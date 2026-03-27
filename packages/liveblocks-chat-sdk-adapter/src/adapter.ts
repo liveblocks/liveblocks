@@ -282,7 +282,7 @@ export class LiveblocksAdapter<
     // The 'Get thread' API returns all comments in the thread in chronological order,
     // so we perform in-memory pagination to match Chat SDK's expected behavior.
     const sliced = slicePageByCreatedAt(comments, {
-      direction,
+      direction: direction === "forward" ? "ascending" : "descending",
       limit,
       startingAfter,
     });
@@ -375,7 +375,6 @@ export class LiveblocksAdapter<
     // The 'Get threads' API returns all threads in the room in chronological order,
     // so we perform in-memory pagination to match Chat SDK's expected behavior.
     const sliced = slicePageByUpdatedAt(threads, {
-      direction: "backward",
       limit,
       startingAfter,
     });
@@ -434,7 +433,7 @@ export class LiveblocksAdapter<
     // The 'Get threads' API returns all comments in the thread in chronological order,
     // so we perform in-memory pagination to match Chat SDK's expected behavior.
     const sliced = slicePageByCreatedAt(comments, {
-      direction,
+      direction: direction === "forward" ? "ascending" : "descending",
       limit,
       startingAfter,
     });
@@ -1059,7 +1058,7 @@ function convertChatInlineElementToPlainText(inline: PhrasingContent): string {
 /**
  * Encode a pagination cursor using the format `base64url( [["id", <string>], ["createdAt", <number>]] )`
  */
-function encodePaginationCursorByCreatedAt(
+export function encodePaginationCursorByCreatedAt(
   id: string,
   createdAt: Date
 ): string {
@@ -1071,7 +1070,7 @@ function encodePaginationCursorByCreatedAt(
   );
 }
 
-function decodePaginationCursorByCreatedAt(cursor: string): {
+export function decodePaginationCursorByCreatedAt(cursor: string): {
   id: string;
   createdAt: Date;
 } {
@@ -1094,7 +1093,7 @@ function decodePaginationCursorByCreatedAt(cursor: string): {
   }
 }
 
-function encodePaginationCursorByUpdatedAt(
+export function encodePaginationCursorByUpdatedAt(
   id: string,
   updatedAt: Date
 ): string {
@@ -1106,7 +1105,7 @@ function encodePaginationCursorByUpdatedAt(
   );
 }
 
-function decodePaginationCursorByUpdatedAt(cursor: string): {
+export function decodePaginationCursorByUpdatedAt(cursor: string): {
   id: string;
   updatedAt: Date;
 } {
@@ -1163,7 +1162,12 @@ function base64UrlDecode(str: string): string {
 function slicePageByCreatedAt<T extends { id: string; createdAt: Date }>(
   data: T[],
   options: {
-    direction: "forward" | "backward";
+    /**
+     * The direction to slice the page in.
+     * - "ascending": Slice the page from the oldest item to the newest item.
+     * - "descending": Slice the page from the newest item to the oldest item.
+     */
+    direction: "ascending" | "descending";
     limit?: number;
     startingAfter?: string;
   }
@@ -1181,7 +1185,7 @@ function slicePageByCreatedAt<T extends { id: string; createdAt: Date }>(
   let startIndex: number;
   let endIndex: number;
 
-  if (direction === "backward") {
+  if (direction === "descending") {
     if (startingAfter) {
       const cursor = decodePaginationCursorByCreatedAt(startingAfter);
       // Find the cursor's position in sort order, then take everything before it.
@@ -1227,7 +1231,7 @@ function slicePageByCreatedAt<T extends { id: string; createdAt: Date }>(
   }
 
   let nextCursor: string | undefined;
-  if (direction === "backward") {
+  if (direction === "descending") {
     nextCursor =
       startIndex > 0
         ? encodePaginationCursorByCreatedAt(page[0]!.id, page[0]!.createdAt)
@@ -1246,17 +1250,17 @@ function slicePageByCreatedAt<T extends { id: string; createdAt: Date }>(
 }
 
 /**
- * Same as {@link slicePageByCreatedAt} but sorts and paginates on `updatedAt`.
+ * Same as {@link slicePageByCreatedAt} (descending direction only) but sorts and
+ * paginates on `updatedAt`. Thread listing does not expose forward pagination.
  */
 function slicePageByUpdatedAt<T extends { id: string; updatedAt: Date }>(
   data: T[],
   options: {
-    direction: "forward" | "backward";
     limit?: number;
     startingAfter?: string;
   }
 ): { data: T[]; nextCursor: string | undefined } {
-  const { direction, limit, startingAfter } = options;
+  const { limit, startingAfter } = options;
 
   // Sort data by 'updatedAt' (oldest first) and use 'id' as a tie-breaker
   data = data.slice().sort((a, b) => {
@@ -1266,47 +1270,23 @@ function slicePageByUpdatedAt<T extends { id: string; updatedAt: Date }>(
     return b.id.localeCompare(a.id);
   });
 
-  let startIndex: number;
   let endIndex: number;
-
-  if (direction === "backward") {
-    if (startingAfter) {
-      const cursor = decodePaginationCursorByUpdatedAt(startingAfter);
-      // Find the cursor's position in sort order, then take everything before it.
-      endIndex = data.findIndex(
-        (c) =>
-          c.updatedAt.getTime() > cursor.updatedAt.getTime() ||
-          (c.updatedAt.getTime() === cursor.updatedAt.getTime() &&
-            c.id <= cursor.id)
-      );
-      if (endIndex === -1) {
-        endIndex = data.length;
-      }
-    } else {
+  if (startingAfter) {
+    const cursor = decodePaginationCursorByUpdatedAt(startingAfter);
+    // Find the cursor's position in sort order, then take everything before it.
+    endIndex = data.findIndex(
+      (c) =>
+        c.updatedAt.getTime() > cursor.updatedAt.getTime() ||
+        (c.updatedAt.getTime() === cursor.updatedAt.getTime() &&
+          c.id <= cursor.id)
+    );
+    if (endIndex === -1) {
       endIndex = data.length;
     }
-    startIndex = limit !== undefined ? Math.max(0, endIndex - limit) : 0;
   } else {
-    if (startingAfter) {
-      const cursor = decodePaginationCursorByUpdatedAt(startingAfter);
-      // Find the first item strictly after the cursor in sort order.
-      startIndex = data.findIndex(
-        (c) =>
-          c.updatedAt.getTime() > cursor.updatedAt.getTime() ||
-          (c.updatedAt.getTime() === cursor.updatedAt.getTime() &&
-            c.id < cursor.id)
-      );
-      if (startIndex === -1) {
-        return { data: [], nextCursor: undefined };
-      }
-    } else {
-      startIndex = 0;
-    }
-    endIndex =
-      limit !== undefined
-        ? Math.min(data.length, startIndex + limit)
-        : data.length;
+    endIndex = data.length;
   }
+  const startIndex = limit !== undefined ? Math.max(0, endIndex - limit) : 0;
 
   const page = data.slice(startIndex, endIndex);
 
@@ -1314,21 +1294,10 @@ function slicePageByUpdatedAt<T extends { id: string; updatedAt: Date }>(
     return { data: [], nextCursor: undefined };
   }
 
-  let nextCursor: string | undefined;
-  if (direction === "backward") {
-    nextCursor =
-      startIndex > 0
-        ? encodePaginationCursorByUpdatedAt(page[0]!.id, page[0]!.updatedAt)
-        : undefined;
-  } else {
-    nextCursor =
-      endIndex < data.length
-        ? encodePaginationCursorByUpdatedAt(
-            page[page.length - 1]!.id,
-            page[page.length - 1]!.updatedAt
-          )
-        : undefined;
-  }
+  const nextCursor =
+    startIndex > 0
+      ? encodePaginationCursorByUpdatedAt(page[0]!.id, page[0]!.updatedAt)
+      : undefined;
 
   return { data: page, nextCursor };
 }

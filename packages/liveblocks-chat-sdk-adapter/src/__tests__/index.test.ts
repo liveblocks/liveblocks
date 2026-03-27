@@ -11,6 +11,8 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import {
   convertPostableMessageToCommentBody,
+  decodePaginationCursorByCreatedAt,
+  encodePaginationCursorByCreatedAt,
   getRoomIdFromChannelId,
   LiveblocksAdapter,
   type LiveblocksAdapterConfig,
@@ -916,13 +918,6 @@ describe("LiveblocksAdapter", () => {
         );
       }
 
-      function decodeCursor(cursor: string): { id: string; createdAt: number } {
-        let s = cursor.replace(/-/g, "+").replace(/_/g, "/");
-        while (s.length % 4) s += "=";
-        const parsed = JSON.parse(atob(s));
-        return { id: parsed[0][1], createdAt: parsed[1][1] };
-      }
-
       test("returns all messages when no options are provided", async () => {
         const adapter = createDummyAdapter();
         const comments = createDummyComments(60);
@@ -969,6 +964,7 @@ describe("LiveblocksAdapter", () => {
         );
 
         const page1 = await adapter.fetchMessages("liveblocks:room_1:th_1", {
+          direction: "backward",
           limit: 3,
         });
         expect(page1.messages.map((m) => m.text)).toEqual([
@@ -977,12 +973,13 @@ describe("LiveblocksAdapter", () => {
           "msg-4",
         ]);
         expect(page1.nextCursor).toBeDefined();
-        expect(decodeCursor(page1.nextCursor!)).toEqual({
+        expect(decodePaginationCursorByCreatedAt(page1.nextCursor!)).toEqual({
           id: "c2",
           createdAt: 2000,
         });
 
         const page2 = await adapter.fetchMessages("liveblocks:room_1:th_1", {
+          direction: "backward",
           limit: 3,
           cursor: page1.nextCursor,
         });
@@ -1006,7 +1003,7 @@ describe("LiveblocksAdapter", () => {
           "msg-2",
         ]);
         expect(result.nextCursor).toBeDefined();
-        expect(decodeCursor(result.nextCursor!)).toEqual({
+        expect(decodePaginationCursorByCreatedAt(result.nextCursor!)).toEqual({
           id: "c2",
           createdAt: 2000,
         });
@@ -1023,7 +1020,7 @@ describe("LiveblocksAdapter", () => {
           limit: 2,
         });
         expect(page1.messages.map((m) => m.text)).toEqual(["msg-0", "msg-1"]);
-        expect(decodeCursor(page1.nextCursor!)).toEqual({
+        expect(decodePaginationCursorByCreatedAt(page1.nextCursor!)).toEqual({
           id: "c1",
           createdAt: 1000,
         });
@@ -1034,7 +1031,7 @@ describe("LiveblocksAdapter", () => {
           cursor: page1.nextCursor,
         });
         expect(page2.messages.map((m) => m.text)).toEqual(["msg-2", "msg-3"]);
-        expect(decodeCursor(page2.nextCursor!)).toEqual({
+        expect(decodePaginationCursorByCreatedAt(page2.nextCursor!)).toEqual({
           id: "c3",
           createdAt: 3000,
         });
@@ -1058,7 +1055,7 @@ describe("LiveblocksAdapter", () => {
           direction: "forward",
           limit: 2,
         });
-        const decoded = decodeCursor(result.nextCursor!);
+        const decoded = decodePaginationCursorByCreatedAt(result.nextCursor!);
         expect(decoded).toEqual({ id: "c1", createdAt: 1000 });
         expect(result.nextCursor).not.toContain("+");
         expect(result.nextCursor).not.toContain("/");
@@ -1077,6 +1074,51 @@ describe("LiveblocksAdapter", () => {
             limit: 10,
           })
         ).rejects.toThrow("Invalid pagination cursor");
+      });
+
+      test("backward: foreign cursor after all messages falls back to newest page", async () => {
+        const adapter = createDummyAdapter();
+        mocks.mockGetThread.mockResolvedValue(
+          createDummyThread(createDummyComments(5))
+        );
+
+        const foreignCursor = encodePaginationCursorByCreatedAt(
+          "ghost-id",
+          new Date(9_999_999_000)
+        );
+
+        const result = await adapter.fetchMessages("liveblocks:room_1:th_1", {
+          direction: "backward",
+          limit: 3,
+          cursor: foreignCursor,
+        });
+
+        expect(result.messages.map((m) => m.text)).toEqual([
+          "msg-2",
+          "msg-3",
+          "msg-4",
+        ]);
+      });
+
+      test("forward: foreign cursor after all messages returns empty page", async () => {
+        const adapter = createDummyAdapter();
+        mocks.mockGetThread.mockResolvedValue(
+          createDummyThread(createDummyComments(5))
+        );
+
+        const foreignCursor = encodePaginationCursorByCreatedAt(
+          "ghost-id",
+          new Date(9_999_999_000)
+        );
+
+        const result = await adapter.fetchMessages("liveblocks:room_1:th_1", {
+          direction: "forward",
+          limit: 3,
+          cursor: foreignCursor,
+        });
+
+        expect(result.messages).toHaveLength(0);
+        expect(result.nextCursor).toBeUndefined();
       });
 
       test("empty thread returns no messages and no cursor", async () => {
@@ -1443,6 +1485,75 @@ describe("LiveblocksAdapter", () => {
           cursor: "not_a_valid_cursor",
         })
       ).rejects.toThrow("Invalid pagination cursor");
+    });
+
+    test("foreign cursor after all threads falls back to newest page", async () => {
+      const adapter = createDummyAdapter();
+      mocks.mockGetThreads.mockResolvedValue({
+        data: [
+          createDummyThread(
+            [
+              createDummyComment({
+                id: "r1",
+                threadId: "th_1",
+                roomId: "room_1",
+                body: {
+                  version: 1,
+                  content: [{ type: "paragraph", children: [{ text: "t1" }] }],
+                },
+              }),
+            ],
+            { id: "th_1", updatedAt: new Date(1000) }
+          ),
+          createDummyThread(
+            [
+              createDummyComment({
+                id: "r2",
+                threadId: "th_2",
+                roomId: "room_1",
+                body: {
+                  version: 1,
+                  content: [{ type: "paragraph", children: [{ text: "t2" }] }],
+                },
+              }),
+            ],
+            { id: "th_2", updatedAt: new Date(2000) }
+          ),
+          createDummyThread(
+            [
+              createDummyComment({
+                id: "r3",
+                threadId: "th_3",
+                roomId: "room_1",
+                body: {
+                  version: 1,
+                  content: [{ type: "paragraph", children: [{ text: "t3" }] }],
+                },
+              }),
+            ],
+            { id: "th_3", updatedAt: new Date(3000) }
+          ),
+        ],
+      });
+
+      const foreignCursor = btoa(
+        JSON.stringify([
+          ["id", "ghost-id"],
+          ["updatedAt", 9_999_999_000],
+        ])
+      )
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_")
+        .replace(/=+$/, "");
+
+      const page = await adapter.listThreads("liveblocks:room_1", {
+        limit: 2,
+        cursor: foreignCursor,
+      });
+      expect(page.threads.map((t) => t.id)).toEqual([
+        "liveblocks:room_1:th_2",
+        "liveblocks:room_1:th_3",
+      ]);
     });
   });
 
