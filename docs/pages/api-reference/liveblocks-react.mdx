@@ -5129,12 +5129,9 @@ const { url, error, isLoading } = useAttachmentUrl("at_xxx");
 
 ### useFeeds [@badge=RoomProvider]
 
-Returns a paginated list of feeds within the current room. Results are merged
-into a per-room cache; `since` and `metadata` filter that cache **for this hook
-call**, and `feeds` is sorted by `createdAt` ascending (oldest first), matching
-the chronological order used by [`useThreads`](#useThreads) for room threads.
-`limit` only sets the **page size** for each fetch (including `fetchMore`), not
-a maximum length of the returned array.
+Returns a paginated list of feeds within the current room. Results are sorted
+oldest first and can be [filtered](#useFeeds-filtering) and
+[paginated](#useFeeds-pagination).
 [Suspense](/docs/api-reference/liveblocks-react#Suspense-hooks) and
 [regular](/docs/api-reference/liveblocks-react#Regular-hooks) versions of this
 hook are available.
@@ -5143,12 +5140,6 @@ hook are available.
 import { useFeeds } from "@liveblocks/react";
 
 const { feeds, error, isLoading } = useFeeds();
-```
-
-```tsx
-import { useFeeds } from "@liveblocks/react/suspense";
-
-const { feeds } = useFeeds();
 ```
 
 <PropertiesList title="Arguments">
@@ -5160,7 +5151,10 @@ const { feeds } = useFeeds();
     is at or after this value are included in `feeds` (applied to the cached
     data for this hook’s options).
   </PropertiesListItem>
-  <PropertiesListItem name="options.metadata" type="Record&lt;string, string&gt;">
+  <PropertiesListItem
+    name="options.metadata"
+    type="Record&lt;string, string&gt;"
+  >
     Optional metadata filter. Only feeds whose metadata matches every key/value
     pair are included (applied to the cached data for this hook’s options).
   </PropertiesListItem>
@@ -5173,8 +5167,8 @@ const { feeds } = useFeeds();
 
 <PropertiesList title="Returns">
   <PropertiesListItem name="feeds" type="Feed[] | undefined">
-    An array of feeds within the current room matching `since` and `metadata` for
-    this call, sorted by `createdAt` ascending (tie-break on `feedId`), or
+    An array of feeds within the current room matching `since` and `metadata`
+    for this call, sorted by `createdAt` ascending (tie-break on `feedId`), or
     `undefined` if not yet loaded (in non-Suspense version).
   </PropertiesListItem>
   <PropertiesListItem name="isLoading" type="boolean">
@@ -5197,11 +5191,93 @@ const { feeds } = useFeeds();
   </PropertiesListItem>
 </PropertiesList>
 
+#### Filtering [#useFeeds-filtering]
+
+It’s possible to filter feeds by timestamp and metadata, and results are merged
+into a per-room cache. Limit sets the page size for each fetch when
+[paginating]().
+
+```tsx
+const { feeds } = useFeeds({
+  // Optional, fetch feeds from the last day
+  since: Date.now() - 1000 * 60 * 60 * 24,
+
+  // Optional, fetch feeds with the `{ tag: "design" }` metadata
+  metadata: {
+    tag: "design",
+  },
+
+  // Optional, fetch only 10 at a time
+  limit: 10,
+});
+```
+
+#### Pagination [#useFeeds-pagination]
+
+By default, the `useFeeds` hook returns up to 50 feeds. To fetch more, the hook
+provides additional fields for pagination, similar to [`useThreads`][].
+
+```tsx
+import { useFeeds } from "@liveblocks/react";
+
+const {
+  feeds,
+  error,
+  isLoading,
+
+  // +++
+  fetchMore,
+  isFetchingMore,
+  hasFetchedAll,
+  fetchMoreError,
+  // +++
+} = useFeeds();
+```
+
+- `hasFetchedAll` indicates whether all available feeds have been fetched.
+- `fetchMore` loads up to 50 more feeds, and is always safe to call.
+- `isFetchingMore` indicates whether more feeds are being fetched.
+- `fetchMoreError` returns error statuses resulting from fetching more.
+
+##### Pagination example [#useFeeds-pagination-example]
+
+The following example demonstrates how to use the `fetchMore` function to
+implement a “Load More” button, which fetches additional feeds when clicked. The
+button is disabled while fetching is in progress.
+
+```tsx
+import { Feed } from "@liveblocks/react-ui";
+import { useFeeds } from "@liveblocks/react/suspense";
+
+function Feeds() {
+  const { feeds, hasFetchedAll, fetchMore, isFetchingMore } = useFeeds();
+
+  return (
+    <div>
+      {feeds.map((feed) => (
+        <a key={feed.feedId} href={`/feeds/${feed.feedId}`}>
+          {feed.metadata.name}
+        </a>
+      ))}
+      // +++
+      {hasFetchedAll ? (
+        <div>🎉 You've loaded all feeds!</div>
+      ) : (
+        <button disabled={isFetchingMore} onClick={fetchMore}>
+          Load more
+        </button>
+      )}
+      // +++
+    </div>
+  );
+}
+```
+
 ### useFeedMessages [@badge=RoomProvider]
 
-Returns a paginated list of messages for a specific feed within the current
-room. Messages are sorted by `createdAt` ascending (chronological). Initially
-fetches messages based on the provided options.
+Returns a paginated list of messages for a specific feed in the current room.
+Messages are sorted newest first using their `createdAt` property and can be
+[paginated](#useFeedMessages-pagination).
 [Suspense](/docs/api-reference/liveblocks-react#Suspense-hooks) and
 [regular](/docs/api-reference/liveblocks-react#Regular-hooks) versions of this
 hook are available.
@@ -5210,12 +5286,6 @@ hook are available.
 import { useFeedMessages } from "@liveblocks/react";
 
 const { messages, error, isLoading } = useFeedMessages("my-feed-id");
-```
-
-```tsx
-import { useFeedMessages } from "@liveblocks/react/suspense";
-
-const { messages } = useFeedMessages("my-feed-id");
 ```
 
 <PropertiesList title="Arguments">
@@ -5260,6 +5330,65 @@ const { messages } = useFeedMessages("my-feed-id");
   </PropertiesListItem>
 </PropertiesList>
 
+#### Pagination [#useFeedMessages-pagination]
+
+By default, the `useFeedMessages` hook returns up to 50 messages. To fetch more,
+the hook provides additional fields for pagination, similar to [`useThreads`][].
+
+```tsx
+import { useFeedMessages } from "@liveblocks/react";
+
+const {
+  messages,
+  error,
+  isLoading,
+
+  // +++
+  hasFetchedAll,
+  fetchMore,
+  isFetchingMore,
+  fetchMoreError,
+  // +++
+} = useFeedMessages("my-feed-id");
+```
+
+- `hasFetchedAll` indicates whether all available messages have been fetched.
+- `fetchMore` loads up to 50 more messages, and is always safe to call.
+- `isFetchingMore` indicates whether more messages are being fetched.
+- `fetchMoreError` returns error statuses resulting from fetching more.
+
+##### Pagination example [#useFeedMessages-pagination-example]
+
+The following example demonstrates how to use the `fetchMore` function to
+implement a “Load More” button, which fetches additional messages when clicked.
+The button is disabled while fetching is in progress.
+
+```tsx
+import { useFeedMessages } from "@liveblocks/react/suspense";
+
+function FeedMessages({ feedId }: { feedId: string }) {
+  const { messages, hasFetchedAll, fetchMore, isFetchingMore } =
+    useFeedMessages(feedId);
+
+  return (
+    <div>
+      {messages.map((message) => (
+        <div key={message.id}>{message.data.content}</div>
+      ))}
+      // +++
+      {hasFetchedAll ? (
+        <div>🎉 You've loaded all messages!</div>
+      ) : (
+        <button disabled={isFetchingMore} onClick={fetchMore}>
+          Load more
+        </button>
+      )}
+      // +++
+    </div>
+  );
+}
+```
+
 ### useCreateFeed [@badge=RoomProvider]
 
 Returns a function that creates a new feed in the current room.
@@ -5296,10 +5425,7 @@ deleteFeed("my-feed-id");
 ```
 
 <PropertiesList title="Returns">
-  <PropertiesListItem
-    name="deleteFeed"
-    type="(feedId: string) => void"
-  >
+  <PropertiesListItem name="deleteFeed" type="(feedId: string) => void">
     A function that deletes a feed. Takes the feed ID.
   </PropertiesListItem>
 </PropertiesList>
@@ -5312,7 +5438,10 @@ Returns a function that updates a feed's metadata in the current room.
 import { useUpdateFeedMetadata } from "@liveblocks/react";
 
 const updateFeedMetadata = useUpdateFeedMetadata();
-updateFeedMetadata("my-feed-id", { name: "Updated Name", updated: new Date().toISOString() });
+updateFeedMetadata("my-feed-id", {
+  name: "Updated Name",
+  updated: new Date().toISOString(),
+});
 ```
 
 <PropertiesList title="Returns">
@@ -5336,10 +5465,14 @@ const createFeedMessage = useCreateFeedMessage();
 createFeedMessage("my-feed-id", { role: "user", content: "Hello, world!" });
 
 // With optional id and timestamp
-createFeedMessage("my-feed-id", { role: "user", content: "Hello!" }, {
-  id: "my-message-id",
-  timestamp: Date.now(),
-});
+createFeedMessage(
+  "my-feed-id",
+  { role: "user", content: "Hello!" },
+  {
+    id: "my-message-id",
+    timestamp: Date.now(),
+  }
+);
 ```
 
 <PropertiesList title="Returns">
@@ -5398,8 +5531,8 @@ updateFeedMessage("my-feed-id", "my-message-id", {
 
 #### Typing feed metadata and message data [#feeds-typescript]
 
-You can type feed metadata and feed message data using the `Liveblocks` interface
-in your `liveblocks.config.ts` file. This provides type safety for
+You can type feed metadata and feed message data using the `Liveblocks`
+interface in your `liveblocks.config.ts` file. This provides type safety for
 [`useFeeds`](#useFeeds) and [`useFeedMessages`](#useFeedMessages).
 
 ```ts
