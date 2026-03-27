@@ -43,6 +43,10 @@ from .create_ai_copilot_options_google import CreateAiCopilotOptionsGoogle
 from .create_ai_copilot_options_open_ai import CreateAiCopilotOptionsOpenAi
 from .create_ai_copilot_options_open_ai_compatible import CreateAiCopilotOptionsOpenAiCompatible
 from .create_comment_request_body import CreateCommentRequestBody
+from .create_feed import CreateFeed
+from .create_feed_message import CreateFeedMessage
+from .create_feed_message_data import CreateFeedMessageData
+from .create_feed_metadata import CreateFeedMetadata
 from .create_file_knowledge_source_response import CreateFileKnowledgeSourceResponse
 from .create_group_request_body import CreateGroupRequestBody
 from .create_group_request_body_scopes import CreateGroupRequestBodyScopes
@@ -61,6 +65,10 @@ from .edit_comment_request_body import EditCommentRequestBody
 from .edit_thread_metadata_request_body import EditThreadMetadataRequestBody
 from .edit_thread_metadata_request_body_metadata import EditThreadMetadataRequestBodyMetadata
 from .error import Error
+from .feed import Feed
+from .feed_message import FeedMessage
+from .feed_message_data import FeedMessageData
+from .feed_metadata import FeedMetadata
 from .get_ai_copilots_response import GetAiCopilotsResponse
 from .get_file_knowledge_source_markdown_response import GetFileKnowledgeSourceMarkdownResponse
 from .get_groups_response import GetGroupsResponse
@@ -68,6 +76,9 @@ from .get_inbox_notifications_response import GetInboxNotificationsResponse
 from .get_knowledge_sources_response import GetKnowledgeSourcesResponse
 from .get_room_subscription_settings_response import GetRoomSubscriptionSettingsResponse
 from .get_rooms_response import GetRoomsResponse
+from .get_rooms_room_id_feeds_feed_id_messages_response_200 import GetRoomsRoomIdFeedsFeedIdMessagesResponse200
+from .get_rooms_room_id_feeds_feed_id_response_200 import GetRoomsRoomIdFeedsFeedIdResponse200
+from .get_rooms_room_id_feeds_response_200 import GetRoomsRoomIdFeedsResponse200
 from .get_storage_document_format import GetStorageDocumentFormat
 from .get_storage_document_response import GetStorageDocumentResponse
 from .get_thread_inbox_notifications_response import GetThreadInboxNotificationsResponse
@@ -114,6 +125,8 @@ from .open_ai_provider_options import OpenAiProviderOptions
 from .open_ai_provider_options_openai import OpenAiProviderOptionsOpenai
 from .open_ai_provider_options_openai_reasoning_effort import OpenAiProviderOptionsOpenaiReasoningEffort
 from .open_ai_provider_options_openai_web_search import OpenAiProviderOptionsOpenaiWebSearch
+from .post_rooms_room_id_feed_response_200 import PostRoomsRoomIdFeedResponse200
+from .post_rooms_room_id_feeds_feed_id_messages_response_200 import PostRoomsRoomIdFeedsFeedIdMessagesResponse200
 from .remove_comment_reaction_request_body import RemoveCommentReactionRequestBody
 from .remove_group_members_request_body import RemoveGroupMembersRequestBody
 from .remove_json_patch_operation import RemoveJsonPatchOperation
@@ -140,6 +153,10 @@ from .trigger_inbox_notification_request_body_activity_data import TriggerInboxN
 from .unsubscribe_from_thread_request_body import UnsubscribeFromThreadRequestBody
 from .update_ai_copilot_request_body import UpdateAiCopilotRequestBody
 from .update_ai_copilot_request_body_provider import UpdateAiCopilotRequestBodyProvider
+from .update_feed import UpdateFeed
+from .update_feed_message import UpdateFeedMessage
+from .update_feed_message_data import UpdateFeedMessageData
+from .update_feed_metadata import UpdateFeedMetadata
 from .update_notification_settings_request_body import UpdateNotificationSettingsRequestBody
 from .update_room_id_request_body import UpdateRoomIdRequestBody
 from .update_room_organization_id_request_body import UpdateRoomOrganizationIdRequestBody
@@ -207,6 +224,10 @@ __all__ = (
     "CreateAiCopilotOptionsOpenAi",
     "CreateAiCopilotOptionsOpenAiCompatible",
     "CreateCommentRequestBody",
+    "CreateFeed",
+    "CreateFeedMessage",
+    "CreateFeedMessageData",
+    "CreateFeedMetadata",
     "CreateFileKnowledgeSourceResponse",
     "CreateGroupRequestBody",
     "CreateGroupRequestBodyScopes",
@@ -225,12 +246,19 @@ __all__ = (
     "EditThreadMetadataRequestBody",
     "EditThreadMetadataRequestBodyMetadata",
     "Error",
+    "Feed",
+    "FeedMessage",
+    "FeedMessageData",
+    "FeedMetadata",
     "GetAiCopilotsResponse",
     "GetFileKnowledgeSourceMarkdownResponse",
     "GetGroupsResponse",
     "GetInboxNotificationsResponse",
     "GetKnowledgeSourcesResponse",
     "GetRoomsResponse",
+    "GetRoomsRoomIdFeedsFeedIdMessagesResponse200",
+    "GetRoomsRoomIdFeedsFeedIdResponse200",
+    "GetRoomsRoomIdFeedsResponse200",
     "GetRoomSubscriptionSettingsResponse",
     "GetStorageDocumentFormat",
     "GetStorageDocumentResponse",
@@ -278,6 +306,8 @@ __all__ = (
     "OpenAiProviderOptionsOpenai",
     "OpenAiProviderOptionsOpenaiReasoningEffort",
     "OpenAiProviderOptionsOpenaiWebSearch",
+    "PostRoomsRoomIdFeedResponse200",
+    "PostRoomsRoomIdFeedsFeedIdMessagesResponse200",
     "RemoveCommentReactionRequestBody",
     "RemoveGroupMembersRequestBody",
     "RemoveJsonPatchOperation",
@@ -304,6 +334,10 @@ __all__ = (
     "UnsubscribeFromThreadRequestBody",
     "UpdateAiCopilotRequestBody",
     "UpdateAiCopilotRequestBodyProvider",
+    "UpdateFeed",
+    "UpdateFeedMessage",
+    "UpdateFeedMessageData",
+    "UpdateFeedMetadata",
     "UpdateNotificationSettingsRequestBody",
     "UpdateRoomIdRequestBody",
     "UpdateRoomOrganizationIdRequestBody",

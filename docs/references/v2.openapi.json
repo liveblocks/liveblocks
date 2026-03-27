@@ -3191,6 +3191,33 @@
               "type": "string"
             },
             "description": "ID of the room"
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Opaque cursor for the next page of results."
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number"
+            },
+            "description": "Only return feeds with `createdAt` greater than this Unix timestamp in milliseconds."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number"
+            },
+            "description": "Maximum number of feeds to return."
           }
         ],
         "responses": {
@@ -3206,6 +3233,11 @@
                       "items": {
                         "$ref": "#/components/schemas/Feed"
                       }
+                    },
+                    "nextCursor": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "Pass as `cursor` to fetch the next page, or null when there are no more results."
                     }
                   }
                 }
@@ -3445,6 +3477,33 @@
               "type": "string"
             },
             "description": "ID of the feed"
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Opaque cursor for the next page of results."
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number"
+            },
+            "description": "Only return messages with `createdAt` greater than this Unix timestamp in milliseconds."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number"
+            },
+            "description": "Maximum number of messages to return."
           }
         ],
         "responses": {
@@ -3460,6 +3519,11 @@
                       "items": {
                         "$ref": "#/components/schemas/FeedMessage"
                       }
+                    },
+                    "nextCursor": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "Pass as `cursor` to fetch the next page, or null when there are no more results."
                     }
                   }
                 }
@@ -7936,6 +8000,7 @@
       "Feed": {
         "type": "object",
         "title": "Feed",
+        "description": "Feed objects returned by the API use `createdAt` and `updatedAt` (Unix time in milliseconds).",
         "properties": {
           "feedId": {
             "type": "string"
@@ -7943,31 +8008,43 @@
           "metadata": {
             "type": "object"
           },
-          "timestamp": {
-            "type": "number"
+          "createdAt": {
+            "type": "number",
+            "description": "Unix timestamp in milliseconds when the feed was created."
+          },
+          "updatedAt": {
+            "type": "number",
+            "description": "Unix timestamp in milliseconds when the feed was last updated."
           }
         },
-        "required": ["feedId", "metadata", "timestamp"]
+        "required": ["feedId", "metadata", "createdAt", "updatedAt"]
       },
       "FeedMessage": {
         "type": "object",
         "title": "FeedMessage",
+        "description": "Message objects returned by the API use `createdAt` and `updatedAt` (Unix time in milliseconds). Request bodies for create/update use `timestamp` for optional custom times.",
         "properties": {
           "id": {
             "type": "string"
           },
-          "timestamp": {
-            "type": "number"
+          "createdAt": {
+            "type": "number",
+            "description": "Unix timestamp in milliseconds when the message was created."
+          },
+          "updatedAt": {
+            "type": "number",
+            "description": "Unix timestamp in milliseconds when the message was last updated."
           },
           "data": {
             "type": "object"
           }
         },
-        "required": ["id", "timestamp", "data"]
+        "required": ["id", "createdAt", "updatedAt", "data"]
       },
       "CreateFeed": {
         "type": "object",
         "title": "CreateFeed",
+        "description": "Request body for `POST /v2/rooms/{roomId}/feed`. Optional creation time is sent as `timestamp` (milliseconds), not `createdAt`.",
         "properties": {
           "feedId": {
             "type": "string"
@@ -7976,7 +8053,8 @@
             "type": "object"
           },
           "timestamp": {
-            "type": "number"
+            "type": "number",
+            "description": "Optional. Unix timestamp in milliseconds for the feed's creation time. If omitted, the server uses the current time."
           }
         },
         "required": ["feedId"]
@@ -7994,12 +8072,15 @@
       "CreateFeedMessage": {
         "type": "object",
         "title": "CreateFeedMessage",
+        "description": "Request body for `POST /v2/rooms/{roomId}/feeds/{feedId}/messages`. Optional message time is sent as `timestamp` (milliseconds), not `createdAt`.",
         "properties": {
           "id": {
-            "type": "string"
+            "type": "string",
+            "description": "Optional client-provided message id. If omitted, the server generates one."
           },
           "timestamp": {
-            "type": "number"
+            "type": "number",
+            "description": "Optional. Unix timestamp in milliseconds for the message's creation time. If omitted, the server uses the current time."
           },
           "data": {
             "type": "object"
@@ -8010,12 +8091,14 @@
       "UpdateFeedMessage": {
         "type": "object",
         "title": "UpdateFeedMessage",
+        "description": "Request body for `PATCH /v2/rooms/{roomId}/feeds/{feedId}/messages/{messageId}`. Optional update time is sent as `timestamp` (milliseconds), not `updatedAt`.",
         "properties": {
           "data": {
             "type": "object"
           },
           "timestamp": {
-            "type": "number"
+            "type": "number",
+            "description": "Optional. Unix timestamp in milliseconds to record as the update time. If omitted, the server uses the current time."
           }
         },
         "required": ["data"]

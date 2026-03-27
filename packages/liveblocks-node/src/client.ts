@@ -627,6 +627,7 @@ export type GetWebKnowledgeSourceLinksOptions = {
 export type CreateFeedOptions = {
   feedId: string;
   metadata?: FeedCreateMetadata;
+  /** Creation time in ms; serialized as `timestamp` in the REST request body. */
   createdAt?: number;
 };
 
@@ -636,12 +637,14 @@ export type UpdateFeedOptions = {
 
 export type CreateFeedMessageOptions<FMD extends Json = Json> = {
   id?: string;
+  /** Creation time in ms; serialized as `timestamp` in the REST request body. */
   createdAt?: number;
   data: FMD;
 };
 
 export type UpdateFeedMessageOptions<FMD extends Json = Json> = {
   data: FMD;
+  /** Update time in ms; serialized as `timestamp` in the REST request body. */
   updatedAt?: number;
 };
 
@@ -3411,7 +3414,7 @@ export class Liveblocks {
    * @param params.roomId The room ID to create the feed in.
    * @param params.feedId The feed ID.
    * @param params.metadata (optional) The metadata for the feed.
-   * @param params.createdAt (optional) Creation time in ms. If not provided, the current time will be used.
+   * @param params.createdAt (optional) Creation time in ms. Sent to the API as `timestamp`. If not provided, the server uses the current time.
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The created feed.
    */
@@ -3422,7 +3425,11 @@ export class Liveblocks {
     const { roomId, feedId, metadata, createdAt } = params;
     const res = await this.#post(
       url`/v2/rooms/${roomId}/feed`,
-      { feedId, metadata, createdAt },
+      {
+        feedId,
+        ...(metadata !== undefined ? { metadata } : {}),
+        ...(createdAt !== undefined ? { timestamp: createdAt } : {}),
+      },
       options
     );
     if (!res.ok) {
@@ -3528,7 +3535,7 @@ export class Liveblocks {
    * @param params.roomId The room ID to create the feed message in.
    * @param params.feedId The feed ID to create the message in.
    * @param params.id (optional) The message ID. If not provided, one will be generated.
-   * @param params.createdAt (optional) Creation time in ms. If not provided, the current time will be used.
+   * @param params.createdAt (optional) Creation time in ms. Sent to the API as `timestamp`. If not provided, the server uses the current time.
    * @param params.data The message data.
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The created feed message.
@@ -3543,7 +3550,11 @@ export class Liveblocks {
     const { roomId, feedId, id, createdAt, data } = params;
     const res = await this.#post(
       url`/v2/rooms/${roomId}/feeds/${feedId}/messages`,
-      { id, createdAt, data },
+      {
+        data,
+        ...(id !== undefined ? { id } : {}),
+        ...(createdAt !== undefined ? { timestamp: createdAt } : {}),
+      },
       options
     );
     if (!res.ok) {
@@ -3558,7 +3569,7 @@ export class Liveblocks {
    * @param params.feedId The feed ID to update the message in.
    * @param params.messageId The message ID to update.
    * @param params.data The message data.
-   * @param params.updatedAt (optional) Last-known update time in ms for stale-update protection. If omitted, the server uses the current time.
+   * @param params.updatedAt (optional) Update time in ms. Sent to the API as `timestamp`. If omitted, the server uses the current time.
    * @param options.signal (optional) An abort signal to cancel the request.
    */
   public async updateFeedMessage<FMD extends Json = Json>(
@@ -3572,7 +3583,10 @@ export class Liveblocks {
     const { roomId, feedId, messageId, data, updatedAt } = params;
     const res = await this.#patch(
       url`/v2/rooms/${roomId}/feeds/${feedId}/messages/${messageId}`,
-      { data, updatedAt },
+      {
+        data,
+        ...(updatedAt !== undefined ? { timestamp: updatedAt } : {}),
+      },
       options
     );
     if (!res.ok) {

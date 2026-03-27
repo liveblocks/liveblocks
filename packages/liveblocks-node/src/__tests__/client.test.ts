@@ -4862,6 +4862,30 @@ describe("client", () => {
             })
           ).resolves.toEqual(feed);
         });
+
+        test("should send createdAt as timestamp in the request body", async () => {
+          server.use(
+            http.post(
+              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/feed`,
+              async ({ request }) => {
+                expect(await request.json()).toEqual({
+                  feedId: "feed_123",
+                  metadata: { key: "value" },
+                  timestamp: 99_000,
+                });
+                return HttpResponse.json({ data: feed }, { status: 200 });
+              }
+            )
+          );
+
+          const client = new Liveblocks({ secret: "sk_xxx" });
+          await client.createFeed({
+            roomId: "room_123",
+            feedId: "feed_123",
+            metadata: { key: "value" },
+            createdAt: 99_000,
+          });
+        });
       });
 
       describe("getFeed", () => {
@@ -4980,7 +5004,12 @@ describe("client", () => {
           server.use(
             http.post(
               `${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds/:feedId/messages`,
-              () => {
+              async ({ request }) => {
+                expect(await request.json()).toEqual({
+                  data: { content: "Hello" },
+                  id: "msg_123",
+                  timestamp: 1234567890,
+                });
                 return HttpResponse.json(
                   { data: feedMessage },
                   { status: 200 }
@@ -5022,6 +5051,30 @@ describe("client", () => {
               data: { content: "Updated" },
             })
           ).resolves.toBeUndefined();
+        });
+
+        test("should send updatedAt as timestamp in the request body", async () => {
+          server.use(
+            http.patch(
+              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds/:feedId/messages/:messageId`,
+              async ({ request }) => {
+                expect(await request.json()).toEqual({
+                  data: { content: "Updated" },
+                  timestamp: 42_000,
+                });
+                return HttpResponse.json({ ok: true }, { status: 200 });
+              }
+            )
+          );
+
+          const client = new Liveblocks({ secret: "sk_xxx" });
+          await client.updateFeedMessage({
+            roomId: "room_123",
+            feedId: "feed_123",
+            messageId: "msg_123",
+            data: { content: "Updated" },
+            updatedAt: 42_000,
+          });
         });
       });
 

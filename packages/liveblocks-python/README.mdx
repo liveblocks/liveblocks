@@ -1620,6 +1620,369 @@ print(result)
 </PropertiesList>
 
 
+## Feeds
+
+### get_rooms_room_id_feeds
+
+This endpoint returns the feeds in the requested room. Corresponds to [`liveblocks.getFeeds`](/docs/api-reference/liveblocks-node#get-rooms-roomId-feeds).
+
+```python
+result = client.get_rooms_room_id_feeds(
+    room_id="...",
+    # cursor="...",
+    # since=0.0,
+    # limit=0.0,
+)
+print(result)
+```
+
+<PropertiesList title="Parameters">
+  <PropertiesListItem
+    name="room_id"
+    type="str"
+  >
+    
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="cursor"
+    type="str | Unset"
+  >
+    
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="since"
+    type="float | Unset"
+  >
+    
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="limit"
+    type="float | Unset"
+  >
+    
+  </PropertiesListItem>
+</PropertiesList>
+
+
+### post_rooms_room_id_feed
+
+This endpoint creates a new feed in a room. Corresponds to [`liveblocks.createFeed`](/docs/api-reference/liveblocks-node#post-rooms-roomId-feed).
+
+```python
+from liveblocks.models import CreateFeed
+
+result = client.post_rooms_room_id_feed(
+    room_id="...",
+    body=CreateFeed(
+        feed_id="...",
+        # metadata=...,
+        # timestamp=0.0,
+    ),
+)
+print(result)
+```
+
+<PropertiesList title="Parameters">
+  <PropertiesListItem
+    name="room_id"
+    type="str"
+  >
+    
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="body"
+    type="CreateFeed | Unset"
+  >
+    Request body (application/json).
+
+  </PropertiesListItem>
+</PropertiesList>
+
+
+### get_rooms_room_id_feeds_feed_id
+
+This endpoint returns a feed by its ID. Corresponds to [`liveblocks.getFeed`](/docs/api-reference/liveblocks-node#get-rooms-roomId-feeds-feedId).
+
+```python
+result = client.get_rooms_room_id_feeds_feed_id(
+    room_id="...",
+    feed_id="...",
+)
+print(result)
+```
+
+<PropertiesList title="Parameters">
+  <PropertiesListItem
+    name="room_id"
+    type="str"
+  >
+    
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="feed_id"
+    type="str"
+  >
+    
+
+  </PropertiesListItem>
+</PropertiesList>
+
+
+### delete_rooms_room_id_feeds_feed_id
+
+This endpoint deletes a feed. Corresponds to [`liveblocks.deleteFeed`](/docs/api-reference/liveblocks-node#delete-rooms-roomId-feeds-feedId).
+
+```python
+client.delete_rooms_room_id_feeds_feed_id(
+    room_id="...",
+    feed_id="...",
+)
+```
+
+<PropertiesList title="Parameters">
+  <PropertiesListItem
+    name="room_id"
+    type="str"
+  >
+    
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="feed_id"
+    type="str"
+  >
+    
+
+  </PropertiesListItem>
+</PropertiesList>
+
+
+### patch_rooms_room_id_feeds_feed_id
+
+This endpoint updates the metadata of a feed. Corresponds to [`liveblocks.updateFeed`](/docs/api-reference/liveblocks-node#patch-rooms-roomId-feeds-feedId).
+
+```python
+from liveblocks.models import UpdateFeed
+
+client.patch_rooms_room_id_feeds_feed_id(
+    room_id="...",
+    feed_id="...",
+    body=UpdateFeed(
+        metadata=...,
+    ),
+)
+```
+
+<PropertiesList title="Parameters">
+  <PropertiesListItem
+    name="room_id"
+    type="str"
+  >
+    
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="feed_id"
+    type="str"
+  >
+    
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="body"
+    type="UpdateFeed | Unset"
+  >
+    Request body (application/json).
+
+  </PropertiesListItem>
+</PropertiesList>
+
+
+### get_rooms_room_id_feeds_feed_id_messages
+
+This endpoint returns the messages in a feed. Corresponds to [`liveblocks.getFeedMessages`](/docs/api-reference/liveblocks-node#get-rooms-roomId-feeds-feedId-messages).
+
+```python
+result = client.get_rooms_room_id_feeds_feed_id_messages(
+    room_id="...",
+    feed_id="...",
+    # cursor="...",
+    # since=0.0,
+    # limit=0.0,
+)
+print(result)
+```
+
+<PropertiesList title="Parameters">
+  <PropertiesListItem
+    name="room_id"
+    type="str"
+  >
+    
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="feed_id"
+    type="str"
+  >
+    
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="cursor"
+    type="str | Unset"
+  >
+    
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="since"
+    type="float | Unset"
+  >
+    
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="limit"
+    type="float | Unset"
+  >
+    
+  </PropertiesListItem>
+</PropertiesList>
+
+
+### post_rooms_room_id_feeds_feed_id_messages
+
+This endpoint creates a new message in a feed. Corresponds to [`liveblocks.createFeedMessage`](/docs/api-reference/liveblocks-node#post-rooms-roomId-feeds-feedId-messages).
+
+```python
+from liveblocks.models import CreateFeedMessage
+
+result = client.post_rooms_room_id_feeds_feed_id_messages(
+    room_id="...",
+    feed_id="...",
+    body=CreateFeedMessage(
+        data=...,
+        # id="...",
+        # timestamp=0.0,
+    ),
+)
+print(result)
+```
+
+<PropertiesList title="Parameters">
+  <PropertiesListItem
+    name="room_id"
+    type="str"
+  >
+    
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="feed_id"
+    type="str"
+  >
+    
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="body"
+    type="CreateFeedMessage | Unset"
+  >
+    Request body (application/json).
+
+  </PropertiesListItem>
+</PropertiesList>
+
+
+### delete_rooms_room_id_feeds_feed_id_messages_message_id
+
+This endpoint deletes a feed message. Corresponds to [`liveblocks.deleteFeedMessage`](/docs/api-reference/liveblocks-node#delete-rooms-roomId-feeds-feedId-messages-messageId).
+
+```python
+client.delete_rooms_room_id_feeds_feed_id_messages_message_id(
+    room_id="...",
+    feed_id="...",
+    message_id="...",
+)
+```
+
+<PropertiesList title="Parameters">
+  <PropertiesListItem
+    name="room_id"
+    type="str"
+  >
+    
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="feed_id"
+    type="str"
+  >
+    
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="message_id"
+    type="str"
+  >
+    
+
+  </PropertiesListItem>
+</PropertiesList>
+
+
+### patch_rooms_room_id_feeds_feed_id_messages_message_id
+
+This endpoint updates a feed message. Corresponds to [`liveblocks.updateFeedMessage`](/docs/api-reference/liveblocks-node#patch-rooms-roomId-feeds-feedId-messages-messageId).
+
+```python
+from liveblocks.models import UpdateFeedMessage
+
+client.patch_rooms_room_id_feeds_feed_id_messages_message_id(
+    room_id="...",
+    feed_id="...",
+    message_id="...",
+    body=UpdateFeedMessage(
+        data=...,
+        # timestamp=0.0,
+    ),
+)
+```
+
+<PropertiesList title="Parameters">
+  <PropertiesListItem
+    name="room_id"
+    type="str"
+  >
+    
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="feed_id"
+    type="str"
+  >
+    
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="message_id"
+    type="str"
+  >
+    
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="body"
+    type="UpdateFeedMessage | Unset"
+  >
+    Request body (application/json).
+
+  </PropertiesListItem>
+</PropertiesList>
+
+
 ## Auth
 
 ### authorize_user
