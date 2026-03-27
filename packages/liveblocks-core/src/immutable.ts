@@ -84,7 +84,8 @@ export function lsonToJson(value: Lson): Json {
  * As such, the returned result will not contain any Json arrays or Json
  * objects anymore.
  */
-function deepLiveify(value: Lson | LsonObject): Lson {
+// XXX Make private again once toLiveblocksNode/Edge use deepLiveifyObject + config
+export function deepLiveify(value: Lson | LsonObject): Lson {
   if (Array.isArray(value)) {
     return new LiveList(value.map(deepLiveify));
   } else if (isPlainObject(value)) {

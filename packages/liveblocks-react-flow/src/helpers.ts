@@ -1,22 +1,14 @@
-import type { LsonObject } from "@liveblocks/core";
-import { deepLiveifyObject, LiveObject } from "@liveblocks/core";
+import type { Json } from "@liveblocks/core";
+import { deepLiveify, LiveObject } from "@liveblocks/core";
 import type { Edge, Node } from "@xyflow/react";
 
-import { EDGE_LOCAL_KEYS, NODE_LOCAL_KEYS } from "./constants";
+import {
+  EDGE_ATOMIC_KEYS,
+  EDGE_LOCAL_KEYS,
+  NODE_ATOMIC_KEYS,
+  NODE_LOCAL_KEYS,
+} from "./constants";
 import type { LiveblocksEdge, LiveblocksNode } from "./types";
-
-function omit<T extends object, K extends PropertyKey>(
-  from: T,
-  keys: readonly K[]
-): Omit<T, Extract<K, keyof T>> {
-  const result = { ...from } as Partial<T>;
-
-  for (const key of keys) {
-    delete (result as Record<PropertyKey, unknown>)[key];
-  }
-
-  return result as Omit<T, Extract<K, keyof T>>;
-}
 
 /**
  * @experimental
@@ -45,12 +37,27 @@ function omit<T extends object, K extends PropertyKey>(
 // )
 //
 export function toLiveblocksNode<N extends Node>(node: N): LiveblocksNode<N> {
-  const { data, ...rest } = omit(node, NODE_LOCAL_KEYS) as N;
+  const liveNode = new LiveObject() as LiveblocksNode<N>;
 
-  return new LiveObject({
-    ...(rest as LsonObject),
-    data: deepLiveifyObject(data as LsonObject),
-  }) as LiveblocksNode<N>;
+  // XXX You can see the shape of deepLiveifyObject() + config emerging here
+  for (const key in node) {
+    const value = node[key];
+    if (value === undefined) continue;
+
+    if (NODE_LOCAL_KEYS.has(key)) {
+      // @ts-expect-error XXX Fix this later
+      liveNode.setLocal(key, value);
+    } else if (NODE_ATOMIC_KEYS.has(key)) {
+      // @ts-expect-error XXX Fix this later
+      liveNode.set(key, value as Json);
+    } else {
+      // @ts-expect-error XXX Fix this later
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-call
+      liveNode.set(key, deepLiveify(value as Json));
+    }
+  }
+
+  return liveNode;
 }
 
 /**
@@ -72,13 +79,24 @@ export function toLiveblocksNode<N extends Node>(node: N): LiveblocksNode<N> {
 // )
 //
 export function toLiveblocksEdge<E extends Edge>(edge: E): LiveblocksEdge<E> {
-  const { data, ...rest } = omit(edge, EDGE_LOCAL_KEYS) as E;
+  const liveEdge = new LiveObject() as LiveblocksEdge<E>;
 
-  return new LiveObject({
-    ...(rest as LsonObject),
+  for (const key in edge) {
+    const value = edge[key];
+    if (value === undefined) continue;
 
-    // `data` is optional on edges.
-    data:
-      data === undefined ? undefined : deepLiveifyObject(data as LsonObject),
-  }) as LiveblocksEdge<E>;
+    if (EDGE_LOCAL_KEYS.has(key)) {
+      // @ts-expect-error XXX Fix this later
+      liveEdge.setLocal(key, value);
+    } else if (EDGE_ATOMIC_KEYS.has(key)) {
+      // @ts-expect-error XXX Fix this later
+      liveEdge.set(key, value as Json);
+    } else {
+      // @ts-expect-error XXX Fix this later
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-call
+      liveEdge.set(key, deepLiveify(value as Json));
+    }
+  }
+
+  return liveEdge;
 }

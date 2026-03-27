@@ -1,11 +1,12 @@
 import type {
   History,
   Json,
+  JsonObject,
   LsonObject,
   Resolve,
   ToImmutable,
 } from "@liveblocks/core";
-import { LiveMap, LiveObject } from "@liveblocks/core";
+import { LiveMap, LiveObject, reconcileLiveRoot } from "@liveblocks/core";
 import { useHistory, useMutation, useStorage } from "@liveblocks/react";
 import {
   useInitial,
@@ -27,11 +28,7 @@ import type {
 import { addEdge as defaultAddEdge } from "@xyflow/react";
 import { useEffect } from "react";
 
-import {
-  DEFAULT_STORAGE_KEY,
-  EDGE_LOCAL_KEYS,
-  NODE_LOCAL_KEYS,
-} from "./constants";
+import { DEFAULT_STORAGE_KEY } from "./constants";
 import { toLiveblocksEdge, toLiveblocksNode } from "./helpers";
 import type { LiveblocksEdge, LiveblocksFlow, LiveblocksNode } from "./types";
 
@@ -208,7 +205,7 @@ type UseLiveblocksFlowOptions<N extends Node, E extends Edge> = {
   suspense?: boolean;
 };
 
-// Narrowed LiveObject type for calling setLocal/delete with known local keys.
+// Narrowed LiveObject type for calling setLocal with known local keys.
 // Needed because TypeScript can't resolve OptionalJsonKeys on generic
 // LiveblocksNode<N>/LiveblocksEdge<E> types.
 type NodeLocalLO = LiveObject<Node & LsonObject>;
@@ -225,47 +222,43 @@ function applyNodeChanges<N extends Node>(
   for (const change of changes) {
     switch (change.type) {
       case "add":
+        nodes.set(change.item.id, toLiveblocksNode(change.item));
+        break;
+
       case "replace": {
-        const lo = toLiveblocksNode(change.item);
-        nodes.set(change.item.id, lo);
-        const n = lo as unknown as NodeLocalLO;
-        for (const key of NODE_LOCAL_KEYS) {
-          const value = change.item[key];
-          if (value !== undefined && value !== false) {
-            n.setLocal(key, value);
+        const existing = nodes.get(change.item.id);
+        if (existing) {
+          // Reconcile the data LiveObject in place — only mutates what changed
+          const data = existing.get("data");
+          if (data) {
+            reconcileLiveRoot(data, (change.item.data ?? {}) as JsonObject);
           }
+        } else {
+          // Node doesn't exist yet — treat as add
+          nodes.set(change.item.id, toLiveblocksNode(change.item));
         }
         break;
       }
 
-      // Removals are handled by onDelete for atomic undo
-      case "remove":
-        break;
-
       case "position": {
         const node = nodes.get(change.id);
-
         if (!node || !change.position) {
           break;
         }
 
-        const previous = node.get("position") as N["position"] | undefined;
-
-        if (
-          previous?.x !== change.position.x ||
-          previous?.y !== change.position.y
-        ) {
+        const prev = node.get("position") as N["position"] | undefined;
+        if (prev?.x !== change.position.x || prev?.y !== change.position.y) {
           node.set("position", change.position);
         }
 
         if (change.dragging !== undefined) {
-          const n = node as unknown as NodeLocalLO;
           if (change.dragging) {
             history.pause();
           } else {
             history.resume();
           }
-          n.setLocal("dragging", change.dragging);
+          // @ts-expect-error XXX Fix this later
+          node.setLocal("dragging", change.dragging);
         }
 
         break;
@@ -273,7 +266,6 @@ function applyNodeChanges<N extends Node>(
 
       case "dimensions": {
         const node = nodes.get(change.id);
-
         if (!node) {
           break;
         }
@@ -323,6 +315,10 @@ function applyNodeChanges<N extends Node>(
           n.setLocal("selected", change.selected);
         }
         break;
+
+      case "remove":
+        // Removals are handled by onDelete for atomic undo
+        break;
     }
   }
 }
@@ -336,23 +332,26 @@ function applyEdgeChanges<E extends Edge>(
 ): void {
   for (const change of changes) {
     switch (change.type) {
-      case "add":
-      case "replace": {
-        const lo = toLiveblocksEdge(change.item);
-        edges.set(change.item.id, lo);
-        const e = lo as unknown as EdgeLocalLO;
-        for (const key of EDGE_LOCAL_KEYS) {
-          const value = change.item[key];
-          if (value !== undefined && value !== false) {
-            e.setLocal(key, value);
-          }
-        }
+      case "add": {
+        edges.set(change.item.id, toLiveblocksEdge(change.item));
         break;
       }
 
-      // Removals are handled by onDelete for atomic undo
-      case "remove":
+      case "replace": {
+        const existing = edges.get(change.item.id);
+        if (existing) {
+          const dataLO = existing.get("data");
+          if (dataLO && change.item.data) {
+            reconcileLiveRoot(
+              dataLO as LiveObject<LsonObject>,
+              change.item.data as JsonObject
+            );
+          }
+        } else {
+          edges.set(change.item.id, toLiveblocksEdge(change.item));
+        }
         break;
+      }
 
       case "select":
         {
@@ -361,6 +360,10 @@ function applyEdgeChanges<E extends Edge>(
           const e = edge as unknown as EdgeLocalLO;
           e.setLocal("selected", change.selected);
         }
+        break;
+
+      case "remove":
+        // Removals are handled by onDelete for atomic undo
         break;
     }
   }

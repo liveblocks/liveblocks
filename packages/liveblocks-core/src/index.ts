@@ -108,6 +108,7 @@ export type {
   KDAD,
 } from "./globals/augmentation";
 export {
+  deepLiveify, // XXX Make private again once toLiveblocksNode/Edge use deepLiveifyObject + config
   deepLiveifyObject,
   legacy_patchImmutableObject,
   legacy_patchLiveObjectKey,
