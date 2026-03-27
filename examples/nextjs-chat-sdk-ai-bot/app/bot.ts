@@ -1,11 +1,14 @@
 import { Chat, toAiMessages } from "chat";
-import { createLiveblocksAdapter, LiveblocksAdapter } from "@liveblocks/chat";
+import {
+  createLiveblocksAdapter,
+  LiveblocksAdapter,
+} from "@liveblocks/chat-sdk-adapter";
 import { createMemoryState } from "@chat-adapter/state-memory";
 import { BOT_USER_ID, BOT_USER_NAME, getUser } from "./database";
 import { streamText } from "ai";
 import { createAnthropic } from "@ai-sdk/anthropic";
 
-const SYSTEM_PROMPT = `You are a helpful assistant in a **demo app**: **Liveblocks Comments** (threads and replies in a room) integrated with the **Chat SDK** via **\`@liveblocks/chat\`**—Liveblocks' **adapter for the Chat SDK** (mapping comments to Chat SDK channels)—plus the Chat SDK's **in-memory state** adapter. You answer when someone @-mentions the bot.
+const SYSTEM_PROMPT = `You are a helpful assistant in a **demo app**: **Liveblocks Comments** (threads and replies in a room) integrated with the **Chat SDK** via **\`@liveblocks/chat-sdk-adapter\`**—Liveblocks' **adapter for the Chat SDK** (mapping comments to Chat SDK channels)—plus the Chat SDK's **in-memory state** adapter. You answer when someone @-mentions the bot.
 
 **How replies are stored.** User messages and your replies are turned into Liveblocks **CommentBody**, not arbitrary Markdown. A comment is a list of **paragraph** blocks. Each paragraph only has **inline** nodes:
 

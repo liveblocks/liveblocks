@@ -1,5 +1,5 @@
 {
-  "name": "@liveblocks-examples/liveblocks-chat-sdk-bot",
+  "name": "@liveblocks-examples/nextjs-chat-sdk-ai-bot",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -10,11 +10,14 @@
   },
   "dependencies": {
     "@chat-adapter/state-memory": "^4.23.0",
-    "@liveblocks/chat": "^3.15.5",
+    "@liveblocks/chat-sdk-adapter": "^3.15.5",
     "@liveblocks/client": "^3.15.5",
     "@liveblocks/node": "^3.15.5",
     "@liveblocks/react": "^3.15.5",
     "@liveblocks/react-ui": "^3.15.5",
+    "@ai-sdk/anthropic": "^3.0.64",
+    "ai": "^6.0.140",
+    "zod": "^4.3.6",
     "chat": "^4.22.0",
     "next": "16.2.1",
     "react": "19.2.4",

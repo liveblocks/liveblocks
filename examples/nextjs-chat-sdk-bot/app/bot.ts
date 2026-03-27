@@ -1,5 +1,8 @@
 import { Chat } from "chat";
-import { createLiveblocksAdapter, LiveblocksAdapter } from "@liveblocks/chat";
+import {
+  createLiveblocksAdapter,
+  LiveblocksAdapter,
+} from "@liveblocks/chat-sdk-adapter";
 import { createMemoryState } from "@chat-adapter/state-memory";
 import { BOT_USER_ID, BOT_USER_NAME, getUser } from "./database";
 

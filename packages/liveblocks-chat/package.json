@@ -1,7 +1,7 @@
 {
-  "name": "@liveblocks/chat",
+  "name": "@liveblocks/chat-sdk-adapter",
   "version": "3.15.5",
-  "description": "Chat SDK platform adapter backed by Liveblocks comments.",
+  "description": "Liveblocks adapter for the Chat SDK.",
   "license": "Apache-2.0",
   "author": "Liveblocks Inc.",
   "type": "module",
