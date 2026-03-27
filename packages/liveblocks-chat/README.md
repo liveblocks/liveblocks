@@ -60,7 +60,7 @@ const liveblocks = createLiveblocksAdapter({
   botUserName: "MyBot",
 });
 
-const chat = new Chat({
+const bot = new Chat({
   userName: "MyBot",
   adapters: { liveblocks },
   state: yourStateAdapter,
@@ -69,7 +69,7 @@ const chat = new Chat({
 // Point Liveblocks webhooks at your route, then forward to the Chat SDK:
 export async function POST(request: Request) {
   // Use your runtime's waitUntil for background processing (e.g. Vercel waitUntil)
-  return chat.webhooks.liveblocks(request, {
+  return bot.webhooks.liveblocks(request, {
     waitUntil: (p) => void p,
   });
 }

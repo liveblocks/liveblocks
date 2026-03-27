@@ -5,11 +5,11 @@ import {
   type CommentBody,
   type CommentBodyInlineElement,
   type CommentBodyParagraph,
+  getMentionsFromCommentBody,
   isCommentBodyLink,
   isCommentBodyMention,
   isCommentBodyText,
   type ResolveGroupsInfoArgs,
-  resolveMentionsInCommentBody,
   type ResolveUsersArgs,
 } from "@liveblocks/core";
 import {
@@ -582,11 +582,42 @@ export class LiveblocksAdapter<
   async #convertLiveblocksCommentDataToChatMessage(
     comment: Extract<CommentData, { body: CommentBody }>
   ): Promise<Message<CommentData>> {
-    const { users, groups } = await resolveMentionsInCommentBody(
-      comment.body,
-      this.#resolveUsers,
-      this.#resolveGroupsInfo
-    );
+    const mentions = getMentionsFromCommentBody(comment.body);
+    const userIds = new Set<string>([comment.userId]); // Initialize with the author's user id
+    const groupIds = new Set<string>();
+    for (const mention of mentions) {
+      if (mention.kind === "user") {
+        userIds.add(mention.id);
+      } else if (mention.kind === "group") {
+        groupIds.add(mention.id);
+      }
+    }
+
+    const [users, groups] = await Promise.all([
+      this.#resolveUsers
+        ? this.#resolveUsers({ userIds: Array.from(userIds) })
+        : undefined,
+      this.#resolveGroupsInfo && groupIds.size > 0
+        ? this.#resolveGroupsInfo({ groupIds: Array.from(groupIds) })
+        : undefined,
+    ]);
+
+    const resolvedUsers = new Map<string, U["info"]>();
+    if (users !== undefined) {
+      for (const [index, userId] of Array.from(userIds).entries()) {
+        const user = users[index];
+        if (user === undefined) continue;
+        resolvedUsers.set(userId, user);
+      }
+    }
+    const resolvedGroups = new Map<string, DGI>();
+    if (groups !== undefined) {
+      for (const [index, groupId] of Array.from(groupIds).entries()) {
+        const group = groups[index];
+        if (group === undefined) continue;
+        resolvedGroups.set(groupId, group);
+      }
+    }
 
     const links = new Set<string>();
 
@@ -599,12 +630,12 @@ export class LiveblocksAdapter<
           if (inline.kind === "user") {
             children.push({
               type: "text",
-              value: users.get(inline.id)?.name ?? inline.id,
+              value: resolvedUsers.get(inline.id)?.name ?? inline.id,
             });
           } else {
             children.push({
               type: "text",
-              value: groups.get(inline.id)?.name ?? inline.id,
+              value: resolvedGroups.get(inline.id)?.name ?? inline.id,
             });
           }
         } else if (isCommentBodyLink(inline)) {
@@ -650,9 +681,9 @@ export class LiveblocksAdapter<
         block.children.reduce((acc, inline) => {
           if (isCommentBodyMention(inline)) {
             if (inline.kind === "user") {
-              return acc + (users.get(inline.id)?.name ?? inline.id);
+              return acc + (resolvedUsers.get(inline.id)?.name ?? inline.id);
             } else {
-              return acc + (groups.get(inline.id)?.name ?? inline.id);
+              return acc + (resolvedGroups.get(inline.id)?.name ?? inline.id);
             }
           } else if (isCommentBodyLink(inline)) {
             if (inline.text) {
@@ -677,12 +708,12 @@ export class LiveblocksAdapter<
       raw: comment,
       formatted: { type: "root", children: nodes },
       text,
-      isMention: users.has(this.#botUserId),
+      isMention: resolvedUsers.has(this.#botUserId),
       links: Array.from(links.values()).map((url) => ({ url })),
       author: {
         userId: comment.userId,
-        userName: users.get(comment.userId)?.name ?? comment.userId,
-        fullName: users.get(comment.userId)?.name ?? comment.userId,
+        userName: resolvedUsers.get(comment.userId)?.name ?? comment.userId,
+        fullName: resolvedUsers.get(comment.userId)?.name ?? comment.userId,
         // This assumes that the current bot is the only bot in the thread; if we want
         // to support multiple bots, we need to add a way to determine the bot's user id.
         isBot: comment.userId === this.#botUserId,
