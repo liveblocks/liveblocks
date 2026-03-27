@@ -19,4 +19,9 @@ export const EXAMPLES = {
     label: "Flowchart",
     roomId: "liveblocks:examples:next-react-flow-kitchen-sink:flowchart",
   },
+  "deep-conflict-resolution": {
+    label: "Deep conflict resolution",
+    roomId:
+      "liveblocks:examples:next-react-flow-kitchen-sink:deep-conflict-resolution",
+  },
 } as const;
