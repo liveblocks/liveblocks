@@ -3714,6 +3714,12 @@ export function createRoom<
       reconnect: () => managedSocket.reconnect(),
       disconnect: () => managedSocket.disconnect(),
       destroy: () => {
+        pendingFeedsRequests.forEach((request) =>
+          request.reject(new Error("Room destroyed"))
+        );
+        pendingFeedMessagesRequests.forEach((request) =>
+          request.reject(new Error("Room destroyed"))
+        );
         // remove the roomWillDestroy event from the event hub
         const { roomWillDestroy, ...eventsExceptDestroy } = eventHub;
         // Unregister all registered callbacks

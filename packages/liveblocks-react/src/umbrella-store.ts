@@ -42,9 +42,7 @@ import {
   DefaultMap,
   DerivedSignal,
   getSubscriptionKey,
-  HttpError,
   kInternal,
-  LiveblocksError,
   MutableSignal,
   nanoid,
   nn,
@@ -388,10 +386,9 @@ const noop = Promise.resolve();
  * - When calling the getter multiple times, the return value is always
  *   referentially equal to the previous call.
  *
- * - When in this error state, the error will remain in error state for
- *   5 seconds. After those 5 seconds, the resource status gets reset, and the
- *   next time the "getter" is accessed, the resource will re-initiate the
- *   initial fetching process.
+ * - With `autoRetry` enabled (default), an initial-fetch error stays for 5 seconds,
+ *   then the resource resets to loading so the next getter access can retry.
+ *   With `autoRetry` disabled, the error persists (no automatic reset).
  *
  * - This class exposes an Observable that is notified whenever the state
  *   changes. For now, this observable can be used to call a no-op update to
@@ -418,44 +415,22 @@ const noop = Promise.resolve();
  *
  * @internal Only exported for unit tests.
  */
-function defaultPaginatedRetryStop(err: unknown): boolean {
-  return err instanceof HttpError && err.status >= 400 && err.status < 500;
-}
-
-/** Do not auto-retry permanent feed failures (e.g. v1 room, validation). */
-function feedPaginatedRetryStop(err: unknown): boolean {
-  return (
-    defaultPaginatedRetryStop(err) ||
-    (err instanceof LiveblocksError &&
-      err.context.type === "FEED_REQUEST_ERROR")
-  );
-}
-
 export class PaginatedResource {
   readonly #signal: Signal<AsyncResult<PaginationState>>;
   public readonly signal: ISignal<AsyncResult<PaginationState>>;
 
   #fetchPage: (cursor?: string) => Promise<string | null>;
   #pendingFetchMore: Promise<void> | null;
-  #shouldStopRetrying: (err: unknown) => boolean;
-  /** When true, keep error state and do not auto-refetch after 5s (see waitUntilLoaded error handler). */
-  #persistErrorWithoutReset: (err: unknown) => boolean;
+  #autoRetry: boolean;
 
   constructor(
     fetchPage: (cursor?: string) => Promise<string | null>,
-    options?: {
-      shouldStopRetrying?: (err: unknown) => boolean;
-      /** Permanent failures: skip the 5s reset that would re-issue the initial fetch (e.g. repeated FETCH_FEEDS). */
-      persistErrorWithoutReset?: (err: unknown) => boolean;
-    }
+    options?: { autoRetry?: boolean }
   ) {
     this.#signal = new Signal<AsyncResult<PaginationState>>(ASYNC_LOADING);
     this.#fetchPage = fetchPage;
     this.#pendingFetchMore = null;
-    this.#shouldStopRetrying =
-      options?.shouldStopRetrying ?? defaultPaginatedRetryStop;
-    this.#persistErrorWithoutReset =
-      options?.persistErrorWithoutReset ?? (() => false);
+    this.#autoRetry = options?.autoRetry ?? true;
     this.signal = this.#signal.asReadonly();
 
     autobind(this);
@@ -533,12 +508,13 @@ export class PaginatedResource {
 
     // Wrap the request to load room threads (and notifications) in an auto-retry function so that if the request fails,
     // we retry for at most 5 times with incremental backoff delays. If all retries fail, the auto-retry function throws an error
-    const initialPageFetch$ = autoRetry(
-      () => this.#fetchPage(/* cursor */ undefined),
-      5,
-      [5000, 5000, 10000, 15000],
-      this.#shouldStopRetrying
-    );
+    const initialPageFetch$ = this.#autoRetry
+      ? autoRetry(
+          () => this.#fetchPage(/* cursor */ undefined),
+          5,
+          [5000, 5000, 10000, 15000]
+        )
+      : Promise.resolve().then(() => this.#fetchPage(/* cursor */ undefined));
 
     const promise = usify(initialPageFetch$);
 
@@ -561,15 +537,13 @@ export class PaginatedResource {
       (err) => {
         this.#signal.set(ASYNC_ERR(err as Error));
 
-        if (this.#persistErrorWithoutReset(err)) {
-          return;
+        if (this.#autoRetry) {
+          // Wait for 5 seconds before removing the request
+          setTimeout(() => {
+            this.#cachedPromise = null;
+            this.#signal.set(ASYNC_LOADING);
+          }, 5_000);
         }
-
-        // Wait for 5 seconds before removing the request
-        setTimeout(() => {
-          this.#cachedPromise = null;
-          this.#signal.set(ASYNC_LOADING);
-        }, 5_000);
       }
     );
 
@@ -1854,10 +1828,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
 
             return result.nextCursor ?? null;
           },
-          {
-            shouldStopRetrying: feedPaginatedRetryStop,
-            persistErrorWithoutReset: feedPaginatedRetryStop,
-          }
+          { autoRetry: false }
         );
 
         const signal = DerivedSignal.from(
@@ -1913,10 +1884,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
 
             return result.nextCursor ?? null;
           },
-          {
-            shouldStopRetrying: feedPaginatedRetryStop,
-            persistErrorWithoutReset: feedPaginatedRetryStop,
-          }
+          { autoRetry: false }
         );
 
         const signal = DerivedSignal.from(

@@ -278,20 +278,14 @@ describe("PaginatedResource", () => {
     }
   });
 
-  test("persistErrorWithoutReset: no 5s reset (avoids repeated initial fetch)", async () => {
+  test("autoRetry: false — single attempt, error persists (no 5s reset)", async () => {
     const fetcher = jest
       .fn<Promise<string | null>, [cursor?: string]>()
       .mockImplementation(() => {
         throw new Error("permanent");
       });
 
-    const permanent = (err: unknown) =>
-      err instanceof Error && err.message === "permanent";
-
-    const p = new PaginatedResource(fetcher, {
-      shouldStopRetrying: permanent,
-      persistErrorWithoutReset: permanent,
-    });
+    const p = new PaginatedResource(fetcher, { autoRetry: false });
 
     jest.useFakeTimers();
     try {
