@@ -39,9 +39,17 @@ New dev server features:
 - Live socket inspector view
 - Maintenance mode toggle (to reject new WebSocket connections)
 
+## Documentation
+
+- New page: [Agent skills](https://liveblocks.io/docs/tools/agent-skills).
+
+## Showcase
+
+- New item: [Realtime design like Figma](https://liveblocks.io/showcase/realtime-design-like-figma).
+
 ## Contributors
 
-nvie, nimeshnayaju
+nvie, nimeshnayaju, ctnicholas
 
 # Week 12 (2026-03-20)
 
