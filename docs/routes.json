@@ -849,6 +849,10 @@
         "path": "/api-reference/liveblocks-emails"
       },
       {
+        "title": "@liveblocks/chat-sdk-adapter",
+        "path": "/api-reference/liveblocks-chat-sdk-adapter"
+      },
+      {
         "title": "Python SDK",
         "path": "/api-reference/liveblocks-python"
       },
