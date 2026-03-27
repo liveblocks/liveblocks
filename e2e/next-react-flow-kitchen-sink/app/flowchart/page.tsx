@@ -81,6 +81,7 @@ import {
   type ReactNode,
 } from "react";
 import { EXAMPLES } from "@/app/examples";
+import { AI_AGENT_USER } from "@/database";
 import {
   BLOCK_COLORS,
   BLOCK_SHAPES,
@@ -1139,28 +1140,45 @@ function FlowToolbar({
 function FlowCursor({ userId, connectionId }: CursorsCursorProps) {
   const { user, isLoading } = useUser(userId);
   const isThinking = useOther(connectionId, (other) => other.presence.thinking);
+  const isAgentCursor = userId === AI_AGENT_USER.id;
 
   if (isLoading) {
     return null;
   }
 
-  return (
-    <Cursor
-      className="flowchart-cursor"
-      color={user?.color}
-      label={
-        user ? (
-          <>
-            {isThinking ? (
-              <span className="flowchart-agent-cursor-thinking">Thinking…</span>
-            ) : (
-              user.name
-            )}
-          </>
-        ) : undefined
-      }
-    />
-  );
+  if (isAgentCursor) {
+    return (
+      <div className="flowchart-agent-cursor-wobble-x">
+        <div className="flowchart-agent-cursor-wobble-y">
+          <Cursor
+            className="flowchart-cursor"
+            color={user?.color}
+            label={
+              user ? (
+                <>
+                  {isThinking ? (
+                    <span className="flowchart-agent-cursor-thinking">
+                      Thinking…
+                    </span>
+                  ) : (
+                    user.name
+                  )}
+                </>
+              ) : undefined
+            }
+          />
+        </div>
+      </div>
+    );
+  } else {
+    return (
+      <Cursor
+        className="flowchart-cursor"
+        color={user?.color}
+        label={user?.name}
+      />
+    );
+  }
 }
 
 function Flow({ className, ...props }: ComponentProps<"div">) {

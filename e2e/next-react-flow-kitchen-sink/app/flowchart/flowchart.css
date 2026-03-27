@@ -551,6 +551,77 @@
   animation: shimmer-inverted 2s linear infinite;
 }
 
+.flowchart-agent-cursor-wobble-x,
+.flowchart-agent-cursor-wobble-y {
+  pointer-events: none;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+.flowchart-agent-cursor-wobble-x {
+  animation: flowchart-agent-cursor-wobble-x -1.2s 4.9s ease-in-out infinite
+    alternate;
+}
+
+.flowchart-agent-cursor-wobble-y {
+  animation: flowchart-agent-cursor-wobble-y -3.4s 6.1s ease-in-out infinite
+    alternate;
+}
+
+@keyframes flowchart-agent-cursor-wobble-x {
+  0%,
+  100% {
+    transform: translateX(-5px);
+  }
+
+  12% {
+    transform: translateX(7px);
+  }
+
+  28% {
+    transform: translateX(-8px);
+  }
+
+  44% {
+    transform: translateX(3px);
+  }
+
+  61% {
+    transform: translateX(-2px);
+  }
+
+  78% {
+    transform: translateX(8px);
+  }
+}
+
+@keyframes flowchart-agent-cursor-wobble-y {
+  0%,
+  100% {
+    transform: translateY(4px);
+  }
+
+  17% {
+    transform: translateY(-7px);
+  }
+
+  33% {
+    transform: translateY(6px);
+  }
+
+  49% {
+    transform: translateY(-8px);
+  }
+
+  66% {
+    transform: translateY(-1px);
+  }
+
+  84% {
+    transform: translateY(5px);
+  }
+}
+
 @keyframes shimmer {
   from,
   to {

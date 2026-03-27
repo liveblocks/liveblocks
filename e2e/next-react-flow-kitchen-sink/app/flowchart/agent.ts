@@ -1,12 +1,7 @@
 "use server";
 
 import { openai } from "@ai-sdk/openai";
-import {
-  Liveblocks,
-  LiveMap,
-  LiveObject,
-  type JsonObject,
-} from "@liveblocks/node";
+import { Liveblocks, LiveMap } from "@liveblocks/node";
 import { generateText, stepCountIs, tool } from "ai";
 import { nanoid } from "nanoid";
 import dedent from "dedent";
@@ -17,7 +12,6 @@ import {
   DEFAULT_BLOCK_SIZE,
   FLOWCHART_EDGE_TYPE,
   FLOWCHART_STORAGE_KEY,
-  FlowchartEdge,
   FlowchartFlow,
   FlowchartNode,
   Point,
@@ -31,10 +25,10 @@ import {
   getMidpoint,
   Bounds,
   getRandomPointInBounds,
+  easeInOutCubic,
 } from "@/app/flowchart/shared";
 import { z } from "zod";
 import {
-  LiveblocksEdge,
   LiveblocksNode,
   toLiveblocksEdge,
   toLiveblocksNode,
@@ -45,6 +39,10 @@ const PRESENCE_DONE_TTL_SECONDS = 2;
 const AGENT_PAUSE = 100;
 const CURSOR_THINKING_INTERVAL = 1000;
 const DEFAULT_BOUNDS_RADIUS = 200;
+
+const POSITION_ANIMATION_MIN_STEPS = 7;
+const POSITION_ANIMATION_MAX_STEPS = 14;
+const POSITION_ANIMATION_STEP_DISTANCE = 40;
 
 const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY!,
@@ -257,7 +255,7 @@ async function runFlowchartAgent(roomId: string, prompt: string) {
           }),
           updateNode: tool({
             description:
-              "Update one node. Moving or resizing it will automatically refresh connected edges.",
+              "Update one node. Handles should be reconsidered after this to take into account the new layout.",
             inputSchema: z.object({
               ...idSchema.shape,
               ...nodeLayoutSchema.partial().shape,
@@ -275,23 +273,61 @@ async function runFlowchartAgent(roomId: string, prompt: string) {
 
                 await pause();
 
-                const position = updatedNode.position ?? node.get("position");
+                const currentPosition = node.get("position");
+                const position = updatedNode.position ?? currentPosition;
                 const currentSize = getLiveblocksNodeSize(node);
                 const width = updatedNode.width ?? currentSize.width;
                 const height = updatedNode.height ?? currentSize.height;
 
-                await setPresence({
-                  cursor: {
-                    x: position.x + width / 2,
-                    y: position.y + height / 2,
-                  },
-                });
-
-                await pause();
-
-                node.set("position", position);
                 node.set("width", width);
                 node.set("height", height);
+
+                if (updatedNode.position !== undefined) {
+                  const distance = Math.hypot(
+                    position.x - currentPosition.x,
+                    position.y - currentPosition.y
+                  );
+
+                  if (distance >= POSITION_ANIMATION_STEP_DISTANCE) {
+                    const steps = Math.min(
+                      POSITION_ANIMATION_MAX_STEPS,
+                      Math.max(
+                        POSITION_ANIMATION_MIN_STEPS,
+                        Math.ceil(distance / POSITION_ANIMATION_STEP_DISTANCE)
+                      )
+                    );
+
+                    for (let i = 1; i <= steps; i++) {
+                      const progress = easeInOutCubic(i / steps);
+
+                      node.set("position", {
+                        x:
+                          currentPosition.x +
+                          (position.x - currentPosition.x) * progress,
+                        y:
+                          currentPosition.y +
+                          (position.y - currentPosition.y) * progress,
+                      });
+
+                      await setPresence({
+                        cursor: getLiveblocksNodeCenter(node),
+                      });
+                    }
+
+                    node.set("position", position);
+                  } else {
+                    await setPresence({
+                      cursor: {
+                        x: position.x + width / 2,
+                        y: position.y + height / 2,
+                      },
+                    });
+
+                    await pause();
+
+                    node.set("position", position);
+                  }
+                }
 
                 const data = node.get("data");
 
@@ -336,7 +372,7 @@ async function runFlowchartAgent(roomId: string, prompt: string) {
           }),
           addEdge: tool({
             description:
-              "Create one edge between two nodes. Handles are chosen automatically from the current layout.",
+              "Create one edge between two nodes. Handles should be chosen from the current layout.",
             inputSchema: z.object({
               ...idSchema.partial().shape,
               ...edgeDataSchema.partial().shape,
