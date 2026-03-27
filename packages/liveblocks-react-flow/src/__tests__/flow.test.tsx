@@ -40,9 +40,9 @@ describe("createLiveblocksFlow", () => {
   });
 
   test("should deep-liveify nested objects and arrays in node data", () => {
-    const nodes: BuiltInNode[] = [
+    const nodes = [
       {
-        type: "default",
+        type: "custom",
         id: "1",
         position: { x: 0, y: 0 },
         data: {
@@ -62,11 +62,17 @@ describe("createLiveblocksFlow", () => {
     // Nested object becomes a LiveObject
     const metadata = nodeData?.get("metadata");
     expect(metadata).toBeInstanceOf(LiveObject);
+    // @ts-expect-error - The return type of createLiveblocksFlow needs to be refined
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     expect(metadata?.get("color")).toBe("red");
     // Nested array becomes a LiveList
+    // @ts-expect-error - The return type of createLiveblocksFlow needs to be refined
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     const tags = metadata?.get("tags");
     expect(tags).toBeInstanceOf(LiveList);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-call
     expect(tags?.get(0)).toBe("a");
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-call
     expect(tags?.get(1)).toBe("b");
   });
 
@@ -259,7 +265,7 @@ describe("useLiveblocksFlow", () => {
 
     act(() => {
       result.current.onDelete({
-        nodes: [NODES[0]],
+        nodes: [NODES[0]!],
         edges: [],
       });
     });
