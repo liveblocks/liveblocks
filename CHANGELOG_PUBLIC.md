@@ -18,6 +18,39 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 13 (2026-03-27)
+
+## 3.15.5
+
+### `@liveblocks/tiptap`
+
+- Improve clipboard handling when text nodes containing comments were copied or
+  pasted.
+
+### Python SDK
+
+- Fix request body for certain endpoints, like `update_room_id`,
+  `initialize_storage_document` incorrectly set as optional.
+
+## Liveblocks dev server (v1.2.0)
+
+New dev server features:
+
+- Live socket inspector view
+- Maintenance mode toggle (to reject new WebSocket connections)
+
+## Documentation
+
+- New page: [Agent skills](https://liveblocks.io/docs/tools/agent-skills).
+
+## Showcase
+
+- New item: [Realtime design like Figma](https://liveblocks.io/showcase/realtime-design-like-figma).
+
+## Contributors
+
+nvie, nimeshnayaju, ctnicholas
+
 # Week 12 (2026-03-20)
 
 ## v3.15.4
