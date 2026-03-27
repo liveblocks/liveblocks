@@ -85,7 +85,7 @@ export class YjsStorage {
     stateVector: string = "",
     guid?: Guid,
     isV2: boolean = false
-  ): Promise<Uint8Array | null> {
+  ): Promise<Uint8Array<ArrayBuffer> | null> {
     const doc = guid !== undefined ? await this.getYSubdoc(guid) : this.doc;
     if (!doc) {
       return null;
@@ -95,7 +95,7 @@ export class YjsStorage {
       // if given a state vector, attempt to decode it a single diffed update
       encodedTargetVector =
         stateVector.length > 0 ? Base64.toUint8Array(stateVector) : undefined;
-    } catch (e) {
+    } catch {
       logger.warn(
         "Could not get update from passed vector, returning all updates"
       );

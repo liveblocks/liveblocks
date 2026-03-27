@@ -18,6 +18,7 @@
 import type { SerializedCrdt } from "@liveblocks/core";
 import { CrdtType } from "@liveblocks/core";
 import { integer, number, string } from "decoders";
+import { describe, expect, test } from "vitest";
 
 import { Logger as LoggerImpl, LogLevel, LogTarget } from "~/lib/Logger";
 import { makeMetadataDB } from "~/MetadataDB";

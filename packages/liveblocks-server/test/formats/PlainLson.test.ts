@@ -25,6 +25,7 @@ import type {
 import { CrdtType, isRootStorageNode, makePosition } from "@liveblocks/core";
 import fc from "fast-check";
 import { reduce } from "itertools";
+import { describe, expect, test } from "vitest";
 
 import type { IReadableSnapshot } from "~";
 import {

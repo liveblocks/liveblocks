@@ -58,7 +58,7 @@ describe("POST /v2/authorize-user", () => {
     expect(payload!.k).toBe("acc");
     expect(payload!.uid).toBe("user-1");
     if (payload!.k === "acc") {
-      expect(payload!.perms).toEqual({ "room-*": ["room:write"] });
+      expect(payload!.perms).toEqual({ "room-*": [Permission.Write] });
     }
   });
 

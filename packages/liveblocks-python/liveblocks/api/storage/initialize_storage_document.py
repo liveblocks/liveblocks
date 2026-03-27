@@ -6,13 +6,12 @@ import httpx
 from ... import errors
 from ...models.initialize_storage_document_body import InitializeStorageDocumentBody
 from ...models.initialize_storage_document_response import InitializeStorageDocumentResponse
-from ...types import UNSET, Unset
 
 
 def _get_kwargs(
     room_id: str,
     *,
-    body: InitializeStorageDocumentBody | Unset = UNSET,
+    body: InitializeStorageDocumentBody,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
@@ -23,8 +22,7 @@ def _get_kwargs(
         ),
     }
 
-    if not isinstance(body, Unset):
-        _kwargs["json"] = body.to_dict()
+    _kwargs["json"] = body.to_dict()
 
     headers["Content-Type"] = "application/json"
 
@@ -45,7 +43,7 @@ def _sync(
     room_id: str,
     *,
     client: httpx.Client,
-    body: InitializeStorageDocumentBody | Unset = UNSET,
+    body: InitializeStorageDocumentBody,
 ) -> InitializeStorageDocumentResponse:
     kwargs = _get_kwargs(
         room_id=room_id,
@@ -62,7 +60,7 @@ async def _asyncio(
     room_id: str,
     *,
     client: httpx.AsyncClient,
-    body: InitializeStorageDocumentBody | Unset = UNSET,
+    body: InitializeStorageDocumentBody,
 ) -> InitializeStorageDocumentResponse:
     kwargs = _get_kwargs(
         room_id=room_id,
