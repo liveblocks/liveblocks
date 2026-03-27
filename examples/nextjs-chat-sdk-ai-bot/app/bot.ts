@@ -1,5 +1,13 @@
-import { Chat } from "chat";
-import { chatMessagesToAiMessages } from "@/app/chatMessagesToAiMessages";
+import {
+  AiAssistantMessage,
+  AiFilePart,
+  AiImagePart,
+  AiMessage,
+  AiMessagePart,
+  AiUserMessage,
+  Chat,
+  Message,
+} from "chat";
 import {
   createLiveblocksAdapter,
   LiveblocksAdapter,
@@ -46,7 +54,120 @@ bot.onNewMention(async (thread, message) => {
   const response = streamText({
     model,
     system: SYSTEM_PROMPT,
-    messages: await chatMessagesToAiMessages([message]),
+    messages: [await convertChatMessageToAiMessage(message)],
   });
   await thread.post(response.fullStream);
 });
+
+async function convertChatMessageToAiMessage(
+  message: Message
+): Promise<AiMessage> {
+  let text = "";
+  if (message.links.length > 0) {
+    text +=
+      "\n\nLinks:\n" +
+      message.links
+        .map((link) => {
+          const parts: string[] = [];
+          if (link.fetchMessage) {
+            parts.push(`[Embedded message: ${link.url}]`);
+          } else {
+            parts.push(link.url);
+          }
+          if (link.title) {
+            parts.push(`Title: ${link.title}`);
+          }
+          if (link.description) {
+            parts.push(`Description: ${link.description}`);
+          }
+          if (link.siteName) {
+            parts.push(`Site: ${link.siteName}`);
+          }
+          return parts.join("\n");
+        })
+        .join("\n\n");
+  }
+
+  if (message.author.isMe) {
+    text = message.text;
+    return {
+      role: "assistant",
+      content: text,
+    } satisfies AiAssistantMessage;
+  } else {
+    const results: PromiseSettledResult<AiMessagePart | null>[] =
+      await Promise.allSettled(
+        message.attachments.map(async (attachment) => {
+          if (attachment.type === "image") {
+            if (attachment.url !== undefined) {
+              return {
+                type: "image",
+                image: new URL(attachment.url),
+                mediaType: attachment.mimeType,
+              } satisfies AiImagePart;
+            } else if (attachment.data !== undefined) {
+              return {
+                type: "image",
+                image:
+                  attachment.data instanceof Uint8Array
+                    ? attachment.data
+                    : new Uint8Array(await attachment.data.arrayBuffer()),
+                mediaType: attachment.mimeType,
+              } satisfies AiImagePart;
+            } else if (attachment.fetchData !== undefined) {
+              const buffer = await attachment.fetchData();
+              return {
+                type: "image",
+                image: buffer,
+                mediaType: attachment.mimeType,
+              } satisfies AiImagePart;
+            } else {
+              return null;
+            }
+          } else if (attachment.type === "file") {
+            if (attachment.data !== undefined) {
+              return {
+                type: "file",
+                data:
+                  attachment.data instanceof Blob
+                    ? new Uint8Array(await attachment.data.arrayBuffer())
+                    : attachment.data,
+                mediaType: attachment.mimeType ?? "application/octet-stream",
+              } satisfies AiFilePart;
+            } else if (attachment.url !== undefined) {
+              return {
+                type: "file",
+                data: new URL(attachment.url),
+                mediaType: attachment.mimeType ?? "application/octet-stream",
+              } satisfies AiFilePart;
+            } else if (attachment.fetchData !== undefined) {
+              const buffer = await attachment.fetchData();
+              return {
+                type: "file",
+                data:
+                  buffer instanceof Blob
+                    ? new Uint8Array(await buffer.arrayBuffer())
+                    : buffer,
+                mediaType: attachment.mimeType ?? "application/octet-stream",
+              } satisfies AiFilePart;
+            } else {
+              return null;
+            }
+          } else {
+            return null;
+          }
+        })
+      );
+
+    return {
+      role: "user",
+      content: [
+        { type: "text", text: `${message.author.userName}: ${message.text}` },
+        ...results
+          .filter((result) => result.status === "fulfilled")
+          .filter((result) => result.value !== null)
+          .map((result) => result.value as AiMessagePart),
+      ],
+    } satisfies AiUserMessage;
+  }
+}

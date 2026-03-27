@@ -411,8 +411,6 @@ export class LiveblocksAdapter<
     const roomId = getRoomIdFromChannelId(channelId);
     const { data } = await this.#client.getThreads({ roomId });
 
-    // The 'Get threads' API returns all comments in the thread in chronological order,
-    // so we perform in-memory pagination to match Chat SDK's expected behavior.
     const comments = data
       .map((thread) => {
         const nonDeletedComments = thread.comments
@@ -430,7 +428,8 @@ export class LiveblocksAdapter<
     const limit = options?.limit;
     const startingAfter = options?.cursor;
 
-    // The 'Get threads' API returns all comments in the thread in chronological order,
+    // The 'Get threads' API returns all threads in the room (sorted by creation date in ascending order)
+    // and each thread contains all comments in the thread (sorted by creation date in ascending order),
     // so we perform in-memory pagination to match Chat SDK's expected behavior.
     const sliced = slicePageByCreatedAt(comments, {
       direction: direction === "forward" ? "ascending" : "descending",
@@ -524,23 +523,23 @@ export class LiveblocksAdapter<
 
   #createAttachment(
     roomId: string,
-    att: CommentData["attachments"][number]
+    attachment: CommentData["attachments"][number]
   ): Attachment {
     const client = this.#client;
     return {
-      type: getAttachmentType(att.mimeType),
-      name: att.name,
-      mimeType: att.mimeType,
-      size: att.size,
+      type: getAttachmentType(attachment.mimeType),
+      name: attachment.name,
+      mimeType: attachment.mimeType,
+      size: attachment.size,
       fetchData: async () => {
         const { url } = await client.getAttachment({
           roomId,
-          attachmentId: att.id,
+          attachmentId: attachment.id,
         });
         const response = await fetch(url);
         if (!response.ok) {
           throw new Error(
-            `Failed to fetch attachment "${att.name}": ${response.status} ${response.statusText}`
+            `Failed to fetch attachment "${attachment.name}": ${response.status} ${response.statusText}`
           );
         }
         return Buffer.from(await response.arrayBuffer());

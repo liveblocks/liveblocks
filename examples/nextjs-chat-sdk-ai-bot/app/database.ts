@@ -1,5 +1,5 @@
-export const BOT_USER_ID = "__bot__";
-export const BOT_USER_NAME = "Liveblocks Bot";
+export const BOT_USER_ID = "__ai__";
+export const BOT_USER_NAME = "Liveblocks AI";
 
 // A mock database with example users
 const USER_INFO: Liveblocks["UserMeta"][] = [
@@ -24,7 +24,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     info: {
       name: BOT_USER_NAME,
       color: "#000000",
-      avatar: "/bot-avatar.png",
+      avatar: "/ai-avatar.png",
     },
   },
 ];
