@@ -62,9 +62,9 @@ bot.onNewMention(async (thread, message) => {
 async function convertChatMessageToAiMessage(
   message: Message
 ): Promise<AiMessage> {
-  let text = "";
+  let links = "";
   if (message.links.length > 0) {
-    text +=
+    links +=
       "\n\nLinks:\n" +
       message.links
         .map((link) => {
@@ -89,10 +89,9 @@ async function convertChatMessageToAiMessage(
   }
 
   if (message.author.isMe) {
-    text = message.text;
     return {
       role: "assistant",
-      content: text,
+      content: message.text + links,
     } satisfies AiAssistantMessage;
   } else {
     const results: PromiseSettledResult<AiMessagePart | null>[] =
@@ -162,7 +161,10 @@ async function convertChatMessageToAiMessage(
     return {
       role: "user",
       content: [
-        { type: "text", text: `${message.author.userName}: ${message.text}` },
+        {
+          type: "text",
+          text: `${message.author.userName}: ${message.text + links}`,
+        },
         ...results
           .filter((result) => result.status === "fulfilled")
           .filter((result) => result.value !== null)
