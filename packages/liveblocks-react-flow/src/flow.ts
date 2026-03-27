@@ -1,6 +1,5 @@
 import type {
   History,
-  Json,
   JsonObject,
   LsonObject,
   Resolve,
@@ -63,16 +62,6 @@ type LiveblocksFlowSuspenseResult<
 > = Extract<UseLiveblocksFlowResult<N, E>, { isLoading: false }>;
 
 /**
- * A pair of callbacks for custom serialization of non-JSON-serializable
- * values. Called right before syncing a value and right after receiving it
- * from other clients.
- */
-export type CustomSerializationConfig<T = unknown> = {
-  serialize: (value: T) => Json;
-  deserialize: (value: Json) => T;
-};
-
-/**
  * Per-key sync configuration for node/edge `data` properties.
  *
  * true
@@ -84,26 +73,18 @@ export type CustomSerializationConfig<T = unknown> = {
  *   Don't sync this property. It stays local to the current client. This
  *   property will be `undefined` on other clients.
  *
- * "readonly"
- *   Sync this property, but store arrays and objects as plain JSON instead of
- *   converting them to LiveLists/LiveObjects. This can be more performant if
- *   clients only replace this property as a whole and never mutate fields
- *   inside it.
- *
- * { serialize, deserialize }
- *   Sync with custom serialization. `serialize` is called right before storing
- *   the value; `deserialize` is called right after receiving it from other
- *   clients.
+ * "atomic"
+ *   Sync this property, but treat it as an indivisible value. The entire value
+ *   is replaced as a whole (last-writer-wins) instead of being recursively
+ *   converted to LiveObjects/LiveLists. Use this when clients always replace
+ *   the value entirely and never need concurrent sub-key merging.
  *
  * @example
  * ```ts
  * const sync: SyncConfig = {
  *   label: true,             // sync as LiveObject (default)
  *   createdAt: false,        // local-only
- *   color: {                 // custom serde
- *     serialize: (c) => c.toHex(),
- *     deserialize: (hex) => Color.fromHex(hex),
- *   },
+ *   shape: "atomic",         // replaced as a whole, no deep merge
  *   nested: {                // recursive config
  *     deep: false,
  *   },
@@ -111,12 +92,7 @@ export type CustomSerializationConfig<T = unknown> = {
  * ```
  */
 export type SyncConfig = {
-  [key: string]:
-    | boolean
-    | "readonly"
-    | CustomSerializationConfig
-    | SyncConfig
-    | undefined;
+  [key: string]: boolean | "atomic" | SyncConfig | undefined;
 };
 
 type InferNodeTypeLiterals<N> =
