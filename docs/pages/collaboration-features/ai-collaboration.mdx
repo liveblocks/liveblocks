@@ -1,0 +1,68 @@
+---
+meta:
+  title: "AI Collaboration"
+  parentTitle: "Collaboration features"
+  description: "Easily integrate AI collaboration into your product"
+---
+
+Bring realtime multiplayer to your AI agents with Feeds and Presence. Connect
+any workflow and use Liveblocks APIs to update your application state live with
+UI updates, comment responses, AI presence, and more. It’s also possible to
+create and update feeds when an AI assistant is
+[mentioned in a comment](/docs/collaboration-features/comments/users-and-mentions),
+or trigger a feed from a custom UI component.
+
+Any workflows are compatible, such as n8n, LangChain, Crew AI, or custom setups.
+Feeds is ideal for multi-agent orchestration, automation, and complex pipelines.
+
+## Overview
+
+TODO explain feeds API
+
+### n8n nodes
+
+A set of Liveblocks nodes are available for [n8n](https://n8n.io/), which you
+can use directly in your workflow. Each Liveblocks REST API endpoint has a
+corresponding n8n node, allowing you to create rooms, add to feeds, update
+multiplayer state, and more.
+
+<Button asChild>
+  <a href="/docs/tools/n8n-nodes">Learn more about Liveblocks n8n nodes</a>
+</Button>
+
+## AI Copilots API Reference
+
+<ListGrid columns={2}>
+  <DocsCard
+    type="technology"
+    title="React"
+    href="/docs/api-reference/liveblocks-react#Feeds"
+    description="@liveblocks/react"
+    visual={<DocsReactIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="JavaScript"
+    href="/docs/api-reference/liveblocks-client#Feeds"
+    description="@liveblocks/client"
+    visual={<DocsJavascriptIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Node.js"
+    href="/docs/api-reference/liveblocks-node#Feeds"
+    description="@liveblocks/node"
+    visual={<DocsNodejsIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="REST API"
+    href="/docs/api-reference/rest-api-endpoints#Feeds"
+    description="HTTP endpoints"
+    visual={<DocsApiIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+</ListGrid>
+
+## Examples
+
+TODO there are none yet
