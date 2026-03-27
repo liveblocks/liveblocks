@@ -7,7 +7,7 @@ import type {
   LsonObject,
   Room,
 } from "@liveblocks/client";
-import type { DFMD, DFM, OpaqueClient, OpaqueRoom } from "@liveblocks/core";
+import type { DFM, DFMD, OpaqueClient, OpaqueRoom } from "@liveblocks/core";
 import { raise } from "@liveblocks/core";
 import { type Context, createContext, useContext } from "react";
 

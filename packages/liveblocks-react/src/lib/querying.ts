@@ -4,11 +4,11 @@ import type {
   ThreadData,
 } from "@liveblocks/client";
 import {
+  type Feed,
+  type FeedFetchMetadataFilter,
   getSubscriptionKey,
   isNumberOperator,
   isStartsWithOperator,
-  type Feed,
-  type FeedFetchMetadataFilter,
   type QueryMetadata,
   type SubscriptionData,
   type SubscriptionKey,
