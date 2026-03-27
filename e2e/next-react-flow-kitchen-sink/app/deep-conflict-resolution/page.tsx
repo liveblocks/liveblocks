@@ -1,6 +1,11 @@
 "use client";
 
-import { ClientSideSuspense, RoomProvider } from "@liveblocks/react";
+import {
+  ClientSideSuspense,
+  RoomProvider,
+  useRoom,
+  useStatus,
+} from "@liveblocks/react";
 import { Cursors, useLiveblocksFlow } from "@liveblocks/react-flow";
 import {
   Background,
@@ -11,6 +16,7 @@ import {
   ReactFlow,
   useReactFlow,
 } from "@xyflow/react";
+import { Panel } from "@xyflow/react";
 import { memo, useCallback } from "react";
 
 import { EXAMPLES } from "../examples";
@@ -328,6 +334,45 @@ const INITIAL_EDGES = [{ id: "a-b", source: "a", target: "b" }];
 // Flow
 // ---------------------------------------------------------------------------
 
+function ConnectionToggle() {
+  const room = useRoom();
+  const status = useStatus();
+  const connected = status === "connected";
+
+  return (
+    <Panel position="top-left">
+      <button
+        onClick={() => (connected ? room.disconnect() : room.reconnect())}
+        style={{
+          padding: "8px 16px",
+          fontSize: 14,
+          cursor: "pointer",
+          background: "#f1f5f9",
+          border: "1px solid #cbd5e1",
+          borderRadius: 6,
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+        }}
+      >
+        <span
+          style={{
+            width: 8,
+            height: 8,
+            borderRadius: "50%",
+            background: connected
+              ? "#22c55e"
+              : status === "connecting" || status === "reconnecting"
+                ? "#f59e0b"
+                : "#ef4444",
+          }}
+        />
+        {connected ? "Disconnect" : "Reconnect"}
+      </button>
+    </Panel>
+  );
+}
+
 function Flow() {
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onDelete } =
     useLiveblocksFlow<ShapeNode>({
@@ -350,6 +395,7 @@ function Flow() {
       >
         <Cursors />
         <Background />
+        <ConnectionToggle />
       </ReactFlow>
     </div>
   );
