@@ -5,7 +5,7 @@ import { Liveblocks, LiveMap } from "@liveblocks/node";
 import { generateText, stepCountIs, tool } from "ai";
 import { nanoid } from "nanoid";
 import dedent from "dedent";
-import { AI_AGENT_USER } from "@/database";
+import { createAgentUser } from "@/database";
 import {
   BLOCK_COLORS,
   BLOCK_SHAPES,
@@ -108,6 +108,7 @@ function getBoundsFromLiveblocksNodes(
 }
 
 async function runFlowchartAgent(roomId: string, prompt: string) {
+  const agentUser = createAgentUser();
   let lastCursor: Point | null = null;
   let lastThinking: boolean = true;
 
@@ -121,12 +122,12 @@ async function runFlowchartAgent(roomId: string, prompt: string) {
     ttl?: number;
   }) {
     await liveblocks.setPresence(roomId, {
-      userId: AI_AGENT_USER.id,
+      userId: agentUser.id,
       data: {
         cursor: cursor ?? lastCursor,
         thinking: thinking ?? lastThinking,
       },
-      userInfo: AI_AGENT_USER.info,
+      userInfo: agentUser.info,
       ttl: ttl ?? PRESENCE_PROGRESS_TTL_SECONDS,
     });
 
@@ -279,8 +280,13 @@ async function runFlowchartAgent(roomId: string, prompt: string) {
                 const width = updatedNode.width ?? currentSize.width;
                 const height = updatedNode.height ?? currentSize.height;
 
-                node.set("width", width);
-                node.set("height", height);
+                if (updatedNode.width !== undefined) {
+                  node.set("width", width);
+                }
+
+                if (updatedNode.height !== undefined) {
+                  node.set("height", height);
+                }
 
                 if (updatedNode.position !== undefined) {
                   const distance = Math.hypot(

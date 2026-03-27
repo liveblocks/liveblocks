@@ -81,7 +81,7 @@ import {
   type ReactNode,
 } from "react";
 import { EXAMPLES } from "@/app/examples";
-import { AI_AGENT_USER } from "@/database";
+import { isAgentUserId } from "@/database";
 import {
   BLOCK_COLORS,
   BLOCK_SHAPES,
@@ -1140,7 +1140,7 @@ function FlowToolbar({
 function FlowCursor({ userId, connectionId }: CursorsCursorProps) {
   const { user, isLoading } = useUser(userId);
   const isThinking = useOther(connectionId, (other) => other.presence.thinking);
-  const isAgentCursor = userId === AI_AGENT_USER.id;
+  const isAgentCursor = isAgentUserId(userId);
 
   if (isLoading) {
     return null;
