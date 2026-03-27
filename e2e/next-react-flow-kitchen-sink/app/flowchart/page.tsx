@@ -16,7 +16,7 @@ import {
 } from "@liveblocks/react/suspense";
 import clsx from "clsx";
 import { nanoid } from "nanoid";
-import { Cursors, useLiveblocksFlow } from "@liveblocks/react-flow/suspense";
+import { Cursors, useLiveblocksFlow } from "@liveblocks/react-flow";
 import {
   Background,
   BaseEdge,
@@ -1199,6 +1199,7 @@ function Flow({ className, ...props }: ComponentProps<"div">) {
   );
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onDelete } =
     useLiveblocksFlow<FlowchartNode, FlowchartEdge>({
+      suspense: true,
       nodes: { initial: INITIAL_NODES },
       edges: { initial: INITIAL_EDGES },
       storageKey: FLOWCHART_STORAGE_KEY,

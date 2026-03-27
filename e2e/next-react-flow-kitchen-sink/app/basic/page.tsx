@@ -1,13 +1,14 @@
 "use client";
 
 import { ClientSideSuspense, RoomProvider } from "@liveblocks/react";
-import { Cursors, useLiveblocksFlow } from "@liveblocks/react-flow/suspense";
+import { Cursors, useLiveblocksFlow } from "@liveblocks/react-flow";
 import { ReactFlow } from "@xyflow/react";
 import { EXAMPLES } from "../examples";
 
 function Flow() {
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onDelete } =
     useLiveblocksFlow({
+      suspense: true,
       nodes: {
         initial: [
           {

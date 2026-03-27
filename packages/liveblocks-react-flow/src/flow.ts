@@ -199,6 +199,13 @@ type UseLiveblocksFlowOptions<N extends Node, E extends Edge> = {
    * Defaults to `"flow"`.
    */
   storageKey?: string;
+
+  /**
+   * When true, suspends until Storage is ready (use a React `Suspense`
+   * boundary). Then `nodes` and `edges` are always arrays and `isLoading` is
+   * always false.
+   */
+  suspense?: boolean;
 };
 
 // Narrowed LiveObject type for calling setLocal/delete with known local keys.
@@ -394,13 +401,34 @@ export function createLiveblocksFlow<
  *
  * return <ReactFlow nodes={nodes} edges={edges} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onConnect={onConnect} onDelete={onDelete} />;
  * ```
+ * Pass `{ suspense: true }` to suspend until Storage is ready, `nodes` and `edges` will never be `null`.
+ *
+ * @example
+ * ```tsx
+ * const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onDelete } =
+ *   useLiveblocksFlow({ suspense: true });
+ *
+ * return <ReactFlow nodes={nodes} edges={edges} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onConnect={onConnect} onDelete={onDelete} />;
+ * ```
  */
 export function useLiveblocksFlow<
   N extends Node = BuiltInNode,
   E extends Edge = BuiltInEdge,
 >(
+  options?: UseLiveblocksFlowOptions<N, E> & { suspense?: false }
+): Resolve<UseLiveblocksFlowResult<N, E>>;
+export function useLiveblocksFlow<
+  N extends Node = BuiltInNode,
+  E extends Edge = BuiltInEdge,
+>(
+  options: UseLiveblocksFlowOptions<N, E> & { suspense: true }
+): Resolve<LiveblocksFlowSuspenseResult<N, E>>;
+export function useLiveblocksFlow<
+  N extends Node = BuiltInNode,
+  E extends Edge = BuiltInEdge,
+>(
   options: UseLiveblocksFlowOptions<N, E> = {}
-): Resolve<UseLiveblocksFlowResult<N, E>> {
+): Resolve<UseLiveblocksFlowResult<N, E> | LiveblocksFlowSuspenseResult<N, E>> {
   type TFlow = LiveblocksFlow<N, E>;
   type TImmutableFlow = ToImmutable<LiveblocksFlow<N, E>>;
 
@@ -412,6 +440,7 @@ export function useLiveblocksFlow<
     nodes: options.nodes,
     edges: options.edges,
     storageKey: options.storageKey ?? DEFAULT_STORAGE_KEY,
+    suspense: options.suspense ?? false,
   });
 
   // Storage already includes local overlays via toImmutable(), so no
@@ -529,41 +558,18 @@ export function useLiveblocksFlow<
     }
   }, [isStorageLoaded, setInitialStorage]);
 
+  if (frozenOptions.suspense) {
+    // eslint-disable-next-line react-hooks/rules-of-hooks -- `suspense` is frozen so this branch is stable
+    useSuspendUntilStorageReady();
+  }
+
   return {
-    nodes,
-    edges,
-    isLoading: !isStorageLoaded,
+    nodes: frozenOptions.suspense ? (nodes ?? (EMPTY_ARRAY as N[])) : nodes,
+    edges: frozenOptions.suspense ? (edges ?? (EMPTY_ARRAY as E[])) : edges,
+    isLoading: frozenOptions.suspense ? false : !isStorageLoaded,
     onNodesChange,
     onEdgesChange,
     onConnect,
     onDelete,
-  } as UseLiveblocksFlowResult<N, E>;
-}
-
-/**
- * Returns a controlled React Flow state backed by Liveblocks Storage.
- *
- * @example
- * ```tsx
- * const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onDelete } = useLiveblocksFlow();
- *
- * return <ReactFlow nodes={nodes} edges={edges} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onConnect={onConnect} onDelete={onDelete} />;
- * ```
- */
-export function useLiveblocksFlowSuspense<
-  N extends Node = BuiltInNode,
-  E extends Edge = BuiltInEdge,
->(
-  options: UseLiveblocksFlowOptions<N, E> = {}
-): Resolve<LiveblocksFlowSuspenseResult<N, E>> {
-  const result = useLiveblocksFlow<N, E>(options);
-
-  useSuspendUntilStorageReady();
-
-  return {
-    ...result,
-    nodes: result.nodes ?? (EMPTY_ARRAY as N[]),
-    edges: result.edges ?? (EMPTY_ARRAY as E[]),
-    isLoading: false,
-  };
+  } as UseLiveblocksFlowResult<N, E> | LiveblocksFlowSuspenseResult<N, E>;
 }

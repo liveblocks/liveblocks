@@ -22,17 +22,6 @@
     "./styles.css": {
       "types": "./styles.css.d.cts",
       "default": "./styles.css"
-    },
-    "./suspense": {
-      "import": {
-        "types": "./dist/suspense.d.ts",
-        "default": "./dist/suspense.js"
-      },
-      "require": {
-        "types": "./dist/suspense.d.cts",
-        "module": "./dist/suspense.js",
-        "default": "./dist/suspense.cjs"
-      }
     }
   },
   "files": [
@@ -41,7 +30,6 @@
     "**/*.css.d.cts",
     "**/*.css.d.ts",
     "**/*.css.map",
-    "suspense/**",
     "README.md"
   ],
   "scripts": {

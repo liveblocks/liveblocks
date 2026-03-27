@@ -1,4 +1,0 @@
-{
-  "main": "../dist/suspense.cjs",
-  "types": "../dist/suspense.d.cts"
-}

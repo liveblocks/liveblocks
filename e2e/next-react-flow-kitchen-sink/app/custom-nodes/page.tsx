@@ -5,7 +5,7 @@ import {
   JsonObject,
   RoomProvider,
 } from "@liveblocks/react";
-import { Cursors, useLiveblocksFlow } from "@liveblocks/react-flow/suspense";
+import { Cursors, useLiveblocksFlow } from "@liveblocks/react-flow";
 import {
   Controls,
   Handle,
@@ -66,6 +66,7 @@ const ColorSelectorNode = memo(
 function Flow() {
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onDelete } =
     useLiveblocksFlow<Node<JsonObject> | ColorSelectorNode>({
+      suspense: true,
       nodes: {
         initial: [
           {

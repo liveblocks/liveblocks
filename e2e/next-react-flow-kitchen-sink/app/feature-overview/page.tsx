@@ -1,7 +1,7 @@
 "use client";
 
 import { ClientSideSuspense, RoomProvider } from "@liveblocks/react";
-import { Cursors, useLiveblocksFlow } from "@liveblocks/react-flow/suspense";
+import { Cursors, useLiveblocksFlow } from "@liveblocks/react-flow";
 import {
   Background,
   BaseEdge,
@@ -440,6 +440,7 @@ const INITIAL_EDGES: FeatureOverviewEdge[] = [
 function Flow() {
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onDelete } =
     useLiveblocksFlow<FeatureOverviewNode, FeatureOverviewEdge>({
+      suspense: true,
       nodes: { initial: INITIAL_NODES },
       edges: { initial: INITIAL_EDGES },
     });

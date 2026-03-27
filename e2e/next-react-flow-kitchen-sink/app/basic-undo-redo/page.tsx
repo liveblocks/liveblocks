@@ -8,7 +8,7 @@ import {
   useRedo,
   useUndo,
 } from "@liveblocks/react";
-import { Cursors, useLiveblocksFlow } from "@liveblocks/react-flow/suspense";
+import { Cursors, useLiveblocksFlow } from "@liveblocks/react-flow";
 import { Panel, ReactFlow } from "@xyflow/react";
 import { EXAMPLES } from "../examples";
 
@@ -53,6 +53,7 @@ function UndoRedoButtons() {
 function Flow() {
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onDelete } =
     useLiveblocksFlow({
+      suspense: true,
       nodes: {
         initial: [
           {

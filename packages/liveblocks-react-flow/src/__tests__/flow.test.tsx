@@ -7,7 +7,6 @@ import { Suspense } from "react";
 import { describe, expect, test } from "vitest";
 
 import { createLiveblocksFlow, useLiveblocksFlow } from "../index";
-import { useLiveblocksFlow as useLiveblocksFlowSuspense } from "../suspense";
 import type { LiveblocksFlow } from "../types";
 import { render, renderHook } from "./_utils";
 
@@ -571,7 +570,8 @@ describe("useLiveblocksFlow", () => {
 describe("useLiveblocksFlow (Suspense)", () => {
   test("should suspend until storage is ready, then return nodes and edges", async () => {
     function Flow() {
-      const { nodes, edges, isLoading } = useLiveblocksFlowSuspense({
+      const { nodes, edges, isLoading } = useLiveblocksFlow({
+        suspense: true,
         nodes: { initial: NODES },
         edges: { initial: EDGES },
       });
@@ -602,7 +602,7 @@ describe("useLiveblocksFlow (Suspense)", () => {
 
   test("should render with empty arrays when storage is empty", async () => {
     function Flow() {
-      const { nodes, edges, isLoading } = useLiveblocksFlowSuspense();
+      const { nodes, edges, isLoading } = useLiveblocksFlow({ suspense: true });
 
       return (
         <div data-testid="flow">
@@ -628,7 +628,8 @@ describe("useLiveblocksFlow (Suspense)", () => {
 
   test("should match non-Suspense data after load", async () => {
     function Flow() {
-      const { nodes, edges } = useLiveblocksFlowSuspense({
+      const { nodes, edges } = useLiveblocksFlow({
+        suspense: true,
         nodes: { initial: NODES },
         edges: { initial: EDGES },
       });
