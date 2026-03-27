@@ -5129,8 +5129,12 @@ const { url, error, isLoading } = useAttachmentUrl("at_xxx");
 
 ### useFeeds [@badge=RoomProvider]
 
-Returns a paginated list of feeds within the current room. Initially fetches
-feeds based on the provided options.
+Returns a paginated list of feeds within the current room. Results are merged
+into a per-room cache; `since` and `metadata` filter that cache **for this hook
+call**, and `feeds` is sorted by `createdAt` ascending (oldest first), matching
+the chronological order used by [`useThreads`](#useThreads) for room threads.
+`limit` only sets the **page size** for each fetch (including `fetchMore`), not
+a maximum length of the returned array.
 [Suspense](/docs/api-reference/liveblocks-react#Suspense-hooks) and
 [regular](/docs/api-reference/liveblocks-react#Regular-hooks) versions of this
 hook are available.
@@ -5152,18 +5156,26 @@ const { feeds } = useFeeds();
     Optional configuration object.
   </PropertiesListItem>
   <PropertiesListItem name="options.since" type="number">
-    Optional timestamp filter. Only feeds created or updated after this
-    timestamp (ms) will be returned.
+    Optional timestamp filter (ms). Only feeds whose `createdAt` or `updatedAt`
+    is at or after this value are included in `feeds` (applied to the cached
+    data for this hook’s options).
   </PropertiesListItem>
-  <PropertiesListItem name="options.metadata" type="Record&lt;string, Json&gt;">
-    Optional metadata filter. Only feeds with matching metadata will be returned.
+  <PropertiesListItem name="options.metadata" type="Record&lt;string, string&gt;">
+    Optional metadata filter. Only feeds whose metadata matches every key/value
+    pair are included (applied to the cached data for this hook’s options).
+  </PropertiesListItem>
+  <PropertiesListItem name="options.limit" type="number">
+    Page size for each server request when loading or loading more feeds. Does
+    not cap how many feeds appear in `feeds`—use `fetchMore` until
+    `hasFetchedAll` is true.
   </PropertiesListItem>
 </PropertiesList>
 
 <PropertiesList title="Returns">
   <PropertiesListItem name="feeds" type="Feed[] | undefined">
-    An array of feeds within the current room, or `undefined` if not yet loaded
-    (in non-Suspense version).
+    An array of feeds within the current room matching `since` and `metadata` for
+    this call, sorted by `createdAt` ascending (tie-break on `feedId`), or
+    `undefined` if not yet loaded (in non-Suspense version).
   </PropertiesListItem>
   <PropertiesListItem name="isLoading" type="boolean">
     Whether the feeds are currently being loaded.
@@ -5188,7 +5200,8 @@ const { feeds } = useFeeds();
 ### useFeedMessages [@badge=RoomProvider]
 
 Returns a paginated list of messages for a specific feed within the current
-room. Initially fetches messages based on the provided options.
+room. Messages are sorted by `createdAt` ascending (chronological). Initially
+fetches messages based on the provided options.
 [Suspense](/docs/api-reference/liveblocks-react#Suspense-hooks) and
 [regular](/docs/api-reference/liveblocks-react#Regular-hooks) versions of this
 hook are available.
@@ -5216,14 +5229,16 @@ const { messages } = useFeedMessages("my-feed-id");
     Optional cursor for pagination.
   </PropertiesListItem>
   <PropertiesListItem name="options.limit" type="number">
-    Optional limit for the number of messages to fetch.
+    Page size for each server request when loading or loading more messages.
+    Does not cap how many messages appear in `messages`—use `fetchMore` until
+    `hasFetchedAll` is true.
   </PropertiesListItem>
 </PropertiesList>
 
 <PropertiesList title="Returns">
   <PropertiesListItem name="messages" type="FeedMessage[] | undefined">
-    An array of messages in the feed, or `undefined` if not yet loaded (in
-    non-Suspense version).
+    An array of messages in the feed (chronological order by `createdAt`), or
+    `undefined` if not yet loaded (in non-Suspense version).
   </PropertiesListItem>
   <PropertiesListItem name="isLoading" type="boolean">
     Whether the messages are currently being loaded.

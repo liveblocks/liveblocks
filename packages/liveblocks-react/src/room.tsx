@@ -1548,7 +1548,7 @@ function useFeeds_withRoomContext(
 
   useEffect(() => {
     void loadableResource.waitUntilLoaded();
-  });
+  }, [room, loadableResource]);
 
   return useSignal(loadableResource.signal);
 }

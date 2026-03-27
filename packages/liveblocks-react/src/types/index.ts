@@ -217,15 +217,23 @@ export type UseInboxNotificationsOptions = {
 
 export type UseFeedsOptions = {
   /**
-   * Optional timestamp filter. Only feeds created or updated after this timestamp will be returned.
+   * Optional timestamp filter. Applied to the client-side cache for this hook’s
+   * options: only feeds whose `createdAt` or `updatedAt` is at or after this
+   * timestamp (ms) are included in `feeds`.
    */
   since?: number;
   /**
-   * Optional metadata filter. Only feeds with matching metadata will be returned.
+   * Optional metadata filter (`Record<string, string>`). Applied to the
+   * client-side cache: only feeds whose metadata matches every key/value pair
+   * are included in `feeds`.
    */
   metadata?: FeedFetchMetadataFilter;
   /**
-   * Optional limit for the number of feeds to fetch per page.
+   * Page size for each server request when loading or loading more feeds. This
+   * does **not** cap the length of `feeds`—use pagination (`fetchMore`,
+   * `hasFetchedAll`) until you have loaded every page. Different hooks with
+   * different `limit` values still share one cache per room; each hook’s
+   * `feeds` array is filtered and sorted independently.
    */
   limit?: number;
 };
@@ -236,7 +244,9 @@ export type UseFeedMessagesOptions = {
    */
   cursor?: string;
   /**
-   * Optional limit for the number of messages to fetch.
+   * Page size for each server request when loading or loading more messages.
+   * Does **not** cap the length of `messages`—pagination loads additional pages
+   * until `hasFetchedAll` is true.
    */
   limit?: number;
 };

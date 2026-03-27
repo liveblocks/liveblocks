@@ -10,6 +10,7 @@ import {
   useFeeds,
   useUpdateFeedMetadata,
   useUpdateFeedMessage,
+  useRoom,
 } from "@liveblocks/react";
 import { useState } from "react";
 

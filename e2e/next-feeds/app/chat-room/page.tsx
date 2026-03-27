@@ -14,7 +14,7 @@ import {
 } from "@liveblocks/react/suspense";
 import { Suspense, useEffect, useRef, useState } from "react";
 
-const ROOM_ID = "liveblocks:examples:chat-room";
+const ROOM_ID = "liveblocks:examples:chat-room:sql";
 
 type FeedMessageData = {
   role: "user" | "assistant" | "system";

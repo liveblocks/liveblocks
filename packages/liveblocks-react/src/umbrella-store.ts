@@ -1097,6 +1097,106 @@ function createStore_forOptimistic<
   };
 }
 
+function createStore_forFeeds() {
+  const signal = new MutableSignal<Map<RoomId, Map<string, Feed>>>(new Map());
+
+  function upsert(roomId: string, feeds: readonly Feed[]) {
+    signal.mutate((map) => {
+      let roomMap = map.get(roomId);
+      if (!roomMap) {
+        roomMap = new Map();
+        map.set(roomId, roomMap);
+      }
+      for (const feed of feeds) {
+        roomMap.set(feed.feedId, feed);
+      }
+    });
+  }
+
+  function deleteOne(roomId: string, feedId: string) {
+    signal.mutate((map) => {
+      map.get(roomId)?.delete(feedId);
+    });
+  }
+
+  function findMany(
+    feedsByRoomId: Map<RoomId, Map<string, Feed>>,
+    roomId: string,
+    options?: { metadata?: FeedFetchMetadataFilter; since?: number }
+  ): Feed[] {
+    const filtered = Array.from(
+      feedsByRoomId.get(roomId)?.values() ?? []
+    ).filter((feed) => {
+      if (
+        options?.since !== undefined &&
+        feed.updatedAt < options.since &&
+        feed.createdAt < options.since
+      ) {
+        return false;
+      }
+      if (options?.metadata !== undefined) {
+        const meta = feed.metadata as Record<string, string>;
+        if (
+          !Object.entries(options.metadata).every(([k, v]) => meta[k] === v)
+        ) {
+          return false;
+        }
+      }
+      return true;
+    });
+    // Match useThreads room order: chronological by createdAt ascending (stable tie-break on feedId).
+    filtered.sort((a, b) => {
+      const byTime = a.createdAt - b.createdAt;
+      if (byTime !== 0) return byTime;
+      return a.feedId < b.feedId ? -1 : a.feedId > b.feedId ? 1 : 0;
+    });
+    return filtered;
+  }
+
+  return { signal, upsert, delete: deleteOne, findMany };
+}
+
+function createStore_forFeedMessages() {
+  const signal = new MutableSignal<Map<string, Map<string, FeedMessage>>>(
+    new Map()
+  );
+
+  function upsert(feedId: string, messages: readonly FeedMessage[]) {
+    signal.mutate((map) => {
+      let feedMap = map.get(feedId);
+      if (!feedMap) {
+        feedMap = new Map();
+        map.set(feedId, feedMap);
+      }
+      for (const msg of messages) {
+        feedMap.set(msg.id, msg);
+      }
+    });
+  }
+
+  function deleteOne(feedId: string, messageIds: readonly string[]) {
+    signal.mutate((map) => {
+      const feedMap = map.get(feedId);
+      if (feedMap) {
+        for (const id of messageIds) {
+          feedMap.delete(id);
+        }
+      }
+    });
+  }
+
+  function findMany(
+    messagesByFeedId: Map<string, Map<string, FeedMessage>>,
+    feedId: string
+  ): FeedMessage[] {
+    return Array.from(messagesByFeedId.get(feedId)?.values() ?? []).sort(
+      (a, b) => a.createdAt - b.createdAt
+    );
+  }
+
+  return { signal, upsert, delete: deleteOne, findMany };
+}
+
 export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
   #client: Client<BaseUserMeta, TM, CM>;
 
@@ -1232,16 +1332,8 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
   #notificationSettings: SinglePageResource;
 
   // Feeds
-  #feedsByRoomId = new Map<RoomId, Map<string, Feed>>();
-  #feedMessagesByFeedId = new Map<string, Map<string, FeedMessage>>();
-
-  // Signals for feeds and feed messages to trigger reactivity
-  readonly #feedsSignal = new MutableSignal<{ version: number }>({
-    version: 0,
-  });
-  readonly #feedMessagesSignal = new MutableSignal<{ version: number }>({
-    version: 0,
-  });
+  readonly #feeds = createStore_forFeeds();
+  readonly #feedMessages = createStore_forFeedMessages();
 
   constructor(client: OpaqueClient) {
     this.#client = client[kInternal].as<TM, CM>();
@@ -1770,14 +1862,13 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
 
         const signal = DerivedSignal.from(
           resource.signal,
-          this.#feedsSignal,
-          (resourceResult, _signalState): FeedsAsyncResult => {
+          this.#feeds.signal,
+          (resourceResult, feedsByRoomId): FeedsAsyncResult => {
             if (resourceResult.isLoading || resourceResult.error) {
               return resourceResult;
             }
 
-            const feedsMap = this.#feedsByRoomId.get(roomId);
-            const feeds: Feed[] = feedsMap ? Array.from(feedsMap.values()) : [];
+            const feeds = this.#feeds.findMany(feedsByRoomId, roomId, options);
 
             const page = resourceResult.data;
             return {
@@ -1830,18 +1921,16 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
 
         const signal = DerivedSignal.from(
           resource.signal,
-          this.#feedMessagesSignal,
-          (resourceResult, _signalState): FeedMessagesAsyncResult => {
+          this.#feedMessages.signal,
+          (resourceResult, messagesByFeedId): FeedMessagesAsyncResult => {
             if (resourceResult.isLoading || resourceResult.error) {
               return resourceResult;
             }
 
-            const messagesMap = this.#feedMessagesByFeedId.get(feedId);
-            const messages: FeedMessage[] = messagesMap
-              ? Array.from(messagesMap.values()).sort(
-                  (a, b) => a.createdAt - b.createdAt
-                )
-              : [];
+            const messages = this.#feedMessages.findMany(
+              messagesByFeedId,
+              feedId
+            );
 
             const page = resourceResult.data;
             return {
@@ -2214,33 +2303,14 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
    * Upserts feeds in the cache (for list/added/updated operations).
    */
   public upsertFeeds(roomId: RoomId, feeds: readonly Feed[]): void {
-    let feedsMap = this.#feedsByRoomId.get(roomId);
-    if (!feedsMap) {
-      feedsMap = new Map();
-      this.#feedsByRoomId.set(roomId, feedsMap);
-    }
-
-    for (const feed of feeds) {
-      feedsMap.set(feed.feedId, feed);
-    }
-
-    this.#feedsSignal.mutate((state) => {
-      state.version++;
-    });
+    this.#feeds.upsert(roomId, feeds);
   }
 
   /**
    * Removes a feed from the cache (for deleted operations).
    */
   public deleteFeed(roomId: RoomId, feedId: string): void {
-    const feedsMap = this.#feedsByRoomId.get(roomId);
-    if (!feedsMap) return;
-
-    feedsMap.delete(feedId);
-
-    this.#feedsSignal.mutate((state) => {
-      state.version++;
-    });
+    this.#feeds.delete(roomId, feedId);
   }
 
   /**
@@ -2251,19 +2321,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
     feedId: string,
     messages: readonly FeedMessage[]
   ): void {
-    let messagesMap = this.#feedMessagesByFeedId.get(feedId);
-    if (!messagesMap) {
-      messagesMap = new Map();
-      this.#feedMessagesByFeedId.set(feedId, messagesMap);
-    }
-
-    for (const message of messages) {
-      messagesMap.set(message.id, message);
-    }
-
-    this.#feedMessagesSignal.mutate((state) => {
-      state.version++;
-    });
+    this.#feedMessages.upsert(feedId, messages);
   }
 
   /**
@@ -2274,16 +2332,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
     feedId: string,
     messageIds: readonly string[]
   ): void {
-    const messagesMap = this.#feedMessagesByFeedId.get(feedId);
-    if (!messagesMap) return;
-
-    for (const messageId of messageIds) {
-      messagesMap.delete(messageId);
-    }
-
-    this.#feedMessagesSignal.mutate((state) => {
-      state.version++;
-    });
+    this.#feedMessages.delete(feedId, messageIds);
   }
 
   public async fetchUnreadNotificationsCount(
