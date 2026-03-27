@@ -3755,6 +3755,23 @@ const { feeds, nextCursor } = await room.fetchFeeds({
   </PropertiesListItem>
 </PropertiesList>
 
+<PropertiesList title="Options">
+  <PropertiesListItem name="cursor" type="string">
+    Optional cursor for pagination.
+  </PropertiesListItem>
+  <PropertiesListItem name="since" type="number">
+    Optional timestamp filter (ms). Only messages whose `createdAt` is at or
+    after this value are included.
+  </PropertiesListItem>
+  <PropertiesListItem name="limit" type="number">
+    Optional limit for the number of feeds to return.
+  </PropertiesListItem>
+  <PropertiesListItem name="metadata" type="object">
+    Optional filter for feeds by metadata. Only feeds with matching metadata are
+    returned.
+  </PropertiesListItem>
+</PropertiesList>
+
 ### Room.fetchFeedMessages
 
 Fetches messages for a specific feed in the current room. Returns a paginated
