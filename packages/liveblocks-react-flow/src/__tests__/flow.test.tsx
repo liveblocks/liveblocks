@@ -6,9 +6,9 @@ import type { BuiltInEdge, BuiltInNode } from "@xyflow/react";
 import { Suspense } from "react";
 import { describe, expect, test } from "vitest";
 
-import type { LiveblocksFlow } from "../types";
 import { createLiveblocksFlow, useLiveblocksFlow } from "../index";
 import { useLiveblocksFlow as useLiveblocksFlowSuspense } from "../suspense";
+import type { LiveblocksFlow } from "../types";
 import { render, renderHook } from "./_utils";
 
 const NODES: BuiltInNode[] = [
