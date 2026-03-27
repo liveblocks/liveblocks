@@ -1363,6 +1363,16 @@ await liveblocks.deleteGroup({
 
 ### Storage
 
+<Banner title="Not rate limited">
+  Calls to storage methods such as
+  [`getStorageDocument`](#get-rooms-roomId-storage) and
+  [`mutateStorage`](#mutate-storage) are not rate limited. However, each
+  document runs in a single-threaded isolated microVM, which means it can start
+  to slow down or crash if it's overwhelmed with too many requests. If you
+  experience performance issues, consider adding a self-imposed rate limit on
+  your end.
+</Banner>
+
 #### Liveblocks.getStorageDocument [#get-rooms-roomId-storage]
 
 Returns the contents of a room’s Storage tree. By default, returns Storage in
