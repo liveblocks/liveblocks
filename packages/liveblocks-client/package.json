@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/client",
-  "version": "3.15.5",
+  "version": "3.16.0-feeds1",
   "description": "A client that lets you interact with Liveblocks servers. Liveblocks is the all-in-one toolkit to build collaborative products like Figma, Notion, and more.",
   "license": "Apache-2.0",
   "author": "Liveblocks Inc.",
@@ -36,7 +36,7 @@
     "test:watch": "NODE_OPTIONS=\"--no-deprecation\" vitest"
   },
   "dependencies": {
-    "@liveblocks/core": "3.15.5"
+    "@liveblocks/core": "3.16.0-feeds1"
   },
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
