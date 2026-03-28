@@ -581,7 +581,7 @@ export function useLiveblocksFlow<
       // Similarly to `initialStorage` on `Client.enterRoom` and `RoomProvider`, we only
       // initialize Storage if it doesn't already exist.
       if (storage.get(frozenOptions.storageKey) !== undefined) {
-        return;
+        return false;
       }
 
       const initialNodes = frozenOptions.nodes?.initial ?? [];
@@ -596,15 +596,24 @@ export function useLiveblocksFlow<
           getEdgeSyncConfig
         )
       );
+
+      return true;
     },
     [frozenOptions, getNodeSyncConfig, getEdgeSyncConfig]
   );
 
   useEffect(() => {
-    if (isStorageLoaded) {
-      setInitialStorage();
+    if (!isStorageLoaded) {
+      return;
     }
-  }, [isStorageLoaded, setInitialStorage]);
+
+    const hasInitializedStorage = setInitialStorage();
+
+    // If Storage was initialized, clear the history stack so that the initial state is not undoable.
+    if (hasInitializedStorage) {
+      history.clear();
+    }
+  }, [isStorageLoaded, setInitialStorage, history]);
 
   if (frozenOptions.suspense) {
     // eslint-disable-next-line react-hooks/rules-of-hooks -- `suspense` is frozen so this branch is stable
