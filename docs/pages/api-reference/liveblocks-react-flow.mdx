@@ -8,7 +8,6 @@ alwaysShowAllNavigationLevels: false
 
 - XXX: Proof-read
 - XXX: Document undo/redo behavior
-- XXX: Document sync config
 
 `@liveblocks/react-flow` provides you with [React](https://react.dev/) hooks and
 components that add collaboration to any [React Flow](https://reactflow.dev/)
@@ -190,9 +189,11 @@ function Flow() {
           position: { x: 100, y: 125 },
         },
       ],
+      // sync: { "*": { label: false } },
     },
     edges: {
       initial: [{ id: "e1-2", source: "1", target: "2" }],
+      // sync: { "*": { ... } },
     },
   });
   // +++
@@ -223,11 +224,19 @@ export function App() {
 ```
 
 <PropertiesList title="Options">
-  <PropertiesListItem name="nodes" type="{ initial?: Node[] }" optional>
+  <PropertiesListItem name="nodes.initial" type="Node[]" optional>
     Default nodes used when the room has no data yet.
   </PropertiesListItem>
-  <PropertiesListItem name="edges" type="{ initial?: Edge[] }" optional>
+  <PropertiesListItem name="nodes.sync" type="NodeSyncConfig" optional>
+    Per-type sync configuration for node `data` keys. See [Sync
+    config](#sync-config).
+  </PropertiesListItem>
+  <PropertiesListItem name="edges.initial" type="Edge[]" optional>
     Default edges used when the room has no data yet.
+  </PropertiesListItem>
+  <PropertiesListItem name="edges.sync" type="EdgeSyncConfig" optional>
+    Per-type sync configuration for edge `data` keys. See [Sync
+    config](#sync-config).
   </PropertiesListItem>
   <PropertiesListItem name="storageKey" type="string" optional>
     The key used to store the diagram in Liveblocks Storage. Defaults to
@@ -286,6 +295,54 @@ so each client keeps their own selection and interaction state:
 
 Everything else on nodes and edges (including `position`, `width` and `height`,
 `data`, handles, and edge endpoints) is synchronized through Storage.
+
+### Sync config [#sync-config]
+
+By default, every key inside a node or edge's `data` object are getting deeply
+synced. Internally objects are stored as LiveObjects, arrays as LiveLists, etc,
+to enable fine-grained conflict-free merging automatically. If two users update
+different properties on the same node or edge, their changes will get merged
+without conflicts.
+
+For some data, this default behavior is not desirable.
+
+Each key in the config accepts a **sync mode**:
+
+| Mode       | Behavior                                                                                       |
+| ---------- | ---------------------------------------------------------------------------------------------- |
+| `true`     | Deeply sync and allow conflict-free merging (default).                                         |
+| `false`    | Keep value local-only. Not synced to other clients at all. Other clients will see `undefined`. |
+| `"atomic"` | Synced, but replaced as a whole (last-writer-wins). No automatic conflict resolution.          |
+| `{ ... }`  | Nested config. Applies recursively to sub-keys of the value.                                   |
+
+Use `"*"` as a fallback for all node (or edge) types.
+
+```tsx
+const { ... } = useLiveblocksFlow({
+  nodes: {
+    sync: {
+      // Applies to all node types
+      "*": {
+        label: false,       // Don't sync node.data.label
+        color: "atomic",    // Sync as a single value, replaced as-a-whole
+      },
+
+      // Additional overrides for specific node types
+      myCustomNode: {
+        showPreview: false,  // Don't sync myCustomNode.data.showPreview
+      },
+    },
+  },
+  edges: {
+    sync: {
+      "*": {
+        hovered: false,      // Don't sync edge.data.hovered
+        style: "atomic",     // Sync as a single value, replaced as-a-whole
+      },
+    },
+  },
+});
+```
 
 ### Suspense [#suspense]
 

@@ -128,6 +128,12 @@ type UseLiveblocksFlowOptions<N extends Node, E extends Edge> = {
     /**
      * Per-type sync configuration for node data keys.
      *
+     * Each key in the config is either:
+     * - `false` - Local-only, not synced to other clients
+     * - `"atomic"` - Synced as a single value (replaced as-a-whole, not patched)
+     * - `true` (or absent) - Deep sync (default, objects/arrays are patched)
+     * - `{ ... }` - Nested config, applies recursively to sub-keys
+     *
      * Use `"*"` as a fallback for all node types. Type-specific entries are
      * deep-merged on top of `"*"`, with explicitly named keys taking
      * precedence.
@@ -137,13 +143,10 @@ type UseLiveblocksFlowOptions<N extends Node, E extends Edge> = {
      * const { ... } = useLiveblocksFlow({
      *   nodes: {
      *     sync: {
-     *       // Fallback for all node types
      *       "*": {
-     *         label: false,  // Don't sync node.data.label
+     *         label: false,       // Don't sync node.data.label
+     *         color: "atomic",    // Sync as a single value, replaced as-a-whole
      *       },
-     *
-     *       // Override for node.type === 'myCustomNode'
-     *       // This will also not sync `myCustomNode.data.label` (because of the fallback above)
      *       myCustomNode: {
      *         showPreview: false,  // Don't sync myCustomNode.data.showPreview
      *       },
@@ -160,6 +163,12 @@ type UseLiveblocksFlowOptions<N extends Node, E extends Edge> = {
     /**
      * Per-type sync configuration for edge data keys.
      *
+     * Each key in the config is either:
+     * - `false` - Local-only, not synced to other clients
+     * - `"atomic"` - Synced as a single value (replaced as-a-whole, not patched)
+     * - `true` (or absent) - Deep sync (default, objects/arrays are patched)
+     * - `{ ... }` - Nested config, applies recursively to sub-keys
+     *
      * Use `"*"` as a fallback for all edge types. Type-specific entries are
      * deep-merged on top of `"*"`, with explicitly named keys taking
      * precedence.
@@ -169,13 +178,10 @@ type UseLiveblocksFlowOptions<N extends Node, E extends Edge> = {
      * const { ... } = useLiveblocksFlow({
      *   edges: {
      *     sync: {
-     *       // Fallback for all edge types
      *       "*": {
-     *         hovered: false,  // Don't sync edge.data.hovered
+     *         hovered: false,       // Don't sync edge.data.hovered
+     *         style: "atomic",      // Sync as a single value, replaced as-a-whole
      *       },
-     *
-     *       // Override for edge.type === 'myCustomEdge'
-     *       // This will also not sync `myCustomEdge.data.hovered` (because of the fallback above)
      *       myCustomEdge: {
      *         isHighlighted: false,  // Don't sync myCustomEdge.data.isHighlighted
      *       },
