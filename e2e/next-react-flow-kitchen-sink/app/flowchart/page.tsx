@@ -4,9 +4,13 @@ import type { ThreadData } from "@liveblocks/client";
 import {
   ClientSideSuspense,
   RoomProvider,
+  useCanRedo,
+  useCanUndo,
   useOther,
+  useRedo,
   useRoom,
   useSelf,
+  useUndo,
   useUser,
 } from "@liveblocks/react";
 import {
@@ -21,6 +25,7 @@ import {
   BaseEdge,
   ConnectionLineType,
   ConnectionMode,
+  ControlButton,
   Controls,
   EdgeLabelRenderer,
   Handle,
@@ -1223,6 +1228,10 @@ function Flow({ className, ...props }: ComponentProps<"div">) {
     submitFlowchartAgentAction,
     null
   );
+  const undo = useUndo();
+  const redo = useRedo();
+  const canUndo = useCanUndo();
+  const canRedo = useCanRedo();
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onDelete } =
     useLiveblocksFlow<FlowchartNode, FlowchartEdge>({
       suspense: true,
@@ -1242,13 +1251,42 @@ function Flow({ className, ...props }: ComponentProps<"div">) {
   }, [agentState]);
 
   useEffect(() => {
+    const isEditableTarget = (target: EventTarget | null): boolean => {
+      if (!(target instanceof HTMLElement)) {
+        return false;
+      }
+      if (target.isContentEditable) {
+        return true;
+      }
+      const tag = target.tagName;
+      return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
+    };
+
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") {
+      if (event.key === "Escape") {
+        if (placementMode.kind !== "idle") {
+          resetPlacementMode();
+        }
         return;
       }
 
-      if (placementMode.kind !== "idle") {
-        resetPlacementMode();
+      const isModZ =
+        event.key.toLowerCase() === "z" &&
+        (event.metaKey || event.ctrlKey) &&
+        !event.altKey;
+
+      if (!isModZ || isEditableTarget(event.target)) {
+        return;
+      }
+
+      if (event.shiftKey) {
+        if (canRedo) {
+          event.preventDefault();
+          redo();
+        }
+      } else if (canUndo) {
+        event.preventDefault();
+        undo();
       }
     };
 
@@ -1257,7 +1295,14 @@ function Flow({ className, ...props }: ComponentProps<"div">) {
     return () => {
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, [placementMode.kind, resetPlacementMode]);
+  }, [
+    placementMode.kind,
+    resetPlacementMode,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+  ]);
 
   const commitThreadPlacementAtScreenPoint = useCallback(
     (clientX: number, clientY: number) => {
@@ -1476,7 +1521,14 @@ function Flow({ className, ...props }: ComponentProps<"div">) {
           onCancelPlacement={resetPlacementMode}
         >
           <Cursors components={{ Cursor: FlowCursor }} />
-          <Controls />
+          <Controls orientation="horizontal" showInteractive={false}>
+            <ControlButton onClick={undo} disabled={!canUndo}>
+              <Icon.Undo />
+            </ControlButton>
+            <ControlButton onClick={redo} disabled={!canRedo}>
+              <Icon.Redo />
+            </ControlButton>
+          </Controls>
           <MiniMap
             nodeComponent={MiniMapNode}
             nodeColor={(node: FlowchartNode) => getBlockColor(node.data.color)}

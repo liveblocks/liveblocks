@@ -60,6 +60,21 @@
 
   .react-flow__controls-button {
     border-radius: 6px;
+
+    &:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+
+      svg {
+        fill-opacity: 1 !important;
+      }
+    }
+
+    .lb-icon {
+      fill: none !important;
+      max-width: 16px !important;
+      max-height: 16px !important;
+    }
   }
 
   .react-flow__minimap {
