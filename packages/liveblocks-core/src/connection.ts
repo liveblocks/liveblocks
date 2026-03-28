@@ -167,7 +167,7 @@ const RESET_DELAY = BACKOFF_DELAYS[0] - 1;
  * Used to back off from WebSocket reconnection attempts after a known
  * Liveblocks issue, like "room full" or a "rate limit" error.
  */
-const BACKOFF_DELAYS_SLOW = [2_000, 5_000, 10_000, 30_000, 60_000, 300_000] as const;
+const BACKOFF_DELAYS_SLOW = [2_000, 30_000, 60_000, 300_000] as const;
 
 /**
  * The client will send a PING to the server every 30 seconds, after which it
