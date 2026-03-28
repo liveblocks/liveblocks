@@ -9,7 +9,7 @@ showTitle: false
 
 <DocsHomepageHero
   title="Documentation"
-  description="Liveblocks gives you the building blocks and infrastructure to enable people and AI to work together inside your app."
+  description="Liveblocks provides the realtime infrastructure to handle concurrent edits on shared data, so people and AI agents can collaborate without breaking your app."
   actions={[
     {
       title: "Get started",
@@ -50,16 +50,9 @@ showTitle: false
   />
 </ListGrid>
 
-## SDKs and packages
+## API Reference
 
-<ListGrid columns={2}>
-  <DocsCard
-    type="technology"
-    title="JavaScript"
-    href="/docs/api-reference/liveblocks-client"
-    description="@liveblocks/client"
-    visual={<DocsJavascriptIcon />}
-  />
+<ListGrid columns={2} defaultVisibleItems={6}>
   <DocsCard
     type="technology"
     title="React"
@@ -90,10 +83,10 @@ showTitle: false
   />
   <DocsCard
     type="technology"
-    title="Node.js ProseMirror"
-    href="/docs/api-reference/liveblocks-node-prosemirror"
-    description="@liveblocks/node-prosemirror"
-    visual={<DocsNodejsIcon />}
+    title="React Flow"
+    href="/docs/api-reference/liveblocks-react-flow"
+    description="@liveblocks/react-flow"
+    visual={<DocsReactIcon />}
   />
   <DocsCard
     type="technology"
@@ -104,10 +97,24 @@ showTitle: false
   />
   <DocsCard
     type="technology"
+    title="Node.js ProseMirror"
+    href="/docs/api-reference/liveblocks-node-prosemirror"
+    description="@liveblocks/node-prosemirror"
+    visual={<DocsNodejsIcon />}
+  />
+  <DocsCard
+    type="technology"
     title="Node.js Lexical"
     href="/docs/api-reference/liveblocks-node-lexical"
     description="@liveblocks/node-lexical"
     visual={<DocsNodejsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="JavaScript"
+    href="/docs/api-reference/liveblocks-client"
+    description="@liveblocks/client"
+    visual={<DocsJavascriptIcon />}
   />
   <DocsCard
     type="technology"
@@ -151,6 +158,13 @@ showTitle: false
     href="/docs/api-reference/liveblocks-emails"
     description="@liveblocks/emails"
     visual={<DocsNodejsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Python"
+    href="/docs/api-reference/liveblocks-python"
+    description="Python SDK"
+    visual={<DocsPythonIcon />}
   />
   <DocsCard
     type="technology"
