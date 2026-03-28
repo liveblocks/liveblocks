@@ -1,28 +1,34 @@
-import type { Edge, Node } from "@xyflow/react";
+import type { SyncConfig } from "@liveblocks/core";
 
 export const DEFAULT_STORAGE_KEY = "flow";
 
-export const NODE_LOCAL_KEYS: Set<string> = new Set([
-  "selected",
-  "dragging",
-  "measured",
-  "resizing",
-] as const satisfies (keyof Node)[]);
+export const NODE_BASE_CONFIG: SyncConfig = {
+  // Local-only (not synced)
+  selected: false,
+  dragging: false,
+  measured: false,
+  resizing: false,
 
-export const NODE_ATOMIC_KEYS: Set<string> = new Set([
-  "position",
-  "sourcePosition",
-  "targetPosition",
-  "extent",
-  "origin",
-  "handles",
-] as const satisfies (keyof Node)[]);
+  // Atomic (synced as plain Json)
+  position: "atomic",
+  sourcePosition: "atomic",
+  targetPosition: "atomic",
+  extent: "atomic",
+  origin: "atomic",
+  handles: "atomic",
 
-export const EDGE_LOCAL_KEYS: Set<string> = new Set([
-  "selected",
-] as const satisfies (keyof Edge)[]);
+  // Note: the `data` key is intentionally left out of this base config, as it
+  // is expected to be provided by the end user
+};
 
-export const EDGE_ATOMIC_KEYS: Set<string> = new Set([
-  "markerStart",
-  "markerEnd",
-] as const satisfies (keyof Edge)[]);
+export const EDGE_BASE_CONFIG: SyncConfig = {
+  // Local-only (not synced)
+  selected: false,
+
+  // Atomic (synced as plain Json)
+  markerStart: "atomic",
+  markerEnd: "atomic",
+
+  // Note: the `data` key is intentionally left out of this base config, as it
+  // is expected to be provided by the end user
+};

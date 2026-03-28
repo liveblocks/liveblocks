@@ -38,7 +38,10 @@ module.exports = {
 
     // Enforce React best practices
     "react-hooks/rules-of-hooks": "error",
-    "react-hooks/exhaustive-deps": "error",
+    "react-hooks/exhaustive-deps": [
+      "error",
+      { additionalHooks: "useMutation" },
+    ],
   },
 
   overrides: [

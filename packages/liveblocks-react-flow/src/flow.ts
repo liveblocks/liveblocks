@@ -1,8 +1,9 @@
 import type {
   History,
   JsonObject,
-  LsonObject,
   Resolve,
+  SyncConfig,
+  SyncMode,
   ToImmutable,
 } from "@liveblocks/core";
 import { LiveMap, LiveObject, reconcileLiveRoot } from "@liveblocks/core";
@@ -25,9 +26,13 @@ import type {
   OnNodesChange,
 } from "@xyflow/react";
 import { addEdge as defaultAddEdge } from "@xyflow/react";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 
-import { DEFAULT_STORAGE_KEY } from "./constants";
+import {
+  DEFAULT_STORAGE_KEY,
+  EDGE_BASE_CONFIG,
+  NODE_BASE_CONFIG,
+} from "./constants";
 import { toLiveblocksEdge, toLiveblocksNode } from "./helpers";
 import type { LiveblocksEdge, LiveblocksFlow, LiveblocksNode } from "./types";
 
@@ -61,44 +66,7 @@ type LiveblocksFlowSuspenseResult<
   E extends Edge = BuiltInEdge,
 > = Extract<UseLiveblocksFlowResult<N, E>, { isLoading: false }>;
 
-/**
- * Per-key sync configuration for node/edge `data` properties.
- *
- * true
- *   Sync this property to Liveblocks Storage. Arrays and objects in the value
- *   will be stored as LiveLists and LiveObjects, enabling fine-grained
- *   conflict-free merging. This is the default for all keys.
- *
- * false
- *   Don't sync this property. It stays local to the current client. This
- *   property will be `undefined` on other clients.
- *
- * "atomic"
- *   Sync this property, but treat it as an indivisible value. The entire value
- *   is replaced as a whole (last-writer-wins) instead of being recursively
- *   converted to LiveObjects/LiveLists. Use this when clients always replace
- *   the value entirely and never need concurrent sub-key merging.
- *
- * { ... }
- *   A nested config object for recursively configuring sub-keys of an object.
- *
- * @example
- * ```ts
- * const sync: SyncConfig = {
- *   label: true,             // sync as LiveObject (default)
- *   createdAt: false,        // local-only
- *   shape: "atomic",         // replaced as a whole, no deep merge
- *   nested: {                // recursive config
- *     deep: false,
- *   },
- * };
- * ```
- */
-export type SyncMode = boolean | "atomic" | SyncConfig;
-
-export type SyncConfig = {
-  [key: string]: SyncMode | undefined;
-};
+export type { SyncConfig, SyncMode };
 
 type InferNodeTypeLiterals<N> =
   N extends Node<any, infer T extends string>
@@ -132,6 +100,42 @@ export type EdgeSyncConfig<E extends Edge> = {
   [key in EdgeTypeLiterals<E>]?: SyncConfig;
 };
 
+function mergeAndBuildDataConfigCache(
+  base: SyncConfig,
+  data?: Record<string, SyncConfig | undefined>
+): (type: string | undefined) => SyncConfig {
+  if (!data) return () => base;
+
+  const dataFallback = data["*"];
+  const fallback = dataFallback ? { ...base, data: dataFallback } : base;
+
+  // Pre-compute full node/edge sync configs for all explicitly declared types
+  const cache = new Map<string | undefined, SyncConfig>();
+  for (const type in data) {
+    if (type === "*") continue;
+    const specific = data[type];
+    if (!specific) continue;
+    const dataConfig: SyncConfig = { ...dataFallback, ...specific };
+    cache.set(type, { ...base, data: dataConfig });
+  }
+
+  return (type) => cache.get(type) || fallback;
+}
+
+function buildNodeConfigCache<N extends Node>(
+  /** The user-provided node data sync configuration, if any. */
+  nodeDataConfig?: NodeSyncConfig<N>
+): (type: string | undefined) => SyncConfig {
+  return mergeAndBuildDataConfigCache(NODE_BASE_CONFIG, nodeDataConfig);
+}
+
+function buildEdgeConfigCache<E extends Edge>(
+  /** The user-provided edge data sync configuration, if any. */
+  edgeDataConfig?: EdgeSyncConfig<E>
+): (type: string | undefined) => SyncConfig {
+  return mergeAndBuildDataConfigCache(EDGE_BASE_CONFIG, edgeDataConfig);
+}
+
 type UseLiveblocksFlowOptions<N extends Node, E extends Edge> = {
   nodes?: {
     /**
@@ -156,7 +160,23 @@ type UseLiveblocksFlowOptions<N extends Node, E extends Edge> = {
      * Use `"*"` as a fallback for all node types. Type-specific entries are
      * deep-merged on top of `"*"`, with explicitly named keys taking
      * precedence.
+     *
+     * @example
+     * ```tsx
+     * const { ... } = useLiveblocksFlow({
+     *   nodes: {
+     *     sync: {
+     *       // Fallback for all node types
+     *       "*": { label: false },
+     *
+     *       // Override for "custom" nodes
+     *       "custom": { color: false },
+     *     },
+     *   },
+     * });
+     * ```
      */
+    // XXX Improve the example + match public documentation
     sync?: NodeSyncConfig<N>;
   };
 
@@ -168,7 +188,20 @@ type UseLiveblocksFlowOptions<N extends Node, E extends Edge> = {
      * Use `"*"` as a fallback for all edge types. Type-specific entries are
      * deep-merged on top of `"*"`, with explicitly named keys taking
      * precedence.
+     *
+     * @example
+     * ```tsx
+     * const { ... } = useLiveblocksFlow({
+     *   edges: {
+     *     sync: {
+     *       // Fallback for all node types
+     *       "*": { floating: false },
+     *     },
+     *   },
+     * });
+     * ```
      */
+    // XXX Improve the example + match public documentation
     sync?: EdgeSyncConfig<E>;
   };
 
@@ -186,47 +219,41 @@ type UseLiveblocksFlowOptions<N extends Node, E extends Edge> = {
   suspense?: boolean;
 };
 
-// Narrowed LiveObject type for calling setLocal with known local keys.
-// Needed because TypeScript can't resolve OptionalJsonKeys on generic
-// LiveblocksNode<N>/LiveblocksEdge<E> types.
-// XXX Remove these type hacks!
-type NodeLocalLO = LiveObject<Node & LsonObject>;
-type EdgeLocalLO = LiveObject<Edge & LsonObject>;
-
 // Similar to React Flow's `applyNodeChanges()`, but writes local-only
 // properties via `setLocal()` / `delete()` on the LiveObject directly.
 // https://reactflow.dev/api-reference/utils/apply-node-changes
 function applyNodeChanges<N extends Node>(
   changes: NodeChange<N>[],
   nodes: LiveMap<string, LiveblocksNode<N>>,
-  history: History
+  history: History,
+  getNodeSyncConfig: (nodeType: string | undefined) => SyncConfig
 ): void {
   for (const change of changes) {
     switch (change.type) {
-      case "add":
-        nodes.set(change.item.id, toLiveblocksNode(change.item));
+      case "add": {
+        const config = getNodeSyncConfig(change.item.type);
+        nodes.set(change.item.id, toLiveblocksNode(change.item, config));
         break;
+      }
 
       case "replace": {
+        const config = getNodeSyncConfig(change.item.type);
         const existing = nodes.get(change.item.id);
         if (existing) {
-          // Reconcile the data LiveObject in place — only mutates what changed
-          const data = existing.get("data");
-          if (data) {
-            reconcileLiveRoot(data, (change.item.data ?? {}) as JsonObject);
-          }
+          reconcileLiveRoot(
+            existing,
+            change.item as unknown as JsonObject,
+            config
+          );
         } else {
-          // Node doesn't exist yet — treat as add
-          nodes.set(change.item.id, toLiveblocksNode(change.item));
+          nodes.set(change.item.id, toLiveblocksNode(change.item, config));
         }
         break;
       }
 
       case "position": {
         const node = nodes.get(change.id);
-        if (!node || !change.position) {
-          break;
-        }
+        if (!node || !change.position) break;
 
         const prev = node.get("position") as N["position"] | undefined;
         if (prev?.x !== change.position.x || prev?.y !== change.position.y) {
@@ -242,15 +269,12 @@ function applyNodeChanges<N extends Node>(
           // @ts-expect-error XXX Fix this later
           node.setLocal("dragging", change.dragging);
         }
-
         break;
       }
 
       case "dimensions": {
         const node = nodes.get(change.id);
-        if (!node) {
-          break;
-        }
+        if (!node) break;
 
         if (
           change.dimensions !== undefined &&
@@ -271,10 +295,9 @@ function applyNodeChanges<N extends Node>(
           }
         }
 
-        const n = node as unknown as NodeLocalLO;
-
         if (change.dimensions !== undefined) {
-          n.setLocal("measured", change.dimensions);
+          // @ts-expect-error XXX Fix this later
+          node.setLocal("measured", change.dimensions);
         }
 
         if (change.resizing !== undefined) {
@@ -283,20 +306,21 @@ function applyNodeChanges<N extends Node>(
           } else {
             history.resume();
           }
-          n.setLocal("resizing", change.resizing);
+          // @ts-expect-error XXX Fix this later
+          node.setLocal("resizing", change.resizing);
         }
 
         break;
       }
 
-      case "select":
-        {
-          const node = nodes.get(change.id);
-          if (!node) break;
-          const n = node as unknown as NodeLocalLO;
-          n.setLocal("selected", change.selected);
-        }
+      case "select": {
+        const node = nodes.get(change.id);
+        if (!node) break;
+
+        // @ts-expect-error XXX Fix this later
+        node.setLocal("selected", change.selected);
         break;
+      }
 
       case "remove":
         // Removals are handled by onDelete for atomic undo
@@ -310,27 +334,28 @@ function applyNodeChanges<N extends Node>(
 // https://reactflow.dev/api-reference/utils/apply-edge-changes
 function applyEdgeChanges<E extends Edge>(
   changes: EdgeChange<E>[],
-  edges: LiveMap<string, LiveblocksEdge<E>>
+  edges: LiveMap<string, LiveblocksEdge<E>>,
+  getEdgeSyncConfig: (type: string | undefined) => SyncConfig
 ): void {
   for (const change of changes) {
     switch (change.type) {
       case "add": {
-        edges.set(change.item.id, toLiveblocksEdge(change.item));
+        const config = getEdgeSyncConfig(change.item.type);
+        edges.set(change.item.id, toLiveblocksEdge(change.item, config));
         break;
       }
 
       case "replace": {
+        const config = getEdgeSyncConfig(change.item.type);
         const existing = edges.get(change.item.id);
         if (existing) {
-          const dataLO = existing.get("data");
-          if (dataLO && change.item.data) {
-            reconcileLiveRoot(
-              dataLO as LiveObject<LsonObject>,
-              change.item.data as JsonObject
-            );
-          }
+          reconcileLiveRoot(
+            existing,
+            change.item as unknown as JsonObject,
+            config
+          );
         } else {
-          edges.set(change.item.id, toLiveblocksEdge(change.item));
+          edges.set(change.item.id, toLiveblocksEdge(change.item, config));
         }
         break;
       }
@@ -339,8 +364,8 @@ function applyEdgeChanges<E extends Edge>(
         {
           const edge = edges.get(change.id);
           if (!edge) break;
-          const e = edge as unknown as EdgeLocalLO;
-          e.setLocal("selected", change.selected);
+          // @ts-expect-error XXX Fix this later
+          edge.setLocal("selected", change.selected);
         }
         break;
 
@@ -363,13 +388,31 @@ function applyEdgeChanges<E extends Edge>(
  * />
  * ```
  */
+// XXX Decide on Monday: can we kill this helper, or do we need to keep it?
 export function createLiveblocksFlow<
   N extends Node = BuiltInNode,
   E extends Edge = BuiltInEdge,
->(nodes: N[] = [], edges: E[] = []): LiveblocksFlow<N, E> {
+>(
+  nodes: N[] = [],
+  edges: E[] = [],
+  resolveNodeConfig?: (type: string | undefined) => SyncConfig,
+  resolveEdgeConfig?: (type: string | undefined) => SyncConfig
+): LiveblocksFlow<N, E> {
+  const nodeConfig = resolveNodeConfig ?? (() => NODE_BASE_CONFIG);
+  const edgeConfig = resolveEdgeConfig ?? (() => EDGE_BASE_CONFIG);
   return new LiveObject({
-    nodes: new LiveMap(nodes.map((node) => [node.id, toLiveblocksNode(node)])),
-    edges: new LiveMap(edges.map((edge) => [edge.id, toLiveblocksEdge(edge)])),
+    nodes: new LiveMap(
+      nodes.map((node) => [
+        node.id,
+        toLiveblocksNode(node, nodeConfig(node.type)),
+      ])
+    ),
+    edges: new LiveMap(
+      edges.map((edge) => [
+        edge.id,
+        toLiveblocksEdge(edge, edgeConfig(edge.type)),
+      ])
+    ),
   }) as LiveblocksFlow<N, E>;
 }
 
@@ -428,6 +471,16 @@ export function useLiveblocksFlow<
     suspense: options.suspense ?? false,
   });
 
+  // Pre-compute sync config caches once (not on every render)
+  const [getNodeSyncConfig, getEdgeSyncConfig] = useMemo(
+    () =>
+      [
+        buildNodeConfigCache(frozenOptions.nodes?.sync),
+        buildEdgeConfigCache(frozenOptions.edges?.sync),
+      ] as const,
+    [frozenOptions]
+  );
+
   // Storage already includes local overlays via toImmutable(), so no
   // separate local layer is needed. Individual node/edge immutable references
   // are already stable (only change when the underlying LiveObject changes).
@@ -451,53 +504,58 @@ export function useLiveblocksFlow<
         return;
       }
 
-      applyNodeChanges(changes, flow.get("nodes"), history);
+      applyNodeChanges(changes, flow.get("nodes"), history, getNodeSyncConfig);
     },
-    [history]
+    [history, frozenOptions, getNodeSyncConfig]
   );
 
-  const onEdgesChange = useMutation(({ storage }, changes: EdgeChange<E>[]) => {
-    const flow = storage.get(frozenOptions.storageKey) as TFlow | undefined;
-    if (!flow) {
-      return;
-    }
-
-    applyEdgeChanges(changes, flow.get("edges"));
-  }, []);
-
-  const onConnect = useMutation(({ storage }, connection: Connection) => {
-    const flow = storage.get(frozenOptions.storageKey) as TFlow | undefined;
-
-    if (!flow) {
-      return;
-    }
-
-    const edges = flow.get("edges");
-
-    // Check for duplicate connections.
-    for (const edge of edges.values()) {
-      if (
-        edge.get("source") === connection.source &&
-        edge.get("target") === connection.target &&
-        (edge.get("sourceHandle") ?? null) ===
-          (connection.sourceHandle ?? null) &&
-        (edge.get("targetHandle") ?? null) === (connection.targetHandle ?? null)
-      ) {
+  const onEdgesChange = useMutation(
+    ({ storage }, changes: EdgeChange<E>[]) => {
+      const flow = storage.get(frozenOptions.storageKey) as TFlow | undefined;
+      if (!flow) {
         return;
       }
-    }
 
-    // Delegate to React Flow's own `addEdge` helper for consistent default
-    // edge ID generation, passing an empty array since de-duplication is
-    // already handled above.
-    const [newEdge] = defaultAddEdge(connection, [] as E[]);
+      applyEdgeChanges(changes, flow.get("edges"), getEdgeSyncConfig);
+    },
+    [frozenOptions, getEdgeSyncConfig]
+  );
 
-    if (!newEdge) {
-      return;
-    }
+  const onConnect = useMutation(
+    ({ storage }, connection: Connection) => {
+      const flow = storage.get(frozenOptions.storageKey) as TFlow | undefined;
+      if (!flow) {
+        return;
+      }
 
-    edges.set(newEdge.id, toLiveblocksEdge(newEdge));
-  }, []);
+      // XXX Discuss with Marc on Monday: why is this necessary?
+      const edges = flow.get("edges");
+      for (const edge of edges.values()) {
+        if (
+          edge.get("source") === connection.source &&
+          edge.get("target") === connection.target &&
+          (edge.get("sourceHandle") ?? null) ===
+            (connection.sourceHandle ?? null) &&
+          (edge.get("targetHandle") ?? null) ===
+            (connection.targetHandle ?? null)
+        ) {
+          return;
+        }
+      }
+
+      // Delegate to React Flow's own `addEdge` helper for consistent default
+      // edge ID generation, passing an empty array since de-duplication is
+      // already handled above.
+      const [newEdge] = defaultAddEdge(connection, [] as E[]);
+      if (!newEdge) {
+        return;
+      }
+
+      const config = getEdgeSyncConfig(newEdge.type);
+      edges.set(newEdge.id, toLiveblocksEdge(newEdge, config));
+    },
+    [frozenOptions.storageKey, getEdgeSyncConfig]
+  );
 
   const onDelete = useMutation(
     ({ storage }, params: { nodes: N[]; edges: E[] }) => {
@@ -517,25 +575,32 @@ export function useLiveblocksFlow<
         nodesMap.delete(node.id);
       }
     },
-    []
+    [frozenOptions.storageKey]
   );
 
-  const setInitialStorage = useMutation(({ storage }) => {
-    // Similarly to `initialStorage` on `Client.enterRoom` and `RoomProvider`, we only
-    // initialize Storage if it doesn't already exist.
-    if (storage.get(frozenOptions.storageKey) !== undefined) {
-      return;
-    }
+  const setInitialStorage = useMutation(
+    ({ storage }) => {
+      // Similarly to `initialStorage` on `Client.enterRoom` and `RoomProvider`, we only
+      // initialize Storage if it doesn't already exist.
+      if (storage.get(frozenOptions.storageKey) !== undefined) {
+        return;
+      }
 
-    const initialNodes = frozenOptions.nodes?.initial ?? [];
-    const initialEdges = frozenOptions.edges?.initial ?? [];
+      const initialNodes = frozenOptions.nodes?.initial ?? [];
+      const initialEdges = frozenOptions.edges?.initial ?? [];
 
-    // TODO: Apply sync config when creating initial storage (filter/serialize data keys)
-    storage.set(
-      frozenOptions.storageKey,
-      createLiveblocksFlow(initialNodes, initialEdges)
-    );
-  }, []);
+      storage.set(
+        frozenOptions.storageKey,
+        createLiveblocksFlow(
+          initialNodes,
+          initialEdges,
+          getNodeSyncConfig,
+          getEdgeSyncConfig
+        )
+      );
+    },
+    [frozenOptions, getNodeSyncConfig, getEdgeSyncConfig]
+  );
 
   useEffect(() => {
     if (isStorageLoaded) {
