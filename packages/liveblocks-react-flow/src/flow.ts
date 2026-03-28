@@ -184,6 +184,7 @@ type UseLiveblocksFlowOptions<N extends Node, E extends Edge> = {
 // Narrowed LiveObject type for calling setLocal with known local keys.
 // Needed because TypeScript can't resolve OptionalJsonKeys on generic
 // LiveblocksNode<N>/LiveblocksEdge<E> types.
+// XXX Remove these type hacks!
 type NodeLocalLO = LiveObject<Node & LsonObject>;
 type EdgeLocalLO = LiveObject<Edge & LsonObject>;
 

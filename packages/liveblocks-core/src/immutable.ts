@@ -77,6 +77,11 @@ export function lsonToJson(value: Lson): Json {
   return value;
 }
 
+// TODO: Define the actual config type for per-key liveification behavior
+// (local-only, atomic, deep). For now, use `never` to reserve the parameter
+// slot without allowing callers to pass a value.
+export type SyncConfigTBD = never;
+
 /**
  * Deeply converts all nested lists to LiveLists, and all nested objects to
  * LiveObjects.
@@ -85,9 +90,9 @@ export function lsonToJson(value: Lson): Json {
  * objects anymore.
  */
 // XXX Make private again once toLiveblocksNode/Edge use deepLiveifyObject + config
-export function deepLiveify(value: Lson | LsonObject): Lson {
+export function deepLiveify(value: Json, config?: SyncConfigTBD): Lson {
   if (Array.isArray(value)) {
-    return new LiveList(value.map(deepLiveify));
+    return new LiveList(value.map((v) => deepLiveify(v, config)));
   } else if (isPlainObject(value)) {
     const init: LsonObject = {};
     for (const key in value) {
@@ -95,7 +100,7 @@ export function deepLiveify(value: Lson | LsonObject): Lson {
       if (val === undefined) {
         continue;
       }
-      init[key] = deepLiveify(val);
+      init[key] = deepLiveify(val, config);
     }
     return new LiveObject(init);
   } else {
@@ -106,11 +111,15 @@ export function deepLiveify(value: Lson | LsonObject): Lson {
 /**
  * Recursively converts all nested plain objects to LiveObjects and all nested
  * arrays to LiveLists. Expects a plain object at the top level.
+ *
+ * TODO: Once SyncConfigTBD is implemented, this should become equivalent to
+ * reconcileLiveObject(new LiveObject(), jsonObj, config)
  */
-export function deepLiveifyObject(obj: LsonObject): LiveObject<LsonObject> {
-  // XXX 🤯 Actually I think deepLiveifyObject(obj, config) could eventually be
-  // equivalent to reconcileLiveObject(new LiveObject(), jsonObj, config) 😌
-  return deepLiveify(obj) as LiveObject<LsonObject>;
+export function deepLiveifyObject(
+  obj: JsonObject,
+  config?: SyncConfigTBD
+): LiveObject<LsonObject> {
+  return deepLiveify(obj, config) as LiveObject<LsonObject>;
 }
 
 /**
@@ -119,8 +128,8 @@ export function deepLiveifyObject(obj: LsonObject): LiveObject<LsonObject> {
  */
 export function reconcileLiveRoot<O extends LsonObject>(
   liveObj: LiveObject<O>,
-  jsonObj: JsonObject
-  /* config? */
+  jsonObj: JsonObject,
+  config?: SyncConfigTBD
 ): void {
   if (liveObj.immutableIs(jsonObj)) return;
   if (!isPlainObject(jsonObj))
@@ -128,7 +137,7 @@ export function reconcileLiveRoot<O extends LsonObject>(
       "Reconciling the document root expects a plain object value"
     );
 
-  reconcileLiveObject(liveObj, jsonObj);
+  reconcileLiveObject(liveObj, jsonObj, config);
 }
 
 // ---------------------------------------------------------------------------
@@ -140,26 +149,22 @@ export function reconcileLiveRoot<O extends LsonObject>(
  * existing live instance in place (when types match) or creates a new
  * deep-liveified tree (when types don't match). Returns the resulting Lson.
  */
-function reconcile(
-  live: Lson,
-  json: Json
-  /* config? */
-): Lson {
+function reconcile(live: Lson, json: Json, config?: SyncConfigTBD): Lson {
   if (isLiveObject(live) && isPlainObject(json)) {
-    return reconcileLiveObject(live, json);
+    return reconcileLiveObject(live, json, config);
   } else if (isLiveList(live) && Array.isArray(json)) {
-    return reconcileLiveList(live, json);
+    return reconcileLiveList(live, json, config);
   } else if (isLiveMap(live) && isPlainObject(json)) {
-    return reconcileLiveMap(live);
+    return reconcileLiveMap(live, config);
   } else {
     // Type mismatch or scalar — create fresh
-    return deepLiveify(json);
+    return deepLiveify(json, config);
   }
 }
 
 function reconcileLiveMap(
-  _liveMap: LiveMap<string, Lson>
-  /* config? */
+  _liveMap: LiveMap<string, Lson>,
+  _config?: SyncConfigTBD
 ): LiveMap<string, Lson> {
   throw new Error("Reconciling a LiveMap is not supported yet");
   // return liveMap;
@@ -167,8 +172,8 @@ function reconcileLiveMap(
 
 function reconcileLiveObject<O extends LsonObject>(
   liveObj: LiveObject<O>,
-  jsonObj: JsonObject
-  /* config? */
+  jsonObj: JsonObject,
+  config?: SyncConfigTBD
 ): LiveObject<O> {
   type L = O[keyof O];
 
@@ -186,16 +191,16 @@ function reconcileLiveObject<O extends LsonObject>(
     const curVal = liveObj.get(key);
     if (curVal === undefined) {
       // New key
-      liveObj.set(key, deepLiveify(newVal) as L);
+      liveObj.set(key, deepLiveify(newVal, config) as L);
     } else if (isLiveStructure(curVal)) {
       // Reconcile existing live structure
-      const next = reconcile(curVal, newVal);
+      const next = reconcile(curVal, newVal, config);
       if (next !== curVal) {
         liveObj.set(key, next as L);
       }
     } else if (curVal !== newVal) {
       // Scalar changed
-      liveObj.set(key, deepLiveify(newVal) as L);
+      liveObj.set(key, deepLiveify(newVal, config) as L);
     }
   }
 
@@ -209,8 +214,8 @@ function reconcileLiveObject<O extends LsonObject>(
 
 function reconcileLiveList<T extends Lson>(
   liveList: LiveList<T>,
-  jsonArr: Json[]
-  /* config? */
+  jsonArr: Json[],
+  config?: SyncConfigTBD
 ): LiveList<T> {
   const curLen = liveList.length;
   const newLen = jsonArr.length;
@@ -221,18 +226,18 @@ function reconcileLiveList<T extends Lson>(
     const newVal = jsonArr[i];
 
     if (isLiveStructure(curVal)) {
-      const next = reconcile(curVal, newVal);
+      const next = reconcile(curVal, newVal, config);
       if (next !== curVal) {
         liveList.set(i, next as T);
       }
     } else if (curVal !== newVal) {
-      liveList.set(i, deepLiveify(newVal) as T);
+      liveList.set(i, deepLiveify(newVal, config) as T);
     }
   }
 
   // Append new elements
   for (let i = curLen; i < newLen; i++) {
-    liveList.push(deepLiveify(jsonArr[i]) as T);
+    liveList.push(deepLiveify(jsonArr[i], config) as T);
   }
 
   // Remove excess elements from the end
@@ -295,8 +300,7 @@ export function legacy_patchLiveList<T extends Lson>(
   if (i > prevEnd) {
     if (i <= nextEnd) {
       while (i <= nextEnd) {
-        liveList.insert(deepLiveify(next[i]) as T, i);
-        //                                   ^^^^ FIXME Not entirely true
+        liveList.insert(deepLiveify(next[i] as Json) as T, i);
         i++;
       }
     }
@@ -319,15 +323,13 @@ export function legacy_patchLiveList<T extends Lson>(
       ) {
         legacy_patchLiveObject(liveListNode, prevNode, nextNode);
       } else {
-        liveList.set(i, deepLiveify(nextNode) as T);
-        //                                    ^^^^ FIXME Not entirely true
+        liveList.set(i, deepLiveify(nextNode as Json) as T);
       }
 
       i++;
     }
     while (i <= nextEnd) {
-      liveList.insert(deepLiveify(next[i]) as T, i);
-      //                                   ^^^^ FIXME Not entirely true
+      liveList.insert(deepLiveify(next[i] as Json) as T, i);
       i++;
     }
     let localI = i;
@@ -361,7 +363,6 @@ export function legacy_patchLiveObjectKey<
     liveObject.delete(key);
   } else if (value === undefined) {
     liveObject.set(key, deepLiveify(next) as O[K]);
-    //                                    ^^^^^^^ FIXME Not entirely true
   } else if (prev === next) {
     return;
   } else if (isLiveList(value) && Array.isArray(prev) && Array.isArray(next)) {
@@ -374,7 +375,6 @@ export function legacy_patchLiveObjectKey<
     legacy_patchLiveObject(value, prev, next);
   } else {
     liveObject.set(key, deepLiveify(next) as O[K]);
-    //                                    ^^^^^^^ FIXME Not entirely true
   }
 }
 

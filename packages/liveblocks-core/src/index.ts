@@ -107,6 +107,10 @@ export type {
   DU,
   KDAD,
 } from "./globals/augmentation";
+export type {
+  // XXX Implement type for real
+  SyncConfigTBD,
+} from "./immutable";
 export {
   deepLiveify, // XXX Make private again once toLiveblocksNode/Edge use deepLiveifyObject + config
   deepLiveifyObject,
