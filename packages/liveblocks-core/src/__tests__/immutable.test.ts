@@ -25,7 +25,7 @@ import {
 } from "../immutable";
 import { kInternal } from "../internal";
 import * as console from "../lib/fancy-console";
-import type { JsonObject } from "../lib/Json";
+import type { Json, JsonObject } from "../lib/Json";
 import type { PlainLsonObject } from "../types/PlainLson";
 import {
   enterConnectAndGetStorage,
@@ -123,7 +123,7 @@ function applyStateChanges<TState extends JsonObject>(
 
 const jsonObject = fc.dictionary(
   fc.string().filter((s) => s !== "__proto__"),
-  fc.jsonValue().map((x) => JSON.parse(JSON.stringify(x)) as unknown)
+  fc.jsonValue().map((x) => JSON.parse(JSON.stringify(x)) as Json)
 );
 
 describe("immutableIs", () => {
@@ -183,7 +183,9 @@ describe("reconcileLiveObject", () => {
   });
 
   test("deep-liveifies a new nested object", () => {
-    const liveObj = new LiveObject({ a: 1 });
+    const liveObj = new LiveObject<{ a: number; nested?: { x: number } }>({
+      a: 1,
+    });
     reconcileLiveRoot(liveObj, { a: 1, nested: { x: 10 } });
     expect(liveObj.toImmutable()).toEqual({ a: 1, nested: { x: 10 } });
     expect(liveObj.get("nested")).toBeInstanceOf(LiveObject);
@@ -209,7 +211,7 @@ describe("reconcileLiveObject", () => {
   });
 
   test("deep-liveifies a new array as LiveList", () => {
-    const liveObj = new LiveObject({ a: 1 });
+    const liveObj = new LiveObject<{ a: number; items?: number[] }>({ a: 1 });
     reconcileLiveRoot(liveObj, { a: 1, items: [1, 2, 3] });
     expect(liveObj.toImmutable()).toEqual({ a: 1, items: [1, 2, 3] });
     expect(liveObj.get("items")).toBeInstanceOf(LiveList);
@@ -380,10 +382,7 @@ describe("reconcileLiveObject", () => {
     await expectUpdates([
       [
         // Only the innermost "bar" object fires with { qux: update }
-        objectUpdate(
-          { qux: 123, keep: "same" },
-          { qux: { type: "update" } }
-        ),
+        objectUpdate({ qux: 123, keep: "same" }, { qux: { type: "update" } }),
       ],
     ]);
   });

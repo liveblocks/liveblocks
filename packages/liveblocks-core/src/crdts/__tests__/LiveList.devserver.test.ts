@@ -832,7 +832,7 @@ describe("LiveList", () => {
     });
 
     test("returns false when cache has been invalidated", () => {
-      const list = new LiveList(["a"]);
+      const list = new LiveList<string>(["a"]);
       const imm = list.toImmutable();
       list.push("b");
       expect(list.immutableIs(imm)).toBe(false);
