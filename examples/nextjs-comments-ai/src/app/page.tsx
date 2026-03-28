@@ -2,11 +2,19 @@
 
 import { useMemo } from "react";
 import { useSearchParams } from "next/navigation";
-import { RoomProvider, useThreads } from "@liveblocks/react/suspense";
+import {
+  ClientSideSuspense,
+  RoomProvider,
+  useThreads,
+  useFeeds,
+  useFeedMessages,
+} from "@liveblocks/react/suspense";
 import { Loading } from "../components/Loading";
-import { AvatarStack, Composer, Thread } from "@liveblocks/react-ui";
-import { ClientSideSuspense } from "@liveblocks/react";
+import { AvatarStack, Composer, Thread, Comment } from "@liveblocks/react-ui";
+import { Feed } from "@liveblocks/core";
 import { ErrorBoundary } from "react-error-boundary";
+import { AI_USER_INFO } from "../database";
+import { CommentData } from "@liveblocks/client";
 
 /**
  * Displays a list of threads, along with a composer for creating
@@ -15,7 +23,9 @@ import { ErrorBoundary } from "react-error-boundary";
 
 function Example() {
   const { threads } = useThreads();
-  console.log(threads);
+  const { feeds } = useFeeds();
+
+  console.log(threads, feeds);
 
   return (
     <>
@@ -24,12 +34,46 @@ function Example() {
           <AvatarStack size={36} />
         </header>
         {threads.map((thread) => (
-          <Thread key={thread.id} thread={thread} className="thread" />
+          <Thread
+            key={thread.id}
+            thread={thread}
+            className="thread"
+            components={{
+              Comment: ({ comment, ...props }) => {
+                const aiComment = comment.userId === AI_USER_INFO.id;
+
+                const feed = feeds.find(
+                  (f) =>
+                    f.metadata.threadId === thread.id &&
+                    f.metadata.commentId === comment.id
+                );
+
+                console.log(aiComment, feed);
+
+                // In progress AI comment
+                if (aiComment && feed) {
+                  return <AiComment comment={comment} feed={feed} />;
+                }
+
+                // Human comment or completed AI comment
+                return <Comment comment={comment} {...props} />;
+              },
+            }}
+          />
         ))}
         <Composer className="composer" />
       </main>
     </>
   );
+}
+
+function AiComment({ feed, comment }: { feed: Feed; comment: CommentData }) {
+  const { messages } = useFeedMessages(feed.feedId);
+  const lastMessage = messages[messages.length - 1];
+
+  console.log(messages, lastMessage);
+
+  return <div>{lastMessage?.data.stage}</div>;
 }
 
 export default function Page() {

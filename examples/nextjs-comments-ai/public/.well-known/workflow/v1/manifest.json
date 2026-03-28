@@ -25,6 +25,9 @@
       "createFeedMessage": {
         "stepId": "step//./src/workflows/comment-reply//createFeedMessage"
       },
+      "deleteFeed": {
+        "stepId": "step//./src/workflows/comment-reply//deleteFeed"
+      },
       "generateResponse": {
         "stepId": "step//./src/workflows/comment-reply//generateResponse"
       },
@@ -33,6 +36,9 @@
       },
       "hidePresence": {
         "stepId": "step//./src/workflows/comment-reply//hidePresence"
+      },
+      "isAiMentionedInComment": {
+        "stepId": "step//./src/workflows/comment-reply//isAiMentionedInComment"
       },
       "showPresence": {
         "stepId": "step//./src/workflows/comment-reply//showPresence"

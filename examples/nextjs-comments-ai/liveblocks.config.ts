@@ -10,6 +10,16 @@ declare global {
         color: string;
       };
     };
+
+    FeedMetadata: {
+      roomId: string;
+      threadId: string;
+      commentId: string;
+    };
+
+    FeedMessageData: {
+      stage: "thinking" | "writing" | "complete";
+    };
   }
 }
 

@@ -22,6 +22,8 @@ const liveblocks = new Liveblocks({
 export async function handleCommentReply(commentLocation: CommentLocation) {
   "use workflow";
 
+  const feedId = `comment-reply-${commentLocation.roomId}-${commentLocation.threadId}-${commentLocation.commentId}`;
+
   try {
     // Get the thread and comment that triggered the workflow
     const { thread, comment } = await getThreadAndComment(commentLocation);
@@ -35,12 +37,9 @@ export async function handleCommentReply(commentLocation: CommentLocation) {
     }
 
     // If AI is not mentioned in the comment, do not continue
-    const mentions = getMentionsFromCommentBody(comment.body);
-    if (!mentions.map((m) => m.id).includes(AI_USER_INFO.id)) {
+    if (!(await isAiMentionedInComment(comment))) {
       return { status: 200, body: "AI is not mentioned in the comment" };
     }
-
-    const feedId = `comment-reply-${commentLocation.roomId}-${commentLocation.threadId}-${commentLocation.commentId}`;
 
     const [newComment, feed] = await Promise.all([
       // Create a new comment which we'll temporarily replace with feed info
@@ -50,7 +49,10 @@ export async function handleCommentReply(commentLocation: CommentLocation) {
       }),
 
       // Create a new feed which we'll use to stream "in progress" info
-      createFeed({ roomId: commentLocation.roomId, feedId }),
+      createFeed({
+        feedId,
+        ...commentLocation,
+      }),
 
       // Show AI avatar in avatar stack
       showPresence(commentLocation),
@@ -58,14 +60,14 @@ export async function handleCommentReply(commentLocation: CommentLocation) {
 
     const [_, response] = await Promise.all([
       // Update the feed with "thinking" info
-      createFeedMessage({
+      await createFeedMessage({
         feedId: feed.feedId,
         stage: "thinking",
         roomId: commentLocation.roomId,
       }),
 
       // Start generating an AI response
-      generateResponse(thread, comment),
+      await generateResponse(thread, comment),
     ]);
 
     if (!response) {
@@ -90,7 +92,7 @@ export async function handleCommentReply(commentLocation: CommentLocation) {
     ]);
 
     // Comment written, feed is no longer needed
-    createFeedMessage({
+    await createFeedMessage({
       feedId: feed.feedId,
       stage: "complete",
       roomId: commentLocation.roomId,
@@ -103,7 +105,16 @@ export async function handleCommentReply(commentLocation: CommentLocation) {
   } catch (err) {
     return { status: 400, error: `${err}` };
   } finally {
-    await hidePresence(commentLocation);
+    await Promise.all([
+      // Feed no longer needed, the run is over
+      deleteFeed({
+        roomId: commentLocation.roomId,
+        feedId,
+      }),
+
+      // Hide AI avatar from avatar stack
+      hidePresence(commentLocation),
+    ]);
   }
 }
 
@@ -113,7 +124,8 @@ export async function handleCommentReply(commentLocation: CommentLocation) {
 async function createFeed({
   roomId,
   feedId,
-}: {
+  ...commentLocation
+}: CommentLocation & {
   roomId: string;
   feedId: string;
 }) {
@@ -122,7 +134,9 @@ async function createFeed({
   return await liveblocks.createFeed({
     roomId,
     feedId,
-    metadata: {},
+    metadata: {
+      ...commentLocation,
+    },
   });
 }
 
@@ -140,8 +154,20 @@ async function createFeedMessage({
   return await liveblocks.createFeedMessage({
     roomId,
     feedId,
-    data: {},
+    data: { stage },
   });
+}
+
+async function deleteFeed({
+  roomId,
+  feedId,
+}: {
+  roomId: string;
+  feedId: string;
+}) {
+  "use step";
+
+  return await liveblocks.deleteFeed({ roomId, feedId });
 }
 
 async function generateResponse(thread: ThreadData, comment: CommentData) {
@@ -212,6 +238,17 @@ async function getThreadAndComment({
   const thread = await liveblocks.getThread({ roomId, threadId });
   const comment = thread?.comments.find((comment) => comment.id === commentId);
   return { thread, comment };
+}
+
+async function isAiMentionedInComment(comment: CommentData) {
+  "use step";
+
+  if (!comment.body) {
+    return false;
+  }
+
+  const mentions = getMentionsFromCommentBody(comment.body);
+  return mentions.map((m) => m.id).includes(AI_USER_INFO.id);
 }
 
 async function createComment({
