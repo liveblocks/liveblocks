@@ -1,0 +1,78 @@
+{
+  "version": "1.0.0",
+  "steps": {
+    "node_modules/workflow/dist/internal/builtins.js": {
+      "__builtin_response_array_buffer": {
+        "stepId": "__builtin_response_array_buffer"
+      },
+      "__builtin_response_json": {
+        "stepId": "__builtin_response_json"
+      },
+      "__builtin_response_text": {
+        "stepId": "__builtin_response_text"
+      }
+    },
+    "src/workflows/comment-reply.ts": {
+      "completeComment": {
+        "stepId": "step//./src/workflows/comment-reply//completeComment"
+      },
+      "createComment": {
+        "stepId": "step//./src/workflows/comment-reply//createComment"
+      },
+      "createFeed": {
+        "stepId": "step//./src/workflows/comment-reply//createFeed"
+      },
+      "createFeedMessage": {
+        "stepId": "step//./src/workflows/comment-reply//createFeedMessage"
+      },
+      "generateResponse": {
+        "stepId": "step//./src/workflows/comment-reply//generateResponse"
+      },
+      "getThreadAndComment": {
+        "stepId": "step//./src/workflows/comment-reply//getThreadAndComment"
+      },
+      "hidePresence": {
+        "stepId": "step//./src/workflows/comment-reply//hidePresence"
+      },
+      "showPresence": {
+        "stepId": "step//./src/workflows/comment-reply//showPresence"
+      }
+    }
+  },
+  "workflows": {
+    "src/workflows/comment-reply.ts": {
+      "handleCommentReply": {
+        "workflowId": "workflow//./src/workflows/comment-reply//handleCommentReply",
+        "graph": {
+          "nodes": [
+            {
+              "id": "start",
+              "type": "workflowStart",
+              "data": {
+                "label": "Start: handleCommentReply",
+                "nodeKind": "workflow_start"
+              }
+            },
+            {
+              "id": "end",
+              "type": "workflowEnd",
+              "data": {
+                "label": "Return",
+                "nodeKind": "workflow_end"
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e_start_end",
+              "source": "start",
+              "target": "end",
+              "type": "default"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "classes": {}
+}
