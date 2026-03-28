@@ -1,0 +1,31 @@
+{
+  "name": "@liveblocks-examples/nextjs-chat-sdk-bot",
+  "description": "This example shows how to build a Chat SDK bot with Liveblocks and Next.js.",
+  "license": "Apache-2.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@chat-adapter/state-memory": "^4.23.0",
+    "@liveblocks/chat-sdk-adapter": "^3.15.5",
+    "@liveblocks/client": "^3.15.5",
+    "@liveblocks/node": "^3.15.5",
+    "@liveblocks/react": "^3.15.5",
+    "@liveblocks/react-ui": "^3.15.5",
+    "chat": "^4.22.0",
+    "next": "16.2.1",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

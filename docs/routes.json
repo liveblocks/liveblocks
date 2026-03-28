@@ -47,6 +47,11 @@
             "hidden": true
           },
           {
+            "title": "Chat SDK Bot",
+            "path": "/get-started/nextjs-chat-sdk-bot",
+            "hidden": true
+          },
+          {
             "title": "Comments / Canvas",
             "path": "/get-started/nextjs-comments-canvas",
             "hidden": true
@@ -851,6 +856,10 @@
       {
         "title": "@liveblocks/emails",
         "path": "/api-reference/liveblocks-emails"
+      },
+      {
+        "title": "@liveblocks/chat-sdk-adapter",
+        "path": "/api-reference/liveblocks-chat-sdk-adapter"
       },
       {
         "title": "Python SDK",
