@@ -17,7 +17,7 @@ export function getAgentUserInfo(
 }
 
 export function createAgentUser(): Liveblocks["UserMeta"] {
-  const id = `${AI_AGENT_ID_PREFIX}${nanoid(10)}`;
+  const id = `${AI_AGENT_ID_PREFIX}:${nanoid(10)}`;
 
   return { id, info: getAgentUserInfo(id) };
 }

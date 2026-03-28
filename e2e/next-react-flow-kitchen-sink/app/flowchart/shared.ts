@@ -2,10 +2,9 @@ import { LiveblocksFlow } from "@liveblocks/react-flow";
 import type { Edge, Node } from "@xyflow/react";
 import { nanoid } from "nanoid";
 
-export const BLOCK_SHAPES = ["rectangle", "rounded", "circle"] as const;
+export const BLOCK_SHAPES = ["rectangle", "ellipse", "diamond"] as const;
 
 export const BLOCK_COLORS = {
-  gray: "#678",
   blue: "#09f",
   cyan: "#0cd",
   green: "#3c5",
@@ -14,6 +13,7 @@ export const BLOCK_COLORS = {
   red: "#f24",
   pink: "#e4b",
   purple: "#85f",
+  gray: "#678",
 } as const;
 
 export const DEFAULT_BLOCK_SIZE = 100;

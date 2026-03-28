@@ -14,7 +14,6 @@ import {
   useEditThreadMetadata,
   useThreads,
 } from "@liveblocks/react/suspense";
-import clsx from "clsx";
 import { nanoid } from "nanoid";
 import { Cursors, useLiveblocksFlow } from "@liveblocks/react-flow";
 import {
@@ -53,6 +52,7 @@ import {
   FloatingComposer,
   FloatingThread,
   Cursor,
+  Icon,
 } from "@liveblocks/react-ui";
 import { CursorsCursorProps } from "@liveblocks/react-flow";
 import {
@@ -119,36 +119,32 @@ type ThreadPinPlacement =
 
 type PlacementMode =
   | { kind: "idle" }
-  | { kind: "placing-shape"; shape: BlockShape }
-  | { kind: "placing-comment" }
+  | { kind: "placing-shape"; shape: BlockShape; pointer: Point }
+  | { kind: "placing-comment"; pointer: Point }
   | { kind: "composing-comment"; placement: ThreadPinPlacement };
 
 function getInitialNodeLayout(
-  shape: BlockShape,
   horizontal: "left" | "center" | "right",
   vertical: number
 ) {
-  const INITIAL_NODES_HORIZONTAL_GAP = 250;
-  const INITIAL_NODES_VERTICAL_GAP = 36;
-  const INITIAL_NODES_SIZE = 100;
-  const INITIAL_NODES_LARGE_SIZE = 150;
+  const width = 150;
+  const height = 100;
+  const horizontalGap = 250;
+  const verticalGap = 36;
 
-  const width =
-    shape === "circle" ? INITIAL_NODES_SIZE : INITIAL_NODES_LARGE_SIZE;
   const midX =
     horizontal === "center"
       ? 0
       : horizontal === "left"
-        ? -INITIAL_NODES_HORIZONTAL_GAP
-        : INITIAL_NODES_HORIZONTAL_GAP;
+        ? -horizontalGap
+        : horizontalGap;
   const x = midX - width / 2;
-  const y =
-    vertical * INITIAL_NODES_SIZE + (vertical - 1) * INITIAL_NODES_VERTICAL_GAP;
+  const y = vertical * height + (vertical - 1) * verticalGap;
 
   return {
     position: { x, y },
     width,
-    height: INITIAL_NODES_SIZE,
+    height,
   };
 }
 
@@ -164,7 +160,7 @@ const INITIAL_NODE_SPECS = [
   {
     id: "new-product",
     label: "Idea",
-    shape: "circle",
+    shape: "ellipse",
     color: "cyan",
     horizontal: "center",
     vertical: 1,
@@ -172,7 +168,7 @@ const INITIAL_NODE_SPECS = [
   {
     id: "prototype",
     label: "Prototype",
-    shape: "rounded",
+    shape: "ellipse",
     color: "purple",
     horizontal: "center",
     vertical: 2,
@@ -196,7 +192,7 @@ const INITIAL_NODE_SPECS = [
   {
     id: "testing",
     label: "Testing",
-    shape: "circle",
+    shape: "ellipse",
     color: "red",
     horizontal: "right",
     vertical: 4,
@@ -212,7 +208,7 @@ const INITIAL_NODE_SPECS = [
   {
     id: "launch",
     label: "Launch",
-    shape: "rounded",
+    shape: "ellipse",
     color: "orange",
     horizontal: "right",
     vertical: 6,
@@ -296,11 +292,7 @@ const INITIAL_EDGE_SPECS = [
 ] as const;
 
 const INITIAL_NODES: FlowchartNode[] = INITIAL_NODE_SPECS.map((node) => {
-  const layout = getInitialNodeLayout(
-    node.shape,
-    node.horizontal,
-    node.vertical
-  );
+  const layout = getInitialNodeLayout(node.horizontal, node.vertical);
 
   return createFlowchartNode({
     id: node.id,
@@ -389,28 +381,38 @@ function getThreadMetadataForPlacement(
   };
 }
 
-function useGlobalPointerPosition() {
-  const [coords, setCoords] = useState({ x: -10000, y: -10000 });
+function usePointerPosition(initial: Point): Point {
+  const [position, setPosition] = useState(initial);
 
   useEffect(() => {
-    const updatePosition = (event: MouseEvent) => {
-      setCoords({ x: event.clientX, y: event.clientY });
+    const updatePosition = (event: { clientX: number; clientY: number }) => {
+      setPosition({ x: event.clientX, y: event.clientY });
     };
 
-    document.addEventListener("pointermove", updatePosition, false);
-    document.addEventListener("pointerenter", updatePosition, false);
+    document.addEventListener("pointermove", updatePosition);
+    document.addEventListener("pointerenter", updatePosition);
+    document.addEventListener("pointerdown", updatePosition, true);
 
     return () => {
       document.removeEventListener("pointermove", updatePosition);
       document.removeEventListener("pointerenter", updatePosition);
+      document.removeEventListener("pointerdown", updatePosition, true);
     };
   }, []);
 
-  return coords;
+  return position;
 }
 
-function ShapeIcon({ shape }: { shape: BlockShape }) {
-  return <span className="flowchart-shape-icon" data-shape={shape} />;
+function ToolbarBlockPreview({ shape }: { shape: BlockShape }) {
+  return (
+    <span className={"flowchart-toolbar-block-preview"} aria-hidden>
+      <div
+        className="flowchart-block flowchart-toolbar-block-preview-shape"
+        style={getBlockStyle(DEFAULT_BLOCK_COLOR)}
+        data-shape={getBlockShape(shape)}
+      />
+    </span>
+  );
 }
 
 function BlockDragPreview({ shape }: { shape: BlockShape }) {
@@ -484,7 +486,7 @@ const BlockNode = memo(({ id, data, selected }: NodeProps<FlowchartNode>) => {
   return (
     <>
       <NodeToolbar isVisible={selected} className="flowchart-node-toolbar">
-        <div className="flowchart-node-toolbar-section">
+        <div className="flowchart-node-toolbar-buttons">
           {BLOCK_SHAPES.map((shape) => (
             <button
               key={shape}
@@ -493,14 +495,13 @@ const BlockNode = memo(({ id, data, selected }: NodeProps<FlowchartNode>) => {
               className="flowchart-node-toolbar-button"
               data-active={data.shape === shape ? "" : undefined}
               title={capitalize(shape)}
-              aria-label={`Set shape to ${capitalize(shape)}`}
+              aria-label={`Set shape to ${shape}`}
             >
-              <ShapeIcon shape={shape} />
+              <ToolbarBlockPreview shape={shape} />
             </button>
           ))}
         </div>
-        <div className="flowchart-node-toolbar-separator" />
-        <div className="flowchart-node-toolbar-section">
+        <div className="flowchart-node-toolbar-colors">
           {(Object.keys(BLOCK_COLORS) as BlockColor[]).map((color) => (
             <button
               key={color}
@@ -508,7 +509,7 @@ const BlockNode = memo(({ id, data, selected }: NodeProps<FlowchartNode>) => {
               onClick={() => handleColorChange(color)}
               className="flowchart-node-toolbar-color"
               data-active={data.color === color ? "" : undefined}
-              style={{ backgroundColor: BLOCK_COLORS[color] }}
+              style={getBlockStyle(color)}
               title={capitalize(color)}
             />
           ))}
@@ -733,7 +734,7 @@ const MiniMapNode = memo(
     const nodeData = nodes.find((node) => node.id === id)?.data;
     const shape = getBlockShape(nodeData?.shape);
 
-    if (shape === "circle") {
+    if (shape === "ellipse") {
       return (
         <ellipse
           cx={boundsX + width / 2}
@@ -743,18 +744,27 @@ const MiniMapNode = memo(
           fill={color}
         />
       );
+    } else if (shape === "diamond") {
+      return (
+        <polygon
+          points={`${boundsX + width / 2},${boundsY} ${boundsX + width},${boundsY + height / 2} ${boundsX + width / 2},${boundsY + height} ${boundsX},${boundsY + height / 2}`}
+          fill={color}
+        />
+      );
+    } else if (shape === "rectangle") {
+      return (
+        <rect
+          x={boundsX}
+          y={boundsY}
+          width={width}
+          height={height}
+          rx={2}
+          fill={color}
+        />
+      );
+    } else {
+      return null;
     }
-
-    return (
-      <rect
-        x={boundsX}
-        y={boundsY}
-        width={width}
-        height={height}
-        rx={shape === "rounded" ? Math.min(width, height) / 2 : 2}
-        fill={color}
-      />
-    );
   }
 );
 
@@ -829,8 +839,8 @@ function DraggableFlowThread({
   );
 }
 
-function NewThreadCursor() {
-  const coords = useGlobalPointerPosition();
+function NewThreadCursor({ pointer }: { pointer: Point }) {
+  const position = usePointerPosition(pointer);
 
   return (
     <CommentPin
@@ -840,7 +850,7 @@ function NewThreadCursor() {
         position: "fixed",
         top: 0,
         left: 0,
-        transform: `translate(${coords.x}px, ${coords.y}px)`,
+        transform: `translate(${position.x}px, ${position.y}px)`,
         zIndex: 999999,
         pointerEvents: "none",
       }}
@@ -848,8 +858,14 @@ function NewThreadCursor() {
   );
 }
 
-function NewShapeCursor({ shape }: { shape: BlockShape }) {
-  const coords = useGlobalPointerPosition();
+function NewShapeCursor({
+  shape,
+  pointer,
+}: {
+  shape: BlockShape;
+  pointer: Point;
+}) {
+  const position = usePointerPosition(pointer);
 
   return (
     <div
@@ -858,7 +874,7 @@ function NewShapeCursor({ shape }: { shape: BlockShape }) {
         position: "fixed",
         top: 0,
         left: 0,
-        transform: `translate(${coords.x - DEFAULT_BLOCK_SIZE / 2}px, ${coords.y - DEFAULT_BLOCK_SIZE / 2}px)`,
+        transform: `translate(${position.x - DEFAULT_BLOCK_SIZE / 2}px, ${position.y - DEFAULT_BLOCK_SIZE / 2}px)`,
         zIndex: 999999,
         pointerEvents: "none",
         cursor: "none",
@@ -881,9 +897,11 @@ function PlaceThreadControl({
   return (
     <>
       {mode.kind === "placing-shape" ? (
-        <NewShapeCursor shape={mode.shape} />
+        <NewShapeCursor shape={mode.shape} pointer={mode.pointer} />
       ) : null}
-      {mode.kind === "placing-comment" ? <NewThreadCursor /> : null}
+      {mode.kind === "placing-comment" ? (
+        <NewThreadCursor pointer={mode.pointer} />
+      ) : null}
       {mode.kind === "composing-comment" ? (
         <ThreadComposer
           placement={mode.placement}
@@ -1082,22 +1100,24 @@ function FlowchartCanvasDnd({
 function ToolbarShapeItem({
   shape,
   onSelectForPlacement,
-  isActive,
 }: {
   shape: BlockShape;
-  onSelectForPlacement: (shape: BlockShape) => void;
-  isActive: boolean;
+  onSelectForPlacement: (shape: BlockShape, pointer: Point) => void;
 }) {
   return (
     <button
       type="button"
-      className="flowchart-toolbar-item flowchart-toolbar-item-shape"
-      data-active={isActive ? "" : undefined}
-      onClick={() => onSelectForPlacement(shape)}
-      title={`Place ${shape}`}
+      className="flowchart-toolbar-shape-button"
+      onClick={(event) =>
+        onSelectForPlacement(shape, {
+          x: event.clientX,
+          y: event.clientY,
+        })
+      }
+      title={capitalize(shape)}
+      aria-label={`Place ${shape}`}
     >
-      <ShapeIcon shape={shape} />
-      <span>{capitalize(shape)}</span>
+      <ToolbarBlockPreview shape={shape} />
     </button>
   );
 }
@@ -1108,9 +1128,13 @@ function FlowToolbar({
   onAddComment,
 }: {
   mode: PlacementMode;
-  onSelectShapeForPlacement: (shape: BlockShape) => void;
-  onAddComment: () => void;
+  onSelectShapeForPlacement: (shape: BlockShape, pointer: Point) => void;
+  onAddComment: (pointer: Point) => void;
 }) {
+  if (mode.kind !== "idle") {
+    return null;
+  }
+
   return (
     <div className="flowchart-toolbar">
       {BLOCK_SHAPES.map((shape) => (
@@ -1118,21 +1142,20 @@ function FlowToolbar({
           key={shape}
           shape={shape}
           onSelectForPlacement={onSelectShapeForPlacement}
-          isActive={mode.kind === "placing-shape" && mode.shape === shape}
         />
       ))}
-      <div className="flowchart-toolbar-separator" />
-      <button
-        type="button"
-        className="flowchart-toolbar-item flowchart-toolbar-item-comment"
+      <CommentPin
+        className="flowchart-toolbar-item-comment"
+        corner="top-left"
+        size={32}
         title="Add comment"
         aria-label="Add comment"
-        data-active={mode.kind === "placing-comment" ? "" : undefined}
-        onClick={onAddComment}
+        onClick={(event) =>
+          onAddComment({ x: event.clientX, y: event.clientY })
+        }
       >
-        <span className="flowchart-shape-icon">💬</span>
-        Comment
-      </button>
+        <Icon.Plus />
+      </CommentPin>
     </div>
   );
 }
@@ -1188,6 +1211,9 @@ function Flow({ className, ...props }: ComponentProps<"div">) {
     kind: "idle",
   });
   const isPlacing = placementMode.kind !== "idle";
+  const isPickingPlacement =
+    placementMode.kind === "placing-comment" ||
+    placementMode.kind === "placing-shape";
   const { threads } = useThreads();
   const roomId = useRoom().id;
   const editThreadMetadata = useEditThreadMetadata();
@@ -1282,6 +1308,10 @@ function Flow({ className, ...props }: ComponentProps<"div">) {
   const handleCanvasClickForPlacement = useCallback(
     (event: ReactMouseEvent) => {
       if (placementMode.kind === "idle") {
+        return;
+      }
+
+      if (placementMode.kind === "composing-comment") {
         return;
       }
 
@@ -1400,12 +1430,11 @@ function Flow({ className, ...props }: ComponentProps<"div">) {
 
   return (
     <div
-      className={clsx("relative w-full h-full", className)}
-      data-placing={isPlacing ? "true" : "false"}
+      className="flowchart-flow"
+      data-placing={isPickingPlacement ? "" : undefined}
       {...props}
     >
       <ReactFlow
-        className="flowchart"
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChangeWithThreadDetach}
@@ -1434,8 +1463,8 @@ function Flow({ className, ...props }: ComponentProps<"div">) {
         connectionLineType={ConnectionLineType.Step}
         panOnScroll
         panOnDrag={[1]}
-        elementsSelectable={!isPlacing}
-        selectionOnDrag={!isPlacing}
+        elementsSelectable={!isPickingPlacement}
+        selectionOnDrag={!isPickingPlacement}
         selectionMode={SelectionMode.Partial}
         fitView
         edgesReconnectable
@@ -1456,11 +1485,11 @@ function Flow({ className, ...props }: ComponentProps<"div">) {
           <Panel position="bottom-center">
             <FlowToolbar
               mode={placementMode}
-              onSelectShapeForPlacement={(shape) => {
-                setPlacementMode({ kind: "placing-shape", shape });
+              onSelectShapeForPlacement={(shape, pointer) => {
+                setPlacementMode({ kind: "placing-shape", shape, pointer });
               }}
-              onAddComment={() => {
-                setPlacementMode({ kind: "placing-comment" });
+              onAddComment={(pointer) => {
+                setPlacementMode({ kind: "placing-comment", pointer });
               }}
             />
           </Panel>
@@ -1472,12 +1501,6 @@ function Flow({ className, ...props }: ComponentProps<"div">) {
           <Panel position="top-left">
             <form className="flowchart-agent-panel" action={formAction}>
               <input type="hidden" name="roomId" value={roomId} />
-              <label
-                className="flowchart-agent-label"
-                htmlFor="flowchart-agent-prompt"
-              >
-                Flowchart AI
-              </label>
               <textarea
                 id="flowchart-agent-prompt"
                 name="prompt"
@@ -1519,21 +1542,17 @@ function Flow({ className, ...props }: ComponentProps<"div">) {
 
 export default function Page() {
   return (
-    <div className="relative h-screen w-screen flex flex-col bg-[#f7f9fb]">
+    <div className="flowchart">
       <RoomProvider id={EXAMPLES.flowchart.roomId}>
         <ReactFlowProvider>
           <ClientSideSuspense
             fallback={
-              <div className="flex-1 w-full h-full flex items-center justify-center">
-                <img
-                  src="https://liveblocks.io/loading.svg"
-                  alt="Loading"
-                  className="size-16 opacity-20"
-                />
+              <div className="flowchart-loading">
+                <img src="https://liveblocks.io/loading.svg" alt="Loading" />
               </div>
             }
           >
-            <Flow className="flex-1" />
+            <Flow />
           </ClientSideSuspense>
         </ReactFlowProvider>
       </RoomProvider>

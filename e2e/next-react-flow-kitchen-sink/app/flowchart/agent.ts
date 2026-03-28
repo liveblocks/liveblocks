@@ -199,8 +199,8 @@ async function runFlowchartAgent(roomId: string, prompt: string) {
           - Maintain readable spacing and avoid overlap.
           - Vary shape, color, and size only when it helps readability.
           - Delete nodes or edges only when the user clearly asks.
-          - Edge handles are chosen automatically from geometry.
-          - Moving a node automatically refreshes its connected edges.
+          - Edge handles should be chosen based on the layout of the source and target nodes.
+          - When moving a node, attached edges should be updated to reflect the new layout. For example, a "bottom" to "top" edge makes sense for two nodes that are above each other, but if they become side by side, the edge should be updated to a "right" to "left" edge.
         `,
         prompt: dedent`
           <diagram>
@@ -255,8 +255,7 @@ async function runFlowchartAgent(roomId: string, prompt: string) {
               }),
           }),
           updateNode: tool({
-            description:
-              "Update one node. Handles should be reconsidered after this to take into account the new layout.",
+            description: "Update one node.",
             inputSchema: z.object({
               ...idSchema.shape,
               ...nodeLayoutSchema.partial().shape,
@@ -377,8 +376,7 @@ async function runFlowchartAgent(roomId: string, prompt: string) {
               }),
           }),
           addEdge: tool({
-            description:
-              "Create one edge between two nodes. Handles should be chosen from the current layout.",
+            description: "Create one edge between two nodes.",
             inputSchema: z.object({
               ...idSchema.partial().shape,
               ...edgeDataSchema.partial().shape,
