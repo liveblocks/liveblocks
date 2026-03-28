@@ -6,7 +6,7 @@ import type {
   SyncMode,
   ToImmutable,
 } from "@liveblocks/core";
-import { LiveMap, LiveObject, reconcileLiveRoot } from "@liveblocks/core";
+import { LiveMap, LiveObject } from "@liveblocks/core";
 import { useHistory, useMutation, useStorage } from "@liveblocks/react";
 import {
   useInitial,
@@ -240,8 +240,7 @@ function applyNodeChanges<N extends Node>(
         const config = getNodeSyncConfig(change.item.type);
         const existing = nodes.get(change.item.id);
         if (existing) {
-          reconcileLiveRoot(
-            existing,
+          existing.reconcile(
             change.item as unknown as JsonObject,
             config
           );
@@ -349,8 +348,7 @@ function applyEdgeChanges<E extends Edge>(
         const config = getEdgeSyncConfig(change.item.type);
         const existing = edges.get(change.item.id);
         if (existing) {
-          reconcileLiveRoot(
-            existing,
+          existing.reconcile(
             change.item as unknown as JsonObject,
             config
           );

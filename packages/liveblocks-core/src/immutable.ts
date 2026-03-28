@@ -168,24 +168,6 @@ export function deepLiveifyObject(
   return deepLiveify(obj, config) as LiveObject<LsonObject>;
 }
 
-/**
- * Reconciles a LiveObject to match the given plain object. Only mutates keys
- * that actually changed. Recursively reconciles the entire Live tree below it.
- */
-export function reconcileLiveRoot<O extends LsonObject>(
-  liveObj: LiveObject<O>,
-  jsonObj: JsonObject,
-  config?: SyncConfig
-): void {
-  if (liveObj.immutableIs(jsonObj)) return;
-  if (!isPlainObject(jsonObj))
-    throw new Error(
-      "Reconciling the document root expects a plain object value"
-    );
-
-  reconcileLiveObject(liveObj, jsonObj, config);
-}
-
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
@@ -216,7 +198,7 @@ function reconcileLiveMap(
   // return liveMap;
 }
 
-function reconcileLiveObject<O extends LsonObject>(
+export function reconcileLiveObject<O extends LsonObject>(
   liveObj: LiveObject<O>,
   jsonObj: JsonObject,
   config?: SyncMode

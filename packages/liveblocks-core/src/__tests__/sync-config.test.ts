@@ -3,7 +3,7 @@ import { describe, expect, test } from "vitest";
 
 import { isLiveList, isLiveObject } from "../crdts/liveblocks-helpers";
 import type { SyncConfig } from "../immutable";
-import { deepLiveifyObject, reconcileLiveRoot } from "../immutable";
+import { deepLiveifyObject } from "../immutable";
 import type { Json, JsonObject } from "../lib/Json";
 
 function assertThat<T>(
@@ -138,7 +138,7 @@ describe("deepLiveifyObject with SyncConfig", () => {
   });
 });
 
-describe("reconcileLiveRoot with SyncConfig", () => {
+describe("LiveObject.reconcile with SyncConfig", () => {
   describe("false (local-only) keys", () => {
     test("updates local-only keys via setLocal during reconcile", () => {
       const config: SyncConfig = { selected: false };
@@ -147,7 +147,7 @@ describe("reconcileLiveRoot with SyncConfig", () => {
         config
       );
 
-      reconcileLiveRoot(lo, { id: "1", selected: false, label: "new" }, config);
+      lo.reconcile({ id: "1", selected: false, label: "new" }, config);
       expect(lo.get("selected")).toBe(false);
       expect(lo.get("label")).toBe("new");
     });
@@ -156,7 +156,7 @@ describe("reconcileLiveRoot with SyncConfig", () => {
       const config: SyncConfig = { local: false };
       const lo = deepLiveifyObject({ id: "1", local: "initial" }, config);
 
-      reconcileLiveRoot(lo, { id: "2" }, config);
+      lo.reconcile({ id: "2" }, config);
       expect(lo.get("local")).toBeUndefined();
       expect(lo.get("id")).toBe("2");
     });
@@ -167,7 +167,7 @@ describe("reconcileLiveRoot with SyncConfig", () => {
       const config: SyncConfig = { position: "atomic" };
       const lo = deepLiveifyObject({ position: { x: 0, y: 0 } }, config);
 
-      reconcileLiveRoot(lo, { position: { x: 10, y2: 20 } }, config);
+      lo.reconcile({ position: { x: 10, y2: 20 } }, config);
 
       // Should be replaced as plain Json, not a LiveObject
       const pos = lo.get("position");
@@ -184,7 +184,7 @@ describe("reconcileLiveRoot with SyncConfig", () => {
 
       // Even though position is already a plain object, reconcile should
       // replace it entirely rather than trying to diff sub-keys
-      reconcileLiveRoot(lo, { position: { x: 5, y: 5 }, label: "hi" }, config);
+      lo.reconcile({ position: { x: 5, y: 5 }, label: "hi" }, config);
       expect(lo.get("position")).toEqual({ x: 5, y: 5 });
     });
   });
@@ -199,8 +199,7 @@ describe("reconcileLiveRoot with SyncConfig", () => {
         config
       );
 
-      reconcileLiveRoot(
-        lo,
+      lo.reconcile(
         { data: { scratch: "changed", pos: { x: 99 }, label: "new" } },
         config
       );
@@ -226,8 +225,7 @@ describe("reconcileLiveRoot with SyncConfig", () => {
         config
       );
 
-      reconcileLiveRoot(
-        lo,
+      lo.reconcile(
         { x: "parent-local", data: { local: "b", x: { nested: false } } },
         config
       );
@@ -253,7 +251,7 @@ describe("reconcileLiveRoot with SyncConfig", () => {
         config
       );
 
-      reconcileLiveRoot(lo, { items: [{ local: "b", synced: "new" }] }, config);
+      lo.reconcile({ items: [{ local: "b", synced: "new" }] }, config);
 
       const items = lo.get("items");
       assertThat(items, isLiveList);
@@ -341,7 +339,7 @@ describe("property tests", () => {
     );
   });
 
-  test("reconcileLiveRoot(lo, obj, config).toImmutable() === obj for any config", () => {
+  test("lo.reconcile(obj, config).toImmutable() === obj for any config", () => {
     fc.assert(
       fc.property(
         fc
@@ -352,7 +350,7 @@ describe("property tests", () => {
             ]).map((config) => [lo, target, config] as const)
           ),
         ([lo, target, config]) => {
-          reconcileLiveRoot(lo, target, config);
+          lo.reconcile(target, config);
           expect(lo.toImmutable()).toEqual(target);
         }
       )

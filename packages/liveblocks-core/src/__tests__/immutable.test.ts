@@ -21,7 +21,6 @@ import {
   legacy_patchLiveObject,
   legacy_patchLiveObjectKey,
   lsonToJson,
-  reconcileLiveRoot,
 } from "../immutable";
 import { kInternal } from "../internal";
 import * as console from "../lib/fancy-console";
@@ -155,19 +154,19 @@ describe("immutableIs", () => {
 describe("reconcileLiveObject", () => {
   test("updates a changed scalar value", () => {
     const liveObj = new LiveObject({ a: 1, b: 2 });
-    reconcileLiveRoot(liveObj, { a: 1, b: 3 });
+    liveObj.reconcile({ a: 1, b: 3 });
     expect(liveObj.toImmutable()).toEqual({ a: 1, b: 3 });
   });
 
   test("adds a new key", () => {
     const liveObj = new LiveObject({ a: 1 });
-    reconcileLiveRoot(liveObj, { a: 1, b: "hello" });
+    liveObj.reconcile({ a: 1, b: "hello" });
     expect(liveObj.toImmutable()).toEqual({ a: 1, b: "hello" });
   });
 
   test("deletes a removed key", () => {
     const liveObj = new LiveObject({ a: 1, b: 2 });
-    reconcileLiveRoot(liveObj, { a: 1 });
+    liveObj.reconcile({ a: 1 });
     expect(liveObj.toImmutable()).toEqual({ a: 1 });
   });
 
@@ -175,7 +174,7 @@ describe("reconcileLiveObject", () => {
     const liveObj = new LiveObject({ a: 1, b: 2 });
     const before = liveObj.toImmutable();
 
-    reconcileLiveRoot(liveObj, { a: 1, b: 2 });
+    liveObj.reconcile({ a: 1, b: 2 });
     expect(liveObj.toImmutable()).toEqual({ a: 1, b: 2 });
 
     // Referentially identical when a no-op
@@ -186,7 +185,7 @@ describe("reconcileLiveObject", () => {
     const liveObj = new LiveObject<{ a: number; nested?: { x: number } }>({
       a: 1,
     });
-    reconcileLiveRoot(liveObj, { a: 1, nested: { x: 10 } });
+    liveObj.reconcile({ a: 1, nested: { x: 10 } });
     expect(liveObj.toImmutable()).toEqual({ a: 1, nested: { x: 10 } });
     expect(liveObj.get("nested")).toBeInstanceOf(LiveObject);
   });
@@ -196,7 +195,7 @@ describe("reconcileLiveObject", () => {
       nested: new LiveObject({ x: 1, y: 2 }),
     });
     const nestedBefore = liveObj.get("nested");
-    reconcileLiveRoot(liveObj, { nested: { x: 1, y: 99 } });
+    liveObj.reconcile({ nested: { x: 1, y: 99 } });
     expect(liveObj.toImmutable()).toEqual({ nested: { x: 1, y: 99 } });
     // Same LiveObject instance — reconciled in place, not replaced
     expect(liveObj.get("nested")).toBe(nestedBefore);
@@ -206,13 +205,13 @@ describe("reconcileLiveObject", () => {
     const liveObj = new LiveObject({
       val: new LiveObject({ x: 1 }),
     });
-    reconcileLiveRoot(liveObj, { val: 42 });
+    liveObj.reconcile({ val: 42 });
     expect(liveObj.toImmutable()).toEqual({ val: 42 });
   });
 
   test("deep-liveifies a new array as LiveList", () => {
     const liveObj = new LiveObject<{ a: number; items?: number[] }>({ a: 1 });
-    reconcileLiveRoot(liveObj, { a: 1, items: [1, 2, 3] });
+    liveObj.reconcile({ a: 1, items: [1, 2, 3] });
     expect(liveObj.toImmutable()).toEqual({ a: 1, items: [1, 2, 3] });
     expect(liveObj.get("items")).toBeInstanceOf(LiveList);
   });
@@ -222,7 +221,7 @@ describe("reconcileLiveObject", () => {
       items: new LiveList([1, 2, 3]),
     });
     const listBefore = liveObj.get("items");
-    reconcileLiveRoot(liveObj, { items: [1, 2, 4] });
+    liveObj.reconcile({ items: [1, 2, 4] });
     expect(liveObj.toImmutable()).toEqual({ items: [1, 2, 4] });
     // Same LiveList instance
     expect(liveObj.get("items")).toBe(listBefore);
@@ -232,7 +231,7 @@ describe("reconcileLiveObject", () => {
     const nested = new LiveObject({ x: 1, y: 2 });
     const liveObj = new LiveObject({ nested });
     const snapshot = nested.toImmutable();
-    reconcileLiveRoot(liveObj, { nested: snapshot });
+    liveObj.reconcile({ nested: snapshot });
     expect(liveObj.toImmutable()).toEqual({ nested: { x: 1, y: 2 } });
     expect(liveObj.get("nested")).toBe(nested);
   });
@@ -244,7 +243,7 @@ describe("reconcileLiveObject", () => {
       }),
     });
     const barBefore = liveObj.get("foo")?.get("bar");
-    reconcileLiveRoot(liveObj, {
+    liveObj.reconcile({
       foo: { bar: { qux: 123, other: "keep" } },
     });
     expect(liveObj.toImmutable()).toEqual({
@@ -258,7 +257,7 @@ describe("reconcileLiveObject", () => {
     const liveObj = new LiveObject({
       items: new LiveList([new LiveObject({ a: 1 })]),
     });
-    reconcileLiveRoot(liveObj, { items: [42] });
+    liveObj.reconcile({ items: [42] });
     expect(liveObj.toImmutable()).toEqual({ items: [42] });
   });
 
@@ -266,7 +265,7 @@ describe("reconcileLiveObject", () => {
     const liveObj = new LiveObject({
       items: new LiveList([1, 2]),
     });
-    reconcileLiveRoot(liveObj, { items: [1, 2, 3, 4] });
+    liveObj.reconcile({ items: [1, 2, 3, 4] });
     expect(liveObj.toImmutable()).toEqual({ items: [1, 2, 3, 4] });
   });
 
@@ -274,7 +273,7 @@ describe("reconcileLiveObject", () => {
     const liveObj = new LiveObject({
       items: new LiveList([1, 2, 3, 4]),
     });
-    reconcileLiveRoot(liveObj, { items: [1, 2] });
+    liveObj.reconcile({ items: [1, 2] });
     expect(liveObj.toImmutable()).toEqual({ items: [1, 2] });
   });
 
@@ -282,20 +281,20 @@ describe("reconcileLiveObject", () => {
     const liveObj = new LiveObject({
       val: new LiveList([1, 2]),
     });
-    reconcileLiveRoot(liveObj, { val: "hello" });
+    liveObj.reconcile({ val: "hello" });
     expect(liveObj.toImmutable()).toEqual({ val: "hello" });
   });
 
   test("replaces scalar with LiveObject when type changes", () => {
     const liveObj = new LiveObject({ val: 42 });
-    reconcileLiveRoot(liveObj, { val: { a: 1 } });
+    liveObj.reconcile({ val: { a: 1 } });
     expect(liveObj.toImmutable()).toEqual({ val: { a: 1 } });
     expect(liveObj.get("val")).toBeInstanceOf(LiveObject);
   });
 
   test("replaces scalar with LiveList when type changes", () => {
     const liveObj = new LiveObject({ val: 42 });
-    reconcileLiveRoot(liveObj, { val: [1, 2] });
+    liveObj.reconcile({ val: [1, 2] });
     expect(liveObj.toImmutable()).toEqual({ val: [1, 2] });
     expect(liveObj.get("val")).toBeInstanceOf(LiveList);
   });
@@ -304,7 +303,7 @@ describe("reconcileLiveObject", () => {
     const liveObj = new LiveObject({
       map: new LiveMap([["a", 1]]),
     });
-    expect(() => reconcileLiveRoot(liveObj, { map: { a: 2 } })).toThrow(
+    expect(() => liveObj.reconcile({ map: { a: 2 } })).toThrow(
       "LiveMap is not supported yet"
     );
   });
@@ -315,7 +314,7 @@ describe("reconcileLiveObject", () => {
         const liveObj = deepLiveifyObject(initial);
         expect(liveObj.toImmutable()).toEqual(initial);
 
-        reconcileLiveRoot(liveObj, target);
+        liveObj.reconcile(target);
         expect(liveObj.toImmutable()).toEqual(target);
       })
     );
@@ -333,7 +332,7 @@ describe("reconcileLiveObject", () => {
       },
     });
 
-    reconcileLiveRoot(rootA, { nested: { x: 1, y: 99 } });
+    rootA.reconcile({ nested: { x: 1, y: 99 } });
 
     await expectUpdates([
       [
@@ -352,7 +351,7 @@ describe("reconcileLiveObject", () => {
       data: { a: 1, b: 2 },
     });
 
-    reconcileLiveRoot(rootA, { a: 1, b: 2 });
+    rootA.reconcile({ a: 1, b: 2 });
 
     await expectUpdates([]);
   });
@@ -377,7 +376,7 @@ describe("reconcileLiveObject", () => {
       },
     });
 
-    reconcileLiveRoot(rootA, { foo: { bar: { qux: 123, keep: "same" } } });
+    rootA.reconcile({ foo: { bar: { qux: 123, keep: "same" } } });
 
     await expectUpdates([
       [

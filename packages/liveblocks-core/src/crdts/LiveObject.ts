@@ -1,5 +1,8 @@
 import type { LiveNode, Lson, LsonObject } from "../crdts/Lson";
+import type { SyncConfig } from "../immutable";
+import { reconcileLiveObject } from "../immutable";
 import { nn } from "../lib/assert";
+import { isPlainObject } from "../lib/guards";
 import type { Json, JsonObject } from "../lib/Json";
 import { nanoid } from "../lib/nanoid";
 import type { RemoveUndefinedValues } from "../lib/utils";
@@ -850,6 +853,20 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       updates: updateDelta,
     });
     this._pool.dispatch(ops, reverseOps, storageUpdates);
+  }
+
+  /**
+   * Reconciles a LiveObject tree to match the given JSON object and sync
+   * config. Only mutates keys that actually changed. Recursively reconciles
+   * the entire Live tree below it.
+   */
+  reconcile(jsonObj: JsonObject, config?: SyncConfig): void {
+    if (this.immutableIs(jsonObj)) return;
+    if (!isPlainObject(jsonObj))
+      throw new Error(
+        "Reconciling the document root expects a plain object value"
+      );
+    reconcileLiveObject<O>(this, jsonObj, config);
   }
 
   toImmutable(): ToImmutable<O> {
