@@ -79,6 +79,9 @@ type LiveblocksFlowSuspenseResult<
  *   converted to LiveObjects/LiveLists. Use this when clients always replace
  *   the value entirely and never need concurrent sub-key merging.
  *
+ * { ... }
+ *   A nested config object for recursively configuring sub-keys of an object.
+ *
  * @example
  * ```ts
  * const sync: SyncConfig = {
@@ -91,8 +94,10 @@ type LiveblocksFlowSuspenseResult<
  * };
  * ```
  */
+export type SyncMode = boolean | "atomic" | SyncConfig;
+
 export type SyncConfig = {
-  [key: string]: boolean | "atomic" | SyncConfig | undefined;
+  [key: string]: SyncMode | undefined;
 };
 
 type InferNodeTypeLiterals<N> =
