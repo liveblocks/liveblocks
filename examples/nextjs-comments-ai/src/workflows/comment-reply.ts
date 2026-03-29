@@ -41,80 +41,56 @@ export async function handleCommentReply(commentLocation: CommentLocation) {
       return { status: 200, body: "AI is not mentioned in the comment" };
     }
 
-    const [newComment, feed] = await Promise.all([
-      // Create a new comment which we'll temporarily replace with feed info
-      createComment({
-        ...commentLocation,
-        feedId,
-      }),
+    // Create a comment which works as placeholder for the AI response
+    // We'll replace it with custom UI
+    const placeholderComment = await createPlaceholderComment({
+      ...commentLocation,
+      feedId,
+    });
 
-      // Create a new feed which we'll use to stream "in progress" info
+    const [feed] = await Promise.all([
+      // Create a new feed which we'll use as an AI response comment
       createFeed({
         feedId,
-        ...commentLocation,
+        roomId: commentLocation.roomId,
+        threadId: commentLocation.threadId,
+        commentId: placeholderComment.id,
       }),
 
       // Show AI avatar in avatar stack
       showPresence(commentLocation),
     ]);
 
-    const [_, response] = await Promise.all([
+    const [response] = await Promise.all([
+      // Start generating an AI response
+      generateResponse(thread, comment),
+
       // Update the feed with "thinking" info
-      await createFeedMessage({
+      createFeedMessage({
         feedId: feed.feedId,
         stage: "thinking",
         roomId: commentLocation.roomId,
       }),
-
-      // Start generating an AI response
-      await generateResponse(thread, comment),
     ]);
 
     if (!response) {
       return { error: "Failed to generate response" };
     }
 
-    await Promise.all([
-      // Update the feed with "writing" info
-      createFeedMessage({
-        feedId: feed.feedId,
-        stage: "writing",
-        roomId: commentLocation.roomId,
-      }),
-
-      // Complete the comment with the AI response
-      await completeComment({
-        roomId: newComment.roomId,
-        threadId: newComment.threadId,
-        commentId: newComment.id,
-        body: response,
-      }),
-    ]);
-
-    // Comment written, feed is no longer needed
+    // Feed complete, add AI response
     await createFeedMessage({
       feedId: feed.feedId,
       stage: "complete",
       roomId: commentLocation.roomId,
-    }),
-      console.log(
-        "Workflow is complete! Run 'npx workflow web' to inspect your run"
-      );
+      response,
+    });
 
     return { status: 200, body: "AI replied to comment" };
   } catch (err) {
     return { status: 400, error: `${err}` };
   } finally {
-    await Promise.all([
-      // Feed no longer needed, the run is over
-      deleteFeed({
-        roomId: commentLocation.roomId,
-        feedId,
-      }),
-
-      // Hide AI avatar from avatar stack
-      hidePresence(commentLocation),
-    ]);
+    // Hide AI avatar from avatar stack
+    await hidePresence(commentLocation);
   }
 }
 
@@ -123,11 +99,14 @@ export async function handleCommentReply(commentLocation: CommentLocation) {
 
 async function createFeed({
   roomId,
+  threadId,
+  commentId,
   feedId,
-  ...commentLocation
-}: CommentLocation & {
+}: {
   roomId: string;
+  threadId: string;
   feedId: string;
+  commentId: string;
 }) {
   "use step";
 
@@ -135,7 +114,9 @@ async function createFeed({
     roomId,
     feedId,
     metadata: {
-      ...commentLocation,
+      type: "ai-comment-reply",
+      threadId,
+      commentId,
     },
   });
 }
@@ -144,30 +125,20 @@ async function createFeedMessage({
   feedId,
   stage,
   roomId,
+  response,
 }: {
   feedId: string;
   stage: Stage;
   roomId: string;
+  response?: string;
 }) {
   "use step";
 
   return await liveblocks.createFeedMessage({
     roomId,
     feedId,
-    data: { stage },
+    data: { stage, response },
   });
-}
-
-async function deleteFeed({
-  roomId,
-  feedId,
-}: {
-  roomId: string;
-  feedId: string;
-}) {
-  "use step";
-
-  return await liveblocks.deleteFeed({ roomId, feedId });
 }
 
 async function generateResponse(thread: ThreadData, comment: CommentData) {
@@ -251,7 +222,7 @@ async function isAiMentionedInComment(comment: CommentData) {
   return mentions.map((m) => m.id).includes(AI_USER_INFO.id);
 }
 
-async function createComment({
+async function createPlaceholderComment({
   roomId,
   threadId,
   feedId,
@@ -269,31 +240,11 @@ async function createComment({
       body: {
         version: 1,
         content: [
-          { type: "paragraph", children: [{ text: "Generating response..." }] },
+          {
+            type: "paragraph",
+            children: [{ text: "Placeholder for a feed" }],
+          },
         ],
-      },
-    },
-  });
-}
-
-async function completeComment({
-  roomId,
-  threadId,
-  commentId,
-  body,
-}: CommentLocation & {
-  body: string;
-}) {
-  "use step";
-
-  return await liveblocks.editComment({
-    roomId,
-    threadId,
-    commentId,
-    data: {
-      body: {
-        version: 1,
-        content: [{ type: "paragraph", children: [{ text: body }] }],
       },
     },
   });

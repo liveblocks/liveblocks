@@ -23,7 +23,7 @@ import { CommentData } from "@liveblocks/client";
 
 function Example() {
   const { threads } = useThreads();
-  const { feeds } = useFeeds();
+  const { feeds } = useFeeds({ metadata: { type: "ai-comment-reply" } });
 
   console.log(threads, feeds);
 
@@ -40,23 +40,19 @@ function Example() {
             className="thread"
             components={{
               Comment: ({ comment, ...props }) => {
-                const aiComment = comment.userId === AI_USER_INFO.id;
+                const feedId = comment.metadata.feedId;
 
-                const feed = feeds.find(
-                  (f) =>
-                    f.metadata.threadId === thread.id &&
-                    f.metadata.commentId === comment.id
-                );
-
-                console.log(aiComment, feed);
-
-                // In progress AI comment
-                if (aiComment && feed) {
-                  return <AiComment comment={comment} feed={feed} />;
+                if (feedId) {
+                  return (
+                    <ClientSideSuspense
+                      fallback={<Comment comment={comment}>Running…</Comment>}
+                    >
+                      <AiComment feedId={feedId} comment={comment} />
+                    </ClientSideSuspense>
+                  );
                 }
 
-                // Human comment or completed AI comment
-                return <Comment comment={comment} {...props} />;
+                return <Comment comment={comment} />;
               },
             }}
           />
@@ -67,13 +63,31 @@ function Example() {
   );
 }
 
-function AiComment({ feed, comment }: { feed: Feed; comment: CommentData }) {
-  const { messages } = useFeedMessages(feed.feedId);
+function AiComment({
+  feedId,
+  comment,
+}: {
+  feedId: string;
+  comment: CommentData;
+}) {
+  const { messages } = useFeedMessages(feedId);
   const lastMessage = messages[messages.length - 1];
 
   console.log(messages, lastMessage);
 
-  return <div>{lastMessage?.data.stage}</div>;
+  if (lastMessage?.data.stage === "thinking") {
+    return <Comment comment={comment}>Thinking…</Comment>;
+  }
+
+  if (lastMessage?.data.stage === "writing") {
+    return <Comment comment={comment}>Writing…</Comment>;
+  }
+
+  return (
+    <Comment comment={comment}>
+      <div className="lb-comment-body">{lastMessage?.data.response}</div>
+    </Comment>
+  );
 }
 
 export default function Page() {

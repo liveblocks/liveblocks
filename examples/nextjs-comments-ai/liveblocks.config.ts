@@ -11,14 +11,19 @@ declare global {
       };
     };
 
+    CommentMetadata: {
+      feedId?: string;
+    };
+
     FeedMetadata: {
-      roomId: string;
+      type: "ai-comment-reply";
       threadId: string;
       commentId: string;
     };
 
     FeedMessageData: {
       stage: "thinking" | "writing" | "complete";
+      response?: string;
     };
   }
 }
