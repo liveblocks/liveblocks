@@ -128,7 +128,7 @@ function StreamingComment({
   return (
     <Comment className="lb-thread-comment" comment={comment}>
       <details className="" open={open} onToggle={() => setOpen(!open)}>
-        <summary className="flex items-baseline cursor-pointer">
+        <summary className="flex items-baseline cursor-pointer mb-1">
           <span className="flex-shrink-0 mr-1">
             <BrainIcon />
           </span>
@@ -140,7 +140,9 @@ function StreamingComment({
             …{responsePart}
           </span>
         </summary>
-        <div className="lb-comment-body pt-2">{response}</div>
+        <div className="border border-gray-500/10 rounded-lg py-2.5 px-3 text-sm">
+          {response}
+        </div>
       </details>
     </Comment>
   );
@@ -162,7 +164,7 @@ function StreamedComment({
   return (
     <Comment className="lb-thread-comment" comment={comment}>
       <details className="" open={open} onToggle={() => setOpen(!open)}>
-        <summary className="flex items-baseline cursor-pointer mb-2">
+        <summary className="flex items-baseline cursor-pointer mb-1">
           <span className="opacity-50 text-sm">
             Thought for {Number(thinkingTime).toFixed(0)} seconds
           </span>
