@@ -6,14 +6,11 @@ import {
   ClientSideSuspense,
   RoomProvider,
   useThreads,
-  useFeeds,
-  useFeedMessages,
 } from "@liveblocks/react/suspense";
+import { useFeedMessages } from "@liveblocks/react";
 import { Loading } from "../components/Loading";
 import { AvatarStack, Composer, Thread, Comment } from "@liveblocks/react-ui";
-import { Feed } from "@liveblocks/core";
 import { ErrorBoundary } from "react-error-boundary";
-import { AI_USER_INFO } from "../database";
 import { CommentData } from "@liveblocks/client";
 
 /**
@@ -23,9 +20,6 @@ import { CommentData } from "@liveblocks/client";
 
 function Example() {
   const { threads } = useThreads();
-  const { feeds } = useFeeds({ metadata: { type: "ai-comment-reply" } });
-
-  console.log(threads, feeds);
 
   return (
     <>
@@ -43,13 +37,7 @@ function Example() {
                 const feedId = comment.metadata.feedId;
 
                 if (feedId) {
-                  return (
-                    <ClientSideSuspense
-                      fallback={<Comment comment={comment}>Running…</Comment>}
-                    >
-                      <AiComment feedId={feedId} comment={comment} />
-                    </ClientSideSuspense>
-                  );
+                  return <AiComment feedId={feedId} comment={comment} />;
                 }
 
                 return <Comment comment={comment} />;
@@ -71,22 +59,60 @@ function AiComment({
   comment: CommentData;
 }) {
   const { messages } = useFeedMessages(feedId);
-  const lastMessage = messages[messages.length - 1];
+  const lastMessage = messages?.[messages.length - 1];
 
-  console.log(messages, lastMessage);
-
-  if (lastMessage?.data.stage === "thinking") {
-    return <Comment comment={comment}>Thinking…</Comment>;
+  if (!messages || !lastMessage) {
+    return (
+      <Comment comment={comment}>
+        <Spinner /> Running…
+      </Comment>
+    );
   }
 
-  if (lastMessage?.data.stage === "writing") {
-    return <Comment comment={comment}>Writing…</Comment>;
+  if (lastMessage.data.stage === "thinking") {
+    return (
+      <Comment comment={comment}>
+        <Spinner /> Thinking…
+      </Comment>
+    );
+  }
+
+  if (lastMessage.data.stage === "writing") {
+    return (
+      <Comment comment={comment}>
+        <Spinner /> Writing…
+      </Comment>
+    );
   }
 
   return (
     <Comment comment={comment}>
       <div className="lb-comment-body">{lastMessage?.data.response}</div>
     </Comment>
+  );
+}
+
+function Spinner() {
+  return (
+    <svg
+      className="comments-ai-spinner"
+      xmlns="http://www.w3.org/2000/svg"
+      width={17}
+      height={17}
+      opacity={0.4}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M22 12a1 1 0 01-10 0 1 1 0 00-10 0" />
+      <path d="M7 20.7a1 1 0 115-8.7 1 1 0 105-8.6" />
+      <path d="M7 3.3a1 1 0 115 8.6 1 1 0 105 8.6" />
+      <circle cx={12} cy={12} r={10} />
+    </svg>
   );
 }
 

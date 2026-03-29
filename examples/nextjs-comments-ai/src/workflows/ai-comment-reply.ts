@@ -1,6 +1,5 @@
 import { AI_USER_INFO } from "@/database";
 import { getMentionsFromCommentBody, Liveblocks } from "@liveblocks/node";
-import { sleep } from "workflow";
 import { generateText } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import type { ThreadData, CommentData } from "@liveblocks/node";
@@ -19,7 +18,7 @@ const liveblocks = new Liveblocks({
 });
 
 // Main workflow
-export async function handleCommentReply(commentLocation: CommentLocation) {
+export async function handleAiCommentReply(commentLocation: CommentLocation) {
   "use workflow";
 
   const feedId = `comment-reply-${commentLocation.roomId}-${commentLocation.threadId}-${commentLocation.commentId}`;
@@ -85,12 +84,23 @@ export async function handleCommentReply(commentLocation: CommentLocation) {
       response,
     });
 
-    return { status: 200, body: "AI replied to comment" };
-  } catch (err) {
-    return { status: 400, error: `${err}` };
-  } finally {
+    // Add response to placeholder commnet, in case anyone uses
+    // comment APIs and wants to see AI responses in there
+    await updatePlaceholderComment({
+      ...commentLocation,
+      feedId,
+      response,
+    });
+
     // Hide AI avatar from avatar stack
     await hidePresence(commentLocation);
+
+    return { status: 200, body: "AI replied to comment" };
+  } catch (err) {
+    // Hide AI avatar from avatar stack
+    await hidePresence(commentLocation);
+
+    return { status: 400, error: `${err}` };
   }
 }
 
@@ -243,6 +253,36 @@ async function createPlaceholderComment({
           {
             type: "paragraph",
             children: [{ text: "Placeholder for a feed" }],
+          },
+        ],
+      },
+    },
+  });
+}
+
+async function updatePlaceholderComment({
+  roomId,
+  threadId,
+  feedId,
+  response,
+}: CommentLocation & {
+  feedId: string;
+  response: string;
+}) {
+  "use step";
+
+  return await liveblocks.editComment({
+    roomId,
+    threadId,
+    commentId: feedId,
+    data: {
+      metadata: { feedId },
+      body: {
+        version: 1,
+        content: [
+          {
+            type: "paragraph",
+            children: [{ text: response }],
           },
         ],
       },

@@ -1,5 +1,5 @@
 import { start } from "workflow/api";
-import { handleCommentReply } from "@/workflows/comment-reply";
+import { handleAiCommentReply } from "@/workflows/ai-comment-reply";
 import { NextResponse } from "next/server";
 import { WebhookHandler } from "@liveblocks/node";
 
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     const { roomId, threadId, commentId } = event.data;
 
     // Start AI workflow to reply to comment
-    await start(handleCommentReply, [{ roomId, threadId, commentId }]);
+    await start(handleAiCommentReply, [{ roomId, threadId, commentId }]);
 
     return NextResponse.json({
       message: "AI comment reply workflow started",

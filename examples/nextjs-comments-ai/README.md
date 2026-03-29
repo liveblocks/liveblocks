@@ -22,7 +22,7 @@
 
 This example shows how to build comments with an AI agent, powered by
 [Liveblocks](https://liveblocks.io), [Next.js](https://nextjs.org/), and
-[OpenAI](https://openai.com).
+[Anthropic](https://anthropic.com).
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/comments-ai.png" width="536" alt="Comments" />
 
@@ -51,15 +51,15 @@ You need to set up webhooks to make this example run.
 - Add your webhook secret key to `.env.local` as the
   `LIVEBLOCKS_WEBHOOK_SECRET_KEY` environment variable
 
-### Setting up OpenAI
+### Setting up Anthropic
 
-You need your own OpenAI API key to run the AI agent.
+You need your own Anthropic API key to run the AI agent.
 
-- Create an account on [OpenAI](https://openai.com)
+- Create an account on [Anthropic](https://anthropic.com)
 - Create a new API key from the
-  [OpenAI Dashboard](https://platform.openai.com/api-keys)
-- Add your OpenAI API key to `.env.local` as the `OPENAI_API_KEY` environment
-  variable
+  [Anthropic Dashboard](https://platform.claude.com/settings/keys)
+- Add your Anthropic API key to `.env.local` as the `ANTHROPIC_API_KEY`
+  environment variable
 
 ### Manual setup
 
