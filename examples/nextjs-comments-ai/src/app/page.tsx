@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   ClientSideSuspense,
@@ -14,7 +14,7 @@ import {
   Composer,
   Thread,
   Comment,
-  AiTool,
+  Icon,
 } from "@liveblocks/react-ui";
 import { ErrorBoundary } from "react-error-boundary";
 import { CommentData } from "@liveblocks/client";
@@ -71,40 +71,149 @@ function AiComment({
 
   if (!messages || !lastMessage) {
     return (
-      <Comment className="lb-thread-comment" comment={comment}>
-        <Brain /> <span className="lb-ai-chat-pending">Running…</span>
-      </Comment>
+      <StreamingComment
+        comment={comment}
+        title="Running…"
+        responsePart=""
+        response=""
+      />
     );
   }
 
   if (lastMessage.data.stage === "thinking") {
     return (
-      <Comment className="lb-thread-comment" comment={comment}>
-        <Brain /> <span className="lb-ai-chat-pending">Thinking…</span>
-      </Comment>
+      <StreamingComment
+        comment={comment}
+        title="Thinking…"
+        responsePart={lastMessage.data.responsePart}
+        response={lastMessage.data.response}
+      />
     );
   }
 
   if (lastMessage.data.stage === "writing") {
     return (
-      <Comment className="lb-thread-comment" comment={comment}>
-        <Brain /> <span className="lb-ai-chat-pending">Writing…</span>
-      </Comment>
+      <StreamingComment
+        comment={comment}
+        title="Writing…"
+        responsePart={lastMessage.data.responsePart}
+        response={lastMessage.data.response}
+      />
     );
   }
 
   return (
+    <StreamedComment
+      comment={comment}
+      reasoning={lastMessage.data.reasoning}
+      response={lastMessage.data.response}
+      thinkingTime={lastMessage.data.thinkingTime}
+    />
+  );
+}
+
+function StreamingComment({
+  comment,
+  title,
+  responsePart,
+  response,
+}: {
+  comment: CommentData;
+  title: string;
+  responsePart: string;
+  response: string;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
     <Comment className="lb-thread-comment" comment={comment}>
-      <div className="lb-comment-body">{lastMessage?.data.response}</div>
+      <details className="" open={open} onToggle={() => setOpen(!open)}>
+        <summary className="flex items-baseline cursor-pointer">
+          <span className="flex-shrink-0 mr-1">
+            <BrainIcon />
+          </span>
+          <span className="lb-ai-chat-pending">{title}</span>
+          <span className="flex-shrink-0 mx-1">
+            {open ? <ChevronIcon rotate /> : <ChevronIcon />}
+          </span>
+          <span className="lb-comment-body opacity-40 flex-shrink flex-grow text-sm truncate">
+            …{responsePart}
+          </span>
+        </summary>
+        <div className="lb-comment-body pt-2">{response}</div>
+      </details>
     </Comment>
   );
 }
 
-function Brain() {
+function StreamedComment({
+  comment,
+  reasoning,
+  response,
+  thinkingTime,
+}: {
+  comment: CommentData;
+  reasoning: string;
+  response: string;
+  thinkingTime: number;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Comment className="lb-thread-comment" comment={comment}>
+      <details className="" open={open} onToggle={() => setOpen(!open)}>
+        <summary className="flex items-baseline cursor-pointer mb-2">
+          <span className="opacity-50 text-sm">
+            Thought for {Number(thinkingTime).toFixed(0)} seconds
+          </span>
+          <span className="flex-shrink-0 mx-0.5 opacity-60">
+            {open ? (
+              <ChevronIcon rotate size={14} />
+            ) : (
+              <ChevronIcon size={14} />
+            )}
+          </span>
+        </summary>
+        <div className="lb-comment-body mb-3">
+          <div className="border border-gray-500/10 rounded-lg py-2.5 px-3 text-sm">
+            {reasoning}
+          </div>
+        </div>
+      </details>
+      <div className="lb-comment-body">{response}</div>
+    </Comment>
+  );
+}
+
+function ChevronIcon({
+  rotate = false,
+  size = 17,
+}: {
+  rotate?: boolean;
+  size?: number;
+}) {
+  return (
+    <svg
+      className={`relative top-0.5 ${rotate ? "rotate-180" : ""}`}
+      width={size}
+      height={size}
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      role="presentation"
+    >
+      <path d="M14.5 8.5 10 13 5.5 8.5"></path>
+    </svg>
+  );
+}
+
+function BrainIcon() {
   return (
     <svg
       className="comments-ai-spinner"
-      xmlns="http://www.w3.org/2000/svg"
       width={17}
       height={17}
       viewBox="0 0 24 24"

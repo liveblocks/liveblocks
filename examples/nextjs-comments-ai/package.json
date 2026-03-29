@@ -14,11 +14,14 @@
     "@liveblocks/node": "3.16.0-feeds1",
     "@liveblocks/react": "3.16.0-feeds1",
     "@liveblocks/react-ui": "3.16.0-feeds1",
+    "@tailwindcss/postcss": "^4.2.2",
     "ai": "^6.0.141",
     "next": "^16.1.6",
+    "postcss": "^8.5.8",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-error-boundary": "^4.0.13",
+    "tailwindcss": "^4.2.2",
     "workflow": "^4.2.0-beta.73"
   },
   "devDependencies": {

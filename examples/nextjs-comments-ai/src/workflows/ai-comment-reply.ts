@@ -1,7 +1,7 @@
 import { AI_USER_INFO } from "@/database";
 import { getMentionsFromCommentBody, Liveblocks } from "@liveblocks/node";
-import { generateText } from "ai";
-import { anthropic } from "@ai-sdk/anthropic";
+import { generateText, streamText } from "ai";
+import { anthropic, AnthropicLanguageModelOptions } from "@ai-sdk/anthropic";
 import type { ThreadData, CommentData } from "@liveblocks/node";
 import { stringifyCommentBody } from "@liveblocks/client";
 
@@ -60,29 +60,17 @@ export async function handleAiCommentReply(commentLocation: CommentLocation) {
       showPresence(commentLocation),
     ]);
 
-    const [response] = await Promise.all([
-      // Start generating an AI response
-      generateResponse(thread, comment),
-
-      // Update the feed with "thinking" info
-      createFeedMessage({
-        feedId: feed.feedId,
-        stage: "thinking",
-        roomId: commentLocation.roomId,
-      }),
-    ]);
+    // Stream an AI response in (also adds feed message updates)
+    const { response } = await streamResponse({
+      roomId: commentLocation.roomId,
+      feedId,
+      thread,
+      comment,
+    });
 
     if (!response) {
       return { error: "Failed to generate response" };
     }
-
-    // Feed complete, add AI response
-    await createFeedMessage({
-      feedId: feed.feedId,
-      stage: "complete",
-      roomId: commentLocation.roomId,
-      response,
-    });
 
     // Add response to placeholder commnet, in case anyone uses
     // comment APIs and wants to see AI responses in there
@@ -151,7 +139,17 @@ async function createFeedMessage({
   });
 }
 
-async function generateResponse(thread: ThreadData, comment: CommentData) {
+async function streamResponse({
+  roomId,
+  feedId,
+  thread,
+  comment,
+}: {
+  roomId: string;
+  feedId: string;
+  thread: ThreadData;
+  comment: CommentData;
+}) {
   "use step";
 
   const stringifiedThread = (
@@ -165,7 +163,7 @@ async function generateResponse(thread: ThreadData, comment: CommentData) {
     ? await stringifyCommentBody(comment.body)
     : "Deleted comment";
 
-  const prompt = `You are an assistant that helpfully responds to comments in a thread.
+  const prompt = `You are an assistant that helpfully responds to comments in a thread in plain text (NOT markdown).
     
 Here is the entire comment thread:
 """
@@ -177,15 +175,63 @@ You must respond to the following comment inside the thread:
 ${stringifiedComment}
 """
 
-Write your response in markdown now.
+Write your response in plain text now. You do NOT return markdown. Just text.
 `;
 
-  const { text } = await generateText({
+  const result = streamText({
     model: anthropic("claude-sonnet-4-5"),
     prompt,
+    providerOptions: {
+      anthropic: {
+        sendReasoning: true,
+        thinking: { type: "enabled", budgetTokens: 10000 },
+      } satisfies AnthropicLanguageModelOptions,
+    },
   });
 
-  return text;
+  let totalReasoning = "";
+  let totalText = "";
+  const thinkingStartedAt = performance.now();
+
+  for await (const part of result.fullStream) {
+    if (part.type === "reasoning-delta") {
+      totalReasoning += part.text;
+      liveblocks.createFeedMessage({
+        roomId,
+        feedId,
+        data: {
+          stage: "thinking",
+          responsePart: part.text,
+          response: totalReasoning,
+        },
+      });
+    } else if (part.type === "text-delta") {
+      totalText += part.text;
+      liveblocks.createFeedMessage({
+        roomId,
+        feedId,
+        data: {
+          stage: "writing",
+          responsePart: part.text,
+          response: totalText,
+        },
+      });
+    }
+  }
+  const thinkingEndedAt = performance.now();
+
+  await liveblocks.createFeedMessage({
+    roomId,
+    feedId,
+    data: {
+      stage: "complete",
+      response: totalText,
+      reasoning: totalReasoning,
+      thinkingTime: (thinkingEndedAt - thinkingStartedAt) / 1000,
+    },
+  });
+
+  return { response: totalText, reasoning: totalReasoning };
 }
 
 async function showPresence({ roomId }: CommentLocation) {

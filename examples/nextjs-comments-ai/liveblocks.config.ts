@@ -21,10 +21,23 @@ declare global {
       commentId: string;
     };
 
-    FeedMessageData: {
-      stage: "thinking" | "writing" | "complete";
-      response?: string;
-    };
+    FeedMessageData:
+      | {
+          stage: "thinking";
+          response: string;
+          responsePart: string;
+        }
+      | {
+          stage: "writing";
+          response: string;
+          responsePart: string;
+        }
+      | {
+          stage: "complete";
+          response: string;
+          reasoning: string;
+          thinkingTime: number;
+        };
   }
 }
 

@@ -37,6 +37,9 @@
       "showPresence": {
         "stepId": "step//./src/workflows/ai-comment-reply//showPresence"
       },
+      "streamResponse": {
+        "stepId": "step//./src/workflows/ai-comment-reply//streamResponse"
+      },
       "updatePlaceholderComment": {
         "stepId": "step//./src/workflows/ai-comment-reply//updatePlaceholderComment"
       }
