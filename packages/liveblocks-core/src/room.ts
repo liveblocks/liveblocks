@@ -270,6 +270,10 @@ export interface History {
    * // room.getPresence() equals { cursor: { x: 0, y: 0 } }
    */
   resume: () => void;
+
+  readonly [kInternal]: {
+    withoutHistory: <T>(fn: () => T) => T;
+  };
 }
 
 export type HistoryEvent = {
@@ -1741,22 +1745,20 @@ export function createRoom<
     const canWrite = self.get()?.canWrite ?? true;
 
     // Populate missing top-level keys using `initialStorage`
-    const stackSizeBefore = context.undoStack.length;
-    for (const key in context.initialStorage) {
-      if (context.root.get(key) === undefined) {
-        if (canWrite) {
-          context.root.set(key, cloneLson(context.initialStorage[key]));
-        } else {
-          console.warn(
-            `Attempted to populate missing storage key '${key}', but current user has no write access`
-          );
+    const root = context.root;
+    withoutHistory(() => {
+      for (const key in context.initialStorage) {
+        if (root.get(key) === undefined) {
+          if (canWrite) {
+            root.set(key, cloneLson(context.initialStorage[key]));
+          } else {
+            console.warn(
+              `Attempted to populate missing storage key '${key}', but current user has no write access`
+            );
+          }
         }
       }
-    }
-
-    // Initial storage is populated using normal "set" operations in the loop
-    // above, those updates can end up in the undo stack, so let's prune it.
-    context.undoStack.length = stackSizeBefore;
+    });
   }
 
   function _addToRealUndoStack(frames: Stackframe<P>[]) {
@@ -2698,6 +2700,17 @@ export function createRoom<
     }
   }
 
+  function withoutHistory<T>(fn: () => T): T {
+    const undoBefore = context.undoStack.length;
+    const redoBefore = context.redoStack.length;
+    try {
+      return fn();
+    } finally {
+      context.undoStack.length = undoBefore;
+      context.redoStack.length = redoBefore;
+    }
+  }
+
   // Register a global source of pending changes for Storage™, so that the
   // useSyncStatus() hook will be able to report this to end users
   const syncSourceForStorage = config.createSyncSource();
@@ -3124,6 +3137,9 @@ export function createRoom<
         clear,
         pause: pauseHistory,
         resume: resumeHistory,
+        [kInternal]: {
+          withoutHistory,
+        },
       },
 
       fetchYDoc,

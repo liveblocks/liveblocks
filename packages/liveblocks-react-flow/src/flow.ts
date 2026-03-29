@@ -6,7 +6,7 @@ import type {
   SyncMode,
   ToImmutable,
 } from "@liveblocks/core";
-import { LiveMap, LiveObject } from "@liveblocks/core";
+import { kInternal, LiveMap, LiveObject } from "@liveblocks/core";
 import { useHistory, useMutation, useStorage } from "@liveblocks/react";
 import {
   useInitial,
@@ -581,7 +581,7 @@ export function useLiveblocksFlow<
       // Similarly to `initialStorage` on `Client.enterRoom` and `RoomProvider`, we only
       // initialize Storage if it doesn't already exist.
       if (storage.get(frozenOptions.storageKey) !== undefined) {
-        return false;
+        return;
       }
 
       const initialNodes = frozenOptions.nodes?.initial ?? [];
@@ -596,22 +596,15 @@ export function useLiveblocksFlow<
           getEdgeSyncConfig
         )
       );
-
-      return true;
     },
     [frozenOptions, getNodeSyncConfig, getEdgeSyncConfig]
   );
 
   useEffect(() => {
-    if (!isStorageLoaded) {
-      return;
-    }
-
-    const hasInitializedStorage = setInitialStorage();
-
-    // If Storage was initialized, clear the history stack so that the initial state is not undoable.
-    if (hasInitializedStorage) {
-      history.clear();
+    if (isStorageLoaded) {
+      history[kInternal].withoutHistory(() => {
+        setInitialStorage();
+      });
     }
   }, [isStorageLoaded, setInitialStorage, history]);
 
