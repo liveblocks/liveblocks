@@ -12,50 +12,47 @@
         "stepId": "__builtin_response_text"
       }
     },
-    "src/workflows/comment-reply.ts": {
-      "completeComment": {
-        "stepId": "step//./src/workflows/comment-reply//completeComment"
-      },
-      "createComment": {
-        "stepId": "step//./src/workflows/comment-reply//createComment"
-      },
+    "src/workflows/ai-comment-reply.ts": {
       "createFeed": {
-        "stepId": "step//./src/workflows/comment-reply//createFeed"
+        "stepId": "step//./src/workflows/ai-comment-reply//createFeed"
       },
       "createFeedMessage": {
-        "stepId": "step//./src/workflows/comment-reply//createFeedMessage"
+        "stepId": "step//./src/workflows/ai-comment-reply//createFeedMessage"
       },
-      "deleteFeed": {
-        "stepId": "step//./src/workflows/comment-reply//deleteFeed"
+      "createPlaceholderComment": {
+        "stepId": "step//./src/workflows/ai-comment-reply//createPlaceholderComment"
       },
       "generateResponse": {
-        "stepId": "step//./src/workflows/comment-reply//generateResponse"
+        "stepId": "step//./src/workflows/ai-comment-reply//generateResponse"
       },
       "getThreadAndComment": {
-        "stepId": "step//./src/workflows/comment-reply//getThreadAndComment"
+        "stepId": "step//./src/workflows/ai-comment-reply//getThreadAndComment"
       },
       "hidePresence": {
-        "stepId": "step//./src/workflows/comment-reply//hidePresence"
+        "stepId": "step//./src/workflows/ai-comment-reply//hidePresence"
       },
       "isAiMentionedInComment": {
-        "stepId": "step//./src/workflows/comment-reply//isAiMentionedInComment"
+        "stepId": "step//./src/workflows/ai-comment-reply//isAiMentionedInComment"
       },
       "showPresence": {
-        "stepId": "step//./src/workflows/comment-reply//showPresence"
+        "stepId": "step//./src/workflows/ai-comment-reply//showPresence"
+      },
+      "updatePlaceholderComment": {
+        "stepId": "step//./src/workflows/ai-comment-reply//updatePlaceholderComment"
       }
     }
   },
   "workflows": {
-    "src/workflows/comment-reply.ts": {
-      "handleCommentReply": {
-        "workflowId": "workflow//./src/workflows/comment-reply//handleCommentReply",
+    "src/workflows/ai-comment-reply.ts": {
+      "handleAiCommentReply": {
+        "workflowId": "workflow//./src/workflows/ai-comment-reply//handleAiCommentReply",
         "graph": {
           "nodes": [
             {
               "id": "start",
               "type": "workflowStart",
               "data": {
-                "label": "Start: handleCommentReply",
+                "label": "Start: handleAiCommentReply",
                 "nodeKind": "workflow_start"
               }
             },

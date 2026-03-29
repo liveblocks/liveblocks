@@ -9,7 +9,13 @@ import {
 } from "@liveblocks/react/suspense";
 import { useFeedMessages } from "@liveblocks/react";
 import { Loading } from "../components/Loading";
-import { AvatarStack, Composer, Thread, Comment } from "@liveblocks/react-ui";
+import {
+  AvatarStack,
+  Composer,
+  Thread,
+  Comment,
+  AiTool,
+} from "@liveblocks/react-ui";
 import { ErrorBoundary } from "react-error-boundary";
 import { CommentData } from "@liveblocks/client";
 
@@ -40,7 +46,9 @@ function Example() {
                   return <AiComment feedId={feedId} comment={comment} />;
                 }
 
-                return <Comment comment={comment} />;
+                return (
+                  <Comment className="lb-thread-comment" comment={comment} />
+                );
               },
             }}
           />
@@ -63,55 +71,51 @@ function AiComment({
 
   if (!messages || !lastMessage) {
     return (
-      <Comment comment={comment}>
-        <Spinner /> Running…
+      <Comment className="lb-thread-comment" comment={comment}>
+        <Brain /> <span className="lb-ai-chat-pending">Running…</span>
       </Comment>
     );
   }
 
   if (lastMessage.data.stage === "thinking") {
     return (
-      <Comment comment={comment}>
-        <Spinner /> Thinking…
+      <Comment className="lb-thread-comment" comment={comment}>
+        <Brain /> <span className="lb-ai-chat-pending">Thinking…</span>
       </Comment>
     );
   }
 
   if (lastMessage.data.stage === "writing") {
     return (
-      <Comment comment={comment}>
-        <Spinner /> Writing…
+      <Comment className="lb-thread-comment" comment={comment}>
+        <Brain /> <span className="lb-ai-chat-pending">Writing…</span>
       </Comment>
     );
   }
 
   return (
-    <Comment comment={comment}>
+    <Comment className="lb-thread-comment" comment={comment}>
       <div className="lb-comment-body">{lastMessage?.data.response}</div>
     </Comment>
   );
 }
 
-function Spinner() {
+function Brain() {
   return (
     <svg
       className="comments-ai-spinner"
       xmlns="http://www.w3.org/2000/svg"
       width={17}
       height={17}
-      opacity={0.4}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={1.5}
+      strokeWidth={2}
       strokeLinecap="round"
       strokeLinejoin="round"
-      aria-hidden
     >
-      <path d="M22 12a1 1 0 01-10 0 1 1 0 00-10 0" />
-      <path d="M7 20.7a1 1 0 115-8.7 1 1 0 105-8.6" />
-      <path d="M7 3.3a1 1 0 115 8.6 1 1 0 105 8.6" />
-      <circle cx={12} cy={12} r={10} />
+      <path d="M12 18V5M15 13a4.17 4.17 0 01-3-4 4.17 4.17 0 01-3 4M17.598 6.5A3 3 0 1012 5a3 3 0 10-5.598 1.5M17.997 5.125a4 4 0 012.526 5.77M18 18a4 4 0 002-7.464" />
+      <path d="M19.967 17.483A4 4 0 1112 18a4 4 0 11-7.967-.517M6 18a4 4 0 01-2-7.464M6.003 5.125a4 4 0 00-2.526 5.77" />
     </svg>
   );
 }

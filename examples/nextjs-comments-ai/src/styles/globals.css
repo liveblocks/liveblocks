@@ -110,7 +110,8 @@ header {
 .comments-ai-spinner {
   display: inline-block;
   vertical-align: -0.2em;
-  animation: comments-ai-spinner-rotate 1s linear infinite;
+  opacity: 0.5;
+  /* animation: comments-ai-spinner-rotate 1s linear infinite; */
 }
 
 @media (prefers-reduced-motion: reduce) {
