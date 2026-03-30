@@ -63,6 +63,10 @@ const ColorSelectorNode = memo(
   }
 );
 
+const nodeTypes = {
+  selectorNode: ColorSelectorNode,
+};
+
 function Flow() {
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onDelete } =
     useLiveblocksFlow<Node<JsonObject> | ColorSelectorNode>({
@@ -121,9 +125,7 @@ function Flow() {
         onConnect={onConnect}
         onDelete={onDelete}
         style={{ background: color }}
-        nodeTypes={{
-          selectorNode: ColorSelectorNode,
-        }}
+        nodeTypes={nodeTypes}
         snapToGrid={true}
         snapGrid={DEFAULT_SNAP_GRID}
         defaultViewport={DEFAULT_VIEWPORT}

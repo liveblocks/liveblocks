@@ -1209,6 +1209,14 @@ function FlowCursor({ userId, connectionId }: CursorsCursorProps) {
   }
 }
 
+const nodeTypes = {
+  block: BlockNode,
+};
+
+const edgeTypes = {
+  [FLOWCHART_EDGE_TYPE]: FlowchartLabelEdge,
+};
+
 function Flow({ className, ...props }: ComponentProps<"div">) {
   const didReconnectRef = useRef(false);
   const reactFlow = useReactFlow<FlowchartNode, FlowchartEdge>();
@@ -1295,14 +1303,7 @@ function Flow({ className, ...props }: ComponentProps<"div">) {
     return () => {
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, [
-    placementMode.kind,
-    resetPlacementMode,
-    undo,
-    redo,
-    canUndo,
-    canRedo,
-  ]);
+  }, [placementMode.kind, resetPlacementMode, undo, redo, canUndo, canRedo]);
 
   const commitThreadPlacementAtScreenPoint = useCallback(
     (clientX: number, clientY: number) => {
@@ -1496,8 +1497,8 @@ function Flow({ className, ...props }: ComponentProps<"div">) {
           event.preventDefault();
           resetPlacementMode();
         }}
-        nodeTypes={{ block: BlockNode }}
-        edgeTypes={{ [FLOWCHART_EDGE_TYPE]: FlowchartLabelEdge }}
+        nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         defaultEdgeOptions={{
           type: FLOWCHART_EDGE_TYPE,
           markerEnd: {

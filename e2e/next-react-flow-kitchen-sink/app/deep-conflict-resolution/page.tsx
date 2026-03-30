@@ -303,6 +303,10 @@ const ShapeNodeView = memo(({ id, data }: NodeProps<ShapeNode>) => {
   );
 });
 
+const nodeTypes = {
+  shape: ShapeNodeView,
+};
+
 // ---------------------------------------------------------------------------
 // Initial data
 // ---------------------------------------------------------------------------
@@ -397,7 +401,7 @@ function Flow() {
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onDelete={onDelete}
-        nodeTypes={{ shape: ShapeNodeView }}
+        nodeTypes={nodeTypes}
         fitView
       >
         <Cursors />

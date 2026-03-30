@@ -257,6 +257,18 @@ function ButtonEdge({
   );
 }
 
+const nodeTypes = {
+  annotation: AnnotationNode,
+  tools: ToolbarNode,
+  resizer: ResizerNode,
+  circle: CircleNode,
+  textinput: TextInputNode,
+};
+
+const edgeTypes = {
+  button: ButtonEdge,
+};
+
 const INITIAL_NODES: FeatureOverviewNode[] = [
   {
     id: "annotation-1",
@@ -456,16 +468,8 @@ function Flow() {
         onDelete={onDelete}
         fitView
         attributionPosition="top-right"
-        nodeTypes={{
-          annotation: AnnotationNode,
-          tools: ToolbarNode,
-          resizer: ResizerNode,
-          circle: CircleNode,
-          textinput: TextInputNode,
-        }}
-        edgeTypes={{
-          button: ButtonEdge,
-        }}
+        nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
       >
         <Cursors />
         <MiniMap zoomable pannable nodeClassName={(node) => node.type ?? ""} />
