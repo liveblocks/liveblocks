@@ -293,7 +293,9 @@ so each client keeps their own selection and interaction state:
 - **Edges:** `selected`
 
 Everything else on nodes and edges (including `position`, `width` and `height`,
-`data`, handles, and edge endpoints) is synchronized through Storage.
+`data`, handles, and edge endpoints) is synchronized through Storage. If you want
+specific keys inside `node.data` or `edge.data` to stay local-only too, use the
+[sync config](#sync-config).
 
 ### Undo / Redo [#undo-redo]
 
