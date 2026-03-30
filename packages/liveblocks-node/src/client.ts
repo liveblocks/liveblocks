@@ -3437,7 +3437,7 @@ export class Liveblocks {
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
-    return ((await res.json()) as { data: Feed<FM> }).data;
+    return (await res.json()) as Feed<FM>;
   }
 
   /**
@@ -3460,7 +3460,7 @@ export class Liveblocks {
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
-    return ((await res.json()) as { data: Feed<FM> }).data;
+    return (await res.json()) as Feed<FM>;
   }
 
   /**
@@ -3469,14 +3469,15 @@ export class Liveblocks {
    * @param params.feedId The feed ID to update.
    * @param params.metadata The metadata for the feed.
    * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns The updated feed.
    */
-  public async updateFeed(
+  public async updateFeed<FM extends Json = DFM>(
     params: {
       roomId: string;
       feedId: string;
     } & UpdateFeedOptions,
     options?: RequestOptions
-  ): Promise<void> {
+  ): Promise<Feed<FM>> {
     const { roomId, feedId, metadata } = params;
     const res = await this.#patch(
       url`/v2/rooms/${roomId}/feeds/${feedId}`,
@@ -3486,6 +3487,7 @@ export class Liveblocks {
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
+    return (await res.json()) as Feed<FM>;
   }
 
   /**
@@ -3562,7 +3564,7 @@ export class Liveblocks {
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
-    return ((await res.json()) as { data: FeedMessage<FMD> }).data;
+    return (await res.json()) as FeedMessage<FMD>;
   }
 
   /**
@@ -3573,6 +3575,7 @@ export class Liveblocks {
    * @param params.data The message data.
    * @param params.updatedAt (optional) Update time in ms. Sent to the API as `timestamp`. If omitted, the server uses the current time.
    * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns The updated feed message.
    */
   public async updateFeedMessage<FMD extends Json = DFMD>(
     params: {
@@ -3581,7 +3584,7 @@ export class Liveblocks {
       messageId: string;
     } & UpdateFeedMessageOptions<FMD>,
     options?: RequestOptions
-  ): Promise<void> {
+  ): Promise<FeedMessage<FMD>> {
     const { roomId, feedId, messageId, data, updatedAt } = params;
     const res = await this.#patch(
       url`/v2/rooms/${roomId}/feeds/${feedId}/messages/${messageId}`,
@@ -3594,6 +3597,7 @@ export class Liveblocks {
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
+    return (await res.json()) as FeedMessage<FMD>;
   }
 
   /**

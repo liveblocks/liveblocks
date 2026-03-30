@@ -4833,7 +4833,7 @@ describe("client", () => {
         test("should create a feed", async () => {
           server.use(
             http.post(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds`, () => {
-              return HttpResponse.json({ data: feed }, { status: 200 });
+              return HttpResponse.json(feed, { status: 200 });
             })
           );
 
@@ -4850,7 +4850,7 @@ describe("client", () => {
         test("should create a feed without metadata", async () => {
           server.use(
             http.post(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds`, () => {
-              return HttpResponse.json({ data: feed }, { status: 200 });
+              return HttpResponse.json(feed, { status: 200 });
             })
           );
 
@@ -4873,7 +4873,7 @@ describe("client", () => {
                   metadata: { key: "value" },
                   timestamp: 99_000,
                 });
-                return HttpResponse.json({ data: feed }, { status: 200 });
+                return HttpResponse.json(feed, { status: 200 });
               }
             )
           );
@@ -4894,7 +4894,7 @@ describe("client", () => {
             http.get(
               `${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds/:feedId`,
               () => {
-                return HttpResponse.json({ data: feed }, { status: 200 });
+                return HttpResponse.json(feed, { status: 200 });
               }
             )
           );
@@ -4910,12 +4910,16 @@ describe("client", () => {
       });
 
       describe("updateFeed", () => {
-        test("should update feed metadata", async () => {
+        test("should update feed metadata and return the updated feed", async () => {
+          const updatedFeed = {
+            ...feed,
+            metadata: { updated: "metadata" },
+          };
           server.use(
             http.patch(
               `${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds/:feedId`,
               () => {
-                return HttpResponse.json({ ok: true }, { status: 200 });
+                return HttpResponse.json(updatedFeed, { status: 200 });
               }
             )
           );
@@ -4927,7 +4931,7 @@ describe("client", () => {
               feedId: "feed_123",
               metadata: { updated: "metadata" },
             })
-          ).resolves.toBeUndefined();
+          ).resolves.toEqual(updatedFeed);
         });
       });
 
@@ -4982,10 +4986,7 @@ describe("client", () => {
             http.post(
               `${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds/:feedId/messages`,
               () => {
-                return HttpResponse.json(
-                  { data: feedMessage },
-                  { status: 200 }
-                );
+                return HttpResponse.json(feedMessage, { status: 200 });
               }
             )
           );
@@ -5010,10 +5011,7 @@ describe("client", () => {
                   id: "msg_123",
                   timestamp: 1234567890,
                 });
-                return HttpResponse.json(
-                  { data: feedMessage },
-                  { status: 200 }
-                );
+                return HttpResponse.json(feedMessage, { status: 200 });
               }
             )
           );
@@ -5032,12 +5030,17 @@ describe("client", () => {
       });
 
       describe("updateFeedMessage", () => {
-        test("should update a feed message", async () => {
+        test("should update a feed message and return the updated message", async () => {
+          const updatedMessage = {
+            ...feedMessage,
+            data: { content: "Updated" },
+            updatedAt: 1234567891,
+          };
           server.use(
             http.patch(
               `${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds/:feedId/messages/:messageId`,
               () => {
-                return HttpResponse.json({ ok: true }, { status: 200 });
+                return HttpResponse.json(updatedMessage, { status: 200 });
               }
             )
           );
@@ -5050,10 +5053,15 @@ describe("client", () => {
               messageId: "msg_123",
               data: { content: "Updated" },
             })
-          ).resolves.toBeUndefined();
+          ).resolves.toEqual(updatedMessage);
         });
 
         test("should send updatedAt as timestamp in the request body", async () => {
+          const updatedMessage = {
+            ...feedMessage,
+            data: { content: "Updated" },
+            updatedAt: 42_000,
+          };
           server.use(
             http.patch(
               `${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds/:feedId/messages/:messageId`,
@@ -5062,19 +5070,21 @@ describe("client", () => {
                   data: { content: "Updated" },
                   timestamp: 42_000,
                 });
-                return HttpResponse.json({ ok: true }, { status: 200 });
+                return HttpResponse.json(updatedMessage, { status: 200 });
               }
             )
           );
 
           const client = new Liveblocks({ secret: "sk_xxx" });
-          await client.updateFeedMessage({
-            roomId: "room_123",
-            feedId: "feed_123",
-            messageId: "msg_123",
-            data: { content: "Updated" },
-            updatedAt: 42_000,
-          });
+          await expect(
+            client.updateFeedMessage({
+              roomId: "room_123",
+              feedId: "feed_123",
+              messageId: "msg_123",
+              data: { content: "Updated" },
+              updatedAt: 42_000,
+            })
+          ).resolves.toEqual(updatedMessage);
         });
       });
 
