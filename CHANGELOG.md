@@ -1,5 +1,7 @@
 ## vNEXT (not yet released)
 
+## v3.16.0
+
 ### `@liveblocks/chat-sdk-adapter`
 
 - Introduce the package. Install with
@@ -8,10 +10,6 @@
   backed by Liveblocks Comments: webhooks, posting and editing messages,
   reactions, paginated fetches, thread and channel helpers, and optional
   `resolveUsers` / `resolveGroupsInfo` hooks.
-
-## v3.16.0
-
-...
 
 ## v3.15.5
 
