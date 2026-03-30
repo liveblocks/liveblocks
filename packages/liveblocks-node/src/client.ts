@@ -3424,7 +3424,7 @@ export class Liveblocks {
   ): Promise<Feed<FM>> {
     const { roomId, feedId, metadata, createdAt } = params;
     const res = await this.#post(
-      url`/v2/rooms/${roomId}/feed`,
+      url`/v2/rooms/${roomId}/feeds`,
       {
         feedId,
         ...(metadata !== undefined ? { metadata } : {}),

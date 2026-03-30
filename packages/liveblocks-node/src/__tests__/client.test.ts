@@ -4832,7 +4832,7 @@ describe("client", () => {
       describe("createFeed", () => {
         test("should create a feed", async () => {
           server.use(
-            http.post(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/feed`, () => {
+            http.post(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds`, () => {
               return HttpResponse.json({ data: feed }, { status: 200 });
             })
           );
@@ -4849,7 +4849,7 @@ describe("client", () => {
 
         test("should create a feed without metadata", async () => {
           server.use(
-            http.post(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/feed`, () => {
+            http.post(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds`, () => {
               return HttpResponse.json({ data: feed }, { status: 200 });
             })
           );
@@ -4866,7 +4866,7 @@ describe("client", () => {
         test("should send createdAt as timestamp in the request body", async () => {
           server.use(
             http.post(
-              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/feed`,
+              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds`,
               async ({ request }) => {
                 expect(await request.json()).toEqual({
                   feedId: "feed_123",
