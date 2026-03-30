@@ -1,10 +1,10 @@
 import * as fc from "fast-check";
 import { describe, expect, test } from "vitest";
 
+import { json, jsonObject, key } from "../crdts/__tests__/_arbitraries";
 import { isLiveList, isLiveObject } from "../crdts/liveblocks-helpers";
 import { LiveObject } from "../crdts/LiveObject";
 import type { SyncConfig } from "../immutable";
-import type { Json, JsonObject } from "../lib/Json";
 
 function assertThat<T>(
   value: unknown,
@@ -386,26 +386,13 @@ describe("LiveObject.reconcile with SyncConfig", () => {
 // Property tests
 // ---------------------------------------------------------------------------
 
-/** Arbitrary for a plain JsonObject (no __proto__ keys, at any depth). */
-const jsonValue = fc
-  .jsonValue()
-  .filter((x) => !JSON.stringify(x).includes("__proto__"))
-  .map((x) => JSON.parse(JSON.stringify(x)) as Json);
-
-const jsonObject: fc.Arbitrary<JsonObject> = fc.dictionary(
-  fc.string().filter((s) => s !== "__proto__"),
-  jsonValue
-);
 
 /** Arbitrary for a LiveObject created from a random JsonObject, with some random local-only keys. */
 const liveObject = fc
   .tuple(
     jsonObject,
     fc.array(
-      fc.tuple(
-        fc.string().filter((s) => s !== "__proto__"),
-        jsonValue
-      ),
+      fc.tuple(key, json),
       { maxLength: 5 }
     )
   )

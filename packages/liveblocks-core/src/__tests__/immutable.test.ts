@@ -10,6 +10,7 @@ import {
   vi,
 } from "vitest";
 
+import { jsonObject } from "../crdts/__tests__/_arbitraries";
 import { LiveList } from "../crdts/LiveList";
 import { LiveMap } from "../crdts/LiveMap";
 import { LiveObject } from "../crdts/LiveObject";
@@ -23,7 +24,7 @@ import {
 } from "../immutable";
 import { kInternal } from "../internal";
 import * as console from "../lib/fancy-console";
-import type { Json, JsonObject } from "../lib/Json";
+import type { JsonObject } from "../lib/Json";
 import type { PlainLsonObject } from "../types/PlainLson";
 import {
   enterConnectAndGetStorage,
@@ -119,10 +120,6 @@ function applyStateChanges<TState extends JsonObject>(
   return { oldState, newState };
 }
 
-const jsonObject = fc.dictionary(
-  fc.string().filter((s) => s !== "__proto__"),
-  fc.jsonValue().map((x) => JSON.parse(JSON.stringify(x)) as Json)
-);
 
 describe("immutableIs", () => {
   test("returns true when cached immutable matches the provided value", () => {
