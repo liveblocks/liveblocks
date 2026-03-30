@@ -1,5 +1,7 @@
 import type {
-  DistributiveOmit,
+  Json,
+  JsonScalar,
+  LiveList,
   LiveMap,
   LiveObject,
   Lson,
@@ -8,33 +10,11 @@ import type {
   SyncMode,
 } from "@liveblocks/core";
 import type { BuiltInEdge, BuiltInNode, Edge, Node } from "@xyflow/react";
+import type { CSSProperties } from "react";
 
 import type { EDGE_BASE_CONFIG, NODE_BASE_CONFIG } from "./constants";
 
 export type { SyncConfig, SyncMode };
-
-// XXX The public types should reflect the runtime behaviors (deep-livefied, local-only, atomic, etc.)
-// XXX The internal types can stay simpler (only focus on the root and not `data`), but should still ideally be derived from NODE_BASE_CONFIG and EDGE_BASE_CONFIG.
-
-export type InternalLiveblocksNode = LiveObject<{
-  [K in keyof Node]: K extends keyof typeof NODE_BASE_CONFIG
-    ? Node[K]
-    : K extends "data"
-      ? LiveObject<LsonObject>
-      : Lson; // XXX Replace this by ToLson<Node[K]> once we have it
-}>;
-export type InternalLiveblocksEdge = LiveObject<{
-  [K in keyof Edge]: K extends keyof typeof EDGE_BASE_CONFIG
-    ? Edge[K]
-    : K extends "data"
-      ? LiveObject<LsonObject>
-      : Lson; // XXX Replace this by ToLson<Node[K]> once we have it
-}>;
-
-export type InternalLiveblocksFlow = LiveObject<{
-  nodes: LiveMap<string, InternalLiveblocksNode>;
-  edges: LiveMap<string, InternalLiveblocksEdge>;
-}>;
 
 type InferNodeTypeLiterals<N> =
   N extends Node<any, infer T extends string>
@@ -68,23 +48,103 @@ export type EdgeSyncConfig<E extends Edge> = {
   [key in EdgeTypeLiterals<E>]?: SyncConfig;
 };
 
+type ToLsonProperty<V, S extends SyncMode> = undefined extends V
+  ? ToLson<Exclude<V, undefined>, S> | undefined
+  : ToLson<V, S>;
+
+type SyncedKeysFor<K, S extends SyncMode> = S extends SyncConfig
+  ? K extends keyof S
+    ? S[K] extends false
+      ? never
+      : K
+    : K
+  : K;
+
+type SyncModeFor<K, S extends SyncMode> = S extends SyncConfig
+  ? K extends keyof S
+    ? S[K] extends SyncMode
+      ? S[K]
+      : true
+    : true
+  : S;
+
+type ToLson<T, S extends SyncMode = true> = [S] extends [false]
+  ? T
+  : [S] extends ["atomic"]
+    ? Json
+    : T extends JsonScalar
+      ? T
+      : T extends
+            | Date
+            | RegExp
+            | Function // eslint-disable-line @typescript-eslint/ban-types
+            | Promise<any>
+            | WeakMap<any, any>
+            | WeakSet<any>
+            | Map<any, any>
+            | Set<any>
+        ? never
+        : T extends ReadonlyArray<infer E>
+          ? LiveList<ToLson<E, S> & Lson>
+          : T extends CSSProperties
+            ? LiveObject<CSSProperties & LsonObject>
+            : T extends object
+              ? LiveObject<
+                  {
+                    [K in keyof T as SyncedKeysFor<K, S>]: ToLsonProperty<
+                      T[K],
+                      SyncModeFor<K, S>
+                    >;
+                  } & LsonObject
+                >
+              : never;
+
+type ToLiveElement<Base, BaseConfig, Concrete, Data> = LiveObject<
+  {
+    [K in keyof Base]: K extends keyof BaseConfig
+      ? BaseConfig[K & keyof BaseConfig] extends "atomic" | false
+        ? Json
+        : Concrete[K & keyof Concrete]
+      : K extends "data"
+        ? Data
+        : ToLson<Base[K]>;
+  } & LsonObject
+>;
+
+export type InternalLiveblocksNode = ToLiveElement<
+  Node,
+  typeof NODE_BASE_CONFIG,
+  Node,
+  LiveObject<LsonObject>
+>;
+
+export type InternalLiveblocksEdge = ToLiveElement<
+  Edge,
+  typeof EDGE_BASE_CONFIG,
+  Edge,
+  LiveObject<LsonObject>
+>;
+
+export type InternalLiveblocksFlow = LiveObject<{
+  nodes: LiveMap<string, InternalLiveblocksNode>;
+  edges: LiveMap<string, InternalLiveblocksEdge>;
+}>;
+
 /**
  * The Liveblocks Storage representation of a React Flow `Node`.
  */
 export type LiveblocksNode<
   N extends Node = BuiltInNode,
-  _S extends NodeSyncConfig<N> = NodeSyncConfig<N>,
-> = LiveObject<DistributiveOmit<N, "data"> & { data: LsonObject } & LsonObject>;
+  S extends SyncConfig = SyncConfig,
+> = ToLiveElement<Node, typeof NODE_BASE_CONFIG, N, ToLson<N["data"], S>>;
 
 /**
  * The Liveblocks Storage representation of a React Flow `Edge`.
  */
 export type LiveblocksEdge<
   E extends Edge = BuiltInEdge,
-  _S extends EdgeSyncConfig<E> = EdgeSyncConfig<E>,
-> = LiveObject<
-  DistributiveOmit<E, "data"> & { data?: LsonObject } & LsonObject
->;
+  S extends SyncConfig = SyncConfig,
+> = ToLiveElement<Edge, typeof EDGE_BASE_CONFIG, E, ToLson<E["data"], S>>;
 
 /**
  * The Liveblocks Storage representation of a React Flow diagram made of nodes and edges.
@@ -92,8 +152,8 @@ export type LiveblocksEdge<
 export type LiveblocksFlow<
   N extends Node = BuiltInNode,
   E extends Edge = BuiltInEdge,
-  NS extends NodeSyncConfig<N> = NodeSyncConfig<N>,
-  ES extends EdgeSyncConfig<E> = EdgeSyncConfig<E>,
+  NS extends SyncConfig = SyncConfig,
+  ES extends SyncConfig = SyncConfig,
 > = LiveObject<{
   nodes: LiveMap<string, LiveblocksNode<N, NS>>;
   edges: LiveMap<string, LiveblocksEdge<E, ES>>;

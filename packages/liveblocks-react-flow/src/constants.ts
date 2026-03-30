@@ -28,6 +28,7 @@ export const EDGE_BASE_CONFIG = {
   // Atomic (synced as plain Json)
   markerStart: "atomic",
   markerEnd: "atomic",
+  label: "atomic",
 
   // Note: the `data` key is intentionally left out of this base config, as it
   // is expected to be provided by the end user
