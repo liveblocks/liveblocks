@@ -856,9 +856,25 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   }
 
   /**
+   * Creates a new LiveObject from a plain JSON object, recursively converting
+   * nested objects to LiveObjects and arrays to LiveLists. An optional
+   * SyncConfig controls per-key behavior (local-only, atomic, or deep).
+   *
+   * @private
+   */
+  static from(obj: JsonObject, config?: SyncConfig): LiveObject<LsonObject> {
+    if (!isPlainObject(obj)) throw new Error("Expected a JSON object");
+    const liveObj = new LiveObject<LsonObject>({});
+    liveObj.reconcile(obj, config);
+    return liveObj;
+  }
+
+  /**
    * Reconciles a LiveObject tree to match the given JSON object and sync
    * config. Only mutates keys that actually changed. Recursively reconciles
    * the entire Live tree below it.
+   *
+   * @private
    */
   reconcile(jsonObj: JsonObject, config?: SyncConfig): void {
     if (this.immutableIs(jsonObj)) return;

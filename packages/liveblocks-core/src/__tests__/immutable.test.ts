@@ -16,7 +16,6 @@ import { LiveObject } from "../crdts/LiveObject";
 import type { LsonObject, ToJson } from "../crdts/Lson";
 import type { StorageUpdate } from "../crdts/StorageUpdates";
 import {
-  deepLiveifyObject,
   legacy_patchImmutableObject,
   legacy_patchLiveObject,
   legacy_patchLiveObjectKey,

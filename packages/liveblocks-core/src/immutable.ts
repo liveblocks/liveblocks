@@ -157,17 +157,6 @@ function deepLiveify(value: Json, config?: SyncMode): Lson {
   }
 }
 
-/**
- * Recursively converts all nested plain objects to LiveObjects and all nested
- * arrays to LiveLists. Expects a plain object at the top level.
- */
-export function deepLiveifyObject(
-  obj: JsonObject,
-  config?: SyncConfig
-): LiveObject<LsonObject> {
-  return deepLiveify(obj, config) as LiveObject<LsonObject>;
-}
-
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------

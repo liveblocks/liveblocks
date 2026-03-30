@@ -2,8 +2,8 @@ import * as fc from "fast-check";
 import { describe, expect, test } from "vitest";
 
 import { isLiveList, isLiveObject } from "../crdts/liveblocks-helpers";
+import { LiveObject } from "../crdts/LiveObject";
 import type { SyncConfig } from "../immutable";
-import { deepLiveifyObject } from "../immutable";
 import type { Json, JsonObject } from "../lib/Json";
 
 function assertThat<T>(
@@ -13,11 +13,11 @@ function assertThat<T>(
   expect(guard(value)).toBe(true);
 }
 
-describe("deepLiveifyObject with SyncConfig", () => {
+describe("LiveObject.from() with SyncConfig", () => {
   describe("false (local-only) keys", () => {
     test("sets scalar key marked false via setLocal", () => {
       const config: SyncConfig = { local: false };
-      const result = deepLiveifyObject(
+      const result = LiveObject.from(
         { local: "local only", synced: "synced value" },
         config
       );
@@ -28,7 +28,7 @@ describe("deepLiveifyObject with SyncConfig", () => {
 
     test("sets object-valued key marked false via setLocal", () => {
       const config: SyncConfig = { scratch: false };
-      const result = deepLiveifyObject(
+      const result = LiveObject.from(
         { scratch: { deep: "nope" }, synced: "synced value" },
         config
       );
@@ -41,7 +41,7 @@ describe("deepLiveifyObject with SyncConfig", () => {
   describe('"atomic" keys', () => {
     test("stores object value as plain Json (no LiveObject wrapping)", () => {
       const config: SyncConfig = { pos1: "atomic" };
-      const result = deepLiveifyObject(
+      const result = LiveObject.from(
         { pos1: { x: 10, y: 20 }, pos2: { x: 50, y: 60 } },
         config
       );
@@ -56,7 +56,7 @@ describe("deepLiveifyObject with SyncConfig", () => {
 
     test("stores array value as plain Json (no LiveList wrapping)", () => {
       const config: SyncConfig = { handles: "atomic" };
-      const result = deepLiveifyObject(
+      const result = LiveObject.from(
         { handles: [1, 2, 3], other: [4, 5] },
         config
       );
@@ -73,7 +73,7 @@ describe("deepLiveifyObject with SyncConfig", () => {
   describe("true keys (explicit deep)", () => {
     test("true behaves identically to absent (deep liveify)", () => {
       const config: SyncConfig = { data: true };
-      const result = deepLiveifyObject({ data: { nested: [1] } }, config);
+      const result = LiveObject.from({ data: { nested: [1] } }, config);
 
       assertThat(result.get("data"), isLiveObject);
     });
@@ -84,7 +84,7 @@ describe("deepLiveifyObject with SyncConfig", () => {
       const config: SyncConfig = {
         nested: { scratch: false, position: "atomic" },
       };
-      const result = deepLiveifyObject(
+      const result = LiveObject.from(
         { nested: { scratch: "local", position: { x: 1 }, label: "hi" } },
         config
       );
@@ -101,7 +101,7 @@ describe("deepLiveifyObject with SyncConfig", () => {
       const config: SyncConfig = {
         items: { local: false },
       };
-      const result = deepLiveifyObject(
+      const result = LiveObject.from(
         { items: [{ local: "local only", synced: "synced value" }] },
         config
       );
@@ -124,13 +124,13 @@ describe("deepLiveifyObject with SyncConfig", () => {
       const config: SyncConfig = {
         nested: { scratch: false, position: "atomic" },
       };
-      expect(() => deepLiveifyObject({ nested: 42 }, config)).toThrow();
+      expect(() => LiveObject.from({ nested: 42 }, config)).toThrow();
     });
   });
 
   describe("no config (backwards compat)", () => {
     test("without config, all keys are deep-liveified as before", () => {
-      const result = deepLiveifyObject({ a: { b: 1 }, c: [2] });
+      const result = LiveObject.from({ a: { b: 1 }, c: [2] });
 
       assertThat(result.get("a"), isLiveObject);
       assertThat(result.get("c"), isLiveList);
@@ -142,7 +142,7 @@ describe("LiveObject.reconcile with SyncConfig", () => {
   describe("false (local-only) keys", () => {
     test("updates local-only keys via setLocal during reconcile", () => {
       const config: SyncConfig = { selected: false };
-      const lo = deepLiveifyObject(
+      const lo = LiveObject.from(
         { id: "1", selected: true, label: "old" },
         config
       );
@@ -154,7 +154,7 @@ describe("LiveObject.reconcile with SyncConfig", () => {
 
     test("deletes local-only keys when absent from jsonObj", () => {
       const config: SyncConfig = { local: false };
-      const lo = deepLiveifyObject({ id: "1", local: "initial" }, config);
+      const lo = LiveObject.from({ id: "1", local: "initial" }, config);
 
       lo.reconcile({ id: "2" }, config);
       expect(lo.get("local")).toBeUndefined();
@@ -165,7 +165,7 @@ describe("LiveObject.reconcile with SyncConfig", () => {
   describe('"atomic" keys', () => {
     test("replaces atomic key value wholesale", () => {
       const config: SyncConfig = { position: "atomic" };
-      const lo = deepLiveifyObject({ position: { x: 0, y: 0 } }, config);
+      const lo = LiveObject.from({ position: { x: 0, y: 0 } }, config);
 
       lo.reconcile({ position: { x: 10, y2: 20 } }, config);
 
@@ -177,7 +177,7 @@ describe("LiveObject.reconcile with SyncConfig", () => {
 
     test("does not reconcile sub-keys of atomic values", () => {
       const config: SyncConfig = { position: "atomic" };
-      const lo = deepLiveifyObject(
+      const lo = LiveObject.from(
         { position: { x: 0, y: 0 }, label: "hi" },
         config
       );
@@ -194,7 +194,7 @@ describe("LiveObject.reconcile with SyncConfig", () => {
       const config: SyncConfig = {
         data: { scratch: false, pos: "atomic" },
       };
-      const lo = deepLiveifyObject(
+      const lo = LiveObject.from(
         { data: { scratch: "local", pos: { x: 0 }, label: "old" } },
         config
       );
@@ -220,7 +220,7 @@ describe("LiveObject.reconcile with SyncConfig", () => {
         x: false,
         data: { local: false },
       };
-      const lo = deepLiveifyObject(
+      const lo = LiveObject.from(
         { x: "parent-local", data: { local: "a", x: { nested: true } } },
         config
       );
@@ -246,7 +246,7 @@ describe("LiveObject.reconcile with SyncConfig", () => {
       const config: SyncConfig = {
         items: { local: false },
       };
-      const lo = deepLiveifyObject(
+      const lo = LiveObject.from(
         { items: [{ local: "a", synced: "old" }] },
         config
       );
@@ -291,7 +291,7 @@ const liveObject = fc
     )
   )
   .map(([obj, localEntries]) => {
-    const lo = deepLiveifyObject(obj);
+    const lo = LiveObject.from(obj);
     for (const [key, value] of localEntries) {
       // @ts-expect-error OptionalJsonKeys resolves to `never` for index-signature types
       lo.setLocal(key, value);
@@ -323,7 +323,7 @@ function syncConfigFor(keys: string[]): fc.Arbitrary<SyncConfig> {
 }
 
 describe("property tests", () => {
-  test("deepLiveifyObject(obj, config).toImmutable() === obj for any config", () => {
+  test("LiveObject.from(obj, config).toImmutable() === obj for any config", () => {
     fc.assert(
       fc.property(
         jsonObject.chain((obj) =>
@@ -332,7 +332,7 @@ describe("property tests", () => {
           )
         ),
         ([obj, config]) => {
-          const liveObj = deepLiveifyObject(obj, config);
+          const liveObj = LiveObject.from(obj, config);
           expect(liveObj.toImmutable()).toEqual(obj);
         }
       )

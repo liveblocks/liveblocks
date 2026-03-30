@@ -1,5 +1,5 @@
 import type { JsonObject, SyncConfig } from "@liveblocks/core";
-import { deepLiveifyObject } from "@liveblocks/core";
+import { LiveObject } from "@liveblocks/core";
 import type { Edge, Node } from "@xyflow/react";
 
 import { EDGE_BASE_CONFIG, NODE_BASE_CONFIG } from "./constants";
@@ -14,14 +14,20 @@ export function toLiveblocksInternalNode<N extends Node>(
   node: N,
   config: SyncConfig
 ): InternalLiveblocksNode {
-  return deepLiveifyObject(node as unknown as JsonObject, config) as InternalLiveblocksNode;
+  return LiveObject.from(
+    node as unknown as JsonObject,
+    config
+  ) as InternalLiveblocksNode;
 }
 
 export function toLiveblocksInternalEdge<E extends Edge>(
   edge: E,
   config: SyncConfig
 ): InternalLiveblocksEdge {
-  return deepLiveifyObject(edge as unknown as JsonObject, config) as InternalLiveblocksEdge;
+  return LiveObject.from(
+    edge as unknown as JsonObject,
+    config
+  ) as InternalLiveblocksEdge;
 }
 
 /**

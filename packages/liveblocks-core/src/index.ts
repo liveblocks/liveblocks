@@ -109,7 +109,6 @@ export type {
 } from "./globals/augmentation";
 export type { SyncConfig, SyncMode } from "./immutable";
 export {
-  deepLiveifyObject, // XXX Look into a way of removing this top-level export
   legacy_patchImmutableObject,
   legacy_patchLiveObjectKey,
   lsonToJson,
