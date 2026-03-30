@@ -84,7 +84,8 @@ jobs:
         run:
           ./.github/scripts/release.sh -V "$VERSION" -w
           "packages/liveblocks-core" "packages/liveblocks-client"
-          "packages/liveblocks-node" "packages/liveblocks-react"
+          "packages/liveblocks-node" "packages/liveblocks-chat-sdk-adapter"
+          "packages/liveblocks-react"
           "packages/liveblocks-redux" "packages/liveblocks-zustand"
           "packages/liveblocks-yjs" "packages/liveblocks-react-ui"
           "packages/liveblocks-react-flow"
@@ -107,7 +108,8 @@ jobs:
         run:
           ./.github/scripts/publish.sh -V "$VERSION" -t "$NPM_TAG"
           "packages/liveblocks-core" "packages/liveblocks-client"
-          "packages/liveblocks-node" "packages/liveblocks-react"
+          "packages/liveblocks-node" "packages/liveblocks-chat-sdk-adapter"
+          "packages/liveblocks-react"
           "packages/liveblocks-redux" "packages/liveblocks-zustand"
           "packages/liveblocks-yjs" "packages/liveblocks-react-lexical"
           "packages/liveblocks-node-lexical" "packages/liveblocks-react-ui"
