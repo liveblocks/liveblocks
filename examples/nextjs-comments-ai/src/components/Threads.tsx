@@ -184,7 +184,7 @@ function StreamedComment({
           </div>
         </div>
       </details>
-      <div className="lb-comment-body">{response}</div>
+      <div className="lb-comment-body whitespace-pre-wrap">{response}</div>
     </Comment>
   );
 }

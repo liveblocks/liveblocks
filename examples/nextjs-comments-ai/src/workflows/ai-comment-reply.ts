@@ -2,7 +2,11 @@ import { AI_USER_INFO } from "@/database";
 import { getMentionsFromCommentBody, Liveblocks } from "@liveblocks/node";
 import { streamText } from "ai";
 import { anthropic, AnthropicLanguageModelOptions } from "@ai-sdk/anthropic";
-import type { ThreadData, CommentData } from "@liveblocks/node";
+import type {
+  ThreadData,
+  CommentData,
+  CommentBodyParagraph,
+} from "@liveblocks/node";
 import { stringifyCommentBody } from "@liveblocks/client";
 import { ModelMessage } from "ai";
 
@@ -144,11 +148,25 @@ async function streamResponse({
     : "Deleted comment";
 
   // System prompt highlights uer ID and includes the comment to respond to
-  const system = `You are an assistant that helpfully responds to comments in a thread in plain text (NOT markdown). 
+  const system = `You are an assistant that helpfully responds to comments in a thread. 
+
+## Info
   
-Your user ID is ${AI_USER_INFO.id}.
+- Threads contain messages sent from multiple users.
+- Your user ID is: ${AI_USER_INFO.id}
+- Your messages list prefixes the user and the time of the message.
+- Respond appropriately and keep track of who is speaking.
+
+## Rules
+
+- You MUST respond in plain text, for example: "Hi, how can I help you today?".
+- You can use new lines to format your response, for example: "Hi, how can I help you today?\nI'm here to help you with any questions you have.".
+- You MUST reply concisely and to the point.
+- You MUST NOT use markdown.
+- You MUST NOT start your messages with "${AI_USER_INFO.id} at ...".
 
 Respond to the following comment inside the thread:
+
 """
 ${stringifiedComment}
 """
@@ -326,6 +344,7 @@ async function createPlaceholderComment({
 async function updatePlaceholderComment({
   roomId,
   threadId,
+  commentId,
   feedId,
   response,
 }: CommentLocation & {
@@ -334,20 +353,23 @@ async function updatePlaceholderComment({
 }) {
   "use step";
 
+  // Convert new lines into new paragraphs
+  const content: CommentBodyParagraph[] = response
+    .split("\n\n")
+    .map((line) => ({
+      type: "paragraph",
+      children: [{ text: line }],
+    }));
+
   return await liveblocks.editComment({
     roomId,
     threadId,
-    commentId: feedId,
+    commentId,
     data: {
       metadata: { feedId },
       body: {
         version: 1,
-        content: [
-          {
-            type: "paragraph",
-            children: [{ text: response }],
-          },
-        ],
+        content,
       },
     },
   });
