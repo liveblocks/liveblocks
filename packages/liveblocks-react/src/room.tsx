@@ -1653,6 +1653,13 @@ function useCreateFeed_withRoomContext(
   );
 }
 
+/**
+ * Returns a function that creates a new feed in the current room.
+ *
+ * @example
+ * const createFeed = useCreateFeed();
+ * createFeed("feed-id", { metadata: { name: "My Feed" } });
+ */
 function useCreateFeed(): (
   feedId: string,
   options?: { metadata?: FeedCreateMetadata; createdAt?: number }
@@ -1667,6 +1674,13 @@ function useDeleteFeed_withRoomContext(
   return useCallback((feedId) => room.deleteFeed(feedId), [room]);
 }
 
+/**
+ * Returns a function that deletes a feed from the current room.
+ *
+ * @example
+ * const deleteFeed = useDeleteFeed();
+ * deleteFeed("feed-id");
+ */
 function useDeleteFeed(): (feedId: string) => Promise<void> {
   return useDeleteFeed_withRoomContext(GlobalRoomContext);
 }
@@ -1681,6 +1695,13 @@ function useUpdateFeedMetadata_withRoomContext(
   );
 }
 
+/**
+ * Returns a function that updates a feed's metadata in the current room.
+ *
+ * @example
+ * const updateFeedMetadata = useUpdateFeedMetadata();
+ * updateFeedMetadata("feed-id", { name: "Updated Name" });
+ */
 function useUpdateFeedMetadata(): (
   feedId: string,
   metadata: FeedUpdateMetadata
@@ -1702,6 +1723,13 @@ function useCreateFeedMessage_withRoomContext(
   );
 }
 
+/**
+ * Returns a function that adds a message to a feed in the current room.
+ *
+ * @example
+ * const createFeedMessage = useCreateFeedMessage();
+ * createFeedMessage("feed-id", { text: "Hello" });
+ */
 function useCreateFeedMessage(): (
   feedId: string,
   data: JsonObject,
@@ -1720,6 +1748,13 @@ function useDeleteFeedMessage_withRoomContext(
   );
 }
 
+/**
+ * Returns a function that deletes a message from a feed in the current room.
+ *
+ * @example
+ * const deleteFeedMessage = useDeleteFeedMessage();
+ * deleteFeedMessage("feed-id", "message-id");
+ */
 function useDeleteFeedMessage(): (
   feedId: string,
   messageId: string
@@ -1743,6 +1778,13 @@ function useUpdateFeedMessage_withRoomContext(
   );
 }
 
+/**
+ * Returns a function that updates a feed message in the current room.
+ *
+ * @example
+ * const updateFeedMessage = useUpdateFeedMessage();
+ * updateFeedMessage("feed-id", "message-id", { text: "Updated" });
+ */
 function useUpdateFeedMessage(): (
   feedId: string,
   messageId: string,
@@ -4517,9 +4559,21 @@ const _useFeeds: TypedBundle["useFeeds"] = useFeeds;
  */
 const _useFeedMessages: TypedBundle["useFeedMessages"] = useFeedMessages;
 
+/**
+ * Returns feeds for the current room.
+ *
+ * @example
+ * const { feeds } = useFeeds();
+ */
 const _useFeedsSuspense: TypedBundle["suspense"]["useFeeds"] =
   useFeedsSuspense;
 
+/**
+ * Returns messages for a specific feed in the current room.
+ *
+ * @example
+ * const { messages } = useFeedMessages("feed-id");
+ */
 const _useFeedMessagesSuspense: TypedBundle["suspense"]["useFeedMessages"] =
   useFeedMessagesSuspense;
 
