@@ -16,6 +16,7 @@
 - Add `body` prop to `Comment` to allow overriding only the default rich-text
   comment body while still keeping attachments, reactions, and
   `additionalContent` as is, unlike when using the `children` prop.
+- Fix `AvatarStack` negative margin breaking alignment.
 
 ## v3.15.5
 
