@@ -14,10 +14,9 @@ import {
   Composer,
   Thread,
   Comment,
-  Icon,
+  CommentProps,
 } from "@liveblocks/react-ui";
 import { ErrorBoundary } from "react-error-boundary";
-import { CommentData } from "@liveblocks/client";
 
 /**
  * Displays a list of threads, along with a composer for creating
@@ -39,16 +38,20 @@ function Example() {
             thread={thread}
             className="thread"
             components={{
-              Comment: ({ comment, ...props }) => {
-                const feedId = comment.metadata.feedId;
+              // Overrides the default comment component
+              Comment: (commentProps) => {
+                const feedId = commentProps.comment.metadata.feedId;
 
+                // This app's AI workflow creates a placeholder comment for AI respones
+                // These comments have a `feedId`, so if we detect it, we use a custom component
                 if (feedId) {
-                  return <AiComment feedId={feedId} comment={comment} />;
+                  return (
+                    <AiComment feedId={feedId} commentProps={commentProps} />
+                  );
                 }
 
-                return (
-                  <Comment className="lb-thread-comment" comment={comment} />
-                );
+                // If not AI feed, use the default comment component
+                return <Comment {...commentProps} />;
               },
             }}
           />
@@ -61,10 +64,10 @@ function Example() {
 
 function AiComment({
   feedId,
-  comment,
+  commentProps,
 }: {
   feedId: string;
-  comment: CommentData;
+  commentProps: CommentProps;
 }) {
   const { messages } = useFeedMessages(feedId);
   const lastMessage = messages?.[messages.length - 1];
@@ -72,7 +75,7 @@ function AiComment({
   if (!messages || !lastMessage) {
     return (
       <StreamingComment
-        comment={comment}
+        commentProps={commentProps}
         title="Running…"
         responsePart=""
         response=""
@@ -80,10 +83,11 @@ function AiComment({
     );
   }
 
+  // Thinking stage, writing up reasoning
   if (lastMessage.data.stage === "thinking") {
     return (
       <StreamingComment
-        comment={comment}
+        commentProps={commentProps}
         title="Thinking…"
         responsePart={lastMessage.data.responsePart}
         response={lastMessage.data.response}
@@ -91,10 +95,11 @@ function AiComment({
     );
   }
 
+  // Writing stage, generating the actual response
   if (lastMessage.data.stage === "writing") {
     return (
       <StreamingComment
-        comment={comment}
+        commentProps={commentProps}
         title="Writing…"
         responsePart={lastMessage.data.responsePart}
         response={lastMessage.data.response}
@@ -102,9 +107,10 @@ function AiComment({
     );
   }
 
+  // Complete stage, showing the full response and reasoning
   return (
     <StreamedComment
-      comment={comment}
+      commentProps={commentProps}
       reasoning={lastMessage.data.reasoning}
       response={lastMessage.data.response}
       thinkingTime={lastMessage.data.thinkingTime}
@@ -112,21 +118,23 @@ function AiComment({
   );
 }
 
+// Shows an AI comment in a streaming state, restricted to one line with loading text
 function StreamingComment({
-  comment,
+  commentProps,
   title,
   responsePart,
   response,
 }: {
-  comment: CommentData;
+  commentProps: CommentProps;
   title: string;
   responsePart: string;
   response: string;
 }) {
   const [open, setOpen] = useState(false);
+  const trimmedResponsePart = responsePart.trim();
 
   return (
-    <Comment className="lb-thread-comment" comment={comment}>
+    <Comment {...commentProps}>
       <details className="" open={open} onToggle={() => setOpen(!open)}>
         <summary className="flex items-baseline cursor-pointer mb-1">
           <span className="flex-shrink-0 mr-1">
@@ -137,7 +145,7 @@ function StreamingComment({
             {open ? <ChevronIcon rotate /> : <ChevronIcon />}
           </span>
           <span className="lb-comment-body opacity-40 flex-shrink flex-grow text-sm truncate">
-            …{responsePart}
+            {trimmedResponsePart.length ? `…${trimmedResponsePart}` : ""}
           </span>
         </summary>
         <div className="border border-gray-500/10 rounded-lg py-2.5 px-3 text-sm">
@@ -148,13 +156,14 @@ function StreamingComment({
   );
 }
 
+// Shows an AI comment in a streamed state, with the full response and reasoning
 function StreamedComment({
-  comment,
+  commentProps,
   reasoning,
   response,
   thinkingTime,
 }: {
-  comment: CommentData;
+  commentProps: CommentProps;
   reasoning: string;
   response: string;
   thinkingTime: number;
@@ -162,7 +171,7 @@ function StreamedComment({
   const [open, setOpen] = useState(false);
 
   return (
-    <Comment className="lb-thread-comment" comment={comment}>
+    <Comment {...commentProps}>
       <details className="" open={open} onToggle={() => setOpen(!open)}>
         <summary className="flex items-baseline cursor-pointer mb-1">
           <span className="opacity-50 text-sm">
@@ -185,6 +194,39 @@ function StreamedComment({
       <div className="lb-comment-body">{response}</div>
     </Comment>
   );
+}
+
+export default function Page() {
+  const roomId = useExampleRoomId("liveblocks:examples:nextjs-comments-ai");
+
+  return (
+    <RoomProvider id={roomId}>
+      <ErrorBoundary
+        fallback={
+          <div className="error">There was an error while getting threads.</div>
+        }
+      >
+        <ClientSideSuspense fallback={<Loading />}>
+          <Example />
+        </ClientSideSuspense>
+      </ErrorBoundary>
+    </RoomProvider>
+  );
+}
+
+/**
+ * This function is used when deploying an example on liveblocks.io.
+ * You can ignore it completely if you run the example locally.
+ */
+function useExampleRoomId(roomId: string) {
+  const params = useSearchParams();
+  const exampleId = params?.get("exampleId");
+
+  const exampleRoomId = useMemo(() => {
+    return exampleId ? `${roomId}-${exampleId}` : roomId;
+  }, [roomId, exampleId]);
+
+  return exampleRoomId;
 }
 
 function ChevronIcon({
@@ -229,37 +271,4 @@ function BrainIcon() {
       <path d="M19.967 17.483A4 4 0 1112 18a4 4 0 11-7.967-.517M6 18a4 4 0 01-2-7.464M6.003 5.125a4 4 0 00-2.526 5.77" />
     </svg>
   );
-}
-
-export default function Page() {
-  const roomId = useExampleRoomId("liveblocks:examples:nextjs-comments-ai");
-
-  return (
-    <RoomProvider id={roomId}>
-      <ErrorBoundary
-        fallback={
-          <div className="error">There was an error while getting threads.</div>
-        }
-      >
-        <ClientSideSuspense fallback={<Loading />}>
-          <Example />
-        </ClientSideSuspense>
-      </ErrorBoundary>
-    </RoomProvider>
-  );
-}
-
-/**
- * This function is used when deploying an example on liveblocks.io.
- * You can ignore it completely if you run the example locally.
- */
-function useExampleRoomId(roomId: string) {
-  const params = useSearchParams();
-  const exampleId = params?.get("exampleId");
-
-  const exampleRoomId = useMemo(() => {
-    return exampleId ? `${roomId}-${exampleId}` : roomId;
-  }, [roomId, exampleId]);
-
-  return exampleRoomId;
 }

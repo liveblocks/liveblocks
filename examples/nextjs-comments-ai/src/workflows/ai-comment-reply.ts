@@ -1,9 +1,10 @@
 import { AI_USER_INFO } from "@/database";
 import { getMentionsFromCommentBody, Liveblocks } from "@liveblocks/node";
-import { generateText, streamText } from "ai";
+import { streamText } from "ai";
 import { anthropic, AnthropicLanguageModelOptions } from "@ai-sdk/anthropic";
 import type { ThreadData, CommentData } from "@liveblocks/node";
 import { stringifyCommentBody } from "@liveblocks/client";
+import { ModelMessage } from "ai";
 
 type CommentLocation = {
   roomId: string;
@@ -11,17 +12,17 @@ type CommentLocation = {
   commentId: string;
 };
 
-type Stage = "thinking" | "writing" | "complete";
-
 const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY!,
 });
 
-// Main workflow
+// Main workflow: Create a feed (+ comment placeholder) when AI
+// is tagged in a comment, and stream an AI response into it
 export async function handleAiCommentReply(commentLocation: CommentLocation) {
   "use workflow";
 
-  const feedId = `comment-reply-${commentLocation.roomId}-${commentLocation.threadId}-${commentLocation.commentId}`;
+  const { roomId, threadId, commentId } = commentLocation;
+  const feedId = `comment-reply-${roomId}-${threadId}-${commentId}`;
 
   try {
     // Get the thread and comment that triggered the workflow
@@ -41,19 +42,21 @@ export async function handleAiCommentReply(commentLocation: CommentLocation) {
     }
 
     // Create a comment which works as placeholder for the AI response
-    // We'll replace it with custom UI
+    // We'll replace it with custom UI containing feed data
     const placeholderComment = await createPlaceholderComment({
       ...commentLocation,
       feedId,
     });
+    const placeholderCommentLocation = {
+      ...commentLocation,
+      commentId: placeholderComment.id,
+    };
 
-    const [feed] = await Promise.all([
+    await Promise.all([
       // Create a new feed which we'll use as an AI response comment
       createFeed({
         feedId,
-        roomId: commentLocation.roomId,
-        threadId: commentLocation.threadId,
-        commentId: placeholderComment.id,
+        ...placeholderCommentLocation,
       }),
 
       // Show AI avatar in avatar stack
@@ -62,7 +65,7 @@ export async function handleAiCommentReply(commentLocation: CommentLocation) {
 
     // Stream an AI response in (also adds feed message updates)
     const { response } = await streamResponse({
-      roomId: commentLocation.roomId,
+      roomId,
       feedId,
       thread,
       comment,
@@ -75,7 +78,7 @@ export async function handleAiCommentReply(commentLocation: CommentLocation) {
     // Add response to placeholder commnet, in case anyone uses
     // comment APIs and wants to see AI responses in there
     await updatePlaceholderComment({
-      ...commentLocation,
+      ...placeholderCommentLocation,
       feedId,
       response,
     });
@@ -95,6 +98,7 @@ export async function handleAiCommentReply(commentLocation: CommentLocation) {
 // =======================================================================
 // Steps
 
+// Holds the live feed for the comment response
 async function createFeed({
   roomId,
   threadId,
@@ -113,32 +117,14 @@ async function createFeed({
     feedId,
     metadata: {
       type: "ai-comment-reply",
+      // threadId and commentId are for the placeholder comment
       threadId,
       commentId,
     },
   });
 }
 
-async function createFeedMessage({
-  feedId,
-  stage,
-  roomId,
-  response,
-}: {
-  feedId: string;
-  stage: Stage;
-  roomId: string;
-  response?: string;
-}) {
-  "use step";
-
-  return await liveblocks.createFeedMessage({
-    roomId,
-    feedId,
-    data: { stage, response },
-  });
-}
-
+// Streams an AI response into the feed
 async function streamResponse({
   roomId,
   feedId,
@@ -152,35 +138,46 @@ async function streamResponse({
 }) {
   "use step";
 
-  const stringifiedThread = (
-    await Promise.all(
-      thread.comments.map((c) =>
-        c.body ? stringifyCommentBody(c.body) : "Deleted comment"
-      )
-    )
-  ).join("\n\n");
+  // Convert comment format into simple text
   const stringifiedComment = comment.body
     ? await stringifyCommentBody(comment.body)
     : "Deleted comment";
 
-  const prompt = `You are an assistant that helpfully responds to comments in a thread in plain text (NOT markdown).
-    
-Here is the entire comment thread:
-"""
-${stringifiedThread}
-"""
+  // System prompt highlights uer ID and includes the comment to respond to
+  const system = `You are an assistant that helpfully responds to comments in a thread in plain text (NOT markdown). 
+  
+Your user ID is ${AI_USER_INFO.id}.
 
-You must respond to the following comment inside the thread:
+Respond to the following comment inside the thread:
 """
 ${stringifiedComment}
 """
-
-Write your response in plain text now. You do NOT return markdown. Just text.
 `;
 
+  // Place the comment thread into a list of messages
+  const messages: ModelMessage[] = [];
+
+  for (const comment of thread.comments) {
+    const buildMessageContent = (
+      content: string
+    ) => `${comment.userId} at ${comment.createdAt}: 
+      
+      """    
+      ${content}
+      """`;
+    messages.push({
+      role: comment.userId === AI_USER_INFO.id ? "assistant" : "user",
+      content: comment.body
+        ? buildMessageContent(await stringifyCommentBody(comment.body))
+        : buildMessageContent("Deleted comment"),
+    });
+  }
+
+  // Stream the response from the AI model with reasoning enabled
   const result = streamText({
     model: anthropic("claude-sonnet-4-5"),
-    prompt,
+    system,
+    messages,
     providerOptions: {
       anthropic: {
         sendReasoning: true,
@@ -192,34 +189,48 @@ Write your response in plain text now. You do NOT return markdown. Just text.
   let totalReasoning = "";
   let totalText = "";
   const thinkingStartedAt = performance.now();
+  const promises = [];
 
   for await (const part of result.fullStream) {
+    // With each reasoning part, add a new feed message
     if (part.type === "reasoning-delta") {
       totalReasoning += part.text;
-      liveblocks.createFeedMessage({
-        roomId,
-        feedId,
-        data: {
-          stage: "thinking",
-          responsePart: part.text,
-          response: totalReasoning,
-        },
-      });
+
+      promises.push(
+        liveblocks.createFeedMessage({
+          roomId,
+          feedId,
+          data: {
+            stage: "thinking",
+            responsePart: part.text,
+            response: totalReasoning,
+          },
+        })
+      );
     } else if (part.type === "text-delta") {
       totalText += part.text;
-      liveblocks.createFeedMessage({
-        roomId,
-        feedId,
-        data: {
-          stage: "writing",
-          responsePart: part.text,
-          response: totalText,
-        },
-      });
+
+      promises.push(
+        liveblocks.createFeedMessage({
+          roomId,
+          feedId,
+          data: {
+            stage: "writing",
+            responsePart: part.text,
+            response: totalText,
+          },
+        })
+      );
     }
   }
+
+  // Check how long the generation took
   const thinkingEndedAt = performance.now();
 
+  // Wait for all feed message creations to complete so there's no race conditions
+  await Promise.all(promises);
+
+  // Send a completed feed message with the full response and reasoning
   await liveblocks.createFeedMessage({
     roomId,
     feedId,
@@ -234,6 +245,7 @@ Write your response in plain text now. You do NOT return markdown. Just text.
   return { response: totalText, reasoning: totalReasoning };
 }
 
+// Shows the AI avatar in the avatar stack
 async function showPresence({ roomId }: CommentLocation) {
   "use step";
 
@@ -244,6 +256,7 @@ async function showPresence({ roomId }: CommentLocation) {
   });
 }
 
+// Hides the AI avatar from the avatar stack
 async function hidePresence({ roomId }: CommentLocation) {
   "use step";
 
@@ -255,6 +268,7 @@ async function hidePresence({ roomId }: CommentLocation) {
   });
 }
 
+// Gets the thread and comment that triggered the workflow
 async function getThreadAndComment({
   roomId,
   threadId,
@@ -267,6 +281,7 @@ async function getThreadAndComment({
   return { thread, comment };
 }
 
+// Checks if the AI is mentioned in the comment
 async function isAiMentionedInComment(comment: CommentData) {
   "use step";
 
@@ -278,6 +293,7 @@ async function isAiMentionedInComment(comment: CommentData) {
   return mentions.map((m) => m.id).includes(AI_USER_INFO.id);
 }
 
+// Creates a placeholder comment for the AI response
 async function createPlaceholderComment({
   roomId,
   threadId,
@@ -306,6 +322,7 @@ async function createPlaceholderComment({
   });
 }
 
+// Updates the placeholder comment with the AI response
 async function updatePlaceholderComment({
   roomId,
   threadId,
