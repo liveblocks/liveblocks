@@ -7,7 +7,7 @@ import type {
   LsonObject,
   Room,
 } from "@liveblocks/client";
-import type { OpaqueClient, OpaqueRoom } from "@liveblocks/core";
+import type { DFM, DFMD, OpaqueClient, OpaqueRoom } from "@liveblocks/core";
 import { raise } from "@liveblocks/core";
 import { type Context, createContext, useContext } from "react";
 
@@ -55,10 +55,12 @@ export function useRoomOrNull<
   E extends Json,
   TM extends BaseMetadata,
   CM extends BaseMetadata,
+  FM extends Json = DFM,
+  FMD extends Json = DFMD,
 >(
   RoomContext: Context<OpaqueRoom | null> = GlobalRoomContext
-): Room<P, S, U, E, TM, CM> | null {
-  return useContext(RoomContext) as Room<P, S, U, E, TM, CM> | null;
+): Room<P, S, U, E, TM, CM, FM, FMD> | null {
+  return useContext(RoomContext) as Room<P, S, U, E, TM, CM, FM, FMD> | null;
 }
 
 /**

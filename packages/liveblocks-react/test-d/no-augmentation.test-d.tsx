@@ -209,7 +209,7 @@ import { expectAssignable, expectError, expectType } from "tsd";
   classic.useErrorListener((err) => {
     expectType<string>(err.message);
     expectType<string | undefined>(err.stack);
-    expectType<-1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(
+    expectType<string | -1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(
       err.context.code
     );
     expectAssignable<
@@ -235,6 +235,7 @@ import { expectAssignable, expectError, expectType } from "tsd";
       | "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR"
       | "UPDATE_NOTIFICATION_SETTINGS_ERROR"
       | "LARGE_MESSAGE_ERROR"
+      | "FEED_REQUEST_ERROR"
     >(err.context.type);
     if (err.context.type === "ROOM_CONNECTION_ERROR") {
       expectAssignable<number>(err.context.code);
@@ -254,7 +255,7 @@ import { expectAssignable, expectError, expectType } from "tsd";
   suspense.useErrorListener((err) => {
     expectType<string>(err.message);
     expectType<string | undefined>(err.stack);
-    expectType<-1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(
+    expectType<string | -1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(
       err.context.code
     );
     expectAssignable<
@@ -280,6 +281,7 @@ import { expectAssignable, expectError, expectType } from "tsd";
       | "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR"
       | "UPDATE_NOTIFICATION_SETTINGS_ERROR"
       | "LARGE_MESSAGE_ERROR"
+      | "FEED_REQUEST_ERROR"
     >(err.context.type);
     if (err.context.type === "ROOM_CONNECTION_ERROR") {
       expectAssignable<number>(err.context.code);
