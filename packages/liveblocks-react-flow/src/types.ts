@@ -99,28 +99,31 @@ type ToLson<T, S extends SyncMode = true> = [S] extends [false]
                 >
               : never;
 
-type ToLiveElement<Base, BaseConfig, Concrete, Data> = LiveObject<
+type ToLiveElement<
+  S extends SyncConfig,
+  B extends Node | Edge,
+  T extends B,
+  D,
+> = LiveObject<
   {
-    [K in keyof Base]: K extends keyof BaseConfig
-      ? BaseConfig[K & keyof BaseConfig] extends "atomic" | false
-        ? Json
-        : Concrete[K & keyof Concrete]
+    [K in keyof B]: K extends keyof S
+      ? T[K & keyof T]
       : K extends "data"
-        ? Data
-        : ToLson<Base[K]>;
+        ? D
+        : ToLson<B[K]>;
   } & LsonObject
 >;
 
 export type InternalLiveblocksNode = ToLiveElement<
-  Node,
   typeof NODE_BASE_CONFIG,
+  Node,
   Node,
   LiveObject<LsonObject>
 >;
 
 export type InternalLiveblocksEdge = ToLiveElement<
-  Edge,
   typeof EDGE_BASE_CONFIG,
+  Edge,
   Edge,
   LiveObject<LsonObject>
 >;
@@ -136,7 +139,7 @@ export type InternalLiveblocksFlow = LiveObject<{
 export type LiveblocksNode<
   N extends Node = BuiltInNode,
   S extends SyncConfig = SyncConfig,
-> = ToLiveElement<Node, typeof NODE_BASE_CONFIG, N, ToLson<N["data"], S>>;
+> = ToLiveElement<typeof NODE_BASE_CONFIG, Node, N, ToLson<N["data"], S>>;
 
 /**
  * The Liveblocks Storage representation of a React Flow `Edge`.
@@ -144,7 +147,7 @@ export type LiveblocksNode<
 export type LiveblocksEdge<
   E extends Edge = BuiltInEdge,
   S extends SyncConfig = SyncConfig,
-> = ToLiveElement<Edge, typeof EDGE_BASE_CONFIG, E, ToLson<E["data"], S>>;
+> = ToLiveElement<typeof EDGE_BASE_CONFIG, Edge, E, ToLson<E["data"], S>>;
 
 /**
  * The Liveblocks Storage representation of a React Flow diagram made of nodes and edges.
