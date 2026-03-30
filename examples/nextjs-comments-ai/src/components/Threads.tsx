@@ -22,38 +22,36 @@ export function Threads() {
   const { threads } = useThreads();
 
   return (
-    <>
-      <main>
-        <header>
-          <AvatarStack size={36} />
-        </header>
-        {threads.map((thread) => (
-          <Thread
-            key={thread.id}
-            thread={thread}
-            className="thread"
-            components={{
-              // Overrides the default comment component
-              Comment: (commentProps) => {
-                const feedId = commentProps.comment.metadata.feedId;
+    <main>
+      <header>
+        <AvatarStack size={36} />
+      </header>
+      {threads.map((thread) => (
+        <Thread
+          key={thread.id}
+          thread={thread}
+          className="thread"
+          components={{
+            // Overrides the default comment component
+            Comment: (commentProps) => {
+              const feedId = commentProps.comment.metadata.feedId;
 
-                // This app's AI workflow creates a placeholder comment for AI respones
-                // These comments have a `feedId`, so if we detect it, we use a custom component
-                if (feedId) {
-                  return (
-                    <AiComment feedId={feedId} commentProps={commentProps} />
-                  );
-                }
+              // This app's AI workflow creates a placeholder comment for AI respones
+              // These comments have a `feedId`, so if we detect it, we use a custom component
+              if (feedId) {
+                return (
+                  <AiComment feedId={feedId} commentProps={commentProps} />
+                );
+              }
 
-                // If not AI feed, use the default comment component
-                return <Comment {...commentProps} />;
-              },
-            }}
-          />
-        ))}
-        <Composer className="composer" />
-      </main>
-    </>
+              // If not AI feed, use the default comment component
+              return <Comment {...commentProps} />;
+            },
+          }}
+        />
+      ))}
+      <Composer className="composer" />
+    </main>
   );
 }
 
