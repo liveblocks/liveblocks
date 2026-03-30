@@ -1,0 +1,49 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: light dark;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: #fff;
+  color: #0a0a0a;
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background: #171717;
+    color: #fafafa;
+  }
+}
+
+button {
+  cursor: pointer;
+}
+
+.app-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.app-loading img {
+  width: 4rem;
+  height: 4rem;
+  opacity: 0.2;
+}
+
+.app-main {
+  position: relative;
+  min-height: 100vh;
+}
