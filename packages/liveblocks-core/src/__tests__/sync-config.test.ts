@@ -116,15 +116,134 @@ describe("LiveObject.from() with SyncConfig", () => {
     });
   });
 
-  // XXX Look at these edge cases later: when a nested SyncConfig targets
-  // a non-object value, or when a SyncConfig is passed to a scalar, we should
-  // throw a clear error instead of silently producing unexpected results.
   describe("config/value shape mismatch", () => {
-    test.skip("throws when nested SyncConfig targets a scalar value", () => {
+    test("nested config targeting a scalar in from() does not throw", () => {
       const config: SyncConfig = {
         nested: { scratch: false, position: "atomic" },
       };
-      expect(() => LiveObject.from({ nested: 42 }, config)).toThrow();
+      // Config expects an object at "nested", but data has a scalar.
+      // Should silently treat config as `true` (deep liveify).
+      const result = LiveObject.from({ nested: 42 }, config);
+      expect(result.get("nested")).toBe(42);
+    });
+
+    test("nested config targeting a string in from() does not throw", () => {
+      const config: SyncConfig = {
+        nested: { scratch: false },
+      };
+      const result = LiveObject.from({ nested: "hello" }, config);
+      expect(result.get("nested")).toBe("hello");
+    });
+
+    test("nested config targeting null in from() does not throw", () => {
+      const config: SyncConfig = {
+        nested: { scratch: false },
+      };
+      const result = LiveObject.from({ nested: null }, config);
+      expect(result.get("nested")).toBeNull();
+    });
+
+    test("nested config targeting a boolean in from() does not throw", () => {
+      const config: SyncConfig = {
+        nested: { scratch: false },
+      };
+      const result = LiveObject.from({ nested: true }, config);
+      expect(result.get("nested")).toBe(true);
+    });
+
+    test("nested config targeting an array in from() passes config to elements", () => {
+      const config: SyncConfig = {
+        nested: { scratch: false, position: "atomic" },
+      };
+      // Config expects an object, but data has an array of objects.
+      // Arrays "hop" the config path — config is applied to each element.
+      const result = LiveObject.from(
+        {
+          nested: [
+            { scratch: "local", position: { x: 1 }, label: "hi" },
+            { scratch: "also local", position: { x: 2 }, label: "bye" },
+          ],
+        },
+        config
+      );
+
+      const nested = result.get("nested");
+      assertThat(nested, isLiveList);
+
+      const first = nested.get(0);
+      assertThat(first, isLiveObject);
+      expect(first.get("scratch")).toBe("local");
+      expect(isLiveObject(first.get("position"))).toBe(false);
+      expect(first.get("position")).toEqual({ x: 1 });
+      expect(first.get("label")).toBe("hi");
+
+      const second = nested.get(1);
+      assertThat(second, isLiveObject);
+      expect(second.get("scratch")).toBe("also local");
+      expect(isLiveObject(second.get("position"))).toBe(false);
+      expect(second.get("position")).toEqual({ x: 2 });
+      expect(second.get("label")).toBe("bye");
+    });
+
+    test("nested config targeting a scalar in reconcile() does not throw", () => {
+      const config: SyncConfig = {
+        nested: { scratch: false, position: "atomic" },
+      };
+      const liveObj = LiveObject.from(
+        { nested: { scratch: 42, position: { x: 10, y: 0 } } },
+        config
+      );
+
+      // Reconcile with a scalar where config expects an object — should not throw
+      liveObj.reconcile({ nested: 42 }, config);
+      expect(liveObj.get("nested")).toBe(42);
+    });
+
+    test("nested config targeting an array in reconcile() passes config to elements", () => {
+      const config: SyncConfig = {
+        nested: { scratch: false, position: "atomic" },
+      };
+      const liveObj = LiveObject.from(
+        { nested: { scratch: "local", position: { x: 1 }, label: "hi" } },
+        config
+      );
+
+      // Reconcile from object to array — config should pass through to elements
+      liveObj.reconcile(
+        {
+          nested: [{ scratch: "new", position: { x: 5 }, label: "bye" }],
+        },
+        config
+      );
+
+      const nested = liveObj.get("nested");
+      assertThat(nested, isLiveList);
+
+      const first = nested.get(0);
+      assertThat(first, isLiveObject);
+      expect(first.get("scratch")).toBe("new");
+      expect(isLiveObject(first.get("position"))).toBe(false);
+      expect(first.get("position")).toEqual({ x: 5 });
+      expect(first.get("label")).toBe("bye");
+    });
+
+    test("other synced keys still work when nested config mismatches", () => {
+      const config: SyncConfig = {
+        nested: { scratch: false },
+        label: "atomic",
+      };
+      const result = LiveObject.from(
+        { nested: 42, label: { x: 1 }, other: "hello" },
+        config
+      );
+
+      // "nested" mismatches (scalar vs nested config) → treated as true
+      expect(result.get("nested")).toBe(42);
+      // "label" marked atomic → stored as plain JSON
+      expect(isLiveObject(result.get("label"))).toBe(false);
+      expect(result.get("label")).toEqual({ x: 1 });
+      // "other" has no config → deep liveified as normal
+      expect(result.get("other")).toBe("hello");
     });
   });
 
