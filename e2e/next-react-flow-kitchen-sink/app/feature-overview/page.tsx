@@ -1,6 +1,6 @@
 "use client";
 
-import { ClientSideSuspense, RoomProvider } from "@liveblocks/react";
+import { ClientSideSuspense, RoomProvider, shallow } from "@liveblocks/react";
 import { Cursors, useLiveblocksFlow } from "@liveblocks/react-flow";
 import {
   Background,
@@ -179,7 +179,7 @@ const TextInputNode = memo(({ id }: NodeProps) => {
     }
 
     return { width: node.measured.width, height: node.measured.height };
-  });
+  }, shallow);
 
   const updateDimension = useCallback(
     (attribute: "width" | "height") =>
