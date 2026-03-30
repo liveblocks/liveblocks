@@ -6,8 +6,6 @@ meta:
 alwaysShowAllNavigationLevels: false
 ---
 
-- XXX: Proof-read
-
 `@liveblocks/react-flow` provides you with [React](https://react.dev/) hooks and
 components that add collaboration to any [React Flow](https://reactflow.dev/)
 diagram. It adds multiplayer data syncing, document persistence on the cloud,
@@ -339,14 +337,9 @@ in any React Flow setup.
 ```tsx
 "use client";
 
-import { ReactFlow } from "@xyflow/react";
 import { useLiveblocksFlow } from "@liveblocks/react-flow";
-import {
-  type Node,
-  type NodeProps,
-  ReactFlow,
-  useReactFlow,
-} from "@xyflow/react";
+import type { Node, NodeProps } from "@xyflow/react";
+import { ReactFlow, useReactFlow } from "@xyflow/react";
 import { memo, useCallback } from "react";
 
 type TaskNode = Node<{ title: string }>;
@@ -503,7 +496,7 @@ function FlowB() {
 
 ### Sync config for `node.data` [#sync-config]
 
-By default, every key inside a node or edge’s `data` object are getting deeply
+By default, every key inside a node or edge’s `data` object is getting deeply
 synced. Internally objects are stored as LiveObjects, arrays as LiveLists, etc,
 to enable fine-grained conflict-free merging automatically. If two users update
 different properties on the same node or edge, their changes will get merged
