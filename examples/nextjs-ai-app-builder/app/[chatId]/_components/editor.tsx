@@ -115,102 +115,98 @@ export function Editor({ chatId }: { chatId: string }) {
 
       <RegisterAiTool
         name="edit-code"
-        tool={
-          defineAiTool()({
-            description:
-              "Edit the code editor content. Use this to build apps and components.",
-            parameters: {
-              type: "object",
-              properties: {
-                description: {
-                  type: "string",
-                  description:
-                    "A 1-3 word description of what you're generating. IMPORTANT: THREE WORDS MAXIMUM. Examples: 'dashboard', 'counter', 'login page'. It will be placed after 'Generating your '. e.g. 'Generating your dashboard'. Make sure it will fit here. ",
-                },
-                code: {
-                  type: "string",
-                  description: "The full code in the editor",
-                },
-              },
-              required: ["description", "code"],
-              additionalProperties: false,
-            },
-            execute: () => {},
-            render: ({ stage, partialArgs, args, respond }) => {
-              if (stage === "receiving") {
-                if (typeof partialArgs.code === "string" && code) {
-                  // Merge this string with the current code as it streams in
-                  const lines = partialArgs.code.split("\n");
-                  const lineCount = lines.length;
-                  const characterCount = lines[lines.length - 1].length;
-
-                  const [currentExtraLine, ...extraLines] = code
-                    .split("\n")
-                    .slice(lineCount - 1);
-
-                  let additionOnLastLine = "";
-
-                  // On the last line, fill in characters from previous code
-                  if (
-                    currentExtraLine?.length > lines[lines.length - 1].length
-                  ) {
-                    additionOnLastLine = currentExtraLine.slice(
-                      lines[lines.length - 1].length
-                    );
-                  }
-
-                  const mergedLines =
-                    partialArgs.code +
-                    additionOnLastLine +
-                    (extraLines.length ? "\n" + extraLines.join("\n") : "");
-
-                  setCode(mergedLines);
-
-                  // Highlight the current generated line and character
-                  highlightGeneratedLine(lineCount, characterCount);
-                }
-                return (
-                  <AiTool
-                    title={`Generating your ${partialArgs?.description || "code"}…`}
-                    icon={<GeneratingIcon />}
-                    variant="minimal"
-                  />
-                );
-              }
-
-              if (stage === "executing") {
-                setCode(args.code);
-
-                // Clear highlight when generation is complete
-                clearHighlight();
-                return (
-                  <AiTool
-                    title={`Generating your ${args.description}…`}
-                    icon={<GeneratingIcon />}
-                    variant="minimal"
-                  />
-                );
-              }
-
-              respond({
-                data: {},
+        tool={defineAiTool()({
+          description:
+            "Edit the code editor content. Use this to build apps and components.",
+          parameters: {
+            type: "object",
+            properties: {
+              description: {
+                type: "string",
                 description:
-                  "You've generated code. Write a very short description.",
-              });
+                  "A 1-3 word description of what you're generating. IMPORTANT: THREE WORDS MAXIMUM. Examples: 'dashboard', 'counter', 'login page'. It will be placed after 'Generating your '. e.g. 'Generating your dashboard'. Make sure it will fit here. ",
+              },
+              code: {
+                type: "string",
+                description: "The full code in the editor",
+              },
+            },
+            required: ["description", "code"],
+            additionalProperties: false,
+          },
+          execute: () => {},
+          render: ({ stage, partialArgs, args, respond }) => {
+            if (stage === "receiving") {
+              if (typeof partialArgs.code === "string" && code) {
+                // Merge this string with the current code as it streams in
+                const lines = partialArgs.code.split("\n");
+                const lineCount = lines.length;
+                const characterCount = lines[lines.length - 1].length;
 
-              // Clear highlight when fully done
-              clearHighlight();
+                const [currentExtraLine, ...extraLines] = code
+                  .split("\n")
+                  .slice(lineCount - 1);
 
+                let additionOnLastLine = "";
+
+                // On the last line, fill in characters from previous code
+                if (currentExtraLine?.length > lines[lines.length - 1].length) {
+                  additionOnLastLine = currentExtraLine.slice(
+                    lines[lines.length - 1].length
+                  );
+                }
+
+                const mergedLines =
+                  partialArgs.code +
+                  additionOnLastLine +
+                  (extraLines.length ? "\n" + extraLines.join("\n") : "");
+
+                setCode(mergedLines);
+
+                // Highlight the current generated line and character
+                highlightGeneratedLine(lineCount, characterCount);
+              }
               return (
                 <AiTool
-                  title={`${args.description.charAt(0).toUpperCase() + args.description.slice(1)} generated.`}
+                  title={`Generating your ${partialArgs?.description || "code"}…`}
                   icon={<GeneratingIcon />}
                   variant="minimal"
                 />
               );
-            },
-          }) as ComponentProps<typeof RegisterAiTool>["tool"]
-        }
+            }
+
+            if (stage === "executing") {
+              setCode(args.code);
+
+              // Clear highlight when generation is complete
+              clearHighlight();
+              return (
+                <AiTool
+                  title={`Generating your ${args.description}…`}
+                  icon={<GeneratingIcon />}
+                  variant="minimal"
+                />
+              );
+            }
+
+            respond({
+              data: {},
+              description:
+                "You've generated code. Write a very short description.",
+            });
+
+            // Clear highlight when fully done
+            clearHighlight();
+
+            return (
+              <AiTool
+                title={`${args.description.charAt(0).toUpperCase() + args.description.slice(1)} generated.`}
+                icon={<GeneratingIcon />}
+                variant="minimal"
+              />
+            );
+          },
+        })}
       />
 
       <div
