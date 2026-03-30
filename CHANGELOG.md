@@ -1,5 +1,14 @@
 ## vNEXT (not yet released)
 
+### `@liveblocks/chat-sdk-adapter`
+
+- Introduce the package. Install with
+  `npm install @liveblocks/chat-sdk-adapter`. Provides a
+  [`chat-sdk`](https://www.npmjs.com/package/chat)-compatible backend adapter
+  backed by Liveblocks Comments: webhooks, posting and editing messages,
+  reactions, paginated fetches, thread and channel helpers, and optional
+  `resolveUsers` / `resolveGroupsInfo` hooks.
+
 ## v3.16.0
 
 ...
