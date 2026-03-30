@@ -212,7 +212,6 @@ function applyNodeChanges<N extends Node>(
 ): void {
   for (const change of changes) {
     switch (change.type) {
-      // XXX Test this actually works!
       case "add":
       case "replace": {
         const config = getNodeSyncConfig(change.item.type);
@@ -242,7 +241,7 @@ function applyNodeChanges<N extends Node>(
           } else {
             history.resume();
           }
-          // XXX Document this needs to be in sync (pun intended) with the sync config def for the node
+          // Must match NODE_BASE_CONFIG's `dragging: false`
           node.setLocal("dragging", change.dragging);
         }
         break;
@@ -272,7 +271,7 @@ function applyNodeChanges<N extends Node>(
         }
 
         if (change.dimensions !== undefined) {
-          // XXX Document this needs to be in sync (pun intended) with the sync config def for the node
+          // Must match NODE_BASE_CONFIG's `measured: false`
           node.setLocal("measured", change.dimensions);
         }
 
@@ -282,7 +281,7 @@ function applyNodeChanges<N extends Node>(
           } else {
             history.resume();
           }
-          // XXX Document this needs to be in sync (pun intended) with the sync config def for the node
+          // Must match NODE_BASE_CONFIG's `resizing: false`
           node.setLocal("resizing", change.resizing);
         }
 
@@ -293,7 +292,7 @@ function applyNodeChanges<N extends Node>(
         const node = nodes.get(change.id);
         if (!node) break;
 
-        // XXX Document this needs to be in sync (pun intended) with the sync config def for the node
+        // Must match NODE_BASE_CONFIG's `selected: false`
         node.setLocal("selected", change.selected);
         break;
       }
@@ -315,15 +314,7 @@ function applyEdgeChanges<E extends Edge>(
 ): void {
   for (const change of changes) {
     switch (change.type) {
-      case "add": {
-        const config = getEdgeSyncConfig(change.item.type);
-        edges.set(
-          change.item.id,
-          toLiveblocksInternalEdge(change.item, config)
-        );
-        break;
-      }
-
+      case "add":
       case "replace": {
         const config = getEdgeSyncConfig(change.item.type);
         const existing = edges.get(change.item.id);
@@ -338,13 +329,13 @@ function applyEdgeChanges<E extends Edge>(
         break;
       }
 
-      case "select":
-        {
-          const edge = edges.get(change.id);
-          if (!edge) break;
-          edge.setLocal("selected", change.selected);
-        }
+      case "select": {
+        const edge = edges.get(change.id);
+        if (!edge) break;
+        // Must match EDGE_BASE_CONFIG's `selected: false`
+        edge.setLocal("selected", change.selected);
         break;
+      }
 
       case "remove":
         // Removals are handled by onDelete for atomic undo
