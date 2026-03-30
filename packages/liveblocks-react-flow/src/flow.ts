@@ -212,6 +212,7 @@ function applyNodeChanges<N extends Node>(
 ): void {
   for (const change of changes) {
     switch (change.type) {
+      // XXX Test this actually works!
       case "add":
       case "replace": {
         const config = getNodeSyncConfig(change.item.type);
@@ -241,6 +242,7 @@ function applyNodeChanges<N extends Node>(
           } else {
             history.resume();
           }
+          // XXX Document this needs to be in sync (pun intended) with the sync config def for the node
           node.setLocal("dragging", change.dragging);
         }
         break;
@@ -270,6 +272,7 @@ function applyNodeChanges<N extends Node>(
         }
 
         if (change.dimensions !== undefined) {
+          // XXX Document this needs to be in sync (pun intended) with the sync config def for the node
           node.setLocal("measured", change.dimensions);
         }
 
@@ -279,6 +282,7 @@ function applyNodeChanges<N extends Node>(
           } else {
             history.resume();
           }
+          // XXX Document this needs to be in sync (pun intended) with the sync config def for the node
           node.setLocal("resizing", change.resizing);
         }
 
@@ -289,6 +293,7 @@ function applyNodeChanges<N extends Node>(
         const node = nodes.get(change.id);
         if (!node) break;
 
+        // XXX Document this needs to be in sync (pun intended) with the sync config def for the node
         node.setLocal("selected", change.selected);
         break;
       }
