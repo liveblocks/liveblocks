@@ -158,13 +158,13 @@ function PresenceCursor({
     };
   }, [room, connectionId, presenceKey, sizeRef, sizeEvents]);
 
-  if (!userId) {
-    return null;
-  }
-
   return (
     <div ref={cursorRef} style={{ display: "none" }}>
-      <Cursor userId={userId} connectionId={connectionId} />
+      {userId ? (
+        <Cursor userId={userId} connectionId={connectionId} />
+      ) : (
+        <DefaultCursor />
+      )}
     </div>
   );
 }
