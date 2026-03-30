@@ -2,24 +2,34 @@ import type {
   DistributiveOmit,
   LiveMap,
   LiveObject,
+  Lson,
   LsonObject,
   SyncConfig,
   SyncMode,
 } from "@liveblocks/core";
 import type { BuiltInEdge, BuiltInNode, Edge, Node } from "@xyflow/react";
 
+import type { EDGE_BASE_CONFIG, NODE_BASE_CONFIG } from "./constants";
+
 export type { SyncConfig, SyncMode };
 
 // XXX The public types should reflect the runtime behaviors (deep-livefied, local-only, atomic, etc.)
 // XXX The internal types can stay simpler (only focus on the root and not `data`), but should still ideally be derived from NODE_BASE_CONFIG and EDGE_BASE_CONFIG.
 
-export type InternalLiveblocksNode = LiveObject<
-  DistributiveOmit<Node, "data"> & { data: LsonObject } & LsonObject
->;
-
-export type InternalLiveblocksEdge = LiveObject<
-  DistributiveOmit<Edge, "data"> & { data?: LsonObject } & LsonObject
->;
+export type InternalLiveblocksNode = LiveObject<{
+  [K in keyof Node]: K extends keyof typeof NODE_BASE_CONFIG
+    ? Node[K]
+    : K extends "data"
+      ? LiveObject<LsonObject>
+      : Lson; // XXX Replace this by ToLson<Node[K]> once we have it
+}>;
+export type InternalLiveblocksEdge = LiveObject<{
+  [K in keyof Edge]: K extends keyof typeof EDGE_BASE_CONFIG
+    ? Edge[K]
+    : K extends "data"
+      ? LiveObject<LsonObject>
+      : Lson; // XXX Replace this by ToLson<Node[K]> once we have it
+}>;
 
 export type InternalLiveblocksFlow = LiveObject<{
   nodes: LiveMap<string, InternalLiveblocksNode>;

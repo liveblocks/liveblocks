@@ -142,7 +142,7 @@ function Slider({
 // ---------------------------------------------------------------------------
 
 const ShapeNodeView = memo(({ id, data }: NodeProps<ShapeNode>) => {
-  const { updateNode } = useReactFlow();
+  const { updateNode } = useReactFlow<ShapeNode>();
 
   const cycleShape = useCallback(() => {
     updateNode(id, (node) => ({
