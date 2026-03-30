@@ -65,6 +65,9 @@ export async function handleAiCommentReply(commentLocation: CommentLocation) {
 
       // Show AI avatar in avatar stack
       showPresence(commentLocation),
+
+      // Leave 👀 reaction on comment that is being replied to
+      leaveReactionOnComment(commentLocation),
     ]);
 
     // Stream an AI response in (also adds feed message updates)
@@ -297,6 +300,26 @@ async function getThreadAndComment({
   const thread = await liveblocks.getThread({ roomId, threadId });
   const comment = thread?.comments.find((comment) => comment.id === commentId);
   return { thread, comment };
+}
+
+// Leave 👀 reaction on comment that is being replied to
+async function leaveReactionOnComment({
+  roomId,
+  threadId,
+  commentId,
+}: CommentLocation) {
+  "use step";
+
+  return liveblocks.addCommentReaction({
+    roomId,
+    threadId,
+    commentId,
+    data: {
+      emoji: "👀",
+      userId: AI_USER_INFO.id,
+      createdAt: new Date(),
+    },
+  });
 }
 
 // Checks if the AI is mentioned in the comment
