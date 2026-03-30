@@ -30,6 +30,7 @@ export type {
   CommentMixedAttachment,
   CommentReaction,
   EnsureJson,
+  Feed,
   FeedCreateMetadata,
   FeedFetchMetadataFilter,
   FeedRequestError,

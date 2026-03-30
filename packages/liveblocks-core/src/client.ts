@@ -9,12 +9,12 @@ import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
 import type {
   DCM,
   DE,
-  DGI,
+  DFM,
   DFMD,
+  DGI,
   DP,
   DRI,
   DS,
-  DFM,
   DTM,
   DU,
 } from "./globals/augmentation";
