@@ -293,9 +293,9 @@ so each client keeps their own selection and interaction state:
 - **Edges:** `selected`
 
 Everything else on nodes and edges (including `position`, `width` and `height`,
-`data`, handles, and edge endpoints) is synchronized through Storage. If you want
-specific keys inside `node.data` or `edge.data` to stay local-only too, use the
-[sync config](#sync-config).
+`data`, handles, and edge endpoints) is synchronized through Storage. If you
+want specific keys inside `node.data` or `edge.data` to stay local-only too, use
+the [sync config](#sync-config).
 
 ### Undo / Redo [#undo-redo]
 
@@ -503,7 +503,7 @@ function FlowB() {
 
 ### Sync config for `node.data` [#sync-config]
 
-By default, every key inside a node or edge's `data` object are getting deeply
+By default, every key inside a node or edge’s `data` object are getting deeply
 synced. Internally objects are stored as LiveObjects, arrays as LiveLists, etc,
 to enable fine-grained conflict-free merging automatically. If two users update
 different properties on the same node or edge, their changes will get merged
@@ -528,20 +528,20 @@ const { ... } = useLiveblocksFlow({
     sync: {
       // Applies to all node types
       "*": {
-        label: false,       // Don't sync node.data.label
+        label: false,       // Don’t sync node.data.label
         color: "atomic",    // Sync as a single value, replaced as-a-whole
       },
 
       // Additional overrides for specific node types
       myCustomNode: {
-        showPreview: false,  // Don't sync myCustomNode.data.showPreview
+        showPreview: false,  // Don’t sync myCustomNode.data.showPreview
       },
     },
   },
   edges: {
     sync: {
       "*": {
-        hovered: false,      // Don't sync edge.data.hovered
+        hovered: false,      // Don’t sync edge.data.hovered
         style: "atomic",     // Sync as a single value, replaced as-a-whole
       },
     },
