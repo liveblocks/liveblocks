@@ -2,6 +2,10 @@
 
 ## v3.16.0
 
+### `@liveblocks/react-flow`
+
+- XXX Write the changelog for this
+
 ### `@liveblocks/chat-sdk-adapter`
 
 - Introduce the package. Install with
