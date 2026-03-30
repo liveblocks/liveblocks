@@ -168,11 +168,25 @@ async function streamResponse({
 - You MUST NOT use markdown.
 - You MUST NOT start your messages with "${AI_USER_INFO.id} at ...".
 
+## Example
+
+### ❌ Bad response:
+
+__AI_AGENT at Mon Mar 30 2026 14:26:03 GMT+0100 (British Summer Time): 
+      
+"""    
+Hi, how can I help you on this fine day over there?
+"""
+
+### ✅ Good response:
+
+Hi, how can I help you?
+
+## Respond
+
 Respond to the following comment inside the thread:
 
-"""
 ${stringifiedComment}
-"""
 `;
 
   // Place the comment thread into a list of messages
@@ -181,11 +195,10 @@ ${stringifiedComment}
   for (const comment of thread.comments) {
     const buildMessageContent = (
       content: string
-    ) => `${comment.userId} at ${comment.createdAt}: 
-      
-      """    
-      ${content}
-      """`;
+    ) => `${comment.userId} at ${comment.createdAt}:
+
+${content}
+`;
     messages.push({
       role: comment.userId === AI_USER_INFO.id ? "assistant" : "user",
       content: comment.body
