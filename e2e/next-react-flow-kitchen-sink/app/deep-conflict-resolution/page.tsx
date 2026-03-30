@@ -377,7 +377,14 @@ function Flow() {
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onDelete } =
     useLiveblocksFlow<ShapeNode>({
       suspense: true,
-      nodes: { initial: INITIAL_NODES },
+      nodes: {
+        initial: INITIAL_NODES,
+        sync: {
+          "*": {
+            shape: "atomic",
+          },
+        },
+      },
       edges: { initial: INITIAL_EDGES },
     });
 
