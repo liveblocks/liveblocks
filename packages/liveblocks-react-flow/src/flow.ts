@@ -138,16 +138,20 @@ type UseLiveblocksFlowOptions<N extends Node, E extends Edge> = {
      *   nodes: {
      *     sync: {
      *       // Fallback for all node types
-     *       "*": { label: false },
+     *       "*": {
+     *         label: false,  // Don't sync node.data.label
+     *       },
      *
-     *       // Override for "custom" nodes
-     *       "custom": { color: false },
+     *       // Override for node.type === 'myCustomNode'
+     *       // This will also not sync `myCustomNode.data.label` (because of the fallback above)
+     *       myCustomNode: {
+     *         showPreview: false,  // Don't sync myCustomNode.data.showPreview
+     *       },
      *     },
      *   },
      * });
      * ```
      */
-    // XXX Improve the example + match public documentation
     sync?: NodeSyncConfig<N>;
   };
 
@@ -165,14 +169,21 @@ type UseLiveblocksFlowOptions<N extends Node, E extends Edge> = {
      * const { ... } = useLiveblocksFlow({
      *   edges: {
      *     sync: {
-     *       // Fallback for all node types
-     *       "*": { floating: false },
+     *       // Fallback for all edge types
+     *       "*": {
+     *         hovered: false,  // Don't sync edge.data.hovered
+     *       },
+     *
+     *       // Override for edge.type === 'myCustomEdge'
+     *       // This will also not sync `myCustomEdge.data.hovered` (because of the fallback above)
+     *       myCustomEdge: {
+     *         isHighlighted: false,  // Don't sync myCustomEdge.data.isHighlighted
+     *       },
      *     },
      *   },
      * });
      * ```
      */
-    // XXX Improve the example + match public documentation
     sync?: EdgeSyncConfig<E>;
   };
 
