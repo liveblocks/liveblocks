@@ -17,6 +17,8 @@ import type {
   DAD,
   DCM,
   DE,
+  DFM,
+  DFMD,
   DS,
   DTM,
   DU,
@@ -635,14 +637,14 @@ export type UpdateFeedOptions = {
   metadata: FeedUpdateMetadata;
 };
 
-export type CreateFeedMessageOptions<FMD extends Json = Json> = {
+export type CreateFeedMessageOptions<FMD extends Json = DFMD> = {
   id?: string;
   /** Creation time in ms; serialized as `timestamp` in the REST request body. */
   createdAt?: number;
   data: FMD;
 };
 
-export type UpdateFeedMessageOptions<FMD extends Json = Json> = {
+export type UpdateFeedMessageOptions<FMD extends Json = DFMD> = {
   data: FMD;
   /** Update time in ms; serialized as `timestamp` in the REST request body. */
   updatedAt?: number;
@@ -3393,7 +3395,7 @@ export class Liveblocks {
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns A list of feeds.
    */
-  public async getFeeds<FM extends Json = Json>(
+  public async getFeeds<FM extends Json = DFM>(
     params: { roomId: string },
     options?: RequestOptions
   ): Promise<{ data: Feed<FM>[] }> {
@@ -3418,7 +3420,7 @@ export class Liveblocks {
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The created feed.
    */
-  public async createFeed<FM extends Json = Json>(
+  public async createFeed<FM extends Json = DFM>(
     params: { roomId: string } & CreateFeedOptions,
     options?: RequestOptions
   ): Promise<Feed<FM>> {
@@ -3445,7 +3447,7 @@ export class Liveblocks {
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The feed.
    */
-  public async getFeed<FM extends Json = Json>(
+  public async getFeed<FM extends Json = DFM>(
     params: { roomId: string; feedId: string },
     options?: RequestOptions
   ): Promise<Feed<FM>> {
@@ -3514,7 +3516,7 @@ export class Liveblocks {
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns A list of feed messages.
    */
-  public async getFeedMessages<FMD extends Json = Json>(
+  public async getFeedMessages<FMD extends Json = DFMD>(
     params: { roomId: string; feedId: string },
     options?: RequestOptions
   ): Promise<{ data: FeedMessage<FMD>[] }> {
@@ -3540,7 +3542,7 @@ export class Liveblocks {
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The created feed message.
    */
-  public async createFeedMessage<FMD extends Json = Json>(
+  public async createFeedMessage<FMD extends Json = DFMD>(
     params: {
       roomId: string;
       feedId: string;
@@ -3572,7 +3574,7 @@ export class Liveblocks {
    * @param params.updatedAt (optional) Update time in ms. Sent to the API as `timestamp`. If omitted, the server uses the current time.
    * @param options.signal (optional) An abort signal to cancel the request.
    */
-  public async updateFeedMessage<FMD extends Json = Json>(
+  public async updateFeedMessage<FMD extends Json = DFMD>(
     params: {
       roomId: string;
       feedId: string;
