@@ -1,51 +1,32 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, Self
+from typing import Any, Self
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-if TYPE_CHECKING:
-    from ..models.update_feed_metadata import UpdateFeedMetadata
-
 
 @_attrs_define
-class UpdateFeed:
-    """
-    Attributes:
-        metadata (UpdateFeedMetadata):
-    """
+class UpdateFeedRequestBodyMetadata:
+    """ """
 
-    metadata: UpdateFeedMetadata
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        metadata = self.metadata.to_dict()
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update(
-            {
-                "metadata": metadata,
-            }
-        )
 
         return field_dict
 
     @classmethod
     def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
-        from ..models.update_feed_metadata import UpdateFeedMetadata
-
         d = dict(src_dict)
-        metadata = UpdateFeedMetadata.from_dict(d.pop("metadata"))
+        update_feed_request_body_metadata = cls()
 
-        update_feed = cls(
-            metadata=metadata,
-        )
-
-        update_feed.additional_properties = d
-        return update_feed
+        update_feed_request_body_metadata.additional_properties = d
+        return update_feed_request_body_metadata
 
     @property
     def additional_keys(self) -> list[str]:

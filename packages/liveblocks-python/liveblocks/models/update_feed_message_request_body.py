@@ -9,30 +9,26 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.create_feed_message_data import CreateFeedMessageData
+    from ..models.update_feed_message_request_body_data import UpdateFeedMessageRequestBodyData
 
 
 @_attrs_define
-class CreateFeedMessage:
-    """Request body for `POST /v2/rooms/{roomId}/feeds/{feedId}/messages`. Optional message time is sent as `timestamp`
-    (milliseconds), not `createdAt`.
+class UpdateFeedMessageRequestBody:
+    """Request body for `PATCH /v2/rooms/{roomId}/feeds/{feedId}/messages/{messageId}`. Optional update time is sent as
+    `timestamp` (milliseconds), not `updatedAt`.
 
         Attributes:
-            data (CreateFeedMessageData):
-            id (str | Unset): Optional client-provided message id. If omitted, the server generates one.
-            timestamp (float | Unset): Optional. Unix timestamp in milliseconds for the message's creation time. If omitted,
+            data (UpdateFeedMessageRequestBodyData):
+            timestamp (float | Unset): Optional. Unix timestamp in milliseconds to record as the update time. If omitted,
                 the server uses the current time.
     """
 
-    data: CreateFeedMessageData
-    id: str | Unset = UNSET
+    data: UpdateFeedMessageRequestBodyData
     timestamp: float | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         data = self.data.to_dict()
-
-        id = self.id
 
         timestamp = self.timestamp
 
@@ -43,8 +39,6 @@ class CreateFeedMessage:
                 "data": data,
             }
         )
-        if id is not UNSET:
-            field_dict["id"] = id
         if timestamp is not UNSET:
             field_dict["timestamp"] = timestamp
 
@@ -52,23 +46,20 @@ class CreateFeedMessage:
 
     @classmethod
     def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
-        from ..models.create_feed_message_data import CreateFeedMessageData
+        from ..models.update_feed_message_request_body_data import UpdateFeedMessageRequestBodyData
 
         d = dict(src_dict)
-        data = CreateFeedMessageData.from_dict(d.pop("data"))
-
-        id = d.pop("id", UNSET)
+        data = UpdateFeedMessageRequestBodyData.from_dict(d.pop("data"))
 
         timestamp = d.pop("timestamp", UNSET)
 
-        create_feed_message = cls(
+        update_feed_message_request_body = cls(
             data=data,
-            id=id,
             timestamp=timestamp,
         )
 
-        create_feed_message.additional_properties = d
-        return create_feed_message
+        update_feed_message_request_body.additional_properties = d
+        return update_feed_message_request_body
 
     @property
     def additional_keys(self) -> list[str]:

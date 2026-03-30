@@ -8,7 +8,7 @@ from attrs import field as _attrs_field
 
 
 @_attrs_define
-class UpdateFeedMetadata:
+class CreateFeedRequestBodyMetadata:
     """ """
 
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
@@ -23,10 +23,10 @@ class UpdateFeedMetadata:
     @classmethod
     def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
         d = dict(src_dict)
-        update_feed_metadata = cls()
+        create_feed_request_body_metadata = cls()
 
-        update_feed_metadata.additional_properties = d
-        return update_feed_metadata
+        create_feed_request_body_metadata.additional_properties = d
+        return create_feed_request_body_metadata
 
     @property
     def additional_keys(self) -> list[str]:

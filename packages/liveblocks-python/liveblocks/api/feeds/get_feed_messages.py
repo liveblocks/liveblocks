@@ -4,10 +4,7 @@ from urllib.parse import quote
 import httpx
 
 from ... import errors
-from ...models.create_feed_message import CreateFeedMessage
-from ...models.post_rooms_room_id_feeds_feed_id_messages_response_200 import (
-    PostRoomsRoomIdFeedsFeedIdMessagesResponse200,
-)
+from ...models.get_feed_messages_response import GetFeedMessagesResponse
 from ...types import UNSET, Unset
 
 
@@ -15,30 +12,36 @@ def _get_kwargs(
     room_id: str,
     feed_id: str,
     *,
-    body: CreateFeedMessage | Unset = UNSET,
+    cursor: str | Unset = UNSET,
+    since: int | Unset = UNSET,
+    limit: int | Unset = 20,
 ) -> dict[str, Any]:
-    headers: dict[str, Any] = {}
+
+    params: dict[str, Any] = {}
+
+    params["cursor"] = cursor
+
+    params["since"] = since
+
+    params["limit"] = limit
+
+    params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
 
     _kwargs: dict[str, Any] = {
-        "method": "post",
+        "method": "get",
         "url": "/v2/rooms/{room_id}/feeds/{feed_id}/messages".format(
             room_id=quote(str(room_id), safe=""),
             feed_id=quote(str(feed_id), safe=""),
         ),
+        "params": params,
     }
 
-    if not isinstance(body, Unset):
-        _kwargs["json"] = body.to_dict()
-
-    headers["Content-Type"] = "application/json"
-
-    _kwargs["headers"] = headers
     return _kwargs
 
 
-def _parse_response(*, response: httpx.Response) -> PostRoomsRoomIdFeedsFeedIdMessagesResponse200:
+def _parse_response(*, response: httpx.Response) -> GetFeedMessagesResponse:
     if response.status_code == 200:
-        response_200 = PostRoomsRoomIdFeedsFeedIdMessagesResponse200.from_dict(response.json())
+        response_200 = GetFeedMessagesResponse.from_dict(response.json())
 
         return response_200
 
@@ -50,12 +53,16 @@ def _sync(
     feed_id: str,
     *,
     client: httpx.Client,
-    body: CreateFeedMessage | Unset = UNSET,
-) -> PostRoomsRoomIdFeedsFeedIdMessagesResponse200:
+    cursor: str | Unset = UNSET,
+    since: int | Unset = UNSET,
+    limit: int | Unset = 20,
+) -> GetFeedMessagesResponse:
     kwargs = _get_kwargs(
         room_id=room_id,
         feed_id=feed_id,
-        body=body,
+        cursor=cursor,
+        since=since,
+        limit=limit,
     )
 
     response = client.request(
@@ -69,12 +76,16 @@ async def _asyncio(
     feed_id: str,
     *,
     client: httpx.AsyncClient,
-    body: CreateFeedMessage | Unset = UNSET,
-) -> PostRoomsRoomIdFeedsFeedIdMessagesResponse200:
+    cursor: str | Unset = UNSET,
+    since: int | Unset = UNSET,
+    limit: int | Unset = 20,
+) -> GetFeedMessagesResponse:
     kwargs = _get_kwargs(
         room_id=room_id,
         feed_id=feed_id,
-        body=body,
+        cursor=cursor,
+        since=since,
+        limit=limit,
     )
 
     response = await client.request(

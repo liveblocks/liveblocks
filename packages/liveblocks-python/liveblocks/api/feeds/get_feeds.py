@@ -4,7 +4,7 @@ from urllib.parse import quote
 import httpx
 
 from ... import errors
-from ...models.get_rooms_room_id_feeds_response_200 import GetRoomsRoomIdFeedsResponse200
+from ...models.get_feeds_response import GetFeedsResponse
 from ...types import UNSET, Unset
 
 
@@ -12,8 +12,8 @@ def _get_kwargs(
     room_id: str,
     *,
     cursor: str | Unset = UNSET,
-    since: float | Unset = UNSET,
-    limit: float | Unset = UNSET,
+    since: int | Unset = UNSET,
+    limit: int | Unset = 20,
 ) -> dict[str, Any]:
 
     params: dict[str, Any] = {}
@@ -37,9 +37,9 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, response: httpx.Response) -> GetRoomsRoomIdFeedsResponse200:
+def _parse_response(*, response: httpx.Response) -> GetFeedsResponse:
     if response.status_code == 200:
-        response_200 = GetRoomsRoomIdFeedsResponse200.from_dict(response.json())
+        response_200 = GetFeedsResponse.from_dict(response.json())
 
         return response_200
 
@@ -51,9 +51,9 @@ def _sync(
     *,
     client: httpx.Client,
     cursor: str | Unset = UNSET,
-    since: float | Unset = UNSET,
-    limit: float | Unset = UNSET,
-) -> GetRoomsRoomIdFeedsResponse200:
+    since: int | Unset = UNSET,
+    limit: int | Unset = 20,
+) -> GetFeedsResponse:
     kwargs = _get_kwargs(
         room_id=room_id,
         cursor=cursor,
@@ -72,9 +72,9 @@ async def _asyncio(
     *,
     client: httpx.AsyncClient,
     cursor: str | Unset = UNSET,
-    since: float | Unset = UNSET,
-    limit: float | Unset = UNSET,
-) -> GetRoomsRoomIdFeedsResponse200:
+    since: int | Unset = UNSET,
+    limit: int | Unset = 20,
+) -> GetFeedsResponse:
     kwargs = _get_kwargs(
         room_id=room_id,
         cursor=cursor,

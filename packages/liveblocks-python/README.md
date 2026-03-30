@@ -1204,17 +1204,17 @@ print(result)
 
 ### Feeds
 
-#### `get_rooms_room_id_feeds`
+#### `get_feeds`
 
-This endpoint returns the feeds in the requested room. Corresponds to [`liveblocks.getFeeds`](/docs/api-reference/liveblocks-node#get-rooms-roomId-feeds).
+This endpoint returns the feeds in the requested room. Corresponds to [`liveblocks.getFeeds`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-feeds).
 
 **Example**
 ```python
-result = client.get_rooms_room_id_feeds(
-    room_id="...",
-    # cursor="...",
-    # since=0.0,
-    # limit=0.0,
+result = client.get_feeds(
+    room_id="my-room-id",
+    # cursor="eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9",
+    # since=1660000988137,
+    # limit=20,
 )
 print(result)
 ```
@@ -1222,25 +1222,25 @@ print(result)
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| `room_id` | `str` | Yes |  |
-| `cursor` | `str \| Unset` | No |  |
-| `since` | `float \| Unset` | No |  |
-| `limit` | `float \| Unset` | No |  |
+| `room_id` | `str` | Yes | ID of the room |
+| `cursor` | `str \| Unset` | No | A cursor used for pagination. Get the value from the `nextCursor` response of the previous page. |
+| `since` | `int \| Unset` | No | Only return feeds with `createdAt` greater than this Unix timestamp in milliseconds. |
+| `limit` | `int \| Unset` | No | A limit on the number of feeds to be returned. The limit can range between 1 and 100, and defaults to 20. *(default: `20`)* |
 
 
 ---
 
-#### `post_rooms_room_id_feed`
+#### `create_feed`
 
-This endpoint creates a new feed in a room. Corresponds to [`liveblocks.createFeed`](/docs/api-reference/liveblocks-node#post-rooms-roomId-feed).
+This endpoint creates a new feed in a room. Corresponds to [`liveblocks.createFeed`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-feeds).
 
 **Example**
 ```python
-from liveblocks.models import CreateFeed
+from liveblocks.models import CreateFeedRequestBody
 
-result = client.post_rooms_room_id_feed(
-    room_id="...",
-    body=CreateFeed(
+result = client.create_feed(
+    room_id="my-room-id",
+    body=CreateFeedRequestBody(
         feed_id="...",
         # metadata=...,
         # timestamp=0.0,
@@ -1252,21 +1252,21 @@ print(result)
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| `room_id` | `str` | Yes |  |
-| `body` | `CreateFeed \| Unset` | No | Request body (application/json) |
+| `room_id` | `str` | Yes | ID of the room |
+| `body` | `CreateFeedRequestBody` | Yes | Request body (application/json) |
 
 
 ---
 
-#### `get_rooms_room_id_feeds_feed_id`
+#### `get_feed`
 
-This endpoint returns a feed by its ID. Corresponds to [`liveblocks.getFeed`](/docs/api-reference/liveblocks-node#get-rooms-roomId-feeds-feedId).
+This endpoint returns a feed by its ID. Corresponds to [`liveblocks.getFeed`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-feeds-feedId).
 
 **Example**
 ```python
-result = client.get_rooms_room_id_feeds_feed_id(
-    room_id="...",
-    feed_id="...",
+result = client.get_feed(
+    room_id="my-room-id",
+    feed_id="fd_abc123",
 )
 print(result)
 ```
@@ -1274,72 +1274,73 @@ print(result)
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| `room_id` | `str` | Yes |  |
-| `feed_id` | `str` | Yes |  |
+| `room_id` | `str` | Yes | ID of the room |
+| `feed_id` | `str` | Yes | ID of the feed |
 
 
 ---
 
-#### `delete_rooms_room_id_feeds_feed_id`
+#### `delete_feed`
 
-This endpoint deletes a feed. Corresponds to [`liveblocks.deleteFeed`](/docs/api-reference/liveblocks-node#delete-rooms-roomId-feeds-feedId).
+This endpoint deletes a feed. Corresponds to [`liveblocks.deleteFeed`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-rooms-roomId-feeds-feedId).
 
 **Example**
 ```python
-client.delete_rooms_room_id_feeds_feed_id(
-    room_id="...",
-    feed_id="...",
+client.delete_feed(
+    room_id="my-room-id",
+    feed_id="fd_abc123",
 )
 ```
 **Parameters:**
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| `room_id` | `str` | Yes |  |
-| `feed_id` | `str` | Yes |  |
+| `room_id` | `str` | Yes | ID of the room |
+| `feed_id` | `str` | Yes | ID of the feed |
 
 
 ---
 
-#### `patch_rooms_room_id_feeds_feed_id`
+#### `update_feed`
 
-This endpoint updates the metadata of a feed. Corresponds to [`liveblocks.updateFeed`](/docs/api-reference/liveblocks-node#patch-rooms-roomId-feeds-feedId).
+This endpoint updates the metadata of a feed. Corresponds to [`liveblocks.updateFeed`](https://liveblocks.io/docs/api-reference/liveblocks-node#patch-rooms-roomId-feeds-feedId).
 
 **Example**
 ```python
-from liveblocks.models import UpdateFeed
+from liveblocks.models import UpdateFeedRequestBody
 
-client.patch_rooms_room_id_feeds_feed_id(
-    room_id="...",
-    feed_id="...",
-    body=UpdateFeed(
+result = client.update_feed(
+    room_id="my-room-id",
+    feed_id="fd_abc123",
+    body=UpdateFeedRequestBody(
         metadata=...,
     ),
 )
+print(result)
 ```
 **Parameters:**
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| `room_id` | `str` | Yes |  |
-| `feed_id` | `str` | Yes |  |
-| `body` | `UpdateFeed \| Unset` | No | Request body (application/json) |
+| `room_id` | `str` | Yes | ID of the room |
+| `feed_id` | `str` | Yes | ID of the feed |
+| `body` | `UpdateFeedRequestBody` | Yes | Request body (application/json) |
 
 
 ---
 
-#### `get_rooms_room_id_feeds_feed_id_messages`
+#### `get_feed_messages`
 
-This endpoint returns the messages in a feed. Corresponds to [`liveblocks.getFeedMessages`](/docs/api-reference/liveblocks-node#get-rooms-roomId-feeds-feedId-messages).
+This endpoint returns the messages in a feed. Corresponds to [`liveblocks.getFeedMessages`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-feeds-feedId-messages).
 
 **Example**
 ```python
-result = client.get_rooms_room_id_feeds_feed_id_messages(
-    room_id="...",
-    feed_id="...",
-    # cursor="...",
-    # since=0.0,
-    # limit=0.0,
+result = client.get_feed_messages(
+    room_id="my-room-id",
+    feed_id="fd_abc123",
+    # cursor="eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9",
+    # since=1660000988137,
+    # limit=20,
 )
 print(result)
 ```
@@ -1347,27 +1348,27 @@ print(result)
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| `room_id` | `str` | Yes |  |
-| `feed_id` | `str` | Yes |  |
-| `cursor` | `str \| Unset` | No |  |
-| `since` | `float \| Unset` | No |  |
-| `limit` | `float \| Unset` | No |  |
+| `room_id` | `str` | Yes | ID of the room |
+| `feed_id` | `str` | Yes | ID of the feed |
+| `cursor` | `str \| Unset` | No | A cursor used for pagination. Get the value from the `nextCursor` response of the previous page. |
+| `since` | `int \| Unset` | No | Only return messages with `createdAt` greater than this Unix timestamp in milliseconds. |
+| `limit` | `int \| Unset` | No | A limit on the number of messages to be returned. The limit can range between 1 and 100, and defaults to 20. *(default: `20`)* |
 
 
 ---
 
-#### `post_rooms_room_id_feeds_feed_id_messages`
+#### `create_feed_message`
 
-This endpoint creates a new message in a feed. Corresponds to [`liveblocks.createFeedMessage`](/docs/api-reference/liveblocks-node#post-rooms-roomId-feeds-feedId-messages).
+This endpoint creates a new message in a feed. Corresponds to [`liveblocks.createFeedMessage`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-feeds-feedId-messages).
 
 **Example**
 ```python
-from liveblocks.models import CreateFeedMessage
+from liveblocks.models import CreateFeedMessageRequestBody
 
-result = client.post_rooms_room_id_feeds_feed_id_messages(
-    room_id="...",
-    feed_id="...",
-    body=CreateFeedMessage(
+result = client.create_feed_message(
+    room_id="my-room-id",
+    feed_id="fd_abc123",
+    body=CreateFeedMessageRequestBody(
         data=...,
         # id="...",
         # timestamp=0.0,
@@ -1379,62 +1380,63 @@ print(result)
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| `room_id` | `str` | Yes |  |
-| `feed_id` | `str` | Yes |  |
-| `body` | `CreateFeedMessage \| Unset` | No | Request body (application/json) |
+| `room_id` | `str` | Yes | ID of the room |
+| `feed_id` | `str` | Yes | ID of the feed |
+| `body` | `CreateFeedMessageRequestBody` | Yes | Request body (application/json) |
 
 
 ---
 
-#### `delete_rooms_room_id_feeds_feed_id_messages_message_id`
+#### `delete_feed_message`
 
-This endpoint deletes a feed message. Corresponds to [`liveblocks.deleteFeedMessage`](/docs/api-reference/liveblocks-node#delete-rooms-roomId-feeds-feedId-messages-messageId).
+This endpoint deletes a feed message. Corresponds to [`liveblocks.deleteFeedMessage`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-rooms-roomId-feeds-feedId-messages-messageId).
 
 **Example**
 ```python
-client.delete_rooms_room_id_feeds_feed_id_messages_message_id(
-    room_id="...",
-    feed_id="...",
-    message_id="...",
+client.delete_feed_message(
+    room_id="my-room-id",
+    feed_id="fd_abc123",
+    message_id="msg_xyz789",
 )
 ```
 **Parameters:**
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| `room_id` | `str` | Yes |  |
-| `feed_id` | `str` | Yes |  |
-| `message_id` | `str` | Yes |  |
+| `room_id` | `str` | Yes | ID of the room |
+| `feed_id` | `str` | Yes | ID of the feed |
+| `message_id` | `str` | Yes | ID of the message |
 
 
 ---
 
-#### `patch_rooms_room_id_feeds_feed_id_messages_message_id`
+#### `update_feed_message`
 
-This endpoint updates a feed message. Corresponds to [`liveblocks.updateFeedMessage`](/docs/api-reference/liveblocks-node#patch-rooms-roomId-feeds-feedId-messages-messageId).
+This endpoint updates a feed message. Corresponds to [`liveblocks.updateFeedMessage`](https://liveblocks.io/docs/api-reference/liveblocks-node#patch-rooms-roomId-feeds-feedId-messages-messageId).
 
 **Example**
 ```python
-from liveblocks.models import UpdateFeedMessage
+from liveblocks.models import UpdateFeedMessageRequestBody
 
-client.patch_rooms_room_id_feeds_feed_id_messages_message_id(
-    room_id="...",
-    feed_id="...",
-    message_id="...",
-    body=UpdateFeedMessage(
+result = client.update_feed_message(
+    room_id="my-room-id",
+    feed_id="fd_abc123",
+    message_id="msg_xyz789",
+    body=UpdateFeedMessageRequestBody(
         data=...,
         # timestamp=0.0,
     ),
 )
+print(result)
 ```
 **Parameters:**
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| `room_id` | `str` | Yes |  |
-| `feed_id` | `str` | Yes |  |
-| `message_id` | `str` | Yes |  |
-| `body` | `UpdateFeedMessage \| Unset` | No | Request body (application/json) |
+| `room_id` | `str` | Yes | ID of the room |
+| `feed_id` | `str` | Yes | ID of the feed |
+| `message_id` | `str` | Yes | ID of the message |
+| `body` | `UpdateFeedMessageRequestBody` | Yes | Request body (application/json) |
 
 
 ---

@@ -4,28 +4,29 @@ from urllib.parse import quote
 import httpx
 
 from ... import errors
-from ...models.update_feed import UpdateFeed
-from ...types import UNSET, Unset
+from ...models.feed_message import FeedMessage
+from ...models.update_feed_message_request_body import UpdateFeedMessageRequestBody
 
 
 def _get_kwargs(
     room_id: str,
     feed_id: str,
+    message_id: str,
     *,
-    body: UpdateFeed | Unset = UNSET,
+    body: UpdateFeedMessageRequestBody,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
     _kwargs: dict[str, Any] = {
         "method": "patch",
-        "url": "/v2/rooms/{room_id}/feeds/{feed_id}".format(
+        "url": "/v2/rooms/{room_id}/feeds/{feed_id}/messages/{message_id}".format(
             room_id=quote(str(room_id), safe=""),
             feed_id=quote(str(feed_id), safe=""),
+            message_id=quote(str(message_id), safe=""),
         ),
     }
 
-    if not isinstance(body, Unset):
-        _kwargs["json"] = body.to_dict()
+    _kwargs["json"] = body.to_dict()
 
     headers["Content-Type"] = "application/json"
 
@@ -33,9 +34,11 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, response: httpx.Response) -> None:
+def _parse_response(*, response: httpx.Response) -> FeedMessage:
     if response.status_code == 200:
-        return None
+        response_200 = FeedMessage.from_dict(response.json())
+
+        return response_200
 
     raise errors.LiveblocksError.from_response(response)
 
@@ -43,13 +46,15 @@ def _parse_response(*, response: httpx.Response) -> None:
 def _sync(
     room_id: str,
     feed_id: str,
+    message_id: str,
     *,
     client: httpx.Client,
-    body: UpdateFeed | Unset = UNSET,
-) -> None:
+    body: UpdateFeedMessageRequestBody,
+) -> FeedMessage:
     kwargs = _get_kwargs(
         room_id=room_id,
         feed_id=feed_id,
+        message_id=message_id,
         body=body,
     )
 
@@ -62,13 +67,15 @@ def _sync(
 async def _asyncio(
     room_id: str,
     feed_id: str,
+    message_id: str,
     *,
     client: httpx.AsyncClient,
-    body: UpdateFeed | Unset = UNSET,
-) -> None:
+    body: UpdateFeedMessageRequestBody,
+) -> FeedMessage:
     kwargs = _get_kwargs(
         room_id=room_id,
         feed_id=feed_id,
+        message_id=message_id,
         body=body,
     )
 

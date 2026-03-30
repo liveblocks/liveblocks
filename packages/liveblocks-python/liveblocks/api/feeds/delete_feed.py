@@ -23,7 +23,7 @@ def _get_kwargs(
 
 
 def _parse_response(*, response: httpx.Response) -> None:
-    if response.status_code == 200:
+    if response.status_code == 204:
         return None
 
     raise errors.LiveblocksError.from_response(response)

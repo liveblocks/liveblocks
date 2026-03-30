@@ -9,32 +9,30 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.create_feed_metadata import CreateFeedMetadata
+    from ..models.create_feed_message_request_body_data import CreateFeedMessageRequestBodyData
 
 
 @_attrs_define
-class CreateFeed:
-    """Request body for `POST /v2/rooms/{roomId}/feed`. Optional creation time is sent as `timestamp` (milliseconds), not
-    `createdAt`.
+class CreateFeedMessageRequestBody:
+    """Request body for `POST /v2/rooms/{roomId}/feeds/{feedId}/messages`. Optional message time is sent as `timestamp`
+    (milliseconds), not `createdAt`.
 
         Attributes:
-            feed_id (str):
-            metadata (CreateFeedMetadata | Unset):
-            timestamp (float | Unset): Optional. Unix timestamp in milliseconds for the feed's creation time. If omitted,
+            data (CreateFeedMessageRequestBodyData):
+            id (str | Unset): Optional client-provided message id. If omitted, the server generates one.
+            timestamp (float | Unset): Optional. Unix timestamp in milliseconds for the message's creation time. If omitted,
                 the server uses the current time.
     """
 
-    feed_id: str
-    metadata: CreateFeedMetadata | Unset = UNSET
+    data: CreateFeedMessageRequestBodyData
+    id: str | Unset = UNSET
     timestamp: float | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        feed_id = self.feed_id
+        data = self.data.to_dict()
 
-        metadata: dict[str, Any] | Unset = UNSET
-        if not isinstance(self.metadata, Unset):
-            metadata = self.metadata.to_dict()
+        id = self.id
 
         timestamp = self.timestamp
 
@@ -42,11 +40,11 @@ class CreateFeed:
         field_dict.update(self.additional_properties)
         field_dict.update(
             {
-                "feedId": feed_id,
+                "data": data,
             }
         )
-        if metadata is not UNSET:
-            field_dict["metadata"] = metadata
+        if id is not UNSET:
+            field_dict["id"] = id
         if timestamp is not UNSET:
             field_dict["timestamp"] = timestamp
 
@@ -54,28 +52,23 @@ class CreateFeed:
 
     @classmethod
     def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
-        from ..models.create_feed_metadata import CreateFeedMetadata
+        from ..models.create_feed_message_request_body_data import CreateFeedMessageRequestBodyData
 
         d = dict(src_dict)
-        feed_id = d.pop("feedId")
+        data = CreateFeedMessageRequestBodyData.from_dict(d.pop("data"))
 
-        _metadata = d.pop("metadata", UNSET)
-        metadata: CreateFeedMetadata | Unset
-        if isinstance(_metadata, Unset):
-            metadata = UNSET
-        else:
-            metadata = CreateFeedMetadata.from_dict(_metadata)
+        id = d.pop("id", UNSET)
 
         timestamp = d.pop("timestamp", UNSET)
 
-        create_feed = cls(
-            feed_id=feed_id,
-            metadata=metadata,
+        create_feed_message_request_body = cls(
+            data=data,
+            id=id,
             timestamp=timestamp,
         )
 
-        create_feed.additional_properties = d
-        return create_feed
+        create_feed_message_request_body.additional_properties = d
+        return create_feed_message_request_body
 
     @property
     def additional_keys(self) -> list[str]:

@@ -4,27 +4,25 @@ from urllib.parse import quote
 import httpx
 
 from ... import errors
-from ...models.create_feed import CreateFeed
-from ...models.post_rooms_room_id_feed_response_200 import PostRoomsRoomIdFeedResponse200
-from ...types import UNSET, Unset
+from ...models.create_feed_request_body import CreateFeedRequestBody
+from ...models.feed import Feed
 
 
 def _get_kwargs(
     room_id: str,
     *,
-    body: CreateFeed | Unset = UNSET,
+    body: CreateFeedRequestBody,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
     _kwargs: dict[str, Any] = {
         "method": "post",
-        "url": "/v2/rooms/{room_id}/feed".format(
+        "url": "/v2/rooms/{room_id}/feeds".format(
             room_id=quote(str(room_id), safe=""),
         ),
     }
 
-    if not isinstance(body, Unset):
-        _kwargs["json"] = body.to_dict()
+    _kwargs["json"] = body.to_dict()
 
     headers["Content-Type"] = "application/json"
 
@@ -32,9 +30,9 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, response: httpx.Response) -> PostRoomsRoomIdFeedResponse200:
+def _parse_response(*, response: httpx.Response) -> Feed:
     if response.status_code == 200:
-        response_200 = PostRoomsRoomIdFeedResponse200.from_dict(response.json())
+        response_200 = Feed.from_dict(response.json())
 
         return response_200
 
@@ -45,8 +43,8 @@ def _sync(
     room_id: str,
     *,
     client: httpx.Client,
-    body: CreateFeed | Unset = UNSET,
-) -> PostRoomsRoomIdFeedResponse200:
+    body: CreateFeedRequestBody,
+) -> Feed:
     kwargs = _get_kwargs(
         room_id=room_id,
         body=body,
@@ -62,8 +60,8 @@ async def _asyncio(
     room_id: str,
     *,
     client: httpx.AsyncClient,
-    body: CreateFeed | Unset = UNSET,
-) -> PostRoomsRoomIdFeedResponse200:
+    body: CreateFeedRequestBody,
+) -> Feed:
     kwargs = _get_kwargs(
         room_id=room_id,
         body=body,

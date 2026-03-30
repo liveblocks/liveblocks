@@ -8,7 +8,7 @@ from attrs import field as _attrs_field
 
 
 @_attrs_define
-class CreateFeedMessageData:
+class UpdateFeedMessageRequestBodyData:
     """ """
 
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
@@ -23,10 +23,10 @@ class CreateFeedMessageData:
     @classmethod
     def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
         d = dict(src_dict)
-        create_feed_message_data = cls()
+        update_feed_message_request_body_data = cls()
 
-        create_feed_message_data.additional_properties = d
-        return create_feed_message_data
+        update_feed_message_request_body_data.additional_properties = d
+        return update_feed_message_request_body_data
 
     @property
     def additional_keys(self) -> list[str]:
