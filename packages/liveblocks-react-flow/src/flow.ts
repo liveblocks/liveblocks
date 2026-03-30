@@ -2,8 +2,6 @@ import type {
   History,
   JsonObject,
   Resolve,
-  SyncConfig,
-  SyncMode,
   ToImmutable,
 } from "@liveblocks/core";
 import { kInternal, LiveMap, LiveObject } from "@liveblocks/core";
@@ -33,8 +31,15 @@ import {
   EDGE_BASE_CONFIG,
   NODE_BASE_CONFIG,
 } from "./constants";
-import { toLiveblocksEdge, toLiveblocksNode } from "./helpers";
-import type { LiveblocksEdge, LiveblocksFlow, LiveblocksNode } from "./types";
+import { toLiveblocksInternalEdge, toLiveblocksInternalNode } from "./helpers";
+import type {
+  EdgeSyncConfig,
+  InternalLiveblocksEdge,
+  InternalLiveblocksFlow,
+  InternalLiveblocksNode,
+  NodeSyncConfig,
+  SyncConfig,
+} from "./types";
 
 const EMPTY_ARRAY = [] as unknown[];
 
@@ -65,40 +70,6 @@ type LiveblocksFlowSuspenseResult<
   N extends Node = BuiltInNode,
   E extends Edge = BuiltInEdge,
 > = Extract<UseLiveblocksFlowResult<N, E>, { isLoading: false }>;
-
-export type { SyncConfig, SyncMode };
-
-type InferNodeTypeLiterals<N> =
-  N extends Node<any, infer T extends string>
-    ? string extends T
-      ? never
-      : T
-    : never;
-
-type NodeTypeLiterals<N> =
-  | (string & {}) // eslint-disable-line @typescript-eslint/ban-types
-  | "*"
-  | InferNodeTypeLiterals<N>;
-
-type InferEdgeTypeLiterals<E> =
-  E extends Edge<any, infer T extends string>
-    ? string extends T
-      ? never
-      : T
-    : never;
-
-type EdgeTypeLiterals<E> =
-  | (string & {}) // eslint-disable-line @typescript-eslint/ban-types
-  | "*"
-  | InferEdgeTypeLiterals<E>;
-
-export type NodeSyncConfig<N extends Node> = {
-  [key in NodeTypeLiterals<N>]?: SyncConfig;
-};
-
-export type EdgeSyncConfig<E extends Edge> = {
-  [key in EdgeTypeLiterals<E>]?: SyncConfig;
-};
 
 function mergeAndBuildDataConfigCache(
   base: SyncConfig,
@@ -224,7 +195,7 @@ type UseLiveblocksFlowOptions<N extends Node, E extends Edge> = {
 // https://reactflow.dev/api-reference/utils/apply-node-changes
 function applyNodeChanges<N extends Node>(
   changes: NodeChange<N>[],
-  nodes: LiveMap<string, LiveblocksNode<N>>,
+  nodes: LiveMap<string, InternalLiveblocksNode>,
   history: History,
   getNodeSyncConfig: (nodeType: string | undefined) => SyncConfig
 ): void {
@@ -232,7 +203,10 @@ function applyNodeChanges<N extends Node>(
     switch (change.type) {
       case "add": {
         const config = getNodeSyncConfig(change.item.type);
-        nodes.set(change.item.id, toLiveblocksNode(change.item, config));
+        nodes.set(
+          change.item.id,
+          toLiveblocksInternalNode(change.item, config)
+        );
         break;
       }
 
@@ -242,7 +216,10 @@ function applyNodeChanges<N extends Node>(
         if (existing) {
           existing.reconcile(change.item as unknown as JsonObject, config);
         } else {
-          nodes.set(change.item.id, toLiveblocksNode(change.item, config));
+          nodes.set(
+            change.item.id,
+            toLiveblocksInternalNode(change.item, config)
+          );
         }
         break;
       }
@@ -251,7 +228,7 @@ function applyNodeChanges<N extends Node>(
         const node = nodes.get(change.id);
         if (!node || !change.position) break;
 
-        const prev = node.get("position") as N["position"] | undefined;
+        const prev = node.get("position");
         if (prev?.x !== change.position.x || prev?.y !== change.position.y) {
           node.set("position", change.position);
         }
@@ -262,7 +239,6 @@ function applyNodeChanges<N extends Node>(
           } else {
             history.resume();
           }
-          // @ts-expect-error XXX Fix this later
           node.setLocal("dragging", change.dragging);
         }
         break;
@@ -292,7 +268,6 @@ function applyNodeChanges<N extends Node>(
         }
 
         if (change.dimensions !== undefined) {
-          // @ts-expect-error XXX Fix this later
           node.setLocal("measured", change.dimensions);
         }
 
@@ -302,7 +277,6 @@ function applyNodeChanges<N extends Node>(
           } else {
             history.resume();
           }
-          // @ts-expect-error XXX Fix this later
           node.setLocal("resizing", change.resizing);
         }
 
@@ -313,7 +287,6 @@ function applyNodeChanges<N extends Node>(
         const node = nodes.get(change.id);
         if (!node) break;
 
-        // @ts-expect-error XXX Fix this later
         node.setLocal("selected", change.selected);
         break;
       }
@@ -330,14 +303,17 @@ function applyNodeChanges<N extends Node>(
 // https://reactflow.dev/api-reference/utils/apply-edge-changes
 function applyEdgeChanges<E extends Edge>(
   changes: EdgeChange<E>[],
-  edges: LiveMap<string, LiveblocksEdge<E>>,
+  edges: LiveMap<string, InternalLiveblocksEdge>,
   getEdgeSyncConfig: (type: string | undefined) => SyncConfig
 ): void {
   for (const change of changes) {
     switch (change.type) {
       case "add": {
         const config = getEdgeSyncConfig(change.item.type);
-        edges.set(change.item.id, toLiveblocksEdge(change.item, config));
+        edges.set(
+          change.item.id,
+          toLiveblocksInternalEdge(change.item, config)
+        );
         break;
       }
 
@@ -347,7 +323,10 @@ function applyEdgeChanges<E extends Edge>(
         if (existing) {
           existing.reconcile(change.item as unknown as JsonObject, config);
         } else {
-          edges.set(change.item.id, toLiveblocksEdge(change.item, config));
+          edges.set(
+            change.item.id,
+            toLiveblocksInternalEdge(change.item, config)
+          );
         }
         break;
       }
@@ -356,7 +335,6 @@ function applyEdgeChanges<E extends Edge>(
         {
           const edge = edges.get(change.id);
           if (!edge) break;
-          // @ts-expect-error XXX Fix this later
           edge.setLocal("selected", change.selected);
         }
         break;
@@ -409,9 +387,6 @@ export function useLiveblocksFlow<
 >(
   options: UseLiveblocksFlowOptions<N, E> = {}
 ): Resolve<UseLiveblocksFlowResult<N, E> | LiveblocksFlowSuspenseResult<N, E>> {
-  type TFlow = LiveblocksFlow<N, E>;
-  type TImmutableFlow = ToImmutable<LiveblocksFlow<N, E>>;
-
   const history = useHistory();
   const isStorageLoaded = useStorage(() => true) ?? false;
 
@@ -438,20 +413,22 @@ export function useLiveblocksFlow<
   // are already stable (only change when the underlying LiveObject changes).
   const nodes = useStorage((storage) => {
     const flow = storage[frozenOptions.storageKey] as
-      | TImmutableFlow
+      | ToImmutable<InternalLiveblocksFlow>
       | undefined;
-    return flow?.nodes ? ([...flow.nodes.values()] as N[]) : null;
+    return flow?.nodes ? ([...flow.nodes.values()] as unknown as N[]) : null;
   });
   const edges = useStorage((storage) => {
     const flow = storage[frozenOptions.storageKey] as
-      | TImmutableFlow
+      | ToImmutable<InternalLiveblocksFlow>
       | undefined;
-    return flow?.edges ? ([...flow.edges.values()] as E[]) : null;
+    return flow?.edges ? ([...flow.edges.values()] as unknown as E[]) : null;
   });
 
   const onNodesChange = useMutation(
     ({ storage }, changes: NodeChange<N>[]) => {
-      const flow = storage.get(frozenOptions.storageKey) as TFlow | undefined;
+      const flow = storage.get(frozenOptions.storageKey) as
+        | InternalLiveblocksFlow
+        | undefined;
       if (!flow) {
         return;
       }
@@ -463,7 +440,9 @@ export function useLiveblocksFlow<
 
   const onEdgesChange = useMutation(
     ({ storage }, changes: EdgeChange<E>[]) => {
-      const flow = storage.get(frozenOptions.storageKey) as TFlow | undefined;
+      const flow = storage.get(frozenOptions.storageKey) as
+        | InternalLiveblocksFlow
+        | undefined;
       if (!flow) {
         return;
       }
@@ -475,7 +454,9 @@ export function useLiveblocksFlow<
 
   const onConnect = useMutation(
     ({ storage }, connection: Connection) => {
-      const flow = storage.get(frozenOptions.storageKey) as TFlow | undefined;
+      const flow = storage.get(frozenOptions.storageKey) as
+        | InternalLiveblocksFlow
+        | undefined;
       if (!flow) {
         return;
       }
@@ -504,14 +485,16 @@ export function useLiveblocksFlow<
       }
 
       const config = getEdgeSyncConfig(newEdge.type);
-      edges.set(newEdge.id, toLiveblocksEdge(newEdge, config));
+      edges.set(newEdge.id, toLiveblocksInternalEdge(newEdge, config));
     },
     [frozenOptions.storageKey, getEdgeSyncConfig]
   );
 
   const onDelete = useMutation(
     ({ storage }, params: { nodes: N[]; edges: E[] }) => {
-      const flow = storage.get(frozenOptions.storageKey) as TFlow | undefined;
+      const flow = storage.get(frozenOptions.storageKey) as
+        | InternalLiveblocksFlow
+        | undefined;
       if (!flow) {
         return;
       }
@@ -547,16 +530,16 @@ export function useLiveblocksFlow<
           nodes: new LiveMap(
             initialNodes.map((node) => [
               node.id,
-              toLiveblocksNode(node, getNodeSyncConfig(node.type)),
+              toLiveblocksInternalNode(node, getNodeSyncConfig(node.type)),
             ])
           ),
           edges: new LiveMap(
             initialEdges.map((edge) => [
               edge.id,
-              toLiveblocksEdge(edge, getEdgeSyncConfig(edge.type)),
+              toLiveblocksInternalEdge(edge, getEdgeSyncConfig(edge.type)),
             ])
           ),
-        }) as LiveblocksFlow<N, E>
+        })
       );
     },
     [frozenOptions, getNodeSyncConfig, getEdgeSyncConfig]

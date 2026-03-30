@@ -2,7 +2,27 @@ import type { JsonObject, SyncConfig } from "@liveblocks/core";
 import { deepLiveifyObject } from "@liveblocks/core";
 import type { Edge, Node } from "@xyflow/react";
 
-import type { LiveblocksEdge, LiveblocksNode } from "./types";
+import { EDGE_BASE_CONFIG, NODE_BASE_CONFIG } from "./constants";
+import type {
+  InternalLiveblocksEdge,
+  InternalLiveblocksNode,
+  LiveblocksEdge,
+  LiveblocksNode,
+} from "./types";
+
+export function toLiveblocksInternalNode<N extends Node>(
+  node: N,
+  config: SyncConfig
+): InternalLiveblocksNode {
+  return deepLiveifyObject(node as unknown as JsonObject, config) as InternalLiveblocksNode;
+}
+
+export function toLiveblocksInternalEdge<E extends Edge>(
+  edge: E,
+  config: SyncConfig
+): InternalLiveblocksEdge {
+  return deepLiveifyObject(edge as unknown as JsonObject, config) as InternalLiveblocksEdge;
+}
 
 /**
  * @experimental
@@ -14,12 +34,12 @@ import type { LiveblocksEdge, LiveblocksNode } from "./types";
  */
 export function toLiveblocksNode<N extends Node>(
   node: N,
-  config: SyncConfig
+  config?: SyncConfig
 ): LiveblocksNode<N> {
-  return deepLiveifyObject(
-    node as unknown as JsonObject,
-    config
-  ) as LiveblocksNode<N>;
+  return toLiveblocksInternalNode(node, {
+    ...NODE_BASE_CONFIG,
+    data: config,
+  }) as unknown as LiveblocksNode<N>;
 }
 
 /**
@@ -32,10 +52,10 @@ export function toLiveblocksNode<N extends Node>(
  */
 export function toLiveblocksEdge<E extends Edge>(
   edge: E,
-  config: SyncConfig
+  config?: SyncConfig
 ): LiveblocksEdge<E> {
-  return deepLiveifyObject(
-    edge as unknown as JsonObject,
-    config
-  ) as LiveblocksEdge<E>;
+  return toLiveblocksInternalEdge(edge, {
+    ...EDGE_BASE_CONFIG,
+    data: config,
+  }) as unknown as LiveblocksEdge<E>;
 }
