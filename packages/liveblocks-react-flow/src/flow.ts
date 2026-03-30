@@ -240,10 +240,7 @@ function applyNodeChanges<N extends Node>(
         const config = getNodeSyncConfig(change.item.type);
         const existing = nodes.get(change.item.id);
         if (existing) {
-          existing.reconcile(
-            change.item as unknown as JsonObject,
-            config
-          );
+          existing.reconcile(change.item as unknown as JsonObject, config);
         } else {
           nodes.set(change.item.id, toLiveblocksNode(change.item, config));
         }
@@ -348,10 +345,7 @@ function applyEdgeChanges<E extends Edge>(
         const config = getEdgeSyncConfig(change.item.type);
         const existing = edges.get(change.item.id);
         if (existing) {
-          existing.reconcile(
-            change.item as unknown as JsonObject,
-            config
-          );
+          existing.reconcile(change.item as unknown as JsonObject, config);
         } else {
           edges.set(change.item.id, toLiveblocksEdge(change.item, config));
         }
@@ -372,46 +366,6 @@ function applyEdgeChanges<E extends Edge>(
         break;
     }
   }
-}
-
-/**
- * Creates a Liveblocks Storage representation of a React Flow diagram from nodes and edges.
- *
- * @example
- * ```tsx
- * <RoomProvider
- *   initialStorage={{
- *     flow: createLiveblocksFlow(initialNodes, initialEdges),
- *   }}
- * />
- * ```
- */
-// XXX Decide on Monday: can we kill this helper, or do we need to keep it?
-export function createLiveblocksFlow<
-  N extends Node = BuiltInNode,
-  E extends Edge = BuiltInEdge,
->(
-  nodes: N[] = [],
-  edges: E[] = [],
-  resolveNodeConfig?: (type: string | undefined) => SyncConfig,
-  resolveEdgeConfig?: (type: string | undefined) => SyncConfig
-): LiveblocksFlow<N, E> {
-  const nodeConfig = resolveNodeConfig ?? (() => NODE_BASE_CONFIG);
-  const edgeConfig = resolveEdgeConfig ?? (() => EDGE_BASE_CONFIG);
-  return new LiveObject({
-    nodes: new LiveMap(
-      nodes.map((node) => [
-        node.id,
-        toLiveblocksNode(node, nodeConfig(node.type)),
-      ])
-    ),
-    edges: new LiveMap(
-      edges.map((edge) => [
-        edge.id,
-        toLiveblocksEdge(edge, edgeConfig(edge.type)),
-      ])
-    ),
-  }) as LiveblocksFlow<N, E>;
 }
 
 /**
@@ -589,12 +543,20 @@ export function useLiveblocksFlow<
 
       storage.set(
         frozenOptions.storageKey,
-        createLiveblocksFlow(
-          initialNodes,
-          initialEdges,
-          getNodeSyncConfig,
-          getEdgeSyncConfig
-        )
+        new LiveObject({
+          nodes: new LiveMap(
+            initialNodes.map((node) => [
+              node.id,
+              toLiveblocksNode(node, getNodeSyncConfig(node.type)),
+            ])
+          ),
+          edges: new LiveMap(
+            initialEdges.map((edge) => [
+              edge.id,
+              toLiveblocksEdge(edge, getEdgeSyncConfig(edge.type)),
+            ])
+          ),
+        }) as LiveblocksFlow<N, E>
       );
     },
     [frozenOptions, getNodeSyncConfig, getEdgeSyncConfig]

@@ -1,12 +1,11 @@
-import type { LsonObject, PlainLsonObject } from "@liveblocks/core";
-import { LiveList, LiveObject } from "@liveblocks/core";
+import type { PlainLsonObject } from "@liveblocks/core";
 import { useMutation } from "@liveblocks/react";
 import { act, screen, waitFor } from "@testing-library/react";
 import type { BuiltInEdge, BuiltInNode } from "@xyflow/react";
 import { Suspense } from "react";
 import { describe, expect, test } from "vitest";
 
-import { createLiveblocksFlow, useLiveblocksFlow } from "../index";
+import { useLiveblocksFlow } from "../index";
 import type { LiveblocksFlow } from "../types";
 import { render, renderHook } from "./_utils";
 
@@ -27,54 +26,6 @@ const NODES: BuiltInNode[] = [
   },
 ];
 const EDGES: BuiltInEdge[] = [{ id: "e1-2", source: "1", target: "2" }];
-
-describe("createLiveblocksFlow", () => {
-  test("should initialize a flow with nodes and edges", () => {
-    const flow = createLiveblocksFlow(NODES, EDGES);
-
-    expect(flow.get("nodes").size).toBe(2);
-    expect(flow.get("edges").size).toBe(1);
-    expect(flow.get("nodes").get("1")?.get("data").get("label")).toBe("Node 1");
-    expect(flow.get("edges").get("e1-2")?.get("source")).toBe("1");
-  });
-
-  test("should deep-liveify nested objects and arrays in node data", () => {
-    const nodes = [
-      {
-        type: "custom",
-        id: "1",
-        position: { x: 0, y: 0 },
-        data: {
-          label: "Node 1",
-          metadata: { color: "red", tags: ["a", "b"] },
-        },
-      },
-    ];
-
-    const flow = createLiveblocksFlow(nodes, []);
-    const nodeData = flow.get("nodes").get("1")?.get("data");
-
-    // Top-level data is a LiveObject with deeply liveified contents
-    expect(nodeData).toBeInstanceOf(LiveObject);
-    expect(nodeData?.toImmutable()).toEqual({
-      label: "Node 1",
-      metadata: { color: "red", tags: ["a", "b"] },
-    });
-
-    // Nested object becomes a LiveObject
-    const metadata = nodeData?.get("metadata") as LiveObject<LsonObject>;
-    expect(metadata).toBeInstanceOf(LiveObject);
-    // Nested array becomes a LiveList
-    expect(metadata.get("tags")).toBeInstanceOf(LiveList);
-  });
-
-  test("should support initializing an empty flow", () => {
-    const flow = createLiveblocksFlow();
-
-    expect(flow.get("nodes").size).toBe(0);
-    expect(flow.get("edges").size).toBe(0);
-  });
-});
 
 describe("useLiveblocksFlow", () => {
   test("should return loading state before storage is ready", async () => {

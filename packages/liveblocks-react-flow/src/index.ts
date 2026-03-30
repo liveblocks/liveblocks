@@ -12,6 +12,6 @@ export type {
   SyncConfig,
   SyncMode,
 } from "./flow";
-export { createLiveblocksFlow, useLiveblocksFlow } from "./flow";
+export { useLiveblocksFlow } from "./flow";
 export { toLiveblocksEdge, toLiveblocksNode } from "./helpers";
 export type { LiveblocksEdge, LiveblocksFlow, LiveblocksNode } from "./types";
