@@ -1,6 +1,6 @@
 export default function Loading() {
   return (
-    <div className="app-loading">
+    <div className="loading">
       <img
         src="https://liveblocks.io/loading.svg"
         alt="Loading"

@@ -7,7 +7,7 @@ import {
   RoomProvider,
 } from "@liveblocks/react/suspense";
 import { useSearchParams } from "next/navigation";
-import FlowchartEditor from "./flowchart/editor";
+import { Flowchart } from "./flowchart";
 
 export default function Page() {
   const roomId = useExampleRoomId(
@@ -16,6 +16,7 @@ export default function Page() {
 
   return (
     <LiveblocksProvider
+      throttle={16}
       authEndpoint="/api/liveblocks-auth"
       resolveUsers={async ({ userIds }) => {
         const searchParams = new URLSearchParams(
@@ -45,7 +46,7 @@ export default function Page() {
     >
       <RoomProvider id={roomId}>
         <ClientSideSuspense fallback={<Loading />}>
-          <FlowchartEditor />
+          <Flowchart />
         </ClientSideSuspense>
       </RoomProvider>
     </LiveblocksProvider>

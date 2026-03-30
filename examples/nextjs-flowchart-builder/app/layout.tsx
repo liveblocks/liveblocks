@@ -1,12 +1,8 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
 import "@xyflow/react/dist/style.css";
 import "@liveblocks/react-ui/styles.css";
 import "@liveblocks/react-flow/styles.css";
-import "./xy-theme.css";
-
-const inter = Inter({ subsets: ["latin"] });
+import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Liveblocks",
@@ -33,9 +29,7 @@ export default function RootLayout({
           type="image/png"
         />
       </head>
-      <body className={inter.className}>
-        <main className="app-main">{children}</main>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

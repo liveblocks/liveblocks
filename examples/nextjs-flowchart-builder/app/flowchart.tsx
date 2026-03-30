@@ -15,7 +15,11 @@ import {
   useThreads,
 } from "@liveblocks/react/suspense";
 import { nanoid } from "nanoid";
-import { Cursors, useLiveblocksFlow } from "@liveblocks/react-flow";
+import {
+  Cursors,
+  useLiveblocksFlow,
+  type LiveblocksFlow,
+} from "@liveblocks/react-flow";
 import {
   Background,
   BaseEdge,
@@ -24,11 +28,13 @@ import {
   ControlButton,
   Controls,
   EdgeLabelRenderer,
+  EdgeTypes,
   Handle,
   MarkerType,
   MiniMap,
   NodeResizer,
   NodeToolbar,
+  NodeTypes,
   Panel,
   Position,
   ReactFlow,
@@ -40,8 +46,10 @@ import {
   useStore,
   useStoreApi,
   type Connection,
+  type Edge,
   type EdgeProps,
   type MiniMapNodeProps,
+  type Node,
   type NodeChange,
   type NodeProps,
   type NodeRemoveChange,
@@ -79,31 +87,215 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
-import {
-  BLOCK_COLORS,
-  BLOCK_SHAPES,
-  DEFAULT_BLOCK_COLOR,
-  DEFAULT_BLOCK_SIZE,
-  FLOWCHART_EDGE_TYPE,
-  createFlowchartEdge,
-  createFlowchartNode,
-  blockSourceHandleId,
-  blockTargetHandleId,
-  flowPointToNormalized,
-  getBlockColor,
-  getNodeAtFlowPoint,
-  getBlockShape,
-  normalizedToFlowPoint,
-  type BlockColor,
-  type BlockHandleSide,
-  type BlockShape,
-  type FlowchartNode,
-  type FlowchartEdge,
-  capitalize,
-  FLOWCHART_STORAGE_KEY,
-  Point,
-} from "./shared";
-import "./flowchart.css";
+
+const BLOCK_SHAPES = ["rectangle", "ellipse", "diamond"] as const;
+
+const BLOCK_COLORS = {
+  blue: "#09f",
+  cyan: "#0cd",
+  green: "#3c5",
+  yellow: "#fb0",
+  orange: "#f81",
+  red: "#f24",
+  pink: "#e4b",
+  purple: "#85f",
+  gray: "#678",
+} as const;
+
+const BLOCK_HANDLE_SIDES = ["top", "right", "bottom", "left"] as const;
+
+const FLOWCHART_STORAGE_KEY = "flow" as const;
+
+const FLOWCHART_EDGE_TYPE = "smoothstep" as const;
+
+const DEFAULT_BLOCK_SIZE = 100;
+
+type Point = { x: number; y: number };
+type Frame = { position: Point; width?: number; height?: number };
+
+type BlockShape = (typeof BLOCK_SHAPES)[number];
+type BlockColor = keyof typeof BLOCK_COLORS;
+type BlockHandleSide = (typeof BLOCK_HANDLE_SIDES)[number];
+
+const DEFAULT_BLOCK_SHAPE: BlockShape = "rectangle";
+const DEFAULT_BLOCK_COLOR: BlockColor = "gray";
+type BlockSourceHandleId = `src-${BlockHandleSide}`;
+type BlockTargetHandleId = `tgt-${BlockHandleSide}`;
+
+type FlowchartNodeData = {
+  label: string;
+  shape: BlockShape;
+  color: BlockColor;
+};
+
+type FlowchartEdgeData = {
+  label: string;
+};
+
+type FlowchartNode = Node<FlowchartNodeData, "block">;
+type FlowchartEdge = Edge<FlowchartEdgeData, typeof FLOWCHART_EDGE_TYPE>;
+type FlowchartFlow = LiveblocksFlow<FlowchartNode, FlowchartEdge>;
+
+function blockSourceHandleId(side: BlockHandleSide): BlockSourceHandleId {
+  return `src-${side}`;
+}
+
+function blockTargetHandleId(side: BlockHandleSide): BlockTargetHandleId {
+  return `tgt-${side}`;
+}
+
+function getNodeSize(node: Pick<Frame, "width" | "height">) {
+  return {
+    width: node.width ?? DEFAULT_BLOCK_SIZE,
+    height: node.height ?? DEFAULT_BLOCK_SIZE,
+  };
+}
+
+function getNodeCenter(node: Frame): Point {
+  const { width, height } = getNodeSize(node);
+
+  return {
+    x: node.position.x + width / 2,
+    y: node.position.y + height / 2,
+  };
+}
+
+function flowPointToNormalized(
+  node: Frame,
+  flowX: number,
+  flowY: number
+): Point {
+  const { width, height } = getNodeSize(node);
+
+  return {
+    x: (flowX - node.position.x) / Math.max(width, 1),
+    y: (flowY - node.position.y) / Math.max(height, 1),
+  };
+}
+
+function normalizedToFlowPoint(node: Frame, normalized: Point): Point {
+  const { width, height } = getNodeSize(node);
+
+  return {
+    x: node.position.x + normalized.x * Math.max(width, 1),
+    y: node.position.y + normalized.y * Math.max(height, 1),
+  };
+}
+
+function getNodeAtFlowPoint(
+  nodes: FlowchartNode[],
+  flow: Point
+): FlowchartNode | undefined {
+  return nodes.find((node) => {
+    const { width, height } = getNodeSize(node);
+    const { x, y } = node.position;
+
+    return (
+      flow.x >= x && flow.x <= x + width && flow.y >= y && flow.y <= y + height
+    );
+  });
+}
+
+function getMidpoint(a: Point, b: Point): Point {
+  return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+}
+
+function getEdgeHandlesForNodes(
+  sourceNode: Frame,
+  targetNode: Frame
+): {
+  sourceHandle: BlockSourceHandleId;
+  targetHandle: BlockTargetHandleId;
+} {
+  const sourceCenter = getNodeCenter(sourceNode);
+  const targetCenter = getNodeCenter(targetNode);
+  const dx = targetCenter.x - sourceCenter.x;
+  const dy = targetCenter.y - sourceCenter.y;
+
+  if (Math.abs(dx) > Math.abs(dy)) {
+    return dx >= 0
+      ? {
+          sourceHandle: blockSourceHandleId("right"),
+          targetHandle: blockTargetHandleId("left"),
+        }
+      : {
+          sourceHandle: blockSourceHandleId("left"),
+          targetHandle: blockTargetHandleId("right"),
+        };
+  }
+
+  return dy >= 0
+    ? {
+        sourceHandle: blockSourceHandleId("bottom"),
+        targetHandle: blockTargetHandleId("top"),
+      }
+    : {
+        sourceHandle: blockSourceHandleId("top"),
+        targetHandle: blockTargetHandleId("bottom"),
+      };
+}
+
+function createFlowchartNode(args: {
+  id?: string;
+  position: Point;
+  label?: string;
+  shape?: BlockShape;
+  color?: BlockColor;
+  width?: number;
+  height?: number;
+  selected?: boolean;
+}): FlowchartNode {
+  return {
+    id: args.id ?? `block-${nanoid()}`,
+    type: "block",
+    position: args.position,
+    width: args.width ?? DEFAULT_BLOCK_SIZE,
+    height: args.height ?? DEFAULT_BLOCK_SIZE,
+    selected: args.selected,
+    data: {
+      label: args.label ?? "",
+      shape: args.shape ?? DEFAULT_BLOCK_SHAPE,
+      color: args.color ?? DEFAULT_BLOCK_COLOR,
+    },
+  };
+}
+
+function createFlowchartEdge(args: {
+  id?: string;
+  source: string;
+  target: string;
+  label?: string;
+  sourceHandle: BlockSourceHandleId;
+  targetHandle: BlockTargetHandleId;
+  selected?: boolean;
+}): FlowchartEdge {
+  return {
+    id: args.id ?? `e-${args.source}-${args.target}-${nanoid(6)}`,
+    source: args.source,
+    target: args.target,
+    sourceHandle: args.sourceHandle,
+    targetHandle: args.targetHandle,
+    type: FLOWCHART_EDGE_TYPE,
+    selected: args.selected,
+    data: { label: args.label ?? "" },
+  };
+}
+
+function isBlockShape(value: string | undefined): value is BlockShape {
+  return value ? (BLOCK_SHAPES as readonly string[]).includes(value) : false;
+}
+
+function getBlockShape(shape: string | BlockShape | undefined): BlockShape {
+  return isBlockShape(shape) ? shape : DEFAULT_BLOCK_SHAPE;
+}
+
+function getBlockColor(color: BlockColor | undefined): string {
+  return BLOCK_COLORS[color ?? DEFAULT_BLOCK_COLOR];
+}
+
+function capitalize(text: string) {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
 
 type ThreadPinPlacement =
   | { kind: "canvas"; flow: Point }
@@ -1156,12 +1348,7 @@ function FlowToolbar({
   );
 }
 
-function FlowCursor({
-  userId,
-}: {
-  userId: string;
-  connectionId: number;
-}) {
+function FlowCursor({ userId }: { userId: string; connectionId: number }) {
   const { user, isLoading } = useUser(userId);
 
   if (isLoading) {
@@ -1176,6 +1363,14 @@ function FlowCursor({
     />
   );
 }
+
+const nodeTypes: NodeTypes = {
+  block: BlockNode,
+};
+
+const edgeTypes: EdgeTypes = {
+  [FLOWCHART_EDGE_TYPE]: FlowchartLabelEdge,
+};
 
 function Flow({ className, ...props }: ComponentProps<"div">) {
   const didReconnectRef = useRef(false);
@@ -1444,8 +1639,8 @@ function Flow({ className, ...props }: ComponentProps<"div">) {
           event.preventDefault();
           resetPlacementMode();
         }}
-        nodeTypes={{ block: BlockNode }}
-        edgeTypes={{ [FLOWCHART_EDGE_TYPE]: FlowchartLabelEdge }}
+        nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         defaultEdgeOptions={{
           type: FLOWCHART_EDGE_TYPE,
           markerEnd: {
@@ -1505,7 +1700,7 @@ function Flow({ className, ...props }: ComponentProps<"div">) {
   );
 }
 
-export default function FlowchartEditor() {
+export function Flowchart() {
   return (
     <div className="flowchart">
       <ReactFlowProvider>
