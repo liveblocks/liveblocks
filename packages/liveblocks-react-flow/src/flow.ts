@@ -201,18 +201,8 @@ function applyNodeChanges<N extends Node>(
 ): void {
   for (const change of changes) {
     switch (change.type) {
-      case "add": {
-        const config = getNodeSyncConfig(change.item.type);
-        nodes.set(
-          change.item.id,
-          toLiveblocksInternalNode(change.item, config)
-        );
-        break;
-      }
-
+      case "add":
       case "replace": {
-        // XXX Discuss with Marc on Monday: DRY this up with "add" case?
-        // XXX Discuss with Marc on Monday: this assumes we receive the _entire_ new Node
         const config = getNodeSyncConfig(change.item.type);
         const existing = nodes.get(change.item.id);
         if (existing) {
@@ -230,9 +220,7 @@ function applyNodeChanges<N extends Node>(
         const node = nodes.get(change.id);
         if (!node || !change.position) break;
 
-        // XXX Discuss with Marc: 'position' is now atomic, so .set() will not exist on there
-        const prev = node.get("position");
-        if (prev?.x !== change.position.x || prev?.y !== change.position.y) {
+        if (change.position !== undefined) {
           node.set("position", change.position);
         }
 
@@ -251,8 +239,6 @@ function applyNodeChanges<N extends Node>(
         const node = nodes.get(change.id);
         if (!node) break;
 
-        // XXX Discuss with Marc: 'dimensions' is now atomic, so .set() will not exist on there
-        // XXX Discuss with Marc: is this so that people can make wider and make longer at the same time?
         if (
           change.dimensions !== undefined &&
           change.setAttributes !== undefined
@@ -292,8 +278,6 @@ function applyNodeChanges<N extends Node>(
         const node = nodes.get(change.id);
         if (!node) break;
 
-        // XXX Discuss with Marc: in a way, we don't care about this individual property change event
-        // XXX Discuss with Marc: This isn't DRY anymore, because of src/constants.ts:7
         node.setLocal("selected", change.selected);
         break;
       }
@@ -468,21 +452,6 @@ export function useLiveblocksFlow<
         return;
       }
 
-      // XXX Discuss with Marc on Monday: why is this necessary?
-      const edges = flow.get("edges");
-      for (const edge of edges.values()) {
-        if (
-          edge.get("source") === connection.source &&
-          edge.get("target") === connection.target &&
-          (edge.get("sourceHandle") ?? null) ===
-            (connection.sourceHandle ?? null) &&
-          (edge.get("targetHandle") ?? null) ===
-            (connection.targetHandle ?? null)
-        ) {
-          return;
-        }
-      }
-
       // Delegate to React Flow's own `addEdge` helper for consistent default
       // edge ID generation, passing an empty array since de-duplication is
       // already handled above.
@@ -491,6 +460,7 @@ export function useLiveblocksFlow<
         return;
       }
 
+      const edges = flow.get("edges");
       const config = getEdgeSyncConfig(newEdge.type);
       edges.set(newEdge.id, toLiveblocksInternalEdge(newEdge, config));
     },
