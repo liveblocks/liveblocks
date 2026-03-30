@@ -142,6 +142,11 @@
             "hidden": true
           },
           {
+            "title": "React Flow",
+            "path": "/get-started/nextjs-react-flow",
+            "hidden": true
+          },
+          {
             "title": "BlockNote",
             "path": "/get-started/react-blocknote",
             "hidden": true

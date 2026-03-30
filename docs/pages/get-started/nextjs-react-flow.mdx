@@ -1,0 +1,296 @@
+---
+meta:
+  title: "Get started with React Flow using Liveblocks and Next.js"
+  parentTitle: "Quickstart"
+  description:
+    "Learn how to add a collaborative React Flow diagram using Liveblocks and
+    Next.js."
+---
+
+Liveblocks is a realtime collaboration infrastructure for building performant
+collaborative experiences. Follow the following steps to start adding
+collaboration to your Next.js application using the APIs from the
+[`@liveblocks/react-flow`](/docs/api-reference/liveblocks-react-flow) package.
+
+## Quickstart
+
+<Steps>
+  <Step>
+    <StepTitle>Install Liveblocks and React Flow</StepTitle>
+    <StepContent>
+
+      Every Liveblocks package should use the same version.
+
+      ```bash trackEvent="install_liveblocks"
+      npm install @liveblocks/client @liveblocks/react @liveblocks/react-ui @liveblocks/react-flow @xyflow/react
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Initialize the `liveblocks.config.ts` file</StepTitle>
+    <StepContent>
+
+      We can use this file later to [define types for our application](/docs/api-reference/liveblocks-react#Typing-your-data).
+
+      ```bash
+      npx create-liveblocks-app@latest --init --framework react
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Create a Liveblocks room</StepTitle>
+    <StepContent>
+
+      Liveblocks uses the concept of rooms, separate virtual spaces where people
+      collaborate, and to create a realtime experience, multiple users must
+      be connected to the same room. When using Next.js’ `/app` router,
+      we recommend creating your room in a `Room.tsx` file in the same directory
+      as your current route.
+
+      Set up a Liveblocks client with
+      [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider),
+      join a room with [`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider),
+      and use [`ClientSideSuspense`](/docs/api-reference/liveblocks-react#ClientSideSuspense)
+      to add a loading spinner to your app.
+
+      ```tsx file="app/Room.tsx"
+      "use client";
+
+      import { ReactNode } from "react";
+      import {
+        LiveblocksProvider,
+        RoomProvider,
+        ClientSideSuspense,
+      } from "@liveblocks/react/suspense";
+
+      export function Room({ children }: { children: ReactNode }) {
+        return (
+          // +++
+          <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
+            <RoomProvider id="my-room">
+              <ClientSideSuspense fallback={<div>Loading…</div>}>
+                {children}
+              </ClientSideSuspense>
+            </RoomProvider>
+          </LiveblocksProvider>
+          // +++
+        );
+      }
+      ```
+
+  </StepContent>
+
+</Step>
+<Step>
+  <StepTitle>Add the Liveblocks room to your page</StepTitle>
+  <StepContent>
+
+    After creating your room file, it’s time to join it. Import
+    your room into your `page.tsx` file, and place
+    your collaborative app components inside it.
+
+    ```tsx file="app/page.tsx"
+    import { Room } from "./Room";
+    import { Flow } from "./Flow";
+
+    export default function Page() {
+      return (
+        // +++
+        <Room>
+          <Flow />
+        </Room>
+        // +++
+      );
+    }
+    ```
+
+  </StepContent>
+
+</Step>
+<Step>
+  <StepTitle>Set up the collaborative React Flow diagram</StepTitle>
+  <StepContent>
+
+    Now that Liveblocks is set up, integrate React Flow in the `Flow.tsx` file.
+    [`useLiveblocksFlow`](/docs/api-reference/liveblocks-react-flow#useLiveblocksFlow)
+    keeps nodes and edges in sync across clients using Liveblocks Storage.
+
+    ```tsx file="app/Flow.tsx"
+    "use client";
+
+    import { ReactFlow } from "@xyflow/react";
+    import { useLiveblocksFlow } from "@liveblocks/react-flow";
+    import "@xyflow/react/dist/style.css";
+
+    export function Flow() {
+      const {
+        nodes,
+        edges,
+        onNodesChange,
+        onEdgesChange,
+        onConnect,
+        onDelete,
+      } = useLiveblocksFlow({
+        suspense: true,
+        nodes: {
+          initial: [
+            {
+              id: "1",
+              type: "input",
+              data: { label: "Start" },
+              position: { x: 250, y: 0 },
+            },
+            {
+              id: "2",
+              data: { label: "Process" },
+              position: { x: 100, y: 110 },
+            },
+            {
+              id: "3",
+              type: "output",
+              data: { label: "End" },
+              position: { x: 250, y: 220 },
+            },
+          ],
+        },
+        edges: {
+          initial: [
+            { id: "e1-2", source: "1", target: "2" },
+            { id: "e2-3", source: "2", target: "3" },
+          ],
+        },
+      });
+
+      return (
+        <div style={{ width: "100%", height: "100vh" }}>
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            onDelete={onDelete}
+          />
+        </div>
+      );
+    }
+    ```
+
+</StepContent>
+
+</Step>
+<Step>
+  <StepTitle>Add multiplayer cursors</StepTitle>
+  <StepContent>
+
+    To show where collaborators are pointing in the diagram, render [`Cursors`](/docs/api-reference/liveblocks-react-flow#Cursors) inside `ReactFlow`.
+    Also include the Liveblocks styles in addition to the React Flow ones.
+
+    ```tsx file="app/Flow.tsx"
+    "use client";
+
+    // +++
+    import { ReactFlow } from "@xyflow/react";
+    import { useLiveblocksFlow, Cursors } from "@liveblocks/react-flow";
+    // +++
+    import "@xyflow/react/dist/style.css";
+    // +++
+    import "@liveblocks/react-ui/styles.css";
+    import "@liveblocks/react-flow/styles.css";
+    // +++
+
+    export function Flow() {
+      const {
+        nodes,
+        edges,
+        onNodesChange,
+        onEdgesChange,
+        onConnect,
+        onDelete,
+      } = useLiveblocksFlow({
+        suspense: true,
+        nodes: {
+          initial: [
+            {
+              id: "1",
+              type: "input",
+              data: { label: "Start" },
+              position: { x: 250, y: 0 },
+            },
+            {
+              id: "2",
+              data: { label: "Process" },
+              position: { x: 100, y: 110 },
+            },
+            {
+              id: "3",
+              type: "output",
+              data: { label: "End" },
+              position: { x: 250, y: 220 },
+            },
+          ],
+        },
+        edges: {
+          initial: [
+            { id: "e1-2", source: "1", target: "2" },
+            { id: "e2-3", source: "2", target: "3" },
+          ],
+        },
+      });
+
+      return (
+        <div style={{ width: "100%", height: "100vh" }}>
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            onDelete={onDelete}
+          >
+            // +++
+            <Cursors />
+            // +++
+          </ReactFlow>
+        </div>
+      );
+    }
+    ```
+
+</StepContent>
+
+</Step>
+<Step lastStep>
+  <StepTitle>Next: authenticate and add your users</StepTitle>
+  <StepContent>
+    Your diagram and cursors work now, but each user is anonymous—the next step is to
+    authenticate each user as they connect, and attach their name, color, and avatar for components
+    like [`Cursors`](/docs/api-reference/liveblocks-react-flow#Cursors) or [`AvatarStack`](/docs/api-reference/liveblocks-react-ui#AvatarStack).
+
+    <Button asChild  className="not-markdown">
+      <a href="/docs/guides/how-to-add-users-to-liveblocks-presence-components">
+        Set up authentication and add user information
+      </a>
+    </Button>
+
+  </StepContent>
+
+</Step>
+</Steps>
+
+## What to read next
+
+Congratulations! You now have set up the foundation for a collaborative React
+Flow diagram inside your Next.js application.
+
+- [@liveblocks/react-flow API Reference](/docs/api-reference/liveblocks-react-flow)
+- [Next.js and React guides](/docs/guides?technologies=nextjs%2Creact)
+- [React Flow website](https://reactflow.dev)
+
+---
+
+{/* TODO: Add React Flow examples */}
