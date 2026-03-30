@@ -127,25 +127,28 @@ function StreamingComment({
   const trimmedResponsePart = responsePart.trim();
 
   return (
-    <Comment {...commentProps}>
-      <details className="" open={open} onToggle={() => setOpen(!open)}>
-        <summary className="flex items-baseline cursor-pointer mb-1">
-          <span className="flex-shrink-0 mr-1">
-            <BrainIcon />
-          </span>
-          <span className="lb-ai-chat-pending">{title}</span>
-          <span className="flex-shrink-0 mx-1">
-            {open ? <ChevronIcon rotate /> : <ChevronIcon />}
-          </span>
-          <span className="lb-comment-body opacity-40 flex-shrink flex-grow text-sm truncate">
-            {trimmedResponsePart.length ? `…${trimmedResponsePart}` : ""}
-          </span>
-        </summary>
-        <div className="border border-gray-500/10 rounded-lg py-2.5 px-3 text-sm">
-          {response}
-        </div>
-      </details>
-    </Comment>
+    <Comment
+      {...commentProps}
+      body={
+        <details className="" open={open} onToggle={() => setOpen(!open)}>
+          <summary className="flex items-baseline cursor-pointer mb-1">
+            <span className="shrink-0 mr-1">
+              <BrainIcon />
+            </span>
+            <span className="lb-ai-chat-pending">{title}</span>
+            <span className="shrink-0 mx-1">
+              {open ? <ChevronIcon rotate /> : <ChevronIcon />}
+            </span>
+            <span className="lb-comment-body opacity-40 shrink grow text-sm truncate">
+              {trimmedResponsePart.length ? `…${trimmedResponsePart}` : ""}
+            </span>
+          </summary>
+          <div className="border border-gray-500/10 rounded-lg py-2.5 px-3 text-sm">
+            {response}
+          </div>
+        </details>
+      }
+    />
   );
 }
 
@@ -164,27 +167,32 @@ function StreamedComment({
   const [open, setOpen] = useState(false);
 
   return (
-    <Comment {...commentProps}>
-      <details className="" open={open} onToggle={() => setOpen(!open)}>
-        <summary className="flex items-baseline cursor-pointer mb-1">
-          <span className="opacity-50 text-sm">
-            Thought for {Number(thinkingTime).toFixed(0)} seconds
-          </span>
-          <span className="flex-shrink-0 mx-0.5 opacity-60">
-            {open ? (
-              <ChevronIcon rotate size={14} />
-            ) : (
-              <ChevronIcon size={14} />
-            )}
-          </span>
-        </summary>
-        <div className="lb-comment-body mb-3">
-          <div className="border border-gray-500/10 rounded-lg py-2.5 px-3 text-sm">
-            {reasoning}
-          </div>
-        </div>
-      </details>
-      <div className="lb-comment-body whitespace-pre-wrap">{response}</div>
-    </Comment>
+    <Comment
+      {...commentProps}
+      body={
+        <>
+          <details className="" open={open} onToggle={() => setOpen(!open)}>
+            <summary className="flex items-baseline cursor-pointer mb-1">
+              <span className="opacity-50 text-sm">
+                Thought for {Number(thinkingTime).toFixed(0)} seconds
+              </span>
+              <span className="shrink-0 mx-0.5 opacity-60">
+                {open ? (
+                  <ChevronIcon rotate size={14} />
+                ) : (
+                  <ChevronIcon size={14} />
+                )}
+              </span>
+            </summary>
+            <div className="lb-comment-body mb-3">
+              <div className="border border-gray-500/10 rounded-lg py-2.5 px-3 text-sm">
+                {reasoning}
+              </div>
+            </div>
+          </details>
+          <div className="lb-comment-body whitespace-pre-wrap">{response}</div>
+        </>
+      }
+    />
   );
 }

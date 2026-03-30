@@ -16,14 +16,8 @@
       "createFeed": {
         "stepId": "step//./src/workflows/ai-comment-reply//createFeed"
       },
-      "createFeedMessage": {
-        "stepId": "step//./src/workflows/ai-comment-reply//createFeedMessage"
-      },
       "createPlaceholderComment": {
         "stepId": "step//./src/workflows/ai-comment-reply//createPlaceholderComment"
-      },
-      "generateResponse": {
-        "stepId": "step//./src/workflows/ai-comment-reply//generateResponse"
       },
       "getThreadAndComment": {
         "stepId": "step//./src/workflows/ai-comment-reply//getThreadAndComment"
