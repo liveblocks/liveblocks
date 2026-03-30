@@ -2,29 +2,10 @@
 
 import { useMemo } from "react";
 import { useSearchParams } from "next/navigation";
-import { RoomProvider, useThreads } from "@liveblocks/react/suspense";
-import { Loading } from "@/components/Loading";
-import { Composer, Thread } from "@liveblocks/react-ui";
-import { ClientSideSuspense } from "@liveblocks/react";
+import { ClientSideSuspense, RoomProvider } from "@liveblocks/react/suspense";
+import { Loading } from "../components/Loading";
 import { ErrorBoundary } from "react-error-boundary";
-
-/**
- * Displays a list of threads, along with a composer for creating
- * new threads.
- */
-
-function Example() {
-  const { threads } = useThreads();
-
-  return (
-    <main>
-      {threads.map((thread) => (
-        <Thread key={thread.id} thread={thread} className="thread" />
-      ))}
-      <Composer className="composer" />
-    </main>
-  );
-}
+import { Threads } from "@/components/Threads";
 
 export default function Page() {
   const roomId = useExampleRoomId("liveblocks:examples:nextjs-comments-ai");
@@ -37,7 +18,7 @@ export default function Page() {
         }
       >
         <ClientSideSuspense fallback={<Loading />}>
-          <Example />
+          <Threads />
         </ClientSideSuspense>
       </ErrorBoundary>
     </RoomProvider>

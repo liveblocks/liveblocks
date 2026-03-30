@@ -28,38 +28,59 @@ import {
   nodeStreamToCompactNodes,
   OpCode,
   raise,
-  ServerMsgCode,
+  ServerMsgCode as CoreServerMsgCode,
   tryParseJson,
   WebsocketCloseCodes as CloseCode,
 } from "@liveblocks/core";
-import { Mutex } from "async-mutex";
+import { Mutex, tryAcquire } from "async-mutex";
 import { array, formatInline } from "decoders";
 import { chunked } from "itertools";
 import { nanoid } from "nanoid";
 
 import type { Guid } from "~/decoders";
 import { clientMsgDecoder } from "~/decoders";
-import type { IServerWebSocket, IStorageDriver } from "~/interfaces";
+import type {
+  IServerWebSocket,
+  IStorageDriver,
+  ListFeedMessagesOptions,
+  ListFeedMessagesResult,
+  ListFeedsOptions,
+  ListFeedsResult,
+} from "~/interfaces";
 import { Logger } from "~/lib/Logger";
 import { makeNewInMemoryDriver } from "~/plugins/InMemoryDriver";
 import type {
+  AddFeedClientMsg,
+  AddFeedMessageClientMsg,
   ClientMsg as GenericClientMsg,
+  DeleteFeedClientMsg,
+  DeleteFeedMessageClientMsg,
+  FeedMessagesServerMsg,
+  FeedsServerMsg,
+  FetchFeedMessagesClientMsg,
+  FetchFeedsClientMsg,
   IgnoredOp,
   Op,
   ServerMsg as GenericServerMsg,
   ServerWireOp,
+  UpdateFeedClientMsg,
+  UpdateFeedMessageClientMsg,
 } from "~/protocol";
-import { ProtocolVersion } from "~/protocol";
 import { Storage } from "~/Storage";
 import { YjsStorage } from "~/YjsStorage";
 
 import { tryCatch } from "./lib/tryCatch";
 import { UniqueMap } from "./lib/UniqueMap";
-import type { LeasedSession } from "./types";
+import { feedFailureServerMsg, feedRequestFailed } from "./protocol/feedErrors";
+import { FeedMsgCode, FeedRequestErrorCode } from "./protocol/feedMessages";
+import { ProtocolVersion } from "./protocol/ProtocolVersion";
+import type { Feed, FeedMessage, LeasedSession } from "./types";
 import { isLeasedSessionExpired, makeRoomStateMsg } from "./utils";
 
 const messagesDecoder = array(clientMsgDecoder);
 
+// Temporary patch
+const ServerMsgCode = { ...CoreServerMsgCode, ...FeedMsgCode };
 const HIGHEST_PROTOCOL_VERSION = Math.max(
   ...Object.values(ProtocolVersion).filter(
     (v): v is number => typeof v === "number"
@@ -77,6 +98,8 @@ const BLACK_HOLE = new Logger([
 
 export type LoadingState = "initial" | "loading" | "loaded";
 export type ActorID = Brand<number, "ActorID">;
+/** Number of milliseconds since Unix epoch. */
+export type Millis = Brand<number, "Millis">;
 
 /**
  * Session keys are also known as the "nonce" in the protocol. It's a random,
@@ -87,8 +110,20 @@ export type ActorID = Brand<number, "ActorID">;
 export type SessionKey = Brand<string, "SessionKey">;
 
 export type PreSerializedServerMsg = Brand<string, "PreSerializedServerMsg">;
-type ClientMsg = GenericClientMsg<JsonObject, Json>;
-type ServerMsg = GenericServerMsg<JsonObject, BaseUserMeta, Json>;
+type ClientMsg =
+  | GenericClientMsg<JsonObject, Json>
+  | FetchFeedsClientMsg
+  | FetchFeedMessagesClientMsg
+  | AddFeedClientMsg
+  | UpdateFeedClientMsg
+  | DeleteFeedClientMsg
+  | AddFeedMessageClientMsg
+  | UpdateFeedMessageClientMsg
+  | DeleteFeedMessageClientMsg;
+type ServerMsg =
+  | GenericServerMsg<JsonObject, BaseUserMeta, Json>
+  | FeedMessagesServerMsg
+  | FeedsServerMsg; // Temp patched server msgs
 
 /**
  * Creates a collector for deferred promises (side effects that should run
@@ -180,7 +215,7 @@ export class BrowserSession<SM, CM extends JsonObject> {
 
   public readonly version: ProtocolVersion; // Liveblocks protocol version this client will speak
   public readonly actor: ActorID; // Must be unique within the room
-  public readonly createdAt: Date;
+  public readonly createdAt: Millis;
 
   // Externally provided (public!) user metadata. This information will get shared with other clients
   public readonly user: IUserData;
@@ -190,7 +225,8 @@ export class BrowserSession<SM, CM extends JsonObject> {
 
   readonly #_socket: IServerWebSocket;
   readonly #_debug: boolean;
-  #_lastActiveAt: Date;
+  /** Updated on every incoming message (including pings) via handleData(). Used for idle timeout detection. */
+  #_lastActiveAt: Millis;
 
   // We keep a status in-memory in the session of whether we already sent a rejected ops message to the client.
   #_hasNotifiedClientStorageUpdateError: boolean;
@@ -199,7 +235,9 @@ export class BrowserSession<SM, CM extends JsonObject> {
   constructor(
     ticket: Ticket<SM, CM>,
     socket: IServerWebSocket,
-    debug: boolean
+    debug: boolean,
+    /** When restoring from hibernation, pass the original socket creation time so session duration is correct. */
+    createdAt?: Date
   ) {
     this.version = ticket.version;
     this.actor = ticket.actor;
@@ -210,16 +248,16 @@ export class BrowserSession<SM, CM extends JsonObject> {
     this.#_socket = socket;
     this.#_debug = debug;
 
-    const now = new Date();
+    const now = (createdAt?.getTime() ?? Date.now()) as Millis;
     this.createdAt = now;
     this.#_lastActiveAt = now;
     this.#_hasNotifiedClientStorageUpdateError = false;
   }
 
-  get lastActiveAt(): Date {
+  get lastActiveAt(): Millis {
     const lastPing = this.#_socket.getLastPongTimestamp?.();
-    if (lastPing && lastPing > this.#_lastActiveAt) {
-      return lastPing;
+    if (lastPing && lastPing.getTime() > this.#_lastActiveAt) {
+      return lastPing.getTime() as Millis;
     } else {
       return this.#_lastActiveAt;
     }
@@ -229,10 +267,9 @@ export class BrowserSession<SM, CM extends JsonObject> {
     return this.#_hasNotifiedClientStorageUpdateError;
   }
 
-  markActive(now = new Date()): void {
-    if (now > this.#_lastActiveAt) {
-      this.#_lastActiveAt = now;
-    }
+  /** @internal - This should have to be called only from Room, never externally */
+  markActive(now?: Date): void {
+    this.#_lastActiveAt = (now ? now.getTime() : Date.now()) as Millis;
   }
 
   setHasNotifiedClientStorageUpdateError(): void {
@@ -433,6 +470,16 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
   public readonly driver: IStorageDriver;
   public logger: Logger;
 
+  /**
+   * While a room is in "maintenance mode", all WebSocket connections to the
+   * room should be rejected until it's pulled out of maintenance mode again.
+   * Maintenance mode should only last a couple of milliseconds, typically.
+   *
+   * This mutex ensures that concurrent destructive operations (like
+   * init-storage, storage-reset, etc.) cannot interfere with one another.
+   */
+  private readonly _maintenanceMode = new Mutex();
+
   private _loadData$: Promise<void> | null = null;
   private _data: InternalData | null = null;
   private _qsize = 0;
@@ -527,6 +574,27 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
   public get mutex(): Mutex            { return this.data.mutex; } // prettier-ignore
 
   private get data(): InternalData      { return this._data ?? raise("Cannot use room before it's loaded"); } // prettier-ignore
+
+  // ------------------------------------------------------------------------------------
+  // Maintenance mode
+  // ------------------------------------------------------------------------------------
+
+  /**
+   * Returns true if the room is currently in maintenance mode.
+   * When in maintenance mode, callers should refuse new WebSocket connections.
+   */
+  public get isInMaintenance(): boolean {
+    return this._maintenanceMode.isLocked();
+  }
+
+  /**
+   * Tries to enter maintenance mode and run the given callback exclusively.
+   * If the room is already in maintenance mode, throws E_ALREADY_LOCKED
+   * immediately instead of queuing the request.
+   */
+  public async runInMaintenanceMode<T>(callback: () => Promise<T>): Promise<T> {
+    return tryAcquire(this._maintenanceMode).runExclusive(callback);
+  }
 
   // ------------------------------------------------------------------------------------
   // Public API
@@ -633,14 +701,21 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
       ticket: Ticket<SM, CM>;
       socket: IServerWebSocket;
       lastActivity: Date;
+      /** Original session creation time (e.g. from persisted attachment). Required for correct session duration after hibernation. */
+      createdAt?: Date;
     }[]
   ): void {
     if (this.sessions.size > 0) {
       throw new Error("This API can only be called before any sessions exist");
     }
 
-    for (const { ticket, socket, lastActivity } of sessions) {
-      const newSession = new BrowserSession(ticket, socket, this.#_debug);
+    for (const { ticket, socket, lastActivity, createdAt } of sessions) {
+      const newSession = new BrowserSession(
+        ticket,
+        socket,
+        this.#_debug,
+        createdAt
+      );
       this.sessions.set(ticket.sessionKey, newSession);
       newSession.markActive(lastActivity);
     }
@@ -851,6 +926,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
     const text =
       typeof data === "string" ? data : raise("Unsupported message format");
 
+    this.sessions.get(key)?.markActive();
     if (text === "ping") {
       await this.handlePing(key, ctx);
     } else {
@@ -1144,6 +1220,117 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
     for (const [_, session] of sessions) {
       await this.deleteLeasedSession(session, ctx, defer);
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Feed APIs
+  // ---------------------------------------------------------------------------
+
+  /**
+   * List feeds with pagination and filtering.
+   */
+  public async listFeeds(options?: ListFeedsOptions): Promise<ListFeedsResult> {
+    return await this.driver.list_feeds(options);
+  }
+
+  /**
+   * Get a specific feed by feed ID.
+   */
+  public async getFeed(feedId: string): Promise<Feed | undefined> {
+    return await this.driver.get_feed(feedId);
+  }
+
+  /**
+   * Create a new feed.
+   * If timestamp is not provided, current server time is used.
+   */
+  public async createFeed(
+    feed: Omit<Feed, "createdAt" | "updatedAt"> & { timestamp?: number }
+  ): Promise<Feed> {
+    const now = feed.timestamp ?? Date.now();
+    const fullFeed: Feed = {
+      ...feed,
+      createdAt: now,
+      updatedAt: now,
+    };
+    await this.driver.create_feed(fullFeed);
+    return fullFeed;
+  }
+
+  /**
+   * Update a feed's metadata.
+   */
+  public async updateFeedMetadata(
+    feedId: string,
+    metadata: Json
+  ): Promise<void> {
+    await this.driver.update_feed_metadata(feedId, metadata);
+  }
+
+  /**
+   * Delete a feed.
+   */
+  public async deleteFeed(feedId: string): Promise<void> {
+    await this.driver.delete_feed(feedId);
+  }
+
+  /**
+   * List feed messages for a feed with pagination.
+   */
+  public async listFeedMessages(
+    feedId: string,
+    options?: ListFeedMessagesOptions
+  ): Promise<ListFeedMessagesResult> {
+    return await this.driver.list_feed_messages(feedId, options);
+  }
+
+  /**
+   * Add a message to a feed.
+   * If message id is not provided, a unique ID is automatically generated.
+   * If timestamp is not provided, current server time is used.
+   */
+  public async addFeedMessage(
+    feedId: string,
+    message: Omit<FeedMessage, "id" | "createdAt" | "updatedAt"> &
+      Partial<Pick<FeedMessage, "id">> & { timestamp?: number }
+  ): Promise<FeedMessage> {
+    const now = message.timestamp ?? Date.now();
+    const fullMessage: FeedMessage = {
+      id: message.id ?? nanoid(),
+      createdAt: now,
+      updatedAt: now,
+      data: message.data,
+    };
+    await this.driver.add_feed_message(feedId, fullMessage);
+    return fullMessage;
+  }
+
+  /**
+   * Update a feed message's data.
+   * Returns the updated message.
+   */
+  public async updateFeedMessage(
+    feedId: string,
+    messageId: string,
+    data: Json,
+    timestamp?: number
+  ): Promise<FeedMessage> {
+    return await this.driver.update_feed_message(
+      feedId,
+      messageId,
+      data,
+      timestamp ?? Date.now()
+    );
+  }
+
+  /**
+   * Delete a feed message.
+   */
+  public async deleteFeedMessage(
+    feedId: string,
+    messageId: string
+  ): Promise<void> {
+    await this.driver.delete_feed_message(feedId, messageId);
   }
 
   /**
@@ -1601,6 +1788,185 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
           if (p$) defer(p$);
         }
 
+        break;
+      }
+
+      // Feed messages
+      case FeedMsgCode.FETCH_FEEDS: {
+        const fetchMsg = msg;
+        const [result, err] = await tryCatch(
+          this.listFeeds({
+            cursor: fetchMsg.cursor,
+            since: fetchMsg.since,
+            limit: fetchMsg.limit,
+            metadata: fetchMsg.metadata,
+          })
+        );
+        if (err) {
+          replyImmediately(feedFailureServerMsg(fetchMsg.requestId, err));
+          break;
+        }
+        replyImmediately({
+          type: FeedMsgCode.FEEDS_LIST,
+          requestId: fetchMsg.requestId,
+          feeds: result.feeds,
+          nextCursor: result.nextCursor,
+        });
+        break;
+      }
+
+      case FeedMsgCode.FETCH_FEED_MESSAGES: {
+        const fetchMsg = msg;
+        const [result, err] = await tryCatch(
+          this.listFeedMessages(fetchMsg.feedId, {
+            cursor: fetchMsg.cursor,
+            since: fetchMsg.since,
+            limit: fetchMsg.limit,
+          })
+        );
+        if (err) {
+          replyImmediately(feedFailureServerMsg(fetchMsg.requestId, err));
+          break;
+        }
+        replyImmediately({
+          type: FeedMsgCode.FEED_MESSAGES_LIST,
+          requestId: fetchMsg.requestId,
+          feedId: fetchMsg.feedId,
+          messages: result.messages,
+          nextCursor: result.nextCursor,
+        });
+        break;
+      }
+
+      case FeedMsgCode.ADD_FEED: {
+        const addMsg = msg;
+        const [feed, err] = await tryCatch(
+          this.createFeed({
+            feedId: addMsg.feedId,
+            metadata: (addMsg.metadata as Json) ?? {},
+            timestamp: addMsg.timestamp,
+          })
+        );
+        if (err) {
+          replyImmediately(feedFailureServerMsg(addMsg.requestId, err));
+          break;
+        }
+        const feedsMsg = {
+          type: FeedMsgCode.FEEDS_ADDED,
+          feeds: [feed],
+        };
+        replyImmediately(feedsMsg);
+        scheduleFanOut(feedsMsg);
+        break;
+      }
+
+      case FeedMsgCode.UPDATE_FEED: {
+        const updateMsg = msg;
+        const [, metaErr] = await tryCatch(
+          this.updateFeedMetadata(updateMsg.feedId, updateMsg.metadata as Json)
+        );
+        if (metaErr) {
+          replyImmediately(feedFailureServerMsg(updateMsg.requestId, metaErr));
+          break;
+        }
+        const feed = await this.getFeed(updateMsg.feedId);
+        if (!feed) {
+          replyImmediately(
+            feedRequestFailed(
+              updateMsg.requestId,
+              FeedRequestErrorCode.FEED_NOT_FOUND
+            )
+          );
+          break;
+        }
+        const feedsMsg = {
+          type: FeedMsgCode.FEEDS_UPDATED,
+          feeds: [feed],
+        };
+        replyImmediately(feedsMsg);
+        scheduleFanOut(feedsMsg);
+        break;
+      }
+
+      case FeedMsgCode.DELETE_FEED: {
+        const deleteMsg = msg;
+        const [, err] = await tryCatch(this.deleteFeed(deleteMsg.feedId));
+        if (err) {
+          replyImmediately(feedFailureServerMsg(deleteMsg.requestId, err));
+          break;
+        }
+        const feedDeletedMsg = {
+          type: FeedMsgCode.FEED_DELETED,
+          feedId: deleteMsg.feedId,
+        };
+        replyImmediately(feedDeletedMsg);
+        scheduleFanOut(feedDeletedMsg);
+        break;
+      }
+
+      case FeedMsgCode.ADD_FEED_MESSAGE: {
+        const addMsg = msg;
+        const [message, err] = await tryCatch(
+          this.addFeedMessage(addMsg.feedId, {
+            data: addMsg.data as Json,
+            id: addMsg.id,
+            timestamp: addMsg.timestamp,
+          })
+        );
+        if (err) {
+          replyImmediately(feedFailureServerMsg(addMsg.requestId, err));
+          break;
+        }
+        const feedMessagesMsg = {
+          type: FeedMsgCode.FEED_MESSAGES_ADDED,
+          feedId: addMsg.feedId,
+          messages: [message],
+        };
+        replyImmediately(feedMessagesMsg);
+        scheduleFanOut(feedMessagesMsg);
+        break;
+      }
+
+      case FeedMsgCode.UPDATE_FEED_MESSAGE: {
+        const updateMsg = msg;
+        const [message, err] = await tryCatch(
+          this.updateFeedMessage(
+            updateMsg.feedId,
+            updateMsg.messageId,
+            updateMsg.data as Json,
+            updateMsg.timestamp
+          )
+        );
+        if (err) {
+          replyImmediately(feedFailureServerMsg(updateMsg.requestId, err));
+          break;
+        }
+        const feedMessagesMsg = {
+          type: FeedMsgCode.FEED_MESSAGES_UPDATED,
+          feedId: updateMsg.feedId,
+          messages: [message],
+        };
+        replyImmediately(feedMessagesMsg);
+        scheduleFanOut(feedMessagesMsg);
+        break;
+      }
+
+      case FeedMsgCode.DELETE_FEED_MESSAGE: {
+        const deleteMsg = msg;
+        const [, err] = await tryCatch(
+          this.deleteFeedMessage(deleteMsg.feedId, deleteMsg.messageId)
+        );
+        if (err) {
+          replyImmediately(feedFailureServerMsg(deleteMsg.requestId, err));
+          break;
+        }
+        const feedMessagesMsg = {
+          type: FeedMsgCode.FEED_MESSAGES_DELETED,
+          feedId: deleteMsg.feedId,
+          messageIds: [deleteMsg.messageId],
+        };
+        replyImmediately(feedMessagesMsg);
+        scheduleFanOut(feedMessagesMsg);
         break;
       }
 

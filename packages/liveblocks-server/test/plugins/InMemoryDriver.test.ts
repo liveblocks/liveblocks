@@ -16,6 +16,7 @@
  */
 
 import type { NodeMap } from "@liveblocks/core";
+import { describe } from "vitest";
 
 import { InMemoryDriver } from "~/plugins/InMemoryDriver";
 

@@ -37,7 +37,7 @@ type OptionDef<V, Optional extends boolean> = Optional extends true
 type OptionDefs<T> = {
   [K in keyof T]-?: OptionDef<
     NonNullable<T[K]>,
-    // eslint-disable-next-line @typescript-eslint/ban-types -- intentional
+    // eslint-disable-next-line @typescript-eslint/no-empty-object-type -- intentional
     {} extends Pick<T, K> ? true : false
   >;
 };

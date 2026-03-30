@@ -28,7 +28,42 @@ import type {
 
 import type { YDocId } from "~/decoders/y-types";
 import type { Logger } from "~/lib/Logger";
-import type { LeasedSession, Pos } from "~/types";
+import type { Feed, FeedMessage, LeasedSession, Pos } from "~/types";
+
+/**
+ * Options for listing feeds with pagination and filtering.
+ */
+export type ListFeedsOptions = {
+  cursor?: string; // Pagination cursor
+  since?: number; // Unix timestamp in milliseconds - return feeds created after this time
+  limit?: number; // Max items to return (1-100)
+  metadata?: Record<string, Json>; // Metadata filters (key-value pairs, supports string/number/boolean/null)
+};
+
+/**
+ * Options for listing feed messages with pagination.
+ */
+export type ListFeedMessagesOptions = {
+  cursor?: string; // Pagination cursor
+  since?: number; // Unix timestamp in milliseconds - return messages created after this time
+  limit?: number; // Max items to return (1-100)
+};
+
+/**
+ * Result of listing feeds with pagination info.
+ */
+export type ListFeedsResult = {
+  feeds: Feed[];
+  nextCursor?: string; // Cursor for next page, undefined if no more pages
+};
+
+/**
+ * Result of listing feed messages with pagination info.
+ */
+export type ListFeedMessagesResult = {
+  messages: FeedMessage[];
+  nextCursor?: string; // Cursor for next page, undefined if no more pages
+};
 
 /**
  * An isolated, read-only copy of the storage document at a point in time.
@@ -295,4 +330,83 @@ export interface IStorageDriver {
    * Delete a leased session by session ID.
    */
   delete_leased_session(sessionId: string): Awaitable<void>;
+
+  /**
+   * Return the number of storage rows written since last call to this method,
+   * and reset the counter.
+   */
+  takeRowsWritten?(): number;
+
+  // ---------------------------------------------------------------------------
+  // Feed APIs
+  // ---------------------------------------------------------------------------
+
+  /**
+   * List feeds with pagination, filtering, and metadata querying.
+   * Feeds are sorted by createdAt descending (newest first).
+   */
+  list_feeds(options?: ListFeedsOptions): Awaitable<ListFeedsResult>;
+
+  /**
+   * Get a specific feed by feed ID.
+   * Returns feed metadata only (without messages).
+   * Use list_feed_messages to retrieve messages for this feed.
+   * Returns undefined if the feed doesn't exist.
+   */
+  get_feed(feedId: string): Awaitable<Feed | undefined>;
+
+  /**
+   * Create a new feed.
+   * If feedId already exists, throws an error.
+   */
+  create_feed(feed: Feed): Awaitable<void>;
+
+  /**
+   * Update a feed's metadata.
+   * The feed must exist, otherwise throws an error.
+   */
+  update_feed_metadata(feedId: string, metadata: Json): Awaitable<void>;
+
+  /**
+   * Delete a feed by feed ID.
+   * Also deletes all messages associated with the feed (via CASCADE).
+   * No-op if feed doesn't exist.
+   */
+  delete_feed(feedId: string): Awaitable<void>;
+
+  /**
+   * List feed messages for a feed with pagination.
+   * Messages are sorted by createdAt descending (newest first).
+   */
+  list_feed_messages(
+    feedId: string,
+    options?: ListFeedMessagesOptions
+  ): Awaitable<ListFeedMessagesResult>;
+
+  /**
+   * Add a message to a feed.
+   * The message must have id, createdAt, and updatedAt already set (handled by Room layer).
+   * The feed must exist, otherwise throws an error.
+   */
+  add_feed_message(feedId: string, message: FeedMessage): Awaitable<void>;
+
+  /**
+   * Update a feed message's data.
+   * Returns the updated message.
+   * The feed and message must exist, otherwise throws an error.
+   * If timestamp is not provided, current server time is used.
+   * Messages are only updated if the provided timestamp is greater than or equal to the stored updatedAt.
+   */
+  update_feed_message(
+    feedId: string,
+    messageId: string,
+    data: Json,
+    timestamp?: number
+  ): Awaitable<FeedMessage>;
+
+  /**
+   * Delete a feed message.
+   * The feed and message must exist, otherwise throws an error.
+   */
+  delete_feed_message(feedId: string, messageId: string): Awaitable<void>;
 }

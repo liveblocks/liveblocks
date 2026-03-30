@@ -1,0 +1,35 @@
+## vNEXT (not yet released)
+
+## v1.2.0
+
+- Add live socket inspector view
+- Add maintenance mode toggle (to reject new WebSocket connections)
+
+## v1.1.0
+
+### Added
+
+- ID token authentication support
+- Read-only rooms support
+- Room permissions and room metadata
+- Room filtering support
+
+### Changed
+
+- Room Node.js methods and REST APIs are now fully supported
+
+See https://liveblocks.io/docs/tools/dev-server for the updated feature matrix.
+
+## v1.0.17
+
+Initial release. Dev server supports:
+
+- Storage (all CRDTs)
+- Presence
+- Broadcast
+- Text editors (Tiptap, BlockNote, Lexical)
+- Public key authentication
+- Access token authentication
+- Room Node.js methods and REST APIs (partial)
+
+See https://liveblocks.io/docs/tools/dev-server for all details.

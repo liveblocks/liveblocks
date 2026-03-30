@@ -751,6 +751,10 @@
         "path": "/tools/nextjs-starter-kit"
       },
       {
+        "title": "Agent skills",
+        "path": "/tools/agent-skills"
+      },
+      {
         "title": "MCP server",
         "path": "/tools/mcp-server"
       },
@@ -843,6 +847,10 @@
       {
         "title": "@liveblocks/emails",
         "path": "/api-reference/liveblocks-emails"
+      },
+      {
+        "title": "Python SDK",
+        "path": "/api-reference/liveblocks-python"
       },
       {
         "title": "REST API",

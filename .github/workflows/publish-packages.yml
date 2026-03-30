@@ -121,8 +121,11 @@ jobs:
           GIT_TAG: ${{ inputs.tag }}
           GITHUB_URL: "https://github.com/liveblocks/liveblocks"
         run: |
-          echo "==> Pushing changes to GitHub"
           if [ "$(git current-branch)" = "main" ]; then
+            echo "==> Fetching and rebasing onto latest main..."
+            git fetch origin main
+            git rebase origin/main
+            echo "==> Pushing changes to GitHub..."
             if ! git push origin main; then
                 echo "ERROR: Could not push this branch to GitHub!" >&2
                 echo "Please manually fix that now, before writing the release notes!" >&2

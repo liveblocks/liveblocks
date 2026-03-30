@@ -35,6 +35,8 @@ export { makeMetadataDB } from "~/MetadataDB";
 export * from "~/protocol";
 export * from "~/Room";
 export type {
+  Feed,
+  FeedMessage,
   LeasedSession,
   NodeMap,
   NodeStream,

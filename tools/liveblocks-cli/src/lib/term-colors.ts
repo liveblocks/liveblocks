@@ -50,3 +50,10 @@ export function bold(text: Stringable): string {
 export function dim(text: Stringable): string {
   return enabled ? styleText("dim", String(text)) : String(text);
 }
+
+// eslint-disable-next-line no-control-regex
+const ANSI_RE = /\x1B\[[0-9;]*m/g;
+
+export function stripAnsi(s: string): string {
+  return s.replace(ANSI_RE, "");
+}

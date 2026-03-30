@@ -18,6 +18,147 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 13 (2026-03-27)
+
+## 3.15.5
+
+### `@liveblocks/tiptap`
+
+- Improve clipboard handling when text nodes containing comments were copied or
+  pasted.
+
+### Python SDK
+
+- Fix request body for certain endpoints, like `update_room_id`,
+  `initialize_storage_document` incorrectly set as optional.
+
+## Liveblocks dev server (v1.2.0)
+
+New dev server features:
+
+- Live socket inspector view
+- Maintenance mode toggle (to reject new WebSocket connections)
+
+## Documentation
+
+- New page: [Agent skills](https://liveblocks.io/docs/tools/agent-skills).
+
+## Showcase
+
+- New item: [Realtime design like Figma](https://liveblocks.io/showcase/realtime-design-like-figma).
+
+## Contributors
+
+nvie, nimeshnayaju, ctnicholas
+
+# Week 12 (2026-03-20)
+
+## v3.15.4
+
+### `@liveblocks/node`
+
+- Add `Liveblocks.getAttachment()` method to get an attachment's metadata and a
+  presigned download URL.
+
+### `Python SDK`
+
+- Add `get_attachment()` method to get an attachment's metadata and a presigned
+  download URL.
+
+## v3.15.3
+
+### `Python SDK`
+
+- Introduce the Python package. Install with `pip install liveblocks`. Provides
+  sync and async clients for the full Liveblocks API (rooms, storage, threads,
+  comments, etc.) for backend use.
+
+### `@liveblocks/react-ui`
+
+- Add `showSubscription` prop to `Thread` to control whether to show the
+  thread’s subscription status.
+
+## Liveblocks dev server (v1.1.0)
+
+New dev server features:
+
+- ID token authentication support
+- Read-only rooms support
+- Room permissions and room metadata
+- Room filtering support
+- Room Node.js methods and REST APIs are now fully supported
+
+See [dev server documentation](https://liveblocks.io/docs/tools/dev-server) for the updated feature matrix.
+
+## Dashboard
+
+- We added support for setting description on projects for better documentation and organization
+- Fixed a bug preventing inviting new members correctly
+- Internal refactoring of dashboard components to improve performance and efficiency
+
+## Infrastructure
+
+- Mangement API: We added support for setting description on projects for better documentation and organization.
+
+## Documentation
+
+- New API reference: [Python SDK](https://liveblocks.io/docs/api-reference/liveblocks-python).
+
+## Website
+
+- New blog post: [What's new in Liveblocks: February 2026](https://liveblocks.io/blog/whats-new-in-liveblocks-february-2026).
+- New blog post: [New React components for adding realtime presence and contextual commenting to your app](https://liveblocks.io/blog/new-react-components-for-adding-realtime-presence-and-contextual-commenting-to-your-app).
+
+## Contributors
+
+nvie, sugardarius, nimeshnayaju, pierrelevaillant, marcbouchenoire, ctnicholas
+
+# Week 11 (2026-03-13)
+
+## v3.15.2
+
+### `@liveblocks/client`
+
+- Deprecate the `engine` option on `enterRoom()`. This flag no longer has any
+  effect.
+
+### `@liveblocks/react`
+
+- Deprecate the `engine` prop on `RoomProvider`. This flag no longer has any
+  effect.
+
+### `@liveblocks/node`
+
+- Deprecate the `engine` option on `createRoom()`. This flag no longer has any
+  effect.
+- Stop sending the `engine` field in the room creation request body.
+
+## v3.15.1
+
+### `@liveblocks/react-ui`
+
+- Add `gap` prop to `AvatarStack` to control the `--lb-avatar-stack-gap` CSS
+  variable.
+- Add `padding` prop to `CommentPin` to control the `--lb-comment-pin-padding`
+  CSS variable.
+- Fix `size` props on `AvatarStack` and `CommentPin` not working as expected
+  when passing numbers.
+- Fix `autoFocus` prop on `FloatingComposer`.
+- Improve avatars’ ordering and `max` logic in `AvatarStack`.
+- Support `children` prop on `CommentPin`.
+
+## Documentation
+
+- Mention how token caching is never recommended.
+
+## Examples
+
+- Improve canvas comments example to prevent a conflict after moving a comment pin twice in rapid succession.
+
+## Contributors
+
+nvie, marcbouchenoire, ctnicholas
+
 # Week 10 (2026-03-06)
 
 ## v3.15.0

@@ -563,7 +563,6 @@ describe("client", () => {
         usersAccesses: undefined,
         organizationId: tenantId,
         metadata: undefined,
-        engine: undefined,
       });
     });
 
@@ -621,11 +620,10 @@ describe("client", () => {
         usersAccesses: undefined,
         organizationId,
         metadata: undefined,
-        engine: undefined,
       });
     });
 
-    test("should pass engine to the request when createRoom is called with engine", async () => {
+    test("should not send engine in the request even when provided", async () => {
       const roomId = "test-room";
       const createRoomParams = {
         defaultAccesses: ["room:write"] as ["room:write"],
@@ -649,38 +647,7 @@ describe("client", () => {
         defaultAccesses: ["room:write"],
         groupsAccesses: undefined,
         usersAccesses: undefined,
-        tenantId: undefined,
         metadata: undefined,
-        engine: 2,
-      });
-    });
-
-    test("should not include engine in the request when createRoom is called without engine", async () => {
-      const roomId = "test-room";
-      const createRoomParams = {
-        defaultAccesses: ["room:write"] as ["room:write"],
-      };
-
-      let capturedRequestData: unknown = null;
-
-      server.use(
-        http.post(`${DEFAULT_BASE_URL}/v2/rooms`, async ({ request }) => {
-          capturedRequestData = await request.json();
-          return HttpResponse.json(room, { status: 200 });
-        })
-      );
-
-      const client = new Liveblocks({ secret: "sk_xxx" });
-      await client.createRoom(roomId, createRoomParams);
-
-      expect(capturedRequestData).toEqual({
-        id: roomId,
-        defaultAccesses: ["room:write"],
-        groupsAccesses: undefined,
-        usersAccesses: undefined,
-        tenantId: undefined,
-        metadata: undefined,
-        engine: undefined,
       });
     });
   });
@@ -1171,6 +1138,71 @@ describe("client", () => {
           threadId: "thread1",
         })
       ).resolves.toEqual(thread);
+    });
+  });
+
+  describe("get attachment", () => {
+    const attachment = {
+      type: "attachment",
+      id: "at_abc123",
+      name: "document.pdf",
+      mimeType: "application/pdf",
+      size: 12345,
+      url: "https://example.com/presigned-url",
+      expiresAt: "2024-01-01T00:00:00.000Z",
+    };
+
+    test("should return the attachment when getAttachment receives a successful response", async () => {
+      server.use(
+        http.get(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/attachments/:attachmentId`,
+          () => {
+            return HttpResponse.json(attachment, { status: 200 });
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(
+        client.getAttachment({
+          roomId: "room1",
+          attachmentId: "at_abc123",
+        })
+      ).resolves.toEqual(attachment);
+    });
+
+    test("should throw a LiveblocksError when getAttachment receives an error response", async () => {
+      const error = {
+        error: "ATTACHMENT_NOT_FOUND",
+        message: "Attachment not found",
+      };
+
+      server.use(
+        http.get(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/attachments/:attachmentId`,
+          () => {
+            return HttpResponse.json(error, { status: 404 });
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      try {
+        await client.getAttachment({
+          roomId: "room1",
+          attachmentId: "at_abc123",
+        });
+        expect(true).toBe(false);
+      } catch (err) {
+        expect(err instanceof LiveblocksError).toBe(true);
+        if (err instanceof LiveblocksError) {
+          expect(err.status).toBe(404);
+          expect(err.message).toBe("Attachment not found");
+          expect(err.name).toBe("LiveblocksError");
+        }
+      }
     });
   });
 

@@ -1,4 +1,57 @@
-## vNEXT (not yet released)
+## 3.15.5
+
+### `@liveblocks/tiptap`
+
+- Improve clipboard handling when text nodes containing comments were copied or
+  pasted.
+
+### Python SDK
+
+- Fix request body for certain endpoints, like `update_room_id`,
+  `initialize_storage_document` incorrectly set as optional.
+
+## v3.15.4
+
+### `@liveblocks/node`
+
+- Add `Liveblocks.getAttachment()` method to get an attachment's metadata and a
+  presigned download URL.
+
+### Python SDK
+
+- Add `get_attachment()` method to get an attachment's metadata and a presigned
+  download URL.
+
+## v3.15.3
+
+### Python SDK
+
+- Introduce the Python package. Install with `pip install liveblocks`. Provides
+  sync and async clients for the full Liveblocks API (rooms, storage, threads,
+  comments, etc.) for backend use.
+
+### `@liveblocks/react-ui`
+
+- Add `showSubscription` prop to `Thread` to control whether to show the
+  thread’s subscription status.
+
+## v3.15.2
+
+### `@liveblocks/client`
+
+- Deprecate the `engine` option on `enterRoom()`. This flag no longer has any
+  effect.
+
+### `@liveblocks/react`
+
+- Deprecate the `engine` prop on `RoomProvider`. This flag no longer has any
+  effect.
+
+### `@liveblocks/node`
+
+- Deprecate the `engine` option on `createRoom()`. This flag no longer has any
+  effect.
+- Stop sending the `engine` field in the room creation request body.
 
 ## v3.15.1
 
