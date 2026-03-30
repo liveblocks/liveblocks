@@ -4,7 +4,12 @@
 
 ### `@liveblocks/react-flow`
 
-- XXX Write the changelog for this
+- Introduce the package. Install with `npm install @liveblocks/react-flow`.
+  Provides hooks and components that add collaboration to any React Flow diagram
+  using Liveblocks Storage:
+  - Use the `useLiveblocksFlow` hook to make React Flow synced and
+    collaborative.
+  - Use the `Cursors` component to show other users' cursors inside React Flow.
 
 ### `@liveblocks/chat-sdk-adapter`
 
@@ -14,6 +19,12 @@
   backed by Liveblocks Comments: webhooks, posting and editing messages,
   reactions, paginated fetches, thread and channel helpers, and optional
   `resolveUsers` / `resolveGroupsInfo` hooks.
+
+### `@liveblocks/react-ui`
+
+- Allow customizing cursors in the `Cursors` component by passing a
+  `components={{ Cursor: MyCursor }}` prop.
+- Fix `AvatarStack` negative margin breaking alignment.
 
 ## v3.15.5
 
