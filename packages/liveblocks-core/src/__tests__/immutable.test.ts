@@ -310,7 +310,7 @@ describe("reconcileLiveObject", () => {
   test("property: reconciling to any JsonObject produces matching immutable", () => {
     fc.assert(
       fc.property(jsonObject, jsonObject, (initial, target) => {
-        const liveObj = deepLiveifyObject(initial);
+        const liveObj = LiveObject.from(initial);
         expect(liveObj.toImmutable()).toEqual(initial);
 
         liveObj.reconcile(target);
