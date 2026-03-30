@@ -1,4 +1,23 @@
-## 3.15.5
+## vNEXT (not yet released)
+
+## v3.16.0
+
+### `@liveblocks/chat-sdk-adapter`
+
+- Introduce the package. Install with
+  `npm install @liveblocks/chat-sdk-adapter`. Provides a
+  [`chat-sdk`](https://www.npmjs.com/package/chat)-compatible backend adapter
+  backed by Liveblocks Comments: webhooks, posting and editing messages,
+  reactions, paginated fetches, thread and channel helpers, and optional
+  `resolveUsers` / `resolveGroupsInfo` hooks.
+
+### `@liveblocks/react-ui`
+
+- Add `body` prop to `Comment` to allow overriding only the default rich-text
+  comment body while still keeping attachments, reactions, and
+  `additionalContent` as is, unlike when using the `children` prop.
+
+## v3.15.5
 
 ### `@liveblocks/tiptap`
 
