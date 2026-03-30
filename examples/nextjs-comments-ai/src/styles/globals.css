@@ -101,22 +101,3 @@ header {
     box-shadow: inset 0 0 0 1px rgb(255 255 255 / 6%);
   }
 }
-
-@keyframes comments-ai-spinner-rotate {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.comments-ai-spinner {
-  display: inline-block;
-  vertical-align: -0.2em;
-  opacity: 0.5;
-  /* animation: comments-ai-spinner-rotate 1s linear infinite; */
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .comments-ai-spinner {
-    animation: none;
-  }
-}

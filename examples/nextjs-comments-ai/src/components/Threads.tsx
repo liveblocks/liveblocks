@@ -130,7 +130,7 @@ function StreamingComment({
     <Comment
       {...commentProps}
       body={
-        <details className="" open={open} onToggle={() => setOpen(!open)}>
+        <details open={open} onToggle={() => setOpen(!open)}>
           <summary className="flex items-baseline cursor-pointer mb-1">
             <span className="shrink-0 mr-1">
               <BrainIcon />
@@ -171,7 +171,7 @@ function StreamedComment({
       {...commentProps}
       body={
         <>
-          <details className="" open={open} onToggle={() => setOpen(!open)}>
+          <details open={open} onToggle={() => setOpen(!open)}>
             <summary className="flex items-baseline cursor-pointer mb-1">
               <span className="opacity-50 text-sm">
                 Thought for {Number(thinkingTime).toFixed(0)} seconds

@@ -21,8 +21,8 @@
 </p>
 
 This example shows how to build comments with an AI agent, powered by
-[Liveblocks](https://liveblocks.io), [Next.js](https://nextjs.org/), and
-[Anthropic](https://anthropic.com).
+[Liveblocks](https://liveblocks.io), [Next.js](https://nextjs.org/),
+[Workflow SDK](https://workflow.dev/), and [Anthropic](https://anthropic.com).
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/comments-ai.png" width="536" alt="Comments" />
 
@@ -47,6 +47,7 @@ You need to set up webhooks to make this example run.
   making sure to
   [check the “**commentCreated**” event](https://liveblocks.io/docs/platform/webhooks#edit-endpoint-events)
   when creating the webhook
+- In the webhooks dashboard, point to the `/api/ai-comment-reply` path
 - Copy your **webhook secret key** from the webhooks dashboard
 - Add your webhook secret key to `.env.local` as the
   `LIVEBLOCKS_WEBHOOK_SECRET_KEY` environment variable

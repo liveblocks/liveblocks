@@ -28,6 +28,9 @@
       "isAiMentionedInComment": {
         "stepId": "step//./src/workflows/ai-comment-reply//isAiMentionedInComment"
       },
+      "leaveReactionOnComment": {
+        "stepId": "step//./src/workflows/ai-comment-reply//leaveReactionOnComment"
+      },
       "showPresence": {
         "stepId": "step//./src/workflows/ai-comment-reply//showPresence"
       },
