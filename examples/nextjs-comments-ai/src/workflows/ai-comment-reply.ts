@@ -75,7 +75,7 @@ export async function handleAiCommentReply(commentLocation: CommentLocation) {
       return { error: "Failed to generate response" };
     }
 
-    // Add response to placeholder commnet, in case anyone uses
+    // Add response to placeholder comment, in case anyone uses
     // comment APIs and wants to see AI responses in there
     await updatePlaceholderComment({
       ...placeholderCommentLocation,
