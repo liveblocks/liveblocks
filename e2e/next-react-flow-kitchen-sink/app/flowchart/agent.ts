@@ -201,6 +201,7 @@ async function runFlowchartAgent(roomId: string, prompt: string) {
           - Delete nodes or edges only when the user clearly asks.
           - Edge handles should be chosen based on the layout of the source and target nodes.
           - When moving a node, attached edges should be updated to reflect the new layout. For example, a "bottom" to "top" edge makes sense for two nodes that are above each other, but if they become side by side, the edge should be updated to a "right" to "left" edge.
+          - Use moveNode to change position, resizeNode to change width/height, and styleNode for label/shape/color — never mix them.
         `,
         prompt: dedent`
           <diagram>
@@ -231,12 +232,13 @@ async function runFlowchartAgent(roomId: string, prompt: string) {
               $(async () => {
                 const width = newNode.width ?? DEFAULT_BLOCK_SIZE;
                 const height = newNode.height ?? DEFAULT_BLOCK_SIZE;
-                const target: Point = {
-                  x: newNode.position.x + width / 2,
-                  y: newNode.position.y + height / 2,
-                };
 
-                await setPresence({ cursor: target });
+                await setPresence({
+                  cursor: {
+                    x: newNode.position.x + width / 2,
+                    y: newNode.position.y + height / 2,
+                  },
+                });
 
                 await pause();
 
@@ -254,12 +256,11 @@ async function runFlowchartAgent(roomId: string, prompt: string) {
                 return { ok: true, id };
               }),
           }),
-          updateNode: tool({
-            description: "Update one node.",
+          moveNode: tool({
+            description: "Move one node to a new position.",
             inputSchema: z.object({
-              ...idSchema.shape,
-              ...nodeLayoutSchema.partial().shape,
-              ...nodeDataSchema.partial().shape,
+              id: z.string(),
+              position: pointSchema,
             }),
             execute: (updatedNode) =>
               $(async () => {
@@ -274,65 +275,127 @@ async function runFlowchartAgent(roomId: string, prompt: string) {
                 await pause();
 
                 const currentPosition = node.get("position");
-                const position = updatedNode.position ?? currentPosition;
-                const currentSize = getLiveblocksNodeSize(node);
-                const width = updatedNode.width ?? currentSize.width;
-                const height = updatedNode.height ?? currentSize.height;
+                const position = updatedNode.position;
+                const { width, height } = getLiveblocksNodeSize(node);
+
+                const distance = Math.hypot(
+                  position.x - currentPosition.x,
+                  position.y - currentPosition.y
+                );
+
+                if (distance >= POSITION_ANIMATION_STEP_DISTANCE) {
+                  const steps = Math.min(
+                    POSITION_ANIMATION_MAX_STEPS,
+                    Math.max(
+                      POSITION_ANIMATION_MIN_STEPS,
+                      Math.ceil(distance / POSITION_ANIMATION_STEP_DISTANCE)
+                    )
+                  );
+
+                  for (let i = 1; i <= steps; i++) {
+                    const progress = easeInOutCubic(i / steps);
+
+                    node.set("position", {
+                      x:
+                        currentPosition.x +
+                        (position.x - currentPosition.x) * progress,
+                      y:
+                        currentPosition.y +
+                        (position.y - currentPosition.y) * progress,
+                    });
+
+                    await setPresence({
+                      cursor: getLiveblocksNodeCenter(node),
+                    });
+                  }
+
+                  node.set("position", position);
+                } else {
+                  await setPresence({
+                    cursor: {
+                      x: position.x + width / 2,
+                      y: position.y + height / 2,
+                    },
+                  });
+
+                  await pause();
+
+                  node.set("position", position);
+                }
+
+                await pause();
+
+                return { ok: true, id: updatedNode.id };
+              }),
+          }),
+          resizeNode: tool({
+            description: "Resize one node.",
+            inputSchema: z.object({
+              id: z.string(),
+              width: sizeSchema.optional(),
+              height: sizeSchema.optional(),
+            }),
+            execute: (updatedNode) =>
+              $(async () => {
+                const node = nodes.get(updatedNode.id);
+
+                if (!node) {
+                  return { ok: false, missing: true, id: updatedNode.id };
+                }
+
+                const position = node.get("position");
+                const { width: currentWidth, height: currentHeight } =
+                  getLiveblocksNodeSize(node);
+
+                await setPresence({
+                  cursor: {
+                    x: position.x + currentWidth,
+                    y: position.y + currentHeight,
+                  },
+                });
+
+                await pause();
 
                 if (updatedNode.width !== undefined) {
-                  node.set("width", width);
+                  node.set("width", updatedNode.width);
                 }
 
                 if (updatedNode.height !== undefined) {
-                  node.set("height", height);
+                  node.set("height", updatedNode.height);
                 }
 
-                if (updatedNode.position !== undefined) {
-                  const distance = Math.hypot(
-                    position.x - currentPosition.x,
-                    position.y - currentPosition.y
-                  );
+                const newWidth = updatedNode.width ?? currentWidth;
+                const newHeight = updatedNode.height ?? currentHeight;
 
-                  if (distance >= POSITION_ANIMATION_STEP_DISTANCE) {
-                    const steps = Math.min(
-                      POSITION_ANIMATION_MAX_STEPS,
-                      Math.max(
-                        POSITION_ANIMATION_MIN_STEPS,
-                        Math.ceil(distance / POSITION_ANIMATION_STEP_DISTANCE)
-                      )
-                    );
+                await setPresence({
+                  cursor: {
+                    x: position.x + newWidth,
+                    y: position.y + newHeight,
+                  },
+                });
 
-                    for (let i = 1; i <= steps; i++) {
-                      const progress = easeInOutCubic(i / steps);
+                await pause();
 
-                      node.set("position", {
-                        x:
-                          currentPosition.x +
-                          (position.x - currentPosition.x) * progress,
-                        y:
-                          currentPosition.y +
-                          (position.y - currentPosition.y) * progress,
-                      });
+                return { ok: true, id: updatedNode.id };
+              }),
+          }),
+          updateNodeData: tool({
+            description: "Update one node's data.",
+            inputSchema: z.object({
+              ...idSchema.shape,
+              ...nodeDataSchema.partial().shape,
+            }),
+            execute: (updatedNode) =>
+              $(async () => {
+                const node = nodes.get(updatedNode.id);
 
-                      await setPresence({
-                        cursor: getLiveblocksNodeCenter(node),
-                      });
-                    }
-
-                    node.set("position", position);
-                  } else {
-                    await setPresence({
-                      cursor: {
-                        x: position.x + width / 2,
-                        y: position.y + height / 2,
-                      },
-                    });
-
-                    await pause();
-
-                    node.set("position", position);
-                  }
+                if (!node) {
+                  return { ok: false, missing: true, id: updatedNode.id };
                 }
+
+                await setPresence({ cursor: getLiveblocksNodeCenter(node) });
+
+                await pause();
 
                 const data = node.get("data");
 
@@ -452,8 +515,8 @@ async function runFlowchartAgent(roomId: string, prompt: string) {
                 return { ok: true, id };
               }),
           }),
-          updateEdge: tool({
-            description: "Update one edge.",
+          updateEdgeData: tool({
+            description: "Update one edge's data.",
             inputSchema: z.object({
               ...idSchema.shape,
               ...edgeDataSchema.partial().shape,

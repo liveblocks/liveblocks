@@ -1548,7 +1548,7 @@ function Flow({ className, ...props }: ComponentProps<"div">) {
           </Panel>
           <Panel position="top-right">
             <div className="flowchart-avatar-stack">
-              <AvatarStack size={32} gap={3} />
+              <AvatarStack size={32} gap={3} max={5} />
             </div>
           </Panel>
           <Panel position="top-left">
