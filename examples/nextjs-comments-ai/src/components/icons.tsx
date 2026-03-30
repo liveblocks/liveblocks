@@ -26,7 +26,7 @@ export function ChevronIcon({
 export function BrainIcon() {
   return (
     <svg
-      className="comments-ai-spinner"
+      className="vertical-align-middle opacity-50 relative top-[3]"
       width={17}
       height={17}
       viewBox="0 0 24 24"
