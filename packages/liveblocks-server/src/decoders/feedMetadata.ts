@@ -71,7 +71,7 @@ const feedMetadataRecordForCreate = record(
 );
 
 /**
- * Optional feed metadata on create (WebSocket ADD_FEED, HTTP POST …/feed).
+ * Optional feed metadata on create (WebSocket ADD_FEED, HTTP POST …/feeds).
  * Same rules as createMetadataDecoder / room metadata on create (no null values).
  */
 export const optionalFeedMetadataDecoder = optional(feedMetadataRecordForCreate);

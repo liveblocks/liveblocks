@@ -546,8 +546,15 @@ zen.route("PATCH /v2/rooms/<roomId>/feeds/<feedId>", ({ p }) => {
   if (!Rooms.getRoom(p.roomId)) {
     throw ROOM_NOT_FOUND(p.roomId);
   }
+  const now = Date.now();
   return DUMMY({
-    ok: true,
+    feedId: p.feedId,
+    createdAt: now,
+    updatedAt: now,
+    metadata: {
+      title: "Test Feed",
+      description: "This is a test feed",
+    },
   });
 });
 zen.route(
@@ -556,12 +563,18 @@ zen.route(
     if (!Rooms.getRoom(p.roomId)) {
       throw ROOM_NOT_FOUND(p.roomId);
     }
+    const now = Date.now();
     return DUMMY({
-      ok: true,
+      id: p.messageId,
+      createdAt: now,
+      updatedAt: now,
+      data: {
+        content: "This is a test message",
+      },
     });
   }
 );
-zen.route("POST /v2/rooms/<roomId>/feed", ({ p }) => {
+zen.route("POST /v2/rooms/<roomId>/feeds", ({ p }) => {
   if (!Rooms.getRoom(p.roomId)) {
     throw ROOM_NOT_FOUND(p.roomId);
   }
