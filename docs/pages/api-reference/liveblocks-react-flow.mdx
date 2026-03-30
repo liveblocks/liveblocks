@@ -342,7 +342,7 @@ import type { Node, NodeProps } from "@xyflow/react";
 import { ReactFlow, useReactFlow } from "@xyflow/react";
 import { memo, useCallback } from "react";
 
-type TaskNode = Node<{ title: string }>;
+type TaskNode = Node<{ title: string }, "task">;
 
 const TaskNode = memo(({ id, data }: NodeProps<TaskNode>) => {
   const { updateNode } = useReactFlow();
