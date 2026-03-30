@@ -4,3 +4,54 @@
 </p>
 
 # `@liveblocks/react-flow`
+
+<p>
+  <a href="https://npmjs.org/package/@liveblocks/react-flow"><img src="https://img.shields.io/npm/v/@liveblocks/react-flow?style=flat&label=npm&color=c33" alt="NPM" /></a>
+  <a href="https://bundlephobia.com/package/@liveblocks/react-flow"><img src="https://img.shields.io/bundlephobia/minzip/@liveblocks/react-flow?style=flat&label=size&color=09f" alt="Size" /></a>
+  <a href="https://github.com/liveblocks/liveblocks/blob/main/licenses/LICENSE-APACHE-2.0"><img src="https://img.shields.io/badge/license-Apache--2.0-green" alt="License" /></a>
+</p>
+
+`@liveblocks/react-flow` provides [React](https://reactjs.org/) APIs to
+integrate [React Flow](https://reactflow.dev/) diagrams with Liveblocks—a
+platform to build, host, and scale collaborative applications with zero
+configuration, no maintenance required.
+
+## Installation
+
+```
+npm install @liveblocks/client @liveblocks/react @liveblocks/react-ui @liveblocks/react-flow
+```
+
+## Documentation
+
+Read the
+[documentation](https://liveblocks.io/docs/api-reference/liveblocks-react-flow)
+for guides and API references.
+
+## Examples
+
+Explore our [collaborative examples](https://liveblocks.io/examples) to help you
+get started.
+
+> All examples are open-source and live in this repository, within
+> [`/examples`](../../examples).
+
+## Releases
+
+See the [latest changes](https://github.com/liveblocks/liveblocks/releases) or
+learn more about
+[upcoming releases](https://github.com/liveblocks/liveblocks/milestones).
+
+## Community
+
+- [Discord](https://liveblocks.io/discord) - To get involved with the Liveblocks
+  community, ask questions and share tips.
+- [X](https://x.com/liveblocks) - To receive updates, announcements, blog posts,
+  and general Liveblocks tips.
+
+## License
+
+Licensed under the Apache License 2.0, Copyright © 2021-present
+[Liveblocks](https://liveblocks.io).
+
+See [LICENSE](../../licenses/LICENSE-APACHE-2.0) for more information.
