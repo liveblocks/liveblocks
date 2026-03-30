@@ -7,7 +7,6 @@ alwaysShowAllNavigationLevels: false
 ---
 
 - XXX: Proof-read
-- XXX: Document undo/redo behavior
 
 `@liveblocks/react-flow` provides you with [React](https://react.dev/) hooks and
 components that add collaboration to any [React Flow](https://reactflow.dev/)
@@ -296,9 +295,9 @@ so each client keeps their own selection and interaction state:
 Everything else on nodes and edges (including `position`, `width` and `height`,
 `data`, handles, and edge endpoints) is synchronized through Storage.
 
-### Sync config [#sync-config]
+### Sync config for `node.data` [#sync-config]
 
-By default, every key inside a node or edge's `data` object are getting deeply
+By default, every key inside a node or edge’s `data` object are getting deeply
 synced. Internally objects are stored as LiveObjects, arrays as LiveLists, etc,
 to enable fine-grained conflict-free merging automatically. If two users update
 different properties on the same node or edge, their changes will get merged
@@ -342,6 +341,40 @@ const { ... } = useLiveblocksFlow({
     },
   },
 });
+```
+
+### Undo / Redo [#undo-redo]
+
+Undo and redo are automatically enabled for the entire flow state. All synced
+changes to nodes and edges are recorded on the undo stack, including position
+changes, data updates, additions, and removals.
+
+A few things are handled automatically:
+
+- **Dragging** and **resizing** produce many live updates during a drag, but
+  produce only a single action on the undo stack
+- **Deleting** nodes and edges in a single action will undo together
+- **Local-only** properties are not recorded on the undo stack
+
+To wire up undo/redo in your UI, just use Liveblocks' normal
+[`useHistory`](/docs/api-reference/liveblocks-react#useHistory) hook:
+
+```tsx
+import { useHistory } from "@liveblocks/react";
+
+function Toolbar() {
+  const history = useHistory();
+  return (
+    <>
+      <button onClick={history.undo} disabled={!history.canUndo()}>
+        Undo
+      </button>
+      <button onClick={history.redo} disabled={!history.canRedo()}>
+        Redo
+      </button>
+    </>
+  );
+}
 ```
 
 ### Suspense [#suspense]
