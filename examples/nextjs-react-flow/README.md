@@ -7,10 +7,10 @@
   </a>
 </p>
 
-# Collaborative Flowchart Builder
+# Collaborative React Flow
 
 <p>
-  <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-flowchart-builder">
+  <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-react-flow">
     <img src="https://img.shields.io/badge/open%20in%20codesandbox-message?style=flat&logo=codesandbox&color=333&logoColor=fff" alt="Open in CodeSandbox" />
   </a>
   <img src="https://img.shields.io/badge/react-message?style=flat&logo=react&color=0bd&logoColor=fff" alt="React" />
@@ -18,19 +18,16 @@
   <img src="https://img.shields.io/badge/React%20Flow-message?style=flat&color=7bf" alt="React Flow" />
 </p>
 
-This example shows how to build a collaborative flowchart builder with
-[Liveblocks](https://liveblocks.io), [React Flow](https://reactflow.dev/), and
-[Next.js](https://nextjs.org/).
-
-You can place blocks, connect them, edit labels, undo and redo, and attach
-comments to the canvas or to specific blocks.
+This example shows how to build a collaborative
+[React Flow](https://reactflow.dev/) diagram with
+[Liveblocks](https://liveblocks.io) and [Next.js](https://nextjs.org/).
 
 ## Getting started
 
 Run the following command to try this example locally:
 
 ```bash
-npx create-liveblocks-app@latest --example nextjs-flowchart-builder --api-key
+npx create-liveblocks-app@latest --example nextjs-react-flow --api-key
 ```
 
 This will download the example and ask permission to open your browser, enabling
@@ -80,7 +77,7 @@ To both deploy on [Vercel](https://vercel.com), and run the example locally, use
 the following command:
 
 ```bash
-npx create-liveblocks-app@latest --example nextjs-flowchart-builder --vercel
+npx create-liveblocks-app@latest --example nextjs-react-flow --vercel
 ```
 
 This will download the example and ask permission to open your browser, enabling
@@ -95,7 +92,7 @@ you to deploy to Vercel.
 <p></p>
 
 After forking
-[this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-flowchart-builder)
+[this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-react-flow)
 on CodeSandbox, create the `LIVEBLOCKS_SECRET_KEY` environment variable as a
 [secret](https://codesandbox.io/docs/secrets).
 

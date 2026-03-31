@@ -68,6 +68,7 @@ button {
   cursor: pointer;
 }
 
+html,
 body {
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
