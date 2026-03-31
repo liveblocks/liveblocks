@@ -2715,6 +2715,166 @@ if (nextCursor) {
 }
 ```
 
+### Feeds
+
+#### Liveblocks.getFeeds [#get-rooms-roomId-feeds]
+
+Returns a list of feeds in a room. This is a wrapper around the
+[Get Room Feeds API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-feeds)
+and returns the same response.
+
+```ts
+const { data: feeds } = await liveblocks.getFeeds({
+  roomId: "my-room-id",
+});
+
+// [{ feedId: "feed-1", metadata: {...}, timestamp: 1234567890 }, ...]
+console.log(feeds);
+```
+
+#### Liveblocks.createFeed [#post-rooms-roomId-feed]
+
+Creates a new feed in a room. This is a wrapper around the
+[Create Feed API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-feed)
+and returns the created feed.
+
+```ts
+const feed = await liveblocks.createFeed({
+  roomId: "my-room-id",
+  feedId: "my-feed-id",
+
+  // Optional, custom metadata for the feed
+  metadata: {
+    name: "My Feed",
+    channel: true,
+  },
+
+  // Optional, timestamp in milliseconds. Defaults to current time if not provided
+  timestamp: Date.now(),
+});
+
+// { feedId: "my-feed-id", metadata: {...}, timestamp: 1234567890 }
+console.log(feed);
+```
+
+#### Liveblocks.getFeed [#get-rooms-roomId-feeds-feedId]
+
+Returns a feed by its ID. This is a wrapper around the
+[Get Feed API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-feeds-feedId)
+and returns the same response.
+
+```ts
+const feed = await liveblocks.getFeed({
+  roomId: "my-room-id",
+  feedId: "my-feed-id",
+});
+
+// { feedId: "my-feed-id", metadata: {...}, timestamp: 1234567890 }
+console.log(feed);
+```
+
+#### Liveblocks.updateFeed [#patch-rooms-roomId-feeds-feedId]
+
+Updates the metadata of a feed. This is a wrapper around the
+[Update Feed API](/docs/api-reference/rest-api-endpoints#patch-rooms-roomId-feeds-feedId).
+
+```ts
+await liveblocks.updateFeed({
+  roomId: "my-room-id",
+  feedId: "my-feed-id",
+  metadata: {
+    name: "Updated Feed Name",
+    updated: new Date().toISOString(),
+  },
+});
+```
+
+#### Liveblocks.deleteFeed [#delete-rooms-roomId-feeds-feedId]
+
+Deletes a feed. This is a wrapper around the
+[Delete Feed API](/docs/api-reference/rest-api-endpoints#delete-rooms-roomId-feeds-feedId).
+
+```ts
+await liveblocks.deleteFeed({
+  roomId: "my-room-id",
+  feedId: "my-feed-id",
+});
+```
+
+#### Liveblocks.getFeedMessages [#get-rooms-roomId-feeds-feedId-messages]
+
+Returns a list of messages in a feed. This is a wrapper around the
+[Get Feed Messages API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-feeds-feedId-messages)
+and returns the same response.
+
+```ts
+const { data: messages } = await liveblocks.getFeedMessages({
+  roomId: "my-room-id",
+  feedId: "my-feed-id",
+});
+
+// [{ id: "msg-1", timestamp: 1234567890, data: {...} }, ...]
+console.log(messages);
+```
+
+#### Liveblocks.createFeedMessage [#post-rooms-roomId-feeds-feedId-messages]
+
+Creates a new message in a feed. This is a wrapper around the
+[Create Feed Message API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-feeds-feedId-messages)
+and returns the created message.
+
+```ts
+const message = await liveblocks.createFeedMessage({
+  roomId: "my-room-id",
+  feedId: "my-feed-id",
+
+  // The message data
+  data: {
+    role: "user",
+    content: "Hello, world!",
+  },
+
+  // Optional, custom message ID. One will be generated if not provided
+  id: "my-message-id",
+
+  // Optional, timestamp in milliseconds. Defaults to current time if not provided
+  timestamp: Date.now(),
+});
+
+// { id: "my-message-id", timestamp: 1234567890, data: {...} }
+console.log(message);
+```
+
+#### Liveblocks.updateFeedMessage [#patch-rooms-roomId-feeds-feedId-messages-messageId]
+
+Updates a feed message. This is a wrapper around the
+[Update Feed Message API](/docs/api-reference/rest-api-endpoints#patch-rooms-roomId-feeds-feedId-messages-messageId).
+
+```ts
+await liveblocks.updateFeedMessage({
+  roomId: "my-room-id",
+  feedId: "my-feed-id",
+  messageId: "my-message-id",
+  data: {
+    role: "user",
+    content: "Updated content",
+  },
+});
+```
+
+#### Liveblocks.deleteFeedMessage [#delete-rooms-roomId-feeds-feedId-messages-messageId]
+
+Deletes a feed message. This is a wrapper around the
+[Delete Feed Message API](/docs/api-reference/rest-api-endpoints#delete-rooms-roomId-feeds-feedId-messages-messageId).
+
+```ts
+await liveblocks.deleteFeedMessage({
+  roomId: "my-room-id",
+  feedId: "my-feed-id",
+  messageId: "my-message-id",
+});
+```
+
 ### Notifications
 
 #### Liveblocks.getInboxNotifications [#get-users-userId-inboxNotifications]

@@ -17,7 +17,16 @@ import {
 import { LiveObject } from "./crdts/LiveObject";
 import type { LiveStructure, LsonObject } from "./crdts/Lson";
 import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
-import type { DCM, DE, DP, DS, DTM, DU } from "./globals/augmentation";
+import type {
+  DCM,
+  DE,
+  DFM,
+  DFMD,
+  DP,
+  DS,
+  DTM,
+  DU,
+} from "./globals/augmentation";
 import { kInternal } from "./internal";
 import { assertNever, nn } from "./lib/assert";
 import type { BatchStore } from "./lib/batch";
@@ -29,6 +38,7 @@ import { makeEventSource } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
 import { isJsonArray, isJsonObject } from "./lib/Json";
+import { nanoid } from "./lib/nanoid";
 import { asPos } from "./lib/position";
 import { DerivedSignal, PatchableSignal, Signal } from "./lib/signals";
 import { makeStopWatch } from "./lib/stopwatch";
@@ -47,7 +57,21 @@ import type {
 import type { Permission } from "./protocol/AuthToken";
 import { canComment, canWriteStorage } from "./protocol/AuthToken";
 import type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
-import type { ClientMsg, UpdateYDocClientMsg } from "./protocol/ClientMsg";
+import type {
+  AddFeedClientMsg,
+  AddFeedMessageClientMsg,
+  ClientMsg,
+  DeleteFeedClientMsg,
+  DeleteFeedMessageClientMsg,
+  FeedCreateMetadata,
+  FeedFetchMetadataFilter,
+  FeedUpdateMetadata,
+  FetchFeedMessagesClientMsg,
+  FetchFeedsClientMsg,
+  UpdateFeedClientMsg,
+  UpdateFeedMessageClientMsg,
+  UpdateYDocClientMsg,
+} from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";
 import type {
   BaseMetadata,
@@ -60,6 +84,7 @@ import type {
   ThreadData,
   ThreadDeleteInfo,
 } from "./protocol/Comments";
+import type { Feed, FeedMessage } from "./protocol/Feeds";
 import type {
   InboxNotificationData,
   InboxNotificationDeleteInfo,
@@ -70,6 +95,14 @@ import { isIgnoredOp, OpCode } from "./protocol/Op";
 import type { RoomSubscriptionSettings } from "./protocol/RoomSubscriptionSettings";
 import type {
   CommentsEventServerMsg,
+  FeedMessagesAddedServerMsg,
+  FeedMessagesListServerMsg,
+  FeedMessagesUpdatedServerMsg,
+  FeedRequestFailedServerMsg,
+  FeedsAddedServerMsg,
+  FeedsEventServerMsg,
+  FeedsListServerMsg,
+  FeedsUpdatedServerMsg,
   RoomStateServerMsg,
   ServerMsg,
   UpdatePresenceServerMsg,
@@ -109,6 +142,8 @@ import type { User } from "./types/User";
 import { PKG_VERSION } from "./version";
 
 export type TimeoutID = ReturnType<typeof setTimeout>;
+
+const FEEDS_TIMEOUT = 5_000; // 5 seconds
 
 //
 // NOTE:
@@ -510,7 +545,10 @@ export type OpaqueRoom = Room<
   LsonObject,
   BaseUserMeta,
   Json,
-  BaseMetadata
+  BaseMetadata,
+  BaseMetadata,
+  Json,
+  Json
 >;
 
 export type Room<
@@ -520,6 +558,8 @@ export type Room<
   E extends Json = DE,
   TM extends BaseMetadata = DTM,
   CM extends BaseMetadata = DCM,
+  FM extends Json = DFM,
+  FMD extends Json = DFMD,
 > = {
   /**
    * @private
@@ -607,6 +647,84 @@ export type Room<
   fetchYDoc(stateVector: string, guid?: string, isV2?: boolean): void;
 
   /**
+   * Fetches feeds for the room.
+   */
+  fetchFeeds(options?: {
+    cursor?: string;
+    since?: number;
+    limit?: number;
+    metadata?: FeedFetchMetadataFilter;
+  }): Promise<{
+    feeds: Feed<FM>[];
+    nextCursor?: string;
+  }>;
+
+  /**
+   * Fetches messages for a specific feed.
+   */
+  fetchFeedMessages(
+    feedId: string,
+    options?: {
+      cursor?: string;
+      since?: number;
+      limit?: number;
+    }
+  ): Promise<{
+    messages: FeedMessage<FMD>[];
+    nextCursor?: string;
+  }>;
+
+  /**
+   * Adds a new feed to the room via WebSocket.
+   * Resolves when the server broadcasts the new feed, or rejects on
+   * FEED_REQUEST_FAILED (508) or timeout.
+   */
+  addFeed(
+    feedId: string,
+    options?: {
+      metadata?: FeedCreateMetadata;
+      createdAt?: number;
+    }
+  ): Promise<void>;
+
+  /**
+   * Updates metadata for an existing feed via WebSocket.
+   */
+  updateFeed(feedId: string, metadata: FeedUpdateMetadata): Promise<void>;
+
+  /**
+   * Deletes a feed via WebSocket.
+   */
+  deleteFeed(feedId: string): Promise<void>;
+
+  /**
+   * Adds a new message to a feed via WebSocket.
+   */
+  addFeedMessage(
+    feedId: string,
+    data: JsonObject,
+    options?: {
+      id?: string;
+      createdAt?: number;
+    }
+  ): Promise<void>;
+
+  /**
+   * Updates an existing feed message via WebSocket.
+   */
+  updateFeedMessage(
+    feedId: string,
+    messageId: string,
+    data: JsonObject,
+    options?: { updatedAt?: number }
+  ): Promise<void>;
+
+  /**
+   * Deletes a feed message via WebSocket.
+   */
+  deleteFeedMessage(feedId: string, messageId: string): Promise<void>;
+
+  /**
    * Broadcasts an event to other users in the room. Event broadcasted to the room can be listened with {@link Room.subscribe}("event").
    * @param {any} event the event to broadcast. Should be serializable to JSON
    *
@@ -670,6 +788,7 @@ export type Room<
     readonly storageStatus: Observable<StorageStatus>;
     readonly ydoc: Observable<YDocUpdateServerMsg | UpdateYDocClientMsg>;
     readonly comments: Observable<CommentsEventServerMsg>;
+    readonly feeds: Observable<FeedsEventServerMsg<FM, FMD>>;
 
     /**
      * Called right before the room is destroyed. The event cannot be used to
@@ -1379,10 +1498,12 @@ export function createRoom<
   E extends Json,
   TM extends BaseMetadata,
   CM extends BaseMetadata,
+  FM extends Json = DFM,
+  FMD extends Json = DFMD,
 >(
   options: { initialPresence: P; initialStorage: S },
   config: RoomConfig<TM, CM>
-): Room<P, S, U, E, TM, CM> {
+): Room<P, S, U, E, TM, CM, FM, FMD> {
   const roomId = config.roomId;
   const initialPresence = options.initialPresence; // ?? {};
   const initialStorage = options.initialStorage; // ?? {};
@@ -1630,6 +1751,7 @@ export function createRoom<
     ydoc: makeEventSource<YDocUpdateServerMsg | UpdateYDocClientMsg>(),
 
     comments: makeEventSource<CommentsEventServerMsg>(),
+    feeds: makeEventSource<FeedsEventServerMsg<FM, FMD>>(),
     roomWillDestroy: makeEventSource<void>(),
   };
 
@@ -2205,6 +2327,12 @@ export function createRoom<
     sendMessages(messages);
   }
 
+  function isFeedRequestFailedMsg(
+    msg: ServerMsg<P, U, E>
+  ): msg is FeedRequestFailedServerMsg {
+    return msg.type === ServerMsgCode.FEED_REQUEST_FAILED;
+  }
+
   /**
    * Handles a message received on the WebSocket. Will never be a "pong". The
    * "pong" is handled at the connection manager level.
@@ -2344,6 +2472,104 @@ export function createRoom<
           break;
         }
 
+        case ServerMsgCode.FEEDS_LIST: {
+          const feedsListMsg = message as FeedsListServerMsg<FM>;
+          const pending = pendingFeedsRequests.get(feedsListMsg.requestId);
+          if (pending) {
+            pending.resolve({
+              feeds: feedsListMsg.feeds,
+              nextCursor: feedsListMsg.nextCursor,
+            });
+            pendingFeedsRequests.delete(feedsListMsg.requestId);
+          }
+          eventHub.feeds.notify(feedsListMsg);
+          break;
+        }
+
+        case ServerMsgCode.FEEDS_ADDED: {
+          const feedsAddedMsg = message as FeedsAddedServerMsg<FM>;
+          eventHub.feeds.notify(feedsAddedMsg);
+          tryResolvePendingFeedMutationsFromFeedsEvent(feedsAddedMsg);
+          break;
+        }
+
+        case ServerMsgCode.FEEDS_UPDATED: {
+          const feedsUpdatedMsg = message as FeedsUpdatedServerMsg<FM>;
+          eventHub.feeds.notify(feedsUpdatedMsg);
+          tryResolvePendingFeedMutationsFromFeedsEvent(feedsUpdatedMsg);
+          break;
+        }
+
+        case ServerMsgCode.FEED_DELETED: {
+          eventHub.feeds.notify(message);
+          tryResolvePendingFeedMutationsFromFeedsEvent(message);
+          break;
+        }
+
+        case ServerMsgCode.FEED_MESSAGES_LIST: {
+          const feedMsgsListMsg = message as FeedMessagesListServerMsg<FMD>;
+          const pending = pendingFeedMessagesRequests.get(
+            feedMsgsListMsg.requestId
+          );
+          if (pending) {
+            pending.resolve({
+              messages: feedMsgsListMsg.messages,
+              nextCursor: feedMsgsListMsg.nextCursor,
+            });
+            pendingFeedMessagesRequests.delete(feedMsgsListMsg.requestId);
+          }
+          eventHub.feeds.notify(feedMsgsListMsg);
+          break;
+        }
+
+        case ServerMsgCode.FEED_MESSAGES_ADDED: {
+          const feedMsgsAddedMsg = message as FeedMessagesAddedServerMsg<FMD>;
+          eventHub.feeds.notify(feedMsgsAddedMsg);
+          tryResolvePendingFeedMutationsFromFeedsEvent(feedMsgsAddedMsg);
+          break;
+        }
+
+        case ServerMsgCode.FEED_MESSAGES_UPDATED: {
+          const feedMsgsUpdatedMsg =
+            message as FeedMessagesUpdatedServerMsg<FMD>;
+          eventHub.feeds.notify(feedMsgsUpdatedMsg);
+          tryResolvePendingFeedMutationsFromFeedsEvent(feedMsgsUpdatedMsg);
+          break;
+        }
+
+        case ServerMsgCode.FEED_MESSAGES_DELETED: {
+          eventHub.feeds.notify(message);
+          tryResolvePendingFeedMutationsFromFeedsEvent(message);
+          break;
+        }
+
+        case ServerMsgCode.FEED_REQUEST_FAILED: {
+          if (!isFeedRequestFailedMsg(message)) {
+            break;
+          }
+          const { requestId, code, reason } = message;
+          const err = new LiveblocksError(reason ?? "Feed request failed", {
+            type: "FEED_REQUEST_ERROR",
+            roomId,
+            requestId,
+            code,
+            reason,
+          });
+          if (pendingFeedMutations.has(requestId)) {
+            settleFeedMutation(requestId, "error", err);
+          } else if (pendingFeedsRequests.has(requestId)) {
+            const pending = pendingFeedsRequests.get(requestId);
+            pendingFeedsRequests.delete(requestId);
+            pending?.reject(err);
+          } else if (pendingFeedMessagesRequests.has(requestId)) {
+            const pending = pendingFeedMessagesRequests.get(requestId);
+            pendingFeedMessagesRequests.delete(requestId);
+            pending?.reject(err);
+          }
+          eventHub.feeds.notify(message);
+          break;
+        }
+
         case ServerMsgCode.STORAGE_STATE_V7: // No longer used in V8
         default:
           // Ignore unknown server messages
@@ -2478,6 +2704,220 @@ export function createRoom<
   let _getStorage$: Promise<void> | null = null;
   let _resolveStoragePromise: (() => void) | null = null;
 
+  // Pending feeds fetch requests (keyed by requestId)
+  const pendingFeedsRequests = new Map<
+    string,
+    {
+      resolve: (value: { feeds: Feed<FM>[]; nextCursor?: string }) => void;
+      reject: (error: Error) => void;
+    }
+  >();
+
+  // Pending feed messages fetch requests (keyed by requestId)
+  const pendingFeedMessagesRequests = new Map<
+    string,
+    {
+      resolve: (value: {
+        messages: FeedMessage<FMD>[];
+        nextCursor?: string;
+      }) => void;
+      reject: (error: Error) => void;
+    }
+  >();
+
+  type PendingFeedMutationKind =
+    | "add-feed"
+    | "update-feed"
+    | "delete-feed"
+    | "add-message"
+    | "update-message"
+    | "delete-message";
+
+  type PendingFeedMutation = {
+    resolve: () => void;
+    reject: (error: Error) => void;
+    timeoutId: TimeoutID;
+    kind: PendingFeedMutationKind;
+    feedId: string;
+    messageId?: string;
+    expectedClientMessageId?: string;
+  };
+
+  const pendingFeedMutations = new Map<string, PendingFeedMutation>();
+  const pendingAddMessageFifoByFeed = new Map<string, string[]>();
+
+  function settleFeedMutation(
+    requestId: string,
+    outcome: "ok" | "error",
+    error?: Error
+  ): void {
+    const pending = pendingFeedMutations.get(requestId);
+    if (pending === undefined) {
+      return;
+    }
+    clearTimeout(pending.timeoutId);
+    pendingFeedMutations.delete(requestId);
+    if (pending.kind === "add-message" && !pending.expectedClientMessageId) {
+      const q = pendingAddMessageFifoByFeed.get(pending.feedId);
+      if (q !== undefined) {
+        const idx = q.indexOf(requestId);
+        if (idx >= 0) {
+          q.splice(idx, 1);
+        }
+        if (q.length === 0) {
+          pendingAddMessageFifoByFeed.delete(pending.feedId);
+        }
+      }
+    }
+    if (outcome === "ok") {
+      pending.resolve();
+    } else {
+      pending.reject(error ?? new Error("Feed mutation failed"));
+    }
+  }
+
+  function registerFeedMutation(
+    requestId: string,
+    kind: PendingFeedMutationKind,
+    feedId: string,
+    options?: { messageId?: string; expectedClientMessageId?: string }
+  ): Promise<void> {
+    const { promise, resolve, reject } = Promise_withResolvers<void>();
+    const timeoutId: TimeoutID = setTimeout(() => {
+      if (pendingFeedMutations.has(requestId)) {
+        settleFeedMutation(
+          requestId,
+          "error",
+          new Error("Feed mutation timeout")
+        );
+      }
+    }, FEEDS_TIMEOUT);
+
+    pendingFeedMutations.set(requestId, {
+      resolve,
+      reject,
+      timeoutId,
+      kind,
+      feedId,
+      messageId: options?.messageId,
+      expectedClientMessageId: options?.expectedClientMessageId,
+    });
+
+    if (
+      kind === "add-message" &&
+      options?.expectedClientMessageId === undefined
+    ) {
+      const q = pendingAddMessageFifoByFeed.get(feedId) ?? [];
+      q.push(requestId);
+      pendingAddMessageFifoByFeed.set(feedId, q);
+    }
+
+    return promise;
+  }
+
+  function tryResolvePendingFeedMutationsFromFeedsEvent(
+    message: FeedsEventServerMsg<FM, FMD>
+  ): void {
+    switch (message.type) {
+      case ServerMsgCode.FEEDS_ADDED: {
+        for (const feed of message.feeds) {
+          for (const [requestId, pending] of [...pendingFeedMutations]) {
+            if (pending.kind === "add-feed" && pending.feedId === feed.feedId) {
+              settleFeedMutation(requestId, "ok");
+              break;
+            }
+          }
+        }
+        break;
+      }
+      case ServerMsgCode.FEEDS_UPDATED: {
+        for (const feed of message.feeds) {
+          for (const [requestId, pending] of [...pendingFeedMutations]) {
+            if (
+              pending.kind === "update-feed" &&
+              pending.feedId === feed.feedId
+            ) {
+              settleFeedMutation(requestId, "ok");
+            }
+          }
+        }
+        break;
+      }
+      case ServerMsgCode.FEED_DELETED: {
+        for (const [requestId, pending] of [...pendingFeedMutations]) {
+          if (
+            pending.kind === "delete-feed" &&
+            pending.feedId === message.feedId
+          ) {
+            settleFeedMutation(requestId, "ok");
+            break;
+          }
+        }
+        break;
+      }
+      case ServerMsgCode.FEED_MESSAGES_ADDED: {
+        for (const m of message.messages) {
+          let matched = false;
+          for (const [requestId, pending] of [...pendingFeedMutations]) {
+            if (
+              pending.kind === "add-message" &&
+              pending.feedId === message.feedId &&
+              pending.expectedClientMessageId === m.id
+            ) {
+              settleFeedMutation(requestId, "ok");
+              matched = true;
+              break;
+            }
+          }
+          if (!matched) {
+            const q = pendingAddMessageFifoByFeed.get(message.feedId);
+            const headId = q?.[0];
+            if (headId !== undefined) {
+              const pending = pendingFeedMutations.get(headId);
+              if (
+                pending?.kind === "add-message" &&
+                pending.expectedClientMessageId === undefined
+              ) {
+                settleFeedMutation(headId, "ok");
+              }
+            }
+          }
+        }
+        break;
+      }
+      case ServerMsgCode.FEED_MESSAGES_UPDATED: {
+        for (const m of message.messages) {
+          for (const [requestId, pending] of [...pendingFeedMutations]) {
+            if (
+              pending.kind === "update-message" &&
+              pending.feedId === message.feedId &&
+              pending.messageId === m.id
+            ) {
+              settleFeedMutation(requestId, "ok");
+            }
+          }
+        }
+        break;
+      }
+      case ServerMsgCode.FEED_MESSAGES_DELETED: {
+        for (const mid of message.messageIds) {
+          for (const [requestId, pending] of [...pendingFeedMutations]) {
+            if (
+              pending.kind === "delete-message" &&
+              pending.feedId === message.feedId &&
+              pending.messageId === mid
+            ) {
+              settleFeedMutation(requestId, "ok");
+            }
+          }
+        }
+        break;
+      }
+      default:
+        break;
+    }
+  }
+
   function processInitialStorage(nodes: NodeMap) {
     const unacknowledgedOps = new Map(context.unacknowledgedOps);
     createOrUpdateRootFromMessage(nodes);
@@ -2586,6 +3026,191 @@ export function createRoom<
     }
 
     flushNowOrSoon();
+  }
+
+  async function fetchFeeds(options?: {
+    cursor?: string;
+    since?: number;
+    limit?: number;
+    metadata?: FeedFetchMetadataFilter;
+  }): Promise<{ feeds: Feed<FM>[]; nextCursor?: string }> {
+    const requestId = nanoid();
+
+    const { promise, resolve, reject } = Promise_withResolvers<{
+      feeds: Feed<FM>[];
+      nextCursor?: string;
+    }>();
+
+    pendingFeedsRequests.set(requestId, { resolve, reject });
+
+    const message: FetchFeedsClientMsg = {
+      type: ClientMsgCode.FETCH_FEEDS,
+      requestId,
+      cursor: options?.cursor,
+      since: options?.since,
+      limit: options?.limit,
+      metadata: options?.metadata,
+    };
+
+    context.buffer.messages.push(message);
+    flushNowOrSoon();
+
+    setTimeout(() => {
+      if (pendingFeedsRequests.has(requestId)) {
+        pendingFeedsRequests.delete(requestId);
+        reject(new Error("Feeds fetch timeout"));
+      }
+    }, FEEDS_TIMEOUT);
+
+    return promise;
+  }
+
+  async function fetchFeedMessages(
+    feedId: string,
+    options?: {
+      cursor?: string;
+      since?: number;
+      limit?: number;
+    }
+  ): Promise<{ messages: FeedMessage<FMD>[]; nextCursor?: string }> {
+    const requestId = nanoid();
+
+    const { promise, resolve, reject } = Promise_withResolvers<{
+      messages: FeedMessage<FMD>[];
+      nextCursor?: string;
+    }>();
+
+    pendingFeedMessagesRequests.set(requestId, { resolve, reject });
+
+    const message: FetchFeedMessagesClientMsg = {
+      type: ClientMsgCode.FETCH_FEED_MESSAGES,
+      requestId,
+      feedId,
+      cursor: options?.cursor,
+      since: options?.since,
+      limit: options?.limit,
+    };
+
+    context.buffer.messages.push(message);
+    flushNowOrSoon();
+
+    setTimeout(() => {
+      if (pendingFeedMessagesRequests.has(requestId)) {
+        pendingFeedMessagesRequests.delete(requestId);
+        reject(new Error("Feed messages fetch timeout"));
+      }
+    }, FEEDS_TIMEOUT);
+
+    return promise;
+  }
+
+  function addFeed(
+    feedId: string,
+    options?: { metadata?: FeedCreateMetadata; createdAt?: number }
+  ): Promise<void> {
+    const requestId = nanoid();
+    const promise = registerFeedMutation(requestId, "add-feed", feedId);
+    const message: AddFeedClientMsg = {
+      type: ClientMsgCode.ADD_FEED,
+      requestId,
+      feedId,
+      metadata: options?.metadata,
+      createdAt: options?.createdAt,
+    };
+    context.buffer.messages.push(message);
+    flushNowOrSoon();
+    return promise;
+  }
+
+  function updateFeed(
+    feedId: string,
+    metadata: FeedUpdateMetadata
+  ): Promise<void> {
+    const requestId = nanoid();
+    const promise = registerFeedMutation(requestId, "update-feed", feedId);
+    const message: UpdateFeedClientMsg = {
+      type: ClientMsgCode.UPDATE_FEED,
+      requestId,
+      feedId,
+      metadata,
+    };
+    context.buffer.messages.push(message);
+    flushNowOrSoon();
+    return promise;
+  }
+
+  function deleteFeed(feedId: string): Promise<void> {
+    const requestId = nanoid();
+    const promise = registerFeedMutation(requestId, "delete-feed", feedId);
+    const message: DeleteFeedClientMsg = {
+      type: ClientMsgCode.DELETE_FEED,
+      requestId,
+      feedId,
+    };
+    context.buffer.messages.push(message);
+    flushNowOrSoon();
+    return promise;
+  }
+
+  function addFeedMessage(
+    feedId: string,
+    data: JsonObject,
+    options?: { id?: string; createdAt?: number }
+  ): Promise<void> {
+    const requestId = nanoid();
+    const promise = registerFeedMutation(requestId, "add-message", feedId, {
+      expectedClientMessageId: options?.id,
+    });
+    const message: AddFeedMessageClientMsg = {
+      type: ClientMsgCode.ADD_FEED_MESSAGE,
+      requestId,
+      feedId,
+      data,
+      id: options?.id,
+      createdAt: options?.createdAt,
+    };
+    context.buffer.messages.push(message);
+    flushNowOrSoon();
+    return promise;
+  }
+
+  function updateFeedMessage(
+    feedId: string,
+    messageId: string,
+    data: JsonObject,
+    options?: { updatedAt?: number }
+  ): Promise<void> {
+    const requestId = nanoid();
+    const promise = registerFeedMutation(requestId, "update-message", feedId, {
+      messageId,
+    });
+    const message: UpdateFeedMessageClientMsg = {
+      type: ClientMsgCode.UPDATE_FEED_MESSAGE,
+      requestId,
+      feedId,
+      messageId,
+      data,
+      updatedAt: options?.updatedAt,
+    };
+    context.buffer.messages.push(message);
+    flushNowOrSoon();
+    return promise;
+  }
+
+  function deleteFeedMessage(feedId: string, messageId: string): Promise<void> {
+    const requestId = nanoid();
+    const promise = registerFeedMutation(requestId, "delete-message", feedId, {
+      messageId,
+    });
+    const message: DeleteFeedMessageClientMsg = {
+      type: ClientMsgCode.DELETE_FEED_MESSAGE,
+      requestId,
+      feedId,
+      messageId,
+    };
+    context.buffer.messages.push(message);
+    flushNowOrSoon();
+    return promise;
   }
 
   function undo() {
@@ -2794,6 +3419,7 @@ export function createRoom<
     ydoc: eventHub.ydoc.observable,
 
     comments: eventHub.comments.observable,
+    feeds: eventHub.feeds.observable,
     roomWillDestroy: eventHub.roomWillDestroy.observable,
   };
 
@@ -3097,7 +3723,7 @@ export function createRoom<
       id: roomId,
       subscribe: makeClassicSubscribeFn(
         roomId,
-        events,
+        eventHub,
         config.errorEventSource
       ),
 
@@ -3105,6 +3731,12 @@ export function createRoom<
       reconnect: () => managedSocket.reconnect(),
       disconnect: () => managedSocket.disconnect(),
       destroy: () => {
+        pendingFeedsRequests.forEach((request) =>
+          request.reject(new Error("Room destroyed"))
+        );
+        pendingFeedMessagesRequests.forEach((request) =>
+          request.reject(new Error("Room destroyed"))
+        );
         // remove the roomWillDestroy event from the event hub
         const { roomWillDestroy, ...eventsExceptDestroy } = eventHub;
         // Unregister all registered callbacks
@@ -3143,6 +3775,14 @@ export function createRoom<
       },
 
       fetchYDoc,
+      fetchFeeds,
+      fetchFeedMessages,
+      addFeed,
+      updateFeed,
+      deleteFeed,
+      addFeedMessage,
+      updateFeedMessage,
+      deleteFeedMessage,
       getStorage,
       getStorageSnapshot,
       getStorageStatus,

@@ -73,6 +73,8 @@ import type {
   CreateRegisterOp,
   DeleteCrdtOp,
   DeleteObjectKeyOp,
+  Feed,
+  FeedMessage,
   Guid,
   HasOpId,
   IStorageDriver,
@@ -688,6 +690,31 @@ export function generateArbitraries(config?: {
       }),
 
     leasedSessionPair: () => fc.tuple(arb.sessionId(), arb.leasedSession()),
+
+    feedMessage: () => {
+      const ts = fc.integer({ min: 0, max: Date.now() });
+      return fc.record({
+        id: fc.uuid(),
+        createdAt: ts,
+        updatedAt: ts,
+        data: arb.json(),
+      });
+    },
+
+    feed: () => {
+      const ts = fc.integer({ min: Date.now() - 1000, max: Date.now() });
+      return fc.record({
+        feedId: fc.uuid(),
+        metadata: arb.json(),
+        createdAt: ts,
+        updatedAt: ts,
+      });
+    },
+
+    feedId: () =>
+      fc.oneof({ withCrossShrink: true }, fc.constant("feed-1"), fc.uuid()),
+
+    feedPair: () => arb.feed().map((feed) => [feed.feedId, feed] as const),
 
     // -------------------------------------------------------------------------
     // Storage-specific arbitraries (ported from test/storage/arbitraries.ts)
@@ -3317,6 +3344,551 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
           )
         )
       ));
+  });
+
+  describe("feed API impl", () => {
+    test("list_feeds on empty store is empty", () =>
+      runTest(async (driver) => {
+        if (config.name === "dos-kv") return Promise.resolve();
+        const result = await driver.list_feeds();
+        expect(result.feeds).toEqual([]);
+        expect(result.nextCursor).toBeUndefined();
+      }));
+
+    test("get_feed on empty store is undefined", () =>
+      runTest(async (driver) => {
+        if (config.name === "dos-kv") return Promise.resolve();
+        return fc.assert(
+          fc.asyncProperty(arb.feedId(), async (feedId) => {
+            expect(await driver.get_feed(feedId)).toEqual(undefined);
+          })
+        );
+      }));
+
+    test("create_feed + get_feed", () =>
+      runTest(async (driver) => {
+        if (config.name === "dos-kv") return Promise.resolve();
+        return fc.assert(
+          fc.asyncProperty(arb.feed(), async (feed) => {
+            await driver.create_feed(feed);
+            expect(await driver.get_feed(feed.feedId)).toEqual(feed);
+
+            // Cleanup
+            await driver.delete_feed(feed.feedId);
+          })
+        );
+      }));
+
+    test("update_feed_metadata", () =>
+      runTest(async (driver) => {
+        if (config.name === "dos-kv") return Promise.resolve();
+        return fc.assert(
+          fc.asyncProperty(
+            arb.feed(),
+            arb.json(),
+            async (feed, newMetadata) => {
+              // Ensure feed doesn't already exist
+              await driver.delete_feed(feed.feedId);
+
+              await driver.create_feed(feed);
+
+              await driver.update_feed_metadata(feed.feedId, newMetadata);
+
+              const updated = await driver.get_feed(feed.feedId);
+              expect(updated?.metadata).toEqual(newMetadata);
+              expect(updated?.feedId).toEqual(feed.feedId);
+
+              // Cleanup
+              await driver.delete_feed(feed.feedId);
+            }
+          )
+        );
+      }));
+
+    test("delete_feed", () =>
+      runTest(async (driver) => {
+        if (config.name === "dos-kv") return Promise.resolve();
+        return fc.assert(
+          fc.asyncProperty(arb.feed(), async (feed) => {
+            // Ensure feed doesn't already exist
+            await driver.delete_feed(feed.feedId);
+
+            await driver.create_feed(feed);
+            expect(await driver.get_feed(feed.feedId)).toEqual(feed);
+
+            await driver.delete_feed(feed.feedId);
+            expect(await driver.get_feed(feed.feedId)).toBeUndefined();
+          })
+        );
+      }));
+
+    test("delete_feed on non-existent feed is no-op", () =>
+      runTest(async (driver) => {
+        if (config.name === "dos-kv") return Promise.resolve();
+        return fc.assert(
+          fc.asyncProperty(arb.feedId(), async (feedId) => {
+            await driver.delete_feed(feedId);
+            expect(await driver.get_feed(feedId)).toBeUndefined();
+          })
+        );
+      }));
+
+    test("list_feeds returns all feeds", () =>
+      runTest(async (driver) => {
+        if (config.name === "dos-kv") return Promise.resolve();
+        return fc.assert(
+          fc.asyncProperty(
+            fc
+              .array(arb.feedPair())
+              .map((x) => new Map(x))
+              .filter((m) => m.size > 0 && m.size <= 5),
+
+            async (entries) => {
+              // Ensure feeds don't already exist
+              for (const [feedId] of entries) {
+                await driver.delete_feed(feedId);
+              }
+
+              // Create all feeds
+              for (const [, feed] of entries) {
+                await driver.create_feed(feed);
+              }
+
+              // List all feeds
+              const result = await driver.list_feeds();
+
+              // Should return all feeds
+              expect(result.feeds.length).toEqual(entries.size);
+              const feedIds = new Set(result.feeds.map((f) => f.feedId));
+              for (const [feedId] of entries) {
+                expect(feedIds.has(feedId)).toBe(true);
+              }
+
+              // Cleanup
+              for (const [feedId] of entries) {
+                await driver.delete_feed(feedId);
+              }
+            }
+          )
+        );
+      }));
+
+    test("list_feeds with pagination", () =>
+      runTest(async (driver) => {
+        if (config.name === "dos-kv") return Promise.resolve();
+        // Create 3 feeds with different createdAt timestamps
+        const feeds: Feed[] = [
+          {
+            feedId: "feed-1",
+            metadata: {},
+            createdAt: 1000,
+            updatedAt: 1000,
+          },
+          {
+            feedId: "feed-2",
+            metadata: {},
+            createdAt: 2000,
+            updatedAt: 2000,
+          },
+          {
+            feedId: "feed-3",
+            metadata: {},
+            createdAt: 3000,
+            updatedAt: 3000,
+          },
+        ];
+
+        for (const feed of feeds) {
+          await driver.create_feed(feed);
+        }
+
+        // List with limit
+        const page1 = await driver.list_feeds({ limit: 2 });
+        expect(page1.feeds.length).toBe(2);
+        expect(page1.nextCursor).toBeDefined();
+
+        // Should be sorted by createdAt descending (newest first)
+        expect(page1.feeds[0]?.feedId).toBe("feed-3");
+        expect(page1.feeds[1]?.feedId).toBe("feed-2");
+
+        // Get next page
+        const page2 = await driver.list_feeds({
+          cursor: page1.nextCursor,
+        });
+        expect(page2.feeds.length).toBe(1);
+        expect(page2.feeds[0]?.feedId).toBe("feed-1");
+        expect(page2.nextCursor).toBeUndefined();
+
+        // Cleanup
+        for (const feed of feeds) {
+          await driver.delete_feed(feed.feedId);
+        }
+      }));
+
+    test("list_feeds with since filter", () =>
+      runTest(async (driver) => {
+        if (config.name === "dos-kv") return Promise.resolve();
+        const feeds: Feed[] = [
+          {
+            feedId: "feed-old",
+            metadata: {},
+            createdAt: 1000,
+            updatedAt: 1000,
+          },
+          {
+            feedId: "feed-new",
+            metadata: {},
+            createdAt: 5000,
+            updatedAt: 5000,
+          },
+        ];
+
+        for (const feed of feeds) {
+          await driver.create_feed(feed);
+        }
+
+        // List feeds since 2000
+        const result = await driver.list_feeds({ since: 2000 });
+        expect(result.feeds.length).toBe(1);
+        expect(result.feeds[0]?.feedId).toBe("feed-new");
+
+        // Cleanup
+        for (const feed of feeds) {
+          await driver.delete_feed(feed.feedId);
+        }
+      }));
+
+    test("add_feed_message", () =>
+      runTest(async (driver) => {
+        if (config.name === "dos-kv") return Promise.resolve();
+        return fc.assert(
+          fc.asyncProperty(
+            arb.feed(),
+            arb.feedMessage(),
+            async (feed, message) => {
+              // Ensure feed doesn't already exist
+              await driver.delete_feed(feed.feedId);
+
+              // Create feed
+              await driver.create_feed(feed);
+
+              // Add message
+              await driver.add_feed_message(feed.feedId, message);
+
+              // List messages and verify message was added
+              const result = await driver.list_feed_messages(feed.feedId);
+              expect(result.messages).toHaveLength(1);
+              expect(result.messages[0]).toEqual(message);
+
+              // Cleanup
+              await driver.delete_feed(feed.feedId);
+            }
+          )
+        );
+      }));
+
+    test("list_feed_messages", () =>
+      runTest(async (driver) => {
+        if (config.name === "dos-kv") return Promise.resolve();
+        return fc.assert(
+          fc.asyncProperty(arb.feed(), async (feed) => {
+            // Ensure feed doesn't already exist
+            await driver.delete_feed(feed.feedId);
+
+            await driver.create_feed(feed);
+
+            const result = await driver.list_feed_messages(feed.feedId);
+            expect(result.messages.length).toBe(0);
+
+            // Cleanup
+            await driver.delete_feed(feed.feedId);
+          })
+        );
+      }));
+
+    test("list_feed_messages with pagination", () =>
+      runTest(async (driver) => {
+        if (config.name === "dos-kv") return Promise.resolve();
+        const messages: FeedMessage[] = [
+          {
+            id: "msg-1",
+            createdAt: 1000,
+            updatedAt: 1000,
+            data: { value: 1 },
+          },
+          {
+            id: "msg-2",
+            createdAt: 2000,
+            updatedAt: 2000,
+            data: { value: 2 },
+          },
+          {
+            id: "msg-3",
+            createdAt: 3000,
+            updatedAt: 3000,
+            data: { value: 3 },
+          },
+        ];
+
+        const feed: Feed = {
+          feedId: "test-feed",
+          metadata: {},
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        };
+
+        await driver.create_feed(feed);
+
+        // Add messages one by one
+        for (const message of messages) {
+          await driver.add_feed_message(feed.feedId, message);
+        }
+
+        // List with limit
+        const page1 = await driver.list_feed_messages(feed.feedId, {
+          limit: 2,
+        });
+        expect(page1.messages.length).toBe(2);
+        expect(page1.nextCursor).toBeDefined();
+
+        // Should be sorted by createdAt descending
+        expect(page1.messages[0]?.id).toBe("msg-3");
+        expect(page1.messages[1]?.id).toBe("msg-2");
+
+        // Get next page
+        const page2 = await driver.list_feed_messages(feed.feedId, {
+          cursor: page1.nextCursor,
+        });
+        expect(page2.messages.length).toBe(1);
+        expect(page2.messages[0]?.id).toBe("msg-1");
+        expect(page2.nextCursor).toBeUndefined();
+
+        // Cleanup
+        await driver.delete_feed(feed.feedId);
+      }));
+
+    test("update_feed_message", () =>
+      runTest(async (driver) => {
+        if (config.name === "dos-kv") return Promise.resolve();
+        return fc.assert(
+          fc.asyncProperty(
+            arb.feed(),
+            arb.feedMessage(),
+            arb.json(),
+            async (feed, message, newData) => {
+              // Ensure feed doesn't already exist
+              await driver.delete_feed(feed.feedId);
+
+              await driver.create_feed(feed);
+
+              // Add message to the feed
+              await driver.add_feed_message(feed.feedId, message);
+
+              await driver.update_feed_message(
+                feed.feedId,
+                message.id,
+                newData
+              );
+
+              const result = await driver.list_feed_messages(feed.feedId);
+              const updatedMessage = result.messages.find(
+                (m) => m.id === message.id
+              );
+              expect(updatedMessage?.data).toEqual(newData);
+
+              // Cleanup
+              await driver.delete_feed(feed.feedId);
+            }
+          )
+        );
+      }));
+
+    test("update_feed_message ignores stale timestamped updates for same message", () =>
+      runTest(async (driver) => {
+        if (config.name === "dos-kv") return Promise.resolve();
+        const feed: Feed = {
+          feedId: "test-feed",
+          metadata: {},
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        };
+        const message: FeedMessage = {
+          id: "msg-1",
+          createdAt: 1000,
+          updatedAt: 1000,
+          data: { value: "original" },
+        };
+
+        await driver.delete_feed(feed.feedId);
+        await driver.create_feed(feed);
+        await driver.add_feed_message(feed.feedId, message);
+
+        const newer = await driver.update_feed_message(
+          feed.feedId,
+          message.id,
+          { value: "newer-update" },
+          2000
+        );
+        expect(newer.updatedAt).toBe(2000);
+        expect(newer.data).toEqual({ value: "newer-update" });
+
+        const stale = await driver.update_feed_message(
+          feed.feedId,
+          message.id,
+          { value: "stale-update" },
+          1500
+        );
+        expect(stale.updatedAt).toBe(2000);
+        expect(stale.data).toEqual({ value: "newer-update" });
+
+        const result = await driver.list_feed_messages(feed.feedId);
+        const latest = result.messages.find((m) => m.id === message.id);
+        expect(latest?.updatedAt).toBe(2000);
+        expect(latest?.data).toEqual({ value: "newer-update" });
+
+        await driver.delete_feed(feed.feedId);
+      }));
+
+    test("list_feed_messages order remains by createdAt after update", () =>
+      runTest(async (driver) => {
+        if (config.name === "dos-kv") return Promise.resolve();
+        const feed: Feed = {
+          feedId: "test-feed",
+          metadata: {},
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        };
+        const messages: FeedMessage[] = [
+          {
+            id: "msg-first",
+            createdAt: 1000,
+            updatedAt: 1000,
+            data: { value: "first" },
+          },
+          {
+            id: "msg-second",
+            createdAt: 2000,
+            updatedAt: 2000,
+            data: { value: "second" },
+          },
+        ];
+
+        await driver.delete_feed(feed.feedId);
+        await driver.create_feed(feed);
+        for (const m of messages) {
+          await driver.add_feed_message(feed.feedId, m);
+        }
+
+        const beforeUpdate = await driver.list_feed_messages(feed.feedId);
+        expect(beforeUpdate.messages[0]?.id).toBe("msg-second");
+        expect(beforeUpdate.messages[1]?.id).toBe("msg-first");
+
+        await driver.update_feed_message(
+          feed.feedId,
+          "msg-first",
+          { value: "first-updated" },
+          9999
+        );
+
+        const afterUpdate = await driver.list_feed_messages(feed.feedId);
+        expect(afterUpdate.messages[0]?.id).toBe("msg-second");
+        expect(afterUpdate.messages[1]?.id).toBe("msg-first");
+        expect(afterUpdate.messages[1]?.data).toEqual({
+          value: "first-updated",
+        });
+        expect(afterUpdate.messages[1]?.updatedAt).toBe(9999);
+
+        await driver.delete_feed(feed.feedId);
+      }));
+
+    test("delete_feed_message", () =>
+      runTest(async (driver) => {
+        if (config.name === "dos-kv") return Promise.resolve();
+        return fc.assert(
+          fc.asyncProperty(
+            arb.feed(),
+            arb.feedMessage(),
+            async (feed, message) => {
+              // Ensure feed doesn't already exist
+              await driver.delete_feed(feed.feedId);
+
+              await driver.create_feed(feed);
+
+              // Add message to the feed
+              await driver.add_feed_message(feed.feedId, message);
+
+              await driver.delete_feed_message(feed.feedId, message.id);
+
+              const result = await driver.list_feed_messages(feed.feedId);
+              expect(result.messages.length).toBe(0);
+              expect(
+                result.messages.find((m) => m.id === message.id)
+              ).toBeUndefined();
+
+              // Cleanup
+              await driver.delete_feed(feed.feedId);
+            }
+          )
+        );
+      }));
+
+    test("delete_feed_message on non-existent message is no-op", () =>
+      runTest(async (driver) => {
+        if (config.name === "dos-kv") return Promise.resolve();
+        return fc.assert(
+          fc.asyncProperty(
+            arb.feed(),
+            arb.feedMessage(),
+            async (feed, message) => {
+              // Ensure feed doesn't already exist
+              await driver.delete_feed(feed.feedId);
+
+              await driver.create_feed(feed);
+
+              // Add message to the feed
+              await driver.add_feed_message(feed.feedId, message);
+
+              await driver.delete_feed_message(
+                feed.feedId,
+                "non-existent-message-id"
+              );
+
+              const result = await driver.list_feed_messages(feed.feedId);
+              expect(result.messages.length).toBe(1);
+
+              // Cleanup
+              await driver.delete_feed(feed.feedId);
+            }
+          )
+        );
+      }));
+
+    test("delete_feed deletes all messages", () =>
+      runTest(async (driver) => {
+        if (config.name === "dos-kv") return Promise.resolve();
+        return fc.assert(
+          fc.asyncProperty(
+            arb.feed(),
+            arb.feedMessage(),
+            async (feed, message) => {
+              // Ensure feed doesn't already exist
+              await driver.delete_feed(feed.feedId);
+
+              await driver.create_feed(feed);
+              await driver.add_feed_message(feed.feedId, message);
+
+              await driver.delete_feed(feed.feedId);
+
+              // Feed should be gone
+              expect(await driver.get_feed(feed.feedId)).toBeUndefined();
+
+              // Messages should be gone too
+              const result = await driver.list_feed_messages(feed.feedId);
+              expect(result.messages).toEqual([]);
+            }
+          )
+        );
+      }));
   });
 
   describe("Storage behavior (high-level)", () => {

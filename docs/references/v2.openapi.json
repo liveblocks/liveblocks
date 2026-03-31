@@ -3176,6 +3176,696 @@
         }
       ]
     },
+    "/rooms/{roomId}/feeds": {
+      "get": {
+        "summary": "Get room feeds",
+        "description": "This endpoint returns the feeds in the requested room. Corresponds to [`liveblocks.getFeeds`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-feeds).",
+        "tags": ["Feeds"],
+        "operationId": "get-feeds",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID of the room",
+              "example": "my-room-id"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page.",
+              "example": "eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9"
+            }
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "description": "Only return feeds with `createdAt` greater than this Unix timestamp in milliseconds.",
+              "example": 1660000988137
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "description": "A limit on the number of feeds to be returned. The limit can range between 1 and 100, and defaults to 20.",
+              "example": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns list of feeds in a room.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetFeedsResponse"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "nextCursor": "eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9",
+                      "data": [
+                        {
+                          "feedId": "my-feed-id",
+                          "metadata": {
+                            "type": "chat",
+                            "name": "General Discussion"
+                          },
+                          "createdAt": 1660000988137,
+                          "updatedAt": 1660000988137
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create feed",
+        "description": "This endpoint creates a new feed in a room. Corresponds to [`liveblocks.createFeed`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-feeds).",
+        "tags": ["Feeds"],
+        "operationId": "create-feed",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID of the room",
+              "example": "my-room-id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFeedRequestBody"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "feedId": "my-feed-id",
+                    "metadata": {
+                      "type": "chat",
+                      "name": "General Discussion"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Returns the created feed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Feed"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "feedId": "my-feed-id",
+                      "metadata": {
+                        "type": "chat",
+                        "name": "General Discussion"
+                      },
+                      "createdAt": 1660000988137,
+                      "updatedAt": 1660000988137
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        }
+      }
+    },
+    "/rooms/{roomId}/feeds/{feedId}": {
+      "get": {
+        "summary": "Get feed",
+        "description": "This endpoint returns a feed by its ID. Corresponds to [`liveblocks.getFeed`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-feeds-feedId).",
+        "tags": ["Feeds"],
+        "operationId": "get-feed",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID of the room",
+              "example": "my-room-id"
+            }
+          },
+          {
+            "name": "feedId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID of the feed",
+              "example": "fd_abc123"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the feed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Feed"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "feedId": "my-feed-id",
+                      "metadata": {
+                        "type": "chat",
+                        "name": "General Discussion"
+                      },
+                      "createdAt": 1660000988137,
+                      "updatedAt": 1660000988137
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update feed",
+        "description": "This endpoint updates the metadata of a feed. Corresponds to [`liveblocks.updateFeed`](https://liveblocks.io/docs/api-reference/liveblocks-node#patch-rooms-roomId-feeds-feedId).",
+        "tags": ["Feeds"],
+        "operationId": "update-feed",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID of the room",
+              "example": "my-room-id"
+            }
+          },
+          {
+            "name": "feedId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID of the feed",
+              "example": "fd_abc123"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFeedRequestBody"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "metadata": {
+                      "type": "chat",
+                      "name": "Updated Discussion"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Returns the updated feed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Feed"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "feedId": "my-feed-id",
+                      "metadata": {
+                        "type": "chat",
+                        "name": "Updated Discussion"
+                      },
+                      "createdAt": 1660000988137,
+                      "updatedAt": 1660001000000
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete feed",
+        "description": "This endpoint deletes a feed. Corresponds to [`liveblocks.deleteFeed`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-rooms-roomId-feeds-feedId).",
+        "tags": ["Feeds"],
+        "operationId": "delete-feed",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID of the room",
+              "example": "my-room-id"
+            }
+          },
+          {
+            "name": "feedId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID of the feed",
+              "example": "fd_abc123"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Success. The feed was deleted."
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        }
+      }
+    },
+    "/rooms/{roomId}/feeds/{feedId}/messages": {
+      "get": {
+        "summary": "Get feed messages",
+        "description": "This endpoint returns the messages in a feed. Corresponds to [`liveblocks.getFeedMessages`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-feeds-feedId-messages).",
+        "tags": ["Feeds"],
+        "operationId": "get-feed-messages",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID of the room",
+              "example": "my-room-id"
+            }
+          },
+          {
+            "name": "feedId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID of the feed",
+              "example": "fd_abc123"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page.",
+              "example": "eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9"
+            }
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "description": "Only return messages with `createdAt` greater than this Unix timestamp in milliseconds.",
+              "example": 1660000988137
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "description": "A limit on the number of messages to be returned. The limit can range between 1 and 100, and defaults to 20.",
+              "example": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns list of messages in a feed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetFeedMessagesResponse"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "nextCursor": "eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9",
+                      "data": [
+                        {
+                          "id": "msg_xyz789",
+                          "data": {
+                            "type": "text",
+                            "content": "Hello, world!"
+                          },
+                          "createdAt": 1660000988137,
+                          "updatedAt": 1660000988137
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create feed message",
+        "description": "This endpoint creates a new message in a feed. Corresponds to [`liveblocks.createFeedMessage`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-feeds-feedId-messages).",
+        "tags": ["Feeds"],
+        "operationId": "create-feed-message",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID of the room",
+              "example": "my-room-id"
+            }
+          },
+          {
+            "name": "feedId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID of the feed",
+              "example": "fd_abc123"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFeedMessageRequestBody"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "id": "msg_xyz789",
+                    "data": {
+                      "type": "text",
+                      "content": "Hello, world!"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Returns the created feed message.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedMessage"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "id": "msg_xyz789",
+                      "data": {
+                        "type": "text",
+                        "content": "Hello, world!"
+                      },
+                      "createdAt": 1660000988137,
+                      "updatedAt": 1660000988137
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        }
+      }
+    },
+    "/rooms/{roomId}/feeds/{feedId}/messages/{messageId}": {
+      "patch": {
+        "summary": "Update feed message",
+        "description": "This endpoint updates a feed message. Corresponds to [`liveblocks.updateFeedMessage`](https://liveblocks.io/docs/api-reference/liveblocks-node#patch-rooms-roomId-feeds-feedId-messages-messageId).",
+        "tags": ["Feeds"],
+        "operationId": "update-feed-message",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID of the room",
+              "example": "my-room-id"
+            }
+          },
+          {
+            "name": "feedId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID of the feed",
+              "example": "fd_abc123"
+            }
+          },
+          {
+            "name": "messageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID of the message",
+              "example": "msg_xyz789"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFeedMessageRequestBody"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "data": {
+                      "type": "text",
+                      "content": "Updated message content"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Returns the updated feed message.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedMessage"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "id": "msg_xyz789",
+                      "data": {
+                        "type": "text",
+                        "content": "Updated message content"
+                      },
+                      "createdAt": 1660000988137,
+                      "updatedAt": 1660001000000
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete feed message",
+        "description": "This endpoint deletes a feed message. Corresponds to [`liveblocks.deleteFeedMessage`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-rooms-roomId-feeds-feedId-messages-messageId).",
+        "tags": ["Feeds"],
+        "operationId": "delete-feed-message",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID of the room",
+              "example": "my-room-id"
+            }
+          },
+          {
+            "name": "feedId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID of the feed",
+              "example": "fd_abc123"
+            }
+          },
+          {
+            "name": "messageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID of the message",
+              "example": "msg_xyz789"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Success. The feed message was deleted."
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        }
+      }
+    },
     "/authorize-user": {
       "post": {
         "summary": "Get access token with secret key",
@@ -7461,6 +8151,190 @@
           "resolved": false
         }
       },
+      "Feed": {
+        "type": "object",
+        "title": "Feed",
+        "description": "Feed objects returned by the API use `createdAt` and `updatedAt` (Unix time in milliseconds).",
+        "properties": {
+          "feedId": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object"
+          },
+          "createdAt": {
+            "type": "number",
+            "description": "Unix timestamp in milliseconds when the feed was created."
+          },
+          "updatedAt": {
+            "type": "number",
+            "description": "Unix timestamp in milliseconds when the feed was last updated."
+          }
+        },
+        "required": ["feedId", "metadata", "createdAt", "updatedAt"]
+      },
+      "FeedMessage": {
+        "type": "object",
+        "title": "FeedMessage",
+        "description": "Message objects returned by the API use `createdAt` and `updatedAt` (Unix time in milliseconds). Request bodies for create/update use `timestamp` for optional custom times.",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "number",
+            "description": "Unix timestamp in milliseconds when the message was created."
+          },
+          "updatedAt": {
+            "type": "number",
+            "description": "Unix timestamp in milliseconds when the message was last updated."
+          },
+          "data": {
+            "type": "object"
+          }
+        },
+        "required": ["id", "createdAt", "updatedAt", "data"]
+      },
+      "CreateFeedRequestBody": {
+        "type": "object",
+        "title": "CreateFeedRequestBody",
+        "description": "Request body for `POST /v2/rooms/{roomId}/feeds`. Optional creation time is sent as `timestamp` (milliseconds), not `createdAt`.",
+        "properties": {
+          "feedId": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object"
+          },
+          "timestamp": {
+            "type": "number",
+            "description": "Optional. Unix timestamp in milliseconds for the feed's creation time. If omitted, the server uses the current time."
+          }
+        },
+        "required": ["feedId"]
+      },
+      "UpdateFeedRequestBody": {
+        "type": "object",
+        "title": "UpdateFeedRequestBody",
+        "properties": {
+          "metadata": {
+            "type": "object"
+          }
+        },
+        "required": ["metadata"]
+      },
+      "CreateFeedMessageRequestBody": {
+        "type": "object",
+        "title": "CreateFeedMessageRequestBody",
+        "description": "Request body for `POST /v2/rooms/{roomId}/feeds/{feedId}/messages`. Optional message time is sent as `timestamp` (milliseconds), not `createdAt`.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Optional client-provided message id. If omitted, the server generates one."
+          },
+          "timestamp": {
+            "type": "number",
+            "description": "Optional. Unix timestamp in milliseconds for the message's creation time. If omitted, the server uses the current time."
+          },
+          "data": {
+            "type": "object"
+          }
+        },
+        "required": ["data"]
+      },
+      "UpdateFeedMessageRequestBody": {
+        "type": "object",
+        "title": "UpdateFeedMessageRequestBody",
+        "description": "Request body for `PATCH /v2/rooms/{roomId}/feeds/{feedId}/messages/{messageId}`. Optional update time is sent as `timestamp` (milliseconds), not `updatedAt`.",
+        "properties": {
+          "data": {
+            "type": "object"
+          },
+          "timestamp": {
+            "type": "number",
+            "description": "Optional. Unix timestamp in milliseconds to record as the update time. If omitted, the server uses the current time."
+          }
+        },
+        "required": ["data"]
+      },
+      "GetFeedsResponse": {
+        "title": "GetFeedsResponse",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["nextCursor", "data"],
+        "properties": {
+          "nextCursor": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Pass as `cursor` to fetch the next page, or null when there are no more results."
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Feed"
+            }
+          }
+        },
+        "example": {
+          "nextCursor": "eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9",
+          "data": [
+            {
+              "feedId": "my-feed-id",
+              "metadata": {
+                "type": "chat",
+                "name": "General Discussion"
+              },
+              "createdAt": 1660000988137,
+              "updatedAt": 1660000988137
+            }
+          ]
+        }
+      },
+      "GetFeedMessagesResponse": {
+        "title": "GetFeedMessagesResponse",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["nextCursor", "data"],
+        "properties": {
+          "nextCursor": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Pass as `cursor` to fetch the next page, or null when there are no more results."
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FeedMessage"
+            }
+          }
+        },
+        "example": {
+          "nextCursor": "eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9",
+          "data": [
+            {
+              "id": "msg_xyz789",
+              "data": {
+                "type": "text",
+                "content": "Hello, world!"
+              },
+              "createdAt": 1660000988137,
+              "updatedAt": 1660000988137
+            }
+          ]
+        }
+      },
       "CreateThreadRequestBody": {
         "title": "CreateThreadRequestBody",
         "type": "object",
@@ -11111,6 +11985,9 @@
     },
     {
       "name": "Comments"
+    },
+    {
+      "name": "Feeds"
     },
     {
       "name": "Notifications"

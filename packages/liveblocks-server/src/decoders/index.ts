@@ -16,5 +16,6 @@
  */
 
 export * from "./ClientMsg";
+export * from "./feedMetadata";
 export * from "./jsonYolo";
 export * from "./y-types";

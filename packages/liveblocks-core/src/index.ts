@@ -99,6 +99,8 @@ export type {
   DAD,
   DCM,
   DE,
+  DFM,
+  DFMD,
   DGI,
   DP,
   DRI,
@@ -203,6 +205,9 @@ export type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
 export type {
   BroadcastEventClientMsg,
   ClientMsg,
+  FeedCreateMetadata,
+  FeedFetchMetadataFilter,
+  FeedUpdateMetadata,
   FetchStorageClientMsg,
   FetchYDocClientMsg,
   UpdatePresenceClientMsg,
@@ -241,6 +246,7 @@ export type {
   ThreadDataWithDeleteInfo,
 } from "./protocol/Comments";
 export type { ThreadDeleteInfo } from "./protocol/Comments";
+export type { Feed, FeedMessage } from "./protocol/Feeds";
 export type {
   GroupData,
   GroupDataPlain,
@@ -296,6 +302,17 @@ export type {
 export type {
   BroadcastedEventServerMsg,
   CommentsEventServerMsg,
+  FeedDeletedServerMsg,
+  FeedMessagesAddedServerMsg,
+  FeedMessagesDeletedServerMsg,
+  FeedMessagesListServerMsg,
+  FeedMessagesUpdatedServerMsg,
+  FeedRequestError,
+  FeedRequestFailedServerMsg,
+  FeedsAddedServerMsg,
+  FeedsEventServerMsg,
+  FeedsListServerMsg,
+  FeedsUpdatedServerMsg,
   RejectedStorageOpServerMsg,
   RoomStateServerMsg,
   ServerMsg,
@@ -306,7 +323,7 @@ export type {
   UserLeftServerMsg,
   YDocUpdateServerMsg,
 } from "./protocol/ServerMsg";
-export { ServerMsgCode } from "./protocol/ServerMsg";
+export { FeedRequestErrorCode, ServerMsgCode } from "./protocol/ServerMsg";
 export type {
   ChildStorageNode,
   CompactChildNode,
