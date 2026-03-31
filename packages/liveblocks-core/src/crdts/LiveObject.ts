@@ -789,6 +789,9 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       }
 
       const oldValue = this.#synced.get(key);
+      if (oldValue === newValue) {
+        continue;
+      }
 
       if (isLiveNode(oldValue)) {
         for (const childOp of oldValue._toOps(this._id, key)) {
