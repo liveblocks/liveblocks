@@ -749,6 +749,10 @@
         "path": "/tools/nextjs-starter-kit"
       },
       {
+        "title": "n8n nodes",
+        "path": "/tools/n8n-nodes"
+      },
+      {
         "title": "Agent skills",
         "path": "/tools/agent-skills"
       },
