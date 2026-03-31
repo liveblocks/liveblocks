@@ -37,6 +37,11 @@
             "hidden": true
           },
           {
+            "title": "Feeds",
+            "path": "/get-started/nextjs-feeds",
+            "hidden": true
+          },
+          {
             "title": "Comments",
             "path": "/get-started/react-comments",
             "hidden": true
