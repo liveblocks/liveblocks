@@ -20,9 +20,13 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 14 (2026-04-03)
 
-## Liveblocks dev server (v1.2.1)
+## Liveblocks dev server (v1.3.0)
 
+- Add feeds support (feeds:write permission)
+- Add verbose logging toggle
+- Fix permission validation to accept all valid permission combinations
 - Support passing extra arguments to `--cmd` dynamically
+
 
 ## Contributors
 
