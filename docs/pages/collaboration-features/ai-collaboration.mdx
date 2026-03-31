@@ -6,9 +6,9 @@ meta:
 ---
 
 Bring realtime multiplayer to your AI agents with Feeds and Presence. Connect
-any workflow and use Liveblocks APIs to update your application state live with
-UI updates, comment responses, AI presence, and more. It’s also possible to
-create and update feeds when an AI assistant is
+any workflow and use Liveblocks APIs to update your application state with
+realtime UI updates, comment responses, AI presence, and more. It’s also
+possible to create and update feeds when an AI assistant is
 [mentioned in a comment](/docs/collaboration-features/comments/users-and-mentions),
 or trigger a feed from a custom UI component.
 
@@ -17,20 +17,232 @@ Feeds is ideal for multi-agent orchestration, automation, and complex pipelines.
 
 ## Overview
 
-TODO explain feeds API
+Feeds are realtime message lists that update live in your React app, inside
+[rooms](/docs/concepts#Rooms). It often makes sense to create feeds from your
+back end, and then render the results on the front end. Here's how to
+[create a feed](/docs/api-reference/liveblocks-client#post-rooms-roomId-feed)
+and
+[send a message](/docs/api-reference/liveblocks-client#post-rooms-roomId-feeds-feedId-messages)
+to it in Node.js.
 
-### n8n nodes
+```ts title="Creating a feed and sending a message"
+import { liveblocks } from "@liveblocks/node";
 
-A set of Liveblocks nodes are available for [n8n](https://n8n.io/), which you
-can use directly in your workflow. Each Liveblocks REST API endpoint has a
-corresponding n8n node, allowing you to create rooms, add to feeds, update
+const liveblocks = new liveblocks.Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+// +++
+const feed = await liveblocks.createFeed({
+  roomId: "my-room-id",
+  feedId: "my-feed-id",
+});
+// +++
+
+// +++
+const message = await liveblocks.createFeedMessage({
+  roomId: "my-room-id",
+  feedId: "my-feed-id",
+
+  // Custom message data
+  data: {
+    role: "user",
+    content: "Hello world",
+  },
+});
+// +++
+```
+
+In React, you can render the list of messages in a feed using
+[`useFeedMessages`](/docs/api-reference/liveblocks-react#useFeedMessages). This
+list updates in realtime for all connected users.
+
+```tsx title="Rendering a feed's messages"
+import { useFeedMessages } from "@liveblocks/react/suspense";
+
+function Feed() {
+  // +++
+  const { messages, error, isLoading } = useFeedMessages("my-feed-id");
+  // +++
+
+  // +++
+  // [{ data: { role: "user", content: "Hello world" }, ... }]
+  console.log(messages);
+  // +++
+
+  return (
+    <div>
+      {messages.map((message) => (
+        <div key={message.id}>{message.content}</div>
+      ))}
+    </div>
+  );
+}
+```
+
+You can also add new feed messages from the front end, for example in a chat
+application.
+
+```tsx title="Rendering a feed's messages"
+import {
+  useCreateFeedMessage,
+  useFeedMessages,
+} from "@liveblocks/react/suspense";
+
+function Feed() {
+  const { messages, error, isLoading } = useFeedMessages("my-feed-id");
+  // +++
+  const createFeedMessage = useCreateFeedMessage();
+  // +++
+  const [input, setInput] = useState("");
+
+  return (
+    <div>
+      {messages.map((message) => (
+        <div key={message.id}>{message.content}</div>
+      ))}
+      <input value={input} onChange={(e) => setInput(e.target.value)} />
+      <button
+        // +++
+        onClick={() => createFeedMessage({ role: "user", content: input })}
+        // +++
+      >
+        Send
+      </button>
+    </div>
+  );
+}
+```
+
+Feeds can be read and edited from React, JavaScript, Node.js, Python, with n8n
+nodes, and via REST API. [API references](#api-reference).
+
+## Presence
+
+Presence represents connected users shown through UI, such as avatar stacks,
+cursors, or cell selections. When AI workflows are running you can choose to
+show an agent’s presence in your application, alongside humans. To create
+presence use
+[`liveblocks.setPresence`](/docs/api-reference/liveblocks-nodee#post-rooms-roomId-presence).
+
+```tsx
+import { liveblocks } from "@liveblocks/node";
+
+const liveblocks = new liveblocks.Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+// +++
+await liveblocks.setPresence("my-room-id", {
+  userId: "agent-123",
+
+  // Custom presence data, e.g. the current cursor position
+  data: {
+    status: "active",
+    cursor: { x: 100, y: 200 },
+  },
+
+  // The AI user's information
+  userInfo: {
+    name: "AI Assistant",
+    avatar: "https://example.com/avatar.png",
+    color: "#22c55e",
+  },
+
+  // How long presence appears for
+  ttl: 30,
+});
+// +++
+```
+
+You can render the presence of an AI agents and humans using our default
+[`AvatarStack`](/docs/api-reference/liveblocks-react-ui#AvatarStack) and
+[`Cursors`](/docs/api-reference/liveblocks-react-ui#Cursors) components.
+
+```tsx
+import { AvatarStack, Cursors } from "@liveblocks/react-ui";
+
+function Presence() {
+  return (
+    // +++
+    <Cursors>
+      <AvatarStack size={32} />
+    </Cursors>
+    // +++
+  );
+}
+```
+
+To create custom presence UI, add
+[`useOthers`](/docs/api-reference/liveblocks-react#useOthers), which returns a
+realtime list of every connected user, both human and AI. Here’s a way to render
+cursors for each user.
+
+```tsx
+import { useOthers } from "@liveblocks/react/suspense";
+
+function Avatars() {
+  // +++
+  const others = useOthers();
+  // +++
+
+  return (
+    <div style={{ height: "100vh", width: "100vw" }}>
+      // +++
+      {others.map(({ connectionId, presence, info }) => (
+        <div
+          key={other.connectionId}
+          style={{
+            position: "absolute",
+            left: presence.cursor.x,
+            top: presence.cursor.y,
+            backgroundColor: info.color,
+          }}
+        >
+          {info.name}
+        </div>
+      ))}
+      // +++
+    </div>
+  );
+}
+```
+
+Note that `presence` and `info` are contain custom values we set on the back
+end.
+
+## AI comments
+
+One way to use feeds is to render AI comments in your application, using
+[custom thread components](/docs/api-reference/liveblocks-react-ui#Customize-comments).
+We have an example of this set up using [Workflow SDK](https://useworkflow.dev/)
+and [webhooks](/docs/platform/webhooks) to trigger the back end code.
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "AI Comments",
+      slug: "ai-comments",
+      image: "/images/examples/thumbnails/comments-ai.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+</ListGrid>
+
+## n8n nodes
+
+[n8n](https://n8n.io/) is a workflow automation platform that allows you to
+build agents visually. A set of Liveblocks nodes are available which you can use
+directly in your workflow. Each Liveblocks REST API endpoint has a corresponding
+n8n node, allowing you to add messages to feeds, show presence, update
 multiplayer state, and more.
 
 <Button asChild>
   <a href="/docs/tools/n8n-nodes">Learn more about Liveblocks n8n nodes</a>
 </Button>
 
-## AI Collaboration API Reference
+## AI Collaboration API Reference [#api-reference]
 
 <ListGrid columns={2}>
   <DocsCard
@@ -65,4 +277,14 @@ multiplayer state, and more.
 
 ## Examples
 
-TODO there are none yet
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "AI Comments",
+      slug: "ai-comments",
+      image: "/images/examples/thumbnails/comments-ai.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+</ListGrid>
