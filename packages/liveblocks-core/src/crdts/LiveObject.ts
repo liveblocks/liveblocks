@@ -1,6 +1,6 @@
 import type { LiveNode, Lson, LsonObject } from "../crdts/Lson";
-import type { SyncConfig } from "../immutable";
-import { reconcileLiveObject } from "../immutable";
+import type { SyncConfig } from "./reconcile";
+import { reconcileLiveObject } from "./reconcile";
 import { nn } from "../lib/assert";
 import { isPlainObject } from "../lib/guards";
 import type { Json, JsonObject } from "../lib/Json";
