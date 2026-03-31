@@ -38,11 +38,15 @@ import type {
   IStorageDriver,
   IStorageDriverNodeAPI,
   LeasedSession,
+  ListFeedMessagesOptions,
+  ListFeedMessagesResult,
+  ListFeedsOptions,
+  ListFeedsResult,
 } from "~/interfaces";
 import { NestedMap } from "~/lib/NestedMap";
 import { quote } from "~/lib/text";
 import { makeInMemorySnapshot } from "~/makeInMemorySnapshot";
-import type { Pos } from "~/types";
+import type { Feed, FeedMessage, Pos } from "~/types";
 
 function buildRevNodes(nodeStream: NodeStream) {
   const result = new NestedMap<string, string, string>();
@@ -126,6 +130,8 @@ export class InMemoryDriver implements IStorageDriver {
   private _metadb: Map<string, Json>;
   private _ydb: Map<string, Uint8Array>;
   private _leasedSessions: Map<string, LeasedSession>;
+  private _feeds: Map<string, Feed>;
+  private _feedMessages: Map<string, FeedMessage>; // Key: `${feedId}:${messageId}`
 
   constructor(options?: {
     initialActor?: number;
@@ -135,6 +141,8 @@ export class InMemoryDriver implements IStorageDriver {
     this._metadb = new Map();
     this._ydb = new Map();
     this._leasedSessions = new Map();
+    this._feeds = new Map();
+    this._feedMessages = new Map();
 
     this._nextActor = options?.initialActor ?? -1;
 
@@ -183,6 +191,257 @@ export class InMemoryDriver implements IStorageDriver {
 
   takeRowsWritten(): number {
     return 0;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Feed APIs
+  // ---------------------------------------------------------------------------
+
+  async list_feeds(options?: ListFeedsOptions): Promise<ListFeedsResult> {
+    const limit = Math.min(options?.limit ?? 20, 100);
+    const since = options?.since;
+    const cursor = options?.cursor;
+    const metadata = options?.metadata;
+
+    let feeds: Feed[] = [];
+
+    // Collect all feeds
+    for (const [_, feed] of this._feeds.entries()) {
+      // Apply metadata filtering
+      if (metadata !== undefined) {
+        const feedMetadata = feed.metadata as JsonObject;
+        let matches = true;
+        for (const [key, value] of Object.entries(metadata)) {
+          if (feedMetadata[key] !== value) {
+            matches = false;
+            break;
+          }
+        }
+        if (!matches) continue;
+      }
+
+      // Apply since filter (uses createdAt for stable ordering)
+      if (since !== undefined && feed.createdAt < since) {
+        continue;
+      }
+
+      feeds.push(feed);
+    }
+
+    // Sort by createdAt descending, then by feedId descending
+    feeds.sort((a, b) => {
+      if (b.createdAt !== a.createdAt) {
+        return b.createdAt - a.createdAt;
+      }
+      return b.feedId.localeCompare(a.feedId);
+    });
+
+    // Apply cursor-based pagination
+    if (cursor !== undefined) {
+      try {
+        // Simple base64url decode (using btoa/atob for browser compatibility)
+        const decoded = JSON.parse(
+          decodeURIComponent(
+            escape(atob(cursor.replace(/-/g, "+").replace(/_/g, "/")))
+          )
+        ) as [string, number];
+        const [cursorFeedId, cursorCreatedAt] = decoded;
+        feeds = feeds.filter((s) => {
+          return (
+            s.createdAt < cursorCreatedAt ||
+            (s.createdAt === cursorCreatedAt && s.feedId < cursorFeedId)
+          );
+        });
+      } catch {
+        // Invalid cursor, ignore it
+      }
+    }
+
+    // Apply limit (get one extra to determine if there's a next page)
+    let nextCursor: string | undefined;
+    if (feeds.length > limit) {
+      feeds = feeds.slice(0, limit);
+      // Create cursor from last returned item
+      const last = feeds[feeds.length - 1];
+      if (last) {
+        const cursorData: [string, number] = [last.feedId, last.createdAt];
+        // Simple base64url encode
+        nextCursor = btoa(
+          unescape(encodeURIComponent(JSON.stringify(cursorData)))
+        )
+          .replace("/", "_")
+          .replace("+", "-")
+          .replace(/=+$/, "");
+      }
+    }
+
+    return { feeds, nextCursor };
+  }
+
+  async get_feed(feedId: string): Promise<Feed | undefined> {
+    const feed = this._feeds.get(feedId);
+    if (feed === undefined) {
+      return undefined;
+    }
+
+    return feed;
+  }
+
+  async create_feed(feed: Feed): Promise<void> {
+    // Check if feed already exists
+    if (this._feeds.has(feed.feedId)) {
+      throw new Error(`Feed ${feed.feedId} already exists`);
+    }
+
+    // Store feed metadata
+    this._feeds.set(feed.feedId, {
+      feedId: feed.feedId,
+      metadata: feed.metadata,
+      createdAt: feed.createdAt,
+      updatedAt: feed.updatedAt,
+    });
+  }
+
+  async update_feed_metadata(feedId: string, metadata: Json): Promise<void> {
+    const existing = this._feeds.get(feedId);
+    if (existing === undefined) {
+      throw new Error(`Feed ${feedId} not found`);
+    }
+
+    this._feeds.set(feedId, {
+      ...existing,
+      metadata,
+    });
+  }
+
+  async delete_feed(feedId: string): Promise<void> {
+    // Delete all messages for this feed
+    const messageKeys: string[] = [];
+    for (const [key] of this._feedMessages.entries()) {
+      if (key.startsWith(`${feedId}:`)) {
+        messageKeys.push(key);
+      }
+    }
+    for (const key of messageKeys) {
+      this._feedMessages.delete(key);
+    }
+
+    // Delete feed
+    this._feeds.delete(feedId);
+  }
+
+  async list_feed_messages(
+    feedId: string,
+    options?: ListFeedMessagesOptions
+  ): Promise<ListFeedMessagesResult> {
+    const limit = Math.min(options?.limit ?? 20, 100);
+    const since = options?.since;
+    const cursor = options?.cursor;
+
+    let messages: FeedMessage[] = [];
+
+    // Collect all messages for this feed
+    const prefix = `${feedId}:`;
+    for (const [key, message] of this._feedMessages.entries()) {
+      if (key.startsWith(prefix)) {
+        // Apply since filter (uses createdAt for stable ordering)
+        if (since !== undefined && message.createdAt < since) {
+          continue;
+        }
+
+        messages.push(message);
+      }
+    }
+
+    // Sort by createdAt descending, then by id descending
+    messages.sort((a, b) => {
+      if (b.createdAt !== a.createdAt) {
+        return b.createdAt - a.createdAt;
+      }
+      return b.id.localeCompare(a.id);
+    });
+
+    // Apply cursor-based pagination
+    if (cursor !== undefined) {
+      try {
+        const decoded = JSON.parse(
+          decodeURIComponent(
+            escape(atob(cursor.replace(/-/g, "+").replace(/_/g, "/")))
+          )
+        ) as [string, number];
+        const [cursorMessageId, cursorCreatedAt] = decoded;
+        messages = messages.filter((m) => {
+          return (
+            m.createdAt < cursorCreatedAt ||
+            (m.createdAt === cursorCreatedAt && m.id < cursorMessageId)
+          );
+        });
+      } catch {
+        // Invalid cursor, ignore it
+      }
+    }
+
+    // Apply limit (get one extra to determine if there's a next page)
+    let nextCursor: string | undefined;
+    if (messages.length > limit) {
+      messages = messages.slice(0, limit);
+      // Create cursor from last returned item
+      const last = messages[messages.length - 1];
+      if (last) {
+        const cursorData: [string, number] = [last.id, last.createdAt];
+        nextCursor = btoa(
+          unescape(encodeURIComponent(JSON.stringify(cursorData)))
+        )
+          .replace("/", "_")
+          .replace("+", "-")
+          .replace(/=+$/, "");
+      }
+    }
+
+    return { messages, nextCursor };
+  }
+
+  async add_feed_message(feedId: string, message: FeedMessage): Promise<void> {
+    // Verify feed exists
+    const feed = this._feeds.get(feedId);
+    if (feed === undefined) {
+      throw new Error(`Feed ${feedId} not found`);
+    }
+
+    this._feedMessages.set(`${feedId}:${message.id}`, message);
+  }
+
+  async update_feed_message(
+    feedId: string,
+    messageId: string,
+    data: Json,
+    timestamp?: number
+  ): Promise<FeedMessage> {
+    const key = `${feedId}:${messageId}`;
+    const message = this._feedMessages.get(key);
+
+    if (message === undefined) {
+      throw new Error(`Feed message ${messageId} not found in feed ${feedId}`);
+    }
+
+    const effectiveTimestamp = timestamp ?? Date.now();
+    if (effectiveTimestamp < message.updatedAt) {
+      return message;
+    }
+
+    const updatedMessage: FeedMessage = {
+      ...message,
+      updatedAt: effectiveTimestamp,
+      data,
+    };
+
+    this._feedMessages.set(key, updatedMessage);
+
+    return updatedMessage;
+  }
+
+  async delete_feed_message(feedId: string, messageId: string): Promise<void> {
+    this._feedMessages.delete(`${feedId}:${messageId}`);
   }
 
   next_actor() {

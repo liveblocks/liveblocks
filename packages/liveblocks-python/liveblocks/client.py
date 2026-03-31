@@ -28,6 +28,8 @@ if TYPE_CHECKING:
     from .models.create_ai_copilot_options_open_ai import CreateAiCopilotOptionsOpenAi
     from .models.create_ai_copilot_options_open_ai_compatible import CreateAiCopilotOptionsOpenAiCompatible
     from .models.create_comment_request_body import CreateCommentRequestBody
+    from .models.create_feed_message_request_body import CreateFeedMessageRequestBody
+    from .models.create_feed_request_body import CreateFeedRequestBody
     from .models.create_file_knowledge_source_response import CreateFileKnowledgeSourceResponse
     from .models.create_group_request_body import CreateGroupRequestBody
     from .models.create_room_request_body import CreateRoomRequestBody
@@ -38,7 +40,11 @@ if TYPE_CHECKING:
     from .models.edit_comment_metadata_request_body import EditCommentMetadataRequestBody
     from .models.edit_comment_request_body import EditCommentRequestBody
     from .models.edit_thread_metadata_request_body import EditThreadMetadataRequestBody
+    from .models.feed import Feed
+    from .models.feed_message import FeedMessage
     from .models.get_ai_copilots_response import GetAiCopilotsResponse
+    from .models.get_feed_messages_response import GetFeedMessagesResponse
+    from .models.get_feeds_response import GetFeedsResponse
     from .models.get_file_knowledge_source_markdown_response import GetFileKnowledgeSourceMarkdownResponse
     from .models.get_groups_response import GetGroupsResponse
     from .models.get_inbox_notifications_response import GetInboxNotificationsResponse
@@ -83,6 +89,8 @@ if TYPE_CHECKING:
     from .models.trigger_inbox_notification_request_body import TriggerInboxNotificationRequestBody
     from .models.unsubscribe_from_thread_request_body import UnsubscribeFromThreadRequestBody
     from .models.update_ai_copilot_request_body import UpdateAiCopilotRequestBody
+    from .models.update_feed_message_request_body import UpdateFeedMessageRequestBody
+    from .models.update_feed_request_body import UpdateFeedRequestBody
     from .models.update_notification_settings_request_body import UpdateNotificationSettingsRequestBody
     from .models.update_room_id_request_body import UpdateRoomIdRequestBody
     from .models.update_room_organization_id_request_body import UpdateRoomOrganizationIdRequestBody
@@ -1723,6 +1731,332 @@ class Liveblocks:
         return get_thread_inbox_notifications._sync(
             room_id=room_id,
             thread_id=thread_id,
+            client=self._client,
+        )
+
+    def get_feeds(
+        self,
+        room_id: str,
+        *,
+        cursor: str | Unset = UNSET,
+        since: int | Unset = UNSET,
+        limit: int | Unset = 20,
+    ) -> GetFeedsResponse:
+        """Get room feeds
+
+         This endpoint returns the feeds in the requested room. Corresponds to
+        [`liveblocks.getFeeds`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-
+        feeds).
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            cursor (str | Unset): A cursor used for pagination. Get the value from the `nextCursor`
+                response of the previous page. Example: eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9.
+            since (int | Unset): Only return feeds with `createdAt` greater than this Unix timestamp
+                in milliseconds. Example: 1660000988137.
+            limit (int | Unset): A limit on the number of feeds to be returned. The limit can range
+                between 1 and 100, and defaults to 20. Default: 20. Example: 20.
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetFeedsResponse
+        """
+
+        from .api.feeds import get_feeds
+
+        return get_feeds._sync(
+            room_id=room_id,
+            cursor=cursor,
+            since=since,
+            limit=limit,
+            client=self._client,
+        )
+
+    def create_feed(
+        self,
+        room_id: str,
+        *,
+        body: CreateFeedRequestBody,
+    ) -> Feed:
+        """Create feed
+
+         This endpoint creates a new feed in a room. Corresponds to
+        [`liveblocks.createFeed`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-
+        roomId-feeds).
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            body (CreateFeedRequestBody): Request body for `POST /v2/rooms/{roomId}/feeds`. Optional
+                creation time is sent as `timestamp` (milliseconds), not `createdAt`.
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            Feed
+        """
+
+        from .api.feeds import create_feed
+
+        return create_feed._sync(
+            room_id=room_id,
+            body=body,
+            client=self._client,
+        )
+
+    def get_feed(
+        self,
+        room_id: str,
+        feed_id: str,
+    ) -> Feed:
+        """Get feed
+
+         This endpoint returns a feed by its ID. Corresponds to
+        [`liveblocks.getFeed`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-
+        feeds-feedId).
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            feed_id (str): ID of the feed Example: fd_abc123.
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            Feed
+        """
+
+        from .api.feeds import get_feed
+
+        return get_feed._sync(
+            room_id=room_id,
+            feed_id=feed_id,
+            client=self._client,
+        )
+
+    def delete_feed(
+        self,
+        room_id: str,
+        feed_id: str,
+    ) -> None:
+        """Delete feed
+
+         This endpoint deletes a feed. Corresponds to
+        [`liveblocks.deleteFeed`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-rooms-
+        roomId-feeds-feedId).
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            feed_id (str): ID of the feed Example: fd_abc123.
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
+        from .api.feeds import delete_feed
+
+        return delete_feed._sync(
+            room_id=room_id,
+            feed_id=feed_id,
+            client=self._client,
+        )
+
+    def update_feed(
+        self,
+        room_id: str,
+        feed_id: str,
+        *,
+        body: UpdateFeedRequestBody,
+    ) -> Feed:
+        """Update feed
+
+         This endpoint updates the metadata of a feed. Corresponds to
+        [`liveblocks.updateFeed`](https://liveblocks.io/docs/api-reference/liveblocks-node#patch-rooms-
+        roomId-feeds-feedId).
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            feed_id (str): ID of the feed Example: fd_abc123.
+            body (UpdateFeedRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            Feed
+        """
+
+        from .api.feeds import update_feed
+
+        return update_feed._sync(
+            room_id=room_id,
+            feed_id=feed_id,
+            body=body,
+            client=self._client,
+        )
+
+    def get_feed_messages(
+        self,
+        room_id: str,
+        feed_id: str,
+        *,
+        cursor: str | Unset = UNSET,
+        since: int | Unset = UNSET,
+        limit: int | Unset = 20,
+    ) -> GetFeedMessagesResponse:
+        """Get feed messages
+
+         This endpoint returns the messages in a feed. Corresponds to
+        [`liveblocks.getFeedMessages`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-
+        roomId-feeds-feedId-messages).
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            feed_id (str): ID of the feed Example: fd_abc123.
+            cursor (str | Unset): A cursor used for pagination. Get the value from the `nextCursor`
+                response of the previous page. Example: eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9.
+            since (int | Unset): Only return messages with `createdAt` greater than this Unix
+                timestamp in milliseconds. Example: 1660000988137.
+            limit (int | Unset): A limit on the number of messages to be returned. The limit can range
+                between 1 and 100, and defaults to 20. Default: 20. Example: 20.
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetFeedMessagesResponse
+        """
+
+        from .api.feeds import get_feed_messages
+
+        return get_feed_messages._sync(
+            room_id=room_id,
+            feed_id=feed_id,
+            cursor=cursor,
+            since=since,
+            limit=limit,
+            client=self._client,
+        )
+
+    def create_feed_message(
+        self,
+        room_id: str,
+        feed_id: str,
+        *,
+        body: CreateFeedMessageRequestBody,
+    ) -> FeedMessage:
+        """Create feed message
+
+         This endpoint creates a new message in a feed. Corresponds to
+        [`liveblocks.createFeedMessage`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-
+        rooms-roomId-feeds-feedId-messages).
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            feed_id (str): ID of the feed Example: fd_abc123.
+            body (CreateFeedMessageRequestBody): Request body for `POST
+                /v2/rooms/{roomId}/feeds/{feedId}/messages`. Optional message time is sent as `timestamp`
+                (milliseconds), not `createdAt`.
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            FeedMessage
+        """
+
+        from .api.feeds import create_feed_message
+
+        return create_feed_message._sync(
+            room_id=room_id,
+            feed_id=feed_id,
+            body=body,
+            client=self._client,
+        )
+
+    def delete_feed_message(
+        self,
+        room_id: str,
+        feed_id: str,
+        message_id: str,
+    ) -> None:
+        """Delete feed message
+
+         This endpoint deletes a feed message. Corresponds to
+        [`liveblocks.deleteFeedMessage`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-
+        rooms-roomId-feeds-feedId-messages-messageId).
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            feed_id (str): ID of the feed Example: fd_abc123.
+            message_id (str): ID of the message Example: msg_xyz789.
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
+        from .api.feeds import delete_feed_message
+
+        return delete_feed_message._sync(
+            room_id=room_id,
+            feed_id=feed_id,
+            message_id=message_id,
+            client=self._client,
+        )
+
+    def update_feed_message(
+        self,
+        room_id: str,
+        feed_id: str,
+        message_id: str,
+        *,
+        body: UpdateFeedMessageRequestBody,
+    ) -> FeedMessage:
+        """Update feed message
+
+         This endpoint updates a feed message. Corresponds to
+        [`liveblocks.updateFeedMessage`](https://liveblocks.io/docs/api-reference/liveblocks-node#patch-
+        rooms-roomId-feeds-feedId-messages-messageId).
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            feed_id (str): ID of the feed Example: fd_abc123.
+            message_id (str): ID of the message Example: msg_xyz789.
+            body (UpdateFeedMessageRequestBody): Request body for `PATCH
+                /v2/rooms/{roomId}/feeds/{feedId}/messages/{messageId}`. Optional update time is sent as
+                `timestamp` (milliseconds), not `updatedAt`.
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            FeedMessage
+        """
+
+        from .api.feeds import update_feed_message
+
+        return update_feed_message._sync(
+            room_id=room_id,
+            feed_id=feed_id,
+            message_id=message_id,
+            body=body,
             client=self._client,
         )
 
@@ -4532,6 +4866,332 @@ class AsyncLiveblocks:
         return await get_thread_inbox_notifications._asyncio(
             room_id=room_id,
             thread_id=thread_id,
+            client=self._client,
+        )
+
+    async def get_feeds(
+        self,
+        room_id: str,
+        *,
+        cursor: str | Unset = UNSET,
+        since: int | Unset = UNSET,
+        limit: int | Unset = 20,
+    ) -> GetFeedsResponse:
+        """Get room feeds
+
+         This endpoint returns the feeds in the requested room. Corresponds to
+        [`liveblocks.getFeeds`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-
+        feeds).
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            cursor (str | Unset): A cursor used for pagination. Get the value from the `nextCursor`
+                response of the previous page. Example: eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9.
+            since (int | Unset): Only return feeds with `createdAt` greater than this Unix timestamp
+                in milliseconds. Example: 1660000988137.
+            limit (int | Unset): A limit on the number of feeds to be returned. The limit can range
+                between 1 and 100, and defaults to 20. Default: 20. Example: 20.
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetFeedsResponse
+        """
+
+        from .api.feeds import get_feeds
+
+        return await get_feeds._asyncio(
+            room_id=room_id,
+            cursor=cursor,
+            since=since,
+            limit=limit,
+            client=self._client,
+        )
+
+    async def create_feed(
+        self,
+        room_id: str,
+        *,
+        body: CreateFeedRequestBody,
+    ) -> Feed:
+        """Create feed
+
+         This endpoint creates a new feed in a room. Corresponds to
+        [`liveblocks.createFeed`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-
+        roomId-feeds).
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            body (CreateFeedRequestBody): Request body for `POST /v2/rooms/{roomId}/feeds`. Optional
+                creation time is sent as `timestamp` (milliseconds), not `createdAt`.
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            Feed
+        """
+
+        from .api.feeds import create_feed
+
+        return await create_feed._asyncio(
+            room_id=room_id,
+            body=body,
+            client=self._client,
+        )
+
+    async def get_feed(
+        self,
+        room_id: str,
+        feed_id: str,
+    ) -> Feed:
+        """Get feed
+
+         This endpoint returns a feed by its ID. Corresponds to
+        [`liveblocks.getFeed`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-
+        feeds-feedId).
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            feed_id (str): ID of the feed Example: fd_abc123.
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            Feed
+        """
+
+        from .api.feeds import get_feed
+
+        return await get_feed._asyncio(
+            room_id=room_id,
+            feed_id=feed_id,
+            client=self._client,
+        )
+
+    async def delete_feed(
+        self,
+        room_id: str,
+        feed_id: str,
+    ) -> None:
+        """Delete feed
+
+         This endpoint deletes a feed. Corresponds to
+        [`liveblocks.deleteFeed`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-rooms-
+        roomId-feeds-feedId).
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            feed_id (str): ID of the feed Example: fd_abc123.
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
+        from .api.feeds import delete_feed
+
+        return await delete_feed._asyncio(
+            room_id=room_id,
+            feed_id=feed_id,
+            client=self._client,
+        )
+
+    async def update_feed(
+        self,
+        room_id: str,
+        feed_id: str,
+        *,
+        body: UpdateFeedRequestBody,
+    ) -> Feed:
+        """Update feed
+
+         This endpoint updates the metadata of a feed. Corresponds to
+        [`liveblocks.updateFeed`](https://liveblocks.io/docs/api-reference/liveblocks-node#patch-rooms-
+        roomId-feeds-feedId).
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            feed_id (str): ID of the feed Example: fd_abc123.
+            body (UpdateFeedRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            Feed
+        """
+
+        from .api.feeds import update_feed
+
+        return await update_feed._asyncio(
+            room_id=room_id,
+            feed_id=feed_id,
+            body=body,
+            client=self._client,
+        )
+
+    async def get_feed_messages(
+        self,
+        room_id: str,
+        feed_id: str,
+        *,
+        cursor: str | Unset = UNSET,
+        since: int | Unset = UNSET,
+        limit: int | Unset = 20,
+    ) -> GetFeedMessagesResponse:
+        """Get feed messages
+
+         This endpoint returns the messages in a feed. Corresponds to
+        [`liveblocks.getFeedMessages`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-
+        roomId-feeds-feedId-messages).
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            feed_id (str): ID of the feed Example: fd_abc123.
+            cursor (str | Unset): A cursor used for pagination. Get the value from the `nextCursor`
+                response of the previous page. Example: eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9.
+            since (int | Unset): Only return messages with `createdAt` greater than this Unix
+                timestamp in milliseconds. Example: 1660000988137.
+            limit (int | Unset): A limit on the number of messages to be returned. The limit can range
+                between 1 and 100, and defaults to 20. Default: 20. Example: 20.
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetFeedMessagesResponse
+        """
+
+        from .api.feeds import get_feed_messages
+
+        return await get_feed_messages._asyncio(
+            room_id=room_id,
+            feed_id=feed_id,
+            cursor=cursor,
+            since=since,
+            limit=limit,
+            client=self._client,
+        )
+
+    async def create_feed_message(
+        self,
+        room_id: str,
+        feed_id: str,
+        *,
+        body: CreateFeedMessageRequestBody,
+    ) -> FeedMessage:
+        """Create feed message
+
+         This endpoint creates a new message in a feed. Corresponds to
+        [`liveblocks.createFeedMessage`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-
+        rooms-roomId-feeds-feedId-messages).
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            feed_id (str): ID of the feed Example: fd_abc123.
+            body (CreateFeedMessageRequestBody): Request body for `POST
+                /v2/rooms/{roomId}/feeds/{feedId}/messages`. Optional message time is sent as `timestamp`
+                (milliseconds), not `createdAt`.
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            FeedMessage
+        """
+
+        from .api.feeds import create_feed_message
+
+        return await create_feed_message._asyncio(
+            room_id=room_id,
+            feed_id=feed_id,
+            body=body,
+            client=self._client,
+        )
+
+    async def delete_feed_message(
+        self,
+        room_id: str,
+        feed_id: str,
+        message_id: str,
+    ) -> None:
+        """Delete feed message
+
+         This endpoint deletes a feed message. Corresponds to
+        [`liveblocks.deleteFeedMessage`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-
+        rooms-roomId-feeds-feedId-messages-messageId).
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            feed_id (str): ID of the feed Example: fd_abc123.
+            message_id (str): ID of the message Example: msg_xyz789.
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
+        from .api.feeds import delete_feed_message
+
+        return await delete_feed_message._asyncio(
+            room_id=room_id,
+            feed_id=feed_id,
+            message_id=message_id,
+            client=self._client,
+        )
+
+    async def update_feed_message(
+        self,
+        room_id: str,
+        feed_id: str,
+        message_id: str,
+        *,
+        body: UpdateFeedMessageRequestBody,
+    ) -> FeedMessage:
+        """Update feed message
+
+         This endpoint updates a feed message. Corresponds to
+        [`liveblocks.updateFeedMessage`](https://liveblocks.io/docs/api-reference/liveblocks-node#patch-
+        rooms-roomId-feeds-feedId-messages-messageId).
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            feed_id (str): ID of the feed Example: fd_abc123.
+            message_id (str): ID of the message Example: msg_xyz789.
+            body (UpdateFeedMessageRequestBody): Request body for `PATCH
+                /v2/rooms/{roomId}/feeds/{feedId}/messages/{messageId}`. Optional update time is sent as
+                `timestamp` (milliseconds), not `updatedAt`.
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            FeedMessage
+        """
+
+        from .api.feeds import update_feed_message
+
+        return await update_feed_message._asyncio(
+            room_id=room_id,
+            feed_id=feed_id,
+            message_id=message_id,
+            body=body,
             client=self._client,
         )
 

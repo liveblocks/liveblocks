@@ -244,6 +244,29 @@ Test Files  1 passed (1)
 Liveblocks dev server shut down
 ```
 
+You can also pass extra arguments after the command. They will be appended to
+the end of the command string:
+
+```bash
+npx liveblocks dev --cmd 'vitest run' my-test.test.ts
+# Runs: vitest run my-test.test.ts
+```
+
+If you need precise control over where the extra arguments are inserted, use
+`{}` as a placeholder:
+
+```bash
+npx liveblocks dev --cmd 'vitest run {} --reporter=verbose' my-test.test.ts
+# Runs: vitest run my-test.test.ts --reporter=verbose
+```
+
+Use `--` before any extra arguments that start with `-`:
+
+```bash
+npx liveblocks dev --cmd 'vitest run' -- --coverage my-test.test.ts
+# Runs: vitest run --coverage my-test.test.ts
+```
+
 We recommend:
 
 1. `npx liveblocks dev` for manual testing and development, which retains data

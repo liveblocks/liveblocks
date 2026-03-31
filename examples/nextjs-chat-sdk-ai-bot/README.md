@@ -20,18 +20,30 @@
   <img src="https://img.shields.io/badge/next.js-message?style=flat&logo=next.js&color=07f&logoColor=fff" alt="Next.js" />
 </p>
 
-This example is a **Next.js** app with **Liveblocks Comments** (`Thread`, `Composer`)
-in a room. The server runs the **[Chat SDK](https://chat-sdk.dev)** with:
+This example is a **Next.js** app with **Liveblocks Comments** (`Thread`,
+`Composer`) in a room. The server runs the **[Chat SDK](https://chat-sdk.dev)**
+with:
 
-- [`@liveblocks/chat`](https://liveblocks.io/docs/api-reference/liveblocks-chat) — Liveblocks **platform adapter** (comments and threads mapped to Chat SDK channels)
-- [`@chat-adapter/state-memory`](https://www.npmjs.com/package/@chat-adapter/state-memory) — Chat SDK **state** adapter (in-memory)
-- [`ai`](https://sdk.vercel.ai/docs) and [`@ai-sdk/anthropic`](https://sdk.vercel.ai/providers/ai-sdk-providers/anthropic) — streaming replies from **Claude** into the thread
+- [`@liveblocks/chat-sdk-adapter`](https://liveblocks.io/docs/api-reference/liveblocks-chat-sdk-adapter)
+  — Liveblocks **platform adapter** (comments and threads mapped to Chat SDK
+  channels)
+- [`@chat-adapter/state-memory`](https://www.npmjs.com/package/@chat-adapter/state-memory)
+  — Chat SDK **state** adapter (in-memory)
+- [`ai`](https://sdk.vercel.ai/docs) and
+  [`@ai-sdk/anthropic`](https://sdk.vercel.ai/providers/ai-sdk-providers/anthropic)
+  — streaming replies from **Claude** into the thread
 
 ### What the bot does
 
-When someone **@-mentions** the bot in a comment thread, the webhook handler (`POST /api/webhooks/liveblocks`) runs [`bot.onNewMention`](app/bot.ts): it adds a **👀** reaction to the message, calls **`streamText`** with Claude (`claude-sonnet-4-20250514` by default), and **`stream`s the model output into the thread** as the bot's reply.
+When someone **@-mentions** the bot in a comment thread, the webhook handler
+(`POST /api/webhooks/liveblocks`) runs [`bot.onNewMention`](app/bot.ts): it adds
+a **👀** reaction to the message, calls **`streamText`** with Claude
+(`claude-sonnet-4-20250514` by default), and **`stream`s the model output into
+the thread** as the bot's reply.
 
-The bot **does not** handle comment reactions (there is no `onReaction` handler). The system prompt in [`app/bot.ts`](app/bot.ts) explains Liveblocks **CommentBody** limits so the model favors formatting that survives in comments.
+The bot **does not** handle comment reactions (there is no `onReaction`
+handler). The system prompt in [`app/bot.ts`](app/bot.ts) explains Liveblocks
+**CommentBody** limits so the model favors formatting that survives in comments.
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/comments.png" width="536" alt="Threads and composer" />
 
@@ -51,18 +63,26 @@ you to automatically get your API key from your
 
 Add these to `.env.local` (see manual setup below if you are not using the CLI):
 
-| Variable | Purpose |
-| -------- | ------- |
-| `LIVEBLOCKS_SECRET_KEY` | Liveblocks secret key (`sk_…`) for REST and auth |
-| `LIVEBLOCKS_WEBHOOK_SECRET` | Webhook signing secret (`whsec_…`) |
-| `ANTHROPIC_API_KEY` | [Anthropic API key](https://docs.anthropic.com/en/api/getting-started) for Claude |
+| Variable                    | Purpose                                                                           |
+| --------------------------- | --------------------------------------------------------------------------------- |
+| `LIVEBLOCKS_SECRET_KEY`     | Liveblocks secret key (`sk_…`) for REST and auth                                  |
+| `LIVEBLOCKS_WEBHOOK_SECRET` | Webhook signing secret (`whsec_…`)                                                |
+| `ANTHROPIC_API_KEY`         | [Anthropic API key](https://docs.anthropic.com/en/api/getting-started) for Claude |
 
 ### Setting up webhooks
 
-The Liveblocks adapter (`@liveblocks/chat`) needs your server to receive Liveblocks webhooks at `POST /api/webhooks/liveblocks` (see [`app/api/webhooks/liveblocks/route.ts`](app/api/webhooks/liveblocks/route.ts)).
+The Liveblocks adapter (`@liveblocks/chat`) needs your server to receive
+Liveblocks webhooks at `POST /api/webhooks/liveblocks` (see
+[`app/api/webhooks/liveblocks/route.ts`](app/api/webhooks/liveblocks/route.ts)).
 
-- Follow our guide on [testing webhooks locally](https://liveblocks.io/docs/guides/how-to-test-webhooks-on-localhost). When creating the webhook endpoint, enable at least **commentCreated** (see [webhook events](https://liveblocks.io/docs/platform/webhooks#edit-endpoint-events)). That event is required so new mentions reach `bot.onNewMention`.
-- **commentReactionAdded** and **commentReactionRemoved** are optional for this example; they are only needed if you add reaction handling (the non-AI [liveblocks-chat-sdk-bot](../liveblocks-chat-sdk-bot) example uses them).
+- Follow our guide on
+  [testing webhooks locally](https://liveblocks.io/docs/guides/how-to-test-webhooks-on-localhost).
+  When creating the webhook endpoint, enable at least **commentCreated** (see
+  [webhook events](https://liveblocks.io/docs/platform/webhooks#edit-endpoint-events)).
+  That event is required so new mentions reach `bot.onNewMention`.
+- **commentReactionAdded** and **commentReactionRemoved** are optional for this
+  example; they are only needed if you add reaction handling (the non-AI
+  [liveblocks-chat-sdk-bot](../liveblocks-chat-sdk-bot) example uses them).
 - Copy your **webhook secret** (`whsec_…`) from the webhooks dashboard
 - Add it to `.env.local` as `LIVEBLOCKS_WEBHOOK_SECRET`
 
@@ -80,8 +100,10 @@ Alternatively, you can set up your project manually:
   [dashboard](https://liveblocks.io/dashboard/apikeys)
 - Create an `.env.local` file with:
   - `LIVEBLOCKS_SECRET_KEY` — Liveblocks secret key
-  - `LIVEBLOCKS_WEBHOOK_SECRET` — webhook signing secret (after you configure webhooks)
-  - `ANTHROPIC_API_KEY` — from the [Anthropic Console](https://console.anthropic.com/)
+  - `LIVEBLOCKS_WEBHOOK_SECRET` — webhook signing secret (after you configure
+    webhooks)
+  - `ANTHROPIC_API_KEY` — from the
+    [Anthropic Console](https://console.anthropic.com/)
 - Run `npm run dev` and go to [http://localhost:3000](http://localhost:3000)
 - Follow the “Setting up webhooks” section above
 
@@ -103,7 +125,9 @@ npx create-liveblocks-app@latest --example liveblocks-chat-sdk-ai-bot --vercel
 This will download the example and ask permission to open your browser, enabling
 you to deploy to Vercel.
 
-Add **`ANTHROPIC_API_KEY`** (and the Liveblocks variables) in the Vercel project settings. Then follow the “Setting up webhooks” section above using your production webhook URL.
+Add **`ANTHROPIC_API_KEY`** (and the Liveblocks variables) in the Vercel project
+settings. Then follow the “Setting up webhooks” section above using your
+production webhook URL.
 
 </details>
 
@@ -115,7 +139,9 @@ Add **`ANTHROPIC_API_KEY`** (and the Liveblocks variables) in the Vercel project
 
 After forking
 [this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/liveblocks-chat-sdk-ai-bot)
-on CodeSandbox, add **`LIVEBLOCKS_SECRET_KEY`**, **`LIVEBLOCKS_WEBHOOK_SECRET`**, and **`ANTHROPIC_API_KEY`** as [secrets](https://codesandbox.io/docs/secrets).
+on CodeSandbox, add **`LIVEBLOCKS_SECRET_KEY`**,
+**`LIVEBLOCKS_WEBHOOK_SECRET`**, and **`ANTHROPIC_API_KEY`** as
+[secrets](https://codesandbox.io/docs/secrets).
 
 Webhook delivery to a sandbox URL may require a tunnel (see
 [testing webhooks locally](https://liveblocks.io/docs/guides/how-to-test-webhooks-on-localhost)).

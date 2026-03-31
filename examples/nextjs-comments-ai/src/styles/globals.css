@@ -1,3 +1,4 @@
+@import "tailwindcss";
 @import "@liveblocks/react-ui/styles.css";
 @import "@liveblocks/react-ui/styles/dark/media-query.css";
 
@@ -35,6 +36,12 @@ main {
   padding: 4rem 1rem;
   margin: 0 auto;
   max-width: 680px;
+}
+
+header {
+  display: flex;
+  justify-content: end;
+  padding: 0.5rem;
 }
 
 .loading,
@@ -93,36 +100,4 @@ main {
     pointer-events: none;
     box-shadow: inset 0 0 0 1px rgb(255 255 255 / 6%);
   }
-}
-
-.no-key {
-  position: fixed;
-  top: 0;
-  right: 0;
-  left: 0;
-  bottom: 0;
-  height: 100%;
-  padding: 16px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: rgba(255, 255, 255, 0.8);
-}
-
-pre {
-  background: rgba(45, 45, 45, 1);
-  border-radius: 6px;
-  color: #fff;
-  padding: 12px;
-}
-
-pre code {
-  line-height: 1.5;
-  background: none;
-}
-
-code {
-  background: rgba(230, 230, 230, 1);
-  padding: 4px;
-  border-radius: 4px;
 }

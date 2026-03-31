@@ -29,10 +29,16 @@ import type {
 } from "@liveblocks/core";
 import { asPos, CrdtType, nn } from "@liveblocks/core";
 import type {
+  Feed,
+  FeedMessage,
   IReadableSnapshot,
   IStorageDriver,
   IStorageDriverNodeAPI,
   LeasedSession,
+  ListFeedMessagesOptions,
+  ListFeedMessagesResult,
+  ListFeedsOptions,
+  ListFeedsResult,
   Logger,
   Pos,
   YDocId,
@@ -43,7 +49,7 @@ import {
   plainLsonToNodeStream,
   quote,
 } from "@liveblocks/server";
-import { Database } from "bun:sqlite";
+import { Database, type SQLQueryBindings } from "bun:sqlite";
 
 function tryParseJson<J extends Json>(
   value: string | undefined
@@ -74,6 +80,21 @@ type YdocsRow = {
   doc_id: string;
   key: string;
   data: Uint8Array;
+};
+
+type FeedRow = {
+  feed_id: string;
+  jmetadata: string;
+  created_at: number;
+  updated_at: number;
+};
+
+type FeedMessageRow = {
+  feed_id: string;
+  message_id: string;
+  jdata: string;
+  created_at: number;
+  updated_at: number;
 };
 
 type LeasedSessionRow = {
@@ -317,6 +338,7 @@ export class BunSQLiteDriver implements IStorageDriver {
 
     db.run("PRAGMA journal_mode = WAL");
     db.run("PRAGMA case_sensitive_like = ON");
+    db.run("PRAGMA foreign_keys = ON");
 
     // Create a table for room info
     db.run(
@@ -368,6 +390,35 @@ export class BunSQLiteDriver implements IStorageDriver {
     );
     db.run(
       "CREATE INDEX IF NOT EXISTS idx_leased_sessions_expiry ON leased_sessions(updated_at, ttl)"
+    );
+
+    // Create a table for feeds
+    db.run(
+      `CREATE TABLE IF NOT EXISTS feeds (
+        feed_id   TEXT NOT NULL PRIMARY KEY,
+        jmetadata TEXT NOT NULL,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      )`
+    );
+    db.run(
+      "CREATE INDEX IF NOT EXISTS idx_feeds_created_at ON feeds(created_at DESC, feed_id DESC)"
+    );
+
+    // Create a table for feed messages
+    db.run(
+      `CREATE TABLE IF NOT EXISTS feed_messages (
+        feed_id    TEXT NOT NULL,
+        message_id TEXT NOT NULL,
+        jdata      TEXT NOT NULL,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
+        PRIMARY KEY (feed_id, message_id),
+        FOREIGN KEY (feed_id) REFERENCES feeds(feed_id) ON DELETE CASCADE
+      )`
+    );
+    db.run(
+      "CREATE INDEX IF NOT EXISTS idx_feed_messages_feed_created ON feed_messages(feed_id, created_at DESC, message_id DESC)"
     );
 
     this.db = db;
@@ -805,6 +856,286 @@ export class BunSQLiteDriver implements IStorageDriver {
     this.db
       .query("DELETE FROM leased_sessions WHERE session_id = ?")
       .run(sessionId);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Feed APIs
+  // ---------------------------------------------------------------------------
+
+  list_feeds(options?: ListFeedsOptions): ListFeedsResult {
+    const limit = Math.min(options?.limit ?? 20, 100);
+    const since = options?.since;
+    const cursor = options?.cursor;
+    const metadata = options?.metadata;
+
+    let query =
+      "SELECT feed_id, jmetadata, created_at, updated_at FROM feeds WHERE 1=1";
+    const params: SQLQueryBindings[] = [];
+
+    if (metadata !== undefined) {
+      for (const [key, value] of Object.entries(metadata)) {
+        const sqlValue = typeof value === "boolean" ? Number(value) : value;
+        query += " AND json_extract(jmetadata, '$.' || ?) = ?";
+        params.push(key, sqlValue as SQLQueryBindings);
+      }
+    }
+
+    if (since !== undefined) {
+      query += " AND created_at >= ?";
+      params.push(since);
+    }
+
+    if (cursor !== undefined) {
+      try {
+        const decoded = JSON.parse(
+          Buffer.from(
+            cursor.replace(/-/g, "+").replace(/_/g, "/"),
+            "base64"
+          ).toString("utf8")
+        ) as [string, number];
+        const [feedId, createdAt] = decoded;
+        query += " AND (created_at < ? OR (created_at = ? AND feed_id < ?))";
+        params.push(createdAt, createdAt, feedId);
+      } catch {
+        // Invalid cursor, ignore it
+      }
+    }
+
+    query += " ORDER BY created_at DESC, feed_id DESC LIMIT ?";
+    params.push(limit + 1);
+
+    const rows = this.db
+      .query<FeedRow, SQLQueryBindings[]>(query)
+      .all(...params);
+
+    let nextCursor: string | undefined;
+    if (rows.length > limit) {
+      rows.pop();
+      const last = rows[rows.length - 1];
+      if (last) {
+        const cursorData: [string, number] = [last.feed_id, last.created_at];
+        nextCursor = Buffer.from(JSON.stringify(cursorData), "utf8")
+          .toString("base64")
+          .replace(/\+/g, "-")
+          .replace(/\//g, "_")
+          .replace(/=+$/, "");
+      }
+    }
+
+    const feeds: Feed[] = rows.map((row) => ({
+      feedId: row.feed_id,
+      metadata: JSON.parse(row.jmetadata) as Feed["metadata"],
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    }));
+
+    return { feeds, nextCursor };
+  }
+
+  get_feed(feedId: string): Feed | undefined {
+    const row = this.db
+      .query<FeedRow, [string]>(
+        "SELECT feed_id, jmetadata, created_at, updated_at FROM feeds WHERE feed_id = ?"
+      )
+      .get(feedId);
+    if (row === undefined || row === null) return undefined;
+    return {
+      feedId: row.feed_id,
+      metadata: JSON.parse(row.jmetadata) as Feed["metadata"],
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
+  }
+
+  create_feed(feed: Feed): void {
+    const existing = this.db
+      .query<Pick<FeedRow, "feed_id">, [string]>(
+        "SELECT feed_id FROM feeds WHERE feed_id = ?"
+      )
+      .get(feed.feedId);
+    if (existing !== undefined && existing !== null) {
+      throw new Error(`Feed ${feed.feedId} already exists`);
+    }
+    this.db
+      .query(
+        "INSERT INTO feeds (feed_id, jmetadata, created_at, updated_at) VALUES (?, ?, ?, ?)"
+      )
+      .run(
+        feed.feedId,
+        JSON.stringify(feed.metadata),
+        feed.createdAt,
+        feed.updatedAt
+      );
+  }
+
+  update_feed_metadata(feedId: string, metadata: Feed["metadata"]): void {
+    const result = this.db
+      .query<FeedRow, [string, string]>(
+        "UPDATE feeds SET jmetadata = ? WHERE feed_id = ? RETURNING feed_id, jmetadata, created_at, updated_at"
+      )
+      .get(JSON.stringify(metadata), feedId);
+    if (result === undefined || result === null) {
+      throw new Error(`Feed ${feedId} not found`);
+    }
+  }
+
+  delete_feed(feedId: string): void {
+    this.db
+      .query("DELETE FROM feeds WHERE feed_id = ?")
+      .run(feedId);
+  }
+
+  list_feed_messages(
+    feedId: string,
+    options?: ListFeedMessagesOptions
+  ): ListFeedMessagesResult {
+    const limit = Math.min(options?.limit ?? 20, 100);
+    const since = options?.since;
+    const cursor = options?.cursor;
+
+    let query =
+      "SELECT feed_id, message_id, jdata, created_at, updated_at FROM feed_messages WHERE feed_id = ?";
+    const params: SQLQueryBindings[] = [feedId];
+
+    if (since !== undefined) {
+      query += " AND created_at >= ?";
+      params.push(since);
+    }
+
+    if (cursor !== undefined) {
+      try {
+        const decoded = JSON.parse(
+          Buffer.from(
+            cursor.replace(/-/g, "+").replace(/_/g, "/"),
+            "base64"
+          ).toString("utf8")
+        ) as [string, number];
+        const [messageId, createdAt] = decoded;
+        query += " AND (created_at < ? OR (created_at = ? AND message_id < ?))";
+        params.push(createdAt, createdAt, messageId);
+      } catch {
+        // Invalid cursor, ignore it
+      }
+    }
+
+    query += " ORDER BY created_at DESC, message_id DESC LIMIT ?";
+    params.push(limit + 1);
+
+    const rows = this.db
+      .query<FeedMessageRow, SQLQueryBindings[]>(query)
+      .all(...params);
+
+    let nextCursor: string | undefined;
+    if (rows.length > limit) {
+      rows.pop();
+      const last = rows[rows.length - 1];
+      if (last) {
+        const cursorData: [string, number] = [last.message_id, last.created_at];
+        nextCursor = Buffer.from(JSON.stringify(cursorData), "utf8")
+          .toString("base64")
+          .replace(/\+/g, "-")
+          .replace(/\//g, "_")
+          .replace(/=+$/, "");
+      }
+    }
+
+    const messages: FeedMessage[] = rows.map((row) => ({
+      id: row.message_id,
+      data: JSON.parse(row.jdata) as FeedMessage["data"],
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    }));
+
+    return { messages, nextCursor };
+  }
+
+  add_feed_message(feedId: string, message: FeedMessage): void {
+    const feed = this.get_feed(feedId);
+    if (feed === undefined) {
+      throw new Error(`Feed ${feedId} not found`);
+    }
+    this.db
+      .query(
+        "INSERT INTO feed_messages (feed_id, message_id, jdata, created_at, updated_at) VALUES (?, ?, ?, ?, ?)"
+      )
+      .run(
+        feedId,
+        message.id,
+        JSON.stringify(message.data),
+        message.createdAt,
+        message.updatedAt
+      );
+  }
+
+  update_feed_message(
+    feedId: string,
+    messageId: string,
+    data: FeedMessage["data"],
+    timestamp?: number
+  ): FeedMessage {
+    const existing = this.db
+      .query<FeedMessageRow, [string, string]>(
+        "SELECT feed_id, message_id, jdata, created_at, updated_at FROM feed_messages WHERE feed_id = ? AND message_id = ?"
+      )
+      .get(feedId, messageId);
+    if (existing === undefined || existing === null) {
+      throw new Error(`Feed message ${messageId} not found in feed ${feedId}`);
+    }
+
+    const effectiveTimestamp = timestamp ?? Date.now();
+    if (effectiveTimestamp < existing.updated_at) {
+      return {
+        id: existing.message_id,
+        data: JSON.parse(existing.jdata) as FeedMessage["data"],
+        createdAt: existing.created_at,
+        updatedAt: existing.updated_at,
+      };
+    }
+
+    const result = this.db
+      .query<
+        FeedMessageRow,
+        [string, number, string, string, number]
+      >(
+        "UPDATE feed_messages SET jdata = ?, updated_at = ? WHERE feed_id = ? AND message_id = ? AND updated_at <= ? RETURNING feed_id, message_id, jdata, created_at, updated_at"
+      )
+      .get(
+        JSON.stringify(data),
+        effectiveTimestamp,
+        feedId,
+        messageId,
+        effectiveTimestamp
+      );
+    if (result === undefined || result === null) {
+      const latest = this.db
+        .query<FeedMessageRow, [string, string]>(
+          "SELECT feed_id, message_id, jdata, created_at, updated_at FROM feed_messages WHERE feed_id = ? AND message_id = ?"
+        )
+        .get(feedId, messageId);
+      if (latest === undefined || latest === null) {
+        throw new Error(`Feed message ${messageId} not found in feed ${feedId}`);
+      }
+      return {
+        id: latest.message_id,
+        data: JSON.parse(latest.jdata) as FeedMessage["data"],
+        createdAt: latest.created_at,
+        updatedAt: latest.updated_at,
+      };
+    }
+    return {
+      id: result.message_id,
+      data: JSON.parse(result.jdata) as FeedMessage["data"],
+      createdAt: result.created_at,
+      updatedAt: result.updated_at,
+    };
+  }
+
+  delete_feed_message(feedId: string, messageId: string): void {
+    this.db
+      .query(
+        "DELETE FROM feed_messages WHERE feed_id = ? AND message_id = ?"
+      )
+      .run(feedId, messageId);
   }
 
   close() {
