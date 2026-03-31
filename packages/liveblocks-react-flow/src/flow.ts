@@ -243,7 +243,10 @@ function applyNodeChanges<N extends Node>(
         }
 
         if (change.position !== undefined) {
-          node.set("position", change.position);
+          const prev = node.get("position");
+          if (prev?.x !== change.position.x || prev?.y !== change.position.y) {
+            node.set("position", change.position);
+          }
         }
 
         if (change.dragging !== undefined) {
