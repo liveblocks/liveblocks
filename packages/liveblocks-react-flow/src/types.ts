@@ -10,7 +10,6 @@ import type {
   SyncMode,
 } from "@liveblocks/core";
 import type { BuiltInEdge, BuiltInNode, Edge, Node } from "@xyflow/react";
-import type { CSSProperties } from "react";
 
 import type { EDGE_BASE_CONFIG, NODE_BASE_CONFIG } from "./constants";
 
@@ -86,18 +85,16 @@ type ToLson<T, S extends SyncMode = true> = [S] extends [false]
         ? never
         : T extends ReadonlyArray<infer E>
           ? LiveList<ToLson<E, S> & Lson>
-          : T extends CSSProperties
-            ? LiveObject<CSSProperties & LsonObject>
-            : T extends object
-              ? LiveObject<
-                  {
-                    [K in keyof T as SyncedKeysFor<K, S>]: ToLsonProperty<
-                      T[K],
-                      SyncModeFor<K, S>
-                    >;
-                  } & LsonObject
-                >
-              : never;
+          : T extends object
+            ? LiveObject<
+                {
+                  [K in keyof T as SyncedKeysFor<K, S>]: ToLsonProperty<
+                    T[K],
+                    SyncModeFor<K, S>
+                  >;
+                } & LsonObject
+              >
+            : never;
 
 type ToLiveElement<
   S extends SyncConfig,
