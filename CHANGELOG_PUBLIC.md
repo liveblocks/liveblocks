@@ -20,7 +20,13 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 14 (2026-04-03)
 
+## Liveblocks dev server (v1.2.1)
+
+- Support passing extra arguments to `--cmd` dynamically
+
 ## Contributors
+
+nvie
 
 # Week 13 (2026-03-27)
 
