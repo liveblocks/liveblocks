@@ -47,7 +47,7 @@
     "@liveblocks/eslint-config": "*",
     "@liveblocks/vitest-config": "*",
     "csstype": "3.0.2",
-    "msw": "^2.10.4"
+    "msw": "^2.12.14"
   },
   "sideEffects": false,
   "bugs": {
