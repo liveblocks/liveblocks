@@ -1339,6 +1339,11 @@ type RoomState<
       presence: boolean;
       storageUpdates: Map<string, StorageUpdate>;
     };
+
+    // When `history.resume()` runs inside `room.batch()`, flushing paused
+    // history must wait until after the batch’s `reverseOps` are merged
+    // otherwise those ops become a second undo step.
+    scheduleHistoryResume: boolean;
   } | null;
 
   // A registry of yet-unacknowledged Ops. These Ops have already been
@@ -3281,6 +3286,7 @@ export function createRoom<
         others: [],
       },
       reverseOps: new Deque(),
+      scheduleHistoryResume: false,
     };
     try {
       returnValue = callback();
@@ -3292,6 +3298,10 @@ export function createRoom<
 
       if (currentBatch.reverseOps.length > 0) {
         addToUndoStack(Array.from(currentBatch.reverseOps));
+      }
+
+      if (currentBatch.scheduleHistoryResume) {
+        commitPausedHistoryToUndoStack();
       }
 
       if (currentBatch.ops.length > 0) {
@@ -3317,12 +3327,20 @@ export function createRoom<
     }
   }
 
-  function resumeHistory() {
+  function commitPausedHistoryToUndoStack() {
     const frames = context.pausedHistory;
     context.pausedHistory = null;
     if (frames !== null && frames.length > 0) {
       _addToRealUndoStack(Array.from(frames));
     }
+  }
+
+  function resumeHistory() {
+    if (context.activeBatch !== null) {
+      context.activeBatch.scheduleHistoryResume = true;
+      return;
+    }
+    commitPausedHistoryToUndoStack();
   }
 
   function withoutHistory<T>(fn: () => T): T {
