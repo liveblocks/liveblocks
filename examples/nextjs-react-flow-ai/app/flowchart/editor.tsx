@@ -889,7 +889,8 @@ function Flow({ className, ...props }: ComponentProps<"div">) {
 
   const addBlockAtPosition = useCallback(
     (shape: BlockShape, position: Point) => {
-      const deselectChanges: NodeChange<FlowchartNode>[] = (nodes ?? [])
+      const deselectChanges: NodeChange<FlowchartNode>[] = reactFlow
+        .getNodes()
         .filter((node) => node.selected)
         .map((node) => ({
           type: "select",
@@ -911,7 +912,7 @@ function Flow({ className, ...props }: ComponentProps<"div">) {
         },
       ]);
     },
-    [nodes, onNodesChange]
+    [reactFlow, onNodesChange]
   );
 
   const handleCanvasClickForPlacement = useCallback(
