@@ -9,9 +9,9 @@ import { describe, expect, onTestFinished, test } from "vitest";
 
 import { LiveList } from "../crdts/LiveList";
 import { LiveObject } from "../crdts/LiveObject";
-import { kInternal } from "../internal";
 import type { StorageUpdate } from "../crdts/StorageUpdates";
 import { legacy_patchImmutableObject } from "../immutable";
+import { kInternal } from "../internal";
 import { nn } from "../lib/assert";
 import { prepareIsolatedStorageTest } from "./_devserver";
 import type { JsonStorageUpdate } from "./_updatesUtils";

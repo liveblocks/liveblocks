@@ -1,6 +1,4 @@
 import type { LiveNode, Lson, LsonObject } from "../crdts/Lson";
-import type { SyncConfig } from "./reconcile";
-import { reconcileLiveObject } from "./reconcile";
 import { nn } from "../lib/assert";
 import { isPlainObject } from "../lib/guards";
 import type { Json, JsonObject } from "../lib/Json";
@@ -35,6 +33,8 @@ import {
   isLiveNode,
   isLiveStructure,
 } from "./liveblocks-helpers";
+import type { SyncConfig } from "./reconcile";
+import { reconcileLiveObject } from "./reconcile";
 import type { UpdateDelta } from "./UpdateDelta";
 import type { ToImmutable } from "./utils";
 

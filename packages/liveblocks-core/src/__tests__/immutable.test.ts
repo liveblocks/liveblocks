@@ -120,7 +120,6 @@ function applyStateChanges<TState extends JsonObject>(
   return { oldState, newState };
 }
 
-
 describe("immutableIs", () => {
   test("returns true when cached immutable matches the provided value", () => {
     const liveObj = new LiveObject({ a: 1 });

@@ -1,3 +1,5 @@
+import { isPlainObject } from "../lib/guards";
+import type { Json, JsonObject } from "../lib/Json";
 import {
   isLiveList,
   isLiveMap,
@@ -5,11 +7,9 @@ import {
   isLiveStructure,
 } from "./liveblocks-helpers";
 import { LiveList } from "./LiveList";
-import { LiveMap } from "./LiveMap";
+import type { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import type { Lson, LsonObject } from "./Lson";
-import { isPlainObject } from "../lib/guards";
-import type { Json, JsonObject } from "../lib/Json";
 
 /**
  * Per-key sync configuration for node/edge `data` properties.

@@ -386,16 +386,9 @@ describe("LiveObject.reconcile with SyncConfig", () => {
 // Property tests
 // ---------------------------------------------------------------------------
 
-
 /** Arbitrary for a LiveObject created from a random JsonObject, with some random local-only keys. */
 const liveObject = fc
-  .tuple(
-    jsonObject,
-    fc.array(
-      fc.tuple(key, json),
-      { maxLength: 5 }
-    )
-  )
+  .tuple(jsonObject, fc.array(fc.tuple(key, json), { maxLength: 5 }))
   .map(([obj, localEntries]) => {
     const lo = LiveObject.from(obj);
     for (const [key, value] of localEntries) {
