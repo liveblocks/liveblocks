@@ -4,3 +4,29 @@ html,
 body {
   @apply w-full h-screen bg-gray-100 antialiased;
 }
+
+/* Apply default node styles to custom nodes */
+.react-flow__node {
+  border-radius: var(
+    --xy-node-border-radius,
+    var(--xy-node-border-radius-default)
+  );
+  width: 150px;
+  color: var(--xy-node-color, var(--xy-node-color-default));
+  text-align: center;
+  border: var(--xy-node-border, var(--xy-node-border-default));
+  background-color: var(
+    --xy-node-background-color,
+    var(--xy-node-background-color-default)
+  );
+  font-size: 12px;
+}
+
+/* Customize default resize controls */
+.react-flow__resize-control {
+  --xy-resize-background-color: transparent;
+
+  &.handle {
+    --xy-resize-background-color: #000;
+  }
+}
