@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import type { JsonObject, Permission } from "@liveblocks/core";
+import type { JsonObject } from "@liveblocks/core";
 import { nanoid, WebsocketCloseCodes } from "@liveblocks/core";
 import type { Millis } from "@liveblocks/server";
 import { DefaultMap, Room } from "@liveblocks/server";
@@ -23,6 +23,8 @@ import { Database } from "bun:sqlite";
 import { mkdirSync, mkdtempSync, rmSync } from "fs";
 import { tmpdir } from "os";
 import { dirname, join, resolve } from "path";
+
+import type { Permission } from "~/dev-server/lib/permissions";
 
 import { BunSQLiteDriver } from "./BunSQLiteDriver";
 
@@ -229,7 +231,7 @@ function createDbRoom(
     id: roomId,
     internalId,
     organizationId,
-    defaultAccesses: defaultAccesses as Permission[],
+    defaultAccesses,
     usersAccesses: opts?.usersAccesses ?? {},
     groupsAccesses: opts?.groupsAccesses ?? {},
     metadata,

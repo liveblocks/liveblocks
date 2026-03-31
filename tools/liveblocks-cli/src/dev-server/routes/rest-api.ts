@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import type { JsonObject, Permission, PlainLsonObject } from "@liveblocks/core";
+import type { JsonObject, PlainLsonObject } from "@liveblocks/core";
 import { QueryParser } from "@liveblocks/query-parser";
 import type { Guid, Logger, YDocId } from "@liveblocks/server";
 import {
@@ -42,6 +42,7 @@ import * as Y from "yjs";
 import type { DbRoom, RoomFilters } from "~/dev-server/db/rooms";
 import * as Rooms from "~/dev-server/db/rooms";
 import { authorizeSecretKey } from "~/dev-server/lib/auth";
+import type { Permission } from "~/dev-server/lib/permissions";
 import { yDocToJson } from "~/dev-server/lib/ydoc";
 import { DUMMY, NOT_IMPLEMENTED } from "~/dev-server/responses";
 

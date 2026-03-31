@@ -934,9 +934,10 @@ export class BunSQLiteDriver implements IStorageDriver {
 
   get_feed(feedId: string): Feed | undefined {
     const row = this.db
-      .query<FeedRow, [string]>(
-        "SELECT feed_id, jmetadata, created_at, updated_at FROM feeds WHERE feed_id = ?"
-      )
+      .query<
+        FeedRow,
+        [string]
+      >("SELECT feed_id, jmetadata, created_at, updated_at FROM feeds WHERE feed_id = ?")
       .get(feedId);
     if (row === undefined || row === null) return undefined;
     return {
@@ -949,9 +950,10 @@ export class BunSQLiteDriver implements IStorageDriver {
 
   create_feed(feed: Feed): void {
     const existing = this.db
-      .query<Pick<FeedRow, "feed_id">, [string]>(
-        "SELECT feed_id FROM feeds WHERE feed_id = ?"
-      )
+      .query<
+        Pick<FeedRow, "feed_id">,
+        [string]
+      >("SELECT feed_id FROM feeds WHERE feed_id = ?")
       .get(feed.feedId);
     if (existing !== undefined && existing !== null) {
       throw new Error(`Feed ${feed.feedId} already exists`);
@@ -970,9 +972,10 @@ export class BunSQLiteDriver implements IStorageDriver {
 
   update_feed_metadata(feedId: string, metadata: Feed["metadata"]): void {
     const result = this.db
-      .query<FeedRow, [string, string]>(
-        "UPDATE feeds SET jmetadata = ? WHERE feed_id = ? RETURNING feed_id, jmetadata, created_at, updated_at"
-      )
+      .query<
+        FeedRow,
+        [string, string]
+      >("UPDATE feeds SET jmetadata = ? WHERE feed_id = ? RETURNING feed_id, jmetadata, created_at, updated_at")
       .get(JSON.stringify(metadata), feedId);
     if (result === undefined || result === null) {
       throw new Error(`Feed ${feedId} not found`);
@@ -980,9 +983,7 @@ export class BunSQLiteDriver implements IStorageDriver {
   }
 
   delete_feed(feedId: string): void {
-    this.db
-      .query("DELETE FROM feeds WHERE feed_id = ?")
-      .run(feedId);
+    this.db.query("DELETE FROM feeds WHERE feed_id = ?").run(feedId);
   }
 
   list_feed_messages(
@@ -1074,9 +1075,10 @@ export class BunSQLiteDriver implements IStorageDriver {
     timestamp?: number
   ): FeedMessage {
     const existing = this.db
-      .query<FeedMessageRow, [string, string]>(
-        "SELECT feed_id, message_id, jdata, created_at, updated_at FROM feed_messages WHERE feed_id = ? AND message_id = ?"
-      )
+      .query<
+        FeedMessageRow,
+        [string, string]
+      >("SELECT feed_id, message_id, jdata, created_at, updated_at FROM feed_messages WHERE feed_id = ? AND message_id = ?")
       .get(feedId, messageId);
     if (existing === undefined || existing === null) {
       throw new Error(`Feed message ${messageId} not found in feed ${feedId}`);
@@ -1096,9 +1098,7 @@ export class BunSQLiteDriver implements IStorageDriver {
       .query<
         FeedMessageRow,
         [string, number, string, string, number]
-      >(
-        "UPDATE feed_messages SET jdata = ?, updated_at = ? WHERE feed_id = ? AND message_id = ? AND updated_at <= ? RETURNING feed_id, message_id, jdata, created_at, updated_at"
-      )
+      >("UPDATE feed_messages SET jdata = ?, updated_at = ? WHERE feed_id = ? AND message_id = ? AND updated_at <= ? RETURNING feed_id, message_id, jdata, created_at, updated_at")
       .get(
         JSON.stringify(data),
         effectiveTimestamp,
@@ -1108,12 +1108,15 @@ export class BunSQLiteDriver implements IStorageDriver {
       );
     if (result === undefined || result === null) {
       const latest = this.db
-        .query<FeedMessageRow, [string, string]>(
-          "SELECT feed_id, message_id, jdata, created_at, updated_at FROM feed_messages WHERE feed_id = ? AND message_id = ?"
-        )
+        .query<
+          FeedMessageRow,
+          [string, string]
+        >("SELECT feed_id, message_id, jdata, created_at, updated_at FROM feed_messages WHERE feed_id = ? AND message_id = ?")
         .get(feedId, messageId);
       if (latest === undefined || latest === null) {
-        throw new Error(`Feed message ${messageId} not found in feed ${feedId}`);
+        throw new Error(
+          `Feed message ${messageId} not found in feed ${feedId}`
+        );
       }
       return {
         id: latest.message_id,
@@ -1132,9 +1135,7 @@ export class BunSQLiteDriver implements IStorageDriver {
 
   delete_feed_message(feedId: string, messageId: string): void {
     this.db
-      .query(
-        "DELETE FROM feed_messages WHERE feed_id = ? AND message_id = ?"
-      )
+      .query("DELETE FROM feed_messages WHERE feed_id = ? AND message_id = ?")
       .run(feedId, messageId);
   }
 
