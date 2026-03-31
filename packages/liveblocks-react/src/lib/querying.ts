@@ -4,6 +4,8 @@ import type {
   ThreadData,
 } from "@liveblocks/client";
 import {
+  type Feed,
+  type FeedFetchMetadataFilter,
   getSubscriptionKey,
   isNumberOperator,
   isStartsWithOperator,
@@ -105,6 +107,35 @@ function matchesNumberOperator(
     (op.lte === undefined || value <= op.lte) &&
     (op.gte === undefined || value >= op.gte)
   );
+}
+
+/**
+ * Creates a predicate function that will filter Feed instances matching the
+ * given options. `metadata` is matched by exact equality per key. `since`
+ * keeps feeds whose `updatedAt` or `createdAt` is >= the given timestamp.
+ */
+export function makeFeedsFilter(options?: {
+  metadata?: FeedFetchMetadataFilter;
+  since?: number;
+}): (feed: Feed) => boolean {
+  return (feed: Feed) => {
+    if (
+      options?.since !== undefined &&
+      feed.updatedAt < options.since &&
+      feed.createdAt < options.since
+    ) {
+      return false;
+    }
+    if (
+      options?.metadata !== undefined &&
+      !Object.entries(options.metadata).every(
+        ([k, v]) => (feed.metadata as Record<string, string>)[k] === v
+      )
+    ) {
+      return false;
+    }
+    return true;
+  };
 }
 
 export function makeInboxNotificationsFilter(

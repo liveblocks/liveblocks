@@ -9,6 +9,9 @@ import type {
   CommentUserReaction,
   Cursor,
   DistributiveOmit,
+  Feed,
+  FeedFetchMetadataFilter,
+  FeedMessage,
   HistoryVersion,
   InboxNotificationData,
   InboxNotificationDeleteInfo,
@@ -60,6 +63,8 @@ import type {
   AiChatAsyncResult,
   AiChatMessagesAsyncResult,
   AiChatsAsyncResult,
+  FeedMessagesAsyncResult,
+  FeedsAsyncResult,
   HistoryVersionsAsyncResult,
   InboxNotificationsAsyncResult,
   InboxNotificationsQuery,
@@ -285,6 +290,25 @@ export function makeInboxNotificationsQueryKey(
   return stableStringify(query ?? {});
 }
 
+export function makeFeedsQueryKey(
+  roomId: string,
+  options?: {
+    since?: number;
+    metadata?: FeedFetchMetadataFilter;
+    limit?: number;
+  }
+) {
+  return stableStringify([roomId, options ?? {}]);
+}
+
+export function makeFeedMessagesQueryKey(
+  roomId: string,
+  feedId: string,
+  options?: { cursor?: string; limit?: number }
+) {
+  return stableStringify([roomId, feedId, options ?? {}]);
+}
+
 /**
  * Like Promise<T>, except it will have a synchronously readable `status`
  * field, indicating the status of the promise.
@@ -362,10 +386,9 @@ const noop = Promise.resolve();
  * - When calling the getter multiple times, the return value is always
  *   referentially equal to the previous call.
  *
- * - When in this error state, the error will remain in error state for
- *   5 seconds. After those 5 seconds, the resource status gets reset, and the
- *   next time the "getter" is accessed, the resource will re-initiate the
- *   initial fetching process.
+ * - With `autoRetry` enabled (default), an initial-fetch error stays for 5 seconds,
+ *   then the resource resets to loading so the next getter access can retry.
+ *   With `autoRetry` disabled, the error persists (no automatic reset).
  *
  * - This class exposes an Observable that is notified whenever the state
  *   changes. For now, this observable can be used to call a no-op update to
@@ -398,11 +421,16 @@ export class PaginatedResource {
 
   #fetchPage: (cursor?: string) => Promise<string | null>;
   #pendingFetchMore: Promise<void> | null;
+  #autoRetry: boolean;
 
-  constructor(fetchPage: (cursor?: string) => Promise<string | null>) {
+  constructor(
+    fetchPage: (cursor?: string) => Promise<string | null>,
+    options?: { autoRetry?: boolean }
+  ) {
     this.#signal = new Signal<AsyncResult<PaginationState>>(ASYNC_LOADING);
     this.#fetchPage = fetchPage;
     this.#pendingFetchMore = null;
+    this.#autoRetry = options?.autoRetry ?? true;
     this.signal = this.#signal.asReadonly();
 
     autobind(this);
@@ -480,11 +508,13 @@ export class PaginatedResource {
 
     // Wrap the request to load room threads (and notifications) in an auto-retry function so that if the request fails,
     // we retry for at most 5 times with incremental backoff delays. If all retries fail, the auto-retry function throws an error
-    const initialPageFetch$ = autoRetry(
-      () => this.#fetchPage(/* cursor */ undefined),
-      5,
-      [5000, 5000, 10000, 15000]
-    );
+    const initialPageFetch$ = this.#autoRetry
+      ? autoRetry(
+          () => this.#fetchPage(/* cursor */ undefined),
+          5,
+          [5000, 5000, 10000, 15000]
+        )
+      : Promise.resolve().then(() => this.#fetchPage(/* cursor */ undefined));
 
     const promise = usify(initialPageFetch$);
 
@@ -507,11 +537,13 @@ export class PaginatedResource {
       (err) => {
         this.#signal.set(ASYNC_ERR(err as Error));
 
-        // Wait for 5 seconds before removing the request
-        setTimeout(() => {
-          this.#cachedPromise = null;
-          this.#signal.set(ASYNC_LOADING);
-        }, 5_000);
+        if (this.#autoRetry) {
+          // Wait for 5 seconds before removing the request
+          setTimeout(() => {
+            this.#cachedPromise = null;
+            this.#signal.set(ASYNC_LOADING);
+          }, 5_000);
+        }
       }
     );
 
@@ -1039,6 +1071,106 @@ function createStore_forOptimistic<
   };
 }
 
+function createStore_forFeeds() {
+  const signal = new MutableSignal<Map<RoomId, Map<string, Feed>>>(new Map());
+
+  function upsert(roomId: string, feeds: readonly Feed[]) {
+    signal.mutate((map) => {
+      let roomMap = map.get(roomId);
+      if (!roomMap) {
+        roomMap = new Map();
+        map.set(roomId, roomMap);
+      }
+      for (const feed of feeds) {
+        roomMap.set(feed.feedId, feed);
+      }
+    });
+  }
+
+  function deleteOne(roomId: string, feedId: string) {
+    signal.mutate((map) => {
+      map.get(roomId)?.delete(feedId);
+    });
+  }
+
+  function findMany(
+    feedsByRoomId: Map<RoomId, Map<string, Feed>>,
+    roomId: string,
+    options?: { metadata?: FeedFetchMetadataFilter; since?: number }
+  ): Feed[] {
+    const filtered = Array.from(
+      feedsByRoomId.get(roomId)?.values() ?? []
+    ).filter((feed) => {
+      if (
+        options?.since !== undefined &&
+        feed.updatedAt < options.since &&
+        feed.createdAt < options.since
+      ) {
+        return false;
+      }
+      if (options?.metadata !== undefined) {
+        const meta = feed.metadata as Record<string, string>;
+        if (
+          !Object.entries(options.metadata).every(([k, v]) => meta[k] === v)
+        ) {
+          return false;
+        }
+      }
+      return true;
+    });
+    // Match useThreads room order: chronological by createdAt ascending (stable tie-break on feedId).
+    filtered.sort((a, b) => {
+      const byTime = a.createdAt - b.createdAt;
+      if (byTime !== 0) return byTime;
+      return a.feedId < b.feedId ? -1 : a.feedId > b.feedId ? 1 : 0;
+    });
+    return filtered;
+  }
+
+  return { signal, upsert, delete: deleteOne, findMany };
+}
+
+function createStore_forFeedMessages() {
+  const signal = new MutableSignal<Map<string, Map<string, FeedMessage>>>(
+    new Map()
+  );
+
+  function upsert(feedId: string, messages: readonly FeedMessage[]) {
+    signal.mutate((map) => {
+      let feedMap = map.get(feedId);
+      if (!feedMap) {
+        feedMap = new Map();
+        map.set(feedId, feedMap);
+      }
+      for (const msg of messages) {
+        feedMap.set(msg.id, msg);
+      }
+    });
+  }
+
+  function deleteOne(feedId: string, messageIds: readonly string[]) {
+    signal.mutate((map) => {
+      const feedMap = map.get(feedId);
+      if (feedMap) {
+        for (const id of messageIds) {
+          feedMap.delete(id);
+        }
+      }
+    });
+  }
+
+  function findMany(
+    messagesByFeedId: Map<string, Map<string, FeedMessage>>,
+    feedId: string
+  ): FeedMessage[] {
+    return Array.from(messagesByFeedId.get(feedId)?.values() ?? []).sort(
+      (a, b) => a.createdAt - b.createdAt
+    );
+  }
+
+  return { signal, upsert, delete: deleteOne, findMany };
+}
+
 export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
   #client: Client<BaseUserMeta, TM, CM>;
 
@@ -1148,6 +1280,14 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
       string,
       LoadableResource<UrlMetadataAsyncResult>
     >;
+    readonly loadingFeeds: DefaultMap<
+      string,
+      LoadableResource<FeedsAsyncResult>
+    >;
+    readonly loadingFeedMessages: DefaultMap<
+      string,
+      LoadableResource<FeedMessagesAsyncResult>
+    >;
   };
 
   // Notifications
@@ -1164,6 +1304,10 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
 
   // Notification Settings
   #notificationSettings: SinglePageResource;
+
+  // Feeds
+  readonly #feeds = createStore_forFeeds();
+  readonly #feedMessages = createStore_forFeedMessages();
 
   constructor(client: OpaqueClient) {
     this.#client = client[kInternal].as<TM, CM>();
@@ -1653,6 +1797,126 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
       }
     );
 
+    const loadingFeeds = new DefaultMap(
+      (queryKey: string): LoadableResource<FeedsAsyncResult> => {
+        const [roomId, options] = JSON.parse(queryKey) as [
+          roomId: RoomId,
+          options?: {
+            since?: number;
+            metadata?: FeedFetchMetadataFilter;
+            limit?: number;
+          },
+        ];
+
+        const resource = new PaginatedResource(
+          async (cursor?: string) => {
+            const room = this.#client.getRoom(roomId);
+            if (room === null) {
+              throw new Error(
+                `Room '${roomId}' is not available on client. Make sure you're calling useFeeds inside a RoomProvider.`
+              );
+            }
+
+            const result = await room.fetchFeeds({
+              cursor,
+              since: options?.since,
+              metadata: options?.metadata,
+              limit: options?.limit,
+            });
+
+            this.upsertFeeds(roomId, result.feeds);
+
+            return result.nextCursor ?? null;
+          },
+          { autoRetry: false }
+        );
+
+        const signal = DerivedSignal.from(
+          resource.signal,
+          this.#feeds.signal,
+          (resourceResult, feedsByRoomId): FeedsAsyncResult => {
+            if (resourceResult.isLoading || resourceResult.error) {
+              return resourceResult;
+            }
+
+            const feeds = this.#feeds.findMany(feedsByRoomId, roomId, options);
+
+            const page = resourceResult.data;
+            return {
+              isLoading: false,
+              feeds,
+              hasFetchedAll: page.hasFetchedAll,
+              isFetchingMore: page.isFetchingMore,
+              fetchMoreError: page.fetchMoreError,
+              fetchMore: page.fetchMore,
+            };
+          },
+          shallow2
+        );
+
+        return { signal, waitUntilLoaded: resource.waitUntilLoaded };
+      }
+    );
+
+    const loadingFeedMessages = new DefaultMap(
+      (queryKey: string): LoadableResource<FeedMessagesAsyncResult> => {
+        const [roomId, feedId, options] = JSON.parse(queryKey) as [
+          roomId: RoomId,
+          feedId: string,
+          options?: { cursor?: string; limit?: number },
+        ];
+
+        const resource = new PaginatedResource(
+          async (cursor?: string) => {
+            const room = this.#client.getRoom(roomId);
+            if (room === null) {
+              throw new Error(
+                `Room '${roomId}' is not available on client. Make sure you're calling useFeedMessages inside a RoomProvider.`
+              );
+            }
+
+            const result = await room.fetchFeedMessages(feedId, {
+              cursor,
+              limit: options?.limit,
+            });
+
+            this.upsertFeedMessages(roomId, feedId, result.messages);
+
+            return result.nextCursor ?? null;
+          },
+          { autoRetry: false }
+        );
+
+        const signal = DerivedSignal.from(
+          resource.signal,
+          this.#feedMessages.signal,
+          (resourceResult, messagesByFeedId): FeedMessagesAsyncResult => {
+            if (resourceResult.isLoading || resourceResult.error) {
+              return resourceResult;
+            }
+
+            const messages = this.#feedMessages.findMany(
+              messagesByFeedId,
+              feedId
+            );
+
+            const page = resourceResult.data;
+            return {
+              isLoading: false,
+              messages,
+              hasFetchedAll: page.hasFetchedAll,
+              isFetchingMore: page.isFetchingMore,
+              fetchMoreError: page.fetchMoreError,
+              fetchMore: page.fetchMore,
+            };
+          },
+          shallow2
+        );
+
+        return { signal, waitUntilLoaded: resource.waitUntilLoaded };
+      }
+    );
+
     this.outputs = {
       threadifications,
       threads,
@@ -1669,6 +1933,8 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
       messagesByChatId,
       aiChatById,
       urlMetadataByUrl,
+      loadingFeeds,
+      loadingFeedMessages,
     };
 
     // Auto-bind all of this class' methods here, so we can use stable
@@ -1999,6 +2265,42 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
       result.inboxNotifications.deleted,
       result.subscriptions.deleted
     );
+  }
+
+  /**
+   * Upserts feeds in the cache (for list/added/updated operations).
+   */
+  public upsertFeeds(roomId: RoomId, feeds: readonly Feed[]): void {
+    this.#feeds.upsert(roomId, feeds);
+  }
+
+  /**
+   * Removes a feed from the cache (for deleted operations).
+   */
+  public deleteFeed(roomId: RoomId, feedId: string): void {
+    this.#feeds.delete(roomId, feedId);
+  }
+
+  /**
+   * Upserts feed messages in the cache (for list/added/updated operations).
+   */
+  public upsertFeedMessages(
+    _roomId: RoomId,
+    feedId: string,
+    messages: readonly FeedMessage[]
+  ): void {
+    this.#feedMessages.upsert(feedId, messages);
+  }
+
+  /**
+   * Removes feed messages from the cache (for deleted operations).
+   */
+  public deleteFeedMessages(
+    _roomId: RoomId,
+    feedId: string,
+    messageIds: readonly string[]
+  ): void {
+    this.#feedMessages.delete(feedId, messageIds);
   }
 
   public async fetchUnreadNotificationsCount(
