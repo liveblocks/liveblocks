@@ -19,6 +19,8 @@ import type { DistributiveOmit } from "@liveblocks/core";
 
 import type { DeleteCrdtOp, SetParentKeyOp } from "./vNEXT";
 
+export * from "./feedErrors";
+export * from "./feedMessages";
 export * from "./ProtocolVersion";
 export * from "./vNEXT"; // Re-exports from @liveblocks/core, with possible additions for new protocol versions
 

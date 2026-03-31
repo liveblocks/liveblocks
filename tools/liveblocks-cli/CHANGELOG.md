@@ -1,5 +1,10 @@
 ## vNEXT (not yet released)
 
+## v1.2.1
+
+- Support passing extra arguments to `--cmd` (`-c`), appended to the command or
+  replacing `{}` if present
+
 ## v1.2.0
 
 - Add live socket inspector view

@@ -22,6 +22,8 @@ import {
   array,
   boolean,
   constant,
+  jsonObject,
+  nonEmptyString,
   number,
   object,
   optional,
@@ -30,15 +32,29 @@ import {
 } from "decoders";
 
 import type {
+  AddFeedClientMsg,
+  AddFeedMessageClientMsg,
   BroadcastEventClientMsg,
   ClientMsg,
+  DeleteFeedClientMsg,
+  DeleteFeedMessageClientMsg,
+  FetchFeedMessagesClientMsg,
+  FetchFeedsClientMsg,
   FetchStorageClientMsg,
   FetchYDocClientMsg,
+  UpdateFeedClientMsg,
+  UpdateFeedMessageClientMsg,
   UpdatePresenceClientMsg,
   UpdateStorageClientMsg,
   UpdateYDocClientMsg,
 } from "~/protocol";
+import { FeedMsgCode } from "~/protocol";
 
+import {
+  feedMetadataUpdateDecoder,
+  fetchFeedsMetadataFilterDecoder,
+  optionalFeedMetadataDecoder,
+} from "./feedMetadata";
 import { jsonObjectYolo, jsonYolo } from "./jsonYolo";
 import { op } from "./Op";
 import type { YUpdate, YVector } from "./y-types";
@@ -79,6 +95,71 @@ const updateYDocClientMsg: Decoder<UpdateYDocClientMsg> = object({
   v2: optional(boolean),
 });
 
+// Feed message decoders
+const fetchFeedsClientMsg: Decoder<FetchFeedsClientMsg> = object({
+  type: constant(FeedMsgCode.FETCH_FEEDS),
+  requestId: string,
+  cursor: optional(string),
+  since: optional(number),
+  limit: optional(number),
+  metadata: fetchFeedsMetadataFilterDecoder,
+});
+
+const fetchFeedMessagesClientMsg: Decoder<FetchFeedMessagesClientMsg> = object({
+  type: constant(FeedMsgCode.FETCH_FEED_MESSAGES),
+  requestId: string,
+  feedId: nonEmptyString,
+  cursor: optional(string),
+  since: optional(number),
+  limit: optional(number),
+});
+
+const addFeedClientMsg: Decoder<AddFeedClientMsg> = object({
+  type: constant(FeedMsgCode.ADD_FEED),
+  feedId: string,
+  metadata: optionalFeedMetadataDecoder,
+  timestamp: optional(number),
+  requestId: optional(string),
+});
+
+const updateFeedClientMsg: Decoder<UpdateFeedClientMsg> = object({
+  type: constant(FeedMsgCode.UPDATE_FEED),
+  feedId: string,
+  metadata: feedMetadataUpdateDecoder,
+  requestId: optional(string),
+});
+
+const deleteFeedClientMsg: Decoder<DeleteFeedClientMsg> = object({
+  type: constant(FeedMsgCode.DELETE_FEED),
+  feedId: string,
+  requestId: optional(string),
+});
+
+const addFeedMessageClientMsg: Decoder<AddFeedMessageClientMsg> = object({
+  type: constant(FeedMsgCode.ADD_FEED_MESSAGE),
+  feedId: string,
+  data: jsonObject,
+  id: optional(string),
+  timestamp: optional(number),
+  requestId: optional(string),
+});
+
+const updateFeedMessageClientMsg: Decoder<UpdateFeedMessageClientMsg> = object({
+  type: constant(FeedMsgCode.UPDATE_FEED_MESSAGE),
+  feedId: string,
+  messageId: string,
+  data: jsonObject,
+  timestamp: optional(number),
+  requestId: optional(string),
+});
+
+const deleteFeedMessageClientMsg: Decoder<DeleteFeedMessageClientMsg> = object({
+  type: constant(FeedMsgCode.DELETE_FEED_MESSAGE),
+  feedId: string,
+  messageId: string,
+  requestId: optional(string),
+});
+
 export const clientMsgDecoder: Decoder<ClientMsg<JsonObject, Json>> =
   taggedUnion("type", {
     [ClientMsgCode.UPDATE_PRESENCE]: updatePresenceClientMsg,
@@ -87,7 +168,18 @@ export const clientMsgDecoder: Decoder<ClientMsg<JsonObject, Json>> =
     [ClientMsgCode.UPDATE_STORAGE]: updateStorageClientMsg,
     [ClientMsgCode.FETCH_YDOC]: fetchYDocClientMsg,
     [ClientMsgCode.UPDATE_YDOC]: updateYDocClientMsg,
-  }).describe("Must be a valid client message");
+    [FeedMsgCode.FETCH_FEEDS]: fetchFeedsClientMsg,
+    [FeedMsgCode.FETCH_FEED_MESSAGES]: fetchFeedMessagesClientMsg,
+    [FeedMsgCode.ADD_FEED]: addFeedClientMsg,
+    [FeedMsgCode.UPDATE_FEED]: updateFeedClientMsg,
+    [FeedMsgCode.DELETE_FEED]: deleteFeedClientMsg,
+    [FeedMsgCode.ADD_FEED_MESSAGE]: addFeedMessageClientMsg,
+    [FeedMsgCode.UPDATE_FEED_MESSAGE]: updateFeedMessageClientMsg,
+    [FeedMsgCode.DELETE_FEED_MESSAGE]: deleteFeedMessageClientMsg,
+  } as unknown as Record<
+    string | number,
+    Decoder<ClientMsg<JsonObject, Json>>
+  >).describe("Must be a valid client message");
 
 export const transientClientMsgDecoder: Decoder<ClientMsg<JsonObject, Json>> =
   taggedUnion("type", {

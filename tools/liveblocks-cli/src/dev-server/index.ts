@@ -111,6 +111,14 @@ function shellCmd(cmd: string): string[] {
     : ["sh", "-c", cmd];
 }
 
+/**
+ * Escapes a string for safe inclusion in a shell command.
+ * Wraps in single quotes, escaping any existing single quotes.
+ */
+function shellEscape(arg: string): string {
+  return "'" + arg.replace(/'/g, "'\\''") + "'";
+}
+
 type Options = {
   port: string;
   host?: string;
@@ -125,7 +133,7 @@ const dev: SubCommand = {
   description: "Start the local Liveblocks dev server",
 
   async run(argv) {
-    const { options } = parseArgs<Options>(argv, {
+    const { options, args } = parseArgs<Options>(argv, {
       port: { type: "string", short: "p", default: DEFAULT_PORT.toString() },
       host: { type: "string" },
       cmd: { type: "string", short: "c" },
@@ -133,7 +141,23 @@ const dev: SubCommand = {
       "no-check": { type: "boolean", default: false },
       ci: { type: "boolean", default: false },
       verbose: { type: "boolean", short: "v", default: false },
-    });
+    }, { allowPositionals: true });
+
+    if (args.length > 0 && !options.cmd) {
+      console.error(
+        red("Extra arguments are only supported with --cmd (-c)")
+      );
+      process.exit(1);
+    }
+
+    if (args.length > 0 && options.cmd) {
+      const escaped = args.map(shellEscape).join(" ");
+      if (options.cmd.includes("{}")) {
+        options.cmd = options.cmd.replaceAll("{}", escaped);
+      } else {
+        options.cmd += " " + escaped;
+      }
+    }
 
     if (options.help) {
       console.log("Usage: liveblocks dev [options]");
@@ -145,6 +169,8 @@ const dev: SubCommand = {
       console.log("  --host          Host to bind to (default: localhost)");
       console.log("  --cmd, -c       Run a one-off command against a fresh server instance, then"); // prettier-ignore
       console.log("                    shut down. Does not affect your local data in .liveblocks/."); // prettier-ignore
+      console.log("                    Extra args are appended to the command, or replace {} if"); // prettier-ignore
+      console.log("                    present. Use -- before args starting with -.");  // prettier-ignore
       console.log("  --ci            Start a fresh server instance on every boot, ideal for CI"); // prettier-ignore
       console.log("  --no-check      Skip project setup check on start");
       console.log("  --verbose, -v   Show verbose output");
