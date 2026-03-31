@@ -17,6 +17,7 @@
 
 import {
   Promise_withResolvers,
+  tryParseJson,
   WebsocketCloseCodes as CloseCode,
 } from "@liveblocks/core";
 import type { Millis, Room, SessionKey, Ticket } from "@liveblocks/server";
@@ -307,19 +308,15 @@ const dev: SubCommand = {
 
           if (verbose) {
             if (reqBody) {
-              try {
-                const parsed = JSON.parse(reqBody);
+              const parsed = tryParseJson(reqBody);
+              if (parsed !== undefined) {
                 console.log(dim(`  → ${JSON.stringify(parsed)}`));
-              } catch {
-                // Not JSON, skip
               }
             }
-            try {
-              const respBody = await resp.clone().text();
-              const parsed = JSON.parse(respBody);
-              console.log(dim(`  ← ${JSON.stringify(parsed)}`));
-            } catch {
-              // Not JSON or empty, skip
+            const respBody = await resp.clone().text();
+            const parsedResp = tryParseJson(respBody);
+            if (parsedResp !== undefined) {
+              console.log(dim(`  ← ${JSON.stringify(parsedResp)}`));
             }
           }
 
