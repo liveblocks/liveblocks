@@ -235,16 +235,19 @@ function applyNodeChanges<N extends Node>(
 
       case "position": {
         const node = nodes.get(change.id);
-        if (!node || !change.position) break;
+        if (!node) break;
+
+        // Pause before setting the first position change so it doesn't create a separate undo step.
+        if (change.dragging === true) {
+          history.pause();
+        }
 
         if (change.position !== undefined) {
           node.set("position", change.position);
         }
 
         if (change.dragging !== undefined) {
-          if (change.dragging) {
-            history.pause();
-          } else {
+          if (change.dragging === false) {
             history.resume();
           }
           // Must match NODE_BASE_CONFIG's `dragging: false`
@@ -256,6 +259,11 @@ function applyNodeChanges<N extends Node>(
       case "dimensions": {
         const node = nodes.get(change.id);
         if (!node) break;
+
+        // Pause before setting the first position change so it doesn't create a separate undo step.
+        if (change.resizing === true) {
+          history.pause();
+        }
 
         if (
           change.dimensions !== undefined &&
@@ -282,9 +290,7 @@ function applyNodeChanges<N extends Node>(
         }
 
         if (change.resizing !== undefined) {
-          if (change.resizing) {
-            history.pause();
-          } else {
+          if (change.resizing === false) {
             history.resume();
           }
           // Must match NODE_BASE_CONFIG's `resizing: false`
