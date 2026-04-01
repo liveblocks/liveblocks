@@ -1,5 +1,9 @@
 ## vNEXT (not yet released)
 
+## v3.17.0
+
+...
+
 ## v3.16.0
 
 ### `@liveblocks/chat-sdk-adapter`
