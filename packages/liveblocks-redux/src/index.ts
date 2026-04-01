@@ -89,7 +89,7 @@ const internalEnhancer = <TState>(options: {
   return (createStore: any) => {
     return (reducer: any, initialState: any, enhancer: any) => {
       let maybeRoom: OpaqueRoom | null = null;
-      let isPatching: boolean = false;
+      let isPatching = false;
       let storageRoot: LiveObject<LsonObject> | null = null;
       let unsubscribeCallbacks: Array<() => void> = [];
       let lastRoomId: string | null = null;
@@ -143,24 +143,27 @@ const internalEnhancer = <TState>(options: {
 
             if (maybeRoom) {
               isPatching = true;
-              updatePresence(
-                maybeRoom,
-                state,
-                newState,
-                presenceMapping as any
-              );
+              try {
+                updatePresence(
+                  maybeRoom,
+                  state,
+                  newState,
+                  presenceMapping as any
+                );
 
-              maybeRoom.batch(() => {
-                if (storageRoot) {
-                  patchLiveblocksStorage(
-                    storageRoot,
-                    state,
-                    newState,
-                    mapping as any
-                  );
-                }
-              });
-              isPatching = false;
+                maybeRoom.batch(() => {
+                  if (storageRoot) {
+                    patchLiveblocksStorage(
+                      storageRoot,
+                      state,
+                      newState,
+                      mapping as any
+                    );
+                  }
+                });
+              } finally {
+                isPatching = false;
+              }
             }
 
             if (newState.liveblocks == null) {
@@ -226,7 +229,7 @@ const internalEnhancer = <TState>(options: {
 
         unsubscribeCallbacks.push(
           room.events.myPresence.subscribe(() => {
-            if (isPatching === false) {
+            if (!isPatching) {
               store.dispatch({
                 type: ACTION_TYPES.PATCH_REDUX_STATE,
                 state: selectFields(room.getPresence(), presenceMapping),
@@ -245,7 +248,6 @@ const internalEnhancer = <TState>(options: {
           maybeRoom!.batch(() => {
             for (const key in mapping) {
               const liveblocksStatePart = root.get(key);
-
               if (liveblocksStatePart == null) {
                 updates[key] = store.getState()[key];
                 legacy_patchLiveObjectKey(
@@ -270,7 +272,7 @@ const internalEnhancer = <TState>(options: {
             maybeRoom!.subscribe(
               root,
               (updates) => {
-                if (isPatching === false) {
+                if (!isPatching) {
                   store.dispatch({
                     type: ACTION_TYPES.PATCH_REDUX_STATE,
                     state: patchState(

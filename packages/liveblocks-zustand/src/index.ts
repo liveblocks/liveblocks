@@ -157,7 +157,7 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
   const { client, presenceMapping, storageMapping } = validateOptions(options);
   return (set, get, api) => {
     let maybeRoom: TRoom | null = null;
-    let isPatching: boolean = false;
+    let isPatching = false;
     let storageRoot: LiveObject<S> | null = null;
     let unsubscribeCallbacks: Array<() => void> = [];
     let lastRoomId: string | null = null;
@@ -206,7 +206,7 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
 
       unsubscribeCallbacks.push(
         room.events.myPresence.subscribe(() => {
-          if (isPatching === false) {
+          if (!isPatching) {
             set(
               selectFields(
                 room.getPresence(),
@@ -246,7 +246,7 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
           room.subscribe(
             root,
             (updates) => {
-              if (isPatching === false) {
+              if (!isPatching) {
                 set(patchState(get(), updates, storageMapping));
               }
             },
@@ -297,25 +297,27 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
         if (maybeRoom) {
           const room = maybeRoom;
           isPatching = true;
-          updatePresence(
-            room,
-            oldState as JsonObject,
-            newState as JsonObject,
-            presenceMapping
-          );
+          try {
+            updatePresence(
+              room,
+              oldState as JsonObject,
+              newState as JsonObject,
+              presenceMapping
+            );
 
-          room.batch(() => {
-            if (storageRoot) {
-              patchLiveblocksStorage(
-                storageRoot,
-                oldState,
-                newState,
-                storageMapping
-              );
-            }
-          });
-
-          isPatching = false;
+            room.batch(() => {
+              if (storageRoot) {
+                patchLiveblocksStorage(
+                  storageRoot,
+                  oldState,
+                  newState,
+                  storageMapping
+                );
+              }
+            });
+          } finally {
+            isPatching = false;
+          }
         }
       },
       get,
