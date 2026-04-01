@@ -54,6 +54,8 @@ notifications, and more.
 - [`@liveblocks/node`](https://liveblocks.io/docs/api-reference/liveblocks-node)
 - [`@liveblocks/emails`](https://liveblocks.io/docs/api-reference/liveblocks-emails)
 - [`@liveblocks/emails`](https://liveblocks.io/docs/api-reference/liveblocks-emails)
+- [`@liveblocks/chat-sdk-adapter`](https://liveblocks.io/docs/api-reference/liveblocks-chat-sdk-adapter)
+- [Python SDK](https://liveblocks.io/docs/api-reference/liveblocks-python)
 - [`REST API`](https://liveblocks.io/docs/api-reference/rest-api-endpoints)
 
 ## Developers
