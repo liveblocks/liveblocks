@@ -54,6 +54,7 @@ jobs:
             "@liveblocks/node",
             "@liveblocks/yjs",
             "@liveblocks/react-ui",
+            "@liveblocks/react-flow",
             "@liveblocks/react-lexical",
             "@liveblocks/react-tiptap",
             "@liveblocks/react-blocknote",

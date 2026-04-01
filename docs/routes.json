@@ -142,6 +142,11 @@
             "hidden": true
           },
           {
+            "title": "React Flow",
+            "path": "/get-started/nextjs-react-flow",
+            "hidden": true
+          },
+          {
             "title": "BlockNote",
             "path": "/get-started/react-blocknote",
             "hidden": true
@@ -812,6 +817,10 @@
       {
         "title": "@liveblocks/react-ui",
         "path": "/api-reference/liveblocks-react-ui"
+      },
+      {
+        "title": "@liveblocks/react-flow",
+        "path": "/api-reference/liveblocks-react-flow"
       },
       {
         "title": "@liveblocks/react-tiptap",

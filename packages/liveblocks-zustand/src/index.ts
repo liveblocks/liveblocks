@@ -25,8 +25,8 @@ import {
   detectDupes,
   errorIf,
   legacy_patchImmutableObject,
+  legacy_patchLiveObjectKey,
   lsonToJson,
-  patchLiveObjectKey,
 } from "@liveblocks/core";
 import type { StateCreator, StoreMutatorIdentifier } from "zustand";
 
@@ -225,7 +225,7 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
             const liveblocksStatePart = root.get(key);
             if (liveblocksStatePart === undefined) {
               updates[key] = get()[key];
-              patchLiveObjectKey(
+              legacy_patchLiveObjectKey(
                 root,
                 key,
                 undefined,
@@ -440,7 +440,7 @@ function patchLiveblocksStorage<O extends LsonObject, TState>(
     if (oldState[key] !== newState[key]) {
       const oldVal = oldState[key] as Json | undefined;
       const newVal = newState[key] as Json | undefined;
-      patchLiveObjectKey(root, key, oldVal, newVal);
+      legacy_patchLiveObjectKey(root, key, oldVal, newVal);
     }
   }
 }

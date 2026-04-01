@@ -1,0 +1,690 @@
+---
+meta:
+  title: "@liveblocks/react-flow"
+  parentTitle: "API Reference"
+  description: "API Reference for the @liveblocks/react-flow package"
+alwaysShowAllNavigationLevels: false
+---
+
+`@liveblocks/react-flow` provides you with [React](https://react.dev/) hooks and
+components that add collaboration to any [React Flow](https://reactflow.dev/)
+diagram. It adds multiplayer data syncing, document persistence on the cloud,
+and realtime cursors.
+
+Read our [get started guide](/docs/get-started/nextjs-react-flow) to learn more.
+
+## Setup
+
+If you’re not already using React Flow, follow their
+[guide](https://reactflow.dev/learn) to get started. Install it and include its
+base styles.
+
+```bash
+npm install @xyflow/react
+```
+
+```tsx
+import "@xyflow/react/dist/style.css";
+```
+
+Install Liveblocks’ packages:
+
+```bash
+npm install @liveblocks/client @liveblocks/react @liveblocks/react-ui @liveblocks/react-flow
+```
+
+Import and use the [`useLiveblocksFlow`](#useLiveblocksFlow) hook to make React
+Flow collaborative:
+
+```tsx
+"use client";
+
+import { ReactFlow } from "@xyflow/react";
+import { RoomProvider } from "@liveblocks/react";
+// +++
+import { useLiveblocksFlow } from "@liveblocks/react-flow";
+// +++
+import "@xyflow/react/dist/style.css";
+
+function Flow() {
+  // +++
+  const {
+    nodes,
+    edges,
+    onNodesChange,
+    onEdgesChange,
+    onConnect,
+    onDelete,
+    isLoading,
+  } = useLiveblocksFlow();
+  // +++
+
+  if (isLoading) {
+    return <div>Loading…</div>;
+  }
+
+  return (
+    // +++
+    <ReactFlow
+      nodes={nodes}
+      edges={edges}
+      onNodesChange={onNodesChange}
+      onEdgesChange={onEdgesChange}
+      onConnect={onConnect}
+      onDelete={onDelete}
+    />
+    // +++
+  );
+}
+
+export function App() {
+  return (
+    <RoomProvider id="my-room-id">
+      <Flow />
+    </RoomProvider>
+  );
+}
+```
+
+Then, import and add the [`Cursors`](#Cursors) component (alongside Liveblocks’
+styles) to add realtime cursors inside React Flow’s canvas:
+
+```tsx
+"use client";
+
+import { ReactFlow } from "@xyflow/react";
+import { RoomProvider } from "@liveblocks/react";
+// +++
+import { useLiveblocksFlow, Cursors } from "@liveblocks/react-flow";
+// +++
+import "@xyflow/react/dist/style.css";
+// +++
+import "@liveblocks/react-ui/styles.css";
+import "@liveblocks/react-flow/styles.css";
+// +++
+
+function Flow() {
+  const {
+    nodes,
+    edges,
+    onNodesChange,
+    onEdgesChange,
+    onConnect,
+    onDelete,
+    isLoading,
+  } = useLiveblocksFlow();
+
+  if (isLoading) {
+    return <div>Loading…</div>;
+  }
+
+  return (
+    <ReactFlow
+      nodes={nodes}
+      edges={edges}
+      onNodesChange={onNodesChange}
+      onEdgesChange={onEdgesChange}
+      onConnect={onConnect}
+      onDelete={onDelete}
+    >
+      // +++
+      <Cursors />
+      // +++
+    </ReactFlow>
+  );
+}
+
+export function App() {
+  return (
+    <RoomProvider id="my-room-id">
+      <Flow />
+    </RoomProvider>
+  );
+}
+```
+
+## useLiveblocksFlow
+
+This hook returns a controlled [React Flow](https://reactflow.dev/) state made
+collaborative using Liveblocks Storage.
+
+You can pass initial nodes and edges to the hook which will be set when entering
+the room for the first time.
+
+```tsx
+"use client";
+
+import { ReactFlow } from "@xyflow/react";
+import { RoomProvider } from "@liveblocks/react";
+// +++
+import { useLiveblocksFlow } from "@liveblocks/react-flow";
+// +++
+import "@xyflow/react/dist/style.css";
+
+function Flow() {
+  // +++
+  const {
+    nodes,
+    edges,
+    onNodesChange,
+    onEdgesChange,
+    onConnect,
+    onDelete,
+    isLoading,
+  } = useLiveblocksFlow({
+    nodes: {
+      initial: [
+        {
+          id: "1",
+          type: "input",
+          data: { label: "Node 1" },
+          position: { x: 250, y: 25 },
+        },
+        {
+          id: "2",
+          data: { label: "Node 2" },
+          position: { x: 100, y: 125 },
+        },
+      ],
+      // sync: { "*": { label: false } },
+    },
+    edges: {
+      initial: [{ id: "e1-2", source: "1", target: "2" }],
+      // sync: { "*": { ... } },
+    },
+  });
+  // +++
+
+  if (isLoading) {
+    return <div>Loading…</div>;
+  }
+
+  return (
+    <ReactFlow
+      nodes={nodes}
+      edges={edges}
+      onNodesChange={onNodesChange}
+      onEdgesChange={onEdgesChange}
+      onConnect={onConnect}
+      onDelete={onDelete}
+    />
+  );
+}
+
+export function App() {
+  return (
+    <RoomProvider id="my-room-id">
+      <Flow />
+    </RoomProvider>
+  );
+}
+```
+
+<PropertiesList title="Options">
+  <PropertiesListItem name="nodes.initial" type="Node[]" optional>
+    Default nodes used when the room has no data yet.
+  </PropertiesListItem>
+  <PropertiesListItem name="nodes.sync" type="NodeSyncConfig" optional>
+    Per-type sync configuration for node `data` keys. See [Sync
+    config](#sync-config).
+  </PropertiesListItem>
+  <PropertiesListItem name="edges.initial" type="Edge[]" optional>
+    Default edges used when the room has no data yet.
+  </PropertiesListItem>
+  <PropertiesListItem name="edges.sync" type="EdgeSyncConfig" optional>
+    Per-type sync configuration for edge `data` keys. See [Sync
+    config](#sync-config).
+  </PropertiesListItem>
+  <PropertiesListItem name="storageKey" type="string" optional>
+    The key used to store the diagram in Liveblocks Storage. Defaults to
+    `"flow"`. See [`storageKey`](#storageKey).
+  </PropertiesListItem>
+  <PropertiesListItem name="suspense" type="boolean" optional>
+    When `true`, suspends until the diagram is ready. Learn more about this in
+    the [Suspense](#suspense) section.
+  </PropertiesListItem>
+</PropertiesList>
+
+<Banner type="success" title="Options are not reactive">
+
+The options passed to the hook (initial nodes, edges, storage key, Suspense,
+etc.) are read once when the hook mounts. Later changes to those options will
+not take effect.
+
+</Banner>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="nodes" type="Node[] | null">
+    Current nodes, `null` while loading unless [using Suspense](#suspense), in
+    which case it is always an array.
+  </PropertiesListItem>
+  <PropertiesListItem name="edges" type="Edge[] | null">
+    Current edges, `null` while loading unless [using Suspense](#suspense), in
+    which case it is always an array.
+  </PropertiesListItem>
+  <PropertiesListItem name="isLoading" type="boolean">
+    Whether the diagram is still loading. When [using Suspense](#suspense),
+    always `false` after the hook has resumed.
+  </PropertiesListItem>
+  <PropertiesListItem name="onNodesChange" type="OnNodesChange">
+    Pass to React Flow’s `onNodesChange`.
+  </PropertiesListItem>
+  <PropertiesListItem name="onEdgesChange" type="OnEdgesChange">
+    Pass to React Flow’s `onEdgesChange`.
+  </PropertiesListItem>
+  <PropertiesListItem name="onConnect" type="OnConnect">
+    Pass to React Flow’s `onConnect`. Handles new edges.
+  </PropertiesListItem>
+  <PropertiesListItem name="onDelete" type="OnDelete">
+    Pass to React Flow’s `onDelete`. Handles node and edge deletions atomically
+    so that deleting a node and its related edges count as a single undoable
+    action.
+  </PropertiesListItem>
+</PropertiesList>
+
+### Local state vs Storage
+
+Some React Flow fields are intentionally **not** written to Liveblocks Storage
+so each client keeps their own selection and interaction state:
+
+- **Nodes:** `selected`, `dragging`, `measured`, `resizing`
+- **Edges:** `selected`
+
+Everything else on nodes and edges (including `position`, `width` and `height`,
+`data`, handles, and edge endpoints) is synchronized through Storage. If you
+want specific keys inside `node.data` or `edge.data` to stay local-only too, use
+the [sync config](#sync-config).
+
+### Undo / Redo [#undo-redo]
+
+Undo and redo are automatically enabled for the entire flow state. All synced
+changes to nodes and edges are recorded on the undo stack, including position
+changes, data updates, additions, and removals.
+
+A few things are handled automatically:
+
+- **Dragging** and **resizing** produce many live updates during a drag, but
+  produce only a single action on the undo stack
+- **Deleting** nodes and edges in a single action will undo together
+- **Local-only** properties are not recorded on the undo stack
+
+To wire up undo/redo in your UI, just use Liveblocks’ normal
+[`useHistory`](/docs/api-reference/liveblocks-react#useHistory) hook:
+
+```tsx
+import { useHistory } from "@liveblocks/react";
+
+function Toolbar() {
+  const history = useHistory();
+  return (
+    <>
+      <button onClick={history.undo} disabled={!history.canUndo()}>
+        Undo
+      </button>
+      <button onClick={history.redo} disabled={!history.canRedo()}>
+        Redo
+      </button>
+    </>
+  );
+}
+```
+
+### Custom nodes [#custom-nodes]
+
+[Custom nodes](https://reactflow.dev/learn/customization/custom-nodes) work like
+in any React Flow setup.
+
+```tsx
+"use client";
+
+import { useLiveblocksFlow } from "@liveblocks/react-flow";
+import type { Node, NodeProps } from "@xyflow/react";
+import { ReactFlow, useReactFlow } from "@xyflow/react";
+import { memo, useCallback } from "react";
+
+type TaskNode = Node<{ title: string }, "task">;
+
+const TaskNode = memo(({ id, data }: NodeProps<TaskNode>) => {
+  const { updateNode } = useReactFlow();
+
+  const rename = useCallback(() => {
+    updateNode(id, (node) => ({
+      ...node,
+      data: { ...node.data, title: "Updated" },
+    }));
+  }, [id, updateNode]);
+
+  return (
+    <div>
+      <button type="button" onClick={rename}>
+        {data.title}
+      </button>
+    </div>
+  );
+});
+
+function Flow() {
+  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onDelete } =
+    useLiveblocksFlow<TaskNode>({
+      suspense: true,
+      nodes: {
+        initial: [
+          {
+            id: "1",
+            type: "task",
+            position: { x: 0, y: 0 },
+            data: { title: "Shared task" },
+          },
+        ],
+      },
+    });
+
+  return (
+    <ReactFlow
+      nodes={nodes}
+      edges={edges}
+      onNodesChange={onNodesChange}
+      onEdgesChange={onEdgesChange}
+      onConnect={onConnect}
+      onDelete={onDelete}
+      nodeTypes={{ task: TaskNode }}
+    />
+  );
+}
+```
+
+### Suspense [#suspense]
+
+By default, `useLiveblocksFlow` returns `isLoading: true`, `nodes: null`, and
+`edges: null` while loading. You can use the `suspense` option to suspend until
+the diagram is ready, when doing so, `nodes` and `edges` will always be arrays
+and `isLoading` will always be `false`.
+
+```tsx
+"use client";
+
+import { ReactFlow } from "@xyflow/react";
+import { RoomProvider, ClientSideSuspense } from "@liveblocks/react";
+import { useLiveblocksFlow } from "@liveblocks/react-flow";
+import "@xyflow/react/dist/style.css";
+
+function Flow() {
+  const {
+    nodes,
+    edges,
+    onNodesChange,
+    onEdgesChange,
+    onConnect,
+    onDelete,
+    // +++
+  } = useLiveblocksFlow({ suspense: true });
+  // +++
+
+  return (
+    <ReactFlow
+      nodes={nodes}
+      edges={edges}
+      onNodesChange={onNodesChange}
+      onEdgesChange={onEdgesChange}
+      onConnect={onConnect}
+      onDelete={onDelete}
+    />
+  );
+}
+
+export function App() {
+  return (
+    <RoomProvider id="my-room-id">
+      // +++
+      <ClientSideSuspense fallback={<div>Loading…</div>}>
+        <Flow />
+      </ClientSideSuspense>
+      // +++
+    </RoomProvider>
+  );
+}
+```
+
+### Storage key [#storageKey]
+
+By default, `useLiveblocksFlow` stores nodes and edges under key `"flow"` in
+Liveblocks Storage. Use the `storageKey` option to choose a different key or to
+support multiple diagrams in a single room.
+
+```tsx
+"use client";
+
+import { ReactFlow } from "@xyflow/react";
+import { useLiveblocksFlow } from "@liveblocks/react-flow";
+
+function FlowA() {
+  // +++
+  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onDelete } =
+    useLiveblocksFlow({ suspense: true, storageKey: "flowA" });
+  // +++
+
+  return (
+    <ReactFlow
+      nodes={nodes}
+      edges={edges}
+      onNodesChange={onNodesChange}
+      onEdgesChange={onEdgesChange}
+      onConnect={onConnect}
+      onDelete={onDelete}
+    />
+  );
+}
+
+function FlowB() {
+  // +++
+  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onDelete } =
+    useLiveblocksFlow({ suspense: true, storageKey: "flowB" });
+  // +++
+
+  return (
+    <ReactFlow
+      nodes={nodes}
+      edges={edges}
+      onNodesChange={onNodesChange}
+      onEdgesChange={onEdgesChange}
+      onConnect={onConnect}
+      onDelete={onDelete}
+    />
+  );
+}
+```
+
+### Sync config for `node.data` [#sync-config]
+
+By default, every key inside a node or edge’s `data` object is getting deeply
+synced. Internally objects are stored as LiveObjects, arrays as LiveLists, etc,
+to enable fine-grained conflict-free merging automatically. If two users update
+different properties on the same node or edge, their changes will get merged
+without conflicts.
+
+For some data, this default behavior is not desirable.
+
+Each key in the config accepts a **sync mode**:
+
+| Mode       | Behavior                                                                                       |
+| ---------- | ---------------------------------------------------------------------------------------------- |
+| `true`     | Deeply sync and allow conflict-free merging (default).                                         |
+| `false`    | Keep value local-only. Not synced to other clients at all. Other clients will see `undefined`. |
+| `"atomic"` | Synced, but replaced as a whole (last-writer-wins). No automatic conflict resolution.          |
+| `{ ... }`  | Nested config. Applies recursively to sub-keys of the value.                                   |
+
+Use `"*"` as a fallback for all node (or edge) types.
+
+```tsx
+const { ... } = useLiveblocksFlow({
+  nodes: {
+    sync: {
+      // Applies to all node types
+      "*": {
+        label: false,       // Don’t sync node.data.label
+        color: "atomic",    // Sync as a single value, replaced as-a-whole
+      },
+
+      // Additional overrides for specific node types
+      myCustomNode: {
+        showPreview: false,  // Don’t sync myCustomNode.data.showPreview
+      },
+    },
+  },
+  edges: {
+    sync: {
+      "*": {
+        hovered: false,      // Don’t sync edge.data.hovered
+        style: "atomic",     // Sync as a single value, replaced as-a-whole
+      },
+    },
+  },
+});
+```
+
+## Cursors
+
+Add the `Cursors` component inside your `ReactFlow` component to add realtime
+cursors inside React Flow’s canvas. Also import Liveblocks’ styles when using
+it.
+
+```tsx
+"use client";
+
+import { RoomProvider } from "@liveblocks/react";
+// +++
+import { useLiveblocksFlow, Cursors } from "@liveblocks/react-flow";
+// +++
+import "@xyflow/react/dist/style.css";
+// +++
+import "@liveblocks/react-ui/styles.css";
+import "@liveblocks/react-flow/styles.css";
+// +++
+
+function Flow() {
+  const {
+    nodes,
+    edges,
+    onNodesChange,
+    onEdgesChange,
+    onConnect,
+    onDelete,
+    isLoading,
+  } = useLiveblocksFlow();
+
+  if (isLoading) {
+    return <div>Loading…</div>;
+  }
+
+  return (
+    <ReactFlow
+      nodes={nodes}
+      edges={edges}
+      onNodesChange={onNodesChange}
+      onEdgesChange={onEdgesChange}
+      onConnect={onConnect}
+      onDelete={onDelete}
+    >
+      // +++
+      <Cursors />
+      // +++
+    </ReactFlow>
+  );
+}
+```
+
+It works similarly to `@liveblocks/react-ui`’s
+[`Cursors`](/docs/api-reference/liveblocks-react-ui#Cursors) component.
+
+By default, cursor coordinates are stored in Presence under `"cursor"`. Use
+`presenceKey` to support multiple diagrams in a single room.
+
+### User information
+
+`Cursors` uses
+[`resolveUsers`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers)
+to resolve each user’s information and then uses the `name` and `color`
+properties.
+
+```tsx
+<LiveblocksProvider
+  authEndpoint="/api/liveblocks-auth"
+  // +++
+  resolveUsers={async ({ userIds }) => {
+    // ["stacy@example.com", ...]
+    console.log(userIds);
+
+    // Get users from your back-end
+    const users = await __fetchUsers__(userIds);
+
+    // [{ name: "Stacy", color: "#22c55e"}, ...]
+    console.log(users);
+
+    // Return a list of users
+    return users;
+  }}
+  // +++
+>
+  <RoomProvider id="my-room-id">{/* ... */}</RoomProvider>
+</LiveblocksProvider>
+```
+
+### Customize cursors
+
+Pass a `Cursor` component through the `components` prop to control how each
+cursor is rendered. It receives `userId` and `connectionId` via its props. Its
+position and visibility are still handled by `Cursors`.
+
+```tsx
+"use client";
+
+import { Cursors } from "@liveblocks/react-flow";
+import { Cursor, type CursorsCursorProps } from "@liveblocks/react-ui";
+import { useUser } from "@liveblocks/react";
+
+function MyCursor({ userId }: CursorsCursorProps) {
+  const { user, isLoading } = useUser(userId);
+
+  if (isLoading) {
+    return null;
+  }
+
+  return (
+    <Cursor
+      label={
+        user ? (
+          <>
+            {user.countryFlag} {user.name}
+          </>
+        ) : undefined
+      }
+      color={user?.color}
+    />
+  );
+}
+
+function Flow() {
+  return (
+    <ReactFlow>
+      // +++
+      <Cursors components={{ Cursor: MyCursor }} />
+      // +++
+    </ReactFlow>
+  );
+}
+```
+
+### Props [#Cursors-props]
+
+<PropertiesList>
+  <PropertiesListItem
+    name="presenceKey"
+    type="string"
+    defaultValue={`"cursor"`}
+  >
+    The key used to store cursor coordinates in users’ Presence.
+  </PropertiesListItem>
+  <PropertiesListItem name="components" type="Partial<CursorsComponents>">
+    Override the component’s components.
+  </PropertiesListItem>
+</PropertiesList>

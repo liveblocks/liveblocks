@@ -1,0 +1,109 @@
+{
+  "name": "@liveblocks/react-flow",
+  "version": "3.16.0",
+  "description": "An integration of React Flow to enable collaboration and realtime cursors with Liveblocks.",
+  "license": "Apache-2.0",
+  "author": "Liveblocks Inc.",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "types": "./dist/index.d.cts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "module": "./dist/index.js",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./styles.css": {
+      "types": "./styles.css.d.cts",
+      "default": "./styles.css"
+    }
+  },
+  "files": [
+    "dist/**",
+    "**/*.css",
+    "**/*.css.d.cts",
+    "**/*.css.d.ts",
+    "**/*.css.map",
+    "README.md"
+  ],
+  "scripts": {
+    "dev": "rollup --config rollup.config.js --watch",
+    "build": "rollup --config rollup.config.js",
+    "start": "npm run dev",
+    "format": "(eslint --fix src/ || true) && stylelint --fix src/styles/ && prettier --write src/",
+    "lint": "eslint src/ && stylelint src/styles/",
+    "test": "npx liveblocks dev -p 1154 -c 'vitest run --coverage'",
+    "test:ci": "vitest run",
+    "test:types": "ls test-d/* | xargs -n1 tsd --files",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@liveblocks/client": "3.16.0",
+    "@liveblocks/core": "3.16.0",
+    "@liveblocks/react": "3.16.0",
+    "@liveblocks/react-ui": "3.16.0"
+  },
+  "peerDependencies": {
+    "@xyflow/react": "^12",
+    "react": "^18 || ^19 || ^19.0.0-rc",
+    "react-dom": "^18 || ^19 || ^19.0.0-rc"
+  },
+  "peerDependenciesMeta": {
+    "@types/react": {
+      "optional": true
+    },
+    "@types/react-dom": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@liveblocks/eslint-config": "*",
+    "@liveblocks/rollup-config": "*",
+    "@liveblocks/vitest-config": "*",
+    "@testing-library/jest-dom": "^6.4.6",
+    "@testing-library/react": "^13.1.1",
+    "@xyflow/react": "^12.10.1",
+    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "stylelint": "^15.10.2",
+    "stylelint-config-standard": "^34.0.0",
+    "stylelint-order": "^6.0.3",
+    "stylelint-plugin-logical-css": "^0.13.2"
+  },
+  "sideEffects": false,
+  "bugs": {
+    "url": "https://github.com/liveblocks/liveblocks/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/liveblocks/liveblocks.git",
+    "directory": "packages/liveblocks-react-flow"
+  },
+  "homepage": "https://liveblocks.io",
+  "keywords": [
+    "xyflow",
+    "react-flow",
+    "react",
+    "comments",
+    "threads",
+    "liveblocks",
+    "real-time",
+    "toolkit",
+    "multiplayer",
+    "websockets",
+    "collaboration",
+    "collaborative",
+    "presence",
+    "crdts",
+    "synchronize",
+    "rooms",
+    "documents",
+    "conflict resolution"
+  ]
+}
