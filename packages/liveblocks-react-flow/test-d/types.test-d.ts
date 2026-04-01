@@ -1,19 +1,28 @@
 /* eslint-disable */
 
-import type { LiveList, LiveObject, LsonObject } from "@liveblocks/core";
+import type {
+  LiveList,
+  LiveMap,
+  LiveObject,
+  LsonObject,
+} from "@liveblocks/core";
 import type { Edge, Node, XYPosition } from "@xyflow/react";
-import { expectAssignable } from "tsd";
+import { expectAssignable, expectType } from "tsd";
 
-import type { LiveblocksEdge, LiveblocksNode } from "@liveblocks/react-flow";
+import type {
+  LiveblocksEdge,
+  LiveblocksFlow,
+  LiveblocksNode,
+} from "@liveblocks/react-flow";
 
 type CustomData = {
   string: string;
   number?: number;
   array: string[];
-  atomic: { x: number; y: number };
+  object: { x: number; y: number };
   nested: {
     string: string;
-    atomic?: { x: number; y: number };
+    object?: { x: number; y: number };
     nested: {
       array: string[];
     };
@@ -21,29 +30,15 @@ type CustomData = {
 };
 
 type CustomNode = Node<CustomData, "custom-node">;
+
 type CustomEdge = Edge<CustomData, "custom-edge">;
-
-declare const node: LiveblocksNode<CustomNode>;
-declare const edge: LiveblocksEdge<CustomEdge>;
-
-type ExpectedCustomData = LiveObject<{
-  string: string;
-  number?: number;
-  array: LiveList<string>;
-  atomic: LiveObject<{ x: number; y: number }>;
-  nested: LiveObject<{
-    string: string;
-    atomic?: LiveObject<{ x: number; y: number }>;
-    nested: LiveObject<{
-      array: LiveList<string>;
-    }>;
-  }>;
-}>;
 
 /**
  * LiveblocksNode
  */
 {
+  const node = {} as LiveblocksNode<CustomNode>;
+
   // It is a LiveObject
   expectAssignable<LiveObject<LsonObject>>(node);
 
@@ -51,22 +46,48 @@ type ExpectedCustomData = LiveObject<{
   // - `style?: { ... }` becomes `style?: LiveObject<{ ... }>`
   // - `id: string` is a scalar so it remains unchanged
   expectAssignable<LiveObject<LsonObject> | undefined>(node.get("style"));
-  expectAssignable<string>(node.get("id"));
+  expectType<string>(node.get("id"));
 
   // Based on NODE_BASE_CONFIG, some fields are treated either as local-only or as atomic:
   // - `selected: boolean` is marked as local-only so it becomes `boolean | undefined`
   // - `position: XYPosition` is marked as atomic so it stays as `XYPosition` instead of becoming `LiveObject<{ x: number; y: number }>`
-  expectAssignable<boolean | undefined>(node.get("selected"));
-  expectAssignable<XYPosition>(node.get("position"));
+  expectType<boolean | undefined>(node.get("selected"));
+  expectType<XYPosition>(node.get("position"));
 
-  // Its data field is deeply livified.
-  expectAssignable<ExpectedCustomData>(node.get("data"));
+  expectAssignable<LiveObject<LsonObject>>(node.get("data"));
+  expectType<string>(node.get("data").get("string"));
+  expectType<number | undefined>(node.get("data").get("number"));
+  expectAssignable<LiveList<string>>(node.get("data").get("array"));
+  expectAssignable<LiveObject<LsonObject>>(node.get("data").get("nested"));
+  expectAssignable<LiveObject<LsonObject>>(
+    node.get("data").get("nested").get("nested")!
+  );
+}
+
+/**
+ * LiveblocksNode with a custom sync config
+ */
+{
+  const node = {} as LiveblocksNode<
+    CustomNode,
+    { object: "atomic"; array: false; nested: { nested: false } }
+  >;
+
+  expectAssignable<LiveObject<LsonObject>>(node.get("data"));
+  expectType<string>(node.get("data").get("string"));
+  expectType<number | undefined>(node.get("data").get("number"));
+  expectAssignable<{ x: number; y: number }>(node.get("data").get("object"));
+  expectAssignable<string[] | undefined>(node.get("data").get("array"));
+  expectAssignable<LiveObject<LsonObject>>(node.get("data").get("nested"));
+  expectType<string>(node.get("data").get("nested").get("string"));
 }
 
 /**
  * LiveblocksEdge
  */
 {
+  const edge = {} as LiveblocksEdge<CustomEdge>;
+
   // It is a LiveObject
   expectAssignable<LiveObject<LsonObject>>(edge);
 
@@ -82,6 +103,48 @@ type ExpectedCustomData = LiveObject<{
   expectAssignable<boolean | undefined>(edge.get("selected"));
   expectAssignable<[number, number] | undefined>(edge.get("labelBgPadding"));
 
-  // Its data field (optional on edges) is deeply livified.
-  expectAssignable<ExpectedCustomData | undefined>(edge.get("data"));
+  expectAssignable<LiveObject<LsonObject> | undefined>(edge.get("data"));
+  expectType<string>(edge.get("data")!.get("string"));
+  expectType<number | undefined>(edge.get("data")!.get("number"));
+  expectAssignable<LiveList<string>>(edge.get("data")!.get("array"));
+  expectAssignable<LiveObject<LsonObject>>(edge.get("data")!.get("nested"));
+  expectAssignable<LiveObject<LsonObject>>(
+    edge.get("data")!.get("nested").get("nested")!
+  );
+}
+
+/**
+ * LiveblocksEdge with a custom sync config
+ */
+{
+  const edge = {} as LiveblocksEdge<
+    CustomEdge,
+    { object: "atomic"; array: false; nested: { nested: false } }
+  >;
+
+  expectAssignable<LiveObject<LsonObject> | undefined>(edge.get("data"));
+  expectType<string>(edge.get("data")!.get("string"));
+  expectType<number | undefined>(edge.get("data")!.get("number"));
+  expectAssignable<{ x: number; y: number }>(edge.get("data")!.get("object"));
+  expectAssignable<string[] | undefined>(edge.get("data")!.get("array"));
+  expectAssignable<LiveObject<LsonObject>>(edge.get("data")!.get("nested"));
+  expectType<string>(edge.get("data")!.get("nested").get("string"));
+}
+
+/**
+ * LiveblocksFlow
+ */
+{
+  const flow = {} as LiveblocksFlow<CustomNode, CustomEdge>;
+
+  // It is a LiveObject
+  expectAssignable<LiveObject<LsonObject>>(flow);
+
+  // Its nodes and edges are LiveMaps.
+  expectAssignable<LiveMap<string, LiveblocksNode<CustomNode>>>(
+    flow.get("nodes")
+  );
+  expectAssignable<LiveMap<string, LiveblocksEdge<CustomEdge>>>(
+    flow.get("edges")
+  );
 }
