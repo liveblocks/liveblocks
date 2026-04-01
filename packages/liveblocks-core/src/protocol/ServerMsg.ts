@@ -1,5 +1,6 @@
 import type { Json, JsonObject } from "../lib/Json";
 import type { BaseUserMeta } from "./BaseUserMeta";
+import type { Feed, FeedMessage } from "./Feeds";
 import type { ServerWireOp } from "./Op";
 import type { CompactNode, StorageNode } from "./StorageNode";
 
@@ -33,6 +34,17 @@ export const ServerMsgCode = Object.freeze({
   COMMENT_REACTION_REMOVED: 406,
   COMMENT_METADATA_UPDATED: 409,
 
+  // For Feeds
+  FEEDS_LIST: 500,
+  FEEDS_ADDED: 501,
+  FEEDS_UPDATED: 502,
+  FEED_DELETED: 503,
+  FEED_MESSAGES_LIST: 504,
+  FEED_MESSAGES_ADDED: 505,
+  FEED_MESSAGES_UPDATED: 506,
+  FEED_MESSAGES_DELETED: 507,
+  FEED_REQUEST_FAILED: 508,
+
   // Error codes
   REJECT_STORAGE_OP: 299, // Sent if a mutation was not allowed on the server (i.e. due to permissions, limit exceeded, etc)
 });
@@ -60,6 +72,17 @@ export namespace ServerMsgCode {
     typeof ServerMsgCode.COMMENT_REACTION_ADDED;
   export type COMMENT_REACTION_REMOVED =
     typeof ServerMsgCode.COMMENT_REACTION_REMOVED;
+  export type FEEDS_LIST = typeof ServerMsgCode.FEEDS_LIST;
+  export type FEEDS_ADDED = typeof ServerMsgCode.FEEDS_ADDED;
+  export type FEEDS_UPDATED = typeof ServerMsgCode.FEEDS_UPDATED;
+  export type FEED_DELETED = typeof ServerMsgCode.FEED_DELETED;
+  export type FEED_MESSAGES_LIST = typeof ServerMsgCode.FEED_MESSAGES_LIST;
+  export type FEED_MESSAGES_ADDED = typeof ServerMsgCode.FEED_MESSAGES_ADDED;
+  export type FEED_MESSAGES_UPDATED =
+    typeof ServerMsgCode.FEED_MESSAGES_UPDATED;
+  export type FEED_MESSAGES_DELETED =
+    typeof ServerMsgCode.FEED_MESSAGES_DELETED;
+  export type FEED_REQUEST_FAILED = typeof ServerMsgCode.FEED_REQUEST_FAILED;
   export type COMMENT_METADATA_UPDATED =
     typeof ServerMsgCode.COMMENT_METADATA_UPDATED;
   export type REJECT_STORAGE_OP = typeof ServerMsgCode.REJECT_STORAGE_OP;
@@ -89,7 +112,10 @@ export type ServerMsg<
   | RejectedStorageOpServerMsg // For a single client
 
   // Comments
-  | CommentsEventServerMsg;
+  | CommentsEventServerMsg
+
+  // Feeds
+  | FeedsEventServerMsg;
 
 export type CommentsEventServerMsg =
   | ThreadCreatedEvent
@@ -358,4 +384,89 @@ export type RejectedStorageOpServerMsg = {
   readonly type: ServerMsgCode.REJECT_STORAGE_OP;
   readonly opIds: string[];
   readonly reason: string;
+};
+
+export type FeedsEventServerMsg<
+  FM extends Json = Json,
+  FMD extends Json = Json,
+> =
+  | FeedsListServerMsg<FM>
+  | FeedsAddedServerMsg<FM>
+  | FeedsUpdatedServerMsg<FM>
+  | FeedDeletedServerMsg
+  | FeedMessagesListServerMsg<FMD>
+  | FeedMessagesAddedServerMsg<FMD>
+  | FeedMessagesUpdatedServerMsg<FMD>
+  | FeedMessagesDeletedServerMsg
+  | FeedRequestFailedServerMsg;
+
+/** Error codes for {@link FeedRequestFailedServerMsg}. */
+export const FeedRequestErrorCode = {
+  INTERNAL: "INTERNAL",
+  FEED_ALREADY_EXISTS: "FEED_ALREADY_EXISTS",
+  FEED_NOT_FOUND: "FEED_NOT_FOUND",
+  FEED_MESSAGE_NOT_FOUND: "FEED_MESSAGE_NOT_FOUND",
+} as const;
+
+/** String literals accepted in {@link FeedRequestFailedServerMsg}.code */
+export type FeedRequestError =
+  (typeof FeedRequestErrorCode)[keyof typeof FeedRequestErrorCode];
+
+/**
+ * Sent to the client when a feed mutation referenced by `requestId` failed
+ * (e.g. validation or permission error).
+ */
+export type FeedRequestFailedServerMsg = {
+  readonly type: ServerMsgCode.FEED_REQUEST_FAILED;
+  readonly requestId: string;
+  readonly code: string;
+  readonly reason?: string;
+};
+
+export type FeedsListServerMsg<FM extends Json = Json> = {
+  readonly type: ServerMsgCode.FEEDS_LIST;
+  readonly requestId: string;
+  readonly feeds: Feed<FM>[];
+  readonly nextCursor?: string;
+};
+
+export type FeedsAddedServerMsg<FM extends Json = Json> = {
+  readonly type: ServerMsgCode.FEEDS_ADDED;
+  readonly feeds: Feed<FM>[];
+};
+
+export type FeedsUpdatedServerMsg<FM extends Json = Json> = {
+  readonly type: ServerMsgCode.FEEDS_UPDATED;
+  readonly feeds: Feed<FM>[];
+};
+
+export type FeedDeletedServerMsg = {
+  readonly type: ServerMsgCode.FEED_DELETED;
+  readonly feedId: string;
+};
+
+export type FeedMessagesListServerMsg<FMD extends Json = Json> = {
+  readonly type: ServerMsgCode.FEED_MESSAGES_LIST;
+  readonly requestId: string;
+  readonly feedId: string;
+  readonly messages: FeedMessage<FMD>[];
+  readonly nextCursor?: string;
+};
+
+export type FeedMessagesAddedServerMsg<FMD extends Json = Json> = {
+  readonly type: ServerMsgCode.FEED_MESSAGES_ADDED;
+  readonly feedId: string;
+  readonly messages: FeedMessage<FMD>[];
+};
+
+export type FeedMessagesUpdatedServerMsg<FMD extends Json = Json> = {
+  readonly type: ServerMsgCode.FEED_MESSAGES_UPDATED;
+  readonly feedId: string;
+  readonly messages: FeedMessage<FMD>[];
+};
+
+export type FeedMessagesDeletedServerMsg = {
+  readonly type: ServerMsgCode.FEED_MESSAGES_DELETED;
+  readonly feedId: string;
+  readonly messageIds: readonly string[];
 };

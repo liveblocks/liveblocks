@@ -277,4 +277,30 @@ describe("PaginatedResource", () => {
       jest.useRealTimers();
     }
   });
+
+  test("autoRetry: false — single attempt, error persists (no 5s reset)", async () => {
+    const fetcher = jest
+      .fn<Promise<string | null>, [cursor?: string]>()
+      .mockImplementation(() => {
+        throw new Error("permanent");
+      });
+
+    const p = new PaginatedResource(fetcher, { autoRetry: false });
+
+    jest.useFakeTimers();
+    try {
+      const w$ = p.waitUntilLoaded();
+      await expect(w$).rejects.toThrow("permanent");
+      expect(fetcher).toHaveBeenCalledTimes(1);
+
+      await jest.advanceTimersByTimeAsync(5_000);
+      expect(fetcher).toHaveBeenCalledTimes(1);
+      expect(p.get()).toEqual({
+        isLoading: false,
+        error: expect.objectContaining({ message: "permanent" }),
+      });
+    } finally {
+      jest.useRealTimers();
+    }
+  });
 });

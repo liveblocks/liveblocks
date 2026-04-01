@@ -14,6 +14,16 @@ export const ClientMsgCode = Object.freeze({
   // For Yjs support
   FETCH_YDOC: 300,
   UPDATE_YDOC: 301,
+
+  // For Feeds
+  FETCH_FEEDS: 510,
+  FETCH_FEED_MESSAGES: 511,
+  ADD_FEED: 512,
+  UPDATE_FEED: 513,
+  DELETE_FEED: 514,
+  ADD_FEED_MESSAGE: 515,
+  UPDATE_FEED_MESSAGE: 516,
+  DELETE_FEED_MESSAGE: 517,
 });
 
 export namespace ClientMsgCode {
@@ -23,6 +33,14 @@ export namespace ClientMsgCode {
   export type UPDATE_STORAGE = typeof ClientMsgCode.UPDATE_STORAGE;
   export type FETCH_YDOC = typeof ClientMsgCode.FETCH_YDOC;
   export type UPDATE_YDOC = typeof ClientMsgCode.UPDATE_YDOC;
+  export type FETCH_FEEDS = typeof ClientMsgCode.FETCH_FEEDS;
+  export type FETCH_FEED_MESSAGES = typeof ClientMsgCode.FETCH_FEED_MESSAGES;
+  export type ADD_FEED = typeof ClientMsgCode.ADD_FEED;
+  export type UPDATE_FEED = typeof ClientMsgCode.UPDATE_FEED;
+  export type DELETE_FEED = typeof ClientMsgCode.DELETE_FEED;
+  export type ADD_FEED_MESSAGE = typeof ClientMsgCode.ADD_FEED_MESSAGE;
+  export type UPDATE_FEED_MESSAGE = typeof ClientMsgCode.UPDATE_FEED_MESSAGE;
+  export type DELETE_FEED_MESSAGE = typeof ClientMsgCode.DELETE_FEED_MESSAGE;
 }
 
 /**
@@ -39,7 +57,17 @@ export type ClientMsg<P extends JsonObject, E extends Json> =
 
   // For Yjs support
   | FetchYDocClientMsg
-  | UpdateYDocClientMsg;
+  | UpdateYDocClientMsg
+
+  // For Feeds
+  | FetchFeedsClientMsg
+  | FetchFeedMessagesClientMsg
+  | AddFeedClientMsg
+  | UpdateFeedClientMsg
+  | DeleteFeedClientMsg
+  | AddFeedMessageClientMsg
+  | UpdateFeedMessageClientMsg
+  | DeleteFeedMessageClientMsg;
 
 export type BroadcastEventClientMsg<E extends Json> = {
   type: ClientMsgCode.BROADCAST_EVENT;
@@ -103,4 +131,77 @@ export type UpdateYDocClientMsg = {
   readonly update: string; // base64 encoded update from a yjs doc
   readonly guid?: string; // an optional guid to identify a subdoc
   readonly v2?: boolean; // if it's a v2 update
+};
+
+/** Metadata filter for {@link FetchFeedsClientMsg}. Values are matched as strings. */
+export type FeedFetchMetadataFilter = Record<string, string>;
+
+/** Metadata for {@link AddFeedClientMsg}. */
+export type FeedCreateMetadata = Record<string, string | string[]>;
+
+/** Metadata for {@link UpdateFeedClientMsg}. Use `null` to remove a key. */
+export type FeedUpdateMetadata = Record<string, string | string[] | null>;
+
+export type FetchFeedsClientMsg = {
+  readonly type: ClientMsgCode.FETCH_FEEDS;
+  readonly requestId: string;
+  readonly cursor?: string;
+  readonly since?: number;
+  readonly limit?: number;
+  readonly metadata?: FeedFetchMetadataFilter;
+};
+
+export type FetchFeedMessagesClientMsg = {
+  readonly type: ClientMsgCode.FETCH_FEED_MESSAGES;
+  readonly requestId: string;
+  readonly feedId: string;
+  readonly cursor?: string;
+  readonly since?: number;
+  readonly limit?: number;
+};
+
+export type AddFeedClientMsg = {
+  readonly type: ClientMsgCode.ADD_FEED;
+  readonly requestId: string;
+  readonly feedId: string;
+  readonly metadata?: FeedCreateMetadata;
+  readonly createdAt?: number;
+};
+
+export type UpdateFeedClientMsg = {
+  readonly type: ClientMsgCode.UPDATE_FEED;
+  readonly requestId: string;
+  readonly feedId: string;
+  readonly metadata: FeedUpdateMetadata;
+};
+
+export type DeleteFeedClientMsg = {
+  readonly type: ClientMsgCode.DELETE_FEED;
+  readonly requestId: string;
+  readonly feedId: string;
+};
+
+export type AddFeedMessageClientMsg = {
+  readonly type: ClientMsgCode.ADD_FEED_MESSAGE;
+  readonly requestId: string;
+  readonly feedId: string;
+  readonly data: JsonObject;
+  readonly id?: string;
+  readonly createdAt?: number;
+};
+
+export type UpdateFeedMessageClientMsg = {
+  readonly type: ClientMsgCode.UPDATE_FEED_MESSAGE;
+  readonly requestId: string;
+  readonly feedId: string;
+  readonly messageId: string;
+  readonly data: JsonObject;
+  readonly updatedAt?: number;
+};
+
+export type DeleteFeedMessageClientMsg = {
+  readonly type: ClientMsgCode.DELETE_FEED_MESSAGE;
+  readonly requestId: string;
+  readonly feedId: string;
+  readonly messageId: string;
 };

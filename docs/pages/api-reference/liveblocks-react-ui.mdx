@@ -984,7 +984,10 @@ its customization options instead.
 
 The `children` prop on `Comment` allows overriding or wrapping the comments’
 content, while the `additionalContent` prop can be useful to render custom
-content integrated into the comments’ content, just below the comment body.
+content integrated into the comments’ content, just below the comment body. The
+`body` prop is the same as the `children` prop but it only overrides the default
+rich-text comment body while still keeping attachments, reactions, and
+`additionalContent` as is.
 
 `Comment` also offers `avatar`, `author`, and `date` props to allow overriding
 or customizing the comment’s displayed avatar, author, and date respectively.
@@ -1827,6 +1830,14 @@ function Component() {
   </PropertiesListItem>
   <PropertiesListItem name="additionalContent" type="ReactNode">
     Additional content to display below the comment’s body.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="body"
+    type="ReactNode | (props) => ReactNode"
+    detailedType="ReactNode | ((props: { children: ReactNode, comment: CommentData }) => ReactNode)"
+  >
+    Override only the comment’s rich-text body. Receives the comment data and
+    the default content as children.
   </PropertiesListItem>
   <PropertiesListItem name="showDeleted" type="boolean" defaultValue="false">
     Whether to show the comment if it was deleted. If set to `false`, it will

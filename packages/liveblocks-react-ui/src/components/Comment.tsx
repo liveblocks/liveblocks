@@ -154,6 +154,13 @@ export interface CommentProps<CM extends BaseMetadata = DCM>
   additionalContent?: ReactNode;
 
   /**
+   * Override the comment's body.
+   */
+  body?:
+    | ReactNode
+    | ((props: PropsWithChildren<{ comment: CommentData<CM> }>) => ReactNode);
+
+  /**
    * The event handler called when the comment is edited.
    */
   onCommentEdit?: (comment: CommentData) => void;
@@ -688,6 +695,7 @@ export const Comment = Object.assign(
         overrides,
         components,
         additionalContent,
+        body,
         avatar,
         author,
         date,
@@ -912,23 +920,31 @@ export const Comment = Object.assign(
           />
         );
       } else {
+        const defaultBody = (
+          <CommentPrimitive.Body
+            className="lb-comment-body"
+            id={bodyId}
+            body={comment.body}
+            components={{
+              Mention: ({ mention }) => (
+                <CommentMention
+                  mention={mention}
+                  onClick={(event) => onMentionClick?.(mention, event)}
+                  overrides={overrides}
+                />
+              ),
+              Link: CommentLink,
+            }}
+          />
+        );
+
         content = comment.body ? (
           <>
-            <CommentPrimitive.Body
-              className="lb-comment-body"
-              id={bodyId}
-              body={comment.body}
-              components={{
-                Mention: ({ mention }) => (
-                  <CommentMention
-                    mention={mention}
-                    onClick={(event) => onMentionClick?.(mention, event)}
-                    overrides={overrides}
-                  />
-                ),
-                Link: CommentLink,
-              }}
-            />
+            {body === undefined
+              ? defaultBody
+              : typeof body === "function"
+                ? body({ comment, children: defaultBody })
+                : body}
             {additionalContent}
             {showAttachments &&
             (mediaAttachments.length > 0 || fileAttachments.length > 0) ? (

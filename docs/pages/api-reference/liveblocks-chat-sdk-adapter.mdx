@@ -1,0 +1,289 @@
+---
+meta:
+  title: "@liveblocks/chat-sdk-adapter"
+  parentTitle: "API Reference"
+  description: "API Reference for the @liveblocks/chat-sdk-adapter package"
+alwaysShowAllNavigationLevels: false
+---
+
+`@liveblocks/chat-sdk-adapter` is a [Chat SDK](https://chat-sdk.dev) platform
+adapter backed by [Liveblocks Comments](/docs/products/comments). It maps
+Liveblocks rooms, threads, and comments to the Chat SDK's `Channel` / `Thread` /
+`Message` model, allowing you to build conversational bots that read and post in
+Liveblocks comment threads.
+
+## Installation
+
+```bash
+npm install @liveblocks/chat-sdk-adapter chat
+```
+
+## Prerequisites
+
+Before using this adapter, ensure you have:
+
+1. A [Liveblocks project](/docs/get-started) with rooms using
+   [Comments](/docs/products/comments).
+2. A **secret key** (`sk_...`) from the Liveblocks dashboard for REST API calls.
+3. A **webhook signing secret** (`whsec_...`) from the dashboard to verify
+   webhook payloads.
+4. Webhooks configured to subscribe to `commentCreated`, `commentReactionAdded`,
+   and `commentReactionRemoved` events.
+5. A stable `botUserId` that matches how you identify users in your app.
+
+## createLiveblocksAdapter [#createLiveblocksAdapter]
+
+Factory function that creates a new `LiveblocksAdapter` instance.
+
+```ts
+import { createLiveblocksAdapter } from "@liveblocks/chat-sdk-adapter";
+
+const adapter = createLiveblocksAdapter({
+  apiKey: "{{SECRET_KEY}}",
+  webhookSecret: "whsec_...",
+  botUserId: "my-bot-user",
+  botUserName: "MyBot",
+});
+```
+
+### Configuration options [#configuration]
+
+<PropertiesList>
+  <PropertiesListItem name="apiKey" type="string" required>
+    Liveblocks secret key (`sk_...`) for REST API calls.
+  </PropertiesListItem>
+  <PropertiesListItem name="webhookSecret" type="string" required>
+    Webhook signing secret (`whsec_...`) from the dashboard.
+  </PropertiesListItem>
+  <PropertiesListItem name="botUserId" type="string" required>
+    User ID used when the bot creates, edits, or reacts to comments. Should
+    match your app's user identifiers.
+  </PropertiesListItem>
+  <PropertiesListItem name="botUserName" type="string" defaultValue='"liveblocks-bot"'>
+    Display name for the bot.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="resolveUsers"
+    type="function"
+    detailedType="(args: { userIds: string[] }) => Awaitable<(UserInfo | undefined)[] | undefined>"
+  >
+    Resolves user IDs to user info for mentions. Returns an array of user info
+    in the same order as the input IDs, or `undefined` to skip resolution.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="resolveGroupsInfo"
+    type="function"
+    detailedType="(args: { groupIds: string[] }) => Awaitable<(GroupInfo | undefined)[] | undefined>"
+  >
+    Resolves group IDs to group info for mentions. Returns an array of group
+    info in the same order as the input IDs, or `undefined` to skip resolution.
+  </PropertiesListItem>
+  <PropertiesListItem name="logger" type="Logger" defaultValue="ConsoleLogger('info')">
+    Chat SDK-compatible logger instance.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Resolving mentions [#resolving-mentions]
+
+When comments contain @mentions, the adapter needs to resolve user and group IDs
+to display names. Use `resolveUsers` and `resolveGroupsInfo` to provide this
+mapping:
+
+```ts
+const adapter = createLiveblocksAdapter({
+  apiKey: "{{SECRET_KEY}}",
+  webhookSecret: "whsec_...",
+  botUserId: "my-bot-user",
+
+  resolveUsers: async ({ userIds }) => {
+    const users = await getUsersFromDatabase(userIds);
+    return users.map((user) => ({
+      name: user.fullName,
+      avatar: user.avatarUrl,
+    }));
+  },
+
+  resolveGroupsInfo: async ({ groupIds }) => {
+    const groups = await getGroupsFromDatabase(groupIds);
+    return groups.map((group) => ({ name: group.displayName }));
+  },
+});
+```
+
+### Webhook events [#webhook-events]
+
+The adapter processes incoming Liveblocks webhook requests via the Chat SDK's
+webhook handler. Supported events:
+
+- `commentCreated` — Triggers message processing in the Chat SDK
+- `commentReactionAdded` — Triggers reaction handlers
+- `commentReactionRemoved` — Triggers reaction handlers
+
+```ts
+export async function POST(request: Request) {
+  return bot.webhooks.liveblocks(request, {
+    waitUntil: (p) => void p,
+  });
+}
+```
+
+<Banner title="Webhook verification">
+
+The adapter automatically verifies webhook signatures using the `webhookSecret`
+provided during configuration. Invalid requests receive a `401` response.
+
+</Banner>
+
+### ID encoding [#id-encoding]
+
+The adapter uses a prefixed encoding scheme for thread and channel IDs:
+
+- **Thread ID**: `liveblocks:{roomId}:{threadId}`
+- **Channel ID**: `liveblocks:{roomId}`
+
+#### encodeThreadId [#encodeThreadId]
+
+Encodes a Liveblocks room ID and thread ID into a single thread ID string.
+
+```ts
+adapter.encodeThreadId(data: { roomId: string; threadId: string }): string
+```
+
+```ts
+const encoded = adapter.encodeThreadId({
+  roomId: "my-room",
+  threadId: "th_abc123",
+});
+// "liveblocks:my-room:th_abc123"
+```
+
+#### decodeThreadId [#decodeThreadId]
+
+Decodes an encoded thread ID string back into its room ID and thread ID
+components. Throws an `Error` if the format is invalid.
+
+```ts
+adapter.decodeThreadId(threadId: string): { roomId: string; threadId: string }
+```
+
+```ts
+const { roomId, threadId } = adapter.decodeThreadId(
+  "liveblocks:my-room:th_abc123"
+);
+// roomId: "my-room"
+// threadId: "th_abc123"
+```
+
+<Banner>
+
+Room IDs may contain colons (`:`), which are preserved during encoding/decoding.
+However, Liveblocks thread IDs must not contain colons as the last colon is used
+as the delimiter when decoding.
+
+</Banner>
+
+### Liveblocks-specific behavior [#liveblocks-specific]
+
+#### Reactions [#reactions]
+
+Liveblocks Comments only supports Unicode emoji. Custom emoji identifiers that
+cannot be resolved to Unicode will fail validation.
+
+```ts
+await adapter.addReaction(threadId, messageId, "👍"); // Works
+await adapter.addReaction(threadId, messageId, "thumbs_up"); // Converted to 👍
+```
+
+#### Typing indicators [#typing-indicators]
+
+The `startTyping` method is a no-op as typing indicators are not supported by
+Liveblocks Comments.
+
+## Message format limitations [#limitations]
+
+<Banner type="warning" title="Limited formatting support">
+
+Liveblocks Comments has a simpler content model than full Markdown. Content from
+the Chat SDK is automatically converted, but some formatting is flattened.
+
+</Banner>
+
+Liveblocks Comments supports:
+
+- Paragraphs with inline formatting (bold, italic, code, strikethrough)
+- Links
+- @mentions (users and groups)
+
+The following are **not supported** and will be flattened to plain text:
+
+- Headings — Converted to paragraphs
+- Bullet and numbered lists — Converted to paragraphs
+- Code blocks — Converted to paragraphs
+- Tables — Converted to ASCII representation in a paragraph
+- HTML — Rendered as plain text
+
+Card payloads from the Chat SDK are converted to markdown/plain text (or use
+`fallbackText` if provided), then converted to a comment body. Interactivity is
+not preserved.
+
+## Example [#example]
+
+Here's a complete example integrating the adapter with the Chat SDK:
+
+```ts
+import { Chat } from "chat";
+import {
+  createLiveblocksAdapter,
+  LiveblocksAdapter,
+} from "@liveblocks/chat-sdk-adapter";
+import { createMemoryState } from "@chat-adapter/state-memory";
+
+const bot = new Chat<{ liveblocks: LiveblocksAdapter }>({
+  userName: "MyBot",
+  adapters: {
+    liveblocks: createLiveblocksAdapter({
+      apiKey: "{{SECRET_KEY}}",
+      webhookSecret: "whsec_...",
+      botUserId: "my-bot-user",
+      botUserName: "MyBot",
+      resolveUsers: async ({ userIds }) => {
+        const users = await getUsersFromDatabase(userIds);
+        return users.map((user) => ({ name: user.fullName }));
+      },
+    }),
+  },
+  state: createMemoryState(),
+});
+
+bot.onNewMention(async (thread, message) => {
+  await thread.adapter.addReaction(thread.id, message.id, "👀");
+  await thread.post(`Hello, ${message.author.userName}!`);
+});
+
+bot.onReaction(async (event) => {
+  if (!event.added) return;
+  await event.adapter.postMessage(
+    event.threadId,
+    `${event.user.userName} reacted with "${event.emoji.name}"`
+  );
+});
+```
+
+### Webhook handler (Next.js)
+
+```ts
+import { bot } from "./bot";
+
+export async function POST(request: Request) {
+  return bot.webhooks.liveblocks(request, {
+    waitUntil: (p) => void p,
+  });
+}
+```
+
+<Banner>
+
+The `waitUntil` option is recommended for serverless environments (e.g., Vercel)
+to allow background processing of messages after the response is sent.
+
+</Banner>

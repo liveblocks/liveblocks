@@ -358,7 +358,7 @@ ctx.useOthersListener(({ user, type }) => {
   ctx.useErrorListener((err) => {
     expectType<string>(err.message);
     expectType<string | undefined>(err.stack);
-    expectType<-1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(
+    expectType<string | -1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(
       err.context.code
     );
     expectAssignable<
@@ -384,6 +384,7 @@ ctx.useOthersListener(({ user, type }) => {
       | "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR"
       | "UPDATE_NOTIFICATION_SETTINGS_ERROR"
       | "LARGE_MESSAGE_ERROR"
+      | "FEED_REQUEST_ERROR"
     >(err.context.type);
     if (err.context.type === "ROOM_CONNECTION_ERROR") {
       expectAssignable<number>(err.context.code);
@@ -400,7 +401,7 @@ ctx.useOthersListener(({ user, type }) => {
   lbctx.useErrorListener((err) => {
     expectType<string>(err.message);
     expectType<string | undefined>(err.stack);
-    expectType<-1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(
+    expectType<string | -1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(
       err.context.code
     );
     expectAssignable<
@@ -426,6 +427,7 @@ ctx.useOthersListener(({ user, type }) => {
       | "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR"
       | "UPDATE_NOTIFICATION_SETTINGS_ERROR"
       | "LARGE_MESSAGE_ERROR"
+      | "FEED_REQUEST_ERROR"
     >(err.context.type);
     if (err.context.type === "ROOM_CONNECTION_ERROR") {
       expectAssignable<number>(err.context.code);
@@ -442,7 +444,7 @@ ctx.useOthersListener(({ user, type }) => {
   lbctx.suspense.useErrorListener((err) => {
     expectType<string>(err.message);
     expectType<string | undefined>(err.stack);
-    expectType<-1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(
+    expectType<string | -1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(
       err.context.code
     );
     expectAssignable<
@@ -468,6 +470,7 @@ ctx.useOthersListener(({ user, type }) => {
       | "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR"
       | "UPDATE_NOTIFICATION_SETTINGS_ERROR"
       | "LARGE_MESSAGE_ERROR"
+      | "FEED_REQUEST_ERROR"
     >(err.context.type);
     if (err.context.type === "ROOM_CONNECTION_ERROR") {
       expectAssignable<number>(err.context.code);

@@ -1,5 +1,13 @@
 ## vNEXT (not yet released)
 
+## v1.3.0
+
+- Add feeds support (`feeds:write` permission)
+- Add verbose logging toggle
+- Fix permission validation to accept all valid permission combinations
+- Support passing extra arguments to `--cmd` (`-c`), appended to the command or
+  replacing `{}` if present
+
 ## v1.2.0
 
 - Add live socket inspector view

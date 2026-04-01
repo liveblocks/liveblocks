@@ -1,0 +1,305 @@
+---
+meta:
+  title:
+    "Get started with creating a realtime feed using Liveblocks and Next.js"
+  parentTitle: "Quickstart"
+  description:
+    "Learn how to create a realtime feed in your Next.js app using Liveblocks"
+---
+
+Liveblocks is a realtime collaboration infrastructure for building performant
+collaborative experiences. Follow the following steps to start adding a realtime
+feed to your Next.js `/app` directory application using hooks from
+[`@liveblocks/react`](/docs/api-reference/liveblocks-react) and methods from
+[`@liveblocks/node`](/docs/api-reference/liveblocks-node).
+
+## Quickstart
+
+<Steps>
+  <Step>
+    <StepTitle>Install Liveblocks</StepTitle>
+    <StepContent>
+
+      Every package should use the same version.
+
+      ```bash trackEvent="install_liveblocks"
+      npm install @liveblocks/client @liveblocks/node @liveblocks/react
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Initialize the `liveblocks.config.ts` file</StepTitle>
+    <StepContent>
+
+      We can use this file later to [define types for our application](/docs/api-reference/liveblocks-react#Typing-your-data).
+
+      ```bash
+      npx create-liveblocks-app@latest --init --framework react
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+
+    <StepTitle>Define feed message shape</StepTitle>
+    <StepContent>
+
+      Inside the new `liveblocks.config.ts` file, define the data shape for messages in feeds.
+      Any JSON data is supported, and can be used to render UI in your application. In this
+      this guide, we'll define `role` and `content` properties, like you’d find in an AI chat.
+
+      ```tsx file="liveblocks.config.ts"
+      // liveblocks.config.ts
+      declare global {
+        interface Liveblocks {
+          // Data shape for feed messages
+          // +++
+          FeedMessageData: {
+            role: "user" | "assistant" | "system";
+            content: string;
+          };
+          // +++
+
+          // Add custom metadata to each feed
+          FeedMetadata: {};
+        }
+      }
+
+      export {};
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Create a feed in your back end</StepTitle>
+    <StepContent>
+
+      Create a feed in your back end using the [`createFeed`](/docs/api-reference/liveblocks-node#post-rooms-roomId-feeds)
+      method and send messages with the [`createFeedMessage`](/docs/api-reference/liveblocks-node#post-rooms-roomId-feeds-feedId-messages)
+      method. This snippet simualtes a slow running process then adds a second message. Here we’ve put this in a server action.
+
+      Picture this file as the AI back end of your application. It’s responsible for generating AI responses and adding them
+      into the feed.
+
+      ```tsx file="app/actions.ts"
+      "use server";
+
+      import { Liveblocks } from "@liveblocks/node";
+
+      const liveblocks = new Liveblocks({
+        secret: "{{SECRET_KEY}}",
+      });
+
+      export async function newFeed(roomId: string, feedId: string) {
+        // Create a new feed
+        const feed = await liveblocks.createFeed({
+          roomId: roomId,
+          feedId: feedId,
+          metadata: {},
+        });
+
+        // Add a first message
+        await liveblocks.createFeedMessage({
+          roomId: roomId,
+          feedId: feedId,
+          data: {
+            role: "assistant",
+            content: "Hello there",
+          },
+        });
+
+        // Simulate a slow running AI process
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+
+        // Add a second message
+        await liveblocks.createFeedMessage({
+          roomId: roomId,
+          feedId: feedId,
+          data: {
+            role: "user",
+            content: "How can I help you today?",
+          },
+        });
+
+        return { feedId };
+      }
+      ```
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Render the feed messages</StepTitle>
+    <StepContent>
+
+      Now that we’ve defined the data shape, we can start using it.
+      Add [`useFeedMessages`](/docs/api-reference/liveblocks-react#useFeedMessages) to get
+      a list of feed messages, then loop through them to render their `data`.
+      Import the `newFeed` server action into a button to demo creating a new feed.
+
+      ```tsx file="app/RealtimeFeed.tsx"
+      "use client";
+
+      import { useState } from "react";
+      import { useFeedMessages, useRoom } from "@liveblocks/react/suspense";
+      import { newFeed } from "./actions";
+
+      export function RealtimeFeed() {
+        // +++
+        const { messages } = useFeedMessages(feedId);
+        // +++
+        const [feedId, setFeedId] = useState("my-feed-id");
+        const room = useRoom();
+
+        return (
+          <div>
+            // +++
+            {messages.map(({ id, data}) => (
+              <div key={id}>{data.role}: {data.content}</div>
+            ))}
+            // +++
+
+            <button onClick={() => {
+              // Create a new feed with a random ID
+              const newFeedId = crypto.randomUUID()
+              newFeed(room.id, newFeedId);
+              setFeedId(newFeedId);
+            }}>
+              New feed
+            </button>
+          </div>
+        );
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Create a Liveblocks room</StepTitle>
+    <StepContent>
+
+      Liveblocks uses the concept of rooms, separate virtual spaces where people
+      collaborate, and to create a realtime experience, multiple users must
+      be connected to the same room. When using Next.js’ `/app` router,
+      we recommend creating your room in a `Room.tsx` file in the same directory
+      as your current route.
+
+      Set up a Liveblocks client with
+      [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider),
+      join a room with [`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider),
+      and use [`ClientSideSuspense`](/docs/api-reference/liveblocks-react#ClientSideSuspense)
+      to add a loading spinner to your app.
+
+      ```tsx file="app/Room.tsx" highlight="12-18"
+      "use client";
+
+      import { ReactNode } from "react";
+      import {
+        LiveblocksProvider,
+        RoomProvider,
+        ClientSideSuspense,
+      } from "@liveblocks/react/suspense";
+
+      export function Room({ children }: { children: ReactNode }) {
+        return (
+          <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
+            <RoomProvider id="my-room-id">
+              <ClientSideSuspense fallback={<div>Loading…</div>}>
+                {children}
+              </ClientSideSuspense>
+            </RoomProvider>
+          </LiveblocksProvider>
+        );
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Add the room and feed to your page</StepTitle>
+    <StepContent>
+
+      After creating your room file, it’s time to join it. Import
+      your room into your `page.tsx` file, and place
+      your feed component inside it.
+
+      ```tsx file="app/page.tsx" highlight="6-8"
+      import { Room } from "./Room";
+      import { RealtimeFeed } from "./RealtimeFeed";
+
+      export default function Page() {
+        return (
+          <Room>
+            <RealtimeFeed />
+          </Room>
+        );
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Next: authenticate your users and add presence</StepTitle>
+    <StepContent>
+
+      Feeds is now set up and working! Each user in your app is still anonymous—the next step is to
+      authenticate each user as they connect, and optionally share their live presence in an avatar
+      stack, cursors, or custom UI.
+
+      <Button asChild className="not-markdown">
+        <a href="/docs/guides/how-to-add-users-to-liveblocks-presence-components">
+          Add your users to Comments
+        </a>
+      </Button>
+    </StepContent>
+
+  </Step>
+  <Step lastStep>
+
+    <StepTitle>Optional: read about creating agentic workflows</StepTitle>
+    <StepContent>
+
+      Liveblocks can be used to create agentic workflows, where AI agents can
+      collaborate with humans in realtime. This is a powerful way to build
+      collaborative applications with AI, and we’ve detailed various ways to create this.
+
+      <Button asChild className="not-markdown">
+        <a href="/docs/guides/enabling-agentic-workflows-with-liveblocks">
+          Enabling agentic workflows with Liveblocks
+        </a>
+      </Button>
+    </StepContent>
+
+  </Step>
+</Steps>
+
+## What to read next
+
+Congratulations! You’ve set up the foundation to start building a realtime feeds
+experience for your Next.js application.
+
+- [Overview](/docs/collaboration-features/ai-collaboration)
+- [API Reference](/docs/collaboration-features/ai-collaboration#API-Reference)
+- [Enabling agentic workflows with Liveblocks ](/docs/guides/enabling-agentic-workflows-with-liveblocks#ephemeral-presence)
+
+---
+
+## Examples using Feeds
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "AI Comments",
+      slug: "ai-comments",
+      image: "/images/examples/thumbnails/comments-ai.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+</ListGrid>

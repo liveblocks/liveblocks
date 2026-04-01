@@ -16,7 +16,7 @@
  */
 
 import type { DistributiveOmit } from "@liveblocks/core";
-import { nanoid, Permission, tryParseJson } from "@liveblocks/core";
+import { nanoid, tryParseJson } from "@liveblocks/core";
 import type { DecoderType } from "decoders";
 import {
   array,
@@ -31,6 +31,7 @@ import {
 } from "decoders";
 
 import { userInfo } from "./decoders";
+import { Permission } from "./permissions";
 
 const unsignedJwtHeader = object({
   alg: constant("none"),
