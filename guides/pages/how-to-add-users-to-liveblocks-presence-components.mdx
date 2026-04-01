@@ -162,10 +162,31 @@ to use
     </StepContent>
 
   </Step>
+  <Step>
+    <StepTitle>Render the presence components</StepTitle>
+    <StepContent>
+      Import the presence components in your app to see them. `Cursors` wraps 
+      around the component where the cursors will appear.
+
+      ```tsx
+      import { AvatarStack, Cursors } from "@liveblocks/react-ui";
+
+      function App() {
+        return (
+          <Cursors style={{ width: "100vw", height: "100vh" }}>
+            <AvatarStack />
+            {/* Rest of your app here */}
+          </Cursors>
+        );
+      }
+      ```
+    </StepContent>
+
+  </Step>
   <Step lastStep>
     <StepTitle>Users are now visible</StepTitle>
     <StepContent>
-      After adding this, you should now be able to see your users in threads!
+      After adding this, you should now be able to see your users in presence components!
 
       <Figure>
         <Image
