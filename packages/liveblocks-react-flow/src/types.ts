@@ -1,5 +1,4 @@
 import type {
-  Json,
   JsonScalar,
   LiveList,
   LiveMap,
@@ -51,15 +50,7 @@ type ToLsonProperty<V, S extends SyncMode> = undefined extends V
   ? ToLson<Exclude<V, undefined>, S> | undefined
   : ToLson<V, S>;
 
-type SyncedKeysFor<K, S extends SyncMode> = S extends SyncConfig
-  ? K extends keyof S
-    ? S[K] extends false
-      ? never
-      : K
-    : K
-  : K;
-
-type SyncModeFor<K, S extends SyncMode> = S extends SyncConfig
+type ResolveSyncMode<S extends SyncMode, K> = S extends SyncConfig
   ? K extends keyof S
     ? S[K] extends SyncMode
       ? S[K]
@@ -67,49 +58,33 @@ type SyncModeFor<K, S extends SyncMode> = S extends SyncConfig
     : true
   : S;
 
-type ToLson<T, S extends SyncMode = true> = [S] extends [false]
-  ? T
-  : [S] extends ["atomic"]
-    ? Json
-    : T extends JsonScalar
-      ? T
-      : T extends
-            | Date
-            | RegExp
-            | Function // eslint-disable-line @typescript-eslint/ban-types
-            | Promise<any>
-            | WeakMap<any, any>
-            | WeakSet<any>
-            | Map<any, any>
-            | Set<any>
-        ? never
-        : T extends ReadonlyArray<infer E>
-          ? LiveList<ToLson<E, S> & Lson>
-          : T extends object
-            ? LiveObject<
-                {
-                  [K in keyof T as SyncedKeysFor<K, S>]: ToLsonProperty<
-                    T[K],
-                    SyncModeFor<K, S>
-                  >;
-                } & LsonObject
-              >
-            : never;
+// prettier-ignore
+type ToLson<T, S extends SyncMode = true> = 
+  [S] extends [false] ? T | undefined :
+  [S] extends ["atomic"] ? T :
+  T extends JsonScalar ? T :
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  T extends Date | RegExp | Function | Promise<any> | WeakMap<any, any> | WeakSet<any> | Map<any, any> | Set<any> ? never :
+  T extends ReadonlyArray<infer E> ? ToLiveList<E, S> :
+  T extends object ? ToLiveObject<T, S> :
+  never;
 
-type ToLiveElement<
-  S extends SyncConfig,
-  B extends Node | Edge,
-  T extends B,
-  D,
-> = LiveObject<
+type ToLiveList<T, S extends SyncMode = true> = LiveList<ToLson<T, S> & Lson>;
+
+// prettier-ignore
+type ToLiveObject<T extends object, S extends SyncMode = true> =
+  { [K in keyof T]: ToLsonProperty<T[K], ResolveSyncMode<S, K>> }
+  & LsonObject extends infer O extends LsonObject ? LiveObject<O> : never;
+
+// prettier-ignore
+type ToLiveElement<S extends SyncConfig, B extends Node | Edge, T extends B, D> =
   {
-    [K in keyof B]: K extends keyof S
-      ? T[K & keyof T]
-      : K extends "data"
-        ? D
-        : ToLson<B[K]>;
-  } & LsonObject
->;
+    [K in keyof B]:
+      K extends keyof S ? T[K & keyof T] :
+      K extends "data" ? D :
+      ToLson<B[K]>;
+  }
+  & LsonObject extends infer O extends LsonObject ? LiveObject<O> : never;
 
 export type InternalLiveblocksNode = ToLiveElement<
   typeof NODE_BASE_CONFIG,
