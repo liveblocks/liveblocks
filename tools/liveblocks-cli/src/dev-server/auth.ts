@@ -15,13 +15,14 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { nanoid, Permission } from "@liveblocks/core";
+import { nanoid } from "@liveblocks/core";
 import type { CreateTicketOptions } from "@liveblocks/server";
 import { ProtocolVersion } from "@liveblocks/server";
 
 import * as Rooms from "./db/rooms";
 import type { LiteAccessToken, LiteIdToken, LiteToken } from "./lib/jwt-lite";
 import { verifyJwtLite } from "./lib/jwt-lite";
+import { Permission } from "./lib/permissions";
 
 function resolvePermissions_acc(
   token: LiteAccessToken,
@@ -150,7 +151,7 @@ export function authorizeWebSocket(
 
     // Auto-create the room if it doesn't exist yet
     Rooms.getOrCreateRoom(roomId, {
-      defaultAccesses: [Permission.Write],
+      defaultAccesses: [Permission.RoomWrite],
     });
 
     // Public key auth always grants write access (matches production behavior)
@@ -160,7 +161,7 @@ export function authorizeWebSocket(
       ticketData: {
         version,
         anonymousId: nanoid(),
-        scopes: [Permission.Write],
+        scopes: [Permission.RoomWrite],
       },
     };
   }

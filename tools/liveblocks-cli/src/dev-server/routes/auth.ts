@@ -15,14 +15,14 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Permission } from "@liveblocks/core";
 import { ZenRouter } from "@liveblocks/zenrouter";
 import { array, enum_, object, optional, record, string } from "decoders";
 
 import { authorizeSecretKey } from "~/dev-server/lib/auth";
 import { userInfo } from "~/dev-server/lib/decoders";
 import { createJwtLite } from "~/dev-server/lib/jwt-lite";
-// Valid permission values (from @liveblocks/core Permission enum)
+import { Permission } from "~/dev-server/lib/permissions";
+
 const permission = enum_(Permission);
 
 export const zen = new ZenRouter({
