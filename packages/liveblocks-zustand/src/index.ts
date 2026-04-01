@@ -155,6 +155,8 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
   type S = ExtractStorage<TRoom>;
 
   const { client, presenceMapping, storageMapping } = validateOptions(options);
+  const presenceKeys = Object.keys(presenceMapping);
+  const storageKeys = Object.keys(storageMapping);
   return (set, get, api) => {
     let maybeRoom: TRoom | null = null;
     let isPatching = false;
@@ -177,10 +179,7 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
         lastLeaveFn();
       }
 
-      const initialPresence = selectFields(
-        get(),
-        presenceMapping
-      ) as unknown as P;
+      const initialPresence = pick(get(), presenceKeys) as unknown as P;
 
       const { room, leave } = client.enterRoom(newRoomId, {
         engine: options?.engine,
@@ -207,12 +206,7 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
       unsubscribeCallbacks.push(
         room.events.myPresence.subscribe(() => {
           if (!isPatching) {
-            set(
-              selectFields(
-                room.getPresence(),
-                presenceMapping
-              ) as Partial<TState>
-            );
+            set(pick(room.getPresence(), presenceKeys) as Partial<TState>);
           }
         })
       );
@@ -363,16 +357,15 @@ function patchState<T>(
   return result;
 }
 
-function selectFields<TState>(
-  presence: TState,
-  mapping: Mapping<TState>
-): /* TODO: Actually, Pick<TState, keyof Mapping<TState>> ? */
-Partial<TState> {
-  const partialState = {} as Partial<TState>;
-  for (const key in mapping) {
-    partialState[key] = presence[key];
+function pick(
+  source: Record<string, unknown>,
+  keys: Iterable<string>
+): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const key of keys) {
+    result[key] = source[key];
   }
-  return partialState;
+  return result;
 }
 
 function updateLiveblocksContext<

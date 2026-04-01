@@ -85,6 +85,8 @@ const internalEnhancer = <TState>(options: {
   if (process.env.NODE_ENV !== "production") {
     validateNoDuplicateKeys(mapping, presenceMapping);
   }
+  const storageKeys = Object.keys(mapping);
+  const presenceKeys = Object.keys(presenceMapping);
 
   return (createStore: any) => {
     return (reducer: any, initialState: any, enhancer: any) => {
@@ -198,10 +200,7 @@ const internalEnhancer = <TState>(options: {
           lastLeaveFn();
         }
 
-        const initialPresence = selectFields(
-          store.getState(),
-          presenceMapping
-        ) as any;
+        const initialPresence = pick(store.getState(), presenceKeys) as any;
 
         const { room, leave } = client.enterRoom(newRoomId, {
           engine: options?.engine,
@@ -232,7 +231,7 @@ const internalEnhancer = <TState>(options: {
             if (!isPatching) {
               store.dispatch({
                 type: ACTION_TYPES.PATCH_REDUX_STATE,
-                state: selectFields(room.getPresence(), presenceMapping),
+                state: pick(room.getPresence(), presenceKeys),
               });
             }
           })
@@ -419,16 +418,15 @@ function validateNoDuplicateKeys<TState>(
   }
 }
 
-function selectFields<TState>(
-  presence: TState,
-  mapping: Mapping<TState>
-): /* TODO: Actually, Pick<TState, keyof Mapping<TState>> ? */
-Partial<TState> {
-  const partialState = {} as Partial<TState>;
-  for (const key in mapping) {
-    partialState[key] = presence[key];
+function pick(
+  source: Record<string, unknown>,
+  keys: Iterable<string>
+): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const key of keys) {
+    result[key] = source[key];
   }
-  return partialState;
+  return result;
 }
 
 function patchState<TState extends JsonObject>(
