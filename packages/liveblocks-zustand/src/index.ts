@@ -243,15 +243,11 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
 
         storageRoot = root as LiveObject<S>;
         unsubscribeCallbacks.push(
-          room.subscribe(
-            root,
-            (updates) => {
-              if (!isPatching) {
-                set(patchState(get(), updates, storageMapping));
-              }
-            },
-            { isDeep: true }
-          )
+          room.events.storageBatch.subscribe((updates) => {
+            if (!isPatching) {
+              set(patchState(get(), updates, storageMapping));
+            }
+          })
         );
 
         // set isLoading storage to false once storage is loaded

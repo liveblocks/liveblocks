@@ -269,22 +269,14 @@ const internalEnhancer = <TState>(options: {
 
           storageRoot = root;
           unsubscribeCallbacks.push(
-            maybeRoom!.subscribe(
-              root,
-              (updates) => {
-                if (!isPatching) {
-                  store.dispatch({
-                    type: ACTION_TYPES.PATCH_REDUX_STATE,
-                    state: patchState(
-                      store.getState(),
-                      updates,
-                      mapping as any
-                    ),
-                  });
-                }
-              },
-              { isDeep: true }
-            )
+            maybeRoom!.events.storageBatch.subscribe((updates) => {
+              if (!isPatching) {
+                store.dispatch({
+                  type: ACTION_TYPES.PATCH_REDUX_STATE,
+                  state: patchState(store.getState(), updates, mapping as any),
+                });
+              }
+            })
           );
         });
 
