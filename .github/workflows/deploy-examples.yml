@@ -42,6 +42,9 @@ jobs:
           echo Triggering deployment for nextjs-blocknote
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_3XoFyLmK5Gtx5twKRTGWFV0jcaUo/1u7c9EF5UX; echo
 
+          echo Triggering deployment for nextjs-chat-sdk-bot
+          curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_a4iBQG1ShzA12DyRjkpoI0U9tBSv/9ZYEH7EaZN; echo
+
           echo Triggering deployment for nextjs-comments
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_n44ypzbdWsirLcq3ZSSJ1wLoCAjQ/QWFQY2wKrB; echo
 
