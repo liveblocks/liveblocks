@@ -9,6 +9,7 @@ export enum Permission {
   PresenceWrite = "room:presence:write",
   CommentsWrite = "comments:write",
   CommentsRead = "comments:read",
+  FeedsWrite = "feeds:write",
 }
 
 export type LiveblocksPermissions = Record<string, Permission[]>;

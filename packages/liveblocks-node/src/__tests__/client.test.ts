@@ -1,6 +1,8 @@
 import type {
   CommentData,
   CommentUserReaction,
+  Feed,
+  FeedMessage,
   NotificationSettingsPlain,
   RoomSubscriptionSettings,
   StorageNode,
@@ -687,7 +689,7 @@ describe("client", () => {
             avatar: "https://example.com/avatar.png",
           },
           ttl: 60,
-        }),
+        })
       ).resolves.toBeUndefined();
     });
 
@@ -699,7 +701,7 @@ describe("client", () => {
           userId: "agent-ai",
           data: { status: "active" },
           userInfo: { name: "AI Assistant" },
-        }),
+        })
       ).resolves.toBeUndefined();
     });
 
@@ -708,9 +710,9 @@ describe("client", () => {
         http.post(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/presence`, () => {
           return HttpResponse.json(
             { error: "INVALID_REQUEST", message: "Invalid presence data" },
-            { status: 422 },
+            { status: 422 }
           );
-        }),
+        })
       );
 
       const client = new Liveblocks({ secret: "sk_xxx" });
@@ -4772,6 +4774,340 @@ describe("client", () => {
             expect(err.message).toBe("Knowledge source not found");
           }
         }
+      });
+    });
+
+    describe("feeds", () => {
+      const feed: Feed = {
+        feedId: "feed_123",
+        metadata: { key: "value" },
+        createdAt: 1234567890,
+        updatedAt: 1234567890,
+      };
+
+      const feedMessage: FeedMessage = {
+        id: "msg_123",
+        createdAt: 1234567890,
+        updatedAt: 1234567890,
+        data: { content: "Hello" },
+      };
+
+      describe("getFeeds", () => {
+        test("should return a list of feeds", async () => {
+          server.use(
+            http.get(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds`, () => {
+              return HttpResponse.json({ data: [feed] }, { status: 200 });
+            })
+          );
+
+          const client = new Liveblocks({ secret: "sk_xxx" });
+          await expect(
+            client.getFeeds({ roomId: "room_123" })
+          ).resolves.toEqual({ data: [feed] });
+        });
+
+        test("should throw a LiveblocksError on error response", async () => {
+          server.use(
+            http.get(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds`, () => {
+              return HttpResponse.json(
+                { message: "Room not found" },
+                { status: 404 }
+              );
+            })
+          );
+
+          const client = new Liveblocks({ secret: "sk_xxx" });
+          try {
+            await client.getFeeds({ roomId: "nonexistent" });
+            expect(true).toBe(false);
+          } catch (err) {
+            expect(err instanceof LiveblocksError).toBe(true);
+            if (err instanceof LiveblocksError) {
+              expect(err.status).toBe(404);
+            }
+          }
+        });
+      });
+
+      describe("createFeed", () => {
+        test("should create a feed", async () => {
+          server.use(
+            http.post(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds`, () => {
+              return HttpResponse.json(feed, { status: 200 });
+            })
+          );
+
+          const client = new Liveblocks({ secret: "sk_xxx" });
+          await expect(
+            client.createFeed({
+              roomId: "room_123",
+              feedId: "feed_123",
+              metadata: { key: "value" },
+            })
+          ).resolves.toEqual(feed);
+        });
+
+        test("should create a feed without metadata", async () => {
+          server.use(
+            http.post(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds`, () => {
+              return HttpResponse.json(feed, { status: 200 });
+            })
+          );
+
+          const client = new Liveblocks({ secret: "sk_xxx" });
+          await expect(
+            client.createFeed({
+              roomId: "room_123",
+              feedId: "feed_123",
+            })
+          ).resolves.toEqual(feed);
+        });
+
+        test("should send createdAt as timestamp in the request body", async () => {
+          server.use(
+            http.post(
+              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds`,
+              async ({ request }) => {
+                expect(await request.json()).toEqual({
+                  feedId: "feed_123",
+                  metadata: { key: "value" },
+                  timestamp: 99_000,
+                });
+                return HttpResponse.json(feed, { status: 200 });
+              }
+            )
+          );
+
+          const client = new Liveblocks({ secret: "sk_xxx" });
+          await client.createFeed({
+            roomId: "room_123",
+            feedId: "feed_123",
+            metadata: { key: "value" },
+            createdAt: 99_000,
+          });
+        });
+      });
+
+      describe("getFeed", () => {
+        test("should return a feed", async () => {
+          server.use(
+            http.get(
+              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds/:feedId`,
+              () => {
+                return HttpResponse.json(feed, { status: 200 });
+              }
+            )
+          );
+
+          const client = new Liveblocks({ secret: "sk_xxx" });
+          await expect(
+            client.getFeed({
+              roomId: "room_123",
+              feedId: "feed_123",
+            })
+          ).resolves.toEqual(feed);
+        });
+      });
+
+      describe("updateFeed", () => {
+        test("should update feed metadata and return the updated feed", async () => {
+          const updatedFeed = {
+            ...feed,
+            metadata: { updated: "metadata" },
+          };
+          server.use(
+            http.patch(
+              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds/:feedId`,
+              () => {
+                return HttpResponse.json(updatedFeed, { status: 200 });
+              }
+            )
+          );
+
+          const client = new Liveblocks({ secret: "sk_xxx" });
+          await expect(
+            client.updateFeed({
+              roomId: "room_123",
+              feedId: "feed_123",
+              metadata: { updated: "metadata" },
+            })
+          ).resolves.toEqual(updatedFeed);
+        });
+      });
+
+      describe("deleteFeed", () => {
+        test("should delete a feed", async () => {
+          server.use(
+            http.delete(
+              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds/:feedId`,
+              () => {
+                return new HttpResponse(null, { status: 204 });
+              }
+            )
+          );
+
+          const client = new Liveblocks({ secret: "sk_xxx" });
+          await expect(
+            client.deleteFeed({
+              roomId: "room_123",
+              feedId: "feed_123",
+            })
+          ).resolves.toBeUndefined();
+        });
+      });
+
+      describe("getFeedMessages", () => {
+        test("should return a list of feed messages", async () => {
+          server.use(
+            http.get(
+              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds/:feedId/messages`,
+              () => {
+                return HttpResponse.json(
+                  { data: [feedMessage] },
+                  { status: 200 }
+                );
+              }
+            )
+          );
+
+          const client = new Liveblocks({ secret: "sk_xxx" });
+          await expect(
+            client.getFeedMessages({
+              roomId: "room_123",
+              feedId: "feed_123",
+            })
+          ).resolves.toEqual({ data: [feedMessage] });
+        });
+      });
+
+      describe("createFeedMessage", () => {
+        test("should create a feed message", async () => {
+          server.use(
+            http.post(
+              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds/:feedId/messages`,
+              () => {
+                return HttpResponse.json(feedMessage, { status: 200 });
+              }
+            )
+          );
+
+          const client = new Liveblocks({ secret: "sk_xxx" });
+          await expect(
+            client.createFeedMessage({
+              roomId: "room_123",
+              feedId: "feed_123",
+              data: { content: "Hello" },
+            })
+          ).resolves.toEqual(feedMessage);
+        });
+
+        test("should create a feed message with id and createdAt", async () => {
+          server.use(
+            http.post(
+              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds/:feedId/messages`,
+              async ({ request }) => {
+                expect(await request.json()).toEqual({
+                  data: { content: "Hello" },
+                  id: "msg_123",
+                  timestamp: 1234567890,
+                });
+                return HttpResponse.json(feedMessage, { status: 200 });
+              }
+            )
+          );
+
+          const client = new Liveblocks({ secret: "sk_xxx" });
+          await expect(
+            client.createFeedMessage({
+              roomId: "room_123",
+              feedId: "feed_123",
+              id: "msg_123",
+              createdAt: 1234567890,
+              data: { content: "Hello" },
+            })
+          ).resolves.toEqual(feedMessage);
+        });
+      });
+
+      describe("updateFeedMessage", () => {
+        test("should update a feed message and return the updated message", async () => {
+          const updatedMessage = {
+            ...feedMessage,
+            data: { content: "Updated" },
+            updatedAt: 1234567891,
+          };
+          server.use(
+            http.patch(
+              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds/:feedId/messages/:messageId`,
+              () => {
+                return HttpResponse.json(updatedMessage, { status: 200 });
+              }
+            )
+          );
+
+          const client = new Liveblocks({ secret: "sk_xxx" });
+          await expect(
+            client.updateFeedMessage({
+              roomId: "room_123",
+              feedId: "feed_123",
+              messageId: "msg_123",
+              data: { content: "Updated" },
+            })
+          ).resolves.toEqual(updatedMessage);
+        });
+
+        test("should send updatedAt as timestamp in the request body", async () => {
+          const updatedMessage = {
+            ...feedMessage,
+            data: { content: "Updated" },
+            updatedAt: 42_000,
+          };
+          server.use(
+            http.patch(
+              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds/:feedId/messages/:messageId`,
+              async ({ request }) => {
+                expect(await request.json()).toEqual({
+                  data: { content: "Updated" },
+                  timestamp: 42_000,
+                });
+                return HttpResponse.json(updatedMessage, { status: 200 });
+              }
+            )
+          );
+
+          const client = new Liveblocks({ secret: "sk_xxx" });
+          await expect(
+            client.updateFeedMessage({
+              roomId: "room_123",
+              feedId: "feed_123",
+              messageId: "msg_123",
+              data: { content: "Updated" },
+              updatedAt: 42_000,
+            })
+          ).resolves.toEqual(updatedMessage);
+        });
+      });
+
+      describe("deleteFeedMessage", () => {
+        test("should delete a feed message", async () => {
+          server.use(
+            http.delete(
+              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds/:feedId/messages/:messageId`,
+              () => {
+                return new HttpResponse(null, { status: 204 });
+              }
+            )
+          );
+
+          const client = new Liveblocks({ secret: "sk_xxx" });
+          await expect(
+            client.deleteFeedMessage({
+              roomId: "room_123",
+              feedId: "feed_123",
+              messageId: "msg_123",
+            })
+          ).resolves.toBeUndefined();
+        });
       });
     });
   });

@@ -69,7 +69,7 @@ describe("authorization (new API)", () => {
     expect(
       session.allow("xyz", session.FULL_ACCESS).serializePermissions()
     ).toEqual({
-      xyz: ["room:write", "comments:write"],
+      xyz: ["room:write"],
     });
   });
 

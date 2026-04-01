@@ -1788,6 +1788,10 @@
       black calc(var(--lb-avatar-stack-mask-size) + 0.375px)
     );
   }
+
+  &:where(:last-child) {
+    margin-inline-end: 0;
+  }
 }
 
 /*************************************

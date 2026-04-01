@@ -22,6 +22,8 @@ const ALLOW_DIFFERENT_JSDOCS = [
   "useRoomInfo",
   "useSelf",
   "useThreads",
+  "useFeeds",
+  "useFeedMessages",
   "useUnreadInboxNotificationsCount",
   "useUser",
   "useGroupInfo",

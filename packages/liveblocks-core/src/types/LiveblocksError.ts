@@ -20,6 +20,14 @@ type LargeMessageErrorContext = {
   type: "LARGE_MESSAGE_ERROR";
 };
 
+type FeedRequestErrorContext = {
+  type: "FEED_REQUEST_ERROR";
+  roomId: string;
+  requestId: string;
+  code: string;
+  reason?: string;
+};
+
 // All possible errors originating from using Comments or Notifications
 type CommentsOrNotificationsErrorContext =
   | {
@@ -106,6 +114,7 @@ export type LiveblocksErrorContext = Relax<
   | CommentsOrNotificationsErrorContext // from Comments or Notifications or UserNotificationSettings
   | AiConnectionErrorContext // from AI
   | LargeMessageErrorContext // whena  message is too large
+  | FeedRequestErrorContext // feed WebSocket mutations
 >;
 
 export class LiveblocksError extends Error {
@@ -182,6 +191,9 @@ function defaultMessageFromContext(context: LiveblocksErrorContext): string {
     case "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR": return "Could not update room subscription settings";
     case "UPDATE_NOTIFICATION_SETTINGS_ERROR": return "Could not update notification settings";
     case "LARGE_MESSAGE_ERROR": return "Could not send large message";
+
+    case "FEED_REQUEST_ERROR":
+      return context.reason ?? "Feed request failed";
 
     default:
       return assertNever(context, "Unhandled case");

@@ -43,6 +43,10 @@ from .create_ai_copilot_options_google import CreateAiCopilotOptionsGoogle
 from .create_ai_copilot_options_open_ai import CreateAiCopilotOptionsOpenAi
 from .create_ai_copilot_options_open_ai_compatible import CreateAiCopilotOptionsOpenAiCompatible
 from .create_comment_request_body import CreateCommentRequestBody
+from .create_feed_message_request_body import CreateFeedMessageRequestBody
+from .create_feed_message_request_body_data import CreateFeedMessageRequestBodyData
+from .create_feed_request_body import CreateFeedRequestBody
+from .create_feed_request_body_metadata import CreateFeedRequestBodyMetadata
 from .create_file_knowledge_source_response import CreateFileKnowledgeSourceResponse
 from .create_group_request_body import CreateGroupRequestBody
 from .create_group_request_body_scopes import CreateGroupRequestBodyScopes
@@ -61,7 +65,13 @@ from .edit_comment_request_body import EditCommentRequestBody
 from .edit_thread_metadata_request_body import EditThreadMetadataRequestBody
 from .edit_thread_metadata_request_body_metadata import EditThreadMetadataRequestBodyMetadata
 from .error import Error
+from .feed import Feed
+from .feed_message import FeedMessage
+from .feed_message_data import FeedMessageData
+from .feed_metadata import FeedMetadata
 from .get_ai_copilots_response import GetAiCopilotsResponse
+from .get_feed_messages_response import GetFeedMessagesResponse
+from .get_feeds_response import GetFeedsResponse
 from .get_file_knowledge_source_markdown_response import GetFileKnowledgeSourceMarkdownResponse
 from .get_groups_response import GetGroupsResponse
 from .get_inbox_notifications_response import GetInboxNotificationsResponse
@@ -140,6 +150,10 @@ from .trigger_inbox_notification_request_body_activity_data import TriggerInboxN
 from .unsubscribe_from_thread_request_body import UnsubscribeFromThreadRequestBody
 from .update_ai_copilot_request_body import UpdateAiCopilotRequestBody
 from .update_ai_copilot_request_body_provider import UpdateAiCopilotRequestBodyProvider
+from .update_feed_message_request_body import UpdateFeedMessageRequestBody
+from .update_feed_message_request_body_data import UpdateFeedMessageRequestBodyData
+from .update_feed_request_body import UpdateFeedRequestBody
+from .update_feed_request_body_metadata import UpdateFeedRequestBodyMetadata
 from .update_notification_settings_request_body import UpdateNotificationSettingsRequestBody
 from .update_room_id_request_body import UpdateRoomIdRequestBody
 from .update_room_organization_id_request_body import UpdateRoomOrganizationIdRequestBody
@@ -207,6 +221,10 @@ __all__ = (
     "CreateAiCopilotOptionsOpenAi",
     "CreateAiCopilotOptionsOpenAiCompatible",
     "CreateCommentRequestBody",
+    "CreateFeedMessageRequestBody",
+    "CreateFeedMessageRequestBodyData",
+    "CreateFeedRequestBody",
+    "CreateFeedRequestBodyMetadata",
     "CreateFileKnowledgeSourceResponse",
     "CreateGroupRequestBody",
     "CreateGroupRequestBodyScopes",
@@ -225,7 +243,13 @@ __all__ = (
     "EditThreadMetadataRequestBody",
     "EditThreadMetadataRequestBodyMetadata",
     "Error",
+    "Feed",
+    "FeedMessage",
+    "FeedMessageData",
+    "FeedMetadata",
     "GetAiCopilotsResponse",
+    "GetFeedMessagesResponse",
+    "GetFeedsResponse",
     "GetFileKnowledgeSourceMarkdownResponse",
     "GetGroupsResponse",
     "GetInboxNotificationsResponse",
@@ -304,6 +328,10 @@ __all__ = (
     "UnsubscribeFromThreadRequestBody",
     "UpdateAiCopilotRequestBody",
     "UpdateAiCopilotRequestBodyProvider",
+    "UpdateFeedMessageRequestBody",
+    "UpdateFeedMessageRequestBodyData",
+    "UpdateFeedRequestBody",
+    "UpdateFeedRequestBodyMetadata",
     "UpdateNotificationSettingsRequestBody",
     "UpdateRoomIdRequestBody",
     "UpdateRoomOrganizationIdRequestBody",

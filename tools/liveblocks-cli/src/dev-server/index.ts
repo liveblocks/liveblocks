@@ -17,6 +17,7 @@
 
 import {
   Promise_withResolvers,
+  tryParseJson,
   WebsocketCloseCodes as CloseCode,
 } from "@liveblocks/core";
 import type { Millis, Room, SessionKey, Ticket } from "@liveblocks/server";
@@ -111,6 +112,14 @@ function shellCmd(cmd: string): string[] {
     : ["sh", "-c", cmd];
 }
 
+/**
+ * Escapes a string for safe inclusion in a shell command.
+ * Wraps in single quotes, escaping any existing single quotes.
+ */
+function shellEscape(arg: string): string {
+  return "'" + arg.replace(/'/g, "'\\''") + "'";
+}
+
 type Options = {
   port: string;
   host?: string;
@@ -125,15 +134,33 @@ const dev: SubCommand = {
   description: "Start the local Liveblocks dev server",
 
   async run(argv) {
-    const { options } = parseArgs<Options>(argv, {
-      port: { type: "string", short: "p", default: DEFAULT_PORT.toString() },
-      host: { type: "string" },
-      cmd: { type: "string", short: "c" },
-      help: { type: "boolean", short: "h", default: false },
-      "no-check": { type: "boolean", default: false },
-      ci: { type: "boolean", default: false },
-      verbose: { type: "boolean", short: "v", default: false },
-    });
+    const { options, args } = parseArgs<Options>(
+      argv,
+      {
+        port: { type: "string", short: "p", default: DEFAULT_PORT.toString() },
+        host: { type: "string" },
+        cmd: { type: "string", short: "c" },
+        help: { type: "boolean", short: "h", default: false },
+        "no-check": { type: "boolean", default: false },
+        ci: { type: "boolean", default: false },
+        verbose: { type: "boolean", short: "v", default: false },
+      },
+      { allowPositionals: true }
+    );
+
+    if (args.length > 0 && !options.cmd) {
+      console.error(red("Extra arguments are only supported with --cmd (-c)"));
+      process.exit(1);
+    }
+
+    if (args.length > 0 && options.cmd) {
+      const escaped = args.map(shellEscape).join(" ");
+      if (options.cmd.includes("{}")) {
+        options.cmd = options.cmd.replaceAll("{}", escaped);
+      } else {
+        options.cmd += " " + escaped;
+      }
+    }
 
     if (options.help) {
       console.log("Usage: liveblocks dev [options]");
@@ -145,6 +172,8 @@ const dev: SubCommand = {
       console.log("  --host          Host to bind to (default: localhost)");
       console.log("  --cmd, -c       Run a one-off command against a fresh server instance, then"); // prettier-ignore
       console.log("                    shut down. Does not affect your local data in .liveblocks/."); // prettier-ignore
+      console.log("                    Extra args are appended to the command, or replace {} if"); // prettier-ignore
+      console.log("                    present. Use -- before args starting with -."); // prettier-ignore
       console.log("  --ci            Start a fresh server instance on every boot, ideal for CI"); // prettier-ignore
       console.log("  --no-check      Skip project setup check on start");
       console.log("  --verbose, -v   Show verbose output");
@@ -186,6 +215,7 @@ const dev: SubCommand = {
     }
 
     let server: Bun.Server<SocketData>;
+    let verbose = false;
 
     function createServer() {
       return Bun.serve<SocketData>({
@@ -253,6 +283,17 @@ const dev: SubCommand = {
           // Defer all other routing to ZenRouter
           // TODO: Maybe port this logging to ZenRouter natively
           const route = `${req.method} ${url.pathname}`;
+
+          // In verbose mode, clone the request so we can read its body
+          let reqBody: string | undefined;
+          if (verbose) {
+            try {
+              reqBody = await req.clone().text();
+            } catch {
+              // Ignore - body may not be readable
+            }
+          }
+
           const resp = await zen.fetch(req);
           const status = resp.status;
           const colorStatus =
@@ -264,6 +305,21 @@ const dev: SubCommand = {
           console.log(`${colorStatus} ${route}`);
           const warnMsg = resp.headers.get("X-LB-Warn") ?? undefined;
           warn(warnMsg, !resp.ok);
+
+          if (verbose) {
+            if (reqBody) {
+              const parsed = tryParseJson(reqBody);
+              if (parsed !== undefined) {
+                console.log(dim(`  → ${JSON.stringify(parsed)}`));
+              }
+            }
+            const respBody = await resp.clone().text();
+            const parsedResp = tryParseJson(respBody);
+            if (parsedResp !== undefined) {
+              console.log(dim(`  ← ${JSON.stringify(parsedResp)}`));
+            }
+          }
+
           return resp;
         },
 
@@ -435,7 +491,9 @@ const dev: SubCommand = {
         bold("!") +
         dim(" crash, ") +
         bold("c") +
-        dim(" clear");
+        dim(" clear, ") +
+        bold("v") +
+        dim(verbose ? " verbose (on)" : " verbose");
 
       const switchToLogs = (): void => {
         if (repaintTimer) {
@@ -684,6 +742,15 @@ const dev: SubCommand = {
           originalLog(renderTabBar());
           originalLog(logsLegend());
           originalLog();
+        } else if (ch === "v") {
+          verbose = !verbose;
+          // Repaint tab bar + legend in-place to reflect new state
+          process.stdout.write("\x1B[s\x1B[H\x1B[2K");
+          originalLog(renderTabBar());
+          process.stdout.write("\x1B[2K");
+          originalLog(logsLegend());
+          process.stdout.write("\x1B[u");
+          console.log(dim(verbose ? "Verbose mode on" : "Verbose mode off"));
         } else if (ch === "p") {
           if (configIssues.length > 0) {
             const prompt = buildFixPrompt(configIssues, baseUrl);
