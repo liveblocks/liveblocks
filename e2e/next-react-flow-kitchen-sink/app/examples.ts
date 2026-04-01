@@ -15,10 +15,6 @@ export const EXAMPLES = {
     label: "Custom nodes",
     roomId: "liveblocks:examples:next-react-flow-kitchen-sink:custom-nodes",
   },
-  flowchart: {
-    label: "Flowchart",
-    roomId: "liveblocks:examples:next-react-flow-kitchen-sink:flowchart",
-  },
   "deep-conflict-resolution": {
     label: "Deep conflict resolution",
     roomId:

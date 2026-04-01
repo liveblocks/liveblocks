@@ -1,27 +1,3 @@
-import { nanoid } from "nanoid";
-
-const AI_AGENT_ID_PREFIX = "#agent";
-
-export function isAgentUserId(userId: string): boolean {
-  return userId.startsWith(AI_AGENT_ID_PREFIX);
-}
-
-export function getAgentUserInfo(
-  userId: string
-): Liveblocks["UserMeta"]["info"] {
-  return {
-    name: "AI Agent",
-    color: "#555",
-    avatar: `https://liveblocks.io/api/avatar?u=${encodeURIComponent(userId)}&agent=true`,
-  };
-}
-
-export function createAgentUser(): Liveblocks["UserMeta"] {
-  const id = `${AI_AGENT_ID_PREFIX}:${nanoid(10)}`;
-
-  return { id, info: getAgentUserInfo(id) };
-}
-
 export const USERS: Liveblocks["UserMeta"][] = [
   {
     id: "user-0",

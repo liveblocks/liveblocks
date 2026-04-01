@@ -1,4 +1,4 @@
-import { USERS, isAgentUserId, getAgentUserInfo } from "@/database";
+import { USERS } from "@/database";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -13,12 +13,8 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.json(
-    userIds.map((userId) => {
-      if (isAgentUserId(userId)) {
-        return getAgentUserInfo(userId);
-      }
-
-      return USERS.find((u) => u.id === userId)?.info ?? null;
-    })
+    userIds.map(
+      (userId) => USERS.find((u) => u.id === userId)?.info ?? null
+    )
   );
 }
