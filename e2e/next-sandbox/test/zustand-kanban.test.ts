@@ -4,6 +4,7 @@ import { expect, test } from "@playwright/test";
 import {
   genRoomId,
   nanoSleep,
+  preparePage,
   preparePages,
   waitForJson,
   waitUntilEqualOnAllPages,
@@ -518,5 +519,85 @@ test.describe("Zustand Kanban", () => {
 
     await page1.click("#clear");
     await waitForJson(pages, "#numCards", 0);
+  });
+
+  test("render counts: editing one card only re-renders that card and its column", async () => {
+    // This test opens page2 AFTER page1 populates, so all render counts
+    // on page2 start at 1 (initial render only).
+    const [page1] = pages;
+    const room = new URL(page1.url()).searchParams.get("room")!;
+
+    await page1.click("#clear");
+    await waitForJson(page1, "#numCards", 0);
+
+    await page1.click("#populate");
+    await waitUntilFlushed();
+    await waitForJson(page1, "#numCards", 7);
+
+    // Open page2 after storage is populated
+    const page2 = await preparePage(
+      `${TEST_URL}?room=${encodeURIComponent(room)}`
+    );
+
+    await waitForJson(page2, "#numCards", 7);
+    await waitUntilEqualOnAllPages([page1, page2], "#columns");
+
+    // Collect all card IDs and their render counts on page2 — all should be 1
+    const allCards = page2.locator("[data-card-id]");
+    const cardCount = await allCards.count();
+    for (let i = 0; i < cardCount; i++) {
+      const cardId = await allCards.nth(i).getAttribute("data-card-id");
+      await expect(page2.getByTestId(`card-renders-${cardId}`)).toHaveText("1");
+    }
+    for (const colId of ["todo", "in-progress", "done"]) {
+      await expect(page2.getByTestId(`column-renders-${colId}`)).toHaveText("1");
+    }
+
+    // Get the middle card in the "in-progress" column (which has 2 cards)
+    const inProgressCards = page2
+      .getByTestId("column-in-progress")
+      .locator("[data-card-id]");
+    const middleCard = inProgressCards.first();
+    const editedCardId = await middleCard.getAttribute("data-card-id");
+
+    // Edit that card's title 3 times from page1
+    const titleInput = page1.getByTestId(`card-title-${editedCardId}`);
+    await titleInput.fill("edit 1");
+    await waitUntilFlushed();
+    await waitUntilEqualOnAllPages([page1, page2], "#columns");
+
+    await titleInput.fill("edit 2");
+    await waitUntilFlushed();
+    await waitUntilEqualOnAllPages([page1, page2], "#columns");
+
+    await titleInput.fill("edit 3");
+    await waitUntilFlushed();
+    await waitUntilEqualOnAllPages([page1, page2], "#columns");
+
+    // On page2: only the edited card and its column should have render count > 1
+    // All other cards and columns should still be at 1
+    for (let i = 0; i < cardCount; i++) {
+      const cardId = await page2.locator("[data-card-id]").nth(i).getAttribute("data-card-id");
+      const renders = await page2.getByTestId(`card-renders-${cardId}`).innerText();
+      if (cardId === editedCardId) {
+        expect(Number(renders)).toBeGreaterThan(1);
+      } else {
+        expect(renders).toBe("1");
+      }
+    }
+
+    // Only the in-progress column should have re-rendered
+    for (const colId of ["todo", "in-progress", "done"]) {
+      const renders = await page2.getByTestId(`column-renders-${colId}`).innerText();
+      if (colId === "in-progress") {
+        expect(Number(renders)).toBeGreaterThan(1);
+      } else {
+        expect(renders).toBe("1");
+      }
+    }
+
+    await page2.close();
+    await page1.click("#clear");
+    await waitForJson(page1, "#numCards", 0);
   });
 });
