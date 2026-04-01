@@ -26,7 +26,7 @@ test.describe("Zustand Kanban", () => {
   test.afterEach(() => Promise.all(pages.map((page) => page.close())));
 
   test("populate syncs across clients", async () => {
-    const [page1, page2] = pages;
+    const [page1] = pages;
 
     await page1.click("#clear");
     await waitForJson(pages, "#numCards", 0);
@@ -147,7 +147,9 @@ test.describe("Zustand Kanban", () => {
     const cardId = await card.getAttribute("data-card-id");
 
     // Move to "in-progress" from page1
-    await page1.getByTestId(`card-status-${cardId}`).selectOption("in-progress");
+    await page1
+      .getByTestId(`card-status-${cardId}`)
+      .selectOption("in-progress");
     await waitUntilFlushed();
     await waitUntilEqualOnAllPages(pages, "#columns");
 
@@ -180,7 +182,7 @@ test.describe("Zustand Kanban", () => {
   });
 
   test("undo and redo sync across clients", async () => {
-    const [page1, page2] = pages;
+    const [page1] = pages;
 
     await page1.click("#clear");
     await waitForJson(pages, "#numCards", 0);
@@ -283,9 +285,7 @@ test.describe("Zustand Kanban", () => {
     for (let i = 0; i < 3; i++) {
       await page1.getByTestId("add-card-todo").click();
 
-      const cards = page2
-        .getByTestId("column-done")
-        .locator("[data-card-id]");
+      const cards = page2.getByTestId("column-done").locator("[data-card-id]");
       const count = await cards.count();
       if (count > 0) {
         const cardId = await cards.first().getAttribute("data-card-id");
@@ -319,7 +319,9 @@ test.describe("Zustand Kanban", () => {
     const cardId = await card.getAttribute("data-card-id");
 
     // Both clients move the same card to different columns simultaneously
-    await page1.getByTestId(`card-status-${cardId}`).selectOption("in-progress");
+    await page1
+      .getByTestId(`card-status-${cardId}`)
+      .selectOption("in-progress");
     await page2.getByTestId(`card-status-${cardId}`).selectOption("done");
 
     await waitForJson(pages, "#syncStatus", "synchronized");
@@ -550,7 +552,9 @@ test.describe("Zustand Kanban", () => {
       await expect(page2.getByTestId(`card-renders-${cardId}`)).toHaveText("1");
     }
     for (const colId of ["todo", "in-progress", "done"]) {
-      await expect(page2.getByTestId(`column-renders-${colId}`)).toHaveText("1");
+      await expect(page2.getByTestId(`column-renders-${colId}`)).toHaveText(
+        "1"
+      );
     }
 
     // Get the middle card in the "in-progress" column (which has 2 cards)
@@ -577,8 +581,13 @@ test.describe("Zustand Kanban", () => {
     // On page2: only the edited card and its column should have render count > 1
     // All other cards and columns should still be at 1
     for (let i = 0; i < cardCount; i++) {
-      const cardId = await page2.locator("[data-card-id]").nth(i).getAttribute("data-card-id");
-      const renders = await page2.getByTestId(`card-renders-${cardId}`).innerText();
+      const cardId = await page2
+        .locator("[data-card-id]")
+        .nth(i)
+        .getAttribute("data-card-id");
+      const renders = await page2
+        .getByTestId(`card-renders-${cardId}`)
+        .innerText();
       if (cardId === editedCardId) {
         expect(Number(renders)).toBeGreaterThan(1);
       } else {
@@ -588,7 +597,9 @@ test.describe("Zustand Kanban", () => {
 
     // Only the in-progress column should have re-rendered
     for (const colId of ["todo", "in-progress", "done"]) {
-      const renders = await page2.getByTestId(`column-renders-${colId}`).innerText();
+      const renders = await page2
+        .getByTestId(`column-renders-${colId}`)
+        .innerText();
       if (colId === "in-progress") {
         expect(Number(renders)).toBeGreaterThan(1);
       } else {

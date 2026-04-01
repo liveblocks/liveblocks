@@ -18,18 +18,23 @@ type Card = {
   title: string;
 };
 
-const COLUMNS: { id: ColumnId; label: string }[] = [
+type Column = {
+  id: ColumnId;
+  label: string;
+};
+
+type Columns = Record<ColumnId, Card[]>;
+
+const COLUMNS: Column[] = [
   { id: "todo", label: "To Do" },
   { id: "in-progress", label: "In Progress" },
   { id: "done", label: "Done" },
 ];
 
-type Columns = Record<ColumnId, Card[]>;
-
 const EMPTY_COLUMNS: Columns = {
-  "todo": [],
+  todo: [],
   "in-progress": [],
-  "done": [],
+  done: [],
 };
 
 type State = {
@@ -51,7 +56,10 @@ type State = {
   populate: () => void;
 };
 
-function findCardColumn(columns: Columns, cardId: string): ColumnId | undefined {
+function findCardColumn(
+  columns: Columns,
+  cardId: string
+): ColumnId | undefined {
   for (const [colId, cards] of Object.entries(columns)) {
     if (cards.some((c) => c.id === cardId)) return colId as ColumnId;
   }
@@ -146,7 +154,7 @@ const useStore = create<WithLiveblocks<State, Presence, never, never, never>>()(
       populate: () =>
         set({
           columns: {
-            "todo": [
+            todo: [
               { id: nanoid(), title: "🎨 Create landing page" },
               { id: nanoid(), title: "🔐 Add authentication" },
               { id: nanoid(), title: "🚀 Deploy to production" },
@@ -155,7 +163,7 @@ const useStore = create<WithLiveblocks<State, Presence, never, never, never>>()(
               { id: nanoid(), title: "⚡ Build API endpoints" },
               { id: nanoid(), title: "🧪 Write unit tests" },
             ],
-            "done": [
+            done: [
               { id: nanoid(), title: "📦 Set up project" },
               { id: nanoid(), title: "🗄️ Design database schema" },
             ],
@@ -183,16 +191,17 @@ const renderBadgeStyle = {
 
 const updateCardTitle = (cardId: string, title: string) =>
   useStore.getState().updateCardTitle(cardId, title);
-const moveCardAction = (cardId: string, toColumnId: ColumnId, toIndex: number) =>
-  useStore.getState().moveCard(cardId, toColumnId, toIndex);
-const deleteCard = (cardId: string) =>
-  useStore.getState().deleteCard(cardId);
+const moveCardAction = (
+  cardId: string,
+  toColumnId: ColumnId,
+  toIndex: number
+) => useStore.getState().moveCard(cardId, toColumnId, toIndex);
+const deleteCard = (cardId: string) => useStore.getState().deleteCard(cardId);
 const setSelectedCardId = (id: string | null) =>
   useStore.getState().setSelectedCardId(id);
 const setDraggedCardId = (id: string | null) =>
   useStore.getState().setDraggedCardId(id);
-const addCard = (columnId: ColumnId) =>
-  useStore.getState().addCard(columnId);
+const addCard = (columnId: ColumnId) => useStore.getState().addCard(columnId);
 
 const KanbanCard = memo(function KanbanCard({
   card,
@@ -242,7 +251,11 @@ const KanbanCard = memo(function KanbanCard({
           onBlur={() => setSelectedCardId(null)}
           style={{ flex: 1, border: "none", outline: "none", font: "inherit" }}
         />
-        <button data-testid={`delete-card-${card.id}`} onClick={() => deleteCard(card.id)} style={{ cursor: "pointer" }}>
+        <button
+          data-testid={`delete-card-${card.id}`}
+          onClick={() => deleteCard(card.id)}
+          style={{ cursor: "pointer" }}
+        >
           x
         </button>
       </div>
@@ -262,12 +275,20 @@ const KanbanCard = memo(function KanbanCard({
           </option>
         ))}
       </select>
-      <span data-testid={`card-renders-${card.id}`} style={renderBadgeStyle}>{renderCount.current}</span>
+      <span data-testid={`card-renders-${card.id}`} style={renderBadgeStyle}>
+        {renderCount.current}
+      </span>
     </div>
   );
 });
 
-const Column = memo(function Column({ id, label }: { id: ColumnId; label: string }) {
+const Column = memo(function Column({
+  id,
+  label,
+}: {
+  id: ColumnId;
+  label: string;
+}) {
   const renderCount = useRef(0);
   renderCount.current++;
 
@@ -312,7 +333,8 @@ const Column = memo(function Column({ id, label }: { id: ColumnId; label: string
       onDrop={(e) => {
         e.preventDefault();
         const cardId = e.dataTransfer.getData("text/plain");
-        if (cardId) moveCardAction(cardId, id, dropIndex >= 0 ? dropIndex : cards.length);
+        if (cardId)
+          moveCardAction(cardId, id, dropIndex >= 0 ? dropIndex : cards.length);
         setDragOver(false);
         setDropIndex(-1);
       }}
@@ -334,14 +356,20 @@ const Column = memo(function Column({ id, label }: { id: ColumnId; label: string
         }}
       >
         <strong>{label}</strong>
-        <button data-testid={`add-card-${id}`} onClick={() => addCard(id)} style={{ cursor: "pointer" }}>
+        <button
+          data-testid={`add-card-${id}`}
+          onClick={() => addCard(id)}
+          style={{ cursor: "pointer" }}
+        >
           + Add
         </button>
       </div>
       {cards.map((card) => (
         <KanbanCard key={card.id} card={card} columnId={id} />
       ))}
-      <span data-testid={`column-renders-${id}`} style={renderBadgeStyle}>{renderCount.current}</span>
+      <span data-testid={`column-renders-${id}`} style={renderBadgeStyle}>
+        {renderCount.current}
+      </span>
     </div>
   );
 });
@@ -381,7 +409,11 @@ export default function ZustandKanbanApp() {
         <button id="populate" onClick={populate} style={{ cursor: "pointer" }}>
           Populate
         </button>
-        <button id="clear" onClick={clear} style={{ cursor: "pointer", marginLeft: 4 }}>
+        <button
+          id="clear"
+          onClick={clear}
+          style={{ cursor: "pointer", marginLeft: 4 }}
+        >
           Clear all
         </button>
         <button
