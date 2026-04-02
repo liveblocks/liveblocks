@@ -60,6 +60,8 @@ export type {
   NotificationSettings,
   OthersEvent,
   PlainLsonObject,
+  ReadonlyJson,
+  ReadonlyJsonObject,
   ResolveGroupsInfoArgs,
   ResolveMentionSuggestionsArgs,
   ResolveRoomsInfoArgs,

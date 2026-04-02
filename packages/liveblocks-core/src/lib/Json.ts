@@ -16,6 +16,21 @@ export type JsonArray = Json[];
  */
 export type JsonObject = { [key: string]: Json | undefined };
 
+/**
+ * Like Json, but with readonly arrays and objects.
+ */
+export type ReadonlyJson =
+  | JsonScalar
+  | readonly ReadonlyJson[]
+  | ReadonlyJsonObject;
+
+/**
+ * Like JsonObject, but readonly.
+ */
+export type ReadonlyJsonObject = {
+  readonly [key: string]: ReadonlyJson | undefined;
+};
+
 export function isJsonScalar(data: Json): data is JsonScalar {
   return (
     data === null ||
