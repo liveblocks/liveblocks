@@ -87,6 +87,7 @@ export function liveListUpdateToJson<TItem extends Lson>(
         }
       }
     }) as any,
+    // XXX Look into why this isn't working
     // ^^^^^^ FIXME: TypeScript nags about this correctly. Deal with this later.
   };
 }

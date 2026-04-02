@@ -1116,6 +1116,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @returns true if the predicate function returns a truthy value for every element. Otherwise, false.
    */
   every(predicate: (value: TItem, index: number) => unknown): boolean {
+    // XXX Calling .toArray() here is not efficient, let's iterate over #items directly but just wrap the predicate
     return this.toArray().every(predicate);
   }
 
@@ -1125,6 +1126,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @returns An array with the elements that pass the test.
    */
   filter(predicate: (value: TItem, index: number) => unknown): TItem[] {
+    // XXX Calling .toArray() here is not efficient, let's iterate over #items directly but just wrap the predicate
     return this.toArray().filter(predicate);
   }
 
@@ -1134,6 +1136,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @returns The value of the first element in the LiveList that satisfies the provided testing function. Otherwise, undefined is returned.
    */
   find(predicate: (value: TItem, index: number) => unknown): TItem | undefined {
+    // XXX Calling .toArray() here is not efficient, let's iterate over #items directly but just wrap the predicate
     return this.toArray().find(predicate);
   }
 
@@ -1143,6 +1146,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @returns The index of the first element in the LiveList that passes the test. Otherwise, -1.
    */
   findIndex(predicate: (value: TItem, index: number) => unknown): number {
+    // XXX Calling .toArray() here is not efficient, let's iterate over #items directly but just wrap the predicate
     return this.toArray().findIndex(predicate);
   }
 
@@ -1151,6 +1155,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @param callbackfn Function to execute on each element.
    */
   forEach(callbackfn: (value: TItem, index: number) => void): void {
+    // XXX Calling .toArray() here is not efficient, let's iterate over #items directly but just wrap the predicate
     return this.toArray().forEach(callbackfn);
   }
 
@@ -1177,6 +1182,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @returns The first index of the element in the LiveList; -1 if not found.
    */
   indexOf(searchElement: TItem, fromIndex?: number): number {
+    // XXX Calling .toArray() here is not efficient, let's iterate over #items directly but just wrap the predicate
     return this.toArray().indexOf(searchElement, fromIndex);
   }
 
@@ -1187,6 +1193,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @returns
    */
   lastIndexOf(searchElement: TItem, fromIndex?: number): number {
+    // XXX Calling .toArray() here is not efficient, let's iterate over #items directly but just wrap the predicate
     return this.toArray().lastIndexOf(searchElement, fromIndex);
   }
 
@@ -1196,6 +1203,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @returns An array with each element being the result of the callback function.
    */
   map<U>(callback: (value: TItem, index: number) => U): U[] {
+    // XXX If we fixed the iterator, could we not "just" map over this.#items?
     const result: U[] = [];
     let i = 0;
     for (const entry of this.#items) {
@@ -1218,6 +1226,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @returns true if the callback function returns a truthy value for at least one element. Otherwise, false.
    */
   some(predicate: (value: TItem, index: number) => unknown): boolean {
+    // XXX Calling .toArray() here is not efficient, let's iterate over #items directly but just wrap the predicate
     return this.toArray().some(predicate);
   }
 
@@ -1308,6 +1317,8 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   }
 }
 
+// XXX Is this helper really still necessary? What would we miss here if we "just"
+// XXX iterated the SortedList directly and yielded liveNodeToLson()'ed items?
 class LiveListIterator<T extends Lson> implements IterableIterator<T> {
   #innerIterator: IterableIterator<LiveNode>;
 
