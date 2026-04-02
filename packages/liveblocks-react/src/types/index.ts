@@ -50,7 +50,7 @@ import type {
   SearchCommentsResult,
   SyncStatus,
   ThreadData,
-  ToImmutable,
+  ToJson,
   UrlMetadata,
   WithNavigation,
   WithRequired,
@@ -1160,7 +1160,7 @@ export type RoomContextBundle<
        * those cases, you'll probably want to use a `shallow` comparison check.
        */
       useStorage<T>(
-        selector: (root: ToImmutable<S>) => T,
+        selector: (root: ToJson<S>) => T,
         isEqual?: (prev: T | null, curr: T | null) => boolean
       ): T | null;
 
@@ -1371,7 +1371,7 @@ export type RoomContextBundle<
              * those cases, you'll probably want to use a `shallow` comparison check.
              */
             useStorage<T>(
-              selector: (root: ToImmutable<S>) => T,
+              selector: (root: ToJson<S>) => T,
               isEqual?: (prev: T, curr: T) => boolean
             ): T;
 
