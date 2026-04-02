@@ -29,10 +29,10 @@ export type ToImmutable<L extends Lson | LsonObject> =
   // A LiveObject serializes to an equivalent JSON object
   L extends LiveObject<infer O> ? ToImmutable<O> :
 
-  // A LiveMap serializes to a JSON object with string-V pairs
+  // A LiveMap serializes to a ReadonlyMap with string-V pairs
   L extends LiveMap<infer K, infer V> ? ReadonlyMap<K, ToImmutable<V>> :
 
-  // Any LsonObject recursively becomes a JsonObject
+  // Any other LsonObject recursively becomes a JsonObject
   L extends LsonObject ?
     { readonly [K in keyof L]: ToImmutable<Exclude<L[K], undefined>>
                                  | (undefined extends L[K] ? undefined : never) } :
