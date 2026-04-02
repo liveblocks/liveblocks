@@ -209,6 +209,8 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
       );
 
       void room.getStorage().then(({ root }) => {
+        // XXX: These initial writes add to the undo stack, but shouldn't
+        // be undoable. Consider wrapping in withoutUndo() once available.
         room.batch(() => {
           for (const key in storageMapping) {
             const liveblocksStatePart = root.get(key);
@@ -278,6 +280,7 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
           const room = maybeRoom;
           isPatching = true;
           try {
+            // XXX Why is this outside of the batch?
             updatePresence(
               room,
               oldState as JsonObject,

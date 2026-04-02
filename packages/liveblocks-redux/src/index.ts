@@ -144,6 +144,7 @@ const internalEnhancer = <TState>(options: {
             if (maybeRoom) {
               isPatching = true;
               try {
+                // XXX Why is this outside of the batch?
                 updatePresence(
                   maybeRoom,
                   state,
@@ -240,6 +241,8 @@ const internalEnhancer = <TState>(options: {
         });
 
         void room.getStorage().then(({ root }) => {
+          // XXX: These initial writes add to the undo stack, but shouldn't
+          // be undoable. Consider wrapping in withoutUndo() once available.
           maybeRoom!.batch(() => {
             for (const key in storageMapping) {
               const liveblocksStatePart = root.get(key);
