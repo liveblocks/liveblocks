@@ -13,7 +13,7 @@ export type JsonStorageUpdate =
 
 export type JsonLiveListUpdate<TItem extends Lson> = {
   type: "LiveList";
-  node: Array<ToJson<TItem>>;
+  node: readonly ToJson<TItem>[];
   updates: Array<JsonLiveListUpdateDelta<TItem>>;
 };
 
@@ -57,8 +57,7 @@ export function liveListUpdateToJson<TItem extends Lson>(
 ): JsonLiveListUpdate<TItem> {
   return {
     type: update.type,
-    node: lsonToJson(update.node) as ToJson<TItem>[],
-    //                            ^^^^^^^^^^^^^^^^^^ FIXME: Manual cast should eventually not be necessary
+    node: update.node.toJSON(),
     updates: update.updates.map((delta) => {
       switch (delta.type) {
         case "move": {
@@ -102,8 +101,7 @@ export function serializeUpdateToJson(
   if (update.type === "LiveObject") {
     return {
       type: update.type,
-      node: lsonToJson(update.node) as ToJson<typeof update.node>,
-      //                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FIXME: Manual cast should eventually not be necessary
+      node: update.node.toJSON(),
       updates: update.updates,
     };
   }
@@ -111,8 +109,7 @@ export function serializeUpdateToJson(
   if (update.type === "LiveMap") {
     return {
       type: update.type,
-      node: lsonToJson(update.node) as { [key: string]: Json },
-      //                            ^^^^^^^^^^^^^^^^^^^^^^^^^^ FIXME: Manual cast should eventually not be necessary
+      node: update.node.toJSON(),
       updates: update.updates,
     };
   }
