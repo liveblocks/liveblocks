@@ -18,7 +18,7 @@ import {
   lsonToLiveNode,
 } from "./liveblocks-helpers";
 import { LiveRegister } from "./LiveRegister";
-import type { LiveNode, Lson } from "./Lson";
+import type { LiveNode, Lson, ToJson } from "./Lson";
 import type { ToImmutable } from "./utils";
 
 export type LiveListUpdateDelta =
@@ -1282,6 +1282,21 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     return (
       process.env.NODE_ENV === "production" ? result : Object.freeze(result)
     ) as readonly ToImmutable<TItem>[];
+  }
+
+  toJSON(): readonly ToJson<TItem>[] {
+    // Don't implement actual toJSON logic in here. Implement it in
+    // ._toJSON() instead. This helper merely exists to help TypeScript
+    // infer better return types.
+    return super.toJSON() as readonly ToJson<TItem>[];
+  }
+
+  /** @internal */
+  _toJSON(): readonly ToJson<TItem>[] {
+    const result = Array.from(this.#items, (node) => node.toJSON());
+    return (
+      process.env.NODE_ENV === "production" ? result : Object.freeze(result)
+    ) as ToJson<TItem>[];
   }
 
   clone(): LiveList<TItem> {

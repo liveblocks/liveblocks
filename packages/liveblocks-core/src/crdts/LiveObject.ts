@@ -1,4 +1,4 @@
-import type { LiveNode, Lson, LsonObject } from "../crdts/Lson";
+import type { LiveNode, Lson, LsonObject, ToJson } from "../crdts/Lson";
 import { nn } from "../lib/assert";
 import { isPlainObject } from "../lib/guards";
 import type { Json, JsonObject } from "../lib/Json";
@@ -940,6 +940,27 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     return (
       process.env.NODE_ENV === "production" ? result : Object.freeze(result)
     ) as ToImmutable<O>;
+  }
+
+  toJSON(): ToJson<O> {
+    // Don't implement actual toJSON logic in here. Implement it in
+    // ._toJSON() instead. This helper merely exists to help TypeScript
+    // infer better return types.
+    return super.toJSON() as ToJson<O>;
+  }
+
+  /** @internal */
+  _toJSON(): ToJson<O> {
+    const result: { [key: string]: unknown } = {};
+    for (const [key, val] of this.#synced) {
+      result[key] = isLiveStructure(val) ? val.toJSON() : val;
+    }
+    for (const [key, val] of this.#local) {
+      result[key] = val;
+    }
+    return (
+      process.env.NODE_ENV === "production" ? result : Object.freeze(result)
+    ) as ToJson<O>;
   }
 
   clone(): LiveObject<O> {

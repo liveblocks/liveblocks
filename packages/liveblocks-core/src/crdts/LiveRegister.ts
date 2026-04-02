@@ -11,6 +11,7 @@ import type {
 } from "../protocol/StorageNode";
 import { CrdtType } from "../protocol/StorageNode";
 import type * as DevTools from "../types/DevToolsTreeNode";
+import type { ReadonlyJson } from "../lib/Json";
 import type { Immutable } from "../types/Immutable";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
@@ -102,6 +103,11 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
 
   /** @internal */
   _toImmutable(): Immutable {
+    return this.#data;
+  }
+
+  /** @internal */
+  _toJSON(): ReadonlyJson {
     return this.#data;
   }
 
