@@ -74,7 +74,7 @@ const internalEnhancer = <TState>(options: {
     throw missingClient();
   }
   const client = options.client;
-  const mapping = validateMapping(
+  const storageMapping = validateMapping(
     options.storageMapping || {},
     "storageMapping"
   );
@@ -83,9 +83,8 @@ const internalEnhancer = <TState>(options: {
     "presenceMapping"
   );
   if (process.env.NODE_ENV !== "production") {
-    validateNoDuplicateKeys(mapping, presenceMapping);
+    validateNoDuplicateKeys(storageMapping, presenceMapping);
   }
-  const storageKeys = Object.keys(mapping);
   const presenceKeys = Object.keys(presenceMapping);
 
   return (createStore: any) => {
@@ -159,7 +158,7 @@ const internalEnhancer = <TState>(options: {
                       storageRoot,
                       state,
                       newState,
-                      mapping as any
+                      storageMapping as any
                     );
                   }
                 });
@@ -245,7 +244,7 @@ const internalEnhancer = <TState>(options: {
           const updates: any = {};
 
           maybeRoom!.batch(() => {
-            for (const key in mapping) {
+            for (const key in storageMapping) {
               const liveblocksStatePart = root.get(key);
               if (liveblocksStatePart == null) {
                 updates[key] = store.getState()[key];
@@ -272,7 +271,11 @@ const internalEnhancer = <TState>(options: {
               if (!isPatching) {
                 store.dispatch({
                   type: ACTION_TYPES.PATCH_REDUX_STATE,
-                  state: patchState(store.getState(), updates, mapping as any),
+                  state: patchState(
+                    store.getState(),
+                    updates,
+                    storageMapping as any
+                  ),
                 });
               }
             })

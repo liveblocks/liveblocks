@@ -156,7 +156,6 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
 
   const { client, presenceMapping, storageMapping } = validateOptions(options);
   const presenceKeys = Object.keys(presenceMapping);
-  const storageKeys = Object.keys(storageMapping);
   return (set, get, api) => {
     let maybeRoom: TRoom | null = null;
     let isPatching = false;
