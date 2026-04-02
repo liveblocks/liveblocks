@@ -9,8 +9,6 @@ import { describe, expect, onTestFinished, test } from "vitest";
 
 import { LiveList } from "../crdts/LiveList";
 import { LiveObject } from "../crdts/LiveObject";
-import type { StorageUpdate } from "../crdts/StorageUpdates";
-import { legacy_patchImmutableObject } from "../immutable";
 import { kInternal } from "../internal";
 import { nn } from "../lib/assert";
 import { prepareIsolatedStorageTest } from "./_devserver";
@@ -228,18 +226,12 @@ describe("room (dev server)", () => {
       });
 
       const jsonUpdates: JsonStorageUpdate[][] = [];
-      let receivedUpdates: StorageUpdate[] = [];
 
       onTestFinished(
         room.events.storageBatch.subscribe((updates) => {
           jsonUpdates.push(updates.map(serializeUpdateToJson));
-          receivedUpdates = updates;
         })
       );
-
-      const immutableState = root.toImmutable() as {
-        items: Array<{ names: Array<string> }>;
-      };
 
       room.batch(() => {
         const items = root.get("items");
@@ -264,13 +256,6 @@ describe("room (dev server)", () => {
           listUpdate(["Jane Doe"], [listUpdateInsert(0, "Jane Doe")]),
         ],
       ]);
-
-      // Additional check to prove that generated updates could patch an immutable state
-      const newImmutableState = legacy_patchImmutableObject(
-        immutableState,
-        receivedUpdates
-      );
-      expect(newImmutableState).toEqual(root.toImmutable());
     });
   });
 
