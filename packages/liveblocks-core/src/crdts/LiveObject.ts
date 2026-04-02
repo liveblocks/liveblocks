@@ -885,9 +885,10 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   }
 
   /**
-   * Reconciles a LiveObject tree to match the given JSON object and sync
-   * config. Only mutates keys that actually changed. Recursively reconciles
-   * the entire Live tree below it.
+   * Reconciles this LiveObject tree to match the given JSON object. Only
+   * mutates keys that actually changed. Keys present on this LiveObject but
+   * absent from `jsonObj` will be deleted. Nested structures are recursively
+   * reconciled.
    *
    * @private
    */
@@ -897,7 +898,26 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       throw new Error(
         "Reconciling the document root expects a plain object value"
       );
-    reconcileLiveObject<O>(this, jsonObj, config);
+    reconcileLiveObject<O>(this, jsonObj, "full", config);
+  }
+
+  /**
+   * Like reconcile(), but only touches the top-level keys present in
+   * `partialObj`. Keys on this LiveObject that are absent from `partialObj`
+   * are left untouched. Typically called on the storage root when
+   * reconciling a subset of keys without affecting other keys on the root.
+   *
+   * Note: the partial behavior only applies to the top-level keys of this
+   * object. Nested structures are always fully reconciled.
+   *
+   * @private
+   */
+  reconcilePartially(partialObj: JsonObject, config?: SyncConfig): void {
+    if (!isPlainObject(partialObj))
+      throw new Error(
+        "Reconciling the document root expects a plain object value"
+      );
+    reconcileLiveObject<O>(this, partialObj, "partial", config);
   }
 
   toImmutable(): ToImmutable<O> {
