@@ -10,7 +10,11 @@ import {
   vi,
 } from "vitest";
 
-import { jsonObject } from "../crdts/__tests__/_arbitraries";
+import {
+  jsonObject,
+  liveStructure,
+  liveStructureWithoutMap,
+} from "../crdts/__tests__/_arbitraries";
 import { LiveList } from "../crdts/LiveList";
 import { LiveMap } from "../crdts/LiveMap";
 import { LiveObject } from "../crdts/LiveObject";
@@ -143,6 +147,83 @@ describe("immutableIs", () => {
     const liveObj = new LiveObject({ a: 1 });
     liveObj.toImmutable();
     expect(liveObj.immutableIs({ a: 999 })).toBe(false);
+  });
+});
+
+describe("toJSON", () => {
+  test("property: without LiveMaps, toJSON() always deep-equals toImmutable()", () => {
+    fc.assert(
+      fc.property(liveStructureWithoutMap, (live) => {
+        expect(live.toJSON()).toEqual(live.toImmutable());
+      })
+    );
+  });
+
+  test("property: with LiveMaps, toJSON() replaces Map instances with plain objects", () => {
+    /**
+     * Recursively walks the toImmutable() result and converts every Map
+     * instance to a plain object, so we can assert structural equality
+     * with toJSON().
+     */
+    function mapsToObjects(value: unknown): unknown {
+      if (value instanceof Map) {
+        const obj: Record<string, unknown> = {};
+        for (const [k, v] of value) {
+          obj[k] = mapsToObjects(v);
+        }
+        return obj;
+      }
+      if (Array.isArray(value)) {
+        return value.map(mapsToObjects);
+      }
+      if (value !== null && typeof value === "object") {
+        const obj: Record<string, unknown> = {};
+        for (const [k, v] of Object.entries(value)) {
+          obj[k] = mapsToObjects(v);
+        }
+        return obj;
+      }
+      return value;
+    }
+
+    fc.assert(
+      fc.property(liveStructure, (live) => {
+        expect(live.toJSON()).toEqual(mapsToObjects(live.toImmutable()));
+      })
+    );
+  });
+
+  test("property: toJSON() result never contains Map instances", () => {
+    function containsMap(value: unknown): boolean {
+      if (value instanceof Map) return true;
+      if (Array.isArray(value)) return value.some(containsMap);
+      if (value !== null && typeof value === "object") {
+        return Object.values(value).some(containsMap);
+      }
+      return false;
+    }
+
+    fc.assert(
+      fc.property(liveStructure, (live) => {
+        expect(containsMap(live.toJSON())).toBe(false);
+      })
+    );
+  });
+
+  test("toJSON() is cached (returns same reference on repeated calls)", () => {
+    const liveObj = new LiveObject({ a: 1, b: new LiveList([2, 3]) });
+    const first = liveObj.toJSON();
+    const second = liveObj.toJSON();
+    expect(first).toBe(second);
+  });
+
+  test("toJSON() cache is invalidated after mutation", () => {
+    const liveObj = new LiveObject({ a: 1 });
+    const before = liveObj.toJSON();
+    liveObj.set("a", 2);
+    const after = liveObj.toJSON();
+    expect(before).not.toBe(after);
+    expect(after).toEqual({ a: 2 });
   });
 });
 
