@@ -8,10 +8,7 @@ import type {
   User,
 } from "@liveblocks/client";
 import type { EnterOptions, OpaqueClient, OpaqueRoom } from "@liveblocks/core";
-import {
-  detectDupes,
-  legacy_patchLiveObjectKey,
-} from "@liveblocks/core";
+import { detectDupes, legacy_patchLiveObjectKey } from "@liveblocks/core";
 import type { StoreEnhancer } from "redux";
 
 import {
@@ -62,6 +59,15 @@ export type WithLiveblocks<
   P extends JsonObject,
   U extends BaseUserMeta,
 > = TState & { readonly liveblocks: LiveblocksContext<P, U> };
+
+/** Ensures values of the provided object are not functions */
+function ensureNoFunctions(state: Record<string, unknown>): void {
+  for (const key in state) {
+    if (typeof state[key] === "function") {
+      throw mappingToFunctionIsNotAllowed(key);
+    }
+  }
+}
 
 const internalEnhancer = <TState>(options: {
   client: OpaqueClient;
@@ -154,12 +160,11 @@ const internalEnhancer = <TState>(options: {
 
                 maybeRoom.batch(() => {
                   if (storageRoot) {
-                    patchLiveblocksStorage(
-                      storageRoot,
-                      state,
-                      newState,
-                      storageMapping as any
-                    );
+                    const partialState = pick(newState, storageKeys) as JsonObject;
+                    if (process.env.NODE_ENV !== "production") {
+                      ensureNoFunctions(partialState);
+                    }
+                    storageRoot.reconcilePartially(partialState);
                   }
                 });
               } finally {
@@ -360,27 +365,6 @@ export const liveblocksEnhancer = internalEnhancer as <TState>(options: {
   presenceMapping?: Mapping<TState>;
 }) => StoreEnhancer;
 
-function patchLiveblocksStorage<O extends LsonObject, TState>(
-  root: LiveObject<O>,
-  oldState: TState,
-  newState: TState,
-  mapping: Mapping<TState>
-) {
-  for (const key in mapping) {
-    if (
-      process.env.NODE_ENV !== "production" &&
-      typeof newState[key] === "function"
-    ) {
-      throw mappingToFunctionIsNotAllowed("value");
-    }
-
-    if (oldState[key] !== newState[key]) {
-      const oldVal = oldState[key];
-      const newVal = newState[key];
-      legacy_patchLiveObjectKey(root, key, oldVal as any, newVal);
-    }
-  }
-}
 
 function updatePresence<P extends JsonObject>(
   room: Room<P, any, any, any, any>,
@@ -424,7 +408,6 @@ function pick(
   }
   return result;
 }
-
 
 /**
  * Remove false keys from mapping and generate to a new object to avoid potential mutation from outside the middleware
