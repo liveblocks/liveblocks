@@ -24,7 +24,6 @@ import { LiveList } from "../crdts/LiveList";
 import { LiveMap } from "../crdts/LiveMap";
 import { LiveObject } from "../crdts/LiveObject";
 import type { LsonObject } from "../crdts/Lson";
-import { lsonToJson } from "../immutable";
 import { kInternal } from "../internal";
 import { makeEventSource } from "../lib/EventSource";
 import * as console from "../lib/fancy-console";
@@ -1660,9 +1659,9 @@ describe("room", () => {
       // Other client (which is still online), deletes "C".
       refStorage.root.get("items").delete(1);
 
-      const storageJson = lsonToJson(storage.root);
+      const storageJson = storage.root.toJSON();
       expect(storageJson).toEqual({ items: ["A", "C", "B"] });
-      const refStorageJson = lsonToJson(refStorage.root);
+      const refStorageJson = refStorage.root.toJSON();
       expect(refStorageJson).toEqual({ items: ["A"] });
 
       const newInitStorage: StorageNode[] = [
@@ -1813,9 +1812,9 @@ describe("room", () => {
       expect(storageStatusCallback).toHaveBeenCalledWith("synchronizing");
       expect(room.getStorageStatus()).toBe("synchronizing");
 
-      const storageJson = lsonToJson(storage.root);
+      const storageJson = storage.root.toJSON();
       expect(storageJson).toEqual({ x: 1 });
-      const refStorageJson = lsonToJson(refStorage.root);
+      const refStorageJson = refStorage.root.toJSON();
       expect(refStorageJson).toEqual({ x: 0 });
 
       const newInitStorage: StorageNode[] = [createSerializedRoot({ x: 0 })];
