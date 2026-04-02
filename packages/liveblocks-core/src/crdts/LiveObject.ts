@@ -849,6 +849,16 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       });
     }
 
+    if (
+      ops.length === 0 &&
+      reverseOps.length === 0 &&
+      Object.keys(updateDelta).length === 0
+    ) {
+      // If all of the above effectively is a no-op, don't dispatch anything or
+      // notify subscribers
+      return;
+    }
+
     const storageUpdates = new Map<string, LiveObjectUpdates<O>>();
     storageUpdates.set(this._id, {
       node: this,
