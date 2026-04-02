@@ -453,10 +453,8 @@ export class LiveMap<
     };
   }
 
+  /** @deprecated Use `.toJSON()` instead. */
   toImmutable(): ReadonlyMap<TKey, ToImmutable<TValue>> {
-    // Don't implement actual toImmutable logic in here. Implement it in
-    // ._toImmutable() instead. This helper merely exists to help TypeScript
-    // infer better return types.
     return super.toImmutable() as ReadonlyMap<TKey, ToImmutable<TValue>>;
   }
 
