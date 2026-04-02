@@ -10,6 +10,7 @@ import type {
 import { OpCode } from "../protocol/Op";
 import type { SerializedCrdt } from "../protocol/StorageNode";
 import type * as DevTools from "../types/DevToolsTreeNode";
+import type { ReadonlyJson } from "../lib/Json";
 import type { Immutable } from "../types/Immutable";
 import type { LiveNode, Lson } from "./Lson";
 import type { StorageUpdate } from "./StorageUpdates";
@@ -422,6 +423,9 @@ export abstract class AbstractCrdt {
   /** This caches the result of the last .toImmutable() call for this Live node. */
   #cachedImmutable?: Immutable;
 
+  /** This caches the result of the last .toJSON() call for this Live node. */
+  #cachedJson?: ReadonlyJson;
+
   #cachedTreeNodeKey?: string | number;
   /** This caches the result of the last .toTreeNode() call for this Live node. */
   #cachedTreeNode?: DevTools.LsonTreeNode;
@@ -436,9 +440,11 @@ export abstract class AbstractCrdt {
   invalidate(): void {
     if (
       this.#cachedImmutable !== undefined ||
+      this.#cachedJson !== undefined ||
       this.#cachedTreeNode !== undefined
     ) {
       this.#cachedImmutable = undefined;
+      this.#cachedJson = undefined;
       this.#cachedTreeNode = undefined;
 
       if (this.parent.type === "HasParent") {
@@ -467,6 +473,9 @@ export abstract class AbstractCrdt {
   /** @internal */
   abstract _toImmutable(): Immutable;
 
+  /** @internal */
+  abstract _toJSON(): ReadonlyJson;
+
   /**
    * @private
    * Returns true if the cached immutable snapshot exists and is
@@ -488,6 +497,20 @@ export abstract class AbstractCrdt {
 
     // Return cached version
     return this.#cachedImmutable;
+  }
+
+  /**
+   * Return a JSON-compatible snapshot of this Live node and its children.
+   * Unlike toImmutable(), LiveMap values become plain objects instead of
+   * Map instances.
+   */
+  toJSON(): ReadonlyJson {
+    if (this.#cachedJson === undefined) {
+      this.#cachedJson = this._toJSON();
+    }
+
+    // Return cached version
+    return this.#cachedJson;
   }
 
   /**
