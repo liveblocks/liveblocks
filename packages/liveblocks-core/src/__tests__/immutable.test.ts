@@ -1,7 +1,5 @@
 import * as fc from "fast-check";
-import { produce } from "immer";
-import type { MockInstance } from "vitest";
-import { afterEach, beforeAll, describe, expect, test, vi } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 
 import {
   jsonObject,
@@ -12,12 +10,8 @@ import { LiveList } from "../crdts/LiveList";
 import { LiveMap } from "../crdts/LiveMap";
 import { LiveObject } from "../crdts/LiveObject";
 import type { LsonObject, ToJson } from "../crdts/Lson";
-import {
-  legacy_patchLiveObject,
-  legacy_patchLiveObjectKey,
-} from "../immutable";
 import { kInternal } from "../internal";
-import * as console from "../lib/fancy-console";
+import type { JsonObject } from "../lib/Json";
 import type { PlainLsonObject } from "../types/PlainLson";
 import {
   enterConnectAndGetStorage,
@@ -29,24 +23,8 @@ import { objectUpdate } from "./_updatesUtils";
 /**
  * Sets up two real clients (A and B) connected to the same room via the dev
  * server, with storage initialized from `initialStorage`.
- *
- * Returns:
- * - `storage`  — client A's storage root (the "active" client that tests
- *   mutate via `legacy_patchLiveObjectKey` / `legacy_patchLiveObject`)
- * - `refStorage` — client B's storage root (the "reference" client that
- *   passively receives changes via server-mediated sync)
- * - `state` — a plain-JSON mirror of client A's storage, shared by reference
- *   with the caller. Tests mutate this object directly (e.g.
- *   `state.foo = "bar"`) and then call `legacy_patchLiveObjectKey` to propagate
- *   the diff into the live CRDT tree.
- * - `expectStorageAndState(data, itemsCount?)` — asserts that both clients'
- *   storage equals `data`, that the CRDT node count matches `itemsCount`
- *   (if provided), and that the JSON `state` mirror was kept in sync by
- *   the `storageBatch` subscription.
- * - `expectStorage(data)` — lighter variant that only checks storage equality
- *   across both clients (no node count or state mirror checks).
  */
-export async function prepareStorageImmutableTest<S extends LsonObject>(
+async function prepareStorageImmutableTest<S extends LsonObject>(
   initialStorage: PlainLsonObject
 ) {
   const roomId = await initRoom(initialStorage);
@@ -59,22 +37,22 @@ export async function prepareStorageImmutableTest<S extends LsonObject>(
   const storageA = clientA.storage;
   const storageB = clientB.storage;
 
-  // Wait for both clients to sync initial storage
   await vi.waitFor(() => {
     expect(storageA.root.toJSON()).toEqual(storageB.root.toJSON());
   });
 
-  const state = storageA.root.toJSON();
-
-  async function expectStorageAndState(data: ToJson<S>, itemsCount?: number) {
+  async function expectStorageAndState(
+    data: ToJson<S>,
+    expectedNodeCount?: number
+  ) {
     expect(storageA.root.toJSON()).toEqual(data);
 
     await vi.waitFor(() => {
       expect(storageB.root.toJSON()).toEqual(data);
     });
 
-    if (itemsCount !== undefined) {
-      expect(clientA.room[kInternal].nodeCount).toBe(itemsCount);
+    if (expectedNodeCount !== undefined) {
+      expect(clientA.room[kInternal].nodeCount).toBe(expectedNodeCount);
     }
   }
 
@@ -90,7 +68,6 @@ export async function prepareStorageImmutableTest<S extends LsonObject>(
     refStorage: storageB,
     expectStorageAndState,
     expectStorage,
-    state,
   };
 }
 
@@ -433,38 +410,10 @@ describe("reconcileLiveObject", () => {
   });
 });
 
-describe("legacy_patchLiveObjectKey", () => {
-  test("should set string", () => {
-    const liveObject = new LiveObject();
-    legacy_patchLiveObjectKey(liveObject, "key", undefined, "value");
-    expect(liveObject.get("key")).toBe("value");
-  });
-
-  test("should set number", () => {
-    const liveObject = new LiveObject();
-    legacy_patchLiveObjectKey(liveObject, "key", undefined, 0);
-    expect(liveObject.get("key")).toBe(0);
-  });
-
-  test("should set LiveObject if next is object", () => {
-    const liveObject = new LiveObject<{ key: LiveObject<{ a: number }> }>();
-    legacy_patchLiveObjectKey(liveObject, "key", undefined, { a: 0 });
-    const value = liveObject.get("key");
-    expect(value instanceof LiveObject).toBe(true);
-    expect(value.toObject()).toEqual({ a: 0 });
-  });
-
-  test("should delete key if next is undefined", () => {
-    const liveObject = new LiveObject({ key: "value" });
-    legacy_patchLiveObjectKey(liveObject, "key", "value", undefined);
-    expect(liveObject.toObject()).toEqual({});
-  });
-});
-
 describe("2 ways tests with two clients", () => {
   describe("Object/LiveObject", () => {
     test("create object", async () => {
-      const { storage, state, expectStorageAndState } =
+      const { storage, expectStorageAndState } =
         await prepareStorageImmutableTest<{
           syncObj: { a: number };
         }>({
@@ -472,25 +421,12 @@ describe("2 ways tests with two clients", () => {
           data: {},
         });
 
-      expect(state).toEqual({});
-
-      const oldState = state;
-      const newState = produce(oldState, (draft) => {
-        draft.syncObj = { a: 1 };
-      });
-
-      legacy_patchLiveObjectKey(
-        storage.root,
-        "syncObj",
-        oldState["syncObj"],
-        newState["syncObj"]
-      );
-
+      storage.root.reconcilePartially({ syncObj: { a: 1 } } as JsonObject);
       await expectStorageAndState({ syncObj: { a: 1 } }, 2);
     });
 
     test("update object", async () => {
-      const { storage, state, expectStorageAndState } =
+      const { storage, expectStorageAndState } =
         await prepareStorageImmutableTest<{
           syncObj: { a: number };
         }>({
@@ -500,25 +436,12 @@ describe("2 ways tests with two clients", () => {
           },
         });
 
-      expect(state).toEqual({ syncObj: { a: 0 } });
-
-      const oldState = state;
-      const newState = produce(oldState, (draft) => {
-        draft.syncObj.a = 1;
-      });
-
-      legacy_patchLiveObjectKey(
-        storage.root,
-        "syncObj",
-        oldState["syncObj"],
-        newState["syncObj"]
-      );
-
+      storage.root.reconcilePartially({ syncObj: { a: 1 } } as JsonObject);
       await expectStorageAndState({ syncObj: { a: 1 } }, 2);
     });
 
     test("add nested object", async () => {
-      const { storage, state, expectStorageAndState } =
+      const { storage, expectStorageAndState } =
         await prepareStorageImmutableTest<{
           syncObj: { a: any };
         }>({
@@ -528,25 +451,14 @@ describe("2 ways tests with two clients", () => {
           },
         });
 
-      expect(state).toEqual({ syncObj: { a: 0 } });
-
-      const oldState = state;
-      const newState = produce(oldState, (draft) => {
-        draft.syncObj.a = { subA: "ok" };
-      });
-
-      legacy_patchLiveObjectKey(
-        storage.root,
-        "syncObj",
-        oldState["syncObj"],
-        newState["syncObj"]
-      );
-
+      storage.root.reconcilePartially({
+        syncObj: { a: { subA: "ok" } },
+      } as JsonObject);
       await expectStorageAndState({ syncObj: { a: { subA: "ok" } } }, 3);
     });
 
     test("create LiveList with one LiveRegister item in same batch", async () => {
-      const { storage, state, expectStorageAndState } =
+      const { storage, expectStorageAndState } =
         await prepareStorageImmutableTest<{
           doc: any;
         }>({
@@ -556,25 +468,12 @@ describe("2 ways tests with two clients", () => {
           },
         });
 
-      expect(state).toEqual({ doc: {} });
-
-      const oldState = state;
-      const newState = produce(oldState, (draft) => {
-        draft.doc = { sub: [0] };
-      });
-
-      legacy_patchLiveObjectKey(
-        storage.root,
-        "doc",
-        oldState["doc"],
-        newState["doc"]
-      );
-
+      storage.root.reconcilePartially({ doc: { sub: [0] } } as JsonObject);
       await expectStorageAndState({ doc: { sub: [0] } }, 4);
     });
 
     test("create nested LiveList with one LiveObject item in same batch", async () => {
-      const { storage, state, expectStorageAndState } =
+      const { storage, expectStorageAndState } =
         await prepareStorageImmutableTest<{
           doc: any;
         }>({
@@ -584,25 +483,14 @@ describe("2 ways tests with two clients", () => {
           },
         });
 
-      expect(state).toEqual({ doc: {} });
-
-      const oldState = state;
-      const newState = produce(oldState, (draft) => {
-        draft.doc = { sub: { subSub: [{ a: 1 }] } };
-      });
-
-      legacy_patchLiveObjectKey(
-        storage.root,
-        "doc",
-        oldState["doc"],
-        newState["doc"]
-      );
-
+      storage.root.reconcilePartially({
+        doc: { sub: { subSub: [{ a: 1 }] } },
+      } as JsonObject);
       await expectStorageAndState({ doc: { sub: { subSub: [{ a: 1 }] } } }, 5);
     });
 
     test("Add nested objects in same batch", async () => {
-      const { storage, state, expectStorageAndState } =
+      const { storage, expectStorageAndState } =
         await prepareStorageImmutableTest<{
           doc: any;
         }>({
@@ -612,25 +500,14 @@ describe("2 ways tests with two clients", () => {
           },
         });
 
-      expect(state).toEqual({ doc: {} });
-
-      const oldState = state;
-      const newState = produce(oldState, (draft) => {
-        draft.doc = { pos: { a: { b: 1 } } };
-      });
-
-      legacy_patchLiveObjectKey(
-        storage.root,
-        "doc",
-        oldState["doc"],
-        newState["doc"]
-      );
-
+      storage.root.reconcilePartially({
+        doc: { pos: { a: { b: 1 } } },
+      } as JsonObject);
       await expectStorageAndState({ doc: { pos: { a: { b: 1 } } } }, 4);
     });
 
     test("delete object key", async () => {
-      const { storage, state, expectStorageAndState } =
+      const { storage, expectStorageAndState } =
         await prepareStorageImmutableTest<{
           syncObj: { a?: number };
         }>({
@@ -640,27 +517,14 @@ describe("2 ways tests with two clients", () => {
           },
         });
 
-      expect(state).toEqual({ syncObj: { a: 0 } });
-
-      const oldState = state;
-      const newState = produce(oldState, (draft) => {
-        delete draft.syncObj.a;
-      });
-
-      legacy_patchLiveObjectKey(
-        storage.root,
-        "syncObj",
-        oldState["syncObj"],
-        newState["syncObj"]
-      );
-
+      storage.root.reconcilePartially({ syncObj: {} } as JsonObject);
       await expectStorageAndState({ syncObj: {} }, 2);
     });
   });
 
   describe("Array/LiveList", () => {
     test("replace array of 3 elements to 1 element", async () => {
-      const { storage, state, expectStorageAndState } =
+      const { storage, expectStorageAndState } =
         await prepareStorageImmutableTest<{
           syncList: LiveList<number>;
         }>({
@@ -670,23 +534,12 @@ describe("2 ways tests with two clients", () => {
           },
         });
 
-      const oldState = state;
-      const newState = produce(oldState, (draft) => {
-        draft.syncList = [2];
-      });
-
-      legacy_patchLiveObjectKey(
-        storage.root,
-        "syncList",
-        oldState["syncList"],
-        newState["syncList"]
-      );
-
+      storage.root.reconcilePartially({ syncList: [2] } as JsonObject);
       await expectStorageAndState({ syncList: [2] });
     });
 
     test("add item to array", async () => {
-      const { storage, state, expectStorageAndState } =
+      const { storage, expectStorageAndState } =
         await prepareStorageImmutableTest<{
           syncList: LiveList<string>;
         }>({
@@ -696,23 +549,12 @@ describe("2 ways tests with two clients", () => {
           },
         });
 
-      const oldState = state;
-      const newState = produce(oldState, (draft) => {
-        draft.syncList.push("a");
-      });
-
-      legacy_patchLiveObjectKey(
-        storage.root,
-        "syncList",
-        oldState["syncList"],
-        newState["syncList"]
-      );
-
+      storage.root.reconcilePartially({ syncList: ["a"] } as JsonObject);
       await expectStorageAndState({ syncList: ["a"] }, 3);
     });
 
     test("replace first item in array", async () => {
-      const { storage, state, expectStorageAndState } =
+      const { storage, expectStorageAndState } =
         await prepareStorageImmutableTest<{
           list: LiveList<string>;
         }>({
@@ -722,18 +564,14 @@ describe("2 ways tests with two clients", () => {
           },
         });
 
-      const oldState = state;
-      const newState = produce(oldState, (draft) => {
-        draft.list[0] = "D";
-      });
-
-      legacy_patchLiveObject(storage.root, oldState, newState);
-
+      storage.root.reconcilePartially({
+        list: ["D", "B", "C"],
+      } as JsonObject);
       await expectStorageAndState({ list: ["D", "B", "C"] }, 5);
     });
 
     test("replace last item in array", async () => {
-      const { storage, state, expectStorageAndState } =
+      const { storage, expectStorageAndState } =
         await prepareStorageImmutableTest<{
           list: LiveList<string>;
         }>({
@@ -743,18 +581,14 @@ describe("2 ways tests with two clients", () => {
           },
         });
 
-      const oldState = state;
-      const newState = produce(oldState, (draft) => {
-        draft.list[2] = "D";
-      });
-
-      legacy_patchLiveObject(storage.root, oldState, newState);
-
+      storage.root.reconcilePartially({
+        list: ["A", "B", "D"],
+      } as JsonObject);
       await expectStorageAndState({ list: ["A", "B", "D"] }, 5);
     });
 
     test("insert item at beginning of array", async () => {
-      const { storage, state, expectStorageAndState } =
+      const { storage, expectStorageAndState } =
         await prepareStorageImmutableTest<{
           syncList: LiveList<string>;
         }>({
@@ -764,23 +598,14 @@ describe("2 ways tests with two clients", () => {
           },
         });
 
-      const oldState = state;
-      const newState = produce(oldState, (draft) => {
-        draft.syncList.unshift("b");
-      });
-
-      legacy_patchLiveObjectKey(
-        storage.root,
-        "syncList",
-        oldState["syncList"],
-        newState["syncList"]
-      );
-
+      storage.root.reconcilePartially({
+        syncList: ["b", "a"],
+      } as JsonObject);
       await expectStorageAndState({ syncList: ["b", "a"] }, 4);
     });
 
     test("swap items in array", async () => {
-      const { storage, state, expectStorageAndState } =
+      const { storage, expectStorageAndState } =
         await prepareStorageImmutableTest<{
           syncList: LiveList<string>;
         }>({
@@ -793,23 +618,14 @@ describe("2 ways tests with two clients", () => {
           },
         });
 
-      const oldState = state;
-      const newState = produce(oldState, (draft) => {
-        draft.syncList = ["d", "b", "c", "a"];
-      });
-
-      legacy_patchLiveObjectKey(
-        storage.root,
-        "syncList",
-        oldState["syncList"],
-        newState["syncList"]
-      );
-
+      storage.root.reconcilePartially({
+        syncList: ["d", "b", "c", "a"],
+      } as JsonObject);
       await expectStorageAndState({ syncList: ["d", "b", "c", "a"] }, 6);
     });
 
     test("array of objects", async () => {
-      const { storage, state, expectStorageAndState } =
+      const { storage, expectStorageAndState } =
         await prepareStorageImmutableTest<{
           syncList: LiveList<LiveObject<{ a: number }>>;
         }>({
@@ -822,23 +638,14 @@ describe("2 ways tests with two clients", () => {
           },
         });
 
-      const oldState = state;
-      const newState = produce(oldState, (draft) => {
-        draft.syncList[0].a = 2;
-      });
-
-      legacy_patchLiveObjectKey(
-        storage.root,
-        "syncList",
-        oldState["syncList"],
-        newState["syncList"]
-      );
-
+      storage.root.reconcilePartially({
+        syncList: [{ a: 2 }],
+      } as JsonObject);
       await expectStorageAndState({ syncList: [{ a: 2 }] }, 3);
     });
 
     test("remove first item from array", async () => {
-      const { storage, state, expectStorageAndState } =
+      const { storage, expectStorageAndState } =
         await prepareStorageImmutableTest<{
           syncList: LiveList<string>;
         }>({
@@ -848,23 +655,12 @@ describe("2 ways tests with two clients", () => {
           },
         });
 
-      const oldState = state;
-      const newState = produce(oldState, (draft) => {
-        draft.syncList.shift();
-      });
-
-      legacy_patchLiveObjectKey(
-        storage.root,
-        "syncList",
-        oldState["syncList"],
-        newState["syncList"]
-      );
-
+      storage.root.reconcilePartially({ syncList: ["b"] } as JsonObject);
       await expectStorageAndState({ syncList: ["b"] }, 3);
     });
 
     test("remove last item from array", async () => {
-      const { storage, state, expectStorageAndState } =
+      const { storage, expectStorageAndState } =
         await prepareStorageImmutableTest<{
           syncList: LiveList<string>;
         }>({
@@ -874,23 +670,12 @@ describe("2 ways tests with two clients", () => {
           },
         });
 
-      const oldState = state;
-      const newState = produce(oldState, (draft) => {
-        draft.syncList.pop();
-      });
-
-      legacy_patchLiveObjectKey(
-        storage.root,
-        "syncList",
-        oldState["syncList"],
-        newState["syncList"]
-      );
-
+      storage.root.reconcilePartially({ syncList: ["a"] } as JsonObject);
       await expectStorageAndState({ syncList: ["a"] }, 3);
     });
 
     test("remove all elements of array except first", async () => {
-      const { storage, state, expectStorageAndState } =
+      const { storage, expectStorageAndState } =
         await prepareStorageImmutableTest<{
           syncList: LiveList<string>;
         }>({
@@ -903,23 +688,12 @@ describe("2 ways tests with two clients", () => {
           },
         });
 
-      const oldState = state;
-      const newState = produce(oldState, (draft) => {
-        draft.syncList = ["a"];
-      });
-
-      legacy_patchLiveObjectKey(
-        storage.root,
-        "syncList",
-        oldState["syncList"],
-        newState["syncList"]
-      );
-
+      storage.root.reconcilePartially({ syncList: ["a"] } as JsonObject);
       await expectStorageAndState({ syncList: ["a"] }, 3);
     });
 
     test("remove all elements of array except last", async () => {
-      const { storage, state, expectStorageAndState } =
+      const { storage, expectStorageAndState } =
         await prepareStorageImmutableTest<{
           syncList: LiveList<string>;
         }>({
@@ -932,23 +706,12 @@ describe("2 ways tests with two clients", () => {
           },
         });
 
-      const oldState = state;
-      const newState = produce(oldState, (draft) => {
-        draft.syncList = ["c"];
-      });
-
-      legacy_patchLiveObjectKey(
-        storage.root,
-        "syncList",
-        oldState["syncList"],
-        newState["syncList"]
-      );
-
+      storage.root.reconcilePartially({ syncList: ["c"] } as JsonObject);
       await expectStorageAndState({ syncList: ["c"] }, 3);
     });
 
     test("remove all elements of array", async () => {
-      const { storage, state, expectStorageAndState } =
+      const { storage, expectStorageAndState } =
         await prepareStorageImmutableTest<{
           syncList: LiveList<string>;
         }>({
@@ -961,94 +724,8 @@ describe("2 ways tests with two clients", () => {
           },
         });
 
-      const oldState = state;
-      const newState = produce(oldState, (draft) => {
-        draft.syncList = [];
-      });
-
-      legacy_patchLiveObjectKey(
-        storage.root,
-        "syncList",
-        oldState["syncList"],
-        newState["syncList"]
-      );
-
+      storage.root.reconcilePartially({ syncList: [] } as JsonObject);
       await expectStorageAndState({ syncList: [] }, 2);
-    });
-  });
-
-  describe("unsupported types", () => {
-    let originalEnv: NodeJS.ProcessEnv;
-    let consoleErrorSpy: MockInstance;
-
-    beforeAll(() => {
-      originalEnv = process.env;
-      consoleErrorSpy = vi.spyOn(console, "error");
-    });
-
-    afterEach(() => {
-      process.env = originalEnv;
-      consoleErrorSpy.mockRestore();
-    });
-
-    test("new state contains a function", async () => {
-      const { storage, state, expectStorage } =
-        await prepareStorageImmutableTest<{ syncObj: { a: any } }>({
-          liveblocksType: "LiveObject",
-          data: {
-            syncObj: { liveblocksType: "LiveObject", data: { a: 0 } },
-          },
-        });
-
-      expect(state).toEqual({ syncObj: { a: 0 } });
-
-      const oldState = state;
-      const newState = produce(oldState, (draft: any) => {
-        draft.syncObj.a = () => {};
-      });
-
-      legacy_patchLiveObjectKey(
-        storage.root,
-        "syncObj",
-        oldState["syncObj"],
-        newState["syncObj"]
-      );
-
-      expect(consoleErrorSpy).toHaveBeenCalledTimes(1);
-
-      await expectStorage({ syncObj: { a: 0 } });
-    });
-
-    test("Production env - new state contains a function", async () => {
-      const { storage, state } = await prepareStorageImmutableTest<{
-        syncObj: { a: any };
-      }>({
-        liveblocksType: "LiveObject",
-        data: {
-          syncObj: { liveblocksType: "LiveObject", data: { a: 0 } },
-        },
-      });
-
-      expect(state).toEqual({ syncObj: { a: 0 } });
-
-      process.env = {
-        ...originalEnv,
-        NODE_ENV: "production",
-      };
-
-      const oldState = state;
-      const newState = produce(oldState, (draft: any) => {
-        draft.syncObj.a = () => {};
-      });
-
-      legacy_patchLiveObjectKey(
-        storage.root,
-        "syncObj",
-        oldState["syncObj"],
-        newState["syncObj"]
-      );
-
-      expect(consoleErrorSpy).toHaveBeenCalledTimes(0);
     });
   });
 });
