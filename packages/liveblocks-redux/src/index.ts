@@ -1,5 +1,6 @@
 import type {
   BaseUserMeta,
+  Json,
   JsonObject,
   LiveObject,
   LsonObject,
@@ -8,7 +9,7 @@ import type {
   User,
 } from "@liveblocks/client";
 import type { EnterOptions, OpaqueClient, OpaqueRoom } from "@liveblocks/core";
-import { detectDupes, legacy_patchLiveObjectKey } from "@liveblocks/core";
+import { detectDupes } from "@liveblocks/core";
 import type { StoreEnhancer } from "redux";
 
 import {
@@ -160,7 +161,10 @@ const internalEnhancer = <TState>(options: {
 
                 maybeRoom.batch(() => {
                   if (storageRoot) {
-                    const partialState = pick(newState, storageKeys) as JsonObject;
+                    const partialState = pick(
+                      newState,
+                      storageKeys
+                    ) as JsonObject;
                     if (process.env.NODE_ENV !== "production") {
                       ensureNoFunctions(partialState);
                     }
@@ -246,20 +250,21 @@ const internalEnhancer = <TState>(options: {
         });
 
         void room.getStorage().then(({ root }) => {
+          // Seed any missing storage keys from the current Redux state.
+          // Only writes keys that don't exist yet in storage — existing
+          // storage values are left untouched and will be read back below.
+          const reduxState = store.getState();
+          const missing: JsonObject = {};
+          for (const key of storageKeys) {
+            if (root.get(key) == null) {
+              missing[key] = reduxState[key] as Json;
+            }
+          }
+
           // XXX: These initial writes add to the undo stack, but shouldn't
           // be undoable. Consider wrapping in withoutUndo() once available.
           maybeRoom!.batch(() => {
-            for (const key in storageMapping) {
-              const liveblocksStatePart = root.get(key);
-              if (liveblocksStatePart == null) {
-                legacy_patchLiveObjectKey(
-                  root,
-                  key,
-                  undefined,
-                  store.getState()[key]
-                );
-              }
-            }
+            root.reconcilePartially(missing);
           });
 
           store.dispatch({
@@ -364,7 +369,6 @@ export const liveblocksEnhancer = internalEnhancer as <TState>(options: {
   storageMapping?: Mapping<TState>;
   presenceMapping?: Mapping<TState>;
 }) => StoreEnhancer;
-
 
 function updatePresence<P extends JsonObject>(
   room: Room<P, any, any, any, any>,

@@ -20,11 +20,7 @@ import type {
   OpaqueClient,
   OpaqueRoom,
 } from "@liveblocks/core";
-import {
-  detectDupes,
-  errorIf,
-  legacy_patchLiveObjectKey,
-} from "@liveblocks/core";
+import { detectDupes, errorIf } from "@liveblocks/core";
 import type { StateCreator, StoreMutatorIdentifier } from "zustand";
 
 import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
@@ -221,19 +217,18 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
         // Seed any missing storage keys from the current Zustand state.
         // Only writes keys that don't exist yet in storage — existing
         // storage values are left untouched and will be read back below.
+        const state = get() as Record<string, unknown>;
+        const missing: JsonObject = {};
+        for (const key of storageKeys) {
+          if (root.get(key) === undefined) {
+            missing[key] = state[key] as Json;
+          }
+        }
+
         // XXX: These initial writes add to the undo stack, but shouldn't
         // be undoable. Consider wrapping in withoutUndo() once available.
         room.batch(() => {
-          for (const key of storageKeys) {
-            if (root.get(key) === undefined) {
-              legacy_patchLiveObjectKey(
-                root,
-                key,
-                undefined,
-                (get() as Record<string, unknown>)[key] as Json | undefined
-              );
-            }
-          }
+          root.reconcilePartially(missing);
         });
 
         set(pick(root.toJSON(), storageKeys) as Partial<TState>);
