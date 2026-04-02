@@ -1316,19 +1316,49 @@ export interface LiveblocksAdapterConfig<
   U extends BaseUserMeta,
   DGI extends BaseGroupInfo,
 > {
+  /**
+   * The Liveblocks secret key. Must start with "sk_". Get it from the Liveblocks dashboard: https://liveblocks.io/dashboard/apikeys
+   */
   apiKey: string;
+  /**
+   * The Liveblocks webhook signing secret. Get it from the Liveblocks dashboard: https://liveblocks.io/dashboard/webhooks
+   * @example "whsec_wPbvQ+u3VtN2e2tRPDKchQ1tBZ3svaHLm"
+   */
   webhookSecret: string;
+  /**
+   * A function that returns user info from user IDs; used to resolve @user mentions in comment bodies.
+   * This function should return an array of user info in the same order as the input user IDs, or `undefined` to skip resolution.
+   */
   resolveUsers?: (
     args: ResolveUsersArgs
   ) => Awaitable<(U["info"] | undefined)[] | undefined>;
+  /**
+   * A function that returns group info from group IDs; used to resolve @group mentions in comment bodies.
+   * This function should return an array of group info in the same order as the input group IDs, or `undefined` to skip resolution.
+   */
   resolveGroupsInfo?: (
     args: ResolveGroupsInfoArgs
   ) => Awaitable<(DGI | undefined)[] | undefined>;
+  /**
+   * The user ID used when the bot creates, edits, or reacts to comments.
+   * This should match your app’s user identifiers.
+   */
   botUserId: string;
+  /**
+   * The display name for the chat user representing the bot.
+   * @default "liveblocks-bot"
+   */
   botUserName?: string;
+  /**
+   * A Chat SDK–compatible logger.
+   * @default ConsoleLogger at info level, scoped to this adapter
+   */
   logger?: Logger;
 }
 
+/**
+ * Creates a {@link LiveblocksAdapter} configured for Liveblocks Comments.
+ */
 export function createLiveblocksAdapter<
   U extends BaseUserMeta = BaseUserMeta,
   DGI extends BaseGroupInfo = BaseGroupInfo,
