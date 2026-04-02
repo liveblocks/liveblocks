@@ -12,6 +12,7 @@ type Storage = {
   obj: LiveObject<{
     a: number;
     nested: LiveList<string>;
+    localField?: string;
   }>;
 };
 

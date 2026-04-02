@@ -209,11 +209,7 @@ export default function StressTestRoom() {
   }
 
   return (
-    <RoomProvider
-      id={roomId}
-      initialPresence={{} as never}
-      initialStorage={{}}
-    >
+    <RoomProvider id={roomId} initialPresence={{} as never} initialStorage={{}}>
       <Sandbox roomId={roomId} />
     </RoomProvider>
   );
@@ -259,7 +255,11 @@ function Sandbox({ roomId }: { roomId: string }) {
     const maxAttempts = totalDeletes * 3; // Allow some retries for empty points
 
     let deleted = 0;
-    for (let attempt = 0; attempt < maxAttempts && deleted < totalDeletes; attempt++) {
+    for (
+      let attempt = 0;
+      attempt < maxAttempts && deleted < totalDeletes;
+      attempt++
+    ) {
       const point = points[randomInt(points.length)];
 
       if (point.type === "object") {

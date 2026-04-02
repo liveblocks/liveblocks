@@ -16,6 +16,7 @@ export { useLiveblocksUiConfig } from "../config";
 export * from "../icons";
 export { capitalize } from "../utils/capitalize";
 export { cn } from "../utils/cn";
+export { makeCursorSpring } from "../utils/cursor-spring";
 export { Portal } from "../utils/Portal";
 export { useInitial } from "../utils/use-initial";
 export { useRefs } from "../utils/use-refs";

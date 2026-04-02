@@ -1,5 +1,21 @@
 ## vNEXT (not yet released)
 
+## v3.17.0
+
+### `@liveblocks/react-flow`
+
+- Introduce the package. Install with `npm install @liveblocks/react-flow`.
+  Provides hooks and components that add collaboration to any React Flow diagram
+  using Liveblocks Storage:
+  - Use the `useLiveblocksFlow` hook to make React Flow synced and
+    collaborative.
+  - Use the `Cursors` component to show other users' cursors inside React Flow.
+
+### `@liveblocks/react-ui`
+
+- Allow customizing cursors in the `Cursors` component by passing a
+  `components={{ Cursor: MyCursor }}` prop.
+
 ## v3.16.0
 
 ### `@liveblocks/chat-sdk-adapter`

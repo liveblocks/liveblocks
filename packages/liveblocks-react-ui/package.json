@@ -71,7 +71,7 @@
     "format": "eslint --fix src/; stylelint --fix src/styles/; prettier --write src/",
     "lint": "eslint src/; stylelint src/styles/",
     "lint:package": "publint --strict && attw --pack",
-    "test": "npx liveblocks dev -c 'vitest run'",
+    "test": "npx liveblocks dev -p 1154 -c 'vitest run'",
     "test:ci": "vitest run",
     "test:types": "ls test-d/* | xargs -n1 tsd --files",
     "test:watch": "vitest"

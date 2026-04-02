@@ -109,10 +109,11 @@ export type {
   DU,
   KDAD,
 } from "./globals/augmentation";
+export type { SyncConfig, SyncMode } from "./immutable";
 export {
   legacy_patchImmutableObject,
+  legacy_patchLiveObjectKey,
   lsonToJson,
-  patchLiveObjectKey,
 } from "./immutable";
 export { kInternal } from "./internal";
 export { makeAbortController } from "./lib/abortController";

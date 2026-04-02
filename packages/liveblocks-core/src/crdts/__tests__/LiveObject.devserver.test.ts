@@ -100,6 +100,60 @@ describe("LiveObject", () => {
     await assertUndoRedo();
   });
 
+  test("set with same value is a no-op", async () => {
+    const { root, room } = await prepareIsolatedStorageTest<{
+      a: number;
+    }>({
+      liveblocksType: "LiveObject",
+      data: { a: 1 },
+    });
+
+    expect(room.history.canUndo()).toBe(false);
+
+    // Setting to the same value should not create an undo entry
+    root.set("a", 1);
+
+    expect(room.history.canUndo()).toBe(false);
+    expect(root.get("a")).toBe(1);
+  });
+
+  test("set with different value creates an undo entry", async () => {
+    const { root, room } = await prepareIsolatedStorageTest<{
+      a: number;
+    }>({
+      liveblocksType: "LiveObject",
+      data: { a: 1 },
+    });
+
+    root.set("a", 2);
+
+    expect(room.history.canUndo()).toBe(true);
+    room.history.undo();
+    expect(root.get("a")).toBe(1);
+  });
+
+  test("update with mix of changed and unchanged keys only undoes the changed ones", async () => {
+    const { root, room } = await prepareIsolatedStorageTest<{
+      a: number;
+      b: number;
+    }>({
+      liveblocksType: "LiveObject",
+      data: { a: 1, b: 2 },
+    });
+
+    root.update({ a: 1, b: 99 });
+
+    expect(room.history.canUndo()).toBe(true);
+    room.history.undo();
+
+    // Only b should have been undone; a was unchanged
+    expect(root.get("a")).toBe(1);
+    expect(root.get("b")).toBe(2);
+
+    // And there should be nothing left to undo
+    expect(room.history.canUndo()).toBe(false);
+  });
+
   // TODO: Needs read-only permission support in dev server
   // See https://linear.app/liveblocks/issue/LB-3528/dev-server-needs-support-for-read-only-rooms
   test.skip("update throws on read-only", async () => {
@@ -1248,6 +1302,508 @@ describe("LiveObject", () => {
       expect(() => {
         liveObject.set("reallyLarge", reallyLargeData);
       }).toThrow(/LiveObject size exceeded limit/);
+    });
+  });
+
+  describe("setLocal", () => {
+    test("first setLocal notifies with no deletedItem", async () => {
+      const { room, root } = await prepareIsolatedStorageTest<{
+        a: number;
+        b?: string;
+      }>({
+        liveblocksType: "LiveObject",
+        data: { a: 1 },
+      });
+
+      const receivedUpdates: JsonStorageUpdate[][] = [];
+      onTestFinished(
+        room.subscribe(
+          root,
+          (updates) => receivedUpdates.push(updates.map(serializeUpdateToJson)),
+          { isDeep: true }
+        )
+      );
+
+      root.setLocal("b", "local");
+
+      expect(receivedUpdates).toEqual([
+        [objectUpdate({ a: 1, b: "local" }, { b: { type: "update" } })],
+      ]);
+    });
+
+    test("second setLocal notifies with previous value as deletedItem", async () => {
+      const { room, root } = await prepareIsolatedStorageTest<{
+        a: number;
+        b?: string;
+      }>({
+        liveblocksType: "LiveObject",
+        data: { a: 1 },
+      });
+
+      root.setLocal("b", "first");
+
+      const receivedUpdates: JsonStorageUpdate[][] = [];
+      onTestFinished(
+        room.subscribe(
+          root,
+          (updates) => receivedUpdates.push(updates.map(serializeUpdateToJson)),
+          { isDeep: true }
+        )
+      );
+
+      root.setLocal("b", "second");
+
+      expect(receivedUpdates).toEqual([
+        [objectUpdate({ a: 1, b: "second" }, { b: { type: "update" } })],
+      ]);
+    });
+
+    test("batched setLocal calls produce a single notification", async () => {
+      const { room, root } = await prepareIsolatedStorageTest<{
+        a: number;
+        b?: string;
+        c?: string;
+      }>({
+        liveblocksType: "LiveObject",
+        data: { a: 1 },
+      });
+
+      const receivedUpdates: JsonStorageUpdate[][] = [];
+      onTestFinished(
+        room.subscribe(
+          root,
+          (updates) => receivedUpdates.push(updates.map(serializeUpdateToJson)),
+          { isDeep: true }
+        )
+      );
+
+      room.batch(() => {
+        root.setLocal("b", "hello");
+        root.setLocal("c", "world");
+      });
+
+      expect(receivedUpdates).toEqual([
+        [
+          objectUpdate(
+            { a: 1, b: "hello", c: "world" },
+            { b: { type: "update" }, c: { type: "update" } }
+          ),
+        ],
+      ]);
+    });
+
+    test("mixed batch with set and setLocal produces a single notification", async () => {
+      const { room, root } = await prepareIsolatedStorageTest<{
+        a: number;
+        b?: string;
+        c?: string;
+      }>({
+        liveblocksType: "LiveObject",
+        data: { a: 1 },
+      });
+
+      const receivedUpdates: JsonStorageUpdate[][] = [];
+      onTestFinished(
+        room.subscribe(
+          root,
+          (updates) => receivedUpdates.push(updates.map(serializeUpdateToJson)),
+          { isDeep: true }
+        )
+      );
+
+      room.batch(() => {
+        root.set("b", "synced");
+        root.setLocal("c", "local");
+      });
+
+      expect(receivedUpdates).toEqual([
+        [
+          objectUpdate(
+            { a: 1, b: "synced", c: "local" },
+            { b: { type: "update" }, c: { type: "update" } }
+          ),
+        ],
+      ]);
+    });
+
+    test("setLocal on a synced key notifies deep subscribers", async () => {
+      const { room, root } = await prepareIsolatedStorageTest<{
+        a: number;
+        b?: string;
+      }>({
+        liveblocksType: "LiveObject",
+        data: { a: 1 },
+      });
+
+      root.set("b", "synced");
+
+      const receivedUpdates: JsonStorageUpdate[][] = [];
+      onTestFinished(
+        room.subscribe(
+          root,
+          (updates) => receivedUpdates.push(updates.map(serializeUpdateToJson)),
+          { isDeep: true }
+        )
+      );
+
+      root.setLocal("b", "local");
+
+      expect(receivedUpdates).toEqual([
+        [objectUpdate({ a: 1, b: "local" }, { b: { type: "update" } })],
+      ]);
+    });
+
+    test("setLocal value is visible via get, toObject, and toImmutable", async () => {
+      const { root } = await prepareIsolatedStorageTest<{
+        a: number;
+        b?: string;
+      }>({
+        liveblocksType: "LiveObject",
+        data: { a: 1 },
+      });
+
+      root.setLocal("b", "local");
+
+      expect(root.get("b")).toBe("local");
+      expect(root.toObject()).toEqual({ a: 1, b: "local" });
+      expect(root.toImmutable()).toEqual({ a: 1, b: "local" });
+    });
+
+    test("setLocal does not sync to other clients", async () => {
+      const { storageA, storageB } = await prepareStorageTest<{
+        a: number;
+        b?: string;
+      }>({
+        liveblocksType: "LiveObject",
+        data: { a: 1 },
+      });
+
+      storageA.root.setLocal("b", "local");
+
+      // Client A sees local value
+      expect(storageA.root.get("b")).toBe("local");
+
+      // Client B does not see local value (wait a bit to confirm nothing syncs)
+      await vi.waitFor(() => {
+        expect(storageB.root.toImmutable()).toEqual({ a: 1 });
+      });
+    });
+
+    test("setLocal value is not synced but set value is", async () => {
+      const { storageA, storageB } = await prepareStorageTest<{
+        a: number;
+        foo?: string;
+        bar?: string;
+      }>({
+        liveblocksType: "LiveObject",
+        data: { a: 1 },
+      });
+
+      storageA.root.setLocal("foo", "local-only");
+      storageA.root.set("bar", "synced");
+
+      // Client A sees both
+      expect(storageA.root.get("foo")).toBe("local-only");
+      expect(storageA.root.get("bar")).toBe("synced");
+
+      // Client B only sees bar, not foo
+      await vi.waitFor(() => {
+        expect(storageB.root.toImmutable()).toEqual({ a: 1, bar: "synced" });
+      });
+    });
+
+    test("client A sees local + remote values, client B sees only remote", async () => {
+      const { storageA, storageB } = await prepareStorageTest<{
+        a: number;
+        foo?: string;
+        bar?: string;
+      }>({
+        liveblocksType: "LiveObject",
+        data: { a: 1 },
+      });
+
+      storageA.root.setLocal("foo", "local-only");
+      storageB.root.set("bar", "from-B");
+
+      // Wait for B's change to sync
+      await vi.waitFor(() => {
+        expect(storageB.root.toImmutable()).toEqual({ a: 1, bar: "from-B" });
+      });
+
+      // Wait for A to receive B's synced change
+      await vi.waitFor(() => {
+        expect(storageA.root.get("bar")).toBe("from-B");
+      });
+
+      // Client A sees both foo (local) and bar (synced from B)
+      expect(storageA.root.get("foo")).toBe("local-only");
+
+      // Client B sees only bar
+      expect(storageB.root.get("foo")).toBeUndefined();
+    });
+
+    test("calling .set() on a local-only key clears the local overlay", async () => {
+      const { storageA, storageB } = await prepareStorageTest<{
+        a: number;
+        foo?: string;
+      }>({
+        liveblocksType: "LiveObject",
+        data: { a: 1 },
+      });
+
+      storageA.root.setLocal("foo", "local-only");
+      expect(storageA.root.get("foo")).toBe("local-only");
+
+      // Now set it as a synced value
+      storageA.root.set("foo", "synced");
+      expect(storageA.root.get("foo")).toBe("synced");
+
+      // Client B should now see it too
+      await vi.waitFor(() => {
+        expect(storageB.root.get("foo")).toBe("synced");
+      });
+    });
+
+    test("remote .set() on a local-only key clears the local overlay", async () => {
+      const { storageA, storageB } = await prepareStorageTest<{
+        a: number;
+        foo?: string;
+      }>({
+        liveblocksType: "LiveObject",
+        data: { a: 1 },
+      });
+
+      storageA.root.setLocal("foo", "local-only");
+      expect(storageA.root.get("foo")).toBe("local-only");
+
+      // Client B sets the same key as synced
+      storageB.root.set("foo", "from-B");
+
+      // Client A should see B's value (remote wins)
+      await vi.waitFor(() => {
+        expect(storageA.root.get("foo")).toBe("from-B");
+      });
+    });
+
+    test("clone preserves local-only properties", async () => {
+      const { root } = await prepareIsolatedStorageTest<{
+        a: number;
+        b?: string;
+      }>({
+        liveblocksType: "LiveObject",
+        data: { a: 1 },
+      });
+
+      root.setLocal("b", "local-only");
+      const cloned = root.clone();
+
+      expect(cloned.get("a")).toBe(1);
+      expect(cloned.get("b")).toBe("local-only");
+      expect(cloned.toImmutable()).toEqual({ a: 1, b: "local-only" });
+    });
+
+    test("clone preserves local-only properties on detached LiveObject", () => {
+      const obj = new LiveObject<{ a: number; b?: string }>({ a: 1 });
+      obj.setLocal("b", "local-only");
+      const cloned = obj.clone();
+
+      expect(cloned.get("a")).toBe(1);
+      expect(cloned.get("b")).toBe("local-only");
+      expect(cloned.toImmutable()).toEqual({ a: 1, b: "local-only" });
+    });
+
+    test("clone with local props injected into sibling: both have local prop on A, neither on B", async () => {
+      const { storageA, storageB } = await prepareStorageTest<{
+        child1?: LiveObject<{ x: number; y?: string }>;
+        child2?: LiveObject<{ x: number; y?: string }>;
+      }>({
+        liveblocksType: "LiveObject",
+        data: {},
+      });
+
+      const obj = new LiveObject<{ x: number; y?: string }>({ x: 1 });
+      storageA.root.set("child1", obj);
+      obj.setLocal("y", "local-only");
+
+      const cloned = obj.clone();
+      storageA.root.set("child2", cloned);
+
+      // Client A: both children have the local prop
+      expect(storageA.root.get("child1")!.get("y")).toBe("local-only");
+      expect(storageA.root.get("child2")!.get("y")).toBe("local-only");
+
+      // Client B: neither child has the local prop
+      await vi.waitFor(() => {
+        expect(storageB.root.get("child1")!.get("x")).toBe(1);
+        expect(storageB.root.get("child2")!.get("x")).toBe(1);
+      });
+      expect(storageB.root.get("child1")!.get("y")).toBeUndefined();
+      expect(storageB.root.get("child2")!.get("y")).toBeUndefined();
+    });
+
+    test("setLocal on an already-synced key deletes the synced value from other clients", async () => {
+      const { storageA, storageB } = await prepareStorageTest<{
+        a: number;
+        foo?: string;
+      }>({
+        liveblocksType: "LiveObject",
+        data: { a: 1 },
+      });
+
+      // First, sync a value
+      storageA.root.set("foo", "synced");
+      await vi.waitFor(() => {
+        expect(storageB.root.get("foo")).toBe("synced");
+      });
+
+      // Now override with setLocal
+      storageA.root.setLocal("foo", "local-only");
+
+      // Client A sees the local value
+      expect(storageA.root.get("foo")).toBe("local-only");
+
+      // Client B should no longer see "synced" — the key should be deleted
+      await vi.waitFor(() => {
+        expect(storageB.root.get("foo")).toBeUndefined();
+      });
+    });
+
+    test("undo after setLocal on a fresh key is a no-op", async () => {
+      const { room, root } = await prepareIsolatedStorageTest<{
+        a: number;
+        foo?: string;
+      }>({
+        liveblocksType: "LiveObject",
+        data: { a: 1 },
+      });
+
+      root.setLocal("foo", "local-only");
+      expect(root.get("foo")).toBe("local-only");
+
+      room.history.undo();
+
+      // setLocal on a fresh key doesn't push to undo stack, so undo is a no-op
+      expect(root.get("foo")).toBe("local-only");
+    });
+
+    test("undo after setLocal on a synced key restores the synced value", async () => {
+      const { room, root } = await prepareIsolatedStorageTest<{
+        a: number;
+        foo?: string;
+      }>({
+        liveblocksType: "LiveObject",
+        data: { a: 1 },
+      });
+
+      root.set("foo", "synced");
+      expect(root.get("foo")).toBe("synced");
+
+      root.setLocal("foo", "local-only");
+      expect(root.get("foo")).toBe("local-only");
+
+      // Undo restores the synced value and clears the local overlay
+      room.history.undo();
+      expect(root.get("foo")).toBe("synced");
+    });
+
+    test("undo then redo after setLocal on a synced key", async () => {
+      const { room, root } = await prepareIsolatedStorageTest<{
+        a: number;
+        foo?: string;
+      }>({
+        liveblocksType: "LiveObject",
+        data: { a: 1 },
+      });
+
+      root.set("foo", "synced");
+      root.setLocal("foo", "local-only");
+
+      // Undo restores synced value
+      room.history.undo();
+      expect(root.get("foo")).toBe("synced");
+
+      // Redo re-deletes the synced value, but local value is NOT restored
+      room.history.redo();
+      expect(root.get("foo")).toBeUndefined();
+    });
+
+    test("delete on a local-only key notifies deep subscribers with deletedItem", async () => {
+      const { room, root } = await prepareIsolatedStorageTest<{
+        a: number;
+        b?: string;
+      }>({
+        liveblocksType: "LiveObject",
+        data: { a: 1 },
+      });
+
+      root.setLocal("b", "local");
+
+      const receivedUpdates: JsonStorageUpdate[][] = [];
+      onTestFinished(
+        room.subscribe(
+          root,
+          (updates) => receivedUpdates.push(updates.map(serializeUpdateToJson)),
+          { isDeep: true }
+        )
+      );
+
+      root.delete("b");
+
+      expect(receivedUpdates).toEqual([
+        [
+          objectUpdate<{ a: number; b?: string }>(
+            { a: 1 },
+            { b: { type: "delete", deletedItem: "local" } }
+          ),
+        ],
+      ]);
+    });
+
+    test("delete on a local-only key removes it without sending ops", async () => {
+      const { storageA, storageB } = await prepareStorageTest<{
+        a: number;
+        foo?: string;
+      }>({
+        liveblocksType: "LiveObject",
+        data: { a: 1 },
+      });
+
+      storageA.root.setLocal("foo", "local-only");
+      expect(storageA.root.get("foo")).toBe("local-only");
+
+      storageA.root.delete("foo");
+      expect(storageA.root.get("foo")).toBeUndefined();
+
+      // Client B should still not see foo (nothing was synced)
+      await vi.waitFor(() => {
+        expect(storageB.root.toImmutable()).toEqual({ a: 1 });
+      });
+    });
+  });
+
+  describe("immutableIs", () => {
+    test("returns true when cached immutable matches the given value", () => {
+      const obj = new LiveObject({ a: 1, b: "hello" });
+      const imm = obj.toImmutable();
+      expect(obj.immutableIs(imm)).toBe(true);
+    });
+
+    test("returns false for a different value with equal contents", () => {
+      const obj = new LiveObject({ a: 1 });
+      obj.toImmutable();
+      expect(obj.immutableIs({ a: 1 })).toBe(false);
+    });
+
+    test("returns false when cache has been invalidated", () => {
+      const obj = new LiveObject<{ a: number }>({ a: 1 });
+      const imm = obj.toImmutable();
+      obj.set("a", 2);
+      expect(obj.immutableIs(imm)).toBe(false);
+    });
+
+    test("returns false when toImmutable has never been called", () => {
+      const obj = new LiveObject({ a: 1 });
+      expect(obj.immutableIs({ a: 1 })).toBe(false);
     });
   });
 });

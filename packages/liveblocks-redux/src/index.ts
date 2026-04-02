@@ -11,8 +11,8 @@ import type { EnterOptions, OpaqueClient, OpaqueRoom } from "@liveblocks/core";
 import {
   detectDupes,
   legacy_patchImmutableObject,
+  legacy_patchLiveObjectKey,
   lsonToJson,
-  patchLiveObjectKey,
 } from "@liveblocks/core";
 import type { StoreEnhancer } from "redux";
 
@@ -74,7 +74,7 @@ const internalEnhancer = <TState>(options: {
     throw missingClient();
   }
   const client = options.client;
-  const mapping = validateMapping(
+  const storageMapping = validateMapping(
     options.storageMapping || {},
     "storageMapping"
   );
@@ -83,13 +83,14 @@ const internalEnhancer = <TState>(options: {
     "presenceMapping"
   );
   if (process.env.NODE_ENV !== "production") {
-    validateNoDuplicateKeys(mapping, presenceMapping);
+    validateNoDuplicateKeys(storageMapping, presenceMapping);
   }
+  const presenceKeys = Object.keys(presenceMapping);
 
   return (createStore: any) => {
     return (reducer: any, initialState: any, enhancer: any) => {
       let maybeRoom: OpaqueRoom | null = null;
-      let isPatching: boolean = false;
+      let isPatching = false;
       let storageRoot: LiveObject<LsonObject> | null = null;
       let unsubscribeCallbacks: Array<() => void> = [];
       let lastRoomId: string | null = null;
@@ -143,24 +144,27 @@ const internalEnhancer = <TState>(options: {
 
             if (maybeRoom) {
               isPatching = true;
-              updatePresence(
-                maybeRoom,
-                state,
-                newState,
-                presenceMapping as any
-              );
+              try {
+                updatePresence(
+                  maybeRoom,
+                  state,
+                  newState,
+                  presenceMapping as any
+                );
 
-              maybeRoom.batch(() => {
-                if (storageRoot) {
-                  patchLiveblocksStorage(
-                    storageRoot,
-                    state,
-                    newState,
-                    mapping as any
-                  );
-                }
-              });
-              isPatching = false;
+                maybeRoom.batch(() => {
+                  if (storageRoot) {
+                    patchLiveblocksStorage(
+                      storageRoot,
+                      state,
+                      newState,
+                      storageMapping as any
+                    );
+                  }
+                });
+              } finally {
+                isPatching = false;
+              }
             }
 
             if (newState.liveblocks == null) {
@@ -195,10 +199,7 @@ const internalEnhancer = <TState>(options: {
           lastLeaveFn();
         }
 
-        const initialPresence = selectFields(
-          store.getState(),
-          presenceMapping
-        ) as any;
+        const initialPresence = pick(store.getState(), presenceKeys) as any;
 
         const { room, leave } = client.enterRoom(newRoomId, {
           engine: options?.engine,
@@ -226,10 +227,10 @@ const internalEnhancer = <TState>(options: {
 
         unsubscribeCallbacks.push(
           room.events.myPresence.subscribe(() => {
-            if (isPatching === false) {
+            if (!isPatching) {
               store.dispatch({
                 type: ACTION_TYPES.PATCH_REDUX_STATE,
-                state: selectFields(room.getPresence(), presenceMapping),
+                state: pick(room.getPresence(), presenceKeys),
               });
             }
           })
@@ -243,12 +244,16 @@ const internalEnhancer = <TState>(options: {
           const updates: any = {};
 
           maybeRoom!.batch(() => {
-            for (const key in mapping) {
+            for (const key in storageMapping) {
               const liveblocksStatePart = root.get(key);
-
               if (liveblocksStatePart == null) {
                 updates[key] = store.getState()[key];
-                patchLiveObjectKey(root, key, undefined, store.getState()[key]);
+                legacy_patchLiveObjectKey(
+                  root,
+                  key,
+                  undefined,
+                  store.getState()[key]
+                );
               } else {
                 updates[key] = lsonToJson(liveblocksStatePart);
               }
@@ -262,22 +267,18 @@ const internalEnhancer = <TState>(options: {
 
           storageRoot = root;
           unsubscribeCallbacks.push(
-            maybeRoom!.subscribe(
-              root,
-              (updates) => {
-                if (isPatching === false) {
-                  store.dispatch({
-                    type: ACTION_TYPES.PATCH_REDUX_STATE,
-                    state: patchState(
-                      store.getState(),
-                      updates,
-                      mapping as any
-                    ),
-                  });
-                }
-              },
-              { isDeep: true }
-            )
+            maybeRoom!.events.storageBatch.subscribe((updates) => {
+              if (!isPatching) {
+                store.dispatch({
+                  type: ACTION_TYPES.PATCH_REDUX_STATE,
+                  state: patchState(
+                    store.getState(),
+                    updates,
+                    storageMapping as any
+                  ),
+                });
+              }
+            })
           );
         });
 
@@ -383,7 +384,7 @@ function patchLiveblocksStorage<O extends LsonObject, TState>(
     if (oldState[key] !== newState[key]) {
       const oldVal = oldState[key];
       const newVal = newState[key];
-      patchLiveObjectKey(root, key, oldVal as any, newVal);
+      legacy_patchLiveObjectKey(root, key, oldVal as any, newVal);
     }
   }
 }
@@ -420,16 +421,15 @@ function validateNoDuplicateKeys<TState>(
   }
 }
 
-function selectFields<TState>(
-  presence: TState,
-  mapping: Mapping<TState>
-): /* TODO: Actually, Pick<TState, keyof Mapping<TState>> ? */
-Partial<TState> {
-  const partialState = {} as Partial<TState>;
-  for (const key in mapping) {
-    partialState[key] = presence[key];
+function pick(
+  source: Record<string, unknown>,
+  keys: Iterable<string>
+): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const key of keys) {
+    result[key] = source[key];
   }
-  return partialState;
+  return result;
 }
 
 function patchState<TState extends JsonObject>(

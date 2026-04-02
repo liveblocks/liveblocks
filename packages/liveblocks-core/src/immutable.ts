@@ -8,11 +8,15 @@ import { LiveMap } from "./crdts/LiveMap";
 import { LiveObject } from "./crdts/LiveObject";
 import { LiveRegister } from "./crdts/LiveRegister";
 import type { LiveNode, Lson, LsonObject, ToJson } from "./crdts/Lson";
+import { deepLiveify } from "./crdts/reconcile";
 import type { StorageUpdate } from "./crdts/StorageUpdates";
 import * as console from "./lib/fancy-console";
 import { isPlainObject } from "./lib/guards";
 import type { Json, JsonObject } from "./lib/Json";
 import { isJsonObject } from "./lib/Json";
+
+export type { SyncConfig, SyncMode } from "./crdts/reconcile";
+export { reconcileLiveObject } from "./crdts/reconcile";
 
 function lsonObjectToJson<O extends LsonObject>(
   obj: O
@@ -75,32 +79,7 @@ export function lsonToJson(value: Lson): Json {
   return value;
 }
 
-/**
- * Deeply converts all nested lists to LiveLists, and all nested objects to
- * LiveObjects.
- *
- * As such, the returned result will not contain any Json arrays or Json
- * objects anymore.
- */
-function deepLiveify(value: Lson | LsonObject): Lson {
-  if (Array.isArray(value)) {
-    return new LiveList(value.map(deepLiveify));
-  } else if (isPlainObject(value)) {
-    const init: LsonObject = {};
-    for (const key in value) {
-      const val = value[key];
-      if (val === undefined) {
-        continue;
-      }
-      init[key] = deepLiveify(val);
-    }
-    return new LiveObject(init);
-  } else {
-    return value;
-  }
-}
-
-export function patchLiveList<T extends Lson>(
+export function legacy_patchLiveList<T extends Lson>(
   liveList: LiveList<T>,
   prev: Array<T>,
   next: Array<T>
@@ -152,8 +131,7 @@ export function patchLiveList<T extends Lson>(
   if (i > prevEnd) {
     if (i <= nextEnd) {
       while (i <= nextEnd) {
-        liveList.insert(deepLiveify(next[i]) as T, i);
-        //                                   ^^^^ FIXME Not entirely true
+        liveList.insert(deepLiveify(next[i] as Json) as T, i);
         i++;
       }
     }
@@ -174,17 +152,15 @@ export function patchLiveList<T extends Lson>(
         isPlainObject(prevNode) &&
         isPlainObject(nextNode)
       ) {
-        patchLiveObject(liveListNode, prevNode, nextNode);
+        legacy_patchLiveObject(liveListNode, prevNode, nextNode);
       } else {
-        liveList.set(i, deepLiveify(nextNode) as T);
-        //                                    ^^^^ FIXME Not entirely true
+        liveList.set(i, deepLiveify(nextNode as Json) as T);
       }
 
       i++;
     }
     while (i <= nextEnd) {
-      liveList.insert(deepLiveify(next[i]) as T, i);
-      //                                   ^^^^ FIXME Not entirely true
+      liveList.insert(deepLiveify(next[i] as Json) as T, i);
       i++;
     }
     let localI = i;
@@ -195,7 +171,7 @@ export function patchLiveList<T extends Lson>(
   }
 }
 
-export function patchLiveObjectKey<
+export function legacy_patchLiveObjectKey<
   O extends LsonObject,
   K extends keyof O,
   V extends Json,
@@ -218,24 +194,22 @@ export function patchLiveObjectKey<
     liveObject.delete(key);
   } else if (value === undefined) {
     liveObject.set(key, deepLiveify(next) as O[K]);
-    //                                    ^^^^^^^ FIXME Not entirely true
   } else if (prev === next) {
     return;
   } else if (isLiveList(value) && Array.isArray(prev) && Array.isArray(next)) {
-    patchLiveList(value, prev, next);
+    legacy_patchLiveList(value, prev, next);
   } else if (
     isLiveObject(value) &&
     isPlainObject(prev) &&
     isPlainObject(next)
   ) {
-    patchLiveObject(value, prev, next);
+    legacy_patchLiveObject(value, prev, next);
   } else {
     liveObject.set(key, deepLiveify(next) as O[K]);
-    //                                    ^^^^^^^ FIXME Not entirely true
   }
 }
 
-export function patchLiveObject<O extends LsonObject>(
+export function legacy_patchLiveObject<O extends LsonObject>(
   root: LiveObject<O>,
   prev: ToJson<O>,
   next: ToJson<O>
@@ -243,7 +217,7 @@ export function patchLiveObject<O extends LsonObject>(
   const updates: Partial<O> = {};
 
   for (const key in next) {
-    patchLiveObjectKey(root, key, prev[key] as Json, next[key] as Json);
+    legacy_patchLiveObjectKey(root, key, prev[key] as Json, next[key] as Json);
   }
 
   for (const key in prev) {
