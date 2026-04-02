@@ -10,9 +10,7 @@ import type {
 import type { EnterOptions, OpaqueClient, OpaqueRoom } from "@liveblocks/core";
 import {
   detectDupes,
-  legacy_patchImmutableObject,
   legacy_patchLiveObjectKey,
-  lsonToJson,
 } from "@liveblocks/core";
 import type { StoreEnhancer } from "redux";
 
@@ -86,6 +84,7 @@ const internalEnhancer = <TState>(options: {
     validateNoDuplicateKeys(storageMapping, presenceMapping);
   }
   const presenceKeys = Object.keys(presenceMapping);
+  const storageKeys = Object.keys(storageMapping);
 
   return (createStore: any) => {
     return (reducer: any, initialState: any, enhancer: any) => {
@@ -241,41 +240,32 @@ const internalEnhancer = <TState>(options: {
         });
 
         void room.getStorage().then(({ root }) => {
-          const updates: any = {};
-
           maybeRoom!.batch(() => {
             for (const key in storageMapping) {
               const liveblocksStatePart = root.get(key);
               if (liveblocksStatePart == null) {
-                updates[key] = store.getState()[key];
                 legacy_patchLiveObjectKey(
                   root,
                   key,
                   undefined,
                   store.getState()[key]
                 );
-              } else {
-                updates[key] = lsonToJson(liveblocksStatePart);
               }
             }
           });
 
           store.dispatch({
             type: ACTION_TYPES.INIT_STORAGE,
-            state: updates,
+            state: pick(root.toJSON(), storageKeys),
           });
 
           storageRoot = root;
           unsubscribeCallbacks.push(
-            maybeRoom!.events.storageBatch.subscribe((updates) => {
+            maybeRoom!.events.storageBatch.subscribe(() => {
               if (!isPatching) {
                 store.dispatch({
                   type: ACTION_TYPES.PATCH_REDUX_STATE,
-                  state: patchState(
-                    store.getState(),
-                    updates,
-                    storageMapping as any
-                  ),
+                  state: pick(root.toJSON(), storageKeys),
                 });
               }
             })
@@ -432,27 +422,6 @@ function pick(
   return result;
 }
 
-function patchState<TState extends JsonObject>(
-  state: TState,
-  updates: any[], // StorageUpdate
-  mapping: Mapping<TState>
-) {
-  const partialState: Partial<TState> = {};
-
-  for (const key in mapping) {
-    partialState[key] = state[key];
-  }
-
-  const patched = legacy_patchImmutableObject(partialState, updates);
-
-  const result: Partial<TState> = {};
-
-  for (const key in mapping) {
-    result[key] = patched[key];
-  }
-
-  return result;
-}
 
 /**
  * Remove false keys from mapping and generate to a new object to avoid potential mutation from outside the middleware

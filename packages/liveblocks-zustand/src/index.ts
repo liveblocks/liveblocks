@@ -19,14 +19,11 @@ import type {
   EnterOptions,
   OpaqueClient,
   OpaqueRoom,
-  StorageUpdate,
 } from "@liveblocks/core";
 import {
   detectDupes,
   errorIf,
-  legacy_patchImmutableObject,
   legacy_patchLiveObjectKey,
-  lsonToJson,
 } from "@liveblocks/core";
 import type { StateCreator, StoreMutatorIdentifier } from "zustand";
 
@@ -156,6 +153,7 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
 
   const { client, presenceMapping, storageMapping } = validateOptions(options);
   const presenceKeys = Object.keys(presenceMapping);
+  const storageKeys = Object.keys(storageMapping);
   return (set, get, api) => {
     let maybeRoom: TRoom | null = null;
     let isPatching = false;
@@ -211,34 +209,27 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
       );
 
       void room.getStorage().then(({ root }) => {
-        const updates = {} as Partial<TState>;
-
         room.batch(() => {
           for (const key in storageMapping) {
             const liveblocksStatePart = root.get(key);
             if (liveblocksStatePart === undefined) {
-              updates[key] = get()[key];
               legacy_patchLiveObjectKey(
                 root,
                 key,
                 undefined,
                 get()[key] as Json | undefined
               );
-            } else {
-              updates[key] = lsonToJson(
-                liveblocksStatePart
-              ) as unknown as TState[Extract<keyof TState, string>];
             }
           }
         });
 
-        set(updates);
+        set(pick(root.toJSON(), storageKeys) as Partial<TState>);
 
         storageRoot = root as LiveObject<S>;
         unsubscribeCallbacks.push(
-          room.events.storageBatch.subscribe((updates) => {
+          room.events.storageBatch.subscribe(() => {
             if (!isPatching) {
-              set(patchState(get(), updates, storageMapping));
+              set(pick(root.toJSON(), storageKeys) as Partial<TState>);
             }
           })
         );
@@ -330,31 +321,6 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
 export const liveblocks =
   middlewareImpl as unknown as OuterLiveblocksMiddleware;
 
-function patchState<T>(
-  state: T,
-  updates: StorageUpdate[],
-  mapping: Mapping<T>
-) {
-  const partialState: Partial<T> = {};
-
-  for (const key in mapping) {
-    partialState[key] = state[key];
-  }
-
-  const patched = legacy_patchImmutableObject(
-    partialState as JsonObject,
-    updates
-  );
-
-  const result: Partial<T> = {};
-
-  for (const key in mapping) {
-    // @ts-expect-error key is a key of T
-    result[key] = patched[key];
-  }
-
-  return result;
-}
 
 function pick(
   source: Record<string, unknown>,
