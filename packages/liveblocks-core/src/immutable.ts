@@ -2,11 +2,10 @@ import {
   findNonSerializableValue,
   isLiveList,
   isLiveObject,
+  isLiveStructure,
 } from "./crdts/liveblocks-helpers";
 import { LiveList } from "./crdts/LiveList";
-import { LiveMap } from "./crdts/LiveMap";
 import { LiveObject } from "./crdts/LiveObject";
-import { LiveRegister } from "./crdts/LiveRegister";
 import type { LiveNode, Lson, LsonObject, ToJson } from "./crdts/Lson";
 import { deepLiveify } from "./crdts/reconcile";
 import type { StorageUpdate } from "./crdts/StorageUpdates";
@@ -18,64 +17,14 @@ import { isJsonObject } from "./lib/Json";
 export type { SyncConfig, SyncMode } from "./crdts/reconcile";
 export { reconcileLiveObject } from "./crdts/reconcile";
 
-function lsonObjectToJson<O extends LsonObject>(
-  obj: O
-): { [K in keyof O]: Json } {
-  const result = {} as { [K in keyof O]: Json };
-  for (const key in obj) {
-    const val = obj[key];
-    if (val !== undefined) {
-      result[key] = lsonToJson(val);
-    }
-  }
-  return result;
-}
-
-export function liveObjectToJson<O extends LsonObject>(
-  liveObject: LiveObject<O>
-): { [K in keyof O]: Json } {
-  return lsonObjectToJson(liveObject.toObject());
-}
-
-function liveMapToJson<TKey extends string>(
-  map: LiveMap<TKey, Lson>
-): { [K in TKey]: Json } {
-  const result = {} as { [K in TKey]: Json };
-  for (const [key, value] of map.entries()) {
-    result[key] = lsonToJson(value);
-  }
-  return result;
-}
-
-function lsonListToJson(value: Lson[]): Json[] {
-  return value.map(lsonToJson);
-}
-
-function liveListToJson(value: LiveList<Lson>): Json[] {
-  return lsonListToJson(value.toArray());
-}
-
+/**
+ * Converts any Lson value to its Json equivalent. Live structures are
+ * converted via .toJSON(), plain values pass through as-is.
+ */
 export function lsonToJson(value: Lson): Json {
-  // Check for LiveStructure datastructures first
-  if (value instanceof LiveObject) {
-    return liveObjectToJson(value);
-  } else if (value instanceof LiveList) {
-    return liveListToJson(value);
-  } else if (value instanceof LiveMap) {
-    return liveMapToJson(value);
-  } else if (value instanceof LiveRegister) {
-    // NOTE: This branch should never be taken, because LiveRegister isn't a valid Lson value
-    return value.data as Json;
+  if (isLiveStructure(value)) {
+    return value.toJSON() as Json;
   }
-
-  // Then for composite Lson values
-  if (Array.isArray(value)) {
-    return lsonListToJson(value);
-  } else if (isPlainObject(value)) {
-    return lsonObjectToJson(value);
-  }
-
-  // Finally, if value is an LsonScalar, then it's also a valid JsonScalar
   return value;
 }
 
