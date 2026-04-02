@@ -4386,7 +4386,7 @@ const _useAddReaction: TypedBundle["useAddReaction"] = useAddReaction;
  * that gets passed into your callback will be a "mutation context".
  *
  * If you want get access to the immutable root somewhere in your mutation,
- * you can use `storage.ToImmutable()`.
+ * you can use `storage.toJSON()`.
  *
  * @example
  * const fillLayers = useMutation(
