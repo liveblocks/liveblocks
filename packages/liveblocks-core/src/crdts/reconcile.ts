@@ -1,5 +1,5 @@
 import { isPlainObject } from "../lib/guards";
-import type { Json, JsonObject } from "../lib/Json";
+import type { Json, JsonObject, ReadonlyJson } from "../lib/Json";
 import {
   isLiveList,
   isLiveMap,
@@ -63,7 +63,7 @@ export function deepLiveify(value: Json, config?: SyncMode): Lson {
     return new LiveList(value.map((v) => deepLiveify(v, config)));
   } else if (isPlainObject(value)) {
     const init: LsonObject = {};
-    const locals: Record<string, Json> = {};
+    const locals: Record<string, ReadonlyJson> = {};
     for (const key in value) {
       const val = value[key];
       if (val === undefined) {

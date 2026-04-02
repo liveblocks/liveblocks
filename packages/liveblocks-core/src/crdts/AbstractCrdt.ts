@@ -1,4 +1,5 @@
 import { assertNever } from "../lib/assert";
+import type { ReadonlyJson } from "../lib/Json";
 import type { Pos } from "../lib/position";
 import { asPos } from "../lib/position";
 import type {
@@ -10,7 +11,6 @@ import type {
 import { OpCode } from "../protocol/Op";
 import type { SerializedCrdt } from "../protocol/StorageNode";
 import type * as DevTools from "../types/DevToolsTreeNode";
-import type { ReadonlyJson } from "../lib/Json";
 import type { Immutable } from "../types/Immutable";
 import type { LiveNode, Lson } from "./Lson";
 import type { StorageUpdate } from "./StorageUpdates";

@@ -1,14 +1,7 @@
 import * as fc from "fast-check";
+import { produce } from "immer";
 import type { MockInstance } from "vitest";
-import {
-  afterEach,
-  beforeAll,
-  describe,
-  expect,
-  onTestFinished,
-  test,
-  vi,
-} from "vitest";
+import { afterEach, beforeAll, describe, expect, test, vi } from "vitest";
 
 import {
   jsonObject,
@@ -28,7 +21,6 @@ import {
 } from "../immutable";
 import { kInternal } from "../internal";
 import * as console from "../lib/fancy-console";
-import type { JsonObject } from "../lib/Json";
 import type { PlainLsonObject } from "../types/PlainLson";
 import {
   enterConnectAndGetStorage,
@@ -76,13 +68,6 @@ export async function prepareStorageImmutableTest<S extends LsonObject>(
   });
 
   const state = lsonToJson(storageA.root) as ToJson<S>;
-  let refState = lsonToJson(storageB.root) as ToJson<S>;
-
-  onTestFinished(
-    clientB.room.events.storageBatch.subscribe(() => {
-      refState = lsonToJson(storageB.root) as ToJson<S>;
-    })
-  );
 
   async function expectStorageAndState(data: ToJson<S>, itemsCount?: number) {
     expect(lsonToJson(storageA.root)).toEqual(data);
@@ -94,8 +79,6 @@ export async function prepareStorageImmutableTest<S extends LsonObject>(
     if (itemsCount !== undefined) {
       expect(clientA.room[kInternal].nodeCount).toBe(itemsCount);
     }
-    expect(state).toEqual(refState);
-    expect(state).toEqual(data);
   }
 
   async function expectStorage(data: ToJson<S>) {
@@ -112,16 +95,6 @@ export async function prepareStorageImmutableTest<S extends LsonObject>(
     expectStorage,
     state,
   };
-}
-
-function applyStateChanges<TState extends JsonObject>(
-  state: TState,
-  applyChanges: () => void
-): { oldState: TState; newState: TState } {
-  const oldState = JSON.parse(JSON.stringify(state)) as TState;
-  applyChanges();
-  const newState = JSON.parse(JSON.stringify(state)) as TState;
-  return { oldState, newState };
 }
 
 describe("immutableIs", () => {
@@ -504,8 +477,9 @@ describe("2 ways tests with two clients", () => {
 
       expect(state).toEqual({});
 
-      const { oldState, newState } = applyStateChanges(state, () => {
-        state.syncObj = { a: 1 };
+      const oldState = state;
+      const newState = produce(oldState, (draft) => {
+        draft.syncObj = { a: 1 };
       });
 
       legacy_patchLiveObjectKey(
@@ -531,8 +505,9 @@ describe("2 ways tests with two clients", () => {
 
       expect(state).toEqual({ syncObj: { a: 0 } });
 
-      const { oldState, newState } = applyStateChanges(state, () => {
-        state.syncObj.a = 1;
+      const oldState = state;
+      const newState = produce(oldState, (draft) => {
+        draft.syncObj.a = 1;
       });
 
       legacy_patchLiveObjectKey(
@@ -558,8 +533,9 @@ describe("2 ways tests with two clients", () => {
 
       expect(state).toEqual({ syncObj: { a: 0 } });
 
-      const { oldState, newState } = applyStateChanges(state, () => {
-        state.syncObj.a = { subA: "ok" };
+      const oldState = state;
+      const newState = produce(oldState, (draft) => {
+        draft.syncObj.a = { subA: "ok" };
       });
 
       legacy_patchLiveObjectKey(
@@ -585,8 +561,9 @@ describe("2 ways tests with two clients", () => {
 
       expect(state).toEqual({ doc: {} });
 
-      const { oldState, newState } = applyStateChanges(state, () => {
-        state.doc = { sub: [0] };
+      const oldState = state;
+      const newState = produce(oldState, (draft) => {
+        draft.doc = { sub: [0] };
       });
 
       legacy_patchLiveObjectKey(
@@ -612,8 +589,9 @@ describe("2 ways tests with two clients", () => {
 
       expect(state).toEqual({ doc: {} });
 
-      const { oldState, newState } = applyStateChanges(state, () => {
-        state.doc = { sub: { subSub: [{ a: 1 }] } };
+      const oldState = state;
+      const newState = produce(oldState, (draft) => {
+        draft.doc = { sub: { subSub: [{ a: 1 }] } };
       });
 
       legacy_patchLiveObjectKey(
@@ -639,8 +617,9 @@ describe("2 ways tests with two clients", () => {
 
       expect(state).toEqual({ doc: {} });
 
-      const { oldState, newState } = applyStateChanges(state, () => {
-        state.doc = { pos: { a: { b: 1 } } };
+      const oldState = state;
+      const newState = produce(oldState, (draft) => {
+        draft.doc = { pos: { a: { b: 1 } } };
       });
 
       legacy_patchLiveObjectKey(
@@ -666,8 +645,9 @@ describe("2 ways tests with two clients", () => {
 
       expect(state).toEqual({ syncObj: { a: 0 } });
 
-      const { oldState, newState } = applyStateChanges(state, () => {
-        delete state.syncObj.a;
+      const oldState = state;
+      const newState = produce(oldState, (draft) => {
+        delete draft.syncObj.a;
       });
 
       legacy_patchLiveObjectKey(
@@ -693,8 +673,9 @@ describe("2 ways tests with two clients", () => {
           },
         });
 
-      const { oldState, newState } = applyStateChanges(state, () => {
-        state.syncList = [2];
+      const oldState = state;
+      const newState = produce(oldState, (draft) => {
+        draft.syncList = [2];
       });
 
       legacy_patchLiveObjectKey(
@@ -718,8 +699,9 @@ describe("2 ways tests with two clients", () => {
           },
         });
 
-      const { oldState, newState } = applyStateChanges(state, () => {
-        state.syncList.push("a");
+      const oldState = state;
+      const newState = produce(oldState, (draft) => {
+        draft.syncList.push("a");
       });
 
       legacy_patchLiveObjectKey(
@@ -743,8 +725,9 @@ describe("2 ways tests with two clients", () => {
           },
         });
 
-      const { oldState, newState } = applyStateChanges(state, () => {
-        state.list[0] = "D";
+      const oldState = state;
+      const newState = produce(oldState, (draft) => {
+        draft.list[0] = "D";
       });
 
       legacy_patchLiveObject(storage.root, oldState, newState);
@@ -763,8 +746,9 @@ describe("2 ways tests with two clients", () => {
           },
         });
 
-      const { oldState, newState } = applyStateChanges(state, () => {
-        state.list[2] = "D";
+      const oldState = state;
+      const newState = produce(oldState, (draft) => {
+        draft.list[2] = "D";
       });
 
       legacy_patchLiveObject(storage.root, oldState, newState);
@@ -783,8 +767,9 @@ describe("2 ways tests with two clients", () => {
           },
         });
 
-      const { oldState, newState } = applyStateChanges(state, () => {
-        state.syncList.unshift("b");
+      const oldState = state;
+      const newState = produce(oldState, (draft) => {
+        draft.syncList.unshift("b");
       });
 
       legacy_patchLiveObjectKey(
@@ -811,8 +796,9 @@ describe("2 ways tests with two clients", () => {
           },
         });
 
-      const { oldState, newState } = applyStateChanges(state, () => {
-        state.syncList = ["d", "b", "c", "a"];
+      const oldState = state;
+      const newState = produce(oldState, (draft) => {
+        draft.syncList = ["d", "b", "c", "a"];
       });
 
       legacy_patchLiveObjectKey(
@@ -839,8 +825,9 @@ describe("2 ways tests with two clients", () => {
           },
         });
 
-      const { oldState, newState } = applyStateChanges(state, () => {
-        state.syncList[0].a = 2;
+      const oldState = state;
+      const newState = produce(oldState, (draft) => {
+        draft.syncList[0].a = 2;
       });
 
       legacy_patchLiveObjectKey(
@@ -864,8 +851,9 @@ describe("2 ways tests with two clients", () => {
           },
         });
 
-      const { oldState, newState } = applyStateChanges(state, () => {
-        state.syncList.shift();
+      const oldState = state;
+      const newState = produce(oldState, (draft) => {
+        draft.syncList.shift();
       });
 
       legacy_patchLiveObjectKey(
@@ -889,8 +877,9 @@ describe("2 ways tests with two clients", () => {
           },
         });
 
-      const { oldState, newState } = applyStateChanges(state, () => {
-        state.syncList.pop();
+      const oldState = state;
+      const newState = produce(oldState, (draft) => {
+        draft.syncList.pop();
       });
 
       legacy_patchLiveObjectKey(
@@ -917,8 +906,9 @@ describe("2 ways tests with two clients", () => {
           },
         });
 
-      const { oldState, newState } = applyStateChanges(state, () => {
-        state.syncList = ["a"];
+      const oldState = state;
+      const newState = produce(oldState, (draft) => {
+        draft.syncList = ["a"];
       });
 
       legacy_patchLiveObjectKey(
@@ -945,8 +935,9 @@ describe("2 ways tests with two clients", () => {
           },
         });
 
-      const { oldState, newState } = applyStateChanges(state, () => {
-        state.syncList = ["c"];
+      const oldState = state;
+      const newState = produce(oldState, (draft) => {
+        draft.syncList = ["c"];
       });
 
       legacy_patchLiveObjectKey(
@@ -973,8 +964,9 @@ describe("2 ways tests with two clients", () => {
           },
         });
 
-      const { oldState, newState } = applyStateChanges(state, () => {
-        state.syncList = [];
+      const oldState = state;
+      const newState = produce(oldState, (draft) => {
+        draft.syncList = [];
       });
 
       legacy_patchLiveObjectKey(
@@ -1013,15 +1005,16 @@ describe("2 ways tests with two clients", () => {
 
       expect(state).toEqual({ syncObj: { a: 0 } });
 
-      const oldState = JSON.parse(JSON.stringify(state));
-
-      state.syncObj.a = () => {};
+      const oldState = state;
+      const newState = produce(oldState, (draft: any) => {
+        draft.syncObj.a = () => {};
+      });
 
       legacy_patchLiveObjectKey(
         storage.root,
         "syncObj",
         oldState["syncObj"],
-        state["syncObj"]
+        newState["syncObj"]
       );
 
       expect(consoleErrorSpy).toHaveBeenCalledTimes(1);
@@ -1046,15 +1039,16 @@ describe("2 ways tests with two clients", () => {
         NODE_ENV: "production",
       };
 
-      const oldState = JSON.parse(JSON.stringify(state));
-
-      state.syncObj.a = () => {};
+      const oldState = state;
+      const newState = produce(oldState, (draft: any) => {
+        draft.syncObj.a = () => {};
+      });
 
       legacy_patchLiveObjectKey(
         storage.root,
         "syncObj",
         oldState["syncObj"],
-        state["syncObj"]
+        newState["syncObj"]
       );
 
       expect(consoleErrorSpy).toHaveBeenCalledTimes(0);

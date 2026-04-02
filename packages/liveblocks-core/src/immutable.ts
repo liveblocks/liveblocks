@@ -12,7 +12,7 @@ import { deepLiveify } from "./crdts/reconcile";
 import type { StorageUpdate } from "./crdts/StorageUpdates";
 import * as console from "./lib/fancy-console";
 import { isPlainObject } from "./lib/guards";
-import type { Json, JsonObject } from "./lib/Json";
+import type { Json, JsonObject, ReadonlyJson } from "./lib/Json";
 import { isJsonObject } from "./lib/Json";
 
 export type { SyncConfig, SyncMode } from "./crdts/reconcile";
@@ -174,7 +174,7 @@ export function legacy_patchLiveList<T extends Lson>(
 export function legacy_patchLiveObjectKey<
   O extends LsonObject,
   K extends keyof O,
-  V extends Json,
+  V extends ReadonlyJson,
 >(liveObject: LiveObject<O>, key: K, prev?: V, next?: V): void {
   if (process.env.NODE_ENV !== "production") {
     const nonSerializableValue = findNonSerializableValue(next);
@@ -193,7 +193,7 @@ export function legacy_patchLiveObjectKey<
   if (next === undefined) {
     liveObject.delete(key);
   } else if (value === undefined) {
-    liveObject.set(key, deepLiveify(next) as O[K]);
+    liveObject.set(key, deepLiveify(next as Json) as O[K]);
   } else if (prev === next) {
     return;
   } else if (isLiveList(value) && Array.isArray(prev) && Array.isArray(next)) {
@@ -205,7 +205,7 @@ export function legacy_patchLiveObjectKey<
   ) {
     legacy_patchLiveObject(value, prev, next);
   } else {
-    liveObject.set(key, deepLiveify(next) as O[K]);
+    liveObject.set(key, deepLiveify(next as Json) as O[K]);
   }
 }
 

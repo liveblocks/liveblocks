@@ -1,6 +1,6 @@
 import type { LiveNode } from "../crdts/Lson";
 import { nn } from "../lib/assert";
-import type { Json } from "../lib/Json";
+import type { Json, ReadonlyJson } from "../lib/Json";
 import { nanoid } from "../lib/nanoid";
 import { deepClone } from "../lib/utils";
 import type { CreateOp, CreateRegisterOp, Op } from "../protocol/Op";
@@ -11,7 +11,6 @@ import type {
 } from "../protocol/StorageNode";
 import { CrdtType } from "../protocol/StorageNode";
 import type * as DevTools from "../types/DevToolsTreeNode";
-import type { ReadonlyJson } from "../lib/Json";
 import type { Immutable } from "../types/Immutable";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
