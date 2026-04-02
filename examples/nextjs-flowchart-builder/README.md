@@ -25,6 +25,8 @@ This example shows how to build a collaborative flowchart builder with
 You can place blocks, connect them, edit labels, undo and redo, and attach
 comments to the canvas or to specific blocks.
 
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/collaborative-flowchart-builder.png" width="536" alt="Collaborative Flowchart Builder" />
+
 ## Getting started
 
 Run the following command to try this example locally:

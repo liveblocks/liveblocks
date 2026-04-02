@@ -29,6 +29,8 @@ powered by [Liveblocks](https://liveblocks.io),
 You can place blocks, connect them, edit labels, undo and redo, and ask the AI
 to edit the diagram in real time for everyone in the room.
 
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/collaborative-flowchart-ai.png" width="536" alt="Collaborative React Flow with AI" />
+
 ## Getting started
 
 Run the following command to try this example locally:

@@ -22,6 +22,8 @@ This example shows how to build a collaborative
 [React Flow](https://reactflow.dev/) diagram with
 [Liveblocks](https://liveblocks.io) and [Next.js](https://nextjs.org/).
 
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/collaborative-flowchart.png" width="536" alt="Collaborative React Flow" />
+
 ## Getting started
 
 Run the following command to try this example locally:
