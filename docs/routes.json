@@ -37,6 +37,11 @@
             "hidden": true
           },
           {
+            "title": "Feeds",
+            "path": "/get-started/nextjs-feeds",
+            "hidden": true
+          },
+          {
             "title": "Comments",
             "path": "/get-started/react-comments",
             "hidden": true
@@ -434,151 +439,149 @@
     ]
   },
   {
-    "title": "Ready-made features",
+    "title": "Collaboration features",
     "routes": [
       {
-        "title": "Comments",
-        "path": "/ready-made-features/comments",
-        "routes": [
-          {
-            "title": "Concepts",
-            "path": "/ready-made-features/comments/concepts"
-          },
-          {
-            "title": "Users and mentions",
-            "path": "/ready-made-features/comments/users-and-mentions"
-          },
-          {
-            "title": "Default components",
-            "path": "/ready-made-features/comments/default-components"
-          },
-          {
-            "title": "Hooks",
-            "path": "/ready-made-features/comments/hooks"
-          },
-          {
-            "title": "Metadata",
-            "path": "/ready-made-features/comments/metadata"
-          },
-          {
-            "title": "Primitives",
-            "path": "/ready-made-features/comments/primitives"
-          },
-          {
-            "title": "Styling and customization",
-            "path": "/ready-made-features/comments/styling-and-customization"
-          },
-          {
-            "title": "Email notifications",
-            "path": "/ready-made-features/comments/email-notifications"
-          }
-        ]
-      },
-      {
         "title": "Multiplayer",
-        "path": "/ready-made-features/multiplayer",
+        "path": "/collaboration-features/multiplayer",
         "routes": [
           {
             "title": "Text editor",
-            "path": "/ready-made-features/multiplayer/text-editor",
+            "path": "/collaboration-features/multiplayer/text-editor",
             "routes": [
               {
                 "title": "Tiptap",
-                "path": "/ready-made-features/multiplayer/text-editor/tiptap"
+                "path": "/collaboration-features/multiplayer/text-editor/tiptap"
               },
               {
                 "title": "BlockNote",
-                "path": "/ready-made-features/multiplayer/text-editor/blocknote"
+                "path": "/collaboration-features/multiplayer/text-editor/blocknote"
               },
               {
                 "title": "Lexical",
-                "path": "/ready-made-features/multiplayer/text-editor/lexical"
+                "path": "/collaboration-features/multiplayer/text-editor/lexical"
               }
             ]
           },
           {
             "title": "Sync engine",
-            "path": "/ready-made-features/multiplayer/sync-engine",
+            "path": "/collaboration-features/multiplayer/sync-engine",
             "routes": [
               {
                 "title": "Yjs",
-                "path": "/ready-made-features/multiplayer/sync-engine/liveblocks-yjs"
+                "path": "/collaboration-features/multiplayer/sync-engine/liveblocks-yjs"
               },
               {
                 "title": "Storage",
-                "path": "/ready-made-features/multiplayer/sync-engine/liveblocks-storage"
+                "path": "/collaboration-features/multiplayer/sync-engine/liveblocks-storage"
               }
             ]
           }
         ]
       },
       {
-        "title": "AI Agents",
-        "path": "/ready-made-features/ai-agents",
+        "title": "Comments",
+        "path": "/collaboration-features/comments",
         "routes": [
           {
-            "title": "Liveblocks AI Copilots",
-            "path": "/ready-made-features/ai-agents/liveblocks-ai-copilots",
-            "routes": [
-              {
-                "title": "Features",
-                "path": "/ready-made-features/ai-agents/liveblocks-ai-copilots/features"
-              },
-              {
-                "title": "Copilots",
-                "path": "/ready-made-features/ai-agents/liveblocks-ai-copilots/copilots"
-              },
-              {
-                "title": "Default components",
-                "path": "/ready-made-features/ai-agents/liveblocks-ai-copilots/default-components"
-              },
-              {
-                "title": "Hooks",
-                "path": "/ready-made-features/ai-agents/liveblocks-ai-copilots/hooks"
-              },
-              {
-                "title": "Knowledge",
-                "path": "/ready-made-features/ai-agents/liveblocks-ai-copilots/knowledge"
-              },
-              {
-                "title": "Tools",
-                "path": "/ready-made-features/ai-agents/liveblocks-ai-copilots/tools"
-              },
-              {
-                "title": "Styling and customization",
-                "path": "/ready-made-features/ai-agents/liveblocks-ai-copilots/styling-and-customization"
-              },
-              {
-                "title": "Troubleshooting",
-                "path": "/ready-made-features/ai-agents/liveblocks-ai-copilots/troubleshooting"
-              }
-            ]
+            "title": "Concepts",
+            "path": "/collaboration-features/comments/concepts"
+          },
+          {
+            "title": "Users and mentions",
+            "path": "/collaboration-features/comments/users-and-mentions"
+          },
+          {
+            "title": "Default components",
+            "path": "/collaboration-features/comments/default-components"
+          },
+          {
+            "title": "Hooks",
+            "path": "/collaboration-features/comments/hooks"
+          },
+          {
+            "title": "Metadata",
+            "path": "/collaboration-features/comments/metadata"
+          },
+          {
+            "title": "Primitives",
+            "path": "/collaboration-features/comments/primitives"
+          },
+          {
+            "title": "Styling and customization",
+            "path": "/collaboration-features/comments/styling-and-customization"
+          },
+          {
+            "title": "Email notifications",
+            "path": "/collaboration-features/comments/email-notifications"
           }
         ]
       },
       {
         "title": "Notifications",
-        "path": "/ready-made-features/notifications",
+        "path": "/collaboration-features/notifications",
         "routes": [
           {
             "title": "Concepts",
-            "path": "/ready-made-features/notifications/concepts"
+            "path": "/collaboration-features/notifications/concepts"
           },
           {
             "title": "Default components",
-            "path": "/ready-made-features/notifications/default-components"
+            "path": "/collaboration-features/notifications/default-components"
           },
           {
             "title": "Hooks",
-            "path": "/ready-made-features/notifications/hooks"
+            "path": "/collaboration-features/notifications/hooks"
           },
           {
             "title": "Styling and customization",
-            "path": "/ready-made-features/notifications/styling-and-customization"
+            "path": "/collaboration-features/notifications/styling-and-customization"
           },
           {
             "title": "Email notifications",
-            "path": "/ready-made-features/notifications/email-notifications"
+            "path": "/collaboration-features/notifications/email-notifications"
+          }
+        ]
+      },
+      {
+        "title": "AI Collaboration",
+        "path": "/collaboration-features/ai-collaboration"
+      },
+      {
+        "title": "AI Copilots",
+        "path": "/collaboration-features/ai-copilots",
+        "routes": [
+          {
+            "title": "Features",
+            "path": "/collaboration-features/ai-copilots/features"
+          },
+          {
+            "title": "Copilots",
+            "path": "/collaboration-features/ai-copilots/copilots"
+          },
+          {
+            "title": "Default components",
+            "path": "/collaboration-features/ai-copilots/default-components"
+          },
+          {
+            "title": "Hooks",
+            "path": "/collaboration-features/ai-copilots/hooks"
+          },
+          {
+            "title": "Knowledge",
+            "path": "/collaboration-features/ai-copilots/knowledge"
+          },
+          {
+            "title": "Tools",
+            "path": "/collaboration-features/ai-copilots/tools"
+          },
+          {
+            "title": "Styling and customization",
+            "path": "/collaboration-features/ai-copilots/styling-and-customization"
+          },
+          {
+            "title": "Troubleshooting",
+            "path": "/collaboration-features/ai-copilots/troubleshooting"
           }
         ]
       }
@@ -759,6 +762,10 @@
       {
         "title": "Next.js Starter Kit",
         "path": "/tools/nextjs-starter-kit"
+      },
+      {
+        "title": "n8n nodes",
+        "path": "/tools/n8n-nodes"
       },
       {
         "title": "Agent skills",

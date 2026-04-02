@@ -1,0 +1,328 @@
+---
+meta:
+  title: "Hooks"
+  parentTitle: "Notifications"
+  description: "Get inbox notifications"
+---
+
+The Notifications React hooks can be used to fetch inbox notifications on the
+client, and change their behavior.
+
+## List a user’s inbox notifications [#inbox-notifications-hook]
+
+The most important Notifications hook is [`useInboxNotifications`][], which
+retrieves every inbox notification for the current user. This can be used to
+render a list of notifications, either using the
+[default components](/docs/ready-made-features/comments/default-components), or
+with your own components. Here’s an example of it used with the default
+[`InboxNotification`][] component.
+
+```tsx
+import { useInboxNotifications } from "../liveblocks.config";
+
+function Component() {
+  const { inboxNotifications } = useInboxNotifications();
+
+  // [{ kind: "$myCustomNotification", id: "in_sf8s6sh...", ... }, ...]
+  console.log(inboxNotifications);
+
+  return (
+    <>
+      {inboxNotifications.map((inboxNotification) => (
+        <InboxNotification
+          key={inboxNotification.id}
+          inboxNotification={inboxNotification}
+        />
+      ))}
+    </>
+  );
+}
+```
+
+There are two versions of the [`useInboxNotifications`][] hook, the
+[Suspense version](#suspense-hooks), which we recommend by default, and the
+[regular version](#regular-hooks).
+
+## Get unread notifications count [#unread-notifications-count-hook]
+
+The
+[`useUnreadInboxNotificationsCount`](/docs/api-reference/liveblocks-react#useUnreadInboxNotificationsCount)
+hook is useful for creating a badge that displays the unread notifications
+count.
+
+```tsx
+import { useUnreadInboxNotificationsCount } from "../liveblocks.config";
+
+function Component() {
+  const { count } = useUnreadInboxNotificationsCount();
+
+  // 3
+  console.log(count);
+
+  return <div>You have {count} unread notifications</div>;
+}
+```
+
+## Mark all notifications as read
+
+To mark all notifications as read for the current user, you can add
+[`useMarkAllInboxNotificationsAsRead`](/docs/api-reference/liveblocks-react#useMarkAllInboxNotificationsAsRead).
+
+```tsx
+function NotificationReadButton() {
+  const markAllInboxNotificationsAsRead = useMarkAllInboxNotificationsAsRead();
+
+  return (
+    <button onClick={markAllInboxNotificationsAsRead}>Mark all as read</button>
+  );
+}
+```
+
+## Fetch a user’s information [#user-hook]
+
+The only information Liveblocks stores about users is their user ID, which is
+set when [authenticating with Liveblocks](/docs/authentication). With the
+[`useUser`](/docs/api-reference/liveblocks-react#useUser) hook, you can fetch a
+user’s information from their ID. This is particularly helpful when building
+custom components, as this allows you fetch their name, avatar, and any other
+custom data you’ve set.
+
+```tsx
+import { useUser } from "../liveblocks.config";
+
+function Component() {
+  const { user } = useUser("olivier@example.com");
+
+  // { name: "Olivier", avatar: "https://...", color: "red" }
+  console.log(user);
+
+  return <img src={user.avatar} alt={user.name} />;
+}
+```
+
+The user data retrieved is set within the
+[`resolveUsers`](/docs/api-reference/liveblocks-client#resolveUsers) function in
+your `liveblocks.config.ts` file.
+
+```ts
+async function resolveUsers({ userIds }) {
+  // ["olivier@example.com"]
+  console.log(userIds);
+
+  return [
+    {
+      name: "Olivier",
+      avatar: "https://example.com/olivier.png",
+      color: "red",
+    },
+  ];
+}
+```
+
+There are two versions of the
+[`useUser`](/docs/api-reference/liveblocks-client#useUser) hook,
+[Suspense](#suspense-hooks), which we recommend by default, and
+[regular](#regular-hooks).
+
+## Fetch a group’s information [#group-hook]
+
+Similar to users, Liveblocks only stores group IDs for groups. With the
+[`useGroupInfo`](/docs/api-reference/liveblocks-react#useGroupInfo) hook, you
+can fetch a group’s information from their ID. This is particularly helpful when
+building custom components, as this allows you to fetch their name, avatar, and
+any other custom data you’ve set.
+
+```tsx
+import { useGroupInfo } from "../liveblocks.config";
+
+function Component() {
+  const { group } = useGroupInfo("engineering");
+
+  // { name: "Engineering", avatar: "https://...", color: "blue" }
+  console.log(group);
+
+  return <img src={group.avatar} alt={group.name} />;
+}
+```
+
+The group data retrieved is set within the
+[`resolveGroupsInfo`](/docs/api-reference/liveblocks-client#resolveGroupsInfo)
+function in your `liveblocks.config.ts` file.
+
+```ts
+async function resolveGroupsInfo({ groupIds }) {
+  // ["engineering"]
+  console.log(groupIds);
+
+  return [
+    {
+      name: "Engineering",
+      avatar: "https://example.com/engineering.png",
+      color: "blue",
+    },
+  ];
+}
+```
+
+There are two versions of the
+[`useGroupInfo`](/docs/api-reference/liveblocks-client#useGroupInfo) hook,
+[Suspense](#suspense-hooks), which we recommend by default, and
+[regular](#regular-hooks).
+
+## Comments hooks
+
+[Comments](/docs/ready-made-features/comments) integrates seamlessly into
+Notifications, and a number of hooks are provided to modify this behavior.
+
+### Unread indicator
+
+Threads keep track of unread comments so viewing a thread will also mark its
+inbox notification as read, and vice versa. If you use the default
+[`Thread`](/docs/api-reference/liveblocks-react-ui#Thread) component, it will
+automatically handle marking threads as read when they are viewed and show
+unread indicators when there are unread comments in threads you are
+participating in.
+
+<Figure>
+  <Image
+    src="/assets/comments/thread-unread-indicator.png"
+    alt="Unread indicator in Thread component"
+    width={1456}
+    height={896}
+  />
+</Figure>
+
+If you’re building your own custom `Thread` component, you can use
+[`useMarkThreadAsRead`](/docs/api-reference/liveblocks-react#useMarkThreadAsRead)
+and
+[`useThreadSubscription`](/docs/api-reference/liveblocks-react#useThreadSubscription)
+to replicate or customize this behavior.
+
+### Thread subscription settings
+
+By default, you’ll receive inbox notifications for threads you are participating
+in. This setting can be customized for each user and per room:
+
+- `"all"` to be notified about everything.
+- `"replies_and_mentions"` for the default setting.
+- `"none"` to mute the room.
+
+You can use
+[`useRoomSubscriptionSettings`](/docs/api-reference/liveblocks-react#useRoomSubscriptionSettings)
+to build a settings picker in your app and allow users to change their own
+subscription settings for the current room, or use
+[`updateRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#post-rooms-roomId-users-userId-subscription-settings)
+server-side to control them yourself: for example, to automatically make a
+document’s author notified about everything in their document.
+
+### Getting thread data
+
+When using inbox notifications for threads, it can be useful to fetch the actual
+thread data, and
+[`useInboxNotificationThread`](/docs/api-reference/liveblocks-react#useInboxNotificationThread)
+makes this easy.
+
+```tsx
+function Notification({ inboxNotification }) {
+  const thread = useInboxNotificationThread(inboxNotification.id);
+
+  // { type: "thread", id: "th_sf8s6sh...", ... }
+  console.log(thread);
+
+  // ...
+}
+```
+
+## Hook types [#hook-types]
+
+There are two different ways to use the
+[notifications](#inbox-notifications-hook) and [user](#user-hook) hooks; with
+[React Suspense](https://react.dev/reference/react/Suspense), and without it. We
+recommend using the Suspense versions, as they often result in simpler code.
+
+### Suspense hooks [#suspense-hooks]
+
+Using Suspense hooks means that any data retrieved, for example
+`inboxNotifications` from `useInboxNotifications`, will never be `undefined`,
+and your component will never see an error.
+
+```tsx
+import { useInboxNotifications } from "@liveblocks/react/suspense";
+
+// Suspense: `inboxNotifications` is always defined
+function MyNotifications() {
+  const { inboxNotifications } = useInboxNotifications();
+
+  // [{ type: "$myCustomNotification", id: "in_sf8s6sh...", ... }, ...]
+  console.log(inboxNotifications);
+}
+```
+
+To catch errors and display a loading screen, you can use
+[`ErrorBoundary`](https://www.npmjs.com/package/react-error-boundary) and
+[`ClientSideSuspense`](/docs/api-reference/liveblocks-react#suspense-avoid-ssr).
+
+```tsx highlight="7-11"
+import { ClientSideSuspense } from "@liveblocks/react/suspense";
+import { ErrorBoundary } from "react-error-boundary";
+
+// Handle errors and loading state in the component above
+function Component() {
+  return (
+    <ErrorBoundary fallback={<div>Error</div>}>
+      <ClientSideSuspense fallback={<div>Loading...</div>}>
+        <MyNotifications />
+      </ClientSideSuspense>
+    </ErrorBoundary>
+  );
+}
+```
+
+To use Suspense, make sure you’re exporting your hooks from
+`@liveblocks/react/suspense`.
+
+```tsx
+// Suspense version of hooks
+import { useInboxNotifications, useUser } from "@liveblocks/react/suspense";
+//                                                                ^^^^^^^^
+```
+
+### Regular hooks [#regular-hooks]
+
+The regular versions of Liveblocks hooks require you to check for `error` and
+`isLoading` properties. You can then handle these states in the same component.
+
+```tsx
+import { useInboxNotifications } from "@liveblocks/react";
+
+// Handle errors and loading state in the same component
+function MyNotifications() {
+  const { inboxNotifications, error, isLoading } = useInboxNotifications();
+
+  if (error) {
+    return <div>Error</div>;
+  }
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  // Non-Suspense: `inboxNotifications` is only defined AFTER the `if` checks
+  // [{ type: "$myCustomNotification", id: "in_sf8s6sh...", ... }, ...]
+  console.log(inboxNotifications);
+}
+```
+
+To use the regular hooks, make sure you’re exporting from `@liveblocks/react`.
+
+```tsx
+// Regular version of hooks
+import { useInboxNotifications, useUser } from "@liveblocks/react";
+//                                              ^^^^^^^^^^^^^^^^^
+```
+
+[`InboxNotification`]: /docs/api-reference/liveblocks-react-ui#InboxNotification
+[`InboxNotificationList`]:
+  /docs/api-reference/liveblocks-react-ui#InboxNotificationList
+[`useInboxNotifications`]:
+  /docs/api-reference/liveblocks-react#useInboxNotifications

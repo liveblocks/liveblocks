@@ -9,19 +9,20 @@
     "start": "next start"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.64",
     "@chat-adapter/state-memory": "^4.23.0",
     "@liveblocks/chat-sdk-adapter": "^3.15.5",
     "@liveblocks/client": "^3.15.5",
     "@liveblocks/node": "^3.15.5",
     "@liveblocks/react": "^3.15.5",
     "@liveblocks/react-ui": "^3.15.5",
-    "@ai-sdk/anthropic": "^3.0.64",
     "ai": "^6.0.140",
-    "zod": "^4.3.6",
     "chat": "^4.22.0",
     "next": "16.2.1",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "react-error-boundary": "^6.1.1",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

@@ -1,0 +1,487 @@
+---
+meta:
+  title: "Liveblocks Storage"
+  parentTitle: "Sync engine"
+  description:
+    "Liveblocks Storage is a realtime sync engine designed for multiplayer
+    creative tools such as Figma, Pitch, and Spline."
+---
+
+Liveblocks Storage is a realtime sync engine designed for multiplayer creative
+tools such as Figma, Pitch, and Spline. `LiveList`, `LiveMap`, and `LiveObject`
+conflict-free data types can be used to build all sorts of multiplayer tools.
+Liveblocks permanently stores Storage data in each
+[room](/docs/concepts/how-liveblocks-works#Rooms), handling scaling and
+maintenance for you.
+
+<Banner title="Interactive tutorial">
+
+Our [interactive React tutorial](/docs/tutorial/react/getting-started/storage)
+guides you through using each of the concepts listed on this page.
+
+</Banner>
+
+## Presence
+
+Easily create online presence indicators such as online avatar stacks and live
+cursors, with hooks like
+[`useOthers`](/docs/api-reference/liveblocks-react#useOthers), which returns an
+array of currently connected users in the room, and
+[`useSelf`](/docs/api-reference/liveblocks-react#useSelf) which returns your own
+data.
+
+```tsx
+import { useOthers, useSelf } from "@liveblocks/react/suspense";
+
+function AvatarStack() {
+  // +++
+  const others = useOthers();
+  const self = useSelf();
+  // +++
+
+  return (
+    <div>
+      // +++
+      {others.map(({ connectionId, info }) => (
+        <img key={connectionId} src={info.avatar} />
+      ))}
+      <img src={self.info.avatar} />
+      // +++
+    </div>
+  );
+}
+```
+
+User info is set when [authenticating with a secret key](/docs/authentication/).
+
+## Conflict-free data structures
+
+Create realtime document state such as shapes on a canvas, notes on a
+whiteboard, or cells in a spreadsheet, with our
+[permanent CRDT-like data structures](/docs/api-reference/liveblocks-react#Data-structures).
+[`useStorage`](/docs/api-reference/liveblocks-react#useStorage) returns data
+structures as simple JSON, and
+[`useMutation`](/docs/api-reference/liveblocks-react#useMutation) allows you to
+modify the data structures themselves.
+
+```tsx
+import { useStorage, useMutation } from "@liveblocks/react/suspense";
+
+function MultiplayerCanvas() {
+  // +++
+  const shapes = useStorage((root) => root.shapes);
+  // +++
+
+  // +++
+  const handleShapeDrag = useMutation(({ storage }, shapeId, { x, y }) => {
+    const shape = storage.get("shapes").get(shapeId);
+    shape.update({ x, y });
+  }, []);
+  // +++
+
+  return (
+    <div>
+      // +++
+      {shapes.map((shape) => (
+        <DraggableShape key={shape.id} shape={shape} onDrag={handleShapeDrag} />
+      ))}
+      // +++
+    </div>
+  );
+}
+```
+
+Conflict-free data structures use
+[`LiveObject`](/docs/api-reference/liveblocks-client#LiveObject),
+[`LiveList`](/docs/api-reference/liveblocks-client#LiveList), and
+[`LiveMap`](/docs/api-reference/liveblocks-client#LiveMap) under the hood, and
+will automatically resolve conflicts when multiple users modify the same data at
+the same time. Additionally, they can be
+[nested to create complex data structures](/docs/api-reference/liveblocks-react#Nesting-data-structures)
+and are
+[automatically typed](/docs/api-reference/liveblocks-react#typing-storage)
+throughout your app.
+
+### Manage document history
+
+Multiplayer undo and redo is
+[notoriously tough to implement](/blog/how-to-build-undo-redo-in-a-multiplayer-environment)
+which is why we provide simple hooks like
+[`useUndo`](/docs/api-reference/liveblocks-react#useUndo) and
+[`useCanUndo`](/docs/api-reference/liveblocks-react#useCanUndo) to handle it for
+you.
+
+```tsx
+import {
+  useStorage,
+  useMutation,
+  useUndo,
+  useCanUndo,
+} from "@liveblocks/react/suspense";
+
+function MultiplayerCanvas() {
+  // +++
+  const undo = useUndo();
+  const canUndo = useCanUndo();
+  // +++
+
+  const shapes = useStorage((root) => root.shapes);
+
+  const handleShapeDrag = useMutation(({ storage }, shapeId, { x, y }) => {
+    const shape = storage.get("shapes").get(shapeId);
+    shape.update({ x, y });
+  }, []);
+
+  return (
+    <div>
+      // +++
+      {canUndo ?? <button onClick={undo}>Undo</button>}
+      // +++
+      {shapes.map((shape) => (
+        <DraggableShape key={shape.id} shape={shape} onDrag={handleShapeDrag} />
+      ))}
+    </div>
+  );
+}
+```
+
+We also provide [`useRedo`](/docs/api-reference/liveblocks-react#useRedo) and
+[`useCanRedo`](/docs/api-reference/liveblocks-react#useCanRedo) to handle redo.
+
+## Broadcast
+
+Broadcast realtime events to other clients, helpful for triggering live actions
+such as playing a video, or for revalidating your database’s data after a
+change.
+[`useBroadcastEvent`](/docs/api-reference/liveblocks-react#useBroadcastEvent)
+sends events, and
+[`useEventListener`](/docs/api-reference/liveblocks-react#useEventListener)
+listens for them.
+
+```tsx
+import {
+  useBroadcastEvent,
+  useEventListener,
+} from "@liveblocks/react/suspense";
+
+function VideoPlayer() {
+  const [playing, setPlaying] = useState(false);
+  // +++
+  const broadcast = useBroadcastEvent();
+  // +++
+
+  // +++
+  useEventListener(({ event }) => {
+    if (event.type === "PLAY_VIDEO") {
+      setPlaying(true);
+    }
+  });
+  // +++
+
+  return (
+    <div>
+      // +++
+      <button onClick={() => broadcast({ type: "PLAY_VIDEO" })}>
+        ▶️ Play Video
+      </button>
+      // +++
+      <Video playing={playing} />
+    </div>
+  );
+}
+```
+
+## Handle connection status
+
+We’ve designed a number of hooks to help you handle different network
+conditions, such as
+[`useLostConnectionListener`](/docs/api-reference/liveblocks-react#useLostConnectionListener)
+which helps you render UI when user’s have connection loss.
+
+```tsx
+import { toast } from "my-preferred-toast-library";
+import { useLostConnectionListener } from "@liveblocks/react/suspense";
+
+function App() {
+  // +++
+  useLostConnectionListener((event) => {
+    if (event === "lost") {
+      return toast.warn("Trying to reconnect…");
+    }
+
+    if (event === "restored") {
+      return toast.success("Successfully reconnected!");
+    }
+  });
+  // +++
+
+  // ...
+}
+```
+
+### Sync status
+
+[`useSyncStatus`](/docs/api-reference/liveblocks-react#useSyncStatus) is a
+related hook which allows you to render the current sync state in your app,
+before a change has been saved.
+
+```tsx
+import { useSyncStatus } from "@liveblocks/react/suspense";
+
+function StorageStatusBadge() {
+  // +++
+  const syncStatus = useSyncStatus({ smooth: true });
+  // +++
+
+  // +++
+  return <div>{syncStatus === "synchronized" ? "✅ Saved" : "🔄 Saving"}</div>;
+  // +++
+}
+```
+
+## Other hooks
+
+A number of other hooks are available to help you with different aspects of
+multiplayer development, check our API reference for more information.
+
+## Server-side modifications
+
+Storage’s presence and conflict-free data structures can be modified through our
+[Node.js package](/docs/api-reference/liveblocks-node) or via
+[REST API](/docs/api-reference/rest-api-endpoints).
+
+### Presence [#server-side-modifications-presence]
+
+Presence can be modified with
+[`liveblocks.setPresence`](/docs/api-reference/liveblocks-node#set-rooms-roomId-presence),
+allowing you set an ephemeral value that will expire after a certain amount of
+time.
+
+```ts
+await liveblocks.setPresence("my-room-id", {
+  userId: "agent-123",
+  data: {
+    status: "active",
+    cursor: { x: 100, y: 200 },
+  },
+  userInfo: {
+    name: "AI Assistant",
+    avatar: "https://example.com/avatar.png",
+  },
+  ttl: 60,
+});
+```
+
+The same operation can be performed in other languages with the
+[Set ephemeral presence REST API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-presence).\
+
+### Conflict-free data structures [#server-side-modifications-conflict-free-data-structures]
+
+Conflict-free data structures can be modified with
+[`liveblocks.mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage),
+allowing you to modify the data structures similarly to on the client-side.
+
+```ts
+await liveblocks.mutateStorage(
+  "my-room-id",
+
+  ({ root }) => {
+    root.get("list").push("item3");
+  }
+);
+```
+
+The same operation can be performed using the
+[Apply JSON Patch to Storage REST API](/docs/api-reference/rest-api-endpoints#patch-rooms-roomId-storage-json-patch).
+We have a guide on
+[Modifying Storage via REST API with JSON Patch](/docs/guides/modifying-storage-via-rest-api-with-json-patch)
+that covers this in more detail.
+
+### Broadcast [#server-side-modifications-broadcast]
+
+Broadcast can be performed with
+[`liveblocks.broadcastEvent`](/docs/api-reference/liveblocks-node#post-broadcast-event),
+allowing you to send events to all connected clients.
+
+```ts
+await liveblocks.broadcastEvent("my-room-id", { type: "PLAY_VIDEO" });
+```
+
+The same operation can be performed using the
+[Broadcast event to a room REST API](/docs/api-reference/rest-api-endpoints#post-broadcast-event).
+
+## API Reference
+
+### Presence
+
+<ListGrid columns={2}>
+  <DocsCard
+    type="technology"
+    title="JavaScript"
+    href="/docs/api-reference/liveblocks-client#Room.getPresence"
+    description="@liveblocks/client"
+    visual={<DocsJavascriptIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="React"
+    href="/docs/api-reference/liveblocks-react#Presence"
+    description="@liveblocks/react"
+    visual={<DocsReactIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Redux"
+    href="/docs/api-reference/liveblocks-redux#enhancer-option-presence-mapping"
+    description="@liveblocks/redux"
+    visual={<DocsReduxIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Zustand"
+    href="/docs/api-reference/liveblocks-zustand#middleware-option-presence-mapping"
+    description="@liveblocks/zustand"
+    visual={
+      <img
+        alt=""
+        src="/assets/zustand.png"
+        width={24}
+        height={24}
+        loading="lazy"
+      />
+    }
+  />
+</ListGrid>
+
+### Broadcast
+
+<ListGrid columns={2}>
+  <DocsCard
+    type="technology"
+    title="JavaScript"
+    href="/docs/api-reference/liveblocks-client#Room.broadcastEvent"
+    description="@liveblocks/client"
+    visual={<DocsJavascriptIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="React"
+    href="/docs/api-reference/liveblocks-react#Broadcast"
+    description="@liveblocks/react"
+    visual={<DocsReactIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Node.js"
+    href="/docs/api-reference/liveblocks-node#post-broadcast-event"
+    description="@liveblocks/node"
+    visual={<DocsNodejsIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="REST API"
+    href="/docs/api-reference/rest-api-endpoints#post-broadcast-event"
+    description="HTTP endpoints"
+    visual={<DocsApiIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+</ListGrid>
+
+### Storage
+
+<ListGrid columns={2}>
+  <DocsCard
+    type="technology"
+    title="JavaScript"
+    href="/docs/api-reference/liveblocks-client#Storage"
+    description="@liveblocks/client"
+    visual={<DocsJavascriptIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="React"
+    href="/docs/api-reference/liveblocks-react#Storage"
+    description="@liveblocks/react"
+    visual={<DocsReactIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Redux"
+    href="/docs/api-reference/liveblocks-redux#enhancer-option-storage-mapping"
+    description="@liveblocks/redux"
+    visual={<DocsReduxIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Zustand"
+    href="/docs/api-reference/liveblocks-zustand#middleware-option-storage-mapping"
+    description="@liveblocks/zustand"
+    visual={
+      <img
+        alt=""
+        src="/assets/zustand.png"
+        width={24}
+        height={24}
+        loading="lazy"
+      />
+    }
+  />
+  <DocsCard
+    type="technology"
+    title="Node.js"
+    href="/docs/api-reference/liveblocks-node#Storage"
+    description="@liveblocks/node"
+    visual={<DocsNodejsIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="REST API"
+    href="/docs/api-reference/rest-api-endpoints#Storage"
+    description="HTTP endpoints"
+    visual={<DocsApiIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+</ListGrid>
+
+## Examples using Liveblocks Storage
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "Live Cursors Chat",
+      slug: "live-cursors-chat",
+      image: "/images/examples/thumbnails/live-cursors-chat.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Collaborative Todo List",
+      slug: "collaborative-todo-list",
+      image: "/images/examples/thumbnails/collaborative-todo-list.jpg",
+    }}
+    technologies={["nextjs", "redux", "zustand", "javascript", "react-native"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Collaborative Spreadsheet",
+      slug: "collaborative-spreadsheet-advanced",
+      image:
+        "/images/examples/thumbnails/collaborative-spreadsheet-advanced.jpg",
+      advanced: true,
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Collaborative Whiteboard",
+      slug: "collaborative-whiteboard-advanced",
+      image:
+        "/images/examples/thumbnails/collaborative-whiteboard-advanced.jpg",
+      advanced: true,
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+</ListGrid>
