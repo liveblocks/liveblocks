@@ -789,6 +789,9 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       }
 
       const oldValue = this.#synced.get(key);
+      if (oldValue === newValue) {
+        continue;
+      }
 
       if (isLiveNode(oldValue)) {
         for (const childOp of oldValue._toOps(this._id, key)) {
@@ -844,6 +847,16 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
         type: OpCode.UPDATE_OBJECT,
         data: updatedProps,
       });
+    }
+
+    if (
+      ops.length === 0 &&
+      reverseOps.length === 0 &&
+      Object.keys(updateDelta).length === 0
+    ) {
+      // If all of the above effectively is a no-op, don't dispatch anything or
+      // notify subscribers
+      return;
     }
 
     const storageUpdates = new Map<string, LiveObjectUpdates<O>>();

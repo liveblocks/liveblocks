@@ -100,6 +100,60 @@ describe("LiveObject", () => {
     await assertUndoRedo();
   });
 
+  test("set with same value is a no-op", async () => {
+    const { root, room } = await prepareIsolatedStorageTest<{
+      a: number;
+    }>({
+      liveblocksType: "LiveObject",
+      data: { a: 1 },
+    });
+
+    expect(room.history.canUndo()).toBe(false);
+
+    // Setting to the same value should not create an undo entry
+    root.set("a", 1);
+
+    expect(room.history.canUndo()).toBe(false);
+    expect(root.get("a")).toBe(1);
+  });
+
+  test("set with different value creates an undo entry", async () => {
+    const { root, room } = await prepareIsolatedStorageTest<{
+      a: number;
+    }>({
+      liveblocksType: "LiveObject",
+      data: { a: 1 },
+    });
+
+    root.set("a", 2);
+
+    expect(room.history.canUndo()).toBe(true);
+    room.history.undo();
+    expect(root.get("a")).toBe(1);
+  });
+
+  test("update with mix of changed and unchanged keys only undoes the changed ones", async () => {
+    const { root, room } = await prepareIsolatedStorageTest<{
+      a: number;
+      b: number;
+    }>({
+      liveblocksType: "LiveObject",
+      data: { a: 1, b: 2 },
+    });
+
+    root.update({ a: 1, b: 99 });
+
+    expect(room.history.canUndo()).toBe(true);
+    room.history.undo();
+
+    // Only b should have been undone; a was unchanged
+    expect(root.get("a")).toBe(1);
+    expect(root.get("b")).toBe(2);
+
+    // And there should be nothing left to undo
+    expect(room.history.canUndo()).toBe(false);
+  });
+
   // TODO: Needs read-only permission support in dev server
   // See https://linear.app/liveblocks/issue/LB-3528/dev-server-needs-support-for-read-only-rooms
   test.skip("update throws on read-only", async () => {
