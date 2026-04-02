@@ -351,7 +351,10 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         };
       } else {
         if (indexOfItemWithSamePosition !== -1) {
-          nn(this.#items.removeAt(indexOfItemWithSamePosition));
+          const displaced = nn(
+            this.#items.removeAt(indexOfItemWithSamePosition)
+          );
+          this.#implicitlyDeletedItems.add(displaced);
         }
 
         const { newItem, newIndex } = this.#createAttachItemAndSort(
