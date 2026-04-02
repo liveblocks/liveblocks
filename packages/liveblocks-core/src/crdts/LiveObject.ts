@@ -517,7 +517,9 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   }
 
   /**
-   * Transform the LiveObject into a javascript object
+   * Gotcha! This function only shallowly convert nested Live values, and may
+   * not be what you expect.
+   * @deprecated Prefer .toJSON() instead.
    */
   toObject(): O {
     const result = Object.fromEntries(this.#synced);

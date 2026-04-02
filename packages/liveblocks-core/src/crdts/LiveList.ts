@@ -1100,7 +1100,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   }
 
   /**
-   * Returns an Array of all the elements in the LiveList.
+   * Gotcha! This function only shallowly convert nested Live values, and may
+   * not be what you expect.
+   * @deprecated Prefer .toJSON() instead.
    */
   toArray(): TItem[] {
     return Array.from(this.#items, (entry) => liveNodeToLson(entry) as TItem);
