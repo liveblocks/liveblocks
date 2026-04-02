@@ -45,7 +45,7 @@
     "@liveblocks/eslint-config": "*",
     "@liveblocks/vitest-config": "*",
     "@types/node-fetch": "^2.6.6",
-    "msw": "^2.10.4",
+    "msw": "^2.12.14",
     "svix": "^0.75.0"
   },
   "bugs": {
