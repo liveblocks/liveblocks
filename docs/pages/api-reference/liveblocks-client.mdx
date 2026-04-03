@@ -2558,12 +2558,12 @@ room.batch(() => {
 });
 
 // { name: "Felix", age: 10 }
-pet.toImmutable();
+pet.toJSON();
 
 room.history.undo();
 
 // { name: "Fido", age: 5 }
-pet.toImmutable();
+pet.toJSON();
 ```
 
 #### Doesn’t work with async functions
@@ -4575,7 +4575,7 @@ const object = new LiveObject({ firstName: "Ada", lastName: "Lovelace" });
 object.delete("lastName");
 
 // { firstName: "Ada" }
-object.toImmutable();
+object.toJSON();
 ```
 
 <PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
@@ -4619,7 +4619,7 @@ const object = new LiveObject({ firstName: "Marie" });
 object.set("lastName", "Curie");
 
 // { firstName: "Ada", lastName: "Curie" }
-object.toImmutable();
+object.toJSON();
 ```
 
 <PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
@@ -4644,7 +4644,7 @@ const object = new LiveObject({ firstName: "Grace" });
 object.update({ lastName: "Hopper", job: "Computer Scientist" });
 
 // { firstName: "Grace", lastName: "Hopper", job: "Computer Scientist" }
-object.toImmutable();
+object.toJSON();
 ```
 
 <PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
@@ -4678,42 +4678,20 @@ root.set("b", obj.clone());
 
 ### toImmutable [#LiveObject.toImmutable]
 
-Returns an immutable JavaScript object that is equivalent to the `LiveObject`.
-Nested values will also be immutable. Calling this method multiple times has no
-performance penalty. It will return the same cached immutable value as long as
-its (nested) contents have not changed.
+<Banner title="Deprecated in 3.17" type="warning">
 
-```ts
-const liveObject = new LiveObject({
-  firstName: "Grace",
-  lastName: "Hopper",
-  hobbies: new LiveList(["reading", "piano"]),
-});
+This method has been replaced by [`.toJSON()`](#LiveObject.toJSON), which
+returns plain objects instead of `Map` instances for `LiveMap` values, making
+the result always valid JSON. Please migrate to `.toJSON()`.
 
-// {
-//   firstName: "Grace",
-//   lastName: "Hopper",
-//   hobbies: ["reading", "piano"]
-// }
-liveObject.toImmutable();
-```
-
-<PropertiesList title="Returns">
-  <PropertiesListItem name="immutableStructure" type="object">
-    Returns a JavaScript object in the shape of your data structure.
-    `LiveObject` is converted to an object, `LiveMap` to a map, and `LiveList`
-    to an array.
-  </PropertiesListItem>
-</PropertiesList>
-
-<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+</Banner>
 
 ### toObject [#LiveObject.toObject]
 
-<Banner title="Will be deprecated in the future">
+<Banner title="Deprecated" type="warning">
 
-Starting with 0.18, we recommend [`toImmutable`][] instead. It’s faster, cached,
-and leads to fewer surprises.
+Use [`.toJSON()`](#LiveObject.toJSON) instead. It’s faster, cached, and deeply
+converts all nested Live structures.
 
 </Banner>
 
@@ -4821,7 +4799,7 @@ const map = new LiveMap([
 map.delete("nimesh");
 
 // Map { "pierre" => "designer" }
-map.toImmutable();
+map.toJSON();
 ```
 
 <PropertiesList title="Returns">
@@ -4989,7 +4967,7 @@ const map = new LiveMap();
 map.set("vincent", "engineer");
 
 // Map { "vincent" => "engineer" }
-map.toImmutable();
+map.toJSON();
 ```
 
 <PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
@@ -5077,33 +5055,13 @@ root.set("b", map.clone());
 
 ### toImmutable [#LiveMap.toImmutable]
 
-Returns an immutable ES6 Map that is equivalent to the `LiveMap`. Nested values
-will also be immutable. Calling this method multiple times has no performance
-penalty. It will return the same cached immutable value as long as its (nested)
-contents have not changed.
+<Banner title="Deprecated in 3.17" type="warning">
 
-```ts
-const map = new LiveMap([
-  ["florent", new LiveObject({ role: "engineer" })],
-  ["marc", new LiveObject({ role: "designer" })],
-]);
+This method has been replaced by [`.toJSON()`](#LiveMap.toJSON), which returns
+plain objects instead of `Map` instances, making the result always valid JSON.
+Please migrate to `.toJSON()`.
 
-// Map {
-//   "florent" => { role: "engineer" },
-//   "marc" => { role: "designer" },
-// }
-map.toImmutable();
-```
-
-<PropertiesList title="Returns">
-  <PropertiesListItem name="immutableStructure" type="object">
-    Returns a JavaScript object in the shape of your data structure. `LiveMap`
-    is converted to a map, `LiveObject` to an object, and `LiveList` to an
-    array.
-  </PropertiesListItem>
-</PropertiesList>
-
-<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+</Banner>
 
 ## LiveList
 
@@ -5157,7 +5115,7 @@ const list = new LiveList(["adrien", "jonathan"]);
 list.clear();
 
 // []
-list.toImmutable();
+list.toJSON();
 ```
 
 <PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
@@ -5174,7 +5132,7 @@ const list = new LiveList(["adrien", "jonathan"]);
 list.delete(0);
 
 // ["jonathan"]
-list.toImmutable();
+list.toJSON();
 ```
 
 This operation uses ID-based semantics, not position-based. When called, it
@@ -5413,7 +5371,7 @@ const list = new LiveList(["adrien", "jonathan"]);
 list.insert("chris", 1);
 
 // ["adrien", "chris", "jonathan"]
-list.toImmutable();
+list.toJSON();
 ```
 
 <PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
@@ -5518,7 +5476,7 @@ const list = new LiveList(["adrien", "chris", "jonathan"]);
 list.move(2, 0);
 
 // ["jonathan", "adrien", "chris"]
-list.toImmutable();
+list.toJSON();
 ```
 
 <PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
@@ -5542,7 +5500,7 @@ const list = new LiveList(["adrien", "jonathan"]);
 list.push("chris");
 
 // ["adrien", "jonathan", "chris"]
-list.toImmutable();
+list.toJSON();
 ```
 
 <PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
@@ -5563,7 +5521,7 @@ const list = new LiveList(["adrien", "jonathan"]);
 list.set(1, "chris");
 
 // equals ["adrien", "chris"]
-list.toImmutable();
+list.toJSON();
 ```
 
 ### some [#LiveList.some]
@@ -5620,39 +5578,20 @@ root.set("b", list.clone());
 
 ### toImmutable [#LiveList.toImmutable]
 
-Returns an immutable JavaScript array that is equivalent to the `LiveList`.
-Nested values will also be immutable. Calling this method multiple times has no
-performance penalty. It will return the same cached immutable value as long as
-its (nested) contents have not changed.
+<Banner title="Deprecated in 3.17" type="warning">
 
-```ts
-const list = new LiveList([
-  new LiveObject({ name: "Olivier" }),
-  new LiveObject({ name: "Vincent" }),
-]);
+This method has been replaced by [`.toJSON()`](#LiveList.toJSON), which returns
+plain objects instead of `Map` instances for `LiveMap` values, making the result
+always valid JSON. Please migrate to `.toJSON()`.
 
-// [
-//   { name: "Olivier" },
-//   { name: "Vincent" },
-// ]
-list.toImmutable();
-```
-
-<PropertiesList title="Returns">
-  <PropertiesListItem name="immutableStructure" type="object">
-    Returns a JavaScript object in the shape of your data structure. `ListList`
-    is converted to an array, `LiveObject` to an object, and `LiveMap` to a map.
-  </PropertiesListItem>
-</PropertiesList>
-
-<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+</Banner>
 
 ### toArray [#LiveList.toArray]
 
-<Banner title="Will be deprecated in the future">
+<Banner title="Deprecated" type="warning">
 
-Starting with 0.18, we recommend [`toImmutable`][] instead. It’s faster, cached,
-and leads to fewer surprises.
+Use [`.toJSON()`](#LiveList.toJSON) instead. It’s faster, cached, and deeply
+converts all nested Live structures.
 
 </Banner>
 
@@ -6289,7 +6228,6 @@ const user = room.getSelf();
 [`liveobject`]: /docs/api-reference/liveblocks-client#LiveObject
 [`lostconnectiontimeout`]:
   /docs/api-reference/liveblocks-client#createClientLostConnectionTimeout
-[`toimmutable`]: /docs/api-reference/liveblocks-client#LiveObject.toImmutable
 [`node-fetch`]: https://npmjs.com/package/node-fetch
 [`room.broadcastevent`]:
   /docs/api-reference/liveblocks-client#Room.broadcastEvent
