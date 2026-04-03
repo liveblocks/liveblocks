@@ -895,7 +895,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   /** @private */
   reconcile(jsonObj: JsonObject, config?: SyncConfig): void;
   reconcile(jsonObj: JsonObject, config?: SyncConfig): void {
-    if (this.immutableIs(jsonObj)) return;
+    if (this.hasCache(jsonObj)) return;
     if (!isPlainObject(jsonObj))
       throw new Error(
         "Reconciling the document root expects a plain object value"

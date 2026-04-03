@@ -697,32 +697,32 @@ describe("LiveMap", () => {
     });
   });
 
-  describe("immutableIs", () => {
+  describe("hasCache", () => {
     test("returns true when cached immutable matches the given value", () => {
       const map = new LiveMap([
         ["a", 1],
         ["b", 2],
       ]);
       const imm = map.toImmutable();
-      expect(map.immutableIs(imm)).toBe(true);
+      expect(map.hasCache(imm)).toBe(true);
     });
 
     test("returns false for a different map with equal contents", () => {
       const map = new LiveMap([["a", 1]]);
       map.toImmutable();
-      expect(map.immutableIs({ a: 1 })).toBe(false);
+      expect(map.hasCache({ a: 1 })).toBe(false);
     });
 
     test("returns false when cache has been invalidated", () => {
       const map = new LiveMap<string, number>([["a", 1]]);
       const imm = map.toImmutable();
       map.set("b", 2);
-      expect(map.immutableIs(imm)).toBe(false);
+      expect(map.hasCache(imm)).toBe(false);
     });
 
     test("returns false when toImmutable has never been called", () => {
       const map = new LiveMap([["x", 42]]);
-      expect(map.immutableIs({ x: 42 })).toBe(false);
+      expect(map.hasCache({ x: 42 })).toBe(false);
     });
   });
 });

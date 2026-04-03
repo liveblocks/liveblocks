@@ -479,10 +479,9 @@ export abstract class AbstractCrdt {
   /**
    * @private
    * Returns true if a cached snapshot exists and is reference-equal to
-   * the given value. Checks both the JSON and immutable caches.
-   * Does not trigger a recompute.
+   * the given value. Does not trigger a recompute.
    */
-  immutableIs(value: unknown): boolean {
+  hasCache(value: unknown): boolean {
     return (
       (this.#cachedJson !== undefined && this.#cachedJson === value) ||
       (this.#cachedImmutable !== undefined && this.#cachedImmutable === value)

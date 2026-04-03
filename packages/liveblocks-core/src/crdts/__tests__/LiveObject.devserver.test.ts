@@ -1781,29 +1781,29 @@ describe("LiveObject", () => {
     });
   });
 
-  describe("immutableIs", () => {
+  describe("hasCache", () => {
     test("returns true when cached immutable matches the given value", () => {
       const obj = new LiveObject({ a: 1, b: "hello" });
       const imm = obj.toImmutable();
-      expect(obj.immutableIs(imm)).toBe(true);
+      expect(obj.hasCache(imm)).toBe(true);
     });
 
     test("returns false for a different value with equal contents", () => {
       const obj = new LiveObject({ a: 1 });
       obj.toImmutable();
-      expect(obj.immutableIs({ a: 1 })).toBe(false);
+      expect(obj.hasCache({ a: 1 })).toBe(false);
     });
 
     test("returns false when cache has been invalidated", () => {
       const obj = new LiveObject<{ a: number }>({ a: 1 });
       const imm = obj.toImmutable();
       obj.set("a", 2);
-      expect(obj.immutableIs(imm)).toBe(false);
+      expect(obj.hasCache(imm)).toBe(false);
     });
 
     test("returns false when toImmutable has never been called", () => {
       const obj = new LiveObject({ a: 1 });
-      expect(obj.immutableIs({ a: 1 })).toBe(false);
+      expect(obj.hasCache({ a: 1 })).toBe(false);
     });
   });
 });

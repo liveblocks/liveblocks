@@ -71,29 +71,29 @@ async function prepareStorageImmutableTest<S extends LsonObject>(
   };
 }
 
-describe("immutableIs", () => {
+describe("hasCache", () => {
   test("returns true when cached immutable matches the provided value", () => {
     const liveObj = new LiveObject({ a: 1 });
     const snapshot = liveObj.toImmutable();
-    expect(liveObj.immutableIs(snapshot)).toBe(true);
+    expect(liveObj.hasCache(snapshot)).toBe(true);
   });
 
   test("returns false when toImmutable was never called", () => {
     const liveObj = new LiveObject({ a: 1 });
-    expect(liveObj.immutableIs({ a: 1 })).toBe(false);
+    expect(liveObj.hasCache({ a: 1 })).toBe(false);
   });
 
   test("returns false after invalidation", () => {
     const liveObj = new LiveObject({ a: 1 });
     const snapshot = liveObj.toImmutable();
     liveObj.set("a", 2);
-    expect(liveObj.immutableIs(snapshot)).toBe(false);
+    expect(liveObj.hasCache(snapshot)).toBe(false);
   });
 
   test("returns false when value does not match", () => {
     const liveObj = new LiveObject({ a: 1 });
     liveObj.toImmutable();
-    expect(liveObj.immutableIs({ a: 999 })).toBe(false);
+    expect(liveObj.hasCache({ a: 999 })).toBe(false);
   });
 });
 
