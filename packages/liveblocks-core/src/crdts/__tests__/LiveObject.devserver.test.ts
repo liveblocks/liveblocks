@@ -1782,6 +1782,12 @@ describe("LiveObject", () => {
   });
 
   describe("hasCache", () => {
+    test("returns true when cached JSON matches the given value", () => {
+      const obj = new LiveObject({ a: 1, b: "hello" });
+      const json = obj.toJSON();
+      expect(obj.hasCache(json)).toBe(true);
+    });
+
     test("returns true when cached immutable matches the given value", () => {
       const obj = new LiveObject({ a: 1, b: "hello" });
       const imm = obj.toImmutable();
@@ -1790,18 +1796,18 @@ describe("LiveObject", () => {
 
     test("returns false for a different value with equal contents", () => {
       const obj = new LiveObject({ a: 1 });
-      obj.toImmutable();
+      obj.toJSON();
       expect(obj.hasCache({ a: 1 })).toBe(false);
     });
 
     test("returns false when cache has been invalidated", () => {
       const obj = new LiveObject<{ a: number }>({ a: 1 });
-      const imm = obj.toImmutable();
+      const json = obj.toJSON();
       obj.set("a", 2);
-      expect(obj.hasCache(imm)).toBe(false);
+      expect(obj.hasCache(json)).toBe(false);
     });
 
-    test("returns false when toImmutable has never been called", () => {
+    test("returns false when toJSON has never been called", () => {
       const obj = new LiveObject({ a: 1 });
       expect(obj.hasCache({ a: 1 })).toBe(false);
     });

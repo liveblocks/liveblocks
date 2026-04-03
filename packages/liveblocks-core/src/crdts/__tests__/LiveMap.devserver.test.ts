@@ -698,6 +698,15 @@ describe("LiveMap", () => {
   });
 
   describe("hasCache", () => {
+    test("returns true when cached JSON matches the given value", () => {
+      const map = new LiveMap([
+        ["a", 1],
+        ["b", 2],
+      ]);
+      const json = map.toJSON();
+      expect(map.hasCache(json)).toBe(true);
+    });
+
     test("returns true when cached immutable matches the given value", () => {
       const map = new LiveMap([
         ["a", 1],
@@ -707,20 +716,20 @@ describe("LiveMap", () => {
       expect(map.hasCache(imm)).toBe(true);
     });
 
-    test("returns false for a different map with equal contents", () => {
+    test("returns false for a different object with equal contents", () => {
       const map = new LiveMap([["a", 1]]);
-      map.toImmutable();
+      map.toJSON();
       expect(map.hasCache({ a: 1 })).toBe(false);
     });
 
     test("returns false when cache has been invalidated", () => {
       const map = new LiveMap<string, number>([["a", 1]]);
-      const imm = map.toImmutable();
+      const json = map.toJSON();
       map.set("b", 2);
-      expect(map.hasCache(imm)).toBe(false);
+      expect(map.hasCache(json)).toBe(false);
     });
 
-    test("returns false when toImmutable has never been called", () => {
+    test("returns false when toJSON has never been called", () => {
       const map = new LiveMap([["x", 42]]);
       expect(map.hasCache({ x: 42 })).toBe(false);
     });

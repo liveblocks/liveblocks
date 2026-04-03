@@ -819,6 +819,12 @@ describe("LiveList", () => {
   });
 
   describe("hasCache", () => {
+    test("returns true when cached JSON matches the given value", () => {
+      const list = new LiveList(["a", "b", "c"]);
+      const json = list.toJSON();
+      expect(list.hasCache(json)).toBe(true);
+    });
+
     test("returns true when cached immutable matches the given value", () => {
       const list = new LiveList(["a", "b", "c"]);
       const imm = list.toImmutable();
@@ -827,18 +833,18 @@ describe("LiveList", () => {
 
     test("returns false for a different array with equal contents", () => {
       const list = new LiveList(["a", "b"]);
-      list.toImmutable();
+      list.toJSON();
       expect(list.hasCache(["a", "b"])).toBe(false);
     });
 
     test("returns false when cache has been invalidated", () => {
       const list = new LiveList<string>(["a"]);
-      const imm = list.toImmutable();
+      const json = list.toJSON();
       list.push("b");
-      expect(list.hasCache(imm)).toBe(false);
+      expect(list.hasCache(json)).toBe(false);
     });
 
-    test("returns false when toImmutable has never been called", () => {
+    test("returns false when toJSON has never been called", () => {
       const list = new LiveList([1, 2, 3]);
       expect(list.hasCache([1, 2, 3])).toBe(false);
     });
