@@ -27,10 +27,27 @@ list and feel free to give them credit at the end of a line, e.g.:
 - Fix permission validation to accept all valid permission combinations
 - Support passing extra arguments to `--cmd` dynamically
 
+## Website
+- [Liveblocks Unveil](https://liveblocks.io/unveil/april-2026): April 6–10, 5 days of launches.
+
+## Documentation
+
+- New page: [n8n nodes](https://liveblocks.io/docs/tools/n8n-nodes).
+- New page: [AI Collaboration](https://liveblocks.io/docs/collaboration-features/ai-collaboration).
+- New get started: [Next.js + Realtime feeds](https://liveblocks.io/docs/get-started/nextjs-feeds).
+- New get started: [Next.js + React Flow](https://liveblocks.io/docs/get-started/nextjs-react-flow).
+- Add Feeds to API reference pages.
+- New concepts and WebSocket images.
+
+## Examples
+
+- New example: [AI Comments](https://liveblocks.io/examples/ai-comments/nextjs-comments-ai).
+- New example: [Chat SDK Bot](https://liveblocks.io/examples/chat-sdk-bot/nextjs-chat-sdk-bot).
+- New example: [Chat SDK AI Bot](https://liveblocks.io/examples/chat-sdk-ai-bot/nextjs-chat-sdk-ai-bot).
 
 ## Contributors
 
-nvie
+nvie, ctnicholas
 
 # Week 13 (2026-03-27)
 
