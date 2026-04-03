@@ -146,7 +146,7 @@ describe("room (dev server)", () => {
 
     room.history.undo(); // won't do anything now
 
-    expect(root.toObject()).toEqual({ a: 3 });
+    expect(root.toJSON()).toEqual({ a: 3 });
   });
 
   describe("subscription", () => {

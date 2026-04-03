@@ -51,7 +51,7 @@ describe("LiveObject.from() with SyncConfig", () => {
 
       const pos2 = result.get("pos2");
       assertThat(pos2, isLiveObject);
-      expect(pos2.toObject()).toEqual({ x: 50, y: 60 });
+      expect(pos2.toJSON()).toEqual({ x: 50, y: 60 });
     });
 
     test("stores array value as plain Json (no LiveList wrapping)", () => {
@@ -66,7 +66,7 @@ describe("LiveObject.from() with SyncConfig", () => {
 
       const other = result.get("other");
       assertThat(other, isLiveList);
-      expect(other.toArray()).toEqual([4, 5]);
+      expect(other.toJSON()).toEqual([4, 5]);
     });
   });
 

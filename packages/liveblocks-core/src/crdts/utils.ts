@@ -48,14 +48,14 @@ export type ToImmutable<L extends Lson | LsonObject> =
  */
 export function toPlainLson(lson: Lson): PlainLson {
   if (lson instanceof LiveObject) {
-    return {
-      liveblocksType: "LiveObject",
-      data: Object.fromEntries(
-        Object.entries(lson.toObject()).flatMap(([key, value]) =>
-          value !== undefined ? [[key, toPlainLson(value)]] : []
-        )
-      ),
-    };
+    const data: Record<string, PlainLson> = {};
+    for (const key of lson.keys()) {
+      const value = lson.get(key);
+      if (value !== undefined) {
+        data[key] = toPlainLson(value);
+      }
+    }
+    return { liveblocksType: "LiveObject", data };
   } else if (lson instanceof LiveMap) {
     return {
       liveblocksType: "LiveMap",

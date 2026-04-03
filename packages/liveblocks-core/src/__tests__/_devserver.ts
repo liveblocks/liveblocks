@@ -5,8 +5,7 @@
 import { expect, onTestFinished, vi } from "vitest";
 
 import { createClient } from "../client";
-import type { LsonObject } from "../crdts/Lson";
-import type { ToJson } from "../crdts/Lson";
+import type { LsonObject, ToJson } from "../crdts/Lson";
 import { kInternal } from "../internal";
 import type { JsonObject } from "../lib/Json";
 import { nanoid } from "../lib/nanoid";

@@ -146,7 +146,7 @@ function collectAttachmentPoints(
     if (value instanceof LiveObject) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       points.push({ type: "object", node: value as LiveObject<LsonObject> });
-      for (const child of Object.values(value.toObject())) {
+      for (const child of Array.from(value.keys(), (k) => value.get(k))) {
         visit(child);
       }
     } else if (value instanceof LiveList) {
@@ -164,7 +164,7 @@ function collectAttachmentPoints(
     }
   }
 
-  for (const child of Object.values(root.toObject())) {
+  for (const child of Array.from(root.keys(), (k) => root.get(k))) {
     visit(child);
   }
 
@@ -263,7 +263,7 @@ function Sandbox({ roomId }: { roomId: string }) {
       const point = points[randomInt(points.length)];
 
       if (point.type === "object") {
-        const keys = Object.keys(point.node.toObject());
+        const keys = Array.from(point.node.keys());
         if (keys.length > 0) {
           point.node.delete(keys[randomInt(keys.length)]);
           deleted++;
@@ -290,7 +290,7 @@ function Sandbox({ roomId }: { roomId: string }) {
         const point = points[randomInt(points.length)];
 
         if (point.type === "object") {
-          const keys = Object.keys(point.node.toObject());
+          const keys = Array.from(point.node.keys());
           if (keys.length > 0 && Math.random() < 0.5) {
             // Change existing value to a string
             const key = keys[randomInt(keys.length)];
@@ -329,7 +329,7 @@ function Sandbox({ roomId }: { roomId: string }) {
   }, []);
 
   const clear = useMutation(({ storage }) => {
-    for (const key of Object.keys(storage.toObject())) {
+    for (const key of Array.from(storage.keys())) {
       storage.delete(key);
     }
   }, []);

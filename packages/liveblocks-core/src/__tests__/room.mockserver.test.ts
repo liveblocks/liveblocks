@@ -998,8 +998,8 @@ describe("room", () => {
 
     room.connect();
     const storage = await room.getStorage();
-    expect(storage.root.toObject()).toEqual({ foo: 1234 });
-    //                                        ^^^ Added by the client, from initialStorage
+    expect(storage.root.toJSON()).toEqual({ foo: 1234 });
+    //                                      ^^^ Added by the client, from initialStorage
     expect(room.history.canUndo()).toBe(false);
   });
 
@@ -1072,7 +1072,7 @@ describe("room", () => {
 
     room.connect();
     const storage = await room.getStorage();
-    expect(storage.root.toObject()).toEqual({ x: 0 });
+    expect(storage.root.toJSON()).toEqual({ x: 0 });
   });
 
   test("undo redo with presence", async () => {
@@ -1125,7 +1125,7 @@ describe("room", () => {
     room.history.undo();
 
     expect(room.getPresence()).toEqual({ x: 1 });
-    expect(storage.root.toObject()).toEqual({ x: 0 });
+    expect(storage.root.toJSON()).toEqual({ x: 0 });
 
     room.history.redo();
   });
@@ -1240,12 +1240,12 @@ describe("room", () => {
 
     expect(room[kInternal].presenceBuffer).toEqual({ x: 0 });
     expect(room.getPresence()).toEqual({ x: 0 });
-    expect(storage.root.toObject()).toEqual({ x: 0 });
+    expect(storage.root.toJSON()).toEqual({ x: 0 });
 
     room.history.redo();
 
     expect(room[kInternal].presenceBuffer).toEqual({ x: 1 });
-    expect(storage.root.toObject()).toEqual({ x: 1 });
+    expect(storage.root.toJSON()).toEqual({ x: 1 });
     expect(room.getPresence()).toEqual({ x: 1 });
   });
 
@@ -1269,12 +1269,12 @@ describe("room", () => {
 
     storage.root.set("x", 1);
     room.history.undo();
-    expect(storage.root.toObject()).toEqual({ x: 0 });
+    expect(storage.root.toJSON()).toEqual({ x: 0 });
 
     room.batch(() => {});
     room.history.redo();
 
-    expect(storage.root.toObject()).toEqual({ x: 1 });
+    expect(storage.root.toJSON()).toEqual({ x: 1 });
   });
 
   describe("subscription", () => {

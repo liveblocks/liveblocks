@@ -447,7 +447,7 @@ describe("LiveObject", () => {
     });
 
     const root = storage.root;
-    const child = root.toObject().child;
+    const child = root.get("child");
 
     await expectStorage({
       a: 0,
@@ -500,14 +500,14 @@ describe("LiveObject", () => {
     });
 
     const root = storage.root;
-    const child = root.toObject().child;
-    const grandChild = child.toObject().grandChild;
-    expect(root.toObject()).toMatchObject({ a: 0 });
-    expect(child.toObject()).toMatchObject({ b: 0 });
-    expect(grandChild.toObject()).toMatchObject({ c: 0 });
+    const child = root.get("child");
+    const grandChild = child.get("grandChild");
+    expect(root.toJSON()).toMatchObject({ a: 0 });
+    expect(child.toJSON()).toMatchObject({ b: 0 });
+    expect(grandChild.toJSON()).toMatchObject({ c: 0 });
 
     grandChild.update({ c: 1 });
-    expect(grandChild.toObject()).toMatchObject({ c: 1 });
+    expect(grandChild.toJSON()).toMatchObject({ c: 1 });
 
     await expectStorage({
       a: 0,
@@ -551,7 +551,7 @@ describe("LiveObject", () => {
         items.set("b", "B");
       });
 
-      expect(items.toObject()).toEqual({ a: "A", b: "B" });
+      expect(items.toJSON()).toEqual({ a: "A", b: "B" });
       expect(receivedUpdates).toEqual([
         [
           objectUpdate(
@@ -563,7 +563,7 @@ describe("LiveObject", () => {
 
       room.history.undo();
 
-      expect(items.toObject()).toEqual({ a: "initial" });
+      expect(items.toJSON()).toEqual({ a: "initial" });
       expect(receivedUpdates).toEqual([
         [
           objectUpdate(
@@ -1465,7 +1465,7 @@ describe("LiveObject", () => {
       root.setLocal("b", "local");
 
       expect(root.get("b")).toBe("local");
-      expect(root.toObject()).toEqual({ a: 1, b: "local" });
+      expect(root.toJSON()).toEqual({ a: 1, b: "local" });
       expect(root.toJSON()).toEqual({ a: 1, b: "local" });
     });
 
@@ -1786,12 +1786,6 @@ describe("LiveObject", () => {
       const obj = new LiveObject({ a: 1, b: "hello" });
       const json = obj.toJSON();
       expect(obj.hasCache(json)).toBe(true);
-    });
-
-    test("returns true when cached immutable matches the given value", () => {
-      const obj = new LiveObject({ a: 1, b: "hello" });
-      const imm = obj.toImmutable();
-      expect(obj.hasCache(imm)).toBe(true);
     });
 
     test("returns false for a different value with equal contents", () => {

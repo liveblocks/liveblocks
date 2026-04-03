@@ -18,7 +18,6 @@ import {
 } from "./liveblocks-helpers";
 import type { LiveNode, Lson, ToJson } from "./Lson";
 import type { UpdateDelta } from "./UpdateDelta";
-import type { ToImmutable } from "./utils";
 
 /**
  * A LiveMap notification that is sent in-client to any subscribers whenever
@@ -453,20 +452,6 @@ export class LiveMap<
     };
   }
 
-  /** @deprecated Use `.toJSON()` instead. */
-  toImmutable(): ReadonlyMap<TKey, ToImmutable<TValue>> {
-    return super.toImmutable() as ReadonlyMap<TKey, ToImmutable<TValue>>;
-  }
-
-  /** @internal */
-  _toImmutable(): ReadonlyMap<TKey, ToImmutable<TValue>> {
-    const result: Map<TKey, ToImmutable<TValue>> = new Map();
-    for (const [key, value] of this.#map) {
-      result.set(key, value.toImmutable() as ToImmutable<TValue>);
-    }
-    return freeze(result);
-  }
-
   toJSON(): { readonly [P in TKey]: ToJson<TValue> } {
     // Don't implement actual toJSON logic in here. Implement it in
     // ._toJSON() instead. This helper merely exists to help TypeScript
@@ -480,9 +465,7 @@ export class LiveMap<
     for (const [key, value] of this.#map) {
       result[key] = value.toJSON();
     }
-    return (
-      process.env.NODE_ENV === "production" ? result : Object.freeze(result)
-    ) as { [P in TKey]: ToJson<TValue> };
+    return freeze(result) as { [P in TKey]: ToJson<TValue> };
   }
 
   clone(): LiveMap<TKey, TValue> {

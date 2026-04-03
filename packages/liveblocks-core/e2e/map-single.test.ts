@@ -11,8 +11,8 @@ test(
       map: new LiveMap<string, string>(),
     },
     async ({ root, flushSocketMessages, room }) => {
-      const states: Immutable[] = [];
-      room.subscribe(root, () => states.push(root.toImmutable()), {
+      const states: ReadonlyJson[] = [];
+      room.subscribe(root, () => states.push(root.toJSON()), {
         isDeep: true,
       });
 

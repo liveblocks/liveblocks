@@ -1,11 +1,7 @@
 import * as fc from "fast-check";
 import { describe, expect, test, vi } from "vitest";
 
-import {
-  jsonObject,
-  liveStructure,
-  liveStructureWithoutMap,
-} from "../crdts/__tests__/_arbitraries";
+import { jsonObject, liveStructure } from "../crdts/__tests__/_arbitraries";
 import { LiveList } from "../crdts/LiveList";
 import { LiveMap } from "../crdts/LiveMap";
 import { LiveObject } from "../crdts/LiveObject";
@@ -74,7 +70,7 @@ async function prepareStorageImmutableTest<S extends LsonObject>(
 describe("hasCache", () => {
   test("returns true when cached immutable matches the provided value", () => {
     const liveObj = new LiveObject({ a: 1 });
-    const snapshot = liveObj.toImmutable();
+    const snapshot = liveObj.toJSON();
     expect(liveObj.hasCache(snapshot)).toBe(true);
   });
 
@@ -85,61 +81,19 @@ describe("hasCache", () => {
 
   test("returns false after invalidation", () => {
     const liveObj = new LiveObject({ a: 1 });
-    const snapshot = liveObj.toImmutable();
+    const snapshot = liveObj.toJSON();
     liveObj.set("a", 2);
     expect(liveObj.hasCache(snapshot)).toBe(false);
   });
 
   test("returns false when value does not match", () => {
     const liveObj = new LiveObject({ a: 1 });
-    liveObj.toImmutable();
+    liveObj.toJSON();
     expect(liveObj.hasCache({ a: 999 })).toBe(false);
   });
 });
 
 describe("toJSON", () => {
-  test("property: without LiveMaps, toJSON() always deep-equals toImmutable()", () => {
-    fc.assert(
-      fc.property(liveStructureWithoutMap, (live) => {
-        expect(live.toJSON()).toEqual(live.toImmutable());
-      })
-    );
-  });
-
-  test("property: with LiveMaps, toJSON() replaces Map instances with plain objects", () => {
-    /**
-     * Recursively walks the toImmutable() result and converts every Map
-     * instance to a plain object, so we can assert structural equality
-     * with toJSON().
-     */
-    function mapsToObjects(value: unknown): unknown {
-      if (value instanceof Map) {
-        const obj: Record<string, unknown> = {};
-        for (const [k, v] of value) {
-          obj[k] = mapsToObjects(v);
-        }
-        return obj;
-      }
-      if (Array.isArray(value)) {
-        return value.map(mapsToObjects);
-      }
-      if (value !== null && typeof value === "object") {
-        const obj: Record<string, unknown> = {};
-        for (const [k, v] of Object.entries(value)) {
-          obj[k] = mapsToObjects(v);
-        }
-        return obj;
-      }
-      return value;
-    }
-
-    fc.assert(
-      fc.property(liveStructure, (live) => {
-        expect(live.toJSON()).toEqual(mapsToObjects(live.toImmutable()));
-      })
-    );
-  });
-
   test("property: toJSON() result never contains Map instances", () => {
     function containsMap(value: unknown): boolean {
       if (value instanceof Map) return true;
@@ -253,7 +207,7 @@ describe("reconcileLiveObject", () => {
   test("skips subtree when cached immutable matches", () => {
     const nested = new LiveObject({ x: 1, y: 2 });
     const liveObj = new LiveObject({ nested });
-    const snapshot = nested.toImmutable();
+    const snapshot = nested.toJSON();
     liveObj.reconcile({ nested: snapshot });
     expect(liveObj.toJSON()).toEqual({ nested: { x: 1, y: 2 } });
     expect(liveObj.get("nested")).toBe(nested);

@@ -783,9 +783,16 @@ export function createClient<U extends BaseUserMeta = DU>(
       (typeof options.initialStorage === "function"
         ? options.initialStorage(roomId)
         : options.initialStorage) ?? ({} as S);
-    const initialStorage = isLiveObject(rawStorage)
-      ? (rawStorage.toObject() as S)
-      : rawStorage;
+    let initialStorage: S;
+    if (isLiveObject(rawStorage)) {
+      const obj: Record<string, unknown> = {};
+      for (const key of rawStorage.keys()) {
+        obj[key] = (rawStorage as LiveObject<LsonObject>).get(key);
+      }
+      initialStorage = obj as S;
+    } else {
+      initialStorage = rawStorage;
+    }
 
     const newRoom = createRoom<P, S, U, E, TM, CM, FM, FMD>(
       { initialPresence, initialStorage },

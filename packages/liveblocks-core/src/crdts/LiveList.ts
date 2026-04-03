@@ -1,4 +1,5 @@
 import { nn } from "../lib/assert";
+import { freeze } from "../lib/freeze";
 import { nanoid } from "../lib/nanoid";
 import type { Pos } from "../lib/position";
 import { asPos, makePosition } from "../lib/position";
@@ -19,7 +20,6 @@ import {
 } from "./liveblocks-helpers";
 import { LiveRegister } from "./LiveRegister";
 import type { LiveNode, Lson, ToJson } from "./Lson";
-import type { ToImmutable } from "./utils";
 
 export type LiveListUpdateDelta =
   | { type: "insert"; index: number; item: Lson }
@@ -1099,14 +1099,8 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     }
   }
 
-  // XXX: Can we remove this instead of deprecating? Will need to update
-  // examples and docs.
-  /**
-   * Gotcha! This function only shallowly convert nested Live values, and may
-   * not be what you expect.
-   * @deprecated Prefer .toJSON() instead.
-   */
-  toArray(): TItem[] {
+  /** @internal */
+  private toArray(): TItem[] {
     return Array.from(this.#items, (entry) => liveNodeToLson(entry) as TItem);
     //                                                                ^^^^^^^^
     //                                                                FIXME! This isn't safe.
@@ -1282,19 +1276,6 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     };
   }
 
-  /** @deprecated Use `.toJSON()` instead. */
-  toImmutable(): readonly ToImmutable<TItem>[] {
-    return super.toImmutable() as readonly ToImmutable<TItem>[];
-  }
-
-  /** @internal */
-  _toImmutable(): readonly ToImmutable<TItem>[] {
-    const result = Array.from(this.#items, (node) => node.toImmutable());
-    return (
-      process.env.NODE_ENV === "production" ? result : Object.freeze(result)
-    ) as readonly ToImmutable<TItem>[];
-  }
-
   toJSON(): readonly ToJson<TItem>[] {
     // Don't implement actual toJSON logic in here. Implement it in
     // ._toJSON() instead. This helper merely exists to help TypeScript
@@ -1305,9 +1286,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   /** @internal */
   _toJSON(): readonly ToJson<TItem>[] {
     const result = Array.from(this.#items, (node) => node.toJSON());
-    return (
-      process.env.NODE_ENV === "production" ? result : Object.freeze(result)
-    ) as ToJson<TItem>[];
+    return freeze(result) as ToJson<TItem>[];
   }
 
   clone(): LiveList<TItem> {

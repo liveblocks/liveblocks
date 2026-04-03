@@ -707,15 +707,6 @@ describe("LiveMap", () => {
       expect(map.hasCache(json)).toBe(true);
     });
 
-    test("returns true when cached immutable matches the given value", () => {
-      const map = new LiveMap([
-        ["a", 1],
-        ["b", 2],
-      ]);
-      const imm = map.toImmutable();
-      expect(map.hasCache(imm)).toBe(true);
-    });
-
     test("returns false for a different object with equal contents", () => {
       const map = new LiveMap([["a", 1]]);
       map.toJSON();

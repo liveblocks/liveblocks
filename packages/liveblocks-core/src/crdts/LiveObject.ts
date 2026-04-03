@@ -1,5 +1,6 @@
 import type { LiveNode, Lson, LsonObject, ToJson } from "../crdts/Lson";
 import { nn } from "../lib/assert";
+import { freeze } from "../lib/freeze";
 import { isPlainObject } from "../lib/guards";
 import type { Json, JsonObject } from "../lib/Json";
 import { nanoid } from "../lib/nanoid";
@@ -36,7 +37,6 @@ import {
 import type { SyncConfig } from "./reconcile";
 import { reconcileLiveObject } from "./reconcile";
 import type { UpdateDelta } from "./UpdateDelta";
-import type { ToImmutable } from "./utils";
 
 /**
  * Optional keys of O whose non-undefined type is plain Json (not a
@@ -516,21 +516,6 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     return result;
   }
 
-  // XXX: Can we remove this instead of deprecating? Will need to update
-  // examples and docs.
-  /**
-   * Gotcha! This function only shallowly convert nested Live values, and may
-   * not be what you expect.
-   * @deprecated Prefer .toJSON() instead.
-   */
-  toObject(): O {
-    const result = Object.fromEntries(this.#synced);
-    for (const [key, value] of this.#local) {
-      result[key] = value;
-    }
-    return result as O;
-  }
-
   /**
    * Adds or updates a property with a specified key and a value.
    * @param key The key of the property to add
@@ -922,11 +907,6 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     reconcileLiveObject<O>(this, partialObj, "partial", config);
   }
 
-  /** @deprecated Use `.toJSON()` instead. */
-  toImmutable(): ToImmutable<O> {
-    return super.toImmutable() as ToImmutable<O>;
-  }
-
   /** @internal */
   toTreeNode(key: string): DevTools.LiveTreeNode<"LiveObject"> {
     // Don't implement actual toTreeNode logic in here. Implement it in
@@ -950,20 +930,6 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     };
   }
 
-  /** @internal */
-  _toImmutable(): ToImmutable<O> {
-    const result: { [key: string]: unknown } = {};
-    for (const [key, val] of this.#synced) {
-      result[key] = isLiveStructure(val) ? val.toImmutable() : val;
-    }
-    for (const [key, val] of this.#local) {
-      result[key] = val;
-    }
-    return (
-      process.env.NODE_ENV === "production" ? result : Object.freeze(result)
-    ) as ToImmutable<O>;
-  }
-
   toJSON(): ToJson<O> {
     // Don't implement actual toJSON logic in here. Implement it in
     // ._toJSON() instead. This helper merely exists to help TypeScript
@@ -980,9 +946,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     for (const [key, val] of this.#local) {
       result[key] = val;
     }
-    return (
-      process.env.NODE_ENV === "production" ? result : Object.freeze(result)
-    ) as ToJson<O>;
+    return freeze(result) as ToJson<O>;
   }
 
   clone(): LiveObject<O> {
