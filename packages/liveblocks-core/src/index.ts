@@ -110,7 +110,6 @@ export type {
   KDAD,
 } from "./globals/augmentation";
 export type { SyncConfig, SyncMode } from "./immutable";
-export { legacy_patchLiveObjectKey } from "./immutable";
 export { kInternal } from "./internal";
 export { makeAbortController } from "./lib/abortController";
 export { assert, assertNever, nn } from "./lib/assert";
