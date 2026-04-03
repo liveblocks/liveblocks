@@ -151,15 +151,14 @@ const internalEnhancer = <TState>(options: {
             if (maybeRoom) {
               isPatching = true;
               try {
-                // XXX Why is this outside of the batch?
-                updatePresence(
-                  maybeRoom,
-                  state,
-                  newState,
-                  presenceMapping as any
-                );
-
                 maybeRoom.batch(() => {
+                  updatePresence(
+                    maybeRoom!,
+                    state,
+                    newState,
+                    presenceMapping as any
+                  );
+
                   if (storageRoot) {
                     const partialState = pick(
                       newState,

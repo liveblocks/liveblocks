@@ -286,15 +286,14 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
           const room = maybeRoom;
           isPatching = true;
           try {
-            // XXX Why is this outside of the batch?
-            updatePresence(
-              room,
-              oldState as JsonObject,
-              newState as JsonObject,
-              presenceMapping
-            );
-
             room.batch(() => {
+              updatePresence(
+                room,
+                oldState as JsonObject,
+                newState as JsonObject,
+                presenceMapping
+              );
+
               if (storageRoot) {
                 const partialState = pick(newState, storageKeys) as JsonObject;
                 if (process.env.NODE_ENV !== "production") {
