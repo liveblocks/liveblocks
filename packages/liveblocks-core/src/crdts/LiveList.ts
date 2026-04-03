@@ -1099,11 +1099,8 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     }
   }
 
-  /** @internal */
-  private toArray(): TItem[] {
-    return Array.from(this.#items, (entry) => liveNodeToLson(entry) as TItem);
-    //                                                                ^^^^^^^^
-    //                                                                FIXME! This isn't safe.
+  #unwrap(node: LiveNode): TItem {
+    return liveNodeToLson(node) as TItem;
   }
 
   /**
@@ -1112,8 +1109,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @returns true if the predicate function returns a truthy value for every element. Otherwise, false.
    */
   every(predicate: (value: TItem, index: number) => unknown): boolean {
-    // XXX Calling .toArray() here is not efficient, let's iterate over #items directly but just wrap the predicate
-    return this.toArray().every(predicate);
+    return this.#items.rawArray.every((node, i) => predicate(this.#unwrap(node), i));
   }
 
   /**
@@ -1122,8 +1118,12 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @returns An array with the elements that pass the test.
    */
   filter(predicate: (value: TItem, index: number) => unknown): TItem[] {
-    // XXX Calling .toArray() here is not efficient, let's iterate over #items directly but just wrap the predicate
-    return this.toArray().filter(predicate);
+    const result: TItem[] = [];
+    this.#items.rawArray.forEach((node, i) => {
+      const item = this.#unwrap(node);
+      if (predicate(item, i)) result.push(item);
+    });
+    return result;
   }
 
   /**
@@ -1132,8 +1132,11 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @returns The value of the first element in the LiveList that satisfies the provided testing function. Otherwise, undefined is returned.
    */
   find(predicate: (value: TItem, index: number) => unknown): TItem | undefined {
-    // XXX Calling .toArray() here is not efficient, let's iterate over #items directly but just wrap the predicate
-    return this.toArray().find(predicate);
+    for (const [i, node] of this.#items.rawArray.entries()) {
+      const item = this.#unwrap(node);
+      if (predicate(item, i)) return item;
+    }
+    return undefined;
   }
 
   /**
@@ -1142,8 +1145,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @returns The index of the first element in the LiveList that passes the test. Otherwise, -1.
    */
   findIndex(predicate: (value: TItem, index: number) => unknown): number {
-    // XXX Calling .toArray() here is not efficient, let's iterate over #items directly but just wrap the predicate
-    return this.toArray().findIndex(predicate);
+    return this.#items.rawArray.findIndex((node, i) => predicate(this.#unwrap(node), i));
   }
 
   /**
@@ -1151,8 +1153,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @param callbackfn Function to execute on each element.
    */
   forEach(callbackfn: (value: TItem, index: number) => void): void {
-    // XXX Calling .toArray() here is not efficient, let's iterate over #items directly but just wrap the predicate
-    return this.toArray().forEach(callbackfn);
+    this.#items.rawArray.forEach((node, i) => callbackfn(this.#unwrap(node), i));
   }
 
   /**
@@ -1164,11 +1165,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     if (index < 0 || index >= this.#items.length) {
       return undefined;
     }
-
-    const item = this.#items.at(index);
-    return item ? (liveNodeToLson(item) as TItem | undefined) : undefined;
-    //                                     ^^^^^^^^^^^^^^^^^
-    //                                     FIXME! This isn't safe.
+    return this.#unwrap(this.#items.at(index)!);
   }
 
   /**
@@ -1178,19 +1175,23 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @returns The first index of the element in the LiveList; -1 if not found.
    */
   indexOf(searchElement: TItem, fromIndex?: number): number {
-    // XXX Calling .toArray() here is not efficient, let's iterate over #items directly but just wrap the predicate
-    return this.toArray().indexOf(searchElement, fromIndex);
+    return this.#items.rawArray.findIndex(
+      (node, i) => i >= (fromIndex ?? 0) && this.#unwrap(node) === searchElement
+    );
   }
 
   /**
-   * Returns the last index at which a given element can be found in the LiveList, or -1 if it is not present. The LiveLsit is searched backwards, starting at fromIndex.
+   * Returns the last index at which a given element can be found in the LiveList, or -1 if it is not present. The LiveList is searched backwards, starting at fromIndex.
    * @param searchElement Element to locate.
    * @param fromIndex The index at which to start searching backwards.
-   * @returns
+   * @returns The last index of the element in the LiveList; -1 if not found.
    */
   lastIndexOf(searchElement: TItem, fromIndex?: number): number {
-    // XXX Calling .toArray() here is not efficient, let's iterate over #items directly but just wrap the predicate
-    return this.toArray().lastIndexOf(searchElement, fromIndex);
+    const arr = this.#items.rawArray;
+    for (let i = fromIndex ?? arr.length - 1; i >= 0; i--) {
+      if (this.#unwrap(arr[i]) === searchElement) return i;
+    }
+    return -1;
   }
 
   /**
@@ -1199,21 +1200,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @returns An array with each element being the result of the callback function.
    */
   map<U>(callback: (value: TItem, index: number) => U): U[] {
-    // XXX If we fixed the iterator, could we not "just" map over this.#items?
-    const result: U[] = [];
-    let i = 0;
-    for (const entry of this.#items) {
-      result.push(
-        callback(
-          liveNodeToLson(entry) as TItem,
-          //                    ^^^^^^^^
-          //                    FIXME! This isn't safe.
-          i
-        )
-      );
-      i++;
-    }
-    return result;
+    return this.#items.rawArray.map((node, i) => callback(this.#unwrap(node), i));
   }
 
   /**
@@ -1222,8 +1209,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @returns true if the callback function returns a truthy value for at least one element. Otherwise, false.
    */
   some(predicate: (value: TItem, index: number) => unknown): boolean {
-    // XXX Calling .toArray() here is not efficient, let's iterate over #items directly but just wrap the predicate
-    return this.toArray().some(predicate);
+    return this.#items.rawArray.some((node, i) => predicate(this.#unwrap(node), i));
   }
 
   *[Symbol.iterator](): IterableIterator<TItem> {
