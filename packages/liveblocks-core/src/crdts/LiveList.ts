@@ -1109,7 +1109,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @returns true if the predicate function returns a truthy value for every element. Otherwise, false.
    */
   every(predicate: (value: TItem, index: number) => unknown): boolean {
-    return this.#items.rawArray.every((node, i) => predicate(this.#unwrap(node), i));
+    return this.#items.rawArray.every((node, i) =>
+      predicate(this.#unwrap(node), i)
+    );
   }
 
   /**
@@ -1145,7 +1147,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @returns The index of the first element in the LiveList that passes the test. Otherwise, -1.
    */
   findIndex(predicate: (value: TItem, index: number) => unknown): number {
-    return this.#items.rawArray.findIndex((node, i) => predicate(this.#unwrap(node), i));
+    return this.#items.rawArray.findIndex((node, i) =>
+      predicate(this.#unwrap(node), i)
+    );
   }
 
   /**
@@ -1153,7 +1157,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @param callbackfn Function to execute on each element.
    */
   forEach(callbackfn: (value: TItem, index: number) => void): void {
-    this.#items.rawArray.forEach((node, i) => callbackfn(this.#unwrap(node), i));
+    this.#items.rawArray.forEach((node, i) =>
+      callbackfn(this.#unwrap(node), i)
+    );
   }
 
   /**
@@ -1162,10 +1168,8 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @returns The element at the specified index or undefined.
    */
   get(index: number): TItem | undefined {
-    if (index < 0 || index >= this.#items.length) {
-      return undefined;
-    }
-    return this.#unwrap(this.#items.at(index)!);
+    const item = this.#items.at(index);
+    return item !== undefined ? this.#unwrap(item) : undefined;
   }
 
   /**
@@ -1200,7 +1204,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @returns An array with each element being the result of the callback function.
    */
   map<U>(callback: (value: TItem, index: number) => U): U[] {
-    return this.#items.rawArray.map((node, i) => callback(this.#unwrap(node), i));
+    return this.#items.rawArray.map((node, i) =>
+      callback(this.#unwrap(node), i)
+    );
   }
 
   /**
@@ -1209,12 +1215,14 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @returns true if the callback function returns a truthy value for at least one element. Otherwise, false.
    */
   some(predicate: (value: TItem, index: number) => unknown): boolean {
-    return this.#items.rawArray.some((node, i) => predicate(this.#unwrap(node), i));
+    return this.#items.rawArray.some((node, i) =>
+      predicate(this.#unwrap(node), i)
+    );
   }
 
   *[Symbol.iterator](): IterableIterator<TItem> {
     for (const node of this.#items) {
-      yield liveNodeToLson(node) as TItem;
+      yield this.#unwrap(node);
     }
   }
 
@@ -1283,7 +1291,6 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     );
   }
 }
-
 
 function makeUpdate<TItem extends Lson>(
   liveList: LiveList<TItem>,

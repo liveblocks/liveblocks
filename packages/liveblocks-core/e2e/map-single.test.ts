@@ -20,10 +20,7 @@ test(
       root.get("map").set("key", "b");
 
       await flushSocketMessages();
-      expect(states).toEqual([
-        { map: { key: "a" } },
-        { map: { key: "b" } },
-      ]);
+      expect(states).toEqual([{ map: { key: "a" } }, { map: { key: "b" } }]);
     }
   )
 );
