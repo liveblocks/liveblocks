@@ -4520,6 +4520,41 @@ JSON-serializable data. If multiple clients update the same property
 simultaneously, the last modification received by the Liveblocks servers is the
 winner.
 
+### LiveObject.from [#LiveObject.from]
+
+Creates a new `LiveObject` from a plain JSON object, recursively converting
+nested objects to `LiveObject` instances and arrays to `LiveList` instances.
+
+```ts
+const liveObject = LiveObject.from({
+  name: "Grace",
+  hobbies: ["reading", "piano"],
+  address: { city: "New York", zip: "10001" },
+});
+```
+
+This is equivalent to writing:
+
+```ts
+const liveObject = new LiveObject({
+  name: "Grace",
+  hobbies: new LiveList(["reading", "piano"]),
+  address: new LiveObject({ city: "New York", zip: "10001" }),
+});
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="liveObject" type="LiveObject">
+    A new `LiveObject` with deeply converted children.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="obj" type="JsonObject" required>
+    A plain JSON object to convert into a `LiveObject`.
+  </PropertiesListItem>
+</PropertiesList>
+
 ### new LiveObject [#LiveObject.constructor]
 
 Create an empty `LiveObject`
@@ -4676,6 +4711,87 @@ root.set("b", obj.clone());
 
 <PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
+### toJSON [#LiveObject.toJSON]
+
+Returns a JSON-compatible snapshot of this `LiveObject` and all its nested
+children. `LiveObject` values become plain objects, `LiveList` values become
+arrays, and `LiveMap` values also become plain objects (not `Map` instances).
+The result is cached and only recomputed when the contents change.
+
+```ts
+const liveObject = new LiveObject({
+  firstName: "Grace",
+  lastName: "Hopper",
+  hobbies: new LiveList(["reading", "piano"]),
+});
+
+// { firstName: "Grace", lastName: "Hopper", hobbies: ["reading", "piano"] }
+liveObject.toJSON();
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="snapshot" type="object">
+    A plain JSON-compatible object. Always serializable — `JSON.stringify()`
+    works out of the box.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
+### reconcile [#LiveObject.reconcile]
+
+Reconciles this `LiveObject` tree to match the given JSON object. Only mutates
+keys that actually changed. Keys present on this `LiveObject` but absent from
+the input will be deleted. Nested structures are recursively reconciled.
+
+```ts
+const liveObject = new LiveObject({
+  name: "Grace",
+  age: 85,
+  nested: new LiveObject({ x: 1, y: 2 }),
+});
+
+// Updates nested.y, deletes age (absent from input)
+liveObject.reconcile({ name: "Grace", nested: { x: 1, y: 99 } });
+```
+
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="jsonObj" type="JsonObject" required>
+    The target state to reconcile towards. Missing keys will be deleted.
+  </PropertiesListItem>
+</PropertiesList>
+
+### reconcilePartially [#LiveObject.reconcilePartially]
+
+Like [`reconcile`](#LiveObject.reconcile), but only touches the top-level keys
+present in the input. Keys on this `LiveObject` that are absent from the input
+are left untouched. Useful when syncing a subset of keys without affecting
+others.
+
+Beware: the partial behavior only applies to the top-level keys. Nested
+structures are always fully reconciled.
+
+```ts
+const liveObject = new LiveObject({
+  name: "Grace",
+  age: 85,
+  nested: new LiveObject({ x: 1, y: 2 }),
+});
+
+// Updates nested.y, leaves age untouched (absent keys are not deleted)
+liveObject.reconcilePartially({ name: "Grace", nested: { x: 1, y: 99 } });
+```
+
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="partialObj" type="JsonObject" required>
+    A partial object. Only the provided keys will be reconciled.
+  </PropertiesListItem>
+</PropertiesList>
+
 ### toImmutable [#LiveObject.toImmutable]
 
 <Banner title="Deprecated in 3.17" type="warning">
@@ -4694,25 +4810,6 @@ Use [`.toJSON()`](#LiveObject.toJSON) instead. It’s faster, cached, and deeply
 converts all nested Live structures.
 
 </Banner>
-
-Transform the `LiveObject` into a normal JavaScript object.
-
-```ts
-const liveObject = new LiveObject({ firstName: "Grace", lastName: "Hopper" });
-liveObject.toObject();
-// { firstName: "Grace", lastName: "Hopper" }
-```
-
-Please note that this method won’t recursively convert Live structures, which
-may be surprising:
-
-```ts
-const liveObject = new LiveObject({
-  animals: new LiveList(["🦁", "🦊", "🐵"]),
-});
-liveObject.toObject();
-// { animals: <LiveList instance> } // ❗️
-```
 
 ## LiveMap
 
@@ -5048,6 +5145,31 @@ root.set("b", map.clone());
 <PropertiesList title="Returns">
   <PropertiesListItem name="clonedStructure" type="LiveMap">
     The cloned `LiveMap`.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
+### toJSON [#LiveMap.toJSON]
+
+Returns a JSON-compatible snapshot of this `LiveMap` and all its nested
+children. `LiveObject` values become plain objects, `LiveList` values become
+arrays, and `LiveMap` values also become plain objects (not `Map` instances).
+The result is cached and only recomputed when the contents change.
+
+```ts
+const map = new LiveMap([
+  ["florent", new LiveObject({ role: "engineer" })],
+  ["marc", new LiveObject({ role: "designer" })],
+]);
+
+// { florent: { role: "engineer" }, marc: { role: "designer" } }
+map.toJSON();
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="snapshot" type="object">
+    A plain JSON-compatible object with string keys.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -5576,6 +5698,32 @@ root.set("b", list.clone());
 
 <PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
+### toJSON [#LiveList.toJSON]
+
+Returns a JSON-compatible snapshot of this `LiveList` and all its nested
+children. `LiveObject` values become plain objects, `LiveList` values become
+arrays, and `LiveMap` values also become plain objects (not `Map` instances).
+The result is cached and only recomputed when the contents change.
+
+```ts
+const list = new LiveList([
+  new LiveObject({ name: "Olivier" }),
+  new LiveObject({ name: "Vincent" }),
+]);
+
+// [{ name: "Olivier" }, { name: "Vincent" }]
+list.toJSON();
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="snapshot" type="array">
+    A plain JSON-compatible array. Always serializable — `JSON.stringify()`
+    works out of the box.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
 ### toImmutable [#LiveList.toImmutable]
 
 <Banner title="Deprecated in 3.17" type="warning">
@@ -5594,25 +5742,6 @@ Use [`.toJSON()`](#LiveList.toJSON) instead. It’s faster, cached, and deeply
 converts all nested Live structures.
 
 </Banner>
-
-Transforms the `LiveList` into a normal JavaScript array.
-
-```ts
-const list = new LiveList(["🦁", "🦊", "🐵"]);
-list.toArray();
-// ["🦁", "🦊", "🐵"]
-```
-
-Please note that this method won’t recursively convert Live structures, which
-may be surprising:
-
-```ts
-const list = new LiveList([
-  new LiveObject({ firstName: "Grace", lastName: "Hopper" }),
-]);
-list.toArray();
-// [ <LiveObject instance> ]  // ❗️
-```
 
 ## Resolvers
 

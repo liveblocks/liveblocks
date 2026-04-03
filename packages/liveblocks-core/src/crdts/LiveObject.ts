@@ -873,11 +873,11 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
 
   /**
    * Creates a new LiveObject from a plain JSON object, recursively converting
-   * nested objects to LiveObjects and arrays to LiveLists. An optional
-   * SyncConfig controls per-key behavior (local-only, atomic, or deep).
-   *
-   * @private
+   * nested objects to LiveObjects and arrays to LiveLists.
    */
+  static from(obj: JsonObject): LiveObject<LsonObject>;
+  /** @private */
+  static from(obj: JsonObject, config?: SyncConfig): LiveObject<LsonObject>;
   static from(obj: JsonObject, config?: SyncConfig): LiveObject<LsonObject> {
     if (!isPlainObject(obj)) throw new Error("Expected a JSON object");
     const liveObj = new LiveObject<LsonObject>({});
@@ -890,9 +890,10 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
    * mutates keys that actually changed. Keys present on this LiveObject but
    * absent from `jsonObj` will be deleted. Nested structures are recursively
    * reconciled.
-   *
-   * @private
    */
+  reconcile(jsonObj: JsonObject): void;
+  /** @private */
+  reconcile(jsonObj: JsonObject, config?: SyncConfig): void;
   reconcile(jsonObj: JsonObject, config?: SyncConfig): void {
     if (this.immutableIs(jsonObj)) return;
     if (!isPlainObject(jsonObj))
@@ -910,9 +911,10 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
    *
    * Note: the partial behavior only applies to the top-level keys of this
    * object. Nested structures are always fully reconciled.
-   *
-   * @private
    */
+  reconcilePartially(partialObj: JsonObject): void;
+  /** @private */
+  reconcilePartially(partialObj: JsonObject, config?: SyncConfig): void;
   reconcilePartially(partialObj: JsonObject, config?: SyncConfig): void {
     if (!isPlainObject(partialObj))
       throw new Error(
