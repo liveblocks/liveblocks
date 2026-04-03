@@ -455,7 +455,7 @@ describe("reconcilePartially", () => {
 });
 
 describe("property tests", () => {
-  test("LiveObject.from(obj, config).toImmutable() === obj for any config", () => {
+  test("LiveObject.from(obj, config).toJSON() === obj for any config", () => {
     fc.assert(
       fc.property(
         jsonObject.chain((obj) =>
@@ -471,7 +471,7 @@ describe("property tests", () => {
     );
   });
 
-  test("lo.reconcile(obj, config).toImmutable() === obj for any config", () => {
+  test("lo.reconcile(obj, config).toJSON() === obj for any config", () => {
     fc.assert(
       fc.property(
         fc
