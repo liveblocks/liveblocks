@@ -45,6 +45,9 @@ jobs:
           echo Triggering deployment for nextjs-chat-sdk-bot
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_a4iBQG1ShzA12DyRjkpoI0U9tBSv/9ZYEH7EaZN; echo
 
+          echo Triggering deployment for nextjs-chat-sdk-ai-bot
+          curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_Wu8bdNCysHzkw6qpVjM11idJtbN5/9mplaVzS9X; echo
+
           echo Triggering deployment for nextjs-comments
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_n44ypzbdWsirLcq3ZSSJ1wLoCAjQ/QWFQY2wKrB; echo
 
@@ -87,6 +90,9 @@ jobs:
           echo Triggering deployment for nextjs-dashboard
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_huuoeSxbMYvNmqcu9UYBUVfP8Cuh/JObDpsWO1x; echo
 
+          echo Triggering deployment for nextjs-flowchart-builder
+          curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_eIdloDR7ghI6tKtP1XcWtNvtzNv9/FL6HNiFmMn; echo
+
           echo Triggering deployment for nextjs-form
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_tkr9dMtcFdxzbrZeo0CFzgsqptKI/CTlpFDvYqB; echo
 
@@ -128,6 +134,12 @@ jobs:
 
           echo Triggering deployment for nextjs-notion-like-ai-editor
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_xvFy7XWt32Yz7gkigfCRZL6AeIBH/J4jKuBvLo8; echo
+
+          echo Triggering deployment for nextjs-react-flow
+          curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_dcdHWlkYszdGyDO62UJByXPHnMNt/lkQC88XdTH; echo
+
+          echo Triggering deployment for nextjs-react-flow-ai
+          curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_mfXSZ8ZM97E6dkp1OGqzvRqfdqoo/Byq4XMwEnk; echo
 
           echo Triggering deployment for nextjs-spreadsheet-advanced
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_ZJK9PEfgkfsqKRVjxFzwQgAVsdsF/gKp8sJ1f1c; echo
@@ -215,9 +227,6 @@ jobs:
 
           echo Triggering deployment for vuejs-live-cursors
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_hy7iXLmWo1okV1dgr2OrMCn9JMWt/t7E6OY5oIX; echo
-
-          echo Triggering deployment for zustand-flowchart
-          curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_pASCvZXKn5uwLtBt0UrstPs4VwDx/yB1yWVTEYs; echo
 
           echo Triggering deployment for zustand-todo-list
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_YJIYYvzKUnVTmDsf0qASayLp7qqh/sNDHSdAMku; echo
