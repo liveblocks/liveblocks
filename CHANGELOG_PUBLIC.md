@@ -20,6 +20,66 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 14 (2026-04-03)
 
+## v3.17.0
+
+### `@liveblocks/react-flow`
+
+- Introduce the package. Install with `npm install @liveblocks/react-flow`.
+  Provides hooks and components that add collaboration to any React Flow diagram
+  using Liveblocks Storage:
+  - Use the `useLiveblocksFlow` hook to make React Flow synced and
+    collaborative.
+  - Use the `Cursors` component to show other users' cursors inside React Flow.
+
+### `@liveblocks/react-ui`
+
+- Allow customizing cursors in the `Cursors` component by passing a
+  `components={{ Cursor: MyCursor }}` prop.
+
+## v3.16.0
+
+### `@liveblocks/chat-sdk-adapter`
+
+- Introduce the package. Install with
+  `npm install @liveblocks/chat-sdk-adapter`. Provides a
+  [`chat-sdk`](https://www.npmjs.com/package/chat)-compatible backend adapter
+  backed by Liveblocks Comments: webhooks, posting and editing messages,
+  reactions, paginated fetches, thread and channel helpers, and optional
+  `resolveUsers` / `resolveGroupsInfo` hooks.
+
+### `@liveblocks/react`
+
+- Add Feeds hooks: `useFeeds`, `useFeedMessages`, `useCreateFeed`,
+  `useDeleteFeed`, `useUpdateFeedMetadata`, `useCreateFeedMessage`,
+  `useDeleteFeedMessage`, and `useUpdateFeedMessage`.
+
+### `@liveblocks/node`
+
+- Add REST client methods for Feeds: `getFeeds`, `getFeed`, `createFeed`,
+  `updateFeed`, `deleteFeed`, `getFeedMessages`, `createFeedMessage`,
+  `updateFeedMessage`, and `deleteFeedMessage`.
+
+### Python SDK
+
+- Add Feeds REST API support on the sync and async clients (`get_feeds`,
+  `get_feed`, `create_feed`, `update_feed`, `delete_feed`, `get_feed_messages`,
+  `create_feed_message`, `update_feed_message`, `delete_feed_message`) with
+  matching request/response models.
+
+### `@liveblocks/client`
+
+- Add **Feeds**: room-scoped feeds with metadata and messages and APIs to list,
+  create, update, and delete feeds and messages (`fetchFeeds`,
+  `fetchFeedMessages`, `addFeed`, `updateFeed`, `deleteFeed`, `addFeedMessage`,
+  `updateFeedMessage`, `deleteFeedMessage`).
+
+### `@liveblocks/react-ui`
+
+- Add `body` prop to `Comment` to allow overriding only the default rich-text
+  comment body while still keeping attachments, reactions, and
+  `additionalContent` as is, unlike when using the `children` prop.
+- Fix `AvatarStack` negative margin breaking alignment.
+
 ## Liveblocks dev server (v1.3.0)
 
 - Add feeds support (feeds:write permission)
@@ -47,7 +107,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ## Contributors
 
-nvie, ctnicholas
+nvie, ctnicholas, marcbouchenoire, sugardarius, nimeshnayaju, jrowny
 
 # Week 13 (2026-03-27)
 
