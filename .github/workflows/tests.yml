@@ -62,6 +62,7 @@ jobs:
             "@liveblocks/node-prosemirror",
             "@liveblocks/codemod",
             "@liveblocks/emails",
+            "@liveblocks/nextjs",
           ]
 
     steps:
