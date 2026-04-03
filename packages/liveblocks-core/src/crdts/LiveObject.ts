@@ -516,6 +516,8 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     return result;
   }
 
+  // XXX: Can we remove this instead of deprecating? Will need to update
+  // examples and docs.
   /**
    * Gotcha! This function only shallowly convert nested Live values, and may
    * not be what you expect.
@@ -541,10 +543,9 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   /**
    * @experimental
    *
-   * Sets a local-only property that is not synchronized over the wire.
-   * The value will be visible via get(), toObject(), and toImmutable() on
-   * this client only. Other clients and the server will see `undefined`
-   * for this key.
+   * Sets a local-only property that is not synchronized over the wire. The
+   * value will be visible via get(), and toJSON() on this client only. Other
+   * clients and the server will see `undefined` for this key.
    *
    * Caveat: this method will not add changes to the undo/redo stack.
    */
@@ -920,10 +921,8 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     reconcileLiveObject<O>(this, partialObj, "partial", config);
   }
 
+  /** @deprecated Use `.toJSON()` instead. */
   toImmutable(): ToImmutable<O> {
-    // Don't implement actual toImmutable logic in here. Implement it in
-    // ._toImmutable() instead. This helper merely exists to help TypeScript
-    // infer better return types.
     return super.toImmutable() as ToImmutable<O>;
   }
 

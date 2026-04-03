@@ -1099,6 +1099,8 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     }
   }
 
+  // XXX: Can we remove this instead of deprecating? Will need to update
+  // examples and docs.
   /**
    * Gotcha! This function only shallowly convert nested Live values, and may
    * not be what you expect.
@@ -1280,10 +1282,8 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     };
   }
 
+  /** @deprecated Use `.toJSON()` instead. */
   toImmutable(): readonly ToImmutable<TItem>[] {
-    // Don't implement actual toJson logic in here. Implement it in ._toImmutable()
-    // instead. This helper merely exists to help TypeScript infer better
-    // return types.
     return super.toImmutable() as readonly ToImmutable<TItem>[];
   }
 

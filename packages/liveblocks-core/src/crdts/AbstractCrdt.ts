@@ -489,6 +489,8 @@ export abstract class AbstractCrdt {
 
   /**
    * Return an immutable snapshot of this Live node and its children.
+   * @deprecated Use `.toJSON()` instead. It returns plain objects for
+   * LiveMaps (instead of Map instances), making the result always valid JSON.
    */
   toImmutable(): Immutable {
     if (this.#cachedImmutable === undefined) {
