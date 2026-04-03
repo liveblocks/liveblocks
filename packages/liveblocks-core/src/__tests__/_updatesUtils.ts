@@ -58,37 +58,39 @@ export function liveListUpdateToJson<TItem extends Lson>(
   return {
     type: update.type,
     node: update.node.toJSON(),
-    updates: update.updates.map((delta) => {
+    updates: update.updates.map((delta): JsonLiveListUpdateDelta<TItem> => {
       switch (delta.type) {
         case "move": {
           return {
             type: delta.type,
             index: delta.index,
             previousIndex: delta.previousIndex,
-            item: lsonToJson(delta.item),
+            item: lsonToJson(delta.item) as ToJson<TItem>,
           };
         }
         case "delete": {
-          return delta;
+          return {
+            type: delta.type,
+            index: delta.index,
+            deletedItem: lsonToJson(delta.deletedItem) as ToJson<TItem>,
+          };
         }
         case "insert": {
           return {
             type: delta.type,
             index: delta.index,
-            item: lsonToJson(delta.item),
+            item: lsonToJson(delta.item) as ToJson<TItem>,
           };
         }
         case "set": {
           return {
             type: delta.type,
             index: delta.index,
-            item: lsonToJson(delta.item),
+            item: lsonToJson(delta.item) as ToJson<TItem>,
           };
         }
       }
-    }) as any,
-    // XXX Look into why this isn't working
-    // ^^^^^^ FIXME: TypeScript nags about this correctly. Deal with this later.
+    }),
   };
 }
 
