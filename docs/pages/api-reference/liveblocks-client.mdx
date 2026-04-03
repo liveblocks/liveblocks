@@ -4763,35 +4763,6 @@ liveObject.reconcile({ name: "Grace", nested: { x: 1, y: 99 } });
   </PropertiesListItem>
 </PropertiesList>
 
-### reconcilePartially [#LiveObject.reconcilePartially]
-
-Like [`reconcile`](#LiveObject.reconcile), but only touches the top-level keys
-present in the input. Keys on this `LiveObject` that are absent from the input
-are left untouched. Useful when syncing a subset of keys without affecting
-others.
-
-Beware: the partial behavior only applies to the top-level keys. Nested
-structures are always fully reconciled.
-
-```ts
-const liveObject = new LiveObject({
-  name: "Grace",
-  age: 85,
-  nested: new LiveObject({ x: 1, y: 2 }),
-});
-
-// Updates nested.y, leaves age untouched (absent keys are not deleted)
-liveObject.reconcilePartially({ name: "Grace", nested: { x: 1, y: 99 } });
-```
-
-<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
-
-<PropertiesList title="Arguments">
-  <PropertiesListItem name="partialObj" type="JsonObject" required>
-    A partial object. Only the provided keys will be reconciled.
-  </PropertiesListItem>
-</PropertiesList>
-
 ### toImmutable [#LiveObject.toImmutable]
 
 <Banner title="Deprecated in 3.17" type="warning">

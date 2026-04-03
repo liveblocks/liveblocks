@@ -911,10 +911,9 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
    *
    * Note: the partial behavior only applies to the top-level keys of this
    * object. Nested structures are always fully reconciled.
+   *
+   * @private
    */
-  reconcilePartially(partialObj: JsonObject): void;
-  /** @private */
-  reconcilePartially(partialObj: JsonObject, config?: SyncConfig): void;
   reconcilePartially(partialObj: JsonObject, config?: SyncConfig): void {
     if (!isPlainObject(partialObj))
       throw new Error(
