@@ -417,7 +417,10 @@ export type RoomProviderProps<P extends JsonObject, S extends LsonObject> =
       /**
        * The initial Storage to use when entering a new Room.
        */
-      initialStorage: S | ((roomId: string) => S);
+      initialStorage:
+        | S
+        | LiveObject<S>
+        | ((roomId: string) => S | LiveObject<S>);
     }
   >
 >;

@@ -4,6 +4,8 @@ import { createApiClient } from "./api-client";
 import { createAuthManager } from "./auth-manager";
 import { isIdle, StopRetrying } from "./connection";
 import { DEFAULT_BASE_URL } from "./constants";
+import { isLiveObject } from "./crdts/liveblocks-helpers";
+import type { LiveObject } from "./crdts/LiveObject";
 import type { LsonObject } from "./crdts/Lson";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
 import type {
@@ -156,7 +158,7 @@ export type EnterOptions<P extends JsonObject = DP, S extends LsonObject = DS> =
       /**
        * The initial Storage to use when entering a new Room.
        */
-      initialStorage: S | ((roomId: string) => S);
+      initialStorage: S | LiveObject<S> | ((roomId: string) => S | LiveObject<S>);
     }
   >
 >;
@@ -777,10 +779,13 @@ export function createClient<U extends BaseUserMeta = DU>(
         ? options.initialPresence(roomId)
         : options.initialPresence) ?? ({} as P);
 
-    const initialStorage =
+    const rawStorage =
       (typeof options.initialStorage === "function"
         ? options.initialStorage(roomId)
         : options.initialStorage) ?? ({} as S);
+    const initialStorage = isLiveObject(rawStorage)
+      ? (rawStorage.toObject() as S)
+      : rawStorage;
 
     const newRoom = createRoom<P, S, U, E, TM, CM, FM, FMD>(
       { initialPresence, initialStorage },
