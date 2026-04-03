@@ -1,0 +1,31 @@
+{
+  "name": "@liveblocks-examples/nextjs-flowchart-builder",
+  "description": "This example shows how to build a collaborative flowchart with Liveblocks, React Flow, and Next.js.",
+  "license": "Apache-2.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@liveblocks/client": "^3.17.0",
+    "@liveblocks/node": "^3.17.0",
+    "@liveblocks/react": "^3.17.0",
+    "@liveblocks/react-flow": "^3.17.0",
+    "@liveblocks/react-ui": "^3.17.0",
+    "@xyflow/react": "^12.10.1",
+    "nanoid": "^5.1.7",
+    "next": "^16.1.6",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^18.11.19",
+    "@types/react": "^18.0.38",
+    "@types/react-dom": "^18.0.11",
+    "typescript": "^5.2.2"
+  }
+}

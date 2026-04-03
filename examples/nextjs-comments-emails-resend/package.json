@@ -11,11 +11,11 @@
     "start": "next start"
   },
   "dependencies": {
-    "@liveblocks/client": "^3.14.0",
-    "@liveblocks/emails": "^3.14.0",
-    "@liveblocks/node": "^3.14.0",
-    "@liveblocks/react": "^3.14.0",
-    "@liveblocks/react-ui": "^3.14.0",
+    "@liveblocks/client": "^3.17.0",
+    "@liveblocks/emails": "^3.17.0",
+    "@liveblocks/node": "^3.17.0",
+    "@liveblocks/react": "^3.17.0",
+    "@liveblocks/react-ui": "^3.17.0",
     "@react-email/components": "^1.0.6",
     "@react-email/render": "1.0.6",
     "clsx": "^2.1.1",

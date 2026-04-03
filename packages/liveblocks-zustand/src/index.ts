@@ -25,8 +25,8 @@ import {
   detectDupes,
   errorIf,
   legacy_patchImmutableObject,
+  legacy_patchLiveObjectKey,
   lsonToJson,
-  patchLiveObjectKey,
 } from "@liveblocks/core";
 import type { StateCreator, StoreMutatorIdentifier } from "zustand";
 
@@ -155,9 +155,10 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
   type S = ExtractStorage<TRoom>;
 
   const { client, presenceMapping, storageMapping } = validateOptions(options);
+  const presenceKeys = Object.keys(presenceMapping);
   return (set, get, api) => {
     let maybeRoom: TRoom | null = null;
-    let isPatching: boolean = false;
+    let isPatching = false;
     let storageRoot: LiveObject<S> | null = null;
     let unsubscribeCallbacks: Array<() => void> = [];
     let lastRoomId: string | null = null;
@@ -177,10 +178,7 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
         lastLeaveFn();
       }
 
-      const initialPresence = selectFields(
-        get(),
-        presenceMapping
-      ) as unknown as P;
+      const initialPresence = pick(get(), presenceKeys) as unknown as P;
 
       const { room, leave } = client.enterRoom(newRoomId, {
         engine: options?.engine,
@@ -206,13 +204,8 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
 
       unsubscribeCallbacks.push(
         room.events.myPresence.subscribe(() => {
-          if (isPatching === false) {
-            set(
-              selectFields(
-                room.getPresence(),
-                presenceMapping
-              ) as Partial<TState>
-            );
+          if (!isPatching) {
+            set(pick(room.getPresence(), presenceKeys) as Partial<TState>);
           }
         })
       );
@@ -225,7 +218,7 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
             const liveblocksStatePart = root.get(key);
             if (liveblocksStatePart === undefined) {
               updates[key] = get()[key];
-              patchLiveObjectKey(
+              legacy_patchLiveObjectKey(
                 root,
                 key,
                 undefined,
@@ -243,15 +236,11 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
 
         storageRoot = root as LiveObject<S>;
         unsubscribeCallbacks.push(
-          room.subscribe(
-            root,
-            (updates) => {
-              if (isPatching === false) {
-                set(patchState(get(), updates, storageMapping));
-              }
-            },
-            { isDeep: true }
-          )
+          room.events.storageBatch.subscribe((updates) => {
+            if (!isPatching) {
+              set(patchState(get(), updates, storageMapping));
+            }
+          })
         );
 
         // set isLoading storage to false once storage is loaded
@@ -297,25 +286,27 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
         if (maybeRoom) {
           const room = maybeRoom;
           isPatching = true;
-          updatePresence(
-            room,
-            oldState as JsonObject,
-            newState as JsonObject,
-            presenceMapping
-          );
+          try {
+            updatePresence(
+              room,
+              oldState as JsonObject,
+              newState as JsonObject,
+              presenceMapping
+            );
 
-          room.batch(() => {
-            if (storageRoot) {
-              patchLiveblocksStorage(
-                storageRoot,
-                oldState,
-                newState,
-                storageMapping
-              );
-            }
-          });
-
-          isPatching = false;
+            room.batch(() => {
+              if (storageRoot) {
+                patchLiveblocksStorage(
+                  storageRoot,
+                  oldState,
+                  newState,
+                  storageMapping
+                );
+              }
+            });
+          } finally {
+            isPatching = false;
+          }
         }
       },
       get,
@@ -365,16 +356,15 @@ function patchState<T>(
   return result;
 }
 
-function selectFields<TState>(
-  presence: TState,
-  mapping: Mapping<TState>
-): /* TODO: Actually, Pick<TState, keyof Mapping<TState>> ? */
-Partial<TState> {
-  const partialState = {} as Partial<TState>;
-  for (const key in mapping) {
-    partialState[key] = presence[key];
+function pick(
+  source: Record<string, unknown>,
+  keys: Iterable<string>
+): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const key of keys) {
+    result[key] = source[key];
   }
-  return partialState;
+  return result;
 }
 
 function updateLiveblocksContext<
@@ -440,7 +430,7 @@ function patchLiveblocksStorage<O extends LsonObject, TState>(
     if (oldState[key] !== newState[key]) {
       const oldVal = oldState[key] as Json | undefined;
       const newVal = newState[key] as Json | undefined;
-      patchLiveObjectKey(root, key, oldVal, newVal);
+      legacy_patchLiveObjectKey(root, key, oldVal, newVal);
     }
   }
 }

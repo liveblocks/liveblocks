@@ -380,6 +380,27 @@ describe("useStorage", () => {
     expect(render2).toEqual(["FOO", "BAR"]);
     expect(render1).toBe(render2); // Referentially equal!
   });
+
+  test("re-renders after setLocal", async () => {
+    const { result } = renderHook(() =>
+      useStorage((root) => root.obj.localField)
+    );
+    const { result: mut } = renderHook(() =>
+      useMutation(
+        ({ storage }) => storage.get("obj").setLocal("localField", "hello"),
+        []
+      )
+    );
+
+    const sim = await websocketSimulator();
+    act(() => sim.simulateStorageLoaded());
+
+    expect(result.current).toBeUndefined();
+
+    act(() => mut.current());
+
+    expect(result.current).toBe("hello");
+  });
 });
 
 describe("useCanUndo / useCanRedo", () => {

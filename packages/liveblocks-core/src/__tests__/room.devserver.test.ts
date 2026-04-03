@@ -11,6 +11,7 @@ import { LiveList } from "../crdts/LiveList";
 import { LiveObject } from "../crdts/LiveObject";
 import type { StorageUpdate } from "../crdts/StorageUpdates";
 import { legacy_patchImmutableObject } from "../immutable";
+import { kInternal } from "../internal";
 import { nn } from "../lib/assert";
 import { prepareIsolatedStorageTest } from "./_devserver";
 import type { JsonStorageUpdate } from "./_updatesUtils";
@@ -271,5 +272,84 @@ describe("room (dev server)", () => {
       );
       expect(newImmutableState).toEqual(root.toImmutable());
     });
+  });
+
+  test("withoutHistory prevents mutations from appearing in undo stack", async () => {
+    const { room, root } = await prepareIsolatedStorageTest<{
+      x: number;
+    }>({
+      liveblocksType: "LiveObject",
+      data: { x: 0 },
+    });
+
+    room.history[kInternal].withoutHistory(() => {
+      root.set("x", 1);
+    });
+
+    expect(root.get("x")).toBe(1);
+    expect(room.history.canUndo()).toBe(false);
+  });
+
+  test("withoutHistory returns the callback's return value", async () => {
+    const { room } = await prepareIsolatedStorageTest<{
+      x: number;
+    }>({
+      liveblocksType: "LiveObject",
+      data: { x: 0 },
+    });
+
+    const result = room.history[kInternal].withoutHistory(() => 42);
+
+    expect(result).toBe(42);
+  });
+
+  test("withoutHistory restores undo stack even if callback throws", async () => {
+    const { room, root } = await prepareIsolatedStorageTest<{
+      x: number;
+    }>({
+      liveblocksType: "LiveObject",
+      data: { x: 0 },
+    });
+
+    // First, create an undoable mutation so the stack is non-empty
+    root.set("x", 1);
+    expect(room.history.canUndo()).toBe(true);
+
+    expect(() => {
+      room.history[kInternal].withoutHistory(() => {
+        root.set("x", 2);
+        throw new Error("boom");
+      });
+    }).toThrow("boom");
+
+    // The mutation inside withoutHistory should not have added to the stack,
+    // but the pre-existing undo entry should still be there
+    expect(room.history.canUndo()).toBe(true);
+    room.history.undo();
+    expect(root.get("x")).toBe(0);
+    expect(room.history.canUndo()).toBe(false);
+  });
+
+  test("withoutHistory preserves the redo stack", async () => {
+    const { room, root } = await prepareIsolatedStorageTest<{
+      x: number;
+    }>({
+      liveblocksType: "LiveObject",
+      data: { x: 0 },
+    });
+
+    // Create an undoable mutation, then undo it to populate the redo stack
+    root.set("x", 1);
+    room.history.undo();
+    expect(root.get("x")).toBe(0);
+    expect(room.history.canRedo()).toBe(true);
+
+    // Mutation inside withoutHistory should not wipe the redo stack
+    room.history[kInternal].withoutHistory(() => {
+      root.set("x", 99);
+    });
+
+    expect(root.get("x")).toBe(99);
+    expect(room.history.canRedo()).toBe(true);
   });
 });

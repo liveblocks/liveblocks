@@ -305,6 +305,10 @@ export interface History {
    * // room.getPresence() equals { cursor: { x: 0, y: 0 } }
    */
   resume: () => void;
+
+  readonly [kInternal]: {
+    withoutHistory: <T>(fn: () => T) => T;
+  };
 }
 
 export type HistoryEvent = {
@@ -1335,6 +1339,11 @@ type RoomState<
       presence: boolean;
       storageUpdates: Map<string, StorageUpdate>;
     };
+
+    // When `history.resume()` runs inside `room.batch()`, flushing paused
+    // history must wait until after the batch’s `reverseOps` are merged
+    // otherwise those ops become a second undo step.
+    scheduleHistoryResume: boolean;
   } | null;
 
   // A registry of yet-unacknowledged Ops. These Ops have already been
@@ -1715,9 +1724,13 @@ export function createRoom<
       }
       context.activeBatch.reverseOps.pushLeft(reverse);
     } else {
-      addToUndoStack(reverse);
-      context.redoStack.length = 0;
-      dispatchOps(ops);
+      if (reverse.length > 0) {
+        addToUndoStack(reverse);
+      }
+      if (ops.length > 0) {
+        context.redoStack.length = 0;
+        dispatchOps(ops);
+      }
       notify({ storageUpdates });
     }
   }
@@ -1859,22 +1872,20 @@ export function createRoom<
     const canWrite = self.get()?.canWrite ?? true;
 
     // Populate missing top-level keys using `initialStorage`
-    const stackSizeBefore = context.undoStack.length;
-    for (const key in context.initialStorage) {
-      if (context.root.get(key) === undefined) {
-        if (canWrite) {
-          context.root.set(key, cloneLson(context.initialStorage[key]));
-        } else {
-          console.warn(
-            `Attempted to populate missing storage key '${key}', but current user has no write access`
-          );
+    const root = context.root;
+    withoutHistory(() => {
+      for (const key in context.initialStorage) {
+        if (root.get(key) === undefined) {
+          if (canWrite) {
+            root.set(key, cloneLson(context.initialStorage[key]));
+          } else {
+            console.warn(
+              `Attempted to populate missing storage key '${key}', but current user has no write access`
+            );
+          }
         }
       }
-    }
-
-    // Initial storage is populated using normal "set" operations in the loop
-    // above, those updates can end up in the undo stack, so let's prune it.
-    context.undoStack.length = stackSizeBefore;
+    });
   }
 
   function _addToRealUndoStack(frames: Stackframe<P>[]) {
@@ -3275,6 +3286,7 @@ export function createRoom<
         others: [],
       },
       reverseOps: new Deque(),
+      scheduleHistoryResume: false,
     };
     try {
       returnValue = callback();
@@ -3286,6 +3298,10 @@ export function createRoom<
 
       if (currentBatch.reverseOps.length > 0) {
         addToUndoStack(Array.from(currentBatch.reverseOps));
+      }
+
+      if (currentBatch.scheduleHistoryResume) {
+        commitPausedHistoryToUndoStack();
       }
 
       if (currentBatch.ops.length > 0) {
@@ -3311,11 +3327,30 @@ export function createRoom<
     }
   }
 
-  function resumeHistory() {
+  function commitPausedHistoryToUndoStack() {
     const frames = context.pausedHistory;
     context.pausedHistory = null;
     if (frames !== null && frames.length > 0) {
       _addToRealUndoStack(Array.from(frames));
+    }
+  }
+
+  function resumeHistory() {
+    if (context.activeBatch !== null) {
+      context.activeBatch.scheduleHistoryResume = true;
+      return;
+    }
+    commitPausedHistoryToUndoStack();
+  }
+
+  function withoutHistory<T>(fn: () => T): T {
+    const undoBefore = context.undoStack.length;
+    const redoBefore = context.redoStack.length;
+    try {
+      return fn();
+    } finally {
+      context.undoStack.length = undoBefore;
+      context.redoStack.length = redoBefore;
     }
   }
 
@@ -3752,6 +3787,9 @@ export function createRoom<
         clear,
         pause: pauseHistory,
         resume: resumeHistory,
+        [kInternal]: {
+          withoutHistory,
+        },
       },
 
       fetchYDoc,

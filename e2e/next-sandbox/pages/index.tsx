@@ -151,6 +151,11 @@ export default function Home() {
         <li>
           <Link href="/zustand?room=e2e-zustand">Zustand</Link>
         </li>
+        <li>
+          <Link href="/zustand-kanban?room=e2e-zustand-kanban">
+            Zustand Kanban
+          </Link>
+        </li>
 
         <hr />
 
