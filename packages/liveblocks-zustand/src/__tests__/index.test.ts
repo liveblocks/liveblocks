@@ -699,7 +699,7 @@ describe("middleware", () => {
       expect(store.getState().value).toBe(2);
     });
 
-    test("updating presence should not reset redo stack", async () => {
+    test("updating presence should not reset redo stack #1", async () => {
       const roomId = await initRoom({
         liveblocksType: "LiveObject",
         data: { value: 1 },
@@ -724,7 +724,7 @@ describe("middleware", () => {
       expect(store.getState().value).toBe(2);
     });
 
-    test("updating presence should not reset redo stack", async () => {
+    test("updating presence should not reset redo stack #2", async () => {
       const roomId = await initRoom({
         liveblocksType: "LiveObject",
         data: { value: 1 },
