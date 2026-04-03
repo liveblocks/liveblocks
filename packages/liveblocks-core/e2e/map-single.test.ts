@@ -21,8 +21,8 @@ test(
 
       await flushSocketMessages();
       expect(states).toEqual([
-        { map: new Map([["key", "a"]]) },
-        { map: new Map([["key", "b"]]) },
+        { map: { key: "a" } },
+        { map: { key: "b" } },
       ]);
     }
   )
