@@ -465,7 +465,7 @@ describe("property tests", () => {
         ),
         ([obj, config]) => {
           const liveObj = LiveObject.from(obj, config);
-          expect(liveObj.toImmutable()).toEqual(obj);
+          expect(liveObj.toJSON()).toEqual(obj);
         }
       )
     );
@@ -483,7 +483,7 @@ describe("property tests", () => {
           ),
         ([lo, target, config]) => {
           lo.reconcile(target, config);
-          expect(lo.toImmutable()).toEqual(target);
+          expect(lo.toJSON()).toEqual(target);
         }
       )
     );

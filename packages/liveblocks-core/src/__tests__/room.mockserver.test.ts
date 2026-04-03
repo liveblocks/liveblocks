@@ -1038,9 +1038,9 @@ describe("room", () => {
       room.connect();
       try {
         const { root } = await room.getStorage();
-        expect(root.toImmutable()).toEqual({
+        expect(root.toJSON()).toEqual({
           list: [13, 42],
-          map: new Map([["a", 1]]),
+          map: { a: 1 },
           obj: { x: 0 },
         });
 

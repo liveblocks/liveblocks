@@ -206,7 +206,7 @@ describe("LiveList", () => {
 
       items.push(new LiveMap([["first", 0]]));
 
-      await expectStorage({ items: [new Map([["first", 0]])] });
+      await expectStorage({ items: [{ first: 0 }] });
 
       await assertUndoRedo();
     });

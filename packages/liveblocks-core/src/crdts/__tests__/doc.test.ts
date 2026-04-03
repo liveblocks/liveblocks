@@ -410,14 +410,14 @@ describe("Storage", () => {
         storage.root.set("a", i + 1);
       }
 
-      expect(storage.root.toImmutable()).toEqual({ a: 100 });
+      expect(storage.root.toJSON()).toEqual({ a: 100 });
 
       for (let i = 0; i < 100; i++) {
         room.history.undo();
       }
 
       // Max undo stack is 50, so undoing 100 times only goes back to 50
-      expect(storage.root.toImmutable()).toEqual({ a: 50 });
+      expect(storage.root.toJSON()).toEqual({ a: 50 });
     });
 
     test("storage operation should clear redo stack", async () => {

@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 
 import { LiveMap } from "../src/crdts/LiveMap";
-import type { Immutable } from "../src/types/Immutable";
+import type { ReadonlyJson } from "../src/lib/Json";
 import { prepareSingleClientTest } from "./utils";
 
 test(

@@ -6,7 +6,7 @@ import { expect, onTestFinished, vi } from "vitest";
 
 import { createClient } from "../client";
 import type { LsonObject } from "../crdts/Lson";
-import type { ToImmutable } from "../crdts/utils";
+import type { ToJson } from "../crdts/Lson";
 import { kInternal } from "../internal";
 import type { JsonObject } from "../lib/Json";
 import { nanoid } from "../lib/nanoid";
@@ -184,16 +184,16 @@ export async function prepareStorageTest<S extends LsonObject>(
 
   // Wait for both clients to have synced initial storage
   await vi.waitFor(() => {
-    expect(storageA.root.toImmutable()).toEqual(storageB.root.toImmutable());
+    expect(storageA.root.toJSON()).toEqual(storageB.root.toJSON());
   });
 
-  const states: ToImmutable<S>[] = [];
+  const states: ToJson<S>[] = [];
 
-  async function expectBothClientStoragesToEqual(data: ToImmutable<S>) {
-    expect(storageA.root.toImmutable()).toEqual(data);
+  async function expectBothClientStoragesToEqual(data: ToJson<S>) {
+    expect(storageA.root.toJSON()).toEqual(data);
 
     await vi.waitFor(() => {
-      expect(storageB.root.toImmutable()).toEqual(data);
+      expect(storageB.root.toJSON()).toEqual(data);
     });
 
     expect(clientA.room[kInternal].nodeCount).toBe(
@@ -201,7 +201,7 @@ export async function prepareStorageTest<S extends LsonObject>(
     );
   }
 
-  async function expectStorage(data: ToImmutable<S>) {
+  async function expectStorage(data: ToJson<S>) {
     states.push(data);
     await expectBothClientStoragesToEqual(data);
   }
@@ -271,8 +271,8 @@ export async function prepareIsolatedStorageTest<S extends LsonObject>(
     permissions: opts?.permissions,
   });
 
-  function expectStorage(data: ToImmutable<S>) {
-    expect(storage.root.toImmutable()).toEqual(data);
+  function expectStorage(data: ToJson<S>) {
+    expect(storage.root.toJSON()).toEqual(data);
   }
 
   return {
@@ -306,7 +306,7 @@ export async function prepareStorageUpdateTest<S extends LsonObject>(
 
   // Wait for both clients to have synced initial storage
   await vi.waitFor(() => {
-    expect(storageA.root.toImmutable()).toEqual(storageB.root.toImmutable());
+    expect(storageA.root.toJSON()).toEqual(storageB.root.toJSON());
   });
 
   const updatesA: JsonStorageUpdate[][] = [];

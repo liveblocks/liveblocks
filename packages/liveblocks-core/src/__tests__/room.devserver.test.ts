@@ -44,17 +44,17 @@ describe("room (dev server)", () => {
     room.history.resume();
     room.history.resume(); // Resuming again should also be a no-op!
 
-    expect(items.toImmutable()).toEqual([{ a: 1, b: 2 }]);
+    expect(items.toJSON()).toEqual([{ a: 1, b: 2 }]);
     expect(room.history.canUndo()).toBe(true);
     expect(room.history.canRedo()).toBe(false);
     room.history.undo();
 
-    expect(items.toImmutable()).toEqual([{}]);
+    expect(items.toJSON()).toEqual([{}]);
     expect(room.history.canUndo()).toBe(false);
     expect(room.history.canRedo()).toBe(true);
     room.history.redo();
 
-    expect(items.toImmutable()).toEqual([{ a: 1, b: 2 }]);
+    expect(items.toJSON()).toEqual([{ a: 1, b: 2 }]);
     expect(room.history.canUndo()).toBe(true);
     expect(room.history.canRedo()).toBe(false);
   });
@@ -87,13 +87,13 @@ describe("room (dev server)", () => {
       items.set(0, new LiveObject({ a: 2 }));
     });
 
-    expect(items.toImmutable()).toEqual([{ a: 2 }]);
+    expect(items.toJSON()).toEqual([{ a: 2 }]);
     room.history.undo();
 
-    expect(items.toImmutable()).toEqual([{}]);
+    expect(items.toJSON()).toEqual([{}]);
     room.history.redo();
 
-    expect(items.toImmutable()).toEqual([{ a: 2 }]);
+    expect(items.toJSON()).toEqual([{ a: 2 }]);
     expect(receivedUpdates).toEqual([
       [listUpdate([{ a: 2 }], [listUpdateSet(0, { a: 2 })])],
       [listUpdate([{}], [listUpdateSet(0, {})])],

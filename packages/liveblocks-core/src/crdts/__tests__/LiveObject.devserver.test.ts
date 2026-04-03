@@ -1466,7 +1466,7 @@ describe("LiveObject", () => {
 
       expect(root.get("b")).toBe("local");
       expect(root.toObject()).toEqual({ a: 1, b: "local" });
-      expect(root.toImmutable()).toEqual({ a: 1, b: "local" });
+      expect(root.toJSON()).toEqual({ a: 1, b: "local" });
     });
 
     test("setLocal does not sync to other clients", async () => {
@@ -1485,7 +1485,7 @@ describe("LiveObject", () => {
 
       // Client B does not see local value (wait a bit to confirm nothing syncs)
       await vi.waitFor(() => {
-        expect(storageB.root.toImmutable()).toEqual({ a: 1 });
+        expect(storageB.root.toJSON()).toEqual({ a: 1 });
       });
     });
 
@@ -1508,7 +1508,7 @@ describe("LiveObject", () => {
 
       // Client B only sees bar, not foo
       await vi.waitFor(() => {
-        expect(storageB.root.toImmutable()).toEqual({ a: 1, bar: "synced" });
+        expect(storageB.root.toJSON()).toEqual({ a: 1, bar: "synced" });
       });
     });
 
@@ -1527,7 +1527,7 @@ describe("LiveObject", () => {
 
       // Wait for B's change to sync
       await vi.waitFor(() => {
-        expect(storageB.root.toImmutable()).toEqual({ a: 1, bar: "from-B" });
+        expect(storageB.root.toJSON()).toEqual({ a: 1, bar: "from-B" });
       });
 
       // Wait for A to receive B's synced change
@@ -1599,7 +1599,7 @@ describe("LiveObject", () => {
 
       expect(cloned.get("a")).toBe(1);
       expect(cloned.get("b")).toBe("local-only");
-      expect(cloned.toImmutable()).toEqual({ a: 1, b: "local-only" });
+      expect(cloned.toJSON()).toEqual({ a: 1, b: "local-only" });
     });
 
     test("clone preserves local-only properties on detached LiveObject", () => {
@@ -1609,7 +1609,7 @@ describe("LiveObject", () => {
 
       expect(cloned.get("a")).toBe(1);
       expect(cloned.get("b")).toBe("local-only");
-      expect(cloned.toImmutable()).toEqual({ a: 1, b: "local-only" });
+      expect(cloned.toJSON()).toEqual({ a: 1, b: "local-only" });
     });
 
     test("clone with local props injected into sibling: both have local prop on A, neither on B", async () => {
@@ -1776,7 +1776,7 @@ describe("LiveObject", () => {
 
       // Client B should still not see foo (nothing was synced)
       await vi.waitFor(() => {
-        expect(storageB.root.toImmutable()).toEqual({ a: 1 });
+        expect(storageB.root.toJSON()).toEqual({ a: 1 });
       });
     });
   });

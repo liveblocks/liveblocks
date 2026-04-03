@@ -178,30 +178,30 @@ describe("reconcileLiveObject", () => {
   test("updates a changed scalar value", () => {
     const liveObj = new LiveObject({ a: 1, b: 2 });
     liveObj.reconcile({ a: 1, b: 3 });
-    expect(liveObj.toImmutable()).toEqual({ a: 1, b: 3 });
+    expect(liveObj.toJSON()).toEqual({ a: 1, b: 3 });
   });
 
   test("adds a new key", () => {
     const liveObj = new LiveObject({ a: 1 });
     liveObj.reconcile({ a: 1, b: "hello" });
-    expect(liveObj.toImmutable()).toEqual({ a: 1, b: "hello" });
+    expect(liveObj.toJSON()).toEqual({ a: 1, b: "hello" });
   });
 
   test("deletes a removed key", () => {
     const liveObj = new LiveObject({ a: 1, b: 2 });
     liveObj.reconcile({ a: 1 });
-    expect(liveObj.toImmutable()).toEqual({ a: 1 });
+    expect(liveObj.toJSON()).toEqual({ a: 1 });
   });
 
   test("leaves unchanged scalars untouched", () => {
     const liveObj = new LiveObject({ a: 1, b: 2 });
-    const before = liveObj.toImmutable();
+    const before = liveObj.toJSON();
 
     liveObj.reconcile({ a: 1, b: 2 });
-    expect(liveObj.toImmutable()).toEqual({ a: 1, b: 2 });
+    expect(liveObj.toJSON()).toEqual({ a: 1, b: 2 });
 
     // Referentially identical when a no-op
-    expect(liveObj.toImmutable()).toBe(before);
+    expect(liveObj.toJSON()).toBe(before);
   });
 
   test("deep-liveifies a new nested object", () => {
@@ -209,7 +209,7 @@ describe("reconcileLiveObject", () => {
       a: 1,
     });
     liveObj.reconcile({ a: 1, nested: { x: 10 } });
-    expect(liveObj.toImmutable()).toEqual({ a: 1, nested: { x: 10 } });
+    expect(liveObj.toJSON()).toEqual({ a: 1, nested: { x: 10 } });
     expect(liveObj.get("nested")).toBeInstanceOf(LiveObject);
   });
 
@@ -219,7 +219,7 @@ describe("reconcileLiveObject", () => {
     });
     const nestedBefore = liveObj.get("nested");
     liveObj.reconcile({ nested: { x: 1, y: 99 } });
-    expect(liveObj.toImmutable()).toEqual({ nested: { x: 1, y: 99 } });
+    expect(liveObj.toJSON()).toEqual({ nested: { x: 1, y: 99 } });
     // Same LiveObject instance — reconciled in place, not replaced
     expect(liveObj.get("nested")).toBe(nestedBefore);
   });
@@ -229,13 +229,13 @@ describe("reconcileLiveObject", () => {
       val: new LiveObject({ x: 1 }),
     });
     liveObj.reconcile({ val: 42 });
-    expect(liveObj.toImmutable()).toEqual({ val: 42 });
+    expect(liveObj.toJSON()).toEqual({ val: 42 });
   });
 
   test("deep-liveifies a new array as LiveList", () => {
     const liveObj = new LiveObject<{ a: number; items?: number[] }>({ a: 1 });
     liveObj.reconcile({ a: 1, items: [1, 2, 3] });
-    expect(liveObj.toImmutable()).toEqual({ a: 1, items: [1, 2, 3] });
+    expect(liveObj.toJSON()).toEqual({ a: 1, items: [1, 2, 3] });
     expect(liveObj.get("items")).toBeInstanceOf(LiveList);
   });
 
@@ -245,7 +245,7 @@ describe("reconcileLiveObject", () => {
     });
     const listBefore = liveObj.get("items");
     liveObj.reconcile({ items: [1, 2, 4] });
-    expect(liveObj.toImmutable()).toEqual({ items: [1, 2, 4] });
+    expect(liveObj.toJSON()).toEqual({ items: [1, 2, 4] });
     // Same LiveList instance
     expect(liveObj.get("items")).toBe(listBefore);
   });
@@ -255,7 +255,7 @@ describe("reconcileLiveObject", () => {
     const liveObj = new LiveObject({ nested });
     const snapshot = nested.toImmutable();
     liveObj.reconcile({ nested: snapshot });
-    expect(liveObj.toImmutable()).toEqual({ nested: { x: 1, y: 2 } });
+    expect(liveObj.toJSON()).toEqual({ nested: { x: 1, y: 2 } });
     expect(liveObj.get("nested")).toBe(nested);
   });
 
@@ -269,7 +269,7 @@ describe("reconcileLiveObject", () => {
     liveObj.reconcile({
       foo: { bar: { qux: 123, other: "keep" } },
     });
-    expect(liveObj.toImmutable()).toEqual({
+    expect(liveObj.toJSON()).toEqual({
       foo: { bar: { qux: 123, other: "keep" } },
     });
     // Same LiveObject instances preserved
@@ -281,7 +281,7 @@ describe("reconcileLiveObject", () => {
       items: new LiveList([new LiveObject({ a: 1 })]),
     });
     liveObj.reconcile({ items: [42] });
-    expect(liveObj.toImmutable()).toEqual({ items: [42] });
+    expect(liveObj.toJSON()).toEqual({ items: [42] });
   });
 
   test("appends elements when new array is longer", () => {
@@ -289,7 +289,7 @@ describe("reconcileLiveObject", () => {
       items: new LiveList([1, 2]),
     });
     liveObj.reconcile({ items: [1, 2, 3, 4] });
-    expect(liveObj.toImmutable()).toEqual({ items: [1, 2, 3, 4] });
+    expect(liveObj.toJSON()).toEqual({ items: [1, 2, 3, 4] });
   });
 
   test("removes elements when new array is shorter", () => {
@@ -297,7 +297,7 @@ describe("reconcileLiveObject", () => {
       items: new LiveList([1, 2, 3, 4]),
     });
     liveObj.reconcile({ items: [1, 2] });
-    expect(liveObj.toImmutable()).toEqual({ items: [1, 2] });
+    expect(liveObj.toJSON()).toEqual({ items: [1, 2] });
   });
 
   test("replaces LiveList with scalar when type changes", () => {
@@ -305,20 +305,20 @@ describe("reconcileLiveObject", () => {
       val: new LiveList([1, 2]),
     });
     liveObj.reconcile({ val: "hello" });
-    expect(liveObj.toImmutable()).toEqual({ val: "hello" });
+    expect(liveObj.toJSON()).toEqual({ val: "hello" });
   });
 
   test("replaces scalar with LiveObject when type changes", () => {
     const liveObj = new LiveObject({ val: 42 });
     liveObj.reconcile({ val: { a: 1 } });
-    expect(liveObj.toImmutable()).toEqual({ val: { a: 1 } });
+    expect(liveObj.toJSON()).toEqual({ val: { a: 1 } });
     expect(liveObj.get("val")).toBeInstanceOf(LiveObject);
   });
 
   test("replaces scalar with LiveList when type changes", () => {
     const liveObj = new LiveObject({ val: 42 });
     liveObj.reconcile({ val: [1, 2] });
-    expect(liveObj.toImmutable()).toEqual({ val: [1, 2] });
+    expect(liveObj.toJSON()).toEqual({ val: [1, 2] });
     expect(liveObj.get("val")).toBeInstanceOf(LiveList);
   });
 
@@ -335,10 +335,10 @@ describe("reconcileLiveObject", () => {
     fc.assert(
       fc.property(jsonObject, jsonObject, (initial, target) => {
         const liveObj = LiveObject.from(initial);
-        expect(liveObj.toImmutable()).toEqual(initial);
+        expect(liveObj.toJSON()).toEqual(initial);
 
         liveObj.reconcile(target);
-        expect(liveObj.toImmutable()).toEqual(target);
+        expect(liveObj.toJSON()).toEqual(target);
       })
     );
   });
