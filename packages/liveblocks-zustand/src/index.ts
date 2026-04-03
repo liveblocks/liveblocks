@@ -20,7 +20,7 @@ import type {
   OpaqueClient,
   OpaqueRoom,
 } from "@liveblocks/core";
-import { detectDupes, errorIf } from "@liveblocks/core";
+import { detectDupes, errorIf, kInternal } from "@liveblocks/core";
 import type { StateCreator, StoreMutatorIdentifier } from "zustand";
 
 import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
@@ -225,10 +225,10 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
           }
         }
 
-        // XXX: These initial writes add to the undo stack, but shouldn't
-        // be undoable. Consider wrapping in withoutUndo() once available.
-        room.batch(() => {
-          root.reconcilePartially(missing);
+        room.history[kInternal].withoutHistory(() => {
+          room.batch(() => {
+            root.reconcilePartially(missing);
+          });
         });
 
         set(pick(root.toJSON(), storageKeys) as Partial<TState>);
