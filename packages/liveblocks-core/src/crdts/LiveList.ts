@@ -1226,8 +1226,10 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     return this.toArray().some(predicate);
   }
 
-  [Symbol.iterator](): IterableIterator<TItem> {
-    return new LiveListIterator(this.#items);
+  *[Symbol.iterator](): IterableIterator<TItem> {
+    for (const node of this.#items) {
+      yield liveNodeToLson(node) as TItem;
+    }
   }
 
   #createAttachItemAndSort(
@@ -1296,35 +1298,6 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   }
 }
 
-// XXX Is this helper really still necessary? What would we miss here if we "just"
-// XXX iterated the SortedList directly and yielded liveNodeToLson()'ed items?
-class LiveListIterator<T extends Lson> implements IterableIterator<T> {
-  #innerIterator: IterableIterator<LiveNode>;
-
-  constructor(items: SortedList<LiveNode>) {
-    this.#innerIterator = items[Symbol.iterator]();
-  }
-
-  [Symbol.iterator](): IterableIterator<T> {
-    return this;
-  }
-
-  next(): IteratorResult<T> {
-    const result = this.#innerIterator.next();
-
-    if (result.done) {
-      return {
-        done: true,
-        value: undefined,
-      };
-    }
-
-    const value = liveNodeToLson(result.value) as T;
-    //                                         ^^^^
-    //                                         FIXME! This isn't safe.
-    return { value };
-  }
-}
 
 function makeUpdate<TItem extends Lson>(
   liveList: LiveList<TItem>,
