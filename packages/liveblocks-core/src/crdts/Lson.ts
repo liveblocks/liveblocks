@@ -2,7 +2,7 @@ import type { LiveList } from "../crdts/LiveList";
 import type { LiveMap } from "../crdts/LiveMap";
 import type { LiveObject } from "../crdts/LiveObject";
 import type { LiveRegister } from "../crdts/LiveRegister";
-import type { Json } from "../lib/Json";
+import type { Json, ReadonlyJsonObject } from "../lib/Json";
 
 export type LiveStructure =
   | LiveObject<LsonObject>
@@ -60,6 +60,7 @@ export type ToJson<L extends Lson | LsonObject> =
 
   // Any LsonObject recursively becomes a JsonObject
   L extends LsonObject ?
+    string extends keyof L ? ReadonlyJsonObject :
     { readonly [K in keyof L]: ToJson<Exclude<L[K], undefined>>
                                  | (undefined extends L[K] ? undefined : never) } :
 
