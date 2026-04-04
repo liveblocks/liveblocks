@@ -1369,7 +1369,10 @@ Returns the contents of a room’s Storage tree. By default, returns Storage in
 LSON format. Throws an error if the room isn’t found. This is a wrapper around
 the
 [Get Storage Document API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-storage)
-and returns the same response.
+and returns the same response. This method is not rate limited, but each
+document runs in a single-threaded isolated microVM, which means it can start to
+slow down or crash if it’s overwhelmed with too many requests. If you experience
+performance issues, consider adding a self-imposed rate limit.
 
 ```ts
 const storage = await liveblocks.getStorageDocument("my-room-id");
@@ -1514,7 +1517,10 @@ const storage = await liveblocks.initializeStorageDocument("my-room-id", {
 #### Liveblocks.mutateStorage [#mutate-storage]
 
 Modify Storage contents from the server. No presence will be shown when you make
-changes.
+changes. This method is not rate limited, but each document runs in a
+single-threaded isolated microVM, which means it can start to slow down or crash
+if it’s overwhelmed with too many requests. If you experience performance
+issues, consider adding a self-imposed rate limit.
 
 ```ts
 // Mutate a single room
