@@ -2,7 +2,7 @@ import type {
   History,
   JsonObject,
   Resolve,
-  ToImmutable,
+  ToJson,
 } from "@liveblocks/core";
 import { kInternal, LiveMap, LiveObject } from "@liveblocks/core";
 import { useHistory, useMutation, useStorage } from "@liveblocks/react";
@@ -426,15 +426,15 @@ export function useLiveblocksFlow<
   // are already stable (only change when the underlying LiveObject changes).
   const nodes = useStorage((storage) => {
     const flow = storage[frozenOptions.storageKey] as
-      | ToImmutable<InternalLiveblocksFlow>
+      | ToJson<InternalLiveblocksFlow>
       | undefined;
-    return flow?.nodes ? ([...flow.nodes.values()] as unknown as N[]) : null;
+    return flow?.nodes ? (Object.values(flow.nodes) as unknown as N[]) : null;
   });
   const edges = useStorage((storage) => {
     const flow = storage[frozenOptions.storageKey] as
-      | ToImmutable<InternalLiveblocksFlow>
+      | ToJson<InternalLiveblocksFlow>
       | undefined;
-    return flow?.edges ? ([...flow.edges.values()] as unknown as E[]) : null;
+    return flow?.edges ? (Object.values(flow.edges) as unknown as E[]) : null;
   });
 
   const onNodesChange = useMutation(
