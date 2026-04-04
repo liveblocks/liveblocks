@@ -1,10 +1,5 @@
-import type {
-  History,
-  JsonObject,
-  Resolve,
-  ToJson,
-} from "@liveblocks/core";
-import { kInternal, LiveMap, LiveObject } from "@liveblocks/core";
+import type { History, JsonObject, Resolve, ToJson } from "@liveblocks/core";
+import { kInternal, LiveMap, LiveObject, shallow } from "@liveblocks/core";
 import { useHistory, useMutation, useStorage } from "@liveblocks/react";
 import {
   useInitial,
@@ -421,21 +416,21 @@ export function useLiveblocksFlow<
     [frozenOptions]
   );
 
-  // Storage already includes local overlays via toImmutable(), so no
-  // separate local layer is needed. Individual node/edge immutable references
-  // are already stable (only change when the underlying LiveObject changes).
+  // Storage already includes local overlays via toJSON(), so no separate local
+  // layer is needed. Individual node/edge immutable references are already
+  // stable (only change when the underlying LiveObject changes).
   const nodes = useStorage((storage) => {
     const flow = storage[frozenOptions.storageKey] as
       | ToJson<InternalLiveblocksFlow>
       | undefined;
     return flow?.nodes ? (Object.values(flow.nodes) as unknown as N[]) : null;
-  });
+  }, shallow);
   const edges = useStorage((storage) => {
     const flow = storage[frozenOptions.storageKey] as
       | ToJson<InternalLiveblocksFlow>
       | undefined;
     return flow?.edges ? (Object.values(flow.edges) as unknown as E[]) : null;
-  });
+  }, shallow);
 
   const onNodesChange = useMutation(
     ({ storage }, changes: NodeChange<N>[]) => {
