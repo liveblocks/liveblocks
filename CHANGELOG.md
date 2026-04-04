@@ -2,7 +2,41 @@
 
 ## v3.18.0
 
-- ...
+### Breaking changes
+
+- **`useStorage` now returns plain objects for `LiveMap` values** instead of
+  `Map` instances. Migrate `.get(key)` to `[key]`, `.size` to
+  `Object.keys(obj).length`, `.entries()` to `Object.entries(obj)`, etc.
+- **Removed `.toImmutable()`** from all Live structures. Use `.toJSON()`
+  instead.
+- **Removed `.toObject()`** from `LiveObject`. Use `.toJSON()` or `.get(key)`.
+- **Removed `.toArray()`** from `LiveList`. Use `.toJSON()` or iterate directly.
+- **Removed `ToImmutable` type.** Use `ToJson` instead.
+- **Removed exports:** `legacy_patchImmutableObject`,
+  `legacy_patchLiveObjectKey`, `lsonToJson` are no longer exported from
+  `@liveblocks/core`.
+
+### New features
+
+- **`.toJSON()`** on all Live structures (LiveObject, LiveList, LiveMap).
+  Returns a cached, JSON-compatible snapshot. LiveMap values become plain
+  objects. `JSON.stringify(root)` now just works.
+- **`LiveObject.from(obj)`** creates a LiveObject from plain JSON, recursively
+  converting nested objects/arrays to Live structures.
+- **`.reconcile(obj)`** efficiently reconciles a LiveObject tree to match a JSON
+  snapshot, only mutating what changed.
+- **`initialStorage` accepts `LiveObject.from()`** result directly.
+
+### Bug fixes
+
+- Initial storage seeding in Zustand/Redux no longer creates an undo frame.
+- Presence updates in Zustand/Redux are now batched with storage updates.
+
+### Internal
+
+- Zustand and Redux middleware rewritten to use `.toJSON()` and
+  `.reconcilePartially()`, removing a lot of legacy patching code.
+- LiveList array performance optimizations.
 
 ## v3.17.0
 
