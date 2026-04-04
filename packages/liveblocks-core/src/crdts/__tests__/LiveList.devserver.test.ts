@@ -29,9 +29,9 @@ describe("LiveList", () => {
       expect(list.get(0)).toEqual("first");
       expect(list.length).toBe(3);
 
-      expect(list.toArray()).toEqual(["first", "second", "third"]);
+      expect(list.toJSON()).toEqual(["first", "second", "third"]);
 
-      expect(Array.from(list)).toEqual(["first", "second", "third"]);
+      expect(list.toJSON()).toEqual(["first", "second", "third"]);
 
       expect(list.map((item) => item.toUpperCase())).toEqual([
         "FIRST",
@@ -53,12 +53,12 @@ describe("LiveList", () => {
 
       list.delete(0);
 
-      expect(list.toArray()).toEqual(["second", "third"]);
+      expect(list.toJSON()).toEqual(["second", "third"]);
       expect(list.get(2)).toBe(undefined);
       expect(list.length).toBe(2);
 
       list.clear();
-      expect(list.toArray()).toEqual([]);
+      expect(list.toJSON()).toEqual([]);
     });
   });
 
@@ -180,7 +180,7 @@ describe("LiveList", () => {
         });
 
       const root = storageA.root;
-      const items = root.toObject().items;
+      const items = root.get("items");
 
       await expectStorage({ items: [] });
 
@@ -206,7 +206,7 @@ describe("LiveList", () => {
 
       items.push(new LiveMap([["first", 0]]));
 
-      await expectStorage({ items: [new Map([["first", 0]])] });
+      await expectStorage({ items: [{ first: 0 }] });
 
       await assertUndoRedo();
     });
@@ -219,7 +219,7 @@ describe("LiveList", () => {
         data: { items: { liveblocksType: "LiveList", data: [] } },
       });
 
-      const items = root.toObject().items;
+      const items = root.get("items");
 
       const object = new LiveObject({ a: 0 });
 
@@ -295,7 +295,7 @@ describe("LiveList", () => {
       });
 
       const root = storageA.root;
-      const items = root.toObject().items;
+      const items = root.get("items");
 
       items.insert(new LiveObject({ a: 0 }), 0);
 
@@ -365,7 +365,7 @@ describe("LiveList", () => {
         });
 
       const root = storageA.root;
-      const items = root.toObject().items;
+      const items = root.get("items");
 
       await expectStorage({
         items: ["A", "B"],
@@ -408,7 +408,7 @@ describe("LiveList", () => {
         items: [{ child: { a: 0 } }],
       });
 
-      storageA.root.toObject().items.delete(0);
+      storageA.root.get("items").delete(0);
 
       await expectStorage({
         items: [],
@@ -485,7 +485,7 @@ describe("LiveList", () => {
       });
 
       const root = storageA.root;
-      const items = root.toObject().items;
+      const items = root.get("items");
       items.move(0, 1);
 
       await expectStorage({ items: ["B", "A", "C"] });
@@ -534,7 +534,7 @@ describe("LiveList", () => {
       });
 
       const root = storageA.root;
-      const items = root.toObject().items;
+      const items = root.get("items");
       items.move(0, 2);
 
       await expectStorage({
@@ -692,7 +692,7 @@ describe("LiveList", () => {
     test("set register on detached list", () => {
       const list = new LiveList<string>(["A", "B", "C"]);
       list.set(0, "D");
-      expect(list.toArray()).toEqual(["D", "B", "C"]);
+      expect(list.toJSON()).toEqual(["D", "B", "C"]);
     });
 
     test("set at invalid position should throw", () => {
@@ -717,7 +717,7 @@ describe("LiveList", () => {
         });
 
       const root = storageA.root;
-      const items = root.toObject().items;
+      const items = root.get("items");
 
       await expectStorage({ items: ["A", "B", "C"] });
 
@@ -745,7 +745,7 @@ describe("LiveList", () => {
         });
 
       const root = storageA.root;
-      const items = root.toObject().items;
+      const items = root.get("items");
 
       await expectStorage({ items: [{ a: 1 }] });
 
@@ -818,29 +818,29 @@ describe("LiveList", () => {
     });
   });
 
-  describe("immutableIs", () => {
-    test("returns true when cached immutable matches the given value", () => {
+  describe("hasCache", () => {
+    test("returns true when cached JSON matches the given value", () => {
       const list = new LiveList(["a", "b", "c"]);
-      const imm = list.toImmutable();
-      expect(list.immutableIs(imm)).toBe(true);
+      const json = list.toJSON();
+      expect(list.hasCache(json)).toBe(true);
     });
 
     test("returns false for a different array with equal contents", () => {
       const list = new LiveList(["a", "b"]);
-      list.toImmutable();
-      expect(list.immutableIs(["a", "b"])).toBe(false);
+      list.toJSON();
+      expect(list.hasCache(["a", "b"])).toBe(false);
     });
 
     test("returns false when cache has been invalidated", () => {
       const list = new LiveList<string>(["a"]);
-      const imm = list.toImmutable();
+      const json = list.toJSON();
       list.push("b");
-      expect(list.immutableIs(imm)).toBe(false);
+      expect(list.hasCache(json)).toBe(false);
     });
 
-    test("returns false when toImmutable has never been called", () => {
+    test("returns false when toJSON has never been called", () => {
       const list = new LiveList([1, 2, 3]);
-      expect(list.immutableIs([1, 2, 3])).toBe(false);
+      expect(list.hasCache([1, 2, 3])).toBe(false);
     });
   });
 });

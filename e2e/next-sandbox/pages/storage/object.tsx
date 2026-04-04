@@ -1,5 +1,4 @@
 import { LiveObject } from "@liveblocks/client";
-import { lsonToJson } from "@liveblocks/core";
 import { createRoomContext } from "@liveblocks/react";
 
 import {
@@ -86,7 +85,7 @@ function Sandbox() {
 
   const clear = useMutation(({ storage }) => {
     const obj = storage.get("object");
-    const keys = Object.keys(obj.toObject());
+    const keys = Array.from(obj.keys());
     let key;
     while ((key = keys.pop()) !== undefined) {
       obj.delete(key);
@@ -181,7 +180,7 @@ function Sandbox() {
             name="Sync status (immediate)"
             value={syncStatus}
           />
-          <Row id="obj" name="Serialized" value={lsonToJson(obj)} />
+          <Row id="obj" name="Serialized" value={obj} />
         </tbody>
       </table>
     </div>

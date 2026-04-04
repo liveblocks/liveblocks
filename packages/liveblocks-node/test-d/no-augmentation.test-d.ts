@@ -7,7 +7,7 @@ import type {
   CommentData,
   Json,
   PlainLson,
-  JsonObject,
+  ReadonlyJsonObject,
 } from "@liveblocks/core";
 
 async () => {
@@ -129,7 +129,7 @@ async () => {
   // .getStorageDocument() (simplified JSON format)
   {
     const root = await client.getStorageDocument("my-room", "json");
-    expectType<JsonObject>(root);
+    expectType<ReadonlyJsonObject>(root);
   }
 
   // .getComment()

@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 
 import { LiveMap } from "../src/crdts/LiveMap";
-import type { Immutable } from "../src/types/Immutable";
+import type { ReadonlyJson } from "../src/lib/Json";
 import { prepareSingleClientTest } from "./utils";
 
 test(
@@ -11,8 +11,8 @@ test(
       map: new LiveMap<string, string>(),
     },
     async ({ root, flushSocketMessages, room }) => {
-      const states: Immutable[] = [];
-      room.subscribe(root, () => states.push(root.toImmutable()), {
+      const states: ReadonlyJson[] = [];
+      room.subscribe(root, () => states.push(root.toJSON()), {
         isDeep: true,
       });
 
@@ -20,10 +20,7 @@ test(
       root.get("map").set("key", "b");
 
       await flushSocketMessages();
-      expect(states).toEqual([
-        { map: new Map([["key", "a"]]) },
-        { map: new Map([["key", "b"]]) },
-      ]);
+      expect(states).toEqual([{ map: { key: "a" } }, { map: { key: "b" } }]);
     }
   )
 );

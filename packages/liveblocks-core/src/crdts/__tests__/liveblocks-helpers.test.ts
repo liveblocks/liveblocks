@@ -10,10 +10,7 @@ import {
 import { OpCode } from "../../protocol/Op";
 import type { NodeMap } from "../../protocol/StorageNode";
 import { CrdtType } from "../../protocol/StorageNode";
-import {
-  findNonSerializableValue,
-  getTreesDiffOperations,
-} from "../liveblocks-helpers";
+import { getTreesDiffOperations } from "../liveblocks-helpers";
 import { LiveList } from "../LiveList";
 import { LiveMap } from "../LiveMap";
 import { LiveObject } from "../LiveObject";
@@ -250,32 +247,6 @@ describe("getTreesDiffOperations", () => {
         data: { c: 1 },
       },
     ]);
-  });
-});
-
-describe("findNonSerializableValue", () => {
-  test("findNonSerializableValue should return path and value of non serializable value", () => {
-    for (const [value, expectedPath] of [
-      [null, false],
-      [undefined, false],
-      [1, false],
-      [true, false],
-      [[], false],
-      ["a", false],
-      [{ a: "a" }, false],
-      [{ a: () => {} }, "a"],
-      [() => {}, "root"],
-      [[() => {}], "0"],
-      [{ a: [() => {}] }, "a.0"],
-      [{ a: new Map() }, "a"], // Map will be accepted in the future
-    ]) {
-      const result = findNonSerializableValue(value);
-      if (result) {
-        expect(result.path).toEqual(expectedPath);
-      } else {
-        expect(result).toEqual(false);
-      }
-    }
   });
 });
 

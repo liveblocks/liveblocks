@@ -1,5 +1,6 @@
-import type { LiveNode, Lson, LsonObject } from "../crdts/Lson";
+import type { LiveNode, Lson, LsonObject, ToJson } from "../crdts/Lson";
 import { nn } from "../lib/assert";
+import { freeze } from "../lib/freeze";
 import { isPlainObject } from "../lib/guards";
 import type { Json, JsonObject } from "../lib/Json";
 import { nanoid } from "../lib/nanoid";
@@ -36,7 +37,6 @@ import {
 import type { SyncConfig } from "./reconcile";
 import { reconcileLiveObject } from "./reconcile";
 import type { UpdateDelta } from "./UpdateDelta";
-import type { ToImmutable } from "./utils";
 
 /**
  * Optional keys of O whose non-undefined type is plain Json (not a
@@ -517,17 +517,6 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   }
 
   /**
-   * Transform the LiveObject into a javascript object
-   */
-  toObject(): O {
-    const result = Object.fromEntries(this.#synced);
-    for (const [key, value] of this.#local) {
-      result[key] = value;
-    }
-    return result as O;
-  }
-
-  /**
    * Adds or updates a property with a specified key and a value.
    * @param key The key of the property to add
    * @param value The value of the property to add
@@ -539,10 +528,9 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   /**
    * @experimental
    *
-   * Sets a local-only property that is not synchronized over the wire.
-   * The value will be visible via get(), toObject(), and toImmutable() on
-   * this client only. Other clients and the server will see `undefined`
-   * for this key.
+   * Sets a local-only property that is not synchronized over the wire. The
+   * value will be visible via get(), and toJSON() on this client only. Other
+   * clients and the server will see `undefined` for this key.
    *
    * Caveat: this method will not add changes to the undo/redo stack.
    */
@@ -870,11 +858,11 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
 
   /**
    * Creates a new LiveObject from a plain JSON object, recursively converting
-   * nested objects to LiveObjects and arrays to LiveLists. An optional
-   * SyncConfig controls per-key behavior (local-only, atomic, or deep).
-   *
-   * @private
+   * nested objects to LiveObjects and arrays to LiveLists.
    */
+  static from(obj: JsonObject): LiveObject<LsonObject>;
+  /** @private */
+  static from(obj: JsonObject, config?: SyncConfig): LiveObject<LsonObject>;
   static from(obj: JsonObject, config?: SyncConfig): LiveObject<LsonObject> {
     if (!isPlainObject(obj)) throw new Error("Expected a JSON object");
     const liveObj = new LiveObject<LsonObject>({});
@@ -883,26 +871,40 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   }
 
   /**
-   * Reconciles a LiveObject tree to match the given JSON object and sync
-   * config. Only mutates keys that actually changed. Recursively reconciles
-   * the entire Live tree below it.
-   *
-   * @private
+   * Reconciles this LiveObject tree to match the given JSON object. Only
+   * mutates keys that actually changed. Keys present on this LiveObject but
+   * absent from `jsonObj` will be deleted. Nested structures are recursively
+   * reconciled.
    */
+  reconcile(jsonObj: JsonObject): void;
+  /** @private */
+  reconcile(jsonObj: JsonObject, config?: SyncConfig): void;
   reconcile(jsonObj: JsonObject, config?: SyncConfig): void {
-    if (this.immutableIs(jsonObj)) return;
+    if (this.hasCache(jsonObj)) return;
     if (!isPlainObject(jsonObj))
       throw new Error(
         "Reconciling the document root expects a plain object value"
       );
-    reconcileLiveObject<O>(this, jsonObj, config);
+    reconcileLiveObject<O>(this, jsonObj, "full", config);
   }
 
-  toImmutable(): ToImmutable<O> {
-    // Don't implement actual toImmutable logic in here. Implement it in
-    // ._toImmutable() instead. This helper merely exists to help TypeScript
-    // infer better return types.
-    return super.toImmutable() as ToImmutable<O>;
+  /**
+   * Like reconcile(), but only touches the top-level keys present in
+   * `partialObj`. Keys on this LiveObject that are absent from `partialObj`
+   * are left untouched. Typically called on the storage root when
+   * reconciling a subset of keys without affecting other keys on the root.
+   *
+   * Note: the partial behavior only applies to the top-level keys of this
+   * object. Nested structures are always fully reconciled.
+   *
+   * @private
+   */
+  reconcilePartially(partialObj: JsonObject, config?: SyncConfig): void {
+    if (!isPlainObject(partialObj))
+      throw new Error(
+        "Reconciling the document root expects a plain object value"
+      );
+    reconcileLiveObject<O>(this, partialObj, "partial", config);
   }
 
   /** @internal */
@@ -928,18 +930,23 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     };
   }
 
+  toJSON(): ToJson<O> {
+    // Don't implement actual toJSON logic in here. Implement it in
+    // ._toJSON() instead. This helper merely exists to help TypeScript
+    // infer better return types.
+    return super.toJSON() as ToJson<O>;
+  }
+
   /** @internal */
-  _toImmutable(): ToImmutable<O> {
+  _toJSON(): ToJson<O> {
     const result: { [key: string]: unknown } = {};
     for (const [key, val] of this.#synced) {
-      result[key] = isLiveStructure(val) ? val.toImmutable() : val;
+      result[key] = isLiveStructure(val) ? val.toJSON() : val;
     }
     for (const [key, val] of this.#local) {
       result[key] = val;
     }
-    return (
-      process.env.NODE_ENV === "production" ? result : Object.freeze(result)
-    ) as ToImmutable<O>;
+    return freeze(result) as ToJson<O>;
   }
 
   clone(): LiveObject<O> {

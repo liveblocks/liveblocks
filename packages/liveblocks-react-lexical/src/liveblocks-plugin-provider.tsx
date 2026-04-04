@@ -36,7 +36,7 @@ export function useIsEditorReady(): boolean {
 
   const subscribe = useCallback(
     (callback: () => void) => {
-      if (yjsProvider === undefined) return () => {};
+      if (yjsProvider === undefined) return () => { };
       yjsProvider.on("status", callback);
       return () => {
         yjsProvider.off("status", callback);
@@ -143,6 +143,7 @@ export const LiveblocksPlugin = ({
     (id: string, yjsDocMap: Map<string, Doc>): Provider => {
       const provider = getYjsProviderForRoom(room, {}, true);
       yjsDocMap.set(id, provider.getYDoc());
+
 
       return provider as Provider;
     },

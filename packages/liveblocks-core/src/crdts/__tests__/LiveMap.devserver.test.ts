@@ -103,7 +103,7 @@ describe("LiveMap", () => {
 
     const map = root.get("map");
     expect(Array.from(map.entries())).toEqual([]);
-    expectStorage({ map: new Map() });
+    expectStorage({ map: {} });
   });
 
   // TODO: Needs read-only permission support in dev server
@@ -144,20 +144,14 @@ describe("LiveMap", () => {
 
     const map = root.get("map");
 
-    expect(map.toImmutable()).toEqual(
-      new Map([
-        ["first", { a: 0 }],
-        ["second", { a: 1 }],
-        ["third", { a: 2 }],
-      ])
-    );
+    expect(map.toJSON()).toEqual({
+      first: { a: 0 },
+      second: { a: 1 },
+      third: { a: 2 },
+    });
 
     expectStorage({
-      map: new Map([
-        ["first", { a: 0 }],
-        ["second", { a: 1 }],
-        ["third", { a: 2 }],
-      ]),
+      map: { first: { a: 0 }, second: { a: 1 }, third: { a: 2 } },
     });
   });
 
@@ -173,28 +167,21 @@ describe("LiveMap", () => {
     const root = storageA.root;
     const map = root.get("map");
 
-    await expectStorage({ map: new Map() });
+    await expectStorage({ map: {} });
 
     map.set("first", 0);
     await expectStorage({
-      map: new Map([["first", 0]]),
+      map: { first: 0 },
     });
 
     map.set("second", 1);
     await expectStorage({
-      map: new Map([
-        ["first", 0],
-        ["second", 1],
-      ]),
+      map: { first: 0, second: 1 },
     });
 
     map.set("third", 2);
     await expectStorage({
-      map: new Map([
-        ["first", 0],
-        ["second", 1],
-        ["third", 2],
-      ]),
+      map: { first: 0, second: 1, third: 2 },
     });
 
     await assertUndoRedo();
@@ -238,29 +225,22 @@ describe("LiveMap", () => {
       const map = root.get("map");
 
       await expectStorage({
-        map: new Map([
-          ["first", 0],
-          ["second", 1],
-          ["third", 2],
-        ]),
+        map: { first: 0, second: 1, third: 2 },
       });
 
       map.delete("first");
       await expectStorage({
-        map: new Map([
-          ["second", 1],
-          ["third", 2],
-        ]),
+        map: { second: 1, third: 2 },
       });
 
       map.delete("second");
       await expectStorage({
-        map: new Map([["third", 2]]),
+        map: { third: 2 },
       });
 
       map.delete("third");
       await expectStorage({
-        map: new Map(),
+        map: {},
       });
 
       await assertUndoRedo();
@@ -283,7 +263,7 @@ describe("LiveMap", () => {
         });
 
       await expectStorage({
-        map: new Map([["first", { a: 0 }]]),
+        map: { first: { a: 0 } },
       });
 
       const root = storageA.root;
@@ -294,7 +274,7 @@ describe("LiveMap", () => {
       expect(roomA[kInternal].nodeCount).toBe(2);
 
       await expectStorage({
-        map: new Map(),
+        map: {},
       });
 
       await assertUndoRedo();
@@ -317,7 +297,7 @@ describe("LiveMap", () => {
         });
 
       await expectStorage({
-        map: new Map([["first", [0]]]),
+        map: { first: [0] },
       });
 
       const root = storageA.root;
@@ -328,7 +308,7 @@ describe("LiveMap", () => {
       expect(roomA[kInternal].nodeCount).toBe(2);
 
       await expectStorage({
-        map: new Map(),
+        map: {},
       });
 
       await assertUndoRedo();
@@ -421,13 +401,13 @@ describe("LiveMap", () => {
     const root = storageA.root;
     const map = root.get("map");
     await expectStorage({
-      map: new Map(),
+      map: {},
     });
 
     map.set("first", new LiveObject({ a: 0 }));
 
     await expectStorage({
-      map: new Map([["first", { a: 0 }]]),
+      map: { first: { a: 0 } },
     });
 
     await assertUndoRedo();
@@ -481,7 +461,7 @@ describe("LiveMap", () => {
       });
 
     await expectStorage({
-      map: new Map([["first", { a: 0 }]]),
+      map: { first: { a: 0 } },
     });
 
     const root = storageA.root;
@@ -490,7 +470,7 @@ describe("LiveMap", () => {
     map.set("first", new LiveObject({ a: 1 }));
 
     await expectStorage({
-      map: new Map([["first", { a: 1 }]]),
+      map: { first: { a: 1 } },
     });
 
     await assertUndoRedo();
@@ -510,7 +490,7 @@ describe("LiveMap", () => {
     storageA.root.set("map", new LiveMap([["first", { a: 0 }]]));
 
     await expectStorage({
-      map: new Map([["first", { a: 0 }]]),
+      map: { first: { a: 0 } },
     });
 
     await assertUndoRedo();
@@ -533,7 +513,7 @@ describe("LiveMap", () => {
     );
 
     await expectStorage({
-      map: new Map([["first", { a: 0 }]]),
+      map: { first: { a: 0 } },
     });
 
     await assertUndoRedo();
@@ -553,7 +533,7 @@ describe("LiveMap", () => {
     storageA.root.set("map", new LiveMap([["first", { a: 0 }]]));
 
     await expectStorage({
-      map: new Map([["first", { a: 0 }]]),
+      map: { first: { a: 0 } },
     });
 
     await assertUndoRedo();
@@ -568,13 +548,13 @@ describe("LiveMap", () => {
         data: { map: { liveblocksType: "LiveMap", data: {} } },
       });
 
-    await expectStorage({ map: new Map() });
+    await expectStorage({ map: {} });
 
     const map = storageA.root.get("map");
     map.set("list", new LiveList(["itemA", "itemB", "itemC"]));
 
     await expectStorage({
-      map: new Map([["list", ["itemA", "itemB", "itemC"]]]),
+      map: { list: ["itemA", "itemB", "itemC"] },
     });
 
     await assertUndoRedo();
@@ -589,13 +569,13 @@ describe("LiveMap", () => {
         data: { map: { liveblocksType: "LiveMap", data: {} } },
       });
 
-    await expectStorage({ map: new Map() });
+    await expectStorage({ map: {} });
 
     const map = storageA.root.get("map");
     map.set("map", new LiveMap([["first", "itemA"]]));
 
     await expectStorage({
-      map: new Map([["map", new Map([["first", "itemA"]])]]),
+      map: { map: { first: "itemA" } },
     });
 
     await assertUndoRedo();
@@ -686,7 +666,7 @@ describe("LiveMap", () => {
       room.subscribe(root, rootDeepCallback, { isDeep: true });
       room.subscribe(map, mapCallback);
 
-      expectStorage({ map: new Map([["first", "a"]]) });
+      expectStorage({ map: { first: "a" } });
 
       await replaceStorageAndReconnectDevServer(room.id, {
         liveblocksType: "LiveObject",
@@ -698,12 +678,9 @@ describe("LiveMap", () => {
         },
       });
 
-      await vi.waitUntil(() => root.toImmutable().map.has("second"));
+      await vi.waitUntil(() => "second" in root.toJSON().map);
       expectStorage({
-        map: new Map([
-          ["first", "a"],
-          ["second", "b"],
-        ]),
+        map: { first: "a", second: "b" },
       });
 
       expect(rootDeepCallback).toHaveBeenCalledTimes(1);
@@ -720,32 +697,32 @@ describe("LiveMap", () => {
     });
   });
 
-  describe("immutableIs", () => {
-    test("returns true when cached immutable matches the given value", () => {
+  describe("hasCache", () => {
+    test("returns true when cached JSON matches the given value", () => {
       const map = new LiveMap([
         ["a", 1],
         ["b", 2],
       ]);
-      const imm = map.toImmutable();
-      expect(map.immutableIs(imm)).toBe(true);
+      const json = map.toJSON();
+      expect(map.hasCache(json)).toBe(true);
     });
 
-    test("returns false for a different map with equal contents", () => {
+    test("returns false for a different object with equal contents", () => {
       const map = new LiveMap([["a", 1]]);
-      map.toImmutable();
-      expect(map.immutableIs(new Map([["a", 1]]))).toBe(false);
+      map.toJSON();
+      expect(map.hasCache({ a: 1 })).toBe(false);
     });
 
     test("returns false when cache has been invalidated", () => {
       const map = new LiveMap<string, number>([["a", 1]]);
-      const imm = map.toImmutable();
+      const json = map.toJSON();
       map.set("b", 2);
-      expect(map.immutableIs(imm)).toBe(false);
+      expect(map.hasCache(json)).toBe(false);
     });
 
-    test("returns false when toImmutable has never been called", () => {
+    test("returns false when toJSON has never been called", () => {
       const map = new LiveMap([["x", 42]]);
-      expect(map.immutableIs(new Map([["x", 42]]))).toBe(false);
+      expect(map.hasCache({ x: 42 })).toBe(false);
     });
   });
 });

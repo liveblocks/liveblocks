@@ -16,9 +16,8 @@ import {
   liveNodeToLson,
   lsonToLiveNode,
 } from "./liveblocks-helpers";
-import type { LiveNode, Lson } from "./Lson";
+import type { LiveNode, Lson, ToJson } from "./Lson";
 import type { UpdateDelta } from "./UpdateDelta";
-import type { ToImmutable } from "./utils";
 
 /**
  * A LiveMap notification that is sent in-client to any subscribers whenever
@@ -453,20 +452,20 @@ export class LiveMap<
     };
   }
 
-  toImmutable(): ReadonlyMap<TKey, ToImmutable<TValue>> {
-    // Don't implement actual toImmutable logic in here. Implement it in
-    // ._toImmutable() instead. This helper merely exists to help TypeScript
+  toJSON(): { readonly [P in TKey]: ToJson<TValue> } {
+    // Don't implement actual toJSON logic in here. Implement it in
+    // ._toJSON() instead. This helper merely exists to help TypeScript
     // infer better return types.
-    return super.toImmutable() as ReadonlyMap<TKey, ToImmutable<TValue>>;
+    return super.toJSON() as { readonly [P in TKey]: ToJson<TValue> };
   }
 
   /** @internal */
-  _toImmutable(): ReadonlyMap<TKey, ToImmutable<TValue>> {
-    const result: Map<TKey, ToImmutable<TValue>> = new Map();
+  _toJSON(): { readonly [P in TKey]: ToJson<TValue> } {
+    const result: { [key: string]: unknown } = {};
     for (const [key, value] of this.#map) {
-      result.set(key, value.toImmutable() as ToImmutable<TValue>);
+      result[key] = value.toJSON();
     }
-    return freeze(result);
+    return freeze(result) as { [P in TKey]: ToJson<TValue> };
   }
 
   clone(): LiveMap<TKey, TValue> {

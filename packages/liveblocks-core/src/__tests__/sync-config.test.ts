@@ -51,7 +51,7 @@ describe("LiveObject.from() with SyncConfig", () => {
 
       const pos2 = result.get("pos2");
       assertThat(pos2, isLiveObject);
-      expect(pos2.toObject()).toEqual({ x: 50, y: 60 });
+      expect(pos2.toJSON()).toEqual({ x: 50, y: 60 });
     });
 
     test("stores array value as plain Json (no LiveList wrapping)", () => {
@@ -66,7 +66,7 @@ describe("LiveObject.from() with SyncConfig", () => {
 
       const other = result.get("other");
       assertThat(other, isLiveList);
-      expect(other.toArray()).toEqual([4, 5]);
+      expect(other.toJSON()).toEqual([4, 5]);
     });
   });
 
@@ -421,8 +421,41 @@ function syncConfigFor(keys: string[]): fc.Arbitrary<SyncConfig> {
     });
 }
 
+describe("reconcilePartially", () => {
+  test("leaves keys not in the partial object untouched", () => {
+    const lo = LiveObject.from({ a: 1, b: 2, c: 3 });
+    lo.reconcilePartially({ a: 10 });
+    expect(lo.toJSON()).toEqual({ a: 10, b: 2, c: 3 });
+  });
+
+  test("adds new keys that don't exist yet", () => {
+    const lo = LiveObject.from({ a: 1 });
+    lo.reconcilePartially({ b: 2 });
+    expect(lo.toJSON()).toEqual({ a: 1, b: 2 });
+  });
+
+  test("updates nested structures recursively", () => {
+    const lo = LiveObject.from({ obj: { x: 1, y: 2 }, other: 99 });
+    lo.reconcilePartially({ obj: { x: 10 } });
+    // Nested reconciliation is full — y is deleted because it's absent from the nested object
+    expect(lo.toJSON()).toEqual({ obj: { x: 10 }, other: 99 });
+  });
+
+  test("reconcile (full) deletes key when value is undefined", () => {
+    const lo = LiveObject.from({ a: 1, b: 2 });
+    lo.reconcile({ a: undefined, b: 2 });
+    expect(lo.toJSON()).toEqual({ b: 2 });
+  });
+
+  test("ignores explicitly-undefined keys (does not delete them)", () => {
+    const lo = LiveObject.from({ a: 1, b: 2 });
+    lo.reconcilePartially({ a: undefined });
+    expect(lo.toJSON()).toEqual({ a: 1, b: 2 });
+  });
+});
+
 describe("property tests", () => {
-  test("LiveObject.from(obj, config).toImmutable() === obj for any config", () => {
+  test("LiveObject.from(obj, config).toJSON() === obj for any config", () => {
     fc.assert(
       fc.property(
         jsonObject.chain((obj) =>
@@ -432,13 +465,13 @@ describe("property tests", () => {
         ),
         ([obj, config]) => {
           const liveObj = LiveObject.from(obj, config);
-          expect(liveObj.toImmutable()).toEqual(obj);
+          expect(liveObj.toJSON()).toEqual(obj);
         }
       )
     );
   });
 
-  test("lo.reconcile(obj, config).toImmutable() === obj for any config", () => {
+  test("lo.reconcile(obj, config).toJSON() === obj for any config", () => {
     fc.assert(
       fc.property(
         fc
@@ -450,7 +483,7 @@ describe("property tests", () => {
           ),
         ([lo, target, config]) => {
           lo.reconcile(target, config);
-          expect(lo.toImmutable()).toEqual(target);
+          expect(lo.toJSON()).toEqual(target);
         }
       )
     );

@@ -1,5 +1,5 @@
 import { isPlainObject } from "../lib/guards";
-import type { Json, JsonObject } from "../lib/Json";
+import type { Json, JsonObject, ReadonlyJson } from "../lib/Json";
 import {
   isLiveList,
   isLiveMap,
@@ -63,7 +63,7 @@ export function deepLiveify(value: Json, config?: SyncMode): Lson {
     return new LiveList(value.map((v) => deepLiveify(v, config)));
   } else if (isPlainObject(value)) {
     const init: LsonObject = {};
-    const locals: Record<string, Json> = {};
+    const locals: Record<string, ReadonlyJson> = {};
     for (const key in value) {
       const val = value[key];
       if (val === undefined) {
@@ -102,7 +102,7 @@ export function deepLiveify(value: Json, config?: SyncMode): Lson {
  */
 function reconcile(live: Lson, json: Json, config?: SyncMode): Lson {
   if (isLiveObject(live) && isPlainObject(json)) {
-    return reconcileLiveObject(live, json, config);
+    return reconcileLiveObject(live, json, "full", config);
   } else if (isLiveList(live) && Array.isArray(json)) {
     return reconcileLiveList(live, json, config);
   } else if (isLiveMap(live) && isPlainObject(json)) {
@@ -121,9 +121,19 @@ function reconcileLiveMap(
   // return liveMap;
 }
 
+/**
+ * Reconciles a LiveObject to match the given JSON object.
+ *
+ * In full mode, makes the LiveObject equal the input.
+ * In partial mode, all given keys will get reconciled, but existing other keys
+ * will not get deleted.
+ *
+ * @private
+ */
 export function reconcileLiveObject<O extends LsonObject>(
   liveObj: LiveObject<O>,
   jsonObj: JsonObject,
+  extent: "full" | "partial",
   config?: SyncMode
 ): LiveObject<O> {
   type L = O[keyof O];
@@ -135,7 +145,9 @@ export function reconcileLiveObject<O extends LsonObject>(
 
     const newVal = jsonObj[key];
     if (newVal === undefined) {
-      liveObj.delete(key);
+      if (extent === "full") {
+        liveObj.delete(key);
+      }
       continue;
     }
 
@@ -166,9 +178,10 @@ export function reconcileLiveObject<O extends LsonObject>(
     }
   }
 
-  // Delete keys absent from jsonObj
-  for (const key of currentKeys) {
-    liveObj.delete(key);
+  if (extent === "full") {
+    for (const key of currentKeys) {
+      liveObj.delete(key);
+    }
   }
 
   return liveObj;

@@ -658,6 +658,23 @@ describe("middleware", () => {
   });
 
   describe("history", () => {
+    test("initial storage seeding should not be undoable", async () => {
+      // Create an empty room — Zustand will seed defaults
+      const roomId = await initRoom();
+
+      const store = createBasicStore();
+      await enterAndConnect(store, roomId);
+      await waitFor(
+        () => store.getState().liveblocks.isStorageLoading === false
+      );
+
+      // Defaults were seeded
+      expect(store.getState().value).toBe(0);
+
+      // But undo stack should be empty
+      expect(store.getState().liveblocks.room!.history.canUndo()).toBe(false);
+    });
+
     test("undo / redo", async () => {
       const roomId = await initRoom({
         liveblocksType: "LiveObject",
@@ -682,7 +699,7 @@ describe("middleware", () => {
       expect(store.getState().value).toBe(2);
     });
 
-    test("updating presence should not reset redo stack", async () => {
+    test("updating presence should not reset redo stack #1", async () => {
       const roomId = await initRoom({
         liveblocksType: "LiveObject",
         data: { value: 1 },
@@ -707,7 +724,7 @@ describe("middleware", () => {
       expect(store.getState().value).toBe(2);
     });
 
-    test("updating presence should not reset redo stack", async () => {
+    test("updating presence should not reset redo stack #2", async () => {
       const roomId = await initRoom({
         liveblocksType: "LiveObject",
         data: { value: 1 },
