@@ -1453,7 +1453,7 @@ describe("LiveObject", () => {
       ]);
     });
 
-    test("setLocal value is visible via get, toObject, and toImmutable", async () => {
+    test("setLocal value is visible via get, and toJson", async () => {
       const { root } = await prepareIsolatedStorageTest<{
         a: number;
         b?: string;

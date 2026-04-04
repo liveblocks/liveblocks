@@ -74,7 +74,7 @@ describe("hasCache", () => {
     expect(liveObj.hasCache(snapshot)).toBe(true);
   });
 
-  test("returns false when toImmutable was never called", () => {
+  test("returns false when toJSON was never called", () => {
     const liveObj = new LiveObject({ a: 1 });
     expect(liveObj.hasCache({ a: 1 })).toBe(false);
   });
