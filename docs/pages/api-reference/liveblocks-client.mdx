@@ -4765,7 +4765,7 @@ liveObject.reconcile({ name: "Grace", nested: { x: 1, y: 99 } });
 
 ### toImmutable [#LiveObject.toImmutable]
 
-<Banner title="Deprecated in 3.17" type="warning">
+<Banner title="Removed in 3.18" type="warning">
 
 This method has been replaced by [`.toJSON()`](#LiveObject.toJSON), which
 returns plain objects instead of `Map` instances for `LiveMap` values, making
@@ -4775,10 +4775,10 @@ the result always valid JSON. Please migrate to `.toJSON()`.
 
 ### toObject [#LiveObject.toObject]
 
-<Banner title="Deprecated" type="warning">
+<Banner title="Removed in 3.18" type="warning">
 
-Use [`.toJSON()`](#LiveObject.toJSON) instead. It’s faster, cached, and deeply
-converts all nested Live structures.
+Use `.toJSON()` instead. It’s faster, cached, and deeply converts all nested
+Live structures.
 
 </Banner>
 
@@ -5148,7 +5148,7 @@ map.toJSON();
 
 ### toImmutable [#LiveMap.toImmutable]
 
-<Banner title="Deprecated in 3.17" type="warning">
+<Banner title="Removed in 3.18" type="warning">
 
 This method has been replaced by [`.toJSON()`](#LiveMap.toJSON), which returns
 plain objects instead of `Map` instances, making the result always valid JSON.
@@ -5697,7 +5697,7 @@ list.toJSON();
 
 ### toImmutable [#LiveList.toImmutable]
 
-<Banner title="Deprecated in 3.17" type="warning">
+<Banner title="Removed in 3.18" type="warning">
 
 This method has been replaced by [`.toJSON()`](#LiveList.toJSON), which returns
 plain objects instead of `Map` instances for `LiveMap` values, making the result
