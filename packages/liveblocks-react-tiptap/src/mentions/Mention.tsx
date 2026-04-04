@@ -23,7 +23,6 @@ interface GroupMentionProps {
 }
 
 const UserMention = ({ isSelected, mention }: MentionProps) => {
-
   return (
     <NodeViewWrapper
       className={cn(
@@ -73,7 +72,10 @@ function deserializeGroupUserIds(
   }
 }
 
-export const Mention = ({ node, selected: isSelected }: ReactNodeViewProps<HTMLSpanElement>) => {
+export const Mention = ({
+  node,
+  selected: isSelected,
+}: ReactNodeViewProps<HTMLSpanElement>) => {
   const attrs = node.attrs as Omit<SerializedTiptapMentionData, "kind">;
 
   if (node.type.name === LIVEBLOCKS_MENTION_TYPE) {
@@ -82,12 +84,7 @@ export const Mention = ({ node, selected: isSelected }: ReactNodeViewProps<HTMLS
       id: attrs.id,
     };
 
-    return (
-      <UserMention
-        mention={mention}
-        isSelected={isSelected}
-      />
-    );
+    return <UserMention mention={mention} isSelected={isSelected} />;
   }
   if (node.type.name === LIVEBLOCKS_GROUP_MENTION_TYPE) {
     const mention: GroupMentionData = {
@@ -96,12 +93,7 @@ export const Mention = ({ node, selected: isSelected }: ReactNodeViewProps<HTMLS
       userIds: deserializeGroupUserIds(attrs.userIds),
     };
 
-    return (
-      <GroupMention
-        mention={mention}
-        isSelected={isSelected}
-      />
-    );
+    return <GroupMention mention={mention} isSelected={isSelected} />;
   }
 
   return null;
