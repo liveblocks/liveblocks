@@ -74,7 +74,6 @@ export type {
   StringifyCommentBodyElements,
   StringifyCommentBodyOptions,
   ThreadData,
-  ToImmutable,
   ToJson,
   UploadAttachmentOptions,
   User,

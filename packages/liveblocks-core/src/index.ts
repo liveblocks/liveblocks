@@ -93,7 +93,6 @@ export type {
   LiveObjectUpdate,
   StorageUpdate,
 } from "./crdts/StorageUpdates";
-export type { ToImmutable } from "./crdts/utils";
 export { toPlainLson } from "./crdts/utils";
 export type {
   DAD,
