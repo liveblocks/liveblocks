@@ -1,4 +1,4 @@
-import type { Json, ReadonlyJson } from "@liveblocks/client";
+import type { ReadonlyJson } from "@liveblocks/client";
 import { raise } from "@liveblocks/core";
 import type { Reducer } from "react";
 import { useReducer, useRef } from "react";
