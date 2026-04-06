@@ -1,4 +1,4 @@
-# `@liveblocks/chat-sdk-adapter`
+# @liveblocks/chat-sdk-adapter
 
 [Chat SDK](https://chat-sdk.dev/docs) adapter backed by
 [Liveblocks Comments](https://liveblocks.io/docs/products/comments). It maps
