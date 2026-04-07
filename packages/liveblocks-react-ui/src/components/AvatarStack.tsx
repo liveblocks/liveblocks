@@ -170,7 +170,7 @@ export const AvatarStack = forwardRef<HTMLDivElement, AvatarStackProps>(
                 align="center"
               >
                 <Avatar
-                  fallback={$.USER_UNKNOWN}
+                  name={$.USER_UNKNOWN}
                   className="lb-avatar-stack-avatar"
                   style={{ "--lb-avatar-stack-index": index } as CSSProperties}
                 />
@@ -190,7 +190,7 @@ export const AvatarStack = forwardRef<HTMLDivElement, AvatarStackProps>(
                         </>
                       ) : (
                         <>
-                          <Avatar fallback={$.USER_UNKNOWN} />
+                          <Avatar name={$.USER_UNKNOWN} />
                           <User />
                         </>
                       )}

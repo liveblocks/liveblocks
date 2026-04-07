@@ -19,9 +19,9 @@ export interface AvatarProps extends ComponentProps<"div"> {
   name?: string;
 
   /**
-   * The fallback text if no name is provided.
+   * Override the avatar's content.
    */
-  fallback?: string;
+  children?: ReactNode;
 }
 
 export interface UserAvatarProps extends ComponentProps<"div"> {
@@ -37,36 +37,25 @@ export interface GroupAvatarProps extends ComponentProps<"div"> {
 export function Avatar({
   src,
   name,
-  fallback,
   className,
+  children,
   ...props
 }: AvatarProps) {
-  const nameInitials = useMemo(
+  const initials = useMemo(
     () => (name ? getInitials(name) : undefined),
     [name]
-  );
-  const fallbackInitials = useMemo(
-    () => (fallback && !name ? getInitials(fallback) : undefined),
-    [fallback, name]
   );
 
   return (
     <div className={cn("lb-avatar", className)} {...props}>
-      {src ? (
-        <img className="lb-avatar-image" src={src} alt={name} />
-      ) : nameInitials ? (
-        <span className="lb-avatar-fallback" aria-hidden>
-          {nameInitials}
-        </span>
-      ) : fallbackInitials ? (
-        <span
-          className="lb-avatar-fallback"
-          aria-label={fallback}
-          title={fallback}
-        >
-          {fallbackInitials}
-        </span>
-      ) : null}
+      {children ??
+        (src ? (
+          <img className="lb-avatar-image" src={src} alt={name} />
+        ) : initials ? (
+          <span className="lb-avatar-fallback" aria-label={name} title={name}>
+            {initials}
+          </span>
+        ) : null)}
     </div>
   );
 }
@@ -81,16 +70,15 @@ function ResolvedUserAvatar({
 }) {
   const { user, isLoading } = useUser(userId);
 
-  return icon && (isLoading || !user?.avatar) ? (
-    <div {...props}>{icon}</div>
-  ) : (
+  return (
     <Avatar
       src={user?.avatar}
-      name={user?.name}
-      fallback={isLoading ? undefined : userId}
+      name={isLoading ? undefined : (user?.name ?? userId)}
       data-loading={isLoading ? "" : undefined}
       {...props}
-    />
+    >
+      {icon && (isLoading || !user?.avatar) ? icon : null}
+    </Avatar>
   );
 }
 
@@ -104,16 +92,15 @@ function ResolvedGroupAvatar({
 }) {
   const { info, isLoading } = useGroupInfo(groupId);
 
-  return icon && (isLoading || !info?.avatar) ? (
-    <div {...props}>{icon}</div>
-  ) : (
+  return (
     <Avatar
       src={info?.avatar}
-      name={info?.name}
-      fallback={isLoading ? undefined : groupId}
+      name={isLoading ? undefined : (info?.name ?? groupId)}
       data-loading={isLoading ? "" : undefined}
       {...props}
-    />
+    >
+      {icon && (isLoading || !info?.avatar) ? icon : null}
+    </Avatar>
   );
 }
 
@@ -127,7 +114,7 @@ export function UserAvatar({ userId, icon, ...props }: UserAvatarProps) {
     return icon ? (
       <div {...props}>{icon}</div>
     ) : (
-      <Avatar fallback={$.USER_UNKNOWN} {...props} />
+      <Avatar name={$.USER_UNKNOWN} {...props} />
     );
   }
 
