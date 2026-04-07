@@ -12,7 +12,7 @@ import type { GlobalOverrides } from "../overrides";
 import { useOverrides } from "../overrides";
 import { cn } from "../utils/cn";
 import { px } from "../utils/px";
-import { Avatar } from "./internal/Avatar";
+import { Avatar, UserAvatar } from "./internal/Avatar";
 import { Tooltip, TooltipProvider } from "./internal/Tooltip";
 import { User } from "./internal/User";
 
@@ -44,6 +44,11 @@ export interface AvatarStackProps extends ComponentPropsWithoutRef<"div"> {
   overrides?: Partial<GlobalOverrides>;
 }
 
+type AvatarStackUser = {
+  key: string;
+  userId: string | null;
+};
+
 /**
  * Displays a stack of avatars for the users currently present in the room.
  */
@@ -62,31 +67,64 @@ export const AvatarStack = forwardRef<HTMLDivElement, AvatarStackProps>(
     forwardedRef
   ) => {
     const $ = useOverrides(overrides);
-    const otherIds = useOthers((others) =>
+    const otherUsers = useOthers((others) =>
       [...others]
         .sort((a, b) => b.connectionId - a.connectionId)
-        .map((user) => user.id)
+        .map((user) => ({
+          connectionId: user.connectionId,
+          userId: user.id,
+        }))
     );
-    const selfId = useSelf((self) => self.id);
-    const userIds = useMemo(() => {
-      const uniqueUserIds = new Set(
-        [selfId, ...otherIds, ...additionalUserIds].filter(
-          (userId): userId is string => userId !== null && userId !== undefined
-        )
-      );
+    const selfUser = useSelf((self) => ({
+      connectionId: self.connectionId,
+      userId: self.id,
+    }));
+    const users = useMemo<AvatarStackUser[]>(() => {
+      const uniqueUsers = new Map<string, AvatarStackUser>();
 
-      return [...uniqueUserIds];
-    }, [selfId, otherIds, additionalUserIds]);
+      const addUser = ({
+        connectionId,
+        userId,
+      }: {
+        connectionId: number;
+        userId: string | null | undefined;
+      }) => {
+        if (userId !== null && userId !== undefined) {
+          const key = `user:${userId}`;
+          uniqueUsers.set(key, { key, userId });
+        } else {
+          const key = `connection:${connectionId}`;
+          uniqueUsers.set(key, { key, userId: null });
+        }
+      };
+
+      if (selfUser) {
+        addUser(selfUser);
+      }
+
+      for (const otherUser of otherUsers) {
+        addUser(otherUser);
+      }
+
+      for (const additionalUserId of additionalUserIds) {
+        if (additionalUserId !== null && additionalUserId !== undefined) {
+          const key = `user:${additionalUserId}`;
+          uniqueUsers.set(key, { key, userId: additionalUserId });
+        }
+      }
+
+      return [...uniqueUsers.values()];
+    }, [selfUser, otherUsers, additionalUserIds]);
     const maxItems = max === null ? Infinity : Math.max(2, Math.floor(max));
-    const shouldShowMore = userIds.length > maxItems;
+    const shouldShowMore = users.length > maxItems;
     const visibleAvatarsCount = shouldShowMore ? maxItems - 1 : maxItems;
-    const visibleUserIds = userIds.slice(0, visibleAvatarsCount);
-    const hiddenUserIds = userIds.slice(visibleUserIds.length);
-    const remainingUsersCount = hiddenUserIds.length;
+    const visibleUsers = users.slice(0, visibleAvatarsCount);
+    const hiddenUsers = users.slice(visibleUsers.length);
+    const remainingUsersCount = hiddenUsers.length;
     const visibleItemsCount =
-      visibleUserIds.length + Number(remainingUsersCount > 0);
+      visibleUsers.length + Number(remainingUsersCount > 0);
 
-    if (userIds.length === 0) {
+    if (users.length === 0) {
       return null;
     }
 
@@ -106,22 +144,33 @@ export const AvatarStack = forwardRef<HTMLDivElement, AvatarStackProps>(
           {...props}
           ref={forwardedRef}
         >
-          {visibleUserIds.map((userId, index) => {
-            if (!userId) {
-              return null;
-            }
-
-            return (
+          {visibleUsers.map((user, index) => {
+            return user.userId ? (
               <Tooltip
-                key={userId}
-                content={<User userId={userId} />}
+                key={user.key}
+                content={<User userId={user.userId} />}
+                sideOffset={FLOATING_ELEMENT_SIDE_OFFSET}
+                collisionPadding={FLOATING_ELEMENT_COLLISION_PADDING}
+                side="top"
+                align="center"
+              >
+                <UserAvatar
+                  userId={user.userId}
+                  className="lb-avatar-stack-avatar"
+                  style={{ "--lb-avatar-stack-index": index } as CSSProperties}
+                />
+              </Tooltip>
+            ) : (
+              <Tooltip
+                key={user.key}
+                content={$.USER_UNKNOWN}
                 sideOffset={FLOATING_ELEMENT_SIDE_OFFSET}
                 collisionPadding={FLOATING_ELEMENT_COLLISION_PADDING}
                 side="top"
                 align="center"
               >
                 <Avatar
-                  userId={userId}
+                  fallback={$.USER_UNKNOWN}
                   className="lb-avatar-stack-avatar"
                   style={{ "--lb-avatar-stack-index": index } as CSSProperties}
                 />
@@ -132,14 +181,21 @@ export const AvatarStack = forwardRef<HTMLDivElement, AvatarStackProps>(
             <Tooltip
               content={
                 <ul className="lb-users-tooltip-list">
-                  {hiddenUserIds.map((userId) =>
-                    userId ? (
-                      <li key={userId} className="lb-users-tooltip-list-item">
-                        <Avatar userId={userId} />
-                        <User userId={userId} />
-                      </li>
-                    ) : null
-                  )}
+                  {hiddenUsers.map((user) => (
+                    <li key={user.key} className="lb-users-tooltip-list-item">
+                      {user.userId ? (
+                        <>
+                          <UserAvatar userId={user.userId} />
+                          <User userId={user.userId} />
+                        </>
+                      ) : (
+                        <>
+                          <Avatar fallback={$.USER_UNKNOWN} />
+                          <User />
+                        </>
+                      )}
+                    </li>
+                  ))}
                 </ul>
               }
               sideOffset={FLOATING_ELEMENT_SIDE_OFFSET}
@@ -152,7 +208,7 @@ export const AvatarStack = forwardRef<HTMLDivElement, AvatarStackProps>(
                 className="lb-avatar lb-avatar-stack-avatar lb-avatar-stack-more"
                 style={
                   {
-                    "--lb-avatar-stack-index": visibleUserIds.length,
+                    "--lb-avatar-stack-index": visibleUsers.length,
                   } as CSSProperties
                 }
               >

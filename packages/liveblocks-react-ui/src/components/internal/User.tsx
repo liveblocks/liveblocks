@@ -12,7 +12,7 @@ export interface UserProps extends ComponentProps<"span"> {
   /**
    * The user ID to display the user name for.
    */
-  userId: string;
+  userId?: string;
 
   /**
    * Whether to replace the user name with "you" ($.USER_SELF) for the current user.
@@ -20,13 +20,35 @@ export interface UserProps extends ComponentProps<"span"> {
   replaceSelf?: boolean;
 }
 
-export function User({
-  userId,
-  replaceSelf,
+interface UserLayoutProps extends ComponentProps<"span"> {
+  isLoading: boolean;
+  name: string;
+}
+
+function UserLayout({
+  isLoading,
+  name,
   className,
   children,
   ...props
-}: UserProps) {
+}: UserLayoutProps) {
+  return (
+    <span
+      className={cn("lb-name lb-user", className)}
+      data-loading={isLoading ? "" : undefined}
+      {...props}
+    >
+      {isLoading ? null : name}
+      {children}
+    </span>
+  );
+}
+
+function ResolvedUser({
+  userId,
+  replaceSelf,
+  ...props
+}: UserProps & { userId: string }) {
   const currentId = useCurrentUserId();
   const { user, isLoading } = useUser(userId);
   const $ = useOverrides();
@@ -37,13 +59,16 @@ export function User({
   }, [replaceSelf, currentId, userId, $.USER_SELF, $.USER_UNKNOWN, user?.name]);
 
   return (
-    <span
-      className={cn("lb-name lb-user", className)}
-      data-loading={isLoading ? "" : undefined}
-      {...props}
-    >
-      {isLoading ? null : resolvedUserName}
-      {children}
-    </span>
+    <UserLayout isLoading={isLoading} name={resolvedUserName} {...props} />
   );
+}
+
+export function User({ userId, ...props }: UserProps) {
+  const $ = useOverrides();
+
+  if (!userId) {
+    return <UserLayout isLoading={false} name={$.USER_UNKNOWN} {...props} />;
+  }
+
+  return <ResolvedUser userId={userId} {...props} />;
 }

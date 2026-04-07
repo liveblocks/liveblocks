@@ -1,60 +1,46 @@
 "use client";
 
-import type { Relax } from "@liveblocks/core";
-import type { ComponentProps, ReactNode } from "react";
-import { useMemo } from "react";
+import { useGroupInfo, useUser } from "@liveblocks/react";
+import { type ComponentProps, type ReactNode, useMemo } from "react";
 
+import { useOverrides } from "../../overrides";
 import { cn } from "../../utils/cn";
 import { getInitials } from "../../utils/get-initials";
-import { useUserOrGroupInfo } from "../../utils/use-user-or-group-info";
 
-interface AvatarLayoutProps extends ComponentProps<"div"> {
+export interface AvatarProps extends ComponentProps<"div"> {
   src?: string;
   name?: string;
   fallback?: string;
-  isLoading: boolean;
 }
 
-export type AvatarProps = ComponentProps<"div"> & {
+export interface UserAvatarProps extends ComponentProps<"div"> {
+  userId?: string;
   icon?: ReactNode;
-} & Relax<
-    | {
-        /**
-         * The user ID to display the avatar for.
-         */
-        userId: string;
-      }
-    | {
-        /**
-         * The group ID to display the avatar for.
-         */
-        groupId: string;
-      }
-  >;
+}
 
-function AvatarLayout({
+export interface GroupAvatarProps extends ComponentProps<"div"> {
+  groupId: string;
+  icon?: ReactNode;
+}
+
+export function Avatar({
   src,
   name,
   fallback,
-  isLoading,
   className,
   ...props
-}: AvatarLayoutProps) {
+}: AvatarProps) {
   const nameInitials = useMemo(
     () => (name ? getInitials(name) : undefined),
     [name]
   );
   const fallbackInitials = useMemo(
-    () => (!isLoading && fallback && !name ? getInitials(fallback) : undefined),
-    [isLoading, fallback, name]
+    () => (fallback && !name ? getInitials(fallback) : undefined),
+    [fallback, name]
   );
 
   return (
-    <div
-      className={cn("lb-avatar", className)}
-      data-loading={isLoading ? "" : undefined}
-      {...props}
-    >
+    <div className={cn("lb-avatar", className)} {...props}>
       {src ? (
         <img className="lb-avatar-image" src={src} alt={name} />
       ) : nameInitials ? (
@@ -74,21 +60,72 @@ function AvatarLayout({
   );
 }
 
-export function Avatar({ userId, groupId, icon, ...props }: AvatarProps) {
-  const { info, isLoading } = useUserOrGroupInfo(
-    userId ? "user" : "group",
-    userId ?? groupId
+function ResolvedUserAvatar({
+  userId,
+  icon,
+  ...props
+}: ComponentProps<"div"> & {
+  userId: string;
+  icon?: ReactNode;
+}) {
+  const { user, isLoading } = useUser(userId);
+
+  return icon && (isLoading || !user?.avatar) ? (
+    <div {...props}>{icon}</div>
+  ) : (
+    <Avatar
+      src={user?.avatar}
+      name={user?.name}
+      fallback={isLoading ? undefined : userId}
+      data-loading={isLoading ? "" : undefined}
+      {...props}
+    />
   );
+}
+
+function ResolvedGroupAvatar({
+  groupId,
+  icon,
+  ...props
+}: ComponentProps<"div"> & {
+  groupId: string;
+  icon?: ReactNode;
+}) {
+  const { info, isLoading } = useGroupInfo(groupId);
 
   return icon && (isLoading || !info?.avatar) ? (
     <div {...props}>{icon}</div>
   ) : (
-    <AvatarLayout
+    <Avatar
       src={info?.avatar}
       name={info?.name}
-      fallback={userId ?? groupId}
-      isLoading={isLoading}
+      fallback={isLoading ? undefined : groupId}
+      data-loading={isLoading ? "" : undefined}
       {...props}
     />
   );
+}
+
+/**
+ * @private
+ */
+export function UserAvatar({ userId, icon, ...props }: UserAvatarProps) {
+  const $ = useOverrides();
+
+  if (!userId) {
+    return icon ? (
+      <div {...props}>{icon}</div>
+    ) : (
+      <Avatar fallback={$.USER_UNKNOWN} {...props} />
+    );
+  }
+
+  return <ResolvedUserAvatar userId={userId} icon={icon} {...props} />;
+}
+
+/**
+ * @private
+ */
+export function GroupAvatar({ groupId, icon, ...props }: GroupAvatarProps) {
+  return <ResolvedGroupAvatar groupId={groupId} icon={icon} {...props} />;
 }
