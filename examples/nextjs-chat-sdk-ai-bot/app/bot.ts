@@ -45,17 +45,26 @@ export const bot = new Chat<{ liveblocks: LiveblocksAdapter }>({
 });
 
 // Handle @-mentions of the bot
-bot.onNewMention(async (thread, message) => {
-  // After AI is mentioned, subscribe and have it respond to all messages in the thread
-  await thread.subscribe();
+bot.onNewMention(postAiResponse);
 
-  await postAiResponse(thread, message);
-});
+// ==========================================================================
+// Optional: Handle replying to further comments in the subscribed thread
+// This requires a permanent state adapter set up to persist the subscription
+// e.g. import { createRedisState } from "@chat-adapter/state-redis";
+
+// Handle @-mentions of the bot
+// bot.onNewMention(async (thread, message) => {
+//   // After AI is mentioned, subscribe to thread
+//   await thread.subscribe();
+
+//   await postAiResponse(thread, message);
+// });
 
 // Handle replying to further comments in the subscribed thread
-bot.onSubscribedMessage(async (thread, message) => {
-  await postAiResponse(thread, message);
-});
+// bot.onSubscribedMessage(async (thread, message) => {
+//   await postAiResponse(thread, message);
+// });
+// ==========================================================================
 
 // Generate an AI response to the message
 async function postAiResponse(thread: Thread, message: Message) {
