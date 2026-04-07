@@ -78,7 +78,7 @@ export interface MutableFlow<N extends Node, E extends Edge> {
 }
 
 /**
- * Opens a "Flow document" (a collection of nodes and edges) for reading and
+ * Opens a flow (a collection of React Flow nodes and edges) for reading and
  * mutating, then automatically flushes all changes when the callback
  * completes.
  *

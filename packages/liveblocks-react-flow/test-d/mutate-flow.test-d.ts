@@ -17,25 +17,25 @@ type CustomEdge = Edge<CustomEdgeData, "weighted">;
  * MutableFlow with custom node/edge types — getters
  */
 {
-  const doc = {} as MutableFlow<CustomNode, CustomEdge>;
+  const flow = {} as MutableFlow<CustomNode, CustomEdge>;
 
-  expectType<readonly CustomNode[]>(doc.nodes);
-  expectType<readonly CustomEdge[]>(doc.edges);
+  expectType<readonly CustomNode[]>(flow.nodes);
+  expectType<readonly CustomEdge[]>(flow.edges);
   expectType<{ nodes: readonly CustomNode[]; edges: readonly CustomEdge[] }>(
-    doc.toJSON()
+    flow.toJSON()
   );
-  expectType<CustomNode | undefined>(doc.getNode("n1"));
-  expectType<CustomEdge | undefined>(doc.getEdge("e1"));
+  expectType<CustomNode | undefined>(flow.getNode("n1"));
+  expectType<CustomEdge | undefined>(flow.getEdge("e1"));
 }
 
 /**
  * MutableFlow — addNode requires correct shape
  */
 {
-  const doc = {} as MutableFlow<CustomNode, CustomEdge>;
+  const flow = {} as MutableFlow<CustomNode, CustomEdge>;
 
   // Correct node should be accepted
-  doc.addNode({
+  flow.addNode({
     id: "n1",
     type: "task",
     position: { x: 0, y: 0 },
@@ -44,7 +44,7 @@ type CustomEdge = Edge<CustomEdgeData, "weighted">;
 
   // Missing required data field should error
   expectError(
-    doc.addNode({
+    flow.addNode({
       id: "n2",
       type: "task",
       position: { x: 0, y: 0 },
@@ -54,7 +54,7 @@ type CustomEdge = Edge<CustomEdgeData, "weighted">;
 
   // Wrong node type should error
   expectError(
-    doc.addNode({
+    flow.addNode({
       id: "n3",
       type: "wrong",
       position: { x: 0, y: 0 },
@@ -67,10 +67,10 @@ type CustomEdge = Edge<CustomEdgeData, "weighted">;
  * MutableFlow — addEdge requires correct shape
  */
 {
-  const doc = {} as MutableFlow<CustomNode, CustomEdge>;
+  const flow = {} as MutableFlow<CustomNode, CustomEdge>;
 
   // Correct edge should be accepted
-  doc.addEdge({
+  flow.addEdge({
     id: "e1",
     type: "weighted",
     source: "n1",
@@ -80,7 +80,7 @@ type CustomEdge = Edge<CustomEdgeData, "weighted">;
 
   // Wrong edge type should error
   expectError(
-    doc.addEdge({
+    flow.addEdge({
       id: "e2",
       type: "wrong",
       source: "n1",
@@ -94,13 +94,13 @@ type CustomEdge = Edge<CustomEdgeData, "weighted">;
  * MutableFlow — updateNode
  */
 {
-  const doc = {} as MutableFlow<CustomNode, CustomEdge>;
+  const flow = {} as MutableFlow<CustomNode, CustomEdge>;
 
   // Partial update
-  doc.updateNode("n1", { position: { x: 10, y: 20 } });
+  flow.updateNode("n1", { position: { x: 10, y: 20 } });
 
   // Updater function receives the correct type
-  doc.updateNode("n1", (node) => {
+  flow.updateNode("n1", (node) => {
     expectType<CustomNode>(node);
     return { ...node, position: { x: 0, y: 0 } };
   });
@@ -110,16 +110,16 @@ type CustomEdge = Edge<CustomEdgeData, "weighted">;
  * MutableFlow — updateNodeData
  */
 {
-  const doc = {} as MutableFlow<CustomNode, CustomEdge>;
+  const flow = {} as MutableFlow<CustomNode, CustomEdge>;
 
   // Partial data update with known key
-  doc.updateNodeData("n1", { priority: 2 });
+  flow.updateNodeData("n1", { priority: 2 });
 
   // Unknown data key should error
-  expectError(doc.updateNodeData("n1", { unknown: true }));
+  expectError(flow.updateNodeData("n1", { unknown: true }));
 
   // Updater function receives the correct data type
-  doc.updateNodeData("n1", (data) => {
+  flow.updateNodeData("n1", (data) => {
     expectType<CustomNodeData>(data);
     return { ...data, priority: data.priority + 1 };
   });
@@ -129,16 +129,16 @@ type CustomEdge = Edge<CustomEdgeData, "weighted">;
  * MutableFlow — updateEdgeData
  */
 {
-  const doc = {} as MutableFlow<CustomNode, CustomEdge>;
+  const flow = {} as MutableFlow<CustomNode, CustomEdge>;
 
   // Partial data update with known key
-  doc.updateEdgeData("e1", { weight: 5 });
+  flow.updateEdgeData("e1", { weight: 5 });
 
   // Unknown data key should error
-  expectError(doc.updateEdgeData("e1", { unknown: true }));
+  expectError(flow.updateEdgeData("e1", { unknown: true }));
 
   // Updater function receives possibly-undefined data (edge data is optional in React Flow)
-  doc.updateEdgeData("e1", (data) => {
+  flow.updateEdgeData("e1", (data) => {
     expectType<CustomEdgeData | undefined>(data);
     return { ...data!, weight: data!.weight + 1 };
   });

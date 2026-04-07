@@ -20,8 +20,8 @@ For full upgrade instructions, see the
 
 ### `@liveblocks/react-flow`
 
-- New `mutateFlow()` API for reading and mutating React Flow documents from a
-  Node.js backend. Import from `@liveblocks/react-flow/node`.
+- New `mutateFlow()` API for reading and mutating React Flow data from a Node.js
+  backend. Import from `@liveblocks/react-flow/node`.
 
 ### `@liveblocks/zustand` and `@liveblocks/redux`
 
