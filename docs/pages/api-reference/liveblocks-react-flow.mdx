@@ -688,3 +688,323 @@ function Flow() {
     Override the component’s components.
   </PropertiesListItem>
 </PropertiesList>
+
+## Updating your Flow from the server [#node-subexport]
+
+To update a React Flow from your Node.js back-end, use `mutateFlow`.
+
+```tsx
+import { Liveblocks } from "@liveblocks/node";
+// +++
+import { mutateFlow } from "@liveblocks/react-flow/node";
+//                                                 ~~~~
+// +++
+
+const client = new Liveblocks({
+  secret: "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx",
+});
+
+await mutateFlow(
+  { client, roomId: "my-room-id" },
+
+  (flow) => {
+    flow.addNode({
+      id: "1",
+      position: { x: 0, y: 0 },
+      data: { label: "Hello" },
+    });
+    flow.addNode({
+      id: "2",
+      position: { x: 100, y: 100 },
+      data: { label: "World" },
+    });
+    flow.addEdge({ id: "e1-2", source: "1", target: "2" });
+  }
+);
+```
+
+```bash
+npm install @liveblocks/node @liveblocks/react-flow
+```
+
+### mutateFlow [#mutateFlow]
+
+`mutateFlow` opens a room’s Flow for reading and mutating. A "Flow" is a
+collection of nodes and edges stored in Liveblocks Storage. By default, your
+Flow gets persisted in the Room's Storage under the top-level key `"flow"`, but
+you can change this with the `storageKey` option.
+
+<Banner type="info" title="No need to work with Liveblocks primitives">
+  Even though internally `mutateFlow` uses Liveblocks Storage and its primitives
+  like LiveObjects, LiveLists, and LiveMaps, you don’t need to work with those
+  directly. You "just" work with React Flow nodes and edges like you know
+  already, but internally these get intelligently stored and synchronized via
+  Live structures in the most efficient manner.
+</Banner>
+
+<PropertiesList title="Options">
+  <PropertiesListItem name="client" type="Liveblocks" required>
+    A [Liveblocks Node
+    client](/docs/api-reference/liveblocks-node#Liveblocks-client) instance.
+  </PropertiesListItem>
+  <PropertiesListItem name="roomId" type="string" required>
+    The ID of the room whose flow to mutate.
+  </PropertiesListItem>
+  <PropertiesListItem name="storageKey" type="string" optional>
+    The key used to store the diagram in Liveblocks Storage. Defaults to
+    `"flow"`. Must match the [`storageKey`](#storageKey) used on the client.
+  </PropertiesListItem>
+  <PropertiesListItem name="nodes.sync" type="NodeSyncConfig" optional>
+    Per-type sync configuration for node `data` keys. Must match the [sync
+    config](#sync-config) used on the client.
+  </PropertiesListItem>
+  <PropertiesListItem name="edges.sync" type="EdgeSyncConfig" optional>
+    Per-type sync configuration for edge `data` keys. Must match the [sync
+    config](#sync-config) used on the client.
+  </PropertiesListItem>
+</PropertiesList>
+
+### Custom node and edge types [#mutateFlow-custom-types]
+
+Pass your custom `Node` and `Edge` types as type parameters to get full type
+safety.
+
+```ts
+import type { Node, Edge } from "@xyflow/react";
+import { mutateFlow } from "@liveblocks/react-flow/node";
+
+type TaskNode = Node<{ title: string; priority: number }, "task">;
+type CustomEdge = Edge<{ weight: number }, "weighted">;
+
+// +++
+await mutateFlow<TaskNode, CustomEdge>(
+  // +++
+  { client: liveblocks, roomId: "my-room-id" },
+  (flow) => {
+    // flow.addNode, flow.updateNodeData, etc. are fully typed
+    flow.addNode({
+      id: "t1",
+      type: "task",
+      position: { x: 0, y: 0 },
+      data: { title: "Ship it", priority: 1 },
+    });
+  }
+);
+```
+
+### MutableFlow API [#mutable-flow]
+
+The callback receives a `MutableFlow` instance. All reads reflect mutations made
+earlier in the same callback.
+
+#### flow.nodes
+
+Returns the current list of nodes as a readonly array.
+
+```ts
+await mutateFlow({ client, roomId }, (flow) => {
+  const allNodes = flow.nodes; // readonly Node[]
+});
+```
+
+#### flow.edges
+
+Returns the current list of edges as a readonly array.
+
+```ts
+await mutateFlow({ client, roomId }, (flow) => {
+  const allEdges = flow.edges; // readonly Edge[]
+});
+```
+
+#### flow.toJSON
+
+Returns a plain object with `nodes` and `edges` arrays.
+
+```ts
+await mutateFlow({ client, roomId }, (flow) => {
+  const snapshot = flow.toJSON();
+  // { nodes: [...], edges: [...] }
+});
+```
+
+#### flow.getNode
+
+Returns a single node by ID, or `undefined` if not found.
+
+```ts
+await mutateFlow({ client, roomId }, (flow) => {
+  const node = flow.getNode("n1");
+});
+```
+
+#### flow.getEdge
+
+Returns a single edge by ID, or `undefined` if not found.
+
+```ts
+await mutateFlow({ client, roomId }, (flow) => {
+  const edge = flow.getEdge("e1");
+});
+```
+
+#### flow.addNode / flow.addNodes
+
+Adds one or more nodes. If a node with the same ID already exists, it is
+replaced.
+
+```ts
+await mutateFlow({ client, roomId }, (flow) => {
+  flow.addNode({
+    id: "1",
+    position: { x: 0, y: 0 },
+    data: { label: "A" },
+  });
+
+  flow.addNodes([
+    { id: "2", position: { x: 100, y: 0 }, data: { label: "B" } },
+    { id: "3", position: { x: 200, y: 0 }, data: { label: "C" } },
+  ]);
+});
+```
+
+#### flow.updateNode
+
+Updates a node by ID. Accepts a partial object to merge, or an updater function.
+No-op if the node does not exist.
+
+When using an updater function, always return a new object. Never mutate the
+provided value in-place.
+
+```ts
+await mutateFlow({ client, roomId }, (flow) => {
+  // With a partial object
+  flow.updateNode("1", { position: { x: 100, y: 200 } });
+
+  // With an updater function
+  flow.updateNode("1", (node) => ({
+    ...node,
+    position: { x: node.position.x + 10, y: node.position.y },
+  }));
+});
+```
+
+#### flow.updateNodeData
+
+Updates only a node’s `data` by ID. Accepts a partial object to merge, or an
+updater function. No-op if the node does not exist.
+
+When using an updater function, always return a new object. Never mutate the
+provided value in-place.
+
+```ts
+await mutateFlow({ client, roomId }, (flow) => {
+  // Merge partial data
+  flow.updateNodeData("1", { label: "Updated" });
+
+  // With an updater function
+  flow.updateNodeData("1", (data) => ({
+    ...data,
+    color: "red",
+  }));
+});
+```
+
+#### flow.removeNode / flow.removeNodes
+
+Removes one or more nodes by ID.
+
+```ts
+await mutateFlow({ client, roomId }, (flow) => {
+  flow.removeNode("1");
+  flow.removeNodes(["2", "3"]);
+});
+```
+
+#### flow.addEdge / flow.addEdges
+
+Adds one or more edges. If an edge with the same ID already exists, it is
+replaced.
+
+```ts
+await mutateFlow({ client, roomId }, (flow) => {
+  flow.addEdge({ id: "e1-2", source: "1", target: "2" });
+
+  flow.addEdges([
+    { id: "e2-3", source: "2", target: "3" },
+    { id: "e3-4", source: "3", target: "4" },
+  ]);
+});
+```
+
+#### flow.updateEdge
+
+Updates an edge by ID. Accepts a partial object to merge, or an updater
+function. No-op if the edge does not exist.
+
+When using an updater function, always return a new object. Never mutate the
+provided value in-place.
+
+```ts
+await mutateFlow({ client, roomId }, (flow) => {
+  // With a partial object
+  flow.updateEdge("e1-2", { label: "My edge" });
+
+  // With an updater function
+  flow.updateEdge("e1-2", (edge) => ({
+    ...edge,
+    label: "Updated",
+  }));
+});
+```
+
+#### flow.updateEdgeData
+
+Updates only an edge’s `data` by ID. Accepts a partial object to merge, or an
+updater function. No-op if the edge does not exist.
+
+When using an updater function, always return a new object. Never mutate the
+provided value in-place.
+
+```ts
+await mutateFlow({ client, roomId }, (flow) => {
+  // Merge partial data
+  flow.updateEdgeData("e1-2", { weight: 5 });
+
+  // With an updater function
+  flow.updateEdgeData("e1-2", (data) => ({
+    ...data,
+    color: "red",
+  }));
+});
+```
+
+#### flow.removeEdge / flow.removeEdges
+
+Removes one or more edges by ID.
+
+```ts
+await mutateFlow({ client, roomId }, (flow) => {
+  flow.removeEdge("e1-2");
+  flow.removeEdges(["e2-3", "e3-4"]);
+});
+```
+
+### How mutations are flushed [#mutateFlow-flushing]
+
+The [`mutateFlow`][] function is built on top of [`Liveblocks.mutateStorage`][],
+but instead of giving you access to the Liveblocks Storage root directly,
+instead it gives you a convenient API tailored to React Flow, the `MutableFlow`
+instance you can use to read or mutate your nodes and edges directly.
+
+Under the hood, everything still gets stored and synced efficiently via Live
+structures (`LiveObject`, `LiveMap`, etc), but this is an implementation detail.
+
+Just like with [`Liveblocks.mutateStorage`][], your mutation callback can be
+long-running. During its execution, any mutations you make will periodically get
+flushed to the server in the background, and when your callback finishes, the
+final state will be flushed before the promise returned by `mutateFlow`
+resolves.
+
+[`mutateFlow`]: /docs/api-reference/liveblocks-react-flow#mutateFlow
+[`Liveblocks.mutateStorage`]: /docs/api-reference/liveblocks-node#mutate-storage
