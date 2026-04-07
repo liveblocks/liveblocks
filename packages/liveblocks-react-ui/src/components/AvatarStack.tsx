@@ -176,17 +176,8 @@ export const AvatarStack = forwardRef<HTMLDivElement, AvatarStackProps>(
                 <ul className="lb-users-tooltip-list">
                   {hiddenUsers.map((user) => (
                     <li key={user.key} className="lb-users-tooltip-list-item">
-                      {user.userId ? (
-                        <>
-                          <UserAvatar userId={user.userId} />
-                          <User userId={user.userId} />
-                        </>
-                      ) : (
-                        <>
-                          <Avatar name={$.USER_UNKNOWN} />
-                          <User />
-                        </>
-                      )}
+                      <UserAvatar userId={user.userId ?? undefined} />
+                      <User userId={user.userId ?? undefined} />
                     </li>
                   ))}
                 </ul>

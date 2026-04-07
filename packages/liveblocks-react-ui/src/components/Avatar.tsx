@@ -40,7 +40,7 @@ export interface UserAvatarProps extends ComponentProps<"div"> {
 }
 
 export interface GroupAvatarProps extends ComponentProps<"div"> {
-  groupId: string;
+  groupId?: string;
   icon?: ReactNode;
 }
 
@@ -138,10 +138,10 @@ export function UserAvatar({ userId, icon, ...props }: UserAvatarProps) {
   const $ = useOverrides();
 
   if (!userId) {
-    return icon ? (
-      <div {...props}>{icon}</div>
-    ) : (
-      <Avatar name={$.USER_UNKNOWN} {...props} />
+    return (
+      <Avatar name={$.USER_UNKNOWN} {...props}>
+        {icon}
+      </Avatar>
     );
   }
 
@@ -152,5 +152,9 @@ export function UserAvatar({ userId, icon, ...props }: UserAvatarProps) {
  * @private
  */
 export function GroupAvatar({ groupId, icon, ...props }: GroupAvatarProps) {
+  if (!groupId) {
+    return <Avatar {...props}>{icon}</Avatar>;
+  }
+
   return <ResolvedGroupAvatar groupId={groupId} icon={icon} {...props} />;
 }
