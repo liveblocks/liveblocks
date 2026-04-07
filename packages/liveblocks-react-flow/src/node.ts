@@ -42,38 +42,59 @@ export interface MutateFlowOptions<
 }
 
 export interface MutableFlow<N extends Node, E extends Edge> {
+  /** The current list of nodes. */
   readonly nodes: readonly N[];
+  /** The current list of edges. */
   readonly edges: readonly E[];
+  /** Returns a plain object snapshot with `nodes` and `edges` arrays. */
   toJSON(): {
     nodes: readonly N[];
     edges: readonly E[];
   };
 
+  /** Returns a single node by ID, or `undefined` if not found. */
   getNode(id: string): N | undefined;
+  /** Returns a single edge by ID, or `undefined` if not found. */
   getEdge(id: string): E | undefined;
 
+  /** Adds a node. If a node with the same ID already exists, it is replaced. */
   addNode(node: N): void;
+  /** Adds multiple nodes. Existing nodes with the same IDs are replaced. */
   addNodes(nodes: N[]): void;
+  /** Updates a node by merging a partial object. No-op if the node does not exist. */
   updateNode(id: string, partial: Partial<N>): void;
+  /** Updates a node using an updater function. Always return a new object, never mutate in-place. No-op if the node does not exist. */
   updateNode(id: string, updater: (node: N) => N): void;
+  /** Updates a node's `data` by merging a partial object. No-op if the node does not exist. */
   updateNodeData(id: string, partial: Partial<N["data"]>): void;
+  /** Updates a node's `data` using an updater function. Always return a new object, never mutate in-place. No-op if the node does not exist. */
   updateNodeData<D extends N["data"]>(
     id: string,
     updater: (data: D) => D
   ): void;
+  /** Removes a node by ID. */
   removeNode(id: string): void;
+  /** Removes multiple nodes by ID. */
   removeNodes(ids: string[]): void;
 
+  /** Adds an edge. If an edge with the same ID already exists, it is replaced. */
   addEdge(edge: E): void;
+  /** Adds multiple edges. Existing edges with the same IDs are replaced. */
   addEdges(edges: E[]): void;
+  /** Updates an edge by merging a partial object. No-op if the edge does not exist. */
   updateEdge(id: string, partial: Partial<E>): void;
+  /** Updates an edge using an updater function. Always return a new object, never mutate in-place. No-op if the edge does not exist. */
   updateEdge(id: string, updater: (edge: E) => E): void;
+  /** Updates an edge's `data` by merging a partial object. No-op if the edge does not exist. */
   updateEdgeData(id: string, partial: Partial<NonNullable<E["data"]>>): void;
+  /** Updates an edge's `data` using an updater function. Always return a new object, never mutate in-place. No-op if the edge does not exist. */
   updateEdgeData<D extends E["data"]>(
     id: string,
     updater: (data: D) => D
   ): void;
+  /** Removes an edge by ID. */
   removeEdge(id: string): void;
+  /** Removes multiple edges by ID. */
   removeEdges(ids: string[]): void;
 }
 
