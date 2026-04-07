@@ -15,16 +15,18 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import type { JsonObject, PlainLsonObject } from "@liveblocks/core";
+import type { Json, JsonObject, PlainLsonObject } from "@liveblocks/core";
 import { QueryParser } from "@liveblocks/query-parser";
 import type { Guid, Logger, YDocId } from "@liveblocks/server";
 import {
   jsonObjectYolo,
   ROOT_YDOC_ID,
   snapshotToLossyJson_eager,
+  snapshotToNodeStream,
   snapshotToPlainLson_eager,
+  transientClientMsgDecoder,
 } from "@liveblocks/server";
-import { json, ZenRouter } from "@liveblocks/zenrouter";
+import { json, ndjsonStream, ZenRouter } from "@liveblocks/zenrouter";
 import {
   array,
   constant,
@@ -36,6 +38,7 @@ import {
   record,
   string,
 } from "decoders";
+import { chain } from "itertools";
 import { Base64 } from "js-base64";
 import * as Y from "yjs";
 
@@ -600,6 +603,50 @@ zen.route("POST /v2/rooms/<roomId>/feeds/<feedId>/messages", ({ p }) => {
     },
   });
 });
+
+zen.route(
+  "POST /v2/rooms/<roomId>/request-storage-mutation",
+
+  async ({ p }) => {
+    if (!Rooms.getRoom(p.roomId)) {
+      throw ROOM_NOT_FOUND(p.roomId);
+    }
+
+    const room = Rooms.getRoomInstance(p.roomId);
+    await room.load();
+
+    const actor = await room.driver.next_actor();
+    const snapshot = room.storage.loadedDriver.get_snapshot(false);
+    return ndjsonStream(
+      chain<Json>([{ actor }], snapshotToNodeStream(snapshot))
+    );
+  }
+);
+
+zen.route(
+  "POST /v2/rooms/<roomId>/send-message",
+
+  object({ messages: array(transientClientMsgDecoder) }),
+
+  async ({ p, body }) => {
+    if (!Rooms.getRoom(p.roomId)) {
+      throw ROOM_NOT_FOUND(p.roomId);
+    }
+
+    const room = Rooms.getRoomInstance(p.roomId);
+    await room.load();
+
+    const [session, capturedServerMsgs] =
+      await room.createBackendSession_experimental();
+
+    await room.processClientMsgFromBackendSession(session, body.messages);
+
+    return new Response(`{"messages":[${capturedServerMsgs.join(",")}]}`, {
+      status: 200,
+      headers: { "Content-Type": "application/json; charset=utf-8" },
+    });
+  }
+);
 
 /**
  * ------------------------------------------------------------
