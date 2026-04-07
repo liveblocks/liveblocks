@@ -12,7 +12,7 @@ import type { GlobalOverrides } from "../overrides";
 import { useOverrides } from "../overrides";
 import { cn } from "../utils/cn";
 import { px } from "../utils/px";
-import { Avatar, UserAvatar } from "./internal/Avatar";
+import { Avatar, UserAvatar } from "./Avatar";
 import { Tooltip, TooltipProvider } from "./internal/Tooltip";
 import { User } from "./internal/User";
 

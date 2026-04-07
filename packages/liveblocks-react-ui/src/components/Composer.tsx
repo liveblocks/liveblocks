@@ -76,7 +76,7 @@ import { useControllableState } from "../utils/use-controllable-state";
 import { useIsGroupMentionMember } from "../utils/use-group-mention";
 import { FileAttachment } from "./internal/Attachment";
 import { Attribution } from "./internal/Attribution";
-import { GroupAvatar, UserAvatar } from "./internal/Avatar";
+import { GroupAvatar, UserAvatar } from "./Avatar";
 import { Button } from "./internal/Button";
 import type { EmojiPickerProps } from "./internal/EmojiPicker";
 import { EmojiPicker, EmojiPickerTrigger } from "./internal/EmojiPicker";

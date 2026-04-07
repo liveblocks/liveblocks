@@ -5,7 +5,7 @@ import { forwardRef } from "react";
 
 import { cn } from "../utils/cn";
 import { px } from "../utils/px";
-import { UserAvatar } from "./internal/Avatar";
+import { UserAvatar } from "./Avatar";
 
 export interface CommentPinProps extends ComponentPropsWithoutRef<"button"> {
   /**

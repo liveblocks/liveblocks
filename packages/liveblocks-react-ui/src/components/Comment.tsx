@@ -87,7 +87,7 @@ import { EmojiPicker, EmojiPickerTrigger } from "./internal/EmojiPicker";
 import { Group } from "./internal/Group";
 import { List } from "./internal/List";
 import { ShortcutTooltip, Tooltip, TooltipProvider } from "./internal/Tooltip";
-import { UserAvatar } from "./internal/Avatar";
+import { UserAvatar } from "./Avatar";
 import { User } from "./internal/User";
 
 const REACTIONS_TRUNCATE = 5;

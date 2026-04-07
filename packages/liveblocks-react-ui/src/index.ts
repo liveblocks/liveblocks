@@ -13,6 +13,8 @@ export type {
 export { AiChat } from "./components/AiChat";
 export type { AiToolIconProps, AiToolProps } from "./components/AiTool";
 export { AiTool } from "./components/AiTool";
+export type { AvatarProps } from "./components/Avatar";
+export { Avatar } from "./components/Avatar";
 export type { AvatarStackProps } from "./components/AvatarStack";
 export { AvatarStack } from "./components/AvatarStack";
 export type {

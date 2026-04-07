@@ -3,13 +3,24 @@
 import { useGroupInfo, useUser } from "@liveblocks/react";
 import { type ComponentProps, type ReactNode, useMemo } from "react";
 
-import { useOverrides } from "../../overrides";
-import { cn } from "../../utils/cn";
-import { getInitials } from "../../utils/get-initials";
+import { useOverrides } from "../overrides";
+import { cn } from "../utils/cn";
+import { getInitials } from "../utils/get-initials";
 
 export interface AvatarProps extends ComponentProps<"div"> {
+  /**
+   * The URL of the avatar's image.
+   */
   src?: string;
+
+  /**
+   * The name of the avatar.
+   */
   name?: string;
+
+  /**
+   * The fallback text if no name is provided.
+   */
   fallback?: string;
 }
 

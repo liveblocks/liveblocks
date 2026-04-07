@@ -59,7 +59,7 @@ import {
   INBOX_NOTIFICATION_THREAD_MAX_COMMENTS,
   InboxNotificationComment,
 } from "./internal/InboxNotificationThread";
-import { UserAvatar } from "./internal/Avatar";
+import { UserAvatar } from "./Avatar";
 import { List } from "./internal/List";
 import { Room } from "./internal/Room";
 import { Tooltip, TooltipProvider } from "./internal/Tooltip";
