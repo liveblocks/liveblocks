@@ -77,7 +77,9 @@ export function getNodeCenter(node: FlowchartNode): Point {
   };
 }
 
-export function getBoundsFromNodes(nodes: FlowchartNode[]): Bounds | null {
+export function getBoundsFromNodes(
+  nodes: readonly FlowchartNode[]
+): Bounds | null {
   let minX = Infinity;
   let minY = Infinity;
   let maxX = -Infinity;
@@ -125,7 +127,7 @@ export function normalizedToFlowPoint(
 }
 
 export function getNodeAtFlowPoint(
-  nodes: FlowchartNode[],
+  nodes: readonly FlowchartNode[],
   flow: Point
 ): FlowchartNode | undefined {
   return nodes.find((node) => {

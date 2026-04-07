@@ -115,7 +115,7 @@ async function runFlowchartAgent(roomId: string, prompt: string) {
       storageKey: FLOWCHART_STORAGE_KEY,
     },
     async (flow) => {
-      const bounds: Bounds = getBoundsFromNodes(flow.getNodes()) ?? {
+      const bounds: Bounds = getBoundsFromNodes(flow.nodes) ?? {
         minX: -DEFAULT_BOUNDS_RADIUS,
         minY: -DEFAULT_BOUNDS_RADIUS,
         maxX: DEFAULT_BOUNDS_RADIUS,
@@ -159,14 +159,7 @@ async function runFlowchartAgent(roomId: string, prompt: string) {
         `,
           prompt: dedent`
           <diagram>
-            ${JSON.stringify(
-              {
-                nodes: flow.getNodes(),
-                edges: flow.getEdges(),
-              },
-              null,
-              2
-            )}
+            ${JSON.stringify(flow, null, 2)}
           </diagram>
 
           <user-message>
