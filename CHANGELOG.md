@@ -2,6 +2,9 @@
 
 ## v3.18.0
 
+For full upgrade instructions, see the
+[3.18 upgrade guide](https://liveblocks.io/docs/platform/upgrading/3.18).
+
 ### `@liveblocks/client`
 
 - **Breaking:** `useStorage` now returns plain objects for `LiveMap` values
