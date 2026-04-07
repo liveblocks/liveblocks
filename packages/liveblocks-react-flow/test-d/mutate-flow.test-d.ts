@@ -19,9 +19,11 @@ type CustomEdge = Edge<CustomEdgeData, "weighted">;
 {
   const doc = {} as MutableFlow<CustomNode, CustomEdge>;
 
-  expectType<CustomNode[]>(doc.nodes);
-  expectType<CustomEdge[]>(doc.edges);
-  expectType<{ nodes: CustomNode[]; edges: CustomEdge[] }>(doc.toJSON());
+  expectType<readonly CustomNode[]>(doc.nodes);
+  expectType<readonly CustomEdge[]>(doc.edges);
+  expectType<{ nodes: readonly CustomNode[]; edges: readonly CustomEdge[] }>(
+    doc.toJSON()
+  );
   expectType<CustomNode | undefined>(doc.getNode("n1"));
   expectType<CustomEdge | undefined>(doc.getEdge("e1"));
 }

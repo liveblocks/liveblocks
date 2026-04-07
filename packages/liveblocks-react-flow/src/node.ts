@@ -42,9 +42,12 @@ export interface MutateFlowOptions<
 }
 
 export interface MutableFlow<N extends Node, E extends Edge> {
-  readonly nodes: N[];
-  readonly edges: E[];
-  toJSON(): { nodes: N[]; edges: E[] };
+  readonly nodes: readonly N[];
+  readonly edges: readonly E[];
+  toJSON(): {
+    nodes: readonly N[];
+    edges: readonly E[];
+  };
 
   getNode(id: string): N | undefined;
   getEdge(id: string): E | undefined;
@@ -117,7 +120,7 @@ export async function mutateFlow<
     const nodesLiveMap = flow.get("nodes");
     const edgesLiveMap = flow.get("edges");
 
-    function getNodes(): N[] {
+    function getNodes(): readonly N[] {
       const nodeMap = nodesLiveMap.toJSON() as unknown as Record<string, N>;
       if (!nodeListCache.has(nodeMap)) {
         // TODO (LB-3665): To support sub-nodes, this function will need to emit nodes
@@ -128,7 +131,7 @@ export async function mutateFlow<
       return nodeListCache.get(nodeMap)!;
     }
 
-    function getEdges(): E[] {
+    function getEdges(): readonly E[] {
       const edgeMap = edgesLiveMap.toJSON() as unknown as Record<string, E>;
       if (!edgeListCache.has(edgeMap)) {
         edgeListCache.set(edgeMap, Object.values(edgeMap));
