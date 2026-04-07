@@ -1,7 +1,12 @@
 "use client";
 
 import { useGroupInfo, useUser } from "@liveblocks/react";
-import { type ComponentProps, type ReactNode, useMemo } from "react";
+import {
+  type ComponentProps,
+  type CSSProperties,
+  type ReactNode,
+  useMemo,
+} from "react";
 
 import {
   FLOATING_ELEMENT_COLLISION_PADDING,
@@ -29,6 +34,11 @@ export interface AvatarProps extends ComponentProps<"div"> {
   tooltip?: ReactNode;
 
   /**
+   * The avatar's outline color.
+   */
+  color?: string;
+
+  /**
    * Override the avatar's content.
    */
   children?: ReactNode;
@@ -37,6 +47,7 @@ export interface AvatarProps extends ComponentProps<"div"> {
 export interface UserAvatarProps extends ComponentProps<"div"> {
   userId?: string;
   icon?: ReactNode;
+  variant?: "default" | "outline";
 }
 
 export interface GroupAvatarProps extends ComponentProps<"div"> {
@@ -50,6 +61,8 @@ export function Avatar({
   className,
   children,
   tooltip,
+  color,
+  style,
   ...props
 }: AvatarProps) {
   const initials = useMemo(
@@ -58,15 +71,26 @@ export function Avatar({
   );
 
   const avatar = (
-    <div className={cn("lb-avatar", className)} {...props}>
-      {children ??
-        (src ? (
-          <img className="lb-avatar-image" src={src} alt={name} />
-        ) : initials ? (
-          <span className="lb-avatar-fallback" aria-label={name} title={name}>
-            {initials}
-          </span>
-        ) : null)}
+    <div
+      className={cn("lb-avatar", className)}
+      style={
+        {
+          "--lb-avatar-color": color,
+          ...style,
+        } as CSSProperties
+      }
+      {...props}
+    >
+      <div className="lb-avatar-content">
+        {children ??
+          (src ? (
+            <img className="lb-avatar-image" src={src} alt={name} />
+          ) : initials ? (
+            <span className="lb-avatar-fallback" aria-label={name} title={name}>
+              {initials}
+            </span>
+          ) : null)}
+      </div>
     </div>
   );
 
@@ -90,10 +114,12 @@ export function Avatar({
 function ResolvedUserAvatar({
   userId,
   icon,
+  variant = "default",
   ...props
 }: ComponentProps<"div"> & {
   userId: string;
   icon?: ReactNode;
+  variant?: "default" | "outline";
 }) {
   const { user, isLoading } = useUser(userId);
 
@@ -101,6 +127,13 @@ function ResolvedUserAvatar({
     <Avatar
       src={user?.avatar}
       name={isLoading ? undefined : (user?.name ?? userId)}
+      color={
+        variant === "outline"
+          ? typeof user?.color === "string"
+            ? user.color
+            : undefined
+          : undefined
+      }
       data-loading={isLoading ? "" : undefined}
       {...props}
     >
@@ -112,17 +145,27 @@ function ResolvedUserAvatar({
 function ResolvedGroupAvatar({
   groupId,
   icon,
+  variant = "default",
   ...props
 }: ComponentProps<"div"> & {
   groupId: string;
   icon?: ReactNode;
+  variant?: "default" | "outline";
 }) {
   const { info, isLoading } = useGroupInfo(groupId);
+
+  const color =
+    variant === "outline"
+      ? typeof info?.color === "string"
+        ? info.color
+        : undefined
+      : undefined;
 
   return (
     <Avatar
       src={info?.avatar}
       name={isLoading ? undefined : (info?.name ?? groupId)}
+      color={color}
       data-loading={isLoading ? "" : undefined}
       {...props}
     >
@@ -134,7 +177,12 @@ function ResolvedGroupAvatar({
 /**
  * @private
  */
-export function UserAvatar({ userId, icon, ...props }: UserAvatarProps) {
+export function UserAvatar({
+  userId,
+  icon,
+  variant = "default",
+  ...props
+}: UserAvatarProps) {
   const $ = useOverrides();
 
   if (!userId) {
@@ -145,7 +193,14 @@ export function UserAvatar({ userId, icon, ...props }: UserAvatarProps) {
     );
   }
 
-  return <ResolvedUserAvatar userId={userId} icon={icon} {...props} />;
+  return (
+    <ResolvedUserAvatar
+      userId={userId}
+      icon={icon}
+      variant={variant}
+      {...props}
+    />
+  );
 }
 
 /**

@@ -1027,6 +1027,9 @@
  *************************************/
 
 .lb-avatar {
+  --lb-avatar-outline-gap: 2px;
+  --lb-avatar-outline-width: 2px;
+
   position: relative;
   container-type: inline-size;
   display: flex;
@@ -1034,14 +1037,29 @@
   align-items: center;
   overflow: hidden;
   aspect-ratio: 1;
+  padding: var(--lb-avatar-outline-gap);
+  border: var(--lb-avatar-outline-width) solid
+    var(--lb-avatar-color, var(--lb-accent));
   border-radius: var(--lb-avatar-radius);
   background: var(--lb-foreground-subtle);
+  background-clip: content-box;
   color: var(--lb-foreground-moderate);
 
   &:where([data-loading]) {
     background: var(--lb-foreground);
     opacity: $lb-loading-opacity;
   }
+}
+
+.lb-avatar-content {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  inline-size: 100%;
+  block-size: 100%;
+  border-radius: inherit;
 }
 
 .lb-avatar-image {

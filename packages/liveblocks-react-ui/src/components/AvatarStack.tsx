@@ -39,6 +39,11 @@ export interface AvatarStackProps extends ComponentPropsWithoutRef<"div"> {
   gap?: string | number;
 
   /**
+   * The avatar stack visual variant.
+   */
+  variant?: "default" | "outline";
+
+  /**
    * Override the component's strings.
    */
   overrides?: Partial<GlobalOverrides>;
@@ -59,6 +64,7 @@ export const AvatarStack = forwardRef<HTMLDivElement, AvatarStackProps>(
       max = 3,
       size,
       gap,
+      variant = "default",
       overrides,
       className,
       style,
@@ -156,6 +162,7 @@ export const AvatarStack = forwardRef<HTMLDivElement, AvatarStackProps>(
               >
                 <UserAvatar
                   userId={user.userId}
+                  variant={variant}
                   className="lb-avatar-stack-avatar"
                   style={{ "--lb-avatar-stack-index": index } as CSSProperties}
                 />
