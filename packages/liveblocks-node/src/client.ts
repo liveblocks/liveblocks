@@ -34,7 +34,6 @@ import type {
   Json,
   JsonObject,
   KDAD,
-  LsonObject,
   NotificationSettings,
   NotificationSettingsPlain,
   Op,
@@ -52,7 +51,7 @@ import type {
   SubscriptionDataPlain,
   ThreadData,
   ThreadDataPlain,
-  ToImmutable,
+  ToJson,
   URLSafeString,
   UserRoomSubscriptionSettings,
   UserSubscriptionData,
@@ -90,23 +89,6 @@ import {
   getBaseUrl,
   normalizeStatusCode,
 } from "./utils";
-
-// Recursively convert ReadonlyMap<K, V> to { [key: K]: V }
-type SerializeMaps<T> =
-  T extends ReadonlyMap<infer K, infer V>
-    ? K extends string
-      ? { readonly [P in K]: SerializeMaps<V> }
-      : { readonly [key: string]: SerializeMaps<V> }
-    : T extends object
-      ? { readonly [P in keyof T]: SerializeMaps<T[P]> }
-      : T;
-
-type ToSimplifiedJson<S extends LsonObject> = LsonObject extends S
-  ? JsonObject
-  : // ToImmutable converts LiveMap instances to ReadonlyMap versions, but
-    // the "simplified JSON" format actually requires (because of serialization)
-    // and converts the maps to plain objects.
-    SerializeMaps<ToImmutable<S>>;
 
 export type LiveblocksOptions = {
   /**
@@ -1421,13 +1403,13 @@ export class Liveblocks {
     roomId: string,
     format: "json",
     options?: RequestOptions
-  ): Promise<ToSimplifiedJson<S>>;
+  ): Promise<ToJson<S>>;
 
   public async getStorageDocument(
     roomId: string,
     format: "plain-lson" | "json" = "plain-lson",
     options?: RequestOptions
-  ): Promise<PlainLsonObject | ToSimplifiedJson<S>> {
+  ): Promise<PlainLsonObject | ToJson<S>> {
     const res = await this.#get(
       url`/v2/rooms/${roomId}/storage`,
       { format },
@@ -1436,7 +1418,7 @@ export class Liveblocks {
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
-    return (await res.json()) as PlainLsonObject | ToSimplifiedJson<S>;
+    return (await res.json()) as PlainLsonObject | ToJson<S>;
   }
 
   async #requestStorageMutation(

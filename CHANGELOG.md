@@ -2,7 +2,26 @@
 
 ## v3.18.0
 
-- ...
+For full upgrade instructions, see the
+[3.18 upgrade guide](https://liveblocks.io/docs/platform/upgrading/3.18).
+
+### `@liveblocks/client`
+
+- **Breaking:** `useStorage` now returns plain objects for `LiveMap` values
+  instead of `Map` instances. Legacy APIs have been removed: `.toImmutable()`,
+  `.toObject()`, `.toArray()`.
+- New `.toJSON()` on all Live structures, returning a cached JSON-compatible
+  snapshot. `JSON.stringify(root)` now just works.
+- New `LiveObject.from(obj)` to create a LiveObject from plain JSON, recursively
+  converting nested objects/arrays to Live structures.
+- New `.reconcile(obj)` to efficiently reconcile a LiveObject tree to match a
+  JSON snapshot, only mutating what changed.
+- `initialStorage` accepts `LiveObject.from()` result directly.
+
+### `@liveblocks/zustand` and `@liveblocks/redux`
+
+- Fix: Initial storage seeding no longer creates an undo frame.
+- Fix: Presence updates are now batched with storage updates.
 
 ## v3.17.0
 

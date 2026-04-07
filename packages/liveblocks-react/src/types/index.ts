@@ -50,7 +50,7 @@ import type {
   SearchCommentsResult,
   SyncStatus,
   ThreadData,
-  ToImmutable,
+  ToJson,
   UrlMetadata,
   WithNavigation,
   WithRequired,
@@ -417,7 +417,10 @@ export type RoomProviderProps<P extends JsonObject, S extends LsonObject> =
       /**
        * The initial Storage to use when entering a new Room.
        */
-      initialStorage: S | ((roomId: string) => S);
+      initialStorage:
+        | S
+        | LiveObject<S>
+        | ((roomId: string) => S | LiveObject<S>);
     }
   >
 >;
@@ -839,7 +842,7 @@ type RoomContextBundleCommon<
    * that gets passed into your callback will be a "mutation context".
    *
    * If you want get access to the immutable root somewhere in your mutation,
-   * you can use `storage.ToImmutable()`.
+   * you can use `storage.toJSON()`.
    *
    * @example
    * const fillLayers = useMutation(
@@ -1160,7 +1163,7 @@ export type RoomContextBundle<
        * those cases, you'll probably want to use a `shallow` comparison check.
        */
       useStorage<T>(
-        selector: (root: ToImmutable<S>) => T,
+        selector: (root: ToJson<S>) => T,
         isEqual?: (prev: T | null, curr: T | null) => boolean
       ): T | null;
 
@@ -1371,7 +1374,7 @@ export type RoomContextBundle<
              * those cases, you'll probably want to use a `shallow` comparison check.
              */
             useStorage<T>(
-              selector: (root: ToImmutable<S>) => T,
+              selector: (root: ToJson<S>) => T,
               isEqual?: (prev: T, curr: T) => boolean
             ): T;
 

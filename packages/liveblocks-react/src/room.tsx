@@ -41,7 +41,7 @@ import type {
   RoomSubscriptionSettings,
   SignalType,
   TextEditorType,
-  ToImmutable,
+  ToJson,
   UnsubscribeCallback,
 } from "@liveblocks/core";
 import {
@@ -1384,10 +1384,10 @@ function useStorageRoot<S extends LsonObject>(): [root: LiveObject<S> | null] {
  */
 function useStorage_withRoomContext<S extends LsonObject, T>(
   RoomContext: Context<OpaqueRoom | null>,
-  selector: (root: ToImmutable<S>) => T,
+  selector: (root: ToJson<S>) => T,
   isEqual?: (prev: T | null, curr: T | null) => boolean
 ): T | null {
-  type Snapshot = ToImmutable<S> | null;
+  type Snapshot = ToJson<S> | null;
   type Selection = T | null;
 
   const room = useRoom_withRoomContext<never, S, never, never, never, never>(
@@ -1414,8 +1414,7 @@ function useStorage_withRoomContext<S extends LsonObject, T>(
       return null;
     } else {
       const root = rootOrNull;
-      const imm = root.toImmutable();
-      return imm;
+      return root.toJSON();
     }
   }, [rootOrNull]);
 
@@ -1431,7 +1430,7 @@ function useStorage_withRoomContext<S extends LsonObject, T>(
 }
 
 function useStorage<S extends LsonObject, T>(
-  selector: (root: ToImmutable<S>) => T,
+  selector: (root: ToJson<S>) => T,
   isEqual?: (prev: T | null, curr: T | null) => boolean
 ): T | null {
   return useStorage_withRoomContext<S, T>(GlobalRoomContext, selector, isEqual);
@@ -3524,7 +3523,7 @@ export function useSuspendUntilStorageReady(): void {
  */
 function useStorageSuspense_withRoomContext<S extends LsonObject, T>(
   RoomContext: Context<OpaqueRoom | null>,
-  selector: (root: ToImmutable<S>) => T,
+  selector: (root: ToJson<S>) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T {
   useSuspendUntilStorageReady_withRoomContext(RoomContext);
@@ -3536,7 +3535,7 @@ function useStorageSuspense_withRoomContext<S extends LsonObject, T>(
 }
 
 function useStorageSuspense<S extends LsonObject, T>(
-  selector: (root: ToImmutable<S>) => T,
+  selector: (root: ToJson<S>) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T {
   return useStorageSuspense_withRoomContext<S, T>(
@@ -4387,7 +4386,7 @@ const _useAddReaction: TypedBundle["useAddReaction"] = useAddReaction;
  * that gets passed into your callback will be a "mutation context".
  *
  * If you want get access to the immutable root somewhere in your mutation,
- * you can use `storage.ToImmutable()`.
+ * you can use `storage.toJSON()`.
  *
  * @example
  * const fillLayers = useMutation(

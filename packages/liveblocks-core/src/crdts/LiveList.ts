@@ -1,4 +1,5 @@
 import { nn } from "../lib/assert";
+import { freeze } from "../lib/freeze";
 import { nanoid } from "../lib/nanoid";
 import type { Pos } from "../lib/position";
 import { asPos, makePosition } from "../lib/position";
@@ -18,8 +19,7 @@ import {
   lsonToLiveNode,
 } from "./liveblocks-helpers";
 import { LiveRegister } from "./LiveRegister";
-import type { LiveNode, Lson } from "./Lson";
-import type { ToImmutable } from "./utils";
+import type { LiveNode, Lson, ToJson } from "./Lson";
 
 export type LiveListUpdateDelta =
   | { type: "insert"; index: number; item: Lson }
@@ -1099,13 +1099,8 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     }
   }
 
-  /**
-   * Returns an Array of all the elements in the LiveList.
-   */
-  toArray(): TItem[] {
-    return Array.from(this.#items, (entry) => liveNodeToLson(entry) as TItem);
-    //                                                                ^^^^^^^^
-    //                                                                FIXME! This isn't safe.
+  #unwrap(node: LiveNode): TItem {
+    return liveNodeToLson(node) as TItem;
   }
 
   /**
@@ -1114,7 +1109,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @returns true if the predicate function returns a truthy value for every element. Otherwise, false.
    */
   every(predicate: (value: TItem, index: number) => unknown): boolean {
-    return this.toArray().every(predicate);
+    return this.#items.rawArray.every((node, i) =>
+      predicate(this.#unwrap(node), i)
+    );
   }
 
   /**
@@ -1123,7 +1120,12 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @returns An array with the elements that pass the test.
    */
   filter(predicate: (value: TItem, index: number) => unknown): TItem[] {
-    return this.toArray().filter(predicate);
+    const result: TItem[] = [];
+    this.#items.rawArray.forEach((node, i) => {
+      const item = this.#unwrap(node);
+      if (predicate(item, i)) result.push(item);
+    });
+    return result;
   }
 
   /**
@@ -1132,7 +1134,11 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @returns The value of the first element in the LiveList that satisfies the provided testing function. Otherwise, undefined is returned.
    */
   find(predicate: (value: TItem, index: number) => unknown): TItem | undefined {
-    return this.toArray().find(predicate);
+    for (const [i, node] of this.#items.rawArray.entries()) {
+      const item = this.#unwrap(node);
+      if (predicate(item, i)) return item;
+    }
+    return undefined;
   }
 
   /**
@@ -1141,7 +1147,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @returns The index of the first element in the LiveList that passes the test. Otherwise, -1.
    */
   findIndex(predicate: (value: TItem, index: number) => unknown): number {
-    return this.toArray().findIndex(predicate);
+    return this.#items.rawArray.findIndex((node, i) =>
+      predicate(this.#unwrap(node), i)
+    );
   }
 
   /**
@@ -1149,7 +1157,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @param callbackfn Function to execute on each element.
    */
   forEach(callbackfn: (value: TItem, index: number) => void): void {
-    return this.toArray().forEach(callbackfn);
+    this.#items.rawArray.forEach((node, i) =>
+      callbackfn(this.#unwrap(node), i)
+    );
   }
 
   /**
@@ -1158,14 +1168,8 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @returns The element at the specified index or undefined.
    */
   get(index: number): TItem | undefined {
-    if (index < 0 || index >= this.#items.length) {
-      return undefined;
-    }
-
     const item = this.#items.at(index);
-    return item ? (liveNodeToLson(item) as TItem | undefined) : undefined;
-    //                                     ^^^^^^^^^^^^^^^^^
-    //                                     FIXME! This isn't safe.
+    return item !== undefined ? this.#unwrap(item) : undefined;
   }
 
   /**
@@ -1175,17 +1179,23 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @returns The first index of the element in the LiveList; -1 if not found.
    */
   indexOf(searchElement: TItem, fromIndex?: number): number {
-    return this.toArray().indexOf(searchElement, fromIndex);
+    return this.#items.rawArray.findIndex(
+      (node, i) => i >= (fromIndex ?? 0) && this.#unwrap(node) === searchElement
+    );
   }
 
   /**
-   * Returns the last index at which a given element can be found in the LiveList, or -1 if it is not present. The LiveLsit is searched backwards, starting at fromIndex.
+   * Returns the last index at which a given element can be found in the LiveList, or -1 if it is not present. The LiveList is searched backwards, starting at fromIndex.
    * @param searchElement Element to locate.
    * @param fromIndex The index at which to start searching backwards.
-   * @returns
+   * @returns The last index of the element in the LiveList; -1 if not found.
    */
   lastIndexOf(searchElement: TItem, fromIndex?: number): number {
-    return this.toArray().lastIndexOf(searchElement, fromIndex);
+    const arr = this.#items.rawArray;
+    for (let i = fromIndex ?? arr.length - 1; i >= 0; i--) {
+      if (this.#unwrap(arr[i]) === searchElement) return i;
+    }
+    return -1;
   }
 
   /**
@@ -1194,20 +1204,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @returns An array with each element being the result of the callback function.
    */
   map<U>(callback: (value: TItem, index: number) => U): U[] {
-    const result: U[] = [];
-    let i = 0;
-    for (const entry of this.#items) {
-      result.push(
-        callback(
-          liveNodeToLson(entry) as TItem,
-          //                    ^^^^^^^^
-          //                    FIXME! This isn't safe.
-          i
-        )
-      );
-      i++;
-    }
-    return result;
+    return this.#items.rawArray.map((node, i) =>
+      callback(this.#unwrap(node), i)
+    );
   }
 
   /**
@@ -1216,11 +1215,15 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @returns true if the callback function returns a truthy value for at least one element. Otherwise, false.
    */
   some(predicate: (value: TItem, index: number) => unknown): boolean {
-    return this.toArray().some(predicate);
+    return this.#items.rawArray.some((node, i) =>
+      predicate(this.#unwrap(node), i)
+    );
   }
 
-  [Symbol.iterator](): IterableIterator<TItem> {
-    return new LiveListIterator(this.#items);
+  *[Symbol.iterator](): IterableIterator<TItem> {
+    for (const node of this.#items) {
+      yield this.#unwrap(node);
+    }
   }
 
   #createAttachItemAndSort(
@@ -1269,53 +1272,23 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     };
   }
 
-  toImmutable(): readonly ToImmutable<TItem>[] {
-    // Don't implement actual toJson logic in here. Implement it in ._toImmutable()
-    // instead. This helper merely exists to help TypeScript infer better
-    // return types.
-    return super.toImmutable() as readonly ToImmutable<TItem>[];
+  toJSON(): readonly ToJson<TItem>[] {
+    // Don't implement actual toJSON logic in here. Implement it in
+    // ._toJSON() instead. This helper merely exists to help TypeScript
+    // infer better return types.
+    return super.toJSON() as readonly ToJson<TItem>[];
   }
 
   /** @internal */
-  _toImmutable(): readonly ToImmutable<TItem>[] {
-    const result = Array.from(this.#items, (node) => node.toImmutable());
-    return (
-      process.env.NODE_ENV === "production" ? result : Object.freeze(result)
-    ) as readonly ToImmutable<TItem>[];
+  _toJSON(): readonly ToJson<TItem>[] {
+    const result = Array.from(this.#items, (node) => node.toJSON());
+    return freeze(result) as ToJson<TItem>[];
   }
 
   clone(): LiveList<TItem> {
     return new LiveList(
       Array.from(this.#items, (item) => item.clone() as TItem)
     );
-  }
-}
-
-class LiveListIterator<T extends Lson> implements IterableIterator<T> {
-  #innerIterator: IterableIterator<LiveNode>;
-
-  constructor(items: SortedList<LiveNode>) {
-    this.#innerIterator = items[Symbol.iterator]();
-  }
-
-  [Symbol.iterator](): IterableIterator<T> {
-    return this;
-  }
-
-  next(): IteratorResult<T> {
-    const result = this.#innerIterator.next();
-
-    if (result.done) {
-      return {
-        done: true,
-        value: undefined,
-      };
-    }
-
-    const value = liveNodeToLson(result.value) as T;
-    //                                         ^^^^
-    //                                         FIXME! This isn't safe.
-    return { value };
   }
 }
 

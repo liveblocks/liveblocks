@@ -7,8 +7,7 @@ import { createClient } from "../src/client";
 import type { Status } from "../src/connection";
 import { isLiveStructure } from "../src/crdts/liveblocks-helpers";
 import type { LiveObject } from "../src/crdts/LiveObject";
-import type { LsonObject } from "../src/crdts/Lson";
-import type { ToImmutable } from "../src/crdts/utils";
+import type { LsonObject, ToJson } from "../src/crdts/Lson";
 import { controlledPromise } from "../src/lib/controlledPromise";
 import type { Json, JsonObject } from "../src/lib/Json";
 import { mapValues, wait, withTimeout } from "../src/lib/utils";
@@ -115,7 +114,7 @@ export function prepareTestsConflicts<S extends LsonObject>(
      * rooms' storages are expected to be equal. It also ensures that immutable
      * states updated with the updates generated from conflicts are equal.
      */
-    assert: (immRoot1: ToImmutable<S>, immRoot2?: ToImmutable<S>) => void;
+    assert: (immRoot1: ToJson<S>, immRoot2?: ToJson<S>) => void;
     /** Test utilities to exactly control message passing */
     control: {
       /**
@@ -240,10 +239,10 @@ export function prepareTestsConflicts<S extends LsonObject>(
     await Promise.all([control.flushA(), control.flushB()]);
 
     const expectedStorage = mapValues(initialStorage, (value) =>
-      isLiveStructure(value) ? value.toImmutable() : value
+      isLiveStructure(value) ? value.toJSON() : value
     );
-    let immutableStorage1 = root1.toImmutable();
-    let immutableStorage2 = root2.toImmutable();
+    let immutableStorage1 = root1.toJSON();
+    let immutableStorage2 = root2.toJSON();
 
     // Initial storage should be equal at the start of the test
     expect(immutableStorage1).toEqual(expectedStorage);
@@ -252,26 +251,23 @@ export function prepareTestsConflicts<S extends LsonObject>(
     actor1.room.subscribe(
       root1,
       () => {
-        immutableStorage1 = root1.toImmutable();
+        immutableStorage1 = root1.toJSON();
       },
       { isDeep: true }
     );
     actor2.room.subscribe(
       root2,
       () => {
-        immutableStorage2 = root2.toImmutable();
+        immutableStorage2 = root2.toJSON();
       },
       { isDeep: true }
     );
 
-    function assert(
-      immRoot1: ToImmutable<S>,
-      immRoot2: ToImmutable<S> = immRoot1
-    ) {
+    function assert(immRoot1: ToJson<S>, immRoot2: ToJson<S> = immRoot1) {
       try {
-        expect({ root1: root1.toImmutable() }).toEqual({ root1: immRoot1 });
+        expect({ root1: root1.toJSON() }).toEqual({ root1: immRoot1 });
         expect(immutableStorage1).toEqual(immRoot1);
-        expect({ root2: root2.toImmutable() }).toEqual({ root2: immRoot2 });
+        expect({ root2: root2.toJSON() }).toEqual({ root2: immRoot2 });
         expect(immutableStorage2).toEqual(immRoot2);
       } catch (error) {
         // Better stack trace (point to where assert is called instead)

@@ -1,5 +1,4 @@
 import { assertNever, nn } from "../lib/assert";
-import { isPlainObject } from "../lib/guards";
 import type { Json } from "../lib/Json";
 import { stringifyOrLog as stringify } from "../lib/stringify";
 import { deepClone, entries } from "../lib/utils";
@@ -310,66 +309,4 @@ export function mergeStorageUpdates(
   }
 
   return second;
-}
-
-function isPlain(
-  value: unknown
-): value is
-  | undefined
-  | null
-  | string
-  | boolean
-  | number
-  | unknown[]
-  | { [key: string]: unknown } {
-  const type = typeof value;
-  return (
-    value === undefined ||
-    value === null ||
-    type === "string" ||
-    type === "boolean" ||
-    type === "number" ||
-    Array.isArray(value) ||
-    isPlainObject(value)
-  );
-}
-
-export function findNonSerializableValue(
-  value: unknown,
-  path: string = ""
-): { path: string; value: unknown } | false {
-  if (!isPlain) {
-    return {
-      path: path || "root",
-      value,
-    };
-  }
-
-  if (typeof value !== "object" || value === null) {
-    return false;
-  }
-
-  for (const [key, nestedValue] of Object.entries(value)) {
-    const nestedPath = path ? path + "." + key : key;
-
-    if (!isPlain(nestedValue)) {
-      return {
-        path: nestedPath,
-        value: nestedValue,
-      };
-    }
-
-    if (typeof nestedValue === "object") {
-      const nonSerializableNestedValue = findNonSerializableValue(
-        nestedValue,
-        nestedPath
-      );
-
-      if (nonSerializableNestedValue) {
-        return nonSerializableNestedValue;
-      }
-    }
-  }
-
-  return false;
 }
