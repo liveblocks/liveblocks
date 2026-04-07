@@ -48,7 +48,7 @@ export const bot = new Chat<{ liveblocks: LiveblocksAdapter }>({
 bot.onNewMention(postAiResponse);
 
 // ==========================================================================
-// Optional: Handle replying to further comments in the subscribed thread
+// Optional: Automatically reply to further comments after the first mention
 // This requires a permanent state adapter set up to persist the subscription
 // e.g. import { createRedisState } from "@chat-adapter/state-redis";
 
