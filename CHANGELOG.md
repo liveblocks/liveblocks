@@ -2,7 +2,11 @@
 
 ## v3.18.0
 
-- ...
+### `@liveblocks/react-ui`
+
+- Add standalone `Avatar` component to complement `AvatarStack` for more
+  fine-grained customization.
+- Add `variant` prop to `AvatarStack` to support outlined avatars.
 
 ## v3.17.0
 
