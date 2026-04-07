@@ -161,20 +161,13 @@ export const AvatarStack = forwardRef<HTMLDivElement, AvatarStackProps>(
                 />
               </Tooltip>
             ) : (
-              <Tooltip
+              <Avatar
                 key={user.key}
-                content={$.USER_UNKNOWN}
-                sideOffset={FLOATING_ELEMENT_SIDE_OFFSET}
-                collisionPadding={FLOATING_ELEMENT_COLLISION_PADDING}
-                side="top"
-                align="center"
-              >
-                <Avatar
-                  name={$.USER_UNKNOWN}
-                  className="lb-avatar-stack-avatar"
-                  style={{ "--lb-avatar-stack-index": index } as CSSProperties}
-                />
-              </Tooltip>
+                name={$.USER_UNKNOWN}
+                tooltip={$.USER_UNKNOWN}
+                className="lb-avatar-stack-avatar"
+                style={{ "--lb-avatar-stack-index": index } as CSSProperties}
+              />
             );
           })}
           {remainingUsersCount > 0 ? (

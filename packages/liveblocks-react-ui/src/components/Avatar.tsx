@@ -3,9 +3,14 @@
 import { useGroupInfo, useUser } from "@liveblocks/react";
 import { type ComponentProps, type ReactNode, useMemo } from "react";
 
+import {
+  FLOATING_ELEMENT_COLLISION_PADDING,
+  FLOATING_ELEMENT_SIDE_OFFSET,
+} from "../constants";
 import { useOverrides } from "../overrides";
 import { cn } from "../utils/cn";
 import { getInitials } from "../utils/get-initials";
+import { Tooltip, TooltipProvider } from "./internal/Tooltip";
 
 export interface AvatarProps extends ComponentProps<"div"> {
   /**
@@ -17,6 +22,11 @@ export interface AvatarProps extends ComponentProps<"div"> {
    * The name of the avatar.
    */
   name?: string;
+
+  /**
+   * The content to display in the avatar's tooltip.
+   */
+  tooltip?: ReactNode;
 
   /**
    * Override the avatar's content.
@@ -39,6 +49,7 @@ export function Avatar({
   name,
   className,
   children,
+  tooltip,
   ...props
 }: AvatarProps) {
   const initials = useMemo(
@@ -46,7 +57,7 @@ export function Avatar({
     [name]
   );
 
-  return (
+  const avatar = (
     <div className={cn("lb-avatar", className)} {...props}>
       {children ??
         (src ? (
@@ -57,6 +68,22 @@ export function Avatar({
           </span>
         ) : null)}
     </div>
+  );
+
+  return tooltip ? (
+    <TooltipProvider>
+      <Tooltip
+        content={tooltip}
+        sideOffset={FLOATING_ELEMENT_SIDE_OFFSET}
+        collisionPadding={FLOATING_ELEMENT_COLLISION_PADDING}
+        side="top"
+        align="center"
+      >
+        {avatar}
+      </Tooltip>
+    </TooltipProvider>
+  ) : (
+    avatar
   );
 }
 
