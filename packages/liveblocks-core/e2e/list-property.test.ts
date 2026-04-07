@@ -321,8 +321,8 @@ test(
             await control.flushB();
 
             // Property: both clients should have identical final states
-            const list1 = root1.get("list").toImmutable();
-            const list2 = root2.get("list").toImmutable();
+            const list1 = root1.get("list").toJSON();
+            const list2 = root2.get("list").toJSON();
             ctx.log(`Client A: ${JSON.stringify(list1)}`);
             ctx.log(`Client B: ${JSON.stringify(list2)}`);
             ctx.log(

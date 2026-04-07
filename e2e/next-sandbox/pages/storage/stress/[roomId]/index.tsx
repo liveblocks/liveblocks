@@ -29,14 +29,6 @@ const {
   useUndo,
 } = createRoomContext<never, Storage>(client);
 
-// JSON.stringify replacer to handle Map objects (LiveMap.toImmutable() returns Map)
-function mapReplacer(_key: string, value: unknown): unknown {
-  if (value instanceof Map) {
-    return Object.fromEntries(value);
-  }
-  return value;
-}
-
 // Deterministic JSON stringify with sorted keys (for consistent hashing)
 function stableStringify(obj: unknown): string {
   return JSON.stringify(obj, (_key, value: unknown) => {
@@ -146,7 +138,9 @@ function collectAttachmentPoints(
     if (value instanceof LiveObject) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       points.push({ type: "object", node: value as LiveObject<LsonObject> });
-      for (const child of Object.values(value.toObject())) {
+      for (const key of value.keys()) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        const child = value.get(key);
         visit(child);
       }
     } else if (value instanceof LiveList) {
@@ -164,7 +158,9 @@ function collectAttachmentPoints(
     }
   }
 
-  for (const child of Object.values(root.toObject())) {
+  for (const key of root.keys()) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const child = root.get(key);
     visit(child);
   }
 
@@ -263,7 +259,7 @@ function Sandbox({ roomId }: { roomId: string }) {
       const point = points[randomInt(points.length)];
 
       if (point.type === "object") {
-        const keys = Object.keys(point.node.toObject());
+        const keys = Array.from(point.node.keys());
         if (keys.length > 0) {
           point.node.delete(keys[randomInt(keys.length)]);
           deleted++;
@@ -290,7 +286,7 @@ function Sandbox({ roomId }: { roomId: string }) {
         const point = points[randomInt(points.length)];
 
         if (point.type === "object") {
-          const keys = Object.keys(point.node.toObject());
+          const keys = Array.from(point.node.keys());
           if (keys.length > 0 && Math.random() < 0.5) {
             // Change existing value to a string
             const key = keys[randomInt(keys.length)];
@@ -329,7 +325,7 @@ function Sandbox({ roomId }: { roomId: string }) {
   }, []);
 
   const clear = useMutation(({ storage }) => {
-    for (const key of Object.keys(storage.toObject())) {
+    for (const key of storage.keys()) {
       storage.delete(key);
     }
   }, []);
@@ -519,7 +515,7 @@ function Sandbox({ roomId }: { roomId: string }) {
             border: "1px solid #ddd",
           }}
         >
-          {JSON.stringify(immutable, mapReplacer, 2)}
+          {JSON.stringify(immutable, null, 2)}
         </pre>
       ) : null}
     </div>

@@ -2956,9 +2956,9 @@ describe("client", () => {
       const client = new Liveblocks({ secret: "sk_xxx" });
       await expect(
         client.mutateStorage("my-room", ({ root }) => {
-          expect(root.toImmutable() as unknown).toEqual({
+          expect(root.toJSON()).toEqual({
             a: [{ abc: 123 }, { xyz: 3.14 }],
-            b: new Map(),
+            b: {},
           });
 
           // Mutate it!

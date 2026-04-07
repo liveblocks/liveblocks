@@ -93,7 +93,6 @@ export type {
   LiveObjectUpdate,
   StorageUpdate,
 } from "./crdts/StorageUpdates";
-export type { ToImmutable } from "./crdts/utils";
 export { toPlainLson } from "./crdts/utils";
 export type {
   DAD,
@@ -110,11 +109,6 @@ export type {
   KDAD,
 } from "./globals/augmentation";
 export type { SyncConfig, SyncMode } from "./immutable";
-export {
-  legacy_patchImmutableObject,
-  legacy_patchLiveObjectKey,
-  lsonToJson,
-} from "./immutable";
 export { kInternal } from "./internal";
 export { makeAbortController } from "./lib/abortController";
 export { assert, assertNever, nn } from "./lib/assert";
@@ -154,7 +148,14 @@ export {
   isPlainObject,
   isStartsWithOperator,
 } from "./lib/guards";
-export type { Json, JsonArray, JsonObject, JsonScalar } from "./lib/Json";
+export type {
+  Json,
+  JsonArray,
+  JsonObject,
+  JsonScalar,
+  ReadonlyJson,
+  ReadonlyJsonObject,
+} from "./lib/Json";
 export { isJsonArray, isJsonObject, isJsonScalar } from "./lib/Json";
 export { nanoid } from "./lib/nanoid";
 export type { NoInfr } from "./lib/NoInfer";

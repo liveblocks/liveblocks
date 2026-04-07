@@ -1,0 +1,152 @@
+---
+meta:
+  title: "Upgrading to 3.18"
+  parentTitle: "Upgrading"
+  description: "Guide to upgrade to Liveblocks version 3.18"
+---
+
+Liveblocks 3.18 introduces a new JSON-based serialization model for Live
+structures. `.toJSON()` replaces `.toImmutable()` as the canonical way to read
+Storage snapshots, and `useStorage` now returns plain objects instead of `Map`
+instances for `LiveMap` values.
+
+## Why this change? [#why-this-change]
+
+Previously, `useStorage` returned `Map` instances for `LiveMap` values, while
+`LiveObject` values were returned as plain objects. This difference caused
+practical problems in real apps: because `Map`s cannot be serialized with
+`JSON.stringify()`, the result of `useStorage()` could never be assumed to be
+legal JSON, even though many users expected that. Instead, LiveMaps would appear
+as empty objects when serialized to JSON.
+
+By unifying the return value of `useStorage()` for every Live structure to JSON,
+users can now "just" store the results of `useStorage()` where they want, pass
+it around, and serialize it without worrying about the underlying structure.
+
+The downside however, is a syntactically breaking change for `LiveMap` users:
+instead of `Map` instances, these now appear as plain objects. However, since
+the change is purely syntactical and mechanical, no real functionality is lost:
+every read-only `Map` operation has an equivalent plain-object expression. See
+the [migration table](#livemap-values-in-usestorage) below for a complete list
+of rewrites.
+
+## How to upgrade [#how-to-upgrade]
+
+First of all, let's upgrade all Liveblocks dependencies to their latest
+versions. The easiest way to do that is to run the following command:
+
+```bash
+npx liveblocks@latest upgrade
+```
+
+There are some potentially **breaking changes** in this update.
+
+## Does this affect you? [#does-this-affect-you]
+
+**If you're reading `LiveMap` values from `useStorage`**, the return type has
+changed from `Map` to a plain object. See
+[LiveMap values in useStorage](#livemap-values-in-usestorage).
+
+**If you're using `.toImmutable()` on any Live structure**, it has been removed.
+See [Removed .toImmutable()](#removed-toimmutable).
+
+**If you're using `.toObject()` on `LiveObject`**, it has been removed. See
+[Removed .toObject()](#removed-toobject).
+
+**If you're using `.toArray()` on `LiveList`**, it has been removed. See
+[Removed .toArray()](#removed-toarray).
+
+**If you're using the `ToImmutable` type**, it has been removed. See
+[Removed ToImmutable type](#removed-toimmutable-type).
+
+Otherwise, you can simply upgrade your packages and no changes will affect you.
+
+## LiveMap values in useStorage [#livemap-values-in-usestorage]
+
+`useStorage` now returns plain objects for `LiveMap` values instead of `Map`
+instances. If you're accessing `LiveMap` data through `useStorage`, you'll need
+to update your code. The change is fully mechanical. Every `Map` method has a
+direct plain-object equivalent:
+
+```tsx
+const myMap = useStorage((root) => root.myMap);
+```
+
+| ❌ Before                     | ✅ After                    |
+| ----------------------------- | --------------------------- |
+| `myMap.get("my-node")`        | `myMap["my-node"]`          |
+| `myMap.has("my-node")`        | `"my-node" in myMap`        |
+| `myMap.size`                  | `Object.keys(myMap).length` |
+| `Array.from(myMap.keys())`    | `Object.keys(myMap)`        |
+| `Array.from(myMap.values())`  | `Object.values(myMap)`      |
+| `Array.from(myMap.entries())` | `Object.entries(myMap)`     |
+
+Of course, if you prefer, you can still convert the plain object back to a `Map`
+if your application requires it:
+
+```tsx
+// Still possible, but not recommended
+const myMap = useStorage((root) => root.myMap);
+const myTrueMap = useMemo(() => new Map(Object.entries(myMap)), [myMap]);
+```
+
+## Removed .toImmutable() [#removed-toimmutable]
+
+`.toImmutable()` has been removed from all Live structures (`LiveObject`,
+`LiveList`, `LiveMap`). Use `.toJSON()` instead, which returns a cached,
+JSON-compatible snapshot. If you aren't using any `LiveMap`s in your
+application, the results will be identical.
+
+```tsx
+// ❌ Before
+const snapshot = liveObject.toImmutable();
+
+// ✅ After
+const snapshot = liveObject.toJSON();
+```
+
+## Removed .toObject() [#removed-toobject]
+
+`.toObject()` has been removed from `LiveObject`. Use `.toJSON()` or `.get(key)`
+instead:
+
+```tsx
+// ❌ Before
+const obj = liveObject.toObject();
+
+// ✅ After
+const obj = liveObject.toJSON();
+// or access individual keys
+const value = liveObject.get("key");
+```
+
+## Removed .toArray() [#removed-toarray]
+
+`.toArray()` has been removed from `LiveList`. Use `.toJSON()` or iterate
+directly:
+
+```tsx
+// ❌ Before
+const arr = liveList.toArray();
+
+// ✅ After
+const arr = liveList.toJSON();
+// or iterate directly
+for (const item of liveList) {
+  // ...
+}
+```
+
+## Removed ToImmutable type [#removed-toimmutable-type]
+
+The `ToImmutable` type has been removed. Use `ToJson` instead:
+
+```tsx
+// ❌ Before
+import type { ToImmutable } from "@liveblocks/client";
+type Snapshot = ToImmutable<MyStorage>;
+
+// ✅ After
+import type { ToJson } from "@liveblocks/client";
+type Snapshot = ToJson<MyStorage>;
+```

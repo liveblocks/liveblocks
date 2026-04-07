@@ -80,7 +80,7 @@ describe("cloning LiveStructures", () => {
           root.set("a", data);
           root.set("b", data.clone());
 
-          const imm = root.toImmutable();
+          const imm = root.toJSON();
           expect(imm.a).toEqual(imm.b);
         }
       )
@@ -99,7 +99,7 @@ describe("cloning LiveStructures", () => {
           root.set("b", data.clone().clone());
           //                        ^^^^^^^^ Deliberately cloning twice in this test
 
-          const imm = root.toImmutable();
+          const imm = root.toJSON();
           expect(imm.a).toEqual(imm.b);
         }
       )
@@ -120,7 +120,7 @@ describe("cloning LiveStructures", () => {
           //                      work on _any_ LSON value, even if data is
           //                      a JSON value
 
-          const imm = root.toImmutable();
+          const imm = root.toJSON();
           expect(imm.a).toEqual(imm.b);
         }
       )

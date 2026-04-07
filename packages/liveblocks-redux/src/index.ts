@@ -1,5 +1,6 @@
 import type {
   BaseUserMeta,
+  Json,
   JsonObject,
   LiveObject,
   LsonObject,
@@ -8,12 +9,7 @@ import type {
   User,
 } from "@liveblocks/client";
 import type { EnterOptions, OpaqueClient, OpaqueRoom } from "@liveblocks/core";
-import {
-  detectDupes,
-  legacy_patchImmutableObject,
-  legacy_patchLiveObjectKey,
-  lsonToJson,
-} from "@liveblocks/core";
+import { detectDupes, kInternal } from "@liveblocks/core";
 import type { StoreEnhancer } from "redux";
 
 import {
@@ -65,6 +61,15 @@ export type WithLiveblocks<
   U extends BaseUserMeta,
 > = TState & { readonly liveblocks: LiveblocksContext<P, U> };
 
+/** Ensures values of the provided object are not functions */
+function ensureNoFunctions(state: Record<string, unknown>): void {
+  for (const key in state) {
+    if (typeof state[key] === "function") {
+      throw mappingToFunctionIsNotAllowed(key);
+    }
+  }
+}
+
 const internalEnhancer = <TState>(options: {
   client: OpaqueClient;
   storageMapping?: Mapping<TState>;
@@ -86,6 +91,7 @@ const internalEnhancer = <TState>(options: {
     validateNoDuplicateKeys(storageMapping, presenceMapping);
   }
   const presenceKeys = Object.keys(presenceMapping);
+  const storageKeys = Object.keys(storageMapping);
 
   return (createStore: any) => {
     return (reducer: any, initialState: any, enhancer: any) => {
@@ -145,21 +151,23 @@ const internalEnhancer = <TState>(options: {
             if (maybeRoom) {
               isPatching = true;
               try {
-                updatePresence(
-                  maybeRoom,
-                  state,
-                  newState,
-                  presenceMapping as any
-                );
-
                 maybeRoom.batch(() => {
+                  updatePresence(
+                    maybeRoom!,
+                    state,
+                    newState,
+                    presenceMapping as any
+                  );
+
                   if (storageRoot) {
-                    patchLiveblocksStorage(
-                      storageRoot,
-                      state,
+                    const partialState = pick(
                       newState,
-                      storageMapping as any
-                    );
+                      storageKeys
+                    ) as JsonObject;
+                    if (process.env.NODE_ENV !== "production") {
+                      ensureNoFunctions(partialState);
+                    }
+                    storageRoot.reconcilePartially(partialState);
                   }
                 });
               } finally {
@@ -241,41 +249,35 @@ const internalEnhancer = <TState>(options: {
         });
 
         void room.getStorage().then(({ root }) => {
-          const updates: any = {};
-
-          maybeRoom!.batch(() => {
-            for (const key in storageMapping) {
-              const liveblocksStatePart = root.get(key);
-              if (liveblocksStatePart == null) {
-                updates[key] = store.getState()[key];
-                legacy_patchLiveObjectKey(
-                  root,
-                  key,
-                  undefined,
-                  store.getState()[key]
-                );
-              } else {
-                updates[key] = lsonToJson(liveblocksStatePart);
-              }
+          // Seed any missing storage keys from the current Redux state.
+          // Only writes keys that don't exist yet in storage — existing
+          // storage values are left untouched and will be read back below.
+          const reduxState = store.getState();
+          const missing: JsonObject = {};
+          for (const key of storageKeys) {
+            if (root.get(key) == null) {
+              missing[key] = reduxState[key] as Json;
             }
+          }
+
+          room.history[kInternal].withoutHistory(() => {
+            maybeRoom!.batch(() => {
+              root.reconcilePartially(missing);
+            });
           });
 
           store.dispatch({
             type: ACTION_TYPES.INIT_STORAGE,
-            state: updates,
+            state: pick(root.toJSON(), storageKeys),
           });
 
           storageRoot = root;
           unsubscribeCallbacks.push(
-            maybeRoom!.events.storageBatch.subscribe((updates) => {
+            maybeRoom!.events.storageBatch.subscribe(() => {
               if (!isPatching) {
                 store.dispatch({
                   type: ACTION_TYPES.PATCH_REDUX_STATE,
-                  state: patchState(
-                    store.getState(),
-                    updates,
-                    storageMapping as any
-                  ),
+                  state: pick(root.toJSON(), storageKeys),
                 });
               }
             })
@@ -367,28 +369,6 @@ export const liveblocksEnhancer = internalEnhancer as <TState>(options: {
   presenceMapping?: Mapping<TState>;
 }) => StoreEnhancer;
 
-function patchLiveblocksStorage<O extends LsonObject, TState>(
-  root: LiveObject<O>,
-  oldState: TState,
-  newState: TState,
-  mapping: Mapping<TState>
-) {
-  for (const key in mapping) {
-    if (
-      process.env.NODE_ENV !== "production" &&
-      typeof newState[key] === "function"
-    ) {
-      throw mappingToFunctionIsNotAllowed("value");
-    }
-
-    if (oldState[key] !== newState[key]) {
-      const oldVal = oldState[key];
-      const newVal = newState[key];
-      legacy_patchLiveObjectKey(root, key, oldVal as any, newVal);
-    }
-  }
-}
-
 function updatePresence<P extends JsonObject>(
   room: Room<P, any, any, any, any>,
   oldState: P,
@@ -429,28 +409,6 @@ function pick(
   for (const key of keys) {
     result[key] = source[key];
   }
-  return result;
-}
-
-function patchState<TState extends JsonObject>(
-  state: TState,
-  updates: any[], // StorageUpdate
-  mapping: Mapping<TState>
-) {
-  const partialState: Partial<TState> = {};
-
-  for (const key in mapping) {
-    partialState[key] = state[key];
-  }
-
-  const patched = legacy_patchImmutableObject(partialState, updates);
-
-  const result: Partial<TState> = {};
-
-  for (const key in mapping) {
-    result[key] = patched[key];
-  }
-
   return result;
 }
 

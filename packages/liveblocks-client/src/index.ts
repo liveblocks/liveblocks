@@ -60,6 +60,8 @@ export type {
   NotificationSettings,
   OthersEvent,
   PlainLsonObject,
+  ReadonlyJson,
+  ReadonlyJsonObject,
   ResolveGroupsInfoArgs,
   ResolveMentionSuggestionsArgs,
   ResolveRoomsInfoArgs,
@@ -72,7 +74,7 @@ export type {
   StringifyCommentBodyElements,
   StringifyCommentBodyOptions,
   ThreadData,
-  ToImmutable,
+  ToJson,
   UploadAttachmentOptions,
   User,
 } from "@liveblocks/core";

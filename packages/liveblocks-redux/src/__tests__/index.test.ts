@@ -676,6 +676,23 @@ describe("middleware", () => {
   });
 
   describe("history", () => {
+    test("initial storage seeding should not be undoable", async () => {
+      // Create an empty room — Redux will seed defaults
+      const roomId = await initRoom();
+
+      const { client, store } = createBasicStore();
+      await enterAndConnect(store, roomId);
+      await waitFor(
+        () => store.getState().liveblocks.isStorageLoading === false
+      );
+
+      // Defaults were seeded
+      expect(store.getState().value).toBe(0);
+
+      // But undo stack should be empty
+      expect(client.getRoom(roomId)!.history.canUndo()).toBe(false);
+    });
+
     test("undo / redo", async () => {
       const roomId = await initRoom({
         liveblocksType: "LiveObject",

@@ -1,4 +1,4 @@
-import type { Json } from "@liveblocks/client";
+import type { ReadonlyJson } from "@liveblocks/client";
 import { raise } from "@liveblocks/core";
 import type { Reducer } from "react";
 import { useReducer, useRef } from "react";
@@ -79,7 +79,7 @@ export const styles = {
 export type RowProps = {
   readonly id: string;
   readonly name: string;
-  readonly value: Readonly<Json> | undefined;
+  readonly value: ReadonlyJson | undefined;
   readonly style?: Record<string, unknown>;
 };
 

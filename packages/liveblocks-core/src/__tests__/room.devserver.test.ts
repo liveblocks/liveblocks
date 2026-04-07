@@ -9,8 +9,6 @@ import { describe, expect, onTestFinished, test } from "vitest";
 
 import { LiveList } from "../crdts/LiveList";
 import { LiveObject } from "../crdts/LiveObject";
-import type { StorageUpdate } from "../crdts/StorageUpdates";
-import { legacy_patchImmutableObject } from "../immutable";
 import { kInternal } from "../internal";
 import { nn } from "../lib/assert";
 import { prepareIsolatedStorageTest } from "./_devserver";
@@ -46,17 +44,17 @@ describe("room (dev server)", () => {
     room.history.resume();
     room.history.resume(); // Resuming again should also be a no-op!
 
-    expect(items.toImmutable()).toEqual([{ a: 1, b: 2 }]);
+    expect(items.toJSON()).toEqual([{ a: 1, b: 2 }]);
     expect(room.history.canUndo()).toBe(true);
     expect(room.history.canRedo()).toBe(false);
     room.history.undo();
 
-    expect(items.toImmutable()).toEqual([{}]);
+    expect(items.toJSON()).toEqual([{}]);
     expect(room.history.canUndo()).toBe(false);
     expect(room.history.canRedo()).toBe(true);
     room.history.redo();
 
-    expect(items.toImmutable()).toEqual([{ a: 1, b: 2 }]);
+    expect(items.toJSON()).toEqual([{ a: 1, b: 2 }]);
     expect(room.history.canUndo()).toBe(true);
     expect(room.history.canRedo()).toBe(false);
   });
@@ -89,13 +87,13 @@ describe("room (dev server)", () => {
       items.set(0, new LiveObject({ a: 2 }));
     });
 
-    expect(items.toImmutable()).toEqual([{ a: 2 }]);
+    expect(items.toJSON()).toEqual([{ a: 2 }]);
     room.history.undo();
 
-    expect(items.toImmutable()).toEqual([{}]);
+    expect(items.toJSON()).toEqual([{}]);
     room.history.redo();
 
-    expect(items.toImmutable()).toEqual([{ a: 2 }]);
+    expect(items.toJSON()).toEqual([{ a: 2 }]);
     expect(receivedUpdates).toEqual([
       [listUpdate([{ a: 2 }], [listUpdateSet(0, { a: 2 })])],
       [listUpdate([{}], [listUpdateSet(0, {})])],
@@ -148,7 +146,7 @@ describe("room (dev server)", () => {
 
     room.history.undo(); // won't do anything now
 
-    expect(root.toObject()).toEqual({ a: 3 });
+    expect(root.toJSON()).toEqual({ a: 3 });
   });
 
   describe("subscription", () => {
@@ -228,18 +226,12 @@ describe("room (dev server)", () => {
       });
 
       const jsonUpdates: JsonStorageUpdate[][] = [];
-      let receivedUpdates: StorageUpdate[] = [];
 
       onTestFinished(
         room.events.storageBatch.subscribe((updates) => {
           jsonUpdates.push(updates.map(serializeUpdateToJson));
-          receivedUpdates = updates;
         })
       );
-
-      const immutableState = root.toImmutable() as {
-        items: Array<{ names: Array<string> }>;
-      };
 
       room.batch(() => {
         const items = root.get("items");
@@ -264,13 +256,6 @@ describe("room (dev server)", () => {
           listUpdate(["Jane Doe"], [listUpdateInsert(0, "Jane Doe")]),
         ],
       ]);
-
-      // Additional check to prove that generated updates could patch an immutable state
-      const newImmutableState = legacy_patchImmutableObject(
-        immutableState,
-        receivedUpdates
-      );
-      expect(newImmutableState).toEqual(root.toImmutable());
     });
   });
 

@@ -12,8 +12,7 @@ import { createApiClient } from "../api-client";
 import { createAuthManager } from "../auth-manager";
 import { DEFAULT_BASE_URL } from "../constants";
 import type { LiveObject } from "../crdts/LiveObject";
-import type { LsonObject } from "../crdts/Lson";
-import type { ToImmutable } from "../crdts/utils";
+import type { LsonObject, ToJson } from "../crdts/Lson";
 import { kInternal } from "../internal";
 import { makeEventSource } from "../lib/EventSource";
 import type { Json, JsonObject } from "../lib/Json";
@@ -238,8 +237,8 @@ export async function prepareIsolatedStorageTest<S extends LsonObject>(
     room,
     wss,
 
-    expectStorage: (data: ToImmutable<S>) =>
-      expect(storage.root.toImmutable()).toEqual(data),
+    expectStorage: (data: ToJson<S>) =>
+      expect(storage.root.toJSON()).toEqual(data),
 
     expectMessagesSent: (
       messages: (ClientMsg<JsonObject, Json> | ClientMsg<JsonObject, Json>[])[]
@@ -347,17 +346,17 @@ export async function prepareStorageTest<
     })
   );
 
-  const states: ToImmutable<S>[] = [];
+  const states: ToJson<S>[] = [];
 
-  function expectBothClientStoragesToEqual(data: ToImmutable<S>) {
-    expect(subject.storage.root.toImmutable()).toEqual(data);
-    expect(ref.storage.root.toImmutable()).toEqual(data);
+  function expectBothClientStoragesToEqual(data: ToJson<S>) {
+    expect(subject.storage.root.toJSON()).toEqual(data);
+    expect(ref.storage.root.toJSON()).toEqual(data);
     expect(subject.room[kInternal].nodeCount).toBe(
       ref.room[kInternal].nodeCount
     );
   }
 
-  function expectStorage(data: ToImmutable<S>) {
+  function expectStorage(data: ToJson<S>) {
     states.push(data);
     expectBothClientStoragesToEqual(data);
   }

@@ -1,8 +1,9 @@
 import type {
   History,
   JsonObject,
+  ReadonlyJsonObject,
   Resolve,
-  ToImmutable,
+  ToJson,
 } from "@liveblocks/core";
 import { kInternal, LiveMap, LiveObject } from "@liveblocks/core";
 import { useHistory, useMutation, useStorage } from "@liveblocks/react";
@@ -359,6 +360,45 @@ function applyEdgeChanges<E extends Edge>(
   }
 }
 
+// TODO (LB-3665): To support sub-nodes, this function will need to emit nodes
+// in topological order (parents before children), deferring any node with a
+// parentId until its parent has been emitted.
+function nodeMapToList<N extends Node>(
+  nodesMap: ReadonlyJsonObject | null
+): N[] | null {
+  if (nodesMap === null) return null;
+  return Object.values(nodesMap) as unknown as N[];
+}
+
+function edgeMapToList<E extends Edge>(
+  edgesMap: ReadonlyJsonObject | null
+): E[] | null {
+  if (edgesMap === null) return null;
+  return Object.values(edgesMap) as unknown as E[];
+}
+
+function useNodesAndEdges<N extends Node, E extends Edge>(storageKey: string) {
+  // Storage already includes local overlays via toJSON(), so no separate local
+  // layer is needed. Individual node/edge immutable references are already
+  // stable (only change when the underlying LiveObject changes).
+  const nodesMap = useStorage((storage) => {
+    const flow = storage[storageKey] as
+      | ToJson<InternalLiveblocksFlow>
+      | undefined;
+    return flow?.nodes ?? null;
+  });
+  const edgesMap = useStorage((storage) => {
+    const flow = storage[storageKey] as
+      | ToJson<InternalLiveblocksFlow>
+      | undefined;
+    return flow?.edges ?? null;
+  });
+
+  const nodes = useMemo(() => nodeMapToList<N>(nodesMap), [nodesMap]);
+  const edges = useMemo(() => edgeMapToList<E>(edgesMap), [edgesMap]);
+  return { nodes, edges };
+}
+
 /**
  * Returns a controlled React Flow state backed by Liveblocks Storage.
  *
@@ -421,21 +461,7 @@ export function useLiveblocksFlow<
     [frozenOptions]
   );
 
-  // Storage already includes local overlays via toImmutable(), so no
-  // separate local layer is needed. Individual node/edge immutable references
-  // are already stable (only change when the underlying LiveObject changes).
-  const nodes = useStorage((storage) => {
-    const flow = storage[frozenOptions.storageKey] as
-      | ToImmutable<InternalLiveblocksFlow>
-      | undefined;
-    return flow?.nodes ? ([...flow.nodes.values()] as unknown as N[]) : null;
-  });
-  const edges = useStorage((storage) => {
-    const flow = storage[frozenOptions.storageKey] as
-      | ToImmutable<InternalLiveblocksFlow>
-      | undefined;
-    return flow?.edges ? ([...flow.edges.values()] as unknown as E[]) : null;
-  });
+  const { nodes, edges } = useNodesAndEdges<N, E>(frozenOptions.storageKey);
 
   const onNodesChange = useMutation(
     ({ storage }, changes: NodeChange<N>[]) => {

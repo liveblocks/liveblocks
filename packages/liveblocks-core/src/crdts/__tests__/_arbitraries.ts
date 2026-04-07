@@ -16,11 +16,24 @@ export const json = fc
 
 export const jsonObject: fc.Arbitrary<JsonObject> = fc.dictionary(key, json);
 
-export const { liveList, liveMap, liveObject, liveStructure, lson } = fc.letrec(
-  (tie) => ({
+interface LsonArbitraryOptions {
+  /** Generates Live trees that can include LiveMaps. Defaults to true. */
+  withLiveMap?: boolean;
+}
+
+function makeLsonArbitraries(options?: LsonArbitraryOptions) {
+  const withLiveMap = options?.withLiveMap ?? true;
+
+  return fc.letrec((tie) => ({
     lson: fc.oneof(json, tie("liveStructure")).map((x) => x as Lson),
     liveStructure: fc
-      .oneof(tie("liveList"), tie("liveMap"), tie("liveObject"))
+      .oneof(
+        ...[
+          tie("liveList"),
+          tie("liveObject"),
+          ...(withLiveMap ? [tie("liveMap")] : []),
+        ]
+      )
       .map((x) => x as LiveStructure),
     liveList: fc.array(tie("lson")).map((x) => new LiveList(x as Lson[])),
     liveMap: fc
@@ -31,5 +44,12 @@ export const { liveList, liveMap, liveObject, liveStructure, lson } = fc.letrec(
       .map(
         (pairs) => new LiveObject(Object.fromEntries(pairs as [string, Lson][]))
       ),
-  })
-);
+  }));
+}
+
+export const { liveList, liveMap, liveObject, liveStructure, lson } =
+  makeLsonArbitraries();
+
+export const { liveStructure: liveStructureWithoutMap } = makeLsonArbitraries({
+  withLiveMap: false,
+});
