@@ -18,6 +18,11 @@ For full upgrade instructions, see the
   JSON snapshot, only mutating what changed.
 - `initialStorage` accepts `LiveObject.from()` result directly.
 
+### `@liveblocks/react-flow`
+
+- New `mutateFlow()` API for reading and mutating React Flow documents from a
+  Node.js backend. Import from `@liveblocks/react-flow/node`.
+
 ### `@liveblocks/zustand` and `@liveblocks/redux`
 
 - Fix: Initial storage seeding no longer creates an undo frame.
