@@ -1,0 +1,12 @@
+@import "tailwindcss";
+
+:root {
+  --background: #fafaf9;
+  --foreground: #1c1917;
+  --lb-bg: #fafaf9;
+}
+
+/* Tame default composer chrome for a minimal sidebar */
+.lb-composer-minimal :where([data-slot="toolbar"]) {
+  opacity: 0.85;
+}

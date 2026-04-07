@@ -13,7 +13,8 @@
     "e2e/next-ai-kitchen-sink",
     "e2e/next-react-flow-kitchen-sink",
     "e2e/next-sandbox",
-    "e2e/node-sandbox"
+    "e2e/node-sandbox",
+    "examples/liveblocks-chat"
   ],
   "scripts": {
     "build": "turbo run build",
