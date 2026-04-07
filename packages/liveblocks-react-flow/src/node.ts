@@ -166,7 +166,7 @@ export async function mutateFlow<
       }
     }
 
-    const doc: MutableFlow<N, E> = {
+    const mutableFlow: MutableFlow<N, E> = {
       get nodes() {
         return getNodes();
       },
@@ -184,7 +184,7 @@ export async function mutateFlow<
       },
       addNodes(nodes: N[]) {
         for (const node of nodes) {
-          doc.addNode(node);
+          mutableFlow.addNode(node);
         }
       },
       updateNode(id: string, partialOrUpdater: Partial<N> | ((node: N) => N)) {
@@ -205,7 +205,7 @@ export async function mutateFlow<
           | Partial<N["data"]>
           | (<D extends N["data"]>(data: D) => D)
       ) {
-        return doc.updateNode(id, (node) => {
+        return mutableFlow.updateNode(id, (node) => {
           const currData = node.data ?? ({} as N["data"]);
           const newData =
             typeof partialOrUpdater === "function"
@@ -228,7 +228,7 @@ export async function mutateFlow<
       },
       addEdges(edges: E[]) {
         for (const edge of edges) {
-          doc.addEdge(edge);
+          mutableFlow.addEdge(edge);
         }
       },
       updateEdge(id: string, partialOrUpdater: Partial<E> | ((edge: E) => E)) {
@@ -249,7 +249,7 @@ export async function mutateFlow<
           | Partial<NonNullable<E["data"]>>
           | (<D extends E["data"]>(data: D) => D)
       ) {
-        return doc.updateEdge(id, (edge) => {
+        return mutableFlow.updateEdge(id, (edge) => {
           const currData = edge.data;
           const newData =
             typeof partialOrUpdater === "function"
@@ -268,6 +268,6 @@ export async function mutateFlow<
       },
     };
 
-    await callback(doc);
+    await callback(mutableFlow);
   });
 }
