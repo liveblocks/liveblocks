@@ -58,6 +58,13 @@ need to be updated separately when a new version is published.
 
 All documentation lives in the `docs/` directory, as Markdown files.
 
+# Changelog
+
+CHANGELOG.md entries should use public-facing package names as subheadings (e.g.
+``### `@liveblocks/client` `` or ``### `@liveblocks/react` ``), not generic
+categories like "Breaking changes" or "New features". Avoid referencing
+`@liveblocks/core` — it is not a public-facing package.
+
 # Packages maintained elsewhere
 
 The following packages are primarily maintained from our backend monorepo for
