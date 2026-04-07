@@ -3,7 +3,7 @@
 import type { Edge, Node } from "@xyflow/react";
 import { expectError, expectType } from "tsd";
 
-import type { FlowDocument } from "../dist/node";
+import type { MutableFlow } from "../dist/node";
 
 // -- Custom types used by the tests below --
 
@@ -14,22 +14,23 @@ type CustomEdgeData = { weight: number };
 type CustomEdge = Edge<CustomEdgeData, "weighted">;
 
 /**
- * FlowDocument with custom node/edge types — getters
+ * MutableFlow with custom node/edge types — getters
  */
 {
-  const doc = {} as FlowDocument<CustomNode, CustomEdge>;
+  const doc = {} as MutableFlow<CustomNode, CustomEdge>;
 
+  expectType<CustomNode[]>(doc.nodes);
+  expectType<CustomEdge[]>(doc.edges);
+  expectType<{ nodes: CustomNode[]; edges: CustomEdge[] }>(doc.toJSON());
   expectType<CustomNode | undefined>(doc.getNode("n1"));
   expectType<CustomEdge | undefined>(doc.getEdge("e1"));
-  expectType<CustomNode[]>(doc.getNodes());
-  expectType<CustomEdge[]>(doc.getEdges());
 }
 
 /**
- * FlowDocument — addNode requires correct shape
+ * MutableFlow — addNode requires correct shape
  */
 {
-  const doc = {} as FlowDocument<CustomNode, CustomEdge>;
+  const doc = {} as MutableFlow<CustomNode, CustomEdge>;
 
   // Correct node should be accepted
   doc.addNode({
@@ -61,10 +62,10 @@ type CustomEdge = Edge<CustomEdgeData, "weighted">;
 }
 
 /**
- * FlowDocument — addEdge requires correct shape
+ * MutableFlow — addEdge requires correct shape
  */
 {
-  const doc = {} as FlowDocument<CustomNode, CustomEdge>;
+  const doc = {} as MutableFlow<CustomNode, CustomEdge>;
 
   // Correct edge should be accepted
   doc.addEdge({
@@ -88,10 +89,10 @@ type CustomEdge = Edge<CustomEdgeData, "weighted">;
 }
 
 /**
- * FlowDocument — updateNode
+ * MutableFlow — updateNode
  */
 {
-  const doc = {} as FlowDocument<CustomNode, CustomEdge>;
+  const doc = {} as MutableFlow<CustomNode, CustomEdge>;
 
   // Partial update
   doc.updateNode("n1", { position: { x: 10, y: 20 } });
@@ -104,10 +105,10 @@ type CustomEdge = Edge<CustomEdgeData, "weighted">;
 }
 
 /**
- * FlowDocument — updateNodeData
+ * MutableFlow — updateNodeData
  */
 {
-  const doc = {} as FlowDocument<CustomNode, CustomEdge>;
+  const doc = {} as MutableFlow<CustomNode, CustomEdge>;
 
   // Partial data update with known key
   doc.updateNodeData("n1", { priority: 2 });
@@ -123,10 +124,10 @@ type CustomEdge = Edge<CustomEdgeData, "weighted">;
 }
 
 /**
- * FlowDocument — updateEdgeData
+ * MutableFlow — updateEdgeData
  */
 {
-  const doc = {} as FlowDocument<CustomNode, CustomEdge>;
+  const doc = {} as MutableFlow<CustomNode, CustomEdge>;
 
   // Partial data update with known key
   doc.updateEdgeData("e1", { weight: 5 });

@@ -118,8 +118,8 @@ describe("mutateFlow", () => {
     const roomId = await initRoom();
 
     await mutateFlow({ client, roomId }, (flow) => {
-      expect(flow.getNodes()).toEqual([]);
-      expect(flow.getEdges()).toEqual([]);
+      expect(flow.nodes).toEqual([]);
+      expect(flow.edges).toEqual([]);
     });
   });
 
@@ -161,13 +161,48 @@ describe("mutateFlow", () => {
     });
 
     await mutateFlow({ client, roomId }, (flow) => {
-      const nodes = flow.getNodes();
+      const nodes = flow.nodes;
       expect(nodes).toHaveLength(1);
       expect(nodes[0]).toMatchObject({ id: "n1", data: { label: "Hello" } });
 
-      const edges = flow.getEdges();
+      const edges = flow.edges;
       expect(edges).toHaveLength(1);
       expect(edges[0]).toMatchObject({ id: "e1", source: "n1", target: "n2" });
+    });
+  });
+
+  // -- toJSON --
+
+  test("toJSON returns both nodes and edges", async () => {
+    const roomId = await initRoom();
+
+    await mutateFlow({ client, roomId }, (flow) => {
+      flow.addNode({
+        id: "n1",
+        type: "default",
+        position: { x: 0, y: 0 },
+        data: { label: "A" },
+      });
+      flow.addEdge({ id: "e1", source: "n1", target: "n2" });
+
+      const { nodes, edges } = flow;
+      expect(nodes).toHaveLength(1);
+      expect(nodes[0]).toMatchObject({ id: "n1" });
+      expect(edges).toHaveLength(1);
+      expect(edges[0]).toMatchObject({ id: "e1" });
+
+      // JSON.stringify calls toJSON() automatically
+      expect(JSON.parse(JSON.stringify(flow))).toEqual({
+        nodes: [
+          {
+            id: "n1",
+            type: "default",
+            position: { x: 0, y: 0 },
+            data: { label: "A" },
+          },
+        ],
+        edges: [{ id: "e1", source: "n1", target: "n2" }],
+      });
     });
   });
 
@@ -211,7 +246,7 @@ describe("mutateFlow", () => {
         data: { label: "New" },
       });
 
-      const nodes = flow.getNodes();
+      const nodes = flow.nodes;
       expect(nodes).toHaveLength(1);
       expect(nodes[0]).toMatchObject({
         id: "n1",
@@ -247,7 +282,7 @@ describe("mutateFlow", () => {
         },
       ]);
 
-      expect(flow.getNodes()).toHaveLength(2);
+      expect(flow.nodes).toHaveLength(2);
     });
   });
 
@@ -304,7 +339,7 @@ describe("mutateFlow", () => {
 
     await mutateFlow({ client, roomId }, (flow) => {
       flow.updateNode("nonexistent", { position: { x: 1, y: 1 } });
-      expect(flow.getNodes()).toHaveLength(0);
+      expect(flow.nodes).toHaveLength(0);
     });
   });
 
@@ -361,7 +396,7 @@ describe("mutateFlow", () => {
 
     await mutateFlow({ client, roomId }, (flow) => {
       flow.updateNodeData("nonexistent", { label: "X" });
-      expect(flow.getNodes()).toHaveLength(0);
+      expect(flow.nodes).toHaveLength(0);
     });
   });
 
@@ -389,8 +424,8 @@ describe("mutateFlow", () => {
 
     await mutateFlow({ client, roomId }, (flow) => {
       flow.removeNode("n1");
-      expect(flow.getNodes()).toHaveLength(1);
-      expect(flow.getNodes()[0]).toMatchObject({ id: "n2" });
+      expect(flow.nodes).toHaveLength(1);
+      expect(flow.nodes[0]).toMatchObject({ id: "n2" });
     });
   });
 
@@ -422,8 +457,8 @@ describe("mutateFlow", () => {
 
     await mutateFlow({ client, roomId }, (flow) => {
       flow.removeNodes(["n1", "n3"]);
-      expect(flow.getNodes()).toHaveLength(1);
-      expect(flow.getNodes()[0]).toMatchObject({ id: "n2" });
+      expect(flow.nodes).toHaveLength(1);
+      expect(flow.nodes[0]).toMatchObject({ id: "n2" });
     });
   });
 
@@ -434,8 +469,8 @@ describe("mutateFlow", () => {
 
     await mutateFlow({ client, roomId }, (flow) => {
       flow.addEdge({ id: "e1", source: "n1", target: "n2" });
-      expect(flow.getEdges()).toHaveLength(1);
-      expect(flow.getEdges()[0]).toMatchObject({
+      expect(flow.edges).toHaveLength(1);
+      expect(flow.edges[0]).toMatchObject({
         id: "e1",
         source: "n1",
         target: "n2",
@@ -451,7 +486,7 @@ describe("mutateFlow", () => {
         { id: "e1", source: "n1", target: "n2" },
         { id: "e2", source: "n2", target: "n3" },
       ]);
-      expect(flow.getEdges()).toHaveLength(2);
+      expect(flow.edges).toHaveLength(2);
     });
   });
 
@@ -486,7 +521,7 @@ describe("mutateFlow", () => {
 
     await mutateFlow({ client, roomId }, (flow) => {
       flow.updateEdge("nonexistent", { label: "X" });
-      expect(flow.getEdges()).toHaveLength(0);
+      expect(flow.edges).toHaveLength(0);
     });
   });
 
@@ -541,8 +576,8 @@ describe("mutateFlow", () => {
 
     await mutateFlow({ client, roomId }, (flow) => {
       flow.removeEdge("e1");
-      expect(flow.getEdges()).toHaveLength(1);
-      expect(flow.getEdges()[0]).toMatchObject({ id: "e2" });
+      expect(flow.edges).toHaveLength(1);
+      expect(flow.edges[0]).toMatchObject({ id: "e2" });
     });
   });
 
@@ -558,7 +593,7 @@ describe("mutateFlow", () => {
 
     await mutateFlow({ client, roomId }, (flow) => {
       flow.removeEdges(["e1", "e2"]);
-      expect(flow.getEdges()).toHaveLength(0);
+      expect(flow.edges).toHaveLength(0);
     });
   });
 
@@ -577,8 +612,8 @@ describe("mutateFlow", () => {
     });
 
     await mutateFlow({ client, roomId, storageKey: "myFlow" }, (flow) => {
-      expect(flow.getNodes()).toHaveLength(1);
-      expect(flow.getNodes()[0]).toMatchObject({
+      expect(flow.nodes).toHaveLength(1);
+      expect(flow.nodes[0]).toMatchObject({
         id: "n1",
         data: { label: "Custom" },
       });
@@ -586,7 +621,7 @@ describe("mutateFlow", () => {
 
     // Default storage key should still be empty
     await mutateFlow({ client, roomId }, (flow) => {
-      expect(flow.getNodes()).toHaveLength(0);
+      expect(flow.nodes).toHaveLength(0);
     });
   });
 
@@ -606,7 +641,7 @@ describe("mutateFlow", () => {
 
     // Second call should see the persisted data
     await mutateFlow({ client, roomId }, (flow) => {
-      const nodes = flow.getNodes();
+      const nodes = flow.nodes;
       expect(nodes).toHaveLength(1);
       expect(nodes[0]).toMatchObject({
         id: "n1",
@@ -639,14 +674,14 @@ describe("mutateFlow", () => {
       });
       flow.addEdge({ id: "e1", source: "n1", target: "n2" });
 
-      expect(flow.getNodes()).toHaveLength(2);
-      expect(flow.getEdges()).toHaveLength(1);
+      expect(flow.nodes).toHaveLength(2);
+      expect(flow.edges).toHaveLength(1);
 
       flow.updateNodeData("n1", { v: 10 });
       expect(flow.getNode("n1")?.data).toMatchObject({ v: 10 });
 
       flow.removeNode("n2");
-      expect(flow.getNodes()).toHaveLength(1);
+      expect(flow.nodes).toHaveLength(1);
     });
   });
 
@@ -787,7 +822,7 @@ describe("mutateFlow", () => {
         data: { label: "Replaced" },
       });
 
-      expect(flow.getNodes()).toHaveLength(1);
+      expect(flow.nodes).toHaveLength(1);
       expect(flow.getNode("n1")).toMatchObject({
         position: { x: 99, y: 99 },
         data: { label: "Replaced" },

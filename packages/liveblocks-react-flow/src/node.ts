@@ -41,11 +41,13 @@ export interface MutateFlowOptions<
   edges?: { sync?: EdgeSyncConfig<E> };
 }
 
-export interface FlowDocument<N extends Node, E extends Edge> {
+export interface MutableFlow<N extends Node, E extends Edge> {
+  readonly nodes: N[];
+  readonly edges: E[];
+  toJSON(): { nodes: N[]; edges: E[] };
+
   getNode(id: string): N | undefined;
   getEdge(id: string): E | undefined;
-  getNodes(): N[];
-  getEdges(): E[];
 
   addNode(node: N): void;
   addNodes(nodes: N[]): void;
@@ -70,14 +72,12 @@ export interface FlowDocument<N extends Node, E extends Edge> {
   ): void;
   removeEdge(id: string): void;
   removeEdges(ids: string[]): void;
-
-  // TBD: Enable this API later
-  // mutate(updater: (state: [N[], E[]]) => [N[], E[]]): void;
 }
 
 /**
- * Opens a Flow document for reading and mutating, then automatically
- * flushes all changes when the callback completes.
+ * Opens a "Flow document" (a collection of nodes and edges) for reading and
+ * mutating, then automatically flushes all changes when the callback
+ * completes.
  *
  * @example
  * ```ts
@@ -92,7 +92,7 @@ export async function mutateFlow<
   E extends Edge = BuiltInEdge,
 >(
   options: MutateFlowOptions<N, E>,
-  callback: (flow: FlowDocument<N, E>) => void | Promise<void>
+  callback: (flow: MutableFlow<N, E>) => void | Promise<void>
 ): Promise<void> {
   const { client, roomId } = options;
   const storageKey = options.storageKey ?? DEFAULT_STORAGE_KEY;
@@ -163,11 +163,18 @@ export async function mutateFlow<
       }
     }
 
-    const doc: FlowDocument<N, E> = {
+    const doc: MutableFlow<N, E> = {
+      get nodes() {
+        return getNodes();
+      },
+      get edges() {
+        return getEdges();
+      },
+      toJSON() {
+        return { nodes: getNodes(), edges: getEdges() };
+      },
       getNode,
       getEdge,
-      getNodes,
-      getEdges,
 
       addNode(node: N) {
         upsertNode(node.id, node);
