@@ -7,7 +7,7 @@ import pkg from "./package.json" with { type: "json" };
 
 export default createConfig({
   pkg,
-  entries: ["src/index.ts"],
+  entries: ["src/index.ts", "src/node.ts"],
   styles: [
     {
       entry: "src/styles/index.css",

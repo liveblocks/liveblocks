@@ -19,6 +19,17 @@
         "default": "./dist/index.cjs"
       }
     },
+    "./node": {
+      "import": {
+        "types": "./dist/node.d.ts",
+        "default": "./dist/node.js"
+      },
+      "require": {
+        "types": "./dist/node.d.cts",
+        "module": "./dist/node.js",
+        "default": "./dist/node.cjs"
+      }
+    },
     "./styles.css": {
       "types": "./styles.css.d.cts",
       "default": "./styles.css"
@@ -37,6 +48,7 @@
     "build": "rollup --config rollup.config.js",
     "start": "npm run dev",
     "format": "(eslint --fix src/ || true) && stylelint --fix src/styles/ && prettier --write src/",
+    "lint:package": "publint --strict && attw --pack --profile node16",
     "lint": "eslint src/ && stylelint src/styles/",
     "test": "npx liveblocks dev -p 1154 -c 'vitest run --coverage'",
     "test:ci": "vitest run",
@@ -64,6 +76,7 @@
   },
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
+    "@liveblocks/node": "*",
     "@liveblocks/rollup-config": "*",
     "@liveblocks/vitest-config": "*",
     "@testing-library/jest-dom": "^6.4.6",
