@@ -12,7 +12,7 @@ import type { GlobalOverrides } from "../overrides";
 import { useOverrides } from "../overrides";
 import { cn } from "../utils/cn";
 import { px } from "../utils/px";
-import { Avatar, UserAvatar } from "./Avatar";
+import { UserAvatar } from "./Avatar";
 import { Tooltip, TooltipProvider } from "./internal/Tooltip";
 import { User } from "./internal/User";
 
@@ -151,29 +151,14 @@ export const AvatarStack = forwardRef<HTMLDivElement, AvatarStackProps>(
           ref={forwardedRef}
         >
           {visibleUsers.map((user, index) => {
-            return user.userId ? (
-              <Tooltip
+            return (
+              <UserAvatar
                 key={user.key}
-                content={<User userId={user.userId} />}
-                sideOffset={FLOATING_ELEMENT_SIDE_OFFSET}
-                collisionPadding={FLOATING_ELEMENT_COLLISION_PADDING}
-                side="top"
-                align="center"
-              >
-                <UserAvatar
-                  userId={user.userId}
-                  variant={variant}
-                  className="lb-avatar-stack-avatar"
-                  style={{ "--lb-avatar-stack-index": index } as CSSProperties}
-                />
-              </Tooltip>
-            ) : (
-              <Avatar
-                key={user.key}
-                name={$.USER_UNKNOWN}
-                tooltip={$.USER_UNKNOWN}
+                userId={user.userId ?? undefined}
+                variant={variant}
                 className="lb-avatar-stack-avatar"
                 style={{ "--lb-avatar-stack-index": index } as CSSProperties}
+                tooltip={<User userId={user.userId ?? undefined} />}
               />
             );
           })}

@@ -15,6 +15,7 @@ import {
 import { useOverrides } from "../overrides";
 import { cn } from "../utils/cn";
 import { getInitials } from "../utils/get-initials";
+import { px } from "../utils/px";
 import { Tooltip, TooltipProvider } from "./internal/Tooltip";
 
 export interface AvatarProps extends ComponentProps<"div"> {
@@ -34,9 +35,12 @@ export interface AvatarProps extends ComponentProps<"div"> {
   tooltip?: ReactNode;
 
   /**
-   * The avatar's outline color.
+   * Whether and how the avatar should have an outline.
    */
-  color?: string;
+  outline?:
+    | string
+    | boolean
+    | { color?: string; width?: string | number; gap?: string | number };
 
   /**
    * Override the avatar's content.
@@ -47,13 +51,18 @@ export interface AvatarProps extends ComponentProps<"div"> {
 export interface UserAvatarProps extends ComponentProps<"div"> {
   userId?: string;
   icon?: ReactNode;
+  tooltip?: ReactNode;
   variant?: "default" | "outline";
 }
 
 export interface GroupAvatarProps extends ComponentProps<"div"> {
   groupId?: string;
   icon?: ReactNode;
+  tooltip?: ReactNode;
+  variant?: "default" | "outline";
 }
+
+type MakeRequired<T, K extends keyof T> = Omit<T, K> & Required<Pick<T, K>>;
 
 export function Avatar({
   src,
@@ -61,7 +70,7 @@ export function Avatar({
   className,
   children,
   tooltip,
-  color,
+  outline,
   style,
   ...props
 }: AvatarProps) {
@@ -69,13 +78,24 @@ export function Avatar({
     () => (name ? getInitials(name) : undefined),
     [name]
   );
+  const resolvedOutline =
+    typeof outline === "object"
+      ? outline
+      : typeof outline === "string"
+        ? { color: outline }
+        : outline === true
+          ? {}
+          : undefined;
 
   const avatar = (
     <div
       className={cn("lb-avatar", className)}
+      data-variant={resolvedOutline ? "outline" : "default"}
       style={
         {
-          "--lb-avatar-color": color,
+          "--lb-avatar-outline-color": resolvedOutline?.color,
+          "--lb-avatar-outline-width": px(resolvedOutline?.width),
+          "--lb-avatar-outline-gap": px(resolvedOutline?.gap),
           ...style,
         } as CSSProperties
       }
@@ -115,19 +135,16 @@ function ResolvedUserAvatar({
   userId,
   icon,
   variant = "default",
+  tooltip,
   ...props
-}: ComponentProps<"div"> & {
-  userId: string;
-  icon?: ReactNode;
-  variant?: "default" | "outline";
-}) {
+}: MakeRequired<UserAvatarProps, "userId">) {
   const { user, isLoading } = useUser(userId);
 
   return (
     <Avatar
       src={user?.avatar}
       name={isLoading ? undefined : (user?.name ?? userId)}
-      color={
+      outline={
         variant === "outline"
           ? typeof user?.color === "string"
             ? user.color
@@ -135,6 +152,7 @@ function ResolvedUserAvatar({
           : undefined
       }
       data-loading={isLoading ? "" : undefined}
+      tooltip={tooltip}
       {...props}
     >
       {icon && (isLoading || !user?.avatar) ? icon : null}
@@ -146,27 +164,24 @@ function ResolvedGroupAvatar({
   groupId,
   icon,
   variant = "default",
+  tooltip,
   ...props
-}: ComponentProps<"div"> & {
-  groupId: string;
-  icon?: ReactNode;
-  variant?: "default" | "outline";
-}) {
+}: MakeRequired<GroupAvatarProps, "groupId">) {
   const { info, isLoading } = useGroupInfo(groupId);
-
-  const color =
-    variant === "outline"
-      ? typeof info?.color === "string"
-        ? info.color
-        : undefined
-      : undefined;
 
   return (
     <Avatar
       src={info?.avatar}
       name={isLoading ? undefined : (info?.name ?? groupId)}
-      color={color}
+      outline={
+        variant === "outline"
+          ? typeof info?.color === "string"
+            ? info.color
+            : undefined
+          : undefined
+      }
       data-loading={isLoading ? "" : undefined}
+      tooltip={tooltip}
       {...props}
     >
       {icon && (isLoading || !info?.avatar) ? icon : null}
@@ -187,7 +202,7 @@ export function UserAvatar({
 
   if (!userId) {
     return (
-      <Avatar name={$.USER_UNKNOWN} {...props}>
+      <Avatar name={$.USER_UNKNOWN} outline={variant === "outline"} {...props}>
         {icon}
       </Avatar>
     );
@@ -206,10 +221,26 @@ export function UserAvatar({
 /**
  * @private
  */
-export function GroupAvatar({ groupId, icon, ...props }: GroupAvatarProps) {
+export function GroupAvatar({
+  groupId,
+  icon,
+  variant = "default",
+  ...props
+}: GroupAvatarProps) {
   if (!groupId) {
-    return <Avatar {...props}>{icon}</Avatar>;
+    return (
+      <Avatar outline={variant === "outline"} {...props}>
+        {icon}
+      </Avatar>
+    );
   }
 
-  return <ResolvedGroupAvatar groupId={groupId} icon={icon} {...props} />;
+  return (
+    <ResolvedGroupAvatar
+      groupId={groupId}
+      icon={icon}
+      variant={variant}
+      {...props}
+    />
+  );
 }

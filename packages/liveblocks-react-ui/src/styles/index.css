@@ -1027,9 +1027,6 @@
  *************************************/
 
 .lb-avatar {
-  --lb-avatar-outline-gap: 2px;
-  --lb-avatar-outline-width: 2px;
-
   position: relative;
   container-type: inline-size;
   display: flex;
@@ -1037,17 +1034,23 @@
   align-items: center;
   overflow: hidden;
   aspect-ratio: 1;
-  padding: var(--lb-avatar-outline-gap);
-  border: var(--lb-avatar-outline-width) solid
-    var(--lb-avatar-color, var(--lb-accent));
   border-radius: var(--lb-avatar-radius);
   background: var(--lb-foreground-subtle);
-  background-clip: content-box;
   color: var(--lb-foreground-moderate);
 
   &:where([data-loading]) {
     background: var(--lb-foreground);
     opacity: $lb-loading-opacity;
+  }
+
+  &:where([data-variant="outline"]) {
+    --lb-avatar-outline-gap: 2px;
+    --lb-avatar-outline-width: 2px;
+
+    padding: var(--lb-avatar-outline-gap);
+    border: var(--lb-avatar-outline-width) solid
+      var(--lb-avatar-outline-color, var(--lb-accent));
+    background-clip: content-box;
   }
 }
 
