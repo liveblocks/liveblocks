@@ -41,6 +41,9 @@ a **👀** reaction to the message, calls **`streamText`** with Claude
 (`claude-sonnet-4-20250514` by default), and **`stream`s the model output into
 the thread** as the bot's reply.
 
+Additionally, it subscribes the bot to the thread, meaning it will respond to
+all future comments inside the thread, without being mentioned.
+
 The bot **does not** handle comment reactions (there is no `onReaction`
 handler). The system prompt in [`app/bot.ts`](app/bot.ts) explains Liveblocks
 **CommentBody** limits so the model favors formatting that survives in comments.

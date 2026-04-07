@@ -7,6 +7,7 @@ import {
   AiUserMessage,
   Chat,
   Message,
+  Thread,
 } from "chat";
 import {
   createLiveblocksAdapter,
@@ -45,6 +46,19 @@ export const bot = new Chat<{ liveblocks: LiveblocksAdapter }>({
 
 // Handle @-mentions of the bot
 bot.onNewMention(async (thread, message) => {
+  // After AI is mentioned, subscribe and have it respond to all messages in the thread
+  await thread.subscribe();
+
+  await postAiResponse(thread, message);
+});
+
+// Handle replying to further comments in the subscribed thread
+bot.onSubscribedMessage(async (thread, message) => {
+  await postAiResponse(thread, message);
+});
+
+// Generate an AI response to the message
+async function postAiResponse(thread: Thread, message: Message) {
   await thread.adapter.addReaction(thread.id, message.id, "👀");
 
   const model = createAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })(
@@ -56,8 +70,9 @@ bot.onNewMention(async (thread, message) => {
     system: SYSTEM_PROMPT,
     messages: [await convertChatMessageToAiMessage(message)],
   });
+
   await thread.post(response.fullStream);
-});
+}
 
 async function convertChatMessageToAiMessage(
   message: Message
