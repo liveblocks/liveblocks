@@ -20,7 +20,13 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 15 (2026-04-10)
 
+## Liveblocks dev server (v1.4.0)
+
+- Add support for `client.mutateStorage()` (from `@liveblocks/node`)
+
 ## Contributors
+
+nvie
 
 # Week 14 (2026-04-03)
 
