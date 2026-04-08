@@ -24,16 +24,16 @@ For full upgrade instructions, see the
   backend. Install via `npm i @liveblocks/react-flow`, import from
   `@liveblocks/react-flow/node`.
 
-### `@liveblocks/zustand` and `@liveblocks/redux`
-
-- Fix: Initial storage seeding no longer creates an undo frame.
-- Fix: Presence updates are now batched with storage updates.
-
 ### `@liveblocks/react-ui`
 
 - Add standalone `Avatar` component to complement `AvatarStack` for more
   fine-grained customization.
 - Add `variant` prop to `AvatarStack` to support outlined avatars.
+
+### `@liveblocks/zustand` and `@liveblocks/redux`
+
+- Fix: Initial storage seeding no longer creates an undo frame.
+- Fix: Presence updates are now batched with storage updates.
 
 ## v3.17.0
 
