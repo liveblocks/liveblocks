@@ -6,7 +6,7 @@ import { Suspense } from "react";
 import { describe, expect, test } from "vitest";
 
 import { useLiveblocksFlow } from "../index";
-import type { LiveblocksFlow } from "../types";
+import type { LiveblocksFlow } from "../lib/types";
 import { render, renderHook } from "./_utils";
 
 const NODES: BuiltInNode[] = [
