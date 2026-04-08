@@ -21,8 +21,38 @@ jobs:
           echo Triggering deployment for nextjs-3d-builder
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_ODKBX4EuSUo19sF7UcUUEUjULL50/ur6dsTOSvu; echo
 
+          echo Triggering deployment for nextjs-ai-app-builder
+          curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_5PbrFsltmp5BKHnsBMAAHuJsj3lc/KiSCa1m4tB; echo
+
+          echo Triggering deployment for nextjs-ai-calendar
+          curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_H7bFg3Aslr8x4sOrwDTNwY4pPUvH/7lC9fUdumy; echo
+
+          echo Triggering deployment for nextjs-ai-dashboard-reports
+          curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_4sGozV6komE0oZ3pLCfmq2BmsKHQ/6JL2UE6nNU; echo
+
+          echo Triggering deployment for nextjs-ai-chats
+          curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_s3I6El0fFejHHo1mKmdmZwszO1Ez/Rp1uaVialk; echo
+
+          echo Triggering deployment for nextjs-ai-popup
+          curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_Dej5iVX3gTDoMyl4Zz7eQCeanbTL/ApOZUtheJg; echo
+
+          echo Triggering deployment for nextjs-ai-support
+          curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_EzObSh8qN6zbbRrIHTcjqtRZ5vre/TjSG9uidvC; echo
+
+          echo Triggering deployment for nextjs-blocknote
+          curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_3XoFyLmK5Gtx5twKRTGWFV0jcaUo/1u7c9EF5UX; echo
+
+          echo Triggering deployment for nextjs-chat-sdk-bot
+          curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_a4iBQG1ShzA12DyRjkpoI0U9tBSv/9ZYEH7EaZN; echo
+
+          echo Triggering deployment for nextjs-chat-sdk-ai-bot
+          curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_Wu8bdNCysHzkw6qpVjM11idJtbN5/9mplaVzS9X; echo
+
           echo Triggering deployment for nextjs-comments
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_n44ypzbdWsirLcq3ZSSJ1wLoCAjQ/QWFQY2wKrB; echo
+
+          echo Triggering deployment for nextjs-comments-ag-grid
+          curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_JdEZqlsSgHYvnKEtGcfyGnZvSTUn/6gaMVzgYrd; echo
 
           echo Triggering deployment for nextjs-comments-ai
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_3ywNY3BnasLn51n9GRlUDp65tpo6/TTkfwrbB0X; echo
@@ -33,6 +63,9 @@ jobs:
           echo Triggering deployment for nextjs-comments-canvas
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_yFy3klLqgmfMNMZI6FVhBj5w5UIl/hS0RaUAXGw; echo
 
+          echo Triggering deployment for nextjs-comments-emails-resend
+          curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_Ht9CiMBXOz7fYMoPGvW0BiSXDeJa/zjNQ0VUNX6; echo
+
           echo Triggering deployment for nextjs-comments-notifications
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_NeiWF6wVsvMmaLaje9MfWNelU0Ms/HU8HBQCHF4; echo
 
@@ -41,6 +74,9 @@ jobs:
 
           echo Triggering deployment for nextjs-comments-primitives
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_OEUy8nEYDuKAfOtVKyNy4w3mxoFb/FtJGZAxTFm; echo
+
+          echo Triggering deployment for nextjs-comments-search
+          curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_Spr2FA4X6qq9AVT072XA6RbpOndc/h4fqsUj4Il; echo
 
           echo Triggering deployment for nextjs-comments-tiptap
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_uNQF4JRW3CMnoA08UWmLfSVVev5K/NusDhfUIma; echo
@@ -54,12 +90,18 @@ jobs:
           echo Triggering deployment for nextjs-dashboard
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_huuoeSxbMYvNmqcu9UYBUVfP8Cuh/JObDpsWO1x; echo
 
+          echo Triggering deployment for nextjs-flowchart-builder
+          curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_eIdloDR7ghI6tKtP1XcWtNvtzNv9/FL6HNiFmMn; echo
+
           echo Triggering deployment for nextjs-form
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_tkr9dMtcFdxzbrZeo0CFzgsqptKI/CTlpFDvYqB; echo
 
           echo Triggering deployment for nextjs-lexical
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_qeKoPfUCRuI6jvBqV556q8V29YtA/IpvamWQh6G; echo
-          
+
+          echo Triggering deployment for nextjs-lexical-emails-resend
+          curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_ty91zX0hZ71c1KmNKGyT3iGSP4Wr/SbFf4Ans0B; echo
+
           echo Triggering deployment for nextjs-linear-like-issue-tracker
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_ilOh5HbvxiAu723gnCAMBksCr3CH/3tTZc8ffgM; echo
 
@@ -86,19 +128,40 @@ jobs:
 
           echo Triggering deployment for nextjs-notifications-custom
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_3MVsF7dPIZBQdUpfzQjVvZ1dBmPp/x1sO6CecOJ; echo
-          
+
+          echo Triggering deployment for nextjs-notification-settings
+          curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_7B4Yq0uUx6AUog07rLG6VFc5R7O4/Xw8EbvIqRl; echo
+
           echo Triggering deployment for nextjs-notion-like-ai-editor
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_xvFy7XWt32Yz7gkigfCRZL6AeIBH/J4jKuBvLo8; echo
+
+          echo Triggering deployment for nextjs-react-flow
+          curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_dcdHWlkYszdGyDO62UJByXPHnMNt/lkQC88XdTH; echo
+
+          echo Triggering deployment for nextjs-react-flow-ai
+          curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_mfXSZ8ZM97E6dkp1OGqzvRqfdqoo/Byq4XMwEnk; echo
 
           echo Triggering deployment for nextjs-spreadsheet-advanced
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_ZJK9PEfgkfsqKRVjxFzwQgAVsdsF/gKp8sJ1f1c; echo
 
+          echo Triggering deployment for nextjs-tiptap
+          curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_LhH3Ag7MdSKWGicQRRIZRHMCacrm/cCpeyZEfFF; echo
+
+          echo Triggering deployment for nextjs-tiptap-advanced
+          curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_J8TT5NanEfJYgWrASs0hqsR6nGa3/QPgzsSe4NF; echo
+
+          echo Triggering deployment for nextjs-tiptap-emails-resend
+          curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_HmPx17FgTo7OY0XkBYnAzttKGm5R/kEYZ6eqhsA; echo
+
+          echo Triggering deployment for nextjs-tiptap-novel
+          curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_uoZ7A0CmwcswPxUqnCy51ds0GXaA/0W5pGVEbOJ; echo
+
           echo Triggering deployment for nextjs-tldraw-storage
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_mKM14iPdQfC3jH6jQhCKtBoasxQY/0AfEGfHLws; echo
-          
+
           echo Triggering deployment for nextjs-tldraw-yjs
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_g3L0m4dKUJ54aupCSjto2tNRjGD1/dH39Y2ZydF; echo
-          
+
           echo Triggering deployment for nextjs-todo-list
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_IzfUkw9eZuOyiS7LbvftjAo812Yk/KvR90vWuGh; echo
 
@@ -132,7 +195,7 @@ jobs:
           echo Triggering deployment for nextjs-yjs-tiptap
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_y3mEp1yQYraCLNghy7NcFcj5CPuS/JKf0W69EpG; echo
 
-          echo Triggering deployment for nextjs-yjs-tiptap-advanced
+          echo Triggering deployment for nextjs-tiptap-advanced
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_pCx1U7T80v9b2YS1JURFTFwOBjTe/PlnhiDwwts; echo
 
           echo Triggering deployment for nuxtjs-live-avatars
@@ -164,9 +227,6 @@ jobs:
 
           echo Triggering deployment for vuejs-live-cursors
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_hy7iXLmWo1okV1dgr2OrMCn9JMWt/t7E6OY5oIX; echo
-
-          echo Triggering deployment for zustand-flowchart
-          curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_pASCvZXKn5uwLtBt0UrstPs4VwDx/yB1yWVTEYs; echo
 
           echo Triggering deployment for zustand-todo-list
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_YJIYYvzKUnVTmDsf0qASayLp7qqh/sNDHSdAMku; echo
