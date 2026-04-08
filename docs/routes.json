@@ -806,7 +806,8 @@
       { "title": "Upgrading to 2.16", "path": "/upgrading/2.16" },
       { "title": "Upgrading to 2.24", "path": "/upgrading/2.24" },
       { "title": "Upgrading to 3.0", "path": "/upgrading/3.0" },
-      { "title": "Upgrading to 3.10", "path": "/upgrading/3.10" }
+      { "title": "Upgrading to 3.10", "path": "/upgrading/3.10" },
+      { "title": "Upgrading to 3.18", "path": "/upgrading/3.18" }
     ]
   },
   {
