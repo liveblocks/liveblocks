@@ -58,6 +58,10 @@ need to be updated separately when a new version is published.
 
 All documentation lives in the `docs/` directory, as Markdown files.
 
+When adding a new page (e.g. an upgrading guide), the `.mdx` file alone is not
+enough. You must also register it in `docs/routes.json` or it won't be
+routable.
+
 # Changelog
 
 CHANGELOG.md entries should use public-facing package names as subheadings (e.g.
