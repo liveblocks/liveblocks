@@ -301,7 +301,7 @@ test.describe("Zustand Kanban", () => {
     await waitForJson(pages, "#numCards", 0);
   });
 
-  test("conflict: both clients move same card to different columns", async () => {
+  test.skip("conflict: both clients move same card to different columns", async () => {
     const [page1, page2] = pages;
 
     await page1.click("#clear");

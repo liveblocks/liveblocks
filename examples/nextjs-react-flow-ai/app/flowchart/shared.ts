@@ -27,7 +27,6 @@ export const FLOWCHART_EDGE_TYPE = "smoothstep" as const;
 export const BLOCK_HANDLE_SIDES = ["top", "right", "bottom", "left"] as const;
 
 export type Point = { x: number; y: number };
-export type Frame = { position: Point; width?: number; height?: number };
 export type Bounds = { minX: number; minY: number; maxX: number; maxY: number };
 
 export type BlockShape = (typeof BLOCK_SHAPES)[number];
@@ -62,14 +61,14 @@ export function blockTargetHandleId(
   return `tgt-${side}`;
 }
 
-export function getNodeSize(node: Pick<Frame, "width" | "height">) {
+export function getNodeSize(node: FlowchartNode) {
   return {
     width: node.width ?? DEFAULT_BLOCK_SIZE,
     height: node.height ?? DEFAULT_BLOCK_SIZE,
   };
 }
 
-export function getNodeCenter(node: Frame): Point {
+export function getNodeCenter(node: FlowchartNode): Point {
   const { width, height } = getNodeSize(node);
 
   return {
@@ -78,8 +77,32 @@ export function getNodeCenter(node: Frame): Point {
   };
 }
 
+export function getBoundsFromNodes(
+  nodes: readonly FlowchartNode[]
+): Bounds | null {
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  let hasNodes = false;
+
+  for (const node of nodes) {
+    const { position } = node;
+    const { width, height } = getNodeSize(node);
+
+    minX = Math.min(minX, position.x);
+    minY = Math.min(minY, position.y);
+    maxX = Math.max(maxX, position.x + width);
+    maxY = Math.max(maxY, position.y + height);
+
+    hasNodes = true;
+  }
+
+  return hasNodes ? { minX, minY, maxX, maxY } : null;
+}
+
 export function flowPointToNormalized(
-  node: Frame,
+  node: FlowchartNode,
   flowX: number,
   flowY: number
 ): Point {
@@ -91,7 +114,10 @@ export function flowPointToNormalized(
   };
 }
 
-export function normalizedToFlowPoint(node: Frame, normalized: Point): Point {
+export function normalizedToFlowPoint(
+  node: FlowchartNode,
+  normalized: Point
+): Point {
   const { width, height } = getNodeSize(node);
 
   return {
@@ -101,7 +127,7 @@ export function normalizedToFlowPoint(node: Frame, normalized: Point): Point {
 }
 
 export function getNodeAtFlowPoint(
-  nodes: FlowchartNode[],
+  nodes: readonly FlowchartNode[],
   flow: Point
 ): FlowchartNode | undefined {
   return nodes.find((node) => {
@@ -130,8 +156,8 @@ export function easeInOutCubic(t: number) {
 }
 
 export function getEdgeHandlesForNodes(
-  sourceNode: Frame,
-  targetNode: Frame
+  sourceNode: FlowchartNode,
+  targetNode: FlowchartNode
 ): {
   sourceHandle: BlockSourceHandleId;
   targetHandle: BlockTargetHandleId;

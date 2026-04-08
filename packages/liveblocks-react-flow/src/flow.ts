@@ -28,11 +28,12 @@ import { addEdge as defaultAddEdge } from "@xyflow/react";
 import { useEffect, useMemo } from "react";
 
 import {
+  buildEdgeConfigCache,
+  buildNodeConfigCache,
   DEFAULT_STORAGE_KEY,
-  EDGE_BASE_CONFIG,
-  NODE_BASE_CONFIG,
-} from "./constants";
-import { toLiveblocksInternalEdge, toLiveblocksInternalNode } from "./helpers";
+  toLiveblocksInternalEdge,
+  toLiveblocksInternalNode,
+} from "./helpers";
 import type {
   EdgeSyncConfig,
   InternalLiveblocksEdge,
@@ -71,42 +72,6 @@ type LiveblocksFlowSuspenseResult<
   N extends Node = BuiltInNode,
   E extends Edge = BuiltInEdge,
 > = Extract<UseLiveblocksFlowResult<N, E>, { isLoading: false }>;
-
-function mergeAndBuildDataConfigCache(
-  base: SyncConfig,
-  data?: Record<string, SyncConfig | undefined>
-): (type: string | undefined) => SyncConfig {
-  if (!data) return () => base;
-
-  const dataFallback = data["*"];
-  const fallback = dataFallback ? { ...base, data: dataFallback } : base;
-
-  // Pre-compute full node/edge sync configs for all explicitly declared types
-  const cache = new Map<string | undefined, SyncConfig>();
-  for (const type in data) {
-    if (type === "*") continue;
-    const specific = data[type];
-    if (!specific) continue;
-    const dataConfig: SyncConfig = { ...dataFallback, ...specific };
-    cache.set(type, { ...base, data: dataConfig });
-  }
-
-  return (type) => cache.get(type) || fallback;
-}
-
-function buildNodeConfigCache<N extends Node>(
-  /** The user-provided node data sync configuration, if any. */
-  nodeDataConfig?: NodeSyncConfig<N>
-): (type: string | undefined) => SyncConfig {
-  return mergeAndBuildDataConfigCache(NODE_BASE_CONFIG, nodeDataConfig);
-}
-
-function buildEdgeConfigCache<E extends Edge>(
-  /** The user-provided edge data sync configuration, if any. */
-  edgeDataConfig?: EdgeSyncConfig<E>
-): (type: string | undefined) => SyncConfig {
-  return mergeAndBuildDataConfigCache(EDGE_BASE_CONFIG, edgeDataConfig);
-}
 
 type UseLiveblocksFlowOptions<N extends Node, E extends Edge> = {
   nodes?: {

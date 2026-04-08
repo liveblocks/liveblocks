@@ -7,7 +7,6 @@ detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 export type { CursorsCursorProps, CursorsProps } from "./cursors";
 export { Cursors } from "./cursors";
 export { useLiveblocksFlow } from "./flow";
-export { toLiveblocksEdge, toLiveblocksNode } from "./helpers";
 export type {
   EdgeSyncConfig,
   LiveblocksEdge,

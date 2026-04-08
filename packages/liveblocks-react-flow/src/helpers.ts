@@ -1,14 +1,85 @@
-import type { JsonObject, SyncConfig } from "@liveblocks/core";
+import type { JsonObject, SyncConfig, SyncMode } from "@liveblocks/core";
 import { LiveObject } from "@liveblocks/core";
 import type { Edge, Node } from "@xyflow/react";
 
-import { EDGE_BASE_CONFIG, NODE_BASE_CONFIG } from "./constants";
-import type {
-  InternalLiveblocksEdge,
-  InternalLiveblocksNode,
-  LiveblocksEdge,
-  LiveblocksNode,
-} from "./types";
+import type { InternalLiveblocksEdge, InternalLiveblocksNode } from "./types";
+
+export const DEFAULT_STORAGE_KEY = "flow";
+
+// React Flow specific versions of `SyncConfig` that only allow keys that are actually exposed by React Flow.
+type NodeSyncConfig = { [K in keyof Node]?: SyncMode };
+type EdgeSyncConfig = { [K in keyof Edge]?: SyncMode };
+
+export const NODE_BASE_CONFIG = {
+  // Local-only (not synced)
+  selected: false,
+  dragging: false,
+  measured: false,
+  resizing: false,
+
+  // Atomic (synced as plain Json)
+  position: "atomic",
+  sourcePosition: "atomic",
+  targetPosition: "atomic",
+  extent: "atomic",
+  origin: "atomic",
+  handles: "atomic",
+
+  // Note: the `data` key is intentionally left out of this base config, as it
+  // is expected to be provided by the end user
+} as const satisfies NodeSyncConfig;
+
+export const EDGE_BASE_CONFIG = {
+  // Local-only (not synced)
+  selected: false,
+
+  // Atomic (synced as plain Json)
+  markerStart: "atomic",
+  markerEnd: "atomic",
+  label: "atomic",
+  labelBgPadding: "atomic",
+
+  // Note: the `data` key is intentionally left out of this base config, as it
+  // is expected to be provided by the end user
+} as const satisfies EdgeSyncConfig;
+
+/**
+ * Merges a base config with per-type user data configs, returning a lookup
+ * function that resolves the full SyncConfig for a given type string.
+ */
+export function buildFlowDataConfigCache(
+  base: SyncConfig,
+  data?: Record<string, SyncConfig | undefined>
+): (type: string | undefined) => SyncConfig {
+  if (!data) return () => base;
+
+  const dataFallback = data["*"];
+  const fallback = dataFallback ? { ...base, data: dataFallback } : base;
+
+  // Pre-compute full sync configs for all explicitly declared types
+  const cache = new Map<string | undefined, SyncConfig>();
+  for (const type in data) {
+    if (type === "*") continue;
+    const specific = data[type];
+    if (!specific) continue;
+    const dataConfig: SyncConfig = { ...dataFallback, ...specific };
+    cache.set(type, { ...base, data: dataConfig });
+  }
+
+  return (type) => cache.get(type) || fallback;
+}
+
+export function buildNodeConfigCache(
+  nodeDataConfig?: Record<string, SyncConfig | undefined>
+): (type: string | undefined) => SyncConfig {
+  return buildFlowDataConfigCache(NODE_BASE_CONFIG, nodeDataConfig);
+}
+
+export function buildEdgeConfigCache(
+  edgeDataConfig?: Record<string, SyncConfig | undefined>
+): (type: string | undefined) => SyncConfig {
+  return buildFlowDataConfigCache(EDGE_BASE_CONFIG, edgeDataConfig);
+}
 
 export function toLiveblocksInternalNode<N extends Node>(
   node: N,
@@ -28,40 +99,4 @@ export function toLiveblocksInternalEdge<E extends Edge>(
     edge as unknown as JsonObject,
     config
   ) as InternalLiveblocksEdge;
-}
-
-/**
- * @experimental
- *
- * Converts a React Flow `Node` into a Liveblocks Storage version.
- * Keys marked `false` in config are set as local-only (not synced).
- * Keys marked `"atomic"` are stored as plain Json (no deep wrapping).
- * All other keys are deep-liveified (objects→LiveObject, arrays→LiveList).
- */
-export function toLiveblocksNode<N extends Node>(
-  node: N,
-  config?: SyncConfig
-): LiveblocksNode<N> {
-  return toLiveblocksInternalNode(node, {
-    ...NODE_BASE_CONFIG,
-    data: config,
-  }) as unknown as LiveblocksNode<N>;
-}
-
-/**
- * @experimental
- *
- * Converts a React Flow `Edge` into a Liveblocks Storage version.
- * Keys marked `false` in config are set as local-only (not synced).
- * Keys marked `"atomic"` are stored as plain Json (no deep wrapping).
- * All other keys are deep-liveified (objects→LiveObject, arrays→LiveList).
- */
-export function toLiveblocksEdge<E extends Edge>(
-  edge: E,
-  config?: SyncConfig
-): LiveblocksEdge<E> {
-  return toLiveblocksInternalEdge(edge, {
-    ...EDGE_BASE_CONFIG,
-    data: config,
-  }) as unknown as LiveblocksEdge<E>;
 }
