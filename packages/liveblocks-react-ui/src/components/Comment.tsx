@@ -80,7 +80,6 @@ import {
   MediaAttachment,
   separateMediaAttachments,
 } from "./internal/Attachment";
-import { Avatar } from "./internal/Avatar";
 import { Button, CustomButton } from "./internal/Button";
 import { Dropdown, DropdownItem, DropdownTrigger } from "./internal/Dropdown";
 import { Emoji } from "./internal/Emoji";
@@ -88,6 +87,7 @@ import { EmojiPicker, EmojiPickerTrigger } from "./internal/EmojiPicker";
 import { Group } from "./internal/Group";
 import { List } from "./internal/List";
 import { ShortcutTooltip, Tooltip, TooltipProvider } from "./internal/Tooltip";
+import { UserAvatar } from "./Avatar";
 import { User } from "./internal/User";
 
 const REACTIONS_TRUNCATE = 5;
@@ -261,7 +261,7 @@ export interface CommentDateProps
 }
 
 function CommentAvatar(props: CommentAvatarProps) {
-  return <Avatar {...props} />;
+  return <UserAvatar {...props} />;
 }
 
 function CommentAuthor(props: CommentAuthorProps) {
@@ -1051,7 +1051,7 @@ export const Comment = Object.assign(
                       {avatar}
                     </div>
                   ) : (
-                    <Avatar
+                    <UserAvatar
                       className="lb-comment-avatar"
                       userId={comment.userId}
                       onClick={handleAuthorClick}

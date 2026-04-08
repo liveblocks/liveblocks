@@ -1,6 +1,6 @@
 // Private APIs
 
-export { Avatar } from "../components/internal/Avatar";
+export { GroupAvatar, UserAvatar } from "../components/Avatar";
 export { Button, SelectButton } from "../components/internal/Button";
 export { Group } from "../components/internal/Group";
 export { GroupDescription } from "../components/internal/GroupDescription";

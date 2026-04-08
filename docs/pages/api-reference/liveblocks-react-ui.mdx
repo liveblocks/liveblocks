@@ -3754,6 +3754,64 @@ All hooks for Notifications are in
 
 ### Default components [#Presence-Components]
 
+#### Avatar
+
+Displays a user avatar from an image URL, or falls back to initials.
+
+```tsx
+<Avatar src="https://example.com/stacy.png" name="Stacy" />
+```
+
+You can also customize fallback content by passing children. This will take
+precedence over the default content.
+
+```tsx
+<Avatar name="Liveblocks">{/* Custom icon */}</Avatar>
+```
+
+Use `outline` to add an outline around the avatar.
+
+```tsx
+<Avatar name="Stacy" outline />
+
+<Avatar name="Stacy" outline="#22c55e" />
+
+<Avatar
+  name="Stacy"
+  outline={{ color: "#22c55e", width: 3, gap: 1 }}
+/>
+```
+
+Use `tooltip` to display additional content on hover.
+
+```tsx
+<Avatar name="Stacy" tooltip={<span>stacy@example.com</span>} />
+```
+
+##### Props [#Avatar-props]
+
+<PropertiesList>
+  <PropertiesListItem name="src" type="string">
+    The URL of the avatar’s image.
+  </PropertiesListItem>
+  <PropertiesListItem name="name" type="string">
+    The name of the avatar.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="outline"
+    type="boolean | string | { ... }"
+    detailedType="boolean | string | { color?: string; width?: string | number; gap?: string | number }"
+  >
+    Whether and how the avatar should have an outline.
+  </PropertiesListItem>
+  <PropertiesListItem name="tooltip" type="ReactNode">
+    The content to display in the avatar’s tooltip.
+  </PropertiesListItem>
+  <PropertiesListItem name="children" type="ReactNode">
+    Override the avatar’s content.
+  </PropertiesListItem>
+</PropertiesList>
+
 #### AvatarStack
 
 Displays a stack of avatars for users currently present in the room.
@@ -3790,6 +3848,13 @@ to change the avatars’ size.
 <AvatarStack size={40} />
 
 <AvatarStack className="[--lb-avatar-stack-size:3rem]" />
+```
+
+You can use the `variant` prop to switch between default and outlined avatars.
+The outline color uses the resolved user’s `color` property by default.
+
+```tsx
+<AvatarStack variant="outline" />
 ```
 
 ##### User information
@@ -3837,6 +3902,13 @@ properties.
   </PropertiesListItem>
   <PropertiesListItem name="gap" type="string | number">
     The gap around the avatars.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="variant"
+    type='"default" | "outline"'
+    defaultValue={`"default"`}
+  >
+    Whether the avatars should show an outline.
   </PropertiesListItem>
   <PropertiesListItem name="overrides" type="Partial<GlobalOverrides>">
     Override the component’s strings.

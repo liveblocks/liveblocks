@@ -22,11 +22,12 @@ import {
   useMentionSuggestions,
 } from "@liveblocks/react/_private";
 import {
-  Avatar,
   Group,
+  GroupAvatar,
   GroupDescription,
   Portal,
   User,
+  UserAvatar,
   UsersIcon,
 } from "@liveblocks/react-ui/_private";
 import type { EditorState, NodeKey, NodeMutation, TextNode } from "lexical";
@@ -457,7 +458,7 @@ export function MentionPlugin() {
                   >
                     {mention.kind === "user" ? (
                       <>
-                        <Avatar
+                        <UserAvatar
                           userId={mention.id}
                           className="lb-lexical-mention-suggestion-avatar"
                         />
@@ -468,7 +469,7 @@ export function MentionPlugin() {
                       </>
                     ) : mention.kind === "group" ? (
                       <>
-                        <Avatar
+                        <GroupAvatar
                           groupId={mention.id}
                           className="lb-lexical-mention-suggestion-avatar"
                           icon={<UsersIcon />}

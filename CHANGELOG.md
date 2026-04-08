@@ -28,6 +28,12 @@ For full upgrade instructions, see the
 - Fix: Initial storage seeding no longer creates an undo frame.
 - Fix: Presence updates are now batched with storage updates.
 
+### `@liveblocks/react-ui`
+
+- Add standalone `Avatar` component to complement `AvatarStack` for more
+  fine-grained customization.
+- Add `variant` prop to `AvatarStack` to support outlined avatars.
+
 ## v3.17.0
 
 ### `@liveblocks/react-flow`
