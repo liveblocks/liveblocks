@@ -1,3 +1,9 @@
+/**
+ * Module with utilities shared between the React Flow frontend and the React
+ * Flow Node backend. There are no runtime dependencies on @xyflow/react,
+ * react, or any other frontend-specific libraries from this module, and this
+ * should stay that way.
+ */
 import type { JsonObject, SyncConfig, SyncMode } from "@liveblocks/core";
 import { LiveObject } from "@liveblocks/core";
 import type { Edge, Node } from "@xyflow/react";

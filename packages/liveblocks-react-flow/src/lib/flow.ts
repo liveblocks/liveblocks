@@ -33,7 +33,7 @@ import {
   DEFAULT_STORAGE_KEY,
   toLiveblocksInternalEdge,
   toLiveblocksInternalNode,
-} from "./helpers";
+} from "./shared";
 import type {
   EdgeSyncConfig,
   InternalLiveblocksEdge,

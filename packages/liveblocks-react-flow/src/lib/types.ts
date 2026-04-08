@@ -10,7 +10,7 @@ import type {
 } from "@liveblocks/core";
 import type { BuiltInEdge, BuiltInNode, Edge, Node } from "@xyflow/react";
 
-import type { EDGE_BASE_CONFIG, NODE_BASE_CONFIG } from "./helpers";
+import type { EDGE_BASE_CONFIG, NODE_BASE_CONFIG } from "./shared";
 
 export type { SyncConfig, SyncMode };
 

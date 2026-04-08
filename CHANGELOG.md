@@ -18,10 +18,11 @@ For full upgrade instructions, see the
   JSON snapshot, only mutating what changed.
 - `initialStorage` accepts `LiveObject.from()` result directly.
 
-### `@liveblocks/react-flow`
+### `@liveblocks/react-flow/node`
 
 - New `mutateFlow()` API for reading and mutating React Flow data from a Node.js
-  backend. Import from `@liveblocks/react-flow/node`.
+  backend. Install via `npm i @liveblocks/react-flow`, import from
+  `@liveblocks/react-flow/node`.
 
 ### `@liveblocks/zustand` and `@liveblocks/redux`
 

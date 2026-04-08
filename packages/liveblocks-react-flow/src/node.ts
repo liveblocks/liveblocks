@@ -8,12 +8,12 @@ import {
   DEFAULT_STORAGE_KEY,
   toLiveblocksInternalEdge,
   toLiveblocksInternalNode,
-} from "./helpers";
+} from "./lib/shared";
 import type {
   EdgeSyncConfig,
   InternalLiveblocksFlow,
   NodeSyncConfig,
-} from "./types";
+} from "./lib/types";
 
 /**
  * A minimal interface for the Liveblocks Node client — just the
