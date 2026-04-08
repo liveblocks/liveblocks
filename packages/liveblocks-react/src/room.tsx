@@ -41,7 +41,7 @@ import type {
   RoomSubscriptionSettings,
   SignalType,
   TextEditorType,
-  ToImmutable,
+  ToJson,
   UnsubscribeCallback,
 } from "@liveblocks/core";
 import {
@@ -127,7 +127,7 @@ import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-
 import { useSignal } from "./use-signal";
 import { useSyncExternalStoreWithSelector } from "./use-sync-external-store-with-selector";
 
-const noop = () => { };
+const noop = () => {};
 const identity: <T>(x: T) => T = (x) => x;
 
 const STABLE_EMPTY_LIST = Object.freeze([]);
@@ -363,28 +363,29 @@ function RoomProvider<
   // Produce a version of client.enterRoom() that when called for the same
   // room ID multiple times, will not keep producing multiple leave
   // functions, but instead return the cached one.
-  const stableEnterRoom: typeof client.enterRoom<P, S, E, TM, CM, FM, FMD> = useCallback(
-    (
-      roomId: string,
-      options: EnterOptions<P, S>
-    ): RoomLeavePair<P, S, U, E, TM, CM, FM, FMD> => {
-      const cached = cache.get(roomId);
-      if (cached) return cached;
+  const stableEnterRoom: typeof client.enterRoom<P, S, E, TM, CM, FM, FMD> =
+    useCallback(
+      (
+        roomId: string,
+        options: EnterOptions<P, S>
+      ): RoomLeavePair<P, S, U, E, TM, CM, FM, FMD> => {
+        const cached = cache.get(roomId);
+        if (cached) return cached;
 
-      const rv = client.enterRoom<P, S, E, TM, CM, FM, FMD>(roomId, options);
+        const rv = client.enterRoom<P, S, E, TM, CM, FM, FMD>(roomId, options);
 
-      // Wrap the leave function to also delete the cached value
-      const origLeave = rv.leave;
-      rv.leave = () => {
-        origLeave();
-        cache.delete(roomId);
-      };
+        // Wrap the leave function to also delete the cached value
+        const origLeave = rv.leave;
+        rv.leave = () => {
+          origLeave();
+          cache.delete(roomId);
+        };
 
-      cache.set(roomId, rv);
-      return rv;
-    },
-    [client, cache]
-  );
+        cache.set(roomId, rv);
+        return rv;
+      },
+      [client, cache]
+    );
 
   //
   // RATIONALE:
@@ -682,7 +683,9 @@ function useRoom<
   CM extends BaseMetadata = DCM,
   FM extends Json = Json,
   FMD extends Json = Json,
->(options: { allowOutsideRoom: boolean }): Room<P, S, U, E, TM, CM, FM, FMD> | null;
+>(options: {
+  allowOutsideRoom: boolean;
+}): Room<P, S, U, E, TM, CM, FM, FMD> | null;
 function useRoom<
   P extends JsonObject = DP,
   S extends LsonObject = DS,
@@ -692,7 +695,9 @@ function useRoom<
   CM extends BaseMetadata = DCM,
   FM extends Json = Json,
   FMD extends Json = Json,
->(options?: { allowOutsideRoom: boolean }): Room<P, S, U, E, TM, CM, FM, FMD> | null {
+>(options?: {
+  allowOutsideRoom: boolean;
+}): Room<P, S, U, E, TM, CM, FM, FMD> | null {
   return useRoom_withRoomContext<P, S, U, E, TM, CM, FM, FMD>(
     GlobalRoomContext,
     options
@@ -1379,10 +1384,10 @@ function useStorageRoot<S extends LsonObject>(): [root: LiveObject<S> | null] {
  */
 function useStorage_withRoomContext<S extends LsonObject, T>(
   RoomContext: Context<OpaqueRoom | null>,
-  selector: (root: ToImmutable<S>) => T,
+  selector: (root: ToJson<S>) => T,
   isEqual?: (prev: T | null, curr: T | null) => boolean
 ): T | null {
-  type Snapshot = ToImmutable<S> | null;
+  type Snapshot = ToJson<S> | null;
   type Selection = T | null;
 
   const room = useRoom_withRoomContext<never, S, never, never, never, never>(
@@ -1409,8 +1414,7 @@ function useStorage_withRoomContext<S extends LsonObject, T>(
       return null;
     } else {
       const root = rootOrNull;
-      const imm = root.toImmutable();
-      return imm;
+      return root.toJSON();
     }
   }, [rootOrNull]);
 
@@ -1426,7 +1430,7 @@ function useStorage_withRoomContext<S extends LsonObject, T>(
 }
 
 function useStorage<S extends LsonObject, T>(
-  selector: (root: ToImmutable<S>) => T,
+  selector: (root: ToJson<S>) => T,
   isEqual?: (prev: T | null, curr: T | null) => boolean
 ): T | null {
   return useStorage_withRoomContext<S, T>(GlobalRoomContext, selector, isEqual);
@@ -1621,7 +1625,9 @@ function useFeedMessagesSuspense_withRoomContext(
   const { store } = getRoomExtrasForClient(client);
   const queryKey = makeFeedMessagesQueryKey(room.id, feedId, options);
 
-  use(store.outputs.loadingFeedMessages.getOrCreate(queryKey).waitUntilLoaded());
+  use(
+    store.outputs.loadingFeedMessages.getOrCreate(queryKey).waitUntilLoaded()
+  );
 
   const result = useFeedMessages_withRoomContext(RoomContext, feedId, options);
   assert(!result.error, "Did not expect error");
@@ -2329,9 +2335,9 @@ function useEditRoomComment<CM extends BaseMetadata>(
       const updatedMetadata =
         metadata !== undefined
           ? {
-            ...comment.metadata,
-            ...metadata,
-          }
+              ...comment.metadata,
+              ...metadata,
+            }
           : comment.metadata;
 
       const optimisticId = store.optimisticUpdates.add({
@@ -2972,9 +2978,9 @@ function useRoomThreadSubscription(
 function useRoomSubscriptionSettings_withRoomContext(
   RoomContext: Context<OpaqueRoom | null>
 ): [
-    RoomSubscriptionSettingsAsyncResult,
-    (settings: Partial<RoomSubscriptionSettings>) => void,
-  ] {
+  RoomSubscriptionSettingsAsyncResult,
+  (settings: Partial<RoomSubscriptionSettings>) => void,
+] {
   const updateRoomSubscriptionSettings =
     useUpdateRoomSubscriptionSettings_withRoomContext(RoomContext);
   const client = useClient();
@@ -3037,9 +3043,9 @@ function useRoomSubscriptionSettings(): [
 function useRoomSubscriptionSettingsSuspense_withRoomContext(
   RoomContext: Context<OpaqueRoom | null>
 ): [
-    RoomSubscriptionSettingsAsyncSuccess,
-    (settings: Partial<RoomSubscriptionSettings>) => void,
-  ] {
+  RoomSubscriptionSettingsAsyncSuccess,
+  (settings: Partial<RoomSubscriptionSettings>) => void,
+] {
   // Throw error if we're calling this hook server side
   ensureNotServerSide();
 
@@ -3109,8 +3115,8 @@ function useHistoryVersionData_withRoomContext(
             error instanceof Error
               ? error
               : new Error(
-                "An unknown error occurred while loading this version"
-              ),
+                  "An unknown error occurred while loading this version"
+                ),
         });
       }
     };
@@ -3517,7 +3523,7 @@ export function useSuspendUntilStorageReady(): void {
  */
 function useStorageSuspense_withRoomContext<S extends LsonObject, T>(
   RoomContext: Context<OpaqueRoom | null>,
-  selector: (root: ToImmutable<S>) => T,
+  selector: (root: ToJson<S>) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T {
   useSuspendUntilStorageReady_withRoomContext(RoomContext);
@@ -3529,7 +3535,7 @@ function useStorageSuspense_withRoomContext<S extends LsonObject, T>(
 }
 
 function useStorageSuspense<S extends LsonObject, T>(
-  selector: (root: ToImmutable<S>) => T,
+  selector: (root: ToJson<S>) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T {
   return useStorageSuspense_withRoomContext<S, T>(
@@ -4017,9 +4023,7 @@ export function createRoomContext<
     return useUpdateRoomSubscriptionSettings_withRoomContext(BoundRoomContext);
   }
 
-  function useFeeds_withBoundRoomContext(
-    ...args: Parameters<typeof useFeeds>
-  ) {
+  function useFeeds_withBoundRoomContext(...args: Parameters<typeof useFeeds>) {
     return useFeeds_withRoomContext(BoundRoomContext, ...args);
   }
 
@@ -4382,7 +4386,7 @@ const _useAddReaction: TypedBundle["useAddReaction"] = useAddReaction;
  * that gets passed into your callback will be a "mutation context".
  *
  * If you want get access to the immutable root somewhere in your mutation,
- * you can use `storage.ToImmutable()`.
+ * you can use `storage.toJSON()`.
  *
  * @example
  * const fillLayers = useMutation(
@@ -4579,8 +4583,7 @@ const _useFeedMessages: TypedBundle["useFeedMessages"] = useFeedMessages;
  * @example
  * const { feeds } = useFeeds();
  */
-const _useFeedsSuspense: TypedBundle["suspense"]["useFeeds"] =
-  useFeedsSuspense;
+const _useFeedsSuspense: TypedBundle["suspense"]["useFeeds"] = useFeedsSuspense;
 
 /**
  * Returns messages for a specific feed in the current room.

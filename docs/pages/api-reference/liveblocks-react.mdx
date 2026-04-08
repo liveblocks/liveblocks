@@ -3750,7 +3750,7 @@ const myTodos = useStorage(
 </Banner>
 
 <PropertiesList title="Arguments">
-  <PropertiesListItem name="selector" type="(root: ToImmutable<TStorage>) => T">
+  <PropertiesListItem name="selector" type="(root: ToJson<TStorage>) => T">
     A selector function to extract specific data from the storage root. The root
     is an immutable copy of your entire Liveblocks Storage tree.
   </PropertiesListItem>

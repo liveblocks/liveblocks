@@ -1042,6 +1042,27 @@
     background: var(--lb-foreground);
     opacity: $lb-loading-opacity;
   }
+
+  &:where([data-variant="outline"]) {
+    --lb-avatar-outline-gap: 2px;
+    --lb-avatar-outline-width: 2px;
+
+    padding: var(--lb-avatar-outline-gap);
+    border: var(--lb-avatar-outline-width) solid
+      var(--lb-avatar-outline-color, var(--lb-accent));
+    background-clip: content-box;
+  }
+}
+
+.lb-avatar-content {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  inline-size: 100%;
+  block-size: 100%;
+  border-radius: inherit;
 }
 
 .lb-avatar-image {

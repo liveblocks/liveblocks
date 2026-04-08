@@ -24,7 +24,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     info: {
       name: BOT_USER_NAME,
       color: "#000000",
-      avatar: "/ai-avatar.png",
+      avatar: "https://liveblocks.io/api/avatar?u=__ai__&agent=true",
     },
   },
 ];

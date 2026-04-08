@@ -68,12 +68,12 @@ function Sandbox() {
     return <div>Loading...</div>;
   }
 
-  const canDelete = map.size > 0;
+  const keys = Object.keys(map);
+  const canDelete = keys.length > 0;
 
   const nextKey = `key:${randomInt(10)}`;
   const nextValue = `value:${randomInt(10)}`;
 
-  const keys = Array.from(map.keys());
   const nextKeyToDelete = canDelete ? keys[randomInt(keys.length)] : "";
 
   return (
@@ -120,8 +120,8 @@ function Sandbox() {
             name="Sync status (immediate)"
             value={syncStatus}
           />
-          <Row id="mapSize" name="Map size" value={map.size} />
-          <Row id="map" name="Serialized" value={Object.fromEntries(map)} />
+          <Row id="mapSize" name="Map size" value={keys.length} />
+          <Row id="map" name="Serialized" value={map} />
         </tbody>
       </table>
     </div>

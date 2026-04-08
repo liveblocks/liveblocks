@@ -447,7 +447,7 @@ describe("LiveObject", () => {
     });
 
     const root = storage.root;
-    const child = root.toObject().child;
+    const child = root.get("child");
 
     await expectStorage({
       a: 0,
@@ -500,14 +500,14 @@ describe("LiveObject", () => {
     });
 
     const root = storage.root;
-    const child = root.toObject().child;
-    const grandChild = child.toObject().grandChild;
-    expect(root.toObject()).toMatchObject({ a: 0 });
-    expect(child.toObject()).toMatchObject({ b: 0 });
-    expect(grandChild.toObject()).toMatchObject({ c: 0 });
+    const child = root.get("child");
+    const grandChild = child.get("grandChild");
+    expect(root.toJSON()).toMatchObject({ a: 0 });
+    expect(child.toJSON()).toMatchObject({ b: 0 });
+    expect(grandChild.toJSON()).toMatchObject({ c: 0 });
 
     grandChild.update({ c: 1 });
-    expect(grandChild.toObject()).toMatchObject({ c: 1 });
+    expect(grandChild.toJSON()).toMatchObject({ c: 1 });
 
     await expectStorage({
       a: 0,
@@ -551,7 +551,7 @@ describe("LiveObject", () => {
         items.set("b", "B");
       });
 
-      expect(items.toObject()).toEqual({ a: "A", b: "B" });
+      expect(items.toJSON()).toEqual({ a: "A", b: "B" });
       expect(receivedUpdates).toEqual([
         [
           objectUpdate(
@@ -563,7 +563,7 @@ describe("LiveObject", () => {
 
       room.history.undo();
 
-      expect(items.toObject()).toEqual({ a: "initial" });
+      expect(items.toJSON()).toEqual({ a: "initial" });
       expect(receivedUpdates).toEqual([
         [
           objectUpdate(
@@ -1453,7 +1453,7 @@ describe("LiveObject", () => {
       ]);
     });
 
-    test("setLocal value is visible via get, toObject, and toImmutable", async () => {
+    test("setLocal value is visible via get, and toJson", async () => {
       const { root } = await prepareIsolatedStorageTest<{
         a: number;
         b?: string;
@@ -1465,8 +1465,8 @@ describe("LiveObject", () => {
       root.setLocal("b", "local");
 
       expect(root.get("b")).toBe("local");
-      expect(root.toObject()).toEqual({ a: 1, b: "local" });
-      expect(root.toImmutable()).toEqual({ a: 1, b: "local" });
+      expect(root.toJSON()).toEqual({ a: 1, b: "local" });
+      expect(root.toJSON()).toEqual({ a: 1, b: "local" });
     });
 
     test("setLocal does not sync to other clients", async () => {
@@ -1485,7 +1485,7 @@ describe("LiveObject", () => {
 
       // Client B does not see local value (wait a bit to confirm nothing syncs)
       await vi.waitFor(() => {
-        expect(storageB.root.toImmutable()).toEqual({ a: 1 });
+        expect(storageB.root.toJSON()).toEqual({ a: 1 });
       });
     });
 
@@ -1508,7 +1508,7 @@ describe("LiveObject", () => {
 
       // Client B only sees bar, not foo
       await vi.waitFor(() => {
-        expect(storageB.root.toImmutable()).toEqual({ a: 1, bar: "synced" });
+        expect(storageB.root.toJSON()).toEqual({ a: 1, bar: "synced" });
       });
     });
 
@@ -1527,7 +1527,7 @@ describe("LiveObject", () => {
 
       // Wait for B's change to sync
       await vi.waitFor(() => {
-        expect(storageB.root.toImmutable()).toEqual({ a: 1, bar: "from-B" });
+        expect(storageB.root.toJSON()).toEqual({ a: 1, bar: "from-B" });
       });
 
       // Wait for A to receive B's synced change
@@ -1599,7 +1599,7 @@ describe("LiveObject", () => {
 
       expect(cloned.get("a")).toBe(1);
       expect(cloned.get("b")).toBe("local-only");
-      expect(cloned.toImmutable()).toEqual({ a: 1, b: "local-only" });
+      expect(cloned.toJSON()).toEqual({ a: 1, b: "local-only" });
     });
 
     test("clone preserves local-only properties on detached LiveObject", () => {
@@ -1609,7 +1609,7 @@ describe("LiveObject", () => {
 
       expect(cloned.get("a")).toBe(1);
       expect(cloned.get("b")).toBe("local-only");
-      expect(cloned.toImmutable()).toEqual({ a: 1, b: "local-only" });
+      expect(cloned.toJSON()).toEqual({ a: 1, b: "local-only" });
     });
 
     test("clone with local props injected into sibling: both have local prop on A, neither on B", async () => {
@@ -1776,34 +1776,34 @@ describe("LiveObject", () => {
 
       // Client B should still not see foo (nothing was synced)
       await vi.waitFor(() => {
-        expect(storageB.root.toImmutable()).toEqual({ a: 1 });
+        expect(storageB.root.toJSON()).toEqual({ a: 1 });
       });
     });
   });
 
-  describe("immutableIs", () => {
-    test("returns true when cached immutable matches the given value", () => {
+  describe("hasCache", () => {
+    test("returns true when cached JSON matches the given value", () => {
       const obj = new LiveObject({ a: 1, b: "hello" });
-      const imm = obj.toImmutable();
-      expect(obj.immutableIs(imm)).toBe(true);
+      const json = obj.toJSON();
+      expect(obj.hasCache(json)).toBe(true);
     });
 
     test("returns false for a different value with equal contents", () => {
       const obj = new LiveObject({ a: 1 });
-      obj.toImmutable();
-      expect(obj.immutableIs({ a: 1 })).toBe(false);
+      obj.toJSON();
+      expect(obj.hasCache({ a: 1 })).toBe(false);
     });
 
     test("returns false when cache has been invalidated", () => {
       const obj = new LiveObject<{ a: number }>({ a: 1 });
-      const imm = obj.toImmutable();
+      const json = obj.toJSON();
       obj.set("a", 2);
-      expect(obj.immutableIs(imm)).toBe(false);
+      expect(obj.hasCache(json)).toBe(false);
     });
 
-    test("returns false when toImmutable has never been called", () => {
+    test("returns false when toJSON has never been called", () => {
       const obj = new LiveObject({ a: 1 });
-      expect(obj.immutableIs({ a: 1 })).toBe(false);
+      expect(obj.hasCache({ a: 1 })).toBe(false);
     });
   });
 });

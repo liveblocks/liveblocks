@@ -11,16 +11,13 @@ test(
     async ({ root1, root2, control, assert }) => {
       root1.get("map").set("key", "a");
       root2.get("map").set("key", "b");
-      assert(
-        { map: new Map([["key", "a"]]) },
-        { map: new Map([["key", "b"]]) }
-      );
+      assert({ map: { key: "a" } }, { map: { key: "b" } });
 
       await control.flushA();
-      assert({ map: new Map([["key", "a"]]) });
+      assert({ map: { key: "a" } });
 
       await control.flushB();
-      assert({ map: new Map([["key", "b"]]) });
+      assert({ map: { key: "b" } });
     }
   )
 );
@@ -34,18 +31,18 @@ test(
       root1.get("map").delete("key");
       root2.get("map").set("key", "b");
       assert(
-        { map: new Map() }, //
-        { map: new Map([["key", "b"]]) }
+        { map: {} }, //
+        { map: { key: "b" } }
       );
 
       await control.flushA();
       assert(
-        { map: new Map() }, //
-        { map: new Map([["key", "b"]]) }
+        { map: {} }, //
+        { map: { key: "b" } }
       );
 
       await control.flushB();
-      assert({ map: new Map([["key", "b"]]) });
+      assert({ map: { key: "b" } });
     }
   )
 );

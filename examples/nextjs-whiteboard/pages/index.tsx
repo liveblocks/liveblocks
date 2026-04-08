@@ -8,7 +8,7 @@ import {
   useSelf,
 } from "@liveblocks/react/suspense";
 import { LiveMap, LiveObject } from "@liveblocks/client";
-import { shallow, ClientSideSuspense } from "@liveblocks/react";
+import { ClientSideSuspense } from "@liveblocks/react";
 import styles from "../styles/index.module.css";
 import { useRouter } from "next/router";
 
@@ -31,10 +31,7 @@ export default function Room() {
 
 function Canvas() {
   const [isDragging, setIsDragging] = useState(false);
-  const shapeIds = useStorage(
-    (root) => Array.from(root.shapes.keys()),
-    shallow
-  );
+  const shapes = useStorage((root) => root.shapes);
 
   const history = useHistory();
 
@@ -113,7 +110,7 @@ function Canvas() {
         onPointerMove={onCanvasPointerMove}
         onPointerUp={onCanvasPointerUp}
       >
-        {shapeIds.map((shapeId: string) => {
+        {Object.keys(shapes).map((shapeId: string) => {
           return (
             <Rectangle
               key={shapeId}
@@ -139,7 +136,7 @@ type RectangleProps = {
 };
 
 function Rectangle({ id, onShapePointerDown }: RectangleProps) {
-  const { x, y, fill } = useStorage((root) => root.shapes.get(id)) ?? {};
+  const { x, y, fill } = useStorage((root) => root.shapes[id]) ?? {};
 
   const selectedByMe = useSelf((me) => me.presence.selectedShape === id);
   const selectedByOthers = useOthers((others) =>

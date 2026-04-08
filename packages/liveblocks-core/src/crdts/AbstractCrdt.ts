@@ -1,4 +1,5 @@
 import { assertNever } from "../lib/assert";
+import type { ReadonlyJson } from "../lib/Json";
 import type { Pos } from "../lib/position";
 import { asPos } from "../lib/position";
 import type {
@@ -10,7 +11,6 @@ import type {
 import { OpCode } from "../protocol/Op";
 import type { SerializedCrdt } from "../protocol/StorageNode";
 import type * as DevTools from "../types/DevToolsTreeNode";
-import type { Immutable } from "../types/Immutable";
 import type { LiveNode, Lson } from "./Lson";
 import type { StorageUpdate } from "./StorageUpdates";
 
@@ -419,8 +419,8 @@ export abstract class AbstractCrdt {
   /** @internal */
   abstract _serialize(): SerializedCrdt;
 
-  /** This caches the result of the last .toImmutable() call for this Live node. */
-  #cachedImmutable?: Immutable;
+  /** This caches the result of the last .toJSON() call for this Live node. */
+  #cachedJson?: ReadonlyJson;
 
   #cachedTreeNodeKey?: string | number;
   /** This caches the result of the last .toTreeNode() call for this Live node. */
@@ -429,16 +429,12 @@ export abstract class AbstractCrdt {
   /**
    * @internal
    *
-   * Clear the Immutable cache, so that the next call to `.toImmutable()` will
-   * recompute the equivalent Immutable value again.  Call this after every
-   * mutation to the Live node.
+   * Clear the cached snapshots, so that the next call to `.toJSON()` will
+   * recompute. Call this after every mutation to the Live node.
    */
   invalidate(): void {
-    if (
-      this.#cachedImmutable !== undefined ||
-      this.#cachedTreeNode !== undefined
-    ) {
-      this.#cachedImmutable = undefined;
+    if (this.#cachedJson !== undefined || this.#cachedTreeNode !== undefined) {
+      this.#cachedJson = undefined;
       this.#cachedTreeNode = undefined;
 
       if (this.parent.type === "HasParent") {
@@ -465,29 +461,30 @@ export abstract class AbstractCrdt {
   }
 
   /** @internal */
-  abstract _toImmutable(): Immutable;
+  abstract _toJSON(): ReadonlyJson;
 
   /**
    * @private
-   * Returns true if the cached immutable snapshot exists and is
-   * reference-equal to the given value. Does not trigger a recompute.
+   * Returns true if the cached JSON snapshot exists and is reference-equal
+   * to the given value. Does not trigger a recompute.
    */
-  immutableIs(value: unknown): boolean {
-    return (
-      this.#cachedImmutable !== undefined && this.#cachedImmutable === value
-    );
+  hasCache(value: unknown): boolean {
+    return this.#cachedJson !== undefined && this.#cachedJson === value;
   }
 
   /**
-   * Return an immutable snapshot of this Live node and its children.
+   * Return a JSON-compatible snapshot of this Live node and its children.
+   * LiveObject values become plain objects, LiveList values become arrays,
+   * and LiveMap values also become plain objects (not Map instances).
+   * The result is cached and only recomputed when the contents change.
    */
-  toImmutable(): Immutable {
-    if (this.#cachedImmutable === undefined) {
-      this.#cachedImmutable = this._toImmutable();
+  toJSON(): ReadonlyJson {
+    if (this.#cachedJson === undefined) {
+      this.#cachedJson = this._toJSON();
     }
 
     // Return cached version
-    return this.#cachedImmutable;
+    return this.#cachedJson;
   }
 
   /**

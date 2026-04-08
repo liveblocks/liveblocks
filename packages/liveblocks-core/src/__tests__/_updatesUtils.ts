@@ -13,7 +13,7 @@ export type JsonStorageUpdate =
 
 export type JsonLiveListUpdate<TItem extends Lson> = {
   type: "LiveList";
-  node: Array<ToJson<TItem>>;
+  node: readonly ToJson<TItem>[];
   updates: Array<JsonLiveListUpdateDelta<TItem>>;
 };
 
@@ -57,38 +57,40 @@ export function liveListUpdateToJson<TItem extends Lson>(
 ): JsonLiveListUpdate<TItem> {
   return {
     type: update.type,
-    node: lsonToJson(update.node) as ToJson<TItem>[],
-    //                            ^^^^^^^^^^^^^^^^^^ FIXME: Manual cast should eventually not be necessary
-    updates: update.updates.map((delta) => {
+    node: update.node.toJSON(),
+    updates: update.updates.map((delta): JsonLiveListUpdateDelta<TItem> => {
       switch (delta.type) {
         case "move": {
           return {
             type: delta.type,
             index: delta.index,
             previousIndex: delta.previousIndex,
-            item: lsonToJson(delta.item),
+            item: lsonToJson(delta.item) as ToJson<TItem>,
           };
         }
         case "delete": {
-          return delta;
+          return {
+            type: delta.type,
+            index: delta.index,
+            deletedItem: lsonToJson(delta.deletedItem) as ToJson<TItem>,
+          };
         }
         case "insert": {
           return {
             type: delta.type,
             index: delta.index,
-            item: lsonToJson(delta.item),
+            item: lsonToJson(delta.item) as ToJson<TItem>,
           };
         }
         case "set": {
           return {
             type: delta.type,
             index: delta.index,
-            item: lsonToJson(delta.item),
+            item: lsonToJson(delta.item) as ToJson<TItem>,
           };
         }
       }
-    }) as any,
-    // ^^^^^^ FIXME: TypeScript nags about this correctly. Deal with this later.
+    }),
   };
 }
 
@@ -102,8 +104,7 @@ export function serializeUpdateToJson(
   if (update.type === "LiveObject") {
     return {
       type: update.type,
-      node: lsonToJson(update.node) as ToJson<typeof update.node>,
-      //                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FIXME: Manual cast should eventually not be necessary
+      node: update.node.toJSON(),
       updates: update.updates,
     };
   }
@@ -111,8 +112,7 @@ export function serializeUpdateToJson(
   if (update.type === "LiveMap") {
     return {
       type: update.type,
-      node: lsonToJson(update.node) as { [key: string]: Json },
-      //                            ^^^^^^^^^^^^^^^^^^^^^^^^^^ FIXME: Manual cast should eventually not be necessary
+      node: update.node.toJSON(),
       updates: update.updates,
     };
   }

@@ -109,7 +109,7 @@ export function isHittingEllipse(layer: EllipseLayer, point: Point) {
  */
 export function findIntersectingLayersWithRectangle(
   layerIds: readonly string[],
-  layers: ReadonlyMap<string, Layer>,
+  layers: Record<string, Layer>,
   a: Point,
   b: Point
 ) {
@@ -123,7 +123,7 @@ export function findIntersectingLayersWithRectangle(
   const ids = [];
 
   for (const layerId of layerIds) {
-    const layer = layers.get(layerId);
+    const layer = layers[layerId];
     if (layer == null) {
       continue;
     }

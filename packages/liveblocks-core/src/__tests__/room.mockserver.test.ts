@@ -24,7 +24,6 @@ import { LiveList } from "../crdts/LiveList";
 import { LiveMap } from "../crdts/LiveMap";
 import { LiveObject } from "../crdts/LiveObject";
 import type { LsonObject } from "../crdts/Lson";
-import { lsonToJson } from "../immutable";
 import { kInternal } from "../internal";
 import { makeEventSource } from "../lib/EventSource";
 import * as console from "../lib/fancy-console";
@@ -999,8 +998,8 @@ describe("room", () => {
 
     room.connect();
     const storage = await room.getStorage();
-    expect(storage.root.toObject()).toEqual({ foo: 1234 });
-    //                                        ^^^ Added by the client, from initialStorage
+    expect(storage.root.toJSON()).toEqual({ foo: 1234 });
+    //                                      ^^^ Added by the client, from initialStorage
     expect(room.history.canUndo()).toBe(false);
   });
 
@@ -1039,9 +1038,9 @@ describe("room", () => {
       room.connect();
       try {
         const { root } = await room.getStorage();
-        expect(root.toImmutable()).toEqual({
+        expect(root.toJSON()).toEqual({
           list: [13, 42],
-          map: new Map([["a", 1]]),
+          map: { a: 1 },
           obj: { x: 0 },
         });
 
@@ -1073,7 +1072,7 @@ describe("room", () => {
 
     room.connect();
     const storage = await room.getStorage();
-    expect(storage.root.toObject()).toEqual({ x: 0 });
+    expect(storage.root.toJSON()).toEqual({ x: 0 });
   });
 
   test("undo redo with presence", async () => {
@@ -1126,7 +1125,7 @@ describe("room", () => {
     room.history.undo();
 
     expect(room.getPresence()).toEqual({ x: 1 });
-    expect(storage.root.toObject()).toEqual({ x: 0 });
+    expect(storage.root.toJSON()).toEqual({ x: 0 });
 
     room.history.redo();
   });
@@ -1241,12 +1240,12 @@ describe("room", () => {
 
     expect(room[kInternal].presenceBuffer).toEqual({ x: 0 });
     expect(room.getPresence()).toEqual({ x: 0 });
-    expect(storage.root.toObject()).toEqual({ x: 0 });
+    expect(storage.root.toJSON()).toEqual({ x: 0 });
 
     room.history.redo();
 
     expect(room[kInternal].presenceBuffer).toEqual({ x: 1 });
-    expect(storage.root.toObject()).toEqual({ x: 1 });
+    expect(storage.root.toJSON()).toEqual({ x: 1 });
     expect(room.getPresence()).toEqual({ x: 1 });
   });
 
@@ -1270,12 +1269,12 @@ describe("room", () => {
 
     storage.root.set("x", 1);
     room.history.undo();
-    expect(storage.root.toObject()).toEqual({ x: 0 });
+    expect(storage.root.toJSON()).toEqual({ x: 0 });
 
     room.batch(() => {});
     room.history.redo();
 
-    expect(storage.root.toObject()).toEqual({ x: 1 });
+    expect(storage.root.toJSON()).toEqual({ x: 1 });
   });
 
   describe("subscription", () => {
@@ -1660,9 +1659,9 @@ describe("room", () => {
       // Other client (which is still online), deletes "C".
       refStorage.root.get("items").delete(1);
 
-      const storageJson = lsonToJson(storage.root);
+      const storageJson = storage.root.toJSON();
       expect(storageJson).toEqual({ items: ["A", "C", "B"] });
-      const refStorageJson = lsonToJson(refStorage.root);
+      const refStorageJson = refStorage.root.toJSON();
       expect(refStorageJson).toEqual({ items: ["A"] });
 
       const newInitStorage: StorageNode[] = [
@@ -1813,9 +1812,9 @@ describe("room", () => {
       expect(storageStatusCallback).toHaveBeenCalledWith("synchronizing");
       expect(room.getStorageStatus()).toBe("synchronizing");
 
-      const storageJson = lsonToJson(storage.root);
+      const storageJson = storage.root.toJSON();
       expect(storageJson).toEqual({ x: 1 });
-      const refStorageJson = lsonToJson(refStorage.root);
+      const refStorageJson = refStorage.root.toJSON();
       expect(refStorageJson).toEqual({ x: 0 });
 
       const newInitStorage: StorageNode[] = [createSerializedRoot({ x: 0 })];

@@ -18,6 +18,97 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 14 (2026-04-03)
+
+## v3.17.0
+
+### `@liveblocks/react-flow`
+
+- Introduce the package. Install with `npm install @liveblocks/react-flow`.
+  Provides hooks and components that add collaboration to any React Flow diagram
+  using Liveblocks Storage:
+  - Use the `useLiveblocksFlow` hook to make React Flow synced and
+    collaborative.
+  - Use the `Cursors` component to show other users' cursors inside React Flow.
+
+### `@liveblocks/react-ui`
+
+- Allow customizing cursors in the `Cursors` component by passing a
+  `components={{ Cursor: MyCursor }}` prop.
+
+## v3.16.0
+
+### `@liveblocks/chat-sdk-adapter`
+
+- Introduce the package. Install with
+  `npm install @liveblocks/chat-sdk-adapter`. Provides a
+  [`chat-sdk`](https://www.npmjs.com/package/chat)-compatible backend adapter
+  backed by Liveblocks Comments: webhooks, posting and editing messages,
+  reactions, paginated fetches, thread and channel helpers, and optional
+  `resolveUsers` / `resolveGroupsInfo` hooks.
+
+### `@liveblocks/react`
+
+- Add Feeds hooks: `useFeeds`, `useFeedMessages`, `useCreateFeed`,
+  `useDeleteFeed`, `useUpdateFeedMetadata`, `useCreateFeedMessage`,
+  `useDeleteFeedMessage`, and `useUpdateFeedMessage`.
+
+### `@liveblocks/node`
+
+- Add REST client methods for Feeds: `getFeeds`, `getFeed`, `createFeed`,
+  `updateFeed`, `deleteFeed`, `getFeedMessages`, `createFeedMessage`,
+  `updateFeedMessage`, and `deleteFeedMessage`.
+
+### Python SDK
+
+- Add Feeds REST API support on the sync and async clients (`get_feeds`,
+  `get_feed`, `create_feed`, `update_feed`, `delete_feed`, `get_feed_messages`,
+  `create_feed_message`, `update_feed_message`, `delete_feed_message`) with
+  matching request/response models.
+
+### `@liveblocks/client`
+
+- Add **Feeds**: room-scoped feeds with metadata and messages and APIs to list,
+  create, update, and delete feeds and messages (`fetchFeeds`,
+  `fetchFeedMessages`, `addFeed`, `updateFeed`, `deleteFeed`, `addFeedMessage`,
+  `updateFeedMessage`, `deleteFeedMessage`).
+
+### `@liveblocks/react-ui`
+
+- Add `body` prop to `Comment` to allow overriding only the default rich-text
+  comment body while still keeping attachments, reactions, and
+  `additionalContent` as is, unlike when using the `children` prop.
+- Fix `AvatarStack` negative margin breaking alignment.
+
+## Liveblocks dev server (v1.3.0)
+
+- Add feeds support (feeds:write permission)
+- Add verbose logging toggle
+- Fix permission validation to accept all valid permission combinations
+- Support passing extra arguments to `--cmd` dynamically
+
+## Website
+- [Liveblocks Unveil](https://liveblocks.io/unveil/april-2026): April 6–10, 5 days of launches.
+
+## Documentation
+
+- New page: [n8n nodes](https://liveblocks.io/docs/tools/n8n-nodes).
+- New page: [AI Collaboration](https://liveblocks.io/docs/collaboration-features/ai-collaboration).
+- New get started: [Next.js + Realtime feeds](https://liveblocks.io/docs/get-started/nextjs-feeds).
+- New get started: [Next.js + React Flow](https://liveblocks.io/docs/get-started/nextjs-react-flow).
+- Add Feeds to API reference pages.
+- New concepts and WebSocket images.
+
+## Examples
+
+- New example: [AI Comments](https://liveblocks.io/examples/ai-comments/nextjs-comments-ai).
+- New example: [Chat SDK Bot](https://liveblocks.io/examples/chat-sdk-bot/nextjs-chat-sdk-bot).
+- New example: [Chat SDK AI Bot](https://liveblocks.io/examples/chat-sdk-ai-bot/nextjs-chat-sdk-ai-bot).
+
+## Contributors
+
+nvie, ctnicholas, marcbouchenoire, sugardarius, nimeshnayaju, jrowny
+
 # Week 13 (2026-03-27)
 
 ## 3.15.5

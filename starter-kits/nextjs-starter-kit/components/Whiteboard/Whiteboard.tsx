@@ -1,4 +1,4 @@
-import { LiveObject, shallow } from "@liveblocks/client";
+import { LiveObject } from "@liveblocks/client";
 import { ClientSideSuspense } from "@liveblocks/react";
 import {
   useCanRedo,
@@ -55,11 +55,7 @@ function LiveblocksWhiteboard({
   style,
   ...props
 }: Props) {
-  // An array of every note id
-  const noteIds: string[] = useStorage(
-    (root) => Array.from(root.notes.keys()),
-    shallow
-  );
+  const notesById = useStorage((root) => root.notes);
 
   const history = useHistory();
   const canUndo = useCanUndo();
@@ -196,7 +192,7 @@ function LiveblocksWhiteboard({
         /*
          * Iterate through each note in the LiveMap and render it as a note
          */
-        noteIds.map((id) => (
+        Object.keys(notesById).map((id) => (
           <WhiteboardNote
             dragged={id === dragInfo?.current?.noteId}
             id={id}

@@ -286,7 +286,9 @@ expectType<P>(ctx.suspense.useMyPresence()[0]);
 
 // The storage hooks
 expectType<readonly string[] | null>(ctx.useStorage((x) => x.animals));
-expectType<ReadonlyMap<string, number> | null>(ctx.useStorage((x) => x.scores));
+expectType<{ readonly [key: string]: number } | null>(
+  ctx.useStorage((x) => x.scores)
+);
 expectType<{ readonly name: string; readonly age: number } | null>(
   ctx.useStorage((x) => x.person)
 );
@@ -295,7 +297,7 @@ expectType<[root: LiveObject<MyStorage> | null]>(ctx.useStorageRoot());
 
 // The storage hooks (suspense versions)
 expectType<readonly string[]>(ctx.suspense.useStorage((x) => x.animals));
-expectType<ReadonlyMap<string, number>>(
+expectType<{ readonly [key: string]: number }>(
   ctx.suspense.useStorage((x) => x.scores)
 );
 expectType<{ readonly name: string; readonly age: number }>(

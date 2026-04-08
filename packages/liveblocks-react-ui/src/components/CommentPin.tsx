@@ -5,7 +5,7 @@ import { forwardRef } from "react";
 
 import { cn } from "../utils/cn";
 import { px } from "../utils/px";
-import { Avatar } from "./internal/Avatar";
+import { UserAvatar } from "./Avatar";
 
 export interface CommentPinProps extends ComponentPropsWithoutRef<"button"> {
   /**
@@ -72,7 +72,7 @@ export const CommentPin = forwardRef<HTMLButtonElement, CommentPinProps>(
       >
         {children ??
           (userId ? (
-            <Avatar className="lb-comment-pin-avatar" userId={userId} />
+            <UserAvatar className="lb-comment-pin-avatar" userId={userId} />
           ) : null)}
       </button>
     );
