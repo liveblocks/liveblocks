@@ -20,7 +20,7 @@ const SelectionBox = memo(
 
     const isShowingHandles = useStorage(
       (root) =>
-        soleLayerId && root.layers.get(soleLayerId)?.type !== LayerType.Path
+        soleLayerId && root.layers[soleLayerId]?.type !== LayerType.Path
     );
 
     const bounds = useSelectionBounds();

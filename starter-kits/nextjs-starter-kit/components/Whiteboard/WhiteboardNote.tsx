@@ -42,7 +42,7 @@ export const WhiteboardNote = memo(
     ...props
   }: Props) => {
     const textAreaRef = useRef<HTMLTextAreaElement>(null);
-    const note = useStorage((root) => root.notes.get(id));
+    const note = useStorage((root) => root.notes[id]);
 
     const handleDoubleClick = useCallback(() => {
       textAreaRef.current?.focus();
