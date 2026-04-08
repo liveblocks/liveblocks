@@ -236,8 +236,8 @@ export function App() {
     config](#sync-config).
   </PropertiesListItem>
   <PropertiesListItem name="storageKey" type="string" optional>
-    The key used to store the diagram in Liveblocks Storage. Defaults to
-    `"flow"`. See [`storageKey`](#storageKey).
+    The key used to store the flow in Liveblocks Storage. Defaults to `"flow"`.
+    See [`storageKey`](#storageKey).
   </PropertiesListItem>
   <PropertiesListItem name="suspense" type="boolean" optional>
     When `true`, suspends until the diagram is ready. Learn more about this in
@@ -689,7 +689,7 @@ function Flow() {
   </PropertiesListItem>
 </PropertiesList>
 
-## Updating your Flow from the server [#node-subexport]
+## Updating your Flow from the server [#server-side]
 
 To update a React Flow from your Node.js back-end, use `mutateFlow`.
 
@@ -737,9 +737,9 @@ you can change this with the `storageKey` option.
 <Banner type="info" title="No need to work with Liveblocks primitives">
   Even though internally `mutateFlow` uses Liveblocks Storage and its primitives
   like LiveObjects, LiveLists, and LiveMaps, you don’t need to work with those
-  directly. You "just" work with React Flow nodes and edges like you know
-  already, but internally these get intelligently stored and synchronized via
-  Live structures in the most efficient manner.
+  directly. You just work with React Flow nodes and edges as you normally would,
+  and they get intelligently stored and synchronized via Live structures in the
+  most efficient manner.
 </Banner>
 
 <PropertiesList title="Options">
@@ -751,8 +751,8 @@ you can change this with the `storageKey` option.
     The ID of the room whose flow to mutate.
   </PropertiesListItem>
   <PropertiesListItem name="storageKey" type="string" optional>
-    The key used to store the diagram in Liveblocks Storage. Defaults to
-    `"flow"`. Must match the [`storageKey`](#storageKey) used on the client.
+    The key used to store the flow in Liveblocks Storage. Defaults to `"flow"`.
+    Must match the [`storageKey`](#storageKey) used on the client.
   </PropertiesListItem>
   <PropertiesListItem name="nodes.sync" type="NodeSyncConfig" optional>
     Per-type sync configuration for node `data` keys. Must match the [sync
@@ -993,9 +993,9 @@ await mutateFlow({ client, roomId }, (flow) => {
 ### How mutations are flushed [#mutateFlow-flushing]
 
 The [`mutateFlow`][] function is built on top of [`Liveblocks.mutateStorage`][],
-but instead of giving you access to the Liveblocks Storage root directly,
-instead it gives you a convenient API tailored to React Flow, the `MutableFlow`
-instance you can use to read or mutate your nodes and edges directly.
+but rather than giving you access to the Liveblocks Storage root directly, it
+gives you a convenient API tailored to React Flow—a `MutableFlow` instance you
+can use to read or mutate your nodes and edges directly.
 
 Under the hood, everything still gets stored and synced efficiently via Live
 structures (`LiveObject`, `LiveMap`, etc), but this is an implementation detail.
