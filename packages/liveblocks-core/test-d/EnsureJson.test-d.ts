@@ -1,5 +1,5 @@
 import type { EnsureJson, Json, JsonObject } from "@liveblocks/core";
-import { expectTypeOf, test } from "vitest";
+import { describe, expectTypeOf, test } from "vitest";
 
 type Item = {
   n?: number;
