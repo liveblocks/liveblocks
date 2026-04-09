@@ -59,7 +59,7 @@
     "lint": "eslint src/ && stylelint src/styles/",
     "test": "npx liveblocks dev -p 1154 -c 'vitest run --coverage'",
     "test:ci": "vitest run",
-    "test:types": "ls test-d/* | xargs -n1 tsd --files",
+    "test:types": "vitest run --config ./vitest.config.typecheck.ts",
     "test:watch": "vitest"
   },
   "dependencies": {
