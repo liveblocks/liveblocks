@@ -57,7 +57,7 @@
     "lint:package": "publint --strict && attw --pack && bun scripts/check-exports.ts",
     "test": "NODE_OPTIONS=\"--no-deprecation\" jest --silent --verbose --color=always",
     "test:ci": "NODE_OPTIONS=\"--no-deprecation\" jest --silent --verbose --color=always",
-    "test:types": "ls test-d/* | xargs -n1 tsd --files",
+    "test:types": "vitest run --config ./vitest.config.typecheck.ts",
     "test:watch": "NODE_OPTIONS=\"--no-deprecation\" jest --silent --verbose --color=always --watch",
     "test:deps": "depcruise src --exclude __tests__",
     "showdeps": "depcruise src --include-only '^src' --exclude='__tests__' --output-type dot | dot -T svg > /tmp/dependency-graph.svg && open /tmp/dependency-graph.svg"
@@ -82,6 +82,7 @@
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
     "@liveblocks/jest-config": "*",
+    "@liveblocks/vitest-config": "*",
     "@liveblocks/query-parser": "^0.1.1",
     "@testing-library/jest-dom": "6.4.6",
     "@testing-library/react": "14.1.2",

@@ -1,8 +1,9 @@
+import React from "react";
 import type { NotificationSettings } from "@liveblocks/core";
 import { LiveList, LiveMap, LiveObject } from "@liveblocks/core";
 import * as classic from "@liveblocks/react";
 import * as suspense from "@liveblocks/react/suspense";
-import { expectAssignable, expectError, expectType } from "tsd";
+import { describe, expectTypeOf, test } from "vitest";
 
 //
 // User-provided type augmentations
@@ -54,1276 +55,1479 @@ declare global {
   }
 }
 
-// LiveblocksProvider
-{
-  const LiveblocksProvider = classic.LiveblocksProvider;
+describe("with Liveblocks augmentation", () => {
+  test("LiveblocksProvider", () => {
+    {
+      const LiveblocksProvider = classic.LiveblocksProvider;
 
-  expectError(<LiveblocksProvider />);
-  expectError(<LiveblocksProvider throttle={16} />);
+      void (
+        (
+          // @ts-expect-error
+          <LiveblocksProvider />
+        )
+      );
+      void (
+        (
+          // @ts-expect-error
+          <LiveblocksProvider throttle={16} />
+        )
+      );
 
-  <LiveblocksProvider authEndpoint="/api/auth" />;
-  <LiveblocksProvider publicApiKey="pk_xxx" />;
-  <LiveblocksProvider authEndpoint="/api/auth" throttle={16} />;
-  <LiveblocksProvider
-    authEndpoint={async () => ({ token: "token" })}
-    throttle={16}
-  />;
+      <LiveblocksProvider authEndpoint="/api/auth" />;
+      <LiveblocksProvider publicApiKey="pk_xxx" />;
+      <LiveblocksProvider authEndpoint="/api/auth" throttle={16} />;
+      <LiveblocksProvider
+        authEndpoint={async () => ({ token: "token" })}
+        throttle={16}
+      />;
 
-  expectError(
-    <LiveblocksProvider
-      authEndpoint="/api/auth"
-      resolveUsers={async () => [{ foo: "bar" }]}
-    />
-  );
+      void (
+        <LiveblocksProvider
+          authEndpoint="/api/auth"
+          // @ts-expect-error
+          resolveUsers={async () => [{ foo: "bar" }]}
+        />
+      );
 
-  <LiveblocksProvider
-    authEndpoint="/api/auth"
-    resolveUsers={async () => [{ name: "Vincent", age: 42 }]}
-  />;
+      <LiveblocksProvider
+        authEndpoint="/api/auth"
+        resolveUsers={async () => [{ name: "Vincent", age: 42 }]}
+      />;
 
-  <LiveblocksProvider authEndpoint="/api/auth" preventUnsavedChanges />;
-}
-
-// LiveblocksProvider (suspense)
-{
-  const LiveblocksProvider = suspense.LiveblocksProvider;
-
-  expectError(<LiveblocksProvider />);
-  expectError(<LiveblocksProvider throttle={16} />);
-
-  <LiveblocksProvider authEndpoint="/api/auth" />;
-  <LiveblocksProvider publicApiKey="pk_xxx" />;
-  <LiveblocksProvider authEndpoint="/api/auth" throttle={16} />;
-  <LiveblocksProvider
-    authEndpoint={async () => ({ token: "token" })}
-    throttle={16}
-  />;
-
-  expectError(
-    <LiveblocksProvider
-      authEndpoint="/api/auth"
-      resolveUsers={async () => [{ foo: "bar" }]}
-    />
-  );
-
-  <LiveblocksProvider
-    authEndpoint="/api/auth"
-    resolveUsers={async () => [{ name: "Vincent", age: 42 }]}
-  />;
-
-  <LiveblocksProvider authEndpoint="/api/auth" preventUnsavedChanges />;
-}
-
-// RoomProvider
-{
-  const RoomProvider = classic.RoomProvider;
-
-  // Missing mandatory props is an error
-  expectError(
-    <RoomProvider /* no room id */>
-      <div />
-    </RoomProvider>
-  );
-
-  expectError(
-    // Missing initialPresence is an error
-    <RoomProvider id="my-room">
-      <div />
-    </RoomProvider>
-  );
-
-  expectError(
-    // Missing mandatory initialStorage is an error
-    <RoomProvider id="my-room" initialPresence={{ cursor: { x: 0, y: 0 } }}>
-      <div />
-    </RoomProvider>
-  );
-
-  expectError(
-    // Missing mandatory initialPresence is an error
-    <RoomProvider
-      id="my-room"
-      initialStorage={{
-        animals: new LiveList([]),
-        person: new LiveObject(),
-        scores: new LiveMap(),
-      }}
-    >
-      <div />
-    </RoomProvider>
-  );
-
-  expectError(
-    // Missing mandatory initialStorage
-    <RoomProvider id="my-room" initialPresence={{ cursor: { x: 0, y: 0 } }}>
-      <div />
-    </RoomProvider>
-  );
-
-  expectError(
-    <RoomProvider
-      id="my-room"
-      initialPresence={{ cursor: { x: 0, y: 0 } }}
-      initialStorage={{
-        // Incorrect storage shape
-        foo: new LiveList([]),
-        bar: new LiveObject(),
-      }}
-    >
-      <div />
-    </RoomProvider>
-  );
-
-  <RoomProvider
-    id="my-room"
-    initialPresence={{ cursor: { x: 0, y: 0 } }}
-    initialStorage={{
-      animals: new LiveList([]),
-      person: new LiveObject(),
-      scores: new LiveMap(),
-    }}
-  >
-    <div />
-  </RoomProvider>;
-}
-
-// RoomProvider (suspense)
-{
-  const RoomProvider = suspense.RoomProvider;
-
-  // Missing mandatory props is an error
-  expectError(
-    <RoomProvider /* no room id */>
-      <div />
-    </RoomProvider>
-  );
-
-  expectError(
-    // Missing initialPresence is an error
-    <RoomProvider id="my-room">
-      <div />
-    </RoomProvider>
-  );
-
-  expectError(
-    // Missing mandatory initialStorage is an error
-    <RoomProvider id="my-room" initialPresence={{ cursor: { x: 0, y: 0 } }}>
-      <div />
-    </RoomProvider>
-  );
-
-  expectError(
-    // Missing mandatory initialPresence is an error
-    <RoomProvider
-      id="my-room"
-      initialStorage={{
-        animals: new LiveList([]),
-        person: new LiveObject(),
-        scores: new LiveMap(),
-      }}
-    >
-      <div />
-    </RoomProvider>
-  );
-
-  expectError(
-    // Missing mandatory initialStorage
-    <RoomProvider id="my-room" initialPresence={{ cursor: { x: 0, y: 0 } }}>
-      <div />
-    </RoomProvider>
-  );
-
-  expectError(
-    <RoomProvider
-      id="my-room"
-      initialPresence={{ cursor: { x: 0, y: 0 } }}
-      initialStorage={{
-        // Incorrect storage shape
-        foo: new LiveList([]),
-        bar: new LiveObject(),
-      }}
-    >
-      <div />
-    </RoomProvider>
-  );
-
-  <RoomProvider
-    id="my-room"
-    initialPresence={{ cursor: { x: 0, y: 0 } }}
-    initialStorage={{
-      animals: new LiveList([]),
-      person: new LiveObject(),
-      scores: new LiveMap(),
-    }}
-  >
-    <div />
-  </RoomProvider>;
-}
-
-// ---------------------------------------------------------
-// Hook APIs
-// ---------------------------------------------------------
-
-// useRoom()
-{
-  const room = classic.useRoom();
-  expectType<number>(room.getPresence().cursor.x);
-  expectType<number>(room.getPresence().cursor.y);
-  expectError(room.getPresence().nonexisting);
-
-  expectType<string>(classic.useRoom({ allowOutsideRoom: false }).id);
-  expectType<string | undefined>(
-    classic.useRoom({ allowOutsideRoom: true })?.id
-  );
-  expectType<string | undefined>(
-    classic.useRoom({ allowOutsideRoom: Math.random() < 0.5 })?.id
-  );
-}
-
-// useRoom() (suspense)
-{
-  const room = suspense.useRoom();
-  expectType<number>(room.getPresence().cursor.x);
-  expectType<number>(room.getPresence().cursor.y);
-  expectError(room.getPresence().nonexisting);
-
-  expectType<string>(suspense.useRoom({ allowOutsideRoom: false }).id);
-  expectType<string | undefined>(
-    suspense.useRoom({ allowOutsideRoom: true })?.id
-  );
-  expectType<string | undefined>(
-    suspense.useRoom({ allowOutsideRoom: Math.random() < 0.5 })?.id
-  );
-}
-
-// ---------------------------------------------------------
-
-// useIsInsideRoom()
-{
-  const isInsideRoom = classic.useIsInsideRoom();
-  expectType<boolean>(isInsideRoom);
-}
-
-// useIsInsideRoom() (suspense)
-{
-  const isInsideRoom = suspense.useIsInsideRoom();
-  expectType<boolean>(isInsideRoom);
-}
-
-// ---------------------------------------------------------
-
-// useErrorListener()
-{
-  classic.useErrorListener((err) => {
-    expectType<string>(err.message);
-    expectType<string | undefined>(err.stack);
-    expectType<string | -1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(
-      err.context.code
-    );
-    expectAssignable<
-      | "AI_CONNECTION_ERROR"
-      | "ROOM_CONNECTION_ERROR"
-      | "CREATE_THREAD_ERROR"
-      | "DELETE_THREAD_ERROR"
-      | "EDIT_THREAD_METADATA_ERROR"
-      | "EDIT_COMMENT_METADATA_ERROR"
-      | "MARK_THREAD_AS_RESOLVED_ERROR"
-      | "MARK_THREAD_AS_UNRESOLVED_ERROR"
-      | "SUBSCRIBE_TO_THREAD_ERROR"
-      | "UNSUBSCRIBE_FROM_THREAD_ERROR"
-      | "CREATE_COMMENT_ERROR"
-      | "EDIT_COMMENT_ERROR"
-      | "DELETE_COMMENT_ERROR"
-      | "ADD_REACTION_ERROR"
-      | "REMOVE_REACTION_ERROR"
-      | "MARK_INBOX_NOTIFICATION_AS_READ_ERROR"
-      | "DELETE_INBOX_NOTIFICATION_ERROR"
-      | "MARK_ALL_INBOX_NOTIFICATIONS_AS_READ_ERROR"
-      | "DELETE_ALL_INBOX_NOTIFICATIONS_ERROR"
-      | "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR"
-      | "UPDATE_NOTIFICATION_SETTINGS_ERROR"
-      | "LARGE_MESSAGE_ERROR"
-      | "FEED_REQUEST_ERROR"
-    >(err.context.type);
-    if (err.context.type === "ROOM_CONNECTION_ERROR") {
-      expectAssignable<number>(err.context.code);
-      expectAssignable<number | undefined>(err.context.code);
-    } else if (err.context.type === "CREATE_THREAD_ERROR") {
-      expectType<string>(err.context.roomId);
-      expectType<string>(err.context.threadId);
-      expectType<string>(err.context.commentId);
-    } else {
-      // Not going to list them all...
+      <LiveblocksProvider authEndpoint="/api/auth" preventUnsavedChanges />;
     }
   });
-}
 
-// useErrorListener() (suspense)
-{
-  suspense.useErrorListener((err) => {
-    expectType<string>(err.message);
-    expectType<string | undefined>(err.stack);
-    expectType<string | -1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(
-      err.context.code
-    );
-    expectAssignable<
-      | "AI_CONNECTION_ERROR"
-      | "ROOM_CONNECTION_ERROR"
-      | "CREATE_THREAD_ERROR"
-      | "DELETE_THREAD_ERROR"
-      | "EDIT_THREAD_METADATA_ERROR"
-      | "EDIT_COMMENT_METADATA_ERROR"
-      | "MARK_THREAD_AS_RESOLVED_ERROR"
-      | "MARK_THREAD_AS_UNRESOLVED_ERROR"
-      | "SUBSCRIBE_TO_THREAD_ERROR"
-      | "UNSUBSCRIBE_FROM_THREAD_ERROR"
-      | "CREATE_COMMENT_ERROR"
-      | "EDIT_COMMENT_ERROR"
-      | "DELETE_COMMENT_ERROR"
-      | "ADD_REACTION_ERROR"
-      | "REMOVE_REACTION_ERROR"
-      | "MARK_INBOX_NOTIFICATION_AS_READ_ERROR"
-      | "DELETE_INBOX_NOTIFICATION_ERROR"
-      | "MARK_ALL_INBOX_NOTIFICATIONS_AS_READ_ERROR"
-      | "DELETE_ALL_INBOX_NOTIFICATIONS_ERROR"
-      | "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR"
-      | "UPDATE_NOTIFICATION_SETTINGS_ERROR"
-      | "LARGE_MESSAGE_ERROR"
-      | "FEED_REQUEST_ERROR"
-    >(err.context.type);
-    if (err.context.type === "ROOM_CONNECTION_ERROR") {
-      expectAssignable<number>(err.context.code);
-      expectAssignable<number | undefined>(err.context.code);
-    } else if (err.context.type === "CREATE_THREAD_ERROR") {
-      expectType<string>(err.context.roomId);
-      expectType<string>(err.context.threadId);
-      expectType<string>(err.context.commentId);
-    } else {
-      // Not going to list them all...
+  test("LiveblocksProvider (suspense)", () => {
+    {
+      const LiveblocksProvider = suspense.LiveblocksProvider;
+
+      void (
+        (
+          // @ts-expect-error
+          <LiveblocksProvider />
+        )
+      );
+      void (
+        (
+          // @ts-expect-error
+          <LiveblocksProvider throttle={16} />
+        )
+      );
+
+      <LiveblocksProvider authEndpoint="/api/auth" />;
+      <LiveblocksProvider publicApiKey="pk_xxx" />;
+      <LiveblocksProvider authEndpoint="/api/auth" throttle={16} />;
+      <LiveblocksProvider
+        authEndpoint={async () => ({ token: "token" })}
+        throttle={16}
+      />;
+
+      void (
+        <LiveblocksProvider
+          authEndpoint="/api/auth"
+          // @ts-expect-error
+          resolveUsers={async () => [{ foo: "bar" }]}
+        />
+      );
+
+      <LiveblocksProvider
+        authEndpoint="/api/auth"
+        resolveUsers={async () => [{ name: "Vincent", age: 42 }]}
+      />;
+
+      <LiveblocksProvider authEndpoint="/api/auth" preventUnsavedChanges />;
     }
   });
-}
 
-// ---------------------------------------------------------
+  test("RoomProvider", () => {
+    {
+      const RoomProvider = classic.RoomProvider;
 
-// useSelf()
-{
-  const me = classic.useSelf();
-  expectType<number | undefined>(me?.presence.cursor.x);
-  expectType<number | undefined>(me?.presence.cursor.y);
-  expectError(me?.presence.nonexisting);
+      // Missing mandatory props is an error
+      void (
+        (
+          // @ts-expect-error
+          <RoomProvider /* no room id */>
+            <div />
+          </RoomProvider>
+        )
+      );
 
-  expectType<string | undefined>(me?.info.name);
-  expectType<number | undefined>(me?.info.age);
-  expectError(me?.info.nonexisting);
-}
+      void (
+        (
+          // @ts-expect-error - Missing initialPresence
+          <RoomProvider id="my-room">
+            <div />
+          </RoomProvider>
+        )
+      );
 
-// useSelf() (suspense)
-{
-  const me = suspense.useSelf();
-  expectType<number>(me.presence.cursor.x);
-  expectType<number>(me.presence.cursor.y);
-  expectError(me.presence.nonexisting);
+      void (
+        (
+          // @ts-expect-error - Missing mandatory initialStorage
+          <RoomProvider
+            id="my-room"
+            initialPresence={{ cursor: { x: 0, y: 0 } }}
+          >
+            <div />
+          </RoomProvider>
+        )
+      );
 
-  expectType<string>(me.info.name);
-  expectType<number>(me.info.age);
-  expectError(me.info.nonexisting);
-}
+      void (
+        (
+          // @ts-expect-error - Missing mandatory initialPresence
+          <RoomProvider
+            id="my-room"
+            initialStorage={{
+              animals: new LiveList([]),
+              person: new LiveObject(),
+              scores: new LiveMap(),
+            }}
+          >
+            <div />
+          </RoomProvider>
+        )
+      );
 
-// useSelf(selector)
-{
-  const x = classic.useSelf((me) => me.presence.cursor.x);
-  expectType<number | null>(x);
-}
+      void (
+        (
+          // @ts-expect-error - Missing mandatory initialStorage
+          <RoomProvider
+            id="my-room"
+            initialPresence={{ cursor: { x: 0, y: 0 } }}
+          >
+            <div />
+          </RoomProvider>
+        )
+      );
 
-// useSelf(selector) (suspense)
-{
-  const x = suspense.useSelf((me) => me.presence.cursor.x);
-  expectType<number>(x);
-}
+      void (
+        <RoomProvider
+          id="my-room"
+          initialPresence={{ cursor: { x: 0, y: 0 } }}
+          initialStorage={{
+            // Incorrect storage shape
+            // @ts-expect-error
+            foo: new LiveList([]),
+            bar: new LiveObject(),
+          }}
+        >
+          <div />
+        </RoomProvider>
+      );
 
-// ---------------------------------------------------------
-
-// useOthers()
-{
-  const others = classic.useOthers();
-  expectType<number>(others[13]!.presence.cursor.x);
-  expectType<number>(others[42]!.presence.cursor.y);
-  expectType<boolean>(others[0]!.canWrite);
-}
-
-// useOthers() (suspense)
-{
-  const others = suspense.useOthers();
-  expectType<number>(others[13]!.presence.cursor.x);
-  expectType<number>(others[42]!.presence.cursor.y);
-  expectType<boolean>(others[0]!.canWrite);
-}
-
-// useOthers(selector)
-{
-  const num = classic.useOthers((others) => others.length);
-  expectType<number>(num);
-
-  const xs = classic.useOthers((others) =>
-    others.map((o) => o.presence.cursor.x)
-  );
-  expectType<number[]>(xs);
-}
-
-// useOthers(selector) (suspense)
-{
-  const num = classic.useOthers((others) => others.length);
-  expectType<number>(num);
-
-  const xs = classic.useOthers((others) =>
-    others.map((o) => o.presence.cursor.x)
-  );
-  expectType<number[]>(xs);
-}
-
-// useOthers(selector, eq)
-{
-  const xs = classic.useOthers(
-    (others) => others.map((o) => o.presence.cursor.x),
-    classic.shallow
-  );
-  expectType<number[]>(xs);
-}
-
-// useOthers(selector, eq) (suspense)
-{
-  const xs = suspense.useOthers(
-    (others) => others.map((o) => o.presence.cursor.x),
-    suspense.shallow
-  );
-  expectType<number[]>(xs);
-}
-
-// ---------------------------------------------------------
-
-// The useMutation() hook
-{
-  expectType<(a: number, b: boolean) => "hi">(
-    classic.useMutation((mut, _a: number, _b: boolean) => {
-      expectType<number>(mut.self.presence.cursor.x);
-      expectError(mut.self.presence.nonexisting);
-      expectType<string>(mut.self.info.name);
-      expectType<number>(mut.self.info.age);
-      expectError(mut.self.info.nonexisting);
-
-      expectType<number>(mut.others[0]!.presence.cursor.x);
-      expectError(mut.others[0]!.presence.nonexisting);
-      expectType<string>(mut.others[0]!.info.name);
-      expectType<number>(mut.others[0]!.info.age);
-      expectError(mut.others[0]!.info.nonexisting);
-
-      expectType<string | undefined>(mut.storage.get("animals").get(0));
-      expectType<number | undefined>(mut.storage.get("scores").get("one"));
-      expectType<number>(mut.storage.get("person").get("age"));
-      expectError(mut.storage.get("nonexisting"));
-      expectType<void>(mut.setMyPresence({ cursor: { x: 0, y: 0 } }));
-      expectError(mut.setMyPresence({ nonexisting: 123 }));
-
-      return "hi" as const;
-    }, [])
-  );
-}
-
-// The useMutation() hook (suspense)
-{
-  expectType<(a: number, b: boolean) => "hi">(
-    suspense.useMutation((mut, _a: number, _b: boolean) => {
-      expectType<number>(mut.self.presence.cursor.x);
-      expectError(mut.self.presence.nonexisting);
-      expectType<string>(mut.self.info.name);
-      expectType<number>(mut.self.info.age);
-      expectError(mut.self.info.nonexisting);
-
-      expectType<number>(mut.others[0]!.presence.cursor.x);
-      expectError(mut.others[0]!.presence.nonexisting);
-      expectType<string>(mut.others[0]!.info.name);
-      expectType<number>(mut.others[0]!.info.age);
-      expectError(mut.others[0]!.info.nonexisting);
-
-      expectType<string | undefined>(mut.storage.get("animals").get(0));
-      expectType<number | undefined>(mut.storage.get("scores").get("one"));
-      expectType<number>(mut.storage.get("person").get("age"));
-      expectError(mut.storage.get("nonexisting"));
-      expectType<void>(mut.setMyPresence({ cursor: { x: 0, y: 0 } }));
-      expectError(mut.setMyPresence({ nonexisting: 123 }));
-
-      return "hi" as const;
-    }, [])
-  );
-}
-
-// ---------------------------------------------------------
-
-// useBroadcastEvent()
-{
-  const broadcast = classic.useBroadcastEvent();
-  broadcast({ type: "emoji", emoji: "😍" });
-  broadcast({ type: "beep", times: 3 });
-  broadcast({ type: "beep" });
-  // broadcast({ type: "leave", userId: "1234" });  // TODO Allow this using union types
-  expectError(broadcast({ type: "i-do-not-exist" }));
-  expectError(broadcast(new Date()));
-}
-
-// useBroadcastEvent() (suspense)
-{
-  const broadcast = suspense.useBroadcastEvent();
-  broadcast({ type: "emoji", emoji: "😍" });
-  broadcast({ type: "beep", times: 3 });
-  broadcast({ type: "beep" });
-  // broadcast({ type: "leave", userId: "1234" });  // TODO Allow this using union types
-  expectError(broadcast({ type: "i-do-not-exist" }));
-  expectError(broadcast(new Date()));
-}
-
-// ---------------------------------------------------------
-
-// The useUser() hook
-{
-  const { user, error, isLoading } = classic.useUser("user-id");
-  expectType<boolean>(isLoading);
-  expectType<string>(user!.name);
-  expectError(user?.avatar);
-  expectType<number>(user!.age);
-  expectError(user?.anyOtherProp);
-  expectType<Error | undefined>(error);
-}
-
-// The useUser() hook (suspense)
-{
-  const { user, error, isLoading } = suspense.useUser("user-id");
-  expectType<false>(isLoading);
-  expectType<string>(user.name);
-  expectError(user.avatar);
-  expectType<number>(user.age);
-  expectError(user.anyOtherProp);
-  expectType<undefined>(error);
-}
-
-// ---------------------------------------------------------
-
-// The useRoomInfo() hook
-{
-  const { info, error, isLoading } = classic.useRoomInfo("room-id");
-  expectType<boolean>(isLoading);
-  expectType<string>(info!.name);
-  expectType<string | undefined>(info!.url);
-  expectType<"public" | "private" | undefined>(info?.type);
-  expectError(info?.nonexisting);
-  expectType<Error | undefined>(error);
-}
-
-// The useRoomInfo() hook (suspense)
-{
-  const { info, error, isLoading } = suspense.useRoomInfo("room-id");
-  expectType<false>(isLoading);
-  expectType<string>(info.name);
-  expectType<string | undefined>(info.url);
-  expectType<"public" | "private">(info?.type);
-  expectError(info?.nonexisting);
-  expectType<undefined>(error);
-}
-
-// ---------------------------------------------------------
-
-// The useGroupInfo() hook
-{
-  const { info, error, isLoading } = classic.useGroupInfo("group-id");
-  expectType<boolean>(isLoading);
-  expectType<string>(info!.name);
-  expectType<string | undefined>(info!.avatar);
-  expectType<"open" | "closed" | undefined>(info?.type);
-  expectError(info?.nonexisting);
-  expectType<Error | undefined>(error);
-}
-
-// The useGroupInfo() hook (suspense)
-{
-  const { info, error, isLoading } = suspense.useGroupInfo("group-id");
-  expectType<false>(isLoading);
-  expectType<string>(info.name);
-  expectType<string | undefined>(info.avatar);
-  expectType<"open" | "closed">(info?.type);
-  expectError(info?.nonexisting);
-  expectType<undefined>(error);
-}
-
-// ---------------------------------------------------------
-
-// The useCreateThread() hook
-{
-  const createThread = classic.useCreateThread();
-  expectError(createThread({})); // no body = error
-
-  // No metadata = error
-  expectError(
-    createThread({
-      body: {
-        version: 1,
-        content: [{ type: "paragraph", children: [{ text: "hi" }] }],
-      },
-    })
-  );
-
-  const thread = createThread({
-    body: {
-      version: 1,
-      content: [{ type: "paragraph", children: [{ text: "hi" }] }],
-    },
-    metadata: { color: "red" },
-    commentMetadata: { priority: 1 },
+      <RoomProvider
+        id="my-room"
+        initialPresence={{ cursor: { x: 0, y: 0 } }}
+        initialStorage={{
+          animals: new LiveList([]),
+          person: new LiveObject(),
+          scores: new LiveMap(),
+        }}
+      >
+        <div />
+      </RoomProvider>;
+    }
   });
 
-  expectType<"thread">(thread.type);
-  expectType<string>(thread.id);
-  expectType<string>(thread.roomId);
-  expectType<"comment">(thread.comments[0]!.type);
-  expectType<string>(thread.comments[0]!.id);
-  expectType<string>(thread.comments[0]!.threadId);
+  test("RoomProvider (suspense)", () => {
+    {
+      const RoomProvider = suspense.RoomProvider;
 
-  expectType<"red" | "blue">(thread.metadata.color);
-  expectError(thread.metadata.nonexisting);
-}
+      // Missing mandatory props is an error
+      void (
+        (
+          // @ts-expect-error
+          <RoomProvider /* no room id */>
+            <div />
+          </RoomProvider>
+        )
+      );
 
-// The useCreateThread() hook (suspense)
-{
-  const createThread = suspense.useCreateThread();
-  expectError(createThread({})); // no body = error
+      void (
+        (
+          // @ts-expect-error - Missing initialPresence
+          <RoomProvider id="my-room">
+            <div />
+          </RoomProvider>
+        )
+      );
 
-  // No metadata = error
-  expectError(
-    createThread({
-      body: {
-        version: 1,
-        content: [{ type: "paragraph", children: [{ text: "hi" }] }],
-      },
-    })
-  );
+      void (
+        (
+          // @ts-expect-error - Missing mandatory initialStorage
+          <RoomProvider
+            id="my-room"
+            initialPresence={{ cursor: { x: 0, y: 0 } }}
+          >
+            <div />
+          </RoomProvider>
+        )
+      );
 
-  const thread = createThread({
-    body: {
-      version: 1,
-      content: [{ type: "paragraph", children: [{ text: "hi" }] }],
-    },
-    metadata: { color: "red" },
-    commentMetadata: { priority: 1 },
+      void (
+        (
+          // @ts-expect-error - Missing mandatory initialPresence
+          <RoomProvider
+            id="my-room"
+            initialStorage={{
+              animals: new LiveList([]),
+              person: new LiveObject(),
+              scores: new LiveMap(),
+            }}
+          >
+            <div />
+          </RoomProvider>
+        )
+      );
+
+      void (
+        (
+          // @ts-expect-error - Missing mandatory initialStorage
+          <RoomProvider
+            id="my-room"
+            initialPresence={{ cursor: { x: 0, y: 0 } }}
+          >
+            <div />
+          </RoomProvider>
+        )
+      );
+
+      void (
+        <RoomProvider
+          id="my-room"
+          initialPresence={{ cursor: { x: 0, y: 0 } }}
+          initialStorage={{
+            // Incorrect storage shape
+            // @ts-expect-error
+            foo: new LiveList([]),
+            bar: new LiveObject(),
+          }}
+        >
+          <div />
+        </RoomProvider>
+      );
+
+      <RoomProvider
+        id="my-room"
+        initialPresence={{ cursor: { x: 0, y: 0 } }}
+        initialStorage={{
+          animals: new LiveList([]),
+          person: new LiveObject(),
+          scores: new LiveMap(),
+        }}
+      >
+        <div />
+      </RoomProvider>;
+    }
   });
 
-  expectType<"thread">(thread.type);
-  expectType<string>(thread.id);
-  expectType<string>(thread.roomId);
-  expectType<"comment">(thread.comments[0]!.type);
-  expectType<string>(thread.comments[0]!.id);
-  expectType<string>(thread.comments[0]!.threadId);
+  test("useRoom()", () => {
+    {
+      const room = classic.useRoom();
+      expectTypeOf(room.getPresence().cursor.x).toEqualTypeOf<number>();
+      expectTypeOf(room.getPresence().cursor.y).toEqualTypeOf<number>();
+      // @ts-expect-error
+      void room.getPresence().nonexisting;
 
-  expectType<"red" | "blue">(thread.metadata.color);
-  expectError(thread.metadata.nonexisting);
-}
-
-// ---------------------------------------------------------
-
-// The useEditThreadMetadata() hook
-{
-  const editMetadata = classic.useEditThreadMetadata();
-  expectError(editMetadata({})); // no body = error
-
-  expectError(
-    editMetadata({ threadId: "th_xxx", metadata: { nonexisting: null } })
-  );
-  expectError(
-    editMetadata({ threadId: "th_xxx", metadata: { nonexisting: 123 } })
-  );
-
-  expectType<void>(editMetadata({ threadId: "th_xxx", metadata: {} }));
-  expectType<void>(
-    editMetadata({
-      threadId: "th_xxx",
-      metadata: { color: "red", pinned: null },
-    })
-  );
-
-  expectError(editMetadata({ threadId: "th_xxx", metadata: { color: null } })); // Color isn't optional, so cannot be wiped
-}
-
-// The useEditThreadMetadata() hook (suspense)
-{
-  const editMetadata = suspense.useEditThreadMetadata();
-  expectError(editMetadata({})); // no body = error
-
-  expectError(
-    editMetadata({ threadId: "th_xxx", metadata: { nonexisting: null } })
-  );
-  expectError(
-    editMetadata({ threadId: "th_xxx", metadata: { nonexisting: 123 } })
-  );
-
-  expectType<void>(editMetadata({ threadId: "th_xxx", metadata: {} }));
-  expectType<void>(
-    editMetadata({
-      threadId: "th_xxx",
-      metadata: { color: "red", pinned: null },
-    })
-  );
-
-  expectError(editMetadata({ threadId: "th_xxx", metadata: { color: null } })); // Color isn't optional, so cannot be wiped
-}
-
-// ---------------------------------------------------------
-
-// The useCreateComment() hook
-{
-  {
-    const createComment = classic.useCreateComment();
-    expectError(createComment({}));
-
-    const comment = createComment({
-      threadId: "th_xxx",
-      body: {
-        version: 1,
-        content: [{ type: "paragraph", children: [{ text: "hi" }] }],
-      },
-      metadata: {
-        priority: 2,
-        reviewed: false,
-      },
-    });
-
-    expectType<"comment">(comment.type);
-    expectType<string>(comment.id);
-    expectType<number>(comment.metadata.priority);
-    expectType<boolean | undefined>(comment.metadata.reviewed);
-    expectError(comment.metadata.nonexisting);
-  }
-}
-
-// The useCreateComment() hook (suspense)
-{
-  const createComment = suspense.useCreateComment();
-  expectError(createComment({}));
-
-  const comment = createComment({
-    threadId: "th_xxx",
-    body: {
-      version: 1,
-      content: [{ type: "paragraph", children: [{ text: "hi" }] }],
-    },
-    metadata: { priority: 1 },
+      expectTypeOf(
+        classic.useRoom({ allowOutsideRoom: false }).id
+      ).toEqualTypeOf<string>();
+      expectTypeOf(
+        classic.useRoom({ allowOutsideRoom: true })?.id
+      ).toEqualTypeOf<string | undefined>();
+      expectTypeOf(
+        classic.useRoom({ allowOutsideRoom: Math.random() < 0.5 })?.id
+      ).toEqualTypeOf<string | undefined>();
+    }
   });
 
-  expectType<"comment">(comment.type);
-  expectType<number>(comment.metadata.priority);
-  expectError(comment.metadata.nonexisting);
-}
-
-// ---------------------------------------------------------
-
-// The useEditComment() hook
-{
-  const editComment = classic.useEditComment();
-  expectError(editComment({}));
-
-  expectType<void>(
-    editComment({
-      threadId: "th_xxx",
-      commentId: "cm_xxx",
-      body: { version: 1, content: [] },
-    })
-  );
-
-  expectType<void>(
-    editComment({
-      threadId: "th_xxx",
-      commentId: "cm_xxx",
-      body: { version: 1, content: [] },
-      metadata: { priority: 2, reviewed: null },
-    })
-  );
-
-  expectError(
-    editComment({
-      threadId: "th_xxx",
-      commentId: "cm_xxx",
-      body: { version: 1, content: [] },
-      metadata: { nonexisting: null },
-    })
-  );
-}
-
-// The useEditComment() hook (suspense)
-{
-  const editComment = suspense.useEditComment();
-  expectError(editComment({}));
-
-  expectType<void>(
-    editComment({
-      threadId: "th_xxx",
-      commentId: "cm_xxx",
-      body: { version: 1, content: [] },
-    })
-  );
-
-  expectType<void>(
-    editComment({
-      threadId: "th_xxx",
-      commentId: "cm_xxx",
-      body: { version: 1, content: [] },
-      metadata: { priority: 2 },
-    })
-  );
-
-  expectError(
-    editComment({
-      threadId: "th_xxx",
-      commentId: "cm_xxx",
-      body: { version: 1, content: [] },
-      metadata: { nonexisting: null },
-    })
-  );
-}
-
-// ---------------------------------------------------------
-
-// The useEditCommentMetadata() hook
-{
-  const editMetadata = classic.useEditCommentMetadata();
-  expectError(editMetadata({})); // no body = error
-
-  expectError(
-    editMetadata({
-      threadId: "th_xxx",
-      commentId: "cm_xxx",
-      metadata: { nonexisting: null },
-    })
-  );
-  expectError(
-    editMetadata({
-      threadId: "th_xxx",
-      commentId: "cm_xxx",
-      metadata: { nonexisting: 123 },
-    })
-  );
-
-  expectType<void>(
-    editMetadata({ threadId: "th_xxx", commentId: "cm_xxx", metadata: {} })
-  );
-  expectType<void>(
-    editMetadata({
-      threadId: "th_xxx",
-      commentId: "cm_xxx",
-      metadata: { priority: 2, reviewed: null },
-    })
-  );
-
-  expectError(
-    editMetadata({
-      threadId: "th_xxx",
-      commentId: "cm_xxx",
-      metadata: { priority: null },
-    })
-  ); // priority isn't optional, so it cannot be wiped
-}
-
-// The useEditCommentMetadata() hook (suspense)
-{
-  const editMetadata = suspense.useEditCommentMetadata();
-  expectError(editMetadata({})); // no body = error
-
-  expectError(
-    editMetadata({
-      threadId: "th_xxx",
-      commentId: "cm_xxx",
-      metadata: { nonexisting: null },
-    })
-  );
-  expectError(
-    editMetadata({
-      threadId: "th_xxx",
-      commentId: "cm_xxx",
-      metadata: { nonexisting: 123 },
-    })
-  );
-
-  expectType<void>(
-    editMetadata({ threadId: "th_xxx", commentId: "cm_xxx", metadata: {} })
-  );
-  expectType<void>(
-    editMetadata({
-      threadId: "th_xxx",
-      commentId: "cm_xxx",
-      metadata: { priority: 2, reviewed: null },
-    })
-  );
-
-  expectError(
-    editMetadata({
-      threadId: "th_xxx",
-      commentId: "cm_xxx",
-      metadata: { priority: null },
-    })
-  ); // priority isn't optional, so it cannot be wiped
-}
-
-// ---------------------------------------------------------
-
-// The useDeleteComment() hook
-{
-  const deleteComment = classic.useDeleteComment();
-
-  expectError(deleteComment({}));
-  expectError(deleteComment({ threadId: "th_xxx" }));
-  expectError(deleteComment({ commentId: "co_xxx" }));
-
-  expectType<void>(deleteComment({ threadId: "th_xxx", commentId: "co_xxx" }));
-}
-
-// The useDeleteComment() hook (suspense)
-{
-  const deleteComment = suspense.useDeleteComment();
-
-  expectError(deleteComment({}));
-  expectError(deleteComment({ threadId: "th_xxx" }));
-  expectError(deleteComment({ commentId: "co_xxx" }));
-
-  expectType<void>(deleteComment({ threadId: "th_xxx", commentId: "co_xxx" }));
-}
-
-// ---------------------------------------------------------
-
-// The useAddReaction() hook
-{
-  const addReaction = classic.useAddReaction();
-
-  expectError(addReaction({}));
-  expectError(addReaction({ threadId: "th_xxx", emoji: "👍" }));
-  expectError(addReaction({ commentId: "th_xxx", emoji: "👍" }));
-  expectError(addReaction({ threadId: "th_xxx", commentId: "th_xxx" }));
-
-  expectType<void>(
-    addReaction({
-      threadId: "th_xxx",
-      commentId: "cm_xxx",
-      emoji: "👍",
-    })
-  );
-}
-
-// The useAddReaction() hook (suspense)
-{
-  const addReaction = suspense.useAddReaction();
-
-  expectError(addReaction({}));
-  expectError(addReaction({ threadId: "th_xxx", emoji: "👍" }));
-  expectError(addReaction({ commentId: "th_xxx", emoji: "👍" }));
-  expectError(addReaction({ threadId: "th_xxx", commentId: "th_xxx" }));
-
-  expectType<void>(
-    addReaction({
-      threadId: "th_xxx",
-      commentId: "cm_xxx",
-      emoji: "👍",
-    })
-  );
-}
-
-// ---------------------------------------------------------
-
-// The useRemoveReaction() hook
-{
-  const removeReaction = classic.useRemoveReaction();
-
-  expectError(removeReaction({}));
-  expectError(removeReaction({ threadId: "th_xxx", emoji: "👍" }));
-  expectError(removeReaction({ commentId: "th_xxx", emoji: "👍" }));
-  expectError(removeReaction({ threadId: "th_xxx", commentId: "th_xxx" }));
-
-  expectType<void>(
-    removeReaction({
-      threadId: "th_xxx",
-      commentId: "cm_xxx",
-      emoji: "👍",
-    })
-  );
-}
-
-// The useRemoveReaction() hook (suspense)
-{
-  const removeReaction = suspense.useRemoveReaction();
-
-  expectError(removeReaction({}));
-  expectError(removeReaction({ threadId: "th_xxx", emoji: "👍" }));
-  expectError(removeReaction({ commentId: "th_xxx", emoji: "👍" }));
-  expectError(removeReaction({ threadId: "th_xxx", commentId: "th_xxx" }));
-
-  expectType<void>(
-    removeReaction({
-      threadId: "th_xxx",
-      commentId: "cm_xxx",
-      emoji: "👍",
-    })
-  );
-}
-
-// ---------------------------------------------------------
-
-// The useInboxNotifications() hook
-{
-  expectType<boolean>(classic.useInboxNotifications().isLoading);
-  expectType<Error | undefined>(classic.useInboxNotifications().error);
-  expectType<("thread" | "textMention" | `$${string}`)[] | undefined>(
-    classic.useInboxNotifications().inboxNotifications?.map((ibn) => ibn.kind)
-  );
-  expectType<(string | undefined)[] | undefined>(
-    classic.useInboxNotifications().inboxNotifications?.map((ibn) => ibn.roomId)
-  );
-}
-
-// The useInboxNotifications() hook (suspense)
-{
-  expectType<false>(suspense.useInboxNotifications().isLoading);
-  expectType<undefined>(suspense.useInboxNotifications().error);
-  expectType<("thread" | "textMention" | `$${string}`)[]>(
-    suspense.useInboxNotifications().inboxNotifications?.map((ibn) => ibn.kind)
-  );
-  expectType<(string | undefined)[]>(
-    suspense
-      .useInboxNotifications()
-      .inboxNotifications?.map((ibn) => ibn.roomId)
-  );
-}
-
-// ---------------------------------------------------------
-
-// The useInboxNotificationThread() hook
-{
-  const result = classic.useInboxNotificationThread("in_xxx");
-  expectType<"thread">(result.type);
-  expectType<string>(result.roomId);
-  expectAssignable<unknown[]>(result.comments);
-  expectType<"red" | "blue">(result.metadata.color);
-  expectError(result.metadata.nonexisting);
-}
-
-// The useInboxNotificationThread() hook (suspense)
-{
-  const result = suspense.useInboxNotificationThread("in_xxx");
-  expectType<"thread">(result.type);
-  expectType<string>(result.roomId);
-  expectAssignable<unknown[]>(result.comments);
-  expectType<"red" | "blue">(result.metadata.color);
-  expectError(result.metadata.nonexisting);
-}
-
-// ---------------------------------------------------------
-
-// The useMarkInboxNotificationAsRead() hook
-{
-  const markRead = classic.useMarkInboxNotificationAsRead();
-  expectType<void>(markRead("in_xxx"));
-}
-
-// The useMarkInboxNotificationAsRead() hook (suspense)
-{
-  const markRead = suspense.useMarkInboxNotificationAsRead();
-  expectType<void>(markRead("in_xxx"));
-}
-
-// ---------------------------------------------------------
-
-// The useMarkAllInboxNotificationsAsRead() hook
-{
-  const markAllRead = classic.useMarkAllInboxNotificationsAsRead();
-  expectType<void>(markAllRead());
-}
-
-// The useMarkAllInboxNotificationsAsRead() hook (suspense)
-{
-  const markAllRead = suspense.useMarkAllInboxNotificationsAsRead();
-  expectType<void>(markAllRead());
-}
-
-// ---------------------------------------------------------
-
-// The useDeleteInboxNotification() hook
-{
-  const deleteNotification = classic.useDeleteInboxNotification();
-  expectType<void>(deleteNotification("in_xxx"));
-}
-
-// The useDeleteInboxNotification() hook (suspense)
-{
-  const deleteNotification = suspense.useDeleteInboxNotification();
-  expectType<void>(deleteNotification("in_xxx"));
-}
-
-// ---------------------------------------------------------
-
-// The useDeleteAllInboxNotifications() hook
-{
-  const deleteAllNotifications = classic.useDeleteAllInboxNotifications();
-  expectType<void>(deleteAllNotifications());
-}
-
-// The useDeleteAllInboxNotifications() hook (suspense)
-{
-  const deleteAllNotifications = suspense.useDeleteAllInboxNotifications();
-  expectType<void>(deleteAllNotifications());
-}
-
-// ---------------------------------------------------------
-
-// The useUnreadInboxNotificationsCount() hook
-{
-  const { count, error, isLoading } =
-    classic.useUnreadInboxNotificationsCount();
-  expectType<boolean>(isLoading);
-  expectType<number | undefined>(count);
-  expectType<Error | undefined>(error);
-}
-
-// The useUnreadInboxNotificationsCount() hook (suspense)
-{
-  const { count, error, isLoading } =
-    suspense.useUnreadInboxNotificationsCount();
-  expectType<false>(isLoading);
-  expectType<number>(count);
-  expectType<undefined>(error);
-}
-
-// ---------------------------------------------------------
-
-// The useSyncStatus() hook
-{
-  const status = classic.useSyncStatus();
-  expectType<"synchronizing" | "synchronized">(status);
-}
-{
-  const status = suspense.useSyncStatus();
-  expectType<"synchronizing" | "synchronized">(status);
-}
-
-// ---------------------------------------------------------
-// the useNotificationSettings() hook
-{
-  const [{ isLoading, error, settings }, update] =
-    classic.useNotificationSettings();
-  expectType<boolean>(isLoading);
-  expectType<Error | undefined>(error);
-  expectType<NotificationSettings | undefined>(settings);
-  expectType<void>(update({})); // empty {} because of partial definition
-}
-// the useNotificationSettings() hook suspense
-{
-  const [{ isLoading, error, settings }, update] =
-    suspense.useNotificationSettings();
-  expectType<false>(isLoading);
-  expectType<undefined>(error);
-  expectType<NotificationSettings>(settings);
-  expectType<void>(update({})); // empty {} because of partial definition
-}
-// ---------------------------------------------------------
-
-// The useAiChatStatus() hook
-{
-  const status = classic.useAiChatStatus("chat-id");
-  expectType<"disconnected" | "idle" | "loading" | "generating">(status.status);
-  if (status.status === "generating") {
-    // The partType might not exist if there's no content yet
-    expectType<
-      | "text"
-      | "reasoning"
-      | "retrieval"
-      | "tool-invocation"
-      | "sources"
-      | undefined
-    >(status.partType);
-    if (status.partType === "tool-invocation") {
-      expectType<string>(status.toolName);
-    } else {
-      expectType<undefined>(status.toolName);
+  test("useRoom() (suspense)", () => {
+    {
+      const room = suspense.useRoom();
+      expectTypeOf(room.getPresence().cursor.x).toEqualTypeOf<number>();
+      expectTypeOf(room.getPresence().cursor.y).toEqualTypeOf<number>();
+      // @ts-expect-error
+      void room.getPresence().nonexisting;
+
+      expectTypeOf(
+        suspense.useRoom({ allowOutsideRoom: false }).id
+      ).toEqualTypeOf<string>();
+      expectTypeOf(
+        suspense.useRoom({ allowOutsideRoom: true })?.id
+      ).toEqualTypeOf<string | undefined>();
+      expectTypeOf(
+        suspense.useRoom({ allowOutsideRoom: Math.random() < 0.5 })?.id
+      ).toEqualTypeOf<string | undefined>();
     }
-  } else {
-    expectType<undefined>(status.partType);
-    expectType<undefined>(status.toolName);
-  }
-}
+  });
 
-// The useAiChatStatus() hook (suspense)
-{
-  const status = suspense.useAiChatStatus("chat-id");
-  expectType<"disconnected" | "idle" | "loading" | "generating">(status.status);
-  if (status.status === "generating") {
-    // The partType might not exist if there's no content yet
-    expectType<
-      | "text"
-      | "reasoning"
-      | "retrieval"
-      | "tool-invocation"
-      | "sources"
-      | undefined
-    >(status.partType);
-    if (status.partType === "tool-invocation") {
-      expectType<string>(status.toolName);
-    } else {
-      expectType<undefined>(status.toolName);
+  test("useIsInsideRoom()", () => {
+    {
+      const isInsideRoom = classic.useIsInsideRoom();
+      expectTypeOf(isInsideRoom).toEqualTypeOf<boolean>();
     }
-  } else {
-    expectType<undefined>(status.partType);
-    expectType<undefined>(status.toolName);
-  }
-}
+  });
 
-// The useAiChatStatus() hook with optional branchId
-{
-  const status = classic.useAiChatStatus("chat-id", "ms_branch" as any);
-  if (status.status === "generating") {
-    // The partType might not exist if there's no content yet
-    expectType<
-      | "text"
-      | "reasoning"
-      | "retrieval"
-      | "tool-invocation"
-      | "sources"
-      | undefined
-    >(status.partType);
-    if (status.partType === "tool-invocation") {
-      expectType<string>(status.toolName);
-    } else {
-      expectType<undefined>(status.toolName);
+  test("useIsInsideRoom() (suspense)", () => {
+    {
+      const isInsideRoom = suspense.useIsInsideRoom();
+      expectTypeOf(isInsideRoom).toEqualTypeOf<boolean>();
     }
-  } else {
-    expectType<undefined>(status.partType);
-    expectType<undefined>(status.toolName);
-  }
-}
+  });
 
-// The useAiChatStatus() hook with optional branchId (suspense)
-{
-  const status = suspense.useAiChatStatus("chat-id", "ms_branch" as any);
-  if (status.status === "generating") {
-    // The partType might not exist if there's no content yet
-    expectType<
-      | "text"
-      | "reasoning"
-      | "retrieval"
-      | "tool-invocation"
-      | "sources"
-      | undefined
-    >(status.partType);
-    if (status.partType === "tool-invocation") {
-      expectType<string>(status.toolName);
-    } else {
-      expectType<undefined>(status.toolName);
+  test("useErrorListener()", () => {
+    {
+      classic.useErrorListener((err) => {
+        expectTypeOf(err.message).toEqualTypeOf<string>();
+        expectTypeOf(err.stack).toEqualTypeOf<string | undefined>();
+        expectTypeOf(err.context.code).toEqualTypeOf<
+          string | -1 | 4001 | 4005 | 4006 | (number & {}) | undefined
+        >();
+        expectTypeOf(err.context.type).toExtend<
+          | "AI_CONNECTION_ERROR"
+          | "ROOM_CONNECTION_ERROR"
+          | "CREATE_THREAD_ERROR"
+          | "DELETE_THREAD_ERROR"
+          | "EDIT_THREAD_METADATA_ERROR"
+          | "EDIT_COMMENT_METADATA_ERROR"
+          | "MARK_THREAD_AS_RESOLVED_ERROR"
+          | "MARK_THREAD_AS_UNRESOLVED_ERROR"
+          | "SUBSCRIBE_TO_THREAD_ERROR"
+          | "UNSUBSCRIBE_FROM_THREAD_ERROR"
+          | "CREATE_COMMENT_ERROR"
+          | "EDIT_COMMENT_ERROR"
+          | "DELETE_COMMENT_ERROR"
+          | "ADD_REACTION_ERROR"
+          | "REMOVE_REACTION_ERROR"
+          | "MARK_INBOX_NOTIFICATION_AS_READ_ERROR"
+          | "DELETE_INBOX_NOTIFICATION_ERROR"
+          | "MARK_ALL_INBOX_NOTIFICATIONS_AS_READ_ERROR"
+          | "DELETE_ALL_INBOX_NOTIFICATIONS_ERROR"
+          | "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR"
+          | "UPDATE_NOTIFICATION_SETTINGS_ERROR"
+          | "LARGE_MESSAGE_ERROR"
+          | "FEED_REQUEST_ERROR"
+        >();
+        if (err.context.type === "ROOM_CONNECTION_ERROR") {
+          expectTypeOf(err.context.code).toExtend<number>();
+          expectTypeOf(err.context.code).toExtend<number | undefined>();
+        } else if (err.context.type === "CREATE_THREAD_ERROR") {
+          expectTypeOf(err.context.roomId).toEqualTypeOf<string>();
+          expectTypeOf(err.context.threadId).toEqualTypeOf<string>();
+          expectTypeOf(err.context.commentId).toEqualTypeOf<string>();
+        } else {
+          // Not going to list them all...
+        }
+      });
     }
-  } else {
-    expectType<undefined>(status.partType);
-    expectType<undefined>(status.toolName);
-  }
-}
+  });
 
-// ---------------------------------------------------------
+  test("useErrorListener() (suspense)", () => {
+    {
+      suspense.useErrorListener((err) => {
+        expectTypeOf(err.message).toEqualTypeOf<string>();
+        expectTypeOf(err.stack).toEqualTypeOf<string | undefined>();
+        expectTypeOf(err.context.code).toEqualTypeOf<
+          string | -1 | 4001 | 4005 | 4006 | (number & {}) | undefined
+        >();
+        expectTypeOf(err.context.type).toExtend<
+          | "AI_CONNECTION_ERROR"
+          | "ROOM_CONNECTION_ERROR"
+          | "CREATE_THREAD_ERROR"
+          | "DELETE_THREAD_ERROR"
+          | "EDIT_THREAD_METADATA_ERROR"
+          | "EDIT_COMMENT_METADATA_ERROR"
+          | "MARK_THREAD_AS_RESOLVED_ERROR"
+          | "MARK_THREAD_AS_UNRESOLVED_ERROR"
+          | "SUBSCRIBE_TO_THREAD_ERROR"
+          | "UNSUBSCRIBE_FROM_THREAD_ERROR"
+          | "CREATE_COMMENT_ERROR"
+          | "EDIT_COMMENT_ERROR"
+          | "DELETE_COMMENT_ERROR"
+          | "ADD_REACTION_ERROR"
+          | "REMOVE_REACTION_ERROR"
+          | "MARK_INBOX_NOTIFICATION_AS_READ_ERROR"
+          | "DELETE_INBOX_NOTIFICATION_ERROR"
+          | "MARK_ALL_INBOX_NOTIFICATIONS_AS_READ_ERROR"
+          | "DELETE_ALL_INBOX_NOTIFICATIONS_ERROR"
+          | "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR"
+          | "UPDATE_NOTIFICATION_SETTINGS_ERROR"
+          | "LARGE_MESSAGE_ERROR"
+          | "FEED_REQUEST_ERROR"
+        >();
+        if (err.context.type === "ROOM_CONNECTION_ERROR") {
+          expectTypeOf(err.context.code).toExtend<number>();
+          expectTypeOf(err.context.code).toExtend<number | undefined>();
+        } else if (err.context.type === "CREATE_THREAD_ERROR") {
+          expectTypeOf(err.context.roomId).toEqualTypeOf<string>();
+          expectTypeOf(err.context.threadId).toEqualTypeOf<string>();
+          expectTypeOf(err.context.commentId).toEqualTypeOf<string>();
+        } else {
+          // Not going to list them all...
+        }
+      });
+    }
+  });
+
+  test("useSelf()", () => {
+    {
+      const me = classic.useSelf();
+      expectTypeOf(me?.presence.cursor.x).toEqualTypeOf<number | undefined>();
+      expectTypeOf(me?.presence.cursor.y).toEqualTypeOf<number | undefined>();
+      // @ts-expect-error
+      void me?.presence.nonexisting;
+
+      expectTypeOf(me?.info.name).toEqualTypeOf<string | undefined>();
+      expectTypeOf(me?.info.age).toEqualTypeOf<number | undefined>();
+      // @ts-expect-error
+      void me?.info.nonexisting;
+    }
+  });
+
+  test("useSelf() (suspense)", () => {
+    {
+      const me = suspense.useSelf();
+      expectTypeOf(me.presence.cursor.x).toEqualTypeOf<number>();
+      expectTypeOf(me.presence.cursor.y).toEqualTypeOf<number>();
+      // @ts-expect-error
+      void me.presence.nonexisting;
+
+      expectTypeOf(me.info.name).toEqualTypeOf<string>();
+      expectTypeOf(me.info.age).toEqualTypeOf<number>();
+      // @ts-expect-error
+      void me.info.nonexisting;
+    }
+  });
+
+  test("useSelf(selector)", () => {
+    {
+      const x = classic.useSelf((me) => me.presence.cursor.x);
+      expectTypeOf(x).toEqualTypeOf<number | null>();
+    }
+  });
+
+  test("useSelf(selector) (suspense)", () => {
+    {
+      const x = suspense.useSelf((me) => me.presence.cursor.x);
+      expectTypeOf(x).toEqualTypeOf<number>();
+    }
+  });
+
+  test("useOthers()", () => {
+    {
+      const others = classic.useOthers();
+      expectTypeOf(others[13]!.presence.cursor.x).toEqualTypeOf<number>();
+      expectTypeOf(others[42]!.presence.cursor.y).toEqualTypeOf<number>();
+      expectTypeOf(others[0]!.canWrite).toEqualTypeOf<boolean>();
+    }
+  });
+
+  test("useOthers() (suspense)", () => {
+    {
+      const others = suspense.useOthers();
+      expectTypeOf(others[13]!.presence.cursor.x).toEqualTypeOf<number>();
+      expectTypeOf(others[42]!.presence.cursor.y).toEqualTypeOf<number>();
+      expectTypeOf(others[0]!.canWrite).toEqualTypeOf<boolean>();
+    }
+  });
+
+  test("useOthers(selector)", () => {
+    {
+      const num = classic.useOthers((others) => others.length);
+      expectTypeOf(num).toEqualTypeOf<number>();
+
+      const xs = classic.useOthers((others) =>
+        others.map((o) => o.presence.cursor.x)
+      );
+      expectTypeOf(xs).toEqualTypeOf<number[]>();
+    }
+  });
+
+  test("useOthers(selector) (suspense)", () => {
+    {
+      const num = classic.useOthers((others) => others.length);
+      expectTypeOf(num).toEqualTypeOf<number>();
+
+      const xs = classic.useOthers((others) =>
+        others.map((o) => o.presence.cursor.x)
+      );
+      expectTypeOf(xs).toEqualTypeOf<number[]>();
+    }
+  });
+
+  test("useOthers(selector, eq)", () => {
+    {
+      const xs = classic.useOthers(
+        (others) => others.map((o) => o.presence.cursor.x),
+        classic.shallow
+      );
+      expectTypeOf(xs).toEqualTypeOf<number[]>();
+    }
+  });
+
+  test("useOthers(selector, eq) (suspense)", () => {
+    {
+      const xs = suspense.useOthers(
+        (others) => others.map((o) => o.presence.cursor.x),
+        suspense.shallow
+      );
+      expectTypeOf(xs).toEqualTypeOf<number[]>();
+    }
+  });
+
+  test("useMutation()", () => {
+    {
+      expectTypeOf(
+        classic.useMutation((mut, _a: number, _b: boolean) => {
+          expectTypeOf(mut.self.presence.cursor.x).toEqualTypeOf<number>();
+          // @ts-expect-error
+          void mut.self.presence.nonexisting;
+          expectTypeOf(mut.self.info.name).toEqualTypeOf<string>();
+          expectTypeOf(mut.self.info.age).toEqualTypeOf<number>();
+          // @ts-expect-error
+          void mut.self.info.nonexisting;
+
+          expectTypeOf(
+            mut.others[0]!.presence.cursor.x
+          ).toEqualTypeOf<number>();
+          // @ts-expect-error
+          void mut.others[0]!.presence.nonexisting;
+          expectTypeOf(mut.others[0]!.info.name).toEqualTypeOf<string>();
+          expectTypeOf(mut.others[0]!.info.age).toEqualTypeOf<number>();
+          // @ts-expect-error
+          void mut.others[0]!.info.nonexisting;
+
+          expectTypeOf(mut.storage.get("animals").get(0)).toEqualTypeOf<
+            string | undefined
+          >();
+          expectTypeOf(mut.storage.get("scores").get("one")).toEqualTypeOf<
+            number | undefined
+          >();
+          expectTypeOf(
+            mut.storage.get("person").get("age")
+          ).toEqualTypeOf<number>();
+          // @ts-expect-error
+          void mut.storage.get("nonexisting");
+          expectTypeOf(
+            mut.setMyPresence({ cursor: { x: 0, y: 0 } })
+          ).toEqualTypeOf<void>();
+          // @ts-expect-error
+          void mut.setMyPresence({ nonexisting: 123 });
+
+          return "hi" as const;
+        }, [])
+      ).toEqualTypeOf<(a: number, b: boolean) => "hi">();
+    }
+  });
+
+  test("useMutation() (suspense)", () => {
+    {
+      expectTypeOf(
+        suspense.useMutation((mut, _a: number, _b: boolean) => {
+          expectTypeOf(mut.self.presence.cursor.x).toEqualTypeOf<number>();
+          // @ts-expect-error
+          void mut.self.presence.nonexisting;
+          expectTypeOf(mut.self.info.name).toEqualTypeOf<string>();
+          expectTypeOf(mut.self.info.age).toEqualTypeOf<number>();
+          // @ts-expect-error
+          void mut.self.info.nonexisting;
+
+          expectTypeOf(
+            mut.others[0]!.presence.cursor.x
+          ).toEqualTypeOf<number>();
+          // @ts-expect-error
+          void mut.others[0]!.presence.nonexisting;
+          expectTypeOf(mut.others[0]!.info.name).toEqualTypeOf<string>();
+          expectTypeOf(mut.others[0]!.info.age).toEqualTypeOf<number>();
+          // @ts-expect-error
+          void mut.others[0]!.info.nonexisting;
+
+          expectTypeOf(mut.storage.get("animals").get(0)).toEqualTypeOf<
+            string | undefined
+          >();
+          expectTypeOf(mut.storage.get("scores").get("one")).toEqualTypeOf<
+            number | undefined
+          >();
+          expectTypeOf(
+            mut.storage.get("person").get("age")
+          ).toEqualTypeOf<number>();
+          // @ts-expect-error
+          void mut.storage.get("nonexisting");
+          expectTypeOf(
+            mut.setMyPresence({ cursor: { x: 0, y: 0 } })
+          ).toEqualTypeOf<void>();
+          // @ts-expect-error
+          void mut.setMyPresence({ nonexisting: 123 });
+
+          return "hi" as const;
+        }, [])
+      ).toEqualTypeOf<(a: number, b: boolean) => "hi">();
+    }
+  });
+
+  test("useBroadcastEvent()", () => {
+    {
+      const broadcast = classic.useBroadcastEvent();
+      broadcast({ type: "emoji", emoji: "😍" });
+      broadcast({ type: "beep", times: 3 });
+      broadcast({ type: "beep" });
+      // broadcast({ type: "leave", userId: "1234" });  // TODO Allow this using union types
+      // @ts-expect-error
+      void broadcast({ type: "i-do-not-exist" });
+      // @ts-expect-error
+      void broadcast(new Date());
+    }
+  });
+
+  test("useBroadcastEvent() (suspense)", () => {
+    {
+      const broadcast = suspense.useBroadcastEvent();
+      broadcast({ type: "emoji", emoji: "😍" });
+      broadcast({ type: "beep", times: 3 });
+      broadcast({ type: "beep" });
+      // broadcast({ type: "leave", userId: "1234" });  // TODO Allow this using union types
+      // @ts-expect-error
+      void broadcast({ type: "i-do-not-exist" });
+      // @ts-expect-error
+      void broadcast(new Date());
+    }
+  });
+
+  test("useUser()", () => {
+    {
+      const { user, error, isLoading } = classic.useUser("user-id");
+      expectTypeOf(isLoading).toEqualTypeOf<boolean>();
+      expectTypeOf(user!.name).toEqualTypeOf<string>();
+      // @ts-expect-error
+      void user?.avatar;
+      expectTypeOf(user!.age).toEqualTypeOf<number>();
+      // @ts-expect-error
+      void user?.anyOtherProp;
+      expectTypeOf(error).toEqualTypeOf<Error | undefined>();
+    }
+  });
+
+  test("useUser() (suspense)", () => {
+    {
+      const { user, error, isLoading } = suspense.useUser("user-id");
+      expectTypeOf(isLoading).toEqualTypeOf<false>();
+      expectTypeOf(user.name).toEqualTypeOf<string>();
+      // @ts-expect-error
+      void user.avatar;
+      expectTypeOf(user.age).toEqualTypeOf<number>();
+      // @ts-expect-error
+      void user.anyOtherProp;
+      expectTypeOf(error).toEqualTypeOf<undefined>();
+    }
+  });
+
+  test("useRoomInfo()", () => {
+    {
+      const { info, error, isLoading } = classic.useRoomInfo("room-id");
+      expectTypeOf(isLoading).toEqualTypeOf<boolean>();
+      expectTypeOf(info!.name).toEqualTypeOf<string>();
+      expectTypeOf(info!.url).toEqualTypeOf<string | undefined>();
+      expectTypeOf(info?.type).toEqualTypeOf<
+        "public" | "private" | undefined
+      >();
+      // @ts-expect-error
+      void info?.nonexisting;
+      expectTypeOf(error).toEqualTypeOf<Error | undefined>();
+    }
+  });
+
+  test("useRoomInfo() (suspense)", () => {
+    {
+      const { info, error, isLoading } = suspense.useRoomInfo("room-id");
+      expectTypeOf(isLoading).toEqualTypeOf<false>();
+      expectTypeOf(info.name).toEqualTypeOf<string>();
+      expectTypeOf(info.url).toEqualTypeOf<string | undefined>();
+      expectTypeOf(info?.type).toEqualTypeOf<"public" | "private">();
+      // @ts-expect-error
+      void info?.nonexisting;
+      expectTypeOf(error).toEqualTypeOf<undefined>();
+    }
+  });
+
+  test("useGroupInfo()", () => {
+    {
+      const { info, error, isLoading } = classic.useGroupInfo("group-id");
+      expectTypeOf(isLoading).toEqualTypeOf<boolean>();
+      expectTypeOf(info!.name).toEqualTypeOf<string>();
+      expectTypeOf(info!.avatar).toEqualTypeOf<string | undefined>();
+      expectTypeOf(info?.type).toEqualTypeOf<"open" | "closed" | undefined>();
+      // @ts-expect-error
+      void info?.nonexisting;
+      expectTypeOf(error).toEqualTypeOf<Error | undefined>();
+    }
+  });
+
+  test("useGroupInfo() (suspense)", () => {
+    {
+      const { info, error, isLoading } = suspense.useGroupInfo("group-id");
+      expectTypeOf(isLoading).toEqualTypeOf<false>();
+      expectTypeOf(info.name).toEqualTypeOf<string>();
+      expectTypeOf(info.avatar).toEqualTypeOf<string | undefined>();
+      expectTypeOf(info?.type).toEqualTypeOf<"open" | "closed">();
+      // @ts-expect-error
+      void info?.nonexisting;
+      expectTypeOf(error).toEqualTypeOf<undefined>();
+    }
+  });
+
+  test("useCreateThread()", () => {
+    {
+      const createThread = classic.useCreateThread();
+      // @ts-expect-error
+      void createThread({}); // no body = error
+
+      // No metadata = error
+      void (
+        // @ts-expect-error
+        createThread({
+          body: {
+            version: 1,
+            content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+          },
+        })
+      );
+
+      const thread = createThread({
+        body: {
+          version: 1,
+          content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+        },
+        metadata: { color: "red" },
+        commentMetadata: { priority: 1 },
+      });
+
+      expectTypeOf(thread.type).toEqualTypeOf<"thread">();
+      expectTypeOf(thread.id).toEqualTypeOf<string>();
+      expectTypeOf(thread.roomId).toEqualTypeOf<string>();
+      expectTypeOf(thread.comments[0]!.type).toEqualTypeOf<"comment">();
+      expectTypeOf(thread.comments[0]!.id).toEqualTypeOf<string>();
+      expectTypeOf(thread.comments[0]!.threadId).toEqualTypeOf<string>();
+
+      expectTypeOf(thread.metadata.color).toEqualTypeOf<"red" | "blue">();
+      // @ts-expect-error
+      void thread.metadata.nonexisting;
+    }
+  });
+
+  test("useCreateThread() (suspense)", () => {
+    {
+      const createThread = suspense.useCreateThread();
+      // @ts-expect-error
+      void createThread({}); // no body = error
+
+      // No metadata = error
+      void (
+        // @ts-expect-error
+        createThread({
+          body: {
+            version: 1,
+            content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+          },
+        })
+      );
+
+      const thread = createThread({
+        body: {
+          version: 1,
+          content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+        },
+        metadata: { color: "red" },
+        commentMetadata: { priority: 1 },
+      });
+
+      expectTypeOf(thread.type).toEqualTypeOf<"thread">();
+      expectTypeOf(thread.id).toEqualTypeOf<string>();
+      expectTypeOf(thread.roomId).toEqualTypeOf<string>();
+      expectTypeOf(thread.comments[0]!.type).toEqualTypeOf<"comment">();
+      expectTypeOf(thread.comments[0]!.id).toEqualTypeOf<string>();
+      expectTypeOf(thread.comments[0]!.threadId).toEqualTypeOf<string>();
+
+      expectTypeOf(thread.metadata.color).toEqualTypeOf<"red" | "blue">();
+      // @ts-expect-error
+      void thread.metadata.nonexisting;
+    }
+  });
+
+  test("useEditThreadMetadata()", () => {
+    {
+      const editMetadata = classic.useEditThreadMetadata();
+      // @ts-expect-error
+      void editMetadata({}); // no body = error
+
+      void editMetadata({
+        threadId: "th_xxx",
+        // @ts-expect-error
+        metadata: { nonexisting: null },
+      });
+      void editMetadata({
+        threadId: "th_xxx",
+        // @ts-expect-error
+        metadata: { nonexisting: 123 },
+      });
+
+      expectTypeOf(
+        editMetadata({ threadId: "th_xxx", metadata: {} })
+      ).toEqualTypeOf<void>();
+      expectTypeOf(
+        editMetadata({
+          threadId: "th_xxx",
+          metadata: { color: "red", pinned: null },
+        })
+      ).toEqualTypeOf<void>();
+
+      void editMetadata({
+        threadId: "th_xxx",
+        // @ts-expect-error
+        metadata: { color: null },
+      }); // Color isn't optional, so cannot be wiped
+    }
+  });
+
+  test("useEditThreadMetadata() (suspense)", () => {
+    {
+      const editMetadata = suspense.useEditThreadMetadata();
+      // @ts-expect-error
+      void editMetadata({}); // no body = error
+
+      void editMetadata({
+        threadId: "th_xxx",
+        // @ts-expect-error
+        metadata: { nonexisting: null },
+      });
+      void editMetadata({
+        threadId: "th_xxx",
+        // @ts-expect-error
+        metadata: { nonexisting: 123 },
+      });
+
+      expectTypeOf(
+        editMetadata({ threadId: "th_xxx", metadata: {} })
+      ).toEqualTypeOf<void>();
+      expectTypeOf(
+        editMetadata({
+          threadId: "th_xxx",
+          metadata: { color: "red", pinned: null },
+        })
+      ).toEqualTypeOf<void>();
+
+      void editMetadata({
+        threadId: "th_xxx",
+        // @ts-expect-error
+        metadata: { color: null },
+      }); // Color isn't optional, so cannot be wiped
+    }
+  });
+
+  test("useCreateComment()", () => {
+    {
+      const createComment = classic.useCreateComment();
+        // @ts-expect-error
+        void createComment({});
+
+        const comment = createComment({
+          threadId: "th_xxx",
+          body: {
+            version: 1,
+            content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+          },
+          metadata: {
+            priority: 2,
+            reviewed: false,
+          },
+        });
+
+        expectTypeOf(comment.type).toEqualTypeOf<"comment">();
+        expectTypeOf(comment.id).toEqualTypeOf<string>();
+        expectTypeOf(comment.metadata.priority).toEqualTypeOf<number>();
+        expectTypeOf(comment.metadata.reviewed).toEqualTypeOf<
+          boolean | undefined
+        >();
+        // @ts-expect-error
+        void comment.metadata.nonexisting;
+    }
+  });
+
+  test("useCreateComment() (suspense)", () => {
+    {
+      const createComment = suspense.useCreateComment();
+      // @ts-expect-error
+      void createComment({});
+
+      const comment = createComment({
+        threadId: "th_xxx",
+        body: {
+          version: 1,
+          content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+        },
+        metadata: { priority: 1 },
+      });
+
+      expectTypeOf(comment.type).toEqualTypeOf<"comment">();
+      expectTypeOf(comment.metadata.priority).toEqualTypeOf<number>();
+      // @ts-expect-error
+      void comment.metadata.nonexisting;
+    }
+  });
+
+  test("useEditComment()", () => {
+    {
+      const editComment = classic.useEditComment();
+      // @ts-expect-error
+      void editComment({});
+
+      expectTypeOf(
+        editComment({
+          threadId: "th_xxx",
+          commentId: "cm_xxx",
+          body: { version: 1, content: [] },
+        })
+      ).toEqualTypeOf<void>();
+
+      expectTypeOf(
+        editComment({
+          threadId: "th_xxx",
+          commentId: "cm_xxx",
+          body: { version: 1, content: [] },
+          metadata: { priority: 2, reviewed: null },
+        })
+      ).toEqualTypeOf<void>();
+
+      void editComment({
+        threadId: "th_xxx",
+        commentId: "cm_xxx",
+        body: { version: 1, content: [] },
+        // @ts-expect-error
+        metadata: { nonexisting: null },
+      });
+    }
+  });
+
+  test("useEditComment() (suspense)", () => {
+    {
+      const editComment = suspense.useEditComment();
+      // @ts-expect-error
+      void editComment({});
+
+      expectTypeOf(
+        editComment({
+          threadId: "th_xxx",
+          commentId: "cm_xxx",
+          body: { version: 1, content: [] },
+        })
+      ).toEqualTypeOf<void>();
+
+      expectTypeOf(
+        editComment({
+          threadId: "th_xxx",
+          commentId: "cm_xxx",
+          body: { version: 1, content: [] },
+          metadata: { priority: 2 },
+        })
+      ).toEqualTypeOf<void>();
+
+      void editComment({
+        threadId: "th_xxx",
+        commentId: "cm_xxx",
+        body: { version: 1, content: [] },
+        // @ts-expect-error
+        metadata: { nonexisting: null },
+      });
+    }
+  });
+
+  test("useEditCommentMetadata()", () => {
+    {
+      const editMetadata = classic.useEditCommentMetadata();
+      // @ts-expect-error
+      void editMetadata({}); // no body = error
+
+      void editMetadata({
+        threadId: "th_xxx",
+        commentId: "cm_xxx",
+        // @ts-expect-error
+        metadata: { nonexisting: null },
+      });
+      void editMetadata({
+        threadId: "th_xxx",
+        commentId: "cm_xxx",
+        // @ts-expect-error
+        metadata: { nonexisting: 123 },
+      });
+
+      expectTypeOf(
+        editMetadata({ threadId: "th_xxx", commentId: "cm_xxx", metadata: {} })
+      ).toEqualTypeOf<void>();
+      expectTypeOf(
+        editMetadata({
+          threadId: "th_xxx",
+          commentId: "cm_xxx",
+          metadata: { priority: 2, reviewed: null },
+        })
+      ).toEqualTypeOf<void>();
+
+      void editMetadata({
+        threadId: "th_xxx",
+        commentId: "cm_xxx",
+        // @ts-expect-error
+        metadata: { priority: null },
+      }); // priority isn't optional, so it cannot be wiped
+    }
+  });
+
+  test("useEditCommentMetadata() (suspense)", () => {
+    {
+      const editMetadata = suspense.useEditCommentMetadata();
+      // @ts-expect-error
+      void editMetadata({}); // no body = error
+
+      void editMetadata({
+        threadId: "th_xxx",
+        commentId: "cm_xxx",
+        // @ts-expect-error
+        metadata: { nonexisting: null },
+      });
+      void editMetadata({
+        threadId: "th_xxx",
+        commentId: "cm_xxx",
+        // @ts-expect-error
+        metadata: { nonexisting: 123 },
+      });
+
+      expectTypeOf(
+        editMetadata({ threadId: "th_xxx", commentId: "cm_xxx", metadata: {} })
+      ).toEqualTypeOf<void>();
+      expectTypeOf(
+        editMetadata({
+          threadId: "th_xxx",
+          commentId: "cm_xxx",
+          metadata: { priority: 2, reviewed: null },
+        })
+      ).toEqualTypeOf<void>();
+
+      void editMetadata({
+        threadId: "th_xxx",
+        commentId: "cm_xxx",
+        // @ts-expect-error
+        metadata: { priority: null },
+      }); // priority isn't optional, so it cannot be wiped
+    }
+  });
+
+  test("useDeleteComment()", () => {
+    {
+      const deleteComment = classic.useDeleteComment();
+
+      // @ts-expect-error
+      void deleteComment({});
+      // @ts-expect-error
+      void deleteComment({ threadId: "th_xxx" });
+      // @ts-expect-error
+      void deleteComment({ commentId: "co_xxx" });
+
+      expectTypeOf(
+        deleteComment({ threadId: "th_xxx", commentId: "co_xxx" })
+      ).toEqualTypeOf<void>();
+    }
+  });
+
+  test("useDeleteComment() (suspense)", () => {
+    {
+      const deleteComment = suspense.useDeleteComment();
+
+      // @ts-expect-error
+      void deleteComment({});
+      // @ts-expect-error
+      void deleteComment({ threadId: "th_xxx" });
+      // @ts-expect-error
+      void deleteComment({ commentId: "co_xxx" });
+
+      expectTypeOf(
+        deleteComment({ threadId: "th_xxx", commentId: "co_xxx" })
+      ).toEqualTypeOf<void>();
+    }
+  });
+
+  test("useAddReaction()", () => {
+    {
+      const addReaction = classic.useAddReaction();
+
+      // @ts-expect-error
+      void addReaction({});
+      // @ts-expect-error
+      void addReaction({ threadId: "th_xxx", emoji: "👍" });
+      // @ts-expect-error
+      void addReaction({ commentId: "th_xxx", emoji: "👍" });
+      // @ts-expect-error
+      void addReaction({ threadId: "th_xxx", commentId: "th_xxx" });
+
+      expectTypeOf(
+        addReaction({
+          threadId: "th_xxx",
+          commentId: "cm_xxx",
+          emoji: "👍",
+        })
+      ).toEqualTypeOf<void>();
+    }
+  });
+
+  test("useAddReaction() (suspense)", () => {
+    {
+      const addReaction = suspense.useAddReaction();
+
+      // @ts-expect-error
+      void addReaction({});
+      // @ts-expect-error
+      void addReaction({ threadId: "th_xxx", emoji: "👍" });
+      // @ts-expect-error
+      void addReaction({ commentId: "th_xxx", emoji: "👍" });
+      // @ts-expect-error
+      void addReaction({ threadId: "th_xxx", commentId: "th_xxx" });
+
+      expectTypeOf(
+        addReaction({
+          threadId: "th_xxx",
+          commentId: "cm_xxx",
+          emoji: "👍",
+        })
+      ).toEqualTypeOf<void>();
+    }
+  });
+
+  test("useRemoveReaction()", () => {
+    {
+      const removeReaction = classic.useRemoveReaction();
+
+      // @ts-expect-error
+      void removeReaction({});
+      // @ts-expect-error
+      void removeReaction({ threadId: "th_xxx", emoji: "👍" });
+      // @ts-expect-error
+      void removeReaction({ commentId: "th_xxx", emoji: "👍" });
+      // @ts-expect-error
+      void removeReaction({ threadId: "th_xxx", commentId: "th_xxx" });
+
+      expectTypeOf(
+        removeReaction({
+          threadId: "th_xxx",
+          commentId: "cm_xxx",
+          emoji: "👍",
+        })
+      ).toEqualTypeOf<void>();
+    }
+  });
+
+  test("useRemoveReaction() (suspense)", () => {
+    {
+      const removeReaction = suspense.useRemoveReaction();
+
+      // @ts-expect-error
+      void removeReaction({});
+      // @ts-expect-error
+      void removeReaction({ threadId: "th_xxx", emoji: "👍" });
+      // @ts-expect-error
+      void removeReaction({ commentId: "th_xxx", emoji: "👍" });
+      // @ts-expect-error
+      void removeReaction({ threadId: "th_xxx", commentId: "th_xxx" });
+
+      expectTypeOf(
+        removeReaction({
+          threadId: "th_xxx",
+          commentId: "cm_xxx",
+          emoji: "👍",
+        })
+      ).toEqualTypeOf<void>();
+    }
+  });
+
+  test("useInboxNotifications()", () => {
+    {
+      expectTypeOf(
+        classic.useInboxNotifications().isLoading
+      ).toEqualTypeOf<boolean>();
+      expectTypeOf(classic.useInboxNotifications().error).toEqualTypeOf<
+        Error | undefined
+      >();
+      expectTypeOf(
+        classic
+          .useInboxNotifications()
+          .inboxNotifications?.map((ibn) => ibn.kind)
+      ).toEqualTypeOf<
+        ("thread" | "textMention" | `$${string}`)[] | undefined
+      >();
+      expectTypeOf(
+        classic
+          .useInboxNotifications()
+          .inboxNotifications?.map((ibn) => ibn.roomId)
+      ).toEqualTypeOf<(string | undefined)[] | undefined>();
+    }
+  });
+
+  test("useInboxNotifications() (suspense)", () => {
+    {
+      expectTypeOf(
+        suspense.useInboxNotifications().isLoading
+      ).toEqualTypeOf<false>();
+      expectTypeOf(
+        suspense.useInboxNotifications().error
+      ).toEqualTypeOf<undefined>();
+      expectTypeOf(
+        suspense
+          .useInboxNotifications()
+          .inboxNotifications?.map((ibn) => ibn.kind)
+      ).toEqualTypeOf<("thread" | "textMention" | `$${string}`)[]>();
+      expectTypeOf(
+        suspense
+          .useInboxNotifications()
+          .inboxNotifications?.map((ibn) => ibn.roomId)
+      ).toEqualTypeOf<(string | undefined)[]>();
+    }
+  });
+
+  test("useInboxNotificationThread()", () => {
+    {
+      const result = classic.useInboxNotificationThread("in_xxx");
+      expectTypeOf(result.type).toEqualTypeOf<"thread">();
+      expectTypeOf(result.roomId).toEqualTypeOf<string>();
+      expectTypeOf(result.comments).toExtend<unknown[]>();
+      expectTypeOf(result.metadata.color).toEqualTypeOf<"red" | "blue">();
+      // @ts-expect-error
+      void result.metadata.nonexisting;
+    }
+  });
+
+  test("useInboxNotificationThread() (suspense)", () => {
+    {
+      const result = suspense.useInboxNotificationThread("in_xxx");
+      expectTypeOf(result.type).toEqualTypeOf<"thread">();
+      expectTypeOf(result.roomId).toEqualTypeOf<string>();
+      expectTypeOf(result.comments).toExtend<unknown[]>();
+      expectTypeOf(result.metadata.color).toEqualTypeOf<"red" | "blue">();
+      // @ts-expect-error
+      void result.metadata.nonexisting;
+    }
+  });
+
+  test("useMarkInboxNotificationAsRead()", () => {
+    {
+      const markRead = classic.useMarkInboxNotificationAsRead();
+      expectTypeOf(markRead("in_xxx")).toEqualTypeOf<void>();
+    }
+  });
+
+  test("useMarkInboxNotificationAsRead() (suspense)", () => {
+    {
+      const markRead = suspense.useMarkInboxNotificationAsRead();
+      expectTypeOf(markRead("in_xxx")).toEqualTypeOf<void>();
+    }
+  });
+
+  test("useMarkAllInboxNotificationsAsRead()", () => {
+    {
+      const markAllRead = classic.useMarkAllInboxNotificationsAsRead();
+      expectTypeOf(markAllRead()).toEqualTypeOf<void>();
+    }
+  });
+
+  test("useMarkAllInboxNotificationsAsRead() (suspense)", () => {
+    {
+      const markAllRead = suspense.useMarkAllInboxNotificationsAsRead();
+      expectTypeOf(markAllRead()).toEqualTypeOf<void>();
+    }
+  });
+
+  test("useDeleteInboxNotification()", () => {
+    {
+      const deleteNotification = classic.useDeleteInboxNotification();
+      expectTypeOf(deleteNotification("in_xxx")).toEqualTypeOf<void>();
+    }
+  });
+
+  test("useDeleteInboxNotification() (suspense)", () => {
+    {
+      const deleteNotification = suspense.useDeleteInboxNotification();
+      expectTypeOf(deleteNotification("in_xxx")).toEqualTypeOf<void>();
+    }
+  });
+
+  test("useDeleteAllInboxNotifications()", () => {
+    {
+      const deleteAllNotifications = classic.useDeleteAllInboxNotifications();
+      expectTypeOf(deleteAllNotifications()).toEqualTypeOf<void>();
+    }
+  });
+
+  test("useDeleteAllInboxNotifications() (suspense)", () => {
+    {
+      const deleteAllNotifications = suspense.useDeleteAllInboxNotifications();
+      expectTypeOf(deleteAllNotifications()).toEqualTypeOf<void>();
+    }
+  });
+
+  test("useUnreadInboxNotificationsCount()", () => {
+    {
+      const { count, error, isLoading } =
+        classic.useUnreadInboxNotificationsCount();
+      expectTypeOf(isLoading).toEqualTypeOf<boolean>();
+      expectTypeOf(count).toEqualTypeOf<number | undefined>();
+      expectTypeOf(error).toEqualTypeOf<Error | undefined>();
+    }
+  });
+
+  test("useUnreadInboxNotificationsCount() (suspense)", () => {
+    {
+      const { count, error, isLoading } =
+        suspense.useUnreadInboxNotificationsCount();
+      expectTypeOf(isLoading).toEqualTypeOf<false>();
+      expectTypeOf(count).toEqualTypeOf<number>();
+      expectTypeOf(error).toEqualTypeOf<undefined>();
+    }
+  });
+
+  test("useSyncStatus()", () => {
+    {
+      const status = classic.useSyncStatus();
+      expectTypeOf(status).toEqualTypeOf<"synchronizing" | "synchronized">();
+    }
+    {
+      const status = suspense.useSyncStatus();
+      expectTypeOf(status).toEqualTypeOf<"synchronizing" | "synchronized">();
+    }
+  });
+
+  test("useNotificationSettings()", () => {
+    {
+      const [{ isLoading, error, settings }, update] =
+        classic.useNotificationSettings();
+      expectTypeOf(isLoading).toEqualTypeOf<boolean>();
+      expectTypeOf(error).toEqualTypeOf<Error | undefined>();
+      expectTypeOf(settings).toEqualTypeOf<NotificationSettings | undefined>();
+      expectTypeOf(update({})).toEqualTypeOf<void>(); // empty {} because of partial definition
+    }
+  });
+
+  test("useNotificationSettings() (suspense)", () => {
+    {
+      const [{ isLoading, error, settings }, update] =
+        suspense.useNotificationSettings();
+      expectTypeOf(isLoading).toEqualTypeOf<false>();
+      expectTypeOf(error).toEqualTypeOf<undefined>();
+      expectTypeOf(settings).toEqualTypeOf<NotificationSettings>();
+      expectTypeOf(update({})).toEqualTypeOf<void>(); // empty {} because of partial definition
+    }
+  });
+
+  test("useAiChatStatus()", () => {
+    {
+      const status = classic.useAiChatStatus("chat-id");
+      expectTypeOf(status.status).toEqualTypeOf<
+        "disconnected" | "idle" | "loading" | "generating"
+      >();
+      if (status.status === "generating") {
+        // The partType might not exist if there's no content yet
+        expectTypeOf(status.partType).toEqualTypeOf<
+          | "text"
+          | "reasoning"
+          | "retrieval"
+          | "tool-invocation"
+          | "sources"
+          | undefined
+        >();
+        if (status.partType === "tool-invocation") {
+          expectTypeOf(status.toolName).toEqualTypeOf<string>();
+        } else {
+          expectTypeOf(status.toolName).toEqualTypeOf<undefined>();
+        }
+      } else {
+        expectTypeOf(status.partType).toEqualTypeOf<undefined>();
+        expectTypeOf(status.toolName).toEqualTypeOf<undefined>();
+      }
+    }
+  });
+
+  test("useAiChatStatus() (suspense)", () => {
+    {
+      const status = suspense.useAiChatStatus("chat-id");
+      expectTypeOf(status.status).toEqualTypeOf<
+        "disconnected" | "idle" | "loading" | "generating"
+      >();
+      if (status.status === "generating") {
+        // The partType might not exist if there's no content yet
+        expectTypeOf(status.partType).toEqualTypeOf<
+          | "text"
+          | "reasoning"
+          | "retrieval"
+          | "tool-invocation"
+          | "sources"
+          | undefined
+        >();
+        if (status.partType === "tool-invocation") {
+          expectTypeOf(status.toolName).toEqualTypeOf<string>();
+        } else {
+          expectTypeOf(status.toolName).toEqualTypeOf<undefined>();
+        }
+      } else {
+        expectTypeOf(status.partType).toEqualTypeOf<undefined>();
+        expectTypeOf(status.toolName).toEqualTypeOf<undefined>();
+      }
+    }
+  });
+
+  test("useAiChatStatus() with optional branchId", () => {
+    {
+      const status = classic.useAiChatStatus("chat-id", "ms_branch" as any);
+      if (status.status === "generating") {
+        // The partType might not exist if there's no content yet
+        expectTypeOf(status.partType).toEqualTypeOf<
+          | "text"
+          | "reasoning"
+          | "retrieval"
+          | "tool-invocation"
+          | "sources"
+          | undefined
+        >();
+        if (status.partType === "tool-invocation") {
+          expectTypeOf(status.toolName).toEqualTypeOf<string>();
+        } else {
+          expectTypeOf(status.toolName).toEqualTypeOf<undefined>();
+        }
+      } else {
+        expectTypeOf(status.partType).toEqualTypeOf<undefined>();
+        expectTypeOf(status.toolName).toEqualTypeOf<undefined>();
+      }
+    }
+  });
+
+  test("useAiChatStatus() with optional branchId (suspense)", () => {
+    {
+      const status = suspense.useAiChatStatus("chat-id", "ms_branch" as any);
+      if (status.status === "generating") {
+        // The partType might not exist if there's no content yet
+        expectTypeOf(status.partType).toEqualTypeOf<
+          | "text"
+          | "reasoning"
+          | "retrieval"
+          | "tool-invocation"
+          | "sources"
+          | undefined
+        >();
+        if (status.partType === "tool-invocation") {
+          expectTypeOf(status.toolName).toEqualTypeOf<string>();
+        } else {
+          expectTypeOf(status.toolName).toEqualTypeOf<undefined>();
+        }
+      } else {
+        expectTypeOf(status.partType).toEqualTypeOf<undefined>();
+        expectTypeOf(status.toolName).toEqualTypeOf<undefined>();
+      }
+    }
+  });
+});
+
