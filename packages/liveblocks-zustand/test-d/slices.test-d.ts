@@ -4,8 +4,7 @@ import { subscribeWithSelector } from "zustand/middleware";
 import { createClient } from "@liveblocks/client";
 import { liveblocks as liveblocksMiddleware } from "@liveblocks/zustand";
 import type { WithLiveblocks } from "@liveblocks/zustand";
-
-import { expectType, expectAssignable } from "tsd";
+import { describe, expectTypeOf, test } from "vitest";
 
 type BearSlice = {
   bears: number;
@@ -63,27 +62,31 @@ const useStore = create<WithLiveblocks<MyState>>()(
   )
 );
 
-const fullstate = useStore((s) => s);
+describe("WithLiveblocks middleware with slices", () => {
+  test("should expose slice fields and Liveblocks API from getState()", () => {
+    const fullstate = useStore.getState();
 
-// From fish slice
-expectType<number>(fullstate.fishes);
-expectType<() => void>(fullstate.addFish);
+    // From fish slice
+    expectTypeOf(fullstate.fishes).toEqualTypeOf<number>();
+    expectTypeOf(fullstate.addFish).toEqualTypeOf<() => void>();
 
-// From bear slice
-expectType<() => void>(fullstate.eatFish);
+    // From bear slice
+    expectTypeOf(fullstate.eatFish).toEqualTypeOf<() => void>();
 
-// Liveblocks state
-expectAssignable<Function>(fullstate.liveblocks.enterRoom);
-expectAssignable<Function>(fullstate.liveblocks.leaveRoom);
-expectType<string>(fullstate.liveblocks.room!.id);
+    // Liveblocks state
+    expectTypeOf(fullstate.liveblocks.enterRoom).toExtend<Function>();
+    expectTypeOf(fullstate.liveblocks.leaveRoom).toExtend<Function>();
+    expectTypeOf(fullstate.liveblocks.room!.id).toEqualTypeOf<string>();
+  });
 
-// Test subscribe with selector middleware
-expectType<() => void>(
-  useStore.subscribe(
-    (state) => state.bears,
-    (n) => {
-      expectType<number>(n);
-      console.log(n);
-    }
-  )
-);
+  test("should return typed state in subscribe callback", () => {
+    expectTypeOf(
+      useStore.subscribe(
+        (state) => state.bears,
+        (bears) => {
+          expectTypeOf(bears).toEqualTypeOf<number>();
+        }
+      )
+    ).toEqualTypeOf<() => void>();
+  });
+});
