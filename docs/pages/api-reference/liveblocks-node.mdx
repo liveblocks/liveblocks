@@ -2862,8 +2862,8 @@ await liveblocks.updateFeedMessage({
     content: "Updated content",
   },
 
-  // Optional, timestamp in milliseconds. Defaults to current time if not provided
-  // Helps prevents race conditions, messages that arrive after a newer message are ignored
+  // Optional, timestamp in milliseconds. Helps prevents race conditions,
+  // messages that arrive after a newer message are ignored
   updatedAt: Date.now(),
 });
 ```
