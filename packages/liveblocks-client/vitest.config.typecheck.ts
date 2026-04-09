@@ -5,7 +5,6 @@ const typecheckConfig: Partial<TypecheckConfig> = {
   enabled: true,
   only: true,
   ignoreSourceErrors: true,
-  tsconfig: "./tsconfig.typecheck.json",
 };
 
 export default defineConfig({

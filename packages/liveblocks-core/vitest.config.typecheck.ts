@@ -7,7 +7,6 @@ export default defineConfig({
       enabled: true,
       only: true,
       ignoreSourceErrors: true,
-      tsconfig: "./tsconfig.typecheck.json",
       include: ["test-d/**/*.test-d.ts"],
     },
   },
