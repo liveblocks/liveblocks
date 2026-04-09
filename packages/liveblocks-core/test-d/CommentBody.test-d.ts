@@ -1,5 +1,3 @@
-/* eslint-disable */
-
 import type { CommentBody } from "@liveblocks/core";
 import { describe, test } from "vitest";
 

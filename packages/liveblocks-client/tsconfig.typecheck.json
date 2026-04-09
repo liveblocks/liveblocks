@@ -3,10 +3,5 @@
   "compilerOptions": {
     "noUnusedLocals": false,
     "noUnusedParameters": false
-  },
-  "include": [
-    "src",
-    "test-d/room.test-d.ts",
-    "test-d/client.no-augmentation.test-d.ts"
-  ]
+  }
 }

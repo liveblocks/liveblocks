@@ -3,6 +3,5 @@
   "compilerOptions": {
     "noUnusedLocals": false,
     "noUnusedParameters": false
-  },
-  "include": ["src", "test-d"]
+  }
 }

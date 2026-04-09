@@ -1,5 +1,3 @@
-/* eslint-disable */
-
 import type { ToolResultResponse } from "@liveblocks/core";
 import { describe, test } from "vitest";
 
