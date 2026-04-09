@@ -1,5 +1,5 @@
 import type { EnsureJson, Json, JsonObject } from "@liveblocks/core";
-import { expectAssignable, expectType } from "tsd";
+import { expectTypeOf, test } from "vitest";
 
 type Item = {
   n?: number;
@@ -50,18 +50,29 @@ declare const uo: EnsureJson<{
   toString(): string;
 }>;
 
-expectType<Json | undefined>(u);
-expectType<string[]>(ua1);
-expectType<(number | string)[]>(ua2);
-expectType<(number | string | boolean | null)[]>(ua3);
-expectType<Valid[]>(ua4);
-expectType<Valid[]>(ua5);
+describe("EnsureJson", () => {
+  test("should limit unknown types to JSON", () => {
+    expectTypeOf(u).toEqualTypeOf<Json | undefined>();
+  });
 
-expectType<{ hi?: Json; date?: number | string }>(uo);
-expectAssignable<JsonObject>(uo);
+  test("should keep JSON-compatible types", () => {
+    expectTypeOf(ua1).toEqualTypeOf<string[]>();
+    expectTypeOf(ua2).toEqualTypeOf<(number | string)[]>();
+    expectTypeOf(ua3).toEqualTypeOf<(number | string | boolean | null)[]>();
+    expectTypeOf(ua4).toEqualTypeOf<Valid[]>();
+    expectTypeOf(ua5).toEqualTypeOf<Valid[]>();
+  });
 
-expectType<{
-  createdAt?: string | number; // Date became a string
-  err: { name: string; message: string; stack?: string; cause?: Json };
-  items: Item[];
-}>(u6);
+  test("should strip non-JSON members and method signatures", () => {
+    expectTypeOf(uo).toEqualTypeOf<{ hi?: Json; date?: number | string }>();
+    expectTypeOf(uo).toExtend<JsonObject>();
+  });
+
+  test("should convert non-JSON types to JSON", () => {
+    expectTypeOf(u6).toEqualTypeOf<{
+      createdAt?: string | number; // Date became a string
+      err: { name: string; message: string; stack?: string; cause?: Json }; // Error became a plain object
+      items: Item[];
+    }>();
+  });
+});

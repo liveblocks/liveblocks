@@ -39,7 +39,7 @@
     "lint:package": "publint --strict && attw --pack",
     "test": "npx liveblocks dev -p 1154 -c 'vitest run --coverage'",
     "test:ci": "vitest run",
-    "test:types": "ls test-d/* | xargs -n1 tsd --files",
+    "test:types": "vitest run --config ./vitest.config.typecheck.ts",
     "test:watch": "NODE_OPTIONS=\"--no-deprecation\" vitest",
     "test:e2e": "npx liveblocks dev -p 1154 -c 'vitest run --config=./vitest.config.e2e.ts'",
     "test:deps": "depcruise src --exclude __tests__",
