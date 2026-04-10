@@ -18,6 +18,9 @@ import { isWhitespaceCharacter } from "../../../slate/utils/is-whitespace-charac
 
 const EMOJI_REGEX =
   /\p{Extended_Pictographic}|\p{Emoji_Modifier}|\uFE0F|\u200D/u;
+
+// A few punctuation characters that aren't common (or even forbidden) as the
+// last character in email addresses' local part so we allow them before "@" mentions.
 const SUPPORTED_PRECEDING_PUNCTUATION = new Set<string>([
   '"',
   "'",
@@ -27,9 +30,11 @@ const SUPPORTED_PRECEDING_PUNCTUATION = new Set<string>([
   ",",
   ";",
   "(",
+  ")",
   "[",
-  "{",
+  "]",
   "<",
+  ">",
 ]);
 
 export type MentionDraft = {
