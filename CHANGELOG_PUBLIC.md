@@ -31,6 +31,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 - New blog post: [Multiplayer SDK for React Flow: Realtime collaboration between humans and agents](https://liveblocks.io/blog/multiplayer-sdk-for-react-flow-realtime-collaboration-between-humans-and-agents).
 - New blog post: [Chat SDK adapter for Liveblocks](https://liveblocks.io/blog/chat-sdk-adapter-for-liveblocks).
 - New blog post: [Python SDK for Liveblocks](https://liveblocks.io/blog/python-sdk-for-liveblocks).
+- New blog post: [Agent skills for Liveblocks](https://liveblocks.io/blog/agent-skills-for-liveblocks).
 
 ## Contributors
 
