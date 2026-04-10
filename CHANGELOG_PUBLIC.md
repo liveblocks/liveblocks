@@ -24,9 +24,17 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 - Add support for `client.mutateStorage()` (from `@liveblocks/node`)
 
+## Website
+
+- New blog post: [AI agents are becoming native users of software](https://liveblocks.io/blog/ai-agents-are-becoming-native-users-of-software).
+- New blog post: [Introducing Feeds and APIs for Agent Workflows](https://liveblocks.io/blog/introducing-feeds-and-apis-for-agent-workflows).
+- New blog post: [Multiplayer SDK for React Flow: Realtime collaboration between humans and agents](https://liveblocks.io/blog/multiplayer-sdk-for-react-flow-realtime-collaboration-between-humans-and-agents).
+- New blog post: [Chat SDK adapter for Liveblocks](https://liveblocks.io/blog/chat-sdk-adapter-for-liveblocks).
+- New blog post: [Python SDK for Liveblocks](https://liveblocks.io/blog/python-sdk-for-liveblocks).
+
 ## Contributors
 
-nvie
+nvie, ctnicholas, stevenfabre
 
 # Week 14 (2026-04-03)
 
