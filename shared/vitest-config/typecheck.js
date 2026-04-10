@@ -1,8 +1,8 @@
 import { mkdirSync, writeFileSync } from "fs";
-import { tmpdir } from "os";
-import { basename, join } from "path";
+import { basename, dirname, join } from "path";
 import { fileURLToPath } from "url";
 
+const MONOREPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const TMP_DIR = "liveblocks-typecheck";
 
 /**
@@ -36,7 +36,13 @@ function slugify(name) {
  */
 export function makeTypecheckTestConfig(importMeta, testFiles, name) {
   const pkgDir = fileURLToPath(new URL(".", importMeta.url));
-  const tmpDirPath = join(tmpdir(), TMP_DIR, basename(pkgDir));
+  const tmpDirPath = join(
+    MONOREPO_ROOT,
+    "node_modules",
+    ".cache",
+    TMP_DIR,
+    basename(pkgDir)
+  );
   const tmpTsConfigPath = join(tmpDirPath, `${slugify(name)}.json`);
   const absoluteTestFiles = testFiles.map((file) => join(pkgDir, file));
 
