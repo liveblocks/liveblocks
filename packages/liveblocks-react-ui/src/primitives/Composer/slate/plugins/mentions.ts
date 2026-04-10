@@ -18,6 +18,19 @@ import { isWhitespaceCharacter } from "../../../slate/utils/is-whitespace-charac
 
 const EMOJI_REGEX =
   /\p{Extended_Pictographic}|\p{Emoji_Modifier}|\uFE0F|\u200D/u;
+const SUPPORTED_PRECEDING_PUNCTUATION = new Set<string>([
+  '"',
+  "'",
+  ".",
+  "!",
+  "?",
+  ",",
+  ";",
+  "(",
+  "[",
+  "{",
+  "<",
+]);
 
 export type MentionDraft = {
   range: SlateRange;
@@ -38,6 +51,9 @@ export function getMentionDraftAtSelection(
   // - `Hello @stacy` → `"stacy"` mention draft (because "@" is preceded by a whitespace character)
   // - `Hello pierre@example.com` → no mention draft (because "@" is preceded by a non-whitespace character)
   // - `Hello @alicia@example.com` → `"alicia@example.com"` mention draft (because the first "@" is preceded by a whitespace character)
+  // - `Hello!@chris` → `"chris"` mention draft (because "!" is a supported preceding punctuation)
+  // - `Hello.@vincent` → `"vincent"` mention draft (because "." is a supported preceding punctuation)
+  // - `Hello (@olivier` → `"olivier"` mention draft (because "(" is a supported preceding punctuation)
   // - `Hello 👋@nimesh` → `"nimesh"` mention draft (because the first "@" is preceded by an emoji)
   const match = getMatchRange(editor, selection, ["@"], {
     include: true,
@@ -47,6 +63,11 @@ export function getMentionDraftAtSelection(
 
       // If "@" is the first character of the block, this "@" is immediately accepted ✅
       if (!characterBefore) {
+        return false;
+      }
+
+      // If the character before "@" is a supported preceding punctuation, this "@" is accepted ✅
+      if (SUPPORTED_PRECEDING_PUNCTUATION.has(characterBefore.text)) {
         return false;
       }
 

@@ -583,6 +583,25 @@ test.describe("Composer", () => {
       ).toBeVisible();
     });
 
+    test("should support mentions preceded by some specific punctuations", async () => {
+      const { editor } = getComposer(page);
+
+      await editor.pressSequentially("Hello!@");
+      await expect(
+        page.locator(".lb-composer-suggestions-list-item").first()
+      ).toBeVisible();
+
+      await editor.pressSequentially("Hello.@");
+      await expect(
+        page.locator(".lb-composer-suggestions-list-item").first()
+      ).toBeVisible();
+
+      await editor.pressSequentially("Hello (@");
+      await expect(
+        page.locator(".lb-composer-suggestions-list-item").first()
+      ).toBeVisible();
+    });
+
     test("should support user and group mentions", async () => {
       const { editor } = getComposer(page);
 
