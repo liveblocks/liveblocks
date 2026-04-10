@@ -1,5 +1,5 @@
 import type { ToolResultResponse } from "@liveblocks/core";
-import { describe, test } from "vitest";
+import { describe, expectTypeOf, test } from "vitest";
 
 describe("ToolResultResponse", () => {
   test("should reject invalid return values", () => {
@@ -59,24 +59,36 @@ describe("ToolResultResponse", () => {
     };
   });
 
-  // NOTE: `expectTypeOf().toExtend` doesn't work well on `Relax<...>` unions,
-  //        so we use plain assignment checks instead.
-
   test("should accept valid shapes", () => {
     // All of these are interpreted as type: "success" cases
-    const _1: ToolResultResponse = { data: {} };
-    const _2: ToolResultResponse = { data: { yo: [1, 2, 3] } };
-    const _3: ToolResultResponse = { data: {}, description: "all good" };
-    const _4: ToolResultResponse = {
+    expectTypeOf({
+      data: {},
+    } satisfies ToolResultResponse).toExtend<ToolResultResponse>();
+
+    expectTypeOf({
+      data: { yo: [1, 2, 3] },
+    } satisfies ToolResultResponse).toExtend<ToolResultResponse>();
+
+    expectTypeOf({
+      data: {},
+      description: "all good",
+    } satisfies ToolResultResponse).toExtend<ToolResultResponse>();
+
+    expectTypeOf({
       data: { yo: [1, 2, 3] },
       description: "all good",
-    };
+    } satisfies ToolResultResponse).toExtend<ToolResultResponse>();
 
-    const _5: ToolResultResponse = { error: "oops" };
+    expectTypeOf({
+      error: "oops",
+    } satisfies ToolResultResponse).toExtend<ToolResultResponse>();
 
-    const _6: ToolResultResponse = { cancel: true };
-    const _7: ToolResultResponse = {
+    expectTypeOf({
+      cancel: true,
+    } satisfies ToolResultResponse).toExtend<ToolResultResponse>();
+
+    expectTypeOf({
       cancel: "I want to cancel the operation",
-    };
+    } satisfies ToolResultResponse).toExtend<ToolResultResponse>();
   });
 });

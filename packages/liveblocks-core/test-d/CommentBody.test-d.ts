@@ -1,5 +1,5 @@
 import type { CommentBody } from "@liveblocks/core";
-import { describe, test } from "vitest";
+import { describe, expectTypeOf, test } from "vitest";
 
 describe("CommentBody", () => {
   test("should reject invalid required properties", () => {
@@ -141,15 +141,13 @@ describe("CommentBody", () => {
     };
   });
 
-  // NOTE: `expectTypeOf().toExtend` doesn't work well on `Relax<...>` unions,
-  //        so we use plain assignment checks instead.
-
   test("should accept valid comment bodies", () => {
-    const _1: CommentBody = {
+    expectTypeOf({
       version: 1,
       content: [],
-    };
-    const _2: CommentBody = {
+    } satisfies CommentBody).toExtend<CommentBody>();
+
+    expectTypeOf({
       version: 1,
       content: [
         {
@@ -157,8 +155,9 @@ describe("CommentBody", () => {
           children: [{ text: "Hello world" }],
         },
       ],
-    };
-    const _3: CommentBody = {
+    } satisfies CommentBody).toExtend<CommentBody>();
+
+    expectTypeOf({
       version: 1,
       content: [
         {
@@ -174,8 +173,9 @@ describe("CommentBody", () => {
           ],
         },
       ],
-    };
-    const _4: CommentBody = {
+    } satisfies CommentBody).toExtend<CommentBody>();
+
+    expectTypeOf({
       version: 1,
       content: [
         {
@@ -183,8 +183,9 @@ describe("CommentBody", () => {
           children: [{ type: "mention", kind: "user", id: "user123" }],
         },
       ],
-    };
-    const _5: CommentBody = {
+    } satisfies CommentBody).toExtend<CommentBody>();
+
+    expectTypeOf({
       version: 1,
       content: [
         {
@@ -198,8 +199,9 @@ describe("CommentBody", () => {
           ],
         },
       ],
-    };
-    const _6: CommentBody = {
+    } satisfies CommentBody).toExtend<CommentBody>();
+
+    expectTypeOf({
       version: 1,
       content: [
         {
@@ -214,8 +216,9 @@ describe("CommentBody", () => {
           ],
         },
       ],
-    };
-    const _7: CommentBody = {
+    } satisfies CommentBody).toExtend<CommentBody>();
+
+    expectTypeOf({
       version: 1,
       content: [
         {
@@ -223,8 +226,9 @@ describe("CommentBody", () => {
           children: [{ type: "link", url: "https://liveblocks.io" }],
         },
       ],
-    };
-    const _8: CommentBody = {
+    } satisfies CommentBody).toExtend<CommentBody>();
+
+    expectTypeOf({
       version: 1,
       content: [
         {
@@ -238,8 +242,9 @@ describe("CommentBody", () => {
           ],
         },
       ],
-    };
-    const _9: CommentBody = {
+    } satisfies CommentBody).toExtend<CommentBody>();
+
+    expectTypeOf({
       version: 1,
       content: [
         {
@@ -251,8 +256,9 @@ describe("CommentBody", () => {
           children: [{ text: "Second paragraph" }],
         },
       ],
-    };
-    const _10: CommentBody = {
+    } satisfies CommentBody).toExtend<CommentBody>();
+
+    expectTypeOf({
       version: 1,
       content: [
         {
@@ -270,8 +276,9 @@ describe("CommentBody", () => {
           ],
         },
       ],
-    };
-    const _11: CommentBody = {
+    } satisfies CommentBody).toExtend<CommentBody>();
+
+    expectTypeOf({
       version: 1,
       content: [
         {
@@ -301,6 +308,6 @@ describe("CommentBody", () => {
           ],
         },
       ],
-    };
+    } satisfies CommentBody).toExtend<CommentBody>();
   });
 });
