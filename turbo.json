@@ -30,7 +30,7 @@
     },
     "test:types": {
       "dependsOn": ["build"],
-      "inputs": ["test-d/**"]
+      "inputs": ["test-d/**", "vitest.*"]
     },
     "test:deps": {
       // A package's `test:deps` script has no dependencies and can be run
