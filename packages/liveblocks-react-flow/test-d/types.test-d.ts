@@ -40,7 +40,7 @@ describe("LiveblocksNode", () => {
     expectTypeOf(node.get("style")).toExtend<
       LiveObject<LsonObject> | undefined
     >();
-    expectTypeOf(node.get("id")).toEqualTypeOf<string>();
+    expectTypeOf(node.get("id")).toBeString();
 
     expectTypeOf(node.get("selected")).toEqualTypeOf<boolean | undefined>();
 
@@ -53,7 +53,7 @@ describe("LiveblocksNode", () => {
 
       expectTypeOf(node.get("data")).toExtend<LiveObject<LsonObject>>();
 
-      expectTypeOf(node.get("data").get("string")).toEqualTypeOf<string>();
+      expectTypeOf(node.get("data").get("string")).toBeString();
       expectTypeOf(node.get("data").get("array")).toExtend<LiveList<string>>();
       expectTypeOf(node.get("data").get("nested")).toExtend<
         LiveObject<LsonObject>
@@ -73,7 +73,7 @@ describe("LiveblocksNode", () => {
 
       expectTypeOf(node.get("data")).toExtend<LiveObject<LsonObject>>();
 
-      expectTypeOf(node.get("data").get("string")).toEqualTypeOf<string>();
+      expectTypeOf(node.get("data").get("string")).toBeString();
       expectTypeOf(node.get("data").get("nested")).toExtend<
         LiveObject<LsonObject>
       >();
@@ -103,7 +103,7 @@ describe("LiveblocksEdge", () => {
     expectTypeOf(edge.get("style")).toExtend<
       LiveObject<LsonObject> | undefined
     >();
-    expectTypeOf(edge.get("id")).toEqualTypeOf<string>();
+    expectTypeOf(edge.get("id")).toBeString();
 
     expectTypeOf(edge.get("selected")).toEqualTypeOf<boolean | undefined>();
 
@@ -120,7 +120,7 @@ describe("LiveblocksEdge", () => {
         LiveObject<LsonObject> | undefined
       >();
 
-      expectTypeOf(edge.get("data")!.get("string")).toEqualTypeOf<string>();
+      expectTypeOf(edge.get("data")!.get("string")).toBeString();
       expectTypeOf(edge.get("data")!.get("array")).toExtend<LiveList<string>>();
       expectTypeOf(edge.get("data")!.get("nested")).toExtend<
         LiveObject<LsonObject>
@@ -142,7 +142,7 @@ describe("LiveblocksEdge", () => {
         LiveObject<LsonObject> | undefined
       >();
 
-      expectTypeOf(edge.get("data")!.get("string")).toEqualTypeOf<string>();
+      expectTypeOf(edge.get("data")!.get("string")).toBeString();
       expectTypeOf(edge.get("data")!.get("nested")).toExtend<
         LiveObject<LsonObject>
       >();

@@ -1,8 +1,6 @@
 import type { ToolResultResponse } from "@liveblocks/core";
 import { describe, test } from "vitest";
 
-// TODO: toExtend doesn't work with Relax<...> union types so we use plain assignment checks instead
-
 describe("ToolResultResponse", () => {
   test("should reject invalid return values", () => {
     // @ts-expect-error - Responses must be an object
@@ -60,6 +58,9 @@ describe("ToolResultResponse", () => {
       description: "cancelled by user",
     };
   });
+
+  // NOTE: `expectTypeOf().toExtend` doesn't work well on `Relax<...>` unions,
+  //        so we use plain assignment checks instead.
 
   test("should accept valid shapes", () => {
     // All of these are interpreted as type: "success" cases

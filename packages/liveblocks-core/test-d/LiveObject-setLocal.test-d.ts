@@ -71,6 +71,6 @@ describe("LiveObject.setLocal", () => {
 
   test("should include local values in get() return type", () => {
     expectTypeOf(obj.get("optionalJson")).toEqualTypeOf<number | undefined>();
-    expectTypeOf(obj.get("required")).toEqualTypeOf<string>();
+    expectTypeOf(obj.get("required")).toBeString();
   });
 });

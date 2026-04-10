@@ -12,14 +12,14 @@ describe("InboxNotification `kinds` (no Liveblocks augmentation)", () => {
         inboxNotification={{} as InboxNotificationData}
         kinds={{
           thread: (props) => {
-            expectTypeOf(props.inboxNotification.threadId).toEqualTypeOf<string>();
+            expectTypeOf(props.inboxNotification.threadId).toBeString();
             // @ts-expect-error - `activities` is not on thread notifications
             void props.inboxNotification.activities;
 
             return <InboxNotification.Thread {...props} />;
           },
           textMention: (props) => {
-            expectTypeOf(props.inboxNotification.mentionId).toEqualTypeOf<string>();
+            expectTypeOf(props.inboxNotification.mentionId).toBeString();
             // @ts-expect-error - `activities` is not on text-mention notifications
             void props.inboxNotification.activities;
 

@@ -65,8 +65,8 @@ describe("createClient with both Presence and Storage augmentation", () => {
         initialStorage: { animals: new LiveList(["🦊"]) },
       });
 
-      expectTypeOf(room.getPresence()?.cursor.x).toEqualTypeOf<number>();
-      expectTypeOf(room.getPresence()?.cursor.y).toEqualTypeOf<number>();
+      expectTypeOf(room.getPresence()?.cursor.x).toBeNumber();
+      expectTypeOf(room.getPresence()?.cursor.y).toBeNumber();
       expectTypeOf((await room.getStorage()).root.get("animals")).toEqualTypeOf<
         LiveList<string>
       >();

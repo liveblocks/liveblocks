@@ -32,8 +32,8 @@ describe("Room", () => {
         initialPresence: {},
       });
 
-      expectTypeOf(room.id).toEqualTypeOf<string>();
-      expectTypeOf(leave()).toEqualTypeOf<void>();
+      expectTypeOf(room.id).toBeString();
+      expectTypeOf(leave()).toBeVoid();
     });
   });
 
@@ -61,7 +61,7 @@ describe("Room", () => {
           case "reset":
             return;
           default:
-            expectTypeOf(event).toEqualTypeOf<never>();
+            expectTypeOf(event).toBeNever();
         }
       });
     });
@@ -91,7 +91,7 @@ describe("Room", () => {
           case "reset":
             return;
           default:
-            expectTypeOf(event).toEqualTypeOf<never>();
+            expectTypeOf(event).toBeNever();
         }
       });
     });

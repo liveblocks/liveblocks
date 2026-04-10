@@ -1,8 +1,6 @@
 import type { CommentBody } from "@liveblocks/core";
 import { describe, test } from "vitest";
 
-// TODO: toExtend doesn't work with Relax<...> union types so we use plain assignment checks instead
-
 describe("CommentBody", () => {
   test("should reject invalid required properties", () => {
     // @ts-expect-error - `version` and `content` are required
@@ -142,6 +140,9 @@ describe("CommentBody", () => {
       ],
     };
   });
+
+  // NOTE: `expectTypeOf().toExtend` doesn't work well on `Relax<...>` unions,
+  //        so we use plain assignment checks instead.
 
   test("should accept valid comment bodies", () => {
     const _1: CommentBody = {

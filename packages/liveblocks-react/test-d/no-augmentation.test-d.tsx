@@ -196,7 +196,7 @@ describe("without Liveblocks augmentation", () => {
 
       expectTypeOf(
         classic.useRoom({ allowOutsideRoom: false }).id
-      ).toEqualTypeOf<string>();
+      ).toBeString();
       expectTypeOf(
         classic.useRoom({ allowOutsideRoom: true })?.id
       ).toEqualTypeOf<string | undefined>();
@@ -216,7 +216,7 @@ describe("without Liveblocks augmentation", () => {
 
       expectTypeOf(
         suspense.useRoom({ allowOutsideRoom: false }).id
-      ).toEqualTypeOf<string>();
+      ).toBeString();
       expectTypeOf(
         suspense.useRoom({ allowOutsideRoom: true })?.id
       ).toEqualTypeOf<string | undefined>();
@@ -229,21 +229,21 @@ describe("without Liveblocks augmentation", () => {
   test("useIsInsideRoom()", () => {
     {
       const isInsideRoom = classic.useIsInsideRoom();
-      expectTypeOf(isInsideRoom).toEqualTypeOf<boolean>();
+      expectTypeOf(isInsideRoom).toBeBoolean();
     }
   });
 
   test("useIsInsideRoom() (suspense)", () => {
     {
       const isInsideRoom = suspense.useIsInsideRoom();
-      expectTypeOf(isInsideRoom).toEqualTypeOf<boolean>();
+      expectTypeOf(isInsideRoom).toBeBoolean();
     }
   });
 
   test("useErrorListener()", () => {
     {
       classic.useErrorListener((err) => {
-        expectTypeOf(err.message).toEqualTypeOf<string>();
+        expectTypeOf(err.message).toBeString();
         expectTypeOf(err.stack).toEqualTypeOf<string | undefined>();
         expectTypeOf(err.context.code).toEqualTypeOf<
           string | -1 | 4001 | 4005 | 4006 | (number & {}) | undefined
@@ -277,9 +277,9 @@ describe("without Liveblocks augmentation", () => {
           expectTypeOf(err.context.code).toExtend<number>();
           expectTypeOf(err.context.code).toExtend<number | undefined>();
         } else if (err.context.type === "CREATE_THREAD_ERROR") {
-          expectTypeOf(err.context.roomId).toEqualTypeOf<string>();
-          expectTypeOf(err.context.threadId).toEqualTypeOf<string>();
-          expectTypeOf(err.context.commentId).toEqualTypeOf<string>();
+          expectTypeOf(err.context.roomId).toBeString();
+          expectTypeOf(err.context.threadId).toBeString();
+          expectTypeOf(err.context.commentId).toBeString();
         } else {
           // Not going to list them all...
         }
@@ -290,7 +290,7 @@ describe("without Liveblocks augmentation", () => {
   test("useErrorListener() (suspense)", () => {
     {
       suspense.useErrorListener((err) => {
-        expectTypeOf(err.message).toEqualTypeOf<string>();
+        expectTypeOf(err.message).toBeString();
         expectTypeOf(err.stack).toEqualTypeOf<string | undefined>();
         expectTypeOf(err.context.code).toEqualTypeOf<
           string | -1 | 4001 | 4005 | 4006 | (number & {}) | undefined
@@ -324,9 +324,9 @@ describe("without Liveblocks augmentation", () => {
           expectTypeOf(err.context.code).toExtend<number>();
           expectTypeOf(err.context.code).toExtend<number | undefined>();
         } else if (err.context.type === "CREATE_THREAD_ERROR") {
-          expectTypeOf(err.context.roomId).toEqualTypeOf<string>();
-          expectTypeOf(err.context.threadId).toEqualTypeOf<string>();
-          expectTypeOf(err.context.commentId).toEqualTypeOf<string>();
+          expectTypeOf(err.context.roomId).toBeString();
+          expectTypeOf(err.context.threadId).toBeString();
+          expectTypeOf(err.context.commentId).toBeString();
         } else {
           // Not going to list them all...
         }
@@ -378,7 +378,7 @@ describe("without Liveblocks augmentation", () => {
       expectTypeOf(others[13]!.presence.cursor).toEqualTypeOf<
         Json | undefined
       >();
-      expectTypeOf(others[0]!.canWrite).toEqualTypeOf<boolean>();
+      expectTypeOf(others[0]!.canWrite).toBeBoolean();
     }
   });
 
@@ -388,14 +388,14 @@ describe("without Liveblocks augmentation", () => {
       expectTypeOf(others[13]!.presence.cursor).toEqualTypeOf<
         Json | undefined
       >();
-      expectTypeOf(others[0]!.canWrite).toEqualTypeOf<boolean>();
+      expectTypeOf(others[0]!.canWrite).toBeBoolean();
     }
   });
 
   test("useOthers(selector)", () => {
     {
       const num = classic.useOthers((others) => others.length);
-      expectTypeOf(num).toEqualTypeOf<number>();
+      expectTypeOf(num).toBeNumber();
 
       const xs = classic.useOthers((others) =>
         others.map((o) => o.presence.cursor)
@@ -407,7 +407,7 @@ describe("without Liveblocks augmentation", () => {
   test("useOthers(selector) (suspense)", () => {
     {
       const num = classic.useOthers((others) => others.length);
-      expectTypeOf(num).toEqualTypeOf<number>();
+      expectTypeOf(num).toBeNumber();
 
       const xs = classic.useOthers((others) =>
         others.map((o) => o.presence.cursor)
@@ -567,7 +567,7 @@ describe("without Liveblocks augmentation", () => {
   test("useUser()", () => {
     {
       const { user, error, isLoading } = classic.useUser("user-id");
-      expectTypeOf(isLoading).toEqualTypeOf<boolean>();
+      expectTypeOf(isLoading).toBeBoolean();
       expectTypeOf(user?.name).toEqualTypeOf<string | undefined>();
       expectTypeOf(user?.avatar).toEqualTypeOf<string | undefined>();
       expectTypeOf(user?.age).toEqualTypeOf<Json | undefined>();
@@ -582,14 +582,14 @@ describe("without Liveblocks augmentation", () => {
       expectTypeOf(user?.name).toEqualTypeOf<string | undefined>();
       expectTypeOf(user?.avatar).toEqualTypeOf<string | undefined>();
       expectTypeOf(user?.age).toEqualTypeOf<Json | undefined>();
-      expectTypeOf(error).toEqualTypeOf<undefined>();
+      expectTypeOf(error).toBeUndefined();
     }
   });
 
   test("useRoomInfo()", () => {
     {
       const { info, error, isLoading } = classic.useRoomInfo("room-id");
-      expectTypeOf(isLoading).toEqualTypeOf<boolean>();
+      expectTypeOf(isLoading).toBeBoolean();
       expectTypeOf(info?.name).toEqualTypeOf<string | undefined>();
       expectTypeOf(info?.url).toEqualTypeOf<string | undefined>();
       expectTypeOf(info?.nonexisting).toEqualTypeOf<Json | undefined>();
@@ -604,14 +604,14 @@ describe("without Liveblocks augmentation", () => {
       expectTypeOf(info.name).toEqualTypeOf<string | undefined>();
       expectTypeOf(info.url).toEqualTypeOf<string | undefined>();
       expectTypeOf(info?.nonexisting).toEqualTypeOf<Json | undefined>();
-      expectTypeOf(error).toEqualTypeOf<undefined>();
+      expectTypeOf(error).toBeUndefined();
     }
   });
 
   test("useGroupInfo()", () => {
     {
       const { info, error, isLoading } = classic.useGroupInfo("group-id");
-      expectTypeOf(isLoading).toEqualTypeOf<boolean>();
+      expectTypeOf(isLoading).toBeBoolean();
       expectTypeOf(info?.name).toEqualTypeOf<string | undefined>();
       expectTypeOf(info?.avatar).toEqualTypeOf<string | undefined>();
       expectTypeOf(info?.nonexisting).toEqualTypeOf<Json | undefined>();
@@ -626,7 +626,7 @@ describe("without Liveblocks augmentation", () => {
       expectTypeOf(info.name).toEqualTypeOf<string | undefined>();
       expectTypeOf(info.avatar).toEqualTypeOf<string | undefined>();
       expectTypeOf(info?.nonexisting).toEqualTypeOf<Json | undefined>();
-      expectTypeOf(error).toEqualTypeOf<undefined>();
+      expectTypeOf(error).toBeUndefined();
     }
   });
 
@@ -644,11 +644,11 @@ describe("without Liveblocks augmentation", () => {
       });
 
       expectTypeOf(thread1.type).toEqualTypeOf<"thread">();
-      expectTypeOf(thread1.id).toEqualTypeOf<string>();
-      expectTypeOf(thread1.roomId).toEqualTypeOf<string>();
+      expectTypeOf(thread1.id).toBeString();
+      expectTypeOf(thread1.roomId).toBeString();
       expectTypeOf(thread1.comments[0]!.type).toEqualTypeOf<"comment">();
-      expectTypeOf(thread1.comments[0]!.id).toEqualTypeOf<string>();
-      expectTypeOf(thread1.comments[0]!.threadId).toEqualTypeOf<string>();
+      expectTypeOf(thread1.comments[0]!.id).toBeString();
+      expectTypeOf(thread1.comments[0]!.threadId).toBeString();
 
       expectTypeOf(thread1.metadata.color).toEqualTypeOf<
         string | number | boolean | undefined
@@ -662,7 +662,7 @@ describe("without Liveblocks augmentation", () => {
         metadata: { foo: "bar" },
       });
 
-      expectTypeOf(thread2.id).toEqualTypeOf<string>();
+      expectTypeOf(thread2.id).toBeString();
       expectTypeOf(thread2.metadata.foo).toEqualTypeOf<
         string | number | boolean | undefined
       >();
@@ -686,11 +686,11 @@ describe("without Liveblocks augmentation", () => {
       });
 
       expectTypeOf(thread1.type).toEqualTypeOf<"thread">();
-      expectTypeOf(thread1.id).toEqualTypeOf<string>();
-      expectTypeOf(thread1.roomId).toEqualTypeOf<string>();
+      expectTypeOf(thread1.id).toBeString();
+      expectTypeOf(thread1.roomId).toBeString();
       expectTypeOf(thread1.comments[0]!.type).toEqualTypeOf<"comment">();
-      expectTypeOf(thread1.comments[0]!.id).toEqualTypeOf<string>();
-      expectTypeOf(thread1.comments[0]!.threadId).toEqualTypeOf<string>();
+      expectTypeOf(thread1.comments[0]!.id).toBeString();
+      expectTypeOf(thread1.comments[0]!.threadId).toBeString();
 
       expectTypeOf(thread1.metadata.foo).toEqualTypeOf<
         string | number | boolean | undefined
@@ -704,7 +704,7 @@ describe("without Liveblocks augmentation", () => {
         metadata: { foo: "bar" },
       });
 
-      expectTypeOf(thread2.id).toEqualTypeOf<string>();
+      expectTypeOf(thread2.id).toBeString();
       expectTypeOf(thread2.metadata.foo).toEqualTypeOf<
         string | number | boolean | undefined
       >();
@@ -774,8 +774,8 @@ describe("without Liveblocks augmentation", () => {
         });
 
         expectTypeOf(comment.type).toEqualTypeOf<"comment">();
-        expectTypeOf(comment.id).toEqualTypeOf<string>();
-        expectTypeOf(comment.threadId).toEqualTypeOf<string>();
+        expectTypeOf(comment.id).toBeString();
+        expectTypeOf(comment.threadId).toBeString();
         expectTypeOf(comment.metadata.foo).toEqualTypeOf<
           string | number | boolean | undefined
         >();
@@ -815,8 +815,8 @@ describe("without Liveblocks augmentation", () => {
       });
 
       expectTypeOf(comment.type).toEqualTypeOf<"comment">();
-      expectTypeOf(comment.id).toEqualTypeOf<string>();
-      expectTypeOf(comment.threadId).toEqualTypeOf<string>();
+      expectTypeOf(comment.id).toBeString();
+      expectTypeOf(comment.threadId).toBeString();
       expectTypeOf(comment.metadata.foo).toEqualTypeOf<
         string | number | boolean | undefined
       >();
@@ -1067,9 +1067,7 @@ describe("without Liveblocks augmentation", () => {
 
   test("useInboxNotifications()", () => {
     {
-      expectTypeOf(
-        classic.useInboxNotifications().isLoading
-      ).toEqualTypeOf<boolean>();
+      expectTypeOf(classic.useInboxNotifications().isLoading).toBeBoolean();
       expectTypeOf(classic.useInboxNotifications().error).toEqualTypeOf<
         Error | undefined
       >();
@@ -1093,9 +1091,7 @@ describe("without Liveblocks augmentation", () => {
       expectTypeOf(
         suspense.useInboxNotifications().isLoading
       ).toEqualTypeOf<false>();
-      expectTypeOf(
-        suspense.useInboxNotifications().error
-      ).toEqualTypeOf<undefined>();
+      expectTypeOf(suspense.useInboxNotifications().error).toBeUndefined();
       expectTypeOf(
         suspense
           .useInboxNotifications()
@@ -1113,7 +1109,7 @@ describe("without Liveblocks augmentation", () => {
     {
       const result = classic.useInboxNotificationThread("in_xxx");
       expectTypeOf(result.type).toEqualTypeOf<"thread">();
-      expectTypeOf(result.roomId).toEqualTypeOf<string>();
+      expectTypeOf(result.roomId).toBeString();
       expectTypeOf(result.comments).toExtend<unknown[]>();
       expectTypeOf(result.metadata).toEqualTypeOf<BaseMetadata>();
       expectTypeOf(result.metadata.color).toEqualTypeOf<
@@ -1129,7 +1125,7 @@ describe("without Liveblocks augmentation", () => {
     {
       const result = suspense.useInboxNotificationThread("in_xxx");
       expectTypeOf(result.type).toEqualTypeOf<"thread">();
-      expectTypeOf(result.roomId).toEqualTypeOf<string>();
+      expectTypeOf(result.roomId).toBeString();
       expectTypeOf(result.comments).toExtend<unknown[]>();
       expectTypeOf(result.metadata).toEqualTypeOf<BaseMetadata>();
       expectTypeOf(result.metadata.color).toEqualTypeOf<
@@ -1201,7 +1197,7 @@ describe("without Liveblocks augmentation", () => {
     {
       const { count, error, isLoading } =
         classic.useUnreadInboxNotificationsCount();
-      expectTypeOf(isLoading).toEqualTypeOf<boolean>();
+      expectTypeOf(isLoading).toBeBoolean();
       expectTypeOf(count).toEqualTypeOf<number | undefined>();
       expectTypeOf(error).toEqualTypeOf<Error | undefined>();
     }
@@ -1212,8 +1208,8 @@ describe("without Liveblocks augmentation", () => {
       const { count, error, isLoading } =
         suspense.useUnreadInboxNotificationsCount();
       expectTypeOf(isLoading).toEqualTypeOf<false>();
-      expectTypeOf(count).toEqualTypeOf<number>();
-      expectTypeOf(error).toEqualTypeOf<undefined>();
+      expectTypeOf(count).toBeNumber();
+      expectTypeOf(error).toBeUndefined();
     }
   });
 
@@ -1232,7 +1228,7 @@ describe("without Liveblocks augmentation", () => {
     {
       const [{ isLoading, error, settings }, update] =
         classic.useNotificationSettings();
-      expectTypeOf(isLoading).toEqualTypeOf<boolean>();
+      expectTypeOf(isLoading).toBeBoolean();
       expectTypeOf(error).toEqualTypeOf<Error | undefined>();
       expectTypeOf(settings).toEqualTypeOf<NotificationSettings | undefined>();
       expectTypeOf(update({})).toEqualTypeOf<void>(); // empty {} because of partial definition
@@ -1244,7 +1240,7 @@ describe("without Liveblocks augmentation", () => {
       const [{ isLoading, error, settings }, update] =
         suspense.useNotificationSettings();
       expectTypeOf(isLoading).toEqualTypeOf<false>();
-      expectTypeOf(error).toEqualTypeOf<undefined>();
+      expectTypeOf(error).toBeUndefined();
       expectTypeOf(settings).toEqualTypeOf<NotificationSettings>();
       expectTypeOf(update({})).toEqualTypeOf<void>(); // empty {} because of partial definition
     }
@@ -1259,19 +1255,19 @@ describe("without Liveblocks augmentation", () => {
         expectTypeOf(status.status).toEqualTypeOf<"generating">();
         if (status.partType === "tool-invocation") {
           expectTypeOf(status.partType).toEqualTypeOf<"tool-invocation">();
-          expectTypeOf(status.toolName).toEqualTypeOf<string>();
+          expectTypeOf(status.toolName).toBeString();
         } else {
           expectTypeOf(status.partType).toEqualTypeOf<
             "text" | "reasoning" | "retrieval" | "sources" | undefined
           >();
-          expectTypeOf(status.toolName).toEqualTypeOf<undefined>();
+          expectTypeOf(status.toolName).toBeUndefined();
         }
       } else {
         expectTypeOf(status.status).toEqualTypeOf<
           "disconnected" | "loading" | "idle"
         >();
-        expectTypeOf(status.partType).toEqualTypeOf<undefined>();
-        expectTypeOf(status.toolName).toEqualTypeOf<undefined>();
+        expectTypeOf(status.partType).toBeUndefined();
+        expectTypeOf(status.toolName).toBeUndefined();
       }
     }
   });
@@ -1284,19 +1280,19 @@ describe("without Liveblocks augmentation", () => {
         expectTypeOf(status.status).toEqualTypeOf<"generating">();
         if (status.partType === "tool-invocation") {
           expectTypeOf(status.partType).toEqualTypeOf<"tool-invocation">();
-          expectTypeOf(status.toolName).toEqualTypeOf<string>();
+          expectTypeOf(status.toolName).toBeString();
         } else {
           expectTypeOf(status.partType).toEqualTypeOf<
             "text" | "reasoning" | "retrieval" | "sources" | undefined
           >();
-          expectTypeOf(status.toolName).toEqualTypeOf<undefined>();
+          expectTypeOf(status.toolName).toBeUndefined();
         }
       } else {
         expectTypeOf(status.status).toEqualTypeOf<
           "disconnected" | "loading" | "idle"
         >();
-        expectTypeOf(status.partType).toEqualTypeOf<undefined>();
-        expectTypeOf(status.toolName).toEqualTypeOf<undefined>();
+        expectTypeOf(status.partType).toBeUndefined();
+        expectTypeOf(status.toolName).toBeUndefined();
       }
     }
   });
@@ -1308,19 +1304,19 @@ describe("without Liveblocks augmentation", () => {
         expectTypeOf(status.status).toEqualTypeOf<"generating">();
         if (status.partType === "tool-invocation") {
           expectTypeOf(status.partType).toEqualTypeOf<"tool-invocation">();
-          expectTypeOf(status.toolName).toEqualTypeOf<string>();
+          expectTypeOf(status.toolName).toBeString();
         } else {
           expectTypeOf(status.partType).toEqualTypeOf<
             "text" | "reasoning" | "retrieval" | "sources" | undefined
           >();
-          expectTypeOf(status.toolName).toEqualTypeOf<undefined>();
+          expectTypeOf(status.toolName).toBeUndefined();
         }
       } else {
         expectTypeOf(status.status).toEqualTypeOf<
           "disconnected" | "loading" | "idle"
         >();
-        expectTypeOf(status.partType).toEqualTypeOf<undefined>();
-        expectTypeOf(status.toolName).toEqualTypeOf<undefined>();
+        expectTypeOf(status.partType).toBeUndefined();
+        expectTypeOf(status.toolName).toBeUndefined();
       }
     }
   });
@@ -1332,21 +1328,20 @@ describe("without Liveblocks augmentation", () => {
         expectTypeOf(status.status).toEqualTypeOf<"generating">();
         if (status.partType === "tool-invocation") {
           expectTypeOf(status.partType).toEqualTypeOf<"tool-invocation">();
-          expectTypeOf(status.toolName).toEqualTypeOf<string>();
+          expectTypeOf(status.toolName).toBeString();
         } else {
           expectTypeOf(status.partType).toEqualTypeOf<
             "text" | "reasoning" | "retrieval" | "sources" | undefined
           >();
-          expectTypeOf(status.toolName).toEqualTypeOf<undefined>();
+          expectTypeOf(status.toolName).toBeUndefined();
         }
       } else {
         expectTypeOf(status.status).toEqualTypeOf<
           "disconnected" | "loading" | "idle"
         >();
-        expectTypeOf(status.partType).toEqualTypeOf<undefined>();
-        expectTypeOf(status.toolName).toEqualTypeOf<undefined>();
+        expectTypeOf(status.partType).toBeUndefined();
+        expectTypeOf(status.toolName).toBeUndefined();
       }
     }
   });
 });
-

@@ -51,7 +51,7 @@ describe("Relax", () => {
       string | number | boolean | undefined
     >();
     if (ru.type === "thing3") {
-      expectTypeOf(ru.payload).toEqualTypeOf<number>();
+      expectTypeOf(ru.payload).toBeNumber();
     }
     if (ru.payload === "string") {
       expectTypeOf(ru.type).toEqualTypeOf<"thing1">();

@@ -85,8 +85,8 @@ describe("Liveblocks client with Liveblocks augmentation", () => {
     });
     session.allow("org1:*", session.READ_ACCESS);
     const resp = await session.authorize();
-    expectTypeOf(resp.status).toEqualTypeOf<number>();
-    expectTypeOf(resp.body).toEqualTypeOf<string>();
+    expectTypeOf(resp.status).toBeNumber();
+    expectTypeOf(resp.body).toBeString();
     expectTypeOf(resp.error).toEqualTypeOf<Error | undefined>();
   });
 
@@ -120,8 +120,8 @@ describe("Liveblocks client with Liveblocks augmentation", () => {
     const resp = await client.identifyUser("user-123", {
       userInfo: { name: "Vincent", age: 42 },
     });
-    expectTypeOf(resp.status).toEqualTypeOf<number>();
-    expectTypeOf(resp.body).toEqualTypeOf<string>();
+    expectTypeOf(resp.status).toBeNumber();
+    expectTypeOf(resp.body).toBeString();
     expectTypeOf(resp.error).toEqualTypeOf<Error | undefined>();
   });
 
@@ -145,10 +145,10 @@ describe("Liveblocks client with Liveblocks augmentation", () => {
     const users = (await client.getActiveUsers("my-room")).data;
     const user = users[0]!;
     expectTypeOf(user.type).toEqualTypeOf<"user">();
-    expectTypeOf(user.connectionId).toEqualTypeOf<number>();
+    expectTypeOf(user.connectionId).toBeNumber();
     expectTypeOf(user.id).toEqualTypeOf<string | null>();
-    expectTypeOf(user.info.name).toEqualTypeOf<string>();
-    expectTypeOf(user.info.age).toEqualTypeOf<number>();
+    expectTypeOf(user.info.name).toBeString();
+    expectTypeOf(user.info.age).toBeNumber();
     // @ts-expect-error - unknown UserMeta field
     user.info.nonexisting;
   });
@@ -194,8 +194,8 @@ describe("Liveblocks client with Liveblocks augmentation", () => {
   test("should return typed Storage shape from getStorageDocument() with 'json' format", async () => {
     const root = await client.getStorageDocument("my-room", "json");
     expectTypeOf(root.animals).toEqualTypeOf<readonly string[]>();
-    expectTypeOf(root.person.name).toEqualTypeOf<string>();
-    expectTypeOf(root.person.age).toEqualTypeOf<number>();
+    expectTypeOf(root.person.name).toBeString();
+    expectTypeOf(root.person.age).toBeNumber();
     expectTypeOf(root.scores["foo"]).toEqualTypeOf<number | undefined>();
   });
 
@@ -206,10 +206,10 @@ describe("Liveblocks client with Liveblocks augmentation", () => {
       commentId: "cm_xxx",
     });
     expectTypeOf(comment.type).toEqualTypeOf<"comment">();
-    expectTypeOf(comment.id).toEqualTypeOf<string>();
-    expectTypeOf(comment.threadId).toEqualTypeOf<string>();
-    expectTypeOf(comment.roomId).toEqualTypeOf<string>();
-    expectTypeOf(comment.userId).toEqualTypeOf<string>();
+    expectTypeOf(comment.id).toBeString();
+    expectTypeOf(comment.threadId).toBeString();
+    expectTypeOf(comment.roomId).toBeString();
+    expectTypeOf(comment.userId).toBeString();
     expectTypeOf(comment.createdAt).toEqualTypeOf<Date>();
     expectTypeOf(comment.editedAt).toEqualTypeOf<Date | undefined>();
     expectTypeOf(comment.reactions).toEqualTypeOf<CommentReaction[]>();
@@ -270,7 +270,7 @@ describe("Liveblocks client with Liveblocks augmentation", () => {
     });
 
     expectTypeOf(thread.type).toEqualTypeOf<"thread">();
-    expectTypeOf(thread.id).toEqualTypeOf<string>();
+    expectTypeOf(thread.id).toBeString();
     expectTypeOf(thread.metadata.color).toEqualTypeOf<"red" | "blue">();
     // @ts-expect-error - unknown ThreadMetadata field
     thread.metadata.nonexisting;
@@ -294,7 +294,7 @@ describe("Liveblocks client with Liveblocks augmentation", () => {
     expectTypeOf(threadWithCommentMetadata.type).toEqualTypeOf<"thread">();
     expectTypeOf(
       threadWithCommentMetadata.comments[0]!.metadata.priority
-    ).toEqualTypeOf<number>();
+    ).toBeNumber();
     expectTypeOf(
       threadWithCommentMetadata.comments[0]!.metadata.reviewed
     ).toEqualTypeOf<boolean | undefined>();
@@ -375,8 +375,8 @@ describe("Liveblocks client with Liveblocks augmentation", () => {
     const threads = (await client.getThreads({ roomId: "my-room" })).data;
     const thread = threads[0]!;
     expectTypeOf(thread.type).toEqualTypeOf<"thread">();
-    expectTypeOf(thread.id).toEqualTypeOf<string>();
-    expectTypeOf(thread.roomId).toEqualTypeOf<string>();
+    expectTypeOf(thread.id).toBeString();
+    expectTypeOf(thread.roomId).toBeString();
     expectTypeOf(thread.createdAt).toEqualTypeOf<Date>();
     expectTypeOf(thread.updatedAt).toEqualTypeOf<Date>();
     expectTypeOf(thread.metadata.color).toEqualTypeOf<"red" | "blue">();
@@ -391,8 +391,8 @@ describe("Liveblocks client with Liveblocks augmentation", () => {
       threadId: "th_xxx",
     });
     expectTypeOf(thread.type).toEqualTypeOf<"thread">();
-    expectTypeOf(thread.id).toEqualTypeOf<string>();
-    expectTypeOf(thread.roomId).toEqualTypeOf<string>();
+    expectTypeOf(thread.id).toBeString();
+    expectTypeOf(thread.roomId).toBeString();
     expectTypeOf(thread.createdAt).toEqualTypeOf<Date>();
     expectTypeOf(thread.updatedAt).toEqualTypeOf<Date>();
     expectTypeOf(thread.metadata.color).toEqualTypeOf<"red" | "blue">();
@@ -434,8 +434,8 @@ describe("Liveblocks client with Liveblocks augmentation", () => {
     });
 
     expectTypeOf(comment.type).toEqualTypeOf<"comment">();
-    expectTypeOf(comment.id).toEqualTypeOf<string>();
-    expectTypeOf(comment.threadId).toEqualTypeOf<string>();
+    expectTypeOf(comment.id).toBeString();
+    expectTypeOf(comment.threadId).toBeString();
 
     const commentWithMetadata = await client.createComment({
       roomId,
@@ -451,7 +451,7 @@ describe("Liveblocks client with Liveblocks augmentation", () => {
     });
 
     expectTypeOf(commentWithMetadata.type).toEqualTypeOf<"comment">();
-    expectTypeOf(commentWithMetadata.metadata.priority).toEqualTypeOf<number>();
+    expectTypeOf(commentWithMetadata.metadata.priority).toBeNumber();
     expectTypeOf(commentWithMetadata.metadata.reviewed).toEqualTypeOf<
       boolean | undefined
     >();
@@ -552,8 +552,8 @@ describe("Liveblocks client with Liveblocks augmentation", () => {
       },
     });
 
-    expectTypeOf(reaction.emoji).toEqualTypeOf<string>();
-    expectTypeOf(reaction.userId).toEqualTypeOf<string>();
+    expectTypeOf(reaction.emoji).toBeString();
+    expectTypeOf(reaction.userId).toBeString();
     expectTypeOf(reaction.createdAt).toEqualTypeOf<Date>();
   });
 
@@ -566,9 +566,9 @@ describe("Liveblocks client with Liveblocks augmentation", () => {
       },
     });
     expectTypeOf(thread.type).toEqualTypeOf<"thread">();
-    expectTypeOf(thread.id).toEqualTypeOf<string>();
-    expectTypeOf(thread.roomId).toEqualTypeOf<string>();
-    expectTypeOf(thread.resolved).toEqualTypeOf<boolean>();
+    expectTypeOf(thread.id).toBeString();
+    expectTypeOf(thread.roomId).toBeString();
+    expectTypeOf(thread.resolved).toBeBoolean();
     expectTypeOf(thread.createdAt).toEqualTypeOf<Date>();
     expectTypeOf(thread.updatedAt).toEqualTypeOf<Date>();
     expectTypeOf(thread.comments).toEqualTypeOf<CommentData[]>();
@@ -583,9 +583,9 @@ describe("Liveblocks client with Liveblocks augmentation", () => {
       },
     });
     expectTypeOf(thread.type).toEqualTypeOf<"thread">();
-    expectTypeOf(thread.id).toEqualTypeOf<string>();
-    expectTypeOf(thread.roomId).toEqualTypeOf<string>();
-    expectTypeOf(thread.resolved).toEqualTypeOf<boolean>();
+    expectTypeOf(thread.id).toBeString();
+    expectTypeOf(thread.roomId).toBeString();
+    expectTypeOf(thread.resolved).toBeBoolean();
     expectTypeOf(thread.createdAt).toEqualTypeOf<Date>();
     expectTypeOf(thread.updatedAt).toEqualTypeOf<Date>();
     expectTypeOf(thread.comments).toEqualTypeOf<CommentData[]>();

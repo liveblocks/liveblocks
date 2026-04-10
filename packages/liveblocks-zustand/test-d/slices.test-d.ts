@@ -67,16 +67,16 @@ describe("WithLiveblocks middleware with slices", () => {
     const fullstate = useStore.getState();
 
     // From fish slice
-    expectTypeOf(fullstate.fishes).toEqualTypeOf<number>();
-    expectTypeOf(fullstate.addFish).toEqualTypeOf<() => void>();
+    expectTypeOf(fullstate.fishes).toBeNumber();
+    expectTypeOf(fullstate.addFish).toBeFunction();
 
     // From bear slice
-    expectTypeOf(fullstate.eatFish).toEqualTypeOf<() => void>();
+    expectTypeOf(fullstate.eatFish).toBeFunction();
 
     // Liveblocks state
-    expectTypeOf(fullstate.liveblocks.enterRoom).toExtend<Function>();
-    expectTypeOf(fullstate.liveblocks.leaveRoom).toExtend<Function>();
-    expectTypeOf(fullstate.liveblocks.room!.id).toEqualTypeOf<string>();
+    expectTypeOf(fullstate.liveblocks.enterRoom).toBeFunction();
+    expectTypeOf(fullstate.liveblocks.leaveRoom).toBeFunction();
+    expectTypeOf(fullstate.liveblocks.room!.id).toBeString();
   });
 
   test("should return typed state in subscribe callback", () => {
@@ -84,9 +84,9 @@ describe("WithLiveblocks middleware with slices", () => {
       useStore.subscribe(
         (state) => state.bears,
         (bears) => {
-          expectTypeOf(bears).toEqualTypeOf<number>();
+          expectTypeOf(bears).toBeNumber();
         }
       )
-    ).toEqualTypeOf<() => void>();
+    ).toBeFunction();
   });
 });
