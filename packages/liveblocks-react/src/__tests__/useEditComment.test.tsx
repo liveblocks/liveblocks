@@ -2,6 +2,7 @@ import type { BaseMetadata, CommentBody, Patchable } from "@liveblocks/core";
 import { nanoid, Permission } from "@liveblocks/core";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { addMinutes } from "date-fns";
+import { HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 
 import { dummyCommentData, dummyThreadData } from "./_dummies";
@@ -41,33 +42,28 @@ describe("useEditComment", () => {
     });
 
     server.use(
-      mockGetThreads((_req, res, ctx) => {
-        return res(
-          ctx.json({
-            data: [initialThread],
-            inboxNotifications: [],
-            subscriptions: [],
-            deletedThreads: [],
-            deletedInboxNotifications: [],
-            deletedSubscriptions: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-              permissionHints: {
-                [roomId]: [Permission.Write],
-              },
+      mockGetThreads(() => {
+        return HttpResponse.json({
+          data: [initialThread],
+          inboxNotifications: [],
+          subscriptions: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+            permissionHints: {
+              [roomId]: [Permission.Write],
             },
-          })
-        );
+          },
+        });
       }),
       mockEditComment(
         { threadId: initialThread.id, commentId: initialComment.id },
-        async (req, res, ctx) => {
-          const json = await req.json<{
+        async ({ request }) => {
+          const json = (await request.json()) as {
             body: CommentBody;
             attachmentIds?: string[];
             metadata?: BaseMetadata;
-          }>();
+          };
 
           const editedComment = dummyCommentData({
             roomId,
@@ -78,7 +74,7 @@ describe("useEditComment", () => {
             metadata: json.metadata ?? initialComment.metadata,
           });
 
-          return res(ctx.json(editedComment));
+          return HttpResponse.json(editedComment);
         }
       )
     );
@@ -143,32 +139,27 @@ describe("useEditComment", () => {
     });
 
     server.use(
-      mockGetThreads((_req, res, ctx) => {
-        return res(
-          ctx.json({
-            data: [initialThread],
-            inboxNotifications: [],
-            subscriptions: [],
-            deletedThreads: [],
-            deletedInboxNotifications: [],
-            deletedSubscriptions: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-              permissionHints: {
-                [roomId]: [Permission.Write],
-              },
+      mockGetThreads(() => {
+        return HttpResponse.json({
+          data: [initialThread],
+          inboxNotifications: [],
+          subscriptions: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+            permissionHints: {
+              [roomId]: [Permission.Write],
             },
-          })
-        );
+          },
+        });
       }),
       mockEditComment(
         { threadId: initialThread.id, commentId: initialComment.id },
-        async (req, res, ctx) => {
-          const json = await req.json<{
+        async ({ request }) => {
+          const json = (await request.json()) as {
             body: CommentBody;
             metadata?: BaseMetadata;
-          }>();
+          };
 
           const editedComment = dummyCommentData({
             roomId,
@@ -179,7 +170,7 @@ describe("useEditComment", () => {
             metadata: json.metadata ?? initialComment.metadata,
           });
 
-          return res(ctx.json(editedComment));
+          return HttpResponse.json(editedComment);
         }
       )
     );
@@ -251,39 +242,34 @@ describe("useEditComment", () => {
     });
 
     server.use(
-      mockGetThreads((_req, res, ctx) => {
-        return res(
-          ctx.json({
-            data: [initialThread],
-            inboxNotifications: [],
-            subscriptions: [],
-            deletedThreads: [],
-            deletedInboxNotifications: [],
-            deletedSubscriptions: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-              permissionHints: {
-                [roomId]: [Permission.Write],
-              },
+      mockGetThreads(() => {
+        return HttpResponse.json({
+          data: [initialThread],
+          inboxNotifications: [],
+          subscriptions: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+            permissionHints: {
+              [roomId]: [Permission.Write],
             },
-          })
-        );
+          },
+        });
       }),
       mockEditComment(
         { threadId: initialThread.id, commentId: initialComment.id },
-        async (req, res, ctx) => {
-          const json = await req.json<{
+        async ({ request }) => {
+          const json = (await request.json()) as {
             body: CommentBody;
             metadata?: Patchable<BaseMetadata>;
-          }>();
+          };
 
           // Null values = deleted keys
           const serverMetadata: BaseMetadata = {};
           if (json.metadata) {
             for (const [key, value] of Object.entries(json.metadata)) {
               if (value !== null) {
-                serverMetadata[key] = value;
+                serverMetadata[key] = value as string | number | boolean;
               }
             }
           }
@@ -300,7 +286,7 @@ describe("useEditComment", () => {
                 : initialComment.metadata,
           });
 
-          return res(ctx.json(editedComment));
+          return HttpResponse.json(editedComment);
         }
       )
     );
@@ -375,29 +361,24 @@ describe("useEditComment", () => {
     });
 
     server.use(
-      mockGetThreads((_req, res, ctx) => {
-        return res(
-          ctx.json({
-            data: [initialThread],
-            inboxNotifications: [],
-            subscriptions: [],
-            deletedThreads: [],
-            deletedInboxNotifications: [],
-            deletedSubscriptions: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-              permissionHints: {
-                [roomId]: [Permission.Write],
-              },
+      mockGetThreads(() => {
+        return HttpResponse.json({
+          data: [initialThread],
+          inboxNotifications: [],
+          subscriptions: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+            permissionHints: {
+              [roomId]: [Permission.Write],
             },
-          })
-        );
+          },
+        });
       }),
       mockEditComment(
         { threadId: initialThread.id, commentId: initialComment.id },
-        (_req, res, ctx) => {
-          return res(ctx.status(500));
+        () => {
+          return HttpResponse.json(null, { status: 500 });
         }
       )
     );

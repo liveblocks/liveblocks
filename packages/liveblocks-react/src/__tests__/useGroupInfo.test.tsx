@@ -1,10 +1,9 @@
-import "@testing-library/jest-dom";
-
 import type { ResolveGroupsInfoArgs } from "@liveblocks/core";
 import { nanoid } from "@liveblocks/core";
 import { renderHook, screen, waitFor } from "@testing-library/react";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
+import { vi } from "vitest";
 
 import { act, createContextsForTest } from "./_utils";
 
@@ -17,11 +16,11 @@ async function defaultResolveGroupsInfo({ groupIds }: ResolveGroupsInfoArgs) {
 
 describe("useGroupInfo", () => {
   beforeAll(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterAll(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   test("should return an error if resolveGroupsInfo is not set", async () => {
@@ -137,7 +136,7 @@ describe("useGroupInfo", () => {
   test("should cache results based on group ID", async () => {
     const roomId = nanoid();
 
-    const resolveGroupsInfo = jest.fn(({ groupIds }: ResolveGroupsInfoArgs) =>
+    const resolveGroupsInfo = vi.fn(({ groupIds }: ResolveGroupsInfoArgs) =>
       groupIds.map((groupId) => ({ name: groupId }))
     );
     const {
@@ -183,7 +182,7 @@ describe("useGroupInfo", () => {
   test("should revalidate instantly if its cache is invalidated", async () => {
     const roomId = nanoid();
 
-    const resolveGroupsInfo = jest.fn(({ groupIds }: ResolveGroupsInfoArgs) =>
+    const resolveGroupsInfo = vi.fn(({ groupIds }: ResolveGroupsInfoArgs) =>
       groupIds.map((groupId) => ({ name: groupId }))
     );
     const {
@@ -242,7 +241,7 @@ describe("useGroupInfo", () => {
   test("should batch (and deduplicate) requests for the same group ID", async () => {
     const roomId = nanoid();
 
-    const resolveGroupsInfo = jest.fn(({ groupIds }: ResolveGroupsInfoArgs) =>
+    const resolveGroupsInfo = vi.fn(({ groupIds }: ResolveGroupsInfoArgs) =>
       groupIds.map((groupId) => ({ name: groupId }))
     );
     const {
@@ -398,7 +397,7 @@ describe("useGroupInfo", () => {
   test("should return an error if resolveGroupsInfo returns undefined for a specifc group ID", async () => {
     const roomId = nanoid();
 
-    const resolveGroupsInfo = jest.fn(({ groupIds }: ResolveGroupsInfoArgs) =>
+    const resolveGroupsInfo = vi.fn(({ groupIds }: ResolveGroupsInfoArgs) =>
       groupIds.map((groupId) => {
         if (groupId === "abc") {
           return undefined;
@@ -449,11 +448,11 @@ describe("useGroupInfo", () => {
 
 describe("useGroupInfoSuspense", () => {
   beforeAll(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterAll(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   test("should suspend with Suspense", async () => {

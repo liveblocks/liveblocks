@@ -344,8 +344,8 @@ describe("useThreads", () => {
     });
 
     server.use(
-      mockGetThreads(async (req, res, ctx) => {
-        const query = req.url.searchParams.get("query");
+      mockGetThreads(async ({ request }) => {
+        const query = new URL(request.url).searchParams.get("query");
         const pred = query ? makeThreadFilter(query) : () => true;
 
         const filteredThreads = [thread1, thread2].filter(pred);
@@ -353,23 +353,19 @@ describe("useThreads", () => {
         const subscriptions = filteredThreads.map((thread) =>
           dummySubscriptionData({ subjectId: thread.id })
         );
-        return res(
-          ctx.json({
-            data: filteredThreads,
-            inboxNotifications: [],
-            subscriptions,
-            deletedThreads: [],
-            deletedInboxNotifications: [],
-            deletedSubscriptions: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-              permissionHints: {
-                [roomId]: [Permission.Write],
-              },
+        return HttpResponse.json({
+          data: filteredThreads,
+          inboxNotifications: [],
+          subscriptions,
+
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+            permissionHints: {
+              [roomId]: [Permission.Write],
             },
-          })
-        );
+          },
+        });
       })
     );
 
@@ -2058,27 +2054,22 @@ describe("useThreads", () => {
     let getThreadsSinceReqCount = 0;
 
     server.use(
-      mockGetThreads(async (_req, res, ctx) => {
-        return res(
-          ctx.json({
-            data: threads,
-            deletedThreads: [],
-            inboxNotifications: [],
-            deletedInboxNotifications: [],
-            subscriptions,
-            deletedSubscriptions: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-              permissionHints: {
-                [roomId]: [Permission.Write],
-              },
+      mockGetThreads(async () => {
+        return HttpResponse.json({
+          data: threads,
+          inboxNotifications: [],
+          subscriptions,
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+            permissionHints: {
+              [roomId]: [Permission.Write],
             },
-          })
-        );
+          },
+        });
       }),
-      mockGetThreadsSince(async (req, res, ctx) => {
-        const url = new URL(req.url);
+      mockGetThreadsSince(async ({ request }) => {
+        const url = new URL(request.url);
         const since = url.searchParams.get("since");
 
         getThreadsSinceReqCount++;
@@ -2089,25 +2080,23 @@ describe("useThreads", () => {
             dummySubscriptionData({ subjectId: thread2.id }),
           ];
 
-          return res(
-            ctx.json({
-              data: [],
-              deletedThreads: [],
-              inboxNotifications: [],
-              subscriptions: updatedSubscriptions,
-              deletedInboxNotifications: [],
-              deletedSubscriptions: [],
-              meta: {
-                requestedAt: new Date().toISOString(),
-                permissionHints: {
-                  [roomId]: [Permission.Write],
-                },
+          return HttpResponse.json({
+            threads: [],
+            inboxNotifications: [],
+            subscriptions: updatedSubscriptions,
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            deletedSubscriptions: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+              permissionHints: {
+                [roomId]: [Permission.Write],
               },
-            })
-          );
+            },
+          });
         }
 
-        return res(ctx.status(500));
+        return HttpResponse.json(null, { status: 500 });
       })
     );
 
@@ -2144,13 +2133,13 @@ describe("useThreads", () => {
     );
 
     // Advance time to trigger the first poll and verify that a poll does occur
-    await jest.advanceTimersByTimeAsync(5 * 60_000);
+    await vi.advanceTimersByTimeAsync(5 * 60_000);
     await waitFor(() => expect(getThreadsSinceReqCount).toBe(1));
 
     firstRenderResult.unmount();
 
     // Advance time by at least maximum stale time (5000ms) so that a poll happens immediately after the room is mounted.
-    await jest.advanceTimersByTimeAsync(6_000);
+    await vi.advanceTimersByTimeAsync(6_000);
 
     // Render the RoomProvider again and verify the threads are updated
     const secondRenderResult = renderHook(

@@ -1,9 +1,8 @@
-import "@testing-library/jest-dom";
-
 import { nanoid } from "@liveblocks/core";
 import { renderHook, waitFor } from "@testing-library/react";
 import { HttpResponse } from "msw";
 import { setupServer } from "msw/node";
+import { vi } from "vitest";
 
 import { useGroup } from "../use-group";
 import { dummyGroupData } from "./_dummies";
@@ -14,7 +13,7 @@ import { createContextsForTest } from "./_utils";
 const server = setupServer();
 
 beforeAll(() => {
-  jest.useFakeTimers();
+  vi.useFakeTimers();
   server.listen({ onUnhandledRequest: "error" });
 });
 
@@ -28,7 +27,7 @@ afterEach(() => {
 });
 
 afterAll(() => {
-  jest.useRealTimers();
+  vi.useRealTimers();
   server.close();
 });
 
@@ -216,7 +215,7 @@ describe("useGroup", () => {
       room: { RoomProvider },
     } = createContextsForTest();
 
-    const mockFindGroupsObserver = jest.fn<void, [string[]]>();
+    const mockFindGroupsObserver = vi.fn<(groupIds: string[]) => void>();
 
     server.use(
       mockFindGroups(async ({ request }) => {
@@ -330,7 +329,7 @@ describe("useGroup", () => {
       liveblocks: { LiveblocksProvider, useInboxNotifications },
     } = createContextsForTest();
 
-    const mockFindGroupsObserver = jest.fn<void, [string[]]>();
+    const mockFindGroupsObserver = vi.fn<(groupIds: string[]) => void>();
 
     server.use(
       mockGetInboxNotifications(async () => {

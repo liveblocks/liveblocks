@@ -1,12 +1,11 @@
-import "@testing-library/jest-dom";
-
 import type { UrlMetadata } from "@liveblocks/core";
 import { renderHook, screen, waitFor } from "@testing-library/react";
-import type { ResponseResolver, RestContext, RestRequest } from "msw";
-import { rest } from "msw";
+import type { HttpResponseResolver } from "msw";
+import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
+import { vi } from "vitest";
 
 import MockWebSocket from "./_MockWebSocket";
 import { createContextsForTest } from "./_utils";
@@ -22,29 +21,29 @@ beforeEach(() => {
 afterEach(() => {
   MockWebSocket.reset();
   server.resetHandlers();
-  jest.clearAllTimers();
-  jest.clearAllMocks();
+  vi.clearAllTimers();
+  vi.clearAllMocks();
 });
 
 afterAll(() => server.close());
 
 function mockGetUrlMetadata(
-  resolver: ResponseResolver<
-    RestRequest<never, never>,
-    RestContext,
+  resolver: HttpResponseResolver<
+    { url: string },
+    never,
     { metadata: UrlMetadata }
   >
 ) {
-  return rest.get("https://api.liveblocks.io/v2/c/urls/metadata", resolver);
+  return http.get("https://api.liveblocks.io/v2/c/urls/metadata", resolver);
 }
 
 describe("useUrlMetadata", () => {
   beforeAll(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterAll(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   test("should fetch URL metadata", async () => {
@@ -58,9 +57,9 @@ describe("useUrlMetadata", () => {
     };
 
     server.use(
-      mockGetUrlMetadata((req, res, ctx) => {
-        expect(req.url.searchParams.get("url")).toBe(url);
-        return res(ctx.json({ metadata }));
+      mockGetUrlMetadata(({ request }) => {
+        expect(new URL(request.url).searchParams.get("url")).toBe(url);
+        return HttpResponse.json({ metadata });
       })
     );
 
@@ -96,9 +95,9 @@ describe("useUrlMetadata", () => {
 
     let fetchCount = 0;
     server.use(
-      mockGetUrlMetadata((_req, res, ctx) => {
+      mockGetUrlMetadata(() => {
         fetchCount++;
-        return res(ctx.json({ metadata }));
+        return HttpResponse.json({ metadata });
       })
     );
 
@@ -149,14 +148,14 @@ describe("useUrlMetadata", () => {
     };
 
     server.use(
-      mockGetUrlMetadata((req, res, ctx) => {
-        const requestedUrl = req.url.searchParams.get("url");
+      mockGetUrlMetadata(({ request }) => {
+        const requestedUrl = new URL(request.url).searchParams.get("url");
         if (requestedUrl === url1) {
-          return res(ctx.json({ metadata: metadata1 }));
+          return HttpResponse.json({ metadata: metadata1 });
         } else if (requestedUrl === url2) {
-          return res(ctx.json({ metadata: metadata2 }));
+          return HttpResponse.json({ metadata: metadata2 });
         }
-        return res(ctx.status(404));
+        return HttpResponse.json(null, { status: 404 });
       })
     );
 
@@ -213,15 +212,15 @@ describe("useUrlMetadata", () => {
 
     let fetchCount = 0;
     server.use(
-      mockGetUrlMetadata((_req, res, ctx) => {
+      mockGetUrlMetadata(({ request }) => {
         fetchCount++;
-        const requestedUrl = _req.url.searchParams.get("url");
+        const requestedUrl = new URL(request.url).searchParams.get("url");
         if (requestedUrl === url1) {
-          return res(ctx.json({ metadata: metadata1 }));
+          return HttpResponse.json({ metadata: metadata1 });
         } else if (requestedUrl === url2) {
-          return res(ctx.json({ metadata: metadata2 }));
+          return HttpResponse.json({ metadata: metadata2 });
         }
-        return res(ctx.status(404));
+        return HttpResponse.json(null, { status: 404 });
       })
     );
 
@@ -267,9 +266,9 @@ describe("useUrlMetadata", () => {
 
     let fetchCount = 0;
     server.use(
-      mockGetUrlMetadata((_req, res, ctx) => {
+      mockGetUrlMetadata(() => {
         fetchCount++;
-        return res(ctx.json({ metadata }));
+        return HttpResponse.json({ metadata });
       })
     );
 
@@ -321,8 +320,8 @@ describe("useUrlMetadata", () => {
     const url = "https://github.com";
 
     server.use(
-      mockGetUrlMetadata((_req, res, ctx) => {
-        return res(ctx.status(500));
+      mockGetUrlMetadata(() => {
+        return HttpResponse.json(null, { status: 500 });
       })
     );
 
@@ -339,7 +338,7 @@ describe("useUrlMetadata", () => {
     expect(result.current).toEqual({ isLoading: true });
 
     // Wait until all fetch attempts have been done
-    await jest.advanceTimersToNextTimerAsync(); // fetch attempt 1
+    await vi.advanceTimersToNextTimerAsync(); // fetch attempt 1
 
     await waitFor(() => {
       expect(result.current).toEqual({
@@ -354,11 +353,11 @@ describe("useUrlMetadata", () => {
 
 describe("useUrlMetadataSuspense", () => {
   beforeAll(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterAll(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   test("should suspend while fetching URL metadata", async () => {
@@ -372,8 +371,8 @@ describe("useUrlMetadataSuspense", () => {
     };
 
     server.use(
-      mockGetUrlMetadata((_req, res, ctx) => {
-        return res(ctx.json({ metadata }));
+      mockGetUrlMetadata(() => {
+        return HttpResponse.json({ metadata });
       })
     );
 
@@ -407,8 +406,8 @@ describe("useUrlMetadataSuspense", () => {
     const url = "https://github.com";
 
     server.use(
-      mockGetUrlMetadata((_req, res, ctx) => {
-        return res(ctx.status(500));
+      mockGetUrlMetadata(() => {
+        return HttpResponse.json(null, { status: 500 });
       })
     );
 
@@ -458,14 +457,14 @@ describe("useUrlMetadataSuspense", () => {
     };
 
     server.use(
-      mockGetUrlMetadata((_req, res, ctx) => {
-        const requestedUrl = _req.url.searchParams.get("url");
+      mockGetUrlMetadata(({ request }) => {
+        const requestedUrl = new URL(request.url).searchParams.get("url");
         if (requestedUrl === url1) {
-          return res(ctx.json({ metadata: metadata1 }));
+          return HttpResponse.json({ metadata: metadata1 });
         } else if (requestedUrl === url2) {
-          return res(ctx.json({ metadata: metadata2 }));
+          return HttpResponse.json({ metadata: metadata2 });
         }
-        return res(ctx.status(404));
+        return HttpResponse.json(null, { status: 404 });
       })
     );
 

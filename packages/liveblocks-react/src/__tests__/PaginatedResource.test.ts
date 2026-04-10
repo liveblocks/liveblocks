@@ -281,28 +281,28 @@ describe("PaginatedResource", () => {
   });
 
   test("autoRetry: false — single attempt, error persists (no 5s reset)", async () => {
-    const fetcher = jest
-      .fn<Promise<string | null>, [cursor?: string]>()
+    const fetcher = vi
+      .fn<(cursor?: string) => Promise<string | null>>()
       .mockImplementation(() => {
         throw new Error("permanent");
       });
 
     const p = new PaginatedResource(fetcher, { autoRetry: false });
 
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     try {
       const w$ = p.waitUntilLoaded();
       await expect(w$).rejects.toThrow("permanent");
       expect(fetcher).toHaveBeenCalledTimes(1);
 
-      await jest.advanceTimersByTimeAsync(5_000);
+      await vi.advanceTimersByTimeAsync(5_000);
       expect(fetcher).toHaveBeenCalledTimes(1);
       expect(p.get()).toEqual({
         isLoading: false,
         error: expect.objectContaining({ message: "permanent" }),
       });
     } finally {
-      jest.useRealTimers();
+      vi.useRealTimers();
     }
   });
 });

@@ -1,5 +1,7 @@
+import type { BaseMetadata } from "@liveblocks/core";
 import { nanoid, Permission } from "@liveblocks/core";
 import { act, renderHook, waitFor } from "@testing-library/react";
+import { HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 
 import { dummyCommentData, dummyThreadData } from "./_dummies";
@@ -36,32 +38,27 @@ describe("useEditCommentMetadata", () => {
     let hasCalledEditCommentMetadata = false;
 
     server.use(
-      mockGetThreads((_req, res, ctx) => {
-        return res(
-          ctx.json({
-            data: [initialThread],
-            inboxNotifications: [],
-            subscriptions: [],
-            deletedThreads: [],
-            deletedInboxNotifications: [],
-            deletedSubscriptions: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-              permissionHints: {
-                [roomId]: [Permission.Write],
-              },
+      mockGetThreads(() => {
+        return HttpResponse.json({
+          data: [initialThread],
+          inboxNotifications: [],
+          subscriptions: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+            permissionHints: {
+              [roomId]: [Permission.Write],
             },
-          })
-        );
+          },
+        });
       }),
       mockEditCommentMetadata(
         { threadId: initialThread.id, commentId: initialComment.id },
-        async (req, res, ctx) => {
+        async ({ request }) => {
           hasCalledEditCommentMetadata = true;
-          const json = await req.json();
+          const json = await request.json();
 
-          return res(ctx.json(json));
+          return HttpResponse.json(json);
         }
       )
     );
@@ -122,34 +119,25 @@ describe("useEditCommentMetadata", () => {
     let hasCalledEditCommentMetadata = false;
 
     server.use(
-      mockGetThreads((_req, res, ctx) => {
-        return res(
-          ctx.json({
-            data: [initialThread],
-            inboxNotifications: [],
-            subscriptions: [],
-            deletedThreads: [],
-            deletedInboxNotifications: [],
-            deletedSubscriptions: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-              permissionHints: {
-                [roomId]: [Permission.Write],
-              },
+      mockGetThreads(() => {
+        return HttpResponse.json({
+          data: [initialThread],
+          inboxNotifications: [],
+          subscriptions: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+            permissionHints: {
+              [roomId]: [Permission.Write],
             },
-          })
-        );
+          },
+        });
       }),
       mockEditCommentMetadata(
         { threadId: initialThread.id, commentId: initialComment.id },
-        async (_, res, ctx) => {
+        async () => {
           hasCalledEditCommentMetadata = true;
-          return res(
-            ctx.json({
-              priority: 2,
-            })
-          );
+          return HttpResponse.json<BaseMetadata>({ priority: 2 });
         }
       )
     );

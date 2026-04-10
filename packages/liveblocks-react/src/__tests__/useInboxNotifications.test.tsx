@@ -902,7 +902,7 @@ describe("useInboxNotifications: polling", () => {
     await waitFor(() => expect(pollerCount).toBe(1));
 
     // Advance 10 seconds (more than the currently set maximum stale time, 5000)
-    await jest.advanceTimersByTimeAsync(10_000);
+    await vi.advanceTimersByTimeAsync(10_000);
 
     // Dispatch a `visibilitychange` event and verify that when the document becomes
     // visible a new poll happens since more than 5000 ms has passed since the last poll
