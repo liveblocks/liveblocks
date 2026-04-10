@@ -33,6 +33,10 @@ list and feel free to give them credit at the end of a line, e.g.:
 - New blog post: [Python SDK for Liveblocks](https://liveblocks.io/blog/python-sdk-for-liveblocks).
 - New blog post: [Agent skills for Liveblocks](https://liveblocks.io/blog/agent-skills-for-liveblocks).
 
+## Documentation
+
+- Mention missing [`updatedAt`](https://liveblocks.io/docs/api-reference/liveblocks-node#patch-rooms-roomId-feeds-feedId-messages-messageId) field in `updateFeedMessage` reference.
+
 ## Contributors
 
 nvie, ctnicholas, stevenfabre
