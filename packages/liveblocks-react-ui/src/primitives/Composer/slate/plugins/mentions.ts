@@ -16,6 +16,9 @@ import { getMatchRange } from "../../../slate/utils/get-match-range";
 import { isEmptyString } from "../../../slate/utils/is-empty-string";
 import { isWhitespaceCharacter } from "../../../slate/utils/is-whitespace-character";
 
+const EMOJI_REGEX =
+  /\p{Extended_Pictographic}|\p{Emoji_Modifier}|\uFE0F|\u200D/u;
+
 export type MentionDraft = {
   range: SlateRange;
   text: string;
@@ -30,20 +33,30 @@ export function getMentionDraftAtSelection(
     return;
   }
 
-  // Walk backwards from the selection until "@" is found, unless the character
-  // before isn't whitespace (or "@" is the block's first character)
+  // Walk backwards from the selection until "@" is found (with a few rules):
+  // - `@` → `""` mention draft
+  // - `Hello @stacy` → `"stacy"` mention draft (because "@" is preceded by a whitespace character)
+  // - `Hello pierre@example.com` → no mention draft (because "@" is preceded by a non-whitespace character)
+  // - `Hello @alicia@example.com` → `"alicia@example.com"` mention draft (because the first "@" is preceded by a whitespace character)
+  // - `Hello 👋@nimesh` → `"nimesh"` mention draft (because the first "@" is preceded by an emoji)
   const match = getMatchRange(editor, selection, ["@"], {
     include: true,
     allowConsecutiveWhitespace: false,
     ignoreTerminator: (_, point) => {
       const characterBefore = getCharacterBefore(editor, point);
 
-      // Ignore "@" if it's preceded by a non-whitespace character
-      if (characterBefore && !isWhitespaceCharacter(characterBefore.text)) {
-        return true;
+      // If "@" is the first character of the block, this "@" is immediately accepted ✅
+      if (!characterBefore) {
+        return false;
       }
 
-      return false;
+      // If the character before "@" is an emoji, this "@" is accepted ✅
+      if (EMOJI_REGEX.test(characterBefore.text)) {
+        return false;
+      }
+
+      // If the character before "@" is still a non-whitespace character, this "@" is ignored ❌
+      return !isWhitespaceCharacter(characterBefore.text);
     },
   });
 
