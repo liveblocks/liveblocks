@@ -1,21 +1,27 @@
 import { Liveblocks } from "@liveblocks/node";
-import { NextRequest } from "next/server";
 import { getRandomUser } from "@/database";
+import { NextRequest, NextResponse } from "next/server";
 
-// Authenticating your Liveblocks application
-// https://liveblocks.io/docs/authentication
+/**
+ * Authenticating your Liveblocks application
+ * https://liveblocks.io/docs/authentication
+ */
 
 const liveblocks = new Liveblocks({
-  secret: process.env.LIVEBLOCKS_SECRET_KEY as string,
+  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
 });
 
 export async function POST(request: NextRequest) {
+  if (!process.env.LIVEBLOCKS_SECRET_KEY) {
+    return new NextResponse("Missing LIVEBLOCKS_SECRET_KEY", { status: 403 });
+  }
+
   // Get the current user's unique id and info from your database
   const user = getRandomUser();
 
-  // Create a session for the current user
-  // userInfo is made available in Liveblocks presence hooks, e.g. useOthers
-  const session = liveblocks.prepareSession(`${user.id}`, {
+  // Create a session for the current user (access token auth)
+  // userInfo is made available in Liveblocks user hooks, e.g. useSelf
+  const session = liveblocks.prepareSession(user.id, {
     userInfo: user.info,
   });
 
@@ -23,6 +29,6 @@ export async function POST(request: NextRequest) {
   session.allow(`liveblocks:examples:*`, session.FULL_ACCESS);
 
   // Authorize the user and return the result
-  const { body, status } = await session.authorize();
-  return new Response(body, { status });
+  const { status, body } = await session.authorize();
+  return new NextResponse(body, { status });
 }

@@ -1,0 +1,229 @@
+---
+meta:
+  title:
+    "Get started with adding realtime avatar and cursor presence using
+    Liveblocks and Next.js"
+  parentTitle: "Quickstart"
+  description: "Learn how to get started with Liveblocks and Next.js"
+---
+
+Liveblocks is a realtime collaboration infrastructure for building performant
+collaborative experiences. Follow the following steps to start adding
+collaboration to your Next.js `/app` directory application using the hooks from
+the [`@liveblocks/react`](/docs/api-reference/liveblocks-react) package.
+
+## Quickstart
+
+<Steps>
+
+  <Step>
+    <StepTitle>Install Liveblocks</StepTitle>
+    <StepContent>
+
+      Every package should use the same version.
+
+      ```bash trackEvent="install_liveblocks"
+      npm install @liveblocks/client @liveblocks/react @liveblocks/react-ui
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Initialize the `liveblocks.config.ts` file</StepTitle>
+    <StepContent>
+
+      We can use this file later to [define types for our application](/docs/api-reference/liveblocks-react#Typing-your-data).
+
+      ```bash
+      npx create-liveblocks-app@latest --init --framework react
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Import default styles</StepTitle>
+    <StepContent>
+
+    The default components come with default styles, you can import them into the
+    root layout of your app or directly into a CSS file with `@import`.
+
+    ```tsx file="app/layout.tsx"
+    import "@liveblocks/react-ui/styles.css";
+    ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Create a Liveblocks room</StepTitle>
+    <StepContent>
+
+      Liveblocks uses the concept of rooms, separate virtual spaces where people
+      collaborate, and to create a realtime experience, multiple users must
+      be connected to the same room. When using Next.js’ `/app` router,
+      we recommend creating your room in a `Room.tsx` file in the same directory
+      as your current route.
+
+      Set up a Liveblocks client with
+      [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider),
+      join a room with [`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider),
+      and use [`ClientSideSuspense`](/docs/api-reference/liveblocks-react#ClientSideSuspense)
+      to add a loading spinner to your app.
+
+      ```tsx file="app/Room.tsx" highlight="12-18"
+      "use client";
+
+      import { ReactNode } from "react";
+      import {
+        LiveblocksProvider,
+        RoomProvider,
+        ClientSideSuspense,
+      } from "@liveblocks/react/suspense";
+
+      export function Room({ children }: { children: ReactNode }) {
+        return (
+          <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
+            <RoomProvider id="my-room">
+              <ClientSideSuspense fallback={<div>Loading…</div>}>
+                {children}
+              </ClientSideSuspense>
+            </RoomProvider>
+          </LiveblocksProvider>
+        );
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Use the Liveblocks hooks</StepTitle>
+    <StepContent>
+
+      Next, create `CollaborativeApp.tsx` and add our
+      [`AvatarStack`](/docs/api-reference/liveblocks-react-ui#AvatarStack)
+      and [`Cursors`](/docs/api-reference/liveblocks-react-ui#Cursors) components. These
+      are pre-built components that are great starting points before diving into Liveblocks
+      hooks such as [`useOthers`](/docs/api-reference/liveblocks-react#useOthers) and
+      [`useMyPresence`](/docs/api-reference/liveblocks-react#useMyPresence).
+
+      ```tsx file="app/CollaborativeApp.tsx" highlight="6"
+      "use client";
+
+      import { AvatarStack, Cursors } from "@liveblocks/react-ui";
+
+      export function CollaborativeApp() {
+        return (
+          <div>
+            <AvatarStack max={3} size={36} />
+            <Cursors />
+          </div>
+        );
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Add the components to your page</StepTitle>
+    <StepContent>
+
+      After creating your presence components, it’s time
+      to add them to your app. Import
+      your multiplayer room into your `page.tsx` file, and place
+      your collaborative app components inside it.
+
+      ```tsx file="app/page.tsx" highlight="6-8"
+      import { Room } from "./Room";
+      import { CollaborativeApp } from "./CollaborativeApp";
+
+      export default function Page() {
+        return (
+          <Room>
+            <CollaborativeApp />
+          </Room>
+        );
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step lastStep>
+    <StepTitle>Next: add user information</StepTitle>
+    <StepContent>
+    
+      You've set up cursors and avatars, and they'll update live as users join and leave the room, 
+      but each user is still anonymous.
+      To add user information, you'll need to set up authentication and
+      add each user's name and avatar.
+
+      <Button asChild className="not-markdown">
+        <a href="/docs/guides/how-to-add-users-to-liveblocks-presence-components">
+          Set up authentication and add user information
+        </a>
+      </Button>
+    </StepContent>
+
+  </Step>
+</Steps>
+
+## What to read next
+
+Congratulations! You now have set up the foundation to start building
+collaborative experiences for your React application.
+
+- [@liveblocks/react API Reference](/docs/api-reference/liveblocks-react)
+- [Next.js and React guides](/docs/guides?technologies=nextjs%2Creact)
+- [How to use Liveblocks Presence with React](/docs/guides/how-to-use-liveblocks-presence-with-react)
+- [How to use Liveblocks Storage with React](/docs/guides/how-to-use-liveblocks-storage-with-react)
+
+---
+
+## Examples using Next.js
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "Collaborative To-do List",
+      slug: "collaborative-todo-list/nextjs-todo-list",
+      image: "/images/examples/thumbnails/collaborative-todo-list.jpg",
+    }}
+    technologies={["nextjs", "vuejs", "sveltekit", "solidjs", "javascript"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Live Avatar Stack",
+      slug: "live-avatar-stack/nextjs-live-avatars",
+      image: "/images/examples/thumbnails/live-avatar-stack.jpg",
+    }}
+    technologies={["nextjs", "nuxtjs", "vuejs", "sveltekit", "solidjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Collaborative Spreadsheet",
+      slug: "collaborative-spreadsheet-advanced/nextjs-spreadsheet-advanced",
+      image:
+        "/images/examples/thumbnails/collaborative-spreadsheet-advanced.jpg",
+      advanced: true,
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Collaborative Whiteboard",
+      slug: "collaborative-whiteboard-advanced/nextjs-whiteboard-advanced",
+      image:
+        "/images/examples/thumbnails/collaborative-whiteboard-advanced.jpg",
+      advanced: true,
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+</ListGrid>

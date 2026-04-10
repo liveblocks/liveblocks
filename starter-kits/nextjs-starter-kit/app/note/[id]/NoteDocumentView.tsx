@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { DocumentHeader, DocumentHeaderSkeleton } from "@/components/Document";
+import { Header, HeaderSkeleton } from "@/components/Header";
 import { NoteEditor } from "@/components/NoteEditor";
 import { DocumentLayout, DocumentProviders } from "@/layouts/Document";
 import { ErrorLayout } from "@/layouts/Error";
@@ -29,15 +29,13 @@ export function NoteDocumentView({ initialDocument, initialError }: Props) {
   }
 
   if (!initialDocument) {
-    return <DocumentLayout header={<DocumentHeaderSkeleton />} />;
+    return <DocumentLayout header={<HeaderSkeleton />} />;
   }
 
   return (
     <DocumentProviders roomId={id} initialDocument={initialDocument}>
       <DocumentLayout
-        header={
-          <DocumentHeader documentId={initialDocument.id} showTitle={false} />
-        }
+        header={<Header documentId={initialDocument.id} showTitle={false} />}
       >
         <NoteEditor />
       </DocumentLayout>

@@ -7,7 +7,7 @@
   </a>
 </p>
 
-# Comments with OpenAI
+# Comments with AI replies
 
 <p>
   <a href="https://liveblocks.io/examples/comments/nextjs-comments-ai/preview">
@@ -20,7 +20,9 @@
   <img src="https://img.shields.io/badge/next.js-message?style=flat&logo=next.js&color=07f&logoColor=fff" alt="Next.js" />
 </p>
 
-This example shows how to build comments with an AI agent, powered by [Liveblocks](https://liveblocks.io), [Next.js](https://nextjs.org/), and [OpenAI](https://openai.com).
+This example shows how to build comments with an AI agent, powered by
+[Liveblocks](https://liveblocks.io), [Next.js](https://nextjs.org/),
+[Workflow SDK](https://workflow.dev/), and [Anthropic](https://anthropic.com).
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/comments-ai.png" width="536" alt="Comments" />
 
@@ -40,17 +42,25 @@ you to automatically get your API key from your
 
 You need to set up webhooks to make this example run.
 
-- Follow our guide on [testing webhooks locally](https://liveblocks.io/docs/guides/how-to-test-webhooks-on-localhost), making sure to [check the “**commentCreated**” event](https://liveblocks.io/docs/platform/webhooks#edit-endpoint-events) when creating the webhook
+- Follow our guide on
+  [testing webhooks locally](https://liveblocks.io/docs/guides/how-to-test-webhooks-on-localhost),
+  making sure to
+  [check the “**commentCreated**” event](https://liveblocks.io/docs/platform/webhooks#edit-endpoint-events)
+  when creating the webhook
+- In the webhooks dashboard, point to the `/api/ai-comment-reply` path
 - Copy your **webhook secret key** from the webhooks dashboard
-- Add your webhook secret key to `.env.local` as the `LIVEBLOCKS_WEBHOOK_SECRET_KEY` environment variable
+- Add your webhook secret key to `.env.local` as the
+  `LIVEBLOCKS_WEBHOOK_SECRET_KEY` environment variable
 
-### Setting up OpenAI
+### Setting up Anthropic
 
-You need your own OpenAI API key to run the AI agent.
+You need your own Anthropic API key to run the AI agent.
 
-- Create an account on [OpenAI](https://openai.com)
-- Create a new API key from the [OpenAI Dashboard](https://platform.openai.com/api-keys)
-- Add your OpenAI API key to `.env.local` as the `OPENAI_API_KEY` environment variable
+- Create an account on [Anthropic](https://anthropic.com)
+- Create a new API key from the
+  [Anthropic Dashboard](https://platform.claude.com/settings/keys)
+- Add your Anthropic API key to `.env.local` as the `ANTHROPIC_API_KEY`
+  environment variable
 
 ### Manual setup
 

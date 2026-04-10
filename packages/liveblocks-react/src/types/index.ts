@@ -17,7 +17,6 @@ import type {
   AiChat,
   AiChatMessage,
   AiChatsQuery,
-  AiKnowledgeSource,
   AiUserMessage,
   AsyncError,
   AsyncLoading,
@@ -30,10 +29,16 @@ import type {
   CommentData,
   DGI,
   DRI,
+  Feed,
+  FeedCreateMetadata,
+  FeedFetchMetadataFilter,
+  FeedMessage,
+  FeedUpdateMetadata,
   GroupData,
   HistoryVersion,
   InboxNotificationData,
   LiveblocksError,
+  MessageId,
   NotificationSettings,
   PartialNotificationSettings,
   PartialUnless,
@@ -42,9 +47,11 @@ import type {
   Relax,
   Resolve,
   RoomEventMessage,
+  SearchCommentsResult,
   SyncStatus,
   ThreadData,
-  ToImmutable,
+  ToJson,
+  UrlMetadata,
   WithNavigation,
   WithRequired,
 } from "@liveblocks/core";
@@ -55,7 +62,11 @@ import type {
   ReactNode,
 } from "react";
 
-import type { RegisterAiKnowledgeProps, RegisterAiToolProps } from "./ai";
+import type {
+  AiChatStatus,
+  RegisterAiKnowledgeProps,
+  RegisterAiToolProps,
+} from "./ai";
 
 type UiChatMessage = WithNavigation<AiChatMessage>;
 
@@ -84,11 +95,6 @@ export type UseSendAiMessageOptions = {
    * The maximum timeout for the answer to be generated.
    */
   timeout?: number;
-
-  /**
-   * @internal
-   */
-  knowledge?: AiKnowledgeSource[];
 };
 
 export type SendAiMessageOptions = UseSendAiMessageOptions & {
@@ -117,33 +123,40 @@ export type UseAiChatsOptions = {
   query?: AiChatsQuery;
 };
 
-export type ThreadsQuery<M extends BaseMetadata> = {
+export type ThreadsQuery<TM extends BaseMetadata> = {
   /**
    * Whether to only return threads marked as resolved or unresolved. If not provided,
    * all threads will be returned.
    */
   resolved?: boolean;
+
+  /**
+   * Whether to only return threads that the user is subscribed to or not. If not provided,
+   * all threads will be returned.
+   */
+  subscribed?: boolean;
+
   /**
    * The metadata to filter the threads by. If provided, only threads with metadata that matches
    * the provided metadata will be returned. If not provided, all threads will be returned.
    */
-  metadata?: Partial<QueryMetadata<M>>;
+  metadata?: Partial<QueryMetadata<TM>>;
 };
 
-export type UseUserThreadsOptions<M extends BaseMetadata> = {
+export type UseUserThreadsOptions<TM extends BaseMetadata> = {
   /**
    * The query (including metadata) to filter the threads by. If provided, only threads
    * that match the query will be returned. If not provided, all threads will be returned.
    */
-  query?: ThreadsQuery<M>;
+  query?: ThreadsQuery<TM>;
 };
 
-export type UseThreadsOptions<M extends BaseMetadata> = {
+export type UseThreadsOptions<TM extends BaseMetadata> = {
   /**
    * The query (including metadata) to filter the threads by. If provided, only threads
    * that match the query will be returned. If not provided, all threads will be returned.
    */
-  query?: ThreadsQuery<M>;
+  query?: ThreadsQuery<TM>;
 
   /**
    * Whether to scroll to a comment on load based on the URL hash. Defaults to `true`.
@@ -153,6 +166,33 @@ export type UseThreadsOptions<M extends BaseMetadata> = {
    * scrolled to on load if it exists in the page.
    */
   scrollOnLoad?: boolean;
+};
+
+export type SearchCommentsQuery<TM extends BaseMetadata> = {
+  /**
+   * (Optional) Metadata to filter the threads by.
+   */
+  threadMetadata?: Partial<QueryMetadata<TM>>;
+  /**
+   * (Optional) Whether to only return comments from threads marked as resolved or unresolved.
+   */
+  threadResolved?: boolean;
+  /**
+   * (Optional) Whether to only return comments that have attachments.
+   */
+  hasAttachments?: boolean;
+  /**
+   * (Optional) Whether to only return comments that have mentions.
+   */
+  hasMentions?: boolean;
+  /**
+   * (Required) Text to search within comment content. Uses rich text and vector search for relevance.
+   */
+  text: string;
+};
+
+export type UseSearchCommentsOptions<TM extends BaseMetadata> = {
+  query: SearchCommentsQuery<TM>;
 };
 
 export type InboxNotificationsQuery = {
@@ -175,6 +215,42 @@ export type UseInboxNotificationsOptions = {
   query?: InboxNotificationsQuery;
 };
 
+export type UseFeedsOptions = {
+  /**
+   * Optional timestamp filter. Applied to the client-side cache for this hook’s
+   * options: only feeds whose `createdAt` or `updatedAt` is at or after this
+   * timestamp (ms) are included in `feeds`.
+   */
+  since?: number;
+  /**
+   * Optional metadata filter (`Record<string, string>`). Applied to the
+   * client-side cache: only feeds whose metadata matches every key/value pair
+   * are included in `feeds`.
+   */
+  metadata?: FeedFetchMetadataFilter;
+  /**
+   * Page size for each server request when loading or loading more feeds. This
+   * does **not** cap the length of `feeds`—use pagination (`fetchMore`,
+   * `hasFetchedAll`) until you have loaded every page. Different hooks with
+   * different `limit` values still share one cache per room; each hook’s
+   * `feeds` array is filtered and sorted independently.
+   */
+  limit?: number;
+};
+
+export type UseFeedMessagesOptions = {
+  /**
+   * Optional cursor for pagination.
+   */
+  cursor?: string;
+  /**
+   * Page size for each server request when loading or loading more messages.
+   * Does **not** cap the length of `messages`—pagination loads additional pages
+   * until `hasFetchedAll` is true.
+   */
+  limit?: number;
+};
+
 export type UserAsyncResult<T> = AsyncResult<T, "user">;
 export type UserAsyncSuccess<T> = AsyncSuccess<T, "user">;
 
@@ -191,28 +267,36 @@ export type GroupAsyncResult = AsyncResult<GroupData | undefined, "group">;
 export type GroupAsyncSuccess = AsyncSuccess<GroupData | undefined, "group">;
 
 // prettier-ignore
-export type CreateThreadOptions<M extends BaseMetadata> =
+export type CreateThreadOptions<TM extends BaseMetadata, CM extends BaseMetadata > =
   Resolve<
     { body: CommentBody, attachments?: CommentAttachment[]; }
-    & PartialUnless<M, { metadata: M }>
+    & PartialUnless<TM, { metadata: TM }>
+    & PartialUnless<CM, { commentMetadata: CM }>
   >;
 
-export type EditThreadMetadataOptions<M extends BaseMetadata> = {
+export type EditThreadMetadataOptions<TM extends BaseMetadata> = {
   threadId: string;
-  metadata: Patchable<M>;
+  metadata: Patchable<TM>;
 };
 
-export type CreateCommentOptions = {
+export type CreateCommentOptions<CM extends BaseMetadata> = {
   threadId: string;
   body: CommentBody;
   attachments?: CommentAttachment[];
-};
+} & PartialUnless<CM, { metadata: CM }>;
 
-export type EditCommentOptions = {
+export type EditCommentOptions<CM extends BaseMetadata> = {
   threadId: string;
   commentId: string;
   body: CommentBody;
   attachments?: CommentAttachment[];
+  metadata?: Patchable<CM>;
+};
+
+export type EditCommentMetadataOptions<CM extends BaseMetadata> = {
+  threadId: string;
+  commentId: string;
+  metadata: Patchable<CM>;
 };
 
 export type DeleteCommentOptions = {
@@ -245,11 +329,19 @@ export type PagedAsyncResult<T, F extends string> = Relax<
 
 // -----------------------------------------------------------------------
 
-export type ThreadsAsyncSuccess<M extends BaseMetadata> = PagedAsyncSuccess<ThreadData<M>[], "threads">; // prettier-ignore
-export type ThreadsAsyncResult<M extends BaseMetadata> = PagedAsyncResult<ThreadData<M>[], "threads">; // prettier-ignore
+export type ThreadsAsyncSuccess<TM extends BaseMetadata, CM extends BaseMetadata> = PagedAsyncSuccess<ThreadData<TM, CM>[], "threads">; // prettier-ignore
+export type ThreadsAsyncResult<TM extends BaseMetadata, CM extends BaseMetadata> = PagedAsyncResult<ThreadData<TM, CM>[], "threads">; // prettier-ignore
+
+export type SearchCommentsAsyncResult = AsyncResult<Array<SearchCommentsResult>, "results">; // prettier-ignore
 
 export type InboxNotificationsAsyncSuccess = PagedAsyncSuccess<InboxNotificationData[], "inboxNotifications">; // prettier-ignore
 export type InboxNotificationsAsyncResult = PagedAsyncResult<InboxNotificationData[], "inboxNotifications">; // prettier-ignore
+
+export type FeedsAsyncSuccess<FM extends Json = Json> = PagedAsyncSuccess<Feed<FM>[], "feeds">; // prettier-ignore
+export type FeedsAsyncResult<FM extends Json = Json> = PagedAsyncResult<Feed<FM>[], "feeds">; // prettier-ignore
+
+export type FeedMessagesAsyncSuccess<FMD extends Json = Json> = PagedAsyncSuccess<FeedMessage<FMD>[], "messages">; // prettier-ignore
+export type FeedMessagesAsyncResult<FMD extends Json = Json> = PagedAsyncResult<FeedMessage<FMD>[], "messages">; // prettier-ignore
 
 export type UnreadInboxNotificationsCountAsyncSuccess = AsyncSuccess<number, "count">; // prettier-ignore
 export type UnreadInboxNotificationsCountAsyncResult = AsyncResult<number, "count">; // prettier-ignore
@@ -274,6 +366,11 @@ export type AiChatAsyncResult = AsyncResult<AiChat, "chat">; // prettier-ignore
 export type AiChatMessagesAsyncSuccess = AsyncSuccess<readonly UiChatMessage[], "messages">; // prettier-ignore
 export type AiChatMessagesAsyncResult = AsyncResult<readonly UiChatMessage[], "messages">; // prettier-ignore
 
+export type UrlMetadataAsyncSuccess = AsyncSuccess<UrlMetadata, "metadata">; // prettier-ignore
+export type UrlMetadataAsyncResult = AsyncResult<UrlMetadata, "metadata">; // prettier-ignore
+
+export type { AiChatStatus };
+
 export type RoomProviderProps<P extends JsonObject, S extends LsonObject> =
   // prettier-ignore
   Resolve<
@@ -293,6 +390,12 @@ export type RoomProviderProps<P extends JsonObject, S extends LsonObject> =
      * only on the client side.
      */
     autoConnect?: boolean;
+
+    /**
+     * @deprecated This flag no longer has any effect and will be removed in
+     * a future version. All rooms now use the v2 storage engine by default.
+     */
+    engine?: 1 | 2;
   }
 
   // Initial presence is only mandatory if the custom type requires it to be
@@ -314,7 +417,10 @@ export type RoomProviderProps<P extends JsonObject, S extends LsonObject> =
       /**
        * The initial Storage to use when entering a new Room.
        */
-      initialStorage: S | ((roomId: string) => S);
+      initialStorage:
+        | S
+        | LiveObject<S>
+        | ((roomId: string) => S | LiveObject<S>);
     }
   >
 >;
@@ -543,14 +649,17 @@ type RoomContextBundleCommon<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
-  M extends BaseMetadata,
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+  FM extends Json = Json,
+  FMD extends Json = Json,
 > = {
   /**
    * You normally don't need to directly interact with the RoomContext, but
    * it can be necessary if you're building an advanced app where you need to
    * set up a context bridge between two React renderers.
    */
-  RoomContext: Context<Room<P, S, U, E, M> | null>;
+  RoomContext: Context<Room<P, S, U, E, TM, CM, FM, FMD> | null>;
 
   /**
    * Makes a Room available in the component hierarchy below.
@@ -563,8 +672,12 @@ type RoomContextBundleCommon<
    * Returns the Room of the nearest RoomProvider above in the React component
    * tree.
    */
-  useRoom(options?: { allowOutsideRoom: false }): Room<P, S, U, E, M>;
-  useRoom(options: { allowOutsideRoom: boolean }): Room<P, S, U, E, M> | null;
+  useRoom(options?: {
+    allowOutsideRoom: false;
+  }): Room<P, S, U, E, TM, CM, FM, FMD>;
+  useRoom(options: {
+    allowOutsideRoom: boolean;
+  }): Room<P, S, U, E, TM, CM, FM, FMD> | null;
 
   /**
    * Returns the current connection status for the Room, and triggers
@@ -729,7 +842,7 @@ type RoomContextBundleCommon<
    * that gets passed into your callback will be a "mutation context".
    *
    * If you want get access to the immutable root somewhere in your mutation,
-   * you can use `storage.ToImmutable()`.
+   * you can use `storage.toJSON()`.
    *
    * @example
    * const fillLayers = useMutation(
@@ -871,7 +984,9 @@ type RoomContextBundleCommon<
    * const createThread = useCreateThread();
    * createThread({ body: {}, metadata: {} });
    */
-  useCreateThread(): (options: CreateThreadOptions<M>) => ThreadData<M>;
+  useCreateThread(): (
+    options: CreateThreadOptions<TM, CM>
+  ) => ThreadData<TM, CM>;
 
   /**
    * Returns a function that deletes a thread and its associated comments.
@@ -891,7 +1006,7 @@ type RoomContextBundleCommon<
    * const editThreadMetadata = useEditThreadMetadata();
    * editThreadMetadata({ threadId: "th_xxx", metadata: {} })
    */
-  useEditThreadMetadata(): (options: EditThreadMetadataOptions<M>) => void;
+  useEditThreadMetadata(): (options: EditThreadMetadataOptions<TM>) => void;
 
   /**
    * Returns a function that marks a thread as resolved.
@@ -936,16 +1051,26 @@ type RoomContextBundleCommon<
    * const createComment = useCreateComment();
    * createComment({ threadId: "th_xxx", body: {} });
    */
-  useCreateComment(): (options: CreateCommentOptions) => CommentData;
+  useCreateComment(): (options: CreateCommentOptions<CM>) => CommentData<CM>;
 
   /**
-   * Returns a function that edits a comment's body.
+   * Returns a function that edits a comment.
    *
    * @example
    * const editComment = useEditComment()
    * editComment({ threadId: "th_xxx", commentId: "cm_xxx", body: {} })
    */
-  useEditComment(): (options: EditCommentOptions) => void;
+  useEditComment(): (options: EditCommentOptions<CM>) => void;
+
+  /**
+   * Returns a function that edits a comment's metadata.
+   * To delete an existing metadata property, set its value to `null`.
+   *
+   * @example
+   * const editCommentMetadata = useEditCommentMetadata();
+   * editCommentMetadata({ threadId: "th_xxx", commentId: "cm_xxx", metadata: { tag: "important", externalId: 1234  } })
+   */
+  useEditCommentMetadata(): (options: EditCommentMetadataOptions<CM>) => void;
 
   /**
    * Returns a function that deletes a comment.
@@ -1011,9 +1136,12 @@ export type RoomContextBundle<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
-  M extends BaseMetadata,
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+  FM extends Json = Json,
+  FMD extends Json = Json,
 > = Resolve<
-  RoomContextBundleCommon<P, S, U, E, M> &
+  RoomContextBundleCommon<P, S, U, E, TM, CM, FM, FMD> &
     SharedContextBundle<U>["classic"] & {
       /**
        * Extract arbitrary data from the Liveblocks Storage state, using an
@@ -1035,7 +1163,7 @@ export type RoomContextBundle<
        * those cases, you'll probably want to use a `shallow` comparison check.
        */
       useStorage<T>(
-        selector: (root: ToImmutable<S>) => T,
+        selector: (root: ToJson<S>) => T,
         isEqual?: (prev: T | null, curr: T | null) => boolean
       ): T | null;
 
@@ -1084,7 +1212,108 @@ export type RoomContextBundle<
        * @example
        * const { threads, error, isLoading } = useThreads();
        */
-      useThreads(options?: UseThreadsOptions<M>): ThreadsAsyncResult<M>;
+      useThreads(options?: UseThreadsOptions<TM>): ThreadsAsyncResult<TM, CM>;
+
+      /**
+       * Returns feeds for the current room.
+       *
+       * @example
+       * const { feeds, error, isLoading } = useFeeds();
+       */
+      useFeeds(options?: UseFeedsOptions): FeedsAsyncResult<FM>;
+
+      /**
+       * Returns messages for a specific feed in the current room.
+       *
+       * @example
+       * const { messages, error, isLoading } = useFeedMessages("feed-id");
+       */
+      useFeedMessages(
+        feedId: string,
+        options?: UseFeedMessagesOptions
+      ): FeedMessagesAsyncResult<FMD>;
+
+      /**
+       * Returns a function that creates a new feed in the current room.
+       *
+       * @example
+       * const createFeed = useCreateFeed();
+       * createFeed("feed-id", { metadata: { name: "My Feed" } });
+       */
+      useCreateFeed(): (
+        feedId: string,
+        options?: { metadata?: FeedCreateMetadata; createdAt?: number }
+      ) => Promise<void>;
+
+      /**
+       * Returns a function that deletes a feed from the current room.
+       *
+       * @example
+       * const deleteFeed = useDeleteFeed();
+       * deleteFeed("feed-id");
+       */
+      useDeleteFeed(): (feedId: string) => Promise<void>;
+
+      /**
+       * Returns a function that updates a feed's metadata in the current room.
+       *
+       * @example
+       * const updateFeedMetadata = useUpdateFeedMetadata();
+       * updateFeedMetadata("feed-id", { name: "Updated Name" });
+       */
+      useUpdateFeedMetadata(): (
+        feedId: string,
+        metadata: FeedUpdateMetadata
+      ) => Promise<void>;
+
+      /**
+       * Returns a function that adds a message to a feed in the current room.
+       *
+       * @example
+       * const createFeedMessage = useCreateFeedMessage();
+       * createFeedMessage("feed-id", { text: "Hello" });
+       */
+      useCreateFeedMessage(): (
+        feedId: string,
+        data: JsonObject,
+        options?: { id?: string; createdAt?: number }
+      ) => Promise<void>;
+
+      /**
+       * Returns a function that deletes a message from a feed in the current room.
+       *
+       * @example
+       * const deleteFeedMessage = useDeleteFeedMessage();
+       * deleteFeedMessage("feed-id", "message-id");
+       */
+      useDeleteFeedMessage(): (
+        feedId: string,
+        messageId: string
+      ) => Promise<void>;
+
+      /**
+       * Returns a function that updates a feed message in the current room.
+       *
+       * @example
+       * const updateFeedMessage = useUpdateFeedMessage();
+       * updateFeedMessage("feed-id", "message-id", { text: "Updated" });
+       */
+      useUpdateFeedMessage(): (
+        feedId: string,
+        messageId: string,
+        data: JsonObject,
+        options?: { updatedAt?: number }
+      ) => Promise<void>;
+
+      /**
+       * Returns the result of searching comments by text in the current room. The result includes the id and the plain text content of the matched comments along with the parent thread id of the comment.
+       *
+       * @example
+       * const { results, error, isLoading } = useSearchComments({ query: { text: "hello"} });
+       */
+      useSearchComments(
+        options: UseSearchCommentsOptions<TM>
+      ): SearchCommentsAsyncResult;
 
       /**
        * Returns the user's subscription settings for the current room
@@ -1123,7 +1352,7 @@ export type RoomContextBundle<
       useHistoryVersionData(id: string): HistoryVersionDataAsyncResult;
 
       suspense: Resolve<
-        RoomContextBundleCommon<P, S, U, E, M> &
+        RoomContextBundleCommon<P, S, U, E, TM, CM, FM, FMD> &
           SharedContextBundle<U>["suspense"] & {
             /**
              * Extract arbitrary data from the Liveblocks Storage state, using an
@@ -1145,7 +1374,7 @@ export type RoomContextBundle<
              * those cases, you'll probably want to use a `shallow` comparison check.
              */
             useStorage<T>(
-              selector: (root: ToImmutable<S>) => T,
+              selector: (root: ToJson<S>) => T,
               isEqual?: (prev: T, curr: T) => boolean
             ): T;
 
@@ -1188,7 +1417,52 @@ export type RoomContextBundle<
              * @example
              * const { threads } = useThreads();
              */
-            useThreads(options?: UseThreadsOptions<M>): ThreadsAsyncSuccess<M>;
+            useThreads(
+              options?: UseThreadsOptions<TM>
+            ): ThreadsAsyncSuccess<TM, CM>;
+
+            /**
+             * Returns feeds for the current room.
+             *
+             * @example
+             * const { feeds } = useFeeds();
+             */
+            useFeeds(options?: UseFeedsOptions): FeedsAsyncSuccess<FM>;
+
+            /**
+             * Returns messages for a specific feed in the current room.
+             *
+             * @example
+             * const { messages } = useFeedMessages("feed-id");
+             */
+            useFeedMessages(
+              feedId: string,
+              options?: UseFeedMessagesOptions
+            ): FeedMessagesAsyncSuccess<FMD>;
+            useCreateFeed(): (
+              feedId: string,
+              options?: { metadata?: FeedCreateMetadata; createdAt?: number }
+            ) => Promise<void>;
+            useDeleteFeed(): (feedId: string) => Promise<void>;
+            useUpdateFeedMetadata(): (
+              feedId: string,
+              metadata: FeedUpdateMetadata
+            ) => Promise<void>;
+            useCreateFeedMessage(): (
+              feedId: string,
+              data: JsonObject,
+              options?: { id?: string; createdAt?: number }
+            ) => Promise<void>;
+            useDeleteFeedMessage(): (
+              feedId: string,
+              messageId: string
+            ) => Promise<void>;
+            useUpdateFeedMessage(): (
+              feedId: string,
+              messageId: string,
+              data: JsonObject,
+              options?: { updatedAt?: number }
+            ) => Promise<void>;
 
             /**
              * (Private beta) Returns a history of versions of the current room.
@@ -1233,7 +1507,10 @@ export type RoomContextBundle<
 /**
  * Properties that are the same in LiveblocksContext and LiveblocksContext["suspense"].
  */
-type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
+type LiveblocksContextBundleCommon<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+> = {
   /**
    * Makes Liveblocks features outside of rooms (e.g. Notifications) available
    * in the component hierarchy below.
@@ -1291,7 +1568,7 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
    * @example
    * const thread = useInboxNotificationThread("in_xxx");
    */
-  useInboxNotificationThread(inboxNotificationId: string): ThreadData<M>;
+  useInboxNotificationThread(inboxNotificationId: string): ThreadData<TM, CM>;
 
   /**
    * Returns notification settings for the current user.
@@ -1433,9 +1710,10 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
 
 export type LiveblocksContextBundle<
   U extends BaseUserMeta,
-  M extends BaseMetadata,
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
 > = Resolve<
-  LiveblocksContextBundleCommon<M> &
+  LiveblocksContextBundleCommon<TM, CM> &
     SharedContextBundle<U>["classic"] & {
       /**
        * Returns the inbox notifications for the current user.
@@ -1464,8 +1742,8 @@ export type LiveblocksContextBundle<
        * Do not use unless explicitly recommended by the Liveblocks team.
        */
       useUserThreads_experimental(
-        options?: UseUserThreadsOptions<M>
-      ): ThreadsAsyncResult<M>;
+        options?: UseUserThreadsOptions<TM>
+      ): ThreadsAsyncResult<TM, CM>;
 
       /**
        * (Private beta)  Returns the chats for the current user.
@@ -1491,8 +1769,40 @@ export type LiveblocksContextBundle<
        */
       useAiChat(chatId: string): AiChatAsyncResult;
 
+      /**
+       * Returns the status of an AI chat, indicating whether it's idle or actively
+       * generating content. This is a convenience hook that derives its state from
+       * the latest assistant message in the chat.
+       *
+       * Re-renders whenever any of the relevant fields change.
+       *
+       * @param chatId - The ID of the chat to monitor
+       * @returns The current status of the AI chat
+       *
+       * @example
+       * ```tsx
+       * import { useAiChatStatus } from "@liveblocks/react";
+       *
+       * function ChatStatus() {
+       *   const { status, partType, toolName } = useAiChatStatus("my-chat");
+       *   console.log(status);          // "loading" | "idle" | "generating"
+       *   console.log(status.partType); // "text" | "tool-invocation" | ...
+       *   console.log(status.toolName); // string | undefined
+       * }
+       * ```
+       */
+      useAiChatStatus(chatId: string, branchId?: MessageId): AiChatStatus;
+
+      /**
+       * Returns metadata for a given URL.
+       *
+       * @example
+       * const { metadata, error, isLoading } = useUrlMetadata("https://liveblocks.io");
+       */
+      useUrlMetadata(url: string): UrlMetadataAsyncResult;
+
       suspense: Resolve<
-        LiveblocksContextBundleCommon<M> &
+        LiveblocksContextBundleCommon<TM, CM> &
           SharedContextBundle<U>["suspense"] & {
             /**
              * Returns the inbox notifications for the current user.
@@ -1532,8 +1842,8 @@ export type LiveblocksContextBundle<
              * Do not use unless explicitly recommended by the Liveblocks team.
              */
             useUserThreads_experimental(
-              options?: UseUserThreadsOptions<M>
-            ): ThreadsAsyncSuccess<M>;
+              options?: UseUserThreadsOptions<TM>
+            ): ThreadsAsyncSuccess<TM, CM>;
 
             /**
              * (Private beta)  Returns the chats for the current user.
@@ -1558,6 +1868,38 @@ export type LiveblocksContextBundle<
              * const { chat, error, isLoading } = useAiChat("my-chat");
              */
             useAiChat(chatId: string): AiChatAsyncSuccess;
+
+            /**
+             * Returns the status of an AI chat, indicating whether it's idle or actively
+             * generating content. This is a convenience hook that derives its state from
+             * the latest assistant message in the chat.
+             *
+             * Re-renders whenever any of the relevant fields change.
+             *
+             * @param chatId - The ID of the chat to monitor
+             * @returns The current status of the AI chat
+             *
+             * @example
+             * ```tsx
+             * import { useAiChatStatus } from "@liveblocks/react";
+             *
+             * function ChatStatus() {
+             *   const { status, partType, toolName } = useAiChatStatus("my-chat");
+             *   console.log(status);          // "loading" | "idle" | "generating"
+             *   console.log(status.partType); // "text" | "tool-invocation" | ...
+             *   console.log(status.toolName); // string | undefined
+             * }
+             * ```
+             */
+            useAiChatStatus(chatId: string, branchId?: MessageId): AiChatStatus;
+
+            /**
+             * Returns metadata for a given URL.
+             *
+             * @example
+             * const { metadata } = useUrlMetadata("https://liveblocks.io");
+             */
+            useUrlMetadata(url: string): UrlMetadataAsyncSuccess;
           }
       >;
     }

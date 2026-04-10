@@ -8,7 +8,7 @@ import {
   SOCKET_AUTOCONNECT_AND_ROOM_STATE,
   SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE,
   SOCKET_NO_BEHAVIOR,
-} from "./_behaviors";
+} from "./_MockWebSocketServer.behaviors";
 
 describe("ManagedSocket", () => {
   test("failure to authenticate", async () => {

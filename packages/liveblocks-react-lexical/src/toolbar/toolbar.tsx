@@ -26,9 +26,8 @@ import {
   TooltipProvider,
   UnderlineIcon,
   UndoIcon,
+  useLiveblocksUiConfig,
 } from "@liveblocks/react-ui/_private";
-import * as SelectPrimitive from "@radix-ui/react-select";
-import * as TogglePrimitive from "@radix-ui/react-toggle";
 import {
   $createParagraphNode,
   $getSelection,
@@ -43,6 +42,7 @@ import {
   REDO_COMMAND,
   UNDO_COMMAND,
 } from "lexical";
+import { Select as SelectPrimitive, Toggle as TogglePrimitive } from "radix-ui";
 import type {
   ComponentProps,
   ComponentType,
@@ -480,6 +480,7 @@ const ToolbarBlockSelector = forwardRef<
   HTMLButtonElement,
   ToolbarBlockSelectorProps
 >(({ items, onKeyDown, ...props }, forwardedRef) => {
+  const { portalContainer } = useLiveblocksUiConfig();
   const floatingToolbarContext = useContext(FloatingToolbarContext);
   const closeFloatingToolbar = floatingToolbarContext?.close;
   const [editor] = useLexicalComposerContext();
@@ -552,7 +553,7 @@ const ToolbarBlockSelector = forwardRef<
           </SelectButton>
         </SelectPrimitive.Trigger>
       </ShortcutTooltip>
-      <SelectPrimitive.Portal>
+      <SelectPrimitive.Portal container={portalContainer}>
         <FloatingToolbarExternal>
           <SelectPrimitive.Content
             position="popper"

@@ -1,5 +1,6 @@
 import type {
   BaseUserMeta,
+  Json,
   JsonObject,
   LiveObject,
   LsonObject,
@@ -7,13 +8,8 @@ import type {
   Status,
   User,
 } from "@liveblocks/client";
-import type { OpaqueClient, OpaqueRoom } from "@liveblocks/core";
-import {
-  detectDupes,
-  legacy_patchImmutableObject,
-  lsonToJson,
-  patchLiveObjectKey,
-} from "@liveblocks/core";
+import type { EnterOptions, OpaqueClient, OpaqueRoom } from "@liveblocks/core";
+import { detectDupes, kInternal } from "@liveblocks/core";
 import type { StoreEnhancer } from "redux";
 
 import {
@@ -65,6 +61,15 @@ export type WithLiveblocks<
   U extends BaseUserMeta,
 > = TState & { readonly liveblocks: LiveblocksContext<P, U> };
 
+/** Ensures values of the provided object are not functions */
+function ensureNoFunctions(state: Record<string, unknown>): void {
+  for (const key in state) {
+    if (typeof state[key] === "function") {
+      throw mappingToFunctionIsNotAllowed(key);
+    }
+  }
+}
+
 const internalEnhancer = <TState>(options: {
   client: OpaqueClient;
   storageMapping?: Mapping<TState>;
@@ -74,7 +79,7 @@ const internalEnhancer = <TState>(options: {
     throw missingClient();
   }
   const client = options.client;
-  const mapping = validateMapping(
+  const storageMapping = validateMapping(
     options.storageMapping || {},
     "storageMapping"
   );
@@ -83,13 +88,15 @@ const internalEnhancer = <TState>(options: {
     "presenceMapping"
   );
   if (process.env.NODE_ENV !== "production") {
-    validateNoDuplicateKeys(mapping, presenceMapping);
+    validateNoDuplicateKeys(storageMapping, presenceMapping);
   }
+  const presenceKeys = Object.keys(presenceMapping);
+  const storageKeys = Object.keys(storageMapping);
 
   return (createStore: any) => {
     return (reducer: any, initialState: any, enhancer: any) => {
       let maybeRoom: OpaqueRoom | null = null;
-      let isPatching: boolean = false;
+      let isPatching = false;
       let storageRoot: LiveObject<LsonObject> | null = null;
       let unsubscribeCallbacks: Array<() => void> = [];
       let lastRoomId: string | null = null;
@@ -143,24 +150,29 @@ const internalEnhancer = <TState>(options: {
 
             if (maybeRoom) {
               isPatching = true;
-              updatePresence(
-                maybeRoom,
-                state,
-                newState,
-                presenceMapping as any
-              );
-
-              maybeRoom.batch(() => {
-                if (storageRoot) {
-                  patchLiveblocksStorage(
-                    storageRoot,
+              try {
+                maybeRoom.batch(() => {
+                  updatePresence(
+                    maybeRoom!,
                     state,
                     newState,
-                    mapping as any
+                    presenceMapping as any
                   );
-                }
-              });
-              isPatching = false;
+
+                  if (storageRoot) {
+                    const partialState = pick(
+                      newState,
+                      storageKeys
+                    ) as JsonObject;
+                    if (process.env.NODE_ENV !== "production") {
+                      ensureNoFunctions(partialState);
+                    }
+                    storageRoot.reconcilePartially(partialState);
+                  }
+                });
+              } finally {
+                isPatching = false;
+              }
             }
 
             if (newState.liveblocks == null) {
@@ -181,7 +193,10 @@ const internalEnhancer = <TState>(options: {
 
       const store = createStore(newReducer, initialState, enhancer);
 
-      function enterRoom(newRoomId: string): void {
+      function enterRoom(
+        newRoomId: string,
+        options?: Pick<EnterOptions, "engine">
+      ): void {
         if (lastRoomId === newRoomId) {
           return;
         }
@@ -192,12 +207,10 @@ const internalEnhancer = <TState>(options: {
           lastLeaveFn();
         }
 
-        const initialPresence = selectFields(
-          store.getState(),
-          presenceMapping
-        ) as any;
+        const initialPresence = pick(store.getState(), presenceKeys) as any;
 
         const { room, leave } = client.enterRoom(newRoomId, {
+          engine: options?.engine,
           initialPresence,
         });
         maybeRoom = room as OpaqueRoom;
@@ -222,10 +235,10 @@ const internalEnhancer = <TState>(options: {
 
         unsubscribeCallbacks.push(
           room.events.myPresence.subscribe(() => {
-            if (isPatching === false) {
+            if (!isPatching) {
               store.dispatch({
                 type: ACTION_TYPES.PATCH_REDUX_STATE,
-                state: selectFields(room.getPresence(), presenceMapping),
+                state: pick(room.getPresence(), presenceKeys),
               });
             }
           })
@@ -236,44 +249,38 @@ const internalEnhancer = <TState>(options: {
         });
 
         void room.getStorage().then(({ root }) => {
-          const updates: any = {};
-
-          maybeRoom!.batch(() => {
-            for (const key in mapping) {
-              const liveblocksStatePart = root.get(key);
-
-              if (liveblocksStatePart == null) {
-                updates[key] = store.getState()[key];
-                patchLiveObjectKey(root, key, undefined, store.getState()[key]);
-              } else {
-                updates[key] = lsonToJson(liveblocksStatePart);
-              }
+          // Seed any missing storage keys from the current Redux state.
+          // Only writes keys that don't exist yet in storage — existing
+          // storage values are left untouched and will be read back below.
+          const reduxState = store.getState();
+          const missing: JsonObject = {};
+          for (const key of storageKeys) {
+            if (root.get(key) == null) {
+              missing[key] = reduxState[key] as Json;
             }
+          }
+
+          room.history[kInternal].withoutHistory(() => {
+            maybeRoom!.batch(() => {
+              root.reconcilePartially(missing);
+            });
           });
 
           store.dispatch({
             type: ACTION_TYPES.INIT_STORAGE,
-            state: updates,
+            state: pick(root.toJSON(), storageKeys),
           });
 
           storageRoot = root;
           unsubscribeCallbacks.push(
-            maybeRoom!.subscribe(
-              root,
-              (updates) => {
-                if (isPatching === false) {
-                  store.dispatch({
-                    type: ACTION_TYPES.PATCH_REDUX_STATE,
-                    state: patchState(
-                      store.getState(),
-                      updates,
-                      mapping as any
-                    ),
-                  });
-                }
-              },
-              { isDeep: true }
-            )
+            maybeRoom!.events.storageBatch.subscribe(() => {
+              if (!isPatching) {
+                store.dispatch({
+                  type: ACTION_TYPES.PATCH_REDUX_STATE,
+                  state: pick(root.toJSON(), storageKeys),
+                });
+              }
+            })
           );
         });
 
@@ -299,7 +306,7 @@ const internalEnhancer = <TState>(options: {
 
       function newDispatch(action: any) {
         if (action.type === ACTION_TYPES.ENTER) {
-          enterRoom(action.roomId);
+          enterRoom(action.roomId, action.options);
         } else if (action.type === ACTION_TYPES.LEAVE) {
           leaveRoom();
         } else {
@@ -322,6 +329,7 @@ export const actions = {
   /**
    * Enters a room and starts sync it with Redux state
    * @param roomId The id of the room
+   * @param options Optional. Options to pass to the underlying client.enterRoom call (e.g. `engine`).
    */
   enterRoom,
   /**
@@ -330,13 +338,18 @@ export const actions = {
   leaveRoom,
 };
 
-function enterRoom(roomId: string): {
+function enterRoom(
+  roomId: string,
+  options?: Pick<EnterOptions, "engine">
+): {
   type: string;
   roomId: string;
+  options?: Pick<EnterOptions, "engine">;
 } {
   return {
     type: ACTION_TYPES.ENTER,
     roomId,
+    options,
   };
 }
 
@@ -355,28 +368,6 @@ export const liveblocksEnhancer = internalEnhancer as <TState>(options: {
   storageMapping?: Mapping<TState>;
   presenceMapping?: Mapping<TState>;
 }) => StoreEnhancer;
-
-function patchLiveblocksStorage<O extends LsonObject, TState>(
-  root: LiveObject<O>,
-  oldState: TState,
-  newState: TState,
-  mapping: Mapping<TState>
-) {
-  for (const key in mapping) {
-    if (
-      process.env.NODE_ENV !== "production" &&
-      typeof newState[key] === "function"
-    ) {
-      throw mappingToFunctionIsNotAllowed("value");
-    }
-
-    if (oldState[key] !== newState[key]) {
-      const oldVal = oldState[key];
-      const newVal = newState[key];
-      patchLiveObjectKey(root, key, oldVal as any, newVal);
-    }
-  }
-}
 
 function updatePresence<P extends JsonObject>(
   room: Room<P, any, any, any, any>,
@@ -410,37 +401,14 @@ function validateNoDuplicateKeys<TState>(
   }
 }
 
-function selectFields<TState>(
-  presence: TState,
-  mapping: Mapping<TState>
-): /* TODO: Actually, Pick<TState, keyof Mapping<TState>> ? */
-Partial<TState> {
-  const partialState = {} as Partial<TState>;
-  for (const key in mapping) {
-    partialState[key] = presence[key];
+function pick(
+  source: Record<string, unknown>,
+  keys: Iterable<string>
+): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const key of keys) {
+    result[key] = source[key];
   }
-  return partialState;
-}
-
-function patchState<TState extends JsonObject>(
-  state: TState,
-  updates: any[], // StorageUpdate
-  mapping: Mapping<TState>
-) {
-  const partialState: Partial<TState> = {};
-
-  for (const key in mapping) {
-    partialState[key] = state[key];
-  }
-
-  const patched = legacy_patchImmutableObject(partialState, updates);
-
-  const result: Partial<TState> = {};
-
-  for (const key in mapping) {
-    result[key] = patched[key];
-  }
-
   return result;
 }
 

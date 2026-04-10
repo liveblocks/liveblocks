@@ -19,6 +19,7 @@ export default class yDocHandler extends Observable<unknown> {
   private useV2Encoding: boolean;
   private localSnapshotHashΣ: Signal<string>;
   private remoteSnapshotHashΣ: Signal<string | null>;
+  private hasEverSyncedΣ: Signal<boolean>;
 
   private debounceTimer: ReturnType<typeof setTimeout> | null = null;
   private static readonly DEBOUNCE_INTERVAL_MS = 200;
@@ -60,6 +61,8 @@ export default class yDocHandler extends Observable<unknown> {
       Base64.fromUint8Array(sha256(encodedSnapshot))
     );
     this.remoteSnapshotHashΣ = new Signal<string | null>(null);
+
+    this.hasEverSyncedΣ = new Signal<boolean>(false);
 
     this.isLocalAndRemoteSnapshotEqualΣ = DerivedSignal.from(() => {
       const remoteSnapshotHash = this.remoteSnapshotHashΣ.get();
@@ -111,6 +114,7 @@ export default class yDocHandler extends Observable<unknown> {
       // now that we've sent our local and received from server, we're in sync
       // calling `syncDoc` again will sync up the documents
       this.synced = true;
+      this.hasEverSyncedΣ.set(true);
     }
 
     this.remoteSnapshotHashΣ.set(remoteSnapshotHash);
@@ -166,8 +170,8 @@ export default class yDocHandler extends Observable<unknown> {
   };
 
   experimental_getSyncStatus(): YjsSyncStatus {
-    const remoteSnapshotHash = this.remoteSnapshotHashΣ.get();
-    if (remoteSnapshotHash === null) {
+    const hasEverSynced = this.hasEverSyncedΣ.get();
+    if (!hasEverSynced) {
       return "loading";
     }
     if (!this.isLocalAndRemoteSnapshotEqualΣ.get()) {

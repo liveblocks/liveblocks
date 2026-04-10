@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import * as Portal from "@radix-ui/react-portal";
+import { Portal as PortalPrimitive } from "radix-ui";
 import styles from "./NewThreadCursor.module.css";
 
 export function NewThreadCursor({ display }: { display: boolean }) {
@@ -42,13 +42,13 @@ export function NewThreadCursor({ display }: { display: boolean }) {
   }
 
   return (
-    <Portal.Root>
+    <PortalPrimitive.Root>
       <div
         className={styles.newThreadCursor}
         style={{
           transform: `translate(${coords.x}px, ${coords.y}px)`,
         }}
       />
-    </Portal.Root>
+    </PortalPrimitive.Root>
   );
 }

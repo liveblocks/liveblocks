@@ -1,8 +1,9 @@
 ---
 meta:
-  title: "Get started with Liveblocks, Tiptap, Yjs, and Vue.js"
-  parentTitle: "Get started"
-  description: "Learn how to get started Liveblocks, Tiptap, Yjs, and Vue.js."
+  title: "Get started with a Tiptap text editor using Liveblocks and Vue.js"
+  parentTitle: "Quickstart"
+  description:
+    "Learn how to install a Tiptap text editor using Liveblocks and Vue.js"
 ---
 
 Liveblocks is a realtime collaboration infrastructure for building performant
@@ -19,7 +20,7 @@ collaboration to your Vue.js application using the APIs from the
 
       Every Liveblocks package should use the same version.
 
-      ```bash
+      ```bash trackEvent="install_liveblocks"
       npm install @liveblocks/client @liveblocks/yjs yjs @tiptap/vue-3 @tiptap/pm @tiptap/starter-kit @tiptap/extension-collaboration @tiptap/extension-collaboration-cursor y-prosemirror
       ```
     </StepContent>
@@ -77,7 +78,7 @@ collaboration to your Vue.js application using the APIs from the
         extensions: [
           StarterKit.configure({
             // The Collaboration extension comes with its own history handling
-            history: false,
+            undoRedo: false,
           }),
           // Register the Yjs document with Tiptap
           Collaboration.configure({

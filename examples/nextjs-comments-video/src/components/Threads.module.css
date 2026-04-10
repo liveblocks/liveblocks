@@ -58,3 +58,16 @@
 .threadTime:focus {
   background-color: var(--accent-background-hover);
 }
+
+.commentContentWrapper[data-spoiler] {
+  filter: blur(6px);
+  opacity: 0.5;
+  transition:
+    filter 150ms ease-out,
+    opacity 150ms ease-out;
+}
+
+.commentContentWrapper[data-spoiler]:hover {
+  filter: none;
+  opacity: 1;
+}

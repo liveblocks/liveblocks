@@ -7,9 +7,9 @@ import type {
   LsonObject,
   Room,
 } from "@liveblocks/client";
-import type { OpaqueClient, OpaqueRoom } from "@liveblocks/core";
+import type { DFM, DFMD, OpaqueClient, OpaqueRoom } from "@liveblocks/core";
 import { raise } from "@liveblocks/core";
-import { createContext, useContext } from "react";
+import { type Context, createContext, useContext } from "react";
 
 /**
  * Raw access to the React context where the LiveblocksProvider stores the
@@ -41,8 +41,11 @@ export function useClient<U extends BaseUserMeta>() {
  * room. Exposed for advanced use cases only.
  *
  * @private This is a private/advanced API. Do not rely on it.
+ *
+ * This context is exported publicly as `import { RoomContext } from "@liveblocks/react"`,
+ * not `GlobalRoomContext`.
  */
-export const RoomContext = createContext<OpaqueRoom | null>(null);
+export const GlobalRoomContext = createContext<OpaqueRoom | null>(null);
 
 /** @private */
 export function useRoomOrNull<
@@ -50,9 +53,14 @@ export function useRoomOrNull<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
-  M extends BaseMetadata,
->(): Room<P, S, U, E, M> | null {
-  return useContext(RoomContext) as Room<P, S, U, E, M> | null;
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+  FM extends Json = DFM,
+  FMD extends Json = DFMD,
+>(
+  RoomContext: Context<OpaqueRoom | null> = GlobalRoomContext
+): Room<P, S, U, E, TM, CM, FM, FMD> | null {
+  return useContext(RoomContext) as Room<P, S, U, E, TM, CM, FM, FMD> | null;
 }
 
 /**

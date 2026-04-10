@@ -20,7 +20,7 @@ Check that you've added the user to data/users.ts, for example:
   id: "${userId}",
   name: "Tchoka Ahoki",
   avatar: "https://liveblocks.io/avatars/avatar-7.png",
-  groupIds: ["product", "engineering", "design"],
+  organizationIds: ["liveblocks"],
 },
  
 `);
@@ -31,7 +31,7 @@ Check that you've added the user to data/users.ts, for example:
   return { color, ...user };
 }
 
-export function getRandom<T>(array: T[], seed?: string): T {
+function getRandom<T>(array: T[], seed?: string): T {
   const index = seed
     ? Math.abs(hashCode(seed)) % array.length
     : Math.floor(Math.random() * array.length);

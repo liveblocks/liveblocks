@@ -372,8 +372,7 @@
     "path": "/how-to-migrate-to-liveblocks-comments",
     "topics": ["comments", "rest-api"],
     "technologies": ["nodejs"],
-    "date": "2024-08-28",
-    "featured": true
+    "date": "2024-08-28"
   },
   {
     "title": "How to send email notifications for unread text editor mentions",
@@ -395,7 +394,122 @@
     "path": "/how-to-create-a-notification-settings-panel",
     "topics": ["notifications", "webhooks"],
     "technologies": ["nodejs"],
-    "date": "2025-02-20",
+    "date": "2025-02-20"
+  },
+  {
+    "title": "How to use fallback AI models in AI Copilots",
+    "path": "/how-to-use-fallback-ai-models-in-ai-copilots",
+    "topics": ["ai-copilots"],
+    "technologies": ["react"],
+    "date": "2025-10-16",
     "featured": true
+  },
+  {
+    "title": "How to customize room names in inbox notifications",
+    "path": "/how-to-customize-room-names-in-inbox-notifications",
+    "topics": ["notifications"],
+    "technologies": ["react", "react-notifications"],
+    "date": "2025-10-15"
+  },
+  {
+    "title": "Migrating to Liveblocks Notifications",
+    "path": "/migrating-to-liveblocks-notifications",
+    "topics": ["notifications", "rest-api"],
+    "technologies": ["nodejs"],
+    "date": "2025-12-05"
+  },
+  {
+    "title": "Yjs best practices and tips",
+    "path": "/yjs-best-practices-and-tips",
+    "topics": ["tutorials", "data-fetching"],
+    "technologies": ["yjs"],
+    "date": "2025-10-24"
+  },
+  {
+    "title": "Tiptap best practices and tips",
+    "path": "/tiptap-best-practices-and-tips",
+    "topics": ["tutorials", "text-editors"],
+    "technologies": ["tiptap", "yjs"],
+    "date": "2025-10-24",
+    "featured": true
+  },
+  {
+    "title": "Migrating from Tiptap 2 to 3",
+    "path": "/migrating-from-tiptap-2-to-3",
+    "topics": ["text-editors"],
+    "technologies": ["tiptap", "react"],
+    "date": "2025-10-22",
+    "featured": true
+  },
+  {
+    "title": "Why you can't delete Yjs documents",
+    "path": "/why-you-cant-delete-yjs-documents",
+    "topics": ["data-fetching", "rest-api"],
+    "technologies": ["yjs"],
+    "date": "2025-11-26"
+  },
+  {
+    "title": "Can I use my own database with Yjs?",
+    "path": "/can-i-use-my-own-database-with-yjs",
+    "topics": ["webhooks", "databases", "rest-api"],
+    "technologies": ["yjs", "nodejs"],
+    "date": "2025-11-26"
+  },
+  {
+    "title": "How to notify users about unread comments outside of your app",
+    "path": "/how-to-notify-users-about-unread-comments-outside-of-your-app",
+    "topics": ["comments", "tutorials", "webhooks", "notifications"],
+    "technologies": ["react-ui", "nodejs"],
+    "date": "2026-01-23"
+  },
+  {
+    "title": "How to notify users about unread custom notifications outside of your app",
+    "path": "/how-to-notify-users-about-unread-custom-notifications-outside-of-your-app",
+    "topics": ["notifications", "tutorials", "webhooks"],
+    "technologies": ["react-ui", "nodejs"],
+    "date": "2026-01-29"
+  },
+  {
+    "title": "The new realtime data storage engine and its benefits",
+    "path": "/about-the-new-storage-engine",
+    "topics": [],
+    "technologies": ["storage"],
+    "date": "2026-02-10"
+  },
+  {
+    "title": "How to set up Continuous Integration (CI) testing",
+    "path": "/how-to-set-up-continuous-integration-ci-testing",
+    "topics": ["tutorials", "testing"],
+    "technologies": ["nodejs"],
+    "date": "2026-02-06"
+  },
+  {
+    "title": "How to set up End-to-End (E2E) testing with Playwright",
+    "path": "/how-to-set-up-end-to-end-e2e-testing-with-playwright",
+    "topics": ["tutorials", "testing"],
+    "technologies": ["nextjs", "react"],
+    "date": "2026-02-17"
+  },
+  {
+    "title": "Modifying Storage via REST API with JSON Patch",
+    "path": "/modifying-storage-via-rest-api-with-json-patch",
+    "topics": ["rest-api", "storage"],
+    "technologies": ["storage"],
+    "date": "2026-02-20"
+  },
+  {
+    "title": "Enabling agentic workflows with Liveblocks",
+    "path": "/enabling-agentic-workflows-with-liveblocks",
+    "topics": ["rest-api", "ai-copilots", "webhooks"],
+    "technologies": ["react", "nodejs"],
+    "date": "2026-02-20",
+    "featured": true
+  },
+  {
+    "title": "How to add users to Liveblocks presence components",
+    "path": "/how-to-add-users-to-liveblocks-presence-components",
+    "topics": ["presence", "tutorials", "data-fetching"],
+    "technologies": ["react-ui", "react"],
+    "date": "2026-03-04"
   }
 ]

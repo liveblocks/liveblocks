@@ -1,6 +1,6 @@
 "use client";
 
-import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
+import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui";
 import type { ReactNode } from "react";
 import { forwardRef } from "react";
 
@@ -55,6 +55,7 @@ export function Dropdown({
           )}
           sideOffset={FLOATING_ELEMENT_SIDE_OFFSET}
           collisionPadding={FLOATING_ELEMENT_COLLISION_PADDING}
+          updatePositionStrategy="always"
           {...props}
         >
           {content}
@@ -85,4 +86,4 @@ export const DropdownItem = forwardRef<HTMLDivElement, DropdownItemProps>(
   }
 );
 
-export { DropdownMenuTrigger as DropdownTrigger } from "@radix-ui/react-dropdown-menu";
+export const DropdownTrigger = DropdownMenuPrimitive.Trigger;

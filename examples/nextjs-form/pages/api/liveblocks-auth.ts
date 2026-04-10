@@ -9,16 +9,12 @@ import { NAMES } from "../../constants";
 
 const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY!,
-  // TODO: revert this after we're done
-  // @ts-expect-error it's ok to use a local baseUrl
-  baseUrl: process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL!,
 });
 
 export default async function auth(req: NextApiRequest, res: NextApiResponse) {
   // For the avatar example, we're generating random users
   // and set their info from the authentication endpoint
-  //TODO revert this after experimentation
-  const userIndex = 0; //Math.floor(Math.random() * NAMES.length);
+  const userIndex = Math.floor(Math.random() * NAMES.length);
 
   // Create a session for the current user (access token auth)
   const session = liveblocks.prepareSession(`user-${userIndex}`, {

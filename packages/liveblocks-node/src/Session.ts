@@ -17,6 +17,7 @@ const ALL_PERMISSIONS = Object.freeze([
   "room:presence:write",
   "comments:write",
   "comments:read",
+  "feeds:write",
 ] as const);
 
 export type Permission = (typeof ALL_PERMISSIONS)[number];
@@ -34,15 +35,15 @@ const MAX_PERMS_PER_SET = 10;
  */
 const READ_ACCESS = Object.freeze([
   "room:read",
-  "room:presence:write",
-  "comments:read",
+  "room:presence:write", // TODO: Remove once backend no longer requires this
+  "comments:read", // TODO: Remove — implied by room:read
 ] as const);
 
 /**
  * Assign this to a room (or wildcard pattern) if you want to grant the user
  * permissions to read and write to the room's storage and comments.
  */
-const FULL_ACCESS = Object.freeze(["room:write", "comments:write"] as const);
+const FULL_ACCESS = Object.freeze(["room:write"] as const);
 
 const roomPatternRegex = /^([*]|[^*]{1,128}[*]?)$/;
 
@@ -90,7 +91,9 @@ export class Session {
   #postFn: PostFn;
   #userId: string;
   #userInfo?: IUserInfo;
-  #tenantId?: string;
+  #organizationId?: string;
+  /** Only used as a hint to produce better error messages. */
+  #localDev: boolean;
   #sealed = false;
   readonly #permissions: Map<string, Set<Permission>> = new Map();
 
@@ -99,14 +102,16 @@ export class Session {
     postFn: PostFn,
     userId: string,
     userInfo?: IUserInfo,
-    tenantId?: string
+    organizationId?: string,
+    localDev?: boolean
   ) {
     assertNonEmpty(userId, "userId"); // TODO: Check if this is a legal userId value too
 
     this.#postFn = postFn;
     this.#userId = userId;
     this.#userInfo = userInfo;
-    this.#tenantId = tenantId;
+    this.#organizationId = organizationId;
+    this.#localDev = localDev ?? false;
   }
 
   #getOrCreate(roomId: string): Set<Permission> {
@@ -191,15 +196,25 @@ export class Session {
     }
 
     try {
-      const resp = await this.#postFn(url`/v2/authorize-user`, {
+      const body: {
+        userId: string;
+        permissions: JsonObject;
+        userInfo?: IUserInfo;
+        organizationId?: string;
+      } = {
         // Required
         userId: this.#userId,
         permissions: this.serializePermissions(),
 
         // Optional metadata
         userInfo: this.#userInfo,
-        tenantId: this.#tenantId,
-      });
+      };
+
+      if (this.#organizationId !== undefined) {
+        body.organizationId = this.#organizationId;
+      }
+
+      const resp = await this.#postFn(url`/v2/authorize-user`, body);
 
       return {
         status: normalizeStatusCode(resp.status),
@@ -208,7 +223,9 @@ export class Session {
     } catch (er) {
       return {
         status: 503 /* Service Unavailable */,
-        body: 'Call to /v2/authorize-user failed. See "error" for more information.',
+        body: this.#localDev
+          ? "Could not connect to your Liveblocks dev server. Is it running?"
+          : 'Call to /v2/authorize-user failed. See "error" for more information.',
         error: er as Error | undefined,
       };
     }

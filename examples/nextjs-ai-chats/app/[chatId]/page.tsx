@@ -4,8 +4,10 @@ import { ClientSideSuspense, useAiChat } from "@liveblocks/react/suspense";
 import { AiChat, AiChatComponentsEmptyProps } from "@liveblocks/react-ui";
 import { ErrorBoundary } from "react-error-boundary";
 import { useSendAiMessage } from "@liveblocks/react";
+import { use } from "react";
 
-export default function Page({ params }: { params: { chatId: string } }) {
+export default function Page({ params }: { params: Promise<{ chatId: string }> }) {
+  const { chatId } = use(params);
   return (
     <div className="flex flex-col h-full">
       <ErrorBoundary fallback={<div>Problem loading chat title</div>}>
@@ -17,13 +19,13 @@ export default function Page({ params }: { params: { chatId: string } }) {
             </div>
           }
         >
-          <ChatTitle chatId={params.chatId} />
+          <ChatTitle chatId={chatId} />
         </ClientSideSuspense>
       </ErrorBoundary>
 
       <AiChat
         // Each chat is stored permanently and has a unique ID
-        chatId={params.chatId}
+        chatId={chatId}
         copilotId={process.env.NEXT_PUBLIC_LIVEBLOCKS_COPILOT_ID || undefined}
         className="grow mx-auto"
         components={{ Empty }}

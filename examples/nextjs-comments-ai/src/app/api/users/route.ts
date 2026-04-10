@@ -1,5 +1,10 @@
-import { getUser } from "@/database";
 import { NextRequest, NextResponse } from "next/server";
+import { getUser } from "@/database";
+
+/**
+ * Get users' info from their ID
+ * For `resolveUsers` in liveblocks.config.ts
+ */
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -10,7 +15,6 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.json(
-    userIds.map((userId) => getUser(userId)?.info || null),
-    { status: 200 }
+    userIds.map((userId) => getUser(userId)?.info || null)
   );
 }

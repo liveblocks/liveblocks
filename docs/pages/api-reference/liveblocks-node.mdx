@@ -13,7 +13,7 @@ for use in your Node.js back end.
 
 ## Liveblocks client [#Liveblocks-client]
 
-The `Liveblocks` client is new in 1.2, and offers access to our REST API.
+The `Liveblocks` client offers access to our REST API.
 
 ```ts showLineNumbers={false}
 import { Liveblocks } from "@liveblocks/node";
@@ -23,17 +23,438 @@ const liveblocks = new Liveblocks({
 });
 ```
 
-### Authorization
+### Authentication [#Authorization]
 
-To authorize your users with Liveblocks, you have the choice between two
+To authenticate your users with Liveblocks, you have the choice between two
 different APIs.
 
-- [`Liveblocks.prepareSession`](#access-tokens) is recommended for most
-  applications.
-- [`Liveblocks.identifyUser`](#id-tokens) is best if you’re using fine-grained
-  permissions with our REST API.
+- [`Liveblocks.identifyUser`](#id-tokens) ID token authentication is recommend
+  for most applications.
+- [`Liveblocks.prepareSession`](#access-tokens) Access token authentication is
+  best if you prefer handle permissions on your end, though it has
+  [limitations](/docs/authentication/access-token#limitations).
+
+#### Liveblocks.identifyUser [#id-tokens]
+
+Creates an ID token that is used to authenticate a user in your application.
+This is a wrapper around the
+[Get ID Token API](/docs/api-reference/rest-api-endpoints#post-identify-user)
+and returns the same response.
+
+```ts
+const { body, status } = await liveblocks.identifyUser({
+  // Required, the current user's ID
+  userId: "marie@example.com",
+});
+```
+
+<Banner>
+  Learn how to [get started with ID tokens](/docs/authentication).
+</Banner>
+
+A number of options are also available, enabling you to set up permissions and
+user metadata.
+
+```ts
+const { body, status } = await liveblocks.identifyUser(
+  {
+    // Required, the current user's ID
+    userId: "marie@example.com",
+
+    // Optional, only view resources on this organization
+    organizationId: "acme-corp",
+
+    // Optional, used to provision room access on group level
+    groupIds: ["marketing", "engineering"],
+  },
+  {
+    // Optional, custom user metadata
+    userInfo: {
+      name: "Marie",
+      color: "#00ff00",
+      avatar: "https://example.com/avatar/marie.jpg",
+    },
+  }
+);
+```
+
+<Banner title="Don't cache tokens" type="warning">
+
+Never cache your access token authentication endpoint, as your client will not
+function correctly. The Liveblocks client will cache results for you, only
+making requests to the endpoint if necessary, such as when the token has
+expired.
+
+</Banner>
+
+##### Granting ID token permissions
+
+You can pass additional options to `identifyUser`, enabling you to create
+complex [workspace permissions](/docs/authentication#permissions) and
+[room permissions](/docs/authentication#Room-permissions). For example, this
+user can only see resources in the `acme-corp` workspace, and they’re part of a
+`marketing` rooms group within it.
+
+```ts
+const { body, status } = await liveblocks.identifyUser({
+  // Required, the current user's ID
+  userId: "marie@example.com",
+
+  // Optional, only view resources on this workspace
+  // +++
+  organizationId: "acme-corp",
+  // +++
+
+  // Optional, used to provision room access on group level
+  // +++
+  groupIds: ["marketing"],
+  // +++
+});
+```
+
+<Banner>
+  Learn more about [ID token permissions](/docs/authentication#permissions).
+</Banner>
+
+##### Text editor user data
+
+When using
+[text editor integrations](/docs/ready-made-features/multiplayer#Text-editor-integrations),
+user data is inserted into their live cursor within the editor, showing their
+name and color. This data originates from the `userInfo` property.
+
+```ts
+const { body, status } = await liveblocks.identifyUser(
+  {
+    // Required, the current user's ID
+    userId: "marie@example.com",
+  },
+  {
+    // Optional, custom user metadata
+    userInfo: {
+      // Used in text editor live carets
+      // +++
+      name: "Marie",
+      color: "#00ff00",
+      // +++
+    },
+  }
+);
+```
+
+##### Custom user metadata
+
+You can pass additional options to `prepareSession`, enabling you to add custom
+user metadata to the session. This metadata can be accessed by all users in the
+room, and is useful for building features such as live avatar stacks.
+
+```ts
+const { body, status } = await liveblocks.identifyUser(
+  {
+    // Required, the current user's ID
+    userId: "marie@example.com",
+  },
+  {
+    // Optional, custom user metadata
+    userInfo: {
+      // Add custom properties to use on front end, e.g. avatar stacks
+      // +++
+      avatar: "https://example.com/avatar/marie.jpg",
+      // +++
+      // ...
+    },
+  }
+);
+```
+
+To access it on the front end, use hooks such as
+[`useSelf`](/docs/api-reference/liveblocks-react#useSelf) and
+[`useOthers`](/docs/api-reference/liveblocks-react#useOthers).
+
+```tsx
+const currentUser = useSelf();
+
+// "https://example.com/avatar/marie.jpg"
+console.log(currentUser.info.avatar);
+```
+
+##### How ID tokens work
+
+The purpose of this API is to help you implement your custom authentication back
+end (i.e. the _server_ part of the diagram). You use the
+`liveblocks.identifyUser()` API if you’d like to issue
+[ID tokens](/docs/authentication/id-token) from your back end. An ID token does
+not grant any permissions in the token directly. Instead, it only securely
+identifies your user, and then uses any permissions set via the [Permissions
+REST API][] to decide whether to allow the user on a room-by-room basis.
+
+Use this approach if you’d like Liveblocks to be the source of truth for your
+user’s permissions.
+
+<Banner title="What are ID tokens?">
+  Issuing identity tokens is like issuing _membership cards_. Anyone with a
+  membership card can try to enter a room, but your permissions will be checked
+  at the door. The Liveblocks servers perform this authorization, so your
+  permissions need to be set up front using the Liveblocks REST API.
+</Banner>
+
+<Figure>
+  <Image
+    src="/assets/id-token-auth-diagram.png"
+    alt="Auth diagram"
+    width={768}
+    height={576}
+  />
+</Figure>
+
+Implement your back end endpoint as follows:
+
+```ts showLineNumbers={false}
+const { body, status } = await liveblocks.identifyUser(
+  {
+    userId: "marie@example.com", // Required, user ID from your DB
+    groupIds: ["marketing", "engineering"],
+    // Optional, identify the user in a specific organization
+    organizationId: "acme-corp",
+  },
+
+  // Optional
+  {
+    userInfo: {
+      name: "Marie",
+      avatar: "https://example.com/avatar/marie.jpg",
+    },
+  }
+);
+
+return new Response(body, { status });
+```
+
+`userId` (required) is a string identifier to uniquely identify your user with
+Liveblocks. This value will be used when counting unique MAUs in your Liveblocks
+dashboard. You can refer to these user IDs in the [Permissions REST API][] when
+assigning group permissions.
+
+`groupIds` (optional) can be used to specify which groups this user belongs to.
+These are arbitrary identifiers that make sense to your app, and that you can
+refer to in the [Permissions REST API][] when assigning group permissions.
+
+`organizationId` (optional) is the organization for this user, will be set to
+`default` if not provided.
+
+`userInfo` (optional) is any custom JSON value, which you can use to attach
+static metadata to this user’s session. This will be publicly visible to all
+other people in the room. Useful for metadata like the user’s full name, or
+their avatar URL.
+
+##### ID tokens example
+
+Here’s a real-world example of ID tokens in a Next.js route handler/endpoint.
+You can find examples for other frameworks in our
+[authentication section](/docs/authentication/id-token).
+
+```ts file="Next.js"
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+export default async function auth(req, res) {
+  /**
+   * Implement your own security here.
+   *
+   * It's your responsibility to ensure that the caller of this endpoint
+   * is a valid user by validating the cookies or authentication headers
+   * and that it has access to the requested room.
+   */
+
+  // Get the current user from your database
+  const user = __getUserFromDB__(req);
+
+  // Create an ID token for the user
+  const { body, status } = await liveblocks.identifyUser(
+    {
+      userId: user.id,
+    },
+    {
+      userInfo: {
+        name: user.fullName,
+        color: user.favoriteColor,
+      },
+    }
+  );
+
+  return new Response(body, { status });
+}
+```
 
 #### Liveblocks.prepareSession [#access-tokens]
+
+Creates an access token that is used to authenticate a user in your application.
+This is a wrapper around the
+[Get Access Token API](/docs/api-reference/rest-api-endpoints#post-authorize-user)
+and returns the same response.
+
+```ts
+const session = liveblocks.prepareSession(
+  // Required, the current user's ID
+  "marie@example.com"
+);
+```
+
+<Banner>
+  Learn how to [get started with access
+  tokens](/docs/authentication/access-token).
+</Banner>
+
+A number of options are also available, enabling you to set up permissions and
+user metadata.
+
+```ts
+const session = liveblocks.prepareSession(
+  // Required, the current user's ID
+  "marie@example.com",
+  {
+    // Optional, only view resources on this organization
+    organizationId: "acme-corp",
+
+    // Optional, used to provision room access on group level
+    groupIds: ["marketing"],
+
+    // Optional, custom user metadata
+    userInfo: {
+      name: "Marie",
+      color: "#00ff00",
+      avatar: "https://example.com/avatar/marie.jpg",
+    },
+  }
+);
+```
+
+<Banner title="Don't cache tokens" type="warning">
+
+Never cache your access token authentication endpoint, as your client will not
+function correctly. The Liveblocks client will cache results for you, only
+making requests to the endpoint if necessary, such as when the token has
+expired.
+
+</Banner>
+
+##### Granting access token permissions
+
+Using `session.allow()`, you can grant full or read-only permissions to the user
+to select rooms. Wildcards can be used to enable granting permissions to
+multiple rooms at once using
+[naming patterns](/docs/authentication/access-token#Naming-pattern).
+
+```ts
+const session = liveblocks.prepareSession(
+  // Required, the current user's ID
+  "marie@example.com"
+);
+
+// Giving access to an individual rooms
+session.allow("room-id-1", session.FULL_ACCESS);
+
+// Giving read-only access to this room
+session.allow("room-id-2", session.READ_ACCESS);
+
+// Giving access to multiple rooms with a wildcard
+// `design-room-1`, `design-room-2`, etc.
+session.allow("design-room:*", session.FULL_ACCESS);
+```
+
+<Banner>
+  Learn more about [access token
+  permissions](/docs/authentication/access-token#permissions).
+</Banner>
+
+Additionally, you can pass additional options to `prepareSession`, enabling you
+to create complex permissions using
+[organizations](/docs/authentication/organizations) and
+[accesses](/docs/authentication/access-tokens/permissions). For example, this
+user can only see resources in the `acme-corp` organization, and they're part of
+a `marketing` group within it.
+
+```ts
+const session = liveblocks.prepareSession(
+  // Required, the current user's ID
+  "marie@example.com",
+  {
+    // Optional, only view resources on this organization
+    // +++
+    organizationId: "acme-corp",
+    // +++
+
+    // Optional, used to provision room access on group level
+    // +++
+    groupIds: ["marketing"],
+    // +++
+  }
+);
+```
+
+##### Text editor user data
+
+When using
+[text editor integrations](/docs/ready-made-features/multiplayer#Text-editor-integrations),
+user data is inserted into their live cursor within the editor, showing their
+name and color. This data originates from the `userInfo` property of the
+session.
+
+```ts
+const session = liveblocks.prepareSession(
+  // Required, the current user's ID
+  "marie@example.com",
+  {
+    // Optional, user metadata
+    userInfo: {
+      // Used in text editor live carets
+      // +++
+      name: "Marie",
+      color: "#00ff00",
+      // +++
+    },
+  }
+);
+```
+
+##### Custom user metadata
+
+You can pass additional options to `prepareSession`, enabling you to add custom
+user metadata to the session. This metadata can be accessed by all users in the
+room, and is useful for building features such as live avatar stacks.
+
+```ts
+const session = liveblocks.prepareSession(
+  // Required, the current user's ID
+  "marie@example.com",
+  {
+    // Optional, custom user metadata
+    userInfo: {
+      // Add custom properties to use on front end, e.g. avatar stacks
+      // +++
+      avatar: "https://example.com/avatar/marie.jpg",
+      // +++
+      // ...
+    },
+  }
+);
+```
+
+To access it on the front end, use hooks such as
+[`useSelf`](/docs/api-reference/liveblocks-react#useSelf) and
+[`useOthers`](/docs/api-reference/liveblocks-react#useOthers).
+
+```tsx
+const currentUser = useSelf();
+
+// "https://example.com/avatar/marie.jpg"
+console.log(currentUser.info.avatar);
+```
+
+##### How access tokens work
 
 The purpose of this API is to help you implement your custom authentication back
 end (i.e. the _server_ part of the diagram). You use the
@@ -72,6 +493,8 @@ To implement your back end, follow these steps:
             name: "Marie",
             avatar: "https://example.com/avatar/marie.jpg",
           },
+          // Optional, authenticate this user on a specific organization
+          organizationId: "acme-corp",
         }
       );
       ```
@@ -85,7 +508,7 @@ To implement your back end, follow these steps:
       publicly visible to all other people in the room. Useful for
       metadata like the user’s full name, or their avatar URL.
 
-      The `tenantId` (optional) is the tenant for this session, will be set to `default` if not provided.
+      The `organizationId` (optional) is the organization for this session, will be set to `default` if not provided.
 
     </StepContent>
 
@@ -172,112 +595,6 @@ export async function POST(request: Request) {
 }
 ```
 
-#### Liveblocks.identifyUser [#id-tokens]
-
-The purpose of this API is to help you implement your custom authentication back
-end (i.e. the _server_ part of the diagram). You use the
-`liveblocks.identifyUser()` API if you’d like to issue
-[ID tokens](/docs/authentication/id-token) from your back end. An ID token does
-not grant any permissions in the token directly. Instead, it only securely
-identifies your user, and then uses any permissions set via the [Permissions
-REST API][] to decide whether to allow the user on a room-by-room basis.
-
-Use this approach if you’d like Liveblocks to be the source of truth for your
-user’s permissions.
-
-<Banner title="What are ID tokens?">
-  Issuing identity tokens is like issuing _membership cards_. Anyone with a
-  membership card can try to enter a room, but your permissions will be checked
-  at the door. The Liveblocks servers perform this authorization, so your
-  permissions need to be set up front using the Liveblocks REST API.
-</Banner>
-
-<Figure>
-  <Image
-    src="/assets/id-token-auth-diagram.png"
-    alt="Auth diagram"
-    width={768}
-    height={576}
-  />
-</Figure>
-
-Implement your back end endpoint as follows:
-
-```ts showLineNumbers={false}
-const { body, status } = await liveblocks.identifyUser(
-  {
-    userId: "marie@example.com", // Required, user ID from your DB
-    groupIds: ["marketing", "engineering"],
-  },
-
-  // Optional
-  {
-    userInfo: {
-      name: "Marie",
-      avatar: "https://example.com/avatar/marie.jpg",
-    },
-  }
-);
-
-return new Response(body, { status });
-```
-
-`userId` (required) is a string identifier to uniquely identify your user with
-Liveblocks. This value will be used when counting unique MAUs in your Liveblocks
-dashboard. You can refer to these user IDs in the [Permissions REST API][] when
-assigning group permissions.
-
-`groupIds` (optional) can be used to specify which groups this user belongs to.
-These are arbitrary identifiers that make sense to your app, and that you can
-refer to in the [Permissions REST API][] when assigning group permissions.
-
-`userInfo` (optional) is any custom JSON value, which you can use to attach
-static metadata to this user’s session. This will be publicly visible to all
-other people in the room. Useful for metadata like the user’s full name, or
-their avatar URL.
-
-##### ID tokens example
-
-Here’s a real-world example of ID tokens in a Next.js route handler/endpoint.
-You can find examples for other frameworks in our
-[authentication section](/docs/authentication/id-token).
-
-```ts file="Next.js"
-import { Liveblocks } from "@liveblocks/node";
-
-const liveblocks = new Liveblocks({
-  secret: "{{SECRET_KEY}}",
-});
-
-export default async function auth(req, res) {
-  /**
-   * Implement your own security here.
-   *
-   * It's your responsibility to ensure that the caller of this endpoint
-   * is a valid user by validating the cookies or authentication headers
-   * and that it has access to the requested room.
-   */
-
-  // Get the current user from your database
-  const user = __getUserFromDB__(req);
-
-  // Create an ID token for the user
-  const { body, status } = await liveblocks.identifyUser(
-    {
-      userId: user.id,
-    },
-    {
-      userInfo: {
-        name: user.fullName,
-        color: user.favoriteColor,
-      },
-    }
-  );
-
-  return new Response(body, { status });
-}
-```
-
 ### Room
 
 #### Liveblocks.getRooms [#get-rooms]
@@ -326,8 +643,8 @@ const { data: rooms, nextCursor } = await liveblocks.getRooms({
     },
   },
 
-  // Optional, filter for rooms that are created for a specific tenant
-  tenantId: "my-tenant-id",
+  // Optional, authenticate this user on a specific organization
+  organizationId: "my-organization-id",
 
   // Optional, cursor used for pagination, use `nextCursor` from the previous page's response
   startingAfter: "L3YyL3Jvb21z...",
@@ -366,15 +683,9 @@ paginates your API requests.
 
 #### Liveblocks.iterRooms [#iter-rooms]
 
-Like `.getRooms()`, but returns an asynchronous iterator, which will help you
-iterate over all (matching) rooms in your project, without having to manually
-paginate over those results. List `.getRooms()`, but returns an asynchronous
-iterator, which will help you iterate over all (matching) rooms in your project,
-without having to manually paginate over those results. Returns a list of rooms
-that are in the current project. Works similarly to
-[`liveblocks.getRooms`](#get-rooms), but instead returns an asynchronous
-iterator, which helps you iterate over all selected rooms in your project,
-without having to manually paginate through the results.
+Works similarly to [`liveblocks.getRooms`](#get-rooms), but instead returns an
+asynchronous iterator, which helps you iterate over all selected rooms in your
+project, without having to manually paginate through the results.
 
 ```ts
 const roomsIterator = liveblocks.iterRooms();
@@ -419,6 +730,39 @@ The `query` option also allows you to pass a
 [query language](/docs/guides/how-to-filter-rooms-using-query-language) string
 instead of a `query` object.
 
+##### Mass deleting rooms
+
+You can use `iterRooms` to efficiently delete multiple rooms at once. This
+example shows how to delete rooms in batches of 50 concurrent deletions at a
+time:
+
+```ts
+const MAX_CONCURRENT = 50;
+const queue: Promise<void>[] = [];
+
+for await (const room of liveblocks.iterRooms({
+  // Optionally filter for certain rooms
+  // ...
+})) {
+  if (queue.length >= MAX_CONCURRENT) {
+    await Promise.race(queue);
+  }
+
+  const promise = liveblocks
+    .deleteRoom(room.id)
+    .finally(() => queue.splice(queue.indexOf(promise), 1));
+
+  queue.push(promise);
+}
+
+await Promise.all(queue);
+```
+
+This approach is useful when you need to delete a large number of rooms, as it
+automatically handles pagination and allows you to control the concurrency of
+deletions. You can use any of the filtering options shown above to select which
+rooms to delete.
+
 #### Liveblocks.createRoom [#post-rooms]
 
 Programmatically creates a new room from a room ID. The `defaultAccesses` option
@@ -460,6 +804,9 @@ const room = await liveblocks.createRoom("my-room-id", {
   metadata: {
     myRoomType: "whiteboard",
   },
+
+  // Optional, create it on a specific organization
+  organizationId: "acme-corp",
 });
 ```
 
@@ -523,6 +870,9 @@ const room = await liveblocks.getOrCreateRoom("my-room-id", {
   metadata: {
     myRoomType: "whiteboard",
   },
+
+  // Optional, create it on a specific organization
+  organizationId: "acme-corp",
 });
 ```
 
@@ -647,12 +997,100 @@ and returns no response.
 await liveblocks.deleteRoom("my-room-id");
 ```
 
+##### Mass deleting rooms
+
+If you need to delete multiple rooms at once, you can use
+[`liveblocks.iterRooms`](#iter-rooms) to efficiently iterate through rooms and
+delete them in batches. This example shows how to delete rooms in batches of 50
+concurrent deletions at a time:
+
+```ts
+const MAX_CONCURRENT = 50;
+const queue: Promise<void>[] = [];
+
+for await (const room of liveblocks.iterRooms({
+  // Optionally filter for certain rooms
+  // ...
+})) {
+  if (queue.length >= MAX_CONCURRENT) {
+    await Promise.race(queue);
+  }
+
+  const promise = liveblocks
+    .deleteRoom(room.id)
+    .finally(() => queue.splice(queue.indexOf(promise), 1));
+
+  queue.push(promise);
+}
+
+await Promise.all(queue);
+```
+
+You can use any of the filtering options available in
+[`liveblocks.iterRooms`](#iter-rooms) to select which rooms to delete, such as
+filtering by metadata, room ID prefix, or user/group access.
+
+#### Liveblocks.prewarmRoom [#get-rooms-roomId-prewarm]
+
+Speeds up connecting to a room for the next 10 seconds. Use this when you know a
+user will be connecting to a room with
+[`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider) or
+[`enterRoom`](/docs/api-reference/liveblocks-client#Client.enterRoom) within 10
+seconds, and the room will load quicker. This is a wrapper around the
+[Prewarm Room API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-prewarm)
+and returns no response.
+
+```ts
+await liveblocks.prewarmRoom("my-room-id");
+```
+
+##### Warm a room before navigating
+
+Triggering a room directly before a user navigates to a room is an easy to way
+use this API. Here’s a Next.js server actions example, showing how to trigger
+prewarming with `onPointerDown`.
+
+```ts title="actions.ts"
+"use server";
+
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+export async function prewarmRoom(roomId: string) {
+  // +++
+  await liveblocks.prewarmRoom(roomId);
+  // +++
+}
+```
+
+```tsx title="RoomLink.tsx"
+"use client";
+
+import { prewarmRoom } from "../actions";
+import Link from "next/link";
+
+export function JoinButton({ roomId }: { roomId: string }) {
+  return (
+    // +++
+    <Link href={`/rooms/${roomId}`} onPointerDown={() => prewarmRoom(roomId)}>
+      // +++
+      {roomId}
+    </Link>
+  );
+}
+```
+
+`onPointerDown` is slightly quicker than `onClick` because it triggers before
+the user releases their pointer.
+
 #### Liveblocks.updateRoomId [#post-rooms-update-roomId]
 
 Permanently updates a room’s ID. `newRoomId` will replace `currentRoomId`. Note
-that this will disconnect connected users from the room, but this currentRoomId
-be worked around. Throws an error if the room isn’t found. This is a wrapper
-around the
+that this will disconnect connected users from the room, but this can be worked
+around. Throws an error if the room isn’t found. This is a wrapper around the
 [Update Room API](/docs/api-reference/rest-api-endpoints#post-rooms-update-roomId)
 and returns the same response.
 
@@ -738,6 +1176,37 @@ useEventListener(({ event, user, connectionId }) => {
 });
 ```
 
+#### Liveblocks.setPresence [#post-rooms-roomId-presence]
+
+Sets ephemeral presence for a user in a room without requiring a WebSocket
+connection. The presence data automatically expires after the specified TTL
+(time-to-live). This is useful for scenarios like showing an AI agent’s presence
+in a room. The presence is broadcast to all connected users in the room. This is
+a wrapper around the
+[Set Presence API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-presence)
+and returns no response on success.
+
+```ts
+await liveblocks.setPresence("my-room-id", {
+  userId: "agent-123",
+  data: {
+    status: "active",
+    cursor: { x: 100, y: 200 },
+  },
+  userInfo: {
+    name: "AI Assistant",
+    avatar: "https://example.com/avatar.png",
+  },
+  ttl: 60, // optional, 2–3599 seconds
+});
+```
+
+- **userId** (required): The ID of the user to set presence for.
+- **data** (required): Presence data as a JSON object.
+- **userInfo** (optional): Metadata about the user or agent
+- **ttl** (optional): Time-to-live in seconds (minimum 2, maximum 3599).
+  Defaults to 60. After this duration, the presence expires automatically.
+
 ### Groups
 
 Groups allow you to manage users for group mentions in comments and text
@@ -753,10 +1222,9 @@ returns the same response.
 const group = await liveblocks.createGroup({
   groupId: "engineering-team",
   memberIds: ["alice@example.com", "bob@example.com"],
-  tenantId: "acme-corp",
 });
 
-// { type: "group", id: "engineering-team", tenantId: "acme-corp", createdAt: "...", updatedAt: "...", scopes: { mention: true }, members: [...] }
+// { type: "group", id: "engineering-team", organizationId: "acme-corp", createdAt: "...", updatedAt: "...", scopes: { mention: true }, members: [...] }
 console.log(group);
 ```
 
@@ -768,8 +1236,8 @@ const group = await liveblocks.createGroup({
   // Optional, add members when creating the group
   memberIds: ["charlie@example.com"],
 
-  // Optional, set tenant ID for multi-tenant applications
-  tenantId: "company-123",
+  // Optional, create it on a specific organization
+  organizationId: "company-123",
 
   // Optional, set group scopes (defaults to { mention: true })
   scopes: { mention: true },
@@ -778,7 +1246,7 @@ const group = await liveblocks.createGroup({
 
 #### Liveblocks.getGroup [#get-group]
 
-Returns a group by its ID. Throws an error if the group isn't found. This is a
+Returns a group by its ID. Throws an error if the group isn’t found. This is a
 wrapper around the
 [Get Group API](/docs/api-reference/rest-api-endpoints#get-groups-groupId) and
 returns the same response.
@@ -788,7 +1256,7 @@ const group = await liveblocks.getGroup({
   groupId: "engineering-team",
 });
 
-// { type: "group", id: "engineering-team", tenantId: "acme-corp", createdAt: "...", updatedAt: "...", scopes: { mention: true }, members: [...] }
+// { type: "group", id: "engineering-team", organizationId: "acme-corp", createdAt: "...", updatedAt: "...", scopes: { mention: true }, members: [...] }
 console.log(group);
 ```
 
@@ -802,7 +1270,7 @@ the same response.
 const { data: groups, nextCursor } = await liveblocks.getGroups();
 
 // A list of groups
-// [{ type: "group", id: "engineering-team", tenantId: "acme-corp", createdAt: "...", updatedAt: "...", scopes: { mention: true }, members: [...] }, ...]
+// [{ type: "group", id: "engineering-team", organizationId: "acme-corp", createdAt: "...", updatedAt: "...", scopes: { mention: true }, members: [...] }, ...]
 console.log(groups);
 
 // A pagination cursor for the next page
@@ -860,7 +1328,7 @@ const updatedGroup = await liveblocks.addGroupMembers({
   memberIds: ["david@example.com", "eve@example.com"],
 });
 
-// { type: "group", id: "engineering-team", tenantId: "acme-corp", createdAt: "...", updatedAt: "...", scopes: { mention: true }, members: [...] }
+// { type: "group", id: "engineering-team", organizationId: "acme-corp", createdAt: "...", updatedAt: "...", scopes: { mention: true }, members: [...] }
 console.log(updatedGroup);
 ```
 
@@ -876,13 +1344,13 @@ const updatedGroup = await liveblocks.removeGroupMembers({
   memberIds: ["david@example.com"],
 });
 
-// { type: "group", id: "engineering-team", tenantId: "acme-corp", createdAt: "...", updatedAt: "...", scopes: { mention: true }, members: [...] }
+// { type: "group", id: "engineering-team", organizationId: "acme-corp", createdAt: "...", updatedAt: "...", scopes: { mention: true }, members: [...] }
 console.log(updatedGroup);
 ```
 
 #### Liveblocks.deleteGroup [#delete-group]
 
-Deletes a group. If the group doesn't exist, no error will be thrown. This is a
+Deletes a group. If the group doesn’t exist, no error will be thrown. This is a
 wrapper around the
 [Delete Group API](/docs/api-reference/rest-api-endpoints#delete-groups-groupId)
 and returns no response.
@@ -1354,146 +1822,51 @@ const binaryYjsUpdate = await liveblocks.getYjsDocumentAsBinaryUpdate(
 Read the [Yjs documentation](https://docs.yjs.dev/api/document-updates) to learn
 more about using binary updates.
 
-### Schema validation
+### Attachments
 
-#### Liveblocks.createSchema [#post-create-new-schema]
+#### Liveblocks.getAttachment [#get-rooms-roomId-attachments-attachmentId]
 
-Creates a schema that can be used to enforce a room’s Storage data structure.
-The schema consists of a unique name, and a body which specifies the data shape
-of the room in Liveblocks
-[schema syntax](/docs/platform/schema-validation/syntax). This is a wrapper
-around the
-[Create Schema API](/docs/api-reference/rest-api-endpoints#post-create-new-schema)
-and returns the same response.
+Returns an attachment's metadata and a presigned download URL. Throws an error
+if the room or attachment isn't found.
 
 ```ts
-const schemaBody = `
-  type Storage {
-    names: LiveList<string>
-  }
-`;
+const attachment = await liveblocks.getAttachment({
+  roomId: "my-room-id",
+  attachmentId: "at_d75sF3...",
+});
 
-const schema = await liveblocks.createSchema("my-schema-name", schemaBody);
+// { type: "attachment", id: "at_d75sF3...", name: "document.pdf", ... }
+console.log(attachment);
 
-// { id: "my-schema-name@1", name: "my-schema-name", version: 1, ... }
-console.log(schema);
+// The presigned URL to download the attachment
+console.log(attachment.url);
 ```
 
-Read the [schema validation](/docs/platform/schema-validation) page to learn
-more.
+Returns an `AttachmentWithUrl` object with the following properties:
 
-#### Liveblocks.getSchema [#get-create-new-schema]
-
-Returns a schema from its ID. A schema’s ID is a combination of its name and
-version, for example the ID for version `1` of `my-schema-name` is
-`my-schema-name@1`. This is a wrapper around the
-[Get Schema API](/docs/api-reference/rest-api-endpoints#get-create-new-schema)
-and returns the same response.
-
-```ts
-const updatedBody = `
-  type Storage {
-    names: LiveMap<string, string>
-  }
-`;
-
-const schema = await liveblocks.getSchema("my-schema-name@1", updatedBody);
-
-// { id: "my-schema-name@1", name: "my-schema-name", version: 1, ... }
-console.log(schema);
-```
-
-Read the [schema validation](/docs/platform/schema-validation) page to learn
-more.
-
-#### Liveblocks.updateSchema [#put-update-new-schema]
-
-Updates a schema’s body and increments its version. A schema’s body specifies
-the data shape of the room in Liveblocks
-[schema syntax](/docs/platform/schema-validation/syntax). Find the schema by its
-ID, a combination of its name and version, for example the ID for version `1` of
-`my-schema-name` is `my-schema-name@1`. This is a wrapper around the
-[Update Schema API](/docs/api-reference/rest-api-endpoints#put-update-new-schema)
-and returns the same response.
-
-```ts
-const schema = await liveblocks.updateSchema("my-schema-name@1");
-
-// { id: "my-schema-name@1", name: "my-schema-name", version: 1, ... }
-console.log(schema);
-```
-
-Read the [schema validation](/docs/platform/schema-validation) page to learn
-more.
-
-#### Liveblocks.deleteSchema [#delete-a-schema]
-
-Deletes a schema. This is only allowed if the schema is not attached to a room.
-Find the schema by its ID, a combination of its name and version, for example
-the ID for version `1` of `my-schema-name` is `my-schema-name@1`. This is a
-wrapper around the
-[Delete Schema API](/docs/api-reference/rest-api-endpoints#delete-a-schema) and
-returns no response.
-
-```ts
-await liveblocks.deleteSchema("my-schema-name@1");
-```
-
-Read the [schema validation](/docs/platform/schema-validation) page to learn
-more.
-
-#### Liveblocks.getSchemaByRoomId [#get-new-schema]
-
-Returns the schema attached to a room. Throws an error if the room isn’t found.
-This is a wrapper around the
-[Get Schema By Room API](/docs/api-reference/rest-api-endpoints#get-new-schema)
-and returns the same response.
-
-```ts
-const schema = await liveblocks.getSchemaByRoomId("my-room-id");
-
-// { id: "my-schema-name@1", name: "my-schema-name", version: 1, ... }
-console.log(schema);
-```
-
-Read the [schema validation](/docs/platform/schema-validation) page to learn
-more.
-
-#### Liveblocks.attachSchemaToRoom [#post-attach-schema-to-room]
-
-Attaches a schema to a room, and instantly enables runtime schema validation in
-it. Attach the schema by its ID, a combination of its name and version, for
-example the ID for version `1` of `my-schema-name` is `my-schema-name@1`. This
-is a wrapper around the
-[Attach Schema to a Room API](/docs/api-reference/rest-api-endpoints#post-attach-schema-to-room)
-and returns the same response.
-
-If the current contents of the room’s Storage do not match the schema, attaching
-will fail and the error message will give details on why the schema failed to
-attach. It’ll also throw an error if the room isn’t found.
-
-```ts
-const schema = await liveblocks.attachSchemaToRoom(
-  "my-room-id",
-  "my-schema-name@1"
-);
-
-// { id: "my-schema-name@1", name: "my-schema-name", version: 1, ... }
-console.log(schema);
-```
-
-Read the [schema validation](/docs/platform/schema-validation) page to learn
-more.
-
-#### Liveblocks.detachSchemaFromRoom [#delete-detach-schema-to-room]
-
-Detaches a schema from a room. This is a wrapper around the
-[Detach Schema from a Room API](/docs/api-reference/rest-api-endpoints#post-detach-schema-to-room)
-and returns no response.
-
-```ts
-await liveblocks.detachSchemaFromRoom("my-room-id");
-```
+<PropertiesList>
+  <PropertiesListItem name="type" type={'"attachment"'}>
+    The type of the object.
+  </PropertiesListItem>
+  <PropertiesListItem name="id" type="string">
+    The attachment ID (starts with "at_").
+  </PropertiesListItem>
+  <PropertiesListItem name="name" type="string">
+    The name of the attachment file.
+  </PropertiesListItem>
+  <PropertiesListItem name="mimeType" type="string">
+    The MIME type of the attachment.
+  </PropertiesListItem>
+  <PropertiesListItem name="size" type="number">
+    The size of the attachment in bytes.
+  </PropertiesListItem>
+  <PropertiesListItem name="url" type="string">
+    A presigned URL to download the attachment.
+  </PropertiesListItem>
+  <PropertiesListItem name="expiresAt" type="string">
+    The expiration time of the presigned URL.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### Comments
 
@@ -1627,6 +2000,12 @@ const thread = await liveblocks.createThread({
       // Optional, when the comment was created.
       createdAt: new Date(),
 
+      // Optional, custom comment metadata
+      metadata: {
+        tag: "important",
+        spam: false,
+      },
+
       // The comment's body, uses the `CommentBody` type
       body: {
         version: 1,
@@ -1715,6 +2094,67 @@ const editedMetadata = await liveblocks.editThreadMetadata({
 });
 
 // { title: "My thread title", page: 3, pinned: true }
+console.log(editedMetadata);
+```
+
+#### Liveblocks.editCommentMetadata [#post-rooms-roomId-threads-threadId-comments-commentId-metadata]
+
+Updates the metadata of a specific comment within a thread. This method allows
+you to modify the metadata of a comment, including user information and the date
+of the last update. Throws an error if the room, thread, or comment isn’t found.
+This is a wrapper around the
+[Update Comment Metadata API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads-threadId-comments-commentId-metadata)
+and returns the updated metadata.
+
+```ts
+const editedMetadata = await liveblocks.editCommentMetadata({
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
+  commentId: "cm_agH76a...",
+
+  data: {
+    metadata: {
+      spam: false,
+    },
+    userId: "stacy@example.com",
+    updatedAt: new Date(), // Optional
+  },
+});
+
+// { spam: false }
+console.log(editedMetadata);
+```
+
+Metadata can be a `string`, `number`, or `boolean`. You can also use `null` to
+remove metadata from a comment. Here’s an example using every option.
+
+```ts
+const editedMetadata = await liveblocks.editCommentMetadata({
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
+  commentId: "cm_agH76a...",
+
+  data: {
+    // Custom metadata
+    metadata: {
+      // Metadata can be a string, number, or boolean
+      tag: "important",
+      priority: 2,
+      spam: true,
+
+      // Remove metadata with null
+      assignedTo: null,
+    },
+
+    // The ID of the user that updated the metadata
+    userId: "stacy@example.com",
+
+    // Optional, the time the user updated the metadata
+    updatedAt: new Date(),
+  },
+});
+
+// { tag: "important", priority: 2, flagged: true }
 console.log(editedMetadata);
 ```
 
@@ -1867,7 +2307,7 @@ await liveblocks.updateRoomSubscriptionSettings({
 });
 
 // 2. Disables notifications just for this thread, "th_d75sF3..."
-await liveblocks.unsubscribeToThread({
+await liveblocks.unsubscribeFromThread({
   roomId,
   threadId: "th_d75sF3...",
   data: { userId },
@@ -1906,7 +2346,7 @@ console.log(subscriptions);
 Creates a new comment in a specific thread within a room. This method allows
 users to add comments to a conversation thread, specifying the user who made the
 comment and the content of the comment. This method is a wrapper around the
-[Get Comment API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads-threadId-comments)
+[Create Comment API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads-threadId-comments)
 and returns the new comment.
 
 ```ts
@@ -1958,7 +2398,7 @@ const comment = await liveblocks.createComment({
 ```
 
 This method has a number of options, including the option to add a custom
-creation date to the comment.
+creation date and metadata to the comment.
 
 ```ts
 const comment = await liveblocks.createComment({
@@ -1977,8 +2417,14 @@ const comment = await liveblocks.createComment({
     // The ID of the user that created the comment
     userId: "adrien@example.com",
 
-    // The time the comment was created
+    // Optional, the time the comment was created
     createdAt: new Date(),
+
+    // Optional, custom comment metadata
+    metadata: {
+      tag: "important",
+      reviewed: false,
+    },
   },
 });
 ```
@@ -2017,14 +2463,22 @@ const editedComment = await liveblocks.editComment({
   commentId: "cm_agH76a...",
 
   data: {
+    userId: "alicia@example.com",
     body: {
       version: 1,
       content: [
         /* The comment's body text goes here, see below */
       ],
     },
-    userId: "alicia@example.com",
-    createdAt: new Date(), // Optional
+
+    // Optional, the time the comment was edited
+    editedAt: new Date(),
+
+    // Optional, custom comment metadata
+    metadata: {
+      tag: "important",
+      spam: false,
+    },
   },
 });
 
@@ -2036,9 +2490,10 @@ A comment’s body is an array of paragraphs, each containing child nodes. Here�
 an example of how to construct a comment’s body, which can be submitted under
 `data.body`.
 
-```tsx highlight="3-11,19"
+```tsx
 import { CommentBody } from "@liveblocks/node";
 
+// +++
 const body: CommentBody = {
   version: 1,
   content: [
@@ -2048,21 +2503,8 @@ const body: CommentBody = {
     },
   ],
 };
+// +++
 
-const comment = await liveblocks.createComment({
-  roomId: "my-room-id",
-  threadId: "th_d75sF3...",
-
-  data: {
-    // The comment's body, uses the `CommentBody` type
-    body,
-
-    // ...
-  },
-});
-```
-
-```ts
 const editedComment = await liveblocks.editComment({
   roomId: "my-room-id",
   threadId: "th_d75sF3...",
@@ -2070,23 +2512,13 @@ const editedComment = await liveblocks.editComment({
 
   data: {
     // The comment's body, uses the `CommentBody` type
-    body: {
-      version: 1,
-      content: [
-        /* The comment's body text goes here, see above */
-      ],
-    },
+    // +++
+    body,
+    // +++
 
-    // The ID of the user that edited the comment
-    userId: "alicia@example.com",
-
-    // Optional, the time the comment was edited
-    editedAt: new Date(),
+    // ...
   },
 });
-
-// { type: "comment", threadId: "th_d75sF3...", ... }
-console.log(editedComment);
 ```
 
 #### Liveblocks.deleteComment [#delete-rooms-roomId-threads-threadId-comments-commentId]
@@ -2265,6 +2697,9 @@ wrapper around the
 const { data: subscriptionSettings, nextCursor } =
   await liveblocks.getUserRoomSubscriptionSettings({
     userId: "steven@example.com",
+
+    // Optional, filter for a specific organization
+    organizationId: "acme-corp",
   });
 
 console.log(subscriptionSettings);
@@ -2278,6 +2713,172 @@ if (nextCursor) {
     startingAfter: nextCursor,
   });
 }
+```
+
+### Feeds
+
+#### Liveblocks.getFeeds [#get-rooms-roomId-feeds]
+
+Returns a list of feeds in a room. This is a wrapper around the
+[Get Room Feeds API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-feeds)
+and returns the same response.
+
+```ts
+const { data: feeds } = await liveblocks.getFeeds({
+  roomId: "my-room-id",
+});
+
+// [{ feedId: "feed-1", metadata: {...}, timestamp: 1234567890 }, ...]
+console.log(feeds);
+```
+
+#### Liveblocks.createFeed [#post-rooms-roomId-feed]
+
+Creates a new feed in a room. This is a wrapper around the
+[Create Feed API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-feed)
+and returns the created feed.
+
+```ts
+const feed = await liveblocks.createFeed({
+  roomId: "my-room-id",
+  feedId: "my-feed-id",
+
+  // Optional, custom metadata for the feed
+  metadata: {
+    name: "My Feed",
+    channel: true,
+  },
+
+  // Optional, timestamp in milliseconds. Defaults to current time if not provided
+  timestamp: Date.now(),
+});
+
+// { feedId: "my-feed-id", metadata: {...}, timestamp: 1234567890 }
+console.log(feed);
+```
+
+#### Liveblocks.getFeed [#get-rooms-roomId-feeds-feedId]
+
+Returns a feed by its ID. This is a wrapper around the
+[Get Feed API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-feeds-feedId)
+and returns the same response.
+
+```ts
+const feed = await liveblocks.getFeed({
+  roomId: "my-room-id",
+  feedId: "my-feed-id",
+});
+
+// { feedId: "my-feed-id", metadata: {...}, timestamp: 1234567890 }
+console.log(feed);
+```
+
+#### Liveblocks.updateFeed [#patch-rooms-roomId-feeds-feedId]
+
+Updates the metadata of a feed. This is a wrapper around the
+[Update Feed API](/docs/api-reference/rest-api-endpoints#patch-rooms-roomId-feeds-feedId).
+
+```ts
+await liveblocks.updateFeed({
+  roomId: "my-room-id",
+  feedId: "my-feed-id",
+  metadata: {
+    name: "Updated Feed Name",
+    updated: new Date().toISOString(),
+  },
+});
+```
+
+#### Liveblocks.deleteFeed [#delete-rooms-roomId-feeds-feedId]
+
+Deletes a feed. This is a wrapper around the
+[Delete Feed API](/docs/api-reference/rest-api-endpoints#delete-rooms-roomId-feeds-feedId).
+
+```ts
+await liveblocks.deleteFeed({
+  roomId: "my-room-id",
+  feedId: "my-feed-id",
+});
+```
+
+#### Liveblocks.getFeedMessages [#get-rooms-roomId-feeds-feedId-messages]
+
+Returns a list of messages in a feed. This is a wrapper around the
+[Get Feed Messages API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-feeds-feedId-messages)
+and returns the same response.
+
+```ts
+const { data: messages } = await liveblocks.getFeedMessages({
+  roomId: "my-room-id",
+  feedId: "my-feed-id",
+});
+
+// [{ id: "msg-1", timestamp: 1234567890, data: {...} }, ...]
+console.log(messages);
+```
+
+#### Liveblocks.createFeedMessage [#post-rooms-roomId-feeds-feedId-messages]
+
+Creates a new message in a feed. This is a wrapper around the
+[Create Feed Message API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-feeds-feedId-messages)
+and returns the created message.
+
+```ts
+const message = await liveblocks.createFeedMessage({
+  roomId: "my-room-id",
+  feedId: "my-feed-id",
+
+  // The message data
+  data: {
+    role: "user",
+    content: "Hello, world!",
+  },
+
+  // Optional, custom message ID. One will be generated if not provided
+  id: "my-message-id",
+
+  // Optional, timestamp in milliseconds. Defaults to current time if not provided
+  timestamp: Date.now(),
+});
+
+// { id: "my-message-id", timestamp: 1234567890, data: {...} }
+console.log(message);
+```
+
+#### Liveblocks.updateFeedMessage [#patch-rooms-roomId-feeds-feedId-messages-messageId]
+
+Updates a feed message. This is a wrapper around the
+[Update Feed Message API](/docs/api-reference/rest-api-endpoints#patch-rooms-roomId-feeds-feedId-messages-messageId).
+
+```ts
+await liveblocks.updateFeedMessage({
+  roomId: "my-room-id",
+  feedId: "my-feed-id",
+  messageId: "my-message-id",
+
+  // The message data
+  data: {
+    role: "user",
+    content: "Updated content",
+  },
+
+  // Optional, timestamp in milliseconds. Helps prevents race conditions,
+  // messages that arrive after a newer message are ignored
+  updatedAt: Date.now(),
+});
+```
+
+#### Liveblocks.deleteFeedMessage [#delete-rooms-roomId-feeds-feedId-messages-messageId]
+
+Deletes a feed message. This is a wrapper around the
+[Delete Feed Message API](/docs/api-reference/rest-api-endpoints#delete-rooms-roomId-feeds-feedId-messages-messageId).
+
+```ts
+await liveblocks.deleteFeedMessage({
+  roomId: "my-room-id",
+  feedId: "my-feed-id",
+  messageId: "my-message-id",
+});
 ```
 
 ### Notifications
@@ -2300,6 +2901,9 @@ const { data: unreadInboxNotifications, nextCursor } =
   await liveblocks.getInboxNotifications({
     userId: "steven@example.com",
     query: { unread: true },
+
+    // Optional, filter for a specific organization
+    organizationId: "acme-corp",
   });
 ```
 
@@ -2343,7 +2947,11 @@ inbox notifications, without having to manually paginate through the results.
 ```ts
 const userId = "steven@example.com";
 
-for await (const item of liveblocks.iterInboxNotifications({ userId })) {
+for await (const item of liveblocks.iterInboxNotifications({
+  userId,
+  // Optional, filter for a specific organization
+  organizationId: "acme-corp",
+})) {
   console.log(item.id); // in_3dH7sF3...
   console.log(item.kind); // "thread", "textMention", ...
 }
@@ -2371,7 +2979,8 @@ console.log(inboxNotification);
 Triggers a custom inbox notification. `kind` must start with a `$`, and
 represents the type of notification. `activityData` is used to send custom data
 with the notification, and properties can have `string`, `number`, or `boolean`
-values. This is a wrapper around the
+values. Notifications [can be batched](#Batching-custom-notifications). This is
+a wrapper around the
 [Trigger Inbox Notification API](/docs/api-reference/rest-api-endpoints#post-inbox-notifications-trigger).
 
 ```ts
@@ -2395,6 +3004,9 @@ await liveblocks.triggerInboxNotification({
 
   // Optional, define the room ID the notification was sent from
   roomId: "my-room-id",
+
+  // Optional, trigger it for a specific organization
+  organizationId: "acme-corp",
 });
 ```
 
@@ -2421,6 +3033,65 @@ declare global {
 }
 ```
 
+##### Batching custom notifications
+
+You can configure a custom notification kind to have batching enabled. When it’s
+enabled, triggering an inbox notification activity for a specific `subjectId`,
+will update the existing inbox notification instead of creating a new one.
+
+To use this, you must first
+[enable batching in the dashboard](/docs/ready-made-features/notifications/concepts#Notification-batching).
+Next, trigger a notification with the same `subjectId` as an existing
+notification, and the result will be added to the `activityData` array.
+
+```ts
+const options = {
+  userId: "steven@example.com",
+  kind: "$fileUploaded",
+  subjectId: "my-file",
+};
+
+await liveblocks.triggerInboxNotification({
+  ...options,
+
+  // +++
+  activityData: {
+    status: "processing",
+  },
+  // +++
+});
+
+await liveblocks.triggerInboxNotification({
+  ...options,
+
+  // +++
+  activityData: {
+    status: "complete",
+  },
+  // +++
+});
+
+const { data: inboxNotifications } = await liveblocks.getInboxNotifications({
+  userId: "steven@example.com",
+});
+
+// {
+//   id: "in_3dH7sF3...",
+//   kind: "$fileUploaded",
+// +++
+//   activities: [
+//     { status: "processing" },
+//     { status: "complete" },
+//   ],
+// +++
+//   ...
+// }
+console.log(inboxNotifications[0]);
+```
+
+An inbox notification can have up to 50 activities, if you exceed this number, a
+new inbox notification will be created.
+
 #### Liveblocks.deleteInboxNotification [#delete-users-userId-inboxNotifications-inboxNotificationId]
 
 Deletes a user’s inbox notification. This is a wrapper around the
@@ -2441,6 +3112,8 @@ Deletes all the user’s inbox notifications. This is a wrapper around the
 ```ts
 await liveblocks.deleteAllInboxNotifications({
   userId: "steven@example.com",
+  // Optional, delete for a specific organization
+  organizationId: "acme-corp",
 });
 ```
 
@@ -2613,6 +3286,9 @@ const copilot = await liveblocks.createAiCopilot({
   // Optional, additional knowledge context for the copilot
   knowledgePrompt: "Use our company's style guide when providing examples.",
 
+  // Optional, always retrieve knowledge sources on each query
+  alwaysUseKnowledge: true,
+
   // Required, the AI provider to use
   provider: "openai",
 
@@ -2626,6 +3302,10 @@ const copilot = await liveblocks.createAiCopilot({
   providerOptions: {
     openai: {
       reasoningEffort: "low",
+      // Optional, restrict web search to specific domains for OpenAI
+      webSearch: {
+        allowedDomains: ["docs.liveblocks.io", "example.com"],
+      },
     },
   },
 
@@ -2657,9 +3337,45 @@ const copilot = await liveblocks.createAiCopilot({
 });
 ```
 
+You can also configure Anthropic or Google providers with provider-specific
+options:
+
+```ts
+// Anthropic example
+await liveblocks.createAiCopilot({
+  name: "Anthropic Helper",
+  systemPrompt: "You are a helpful assistant.",
+  provider: "anthropic",
+  providerModel: "claude-3-5-sonnet-latest",
+  providerApiKey: "sk-...",
+  providerOptions: {
+    anthropic: {
+      thinking: { type: "disabled" },
+      webSearch: {
+        allowedDomains: ["example.com"],
+      },
+    },
+  },
+});
+
+// Google example
+await liveblocks.createAiCopilot({
+  name: "Gemini Helper",
+  systemPrompt: "You are a helpful assistant.",
+  provider: "google",
+  providerModel: "gemini-2.5-pro",
+  providerApiKey: "sk-...",
+  providerOptions: {
+    google: {
+      thinkingConfig: { thinkingBudget: 2000 },
+    },
+  },
+});
+```
+
 #### Liveblocks.getAiCopilot [#get-ai-copilot]
 
-Returns an AI copilot by its ID. Throws an error if the copilot isn't found.
+Returns an AI copilot by its ID. Throws an error if the copilot isn’t found.
 This is a wrapper around the
 [Get AI Copilot API](/docs/api-reference/rest-api-endpoints#get-ai-copilot) and
 returns the same response.
@@ -2673,8 +3389,8 @@ console.log(copilot);
 
 #### Liveblocks.updateAiCopilot [#update-ai-copilot]
 
-Updates an existing AI copilot's configuration. You only need to pass the
-properties you want to update. Throws an error if the copilot isn't found. This
+Updates an existing AI copilot’s configuration. You only need to pass the
+properties you want to update. Throws an error if the copilot isn’t found. This
 is a wrapper around the
 [Update AI Copilot API](/docs/api-reference/rest-api-endpoints#update-ai-copilot)
 and returns the same response.
@@ -2705,7 +3421,11 @@ const updatedCopilot = await liveblocks.updateAiCopilot("co_abc123...", {
   // Optional, update the knowledge prompt
   knowledgePrompt: "Reference our latest guidelines.",
 
-  // Optional, update provider-specific options
+  // Optional, always retrieve knowledge sources on each query
+  alwaysUseKnowledge: true,
+
+  // Optional, update provider-specific options (replaces the entire nested options object)
+  // Set to null to clear options
   providerOptions: null,
 
   // Optional, update model settings
@@ -2716,7 +3436,34 @@ const updatedCopilot = await liveblocks.updateAiCopilot("co_abc123...", {
 });
 ```
 
-Certain properties can be set to `null` to clear them from the copilot's
+You can also update provider options. When updating `providerOptions`, it fully
+replaces the previous nested options (no deep merge):
+
+```ts
+// Update OpenAI provider options (replaces prior options)
+await liveblocks.updateAiCopilot("co_abc123...", {
+  provider: "openai",
+  providerOptions: {
+    openai: {
+      reasoningEffort: "medium",
+      webSearch: { allowedDomains: ["docs.liveblocks.io"] },
+    },
+  },
+});
+
+// Update Anthropic thinking/web search settings
+await liveblocks.updateAiCopilot("co_abc123...", {
+  provider: "anthropic",
+  providerOptions: {
+    anthropic: {
+      thinking: { type: "enabled", budgetTokens: 2000 },
+      webSearch: { maxUses: 2 },
+    },
+  },
+});
+```
+
+Certain properties can be set to `null` to clear them from the copilot’s
 configuration. This includes `description`, `knowledgePrompt`, `settings`, and
 `providerOptions`.
 
@@ -2733,16 +3480,16 @@ const updatedCopilot = await liveblocks.updateAiCopilot("co_abc123...", {
 });
 ```
 
-The method returns a 422 response if the update doesn't apply due to validation
+The method returns a 422 response if the update doesn’t apply due to validation
 failures. For example, if the existing copilot uses the "openai" provider and
 you attempt to update the provider model to an incompatible value for the
-provider, like "gemini-2.5-pro", you'll receive a 422 response with an error
+provider, like "gemini-2.5-pro", you’ll receive a 422 response with an error
 message explaining where the validation failed.
 
 #### Liveblocks.deleteAiCopilot [#delete-ai-copilot]
 
 Deletes an AI copilot by its ID. A deleted copilot is no longer accessible and
-cannot be restored. Throws an error if the copilot isn't found. This is a
+cannot be restored. Throws an error if the copilot isn’t found. This is a
 wrapper around the
 [Delete AI Copilot API](/docs/api-reference/rest-api-endpoints#delete-ai-copilot)
 and returns no response.
@@ -2848,7 +3595,7 @@ const { data: sources, nextCursor } = await liveblocks.getKnowledgeSources({
 #### Liveblocks.getKnowledgeSource [#get-knowledge-source]
 
 Returns a specific knowledge source by its ID. Throws an error if the knowledge
-source isn't found. This is a wrapper around the
+source isn’t found. This is a wrapper around the
 [Get Knowledge Source API](/docs/api-reference/rest-api-endpoints#get-knowledge-source)
 and returns the same response.
 
@@ -2867,7 +3614,7 @@ console.log(source);
 
 Returns the content of a file knowledge source as Markdown. This allows you to
 see what content the AI copilot has access to from uploaded files. Throws an
-error if the knowledge source isn't found. This is a wrapper around the
+error if the knowledge source isn’t found. This is a wrapper around the
 [Get File Knowledge Source Content API](/docs/api-reference/rest-api-endpoints#get-file-knowledge-source-content)
 and returns the content as a string.
 
@@ -2920,7 +3667,7 @@ const { data: links, nextCursor } = await liveblocks.getWebKnowledgeSourceLinks(
 
 Deletes a web knowledge source from an AI copilot. The copilot will no longer
 have access to the content from this source. Throws an error if the knowledge
-source isn't found. This is a wrapper around the
+source isn’t found. This is a wrapper around the
 [Delete Web Knowledge Source API](/docs/api-reference/rest-api-endpoints#delete-web-knowledge-source)
 and returns no response.
 
@@ -2935,7 +3682,7 @@ await liveblocks.deleteWebKnowledgeSource({
 
 Deletes a file knowledge source from an AI copilot. The copilot will no longer
 have access to the content from this file. Throws an error if the knowledge
-source isn't found. This is a wrapper around the
+source isn’t found. This is a wrapper around the
 [Delete File Knowledge Source API](/docs/api-reference/rest-api-endpoints#delete-file-knowledge-source)
 and returns no response.
 
@@ -3063,7 +3810,7 @@ console.log(mentions);
 
 <Banner title="Also available from @liveblocks/client">
 
-If you’d like to use this on the client side, it's also available from
+If you’d like to use this on the client side, it’s also available from
 [`@liveblocks/client`](/docs/api-reference/liveblocks-client#get-mentions-from-comment-body).
 
 </Banner>
@@ -3366,69 +4113,6 @@ if (isCustomNotificationEvent(event)) {
 ```
 
 The check is made against the event type and event data kind.
-
-## Deprecated
-
-### authorize [#authorize] [@badge=Deprecated]
-
-<Banner title="Deprecated" type="error">
-  This is no longer supported. Adopt
-  [`Liveblocks.prepareSession`](#access-tokens) or
-  [`Liveblocks.identifyUser`](#id-tokens) APIs instead.
-</Banner>
-
-The purpose of `authorize()` was to help you implement your custom
-authentication back end. It generates old-style single-room tokens.
-
-Please refer to [our upgrade guide](/docs/platform/upgrading/1.2) if you’re
-using the `authorize` function in your back end, and adopt
-[`Liveblocks.prepareSession`](#access-tokens) or
-[`Liveblocks.identifyUser`](#id-tokens) APIs instead.
-
-#### Liveblocks.getThreadParticipants [#get-rooms-roomId-threads-threadId-participants] [@badge=Deprecated]
-
-Returns a list of participants found inside a thread. A participant is a user
-who has commented or been mentioned in the thread. Throws an error if the room
-or thread isn’t found. This is a wrapper around the
-[Get Thread Participants API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-threads-threadId-participants)
-and returns the same response.
-
-This method is deprecated, prefer using
-[`getMentionsFromCommentBody`](#get-mentions-from-comment-body) to extract
-mentions from comments and threads, or
-[`Liveblocks.getThreadSubscriptions`](#get-rooms-roomId-threads-threadId-subscriptions)
-to get the list of users who are subscribed to a thread.
-
-```ts
-const { participantIds } = await liveblocks.getThreadParticipants({
-  roomId: "my-room-id",
-  threadId: "th_d75sF3...",
-});
-
-// ["chris@example.com", "nimesh@example.com", ...]
-console.log(participantIds);
-```
-
-#### Liveblocks.getRoomNotificationSettings [#get-rooms-roomId-users-userId-notification-settings]
-
-This method was renamed to
-[`Liveblocks.getRoomSubscriptionSettings`](#get-rooms-roomId-users-userId-subscription-settings)
-in 2.24 and removed in 3.0, read more in our
-[migration guide](/docs/platform/upgrading/2.24).
-
-#### Liveblocks.updateRoomNotificationSettings [#post-rooms-roomId-users-userId-notification-settings]
-
-This method was renamed to
-[`Liveblocks.updateRoomSubscriptionSettings`](#post-rooms-roomId-users-userId-subscription-settings)
-in 2.24 and removed in 3.0, read more in our
-[migration guide](/docs/platform/upgrading/2.24).
-
-#### Liveblocks.deleteRoomNotificationSettings [#delete-rooms-roomId-users-userId-notification-settings]
-
-This method was renamed to
-[`Liveblocks.deleteRoomSubscriptionSettings`](#delete-rooms-roomId-users-userId-subscription-settings)
-in 2.24 and removed in 3.0, read more in our
-[migration guide](/docs/platform/upgrading/2.24).
 
 [`room.getothers`]: /docs/api-reference/liveblocks-client#Room.getOthers
 [Permissions REST API]: /docs/authentication/id-token

@@ -52,13 +52,40 @@ describe("objectToQuery", () => {
         color: null,
       },
       resolved: true,
+      subscribed: true,
       roomId: {
         startsWith: "engineering:",
       },
     });
 
     expect(query).toEqual(
-      "resolved:true roomId^'engineering:' metadata['status']:'open' metadata['priority']:3 metadata['color']:null metadata['org']^'liveblocks:'"
+      "resolved:true subscribed:true roomId^'engineering:' metadata['status']:'open' metadata['priority']:3 metadata['color']:null metadata['org']^'liveblocks:'"
+    );
+  });
+
+  test("should convert an indexed field object with number operators to a query", () => {
+    const query = objectToQuery({
+      metadata: {
+        priority: 3,
+        posX: {
+          gt: 100,
+          lt: 200,
+        },
+        level: {
+          gt: 25,
+        },
+        volume: {
+          lt: 50,
+        },
+        age: {
+          gte: 18,
+          lte: 65,
+        },
+      },
+    });
+
+    expect(query).toEqual(
+      "metadata['priority']:3 metadata['posX']<200 metadata['posX']>100 metadata['level']>25 metadata['volume']<50 metadata['age']>=18 metadata['age']<=65"
     );
   });
 

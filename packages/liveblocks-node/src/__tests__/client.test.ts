@@ -1,10 +1,11 @@
 import type {
   CommentData,
   CommentUserReaction,
-  IdTuple,
+  Feed,
+  FeedMessage,
   NotificationSettingsPlain,
   RoomSubscriptionSettings,
-  SerializedCrdt,
+  StorageNode,
   ThreadData,
 } from "@liveblocks/core";
 import { createNotificationSettings, LiveList } from "@liveblocks/core";
@@ -74,6 +75,7 @@ describe("client", () => {
       version: 1,
       content: [],
     },
+    metadata: {},
   };
 
   const thread: ThreadData<{
@@ -114,6 +116,12 @@ describe("client", () => {
       return HttpResponse.json({
         data: activeUsers,
       });
+    }),
+    http.get(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/prewarm`, () => {
+      return new HttpResponse(null, { status: 204 });
+    }),
+    http.post(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/presence`, () => {
+      return new HttpResponse(null, { status: 204 });
     })
   );
 
@@ -244,12 +252,13 @@ describe("client", () => {
         http.get(`${DEFAULT_BASE_URL}/v2/rooms`, ({ request }) => {
           const url = new URL(request.url);
 
-          expect(url.searchParams.size).toEqual(5);
+          expect(url.searchParams.size).toEqual(6);
           expect(url.searchParams.get("limit")).toEqual("10");
           expect(url.searchParams.get("startingAfter")).toEqual("2");
           expect(url.searchParams.get("query")).toEqual(
             "roomId^'liveblocks:' metadata['color']:'blue'"
           );
+          expect(url.searchParams.get("organizationId")).toEqual("tenant1");
           expect(url.searchParams.get("userId")).toEqual("user1");
           expect(url.searchParams.get("groupIds")).toEqual("group1");
 
@@ -269,6 +278,56 @@ describe("client", () => {
         client.getRooms({
           limit: 10,
           startingAfter: "2",
+          tenantId: "tenant1",
+          query: {
+            roomId: {
+              startsWith: "liveblocks:",
+            },
+            metadata: {
+              color: "blue",
+            },
+          },
+          userId: "user1",
+          groupIds: ["group1"],
+        })
+      ).resolves.toEqual({
+        nextCursor: "3",
+        data: [room],
+      });
+    });
+
+    test("should return a list of room when getRooms with organizationId receives a successful response", async () => {
+      server.use(
+        http.get(`${DEFAULT_BASE_URL}/v2/rooms`, ({ request }) => {
+          const url = new URL(request.url);
+
+          expect(url.searchParams.size).toEqual(6);
+          expect(url.searchParams.get("limit")).toEqual("10");
+          expect(url.searchParams.get("startingAfter")).toEqual("2");
+          expect(url.searchParams.get("query")).toEqual(
+            "roomId^'liveblocks:' metadata['color']:'blue'"
+          );
+          expect(url.searchParams.get("organizationId")).toEqual("org1");
+          expect(url.searchParams.get("userId")).toEqual("user1");
+          expect(url.searchParams.get("groupIds")).toEqual("group1");
+
+          return HttpResponse.json(
+            {
+              nextCursor: "3",
+              data: [room],
+            },
+            { status: 200 }
+          );
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(
+        client.getRooms({
+          limit: 10,
+          startingAfter: "2",
+          organizationId: "org1",
           query: {
             roomId: {
               startsWith: "liveblocks:",
@@ -478,12 +537,201 @@ describe("client", () => {
     });
   });
 
+  describe("create room", () => {
+    test("should pass organizationId to the request when createRoom is called with tenantId (backward compatibility)", async () => {
+      const roomId = "test-room";
+      const tenantId = "test-tenant";
+      const createRoomParams = {
+        defaultAccesses: ["room:write"] as ["room:write"],
+        tenantId,
+      };
+
+      let capturedRequestData: unknown = null;
+
+      server.use(
+        http.post(`${DEFAULT_BASE_URL}/v2/rooms`, async ({ request }) => {
+          capturedRequestData = await request.json();
+          return HttpResponse.json(room, { status: 200 });
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+      await client.createRoom(roomId, createRoomParams);
+
+      expect(capturedRequestData).toEqual({
+        id: roomId,
+        defaultAccesses: ["room:write"],
+        groupsAccesses: undefined,
+        usersAccesses: undefined,
+        organizationId: tenantId,
+        metadata: undefined,
+      });
+    });
+
+    test("should not include tenantId in the request when createRoom is called without tenantId or organizationId", async () => {
+      const roomId = "test-room";
+      const createRoomParams = {
+        defaultAccesses: ["room:write"] as ["room:write"],
+      };
+
+      let capturedRequestData: unknown = null;
+
+      server.use(
+        http.post(`${DEFAULT_BASE_URL}/v2/rooms`, async ({ request }) => {
+          capturedRequestData = await request.json();
+          return HttpResponse.json(room, { status: 200 });
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+      await client.createRoom(roomId, createRoomParams);
+
+      expect(capturedRequestData).toEqual({
+        id: roomId,
+        defaultAccesses: ["room:write"],
+        groupsAccesses: undefined,
+        usersAccesses: undefined,
+        metadata: undefined,
+      });
+    });
+
+    test("should pass organizationId to the request when createRoom is called with organizationId", async () => {
+      const roomId = "test-room";
+      const organizationId = "test-org";
+      const createRoomParams = {
+        defaultAccesses: ["room:write"] as ["room:write"],
+        organizationId,
+      };
+
+      let capturedRequestData: unknown = null;
+
+      server.use(
+        http.post(`${DEFAULT_BASE_URL}/v2/rooms`, async ({ request }) => {
+          capturedRequestData = await request.json();
+          return HttpResponse.json(room, { status: 200 });
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+      await client.createRoom(roomId, createRoomParams);
+
+      expect(capturedRequestData).toEqual({
+        id: roomId,
+        defaultAccesses: ["room:write"],
+        groupsAccesses: undefined,
+        usersAccesses: undefined,
+        organizationId,
+        metadata: undefined,
+      });
+    });
+
+    test("should not send engine in the request even when provided", async () => {
+      const roomId = "test-room";
+      const createRoomParams = {
+        defaultAccesses: ["room:write"] as ["room:write"],
+        engine: 2 as const,
+      };
+
+      let capturedRequestData: unknown = null;
+
+      server.use(
+        http.post(`${DEFAULT_BASE_URL}/v2/rooms`, async ({ request }) => {
+          capturedRequestData = await request.json();
+          return HttpResponse.json(room, { status: 200 });
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+      await client.createRoom(roomId, createRoomParams);
+
+      expect(capturedRequestData).toEqual({
+        id: roomId,
+        defaultAccesses: ["room:write"],
+        groupsAccesses: undefined,
+        usersAccesses: undefined,
+        metadata: undefined,
+      });
+    });
+  });
+
+  describe("prewarm room", () => {
+    test("should successfully prewarm a room when prewarmRoom receives a successful response", async () => {
+      server.use(
+        http.get(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/prewarm`, () => {
+          return new HttpResponse(null, { status: 204 });
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+      await expect(client.prewarmRoom("123")).resolves.toBeUndefined();
+    });
+  });
+
   describe("get active users", () => {
     test("should return active users when getActiveUsers receives a successful response", async () => {
       const client = new Liveblocks({ secret: "sk_xxx" });
       await expect(client.getActiveUsers("123")).resolves.toEqual({
         data: activeUsers,
       });
+    });
+  });
+
+  describe("set presence", () => {
+    test("should successfully set presence when receiving 204 response", async () => {
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(
+        client.setPresence("room-123", {
+          userId: "agent-ai",
+          data: { status: "active", cursor: { x: 100, y: 200 } },
+          userInfo: {
+            name: "AI Assistant",
+            avatar: "https://example.com/avatar.png",
+          },
+          ttl: 60,
+        })
+      ).resolves.toBeUndefined();
+    });
+
+    test("should handle optional ttl parameter", async () => {
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(
+        client.setPresence("room-123", {
+          userId: "agent-ai",
+          data: { status: "active" },
+          userInfo: { name: "AI Assistant" },
+        })
+      ).resolves.toBeUndefined();
+    });
+
+    test("should throw LiveblocksError on failure", async () => {
+      server.use(
+        http.post(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/presence`, () => {
+          return HttpResponse.json(
+            { error: "INVALID_REQUEST", message: "Invalid presence data" },
+            { status: 422 }
+          );
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      try {
+        await client.setPresence("room-123", {
+          userId: "agent-ai",
+          data: { status: "active" },
+          userInfo: { name: "AI Assistant" },
+        });
+        expect(true).toBe(false);
+      } catch (err) {
+        expect(err instanceof LiveblocksError).toBe(true);
+        if (err instanceof LiveblocksError) {
+          expect(err.status).toBe(422);
+          expect(err.message).toBe("Invalid presence data");
+          expect(err.name).toBe("LiveblocksError");
+        }
+      }
     });
   });
 
@@ -660,6 +908,69 @@ describe("client", () => {
         }
       }
     });
+
+    test("should return the created thread with comment metadata", async () => {
+      const threadData = {
+        comment: {
+          userId: "user1",
+          createdAt: new Date(),
+          body: {
+            version: 1 as const,
+            content: [],
+          },
+          metadata: {
+            priority: 1,
+            reviewed: false,
+          },
+        },
+        metadata: {
+          color: "blue",
+        },
+      };
+
+      const threadWithCommentMetadata: ThreadData<
+        { color: string },
+        { priority: number; reviewed?: boolean }
+      > = {
+        ...thread,
+        comments: [
+          {
+            ...comment,
+            metadata: {
+              priority: 1,
+              reviewed: false,
+            },
+          },
+        ],
+      };
+
+      server.use(
+        http.post(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/threads`,
+          async ({ request }) => {
+            const data = await request.json();
+
+            if (JSON.stringify(threadData) === JSON.stringify(data)) {
+              return HttpResponse.json(threadWithCommentMetadata);
+            }
+
+            return HttpResponse.error();
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+      const res = await client.createThread({
+        roomId: "room1",
+        data: threadData,
+      });
+
+      expect(res).toEqual(threadWithCommentMetadata);
+      expect(res.comments[0]?.metadata).toEqual({
+        priority: 1,
+        reviewed: false,
+      });
+    });
   });
 
   describe("delete thread", () => {
@@ -829,6 +1140,71 @@ describe("client", () => {
           threadId: "thread1",
         })
       ).resolves.toEqual(thread);
+    });
+  });
+
+  describe("get attachment", () => {
+    const attachment = {
+      type: "attachment",
+      id: "at_abc123",
+      name: "document.pdf",
+      mimeType: "application/pdf",
+      size: 12345,
+      url: "https://example.com/presigned-url",
+      expiresAt: "2024-01-01T00:00:00.000Z",
+    };
+
+    test("should return the attachment when getAttachment receives a successful response", async () => {
+      server.use(
+        http.get(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/attachments/:attachmentId`,
+          () => {
+            return HttpResponse.json(attachment, { status: 200 });
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(
+        client.getAttachment({
+          roomId: "room1",
+          attachmentId: "at_abc123",
+        })
+      ).resolves.toEqual(attachment);
+    });
+
+    test("should throw a LiveblocksError when getAttachment receives an error response", async () => {
+      const error = {
+        error: "ATTACHMENT_NOT_FOUND",
+        message: "Attachment not found",
+      };
+
+      server.use(
+        http.get(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/attachments/:attachmentId`,
+          () => {
+            return HttpResponse.json(error, { status: 404 });
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      try {
+        await client.getAttachment({
+          roomId: "room1",
+          attachmentId: "at_abc123",
+        });
+        expect(true).toBe(false);
+      } catch (err) {
+        expect(err instanceof LiveblocksError).toBe(true);
+        if (err instanceof LiveblocksError) {
+          expect(err.status).toBe(404);
+          expect(err.message).toBe("Attachment not found");
+          expect(err.name).toBe("LiveblocksError");
+        }
+      }
     });
   });
 
@@ -1218,6 +1594,234 @@ describe("client", () => {
           commentId: "comment1",
         })
       ).resolves.toEqual(comment);
+    });
+  });
+
+  describe("create comment", () => {
+    test("should return the created comment when createComment receives a successful response", async () => {
+      const commentData = {
+        userId: "user1",
+        body: {
+          version: 1 as const,
+          content: [],
+        },
+      };
+
+      server.use(
+        http.post(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/threads/:threadId/comments`,
+          async ({ request }) => {
+            const data = await request.json();
+
+            if (JSON.stringify(commentData) === JSON.stringify(data)) {
+              return HttpResponse.json(comment);
+            }
+
+            return HttpResponse.error();
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+      const res = await client.createComment({
+        roomId: "room1",
+        threadId: "thread1",
+        data: commentData,
+      });
+
+      expect(res).toEqual(comment);
+    });
+
+    test("should return the created comment with metadata when createComment receives metadata", async () => {
+      const commentData = {
+        userId: "user1",
+        body: {
+          version: 1 as const,
+          content: [],
+        },
+        metadata: {
+          priority: 1,
+          reviewed: false,
+        },
+      };
+
+      const commentWithMetadata: CommentData = {
+        ...comment,
+        metadata: {
+          priority: 1,
+          reviewed: false,
+        },
+      };
+
+      server.use(
+        http.post(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/threads/:threadId/comments`,
+          async ({ request }) => {
+            const data = await request.json();
+
+            if (JSON.stringify(commentData) === JSON.stringify(data)) {
+              return HttpResponse.json(commentWithMetadata);
+            }
+
+            return HttpResponse.error();
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+      const res = await client.createComment({
+        roomId: "room1",
+        threadId: "thread1",
+        data: commentData,
+      });
+
+      expect(res).toEqual(commentWithMetadata);
+      expect(res.metadata).toEqual({
+        priority: 1,
+        reviewed: false,
+      });
+    });
+
+    test("should throw a LiveblocksError when createComment receives an error response", async () => {
+      const commentData = {
+        userId: "user1",
+        body: {
+          version: 1 as const,
+          content: [],
+        },
+      };
+
+      const error = {
+        error: "THREAD_NOT_FOUND",
+        message: "Thread not found",
+      };
+
+      server.use(
+        http.post(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/threads/:threadId/comments`,
+          async ({ request }) => {
+            const data = await request.json();
+            if (JSON.stringify(commentData) === JSON.stringify(data)) {
+              return HttpResponse.json(error, { status: 404 });
+            }
+
+            return HttpResponse.error();
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      // This should throw a LiveblocksError
+      try {
+        // Attempt to create a comment, which should fail and throw an error.
+        await client.createComment({
+          roomId: "room1",
+          threadId: "thread1",
+          data: commentData,
+        });
+        // If it doesn't throw, fail the test.
+        expect(true).toBe(false);
+      } catch (err) {
+        expect(err instanceof LiveblocksError).toBe(true);
+        if (err instanceof LiveblocksError) {
+          expect(err.status).toBe(404);
+          expect(err.message).toBe("Thread not found");
+          expect(err.name).toBe("LiveblocksError");
+        }
+      }
+    });
+  });
+
+  describe("edit comment metadata", () => {
+    test("should return the updated comment metadata when editCommentMetadata receives a successful response", async () => {
+      const metadataData = {
+        userId: "user1",
+        metadata: {
+          priority: 2,
+          reviewed: true,
+        },
+      };
+
+      const updatedMetadata = {
+        priority: 2,
+        reviewed: true,
+      };
+
+      server.use(
+        http.post(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/threads/:threadId/comments/:commentId/metadata`,
+          async ({ request }) => {
+            const data = await request.json();
+
+            if (JSON.stringify(metadataData) === JSON.stringify(data)) {
+              return HttpResponse.json(updatedMetadata);
+            }
+
+            return HttpResponse.error();
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+      const res = await client.editCommentMetadata({
+        roomId: "room1",
+        threadId: "thread1",
+        commentId: "comment1",
+        data: metadataData,
+      });
+
+      expect(res).toEqual(updatedMetadata);
+    });
+
+    test("should throw a LiveblocksError when editCommentMetadata receives an error response", async () => {
+      const metadataData = {
+        userId: "user1",
+        metadata: {
+          priority: 2,
+        },
+      };
+
+      const error = {
+        error: "COMMENT_NOT_FOUND",
+        message: "Comment not found",
+      };
+
+      server.use(
+        http.post(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/threads/:threadId/comments/:commentId/metadata`,
+          async ({ request }) => {
+            const data = await request.json();
+            if (JSON.stringify(metadataData) === JSON.stringify(data)) {
+              return HttpResponse.json(error, { status: 404 });
+            }
+
+            return HttpResponse.error();
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      // This should throw a LiveblocksError
+      try {
+        // Attempt to edit comment metadata, which should fail and throw an error.
+        await client.editCommentMetadata({
+          roomId: "room1",
+          threadId: "thread1",
+          commentId: "comment1",
+          data: metadataData,
+        });
+        // If it doesn't throw, fail the test.
+        expect(true).toBe(false);
+      } catch (err) {
+        expect(err instanceof LiveblocksError).toBe(true);
+        if (err instanceof LiveblocksError) {
+          expect(err.status).toBe(404);
+          expect(err.message).toBe("Comment not found");
+          expect(err.name).toBe("LiveblocksError");
+        }
+      }
     });
   });
 
@@ -2333,7 +2937,7 @@ describe("client", () => {
               ["0:2", { type: 2, parentId: "root", parentKey: "b" }],
               ["0:3", { type: 3, parentId: "0:1", parentKey: "!", data: { abc: 123 }}],
               ["0:4", { type: 3, parentId: "0:1", parentKey: "%", data: { xyz: 3.14 }}],
-            ] satisfies IdTuple<SerializedCrdt>[];
+            ] satisfies StorageNode[];
 
             return HttpResponse.text(
               [{ actor: 123 }, ...nodes]
@@ -2352,9 +2956,9 @@ describe("client", () => {
       const client = new Liveblocks({ secret: "sk_xxx" });
       await expect(
         client.mutateStorage("my-room", ({ root }) => {
-          expect(root.toImmutable() as unknown).toEqual({
+          expect(root.toJSON()).toEqual({
             a: [{ abc: 123 }, { xyz: 3.14 }],
-            b: new Map(),
+            b: {},
           });
 
           // Mutate it!
@@ -2386,6 +2990,7 @@ describe("client", () => {
                 type: "group",
                 id: "group1",
                 tenantId: "tenant1",
+                organizationId: "tenant1",
                 createdAt: "2022-07-13T14:32:50.697Z",
                 updatedAt: "2022-07-13T14:32:50.697Z",
                 scopes: { mention: true },
@@ -2415,6 +3020,75 @@ describe("client", () => {
         type: "group",
         id: "group1",
         tenantId: "tenant1",
+        organizationId: "tenant1",
+        createdAt: new Date("2022-07-13T14:32:50.697Z"),
+        updatedAt: new Date("2022-07-13T14:32:50.697Z"),
+        scopes: { mention: true },
+        members: [
+          {
+            id: "user1",
+            addedAt: new Date("2022-07-13T14:32:50.697Z"),
+          },
+          {
+            id: "user2",
+            addedAt: new Date("2022-07-13T14:32:50.697Z"),
+          },
+        ],
+      });
+    });
+
+    test("should return the created group when createGroup receives a successful response with organizationId", async () => {
+      const createGroupParams = {
+        groupId: "group1",
+        memberIds: ["user1", "user2"],
+        organizationId: "org1",
+        scopes: { mention: true as const },
+      };
+
+      server.use(
+        http.post(`${DEFAULT_BASE_URL}/v2/groups`, async ({ request }) => {
+          const data = await request.json();
+
+          if (
+            (data as typeof createGroupParams)?.groupId ===
+            createGroupParams.groupId
+          ) {
+            return HttpResponse.json(
+              {
+                type: "group",
+                id: "group1",
+                tenantId: "org1",
+                organizationId: "org1",
+                createdAt: "2022-07-13T14:32:50.697Z",
+                updatedAt: "2022-07-13T14:32:50.697Z",
+                scopes: { mention: true },
+                members: [
+                  {
+                    id: "user1",
+                    addedAt: "2022-07-13T14:32:50.697Z",
+                  },
+                  {
+                    id: "user2",
+                    addedAt: "2022-07-13T14:32:50.697Z",
+                  },
+                ],
+              },
+              { status: 200 }
+            );
+          }
+
+          return HttpResponse.error();
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+      const res = await client.createGroup(createGroupParams);
+
+      expect(res).toEqual({
+        type: "group",
+        id: "group1",
+        tenantId: "org1",
+        organizationId: "org1",
         createdAt: new Date("2022-07-13T14:32:50.697Z"),
         updatedAt: new Date("2022-07-13T14:32:50.697Z"),
         scopes: { mention: true },
@@ -2451,6 +3125,7 @@ describe("client", () => {
                 type: "group",
                 id: "group1",
                 tenantId: "tenant1",
+                organizationId: "tenant1",
                 createdAt: "2022-07-13T14:32:50.697Z",
                 updatedAt: "2022-07-13T14:32:50.697Z",
                 scopes: { mention: true },
@@ -2471,6 +3146,56 @@ describe("client", () => {
         type: "group",
         id: "group1",
         tenantId: "tenant1",
+        organizationId: "tenant1",
+        createdAt: new Date("2022-07-13T14:32:50.697Z"),
+        updatedAt: new Date("2022-07-13T14:32:50.697Z"),
+        scopes: { mention: true },
+        members: [],
+      });
+    });
+
+    test("should create a group without members when createGroup receives a successful response with organizationId", async () => {
+      const createGroupParams = {
+        groupId: "group1",
+        organizationId: "org1",
+        scopes: { mention: true as const },
+      };
+
+      server.use(
+        http.post(`${DEFAULT_BASE_URL}/v2/groups`, async ({ request }) => {
+          const data = await request.json();
+
+          if (
+            (data as typeof createGroupParams)?.groupId ===
+            createGroupParams.groupId
+          ) {
+            return HttpResponse.json(
+              {
+                type: "group",
+                id: "group1",
+                tenantId: "org1",
+                organizationId: "org1",
+                createdAt: "2022-07-13T14:32:50.697Z",
+                updatedAt: "2022-07-13T14:32:50.697Z",
+                scopes: { mention: true },
+                members: [],
+              },
+              { status: 200 }
+            );
+          }
+
+          return HttpResponse.error();
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+      const res = await client.createGroup(createGroupParams);
+
+      expect(res).toEqual({
+        type: "group",
+        id: "group1",
+        tenantId: "org1",
+        organizationId: "org1",
         createdAt: new Date("2022-07-13T14:32:50.697Z"),
         updatedAt: new Date("2022-07-13T14:32:50.697Z"),
         scopes: { mention: true },
@@ -2530,6 +3255,7 @@ describe("client", () => {
         type: "group",
         id: "group1",
         tenantId: "tenant1",
+        organizationId: "tenant1",
         createdAt: "2022-07-13T14:32:50.697Z",
         updatedAt: "2022-07-13T14:32:50.697Z",
         scopes: { mention: true },
@@ -2557,6 +3283,7 @@ describe("client", () => {
         type: "group",
         id: "group1",
         tenantId: "tenant1",
+        organizationId: "tenant1",
         createdAt: new Date("2022-07-13T14:32:50.697Z"),
         updatedAt: new Date("2022-07-13T14:32:50.697Z"),
         scopes: { mention: true },
@@ -2609,6 +3336,7 @@ describe("client", () => {
         type: "group",
         id: "group1",
         tenantId: "tenant1",
+        organizationId: "tenant1",
         createdAt: "2022-07-13T14:32:50.697Z",
         updatedAt: "2022-07-13T14:32:50.697Z",
         scopes: { mention: true },
@@ -2658,6 +3386,7 @@ describe("client", () => {
         type: "group",
         id: "group1",
         tenantId: "tenant1",
+        organizationId: "tenant1",
         createdAt: new Date("2022-07-13T14:32:50.697Z"),
         updatedAt: new Date("2022-07-13T14:32:50.697Z"),
         scopes: { mention: true },
@@ -2733,6 +3462,7 @@ describe("client", () => {
         type: "group",
         id: "group1",
         tenantId: "tenant1",
+        organizationId: "tenant1",
         createdAt: "2022-07-13T14:32:50.697Z",
         updatedAt: "2022-07-13T15:30:00.000Z",
         scopes: { mention: true },
@@ -2770,6 +3500,7 @@ describe("client", () => {
         type: "group",
         id: "group1",
         tenantId: "tenant1",
+        organizationId: "tenant1",
         createdAt: new Date("2022-07-13T14:32:50.697Z"),
         updatedAt: new Date("2022-07-13T15:30:00.000Z"),
         scopes: { mention: true },
@@ -2881,6 +3612,7 @@ describe("client", () => {
           type: "group",
           id: "group1",
           tenantId: "tenant1",
+          organizationId: "tenant1",
           createdAt: "2022-07-13T14:32:50.697Z",
           updatedAt: "2022-07-13T14:32:50.697Z",
           scopes: { mention: true },
@@ -2895,6 +3627,7 @@ describe("client", () => {
           type: "group",
           id: "group2",
           tenantId: "tenant1",
+          organizationId: "tenant1",
           createdAt: "2022-07-14T10:00:00.000Z",
           updatedAt: "2022-07-14T10:00:00.000Z",
           scopes: { mention: true },
@@ -2932,6 +3665,7 @@ describe("client", () => {
             type: "group",
             id: "group1",
             tenantId: "tenant1",
+            organizationId: "tenant1",
             createdAt: new Date("2022-07-13T14:32:50.697Z"),
             updatedAt: new Date("2022-07-13T14:32:50.697Z"),
             scopes: { mention: true },
@@ -2946,6 +3680,7 @@ describe("client", () => {
             type: "group",
             id: "group2",
             tenantId: "tenant1",
+            organizationId: "tenant1",
             createdAt: new Date("2022-07-14T10:00:00.000Z"),
             updatedAt: new Date("2022-07-14T10:00:00.000Z"),
             scopes: { mention: true },
@@ -3023,6 +3758,7 @@ describe("client", () => {
           type: "group",
           id: "group1",
           tenantId: "tenant1",
+          organizationId: "tenant1",
           createdAt: "2022-07-13T14:32:50.697Z",
           updatedAt: "2022-07-13T14:32:50.697Z",
           scopes: { mention: true },
@@ -3041,6 +3777,7 @@ describe("client", () => {
           type: "group",
           id: "group3",
           tenantId: "tenant1",
+          organizationId: "tenant1",
           createdAt: "2022-07-15T09:00:00.000Z",
           updatedAt: "2022-07-15T09:00:00.000Z",
           scopes: { mention: true },
@@ -3074,6 +3811,7 @@ describe("client", () => {
             type: "group",
             id: "group1",
             tenantId: "tenant1",
+            organizationId: "tenant1",
             createdAt: new Date("2022-07-13T14:32:50.697Z"),
             updatedAt: new Date("2022-07-13T14:32:50.697Z"),
             scopes: { mention: true },
@@ -3092,6 +3830,7 @@ describe("client", () => {
             type: "group",
             id: "group3",
             tenantId: "tenant1",
+            organizationId: "tenant1",
             createdAt: new Date("2022-07-15T09:00:00.000Z"),
             updatedAt: new Date("2022-07-15T09:00:00.000Z"),
             scopes: { mention: true },
@@ -3116,6 +3855,7 @@ describe("client", () => {
           type: "group",
           id: "group2",
           tenantId: "tenant1",
+          organizationId: "tenant1",
           createdAt: "2022-07-14T10:00:00.000Z",
           updatedAt: "2022-07-14T10:00:00.000Z",
           scopes: { mention: true },
@@ -3156,6 +3896,7 @@ describe("client", () => {
             type: "group",
             id: "group2",
             tenantId: "tenant1",
+            organizationId: "tenant1",
             createdAt: new Date("2022-07-14T10:00:00.000Z"),
             updatedAt: new Date("2022-07-14T10:00:00.000Z"),
             scopes: { mention: true },
@@ -3235,6 +3976,7 @@ describe("client", () => {
       systemPrompt: "You are a helpful assistant",
       providerModel: "gpt-4o",
       knowledgePrompt: "Use the provided knowledge",
+      alwaysUseKnowledge: false,
       provider: "openai",
       createdAt: new Date("2023-01-01T00:00:00.000Z"),
       updatedAt: new Date("2023-01-02T00:00:00.000Z"),
@@ -4032,6 +4774,340 @@ describe("client", () => {
             expect(err.message).toBe("Knowledge source not found");
           }
         }
+      });
+    });
+
+    describe("feeds", () => {
+      const feed: Feed = {
+        feedId: "feed_123",
+        metadata: { key: "value" },
+        createdAt: 1234567890,
+        updatedAt: 1234567890,
+      };
+
+      const feedMessage: FeedMessage = {
+        id: "msg_123",
+        createdAt: 1234567890,
+        updatedAt: 1234567890,
+        data: { content: "Hello" },
+      };
+
+      describe("getFeeds", () => {
+        test("should return a list of feeds", async () => {
+          server.use(
+            http.get(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds`, () => {
+              return HttpResponse.json({ data: [feed] }, { status: 200 });
+            })
+          );
+
+          const client = new Liveblocks({ secret: "sk_xxx" });
+          await expect(
+            client.getFeeds({ roomId: "room_123" })
+          ).resolves.toEqual({ data: [feed] });
+        });
+
+        test("should throw a LiveblocksError on error response", async () => {
+          server.use(
+            http.get(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds`, () => {
+              return HttpResponse.json(
+                { message: "Room not found" },
+                { status: 404 }
+              );
+            })
+          );
+
+          const client = new Liveblocks({ secret: "sk_xxx" });
+          try {
+            await client.getFeeds({ roomId: "nonexistent" });
+            expect(true).toBe(false);
+          } catch (err) {
+            expect(err instanceof LiveblocksError).toBe(true);
+            if (err instanceof LiveblocksError) {
+              expect(err.status).toBe(404);
+            }
+          }
+        });
+      });
+
+      describe("createFeed", () => {
+        test("should create a feed", async () => {
+          server.use(
+            http.post(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds`, () => {
+              return HttpResponse.json(feed, { status: 200 });
+            })
+          );
+
+          const client = new Liveblocks({ secret: "sk_xxx" });
+          await expect(
+            client.createFeed({
+              roomId: "room_123",
+              feedId: "feed_123",
+              metadata: { key: "value" },
+            })
+          ).resolves.toEqual(feed);
+        });
+
+        test("should create a feed without metadata", async () => {
+          server.use(
+            http.post(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds`, () => {
+              return HttpResponse.json(feed, { status: 200 });
+            })
+          );
+
+          const client = new Liveblocks({ secret: "sk_xxx" });
+          await expect(
+            client.createFeed({
+              roomId: "room_123",
+              feedId: "feed_123",
+            })
+          ).resolves.toEqual(feed);
+        });
+
+        test("should send createdAt as timestamp in the request body", async () => {
+          server.use(
+            http.post(
+              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds`,
+              async ({ request }) => {
+                expect(await request.json()).toEqual({
+                  feedId: "feed_123",
+                  metadata: { key: "value" },
+                  timestamp: 99_000,
+                });
+                return HttpResponse.json(feed, { status: 200 });
+              }
+            )
+          );
+
+          const client = new Liveblocks({ secret: "sk_xxx" });
+          await client.createFeed({
+            roomId: "room_123",
+            feedId: "feed_123",
+            metadata: { key: "value" },
+            createdAt: 99_000,
+          });
+        });
+      });
+
+      describe("getFeed", () => {
+        test("should return a feed", async () => {
+          server.use(
+            http.get(
+              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds/:feedId`,
+              () => {
+                return HttpResponse.json(feed, { status: 200 });
+              }
+            )
+          );
+
+          const client = new Liveblocks({ secret: "sk_xxx" });
+          await expect(
+            client.getFeed({
+              roomId: "room_123",
+              feedId: "feed_123",
+            })
+          ).resolves.toEqual(feed);
+        });
+      });
+
+      describe("updateFeed", () => {
+        test("should update feed metadata and return the updated feed", async () => {
+          const updatedFeed = {
+            ...feed,
+            metadata: { updated: "metadata" },
+          };
+          server.use(
+            http.patch(
+              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds/:feedId`,
+              () => {
+                return HttpResponse.json(updatedFeed, { status: 200 });
+              }
+            )
+          );
+
+          const client = new Liveblocks({ secret: "sk_xxx" });
+          await expect(
+            client.updateFeed({
+              roomId: "room_123",
+              feedId: "feed_123",
+              metadata: { updated: "metadata" },
+            })
+          ).resolves.toEqual(updatedFeed);
+        });
+      });
+
+      describe("deleteFeed", () => {
+        test("should delete a feed", async () => {
+          server.use(
+            http.delete(
+              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds/:feedId`,
+              () => {
+                return new HttpResponse(null, { status: 204 });
+              }
+            )
+          );
+
+          const client = new Liveblocks({ secret: "sk_xxx" });
+          await expect(
+            client.deleteFeed({
+              roomId: "room_123",
+              feedId: "feed_123",
+            })
+          ).resolves.toBeUndefined();
+        });
+      });
+
+      describe("getFeedMessages", () => {
+        test("should return a list of feed messages", async () => {
+          server.use(
+            http.get(
+              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds/:feedId/messages`,
+              () => {
+                return HttpResponse.json(
+                  { data: [feedMessage] },
+                  { status: 200 }
+                );
+              }
+            )
+          );
+
+          const client = new Liveblocks({ secret: "sk_xxx" });
+          await expect(
+            client.getFeedMessages({
+              roomId: "room_123",
+              feedId: "feed_123",
+            })
+          ).resolves.toEqual({ data: [feedMessage] });
+        });
+      });
+
+      describe("createFeedMessage", () => {
+        test("should create a feed message", async () => {
+          server.use(
+            http.post(
+              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds/:feedId/messages`,
+              () => {
+                return HttpResponse.json(feedMessage, { status: 200 });
+              }
+            )
+          );
+
+          const client = new Liveblocks({ secret: "sk_xxx" });
+          await expect(
+            client.createFeedMessage({
+              roomId: "room_123",
+              feedId: "feed_123",
+              data: { content: "Hello" },
+            })
+          ).resolves.toEqual(feedMessage);
+        });
+
+        test("should create a feed message with id and createdAt", async () => {
+          server.use(
+            http.post(
+              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds/:feedId/messages`,
+              async ({ request }) => {
+                expect(await request.json()).toEqual({
+                  data: { content: "Hello" },
+                  id: "msg_123",
+                  timestamp: 1234567890,
+                });
+                return HttpResponse.json(feedMessage, { status: 200 });
+              }
+            )
+          );
+
+          const client = new Liveblocks({ secret: "sk_xxx" });
+          await expect(
+            client.createFeedMessage({
+              roomId: "room_123",
+              feedId: "feed_123",
+              id: "msg_123",
+              createdAt: 1234567890,
+              data: { content: "Hello" },
+            })
+          ).resolves.toEqual(feedMessage);
+        });
+      });
+
+      describe("updateFeedMessage", () => {
+        test("should update a feed message and return the updated message", async () => {
+          const updatedMessage = {
+            ...feedMessage,
+            data: { content: "Updated" },
+            updatedAt: 1234567891,
+          };
+          server.use(
+            http.patch(
+              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds/:feedId/messages/:messageId`,
+              () => {
+                return HttpResponse.json(updatedMessage, { status: 200 });
+              }
+            )
+          );
+
+          const client = new Liveblocks({ secret: "sk_xxx" });
+          await expect(
+            client.updateFeedMessage({
+              roomId: "room_123",
+              feedId: "feed_123",
+              messageId: "msg_123",
+              data: { content: "Updated" },
+            })
+          ).resolves.toEqual(updatedMessage);
+        });
+
+        test("should send updatedAt as timestamp in the request body", async () => {
+          const updatedMessage = {
+            ...feedMessage,
+            data: { content: "Updated" },
+            updatedAt: 42_000,
+          };
+          server.use(
+            http.patch(
+              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds/:feedId/messages/:messageId`,
+              async ({ request }) => {
+                expect(await request.json()).toEqual({
+                  data: { content: "Updated" },
+                  timestamp: 42_000,
+                });
+                return HttpResponse.json(updatedMessage, { status: 200 });
+              }
+            )
+          );
+
+          const client = new Liveblocks({ secret: "sk_xxx" });
+          await expect(
+            client.updateFeedMessage({
+              roomId: "room_123",
+              feedId: "feed_123",
+              messageId: "msg_123",
+              data: { content: "Updated" },
+              updatedAt: 42_000,
+            })
+          ).resolves.toEqual(updatedMessage);
+        });
+      });
+
+      describe("deleteFeedMessage", () => {
+        test("should delete a feed message", async () => {
+          server.use(
+            http.delete(
+              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds/:feedId/messages/:messageId`,
+              () => {
+                return new HttpResponse(null, { status: 204 });
+              }
+            )
+          );
+
+          const client = new Liveblocks({ secret: "sk_xxx" });
+          await expect(
+            client.deleteFeedMessage({
+              roomId: "room_123",
+              feedId: "feed_123",
+              messageId: "msg_123",
+            })
+          ).resolves.toBeUndefined();
+        });
       });
     });
   });

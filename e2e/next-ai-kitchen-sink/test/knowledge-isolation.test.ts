@@ -131,8 +131,8 @@ test.describe("AiChat Knowledge Isolation", () => {
     });
 
     // Ask both chats about favorite pasta - only one should know it
-    await sendMessageToChatA(page, "What's my favorite pasta?");
-    await sendMessageToChatB(page, "What's my favorite pasta?");
+    await sendMessageToChatA(page, "What's my favorite pasta? Be brief.");
+    await sendMessageToChatB(page, "What's my favorite pasta? Be brief.");
 
     // Wait for Chat A's response containing the pasta name
     await expect(
@@ -183,7 +183,7 @@ test.describe("AiChat Knowledge Isolation", () => {
     await knowledgeInput.fill("Penne Arrabiata");
 
     // Ask Chat A about favorite pasta
-    await sendMessageToChatA(page, "What's my favorite pasta?");
+    await sendMessageToChatA(page, "What's my favorite pasta? Be brief.");
 
     // Chat A should know the pasta is Penne Arrabiata
     await expect(
@@ -191,7 +191,7 @@ test.describe("AiChat Knowledge Isolation", () => {
     ).toBeVisible({ timeout: 30000 });
 
     // Ask Chat B about favorite pasta
-    await sendMessageToChatB(page, "What's my favorite pasta?");
+    await sendMessageToChatB(page, "What's my favorite pasta? Be brief.");
 
     // Get Chat B's assistant response text and verify it doesn't include "Penne Arrabiata"
     // This test should FAIL with the current bug
@@ -238,7 +238,7 @@ test.describe("AiChat Knowledge Isolation", () => {
     });
 
     // Ask Chat A about the global knowledge - it should have access to both local and global
-    await sendMessageToChatA(page, "What dessert do I like?");
+    await sendMessageToChatA(page, "What dessert do I like? Be brief.");
 
     // Wait for Chat A's response containing the global knowledge
     await expect(
@@ -249,7 +249,7 @@ test.describe("AiChat Knowledge Isolation", () => {
     ).toBeVisible({ timeout: 30000 });
 
     // Ask Chat B about the same global knowledge - it should ALSO have access
-    await sendMessageToChatB(page, "What dessert do I like?");
+    await sendMessageToChatB(page, "What dessert do I like? Be brief.");
 
     // Chat B should ALSO have access to the global knowledge
     await expect(
@@ -264,8 +264,8 @@ test.describe("AiChat Knowledge Isolation", () => {
     await globalKnowledgeInput.fill("Gelato");
 
     // Ask both chats again - they should both know the new global knowledge
-    await sendMessageToChatA(page, "What dessert do I like now?");
-    await sendMessageToChatB(page, "What dessert do I like now?");
+    await sendMessageToChatA(page, "What dessert do I like now? Be brief.");
+    await sendMessageToChatB(page, "What dessert do I like now? Be brief.");
 
     // Both chats should have access to the updated global knowledge
     await expect(

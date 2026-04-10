@@ -16,6 +16,7 @@ export default defaultLiveblocksVitestConfig({
     coverage: {
       provider: "istanbul",
       exclude: ["**/__tests__/**"],
+      reporter: [["text", { maxCols: 100 }]],
     },
   },
 });

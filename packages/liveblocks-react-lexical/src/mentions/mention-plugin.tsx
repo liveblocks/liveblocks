@@ -22,10 +22,12 @@ import {
   useMentionSuggestions,
 } from "@liveblocks/react/_private";
 import {
-  Avatar,
   Group,
+  GroupAvatar,
   GroupDescription,
+  Portal,
   User,
+  UserAvatar,
   UsersIcon,
 } from "@liveblocks/react-ui/_private";
 import type { EditorState, NodeKey, NodeMutation, TextNode } from "lexical";
@@ -44,7 +46,6 @@ import {
 } from "lexical";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useState } from "react";
-import { createPortal } from "react-dom";
 
 import {
   $createGroupMentionNode,
@@ -440,17 +441,13 @@ export function MentionPlugin() {
 
   if (range === null) return null;
 
-  return createPortal(
+  return (
     <SuggestionsContext.Provider value={suggestions}>
       <OnSuggestionSelectCallbackContext.Provider
         value={handleSuggestionSelect}
       >
         <OnResetMatchCallbackContext.Provider value={() => setMatch(null)}>
-          <SuggestionsPortal
-            range={range}
-            container={document.body}
-            key={matchingString}
-          >
+          <SuggestionsPortal range={range} key={matchingString}>
             <Suggestions.List className="lb-lexical-suggestions-list lb-lexical-mention-suggestions-list">
               {suggestions.map((mention) => {
                 return (
@@ -461,7 +458,7 @@ export function MentionPlugin() {
                   >
                     {mention.kind === "user" ? (
                       <>
-                        <Avatar
+                        <UserAvatar
                           userId={mention.id}
                           className="lb-lexical-mention-suggestion-avatar"
                         />
@@ -472,7 +469,7 @@ export function MentionPlugin() {
                       </>
                     ) : mention.kind === "group" ? (
                       <>
-                        <Avatar
+                        <GroupAvatar
                           groupId={mention.id}
                           className="lb-lexical-mention-suggestion-avatar"
                           icon={<UsersIcon />}
@@ -497,8 +494,7 @@ export function MentionPlugin() {
           </SuggestionsPortal>
         </OnResetMatchCallbackContext.Provider>
       </OnSuggestionSelectCallbackContext.Provider>
-    </SuggestionsContext.Provider>,
-    document.body
+    </SuggestionsContext.Provider>
   );
 }
 
@@ -507,11 +503,9 @@ export const SUGGESTIONS_COLLISION_PADDING = 10;
 function SuggestionsPortal({
   children,
   range,
-  container,
 }: {
   children: ReactNode;
   range: Range;
-  container: Element;
 }) {
   const {
     refs: { setReference, setFloating },
@@ -541,20 +535,21 @@ function SuggestionsPortal({
     });
   }, [setReference, range]);
 
-  return createPortal(
-    <div
-      ref={setFloating}
-      style={{
-        position: strategy,
-        top: 0,
-        left: 0,
-        transform: `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`,
-        minWidth: "max-content",
-      }}
-      className="lb-root lb-portal lb-elevation lb-lexical-suggestions lb-lexical-mention-suggestions"
-    >
-      {children}
-    </div>,
-    container
+  return (
+    <Portal asChild>
+      <div
+        ref={setFloating}
+        style={{
+          position: strategy,
+          top: 0,
+          left: 0,
+          transform: `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`,
+          minWidth: "max-content",
+        }}
+        className="lb-root lb-portal lb-elevation lb-lexical-suggestions lb-lexical-mention-suggestions"
+      >
+        {children}
+      </div>
+    </Portal>
   );
 }

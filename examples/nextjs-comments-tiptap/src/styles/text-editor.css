@@ -207,7 +207,9 @@ h3 .tiptap-code {
   border: 0;
 }
 
+.hide-collaboration-cursor .collaboration-carets__caret,
 .hide-collaboration-cursor .collaboration-cursor__caret,
+.hide-collaboration-cursor .collaboration-carets__label,
 .hide-collaboration-cursor .collaboration-cursor__label {
   display: none;
 }

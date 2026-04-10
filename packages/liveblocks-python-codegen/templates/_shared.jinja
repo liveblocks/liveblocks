@@ -1,0 +1,76 @@
+{#
+  Endpoints and models listed here by operationId / class name are completely
+  suppressed from the generated SDK (empty files, no exports, no client methods,
+  no README entries). We have to hardcode these because the generator does not
+  expose a way to skip code generation from within templates.
+#}
+{#
+  Management API endpoints require a separate access token (lbs_*) that this
+  SDK's client does not support yet (it only accepts sk_* secret keys). Hidden
+  until a dedicated management client is implemented.
+#}
+{% set hidden_endpoints = [
+    "get-room-notification-settings",
+    "update-room-notification-settings",
+    "delete-room-notification-settings",
+    "get-thread-participants",
+    "get-management-projects",
+    "create-management-project",
+    "get-management-project",
+    "update-management-project",
+    "delete-management-project",
+    "activate-project-public-api-key",
+    "deactivate-project-public-api-key",
+    "roll-project-public-api-key",
+    "roll-project-secret-api-key",
+    "get-management-webhooks",
+    "create-management-webhook",
+    "get-management-webhook",
+    "update-management-webhook",
+    "delete-management-webhook",
+    "roll-management-webhook-secret",
+    "upsert-management-webhook-additional-headers",
+    "get-management-webhook-additional-headers",
+    "delete-management-webhook-additional-headers",
+    "recover-failed-webhook-messages",
+    "send-test-webhook",
+] %}
+
+{# Models used exclusively by hidden Management API endpoints above. #}
+{% set hidden_models = [
+    "GetThreadParticipantsResponse",
+    "CreateManagementProjectRequestBody",
+    "CreateManagementWebhookRequestBody",
+    "CreateManagementWebhookRequestBodyAdditionalHeaders",
+    "DeleteManagementWebhookHeadersRequestBody",
+    "DeleteManagementWebhookHeadersResponse",
+    "GetManagementProjectsResponse",
+    "GetManagementWebhookHeadersResponse",
+    "GetManagementWebhooksResponse",
+    "ManagementProject",
+    "ManagementProjectPublicKey",
+    "ManagementProjectRegion",
+    "ManagementProjectRollProjectSecretApiKeyResponseSecretKeyResponse",
+    "ManagementProjectSecretKey",
+    "ManagementProjectType",
+    "ManagementWebhook",
+    "ManagementWebhookAdditionalHeaders",
+    "ManagementWebhookEvent",
+    "ManagementWebhookHeadersDelete",
+    "ManagementWebhookSecret",
+    "RecoverManagementWebhookFailedMessagesRequestBody",
+    "RollProjectPublicApiKeyRequestBody",
+    "RollProjectPublicApiKeyRequestBodyExpirationIn",
+    "RollProjectPublicApiKeyResponse",
+    "RollProjectSecretApiKeyRequestBody",
+    "RollProjectSecretApiKeyRequestBodyExpirationIn",
+    "RotateManagementWebhookSecretResponse",
+    "TestManagementWebhookRequestBody",
+    "TestManagementWebhookResponse",
+    "TestManagementWebhookResponseMessage",
+    "UpdateManagementProjectRequestBody",
+    "UpdateManagementWebhookRequestBody",
+    "UpsertManagementWebhookHeadersRequestBody",
+    "UpsertManagementWebhookHeadersResponse",
+    "UpsertManagementWebhookHeadersResponseHeaders",
+] %}

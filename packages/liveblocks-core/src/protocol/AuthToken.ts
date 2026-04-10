@@ -9,12 +9,12 @@ export enum Permission {
   PresenceWrite = "room:presence:write",
   CommentsWrite = "comments:write",
   CommentsRead = "comments:read",
+  FeedsWrite = "feeds:write",
 }
 
 export type LiveblocksPermissions = Record<string, Permission[]>;
 
 export enum TokenKind {
-  SECRET_LEGACY = "sec-legacy",
   ACCESS_TOKEN = "acc",
   ID_TOKEN = "id",
 }
@@ -40,24 +40,7 @@ type JwtMeta = {
 };
 
 /**
- * Legacy Secret Token.
- */
-export type LegacySecretToken = {
-  k: TokenKind.SECRET_LEGACY;
-  roomId: string;
-  scopes: string[];
-
-  // Extra payload as defined by the customer's own authorization
-  id?: string;
-  info?: IUserInfo;
-
-  // IMPORTANT: All other fields on the JWT token are deliberately treated as
-  // opaque, and not relied on by the client.
-  [other: string]: Json | undefined;
-} & JwtMeta;
-
-/**
- * New authorization Access Token.
+ * Access Token.
  */
 export type AccessToken = {
   k: TokenKind.ACCESS_TOKEN;
@@ -65,7 +48,6 @@ export type AccessToken = {
   uid: string; // user id
   perms: LiveblocksPermissions; // permissions
   ui?: IUserInfo; // user info
-  ai?: boolean; // is AI Copilots enabled for this user?
 } & JwtMeta;
 
 /**
@@ -77,10 +59,9 @@ export type IDToken = {
   uid: string; // user id
   gids?: string[]; // group ids
   ui?: IUserInfo; // user info
-  ai?: boolean; // is AI Copilots enabled for this user?
 } & JwtMeta;
 
-export type AuthToken = AccessToken | IDToken | LegacySecretToken;
+export type AuthToken = AccessToken | IDToken;
 
 // The "rich" token is data we obtain by parsing the JWT token and making all
 // metadata on it accessible. It's done right after hitting the backend, but
@@ -91,14 +72,10 @@ export type ParsedAuthToken = {
   readonly parsed: AuthToken; // Rich data on the JWT value
 };
 
-function isValidAuthTokenPayload(
-  data: Json
-): data is AccessToken | IDToken | LegacySecretToken {
+function isValidAuthTokenPayload(data: Json): data is AccessToken | IDToken {
   return (
     isPlainObject(data) &&
-    (data.k === TokenKind.ACCESS_TOKEN ||
-      data.k === TokenKind.ID_TOKEN ||
-      data.k === TokenKind.SECRET_LEGACY)
+    (data.k === TokenKind.ACCESS_TOKEN || data.k === TokenKind.ID_TOKEN)
   );
 }
 

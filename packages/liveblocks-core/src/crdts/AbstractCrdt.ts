@@ -1,11 +1,16 @@
 import { assertNever } from "../lib/assert";
+import type { ReadonlyJson } from "../lib/Json";
 import type { Pos } from "../lib/position";
 import { asPos } from "../lib/position";
-import type { CreateOp, Op } from "../protocol/Op";
+import type {
+  ClientWireCreateOp,
+  ClientWireOp,
+  CreateOp,
+  Op,
+} from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
-import type { SerializedCrdt } from "../protocol/SerializedCrdt";
+import type { SerializedCrdt } from "../protocol/StorageNode";
 import type * as DevTools from "../types/DevToolsTreeNode";
-import type { Immutable } from "../types/Immutable";
 import type { LiveNode, Lson } from "./Lson";
 import type { StorageUpdate } from "./StorageUpdates";
 
@@ -35,7 +40,7 @@ export interface ManagedPool {
    * - Notify room subscribers with updates (in-client, no networking)
    */
   dispatch: (
-    ops: Op[],
+    ops: ClientWireOp[],
     reverseOps: Op[],
     storageUpdates: Map<string, StorageUpdate>
   ) => void;
@@ -62,7 +67,7 @@ export type CreateManagedPoolOptions = {
    * Will get invoked when any Live structure calls .dispatch() on the pool.
    */
   onDispatch?: (
-    ops: Op[],
+    ops: ClientWireOp[],
     reverse: Op[],
     storageUpdates: Map<string, StorageUpdate>
   ) => void;
@@ -105,7 +110,7 @@ export function createManagedPool(
     generateOpId: () => `${getCurrentConnectionId()}:${opClock++}`,
 
     dispatch(
-      ops: Op[],
+      ops: ClientWireOp[],
       reverse: Op[],
       storageUpdates: Map<string, StorageUpdate>
     ) {
@@ -122,10 +127,34 @@ export function createManagedPool(
   };
 }
 
+/**
+ * When applying an op to a CRDT, we need to know where it came from to apply
+ * it correctly.
+ */
 export enum OpSource {
-  UNDOREDO_RECONNECT,
-  REMOTE,
-  ACK,
+  /**
+   * Optimistic update applied locally (from an undo, redo, or reconnect). Not
+   * yet acknowledged by the server. Will be sent to server and needs to be
+   * tracked for conflict resolution.
+   */
+  LOCAL,
+
+  /**
+   * Op received from server, originated from another client. Apply it, unless
+   * there's a pending local op for the same key (local ops take precedence
+   * until acknowledged).
+   *
+   * Note that a "fix Op" sent by the server in response to a local mutation
+   * that caused a conflict will also be classified as a THEIRS-like mutation.
+   * (As if another client resolved the conflict.)
+   */
+  THEIRS,
+
+  /**
+   * Op received from server, originated from THIS client. Server echoed it
+   * back to confirm.
+   */
+  OURS,
 }
 
 // TODO Temporary helper to help convert from AbstractCrdt -> LiveNode, only
@@ -360,18 +389,38 @@ export abstract class AbstractCrdt {
   /** @internal */
   abstract _detachChild(crdt: LiveNode): ApplyResult;
 
-  /** @internal */
-  abstract _toOps(
+  /**
+   * Serializes this CRDT and all its children into a list of creation ops
+   * without opIds. Used for creating reverse/undo operations, which get their
+   * opIds assigned later when the undo is actually applied.
+   *
+   * @internal
+   */
+  abstract _toOps(parentId: string, parentKey: string): CreateOp[];
+
+  /**
+   * Serializes this CRDT and all its children into a list of creation ops
+   * with opIds. Used for forward operations that will be sent over the wire
+   * immediately. Each op gets a unique opId for server acknowledgement.
+   *
+   * @internal
+   */
+  _toOpsWithOpId(
     parentId: string,
     parentKey: string,
-    pool?: ManagedPool
-  ): CreateOp[];
+    pool: ManagedPool
+  ): ClientWireCreateOp[] {
+    return this._toOps(parentId, parentKey).map((op) => ({
+      opId: pool.generateOpId(),
+      ...op,
+    }));
+  }
 
   /** @internal */
   abstract _serialize(): SerializedCrdt;
 
-  /** This caches the result of the last .toImmutable() call for this Live node. */
-  #cachedImmutable?: Immutable;
+  /** This caches the result of the last .toJSON() call for this Live node. */
+  #cachedJson?: ReadonlyJson;
 
   #cachedTreeNodeKey?: string | number;
   /** This caches the result of the last .toTreeNode() call for this Live node. */
@@ -380,16 +429,12 @@ export abstract class AbstractCrdt {
   /**
    * @internal
    *
-   * Clear the Immutable cache, so that the next call to `.toImmutable()` will
-   * recompute the equivalent Immutable value again.  Call this after every
-   * mutation to the Live node.
+   * Clear the cached snapshots, so that the next call to `.toJSON()` will
+   * recompute. Call this after every mutation to the Live node.
    */
   invalidate(): void {
-    if (
-      this.#cachedImmutable !== undefined ||
-      this.#cachedTreeNode !== undefined
-    ) {
-      this.#cachedImmutable = undefined;
+    if (this.#cachedJson !== undefined || this.#cachedTreeNode !== undefined) {
+      this.#cachedJson = undefined;
       this.#cachedTreeNode = undefined;
 
       if (this.parent.type === "HasParent") {
@@ -403,7 +448,6 @@ export abstract class AbstractCrdt {
 
   /**
    * @internal
-   *
    * Return an snapshot of this Live tree for use in DevTools.
    */
   toTreeNode(key: string): DevTools.LsonTreeNode {
@@ -417,18 +461,30 @@ export abstract class AbstractCrdt {
   }
 
   /** @internal */
-  abstract _toImmutable(): Immutable;
+  abstract _toJSON(): ReadonlyJson;
 
   /**
-   * Return an immutable snapshot of this Live node and its children.
+   * @private
+   * Returns true if the cached JSON snapshot exists and is reference-equal
+   * to the given value. Does not trigger a recompute.
    */
-  toImmutable(): Immutable {
-    if (this.#cachedImmutable === undefined) {
-      this.#cachedImmutable = this._toImmutable();
+  hasCache(value: unknown): boolean {
+    return this.#cachedJson !== undefined && this.#cachedJson === value;
+  }
+
+  /**
+   * Return a JSON-compatible snapshot of this Live node and its children.
+   * LiveObject values become plain objects, LiveList values become arrays,
+   * and LiveMap values also become plain objects (not Map instances).
+   * The result is cached and only recomputed when the contents change.
+   */
+  toJSON(): ReadonlyJson {
+    if (this.#cachedJson === undefined) {
+      this.#cachedJson = this._toJSON();
     }
 
     // Return cached version
-    return this.#cachedImmutable;
+    return this.#cachedJson;
   }
 
   /**

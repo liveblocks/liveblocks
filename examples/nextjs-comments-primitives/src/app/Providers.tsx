@@ -1,7 +1,8 @@
 "use client";
 
 import { LiveblocksProvider } from "@liveblocks/react";
-import { PropsWithChildren } from "react";
+import { PropsWithChildren, Suspense } from "react";
+import { Tooltip } from "radix-ui";
 
 export function Providers({ children }: PropsWithChildren) {
   return (
@@ -35,7 +36,9 @@ export function Providers({ children }: PropsWithChildren) {
         return userIds;
       }}
     >
-      {children}
+      <Suspense>
+        <Tooltip.Provider>{children}</Tooltip.Provider>
+      </Suspense>
     </LiveblocksProvider>
   );
 }

@@ -66,7 +66,10 @@ function customRenderHook<Result, Props>(
   return renderHook(render, { wrapper: TestingRoomProvider, ...options });
 }
 
-export function createContextsForTest<M extends BaseMetadata>(
+export function createContextsForTest<
+  TM extends BaseMetadata = BaseMetadata,
+  CM extends BaseMetadata = BaseMetadata,
+>(
   {
     userId,
     ...options
@@ -93,10 +96,10 @@ export function createContextsForTest<M extends BaseMetadata>(
   }
 
   const client = createClient(clientOptions);
-  const { store: umbrellaStore } = getLiveblocksExtrasForClient<M>(client);
+  const { store: umbrellaStore } = getLiveblocksExtrasForClient<TM, CM>(client);
 
   return {
-    room: createRoomContext<JsonObject, never, never, never, M>(client),
+    room: createRoomContext<JsonObject, never, never, never, TM, CM>(client),
     liveblocks: createLiveblocksContext(client),
     client,
     umbrellaStore,
@@ -127,6 +130,7 @@ export function generateFakeJwt(options: { userId: string }) {
 const parser = new QueryParser({
   fields: {
     resolved: "boolean",
+    subscribed: "boolean",
   },
   indexableFields: {
     metadata: "mixed",
@@ -134,16 +138,13 @@ const parser = new QueryParser({
   allowNull: true,
 });
 
-function getFieldValue(
-  thread: ThreadData<BaseMetadata>,
-  field: AST.Field
-): unknown {
+function getFieldValue(thread: ThreadData, field: AST.Field): unknown {
   switch (field._kind) {
     case "DirectField":
-      return thread[field.ref.name as keyof ThreadData<BaseMetadata>];
+      return thread[field.ref.name as keyof ThreadData];
 
     case "KeyedField": {
-      const base = thread[field.base.name as keyof ThreadData<BaseMetadata>];
+      const base = thread[field.base.name as keyof ThreadData];
       return isPlainObject(base) ? base?.[field.key] : undefined;
     }
 
@@ -154,7 +155,7 @@ function getFieldValue(
 
 function matchesConditionGroup(
   cond: AST.ConditionGroup,
-  thread: ThreadData<BaseMetadata>
+  thread: ThreadData
 ): boolean {
   switch (cond._kind) {
     case "OrCondition":
@@ -173,22 +174,33 @@ function matchesConditionGroup(
       return typeof actual === "string" && actual.startsWith(expected);
     }
 
-    case "NumericCondition":
-      throw new Error("Not implemented yet");
+    case "NumericCondition": {
+      const actual = getFieldValue(thread, cond.field);
+      const expected = cond.value.value;
+      switch (cond.op) {
+        case ">":
+          return typeof actual === "number" && actual > expected;
+        case ">=":
+          return typeof actual === "number" && actual >= expected;
+        case "<":
+          return typeof actual === "number" && actual < expected;
+        case "<=":
+          return typeof actual === "number" && actual <= expected;
+        default:
+          throw new Error(`Unknown numeric operator: ${cond.op}`);
+      }
+    }
 
     default:
       return assertNever(cond, "Unhandled case");
   }
 }
 
-function matchesQuery(
-  query: AST.Query,
-  thread: ThreadData<BaseMetadata>
-): boolean {
+function matchesThreadQuery(query: AST.Query, thread: ThreadData): boolean {
   return query.allOf.every((group) => matchesConditionGroup(group, thread));
 }
 
 export const makeThreadFilter = (queryText: string) => {
   const query = parser.parse(queryText).query;
-  return (thread: ThreadData<BaseMetadata>) => matchesQuery(query, thread);
+  return (thread: ThreadData) => matchesThreadQuery(query, thread);
 };

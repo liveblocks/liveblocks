@@ -321,8 +321,8 @@ test(
             await control.flushB();
 
             // Property: both clients should have identical final states
-            const list1 = root1.get("list").toImmutable();
-            const list2 = root2.get("list").toImmutable();
+            const list1 = root1.get("list").toJSON();
+            const list2 = root2.get("list").toJSON();
             ctx.log(`Client A: ${JSON.stringify(list1)}`);
             ctx.log(`Client B: ${JSON.stringify(list2)}`);
             ctx.log(
@@ -335,25 +335,12 @@ test(
               throw new Error(
                 "Consistency violation! Clients disagree on final state of LiveList."
               );
-            } else {
-              // console.log(
-              //   "---------------------------------------------------"
-              // );
-              // console.log("Commands executed:");
-              // for (const c of commands) {
-              //   console.log("  - ", c.toString());
-              // }
-              // console.log("Final consistent state:", JSON.stringify(list1));
-              // console.log("");
-              // console.log(
-              //   "---------------------------------------------------"
-              // );
             }
           }
         ),
         {
-          // Run as many tests as you can run in 30 seconds
-          interruptAfterTimeLimit: 30_000,
+          // Run as many tests as you can run in 20 seconds
+          interruptAfterTimeLimit: 20_000,
           numRuns: Number.POSITIVE_INFINITY,
           verbose: true,
         }

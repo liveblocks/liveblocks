@@ -1,4 +1,4 @@
-import { Slot } from "@radix-ui/react-slot";
+import { Slot as SlotPrimitive } from "radix-ui";
 import {
   createContext,
   forwardRef,
@@ -44,7 +44,7 @@ const CollapsibleRoot = forwardRef<HTMLDivElement, RootProps>(
       controlledOpen,
       controlledOnOpenChange
     );
-    const Component = asChild ? Slot : "div";
+    const Component = asChild ? SlotPrimitive.Slot : "div";
     const id = useId();
 
     return (
@@ -68,7 +68,7 @@ const CollapsibleRoot = forwardRef<HTMLDivElement, RootProps>(
 
 const CollapsibleTrigger = forwardRef<HTMLButtonElement, TriggerProps>(
   ({ onClick, asChild, ...props }, forwardedRef) => {
-    const Component = asChild ? Slot : "button";
+    const Component = asChild ? SlotPrimitive.Slot : "button";
     const context = useContext(CollapsibleContext);
 
     if (!context) {
@@ -104,7 +104,7 @@ const CollapsibleTrigger = forwardRef<HTMLButtonElement, TriggerProps>(
 
 const CollapsibleContent = forwardRef<HTMLDivElement, ContentProps>(
   ({ asChild, ...props }, forwardedRef) => {
-    const Component = asChild ? Slot : "div";
+    const Component = asChild ? SlotPrimitive.Slot : "div";
     const context = useContext(CollapsibleContext);
     const divRef = useRef<HTMLDivElement>(null);
 

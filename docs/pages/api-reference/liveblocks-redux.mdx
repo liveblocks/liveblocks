@@ -32,6 +32,18 @@ const store = configureStore({
 });
 ```
 
+<PropertiesList title="Options">
+  <PropertiesListItem name="client" type="Client">
+    The Liveblocks client instance created with `createClient()`.
+  </PropertiesListItem>
+  <PropertiesListItem name="presenceMapping" type="PresenceMapping">
+    Optional mapping to synchronize Redux state with Liveblocks presence.
+  </PropertiesListItem>
+  <PropertiesListItem name="storageMapping" type="StorageMapping">
+    Optional mapping to synchronize Redux state with Liveblocks storage.
+  </PropertiesListItem>
+</PropertiesList>
+
 ### client [#enhancer-option-client]
 
 See different authentication methods in the [`createClient`][] method.
@@ -119,7 +131,8 @@ const store = configureStore({
 
 ### ENTER [#actions-enter]
 
-Dispatch `enterRoom` action to enter a room and start sync it with Redux state.
+Dispatch `enterRoom` action to enter a room and start syncing it with Redux
+state.
 
 - `roomId`: The room’s ID.
 
@@ -131,6 +144,18 @@ const dispatch = useDispatch();
 
 dispatch(actions.enterRoom("roomId"));
 ```
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="roomId" type="string">
+    The ID of the room to enter.
+  </PropertiesListItem>
+  <PropertiesListItem name="options" type="object" optional>
+    <PropertiesListItem name="engine" type="1 | 2" optional>
+      Preferred storage engine version to use when creating the room. Only takes
+      effect if the room doesn't exist yet.
+    </PropertiesListItem>
+  </PropertiesListItem>
+</PropertiesList>
 
 ### LEAVE [#actions-leave]
 
@@ -145,6 +170,8 @@ const dispatch = useDispatch();
 
 dispatch(actions.leaveRoom());
 ```
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 ## state.liveblocks [#liveblocks-state]
 
@@ -163,7 +190,9 @@ const others = useSelector((state) => state.liveblocks.others);
 Whether the room storage is currently loading.
 
 ```js
-const connection = useSelector((state) => state.liveblocks.isStorageLoading);
+const isStorageLoading = useSelector(
+  (state) => state.liveblocks.isStorageLoading
+);
 ```
 
 ### status [#liveblocks-state-status]
@@ -176,8 +205,8 @@ const {
 } = useStore();
 ```
 
-The possible value are: `initial`, `connecting`, `connected`, `reconnecting`, or
-`disconnected`.
+The possible values are: `initial`, `connecting`, `connected`, `reconnecting`,
+or `disconnected`.
 
 [`createclient`]: /docs/api-reference/liveblocks-client#createClient
 [`status`]: /docs/api-reference/liveblocks-redux#liveblocks-state-status

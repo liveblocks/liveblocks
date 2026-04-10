@@ -6,7 +6,6 @@
   gap: 8px;
 }
 
-
 .warningIcon {
   width: 36px;
   height: 36px;
@@ -16,16 +15,79 @@
   color: #c99f00;
 }
 
+.issueIcon {
+  width: 36px;
+  height: 36px;
+  background: #f3f3f3;
+  border-radius: 100%;
+  padding: 8px;
+  color: #5946d9;
+}
+
 .buttonBar {
   display: flex;
   gap: 6px;
   margin-top: 12px;
 }
 
-.imageSurround {}
-
 .image {
   margin: 6px 0 16px;
   border-radius: 8px;
   max-width: 60%;
+}
+
+.timeline {
+  position: relative;
+  padding-left: 0;
+  font-size: 14px;
+}
+
+.timelineItem {
+  display: flex;
+  align-items: flex-start;
+  position: relative;
+}
+
+.timelineConnector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 12px;
+  position: relative;
+}
+
+.timelineCircle {
+  margin-top: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-border-contrasted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
+}
+
+.timelineLine {
+  width: 1px;
+  margin-left: 0.5px;
+  height: 14px;
+  background: var(--color-border-contrasted);
+  flex-shrink: 0;
+  margin-top: 4px;
+  margin-bottom: -2px;
+}
+
+.timelineContent {
+  flex: 1;
+  line-height: 1.4;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.timelineItem:last-child .timelineLine {
+  display: none;
 }

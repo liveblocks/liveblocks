@@ -1,0 +1,324 @@
+---
+meta:
+  title: "How to set up End-to-End (E2E) testing with Playwright"
+  description:
+    "Learn how to write End-to-End (E2E) tests for your Liveblocks application
+    using Playwright and the local dev server."
+---
+
+End-to-End (E2E) tests give you confidence that your collaborative features work
+correctly across multiple clients. This guide walks through setting up
+[Playwright](https://playwright.dev) to test a Liveblocks-powered Next.js
+application using the [local dev server](/docs/tools/dev-server), so your tests
+run locally or in CI, without hitting Liveblocks cloud APIs.
+
+<Banner title="Have a project ready">
+
+This guide assumes you already have a Liveblocks application set up. We'll use
+our
+[Collaborative Todo List](/examples/collaborative-todo-list/nextjs-todo-list)
+example as a reference throughout, but a similar approach works with any
+Liveblocks project.
+
+</Banner>
+
+## Overview
+
+The setup has two parts:
+
+1. **Point your app at the local dev server** instead of the Liveblocks cloud,
+   using the `baseUrl` prop and using `pk_localdev` as the public key.
+2. **Configure Playwright** to start both the dev server and your app before
+   tests run.
+
+## Step 1: Install dependencies
+
+Add Playwright to your project:
+
+```bash
+npm install -D @playwright/test
+npx playwright install chromium
+```
+
+## Step 2: Configure your app for local development
+
+The Liveblocks dev server accepts connections using the magic key `pk_localdev`
+and runs on port `1153` by default. Pass these to your `LiveblocksProvider` via
+environment variables so they can be overridden per environment:
+
+```tsx file="pages/_app.tsx"
+import { LiveblocksProvider } from "@liveblocks/react";
+
+export default function App({ Component, pageProps }) {
+  return (
+    <LiveblocksProvider
+      publicApiKey={process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY}
+      baseUrl={process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL}
+    >
+      <Component {...pageProps} />
+    </LiveblocksProvider>
+  );
+}
+```
+
+Set the environment variables in your `.env.local` for everyday development, or
+let Playwright inject them at test time (see Step 3).
+
+<Banner title="Note about baseUrl">
+
+The `baseUrl` prop redirects all Liveblocks traffic, including WebSocket
+connections, to the given URL. When it is `undefined`, the client uses the
+default Liveblocks cloud endpoint, so production builds are unaffected.
+
+</Banner>
+
+## Step 3: Create a Playwright configuration
+
+Create `playwright.config.ts` at the project root. The key idea is to use the
+[`webServer`](https://playwright.dev/docs/test-webserver) option to start the
+Liveblocks dev server and your Next.js app automatically:
+
+```ts file="playwright.config.ts"
+import { defineConfig } from "@playwright/test";
+
+const NEXT_PORT = 3009;
+const LIVEBLOCKS_PORT = 1153;
+
+export default defineConfig({
+  testDir: "./test",
+  retries: process.env.CI ? 2 : 0,
+  use: {
+    baseURL: `http://localhost:${NEXT_PORT}`,
+    trace: "on-first-retry",
+  },
+  webServer: [
+    // Locally, start the Liveblocks dev server via npx.
+    // In CI it runs as a Docker service container instead.
+    ...(process.env.CI
+      ? []
+      : [
+          {
+            command: `npx liveblocks dev --ephemeral --no-check --port ${LIVEBLOCKS_PORT}`,
+            port: LIVEBLOCKS_PORT,
+            reuseExistingServer: true,
+          },
+        ]),
+    {
+      command: process.env.CI
+        ? `npx next start --port ${NEXT_PORT}`
+        : `npx next dev --port ${NEXT_PORT}`,
+      port: NEXT_PORT,
+      reuseExistingServer: !process.env.CI,
+      env: {
+        NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY: "pk_localdev",
+        NEXT_PUBLIC_LIVEBLOCKS_BASE_URL: `http://localhost:${LIVEBLOCKS_PORT}`,
+      },
+    },
+  ],
+});
+```
+
+A few things to note:
+
+- **`reuseExistingServer`**—Locally, this lets you leave the servers running
+  between test runs for faster iteration. In CI, a fresh server is started each
+  time.
+- **`CI` check**—In CI, the dev server is provided by a Docker service container
+  (see [Running in CI](#running-in-ci)), so we skip starting it via `webServer`.
+- **Environment variables**—`NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY` and
+  `NEXT_PUBLIC_LIVEBLOCKS_BASE_URL` are injected into the Next.js build/dev
+  process, pointing it at the local dev server.
+
+## Step 4: Write tests
+
+Create a test file, e.g. `test/todo.spec.ts`. Each test navigates to a unique
+room to avoid cross-test interference:
+
+```ts file="test/todo.spec.ts"
+import { test, expect } from "@playwright/test";
+
+// Each test gets a unique room to avoid cross-test interference.
+function roomId(testInfo: { workerIndex: number; title: string }) {
+  let hash = 0;
+  const raw = `pw-${testInfo.workerIndex}-${testInfo.title}`;
+  for (let i = 0; i < raw.length; i++) {
+    hash = (hash * 33) ^ raw.charCodeAt(i);
+  }
+  return `todo-test-${(hash >>> 0).toString(36)}`;
+}
+
+test("should add a todo", async ({ page }, testInfo) => {
+  await page.goto(`/?roomId=${roomId(testInfo)}`);
+  const input = page.getByPlaceholder("What needs to be done?");
+  await expect(input).toBeVisible();
+
+  await input.fill("Buy groceries");
+  await input.press("Enter");
+
+  const todo = page.locator(".todo_container");
+  await expect(todo).toHaveCount(1);
+  await expect(todo).toContainText("Buy groceries");
+});
+```
+
+### Testing multi-client collaboration
+
+One of the most valuable things to test is that changes sync between clients.
+Playwright makes this straightforward—open a second page in the same browser
+context and point it at the same room:
+
+```ts file="test/todo.spec.ts"
+test("should sync a new todo to a second client", async ({
+  page,
+}, testInfo) => {
+  const room = roomId(testInfo);
+  const page2 = await page.context().newPage();
+
+  await page.goto(`/?roomId=${room}`);
+  await page2.goto(`/?roomId=${room}`);
+
+  const input1 = page.getByPlaceholder("What needs to be done?");
+  await expect(input1).toBeVisible();
+  await expect(page2.getByPlaceholder("What needs to be done?")).toBeVisible();
+
+  // Add a todo on page 1
+  await input1.fill("Synced todo");
+  await input1.press("Enter");
+
+  // Should appear on page 2
+  const todosPage2 = page2.locator(".todo_container");
+  await expect(todosPage2).toHaveCount(1);
+  await expect(todosPage2.nth(0)).toContainText("Synced todo");
+
+  await page2.close();
+});
+```
+
+### Testing presence
+
+You can also verify presence features like typing indicators:
+
+```ts file="test/todo.spec.ts"
+test("should show typing indicator to other user", async ({
+  page,
+}, testInfo) => {
+  const room = roomId(testInfo);
+  const page2 = await page.context().newPage();
+
+  await page.goto(`/?roomId=${room}`);
+  await page2.goto(`/?roomId=${room}`);
+
+  const input1 = page.getByPlaceholder("What needs to be done?");
+  await expect(input1).toBeVisible();
+  await expect(page2.getByPlaceholder("What needs to be done?")).toBeVisible();
+
+  // Type on page 1—page 2 should see the typing indicator
+  await input1.fill("Hello");
+
+  await expect(page2.locator(".someone_is_typing")).toContainText(
+    "Someone is typing"
+  );
+
+  await page2.close();
+});
+```
+
+## Step 5: Run the tests
+
+```bash
+npx playwright test
+```
+
+Playwright will automatically start the Liveblocks dev server and your Next.js
+app, run all tests, then shut everything down.
+
+## Running in CI
+
+In CI environments like GitHub Actions, use the
+[Liveblocks dev server Docker image](https://github.com/liveblocks/liveblocks/pkgs/container/dev-server)
+as a service container instead of starting it via `npx`:
+
+```yaml file=".github/workflows/e2e.yml"
+name: E2E Tests
+
+on:
+  pull_request:
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+
+    services:
+      liveblocks:
+        image: ghcr.io/liveblocks/dev-server:latest
+        ports:
+          - 1153:1153
+
+    env:
+      NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY: pk_localdev
+      NEXT_PUBLIC_LIVEBLOCKS_BASE_URL: http://localhost:1153
+
+    defaults:
+      run:
+        working-directory: your-app-directory
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: your-app-directory/package-lock.json
+
+      - run: npm install
+      - run: npx playwright install chromium --with-deps
+      - run: npm run build
+      - run: npx playwright test
+
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: your-app-directory/playwright-report
+          retention-days: 14
+```
+
+Key points:
+
+- **`NEXT_PUBLIC_` env vars**—These are set at the job level so they're
+  available during both `npm run build` (where Next.js inlines them) and test
+  execution.
+- **Build before test**—In CI, the Playwright config uses `next start` (not
+  `next dev`), so the app must be built first.
+- **Artifact upload**—On failure, the Playwright HTML report is uploaded so you
+  can debug test failures.
+
+## Complete example
+
+The
+[Next.js Todo List example](https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-todo-list)
+in the Liveblocks repository includes a full Playwright test suite and a CI
+workflow built using this guide. You can use it as a starting point:
+
+- [`test/todo.spec.ts`](https://github.com/liveblocks/liveblocks/blob/main/examples/nextjs-todo-list/test/todo.spec.ts):
+  Test file with 11 tests covering CRUD, toggle, multi-client sync, and typing
+  indicators.
+- [`playwright.config.ts`](https://github.com/liveblocks/liveblocks/blob/main/examples/nextjs-todo-list/playwright.config.ts):
+  Playwright configuration for local dev server and Next.js web server setup.
+- [`.github/workflows/e2e-todo-list.yml`](https://github.com/liveblocks/liveblocks/blob/main/.github/workflows/e2e-todo-list.yml):
+  CI workflow with GitHub Actions pipeline using the dev server Docker image.
+
+## Tips
+
+- **Unique room IDs per test**: The dev server persists storage to disk, so
+  using unique room IDs prevents state from leaking between tests.
+- **Retries**: Collaborative tests involve WebSocket connections and async
+  syncing. Adding a few retries in CI (`retries: 2` or more) helps absorb
+  occasional timing-related flakiness.
+- **Traces**: Setting `trace: "on-first-retry"` captures a
+  [Playwright trace](https://playwright.dev/docs/trace-viewer) on the first
+  retry, which is invaluable for debugging.
+- **`reuseExistingServer`**: During local development, keep the dev server
+  running separately (`npx liveblocks dev`) for faster test iteration.

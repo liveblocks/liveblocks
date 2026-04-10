@@ -1,23 +1,18 @@
 import {
   useBroadcastEvent,
+  useErrorListener,
   useEventListener,
 } from "@liveblocks/react/suspense";
-import * as Tabs from "@radix-ui/react-tabs";
 import { useSession } from "next-auth/react";
 import { ComponentProps, useCallback, useEffect, useState } from "react";
-import { UserIcon, UsersIcon } from "@/icons";
-import {
-  getDocument,
-  getDocumentGroups,
-  getDocumentUsers,
-} from "@/lib/actions";
+import { CheckIcon, LinkIcon } from "@/icons";
+import { getDocument, getDocumentUsers } from "@/lib/actions";
 import { useDocumentsFunctionSWR, useInitialDocument } from "@/lib/hooks";
 import { getDocumentAccess } from "@/lib/utils";
+import { Button } from "@/primitives/Button";
 import { Dialog } from "@/primitives/Dialog";
-import { DocumentAccess } from "@/types";
-import { ShareDialogDefault } from "./ShareDialogDefault";
-import { ShareDialogGroups } from "./ShareDialogGroups";
-import { ShareDialogInviteGroup } from "./ShareDialogInviteGroup";
+import { DocumentPermissionType } from "@/types";
+import { ShareDialogGeneral } from "./ShareDialogGeneral";
 import { ShareDialogInviteUser } from "./ShareDialogInviteUser";
 import { ShareDialogUsers } from "./ShareDialogUsers";
 import styles from "./ShareDialog.module.css";
@@ -25,12 +20,15 @@ import styles from "./ShareDialog.module.css";
 type Props = Omit<ComponentProps<typeof Dialog>, "content" | "title">;
 
 export function ShareDialog({ children, ...props }: Props) {
-  const { id: documentId, accesses: documentAccesses } = useInitialDocument();
-
   const { data: session } = useSession();
-  const [currentUserAccess, setCurrentUserAccess] = useState(
-    DocumentAccess.NONE
-  );
+  const initialDocument = useInitialDocument();
+  const { id: documentId, userPermissions, owner } = initialDocument;
+  const fullAccess = owner === session?.user?.info.id;
+
+  const [currentUserAccess, setCurrentUserAccess] =
+    useState<DocumentPermissionType | null>(
+      userPermissions[session?.user?.info.id ?? ""] || null
+    );
 
   // Get a list of users attached to the document (+ their info)
   const {
@@ -41,33 +39,29 @@ export function ShareDialog({ children, ...props }: Props) {
     refreshInterval: 0,
   });
 
-  // Get a list of groups attached to the document (+ their info)
-  const {
-    data: groups,
-    mutate: revalidateGroups,
-    // error: groupsError,
-  } = useDocumentsFunctionSWR([getDocumentGroups, { documentId }], {
-    refreshInterval: 0,
-  });
-
   // Get the current document
   const {
     data: document,
-    error: defaultAccessError,
+    error: generalAccessError,
     mutate: revalidateDefaultAccess,
   } = useDocumentsFunctionSWR([getDocument, { documentId }], {
     refreshInterval: 0,
   });
 
-  // Get default access value from document, or the default value from the property
-  const defaultAccess = document
-    ? document.accesses.default
-    : documentAccesses.default;
-
-  // If you have no access to this room, refresh
-  if (defaultAccessError && defaultAccessError.code === 403) {
+  // If document says you have no access to this room, refresh and show error page
+  if (generalAccessError && generalAccessError.code === 403) {
     window.location.reload();
   }
+
+  // If WebSocket says you have no access to this room, refresh and show error page
+  useErrorListener((error) => {
+    if (
+      error.context.type === "ROOM_CONNECTION_ERROR" &&
+      error.context.code === 4001
+    ) {
+      window.location.reload();
+    }
+  });
 
   // Refresh the current user's access level
   const revalidateCurrentUserAccess = useCallback(() => {
@@ -76,23 +70,16 @@ export function ShareDialog({ children, ...props }: Props) {
     }
 
     const accessLevel = getDocumentAccess({
-      documentAccesses: document.accesses,
+      document,
       userId: session?.user?.info.id ?? "",
-      groupIds: session?.user?.info.groupIds ?? [],
     });
-
-    // Reload if current user has no access (will show error page)
-    if (accessLevel === DocumentAccess.NONE) {
-      window.location.reload();
-      return;
-    }
 
     // Reload app if current user swapping between READONLY and EDIT/FULL (will reconnect to app with new access level)
     const accessChanges = new Set([currentUserAccess, accessLevel]);
     if (
-      accessChanges.has(DocumentAccess.READONLY) &&
-      (accessChanges.has(DocumentAccess.EDIT) ||
-        accessChanges.has(DocumentAccess.FULL))
+      !accessChanges.has(null) &&
+      accessChanges.has("read") &&
+      accessChanges.has("write")
     ) {
       window.location.reload();
       return;
@@ -108,7 +95,6 @@ export function ShareDialog({ children, ...props }: Props) {
   // Revalidate all access data
   function revalidateAll() {
     revalidateUsers();
-    revalidateGroups();
     revalidateDefaultAccess();
     revalidateCurrentUserAccess();
   }
@@ -127,76 +113,37 @@ export function ShareDialog({ children, ...props }: Props) {
     <Dialog
       content={
         <div className={styles.dialog}>
-          <Tabs.Root className={styles.dialogTabs} defaultValue="users">
-            <Tabs.List className={styles.dialogTabList}>
-              <Tabs.Trigger className={styles.dialogTab} value="users">
-                <span className={styles.dialogTabLabel}>
-                  <UserIcon className={styles.dialogTabIcon} />
-                  <span>Users</span>
-                </span>
-              </Tabs.Trigger>
-              <Tabs.Trigger className={styles.dialogTab} value="groups">
-                <span className={styles.dialogTabLabel}>
-                  <UsersIcon className={styles.dialogTabIcon} />
-                  <span>Groups</span>
-                </span>
-              </Tabs.Trigger>
-            </Tabs.List>
-            <Tabs.Content value="users" className={styles.dialogTabContent}>
-              <ShareDialogInviteUser
-                className={styles.dialogSection}
-                documentId={documentId}
-                fullAccess={currentUserAccess === DocumentAccess.FULL}
-                onSetUsers={() => {
-                  revalidateAll();
-                  broadcast({ type: "SHARE_DIALOG_UPDATE" });
-                }}
-              />
-              {users?.length ? (
-                <ShareDialogUsers
-                  className={styles.dialogSection}
-                  documentId={documentId}
-                  documentOwner={document?.owner || ""}
-                  fullAccess={currentUserAccess === DocumentAccess.FULL}
-                  onSetUsers={() => {
-                    revalidateAll();
-                    broadcast({ type: "SHARE_DIALOG_UPDATE" });
-                  }}
-                  users={users}
-                />
-              ) : null}
-            </Tabs.Content>
-            <Tabs.Content value="groups" className={styles.dialogTabContent}>
-              <ShareDialogInviteGroup
-                className={styles.dialogSection}
-                documentId={documentId}
-                fullAccess={currentUserAccess === DocumentAccess.FULL}
-                currentGroups={groups || []}
-                onSetGroups={() => {
-                  revalidateAll();
-                  broadcast({ type: "SHARE_DIALOG_UPDATE" });
-                }}
-              />
-              {groups?.length ? (
-                <ShareDialogGroups
-                  className={styles.dialogSection}
-                  documentId={documentId}
-                  fullAccess={currentUserAccess === DocumentAccess.FULL}
-                  groups={groups}
-                  onSetGroups={() => {
-                    revalidateAll();
-                    broadcast({ type: "SHARE_DIALOG_UPDATE" });
-                  }}
-                />
-              ) : null}
-            </Tabs.Content>
-          </Tabs.Root>
-          <ShareDialogDefault
+          <ShareDialogInviteUser
             className={styles.dialogSection}
-            defaultAccess={defaultAccess}
             documentId={documentId}
-            fullAccess={currentUserAccess === DocumentAccess.FULL}
-            onSetDefaultAccess={() => {
+            fullAccess={fullAccess}
+            onSetUsers={() => {
+              revalidateAll();
+              broadcast({ type: "SHARE_DIALOG_UPDATE" });
+            }}
+          />
+
+          {users?.length ? (
+            <ShareDialogUsers
+              className={styles.dialogSection}
+              documentId={documentId}
+              documentOwner={document?.owner || ""}
+              fullAccess={fullAccess}
+              onSetUsers={() => {
+                revalidateAll();
+                broadcast({ type: "SHARE_DIALOG_UPDATE" });
+              }}
+              users={users}
+            />
+          ) : null}
+
+          <div className={styles.dialogDivider}>General access</div>
+
+          <ShareDialogGeneral
+            className={styles.dialogSection}
+            document={document ?? initialDocument}
+            fullAccess={fullAccess}
+            onSetGeneralAccess={() => {
               revalidateAll();
               broadcast({ type: "SHARE_DIALOG_UPDATE" });
             }}
@@ -204,9 +151,49 @@ export function ShareDialog({ children, ...props }: Props) {
         </div>
       }
       title="Share document"
+      titleButton={<CopyToClipboardButton />}
       {...props}
     >
       {children}
     </Dialog>
+  );
+}
+
+// "Copy link" button
+let copyToClipboardTimeout: number;
+function CopyToClipboardButton() {
+  const [copiedToClipboard, setCopiedToClipboard] = useState(false);
+
+  // Show "Copied" for 3 seconds after copying
+  const handleCopyToClipboard = useCallback(async () => {
+    try {
+      const thisUrl = window.location.origin + window.location.pathname;
+      await navigator.clipboard.writeText(thisUrl);
+
+      setCopiedToClipboard(true);
+      window.clearTimeout(copyToClipboardTimeout);
+      copyToClipboardTimeout = window.setTimeout(() => {
+        setCopiedToClipboard(false);
+      }, 3000);
+    } catch {
+      return;
+    }
+  }, []);
+
+  return (
+    <Button
+      icon={
+        copiedToClipboard ? (
+          <CheckIcon height={16} width={16} />
+        ) : (
+          <LinkIcon height={16} width={16} />
+        )
+      }
+      variant="subtle"
+      onClick={handleCopyToClipboard}
+      style={{ pointerEvents: copiedToClipboard ? "none" : "auto" }}
+    >
+      {copiedToClipboard ? "Copied" : "Copy link"}
+    </Button>
   );
 }

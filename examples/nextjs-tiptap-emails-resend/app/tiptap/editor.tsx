@@ -19,6 +19,7 @@ export default function TiptapEditor() {
   const liveblocks = useLiveblocksExtension();
 
   const editor = useEditor({
+    immediatelyRender: false,
     editorProps: {
       attributes: {
         // Add styles to editor element
@@ -27,7 +28,7 @@ export default function TiptapEditor() {
     },
     extensions: [
       StarterKit.configure({
-        history: false,
+        undoRedo: false,
       }),
       liveblocks,
     ],

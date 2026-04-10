@@ -1,14 +1,14 @@
-export const AI_USER_ID = "__ai__";
+export const AI_USER_INFO = {
+  id: "__AI_AGENT",
+  info: {
+    name: "AI Assistant",
+    color: "#6366f1",
+    avatar: `https://liveblocks.io/api/avatar?u=__AI_AGENT&agent=true`,
+  },
+};
 
 const USER_INFO: Liveblocks["UserMeta"][] = [
-  {
-    id: AI_USER_ID,
-    info: {
-      name: "Liveblocks AI",
-      color: "#000000",
-      avatar: "/ai-avatar.png",
-    },
-  },
+  AI_USER_INFO,
   {
     id: "charlie.layne@example.com",
     info: {
@@ -26,7 +26,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     },
   },
   {
-    id: "tatum-paolo@example.com",
+    id: "tatum.paolo@example.com",
     info: {
       name: "Tatum Paolo",
       color: "#F0D885",
@@ -34,7 +34,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     },
   },
   {
-    id: "anjali-wanda@example.com",
+    id: "anjali.wanda@example.com",
     info: {
       name: "Anjali Wanda",
       color: "#85EED6",
@@ -42,7 +42,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     },
   },
   {
-    id: "jody-hekla@example.com",
+    id: "jody.hekla@example.com",
     info: {
       name: "Jody Hekla",
       color: "#85BBF0",
@@ -50,7 +50,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     },
   },
   {
-    id: "emil-joyce@example.com",
+    id: "emil.joyce@example.com",
     info: {
       name: "Emil Joyce",
       color: "#8594F0",
@@ -58,7 +58,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     },
   },
   {
-    id: "jory-quispe@example.com",
+    id: "jory.quispe@example.com",
     info: {
       name: "Jory Quispe",
       color: "#85DBF0",
@@ -66,7 +66,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     },
   },
   {
-    id: "quinn-elton@example.com",
+    id: "quinn.elton@example.com",
     info: {
       name: "Quinn Elton",
       color: "#87EE85",
@@ -76,8 +76,8 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
 ];
 
 export function getRandomUser() {
-  const realUsers = USER_INFO.filter(({ id }) => id !== AI_USER_ID);
-  return realUsers[Math.floor(Math.random() * 10) % realUsers.length];
+  const realUsers = USER_INFO.filter(({ id }) => id !== "__AI_AGENT");
+  return realUsers[Math.floor(Math.random() * realUsers.length)];
 }
 
 export function getUser(id: string) {

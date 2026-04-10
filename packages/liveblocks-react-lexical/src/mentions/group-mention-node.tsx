@@ -81,7 +81,7 @@ export class GroupMentionNode extends DecoratorNode<JSX.Element> {
     return false;
   }
 
-  static importDom(): DOMConversionMap<HTMLElement> | null {
+  static importDOM(): DOMConversionMap<HTMLElement> | null {
     return {
       span: () => ({
         conversion: (element) => {

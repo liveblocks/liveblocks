@@ -33,3 +33,9 @@ export enum TextEditorType {
   TipTap = "tiptap",
   BlockNote = "blocknote",
 }
+
+export type BadgeLocation =
+  | "top-right"
+  | "bottom-right"
+  | "bottom-left"
+  | "top-left";

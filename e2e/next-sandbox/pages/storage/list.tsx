@@ -170,9 +170,9 @@ function Sandbox() {
           onClick={() => delete_(nextIndexToDelete)}
           subtitle={
             canDelete
-              ? `index ${nextIndexToDelete} (${items[
-                  nextIndexToDelete
-                ].trim()})`
+              ? `index ${nextIndexToDelete} (${String(
+                  items[nextIndexToDelete]
+                ).trim()})`
               : null
           }
         >

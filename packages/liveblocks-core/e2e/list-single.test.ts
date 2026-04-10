@@ -1,8 +1,7 @@
 import { expect, test } from "vitest";
 
 import { LiveList } from "../src/crdts/LiveList";
-import { lsonToJson } from "../src/immutable";
-import type { Json } from "../src/lib/Json";
+import type { ReadonlyJson } from "../src/lib/Json";
 import { prepareSingleClientTest } from "./utils";
 
 test(
@@ -12,8 +11,8 @@ test(
       list: new LiveList(["a"]),
     },
     async ({ root, flushSocketMessages, room }) => {
-      const states: Json[] = [];
-      room.subscribe(root, () => states.push(lsonToJson(root)), {
+      const states: ReadonlyJson[] = [];
+      room.subscribe(root, () => states.push(root.toJSON()), {
         isDeep: true,
       });
 
@@ -33,8 +32,8 @@ test(
       list: null,
     } as { list: LiveList<string> | null },
     async ({ root, flushSocketMessages, room }) => {
-      const states: Json[] = [];
-      room.subscribe(root, () => states.push(lsonToJson(root)), {
+      const states: ReadonlyJson[] = [];
+      room.subscribe(root, () => states.push(root.toJSON()), {
         isDeep: true,
       });
 

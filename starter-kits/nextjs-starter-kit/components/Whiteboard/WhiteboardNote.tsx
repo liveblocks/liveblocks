@@ -15,11 +15,10 @@ import { Avatar } from "@/primitives/Avatar";
 import { Button } from "@/primitives/Button";
 import styles from "./WhiteboardNote.module.css";
 
-interface Props
-  extends Omit<
-    ComponentProps<"div">,
-    "id" | "onBlur" | "onChange" | "onFocus"
-  > {
+interface Props extends Omit<
+  ComponentProps<"div">,
+  "id" | "onBlur" | "onChange" | "onFocus"
+> {
   dragged: boolean;
   id: string;
   onBlur: FocusEventHandler<HTMLTextAreaElement>;
@@ -43,7 +42,7 @@ export const WhiteboardNote = memo(
     ...props
   }: Props) => {
     const textAreaRef = useRef<HTMLTextAreaElement>(null);
-    const note = useStorage((root) => root.notes.get(id));
+    const note = useStorage((root) => root.notes[id]);
 
     const handleDoubleClick = useCallback(() => {
       textAreaRef.current?.focus();

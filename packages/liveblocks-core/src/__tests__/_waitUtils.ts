@@ -1,24 +1,6 @@
 import type { Status } from "../connection";
-import { wait, withTimeout } from "../lib/utils";
+import { withTimeout } from "../lib/utils";
 import type { OpaqueRoom } from "../room";
-
-export async function waitFor(predicate: () => boolean): Promise<void> {
-  const result = predicate();
-  if (result) {
-    return;
-  }
-
-  const time = new Date().getTime();
-
-  while (new Date().getTime() - time < 2000) {
-    await wait(100);
-    if (predicate()) {
-      return;
-    }
-  }
-
-  throw new Error("TIMEOUT");
-}
 
 /**
  * Handy helper that allows to pause test execution until the room has

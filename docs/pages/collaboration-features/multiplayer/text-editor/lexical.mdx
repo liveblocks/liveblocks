@@ -1,0 +1,385 @@
+---
+meta:
+  title: "Lexical"
+  parentTitle: "Text editor"
+  description: "Learn about using Multiplayer for Lexical"
+---
+
+A quick overview of the packages for Lexical.
+
+## Concepts
+
+Liveblocks Lexical allows you to add collaboration to any
+[Lexical](https://lexical.dev/) text editor, along with a number of related
+features. Each [collaborative room](/docs/concepts/how-liveblocks-works#Rooms)
+in your application can store one document each, and these documents are
+persisted on the cloud, visible on [your dashboard](/dashboard), and are
+integrated into other Liveblocks products such as
+[Comments](/docs/ready-made-features/comments) and
+[Notifications](/docs/ready-made-features/notifications).
+
+### Permanent storage
+
+All documents created with Lexical are **permanently stored**. You don’t need to
+sync, scale, or maintain any infrastructure.
+
+### Users and mentions
+
+Users and groups can be added to your document, and you can tag others inline.
+You can also easily enable mention suggestions for both users and groups.
+
+<Figure>
+  <Image
+    src="/assets/text-editor/mentions.png"
+    alt="User mentions"
+    width={1312}
+    height={874}
+  />
+</Figure>
+
+Users, groups, and mention suggestions can be added with
+[`resolveUsers`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers),
+[`resolveGroupsInfo`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveGroupsInfo),
+and
+[`resolveMentionSuggestions`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveMentionSuggestions).
+
+```tsx highlight="6-16"
+import { LiveblocksProvider } from "@liveblocks/react/suspense";
+
+function App() {
+  return (
+    <LiveblocksProvider
+      resolveUsers={async ({ userIds }) => {
+        // Return user info from their `userIds`
+        // ...
+      }}
+      resolveGroupsInfo={async ({ groupIds }) => {
+        // Return group info from their `groupIds`
+        // ...
+      }}
+      resolveMentionSuggestions={async ({ text, roomId }) => {
+        // Return suggestions from the search `text`
+        // Can return user IDs or mention objects for both users and groups
+        // ...
+      }}
+    >
+      {/* children */}
+    </LiveblocksProvider>
+  );
+}
+```
+
+### Realtime editing
+
+Your document can be edited in real-time by multiple users at once. Each user
+renders a cursor on screen that updates live as they move, select, and edit.
+
+<Figure>
+  <Image
+    src="/assets/text-editor/cursors.png"
+    alt="Real-time text cursors"
+    width={1312}
+    height={874}
+  />
+</Figure>
+
+When [authenticating your users](/docs/authentication) with
+[`prepareSession`](/docs/api-reference/liveblocks-node#access-tokens) or
+[`identifyUser`](/docs/api-reference/liveblocks-node#id-tokens), pass `name` and
+`color` properties to their `userInfo` to add their cursor information.
+
+```js
+userInfo: {
+  name: "Marie",
+  color: "#00ff00",
+}
+```
+
+### Toolbars
+
+Two toolbars are available allowing you to create a
+[static toolbar](/docs/api-reference/liveblocks-react-lexical#Toolbar), or a
+[floating toolbar](/docs/api-reference/liveblocks-react-lexical#FloatingToolbar),
+as seen below.
+
+<Figure>
+  <Image
+    src="/assets/text-editor/floating-toolbar.png"
+    alt="FloatingToolbar"
+    width={960}
+    height={558}
+  />
+</Figure>
+
+Add [`Toolbar`](/docs/api-reference/liveblocks-react-lexical#Toolbar) and
+[`FloatingToolbar`](/docs/api-reference/liveblocks-react-lexical#FloatingToolbar)
+to enable these features.
+
+```tsx
+<LexicalComposer initialConfig={initialConfig}>
+  <LiveblocksPlugin>
+    <Toolbar />
+  </LiveblocksPlugin>
+</LexicalComposer>
+```
+
+It’s easy to
+[customize a toolbar’s content](/docs/api-reference/liveblocks-react-lexical#toolbar-extending-the-defaults),
+piecing together sections like blocks.
+
+```tsx
+function CustomToolbar() {
+  return (
+    <Toolbar>
+      // +++
+      <Toolbar.BlockSelector />
+      <Toolbar.SectionInline />
+      <Toolbar.Separator />
+      <Toolbar.SectionCollaboration />
+      // +++
+    </Toolbar>
+  );
+}
+```
+
+You can also easily create
+[custom styled buttons](/docs/api-reference/liveblocks-react-lexical#Toolbar.Button),
+and
+[more](/docs/api-reference/liveblocks-react-lexical#creating-a-custom-toolbar),
+with any functionality you like.
+
+```tsx
+function CustomButton() {
+  return (
+    // +++
+    <Toolbar.Button
+      name="Help"
+      icon={<Icon.QuestionMark />}
+      shortcut="CMD-H"
+      onClick={() => console.log("help")}
+    />
+    // +++
+  );
+}
+```
+
+### Annotation comments
+
+Add [Comments](/docs/ready-made-features/comments) to your text editor, allowing
+others to select words in the editor, and leave annotations. Each annotation
+creates a [thread](/docs/ready-made-features/comments/concepts#Threads), and
+inside each you can reply, use emoji reactions, mention others, and more.
+
+<Figure>
+  <Image
+    src="/assets/text-editor/annotations.png"
+    alt="Text editor annotations"
+    width={1312}
+    height={874}
+  />
+</Figure>
+
+Add a floating Comments composer to your text editor using
+[`FloatingComposer`](/docs/api-reference/liveblocks-react-lexical#FloatingComposer).
+
+```tsx highlight="3"
+<LexicalComposer initialConfig={initialConfig}>
+  <LiveblocksPlugin>
+    <FloatingComposer />
+  </LiveblocksPlugin>
+</LexicalComposer>
+```
+
+Add [`useThreads`](/docs/ready-made-features/comments/hooks#threads-hook)
+alongside
+[`FloatingThreads`](/docs/api-reference/liveblocks-react-lexical#FloatingThreads)
+and
+[`AnchoredThreads`](/docs/api-reference/liveblocks-react-lexical#AnchoredThreads)
+to render your comments to the page.
+
+```tsx
+export function Threads({ editor }) {
+  const { threads } = useThreads();
+
+  return (
+    <>
+      <AnchoredThreads threads={threads} />
+      <FloatingThreads threads={threads} />
+    </>
+  );
+}
+```
+
+`FloatingThreads` displays floating threads below text highlights in the editor,
+ideal for mobile, whereas `AnchoredThreads` displays threads vertically
+alongside the editor which is great on desktop. To create a new thread use the
+button in a [pre-built toolbar](#Toolbars), or
+[build a button yourself](/docs/api-reference/liveblocks-react-lexical#Opening-the-FloatingComposer).
+
+### Notifications
+
+Add a [Notifications](/docs/ready-made-features/notifications) UI to your
+application, and automatically notify users when they’ve been mentioned.
+Notifications also allows you to trigger sending emails, Slack, or any other
+kind of notification, using our webhooks.
+
+<Figure>
+  <Image
+    src="/assets/text-editor/notifications.png"
+    alt="Text editor notifications"
+    width={1312}
+    height={874}
+  />
+</Figure>
+
+Notifications is enabled by default, which means you just need to add our UI
+components to keep your users notified. Follow our
+[get started guides](/docs/get-started/notifications) to learn how to set up
+[`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification).
+
+```tsx
+export function CollaborativeApp() {
+  const { inboxNotifications } = useInboxNotifications();
+
+  return (
+    <InboxNotificationList>
+      {inboxNotifications.map((inboxNotification) => (
+        <InboxNotification
+          key={inboxNotification.id}
+          inboxNotification={inboxNotification}
+        />
+      ))}
+    </InboxNotificationList>
+  );
+}
+```
+
+Inline mentions also trigger
+[`TextMention`](/docs/platform/webhooks#TextMention-notification) notification
+webhook events. Learn more about
+[sending email notifications](/docs/ready-made-features/notifications/email-notifications).
+
+### AI agents and editing on the server
+
+Fetch and modify your text editor’s content from the server, enabling features
+such as AI agents. Easily make changes that update in real-time for every
+connected user.
+
+<Figure>
+  <Image
+    src="/assets/text-editor/ai.png"
+    alt="AI suggestions"
+    width={1312}
+    height={874}
+  />
+</Figure>
+
+Use
+[`withLexicalDocument`](/docs/api-reference/liveblocks-node-lexical#withLexicalDocument)
+to get your editor’s content and make modifications live.
+
+```tsx
+await withLexicalDocument(
+  { roomId: "my-room-id", client: liveblocks },
+  async (doc) => {
+    // Get editor content
+    const textContent = doc.getTextContent();
+
+    await doc.update(async () => {
+      // Make real-time updates
+      // ...
+    });
+  }
+);
+```
+
+### Version History
+
+Liveblocks Lexical enables version history for your document. Versions can be
+automatically created when enabled in your project settings, or manually created
+using the
+[REST API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-version).
+These versions can be easily displayed to users using a few simple components.
+This allows for a comprehensive version history feature in your collaborative
+text editor.
+
+To implement version history in your application, you can use the
+`useHistoryVersions` hook along with the `HistoryVersionsList` and
+`HistoryVersionPreview` components. Here's an example of how to set this up:
+
+```tsx
+import {
+  useHistoryVersions,
+  HistoryVersionSummaryList,
+} from "@liveblocks/react";
+import { HistoryVersionPreview } from "@liveblocks/react-lexical";
+
+function DocumentHistory() {
+  const [selectedVersionId, setSelectedVersionId] = useState<string>();
+  const { versions, isLoading } = useHistoryVersions();
+  const selectedVersion = useMemo(
+    () => versions?.find((version) => version.id === selectedVersionId),
+    [selectedVersionId, versions]
+  );
+
+  if (isLoading) {
+    return <div>Loading version history...</div>;
+  }
+
+  return (
+    <>
+      <div>
+        {selectedVersion ? (
+          <HistoryVersionPreview
+            version={selectedVersion}
+            className="h-full w-full"
+            onVersionRestore={onVersionRestore}
+          />
+        ) : (
+          <div>No version selected</div>
+        )}
+      </div>
+
+      <div>
+        <HistoryVersionSummaryList>
+          {versions?.map((version) => (
+            <HistoryVersionSummary
+              onClick={() => {
+                setSelectedVersionId(version.id);
+              }}
+              key={version.id}
+              version={version}
+              selected={version.id === selectedVersionId}
+            />
+          ))}
+        </HistoryVersionSummaryList>
+      </div>
+    </>
+  );
+}
+```
+
+In this example, `useHistoryVersions` fetches the version history,
+`HistoryVersionSummaryList` displays a list of available versions, and
+`HistoryVersionPreview` shows a preview of the selected version. This setup
+provides users with an interface to browse through the document's history and
+restore different versions.
+
+## Lexical API Reference
+
+<ListGrid columns={2}>
+  <DocsCard
+    type="technology"
+    title="Lexical React"
+    href="/docs/api-reference/liveblocks-react-lexical"
+    description="@liveblocks/react-lexical"
+    visual={<DocsReactIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Lexical Node"
+    href="/docs/api-reference/liveblocks-node-lexical"
+    description="@liveblocks/node-lexical"
+    visual={<DocsApiIcon />}
+  />
+</ListGrid>

@@ -1,0 +1,1 @@
+../../tools/liveblocks-cli/CHANGELOG.md

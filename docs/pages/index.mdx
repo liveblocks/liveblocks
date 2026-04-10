@@ -2,14 +2,14 @@
 meta:
   title: "Documentation"
   description:
-    "Explore the documentation to learn how to build realtime collaborative
-    experiences with Liveblocks."
+    "Explore the documentation to learn how to build collaborative experiences
+    with Liveblocks."
 showTitle: false
 ---
 
 <DocsHomepageHero
   title="Documentation"
-  description="Liveblocks is the platform for adding collaborative editing, AI copilots, comments, and notifications into your application."
+  description="Liveblocks provides the realtime infrastructure to handle concurrent edits on shared data, so people and AI agents can collaborate without breaking your app."
   actions={[
     {
       title: "Get started",
@@ -25,16 +25,34 @@ showTitle: false
 
 <DocsHomepageGrid />
 
-## API Reference
+## Collaboration features
 
 <ListGrid columns={2}>
-  <DocsCard
-    type="technology"
-    title="JavaScript"
-    href="/docs/api-reference/liveblocks-client"
-    description="@liveblocks/client"
-    visual={<DocsJavascriptIcon />}
+  <DocsCardFeature
+    feature="multiplayer"
+    href="/docs/collaboration-features/multiplayer"
   />
+  <DocsCardFeature
+    feature="comments"
+    href="/docs/collaboration-features/comments"
+  />
+  <DocsCardFeature
+    feature="notifications"
+    href="/docs/collaboration-features/notifications"
+  />
+  <DocsCardFeature
+    feature="ai-collaboration"
+    href="/docs/collaboration-features/ai-collaboration"
+  />
+  <DocsCardFeature
+    feature="ai-copilots"
+    href="/docs/collaboration-features/ai-copilots"
+  />
+</ListGrid>
+
+## API Reference
+
+<ListGrid columns={2} defaultVisibleItems={6}>
   <DocsCard
     type="technology"
     title="React"
@@ -65,10 +83,10 @@ showTitle: false
   />
   <DocsCard
     type="technology"
-    title="Node.js ProseMirror"
-    href="/docs/api-reference/liveblocks-node-prosemirror"
-    description="@liveblocks/node-prosemirror"
-    visual={<DocsNodejsIcon />}
+    title="React Flow"
+    href="/docs/api-reference/liveblocks-react-flow"
+    description="@liveblocks/react-flow"
+    visual={<DocsReactIcon />}
   />
   <DocsCard
     type="technology"
@@ -79,10 +97,24 @@ showTitle: false
   />
   <DocsCard
     type="technology"
+    title="Node.js ProseMirror"
+    href="/docs/api-reference/liveblocks-node-prosemirror"
+    description="@liveblocks/node-prosemirror"
+    visual={<DocsNodejsIcon />}
+  />
+  <DocsCard
+    type="technology"
     title="Node.js Lexical"
     href="/docs/api-reference/liveblocks-node-lexical"
     description="@liveblocks/node-lexical"
     visual={<DocsNodejsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="JavaScript"
+    href="/docs/api-reference/liveblocks-client"
+    description="@liveblocks/client"
+    visual={<DocsJavascriptIcon />}
   />
   <DocsCard
     type="technology"
@@ -129,10 +161,17 @@ showTitle: false
   />
   <DocsCard
     type="technology"
+    title="Python"
+    href="/docs/api-reference/liveblocks-python"
+    description="Python SDK"
+    visual={<DocsPythonIcon />}
+  />
+  <DocsCard
+    type="technology"
     title="REST API"
     href="/docs/api-reference/rest-api-endpoints"
     description="HTTP endpoints"
-    visual={<DocsApiIcon />}
+    visual={<DocsApiIcon className="fill-product-icon-brand h-auto w-6" />}
   />
 </ListGrid>
 

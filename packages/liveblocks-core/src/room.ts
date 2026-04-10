@@ -1,5 +1,6 @@
 import { getBearerTokenFromAuthValue, type RoomHttpApi } from "./api-client";
 import type { AuthManager, AuthValue } from "./auth-manager";
+import { injectBrandBadge } from "./brand";
 import type { InternalSyncStatus } from "./client";
 import type { Delegates, LostConnectionEvent, Status } from "./connection";
 import { ManagedSocket, StopRetrying } from "./connection";
@@ -16,27 +17,37 @@ import {
 import { LiveObject } from "./crdts/LiveObject";
 import type { LiveStructure, LsonObject } from "./crdts/Lson";
 import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
-import type { DE, DM, DP, DS, DU } from "./globals/augmentation";
+import type {
+  DCM,
+  DE,
+  DFM,
+  DFMD,
+  DP,
+  DS,
+  DTM,
+  DU,
+} from "./globals/augmentation";
 import { kInternal } from "./internal";
 import { assertNever, nn } from "./lib/assert";
 import type { BatchStore } from "./lib/batch";
 import { Promise_withResolvers } from "./lib/controlledPromise";
 import { createCommentAttachmentId } from "./lib/createIds";
-import { captureStackTrace } from "./lib/debug";
 import { Deque } from "./lib/Deque";
 import type { Callback, EventSource, Observable } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
 import { isJsonArray, isJsonObject } from "./lib/Json";
+import { nanoid } from "./lib/nanoid";
 import { asPos } from "./lib/position";
 import { DerivedSignal, PatchableSignal, Signal } from "./lib/signals";
+import { makeStopWatch } from "./lib/stopwatch";
 import { stringifyOrLog as stringify } from "./lib/stringify";
 import {
   compact,
   deepClone,
   memoizeOnSuccess,
-  raise,
+  partition,
   tryParseJson,
 } from "./lib/utils";
 import type {
@@ -44,11 +55,21 @@ import type {
   ContextualPromptResponse,
 } from "./protocol/Ai";
 import type { Permission } from "./protocol/AuthToken";
-import { canComment, canWriteStorage, TokenKind } from "./protocol/AuthToken";
+import { canComment, canWriteStorage } from "./protocol/AuthToken";
 import type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
 import type {
+  AddFeedClientMsg,
+  AddFeedMessageClientMsg,
   ClientMsg,
-  UpdateStorageClientMsg,
+  DeleteFeedClientMsg,
+  DeleteFeedMessageClientMsg,
+  FeedCreateMetadata,
+  FeedFetchMetadataFilter,
+  FeedUpdateMetadata,
+  FetchFeedMessagesClientMsg,
+  FetchFeedsClientMsg,
+  UpdateFeedClientMsg,
+  UpdateFeedMessageClientMsg,
   UpdateYDocClientMsg,
 } from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";
@@ -63,18 +84,25 @@ import type {
   ThreadData,
   ThreadDeleteInfo,
 } from "./protocol/Comments";
+import type { Feed, FeedMessage } from "./protocol/Feeds";
 import type {
   InboxNotificationData,
   InboxNotificationDeleteInfo,
 } from "./protocol/InboxNotifications";
 import type { MentionData } from "./protocol/MentionData";
-import type { Op } from "./protocol/Op";
-import { isAckOp, OpCode } from "./protocol/Op";
+import type { ClientWireOp, Op, ServerWireOp } from "./protocol/Op";
+import { isIgnoredOp, OpCode } from "./protocol/Op";
 import type { RoomSubscriptionSettings } from "./protocol/RoomSubscriptionSettings";
-import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
 import type {
   CommentsEventServerMsg,
-  InitialDocumentStateServerMsg,
+  FeedMessagesAddedServerMsg,
+  FeedMessagesListServerMsg,
+  FeedMessagesUpdatedServerMsg,
+  FeedRequestFailedServerMsg,
+  FeedsAddedServerMsg,
+  FeedsEventServerMsg,
+  FeedsListServerMsg,
+  FeedsUpdatedServerMsg,
   RoomStateServerMsg,
   ServerMsg,
   UpdatePresenceServerMsg,
@@ -83,6 +111,12 @@ import type {
   YDocUpdateServerMsg,
 } from "./protocol/ServerMsg";
 import { ServerMsgCode } from "./protocol/ServerMsg";
+import type {
+  NodeMap,
+  NodeStream,
+  SerializedCrdt,
+} from "./protocol/StorageNode";
+import { compactNodesToNodeStream } from "./protocol/StorageNode";
 import type {
   SubscriptionData,
   SubscriptionDeleteInfo,
@@ -97,8 +131,8 @@ import type {
   IWebSocketMessageEvent,
 } from "./types/IWebSocket";
 import { LiveblocksError } from "./types/LiveblocksError";
-import type { NodeMap } from "./types/NodeMap";
 import type {
+  BadgeLocation,
   InternalOthersEvent,
   OthersEvent,
   TextEditorType,
@@ -108,6 +142,8 @@ import type { User } from "./types/User";
 import { PKG_VERSION } from "./version";
 
 export type TimeoutID = ReturnType<typeof setTimeout>;
+
+const FEEDS_TIMEOUT = 5_000; // 5 seconds
 
 //
 // NOTE:
@@ -269,6 +305,10 @@ export interface History {
    * // room.getPresence() equals { cursor: { x: 0, y: 0 } }
    */
   resume: () => void;
+
+  readonly [kInternal]: {
+    withoutHistory: <T>(fn: () => T) => T;
+  };
 }
 
 export type HistoryEvent = {
@@ -468,11 +508,12 @@ type SubscribeFn<
   (type: "comments", listener: Callback<CommentsEventServerMsg>): () => void;
 };
 
-export type GetThreadsOptions<M extends BaseMetadata> = {
+export type GetThreadsOptions<TM extends BaseMetadata> = {
   cursor?: string;
   query?: {
     resolved?: boolean;
-    metadata?: Partial<QueryMetadata<M>>;
+    subscribed?: boolean;
+    metadata?: Partial<QueryMetadata<TM>>;
   };
 };
 
@@ -504,7 +545,10 @@ export type OpaqueRoom = Room<
   LsonObject,
   BaseUserMeta,
   Json,
-  BaseMetadata
+  BaseMetadata,
+  BaseMetadata,
+  Json,
+  Json
 >;
 
 export type Room<
@@ -512,7 +556,10 @@ export type Room<
   S extends LsonObject = DS,
   U extends BaseUserMeta = DU,
   E extends Json = DE,
-  M extends BaseMetadata = DM,
+  TM extends BaseMetadata = DTM,
+  CM extends BaseMetadata = DCM,
+  FM extends Json = DFM,
+  FMD extends Json = DFMD,
 > = {
   /**
    * @private
@@ -600,6 +647,84 @@ export type Room<
   fetchYDoc(stateVector: string, guid?: string, isV2?: boolean): void;
 
   /**
+   * Fetches feeds for the room.
+   */
+  fetchFeeds(options?: {
+    cursor?: string;
+    since?: number;
+    limit?: number;
+    metadata?: FeedFetchMetadataFilter;
+  }): Promise<{
+    feeds: Feed<FM>[];
+    nextCursor?: string;
+  }>;
+
+  /**
+   * Fetches messages for a specific feed.
+   */
+  fetchFeedMessages(
+    feedId: string,
+    options?: {
+      cursor?: string;
+      since?: number;
+      limit?: number;
+    }
+  ): Promise<{
+    messages: FeedMessage<FMD>[];
+    nextCursor?: string;
+  }>;
+
+  /**
+   * Adds a new feed to the room via WebSocket.
+   * Resolves when the server broadcasts the new feed, or rejects on
+   * FEED_REQUEST_FAILED (508) or timeout.
+   */
+  addFeed(
+    feedId: string,
+    options?: {
+      metadata?: FeedCreateMetadata;
+      createdAt?: number;
+    }
+  ): Promise<void>;
+
+  /**
+   * Updates metadata for an existing feed via WebSocket.
+   */
+  updateFeed(feedId: string, metadata: FeedUpdateMetadata): Promise<void>;
+
+  /**
+   * Deletes a feed via WebSocket.
+   */
+  deleteFeed(feedId: string): Promise<void>;
+
+  /**
+   * Adds a new message to a feed via WebSocket.
+   */
+  addFeedMessage(
+    feedId: string,
+    data: JsonObject,
+    options?: {
+      id?: string;
+      createdAt?: number;
+    }
+  ): Promise<void>;
+
+  /**
+   * Updates an existing feed message via WebSocket.
+   */
+  updateFeedMessage(
+    feedId: string,
+    messageId: string,
+    data: JsonObject,
+    options?: { updatedAt?: number }
+  ): Promise<void>;
+
+  /**
+   * Deletes a feed message via WebSocket.
+   */
+  deleteFeedMessage(feedId: string, messageId: string): Promise<void>;
+
+  /**
    * Broadcasts an event to other users in the room. Event broadcasted to the room can be listened with {@link Room.subscribe}("event").
    * @param {any} event the event to broadcast. Should be serializable to JSON
    *
@@ -663,6 +788,7 @@ export type Room<
     readonly storageStatus: Observable<StorageStatus>;
     readonly ydoc: Observable<YDocUpdateServerMsg | UpdateYDocClientMsg>;
     readonly comments: Observable<CommentsEventServerMsg>;
+    readonly feeds: Observable<FeedsEventServerMsg<FM, FMD>>;
 
     /**
      * Called right before the room is destroyed. The event cannot be used to
@@ -764,8 +890,8 @@ export type Room<
    *   requestedAt
    * } = await room.getThreads({ query: { resolved: false }});
    */
-  getThreads(options?: GetThreadsOptions<M>): Promise<{
-    threads: ThreadData<M>[];
+  getThreads(options?: GetThreadsOptions<TM>): Promise<{
+    threads: ThreadData<TM, CM>[];
     inboxNotifications: InboxNotificationData[];
     subscriptions: SubscriptionData[];
     requestedAt: Date;
@@ -783,7 +909,7 @@ export type Room<
    */
   getThreadsSince(options: GetThreadsSinceOptions): Promise<{
     threads: {
-      updated: ThreadData<M>[];
+      updated: ThreadData<TM, CM>[];
       deleted: ThreadDeleteInfo[];
     };
     inboxNotifications: {
@@ -805,7 +931,7 @@ export type Room<
    * const { thread, inboxNotification, subscription } = await room.getThread("th_xxx");
    */
   getThread(threadId: string): Promise<{
-    thread?: ThreadData<M>;
+    thread?: ThreadData<TM, CM>;
     inboxNotification?: InboxNotificationData;
     subscription?: SubscriptionData;
   }>;
@@ -824,10 +950,11 @@ export type Room<
   createThread(options: {
     threadId?: string;
     commentId?: string;
-    metadata: M | undefined;
+    metadata: TM | undefined;
     body: CommentBody;
+    commentMetadata?: CM;
     attachmentIds?: string[];
-  }): Promise<ThreadData<M>>;
+  }): Promise<ThreadData<TM, CM>>;
 
   /**
    * Deletes a thread.
@@ -845,9 +972,22 @@ export type Room<
    * await room.editThreadMetadata({ threadId: "th_xxx", metadata: { x: 100, y: 100 } })
    */
   editThreadMetadata(options: {
-    metadata: Patchable<M>;
+    metadata: Patchable<TM>;
     threadId: string;
-  }): Promise<M>;
+  }): Promise<TM>;
+
+  /**
+   * Edits a comment's metadata.
+   * To delete an existing metadata property, set its value to `null`.
+   *
+   * @example
+   * await room.editCommentMetadata({ threadId: "th_xxx", commentId: "cm_xxx", metadata: { tag: "important", externalId: 1234 } })
+   */
+  editCommentMetadata(options: {
+    threadId: string;
+    commentId: string;
+    metadata: Patchable<CM>;
+  }): Promise<CM>;
 
   /**
    * Marks a thread as resolved.
@@ -897,8 +1037,9 @@ export type Room<
     threadId: string;
     commentId?: string;
     body: CommentBody;
+    metadata?: CM;
     attachmentIds?: string[];
-  }): Promise<CommentData>;
+  }): Promise<CommentData<CM>>;
 
   /**
    * Edits a comment.
@@ -917,8 +1058,9 @@ export type Room<
     threadId: string;
     commentId: string;
     body: CommentBody;
+    metadata?: Patchable<CM>;
     attachmentIds?: string[];
-  }): Promise<CommentData>;
+  }): Promise<CommentData<CM>>;
 
   /**
    * Deletes a comment.
@@ -1054,7 +1196,7 @@ export interface SyncSource {
 export type PrivateRoomApi = {
   // For introspection in unit tests only
   presenceBuffer: Json | undefined;
-  undoStack: readonly (readonly Readonly<HistoryOp<JsonObject>>[])[];
+  undoStack: readonly (readonly Readonly<Stackframe<JsonObject>>[])[];
   nodeCount: number;
 
   // Get/set the associated Yjs provider on this room
@@ -1093,34 +1235,27 @@ export type PrivateRoomApi = {
     signal: AbortSignal;
   }): Promise<string>;
 
-  // NOTE: These are only used in our e2e test app!
+  // NOTE: These are only used for some edge case unit tests or our e2e test app!
   simulate: {
     explicitClose(event: IWebSocketCloseEvent): void;
     rawSend(data: string): void;
+    incomingMessage(data: string): void;
   };
 
   attachmentUrlsStore: BatchStore<string, string>;
 };
-
-//
-// The maximum message size on websockets is 1MB. If a message larger than this
-// threshold is attempted to be sent, the strategy picked via the
-// `largeMessageStrategy` option will be used.
-//
-// In practice, we'll set threshold to slightly less than 1 MB.
-const MAX_SOCKET_MESSAGE_SIZE = 1024 * 1024 - 512;
 
 function makeIdFactory(connectionId: number): IdFactory {
   let count = 0;
   return () => `${connectionId}:${count++}`;
 }
 
-type HistoryOp<P extends JsonObject> =
-  | Op
-  | {
-      readonly type: "presence";
-      readonly data: P;
-    };
+type Stackframe<P extends JsonObject> = Op | PresenceStackframe<P>;
+
+type PresenceStackframe<P extends JsonObject> = {
+  readonly type: "presence";
+  readonly data: P;
+};
 
 type IdFactory = () => string;
 
@@ -1133,6 +1268,7 @@ export type DynamicSessionInfo = {
   readonly actor: number;
   readonly nonce: string;
   readonly scopes: string[];
+  readonly meta: JsonObject;
 };
 
 type RoomState<
@@ -1158,7 +1294,7 @@ type RoomState<
       | { type: "full"; data: P }
       | null;
     messages: ClientMsg<P, E>[];
-    storageOperations: Op[];
+    storageOperations: ClientWireOp[];
   };
 
   //
@@ -1182,35 +1318,37 @@ type RoomState<
   pool: ManagedPool;
   root: LiveObject<S> | undefined;
 
-  readonly undoStack: HistoryOp<P>[][];
-  readonly redoStack: HistoryOp<P>[][];
+  readonly undoStack: Stackframe<P>[][];
+  readonly redoStack: Stackframe<P>[][];
 
   /**
    * When history is paused, all operations will get queued up here. When
    * history is resumed, these operations get "committed" to the undo stack.
    */
-  pausedHistory: null | Deque<HistoryOp<P>>;
+  pausedHistory: null | Deque<Stackframe<P>>;
 
   /**
    * Place to collect all mutations during a batch. Ops will be sent over the
    * wire after the batch is ended.
    */
   activeBatch: {
-    ops: Op[];
-    reverseOps: Deque<HistoryOp<P>>;
+    ops: ClientWireOp[];
+    reverseOps: Deque<Stackframe<P>>;
     updates: {
       others: [];
       presence: boolean;
       storageUpdates: Map<string, StorageUpdate>;
     };
+
+    // When `history.resume()` runs inside `room.batch()`, flushing paused
+    // history must wait until after the batch’s `reverseOps` are merged
+    // otherwise those ops become a second undo step.
+    scheduleHistoryResume: boolean;
   } | null;
 
   // A registry of yet-unacknowledged Ops. These Ops have already been
   // submitted to the server, but have not yet been acknowledged.
-  readonly unacknowledgedOps: Map<string, Op>;
-
-  // Stack traces of all pending Ops. Used for debugging in non-production builds
-  readonly opStackTraces?: Map<string, string>;
+  readonly unacknowledgedOps: Map<string, ClientWireOp>;
 };
 
 export type Polyfills = {
@@ -1254,29 +1392,30 @@ export type OptionalTupleUnless<C, T extends any[]> =
 
 export type RoomDelegates = Omit<Delegates<AuthValue>, "canZombie">;
 
-export type LargeMessageStrategy =
-  | "default"
-  | "split"
-  | "experimental-fallback-to-http";
-
 /** @internal */
-export type RoomConfig<M extends BaseMetadata> = {
+export type RoomConfig<TM extends BaseMetadata, CM extends BaseMetadata> = {
   delegates: RoomDelegates;
 
   roomId: string;
   throttleDelay: number;
   lostConnectionTimeout: number;
   backgroundKeepAliveTimeout?: number;
-  largeMessageStrategy?: LargeMessageStrategy;
 
+  /**
+   * @deprecated All rooms will be migrated to the v2 storage engine in the
+   * future, which has native support for streaming. After that migration, this
+   * flag will no longer have any effect and will be removed in a future version.
+   */
   unstable_streamData?: boolean;
 
   polyfills?: Polyfills;
 
-  roomHttpClient: RoomHttpApi<M>;
+  roomHttpClient: RoomHttpApi<TM, CM>;
 
   baseUrl: string;
   enableDebugLogging?: boolean;
+
+  badgeLocation?: BadgeLocation;
 
   // We would not have to pass this complicated factory/callback functions to
   // the createRoom() function if we would simply pass the Client instance to
@@ -1335,6 +1474,24 @@ function installBackgroundTabSpy(): [
   return [inBackgroundSince, unsub];
 }
 
+function makeNodeMapBuffer() {
+  let map: NodeMap = new Map();
+  return {
+    /** Append a "page" of nodes to the current NodeMap buffer. */
+    append(chunk: NodeStream) {
+      for (const [id, node] of chunk) {
+        map.set(id, node);
+      }
+    },
+    /** Return the contents of the current NodeMap buffer, and create a fresh new one. */
+    take(): NodeMap {
+      const result = map;
+      map = new Map();
+      return result;
+    },
+  };
+}
+
 /**
  * @internal
  * Initializes a new Room, and returns its public API.
@@ -1344,11 +1501,14 @@ export function createRoom<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
-  M extends BaseMetadata,
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+  FM extends Json = DFM,
+  FMD extends Json = DFMD,
 >(
   options: { initialPresence: P; initialStorage: S },
-  config: RoomConfig<M>
-): Room<P, S, U, E, M> {
+  config: RoomConfig<TM, CM>
+): Room<P, S, U, E, TM, CM, FM, FMD> {
   const roomId = config.roomId;
   const initialPresence = options.initialPresence; // ?? {};
   const initialStorage = options.initialStorage; // ?? {};
@@ -1425,14 +1585,16 @@ export function createRoom<
     pausedHistory: null,
 
     activeBatch: null,
-    unacknowledgedOps: new Map<string, Op>(),
-
-    // Debug
-    opStackTraces:
-      process.env.NODE_ENV !== "production"
-        ? new Map<string, string>()
-        : undefined,
+    unacknowledgedOps: new Map<string, ClientWireOp>(),
   };
+
+  // Accumulates nodes as initial storage arrives in chunks via
+  // STORAGE_CHUNK messages. Once the final chunk arrives (with
+  // done: true), the complete map is passed to processInitialStorage().
+  const nodeMapBuffer = makeNodeMapBuffer();
+
+  // Tracks timing of storage fetch for debug logging
+  const stopwatch = config.enableDebugLogging ? makeStopWatch() : undefined;
 
   let lastTokenKey: string | undefined;
   function onStatusDidChange(newStatus: Status) {
@@ -1446,9 +1608,8 @@ export function createRoom<
         if (authValue.type === "secret") {
           const token = authValue.token.parsed;
           context.staticSessionInfoSig.set({
-            userId: token.k === TokenKind.SECRET_LEGACY ? token.id : token.uid,
-            userInfo:
-              token.k === TokenKind.SECRET_LEGACY ? token.info : token.ui,
+            userId: token.uid,
+            userInfo: token.ui,
           });
         } else {
           context.staticSessionInfoSig.set({
@@ -1544,21 +1705,10 @@ export function createRoom<
   });
 
   function onDispatch(
-    ops: Op[],
+    ops: ClientWireOp[],
     reverse: Op[],
     storageUpdates: Map<string, StorageUpdate>
   ): void {
-    if (process.env.NODE_ENV !== "production") {
-      const stackTrace = captureStackTrace("Storage mutation", onDispatch);
-      if (stackTrace) {
-        for (const op of ops) {
-          if (op.opId) {
-            nn(context.opStackTraces).set(op.opId, stackTrace);
-          }
-        }
-      }
-    }
-
     if (context.activeBatch) {
       for (const op of ops) {
         context.activeBatch.ops.push(op);
@@ -1574,9 +1724,13 @@ export function createRoom<
       }
       context.activeBatch.reverseOps.pushLeft(reverse);
     } else {
-      addToUndoStack(reverse);
-      context.redoStack.length = 0;
-      dispatchOps(ops);
+      if (reverse.length > 0) {
+        addToUndoStack(reverse);
+      }
+      if (ops.length > 0) {
+        context.redoStack.length = 0;
+        dispatchOps(ops);
+      }
       notify({ storageUpdates });
     }
   }
@@ -1602,6 +1756,7 @@ export function createRoom<
     ydoc: makeEventSource<YDocUpdateServerMsg | UpdateYDocClientMsg>(),
 
     comments: makeEventSource<CommentsEventServerMsg>(),
+    feeds: makeEventSource<FeedsEventServerMsg<FM, FMD>>(),
     roomWillDestroy: makeEventSource<void>(),
   };
 
@@ -1652,125 +1807,8 @@ export function createRoom<
     });
   }
 
-  /**
-   * Split a single large UPDATE_STORAGE message into smaller chunks, by
-   * splitting the ops list recursively in half.
-   */
-  function* chunkOps(msg: UpdateStorageClientMsg): IterableIterator<string> {
-    const { ops, ...rest } = msg;
-    if (ops.length < 2) {
-      throw new Error("Cannot split ops into smaller chunks");
-    }
-
-    const mid = Math.floor(ops.length / 2);
-    const firstHalf = ops.slice(0, mid);
-    const secondHalf = ops.slice(mid);
-
-    for (const halfOps of [firstHalf, secondHalf]) {
-      const half: UpdateStorageClientMsg = { ops: halfOps, ...rest };
-      const text = stringify([half]);
-      if (!isTooBigForWebSocket(text)) {
-        yield text;
-      } else {
-        yield* chunkOps(half);
-      }
-    }
-  }
-
-  /**
-   * Split the message array in half (two chunks), and try to send each chunk
-   * separately. If the chunk is still too big, repeat the process. If a chunk
-   * can no longer be split up (i.e. is 1 message), then error.
-   */
-  function* chunkMessages(
-    messages: ClientMsg<P, E>[]
-  ): IterableIterator<string> {
-    if (messages.length < 2) {
-      if (messages[0].type === ClientMsgCode.UPDATE_STORAGE) {
-        yield* chunkOps(messages[0]);
-        return;
-      } else {
-        throw new Error(
-          "Cannot split into chunks smaller than the allowed message size"
-        );
-      }
-    }
-
-    const mid = Math.floor(messages.length / 2);
-    const firstHalf = messages.slice(0, mid);
-    const secondHalf = messages.slice(mid);
-
-    for (const half of [firstHalf, secondHalf]) {
-      const text = stringify(half);
-      if (!isTooBigForWebSocket(text)) {
-        yield text;
-      } else {
-        yield* chunkMessages(half);
-      }
-    }
-  }
-
-  function isTooBigForWebSocket(text: string): boolean {
-    // The theoretical worst case is that each character in the string is
-    // a 4-byte UTF-8 character. String.prototype.length is an O(1) operation,
-    // so we can spare ourselves the TextEncoder() measurement overhead with
-    // this heuristic.
-    if (text.length * 4 < MAX_SOCKET_MESSAGE_SIZE) {
-      return false;
-    }
-
-    // Otherwise we need to measure to be sure
-    return new TextEncoder().encode(text).length >= MAX_SOCKET_MESSAGE_SIZE;
-  }
-
   function sendMessages(messages: ClientMsg<P, E>[]) {
-    const strategy = config.largeMessageStrategy ?? "default";
-
-    const text = stringify(messages);
-    if (!isTooBigForWebSocket(text)) {
-      return managedSocket.send(text); // Happy path
-    }
-
-    // If message is too big for WebSockets, we need to follow a strategy
-    switch (strategy) {
-      case "default": {
-        const type = "LARGE_MESSAGE_ERROR";
-        const err = new LiveblocksError("Message is too large for websockets", {
-          type,
-        });
-        const didNotify = config.errorEventSource.notify(err);
-        if (!didNotify) {
-          console.error(
-            "Message is too large for websockets.  Configure largeMessageStrategy option or useErrorListener to handle this."
-          );
-        }
-        return;
-      }
-
-      case "split": {
-        console.warn("Message is too large for websockets, splitting into smaller chunks"); // prettier-ignore
-        for (const chunk of chunkMessages(messages)) {
-          managedSocket.send(chunk);
-        }
-        return;
-      }
-
-      case "experimental-fallback-to-http": {
-        console.warn("Message is too large for websockets, so sending over HTTP instead"); // prettier-ignore
-        const nonce =
-          context.dynamicSessionInfoSig.get()?.nonce ??
-          raise("Session is not authorized to send message over HTTP");
-
-        void httpClient
-          .sendMessages<P, E>({ roomId, nonce, messages })
-          .then((resp) => {
-            if (!resp.ok && resp.status === 403) {
-              managedSocket.reconnect();
-            }
-          });
-        return;
-      }
-    }
+    managedSocket.send(stringify(messages));
   }
 
   const self = DerivedSignal.from(
@@ -1808,73 +1846,63 @@ export function createRoom<
     me !== null ? userToTreeNode("Me", me) : null
   );
 
-  function createOrUpdateRootFromMessage(
-    message: InitialDocumentStateServerMsg
-  ) {
-    if (message.items.length === 0) {
+  function createOrUpdateRootFromMessage(nodes: NodeMap) {
+    if (nodes.size === 0) {
       throw new Error("Internal error: cannot load storage without items");
     }
 
     if (context.root !== undefined) {
-      updateRoot(message.items);
+      const currentItems: NodeMap = new Map();
+      for (const [id, crdt] of context.pool.nodes) {
+        currentItems.set(id, crdt._serialize());
+      }
+
+      // Get operations that represent the diff between 2 states.
+      const ops = getTreesDiffOperations(currentItems, nodes);
+
+      const result = applyRemoteOps(ops);
+      notify(result.updates);
     } else {
-      context.root = LiveObject._fromItems<S>(message.items, context.pool);
+      context.root = LiveObject._fromItems<S>(
+        nodes as NodeStream,
+        context.pool
+      );
     }
 
     const canWrite = self.get()?.canWrite ?? true;
 
     // Populate missing top-level keys using `initialStorage`
-    const stackSizeBefore = context.undoStack.length;
-    for (const key in context.initialStorage) {
-      if (context.root.get(key) === undefined) {
-        if (canWrite) {
-          context.root.set(key, cloneLson(context.initialStorage[key]));
-        } else {
-          console.warn(
-            `Attempted to populate missing storage key '${key}', but current user has no write access`
-          );
+    const root = context.root;
+    withoutHistory(() => {
+      for (const key in context.initialStorage) {
+        if (root.get(key) === undefined) {
+          if (canWrite) {
+            root.set(key, cloneLson(context.initialStorage[key]));
+          } else {
+            console.warn(
+              `Attempted to populate missing storage key '${key}', but current user has no write access`
+            );
+          }
         }
       }
-    }
-
-    // Initial storage is populated using normal "set" operations in the loop
-    // above, those updates can end up in the undo stack, so let's prune it.
-    context.undoStack.length = stackSizeBefore;
+    });
   }
 
-  function updateRoot(items: IdTuple<SerializedCrdt>[]) {
-    if (context.root === undefined) {
-      return;
-    }
-
-    const currentItems: NodeMap = new Map();
-    for (const [id, node] of context.pool.nodes) {
-      currentItems.set(id, node._serialize());
-    }
-
-    // Get operations that represent the diff between 2 states.
-    const ops = getTreesDiffOperations(currentItems, new Map(items));
-
-    const result = applyOps(ops, false);
-
-    notify(result.updates);
-  }
-
-  function _addToRealUndoStack(historyOps: HistoryOp<P>[]) {
+  function _addToRealUndoStack(frames: Stackframe<P>[]) {
     // If undo stack is too large, we remove the older item
     if (context.undoStack.length >= 50) {
       context.undoStack.shift();
     }
 
-    context.undoStack.push(historyOps);
+    context.undoStack.push(frames);
     onHistoryChange();
   }
 
-  function addToUndoStack(historyOps: HistoryOp<P>[]) {
+  function addToUndoStack(frames: Stackframe<P>[]) {
     if (context.pausedHistory !== null) {
-      context.pausedHistory.pushLeft(historyOps);
+      context.pausedHistory.pushLeft(frames);
     } else {
-      _addToRealUndoStack(historyOps);
+      _addToRealUndoStack(frames);
     }
   }
 
@@ -1918,106 +1946,132 @@ export function createRoom<
     );
   }
 
-  function applyOps<O extends HistoryOp<P>>(
-    rawOps: readonly O[],
+  function applyLocalOps(frames: readonly Stackframe<P>[]): {
+    opsToEmit: ClientWireOp[]; // Ops to send over the wire afterwards
+    reverse: Stackframe<P>[]; // Reverse ops to add to the undo stack aftwards
+    // Updates to notify about afterwards
+    updates: {
+      storageUpdates: Map<string, StorageUpdate>;
+      presence: boolean;
+    };
+  } {
+    const [pframes, ops] = partition(
+      frames,
+      (f): f is PresenceStackframe<P> => f.type === "presence"
+    );
+
+    // Ensure all local ops have opIds assigned before applying them
+    const opsWithOpIds = ops.map((op: Op) =>
+      op.opId === undefined
+        ? { ...op, opId: context.pool.generateOpId() }
+        : (op as ClientWireOp)
+    );
+
+    const { reverse, updates } = applyOps(
+      pframes,
+      opsWithOpIds,
+      /* isLocal */ true
+    );
+    return { opsToEmit: opsWithOpIds, reverse, updates };
+  }
+
+  function applyRemoteOps(ops: readonly ServerWireOp[]): {
+    // Updates to notify about afterwards
+    updates: {
+      storageUpdates: Map<string, StorageUpdate>;
+      presence: boolean;
+    };
+  } {
+    return applyOps([], ops, /* isLocal */ false);
+  }
+
+  function applyOps(
+    pframes: readonly PresenceStackframe<P>[],
+    ops: readonly Op[],
     isLocal: boolean
   ): {
-    // Input Ops can get opIds assigned during application.
-    ops: O[];
-    reverse: O[];
+    reverse: Stackframe<P>[];
     updates: {
       storageUpdates: Map<string, StorageUpdate>;
       presence: boolean;
     };
   } {
     const output = {
-      reverse: new Deque<O>(),
+      reverse: new Deque<Stackframe<P>>(),
       storageUpdates: new Map<string, StorageUpdate>(),
       presence: false,
     };
 
-    const createdNodeIds = new Set<string>();
+    for (const pf of pframes) {
+      const reverse = {
+        type: "presence" as const,
+        data: {} as P,
+      };
 
-    // Ops applied after undo/redo won't have opIds assigned, yet. Let's do
-    // that right now first.
-    const ops = rawOps.map((op) => {
-      if (op.type !== "presence" && !op.opId) {
-        return { ...op, opId: context.pool.generateOpId() };
-      } else {
-        return op;
+      for (const key in pf.data) {
+        reverse.data[key] = context.myPresence.get()[key];
       }
-    });
 
-    for (const op of ops) {
-      if (op.type === "presence") {
-        const reverse = {
-          type: "presence" as const,
-          data: {} as P,
-        };
+      context.myPresence.patch(pf.data);
 
-        for (const key in op.data) {
-          reverse.data[key] = context.myPresence.get()[key];
-        }
-
-        context.myPresence.patch(op.data);
-
-        if (context.buffer.presenceUpdates === null) {
-          context.buffer.presenceUpdates = { type: "partial", data: op.data };
-        } else {
-          // Merge the new fields with whatever is already queued up (doesn't
-          // matter whether its a partial or full update)
-          for (const key in op.data) {
-            context.buffer.presenceUpdates.data[key] = op.data[key];
-          }
-        }
-
-        output.reverse.pushLeft(reverse as O);
-        output.presence = true;
+      if (context.buffer.presenceUpdates === null) {
+        context.buffer.presenceUpdates = { type: "partial", data: pf.data };
       } else {
-        let source: OpSource;
+        // Merge the new fields with whatever is already queued up (doesn't
+        // matter whether its a partial or full update)
+        for (const key in pf.data) {
+          context.buffer.presenceUpdates.data[key] = pf.data[key];
+        }
+      }
 
-        if (isLocal) {
-          source = OpSource.UNDOREDO_RECONNECT;
-        } else {
-          const opId = nn(op.opId);
-          if (process.env.NODE_ENV !== "production") {
-            nn(context.opStackTraces).delete(opId);
-          }
+      output.reverse.pushLeft(reverse);
+      output.presence = true;
+    }
 
-          const deleted = context.unacknowledgedOps.delete(opId);
-          source = deleted ? OpSource.ACK : OpSource.REMOTE;
+    const createdNodeIds = new Set<string>();
+    for (const op of ops) {
+      let source: OpSource;
+
+      if (isLocal) {
+        source = OpSource.LOCAL;
+      } else if (op.opId !== undefined) {
+        context.unacknowledgedOps.delete(op.opId);
+        source = OpSource.OURS;
+      } else {
+        // Remotely generated Ops (and fix Ops as a special case of that)
+        // don't have opId anymore.
+        source = OpSource.THEIRS;
+      }
+
+      const applyOpResult = applyOp(op, source);
+      if (applyOpResult.modified) {
+        const nodeId = applyOpResult.modified.node._id;
+
+        // If the modified node was created in the same batch, we don't want
+        // to notify storage updates for it (children of newly created nodes
+        // shouldn't trigger separate updates).
+        if (!(nodeId && createdNodeIds.has(nodeId))) {
+          output.storageUpdates.set(
+            nn(applyOpResult.modified.node._id),
+            mergeStorageUpdates(
+              output.storageUpdates.get(nn(applyOpResult.modified.node._id)),
+              applyOpResult.modified
+            )
+          );
+          output.reverse.pushLeft(applyOpResult.reverse);
         }
 
-        const applyOpResult = applyOp(op, source);
-        if (applyOpResult.modified) {
-          const nodeId = applyOpResult.modified.node._id;
-
-          // If the modified node is not the root (undefined) and was created in the same batch, we don't want to notify
-          // storage updates for the children.
-          if (!(nodeId && createdNodeIds.has(nodeId))) {
-            output.storageUpdates.set(
-              nn(applyOpResult.modified.node._id),
-              mergeStorageUpdates(
-                output.storageUpdates.get(nn(applyOpResult.modified.node._id)),
-                applyOpResult.modified
-              )
-            );
-            output.reverse.pushLeft(applyOpResult.reverse as O[]);
-          }
-
-          if (
-            op.type === OpCode.CREATE_LIST ||
-            op.type === OpCode.CREATE_MAP ||
-            op.type === OpCode.CREATE_OBJECT
-          ) {
-            createdNodeIds.add(nn(op.id));
-          }
+        if (
+          op.type === OpCode.CREATE_LIST ||
+          op.type === OpCode.CREATE_MAP ||
+          op.type === OpCode.CREATE_OBJECT
+        ) {
+          createdNodeIds.add(op.id);
         }
       }
     }
 
     return {
-      ops,
       reverse: Array.from(output.reverse),
       updates: {
         storageUpdates: output.storageUpdates,
@@ -2027,9 +2081,8 @@ export function createRoom<
   }
 
   function applyOp(op: Op, source: OpSource): ApplyResult {
-    // Explicit case to handle incoming "AckOp"s, which are supposed to be
-    // no-ops.
-    if (isAckOp(op)) {
+    // Explicit case to handle ignored Ops
+    if (isIgnoredOp(op)) {
       return { modified: false };
     }
 
@@ -2042,7 +2095,7 @@ export function createRoom<
           return { modified: false };
         }
 
-        return node._apply(op, source === OpSource.UNDOREDO_RECONNECT);
+        return node._apply(op, source === OpSource.LOCAL);
       }
 
       case OpCode.SET_PARENT_KEY: {
@@ -2178,9 +2231,15 @@ export function createRoom<
       actor: message.actor,
       nonce: message.nonce,
       scopes: message.scopes,
+      meta: message.meta,
     });
     context.idFactory = makeIdFactory(message.actor);
     notifySelfChanged();
+
+    // Inject brand badge if meta.showBrand is true
+    if (message.meta.showBrand === true) {
+      injectBrandBadge(config.badgeLocation ?? "bottom-right");
+    }
 
     for (const connectionId of context.others.connectionIds()) {
       const user = message.users[connectionId];
@@ -2242,9 +2301,7 @@ export function createRoom<
     if (!isJsonObject(data)) {
       return null;
     }
-
     return data as ServerMsg<P, U, E>;
-    //             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FIXME: Properly validate incoming external data instead!
   }
 
   function parseServerMessages(text: string): ServerMsg<P, U, E>[] | null {
@@ -2258,25 +2315,27 @@ export function createRoom<
     }
   }
 
-  function applyAndSendOps(offlineOps: Map<string, Op>) {
-    if (offlineOps.size === 0) {
+  function applyAndSendOfflineOps(unackedOps: Map<string, ClientWireOp>) {
+    if (unackedOps.size === 0) {
       return;
     }
 
     const messages: ClientMsg<P, E>[] = [];
-
-    const inOps = Array.from(offlineOps.values());
-
-    const result = applyOps(inOps, true);
-
+    const inOps = Array.from(unackedOps.values());
+    const result = applyLocalOps(inOps);
     messages.push({
       type: ClientMsgCode.UPDATE_STORAGE,
-      ops: result.ops,
+      ops: result.opsToEmit,
     });
 
     notify(result.updates);
-
     sendMessages(messages);
+  }
+
+  function isFeedRequestFailedMsg(
+    msg: ServerMsg<P, U, E>
+  ): msg is FeedRequestFailedServerMsg {
+    return msg.type === ServerMsgCode.FEED_REQUEST_FAILED;
   }
 
   /**
@@ -2350,15 +2409,32 @@ export function createRoom<
           break;
         }
 
-        case ServerMsgCode.INITIAL_STORAGE_STATE: {
-          // createOrUpdateRootFromMessage function could add ops to offlineOperations.
-          // Client shouldn't resend these ops as part of the offline ops sending after reconnect.
-          processInitialStorage(message);
+        case ServerMsgCode.STORAGE_CHUNK:
+          stopwatch?.lap();
+          nodeMapBuffer.append(compactNodesToNodeStream(message.nodes));
+          break;
+
+        case ServerMsgCode.STORAGE_STREAM_END: {
+          const timing = stopwatch?.stop();
+          if (timing) {
+            const ms = (v: number) => `${v.toFixed(1)}ms`;
+            const rest = timing.laps.slice(1);
+            console.warn(
+              `Storage chunk arrival: ${[
+                `total=${ms(timing.total)}`,
+                `first=${ms(timing.laps[0])}`,
+                `rest.n=${rest.length}`,
+                `rest.avg=${ms(rest.reduce((a, b) => a + b, 0) / rest.length)}`,
+                `rest.max=${ms(rest.reduce((a, b) => Math.max(a, b), 0))}`,
+              ].join(", ")}`
+            );
+          }
+          processInitialStorage(nodeMapBuffer.take());
           break;
         }
-        // Write event
+
         case ServerMsgCode.UPDATE_STORAGE: {
-          const applyResult = applyOps(message.ops, false);
+          const applyResult = applyRemoteOps(message.ops);
           for (const [key, value] of applyResult.updates.storageUpdates) {
             updates.storageUpdates.set(
               key,
@@ -2371,8 +2447,7 @@ export function createRoom<
         // Receiving a RejectedOps message in the client means that the server is no
         // longer in sync with the client. Trying to synchronize the client again by
         // rolling back particular Ops may be hard/impossible. It's fine to not try and
-        // accept the out-of-sync reality and throw an error. We look at this kind of bug
-        // as a developer-owned bug. In production, these errors are not expected to happen.
+        // accept the out-of-sync reality and throw an error.
         case ServerMsgCode.REJECT_STORAGE_OP: {
           console.errorWithTitle(
             "Storage mutation rejection error",
@@ -2380,21 +2455,6 @@ export function createRoom<
           );
 
           if (process.env.NODE_ENV !== "production") {
-            const traces: Set<string> = new Set();
-            for (const opId of message.opIds) {
-              const trace = context.opStackTraces?.get(opId);
-              if (trace) {
-                traces.add(trace);
-              }
-            }
-
-            if (traces.size > 0) {
-              console.warnWithTitle(
-                "The following function calls caused the rejected storage mutations:",
-                `\n\n${Array.from(traces).join("\n\n")}`
-              );
-            }
-
             throw new Error(
               `Storage mutations rejected by server: ${message.reason}`
             );
@@ -2411,10 +2471,114 @@ export function createRoom<
         case ServerMsgCode.COMMENT_REACTION_REMOVED:
         case ServerMsgCode.COMMENT_CREATED:
         case ServerMsgCode.COMMENT_EDITED:
-        case ServerMsgCode.COMMENT_DELETED: {
+        case ServerMsgCode.COMMENT_DELETED:
+        case ServerMsgCode.COMMENT_METADATA_UPDATED: {
           eventHub.comments.notify(message);
           break;
         }
+
+        case ServerMsgCode.FEEDS_LIST: {
+          const feedsListMsg = message as FeedsListServerMsg<FM>;
+          const pending = pendingFeedsRequests.get(feedsListMsg.requestId);
+          if (pending) {
+            pending.resolve({
+              feeds: feedsListMsg.feeds,
+              nextCursor: feedsListMsg.nextCursor,
+            });
+            pendingFeedsRequests.delete(feedsListMsg.requestId);
+          }
+          eventHub.feeds.notify(feedsListMsg);
+          break;
+        }
+
+        case ServerMsgCode.FEEDS_ADDED: {
+          const feedsAddedMsg = message as FeedsAddedServerMsg<FM>;
+          eventHub.feeds.notify(feedsAddedMsg);
+          tryResolvePendingFeedMutationsFromFeedsEvent(feedsAddedMsg);
+          break;
+        }
+
+        case ServerMsgCode.FEEDS_UPDATED: {
+          const feedsUpdatedMsg = message as FeedsUpdatedServerMsg<FM>;
+          eventHub.feeds.notify(feedsUpdatedMsg);
+          tryResolvePendingFeedMutationsFromFeedsEvent(feedsUpdatedMsg);
+          break;
+        }
+
+        case ServerMsgCode.FEED_DELETED: {
+          eventHub.feeds.notify(message);
+          tryResolvePendingFeedMutationsFromFeedsEvent(message);
+          break;
+        }
+
+        case ServerMsgCode.FEED_MESSAGES_LIST: {
+          const feedMsgsListMsg = message as FeedMessagesListServerMsg<FMD>;
+          const pending = pendingFeedMessagesRequests.get(
+            feedMsgsListMsg.requestId
+          );
+          if (pending) {
+            pending.resolve({
+              messages: feedMsgsListMsg.messages,
+              nextCursor: feedMsgsListMsg.nextCursor,
+            });
+            pendingFeedMessagesRequests.delete(feedMsgsListMsg.requestId);
+          }
+          eventHub.feeds.notify(feedMsgsListMsg);
+          break;
+        }
+
+        case ServerMsgCode.FEED_MESSAGES_ADDED: {
+          const feedMsgsAddedMsg = message as FeedMessagesAddedServerMsg<FMD>;
+          eventHub.feeds.notify(feedMsgsAddedMsg);
+          tryResolvePendingFeedMutationsFromFeedsEvent(feedMsgsAddedMsg);
+          break;
+        }
+
+        case ServerMsgCode.FEED_MESSAGES_UPDATED: {
+          const feedMsgsUpdatedMsg =
+            message as FeedMessagesUpdatedServerMsg<FMD>;
+          eventHub.feeds.notify(feedMsgsUpdatedMsg);
+          tryResolvePendingFeedMutationsFromFeedsEvent(feedMsgsUpdatedMsg);
+          break;
+        }
+
+        case ServerMsgCode.FEED_MESSAGES_DELETED: {
+          eventHub.feeds.notify(message);
+          tryResolvePendingFeedMutationsFromFeedsEvent(message);
+          break;
+        }
+
+        case ServerMsgCode.FEED_REQUEST_FAILED: {
+          if (!isFeedRequestFailedMsg(message)) {
+            break;
+          }
+          const { requestId, code, reason } = message;
+          const err = new LiveblocksError(reason ?? "Feed request failed", {
+            type: "FEED_REQUEST_ERROR",
+            roomId,
+            requestId,
+            code,
+            reason,
+          });
+          if (pendingFeedMutations.has(requestId)) {
+            settleFeedMutation(requestId, "error", err);
+          } else if (pendingFeedsRequests.has(requestId)) {
+            const pending = pendingFeedsRequests.get(requestId);
+            pendingFeedsRequests.delete(requestId);
+            pending?.reject(err);
+          } else if (pendingFeedMessagesRequests.has(requestId)) {
+            const pending = pendingFeedMessagesRequests.get(requestId);
+            pendingFeedMessagesRequests.delete(requestId);
+            pending?.reject(err);
+          }
+          eventHub.feeds.notify(message);
+          break;
+        }
+
+        case ServerMsgCode.STORAGE_STATE_V7: // No longer used in V8
+        default:
+          // Ignore unknown server messages
+          break;
       }
     }
 
@@ -2425,7 +2589,7 @@ export function createRoom<
     const storageOps = context.buffer.storageOperations;
     if (storageOps.length > 0) {
       for (const op of storageOps) {
-        context.unacknowledgedOps.set(nn(op.opId), op);
+        context.unacknowledgedOps.set(op.opId, op);
       }
       notifyStorageStatus();
     }
@@ -2530,7 +2694,11 @@ export function createRoom<
     flushNowOrSoon();
   }
 
-  function dispatchOps(ops: Op[]) {
+  /**
+   * Schedule Ops to be sent to the server (now or soon). All ops should be
+   * "wire-ready" (have an opId), once dispatched there is no going back.
+   */
+  function dispatchOps(ops: ClientWireOp[]) {
     const { storageOperations } = context.buffer;
     for (const op of ops) {
       storageOperations.push(op);
@@ -2541,10 +2709,224 @@ export function createRoom<
   let _getStorage$: Promise<void> | null = null;
   let _resolveStoragePromise: (() => void) | null = null;
 
-  function processInitialStorage(message: InitialDocumentStateServerMsg) {
+  // Pending feeds fetch requests (keyed by requestId)
+  const pendingFeedsRequests = new Map<
+    string,
+    {
+      resolve: (value: { feeds: Feed<FM>[]; nextCursor?: string }) => void;
+      reject: (error: Error) => void;
+    }
+  >();
+
+  // Pending feed messages fetch requests (keyed by requestId)
+  const pendingFeedMessagesRequests = new Map<
+    string,
+    {
+      resolve: (value: {
+        messages: FeedMessage<FMD>[];
+        nextCursor?: string;
+      }) => void;
+      reject: (error: Error) => void;
+    }
+  >();
+
+  type PendingFeedMutationKind =
+    | "add-feed"
+    | "update-feed"
+    | "delete-feed"
+    | "add-message"
+    | "update-message"
+    | "delete-message";
+
+  type PendingFeedMutation = {
+    resolve: () => void;
+    reject: (error: Error) => void;
+    timeoutId: TimeoutID;
+    kind: PendingFeedMutationKind;
+    feedId: string;
+    messageId?: string;
+    expectedClientMessageId?: string;
+  };
+
+  const pendingFeedMutations = new Map<string, PendingFeedMutation>();
+  const pendingAddMessageFifoByFeed = new Map<string, string[]>();
+
+  function settleFeedMutation(
+    requestId: string,
+    outcome: "ok" | "error",
+    error?: Error
+  ): void {
+    const pending = pendingFeedMutations.get(requestId);
+    if (pending === undefined) {
+      return;
+    }
+    clearTimeout(pending.timeoutId);
+    pendingFeedMutations.delete(requestId);
+    if (pending.kind === "add-message" && !pending.expectedClientMessageId) {
+      const q = pendingAddMessageFifoByFeed.get(pending.feedId);
+      if (q !== undefined) {
+        const idx = q.indexOf(requestId);
+        if (idx >= 0) {
+          q.splice(idx, 1);
+        }
+        if (q.length === 0) {
+          pendingAddMessageFifoByFeed.delete(pending.feedId);
+        }
+      }
+    }
+    if (outcome === "ok") {
+      pending.resolve();
+    } else {
+      pending.reject(error ?? new Error("Feed mutation failed"));
+    }
+  }
+
+  function registerFeedMutation(
+    requestId: string,
+    kind: PendingFeedMutationKind,
+    feedId: string,
+    options?: { messageId?: string; expectedClientMessageId?: string }
+  ): Promise<void> {
+    const { promise, resolve, reject } = Promise_withResolvers<void>();
+    const timeoutId: TimeoutID = setTimeout(() => {
+      if (pendingFeedMutations.has(requestId)) {
+        settleFeedMutation(
+          requestId,
+          "error",
+          new Error("Feed mutation timeout")
+        );
+      }
+    }, FEEDS_TIMEOUT);
+
+    pendingFeedMutations.set(requestId, {
+      resolve,
+      reject,
+      timeoutId,
+      kind,
+      feedId,
+      messageId: options?.messageId,
+      expectedClientMessageId: options?.expectedClientMessageId,
+    });
+
+    if (
+      kind === "add-message" &&
+      options?.expectedClientMessageId === undefined
+    ) {
+      const q = pendingAddMessageFifoByFeed.get(feedId) ?? [];
+      q.push(requestId);
+      pendingAddMessageFifoByFeed.set(feedId, q);
+    }
+
+    return promise;
+  }
+
+  function tryResolvePendingFeedMutationsFromFeedsEvent(
+    message: FeedsEventServerMsg<FM, FMD>
+  ): void {
+    switch (message.type) {
+      case ServerMsgCode.FEEDS_ADDED: {
+        for (const feed of message.feeds) {
+          for (const [requestId, pending] of [...pendingFeedMutations]) {
+            if (pending.kind === "add-feed" && pending.feedId === feed.feedId) {
+              settleFeedMutation(requestId, "ok");
+              break;
+            }
+          }
+        }
+        break;
+      }
+      case ServerMsgCode.FEEDS_UPDATED: {
+        for (const feed of message.feeds) {
+          for (const [requestId, pending] of [...pendingFeedMutations]) {
+            if (
+              pending.kind === "update-feed" &&
+              pending.feedId === feed.feedId
+            ) {
+              settleFeedMutation(requestId, "ok");
+            }
+          }
+        }
+        break;
+      }
+      case ServerMsgCode.FEED_DELETED: {
+        for (const [requestId, pending] of [...pendingFeedMutations]) {
+          if (
+            pending.kind === "delete-feed" &&
+            pending.feedId === message.feedId
+          ) {
+            settleFeedMutation(requestId, "ok");
+            break;
+          }
+        }
+        break;
+      }
+      case ServerMsgCode.FEED_MESSAGES_ADDED: {
+        for (const m of message.messages) {
+          let matched = false;
+          for (const [requestId, pending] of [...pendingFeedMutations]) {
+            if (
+              pending.kind === "add-message" &&
+              pending.feedId === message.feedId &&
+              pending.expectedClientMessageId === m.id
+            ) {
+              settleFeedMutation(requestId, "ok");
+              matched = true;
+              break;
+            }
+          }
+          if (!matched) {
+            const q = pendingAddMessageFifoByFeed.get(message.feedId);
+            const headId = q?.[0];
+            if (headId !== undefined) {
+              const pending = pendingFeedMutations.get(headId);
+              if (
+                pending?.kind === "add-message" &&
+                pending.expectedClientMessageId === undefined
+              ) {
+                settleFeedMutation(headId, "ok");
+              }
+            }
+          }
+        }
+        break;
+      }
+      case ServerMsgCode.FEED_MESSAGES_UPDATED: {
+        for (const m of message.messages) {
+          for (const [requestId, pending] of [...pendingFeedMutations]) {
+            if (
+              pending.kind === "update-message" &&
+              pending.feedId === message.feedId &&
+              pending.messageId === m.id
+            ) {
+              settleFeedMutation(requestId, "ok");
+            }
+          }
+        }
+        break;
+      }
+      case ServerMsgCode.FEED_MESSAGES_DELETED: {
+        for (const mid of message.messageIds) {
+          for (const [requestId, pending] of [...pendingFeedMutations]) {
+            if (
+              pending.kind === "delete-message" &&
+              pending.feedId === message.feedId &&
+              pending.messageId === mid
+            ) {
+              settleFeedMutation(requestId, "ok");
+            }
+          }
+        }
+        break;
+      }
+      default:
+        break;
+    }
+  }
+
+  function processInitialStorage(nodes: NodeMap) {
     const unacknowledgedOps = new Map(context.unacknowledgedOps);
-    createOrUpdateRootFromMessage(message);
-    applyAndSendOps(unacknowledgedOps);
+    createOrUpdateRootFromMessage(nodes);
+    applyAndSendOfflineOps(unacknowledgedOps);
     _resolveStoragePromise?.();
     notifyStorageStatus();
     eventHub.storageDidLoad.notify();
@@ -2553,8 +2935,10 @@ export function createRoom<
   async function streamStorage() {
     // TODO: Handle potential race conditions where the room get disconnected while the request is pending
     if (!managedSocket.authValue) return;
-    const items = await httpClient.streamStorage({ roomId });
-    processInitialStorage({ type: ServerMsgCode.INITIAL_STORAGE_STATE, items });
+    const nodes = new Map<string, SerializedCrdt>(
+      await httpClient.streamStorage({ roomId })
+    );
+    processInitialStorage(nodes);
   }
 
   function refreshStorage(options: { flush: boolean }) {
@@ -2568,6 +2952,8 @@ export function createRoom<
       // Only add the fetch message to the outgoing message queue if it isn't
       // already there
       messages.push({ type: ClientMsgCode.FETCH_STORAGE });
+      nodeMapBuffer.take(); // Reset any partial state from previous fetch
+      stopwatch?.start();
     }
 
     if (options.flush) {
@@ -2647,26 +3033,209 @@ export function createRoom<
     flushNowOrSoon();
   }
 
+  async function fetchFeeds(options?: {
+    cursor?: string;
+    since?: number;
+    limit?: number;
+    metadata?: FeedFetchMetadataFilter;
+  }): Promise<{ feeds: Feed<FM>[]; nextCursor?: string }> {
+    const requestId = nanoid();
+
+    const { promise, resolve, reject } = Promise_withResolvers<{
+      feeds: Feed<FM>[];
+      nextCursor?: string;
+    }>();
+
+    pendingFeedsRequests.set(requestId, { resolve, reject });
+
+    const message: FetchFeedsClientMsg = {
+      type: ClientMsgCode.FETCH_FEEDS,
+      requestId,
+      cursor: options?.cursor,
+      since: options?.since,
+      limit: options?.limit,
+      metadata: options?.metadata,
+    };
+
+    context.buffer.messages.push(message);
+    flushNowOrSoon();
+
+    setTimeout(() => {
+      if (pendingFeedsRequests.has(requestId)) {
+        pendingFeedsRequests.delete(requestId);
+        reject(new Error("Feeds fetch timeout"));
+      }
+    }, FEEDS_TIMEOUT);
+
+    return promise;
+  }
+
+  async function fetchFeedMessages(
+    feedId: string,
+    options?: {
+      cursor?: string;
+      since?: number;
+      limit?: number;
+    }
+  ): Promise<{ messages: FeedMessage<FMD>[]; nextCursor?: string }> {
+    const requestId = nanoid();
+
+    const { promise, resolve, reject } = Promise_withResolvers<{
+      messages: FeedMessage<FMD>[];
+      nextCursor?: string;
+    }>();
+
+    pendingFeedMessagesRequests.set(requestId, { resolve, reject });
+
+    const message: FetchFeedMessagesClientMsg = {
+      type: ClientMsgCode.FETCH_FEED_MESSAGES,
+      requestId,
+      feedId,
+      cursor: options?.cursor,
+      since: options?.since,
+      limit: options?.limit,
+    };
+
+    context.buffer.messages.push(message);
+    flushNowOrSoon();
+
+    setTimeout(() => {
+      if (pendingFeedMessagesRequests.has(requestId)) {
+        pendingFeedMessagesRequests.delete(requestId);
+        reject(new Error("Feed messages fetch timeout"));
+      }
+    }, FEEDS_TIMEOUT);
+
+    return promise;
+  }
+
+  function addFeed(
+    feedId: string,
+    options?: { metadata?: FeedCreateMetadata; createdAt?: number }
+  ): Promise<void> {
+    const requestId = nanoid();
+    const promise = registerFeedMutation(requestId, "add-feed", feedId);
+    const message: AddFeedClientMsg = {
+      type: ClientMsgCode.ADD_FEED,
+      requestId,
+      feedId,
+      metadata: options?.metadata,
+      createdAt: options?.createdAt,
+    };
+    context.buffer.messages.push(message);
+    flushNowOrSoon();
+    return promise;
+  }
+
+  function updateFeed(
+    feedId: string,
+    metadata: FeedUpdateMetadata
+  ): Promise<void> {
+    const requestId = nanoid();
+    const promise = registerFeedMutation(requestId, "update-feed", feedId);
+    const message: UpdateFeedClientMsg = {
+      type: ClientMsgCode.UPDATE_FEED,
+      requestId,
+      feedId,
+      metadata,
+    };
+    context.buffer.messages.push(message);
+    flushNowOrSoon();
+    return promise;
+  }
+
+  function deleteFeed(feedId: string): Promise<void> {
+    const requestId = nanoid();
+    const promise = registerFeedMutation(requestId, "delete-feed", feedId);
+    const message: DeleteFeedClientMsg = {
+      type: ClientMsgCode.DELETE_FEED,
+      requestId,
+      feedId,
+    };
+    context.buffer.messages.push(message);
+    flushNowOrSoon();
+    return promise;
+  }
+
+  function addFeedMessage(
+    feedId: string,
+    data: JsonObject,
+    options?: { id?: string; createdAt?: number }
+  ): Promise<void> {
+    const requestId = nanoid();
+    const promise = registerFeedMutation(requestId, "add-message", feedId, {
+      expectedClientMessageId: options?.id,
+    });
+    const message: AddFeedMessageClientMsg = {
+      type: ClientMsgCode.ADD_FEED_MESSAGE,
+      requestId,
+      feedId,
+      data,
+      id: options?.id,
+      createdAt: options?.createdAt,
+    };
+    context.buffer.messages.push(message);
+    flushNowOrSoon();
+    return promise;
+  }
+
+  function updateFeedMessage(
+    feedId: string,
+    messageId: string,
+    data: JsonObject,
+    options?: { updatedAt?: number }
+  ): Promise<void> {
+    const requestId = nanoid();
+    const promise = registerFeedMutation(requestId, "update-message", feedId, {
+      messageId,
+    });
+    const message: UpdateFeedMessageClientMsg = {
+      type: ClientMsgCode.UPDATE_FEED_MESSAGE,
+      requestId,
+      feedId,
+      messageId,
+      data,
+      updatedAt: options?.updatedAt,
+    };
+    context.buffer.messages.push(message);
+    flushNowOrSoon();
+    return promise;
+  }
+
+  function deleteFeedMessage(feedId: string, messageId: string): Promise<void> {
+    const requestId = nanoid();
+    const promise = registerFeedMutation(requestId, "delete-message", feedId, {
+      messageId,
+    });
+    const message: DeleteFeedMessageClientMsg = {
+      type: ClientMsgCode.DELETE_FEED_MESSAGE,
+      requestId,
+      feedId,
+      messageId,
+    };
+    context.buffer.messages.push(message);
+    flushNowOrSoon();
+    return promise;
+  }
+
   function undo() {
     if (context.activeBatch) {
       throw new Error("undo is not allowed during a batch");
     }
-    const historyOps = context.undoStack.pop();
-    if (historyOps === undefined) {
+    const frames = context.undoStack.pop();
+    if (frames === undefined) {
       return;
     }
 
     context.pausedHistory = null;
-    const result = applyOps(historyOps, true);
+    const result = applyLocalOps(frames);
 
     notify(result.updates);
     context.redoStack.push(result.reverse);
     onHistoryChange();
 
-    for (const op of result.ops) {
-      if (op.type !== "presence") {
-        context.buffer.storageOperations.push(op);
-      }
+    for (const op of result.opsToEmit) {
+      context.buffer.storageOperations.push(op);
     }
     flushNowOrSoon();
   }
@@ -2676,22 +3245,20 @@ export function createRoom<
       throw new Error("redo is not allowed during a batch");
     }
 
-    const historyOps = context.redoStack.pop();
-    if (historyOps === undefined) {
+    const frames = context.redoStack.pop();
+    if (frames === undefined) {
       return;
     }
 
     context.pausedHistory = null;
-    const result = applyOps(historyOps, true);
+    const result = applyLocalOps(frames);
 
     notify(result.updates);
     context.undoStack.push(result.reverse);
     onHistoryChange();
 
-    for (const op of result.ops) {
-      if (op.type !== "presence") {
-        context.buffer.storageOperations.push(op);
-      }
+    for (const op of result.opsToEmit) {
+      context.buffer.storageOperations.push(op);
     }
     flushNowOrSoon();
   }
@@ -2719,6 +3286,7 @@ export function createRoom<
         others: [],
       },
       reverseOps: new Deque(),
+      scheduleHistoryResume: false,
     };
     try {
       returnValue = callback();
@@ -2730,6 +3298,10 @@ export function createRoom<
 
       if (currentBatch.reverseOps.length > 0) {
         addToUndoStack(Array.from(currentBatch.reverseOps));
+      }
+
+      if (currentBatch.scheduleHistoryResume) {
+        commitPausedHistoryToUndoStack();
       }
 
       if (currentBatch.ops.length > 0) {
@@ -2755,11 +3327,30 @@ export function createRoom<
     }
   }
 
-  function resumeHistory() {
-    const historyOps = context.pausedHistory;
+  function commitPausedHistoryToUndoStack() {
+    const frames = context.pausedHistory;
     context.pausedHistory = null;
-    if (historyOps !== null && historyOps.length > 0) {
-      _addToRealUndoStack(Array.from(historyOps));
+    if (frames !== null && frames.length > 0) {
+      _addToRealUndoStack(Array.from(frames));
+    }
+  }
+
+  function resumeHistory() {
+    if (context.activeBatch !== null) {
+      context.activeBatch.scheduleHistoryResume = true;
+      return;
+    }
+    commitPausedHistoryToUndoStack();
+  }
+
+  function withoutHistory<T>(fn: () => T): T {
+    const undoBefore = context.undoStack.length;
+    const redoBefore = context.redoStack.length;
+    try {
+      return fn();
+    } finally {
+      context.undoStack.length = undoBefore;
+      context.redoStack.length = redoBefore;
     }
   }
 
@@ -2846,6 +3437,7 @@ export function createRoom<
     ydoc: eventHub.ydoc.observable,
 
     comments: eventHub.comments.observable,
+    feeds: eventHub.feeds.observable,
     roomWillDestroy: eventHub.roomWillDestroy.observable,
   };
 
@@ -2857,7 +3449,7 @@ export function createRoom<
     });
   }
 
-  async function getThreads(options?: GetThreadsOptions<M>) {
+  async function getThreads(options?: GetThreadsOptions<TM>) {
     return httpClient.getThreads({
       roomId,
       query: options?.query,
@@ -2869,11 +3461,27 @@ export function createRoom<
     return httpClient.getThread({ roomId, threadId });
   }
 
+  // TODO 4.0: Update API to be similar to `@liveblocks/node`'s `createThread` method.
+  // Instead of a flat list of options (`commentId`, `metadata`, `body`, `commentMetadata`, etc.),
+  // we could move to using a nested `comment` object to differentiate between thread and comment properties.
+  //
+  // {
+  //   roomId: string;
+  //   threadId?: string;
+  //   metadata: TM | undefined;
+  //   comment: {
+  //     id?: string;
+  //     metadata: CM | undefined;
+  //     body: CommentBody;
+  //     attachmentIds?: string[];
+  //   };
+  // }
   async function createThread(options: {
     roomId: string;
     threadId?: string;
     commentId?: string;
-    metadata: M | undefined;
+    metadata: TM | undefined;
+    commentMetadata: CM | undefined;
     body: CommentBody;
     attachmentIds?: string[];
   }) {
@@ -2883,6 +3491,7 @@ export function createRoom<
       commentId: options.commentId,
       metadata: options.metadata,
       body: options.body,
+      commentMetadata: options.commentMetadata,
       attachmentIds: options.attachmentIds,
     });
   }
@@ -2896,10 +3505,28 @@ export function createRoom<
     threadId,
   }: {
     roomId: string;
-    metadata: Patchable<M>;
+    metadata: Patchable<TM>;
     threadId: string;
   }) {
     return httpClient.editThreadMetadata({ roomId, threadId, metadata });
+  }
+
+  async function editCommentMetadata({
+    threadId,
+    commentId,
+    metadata,
+  }: {
+    roomId: string;
+    threadId: string;
+    commentId: string;
+    metadata: Patchable<CM>;
+  }) {
+    return httpClient.editCommentMetadata({
+      roomId,
+      threadId,
+      commentId,
+      metadata,
+    });
   }
 
   async function markThreadAsResolved(threadId: string) {
@@ -2925,6 +3552,7 @@ export function createRoom<
     threadId: string;
     commentId?: string;
     body: CommentBody;
+    metadata?: CM;
     attachmentIds?: string[];
   }) {
     return httpClient.createComment({
@@ -2932,6 +3560,7 @@ export function createRoom<
       threadId: options.threadId,
       commentId: options.commentId,
       body: options.body,
+      metadata: options.metadata,
       attachmentIds: options.attachmentIds,
     });
   }
@@ -2940,6 +3569,7 @@ export function createRoom<
     threadId: string;
     commentId: string;
     body: CommentBody;
+    metadata?: Patchable<CM>;
     attachmentIds?: string[];
   }) {
     return httpClient.editComment({
@@ -2947,6 +3577,7 @@ export function createRoom<
       threadId: options.threadId,
       commentId: options.commentId,
       body: options.body,
+      metadata: options.metadata,
       attachmentIds: options.attachmentIds,
     });
   }
@@ -3098,9 +3729,10 @@ export function createRoom<
 
         // prettier-ignore
         simulate: {
-          // These exist only for our E2E testing app
+          // These exist only for our E2E testing app and unit tests
           explicitClose: (event) => managedSocket._privateSendMachineEvent({ type: "EXPLICIT_SOCKET_CLOSE", event }),
           rawSend: (data) => managedSocket.send(data),
+          incomingMessage: (data) => handleServerMessage(new MessageEvent("message", { data })),
         },
 
         attachmentUrlsStore: httpClient.getOrCreateAttachmentUrlsStore(roomId),
@@ -3109,7 +3741,7 @@ export function createRoom<
       id: roomId,
       subscribe: makeClassicSubscribeFn(
         roomId,
-        events,
+        eventHub,
         config.errorEventSource
       ),
 
@@ -3117,6 +3749,12 @@ export function createRoom<
       reconnect: () => managedSocket.reconnect(),
       disconnect: () => managedSocket.disconnect(),
       destroy: () => {
+        pendingFeedsRequests.forEach((request) =>
+          request.reject(new Error("Room destroyed"))
+        );
+        pendingFeedMessagesRequests.forEach((request) =>
+          request.reject(new Error("Room destroyed"))
+        );
         // remove the roomWillDestroy event from the event hub
         const { roomWillDestroy, ...eventsExceptDestroy } = eventHub;
         // Unregister all registered callbacks
@@ -3149,9 +3787,20 @@ export function createRoom<
         clear,
         pause: pauseHistory,
         resume: resumeHistory,
+        [kInternal]: {
+          withoutHistory,
+        },
       },
 
       fetchYDoc,
+      fetchFeeds,
+      fetchFeedMessages,
+      addFeed,
+      updateFeed,
+      deleteFeed,
+      addFeedMessage,
+      updateFeedMessage,
+      deleteFeedMessage,
       getStorage,
       getStorageSnapshot,
       getStorageStatus,
@@ -3184,6 +3833,7 @@ export function createRoom<
       unsubscribeFromThread,
       createComment,
       editComment,
+      editCommentMetadata,
       deleteComment,
       addReaction,
       removeReaction,
@@ -3216,10 +3866,11 @@ function makeClassicSubscribeFn<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
-  M extends BaseMetadata,
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
 >(
   roomId: string,
-  events: Room<P, S, U, E, M>["events"],
+  events: Room<P, S, U, E, TM, CM>["events"],
   errorEvents: EventSource<LiveblocksError>
 ): SubscribeFn<P, S, U, E> {
   // Set up the "subscribe" wrapper API
@@ -3396,7 +4047,7 @@ export function makeCreateSocketDelegateForRoom(
 
     const url = new URL(baseUrl);
     url.protocol = url.protocol === "http:" ? "ws" : "wss";
-    url.pathname = "/v7";
+    url.pathname = "/v8";
     url.searchParams.set("roomId", roomId);
     if (authValue.type === "secret") {
       url.searchParams.set("tok", authValue.token.raw);

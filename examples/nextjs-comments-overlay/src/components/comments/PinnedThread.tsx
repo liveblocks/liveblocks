@@ -12,6 +12,8 @@ import {
 import { ThreadData } from "@liveblocks/client";
 import { Thread } from "@liveblocks/react-ui";
 import { useNearEdge } from "@/lib/useNearEdge";
+import { Tooltip as TooltipPrimitive } from "radix-ui";
+import { CommentWithUserAgent } from "@/components/comments/CommentWithUserAgent";
 
 type Props = {
   user: Liveblocks["UserMeta"]["info"];
@@ -92,17 +94,20 @@ export function PinnedThread({
         />
       </div>
       {!minimized ? (
-        <div
-          className={styles.pinnedContent}
-          data-flip-vertical={nearBottomEdge || undefined}
-          data-flip-horizontal={nearRightEdge || undefined}
-        >
-          <Thread
-            thread={thread}
-            indentCommentContent={false}
-            onFocus={onFocus}
-          />
-        </div>
+        <TooltipPrimitive.TooltipProvider>
+          <div
+            className={styles.pinnedContent}
+            data-flip-vertical={nearBottomEdge || undefined}
+            data-flip-horizontal={nearRightEdge || undefined}
+          >
+            <Thread
+              thread={thread}
+              indentCommentContent={false}
+              onFocus={onFocus}
+              components={{ Comment: CommentWithUserAgent }}
+            />
+          </div>
+        </TooltipPrimitive.TooltipProvider>
       ) : null}
     </div>
   );

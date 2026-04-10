@@ -5,7 +5,6 @@ import {
   useMutation,
   useStorage,
   useSelf,
-  useClient,
 } from "@liveblocks/react";
 import React from "react";
 import Avatar from "../components/Avatar";
@@ -32,12 +31,6 @@ export default function Example() {
    * For more information: https://liveblocks.io/docs/api-reference/liveblocks-react#useUpdateMyPresence
    */
   const updateMyPresence = useUpdateMyPresence();
-
-  //TODO revert this after experimentation
-  const client = useClient();
-  if (typeof window !== "undefined") {
-    (window as any).lbClient = client;
-  }
 
   /**
    * useStorage is used to read and stay in sync with the shared state, which
@@ -219,9 +212,9 @@ export async function getStaticProps() {
   const API_KEY = process.env.LIVEBLOCKS_SECRET_KEY;
   const API_KEY_WARNING = process.env.CODESANDBOX_SSE
     ? `Add your secret key from https://liveblocks.io/dashboard/apikeys as the \`LIVEBLOCKS_SECRET_KEY\` secret in CodeSandbox.\n` +
-    `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-live-avatars#codesandbox.`
+      `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-live-avatars#codesandbox.`
     : `Create an \`.env.local\` file and add your secret key from https://liveblocks.io/dashboard/apikeys as the \`LIVEBLOCKS_SECRET_KEY\` environment variable.\n` +
-    `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-live-avatars#getting-started.`;
+      `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-live-avatars#getting-started.`;
 
   if (!API_KEY) {
     console.warn(API_KEY_WARNING);

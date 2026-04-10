@@ -1,0 +1,132 @@
+---
+meta:
+  title: "Can I use my own database with Yjs?"
+  description:
+    "Learn how to use webhooks to duplicate Yjs document data to your own
+    database"
+---
+
+When building collaborative applications with Yjs and Liveblocks, you may wish
+to store document data in your own database alongside Liveblocks. While
+Liveblocks needs to store Yjs document data to handle realtime collaboration,
+you can use webhooks to duplicate this data to your own database whenever
+changes occur.
+
+## Why Liveblocks stores Yjs data
+
+Liveblocks must store Yjs document data to provide realtime collaboration
+features. This storage is essential for:
+
+- **Realtime synchronization**: Distributing changes to all connected users
+  instantly.
+- **Conflict resolution**: Merging changes from multiple users working
+  simultaneously.
+- **Offline support**: Syncing changes when users reconnect after being offline.
+- **Document loading**: Loading the current document state when a user
+  enters the room.
+
+Without storing this data, Liveblocks wouldn't be able to provide the realtime
+collaboration features that make Yjs powerful. However, you can still maintain
+your own copy of the data for additional purposes like backups, analytics, or
+creating full-text search.
+
+## Duplicating data with webhooks
+
+The best way to keep your own database in sync with Liveblocks is to use the
+[`YDocUpdated`](/docs/platform/webhooks#YDocUpdatedEvent) webhook event. This
+event fires whenever a Yjs document changes, allowing you to copy the updated
+data to your database. Your server can then:
+
+1. Receive the webhook event.
+2. Fetch the latest document data from Liveblocks.
+3. Store it in your database.
+
+This approach ensures your database stays synchronized with Liveblocks without
+interfering with realtime collaboration.
+
+### Webhook throttling
+
+Yjs documents can update up to 60 times per second during active collaboration,
+so the `YDocUpdated` webhook is throttled to prevent overwhelming your server.
+The webhook event will run no more than once every 60 seconds by default, but on
+Enterprise plans, you can configure this throttle to be as low as every 5
+seconds, giving you near realtime synchronization to your database.
+
+<Banner title="Need a lower throttle speed?">
+
+If you’re interested in lowering the throttle value,
+[reach out to our team](/contact/sales) to discuss your needs.
+
+</Banner>
+
+## Setting up database synchronization
+
+We have detailed guides that walk you through how to set up your webhooks and
+store the Yjs data in your database.
+
+- [How to synchronize your Liveblocks Yjs document data to a Vercel Postgres database](/docs/guides/how-to-synchronize-your-liveblocks-yjs-document-data-to-a-vercel-postgres-database)
+- [How to synchronize your Liveblocks Yjs document data to a Supabase Postgres database](/docs/guides/how-to-synchronize-your-liveblocks-yjs-document-data-to-a-supabase-postgres-database)
+- [How to synchronize your Liveblocks Yjs document data to a PlanetScale MySQL database](/docs/guides/how-to-synchronize-your-liveblocks-yjs-document-data-to-a-planetscale-mysql-database)
+
+If your database isn’t mentioned in these guides, the process is still similar,
+so we recommend following the general steps outlined in the guides. The guides
+above detail fetching your Yjs data, however if you’re using one of our text
+editor extensions, you can use our server packages to fetch the Tiptap or
+Lexical data instead.
+
+### Tiptap
+
+If you’re using Tiptap,
+[`withProsemirrorDocument`](/docs/api-reference/liveblocks-node-prosemirror#withProsemirrorDocument)
+can be used to fetch the Tiptap data, as text, markdown, JSON, and more, when
+receiving the webhook event.
+
+```ts
+const textContent = await withProsemirrorDocument(
+  { roomId: "my-room-id", client: liveblocks },
+  async (api) => {
+    return api.toMarkdown();
+  }
+);
+
+// "# Hello world"
+console.log(textContent);
+```
+
+Additionally you can modify the live document with
+[`setContent`](/docs/api-reference/liveblocks-node-prosemirror#api.setContent).
+
+### Lexical
+
+If you’re using Lexical,
+[`withLexicalDocument`](/docs/api-reference/liveblocks-node-lexical#withLexicalDocument)
+can be used to fetch the Lexical data, as text, markdown, JSON, and more, when
+receiving the webhook event.
+
+```ts
+const textContent = await withLexicalDocument(
+  { roomId: "my-room-id", client: liveblocks },
+  async (doc) => {
+    return doc.toMarkdown();
+  }
+);
+
+// "# Hello world"
+console.log(textContent);
+```
+
+Additionally you can modify the live document with
+[`update`](/docs/api-reference/liveblocks-node-lexical#doc.update).
+
+## Learn more
+
+For more information about data storage and webhooks, check out these resources:
+
+### API documentation
+
+Learn more about the APIs for working with Yjs data:
+
+- [YDocUpdated webhook event](/docs/platform/webhooks#YDocUpdatedEvent)
+- [@liveblocks/node-prosemirror](/docs/api-reference/liveblocks-node-prosemirror)
+- [@liveblocks/node-lexical](/docs/api-reference/liveblocks-node-lexical)
+- [Data storage](/docs/platform/data-storage)

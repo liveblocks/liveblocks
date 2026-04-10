@@ -1,0 +1,114 @@
+from __future__ import annotations
+
+import datetime
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, Literal, Self, cast
+
+from attrs import define as _attrs_define
+from dateutil.parser import isoparse
+
+from ..models.knowledge_source_base_status import KnowledgeSourceBaseStatus
+from ..types import UNSET, Unset
+
+if TYPE_CHECKING:
+    from ..models.knowledge_source_web_source_link import KnowledgeSourceWebSourceLink
+
+
+@_attrs_define
+class KnowledgeSourceWebSource:
+    """
+    Example:
+        {'id': 'ks_web123', 'type': 'ai-knowledge-web-source', 'createdAt': '2024-06-01T12:00:00.000Z', 'updatedAt':
+            '2024-06-01T12:00:00.000Z', 'lastIndexedAt': '2024-06-01T12:00:00.000Z', 'status': 'ready', 'link': {'url':
+            'https://docs.example.com', 'type': 'crawl'}}
+
+    Attributes:
+        id (str):
+        created_at (datetime.datetime):
+        updated_at (datetime.datetime):
+        last_indexed_at (datetime.datetime):
+        status (KnowledgeSourceBaseStatus):
+        type_ (Literal['ai-knowledge-web-source']):
+        link (KnowledgeSourceWebSourceLink):
+        error_message (str | Unset):
+    """
+
+    id: str
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
+    last_indexed_at: datetime.datetime
+    status: KnowledgeSourceBaseStatus
+    type_: Literal["ai-knowledge-web-source"]
+    link: KnowledgeSourceWebSourceLink
+    error_message: str | Unset = UNSET
+
+    def to_dict(self) -> dict[str, Any]:
+        id = self.id
+
+        created_at = self.created_at.isoformat()
+
+        updated_at = self.updated_at.isoformat()
+
+        last_indexed_at = self.last_indexed_at.isoformat()
+
+        status = self.status.value
+
+        type_ = self.type_
+
+        link = self.link.to_dict()
+
+        error_message = self.error_message
+
+        field_dict: dict[str, Any] = {}
+
+        field_dict.update(
+            {
+                "id": id,
+                "createdAt": created_at,
+                "updatedAt": updated_at,
+                "lastIndexedAt": last_indexed_at,
+                "status": status,
+                "type": type_,
+                "link": link,
+            }
+        )
+        if error_message is not UNSET:
+            field_dict["errorMessage"] = error_message
+
+        return field_dict
+
+    @classmethod
+    def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
+        from ..models.knowledge_source_web_source_link import KnowledgeSourceWebSourceLink
+
+        d = dict(src_dict)
+        id = d.pop("id")
+
+        created_at = isoparse(d.pop("createdAt"))
+
+        updated_at = isoparse(d.pop("updatedAt"))
+
+        last_indexed_at = isoparse(d.pop("lastIndexedAt"))
+
+        status = KnowledgeSourceBaseStatus(d.pop("status"))
+
+        type_ = cast(Literal["ai-knowledge-web-source"], d.pop("type"))
+        if type_ != "ai-knowledge-web-source":
+            raise ValueError(f"type must match const 'ai-knowledge-web-source', got '{type_}'")
+
+        link = KnowledgeSourceWebSourceLink.from_dict(d.pop("link"))
+
+        error_message = d.pop("errorMessage", UNSET)
+
+        knowledge_source_web_source = cls(
+            id=id,
+            created_at=created_at,
+            updated_at=updated_at,
+            last_indexed_at=last_indexed_at,
+            status=status,
+            type_=type_,
+            link=link,
+            error_message=error_message,
+        )
+
+        return knowledge_source_web_source

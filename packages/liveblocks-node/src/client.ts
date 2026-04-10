@@ -8,26 +8,32 @@ import type {
   BaseMetadata,
   BaseUserMeta,
   ClientMsg,
+  ClientWireOp,
   CommentBody,
   CommentData,
   CommentDataPlain,
   CommentUserReaction,
   CommentUserReactionPlain,
   DAD,
+  DCM,
   DE,
-  DM,
+  DFM,
+  DFMD,
   DS,
+  DTM,
   DU,
+  Feed,
+  FeedCreateMetadata,
+  FeedMessage,
+  FeedUpdateMetadata,
   GroupData,
   GroupDataPlain,
   GroupScopes,
-  IdTuple,
   InboxNotificationData,
   InboxNotificationDataPlain,
   Json,
   JsonObject,
   KDAD,
-  LsonObject,
   NotificationSettings,
   NotificationSettingsPlain,
   Op,
@@ -39,13 +45,13 @@ import type {
   QueryMetadata,
   QueryParams,
   RoomSubscriptionSettings,
-  SerializedCrdt,
+  StorageNode,
   StorageUpdate,
   SubscriptionData,
   SubscriptionDataPlain,
   ThreadData,
   ThreadDataPlain,
-  ToImmutable,
+  ToJson,
   URLSafeString,
   UserRoomSubscriptionSettings,
   UserSubscriptionData,
@@ -74,6 +80,7 @@ import {
 
 import { asyncConsume, runConcurrently } from "./lib/itertools";
 import { LineStream, NdJsonStream } from "./lib/ndjson";
+import { xwarn } from "./lib/xwarn";
 import { Session } from "./Session";
 import {
   assertNonEmpty,
@@ -83,23 +90,6 @@ import {
   normalizeStatusCode,
 } from "./utils";
 
-// Recursively convert ReadonlyMap<K, V> to { [key: K]: V }
-type SerializeMaps<T> =
-  T extends ReadonlyMap<infer K, infer V>
-    ? K extends string
-      ? { readonly [P in K]: SerializeMaps<V> }
-      : { readonly [key: string]: SerializeMaps<V> }
-    : T extends object
-      ? { readonly [P in keyof T]: SerializeMaps<T[P]> }
-      : T;
-
-type ToSimplifiedJson<S extends LsonObject> = LsonObject extends S
-  ? JsonObject
-  : // ToImmutable converts LiveMap instances to ReadonlyMap versions, but
-    // the "simplified JSON" format actually requires (because of serialization)
-    // and converts the maps to plain objects.
-    SerializeMaps<ToImmutable<S>>;
-
 export type LiveblocksOptions = {
   /**
    * The Liveblocks secret key. Must start with "sk_".
@@ -107,10 +97,7 @@ export type LiveblocksOptions = {
    */
   secret: string;
 
-  /**
-   * @internal To point the client to a different Liveblocks server. Only
-   * useful for Liveblocks developers. Not for end users.
-   */
+  /** Point the client to an alternative Liveblocks server. */
   baseUrl?: string;
 };
 
@@ -121,7 +108,11 @@ type DateToString<T> = {
 export type CreateSessionOptions<U extends BaseUserMeta = DU> =
   //
   PartialUnless<U["info"], { userInfo: U["info"] }> & {
+    /**
+     * @deprecated Use `organizationId` instead.
+     */
     tenantId?: string;
+    organizationId?: string;
   };
 
 export type IdentifyUserOptions<U extends BaseUserMeta = DU> =
@@ -137,27 +128,61 @@ export type AuthResponse = {
 type Identity = {
   userId: string;
   groupIds: string[];
+  /**
+   * @deprecated Use `organizationId` instead.
+   */
   tenantId?: string;
+  organizationId?: string;
 };
 
 export type ThreadParticipants = {
   participantIds: string[];
 };
 
-export type CreateThreadOptions<M extends BaseMetadata> = {
+export type AttachmentWithUrl = {
+  type: "attachment";
+  id: string;
+  mimeType: string;
+  name: string;
+  size: number;
+  url: string;
+  expiresAt: string;
+};
+
+export type CreateThreadOptions<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+> = {
   roomId: string;
   data: {
-    comment: { userId: string; createdAt?: Date; body: CommentBody };
-  } & PartialUnless<M, { metadata: M }>;
+    comment: {
+      userId: string;
+      createdAt?: Date;
+      body: CommentBody;
+    } & PartialUnless<CM, { metadata: CM }>; // Comment metadata (data.comment.metadata)
+  } & PartialUnless<TM, { metadata: TM }>; // Thread metadata (data.metadata)
+};
+
+export type CreateCommentOptions<CM extends BaseMetadata> = {
+  roomId: string;
+  threadId: string;
+  data: {
+    userId: string;
+    createdAt?: Date;
+    body: CommentBody;
+  } & PartialUnless<CM, { metadata: CM }>;
 };
 
 export type RoomPermission =
   | []
   | ["room:write"]
-  | ["room:read", "room:presence:write"];
+  | ["room:read", "room:presence:write"]
+  | ["room:read", "room:presence:write", "comments:write"];
 export type RoomAccesses = Record<
   string,
-  ["room:write"] | ["room:read", "room:presence:write"]
+  | ["room:write"]
+  | ["room:read", "room:presence:write"]
+  | ["room:read", "room:presence:write", "comments:write"]
 >;
 export type RoomMetadata = Record<string, string | string[]>;
 type QueryRoomMetadata = Record<string, string>;
@@ -167,6 +192,7 @@ export type RoomData = {
   id: string;
   createdAt: Date;
   lastConnectionAt?: Date;
+  organizationId: string;
   defaultAccesses: RoomPermission;
   usersAccesses: RoomAccesses;
   groupsAccesses: RoomAccesses;
@@ -199,15 +225,28 @@ type OpenAiModel =
   | "gpt-4o"
   | "gpt-4o-mini"
   | "gpt-4-turbo"
-  | "gpt-4";
+  | "gpt-4"
+  | "gpt-5"
+  | "gpt-5-mini"
+  | "gpt-5-nano"
+  | "gpt-5-chat-latest"
+  | "gpt-5.1"
+  | "gpt-5.1-mini"
+  | "gpt-5.1-chat-latest";
 
 type OpenAiProviderOptions = {
   openai: {
-    reasoningEffort: "low" | "medium" | "high";
+    reasoningEffort?: "low" | "medium" | "high";
+    webSearch?: {
+      allowedDomains?: string[];
+    };
   };
 };
 
 type AnthropicModel =
+  | "claude-sonnet-4-5-20250929"
+  | "claude-haiku-4-5-20251001"
+  | "claude-opus-4-1-20250805"
   | "claude-4-opus-20250514"
   | "claude-4-sonnet-20250514"
   | "claude-3-7-sonnet-20250219"
@@ -216,9 +255,16 @@ type AnthropicModel =
   | "claude-3-opus-latest";
 type AnthropicProviderOptions = {
   anthropic: {
-    thinking: {
-      type: "enabled" | "disabled";
-      budgetTokens: number;
+    thinking?:
+      | {
+          type: "enabled";
+          budgetTokens: number;
+        }
+      | {
+          type: "disabled";
+        };
+    webSearch?: {
+      allowedDomains?: string[];
     };
   };
 };
@@ -231,8 +277,8 @@ type GoogleModel =
   | "gemini-1.5-pro";
 type GoogleProviderOptions = {
   google: {
-    thinkingConfig: {
-      thinkingBudget: number;
+    thinkingConfig?: {
+      thinkingBudget?: number;
     };
   };
 };
@@ -245,6 +291,7 @@ export type AiCopilot = {
 
   systemPrompt: string;
   knowledgePrompt?: string;
+  alwaysUseKnowledge: boolean;
 
   createdAt: Date;
   updatedAt: Date;
@@ -283,20 +330,9 @@ export type RoomUser<U extends BaseUserMeta = DU> = {
   info: U["info"];
 };
 
-export type Schema = {
-  id: string;
-  name: string;
-  version: number;
-  body: string;
-  createdAt: Date;
-  updatedAt: Date;
-};
-
-type SchemaPlain = DateToString<Schema>;
-
 type RequestStorageMutationResponse = {
   actor: number;
-  nodes: IdTuple<SerializedCrdt>[];
+  nodes: StorageNode[];
 };
 
 export type MutateStorageCallback = (context: {
@@ -321,11 +357,17 @@ export type MassMutateStorageOptions =
 // The idea is that we "start small" and could always add them in at the class
 // level later.
 type E = DE;
-type M = DM;
+type TM = DTM;
+type CM = DCM;
 type S = DS;
 type U = DU;
 
 export type RoomsQueryCriteria = {
+  /**
+   * @deprecated Use `organizationId` instead.
+   */
+  tenantId?: string;
+  organizationId?: string;
   userId?: string;
   groupIds?: string[];
   /**
@@ -362,7 +404,11 @@ export type RoomsQueryCriteria = {
 
 export type InboxNotificationsQueryCriteria = {
   userId: string;
+  /**
+   * @deprecated Use `organizationId` instead.
+   */
   tenantId?: string;
+  organizationId?: string;
   /**
    * The query to filter inbox notifications by. It is based on our query language.
    *
@@ -411,7 +457,17 @@ export type CreateRoomOptions = {
   groupsAccesses?: RoomAccesses;
   usersAccesses?: RoomAccesses;
   metadata?: RoomMetadata;
+  /**
+   * @deprecated Use `organizationId` instead.
+   */
   tenantId?: string;
+  organizationId?: string;
+
+  /**
+   * @deprecated This flag no longer has any effect and will be removed in
+   * a future version. All rooms now use the v2 storage engine by default.
+   */
+  engine?: 1 | 2;
 };
 
 export type UpdateRoomOptions = {
@@ -440,6 +496,7 @@ export type CreateAiCopilotOptions = {
 
   systemPrompt: string;
   knowledgePrompt?: string;
+  alwaysUseKnowledge?: boolean;
 
   settings?: AiCopilotProviderSettings;
 
@@ -475,6 +532,7 @@ export type UpdateAiCopilotOptions = {
 
   systemPrompt?: string;
   knowledgePrompt?: string | null;
+  alwaysUseKnowledge?: boolean;
 
   settings?: AiCopilotProviderSettings | null;
 
@@ -482,34 +540,54 @@ export type UpdateAiCopilotOptions = {
 } & (
   | {
       provider?: "openai";
+      /**
+       * The provider model to use.
+       */
       providerModel?: OpenAiModel;
+      /**
+       * The provider options to use. Replaces the entire existing provider options; no deep merge of the nested fields occurs.
+       */
       providerOptions?: OpenAiProviderOptions | null;
       compatibleProviderName?: never;
       providerBaseUrl?: never;
     }
   | {
       provider?: "anthropic";
+      /**
+       * The provider model to use.
+       */
       providerModel?: AnthropicModel;
+      /**
+       * The provider options to use. Replaces the entire existing provider options; no deep merge of the nested fields occurs..
+       */
       providerOptions?: AnthropicProviderOptions | null;
       compatibleProviderName?: never;
       providerBaseUrl?: never;
     }
   | {
       provider?: "google";
+      /**
+       * The provider model to use.
+       */
       providerModel?: GoogleModel;
+      /**
+       * The provider options to use. Replaces the entire existing provider options; no deep merge of the nested fields occurs.
+       */
       providerOptions?: GoogleProviderOptions | null;
       compatibleProviderName?: never;
       providerBaseUrl?: never;
     }
   | {
       provider?: "openai-compatible";
+      /**
+       * The provider model to use.
+       */
       providerModel?: string;
       compatibleProviderName?: string;
       providerBaseUrl?: string;
       providerOptions?: never;
     }
 );
-
 export type CreateWebKnowledgeSourceOptions = {
   copilotId: string;
   url: string;
@@ -529,6 +607,30 @@ export type GetWebKnowledgeSourceLinksOptions = {
   copilotId: string;
   knowledgeSourceId: string;
 } & PaginationOptions;
+
+export type CreateFeedOptions = {
+  feedId: string;
+  metadata?: FeedCreateMetadata;
+  /** Creation time in ms; serialized as `timestamp` in the REST request body. */
+  createdAt?: number;
+};
+
+export type UpdateFeedOptions = {
+  metadata: FeedUpdateMetadata;
+};
+
+export type CreateFeedMessageOptions<FMD extends Json = DFMD> = {
+  id?: string;
+  /** Creation time in ms; serialized as `timestamp` in the REST request body. */
+  createdAt?: number;
+  data: FMD;
+};
+
+export type UpdateFeedMessageOptions<FMD extends Json = DFMD> = {
+  data: FMD;
+  /** Update time in ms; serialized as `timestamp` in the REST request body. */
+  updatedAt?: number;
+};
 
 type KnowledgeSourcePlain = DateToString<KnowledgeSource>;
 
@@ -569,6 +671,18 @@ export type WebKnowledgeSourceLink = {
 
 export type RequestOptions = {
   signal?: AbortSignal;
+};
+
+export type SetPresenceOptions = {
+  userId: string;
+  data: JsonObject;
+  userInfo?: {
+    name?: string;
+    avatar?: string;
+    color?: string;
+    [key: string]: Json | undefined;
+  };
+  ttl?: number;
 };
 
 /**
@@ -622,7 +736,8 @@ function inflateWebKnowledgeSourceLink(
 export class Liveblocks {
   readonly #secret: string;
   readonly #baseUrl: URL;
-
+  /** Only used as a hint to produce better error messages. */
+  readonly #localDev: boolean;
   /**
    * Interact with the Liveblocks API from your Node.js backend.
    */
@@ -632,6 +747,8 @@ export class Liveblocks {
     assertSecretKey(secret, "secret");
     this.#secret = secret;
     this.#baseUrl = new URL(getBaseUrl(options.baseUrl));
+    this.#localDev =
+      !!options.baseUrl && /^https?:\/\/localhost[:/]/.test(options.baseUrl);
   }
 
   async #post(
@@ -651,10 +768,11 @@ export class Liveblocks {
       body: JSON.stringify(json),
       signal: options?.signal,
     });
+    xwarn(res, "POST", path);
     return res;
   }
 
-  async #put(
+  async #patch(
     path: URLSafeString,
     json: Json,
     options?: RequestOptions
@@ -665,12 +783,14 @@ export class Liveblocks {
       "Content-Type": "application/json",
     };
     const fetch = await fetchPolyfill();
-    return await fetch(url, {
-      method: "PUT",
+    const res = await fetch(url, {
+      method: "PATCH",
       headers,
       body: JSON.stringify(json),
       signal: options?.signal,
     });
+    xwarn(res, "PATCH", path);
+    return res;
   }
 
   async #putBinary(
@@ -685,12 +805,14 @@ export class Liveblocks {
       "Content-Type": "application/octet-stream",
     };
     const fetch = await fetchPolyfill();
-    return await fetch(url, {
+    const res = await fetch(url, {
       method: "PUT",
       headers,
-      body,
+      body: body as Uint8Array<ArrayBuffer>,
       signal: options?.signal,
     });
+    xwarn(res, "PUT", path);
+    return res;
   }
 
   async #delete(
@@ -708,6 +830,7 @@ export class Liveblocks {
       headers,
       signal: options?.signal,
     });
+    xwarn(res, "DELETE", path);
     return res;
   }
 
@@ -726,6 +849,7 @@ export class Liveblocks {
       headers,
       signal: options?.signal,
     });
+    xwarn(res, "GET", path);
     return res;
   }
 
@@ -744,7 +868,7 @@ export class Liveblocks {
    * uniquely identify the user account in your system. The uniqueness of this
    * value will determine how many MAUs will be counted/billed.
    *
-   * @param tenantId (optional) The tenant ID to authorize the user for.
+   * @param options.organizationId (optional) The organization ID to authorize the user for.
    *
    * @param options.userInfo Custom metadata to attach to this user. Data you
    * add here will be visible to all other clients in the room, through the
@@ -763,7 +887,8 @@ export class Liveblocks {
       this.#post.bind(this),
       userId,
       options?.userInfo,
-      options?.tenantId
+      options?.organizationId ?? options?.tenantId,
+      this.#localDev
     );
   }
 
@@ -813,19 +938,35 @@ export class Liveblocks {
 
     const path = url`/v2/identify-user`;
 
-    const { userId, groupIds, tenantId } =
+    const { userId, groupIds, tenantId, organizationId } =
       typeof identity === "string"
-        ? { userId: identity, groupIds: undefined, tenantId: undefined }
+        ? {
+            userId: identity,
+            groupIds: undefined,
+            tenantId: undefined,
+            organizationId: undefined,
+          }
         : identity;
 
     assertNonEmpty(userId, "userId");
 
-    const body = {
+    const body: {
+      userId: string;
+      groupIds?: string[];
+      organizationId?: string;
+      tenantId?: string;
+      userInfo?: U["info"];
+    } = {
       userId,
       groupIds,
-      tenantId,
       userInfo: options?.userInfo,
     };
+
+    if (organizationId !== undefined) {
+      body.organizationId = organizationId;
+    } else if (tenantId !== undefined) {
+      body.organizationId = tenantId;
+    }
 
     try {
       const resp = await this.#post(path, body);
@@ -837,10 +978,12 @@ export class Liveblocks {
     } catch (er) {
       return {
         status: 503 /* Service Unavailable */,
-        body: `Call to ${urljoin(
-          this.#baseUrl,
-          path
-        )} failed. See "error" for more information.`,
+        body: this.#localDev
+          ? "Could not connect to your Liveblocks dev server. Is it running?"
+          : `Call to ${urljoin(
+              this.#baseUrl,
+              path
+            )} failed. See "error" for more information.`,
         error: er as Error | undefined,
       };
     }
@@ -857,7 +1000,7 @@ export class Liveblocks {
    * @param params.userId (optional) A filter on users accesses.
    * @param params.metadata (optional) A filter on metadata. Multiple metadata keys can be used to filter rooms.
    * @param params.groupIds (optional) A filter on groups accesses. Multiple groups can be used.
-   * @param params.tenantId (optional) A filter on tenant ID.
+   * @param params.organizationId (optional) A filter on organization ID.
    * @param params.query (optional) A query to filter rooms by. It is based on our query language. You can filter by metadata and room ID.
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns A list of rooms.
@@ -876,13 +1019,19 @@ export class Liveblocks {
       query = objectToQuery(params.query);
     }
 
-    const queryParams = {
+    const queryParams: QueryParams = {
       limit: params.limit,
       startingAfter: params.startingAfter,
       userId: params.userId,
       groupIds: params.groupIds ? params.groupIds.join(",") : undefined,
       query,
     };
+
+    if (params.organizationId !== undefined) {
+      queryParams.organizationId = params.organizationId;
+    } else if (params.tenantId !== undefined) {
+      queryParams.organizationId = params.tenantId;
+    }
 
     const res = await this.#get(path, queryParams, options);
     if (!res.ok) {
@@ -942,7 +1091,7 @@ export class Liveblocks {
    * @param params.groupsAccesses (optional) The group accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
    * @param params.usersAccesses (optional) The user accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
    * @param params.metadata (optional) The metadata for the room. Supports upto a maximum of 50 entries. Key length has a limit of 40 characters. Value length has a limit of 256 characters.
-   * @param params.tenantId (optional) The tenant ID to create the room for.
+   * @param params.organizationId (optional) The organization ID to create the room for.
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The created room.
    */
@@ -951,17 +1100,39 @@ export class Liveblocks {
     params: CreateRoomOptions,
     options?: RequestOptions & { idempotent?: boolean }
   ): Promise<RoomData> {
-    const { defaultAccesses, groupsAccesses, usersAccesses, metadata } = params;
+    const {
+      defaultAccesses,
+      groupsAccesses,
+      usersAccesses,
+      metadata,
+      tenantId,
+      organizationId,
+    } = params;
+
+    const body: {
+      id: string;
+      defaultAccesses: RoomPermission;
+      groupsAccesses?: RoomAccesses;
+      usersAccesses?: RoomAccesses;
+      metadata?: RoomMetadata;
+      organizationId?: string;
+    } = {
+      id: roomId,
+      defaultAccesses,
+      groupsAccesses,
+      usersAccesses,
+      metadata,
+    };
+
+    if (organizationId !== undefined) {
+      body.organizationId = organizationId;
+    } else if (tenantId !== undefined) {
+      body.organizationId = tenantId;
+    }
 
     const res = await this.#post(
       options?.idempotent ? url`/v2/rooms?idempotent` : url`/v2/rooms`,
-      {
-        id: roomId,
-        defaultAccesses,
-        groupsAccesses,
-        usersAccesses,
-        metadata,
-      },
+      body,
       options
     );
 
@@ -982,7 +1153,7 @@ export class Liveblocks {
    * @param params.groupsAccesses (optional) The group accesses for the room if the room will be created. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
    * @param params.usersAccesses (optional) The user accesses for the room if the room will be created. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
    * @param params.metadata (optional) The metadata for the room if the room will be created. Supports upto a maximum of 50 entries. Key length has a limit of 40 characters. Value length has a limit of 256 characters.
-   * @param params.tenantId (optional) The tenant ID to create the room for.
+   * @param params.organizationId (optional) The organization ID to create the room for.
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The room.
    */
@@ -1102,6 +1273,26 @@ export class Liveblocks {
   }
 
   /**
+   * Prepares a room for connectivity, making the eventual connection faster. Use this when you know you'll be loading a room but are not yet connected to it.
+   * @param roomId The id of the room to prewarm.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  public async prewarmRoom(
+    roomId: string,
+    options?: RequestOptions
+  ): Promise<void> {
+    const res = await this.#get(
+      url`/v2/rooms/${roomId}/prewarm`,
+      undefined,
+      options
+    );
+
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+  }
+
+  /**
    * Returns a list of users currently present in the requested room. For better performance, we recommand to call this endpoint every 10 seconds maximum. Duplicates can happen if a user is in the requested room with multiple browser tabs opened.
    * @param roomId The id of the room to get the users from.
    * @param options.signal (optional) An abort signal to cancel the request.
@@ -1145,6 +1336,38 @@ export class Liveblocks {
     }
   }
 
+  /**
+   * Sets ephemeral presence for a user in a room without requiring a WebSocket connection.
+   * The presence data will automatically expire after the specified TTL.
+   * This is useful for scenarios like showing an AI agent's presence in a room.
+   *
+   * @param roomId The id of the room to set presence in.
+   * @param params.userId The ID of the user to set presence for.
+   * @param params.data The presence data as a JSON object.
+   * @param params.userInfo (optional) Metadata about the user or agent
+   * @param params.ttl (optional) Time-to-live in seconds. If not specified, the default TTL is 60 seconds. (minimum: 2, maximum: 3599).
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  public async setPresence(
+    roomId: string,
+    params: SetPresenceOptions,
+    options?: RequestOptions
+  ): Promise<void> {
+    const res = await this.#post(
+      url`/v2/rooms/${roomId}/presence`,
+      {
+        userId: params.userId,
+        data: params.data,
+        userInfo: params.userInfo,
+        ttl: params.ttl,
+      },
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+  }
+
   /* -------------------------------------------------------------------------------------------------
    * Storage
    * -----------------------------------------------------------------------------------------------*/
@@ -1180,13 +1403,13 @@ export class Liveblocks {
     roomId: string,
     format: "json",
     options?: RequestOptions
-  ): Promise<ToSimplifiedJson<S>>;
+  ): Promise<ToJson<S>>;
 
   public async getStorageDocument(
     roomId: string,
     format: "plain-lson" | "json" = "plain-lson",
     options?: RequestOptions
-  ): Promise<PlainLsonObject | ToSimplifiedJson<S>> {
+  ): Promise<PlainLsonObject | ToJson<S>> {
     const res = await this.#get(
       url`/v2/rooms/${roomId}/storage`,
       { format },
@@ -1195,7 +1418,7 @@ export class Liveblocks {
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
-    return (await res.json()) as PlainLsonObject | ToSimplifiedJson<S>;
+    return (await res.json()) as PlainLsonObject | ToJson<S>;
   }
 
   async #requestStorageMutation(
@@ -1231,7 +1454,7 @@ export class Liveblocks {
     }
 
     // The rest of the stream are all the Storage nodes
-    const nodes = (await asyncConsume(iter)) as IdTuple<SerializedCrdt>[];
+    const nodes = (await asyncConsume(iter)) as StorageNode[];
     return { actor: first.actor, nodes };
   }
 
@@ -1363,197 +1586,6 @@ export class Liveblocks {
   }
 
   /* -------------------------------------------------------------------------------------------------
-   * Schema Validation
-   * -----------------------------------------------------------------------------------------------*/
-
-  /**
-   * Creates a new schema which can be referenced later to enforce a room’s Storage data structure.
-   * @param name The name used to reference the schema. Must be a non-empty string with less than 65 characters and only contain lowercase letters, numbers and dashes
-   * @param body The exact allowed shape of data in the room. It is a multi-line string written in the [Liveblocks schema syntax](https://liveblocks.io/docs/platform/schema-validation/syntax).
-   * @param options.signal (optional) An abort signal to cancel the request.
-   * @returns The created schema.
-   */
-  public async createSchema(
-    name: string,
-    body: string,
-    options?: RequestOptions
-  ): Promise<Schema> {
-    const res = await this.#post(url`/v2/schemas`, { name, body }, options);
-    if (!res.ok) {
-      throw await LiveblocksError.from(res);
-    }
-    const data = (await res.json()) as SchemaPlain;
-
-    // Convert createdAt and updatedAt from ISO date strings to Date objects
-    const createdAt = new Date(data.createdAt);
-    const updatedAt = new Date(data.updatedAt);
-    return {
-      ...data,
-      createdAt,
-      updatedAt,
-    };
-  }
-
-  /**
-   * Returns a schema by its id.
-   * @param schemaId Id of the schema - this is the combination of the schema name and version of the schema to update. For example, `my-schema@1`.
-   * @param options.signal (optional) An abort signal to cancel the request.
-   * @returns The schema with the given id.
-   */
-  public async getSchema(
-    schemaId: string,
-    options?: RequestOptions
-  ): Promise<Schema> {
-    const res = await this.#get(
-      url`/v2/schemas/${schemaId}`,
-      undefined,
-      options
-    );
-    if (!res.ok) {
-      throw await LiveblocksError.from(res);
-    }
-    const data = (await res.json()) as SchemaPlain;
-
-    // Convert createdAt and updatedAt from ISO date strings to Date objects
-    const createdAt = new Date(data.createdAt);
-    const updatedAt = new Date(data.updatedAt);
-
-    return {
-      ...data,
-      createdAt,
-      updatedAt,
-    };
-  }
-
-  /**
-   * Updates the body for the schema. A schema can only be updated if it is not used by any room.
-   * @param schemaId Id of the schema - this is the combination of the schema name and version of the schema to update. For example, `my-schema@1`.
-   * @param body The exact allowed shape of data in the room. It is a multi-line string written in the [Liveblocks schema syntax](https://liveblocks.io/docs/platform/schema-validation/syntax).
-   * @param options.signal (optional) An abort signal to cancel the request.
-   * @returns The updated schema. The version of the schema will be incremented.
-   */
-  public async updateSchema(
-    schemaId: string,
-    body: string,
-    options?: RequestOptions
-  ): Promise<Schema> {
-    const res = await this.#put(
-      url`/v2/schemas/${schemaId}`,
-      { body },
-      options
-    );
-    if (!res.ok) {
-      throw await LiveblocksError.from(res);
-    }
-
-    const data = (await res.json()) as SchemaPlain;
-
-    // Convert createdAt and updatedAt from ISO date strings to Date objects
-    const createdAt = new Date(data.createdAt);
-    const updatedAt = new Date(data.updatedAt);
-
-    return {
-      ...data,
-      createdAt,
-      updatedAt,
-    };
-  }
-
-  /**
-   * Deletes a schema by its id. A schema can only be deleted if it is not used by any room.
-   * @param schemaId Id of the schema - this is the combination of the schema name and version of the schema to update. For example, `my-schema@1`.
-   * @param options.signal (optional) An abort signal to cancel the request.
-   */
-  public async deleteSchema(
-    schemaId: string,
-    options?: RequestOptions
-  ): Promise<void> {
-    const res = await this.#delete(
-      url`/v2/schemas/${schemaId}`,
-      undefined,
-      options
-    );
-    if (!res.ok) {
-      throw await LiveblocksError.from(res);
-    }
-  }
-
-  /**
-   * Returns the schema attached to a room.
-   * @param roomId The id of the room to get the schema from.
-   * @param options.signal (optional) An abort signal to cancel the request.
-   * @returns
-   */
-  public async getSchemaByRoomId(
-    roomId: string,
-    options?: RequestOptions
-  ): Promise<Schema> {
-    const res = await this.#get(
-      url`/v2/rooms/${roomId}/schema`,
-      undefined,
-      options
-    );
-    if (!res.ok) {
-      throw await LiveblocksError.from(res);
-    }
-
-    const data = (await res.json()) as SchemaPlain;
-
-    // Convert createdAt and updatedAt from ISO date strings to Date objects
-    const createdAt = new Date(data.createdAt);
-    const updatedAt = new Date(data.updatedAt);
-
-    return {
-      ...data,
-      createdAt,
-      updatedAt,
-    };
-  }
-
-  /**
-   * Attaches a schema to a room, and instantly enables runtime schema validation for the room.
-   * If the current contents of the room’s Storage do not match the schema, attaching will fail and the error message will give details on why the schema failed to attach.
-   * @param roomId The id of the room to attach the schema to.
-   * @param schemaId Id of the schema - this is the combination of the schema name and version of the schema to update. For example, `my-schema@1`.
-   * @param options.signal (optional) An abort signal to cancel the request.
-   * @returns The schema id as JSON.
-   */
-  public async attachSchemaToRoom(
-    roomId: string,
-    schemaId: string,
-    options?: RequestOptions
-  ): Promise<{ schema: string }> {
-    const res = await this.#post(
-      url`/v2/rooms/${roomId}/schema`,
-      { schema: schemaId },
-      options
-    );
-    if (!res.ok) {
-      throw await LiveblocksError.from(res);
-    }
-    return (await res.json()) as Promise<{ schema: string }>;
-  }
-
-  /**
-   * Detaches a schema from a room, and disables runtime schema validation for the room.
-   * @param roomId The id of the room to detach the schema from.
-   * @param options.signal (optional) An abort signal to cancel the request.
-   */
-  public async detachSchemaFromRoom(
-    roomId: string,
-    options?: RequestOptions
-  ): Promise<void> {
-    const res = await this.#delete(
-      url`/v2/rooms/${roomId}/schema`,
-      undefined,
-      options
-    );
-    if (!res.ok) {
-      throw await LiveblocksError.from(res);
-    }
-  }
-
-  /* -------------------------------------------------------------------------------------------------
    * Comments
    * -----------------------------------------------------------------------------------------------*/
 
@@ -1597,12 +1629,12 @@ export class Liveblocks {
       query?:
         | string
         | {
-            metadata?: Partial<QueryMetadata<M>>;
+            metadata?: Partial<QueryMetadata<TM>>;
             resolved?: boolean;
           };
     },
     options?: RequestOptions
-  ): Promise<{ data: ThreadData<M>[] }> {
+  ): Promise<{ data: ThreadData<TM, CM>[] }> {
     const { roomId } = params;
 
     let query: string | undefined;
@@ -1621,7 +1653,7 @@ export class Liveblocks {
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
-    const { data } = (await res.json()) as { data: ThreadDataPlain<M>[] };
+    const { data } = (await res.json()) as { data: ThreadDataPlain<TM, CM>[] };
     return {
       data: data.map((thread) => convertToThreadData(thread)),
     };
@@ -1638,7 +1670,7 @@ export class Liveblocks {
   public async getThread(
     params: { roomId: string; threadId: string },
     options?: RequestOptions
-  ): Promise<ThreadData<M>> {
+  ): Promise<ThreadData<TM, CM>> {
     const { roomId, threadId } = params;
 
     const res = await this.#get(
@@ -1649,7 +1681,7 @@ export class Liveblocks {
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
-    return convertToThreadData((await res.json()) as ThreadDataPlain<M>);
+    return convertToThreadData((await res.json()) as ThreadDataPlain<TM, CM>);
   }
 
   /**
@@ -1729,7 +1761,7 @@ export class Liveblocks {
   public async getComment(
     params: { roomId: string; threadId: string; commentId: string },
     options?: RequestOptions
-  ): Promise<CommentData> {
+  ): Promise<CommentData<CM>> {
     const { roomId, threadId, commentId } = params;
 
     const res = await this.#get(
@@ -1740,7 +1772,7 @@ export class Liveblocks {
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
-    return convertToCommentData((await res.json()) as CommentDataPlain);
+    return convertToCommentData<CM>((await res.json()) as CommentDataPlain<CM>);
   }
 
   /**
@@ -1751,17 +1783,14 @@ export class Liveblocks {
    * @param params.data.userId The user ID of the user who is set to create the comment.
    * @param params.data.createdAt (optional) The date the comment is set to be created.
    * @param params.data.body The body of the comment.
+   * @param params.data.metadata (optional) The metadata for the comment.
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The created comment.
    */
   public async createComment(
-    params: {
-      roomId: string;
-      threadId: string;
-      data: { userId: string; createdAt?: Date; body: CommentBody };
-    },
+    params: CreateCommentOptions<CM>,
     options?: RequestOptions
-  ): Promise<CommentData> {
+  ): Promise<CommentData<CM>> {
     const { roomId, threadId, data } = params;
 
     const res = await this.#post(
@@ -1775,7 +1804,7 @@ export class Liveblocks {
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
-    return convertToCommentData((await res.json()) as CommentDataPlain);
+    return convertToCommentData<CM>((await res.json()) as CommentDataPlain<CM>);
   }
 
   /**
@@ -1784,6 +1813,7 @@ export class Liveblocks {
    * @param params.threadId The thread ID to edit the comment in.
    * @param params.commentId The comment ID to edit.
    * @param params.data.body The body of the comment.
+   * @param params.data.metadata (optional) The metadata for the comment. Value must be a string, boolean or number. Use null to delete a key.
    * @param params.data.editedAt (optional) The date the comment was edited.
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The edited comment.
@@ -1793,22 +1823,30 @@ export class Liveblocks {
       roomId: string;
       threadId: string;
       commentId: string;
-      data: { body: CommentBody; editedAt?: Date };
+      data: {
+        body: CommentBody;
+        metadata?: Patchable<CM>;
+        editedAt?: Date;
+      };
     },
     options?: RequestOptions
-  ): Promise<CommentData> {
+  ): Promise<CommentData<CM>> {
     const { roomId, threadId, commentId, data } = params;
 
     const res = await this.#post(
       url`/v2/rooms/${roomId}/threads/${threadId}/comments/${commentId}`,
-      { ...data, editedAt: data.editedAt?.toISOString() },
+      {
+        body: data.body,
+        editedAt: data.editedAt?.toISOString(),
+        metadata: data.metadata,
+      },
       options
     );
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
 
-    return convertToCommentData((await res.json()) as CommentDataPlain);
+    return convertToCommentData<CM>((await res.json()) as CommentDataPlain<CM>);
   }
 
   /**
@@ -1835,6 +1873,31 @@ export class Liveblocks {
   }
 
   /**
+   * Gets an attachment's metadata and a presigned download URL.
+   *
+   * @param params.roomId The room ID the attachment belongs to.
+   * @param params.attachmentId The attachment ID (starts with "at_").
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns The attachment metadata including a presigned download URL.
+   */
+  public async getAttachment(
+    params: { roomId: string; attachmentId: string },
+    options?: RequestOptions
+  ): Promise<AttachmentWithUrl> {
+    const { roomId, attachmentId } = params;
+
+    const res = await this.#get(
+      url`/v2/rooms/${roomId}/attachments/${attachmentId}`,
+      undefined,
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+    return (await res.json()) as AttachmentWithUrl;
+  }
+
+  /**
    * Creates a new thread. The thread will be created with the specified comment as its first comment.
    * If the thread already exists, a `LiveblocksError` will be thrown with status code 409.
    * @param params.roomId The room ID to create the thread in.
@@ -1842,13 +1905,14 @@ export class Liveblocks {
    * @param params.thread.comment.userId The user ID of the user who created the comment.
    * @param params.thread.comment.createdAt (optional) The date the comment was created.
    * @param params.thread.comment.body The body of the comment.
+   * @param params.thread.comment.metadata (optional) The metadata for the comment.
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The created thread. The thread will be created with the specified comment as its first comment.
    */
   public async createThread(
-    params: CreateThreadOptions<M>,
+    params: CreateThreadOptions<TM, CM>,
     options?: RequestOptions
-  ): Promise<ThreadData<M>> {
+  ): Promise<ThreadData<TM, CM>> {
     const { roomId, data } = params;
 
     const res = await this.#post(
@@ -1867,7 +1931,7 @@ export class Liveblocks {
       throw await LiveblocksError.from(res);
     }
 
-    return convertToThreadData((await res.json()) as ThreadDataPlain<M>);
+    return convertToThreadData((await res.json()) as ThreadDataPlain<TM, CM>);
   }
 
   /**
@@ -1904,7 +1968,7 @@ export class Liveblocks {
   public async markThreadAsResolved(
     params: { roomId: string; threadId: string; data: { userId: string } },
     options?: RequestOptions
-  ): Promise<ThreadData<M>> {
+  ): Promise<ThreadData<TM, CM>> {
     const { roomId, threadId } = params;
 
     const res = await this.#post(
@@ -1917,7 +1981,7 @@ export class Liveblocks {
       throw await LiveblocksError.from(res);
     }
 
-    return convertToThreadData((await res.json()) as ThreadDataPlain<M>);
+    return convertToThreadData((await res.json()) as ThreadDataPlain<TM, CM>);
   }
 
   /**
@@ -1931,7 +1995,7 @@ export class Liveblocks {
   public async markThreadAsUnresolved(
     params: { roomId: string; threadId: string; data: { userId: string } },
     options?: RequestOptions
-  ): Promise<ThreadData<M>> {
+  ): Promise<ThreadData<TM, CM>> {
     const { roomId, threadId } = params;
 
     const res = await this.#post(
@@ -1944,7 +2008,7 @@ export class Liveblocks {
       throw await LiveblocksError.from(res);
     }
 
-    return convertToThreadData((await res.json()) as ThreadDataPlain<M>);
+    return convertToThreadData((await res.json()) as ThreadDataPlain<TM, CM>);
   }
 
   /**
@@ -2014,10 +2078,10 @@ export class Liveblocks {
     params: {
       roomId: string;
       threadId: string;
-      data: { metadata: Patchable<M>; userId: string; updatedAt?: Date };
+      data: { metadata: Patchable<TM>; userId: string; updatedAt?: Date };
     },
     options?: RequestOptions
-  ): Promise<M> {
+  ): Promise<TM> {
     const { roomId, threadId, data } = params;
 
     const res = await this.#post(
@@ -2033,7 +2097,45 @@ export class Liveblocks {
       throw await LiveblocksError.from(res);
     }
 
-    return (await res.json()) as M;
+    return (await res.json()) as TM;
+  }
+
+  /**
+   * Updates the metadata of the specified comment in a room.
+   * @param params.roomId The room ID to update the comment in.
+   * @param params.threadId The thread ID to update the comment in.
+   * @param params.commentId The comment ID to update.
+   * @param params.data.metadata The metadata for the comment. Value must be a string, boolean or number. Use null to delete a key.
+   * @param params.data.userId The user ID of the user who updated the comment.
+   * @param params.data.updatedAt (optional) The date the comment metadata is set to be updated.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns The updated comment metadata.
+   */
+  public async editCommentMetadata(
+    params: {
+      roomId: string;
+      threadId: string;
+      commentId: string;
+      data: { metadata: Patchable<CM>; userId: string; updatedAt?: Date };
+    },
+    options?: RequestOptions
+  ): Promise<CM> {
+    const { roomId, threadId, commentId, data } = params;
+
+    const res = await this.#post(
+      url`/v2/rooms/${roomId}/threads/${threadId}/comments/${commentId}/metadata`,
+      {
+        ...data,
+        updatedAt: data.updatedAt?.toISOString(),
+      },
+      options
+    );
+
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+
+    return (await res.json()) as CM;
   }
 
   /**
@@ -2146,14 +2248,14 @@ export class Liveblocks {
    * Returns the inbox notifications for a user.
    * @param params.userId The user ID to get the inbox notifications from.
    * @param params.query The query to filter inbox notifications by. It is based on our query language and can filter by unread.
-   * @param params.tenantId (optional) The tenant ID to get the inbox notifications for.
+   * @param params.organizationId (optional) The organization ID to get the inbox notifications for.
    * @param options.signal (optional) An abort signal to cancel the request.
    */
   public async getInboxNotifications(
     params: GetInboxNotificationsOptions,
     options?: RequestOptions
   ): Promise<Page<InboxNotificationData>> {
-    const { userId, tenantId, limit, startingAfter } = params;
+    const { userId, tenantId, organizationId, limit, startingAfter } = params;
 
     let query: string | undefined;
 
@@ -2163,14 +2265,21 @@ export class Liveblocks {
       query = objectToQuery(params.query);
     }
 
+    const queryParams: QueryParams = {
+      query,
+      limit,
+      startingAfter,
+    };
+
+    if (organizationId !== undefined) {
+      queryParams.organizationId = organizationId;
+    } else if (tenantId !== undefined) {
+      queryParams.organizationId = tenantId;
+    }
+
     const res = await this.#get(
       url`/v2/users/${userId}/inbox-notifications`,
-      {
-        query,
-        limit,
-        startingAfter,
-        tenantId,
-      },
+      queryParams,
       options
     );
     if (!res.ok) {
@@ -2192,7 +2301,7 @@ export class Liveblocks {
    *
    * @param criteria.userId The user ID to get the inbox notifications from.
    * @param criteria.query The query to filter inbox notifications by. It is based on our query language and can filter by unread.
-   * @param criteria.tenantId (optional) The tenant ID to get the inbox notifications for.
+   * @param criteria.organizationId (optional) The organization ID to get the inbox notifications for.
    * @param options.pageSize (optional) The page size to use for each request.
    * @param options.signal (optional) An abort signal to cancel the request.
    */
@@ -2223,24 +2332,38 @@ export class Liveblocks {
   /**
    * Returns all room subscription settings for a user.
    * @param params.userId The user ID to get the room subscription settings from.
-   * @param params.tenantId (optional) The tenant ID to get the room subscription settings for.
+   * @param params.organizationId (optional) The organization ID to get the room subscription settings for.
    * @param params.startingAfter (optional) The cursor to start the pagination from.
    * @param params.limit (optional) The number of items to return.
    * @param options.signal (optional) An abort signal to cancel the request.
    */
   public async getUserRoomSubscriptionSettings(
-    params: { userId: string; tenantId?: string } & PaginationOptions,
+    params: {
+      userId: string;
+      organizationId?: string;
+      /**
+       * @deprecated Use `organizationId` instead.
+       */
+      tenantId?: string;
+    } & PaginationOptions,
     options?: RequestOptions
   ): Promise<Page<UserRoomSubscriptionSettings>> {
-    const { userId, tenantId, startingAfter, limit } = params;
+    const { userId, tenantId, organizationId, startingAfter, limit } = params;
+
+    const queryParams: QueryParams = {
+      startingAfter,
+      limit,
+    };
+
+    if (organizationId !== undefined) {
+      queryParams.organizationId = organizationId;
+    } else if (tenantId !== undefined) {
+      queryParams.organizationId = tenantId;
+    }
 
     const res = await this.#get(
       url`/v2/users/${userId}/room-subscription-settings`,
-      {
-        tenantId,
-        startingAfter,
-        limit,
-      },
+      queryParams,
       options
     );
     if (!res.ok) {
@@ -2367,7 +2490,7 @@ export class Liveblocks {
    * @param params.subjectId The subject ID of the triggered inbox notification.
    * @param params.activityData The activity data of the triggered inbox notification.
    * @param params.roomId (optional) The room ID to trigger the inbox notification for.
-   * @param params.tenantId (optional) The tenant ID to trigger the inbox notification for.
+   * @param params.organizationId (optional) The organization ID to trigger the inbox notification for.
    * @param options.signal (optional) An abort signal to cancel the request.
    */
   public async triggerInboxNotification<K extends KDAD>(
@@ -2375,15 +2498,33 @@ export class Liveblocks {
       userId: string;
       kind: K;
       roomId?: string;
+      organizationId?: string;
+      /**
+       * @deprecated Use `organizationId` instead.
+       */
       tenantId?: string;
       subjectId: string;
       activityData: DAD[K];
     },
     options?: RequestOptions
   ): Promise<void> {
+    const { tenantId, organizationId, ...restParams } = params;
+    const body: typeof restParams & {
+      organizationId?: string;
+      tenantId?: string;
+    } = {
+      ...restParams,
+    };
+
+    if (organizationId !== undefined) {
+      body.organizationId = organizationId;
+    } else if (tenantId !== undefined) {
+      body.organizationId = tenantId;
+    }
+
     const res = await this.#post(
       url`/v2/inbox-notifications/trigger`,
-      params,
+      body,
       options
     );
 
@@ -2420,18 +2561,32 @@ export class Liveblocks {
   /**
    * Deletes all inbox notifications for a user.
    * @param params.userId The user ID for which to delete all the inbox notifications.
-   * @param params.tenantId (optional) The tenant ID to delete the inbox notifications for.
+   * @param params.organizationId (optional) The organization ID to delete the inbox notifications for.
    * @param options.signal (optional) An abort signal to cancel the request.
    */
   public async deleteAllInboxNotifications(
-    params: { userId: string; tenantId?: string },
+    params: {
+      userId: string;
+      organizationId?: string;
+      /**
+       * @deprecated Use `organizationId` instead.
+       */
+      tenantId?: string;
+    },
     options?: RequestOptions
   ): Promise<void> {
-    const { userId, tenantId } = params;
+    const { userId, tenantId, organizationId } = params;
+
+    const queryParams: QueryParams = {};
+    if (organizationId !== undefined) {
+      queryParams.organizationId = organizationId;
+    } else if (tenantId !== undefined) {
+      queryParams.organizationId = tenantId;
+    }
 
     const res = await this.#delete(
       url`/v2/users/${userId}/inbox-notifications`,
-      { tenantId },
+      queryParams,
       options
     );
     if (!res.ok) {
@@ -2517,7 +2672,7 @@ export class Liveblocks {
    * Create a group
    * @param params.groupId The ID of the group to create.
    * @param params.memberIds The IDs of the members to add to the group.
-   * @param params.tenantId (optional) The tenant ID to create the group for.
+   * @param params.organizationId (optional) The organization ID to create the group for.
    * @param params.scopes (optional) The scopes to grant to the group. The default is `{ mention: true }`.
    * @param options.signal (optional) An abort signal to cancel the request.
    */
@@ -2525,22 +2680,34 @@ export class Liveblocks {
     params: {
       groupId: string;
       memberIds?: string[];
+      organizationId?: string;
+      /**
+       * @deprecated Use `organizationId` instead.
+       */
       tenantId?: string;
       scopes?: GroupScopes;
     },
     options?: RequestOptions
   ): Promise<GroupData> {
-    const res = await this.#post(
-      url`/v2/groups`,
-      {
-        ...params,
+    const { tenantId, organizationId, ...restParams } = params;
+    const body: typeof restParams & {
+      id: string;
+      organizationId?: string;
+      tenantId?: string;
+    } = {
+      ...restParams,
+      // The REST API uses `id` since a group is a resource,
+      // but we use `groupId` here for consistency with the other methods.
+      id: params.groupId,
+    };
 
-        // The REST API uses `id` since a group is a resource,
-        // but we use `groupId` here for consistency with the other methods.
-        id: params.groupId,
-      },
-      options
-    );
+    if (organizationId !== undefined) {
+      body.organizationId = organizationId;
+    } else if (tenantId !== undefined) {
+      body.organizationId = tenantId;
+    }
+
+    const res = await this.#post(url`/v2/groups`, body, options);
 
     if (!res.ok) {
       throw await LiveblocksError.from(res);
@@ -2772,7 +2939,7 @@ export class Liveblocks {
     // there hasn't been an update to the buffered ops for a while. This
     // behavior is slightly different from the browser client, which will emit
     // ops as soon as they are available (= throttling)
-    let opsBuffer: Op[] = [];
+    let opsBuffer: ClientWireOp[] = [];
     let outstandingFlush$: Promise<void> | undefined = undefined;
     let lastFlush = performance.now();
 
@@ -2821,7 +2988,7 @@ export class Liveblocks {
       const pool = createManagedPool(roomId, {
         getCurrentConnectionId: () => actor,
         onDispatch: (
-          ops: Op[],
+          ops: ClientWireOp[],
           _reverse: Op[],
           _storageUpdates: Map<string, StorageUpdate>
         ) => {
@@ -3198,6 +3365,247 @@ export class Liveblocks {
       ...page,
       data: page.data.map(inflateWebKnowledgeSourceLink),
     };
+  }
+
+  /* -------------------------------------------------------------------------------------------------
+   * Feeds
+   * -----------------------------------------------------------------------------------------------*/
+
+  /**
+   * Returns a list of feeds in a room.
+   * @param params.roomId The room ID to get the feeds from.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns A list of feeds.
+   */
+  public async getFeeds<FM extends Json = DFM>(
+    params: { roomId: string },
+    options?: RequestOptions
+  ): Promise<{ data: Feed<FM>[] }> {
+    const { roomId } = params;
+    const res = await this.#get(
+      url`/v2/rooms/${roomId}/feeds`,
+      undefined,
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+    return (await res.json()) as { data: Feed<FM>[] };
+  }
+
+  /**
+   * Creates a new feed in a room.
+   * @param params.roomId The room ID to create the feed in.
+   * @param params.feedId The feed ID.
+   * @param params.metadata (optional) The metadata for the feed.
+   * @param params.createdAt (optional) Creation time in ms. Sent to the API as `timestamp`. If not provided, the server uses the current time.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns The created feed.
+   */
+  public async createFeed<FM extends Json = DFM>(
+    params: { roomId: string } & CreateFeedOptions,
+    options?: RequestOptions
+  ): Promise<Feed<FM>> {
+    const { roomId, feedId, metadata, createdAt } = params;
+    const res = await this.#post(
+      url`/v2/rooms/${roomId}/feeds`,
+      {
+        feedId,
+        ...(metadata !== undefined ? { metadata } : {}),
+        ...(createdAt !== undefined ? { timestamp: createdAt } : {}),
+      },
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+    return (await res.json()) as Feed<FM>;
+  }
+
+  /**
+   * Returns a feed with the given id.
+   * @param params.roomId The room ID to get the feed from.
+   * @param params.feedId The feed ID.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns The feed.
+   */
+  public async getFeed<FM extends Json = DFM>(
+    params: { roomId: string; feedId: string },
+    options?: RequestOptions
+  ): Promise<Feed<FM>> {
+    const { roomId, feedId } = params;
+    const res = await this.#get(
+      url`/v2/rooms/${roomId}/feeds/${feedId}`,
+      undefined,
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+    return (await res.json()) as Feed<FM>;
+  }
+
+  /**
+   * Updates the metadata of a feed.
+   * @param params.roomId The room ID to update the feed in.
+   * @param params.feedId The feed ID to update.
+   * @param params.metadata The metadata for the feed.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns The updated feed.
+   */
+  public async updateFeed<FM extends Json = DFM>(
+    params: {
+      roomId: string;
+      feedId: string;
+    } & UpdateFeedOptions,
+    options?: RequestOptions
+  ): Promise<Feed<FM>> {
+    const { roomId, feedId, metadata } = params;
+    const res = await this.#patch(
+      url`/v2/rooms/${roomId}/feeds/${feedId}`,
+      { metadata },
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+    return (await res.json()) as Feed<FM>;
+  }
+
+  /**
+   * Deletes a feed.
+   * @param params.roomId The room ID to delete the feed from.
+   * @param params.feedId The feed ID to delete.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  public async deleteFeed(
+    params: { roomId: string; feedId: string },
+    options?: RequestOptions
+  ): Promise<void> {
+    const { roomId, feedId } = params;
+    const res = await this.#delete(
+      url`/v2/rooms/${roomId}/feeds/${feedId}`,
+      undefined,
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+  }
+
+  /**
+   * Returns a list of messages in a feed.
+   * @param params.roomId The room ID to get the feed messages from.
+   * @param params.feedId The feed ID to get the messages from.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns A list of feed messages.
+   */
+  public async getFeedMessages<FMD extends Json = DFMD>(
+    params: { roomId: string; feedId: string },
+    options?: RequestOptions
+  ): Promise<{ data: FeedMessage<FMD>[] }> {
+    const { roomId, feedId } = params;
+    const res = await this.#get(
+      url`/v2/rooms/${roomId}/feeds/${feedId}/messages`,
+      undefined,
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+    return (await res.json()) as { data: FeedMessage<FMD>[] };
+  }
+
+  /**
+   * Creates a new message in a feed.
+   * @param params.roomId The room ID to create the feed message in.
+   * @param params.feedId The feed ID to create the message in.
+   * @param params.id (optional) The message ID. If not provided, one will be generated.
+   * @param params.createdAt (optional) Creation time in ms. Sent to the API as `timestamp`. If not provided, the server uses the current time.
+   * @param params.data The message data.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns The created feed message.
+   */
+  public async createFeedMessage<FMD extends Json = DFMD>(
+    params: {
+      roomId: string;
+      feedId: string;
+    } & CreateFeedMessageOptions<FMD>,
+    options?: RequestOptions
+  ): Promise<FeedMessage<FMD>> {
+    const { roomId, feedId, id, createdAt, data } = params;
+    const res = await this.#post(
+      url`/v2/rooms/${roomId}/feeds/${feedId}/messages`,
+      {
+        data,
+        ...(id !== undefined ? { id } : {}),
+        ...(createdAt !== undefined ? { timestamp: createdAt } : {}),
+      },
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+    return (await res.json()) as FeedMessage<FMD>;
+  }
+
+  /**
+   * Updates a feed message.
+   * @param params.roomId The room ID to update the feed message in.
+   * @param params.feedId The feed ID to update the message in.
+   * @param params.messageId The message ID to update.
+   * @param params.data The message data.
+   * @param params.updatedAt (optional) Update time in ms. Sent to the API as `timestamp`. If omitted, the server uses the current time.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns The updated feed message.
+   */
+  public async updateFeedMessage<FMD extends Json = DFMD>(
+    params: {
+      roomId: string;
+      feedId: string;
+      messageId: string;
+    } & UpdateFeedMessageOptions<FMD>,
+    options?: RequestOptions
+  ): Promise<FeedMessage<FMD>> {
+    const { roomId, feedId, messageId, data, updatedAt } = params;
+    const res = await this.#patch(
+      url`/v2/rooms/${roomId}/feeds/${feedId}/messages/${messageId}`,
+      {
+        data,
+        ...(updatedAt !== undefined ? { timestamp: updatedAt } : {}),
+      },
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+    return (await res.json()) as FeedMessage<FMD>;
+  }
+
+  /**
+   * Deletes a feed message.
+   * @param params.roomId The room ID to delete the feed message from.
+   * @param params.feedId The feed ID to delete the message from.
+   * @param params.messageId The message ID to delete.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  public async deleteFeedMessage(
+    params: {
+      roomId: string;
+      feedId: string;
+      messageId: string;
+    },
+    options?: RequestOptions
+  ): Promise<void> {
+    const { roomId, feedId, messageId } = params;
+    const res = await this.#delete(
+      url`/v2/rooms/${roomId}/feeds/${feedId}/messages/${messageId}`,
+      undefined,
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
   }
 }
 

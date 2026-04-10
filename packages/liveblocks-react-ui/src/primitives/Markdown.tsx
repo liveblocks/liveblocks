@@ -1,11 +1,11 @@
 import { assertNever, isUrl, type Relax, sanitizeUrl } from "@liveblocks/core";
-import { Slot } from "@radix-ui/react-slot";
 import {
   Lexer,
   type MarkedToken,
   type Token as DefaultToken,
   type Tokens,
 } from "marked";
+import { Slot as SlotPrimitive } from "radix-ui";
 import {
   type ComponentType,
   forwardRef,
@@ -437,7 +437,7 @@ const defaultComponents: MarkdownComponents = {
 
 export const Markdown = forwardRef<HTMLDivElement, MarkdownProps>(
   ({ content, partial, components, asChild, ...props }, forwardedRef) => {
-    const Component = asChild ? Slot : "div";
+    const Component = asChild ? SlotPrimitive.Slot : "div";
     const tokens = useMemo(() => {
       if (!content) {
         return [];

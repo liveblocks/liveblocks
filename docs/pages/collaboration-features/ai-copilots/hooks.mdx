@@ -1,0 +1,364 @@
+---
+meta:
+  title: "Hooks"
+  parentTitle: "AI Copilots"
+  description: "React hooks for building custom AI interfaces"
+---
+
+The AI Copilots React hooks allow you to fetch, create, and modify AI chats,
+enabling you to build custom AI interfaces, even beyond our
+[default components](/docs/ready-made-features/ai-copilots/default-components).
+Chats are stored permanently and the infrastructure is handled for you. All
+hooks work optimistically, meaning they update immediately, before the server
+has synched.
+
+## List a user’s chats
+
+Each [authenticated user](/docs/authentication) has their own private set of
+chats, and the [`useAiChats`](/docs/api-reference/liveblocks-react#useAiChats)
+hook fetches all AI chats created by the current user. It’s easy to
+[create a list of chats](/docs/api-reference/liveblocks-react#List-the-user's-chats-and-switch-between-them),
+with links or buttons that take you to each.
+
+```tsx
+import { useAiChats } from "@liveblocks/react/suspense";
+
+function ListChats() {
+  // +++
+  const { chats } = useAiChats();
+  // +++
+
+  return (
+    <nav>
+      // +++
+      {chats.map((chat) => (
+        <a key={chat.id} href={`/chats/${chat.id}`}>
+          {chat.title || "Untitled"}
+        </a>
+      ))}
+      // +++
+    </nav>
+  );
+}
+```
+
+Chats are
+[paginated](/docs/api-reference/liveblocks-react#useAiChats-pagination),
+returning 50 at a time, and you can
+[filter chats by metadata](/docs/api-reference/liveblocks-react#useAiChats-query).
+There are also ways to
+[handle errors](/docs/api-reference/liveblocks-react#useAiChats-error-handling).
+
+## Create & delete chats
+
+The [`useCreateAiChat`](/docs/api-reference/liveblocks-react#useCreateAiChat)
+and [`useDeleteAiChat`](/docs/api-reference/liveblocks-react#useDeleteAiChat)
+hooks allow you to create and delete AI chats. When used in combination with the
+[`useAiChats`](/docs/api-reference/liveblocks-react#useAiChats) hook, you can
+add “New Chat” and “Delete Chat” buttons to your listing.
+
+```tsx
+import {
+  useAiChats,
+  useCreateAiChat,
+  useDeleteAiChat,
+} from "@liveblocks/react/suspense";
+
+function ListChats() {
+  const { chats } = useAiChats();
+  // +++
+  const createAiChat = useCreateAiChat();
+  const deleteAiChat = useDeleteAiChat();
+  // +++
+
+  return (
+    <nav>
+      // +++
+      <button onClick={() => createAiChat("my-ai-chat")}>💬 New Chat</button>
+      // +++
+      {chats.map((chat) => (
+        <a key={chat.id} href={`/chats/${chat.id}`}>
+          {chat.title || "Untitled"}
+          // +++
+          <button onClick={() => deleteAiChat(chat.id)}>❌ Delete chat</button>
+          // +++
+        </a>
+      ))}
+    </nav>
+  );
+}
+```
+
+When an AI chat is created, a title is automatically generated from the first
+messages. You can optionally set this title, and add custom metadata to the
+chat.
+
+```tsx
+createAiChat({
+  id: "my-ai-chat",
+  // +++
+  title: "My AI Chat",
+  metadata: {
+    color: "red",
+    tags: ["product", "engineering"],
+  },
+  // +++
+});
+```
+
+{/* prettier-ignore */}
+{/* TODO add back later when we enable it
+
+## List a chat’s messages
+
+The
+[`useAiChatMessages`](/docs/api-reference/liveblocks-react#useAiChatMessages)
+hook allows you to fetch all messages in a specific chat. Use this to display
+the main content of a chat. User and assistant messages can be rendered
+differently, and below we’re returning different UI for each. Other types of
+messages can be rendered separately too, for example tool calls, knowledge
+calls, custom components.
+
+```tsx
+import { useAiChatMessages } from "@liveblocks/react/suspense";
+
+function ChatMessages({ chatId }: { chatId: string }) {
+  // +++
+  const { messages } = useAiChatMessages(chatId);
+  // +++
+
+  return (
+    <div>
+      {messages.map((message) => {
+        // +++
+        if (message.role === "user") {
+          // +++
+          return (
+            // +++
+            <div key={message.id}>
+              {message.content.map((part) => (
+                <p>👤 You: {part.text}</p>
+              ))}
+            </div>
+            // +++
+          );
+        }
+
+        return (
+          // +++
+          <div key={message.id}>
+            {(message.contentSoFar ?? message.content).map((part) => (
+              <p>🤖 Assistant: {part.text}</p>
+            ))}
+          </div>
+          // +++
+        );
+      })}
+    </div>
+  );
+}
+```
+
+Note that if you’re using our default
+[`AiChat`](/docs/api-reference/liveblocks-react-ui#AiChat) component, you don’t
+need to `useAiChatMessages`, as the messages are fetched for you. This hook is
+only required for building custom chat interfaces.
+
+\*/}
+
+## Send messages to a chat
+
+The [`useSendAiMessage`](/docs/api-reference/liveblocks-react#useSendAiMessage)
+hook allows you to send messages directly to a chat, as if from a user. This
+works really well in combination with buttons in your UI, for example you may
+have a “Explain with AI” button.
+
+```tsx
+import { useSendAiMessage } from "@liveblocks/react/suspense";
+
+function ExplainWithAi() {
+  // +++
+  const sendAiMessage = useSendAiMessage("my-chat-id", {
+    copilotId: "co_h7GBa3...",
+  });
+  // +++
+
+  return (
+    // +++
+    <button onClick={() => sendAiMessage("Explain how this page works")}>
+      Explain with AI
+    </button>
+    // +++
+  );
+}
+```
+
+Additionally, when using
+[`AiChat`](/docs/api-reference/liveblocks-react-ui#AiChat) you can use the hook
+to display suggestion buttons in the
+[empty state](/docs/api-reference/liveblocks-react-ui#AiChat-placeholder).
+
+```tsx
+import { useSendAiMessage } from "@liveblocks/react/suspense";
+import { AiChat } from "@liveblocks/react-ui";
+
+function Chat() {
+  // +++
+  const sendAiMessage = useSendAiMessage("my-chat-id", {
+    copilotId: "co_h7GBa3...",
+  });
+  // +++
+
+  return (
+    <AiChat
+      chatId="my-chat-id"
+      copilotId="co_h7GBa3..."
+      components={{
+        Empty: (
+          <div>
+            <div>How can I help you?</div>
+            // +++
+            <button onClick={() => sendAiMessage("What's new?")}>
+              Update me
+            </button>
+            <button onClick={() => sendAiMessage("Create a new document")}>
+              Draft a document
+            </button>
+            // +++
+          </div>
+        ),
+      }}
+    />
+  );
+}
+```
+
+## Get a chat’s information
+
+The [`useAiChat`](/docs/api-reference/liveblocks-react#useAiChat) hook allows
+you to fetch a
+[chat’s title](/docs/api-reference/liveblocks-react#Displaying-a-default-title)
+and
+[custom metadata](/docs/api-reference/liveblocks-react#Create-a-chat-with-a-custom-title-and-metadata).
+
+```tsx
+import { useAiChat } from "@liveblocks/react/suspense";
+
+function ChatTitle({ chatId }: { chatId: string }) {
+  // +++
+  const { chat } = useAiChat(chatId);
+  // +++
+
+  // +++
+  return <h1>{chat.title || "Untitled chat"}</h1>;
+  // +++
+}
+```
+
+## Get a chat’s status
+
+The [`useAiChatStatus`](/docs/api-reference/liveblocks-react#useAiChatStatus)
+hook allows you to fetch the status of an AI chat, indicating whether it’s idle
+or currently generating content. This is helpful for displaying a loading state
+or freezing part of your app while content is generating.
+
+```tsx
+import { useAiChatStatus } from "@liveblocks/react/suspense";
+
+function ChatStatus({ chatId }: { chatId: string }) {
+  // +++
+  const { status } = useAiChatStatus(chatId);
+  // +++
+
+  // +++
+  return status === "idle" ? <div>🟢 Ready</div> : <div>🟡 Generating…</div>;
+  // +++
+}
+```
+
+## Hook types [#hook-types]
+
+There are two different ways to use many Liveblocks hooks; with
+[React Suspense](https://react.dev/reference/react/Suspense), and without it. We
+recommend using the Suspense versions, as they often result in simpler code.
+
+### Suspense hooks [#suspense-hooks]
+
+Using Suspense hooks means that any data retrieved, for example `chats` from
+`useAiChats`, will never be `undefined`, and your component will never see an
+error.
+
+```tsx
+import { useAiChats } from "@liveblocks/react/suspense";
+
+// Suspense: `chats` is always defined
+function MyAiChats() {
+  const { chats } = useAiChats();
+
+  // [{ id: "th_sf8s6sh...", title: "...", ... }, ...]
+  console.log(chats);
+}
+```
+
+To catch errors and display a loading screen, you can use
+[`ErrorBoundary`](https://www.npmjs.com/package/react-error-boundary) and
+[`ClientSideSuspense`](/docs/api-reference/liveblocks-react#suspense-avoid-ssr).
+
+```tsx highlight="7-11"
+import { ClientSideSuspense } from "@liveblocks/react/suspense";
+import { ErrorBoundary } from "react-error-boundary";
+
+// Handle errors and loading state in the component above
+function Component() {
+  return (
+    <ErrorBoundary fallback={<div>Error</div>}>
+      <ClientSideSuspense fallback={<div>Loading...</div>}>
+        <MyAiChats />
+      </ClientSideSuspense>
+    </ErrorBoundary>
+  );
+}
+```
+
+To use Suspense, make sure you’re exporting your hooks from
+`@liveblocks/react/suspense`.
+
+```tsx
+// Suspense version of hooks
+import { useAiChats, useAiChatMessages } from "@liveblocks/react/suspense";
+//                                                               ^^^^^^^^
+```
+
+### Regular hooks [#regular-hooks]
+
+The regular versions of Liveblocks hooks require you to check for `error` and
+`isLoading` properties. You can then handle these states in the same component.
+
+```tsx
+import { useAiChats } from "@liveblocks/react";
+
+// Handle errors and loading state in the same component
+function MyAiChats() {
+  const { chats, error, isLoading } = useAiChats();
+
+  if (error) {
+    return <div>Error</div>;
+  }
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  // Non-Suspense: `chats` is only defined AFTER the `if` checks
+  // [{ id: "th_sf8s6sh...", title: "...", ... }, ...]
+  console.log(chats);
+}
+```
+
+To use the regular hooks, make sure you’re exporting from `@liveblocks/react`.
+
+```tsx
+// Regular version of hooks
+import { useAiChats, useAiChatMessages } from "@liveblocks/react";
+//                                             ^^^^^^^^^^^^^^^^^
+```

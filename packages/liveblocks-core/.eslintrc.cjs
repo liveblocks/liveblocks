@@ -31,6 +31,7 @@ module.exports = {
     // Overrides from default rule config used in all other projects!
     // ----------------------------------------------------------------------
     "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/no-namespace": "off",
     "@typescript-eslint/unbound-method": "off",
 
     // ----------------------------------------------------------------------

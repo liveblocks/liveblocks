@@ -1,7 +1,7 @@
 "use client";
 
 import { LiveblocksProvider } from "@liveblocks/react";
-import { PropsWithChildren } from "react";
+import { PropsWithChildren, Suspense } from "react";
 
 export function Providers({ children }: PropsWithChildren) {
   return (
@@ -35,7 +35,7 @@ export function Providers({ children }: PropsWithChildren) {
         return userIds;
       }}
     >
-      {children}
+      <Suspense>{children}</Suspense>
     </LiveblocksProvider>
   );
 }

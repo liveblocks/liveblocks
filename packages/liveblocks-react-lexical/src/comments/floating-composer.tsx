@@ -11,7 +11,7 @@ import {
 } from "@floating-ui/react-dom";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import type { BaseMetadata } from "@liveblocks/client";
-import type { DM } from "@liveblocks/core";
+import type { DCM, DTM } from "@liveblocks/core";
 import { useCreateThread } from "@liveblocks/react";
 import { useLayoutEffect } from "@liveblocks/react/_private";
 import type {
@@ -19,6 +19,7 @@ import type {
   ComposerSubmitComment,
 } from "@liveblocks/react-ui";
 import { Composer as DefaultComposer } from "@liveblocks/react-ui";
+import { Portal, useStableComponent } from "@liveblocks/react-ui/_private";
 import type { LexicalCommand } from "lexical";
 import {
   $getSelection,
@@ -29,14 +30,26 @@ import {
 } from "lexical";
 import type { ComponentType, FormEvent, KeyboardEvent, ReactNode } from "react";
 import { forwardRef, useCallback, useEffect, useState } from "react";
-import { createPortal } from "react-dom";
 
 import { createDOMRange } from "../create-dom-range";
 import { createRectsFromDOMRange } from "../create-rects-from-dom-range";
 import $wrapSelectionInThreadMarkNode from "./wrap-selection-in-thread-mark-node";
 
+type ExcludeProps<T, K extends Record<string, unknown>> = Omit<
+  Exclude<T, T & K>,
+  keyof K
+>;
+
+type ComposerPropsCreateThread<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+> = ExcludeProps<
+  ComposerProps<TM, CM>,
+  { threadId: string; commentId: string }
+>;
+
 type FloatingComposerComponents = {
-  Composer: ComponentType<Omit<ComposerProps, "threadId" | "commentId">>;
+  Composer: ComponentType<ComposerPropsCreateThread<DTM, DCM>>;
 };
 
 /**
@@ -70,10 +83,10 @@ export const ATTACH_THREAD_COMMAND: LexicalCommand<string> = createCommand(
   "ATTACH_THREAD_COMMAND"
 );
 
-export type FloatingComposerProps<M extends BaseMetadata = DM> = Omit<
-  ComposerProps<M>,
-  "threadId" | "commentId"
-> & {
+export type FloatingComposerProps<
+  TM extends BaseMetadata = DTM,
+  CM extends BaseMetadata = DCM,
+> = ComposerPropsCreateThread<TM, CM> & {
   /**
    * Override the component's components.
    */
@@ -151,7 +164,7 @@ const FloatingComposerImpl = forwardRef<
     components,
     ...composerProps
   } = props;
-  const Composer = components?.Composer ?? DefaultComposer;
+  const Composer = useStableComponent(components?.Composer, DefaultComposer);
   const [editor] = useLexicalComposerContext();
   const createThread = useCreateThread();
 
@@ -243,9 +256,9 @@ const FloatingComposerImpl = forwardRef<
 
   return (
     <>
-      <ActiveSelectionPortal range={range} container={document.body} />
+      <ActiveSelectionPortal range={range} />
 
-      <FloatingComposerPortal range={range} container={document.body}>
+      <FloatingComposerPortal range={range}>
         <Composer
           autoFocus
           {...composerProps}
@@ -258,13 +271,7 @@ const FloatingComposerImpl = forwardRef<
   );
 });
 
-function ActiveSelectionPortal({
-  range,
-  container,
-}: {
-  range: Range;
-  container: HTMLElement;
-}) {
+function ActiveSelectionPortal({ range }: { range: Range }) {
   const {
     refs: { setReference, setFloating },
     strategy,
@@ -288,8 +295,8 @@ function ActiveSelectionPortal({
   const [editor] = useLexicalComposerContext();
   const rects = createRectsFromDOMRange(editor, range);
 
-  return createPortal(
-    <>
+  return (
+    <Portal asChild>
       <span
         ref={setFloating}
         style={{
@@ -320,19 +327,16 @@ function ActiveSelectionPortal({
           />
         ))}
       </span>
-    </>,
-    container
+    </Portal>
   );
 }
 
 export const FLOATING_COMPOSER_COLLISION_PADDING = 10;
 
 function FloatingComposerPortal({
-  container,
   range,
   children,
 }: {
-  container: HTMLElement;
   range: Range;
   children: ReactNode;
 }) {
@@ -366,20 +370,21 @@ function FloatingComposerPortal({
     setReference(range);
   }, [range, setReference]);
 
-  return createPortal(
-    <div
-      ref={setFloating}
-      style={{
-        position: strategy,
-        top: 0,
-        left: 0,
-        transform: `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`,
-        minWidth: "max-content",
-      }}
-      className="lb-root lb-portal lb-elevation lb-lexical-floating lb-lexical-floating-composer"
-    >
-      {children}
-    </div>,
-    container
+  return (
+    <Portal asChild>
+      <div
+        ref={setFloating}
+        style={{
+          position: strategy,
+          top: 0,
+          left: 0,
+          transform: `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`,
+          minWidth: "max-content",
+        }}
+        className="lb-root lb-portal lb-elevation lb-lexical-floating lb-lexical-floating-composer"
+      >
+        {children}
+      </div>
+    </Portal>
   );
 }

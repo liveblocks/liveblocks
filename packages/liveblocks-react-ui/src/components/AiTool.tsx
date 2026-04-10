@@ -36,7 +36,7 @@ export interface AiToolProps
    * - `"showTodo"` → "Show todo"
    * - `"get_weather"` → "Get weather"
    */
-  title?: string;
+  title?: ReactNode;
 
   /**
    * An optional icon displayed next to the title.

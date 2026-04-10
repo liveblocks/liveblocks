@@ -47,6 +47,33 @@ When running scripts, use `npx turbo`, not `npm`.
 Run e2e tests headlessly using Playwright:  
 npx turbo build && env HEADLESS=1 playwright test --retries=5 --
 
+# Examples
+
+Examples live in the `examples/` directory but are NOT part of the monorepo
+workspace. They depend on the latest _published_ version of Liveblocks packages,
+not on the local source. You cannot test examples against local changes. They
+need to be updated separately when a new version is published.
+
 # Documentation
 
 All documentation lives in the `docs/` directory, as Markdown files.
+
+When adding a new page (e.g. an upgrading guide), the `.mdx` file alone is not
+enough. You must also register it in `docs/routes.json` or it won't be
+routable.
+
+# Changelog
+
+CHANGELOG.md entries should use public-facing package names as subheadings (e.g.
+``### `@liveblocks/client` `` or ``### `@liveblocks/react` ``), not generic
+categories like "Breaking changes" or "New features". Avoid referencing
+`@liveblocks/core` — it is not a public-facing package.
+
+# Packages maintained elsewhere
+
+The following packages are primarily maintained from our backend monorepo for
+ease of changes. If you have access to the Liveblocks backend repo, avoid making
+changes to them directly here — prefer editing the source in the backend repo.
+
+- `packages/liveblocks-server`
+- `tools/liveblocks-cli`

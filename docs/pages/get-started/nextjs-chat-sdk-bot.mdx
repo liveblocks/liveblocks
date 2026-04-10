@@ -1,0 +1,249 @@
+---
+meta:
+  title: "Get started with a Chat SDK bot using Liveblocks and Next.js"
+  parentTitle: "Quickstart"
+  description:
+    "Learn how to build a bot on Liveblocks comment threads using the Chat SDK"
+---
+
+Liveblocks is a realtime collaboration infrastructure for building performant
+collaborative experiences. Follow the following steps to start building a bot
+that reads and responds to Liveblocks comment threads using the
+[Chat SDK](https://chat-sdk.dev) and the
+[`@liveblocks/chat-sdk-adapter`](/docs/api-reference/liveblocks-chat-sdk-adapter)
+in your Next.js `/app` directory application.
+
+## Quickstart
+
+<Steps>
+  <Step>
+    <StepTitle>Install Liveblocks and Chat SDK</StepTitle>
+    <StepContent>
+
+      Install the Liveblocks Chat SDK adapter, the Chat SDK, and a state adapter.
+
+      ```bash trackEvent="install_liveblocks"
+      npm install @liveblocks/chat-sdk-adapter @liveblocks/node chat @chat-adapter/state-memory
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Add your environment variables</StepTitle>
+    <StepContent>
+
+      Create a new `.env.local` file and add your Liveblocks secret key and webhook
+      secret from the [dashboard](/dashboard/apikeys).
+
+      ```env file=".env.local"
+      LIVEBLOCKS_SECRET_KEY="{{SECRET_KEY}}"
+      LIVEBLOCKS_WEBHOOK_SECRET="whsec_..."
+      ```
+
+      You'll create the webhook and get the secret in the final step.
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Create a user database</StepTitle>
+    <StepContent>
+
+      Create a file to store your bot's user ID and a function to resolve users.
+      The `resolveUsers` function converts user IDs from mentions into display names.
+
+      ```tsx file="app/database.ts"
+      export const BOT_USER_ID = "__bot__";
+      export const BOT_USER_NAME = "My Bot";
+
+      // A mock database with example users
+      const USER_INFO = [
+        {
+          id: "user-1",
+          info: {
+            name: "Charlie Layne",
+          },
+        },
+        {
+          id: "user-2",
+          info: {
+            name: "Mislav Abha",
+          },
+        },
+        {
+          id: BOT_USER_ID,
+          info: {
+            name: BOT_USER_NAME,
+          },
+        },
+      ];
+
+      export function getUser(id: string) {
+        return USER_INFO.find((u) => u.id === id) || undefined;
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Create the bot instance</StepTitle>
+    <StepContent>
+
+      Create a bot instance using the Chat SDK with the Liveblocks adapter.
+      The adapter connects your bot to Liveblocks comment threads.
+
+      ```tsx file="app/bot.ts"
+      import { Chat } from "chat";
+      import {
+        createLiveblocksAdapter,
+        LiveblocksAdapter,
+      } from "@liveblocks/chat-sdk-adapter";
+      import { createMemoryState } from "@chat-adapter/state-memory";
+      import { BOT_USER_ID, BOT_USER_NAME, getUser } from "./database";
+
+      export const bot = new Chat<{ liveblocks: LiveblocksAdapter }>({
+        userName: BOT_USER_NAME,
+        adapters: {
+          liveblocks: createLiveblocksAdapter({
+            apiKey: process.env.LIVEBLOCKS_SECRET_KEY!,
+            webhookSecret: process.env.LIVEBLOCKS_WEBHOOK_SECRET!,
+            botUserId: BOT_USER_ID,
+            botUserName: BOT_USER_NAME,
+            resolveUsers: ({ userIds }) => {
+              return userIds.map((id) => getUser(id)?.info);
+            },
+          }),
+        },
+        state: createMemoryState(),
+      });
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Handle mentions and reactions</StepTitle>
+    <StepContent>
+
+      Add event handlers to respond when users mention the bot or react to messages.
+      Add these handlers to your `app/bot.ts` file after the bot instance.
+
+      ```tsx file="app/bot.ts"
+      // Handle @-mentions of the bot
+      bot.onNewMention(async (thread, message) => {
+        // Add a reaction to acknowledge the message
+        await thread.adapter.addReaction(thread.id, message.id, "👀");
+
+        // Reply in the thread
+        await thread.post(`Hello ${message.author.userName}! How can I help?`);
+      });
+
+      // Handle reactions to messages
+      bot.onReaction(async (event) => {
+        if (!event.added) return;
+
+        await event.adapter.postMessage(
+          event.threadId,
+          `${event.user.userName} reacted with "${event.emoji.name}"`
+        );
+      });
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Create the webhook endpoint</StepTitle>
+    <StepContent>
+
+      Create an API route to receive Liveblocks webhooks. The bot processes
+      incoming comments and reactions through this endpoint.
+
+      ```tsx file="app/api/webhooks/liveblocks/route.ts"
+      import { bot } from "@/app/bot";
+
+      export async function POST(request: Request) {
+        return bot.webhooks.liveblocks(request, {
+          waitUntil: (p) => void p,
+        });
+      }
+      ```
+
+      For production deployments on Vercel, use `waitUntil` from `@vercel/functions`
+      for background processing:
+
+      ```tsx file="app/api/webhooks/liveblocks/route.ts"
+      import { bot } from "@/app/bot";
+      import { waitUntil } from "@vercel/functions";
+
+      export async function POST(request: Request) {
+        return bot.webhooks.liveblocks(request, { waitUntil });
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step lastStep>
+    <StepTitle>Set up Liveblocks webhooks</StepTitle>
+    <StepContent>
+
+      The final step is to configure Liveblocks webhooks to send events to your bot.
+
+      1. Follow the guide on [testing webhooks locally](/docs/guides/how-to-test-webhooks-on-localhost)
+      2. When creating the webhook endpoint in the [dashboard](/dashboard), enable these events:
+         - `commentCreated`
+         - `commentReactionAdded`
+         - `commentReactionRemoved`
+      3. Copy your **webhook secret** (`whsec_...`) and add it to `.env.local`
+
+      Now when users @-mention your bot or react to messages in comment threads,
+      your bot will respond automatically.
+
+      <Button asChild className="not-markdown">
+        <a href="/docs/guides/how-to-test-webhooks-on-localhost">
+          Set up webhooks
+        </a>
+      </Button>
+
+    </StepContent>
+
+  </Step>
+</Steps>
+
+## What to read next
+
+Congratulations! You've set up a bot that responds to Liveblocks comment threads
+using the Chat SDK.
+
+- [Chat SDK documentation](https://chat-sdk.dev)
+- [@liveblocks/chat-sdk-adapter README](https://github.com/liveblocks/liveblocks/tree/main/packages/liveblocks-chat-sdk-adapter)
+- [Webhooks documentation](/docs/platform/webhooks)
+- [How to test webhooks on localhost](/docs/guides/how-to-test-webhooks-on-localhost)
+
+---
+
+## Examples using Chat SDK
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "Chat SDK Bot",
+      slug: "chat-sdk-bot/nextjs-chat-sdk-bot",
+      image: "/images/examples/thumbnails/comments.jpg",
+    }}
+    technologies={["nextjs", "react"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Chat SDK AI Bot",
+      slug: "chat-sdk-ai-bot/nextjs-chat-sdk-ai-bot",
+      image: "/images/examples/thumbnails/comments-ai.jpg",
+    }}
+    technologies={["nextjs", "react"]}
+    openInNewWindow
+  />
+</ListGrid>

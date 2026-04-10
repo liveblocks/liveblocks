@@ -5,14 +5,20 @@
   "workspaces": [
     "shared/*",
     "packages/*",
+    "!packages/liveblocks-server",
+    "!packages/liveblocks-python",
+    "!packages/liveblocks-python-codegen",
     "tools/*",
+    "!tools/liveblocks-cli",
     "e2e/next-ai-kitchen-sink",
+    "e2e/next-react-flow-kitchen-sink",
     "e2e/next-sandbox",
     "e2e/node-sandbox"
   ],
   "scripts": {
     "build": "turbo run build",
     "test": "turbo run test",
+    "test:ci": "turbo run test:ci",
     "test:types": "turbo run test:types",
     "test:deps": "turbo run test:deps",
     "lint": "turbo run lint",

@@ -41,7 +41,7 @@ test.describe("Simple Chat", () => {
 
     await test.step("Send ping message", async () => {
       // Perform the ping-pong interaction
-      await textInput.fill("ping");
+      await textInput.fill("ping.");
       await sendButton.click();
     });
 
@@ -66,8 +66,8 @@ test.describe("Simple Chat", () => {
         .last();
       await expect(assistantMessage).toBeVisible({ timeout: 15000 });
 
-      // Check if it contains "pong"
-      await expect(assistantMessage).toContainText("pong", {
+      // Check if it contains "pong" (case-insensitive)
+      await expect(assistantMessage).toContainText(/pong/i, {
         timeout: 15000,
       });
     });

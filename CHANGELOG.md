@@ -1,4 +1,535 @@
-## vNEXT (not yet published)
+## vNEXT (not yet released)
+
+## v3.18.0
+
+For full upgrade instructions, see the
+[3.18 upgrade guide](https://liveblocks.io/docs/platform/upgrading/3.18).
+
+### `@liveblocks/client`
+
+- **Breaking:** `useStorage` now returns plain objects for `LiveMap` values
+  instead of `Map` instances. Legacy APIs have been removed: `.toImmutable()`,
+  `.toObject()`, `.toArray()`.
+- New `.toJSON()` on all Live structures, returning a cached JSON-compatible
+  snapshot. `JSON.stringify(root)` now just works.
+- New `LiveObject.from(obj)` to create a LiveObject from plain JSON, recursively
+  converting nested objects/arrays to Live structures.
+- New `.reconcile(obj)` to efficiently reconcile a LiveObject tree to match a
+  JSON snapshot, only mutating what changed.
+- `initialStorage` accepts `LiveObject.from()` result directly.
+
+### `@liveblocks/react-flow/node`
+
+- New `mutateFlow()` API for reading and mutating React Flow data from a Node.js
+  backend. Install via `npm i @liveblocks/react-flow`, import from
+  `@liveblocks/react-flow/node`.
+
+### `@liveblocks/react-ui`
+
+- Add standalone `Avatar` component to complement `AvatarStack` for more
+  fine-grained customization.
+- Add `variant` prop to `AvatarStack` to support outlined avatars.
+
+### `@liveblocks/zustand` and `@liveblocks/redux`
+
+- Fix: Initial storage seeding no longer creates an undo frame.
+- Fix: Presence updates are now batched with storage updates.
+
+## v3.17.0
+
+### `@liveblocks/react-flow`
+
+- Introduce the package. Install with `npm install @liveblocks/react-flow`.
+  Provides hooks and components that add collaboration to any React Flow diagram
+  using Liveblocks Storage:
+  - Use the `useLiveblocksFlow` hook to make React Flow synced and
+    collaborative.
+  - Use the `Cursors` component to show other users' cursors inside React Flow.
+
+### `@liveblocks/react-ui`
+
+- Allow customizing cursors in the `Cursors` component by passing a
+  `components={{ Cursor: MyCursor }}` prop.
+
+## v3.16.0
+
+### `@liveblocks/chat-sdk-adapter`
+
+- Introduce the package. Install with
+  `npm install @liveblocks/chat-sdk-adapter`. Provides a
+  [`chat-sdk`](https://www.npmjs.com/package/chat)-compatible backend adapter
+  backed by Liveblocks Comments: webhooks, posting and editing messages,
+  reactions, paginated fetches, thread and channel helpers, and optional
+  `resolveUsers` / `resolveGroupsInfo` hooks.
+
+### `@liveblocks/react`
+
+- Add Feeds hooks: `useFeeds`, `useFeedMessages`, `useCreateFeed`,
+  `useDeleteFeed`, `useUpdateFeedMetadata`, `useCreateFeedMessage`,
+  `useDeleteFeedMessage`, and `useUpdateFeedMessage`.
+
+### `@liveblocks/node`
+
+- Add REST client methods for Feeds: `getFeeds`, `getFeed`, `createFeed`,
+  `updateFeed`, `deleteFeed`, `getFeedMessages`, `createFeedMessage`,
+  `updateFeedMessage`, and `deleteFeedMessage`.
+
+### Python SDK
+
+- Add Feeds REST API support on the sync and async clients (`get_feeds`,
+  `get_feed`, `create_feed`, `update_feed`, `delete_feed`, `get_feed_messages`,
+  `create_feed_message`, `update_feed_message`, `delete_feed_message`) with
+  matching request/response models.
+
+### `@liveblocks/client`
+
+- Add **Feeds**: room-scoped feeds with metadata and messages and APIs to list,
+  create, update, and delete feeds and messages (`fetchFeeds`,
+  `fetchFeedMessages`, `addFeed`, `updateFeed`, `deleteFeed`, `addFeedMessage`,
+  `updateFeedMessage`, `deleteFeedMessage`).
+
+### `@liveblocks/react-ui`
+
+- Add `body` prop to `Comment` to allow overriding only the default rich-text
+  comment body while still keeping attachments, reactions, and
+  `additionalContent` as is, unlike when using the `children` prop.
+- Fix `AvatarStack` negative margin breaking alignment.
+
+## v3.15.5
+
+### `@liveblocks/tiptap`
+
+- Improve clipboard handling when text nodes containing comments were copied or
+  pasted.
+
+### Python SDK
+
+- Fix request body for certain endpoints, like `update_room_id`,
+  `initialize_storage_document` incorrectly set as optional.
+
+## v3.15.4
+
+### `@liveblocks/node`
+
+- Add `Liveblocks.getAttachment()` method to get an attachment's metadata and a
+  presigned download URL.
+
+### Python SDK
+
+- Add `get_attachment()` method to get an attachment's metadata and a presigned
+  download URL.
+
+## v3.15.3
+
+### Python SDK
+
+- Introduce the Python package. Install with `pip install liveblocks`. Provides
+  sync and async clients for the full Liveblocks API (rooms, storage, threads,
+  comments, etc.) for backend use.
+
+### `@liveblocks/react-ui`
+
+- Add `showSubscription` prop to `Thread` to control whether to show the
+  thread’s subscription status.
+
+## v3.15.2
+
+### `@liveblocks/client`
+
+- Deprecate the `engine` option on `enterRoom()`. This flag no longer has any
+  effect.
+
+### `@liveblocks/react`
+
+- Deprecate the `engine` prop on `RoomProvider`. This flag no longer has any
+  effect.
+
+### `@liveblocks/node`
+
+- Deprecate the `engine` option on `createRoom()`. This flag no longer has any
+  effect.
+- Stop sending the `engine` field in the room creation request body.
+
+## v3.15.1
+
+### `@liveblocks/react-ui`
+
+- Add `gap` prop to `AvatarStack` to control the `--lb-avatar-stack-gap` CSS
+  variable.
+- Add `padding` prop to `CommentPin` to control the `--lb-comment-pin-padding`
+  CSS variable.
+- Fix `size` props on `AvatarStack` and `CommentPin` not working as expected
+  when passing numbers.
+- Fix `autoFocus` prop on `FloatingComposer`.
+- Improve avatars’ ordering and `max` logic in `AvatarStack`.
+- Support `children` prop on `CommentPin`.
+
+## v3.15.0
+
+### `@liveblocks/react-ui`
+
+- Add various new ways to customize `Thread` and `Comment`:
+  - Comments in `Thread` can now be overridden or customized via the
+    `components` prop.
+  - New parts of `Comment` (content, avatar, author, and date) can now be
+    overridden or customized via the `children`, `additionalContent`, `avatar`,
+    `author`, and `date` props.
+- Fix `commentDropdownItems` prop on `Thread` not working as expected in some
+  cases.
+
+### `@liveblocks/react`
+
+- Each `createRoomContext()` invocation now creates its own isolated context to
+  allow nesting independent room contexts and their `RoomProvider` components.
+
+### `@liveblocks/react-blocknote`
+
+- Support newer BlockNote versions and bump the minimum required version to
+  v0.43.0. (Thanks @nperez0111 for the contribution!)
+
+### `@liveblocks/react-ui`, `@liveblocks/react-tiptap`, and `@liveblocks/react-lexical`
+
+- Improve how inline components passed to `components={{ ... }}` props are
+  handled by keeping them stable instead of re-mounting them on every render.
+- Move `@radix-ui/*` dependencies to the `radix-ui` mono package.
+
+## v3.14.1
+
+### `@liveblocks/react`
+
+- Fix paginated hooks (`useThreads`, `useInboxNotifications`, and `useAiChats`)
+  stopping pagination after the first `fetchMore()` call when auto-paginating in
+  a `useEffect`.
+
+## v3.14.0
+
+This release adds support for opting-in to the new storage engine on a per-room
+basis. The new storage engine can support larger documents, is more performant,
+is considered more stable, and will eventually become our default engine for all
+new rooms in the future.
+
+As of this release, the default storage engine still remains engine version 1.
+
+To give it a try, simply pass `engine: 2` when entering a _new_ room. After a
+room is created, you cannot change the engine it was created with anymore.
+
+For example:
+
+```ts
+// Vanilla JS
+client.enterRoom("my-new-room", { engine: 2 });
+```
+
+or:
+
+```ts
+// In React
+<RoomProvider id="my-new-room" engine={2}>
+  ...
+</RoomProvider>
+```
+
+### `@liveblocks/client`
+
+- Support for selecting the preferred engine when entering new rooms:
+  `client.enterRoom("my-new-room", { engine: 2 })`
+- Internal protocol optimizations to support larger storage documents
+- Add new config option `createClient({ baseUrl: "https://..." })` to allow
+  connecting to the
+  [Liveblocks dev server](https://liveblocks.io/docs/tools/dev-server)
+- Improve `LiveList` performance when processing large batches of operations
+- Improve `LiveList.push()` efficiency to prevent unbounded position string
+  growth over time
+- Fix crash when clearing documents with a large number of keys
+- Remove the `largeMessageStrategy` client option. The WebSocket message limit
+  has been increased from 1 MB to 32 MB, making this setting obsolete.
+
+### `@liveblocks/react`
+
+- Support for selecting the preferred engine when entering new rooms:
+  `<RoomProvider id="my-new-room" engine={2}>...</RoomProvider>`
+- Add new config option `<LiveblocksProvider baseUrl="https://..." />` to allow
+  connecting to the
+  [Liveblocks dev server](https://liveblocks.io/docs/tools/dev-server)
+- Exclude marking a thread or inbox notification as read from blocking
+  navigation when `preventUnsavedChanges` is enabled.
+
+### `@liveblocks/react-tiptap` and `@liveblocks/react-lexical`
+
+- Portaled elements now respect the `portalContainer` option from
+  `@liveblocks/react-ui`’s `LiveblocksUiConfig` instead of always using
+  `document.body`.
+
+### `@liveblocks/zustand` and `@liveblocks/redux`
+
+- Support for selecting the preferred engine when entering new rooms:
+  `enterRoom("my-new-room", { engine: 2 })`
+
+### `@liveblocks/node`
+
+- Add new `.setPresence()` method to set ephemeral presence for a user in a room
+  via the REST API, without requiring a WebSocket connection
+- Deprecated `tenantId` parameter in client methods, use `organizationId`
+  instead.
+
+## v3.13.5
+
+### `@liveblocks/react-tiptap`
+
+- Replace `y-tiptap` with `y-prosemirror` to prevent plugin key conflict, which
+  was causing change source to be incorrectly set in Blocknote.
+
+## v3.13.4
+
+### `@liveblocks/react-tiptap`
+
+- Fix an issue where `FloatingComposer` wouldn’t auto-focus and
+  `FloatingToolbar` would conflict with it.
+
+## v3.13.3
+
+### `@liveblocks/client`
+
+- Bump hardcoded client-side socket connection timeout from 10s to 20s
+- Add more detailed timing info to `enableDebugLogging` to better debug
+  connection issues
+
+### `@liveblocks/react-ui`
+
+- Fix an issue where `Composer` and `AiComposer` would throw an error when
+  mounted/unmounted.
+
+## v3.13.2
+
+### `@liveblocks/node`
+
+- Add a new `alwaysUseKnowledge` option when creating or updating copilots. When
+  this option is enabled, the copilot retrieves and uses the uploaded knowledge
+  sources on each user query. When disabled, the copilot will retrieve the
+  uploaded knowledge sources only when the user query relates to the knowledge
+  prompt set on the copilot.
+
+## v3.13.1
+
+### `@liveblocks/client`
+
+- Fix issue where storage subscriptions wouldn't fire after concurrent move and
+  set operations, causing stale `LiveList` state in UI.
+
+## v3.13.0
+
+This release adds support for comment metadata, allowing you to attach custom
+metadata to individual comments in the same way as thread metadata.
+
+### All packages
+
+- Support typing comment metadata globally via the `Liveblocks` interface.
+- Improve `CommentBody` types.
+- Internal refactorings to prepare for upcoming protocol updates.
+
+### `@liveblocks/client`
+
+- Add new parameters to `createThread`, `createComment`, and `editComment` to
+  attach and update comment metadata.
+- Add `editCommentMetadata` method to update only a commentʼs metadata.
+
+### `@liveblocks/react`
+
+- Add new parameters to `useCreateThread`, `useCreateComment`, and
+  `useEditComment` to attach and update comment metadata.
+- Add `useEditCommentMetadata` hook to update only a commentʼs metadata.
+
+### `@liveblocks/react-ui`
+
+- Add `commentMetadata` prop to `Composer` to attach and update comment
+  metadata.
+
+### `@liveblocks/react-lexical` and `@liveblocks/react-tiptap`
+
+- Add `commentMetadata` prop to `FloatingComposer` to attach and update comment
+  metadata.
+
+### `@liveblocks/react-tiptap`
+
+- Fix `Toolbar` not reflecting the editorʼs current state.
+
+### `@liveblocks/node`
+
+- Add new parameters to `createThread`, `createComment`, and `editComment` to
+  attach and update comment metadata.
+- Add `editCommentMetadata` method to update only a commentʼs metadata.
+- Add `commentMetadataUpdated` webhook event.
+
+## v3.12.1
+
+### `@liveblocks/client`
+
+- Improve an internal type definition.
+
+## v3.12.0
+
+### `@liveblocks/client`
+
+- Liveblocks branding will appear for free plans.
+- Added badgeLocation option for the client library to control the branding
+  location for free plans.
+
+### `@liveblocks/react`
+
+- Added badgeLocation option to LiveblocksProvider to control the branding
+  location for free plans.
+
+## v3.11.1
+
+### `@liveblocks/core`
+
+- Log full error details when WebSocket connections to Liveblocks are getting
+  blocked
+
+### `@liveblocks/yjs`
+
+- Fix an issue where a document incorrectly reported its sync state.
+
+## v3.11.0
+
+### `@liveblocks/react`
+
+- Introduce `useSearchComments` hook that allows searching comments by text and
+  other filters.
+
+### `@liveblocks/client`
+
+- Fix regression: handle rejection messages from the server again.
+
+### `@liveblocks/node`
+
+- Update type definitions for provider models to support GPT-5.1 variants.
+
+## v3.10.1
+
+### `@liveblocks/lexical`
+
+- Fix a bug where a fresh provider is required by Lexical in order to initialize
+  properly by always requieting a new provider in the factory function
+
+### `@liveblocks/yjs`
+
+- Add `forceNewProvider` option to `getYjsProviderForRoom` and destroy existing
+  provider when requested
+
+## v3.10.0
+
+### `@liveblocks/client`
+
+- Tweak reconnection logic to not retry on specific 400 level error codes
+
+### `@liveblocks/node`
+
+- Prevents certain 400 level errors from being reported as a 403
+
+### `@liveblocks/react-ui`
+
+- Add `dropdownItems` prop to `Comment` (`commentDropdownItems` prop on
+  `Thread`) to allow customizing comments’ dropdown items in the default
+  components.
+- Fix scroll issues in some scenarios where `AiChat` would be rendered but
+  hidden.
+
+### `@liveblocks/react-tiptap`
+
+- Support for Tiptap v3.
+
+## v3.9.2
+
+### `@liveblocks/node`
+
+- Update type definitions for provider models to support newer Claude variants:
+  Opus 4.1, Sonnet 4.5, and Haiku 4.5.
+
+## v3.9.1
+
+### `@liveblocks/node`
+
+- Update type definitions for provider models to support GPT-5 variants.
+
+## v3.9.0
+
+### `@liveblocks/react-ui`
+
+- Add support for web search to `<AiChat />` component.
+- Add `showSources`, `showRetrievals` and `showReasoning` props to `<AiChat />`
+  component to determine how sources, retrievals and reasoning are displayed
+  respectively.
+- Disable AI chat composers when AI service is not available.
+
+### `@liveblocks/react`
+
+- Add query filter `subscribed` on the `useThreads` hook.
+- Add `useUrlMetadata` hook to get metadata for a given URL.
+- Expose `disconnected` status in `useAiChatStatus` to indicate when AI service
+  is not available.
+
+### `@liveblocks/client`
+
+- Add query filter `subscribed` on the `room.getThreads` method.
+
+### `@liveblocks/node`
+
+- Update `createAiCopilot` and `updateAiCopilot` to include web search in
+  provider options for OpenAI and Anthropic.
+- Remove all schema validation related client methods that should no longer be
+  used. Schema validation was sunsetted on May 1st, 2025.
+
+## v3.8.1
+
+### `@liveblocks/react`
+
+- Add `chatId` prop to `RegisterAiKnowledge` to scope knowledge to a specific
+  chat, similar to `RegisterAiTool`. This is the same as using the `knowledge`
+  prop on `AiChat`.
+- Fix issue where `useAiChat()` didn't re-render correctly when chat title gets
+  updated.
+
+### `@liveblocks/node`
+
+- Fix issue where `tenantId` was not being passed to the request when using
+  `Liveblocks.createRoom()`.
+- Add `comments:write` to the list of possible room permissions.
+
+## v3.8.0
+
+### `@liveblocks/client`
+
+- LiveMap and LiveObject deletions now report which item got deleted in the
+  update notifications. LiveLists already did this.
+- Support numerical operators `gt`, `lt`, `gte`, and `lte` in `room.getThreads`
+  metadata query filters.
+
+### `@liveblocks/react`
+
+- Add new hook
+  [`useAiChatStatus`](https://liveblocks.io/docs/api-reference/liveblocks-react#useAiChatStatus)
+  that offers a convenient way to get the current generation status for an AI
+  chat, indicating whether the chat is idle, currently generating contents, and,
+  if so, what type of content is currently generating.
+- Fixes an issue where `useUnreadInboxNotificationsCount` wasn't returning the
+  proper count if there were more than a page of unread notifications.
+- Support numerical operators `gt`, `lt`, `gte`, and `lte` in `useThreads`
+  metadata query filters.
+
+### `@liveblocks/react-ui`
+
+- Add `responseTimeout` property to `AiChat` to allow customization of the
+  default 30 seconds timeout.
+- The `title` prop on `AiTool` now accepts `ReactNode`, not just strings.
+- Fix a bug where `AiChat` would not always scroll in the same way when sending
+  new messages.
+
+### `@liveblocks/node`
+
+- Add new method `Liveblocks.prewarmRoom(roomId, options)`. This method can
+  prewarm a room from your backend, preparing it for connectivity and making the
+  eventual connection from the frontend faster.
 
 ## v3.7.1
 
@@ -162,8 +693,8 @@ and [tenants](http://liveblocks.io/docs/authentication/tenants) in the docs.
 
 ### `@liveblocks/react`
 
-- Update `useSendAiMessage` to use the the last used copilot id in a chat when
-  no copilot id is passed to the hook or the method returned by the hook.
+- Update `useSendAiMessage` to use the last used copilot id in a chat when no
+  copilot id is passed to the hook or the method returned by the hook.
 
 ## v3.4.0
 
@@ -1393,11 +1924,11 @@ for more information about this change please read our
 - Fix bug where some combinations of `query` criteria could over-select threads
   in `useThreads`
 
-### Version History (private beta)
+### Version History
 
-This release adds some new hooks for Version History in text documents, which is
-now available in private beta. If you’re interested in joining the private beta,
-please [contact us](https://liveblocks.io/contact/sales).
+This release adds some new hooks for Version History in text documents. If
+you're interested in getting access, please
+[contact us](https://liveblocks.io/contact/sales).
 
 - Add `useHistoryVersion` hook to retrieve version history (in
   `@liveblocks/react`)

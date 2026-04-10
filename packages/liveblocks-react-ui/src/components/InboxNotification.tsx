@@ -21,8 +21,7 @@ import {
   useRoomInfo,
 } from "@liveblocks/react";
 import { useRoomThreadSubscription } from "@liveblocks/react/_private";
-import { Slot } from "@radix-ui/react-slot";
-import { TooltipProvider } from "@radix-ui/react-tooltip";
+import { Slot as SlotPrimitive } from "radix-ui";
 import type {
   ComponentProps,
   ComponentPropsWithoutRef,
@@ -52,7 +51,6 @@ import { Timestamp } from "../primitives/Timestamp";
 import { useCurrentUserId } from "../shared";
 import type { SlotProp } from "../types";
 import { cn } from "../utils/cn";
-import { Avatar } from "./internal/Avatar";
 import { Button } from "./internal/Button";
 import { CodeBlock } from "./internal/CodeBlock";
 import { Dropdown, DropdownItem, DropdownTrigger } from "./internal/Dropdown";
@@ -61,9 +59,10 @@ import {
   INBOX_NOTIFICATION_THREAD_MAX_COMMENTS,
   InboxNotificationComment,
 } from "./internal/InboxNotificationThread";
+import { UserAvatar } from "./Avatar";
 import { List } from "./internal/List";
 import { Room } from "./internal/Room";
-import { Tooltip } from "./internal/Tooltip";
+import { Tooltip, TooltipProvider } from "./internal/Tooltip";
 import { User } from "./internal/User";
 
 type ComponentTypeWithRef<
@@ -278,7 +277,7 @@ const InboxNotificationLayout = forwardRef<
   ) => {
     const $ = useOverrides(overrides);
     const { Anchor } = useComponents(components);
-    const Component = asChild ? Slot : Anchor;
+    const Component = asChild ? SlotPrimitive.Slot : Anchor;
     const [isMoreActionOpen, setMoreActionOpen] = useState(false);
     const markInboxNotificationAsRead = useMarkInboxNotificationAsRead();
     const deleteInboxNotification = useDeleteInboxNotification();
@@ -433,7 +432,7 @@ function InboxNotificationAvatar({
   ...props
 }: InboxNotificationAvatarProps) {
   return (
-    <Avatar
+    <UserAvatar
       className={cn("lb-inbox-notification-avatar", className)}
       {...props}
     />

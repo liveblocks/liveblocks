@@ -157,6 +157,9 @@ function Toolbar({ editor }: { editor: BlockNoteEditor | null }) {
   <PropertiesListItem name="metadata" type="ThreadMetadata">
     The metadata of the thread to create.
   </PropertiesListItem>
+  <PropertiesListItem name="commentMetadata" type="CommentMetadata">
+    The metadata of the comment to create.
+  </PropertiesListItem>
   <PropertiesListItem
     name="onComposerSubmit"
     type="function"
@@ -326,7 +329,7 @@ function ThreadOverlay({ editor }: { editor: BlockNoteEditor | null }) {
       style={{ width: "350px" }}
     />
   );
-  //+++
+  // +++
 }
 
 export function useIsMobile() {
@@ -397,11 +400,14 @@ import { Thread } from "@liveblocks/react-ui";
 ```
 
 You can return any custom `ReactNode` here, including anything from a simple
-wrapper around `Thread`, up to a full custom `Thread` component built using our
+wrapper around [`Thread`][]. You can also use [`Thread`][]'s
+[`components`](/docs/api-reference/liveblocks-react-ui#Thread-components) prop
+to customize individual comments, or build a fully custom `Thread` component
+using our
 [Comment primitives](/docs/api-reference/liveblocks-react-ui#primitives-Comment).
 
 ```tsx
-import { Comment } from "@liveblocks/react-ui/primitives";
+import { Comment, Thread } from "@liveblocks/react-ui";
 
 <FloatingThreads
   editor={editor}
@@ -410,15 +416,18 @@ import { Comment } from "@liveblocks/react-ui/primitives";
   components={{
     Thread: (props) => (
       // +++
-      <div>
-        {props.thread.comments.map((comment) => (
-          <Comment.Body
-            key={comment.id}
-            body={comment.body}
-            components={/* ... */}
-          />
-        ))}
-      </div>
+      <Thread
+        {...props}
+        components={{
+          Comment: ({ comment, ...commentProps }) => (
+            <Comment
+              comment={comment}
+              {/* Customize `Comment`'s props */}
+              {...commentProps}
+            />
+          ),
+        }}
+      />
       // +++
     ),
   }}
@@ -576,7 +585,7 @@ function ThreadOverlay({ editor }: { editor: BlockNoteEditor | null }) {
       style={{ width: "350px" }}
     />
   );
-  //+++
+  // +++
 }
 
 export function useIsMobile() {
@@ -653,11 +662,14 @@ import { Thread } from "@liveblocks/react-ui";
 ```
 
 You can return any custom `ReactNode` here, including anything from a simple
-wrapper around `Thread`, up to a full custom `Thread` component built using our
+wrapper around [`Thread`][]. You can also use [`Thread`][]'s
+[`components`](/docs/api-reference/liveblocks-react-ui#Thread-components) prop
+to customize individual comments, or build a fully custom `Thread` component
+using our
 [Comment primitives](/docs/api-reference/liveblocks-react-ui#primitives-Comment).
 
 ```tsx
-import { Comment } from "@liveblocks/react-ui/primitives";
+import { Comment, Thread } from "@liveblocks/react-ui";
 
 <AnchoredThreads
   editor={editor}
@@ -667,15 +679,18 @@ import { Comment } from "@liveblocks/react-ui/primitives";
   components={{
     Thread: (props) => (
       // +++
-      <div>
-        {props.thread.comments.map((comment) => (
-          <Comment.Body
-            key={comment.id}
-            body={comment.body}
-            components={/* ... */}
-          />
-        ))}
-      </div>
+      <Thread
+        {...props}
+        components={{
+          Comment: ({ comment, ...commentProps }) => (
+            <Comment
+              comment={comment}
+              {/* Customize `Comment`'s props */}
+              {...commentProps}
+            />
+          ),
+        }}
+      />
       // +++
     ),
   }}
@@ -720,18 +735,9 @@ offset that’s added when a thread is selected.
 
 ### HistoryVersionPreview [@badge=beta]
 
-<Banner title="Private beta">
-
-Version history is currently in private beta. If you would like access to the
-beta, please [contact us](https://liveblocks.io/contact/sales). We’d love to
-hear from you.
-
-</Banner>
-
 The `HistoryVersionPreview` component allows you to display a preview of a
 specific version of your BlockNote editor’s content. It also contains a button
-and logic for restoring. It must be used inside the `<LiveblocksPlugin>`
-context. To render a list of versions, see
+and logic for restoring. To render a list of versions, see
 [`VersionHistory`](/docs/api-reference/liveblocks-react-ui#Version-History).
 
 #### Usage [#HistoryVersionPreview-usage]
@@ -850,7 +856,7 @@ const editor = useCreateBlockNoteWithLiveblocks(
     defaultValue="false"
     type="boolean"
   >
-    Experimental. Enable offline support using IndexedDB. This means the after
+    Experimental. Enable offline support using IndexedDB. This means that after
     the first load, documents will be stored locally and load instantly. [Learn
     more](#Offline-support).
   </PropertiesListItem>
@@ -956,7 +962,7 @@ It’s possible to enable offline support in your editor with an experimental
 option. This means that once a document has been opened, it’s saved locally on
 the browser, and can be shown instantly without a loading screen. As soon as
 Liveblocks connects, any remote changes will be synchronized, without any load
-spinner. Enable this by passing a `offlineSupport_experimental ` value.
+spinner. Enable this by passing a `offlineSupport_experimental` value.
 
 ```tsx
 import { useCreateBlockNoteWithLiveblocks } from "@liveblocks/react-blocknote";
@@ -993,7 +999,7 @@ import {
 import { BlockNoteView } from "@blocknote/mantine";
 import { BlockNoteEditor } from "@blocknote/core";
 
-export function TiptapEditor() {
+export function BlockNoteEditor() {
   const editor = useCreateBlockNoteWithLiveblocks(
     {},
     {
@@ -1039,7 +1045,10 @@ const status = useIsEditorReady();
 Here's how it can be used in the context of your editor.
 
 ```tsx
-import { useCreateBlockNoteWithLiveblocks, useIsEditorReady } from "@liveblocks/react-blocknote";
+import {
+  useCreateBlockNoteWithLiveblocks,
+  useIsEditorReady,
+} from "@liveblocks/react-blocknote";
 import { BlockNoteView } from "@blocknote/mantine";
 
 function TextEditor() {
@@ -1077,8 +1086,6 @@ Adding dark mode and customizing your styles is part of `@liveblocks/react-ui`,
 learn how to do this under
 [styling and customization](/docs/api-reference/liveblocks-react-ui#Styling-and-customization).
 
-[`LiveblocksPlugin`]: #LiveblocksPlugin
-[`useLiveblocksExtension`]: #useLiveblocksExtension
 [`Thread`]: /docs/api-reference/liveblocks-react-ui#Thread
 [`Composer`]: /docs/api-reference/liveblocks-react-ui#Composer
 [`useThreads`]: /docs/api-reference/liveblocks-react#useThreads

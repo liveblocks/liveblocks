@@ -1,6 +1,10 @@
 import { describe, expect, test } from "vitest";
 
-import { KnowledgeStack } from "../ai";
+import {
+  createReceivingToolInvocation,
+  KnowledgeStack,
+  patchContentWithDelta,
+} from "../ai";
 import { iso } from "../lib/utils";
 import type {
   AiAssistantContentPart,
@@ -11,10 +15,6 @@ import type {
   AiTextDelta,
   AiToolInvocationDelta,
   AiToolInvocationStreamStart,
-} from "../types/ai";
-import {
-  createReceivingToolInvocation,
-  patchContentWithDelta,
 } from "../types/ai";
 
 describe("KnowledgeStack", () => {

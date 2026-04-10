@@ -1,0 +1,140 @@
+---
+meta:
+  title: "Migrating from Tiptap 2 to 3"
+  description:
+    "Learn how to upgrade your Liveblocks project from Tiptap 2 to Tiptap 3"
+---
+
+Tiptap v3 is a major update with breaking changes, but the migration process is
+quite simple. This guide will help you upgrade your Liveblocks project that uses
+Tiptap from version 2 to version 3.
+
+<Banner title="Liveblocks 3.10.0+ requires Tiptap 3" type="warning">
+
+Any Liveblocks version after 3.10.0 requires Tiptap 3. If you're upgrading
+Liveblocks to version 3.10.0 or higher, you'll need to upgrade Tiptap to version
+3 as well.
+
+</Banner>
+
+## Upgrade dependencies
+
+First, you _must_ uninstall all Tiptap and Liveblocks dependencies to avoid
+future version conflicts as we upgrade. This includes any extra Tiptap
+extensions you may have installed or anything else with a dependency on Tiptap.
+
+### AI-assisted upgrade
+
+The easiest way to do this is to allow our AI assistant to generate the commands
+for you. Make sure you’re signed in, paste your `package.json` into the
+following input, and generate the commands.
+
+<AskAiInput 
+  placeholder="Paste package.json here" 
+  prompt={`Write two multi-line npm commands for me:
+1. Uninstall all Tiptap and Liveblocks packages. 
+2. Install all the same packages with @latest on Liveblocks and @3 on Tiptap
+
+Here is my package.json:
+
+\`\`\`json
+
+{{INPUT}}
+
+\`\`\`
+
+`}>
+
+Generate commands
+
+</AskAiInput>
+
+### Manual upgrade
+
+If you’d like to upgrade manually, you need to run the npm command to uninstall
+all Tiptap and Liveblocks packages. Note that you are likely using more package
+than are listed here, such as Tiptap extensions.
+
+```bash
+npm uninstall @tiptap/react @tiptap/starter-kit @liveblocks/client @liveblocks/react @liveblocks/react-ui @liveblocks/react-tiptap @liveblocks/node
+```
+
+Next re-install all Tiptap and Liveblocks packages. If you see a peer dependency
+issue during this install, you may have missed something during the previous
+uninstall step.
+
+```bash
+npm install @tiptap/react@3 @tiptap/starter-kit@3 @liveblocks/client@latest @liveblocks/react@latest @liveblocks/react-ui@latest @liveblocks/react-tiptap@latest @liveblocks/node@latest
+```
+
+This will ensure that all packages are compatible with each other and prevent
+version conflicts.
+
+## Critical changes for Liveblocks users
+
+While Tiptap 3 includes many changes, there are two particularly critical
+changes that affect Liveblocks integration:
+
+### 1. StarterKit configuration change
+
+Liveblocks provides its own undo/redo functionality for collaborative editing.
+In Tiptap 2, you disabled this by setting `history: false` in the StarterKit
+extension. In Tiptap 3, this option has been renamed to `undoRedo`:
+
+```tsx highlight="3-5"
+const editor = useEditor({
+  extensions: [
+    StarterKit.configure({
+      undoRedo: false, // Previously: history: false
+    }),
+    // Other extensions...
+  ],
+});
+```
+
+### 2. Set `immediatelyRender: false` for SSR
+
+If you're using server-side rendering (such as with Next.js), it's now more
+critical to set `immediatelyRender: false` in your editor configuration to
+prevent hydration issues:
+
+```tsx highlight="3"
+const editor = useEditor(
+  {
+    immediatelyRender: false,
+    extensions: [
+      StarterKit.configure({
+        undoRedo: false,
+      }),
+      // Other extensions...
+    ],
+  },
+  []
+);
+```
+
+This ensures the editor doesn't render on the server, which can cause mismatches
+between server and client rendering.
+
+## Style Changes
+
+If you have your own styles for collaboration cursors, the default CSS classes
+prefix changed from `.collaboration-cursor` to `.collaboration-carets`.
+
+```diff
+- .collaboration-cursor__caret {
++ .collaboration-carets__caret {
+  /* Your caret styles */
+}
+
+- .collaboration-cursor__label {
++ .collaboration-carets__label {
+  /* Your label styles */
+}
+```
+
+## Full migration guide
+
+For a complete list of breaking changes and new features in Tiptap 3, refer to
+the
+[official Tiptap upgrade guide](https://tiptap.dev/docs/guides/upgrade-tiptap-v2).

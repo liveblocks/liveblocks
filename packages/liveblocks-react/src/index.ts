@@ -18,8 +18,16 @@ export { shallow, isNotificationChannelEnabled } from "@liveblocks/client";
 
 // Export all the top-level hooks
 export { RegisterAiKnowledge, RegisterAiTool } from "./ai";
-export type { RegisterAiKnowledgeProps, RegisterAiToolProps } from "./types/ai";
-export { ClientContext, RoomContext, useClient } from "./contexts";
+export type {
+  AiChatStatus,
+  RegisterAiKnowledgeProps,
+  RegisterAiToolProps,
+} from "./types/ai";
+export {
+  ClientContext,
+  GlobalRoomContext as RoomContext,
+  useClient,
+} from "./contexts";
 export {
   createLiveblocksContext,
   LiveblocksProvider,
@@ -44,6 +52,7 @@ export {
   useDeleteThread,
   useEditComment,
   useEditThreadMetadata,
+  useEditCommentMetadata,
   useMarkThreadAsResolved,
   useMarkThreadAsUnresolved,
   useSubscribeToThread,
@@ -78,6 +87,15 @@ export {
   useSelf,
   useStorage,
   useThreads,
+  useFeeds,
+  useFeedMessages,
+  useCreateFeed,
+  useDeleteFeed,
+  useUpdateFeedMetadata,
+  useCreateFeedMessage,
+  useDeleteFeedMessage,
+  useUpdateFeedMessage,
+  useSearchComments,
   useAttachmentUrl,
   useHistoryVersions,
   useRoomSubscriptionSettings,
@@ -97,4 +115,6 @@ export {
   useAiChat,
   useAiChats,
   useAiChatMessages,
+  useAiChatStatus,
+  useUrlMetadata,
 } from "./liveblocks";

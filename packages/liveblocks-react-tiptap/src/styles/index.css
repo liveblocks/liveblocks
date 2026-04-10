@@ -1,3 +1,4 @@
+/* stylelint-disable selector-class-pattern */
 @import "./utils";
 @import "./constants";
 
@@ -618,7 +619,7 @@
  *************************************/
 
 /* Give a remote user a caret */
-/* stylelint-disable-next-line selector-class-pattern */
+.collaboration-carets__caret,
 .collaboration-cursor__caret {
   position: relative;
   margin-inline-start: -1px;
@@ -630,7 +631,7 @@
 }
 
 /* Render the username above the caret */
-/* stylelint-disable-next-line selector-class-pattern */
+.collaboration-carets__label,
 .collaboration-cursor__label {
   position: absolute;
   inset-inline-start: -1px;

@@ -1,0 +1,23 @@
+{
+  // Use the same settings for all packages
+  "extends": "../../shared/tsconfig.common.json",
+
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "dist",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "target": "esnext",
+    "lib": [],
+    "skipLibCheck": true,
+
+    "paths": {
+      "~": ["./src"],
+      "~/*": ["./src/*"],
+      "~test": ["./test"],
+      "~test/*": ["./test/*"]
+    }
+  },
+  "include": ["src", "test"],
+  "exclude": ["node_modules", "dist"]
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useRef } from "react";
+import type { CopilotId } from "@liveblocks/core";
 import { defineAiTool } from "@liveblocks/core";
 import {
   ClientSideSuspense,
@@ -12,6 +12,7 @@ import {
   AiChatComponentsEmptyProps,
   AiTool,
 } from "@liveblocks/react-ui";
+import { use, useRef } from "react";
 
 function useRenderCount() {
   const ref = useRef(0);
@@ -76,16 +77,19 @@ export default function HtmlStreamingPage({
   params: Promise<{ chatId: string }>;
 }) {
   const { chatId } = use(params);
+  const copilotId =
+    (process.env.NEXT_PUBLIC_LIVEBLOCKS_DEFAULT_COPILOT_ID as CopilotId) ||
+    undefined;
   return (
     <main className="h-screen w-full">
       <LiveblocksProvider
         authEndpoint="/api/auth/liveblocks"
-        // @ts-expect-error
         baseUrl={process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL}
       >
         <ClientSideSuspense fallback={null}>
           <AiChat
             chatId={chatId}
+            copilotId={copilotId}
             components={{
               Empty: AiChatEmptyComponent,
             }}

@@ -3,7 +3,7 @@
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Collaboration from "@tiptap/extension-collaboration";
-import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
+import CollaborationCaret from "@tiptap/extension-collaboration-caret";
 import * as Y from "yjs";
 import { getYjsProviderForRoom } from "@liveblocks/yjs";
 import { useRoom, useSelf } from "@liveblocks/react/suspense";
@@ -35,6 +35,7 @@ function TiptapEditor({ doc, provider }: EditorProps) {
 
   // Set up editor with plugins, and place user info into Yjs awareness and cursors
   const editor = useEditor({
+    immediatelyRender: false,
     editorProps: {
       attributes: {
         // Add styles to editor element
@@ -44,14 +45,14 @@ function TiptapEditor({ doc, provider }: EditorProps) {
     extensions: [
       StarterKit.configure({
         // The Collaboration extension comes with its own history handling
-        history: false,
+        undoRedo: false,
       }),
       // Register the document with Tiptap
       Collaboration.configure({
         document: doc,
       }),
       // Attach provider and user info
-      CollaborationCursor.configure({
+      CollaborationCaret.configure({
         provider: provider,
         user: userInfo,
       }),

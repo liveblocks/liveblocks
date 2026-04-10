@@ -1,5 +1,6 @@
 import { Extension, Mark, mergeAttributes } from "@tiptap/core";
 import type { Node } from "@tiptap/pm/model";
+import { Fragment, Slice } from "@tiptap/pm/model";
 import type { Transaction } from "@tiptap/pm/state";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
@@ -155,7 +156,55 @@ const Comment = Mark.create({
       };
     };
 
+    // Recursively walks a Fragment and removes only this extension's comment mark from every node it finds.
+    const stripCommentMarks = (slice: Slice): Slice => {
+      const stripFragment = (fragment: Fragment): Fragment => {
+        let changed = false;
+        const nodes: Node[] = [];
+
+        fragment.forEach((node) => {
+          // Filter out this extension's comment mark from the node's marks so that it is not copied to the clipboard
+          const nextMarks = node.marks.filter(
+            (mark) => mark.type !== this.type
+          );
+          const marksChanged = nextMarks.length !== node.marks.length;
+
+          // Recursively strip comment marks from child content (e.g. inline content inside paragraphs, list items)
+          const nextContent =
+            node.content.childCount > 0
+              ? stripFragment(node.content)
+              : node.content;
+          const contentChanged = nextContent !== node.content;
+
+          if (marksChanged || contentChanged) {
+            changed = true;
+            nodes.push(
+              node.isText
+                ? node.mark(nextMarks)
+                : node.type.create(node.attrs, nextContent, nextMarks)
+            );
+          } else {
+            nodes.push(node);
+          }
+        });
+
+        return changed ? Fragment.fromArray(nodes) : fragment;
+      };
+
+      const content = stripFragment(slice.content);
+      return content === slice.content
+        ? slice
+        : new Slice(content, slice.openStart, slice.openEnd);
+    };
+
     return [
+      new Plugin({
+        key: new PluginKey("lb-comment-clipboard"),
+        props: {
+          transformCopied: (slice) => stripCommentMarks(slice),
+          transformPasted: (slice) => stripCommentMarks(slice),
+        },
+      }),
       new Plugin({
         key: THREADS_PLUGIN_KEY,
         state: {
@@ -313,10 +362,6 @@ export const CommentsExtension = Extension.create<
         },
     };
   },
-
-  // @ts-expect-error - this is incorrectly typed upstream in Mark.ts of TipTap. This event does include transaction
-  // correct: https://github.com/ueberdosis/tiptap/blob/2ff327ced84df6865b4ef98947b667aa79992292/packages/core/src/types.ts#L60
-  // incorrect: https://github.com/ueberdosis/tiptap/blob/2ff327ced84df6865b4ef98947b667aa79992292/packages/core/src/Mark.ts#L330
   onSelectionUpdate(
     this: { storage: CommentsExtensionStorage }, // NOTE: there are more types here I didn't override, this gets removed after submitting PR to tiptap
     { transaction }: { transaction: Transaction } // TODO: remove this after submitting PR to tiptap

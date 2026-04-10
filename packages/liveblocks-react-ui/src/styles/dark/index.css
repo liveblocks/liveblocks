@@ -23,7 +23,7 @@
 
   color-scheme: dark;
 
-  &:where(.lb-elevation, .lb-tooltip) {
+  &:where(.lb-elevation, .lb-tooltip, .lb-comment-pin) {
     --lb-background: #333;
     --lb-foreground-contrast: 10%;
   }

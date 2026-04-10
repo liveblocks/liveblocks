@@ -291,12 +291,23 @@ export function createConfig({ pkg, entries, styles: styleFiles, external }) {
         }),
       ],
       onwarn(warning, warn) {
+        // Ignore warnings about preserved "use client" directives.
         if (
           warning.code === "MODULE_LEVEL_DIRECTIVE" &&
           warning.message.includes("use client")
         ) {
           return;
         }
+
+        // Ignore warnings about sourcemap errors related to directives (first line of the file).
+        if (
+          warning.code === "SOURCEMAP_ERROR" &&
+          warning.message.includes("resolve original location of error") &&
+          warning.pos === 0
+        ) {
+          return;
+        }
+
         warn(warning);
       },
     };

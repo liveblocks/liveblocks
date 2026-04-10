@@ -1,14 +1,13 @@
 "use server";
 
-import { createStreamableValue } from "ai/rsc";
-import { CoreMessage, streamText } from "ai";
-import { openai } from "@ai-sdk/openai";
+import { createStreamableValue } from "@ai-sdk/rsc";
+import { ModelMessage, streamText } from "ai";
 import { aiModel } from "../config";
 
 // Send messages to AI and stream a result back
-export async function continueConversation(messages: CoreMessage[]) {
+export async function continueConversation(messages: ModelMessage[]) {
   const result = await streamText({
-    model: openai(aiModel),
+    model: aiModel,
     messages,
   });
 

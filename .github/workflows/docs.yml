@@ -6,6 +6,9 @@ on:
       - main
     paths:
       - docs/**
+      - guides/**
+      - tutorial/**
+      - CHANGELOG_PUBLIC.md
 
 jobs:
   deploy:

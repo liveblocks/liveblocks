@@ -1,6 +1,6 @@
 /**
  * Represents an indefinitely deep arbitrary immutable data
- * structure, as returned by the .toImmutable().
+ * structure.
  */
 
 export type Immutable = Scalar | ImmutableList | ImmutableObject | ImmutableMap;

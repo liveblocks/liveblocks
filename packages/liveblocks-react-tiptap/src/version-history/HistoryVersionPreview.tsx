@@ -45,6 +45,7 @@ export const HistoryVersionPreview = forwardRef<
     const previewEditor = useEditor({
       // ignore extensions, only get marks/nodes
       editable: false,
+      immediatelyRender: false,
       extensions: parentEditor.extensionManager.extensions.filter(
         (e) => e.type !== "extension"
       ),

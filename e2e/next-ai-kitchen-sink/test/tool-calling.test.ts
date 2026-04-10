@@ -73,7 +73,7 @@ test.describe("Tool Calling", () => {
     await test.step("Test AI tool call to list todos", async () => {
       // Open the AI chat and ask it to list all current todos
       // The chat should be open by default (Popover.Root open={true})
-      await sendAiMessage(page, "List all current todos");
+      await sendAiMessage(page, "List all current todos. Be brief.");
 
       // Wait for the AI response with tool call results
       // The response should show all todos including our new one

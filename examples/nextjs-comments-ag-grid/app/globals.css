@@ -1,0 +1,49 @@
+@import "@liveblocks/react-ui/styles.css";
+@import "@liveblocks/react-ui/styles/dark/media-query.css";
+
+html,
+body {
+  background: #f3f3f3;
+  padding: 0;
+  margin: 0;
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    Segoe UI,
+    Roboto,
+    Oxygen,
+    Ubuntu,
+    Cantarell,
+    Fira Sans,
+    Droid Sans,
+    Helvetica Neue,
+    sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button {
+  appearance: none;
+  border: 0;
+  background: none;
+}
+
+.lb-root {
+  --lb-accent: var(--ag-accent-color, #2196f3);
+}
+
+/* Hover to show "+" CommentPin icon */
+.comment-cell-trigger {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.comment-cell:hover .comment-cell-trigger,
+.comment-cell-trigger[data-open] {
+  opacity: 1;
+}
+
+.lb-portal {
+  z-index: 10;
+}

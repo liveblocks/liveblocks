@@ -177,7 +177,7 @@ import {
   FloatingComposer,
   // +++
   Toolbar,
-  //+++
+  // +++
 } from "@liveblocks/react-lexical";
 
 const initialConfig = liveblocksConfig({
@@ -755,7 +755,7 @@ import {
   FloatingComposer,
   // +++
   FloatingToolbar,
-  //+++
+  // +++
 } from "@liveblocks/react-lexical";
 
 const initialConfig = liveblocksConfig({
@@ -1020,8 +1020,8 @@ function Toolbar() {
 
 #### Customization [#FloatingComposer-customization]
 
-The `FloatingComposer` components acts as a wrapper around a [`Composer`][],
-near the current selection. You can treat the component like you would a `form`,
+The `FloatingComposer` component acts as a wrapper around a [`Composer`][], near
+the current selection. You can treat the component like you would a `form`,
 using classes, listeners, and more.
 
 ```tsx
@@ -1084,9 +1084,9 @@ import { Composer } from "@liveblocks/react-ui/primitives";
   style={{ width: "350px" }}
   components={{
     Composer: () => (
-        <Composer.Form
+      <Composer.Form
         // +++
-          onComposerSubmit={(message, event) => {
+          onComposerSubmit={(comment, event) => {
             event.preventDefault();
 
             const thread = createThread({
@@ -1112,6 +1112,9 @@ import { Composer } from "@liveblocks/react-ui/primitives";
 <PropertiesList>
   <PropertiesListItem name="metadata" type="ThreadMetadata">
     The metadata of the thread to create.
+  </PropertiesListItem>
+  <PropertiesListItem name="commentMetadata" type="CommentMetadata">
+    The metadata of the comment to create.
   </PropertiesListItem>
   <PropertiesListItem
     name="onComposerSubmit"
@@ -1292,7 +1295,7 @@ function ThreadOverlay() {
 
   // +++
   return <AnchoredThreads threads={threads} style={{ width: "350px" }} />;
-  //+++
+  // +++
 }
 
 export function useIsMobile() {
@@ -1359,11 +1362,14 @@ import { Thread } from "@liveblocks/react-ui";
 ```
 
 You can return any custom `ReactNode` here, including anything from a simple
-wrapper around `Thread`, up to a full custom `Thread` component built using our
+wrapper around [`Thread`][]. You can also use [`Thread`][]'s
+[`components`](/docs/api-reference/liveblocks-react-ui#Thread-components) prop
+to customize individual comments, or build a fully custom `Thread` component
+using our
 [Comment primitives](/docs/api-reference/liveblocks-react-ui#primitives-Comment).
 
 ```tsx
-import { Comment } from "@liveblocks/react-ui/primitives";
+import { Comment, Thread } from "@liveblocks/react-ui";
 
 <FloatingThreads
   threads={threads}
@@ -1371,15 +1377,18 @@ import { Comment } from "@liveblocks/react-ui/primitives";
   components={{
     Thread: (props) => (
       // +++
-      <div>
-        {props.thread.comments.map((comment) => (
-          <Comment.Body
-            key={comment.id}
-            body={comment.body}
-            components={/* ... */}
-          />
-        ))}
-      </div>
+      <Thread
+        {...props}
+        components={{
+          Comment: ({ comment, ...commentProps }) => (
+            <Comment
+              comment={comment}
+              {/* Customize `Comment`'s props */}
+              {...commentProps}
+            />
+          ),
+        }}
+      />
       // +++
     ),
   }}
@@ -1536,7 +1545,7 @@ function ThreadOverlay() {
 
   // +++
   return <AnchoredThreads threads={threads} style={{ width: "350px" }} />;
-  //+++
+  // +++
 }
 
 export function useIsMobile() {
@@ -1612,11 +1621,14 @@ import { Thread } from "@liveblocks/react-ui";
 ```
 
 You can return any custom `ReactNode` here, including anything from a simple
-wrapper around `Thread`, up to a full custom `Thread` component built using our
+wrapper around [`Thread`][]. You can also use [`Thread`][]'s
+[`components`](/docs/api-reference/liveblocks-react-ui#Thread-components) prop
+to customize individual comments, or build a fully custom `Thread` component
+using our
 [Comment primitives](/docs/api-reference/liveblocks-react-ui#primitives-Comment).
 
 ```tsx
-import { Comment } from "@liveblocks/react-ui/primitives";
+import { Comment, Thread } from "@liveblocks/react-ui";
 
 <AnchoredThreads
   threads={threads}
@@ -1625,15 +1637,18 @@ import { Comment } from "@liveblocks/react-ui/primitives";
   components={{
     Thread: (props) => (
       // +++
-      <div>
-        {props.thread.comments.map((comment) => (
-          <Comment.Body
-            key={comment.id}
-            body={comment.body}
-            components={/* ... */}
-          />
-        ))}
-      </div>
+      <Thread
+        {...props}
+        components={{
+          Comment: ({ comment, ...commentProps }) => (
+            <Comment
+              comment={comment}
+              {/* Customize `Comment`'s props */}
+              {...commentProps}
+            />
+          ),
+        }}
+      />
       // +++
     ),
   }}
@@ -1677,14 +1692,6 @@ offset that’s added when a thread is selected.
 </PropertiesList>
 
 ### HistoryVersionPreview
-
-<Banner title="Private beta">
-
-Version history is currently in private beta. If you would like access to the
-beta, please [contact us](https://liveblocks.io/contact/sales). We’d love to
-hear from you.
-
-</Banner>
 
 The `HistoryVersionPreview` component allows you to display a preview of a
 specific version of your Lexical editor's content. It also contains a button and
@@ -1801,7 +1808,7 @@ const isActive = useIsThreadActive(thread.id);
 ```
 
 <PropertiesList title="Arguments">
-  <PropertiesListItem name="threadId" type="strinng" required>
+  <PropertiesListItem name="threadId" type="string" required>
     The ID of the thread.
   </PropertiesListItem>
 </PropertiesList>
@@ -1894,7 +1901,7 @@ The `isBlockNodeActive` helper is particularly useful for adding custom
 [`Toolbar.BlockSelector`][] items.
 
 ```tsx
-//+++
+// +++
 import { isBlockNodeActive, Toolbar } from "@liveblocks/react-lexical";
 // +++
 import { $setBlocksType } from "@lexical/selection";

@@ -3,7 +3,7 @@
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Canvas } from "@/components/Canvas";
-import { DocumentHeader, DocumentHeaderSkeleton } from "@/components/Document";
+import { Header, HeaderSkeleton } from "@/components/Header";
 import { DocumentLayout, DocumentProviders } from "@/layouts/Document";
 import { ErrorLayout } from "@/layouts/Error";
 import { Document, ErrorData } from "@/types";
@@ -29,14 +29,12 @@ export function CanvasDocumentView({ initialDocument, initialError }: Props) {
   }
 
   if (!initialDocument) {
-    return <DocumentLayout header={<DocumentHeaderSkeleton />} />;
+    return <DocumentLayout header={<HeaderSkeleton />} />;
   }
 
   return (
     <DocumentProviders roomId={id} initialDocument={initialDocument}>
-      <DocumentLayout
-        header={<DocumentHeader documentId={initialDocument.id} />}
-      >
+      <DocumentLayout header={<Header documentId={initialDocument.id} />}>
         <Canvas />
       </DocumentLayout>
     </DocumentProviders>

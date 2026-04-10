@@ -1,7 +1,7 @@
 "use client";
 
 import { LiveblocksProvider } from "@liveblocks/react";
-import { PropsWithChildren } from "react";
+import { PropsWithChildren, Suspense } from "react";
 
 export function Providers({ children }: PropsWithChildren) {
   return (
@@ -12,7 +12,7 @@ export function Providers({ children }: PropsWithChildren) {
       // or reduct the time it takes to reconnect
       // lostConnectionTimeout={5000}
     >
-      {children}
+      <Suspense>{children}</Suspense>
     </LiveblocksProvider>
   );
 }

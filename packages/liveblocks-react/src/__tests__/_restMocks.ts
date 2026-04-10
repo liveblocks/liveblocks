@@ -55,11 +55,18 @@ export function mockGetThread(
   );
 }
 
-export function mockCreateThread(
+export function mockCreateThread<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(
   resolver: HttpResponseResolver<
     { roomId: string },
-    { id: string; comment: { id: string; body: CommentBody } },
-    ThreadData
+    {
+      id: string;
+      metadata?: TM;
+      comment: { id: string; body: CommentBody; metadata?: CM };
+    },
+    ThreadData<TM, CM>
   >
 ) {
   return http.post(
@@ -78,16 +85,30 @@ export function mockDeleteThread(
   );
 }
 
-export function mockCreateComment(
+export function mockCreateComment<CM extends BaseMetadata>(
   params: { threadId: string },
   resolver: HttpResponseResolver<
     { roomId: string },
-    { id: string; body: CommentBody },
-    CommentData
+    { id: string; body: CommentBody; metadata?: CM },
+    CommentData<CM>
   >
 ) {
   return http.post(
     `https://api.liveblocks.io/v2/c/rooms/:roomId/threads/${params.threadId}/comments`,
+    resolver
+  );
+}
+
+export function mockEditComment<CM extends BaseMetadata>(
+  params: { threadId: string; commentId: string },
+  resolver: HttpResponseResolver<
+    { roomId: string },
+    CommentData<CM>,
+    CommentData<CM>
+  >
+) {
+  return http.post(
+    `https://api.liveblocks.io/v2/c/rooms/:roomId/threads/${params.threadId}/comments/${params.commentId}`,
     resolver
   );
 }
@@ -102,12 +123,22 @@ export function mockDeleteComment(
   );
 }
 
-export function mockEditThreadMetadata<M extends BaseMetadata>(
+export function mockEditThreadMetadata<TM extends BaseMetadata>(
   params: { threadId: string },
-  resolver: HttpResponseResolver<{ roomId: string }, M, M>
+  resolver: HttpResponseResolver<{ roomId: string }, TM, TM>
 ) {
   return http.post(
     `https://api.liveblocks.io/v2/c/rooms/:roomId/threads/${params.threadId}/metadata`,
+    resolver
+  );
+}
+
+export function mockEditCommentMetadata<CM extends BaseMetadata>(
+  params: { threadId: string; commentId: string },
+  resolver: HttpResponseResolver<{ roomId: string }, CM, CM>
+) {
+  return http.post(
+    `https://api.liveblocks.io/v2/c/rooms/:roomId/threads/${params.threadId}/comments/${params.commentId}/metadata`,
     resolver
   );
 }
@@ -188,6 +219,21 @@ export function mockGetInboxNotifications(
 ) {
   return http.get(
     "https://api.liveblocks.io/v2/c/inbox-notifications",
+    resolver
+  );
+}
+
+export function mockGetUnreadInboxNotificationsCount(
+  resolver: HttpResponseResolver<
+    never,
+    never,
+    {
+      count: number;
+    }
+  >
+) {
+  return http.get(
+    "https://api.liveblocks.io/v2/c/inbox-notifications/count",
     resolver
   );
 }

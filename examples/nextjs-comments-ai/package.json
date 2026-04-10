@@ -1,6 +1,6 @@
 {
-  "name": "@liveblocks-examples/nextjs-comments-ai",
-  "description": "This example shows how to build comments with an AI agent, powered by Liveblocks, Next.js, and OpenAI.",
+  "name": "@liveblocks-examples/nextjs-comments",
+  "description": "This example shows how to build comments with Liveblocks and Next.js.",
   "license": "Apache-2.0",
   "private": true,
   "scripts": {
@@ -9,21 +9,25 @@
     "start": "next start"
   },
   "dependencies": {
-    "@liveblocks/client": "^3.7.1",
-    "@liveblocks/node": "^3.7.1",
-    "@liveblocks/react": "^3.7.1",
-    "@liveblocks/react-ui": "^3.7.1",
-    "eslint-config-next": "^14.2.9",
-    "next": "^14.2.9",
-    "openai": "^4.21.0",
+    "@ai-sdk/anthropic": "^3.0.64",
+    "@liveblocks/client": "^3.18.0",
+    "@liveblocks/node": "^3.18.0",
+    "@liveblocks/react": "^3.18.0",
+    "@liveblocks/react-ui": "^3.18.0",
+    "@tailwindcss/postcss": "^4.2.2",
+    "ai": "^6.0.141",
+    "next": "^16.1.6",
+    "postcss": "^8.5.8",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-error-boundary": "^4.0.11"
+    "react-error-boundary": "^4.0.13",
+    "tailwindcss": "^4.2.2",
+    "workflow": "^4.2.0-beta.73"
   },
   "devDependencies": {
-    "@types/node": "^20.4.2",
-    "@types/react": "^18.3.3",
-    "prettier": "^3.3.2",
+    "@types/node": "^20.4.10",
+    "@types/react": "^18.3.27",
+    "prettier": "^3.3.3",
     "typescript": "^5.4.5"
   }
 }

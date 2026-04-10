@@ -8,12 +8,12 @@ import { getUsers } from "@/database";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const text = searchParams.get("text") as string;
+  const text = searchParams.get("text");
 
   const filteredUserIds = getUsers()
-    .filter((user) => {
-      return user.info.name.toLowerCase().includes(text.toLowerCase());
-    })
+    .filter((user) =>
+      text ? user.info.name.toLowerCase().includes(text.toLowerCase()) : true
+    )
     .map((user) => user.id);
 
   return NextResponse.json(filteredUserIds);

@@ -1,7 +1,5 @@
 import { LiveMap } from "@liveblocks/core";
 
-export type PresenceStates = "playing" | "seeking" | "paused";
-
 declare global {
   interface Liveblocks {
     // Each user's Presence, for room.getPresence, room.subscribe("others"), etc.

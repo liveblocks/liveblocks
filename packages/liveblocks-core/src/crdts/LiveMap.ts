@@ -3,8 +3,8 @@ import { freeze } from "../lib/freeze";
 import { nanoid } from "../lib/nanoid";
 import type { CreateMapOp, CreateOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
-import type { IdTuple, SerializedMap } from "../protocol/SerializedCrdt";
-import { CrdtType } from "../protocol/SerializedCrdt";
+import type { MapStorageNode, SerializedMap } from "../protocol/StorageNode";
+import { CrdtType } from "../protocol/StorageNode";
 import type * as DevTools from "../types/DevToolsTreeNode";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
@@ -16,9 +16,8 @@ import {
   liveNodeToLson,
   lsonToLiveNode,
 } from "./liveblocks-helpers";
-import type { LiveNode, Lson } from "./Lson";
+import type { LiveNode, Lson, ToJson } from "./Lson";
 import type { UpdateDelta } from "./UpdateDelta";
-import type { ToImmutable } from "./utils";
 
 /**
  * A LiveMap notification that is sent in-client to any subscribers whenever
@@ -63,7 +62,7 @@ export class LiveMap<
   }
 
   /** @internal */
-  _toOps(parentId: string, parentKey: string, pool?: ManagedPool): CreateOp[] {
+  _toOps(parentId: string, parentKey: string): CreateOp[] {
     if (this._id === undefined) {
       throw new Error("Cannot serialize item is not attached");
     }
@@ -71,7 +70,6 @@ export class LiveMap<
     const ops: CreateOp[] = [];
     const op: CreateMapOp = {
       id: this._id,
-      opId: pool?.generateOpId(),
       type: OpCode.CREATE_MAP,
       parentId,
       parentKey,
@@ -80,7 +78,9 @@ export class LiveMap<
     ops.push(op);
 
     for (const [key, value] of this.#map) {
-      ops.push(...value._toOps(this._id, key, pool));
+      for (const childOp of value._toOps(this._id, key)) {
+        ops.push(childOp);
+      }
     }
 
     return ops;
@@ -88,7 +88,7 @@ export class LiveMap<
 
   /** @internal */
   static _deserialize(
-    [id, _item]: IdTuple<SerializedMap>,
+    [id, _item]: MapStorageNode,
     parentToChildren: ParentToChildNodeMap,
     pool: ManagedPool
   ): LiveMap<string, Lson> {
@@ -100,8 +100,9 @@ export class LiveMap<
       return map;
     }
 
-    for (const [id, crdt] of children) {
-      const child = deserialize([id, crdt], parentToChildren, pool);
+    for (const node of children) {
+      const crdt = node[1];
+      const child = deserialize(node, parentToChildren, pool);
       child._setParentLink(map, crdt.parentKey);
       map.#map.set(crdt.parentKey, child);
       map.invalidate();
@@ -138,7 +139,7 @@ export class LiveMap<
       return { modified: false };
     }
 
-    if (source === OpSource.ACK) {
+    if (source === OpSource.OURS) {
       const lastUpdateOpId = this.#unacknowledgedSet.get(key);
       if (lastUpdateOpId === opId) {
         // Acknowlegment from local operation
@@ -148,7 +149,7 @@ export class LiveMap<
         // Another local set has overriden the value, so we do nothing
         return { modified: false };
       }
-    } else if (source === OpSource.REMOTE) {
+    } else if (source === OpSource.THEIRS) {
       // If a remote operation set an item,
       // delete the unacknowledgedSet associated to the key
       // to make sure any future ack can override it
@@ -193,7 +194,7 @@ export class LiveMap<
   _detachChild(child: LiveNode): ApplyResult {
     const id = nn(this._id);
     const parentKey = nn(child._parentKey);
-    const reverse = child._toOps(id, parentKey, this._pool);
+    const reverse = child._toOps(id, parentKey);
 
     for (const [key, value] of this.#map) {
       if (value === child) {
@@ -207,7 +208,12 @@ export class LiveMap<
     const storageUpdate: LiveMapUpdates<TKey, TValue> = {
       node: this,
       type: "LiveMap",
-      updates: { [parentKey]: { type: "delete" } },
+      updates: {
+        [parentKey]: {
+          type: "delete",
+          deletedItem: liveNodeToLson(child),
+        },
+      },
     };
 
     return { modified: storageUpdate, reverse };
@@ -271,12 +277,12 @@ export class LiveMap<
         updates: { [key]: { type: "update" } },
       });
 
-      const ops = item._toOps(this._id, key, this._pool);
+      const ops = item._toOpsWithOpId(this._id, key, this._pool);
 
       this.#unacknowledgedSet.set(key, nn(ops[0].opId));
 
       this._pool.dispatch(
-        item._toOps(this._id, key, this._pool),
+        ops,
         oldValue
           ? oldValue._toOps(this._id, key)
           : [{ type: OpCode.DELETE_CRDT, id }],
@@ -323,7 +329,12 @@ export class LiveMap<
       storageUpdates.set(thisId, {
         node: this,
         type: "LiveMap",
-        updates: { [key]: { type: "delete" } },
+        updates: {
+          [key]: {
+            type: "delete",
+            deletedItem: liveNodeToLson(item),
+          },
+        },
       });
       this._pool.dispatch(
         [
@@ -441,20 +452,20 @@ export class LiveMap<
     };
   }
 
-  toImmutable(): ReadonlyMap<TKey, ToImmutable<TValue>> {
-    // Don't implement actual toImmutable logic in here. Implement it in
-    // ._toImmutable() instead. This helper merely exists to help TypeScript
+  toJSON(): { readonly [P in TKey]: ToJson<TValue> } {
+    // Don't implement actual toJSON logic in here. Implement it in
+    // ._toJSON() instead. This helper merely exists to help TypeScript
     // infer better return types.
-    return super.toImmutable() as ReadonlyMap<TKey, ToImmutable<TValue>>;
+    return super.toJSON() as { readonly [P in TKey]: ToJson<TValue> };
   }
 
   /** @internal */
-  _toImmutable(): ReadonlyMap<TKey, ToImmutable<TValue>> {
-    const result: Map<TKey, ToImmutable<TValue>> = new Map();
+  _toJSON(): { readonly [P in TKey]: ToJson<TValue> } {
+    const result: { [key: string]: unknown } = {};
     for (const [key, value] of this.#map) {
-      result.set(key, value.toImmutable() as ToImmutable<TValue>);
+      result[key] = value.toJSON();
     }
-    return freeze(result);
+    return freeze(result) as { [P in TKey]: ToJson<TValue> };
   }
 
   clone(): LiveMap<TKey, TValue> {

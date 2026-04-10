@@ -2,7 +2,7 @@ import {
   InboxNotification,
   InboxNotificationCustomKindProps,
 } from "@liveblocks/react-ui";
-import { DocumentIcon } from "@/components/Documents";
+import { DocumentIcon } from "@/components/DocumentsList";
 import { DOCUMENT_URL } from "@/constants";
 import { getDocument } from "@/lib/actions";
 import { useDocumentsFunctionSWR } from "@/lib/hooks";

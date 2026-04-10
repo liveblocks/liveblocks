@@ -1,0 +1,110 @@
+---
+meta:
+  title: "How to set up Continuous Integration (CI) testing"
+  description:
+    "Learn how to run end-to-end tests against the Liveblocks dev server in CI
+    without needing production credentials."
+---
+
+The Liveblocks dev server lets you run your end-to-end tests in CI without
+needing Liveblocks credentials, and without usage limits. Your tests behave
+identically whether you run them locally or in CI.
+
+## What we’re setting up
+
+You’ll run the Liveblocks dev server as a
+[service container](https://docs.github.com/en/actions/use-cases-and-examples/using-containerized-services/about-service-containers)
+in your GitHub Actions workflow. Your app connects to `http://localhost:1153`
+instead of Liveblocks production, using the built-in `"sk_localdev"` secret key.
+No production credentials required.
+
+## Step 1: Add a test environment file
+
+Most frameworks automatically load a `.env.test` file when running tests. Create
+one with the dev server values:
+
+```dotenv file=".env.test"
+LIVEBLOCKS_SECRET_KEY=sk_localdev
+
+# Depends on your framework
+VITE_LIVEBLOCKS_BASE_URL=http://localhost:1153         # For Vite
+NEXT_PUBLIC_LIVEBLOCKS_BASE_URL=http://localhost:1153  # For Next.js
+```
+
+Since these are well-known dev-only values, it’s safe to commit this file to
+your repository.
+
+<Banner title="Client-side environment variables" type="warning">
+  For the base URL to be accessible in client-side code, some frameworks require
+  a specific prefix. For example, Next.js requires `NEXT_PUBLIC_` and Vite
+  requires `VITE_`. Adjust the variable name accordingly. In all examples below,
+  we assume Next.js.
+</Banner>
+
+## Step 2: Reference the environment variables
+
+In your client, read the base URL from the environment variable:
+
+```ts
+const client = createClient({
+  baseUrl: process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL || undefined,
+  authEndpoint: "/api/liveblocks-auth",
+});
+```
+
+In your Node backend, read both the base URL and secret:
+
+```ts
+const liveblocks = new Liveblocks({
+  baseUrl: process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL || undefined,
+  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+});
+```
+
+When these variables are not set, your app connects to Liveblocks production as
+usual.
+
+## Step 3: Add the GitHub Actions workflow
+
+Use the `services` block to run the Liveblocks dev server as a service
+container. GitHub Actions starts it automatically before your steps run, and
+your tests can connect to it on `localhost:1153`.
+
+```yaml file=".github/workflows/test-my-app.yml"
+name: My app tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    +++
+    services:
+      liveblocks:
+        image: liveblocks/dev-server
+        ports:
+          - 1153:1153
+    +++
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: npm ci
+
+      +++
+      - name: Run tests
+        run: npm test
+      +++
+```
+
+That’s it! The service container provides the dev server, and the `.env.test`
+file supplies the configuration. No additional setup needed.
+
+## What to read next
+
+- [Dev server reference](/docs/tools/dev-server)
+- [Get started with the dev server](/docs/tools/dev-server#Set-up-the-dev-server)

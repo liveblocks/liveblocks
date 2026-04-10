@@ -3,12 +3,47 @@ name: Tests
 on: [pull_request]
 
 jobs:
-  test:
+  # Check if there are any code changes in the PR (not docs, examples, changelogs, etc.)
+  # If not, the tests will be skipped and marked as successful
+  check_for_code_changes:
     runs-on: ubuntu-latest
+
+    permissions:
+      pull-requests: read
+
+    outputs:
+      changes: ${{ steps.filter.outputs.changes }}
+
+    steps:
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        id: filter
+        with:
+          predicate-quantifier: "every"
+          filters: |
+            changes:
+              - '**/*'
+              - '!docs/**'
+              - '!examples/**'
+              - '!guides/**'
+              - '!starter-kits/**'
+              - '!tutorials/**'
+              - '!CHANGELOG.md'
+              - '!CHANGELOG_PUBLIC.md'
+
+  test:
+    needs: check_for_code_changes
+    runs-on: ubuntu-latest
+
+    # Run the Liveblocks dev server on port 1154 for all tests
+    services:
+      liveblocks:
+        image: ghcr.io/liveblocks/dev-server:main
+        ports:
+          - 1154:1153
 
     strategy:
       matrix:
-        node-version: [22.4.1]
+        node-version: [22.21.0]
         pkg:
           [
             "@liveblocks/core",
@@ -19,6 +54,7 @@ jobs:
             "@liveblocks/node",
             "@liveblocks/yjs",
             "@liveblocks/react-ui",
+            "@liveblocks/react-flow",
             "@liveblocks/react-lexical",
             "@liveblocks/react-tiptap",
             "@liveblocks/react-blocknote",
@@ -30,9 +66,11 @@ jobs:
 
     steps:
       - name: Checkout
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         uses: actions/checkout@v4
 
       - name: Use Node ${{ matrix.node-version }}
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
@@ -40,9 +78,11 @@ jobs:
           cache-dependency-path: "**/package-lock.json"
 
       - name: Install dependencies
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         run: npm install
 
       - name: Turbo Cache
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         id: turbo-cache
         uses: actions/cache@v4
         with:
@@ -52,12 +92,15 @@ jobs:
             turbo-cache-${{ matrix.node-version }}-${{ matrix.pkg }}-bust3
 
       - name: Install Bun
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         uses: oven-sh/setup-bun@v1
 
       - name: Build
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         run: npm run build -- --filter ${{ matrix.pkg }}
 
       - name: Ensure no files are changed
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         run: |
           CHANGED=$(git status --porcelain)
           if [ -n "$CHANGED" ]; then
@@ -67,26 +110,33 @@ jobs:
           fi
 
       - name: Run unit tests
-        run: npm run test -- --filter ${{ matrix.pkg }} -- --coverage
+        if: needs.check_for_code_changes.outputs.changes == 'true'
+        run: npm run test:ci -- --filter ${{ matrix.pkg }} -- --coverage
 
       - name: Run type tests
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         run: npm run test:types -- --filter ${{ matrix.pkg }}
 
       - name: Run dependency tests
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         run: npm run test:deps -- --filter ${{ matrix.pkg }}
 
       - name: Run lint checks
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         run: npm run lint -- --filter ${{ matrix.pkg }}
 
       - name: Run public NPM packaging lint checks
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         run: npm run lint:package -- --filter ${{ matrix.pkg }}
 
+  # E2E tests defined in e2e/next-sandbox package
   e2e-next-sandbox:
+    needs: check_for_code_changes
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        node-version: [22.4.1]
+        node-version: [22.21.0]
 
     timeout-minutes: 60
 
@@ -99,9 +149,11 @@ jobs:
 
     steps:
       - name: Checkout
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         uses: actions/checkout@v4
 
       - name: Use Node ${{ matrix.node-version }}
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
@@ -109,12 +161,15 @@ jobs:
           cache-dependency-path: "**/package-lock.json"
 
       - name: Install dependencies
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         run: npm install
 
       - name: Install Playwright
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         run: npx playwright install chromium --no-shell --with-deps
 
       - name: Run Playwright tests
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         run: npm run test -- --filter @liveblocks/next-sandbox
 
       - uses: actions/upload-artifact@v4
@@ -124,25 +179,31 @@ jobs:
           path: e2e/next-sandbox/playwright-report
           retention-days: 14
 
+  # E2E tests defined in e2e/next-ai-kitchen-sink package
   e2e-next-ai-sandbox:
+    needs: check_for_code_changes
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        node-version: [22.4.1]
+        node-version: [22.21.0]
 
     timeout-minutes: 60
 
     env:
       NEXT_PUBLIC_GITHUB_SHA: ${{ github.sha }}
       NEXT_PUBLIC_LIVEBLOCKS_BASE_URL: ${{ vars.E2E_TEST_LIVEBLOCKS_BASE_URL }}
+      NEXT_PUBLIC_LIVEBLOCKS_DEFAULT_COPILOT_ID:
+        ${{ vars.NEXT_PUBLIC_LIVEBLOCKS_DEFAULT_COPILOT_ID }}
       LIVEBLOCKS_SECRET_KEY: ${{ secrets.E2E_TEST_LIVEBLOCKS_SECRET_KEY }}
 
     steps:
       - name: Checkout
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         uses: actions/checkout@v4
 
       - name: Use Node ${{ matrix.node-version }}
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
@@ -150,12 +211,15 @@ jobs:
           cache-dependency-path: "**/package-lock.json"
 
       - name: Install dependencies
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         run: npm install
 
       - name: Install Playwright
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         run: npx playwright install chromium --no-shell --with-deps
 
       - name: Run AI Playwright tests
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         run: npm run test -- --filter @liveblocks/next-ai-kitchen-sink
 
       - uses: actions/upload-artifact@v4
@@ -165,12 +229,14 @@ jobs:
           path: e2e/next-ai-kitchen-sink/playwright-report
           retention-days: 14
 
+  # E2E tests defined in e2e/node-sandbox package
   e2e-node-sandbox:
+    needs: check_for_code_changes
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        node-version: [22.4.1]
+        node-version: [22.21.0]
 
     timeout-minutes: 60
 
@@ -184,9 +250,11 @@ jobs:
 
     steps:
       - name: Checkout
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         uses: actions/checkout@v4
 
       - name: Use Node ${{ matrix.node-version }}
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
@@ -194,37 +262,137 @@ jobs:
           cache-dependency-path: "**/package-lock.json"
 
       - name: Install dependencies
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         run: npm install
 
       - name: Run node-sandbox tests
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         run: npm run test -- --filter node-sandbox
 
+  # E2E tests defined in @liveblocks/core package
   e2e-client-specs:
+    needs: check_for_code_changes
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        node-version: [22.4.1]
+        node-version: [22.21.0]
 
     timeout-minutes: 60
 
-    env:
-      LIVEBLOCKS_PUBLIC_KEY: ${{ secrets.E2E_TEST_LIVEBLOCKS_PUBLIC_KEY }}
-
     steps:
       - name: Checkout
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         uses: actions/checkout@v4
 
       - name: Use Node ${{ matrix.node-version }}
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
           cache-dependency-path: "**/package-lock.json"
 
-      - name: Run npm install
+      - name: Install Bun
+        if: needs.check_for_code_changes.outputs.changes == 'true'
+        uses: oven-sh/setup-bun@v1
+
+      - name: Install dependencies
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         run: npm install
 
       - name: Run e2e client specs tests
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         run: npm run test:e2e
         working-directory: packages/liveblocks-core
+
+  # Check that the generated Python SDK is up to date with the OpenAPI spec
+  python-sdk-sync:
+    runs-on: ubuntu-latest
+
+    permissions:
+      pull-requests: read
+
+    steps:
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        id: filter
+        with:
+          filters: |
+            python_sdk:
+              - 'docs/references/v2.openapi.json'
+              - 'packages/liveblocks-python-codegen/templates/**'
+              - 'packages/liveblocks-python-codegen/config.yaml'
+              - 'packages/liveblocks-python-codegen/generate.py'
+
+      - name: Checkout
+        if: steps.filter.outputs.python_sdk == 'true'
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        if: steps.filter.outputs.python_sdk == 'true'
+        uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098 # v7.3.1
+
+      - name: Regenerate Python SDK
+        if: steps.filter.outputs.python_sdk == 'true'
+        run: uv run python generate.py
+        working-directory: packages/liveblocks-python-codegen
+
+      - name: Check for uncommitted changes
+        if: steps.filter.outputs.python_sdk == 'true'
+        run: |
+          CHANGED=$(git status --porcelain packages/liveblocks-python)
+          if [ -n "$CHANGED" ]; then
+            echo "The generated Python SDK is out of date. Please run 'uv run python generate.py' in packages/liveblocks-python-codegen and commit the changes."
+            echo ""
+            echo "Changed files:"
+            echo "$CHANGED"
+            echo ""
+            git diff packages/liveblocks-python
+            exit 1
+          fi
+
+  # Python lint + tests with coverage
+  test-python:
+    runs-on: ubuntu-latest
+
+    permissions:
+      pull-requests: write
+
+    steps:
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        id: filter
+        with:
+          filters: |
+            python_sdk:
+              - 'packages/liveblocks-python/**'
+              - 'packages/liveblocks-python-codegen/**'
+
+      - name: Checkout
+        if: steps.filter.outputs.python_sdk == 'true'
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        if: steps.filter.outputs.python_sdk == 'true'
+        uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098 # v7.3.1
+
+      - name: Lint
+        if: steps.filter.outputs.python_sdk == 'true'
+        run: uvx ruff check .
+        working-directory: packages/liveblocks-python
+
+      - name: Run Python tests with coverage
+        if: steps.filter.outputs.python_sdk == 'true'
+        run:
+          uv run pytest --cov --cov-report=term-missing
+          --cov-report=xml:coverage.xml
+        working-directory: packages/liveblocks-python
+
+      - name: Post coverage report as PR comment
+        if:
+          steps.filter.outputs.python_sdk == 'true' && github.event_name ==
+          'pull_request'
+        uses: orgoro/coverage@3f13a558c5af7376496aa4848bf0224aead366ac # v3.2
+        with:
+          coverageFile: packages/liveblocks-python/coverage.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          thresholdAll: 0.0

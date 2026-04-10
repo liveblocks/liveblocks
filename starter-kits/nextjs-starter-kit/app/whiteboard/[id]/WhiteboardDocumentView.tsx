@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { DocumentHeader, DocumentHeaderSkeleton } from "@/components/Document";
+import { Header, HeaderSkeleton } from "@/components/Header";
 import { Whiteboard } from "@/components/Whiteboard";
 import { DocumentLayout, DocumentProviders } from "@/layouts/Document";
 import { ErrorLayout } from "@/layouts/Error";
@@ -32,14 +32,12 @@ export function WhiteboardDocumentView({
   }
 
   if (!initialDocument) {
-    return <DocumentLayout header={<DocumentHeaderSkeleton />} />;
+    return <DocumentLayout header={<HeaderSkeleton />} />;
   }
 
   return (
     <DocumentProviders roomId={id} initialDocument={initialDocument}>
-      <DocumentLayout
-        header={<DocumentHeader documentId={initialDocument.id} />}
-      >
+      <DocumentLayout header={<Header documentId={initialDocument.id} />}>
         <Whiteboard />
       </DocumentLayout>
     </DocumentProviders>

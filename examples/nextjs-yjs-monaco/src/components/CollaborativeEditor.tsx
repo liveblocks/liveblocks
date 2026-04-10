@@ -55,7 +55,7 @@ export function CollaborativeEditor() {
         <Editor
           onMount={handleOnMount}
           height="100%"
-          width="100hw"
+          width="100%"
           theme="vs-light"
           defaultLanguage="typescript"
           defaultValue=""

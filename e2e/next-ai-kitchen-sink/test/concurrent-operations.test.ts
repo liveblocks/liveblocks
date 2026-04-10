@@ -52,14 +52,14 @@ test.describe("Concurrent Operations", () => {
     const chatId = chatUrl.split("/").pop();
 
     // Send first message
-    await sendMessage(page, "What is 2+2?");
+    await sendMessage(page, "What is 2+2? Be brief.");
 
     // Immediately try to send a second message while first is processing
     // This should either be queued or the first should be aborted
-    await sendMessage(page, "What is 3+3?");
+    await sendMessage(page, "What is 3+3? Be brief.");
 
     // Try to send a third message rapidly
-    await sendMessage(page, "What is 4+4?");
+    await sendMessage(page, "What is 4+4? Be brief.");
 
     // Wait for the interface to stabilize
     await page.waitForTimeout(2000);
@@ -110,7 +110,7 @@ test.describe("Concurrent Operations", () => {
     // Send a message that should take some time to process
     await sendMessage(
       page,
-      "Write a detailed explanation of quantum mechanics with examples."
+      "Write a brief explanation of quantum mechanics with one example. Be brief."
     );
 
     // Wait for abort button to appear
@@ -125,7 +125,7 @@ test.describe("Concurrent Operations", () => {
     await expect(sendButton).toBeVisible({ timeout: 5000 });
 
     // Immediately send another message
-    await sendMessage(page, "What is the capital of France?");
+    await sendMessage(page, "What is the capital of France? Be brief.");
 
     // Wait for this new response
     await page.waitForFunction(
@@ -138,9 +138,7 @@ test.describe("Concurrent Operations", () => {
     );
 
     // Verify both user messages are present
-    await expect(
-      page.locator("text=Write a detailed explanation")
-    ).toBeVisible();
+    await expect(page.locator("text=Write a brief explanation")).toBeVisible();
     await expect(
       page.locator("text=What is the capital of France?")
     ).toBeVisible();
@@ -186,12 +184,12 @@ test.describe("Concurrent Operations", () => {
     }
 
     // Add some text - button should be enabled
-    await textInput.fill("Hello world!");
+    await textInput.fill("Hello world! Be brief.");
     await expect(sendButton).toBeEnabled();
     await sendButton.click();
 
     // Verify the message was sent
-    await expect(page.locator("text=Hello world!")).toBeVisible();
+    await expect(page.locator("text=Hello world! Be brief.")).toBeVisible();
 
     // Try sending whitespace-only message
     await textInput.clear();

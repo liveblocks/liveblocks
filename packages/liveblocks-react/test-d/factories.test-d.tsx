@@ -6,7 +6,11 @@ import type {
 } from "@liveblocks/client";
 import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
 import { createClient } from "@liveblocks/client";
-import { createLiveblocksContext, createRoomContext } from "@liveblocks/react";
+import {
+  createLiveblocksContext,
+  createRoomContext,
+  type AiChatStatus,
+} from "@liveblocks/react";
 import { expectAssignable, expectError, expectType } from "tsd";
 
 type MyPresence = {
@@ -282,7 +286,9 @@ expectType<P>(ctx.suspense.useMyPresence()[0]);
 
 // The storage hooks
 expectType<readonly string[] | null>(ctx.useStorage((x) => x.animals));
-expectType<ReadonlyMap<string, number> | null>(ctx.useStorage((x) => x.scores));
+expectType<{ readonly [key: string]: number } | null>(
+  ctx.useStorage((x) => x.scores)
+);
 expectType<{ readonly name: string; readonly age: number } | null>(
   ctx.useStorage((x) => x.person)
 );
@@ -291,7 +297,7 @@ expectType<[root: LiveObject<MyStorage> | null]>(ctx.useStorageRoot());
 
 // The storage hooks (suspense versions)
 expectType<readonly string[]>(ctx.suspense.useStorage((x) => x.animals));
-expectType<ReadonlyMap<string, number>>(
+expectType<{ readonly [key: string]: number }>(
   ctx.suspense.useStorage((x) => x.scores)
 );
 expectType<{ readonly name: string; readonly age: number }>(
@@ -354,7 +360,7 @@ ctx.useOthersListener(({ user, type }) => {
   ctx.useErrorListener((err) => {
     expectType<string>(err.message);
     expectType<string | undefined>(err.stack);
-    expectType<-1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(
+    expectType<string | -1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(
       err.context.code
     );
     expectAssignable<
@@ -363,6 +369,7 @@ ctx.useOthersListener(({ user, type }) => {
       | "CREATE_THREAD_ERROR"
       | "DELETE_THREAD_ERROR"
       | "EDIT_THREAD_METADATA_ERROR"
+      | "EDIT_COMMENT_METADATA_ERROR"
       | "MARK_THREAD_AS_RESOLVED_ERROR"
       | "MARK_THREAD_AS_UNRESOLVED_ERROR"
       | "SUBSCRIBE_TO_THREAD_ERROR"
@@ -379,6 +386,7 @@ ctx.useOthersListener(({ user, type }) => {
       | "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR"
       | "UPDATE_NOTIFICATION_SETTINGS_ERROR"
       | "LARGE_MESSAGE_ERROR"
+      | "FEED_REQUEST_ERROR"
     >(err.context.type);
     if (err.context.type === "ROOM_CONNECTION_ERROR") {
       expectAssignable<number>(err.context.code);
@@ -395,7 +403,7 @@ ctx.useOthersListener(({ user, type }) => {
   lbctx.useErrorListener((err) => {
     expectType<string>(err.message);
     expectType<string | undefined>(err.stack);
-    expectType<-1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(
+    expectType<string | -1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(
       err.context.code
     );
     expectAssignable<
@@ -404,6 +412,7 @@ ctx.useOthersListener(({ user, type }) => {
       | "CREATE_THREAD_ERROR"
       | "DELETE_THREAD_ERROR"
       | "EDIT_THREAD_METADATA_ERROR"
+      | "EDIT_COMMENT_METADATA_ERROR"
       | "MARK_THREAD_AS_RESOLVED_ERROR"
       | "MARK_THREAD_AS_UNRESOLVED_ERROR"
       | "SUBSCRIBE_TO_THREAD_ERROR"
@@ -420,6 +429,7 @@ ctx.useOthersListener(({ user, type }) => {
       | "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR"
       | "UPDATE_NOTIFICATION_SETTINGS_ERROR"
       | "LARGE_MESSAGE_ERROR"
+      | "FEED_REQUEST_ERROR"
     >(err.context.type);
     if (err.context.type === "ROOM_CONNECTION_ERROR") {
       expectAssignable<number>(err.context.code);
@@ -436,7 +446,7 @@ ctx.useOthersListener(({ user, type }) => {
   lbctx.suspense.useErrorListener((err) => {
     expectType<string>(err.message);
     expectType<string | undefined>(err.stack);
-    expectType<-1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(
+    expectType<string | -1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(
       err.context.code
     );
     expectAssignable<
@@ -445,6 +455,7 @@ ctx.useOthersListener(({ user, type }) => {
       | "CREATE_THREAD_ERROR"
       | "DELETE_THREAD_ERROR"
       | "EDIT_THREAD_METADATA_ERROR"
+      | "EDIT_COMMENT_METADATA_ERROR"
       | "MARK_THREAD_AS_RESOLVED_ERROR"
       | "MARK_THREAD_AS_UNRESOLVED_ERROR"
       | "SUBSCRIBE_TO_THREAD_ERROR"
@@ -461,6 +472,7 @@ ctx.useOthersListener(({ user, type }) => {
       | "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR"
       | "UPDATE_NOTIFICATION_SETTINGS_ERROR"
       | "LARGE_MESSAGE_ERROR"
+      | "FEED_REQUEST_ERROR"
     >(err.context.type);
     if (err.context.type === "ROOM_CONNECTION_ERROR") {
       expectAssignable<number>(err.context.code);
@@ -972,6 +984,15 @@ ctx.useOthersListener(({ user, type }) => {
       body: { version: 1, content: [] },
     })
   );
+
+  expectType<void>(
+    editComment({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      body: { version: 1, content: [] },
+      metadata: { priority: 2 },
+    })
+  );
 }
 
 // The useEditComment() hook (suspense)
@@ -984,6 +1005,15 @@ ctx.useOthersListener(({ user, type }) => {
       threadId: "th_xxx",
       commentId: "cm_xxx",
       body: { version: 1, content: [] },
+    })
+  );
+
+  expectType<void>(
+    editComment({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      body: { version: 1, content: [] },
+      metadata: { priority: 2 },
     })
   );
 }
@@ -1253,4 +1283,92 @@ ctx.useOthersListener(({ user, type }) => {
   expectType<NotificationSettings | undefined>(settings);
   expectType<void>(update({})); // empty {} because of partial definition
 }
+// ---------------------------------------------------------
+
+// The useAiChatStatus() hook
+{
+  const status = lbctx.useAiChatStatus("chat-123");
+  expectType<AiChatStatus>(status);
+  if (status.status === "generating") {
+    expectType<"generating">(status.status);
+    if (status.partType === "tool-invocation") {
+      expectType<"tool-invocation">(status.partType);
+      expectType<string>(status.toolName);
+    } else {
+      expectType<"text" | "reasoning" | "retrieval" | "sources" | undefined>(
+        status.partType
+      );
+      expectType<undefined>(status.toolName);
+    }
+  } else {
+    expectType<"disconnected" | "loading" | "idle">(status.status);
+    expectType<undefined>(status.partType);
+    expectType<undefined>(status.toolName);
+  }
+}
+
+// The useAiChatStatus() hook (suspense)
+{
+  const status = lbctx.suspense.useAiChatStatus("chat-123");
+  expectType<AiChatStatus>(status);
+  if (status.status === "generating") {
+    expectType<"generating">(status.status);
+    if (status.partType === "tool-invocation") {
+      expectType<"tool-invocation">(status.partType);
+      expectType<string>(status.toolName);
+    } else {
+      expectType<"text" | "reasoning" | "retrieval" | "sources" | undefined>(
+        status.partType
+      );
+      expectType<undefined>(status.toolName);
+    }
+  } else {
+    expectType<"disconnected" | "loading" | "idle">(status.status);
+    expectType<undefined>(status.partType);
+    expectType<undefined>(status.toolName);
+  }
+}
+
+// The useAiChatStatus() hook with branchId parameter
+{
+  const status = lbctx.useAiChatStatus("chat-123", "ms_branch" as any);
+  if (status.status === "generating") {
+    expectType<"generating">(status.status);
+    if (status.partType === "tool-invocation") {
+      expectType<"tool-invocation">(status.partType);
+      expectType<string>(status.toolName);
+    } else {
+      expectType<"text" | "reasoning" | "retrieval" | "sources" | undefined>(
+        status.partType
+      );
+      expectType<undefined>(status.toolName);
+    }
+  } else {
+    expectType<"disconnected" | "loading" | "idle">(status.status);
+    expectType<undefined>(status.partType);
+    expectType<undefined>(status.toolName);
+  }
+}
+
+// The useAiChatStatus() hook (suspense) with branchId parameter
+{
+  const status = lbctx.suspense.useAiChatStatus("chat-123", "ms_branch" as any);
+  if (status.status === "generating") {
+    expectType<"generating">(status.status);
+    if (status.partType === "tool-invocation") {
+      expectType<"tool-invocation">(status.partType);
+      expectType<string>(status.toolName);
+    } else {
+      expectType<"text" | "reasoning" | "retrieval" | "sources" | undefined>(
+        status.partType
+      );
+      expectType<undefined>(status.toolName);
+    }
+  } else {
+    expectType<"disconnected" | "loading" | "idle">(status.status);
+    expectType<undefined>(status.partType);
+    expectType<undefined>(status.toolName);
+  }
+}
+
 // ---------------------------------------------------------

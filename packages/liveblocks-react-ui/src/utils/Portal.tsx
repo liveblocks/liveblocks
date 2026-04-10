@@ -1,23 +1,19 @@
 "use client";
 
-import { Slot } from "@radix-ui/react-slot";
+import { Slot as SlotPrimitive } from "radix-ui";
 import { forwardRef } from "react";
 import { createPortal } from "react-dom";
 
+import { useLiveblocksUiConfig } from "../config";
 import type { ComponentPropsWithSlot } from "../types";
 
 const PORTAL_NAME = "Portal";
 
-interface PortalProps extends ComponentPropsWithSlot<"div"> {
-  /**
-   * The container to render the portal into.
-   */
-  container?: HTMLElement | null;
-}
-
-const Portal = forwardRef<HTMLDivElement, PortalProps>(
-  ({ container = document?.body, asChild, ...props }, forwardedRef) => {
-    const Component = asChild ? Slot : "div";
+const Portal = forwardRef<HTMLDivElement, ComponentPropsWithSlot<"div">>(
+  ({ asChild, ...props }, forwardedRef) => {
+    const { portalContainer } = useLiveblocksUiConfig();
+    const container = portalContainer ?? document?.body;
+    const Component = asChild ? SlotPrimitive.Slot : "div";
 
     return container
       ? createPortal(

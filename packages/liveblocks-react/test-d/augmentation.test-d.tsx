@@ -27,12 +27,17 @@ declare global {
     };
 
     RoomEvent:
-    | { type: "emoji"; emoji: string }
-    | { type: "beep"; times?: number };
+      | { type: "emoji"; emoji: string }
+      | { type: "beep"; times?: number };
 
     ThreadMetadata: {
       color: "red" | "blue";
       pinned?: boolean;
+    };
+
+    CommentMetadata: {
+      priority: number;
+      reviewed?: boolean;
     };
 
     RoomInfo: {
@@ -312,7 +317,7 @@ declare global {
   classic.useErrorListener((err) => {
     expectType<string>(err.message);
     expectType<string | undefined>(err.stack);
-    expectType<-1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(
+    expectType<string | -1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(
       err.context.code
     );
     expectAssignable<
@@ -321,6 +326,7 @@ declare global {
       | "CREATE_THREAD_ERROR"
       | "DELETE_THREAD_ERROR"
       | "EDIT_THREAD_METADATA_ERROR"
+      | "EDIT_COMMENT_METADATA_ERROR"
       | "MARK_THREAD_AS_RESOLVED_ERROR"
       | "MARK_THREAD_AS_UNRESOLVED_ERROR"
       | "SUBSCRIBE_TO_THREAD_ERROR"
@@ -337,6 +343,7 @@ declare global {
       | "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR"
       | "UPDATE_NOTIFICATION_SETTINGS_ERROR"
       | "LARGE_MESSAGE_ERROR"
+      | "FEED_REQUEST_ERROR"
     >(err.context.type);
     if (err.context.type === "ROOM_CONNECTION_ERROR") {
       expectAssignable<number>(err.context.code);
@@ -356,7 +363,7 @@ declare global {
   suspense.useErrorListener((err) => {
     expectType<string>(err.message);
     expectType<string | undefined>(err.stack);
-    expectType<-1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(
+    expectType<string | -1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(
       err.context.code
     );
     expectAssignable<
@@ -365,6 +372,7 @@ declare global {
       | "CREATE_THREAD_ERROR"
       | "DELETE_THREAD_ERROR"
       | "EDIT_THREAD_METADATA_ERROR"
+      | "EDIT_COMMENT_METADATA_ERROR"
       | "MARK_THREAD_AS_RESOLVED_ERROR"
       | "MARK_THREAD_AS_UNRESOLVED_ERROR"
       | "SUBSCRIBE_TO_THREAD_ERROR"
@@ -381,6 +389,7 @@ declare global {
       | "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR"
       | "UPDATE_NOTIFICATION_SETTINGS_ERROR"
       | "LARGE_MESSAGE_ERROR"
+      | "FEED_REQUEST_ERROR"
     >(err.context.type);
     if (err.context.type === "ROOM_CONNECTION_ERROR") {
       expectAssignable<number>(err.context.code);
@@ -668,6 +677,7 @@ declare global {
       content: [{ type: "paragraph", children: [{ text: "hi" }] }],
     },
     metadata: { color: "red" },
+    commentMetadata: { priority: 1 },
   });
 
   expectType<"thread">(thread.type);
@@ -702,6 +712,7 @@ declare global {
       content: [{ type: "paragraph", children: [{ text: "hi" }] }],
     },
     metadata: { color: "red" },
+    commentMetadata: { priority: 1 },
   });
 
   expectType<"thread">(thread.type);
@@ -777,11 +788,17 @@ declare global {
         version: 1,
         content: [{ type: "paragraph", children: [{ text: "hi" }] }],
       },
+      metadata: {
+        priority: 2,
+        reviewed: false,
+      },
     });
 
     expectType<"comment">(comment.type);
     expectType<string>(comment.id);
-    expectType<string>(comment.threadId);
+    expectType<number>(comment.metadata.priority);
+    expectType<boolean | undefined>(comment.metadata.reviewed);
+    expectError(comment.metadata.nonexisting);
   }
 }
 
@@ -796,11 +813,12 @@ declare global {
       version: 1,
       content: [{ type: "paragraph", children: [{ text: "hi" }] }],
     },
+    metadata: { priority: 1 },
   });
 
   expectType<"comment">(comment.type);
-  expectType<string>(comment.id);
-  expectType<string>(comment.threadId);
+  expectType<number>(comment.metadata.priority);
+  expectError(comment.metadata.nonexisting);
 }
 
 // ---------------------------------------------------------
@@ -817,6 +835,24 @@ declare global {
       body: { version: 1, content: [] },
     })
   );
+
+  expectType<void>(
+    editComment({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      body: { version: 1, content: [] },
+      metadata: { priority: 2, reviewed: null },
+    })
+  );
+
+  expectError(
+    editComment({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      body: { version: 1, content: [] },
+      metadata: { nonexisting: null },
+    })
+  );
 }
 
 // The useEditComment() hook (suspense)
@@ -831,6 +867,106 @@ declare global {
       body: { version: 1, content: [] },
     })
   );
+
+  expectType<void>(
+    editComment({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      body: { version: 1, content: [] },
+      metadata: { priority: 2 },
+    })
+  );
+
+  expectError(
+    editComment({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      body: { version: 1, content: [] },
+      metadata: { nonexisting: null },
+    })
+  );
+}
+
+// ---------------------------------------------------------
+
+// The useEditCommentMetadata() hook
+{
+  const editMetadata = classic.useEditCommentMetadata();
+  expectError(editMetadata({})); // no body = error
+
+  expectError(
+    editMetadata({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      metadata: { nonexisting: null },
+    })
+  );
+  expectError(
+    editMetadata({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      metadata: { nonexisting: 123 },
+    })
+  );
+
+  expectType<void>(
+    editMetadata({ threadId: "th_xxx", commentId: "cm_xxx", metadata: {} })
+  );
+  expectType<void>(
+    editMetadata({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      metadata: { priority: 2, reviewed: null },
+    })
+  );
+
+  expectError(
+    editMetadata({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      metadata: { priority: null },
+    })
+  ); // priority isn't optional, so it cannot be wiped
+}
+
+// The useEditCommentMetadata() hook (suspense)
+{
+  const editMetadata = suspense.useEditCommentMetadata();
+  expectError(editMetadata({})); // no body = error
+
+  expectError(
+    editMetadata({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      metadata: { nonexisting: null },
+    })
+  );
+  expectError(
+    editMetadata({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      metadata: { nonexisting: 123 },
+    })
+  );
+
+  expectType<void>(
+    editMetadata({ threadId: "th_xxx", commentId: "cm_xxx", metadata: {} })
+  );
+  expectType<void>(
+    editMetadata({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      metadata: { priority: 2, reviewed: null },
+    })
+  );
+
+  expectError(
+    editMetadata({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      metadata: { priority: null },
+    })
+  ); // priority isn't optional, so it cannot be wiped
 }
 
 // ---------------------------------------------------------
@@ -1090,4 +1226,104 @@ declare global {
   expectType<NotificationSettings>(settings);
   expectType<void>(update({})); // empty {} because of partial definition
 }
+// ---------------------------------------------------------
+
+// The useAiChatStatus() hook
+{
+  const status = classic.useAiChatStatus("chat-id");
+  expectType<"disconnected" | "idle" | "loading" | "generating">(status.status);
+  if (status.status === "generating") {
+    // The partType might not exist if there's no content yet
+    expectType<
+      | "text"
+      | "reasoning"
+      | "retrieval"
+      | "tool-invocation"
+      | "sources"
+      | undefined
+    >(status.partType);
+    if (status.partType === "tool-invocation") {
+      expectType<string>(status.toolName);
+    } else {
+      expectType<undefined>(status.toolName);
+    }
+  } else {
+    expectType<undefined>(status.partType);
+    expectType<undefined>(status.toolName);
+  }
+}
+
+// The useAiChatStatus() hook (suspense)
+{
+  const status = suspense.useAiChatStatus("chat-id");
+  expectType<"disconnected" | "idle" | "loading" | "generating">(status.status);
+  if (status.status === "generating") {
+    // The partType might not exist if there's no content yet
+    expectType<
+      | "text"
+      | "reasoning"
+      | "retrieval"
+      | "tool-invocation"
+      | "sources"
+      | undefined
+    >(status.partType);
+    if (status.partType === "tool-invocation") {
+      expectType<string>(status.toolName);
+    } else {
+      expectType<undefined>(status.toolName);
+    }
+  } else {
+    expectType<undefined>(status.partType);
+    expectType<undefined>(status.toolName);
+  }
+}
+
+// The useAiChatStatus() hook with optional branchId
+{
+  const status = classic.useAiChatStatus("chat-id", "ms_branch" as any);
+  if (status.status === "generating") {
+    // The partType might not exist if there's no content yet
+    expectType<
+      | "text"
+      | "reasoning"
+      | "retrieval"
+      | "tool-invocation"
+      | "sources"
+      | undefined
+    >(status.partType);
+    if (status.partType === "tool-invocation") {
+      expectType<string>(status.toolName);
+    } else {
+      expectType<undefined>(status.toolName);
+    }
+  } else {
+    expectType<undefined>(status.partType);
+    expectType<undefined>(status.toolName);
+  }
+}
+
+// The useAiChatStatus() hook with optional branchId (suspense)
+{
+  const status = suspense.useAiChatStatus("chat-id", "ms_branch" as any);
+  if (status.status === "generating") {
+    // The partType might not exist if there's no content yet
+    expectType<
+      | "text"
+      | "reasoning"
+      | "retrieval"
+      | "tool-invocation"
+      | "sources"
+      | undefined
+    >(status.partType);
+    if (status.partType === "tool-invocation") {
+      expectType<string>(status.toolName);
+    } else {
+      expectType<undefined>(status.toolName);
+    }
+  } else {
+    expectType<undefined>(status.partType);
+    expectType<undefined>(status.toolName);
+  }
+}
+
 // ---------------------------------------------------------

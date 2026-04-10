@@ -327,7 +327,7 @@ export async function POST(request: Request) {
       // An unread mention has just one comment
       comment: {
         id: "cm_asfs8f...",
-        threadId: "th_sj30as..."
+        threadId: "th_sj30as...",
         createdAt: Date <Fri Dec 15 2023 14:15:22 GMT+0000 (Greenwich Mean Time)>,
 
         // The formatted comment, pass it to React `children`
@@ -727,7 +727,7 @@ export async function POST(request: Request) {
       // An unread mention has just one comment
       comment: {
         id: "cm_asfs8f...",
-        threadId: "th_sj30as..."
+        threadId: "th_sj30as...",
         createdAt: Date <Fri Dec 15 2023 14:15:22 GMT+0000 (Greenwich Mean Time)>,
 
         // The formatted comment, as an HTML string
@@ -752,7 +752,7 @@ export async function POST(request: Request) {
         comments: [
           {
             id: "cm_asfs8f...",
-            threadId: "th_sj30as..."
+            threadId: "th_sj30as...",
             createdAt: Date <Fri Dec 15 2023 14:15:22 GMT+0000 (Greenwich Mean Time)>,
 
             // The formatted comment, as an HTML string
@@ -966,7 +966,7 @@ examples.
 
 </Banner>
 
-The functions helps to determine if the mention still exists in the document and
+The functions help to determine if the mention still exists in the document and
 will indicate that there’s no email to send in this case. Currently, only
 mentions in paragraph blocks create notifications, as there are limitations
 around retrieving mentions in plugins.
@@ -1115,12 +1115,12 @@ export async function POST(request: Request) {
   >
     Returns text mention information, and a formatted React content ready for
     use in emails. Returns `null` if the text mention does not exist anymore or
-    has been already been read.
+    has already been read.
 
     ```js title="Unread text mention"
     {
       roomInfo: {
-        name: "my room name"
+        name: "my room name",
         url: "https://my-room-url.io"
       },
       mention: {
@@ -1280,7 +1280,7 @@ component, if you wish to apply different styles. Three components are
 available: `Container`, `Text`, and `Mention`.
 
 ```tsx
-const emailData = await prepareThreadNotificationEmailAsReact(
+const emailData = await prepareTextMentionNotificationEmailAsReact(
   liveblocks,
   webhookEvent,
   {
@@ -1309,7 +1309,6 @@ console.log(emailData);
 
 // The components are now used in this React content
 console.log(emailData.mention.content);
-``;
 ```
 
 ### prepareTextMentionNotificationEmailAsHtml [#prepare-text-mention-notification-email-as-html]
@@ -1508,8 +1507,8 @@ export async function POST(request: Request) {
     more](#prepare-text-mention-notification-email-as-html-styling-elements).
   </PropertiesListItem>
   <PropertiesListItem name="options.styles.paragraph" type="CSSProperties">
-    Inline styles to apply to the mention container container. It's a `<div />`
-    element under the hood.
+    Inline styles to apply to the mention container. It's a `<div />` element
+    under the hood.
   </PropertiesListItem>
   <PropertiesListItem name="options.styles.code" type="CSSProperties">
     Inline styles to apply to the code element.

@@ -3,30 +3,34 @@
 import {
   type BaseMetadata,
   type CommentData,
-  type DM,
+  type DCM,
+  type DTM,
+  findLastIndex,
   Permission,
   type ThreadData,
 } from "@liveblocks/core";
-import { findLastIndex } from "@liveblocks/core";
 import {
+  useMarkRoomThreadAsRead,
   useMarkRoomThreadAsResolved,
   useMarkRoomThreadAsUnresolved,
   useRoomPermissions,
   useRoomThreadSubscription,
 } from "@liveblocks/react/_private";
-import * as TogglePrimitive from "@radix-ui/react-toggle";
-import type {
-  ComponentPropsWithoutRef,
-  ForwardedRef,
-  RefAttributes,
-  SyntheticEvent,
-} from "react";
+import { Toggle as TogglePrimitive } from "radix-ui";
 import {
+  type ComponentPropsWithoutRef,
+  type ComponentType,
+  type ForwardedRef,
   forwardRef,
   Fragment,
+  type PropsWithChildren,
+  type ReactNode,
+  type RefAttributes,
+  type SyntheticEvent,
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -44,20 +48,64 @@ import type {
 } from "../overrides";
 import { useOverrides } from "../overrides";
 import { cn } from "../utils/cn";
-import type { CommentProps } from "./Comment";
-import { Comment } from "./Comment";
-import type { ComposerProps } from "./Composer";
-import { Composer } from "./Composer";
+import { useStableComponent } from "../utils/use-stable-component";
+import { useIntersectionCallback } from "../utils/use-visible";
+import { useWindowFocus } from "../utils/use-window-focus";
+import { Comment as DefaultComment, type CommentProps } from "./Comment";
+import { Composer, type ComposerProps } from "./Composer";
 import { Button } from "./internal/Button";
-import { DropdownItem } from "./internal/Dropdown";
 import { Tooltip, TooltipProvider } from "./internal/Tooltip";
 
-export interface ThreadProps<M extends BaseMetadata = DM>
-  extends ComponentPropsWithoutRef<"div"> {
+// An invisible marker used to mark a thread as read only when it becomes visible.
+function MarkThreadAsReadMarker({ thread }: { thread: ThreadData }) {
+  const { id: threadId, roomId } = thread;
+  const ref = useRef<HTMLDivElement>(null);
+  const markThreadAsRead = useMarkRoomThreadAsRead(roomId);
+  const isWindowFocused = useWindowFocus();
+
+  useIntersectionCallback(
+    ref,
+    (isIntersecting) => {
+      if (isIntersecting) {
+        markThreadAsRead(threadId);
+      }
+    },
+    {
+      // The underlying IntersectionObserver is only enabled when the window is focused
+      enabled: isWindowFocused,
+    }
+  );
+
+  return (
+    <div
+      ref={ref}
+      style={{ height: 0 }}
+      aria-hidden
+      data-mark-as-read-marker=""
+    />
+  );
+}
+
+export interface ThreadComponents<
+  // Future components might reference thread metadata so we declare it
+  // already to respect the `TM` → `CM` order used everywhere else.
+  _TM extends BaseMetadata = DTM,
+  CM extends BaseMetadata = DCM,
+> {
+  /**
+   * The component used to display comments.
+   */
+  Comment: ComponentType<CommentProps<CM>>;
+}
+
+export interface ThreadProps<
+  TM extends BaseMetadata = DTM,
+  CM extends BaseMetadata = DCM,
+> extends ComponentPropsWithoutRef<"div"> {
   /**
    * The thread to display.
    */
-  thread: ThreadData<M>;
+  thread: ThreadData<TM, CM>;
 
   /**
    * How to show or hide the composer to reply to the thread.
@@ -83,6 +131,13 @@ export interface ThreadProps<M extends BaseMetadata = DM>
    * Whether to show the composer's formatting controls.
    */
   showComposerFormattingControls?: ComposerProps["showFormattingControls"];
+
+  /**
+   * Add (or change) items to display in a comment's dropdown.
+   */
+  commentDropdownItems?:
+    | ReactNode
+    | ((props: PropsWithChildren<{ comment: CommentData<CM> }>) => ReactNode);
 
   /**
    * The maximum number of comments to show.
@@ -121,6 +176,11 @@ export interface ThreadProps<M extends BaseMetadata = DM>
   showDeletedComments?: CommentProps["showDeleted"];
 
   /**
+   * Whether to show the thread's subscription status.
+   */
+  showSubscription?: boolean;
+
+  /**
    * Whether to show attachments.
    */
   showAttachments?: boolean;
@@ -144,7 +204,7 @@ export interface ThreadProps<M extends BaseMetadata = DM>
    * The event handler called when the thread is deleted.
    * A thread is deleted when all its comments are deleted.
    */
-  onThreadDelete?: (thread: ThreadData<M>) => void;
+  onThreadDelete?: (thread: ThreadData<TM, CM>) => void;
 
   /**
    * The event handler called when clicking on a comment's author.
@@ -167,6 +227,11 @@ export interface ThreadProps<M extends BaseMetadata = DM>
   onComposerSubmit?: ComposerProps["onComposerSubmit"];
 
   /**
+   * Whether to focus the composer on mount.
+   */
+  autoFocus?: ComposerProps["autoFocus"];
+
+  /**
    * Override the component's strings.
    */
   overrides?: Partial<
@@ -176,7 +241,7 @@ export interface ThreadProps<M extends BaseMetadata = DM>
   /**
    * Override the component's components.
    */
-  components?: Partial<GlobalComponents>;
+  components?: Partial<GlobalComponents & ThreadComponents<TM, CM>>;
 }
 
 /**
@@ -191,7 +256,7 @@ export interface ThreadProps<M extends BaseMetadata = DM>
  * </>
  */
 export const Thread = forwardRef(
-  <M extends BaseMetadata = DM>(
+  <TM extends BaseMetadata = DTM, CM extends BaseMetadata = DCM>(
     {
       thread,
       indentCommentContent = true,
@@ -201,8 +266,10 @@ export const Thread = forwardRef(
       showReactions = true,
       showComposer = "collapsed",
       showAttachments = true,
+      showSubscription = true,
       showComposerFormattingControls = true,
       maxVisibleComments,
+      commentDropdownItems,
       onResolvedChange,
       onCommentEdit,
       onCommentDelete,
@@ -212,13 +279,15 @@ export const Thread = forwardRef(
       onAttachmentClick,
       onComposerSubmit,
       blurComposerOnSubmit,
+      autoFocus,
       overrides,
       components,
       className,
       ...props
-    }: ThreadProps<M>,
+    }: ThreadProps<TM, CM>,
     forwardedRef: ForwardedRef<HTMLDivElement>
   ) => {
+    const Comment = useStableComponent(components?.Comment, DefaultComment);
     const markThreadAsResolved = useMarkRoomThreadAsResolved(thread.roomId);
     const markThreadAsUnresolved = useMarkRoomThreadAsUnresolved(thread.roomId);
     const $ = useOverrides(overrides);
@@ -232,6 +301,11 @@ export const Thread = forwardRef(
       return showDeletedComments
         ? thread.comments.length - 1
         : findLastIndex(thread.comments, (comment) => Boolean(comment.body));
+    }, [showDeletedComments, thread.comments]);
+    const commentsCount = useMemo(() => {
+      return showDeletedComments
+        ? thread.comments.length
+        : thread.comments.filter((comment) => comment.body).length;
     }, [showDeletedComments, thread.comments]);
     const hiddenComments = useMemo(() => {
       const maxVisibleCommentsCount =
@@ -417,6 +491,8 @@ export const Thread = forwardRef(
       }
     }, [subscriptionStatus, subscribe, unsubscribe]);
 
+    let currentCommentIndex = 0;
+
     return (
       <TooltipProvider>
         <div
@@ -431,8 +507,9 @@ export const Thread = forwardRef(
           {...props}
           ref={forwardedRef}
         >
-          <div className="lb-thread-comments">
+          <div className="lb-thread-comments" role="feed">
             {thread.comments.map((comment, index) => {
+              const isNonDeletedComment = showDeletedComments || comment.body;
               const isFirstComment = index === firstCommentIndex;
               const isUnread =
                 unreadIndex !== undefined && index >= unreadIndex;
@@ -440,13 +517,15 @@ export const Thread = forwardRef(
                 hiddenComments &&
                 index >= hiddenComments.firstIndex &&
                 index <= hiddenComments.lastIndex;
+              const isHiddenBecauseDeleted =
+                !showDeletedComments && !comment.body;
               const isFirstHiddenComment =
                 isHidden && index === hiddenComments.firstIndex;
 
               if (isFirstHiddenComment) {
                 return (
                   <div
-                    key={`${comment.id}-show-more`}
+                    key={`${comment.id}:show-more`}
                     className="lb-thread-show-more"
                   >
                     <Button
@@ -460,13 +539,20 @@ export const Thread = forwardRef(
                 );
               }
 
-              if (isHidden) {
+              if (isHidden || isHiddenBecauseDeleted) {
                 return null;
+              }
+
+              if (isNonDeletedComment) {
+                currentCommentIndex++;
               }
 
               const children = (
                 <Comment
                   key={comment.id}
+                  tabIndex={0}
+                  aria-posinset={currentCommentIndex}
+                  aria-setsize={commentsCount}
                   overrides={overrides}
                   className="lb-thread-comment"
                   data-unread={isUnread ? "" : undefined}
@@ -485,15 +571,10 @@ export const Thread = forwardRef(
                   onMentionClick={onMentionClick}
                   onAttachmentClick={onAttachmentClick}
                   components={components}
-                  autoMarkReadThreadId={
-                    index === lastCommentIndex && isUnread
-                      ? thread.id
-                      : undefined
-                  }
-                  additionalActionsClassName={
+                  actionsClassName={
                     isFirstComment ? "lb-thread-actions" : undefined
                   }
-                  additionalActions={
+                  actions={
                     isFirstComment && showResolveAction ? (
                       <Tooltip
                         content={
@@ -528,11 +609,10 @@ export const Thread = forwardRef(
                       </Tooltip>
                     ) : null
                   }
-                  additionalDropdownItemsBefore={
-                    isFirstComment ? (
-                      <DropdownItem
+                  internalDropdownItems={
+                    isFirstComment && showSubscription ? (
+                      <DefaultComment.DropdownItem
                         onSelect={handleSubscribeChange}
-                        onClick={stopPropagation}
                         icon={
                           subscriptionStatus === "subscribed" ? (
                             <BellCrossedIcon />
@@ -544,8 +624,11 @@ export const Thread = forwardRef(
                         {subscriptionStatus === "subscribed"
                           ? $.THREAD_UNSUBSCRIBE
                           : $.THREAD_SUBSCRIBE}
-                      </DropdownItem>
-                    ) : null
+                      </DefaultComment.DropdownItem>
+                    ) : undefined
+                  }
+                  dropdownItems={
+                    commentDropdownItems as CommentProps["dropdownItems"]
                   }
                 />
               );
@@ -570,6 +653,9 @@ export const Thread = forwardRef(
               );
             })}
           </div>
+          {unreadIndex !== undefined && (
+            <MarkThreadAsReadMarker thread={thread} />
+          )}
           {showComposer && (
             <Composer
               className="lb-thread-composer"
@@ -585,12 +671,13 @@ export const Thread = forwardRef(
                 ...overrides,
               }}
               roomId={thread.roomId}
+              autoFocus={autoFocus}
             />
           )}
         </div>
       </TooltipProvider>
     );
   }
-) as <M extends BaseMetadata = DM>(
-  props: ThreadProps<M> & RefAttributes<HTMLDivElement>
+) as <TM extends BaseMetadata = DTM, CM extends BaseMetadata = DCM>(
+  props: ThreadProps<TM, CM> & RefAttributes<HTMLDivElement>
 ) => JSX.Element;

@@ -12,9 +12,15 @@
 .heroTitle {
   max-width: 400px;
   margin-bottom: var(--space-9);
-  font-size: var(--size-4xl);
+  font-size: var(--size-3xl);
   font-weight: 800;
   line-height: 1.25;
+}
+
+@media (min-width: 480px) {
+  .heroTitle {
+    font-size: var(--size-4xl);
+  }
 }
 
 .heroLead {

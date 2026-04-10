@@ -14,6 +14,7 @@ import {
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import {
   cn,
+  Portal,
   TooltipProvider,
   useInitial,
   useRefs,
@@ -32,7 +33,6 @@ import {
   useRef,
   useState,
 } from "react";
-import { createPortal } from "react-dom";
 
 import { OPEN_FLOATING_COMPOSER_COMMAND } from "../comments/floating-composer";
 import { createDOMRange } from "../create-dom-range";
@@ -413,39 +413,42 @@ export const FloatingToolbar = Object.assign(
 
       const slotProps: ToolbarSlotProps = { editor };
 
-      return createPortal(
-        <TooltipProvider>
-          <FloatingToolbarContext.Provider value={{ close, registerExternal }}>
-            <div
-              role="toolbar"
-              aria-label="Floating toolbar"
-              aria-orientation="horizontal"
-              className={cn(
-                "lb-root lb-portal lb-elevation lb-lexical-floating-toolbar lb-lexical-toolbar",
-                className
-              )}
-              ref={mergedRefs}
-              style={{
-                position: strategy,
-                top: 0,
-                left: 0,
-                transform: isPositioned
-                  ? `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`
-                  : "translate3d(0, -200%, 0)",
-                minWidth: "max-content",
-              }}
-              onPointerDown={handlePointerDown}
-              onFocus={handleFocus}
-              onBlur={handleBlur}
-              {...props}
-            >
-              {applyToolbarSlot(before, slotProps)}
-              {applyToolbarSlot(children, slotProps)}
-              {applyToolbarSlot(after, slotProps)}
-            </div>
-          </FloatingToolbarContext.Provider>
-        </TooltipProvider>,
-        document.body
+      return (
+        <Portal asChild>
+          <div
+            role="toolbar"
+            aria-label="Floating toolbar"
+            aria-orientation="horizontal"
+            className={cn(
+              "lb-root lb-portal lb-elevation lb-lexical-floating-toolbar lb-lexical-toolbar",
+              className
+            )}
+            ref={mergedRefs}
+            style={{
+              position: strategy,
+              top: 0,
+              left: 0,
+              transform: isPositioned
+                ? `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`
+                : "translate3d(0, -200%, 0)",
+              minWidth: "max-content",
+            }}
+            onPointerDown={handlePointerDown}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
+            {...props}
+          >
+            <TooltipProvider>
+              <FloatingToolbarContext.Provider
+                value={{ close, registerExternal }}
+              >
+                {applyToolbarSlot(before, slotProps)}
+                {applyToolbarSlot(children, slotProps)}
+                {applyToolbarSlot(after, slotProps)}
+              </FloatingToolbarContext.Provider>
+            </TooltipProvider>
+          </div>
+        </Portal>
       );
     }
   ),

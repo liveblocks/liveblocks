@@ -1,8 +1,9 @@
 ---
 meta:
-  title: "Get started with Liveblocks, Monaco, Yjs, and Svelte"
-  parentTitle: "Get started"
-  description: "Learn how to get started Liveblocks, Monaco, Yjs, and Svelte."
+  title: "Get started with a Monaco code editor using Liveblocks and Svelte"
+  parentTitle: "Quickstart"
+  description:
+    "Learn how to install a Monaco code editor using Liveblocks and Svelte"
 ---
 
 Liveblocks is a realtime collaboration infrastructure for building performant
@@ -19,7 +20,7 @@ collaboration to your Svelte application using the APIs from the
 
       Every Liveblocks package should use the same version.
 
-      ```bash
+      ```bash trackEvent="install_liveblocks"
       npm install @liveblocks/client @liveblocks/yjs yjs monaco-editor y-monaco
       ```
     </StepContent>
@@ -74,12 +75,12 @@ collaboration to your Svelte application using the APIs from the
         const editor = monaco.editor.create(element, {
           value: "",
           language: "javascript"
-        })
+        });
 
         // Attach Yjs to Monaco
         const binding = new MonacoBinding(
           yText,
-          editorRef.getModel(),
+          editor.getModel(),
           new Set([editor]),
           yProvider.awareness
         );

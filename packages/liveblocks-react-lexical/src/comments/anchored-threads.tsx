@@ -1,12 +1,12 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import type { BaseMetadata, ThreadData } from "@liveblocks/client";
-import type { DM } from "@liveblocks/core";
+import type { DCM, DTM } from "@liveblocks/core";
 import { useLayoutEffect } from "@liveblocks/react/_private";
 import {
   Thread as DefaultThread,
   type ThreadProps,
 } from "@liveblocks/react-ui";
-import { cn } from "@liveblocks/react-ui/_private";
+import { cn, useStableComponent } from "@liveblocks/react-ui/_private";
 import { $getNodeByKey } from "lexical";
 import type { ComponentPropsWithoutRef, ComponentType } from "react";
 import {
@@ -36,12 +36,14 @@ type AnchoredThreadsComponents = {
   Thread: ComponentType<ThreadProps>;
 };
 
-export interface AnchoredThreadsProps<M extends BaseMetadata = DM>
-  extends Omit<ComponentPropsWithoutRef<"div">, "children"> {
+export interface AnchoredThreadsProps<
+  TM extends BaseMetadata = DTM,
+  CM extends BaseMetadata = DCM,
+> extends Omit<ComponentPropsWithoutRef<"div">, "children"> {
   /**
    * The threads to display.
    */
-  threads: ThreadData<M>[];
+  threads: ThreadData<TM, CM>[];
 
   /**
    * Override the component's components.
@@ -72,7 +74,7 @@ export function AnchoredThreads({
   ...props
 }: AnchoredThreadsProps) {
   const [editor] = useLexicalComposerContext();
-  const Thread = components?.Thread ?? DefaultThread;
+  const Thread = useStableComponent(components?.Thread, DefaultThread);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const activeThreads = useActiveThreads();

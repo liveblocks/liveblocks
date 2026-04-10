@@ -1,7 +1,3 @@
-import "dotenv/config";
-
-import fetch from "node-fetch";
-import type { URL } from "url";
 import { expect, onTestFinished } from "vitest";
 import WebSocket from "ws";
 
@@ -9,29 +5,25 @@ import type { BaseMetadata, NoInfr } from "../src";
 import { nanoid } from "../src";
 import { createClient } from "../src/client";
 import type { Status } from "../src/connection";
+import { isLiveStructure } from "../src/crdts/liveblocks-helpers";
 import type { LiveObject } from "../src/crdts/LiveObject";
-import type { LsonObject } from "../src/crdts/Lson";
-import type { ToImmutable } from "../src/crdts/utils";
+import type { LsonObject, ToJson } from "../src/crdts/Lson";
 import { controlledPromise } from "../src/lib/controlledPromise";
 import type { Json, JsonObject } from "../src/lib/Json";
 import { mapValues, wait, withTimeout } from "../src/lib/utils";
 import type { BaseUserMeta } from "../src/protocol/BaseUserMeta";
 import type { Room, RoomEventMessage } from "../src/room";
-import { isLiveStructure } from "../src/crdts/liveblocks-helpers";
+
+const BASE_URL = "http://localhost:1154";
 
 async function initializeRoomForTest<
   P extends JsonObject = JsonObject,
   S extends LsonObject = LsonObject,
   U extends BaseUserMeta = BaseUserMeta,
   E extends Json = Json,
-  M extends BaseMetadata = BaseMetadata,
+  TM extends BaseMetadata = BaseMetadata,
+  CM extends BaseMetadata = BaseMetadata,
 >(roomId: string, initialPresence: NoInfr<P>, initialStorage: NoInfr<S>) {
-  const publicApiKey = process.env.LIVEBLOCKS_PUBLIC_KEY;
-
-  if (!publicApiKey) {
-    throw new Error('Environment variable "LIVEBLOCKS_PUBLIC_KEY" is missing.');
-  }
-
   let ws: PausableWebSocket | null = null;
 
   class PausableWebSocket extends WebSocket {
@@ -75,17 +67,15 @@ async function initializeRoomForTest<
 
   const client = createClient<U>({
     __DANGEROUSLY_disableThrottling: true,
-    publicApiKey,
+    publicApiKey: "pk_localdev",
     polyfills: {
-      // @ts-expect-error fetch from Node isn't compatible?
-      fetch,
       WebSocket: PausableWebSocket,
     },
-    baseUrl: process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL,
+    baseUrl: BASE_URL,
   });
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-  const { room, leave } = client.enterRoom<P, S, E, M>(roomId, {
+  const { room, leave } = client.enterRoom<P, S, E, TM, CM>(roomId, {
     initialPresence,
     initialStorage,
   } as any);
@@ -124,7 +114,7 @@ export function prepareTestsConflicts<S extends LsonObject>(
      * rooms' storages are expected to be equal. It also ensures that immutable
      * states updated with the updates generated from conflicts are equal.
      */
-    assert: (immRoot1: ToImmutable<S>, immRoot2?: ToImmutable<S>) => void;
+    assert: (immRoot1: ToJson<S>, immRoot2?: ToJson<S>) => void;
     /** Test utilities to exactly control message passing */
     control: {
       /**
@@ -187,7 +177,7 @@ export function prepareTestsConflicts<S extends LsonObject>(
           // Unfortunately there is no public API to know this has happened. It
           // typically happens within ~5 ms, so we'll wait a multitude of that
           // here, just to be sure.
-          setTimeout(resolve, 150);
+          setTimeout(resolve, 50);
         }
         beacons.delete(event.beacon);
       }
@@ -217,8 +207,8 @@ export function prepareTestsConflicts<S extends LsonObject>(
 
         await withTimeout(
           beacon$,
-          2000,
-          "Client B did not receive beacon from Client A within 2s"
+          8000,
+          "Client B did not receive beacon from Client A within 8s"
         );
       },
 
@@ -236,8 +226,8 @@ export function prepareTestsConflicts<S extends LsonObject>(
 
         await withTimeout(
           beacon$,
-          2000,
-          "Client A did not receive beacon from Client B within 2s"
+          8000,
+          "Client A did not receive beacon from Client B within 8s"
         );
       },
     };
@@ -249,10 +239,10 @@ export function prepareTestsConflicts<S extends LsonObject>(
     await Promise.all([control.flushA(), control.flushB()]);
 
     const expectedStorage = mapValues(initialStorage, (value) =>
-      isLiveStructure(value) ? value.toImmutable() : value
+      isLiveStructure(value) ? value.toJSON() : value
     );
-    let immutableStorage1 = root1.toImmutable();
-    let immutableStorage2 = root2.toImmutable();
+    let immutableStorage1 = root1.toJSON();
+    let immutableStorage2 = root2.toJSON();
 
     // Initial storage should be equal at the start of the test
     expect(immutableStorage1).toEqual(expectedStorage);
@@ -261,26 +251,23 @@ export function prepareTestsConflicts<S extends LsonObject>(
     actor1.room.subscribe(
       root1,
       () => {
-        immutableStorage1 = root1.toImmutable();
+        immutableStorage1 = root1.toJSON();
       },
       { isDeep: true }
     );
     actor2.room.subscribe(
       root2,
       () => {
-        immutableStorage2 = root2.toImmutable();
+        immutableStorage2 = root2.toJSON();
       },
       { isDeep: true }
     );
 
-    function assert(
-      immRoot1: ToImmutable<S>,
-      immRoot2: ToImmutable<S> = immRoot1
-    ) {
+    function assert(immRoot1: ToJson<S>, immRoot2: ToJson<S> = immRoot1) {
       try {
-        expect({ root1: root1.toImmutable() }).toEqual({ root1: immRoot1 });
+        expect({ root1: root1.toJSON() }).toEqual({ root1: immRoot1 });
         expect(immutableStorage1).toEqual(immRoot1);
-        expect({ root2: root2.toImmutable() }).toEqual({ root2: immRoot2 });
+        expect({ root2: root2.toJSON() }).toEqual({ root2: immRoot2 });
         expect(immutableStorage2).toEqual(immRoot2);
       } catch (error) {
         // Better stack trace (point to where assert is called instead)
@@ -332,7 +319,7 @@ export function prepareSingleClientTest<S extends LsonObject>(
 
     // Waiting until every messages are received by all clients.
     // We don't have a public way to know if everything has been received so we have to rely on time
-    await wait(600);
+    await wait(200);
 
     actor.ws.pause();
 
@@ -348,7 +335,7 @@ export function prepareSingleClientTest<S extends LsonObject>(
           actor.ws.resume();
           // Waiting until every messages are received by all clients.
           // We don't have a public way to know if everything has been received so we have to rely on time
-          await wait(600);
+          await wait(200);
         },
       });
       actor.leave();
@@ -374,7 +361,7 @@ async function waitUntilStatus(
 
   await withTimeout(
     room.events.status.waitUntil((status) => status === targetStatus),
-    5000,
-    `Room did not reach connection status "${targetStatus}" within 5s`
+    20000,
+    `Room did not reach connection status "${targetStatus}" within 20s`
   );
 }

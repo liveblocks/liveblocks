@@ -20,6 +20,14 @@ type LargeMessageErrorContext = {
   type: "LARGE_MESSAGE_ERROR";
 };
 
+type FeedRequestErrorContext = {
+  type: "FEED_REQUEST_ERROR";
+  roomId: string;
+  requestId: string;
+  code: string;
+  reason?: string;
+};
+
 // All possible errors originating from using Comments or Notifications
 type CommentsOrNotificationsErrorContext =
   | {
@@ -29,6 +37,7 @@ type CommentsOrNotificationsErrorContext =
       commentId: string;
       body: CommentBody;
       metadata: BaseMetadata;
+      commentMetadata: BaseMetadata;
     }
   | {
       type: "DELETE_THREAD_ERROR";
@@ -39,6 +48,13 @@ type CommentsOrNotificationsErrorContext =
       type: "EDIT_THREAD_METADATA_ERROR";
       roomId: string;
       threadId: string;
+      metadata: Patchable<BaseMetadata>;
+    }
+  | {
+      type: "EDIT_COMMENT_METADATA_ERROR";
+      roomId: string;
+      threadId: string;
+      commentId: string;
       metadata: Patchable<BaseMetadata>;
     }
   | {
@@ -56,6 +72,7 @@ type CommentsOrNotificationsErrorContext =
       threadId: string;
       commentId: string;
       body: CommentBody;
+      metadata: BaseMetadata;
     }
   | {
       type: "DELETE_COMMENT_ERROR";
@@ -97,6 +114,7 @@ export type LiveblocksErrorContext = Relax<
   | CommentsOrNotificationsErrorContext // from Comments or Notifications or UserNotificationSettings
   | AiConnectionErrorContext // from AI
   | LargeMessageErrorContext // whena  message is too large
+  | FeedRequestErrorContext // feed WebSocket mutations
 >;
 
 export class LiveblocksError extends Error {
@@ -156,6 +174,7 @@ function defaultMessageFromContext(context: LiveblocksErrorContext): string {
     case "CREATE_THREAD_ERROR": return "Could not create new thread";
     case "DELETE_THREAD_ERROR": return "Could not delete thread";
     case "EDIT_THREAD_METADATA_ERROR": return "Could not edit thread metadata";
+    case "EDIT_COMMENT_METADATA_ERROR": return "Could not edit comment metadata";
     case "MARK_THREAD_AS_RESOLVED_ERROR": return "Could not mark thread as resolved";
     case "MARK_THREAD_AS_UNRESOLVED_ERROR": return "Could not mark thread as unresolved";
     case "SUBSCRIBE_TO_THREAD_ERROR": return "Could not subscribe to thread";
@@ -172,6 +191,9 @@ function defaultMessageFromContext(context: LiveblocksErrorContext): string {
     case "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR": return "Could not update room subscription settings";
     case "UPDATE_NOTIFICATION_SETTINGS_ERROR": return "Could not update notification settings";
     case "LARGE_MESSAGE_ERROR": return "Could not send large message";
+
+    case "FEED_REQUEST_ERROR":
+      return context.reason ?? "Feed request failed";
 
     default:
       return assertNever(context, "Unhandled case");

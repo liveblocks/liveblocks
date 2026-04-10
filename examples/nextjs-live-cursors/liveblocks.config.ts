@@ -4,6 +4,15 @@ declare global {
     Presence: {
       cursor: { x: number; y: number } | null;
     };
+    // Custom user info set when authenticating with a secret key
+    UserMeta: {
+      id: string;
+      info: {
+        name: string;
+        color: string;
+        avatar: string;
+      };
+    };
   }
 }
 

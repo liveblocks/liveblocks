@@ -18,7 +18,8 @@ import { chunk } from "./lib/chunk";
 import { createCommentId, createThreadId } from "./lib/createIds";
 import type { DateToString } from "./lib/DateToString";
 import { DefaultMap } from "./lib/DefaultMap";
-import type { Json, JsonObject } from "./lib/Json";
+import * as console from "./lib/fancy-console";
+import type { JsonObject } from "./lib/Json";
 import { objectToQuery } from "./lib/objectToQuery";
 import type { Signal } from "./lib/signals";
 import { stringifyOrLog as stringify } from "./lib/stringify";
@@ -30,7 +31,6 @@ import type {
   ContextualPromptResponse,
 } from "./protocol/Ai";
 import type { Permission } from "./protocol/AuthToken";
-import type { ClientMsg } from "./protocol/ClientMsg";
 import type {
   BaseMetadata,
   CommentAttachment,
@@ -41,6 +41,7 @@ import type {
   CommentUserReaction,
   CommentUserReactionPlain,
   QueryMetadata,
+  SearchCommentsResult,
   ThreadData,
   ThreadDataPlain,
   ThreadDeleteInfo,
@@ -59,28 +60,30 @@ import type {
   PartialNotificationSettings,
 } from "./protocol/NotificationSettings";
 import type { RoomSubscriptionSettings } from "./protocol/RoomSubscriptionSettings";
-import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
+import type { StorageNode } from "./protocol/StorageNode";
 import type {
   SubscriptionData,
   SubscriptionDataPlain,
   SubscriptionDeleteInfo,
   SubscriptionDeleteInfoPlain,
 } from "./protocol/Subscriptions";
+import type { UrlMetadata } from "./protocol/UrlMetadata";
 import type { HistoryVersion } from "./protocol/VersionHistory";
 import type { TextEditorType } from "./types/Others";
 import type { Patchable } from "./types/Patchable";
 import { PKG_VERSION } from "./version";
 
-export interface RoomHttpApi<M extends BaseMetadata> {
+export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
   getThreads(options: {
     roomId: string;
     cursor?: string;
     query?: {
       resolved?: boolean;
-      metadata?: Partial<QueryMetadata<M>>;
+      subscribed?: boolean;
+      metadata?: Partial<QueryMetadata<TM>>;
     };
   }): Promise<{
-    threads: ThreadData<M>[];
+    threads: ThreadData<TM, CM>[];
     inboxNotifications: InboxNotificationData[];
     subscriptions: SubscriptionData[];
     requestedAt: Date;
@@ -94,7 +97,7 @@ export interface RoomHttpApi<M extends BaseMetadata> {
     signal?: AbortSignal;
   }): Promise<{
     threads: {
-      updated: ThreadData<M>[];
+      updated: ThreadData<TM, CM>[];
       deleted: ThreadDeleteInfo[];
     };
     inboxNotifications: {
@@ -109,24 +112,44 @@ export interface RoomHttpApi<M extends BaseMetadata> {
     permissionHints: Record<string, Permission[]>;
   }>;
 
+  searchComments(
+    options: {
+      roomId: string;
+      query: {
+        threadMetadata?: Partial<QueryMetadata<TM>>;
+        threadResolved?: boolean;
+        hasAttachments?: boolean;
+        hasMentions?: boolean;
+        text: string;
+      };
+    },
+    requestOptions?: {
+      signal?: AbortSignal;
+    }
+  ): Promise<{
+    data: Array<SearchCommentsResult>;
+  }>;
+
   createThread({
     roomId,
     metadata,
     body,
     commentId,
     threadId,
+    commentMetadata,
     attachmentIds,
   }: {
     roomId: string;
     threadId?: string;
     commentId?: string;
-    metadata: M | undefined;
+    metadata: TM | undefined;
+    commentMetadata: CM | undefined;
     body: CommentBody;
     attachmentIds?: string[];
-  }): Promise<ThreadData<M>>;
+  }): Promise<ThreadData<TM, CM>>;
 
   getThread(options: { roomId: string; threadId: string }): Promise<{
-    thread?: ThreadData<M>;
+    thread?: ThreadData<TM, CM>;
     inboxNotification?: InboxNotificationData;
     subscription?: SubscriptionData;
   }>;
@@ -145,23 +168,37 @@ export interface RoomHttpApi<M extends BaseMetadata> {
     threadId,
   }: {
     roomId: string;
-    metadata: Patchable<M>;
+    metadata: Patchable<TM>;
     threadId: string;
-  }): Promise<M>;
+  }): Promise<TM>;
+
+  editCommentMetadata({
+    roomId,
+    threadId,
+    commentId,
+    metadata,
+  }: {
+    roomId: string;
+    threadId: string;
+    commentId: string;
+    metadata: Patchable<CM>;
+  }): Promise<CM>;
 
   createComment({
     roomId,
     threadId,
     commentId,
     body,
+    metadata,
     attachmentIds,
   }: {
     roomId: string;
     threadId: string;
     commentId?: string;
     body: CommentBody;
+    metadata?: CM;
     attachmentIds?: string[];
-  }): Promise<CommentData>;
+  }): Promise<CommentData<CM>>;
 
   editComment({
     roomId,
@@ -169,13 +206,15 @@ export interface RoomHttpApi<M extends BaseMetadata> {
     commentId,
     body,
     attachmentIds,
+    metadata,
   }: {
     roomId: string;
     threadId: string;
     commentId: string;
     body: CommentBody;
     attachmentIds?: string[];
-  }): Promise<CommentData>;
+    metadata?: Patchable<CM>;
+  }): Promise<CommentData<CM>>;
 
   deleteComment({
     roomId,
@@ -374,15 +413,7 @@ export interface RoomHttpApi<M extends BaseMetadata> {
     requestedAt: Date;
   }>;
 
-  streamStorage(options: {
-    roomId: string;
-  }): Promise<IdTuple<SerializedCrdt>[]>;
-
-  sendMessages<P extends JsonObject, E extends Json>(options: {
-    roomId: string;
-    nonce: string | undefined;
-    messages: ClientMsg<P, E>[];
-  }): Promise<Response>;
+  streamStorage(options: { roomId: string }): Promise<StorageNode[]>;
 
   executeContextualPrompt({
     roomId,
@@ -401,13 +432,16 @@ export interface RoomHttpApi<M extends BaseMetadata> {
   }): Promise<string>;
 }
 
-export interface NotificationHttpApi<M extends BaseMetadata> {
+export interface NotificationHttpApi<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+> {
   getInboxNotifications(options?: {
     cursor?: string;
     query?: { roomId?: string; kind?: string };
   }): Promise<{
     inboxNotifications: InboxNotificationData[];
-    threads: ThreadData<M>[];
+    threads: ThreadData<TM, CM>[];
     subscriptions: SubscriptionData[];
     nextCursor: string | null;
     requestedAt: Date;
@@ -423,7 +457,7 @@ export interface NotificationHttpApi<M extends BaseMetadata> {
       deleted: InboxNotificationDeleteInfo[];
     };
     threads: {
-      updated: ThreadData<M>[];
+      updated: ThreadData<TM, CM>[];
       deleted: ThreadDeleteInfo[];
     };
     subscriptions: {
@@ -433,7 +467,13 @@ export interface NotificationHttpApi<M extends BaseMetadata> {
     requestedAt: Date;
   }>;
 
-  getUnreadInboxNotificationsCount(): Promise<number>;
+  getUnreadInboxNotificationsCount(options?: {
+    query?: {
+      roomId?: string;
+      kind?: string;
+    };
+    signal?: AbortSignal;
+  }): Promise<number>;
 
   markAllInboxNotificationsAsRead(): Promise<void>;
 
@@ -452,17 +492,21 @@ export interface NotificationHttpApi<M extends BaseMetadata> {
   ): Promise<NotificationSettingsPlain>;
 }
 
-export interface LiveblocksHttpApi<M extends BaseMetadata>
-  extends RoomHttpApi<M>,
-    NotificationHttpApi<M> {
+export interface LiveblocksHttpApi<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+> extends RoomHttpApi<TM, CM>,
+    NotificationHttpApi<TM, CM> {
+  getUrlMetadata(url: string): Promise<UrlMetadata>;
+
   getUserThreads_experimental(options?: {
     cursor?: string;
     query?: {
       resolved?: boolean;
-      metadata?: Partial<QueryMetadata<M>>;
+      metadata?: Partial<QueryMetadata<TM>>;
     };
   }): Promise<{
-    threads: ThreadData<M>[];
+    threads: ThreadData<TM, CM>[];
     inboxNotifications: InboxNotificationData[];
     subscriptions: SubscriptionData[];
     nextCursor: string | null;
@@ -479,7 +523,7 @@ export interface LiveblocksHttpApi<M extends BaseMetadata>
       deleted: InboxNotificationDeleteInfo[];
     };
     threads: {
-      updated: ThreadData<M>[];
+      updated: ThreadData<TM, CM>[];
       deleted: ThreadDeleteInfo[];
     };
     subscriptions: {
@@ -495,7 +539,10 @@ export interface LiveblocksHttpApi<M extends BaseMetadata>
   getGroup(groupId: string): Promise<GroupData | undefined>;
 }
 
-export function createApiClient<M extends BaseMetadata>({
+export function createApiClient<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>({
   baseUrl,
   authManager,
   currentUserId,
@@ -505,7 +552,7 @@ export function createApiClient<M extends BaseMetadata>({
   authManager: AuthManager;
   currentUserId: Signal<string | undefined>;
   fetchPolyfill: typeof fetch;
-}): LiveblocksHttpApi<M> {
+}): LiveblocksHttpApi<TM, CM> {
   const httpClient = new HttpClient(baseUrl, fetchPolyfill);
 
   /* -------------------------------------------------------------------------------------------------
@@ -517,7 +564,7 @@ export function createApiClient<M extends BaseMetadata>({
     signal?: AbortSignal;
   }) {
     const result = await httpClient.get<{
-      data: ThreadDataPlain<M>[];
+      data: ThreadDataPlain<TM, CM>[];
       inboxNotifications: InboxNotificationDataPlain[];
       subscriptions: SubscriptionDataPlain[];
       deletedThreads: ThreadDeleteInfoPlain[];
@@ -566,7 +613,8 @@ export function createApiClient<M extends BaseMetadata>({
     cursor?: string;
     query?: {
       resolved?: boolean;
-      metadata?: Partial<QueryMetadata<M>>;
+      subscribed?: boolean;
+      metadata?: Partial<QueryMetadata<TM>>;
     };
   }) {
     let query: string | undefined;
@@ -579,7 +627,7 @@ export function createApiClient<M extends BaseMetadata>({
 
     try {
       const result = await httpClient.get<{
-        data: ThreadDataPlain<M>[];
+        data: ThreadDataPlain<TM, CM>[];
         inboxNotifications: InboxNotificationDataPlain[];
         subscriptions: SubscriptionDataPlain[];
         deletedThreads: ThreadDeleteInfoPlain[];
@@ -639,18 +687,56 @@ export function createApiClient<M extends BaseMetadata>({
     }
   }
 
+  async function searchComments(
+    options: {
+      roomId: string;
+      query: {
+        threadMetadata?: Partial<QueryMetadata<TM>>;
+        threadResolved?: boolean;
+        hasAttachments?: boolean;
+        hasMentions?: boolean;
+        text: string;
+      };
+    },
+    requestOptions?: {
+      signal?: AbortSignal;
+    }
+  ) {
+    const result = await httpClient.get<{
+      data: Array<SearchCommentsResult>;
+    }>(
+      url`/v2/c/rooms/${options.roomId}/threads/comments/search`,
+      await authManager.getAuthValue({
+        requestedScope: "comments:read",
+        roomId: options.roomId,
+      }),
+      {
+        text: options.query.text,
+        query: objectToQuery({
+          threadMetadata: options.query.threadMetadata,
+          threadResolved: options.query.threadResolved,
+          hasAttachments: options.query.hasAttachments,
+          hasMentions: options.query.hasMentions,
+        }),
+      },
+      { signal: requestOptions?.signal }
+    );
+    return result;
+  }
+
   async function createThread(options: {
     roomId: string;
     threadId?: string;
     commentId?: string;
-    metadata: M | undefined;
+    metadata: TM | undefined;
     body: CommentBody;
+    commentMetadata?: CM;
     attachmentIds?: string[];
   }) {
     const commentId = options.commentId ?? createCommentId();
     const threadId = options.threadId ?? createThreadId();
 
-    const thread = await httpClient.post<ThreadDataPlain<M>>(
+    const thread = await httpClient.post<ThreadDataPlain<TM, CM>>(
       url`/v2/c/rooms/${options.roomId}/threads`,
       await authManager.getAuthValue({
         requestedScope: "comments:read",
@@ -661,13 +747,14 @@ export function createApiClient<M extends BaseMetadata>({
         comment: {
           id: commentId,
           body: options.body,
+          metadata: options.commentMetadata,
           attachmentIds: options.attachmentIds,
         },
         metadata: options.metadata,
       }
     );
 
-    return convertToThreadData<M>(thread);
+    return convertToThreadData<TM, CM>(thread);
   }
 
   async function deleteThread(options: { roomId: string; threadId: string }) {
@@ -691,7 +778,7 @@ export function createApiClient<M extends BaseMetadata>({
 
     if (response.ok) {
       const json = (await response.json()) as {
-        thread: ThreadDataPlain<M>;
+        thread: ThreadDataPlain<TM, CM>;
         inboxNotification?: InboxNotificationDataPlain;
         subscription?: SubscriptionDataPlain;
       };
@@ -720,11 +807,27 @@ export function createApiClient<M extends BaseMetadata>({
 
   async function editThreadMetadata(options: {
     roomId: string;
-    metadata: Patchable<M>;
+    metadata: Patchable<TM>;
     threadId: string;
   }) {
-    return await httpClient.post<M>(
+    return await httpClient.post<TM>(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/metadata`,
+      await authManager.getAuthValue({
+        requestedScope: "comments:read",
+        roomId: options.roomId,
+      }),
+      options.metadata
+    );
+  }
+
+  async function editCommentMetadata(options: {
+    roomId: string;
+    threadId: string;
+    commentId: string;
+    metadata: Patchable<CM>;
+  }) {
+    return await httpClient.post<CM>(
+      url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments/${options.commentId}/metadata`,
       await authManager.getAuthValue({
         requestedScope: "comments:read",
         roomId: options.roomId,
@@ -738,10 +841,11 @@ export function createApiClient<M extends BaseMetadata>({
     threadId: string;
     commentId?: string;
     body: CommentBody;
+    metadata?: CM;
     attachmentIds?: string[];
   }) {
     const commentId = options.commentId ?? createCommentId();
-    const comment = await httpClient.post<CommentDataPlain>(
+    const comment = await httpClient.post<CommentDataPlain<CM>>(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments`,
       await authManager.getAuthValue({
         requestedScope: "comments:read",
@@ -750,6 +854,7 @@ export function createApiClient<M extends BaseMetadata>({
       {
         id: commentId,
         body: options.body,
+        metadata: options.metadata,
         attachmentIds: options.attachmentIds,
       }
     );
@@ -762,8 +867,9 @@ export function createApiClient<M extends BaseMetadata>({
     commentId: string;
     body: CommentBody;
     attachmentIds?: string[];
+    metadata?: Patchable<CM>;
   }) {
-    const comment = await httpClient.post<CommentDataPlain>(
+    const comment = await httpClient.post<CommentDataPlain<CM>>(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments/${options.commentId}`,
       await authManager.getAuthValue({
         requestedScope: "comments:read",
@@ -772,6 +878,7 @@ export function createApiClient<M extends BaseMetadata>({
       {
         body: options.body,
         attachmentIds: options.attachmentIds,
+        metadata: options.metadata,
       }
     );
 
@@ -816,7 +923,7 @@ export function createApiClient<M extends BaseMetadata>({
     commentId: string;
     emoji: string;
   }) {
-    await httpClient.delete<CommentDataPlain>(
+    await httpClient.delete<CommentDataPlain<CM>>(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments/${options.commentId}/reactions/${options.emoji}`,
       await authManager.getAuthValue({
         requestedScope: "comments:read",
@@ -1505,25 +1612,7 @@ export function createApiClient<M extends BaseMetadata>({
         roomId: options.roomId,
       })
     );
-    return (await result.json()) as IdTuple<SerializedCrdt>[];
-  }
-
-  async function sendMessages<P extends JsonObject, E extends Json>(options: {
-    roomId: string;
-    nonce: string | undefined;
-    messages: ClientMsg<P, E>[];
-  }) {
-    return httpClient.rawPost(
-      url`/v2/c/rooms/${options.roomId}/send-message`,
-      await authManager.getAuthValue({
-        requestedScope: "room:read",
-        roomId: options.roomId,
-      }),
-      {
-        nonce: options.nonce,
-        messages: options.messages,
-      }
-    );
+    return (await result.json()) as StorageNode[];
   }
 
   /* -------------------------------------------------------------------------------------------------
@@ -1542,7 +1631,7 @@ export function createApiClient<M extends BaseMetadata>({
     }
 
     const json = await httpClient.get<{
-      threads: ThreadDataPlain<M>[];
+      threads: ThreadDataPlain<TM, CM>[];
       inboxNotifications: InboxNotificationDataPlain[];
       subscriptions: SubscriptionDataPlain[];
       groups: GroupDataPlain[];
@@ -1589,7 +1678,7 @@ export function createApiClient<M extends BaseMetadata>({
     }
 
     const json = await httpClient.get<{
-      threads: ThreadDataPlain<M>[];
+      threads: ThreadDataPlain<TM, CM>[];
       inboxNotifications: InboxNotificationDataPlain[];
       subscriptions: SubscriptionDataPlain[];
       deletedThreads: ThreadDeleteInfoPlain[];
@@ -1623,10 +1712,24 @@ export function createApiClient<M extends BaseMetadata>({
     };
   }
 
-  async function getUnreadInboxNotificationsCount() {
+  async function getUnreadInboxNotificationsCount(options: {
+    query?: {
+      roomId?: string;
+      kind?: string;
+    };
+    signal?: AbortSignal;
+  }) {
+    let query: string | undefined;
+
+    if (options?.query) {
+      query = objectToQuery(options.query);
+    }
+
     const { count } = await httpClient.get<{ count: number }>(
       url`/v2/c/inbox-notifications/count`,
-      await authManager.getAuthValue({ requestedScope: "comments:read" })
+      await authManager.getAuthValue({ requestedScope: "comments:read" }),
+      { query },
+      { signal: options?.signal }
     );
     return count;
   }
@@ -1713,7 +1816,7 @@ export function createApiClient<M extends BaseMetadata>({
     cursor?: string;
     query?: {
       resolved?: boolean;
-      metadata?: Partial<QueryMetadata<M>>;
+      metadata?: Partial<QueryMetadata<TM>>;
     };
   }) {
     let query: string | undefined;
@@ -1725,7 +1828,7 @@ export function createApiClient<M extends BaseMetadata>({
     const PAGE_SIZE = 50;
 
     const json = await httpClient.get<{
-      threads: ThreadDataPlain<M>[];
+      threads: ThreadDataPlain<TM, CM>[];
       inboxNotifications: InboxNotificationDataPlain[];
       subscriptions: SubscriptionDataPlain[];
       deletedThreads: ThreadDeleteInfoPlain[];
@@ -1758,11 +1861,12 @@ export function createApiClient<M extends BaseMetadata>({
     };
   }
 
-  async function getUserThreadsSince_experimental<
-    M extends BaseMetadata,
-  >(options: { since: Date; signal?: AbortSignal }) {
+  async function getUserThreadsSince_experimental(options: {
+    since: Date;
+    signal?: AbortSignal;
+  }) {
     const json = await httpClient.get<{
-      threads: ThreadDataPlain<M>[];
+      threads: ThreadDataPlain<TM, CM>[];
       inboxNotifications: InboxNotificationDataPlain[];
       subscriptions: SubscriptionDataPlain[];
       deletedThreads: ThreadDeleteInfoPlain[];
@@ -1833,16 +1937,32 @@ export function createApiClient<M extends BaseMetadata>({
     return batchedGetGroups.get(groupId);
   }
 
+  /* -------------------------------------------------------------------------------------------------
+   * URL metadata
+   * -------------------------------------------------------------------------------------------------
+   */
+  async function getUrlMetadata(_url: string) {
+    const { metadata } = await httpClient.get<{ metadata: UrlMetadata }>(
+      url`/v2/c/urls/metadata`,
+      await authManager.getAuthValue({ requestedScope: "comments:read" }),
+      { url: _url }
+    );
+
+    return metadata;
+  }
+
   return {
     // Room threads
     getThreads,
     getThreadsSince,
+    searchComments,
     createThread,
     getThread,
     deleteThread,
     editThreadMetadata,
     createComment,
     editComment,
+    editCommentMetadata,
     deleteComment,
     addReaction,
     removeReaction,
@@ -1872,7 +1992,6 @@ export function createApiClient<M extends BaseMetadata>({
     getChatAttachmentUrl,
     // Room storage
     streamStorage,
-    sendMessages,
     // Notifications
     getInboxNotifications,
     getInboxNotificationsSince,
@@ -1891,6 +2010,8 @@ export function createApiClient<M extends BaseMetadata>({
     getGroup,
     // AI
     executeContextualPrompt,
+    // URL metadata
+    getUrlMetadata,
   };
 }
 
@@ -1948,7 +2069,7 @@ class HttpClient {
     }
 
     const url = urljoin(this.#baseUrl, endpoint, params);
-    return await this.#fetchPolyfill(url, {
+    const response = await this.#fetchPolyfill(url, {
       ...options,
       headers: {
         // These headers are default, but can be overriden by custom headers
@@ -1962,6 +2083,20 @@ class HttpClient {
         "X-LB-Client": PKG_VERSION || "dev",
       },
     });
+
+    // Surface dev-server warnings to the developer
+    const xwarn = response.headers.get("X-LB-Warn");
+    if (xwarn) {
+      const method = options?.method?.toUpperCase() ?? "GET";
+      const msg = `${xwarn} (${method} ${endpoint})`;
+      if (response.ok) {
+        console.warn(msg);
+      } else {
+        console.error(msg);
+      }
+    }
+
+    return response;
   }
 
   /**

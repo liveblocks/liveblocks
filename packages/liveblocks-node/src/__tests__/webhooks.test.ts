@@ -161,6 +161,17 @@ describe("WebhookHandler", () => {
         },
       ],
       [
+        "commentMetadataUpdated",
+        {
+          projectId: "605a50b01a36d5ea7a2e9104",
+          threadId: "605a50b01a36d5ea7a2e9104",
+          commentId: "605a50b01a36d5ea7a2e9104",
+          roomId: "examples-hero-21-07-2022",
+          updatedBy: "authorId",
+          updatedAt: "2023-01-27T20:33:23.737Z",
+        },
+      ],
+      [
         "threadCreated",
         {
           projectId: "605a50b01a36d5ea7a2e9104",

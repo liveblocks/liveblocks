@@ -7,6 +7,7 @@ import type {
 import { LiveObject, LiveList } from "@liveblocks/client";
 import * as classic from "@liveblocks/react";
 import * as suspense from "@liveblocks/react/suspense";
+import type { AiChatStatus } from "@liveblocks/react";
 import { expectAssignable, expectError, expectType } from "tsd";
 
 // LiveblocksProvider
@@ -208,7 +209,7 @@ import { expectAssignable, expectError, expectType } from "tsd";
   classic.useErrorListener((err) => {
     expectType<string>(err.message);
     expectType<string | undefined>(err.stack);
-    expectType<-1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(
+    expectType<string | -1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(
       err.context.code
     );
     expectAssignable<
@@ -217,6 +218,7 @@ import { expectAssignable, expectError, expectType } from "tsd";
       | "CREATE_THREAD_ERROR"
       | "DELETE_THREAD_ERROR"
       | "EDIT_THREAD_METADATA_ERROR"
+      | "EDIT_COMMENT_METADATA_ERROR"
       | "MARK_THREAD_AS_RESOLVED_ERROR"
       | "MARK_THREAD_AS_UNRESOLVED_ERROR"
       | "SUBSCRIBE_TO_THREAD_ERROR"
@@ -233,6 +235,7 @@ import { expectAssignable, expectError, expectType } from "tsd";
       | "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR"
       | "UPDATE_NOTIFICATION_SETTINGS_ERROR"
       | "LARGE_MESSAGE_ERROR"
+      | "FEED_REQUEST_ERROR"
     >(err.context.type);
     if (err.context.type === "ROOM_CONNECTION_ERROR") {
       expectAssignable<number>(err.context.code);
@@ -252,7 +255,7 @@ import { expectAssignable, expectError, expectType } from "tsd";
   suspense.useErrorListener((err) => {
     expectType<string>(err.message);
     expectType<string | undefined>(err.stack);
-    expectType<-1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(
+    expectType<string | -1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(
       err.context.code
     );
     expectAssignable<
@@ -261,6 +264,7 @@ import { expectAssignable, expectError, expectType } from "tsd";
       | "CREATE_THREAD_ERROR"
       | "DELETE_THREAD_ERROR"
       | "EDIT_THREAD_METADATA_ERROR"
+      | "EDIT_COMMENT_METADATA_ERROR"
       | "MARK_THREAD_AS_RESOLVED_ERROR"
       | "MARK_THREAD_AS_UNRESOLVED_ERROR"
       | "SUBSCRIBE_TO_THREAD_ERROR"
@@ -277,6 +281,7 @@ import { expectAssignable, expectError, expectType } from "tsd";
       | "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR"
       | "UPDATE_NOTIFICATION_SETTINGS_ERROR"
       | "LARGE_MESSAGE_ERROR"
+      | "FEED_REQUEST_ERROR"
     >(err.context.type);
     if (err.context.type === "ROOM_CONNECTION_ERROR") {
       expectAssignable<number>(err.context.code);
@@ -656,6 +661,24 @@ import { expectAssignable, expectError, expectType } from "tsd";
     expectType<"comment">(comment.type);
     expectType<string>(comment.id);
     expectType<string>(comment.threadId);
+    expectType<string | number | boolean | undefined>(comment.metadata.foo);
+
+    const commentWithMetadata = createComment({
+      threadId: "th_xxx",
+      body: {
+        version: 1,
+        content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+      },
+      metadata: { status: "pending", priority: 1 },
+    });
+
+    expectType<"comment">(commentWithMetadata.type);
+    expectType<string | number | boolean | undefined>(
+      commentWithMetadata.metadata.status
+    );
+    expectType<string | number | boolean | undefined>(
+      commentWithMetadata.metadata.priority
+    );
   }
 }
 
@@ -675,6 +698,21 @@ import { expectAssignable, expectError, expectType } from "tsd";
   expectType<"comment">(comment.type);
   expectType<string>(comment.id);
   expectType<string>(comment.threadId);
+  expectType<string | number | boolean | undefined>(comment.metadata.foo);
+
+  const commentWithMetadata = createComment({
+    threadId: "th_xxx",
+    body: {
+      version: 1,
+      content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+    },
+    metadata: { priority: 2 },
+  });
+
+  expectType<"comment">(commentWithMetadata.type);
+  expectType<string | number | boolean | undefined>(
+    commentWithMetadata.metadata.status
+  );
 }
 
 // ---------------------------------------------------------
@@ -691,6 +729,15 @@ import { expectAssignable, expectError, expectType } from "tsd";
       body: { version: 1, content: [] },
     })
   );
+
+  expectType<void>(
+    editComment({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      body: { version: 1, content: [] },
+      metadata: { priority: 2 },
+    })
+  );
 }
 
 // The useEditComment() hook (suspense)
@@ -703,6 +750,65 @@ import { expectAssignable, expectError, expectType } from "tsd";
       threadId: "th_xxx",
       commentId: "cm_xxx",
       body: { version: 1, content: [] },
+    })
+  );
+
+  expectType<void>(
+    editComment({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      body: { version: 1, content: [] },
+      metadata: { priority: 2 },
+    })
+  );
+}
+
+// ---------------------------------------------------------
+
+// The useEditCommentMetadata() hook
+{
+  const editMetadata = classic.useEditCommentMetadata();
+  expectError(editMetadata({}));
+
+  expectType<void>(
+    editMetadata({ threadId: "th_xxx", commentId: "cm_xxx", metadata: {} })
+  );
+  expectType<void>(
+    editMetadata({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      metadata: { nonexisting: 123 },
+    })
+  );
+  expectType<void>(
+    editMetadata({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      metadata: { nonexisting: null },
+    })
+  );
+}
+
+// The useEditCommentMetadata() hook (suspense)
+{
+  const editMetadata = suspense.useEditCommentMetadata();
+  expectError(editMetadata({}));
+
+  expectType<void>(
+    editMetadata({ threadId: "th_xxx", commentId: "cm_xxx", metadata: {} })
+  );
+  expectType<void>(
+    editMetadata({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      metadata: { nonexisting: null },
+    })
+  );
+  expectType<void>(
+    editMetadata({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      metadata: { nonexisting: 123 },
     })
   );
 }
@@ -970,4 +1076,93 @@ import { expectAssignable, expectError, expectType } from "tsd";
   expectType<NotificationSettings>(settings);
   expectType<void>(update({})); // empty {} because of partial definition
 }
+// ---------------------------------------------------------
+
+// The useAiChatStatus() hook
+{
+  const status = classic.useAiChatStatus("chat-123");
+  expectType<AiChatStatus>(status);
+
+  if (status.status === "generating") {
+    expectType<"generating">(status.status);
+    if (status.partType === "tool-invocation") {
+      expectType<"tool-invocation">(status.partType);
+      expectType<string>(status.toolName);
+    } else {
+      expectType<"text" | "reasoning" | "retrieval" | "sources" | undefined>(
+        status.partType
+      );
+      expectType<undefined>(status.toolName);
+    }
+  } else {
+    expectType<"disconnected" | "loading" | "idle">(status.status);
+    expectType<undefined>(status.partType);
+    expectType<undefined>(status.toolName);
+  }
+}
+
+// The useAiChatStatus() hook (suspense)
+{
+  const status = suspense.useAiChatStatus("chat-123");
+  expectType<AiChatStatus>(status);
+  if (status.status === "generating") {
+    expectType<"generating">(status.status);
+    if (status.partType === "tool-invocation") {
+      expectType<"tool-invocation">(status.partType);
+      expectType<string>(status.toolName);
+    } else {
+      expectType<"text" | "reasoning" | "retrieval" | "sources" | undefined>(
+        status.partType
+      );
+      expectType<undefined>(status.toolName);
+    }
+  } else {
+    expectType<"disconnected" | "loading" | "idle">(status.status);
+    expectType<undefined>(status.partType);
+    expectType<undefined>(status.toolName);
+  }
+}
+
+// The useAiChatStatus() hook with branchId parameter
+{
+  const status = classic.useAiChatStatus("chat-123", "ms_branch" as any);
+  if (status.status === "generating") {
+    expectType<"generating">(status.status);
+    if (status.partType === "tool-invocation") {
+      expectType<"tool-invocation">(status.partType);
+      expectType<string>(status.toolName);
+    } else {
+      expectType<"text" | "reasoning" | "retrieval" | "sources" | undefined>(
+        status.partType
+      );
+      expectType<undefined>(status.toolName);
+    }
+  } else {
+    expectType<"disconnected" | "loading" | "idle">(status.status);
+    expectType<undefined>(status.partType);
+    expectType<undefined>(status.toolName);
+  }
+}
+
+// The useAiChatStatus() hook with branchId parameter
+{
+  const status = suspense.useAiChatStatus("chat-123", "ms_branch" as any);
+  if (status.status === "generating") {
+    expectType<"generating">(status.status);
+    if (status.partType === "tool-invocation") {
+      expectType<"tool-invocation">(status.partType);
+      expectType<string>(status.toolName);
+    } else {
+      expectType<"text" | "reasoning" | "retrieval" | "sources" | undefined>(
+        status.partType
+      );
+      expectType<undefined>(status.toolName);
+    }
+  } else {
+    expectType<"disconnected" | "loading" | "idle">(status.status);
+    expectType<undefined>(status.partType);
+    expectType<undefined>(status.toolName);
+  }
+}
+
 // ---------------------------------------------------------

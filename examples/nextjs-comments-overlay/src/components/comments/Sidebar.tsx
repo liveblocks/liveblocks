@@ -9,6 +9,8 @@ import { DocumentCompleteIcon } from "@/components/icons/DocumentCompleteIcon";
 import { ThreadData } from "@liveblocks/client";
 import { CloseIcon } from "@/components/icons/CloseIcon";
 import { PlusIcon } from "@/components/icons/PlusIcon";
+import { Tooltip as TooltipPrimitive } from "radix-ui";
+import { CommentWithUserAgent } from "@/components/comments/CommentWithUserAgent";
 
 type Props = {
   onClose: () => void;
@@ -40,15 +42,21 @@ export function Sidebar({ onClose }: Props) {
         </div>
         <div className={styles.sidebarThreadList}>
           {threads.length ? (
-            threads.sort(sortResolved).map((thread) => (
-              <div
-                key={thread.id}
-                className={styles.sidebarThread}
-                data-thread-resolved={thread.resolved || undefined}
-              >
-                <Thread thread={thread} indentCommentContent={false} />
-              </div>
-            ))
+            <TooltipPrimitive.TooltipProvider>
+              {threads.sort(sortResolved).map((thread) => (
+                <div
+                  key={thread.id}
+                  className={styles.sidebarThread}
+                  data-thread-resolved={thread.resolved || undefined}
+                >
+                  <Thread
+                    thread={thread}
+                    indentCommentContent={false}
+                    components={{ Comment: CommentWithUserAgent }}
+                  />
+                </div>
+              ))}
+            </TooltipPrimitive.TooltipProvider>
           ) : (
             <CreateThreadMessage />
           )}

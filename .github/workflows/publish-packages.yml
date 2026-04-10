@@ -16,6 +16,9 @@ jobs:
   publish:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write
+
     steps:
       - name: Install moreutils
         run: sudo apt-get install -y moreutils
@@ -32,7 +35,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.WRITE_ACCESS_TOKEN }}
+          token: ${{ secrets.RELEASE_COMMIT_WRITE_TOKEN }}
 
       - name: Validate git tag
         run: ./.github/scripts/validate-version.sh "${{ inputs.tag }}"
@@ -66,7 +69,7 @@ jobs:
       - name: Setup Node.js environment
         uses: actions/setup-node@v4
         with:
-          node-version: "22.4.1"
+          node-version: "22.21.0"
           registry-url: "https://registry.npmjs.org"
 
       - name: Setup git config
@@ -77,14 +80,18 @@ jobs:
       - name: Prepare release
         env:
           VERSION: ${{steps.version.outputs.value}}
+
         run:
-          ./.github/scripts/release.sh -V "$VERSION" "packages/liveblocks-core"
-          "packages/liveblocks-client" "packages/liveblocks-node"
-          "packages/liveblocks-react" "packages/liveblocks-redux"
-          "packages/liveblocks-zustand" "packages/liveblocks-yjs"
-          "packages/liveblocks-react-ui" "packages/liveblocks-react-lexical"
-          "packages/liveblocks-node-lexical" "packages/liveblocks-react-tiptap"
-          "packages/liveblocks-emails" "packages/liveblocks-node-prosemirror"
+          ./.github/scripts/release.sh -V "$VERSION" -w
+          "packages/liveblocks-core" "packages/liveblocks-client"
+          "packages/liveblocks-node" "packages/liveblocks-chat-sdk-adapter"
+          "packages/liveblocks-react"
+          "packages/liveblocks-redux" "packages/liveblocks-zustand"
+          "packages/liveblocks-yjs" "packages/liveblocks-react-ui"
+          "packages/liveblocks-react-flow"
+          "packages/liveblocks-react-lexical" "packages/liveblocks-node-lexical"
+          "packages/liveblocks-react-tiptap" "packages/liveblocks-emails"
+          "packages/liveblocks-node-prosemirror"
           "packages/liveblocks-react-blocknote"
 
       - name: Build all packages
@@ -101,10 +108,12 @@ jobs:
         run:
           ./.github/scripts/publish.sh -V "$VERSION" -t "$NPM_TAG"
           "packages/liveblocks-core" "packages/liveblocks-client"
-          "packages/liveblocks-node" "packages/liveblocks-react"
+          "packages/liveblocks-node" "packages/liveblocks-chat-sdk-adapter"
+          "packages/liveblocks-react"
           "packages/liveblocks-redux" "packages/liveblocks-zustand"
           "packages/liveblocks-yjs" "packages/liveblocks-react-lexical"
           "packages/liveblocks-node-lexical" "packages/liveblocks-react-ui"
+          "packages/liveblocks-react-flow"
           "packages/liveblocks-react-tiptap" "packages/liveblocks-emails"
           "packages/liveblocks-node-prosemirror"
           "packages/liveblocks-react-blocknote"
@@ -116,8 +125,11 @@ jobs:
           GIT_TAG: ${{ inputs.tag }}
           GITHUB_URL: "https://github.com/liveblocks/liveblocks"
         run: |
-          echo "==> Pushing changes to GitHub"
           if [ "$(git current-branch)" = "main" ]; then
+            echo "==> Fetching and rebasing onto latest main..."
+            git fetch origin main
+            git rebase origin/main
+            echo "==> Pushing changes to GitHub..."
             if ! git push origin main; then
                 echo "ERROR: Could not push this branch to GitHub!" >&2
                 echo "Please manually fix that now, before writing the release notes!" >&2

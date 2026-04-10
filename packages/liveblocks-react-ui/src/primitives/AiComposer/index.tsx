@@ -6,7 +6,7 @@ import {
 } from "@liveblocks/core";
 import { useClient } from "@liveblocks/react";
 import { useLayoutEffect, useSignal } from "@liveblocks/react/_private";
-import { Slot } from "@radix-ui/react-slot";
+import { Slot as SlotPrimitive } from "radix-ui";
 import type { FocusEvent, FormEvent, KeyboardEvent, MouseEvent } from "react";
 import {
   forwardRef,
@@ -34,6 +34,7 @@ import type { AiComposerBody } from "../../types";
 import { requestSubmit } from "../../utils/request-submit";
 import { useInitial } from "../../utils/use-initial";
 import { withNormalize } from "../slate/plugins/normalize";
+import { getDOMRange } from "../slate/utils/get-dom-range";
 import { isEmpty } from "../slate/utils/is-empty";
 import {
   AiComposerContext,
@@ -100,7 +101,7 @@ export const AiComposerForm = forwardRef<HTMLFormElement, AiComposerFormProps>(
     },
     forwardedRef
   ) => {
-    const Component = asChild ? Slot : "form";
+    const Component = asChild ? SlotPrimitive.Slot : "form";
     const client = useClient();
     const formRef = useRef<HTMLFormElement | null>(null);
     const editor = useInitial(() =>
@@ -114,10 +115,18 @@ export const AiComposerForm = forwardRef<HTMLFormElement, AiComposerFormProps>(
       : emptyMessagesΣ;
     const lastMessageId = useSignal(messagesΣ, getLastMessageId);
     const abortableMessageId = useSignal(messagesΣ, getAbortableMessageId);
+    const isAvailable = useSignal(
+      // Subscribe to connection status signal
+      client[kInternal].ai.signals.statusΣ,
+      // "Disconnected" means the AI service is not available
+      // as it represents a final error status.
+      (status) => status !== "disconnected"
+    );
 
     const isDisabled = isSubmitting || disabled === true;
-    const canAbort = abortableMessageId !== undefined;
-    const canSubmit = !isEditorEmpty && !canAbort;
+
+    const canAbort = isAvailable && abortableMessageId !== undefined;
+    const canSubmit = isAvailable && !isEditorEmpty && !canAbort;
 
     const clear = useCallback(() => {
       SlateTransforms.delete(editor, {
@@ -135,6 +144,9 @@ export const AiComposerForm = forwardRef<HTMLFormElement, AiComposerFormProps>(
     const focus = useCallback(
       (resetSelection = true) => {
         try {
+          // Slate's `ReactEditor.focus` method can use `setTimeout` internally
+          // which prevents us from catching errors, so this is a reimplementation.
+          // https://github.com/ianstormtaylor/slate/blob/main/packages/slate-dom/src/plugin/dom-editor.ts
           if (!ReactEditor.isFocused(editor)) {
             SlateTransforms.select(
               editor,
@@ -142,7 +154,20 @@ export const AiComposerForm = forwardRef<HTMLFormElement, AiComposerFormProps>(
                 ? SlateEditor.end(editor, [])
                 : editor.selection
             );
-            ReactEditor.focus(editor);
+
+            const element = ReactEditor.toDOMNode(editor, editor);
+
+            if (editor.selection) {
+              const domSelection = window.getSelection();
+              const domRange = getDOMRange(editor, editor.selection);
+
+              if (domRange) {
+                domSelection?.removeAllRanges();
+                domSelection?.addRange(domRange);
+              }
+            }
+
+            element.focus({ preventScroll: true });
           }
         } catch {
           // Slate's DOM-specific methods will throw if the editor's DOM
@@ -391,9 +416,17 @@ const AiComposerEditor = forwardRef<HTMLDivElement, AiComposerEditorProps>(
 
     // Manually focus the editor when `autoFocus` is true
     useLayoutEffect(() => {
-      if (autoFocus) {
-        focus();
+      if (!autoFocus) {
+        return;
       }
+
+      // `focus` needs to be synchronous to ensure its errors can be caught
+      // but the triggering of `focus` on mount itself can be asynchronous.
+      // This brings back the same timing behavior as Slate's `ReactEditor.focus`
+      // (which uses `setTimeout` internally) while still allowing us to catch errors.
+      const timeout = setTimeout(() => focus(), 0);
+
+      return () => clearTimeout(timeout);
     }, [autoFocus, editor, focus]);
 
     // Manually add a selection in the editor if the selection
@@ -418,6 +451,7 @@ const AiComposerEditor = forwardRef<HTMLDivElement, AiComposerEditorProps>(
       >
         <Editable
           dir={dir}
+          tabIndex={isDisabled ? -1 : 0}
           enterKeyHint="send"
           autoCapitalize="sentences"
           aria-label="Composer editor"
@@ -450,7 +484,7 @@ export const AiComposerSubmit = forwardRef<
   HTMLButtonElement,
   AiComposerSubmitProps
 >(({ disabled, asChild, ...props }, forwardedRef) => {
-  const Component = asChild ? Slot : "button";
+  const Component = asChild ? SlotPrimitive.Slot : "button";
   const { isDisabled: isComposerDisabled, canSubmit } = useAiComposer();
   const isDisabled = isComposerDisabled || disabled || !canSubmit;
 
@@ -478,7 +512,7 @@ export const AiComposerAbort = forwardRef<
   HTMLButtonElement,
   AiComposerSubmitProps
 >(({ disabled, onClick, asChild, ...props }, forwardedRef) => {
-  const Component = asChild ? Slot : "button";
+  const Component = asChild ? SlotPrimitive.Slot : "button";
   const { isDisabled: isComposerDisabled, canAbort, abort } = useAiComposer();
   const isDisabled = isComposerDisabled || disabled || !canAbort;
 

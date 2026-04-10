@@ -23,6 +23,19 @@ start building your own security logic in Next.js’ `/app` directory.
 
   </Step>
   <Step>
+    <StepTitle>Add your project’s secret key</StepTitle>
+    <StepContent>
+
+      Create a new `.env.local` file and add your Liveblocks secret key from the [dashboard](/dashboard/apikeys).
+
+      ```env file=".env.local"
+      LIVEBLOCKS_SECRET_KEY="{{SECRET_KEY}}"
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
     <StepTitle>Set up authentication endpoint</StepTitle>
     <StepContent>
       Users can only interact with rooms they have access to. You can
@@ -35,7 +48,7 @@ start building your own security logic in Next.js’ `/app` directory.
       import { Liveblocks } from "@liveblocks/node";
 
       const liveblocks = new Liveblocks({
-        secret: "{{SECRET_KEY}}",
+        secret: process.env.LIVEBLOCKS_SECRET_KEY!,
       });
 
       export async function POST(request: Request) {
@@ -61,10 +74,8 @@ start building your own security logic in Next.js’ `/app` directory.
       import { Liveblocks } from "@liveblocks/node";
       import type { NextApiRequest, NextApiResponse } from "next";
 
-      const API_KEY = "{{SECRET_KEY}}";
-
       const liveblocks = new Liveblocks({
-        secret: API_KEY!,
+        secret: process.env.LIVEBLOCKS_SECRET_KEY!,
       });
 
       export default async function handler(request: NextApiRequest, response: NextApiResponse) {
@@ -150,7 +161,7 @@ start building your own security logic in Next.js’ `/app` directory.
       import { Liveblocks } from "@liveblocks/node";
 
       const liveblocks = new Liveblocks({
-        secret: "{{SECRET_KEY}}",
+        secret: process.env.LIVEBLOCKS_SECRET_KEY!,
       });
 
       const room = await liveblocks.createRoom("my-room-id", {

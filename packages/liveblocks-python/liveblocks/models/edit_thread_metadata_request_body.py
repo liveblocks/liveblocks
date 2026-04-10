@@ -1,0 +1,92 @@
+from __future__ import annotations
+
+import datetime
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, Self
+
+from attrs import define as _attrs_define
+from attrs import field as _attrs_field
+from dateutil.parser import isoparse
+
+from ..types import UNSET, Unset
+
+if TYPE_CHECKING:
+    from ..models.edit_thread_metadata_request_body_metadata import EditThreadMetadataRequestBodyMetadata
+
+
+@_attrs_define
+class EditThreadMetadataRequestBody:
+    """
+    Attributes:
+        metadata (EditThreadMetadataRequestBodyMetadata):
+        user_id (str):
+        updated_at (datetime.datetime | Unset):
+    """
+
+    metadata: EditThreadMetadataRequestBodyMetadata
+    user_id: str
+    updated_at: datetime.datetime | Unset = UNSET
+    additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
+        metadata = self.metadata.to_dict()
+
+        user_id = self.user_id
+
+        updated_at: str | Unset = UNSET
+        if not isinstance(self.updated_at, Unset):
+            updated_at = self.updated_at.isoformat()
+
+        field_dict: dict[str, Any] = {}
+        field_dict.update(self.additional_properties)
+        field_dict.update(
+            {
+                "metadata": metadata,
+                "userId": user_id,
+            }
+        )
+        if updated_at is not UNSET:
+            field_dict["updatedAt"] = updated_at
+
+        return field_dict
+
+    @classmethod
+    def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
+        from ..models.edit_thread_metadata_request_body_metadata import EditThreadMetadataRequestBodyMetadata
+
+        d = dict(src_dict)
+        metadata = EditThreadMetadataRequestBodyMetadata.from_dict(d.pop("metadata"))
+
+        user_id = d.pop("userId")
+
+        _updated_at = d.pop("updatedAt", UNSET)
+        updated_at: datetime.datetime | Unset
+        if isinstance(_updated_at, Unset):
+            updated_at = UNSET
+        else:
+            updated_at = isoparse(_updated_at)
+
+        edit_thread_metadata_request_body = cls(
+            metadata=metadata,
+            user_id=user_id,
+            updated_at=updated_at,
+        )
+
+        edit_thread_metadata_request_body.additional_properties = d
+        return edit_thread_metadata_request_body
+
+    @property
+    def additional_keys(self) -> list[str]:
+        return list(self.additional_properties.keys())
+
+    def __getitem__(self, key: str) -> Any:
+        return self.additional_properties[key]
+
+    def __setitem__(self, key: str, value: Any) -> None:
+        self.additional_properties[key] = value
+
+    def __delitem__(self, key: str) -> None:
+        del self.additional_properties[key]
+
+    def __contains__(self, key: str) -> bool:
+        return key in self.additional_properties

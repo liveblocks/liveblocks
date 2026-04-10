@@ -1,6 +1,7 @@
-import type { DM } from "../globals/augmentation";
+import type { DCM, DTM } from "../globals/augmentation";
 import type { DateToString } from "../lib/DateToString";
 import type { Relax } from "../lib/Relax";
+import type { Resolve } from "../lib/Resolve";
 
 export type BaseMetadata = Record<
   string,
@@ -75,7 +76,7 @@ export type CommentMixedAttachment = CommentAttachment | CommentLocalAttachment;
 /**
  * Represents a comment.
  */
-export type CommentData = {
+export type CommentData<CM extends BaseMetadata = DCM> = {
   type: "comment";
   id: string;
   threadId: string;
@@ -85,13 +86,15 @@ export type CommentData = {
   editedAt?: Date;
   reactions: CommentReaction[];
   attachments: CommentAttachment[];
+  metadata: CM;
 } & Relax<{ body: CommentBody } | { deletedAt: Date }>;
 
-export type CommentDataPlain = Omit<
-  DateToString<CommentData>,
-  "reactions" | "body"
+export type CommentDataPlain<CM extends BaseMetadata = DCM> = Omit<
+  DateToString<CommentData<CM>>,
+  "reactions" | "body" | "metadata"
 > & {
   reactions: DateToString<CommentReaction>[];
+  metadata: CM;
 } & Relax<{ body: CommentBody } | { deletedAt: string }>;
 
 export type CommentBodyBlockElement = CommentBodyParagraph;
@@ -133,13 +136,22 @@ export type CommentBodyLink = {
   text?: string;
 };
 
-export type CommentBodyText = {
-  bold?: boolean;
-  italic?: boolean;
-  strikethrough?: boolean;
-  code?: boolean;
-  text: string;
-};
+export type CommentBodyText = Resolve<
+  {
+    bold?: boolean;
+    italic?: boolean;
+    strikethrough?: boolean;
+    code?: boolean;
+    text: string;
+  } & {
+    // Text elements don't have a `type` discriminator, so we
+    // explicitly exclude properties from other inline elements.
+    [K in Exclude<
+      keyof Relax<CommentBodyMention | CommentBodyLink>,
+      "text"
+    >]?: never;
+  }
+>;
 
 export type CommentBody = {
   version: 1;
@@ -154,31 +166,42 @@ export type CommentUserReaction = {
 
 export type CommentUserReactionPlain = DateToString<CommentUserReaction>;
 
+export type SearchCommentsResult = {
+  threadId: string;
+  commentId: string;
+  content: string;
+};
+
 /**
  * Represents a thread of comments.
  */
-export type ThreadData<M extends BaseMetadata = DM> = {
+export type ThreadData<
+  TM extends BaseMetadata = DTM,
+  CM extends BaseMetadata = DCM,
+> = {
   type: "thread";
   id: string;
   roomId: string;
   createdAt: Date;
   updatedAt: Date;
-  comments: CommentData[];
-  metadata: M;
+  comments: CommentData<CM>[];
+  metadata: TM;
   resolved: boolean;
 };
 
-export interface ThreadDataWithDeleteInfo<M extends BaseMetadata = DM>
-  extends ThreadData<M> {
+export interface ThreadDataWithDeleteInfo<
+  TM extends BaseMetadata = DTM,
+  CM extends BaseMetadata = DCM,
+> extends ThreadData<TM, CM> {
   deletedAt?: Date;
 }
 
-export type ThreadDataPlain<M extends BaseMetadata> = Omit<
-  DateToString<ThreadData<M>>,
-  "comments" | "metadata"
-> & {
-  comments: CommentDataPlain[];
-  metadata: M;
+export type ThreadDataPlain<
+  TM extends BaseMetadata = DTM,
+  CM extends BaseMetadata = DCM,
+> = Omit<DateToString<ThreadData<TM, CM>>, "comments" | "metadata"> & {
+  comments: CommentDataPlain<CM>[];
+  metadata: TM;
 };
 
 export type ThreadDeleteInfo = {
@@ -196,6 +219,15 @@ type StringOperators<T> =
       startsWith: string;
     };
 
+type NumberOperators<T> =
+  | T
+  | {
+      lt?: number;
+      gt?: number;
+      lte?: number;
+      gte?: number;
+    };
+
 /**
  * This type can be used to build a metadata query string (compatible
  * with `@liveblocks/query-parser`) through a type-safe API.
@@ -205,5 +237,8 @@ type StringOperators<T> =
  *  - `startsWith` (`^` in query string)
  */
 export type QueryMetadata<M extends BaseMetadata> = {
-  [K in keyof M]: (string extends M[K] ? StringOperators<M[K]> : M[K]) | null;
+  [K in keyof M]:
+    | (string extends M[K] ? StringOperators<M[K]> : M[K])
+    | (number extends M[K] ? NumberOperators<M[K]> : M[K])
+    | null;
 };

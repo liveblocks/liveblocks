@@ -9,7 +9,7 @@ import {
 } from "@testing-library/react";
 import { HttpResponse } from "msw";
 import { setupServer } from "msw/node";
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 import {
   afterAll,
@@ -901,8 +901,8 @@ describe("useInboxNotifications: polling", () => {
     await vi.advanceTimersByTimeAsync(60_000);
     await waitFor(() => expect(pollerCount).toBe(1));
 
-    // Advance 10 seconds (more than the the currently set maximum stale time, 5000)
-    await vi.advanceTimersByTimeAsync(10_000);
+    // Advance 10 seconds (more than the currently set maximum stale time, 5000)
+    await jest.advanceTimersByTimeAsync(10_000);
 
     // Dispatch a `visibilitychange` event and verify that when the document becomes
     // visible a new poll happens since more than 5000 ms has passed since the last poll
@@ -1455,6 +1455,153 @@ describe("useInboxNotifications: pagination", () => {
         fetchMoreError: expect.any(Error),
       })
     );
+
+    unmount();
+  });
+
+  test("should auto-paginate all pages when fetchMore is called from useEffect", async () => {
+    const roomId = nanoid();
+
+    const thread1 = dummyThreadData({ roomId, createdAt: new Date("2021-01-01") }); // prettier-ignore
+    const thread2 = dummyThreadData({ roomId, createdAt: new Date("2021-01-02") }); // prettier-ignore
+    const thread3 = dummyThreadData({ roomId, createdAt: new Date("2021-01-03") }); // prettier-ignore
+
+    const notificationsPage1 = [
+      dummyThreadInboxNotificationData({
+        roomId,
+        threadId: thread1.id,
+        notifiedAt: new Date("2021-01-03"),
+      }),
+    ];
+    const notificationsPage2 = [
+      dummyThreadInboxNotificationData({
+        roomId,
+        threadId: thread2.id,
+        notifiedAt: new Date("2021-01-02"),
+      }),
+    ];
+    const notificationsPage3 = [
+      dummyThreadInboxNotificationData({
+        roomId,
+        threadId: thread3.id,
+        notifiedAt: new Date("2021-01-01"),
+      }),
+    ];
+
+    let requestCount = 0;
+
+    server.use(
+      mockGetInboxNotifications(async ({ request }) => {
+        requestCount++;
+        const url = new URL(request.url);
+        const cursor = url.searchParams.get("cursor");
+
+        if (cursor === "cursor-1") {
+          return HttpResponse.json({
+            threads: [thread2],
+            inboxNotifications: notificationsPage2,
+            subscriptions: [dummySubscriptionData({ subjectId: thread2.id })],
+            groups: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+              nextCursor: "cursor-2",
+            },
+          });
+        } else if (cursor === "cursor-2") {
+          return HttpResponse.json({
+            threads: [thread3],
+            inboxNotifications: notificationsPage3,
+            subscriptions: [dummySubscriptionData({ subjectId: thread3.id })],
+            groups: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+              nextCursor: null,
+            },
+          });
+        } else {
+          return HttpResponse.json({
+            threads: [thread1],
+            inboxNotifications: notificationsPage1,
+            subscriptions: [dummySubscriptionData({ subjectId: thread1.id })],
+            groups: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+              nextCursor: "cursor-1",
+            },
+          });
+        }
+      }),
+      mockGetInboxNotificationsDelta(async () => {
+        return HttpResponse.json({
+          threads: [],
+          inboxNotifications: [],
+          subscriptions: [],
+          deletedThreads: [],
+          deletedInboxNotifications: [],
+          deletedSubscriptions: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+          },
+        });
+      })
+    );
+
+    const {
+      liveblocks: {
+        suspense: { LiveblocksProvider, useInboxNotifications },
+      },
+    } = createContextsForTest();
+
+    // Component that auto-paginates using useEffect, matching the reported
+    // user pattern that triggered the microtask ordering bug.
+    function AutoPaginator({
+      onResult,
+    }: {
+      onResult: (result: { count: number; hasFetchedAll: boolean }) => void;
+    }) {
+      const result = useInboxNotifications();
+      const { isFetchingMore, hasFetchedAll, fetchMore } = result;
+
+      useEffect(() => {
+        onResult({
+          count: result.inboxNotifications.length,
+          hasFetchedAll,
+        });
+      }, [result.inboxNotifications.length, hasFetchedAll, onResult]);
+
+      useEffect(() => {
+        if (!hasFetchedAll && !isFetchingMore) {
+          fetchMore();
+        }
+      }, [hasFetchedAll, isFetchingMore, fetchMore]);
+
+      return null;
+    }
+
+    let latestResult = { count: 0, hasFetchedAll: false };
+    const handleResult = (r: { count: number; hasFetchedAll: boolean }) => {
+      latestResult = r;
+    };
+
+    const { unmount } = render(
+      <LiveblocksProvider>
+        <Suspense fallback={<div>Loading</div>}>
+          <AutoPaginator onResult={handleResult} />
+        </Suspense>
+      </LiveblocksProvider>
+    );
+
+    // All 3 pages should be fetched automatically without getting stuck.
+    // Before the fix, this would stop at 2 items (page 1 + page 2) because
+    // .finally() clearing #pendingFetchMore ran in a later microtask than
+    // React's re-render flush, causing the 3rd fetchMore() call to be skipped.
+    await waitFor(() => expect(latestResult.hasFetchedAll).toBe(true), {
+      timeout: 5000,
+    });
+    expect(latestResult.count).toBe(3);
+
+    // Initial page + 2 fetchMore calls = 3 requests total
+    expect(requestCount).toBe(3);
 
     unmount();
   });

@@ -24,6 +24,7 @@ export type {
   AiToolExecuteContext,
   AiToolInvocationProps,
   AiToolTypePack,
+  LayerKey,
   WithNavigation,
 } from "./ai";
 export { defineAiTool } from "./ai";
@@ -92,24 +93,22 @@ export type {
   LiveObjectUpdate,
   StorageUpdate,
 } from "./crdts/StorageUpdates";
-export type { ToImmutable } from "./crdts/utils";
 export { toPlainLson } from "./crdts/utils";
 export type {
   DAD,
+  DCM,
   DE,
+  DFM,
+  DFMD,
   DGI,
-  DM,
   DP,
   DRI,
   DS,
+  DTM,
   DU,
   KDAD,
 } from "./globals/augmentation";
-export {
-  legacy_patchImmutableObject,
-  lsonToJson,
-  patchLiveObjectKey,
-} from "./immutable";
+export type { SyncConfig, SyncMode } from "./immutable";
 export { kInternal } from "./internal";
 export { makeAbortController } from "./lib/abortController";
 export { assert, assertNever, nn } from "./lib/assert";
@@ -144,8 +143,19 @@ export type {
 export { makeEventSource } from "./lib/EventSource";
 export * as console from "./lib/fancy-console";
 export { freeze } from "./lib/freeze";
-export { isPlainObject, isStartsWithOperator } from "./lib/guards";
-export type { Json, JsonArray, JsonObject, JsonScalar } from "./lib/Json";
+export {
+  isNumberOperator,
+  isPlainObject,
+  isStartsWithOperator,
+} from "./lib/guards";
+export type {
+  Json,
+  JsonArray,
+  JsonObject,
+  JsonScalar,
+  ReadonlyJson,
+  ReadonlyJsonObject,
+} from "./lib/Json";
 export { isJsonArray, isJsonObject, isJsonScalar } from "./lib/Json";
 export { nanoid } from "./lib/nanoid";
 export type { NoInfr } from "./lib/NoInfer";
@@ -165,6 +175,7 @@ export { generateUrl, isUrl, sanitizeUrl, url, urljoin } from "./lib/url";
 export type {
   Brand,
   DistributiveOmit,
+  ISODateString,
   WithOptional,
   WithRequired,
 } from "./lib/utils";
@@ -195,6 +206,9 @@ export type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
 export type {
   BroadcastEventClientMsg,
   ClientMsg,
+  FeedCreateMetadata,
+  FeedFetchMetadataFilter,
+  FeedUpdateMetadata,
   FetchStorageClientMsg,
   FetchYDocClientMsg,
   UpdatePresenceClientMsg,
@@ -227,11 +241,13 @@ export type {
 } from "./protocol/Comments";
 export type { QueryMetadata } from "./protocol/Comments";
 export type {
+  SearchCommentsResult,
   ThreadData,
   ThreadDataPlain,
   ThreadDataWithDeleteInfo,
 } from "./protocol/Comments";
 export type { ThreadDeleteInfo } from "./protocol/Comments";
+export type { Feed, FeedMessage } from "./protocol/Feeds";
 export type {
   GroupData,
   GroupDataPlain,
@@ -264,7 +280,7 @@ export {
   patchNotificationSettings,
 } from "./protocol/NotificationSettings";
 export type {
-  AckOp,
+  ClientWireOp,
   CreateListOp,
   CreateMapOp,
   CreateObjectOp,
@@ -272,17 +288,59 @@ export type {
   CreateRegisterOp,
   DeleteCrdtOp,
   DeleteObjectKeyOp,
+  HasOpId,
+  IgnoredOp,
   Op,
+  ServerWireOp,
   SetParentKeyOp,
   UpdateObjectOp,
 } from "./protocol/Op";
-export { ackOp, OpCode } from "./protocol/Op";
+export { OpCode } from "./protocol/Op";
 export type {
   RoomSubscriptionSettings,
   UserRoomSubscriptionSettings,
 } from "./protocol/RoomSubscriptionSettings";
 export type {
-  IdTuple,
+  BroadcastedEventServerMsg,
+  CommentsEventServerMsg,
+  FeedDeletedServerMsg,
+  FeedMessagesAddedServerMsg,
+  FeedMessagesDeletedServerMsg,
+  FeedMessagesListServerMsg,
+  FeedMessagesUpdatedServerMsg,
+  FeedRequestError,
+  FeedRequestFailedServerMsg,
+  FeedsAddedServerMsg,
+  FeedsEventServerMsg,
+  FeedsListServerMsg,
+  FeedsUpdatedServerMsg,
+  RejectedStorageOpServerMsg,
+  RoomStateServerMsg,
+  ServerMsg,
+  StorageChunkServerMsg,
+  UpdatePresenceServerMsg,
+  UpdateStorageServerMsg,
+  UserJoinServerMsg,
+  UserLeftServerMsg,
+  YDocUpdateServerMsg,
+} from "./protocol/ServerMsg";
+export { FeedRequestErrorCode, ServerMsgCode } from "./protocol/ServerMsg";
+export type {
+  ChildStorageNode,
+  CompactChildNode,
+  CompactListNode,
+  CompactMapNode,
+  CompactNode,
+  CompactObjectNode,
+  CompactRegisterNode,
+  CompactRootNode,
+  ListStorageNode,
+  MapStorageNode,
+  NodeMap,
+  NodeStream,
+  ObjectStorageNode,
+  RegisterStorageNode,
+  RootStorageNode,
   SerializedChild,
   SerializedCrdt,
   SerializedList,
@@ -290,23 +348,18 @@ export type {
   SerializedObject,
   SerializedRegister,
   SerializedRootObject,
-} from "./protocol/SerializedCrdt";
-export { CrdtType } from "./protocol/SerializedCrdt";
-export { isChildCrdt, isRootCrdt } from "./protocol/SerializedCrdt";
-export type {
-  BroadcastedEventServerMsg,
-  CommentsEventServerMsg,
-  InitialDocumentStateServerMsg,
-  RejectedStorageOpServerMsg,
-  RoomStateServerMsg,
-  ServerMsg,
-  UpdatePresenceServerMsg,
-  UpdateStorageServerMsg,
-  UserJoinServerMsg,
-  UserLeftServerMsg,
-  YDocUpdateServerMsg,
-} from "./protocol/ServerMsg";
-export { ServerMsgCode } from "./protocol/ServerMsg";
+  StorageNode,
+} from "./protocol/StorageNode";
+export {
+  compactNodesToNodeStream,
+  CrdtType,
+  isListStorageNode,
+  isMapStorageNode,
+  isObjectStorageNode,
+  isRegisterStorageNode,
+  isRootStorageNode,
+  nodeStreamToCompactNodes,
+} from "./protocol/StorageNode";
 export type {
   SubscriptionData,
   SubscriptionDataPlain,
@@ -317,13 +370,9 @@ export type {
   UserSubscriptionDataPlain,
 } from "./protocol/Subscriptions";
 export { getSubscriptionKey } from "./protocol/Subscriptions";
+export type { UrlMetadata } from "./protocol/UrlMetadata";
 export type { HistoryVersion } from "./protocol/VersionHistory";
-export type {
-  IYjsProvider,
-  LargeMessageStrategy,
-  PrivateRoomApi,
-  YjsSyncStatus,
-} from "./room";
+export type { IYjsProvider, PrivateRoomApi, YjsSyncStatus } from "./room";
 export type {
   BroadcastOptions,
   History,
@@ -342,12 +391,16 @@ export type {
   AiChat,
   AiChatMessage,
   AiChatsQuery,
+  AiKnowledgeRetrievalPart,
   AiKnowledgeSource,
   AiReasoningPart,
   AiRetrievalPart,
+  AiSourcesPart,
   AiTextPart,
   AiToolInvocationPart,
+  AiUrlSource,
   AiUserMessage,
+  AiWebRetrievalPart,
   CopilotId,
   Cursor,
   MessageId,
@@ -367,7 +420,7 @@ export type {
 export { WebsocketCloseCodes } from "./types/IWebSocket";
 export type { LiveblocksErrorContext } from "./types/LiveblocksError";
 export { LiveblocksError } from "./types/LiveblocksError";
-export type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
+export type { ParentToChildNodeMap } from "./types/NodeMap";
 export type { OthersEvent } from "./types/Others";
 export { TextEditorType } from "./types/Others";
 export type { Patchable } from "./types/Patchable";

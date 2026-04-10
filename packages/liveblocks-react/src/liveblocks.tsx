@@ -11,7 +11,8 @@ import type {
   BaseGroupInfo,
   BaseRoomInfo,
   CopilotId,
-  DM,
+  DCM,
+  DTM,
   DU,
   LiveblocksError,
   MessageId,
@@ -24,6 +25,7 @@ import {
   assert,
   console,
   createClient,
+  DefaultMap,
   HttpError,
   kInternal,
   makePoller,
@@ -48,7 +50,6 @@ import {
   useIsInsideRoom,
 } from "./contexts";
 import { ASYNC_OK } from "./lib/AsyncResult";
-import { count } from "./lib/itertools";
 import { ensureNotServerSide } from "./lib/ssr";
 import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
@@ -60,6 +61,7 @@ import type {
   AiChatMessagesAsyncSuccess,
   AiChatsAsyncResult,
   AiChatsAsyncSuccess,
+  AiChatStatus,
   CreateAiChatOptions,
   GroupInfoAsyncResult,
   GroupInfoAsyncSuccess,
@@ -74,6 +76,8 @@ import type {
   ThreadsAsyncResult,
   ThreadsAsyncSuccess,
   UnreadInboxNotificationsCountAsyncResult,
+  UrlMetadataAsyncResult,
+  UrlMetadataAsyncSuccess,
   UseAiChatsOptions,
   UseInboxNotificationsOptions,
   UserAsyncResult,
@@ -113,7 +117,7 @@ function identity<T>(x: T): T {
 
 const _umbrellaStores = new WeakMap<
   OpaqueClient,
-  UmbrellaStore<BaseMetadata>
+  UmbrellaStore<BaseMetadata, BaseMetadata>
 >();
 const _extras = new WeakMap<
   OpaqueClient,
@@ -121,24 +125,18 @@ const _extras = new WeakMap<
 >();
 const _bundles = new WeakMap<
   OpaqueClient,
-  LiveblocksContextBundle<BaseUserMeta, BaseMetadata>
+  LiveblocksContextBundle<BaseUserMeta, BaseMetadata, BaseMetadata>
 >();
 
 function selectorFor_useUnreadInboxNotificationsCount(
-  result: InboxNotificationsAsyncResult
+  result: UnreadInboxNotificationsCountAsyncResult
 ): UnreadInboxNotificationsCountAsyncResult {
-  if (!result.inboxNotifications) {
+  if (!("count" in result) || result.count === undefined) {
     // Can be loading or error states
     return result;
   }
 
-  return ASYNC_OK(
-    "count",
-    count(
-      result.inboxNotifications,
-      (n) => n.readAt === null || n.readAt < n.notifiedAt
-    )
-  );
+  return ASYNC_OK("count", result.count);
 }
 
 function selectorFor_useUser<U extends BaseUserMeta>(
@@ -227,14 +225,15 @@ function selectorFor_useGroupInfo(
 
 function getOrCreateContextBundle<
   U extends BaseUserMeta,
-  M extends BaseMetadata,
->(client: OpaqueClient): LiveblocksContextBundle<U, M> {
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(client: OpaqueClient): LiveblocksContextBundle<U, TM, CM> {
   let bundle = _bundles.get(client);
   if (!bundle) {
     bundle = makeLiveblocksContextBundle(client);
     _bundles.set(client, bundle);
   }
-  return bundle as LiveblocksContextBundle<U, M>;
+  return bundle as unknown as LiveblocksContextBundle<U, TM, CM>;
 }
 
 /**
@@ -242,24 +241,26 @@ function getOrCreateContextBundle<
  *
  * @private
  */
-export function getUmbrellaStoreForClient<M extends BaseMetadata>(
-  client: OpaqueClient
-): UmbrellaStore<M> {
+export function getUmbrellaStoreForClient<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(client: OpaqueClient): UmbrellaStore<TM, CM> {
   let store = _umbrellaStores.get(client);
   if (!store) {
     store = new UmbrellaStore(client);
     _umbrellaStores.set(client, store);
   }
-  return store as unknown as UmbrellaStore<M>;
+  return store as unknown as UmbrellaStore<TM, CM>;
 }
 
 // TODO: Likely a better / more clear name for this helper will arise. I'll
 // rename this later. All of these are implementation details to support inbox
 // notifications on a per-client basis.
 /** @internal Only exported for unit tests. */
-export function getLiveblocksExtrasForClient<M extends BaseMetadata>(
-  client: OpaqueClient
-) {
+export function getLiveblocksExtrasForClient<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(client: OpaqueClient) {
   let extras = _extras.get(client);
   if (!extras) {
     extras = makeLiveblocksExtrasForClient(client);
@@ -267,7 +268,7 @@ export function getLiveblocksExtrasForClient<M extends BaseMetadata>(
   }
 
   return extras as unknown as Omit<typeof extras, "store"> & {
-    store: UmbrellaStore<M>;
+    store: UmbrellaStore<TM, CM>;
   };
 }
 
@@ -352,6 +353,24 @@ function makeLiveblocksExtrasForClient(client: OpaqueClient) {
     { maxStaleTimeMs: config.NOTIFICATIONS_MAX_STALE_TIME }
   );
 
+  const unreadNotificationsCountPollersByQueryKey = new DefaultMap(
+    (queryKey: string) =>
+      makePoller(
+        async (signal) => {
+          try {
+            return await store.fetchUnreadNotificationsCount(queryKey, signal);
+          } catch (err) {
+            console.warn(
+              `Polling unread inbox notifications countfailed: ${String(err)}`
+            );
+            throw err;
+          }
+        },
+        config.NOTIFICATIONS_POLL_INTERVAL,
+        { maxStaleTimeMs: config.NOTIFICATIONS_MAX_STALE_TIME }
+      )
+  );
+
   const userThreadsPoller = makePoller(
     async (signal) => {
       try {
@@ -385,16 +404,18 @@ function makeLiveblocksExtrasForClient(client: OpaqueClient) {
     notificationsPoller,
     userThreadsPoller,
     notificationSettingsPoller,
+    unreadNotificationsCountPollersByQueryKey,
   };
 }
 
 function makeLiveblocksContextBundle<
   U extends BaseUserMeta,
-  M extends BaseMetadata,
->(client: Client<U>): LiveblocksContextBundle<U, M> {
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(client: Client<U>): LiveblocksContextBundle<U, TM, CM> {
   // Bind all hooks to the current client instance
   const useInboxNotificationThread = (inboxNotificationId: string) =>
-    useInboxNotificationThread_withClient<M>(client, inboxNotificationId);
+    useInboxNotificationThread_withClient<TM, CM>(client, inboxNotificationId);
 
   const useMarkInboxNotificationAsRead = () =>
     useMarkInboxNotificationAsRead_withClient(client);
@@ -424,7 +445,7 @@ function makeLiveblocksContextBundle<
 
   const shared = createSharedContext<U>(client);
 
-  const bundle: LiveblocksContextBundle<U, M> = {
+  const bundle: LiveblocksContextBundle<U, TM, CM> = {
     LiveblocksProvider,
 
     useInboxNotifications: (options?: UseInboxNotificationsOptions) =>
@@ -448,9 +469,12 @@ function makeLiveblocksContextBundle<
     useAiChats,
     useAiChat,
     useAiChatMessages,
+    useAiChatStatus,
     useCreateAiChat,
     useDeleteAiChat,
     useSendAiMessage,
+
+    useUrlMetadata,
 
     ...shared.classic,
 
@@ -480,9 +504,12 @@ function makeLiveblocksContextBundle<
       useAiChats: useAiChatsSuspense,
       useAiChat: useAiChatSuspense,
       useAiChatMessages: useAiChatMessagesSuspense,
+      useAiChatStatus,
       useCreateAiChat,
       useDeleteAiChat,
       useSendAiMessage,
+
+      useUrlMetadata: useUrlMetadataSuspense,
 
       ...shared.suspense,
     },
@@ -567,11 +594,41 @@ function useUnreadInboxNotificationsCount_withClient(
   client: OpaqueClient,
   options?: UseInboxNotificationsOptions
 ) {
-  return useInboxNotifications_withClient(
-    client,
+  const { store, unreadNotificationsCountPollersByQueryKey: pollers } =
+    getLiveblocksExtrasForClient(client);
+
+  const queryKey = makeInboxNotificationsQueryKey(options?.query);
+
+  const poller = pollers.getOrCreate(queryKey);
+
+  useEffect(
+    () =>
+      void store.outputs.unreadNotificationsCount
+        .getOrCreate(queryKey)
+        .waitUntilLoaded()
+
+    // NOTE: Deliberately *not* using a dependency array here!
+    //
+    // It is important to call waitUntil on *every* render.
+    // This is harmless though, on most renders, except:
+    // 1. The very first render, in which case we'll want to trigger the initial page fetch.
+    // 2. All other subsequent renders now "just" return the same promise (a quick operation).
+    // 3. If ever the promise would fail, then after 5 seconds it would reset, and on the very
+    //    *next* render after that, a *new* fetch/promise will get created.
+  );
+
+  useEffect(() => {
+    poller.inc();
+    poller.pollNowIfStale();
+    return () => {
+      poller.dec();
+    };
+  }, [poller]);
+
+  return useSignal(
+    store.outputs.unreadNotificationsCount.getOrCreate(queryKey).signal,
     selectorFor_useUnreadInboxNotificationsCount,
-    shallow,
-    options
+    shallow
   );
 }
 
@@ -586,9 +643,11 @@ function useUnreadInboxNotificationsCountSuspense_withClient(
 
   const queryKey = makeInboxNotificationsQueryKey(options?.query);
 
-  // Suspend until there are at least some inbox notifications
+  // Suspend until there are at least some unread inbox notifications count
   use(
-    store.outputs.loadingNotifications.getOrCreate(queryKey).waitUntilLoaded()
+    store.outputs.unreadNotificationsCount
+      .getOrCreate(queryKey)
+      .waitUntilLoaded()
   );
 
   const result = useUnreadInboxNotificationsCount_withClient(client, options);
@@ -600,7 +659,8 @@ function useUnreadInboxNotificationsCountSuspense_withClient(
 function useMarkInboxNotificationAsRead_withClient(client: OpaqueClient) {
   return useCallback(
     (inboxNotificationId: string) => {
-      const { store } = getLiveblocksExtrasForClient(client);
+      const { store, unreadNotificationsCountPollersByQueryKey } =
+        getLiveblocksExtrasForClient(client);
 
       const readAt = new Date();
       const optimisticId = store.optimisticUpdates.add({
@@ -617,6 +677,12 @@ function useMarkInboxNotificationAsRead_withClient(client: OpaqueClient) {
             readAt,
             optimisticId
           );
+
+          // Force a re-fetch of the unread notifications count
+          for (const poller of unreadNotificationsCountPollersByQueryKey.values()) {
+            poller.markAsStale();
+            poller.pollNowIfStale();
+          }
         },
         (err: Error) => {
           store.optimisticUpdates.remove(optimisticId);
@@ -637,7 +703,8 @@ function useMarkInboxNotificationAsRead_withClient(client: OpaqueClient) {
 
 function useMarkAllInboxNotificationsAsRead_withClient(client: OpaqueClient) {
   return useCallback(() => {
-    const { store } = getLiveblocksExtrasForClient(client);
+    const { store, unreadNotificationsCountPollersByQueryKey } =
+      getLiveblocksExtrasForClient(client);
     const readAt = new Date();
     const optimisticId = store.optimisticUpdates.add({
       type: "mark-all-inbox-notifications-as-read",
@@ -648,6 +715,12 @@ function useMarkAllInboxNotificationsAsRead_withClient(client: OpaqueClient) {
       () => {
         // Replace the optimistic update by the real thing
         store.markAllInboxNotificationsRead(optimisticId, readAt);
+
+        // Force a re-fetch of the unread notifications count
+        for (const poller of unreadNotificationsCountPollersByQueryKey.values()) {
+          poller.markAsStale();
+          poller.pollNowIfStale();
+        }
       },
       (err: Error) => {
         store.optimisticUpdates.remove(optimisticId);
@@ -664,7 +737,8 @@ function useMarkAllInboxNotificationsAsRead_withClient(client: OpaqueClient) {
 function useDeleteInboxNotification_withClient(client: OpaqueClient) {
   return useCallback(
     (inboxNotificationId: string) => {
-      const { store } = getLiveblocksExtrasForClient(client);
+      const { store, unreadNotificationsCountPollersByQueryKey } =
+        getLiveblocksExtrasForClient(client);
 
       const deletedAt = new Date();
       const optimisticId = store.optimisticUpdates.add({
@@ -677,6 +751,12 @@ function useDeleteInboxNotification_withClient(client: OpaqueClient) {
         () => {
           // Replace the optimistic update by the real thing
           store.deleteInboxNotification(inboxNotificationId, optimisticId);
+
+          // Force a re-fetch of the unread notifications count
+          for (const poller of unreadNotificationsCountPollersByQueryKey.values()) {
+            poller.markAsStale();
+            poller.pollNowIfStale();
+          }
         },
         (err: Error) => {
           store.optimisticUpdates.remove(optimisticId);
@@ -694,7 +774,8 @@ function useDeleteInboxNotification_withClient(client: OpaqueClient) {
 
 function useDeleteAllInboxNotifications_withClient(client: OpaqueClient) {
   return useCallback(() => {
-    const { store } = getLiveblocksExtrasForClient(client);
+    const { store, unreadNotificationsCountPollersByQueryKey } =
+      getLiveblocksExtrasForClient(client);
     const deletedAt = new Date();
     const optimisticId = store.optimisticUpdates.add({
       type: "delete-all-inbox-notifications",
@@ -705,6 +786,12 @@ function useDeleteAllInboxNotifications_withClient(client: OpaqueClient) {
       () => {
         // Replace the optimistic update by the real thing
         store.deleteAllInboxNotifications(optimisticId);
+
+        // Force a re-fetch of the unread notifications count
+        for (const poller of unreadNotificationsCountPollersByQueryKey.values()) {
+          poller.markAsStale();
+          poller.pollNowIfStale();
+        }
       },
       (err: Error) => {
         store.optimisticUpdates.remove(optimisticId);
@@ -718,11 +805,11 @@ function useDeleteAllInboxNotifications_withClient(client: OpaqueClient) {
   }, [client]);
 }
 
-function useInboxNotificationThread_withClient<M extends BaseMetadata>(
-  client: OpaqueClient,
-  inboxNotificationId: string
-): ThreadData<M> {
-  const { store } = getLiveblocksExtrasForClient<M>(client);
+function useInboxNotificationThread_withClient<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(client: OpaqueClient, inboxNotificationId: string): ThreadData<TM, CM> {
+  const { store } = getLiveblocksExtrasForClient<TM, CM>(client);
   return useSignal(
     store.outputs.threadifications,
     useCallback(
@@ -1269,6 +1356,53 @@ function useAiChatSuspense(chatId: string): AiChatAsyncSuccess {
 }
 
 /**
+ * Returns metadata for a given URL.
+ *
+ * @example
+ * const { metadata, error, isLoading } = useUrlMetadata("https://liveblocks.io");
+ */
+function useUrlMetadata(url: string): UrlMetadataAsyncResult {
+  const client = useClient();
+  const store = getUmbrellaStoreForClient(client);
+
+  useEffect(
+    () => void store.outputs.urlMetadataByUrl.getOrCreate(url).waitUntilLoaded()
+
+    // NOTE: Deliberately *not* using a dependency array here!
+    //
+    // It is important to call waitUntil on *every* render.
+    // This is harmless though, on most renders, except:
+    // 1. The very first render, in which case we'll want to trigger the initial page fetch.
+    // 2. All other subsequent renders now "just" return the same promise (a quick operation).
+    // 3. If ever the promise would fail, then after 5 seconds it would reset, and on the very
+    //    *next* render after that, a *new* fetch/promise will get created.
+  );
+
+  return useSignal(store.outputs.urlMetadataByUrl.getOrCreate(url).signal);
+}
+
+/**
+ * Returns metadata for a given URL.
+ *
+ * @example
+ * const { metadata } = useUrlMetadata("https://liveblocks.io");
+ */
+function useUrlMetadataSuspense(url: string): UrlMetadataAsyncSuccess {
+  // Throw error if we're calling this hook server side
+  ensureNotServerSide();
+
+  const client = useClient();
+  const store = getUmbrellaStoreForClient(client);
+
+  use(store.outputs.urlMetadataByUrl.getOrCreate(url).waitUntilLoaded());
+
+  const result = useUrlMetadata(url);
+  assert(!result.error, "Did not expect error");
+  assert(!result.isLoading, "Did not expect loading");
+  return result;
+}
+
+/**
  * Returns a function that creates an AI chat.
  *
  * If you do not pass a title for the chat, it will be automatically computed
@@ -1330,6 +1464,107 @@ function useDeleteAiChat() {
     },
     [client]
   );
+}
+
+const DISCONNECTED = Object.freeze({ status: "disconnected" });
+const LOADING = Object.freeze({ status: "loading" });
+const IDLE = Object.freeze({ status: "idle" });
+
+/**
+ * Returns the status of an AI chat, indicating whether it's disconnected, loading, idle
+ * or actively generating content. This is a convenience hook that derives its state from
+ * the latest assistant message in the chat.
+ *
+ * Re-renders whenever any of the relevant fields change.
+ *
+ * @param chatId - The ID of the chat to monitor
+ * @returns The current status of the AI chat
+ *
+ * @example
+ * ```tsx
+ * import { useAiChatStatus } from "@liveblocks/react";
+ *
+ * function ChatStatus() {
+ *   const { status, partType, toolName } = useAiChatStatus("my-chat");
+ *   console.log(status);          // "disconnected" | "loading" | "idle" | "generating"
+ *   console.log(status.partType); // "text" | "tool-invocation" | ...
+ *   console.log(status.toolName); // string | undefined
+ * }
+ * ```
+ */
+function useAiChatStatus(
+  chatId: string,
+  /** @internal */
+  branchId?: MessageId
+): AiChatStatus {
+  const client = useClient();
+  const store = getUmbrellaStoreForClient(client);
+
+  useEnsureAiConnection(client);
+
+  useEffect(
+    () =>
+      void store.outputs.messagesByChatId
+        .getOrCreate(chatId)
+        .getOrCreate(branchId ?? null)
+        .waitUntilLoaded()
+  );
+
+  const isAvailable = useSignal(
+    // Subscribe to connection status signal
+    client[kInternal].ai.signals.statusΣ,
+    // "Disconnected" means the AI service is not available
+    // as it represents a final error status.
+    (status) => status !== "disconnected"
+  );
+
+  const chatStatus = useSignal(
+    // Signal
+    store.outputs.messagesByChatId
+      .getOrCreate(chatId)
+      .getOrCreate(branchId ?? null).signal,
+
+    // Selector
+    (result) => {
+      if (result.isLoading) return LOADING satisfies AiChatStatus;
+      if (result.error) return IDLE satisfies AiChatStatus;
+
+      const messages = result.messages;
+      const lastMessage = messages[messages.length - 1];
+
+      if (lastMessage?.role !== "assistant") return IDLE satisfies AiChatStatus;
+      if (
+        lastMessage.status !== "generating" &&
+        lastMessage.status !== "awaiting-tool"
+      )
+        return IDLE satisfies AiChatStatus;
+
+      const contentSoFar = lastMessage.contentSoFar;
+      const lastPart = contentSoFar[contentSoFar.length - 1];
+
+      if (lastPart?.type === "tool-invocation") {
+        return {
+          status: "generating",
+          partType: "tool-invocation",
+          toolName: lastPart.name,
+        } satisfies AiChatStatus;
+      } else {
+        return {
+          status: "generating",
+          partType: lastPart?.type,
+        } satisfies AiChatStatus;
+      }
+    },
+
+    // Consider { status: "generating", partType: "text" } and { status: "generating", partType: "text" } equal
+    shallow
+  );
+
+  if (!isAvailable) {
+    return DISCONNECTED;
+  }
+
+  return chatStatus;
 }
 
 /**
@@ -1481,20 +1716,12 @@ function useSendAiMessage(
           stream: messageOptions.stream ?? options?.stream,
           copilotId: resolvedCopilotId,
           timeout: messageOptions.timeout ?? options?.timeout,
-          knowledge: messageOptions.knowledge ?? options?.knowledge,
         }
       );
 
       return newMessage;
     },
-    [
-      client,
-      chatId,
-      options?.copilotId,
-      options?.stream,
-      options?.timeout,
-      options?.knowledge,
-    ]
+    [client, chatId, options?.copilotId, options?.stream, options?.timeout]
   );
 }
 
@@ -1590,9 +1817,9 @@ export function LiveblocksProvider<U extends BaseUserMeta = DU>(
     lostConnectionTimeout: useInitial(o.lostConnectionTimeout),
     backgroundKeepAliveTimeout: useInitial(o.backgroundKeepAliveTimeout),
     polyfills: useInitial(o.polyfills),
-    largeMessageStrategy: useInitial(o.largeMessageStrategy),
     unstable_streamData: useInitial(o.unstable_streamData),
     preventUnsavedChanges: useInitial(o.preventUnsavedChanges),
+    badgeLocation: useInitial(o.badgeLocation),
 
     authEndpoint: useInitialUnlessFunction(o.authEndpoint),
     resolveMentionSuggestions: useInitialUnlessFunction(
@@ -1602,10 +1829,7 @@ export function LiveblocksProvider<U extends BaseUserMeta = DU>(
     resolveRoomsInfo: useInitialUnlessFunction(o.resolveRoomsInfo),
     resolveGroupsInfo: useInitialUnlessFunction(o.resolveGroupsInfo),
 
-    baseUrl: useInitial(
-      // @ts-expect-error - Hidden config options
-      o.baseUrl as string | undefined
-    ),
+    baseUrl: useInitial(o.baseUrl),
     enableDebugLogging: useInitial(
       // @ts-expect-error - Hidden config options
       o.enableDebugLogging as boolean | undefined
@@ -1639,9 +1863,10 @@ export function LiveblocksProvider<U extends BaseUserMeta = DU>(
  */
 export function createLiveblocksContext<
   U extends BaseUserMeta = DU,
-  M extends BaseMetadata = DM,
->(client: OpaqueClient): LiveblocksContextBundle<U, M> {
-  return getOrCreateContextBundle<U, M>(client);
+  TM extends BaseMetadata = DTM,
+  CM extends BaseMetadata = DCM,
+>(client: OpaqueClient): LiveblocksContextBundle<U, TM, CM> {
+  return getOrCreateContextBundle<U, TM, CM>(client);
 }
 
 /**
@@ -1660,12 +1885,15 @@ export function createLiveblocksContext<
  * The final API for that is still TBD.
  *
  */
-function useUserThreads_experimental<M extends BaseMetadata>(
-  options: UseUserThreadsOptions<M> = {}
-): ThreadsAsyncResult<M> {
+function useUserThreads_experimental<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(options: UseUserThreadsOptions<TM> = {}): ThreadsAsyncResult<TM, CM> {
   const client = useClient();
-  const { store, userThreadsPoller: poller } =
-    getLiveblocksExtrasForClient<M>(client);
+  const { store, userThreadsPoller: poller } = getLiveblocksExtrasForClient<
+    TM,
+    CM
+  >(client);
   const queryKey = makeUserThreadsQueryKey(options.query);
 
   useEffect(
@@ -1712,19 +1940,20 @@ function useUserThreads_experimental<M extends BaseMetadata>(
  * specify the sort order to be by most recently updated first somehow.
  * The final API for that is still TBD.
  */
-function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
-  options: UseUserThreadsOptions<M> = {}
-): ThreadsAsyncSuccess<M> {
+function useUserThreadsSuspense_experimental<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(options: UseUserThreadsOptions<TM> = {}): ThreadsAsyncSuccess<TM, CM> {
   // Throw error if we're calling this hook server side
   ensureNotServerSide();
 
   const client = useClient();
-  const { store } = getLiveblocksExtrasForClient<M>(client);
+  const { store } = getLiveblocksExtrasForClient<TM, CM>(client);
   const queryKey = makeUserThreadsQueryKey(options.query);
 
   use(store.outputs.loadingUserThreads.getOrCreate(queryKey).waitUntilLoaded());
 
-  const result = useUserThreads_experimental(options);
+  const result = useUserThreads_experimental<TM, CM>(options);
   assert(!result.error, "Did not expect error");
   assert(!result.isLoading, "Did not expect loading");
   return result;
@@ -1755,10 +1984,11 @@ function useInboxNotificationsSuspense(options?: UseInboxNotificationsOptions) {
   return useInboxNotificationsSuspense_withClient(useClient(), options);
 }
 
-function useInboxNotificationThread<M extends BaseMetadata>(
-  inboxNotificationId: string
-) {
-  return useInboxNotificationThread_withClient<M>(
+function useInboxNotificationThread<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(inboxNotificationId: string) {
+  return useInboxNotificationThread_withClient<TM, CM>(
     useClient(),
     inboxNotificationId
   );
@@ -1918,7 +2148,7 @@ function useGroupInfoSuspense(groupId: string): GroupInfoAsyncSuccess {
   return useGroupInfoSuspense_withClient(useClient(), groupId);
 }
 
-type TypedBundle = LiveblocksContextBundle<DU, DM>;
+type TypedBundle = LiveblocksContextBundle<DU, DTM, DCM>;
 
 /**
  * Returns the thread associated with a `"thread"` inbox notification.
@@ -2041,6 +2271,23 @@ const _useAiChatMessages: TypedBundle["useAiChatMessages"] = useAiChatMessages;
 const _useAiChatMessagesSuspense: TypedBundle["suspense"]["useAiChatMessages"] =
   useAiChatMessagesSuspense;
 
+/**
+ * Returns metadata for a given URL.
+ *
+ * @example
+ * const { metadata, error, isLoading } = useUrlMetadata("https://liveblocks.io");
+ */
+const _useUrlMetadata: TypedBundle["useUrlMetadata"] = useUrlMetadata;
+
+/**
+ * Returns metadata for a given URL.
+ *
+ * @example
+ * const { metadata } = useUrlMetadata("https://liveblocks.io");
+ */
+const _useUrlMetadataSuspense: TypedBundle["suspense"]["useUrlMetadata"] =
+  useUrlMetadataSuspense;
+
 function useSyncStatus_withClient(
   client: OpaqueClient,
   options?: UseSyncStatusOptions
@@ -2161,7 +2408,10 @@ export {
   _useAiChatSuspense as useAiChatSuspense,
   _useAiChatMessages as useAiChatMessages,
   _useAiChatMessagesSuspense as useAiChatMessagesSuspense,
+  useAiChatStatus,
   useCreateAiChat,
   useDeleteAiChat,
   useSendAiMessage,
+  _useUrlMetadata as useUrlMetadata,
+  _useUrlMetadataSuspense as useUrlMetadataSuspense,
 };

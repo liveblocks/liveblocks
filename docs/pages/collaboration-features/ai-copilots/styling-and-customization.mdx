@@ -1,0 +1,187 @@
+---
+meta:
+  title: "Styling and customization"
+  parentTitle: "AI Copilots"
+  description: "Customize the appearance and behavior of AI Copilots"
+---
+
+Styling
+[default components](/docs/ready-made-features/ai-copilots/default-components)
+is enabled through a range of means, such as CSS variables, class names, and
+more. It’s also possible to use [overrides](#Overrides-and-localization) to
+modify any strings used in the default components, which is especially helpful
+for localization.
+
+## Default components
+
+To add the default components’ theme, import the
+[default styles](/docs/api-reference/liveblocks-react-ui#Default-styles) CSS
+file.
+
+```ts
+import "@liveblocks/react-ui/styles.css";
+```
+
+You can also import one of two CSS files to enable
+[dark mode](/docs/api-reference/liveblocks-react-ui#Dark-mode), depending on how
+you’d like to enable it.
+
+```ts
+// Dark mode using the system theme with `prefers-color-scheme`
+import "@liveblocks/react-ui/styles/dark/media-query.css";
+```
+
+```ts
+// Dark mode using `className="dark"`, `data-theme="dark"`, or `data-dark="true"`
+import "@liveblocks/react-ui/styles/dark/attributes.css";
+```
+
+### CSS variables
+
+A number of
+[CSS variables](/docs/api-reference/liveblocks-react-ui#CSS-variables) can be
+used to customize colors, spacing, and more. This is our recommended path for
+styling the default components, as you can quickly and easily modify all
+components with just a few variables.
+
+```css
+/* Styles all default components */
+.lb-root {
+  --lb-accent: purple;
+  --lb-spacing: 1em;
+  --lb-radius: 0;
+}
+```
+
+### Class names
+
+Should you need deeper customization,
+[class names](/docs/api-reference/liveblocks-react-ui#Class-names) can be
+styled, some of which provide contextual data attributes.
+
+```css
+.lb-ai-chat {
+  /* Customize AI chat */
+}
+
+.lb-ai-composer {
+  /* Customize message composer */
+}
+```
+
+### Overrides and localization
+
+It’s possible to
+[override strings](/docs/api-reference/liveblocks-react-ui#Overrides) used in
+the default components, which has a couple of different uses, the first being
+localization. In this example, we’re globally setting the AI composer’s
+placeholder from “Ask anything…” to “Posez une question” for French users.
+
+```tsx
+import { LiveblocksUiConfig } from "@liveblocks/react-ui";
+
+export function App() {
+  return (
+    <LiveblocksUiConfig
+      overrides={{
+        // +++
+        locale: "fr",
+        AI_COMPOSER_PLACEHOLDER: "Posez une question",
+        // +++
+      }}
+    >
+      {/* ... */}
+    </LiveblocksUiConfig>
+  );
+}
+```
+
+You can also override strings on a component basis, for example if you’d like to
+change the “Send” button tooltip to “Post message” in the chat’s message
+composer.
+
+```tsx
+import { Composer } from "@liveblocks/react-ui";
+
+function Component() {
+  return (
+    <AiChat
+      chatId="my-chat-id"
+      copilotId="co_a7Gd3x..."
+      overrides={{
+        // +++
+        AI_COMPOSER_PLACEHOLDER: "Post message",
+        // +++
+      }}
+    />
+  );
+}
+```
+
+{/* prettier-ignore */}
+{/* TODO add back later when we enable it
+
+## Custom interfaces
+
+You can bypass the default components and build completely custom UI for your AI
+copilots, for example using
+[`useAiChatMessages`](/docs/api-reference/liveblocks-react#useAiChatMessages)
+and [`useSendAiMessage`](/docs/api-reference/liveblocks-react#useSendAiMessage)
+to build your own chat history and composer.
+
+```tsx
+import {
+  useAiChatMessages,
+  useSendAiMessage,
+} from "@liveblocks/react/suspense";
+
+function ChatMessages({ chatId }: { chatId: string }) {
+  // +++
+  const { messages } = useAiChatMessages(chatId);
+  const sendAiMessage = useSendAiMessage(chatId, { copilotId: "co_a7Gd3x..." });
+  // +++
+
+  return (
+    <div>
+      // +++
+      {messages.map((message) => {
+        // +++
+        if (message.role === "user") {
+          return (
+            <div key={message.id}>
+              {message.content.map((part) => (
+                <p>👤 You: {part.text}</p>
+              ))}
+            </div>
+          );
+        }
+
+        return (
+          <div key={message.id}>
+            {(message.contentSoFar ?? message.content).map((part) => (
+              <p>🤖 Assistant: {part.text}</p>
+            ))}
+          </div>
+        );
+      })}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          // +++
+          sendAiMessage({ text: e.target.message.value });
+          // +++
+          e.target.reset();
+        }}
+      >
+        <input type="text" name="message" />
+        <button type="submit">Send</button>
+      </form>
+    </div>
+  );
+}
+```
+
+Learn more about what you can build under
+[hooks](/docs/ready-made-features/ai-copilots/hooks).
+
+\*/}
