@@ -1,5 +1,6 @@
 "use client";
 
+import { shallow } from "@liveblocks/client";
 import { HotTable, type HotTableRef } from "@handsontable/react-wrapper";
 import { registerAllModules } from "handsontable/registry";
 import { textRenderer } from "handsontable/renderers";
@@ -8,26 +9,44 @@ import {
   useMutation,
   useOthersListener,
   useStorage,
-  useUpdateMyPresence,
 } from "@liveblocks/react/suspense";
 import { useCallback, useRef } from "react";
-import { GRID_COLS } from "../liveblocks.config";
+import { GRID_COLS, GRID_ROWS } from "../liveblocks.config";
+
+const MIN_COL_WIDTH = 24;
+const MIN_ROW_HEIGHT = 22;
 
 registerAllModules();
 
 export function Table() {
   const hotRef = useRef<HotTableRef>(null);
-  const updateMyPresence = useUpdateMyPresence();
 
   // Create column and row headers
   const colHeaders = useCallback((index: number) => columnLetters(index), []);
   const rowHeaders = useCallback((index: number) => String(index + 1), []);
 
   // Get the realtime grid contents from Liveblocks Storage
-  const data = useStorage((root) =>
-    root.grid.map((row) =>
-      Array.from({ length: GRID_COLS }, (_, c) => String(row[c] ?? ""))
-    )
+  const data = useStorage(
+    (root) =>
+      root.grid.map((row) =>
+        Array.from({ length: GRID_COLS }, (_, c) => String(row[c] ?? ""))
+      ),
+    shallow
+  );
+
+  // Get the realtime column and row widths from Liveblocks Storage
+  const { colWidths, rowHeights } = useStorage(
+    (root) => ({
+      colWidths: Array.from(
+        { length: GRID_COLS },
+        (_, i) => root.columnWidths[i]
+      ),
+      rowHeights: Array.from(
+        { length: GRID_ROWS },
+        (_, i) => root.rowHeights[i]
+      ),
+    }),
+    shallow
   );
 
   // Update a cell's value
@@ -72,10 +91,29 @@ export function Table() {
     []
   );
 
-  // End presence on cell
-  const afterSelectionEnd = useMutation(({ setMyPresence }) => {
+  // Clear presence when the grid stops listening (focus leaves the table)
+  const clearSelectedCellPresence = useMutation(({ setMyPresence }) => {
     setMyPresence({ selectedCell: null });
   }, []);
+
+  // Update columns width and heights on changes
+  const afterColumnResize = useMutation(
+    ({ storage }, newSize: number, column: number) => {
+      storage
+        .get("columnWidths")
+        .set(column, Math.max(MIN_COL_WIDTH, Math.round(newSize)));
+    },
+    []
+  );
+
+  const afterRowResize = useMutation(
+    ({ storage }, newSize: number, row: number) => {
+      storage
+        .get("rowHeights")
+        .set(row, Math.max(MIN_ROW_HEIGHT, Math.round(newSize)));
+    },
+    []
+  );
 
   // Render presence inside cells
   const renderDataCell = useMutation(
@@ -123,9 +161,15 @@ export function Table() {
       afterSelection={syncSelectedCellToPresence}
       afterSelectionEnd={syncSelectedCellToPresence}
       afterSelectionFocusSet={syncSelectedCellToPresence}
-      afterUnlisten={afterSelectionEnd}
+      afterUnlisten={clearSelectedCellPresence}
+      afterColumnResize={afterColumnResize}
+      afterRowResize={afterRowResize}
       colHeaders={colHeaders}
       rowHeaders={rowHeaders}
+      colWidths={colWidths}
+      rowHeights={rowHeights}
+      manualColumnResize={true}
+      manualRowResize={true}
       height={279}
       width={720}
       licenseKey="non-commercial-and-evaluation"
@@ -133,9 +177,9 @@ export function Table() {
       autoWrapCol={true}
       autoRowSize={false}
       autoColumnSize={false}
-      stretchH="all"
+      stretchH="none"
       rowHeaderWidth={44}
-      minRowHeights={24}
+      minRowHeights={MIN_ROW_HEIGHT}
     />
   );
 }

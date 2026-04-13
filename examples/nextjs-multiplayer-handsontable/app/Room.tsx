@@ -5,7 +5,12 @@ import { ReactNode, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { RoomProvider, ClientSideSuspense } from "@liveblocks/react/suspense";
 import { Loading } from "./Loading";
-import { GRID_COLS, GRID_ROWS } from "../liveblocks.config";
+import {
+  DEFAULT_COL_WIDTH,
+  DEFAULT_ROW_HEIGHT,
+  GRID_COLS,
+  GRID_ROWS,
+} from "../liveblocks.config";
 
 export function Room({ children }: { children: ReactNode }) {
   const roomId = useExampleRoomId(
@@ -23,6 +28,12 @@ export function Room({ children }: { children: ReactNode }) {
             { length: GRID_ROWS },
             () => new LiveList(Array.from({ length: GRID_COLS }, () => ""))
           )
+        ),
+        columnWidths: new LiveList(
+          Array.from({ length: GRID_COLS }, () => DEFAULT_COL_WIDTH)
+        ),
+        rowHeights: new LiveList(
+          Array.from({ length: GRID_ROWS }, () => DEFAULT_ROW_HEIGHT)
         ),
       }}
     >
