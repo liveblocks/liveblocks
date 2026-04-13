@@ -18,6 +18,64 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 15 (2026-04-10)
+
+## v3.18.0
+
+For full upgrade instructions, see the
+[3.18 upgrade guide](https://liveblocks.io/docs/platform/upgrading/3.18).
+
+### `@liveblocks/client`
+
+- **Breaking:** `useStorage` now returns plain objects for `LiveMap` values
+  instead of `Map` instances. Legacy APIs have been removed: `.toImmutable()`,
+  `.toObject()`, `.toArray()`.
+- New `.toJSON()` on all Live structures, returning a cached JSON-compatible
+  snapshot. `JSON.stringify(root)` now just works.
+- New `LiveObject.from(obj)` to create a LiveObject from plain JSON, recursively
+  converting nested objects/arrays to Live structures.
+- New `.reconcile(obj)` to efficiently reconcile a LiveObject tree to match a
+  JSON snapshot, only mutating what changed.
+- `initialStorage` accepts `LiveObject.from()` result directly.
+
+### `@liveblocks/react-flow/node`
+
+- New `mutateFlow()` API for reading and mutating React Flow data from a Node.js
+  backend. Install via `npm i @liveblocks/react-flow`, import from
+  `@liveblocks/react-flow/node`.
+
+### `@liveblocks/react-ui`
+
+- Add standalone `Avatar` component to complement `AvatarStack` for more
+  fine-grained customization.
+- Add `variant` prop to `AvatarStack` to support outlined avatars.
+
+### `@liveblocks/zustand` and `@liveblocks/redux`
+
+- Fix: Initial storage seeding no longer creates an undo frame.
+- Fix: Presence updates are now batched with storage updates.
+
+## Liveblocks dev server (v1.4.0)
+
+- Add support for `client.mutateStorage()` (from `@liveblocks/node`)
+
+## Website
+
+- New blog post: [AI agents are becoming native users of software](https://liveblocks.io/blog/ai-agents-are-becoming-native-users-of-software).
+- New blog post: [Introducing Feeds and APIs for Agent Workflows](https://liveblocks.io/blog/introducing-feeds-and-apis-for-agent-workflows).
+- New blog post: [Multiplayer SDK for React Flow: Realtime collaboration between humans and agents](https://liveblocks.io/blog/multiplayer-sdk-for-react-flow-realtime-collaboration-between-humans-and-agents).
+- New blog post: [Chat SDK adapter for Liveblocks](https://liveblocks.io/blog/chat-sdk-adapter-for-liveblocks).
+- New blog post: [Python SDK for Liveblocks](https://liveblocks.io/blog/python-sdk-for-liveblocks).
+- New blog post: [Agent skills for Liveblocks](https://liveblocks.io/blog/agent-skills-for-liveblocks).
+
+## Documentation
+
+- Mention missing [`updatedAt`](https://liveblocks.io/docs/api-reference/liveblocks-node#patch-rooms-roomId-feeds-feedId-messages-messageId) field in `updateFeedMessage` reference.
+
+## Contributors
+
+nvie, ctnicholas, stevenfabre, marcbouchenoire
+
 # Week 14 (2026-04-03)
 
 ## v3.17.0
@@ -88,6 +146,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 - Support passing extra arguments to `--cmd` dynamically
 
 ## Website
+
 - [Liveblocks Unveil](https://liveblocks.io/unveil/april-2026): April 6–10, 5 days of launches.
 
 ## Documentation

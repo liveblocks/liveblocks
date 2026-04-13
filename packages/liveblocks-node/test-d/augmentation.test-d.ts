@@ -1,13 +1,11 @@
-import { expectError, expectType } from "tsd";
 import { Liveblocks } from "@liveblocks/node";
+import { describe, expectTypeOf, test } from "vitest";
+import { LiveList, LiveMap, LiveObject } from "@liveblocks/core";
 import type {
   CommentReaction,
   CommentBody,
   CommentBodyBlockElement,
   CommentData,
-  LiveList,
-  LiveMap,
-  LiveObject,
   PlainLson,
 } from "@liveblocks/core";
 
@@ -61,190 +59,203 @@ declare global {
   }
 }
 
-async () => {
+describe("Liveblocks client with Liveblocks augmentation", () => {
   const client = new Liveblocks({ secret: "sk_xxx" });
 
-  // .prepareSession() without all mandatory userInfo is an error
-  {
-    expectError(await client.prepareSession("user-123"));
-    expectError(await client.prepareSession("user-123", {}));
-    expectError(await client.prepareSession("user-123", { userInfo: {} }));
-    expectError(
-      await client.prepareSession("user-123", { userInfo: { name: "Vincent" } })
-    );
-    expectError(
-      await client.prepareSession("user-123", { userInfo: { age: 42 } })
-    );
-  }
+  test("should reject prepareSession() without mandatory userInfo", () => {
+    // @ts-expect-error - userInfo must include name and age
+    client.prepareSession("user-123");
+    // @ts-expect-error - userInfo must include name and age
+    client.prepareSession("user-123", {});
+    // @ts-expect-error - userInfo must include name and age
+    client.prepareSession("user-123", { userInfo: {} });
+    client.prepareSession("user-123", {
+      // @ts-expect-error - userInfo must include age
+      userInfo: { name: "Vincent" },
+    });
+    client.prepareSession("user-123", {
+      // @ts-expect-error - userInfo must include name
+      userInfo: { age: 42 },
+    });
+  });
 
-  // .prepareSession() with user info
-  {
-    const session = await client.prepareSession("user-123", {
+  test("should return a session with authorize() response types when correct userInfo is provided", async () => {
+    const session = client.prepareSession("user-123", {
       userInfo: { name: "Vincent", age: 42 },
     });
     session.allow("org1:*", session.READ_ACCESS);
     const resp = await session.authorize();
-    expectType<number>(resp.status);
-    expectType<string>(resp.body);
-    expectType<Error | undefined>(resp.error);
-  }
+    expectTypeOf(resp.status).toEqualTypeOf<number>();
+    expectTypeOf(resp.body).toEqualTypeOf<string>();
+    expectTypeOf(resp.error).toEqualTypeOf<Error | undefined>();
+  });
 
-  // .prepareSession() with incorrect user info
-  {
-    expectError(
-      await client.prepareSession("user-123", { userInfo: { foo: "bar" } })
-    );
-  }
+  test("should reject prepareSession() with incorrect user info", () => {
+    client.prepareSession("user-123", {
+      userInfo: {
+        // @ts-expect-error - userInfo shape must match UserMeta
+        foo: "bar",
+      },
+    });
+  });
 
-  // .identifyUser() without all mandatory userInfo is an error
-  {
-    expectError(await client.identifyUser("user-123"));
-    expectError(await client.identifyUser("user-123", {}));
-    expectError(await client.identifyUser("user-123", { userInfo: {} }));
-    expectError(
-      await client.identifyUser("user-123", { userInfo: { name: "Vincent" } })
-    );
-    expectError(
-      await client.identifyUser("user-123", { userInfo: { age: 42 } })
-    );
-  }
+  test("should reject identifyUser() without mandatory userInfo", async () => {
+    // @ts-expect-error - userInfo must include name and age
+    await client.identifyUser("user-123");
+    // @ts-expect-error - userInfo must include name and age
+    await client.identifyUser("user-123", {});
+    // @ts-expect-error - userInfo must include name and age
+    await client.identifyUser("user-123", { userInfo: {} });
+    await client.identifyUser("user-123", {
+      // @ts-expect-error - userInfo must include age
+      userInfo: { name: "Vincent" },
+    });
+    await client.identifyUser("user-123", {
+      // @ts-expect-error - userInfo must include name
+      userInfo: { age: 42 },
+    });
+  });
 
-  // .identifyUser() with user info
-  {
+  test("should return correct response types from identifyUser() when correct userInfo is provided", async () => {
     const resp = await client.identifyUser("user-123", {
       userInfo: { name: "Vincent", age: 42 },
     });
-    expectType<number>(resp.status);
-    expectType<string>(resp.body);
-    expectType<Error | undefined>(resp.error);
-  }
+    expectTypeOf(resp.status).toEqualTypeOf<number>();
+    expectTypeOf(resp.body).toEqualTypeOf<string>();
+    expectTypeOf(resp.error).toEqualTypeOf<Error | undefined>();
+  });
 
-  // .identifyUser() with incorrect user info
-  {
-    expectError(
-      await client.identifyUser("user-123", {
-        userInfo:
-          // Not matching the annotations...
-          { foo: "bar" },
-      })
-    );
+  test("should reject identifyUser() with incorrect user info", async () => {
+    await client.identifyUser("user-123", {
+      userInfo: {
+        // @ts-expect-error - userInfo shape must match UserMeta
+        foo: "bar",
+      },
+    });
 
-    expectError(
-      await client.identifyUser("user-123", {
-        userInfo:
-          // ...or non-JSON
-          { notJson: new Date() },
-      })
-    );
-  }
+    await client.identifyUser("user-123", {
+      userInfo: {
+        // @ts-expect-error - userInfo must be JSON-serializable
+        notJson: new Date(),
+      },
+    });
+  });
 
-  // .getActiveUsers()
-  {
+  test("should return typed user info from getActiveUsers()", async () => {
     const users = (await client.getActiveUsers("my-room")).data;
     const user = users[0]!;
-    expectType<"user">(user.type);
-    expectType<number>(user.connectionId);
-    expectType<string | null>(user.id);
-    expectType<string>(user.info.name);
-    expectType<number>(user.info.age);
-    expectError(user.info.nonexisting);
-  }
+    expectTypeOf(user.type).toEqualTypeOf<"user">();
+    expectTypeOf(user.connectionId).toEqualTypeOf<number>();
+    expectTypeOf(user.id).toEqualTypeOf<string | null>();
+    expectTypeOf(user.info.name).toEqualTypeOf<string>();
+    expectTypeOf(user.info.age).toEqualTypeOf<number>();
+    // @ts-expect-error - unknown UserMeta field
+    user.info.nonexisting;
+  });
 
-  // .broadcastEvent()
-  {
-    expectError(client.broadcastEvent("my-room"));
-    expectError(client.broadcastEvent("my-room", { date: Date }));
+  test("should only accept typed RoomEvents in broadcastEvent()", async () => {
+    // @ts-expect-error - payload is required
+    client.broadcastEvent("my-room");
+    client.broadcastEvent("my-room", {
+      // @ts-expect-error - invalid broadcast payload
+      date: Date,
+    });
 
-    // Arbitrary JSON will be errors
-    expectError(client.broadcastEvent("my-room", 123));
-    expectError(client.broadcastEvent("my-room", [1, 2, 3]));
-    expectError(client.broadcastEvent("my-room", { type: "foo" }));
-    expectError(client.broadcastEvent("my-room", { type: "boop" }));
+    // @ts-expect-error - event must match RoomEvent
+    client.broadcastEvent("my-room", 123);
+    // @ts-expect-error - event must match RoomEvent
+    client.broadcastEvent("my-room", [1, 2, 3]);
+    // @ts-expect-error - event must match RoomEvent
+    client.broadcastEvent("my-room", { type: "foo" });
+    // @ts-expect-error - event must match RoomEvent
+    client.broadcastEvent("my-room", { type: "boop" });
 
-    // Only correct room events can be sent
     await client.broadcastEvent("my-room", { type: "emoji", emoji: "😍" });
     await client.broadcastEvent("my-room", { type: "beep" });
     await client.broadcastEvent("my-room", { type: "beep", times: 3 });
-  }
+  });
 
-  // .getStorageDocument() (implicit plain LSON format)
-  {
+  test("should return PlainLson root from getStorageDocument()", async () => {
     const root = await client.getStorageDocument("my-room");
-    expectType<"LiveObject">(root.liveblocksType);
-    expectType<PlainLson | undefined>(root.data.liveblocksType);
-  }
+    expectTypeOf(root.liveblocksType).toEqualTypeOf<"LiveObject">();
+    expectTypeOf(root.data.liveblocksType).toEqualTypeOf<
+      PlainLson | undefined
+    >();
+  });
 
-  // .getStorageDocument() (explicit plain LSON format)
-  {
+  test("should return PlainLson root from getStorageDocument() with 'plain-lson' format", async () => {
     const root = await client.getStorageDocument("my-room", "plain-lson");
-    expectType<"LiveObject">(root.liveblocksType);
-    expectType<PlainLson | undefined>(root.data.liveblocksType);
-  }
+    expectTypeOf(root.liveblocksType).toEqualTypeOf<"LiveObject">();
+    expectTypeOf(root.data.liveblocksType).toEqualTypeOf<
+      PlainLson | undefined
+    >();
+  });
 
-  // .getStorageDocument() (simplified JSON format)
-  {
+  test("should return typed Storage shape from getStorageDocument() with 'json' format", async () => {
     const root = await client.getStorageDocument("my-room", "json");
-    expectType<readonly string[]>(root.animals);
-    expectType<string>(root.person.name);
-    expectType<number>(root.person.age);
-    expectType<number | undefined>(root.scores["foo"]);
-  }
+    expectTypeOf(root.animals).toEqualTypeOf<readonly string[]>();
+    expectTypeOf(root.person.name).toEqualTypeOf<string>();
+    expectTypeOf(root.person.age).toEqualTypeOf<number>();
+    expectTypeOf(root.scores["foo"]).toEqualTypeOf<number | undefined>();
+  });
 
-  // .getComment()
-  {
+  test("should return correct comment shape from getComment()", async () => {
     const comment = await client.getComment({
       roomId: "my-room",
       threadId: "th_xxx",
       commentId: "cm_xxx",
     });
-    expectType<"comment">(comment.type);
-    expectType<string>(comment.id);
-    expectType<string>(comment.threadId);
-    expectType<string>(comment.roomId);
-    expectType<string>(comment.userId);
-    expectType<Date>(comment.createdAt);
-    expectType<Date | undefined>(comment.editedAt);
-    expectType<CommentReaction[]>(comment.reactions);
-    expectType<Date | undefined>(comment.deletedAt);
+    expectTypeOf(comment.type).toEqualTypeOf<"comment">();
+    expectTypeOf(comment.id).toEqualTypeOf<string>();
+    expectTypeOf(comment.threadId).toEqualTypeOf<string>();
+    expectTypeOf(comment.roomId).toEqualTypeOf<string>();
+    expectTypeOf(comment.userId).toEqualTypeOf<string>();
+    expectTypeOf(comment.createdAt).toEqualTypeOf<Date>();
+    expectTypeOf(comment.editedAt).toEqualTypeOf<Date | undefined>();
+    expectTypeOf(comment.reactions).toEqualTypeOf<CommentReaction[]>();
+    expectTypeOf(comment.deletedAt).toEqualTypeOf<Date | undefined>();
 
-    expectType<CommentBody | undefined>(comment.body);
-    expectType<1 | undefined>(comment.body?.version);
-    expectType<CommentBodyBlockElement[] | undefined>(comment.body?.content);
-  }
+    expectTypeOf(comment.body).toEqualTypeOf<CommentBody | undefined>();
+    expectTypeOf(comment.body?.version).toEqualTypeOf<1 | undefined>();
+    expectTypeOf(comment.body?.content).toEqualTypeOf<
+      CommentBodyBlockElement[] | undefined
+    >();
+  });
 
-  // .createThread()
-  {
-    // Invalid calls
-    expectError(client.createThread({ data: {} }));
-    expectError(client.createThread({ roomId: "my-room" }));
-    expectError(client.createThread({ roomId: "my-room", data: {} }));
+  test("should enforce typed metadata in createThread() and return typed thread", async () => {
+    // @ts-expect-error - invalid createThread arguments
+    client.createThread({ data: {} });
+    // @ts-expect-error - invalid createThread arguments
+    client.createThread({ roomId: "my-room" });
+    client.createThread({
+      roomId: "my-room",
+      // @ts-expect-error - invalid createThread arguments
+      data: {},
+    });
 
-    // In an un-augmented world, this would be fine
-    expectError(
-      client.createThread({
-        roomId: "my-room",
-        data: {
-          comment: {
-            userId: "user-123",
-            body: { version: 1, content: [] },
-          },
+    client.createThread({
+      roomId: "my-room",
+      data: {
+        // @ts-expect-error - comment must include CommentMetadata
+        comment: {
+          userId: "user-123",
+          body: { version: 1, content: [] },
         },
-      })
-    );
+      },
+    });
 
-    // In an un-augmented world, this would be fine
-    expectError(
-      client.createThread({
-        roomId: "my-room",
-        data: {
-          comment: {
-            userId: "user-123",
-            body: { version: 1, content: [] },
-          },
-          metadata: { foo: "bar" }, // Arbitrary metadata!
+    client.createThread({
+      roomId: "my-room",
+      data: {
+        comment: {
+          userId: "user-123",
+          body: { version: 1, content: [] },
+          metadata: { priority: 1 },
         },
-      })
-    );
+        // @ts-expect-error - ThreadMetadata shape
+        metadata: { foo: "bar" },
+      },
+    });
 
     const thread = await client.createThread({
       roomId: "room-123",
@@ -258,11 +269,12 @@ async () => {
       },
     });
 
-    expectType<"thread">(thread.type);
-    expectType<string>(thread.id);
-    expectType<"red" | "blue">(thread.metadata.color);
-    expectError(thread.metadata.nonexisting);
-    expectType<CommentData[]>(thread.comments);
+    expectTypeOf(thread.type).toEqualTypeOf<"thread">();
+    expectTypeOf(thread.id).toEqualTypeOf<string>();
+    expectTypeOf(thread.metadata.color).toEqualTypeOf<"red" | "blue">();
+    // @ts-expect-error - unknown ThreadMetadata field
+    thread.metadata.nonexisting;
+    expectTypeOf(thread.comments).toEqualTypeOf<CommentData[]>();
 
     const threadWithCommentMetadata = await client.createThread({
       roomId: "room-123",
@@ -279,127 +291,137 @@ async () => {
       },
     });
 
-    expectType<"thread">(threadWithCommentMetadata.type);
-    expectType<number>(
+    expectTypeOf(threadWithCommentMetadata.type).toEqualTypeOf<"thread">();
+    expectTypeOf(
       threadWithCommentMetadata.comments[0]!.metadata.priority
-    );
-    expectType<boolean | undefined>(
+    ).toEqualTypeOf<number>();
+    expectTypeOf(
       threadWithCommentMetadata.comments[0]!.metadata.reviewed
-    );
-    expectError(threadWithCommentMetadata.comments[0]!.metadata.nonexisting);
-  }
+    ).toEqualTypeOf<boolean | undefined>();
+    // @ts-expect-error - unknown CommentMetadata field
+    threadWithCommentMetadata.comments[0]!.metadata.nonexisting;
+  });
 
-  // .editThreadMetadata()
-  {
+  test("should enforce typed metadata in editThreadMetadata()", async () => {
     const roomId = "my-room";
     const threadId = "th_xxx";
     const userId = "user-123";
 
-    // Invalid calls
-    expectError(client.editThreadMetadata({ roomId }));
-    expectError(client.editThreadMetadata({ threadId }));
-    expectError(
-      client.editThreadMetadata({
-        roomId: "my-room",
-        threadId: "th_xxx",
-        data: {},
-      })
-    );
-    expectError(
-      client.editThreadMetadata({ roomId, threadId, data: { userId } })
-    );
-
-    // Incorrect metadata
-    expectError(
-      client.editThreadMetadata({
-        roomId,
-        threadId,
-        data: { userId, metadata: { foo: "bar" } }, // Incorrect metadata
-      })
-    );
-
-    await client.editThreadMetadata({
+    // @ts-expect-error - invalid editThreadMetadata arguments
+    client.editThreadMetadata({ roomId });
+    // @ts-expect-error - invalid editThreadMetadata arguments
+    client.editThreadMetadata({ threadId });
+    client.editThreadMetadata({
+      roomId: "my-room",
+      threadId: "th_xxx",
+      // @ts-expect-error - invalid editThreadMetadata arguments
+      data: {},
+    });
+    client.editThreadMetadata({
       roomId,
       threadId,
-      data: { userId, metadata: {} }, // Not updating any fields is useless, but fine
+      // @ts-expect-error - invalid editThreadMetadata arguments
+      data: { userId },
+    });
+
+    client.editThreadMetadata({
+      roomId,
+      threadId,
+      data: {
+        userId,
+        // @ts-expect-error - metadata must match ThreadMetadata
+        metadata: { foo: "bar" },
+      },
     });
 
     await client.editThreadMetadata({
       roomId,
       threadId,
-      data: { userId, metadata: { color: "red", pinned: null } }, // Correct metadata updates
+      data: { userId, metadata: {} },
     });
 
-    expectError(
-      client.editThreadMetadata({
-        roomId,
-        threadId,
-        data: { userId, metadata: { color: null } }, // Color cannot be set to null
-      })
-    );
+    await client.editThreadMetadata({
+      roomId,
+      threadId,
+      data: { userId, metadata: { color: "red", pinned: null } },
+    });
 
-    expectError(
-      client.editThreadMetadata({
-        roomId,
-        threadId,
-        data: { userId, metadata: { foo: null } }, // Undefined fields
-      })
-    );
-  }
+    client.editThreadMetadata({
+      roomId,
+      threadId,
+      data: {
+        userId,
+        metadata: {
+          // @ts-expect-error - color cannot be null
+          color: null,
+        },
+      },
+    });
 
-  // .getThreads()
-  {
+    client.editThreadMetadata({
+      roomId,
+      threadId,
+      data: {
+        userId,
+        metadata: {
+          // @ts-expect-error - unknown ThreadMetadata field
+          foo: null,
+        },
+      },
+    });
+  });
+
+  test("should return typed thread metadata from getThreads()", async () => {
     const threads = (await client.getThreads({ roomId: "my-room" })).data;
     const thread = threads[0]!;
-    expectType<"thread">(thread.type);
-    expectType<string>(thread.id);
-    expectType<string>(thread.roomId);
-    expectType<Date>(thread.createdAt);
-    expectType<Date>(thread.updatedAt);
-    expectType<"red" | "blue">(thread.metadata.color);
-    expectError(thread.metadata.nonexisting);
-    expectType<CommentData[]>(thread.comments);
-  }
+    expectTypeOf(thread.type).toEqualTypeOf<"thread">();
+    expectTypeOf(thread.id).toEqualTypeOf<string>();
+    expectTypeOf(thread.roomId).toEqualTypeOf<string>();
+    expectTypeOf(thread.createdAt).toEqualTypeOf<Date>();
+    expectTypeOf(thread.updatedAt).toEqualTypeOf<Date>();
+    expectTypeOf(thread.metadata.color).toEqualTypeOf<"red" | "blue">();
+    // @ts-expect-error - unknown ThreadMetadata field
+    thread.metadata.nonexisting;
+    expectTypeOf(thread.comments).toEqualTypeOf<CommentData[]>();
+  });
 
-  // .getThread()
-  {
+  test("should return typed thread metadata from getThread()", async () => {
     const thread = await client.getThread({
       roomId: "my-room",
       threadId: "th_xxx",
     });
-    expectType<"thread">(thread.type);
-    expectType<string>(thread.id);
-    expectType<string>(thread.roomId);
-    expectType<Date>(thread.createdAt);
-    expectType<Date>(thread.updatedAt);
-    expectType<"red" | "blue">(thread.metadata.color);
-    expectError(thread.metadata.nonexisting);
-    expectType<CommentData[]>(thread.comments);
-  }
+    expectTypeOf(thread.type).toEqualTypeOf<"thread">();
+    expectTypeOf(thread.id).toEqualTypeOf<string>();
+    expectTypeOf(thread.roomId).toEqualTypeOf<string>();
+    expectTypeOf(thread.createdAt).toEqualTypeOf<Date>();
+    expectTypeOf(thread.updatedAt).toEqualTypeOf<Date>();
+    expectTypeOf(thread.metadata.color).toEqualTypeOf<"red" | "blue">();
+    // @ts-expect-error - unknown ThreadMetadata field
+    thread.metadata.nonexisting;
+    expectTypeOf(thread.comments).toEqualTypeOf<CommentData[]>();
+  });
 
-  // .createComment()
-  {
+  test("should enforce typed metadata in createComment() and return typed comment", async () => {
     const roomId = "my-room";
     const threadId = "th_xxx";
     const userId = "user-123";
 
-    // Invalid calls
-    expectError(client.createComment({ roomId }));
-    expectError(client.createComment({ threadId }));
-    expectError(
-      client.createComment({
-        roomId: "my-room",
-        threadId: "th_xxx",
-        data: {},
-      })
-    );
-    expectError(
-      client.createComment({
-        roomId: "my-room",
-        threadId: "th_xxx",
-        data: { userId },
-      })
-    );
+    // @ts-expect-error - invalid createComment arguments
+    client.createComment({ roomId });
+    // @ts-expect-error - invalid createComment arguments
+    client.createComment({ threadId });
+    client.createComment({
+      roomId: "my-room",
+      threadId: "th_xxx",
+      // @ts-expect-error - invalid createComment arguments
+      data: {},
+    });
+    client.createComment({
+      roomId: "my-room",
+      threadId: "th_xxx",
+      // @ts-expect-error - invalid createComment arguments
+      data: { userId },
+    });
 
     const comment = await client.createComment({
       roomId,
@@ -411,9 +433,9 @@ async () => {
       },
     });
 
-    expectType<"comment">(comment.type);
-    expectType<string>(comment.id);
-    expectType<string>(comment.threadId);
+    expectTypeOf(comment.type).toEqualTypeOf<"comment">();
+    expectTypeOf(comment.id).toEqualTypeOf<string>();
+    expectTypeOf(comment.threadId).toEqualTypeOf<string>();
 
     const commentWithMetadata = await client.createComment({
       roomId,
@@ -428,55 +450,58 @@ async () => {
       },
     });
 
-    expectType<"comment">(commentWithMetadata.type);
-    expectType<number>(commentWithMetadata.metadata.priority);
-    expectType<boolean | undefined>(commentWithMetadata.metadata.reviewed);
-    expectError(commentWithMetadata.metadata.nonexisting);
-  }
+    expectTypeOf(commentWithMetadata.type).toEqualTypeOf<"comment">();
+    expectTypeOf(commentWithMetadata.metadata.priority).toEqualTypeOf<number>();
+    expectTypeOf(commentWithMetadata.metadata.reviewed).toEqualTypeOf<
+      boolean | undefined
+    >();
+    // @ts-expect-error - unknown CommentMetadata field
+    commentWithMetadata.metadata.nonexisting;
+  });
 
-  // .editCommentMetadata()
-  {
+  test("should enforce typed metadata in editCommentMetadata()", async () => {
     const roomId = "my-room";
     const threadId = "th_xxx";
     const commentId = "cm_xxx";
     const userId = "user-123";
 
-    // Invalid calls
-    expectError(client.editCommentMetadata({ roomId }));
-    expectError(client.editCommentMetadata({ threadId }));
-    expectError(client.editCommentMetadata({ commentId }));
-    expectError(
-      client.editCommentMetadata({
-        roomId: "my-room",
-        threadId: "th_xxx",
-        commentId: "cm_xxx",
-        data: {},
-      })
-    );
-    expectError(
-      client.editCommentMetadata({
-        roomId,
-        threadId,
-        commentId,
-        data: { userId },
-      })
-    );
+    // @ts-expect-error - invalid editCommentMetadata arguments
+    client.editCommentMetadata({ roomId });
+    // @ts-expect-error - invalid editCommentMetadata arguments
+    client.editCommentMetadata({ threadId });
+    // @ts-expect-error - invalid editCommentMetadata arguments
+    client.editCommentMetadata({ commentId });
+    client.editCommentMetadata({
+      roomId: "my-room",
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      // @ts-expect-error - invalid editCommentMetadata arguments
+      data: {},
+    });
+    client.editCommentMetadata({
+      roomId,
+      threadId,
+      commentId,
+      // @ts-expect-error - invalid editCommentMetadata arguments
+      data: { userId },
+    });
 
-    // Incorrect metadata
-    expectError(
-      client.editCommentMetadata({
-        roomId,
-        threadId,
-        commentId,
-        data: { userId, metadata: { foo: "bar" } }, // Incorrect metadata
-      })
-    );
+    client.editCommentMetadata({
+      roomId,
+      threadId,
+      commentId,
+      data: {
+        userId,
+        // @ts-expect-error - metadata must match CommentMetadata
+        metadata: { foo: "bar" },
+      },
+    });
 
     await client.editCommentMetadata({
       roomId,
       threadId,
       commentId,
-      data: { userId, metadata: {} }, // Not updating any fields is useless, but fine
+      data: { userId, metadata: {} },
     });
 
     await client.editCommentMetadata({
@@ -486,30 +511,37 @@ async () => {
       data: {
         userId,
         metadata: { priority: 2, reviewed: null },
-      }, // Correct metadata updates
+      },
     });
 
-    expectError(
-      client.editCommentMetadata({
-        roomId,
-        threadId,
-        commentId,
-        data: { userId, metadata: { priority: null } }, // priority cannot be set to null
-      })
-    );
+    client.editCommentMetadata({
+      roomId,
+      threadId,
+      commentId,
+      data: {
+        userId,
+        metadata: {
+          // @ts-expect-error - priority cannot be null
+          priority: null,
+        },
+      },
+    });
 
-    expectError(
-      client.editCommentMetadata({
-        roomId,
-        threadId,
-        commentId,
-        data: { userId, metadata: { foo: null } }, // Undefined fields
-      })
-    );
-  }
+    client.editCommentMetadata({
+      roomId,
+      threadId,
+      commentId,
+      data: {
+        userId,
+        metadata: {
+          // @ts-expect-error - unknown CommentMetadata field
+          foo: null,
+        },
+      },
+    });
+  });
 
-  // .addCommentReaction()
-  {
+  test("should return correct reaction shape from addCommentReaction()", async () => {
     const reaction = await client.addCommentReaction({
       roomId: "my-room",
       threadId: "th_xxx",
@@ -520,13 +552,12 @@ async () => {
       },
     });
 
-    expectType<string>(reaction.emoji);
-    expectType<string>(reaction.userId);
-    expectType<Date>(reaction.createdAt);
-  }
+    expectTypeOf(reaction.emoji).toEqualTypeOf<string>();
+    expectTypeOf(reaction.userId).toEqualTypeOf<string>();
+    expectTypeOf(reaction.createdAt).toEqualTypeOf<Date>();
+  });
 
-  // .markThreadAsResolved()
-  {
+  test("should return correct thread shape from markThreadAsResolved()", async () => {
     const thread = await client.markThreadAsResolved({
       roomId: "my-room",
       threadId: "th_xxx",
@@ -534,17 +565,16 @@ async () => {
         userId: "user-id",
       },
     });
-    expectType<"thread">(thread.type);
-    expectType<string>(thread.id);
-    expectType<string>(thread.roomId);
-    expectType<boolean>(thread.resolved);
-    expectType<Date>(thread.createdAt);
-    expectType<Date>(thread.updatedAt);
-    expectType<CommentData[]>(thread.comments);
-  }
+    expectTypeOf(thread.type).toEqualTypeOf<"thread">();
+    expectTypeOf(thread.id).toEqualTypeOf<string>();
+    expectTypeOf(thread.roomId).toEqualTypeOf<string>();
+    expectTypeOf(thread.resolved).toEqualTypeOf<boolean>();
+    expectTypeOf(thread.createdAt).toEqualTypeOf<Date>();
+    expectTypeOf(thread.updatedAt).toEqualTypeOf<Date>();
+    expectTypeOf(thread.comments).toEqualTypeOf<CommentData[]>();
+  });
 
-  // .markThreadAsUnresolved()
-  {
+  test("should return correct thread shape from markThreadAsUnresolved()", async () => {
     const thread = await client.markThreadAsUnresolved({
       roomId: "my-room",
       threadId: "th_xxx",
@@ -552,12 +582,12 @@ async () => {
         userId: "user-id",
       },
     });
-    expectType<"thread">(thread.type);
-    expectType<string>(thread.id);
-    expectType<string>(thread.roomId);
-    expectType<boolean>(thread.resolved);
-    expectType<Date>(thread.createdAt);
-    expectType<Date>(thread.updatedAt);
-    expectType<CommentData[]>(thread.comments);
-  }
-};
+    expectTypeOf(thread.type).toEqualTypeOf<"thread">();
+    expectTypeOf(thread.id).toEqualTypeOf<string>();
+    expectTypeOf(thread.roomId).toEqualTypeOf<string>();
+    expectTypeOf(thread.resolved).toEqualTypeOf<boolean>();
+    expectTypeOf(thread.createdAt).toEqualTypeOf<Date>();
+    expectTypeOf(thread.updatedAt).toEqualTypeOf<Date>();
+    expectTypeOf(thread.comments).toEqualTypeOf<CommentData[]>();
+  });
+});

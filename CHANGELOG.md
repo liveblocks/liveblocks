@@ -1,5 +1,14 @@
 ## vNEXT (not yet released)
 
+## v3.18.1
+
+### `@liveblocks/react-ui`
+
+- Mentions suggestions now appear in more cases after typing `@`:
+  - After punctuation like `!`, `.`, `(`, etc. (e.g. `Hello!@`,
+    `cc: the other team (@`)
+  - After emojis (e.g. `Hello 👋@`)
+
 ## v3.18.0
 
 For full upgrade instructions, see the
