@@ -9,7 +9,16 @@ import { HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
-import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vitest";
 
 import MockWebSocket from "./_MockWebSocket";
 import {

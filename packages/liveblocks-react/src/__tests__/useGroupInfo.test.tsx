@@ -3,7 +3,7 @@ import { nanoid } from "@liveblocks/core";
 import { renderHook, screen, waitFor } from "@testing-library/react";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
-import { vi } from "vitest";
+import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 
 import { act, createContextsForTest } from "./_utils";
 
