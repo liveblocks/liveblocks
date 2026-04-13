@@ -14,7 +14,7 @@ import {
 
 export function Room({ children }: { children: ReactNode }) {
   const roomId = useExampleRoomId(
-    "liveblocks:examples:nextjs-multiplayer-handsontable-cell"
+    "liveblocks:examples:nextjs-multiplayer-handsontable"
   );
 
   return (
