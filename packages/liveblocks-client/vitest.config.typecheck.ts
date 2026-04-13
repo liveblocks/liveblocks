@@ -1,6 +1,8 @@
 import { makeTypecheckTestConfig } from "@liveblocks/vitest-config/typecheck";
 import { defineConfig } from "vitest/config";
 
+// Multiple configs are used when testing augmentation and global
+// declerations, to avoid leaking globals between tests.
 export default defineConfig({
   test: {
     projects: [
