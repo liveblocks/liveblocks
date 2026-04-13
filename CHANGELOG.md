@@ -1,6 +1,6 @@
 ## vNEXT (not yet released)
 
-## v3.18.1 (not yet released)
+## v3.18.1
 
 ### `@liveblocks/react-ui`
 
