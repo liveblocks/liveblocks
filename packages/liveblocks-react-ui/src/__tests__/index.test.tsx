@@ -15,6 +15,7 @@ const comment: CommentData = {
   createdAt: new Date("2023-08-14T12:41:50.243Z"),
   reactions: [],
   attachments: [],
+  metadata: {},
   body: {
     version: 1,
     content: [
@@ -76,6 +77,7 @@ const editedComment: CommentData = {
   editedAt: new Date("2023-08-14T12:41:50.243Z"),
   reactions: [],
   attachments: [],
+  metadata: {},
   body: {
     version: 1,
     content: [
