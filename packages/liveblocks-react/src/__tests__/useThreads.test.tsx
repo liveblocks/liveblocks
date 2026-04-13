@@ -69,7 +69,7 @@ function mockGetThreadsSince(
     { roomId: string },
     never,
     {
-      threads: ThreadData<any>[];
+      data: ThreadData<any>[];
       inboxNotifications: InboxNotificationData[];
       subscriptions: SubscriptionData[];
       deletedThreads: ThreadData[];
@@ -1703,7 +1703,7 @@ describe("useThreads", () => {
           );
 
           return HttpResponse.json({
-            threads: updatedThreads,
+            data: updatedThreads,
             deletedThreads: [],
             inboxNotifications: [],
             subscriptions: updatedSubscriptions,
@@ -1891,7 +1891,7 @@ describe("useThreads", () => {
           });
 
           return HttpResponse.json({
-            threads: updatedThreads,
+            data: updatedThreads,
             inboxNotifications: [],
             subscriptions: [],
             deletedThreads: [],
@@ -1981,7 +1981,7 @@ describe("useThreads", () => {
         // so, new threads are available in the room
         getThreadsSinceReqCount++;
         return HttpResponse.json({
-          threads,
+          data: threads,
           inboxNotifications: [],
           subscriptions: [],
           deletedThreads: [],
@@ -2081,7 +2081,7 @@ describe("useThreads", () => {
           ];
 
           return HttpResponse.json({
-            threads: [],
+            data: [],
             inboxNotifications: [],
             subscriptions: updatedSubscriptions,
             deletedThreads: [],
@@ -2329,7 +2329,7 @@ describe("useThreads: polling", () => {
       mockGetThreadsSince(() => {
         getThreadsReqCount++;
         return HttpResponse.json({
-          threads,
+          data: threads,
           inboxNotifications: [],
           subscriptions,
           deletedThreads: [],
