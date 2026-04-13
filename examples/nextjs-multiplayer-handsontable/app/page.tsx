@@ -11,6 +11,7 @@ export default function Page() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          padding: 24,
         }}
       >
         <div
@@ -18,7 +19,6 @@ export default function Page() {
             display: "flex",
             flexDirection: "column",
             alignItems: "end",
-            width: 960,
             gap: 20,
           }}
         >

@@ -1,8 +1,12 @@
 import type { LiveList } from "@liveblocks/client";
 
-/** Spreadsheet dimensions (new rooms only; `grid` replaces legacy `rows` storage). */
 export const GRID_ROWS = 30;
 export const GRID_COLS = 18;
+
+export type PresenceCell = {
+  row: number;
+  col: number;
+};
 
 declare global {
   interface Liveblocks {
@@ -14,11 +18,11 @@ declare global {
         avatar: string;
       };
     };
-    Presence: Record<string, never>;
+    Presence: {
+      selectedCell: PresenceCell | null;
+    };
     Storage: {
       grid: LiveList<LiveList<string>>;
     };
   }
 }
-
-export {};

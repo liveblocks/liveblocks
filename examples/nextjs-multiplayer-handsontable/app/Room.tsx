@@ -7,32 +7,24 @@ import { RoomProvider, ClientSideSuspense } from "@liveblocks/react/suspense";
 import { Loading } from "./Loading";
 import { GRID_COLS, GRID_ROWS } from "../liveblocks.config";
 
-function createEmptyGrid(): LiveList<LiveList<string>> {
-  return new LiveList(
-    Array.from({ length: GRID_ROWS }, () =>
-      new LiveList(Array.from({ length: GRID_COLS }, () => ""))
-    )
-  );
-}
-
-function createInitialStorage(): Liveblocks["Storage"] {
-  return {
-    grid: createEmptyGrid(),
-  };
-}
-
 export function Room({ children }: { children: ReactNode }) {
   const roomId = useExampleRoomId(
-    "liveblocks:examples:nextjs-multiplayer-handsontable-grid"
+    "liveblocks:examples:nextjs-multiplayer-handsontable-cell"
   );
-
-  const initialStorage = useMemo(() => createInitialStorage(), []);
 
   return (
     <RoomProvider
       id={roomId}
-      initialPresence={{}}
-      initialStorage={initialStorage}
+      initialPresence={{ selectedCell: null }}
+      initialStorage={{
+        // Create an empty grid with the dimensions of the spreadsheet
+        grid: new LiveList(
+          Array.from(
+            { length: GRID_ROWS },
+            () => new LiveList(Array.from({ length: GRID_COLS }, () => ""))
+          )
+        ),
+      }}
     >
       <ClientSideSuspense fallback={<Loading />}>{children}</ClientSideSuspense>
     </RoomProvider>
