@@ -11,17 +11,7 @@ import { useSelf } from "@liveblocks/react";
 import { CSSProperties, useState } from "react";
 import { useCellThread } from "./CellThreadContext";
 
-const COMMENT_PIN_SIZE = 24;
-
-const commentPinStyle = {
-  "--lb-comment-pin-padding": "3px",
-  width: COMMENT_PIN_SIZE,
-  height: COMMENT_PIN_SIZE,
-  cursor: "pointer",
-  marginTop: 3,
-  boxSizing: "border-box",
-} as CSSProperties;
-
+// Wrapper around the comment pin cell
 export function CommentCell({
   instance,
   row,
@@ -36,11 +26,10 @@ export function CommentCell({
     return null;
   }
 
-  const cellMountKey = `${row}-${col}-${rowId}-${columnId}`;
-
   return (
     <CommentCellBody
-      key={cellMountKey}
+      // `key` prevents an issue with duplicate pins displayed in the UI
+      key={`${row}-${col}-${rowId}-${columnId}`}
       rowId={rowId}
       columnId={columnId}
       value={value}
@@ -48,26 +37,46 @@ export function CommentCell({
   );
 }
 
-type CommentCellBodyProps = {
+const COMMENT_PIN_SIZE = 24;
+
+const commentPinStyle = {
+  "--lb-comment-pin-padding": "3px",
+  width: COMMENT_PIN_SIZE,
+  height: COMMENT_PIN_SIZE,
+  cursor: "pointer",
+  marginTop: 3,
+  boxSizing: "border-box",
+} as CSSProperties;
+
+// Displays comment pins alongside cell contents
+function CommentCellBody({
+  rowId,
+  columnId,
+  value,
+}: {
   rowId: string;
   columnId: string;
   value: unknown;
-};
-
-function CommentCellBody({ rowId, columnId, value }: CommentCellBodyProps) {
+}) {
   const { threads, openCell, setOpenCell } = useCellThread();
-  const currentUserId = useSelf((self) => self.id) ?? undefined;
   const [isComposerOpen, setIsComposerOpen] = useState(false);
 
+  // Get the current user's ID, set when authenticating Liveblocks
+  const currentUserId = useSelf((self) => self.id) ?? undefined;
+
+  // Each cell has a thread, find the thread for this cell
+  // Metadata is set when creating a thread
   const thread = threads.find(
     ({ metadata }) => metadata.rowId === rowId && metadata.columnId === columnId
   );
 
+  // When the thread matches the open cell, open it by default
   const defaultOpen =
     openCell !== null &&
     openCell.rowId === rowId &&
     openCell.columnId === columnId;
 
+  // Metadata for this thread
   const metadata = { rowId, columnId };
 
   return (
@@ -82,12 +91,14 @@ function CommentCellBody({ rowId, columnId, value }: CommentCellBodyProps) {
       <span className="comment-cell-value">{String(value ?? "")}</span>
 
       {!thread ? (
+        // If there's no thread, show a thread composer on hover
         <div
           className="comment-cell-trigger"
           data-open={isComposerOpen || undefined}
         >
           <FloatingComposer
             className="ht-theme-main"
+            // Set { rowId, columnId } metadata on new threads when created
             metadata={metadata}
             onComposerSubmit={() => setOpenCell(metadata)}
             onOpenChange={setIsComposerOpen}
@@ -96,6 +107,7 @@ function CommentCellBody({ rowId, columnId, value }: CommentCellBodyProps) {
             <CommentPin
               corner="top-left"
               style={commentPinStyle}
+              // Resolves the image from the current user's ID
               userId={currentUserId}
             >
               {!isComposerOpen ? (
@@ -105,6 +117,7 @@ function CommentCellBody({ rowId, columnId, value }: CommentCellBodyProps) {
           </FloatingComposer>
         </div>
       ) : (
+        // If a thread has been created already, show it with an avatar pin
         <FloatingThread
           className="ht-theme-main"
           thread={thread}
@@ -121,6 +134,7 @@ function CommentCellBody({ rowId, columnId, value }: CommentCellBodyProps) {
           <CommentPin
             corner="top-left"
             style={commentPinStyle}
+            // Resolves the image from the writer of thefirst comment in the thread
             userId={thread.comments[0]?.userId}
           />
         </FloatingThread>
