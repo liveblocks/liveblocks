@@ -13,8 +13,8 @@
     "build": "tsc -d --project ./tsconfig.json",
     "format": "(eslint --fix src/ || true) && prettier --write src/",
     "lint": "eslint src/",
-    "test": "NODE_OPTIONS=\"--no-deprecation\" vitest run",
-    "test:watch": "NODE_OPTIONS=\"--no-deprecation\" vitest"
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "devDependencies": {
     "@liveblocks/eslint-config": "*",

@@ -40,7 +40,7 @@
     "test": "npx liveblocks dev -p 1154 -c 'vitest run --coverage'",
     "test:ci": "vitest run",
     "test:types": "vitest run --config ./vitest.config.typecheck.ts",
-    "test:watch": "NODE_OPTIONS=\"--no-deprecation\" vitest",
+    "test:watch": "vitest",
     "test:e2e": "npx liveblocks dev -p 1154 -c 'vitest run --config=./vitest.config.e2e.ts'",
     "test:deps": "depcruise src --exclude __tests__",
     "showdeps": "depcruise src --include-only '^src' --exclude='__tests__' --output-type dot | dot -T svg > /tmp/dependency-graph.svg && open /tmp/dependency-graph.svg",

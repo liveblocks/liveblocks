@@ -54,10 +54,10 @@
     "format": "(eslint --fix src/ || true) && prettier --write src/",
     "lint": "eslint src/",
     "lint:package": "publint --strict && attw --pack && bun scripts/check-exports.ts",
-    "test": "NODE_OPTIONS=\"--no-deprecation\" vitest run",
-    "test:ci": "NODE_OPTIONS=\"--no-deprecation\" vitest run",
+    "test": "vitest run",
+    "test:ci": "vitest run",
     "test:types": "vitest run --config ./vitest.config.typecheck.ts",
-    "test:watch": "NODE_OPTIONS=\"--no-deprecation\" vitest",
+    "test:watch": "vitest",
     "test:deps": "depcruise src --exclude __tests__",
     "showdeps": "depcruise src --include-only '^src' --exclude='__tests__' --output-type dot | dot -T svg > /tmp/dependency-graph.svg && open /tmp/dependency-graph.svg"
   },
