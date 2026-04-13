@@ -1,0 +1,28 @@
+{
+  "name": "@liveblocks-examples/nextjs-comments-handsontable",
+  "description": "This example shows how to build Handsontable commenting with Liveblocks and Next.js.",
+  "license": "Apache-2.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@handsontable/react-wrapper": "^17.0.1",
+    "@liveblocks/client": "^3.18.0",
+    "@liveblocks/node": "^3.18.0",
+    "@liveblocks/react": "^3.18.0",
+    "@liveblocks/react-ui": "^3.18.0",
+    "handsontable": "^17.0.1",
+    "next": "^16.1.6",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.3.3",
+    "prettier": "^3.3.2",
+    "typescript": "^5.4.5"
+  }
+}
