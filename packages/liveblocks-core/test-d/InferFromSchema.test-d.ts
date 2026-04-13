@@ -242,24 +242,38 @@ describe("InferFromSchema", () => {
       infer({ const: "exactly-this-value" })
     ).toEqualTypeOf<"exactly-this-value">();
     expectTypeOf(infer({ const: 42 })).toEqualTypeOf<42>();
-    expectTypeOf(infer({ const: null })).toBeNull();
+    expectTypeOf(infer({ const: null })).toEqualTypeOf<null>();
     expectTypeOf(infer({ const: true })).toEqualTypeOf<true>();
   });
 
   test("should infer string constraints as string", () => {
     expectTypeOf(
       infer({ type: "string", pattern: "^[a-zA-Z0-9]+$" })
-    ).toBeString();
+    ).toEqualTypeOf<string>();
     expectTypeOf(
       infer({ type: "string", minLength: 5, maxLength: 20 })
-    ).toBeString();
-    expectTypeOf(infer({ type: "string", format: "email" })).toBeString();
-    expectTypeOf(infer({ type: "string", format: "uri" })).toBeString();
-    expectTypeOf(infer({ type: "string", format: "uuid" })).toBeString();
-    expectTypeOf(infer({ type: "string", format: "date" })).toBeString();
-    expectTypeOf(infer({ type: "string", format: "date-time" })).toBeString();
-    expectTypeOf(infer({ type: "string", format: "ipv4" })).toBeString();
-    expectTypeOf(infer({ type: "string", format: "ipv6" })).toBeString();
+    ).toEqualTypeOf<string>();
+    expectTypeOf(
+      infer({ type: "string", format: "email" })
+    ).toEqualTypeOf<string>();
+    expectTypeOf(
+      infer({ type: "string", format: "uri" })
+    ).toEqualTypeOf<string>();
+    expectTypeOf(
+      infer({ type: "string", format: "uuid" })
+    ).toEqualTypeOf<string>();
+    expectTypeOf(
+      infer({ type: "string", format: "date" })
+    ).toEqualTypeOf<string>();
+    expectTypeOf(
+      infer({ type: "string", format: "date-time" })
+    ).toEqualTypeOf<string>();
+    expectTypeOf(
+      infer({ type: "string", format: "ipv4" })
+    ).toEqualTypeOf<string>();
+    expectTypeOf(
+      infer({ type: "string", format: "ipv6" })
+    ).toEqualTypeOf<string>();
     expectTypeOf(
       infer({
         type: "string",
@@ -268,28 +282,36 @@ describe("InferFromSchema", () => {
         maxLength: 50,
         format: "hostname",
       })
-    ).toBeString();
+    ).toEqualTypeOf<string>();
     expectTypeOf(
       infer({ type: "string", format: "custom-format" })
-    ).toBeString();
+    ).toEqualTypeOf<string>();
     expectTypeOf(
       infer({
         type: "string",
         description: "A descriptive string field",
         pattern: ".*",
       })
-    ).toBeString();
+    ).toEqualTypeOf<string>();
   });
 
   test("should infer number/integer constraints as number", () => {
-    expectTypeOf(infer({ type: "number", minimum: 0 })).toBeNumber();
-    expectTypeOf(infer({ type: "number", maximum: 100 })).toBeNumber();
+    expectTypeOf(infer({ type: "number", minimum: 0 })).toEqualTypeOf<number>();
+    expectTypeOf(
+      infer({ type: "number", maximum: 100 })
+    ).toEqualTypeOf<number>();
     expectTypeOf(
       infer({ type: "number", minimum: 0, maximum: 100 })
-    ).toBeNumber();
-    expectTypeOf(infer({ type: "number", exclusiveMinimum: 0 })).toBeNumber();
-    expectTypeOf(infer({ type: "number", exclusiveMaximum: 100 })).toBeNumber();
-    expectTypeOf(infer({ type: "number", multipleOf: 5 })).toBeNumber();
+    ).toEqualTypeOf<number>();
+    expectTypeOf(
+      infer({ type: "number", exclusiveMinimum: 0 })
+    ).toEqualTypeOf<number>();
+    expectTypeOf(
+      infer({ type: "number", exclusiveMaximum: 100 })
+    ).toEqualTypeOf<number>();
+    expectTypeOf(
+      infer({ type: "number", multipleOf: 5 })
+    ).toEqualTypeOf<number>();
     expectTypeOf(
       infer({
         type: "number",
@@ -298,25 +320,29 @@ describe("InferFromSchema", () => {
         multipleOf: 10,
         description: "A constrained number",
       })
-    ).toBeNumber();
+    ).toEqualTypeOf<number>();
 
-    expectTypeOf(infer({ type: "integer" })).toBeNumber();
+    expectTypeOf(infer({ type: "integer" })).toEqualTypeOf<number>();
     expectTypeOf(
       infer({ type: "integer", minimum: 1, maximum: 10 })
-    ).toBeNumber();
-    expectTypeOf(infer({ type: "integer", multipleOf: 2 })).toBeNumber();
+    ).toEqualTypeOf<number>();
+    expectTypeOf(
+      infer({ type: "integer", multipleOf: 2 })
+    ).toEqualTypeOf<number>();
   });
 
   test("should infer boolean constraints as boolean", () => {
-    expectTypeOf(infer({ type: "boolean" })).toBeBoolean();
+    expectTypeOf(infer({ type: "boolean" })).toEqualTypeOf<boolean>();
     expectTypeOf(
       infer({
         type: "boolean",
         description: "A boolean flag",
         title: "Enable feature",
       })
-    ).toBeBoolean();
-    expectTypeOf(infer({ type: "boolean", default: true })).toBeBoolean();
+    ).toEqualTypeOf<boolean>();
+    expectTypeOf(
+      infer({ type: "boolean", default: true })
+    ).toEqualTypeOf<boolean>();
   });
 
   test("should infer array constraints as T[]", () => {
@@ -513,7 +539,7 @@ describe("defineAiTool", () => {
       },
       render: ({ args, partialArgs }) => {
         if (partialArgs !== undefined) {
-          expectTypeOf(args).toBeUndefined();
+          expectTypeOf(args).toEqualTypeOf<undefined>();
         } else {
           expectTypeOf(args).toEqualTypeOf<{ id: number }>();
         }
@@ -547,10 +573,10 @@ describe("defineAiTool", () => {
         ) => Awaitable<ToolResultResponse | undefined | void>
       >();
     } else {
-      expectTypeOf(myTool.execute).toBeUndefined();
+      expectTypeOf(myTool.execute).toEqualTypeOf<undefined>();
     }
     if (!myTool.render) {
-      expectTypeOf(myTool.render).toBeUndefined();
+      expectTypeOf(myTool.render).toEqualTypeOf<undefined>();
     } else {
       const internal = {
         [kInternal]: {
@@ -652,14 +678,14 @@ describe("defineAiTool", () => {
           >();
           if (stage === "receiving") {
             expectTypeOf(partialArgs).toEqualTypeOf<JsonObject>();
-            expectTypeOf(args).toBeUndefined();
-            expectTypeOf(result).toBeUndefined();
+            expectTypeOf(args).toEqualTypeOf<undefined>();
+            expectTypeOf(result).toEqualTypeOf<undefined>();
           } else if (stage === "executing") {
-            expectTypeOf(partialArgs).toBeUndefined();
+            expectTypeOf(partialArgs).toEqualTypeOf<undefined>();
             expectTypeOf(args).toEqualTypeOf<{ bar?: string }>();
-            expectTypeOf(result).toBeUndefined();
+            expectTypeOf(result).toEqualTypeOf<undefined>();
           } else {
-            expectTypeOf(partialArgs).toBeUndefined();
+            expectTypeOf(partialArgs).toEqualTypeOf<undefined>();
             expectTypeOf(args).toEqualTypeOf<{ bar?: string }>();
             expectTypeOf(result).toEqualTypeOf<RenderableToolResultResponse>();
           }
@@ -684,14 +710,14 @@ describe("defineAiTool", () => {
           >();
           if (stage === "receiving") {
             expectTypeOf(partialArgs).toEqualTypeOf<JsonObject>();
-            expectTypeOf(args).toBeUndefined();
-            expectTypeOf(result).toBeUndefined();
+            expectTypeOf(args).toEqualTypeOf<undefined>();
+            expectTypeOf(result).toEqualTypeOf<undefined>();
           } else if (stage === "executing") {
-            expectTypeOf(partialArgs).toBeUndefined();
+            expectTypeOf(partialArgs).toEqualTypeOf<undefined>();
             expectTypeOf(args).toEqualTypeOf<{ bar?: string }>();
-            expectTypeOf(result).toBeUndefined();
+            expectTypeOf(result).toEqualTypeOf<undefined>();
           } else {
-            expectTypeOf(partialArgs).toBeUndefined();
+            expectTypeOf(partialArgs).toEqualTypeOf<undefined>();
             expectTypeOf(args).toEqualTypeOf<{ bar?: string }>();
             expectTypeOf(result).toEqualTypeOf<RenderableToolResultResponse>();
           }

@@ -46,11 +46,13 @@ describe("WithLiveblocks middleware", () => {
               setValue: (newValue: number) => {
                 const state = get();
 
-                expectTypeOf(state.value).toBeNumber();
+                expectTypeOf(state.value).toEqualTypeOf<number>();
                 expectTypeOf(state.setValue).toEqualTypeOf<
                   (newValue: number) => void
                 >();
-                expectTypeOf(state.liveblocks.isStorageLoading).toBeBoolean();
+                expectTypeOf(
+                  state.liveblocks.isStorageLoading
+                ).toEqualTypeOf<boolean>();
 
                 expectTypeOf(
                   state.liveblocks.others[0]!.presence
@@ -114,9 +116,9 @@ describe("WithLiveblocks middleware", () => {
       )
     );
     const state = useStore.getState();
-    expectTypeOf(state.value).toBeNumber();
+    expectTypeOf(state.value).toEqualTypeOf<number>();
     expectTypeOf(state.setValue).toEqualTypeOf<(newValue: number) => void>();
-    expectTypeOf(state.liveblocks.isStorageLoading).toBeBoolean();
+    expectTypeOf(state.liveblocks.isStorageLoading).toEqualTypeOf<boolean>();
     expectTypeOf(
       state.liveblocks.others[0]!.presence
     ).toEqualTypeOf<Presence>();
@@ -158,9 +160,9 @@ describe("WithLiveblocks middleware", () => {
       )
     );
     useStore.subscribe((state) => {
-      expectTypeOf(state.value).toBeNumber();
+      expectTypeOf(state.value).toEqualTypeOf<number>();
       expectTypeOf(state.setValue).toEqualTypeOf<(newValue: number) => void>();
-      expectTypeOf(state.liveblocks.isStorageLoading).toBeBoolean();
+      expectTypeOf(state.liveblocks.isStorageLoading).toEqualTypeOf<boolean>();
       expectTypeOf(
         state.liveblocks.others[0]!.presence
       ).toEqualTypeOf<Presence>();

@@ -72,14 +72,18 @@ describe("InboxNotification `kinds` (with Liveblocks augmentation)", () => {
         inboxNotification={{} as InboxNotificationData}
         kinds={{
           thread: (props) => {
-            expectTypeOf(props.inboxNotification.threadId).toBeString();
+            expectTypeOf(
+              props.inboxNotification.threadId
+            ).toEqualTypeOf<string>();
             // @ts-expect-error - `activities` is not on thread notifications
             void props.inboxNotification.activities;
 
             return <InboxNotification.Thread {...props} />;
           },
           textMention: (props) => {
-            expectTypeOf(props.inboxNotification.mentionId).toBeString();
+            expectTypeOf(
+              props.inboxNotification.mentionId
+            ).toEqualTypeOf<string>();
             // @ts-expect-error - `activities` is not on text-mention notifications
             void props.inboxNotification.activities;
 
@@ -88,10 +92,10 @@ describe("InboxNotification `kinds` (with Liveblocks augmentation)", () => {
           $myErrorNotification: (props) => {
             expectTypeOf(
               props.inboxNotification.activities[0]!.data.message
-            ).toBeString();
+            ).toEqualTypeOf<string>();
             expectTypeOf(
               props.inboxNotification.activities[0]!.data.code
-            ).toBeNumber();
+            ).toEqualTypeOf<number>();
             // @ts-expect-error - invalid activity data field
             void props.inboxNotification.activities[0]!.data.nonexisting;
             // @ts-expect-error - `threadId` is not on this custom kind
@@ -147,8 +151,12 @@ describe("InboxNotification `kinds` (with Liveblocks augmentation)", () => {
       inboxNotification,
       ...props
     }: InboxNotificationCustomKindProps<"$myErrorNotification">) {
-      expectTypeOf(inboxNotification.activities[0]!.data.message).toBeString();
-      expectTypeOf(inboxNotification.activities[0]!.data.code).toBeNumber();
+      expectTypeOf(
+        inboxNotification.activities[0]!.data.message
+      ).toEqualTypeOf<string>();
+      expectTypeOf(
+        inboxNotification.activities[0]!.data.code
+      ).toEqualTypeOf<number>();
       // @ts-expect-error - invalid activity data field
       void inboxNotification.activities[0]!.data.nonexisting;
 

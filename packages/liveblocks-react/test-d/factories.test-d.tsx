@@ -348,11 +348,11 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
 
   test("useIsInsideRoom()", () => {
     expectTypeOf(ctx.useIsInsideRoom).parameters.toEqualTypeOf<[]>();
-    expectTypeOf(ctx.useIsInsideRoom).returns.toBeBoolean();
-    expectTypeOf(ctx.useIsInsideRoom()).toBeBoolean();
+    expectTypeOf(ctx.useIsInsideRoom).returns.toEqualTypeOf<boolean>();
+    expectTypeOf(ctx.useIsInsideRoom()).toEqualTypeOf<boolean>();
     expectTypeOf(lbctx.useIsInsideRoom).parameters.toEqualTypeOf<[]>();
-    expectTypeOf(lbctx.useIsInsideRoom).returns.toBeBoolean();
-    expectTypeOf(lbctx.useIsInsideRoom()).toBeBoolean();
+    expectTypeOf(lbctx.useIsInsideRoom).returns.toEqualTypeOf<boolean>();
+    expectTypeOf(lbctx.useIsInsideRoom()).toEqualTypeOf<boolean>();
   });
 
   test("presence hooks", () => {
@@ -466,7 +466,7 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
           return;
         case "reset":
           // No extra fields on reset
-          expectTypeOf(user).toBeUndefined();
+          expectTypeOf(user).toEqualTypeOf<undefined>();
           return;
         default:
           expectTypeOf(type).toEqualTypeOf<never>();
@@ -477,7 +477,7 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
   test("useErrorListener()", () => {
     {
       ctx.useErrorListener((err) => {
-        expectTypeOf(err.message).toBeString();
+        expectTypeOf(err.message).toEqualTypeOf<string>();
         expectTypeOf(err.stack).toEqualTypeOf<string | undefined>();
         expectTypeOf(err.context.code).toEqualTypeOf<
           string | -1 | 4001 | 4005 | 4006 | (number & {}) | undefined
@@ -511,16 +511,16 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
           expectTypeOf(err.context.code).toExtend<number>();
           expectTypeOf(err.context.code).toExtend<number | undefined>();
         } else if (err.context.type === "CREATE_THREAD_ERROR") {
-          expectTypeOf(err.context.roomId).toBeString();
-          expectTypeOf(err.context.threadId).toBeString();
-          expectTypeOf(err.context.commentId).toBeString();
+          expectTypeOf(err.context.roomId).toEqualTypeOf<string>();
+          expectTypeOf(err.context.threadId).toEqualTypeOf<string>();
+          expectTypeOf(err.context.commentId).toEqualTypeOf<string>();
         } else {
           // Not going to list them all...
         }
       });
 
       lbctx.useErrorListener((err) => {
-        expectTypeOf(err.message).toBeString();
+        expectTypeOf(err.message).toEqualTypeOf<string>();
         expectTypeOf(err.stack).toEqualTypeOf<string | undefined>();
         expectTypeOf(err.context.code).toEqualTypeOf<
           string | -1 | 4001 | 4005 | 4006 | (number & {}) | undefined
@@ -554,16 +554,16 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
           expectTypeOf(err.context.code).toExtend<number>();
           expectTypeOf(err.context.code).toExtend<number | undefined>();
         } else if (err.context.type === "CREATE_THREAD_ERROR") {
-          expectTypeOf(err.context.roomId).toBeString();
-          expectTypeOf(err.context.threadId).toBeString();
-          expectTypeOf(err.context.commentId).toBeString();
+          expectTypeOf(err.context.roomId).toEqualTypeOf<string>();
+          expectTypeOf(err.context.threadId).toEqualTypeOf<string>();
+          expectTypeOf(err.context.commentId).toEqualTypeOf<string>();
         } else {
           // Not going to list them all...
         }
       });
 
       lbctx.suspense.useErrorListener((err) => {
-        expectTypeOf(err.message).toBeString();
+        expectTypeOf(err.message).toEqualTypeOf<string>();
         expectTypeOf(err.stack).toEqualTypeOf<string | undefined>();
         expectTypeOf(err.context.code).toEqualTypeOf<
           string | -1 | 4001 | 4005 | 4006 | (number & {}) | undefined
@@ -597,9 +597,9 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
           expectTypeOf(err.context.code).toExtend<number>();
           expectTypeOf(err.context.code).toExtend<number | undefined>();
         } else if (err.context.type === "CREATE_THREAD_ERROR") {
-          expectTypeOf(err.context.roomId).toBeString();
-          expectTypeOf(err.context.threadId).toBeString();
-          expectTypeOf(err.context.commentId).toBeString();
+          expectTypeOf(err.context.roomId).toEqualTypeOf<string>();
+          expectTypeOf(err.context.threadId).toEqualTypeOf<string>();
+          expectTypeOf(err.context.commentId).toEqualTypeOf<string>();
         } else {
           // Not going to list them all...
         }
@@ -624,12 +624,12 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
   test("useSelf() (suspense)", () => {
     {
       const me = ctx.suspense.useSelf();
-      expectTypeOf(me.presence.cursor.x).toBeNumber();
+      expectTypeOf(me.presence.cursor.x).toEqualTypeOf<number>();
       // @ts-expect-error
       void me.presence.nonexisting;
 
-      expectTypeOf(me.info.name).toBeString();
-      expectTypeOf(me.info.age).toBeNumber();
+      expectTypeOf(me.info.name).toEqualTypeOf<string>();
+      expectTypeOf(me.info.age).toEqualTypeOf<number>();
       // @ts-expect-error
       void me.info.nonexisting;
     }
@@ -639,19 +639,21 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
     {
       expectTypeOf(
         ctx.useMutation((mut, _a: number, _b: boolean) => {
-          expectTypeOf(mut.self.presence.cursor.x).toBeNumber();
+          expectTypeOf(mut.self.presence.cursor.x).toEqualTypeOf<number>();
           // @ts-expect-error
           void mut.self.presence.nonexisting;
-          expectTypeOf(mut.self.info.name).toBeString();
-          expectTypeOf(mut.self.info.age).toBeNumber();
+          expectTypeOf(mut.self.info.name).toEqualTypeOf<string>();
+          expectTypeOf(mut.self.info.age).toEqualTypeOf<number>();
           // @ts-expect-error
           void mut.self.info.nonexisting;
 
-          expectTypeOf(mut.others[0]!.presence.cursor.x).toBeNumber();
+          expectTypeOf(
+            mut.others[0]!.presence.cursor.x
+          ).toEqualTypeOf<number>();
           // @ts-expect-error
           void mut.others[0]!.presence.nonexisting;
-          expectTypeOf(mut.others[0]!.info.name).toBeString();
-          expectTypeOf(mut.others[0]!.info.age).toBeNumber();
+          expectTypeOf(mut.others[0]!.info.name).toEqualTypeOf<string>();
+          expectTypeOf(mut.others[0]!.info.age).toEqualTypeOf<number>();
           // @ts-expect-error
           void mut.others[0]!.info.nonexisting;
 
@@ -661,7 +663,9 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
           expectTypeOf(mut.storage.get("scores").get("one")).toEqualTypeOf<
             number | undefined
           >();
-          expectTypeOf(mut.storage.get("person").get("age")).toBeNumber();
+          expectTypeOf(
+            mut.storage.get("person").get("age")
+          ).toEqualTypeOf<number>();
           // @ts-expect-error
           void mut.storage.get("nonexisting");
           expectTypeOf(
@@ -680,19 +684,21 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
     {
       expectTypeOf(
         ctx.suspense.useMutation((mut, _a: number, _b: boolean) => {
-          expectTypeOf(mut.self.presence.cursor.x).toBeNumber();
+          expectTypeOf(mut.self.presence.cursor.x).toEqualTypeOf<number>();
           // @ts-expect-error
           void mut.self.presence.nonexisting;
-          expectTypeOf(mut.self.info.name).toBeString();
-          expectTypeOf(mut.self.info.age).toBeNumber();
+          expectTypeOf(mut.self.info.name).toEqualTypeOf<string>();
+          expectTypeOf(mut.self.info.age).toEqualTypeOf<number>();
           // @ts-expect-error
           void mut.self.info.nonexisting;
 
-          expectTypeOf(mut.others[0]!.presence.cursor.x).toBeNumber();
+          expectTypeOf(
+            mut.others[0]!.presence.cursor.x
+          ).toEqualTypeOf<number>();
           // @ts-expect-error
           void mut.others[0]!.presence.nonexisting;
-          expectTypeOf(mut.others[0]!.info.name).toBeString();
-          expectTypeOf(mut.others[0]!.info.age).toBeNumber();
+          expectTypeOf(mut.others[0]!.info.name).toEqualTypeOf<string>();
+          expectTypeOf(mut.others[0]!.info.age).toEqualTypeOf<number>();
           // @ts-expect-error
           void mut.others[0]!.info.nonexisting;
 
@@ -702,7 +708,9 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
           expectTypeOf(mut.storage.get("scores").get("one")).toEqualTypeOf<
             number | undefined
           >();
-          expectTypeOf(mut.storage.get("person").get("age")).toBeNumber();
+          expectTypeOf(
+            mut.storage.get("person").get("age")
+          ).toEqualTypeOf<number>();
           // @ts-expect-error
           void mut.storage.get("nonexisting");
           expectTypeOf(
@@ -722,7 +730,7 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
       {
         const { user, error, isLoading } = ctx.useUser("user-id");
         //                                 ^^^ [1]
-        expectTypeOf(isLoading).toBeBoolean();
+        expectTypeOf(isLoading).toEqualTypeOf<boolean>();
         expectTypeOf(user?.name).toEqualTypeOf<string | undefined>();
         expectTypeOf(user?.age).toEqualTypeOf<number | undefined>();
         expectTypeOf(error).toEqualTypeOf<Error | undefined>();
@@ -730,7 +738,7 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
       {
         const { user, error, isLoading } = lbctx.useUser("user-id");
         //                                 ^^^^^ [2]
-        expectTypeOf(isLoading).toBeBoolean();
+        expectTypeOf(isLoading).toEqualTypeOf<boolean>();
         expectTypeOf(user?.name).toEqualTypeOf<string | undefined>();
         expectTypeOf(user?.age).toEqualTypeOf<number | undefined>();
         expectTypeOf(error).toEqualTypeOf<Error | undefined>();
@@ -744,17 +752,17 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
         const { user, error, isLoading } = ctx.suspense.useUser("user-id");
         //                                 ^^^^^^^^^^^^ [3]
         expectTypeOf(isLoading).toEqualTypeOf<false>();
-        expectTypeOf(user.name).toBeString();
-        expectTypeOf(user.age).toBeNumber();
-        expectTypeOf(error).toBeUndefined();
+        expectTypeOf(user.name).toEqualTypeOf<string>();
+        expectTypeOf(user.age).toEqualTypeOf<number>();
+        expectTypeOf(error).toEqualTypeOf<undefined>();
       }
       {
         const { user, error, isLoading } = lbctx.suspense.useUser("user-id");
         //                                 ^^^^^^^^^^^^^^ [4]
         expectTypeOf(isLoading).toEqualTypeOf<false>();
-        expectTypeOf(user.name).toBeString();
-        expectTypeOf(user.age).toBeNumber();
-        expectTypeOf(error).toBeUndefined();
+        expectTypeOf(user.name).toEqualTypeOf<string>();
+        expectTypeOf(user.age).toEqualTypeOf<number>();
+        expectTypeOf(error).toEqualTypeOf<undefined>();
       }
     }
   });
@@ -764,7 +772,7 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
       {
         const { info, error, isLoading } = ctx.useRoomInfo("room-id");
         //                                 ^^^ [1]
-        expectTypeOf(isLoading).toBeBoolean();
+        expectTypeOf(isLoading).toEqualTypeOf<boolean>();
         expectTypeOf(info?.name).toEqualTypeOf<string | undefined>();
         expectTypeOf(info?.url).toEqualTypeOf<string | undefined>();
         expectTypeOf(info?.nonexisting).toEqualTypeOf<Json | undefined>();
@@ -773,7 +781,7 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
       {
         const { info, error, isLoading } = lbctx.useRoomInfo("room-id");
         //                                 ^^^^^ [2]
-        expectTypeOf(isLoading).toBeBoolean();
+        expectTypeOf(isLoading).toEqualTypeOf<boolean>();
         expectTypeOf(info?.name).toEqualTypeOf<string | undefined>();
         expectTypeOf(info?.url).toEqualTypeOf<string | undefined>();
         expectTypeOf(info?.nonexisting).toEqualTypeOf<Json | undefined>();
@@ -791,7 +799,7 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
         expectTypeOf(info.name).toEqualTypeOf<string | undefined>();
         expectTypeOf(info.url).toEqualTypeOf<string | undefined>();
         expectTypeOf(info.nonexisting).toEqualTypeOf<Json | undefined>();
-        expectTypeOf(error).toBeUndefined();
+        expectTypeOf(error).toEqualTypeOf<undefined>();
       }
       {
         const { info, error, isLoading } =
@@ -801,7 +809,7 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
         expectTypeOf(info.name).toEqualTypeOf<string | undefined>();
         expectTypeOf(info.url).toEqualTypeOf<string | undefined>();
         expectTypeOf(info.nonexisting).toEqualTypeOf<Json | undefined>();
-        expectTypeOf(error).toBeUndefined();
+        expectTypeOf(error).toEqualTypeOf<undefined>();
       }
     }
   });
@@ -811,7 +819,7 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
       {
         const { info, error, isLoading } = ctx.useGroupInfo("group-id");
         //                                 ^^^ [1]
-        expectTypeOf(isLoading).toBeBoolean();
+        expectTypeOf(isLoading).toEqualTypeOf<boolean>();
         expectTypeOf(info?.name).toEqualTypeOf<string | undefined>();
         expectTypeOf(info?.avatar).toEqualTypeOf<string | undefined>();
         expectTypeOf(info?.nonexisting).toEqualTypeOf<Json | undefined>();
@@ -820,7 +828,7 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
       {
         const { info, error, isLoading } = lbctx.useGroupInfo("group-id");
         //                                 ^^^^^ [2]
-        expectTypeOf(isLoading).toBeBoolean();
+        expectTypeOf(isLoading).toEqualTypeOf<boolean>();
         expectTypeOf(info?.name).toEqualTypeOf<string | undefined>();
         expectTypeOf(info?.avatar).toEqualTypeOf<string | undefined>();
         expectTypeOf(info?.nonexisting).toEqualTypeOf<Json | undefined>();
@@ -839,7 +847,7 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
         expectTypeOf(info.name).toEqualTypeOf<string | undefined>();
         expectTypeOf(info.avatar).toEqualTypeOf<string | undefined>();
         expectTypeOf(info.nonexisting).toEqualTypeOf<Json | undefined>();
-        expectTypeOf(error).toBeUndefined();
+        expectTypeOf(error).toEqualTypeOf<undefined>();
       }
       {
         const { info, error, isLoading } =
@@ -849,7 +857,7 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
         expectTypeOf(info.name).toEqualTypeOf<string | undefined>();
         expectTypeOf(info.avatar).toEqualTypeOf<string | undefined>();
         expectTypeOf(info.nonexisting).toEqualTypeOf<Json | undefined>();
-        expectTypeOf(error).toBeUndefined();
+        expectTypeOf(error).toEqualTypeOf<undefined>();
       }
     }
   });
@@ -871,11 +879,11 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
         });
 
         expectTypeOf(thread1.type).toEqualTypeOf<"thread">();
-        expectTypeOf(thread1.id).toBeString();
-        expectTypeOf(thread1.roomId).toBeString();
+        expectTypeOf(thread1.id).toEqualTypeOf<string>();
+        expectTypeOf(thread1.roomId).toEqualTypeOf<string>();
         expectTypeOf(thread1.comments[0]!.type).toEqualTypeOf<"comment">();
-        expectTypeOf(thread1.comments[0]!.id).toBeString();
-        expectTypeOf(thread1.comments[0]!.threadId).toBeString();
+        expectTypeOf(thread1.comments[0]!.id).toEqualTypeOf<string>();
+        expectTypeOf(thread1.comments[0]!.threadId).toEqualTypeOf<string>();
 
         expectTypeOf(thread1.metadata.color).toEqualTypeOf<
           string | number | boolean | undefined
@@ -890,7 +898,7 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
           metadata: { foo: "bar" },
         });
 
-        expectTypeOf(thread2.id).toBeString();
+        expectTypeOf(thread2.id).toEqualTypeOf<string>();
       }
 
       {
@@ -919,11 +927,11 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
         });
 
         expectTypeOf(thread.type).toEqualTypeOf<"thread">();
-        expectTypeOf(thread.id).toBeString();
-        expectTypeOf(thread.roomId).toBeString();
+        expectTypeOf(thread.id).toEqualTypeOf<string>();
+        expectTypeOf(thread.roomId).toEqualTypeOf<string>();
         expectTypeOf(thread.comments[0]!.type).toEqualTypeOf<"comment">();
-        expectTypeOf(thread.comments[0]!.id).toBeString();
-        expectTypeOf(thread.comments[0]!.threadId).toBeString();
+        expectTypeOf(thread.comments[0]!.id).toEqualTypeOf<string>();
+        expectTypeOf(thread.comments[0]!.threadId).toEqualTypeOf<string>();
 
         expectTypeOf(thread.metadata.color).toEqualTypeOf<"red" | "blue">();
       }
@@ -947,11 +955,11 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
         });
 
         expectTypeOf(thread1.type).toEqualTypeOf<"thread">();
-        expectTypeOf(thread1.id).toBeString();
-        expectTypeOf(thread1.roomId).toBeString();
+        expectTypeOf(thread1.id).toEqualTypeOf<string>();
+        expectTypeOf(thread1.roomId).toEqualTypeOf<string>();
         expectTypeOf(thread1.comments[0]!.type).toEqualTypeOf<"comment">();
-        expectTypeOf(thread1.comments[0]!.id).toBeString();
-        expectTypeOf(thread1.comments[0]!.threadId).toBeString();
+        expectTypeOf(thread1.comments[0]!.id).toEqualTypeOf<string>();
+        expectTypeOf(thread1.comments[0]!.threadId).toEqualTypeOf<string>();
 
         expectTypeOf(thread1.metadata.color).toEqualTypeOf<
           string | number | boolean | undefined
@@ -965,7 +973,7 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
           metadata: { foo: "bar" },
         });
 
-        expectTypeOf(thread2.id).toBeString();
+        expectTypeOf(thread2.id).toEqualTypeOf<string>();
       }
 
       {
@@ -994,11 +1002,11 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
         });
 
         expectTypeOf(thread.type).toEqualTypeOf<"thread">();
-        expectTypeOf(thread.id).toBeString();
-        expectTypeOf(thread.roomId).toBeString();
+        expectTypeOf(thread.id).toEqualTypeOf<string>();
+        expectTypeOf(thread.roomId).toEqualTypeOf<string>();
         expectTypeOf(thread.comments[0]!.type).toEqualTypeOf<"comment">();
-        expectTypeOf(thread.comments[0]!.id).toBeString();
-        expectTypeOf(thread.comments[0]!.threadId).toBeString();
+        expectTypeOf(thread.comments[0]!.id).toEqualTypeOf<string>();
+        expectTypeOf(thread.comments[0]!.threadId).toEqualTypeOf<string>();
 
         expectTypeOf(thread.metadata.color).toEqualTypeOf<"red" | "blue">();
       }
@@ -1131,8 +1139,8 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
         });
 
         expectTypeOf(comment.type).toEqualTypeOf<"comment">();
-        expectTypeOf(comment.id).toBeString();
-        expectTypeOf(comment.threadId).toBeString();
+        expectTypeOf(comment.id).toEqualTypeOf<string>();
+        expectTypeOf(comment.threadId).toEqualTypeOf<string>();
       }
     }
   });
@@ -1152,8 +1160,8 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
       });
 
       expectTypeOf(comment.type).toEqualTypeOf<"comment">();
-      expectTypeOf(comment.id).toBeString();
-      expectTypeOf(comment.threadId).toBeString();
+      expectTypeOf(comment.id).toEqualTypeOf<string>();
+      expectTypeOf(comment.threadId).toEqualTypeOf<string>();
     }
   });
 
@@ -1336,7 +1344,7 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
   test("useInboxNotifications()", () => {
     {
       const result = lbctx.useInboxNotifications();
-      expectTypeOf(result.isLoading).toBeBoolean();
+      expectTypeOf(result.isLoading).toEqualTypeOf<boolean>();
       expectTypeOf(result.error).toEqualTypeOf<Error | undefined>();
       expectTypeOf(
         result.inboxNotifications?.map((ibn) => ibn.kind)
@@ -1353,7 +1361,7 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
     {
       const result = lbctx.suspense.useInboxNotifications();
       expectTypeOf(result.isLoading).toEqualTypeOf<false>();
-      expectTypeOf(result.error).toBeUndefined();
+      expectTypeOf(result.error).toEqualTypeOf<undefined>();
       expectTypeOf(
         result.inboxNotifications?.map((ibn) => ibn.kind)
       ).toEqualTypeOf<("thread" | "textMention" | `$${string}`)[]>();
@@ -1367,7 +1375,7 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
     {
       const result = lbctx.useInboxNotificationThread("in_xxx");
       expectTypeOf(result.type).toEqualTypeOf<"thread">();
-      expectTypeOf(result.roomId).toBeString();
+      expectTypeOf(result.roomId).toEqualTypeOf<string>();
       expectTypeOf(result.comments).toExtend<unknown[]>();
       expectTypeOf(result.metadata.color).toEqualTypeOf<"red" | "blue">();
       // @ts-expect-error
@@ -1379,7 +1387,7 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
     {
       const result = lbctx.suspense.useInboxNotificationThread("in_xxx");
       expectTypeOf(result.type).toEqualTypeOf<"thread">();
-      expectTypeOf(result.roomId).toBeString();
+      expectTypeOf(result.roomId).toEqualTypeOf<string>();
       expectTypeOf(result.comments).toExtend<unknown[]>();
       expectTypeOf(result.metadata.color).toEqualTypeOf<"red" | "blue">();
       // @ts-expect-error
@@ -1448,7 +1456,7 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
     {
       const { count, error, isLoading } =
         lbctx.useUnreadInboxNotificationsCount();
-      expectTypeOf(isLoading).toBeBoolean();
+      expectTypeOf(isLoading).toEqualTypeOf<boolean>();
       expectTypeOf(count).toEqualTypeOf<number | undefined>();
       expectTypeOf(error).toEqualTypeOf<Error | undefined>();
     }
@@ -1459,8 +1467,8 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
       const { count, error, isLoading } =
         lbctx.suspense.useUnreadInboxNotificationsCount();
       expectTypeOf(isLoading).toEqualTypeOf<false>();
-      expectTypeOf(count).toBeNumber();
-      expectTypeOf(error).toBeUndefined();
+      expectTypeOf(count).toEqualTypeOf<number>();
+      expectTypeOf(error).toEqualTypeOf<undefined>();
     }
   });
 
@@ -1487,7 +1495,7 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
     {
       const [{ isLoading, error, settings }, update] =
         lbctx.useNotificationSettings();
-      expectTypeOf(isLoading).toBeBoolean();
+      expectTypeOf(isLoading).toEqualTypeOf<boolean>();
       expectTypeOf(error).toEqualTypeOf<Error | undefined>();
       expectTypeOf(settings).toEqualTypeOf<NotificationSettings | undefined>();
       expectTypeOf(update({})).toEqualTypeOf<void>(); // empty {} because of partial definition
@@ -1498,7 +1506,7 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
     {
       const [{ isLoading, error, settings }, update] =
         lbctx.suspense.useNotificationSettings();
-      expectTypeOf(isLoading).toBeBoolean();
+      expectTypeOf(isLoading).toEqualTypeOf<boolean>();
       expectTypeOf(error).toEqualTypeOf<Error | undefined>();
       expectTypeOf(settings).toEqualTypeOf<NotificationSettings | undefined>();
       expectTypeOf(update({})).toEqualTypeOf<void>(); // empty {} because of partial definition
@@ -1513,19 +1521,19 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
         expectTypeOf(status.status).toEqualTypeOf<"generating">();
         if (status.partType === "tool-invocation") {
           expectTypeOf(status.partType).toEqualTypeOf<"tool-invocation">();
-          expectTypeOf(status.toolName).toBeString();
+          expectTypeOf(status.toolName).toEqualTypeOf<string>();
         } else {
           expectTypeOf(status.partType).toEqualTypeOf<
             "text" | "reasoning" | "retrieval" | "sources" | undefined
           >();
-          expectTypeOf(status.toolName).toBeUndefined();
+          expectTypeOf(status.toolName).toEqualTypeOf<undefined>();
         }
       } else {
         expectTypeOf(status.status).toEqualTypeOf<
           "disconnected" | "loading" | "idle"
         >();
-        expectTypeOf(status.partType).toBeUndefined();
-        expectTypeOf(status.toolName).toBeUndefined();
+        expectTypeOf(status.partType).toEqualTypeOf<undefined>();
+        expectTypeOf(status.toolName).toEqualTypeOf<undefined>();
       }
     }
   });
@@ -1538,19 +1546,19 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
         expectTypeOf(status.status).toEqualTypeOf<"generating">();
         if (status.partType === "tool-invocation") {
           expectTypeOf(status.partType).toEqualTypeOf<"tool-invocation">();
-          expectTypeOf(status.toolName).toBeString();
+          expectTypeOf(status.toolName).toEqualTypeOf<string>();
         } else {
           expectTypeOf(status.partType).toEqualTypeOf<
             "text" | "reasoning" | "retrieval" | "sources" | undefined
           >();
-          expectTypeOf(status.toolName).toBeUndefined();
+          expectTypeOf(status.toolName).toEqualTypeOf<undefined>();
         }
       } else {
         expectTypeOf(status.status).toEqualTypeOf<
           "disconnected" | "loading" | "idle"
         >();
-        expectTypeOf(status.partType).toBeUndefined();
-        expectTypeOf(status.toolName).toBeUndefined();
+        expectTypeOf(status.partType).toEqualTypeOf<undefined>();
+        expectTypeOf(status.toolName).toEqualTypeOf<undefined>();
       }
     }
   });
@@ -1562,19 +1570,19 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
         expectTypeOf(status.status).toEqualTypeOf<"generating">();
         if (status.partType === "tool-invocation") {
           expectTypeOf(status.partType).toEqualTypeOf<"tool-invocation">();
-          expectTypeOf(status.toolName).toBeString();
+          expectTypeOf(status.toolName).toEqualTypeOf<string>();
         } else {
           expectTypeOf(status.partType).toEqualTypeOf<
             "text" | "reasoning" | "retrieval" | "sources" | undefined
           >();
-          expectTypeOf(status.toolName).toBeUndefined();
+          expectTypeOf(status.toolName).toEqualTypeOf<undefined>();
         }
       } else {
         expectTypeOf(status.status).toEqualTypeOf<
           "disconnected" | "loading" | "idle"
         >();
-        expectTypeOf(status.partType).toBeUndefined();
-        expectTypeOf(status.toolName).toBeUndefined();
+        expectTypeOf(status.partType).toEqualTypeOf<undefined>();
+        expectTypeOf(status.toolName).toEqualTypeOf<undefined>();
       }
     }
   });
@@ -1589,19 +1597,19 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
         expectTypeOf(status.status).toEqualTypeOf<"generating">();
         if (status.partType === "tool-invocation") {
           expectTypeOf(status.partType).toEqualTypeOf<"tool-invocation">();
-          expectTypeOf(status.toolName).toBeString();
+          expectTypeOf(status.toolName).toEqualTypeOf<string>();
         } else {
           expectTypeOf(status.partType).toEqualTypeOf<
             "text" | "reasoning" | "retrieval" | "sources" | undefined
           >();
-          expectTypeOf(status.toolName).toBeUndefined();
+          expectTypeOf(status.toolName).toEqualTypeOf<undefined>();
         }
       } else {
         expectTypeOf(status.status).toEqualTypeOf<
           "disconnected" | "loading" | "idle"
         >();
-        expectTypeOf(status.partType).toBeUndefined();
-        expectTypeOf(status.toolName).toBeUndefined();
+        expectTypeOf(status.partType).toEqualTypeOf<undefined>();
+        expectTypeOf(status.toolName).toEqualTypeOf<undefined>();
       }
     }
   });
