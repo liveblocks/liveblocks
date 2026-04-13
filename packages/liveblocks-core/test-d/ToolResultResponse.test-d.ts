@@ -4,37 +4,37 @@ import { describe, expectTypeOf, test } from "vitest";
 describe("ToolResultResponse", () => {
   test("should reject invalid return values", () => {
     // @ts-expect-error - Responses must be an object
-    const _1: ToolResultResponse = 123;
+    ({}) satisfies ToolResultResponse;
     // @ts-expect-error - Responses must be an object
-    const _2: ToolResultResponse = [1, 2, 3];
+    [1, 2, 3] satisfies ToolResultResponse;
 
     // @ts-expect-error - Success responses must have a `data` field
-    const _3: ToolResultResponse = { yo: [1, 2, 3] };
+    ({ yo: [1, 2, 3] }) satisfies ToolResultResponse;
 
     // @ts-expect-error - `data` must be an object as well
-    const _4: ToolResultResponse = { data: "hi" };
+    ({ data: "hi" }) satisfies ToolResultResponse;
     // @ts-expect-error - `data` must be an object as well
-    const _5: ToolResultResponse = { data: 123 };
+    ({ data: 123 }) satisfies ToolResultResponse;
     // @ts-expect-error - `data` must be an object as well
-    const _6: ToolResultResponse = { data: [1, 2, 3] };
+    ({ data: [1, 2, 3] }) satisfies ToolResultResponse;
 
     // @ts-expect-error - `error` must be a string
-    const _7: ToolResultResponse = { error: 123 };
-    const _8: ToolResultResponse = {
+    ({ error: 123 }) satisfies ToolResultResponse;
+    ({
       // @ts-expect-error - `error` must be a string
       error: { code: 403, message: "Not authorized" },
-    };
+    }) satisfies ToolResultResponse;
 
     // @ts-expect-error - `cancel` must be a boolean or a string (reason)
-    const _9: ToolResultResponse = { cancel: 1 };
+    ({ cancel: 1 }) satisfies ToolResultResponse;
     // @ts-expect-error - `cancel` must be a boolean or a string (reason)
-    const _10: ToolResultResponse = { cancel: false };
+    ({ cancel: false }) satisfies ToolResultResponse;
     // @ts-expect-error - `cancel` must be a boolean or a string (reason)
-    const _11: ToolResultResponse = { cancel: null };
+    ({ cancel: null }) satisfies ToolResultResponse;
     // @ts-expect-error - `cancel` must be a boolean or a string (reason)
-    const _12: ToolResultResponse = { cancel: [] };
+    ({ cancel: [] }) satisfies ToolResultResponse;
     // @ts-expect-error - `cancel` must be a boolean or a string (reason)
-    const _13: ToolResultResponse = { cancel: {} };
+    ({ cancel: {} }) satisfies ToolResultResponse;
   });
 
   // For now, don't allow description on error/cancelled results.
@@ -42,21 +42,21 @@ describe("ToolResultResponse", () => {
   // Besides, adding it back in later is still possible, but removing it
   // is not, so this is the least risky option to launch with initially.
   test("should disallow description on error/cancelled results", () => {
-    // @ts-expect-error - `description` is not allowed on error/cancelled results
-    const _1: ToolResultResponse = {
+    ({
       error: "oops",
       description: "something went wrong",
-    };
-    // @ts-expect-error - `description` is not allowed on error/cancelled results
-    const _2: ToolResultResponse = {
+      // @ts-expect-error - `description` is not allowed on error/cancelled results
+    }) satisfies ToolResultResponse;
+    ({
       cancel: true,
       description: "cancelled by user",
-    };
-    // @ts-expect-error - `description` is not allowed on error/cancelled results
-    const _3: ToolResultResponse = {
+      // @ts-expect-error - `description` is not allowed on error/cancelled results
+    }) satisfies ToolResultResponse;
+    ({
       cancel: "I want to cancel the operation",
       description: "cancelled by user",
-    };
+      // @ts-expect-error - `description` is not allowed on error/cancelled results
+    }) satisfies ToolResultResponse;
   });
 
   test("should accept valid shapes", () => {
@@ -64,29 +64,23 @@ describe("ToolResultResponse", () => {
     expectTypeOf({
       data: {},
     } satisfies ToolResultResponse).toExtend<ToolResultResponse>();
-
     expectTypeOf({
       data: { yo: [1, 2, 3] },
     } satisfies ToolResultResponse).toExtend<ToolResultResponse>();
-
     expectTypeOf({
       data: {},
       description: "all good",
     } satisfies ToolResultResponse).toExtend<ToolResultResponse>();
-
     expectTypeOf({
       data: { yo: [1, 2, 3] },
       description: "all good",
     } satisfies ToolResultResponse).toExtend<ToolResultResponse>();
-
     expectTypeOf({
       error: "oops",
     } satisfies ToolResultResponse).toExtend<ToolResultResponse>();
-
     expectTypeOf({
       cancel: true,
     } satisfies ToolResultResponse).toExtend<ToolResultResponse>();
-
     expectTypeOf({
       cancel: "I want to cancel the operation",
     } satisfies ToolResultResponse).toExtend<ToolResultResponse>();

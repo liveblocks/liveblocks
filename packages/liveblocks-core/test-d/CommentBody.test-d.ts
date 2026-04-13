@@ -4,21 +4,21 @@ import { describe, expectTypeOf, test } from "vitest";
 describe("CommentBody", () => {
   test("should reject invalid required properties", () => {
     // @ts-expect-error - `version` and `content` are required
-    const _1: CommentBody = {};
+    ({}) satisfies CommentBody;
     // @ts-expect-error - `content` is required
-    const _2: CommentBody = { version: 1 };
+    ({ version: 1 }) satisfies CommentBody;
     // @ts-expect-error - `version` is required
-    const _3: CommentBody = { content: [] };
+    ({ content: [] }) satisfies CommentBody;
     // @ts-expect-error - `version` must be 1
-    const _4: CommentBody = { version: 2, content: [] };
+    ({ version: 2, content: [] }) satisfies CommentBody;
     // @ts-expect-error - `version` must be a number
-    const _5: CommentBody = { version: "1", content: [] };
+    ({ version: "1", content: [] }) satisfies CommentBody;
     // @ts-expect-error - `content` must be an array
-    const _6: CommentBody = { version: 1, content: "text" };
+    ({ version: 1, content: "text" }) satisfies CommentBody;
     // @ts-expect-error - `content` must be an array
-    const _7: CommentBody = { version: 1, content: {} };
+    ({ version: 1, content: {} }) satisfies CommentBody;
     // @ts-expect-error - `content` must be an array of valid block elements
-    const _8: CommentBody = { version: 1, content: [{ type: "invalid" }] };
+    ({ version: 1, content: [{ type: "invalid" }] }) satisfies CommentBody;
   });
 
   test("should reject invalid block elements", () => {
@@ -27,17 +27,17 @@ describe("CommentBody", () => {
      */
 
     // @ts-expect-error - `children` is required
-    const _1: CommentBody = { version: 1, content: [{ type: "paragraph" }] };
-    const _2: CommentBody = {
+    ({ version: 1, content: [{ type: "paragraph" }] }) satisfies CommentBody;
+    ({
       version: 1,
       // @ts-expect-error - `children` must be an array
       content: [{ type: "paragraph", children: "text" }],
-    };
-    const _3: CommentBody = {
+    }) satisfies CommentBody;
+    ({
       version: 1,
       // @ts-expect-error - `children` must be an array of valid inline elements
       content: [{ type: "paragraph", children: [{}] }],
-    };
+    }) satisfies CommentBody;
   });
 
   test("should reject invalid inline elements", () => {
@@ -45,34 +45,34 @@ describe("CommentBody", () => {
      * Invalid text element
      */
 
-    const _1: CommentBody = {
+    ({
       version: 1,
       // @ts-expect-error - `text` must be a string
       content: [{ type: "paragraph", children: [{ text: 123 }] }],
-    };
-    const _2: CommentBody = {
+    }) satisfies CommentBody;
+    ({
       version: 1,
       // @ts-expect-error - text elements must include `text`
       content: [{ type: "paragraph", children: [{ bold: true }] }],
-    };
+    }) satisfies CommentBody;
 
     /**
      * Invalid mention element
      */
 
-    const _3: CommentBody = {
+    ({
       version: 1,
       // @ts-expect-error - `kind` and `id` are required
       content: [{ type: "paragraph", children: [{ type: "mention" }] }],
-    };
-    const _4: CommentBody = {
+    }) satisfies CommentBody;
+    ({
       version: 1,
       content: [
         // @ts-expect-error - mention nodes require `kind`, and `id` must be a string
         { type: "paragraph", children: [{ type: "mention", id: 123 }] },
       ],
-    };
-    const _5: CommentBody = {
+    }) satisfies CommentBody;
+    ({
       version: 1,
       content: [
         {
@@ -81,8 +81,8 @@ describe("CommentBody", () => {
           children: [{ type: "mention", kind: "invalid", id: "user1" }],
         },
       ],
-    };
-    const _6: CommentBody = {
+    }) satisfies CommentBody;
+    ({
       version: 1,
       content: [
         {
@@ -93,8 +93,8 @@ describe("CommentBody", () => {
           ],
         },
       ],
-    };
-    const _7: CommentBody = {
+    }) satisfies CommentBody;
+    ({
       version: 1,
       content: [
         {
@@ -103,23 +103,23 @@ describe("CommentBody", () => {
           children: [{ text: "mention", kind: "user", id: "user123" }],
         },
       ],
-    };
+    }) satisfies CommentBody;
 
     /**
      * Invalid link element
      */
 
-    const _8: CommentBody = {
+    ({
       version: 1,
       // @ts-expect-error - `url` is required
       content: [{ type: "paragraph", children: [{ type: "link" }] }],
-    };
-    const _9: CommentBody = {
+    }) satisfies CommentBody;
+    ({
       version: 1,
       // @ts-expect-error - `url` must be a string
       content: [{ type: "paragraph", children: [{ type: "link", url: 123 }] }],
-    };
-    const _10: CommentBody = {
+    }) satisfies CommentBody;
+    ({
       version: 1,
       content: [
         {
@@ -128,8 +128,8 @@ describe("CommentBody", () => {
           children: [{ type: "link", url: "https://liveblocks.io", text: 123 }],
         },
       ],
-    };
-    const _11: CommentBody = {
+    }) satisfies CommentBody;
+    ({
       version: 1,
       content: [
         {
@@ -138,7 +138,7 @@ describe("CommentBody", () => {
           children: [{ text: "link", url: "https://liveblocks.io" }],
         },
       ],
-    };
+    }) satisfies CommentBody;
   });
 
   test("should accept valid comment bodies", () => {
@@ -156,7 +156,6 @@ describe("CommentBody", () => {
         },
       ],
     } satisfies CommentBody).toExtend<CommentBody>();
-
     expectTypeOf({
       version: 1,
       content: [
@@ -174,7 +173,6 @@ describe("CommentBody", () => {
         },
       ],
     } satisfies CommentBody).toExtend<CommentBody>();
-
     expectTypeOf({
       version: 1,
       content: [
@@ -184,7 +182,6 @@ describe("CommentBody", () => {
         },
       ],
     } satisfies CommentBody).toExtend<CommentBody>();
-
     expectTypeOf({
       version: 1,
       content: [
@@ -200,7 +197,6 @@ describe("CommentBody", () => {
         },
       ],
     } satisfies CommentBody).toExtend<CommentBody>();
-
     expectTypeOf({
       version: 1,
       content: [
@@ -243,7 +239,6 @@ describe("CommentBody", () => {
         },
       ],
     } satisfies CommentBody).toExtend<CommentBody>();
-
     expectTypeOf({
       version: 1,
       content: [
@@ -277,7 +272,6 @@ describe("CommentBody", () => {
         },
       ],
     } satisfies CommentBody).toExtend<CommentBody>();
-
     expectTypeOf({
       version: 1,
       content: [
