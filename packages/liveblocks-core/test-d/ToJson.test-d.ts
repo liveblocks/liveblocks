@@ -94,13 +94,6 @@ describe("ToJson", () => {
       readonly b: string | undefined;
     }>();
 
-    // XXX It would be nice if this would actually work
-    // expectTypeOf(
-    //   toJson(new LiveObject({ a: 1, b: maybe(str) }))
-    // ).toEqualTypeOf<{
-    //   readonly a: number;
-    //   readonly b?: string;                  // 👈 note the "?"
-    // }>();
   });
 
   test("LiveObject with mixed fields (docstring example)", () => {
@@ -117,21 +110,6 @@ describe("ToJson", () => {
       readonly b: readonly string[];
       readonly c: number | undefined;
     }>();
-
-    // XXX It would be nice if this would actually work
-    // expectTypeOf(
-    //   toJson(
-    //     new LiveObject({
-    //       a: 1,
-    //       b: new LiveList(["x"]),
-    //       c: 1 as number | undefined,
-    //     })
-    //   )
-    // ).toEqualTypeOf<{
-    //   readonly a: number;
-    //   readonly b: readonly string[];
-    //   readonly c?: number;                  // 👈 note the "?"
-    // }>();
   });
 
   test("nested LiveObject", () => {
