@@ -242,6 +242,19 @@ describe("ToJson", () => {
     expectTypeOf(toJson(liveObj)).toEqualTypeOf<ReadonlyJsonObject>();
   });
 
+  test("Record<string, LiveObject<specific type>>", () => {
+    const liveObj = new LiveObject(
+      {} as Record<string, LiveObject<{ prop: string }>>
+    );
+    expectTypeOf(liveObj).toEqualTypeOf<
+      LiveObject<Record<string, LiveObject<{ prop: string }>>>
+    >();
+
+    expectTypeOf(toJson(liveObj)).toEqualTypeOf<{
+      readonly [key: string]: { readonly prop: string };
+    }>();
+  });
+
   test("Record<string, specific type> through LiveList<LiveObject>", () => {
     const liveObj = new LiveObject({} as Record<string, { prop: string }>);
     const liveList = new LiveList([liveObj]);
