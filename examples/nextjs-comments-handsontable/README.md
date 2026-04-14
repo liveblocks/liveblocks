@@ -20,7 +20,7 @@
   <img src="https://img.shields.io/badge/next.js-message?style=flat&logo=next.js&color=07f&logoColor=fff" alt="Next.js" />
 </p>
 
-This example shows how to build commenting to your
+This example shows how to add commenting to your
 [Handsontable](https://www.handsontable.com/) table with
 [Liveblocks](https://liveblocks.io) and [Next.js](https://nextjs.org/).
 
