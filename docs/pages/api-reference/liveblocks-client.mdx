@@ -2795,6 +2795,30 @@ room.history.disable(() => {
 });
 ```
 
+#### Batching
+
+When combining with [`room.batch`](#Room.batch), always place the batch _inside_
+the `disable` call. If `batch` wraps `disable`, the batched mutations will still
+end up on the undo stack.
+
+```ts
+// ✅ Disabling undo must happen around a batch
+room.history.disable(() => {
+  room.batch(() => {
+    root.set("x", 1);
+    root.set("y", 2);
+  });
+});
+
+// ❌ Batch wraps disable, mutations will still end up in the undo stack
+room.batch(() => {
+  room.history.disable(() => {
+    root.set("x", 1);
+    root.set("y", 2);
+  });
+});
+```
+
 #### Async
 
 The history API is synchronous. For long-running async tasks, call
