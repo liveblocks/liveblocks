@@ -7,7 +7,6 @@ import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 
 import { act, createContextsForTest } from "./_utils";
 
-// eslint-disable-next-line @typescript-eslint/require-await
 async function defaultResolveRoomsInfo({ roomIds }: ResolveRoomsInfoArgs) {
   return roomIds.map((roomId) => ({
     name: roomId,

@@ -7,7 +7,6 @@ import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 
 import { act, createContextsForTest } from "./_utils";
 
-// eslint-disable-next-line @typescript-eslint/require-await
 async function defaultResolveGroupsInfo({ groupIds }: ResolveGroupsInfoArgs) {
   return groupIds.map((groupId) => ({
     name: groupId,

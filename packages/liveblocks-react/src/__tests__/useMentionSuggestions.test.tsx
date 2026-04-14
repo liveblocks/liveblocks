@@ -6,14 +6,12 @@ import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 import { useMentionSuggestions } from "../use-mention-suggestions";
 import { act, createContextsForTest } from "./_utils";
 
-// eslint-disable-next-line @typescript-eslint/require-await
 async function defaultResolveMentionSuggestions({
   text,
 }: ResolveMentionSuggestionsArgs) {
   return text.split("").map((id) => ({ kind: "user" as const, id }));
 }
 
-// eslint-disable-next-line @typescript-eslint/require-await
 async function legacyResolveMentionSuggestions({
   text,
 }: ResolveMentionSuggestionsArgs) {

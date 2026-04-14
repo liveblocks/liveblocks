@@ -28,14 +28,11 @@ function makeUnreliableFetcher() {
 }
 
 function makeBrokenFetcher() {
-  return (
-    vi
-      .fn<(cursor?: string) => Promise<string | null>>()
-      // eslint-disable-next-line @typescript-eslint/require-await
-      .mockImplementation(async () => {
-        throw new Error("Crap");
-      })
-  );
+  return vi
+    .fn<(cursor?: string) => Promise<string | null>>()
+    .mockImplementation(async () => {
+      throw new Error("Crap");
+    });
 }
 
 describe("PaginatedResource", () => {
