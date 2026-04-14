@@ -8,6 +8,7 @@ import { createRoomContext, useRoom as useRoomGlobal } from "../room";
 import {
   useCanRedo,
   useCanUndo,
+  useHistory,
   useIsInsideRoom,
   useMutation,
   useMyPresence,
@@ -456,5 +457,37 @@ describe("useCanUndo / useCanRedo", () => {
 
     expect(canUndo.result.current).toEqual(false);
     expect(canRedo.result.current).toEqual(true);
+  });
+});
+
+describe("useHistory", () => {
+  test("history.disable prevents mutations from being undoable", async () => {
+    const history = renderHook(() => useHistory());
+    const canUndo = renderHook(() => useCanUndo());
+    const mutation = renderHook(() =>
+      useMutation(
+        ({ storage }) => storage.get("obj").set("a", Math.random()),
+        []
+      )
+    );
+
+    const sim = await websocketSimulator();
+    act(() => sim.simulateExistingStorageLoaded());
+
+    // A normal mutation is undoable
+    act(() => mutation.result.current());
+    expect(canUndo.result.current).toEqual(true);
+
+    // Undo it to get back to clean state
+    act(() => history.result.current.undo());
+    expect(canUndo.result.current).toEqual(false);
+
+    // A mutation inside history.disable is not undoable
+    act(() => {
+      history.result.current.disable(() => {
+        mutation.result.current();
+      });
+    });
+    expect(canUndo.result.current).toEqual(false);
   });
 });
