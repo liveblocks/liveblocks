@@ -9,7 +9,6 @@ import { describe, expect, onTestFinished, test } from "vitest";
 
 import { LiveList } from "../crdts/LiveList";
 import { LiveObject } from "../crdts/LiveObject";
-import { kInternal } from "../internal";
 import { nn } from "../lib/assert";
 import { prepareIsolatedStorageTest } from "./_devserver";
 import type { JsonStorageUpdate } from "./_updatesUtils";
@@ -259,7 +258,7 @@ describe("room (dev server)", () => {
     });
   });
 
-  test("withoutHistory prevents mutations from appearing in undo stack", async () => {
+  test("history.disable prevents mutations from appearing in undo stack", async () => {
     const { room, root } = await prepareIsolatedStorageTest<{
       x: number;
     }>({
@@ -267,7 +266,7 @@ describe("room (dev server)", () => {
       data: { x: 0 },
     });
 
-    room.history[kInternal].withoutHistory(() => {
+    room.history.disable(() => {
       root.set("x", 1);
     });
 
@@ -275,7 +274,7 @@ describe("room (dev server)", () => {
     expect(room.history.canUndo()).toBe(false);
   });
 
-  test("withoutHistory returns the callback's return value", async () => {
+  test("history.disable returns the callback's return value", async () => {
     const { room } = await prepareIsolatedStorageTest<{
       x: number;
     }>({
@@ -283,12 +282,12 @@ describe("room (dev server)", () => {
       data: { x: 0 },
     });
 
-    const result = room.history[kInternal].withoutHistory(() => 42);
+    const result = room.history.disable(() => 42);
 
     expect(result).toBe(42);
   });
 
-  test("withoutHistory restores undo stack even if callback throws", async () => {
+  test("history.disable restores undo stack even if callback throws", async () => {
     const { room, root } = await prepareIsolatedStorageTest<{
       x: number;
     }>({
@@ -301,13 +300,13 @@ describe("room (dev server)", () => {
     expect(room.history.canUndo()).toBe(true);
 
     expect(() => {
-      room.history[kInternal].withoutHistory(() => {
+      room.history.disable(() => {
         root.set("x", 2);
         throw new Error("boom");
       });
     }).toThrow("boom");
 
-    // The mutation inside withoutHistory should not have added to the stack,
+    // The mutation inside history.disable should not have added to the stack,
     // but the pre-existing undo entry should still be there
     expect(room.history.canUndo()).toBe(true);
     room.history.undo();
@@ -315,7 +314,7 @@ describe("room (dev server)", () => {
     expect(room.history.canUndo()).toBe(false);
   });
 
-  test("withoutHistory preserves the redo stack", async () => {
+  test("history.disable preserves the redo stack", async () => {
     const { room, root } = await prepareIsolatedStorageTest<{
       x: number;
     }>({
@@ -329,8 +328,8 @@ describe("room (dev server)", () => {
     expect(root.get("x")).toBe(0);
     expect(room.history.canRedo()).toBe(true);
 
-    // Mutation inside withoutHistory should not wipe the redo stack
-    room.history[kInternal].withoutHistory(() => {
+    // Mutation inside history.disable should not wipe the redo stack
+    room.history.disable(() => {
       root.set("x", 99);
     });
 
