@@ -399,8 +399,11 @@ describe("useDeleteAllInboxNotifications", () => {
 
   test("should support deleting all notifications and one if its related thread", async () => {
     const roomId = nanoid();
-    const thread1 = dummyThreadData({ roomId });
-    const thread2 = dummyThreadData({ roomId });
+    const userId = "userId";
+    const comment1 = dummyCommentData({ roomId, userId });
+    const comment2 = dummyCommentData({ roomId, userId });
+    const thread1 = dummyThreadData({ roomId, comments: [comment1] });
+    const thread2 = dummyThreadData({ roomId, comments: [comment2] });
     const threads = [thread1, thread2];
     const notification1 = dummyThreadInboxNotificationData({
       roomId,
@@ -451,7 +454,7 @@ describe("useDeleteAllInboxNotifications", () => {
         useInboxNotifications,
         useDeleteAllInboxNotifications,
       },
-    } = createContextsForTest();
+    } = createContextsForTest({ userId });
 
     const { result, unmount } = renderHook(
       () => ({
