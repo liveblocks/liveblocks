@@ -924,9 +924,12 @@ describe("useInboxNotificationsSuspense: error", () => {
   });
 
   test("should trigger error boundary if initial fetch throws an error", async () => {
+    let getInboxNotificationsReqCount = 0;
+
     server.use(
+      // Mock an error response from the server for the initial fetch
       mockGetInboxNotifications(() => {
-        // Mock an error response from the server for the initial fetch
+        getInboxNotificationsReqCount++;
         return HttpResponse.json(null, { status: 500 });
       })
     );
@@ -940,7 +943,7 @@ describe("useInboxNotificationsSuspense: error", () => {
     function Fallback({ resetErrorBoundary }: FallbackProps) {
       return (
         <div>
-          <p>Oops, error grabbing inbox notifications.</p>
+          <div>There was an error while getting inbox notifications.</div>
           <button onClick={resetErrorBoundary}>Retry</button>
         </div>
       );
@@ -950,37 +953,55 @@ describe("useInboxNotificationsSuspense: error", () => {
       wrapper: ({ children }) => (
         <LiveblocksProvider>
           <ErrorBoundary FallbackComponent={Fallback}>
-            <Suspense fallback="Loading, yo">{children}</Suspense>
+            <Suspense fallback={<div>Loading</div>}>{children}</Suspense>
           </ErrorBoundary>
         </LiveblocksProvider>
       ),
     });
 
-    // Hook did not return a value. Instead, an error was thrown
     expect(result.current).toEqual(null);
 
-    expect(screen.getByText("Loading, yo")).toBeInTheDocument();
+    expect(screen.getByText("Loading")).toBeInTheDocument();
 
     // Wait until all fetch attempts have been done
-    await act(() => vi.advanceTimersToNextTimerAsync()); // fetch attempt 1
-    await act(() => vi.advanceTimersByTimeAsync(5_000)); // fetch attempt 2
-    await act(() => vi.advanceTimersByTimeAsync(5_000)); // fetch attempt 3
-    await act(() => vi.advanceTimersByTimeAsync(10_000)); // fetch attempt 4
-    await act(() => vi.advanceTimersByTimeAsync(15_000)); // fetch attempt 5
+    await vi.waitFor(() => expect(getInboxNotificationsReqCount).toBe(1));
+
+    // The first retry should be made after 5s
+    await vi.advanceTimersByTimeAsync(5_000);
+    // A new fetch request for the threads should have been made after the first retry
+    await vi.waitFor(() => expect(getInboxNotificationsReqCount).toBe(2));
+
+    // The second retry should be made after 5s
+    await vi.advanceTimersByTimeAsync(5_000);
+    await vi.waitFor(() => expect(getInboxNotificationsReqCount).toBe(3));
+
+    // The third retry should be made after 10s
+    await vi.advanceTimersByTimeAsync(10_000);
+    await vi.waitFor(() => expect(getInboxNotificationsReqCount).toBe(4));
+
+    // The fourth retry should be made after 15s
+    await vi.advanceTimersByTimeAsync(15_000);
+    await vi.waitFor(() => expect(getInboxNotificationsReqCount).toBe(5));
 
     // Check if the error boundary's fallback is displayed
-    expect(
-      screen.getByText("Oops, error grabbing inbox notifications.")
-    ).toBeInTheDocument();
+    await vi.waitFor(() => {
+      expect(
+        screen.getByText(
+          "There was an error while getting inbox notifications."
+        )
+      ).toBeInTheDocument();
+    });
 
     // Wait until the error boundary auto-clears
-    await act(() => vi.advanceTimersByTimeAsync(5_000));
+    await vi.advanceTimersByTimeAsync(5_000);
 
     // Simulate clicking the retry button
     fireEvent.click(screen.getByText("Retry"));
 
     // The error boundary's fallback should be cleared
-    expect(screen.getByText("Loading, yo")).toBeInTheDocument();
+    await vi.waitFor(() => {
+      expect(screen.getByText("Loading")).toBeInTheDocument();
+    });
 
     unmount();
   });
