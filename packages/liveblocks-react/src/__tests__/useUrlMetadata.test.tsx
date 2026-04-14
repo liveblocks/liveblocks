@@ -347,7 +347,7 @@ describe("useUrlMetadata", () => {
     expect(result.current).toEqual({ isLoading: true });
 
     // Wait until all fetch attempts have been done
-    await vi.advanceTimersToNextTimerAsync(); // fetch attempt 1
+    await vi.advanceTimersToNextTimerAsync();
 
     await vi.waitFor(() => {
       expect(result.current).toEqual({

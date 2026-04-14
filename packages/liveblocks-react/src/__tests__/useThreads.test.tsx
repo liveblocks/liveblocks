@@ -2922,7 +2922,7 @@ describe("useThreadsSuspense: error", () => {
     expect(screen.getByText("Loading")).toBeInTheDocument();
 
     // Wait until all fetch attempts have been done
-    await vi.advanceTimersToNextTimerAsync(); // fetch attempt 1
+    await vi.waitFor(() => expect(getThreadsReqCount).toBe(1));
 
     // The first retry should be made after 5s
     await vi.advanceTimersByTimeAsync(5_000);

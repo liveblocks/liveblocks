@@ -1050,7 +1050,7 @@ describe("useInboxNotificationsSuspense: error", () => {
     expect(screen.getByText("Loading your notifications")).toBeInTheDocument();
 
     // Wait until all fetch attempts have been done
-    await act(() => vi.advanceTimersToNextTimerAsync()); // fetch attempt 1
+    await act(() => vi.advanceTimersToNextTimerAsync());
 
     // Check if the error boundary's fallback is displayed
     expect(screen.getByText("Done loading!")).toBeInTheDocument();
