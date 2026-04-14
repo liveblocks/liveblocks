@@ -1,5 +1,14 @@
 ## vNEXT (not yet released)
 
+## v3.18.2
+
+### `@liveblocks/client`
+
+- New experimental `room.history.disable(fn)` API that allows running storage
+  mutations without them appearing on the undo/redo stacks. Intended for
+  background/async writes (e.g. writing back AI generation results) that should
+  not be undoable.
+
 ## v3.18.1
 
 ### `@liveblocks/react-ui`
