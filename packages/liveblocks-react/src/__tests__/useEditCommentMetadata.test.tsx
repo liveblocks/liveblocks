@@ -1,6 +1,6 @@
 import type { BaseMetadata } from "@liveblocks/core";
 import { nanoid, Permission } from "@liveblocks/core";
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import { HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import {
@@ -11,6 +11,7 @@ import {
   describe,
   expect,
   test,
+  vi,
 } from "vitest";
 
 import { dummyCommentData, dummyThreadData } from "./_dummies";
@@ -90,7 +91,7 @@ describe("useEditCommentMetadata", () => {
 
     expect(result.current.threads).toBeUndefined();
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.threads).toEqual([initialThread])
     );
 
@@ -110,7 +111,7 @@ describe("useEditCommentMetadata", () => {
 
     // Comment metadata is not updated by the server response so exceptionally,
     // we need to check if mock has been called
-    await waitFor(() => expect(hasCalledEditCommentMetadata).toEqual(true));
+    await vi.waitFor(() => expect(hasCalledEditCommentMetadata).toEqual(true));
 
     unmount();
   });
@@ -169,7 +170,7 @@ describe("useEditCommentMetadata", () => {
 
     expect(result.current.threads).toBeUndefined();
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.threads).toEqual([initialThread])
     );
 
@@ -192,9 +193,9 @@ describe("useEditCommentMetadata", () => {
 
     // Comment metadata is not updated by the server response so exceptionally,
     // we need to check if mock has been called
-    await waitFor(() => expect(hasCalledEditCommentMetadata).toEqual(true));
+    await vi.waitFor(() => expect(hasCalledEditCommentMetadata).toEqual(true));
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(result.current.threads?.[0]?.comments[0]?.metadata).toEqual({
         priority: 2,
       });

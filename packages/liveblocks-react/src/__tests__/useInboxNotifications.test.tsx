@@ -5,7 +5,6 @@ import {
   render,
   renderHook,
   screen,
-  waitFor,
 } from "@testing-library/react";
 import { HttpResponse } from "msw";
 import { setupServer } from "msw/node";
@@ -89,7 +88,7 @@ describe("useInboxNotifications", () => {
       isLoading: true,
     });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications,
@@ -154,7 +153,7 @@ describe("useInboxNotifications", () => {
       }
     );
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications,
@@ -233,7 +232,7 @@ describe("useInboxNotifications", () => {
       }
     );
 
-    await waitFor(() => expect(getInboxNotificationsReqCount).toBe(1));
+    await vi.waitFor(() => expect(getInboxNotificationsReqCount).toBe(1));
 
     rerender();
 
@@ -324,7 +323,7 @@ describe("useInboxNotifications", () => {
       isLoading: true,
     });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications: [newInboxNotification, oldInboxNotification],
@@ -369,28 +368,28 @@ describe("useInboxNotifications: error", () => {
     });
 
     expect(result.current).toEqual({ isLoading: true });
-    await waitFor(() => expect(getInboxNotificationsReqCount).toBe(1));
+    await vi.waitFor(() => expect(getInboxNotificationsReqCount).toBe(1));
 
     // The first retry should be made after 5s
     await vi.advanceTimersByTimeAsync(5_000);
     // A new fetch request for the inbox notifications should have been made after the first retry
-    await waitFor(() => expect(getInboxNotificationsReqCount).toBe(2));
+    await vi.waitFor(() => expect(getInboxNotificationsReqCount).toBe(2));
     expect(result.current).toEqual({ isLoading: true });
 
     // The second retry should be made after 5s
     await vi.advanceTimersByTimeAsync(5_000);
-    await waitFor(() => expect(getInboxNotificationsReqCount).toBe(3));
+    await vi.waitFor(() => expect(getInboxNotificationsReqCount).toBe(3));
     expect(result.current).toEqual({ isLoading: true });
 
     // The third retry should be made after 10s
     await vi.advanceTimersByTimeAsync(10_000);
-    await waitFor(() => expect(getInboxNotificationsReqCount).toBe(4));
+    await vi.waitFor(() => expect(getInboxNotificationsReqCount).toBe(4));
     expect(result.current).toEqual({ isLoading: true });
 
     // The fourth retry should be made after 15s
     await vi.advanceTimersByTimeAsync(15_000);
-    await waitFor(() => expect(getInboxNotificationsReqCount).toBe(5));
-    await waitFor(() =>
+    await vi.waitFor(() => expect(getInboxNotificationsReqCount).toBe(5));
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         error: expect.any(Error),
@@ -401,11 +400,11 @@ describe("useInboxNotifications: error", () => {
     await vi.advanceTimersByTimeAsync(5_000);
     expect(result.current).toEqual({ isLoading: true });
     // A new fetch request for the threads should have been made after the initial render
-    await waitFor(() => expect(getInboxNotificationsReqCount).toBe(6));
+    await vi.waitFor(() => expect(getInboxNotificationsReqCount).toBe(6));
 
     // The first retry should be made after 5s
     await vi.advanceTimersByTimeAsync(5_000);
-    await waitFor(() => expect(getInboxNotificationsReqCount).toBe(7));
+    await vi.waitFor(() => expect(getInboxNotificationsReqCount).toBe(7));
     expect(result.current).toEqual({ isLoading: true });
 
     // and so on...
@@ -433,7 +432,7 @@ describe("useInboxNotifications: error", () => {
 
     expect(result.current).toEqual({ isLoading: true });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         error: expect.any(HttpError),
@@ -502,7 +501,7 @@ describe("useInboxNotifications - Suspense", () => {
 
     expect(result.current).toEqual(null);
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications,
@@ -597,19 +596,19 @@ describe("useInboxNotifications: polling", () => {
     const { unmount } = render(<Room />);
 
     // A new fetch request for the threads should have been made after the initial render
-    await waitFor(() => expect(initialCount).toBe(1));
-    await waitFor(() => expect(pollerCount).toBe(0));
+    await vi.waitFor(() => expect(initialCount).toBe(1));
+    await vi.waitFor(() => expect(pollerCount).toBe(0));
 
     // Wait for the first polling to occur after the initial render
     vi.advanceTimersByTime(60_000);
     expect(initialCount).toBe(1);
-    await waitFor(() => expect(pollerCount).toBe(1));
+    await vi.waitFor(() => expect(pollerCount).toBe(1));
 
     // Advance time to simulate the polling interval
     vi.advanceTimersByTime(60_000);
     // Wait for the second polling to occur
     expect(initialCount).toBe(1);
-    await waitFor(() => expect(pollerCount).toBe(2));
+    await vi.waitFor(() => expect(pollerCount).toBe(2));
 
     unmount();
   });
@@ -697,7 +696,7 @@ describe("useInboxNotifications: polling", () => {
 
     expect(result.current).toEqual({ isLoading: true });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications: inboxNotifications.filter(
@@ -723,7 +722,7 @@ describe("useInboxNotifications: polling", () => {
 
     expect(result2.current).toEqual({ isLoading: true });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result2.current).toEqual({
         isLoading: false,
         inboxNotifications,
@@ -803,12 +802,12 @@ describe("useInboxNotifications: polling", () => {
     const { unmount: unmountComp1 } = render(<Client />);
 
     // A new fetch request for the threads should have been made after the initial render
-    await waitFor(() => expect(hasCalledGetNotifications).toBe(true));
+    await vi.waitFor(() => expect(hasCalledGetNotifications).toBe(true));
     expect(pollerCount).toBe(0);
 
     // Wait for the first polling to occur after the initial render
     await vi.advanceTimersByTimeAsync(60_000);
-    await waitFor(() => expect(pollerCount).toBe(1));
+    await vi.waitFor(() => expect(pollerCount).toBe(1));
 
     // Unmount Component 1 and verify that no new poll happens after the next interval
     unmountComp1();
@@ -819,11 +818,11 @@ describe("useInboxNotifications: polling", () => {
 
     // Mount Component 2 and verify that a new poll happens immediately (because the last time we polled was 999999ms ago)
     const { unmount: unmountComp2 } = render(<Client />);
-    await waitFor(() => expect(pollerCount).toBe(2));
+    await vi.waitFor(() => expect(pollerCount).toBe(2));
 
     // And polling keeps happening every 60s too
     await vi.advanceTimersByTimeAsync(60_000);
-    await waitFor(() => expect(pollerCount).toBe(3));
+    await vi.waitFor(() => expect(pollerCount).toBe(3));
 
     unmountComp2();
   });
@@ -894,12 +893,12 @@ describe("useInboxNotifications: polling", () => {
     const { unmount } = render(<Client />);
 
     // A new fetch request for the threads should have been made after the initial render
-    await waitFor(() => expect(hasCalledGetNotifications).toBe(true));
+    await vi.waitFor(() => expect(hasCalledGetNotifications).toBe(true));
     expect(pollerCount).toBe(0);
 
     // Wait for the first polling to occur after the initial render
     await vi.advanceTimersByTimeAsync(60_000);
-    await waitFor(() => expect(pollerCount).toBe(1));
+    await vi.waitFor(() => expect(pollerCount).toBe(1));
 
     // Advance 10 seconds (more than the currently set maximum stale time, 5000)
     await vi.advanceTimersByTimeAsync(10_000);
@@ -908,7 +907,7 @@ describe("useInboxNotifications: polling", () => {
     // visible a new poll happens since more than 5000 ms has passed since the last poll
     document.dispatchEvent(new Event("visibilitychange"));
 
-    await waitFor(() => expect(pollerCount).toBe(2));
+    await vi.waitFor(() => expect(pollerCount).toBe(2));
 
     unmount();
   });
@@ -1198,8 +1197,8 @@ describe("useInboxNotifications: pagination", () => {
     expect(result.current).toEqual({ isLoading: true });
 
     // Initial load (Page 1)
-    await waitFor(() => expect(isPage1Requested).toBe(true));
-    await waitFor(() =>
+    await vi.waitFor(() => expect(isPage1Requested).toBe(true));
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications: [...inboxNotificationsPage1],
@@ -1214,8 +1213,8 @@ describe("useInboxNotifications: pagination", () => {
 
     // Fetch Page 2
     fetchMore();
-    await waitFor(() => expect(isPage2Requested).toBe(true));
-    await waitFor(() =>
+    await vi.waitFor(() => expect(isPage2Requested).toBe(true));
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications: [
@@ -1231,8 +1230,8 @@ describe("useInboxNotifications: pagination", () => {
 
     // Fetch Page 3
     fetchMore();
-    await waitFor(() => expect(isPage3Requested).toBe(true));
-    await waitFor(() =>
+    await vi.waitFor(() => expect(isPage3Requested).toBe(true));
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications: [
@@ -1336,7 +1335,7 @@ describe("useInboxNotifications: pagination", () => {
     expect(result.current).toEqual({ isLoading: true });
 
     // Initial load (Page 1)
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications: [...inboxNotificationsPageOne],
@@ -1352,9 +1351,9 @@ describe("useInboxNotifications: pagination", () => {
 
     // Fetch Page 2 (final page)
     fetchMore();
-    await waitFor(() => expect(isPageTwoRequested).toBe(true));
+    await vi.waitFor(() => expect(isPageTwoRequested).toBe(true));
     expect(getNotificationsReqCount).toEqual(2);
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications: [
@@ -1428,7 +1427,7 @@ describe("useInboxNotifications: pagination", () => {
     expect(result.current).toEqual({ isLoading: true });
 
     // Initial load (Page 1)
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications: [...inboxNotificationsPageOne],
@@ -1444,8 +1443,8 @@ describe("useInboxNotifications: pagination", () => {
     // Fetch Page 2 (which returns an error)
     fetchMore();
 
-    await waitFor(() => expect(isPageTwoRequested).toBe(true));
-    await waitFor(() =>
+    await vi.waitFor(() => expect(isPageTwoRequested).toBe(true));
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications: [...inboxNotificationsPageOne],
@@ -1595,7 +1594,7 @@ describe("useInboxNotifications: pagination", () => {
     // Before the fix, this would stop at 2 items (page 1 + page 2) because
     // .finally() clearing #pendingFetchMore ran in a later microtask than
     // React's re-render flush, causing the 3rd fetchMore() call to be skipped.
-    await waitFor(() => expect(latestResult.hasFetchedAll).toBe(true), {
+    await vi.waitFor(() => expect(latestResult.hasFetchedAll).toBe(true), {
       timeout: 5000,
     });
     expect(latestResult.count).toBe(3);

@@ -5,7 +5,7 @@ import type {
   ThreadDataWithDeleteInfo,
 } from "@liveblocks/core";
 import { HttpError, nanoid, Permission } from "@liveblocks/core";
-import { fireEvent, renderHook, screen, waitFor } from "@testing-library/react";
+import { fireEvent, renderHook, screen } from "@testing-library/react";
 import type { HttpResponseResolver } from "msw";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
@@ -133,7 +133,7 @@ describe("useUserThreads", () => {
       isLoading: true,
     });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         threads,
@@ -204,7 +204,7 @@ describe("useUserThreads", () => {
       isLoading: true,
     });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         threads: [pinnedThread],
@@ -269,7 +269,7 @@ describe("useUserThreads", () => {
       isLoading: true,
     });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         threads: [latestUpdatedThread, earliestUpdatedThread],
@@ -325,21 +325,21 @@ describe("useThreads: error", () => {
     // The first retry should be made after 5s
     await vi.advanceTimersByTimeAsync(5_000);
     // A new fetch request for the threads should have been made after the first retry
-    await waitFor(() => expect(getThreadsReqCount).toBe(2));
+    await vi.waitFor(() => expect(getThreadsReqCount).toBe(2));
 
     // The second retry should be made after 5s
     await vi.advanceTimersByTimeAsync(5_000);
-    await waitFor(() => expect(getThreadsReqCount).toBe(3));
+    await vi.waitFor(() => expect(getThreadsReqCount).toBe(3));
 
     // The third retry should be made after 10s
     await vi.advanceTimersByTimeAsync(10_000);
-    await waitFor(() => expect(getThreadsReqCount).toBe(4));
+    await vi.waitFor(() => expect(getThreadsReqCount).toBe(4));
 
     // The fourth retry should be made after 15s
     await vi.advanceTimersByTimeAsync(15_000);
-    await waitFor(() => expect(getThreadsReqCount).toBe(5));
+    await vi.waitFor(() => expect(getThreadsReqCount).toBe(5));
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(result.current).toEqual({
         isLoading: false,
         error: expect.any(Error),
@@ -350,14 +350,14 @@ describe("useThreads: error", () => {
     await vi.advanceTimersByTimeAsync(5_000);
 
     // A new fetch request for the threads should have been made after the initial render
-    await waitFor(() => expect(getThreadsReqCount).toBe(6));
+    await vi.waitFor(() => expect(getThreadsReqCount).toBe(6));
     expect(result.current).toEqual({
       isLoading: true,
     });
 
     // The first retry should be made after 5s
     await vi.advanceTimersByTimeAsync(5_000);
-    await waitFor(() => expect(getThreadsReqCount).toBe(7));
+    await vi.waitFor(() => expect(getThreadsReqCount).toBe(7));
 
     // and so on...
 
@@ -387,7 +387,7 @@ describe("useThreads: error", () => {
 
     expect(result.current).toEqual({ isLoading: true });
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(result.current).toEqual({
         isLoading: false,
         error: expect.any(HttpError),
@@ -450,7 +450,7 @@ describe("useThreadsSuspense", () => {
 
     expect(result.current).toEqual(null);
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         threads,
@@ -536,22 +536,22 @@ describe("useUserThreadsSuspense: error", () => {
     // The first retry should be made after 5s
     await vi.advanceTimersByTimeAsync(5_000);
     // A new fetch request for the threads should have been made after the first retry
-    await waitFor(() => expect(getThreadsReqCount).toBe(2));
+    await vi.waitFor(() => expect(getThreadsReqCount).toBe(2));
 
     // The second retry should be made after 5s
     await vi.advanceTimersByTimeAsync(5_000);
-    await waitFor(() => expect(getThreadsReqCount).toBe(3));
+    await vi.waitFor(() => expect(getThreadsReqCount).toBe(3));
 
     // The third retry should be made after 10s
     await vi.advanceTimersByTimeAsync(10_000);
-    await waitFor(() => expect(getThreadsReqCount).toBe(4));
+    await vi.waitFor(() => expect(getThreadsReqCount).toBe(4));
 
     // The fourth retry should be made after 15s
     await vi.advanceTimersByTimeAsync(15_000);
-    await waitFor(() => expect(getThreadsReqCount).toBe(5));
+    await vi.waitFor(() => expect(getThreadsReqCount).toBe(5));
 
     // Check if the error boundary's fallback is displayed
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(
         screen.getByText("There was an error while getting threads.")
       ).toBeInTheDocument();
@@ -564,7 +564,7 @@ describe("useUserThreadsSuspense: error", () => {
     fireEvent.click(screen.getByText("Retry"));
 
     // The error boundary's fallback should be cleared
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(screen.getByText("Loading")).toBeInTheDocument();
     });
 
@@ -680,8 +680,8 @@ describe("useUserThreads: pagination", () => {
     });
 
     // Initial load (Page 1)
-    await waitFor(() => expect(isPageOneRequested).toBe(true));
-    await waitFor(() =>
+    await vi.waitFor(() => expect(isPageOneRequested).toBe(true));
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         threads: [...threadsPageOne],
@@ -696,8 +696,8 @@ describe("useUserThreads: pagination", () => {
 
     // Fetch Page 2
     fetchMore();
-    await waitFor(() => expect(isPageTwoRequested).toBe(true));
-    await waitFor(() =>
+    await vi.waitFor(() => expect(isPageTwoRequested).toBe(true));
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         threads: [...threadsPageOne, ...threadsPageTwo],
@@ -710,8 +710,8 @@ describe("useUserThreads: pagination", () => {
 
     // Fetch Page 3
     fetchMore();
-    await waitFor(() => expect(isPageThreeRequested).toBe(true));
-    await waitFor(() =>
+    await vi.waitFor(() => expect(isPageThreeRequested).toBe(true));
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         threads: [...threadsPageOne, ...threadsPageTwo, ...threadsPageThree],
@@ -801,8 +801,8 @@ describe("useUserThreads: pagination", () => {
     });
 
     // Initial load (Page 1)
-    await waitFor(() => expect(isPageOneRequested).toBe(true));
-    await waitFor(() =>
+    await vi.waitFor(() => expect(isPageOneRequested).toBe(true));
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         threads: [...threadsPageOne],
@@ -817,8 +817,8 @@ describe("useUserThreads: pagination", () => {
 
     // Fetch Page 2
     fetchMore();
-    await waitFor(() => expect(isPageTwoRequested).toBe(true));
-    await waitFor(() =>
+    await vi.waitFor(() => expect(isPageTwoRequested).toBe(true));
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         threads: [...threadsPageOne, ...threadsPageTwo],
@@ -884,7 +884,7 @@ describe("useUserThreads: pagination", () => {
     expect(result.current).toEqual({ isLoading: true });
 
     // Initial load (Page 1)
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         threads: [...threadsPageOne],
@@ -900,8 +900,8 @@ describe("useUserThreads: pagination", () => {
     // Fetch Page 2 (which returns an error)
     fetchMore();
 
-    await waitFor(() => expect(isPageTwoRequested).toBe(true));
-    await waitFor(() =>
+    await vi.waitFor(() => expect(isPageTwoRequested).toBe(true));
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         threads: threadsPageOne,

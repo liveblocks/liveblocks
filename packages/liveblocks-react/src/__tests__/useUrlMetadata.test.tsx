@@ -1,5 +1,5 @@
 import type { UrlMetadata } from "@liveblocks/core";
-import { renderHook, screen, waitFor } from "@testing-library/react";
+import { renderHook, screen } from "@testing-library/react";
 import type { HttpResponseResolver } from "msw";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
@@ -86,7 +86,7 @@ describe("useUrlMetadata", () => {
       isLoading: true,
     });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         metadata,
@@ -123,7 +123,7 @@ describe("useUrlMetadata", () => {
       }
     );
 
-    await waitFor(() => expect(result.current.isLoading).toBeFalsy());
+    await vi.waitFor(() => expect(result.current.isLoading).toBeFalsy());
 
     expect(result.current).toEqual({
       isLoading: false,
@@ -182,7 +182,7 @@ describe("useUrlMetadata", () => {
       }
     );
 
-    await waitFor(() => expect(result.current.isLoading).toBeFalsy());
+    await vi.waitFor(() => expect(result.current.isLoading).toBeFalsy());
 
     expect(result.current).toEqual({
       isLoading: false,
@@ -196,7 +196,7 @@ describe("useUrlMetadata", () => {
       isLoading: true,
     });
 
-    await waitFor(() => expect(result.current.isLoading).toBeFalsy());
+    await vi.waitFor(() => expect(result.current.isLoading).toBeFalsy());
 
     expect(result.current).toEqual({
       isLoading: false,
@@ -247,11 +247,11 @@ describe("useUrlMetadata", () => {
       }
     );
 
-    await waitFor(() => expect(result.current.isLoading).toBeFalsy());
+    await vi.waitFor(() => expect(result.current.isLoading).toBeFalsy());
 
     // Change to URL 2
     rerender({ url: url2 });
-    await waitFor(() => expect(result.current.isLoading).toBeFalsy());
+    await vi.waitFor(() => expect(result.current.isLoading).toBeFalsy());
 
     // Change back to URL 1 - should use cached data
     rerender({ url: url1 });
@@ -298,7 +298,7 @@ describe("useUrlMetadata", () => {
       }
     );
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(result.current.metadata1.isLoading).toBeFalsy();
       expect(result.current.metadata2.isLoading).toBeFalsy();
       expect(result.current.metadata3.isLoading).toBeFalsy();
@@ -349,7 +349,7 @@ describe("useUrlMetadata", () => {
     // Wait until all fetch attempts have been done
     await vi.advanceTimersToNextTimerAsync(); // fetch attempt 1
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(result.current).toEqual({
         isLoading: false,
         error: expect.any(Error),
@@ -401,7 +401,7 @@ describe("useUrlMetadataSuspense", () => {
 
     expect(result.current).toEqual(null);
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         metadata,
@@ -443,7 +443,7 @@ describe("useUrlMetadataSuspense", () => {
     expect(screen.getByText("Loading")).toBeInTheDocument();
 
     // Check if the error boundary's fallback is displayed
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(
         screen.getByText("There was an error while getting URL metadata.")
       ).toBeInTheDocument();
@@ -495,7 +495,7 @@ describe("useUrlMetadataSuspense", () => {
       }
     );
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         metadata: metadata1,
@@ -504,7 +504,7 @@ describe("useUrlMetadataSuspense", () => {
 
     // Change to URL 2
     rerender({ url: url2 });
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         metadata: metadata2,

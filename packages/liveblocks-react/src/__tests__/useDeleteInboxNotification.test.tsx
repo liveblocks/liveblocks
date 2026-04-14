@@ -1,8 +1,16 @@
 import { nanoid } from "@liveblocks/core";
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import { HttpResponse } from "msw";
 import { setupServer } from "msw/node";
-import { afterAll, afterEach, beforeAll, describe, expect, test } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vitest";
 
 import {
   dummyCommentData,
@@ -103,7 +111,7 @@ describe("useDeleteInboxNotification", () => {
       }
     );
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(result.current.inboxNotifications).toEqual(
         expect.arrayContaining(inboxNotifications)
       );
@@ -191,7 +199,7 @@ describe("useDeleteInboxNotification", () => {
       }
     );
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.inboxNotifications).toEqual(
         expect.arrayContaining(inboxNotifications)
       )
@@ -204,7 +212,7 @@ describe("useDeleteInboxNotification", () => {
 
     expect(result.current.inboxNotifications).toEqual([notification2]);
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       // The optimistic update is reverted because of the error response
       expect(result.current.inboxNotifications).toEqual(
         expect.arrayContaining(inboxNotifications)
@@ -294,7 +302,7 @@ describe("useDeleteInboxNotification", () => {
       }
     );
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(result.current.inboxNotifications).toEqual(
         expect.arrayContaining(inboxNotifications)
       );
@@ -310,7 +318,7 @@ describe("useDeleteInboxNotification", () => {
 
     expect(result.current.unreadInboxNotificationsCount).toEqual(2);
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       // The optimistic update is reverted because of the error response
       expect(result.current.inboxNotifications).toEqual(
         expect.arrayContaining(inboxNotifications)
@@ -404,7 +412,7 @@ describe("useDeleteInboxNotification", () => {
       }
     );
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(result.current.inboxNotifications).toEqual(
         expect.arrayContaining(inboxNotifications)
       );
@@ -418,7 +426,7 @@ describe("useDeleteInboxNotification", () => {
 
     expect(result.current.inboxNotifications).toEqual([notification2]);
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(result.current.unreadInboxNotificationsCount).toEqual(1);
     });
 
@@ -507,7 +515,7 @@ describe("useDeleteInboxNotification", () => {
       }
     );
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.inboxNotifications).toEqual(
         expect.arrayContaining(inboxNotifications)
       )
@@ -527,10 +535,12 @@ describe("useDeleteInboxNotification", () => {
 
     expect(result.current.inboxNotifications).toEqual([notification2]);
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(client.getSyncStatus()).toEqual("synchronizing")
     );
-    await waitFor(() => expect(client.getSyncStatus()).toEqual("synchronized"));
+    await vi.waitFor(() =>
+      expect(client.getSyncStatus()).toEqual("synchronized")
+    );
 
     unmount();
   });
@@ -609,7 +619,7 @@ describe("useDeleteInboxNotification", () => {
       }
     );
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.inboxNotifications).toEqual(
         expect.arrayContaining(inboxNotifications)
       )
@@ -632,10 +642,12 @@ describe("useDeleteInboxNotification", () => {
 
     expect(result.current.inboxNotifications).toEqual([]);
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(client.getSyncStatus()).toEqual("synchronizing")
     );
-    await waitFor(() => expect(client.getSyncStatus()).toEqual("synchronized"));
+    await vi.waitFor(() =>
+      expect(client.getSyncStatus()).toEqual("synchronized")
+    );
 
     unmount();
   });

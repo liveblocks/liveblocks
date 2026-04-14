@@ -1,5 +1,5 @@
 import { nanoid, Permission } from "@liveblocks/core";
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import { HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import {
@@ -10,6 +10,7 @@ import {
   describe,
   expect,
   test,
+  vi,
 } from "vitest";
 
 import { dummyCommentData, dummyThreadData } from "./_dummies";
@@ -93,18 +94,18 @@ describe("useDeleteThread", () => {
 
     expect(result.current.threads).toBeUndefined();
 
-    await waitFor(() => expect(result.current.threads).toEqual(threads));
+    await vi.waitFor(() => expect(result.current.threads).toEqual(threads));
 
     act(() => {
       result.current.deleteThread(threads[0]!.id);
     });
 
-    await waitFor(() => expect(result.current.threads).toEqual([]));
+    await vi.waitFor(() => expect(result.current.threads).toEqual([]));
 
     // TODO: We should wait for the `deleteThread` call to be finished but we don't have APIs for that yet
     //       We should expose a way to know (and be updated about) if there are still pending optimistic updates
     //       Until then, we'll just wait for the mock to be called
-    await waitFor(() => expect(hasCalledDeleteThread).toEqual(true));
+    await vi.waitFor(() => expect(hasCalledDeleteThread).toEqual(true));
 
     unmount();
   });
@@ -153,7 +154,7 @@ describe("useDeleteThread", () => {
 
     expect(result.current.threads).toBeUndefined();
 
-    await waitFor(() => expect(result.current.threads).toEqual(threads));
+    await vi.waitFor(() => expect(result.current.threads).toEqual(threads));
 
     expect(result.current.room.getSelf()?.id).toEqual("not-the-thread-creator");
 
@@ -171,7 +172,7 @@ describe("useDeleteThread", () => {
       "Only the thread creator can delete the thread"
     );
 
-    await waitFor(() => expect(result.current.threads).toEqual(threads));
+    await vi.waitFor(() => expect(result.current.threads).toEqual(threads));
 
     unmount();
   });
@@ -218,7 +219,7 @@ describe("useDeleteThread", () => {
 
     expect(result.current.threads).toBeUndefined();
 
-    await waitFor(() => expect(result.current.threads).toEqual(threads));
+    await vi.waitFor(() => expect(result.current.threads).toEqual(threads));
 
     act(() => {
       result.current.deleteThread(threads[0]!.id);
@@ -226,7 +227,7 @@ describe("useDeleteThread", () => {
 
     expect(result.current.threads).toEqual([]);
 
-    await waitFor(() => expect(result.current.threads).toEqual(threads));
+    await vi.waitFor(() => expect(result.current.threads).toEqual(threads));
 
     unmount();
   });

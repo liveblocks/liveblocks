@@ -1,5 +1,5 @@
 import { nanoid, Permission } from "@liveblocks/core";
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import { HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import {
@@ -10,6 +10,7 @@ import {
   describe,
   expect,
   test,
+  vi,
 } from "vitest";
 
 import { dummyThreadData } from "./_dummies";
@@ -78,7 +79,7 @@ describe("useMarkThreadAsUnresolved", () => {
 
     expect(result.current.threads).toBeUndefined();
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.threads).toEqual([initialThread])
     );
 
@@ -86,7 +87,9 @@ describe("useMarkThreadAsUnresolved", () => {
 
     expect(result.current.threads![0]?.resolved).toBe(false);
 
-    await waitFor(() => expect(hasCalledMarkThreadAsUnresolved).toEqual(true));
+    await vi.waitFor(() =>
+      expect(hasCalledMarkThreadAsUnresolved).toEqual(true)
+    );
 
     expect(result.current.threads![0]?.resolved).toBe(false);
 

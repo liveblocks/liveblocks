@@ -1,6 +1,6 @@
 import type { HistoryVersion } from "@liveblocks/core";
 import { nanoid } from "@liveblocks/core";
-import { fireEvent, renderHook, screen, waitFor } from "@testing-library/react";
+import { fireEvent, renderHook, screen } from "@testing-library/react";
 import type { HttpResponseResolver } from "msw";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
@@ -123,7 +123,7 @@ describe("useHistoryVersions", () => {
       isLoading: true,
     });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         versions,
@@ -185,7 +185,7 @@ describe("useHistoryVersions", () => {
       isLoading: true,
     });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         versions,
@@ -235,21 +235,21 @@ describe("useHistoryVersions: error", () => {
     // The first retry should be made after 5s
     await vi.advanceTimersByTimeAsync(5_000);
     // A new fetch request for the threads should have been made after the first retry
-    await waitFor(() => expect(listHistoryVersionsReqCount).toBe(2));
+    await vi.waitFor(() => expect(listHistoryVersionsReqCount).toBe(2));
 
     // The second retry should be made after 5s
     await vi.advanceTimersByTimeAsync(5_000);
-    await waitFor(() => expect(listHistoryVersionsReqCount).toBe(3));
+    await vi.waitFor(() => expect(listHistoryVersionsReqCount).toBe(3));
 
     // The third retry should be made after 10s
     await vi.advanceTimersByTimeAsync(10_000);
-    await waitFor(() => expect(listHistoryVersionsReqCount).toBe(4));
+    await vi.waitFor(() => expect(listHistoryVersionsReqCount).toBe(4));
 
     // The fourth retry should be made after 15s
     await vi.advanceTimersByTimeAsync(15_000);
-    await waitFor(() => expect(listHistoryVersionsReqCount).toBe(5));
+    await vi.waitFor(() => expect(listHistoryVersionsReqCount).toBe(5));
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(result.current).toEqual({
         isLoading: false,
         error: expect.any(Error),
@@ -260,14 +260,14 @@ describe("useHistoryVersions: error", () => {
     await vi.advanceTimersByTimeAsync(5_000);
 
     // A new fetch request for the threads should have been made after the initial render
-    await waitFor(() => expect(listHistoryVersionsReqCount).toBe(6));
+    await vi.waitFor(() => expect(listHistoryVersionsReqCount).toBe(6));
     expect(result.current).toEqual({
       isLoading: true,
     });
 
     // The first retry should be made after 5s
     await vi.advanceTimersByTimeAsync(5_000);
-    await waitFor(() => expect(listHistoryVersionsReqCount).toBe(7));
+    await vi.waitFor(() => expect(listHistoryVersionsReqCount).toBe(7));
 
     // and so on...
 
@@ -327,7 +327,7 @@ describe("useHistoryVersions: suspense", () => {
 
     expect(result.current).toEqual(null);
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         versions,
@@ -396,22 +396,22 @@ describe("useHistoryVersions: error", () => {
     // The first retry should be made after 5s
     await vi.advanceTimersByTimeAsync(5_000);
     // A new fetch request for the threads should have been made after the first retry
-    await waitFor(() => expect(listHistoryVersionsReqCount).toBe(2));
+    await vi.waitFor(() => expect(listHistoryVersionsReqCount).toBe(2));
 
     // The second retry should be made after 5s
     await vi.advanceTimersByTimeAsync(5_000);
-    await waitFor(() => expect(listHistoryVersionsReqCount).toBe(3));
+    await vi.waitFor(() => expect(listHistoryVersionsReqCount).toBe(3));
 
     // The third retry should be made after 10s
     await vi.advanceTimersByTimeAsync(10_000);
-    await waitFor(() => expect(listHistoryVersionsReqCount).toBe(4));
+    await vi.waitFor(() => expect(listHistoryVersionsReqCount).toBe(4));
 
     // The fourth retry should be made after 15s
     await vi.advanceTimersByTimeAsync(15_000);
-    await waitFor(() => expect(listHistoryVersionsReqCount).toBe(5));
+    await vi.waitFor(() => expect(listHistoryVersionsReqCount).toBe(5));
 
     // Check if the error boundary's fallback is displayed
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(
         screen.getByText("There was an error while getting threads.")
       ).toBeInTheDocument();
@@ -424,7 +424,7 @@ describe("useHistoryVersions: error", () => {
     fireEvent.click(screen.getByText("Retry"));
 
     // The error boundary's fallback should be cleared
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(screen.getByText("Loading")).toBeInTheDocument();
     });
 
@@ -494,7 +494,7 @@ describe("useHistoryVersions: polling", () => {
       isLoading: true,
     });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         versions,
@@ -518,9 +518,9 @@ describe("useHistoryVersions: polling", () => {
 
     // Wait for the first polling to occur after the initial render
     await vi.advanceTimersByTimeAsync(60_000);
-    await waitFor(() => expect(getHistoryVersionsSinceCount).toBe(1));
+    await vi.waitFor(() => expect(getHistoryVersionsSinceCount).toBe(1));
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         versions,

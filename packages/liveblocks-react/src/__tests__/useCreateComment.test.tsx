@@ -1,5 +1,5 @@
 import { nanoid, Permission } from "@liveblocks/core";
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import { addMinutes } from "date-fns";
 import { HttpResponse } from "msw";
 import { setupServer } from "msw/node";
@@ -11,6 +11,7 @@ import {
   describe,
   expect,
   test,
+  vi,
 } from "vitest";
 
 import {
@@ -91,7 +92,7 @@ describe("useCreateComment", () => {
 
     expect(result.current.threads).toBeUndefined();
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.threads).toEqual([initialThread])
     );
 
@@ -108,7 +109,7 @@ describe("useCreateComment", () => {
     expect(result.current.threads?.[0]?.comments[1]).toEqual(comment);
 
     // We're using the createdDate overriden by the server to ensure the optimistic update have been properly deleted
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.threads?.[0]?.comments[1]?.createdAt).toEqual(
         fakeCreatedAt
       )
@@ -183,7 +184,7 @@ describe("useCreateComment", () => {
 
     expect(result.current.subscription.status).toEqual("not-subscribed");
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.subscription.unreadSince).toBeNull()
     );
 
@@ -201,7 +202,7 @@ describe("useCreateComment", () => {
     expect(result.current.subscription.unreadSince).toEqual(comment.createdAt);
 
     // We're using the createdDate overriden by the server to ensure the optimistic update have been properly deleted
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.subscription.unreadSince).toEqual(fakeCreatedAt)
     );
 
@@ -249,7 +250,7 @@ describe("useCreateComment", () => {
     );
 
     expect(result.current.threads).toBeUndefined();
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.threads).toEqual([initialThread])
     );
 
@@ -266,7 +267,7 @@ describe("useCreateComment", () => {
     expect(result.current.threads?.[0]?.comments[1]).toEqual(comment);
 
     // Wait for optimistic update to be rolled back
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.threads).toEqual([initialThread])
     );
 
@@ -327,7 +328,7 @@ describe("useCreateComment", () => {
 
     expect(result.current.threads).toBeUndefined();
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.threads).toEqual([initialThread])
     );
 
@@ -346,7 +347,7 @@ describe("useCreateComment", () => {
     expect(comment.metadata).toEqual(metadata);
 
     // We're using the createdDate overriden by the server to ensure the optimistic update have been properly deleted
-    await waitFor(() => {
+    await vi.waitFor(() => {
       const serverComment = result.current.threads?.[0]?.comments[1];
       expect(serverComment?.createdAt).toEqual(fakeCreatedAt);
       expect(serverComment?.metadata).toEqual(metadata);

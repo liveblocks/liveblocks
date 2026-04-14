@@ -1,6 +1,6 @@
 import type { ResolveGroupsInfoArgs } from "@liveblocks/core";
 import { nanoid } from "@liveblocks/core";
-import { renderHook, screen, waitFor } from "@testing-library/react";
+import { renderHook, screen } from "@testing-library/react";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
@@ -45,7 +45,9 @@ describe("useGroupInfo", () => {
 
     expect(result.current.groupInfo).toEqual({ isLoading: true });
 
-    await waitFor(() => expect(result.current.groupInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.groupInfo.isLoading).toBeFalsy()
+    );
 
     expect(result.current.groupInfo).toEqual({
       isLoading: false,
@@ -79,7 +81,9 @@ describe("useGroupInfo", () => {
 
     expect(result.current.groupInfo).toEqual({ isLoading: true });
 
-    await waitFor(() => expect(result.current.groupInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.groupInfo.isLoading).toBeFalsy()
+    );
 
     expect(result.current.groupInfo).toEqual({
       isLoading: false,
@@ -112,7 +116,9 @@ describe("useGroupInfo", () => {
 
     expect(result.current.groupInfo).toEqual({ isLoading: true });
 
-    await waitFor(() => expect(result.current.groupInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.groupInfo.isLoading).toBeFalsy()
+    );
 
     expect(result.current.groupInfo).toEqual({
       isLoading: false,
@@ -123,7 +129,9 @@ describe("useGroupInfo", () => {
 
     expect(result.current.groupInfo).toEqual({ isLoading: true });
 
-    await waitFor(() => expect(result.current.groupInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.groupInfo.isLoading).toBeFalsy()
+    );
 
     expect(result.current.groupInfo).toEqual({
       isLoading: false,
@@ -157,11 +165,15 @@ describe("useGroupInfo", () => {
       }
     );
 
-    await waitFor(() => expect(result.current.groupInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.groupInfo.isLoading).toBeFalsy()
+    );
 
     rerender({ groupId: "123" });
 
-    await waitFor(() => expect(result.current.groupInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.groupInfo.isLoading).toBeFalsy()
+    );
 
     rerender({ groupId: "abc" });
 
@@ -204,11 +216,15 @@ describe("useGroupInfo", () => {
       }
     );
 
-    await waitFor(() => expect(result.current.groupInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.groupInfo.isLoading).toBeFalsy()
+    );
 
     rerender({ groupId: "123" });
 
-    await waitFor(() => expect(result.current.groupInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.groupInfo.isLoading).toBeFalsy()
+    );
 
     rerender({ groupId: "abc" });
 
@@ -220,7 +236,9 @@ describe("useGroupInfo", () => {
     // Invalidate all group IDs
     act(() => client.resolvers.invalidateGroupsInfo());
 
-    await waitFor(() => expect(result.current.groupInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.groupInfo.isLoading).toBeFalsy()
+    );
 
     expect(result.current.groupInfo).toEqual({
       isLoading: false,
@@ -263,7 +281,7 @@ describe("useGroupInfo", () => {
       }
     );
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(result.current.groupInfoAbc.isLoading).toBeFalsy();
       expect(result.current.groupInfoAbc2.isLoading).toBeFalsy();
       expect(result.current.groupInfo123.isLoading).toBeFalsy();
@@ -316,7 +334,9 @@ describe("useGroupInfo", () => {
 
     expect(result.current.groupInfo).toEqual({ isLoading: true });
 
-    await waitFor(() => expect(result.current.groupInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.groupInfo.isLoading).toBeFalsy()
+    );
 
     expect(result.current.groupInfo).toEqual({
       isLoading: false,
@@ -349,7 +369,9 @@ describe("useGroupInfo", () => {
 
     expect(result.current.groupInfo).toEqual({ isLoading: true });
 
-    await waitFor(() => expect(result.current.groupInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.groupInfo.isLoading).toBeFalsy()
+    );
 
     expect(result.current.groupInfo).toEqual({
       isLoading: false,
@@ -382,7 +404,9 @@ describe("useGroupInfo", () => {
 
     expect(result.current.groupInfo).toEqual({ isLoading: true });
 
-    await waitFor(() => expect(result.current.groupInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.groupInfo.isLoading).toBeFalsy()
+    );
 
     expect(result.current.groupInfo).toEqual({
       isLoading: false,
@@ -423,7 +447,7 @@ describe("useGroupInfo", () => {
       }
     );
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(result.current.groupInfoAbc.isLoading).toBeFalsy();
       expect(result.current.groupInfo123.isLoading).toBeFalsy();
     });
@@ -483,14 +507,16 @@ describe("useGroupInfoSuspense", () => {
       }
     );
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       // Check if the Suspense fallback is displayed
       expect(screen.getByText("Loading")).toBeInTheDocument();
     });
 
-    await waitFor(() => expect(result.current.groupInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.groupInfo.isLoading).toBeFalsy()
+    );
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       // Check if the Suspense fallback is no longer displayed
       expect(screen.getByText("Loaded")).toBeInTheDocument();
     });
@@ -527,28 +553,32 @@ describe("useGroupInfoSuspense", () => {
       }
     );
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       // Check if the Suspense fallback is displayed
       expect(screen.getByText("Loading")).toBeInTheDocument();
     });
 
-    await waitFor(() => expect(result.current.groupInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.groupInfo.isLoading).toBeFalsy()
+    );
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       // Check if the Suspense fallback is no longer displayed
       expect(screen.getByText("Loaded")).toBeInTheDocument();
     });
 
     act(() => client.resolvers.invalidateGroupsInfo());
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       // Check if the Suspense fallback is displayed again
       expect(screen.getByText("Loading")).toBeInTheDocument();
     });
 
-    await waitFor(() => expect(result.current.groupInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.groupInfo.isLoading).toBeFalsy()
+    );
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       // Check if the Suspense fallback is no longer displayed again
       expect(screen.getByText("Loaded")).toBeInTheDocument();
     });
@@ -589,7 +619,7 @@ describe("useGroupInfoSuspense", () => {
 
     expect(result.current).toEqual(null);
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       // Check if the error boundary fallback is displayed
       expect(
         screen.getByText("There was an error while getting group info.")

@@ -1,6 +1,6 @@
 import type { BaseMetadata, CommentBody, Patchable } from "@liveblocks/core";
 import { nanoid, Permission } from "@liveblocks/core";
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import { addMinutes } from "date-fns";
 import { HttpResponse } from "msw";
 import { setupServer } from "msw/node";
@@ -12,6 +12,7 @@ import {
   describe,
   expect,
   test,
+  vi,
 } from "vitest";
 
 import { dummyCommentData, dummyThreadData } from "./_dummies";
@@ -106,7 +107,7 @@ describe("useEditComment", () => {
 
     expect(result.current.threads).toBeUndefined();
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.threads).toEqual([initialThread])
     );
 
@@ -126,7 +127,7 @@ describe("useEditComment", () => {
     expect(result.current.threads?.[0]?.comments[0]?.body).toEqual(newBody);
     expect(result.current.threads?.[0]?.comments[0]?.editedAt).toBeDefined();
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       const comment = result.current.threads?.[0]?.comments[0];
       expect(comment?.editedAt).toEqual(fakeEditedAt);
       expect(comment?.body).toEqual(newBody);
@@ -202,7 +203,7 @@ describe("useEditComment", () => {
 
     expect(result.current.threads).toBeUndefined();
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.threads).toEqual([initialThread])
     );
 
@@ -228,7 +229,7 @@ describe("useEditComment", () => {
     });
     expect(result.current.threads?.[0]?.comments[0]?.editedAt).toBeDefined();
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       const comment = result.current.threads?.[0]?.comments[0];
       expect(comment?.editedAt).toEqual(fakeEditedAt);
       expect(comment?.body).toEqual(newBody);
@@ -318,7 +319,7 @@ describe("useEditComment", () => {
 
     expect(result.current.threads).toBeUndefined();
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.threads).toEqual([initialThread])
     );
 
@@ -345,7 +346,7 @@ describe("useEditComment", () => {
       reviewed: null,
     });
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       const comment = result.current.threads?.[0]?.comments[0];
       expect(comment?.editedAt).toEqual(fakeEditedAt);
       expect(comment?.body).toEqual(newBody);
@@ -410,7 +411,7 @@ describe("useEditComment", () => {
 
     expect(result.current.threads).toBeUndefined();
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.threads).toEqual([initialThread])
     );
 
@@ -429,7 +430,7 @@ describe("useEditComment", () => {
 
     expect(result.current.threads?.[0]?.comments[0]?.body).toEqual(newBody);
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(result.current.threads?.[0]?.comments[0]?.body).toEqual(
         initialComment.body
       );

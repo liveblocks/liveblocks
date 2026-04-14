@@ -1,10 +1,4 @@
-import {
-  act,
-  fireEvent,
-  renderHook,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { act, fireEvent, renderHook, screen } from "@testing-library/react";
 import { HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { Suspense } from "react";
@@ -82,7 +76,7 @@ describe("useNotificationSettings", () => {
 
     expect(result.current[0]).toEqual({ isLoading: true });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current[0]).toEqual({
         isLoading: false,
         settings: {
@@ -158,7 +152,7 @@ describe("useNotificationSettings", () => {
 
     expect(result.current[0]).toEqual({ isLoading: true });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current[0]).toEqual({
         isLoading: false,
         settings: {
@@ -190,7 +184,7 @@ describe("useNotificationSettings", () => {
       });
     });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       // Notification settings response from the server should be updated accordingly
       expect(result.current[0]).toEqual({
         isLoading: false,
@@ -257,7 +251,7 @@ describe("useNotificationSettings", () => {
 
     expect(result.current[0]).toEqual({ isLoading: true });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current[0]).toEqual({
         isLoading: false,
         settings: {
@@ -312,7 +306,7 @@ describe("useNotificationSettings", () => {
       },
     });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       // Notification settings should be reverted to the original value after the error response from the server
       expect(result.current[0]).toEqual({
         isLoading: false,
@@ -374,26 +368,26 @@ describe("useNotificationSettings: error", () => {
     expect(result.current[0]).toEqual({ isLoading: true });
 
     // Wait for the first attempt to fetch channel notification settings
-    await waitFor(() => expect(getNotificationSettingsCount).toBe(1));
+    await vi.waitFor(() => expect(getNotificationSettingsCount).toBe(1));
 
     // The first retry should be made after 5s
     await vi.advanceTimersByTimeAsync(5_000);
     // A new fetch request for the threads should have been made after the first retry
-    await waitFor(() => expect(getNotificationSettingsCount).toBe(2));
+    await vi.waitFor(() => expect(getNotificationSettingsCount).toBe(2));
 
     // The second retry should be made after 5s
     await vi.advanceTimersByTimeAsync(5_000);
-    await waitFor(() => expect(getNotificationSettingsCount).toBe(3));
+    await vi.waitFor(() => expect(getNotificationSettingsCount).toBe(3));
 
     // The third retry should be made after 10s
     await vi.advanceTimersByTimeAsync(10_000);
-    await waitFor(() => expect(getNotificationSettingsCount).toBe(4));
+    await vi.waitFor(() => expect(getNotificationSettingsCount).toBe(4));
 
     // The fourth retry should be made after 15s
     await vi.advanceTimersByTimeAsync(15_000);
-    await waitFor(() => expect(getNotificationSettingsCount).toBe(5));
+    await vi.waitFor(() => expect(getNotificationSettingsCount).toBe(5));
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current[0]).toEqual({
         isLoading: false,
         error: expect.any(Error),
@@ -405,11 +399,11 @@ describe("useNotificationSettings: error", () => {
     expect(result.current[0]).toEqual({ isLoading: true });
 
     // A new fetch request for the threads should have been made after the initial render
-    await waitFor(() => expect(getNotificationSettingsCount).toBe(6));
+    await vi.waitFor(() => expect(getNotificationSettingsCount).toBe(6));
 
     // The first retry should be made after 5s
     await vi.advanceTimersByTimeAsync(5_000);
-    await waitFor(() => expect(getNotificationSettingsCount).toBe(7));
+    await vi.waitFor(() => expect(getNotificationSettingsCount).toBe(7));
     expect(result.current[0]).toEqual({ isLoading: true });
 
     // and so on...
@@ -463,26 +457,26 @@ describe("useNotificationSettings: error", () => {
     expect(result.current[0]).toEqual({ isLoading: true });
 
     // Wait for the first attempt to fetch channel notification settings
-    await waitFor(() => expect(getNotificationSettingsCount).toBe(1));
+    await vi.waitFor(() => expect(getNotificationSettingsCount).toBe(1));
 
     // The first retry should be made after 5s
     await vi.advanceTimersByTimeAsync(5_000);
     // A new fetch request for the threads should have been made after the first retry
-    await waitFor(() => expect(getNotificationSettingsCount).toBe(2));
+    await vi.waitFor(() => expect(getNotificationSettingsCount).toBe(2));
 
     // The second retry should be made after 5s
     await vi.advanceTimersByTimeAsync(5_000);
-    await waitFor(() => expect(getNotificationSettingsCount).toBe(3));
+    await vi.waitFor(() => expect(getNotificationSettingsCount).toBe(3));
 
     // The third retry should be made after 10s
     await vi.advanceTimersByTimeAsync(10_000);
-    await waitFor(() => expect(getNotificationSettingsCount).toBe(4));
+    await vi.waitFor(() => expect(getNotificationSettingsCount).toBe(4));
 
     // The fourth retry should be made after 15s
     await vi.advanceTimersByTimeAsync(15_000);
-    await waitFor(() => expect(getNotificationSettingsCount).toBe(5));
+    await vi.waitFor(() => expect(getNotificationSettingsCount).toBe(5));
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current[0]).toEqual({
         isLoading: false,
         error: expect.any(Error),
@@ -494,7 +488,7 @@ describe("useNotificationSettings: error", () => {
     expect(result.current[0]).toEqual({ isLoading: true });
 
     // A new fetch request for the threads should have been made after the initial render
-    await waitFor(() => expect(getNotificationSettingsCount).toBe(6));
+    await vi.waitFor(() => expect(getNotificationSettingsCount).toBe(6));
 
     // Switch the mock endpoint to return a successful response after 4 seconds
     shouldReturnErrorResponse = false;
@@ -502,7 +496,7 @@ describe("useNotificationSettings: error", () => {
     // The first retry should be made after 5s
     await vi.advanceTimersByTimeAsync(5_000);
     // A new fetch request for the threads should have been made after the initial render
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current[0]).toEqual({
         isLoading: false,
         settings: {
@@ -609,7 +603,7 @@ describe("useNotificationSettings: error", () => {
     expect(result.current[0]).toEqual({ isLoading: true });
 
     // Wait for the first attempt to fetch channel notification settings
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current[0]).toEqual({
         isLoading: false,
         settings: {
@@ -637,7 +631,7 @@ describe("useNotificationSettings: error", () => {
 
     // Advance by 5 minute so that and verify that the first poll is triggered
     vi.advanceTimersByTime(60_000 * 5);
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current[0]).toEqual({
         isLoading: false,
         settings: {
@@ -664,7 +658,7 @@ describe("useNotificationSettings: error", () => {
 
     // Advance by another 5 minute so that and verify that the second poll is triggered
     vi.advanceTimersByTime(60_000 * 5);
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current[0]).toEqual({
         isLoading: false,
         settings: {
@@ -737,7 +731,7 @@ describe("useNotificationSettings - Suspense", () => {
 
     expect(result.current).toEqual(null);
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current[0]).toEqual({
         isLoading: false,
         settings: {
@@ -822,26 +816,26 @@ describe("useNotificationSettings - Suspense: error", () => {
     expect(result.current).toEqual(null);
 
     // Wait for the first attempt to fetch channel notification settings
-    await waitFor(() => expect(getNotificationSettingsCount).toBe(1));
+    await vi.waitFor(() => expect(getNotificationSettingsCount).toBe(1));
 
     // The first retry should be made after 5s
     await vi.advanceTimersByTimeAsync(5_000);
     // A new fetch request for the threads should have been made after the first retry
-    await waitFor(() => expect(getNotificationSettingsCount).toBe(2));
+    await vi.waitFor(() => expect(getNotificationSettingsCount).toBe(2));
 
     // The second retry should be made after 5s
     await vi.advanceTimersByTimeAsync(5_000);
-    await waitFor(() => expect(getNotificationSettingsCount).toBe(3));
+    await vi.waitFor(() => expect(getNotificationSettingsCount).toBe(3));
 
     // The third retry should be made after 10s
     await vi.advanceTimersByTimeAsync(10_000);
-    await waitFor(() => expect(getNotificationSettingsCount).toBe(4));
+    await vi.waitFor(() => expect(getNotificationSettingsCount).toBe(4));
 
     // The fourth retry should be made after 15s
     await vi.advanceTimersByTimeAsync(15_000);
-    await waitFor(() => expect(getNotificationSettingsCount).toBe(5));
+    await vi.waitFor(() => expect(getNotificationSettingsCount).toBe(5));
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       // Check if the error boundary's fallback is displayed
       expect(
         screen.getByText(
@@ -894,26 +888,26 @@ describe("useNotificationSettings - Suspense: error", () => {
     expect(result.current).toEqual(null);
 
     // Wait for the first attempt to fetch channel notification settings
-    await waitFor(() => expect(getNotificationSettingsCount).toBe(1));
+    await vi.waitFor(() => expect(getNotificationSettingsCount).toBe(1));
 
     // The first retry should be made after 5s
     await vi.advanceTimersByTimeAsync(5_000);
     // A new fetch request for the threads should have been made after the first retry
-    await waitFor(() => expect(getNotificationSettingsCount).toBe(2));
+    await vi.waitFor(() => expect(getNotificationSettingsCount).toBe(2));
 
     // The second retry should be made after 5s
     await vi.advanceTimersByTimeAsync(5_000);
-    await waitFor(() => expect(getNotificationSettingsCount).toBe(3));
+    await vi.waitFor(() => expect(getNotificationSettingsCount).toBe(3));
 
     // The third retry should be made after 10s
     await vi.advanceTimersByTimeAsync(10_000);
-    await waitFor(() => expect(getNotificationSettingsCount).toBe(4));
+    await vi.waitFor(() => expect(getNotificationSettingsCount).toBe(4));
 
     // The fourth retry should be made after 15s
     await vi.advanceTimersByTimeAsync(15_000);
-    await waitFor(() => expect(getNotificationSettingsCount).toBe(5));
+    await vi.waitFor(() => expect(getNotificationSettingsCount).toBe(5));
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       // Check if the error boundary's fallback is displayed
       expect(
         screen.getByText(

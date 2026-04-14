@@ -1,5 +1,5 @@
 import { nanoid, Permission } from "@liveblocks/core";
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import { addMinutes } from "date-fns";
 import { HttpResponse } from "msw";
 import { setupServer } from "msw/node";
@@ -11,6 +11,7 @@ import {
   describe,
   expect,
   test,
+  vi,
 } from "vitest";
 
 import { dummyCommentData, dummyThreadData } from "./_dummies";
@@ -93,7 +94,7 @@ describe("useCreateThread", () => {
 
     expect(result.current.threadData).toEqual({ isLoading: true });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.threadData).toEqual({
         isLoading: false,
         threads: [],
@@ -116,7 +117,7 @@ describe("useCreateThread", () => {
     expect(result.current.threadData.threads?.[0]).toEqual(thread);
 
     // We're using the createdDate overriden by the server to ensure the optimistic update have been properly deleted
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.threadData.threads?.[0]?.createdAt).toEqual(
         fakeCreatedAt
       )
@@ -166,7 +167,7 @@ describe("useCreateThread", () => {
 
     expect(result.current.threadsData).toEqual({ isLoading: true });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.threadsData).toEqual({
         isLoading: false,
         threads: [],
@@ -189,7 +190,9 @@ describe("useCreateThread", () => {
     expect(result.current.threadsData.threads).toEqual([thread]);
 
     // Wait for optimistic update to be rolled back
-    await waitFor(() => expect(result.current.threadsData.threads).toEqual([]));
+    await vi.waitFor(() =>
+      expect(result.current.threadsData.threads).toEqual([])
+    );
 
     unmount();
   });
@@ -255,7 +258,7 @@ describe("useCreateThread", () => {
 
     expect(result.current.threadData).toEqual({ isLoading: true });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.threadData).toEqual({
         isLoading: false,
         threads: [],
@@ -280,7 +283,7 @@ describe("useCreateThread", () => {
     expect(thread.comments[0]?.metadata).toEqual(commentMetadata);
 
     // We're using the createdDate overriden by the server to ensure the optimistic update have been properly deleted
-    await waitFor(() => {
+    await vi.waitFor(() => {
       const serverThread = result.current.threadData.threads?.[0];
       expect(serverThread?.createdAt).toEqual(fakeCreatedAt);
       expect(serverThread?.comments[0]?.metadata).toEqual(commentMetadata);

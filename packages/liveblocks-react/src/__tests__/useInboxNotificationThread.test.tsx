@@ -1,5 +1,5 @@
 import { nanoid } from "@liveblocks/core";
-import { renderHook, waitFor } from "@testing-library/react";
+import { renderHook } from "@testing-library/react";
 import { sorted } from "itertools";
 import { HttpResponse } from "msw";
 import { setupServer } from "msw/node";
@@ -11,6 +11,7 @@ import {
   describe,
   expect,
   test,
+  vi,
 } from "vitest";
 
 import {
@@ -81,7 +82,7 @@ describe("useInboxNotificationThread", () => {
       isLoading: true,
     });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications,
@@ -164,7 +165,7 @@ describe("useInboxNotificationThread", () => {
       isLoading: true,
     });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications: expect.any(Array),
@@ -270,7 +271,7 @@ describe("useInboxNotificationThread", () => {
       isLoading: true,
     });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications: expect.any(Array),

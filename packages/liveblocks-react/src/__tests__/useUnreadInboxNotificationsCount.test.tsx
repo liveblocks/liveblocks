@@ -1,5 +1,5 @@
 import { nanoid } from "@liveblocks/core";
-import { renderHook, waitFor } from "@testing-library/react";
+import { renderHook } from "@testing-library/react";
 import { HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { Suspense } from "react";
@@ -11,6 +11,7 @@ import {
   describe,
   expect,
   test,
+  vi,
 } from "vitest";
 
 import MockWebSocket from "./_MockWebSocket";
@@ -59,7 +60,7 @@ describe("useUnreadInboxNotificationsCount", () => {
       isLoading: true,
     });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         count: 1,
@@ -106,7 +107,7 @@ describe("useUnreadInboxNotificationsCount", () => {
       isLoading: true,
     });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         count: 1,
@@ -128,7 +129,7 @@ describe("useUnreadInboxNotificationsCount", () => {
       isLoading: true,
     });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result2.current).toEqual({
         isLoading: false,
         count: 2,
@@ -168,7 +169,7 @@ describe("useUnreadInboxNotificationsCount - Suspense", () => {
 
     expect(result.current).toEqual(null);
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         count: 1,

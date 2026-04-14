@@ -1,5 +1,5 @@
 import { nanoid } from "@liveblocks/core";
-import { renderHook, waitFor } from "@testing-library/react";
+import { renderHook } from "@testing-library/react";
 import { HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import {
@@ -81,7 +81,7 @@ describe("useGroup", () => {
 
     expect(result.current.group).toEqual({ isLoading: true });
 
-    await waitFor(() => expect(result.current.group.isLoading).toBeFalsy());
+    await vi.waitFor(() => expect(result.current.group.isLoading).toBeFalsy());
 
     expect(result.current.group).toEqual({
       isLoading: false,
@@ -133,7 +133,7 @@ describe("useGroup", () => {
 
     expect(result.current.group).toEqual({ isLoading: true });
 
-    await waitFor(() => expect(result.current.group.isLoading).toBeFalsy());
+    await vi.waitFor(() => expect(result.current.group.isLoading).toBeFalsy());
 
     expect(result.current.group).toEqual({
       isLoading: false,
@@ -182,7 +182,7 @@ describe("useGroup", () => {
 
     expect(result.current.group).toEqual({ isLoading: true });
 
-    await waitFor(() => expect(result.current.group.isLoading).toBeFalsy());
+    await vi.waitFor(() => expect(result.current.group.isLoading).toBeFalsy());
 
     expect(result.current.group).toEqual({
       isLoading: false,
@@ -207,7 +207,7 @@ describe("useGroup", () => {
 
     expect(result.current.group).toEqual({ isLoading: true });
 
-    await waitFor(() => expect(result.current.group.isLoading).toBeFalsy());
+    await vi.waitFor(() => expect(result.current.group.isLoading).toBeFalsy());
 
     expect(result.current.group).toEqual({
       isLoading: false,
@@ -261,7 +261,7 @@ describe("useGroup", () => {
       }
     );
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(result.current.groupEngineering.isLoading).toBeFalsy();
       expect(result.current.groupEngineering2.isLoading).toBeFalsy();
       expect(result.current.groupDesign.isLoading).toBeFalsy();
@@ -387,7 +387,7 @@ describe("useGroup", () => {
       ),
     });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(_useInboxNotifications.result.current).toEqual(
         expect.objectContaining({
           isLoading: false,
@@ -407,7 +407,7 @@ describe("useGroup", () => {
       }
     );
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(_useGroup.result.current.groupEngineering.isLoading).toBeFalsy();
       expect(_useGroup.result.current.groupDesign.isLoading).toBeFalsy();
     });

@@ -1,5 +1,5 @@
 import { nanoid, Permission } from "@liveblocks/core";
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import { HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import {
@@ -10,6 +10,7 @@ import {
   describe,
   expect,
   test,
+  vi,
 } from "vitest";
 
 import {
@@ -92,7 +93,7 @@ describe("useSubscribeToThread", () => {
 
     expect(result.current.threads).toBeUndefined();
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.threads).toEqual([initialThread])
     );
 
@@ -101,7 +102,7 @@ describe("useSubscribeToThread", () => {
 
     act(() => result.current.subscribeToThread(initialThread.id));
 
-    await waitFor(() => expect(hasCalledSubscribeToThread).toEqual(true));
+    await vi.waitFor(() => expect(hasCalledSubscribeToThread).toEqual(true));
 
     // The thread should optimistically be subscribed to
     expect(result.current.subscription.status).toBe("subscribed");
@@ -173,7 +174,7 @@ describe("useSubscribeToThread", () => {
 
     expect(result.current.threads).toBeUndefined();
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.threads).toEqual([initialThread])
     );
 
@@ -181,7 +182,7 @@ describe("useSubscribeToThread", () => {
 
     act(() => result.current.subscribeToThread(initialThread.id));
 
-    await waitFor(() => expect(hasCalledSubscribeToThread).toEqual(true));
+    await vi.waitFor(() => expect(hasCalledSubscribeToThread).toEqual(true));
 
     expect(result.current.subscription.status).toBe("subscribed");
 

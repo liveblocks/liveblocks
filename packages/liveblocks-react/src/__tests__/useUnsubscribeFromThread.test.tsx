@@ -1,5 +1,5 @@
 import { nanoid, Permission } from "@liveblocks/core";
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import { HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import {
@@ -10,6 +10,7 @@ import {
   describe,
   expect,
   test,
+  vi,
 } from "vitest";
 
 import {
@@ -97,7 +98,7 @@ describe("useUnsubscribeFromThread", () => {
 
     expect(result.current.threads).toBeUndefined();
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.threads).toEqual([initialThread])
     );
 
@@ -106,7 +107,9 @@ describe("useUnsubscribeFromThread", () => {
 
     act(() => result.current.unsubscribeFromThread(initialThread.id));
 
-    await waitFor(() => expect(hasCalledUnsubscribeFromThread).toEqual(true));
+    await vi.waitFor(() =>
+      expect(hasCalledUnsubscribeFromThread).toEqual(true)
+    );
 
     // The thread should optimistically no longer be subscribed to
     expect(result.current.subscription.status).toBe("not-subscribed");
@@ -165,7 +168,7 @@ describe("useUnsubscribeFromThread", () => {
 
     expect(result.current.threads).toBeUndefined();
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.threads).toEqual([initialThread])
     );
 
@@ -173,7 +176,9 @@ describe("useUnsubscribeFromThread", () => {
 
     act(() => result.current.unsubscribeFromThread(initialThread.id));
 
-    await waitFor(() => expect(hasCalledUnsubscribeFromThread).toEqual(true));
+    await vi.waitFor(() =>
+      expect(hasCalledUnsubscribeFromThread).toEqual(true)
+    );
 
     expect(result.current.subscription.status).toBe("not-subscribed");
 

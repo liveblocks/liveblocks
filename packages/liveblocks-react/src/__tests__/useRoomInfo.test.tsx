@@ -1,6 +1,6 @@
 import type { ResolveRoomsInfoArgs } from "@liveblocks/core";
 import { nanoid } from "@liveblocks/core";
-import { renderHook, screen, waitFor } from "@testing-library/react";
+import { renderHook, screen } from "@testing-library/react";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
@@ -45,7 +45,9 @@ describe("useRoomInfo", () => {
 
     expect(result.current.roomInfo).toEqual({ isLoading: true });
 
-    await waitFor(() => expect(result.current.roomInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.roomInfo.isLoading).toBeFalsy()
+    );
 
     expect(result.current.roomInfo).toEqual({
       isLoading: false,
@@ -79,7 +81,9 @@ describe("useRoomInfo", () => {
 
     expect(result.current.roomInfo).toEqual({ isLoading: true });
 
-    await waitFor(() => expect(result.current.roomInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.roomInfo.isLoading).toBeFalsy()
+    );
 
     expect(result.current.roomInfo).toEqual({
       isLoading: false,
@@ -112,7 +116,9 @@ describe("useRoomInfo", () => {
 
     expect(result.current.roomInfo).toEqual({ isLoading: true });
 
-    await waitFor(() => expect(result.current.roomInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.roomInfo.isLoading).toBeFalsy()
+    );
 
     expect(result.current.roomInfo).toEqual({
       isLoading: false,
@@ -123,7 +129,9 @@ describe("useRoomInfo", () => {
 
     expect(result.current.roomInfo).toEqual({ isLoading: true });
 
-    await waitFor(() => expect(result.current.roomInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.roomInfo.isLoading).toBeFalsy()
+    );
 
     expect(result.current.roomInfo).toEqual({
       isLoading: false,
@@ -157,11 +165,15 @@ describe("useRoomInfo", () => {
       }
     );
 
-    await waitFor(() => expect(result.current.roomInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.roomInfo.isLoading).toBeFalsy()
+    );
 
     rerender({ roomId: "123" });
 
-    await waitFor(() => expect(result.current.roomInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.roomInfo.isLoading).toBeFalsy()
+    );
 
     rerender({ roomId: "abc" });
 
@@ -204,11 +216,15 @@ describe("useRoomInfo", () => {
       }
     );
 
-    await waitFor(() => expect(result.current.roomInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.roomInfo.isLoading).toBeFalsy()
+    );
 
     rerender({ roomId: "123" });
 
-    await waitFor(() => expect(result.current.roomInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.roomInfo.isLoading).toBeFalsy()
+    );
 
     rerender({ roomId: "abc" });
 
@@ -220,7 +236,9 @@ describe("useRoomInfo", () => {
     // Invalidate all room IDs
     act(() => client.resolvers.invalidateRoomsInfo());
 
-    await waitFor(() => expect(result.current.roomInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.roomInfo.isLoading).toBeFalsy()
+    );
 
     expect(result.current.roomInfo).toEqual({
       isLoading: false,
@@ -263,7 +281,7 @@ describe("useRoomInfo", () => {
       }
     );
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(result.current.roomInfoAbc.isLoading).toBeFalsy();
       expect(result.current.roomInfoAbc2.isLoading).toBeFalsy();
       expect(result.current.roomInfo123.isLoading).toBeFalsy();
@@ -314,7 +332,9 @@ describe("useRoomInfo", () => {
 
     expect(result.current.roomInfo).toEqual({ isLoading: true });
 
-    await waitFor(() => expect(result.current.roomInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.roomInfo.isLoading).toBeFalsy()
+    );
 
     expect(result.current.roomInfo).toEqual({
       isLoading: false,
@@ -347,7 +367,9 @@ describe("useRoomInfo", () => {
 
     expect(result.current.roomInfo).toEqual({ isLoading: true });
 
-    await waitFor(() => expect(result.current.roomInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.roomInfo.isLoading).toBeFalsy()
+    );
 
     expect(result.current.roomInfo).toEqual({
       isLoading: false,
@@ -380,7 +402,9 @@ describe("useRoomInfo", () => {
 
     expect(result.current.roomInfo).toEqual({ isLoading: true });
 
-    await waitFor(() => expect(result.current.roomInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.roomInfo.isLoading).toBeFalsy()
+    );
 
     expect(result.current.roomInfo).toEqual({
       isLoading: false,
@@ -421,7 +445,7 @@ describe("useRoomInfo", () => {
       }
     );
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(result.current.roomInfoAbc.isLoading).toBeFalsy();
       expect(result.current.roomInfo123.isLoading).toBeFalsy();
     });
@@ -481,14 +505,16 @@ describe("useRoomInfoSuspense", () => {
       }
     );
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       // Check if the Suspense fallback is displayed
       expect(screen.getByText("Loading")).toBeInTheDocument();
     });
 
-    await waitFor(() => expect(result.current.roomInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.roomInfo.isLoading).toBeFalsy()
+    );
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       // Check if the Suspense fallback is no longer displayed
       expect(screen.getByText("Loaded")).toBeInTheDocument();
     });
@@ -525,28 +551,32 @@ describe("useRoomInfoSuspense", () => {
       }
     );
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       // Check if the Suspense fallback is displayed
       expect(screen.getByText("Loading")).toBeInTheDocument();
     });
 
-    await waitFor(() => expect(result.current.roomInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.roomInfo.isLoading).toBeFalsy()
+    );
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       // Check if the Suspense fallback is no longer displayed
       expect(screen.getByText("Loaded")).toBeInTheDocument();
     });
 
     act(() => client.resolvers.invalidateRoomsInfo());
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       // Check if the Suspense fallback is displayed again
       expect(screen.getByText("Loading")).toBeInTheDocument();
     });
 
-    await waitFor(() => expect(result.current.roomInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.roomInfo.isLoading).toBeFalsy()
+    );
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       // Check if the Suspense fallback is no longer displayed again
       expect(screen.getByText("Loaded")).toBeInTheDocument();
     });
@@ -587,7 +617,7 @@ describe("useRoomInfoSuspense", () => {
 
     expect(result.current).toEqual(null);
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       // Check if the error boundary fallback is displayed
       expect(
         screen.getByText("There was an error while getting room info.")

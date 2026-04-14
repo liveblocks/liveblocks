@@ -1,5 +1,5 @@
 import { nanoid, Permission } from "@liveblocks/core";
-import { renderHook, waitFor } from "@testing-library/react";
+import { renderHook } from "@testing-library/react";
 import { HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import {
@@ -10,6 +10,7 @@ import {
   describe,
   expect,
   test,
+  vi,
 } from "vitest";
 
 import {
@@ -87,7 +88,7 @@ describe("useThreadSubscription", () => {
       unsubscribe: expect.any(Function),
     });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.threads).toEqual({
         isLoading: false,
         threads,
@@ -162,7 +163,7 @@ describe("useThreadSubscription", () => {
       unsubscribe: expect.any(Function),
     });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.threads).toEqual({
         isLoading: false,
         threads,
@@ -227,7 +228,7 @@ describe("useThreadSubscription", () => {
       unsubscribe: expect.any(Function),
     });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.threads).toEqual({
         isLoading: false,
         threads,
@@ -297,7 +298,7 @@ describe("useThreadSubscription", () => {
       unsubscribe: expect.any(Function),
     });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.threads).toEqual({
         isLoading: false,
         threads,
@@ -370,7 +371,7 @@ describe("useThreadSubscription", () => {
       unsubscribe: expect.any(Function),
     });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.threads).toEqual({
         isLoading: false,
         threads,

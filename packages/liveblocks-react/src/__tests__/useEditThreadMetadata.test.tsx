@@ -1,5 +1,5 @@
 import { nanoid, Permission } from "@liveblocks/core";
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import { HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import {
@@ -10,6 +10,7 @@ import {
   describe,
   expect,
   test,
+  vi,
 } from "vitest";
 
 import { dummyThreadData } from "./_dummies";
@@ -82,7 +83,7 @@ describe("useEditThreadMetadata", () => {
 
     expect(result.current.threads).toBeUndefined();
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.threads).toEqual([initialThread])
     );
 
@@ -99,7 +100,7 @@ describe("useEditThreadMetadata", () => {
 
     // Thread updatedAt is not updated by the server response so exceptionally,
     // we need to check if mock has been called
-    await waitFor(() => expect(hasCalledEditThreadMetadata).toEqual(true));
+    await vi.waitFor(() => expect(hasCalledEditThreadMetadata).toEqual(true));
 
     unmount();
   });
@@ -156,7 +157,7 @@ describe("useEditThreadMetadata", () => {
 
     expect(result.current.threads).toBeUndefined();
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.threads).toEqual([initialThread])
     );
 
@@ -178,9 +179,9 @@ describe("useEditThreadMetadata", () => {
 
     // Thread updatedAt is not updated by the server response so exceptionally,
     // we need to check if mock has been called
-    await waitFor(() => expect(hasCalledEditThreadMetadata).toEqual(true));
+    await vi.waitFor(() => expect(hasCalledEditThreadMetadata).toEqual(true));
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(result.current.threads?.[0]?.metadata).toEqual({
         color: "yellow",
       });

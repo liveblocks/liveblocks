@@ -11,7 +11,6 @@ import {
   render,
   renderHook,
   screen,
-  waitFor,
 } from "@testing-library/react";
 import { addSeconds } from "date-fns";
 import type { HttpResponseResolver } from "msw";
@@ -133,7 +132,7 @@ describe("useThreads", () => {
 
     expect(result.current).toEqual({ isLoading: true });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         threads,
@@ -183,7 +182,7 @@ describe("useThreads", () => {
 
     expect(result.current).toEqual({ isLoading: true });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         threads,
@@ -246,7 +245,7 @@ describe("useThreads", () => {
       }
     );
 
-    await waitFor(() => expect(getThreadsReqCount).toBe(1));
+    await vi.waitFor(() => expect(getThreadsReqCount).toBe(1));
 
     rerender();
 
@@ -312,7 +311,7 @@ describe("useThreads", () => {
 
     expect(result.current).toEqual({ isLoading: true });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         threads: [pinnedThread],
@@ -401,7 +400,7 @@ describe("useThreads", () => {
 
     expect(result.current).toEqual({ isLoading: true });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         threads: [thread1],
@@ -491,7 +490,7 @@ describe("useThreads", () => {
 
       expect(result.current).toEqual({ isLoading: true });
 
-      await waitFor(() =>
+      await vi.waitFor(() =>
         expect(result.current).toEqual({
           isLoading: false,
           threads: [redPinnedThread],
@@ -521,7 +520,7 @@ describe("useThreads", () => {
 
       expect(result.current).toEqual({ isLoading: true });
 
-      await waitFor(() =>
+      await vi.waitFor(() =>
         expect(result.current).toEqual({
           isLoading: false,
           threads: [redPinnedThread, redUnpinnedThread],
@@ -560,7 +559,7 @@ describe("useThreads", () => {
         expect.objectContaining({ isLoading: false })
       );
 
-      await waitFor(() =>
+      await vi.waitFor(() =>
         expect(result.current).toEqual({
           isLoading: false,
           threads: [redPinnedThread],
@@ -590,7 +589,7 @@ describe("useThreads", () => {
 
       expect(result.current).toEqual({ isLoading: true });
 
-      await waitFor(() =>
+      await vi.waitFor(() =>
         expect(result.current).toEqual({
           isLoading: false,
           threads: [],
@@ -620,7 +619,7 @@ describe("useThreads", () => {
 
       expect(result.current).toEqual({ isLoading: true });
 
-      await waitFor(() =>
+      await vi.waitFor(() =>
         expect(result.current).toEqual({
           isLoading: false,
           threads: [],
@@ -647,7 +646,7 @@ describe("useThreads", () => {
 
       expect(result.current).toEqual({ isLoading: true });
 
-      await waitFor(() =>
+      await vi.waitFor(() =>
         expect(result.current).toEqual({
           isLoading: false,
           threads: [bluePinnedThread, redPinnedThread, uncoloredPinnedThread],
@@ -677,7 +676,7 @@ describe("useThreads", () => {
 
       expect(result.current).toEqual({ isLoading: true });
 
-      await waitFor(() =>
+      await vi.waitFor(() =>
         expect(result.current).toEqual({
           isLoading: false,
           threads: [bluePinnedThread],
@@ -711,7 +710,7 @@ describe("useThreads", () => {
         }
       );
 
-      await waitFor(() =>
+      await vi.waitFor(() =>
         expect(result.current).toEqual({
           isLoading: false,
           threads: [bluePinnedThread, redPinnedThread, uncoloredPinnedThread],
@@ -744,7 +743,7 @@ describe("useThreads", () => {
         }
       );
 
-      await waitFor(() =>
+      await vi.waitFor(() =>
         expect(result.current).toEqual({
           isLoading: false,
           threads: [uncoloredPinnedThread],
@@ -775,7 +774,7 @@ describe("useThreads", () => {
         }
       );
 
-      await waitFor(() =>
+      await vi.waitFor(() =>
         expect(result.current).toEqual({
           isLoading: false,
           threads: [uncoloredPinnedThread],
@@ -802,7 +801,7 @@ describe("useThreads", () => {
 
       expect(result.current).toEqual({ isLoading: true });
 
-      await waitFor(() =>
+      await vi.waitFor(() =>
         expect(result.current).toEqual({
           isLoading: false,
           threads: [bluePinnedThread, redUnpinnedThread, uncoloredPinnedThread],
@@ -829,7 +828,7 @@ describe("useThreads", () => {
 
       expect(result.current).toEqual({ isLoading: true });
 
-      await waitFor(() =>
+      await vi.waitFor(() =>
         expect(result.current).toEqual({
           isLoading: false,
           threads: [blueUnpinnedThread, redPinnedThread],
@@ -862,7 +861,7 @@ describe("useThreads", () => {
 
       expect(result.current).toEqual({ isLoading: true });
 
-      await waitFor(() =>
+      await vi.waitFor(() =>
         expect(result.current).toEqual({
           isLoading: false,
           threads: [redUnpinnedThread],
@@ -951,7 +950,7 @@ describe("useThreads", () => {
 
     expect(result.current).toEqual({ isLoading: true });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         threads: [liveblocksEngineeringThread, liveblocksDesignThread],
@@ -1009,7 +1008,7 @@ describe("useThreads", () => {
       }
     );
 
-    await waitFor(() => expect(getThreadsReqCount).toBe(1));
+    await vi.waitFor(() => expect(getThreadsReqCount).toBe(1));
 
     unmount();
   });
@@ -1072,7 +1071,7 @@ describe("useThreads", () => {
 
     expect(result.current).toEqual({ isLoading: true });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         threads: [pinnedThread],
@@ -1087,7 +1086,7 @@ describe("useThreads", () => {
 
     expect(result.current).toEqual({ isLoading: true });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         threads: [unpinnedThread],
@@ -1185,7 +1184,7 @@ describe("useThreads", () => {
     expect(room1Result.current).toEqual({ isLoading: true });
     expect(room2Result.current).toEqual({ isLoading: true });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(room1Result.current).toEqual({
         isLoading: false,
         threads: room1Threads,
@@ -1196,7 +1195,7 @@ describe("useThreads", () => {
       })
     );
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(room2Result.current).toEqual({
         isLoading: false,
         threads: room2Threads,
@@ -1288,7 +1287,7 @@ describe("useThreads", () => {
 
     expect(result.current.state).toEqual({ isLoading: true });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.state).toEqual({
         isLoading: false,
         threads: room1Threads,
@@ -1305,7 +1304,7 @@ describe("useThreads", () => {
 
     expect(result.current.state).toEqual({ isLoading: true });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.state).toEqual({
         isLoading: false,
         threads: room2Threads,
@@ -1320,7 +1319,7 @@ describe("useThreads", () => {
       result.current.setRoomId?.(room1Id);
     });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.state).toEqual({
         isLoading: false,
         threads: room1Threads,
@@ -1369,7 +1368,7 @@ describe("useThreads", () => {
 
     await vi.advanceTimersByTimeAsync(15_000); // fetch attempt 5
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         error: expect.any(Error),
@@ -1424,7 +1423,7 @@ describe("useThreads", () => {
 
     expect(result.current.threads).toEqual({ isLoading: true });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.threads).toEqual({
         isLoading: false,
         threads: [oldThread, newThread],
@@ -1507,7 +1506,7 @@ describe("useThreads", () => {
 
     vi.advanceTimersByTime(100);
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.threads).toEqual({
         isLoading: false,
         threads: [oldThread, newThread],
@@ -1590,7 +1589,7 @@ describe("useThreads", () => {
 
     vi.advanceTimersByTime(100);
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.threads).toEqual({
         isLoading: false,
         threads: [oldThread, newThread],
@@ -1650,7 +1649,7 @@ describe("useThreads", () => {
 
     expect(result.current).toEqual({ isLoading: true });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         threads: [thread1], // thread2WithDeleteAt should not be returned
@@ -1735,7 +1734,7 @@ describe("useThreads", () => {
     expect(firstRenderResult.result.current).toEqual({ isLoading: true });
 
     // Threads should be displayed after the server responds with the threads
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(firstRenderResult.result.current).toEqual({
         isLoading: false,
         threads,
@@ -1748,7 +1747,7 @@ describe("useThreads", () => {
 
     // Advance time to trigger the first poll and verify that a poll does occur
     await vi.advanceTimersByTimeAsync(5 * 60_000);
-    await waitFor(() => expect(getThreadsSinceReqCount).toBe(1));
+    await vi.waitFor(() => expect(getThreadsSinceReqCount).toBe(1));
 
     firstRenderResult.unmount();
 
@@ -1776,7 +1775,7 @@ describe("useThreads", () => {
     });
 
     // The updated threads should be displayed after the server responds with the updated threads
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(secondRenderResult.result.current).toEqual({
         isLoading: false,
         threads,
@@ -1843,7 +1842,7 @@ describe("useThreads", () => {
     const { unmount: unmountSecondRoom } = render(<SecondRoom />);
 
     // A new fetch request for the threads should have been made
-    await waitFor(() => expect(getThreadsReqCount).toBe(1));
+    await vi.waitFor(() => expect(getThreadsReqCount).toBe(1));
 
     const room = client.getRoom(roomId);
     expect(room).not.toBeNull();
@@ -1923,7 +1922,7 @@ describe("useThreads", () => {
     expect(result.current).toEqual({ isLoading: true });
 
     // Threads should be displayed after the server responds with the threads
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         threads,
@@ -1936,7 +1935,7 @@ describe("useThreads", () => {
 
     // Advance time to trigger the first poll and verify that a poll does occur
     await vi.advanceTimersByTimeAsync(5 * 60_000);
-    await waitFor(() => expect(getThreadsSinceReqCount).toBe(1));
+    await vi.waitFor(() => expect(getThreadsSinceReqCount).toBe(1));
 
     // Add a new thread to the threads array to simulate a new thread being added to the room
     threads.push(dummyThreadData({ roomId }));
@@ -1948,7 +1947,7 @@ describe("useThreads", () => {
     window.dispatchEvent(new Event("online"));
 
     // The updated threads should be displayed after the server responds with the updated threads (either due to a fetch request to get all threads or just the updated threads)
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(result.current).toEqual({
         isLoading: false,
         threads,
@@ -2009,7 +2008,7 @@ describe("useThreads", () => {
 
     expect(result.current).toEqual({ isLoading: true });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         threads: [],
@@ -2025,7 +2024,7 @@ describe("useThreads", () => {
 
     // Wait for the first polling to occur after the initial render
     vi.advanceTimersByTime(5 * MINUTES);
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         threads,
@@ -2121,7 +2120,7 @@ describe("useThreads", () => {
     expect(firstRenderResult.result.current).toEqual({ isLoading: true });
 
     // Threads should be displayed after the server responds with the threads
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(firstRenderResult.result.current).toEqual({
         isLoading: false,
         threads: [thread1],
@@ -2134,7 +2133,7 @@ describe("useThreads", () => {
 
     // Advance time to trigger the first poll and verify that a poll does occur
     await vi.advanceTimersByTimeAsync(5 * 60_000);
-    await waitFor(() => expect(getThreadsSinceReqCount).toBe(1));
+    await vi.waitFor(() => expect(getThreadsSinceReqCount).toBe(1));
 
     firstRenderResult.unmount();
 
@@ -2167,7 +2166,7 @@ describe("useThreads", () => {
     });
 
     // The updated threads should be displayed after the server responds with the updated threads
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(secondRenderResult.result.current).toEqual({
         isLoading: false,
         threads: [thread1, thread2],
@@ -2216,28 +2215,28 @@ describe("useThreads: error", () => {
     expect(result.current).toEqual({ isLoading: true });
 
     // A new fetch request for the threads should have been made after the initial render
-    await waitFor(() => expect(getThreadsReqCount).toBe(1));
+    await vi.waitFor(() => expect(getThreadsReqCount).toBe(1));
 
     // The first retry should be made after 5s
     await vi.advanceTimersByTimeAsync(5_000);
     // A new fetch request for the threads should have been made after the first retry
-    await waitFor(() => expect(getThreadsReqCount).toBe(2));
+    await vi.waitFor(() => expect(getThreadsReqCount).toBe(2));
     expect(result.current).toEqual({ isLoading: true });
 
     // The second retry should be made after 5s
     await vi.advanceTimersByTimeAsync(5_000);
-    await waitFor(() => expect(getThreadsReqCount).toBe(3));
+    await vi.waitFor(() => expect(getThreadsReqCount).toBe(3));
     expect(result.current).toEqual({ isLoading: true });
 
     // The third retry should be made after 10s
     await vi.advanceTimersByTimeAsync(10_000);
-    await waitFor(() => expect(getThreadsReqCount).toBe(4));
+    await vi.waitFor(() => expect(getThreadsReqCount).toBe(4));
     expect(result.current).toEqual({ isLoading: true });
 
     // The fourth retry should be made after 15s
     await vi.advanceTimersByTimeAsync(15_000);
-    await waitFor(() => expect(getThreadsReqCount).toBe(5));
-    await waitFor(() => {
+    await vi.waitFor(() => expect(getThreadsReqCount).toBe(5));
+    await vi.waitFor(() => {
       expect(result.current).toEqual({
         isLoading: false,
         error: expect.any(Error),
@@ -2248,11 +2247,11 @@ describe("useThreads: error", () => {
     await vi.advanceTimersByTimeAsync(5_000);
     expect(result.current).toEqual({ isLoading: true });
     // A new fetch request for the threads should have been made after the initial render
-    await waitFor(() => expect(getThreadsReqCount).toBe(6));
+    await vi.waitFor(() => expect(getThreadsReqCount).toBe(6));
 
     // The first retry should be made after 5s
     await vi.advanceTimersByTimeAsync(5_000);
-    await waitFor(() => expect(getThreadsReqCount).toBe(7));
+    await vi.waitFor(() => expect(getThreadsReqCount).toBe(7));
     expect(result.current).toEqual({ isLoading: true });
 
     // and so on...
@@ -2282,7 +2281,7 @@ describe("useThreads: error", () => {
 
     expect(result.current).toEqual({ isLoading: true });
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(result.current).toEqual({
         isLoading: false,
         error: expect.any(HttpError),
@@ -2365,16 +2364,16 @@ describe("useThreads: polling", () => {
     const { unmount } = render(<Room />);
 
     // A new fetch request for the threads should have been made after the initial render
-    await waitFor(() => expect(getThreadsReqCount).toBe(1));
+    await vi.waitFor(() => expect(getThreadsReqCount).toBe(1));
 
     // Wait for the first polling to occur after the initial render
     vi.advanceTimersByTime(5 * MINUTES);
-    await waitFor(() => expect(getThreadsReqCount).toBe(2));
+    await vi.waitFor(() => expect(getThreadsReqCount).toBe(2));
 
     // Advance time to simulate the polling interval
     vi.advanceTimersByTime(5 * MINUTES);
     // Wait for the second polling to occur
-    await waitFor(() => expect(getThreadsReqCount).toBe(3));
+    await vi.waitFor(() => expect(getThreadsReqCount).toBe(3));
 
     unmount();
   });
@@ -2425,10 +2424,10 @@ describe("useThreads: polling", () => {
     const { unmount } = render(<Room />);
 
     vi.advanceTimersByTime(5 * MINUTES);
-    await waitFor(() => expect(hasCalledGetThreads).toBe(false));
+    await vi.waitFor(() => expect(hasCalledGetThreads).toBe(false));
 
     vi.advanceTimersByTime(5 * MINUTES);
-    await waitFor(() => expect(hasCalledGetThreads).toBe(false));
+    await vi.waitFor(() => expect(hasCalledGetThreads).toBe(false));
 
     unmount();
   });
@@ -2478,7 +2477,7 @@ describe("WebSocket events", () => {
 
     const sim = await websocketSimulator();
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         threads: [],
@@ -2494,7 +2493,7 @@ describe("WebSocket events", () => {
       commentId: newThread.comments[0]!.id,
     });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         threads: [newThread],
@@ -2546,7 +2545,7 @@ describe("WebSocket events", () => {
 
     const sim = await websocketSimulator();
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         threads: [newThread],
@@ -2563,7 +2562,7 @@ describe("WebSocket events", () => {
       commentId: newThread.comments[0]!.id,
     });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         threads: [],
@@ -2612,7 +2611,7 @@ describe("WebSocket events", () => {
 
     const sim = await websocketSimulator();
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         threads: [newThread],
@@ -2627,7 +2626,7 @@ describe("WebSocket events", () => {
       threadId: newThread.id,
     });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         threads: [],
@@ -2711,7 +2710,7 @@ describe("WebSocket events", () => {
 
     const sim = await websocketSimulator();
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         threads: [initialThread],
@@ -2733,7 +2732,7 @@ describe("WebSocket events", () => {
       threadId: initialThread.id,
     });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         threads: [latestThread],
@@ -2797,7 +2796,7 @@ describe("useThreadsSuspense", () => {
 
     expect(result.current).toEqual(null);
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         threads,
@@ -2851,7 +2850,7 @@ describe("useThreadsSuspense", () => {
 
     expect(result.current).toEqual(null);
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         threads,
@@ -2928,22 +2927,22 @@ describe("useThreadsSuspense: error", () => {
     // The first retry should be made after 5s
     await vi.advanceTimersByTimeAsync(5_000);
     // A new fetch request for the threads should have been made after the first retry
-    await waitFor(() => expect(getThreadsReqCount).toBe(2));
+    await vi.waitFor(() => expect(getThreadsReqCount).toBe(2));
 
     // The second retry should be made after 5s
     await vi.advanceTimersByTimeAsync(5_000);
-    await waitFor(() => expect(getThreadsReqCount).toBe(3));
+    await vi.waitFor(() => expect(getThreadsReqCount).toBe(3));
 
     // The third retry should be made after 10s
     await vi.advanceTimersByTimeAsync(10_000);
-    await waitFor(() => expect(getThreadsReqCount).toBe(4));
+    await vi.waitFor(() => expect(getThreadsReqCount).toBe(4));
 
     // The fourth retry should be made after 15s
     await vi.advanceTimersByTimeAsync(15_000);
-    await waitFor(() => expect(getThreadsReqCount).toBe(5));
+    await vi.waitFor(() => expect(getThreadsReqCount).toBe(5));
 
     // Check if the error boundary's fallback is displayed
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(
         screen.getByText("There was an error while getting threads.")
       ).toBeInTheDocument();
@@ -2956,7 +2955,7 @@ describe("useThreadsSuspense: error", () => {
     fireEvent.click(screen.getByText("Retry"));
 
     // The error boundary's fallback should be cleared
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(screen.getByText("Loading")).toBeInTheDocument();
     });
 
@@ -3069,8 +3068,8 @@ describe("useThreads: pagination", () => {
     expect(result.current).toEqual({ isLoading: true });
 
     // Initial load (Page 1)
-    await waitFor(() => expect(isPageOneRequested).toBe(true));
-    await waitFor(() =>
+    await vi.waitFor(() => expect(isPageOneRequested).toBe(true));
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         threads: [...threadsPageOne],
@@ -3085,8 +3084,8 @@ describe("useThreads: pagination", () => {
 
     // Fetch Page 2
     fetchMore();
-    await waitFor(() => expect(isPageTwoRequested).toBe(true));
-    await waitFor(() =>
+    await vi.waitFor(() => expect(isPageTwoRequested).toBe(true));
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         threads: [...threadsPageOne, ...threadsPageTwo],
@@ -3099,8 +3098,8 @@ describe("useThreads: pagination", () => {
 
     // Fetch Page 3
     fetchMore();
-    await waitFor(() => expect(isPageThreeRequested).toBe(true));
-    await waitFor(() =>
+    await vi.waitFor(() => expect(isPageThreeRequested).toBe(true));
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         threads: [...threadsPageOne, ...threadsPageTwo, ...threadsPageThree],
@@ -3191,7 +3190,7 @@ describe("useThreads: pagination", () => {
 
     expect(result.current).toEqual({ isLoading: true });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         threads: [...threadsPageOne],
@@ -3206,9 +3205,9 @@ describe("useThreads: pagination", () => {
     const fetchMore = result.current.fetchMore!;
 
     fetchMore();
-    await waitFor(() => expect(isPageTwoRequested).toBe(true));
+    await vi.waitFor(() => expect(isPageTwoRequested).toBe(true));
     expect(getThreadsReqCount).toEqual(2);
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         threads: [...threadsPageOne, ...threadsPageTwo],
@@ -3270,7 +3269,7 @@ describe("useThreads: pagination", () => {
     expect(result.current).toEqual({ isLoading: true });
 
     // Initial load (Page 1)
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         threads: [...threadsPageOne],
@@ -3286,8 +3285,8 @@ describe("useThreads: pagination", () => {
     // Fetch Page 2 (which returns an error)
     fetchMore();
 
-    await waitFor(() => expect(isPageTwoRequested).toBe(true));
-    await waitFor(() =>
+    await vi.waitFor(() => expect(isPageTwoRequested).toBe(true));
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         threads: threadsPageOne,
