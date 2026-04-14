@@ -234,9 +234,12 @@ describe("useMarkAllInboxNotificationsAsRead", () => {
         });
       }),
       mockMarkAllInboxNotificationsAsRead(() => {
-        return HttpResponse.json("whoops, something went wrong", {
-          status: 500,
-        });
+        return HttpResponse.json(
+          { message: "whoops, something went wrong" },
+          {
+            status: 500,
+          }
+        );
       })
     );
 
