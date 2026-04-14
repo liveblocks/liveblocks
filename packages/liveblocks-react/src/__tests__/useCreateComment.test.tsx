@@ -1,4 +1,4 @@
-import { nanoid, Permission } from "@liveblocks/core";
+import { type CommentData, nanoid, Permission } from "@liveblocks/core";
 import { act, renderHook } from "@testing-library/react";
 import { addMinutes } from "date-fns";
 import { HttpResponse } from "msw";
@@ -96,15 +96,16 @@ describe("useCreateComment", () => {
       expect(result.current.threads).toEqual([initialThread])
     );
 
-    const comment = await act(() =>
-      result.current.createComment({
+    let comment!: CommentData;
+    act(() => {
+      comment = result.current.createComment({
         threadId: initialThread.id,
         body: {
           version: 1,
           content: [{ type: "paragraph", children: [{ text: "Hello" }] }],
         },
-      })
-    );
+      });
+    });
 
     expect(result.current.threads?.[0]?.comments[1]).toEqual(comment);
 
@@ -188,15 +189,16 @@ describe("useCreateComment", () => {
       expect(result.current.subscription.unreadSince).toBeNull()
     );
 
-    const comment = await act(() =>
-      result.current.createComment({
+    let comment!: CommentData;
+    act(() => {
+      comment = result.current.createComment({
         threadId: initialThread.id,
         body: {
           version: 1,
           content: [{ type: "paragraph", children: [{ text: "Hello" }] }],
         },
-      })
-    );
+      });
+    });
 
     expect(result.current.subscription.status).toEqual("subscribed");
     expect(result.current.subscription.unreadSince).toEqual(comment.createdAt);
@@ -228,9 +230,10 @@ describe("useCreateComment", () => {
           },
         });
       }),
-      mockCreateComment({ threadId: initialThread.id }, () => {
-        return HttpResponse.json(null, { status: 500 });
-      })
+      mockCreateComment(
+        { threadId: initialThread.id },
+        () => new HttpResponse(null, { status: 500 })
+      )
     );
 
     const {
@@ -254,15 +257,16 @@ describe("useCreateComment", () => {
       expect(result.current.threads).toEqual([initialThread])
     );
 
-    const comment = await act(() =>
-      result.current.createComment({
+    let comment!: CommentData;
+    act(() => {
+      comment = result.current.createComment({
         threadId: initialThread.id,
         body: {
           version: 1,
           content: [{ type: "paragraph", children: [{ text: "Hello" }] }],
         },
-      })
-    );
+      });
+    });
 
     expect(result.current.threads?.[0]?.comments[1]).toEqual(comment);
 
@@ -332,16 +336,17 @@ describe("useCreateComment", () => {
       expect(result.current.threads).toEqual([initialThread])
     );
 
-    const comment = await act(() =>
-      result.current.createComment({
+    let comment!: CommentData;
+    act(() => {
+      comment = result.current.createComment({
         threadId: initialThread.id,
         body: {
           version: 1,
           content: [{ type: "paragraph", children: [{ text: "Hello" }] }],
         },
         metadata,
-      })
-    );
+      });
+    });
 
     expect(result.current.threads?.[0]?.comments[1]).toEqual(comment);
     expect(comment.metadata).toEqual(metadata);

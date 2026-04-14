@@ -1,4 +1,4 @@
-import { nanoid, Permission } from "@liveblocks/core";
+import { nanoid, Permission, type ThreadData } from "@liveblocks/core";
 import { act, renderHook } from "@testing-library/react";
 import { addMinutes } from "date-fns";
 import { HttpResponse } from "msw";
@@ -105,14 +105,15 @@ describe("useCreateThread", () => {
       })
     );
 
-    const thread = await act(() =>
-      result.current.createThread({
+    let thread!: ThreadData;
+    act(() => {
+      thread = result.current.createThread({
         body: {
           version: 1,
           content: [{ type: "paragraph", children: [{ text: "Hello" }] }],
         },
-      })
-    );
+      });
+    });
 
     expect(result.current.threadData.threads?.[0]).toEqual(thread);
 
@@ -144,9 +145,7 @@ describe("useCreateThread", () => {
           },
         });
       }),
-      mockCreateThread(() => {
-        return HttpResponse.json(null, { status: 500 });
-      })
+      mockCreateThread(() => new HttpResponse(null, { status: 500 }))
     );
 
     const {
@@ -178,14 +177,15 @@ describe("useCreateThread", () => {
       })
     );
 
-    const thread = await act(() =>
-      result.current.createThread({
+    let thread!: ThreadData;
+    act(() => {
+      thread = result.current.createThread({
         body: {
           version: 1,
           content: [{ type: "paragraph", children: [{ text: "Hello" }] }],
         },
-      })
-    );
+      });
+    });
 
     expect(result.current.threadsData.threads).toEqual([thread]);
 
@@ -269,15 +269,16 @@ describe("useCreateThread", () => {
       })
     );
 
-    const thread = await act(() =>
-      result.current.createThread({
+    let thread!: ThreadData;
+    act(() => {
+      thread = result.current.createThread({
         body: {
           version: 1,
           content: [{ type: "paragraph", children: [{ text: "Hello" }] }],
         },
         commentMetadata,
-      })
-    );
+      });
+    });
 
     expect(result.current.threadData.threads?.[0]).toEqual(thread);
     expect(thread.comments[0]?.metadata).toEqual(commentMetadata);

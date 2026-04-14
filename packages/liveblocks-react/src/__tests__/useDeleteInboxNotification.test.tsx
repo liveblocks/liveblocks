@@ -493,7 +493,7 @@ describe("useDeleteInboxNotification", () => {
         useInboxNotifications,
         useDeleteInboxNotification,
       },
-    } = createContextsForTest({ userId: "user-id" });
+    } = createContextsForTest();
 
     const { result, unmount } = renderHook(
       () => ({
