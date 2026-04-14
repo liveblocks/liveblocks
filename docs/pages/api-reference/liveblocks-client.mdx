@@ -2782,9 +2782,9 @@ without following semver guarantees.
 
 Executes a callback with history tracking temporarily disabled. Any storage
 mutations made inside the callback will be applied normally but will not appear
-on the undo/redo stacks. This is useful for background or async writes that
-should not be undoable, such as writing back results from an AI generation task
-or reconciling state from an external source.
+on the undo/redo stacks. This is useful for background writes that should not be
+undoable, such as writing back results from agent updates or reconciling state
+from an external source.
 
 If the callback throws, the undo/redo stacks are left unchanged (as if the
 callback never ran).
@@ -2793,6 +2793,25 @@ callback never ran).
 room.history.disable(() => {
   root.set("generatedText", result);
 });
+```
+
+#### Async
+
+The history API is synchronous. For long-running async tasks, call
+`history.disable` at each synchronous step rather than wrapping the entire async
+function:
+
+```ts
+async function generateSummary() {
+  room.history.disable(() => root.set("status", "generating"));
+  const summary = await fetchSummaryFromAgent();
+  room.history.disable(() => {
+    room.batch(() => {
+      root.set("summary", summary);
+      root.set("status", "done");
+    });
+  });
+}
 ```
 
 <PropertiesList title="Returns">

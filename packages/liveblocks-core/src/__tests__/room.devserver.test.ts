@@ -314,6 +314,99 @@ describe("room (dev server)", () => {
     expect(room.history.canUndo()).toBe(false);
   });
 
+  test("background write via history.disable does not interfere with user's undo history", async () => {
+    const { room, root } = await prepareIsolatedStorageTest<{
+      userText: string;
+      generatedSummary: string;
+      status: string;
+    }>({
+      liveblocksType: "LiveObject",
+      data: { userText: "", generatedSummary: "", status: "idle" },
+    });
+
+    // User types something (undoable)
+    root.set("userText", "Hello world");
+
+    // A background task writes back a generation result (not undoable),
+    // using batch to group multiple mutations into a single message
+    room.history.disable(() => {
+      room.batch(() => {
+        root.set("generatedSummary", "AI-generated summary");
+        root.set("status", "done");
+      });
+    });
+
+    expect(root.get("userText")).toBe("Hello world");
+    expect(root.get("generatedSummary")).toBe("AI-generated summary");
+    expect(root.get("status")).toBe("done");
+
+    // Undo should only revert the user's typing, not the background write
+    room.history.undo();
+    expect(root.get("userText")).toBe("");
+    expect(root.get("generatedSummary")).toBe("AI-generated summary");
+    expect(root.get("status")).toBe("done");
+
+    // Nothing left to undo
+    expect(room.history.canUndo()).toBe(false);
+  });
+
+  test("disable must wrap batch, not the other way around", async () => {
+    const { room, root } = await prepareIsolatedStorageTest<{
+      x: number;
+      y: number;
+    }>({
+      liveblocksType: "LiveObject",
+      data: { x: 0, y: 0 },
+    });
+
+    // batch(disable(...)) does NOT work — batch pushes to the undo stack
+    // in its finally block, after disable has already restored the lengths
+    room.batch(() => {
+      room.history.disable(() => {
+        root.set("x", 1);
+        root.set("y", 1);
+      });
+    });
+
+    // The mutations leak onto the undo stack
+    expect(root.get("x")).toBe(1);
+    expect(room.history.canUndo()).toBe(true);
+
+    // disable(batch(...)) works correctly
+    room.history.undo();
+    room.history.disable(() => {
+      room.batch(() => {
+        root.set("x", 2);
+        root.set("y", 2);
+      });
+    });
+
+    expect(root.get("x")).toBe(2);
+    expect(root.get("y")).toBe(2);
+    expect(room.history.canUndo()).toBe(false);
+  });
+
+  test("nested history.disable calls work correctly", async () => {
+    const { room, root } = await prepareIsolatedStorageTest<{
+      x: number;
+      y: number;
+    }>({
+      liveblocksType: "LiveObject",
+      data: { x: 0, y: 0 },
+    });
+
+    room.history.disable(() => {
+      root.set("x", 1);
+      room.history.disable(() => {
+        root.set("y", 2);
+      });
+    });
+
+    expect(root.get("x")).toBe(1);
+    expect(root.get("y")).toBe(2);
+    expect(room.history.canUndo()).toBe(false);
+  });
+
   test("history.disable preserves the redo stack", async () => {
     const { room, root } = await prepareIsolatedStorageTest<{
       x: number;
