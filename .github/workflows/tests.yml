@@ -85,14 +85,13 @@ jobs:
         id: turbo-cache
         uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5
         with:
-          key: turbo-cache-${{ matrix.pkg }}-bust3
+          key: turbo-cache-${{ matrix.pkg }}-bust4
           path: node_modules/.cache/turbo
-          restore-keys:
-            turbo-cache-${{ matrix.pkg }}-bust3
+          restore-keys: turbo-cache-${{ matrix.pkg }}-bust4
 
       - name: Install Bun
         if: needs.check_for_code_changes.outputs.changes == 'true'
-        uses: oven-sh/setup-bun@v1
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 #v2
 
       - name: Build
         if: needs.check_for_code_changes.outputs.changes == 'true'
@@ -278,7 +277,7 @@ jobs:
 
       - name: Install Bun
         if: needs.check_for_code_changes.outputs.changes == 'true'
-        uses: oven-sh/setup-bun@v1
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 #v2
 
       - name: Install dependencies
         if: needs.check_for_code_changes.outputs.changes == 'true'
