@@ -51,6 +51,7 @@ import { Timestamp } from "../primitives/Timestamp";
 import { useCurrentUserId } from "../shared";
 import type { SlotProp } from "../types";
 import { cn } from "../utils/cn";
+import { UserAvatar } from "./Avatar";
 import { Button } from "./internal/Button";
 import { CodeBlock } from "./internal/CodeBlock";
 import { Dropdown, DropdownItem, DropdownTrigger } from "./internal/Dropdown";
@@ -59,7 +60,6 @@ import {
   INBOX_NOTIFICATION_THREAD_MAX_COMMENTS,
   InboxNotificationComment,
 } from "./internal/InboxNotificationThread";
-import { UserAvatar } from "./Avatar";
 import { List } from "./internal/List";
 import { Room } from "./internal/Room";
 import { Tooltip, TooltipProvider } from "./internal/Tooltip";

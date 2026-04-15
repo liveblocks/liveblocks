@@ -73,6 +73,7 @@ import { cn } from "../utils/cn";
 import { download } from "../utils/download";
 import { useIsGroupMentionMember } from "../utils/use-group-mention";
 import { useRefs } from "../utils/use-refs";
+import { UserAvatar } from "./Avatar";
 import type { ComposerProps } from "./Composer";
 import { Composer } from "./Composer";
 import {
@@ -87,7 +88,6 @@ import { EmojiPicker, EmojiPickerTrigger } from "./internal/EmojiPicker";
 import { Group } from "./internal/Group";
 import { List } from "./internal/List";
 import { ShortcutTooltip, Tooltip, TooltipProvider } from "./internal/Tooltip";
-import { UserAvatar } from "./Avatar";
 import { User } from "./internal/User";
 
 const REACTIONS_TRUNCATE = 5;
