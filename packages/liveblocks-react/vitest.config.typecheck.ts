@@ -8,21 +8,18 @@ export default defineConfig({
     projects: [
       {
         test: makeTypecheckTestConfig(
-          import.meta,
           ["test-d/factories.test-d.tsx"],
           "factories"
         ),
       },
       {
         test: makeTypecheckTestConfig(
-          import.meta,
           ["test-d/augmentation.test-d.tsx"],
           "augmentation"
         ),
       },
       {
         test: makeTypecheckTestConfig(
-          import.meta,
           ["test-d/no-augmentation.test-d.tsx"],
           "no-augmentation"
         ),
