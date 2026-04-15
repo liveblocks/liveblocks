@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from "fs";
+import { existsSync, mkdirSync, writeFileSync } from "fs";
 import { join } from "path";
 
 /**
@@ -34,6 +34,11 @@ function slugify(name) {
  */
 export function makeTypecheckTestConfig(testFiles, name) {
   const pkgDir = process.cwd();
+  if (!existsSync(join(pkgDir, "tsconfig.json"))) {
+    throw new Error(
+      "makeTypecheckTestConfig must be run from a package directory"
+    );
+  }
   const tmpDirPath = join(pkgDir, ".vitest-typecheck");
   const tmpTsConfigName = `${slugify(name)}.json`;
 
