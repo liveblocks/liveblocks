@@ -20,7 +20,29 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 16 (2026-04-17)
 
+## v3.18.2
+
+### `@liveblocks/client`
+
+- New experimental `room.history.disable(fn)` API that allows running storage
+  mutations without them appearing on the undo/redo stacks. Intended for
+  background/async writes (e.g. writing back AI generation results) that should
+  not be undoable.
+- Fix `ToJson` type losing specific value types for `Record<string, T>` fields
+  in Storage
+
+## v3.18.1
+
+### `@liveblocks/react-ui`
+
+- Mentions suggestions now appear in more cases after typing `@`:
+  - After punctuation like `!`, `.`, `(`, etc. (e.g. `Hello!@`,
+    `cc: the other team (@`)
+  - After emojis (e.g. `Hello 👋@`)
+
 ## Contributors
+
+marcbouchenoire, ctnicholas, nvie
 
 # Week 15 (2026-04-10)
 
