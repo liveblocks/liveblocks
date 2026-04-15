@@ -33,7 +33,7 @@
     "@vitest/coverage-istanbul": "^4.1.4",
     "dependency-cruiser": "^17.3.10",
     "happy-dom": "^20.9.0",
-    "prettier": "^3.4.2",
+    "prettier": "^3.8.3",
     "publint": "^0.3.18",
     "ts-morph": "^22.0.0",
     "tsup": "^8.5.1",
