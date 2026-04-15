@@ -9,7 +9,7 @@ import {
 import type { ReactNode } from "react";
 import { onTestFinished } from "vitest";
 
-const DEV_SERVER = "http://localhost:1154";
+const DEV_SERVER = `http://localhost:${process.env.LIVEBLOCKS_DEV_SERVER_PORT ?? 1154}`;
 
 /**
  * Creates a room on the dev server and optionally initializes its storage.

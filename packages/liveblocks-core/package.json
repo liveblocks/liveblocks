@@ -37,11 +37,11 @@
     "format": "(eslint --fix src/ e2e/ || true) && prettier --write src/ e2e/",
     "lint": "eslint src/",
     "lint:package": "publint --strict && attw --pack",
-    "test": "npx liveblocks dev -p 1154 -c 'vitest run --coverage'",
+    "test": "npx liveblocks dev -p 1160 -c 'vitest run --coverage'",
     "test:ci": "vitest run",
     "test:types": "vitest run --config ./vitest.config.typecheck.ts",
     "test:watch": "vitest",
-    "test:e2e": "npx liveblocks dev -p 1154 -c 'vitest run --config=./vitest.config.e2e.ts'",
+    "test:e2e": "npx liveblocks dev -p 1160 -c 'vitest run --config=./vitest.config.e2e.ts'",
     "test:deps": "depcruise src --exclude __tests__",
     "showdeps": "depcruise src --include-only '^src' --exclude='__tests__' --output-type dot | dot -T svg > /tmp/dependency-graph.svg && open /tmp/dependency-graph.svg",
     "showdeps:high-level": "depcruise src --include-only '^src' --exclude='(^src/index.ts|shallow.ts|__tests__)' --collapse='^src/(refs|lib|compat|types|crdts|protocol)' --output-type dot | dot -T svg > /tmp/dependency-graph.svg && open /tmp/dependency-graph.svg"

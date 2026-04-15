@@ -8,7 +8,7 @@ import { describe, expect, onTestFinished, test, vi } from "vitest";
 
 import { mutateFlow } from "../node";
 
-const DEV_SERVER = "http://localhost:1154";
+const DEV_SERVER = `http://localhost:${process.env.LIVEBLOCKS_DEV_SERVER_PORT ?? 1154}`;
 
 const client = new Liveblocks({
   secret: "sk_localdev",

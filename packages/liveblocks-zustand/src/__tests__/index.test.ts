@@ -52,7 +52,7 @@ const basicStateCreator: StateCreator<BasicStore> = (set) => ({
   setCursor: (cursor: { x: number; y: number }) => set({ cursor }),
 });
 
-const DEV_SERVER = "http://localhost:1154";
+const DEV_SERVER = `http://localhost:${process.env.LIVEBLOCKS_DEV_SERVER_PORT ?? 1154}`;
 
 /**
  * Creates a room on the dev server and initializes its storage.

@@ -6,7 +6,7 @@ import * as Y from "yjs";
 import { LiveblocksYjsProvider } from "..";
 import { waitFor } from "./_utils";
 
-const DEV_SERVER_PORT = 1154;
+const DEV_SERVER_PORT = Number(process.env.LIVEBLOCKS_DEV_SERVER_PORT ?? 1154);
 
 type UpdateType = { added: string[]; removed: string[]; updated: string[] };
 

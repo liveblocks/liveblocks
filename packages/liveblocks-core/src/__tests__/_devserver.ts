@@ -1,6 +1,6 @@
 /**
  * Test utilities for running @liveblocks/core unit tests against the real
- * local dev server at localhost:1154.
+ * local dev server.
  */
 import { expect, onTestFinished, vi } from "vitest";
 
@@ -13,7 +13,7 @@ import type { PlainLsonObject } from "../types/PlainLson";
 import type { JsonStorageUpdate } from "./_updatesUtils";
 import { serializeUpdateToJson } from "./_updatesUtils";
 
-const DEV_SERVER = "http://localhost:1154";
+const DEV_SERVER = `http://localhost:${process.env.LIVEBLOCKS_DEV_SERVER_PORT ?? 1154}`;
 
 export function randomRoomId(): string {
   return `room-${nanoid()}`;
