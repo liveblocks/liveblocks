@@ -85,13 +85,33 @@ export function Table() {
 
   // Sync the selected cell to the presence
   const syncSelectedCellToPresence = useMutation(
-    ({ setMyPresence }, row: number, col: number) => {
-      setMyPresence({ selectedCell: { row, col } });
+    (
+      { setMyPresence },
+      row: number,
+      col: number,
+      third?: unknown,
+      fourth?: unknown
+    ) => {
+      let anchorRow = row;
+      let anchorCol = col;
+
+      if (typeof third === "number" && typeof fourth === "number") {
+        anchorRow = Math.min(row, third);
+        anchorCol = Math.min(col, fourth);
+      }
+
+      // Full column/row selections can use negative indices, set to 0 in these cases
+      setMyPresence({
+        selectedCell: {
+          row: anchorRow < 0 ? 0 : anchorRow,
+          col: anchorCol < 0 ? 0 : anchorCol,
+        },
+      });
     },
     []
   );
 
-  // Clear presence when the grid stops listening (focus leaves the table)
+  // Clear presence only when the selection is cleared
   const clearSelectedCellPresence = useMutation(({ setMyPresence }) => {
     setMyPresence({ selectedCell: null });
   }, []);
@@ -161,7 +181,7 @@ export function Table() {
       afterSelection={syncSelectedCellToPresence}
       afterSelectionEnd={syncSelectedCellToPresence}
       afterSelectionFocusSet={syncSelectedCellToPresence}
-      afterUnlisten={clearSelectedCellPresence}
+      afterDeselect={clearSelectedCellPresence}
       afterColumnResize={afterColumnResize}
       afterRowResize={afterRowResize}
       colHeaders={colHeaders}
