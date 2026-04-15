@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/node-prosemirror",
-  "version": "3.18.0",
+  "version": "3.18.2",
   "description": "A server-side utility that lets you modify prosemirror and tiptap documents hosted in Liveblocks.",
   "license": "Apache-2.0",
   "author": "Liveblocks Inc.",
@@ -30,14 +30,13 @@
     "format": "(eslint --fix src/ || true) && prettier --write src/",
     "lint": "eslint src/",
     "lint:package": "publint --strict && attw --pack",
-    "test": "NODE_OPTIONS=\"--no-deprecation\" vitest run",
-    "test:ci": "NODE_OPTIONS=\"--no-deprecation\" vitest run",
-    "test:types": "tsd -f test-d/index.test-d.ts",
-    "test:watch": "NODE_OPTIONS=\"--no-deprecation\" vitest"
+    "test": "vitest run",
+    "test:ci": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
-    "@liveblocks/core": "3.18.0",
-    "@liveblocks/node": "3.18.0",
+    "@liveblocks/core": "3.18.2",
+    "@liveblocks/node": "3.18.2",
     "yjs": "^13.6.20"
   },
   "peerDependencies": {

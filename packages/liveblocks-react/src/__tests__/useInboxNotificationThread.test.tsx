@@ -1,9 +1,18 @@
-import "@testing-library/jest-dom";
-
 import { nanoid } from "@liveblocks/core";
-import { renderHook, waitFor } from "@testing-library/react";
+import { renderHook } from "@testing-library/react";
 import { sorted } from "itertools";
+import { HttpResponse } from "msw";
 import { setupServer } from "msw/node";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vitest";
 
 import {
   dummyCustomInboxNoficationData,
@@ -41,19 +50,17 @@ describe("useInboxNotificationThread", () => {
     const inboxNotifications = [inboxNotification];
 
     server.use(
-      mockGetInboxNotifications(async (_req, res, ctx) => {
-        return res(
-          ctx.json({
-            threads,
-            inboxNotifications,
-            subscriptions: [],
-            groups: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-            },
-          })
-        );
+      mockGetInboxNotifications(() => {
+        return HttpResponse.json({
+          threads,
+          inboxNotifications,
+          subscriptions: [],
+          groups: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+          },
+        });
       })
     );
 
@@ -75,7 +82,7 @@ describe("useInboxNotificationThread", () => {
       isLoading: true,
     });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications,
@@ -117,19 +124,17 @@ describe("useInboxNotificationThread", () => {
     const inboxNotifications = [inboxNotification, customInboxNotification];
 
     server.use(
-      mockGetInboxNotifications(async (_req, res, ctx) => {
-        return res(
-          ctx.json({
-            threads: [], // NOTE! Not setting the thread ID, making it a broken reference from the inbox notification
-            inboxNotifications,
-            subscriptions: [],
-            groups: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-            },
-          })
-        );
+      mockGetInboxNotifications(() => {
+        return HttpResponse.json({
+          threads: [], // NOTE! Not setting the thread ID, making it a broken reference from the inbox notification
+          inboxNotifications,
+          subscriptions: [],
+          groups: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+          },
+        });
       })
     );
 
@@ -160,7 +165,7 @@ describe("useInboxNotificationThread", () => {
       isLoading: true,
     });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications: expect.any(Array),
@@ -225,19 +230,17 @@ describe("useInboxNotificationThread", () => {
     const inboxNotifications = [inboxNotification, customInboxNotification];
 
     server.use(
-      mockGetInboxNotifications(async (_req, res, ctx) => {
-        return res(
-          ctx.json({
-            threads,
-            inboxNotifications,
-            subscriptions,
-            groups: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-            },
-          })
-        );
+      mockGetInboxNotifications(() => {
+        return HttpResponse.json({
+          threads,
+          inboxNotifications,
+          subscriptions,
+          groups: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+          },
+        });
       })
     );
 
@@ -268,7 +271,7 @@ describe("useInboxNotificationThread", () => {
       isLoading: true,
     });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications: expect.any(Array),

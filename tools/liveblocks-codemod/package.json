@@ -3,7 +3,6 @@
   "version": "2.20240816.0",
   "description": "Codemods for updating Liveblocks apps.",
   "license": "Apache-2.0",
-  "author": "Liveblocks Inc.",
   "bin": "dist/bin/liveblocks-codemod.js",
   "files": [
     "dist/**",
@@ -14,13 +13,12 @@
     "build": "tsc -d --project ./tsconfig.json",
     "format": "(eslint --fix src/ || true) && prettier --write src/",
     "lint": "eslint src/",
-    "test": "jest --silent --verbose --color=always",
-    "test:ci": "jest --silent --verbose --color=always",
-    "test:watch": "jest --silent --verbose --color=always --watch"
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
-    "@liveblocks/jest-config": "*",
+    "@liveblocks/vitest-config": "*",
     "@types/is-git-clean": "1.1.2",
     "@types/jscodeshift": "0.11.11"
   },

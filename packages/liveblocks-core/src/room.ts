@@ -306,9 +306,27 @@ export interface History {
    */
   resume: () => void;
 
-  readonly [kInternal]: {
-    withoutHistory: <T>(fn: () => T) => T;
-  };
+  /**
+   * Executes a callback with history tracking temporarily disabled. Any
+   * storage mutations made inside the callback will be applied normally
+   * but will not appear on the undo/redo stacks.
+   *
+   * This is useful for background or async writes that should not be
+   * undoable, such as writing back results from an AI generation task
+   * or reconciling state from an external source.
+   *
+   * Returns the callback's return value. If the callback throws, the
+   * undo/redo stacks are left unchanged (as if the callback never ran).
+   *
+   * @example
+   * room.history.disable(() => {
+   *   root.set("generatedText", result);
+   * });
+   *
+   * @experimental This API is experimental and may change or be removed
+   * in a future release without following semver guarantees.
+   */
+  disable: <T>(fn: () => T) => T;
 }
 
 export type HistoryEvent = {
@@ -1318,8 +1336,8 @@ type RoomState<
   pool: ManagedPool;
   root: LiveObject<S> | undefined;
 
-  readonly undoStack: Stackframe<P>[][];
-  readonly redoStack: Stackframe<P>[][];
+  undoStack: Stackframe<P>[][];
+  redoStack: Stackframe<P>[][];
 
   /**
    * When history is paused, all operations will get queued up here. When
@@ -1873,7 +1891,7 @@ export function createRoom<
 
     // Populate missing top-level keys using `initialStorage`
     const root = context.root;
-    withoutHistory(() => {
+    disableHistory(() => {
       for (const key in context.initialStorage) {
         if (root.get(key) === undefined) {
           if (canWrite) {
@@ -2269,7 +2287,9 @@ export function createRoom<
 
   function canUndo() { return context.undoStack.length > 0; } // prettier-ignore
   function canRedo() { return context.redoStack.length > 0; } // prettier-ignore
+
   function onHistoryChange() {
+    if (historyDisabled > 0) return;
     eventHub.history.notify({ canUndo: canUndo(), canRedo: canRedo() });
   }
 
@@ -3343,14 +3363,26 @@ export function createRoom<
     commitPausedHistoryToUndoStack();
   }
 
-  function withoutHistory<T>(fn: () => T): T {
-    const undoBefore = context.undoStack.length;
-    const redoBefore = context.redoStack.length;
+  // Depth counter for nested history.disable() calls, 0 means history is not disabled
+  let historyDisabled = 0;
+
+  function disableHistory<T>(fn: () => T): T {
+    const origUndo = context.undoStack;
+    const origRedo = context.redoStack;
+    const tempUndo: Stackframe<P>[][] = [];
+    const tempRedo: Stackframe<P>[][] = [];
+    context.undoStack = tempUndo;
+    context.redoStack = tempRedo;
+    historyDisabled++;
     try {
       return fn();
     } finally {
-      context.undoStack.length = undoBefore;
-      context.redoStack.length = redoBefore;
+      historyDisabled--;
+      if (context.undoStack !== tempUndo || context.redoStack !== tempRedo) {
+        throw new Error("unexpected stack swap during history.disable()"); // eslint-disable-line no-unsafe-finally
+      }
+      context.undoStack = origUndo;
+      context.redoStack = origRedo;
     }
   }
 
@@ -3787,9 +3819,7 @@ export function createRoom<
         clear,
         pause: pauseHistory,
         resume: resumeHistory,
-        [kInternal]: {
-          withoutHistory,
-        },
+        disable: disableHistory,
       },
 
       fetchYDoc,

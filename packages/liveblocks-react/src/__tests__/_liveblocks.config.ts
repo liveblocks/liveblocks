@@ -28,6 +28,7 @@ export const {
   RoomProvider,
   useCanRedo,
   useCanUndo,
+  useHistory,
   useIsInsideRoom,
   useMutation,
   useMyPresence,

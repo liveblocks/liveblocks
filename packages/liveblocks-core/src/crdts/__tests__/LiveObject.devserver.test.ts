@@ -101,9 +101,7 @@ describe("LiveObject", () => {
   });
 
   test("set with same value is a no-op", async () => {
-    const { root, room } = await prepareIsolatedStorageTest<{
-      a: number;
-    }>({
+    const { root, room } = await prepareIsolatedStorageTest<{ a: number }>({
       liveblocksType: "LiveObject",
       data: { a: 1 },
     });
@@ -118,9 +116,7 @@ describe("LiveObject", () => {
   });
 
   test("set with different value creates an undo entry", async () => {
-    const { root, room } = await prepareIsolatedStorageTest<{
-      a: number;
-    }>({
+    const { root, room } = await prepareIsolatedStorageTest<{ a: number }>({
       liveblocksType: "LiveObject",
       data: { a: 1 },
     });
@@ -651,9 +647,7 @@ describe("LiveObject", () => {
     });
 
     test("should not notify if property does not exist", async () => {
-      const { room, root } = await prepareIsolatedStorageTest<{
-        a?: number;
-      }>();
+      const { room, root } = await prepareIsolatedStorageTest<{ a?: number }>();
 
       const callback = vi.fn();
       room.subscribe(root, callback);
@@ -664,9 +658,7 @@ describe("LiveObject", () => {
     });
 
     test("should notify if property has been deleted", async () => {
-      const { room, root } = await prepareIsolatedStorageTest<{
-        a?: number;
-      }>({
+      const { room, root } = await prepareIsolatedStorageTest<{ a?: number }>({
         liveblocksType: "LiveObject",
         data: { a: 1 },
       });

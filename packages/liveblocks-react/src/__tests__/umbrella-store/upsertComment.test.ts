@@ -1,8 +1,10 @@
+import { describe, expect, test } from "vitest";
+
 import { applyUpsertComment } from "../../umbrella-store";
 import { createComment, createThread } from "./_dummies";
 
 describe("upsertComment", () => {
-  it("should add a new comment to an empty thread", () => {
+  test("should add a new comment to an empty thread", () => {
     const thread = createThread({
       createdAt: new Date("2024-01-01"),
       updatedAt: new Date("2024-01-01"),
@@ -19,7 +21,7 @@ describe("upsertComment", () => {
     expect(updatedThread.updatedAt).toEqual(comment.createdAt);
   });
 
-  it("should add a new comment to a thread with existing comments", () => {
+  test("should add a new comment to a thread with existing comments", () => {
     const thread = createThread({
       comments: [createComment(), createComment()],
       createdAt: new Date("2024-01-01"),
@@ -36,7 +38,7 @@ describe("upsertComment", () => {
     expect(updatedThread.updatedAt).toEqual(comment.createdAt);
   });
 
-  it("should update an existing comment", () => {
+  test("should update an existing comment", () => {
     const comment = createComment({ createdAt: new Date("2024-01-01") });
     const thread = createThread({
       id: comment.threadId,
@@ -64,7 +66,7 @@ describe("upsertComment", () => {
     expect(updatedThread.updatedAt).toEqual(new Date("2024-01-02"));
   });
 
-  it("should not update an existing comment if the new comment is older", () => {
+  test("should not update an existing comment if the new comment is older", () => {
     const comment = createComment({
       createdAt: new Date("2024-01-01"),
       editedAt: new Date("2024-01-03"),
@@ -93,7 +95,7 @@ describe("upsertComment", () => {
     expect(updatedThread.updatedAt).toBe(thread.updatedAt);
   });
 
-  it("should add a new comment if the thread has been updatedAt more recently than the comment creation date", () => {
+  test("should add a new comment if the thread has been updatedAt more recently than the comment creation date", () => {
     const thread = createThread({
       createdAt: new Date("2024-01-01"),
       updatedAt: new Date("2024-01-03"),
@@ -110,7 +112,7 @@ describe("upsertComment", () => {
     expect(updatedThread.updatedAt).toEqual(thread.updatedAt);
   });
 
-  it("should update a comment if the thread has been updatedAt more recently", () => {
+  test("should update a comment if the thread has been updatedAt more recently", () => {
     const comment = createComment({ createdAt: new Date("2024-01-01") });
     const thread = createThread({
       id: comment.threadId,
@@ -136,7 +138,7 @@ describe("upsertComment", () => {
     expect(updatedThread.updatedAt).toEqual(thread.updatedAt);
   });
 
-  it("should not update a comment if the thread has been deleted", () => {
+  test("should not update a comment if the thread has been deleted", () => {
     const comment = createComment({ createdAt: new Date("2024-01-01") });
     const thread = createThread({
       id: comment.threadId,
@@ -161,7 +163,7 @@ describe("upsertComment", () => {
     expect(updatedThread.comments).not.toContainEqual(updatedComment);
   });
 
-  it("should not add a new comment if the thread has been deleted", () => {
+  test("should not add a new comment if the thread has been deleted", () => {
     const thread = createThread({
       deletedAt: new Date("2024-01-02"),
     });

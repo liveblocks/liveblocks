@@ -520,6 +520,17 @@ test.describe("Composer", () => {
       ]);
     });
 
+    test("should not support mentions preceded by non-whitespace characters", async () => {
+      const { editor } = getComposer(page);
+
+      await editor.pressSequentially("Hello stacy@example");
+      await sleep(100);
+
+      await expect(
+        page.locator(".lb-composer-mention-suggestions-list")
+      ).not.toBeVisible();
+    });
+
     test("should support non-alphanumeric characters in mentions but not leading or consecutive whitespace", async () => {
       const { editor } = getComposer(page);
 
@@ -560,6 +571,35 @@ test.describe("Composer", () => {
       await expect(
         page.locator(".lb-composer-mention-suggestions-list")
       ).not.toBeVisible();
+    });
+
+    test("should support mentions preceded by emojis", async () => {
+      const { editor } = getComposer(page);
+
+      await editor.pressSequentially("Hello 👋@");
+
+      await expect(
+        page.locator(".lb-composer-suggestions-list-item").first()
+      ).toBeVisible();
+    });
+
+    test("should support mentions preceded by some specific punctuations", async () => {
+      const { editor } = getComposer(page);
+
+      await editor.pressSequentially("Hello!@");
+      await expect(
+        page.locator(".lb-composer-suggestions-list-item").first()
+      ).toBeVisible();
+
+      await editor.pressSequentially("Hello.@");
+      await expect(
+        page.locator(".lb-composer-suggestions-list-item").first()
+      ).toBeVisible();
+
+      await editor.pressSequentially("Hello (@");
+      await expect(
+        page.locator(".lb-composer-suggestions-list-item").first()
+      ).toBeVisible();
     });
 
     test("should support user and group mentions", async () => {

@@ -1,3 +1,5 @@
+import { describe, expect, test, vi } from "vitest";
+
 import { ThreadDB } from "../ThreadDB";
 import { dummyThreadData } from "./_dummies";
 
@@ -116,7 +118,7 @@ describe("ThreadDB", () => {
   });
 
   test("upsert if newer", () => {
-    const fn = jest.fn();
+    const fn = vi.fn();
     const db = new ThreadDB();
     const unsub = db.signal.subscribe(fn);
 
@@ -148,7 +150,7 @@ describe("ThreadDB", () => {
   });
 
   test("upsert should never overwrite already-deleted threads", () => {
-    const fn = jest.fn();
+    const fn = vi.fn();
     const db = new ThreadDB();
     const unsub = db.signal.subscribe(fn);
 
@@ -179,7 +181,7 @@ describe("ThreadDB", () => {
   });
 
   test("upsert if newer should never update deleted threads", () => {
-    const fn = jest.fn();
+    const fn = vi.fn();
     const db = new ThreadDB();
     const unsub = db.signal.subscribe(fn);
 

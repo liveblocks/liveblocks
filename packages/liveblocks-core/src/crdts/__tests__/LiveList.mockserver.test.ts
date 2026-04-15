@@ -481,9 +481,7 @@ describe("LiveList edge cases", () => {
   describe("reconnect with remote changes and subscribe", () => {
     test("register added to list", async () => {
       const { expectStorage, room, root, wss } =
-        await prepareIsolatedStorageTest<{
-          items: LiveList<string>;
-        }>(
+        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
             createSerializedRoot(),
             createSerializedList("0:1", "root", "items"),
@@ -563,9 +561,7 @@ describe("LiveList edge cases", () => {
 
     test("register moved in list", async () => {
       const { expectStorage, room, root, wss } =
-        await prepareIsolatedStorageTest<{
-          items: LiveList<string>;
-        }>(
+        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
             createSerializedRoot(),
             createSerializedList("0:1", "root", "items"),
@@ -634,9 +630,7 @@ describe("LiveList edge cases", () => {
 
     test("register deleted from list", async () => {
       const { expectStorage, room, root, wss } =
-        await prepareIsolatedStorageTest<{
-          items: LiveList<string>;
-        }>(
+        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
             createSerializedRoot(),
             createSerializedList("0:1", "root", "items"),

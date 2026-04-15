@@ -2855,10 +2855,16 @@ await liveblocks.updateFeedMessage({
   roomId: "my-room-id",
   feedId: "my-feed-id",
   messageId: "my-message-id",
+
+  // The message data
   data: {
     role: "user",
     content: "Updated content",
   },
+
+  // Optional, timestamp in milliseconds. Helps prevents race conditions,
+  // messages that arrive after a newer message are ignored
+  updatedAt: Date.now(),
 });
 ```
 

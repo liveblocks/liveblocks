@@ -1,18 +1,17 @@
 import type { ResolveMentionSuggestionsArgs } from "@liveblocks/core";
 import { nanoid } from "@liveblocks/core";
-import { renderHook, waitFor } from "@testing-library/react";
+import { renderHook } from "@testing-library/react";
+import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 
 import { useMentionSuggestions } from "../use-mention-suggestions";
 import { act, createContextsForTest } from "./_utils";
 
-// eslint-disable-next-line @typescript-eslint/require-await
 async function defaultResolveMentionSuggestions({
   text,
 }: ResolveMentionSuggestionsArgs) {
   return text.split("").map((id) => ({ kind: "user" as const, id }));
 }
 
-// eslint-disable-next-line @typescript-eslint/require-await
 async function legacyResolveMentionSuggestions({
   text,
 }: ResolveMentionSuggestionsArgs) {
@@ -21,11 +20,11 @@ async function legacyResolveMentionSuggestions({
 
 describe("useMentionSuggestions", () => {
   beforeAll(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterAll(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   test("should return the results from resolveMentionSuggestions", async () => {
@@ -50,7 +49,7 @@ describe("useMentionSuggestions", () => {
 
     expect(result.current.mentionSuggestions).toBeUndefined();
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.mentionSuggestions).not.toBeUndefined()
     );
 
@@ -84,7 +83,7 @@ describe("useMentionSuggestions", () => {
       }
     );
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.mentionSuggestions).toEqual([
         { kind: "user", id: "a" },
         { kind: "user", id: "b" },
@@ -100,7 +99,7 @@ describe("useMentionSuggestions", () => {
 
     rerender({ text: "123" });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.mentionSuggestions).toEqual([
         { kind: "user", id: "1" },
         { kind: "user", id: "2" },
@@ -146,7 +145,7 @@ describe("useMentionSuggestions", () => {
 
     expect(result.current.mentionSuggestions).toBeUndefined();
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.mentionSuggestions).not.toBeUndefined()
     );
 
@@ -165,7 +164,7 @@ describe("useMentionSuggestions", () => {
   test("should invoke resolveMentionSuggestions with the expected arguments", async () => {
     const roomId = nanoid();
 
-    const resolveMentionSuggestions = jest.fn(
+    const resolveMentionSuggestions = vi.fn(
       ({ text }: ResolveMentionSuggestionsArgs) =>
         text.split("").map((id) => ({ kind: "user" as const, id }))
     );
@@ -187,7 +186,7 @@ describe("useMentionSuggestions", () => {
       }
     );
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.mentionSuggestions).toEqual([
         { kind: "user", id: "a" },
         { kind: "user", id: "b" },
@@ -206,7 +205,7 @@ describe("useMentionSuggestions", () => {
   test("should cache results and not invoke resolveMentionSuggestions with previously provided arguments", async () => {
     const roomId = nanoid();
 
-    const resolveMentionSuggestions = jest.fn(
+    const resolveMentionSuggestions = vi.fn(
       ({ text }: ResolveMentionSuggestionsArgs) =>
         text.split("").map((id) => ({ kind: "user" as const, id }))
     );
@@ -228,7 +227,7 @@ describe("useMentionSuggestions", () => {
       }
     );
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.mentionSuggestions).toEqual([
         { kind: "user", id: "a" },
         { kind: "user", id: "b" },
@@ -238,7 +237,7 @@ describe("useMentionSuggestions", () => {
 
     rerender({ text: "123" });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.mentionSuggestions).toEqual([
         { kind: "user", id: "1" },
         { kind: "user", id: "2" },
@@ -249,7 +248,7 @@ describe("useMentionSuggestions", () => {
     // "abc" was already resolved so resolveMentionSuggestions should not be called again
     rerender({ text: "abc" });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.mentionSuggestions).toEqual([
         { kind: "user", id: "a" },
         { kind: "user", id: "b" },
@@ -275,7 +274,7 @@ describe("useMentionSuggestions", () => {
   test("should invoke resolveMentionSuggestions again if its cache was invalidated", async () => {
     const roomId = nanoid();
 
-    const resolveMentionSuggestions = jest.fn(
+    const resolveMentionSuggestions = vi.fn(
       ({ text }: ResolveMentionSuggestionsArgs) =>
         text.split("").map((id) => ({ kind: "user" as const, id }))
     );
@@ -298,7 +297,7 @@ describe("useMentionSuggestions", () => {
       }
     );
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.mentionSuggestions).toEqual([
         { kind: "user", id: "a" },
         { kind: "user", id: "b" },
@@ -308,7 +307,7 @@ describe("useMentionSuggestions", () => {
 
     rerender({ text: "123" });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.mentionSuggestions).toEqual([
         { kind: "user", id: "1" },
         { kind: "user", id: "2" },
@@ -321,7 +320,7 @@ describe("useMentionSuggestions", () => {
 
     rerender({ text: "abc" });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.mentionSuggestions).toEqual([
         { kind: "user", id: "a" },
         { kind: "user", id: "b" },
@@ -352,7 +351,7 @@ describe("useMentionSuggestions", () => {
   test("should debounce the invokations of resolveMentionSuggestions", async () => {
     const roomId = nanoid();
 
-    const resolveMentionSuggestions = jest.fn(
+    const resolveMentionSuggestions = vi.fn(
       ({ text }: ResolveMentionSuggestionsArgs) =>
         text.split("").map((id) => ({ kind: "user" as const, id }))
     );
@@ -374,7 +373,7 @@ describe("useMentionSuggestions", () => {
       }
     );
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.mentionSuggestions).not.toBeUndefined()
     );
 
@@ -382,7 +381,7 @@ describe("useMentionSuggestions", () => {
     rerender({ text: "ab" });
     rerender({ text: "abc" });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.mentionSuggestions).toEqual([
         { kind: "user", id: "a" },
         { kind: "user", id: "b" },
@@ -427,7 +426,7 @@ describe("useMentionSuggestions", () => {
 
     expect(result.current.mentionSuggestions).toBeUndefined();
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.mentionSuggestions).not.toBeUndefined()
     );
 

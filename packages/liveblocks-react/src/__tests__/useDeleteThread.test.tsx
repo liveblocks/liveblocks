@@ -1,6 +1,17 @@
 import { nanoid, Permission } from "@liveblocks/core";
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
+import { HttpResponse } from "msw";
 import { setupServer } from "msw/node";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vitest";
 
 import { dummyCommentData, dummyThreadData } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
@@ -45,28 +56,23 @@ describe("useDeleteThread", () => {
     let hasCalledDeleteThread = false;
 
     server.use(
-      mockGetThreads(async (_req, res, ctx) => {
-        return res(
-          ctx.json({
-            data: threads,
-            inboxNotifications: [],
-            subscriptions: [],
-            deletedThreads: [],
-            deletedInboxNotifications: [],
-            deletedSubscriptions: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-              permissionHints: {
-                [roomId]: [Permission.Write],
-              },
+      mockGetThreads(() => {
+        return HttpResponse.json({
+          data: threads,
+          inboxNotifications: [],
+          subscriptions: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+            permissionHints: {
+              [roomId]: [Permission.Write],
             },
-          })
-        );
+          },
+        });
       }),
-      mockDeleteThread({ threadId: threads[0]!.id }, async (_req, res, ctx) => {
+      mockDeleteThread({ threadId: threads[0]!.id }, () => {
         hasCalledDeleteThread = true;
-        return res(ctx.status(204));
+        return HttpResponse.json(null, { status: 204 });
       })
     );
 
@@ -88,18 +94,18 @@ describe("useDeleteThread", () => {
 
     expect(result.current.threads).toBeUndefined();
 
-    await waitFor(() => expect(result.current.threads).toEqual(threads));
+    await vi.waitFor(() => expect(result.current.threads).toEqual(threads));
 
     act(() => {
       result.current.deleteThread(threads[0]!.id);
     });
 
-    await waitFor(() => expect(result.current.threads).toEqual([]));
+    await vi.waitFor(() => expect(result.current.threads).toEqual([]));
 
     // TODO: We should wait for the `deleteThread` call to be finished but we don't have APIs for that yet
     //       We should expose a way to know (and be updated about) if there are still pending optimistic updates
     //       Until then, we'll just wait for the mock to be called
-    await waitFor(() => expect(hasCalledDeleteThread).toEqual(true));
+    await vi.waitFor(() => expect(hasCalledDeleteThread).toEqual(true));
 
     unmount();
   });
@@ -109,25 +115,20 @@ describe("useDeleteThread", () => {
     const threads = createDummyThreads(roomId, userId);
 
     server.use(
-      mockGetThreads(async (_req, res, ctx) =>
-        res(
-          ctx.json({
-            data: threads,
-            inboxNotifications: [],
-            subscriptions: [],
-            deletedThreads: [],
-            deletedInboxNotifications: [],
-            deletedSubscriptions: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-              permissionHints: {
-                [roomId]: [Permission.Write],
-              },
+      mockGetThreads(() => {
+        return HttpResponse.json({
+          data: threads,
+          inboxNotifications: [],
+          subscriptions: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+            permissionHints: {
+              [roomId]: [Permission.Write],
             },
-          })
-        )
-      )
+          },
+        });
+      })
       // No need to mock delete thread, as it should not be called
     );
 
@@ -153,7 +154,7 @@ describe("useDeleteThread", () => {
 
     expect(result.current.threads).toBeUndefined();
 
-    await waitFor(() => expect(result.current.threads).toEqual(threads));
+    await vi.waitFor(() => expect(result.current.threads).toEqual(threads));
 
     expect(result.current.room.getSelf()?.id).toEqual("not-the-thread-creator");
 
@@ -171,7 +172,7 @@ describe("useDeleteThread", () => {
       "Only the thread creator can delete the thread"
     );
 
-    await waitFor(() => expect(result.current.threads).toEqual(threads));
+    await vi.waitFor(() => expect(result.current.threads).toEqual(threads));
 
     unmount();
   });
@@ -181,27 +182,22 @@ describe("useDeleteThread", () => {
     const threads = createDummyThreads(roomId, userId);
 
     server.use(
-      mockGetThreads(async (_req, res, ctx) =>
-        res(
-          ctx.json({
-            data: threads,
-            inboxNotifications: [],
-            subscriptions: [],
-            deletedThreads: [],
-            deletedInboxNotifications: [],
-            deletedSubscriptions: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-              permissionHints: {
-                [roomId]: [Permission.Write],
-              },
+      mockGetThreads(() => {
+        return HttpResponse.json({
+          data: threads,
+          inboxNotifications: [],
+          subscriptions: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+            permissionHints: {
+              [roomId]: [Permission.Write],
             },
-          })
-        )
-      ),
-      mockDeleteThread({ threadId: threads[0]!.id }, async (_req, res, ctx) => {
-        return res(ctx.status(500));
+          },
+        });
+      }),
+      mockDeleteThread({ threadId: threads[0]!.id }, () => {
+        return HttpResponse.json(null, { status: 500 });
       })
     );
 
@@ -223,7 +219,7 @@ describe("useDeleteThread", () => {
 
     expect(result.current.threads).toBeUndefined();
 
-    await waitFor(() => expect(result.current.threads).toEqual(threads));
+    await vi.waitFor(() => expect(result.current.threads).toEqual(threads));
 
     act(() => {
       result.current.deleteThread(threads[0]!.id);
@@ -231,7 +227,7 @@ describe("useDeleteThread", () => {
 
     expect(result.current.threads).toEqual([]);
 
-    await waitFor(() => expect(result.current.threads).toEqual(threads));
+    await vi.waitFor(() => expect(result.current.threads).toEqual(threads));
 
     unmount();
   });

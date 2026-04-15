@@ -1,25 +1,23 @@
-import "@testing-library/jest-dom";
-
 import type { ResolveUsersArgs } from "@liveblocks/core";
 import { nanoid } from "@liveblocks/core";
-import { renderHook, screen, waitFor } from "@testing-library/react";
+import { renderHook, screen } from "@testing-library/react";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
+import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 
 import { act, createContextsForTest } from "./_utils";
 
-// eslint-disable-next-line @typescript-eslint/require-await
 async function defaultResolveUsers({ userIds }: ResolveUsersArgs) {
   return userIds.map((userId) => ({ name: userId }));
 }
 
 describe("useUser", () => {
   beforeAll(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterAll(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   test("should return an error if resolveUsers is not set", async () => {
@@ -44,7 +42,7 @@ describe("useUser", () => {
 
     expect(result.current.user).toEqual({ isLoading: true });
 
-    await waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
+    await vi.waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
 
     expect(result.current.user).toEqual({
       isLoading: false,
@@ -76,7 +74,7 @@ describe("useUser", () => {
 
     expect(result.current.user).toEqual({ isLoading: true });
 
-    await waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
+    await vi.waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
 
     expect(result.current.user).toEqual({
       isLoading: false,
@@ -109,7 +107,7 @@ describe("useUser", () => {
 
     expect(result.current.user).toEqual({ isLoading: true });
 
-    await waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
+    await vi.waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
 
     expect(result.current.user).toEqual({
       isLoading: false,
@@ -120,7 +118,7 @@ describe("useUser", () => {
 
     expect(result.current.user).toEqual({ isLoading: true });
 
-    await waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
+    await vi.waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
 
     expect(result.current.user).toEqual({
       isLoading: false,
@@ -133,7 +131,7 @@ describe("useUser", () => {
   test("should cache results based on user ID", async () => {
     const roomId = nanoid();
 
-    const resolveUsers = jest.fn(({ userIds }: ResolveUsersArgs) =>
+    const resolveUsers = vi.fn(({ userIds }: ResolveUsersArgs) =>
       userIds.map((userId) => ({ name: userId }))
     );
     const {
@@ -154,11 +152,11 @@ describe("useUser", () => {
       }
     );
 
-    await waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
+    await vi.waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
 
     rerender({ userId: "123" });
 
-    await waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
+    await vi.waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
 
     rerender({ userId: "abc" });
 
@@ -179,7 +177,7 @@ describe("useUser", () => {
   test("should revalidate instantly if its cache is invalidated", async () => {
     const roomId = nanoid();
 
-    const resolveUsers = jest.fn(({ userIds }: ResolveUsersArgs) =>
+    const resolveUsers = vi.fn(({ userIds }: ResolveUsersArgs) =>
       userIds.map((userId) => ({ name: userId }))
     );
     const {
@@ -201,11 +199,11 @@ describe("useUser", () => {
       }
     );
 
-    await waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
+    await vi.waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
 
     rerender({ userId: "123" });
 
-    await waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
+    await vi.waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
 
     rerender({ userId: "abc" });
 
@@ -217,7 +215,7 @@ describe("useUser", () => {
     // Invalidate all user IDs
     act(() => client.resolvers.invalidateUsers());
 
-    await waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
+    await vi.waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
 
     expect(result.current.user).toEqual({
       isLoading: false,
@@ -238,7 +236,7 @@ describe("useUser", () => {
   test("should batch (and deduplicate) requests for the same user ID", async () => {
     const roomId = nanoid();
 
-    const resolveUsers = jest.fn(({ userIds }: ResolveUsersArgs) =>
+    const resolveUsers = vi.fn(({ userIds }: ResolveUsersArgs) =>
       userIds.map((userId) => ({ name: userId }))
     );
     const {
@@ -260,7 +258,7 @@ describe("useUser", () => {
       }
     );
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(result.current.userAbc.isLoading).toBeFalsy();
       expect(result.current.userAbc2.isLoading).toBeFalsy();
       expect(result.current.user123.isLoading).toBeFalsy();
@@ -311,7 +309,7 @@ describe("useUser", () => {
 
     expect(result.current.user).toEqual({ isLoading: true });
 
-    await waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
+    await vi.waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
 
     expect(result.current.user).toEqual({
       isLoading: false,
@@ -344,7 +342,7 @@ describe("useUser", () => {
 
     expect(result.current.user).toEqual({ isLoading: true });
 
-    await waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
+    await vi.waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
 
     expect(result.current.user).toEqual({
       isLoading: false,
@@ -377,7 +375,7 @@ describe("useUser", () => {
 
     expect(result.current.user).toEqual({ isLoading: true });
 
-    await waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
+    await vi.waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
 
     expect(result.current.user).toEqual({
       isLoading: false,
@@ -390,7 +388,7 @@ describe("useUser", () => {
   test("should return an error if resolveUsers returns undefined for a specifc user ID", async () => {
     const roomId = nanoid();
 
-    const resolveUsers = jest.fn(({ userIds }: ResolveUsersArgs) =>
+    const resolveUsers = vi.fn(({ userIds }: ResolveUsersArgs) =>
       userIds.map((userId) => {
         if (userId === "abc") {
           return undefined;
@@ -416,7 +414,7 @@ describe("useUser", () => {
       }
     );
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(result.current.userAbc.isLoading).toBeFalsy();
       expect(result.current.user123.isLoading).toBeFalsy();
     });
@@ -439,11 +437,11 @@ describe("useUser", () => {
 
 describe("useUserSuspense", () => {
   beforeAll(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterAll(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   test("should suspend with Suspense", async () => {
@@ -474,14 +472,14 @@ describe("useUserSuspense", () => {
       }
     );
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       // Check if the Suspense fallback is displayed
       expect(screen.getByText("Loading")).toBeInTheDocument();
     });
 
-    await waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
+    await vi.waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       // Check if the Suspense fallback is no longer displayed
       expect(screen.getByText("Loaded")).toBeInTheDocument();
     });
@@ -518,28 +516,28 @@ describe("useUserSuspense", () => {
       }
     );
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       // Check if the Suspense fallback is displayed
       expect(screen.getByText("Loading")).toBeInTheDocument();
     });
 
-    await waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
+    await vi.waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       // Check if the Suspense fallback is no longer displayed
       expect(screen.getByText("Loaded")).toBeInTheDocument();
     });
 
     act(() => client.resolvers.invalidateUsers());
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       // Check if the Suspense fallback is displayed again
       expect(screen.getByText("Loading")).toBeInTheDocument();
     });
 
-    await waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
+    await vi.waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       // Check if the Suspense fallback is no longer displayed again
       expect(screen.getByText("Loaded")).toBeInTheDocument();
     });
@@ -580,7 +578,7 @@ describe("useUserSuspense", () => {
 
     expect(result.current).toEqual(null);
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       // Check if the error boundary fallback is displayed
       expect(
         screen.getByText("There was an error while getting user.")

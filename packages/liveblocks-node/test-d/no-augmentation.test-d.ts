@@ -1,5 +1,5 @@
-import { expectError, expectType } from "tsd";
 import { Liveblocks } from "@liveblocks/node";
+import { describe, expectTypeOf, test } from "vitest";
 import type {
   CommentReaction,
   CommentBody,
@@ -10,98 +10,88 @@ import type {
   ReadonlyJsonObject,
 } from "@liveblocks/core";
 
-async () => {
+describe("Liveblocks client without Liveblocks augmentation", () => {
   const client = new Liveblocks({ secret: "sk_xxx" });
 
-  // .prepareSession()
-  {
-    const session = await client.prepareSession("user-123");
+  test("should return a session with authorize() response types", async () => {
+    const session = client.prepareSession("user-123");
     session.allow("org1:*", session.READ_ACCESS);
     const resp = await session.authorize();
-    expectType<number>(resp.status);
-    expectType<string>(resp.body);
-    expectType<Error | undefined>(resp.error);
-  }
+    expectTypeOf(resp.status).toEqualTypeOf<number>();
+    expectTypeOf(resp.body).toEqualTypeOf<string>();
+    expectTypeOf(resp.error).toEqualTypeOf<Error | undefined>();
+  });
 
-  // .prepareSession() with user info
-  {
-    const session = await client.prepareSession("user-123", {
+  test("should return a session with authorize() response types when userInfo is provided", async () => {
+    const session = client.prepareSession("user-123", {
       userInfo: { name: "Vincent", age: 42 },
     });
     session.allow("org1:*", session.READ_ACCESS);
     const resp = await session.authorize();
-    expectType<number>(resp.status);
-    expectType<string>(resp.body);
-    expectType<Error | undefined>(resp.error);
-  }
+    expectTypeOf(resp.status).toEqualTypeOf<number>();
+    expectTypeOf(resp.body).toEqualTypeOf<string>();
+    expectTypeOf(resp.error).toEqualTypeOf<Error | undefined>();
+  });
 
-  // .prepareSession() with arbitrary user info
-  {
-    await client.prepareSession("user-123", {
-      userInfo:
-        // Arbitrary user info is fine...
-        { foo: "bar" },
+  test("should reject non-JSON values in prepareSession() userInfo", () => {
+    client.prepareSession("user-123", {
+      userInfo: { foo: "bar" },
     });
 
-    expectError(
-      await client.prepareSession("user-123", {
-        userInfo:
-          // ...but non-JSON is not
-          { foo: "bar", notJson: new Date() },
-      })
-    );
-  }
+    client.prepareSession("user-123", {
+      userInfo: {
+        foo: "bar",
+        // @ts-expect-error non-JSON in userInfo
+        notJson: new Date(),
+      },
+    });
+  });
 
-  // .identifyUser() bare
-  {
+  test("should accept identifyUser() without userInfo", async () => {
     await client.identifyUser("user-123");
-  }
+  });
 
-  // .identifyUser() with user info
-  {
+  test("should return correct response types from identifyUser()", async () => {
     const resp = await client.identifyUser("user-123", {
       userInfo: { name: "Vincent", age: 42 },
     });
-    expectType<number>(resp.status);
-    expectType<string>(resp.body);
-    expectType<Error | undefined>(resp.error);
-  }
+    expectTypeOf(resp.status).toEqualTypeOf<number>();
+    expectTypeOf(resp.body).toEqualTypeOf<string>();
+    expectTypeOf(resp.error).toEqualTypeOf<Error | undefined>();
+  });
 
-  // .identifyUser() with arbitrary user info
-  {
+  test("should reject non-JSON values in identifyUser() userInfo", async () => {
     await client.identifyUser("user-123", {
-      userInfo:
-        // Arbitrary user info is fine...
-        { foo: "bar" },
+      userInfo: { foo: "bar" },
     });
 
-    expectError(
-      await client.identifyUser("user-123", {
-        userInfo:
-          // ...but non-JSON is not
-          { foo: "bar", notJson: new Date() },
-      })
-    );
-  }
+    await client.identifyUser("user-123", {
+      userInfo: {
+        foo: "bar",
+        // @ts-expect-error non-JSON in userInfo
+        notJson: new Date(),
+      },
+    });
+  });
 
-  // .getActiveUsers()
-  {
+  test("should return loosely typed user info from getActiveUsers()", async () => {
     const users = (await client.getActiveUsers("my-room")).data;
     const user = users[0]!;
-    expectType<"user">(user.type);
-    expectType<number>(user.connectionId);
-    expectType<string | null>(user.id);
+    expectTypeOf(user.type).toEqualTypeOf<"user">();
+    expectTypeOf(user.connectionId).toEqualTypeOf<number>();
+    expectTypeOf(user.id).toEqualTypeOf<string | null>();
 
     const info = user.info!;
-    expectType<string | undefined>(info.name);
-    expectType<Json | undefined>(info.age);
-    expectType<Json | undefined>(info.nonexisting);
-  }
+    expectTypeOf(info.name).toEqualTypeOf<string | undefined>();
+    expectTypeOf(info.age).toEqualTypeOf<Json | undefined>();
+    expectTypeOf(info.nonexisting).toEqualTypeOf<Json | undefined>();
+  });
 
-  // .broadcastEvent()
-  {
-    expectError(client.broadcastEvent("my-room"));
-    expectError(client.broadcastEvent("my-room", { date: Date }));
+  test("should accept any JSON payload in broadcastEvent()", async () => {
+    // @ts-expect-error payload is required
+    client.broadcastEvent("my-room");
+    // @ts-expect-error invalid broadcast payload
+    client.broadcastEvent("my-room", { date: Date });
 
     await client.broadcastEvent("my-room", 123);
     await client.broadcastEvent("my-room", [1, 2, 3]);
@@ -110,58 +100,63 @@ async () => {
     await client.broadcastEvent("my-room", { type: "emoji", emoji: "😍" });
     await client.broadcastEvent("my-room", { type: "beep" });
     await client.broadcastEvent("my-room", { type: "beep", times: 3 });
-  }
+  });
 
-  // .getStorageDocument() (implicit plain LSON format)
-  {
+  test("should return PlainLson root from getStorageDocument()", async () => {
     const root = await client.getStorageDocument("my-room");
-    expectType<"LiveObject">(root.liveblocksType);
-    expectType<PlainLson | undefined>(root.data.liveblocksType);
-  }
+    expectTypeOf(root.liveblocksType).toEqualTypeOf<"LiveObject">();
+    expectTypeOf(root.data.liveblocksType).toEqualTypeOf<
+      PlainLson | undefined
+    >();
+  });
 
-  // .getStorageDocument() (explicit plain LSON format)
-  {
+  test("should return PlainLson root from getStorageDocument() with 'plain-lson' format", async () => {
     const root = await client.getStorageDocument("my-room", "plain-lson");
-    expectType<"LiveObject">(root.liveblocksType);
-    expectType<PlainLson | undefined>(root.data.liveblocksType);
-  }
+    expectTypeOf(root.liveblocksType).toEqualTypeOf<"LiveObject">();
+    expectTypeOf(root.data.liveblocksType).toEqualTypeOf<
+      PlainLson | undefined
+    >();
+  });
 
-  // .getStorageDocument() (simplified JSON format)
-  {
+  test("should return ReadonlyJsonObject from getStorageDocument() with 'json' format", async () => {
     const root = await client.getStorageDocument("my-room", "json");
-    expectType<ReadonlyJsonObject>(root);
-  }
+    expectTypeOf(root).toEqualTypeOf<ReadonlyJsonObject>();
+  });
 
-  // .getComment()
-  {
+  test("should return correct comment shape from getComment()", async () => {
     const comment = await client.getComment({
       roomId: "my-room",
       threadId: "th_xxx",
       commentId: "cm_xxx",
     });
-    expectType<"comment">(comment.type);
-    expectType<string>(comment.id);
-    expectType<string>(comment.threadId);
-    expectType<string>(comment.roomId);
-    expectType<string>(comment.userId);
-    expectType<Date>(comment.createdAt);
-    expectType<Date | undefined>(comment.editedAt);
-    expectType<CommentReaction[]>(comment.reactions);
-    expectType<Date | undefined>(comment.deletedAt);
+    expectTypeOf(comment.type).toEqualTypeOf<"comment">();
+    expectTypeOf(comment.id).toEqualTypeOf<string>();
+    expectTypeOf(comment.threadId).toEqualTypeOf<string>();
+    expectTypeOf(comment.roomId).toEqualTypeOf<string>();
+    expectTypeOf(comment.userId).toEqualTypeOf<string>();
+    expectTypeOf(comment.createdAt).toEqualTypeOf<Date>();
+    expectTypeOf(comment.editedAt).toEqualTypeOf<Date | undefined>();
+    expectTypeOf(comment.reactions).toEqualTypeOf<CommentReaction[]>();
+    expectTypeOf(comment.deletedAt).toEqualTypeOf<Date | undefined>();
 
-    expectType<CommentBody | undefined>(comment.body);
-    expectType<1 | undefined>(comment.body?.version);
-    expectType<CommentBodyBlockElement[] | undefined>(comment.body?.content);
-  }
+    expectTypeOf(comment.body).toEqualTypeOf<CommentBody | undefined>();
+    expectTypeOf(comment.body?.version).toEqualTypeOf<1 | undefined>();
+    expectTypeOf(comment.body?.content).toEqualTypeOf<
+      CommentBodyBlockElement[] | undefined
+    >();
+  });
 
-  // .createThread()
-  {
-    // Invalid calls
-    expectError(client.createThread({ data: {} }));
-    expectError(client.createThread({ roomId: "my-room" }));
-    expectError(client.createThread({ roomId: "my-room", data: {} }));
+  test("should accept arbitrary metadata in createThread() and return loosely typed thread", async () => {
+    // @ts-expect-error invalid createThread arguments
+    client.createThread({ data: {} });
+    // @ts-expect-error invalid createThread arguments
+    client.createThread({ roomId: "my-room" });
+    client.createThread({
+      roomId: "my-room",
+      // @ts-expect-error invalid createThread arguments
+      data: {},
+    });
 
-    // In this un-augmented world, this is fine
     client.createThread({
       roomId: "my-room",
       data: {
@@ -172,7 +167,6 @@ async () => {
       },
     });
 
-    // In this un-augmented world, this is fine
     client.createThread({
       roomId: "my-room",
       data: {
@@ -180,7 +174,7 @@ async () => {
           userId: "user-123",
           body: { version: 1, content: [] },
         },
-        metadata: { foo: "bar" }, // Arbitrary metadata!
+        metadata: { foo: "bar" },
       },
     });
 
@@ -195,36 +189,39 @@ async () => {
       },
     });
 
-    expectType<"thread">(thread.type);
-    expectType<string>(thread.id);
-    expectType<string | number | boolean | undefined>(thread.metadata.color);
-    expectType<string | number | boolean | undefined>(
-      thread.metadata.nonexisting
-    );
-    expectType<CommentData[]>(thread.comments);
-  }
+    expectTypeOf(thread.type).toEqualTypeOf<"thread">();
+    expectTypeOf(thread.id).toEqualTypeOf<string>();
+    expectTypeOf(thread.metadata.color).toEqualTypeOf<
+      string | number | boolean | undefined
+    >();
+    expectTypeOf(thread.metadata.nonexisting).toEqualTypeOf<
+      string | number | boolean | undefined
+    >();
+    expectTypeOf(thread.comments).toEqualTypeOf<CommentData[]>();
+  });
 
-  // .editThreadMetadata()
-  {
+  test("should accept arbitrary metadata in editThreadMetadata()", async () => {
     const roomId = "my-room";
     const threadId = "th_xxx";
     const userId = "user-123";
 
-    // Invalid calls
-    expectError(client.editThreadMetadata({ roomId }));
-    expectError(client.editThreadMetadata({ threadId }));
-    expectError(
-      client.editThreadMetadata({
-        roomId: "my-room",
-        threadId: "th_xxx",
-        data: {},
-      })
-    );
-    expectError(
-      client.editThreadMetadata({ roomId, threadId, data: { userId } })
-    );
+    // @ts-expect-error invalid editThreadMetadata arguments
+    client.editThreadMetadata({ roomId });
+    // @ts-expect-error invalid editThreadMetadata arguments
+    client.editThreadMetadata({ threadId });
+    client.editThreadMetadata({
+      roomId: "my-room",
+      threadId: "th_xxx",
+      // @ts-expect-error invalid editThreadMetadata arguments
+      data: {},
+    });
+    client.editThreadMetadata({
+      roomId,
+      threadId,
+      // @ts-expect-error invalid editThreadMetadata arguments
+      data: { userId },
+    });
 
-    // Arbitrary metadata updates are fine in an unaugmented world
     await client.editThreadMetadata({
       roomId,
       threadId,
@@ -234,73 +231,73 @@ async () => {
     await client.editThreadMetadata({
       roomId,
       threadId,
-      data: { userId, metadata: {} }, // Not updating any fields is useless, but fine
+      data: { userId, metadata: {} },
     });
 
     await client.editThreadMetadata({
       roomId,
       threadId,
-      data: { userId, metadata: { color: "red", pinned: null } }, // Correct metadata updates
+      data: { userId, metadata: { color: "red", pinned: null } },
     });
-  }
+  });
 
-  // .getThreads()
-  {
+  test("should return loosely typed thread metadata from getThreads()", async () => {
     const threads = (await client.getThreads({ roomId: "my-room" })).data;
     const thread = threads[0]!;
-    expectType<"thread">(thread.type);
-    expectType<string>(thread.id);
-    expectType<string>(thread.roomId);
-    expectType<Date>(thread.createdAt);
-    expectType<Date>(thread.updatedAt);
-    expectType<string | number | boolean | undefined>(thread.metadata.foo);
-    expectType<string | number | boolean | undefined>(
-      thread.metadata.nonexisting
-    );
-    expectType<CommentData[]>(thread.comments);
-  }
+    expectTypeOf(thread.type).toEqualTypeOf<"thread">();
+    expectTypeOf(thread.id).toEqualTypeOf<string>();
+    expectTypeOf(thread.roomId).toEqualTypeOf<string>();
+    expectTypeOf(thread.createdAt).toEqualTypeOf<Date>();
+    expectTypeOf(thread.updatedAt).toEqualTypeOf<Date>();
+    expectTypeOf(thread.metadata.foo).toEqualTypeOf<
+      string | number | boolean | undefined
+    >();
+    expectTypeOf(thread.metadata.nonexisting).toEqualTypeOf<
+      string | number | boolean | undefined
+    >();
+    expectTypeOf(thread.comments).toEqualTypeOf<CommentData[]>();
+  });
 
-  // .getThread()
-  {
+  test("should return loosely typed thread metadata from getThread()", async () => {
     const thread = await client.getThread({
       roomId: "my-room",
       threadId: "th_xxx",
     });
-    expectType<"thread">(thread.type);
-    expectType<string>(thread.id);
-    expectType<string>(thread.roomId);
-    expectType<Date>(thread.createdAt);
-    expectType<Date>(thread.updatedAt);
-    expectType<string | number | boolean | undefined>(thread.metadata.foo);
-    expectType<string | number | boolean | undefined>(
-      thread.metadata.nonexisting
-    );
-    expectType<CommentData[]>(thread.comments);
-  }
+    expectTypeOf(thread.type).toEqualTypeOf<"thread">();
+    expectTypeOf(thread.id).toEqualTypeOf<string>();
+    expectTypeOf(thread.roomId).toEqualTypeOf<string>();
+    expectTypeOf(thread.createdAt).toEqualTypeOf<Date>();
+    expectTypeOf(thread.updatedAt).toEqualTypeOf<Date>();
+    expectTypeOf(thread.metadata.foo).toEqualTypeOf<
+      string | number | boolean | undefined
+    >();
+    expectTypeOf(thread.metadata.nonexisting).toEqualTypeOf<
+      string | number | boolean | undefined
+    >();
+    expectTypeOf(thread.comments).toEqualTypeOf<CommentData[]>();
+  });
 
-  // .createComment()
-  {
+  test("should accept arbitrary metadata in createComment() and return loosely typed comment", async () => {
     const roomId = "my-room";
     const threadId = "th_xxx";
     const userId = "user-123";
 
-    // Invalid calls
-    expectError(client.createComment({ roomId }));
-    expectError(client.createComment({ threadId }));
-    expectError(
-      client.createComment({
-        roomId: "my-room",
-        threadId: "th_xxx",
-        data: {},
-      })
-    );
-    expectError(
-      client.createComment({
-        roomId: "my-room",
-        threadId: "th_xxx",
-        data: { userId },
-      })
-    );
+    // @ts-expect-error invalid createComment arguments
+    client.createComment({ roomId });
+    // @ts-expect-error invalid createComment arguments
+    client.createComment({ threadId });
+    client.createComment({
+      roomId: "my-room",
+      threadId: "th_xxx",
+      // @ts-expect-error invalid createComment arguments
+      data: {},
+    });
+    client.createComment({
+      roomId: "my-room",
+      threadId: "th_xxx",
+      // @ts-expect-error invalid createComment arguments
+      data: { userId },
+    });
 
     const comment = await client.createComment({
       roomId,
@@ -311,10 +308,12 @@ async () => {
       },
     });
 
-    expectType<"comment">(comment.type);
-    expectType<string>(comment.id);
-    expectType<string>(comment.threadId);
-    expectType<string | number | boolean | undefined>(comment.metadata.foo);
+    expectTypeOf(comment.type).toEqualTypeOf<"comment">();
+    expectTypeOf(comment.id).toEqualTypeOf<string>();
+    expectTypeOf(comment.threadId).toEqualTypeOf<string>();
+    expectTypeOf(comment.metadata.foo).toEqualTypeOf<
+      string | number | boolean | undefined
+    >();
 
     const commentWithMetadata = await client.createComment({
       roomId,
@@ -326,44 +325,42 @@ async () => {
       },
     });
 
-    expectType<"comment">(commentWithMetadata.type);
-    expectType<string | number | boolean | undefined>(
-      commentWithMetadata.metadata.status
-    );
-    expectType<string | number | boolean | undefined>(
-      commentWithMetadata.metadata.priority
-    );
-  }
+    expectTypeOf(commentWithMetadata.type).toEqualTypeOf<"comment">();
+    expectTypeOf(commentWithMetadata.metadata.status).toEqualTypeOf<
+      string | number | boolean | undefined
+    >();
+    expectTypeOf(commentWithMetadata.metadata.priority).toEqualTypeOf<
+      string | number | boolean | undefined
+    >();
+  });
 
-  // .editCommentMetadata()
-  {
+  test("should accept arbitrary metadata in editCommentMetadata()", async () => {
     const roomId = "my-room";
     const threadId = "th_xxx";
     const commentId = "cm_xxx";
     const userId = "user-123";
 
-    // Invalid calls
-    expectError(client.editCommentMetadata({ roomId }));
-    expectError(client.editCommentMetadata({ threadId }));
-    expectError(client.editCommentMetadata({ commentId }));
-    expectError(
-      client.editCommentMetadata({
-        roomId: "my-room",
-        threadId: "th_xxx",
-        commentId: "cm_xxx",
-        data: {},
-      })
-    );
-    expectError(
-      client.editCommentMetadata({
-        roomId,
-        threadId,
-        commentId,
-        data: { userId },
-      })
-    );
+    // @ts-expect-error invalid editCommentMetadata arguments
+    client.editCommentMetadata({ roomId });
+    // @ts-expect-error invalid editCommentMetadata arguments
+    client.editCommentMetadata({ threadId });
+    // @ts-expect-error invalid editCommentMetadata arguments
+    client.editCommentMetadata({ commentId });
+    client.editCommentMetadata({
+      roomId: "my-room",
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      // @ts-expect-error invalid editCommentMetadata arguments
+      data: {},
+    });
+    client.editCommentMetadata({
+      roomId,
+      threadId,
+      commentId,
+      // @ts-expect-error invalid editCommentMetadata arguments
+      data: { userId },
+    });
 
-    // Arbitrary metadata updates are fine in an unaugmented world
     await client.editCommentMetadata({
       roomId,
       threadId,
@@ -375,7 +372,7 @@ async () => {
       roomId,
       threadId,
       commentId,
-      data: { userId, metadata: {} }, // Not updating any fields is useless, but fine
+      data: { userId, metadata: {} },
     });
 
     await client.editCommentMetadata({
@@ -384,10 +381,9 @@ async () => {
       commentId,
       data: { userId, metadata: { priority: 2, reviewed: null } },
     });
-  }
+  });
 
-  // .addCommentReaction()
-  {
+  test("should return correct reaction shape from addCommentReaction()", async () => {
     const reaction = await client.addCommentReaction({
       roomId: "my-room",
       threadId: "th_xxx",
@@ -398,12 +394,12 @@ async () => {
       },
     });
 
-    expectType<string>(reaction.emoji);
-    expectType<string>(reaction.userId);
-    expectType<Date>(reaction.createdAt);
-  }
-  // .markThreadAsResolved()
-  {
+    expectTypeOf(reaction.emoji).toEqualTypeOf<string>();
+    expectTypeOf(reaction.userId).toEqualTypeOf<string>();
+    expectTypeOf(reaction.createdAt).toEqualTypeOf<Date>();
+  });
+
+  test("should return correct thread shape from markThreadAsResolved()", async () => {
     const thread = await client.markThreadAsResolved({
       roomId: "my-room",
       threadId: "th_xxx",
@@ -411,16 +407,16 @@ async () => {
         userId: "user-id",
       },
     });
-    expectType<"thread">(thread.type);
-    expectType<string>(thread.id);
-    expectType<string>(thread.roomId);
-    expectType<boolean>(thread.resolved);
-    expectType<Date>(thread.createdAt);
-    expectType<Date>(thread.updatedAt);
-    expectType<CommentData[]>(thread.comments);
-  }
-  // .markThreadAsUnresolved()
-  {
+    expectTypeOf(thread.type).toEqualTypeOf<"thread">();
+    expectTypeOf(thread.id).toEqualTypeOf<string>();
+    expectTypeOf(thread.roomId).toEqualTypeOf<string>();
+    expectTypeOf(thread.resolved).toEqualTypeOf<boolean>();
+    expectTypeOf(thread.createdAt).toEqualTypeOf<Date>();
+    expectTypeOf(thread.updatedAt).toEqualTypeOf<Date>();
+    expectTypeOf(thread.comments).toEqualTypeOf<CommentData[]>();
+  });
+
+  test("should return correct thread shape from markThreadAsUnresolved()", async () => {
     const thread = await client.markThreadAsUnresolved({
       roomId: "my-room",
       threadId: "th_xxx",
@@ -428,12 +424,12 @@ async () => {
         userId: "user-id",
       },
     });
-    expectType<"thread">(thread.type);
-    expectType<string>(thread.id);
-    expectType<string>(thread.roomId);
-    expectType<boolean>(thread.resolved);
-    expectType<Date>(thread.createdAt);
-    expectType<Date>(thread.updatedAt);
-    expectType<CommentData[]>(thread.comments);
-  }
-};
+    expectTypeOf(thread.type).toEqualTypeOf<"thread">();
+    expectTypeOf(thread.id).toEqualTypeOf<string>();
+    expectTypeOf(thread.roomId).toEqualTypeOf<string>();
+    expectTypeOf(thread.resolved).toEqualTypeOf<boolean>();
+    expectTypeOf(thread.createdAt).toEqualTypeOf<Date>();
+    expectTypeOf(thread.updatedAt).toEqualTypeOf<Date>();
+    expectTypeOf(thread.comments).toEqualTypeOf<CommentData[]>();
+  });
+});

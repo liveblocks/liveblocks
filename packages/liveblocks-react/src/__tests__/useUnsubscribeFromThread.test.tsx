@@ -1,6 +1,17 @@
 import { nanoid, Permission } from "@liveblocks/core";
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
+import { HttpResponse } from "msw";
 import { setupServer } from "msw/node";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vitest";
 
 import {
   dummySubscriptionData,
@@ -36,39 +47,31 @@ describe("useUnsubscribeFromThread", () => {
     let hasCalledUnsubscribeFromThread = false;
 
     server.use(
-      mockGetThreads((_req, res, ctx) => {
-        return res(
-          ctx.json({
-            data: [initialThread],
-            inboxNotifications,
-            subscriptions: [
-              dummySubscriptionData({
-                kind: "thread",
-                subjectId: initialThread.id,
-                createdAt: initialThread.createdAt,
-              }),
-            ],
-            deletedThreads: [],
-            deletedInboxNotifications: [],
-            deletedSubscriptions: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-              permissionHints: {
-                [roomId]: [Permission.Write],
-              },
+      mockGetThreads(() => {
+        return HttpResponse.json({
+          data: [initialThread],
+          inboxNotifications,
+          subscriptions: [
+            dummySubscriptionData({
+              kind: "thread",
+              subjectId: initialThread.id,
+              createdAt: initialThread.createdAt,
+            }),
+          ],
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+            permissionHints: {
+              [roomId]: [Permission.Write],
             },
-          })
-        );
+          },
+        });
       }),
-      mockUnsubscribeFromThread(
-        { threadId: initialThread.id },
-        async (_, res, ctx) => {
-          hasCalledUnsubscribeFromThread = true;
+      mockUnsubscribeFromThread({ threadId: initialThread.id }, () => {
+        hasCalledUnsubscribeFromThread = true;
 
-          return res(ctx.status(200));
-        }
-      )
+        return HttpResponse.json(null, { status: 200 });
+      })
     );
 
     const {
@@ -95,7 +98,7 @@ describe("useUnsubscribeFromThread", () => {
 
     expect(result.current.threads).toBeUndefined();
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.threads).toEqual([initialThread])
     );
 
@@ -104,7 +107,9 @@ describe("useUnsubscribeFromThread", () => {
 
     act(() => result.current.unsubscribeFromThread(initialThread.id));
 
-    await waitFor(() => expect(hasCalledUnsubscribeFromThread).toEqual(true));
+    await vi.waitFor(() =>
+      expect(hasCalledUnsubscribeFromThread).toEqual(true)
+    );
 
     // The thread should optimistically no longer be subscribed to
     expect(result.current.subscription.status).toBe("not-subscribed");
@@ -118,33 +123,25 @@ describe("useUnsubscribeFromThread", () => {
     let hasCalledUnsubscribeFromThread = false;
 
     server.use(
-      mockGetThreads((_req, res, ctx) => {
-        return res(
-          ctx.json({
-            data: [initialThread],
-            inboxNotifications: [],
-            subscriptions: [],
-            deletedThreads: [],
-            deletedInboxNotifications: [],
-            deletedSubscriptions: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-              permissionHints: {
-                [roomId]: [Permission.Write],
-              },
+      mockGetThreads(() => {
+        return HttpResponse.json({
+          data: [initialThread],
+          inboxNotifications: [],
+          subscriptions: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+            permissionHints: {
+              [roomId]: [Permission.Write],
             },
-          })
-        );
+          },
+        });
       }),
-      mockUnsubscribeFromThread(
-        { threadId: initialThread.id },
-        async (_, res, ctx) => {
-          hasCalledUnsubscribeFromThread = true;
+      mockUnsubscribeFromThread({ threadId: initialThread.id }, () => {
+        hasCalledUnsubscribeFromThread = true;
 
-          return res(ctx.status(200));
-        }
-      )
+        return HttpResponse.json(null, { status: 200 });
+      })
     );
 
     const {
@@ -171,7 +168,7 @@ describe("useUnsubscribeFromThread", () => {
 
     expect(result.current.threads).toBeUndefined();
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.threads).toEqual([initialThread])
     );
 
@@ -179,7 +176,9 @@ describe("useUnsubscribeFromThread", () => {
 
     act(() => result.current.unsubscribeFromThread(initialThread.id));
 
-    await waitFor(() => expect(hasCalledUnsubscribeFromThread).toEqual(true));
+    await vi.waitFor(() =>
+      expect(hasCalledUnsubscribeFromThread).toEqual(true)
+    );
 
     expect(result.current.subscription.status).toBe("not-subscribed");
 

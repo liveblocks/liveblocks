@@ -72,7 +72,7 @@
   },
   "sideEffects": false,
   "dependencies": {
-    "@liveblocks/core": "3.14.0",
+    "@liveblocks/core": "3.18.0",
     "async-mutex": "^0.4.0",
     "decoders": "^2.9.0",
     "itertools": "^2.3.2",

@@ -1,6 +1,16 @@
 import { nanoid } from "@liveblocks/core";
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
+import { HttpResponse } from "msw";
 import { setupServer } from "msw/node";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vitest";
 
 import {
   dummyCommentData,
@@ -53,10 +63,9 @@ describe("useDeleteInboxNotification", () => {
     const subscriptions = [subscription1, subscription2];
 
     server.use(
-      mockGetInboxNotifications((_req, res, ctx) =>
-        res(
-          ctx.status(200),
-          ctx.json({
+      mockGetInboxNotifications(() => {
+        return HttpResponse.json(
+          {
             inboxNotifications,
             threads,
             subscriptions,
@@ -65,12 +74,15 @@ describe("useDeleteInboxNotification", () => {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
             },
-          })
-        )
-      ),
+          },
+          { status: 200 }
+        );
+      }),
       mockDeleteInboxNotification(
         { inboxNotificationId: notification1.id },
-        (_req, res, ctx) => res(ctx.status(204))
+        () => {
+          return HttpResponse.json(null, { status: 204 });
+        }
       )
     );
 
@@ -99,7 +111,7 @@ describe("useDeleteInboxNotification", () => {
       }
     );
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(result.current.inboxNotifications).toEqual(
         expect.arrayContaining(inboxNotifications)
       );
@@ -139,10 +151,9 @@ describe("useDeleteInboxNotification", () => {
     const subscriptions = [subscription1, subscription2];
 
     server.use(
-      mockGetInboxNotifications((_req, res, ctx) =>
-        res(
-          ctx.status(200),
-          ctx.json({
+      mockGetInboxNotifications(() => {
+        return HttpResponse.json(
+          {
             inboxNotifications,
             threads,
             subscriptions,
@@ -151,12 +162,15 @@ describe("useDeleteInboxNotification", () => {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
             },
-          })
-        )
-      ),
+          },
+          { status: 200 }
+        );
+      }),
       mockDeleteInboxNotification(
         { inboxNotificationId: notification1.id },
-        (_req, res, ctx) => res(ctx.status(500))
+        () => {
+          return HttpResponse.json(null, { status: 500 });
+        }
       )
     );
 
@@ -185,7 +199,7 @@ describe("useDeleteInboxNotification", () => {
       }
     );
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.inboxNotifications).toEqual(
         expect.arrayContaining(inboxNotifications)
       )
@@ -198,7 +212,7 @@ describe("useDeleteInboxNotification", () => {
 
     expect(result.current.inboxNotifications).toEqual([notification2]);
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       // The optimistic update is reverted because of the error response
       expect(result.current.inboxNotifications).toEqual(
         expect.arrayContaining(inboxNotifications)
@@ -235,10 +249,9 @@ describe("useDeleteInboxNotification", () => {
     let unreadInboxNotificationsCountCalls = 0;
 
     server.use(
-      mockGetInboxNotifications((_req, res, ctx) =>
-        res(
-          ctx.status(200),
-          ctx.json({
+      mockGetInboxNotifications(() => {
+        return HttpResponse.json(
+          {
             inboxNotifications,
             threads,
             subscriptions,
@@ -247,19 +260,22 @@ describe("useDeleteInboxNotification", () => {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
             },
-          })
-        )
-      ),
+          },
+          { status: 200 }
+        );
+      }),
       mockDeleteInboxNotification(
         { inboxNotificationId: notification1.id },
-        (_req, res, ctx) => res(ctx.status(500))
+        () => {
+          return HttpResponse.json(null, { status: 500 });
+        }
       ),
-      mockGetUnreadInboxNotificationsCount(async (_req, res, ctx) => {
+      mockGetUnreadInboxNotificationsCount(async () => {
         unreadInboxNotificationsCountCalls++;
         if (unreadInboxNotificationsCountCalls === 1) {
-          return res(ctx.json({ count: 2 }));
+          return HttpResponse.json({ count: 2 });
         } else {
-          return res(ctx.json({ count: 1 }));
+          return HttpResponse.json({ count: 1 });
         }
       })
     );
@@ -286,7 +302,7 @@ describe("useDeleteInboxNotification", () => {
       }
     );
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(result.current.inboxNotifications).toEqual(
         expect.arrayContaining(inboxNotifications)
       );
@@ -302,7 +318,7 @@ describe("useDeleteInboxNotification", () => {
 
     expect(result.current.unreadInboxNotificationsCount).toEqual(2);
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       // The optimistic update is reverted because of the error response
       expect(result.current.inboxNotifications).toEqual(
         expect.arrayContaining(inboxNotifications)
@@ -341,31 +357,30 @@ describe("useDeleteInboxNotification", () => {
     let unreadInboxNotificationsCountCalls = 0;
 
     server.use(
-      mockGetInboxNotifications((_req, res, ctx) =>
-        res(
-          ctx.status(200),
-          ctx.json({
-            inboxNotifications,
-            threads,
-            subscriptions,
-            groups: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-            },
-          })
-        )
-      ),
+      mockGetInboxNotifications(() => {
+        return HttpResponse.json({
+          inboxNotifications,
+          threads,
+          subscriptions,
+          groups: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+          },
+        });
+      }),
       mockDeleteInboxNotification(
         { inboxNotificationId: notification1.id },
-        (_req, res, ctx) => res(ctx.status(204))
+        () => {
+          return HttpResponse.json(null, { status: 204 });
+        }
       ),
-      mockGetUnreadInboxNotificationsCount(async (_req, res, ctx) => {
+      mockGetUnreadInboxNotificationsCount(async () => {
         unreadInboxNotificationsCountCalls++;
         if (unreadInboxNotificationsCountCalls === 1) {
-          return res(ctx.json({ count: 2 }));
+          return HttpResponse.json({ count: 2 });
         } else {
-          return res(ctx.json({ count: 1 }));
+          return HttpResponse.json({ count: 1 });
         }
       })
     );
@@ -397,7 +412,7 @@ describe("useDeleteInboxNotification", () => {
       }
     );
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(result.current.inboxNotifications).toEqual(
         expect.arrayContaining(inboxNotifications)
       );
@@ -411,7 +426,7 @@ describe("useDeleteInboxNotification", () => {
 
     expect(result.current.inboxNotifications).toEqual([notification2]);
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(result.current.unreadInboxNotificationsCount).toEqual(1);
     });
 
@@ -421,8 +436,16 @@ describe("useDeleteInboxNotification", () => {
   test("should support deleting a notification and its related thread", async () => {
     const now = new Date();
     const roomId = nanoid();
-    const thread1 = dummyThreadData({ roomId, createdAt: now, updatedAt: now });
-    const thread2 = dummyThreadData({ roomId });
+    const userId = "userId";
+    const comment1 = dummyCommentData({ roomId, userId });
+    const comment2 = dummyCommentData({ roomId, userId });
+    const thread1 = dummyThreadData({
+      roomId,
+      comments: [comment1],
+      createdAt: now,
+      updatedAt: now,
+    });
+    const thread2 = dummyThreadData({ roomId, comments: [comment2] });
     const threads = [thread1, thread2];
     const notification1 = dummyThreadInboxNotificationData({
       roomId,
@@ -444,10 +467,9 @@ describe("useDeleteInboxNotification", () => {
     const subscriptions = [subscription1, subscription2];
 
     server.use(
-      mockGetInboxNotifications((_req, res, ctx) =>
-        res(
-          ctx.status(200),
-          ctx.json({
+      mockGetInboxNotifications(() => {
+        return HttpResponse.json(
+          {
             inboxNotifications,
             threads,
             subscriptions,
@@ -456,15 +478,18 @@ describe("useDeleteInboxNotification", () => {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
             },
-          })
-        )
-      ),
+          },
+          { status: 200 }
+        );
+      }),
       mockDeleteInboxNotification(
         { inboxNotificationId: notification1.id },
-        (_req, res, ctx) => res(ctx.status(500))
+        () => {
+          return HttpResponse.json(null, { status: 500 });
+        }
       ),
-      mockDeleteThread({ threadId: threads[0]!.id }, async (_req, res, ctx) => {
-        return res(ctx.status(204));
+      mockDeleteThread({ threadId: threads[0]!.id }, () => {
+        return HttpResponse.json(null, { status: 204 });
       })
     );
 
@@ -476,7 +501,7 @@ describe("useDeleteInboxNotification", () => {
         useInboxNotifications,
         useDeleteInboxNotification,
       },
-    } = createContextsForTest({ userId: "user-id" });
+    } = createContextsForTest({ userId });
 
     const { result, unmount } = renderHook(
       () => ({
@@ -498,7 +523,7 @@ describe("useDeleteInboxNotification", () => {
       }
     );
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.inboxNotifications).toEqual(
         expect.arrayContaining(inboxNotifications)
       )
@@ -518,10 +543,12 @@ describe("useDeleteInboxNotification", () => {
 
     expect(result.current.inboxNotifications).toEqual([notification2]);
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(client.getSyncStatus()).toEqual("synchronizing")
     );
-    await waitFor(() => expect(client.getSyncStatus()).toEqual("synchronized"));
+    await vi.waitFor(() =>
+      expect(client.getSyncStatus()).toEqual("synchronized")
+    );
 
     unmount();
   });
@@ -544,10 +571,9 @@ describe("useDeleteInboxNotification", () => {
     const subscriptions = [subscription];
 
     server.use(
-      mockGetInboxNotifications((_req, res, ctx) =>
-        res(
-          ctx.status(200),
-          ctx.json({
+      mockGetInboxNotifications(() => {
+        return HttpResponse.json(
+          {
             inboxNotifications,
             threads,
             subscriptions,
@@ -556,19 +582,19 @@ describe("useDeleteInboxNotification", () => {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
             },
-          })
-        )
-      ),
+          },
+          { status: 200 }
+        );
+      }),
       mockDeleteInboxNotification(
         { inboxNotificationId: notification.id },
-        (_req, res, ctx) => res(ctx.status(500))
-      ),
-      mockDeleteComment(
-        { threadId: thread.id, commentId: comment.id },
-        async (_req, res, ctx) => {
-          return res(ctx.status(204));
+        () => {
+          return HttpResponse.json(null, { status: 500 });
         }
-      )
+      ),
+      mockDeleteComment({ threadId: thread.id, commentId: comment.id }, () => {
+        return HttpResponse.json(null, { status: 204 });
+      })
     );
 
     const {
@@ -601,7 +627,7 @@ describe("useDeleteInboxNotification", () => {
       }
     );
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.inboxNotifications).toEqual(
         expect.arrayContaining(inboxNotifications)
       )
@@ -624,10 +650,12 @@ describe("useDeleteInboxNotification", () => {
 
     expect(result.current.inboxNotifications).toEqual([]);
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(client.getSyncStatus()).toEqual("synchronizing")
     );
-    await waitFor(() => expect(client.getSyncStatus()).toEqual("synchronized"));
+    await vi.waitFor(() =>
+      expect(client.getSyncStatus()).toEqual("synchronized")
+    );
 
     unmount();
   });

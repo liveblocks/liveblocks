@@ -1,6 +1,16 @@
 import { nanoid } from "@liveblocks/core";
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
+import { HttpResponse } from "msw";
 import { setupServer } from "msw/node";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vitest";
 
 import {
   dummyCommentData,
@@ -49,10 +59,9 @@ describe("useDeleteAllInboxNotifications", () => {
     ];
 
     server.use(
-      mockGetInboxNotifications((_req, res, ctx) =>
-        res(
-          ctx.status(200),
-          ctx.json({
+      mockGetInboxNotifications(() => {
+        return HttpResponse.json(
+          {
             inboxNotifications,
             threads,
             subscriptions,
@@ -61,10 +70,13 @@ describe("useDeleteAllInboxNotifications", () => {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
             },
-          })
-        )
-      ),
-      mockDeleteAllInboxNotifications((_req, res, ctx) => res(ctx.status(204)))
+          },
+          { status: 200 }
+        );
+      }),
+      mockDeleteAllInboxNotifications(() => {
+        return HttpResponse.json(null, { status: 204 });
+      })
     );
 
     const {
@@ -92,7 +104,7 @@ describe("useDeleteAllInboxNotifications", () => {
       }
     );
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.inboxNotifications).toEqual(
         expect.arrayContaining(inboxNotifications)
       )
@@ -128,10 +140,9 @@ describe("useDeleteAllInboxNotifications", () => {
     ];
 
     server.use(
-      mockGetInboxNotifications((_req, res, ctx) =>
-        res(
-          ctx.status(200),
-          ctx.json({
+      mockGetInboxNotifications(() => {
+        return HttpResponse.json(
+          {
             inboxNotifications,
             threads,
             subscriptions,
@@ -140,10 +151,13 @@ describe("useDeleteAllInboxNotifications", () => {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
             },
-          })
-        )
-      ),
-      mockDeleteAllInboxNotifications((_req, res, ctx) => res(ctx.status(500)))
+          },
+          { status: 200 }
+        );
+      }),
+      mockDeleteAllInboxNotifications(() => {
+        return HttpResponse.json(null, { status: 500 });
+      })
     );
 
     const {
@@ -166,7 +180,7 @@ describe("useDeleteAllInboxNotifications", () => {
       }
     );
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.inboxNotifications).toEqual(
         expect.arrayContaining(inboxNotifications)
       )
@@ -179,7 +193,7 @@ describe("useDeleteAllInboxNotifications", () => {
     // We delete the notifications optimitiscally
     expect(result.current.inboxNotifications).toEqual([]);
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       // The optimistic update is reverted because of the error response
       expect(result.current.inboxNotifications).toEqual(
         expect.arrayContaining(inboxNotifications)
@@ -214,30 +228,29 @@ describe("useDeleteAllInboxNotifications", () => {
     ];
 
     server.use(
-      mockGetInboxNotifications((_req, res, ctx) =>
-        res(
-          ctx.status(200),
-          ctx.json({
-            inboxNotifications,
-            threads,
-            subscriptions,
-            groups: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-            },
-          })
-        )
-      ),
-      mockGetUnreadInboxNotificationsCount(async (_req, res, ctx) => {
+      mockGetInboxNotifications(() => {
+        return HttpResponse.json({
+          inboxNotifications,
+          threads,
+          subscriptions,
+          groups: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+          },
+        });
+      }),
+      mockGetUnreadInboxNotificationsCount(async () => {
         unreadInboxNotificationsCountCalls++;
         if (unreadInboxNotificationsCountCalls === 1) {
-          return res(ctx.json({ count: 2 }));
+          return HttpResponse.json({ count: 2 });
         } else {
-          return res(ctx.json({ count: 0 }));
+          return HttpResponse.json({ count: 0 });
         }
       }),
-      mockDeleteAllInboxNotifications((_req, res, ctx) => res(ctx.status(500)))
+      mockDeleteAllInboxNotifications(() => {
+        return HttpResponse.json(null, { status: 500 });
+      })
     );
 
     const {
@@ -262,7 +275,7 @@ describe("useDeleteAllInboxNotifications", () => {
       }
     );
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(result.current.inboxNotifications).toEqual(
         expect.arrayContaining(inboxNotifications)
       );
@@ -276,7 +289,7 @@ describe("useDeleteAllInboxNotifications", () => {
     // We delete the notifications optimitiscally
     expect(result.current.inboxNotifications).toEqual([]);
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       // The optimistic update is reverted because of the error response
       expect(result.current.inboxNotifications).toEqual(
         expect.arrayContaining(inboxNotifications)
@@ -313,30 +326,29 @@ describe("useDeleteAllInboxNotifications", () => {
     ];
 
     server.use(
-      mockGetInboxNotifications((_req, res, ctx) =>
-        res(
-          ctx.status(200),
-          ctx.json({
-            inboxNotifications,
-            threads,
-            subscriptions,
-            groups: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-            },
-          })
-        )
-      ),
-      mockGetUnreadInboxNotificationsCount(async (_req, res, ctx) => {
+      mockGetInboxNotifications(() => {
+        return HttpResponse.json({
+          inboxNotifications,
+          threads,
+          subscriptions,
+          groups: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+          },
+        });
+      }),
+      mockGetUnreadInboxNotificationsCount(async () => {
         unreadInboxNotificationsCountCalls++;
         if (unreadInboxNotificationsCountCalls === 1) {
-          return res(ctx.json({ count: 2 }));
+          return HttpResponse.json({ count: 2 });
         } else {
-          return res(ctx.json({ count: 0 }));
+          return HttpResponse.json({ count: 0 });
         }
       }),
-      mockDeleteAllInboxNotifications((_req, res, ctx) => res(ctx.status(204)))
+      mockDeleteAllInboxNotifications(() => {
+        return HttpResponse.json(null, { status: 204 });
+      })
     );
 
     const {
@@ -361,7 +373,7 @@ describe("useDeleteAllInboxNotifications", () => {
       }
     );
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(result.current.inboxNotifications).toEqual(
         expect.arrayContaining(inboxNotifications)
       );
@@ -375,11 +387,11 @@ describe("useDeleteAllInboxNotifications", () => {
     // We delete the notifications optimitiscally
     expect(result.current.inboxNotifications).toEqual([]);
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(result.current.inboxNotifications).toEqual([]);
     });
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(result.current.unreadInboxNotificationsCount).toEqual(0);
     });
     unmount();
@@ -387,8 +399,11 @@ describe("useDeleteAllInboxNotifications", () => {
 
   test("should support deleting all notifications and one if its related thread", async () => {
     const roomId = nanoid();
-    const thread1 = dummyThreadData({ roomId });
-    const thread2 = dummyThreadData({ roomId });
+    const userId = "userId";
+    const comment1 = dummyCommentData({ roomId, userId });
+    const comment2 = dummyCommentData({ roomId, userId });
+    const thread1 = dummyThreadData({ roomId, comments: [comment1] });
+    const thread2 = dummyThreadData({ roomId, comments: [comment2] });
     const threads = [thread1, thread2];
     const notification1 = dummyThreadInboxNotificationData({
       roomId,
@@ -408,10 +423,9 @@ describe("useDeleteAllInboxNotifications", () => {
     let hasCalledDeleteThread = false;
 
     server.use(
-      mockGetInboxNotifications((_req, res, ctx) =>
-        res(
-          ctx.status(200),
-          ctx.json({
+      mockGetInboxNotifications(() => {
+        return HttpResponse.json(
+          {
             inboxNotifications,
             threads,
             subscriptions,
@@ -420,13 +434,16 @@ describe("useDeleteAllInboxNotifications", () => {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
             },
-          })
-        )
-      ),
-      mockDeleteAllInboxNotifications((_req, res, ctx) => res(ctx.status(204))),
-      mockDeleteThread({ threadId: threads[0]!.id }, async (_req, res, ctx) => {
+          },
+          { status: 200 }
+        );
+      }),
+      mockDeleteAllInboxNotifications(() => {
+        return HttpResponse.json(null, { status: 204 });
+      }),
+      mockDeleteThread({ threadId: threads[0]!.id }, () => {
         hasCalledDeleteThread = true;
-        return res(ctx.status(204));
+        return HttpResponse.json(null, { status: 204 });
       })
     );
 
@@ -437,7 +454,7 @@ describe("useDeleteAllInboxNotifications", () => {
         useInboxNotifications,
         useDeleteAllInboxNotifications,
       },
-    } = createContextsForTest({ userId: "user-id" });
+    } = createContextsForTest({ userId });
 
     const { result, unmount } = renderHook(
       () => ({
@@ -459,7 +476,7 @@ describe("useDeleteAllInboxNotifications", () => {
       }
     );
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.inboxNotifications).toEqual(
         expect.arrayContaining(inboxNotifications)
       )
@@ -482,7 +499,7 @@ describe("useDeleteAllInboxNotifications", () => {
     // TODO: We should wait for the `deleteThread` call to be finished but we don't have APIs for that yet
     //       We should expose a way to know (and be updated about) if there are still pending optimistic updates
     //       Until then, we'll just wait for the mock to be called
-    await waitFor(() => expect(hasCalledDeleteThread).toEqual(true));
+    await vi.waitFor(() => expect(hasCalledDeleteThread).toEqual(true));
 
     unmount();
   });
@@ -503,10 +520,9 @@ describe("useDeleteAllInboxNotifications", () => {
     let hasCalledDeleteComment = false;
 
     server.use(
-      mockGetInboxNotifications((_req, res, ctx) =>
-        res(
-          ctx.status(200),
-          ctx.json({
+      mockGetInboxNotifications(() => {
+        return HttpResponse.json(
+          {
             inboxNotifications,
             threads,
             subscriptions,
@@ -515,17 +531,17 @@ describe("useDeleteAllInboxNotifications", () => {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
             },
-          })
-        )
-      ),
-      mockDeleteAllInboxNotifications((_req, res, ctx) => res(ctx.status(204))),
-      mockDeleteComment(
-        { threadId: thread.id, commentId: comment.id },
-        async (_req, res, ctx) => {
-          hasCalledDeleteComment = true;
-          return res(ctx.status(204));
-        }
-      )
+          },
+          { status: 200 }
+        );
+      }),
+      mockDeleteAllInboxNotifications(() => {
+        return HttpResponse.json(null, { status: 204 });
+      }),
+      mockDeleteComment({ threadId: thread.id, commentId: comment.id }, () => {
+        hasCalledDeleteComment = true;
+        return HttpResponse.json(null, { status: 204 });
+      })
     );
 
     const {
@@ -557,7 +573,7 @@ describe("useDeleteAllInboxNotifications", () => {
       }
     );
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.inboxNotifications).toEqual(
         expect.arrayContaining(inboxNotifications)
       )
@@ -583,7 +599,7 @@ describe("useDeleteAllInboxNotifications", () => {
     // TODO: We should wait for the `deleteComment` call to be finished but we don't have APIs for that yet
     //       We should expose a way to know (and be updated about) if there are still pending optimistic updates
     //       Until then, we'll just wait for the mock to be called
-    await waitFor(() => expect(hasCalledDeleteComment).toEqual(true));
+    await vi.waitFor(() => expect(hasCalledDeleteComment).toEqual(true));
 
     unmount();
   });

@@ -1,6 +1,16 @@
 import { nanoid } from "@liveblocks/core";
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
+import { HttpResponse } from "msw";
 import { setupServer } from "msw/node";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vitest";
 
 import {
   dummySubscriptionData,
@@ -39,10 +49,9 @@ describe("useMarkInboxNotificationAsRead", () => {
     ];
 
     server.use(
-      mockGetInboxNotifications((_req, res, ctx) =>
-        res(
-          ctx.status(200),
-          ctx.json({
+      mockGetInboxNotifications(() => {
+        return HttpResponse.json(
+          {
             inboxNotifications,
             threads,
             subscriptions,
@@ -51,10 +60,13 @@ describe("useMarkInboxNotificationAsRead", () => {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
             },
-          })
-        )
-      ),
-      mockMarkInboxNotificationsAsRead((_req, res, ctx) => res(ctx.status(200)))
+          },
+          { status: 200 }
+        );
+      }),
+      mockMarkInboxNotificationsAsRead(() => {
+        return HttpResponse.json(null, { status: 200 });
+      })
     );
 
     const {
@@ -77,7 +89,7 @@ describe("useMarkInboxNotificationAsRead", () => {
       }
     );
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.inboxNotifications).toEqual(
         expect.arrayContaining(inboxNotifications)
       )
@@ -108,10 +120,9 @@ describe("useMarkInboxNotificationAsRead", () => {
     ];
 
     server.use(
-      mockGetInboxNotifications((_req, res, ctx) =>
-        res(
-          ctx.status(200),
-          ctx.json({
+      mockGetInboxNotifications(() => {
+        return HttpResponse.json(
+          {
             inboxNotifications,
             threads,
             subscriptions,
@@ -120,10 +131,13 @@ describe("useMarkInboxNotificationAsRead", () => {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
             },
-          })
-        )
-      ),
-      mockMarkInboxNotificationsAsRead((_req, res, ctx) => res(ctx.status(500)))
+          },
+          { status: 200 }
+        );
+      }),
+      mockMarkInboxNotificationsAsRead(() => {
+        return HttpResponse.json(null, { status: 500 });
+      })
     );
 
     const {
@@ -146,7 +160,7 @@ describe("useMarkInboxNotificationAsRead", () => {
       }
     );
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.inboxNotifications).toEqual(
         expect.arrayContaining(inboxNotifications)
       )
@@ -160,7 +174,7 @@ describe("useMarkInboxNotificationAsRead", () => {
     // We mark the notification as read optimitiscally
     expect(result.current.inboxNotifications?.[0]?.readAt).not.toBe(null);
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       // The readAt field should have been updated in the inbox notification cache
       expect(result.current.inboxNotifications?.[0]?.readAt).toEqual(null);
     });

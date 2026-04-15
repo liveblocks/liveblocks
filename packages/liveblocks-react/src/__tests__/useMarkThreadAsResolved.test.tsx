@@ -1,6 +1,17 @@
 import { nanoid, Permission } from "@liveblocks/core";
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
+import { HttpResponse } from "msw";
 import { setupServer } from "msw/node";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vitest";
 
 import { dummyThreadData } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
@@ -29,33 +40,25 @@ describe("useMarkThreadAsResolved", () => {
     let hasCalledMarkThreadAsResolved = false;
 
     server.use(
-      mockGetThreads((_req, res, ctx) => {
-        return res(
-          ctx.json({
-            data: [initialThread],
-            inboxNotifications: [],
-            subscriptions: [],
-            deletedThreads: [],
-            deletedInboxNotifications: [],
-            deletedSubscriptions: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-              permissionHints: {
-                [roomId]: [Permission.Write],
-              },
+      mockGetThreads(() => {
+        return HttpResponse.json({
+          data: [initialThread],
+          inboxNotifications: [],
+          subscriptions: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+            permissionHints: {
+              [roomId]: [Permission.Write],
             },
-          })
-        );
+          },
+        });
       }),
-      mockMarkThreadAsResolved(
-        { threadId: initialThread.id },
-        async (_, res, ctx) => {
-          hasCalledMarkThreadAsResolved = true;
+      mockMarkThreadAsResolved({ threadId: initialThread.id }, () => {
+        hasCalledMarkThreadAsResolved = true;
 
-          return res(ctx.status(200));
-        }
-      )
+        return HttpResponse.json(null, { status: 200 });
+      })
     );
 
     const {
@@ -76,7 +79,7 @@ describe("useMarkThreadAsResolved", () => {
 
     expect(result.current.threads).toBeUndefined();
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.threads).toEqual([initialThread])
     );
 
@@ -84,7 +87,7 @@ describe("useMarkThreadAsResolved", () => {
 
     expect(result.current.threads![0]?.resolved).toBe(true);
 
-    await waitFor(() => expect(hasCalledMarkThreadAsResolved).toEqual(true));
+    await vi.waitFor(() => expect(hasCalledMarkThreadAsResolved).toEqual(true));
 
     expect(result.current.threads![0]?.resolved).toBe(true);
 

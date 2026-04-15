@@ -1,8 +1,10 @@
+import { describe, expect, test } from "vitest";
+
 import { applyDeleteComment } from "../../umbrella-store";
 import { createAttachment, createComment, createThread } from "./_dummies";
 
 describe("deleteComment", () => {
-  it("should mark a comment as deleted in a thread", () => {
+  test("should mark a comment as deleted in a thread", () => {
     const comment = createComment({ createdAt: new Date("2024-01-01") });
 
     const thread = createThread({
@@ -33,7 +35,7 @@ describe("deleteComment", () => {
     expect(updatedComment.attachments.length).toEqual(0);
   });
 
-  it("should not delete a comment from a deleted thread", () => {
+  test("should not delete a comment from a deleted thread", () => {
     const comment = createComment({ createdAt: new Date("2024-01-01") });
 
     const thread = createThread({
@@ -54,7 +56,7 @@ describe("deleteComment", () => {
     expect(updatedThread).toEqual(thread);
   });
 
-  it("should not delete a comment that does not exist", () => {
+  test("should not delete a comment that does not exist", () => {
     const thread = createThread({
       createdAt: new Date("2024-01-01"),
       updatedAt: new Date("2024-01-01"),
@@ -73,7 +75,7 @@ describe("deleteComment", () => {
     expect(updatedThread.comments.length).toBe(1);
   });
 
-  it("should not delete an already deleted comment", () => {
+  test("should not delete an already deleted comment", () => {
     const comment = createComment({
       createdAt: new Date("2024-01-01"),
       deletedAt: new Date("2024-01-02"),
@@ -98,7 +100,7 @@ describe("deleteComment", () => {
     expect(updatedThread.updatedAt).toEqual(thread.updatedAt); // The thread's updatedAt should not change
   });
 
-  it("should update the thread's updatedAt when deleting the last comment", () => {
+  test("should update the thread's updatedAt when deleting the last comment", () => {
     const comment = createComment({
       createdAt: new Date("2024-01-01"),
       deletedAt: new Date("2024-01-02"),

@@ -76,7 +76,6 @@ describe("@liveblocks/client package e2e", () => {
           process.env.PUBLIC_LIVEBLOCKS_PUBLIC_KEY ??
           process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY!,
         polyfills: { WebSocket },
-        // @ts-expect-error hidden config
         baseUrl: process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL!,
       });
 
@@ -85,7 +84,6 @@ describe("@liveblocks/client package e2e", () => {
           process.env.PUBLIC_LIVEBLOCKS_PUBLIC_KEY ??
           process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY!,
         polyfills: { WebSocket },
-        // @ts-expect-error hidden config
         baseUrl: process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL,
       });
 

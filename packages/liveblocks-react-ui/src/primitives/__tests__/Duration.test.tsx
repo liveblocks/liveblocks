@@ -1,4 +1,4 @@
-import { cleanup, render } from "@testing-library/react";
+import { act, cleanup, render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { Duration, formatIso8601Duration } from "../Duration";
@@ -139,7 +139,9 @@ describe("Duration", () => {
     const time = container.querySelector("time")!;
 
     const before = time.textContent;
-    await vi.advanceTimersByTimeAsync(10000);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(10000);
+    });
     const after = time.textContent;
     expect(after).not.toBe(before);
   });
@@ -157,11 +159,15 @@ describe("Duration", () => {
     const time = container.querySelector("time")!;
 
     const before = time.textContent;
-    await vi.advanceTimersByTimeAsync(6000);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(6000);
+    });
     const between = time.textContent;
     expect(between).toBe(before);
 
-    await vi.advanceTimersByTimeAsync(6000);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(6000);
+    });
     const after = time.textContent;
     expect(after).not.toBe(before);
   });

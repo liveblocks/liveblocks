@@ -1,6 +1,17 @@
 import { nanoid, Permission } from "@liveblocks/core";
-import { renderHook, waitFor } from "@testing-library/react";
+import { renderHook } from "@testing-library/react";
+import { HttpResponse } from "msw";
 import { setupServer } from "msw/node";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vitest";
 
 import {
   dummySubscriptionData,
@@ -38,21 +49,19 @@ describe("useThreadSubscription", () => {
     ];
 
     server.use(
-      mockGetThreads(async (_req, res, ctx) => {
-        return res(
-          ctx.json({
-            data: threads,
-            inboxNotifications,
-            subscriptions,
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-              permissionHints: {
-                [roomId]: [Permission.Write],
-              },
+      mockGetThreads(() => {
+        return HttpResponse.json({
+          data: threads,
+          inboxNotifications,
+          subscriptions,
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+            permissionHints: {
+              [roomId]: [Permission.Write],
             },
-          })
-        );
+          },
+        });
       })
     );
 
@@ -79,7 +88,7 @@ describe("useThreadSubscription", () => {
       unsubscribe: expect.any(Function),
     });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.threads).toEqual({
         isLoading: false,
         threads,
@@ -115,21 +124,19 @@ describe("useThreadSubscription", () => {
     ];
 
     server.use(
-      mockGetThreads(async (_req, res, ctx) => {
-        return res(
-          ctx.json({
-            data: threads,
-            inboxNotifications,
-            subscriptions,
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-              permissionHints: {
-                [roomId]: [Permission.Write],
-              },
+      mockGetThreads(() => {
+        return HttpResponse.json({
+          data: threads,
+          inboxNotifications,
+          subscriptions,
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+            permissionHints: {
+              [roomId]: [Permission.Write],
             },
-          })
-        );
+          },
+        });
       })
     );
 
@@ -156,7 +163,7 @@ describe("useThreadSubscription", () => {
       unsubscribe: expect.any(Function),
     });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.threads).toEqual({
         isLoading: false,
         threads,
@@ -182,21 +189,19 @@ describe("useThreadSubscription", () => {
     const threads = [dummyThreadData({ roomId })];
 
     server.use(
-      mockGetThreads(async (_req, res, ctx) => {
-        return res(
-          ctx.json({
-            data: threads,
-            inboxNotifications: [],
-            subscriptions: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-              permissionHints: {
-                [roomId]: [Permission.Write],
-              },
+      mockGetThreads(() => {
+        return HttpResponse.json({
+          data: threads,
+          inboxNotifications: [],
+          subscriptions: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+            permissionHints: {
+              [roomId]: [Permission.Write],
             },
-          })
-        );
+          },
+        });
       })
     );
 
@@ -223,7 +228,7 @@ describe("useThreadSubscription", () => {
       unsubscribe: expect.any(Function),
     });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.threads).toEqual({
         isLoading: false,
         threads,
@@ -254,21 +259,19 @@ describe("useThreadSubscription", () => {
     ];
 
     server.use(
-      mockGetThreads(async (_req, res, ctx) => {
-        return res(
-          ctx.json({
-            data: threads,
-            inboxNotifications,
-            subscriptions: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-              permissionHints: {
-                [roomId]: [Permission.Write],
-              },
+      mockGetThreads(() => {
+        return HttpResponse.json({
+          data: threads,
+          inboxNotifications,
+          subscriptions: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+            permissionHints: {
+              [roomId]: [Permission.Write],
             },
-          })
-        );
+          },
+        });
       })
     );
 
@@ -295,7 +298,7 @@ describe("useThreadSubscription", () => {
       unsubscribe: expect.any(Function),
     });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.threads).toEqual({
         isLoading: false,
         threads,
@@ -329,21 +332,19 @@ describe("useThreadSubscription", () => {
     ];
 
     server.use(
-      mockGetThreads(async (_req, res, ctx) => {
-        return res(
-          ctx.json({
-            data: threads,
-            inboxNotifications,
-            subscriptions,
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-              permissionHints: {
-                [roomId]: [Permission.Write],
-              },
+      mockGetThreads(() => {
+        return HttpResponse.json({
+          data: threads,
+          inboxNotifications,
+          subscriptions,
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+            permissionHints: {
+              [roomId]: [Permission.Write],
             },
-          })
-        );
+          },
+        });
       })
     );
 
@@ -370,7 +371,7 @@ describe("useThreadSubscription", () => {
       unsubscribe: expect.any(Function),
     });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.threads).toEqual({
         isLoading: false,
         threads,

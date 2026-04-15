@@ -53,6 +53,7 @@ module.exports = {
         "@typescript-eslint/no-unsafe-return": "off",
         "@typescript-eslint/unbound-method": "off",
         "@typescript-eslint/no-floating-promises": "off",
+        "@typescript-eslint/require-await": "off", // Fine in test mocks
       },
     },
   ],

@@ -1,6 +1,17 @@
 import { nanoid, Permission } from "@liveblocks/core";
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
+import { HttpResponse } from "msw";
 import { setupServer } from "msw/node";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vitest";
 
 import { dummyThreadData } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
@@ -29,32 +40,27 @@ describe("useEditThreadMetadata", () => {
     let hasCalledEditThreadMetadata = false;
 
     server.use(
-      mockGetThreads((_req, res, ctx) => {
-        return res(
-          ctx.json({
-            data: [initialThread],
-            inboxNotifications: [],
-            subscriptions: [],
-            deletedThreads: [],
-            deletedInboxNotifications: [],
-            deletedSubscriptions: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-              permissionHints: {
-                [roomId]: [Permission.Write],
-              },
+      mockGetThreads(() => {
+        return HttpResponse.json({
+          data: [initialThread],
+          inboxNotifications: [],
+          subscriptions: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+            permissionHints: {
+              [roomId]: [Permission.Write],
             },
-          })
-        );
+          },
+        });
       }),
       mockEditThreadMetadata(
         { threadId: initialThread.id },
-        async (req, res, ctx) => {
+        async ({ request }) => {
           hasCalledEditThreadMetadata = true;
-          const json = await req.json();
+          const json = await request.json();
 
-          return res(ctx.json(json));
+          return HttpResponse.json(json);
         }
       )
     );
@@ -77,7 +83,7 @@ describe("useEditThreadMetadata", () => {
 
     expect(result.current.threads).toBeUndefined();
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.threads).toEqual([initialThread])
     );
 
@@ -94,7 +100,7 @@ describe("useEditThreadMetadata", () => {
 
     // Thread updatedAt is not updated by the server response so exceptionally,
     // we need to check if mock has been called
-    await waitFor(() => expect(hasCalledEditThreadMetadata).toEqual(true));
+    await vi.waitFor(() => expect(hasCalledEditThreadMetadata).toEqual(true));
 
     unmount();
   });
@@ -108,34 +114,27 @@ describe("useEditThreadMetadata", () => {
     let hasCalledEditThreadMetadata = false;
 
     server.use(
-      mockGetThreads((_req, res, ctx) => {
-        return res(
-          ctx.json({
-            data: [initialThread],
-            inboxNotifications: [],
-            subscriptions: [],
-            deletedThreads: [],
-            deletedInboxNotifications: [],
-            deletedSubscriptions: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-              permissionHints: {
-                [roomId]: [Permission.Write],
-              },
+      mockGetThreads(() => {
+        return HttpResponse.json({
+          data: [initialThread],
+          inboxNotifications: [],
+          subscriptions: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+            permissionHints: {
+              [roomId]: [Permission.Write],
             },
-          })
-        );
+          },
+        });
       }),
-      mockEditThreadMetadata(
+      mockEditThreadMetadata<{ color: string }>(
         { threadId: initialThread.id },
-        async (_, res, ctx) => {
+        () => {
           hasCalledEditThreadMetadata = true;
-          return res(
-            ctx.json({
-              color: "yellow",
-            })
-          );
+          return HttpResponse.json({
+            color: "yellow",
+          });
         }
       )
     );
@@ -158,7 +157,7 @@ describe("useEditThreadMetadata", () => {
 
     expect(result.current.threads).toBeUndefined();
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.threads).toEqual([initialThread])
     );
 
@@ -180,9 +179,9 @@ describe("useEditThreadMetadata", () => {
 
     // Thread updatedAt is not updated by the server response so exceptionally,
     // we need to check if mock has been called
-    await waitFor(() => expect(hasCalledEditThreadMetadata).toEqual(true));
+    await vi.waitFor(() => expect(hasCalledEditThreadMetadata).toEqual(true));
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(result.current.threads?.[0]?.metadata).toEqual({
         color: "yellow",
       });

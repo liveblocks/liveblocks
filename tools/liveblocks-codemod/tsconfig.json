@@ -13,6 +13,7 @@
     "dist",
     "node_modules",
     "src/transforms/__tests__",
-    "src/transforms/__testfixtures__"
+    "src/replacements/__tests__",
+    "vitest.config.ts"
   ]
 }

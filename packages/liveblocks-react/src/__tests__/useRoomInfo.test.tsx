@@ -1,14 +1,12 @@
-import "@testing-library/jest-dom";
-
 import type { ResolveRoomsInfoArgs } from "@liveblocks/core";
 import { nanoid } from "@liveblocks/core";
-import { renderHook, screen, waitFor } from "@testing-library/react";
+import { renderHook, screen } from "@testing-library/react";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
+import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 
 import { act, createContextsForTest } from "./_utils";
 
-// eslint-disable-next-line @typescript-eslint/require-await
 async function defaultResolveRoomsInfo({ roomIds }: ResolveRoomsInfoArgs) {
   return roomIds.map((roomId) => ({
     name: roomId,
@@ -17,11 +15,11 @@ async function defaultResolveRoomsInfo({ roomIds }: ResolveRoomsInfoArgs) {
 
 describe("useRoomInfo", () => {
   beforeAll(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterAll(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   test("should return an error if resolveRoomsInfo is not set", async () => {
@@ -46,7 +44,9 @@ describe("useRoomInfo", () => {
 
     expect(result.current.roomInfo).toEqual({ isLoading: true });
 
-    await waitFor(() => expect(result.current.roomInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.roomInfo.isLoading).toBeFalsy()
+    );
 
     expect(result.current.roomInfo).toEqual({
       isLoading: false,
@@ -80,7 +80,9 @@ describe("useRoomInfo", () => {
 
     expect(result.current.roomInfo).toEqual({ isLoading: true });
 
-    await waitFor(() => expect(result.current.roomInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.roomInfo.isLoading).toBeFalsy()
+    );
 
     expect(result.current.roomInfo).toEqual({
       isLoading: false,
@@ -113,7 +115,9 @@ describe("useRoomInfo", () => {
 
     expect(result.current.roomInfo).toEqual({ isLoading: true });
 
-    await waitFor(() => expect(result.current.roomInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.roomInfo.isLoading).toBeFalsy()
+    );
 
     expect(result.current.roomInfo).toEqual({
       isLoading: false,
@@ -124,7 +128,9 @@ describe("useRoomInfo", () => {
 
     expect(result.current.roomInfo).toEqual({ isLoading: true });
 
-    await waitFor(() => expect(result.current.roomInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.roomInfo.isLoading).toBeFalsy()
+    );
 
     expect(result.current.roomInfo).toEqual({
       isLoading: false,
@@ -137,7 +143,7 @@ describe("useRoomInfo", () => {
   test("should cache results based on room ID", async () => {
     const roomId = nanoid();
 
-    const resolveRoomsInfo = jest.fn(({ roomIds }: ResolveRoomsInfoArgs) =>
+    const resolveRoomsInfo = vi.fn(({ roomIds }: ResolveRoomsInfoArgs) =>
       roomIds.map((roomId) => ({ name: roomId }))
     );
     const {
@@ -158,11 +164,15 @@ describe("useRoomInfo", () => {
       }
     );
 
-    await waitFor(() => expect(result.current.roomInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.roomInfo.isLoading).toBeFalsy()
+    );
 
     rerender({ roomId: "123" });
 
-    await waitFor(() => expect(result.current.roomInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.roomInfo.isLoading).toBeFalsy()
+    );
 
     rerender({ roomId: "abc" });
 
@@ -183,7 +193,7 @@ describe("useRoomInfo", () => {
   test("should revalidate instantly if its cache is invalidated", async () => {
     const roomId = nanoid();
 
-    const resolveRoomsInfo = jest.fn(({ roomIds }: ResolveRoomsInfoArgs) =>
+    const resolveRoomsInfo = vi.fn(({ roomIds }: ResolveRoomsInfoArgs) =>
       roomIds.map((roomId) => ({ name: roomId }))
     );
     const {
@@ -205,11 +215,15 @@ describe("useRoomInfo", () => {
       }
     );
 
-    await waitFor(() => expect(result.current.roomInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.roomInfo.isLoading).toBeFalsy()
+    );
 
     rerender({ roomId: "123" });
 
-    await waitFor(() => expect(result.current.roomInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.roomInfo.isLoading).toBeFalsy()
+    );
 
     rerender({ roomId: "abc" });
 
@@ -221,7 +235,9 @@ describe("useRoomInfo", () => {
     // Invalidate all room IDs
     act(() => client.resolvers.invalidateRoomsInfo());
 
-    await waitFor(() => expect(result.current.roomInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.roomInfo.isLoading).toBeFalsy()
+    );
 
     expect(result.current.roomInfo).toEqual({
       isLoading: false,
@@ -242,7 +258,7 @@ describe("useRoomInfo", () => {
   test("should batch (and deduplicate) requests for the same room ID", async () => {
     const roomId = nanoid();
 
-    const resolveRoomsInfo = jest.fn(({ roomIds }: ResolveRoomsInfoArgs) =>
+    const resolveRoomsInfo = vi.fn(({ roomIds }: ResolveRoomsInfoArgs) =>
       roomIds.map((roomId) => ({ name: roomId }))
     );
     const {
@@ -264,7 +280,7 @@ describe("useRoomInfo", () => {
       }
     );
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(result.current.roomInfoAbc.isLoading).toBeFalsy();
       expect(result.current.roomInfoAbc2.isLoading).toBeFalsy();
       expect(result.current.roomInfo123.isLoading).toBeFalsy();
@@ -315,7 +331,9 @@ describe("useRoomInfo", () => {
 
     expect(result.current.roomInfo).toEqual({ isLoading: true });
 
-    await waitFor(() => expect(result.current.roomInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.roomInfo.isLoading).toBeFalsy()
+    );
 
     expect(result.current.roomInfo).toEqual({
       isLoading: false,
@@ -348,7 +366,9 @@ describe("useRoomInfo", () => {
 
     expect(result.current.roomInfo).toEqual({ isLoading: true });
 
-    await waitFor(() => expect(result.current.roomInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.roomInfo.isLoading).toBeFalsy()
+    );
 
     expect(result.current.roomInfo).toEqual({
       isLoading: false,
@@ -381,7 +401,9 @@ describe("useRoomInfo", () => {
 
     expect(result.current.roomInfo).toEqual({ isLoading: true });
 
-    await waitFor(() => expect(result.current.roomInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.roomInfo.isLoading).toBeFalsy()
+    );
 
     expect(result.current.roomInfo).toEqual({
       isLoading: false,
@@ -396,7 +418,7 @@ describe("useRoomInfo", () => {
   test("should return an error if resolveRoomsInfo returns undefined for a specifc room ID", async () => {
     const roomId = nanoid();
 
-    const resolveRoomsInfo = jest.fn(({ roomIds }: ResolveRoomsInfoArgs) =>
+    const resolveRoomsInfo = vi.fn(({ roomIds }: ResolveRoomsInfoArgs) =>
       roomIds.map((roomId) => {
         if (roomId === "abc") {
           return undefined;
@@ -422,7 +444,7 @@ describe("useRoomInfo", () => {
       }
     );
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(result.current.roomInfoAbc.isLoading).toBeFalsy();
       expect(result.current.roomInfo123.isLoading).toBeFalsy();
     });
@@ -447,11 +469,11 @@ describe("useRoomInfo", () => {
 
 describe("useRoomInfoSuspense", () => {
   beforeAll(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterAll(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   test("should suspend with Suspense", async () => {
@@ -482,14 +504,16 @@ describe("useRoomInfoSuspense", () => {
       }
     );
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       // Check if the Suspense fallback is displayed
       expect(screen.getByText("Loading")).toBeInTheDocument();
     });
 
-    await waitFor(() => expect(result.current.roomInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.roomInfo.isLoading).toBeFalsy()
+    );
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       // Check if the Suspense fallback is no longer displayed
       expect(screen.getByText("Loaded")).toBeInTheDocument();
     });
@@ -526,28 +550,32 @@ describe("useRoomInfoSuspense", () => {
       }
     );
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       // Check if the Suspense fallback is displayed
       expect(screen.getByText("Loading")).toBeInTheDocument();
     });
 
-    await waitFor(() => expect(result.current.roomInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.roomInfo.isLoading).toBeFalsy()
+    );
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       // Check if the Suspense fallback is no longer displayed
       expect(screen.getByText("Loaded")).toBeInTheDocument();
     });
 
     act(() => client.resolvers.invalidateRoomsInfo());
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       // Check if the Suspense fallback is displayed again
       expect(screen.getByText("Loading")).toBeInTheDocument();
     });
 
-    await waitFor(() => expect(result.current.roomInfo.isLoading).toBeFalsy());
+    await vi.waitFor(() =>
+      expect(result.current.roomInfo.isLoading).toBeFalsy()
+    );
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       // Check if the Suspense fallback is no longer displayed again
       expect(screen.getByText("Loaded")).toBeInTheDocument();
     });
@@ -588,7 +616,7 @@ describe("useRoomInfoSuspense", () => {
 
     expect(result.current).toEqual(null);
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       // Check if the error boundary fallback is displayed
       expect(
         screen.getByText("There was an error while getting room info.")

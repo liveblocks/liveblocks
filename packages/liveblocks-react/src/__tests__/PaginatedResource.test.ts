@@ -1,8 +1,10 @@
+import { describe, expect, test, vi } from "vitest";
+
 import { PaginatedResource } from "../umbrella-store";
 
 function makeFetcher() {
-  return jest
-    .fn<Promise<string | null>, [cursor?: string]>()
+  return vi
+    .fn<(cursor?: string) => Promise<string | null>>()
     .mockImplementation((cursor?: string) => {
       const nextCursor =
         cursor === undefined ? "two" : cursor === "two" ? "three" : null;
@@ -12,8 +14,8 @@ function makeFetcher() {
 
 function makeUnreliableFetcher() {
   let i = 0;
-  return jest
-    .fn<Promise<string | null>, [cursor?: string]>()
+  return vi
+    .fn<(cursor?: string) => Promise<string | null>>()
     .mockImplementation(async (cursor?: string) => {
       if (++i % 2 === 0) {
         throw new Error("Crap");
@@ -26,14 +28,11 @@ function makeUnreliableFetcher() {
 }
 
 function makeBrokenFetcher() {
-  return (
-    jest
-      .fn<Promise<string | null>, [cursor?: string]>()
-      // eslint-disable-next-line @typescript-eslint/require-await
-      .mockImplementation(async () => {
-        throw new Error("Crap");
-      })
-  );
+  return vi
+    .fn<(cursor?: string) => Promise<string | null>>()
+    .mockImplementation(async () => {
+      throw new Error("Crap");
+    });
 }
 
 describe("PaginatedResource", () => {
@@ -241,7 +240,7 @@ describe("PaginatedResource", () => {
     const p = new PaginatedResource(brokenFetcher);
     expect(p.get()).toEqual({ isLoading: true });
 
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     try {
       // Kick the fetcher off
       const w$ = p.waitUntilLoaded();
@@ -249,19 +248,19 @@ describe("PaginatedResource", () => {
       expect(brokenFetcher).toHaveBeenCalledTimes(1);
       expect(p.get()).toEqual({ isLoading: true });
 
-      await jest.advanceTimersByTimeAsync(5_000);
+      await vi.advanceTimersByTimeAsync(5_000);
       expect(brokenFetcher).toHaveBeenCalledTimes(2);
       expect(p.get()).toEqual({ isLoading: true });
 
-      await jest.advanceTimersByTimeAsync(5_000);
+      await vi.advanceTimersByTimeAsync(5_000);
       expect(brokenFetcher).toHaveBeenCalledTimes(3);
       expect(p.get()).toEqual({ isLoading: true });
 
-      await jest.advanceTimersByTimeAsync(10_000);
+      await vi.advanceTimersByTimeAsync(10_000);
       expect(brokenFetcher).toHaveBeenCalledTimes(4);
       expect(p.get()).toEqual({ isLoading: true });
 
-      await jest.advanceTimersByTimeAsync(15_000);
+      await vi.advanceTimersByTimeAsync(15_000);
       expect(brokenFetcher).toHaveBeenCalledTimes(5);
       expect(p.get()).toEqual({
         isLoading: false,
@@ -274,33 +273,33 @@ describe("PaginatedResource", () => {
       // Referential equality is maintained!
       expect(p.get() === p.get()).toEqual(true);
     } finally {
-      jest.useRealTimers();
+      vi.useRealTimers();
     }
   });
 
   test("autoRetry: false — single attempt, error persists (no 5s reset)", async () => {
-    const fetcher = jest
-      .fn<Promise<string | null>, [cursor?: string]>()
+    const fetcher = vi
+      .fn<(cursor?: string) => Promise<string | null>>()
       .mockImplementation(() => {
         throw new Error("permanent");
       });
 
     const p = new PaginatedResource(fetcher, { autoRetry: false });
 
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     try {
       const w$ = p.waitUntilLoaded();
       await expect(w$).rejects.toThrow("permanent");
       expect(fetcher).toHaveBeenCalledTimes(1);
 
-      await jest.advanceTimersByTimeAsync(5_000);
+      await vi.advanceTimersByTimeAsync(5_000);
       expect(fetcher).toHaveBeenCalledTimes(1);
       expect(p.get()).toEqual({
         isLoading: false,
         error: expect.objectContaining({ message: "permanent" }),
       });
     } finally {
-      jest.useRealTimers();
+      vi.useRealTimers();
     }
   });
 });

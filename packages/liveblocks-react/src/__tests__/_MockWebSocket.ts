@@ -6,8 +6,7 @@ import type {
   ServerMsg,
 } from "@liveblocks/core";
 import { CrdtType, ServerMsgCode, wait } from "@liveblocks/core";
-
-import { waitFor } from "./_utils";
+import { expect, vi } from "vitest";
 
 /**
  * https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent/code
@@ -121,7 +120,7 @@ function remove<T>(array: T[], item: T) {
 }
 
 export async function waitForSocketToBeConnected() {
-  await waitFor(() => expect(MockWebSocket.instances.length).toBe(1));
+  await vi.waitFor(() => expect(MockWebSocket.instances.length).toBe(1));
 
   const socket = MockWebSocket.instances[0]!;
   expect(socket.callbacks.open).toEqual([expect.any(Function)]); // Got open callback

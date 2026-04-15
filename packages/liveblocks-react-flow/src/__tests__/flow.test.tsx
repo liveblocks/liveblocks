@@ -1,9 +1,9 @@
 import type { PlainLsonObject } from "@liveblocks/core";
 import { useMutation } from "@liveblocks/react";
-import { act, screen, waitFor } from "@testing-library/react";
+import { act, screen } from "@testing-library/react";
 import type { BuiltInEdge, BuiltInNode } from "@xyflow/react";
 import { Suspense } from "react";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 
 import { useLiveblocksFlow } from "../index";
 import type { LiveblocksFlow } from "../lib/types";
@@ -47,7 +47,7 @@ describe("useLiveblocksFlow", () => {
       })
     );
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    await vi.waitFor(() => expect(result.current.isLoading).toBe(false));
 
     expect(result.current.nodes).toHaveLength(2);
     expect(result.current.edges).toHaveLength(1);
@@ -65,7 +65,7 @@ describe("useLiveblocksFlow", () => {
   test("should return empty arrays when storage is empty and no initial provided", async () => {
     const { result } = await renderHook(() => useLiveblocksFlow());
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    await vi.waitFor(() => expect(result.current.isLoading).toBe(false));
 
     expect(result.current.nodes).toEqual([]);
     expect(result.current.edges).toEqual([]);
@@ -109,7 +109,7 @@ describe("useLiveblocksFlow", () => {
       { initialStorage: serverStorage }
     );
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    await vi.waitFor(() => expect(result.current.isLoading).toBe(false));
 
     expect(result.current.nodes).toHaveLength(1);
     expect(result.current.nodes?.[0]).toMatchObject({
@@ -122,7 +122,7 @@ describe("useLiveblocksFlow", () => {
   test("should add node to flow when onNodesChange add is called", async () => {
     const { result } = await renderHook(() => useLiveblocksFlow());
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    await vi.waitFor(() => expect(result.current.isLoading).toBe(false));
 
     const newNode = {
       id: "n1",
@@ -137,7 +137,7 @@ describe("useLiveblocksFlow", () => {
       result.current.onNodesChange([{ type: "add", item: newNode }]);
     });
 
-    await waitFor(() => expect(result.current.nodes).toHaveLength(1));
+    await vi.waitFor(() => expect(result.current.nodes).toHaveLength(1));
     expect(result.current.nodes?.[0]).toMatchObject({
       id: "n1",
       position: { x: 10, y: 20 },
@@ -151,7 +151,7 @@ describe("useLiveblocksFlow", () => {
       useLiveblocksFlow({ nodes: { initial: NODES } })
     );
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    await vi.waitFor(() => expect(result.current.isLoading).toBe(false));
 
     const newEdge = {
       id: "e1-2",
@@ -164,7 +164,7 @@ describe("useLiveblocksFlow", () => {
       result.current.onEdgesChange([{ type: "add", item: newEdge }]);
     });
 
-    await waitFor(() => expect(result.current.edges).toHaveLength(1));
+    await vi.waitFor(() => expect(result.current.edges).toHaveLength(1));
     expect(result.current.edges?.[0]).toMatchObject({
       source: "1",
       target: "2",
@@ -180,7 +180,7 @@ describe("useLiveblocksFlow", () => {
       })
     );
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    await vi.waitFor(() => expect(result.current.isLoading).toBe(false));
 
     expect(result.current.edges).toHaveLength(1);
 
@@ -191,7 +191,7 @@ describe("useLiveblocksFlow", () => {
       });
     });
 
-    await waitFor(() => expect(result.current.edges).toHaveLength(0));
+    await vi.waitFor(() => expect(result.current.edges).toHaveLength(0));
   });
 
   test("should remove node from flow when onDelete is called", async () => {
@@ -202,7 +202,7 @@ describe("useLiveblocksFlow", () => {
       })
     );
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    await vi.waitFor(() => expect(result.current.isLoading).toBe(false));
 
     expect(result.current.nodes).toHaveLength(2);
 
@@ -213,7 +213,7 @@ describe("useLiveblocksFlow", () => {
       });
     });
 
-    await waitFor(() => expect(result.current.nodes).toHaveLength(1));
+    await vi.waitFor(() => expect(result.current.nodes).toHaveLength(1));
 
     expect(result.current.nodes?.[0]).toMatchObject({ id: "2" });
   });
@@ -236,7 +236,7 @@ describe("useLiveblocksFlow", () => {
 
     const { result } = await renderHook(() => useFlowWithDelete());
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    await vi.waitFor(() => expect(result.current.isLoading).toBe(false));
 
     act(() => {
       result.current.onNodesChange([
@@ -248,7 +248,7 @@ describe("useLiveblocksFlow", () => {
       result.current.deleteNodeFromStorage();
     });
 
-    await waitFor(() => expect(result.current.nodes).toHaveLength(1));
+    await vi.waitFor(() => expect(result.current.nodes).toHaveLength(1));
     expect(result.current.nodes?.[0]).toMatchObject({ id: "2" });
   });
 
@@ -257,7 +257,7 @@ describe("useLiveblocksFlow", () => {
       useLiveblocksFlow({ nodes: { initial: NODES } })
     );
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    await vi.waitFor(() => expect(result.current.isLoading).toBe(false));
 
     act(() => {
       result.current.onNodesChange([
@@ -265,7 +265,7 @@ describe("useLiveblocksFlow", () => {
       ]);
     });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.nodes?.[0]?.position).toEqual({ x: 50, y: 75 })
     );
   });
@@ -275,7 +275,7 @@ describe("useLiveblocksFlow", () => {
       useLiveblocksFlow({ nodes: { initial: NODES } })
     );
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    await vi.waitFor(() => expect(result.current.isLoading).toBe(false));
 
     act(() => {
       result.current.onNodesChange([
@@ -288,7 +288,7 @@ describe("useLiveblocksFlow", () => {
       ]);
     });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.nodes?.[0]).toMatchObject({ dragging: true })
     );
   });
@@ -298,7 +298,7 @@ describe("useLiveblocksFlow", () => {
       useLiveblocksFlow({ nodes: { initial: NODES } })
     );
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    await vi.waitFor(() => expect(result.current.isLoading).toBe(false));
 
     act(() => {
       result.current.onNodesChange([
@@ -318,7 +318,7 @@ describe("useLiveblocksFlow", () => {
       useLiveblocksFlow({ nodes: { initial: NODES } })
     );
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    await vi.waitFor(() => expect(result.current.isLoading).toBe(false));
 
     act(() => {
       result.current.onNodesChange([
@@ -332,7 +332,7 @@ describe("useLiveblocksFlow", () => {
       ]);
     });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.nodes?.[0]).toMatchObject({
         width: 200,
         height: 100,
@@ -346,7 +346,7 @@ describe("useLiveblocksFlow", () => {
       useLiveblocksFlow({ nodes: { initial: NODES } })
     );
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    await vi.waitFor(() => expect(result.current.isLoading).toBe(false));
 
     act(() => {
       result.current.onNodesChange([
@@ -354,7 +354,7 @@ describe("useLiveblocksFlow", () => {
       ]);
     });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.nodes?.[0]).toMatchObject({ selected: true })
     );
   });
@@ -364,7 +364,7 @@ describe("useLiveblocksFlow", () => {
       useLiveblocksFlow({ nodes: { initial: NODES } })
     );
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    await vi.waitFor(() => expect(result.current.isLoading).toBe(false));
 
     act(() => {
       result.current.onNodesChange([
@@ -378,7 +378,7 @@ describe("useLiveblocksFlow", () => {
       ]);
     });
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(result.current.nodes?.[0]?.selected).toBeFalsy();
     });
   });
@@ -391,7 +391,7 @@ describe("useLiveblocksFlow", () => {
       })
     );
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    await vi.waitFor(() => expect(result.current.isLoading).toBe(false));
 
     act(() => {
       result.current.onEdgesChange([
@@ -399,7 +399,7 @@ describe("useLiveblocksFlow", () => {
       ]);
     });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.edges?.[0]).toMatchObject({ selected: true })
     );
   });
@@ -409,7 +409,7 @@ describe("useLiveblocksFlow", () => {
       useLiveblocksFlow({ nodes: { initial: NODES } })
     );
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    await vi.waitFor(() => expect(result.current.isLoading).toBe(false));
 
     act(() => {
       result.current.onConnect({
@@ -420,7 +420,7 @@ describe("useLiveblocksFlow", () => {
       });
     });
 
-    await waitFor(() => expect(result.current.edges).toHaveLength(1));
+    await vi.waitFor(() => expect(result.current.edges).toHaveLength(1));
 
     act(() => {
       result.current.onConnect({
@@ -439,7 +439,7 @@ describe("useLiveblocksFlow", () => {
       useLiveblocksFlow({ nodes: { initial: NODES } })
     );
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    await vi.waitFor(() => expect(result.current.isLoading).toBe(false));
 
     act(() => {
       result.current.onConnect({
@@ -450,7 +450,7 @@ describe("useLiveblocksFlow", () => {
       });
     });
 
-    await waitFor(() => expect(result.current.edges).toHaveLength(1));
+    await vi.waitFor(() => expect(result.current.edges).toHaveLength(1));
 
     act(() => {
       result.current.onConnect({
@@ -461,7 +461,7 @@ describe("useLiveblocksFlow", () => {
       });
     });
 
-    await waitFor(() => expect(result.current.edges).toHaveLength(2));
+    await vi.waitFor(() => expect(result.current.edges).toHaveLength(2));
 
     const handles = result.current.edges?.map((e) => e.sourceHandle) ?? [];
     expect(handles).toContain("a");
@@ -476,7 +476,7 @@ describe("useLiveblocksFlow", () => {
       })
     );
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    await vi.waitFor(() => expect(result.current.isLoading).toBe(false));
 
     const nodes1 = result.current.nodes;
 
@@ -496,7 +496,7 @@ describe("useLiveblocksFlow", () => {
       })
     );
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    await vi.waitFor(() => expect(result.current.isLoading).toBe(false));
 
     const edges1 = result.current.edges;
 
@@ -512,7 +512,7 @@ describe("useLiveblocksFlow", () => {
       useLiveblocksFlow({ storageKey: "myFlow", nodes: { initial: NODES } })
     );
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    await vi.waitFor(() => expect(result.current.isLoading).toBe(false));
 
     expect(result.current.nodes).toHaveLength(2);
   });
@@ -544,7 +544,9 @@ describe("useLiveblocksFlow (Suspense)", () => {
 
     expect(screen.getByTestId("fallback")).toBeInTheDocument();
 
-    await waitFor(() => expect(screen.getByTestId("flow")).toBeInTheDocument());
+    await vi.waitFor(() =>
+      expect(screen.getByTestId("flow")).toBeInTheDocument()
+    );
 
     expect(screen.getByTestId("loading").textContent).toBe("false");
     expect(screen.getByTestId("node-count").textContent).toBe("2");
@@ -570,7 +572,9 @@ describe("useLiveblocksFlow (Suspense)", () => {
       </Suspense>
     );
 
-    await waitFor(() => expect(screen.getByTestId("flow")).toBeInTheDocument());
+    await vi.waitFor(() =>
+      expect(screen.getByTestId("flow")).toBeInTheDocument()
+    );
 
     expect(screen.getByTestId("loading").textContent).toBe("false");
     expect(screen.getByTestId("node-count").textContent).toBe("0");
@@ -599,7 +603,9 @@ describe("useLiveblocksFlow (Suspense)", () => {
       </Suspense>
     );
 
-    await waitFor(() => expect(screen.getByTestId("flow")).toBeInTheDocument());
+    await vi.waitFor(() =>
+      expect(screen.getByTestId("flow")).toBeInTheDocument()
+    );
 
     expect(screen.getByTestId("node-label").textContent).toBe("Node 1");
     expect(screen.getByTestId("edge-id").textContent).toBe("e1-2");

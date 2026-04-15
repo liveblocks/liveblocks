@@ -1,9 +1,18 @@
-import "@testing-library/jest-dom";
-
 import { nanoid } from "@liveblocks/core";
-import { renderHook, waitFor } from "@testing-library/react";
+import { renderHook } from "@testing-library/react";
+import { HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { Suspense } from "react";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vitest";
 
 import MockWebSocket from "./_MockWebSocket";
 import { mockGetUnreadInboxNotificationsCount } from "./_restMocks";
@@ -27,12 +36,10 @@ afterAll(() => server.close());
 describe("useUnreadInboxNotificationsCount", () => {
   test("should fetch inbox notification count", async () => {
     server.use(
-      mockGetUnreadInboxNotificationsCount(async (_req, res, ctx) => {
-        return res(
-          ctx.json({
-            count: 1,
-          })
-        );
+      mockGetUnreadInboxNotificationsCount(() => {
+        return HttpResponse.json({
+          count: 1,
+        });
       })
     );
 
@@ -53,7 +60,7 @@ describe("useUnreadInboxNotificationsCount", () => {
       isLoading: true,
     });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         count: 1,
@@ -67,23 +74,19 @@ describe("useUnreadInboxNotificationsCount", () => {
     const roomA = nanoid();
 
     server.use(
-      mockGetUnreadInboxNotificationsCount(async (_req, res, ctx) => {
-        const query = _req.url.searchParams.get("query");
+      mockGetUnreadInboxNotificationsCount(({ request }) => {
+        const query = new URL(request.url).searchParams.get("query");
 
         // For the sake of simplicity, the server mock assumes that if a query is provided, it's for roomA.
         if (query) {
-          return res(
-            ctx.json({
-              count: 1,
-            })
-          );
+          return HttpResponse.json({
+            count: 1,
+          });
         }
 
-        return res(
-          ctx.json({
-            count: 2,
-          })
-        );
+        return HttpResponse.json({
+          count: 2,
+        });
       })
     );
 
@@ -104,7 +107,7 @@ describe("useUnreadInboxNotificationsCount", () => {
       isLoading: true,
     });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         count: 1,
@@ -126,7 +129,7 @@ describe("useUnreadInboxNotificationsCount", () => {
       isLoading: true,
     });
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result2.current).toEqual({
         isLoading: false,
         count: 2,
@@ -140,12 +143,10 @@ describe("useUnreadInboxNotificationsCount", () => {
 describe("useUnreadInboxNotificationsCount - Suspense", () => {
   test("should be referentially stable after rerendering", async () => {
     server.use(
-      mockGetUnreadInboxNotificationsCount(async (_req, res, ctx) => {
-        return res(
-          ctx.json({
-            count: 1,
-          })
-        );
+      mockGetUnreadInboxNotificationsCount(() => {
+        return HttpResponse.json({
+          count: 1,
+        });
       })
     );
 
@@ -168,7 +169,7 @@ describe("useUnreadInboxNotificationsCount - Suspense", () => {
 
     expect(result.current).toEqual(null);
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         count: 1,

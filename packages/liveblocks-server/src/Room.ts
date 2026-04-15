@@ -1844,7 +1844,6 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
           this.createFeed({
             feedId: addMsg.feedId,
             metadata: (addMsg.metadata as Json) ?? {},
-            timestamp: addMsg.timestamp,
           })
         );
         if (err) {
@@ -1910,7 +1909,6 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
           this.addFeedMessage(addMsg.feedId, {
             data: addMsg.data as Json,
             id: addMsg.id,
-            timestamp: addMsg.timestamp,
           })
         );
         if (err) {
@@ -1933,8 +1931,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
           this.updateFeedMessage(
             updateMsg.feedId,
             updateMsg.messageId,
-            updateMsg.data as Json,
-            updateMsg.timestamp
+            updateMsg.data as Json
           )
         );
         if (err) {
