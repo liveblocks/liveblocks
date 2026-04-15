@@ -93,7 +93,6 @@ describe("ToJson", () => {
       readonly a: number;
       readonly b: string | undefined;
     }>();
-
   });
 
   test("LiveObject with mixed fields (docstring example)", () => {

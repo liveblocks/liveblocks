@@ -101,9 +101,7 @@ describe("room (dev server)", () => {
   });
 
   test("canUndo / canRedo", async () => {
-    const { room, root } = await prepareIsolatedStorageTest<{
-      a: number;
-    }>({
+    const { room, root } = await prepareIsolatedStorageTest<{ a: number }>({
       liveblocksType: "LiveObject",
       data: { a: 1 },
     });
@@ -121,9 +119,7 @@ describe("room (dev server)", () => {
   });
 
   test("clearing undo/redo stack", async () => {
-    const { room, root } = await prepareIsolatedStorageTest<{
-      a: number;
-    }>({
+    const { room, root } = await prepareIsolatedStorageTest<{ a: number }>({
       liveblocksType: "LiveObject",
       data: { a: 1 },
     });
@@ -259,9 +255,7 @@ describe("room (dev server)", () => {
   });
 
   test("history.disable prevents mutations from appearing in undo stack", async () => {
-    const { room, root } = await prepareIsolatedStorageTest<{
-      x: number;
-    }>({
+    const { room, root } = await prepareIsolatedStorageTest<{ x: number }>({
       liveblocksType: "LiveObject",
       data: { x: 0 },
     });
@@ -275,9 +269,7 @@ describe("room (dev server)", () => {
   });
 
   test("history.disable returns the callback's return value", async () => {
-    const { room } = await prepareIsolatedStorageTest<{
-      x: number;
-    }>({
+    const { room } = await prepareIsolatedStorageTest<{ x: number }>({
       liveblocksType: "LiveObject",
       data: { x: 0 },
     });
@@ -288,9 +280,7 @@ describe("room (dev server)", () => {
   });
 
   test("history.disable restores undo stack even if callback throws", async () => {
-    const { room, root } = await prepareIsolatedStorageTest<{
-      x: number;
-    }>({
+    const { room, root } = await prepareIsolatedStorageTest<{ x: number }>({
       liveblocksType: "LiveObject",
       data: { x: 0 },
     });
@@ -408,9 +398,7 @@ describe("room (dev server)", () => {
   });
 
   test("history.disable preserves the redo stack", async () => {
-    const { room, root } = await prepareIsolatedStorageTest<{
-      x: number;
-    }>({
+    const { room, root } = await prepareIsolatedStorageTest<{ x: number }>({
       liveblocksType: "LiveObject",
       data: { x: 0 },
     });
