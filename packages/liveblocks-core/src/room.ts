@@ -306,9 +306,27 @@ export interface History {
    */
   resume: () => void;
 
-  readonly [kInternal]: {
-    withoutHistory: <T>(fn: () => T) => T;
-  };
+  /**
+   * Executes a callback with history tracking temporarily disabled. Any
+   * storage mutations made inside the callback will be applied normally
+   * but will not appear on the undo/redo stacks.
+   *
+   * This is useful for background or async writes that should not be
+   * undoable, such as writing back results from an AI generation task
+   * or reconciling state from an external source.
+   *
+   * Returns the callback's return value. If the callback throws, the
+   * undo/redo stacks are left unchanged (as if the callback never ran).
+   *
+   * @example
+   * room.history.disable(() => {
+   *   root.set("generatedText", result);
+   * });
+   *
+   * @experimental This API is experimental and may change or be removed
+   * in a future release without following semver guarantees.
+   */
+  disable: <T>(fn: () => T) => T;
 }
 
 export type HistoryEvent = {
@@ -3787,9 +3805,7 @@ export function createRoom<
         clear,
         pause: pauseHistory,
         resume: resumeHistory,
-        [kInternal]: {
-          withoutHistory,
-        },
+        disable: withoutHistory,
       },
 
       fetchYDoc,

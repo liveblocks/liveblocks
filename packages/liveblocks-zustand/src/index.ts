@@ -20,7 +20,7 @@ import type {
   OpaqueClient,
   OpaqueRoom,
 } from "@liveblocks/core";
-import { detectDupes, errorIf, kInternal } from "@liveblocks/core";
+import { detectDupes, errorIf } from "@liveblocks/core";
 import type { StateCreator, StoreMutatorIdentifier } from "zustand";
 
 import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
@@ -225,7 +225,7 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
           }
         }
 
-        room.history[kInternal].withoutHistory(() => {
+        room.history.disable(() => {
           room.batch(() => {
             root.reconcilePartially(missing);
           });

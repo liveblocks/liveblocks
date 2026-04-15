@@ -32,6 +32,15 @@ When running scripts, use `npx turbo`, not `npm`.
 - Use Σ-suffix for variables storing Signals (MutableSignal, Signal,
   DerivedSignal, etc)
 
+# Code quality
+
+- Never use `as` casts blindly -- explain the type issue and let me decide. If
+  that would interrupt the flow, leave an `// XXX` comment above it explaining
+  the issue instead (CI lint will flag it)
+- Never add vitest/globals -- use explicit imports
+- Always prefer the Liveblocks dev server for tests, over a mocked websocket
+  server
+
 # Workflow
 
 - Be sure to typecheck when you're done making a series of code changes
@@ -59,8 +68,7 @@ need to be updated separately when a new version is published.
 All documentation lives in the `docs/` directory, as Markdown files.
 
 When adding a new page (e.g. an upgrading guide), the `.mdx` file alone is not
-enough. You must also register it in `docs/routes.json` or it won't be
-routable.
+enough. You must also register it in `docs/routes.json` or it won't be routable.
 
 # Changelog
 

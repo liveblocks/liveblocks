@@ -3774,15 +3774,20 @@ Returns the room’s history. See [`Room.history`][] for more information.
 ```ts
 import { useHistory } from "@liveblocks/react/suspense";
 
-const { undo, redo, pause, resume } = useHistory();
+const { undo, redo, pause, resume, disable } = useHistory();
 ```
 
 <PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 <PropertiesList title="Returns">
   <PropertiesListItem name="history" type="History">
-    The room's history object containing methods for undo, redo, pause, and
-    resume operations.
+    The room's history object containing methods for
+    [`undo`](/docs/api-reference/liveblocks-client#Room.history.undo),
+    [`redo`](/docs/api-reference/liveblocks-client#Room.history.redo),
+    [`pause`](/docs/api-reference/liveblocks-client#Room.history.pause),
+    [`resume`](/docs/api-reference/liveblocks-client#Room.history.resume), and
+    [`disable`](/docs/api-reference/liveblocks-client#Room.history.disable)
+    operations.
   </PropertiesListItem>
 </PropertiesList>
 

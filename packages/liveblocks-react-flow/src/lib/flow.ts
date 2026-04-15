@@ -5,7 +5,7 @@ import type {
   Resolve,
   ToJson,
 } from "@liveblocks/core";
-import { kInternal, LiveMap, LiveObject } from "@liveblocks/core";
+import { LiveMap, LiveObject } from "@liveblocks/core";
 import { useHistory, useMutation, useStorage } from "@liveblocks/react";
 import {
   useInitial,
@@ -537,7 +537,7 @@ export function useLiveblocksFlow<
 
   useEffect(() => {
     if (isStorageLoaded) {
-      history[kInternal].withoutHistory(() => {
+      history.disable(() => {
         setInitialStorage();
       });
     }

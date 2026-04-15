@@ -2771,6 +2771,85 @@ room.get("time");
 
 <PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
+### Room.history.disable [#Room.history.disable]
+
+<Banner title="Experimental API" type="warning">
+
+This API is experimental and may change or be removed in a future release
+without following semver guarantees.
+
+</Banner>
+
+Executes a callback with history tracking temporarily disabled. Any storage
+mutations made inside the callback will be applied normally but will not appear
+on the undo/redo stacks. This is useful for background writes that should not be
+undoable, such as writing back results from agent updates or reconciling state
+from an external source.
+
+If the callback throws, the undo/redo stacks are left unchanged (as if the
+callback never ran).
+
+```ts
+room.history.disable(() => {
+  root.set("generatedText", result);
+});
+```
+
+#### Batching
+
+When combining with [`room.batch`](#Room.batch), always place the batch _inside_
+the `disable` call. If `batch` wraps `disable`, the batched mutations will still
+end up on the undo stack.
+
+```ts
+// ✅ Disabling undo must happen around a batch
+room.history.disable(() => {
+  room.batch(() => {
+    root.set("x", 1);
+    root.set("y", 2);
+  });
+});
+
+// ❌ Batch wraps disable, mutations will still end up in the undo stack
+room.batch(() => {
+  room.history.disable(() => {
+    root.set("x", 1);
+    root.set("y", 2);
+  });
+});
+```
+
+#### Async
+
+The history API is synchronous. For long-running async tasks, call
+`history.disable` at each synchronous step rather than wrapping the entire async
+function:
+
+```ts
+async function generateSummary() {
+  room.history.disable(() => root.set("status", "generating"));
+  const summary = await fetchSummaryFromAgent();
+  room.history.disable(() => {
+    room.batch(() => {
+      root.set("summary", summary);
+      root.set("status", "done");
+    });
+  });
+}
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="return" type="T">
+    The return value of the callback.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="fn" type="() => T" required>
+    The callback to execute while history is disabled.
+  </PropertiesListItem>
+</PropertiesList>
+
 ### Room.connect
 
 Connect the local room instance to the Liveblocks server. Does nothing if the

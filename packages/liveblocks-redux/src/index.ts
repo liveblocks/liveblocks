@@ -9,7 +9,7 @@ import type {
   User,
 } from "@liveblocks/client";
 import type { EnterOptions, OpaqueClient, OpaqueRoom } from "@liveblocks/core";
-import { detectDupes, kInternal } from "@liveblocks/core";
+import { detectDupes } from "@liveblocks/core";
 import type { StoreEnhancer } from "redux";
 
 import {
@@ -260,7 +260,7 @@ const internalEnhancer = <TState>(options: {
             }
           }
 
-          room.history[kInternal].withoutHistory(() => {
+          room.history.disable(() => {
             maybeRoom!.batch(() => {
               root.reconcilePartially(missing);
             });
