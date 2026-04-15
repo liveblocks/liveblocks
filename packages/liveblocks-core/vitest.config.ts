@@ -6,12 +6,8 @@ export default defaultLiveblocksVitestConfig({
     // e2e/* tests will be run by `npm run test:e2e`
     exclude: ["e2e/**"],
 
-    environment: "jsdom",
-    environmentOptions: {
-      jsdom: {
-        url: "http://dummy/",
-      },
-    },
+    environment: "happy-dom",
+
     // Collect code coverage for this project, when using the --coverage flag
     coverage: {
       provider: "istanbul",

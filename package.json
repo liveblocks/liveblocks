@@ -32,7 +32,7 @@
     "@types/react-dom": "^18.3.5",
     "@vitest/coverage-istanbul": "^3.2.4",
     "dependency-cruiser": "^17.3.10",
-    "jsdom": "^25.0.1",
+    "happy-dom": "^20.9.0",
     "prettier": "^3.4.2",
     "publint": "^0.3.6",
     "ts-morph": "^22.0.0",
