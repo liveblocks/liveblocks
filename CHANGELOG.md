@@ -8,6 +8,8 @@
   mutations without them appearing on the undo/redo stacks. Intended for
   background/async writes (e.g. writing back AI generation results) that should
   not be undoable.
+- Fix `ToJson` type losing specific value types for `Record<string, T>` fields
+  in Storage
 
 ## v3.18.1
 
