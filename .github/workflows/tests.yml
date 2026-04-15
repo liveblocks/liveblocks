@@ -43,7 +43,6 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [22.21.0]
         pkg:
           [
             "@liveblocks/core",
@@ -67,13 +66,13 @@ jobs:
     steps:
       - name: Checkout
         if: needs.check_for_code_changes.outputs.changes == 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
-      - name: Use Node ${{ matrix.node-version }}
+      - name: Setup Node
         if: needs.check_for_code_changes.outputs.changes == 'true'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version-file: ".nvmrc"
           cache: npm
           cache-dependency-path: "**/package-lock.json"
 
@@ -84,12 +83,12 @@ jobs:
       - name: Turbo Cache
         if: needs.check_for_code_changes.outputs.changes == 'true'
         id: turbo-cache
-        uses: actions/cache@v4
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5
         with:
-          key: turbo-cache-${{ matrix.node-version }}-${{ matrix.pkg }}-bust3
+          key: turbo-cache-${{ matrix.pkg }}-bust3
           path: node_modules/.cache/turbo
           restore-keys:
-            turbo-cache-${{ matrix.node-version }}-${{ matrix.pkg }}-bust3
+            turbo-cache-${{ matrix.pkg }}-bust3
 
       - name: Install Bun
         if: needs.check_for_code_changes.outputs.changes == 'true'
@@ -134,10 +133,6 @@ jobs:
     needs: check_for_code_changes
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: [22.21.0]
-
     timeout-minutes: 60
 
     env:
@@ -150,13 +145,13 @@ jobs:
     steps:
       - name: Checkout
         if: needs.check_for_code_changes.outputs.changes == 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
-      - name: Use Node ${{ matrix.node-version }}
+      - name: Setup Node
         if: needs.check_for_code_changes.outputs.changes == 'true'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version-file: ".nvmrc"
           cache: npm
           cache-dependency-path: "**/package-lock.json"
 
@@ -172,7 +167,7 @@ jobs:
         if: needs.check_for_code_changes.outputs.changes == 'true'
         run: npm run test -- --filter @liveblocks/next-sandbox
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: failure()
         with:
           name: playwright-report
@@ -183,10 +178,6 @@ jobs:
   e2e-next-ai-sandbox:
     needs: check_for_code_changes
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [22.21.0]
 
     timeout-minutes: 60
 
@@ -200,13 +191,13 @@ jobs:
     steps:
       - name: Checkout
         if: needs.check_for_code_changes.outputs.changes == 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
-      - name: Use Node ${{ matrix.node-version }}
+      - name: Setup Node
         if: needs.check_for_code_changes.outputs.changes == 'true'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version-file: ".nvmrc"
           cache: npm
           cache-dependency-path: "**/package-lock.json"
 
@@ -222,7 +213,7 @@ jobs:
         if: needs.check_for_code_changes.outputs.changes == 'true'
         run: npm run test -- --filter @liveblocks/next-ai-kitchen-sink
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: failure()
         with:
           name: ai-playwright-report
@@ -233,10 +224,6 @@ jobs:
   e2e-node-sandbox:
     needs: check_for_code_changes
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [22.21.0]
 
     timeout-minutes: 60
 
@@ -251,13 +238,13 @@ jobs:
     steps:
       - name: Checkout
         if: needs.check_for_code_changes.outputs.changes == 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
-      - name: Use Node ${{ matrix.node-version }}
+      - name: Setup Node
         if: needs.check_for_code_changes.outputs.changes == 'true'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version-file: ".nvmrc"
           cache: npm
           cache-dependency-path: "**/package-lock.json"
 
@@ -274,22 +261,18 @@ jobs:
     needs: check_for_code_changes
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: [22.21.0]
-
     timeout-minutes: 60
 
     steps:
       - name: Checkout
         if: needs.check_for_code_changes.outputs.changes == 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
-      - name: Use Node ${{ matrix.node-version }}
+      - name: Setup Node
         if: needs.check_for_code_changes.outputs.changes == 'true'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version-file: ".nvmrc"
           cache: npm
           cache-dependency-path: "**/package-lock.json"
 
@@ -326,7 +309,7 @@ jobs:
 
       - name: Checkout
         if: steps.filter.outputs.python_sdk == 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Install uv
         if: steps.filter.outputs.python_sdk == 'true'
@@ -369,7 +352,7 @@ jobs:
 
       - name: Checkout
         if: steps.filter.outputs.python_sdk == 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Install uv
         if: steps.filter.outputs.python_sdk == 'true'

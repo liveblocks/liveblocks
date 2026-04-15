@@ -31,7 +31,7 @@ jobs:
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           token: ${{ secrets.RELEASE_COMMIT_WRITE_TOKEN }}
 
@@ -44,10 +44,10 @@ jobs:
       - name: Validate branch
         run: test "$(git rev-parse --abbrev-ref HEAD)" == "main"
 
-      - name: Use Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Node
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
         with:
-          node-version: "22.x"
+          node-version-file: ".nvmrc"
           cache: "npm"
           cache-dependency-path: "**/package-lock.json"
 
@@ -61,7 +61,7 @@ jobs:
 
       - name: Turbo Cache
         id: turbo-cache
-        uses: actions/cache@v4
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5
         with:
           key: turbo-cache-@liveblocks/devtools-bust
           path: node_modules/.cache/turbo
