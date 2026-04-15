@@ -40,7 +40,17 @@
     "@liveblocks/node": "3.18.2"
   },
   "peerDependencies": {
-    "react": "^18 || ^19 || ^19.0.0-rc"
+    "react": "^18 || ^19 || ^19.0.0-rc",
+    "y-prosemirror": "^1",
+    "yjs": "^13"
+  },
+  "peerDependenciesMeta": {
+    "y-prosemirror": {
+      "optional": true
+    },
+    "yjs": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@liveblocks/eslint-config": "*",

@@ -32,6 +32,13 @@ When running scripts, use `npx turbo`, not `npm`.
 - Use Σ-suffix for variables storing Signals (MutableSignal, Signal,
   DerivedSignal, etc)
 
+# Dependencies
+
+- When adding new peerDependencies, pin them to major version ranges initially
+  (e.g. `"^13"` for yjs, `"^1"` for y-prosemirror, `"^18 || ^19"` for react).
+  Widen after verification. To support multiple major versions, use
+  `"^1 || ^2"`.
+
 # Code quality
 
 - Never use `as` casts blindly -- explain the type issue and let me decide. If
