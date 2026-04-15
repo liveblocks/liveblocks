@@ -92,8 +92,10 @@ import { User } from "./internal/User";
 
 const REACTIONS_TRUNCATE = 5;
 
-export interface CommentProps<CM extends BaseMetadata = DCM>
-  extends Omit<ComponentPropsWithoutRef<"div">, "children"> {
+export interface CommentProps<CM extends BaseMetadata = DCM> extends Omit<
+  ComponentPropsWithoutRef<"div">,
+  "children"
+> {
   /**
    * The comment to display.
    */
@@ -231,24 +233,30 @@ export interface CommentProps<CM extends BaseMetadata = DCM>
   internalDropdownItems?: ReactNode;
 }
 
-export interface CommentAvatarProps
-  extends Omit<ComponentProps<"div">, "children"> {
+export interface CommentAvatarProps extends Omit<
+  ComponentProps<"div">,
+  "children"
+> {
   /**
    * The user ID to display the avatar for.
    */
   userId: string;
 }
 
-export interface CommentAuthorProps
-  extends Omit<ComponentProps<"span">, "children"> {
+export interface CommentAuthorProps extends Omit<
+  ComponentProps<"span">,
+  "children"
+> {
   /**
    * The user ID to display the author for.
    */
   userId: string;
 }
 
-export interface CommentDateProps
-  extends Omit<ComponentProps<"span">, "children"> {
+export interface CommentDateProps extends Omit<
+  ComponentProps<"span">,
+  "children"
+> {
   /**
    * The date to display.
    */
@@ -279,8 +287,10 @@ function CommentDate({ locale, date, className, ...props }: CommentDateProps) {
   );
 }
 
-export interface CommentDropdownItemProps
-  extends Omit<ComponentPropsWithoutRef<"div">, "onSelect"> {
+export interface CommentDropdownItemProps extends Omit<
+  ComponentPropsWithoutRef<"div">,
+  "onSelect"
+> {
   /**
    * An optional icon displayed in this dropdown item.
    */
@@ -292,8 +302,9 @@ export interface CommentDropdownItemProps
   onSelect?: (event: Event) => void;
 }
 
-interface CommentReactionButtonProps
-  extends ComponentPropsWithoutRef<typeof Button> {
+interface CommentReactionButtonProps extends ComponentPropsWithoutRef<
+  typeof Button
+> {
   reaction: CommentReactionData;
   overrides?: Partial<GlobalOverrides & CommentOverrides>;
 }
@@ -312,8 +323,7 @@ interface CommentAttachmentProps extends ComponentProps<typeof FileAttachment> {
 }
 
 interface CommentMentionProps
-  extends CommentBodyMentionProps,
-    CommentPrimitiveMentionProps {
+  extends CommentBodyMentionProps, CommentPrimitiveMentionProps {
   overrides?: CommentProps["overrides"];
 }
 

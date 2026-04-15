@@ -13,7 +13,8 @@ import { useOverrides } from "../../overrides";
 import { cn } from "../../utils/cn";
 
 export interface DropdownProps
-  extends Pick<
+  extends
+    Pick<
       DropdownMenuPrimitive.DropdownMenuProps,
       "defaultOpen" | "open" | "onOpenChange"
     >,

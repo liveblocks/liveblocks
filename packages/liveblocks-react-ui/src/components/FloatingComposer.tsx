@@ -25,7 +25,9 @@ import { Composer } from "./Composer";
 export interface FloatingComposerProps<
   TM extends BaseMetadata = DTM,
   CM extends BaseMetadata = DCM,
-> extends Omit<
+>
+  extends
+    Omit<
       ComposerProps<TM, CM>,
       "collapsed" | "onCollapsedChange" | "defaultCollapsed"
     >,

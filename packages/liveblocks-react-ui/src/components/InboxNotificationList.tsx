@@ -6,8 +6,7 @@ import { Children, forwardRef, useRef } from "react";
 import { cn } from "../utils/cn";
 import { useIntersectionCallback } from "../utils/use-visible";
 
-export interface InboxNotificationListProps
-  extends ComponentPropsWithoutRef<"ol"> {
+export interface InboxNotificationListProps extends ComponentPropsWithoutRef<"ol"> {
   /**
    * This API is *EXPERIMENTAL* and likely not going to be the final API. Do
    * not rely on it.

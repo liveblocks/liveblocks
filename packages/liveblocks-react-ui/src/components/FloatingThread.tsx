@@ -23,7 +23,9 @@ import { Thread } from "./Thread";
 export interface FloatingThreadProps<
   TM extends BaseMetadata = DTM,
   CM extends BaseMetadata = DCM,
-> extends ThreadProps<TM, CM>,
+>
+  extends
+    ThreadProps<TM, CM>,
     Relax<
       Pick<
         PopoverPrimitive.PopoverProps,

@@ -36,7 +36,8 @@ const KEYS = {
 } as const;
 
 export interface TooltipProps
-  extends Pick<TooltipPrimitive.TooltipTriggerProps, "children">,
+  extends
+    Pick<TooltipPrimitive.TooltipTriggerProps, "children">,
     Omit<TooltipPrimitive.TooltipContentProps, "content"> {
   content: ReactNode;
   multiline?: boolean;

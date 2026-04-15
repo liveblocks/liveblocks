@@ -495,8 +495,8 @@ export interface NotificationHttpApi<
 export interface LiveblocksHttpApi<
   TM extends BaseMetadata,
   CM extends BaseMetadata,
-> extends RoomHttpApi<TM, CM>,
-    NotificationHttpApi<TM, CM> {
+>
+  extends RoomHttpApi<TM, CM>, NotificationHttpApi<TM, CM> {
   getUrlMetadata(url: string): Promise<UrlMetadata>;
 
   getUserThreads_experimental(options?: {

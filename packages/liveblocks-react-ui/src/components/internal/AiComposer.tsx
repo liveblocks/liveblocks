@@ -33,8 +33,10 @@ import { ShortcutTooltip, TooltipProvider } from "./Tooltip";
 /* -------------------------------------------------------------------------------------------------
  * AiComposer
  * -----------------------------------------------------------------------------------------------*/
-export interface AiComposerProps
-  extends Omit<ComponentProps<"form">, "defaultValue"> {
+export interface AiComposerProps extends Omit<
+  ComponentProps<"form">,
+  "defaultValue"
+> {
   /**
    * The composer's initial value.
    */

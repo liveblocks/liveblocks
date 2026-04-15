@@ -121,8 +121,10 @@ export function FloatingThreads({
   );
 }
 
-interface FloatingThreadPortalProps
-  extends Omit<HTMLAttributes<HTMLDivElement>, "children"> {
+interface FloatingThreadPortalProps extends Omit<
+  HTMLAttributes<HTMLDivElement>,
+  "children"
+> {
   thread: ThreadData;
   editor: Editor;
   children: ReactNode;

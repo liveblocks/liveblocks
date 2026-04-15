@@ -241,18 +241,17 @@ export type ComposerProps<
     roomId?: string;
   };
 
-interface ComposerEditorContainerProps
-  extends Pick<
-    ComposerProps,
-    | "defaultValue"
-    | "showAttachments"
-    | "showFormattingControls"
-    | "showAttribution"
-    | "overrides"
-    | "actions"
-    | "autoFocus"
-    | "disabled"
-  > {
+interface ComposerEditorContainerProps extends Pick<
+  ComposerProps,
+  | "defaultValue"
+  | "showAttachments"
+  | "showFormattingControls"
+  | "showAttribution"
+  | "overrides"
+  | "actions"
+  | "autoFocus"
+  | "disabled"
+> {
   isCollapsed: boolean | undefined;
   onEmptyChange: (isEmpty: boolean) => void;
   hasResolveMentionSuggestions: boolean;

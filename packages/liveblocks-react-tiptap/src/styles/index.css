@@ -39,9 +39,9 @@
 
 :is(.lb-tiptap-suggestions-list-item) {
   &:where(
-      [data-highlighted]:not([data-highlighted="false"]),
-      [data-selected]:not([data-selected="false"])
-    ) {
+    [data-highlighted]:not([data-highlighted="false"]),
+    [data-selected]:not([data-selected="false"])
+  ) {
     background: var(--lb-foreground-subtle);
     transition-duration: calc(var(--lb-transition-duration) / 2);
   }

@@ -12,8 +12,7 @@ import { User } from "./internal/User";
 
 const AUTHORS_TRUNCATE = 3;
 
-export interface HistoryVersionSummaryProps
-  extends ComponentPropsWithoutRef<"button"> {
+export interface HistoryVersionSummaryProps extends ComponentPropsWithoutRef<"button"> {
   version: HistoryVersion;
   selected?: boolean;
 }

@@ -18,8 +18,7 @@ import { applyUpdate, Doc } from "yjs";
 
 const AUTHORS_TRUNCATE = 3;
 
-export interface HistoryVersionPreviewProps
-  extends ComponentPropsWithoutRef<"div"> {
+export interface HistoryVersionPreviewProps extends ComponentPropsWithoutRef<"div"> {
   version: HistoryVersion;
   editor: Editor;
   onVersionRestore?: (version: HistoryVersion) => void;

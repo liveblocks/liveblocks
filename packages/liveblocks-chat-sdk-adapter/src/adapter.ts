@@ -59,8 +59,7 @@ const ADAPTER_PREFIX = "liveblocks";
 export class LiveblocksAdapter<
   U extends BaseUserMeta = BaseUserMeta,
   DGI extends BaseGroupInfo = BaseGroupInfo,
-> implements Adapter<{ roomId: string; threadId: string }, CommentData>
-{
+> implements Adapter<{ roomId: string; threadId: string }, CommentData> {
   readonly name = "liveblocks";
   readonly userName: string;
   readonly #client: Liveblocks;

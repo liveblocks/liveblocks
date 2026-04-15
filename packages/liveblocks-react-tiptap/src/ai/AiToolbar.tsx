@@ -59,8 +59,10 @@ import { DEFAULT_STATE, isContextualPromptDiffResponse } from "./AiExtension";
 
 export const AI_TOOLBAR_COLLISION_PADDING = 10;
 
-export interface AiToolbarProps
-  extends Omit<ComponentProps<"div">, "value" | "defaultValue" | "children"> {
+export interface AiToolbarProps extends Omit<
+  ComponentProps<"div">,
+  "value" | "defaultValue" | "children"
+> {
   /**
    * The Tiptap editor.
    */
@@ -79,8 +81,9 @@ export interface AiToolbarProps
 
 type AiToolbarDropdownSeparatorProps = ComponentProps<"div">;
 
-interface AiToolbarDropdownItemProps
-  extends ComponentProps<typeof Command.Item> {
+interface AiToolbarDropdownItemProps extends ComponentProps<
+  typeof Command.Item
+> {
   icon?: ReactNode;
 }
 
