@@ -5,7 +5,7 @@
  * For connection state machine, auth, reconnection, and wire protocol tests,
  * see room.mockserver.test.ts.
  */
-import { describe, expect, onTestFinished, test } from "vitest";
+import { describe, expect, onTestFinished, test, vi } from "vitest";
 
 import { LiveList } from "../crdts/LiveList";
 import { LiveObject } from "../crdts/LiveObject";
@@ -618,5 +618,26 @@ describe("room (dev server)", () => {
       expect(root.get("x")).toBe(i - 1);
     }
     expect(room.history.canUndo()).toBe(false);
+  });
+
+  test("history.disable() never fires history subscription events", async () => {
+    const { room, root } = await prepareIsolatedStorageTest<{ x: number }>({
+      liveblocksType: "LiveObject",
+      data: { x: 0 },
+    });
+
+    // Build up undo state so canUndo is true
+    root.set("x", 1);
+
+    const callback = vi.fn();
+    onTestFinished(room.events.history.subscribe(callback));
+
+    // Mutations inside disable should not produce any history notifications
+    room.history.disable(() => {
+      root.set("x", 2);
+      root.set("x", 3);
+    });
+
+    expect(callback).not.toHaveBeenCalled();
   });
 });
