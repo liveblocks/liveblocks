@@ -1,5 +1,9 @@
 ## vNEXT (not yet released)
 
+### `@liveblocks/emails`
+
+- Add missing peer dependency declarations for `yjs` and `y-prosemirror`.
+
 ## v3.18.2
 
 ### `@liveblocks/client`
