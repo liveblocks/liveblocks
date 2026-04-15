@@ -1891,7 +1891,7 @@ export function createRoom<
 
     // Populate missing top-level keys using `initialStorage`
     const root = context.root;
-    withoutHistory(() => {
+    disableHistory(() => {
       for (const key in context.initialStorage) {
         if (root.get(key) === undefined) {
           if (canWrite) {
@@ -3361,7 +3361,7 @@ export function createRoom<
     commitPausedHistoryToUndoStack();
   }
 
-  function withoutHistory<T>(fn: () => T): T {
+  function disableHistory<T>(fn: () => T): T {
     const undoBefore = context.undoStack.length;
     const redoBefore = context.redoStack.length;
     try {
@@ -3805,7 +3805,7 @@ export function createRoom<
         clear,
         pause: pauseHistory,
         resume: resumeHistory,
-        disable: withoutHistory,
+        disable: disableHistory,
       },
 
       fetchYDoc,
