@@ -31,7 +31,7 @@
     "@types/react": "^18.3.17",
     "@types/react-dom": "^18.3.5",
     "@vitest/coverage-istanbul": "^3.2.4",
-    "dependency-cruiser": "^16.9.0",
+    "dependency-cruiser": "^17.3.10",
     "jsdom": "^25.0.1",
     "prettier": "^3.4.2",
     "publint": "^0.3.6",
