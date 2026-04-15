@@ -26,7 +26,7 @@
     "format": "turbo run format"
   },
   "devDependencies": {
-    "@arethetypeswrong/cli": "^0.17.3",
+    "@arethetypeswrong/cli": "^0.18.2",
     "@types/node": "^18.19.70",
     "@types/react": "^18.3.17",
     "@types/react-dom": "^18.3.5",
@@ -34,9 +34,9 @@
     "dependency-cruiser": "^17.3.10",
     "happy-dom": "^20.9.0",
     "prettier": "^3.4.2",
-    "publint": "^0.3.6",
+    "publint": "^0.3.18",
     "ts-morph": "^22.0.0",
-    "tsup": "^8.3.5",
+    "tsup": "^8.5.1",
     "turbo": "^2.5.6",
     "typescript": "^5.7.2",
     "vitest": "^4.1.4"
