@@ -2289,7 +2289,7 @@ export function createRoom<
   function canRedo() { return context.redoStack.length > 0; } // prettier-ignore
 
   function onHistoryChange() {
-    if (_historyDisabled > 0) return;
+    if (historyDisabled > 0) return;
     eventHub.history.notify({ canUndo: canUndo(), canRedo: canRedo() });
   }
 
@@ -3364,7 +3364,7 @@ export function createRoom<
   }
 
   // Depth counter for nested history.disable() calls, 0 means history is not disabled
-  let _historyDisabled = 0;
+  let historyDisabled = 0;
 
   function disableHistory<T>(fn: () => T): T {
     const origUndo = context.undoStack;
@@ -3373,11 +3373,11 @@ export function createRoom<
     const tempRedo: Stackframe<P>[][] = [];
     context.undoStack = tempUndo;
     context.redoStack = tempRedo;
-    _historyDisabled++;
+    historyDisabled++;
     try {
       return fn();
     } finally {
-      _historyDisabled--;
+      historyDisabled--;
       if (context.undoStack !== tempUndo || context.redoStack !== tempRedo) {
         throw new Error("unexpected stack swap during history.disable()"); // eslint-disable-line no-unsafe-finally
       }
