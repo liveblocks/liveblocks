@@ -1336,8 +1336,8 @@ type RoomState<
   pool: ManagedPool;
   root: LiveObject<S> | undefined;
 
-  readonly undoStack: Stackframe<P>[][];
-  readonly redoStack: Stackframe<P>[][];
+  undoStack: Stackframe<P>[][];
+  redoStack: Stackframe<P>[][];
 
   /**
    * When history is paused, all operations will get queued up here. When
@@ -3362,13 +3362,20 @@ export function createRoom<
   }
 
   function disableHistory<T>(fn: () => T): T {
-    const undoBefore = context.undoStack.length;
-    const redoBefore = context.redoStack.length;
+    const origUndo = context.undoStack;
+    const origRedo = context.redoStack;
+    const tempUndo: Stackframe<P>[][] = [];
+    const tempRedo: Stackframe<P>[][] = [];
+    context.undoStack = tempUndo;
+    context.redoStack = tempRedo;
     try {
       return fn();
     } finally {
-      context.undoStack.length = undoBefore;
-      context.redoStack.length = redoBefore;
+      if (context.undoStack !== tempUndo || context.redoStack !== tempRedo) {
+        throw new Error("unexpected stack swap during history.disable()"); // eslint-disable-line no-unsafe-finally
+      }
+      context.undoStack = origUndo;
+      context.redoStack = origRedo;
     }
   }
 
