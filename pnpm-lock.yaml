@@ -722,6 +722,9 @@ importers:
       '@xyflow/react':
         specifier: ^12.10.1
         version: 12.10.1(@types/react@18.3.17)(immer@10.1.1)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+      esbuild:
+        specifier: ^0.27.0
+        version: 0.27.7
       eslint:
         specifier: ^9.39.4
         version: 9.39.4(jiti@2.4.2)

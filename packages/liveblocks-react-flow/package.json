@@ -89,6 +89,7 @@
     "@testing-library/jest-dom": "^6.4.6",
     "@testing-library/react": "^13.1.1",
     "@xyflow/react": "^12.10.1",
+    "esbuild": "^0.27.0",
     "eslint": "^9.39.4",
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^5.2.0",
