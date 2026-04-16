@@ -43,7 +43,7 @@
     "y-indexeddb": "^9.0.12"
   },
   "peerDependencies": {
-    "yjs": "^13.6.1"
+    "yjs": "^13"
   },
   "devDependencies": {
     "@liveblocks/eslint-config": "workspace:*",
