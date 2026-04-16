@@ -1,8 +1,10 @@
 ## vNEXT (not yet released)
 
-### `@liveblocks/emails`
+### `@liveblocks/*`
 
-- Add missing peer dependency declarations for `yjs` and `y-prosemirror`.
+- Third-party libraries like `yjs`, `@tiptap/*`, and `@blocknote/*` are now
+  declared as peer dependencies instead of bundled dependencies across all
+  packages that use them.
 
 ## v3.18.2
 
