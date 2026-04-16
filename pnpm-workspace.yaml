@@ -15,8 +15,10 @@ allowBuilds:
   "@parcel/watcher": true
   "@swc/core": true
   "@tailwindcss/oxide": true
-  "esbuild": true
-  "lmdb": true
-  "msgpackr-extract": true
-  "msw": true
-  "sharp": true
+  esbuild: true
+  lmdb: true
+  sharp: true
+
+  # Optional — fall back to JS implementations
+  msgpackr-extract: false
+  msw: false
