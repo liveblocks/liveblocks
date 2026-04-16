@@ -53,7 +53,6 @@
     "@liveblocks/query-parser": "^0.1.1",
     "@liveblocks/vitest-config": "*",
     "@types/ws": "^8.5.10",
-    "eslint-plugin-rulesdir": "^0.2.2",
     "fast-check": "^4.6.0",
     "msw": "^2.10.4",
     "ws": "^8.17.1"

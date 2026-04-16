@@ -56,6 +56,7 @@
     "@liveblocks/eslint-config": "*",
     "@liveblocks/vitest-config": "*",
     "csstype": "3.0.2",
+    "eslint-plugin-react-hooks": "^5.2.0",
     "msw": "^2.10.4"
   },
   "sideEffects": false,
