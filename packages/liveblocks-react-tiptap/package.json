@@ -79,7 +79,6 @@
     "@liveblocks/eslint-config": "workspace:*",
     "@liveblocks/rollup-config": "workspace:*",
     "@liveblocks/vitest-config": "workspace:*",
-    "@testing-library/jest-dom": "^5.16.5",
     "@tiptap/extension-document": "^3.19.0",
     "@tiptap/extension-paragraph": "^3.19.0",
     "@tiptap/extension-text": "^3.19.0",
