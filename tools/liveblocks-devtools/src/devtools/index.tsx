@@ -7,8 +7,8 @@ void browser.devtools.panels.create(
   "Liveblocks",
   "",
   // See: https://github.com/PlasmoHQ/plasmo/issues/106#issuecomment-1188539625
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-  liveblocksPanelHTML.split("/").pop()!
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+  liveblocksPanelHTML.split("/").pop()
 );
 
 function Page() {

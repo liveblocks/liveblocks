@@ -56,18 +56,18 @@ export type YContentBinaryNode = {
 export type YContentFormatNode = {
   type: "Y.ContentFormat";
   data: {
-    [key: string]: Object;
+    [key: string]: object;
   };
 };
 
 export type YContentEmbedNode = {
   type: "Y.ContentEmbed";
-  data: Object;
+  data: object;
 };
 
 export type YContentAnyNode = {
   type: "Y.ContentAny";
-  data: (Number | Object | Boolean | Array<unknown> | String)[];
+  data: (number | object | boolean | Array<unknown> | string)[];
 };
 
 export type YAbstractTypeNode =

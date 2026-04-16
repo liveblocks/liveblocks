@@ -53,7 +53,7 @@ export type YContentEmbedTreeNode = {
   type: YContentEmbedNode["type"];
   id: string;
   key: string;
-  payload: Object;
+  payload: object;
 };
 
 export type YContentBinaryTreeNode = {
@@ -67,14 +67,14 @@ export type YContentFormatTreeNode = {
   type: YContentFormatNode["type"];
   id: string;
   key: string;
-  payload: Object;
+  payload: object;
 };
 
 export type YContentAnyTreeNode = {
   type: YContentAnyNode["type"];
   id: string;
   key: string;
-  payload: (Number | Object | Boolean | Array<unknown> | String)[];
+  payload: (number | object | boolean | Array<unknown> | string)[];
 };
 
 export type YContentTreeNode =

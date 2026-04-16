@@ -169,7 +169,6 @@ export function ResizablePanel({
           <Handle
             direction="vertical"
             value={height}
-            // eslint-disable-next-line @typescript-eslint/no-misused-promises
             onValueChange={setRenderHeight}
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
             onValueApply={setHeight}

@@ -1,4 +1,3 @@
-/* eslint-disable eqeqeq */
 import type { Edge, Node } from "reactflow";
 import { MarkerType } from "reactflow";
 import * as Y from "yjs";

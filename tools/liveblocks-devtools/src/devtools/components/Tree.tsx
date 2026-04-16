@@ -1862,7 +1862,7 @@ function collectYNode(
       case "Y.Text":
       case "Y.XmlText":
       case "Y.XmlElement":
-      case "Y.XmlFragment":
+      case "Y.XmlFragment": {
         let isIndirectMatch = false;
         for (const childNode of node.payload) {
           if (
@@ -1875,6 +1875,7 @@ function collectYNode(
           indirectMatches.add(node.id);
         }
         return isIndirectMatch;
+      }
     }
   }
 }

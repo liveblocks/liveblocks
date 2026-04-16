@@ -17,7 +17,7 @@ export function findAndReplace(
 
       fs.writeFileSync(file, callback(content), { encoding: "utf-8" });
     }
-  } catch (error) {
+  } catch {
     // console.error(error);
   }
 }
