@@ -139,7 +139,7 @@ export const AiExtension = Extension.create<
       pud: undefined,
 
       // The actual default resolver is set in LiveblocksExtension via AiExtension.configure()
-      resolveContextualPrompt: () => Promise.reject(),
+      resolveContextualPrompt: () => Promise.reject(new Error("resolveContextualPrompt not configured")),
       name: DEFAULT_AI_NAME,
     };
   },

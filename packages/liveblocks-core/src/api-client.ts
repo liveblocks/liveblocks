@@ -1174,7 +1174,7 @@ export function createApiClient<
                 roomId,
               })
             );
-          } catch (error) {
+          } catch {
             // Ignore the error, we are probably offline
           }
         }
@@ -1310,7 +1310,7 @@ export function createApiClient<
             url`/v2/c/chats/${chatId}/attachments/${attachment.id}/multipart/${multipartUpload.uploadId}`,
             await authManager.getAuthValue({ requestedScope: "comments:read" })
           );
-        } catch (err) {
+        } catch {
           // Ignore the error, we are probably offline
         }
         throw err;

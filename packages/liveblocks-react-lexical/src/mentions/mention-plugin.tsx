@@ -164,7 +164,7 @@ function $getRangeAtMatch(match: RegExpExecArray): globalThis.Range | null {
     range.setStart(anchor, offsetWithWhitespaces);
     range.setEnd(anchor, endOffset);
     return range;
-  } catch (error) {
+  } catch {
     return null;
   }
 }

@@ -124,8 +124,10 @@ export default function $wrapSelectionInThreadMarkNode(
   }
   // Make selection collapsed at the end
   if ($isElementNode(lastCreatedMarkNode)) {
-    isBackward
-      ? lastCreatedMarkNode.selectStart()
-      : lastCreatedMarkNode.selectEnd();
+    if (isBackward) {
+      lastCreatedMarkNode.selectStart();
+    } else {
+      lastCreatedMarkNode.selectEnd();
+    }
   }
 }
