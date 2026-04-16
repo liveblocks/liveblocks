@@ -4,7 +4,8 @@ import type { ReactNode } from "react";
 import { forwardRef } from "react";
 
 export interface Props
-  extends RadixDialog.DialogProps,
+  extends
+    RadixDialog.DialogProps,
     Omit<RadixDialog.DialogContentProps, "content"> {
   content: ReactNode;
 }

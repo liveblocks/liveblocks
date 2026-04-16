@@ -3,7 +3,8 @@ import cx from "classnames";
 import { forwardRef, type ReactNode } from "react";
 
 export interface Props
-  extends RadixTooltip.TooltipProps,
+  extends
+    RadixTooltip.TooltipProps,
     Omit<RadixTooltip.TooltipContentProps, "content"> {
   content: ReactNode;
 }
