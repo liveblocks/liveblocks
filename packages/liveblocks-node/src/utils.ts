@@ -3,7 +3,7 @@ const DEFAULT_BASE_URL = "https://api.liveblocks.io";
 // Valid alphabet for secret/public keys
 const VALID_KEY_CHARS_REGEX = /^[\w-]+$/;
 
-export function getBaseUrl(baseUrl?: string | undefined): string {
+export function getBaseUrl(baseUrl?: string): string {
   if (
     typeof baseUrl === "string" &&
     baseUrl.startsWith("http") // Must be http or https URL

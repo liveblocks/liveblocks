@@ -182,7 +182,7 @@ export async function withProsemirrorDocument<T>(
       }
       const node = createDocumentFromContent(content, schema);
       if (!node) {
-        throw "Invalid content";
+        throw new Error("Invalid content");
       }
       return this.update((doc, tr) => {
         tr.delete(0, doc.content.size);
