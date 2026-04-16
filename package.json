@@ -32,6 +32,7 @@
     "@types/react-dom": "^18.3.5",
     "@vitest/coverage-istanbul": "^4.1.4",
     "dependency-cruiser": "^17.3.10",
+    "eslint": "^9.39.4",
     "happy-dom": "^20.9.0",
     "prettier": "^3.8.3",
     "publint": "^0.3.18",
