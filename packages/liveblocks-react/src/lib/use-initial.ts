@@ -27,7 +27,6 @@ export function useInitialUnlessFunction<T>(
 
   type Fn = T & ((...args: unknown[]) => unknown);
   const ref = useLatest(latestValue as Fn);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const wrapper = useCallback(
     ((...args: unknown[]) => ref.current(...args)) as Fn,
     [ref]

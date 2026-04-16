@@ -21,10 +21,7 @@ type InferNodeTypeLiterals<N> =
       : T
     : never;
 
-type NodeTypeLiterals<N> =
-  | (string & {}) // eslint-disable-line @typescript-eslint/no-empty-object-type
-  | "*"
-  | InferNodeTypeLiterals<N>;
+type NodeTypeLiterals<N> = (string & {}) | "*" | InferNodeTypeLiterals<N>;
 
 type InferEdgeTypeLiterals<E> =
   E extends Edge<any, infer T extends string>
@@ -33,10 +30,7 @@ type InferEdgeTypeLiterals<E> =
       : T
     : never;
 
-type EdgeTypeLiterals<E> =
-  | (string & {}) // eslint-disable-line @typescript-eslint/no-empty-object-type
-  | "*"
-  | InferEdgeTypeLiterals<E>;
+type EdgeTypeLiterals<E> = (string & {}) | "*" | InferEdgeTypeLiterals<E>;
 
 export type NodeSyncConfig<N extends Node> = {
   [key in NodeTypeLiterals<N>]?: SyncConfig;

@@ -20,7 +20,6 @@ export const withLiveblocksEditorOptions = <
   S extends StyleSchema = DefaultStyleSchema,
 >(
   liveblocksExtension: Extension<any, any>,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   blocknoteOptions: Partial<BlockNoteEditorOptions<B, I, S>> = {},
   liveblocksOptions: Partial<{ mentions: boolean }> = {}
 ): Partial<BlockNoteEditorOptions<B, I, S>> => {
@@ -37,7 +36,6 @@ export const withLiveblocksEditorOptions = <
 
     // add the liveblocks extension
     extensions: [
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       createExtension({
         key: "liveblocksExtension",
         tiptapExtensions: [liveblocksExtension],

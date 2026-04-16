@@ -11,7 +11,7 @@
  */
 
 // There are some lint errors in this file as it's a direct copy of the original code from Tiptap. In order to not diverge from the original code, we're disabling the lint errors.
-/* eslint-disable */
+
 import type { Transaction } from "@tiptap/pm/state";
 import { ySyncPluginKey } from "y-prosemirror";
 

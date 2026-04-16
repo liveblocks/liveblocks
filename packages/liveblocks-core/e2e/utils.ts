@@ -74,7 +74,6 @@ async function initializeRoomForTest<
     baseUrl: BASE_URL,
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
   const { room, leave } = client.enterRoom<P, S, E, TM, CM>(roomId, {
     initialPresence,
     initialStorage,

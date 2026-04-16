@@ -301,7 +301,6 @@ function AiToolbarReviewingSuggestions() {
 function AiToolbarCustomPromptContent() {
   const editor = useCurrentEditor("CustomPromptContent", "AiToolbar");
   // Eslint doesn't seem to like Tiptap's Type declaration strategy
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
   const aiName = editor.storage.liveblocksAi.name;
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const { state, dropdownRef, isDropdownHidden } = useAiToolbarContext();
@@ -314,24 +313,18 @@ function AiToolbarCustomPromptContent() {
     [customPrompt]
   );
 
-  useLayoutEffect(
-    () => {
-      requestAnimationFrame(() => {
-        const textArea = textAreaRef.current;
+  useLayoutEffect(() => {
+    requestAnimationFrame(() => {
+      const textArea = textAreaRef.current;
 
-        if (!textArea) {
-          return;
-        }
+      if (!textArea) {
+        return;
+      }
 
-        textArea.focus();
-        textArea.setSelectionRange(
-          textArea.value.length,
-          textArea.value.length
-        );
-      });
-    },
-    [] // eslint-disable-line react-hooks/exhaustive-deps
-  );
+      textArea.focus();
+      textArea.setSelectionRange(textArea.value.length, textArea.value.length);
+    });
+  }, []);
 
   const handlePromptKeyDown = (
     event: ReactKeyboardEvent<HTMLTextAreaElement>

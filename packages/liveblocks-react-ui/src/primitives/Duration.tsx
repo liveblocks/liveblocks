@@ -328,7 +328,6 @@ export const Duration = forwardRef<HTMLTimeElement, DurationProps>(
         typeof renderTitle === "function"
           ? renderTitle(resolvedDuration, locale)
           : renderTitle,
-      // eslint-disable-next-line react-hooks/exhaustive-deps
       [renderTitle, resolvedDuration, locale]
     );
     const children = useMemo(

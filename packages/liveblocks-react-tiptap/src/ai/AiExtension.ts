@@ -47,7 +47,6 @@ function getLiveblocksYjsProvider(
   editor: Editor
 ): LiveblocksYjsProvider | undefined {
   // Eslint doesn't seem to like Tiptap's Type declaration strategy
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
   return editor.extensionStorage.liveblocksExtension?.provider;
 }
 
