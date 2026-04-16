@@ -104,6 +104,7 @@ const deletedComment: CommentData = {
   createdAt: new Date("2023-08-14T12:41:50.243Z"),
   editedAt: new Date("2023-08-14T12:41:50.243Z"),
   deletedAt: new Date("2023-08-14T12:41:50.243Z"),
+  metadata: {},
 };
 
 const thread: ThreadData = {
