@@ -31,12 +31,5 @@
   },
   "engines": {
     "node": ">=24.x"
-  },
-  "pnpm": {
-    "overrides": {
-      "@types/node": "$@types/node",
-      "@types/react": "$@types/react",
-      "@types/react-dom": "$@types/react-dom"
-    }
   }
 }

@@ -61,8 +61,8 @@
     "@tiptap/pm": "^3.19.0",
     "@tiptap/react": "^3.19.0",
     "@tiptap/suggestion": "^3.19.0",
-    "@types/react": "*",
-    "@types/react-dom": "*",
+    "@types/react": "^18 || ^19",
+    "@types/react-dom": "^18 || ^19",
     "react": "^18 || ^19 || ^19.0.0-rc",
     "react-dom": "^18 || ^19 || ^19.0.0-rc",
     "yjs": "^13"

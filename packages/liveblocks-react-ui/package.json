@@ -90,8 +90,8 @@
     "slate-react": "^0.110.3"
   },
   "peerDependencies": {
-    "@types/react": "*",
-    "@types/react-dom": "*",
+    "@types/react": "^18 || ^19",
+    "@types/react-dom": "^18 || ^19",
     "react": "^18 || ^19 || ^19.0.0-rc",
     "react-dom": "^18 || ^19 || ^19.0.0-rc"
   },
