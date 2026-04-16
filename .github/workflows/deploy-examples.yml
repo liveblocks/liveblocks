@@ -66,6 +66,9 @@ jobs:
           echo Triggering deployment for nextjs-comments-emails-resend
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_Ht9CiMBXOz7fYMoPGvW0BiSXDeJa/zjNQ0VUNX6; echo
 
+          echo Triggering deployment for nextjs-comments-handsontable
+          curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_4jq3qnMcDd1LcrnZdO6gyLEdHfsv/reWjm0bChp; echo
+
           echo Triggering deployment for nextjs-comments-notifications
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_NeiWF6wVsvMmaLaje9MfWNelU0Ms/HU8HBQCHF4; echo
 
@@ -125,6 +128,9 @@ jobs:
 
           echo Triggering deployment for nextjs-live-form-selection
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_ypmCK9Ww5ROey9Y9f1Q4SWtlGSGa/TqtsylS5TE; echo
+
+          echo Triggering deployment for nextjs-multiplayer-handsontable
+          curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_1T5W3NupIFxKYDGgbCygAnrArELa/1WOeYSxEdK; echo
 
           echo Triggering deployment for nextjs-notifications-custom
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_3MVsF7dPIZBQdUpfzQjVvZ1dBmPp/x1sO6CecOJ; echo
