@@ -141,4 +141,5 @@ function ShortcutTooltipKey({ name, ...props }: ShortcutTooltipKeyProps) {
   );
 }
 
-export const TooltipProvider = TooltipPrimitive.Provider;
+export const TooltipProvider: typeof TooltipPrimitive.Provider =
+  TooltipPrimitive.Provider;

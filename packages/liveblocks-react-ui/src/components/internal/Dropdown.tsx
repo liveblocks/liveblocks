@@ -87,4 +87,5 @@ export const DropdownItem = forwardRef<HTMLDivElement, DropdownItemProps>(
   }
 );
 
-export const DropdownTrigger = DropdownMenuPrimitive.Trigger;
+export const DropdownTrigger: typeof DropdownMenuPrimitive.Trigger =
+  DropdownMenuPrimitive.Trigger;
