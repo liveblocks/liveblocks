@@ -37,7 +37,7 @@ export default function Page() {
               style={{
                 display: "flex",
                 flexDirection: "column",
-                aspectRatio: 1,
+                aspectRatio: "1",
               }}
             >
               <div
