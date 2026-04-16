@@ -68,17 +68,20 @@ jobs:
         if: needs.check_for_code_changes.outputs.changes == 'true'
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
+      - name: Setup pnpm
+        if: needs.check_for_code_changes.outputs.changes == 'true'
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4
+
       - name: Setup Node
         if: needs.check_for_code_changes.outputs.changes == 'true'
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
         with:
           node-version-file: ".nvmrc"
-          cache: npm
-          cache-dependency-path: "**/package-lock.json"
+          cache: pnpm
 
       - name: Install dependencies
         if: needs.check_for_code_changes.outputs.changes == 'true'
-        run: npm install
+        run: pnpm install --frozen-lockfile
 
       - name: Turbo Cache
         if: needs.check_for_code_changes.outputs.changes == 'true'
@@ -95,7 +98,7 @@ jobs:
 
       - name: Build
         if: needs.check_for_code_changes.outputs.changes == 'true'
-        run: npm run build -- --filter ${{ matrix.pkg }}
+        run: pnpm run build --filter ${{ matrix.pkg }}
 
       - name: Ensure no files are changed
         if: needs.check_for_code_changes.outputs.changes == 'true'
@@ -109,23 +112,23 @@ jobs:
 
       - name: Run unit tests
         if: needs.check_for_code_changes.outputs.changes == 'true'
-        run: npm run test:ci -- --filter ${{ matrix.pkg }} -- --coverage
+        run: pnpm run test:ci --filter ${{ matrix.pkg }} -- --coverage
 
       - name: Run type tests
         if: needs.check_for_code_changes.outputs.changes == 'true'
-        run: npm run test:types -- --filter ${{ matrix.pkg }}
+        run: pnpm run test:types --filter ${{ matrix.pkg }}
 
       - name: Run dependency tests
         if: needs.check_for_code_changes.outputs.changes == 'true'
-        run: npm run test:deps -- --filter ${{ matrix.pkg }}
+        run: pnpm run test:deps --filter ${{ matrix.pkg }}
 
       - name: Run lint checks
         if: needs.check_for_code_changes.outputs.changes == 'true'
-        run: npm run lint -- --filter ${{ matrix.pkg }}
+        run: pnpm run lint --filter ${{ matrix.pkg }}
 
       - name: Run public NPM packaging lint checks
         if: needs.check_for_code_changes.outputs.changes == 'true'
-        run: npm run lint:package -- --filter ${{ matrix.pkg }}
+        run: pnpm run lint:package --filter ${{ matrix.pkg }}
 
   # E2E tests defined in e2e/next-sandbox package
   e2e-next-sandbox:
@@ -146,25 +149,28 @@ jobs:
         if: needs.check_for_code_changes.outputs.changes == 'true'
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
+      - name: Setup pnpm
+        if: needs.check_for_code_changes.outputs.changes == 'true'
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4
+
       - name: Setup Node
         if: needs.check_for_code_changes.outputs.changes == 'true'
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
         with:
           node-version-file: ".nvmrc"
-          cache: npm
-          cache-dependency-path: "**/package-lock.json"
+          cache: pnpm
 
       - name: Install dependencies
         if: needs.check_for_code_changes.outputs.changes == 'true'
-        run: npm install
+        run: pnpm install --frozen-lockfile
 
       - name: Install Playwright
         if: needs.check_for_code_changes.outputs.changes == 'true'
-        run: npx playwright install chromium --no-shell --with-deps
+        run: pnpm exec playwright install chromium --no-shell --with-deps
 
       - name: Run Playwright tests
         if: needs.check_for_code_changes.outputs.changes == 'true'
-        run: npm run test -- --filter @liveblocks/next-sandbox
+        run: pnpm run test --filter @liveblocks/next-sandbox
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: failure()
@@ -192,25 +198,28 @@ jobs:
         if: needs.check_for_code_changes.outputs.changes == 'true'
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
+      - name: Setup pnpm
+        if: needs.check_for_code_changes.outputs.changes == 'true'
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4
+
       - name: Setup Node
         if: needs.check_for_code_changes.outputs.changes == 'true'
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
         with:
           node-version-file: ".nvmrc"
-          cache: npm
-          cache-dependency-path: "**/package-lock.json"
+          cache: pnpm
 
       - name: Install dependencies
         if: needs.check_for_code_changes.outputs.changes == 'true'
-        run: npm install
+        run: pnpm install --frozen-lockfile
 
       - name: Install Playwright
         if: needs.check_for_code_changes.outputs.changes == 'true'
-        run: npx playwright install chromium --no-shell --with-deps
+        run: pnpm exec playwright install chromium --no-shell --with-deps
 
       - name: Run AI Playwright tests
         if: needs.check_for_code_changes.outputs.changes == 'true'
-        run: npm run test -- --filter @liveblocks/next-ai-kitchen-sink
+        run: pnpm run test --filter @liveblocks/next-ai-kitchen-sink
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: failure()
@@ -239,21 +248,24 @@ jobs:
         if: needs.check_for_code_changes.outputs.changes == 'true'
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
+      - name: Setup pnpm
+        if: needs.check_for_code_changes.outputs.changes == 'true'
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4
+
       - name: Setup Node
         if: needs.check_for_code_changes.outputs.changes == 'true'
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
         with:
           node-version-file: ".nvmrc"
-          cache: npm
-          cache-dependency-path: "**/package-lock.json"
+          cache: pnpm
 
       - name: Install dependencies
         if: needs.check_for_code_changes.outputs.changes == 'true'
-        run: npm install
+        run: pnpm install --frozen-lockfile
 
       - name: Run node-sandbox tests
         if: needs.check_for_code_changes.outputs.changes == 'true'
-        run: npm run test -- --filter node-sandbox
+        run: pnpm run test --filter node-sandbox
 
   # E2E tests defined in @liveblocks/core package
   e2e-client-specs:
@@ -267,13 +279,16 @@ jobs:
         if: needs.check_for_code_changes.outputs.changes == 'true'
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
+      - name: Setup pnpm
+        if: needs.check_for_code_changes.outputs.changes == 'true'
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4
+
       - name: Setup Node
         if: needs.check_for_code_changes.outputs.changes == 'true'
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
         with:
           node-version-file: ".nvmrc"
-          cache: npm
-          cache-dependency-path: "**/package-lock.json"
+          cache: pnpm
 
       - name: Install Bun
         if: needs.check_for_code_changes.outputs.changes == 'true'
@@ -281,11 +296,11 @@ jobs:
 
       - name: Install dependencies
         if: needs.check_for_code_changes.outputs.changes == 'true'
-        run: npm install
+        run: pnpm install --frozen-lockfile
 
       - name: Run e2e client specs tests
         if: needs.check_for_code_changes.outputs.changes == 'true'
-        run: npm run test:e2e
+        run: pnpm run test:e2e
         working-directory: packages/liveblocks-core
 
   # Check that the generated Python SDK is up to date with the OpenAPI spec

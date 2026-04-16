@@ -70,9 +70,9 @@ done
 # Step 4: Build all @liveblocks packages to ensure they're up-to-date (optional)
 if [ "$build" -eq 1 ]; then
     err "Building @liveblocks packages..."
-    if ! ( cd ../../ && npm run build -- --filter='packages/*' > /dev/null 2>&1 ); then
+    if ! ( cd ../../ && pnpm run build --filter='packages/*' > /dev/null 2>&1 ); then
         err "Warning: Some packages failed to build. This may cause version mismatch issues."
-        err "You can manually build packages with: npm run build"
+        err "You can manually build packages with: pnpm run build"
     fi
 fi
 
@@ -82,9 +82,9 @@ if ! grep -q "\"$reldir\"" ../../package.json; then
     jq ".workspaces |= . + [\"$reldir\"]" ../../package.json | sponge ../../package.json
 fi
 
-( cd ../../ && npm i > /dev/null )
+( cd ../../ && pnpm install > /dev/null )
 
-npm i
+pnpm install
 
 # Reset all changes if no-modify mode is enabled
 if [ "$no_modify" -eq 1 ]; then

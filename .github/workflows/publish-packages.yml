@@ -66,11 +66,15 @@ jobs:
           echo "${{ steps.version.outputs.value }}"
           echo "${{ steps.npm_tag.outputs.value }}"
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4
+
       - name: Setup Node.js environment
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
         with:
           node-version-file: ".nvmrc"
           registry-url: "https://registry.npmjs.org"
+          cache: pnpm
 
       - name: Setup git config
         run: |
@@ -96,7 +100,7 @@ jobs:
 
       - name: Build all packages
         run: |
-          npm run build -- --filter='./packages/*'
+          pnpm run build --filter='./packages/*'
 
       - name: Publish packages
         env:

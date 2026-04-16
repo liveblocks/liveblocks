@@ -44,12 +44,14 @@ jobs:
       - name: Validate branch
         run: test "$(git rev-parse --abbrev-ref HEAD)" == "main"
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4
+
       - name: Setup Node
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
         with:
           node-version-file: ".nvmrc"
-          cache: "npm"
-          cache-dependency-path: "**/package-lock.json"
+          cache: pnpm
 
       - name: Setup git config
         run: |
@@ -57,7 +59,7 @@ jobs:
           git config user.email "<>"
 
       - name: Install dependencies
-        run: npm install
+        run: pnpm install --frozen-lockfile
 
       - name: Turbo Cache
         id: turbo-cache
@@ -81,10 +83,10 @@ jobs:
           DevTools to " "tools/liveblocks-devtools"
 
       - name: Build for Chromium
-        run: npx --no turbo run build --filter=@liveblocks/devtools
+        run: pnpm exec turbo run build --filter=@liveblocks/devtools
 
       - name: Build for Firefox
-        run: npx --no turbo run build:firefox --filter=@liveblocks/devtools
+        run: pnpm exec turbo run build:firefox --filter=@liveblocks/devtools
 
       - name: Browser Platform Publish
         uses: PlasmoHQ/bpp@v3

@@ -38,7 +38,7 @@
     "format": "eslint --fix src/; stylelint --fix src/styles/; prettier --write src/",
     "lint": "eslint src/; stylelint src/styles/",
     "lint:package": "publint --strict && attw --pack",
-    "start": "npm run dev",
+    "start": "pnpm run dev",
     "test": "vitest run",
     "test:ci": "vitest run",
     "test:watch": "vitest"
