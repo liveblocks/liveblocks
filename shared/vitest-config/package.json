@@ -10,7 +10,6 @@
   "dependencies": {
     "fast-check": "^4.6.0",
     "happy-dom": "^20.9.0",
-    "vite-tsconfig-paths": "^6.1.1",
     "whatwg-fetch": "^3.6.20"
   }
 }

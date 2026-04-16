@@ -49,8 +49,7 @@
     "@liveblocks/react": "workspace:*",
     "@liveblocks/react-tiptap": "workspace:*",
     "@liveblocks/react-ui": "workspace:*",
-    "@liveblocks/yjs": "workspace:*",
-    "vitest-tsconfig-paths": "^3.4.1"
+    "@liveblocks/yjs": "workspace:*"
   },
   "peerDependencies": {
     "@blocknote/core": "0.43.0 - 1.0.0",

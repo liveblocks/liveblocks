@@ -2,17 +2,13 @@ import { defineConfig } from "vitest/config";
 import path from "path";
 import { fileURLToPath } from "url";
 
-import tsconfigPaths from "vite-tsconfig-paths";
-
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export function defaultLiveblocksVitestConfig(options = {}) {
   return defineConfig({
-    plugins: [
-      tsconfigPaths({
-        projects: ["./tsconfig.json"],
-      }),
-    ],
+    resolve: {
+      tsconfigPaths: true,
+    },
     test: {
       include: ["src/**/*.test.[jt]s?(x)", "test/**/*.test.[jt]s?(x)"],
       setupFiles: [path.join(__dirname, "setup.js")],
