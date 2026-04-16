@@ -25,6 +25,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "dotenv": "^16.0.0",
     "@playwright/test": "^1.55.0",
     "@tailwindcss/postcss": "^4",
     "eslint": "^9",

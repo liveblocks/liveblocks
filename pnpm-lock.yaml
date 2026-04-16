@@ -98,6 +98,9 @@ importers:
       '@tailwindcss/postcss':
         specifier: ^4
         version: 4.1.6
+      dotenv:
+        specifier: ^16.0.0
+        version: 16.6.1
       eslint:
         specifier: ^9
         version: 9.39.4(jiti@2.4.2)
@@ -232,6 +235,9 @@ importers:
       '@types/lodash':
         specifier: ^4.17.13
         version: 4.17.13
+      dotenv:
+        specifier: ^16.0.0
+        version: 16.6.1
       eslint:
         specifier: ^9.39.4
         version: 9.39.4(jiti@2.4.2)
