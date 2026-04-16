@@ -30,6 +30,6 @@
     "eslint-config-next": "15.3.1",
     "playwright": "^1.55.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5.9.3"
   }
 }
