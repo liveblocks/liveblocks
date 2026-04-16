@@ -47,9 +47,14 @@
     "lexical": "0.35.0"
   },
   "devDependencies": {
+    "@lexical/headless": "0.35.0",
+    "@lexical/markdown": "0.35.0",
+    "@lexical/selection": "0.35.0",
+    "@lexical/yjs": "0.35.0",
     "@liveblocks/eslint-config": "*",
     "@liveblocks/vitest-config": "*",
     "eslint": "^9.39.4",
+    "lexical": "0.35.0",
     "vitest": "^4.1.4"
   },
   "bugs": {

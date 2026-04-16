@@ -74,6 +74,11 @@
     }
   },
   "devDependencies": {
+    "@lexical/react": "0.35.0",
+    "@lexical/rich-text": "0.35.0",
+    "@lexical/selection": "0.35.0",
+    "@lexical/utils": "0.35.0",
+    "@lexical/yjs": "0.35.0",
     "@liveblocks/eslint-config": "*",
     "@liveblocks/rollup-config": "*",
     "@liveblocks/vitest-config": "*",
@@ -81,7 +86,10 @@
     "eslint": "^9.39.4",
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^5.2.0",
+    "lexical": "0.35.0",
     "msw": "^2.10.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "rollup": "3.28.1",
     "stylelint": "^15.10.2",
     "stylelint-config-standard": "^34.0.0",
