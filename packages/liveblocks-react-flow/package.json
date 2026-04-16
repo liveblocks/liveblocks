@@ -87,7 +87,7 @@
     "@liveblocks/rollup-config": "workspace:*",
     "@liveblocks/vitest-config": "workspace:*",
     "@testing-library/jest-dom": "^6.8.0",
-    "@testing-library/react": "^13.1.1",
+    "@testing-library/react": "^16.3.0",
     "@xyflow/react": "^12.10.1",
     "esbuild": "^0.27.0",
     "eslint": "^9.39.4",
