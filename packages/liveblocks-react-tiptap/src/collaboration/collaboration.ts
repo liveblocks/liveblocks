@@ -284,6 +284,7 @@ export const Collaboration = Extension.create<
           // If the content is invalid, return false to prevent the transaction from being applied
           return false;
         }
+        return;
       });
     }
 
