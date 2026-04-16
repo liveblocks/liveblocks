@@ -36,7 +36,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@liveblocks/core": "3.18.2"
+    "@liveblocks/core": "workspace:*"
   },
   "devDependencies": {
     "@liveblocks/eslint-config": "workspace:*",

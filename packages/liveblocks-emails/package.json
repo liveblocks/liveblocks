@@ -36,8 +36,8 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@liveblocks/core": "3.18.2",
-    "@liveblocks/node": "3.18.2"
+    "@liveblocks/core": "workspace:*",
+    "@liveblocks/node": "workspace:*"
   },
   "peerDependencies": {
     "react": "^18 || ^19 || ^19.0.0-rc",

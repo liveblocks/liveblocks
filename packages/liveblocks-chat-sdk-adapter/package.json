@@ -35,8 +35,8 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@liveblocks/core": "3.18.2",
-    "@liveblocks/node": "3.18.2"
+    "@liveblocks/core": "workspace:*",
+    "@liveblocks/node": "workspace:*"
   },
   "peerDependencies": {
     "chat": ">=4.20.0"

@@ -36,8 +36,8 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@liveblocks/client": "3.18.2",
-    "@liveblocks/core": "3.18.2"
+    "@liveblocks/client": "workspace:*",
+    "@liveblocks/core": "workspace:*"
   },
   "peerDependencies": {
     "zustand": "^5.0.1"

@@ -78,9 +78,9 @@
   },
   "dependencies": {
     "@floating-ui/react-dom": "^2.1.0",
-    "@liveblocks/client": "3.18.2",
-    "@liveblocks/core": "3.18.2",
-    "@liveblocks/react": "3.18.2",
+    "@liveblocks/client": "workspace:*",
+    "@liveblocks/core": "workspace:*",
+    "@liveblocks/react": "workspace:*",
     "frimousse": "^0.2.0",
     "marked": "^15.0.11",
     "radix-ui": "^1.4.0",

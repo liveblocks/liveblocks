@@ -35,8 +35,8 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@liveblocks/client": "3.18.2",
-    "@liveblocks/core": "3.18.2",
+    "@liveblocks/client": "workspace:*",
+    "@liveblocks/core": "workspace:*",
     "@noble/hashes": "^1.8.0",
     "js-base64": "^3.7.7",
     "y-indexeddb": "^9.0.12"

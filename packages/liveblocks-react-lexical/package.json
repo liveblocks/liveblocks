@@ -45,11 +45,11 @@
   },
   "dependencies": {
     "@floating-ui/react-dom": "^2.1.0",
-    "@liveblocks/client": "3.18.2",
-    "@liveblocks/core": "3.18.2",
-    "@liveblocks/react": "3.18.2",
-    "@liveblocks/react-ui": "3.18.2",
-    "@liveblocks/yjs": "3.18.2",
+    "@liveblocks/client": "workspace:*",
+    "@liveblocks/core": "workspace:*",
+    "@liveblocks/react": "workspace:*",
+    "@liveblocks/react-ui": "workspace:*",
+    "@liveblocks/yjs": "workspace:*",
     "radix-ui": "^1.4.0",
     "yjs": "^13.6.18"
   },

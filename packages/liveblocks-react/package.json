@@ -63,8 +63,8 @@
     "showdeps": "depcruise src --include-only '^src' --exclude='__tests__' --output-type dot | dot -T svg > /tmp/dependency-graph.svg && open /tmp/dependency-graph.svg"
   },
   "dependencies": {
-    "@liveblocks/client": "3.18.2",
-    "@liveblocks/core": "3.18.2"
+    "@liveblocks/client": "workspace:*",
+    "@liveblocks/core": "workspace:*"
   },
   "peerDependencies": {
     "@types/react": "*",
