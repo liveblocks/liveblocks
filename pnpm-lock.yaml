@@ -217,7 +217,7 @@ importers:
         specifier: ^5.0.1
         version: 5.0.1
       yjs:
-        specifier: ^13.6.18
+        specifier: ^13.6.27
         version: 13.6.27
       zustand:
         specifier: ^5.0.2
@@ -497,7 +497,7 @@ importers:
         specifier: ^4.1.4
         version: 4.1.4(@types/node@18.19.70)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.4.2)(less@4.2.1)(msw@2.10.4(@types/node@18.19.70)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
       yjs:
-        specifier: ^13.6.18
+        specifier: ^13.6.27
         version: 13.6.27
 
   packages/liveblocks-node-prosemirror:
@@ -546,7 +546,7 @@ importers:
         specifier: ^1.3.7
         version: 1.3.7(prosemirror-model@1.25.4)(prosemirror-state@1.4.4)(prosemirror-view@1.41.6)(y-protocols@1.0.7(yjs@13.6.27))(yjs@13.6.27)
       yjs:
-        specifier: ^13.6.20
+        specifier: ^13.6.27
         version: 13.6.27
 
   packages/liveblocks-react:
@@ -859,7 +859,7 @@ importers:
         specifier: ^4.1.4
         version: 4.1.4(@types/node@18.19.70)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.4.2)(less@4.2.1)(msw@2.10.4(@types/node@18.19.70)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
       yjs:
-        specifier: ^13.6.18
+        specifier: ^13.6.27
         version: 13.6.27
 
   packages/liveblocks-react-tiptap:
@@ -965,7 +965,7 @@ importers:
         specifier: ^4.1.4
         version: 4.1.4(@types/node@18.19.70)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.4.2)(less@4.2.1)(msw@2.10.4(@types/node@18.19.70)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
       yjs:
-        specifier: ^13.6.18
+        specifier: ^13.6.27
         version: 13.6.27
 
   packages/liveblocks-react-ui:

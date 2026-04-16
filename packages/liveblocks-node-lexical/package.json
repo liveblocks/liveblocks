@@ -57,7 +57,7 @@
     "lexical": "0.35.0",
     "typescript": "^5.9.3",
     "vitest": "^4.1.4",
-    "yjs": "^13.6.18"
+    "yjs": "^13.6.27"
   },
   "bugs": {
     "url": "https://github.com/liveblocks/liveblocks/issues"

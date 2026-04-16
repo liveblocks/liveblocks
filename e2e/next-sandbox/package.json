@@ -29,7 +29,7 @@
     "react-error-boundary": "^4.1.2",
     "react-redux": "^9.2.0",
     "redux": "^5.0.1",
-    "yjs": "^13.6.18",
+    "yjs": "^13.6.27",
     "zustand": "^5.0.2"
   },
   "devDependencies": {

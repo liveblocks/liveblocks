@@ -97,7 +97,7 @@
     "stylelint-plugin-logical-css": "^0.13.2",
     "typescript": "^5.9.3",
     "vitest": "^4.1.4",
-    "yjs": "^13.6.18"
+    "yjs": "^13.6.27"
   },
   "sideEffects": false,
   "bugs": {
