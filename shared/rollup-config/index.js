@@ -331,7 +331,11 @@ export function createConfig({ pkg, entries, styles: styleFiles, external }) {
             .replace(/\.ts$/, pkg.type === "module" ? ".d.cts" : ".d.ts"),
         },
       ],
-      plugins: [dts()],
+
+      // Workaround for rollup-plugin-dts not resolving transitive types
+      // under pnpm's symlinked node_modules layout. See:
+      // https://github.com/Swatinem/rollup-plugin-dts/issues/143
+      plugins: [dts({ compilerOptions: { preserveSymlinks: false } })],
     }));
   }
 

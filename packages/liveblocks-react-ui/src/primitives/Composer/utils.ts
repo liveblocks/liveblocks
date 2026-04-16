@@ -223,11 +223,13 @@ export function getSideAndAlignFromFloatingPlacement(placement: Placement) {
 export function useContentZIndex() {
   const [content, setContent] = useState<HTMLDivElement | null>(null);
   const contentRef = useCallback(setContent, [setContent]);
-  const [contentZIndex, setContentZIndex] = useState<string>();
+  const [contentZIndex, setContentZIndex] = useState<number>();
 
   useLayoutEffect(() => {
     if (content) {
-      setContentZIndex(window.getComputedStyle(content).zIndex);
+      const value = window.getComputedStyle(content).zIndex;
+      const parsed = parseInt(value, 10);
+      setContentZIndex(Number.isNaN(parsed) ? undefined : parsed);
     }
   }, [content]);
 

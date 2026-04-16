@@ -76,7 +76,6 @@
     }
   },
   "devDependencies": {
-    "@floating-ui/dom": "^1.6.0",
     "@liveblocks/eslint-config": "*",
     "@liveblocks/rollup-config": "*",
     "@liveblocks/vitest-config": "*",
@@ -85,10 +84,6 @@
     "@tiptap/extension-paragraph": "^3.19.0",
     "@tiptap/extension-text": "^3.19.0",
     "@tiptap/pm": "^3.22.3",
-    "prosemirror-model": "^1.25.0",
-    "prosemirror-state": "^1.4.0",
-    "prosemirror-transform": "^1.11.0",
-    "prosemirror-view": "^1.41.0",
     "eslint": "^9.39.4",
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^5.2.0",
