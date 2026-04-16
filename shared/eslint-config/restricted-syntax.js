@@ -1,4 +1,4 @@
-module.exports = [
+export default [
   {
     selector: 'TSTypeReference[typeName.name="AbstractCrdt"]',
     message: "Don't refer to AbstractCrdt as a type. Use LiveNode instead.",
@@ -18,7 +18,6 @@ module.exports = [
   {
     selector:
       "ImportDeclaration[source.value='vitest'] ImportSpecifier[imported.name='it']",
-    message:
-      "Import 'test' instead of 'it' from vitest.",
+    message: "Import 'test' instead of 'it' from vitest.",
   },
 ];
