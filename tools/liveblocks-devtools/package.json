@@ -45,6 +45,7 @@
     "postcss": "^8.4.20",
     "prettier-plugin-tailwindcss": "^0.5.4",
     "tailwindcss": "^3.2.4",
+    "typescript": "^5.9.3",
     "webextension-polyfill": "^0.10.0"
   },
   "manifest": {

@@ -40,6 +40,7 @@
     "eslint": "^9.39.4",
     "eslint-config-next": "16.1.4",
     "lodash": "^4.17.21",
-    "playwright": "^1.55.0"
+    "playwright": "^1.55.0",
+    "typescript": "^5.9.3"
   }
 }

@@ -46,6 +46,7 @@
     "@liveblocks/vitest-config": "*",
     "chat": "^4.21.0",
     "eslint": "^9.39.4",
+    "typescript": "^5.9.3",
     "vitest": "^4.1.4"
   },
   "sideEffects": false,
