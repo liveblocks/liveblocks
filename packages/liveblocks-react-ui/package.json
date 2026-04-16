@@ -104,6 +104,7 @@
     }
   },
   "devDependencies": {
+    "@radix-ui/react-dropdown-menu": "^2.1.0",
     "@liveblocks/eslint-config": "*",
     "@liveblocks/rollup-config": "*",
     "@liveblocks/vitest-config": "*",
