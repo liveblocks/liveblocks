@@ -42,8 +42,8 @@
     "chat": ">=4.20.0"
   },
   "devDependencies": {
-    "@liveblocks/eslint-config": "*",
-    "@liveblocks/vitest-config": "*",
+    "@liveblocks/eslint-config": "workspace:*",
+    "@liveblocks/vitest-config": "workspace:*",
     "chat": "^4.21.0",
     "eslint": "^9.39.4",
     "typescript": "^5.9.3",

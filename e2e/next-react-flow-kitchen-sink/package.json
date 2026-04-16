@@ -10,11 +10,11 @@
     "format": "(eslint --fix app/ test/ || true) && prettier --write app/ test/"
   },
   "dependencies": {
-    "@liveblocks/client": "*",
-    "@liveblocks/node": "*",
-    "@liveblocks/react": "*",
-    "@liveblocks/react-flow": "*",
-    "@liveblocks/react-ui": "*",
+    "@liveblocks/client": "workspace:*",
+    "@liveblocks/node": "workspace:*",
+    "@liveblocks/react": "workspace:*",
+    "@liveblocks/react-flow": "workspace:*",
+    "@liveblocks/react-ui": "workspace:*",
     "@xyflow/react": "^12.10.1",
     "next": "16.1.4",
     "react": "19.2.3",

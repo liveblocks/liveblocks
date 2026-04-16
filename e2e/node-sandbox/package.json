@@ -11,12 +11,12 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@liveblocks/client": "*",
-    "@liveblocks/node": "*",
+    "@liveblocks/client": "workspace:*",
+    "@liveblocks/node": "workspace:*",
     "dotenv": "^16.0.0"
   },
   "devDependencies": {
-    "@liveblocks/vitest-config": "*",
+    "@liveblocks/vitest-config": "workspace:*",
     "@types/ws": "^8.5.0",
     "eslint": "^9.39.4",
     "typescript": "^5.9.3",

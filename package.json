@@ -1,20 +1,7 @@
 {
   "name": "@liveblocks/monorepo",
   "private": true,
-  "packageManager": "npm@10.8.1+sha256.b8807aebb9656758e2872fa6e7c564b506aa2faa9297439a478d471d2fe32483",
-  "workspaces": [
-    "shared/*",
-    "packages/*",
-    "!packages/liveblocks-server",
-    "!packages/liveblocks-python",
-    "!packages/liveblocks-python-codegen",
-    "tools/*",
-    "!tools/liveblocks-cli",
-    "e2e/next-ai-kitchen-sink",
-    "e2e/next-react-flow-kitchen-sink",
-    "e2e/next-sandbox",
-    "e2e/node-sandbox"
-  ],
+  "packageManager": "pnpm@10.33.0",
   "scripts": {
     "build": "turbo run build",
     "test": "turbo run test",
@@ -45,9 +32,11 @@
   "engines": {
     "node": ">=24.x"
   },
-  "overrides": {
-    "@types/node": "$@types/node",
-    "@types/react": "$@types/react",
-    "@types/react-dom": "$@types/react-dom"
+  "pnpm": {
+    "overrides": {
+      "@types/node": "$@types/node",
+      "@types/react": "$@types/react",
+      "@types/react-dom": "$@types/react-dom"
+    }
   }
 }

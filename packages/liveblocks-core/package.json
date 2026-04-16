@@ -49,9 +49,9 @@
   "license": "Apache-2.0",
   "author": "Liveblocks Inc.",
   "devDependencies": {
-    "@liveblocks/eslint-config": "*",
+    "@liveblocks/eslint-config": "workspace:*",
     "@liveblocks/query-parser": "^0.1.1",
-    "@liveblocks/vitest-config": "*",
+    "@liveblocks/vitest-config": "workspace:*",
     "@types/json-schema": "^7.0.15",
     "@types/ws": "^8.5.10",
     "eslint": "^9.39.4",

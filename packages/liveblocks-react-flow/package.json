@@ -82,10 +82,10 @@
     }
   },
   "devDependencies": {
-    "@liveblocks/eslint-config": "*",
-    "@liveblocks/node": "*",
-    "@liveblocks/rollup-config": "*",
-    "@liveblocks/vitest-config": "*",
+    "@liveblocks/eslint-config": "workspace:*",
+    "@liveblocks/node": "workspace:*",
+    "@liveblocks/rollup-config": "workspace:*",
+    "@liveblocks/vitest-config": "workspace:*",
     "@testing-library/jest-dom": "^6.4.6",
     "@testing-library/react": "^13.1.1",
     "@xyflow/react": "^12.10.1",

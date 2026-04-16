@@ -73,9 +73,9 @@
   "devDependencies": {
     "@blocknote/core": "^0.43.0",
     "@blocknote/react": "^0.43.0",
-    "@liveblocks/eslint-config": "*",
-    "@liveblocks/rollup-config": "*",
-    "@liveblocks/vitest-config": "*",
+    "@liveblocks/eslint-config": "workspace:*",
+    "@liveblocks/rollup-config": "workspace:*",
+    "@liveblocks/vitest-config": "workspace:*",
     "@testing-library/jest-dom": "^5.16.5",
     "eslint": "^9.39.4",
     "eslint-plugin-react": "^7.33.2",
