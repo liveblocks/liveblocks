@@ -24,14 +24,14 @@
     "react-dom": "19.2.3"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3",
+    "@eslint/eslintrc": "^3.3.3",
     "dotenv": "^16.0.0",
     "@playwright/test": "^1.55.0",
-    "@tailwindcss/postcss": "^4",
-    "eslint": "^9",
+    "@tailwindcss/postcss": "^4.1.18",
+    "eslint": "^9.39.4",
     "eslint-config-next": "16.1.4",
     "playwright": "^1.55.0",
-    "tailwindcss": "^4",
+    "tailwindcss": "^4.1.18",
     "typescript": "^5.9.3"
   }
 }
