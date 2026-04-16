@@ -22,7 +22,7 @@ type InferNodeTypeLiterals<N> =
     : never;
 
 type NodeTypeLiterals<N> =
-  | (string & {}) // eslint-disable-line @typescript-eslint/ban-types
+  | (string & {}) // eslint-disable-line @typescript-eslint/no-empty-object-type
   | "*"
   | InferNodeTypeLiterals<N>;
 
@@ -34,7 +34,7 @@ type InferEdgeTypeLiterals<E> =
     : never;
 
 type EdgeTypeLiterals<E> =
-  | (string & {}) // eslint-disable-line @typescript-eslint/ban-types
+  | (string & {}) // eslint-disable-line @typescript-eslint/no-empty-object-type
   | "*"
   | InferEdgeTypeLiterals<E>;
 
@@ -63,7 +63,7 @@ type ToLson<T, S extends SyncMode = true> =
   [S] extends [false] ? T | undefined :
   [S] extends ["atomic"] ? T :
   T extends JsonScalar ? T :
-  // eslint-disable-next-line @typescript-eslint/ban-types
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
   T extends Date | RegExp | Function | Promise<any> | WeakMap<any, any> | WeakSet<any> | Map<any, any> | Set<any> ? never :
   T extends ReadonlyArray<infer E> ? ToLiveList<E, S> :
   T extends object ? ToLiveObject<T, S> :
