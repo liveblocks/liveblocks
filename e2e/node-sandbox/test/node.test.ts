@@ -1,4 +1,4 @@
-import { LiveList } from "@liveblocks/core";
+import { LiveList } from "@liveblocks/client";
 import { Liveblocks } from "@liveblocks/node";
 import { config } from "dotenv";
 import { describe, test, expect, onTestFinished, vi } from "vitest";
