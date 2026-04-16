@@ -81,11 +81,12 @@
   },
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
-    "@liveblocks/vitest-config": "*",
     "@liveblocks/query-parser": "^0.1.1",
+    "@liveblocks/vitest-config": "*",
     "@testing-library/jest-dom": "^6.8.0",
     "@testing-library/react": "^16.3.0",
     "date-fns": "^3.6.0",
+    "eslint": "^9.39.4",
     "eslint-plugin-react-hooks": "^5.2.0",
     "itertools": "^2.3.2",
     "msw": "^2.10.4",

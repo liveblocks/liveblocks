@@ -46,6 +46,7 @@
     "@liveblocks/vitest-config": "*",
     "@reduxjs/toolkit": "^2.8.2",
     "@testing-library/dom": "^10.4.0",
+    "eslint": "^9.39.4",
     "redux": "^5.0.1"
   },
   "sideEffects": false,

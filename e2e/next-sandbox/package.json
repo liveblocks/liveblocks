@@ -37,6 +37,7 @@
     "@liveblocks/eslint-config": "*",
     "@playwright/test": "^1.55.0",
     "@types/lodash": "^4.17.13",
+    "eslint": "^9.39.4",
     "eslint-config-next": "16.1.4",
     "lodash": "^4.17.21",
     "playwright": "^1.55.0"
