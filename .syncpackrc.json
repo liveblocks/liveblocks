@@ -8,6 +8,12 @@
     },
 
     {
+      "label": "react/react-dom versions vary across packages (TODO: align with Marc)",
+      "dependencies": ["react", "react-dom"],
+      "isIgnored": true
+    },
+
+    {
       "label": "Peer dependencies are intentionally wider ranges",
       "dependencyTypes": ["peer"],
       "preferVersion": "highestSemver"
