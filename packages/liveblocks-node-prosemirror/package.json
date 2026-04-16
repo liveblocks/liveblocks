@@ -39,10 +39,10 @@
     "@liveblocks/node": "workspace:*"
   },
   "peerDependencies": {
-    "@tiptap/core": "^3.19.0",
-    "@tiptap/pm": "^3.19.0",
-    "@tiptap/react": "^3.19.0",
-    "@tiptap/starter-kit": "^3.19.0",
+    "@tiptap/core": "^3",
+    "@tiptap/pm": "^3",
+    "@tiptap/react": "^3",
+    "@tiptap/starter-kit": "^3",
     "prosemirror-markdown": "^1.13.1",
     "y-prosemirror": "^1",
     "yjs": "^13"

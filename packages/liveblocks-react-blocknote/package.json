@@ -50,13 +50,12 @@
     "@liveblocks/react-tiptap": "workspace:*",
     "@liveblocks/react-ui": "workspace:*",
     "@liveblocks/yjs": "workspace:*",
-    "@tiptap/core": "^3.19.0",
     "vitest-tsconfig-paths": "^3.4.1"
   },
   "peerDependencies": {
     "@blocknote/core": "0.43.0 - 1.0.0",
     "@blocknote/react": "0.43.0 - 1.0.0",
-    "@tiptap/core": "^3.19.0",
+    "@tiptap/core": "^3",
     "@types/react": "^18 || ^19",
     "@types/react-dom": "^18 || ^19",
     "react": "^18 || ^19 || ^19.0.0-rc",
@@ -73,6 +72,7 @@
   "devDependencies": {
     "@blocknote/core": "^0.43.0",
     "@blocknote/react": "^0.43.0",
+    "@tiptap/core": "^3.22.3",
     "@liveblocks/eslint-config": "workspace:*",
     "@liveblocks/rollup-config": "workspace:*",
     "@liveblocks/vitest-config": "workspace:*",
