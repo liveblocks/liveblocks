@@ -1167,7 +1167,7 @@ importers:
         specifier: ^4.1.4
         version: 4.1.4(@types/node@18.19.70)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@18.19.70)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
       zustand:
-        specifier: ^5.0.1
+        specifier: ^5.0.2
         version: 5.0.2(@types/react@18.3.17)(immer@10.1.1)(react@19.2.3)(use-sync-external-store@1.6.0(react@19.2.3))
 
   shared/eslint-config:
