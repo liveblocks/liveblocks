@@ -10,7 +10,8 @@
     "test:deps": "turbo run test:deps",
     "lint": "turbo run lint",
     "lint:package": "turbo run lint:package",
-    "format": "turbo run format"
+    "format": "turbo run format",
+    "postinstall": "syncpack lint"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.2",
@@ -20,6 +21,7 @@
     "@vitest/coverage-istanbul": "^4.1.4",
     "dependency-cruiser": "^17.3.10",
     "eslint": "^9.39.4",
+    "syncpack": "^14.3.0",
     "happy-dom": "^20.9.0",
     "prettier": "^3.8.3",
     "publint": "^0.3.18",
