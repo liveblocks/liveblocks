@@ -76,6 +76,7 @@
     }
   },
   "devDependencies": {
+    "@floating-ui/dom": "^1.6.0",
     "@liveblocks/eslint-config": "*",
     "@liveblocks/rollup-config": "*",
     "@liveblocks/vitest-config": "*",
