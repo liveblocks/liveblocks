@@ -709,7 +709,7 @@ importers:
         specifier: workspace:*
         version: link:../../shared/vitest-config
       '@testing-library/jest-dom':
-        specifier: ^6.4.6
+        specifier: ^6.8.0
         version: 6.9.1
       '@testing-library/react':
         specifier: ^13.1.1
