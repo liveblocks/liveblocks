@@ -4706,6 +4706,7 @@ function _useOthers<T>(
   isEqual?: (prev: T, curr: T) => boolean
 ): T;
 function _useOthers(...args: any[]) {
+  // eslint-disable-next-line react-hooks/rules-of-hooks -- internal wrapper
   return useOthers(...(args as []));
 }
 
@@ -4766,6 +4767,7 @@ function _useOthersSuspense<T>(
   isEqual?: (prev: T, curr: T) => boolean
 ): T;
 function _useOthersSuspense(...args: any[]) {
+  // eslint-disable-next-line react-hooks/rules-of-hooks -- internal wrapper
   return useOthersSuspense(...(args as []));
 }
 
@@ -4850,6 +4852,7 @@ function _useSelf<T>(
   isEqual?: (prev: T, curr: T) => boolean
 ): T | null;
 function _useSelf(...args: any[]) {
+  // eslint-disable-next-line react-hooks/rules-of-hooks -- internal wrapper
   return useSelf(...(args as []));
 }
 
@@ -4885,6 +4888,7 @@ function _useSelfSuspense<T>(
   isEqual?: (prev: T, curr: T) => boolean
 ): T;
 function _useSelfSuspense(...args: any[]) {
+  // eslint-disable-next-line react-hooks/rules-of-hooks -- internal wrapper
   return useSelfSuspense(...(args as []));
 }
 
