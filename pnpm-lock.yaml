@@ -1104,6 +1104,9 @@ importers:
       js-base64:
         specifier: ^3.7.7
         version: 3.7.7
+      lib0:
+        specifier: ^0.2.0
+        version: 0.2.114
       y-indexeddb:
         specifier: ^9.0.12
         version: 9.0.12(yjs@13.6.27)

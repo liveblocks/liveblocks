@@ -39,6 +39,7 @@
     "@liveblocks/core": "workspace:*",
     "@noble/hashes": "^1.8.0",
     "js-base64": "^3.7.7",
+    "lib0": "^0.2.0",
     "y-indexeddb": "^9.0.12"
   },
   "peerDependencies": {
