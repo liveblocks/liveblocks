@@ -14,6 +14,7 @@ export function defaultLiveblocksVitestConfig(options = {}) {
       }),
     ],
     test: {
+      include: ["src/**/*.test.[jt]s?(x)", "test/**/*.test.[jt]s?(x)"],
       setupFiles: [path.join(__dirname, "setup.js")],
 
       coverage: {
