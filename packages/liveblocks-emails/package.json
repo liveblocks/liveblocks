@@ -58,7 +58,8 @@
     "csstype": "3.0.2",
     "eslint": "^9.39.4",
     "eslint-plugin-react-hooks": "^5.2.0",
-    "msw": "^2.10.4"
+    "msw": "^2.10.4",
+    "vitest": "^4.1.4"
   },
   "sideEffects": false,
   "bugs": {

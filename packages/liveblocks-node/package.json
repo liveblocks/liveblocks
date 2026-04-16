@@ -47,7 +47,8 @@
     "@types/node-fetch": "^2.6.6",
     "eslint": "^9.39.4",
     "msw": "^2.10.4",
-    "svix": "^0.75.0"
+    "svix": "^0.75.0",
+    "vitest": "^4.1.4"
   },
   "bugs": {
     "url": "https://github.com/liveblocks/liveblocks/issues"

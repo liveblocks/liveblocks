@@ -48,7 +48,8 @@
     "@liveblocks/eslint-config": "*",
     "@liveblocks/vitest-config": "*",
     "@testing-library/jest-dom": "^6.4.6",
-    "eslint": "^9.39.4"
+    "eslint": "^9.39.4",
+    "vitest": "^4.1.4"
   },
   "sideEffects": false,
   "bugs": {

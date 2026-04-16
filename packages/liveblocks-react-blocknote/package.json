@@ -82,7 +82,8 @@
     "stylelint": "^15.10.2",
     "stylelint-config-standard": "^34.0.0",
     "stylelint-order": "^6.0.3",
-    "stylelint-plugin-logical-css": "^0.13.2"
+    "stylelint-plugin-logical-css": "^0.13.2",
+    "vitest": "^4.1.4"
   },
   "sideEffects": false,
   "bugs": {

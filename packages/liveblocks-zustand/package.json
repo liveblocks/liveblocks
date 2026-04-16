@@ -47,6 +47,7 @@
     "@liveblocks/vitest-config": "*",
     "@testing-library/dom": "^10.4.0",
     "eslint": "^9.39.4",
+    "vitest": "^4.1.4",
     "zustand": "^5.0.1"
   },
   "sideEffects": false,

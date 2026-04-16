@@ -90,7 +90,8 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "itertools": "^2.3.2",
     "msw": "^2.10.4",
-    "react-error-boundary": "^4.0.13"
+    "react-error-boundary": "^4.0.13",
+    "vitest": "^4.1.4"
   },
   "sideEffects": false,
   "bugs": {

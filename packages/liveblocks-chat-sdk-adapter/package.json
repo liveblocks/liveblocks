@@ -45,7 +45,8 @@
     "@liveblocks/eslint-config": "*",
     "@liveblocks/vitest-config": "*",
     "chat": "^4.21.0",
-    "eslint": "^9.39.4"
+    "eslint": "^9.39.4",
+    "vitest": "^4.1.4"
   },
   "sideEffects": false,
   "bugs": {

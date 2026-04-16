@@ -19,6 +19,7 @@
   "devDependencies": {
     "@liveblocks/vitest-config": "*",
     "@types/ws": "^8.5.0",
-    "eslint": "^9.39.4"
+    "eslint": "^9.39.4",
+    "vitest": "^4.1.4"
   }
 }
