@@ -52,8 +52,8 @@
     "@liveblocks/yjs": "workspace:*"
   },
   "peerDependencies": {
-    "@blocknote/core": "0.43.0 - 1.0.0",
-    "@blocknote/react": "0.43.0 - 1.0.0",
+    "@blocknote/core": ">=0.43",
+    "@blocknote/react": ">=0.43",
     "@tiptap/core": "^3",
     "@types/react": "^18 || ^19",
     "@types/react-dom": "^18 || ^19",
