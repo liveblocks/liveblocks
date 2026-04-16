@@ -167,6 +167,7 @@ jobs:
       - name: Install Playwright
         if: needs.check_for_code_changes.outputs.changes == 'true'
         run: pnpm exec playwright install chromium --no-shell --with-deps
+        working-directory: e2e/next-sandbox
 
       - name: Run Playwright tests
         if: needs.check_for_code_changes.outputs.changes == 'true'
@@ -216,6 +217,7 @@ jobs:
       - name: Install Playwright
         if: needs.check_for_code_changes.outputs.changes == 'true'
         run: pnpm exec playwright install chromium --no-shell --with-deps
+        working-directory: e2e/next-ai-kitchen-sink
 
       - name: Run AI Playwright tests
         if: needs.check_for_code_changes.outputs.changes == 'true'
