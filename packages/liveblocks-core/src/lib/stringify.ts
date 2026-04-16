@@ -30,10 +30,10 @@ export function stringifyOrLog(value: unknown): string {
   try {
     return JSON.stringify(value);
   } catch (err) {
-    /* eslint-disable rulesdir/console-must-be-fancy */
+    /* eslint-disable local/console-must-be-fancy */
     console.error(`Could not stringify: ${(err as Error).message}`);
     console.error(value);
-    /* eslint-enable rulesdir/console-must-be-fancy */
+    /* eslint-enable local/console-must-be-fancy */
     throw err;
   }
 }

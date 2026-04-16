@@ -16,7 +16,7 @@ const SPACE = " "; // Important space to make sure links in errors are clickable
 
 function error(msg: string): void {
   if (process.env.NODE_ENV === "production") {
-    // eslint-disable-next-line rulesdir/console-must-be-fancy
+    // eslint-disable-next-line local/console-must-be-fancy
     console.error(msg);
   } else {
     throw new Error(msg);

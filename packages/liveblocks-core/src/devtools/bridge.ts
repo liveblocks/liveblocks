@@ -32,7 +32,7 @@ export function sendToPanel(
 
   if (!(options?.force || _bridgeActive)) {
     /*
-    // eslint-disable-next-line rulesdir/console-must-be-fancy
+    // eslint-disable-next-line local/console-must-be-fancy
     console.log(
       "%c[client → panel] %c%s",
       "color: green",
@@ -44,7 +44,7 @@ export function sendToPanel(
     return;
   }
   /*
-  // eslint-disable-next-line rulesdir/console-must-be-fancy
+  // eslint-disable-next-line local/console-must-be-fancy
   console.log(
     "%c[client → panel] %c%s",
     "color: green",
