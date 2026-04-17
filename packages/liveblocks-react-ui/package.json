@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/react-ui",
-  "version": "3.18.2",
+  "version": "3.18.3",
   "description": "A set of React pre-built components for the Liveblocks products. Liveblocks is the all-in-one toolkit to build collaborative products like Figma, Notion, and more.",
   "license": "Apache-2.0",
   "author": "Liveblocks Inc.",
@@ -67,20 +67,20 @@
   "scripts": {
     "dev": "rollup --config rollup.config.js --watch",
     "build": "rollup --config rollup.config.js",
-    "start": "npm run dev",
+    "start": "pnpm run dev",
     "format": "eslint --fix src/; stylelint --fix src/styles/; prettier --write src/",
     "lint": "eslint src/; stylelint src/styles/",
     "lint:package": "publint --strict && attw --pack",
-    "test": "npx liveblocks dev -p 1154 -c 'vitest run'",
+    "test": "pnpm dlx liveblocks dev -p 1164 -c 'vitest run'",
     "test:ci": "vitest run",
     "test:types": "vitest run --config ./vitest.config.typecheck.ts",
     "test:watch": "vitest"
   },
   "dependencies": {
     "@floating-ui/react-dom": "^2.1.0",
-    "@liveblocks/client": "3.18.2",
-    "@liveblocks/core": "3.18.2",
-    "@liveblocks/react": "3.18.2",
+    "@liveblocks/client": "workspace:*",
+    "@liveblocks/core": "workspace:*",
+    "@liveblocks/react": "workspace:*",
     "frimousse": "^0.2.0",
     "marked": "^15.0.11",
     "radix-ui": "^1.4.0",
@@ -90,8 +90,8 @@
     "slate-react": "^0.110.3"
   },
   "peerDependencies": {
-    "@types/react": "*",
-    "@types/react-dom": "*",
+    "@types/react": "^18 || ^19",
+    "@types/react-dom": "^18 || ^19",
     "react": "^18 || ^19 || ^19.0.0-rc",
     "react-dom": "^18 || ^19 || ^19.0.0-rc"
   },
@@ -104,18 +104,25 @@
     }
   },
   "devDependencies": {
-    "@liveblocks/eslint-config": "*",
-    "@liveblocks/rollup-config": "*",
-    "@liveblocks/vitest-config": "*",
+    "@radix-ui/react-dropdown-menu": "^2.1.0",
+    "@liveblocks/eslint-config": "workspace:*",
+    "@liveblocks/rollup-config": "workspace:*",
+    "@liveblocks/vitest-config": "workspace:*",
     "@testing-library/jest-dom": "^6.8.0",
     "@testing-library/react": "^16.3.0",
+    "eslint": "^9.39.4",
     "eslint-plugin-react": "^7.33.2",
-    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
     "msw": "^2.10.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "rollup": "3.28.1",
     "stylelint": "^15.10.2",
     "stylelint-config-standard": "^34.0.0",
     "stylelint-order": "^6.0.3",
-    "stylelint-plugin-logical-css": "^0.13.2"
+    "stylelint-plugin-logical-css": "^0.13.2",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.4"
   },
   "sideEffects": false,
   "bugs": {

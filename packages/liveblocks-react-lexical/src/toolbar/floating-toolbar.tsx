@@ -47,8 +47,10 @@ import {
   type ToolbarSlotProps,
 } from "./toolbar";
 
-export interface FloatingToolbarProps
-  extends Omit<ComponentProps<"div">, "children"> {
+export interface FloatingToolbarProps extends Omit<
+  ComponentProps<"div">,
+  "children"
+> {
   /**
    * The vertical position of the floating toolbar.
    */

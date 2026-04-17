@@ -2,6 +2,30 @@ import type { API, FileInfo, Options } from "jscodeshift";
 
 // Based on https://github.com/vercel/next.js/blob/main/packages/next-codemod
 
+// Helper to pull a string name off an Identifier-ish AST node.
+//
+// Why this exists: ast-types types `IdentifierKind["name"]` as
+// `string | IdentifierKind` because `TSTypeParameter.name` can be either —
+// Babel (what jscodeshift uses) emits a string, TS's own compiler emits an
+// Identifier node, and the type union covers both. At runtime we never hit the
+// non-string branch because our call sites only touch `.name` on Identifier /
+// JSXIdentifier nodes (Import/Export specifiers, non-qualified TSTypeReference
+// typeNames). The helper narrows away the type-only `IdentifierKind` case and
+// throws if it's ever encountered — that would be either an unexpected AST
+// shape or a new misuse of the helper.
+function nameOf(id: { name: unknown }): string;
+function nameOf(id: { name: unknown } | null | undefined): string | undefined;
+function nameOf(id: { name: unknown } | null | undefined): string | undefined {
+  if (id === null || id === undefined) return undefined;
+  const n = id.name;
+  if (typeof n !== "string") {
+    throw new Error(
+      `Expected Identifier with string name, got: ${JSON.stringify(id)}`
+    );
+  }
+  return n;
+}
+
 export default function transformer(
   file: FileInfo,
   api: API,
@@ -34,10 +58,10 @@ export default function transformer(
       path.node.specifiers.forEach((specifier) => {
         if (
           specifier.type === "ImportSpecifier" &&
-          sourceNames.includes(specifier.imported.name)
+          sourceNames.includes(nameOf(specifier.imported))
         ) {
           typeNamesToChange.push(
-            specifier.local.name ?? specifier.imported.name
+            nameOf(specifier.local) ?? nameOf(specifier.imported)
           );
         }
       });
@@ -54,7 +78,7 @@ export default function transformer(
       .filter(
         (path) =>
           path.node.typeName.type !== "TSQualifiedName" &&
-          typeNamesToChange.includes(path.node.typeName.name)
+          typeNamesToChange.includes(nameOf(path.node.typeName))
       )
       .replaceWith((path) =>
         j.tsTypeReference(path.node.typeName /* no typeParameters */)

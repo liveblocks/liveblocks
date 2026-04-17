@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ComponentProps, useMemo, useState } from "react";
 
-import { nanoid } from "@liveblocks/core";
+import { nanoid } from "nanoid";
 import { useAiChats, useDeleteAiChat } from "@liveblocks/react";
 import { Timestamp } from "@liveblocks/react-ui/primitives";
 

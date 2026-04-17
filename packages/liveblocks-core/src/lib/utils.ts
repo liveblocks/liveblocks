@@ -97,7 +97,7 @@ export function tryParseJson(rawMessage: string): Json | undefined {
   try {
     // eslint-disable-next-line no-restricted-syntax
     return JSON.parse(rawMessage) as Json;
-  } catch (e) {
+  } catch {
     return undefined;
   }
 }
@@ -131,7 +131,7 @@ export function b64decode(b64value: string): string {
     );
 
     return decodedValue;
-  } catch (err) {
+  } catch {
     return atob(b64value);
   }
 }

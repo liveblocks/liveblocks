@@ -44,8 +44,10 @@ import {
   type ToolbarSlotProps,
 } from "./Toolbar";
 
-export interface FloatingToolbarProps
-  extends Omit<ComponentProps<"div">, "children"> {
+export interface FloatingToolbarProps extends Omit<
+  ComponentProps<"div">,
+  "children"
+> {
   /**
    * The Tiptap editor.
    */

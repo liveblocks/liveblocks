@@ -134,7 +134,6 @@ test("[prop] will freeze all given values", () => {
         const signal = new Signal(init);
         expect(signal.get()).toBe(init);
 
-        /* eslint-disable @typescript-eslint/no-unsafe-return */
         expect(() => {
           // @ts-expect-error - deliberately set invalid prop
           signal.get().abc = 123;
@@ -153,7 +152,6 @@ test("[prop] will freeze all given values", () => {
 
         // @ts-expect-error - get prop
         expect(signal.get().xyz).toBe(undefined);
-        /* eslint-enable @typescript-eslint/no-unsafe-return */
       }
     )
   );

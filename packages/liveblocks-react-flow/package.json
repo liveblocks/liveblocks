@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/react-flow",
-  "version": "3.18.2",
+  "version": "3.18.3",
   "description": "An integration of React Flow to enable collaboration and realtime cursors with Liveblocks.",
   "license": "Apache-2.0",
   "author": "Liveblocks Inc.",
@@ -53,20 +53,20 @@
   "scripts": {
     "dev": "rollup --config rollup.config.js --watch",
     "build": "rollup --config rollup.config.js",
-    "start": "npm run dev",
+    "start": "pnpm run dev",
     "format": "(eslint --fix src/ || true) && stylelint --fix src/styles/ && prettier --write src/",
     "lint:package": "publint --strict && attw --pack && node check-node-entrypoint.mjs",
     "lint": "eslint src/ && stylelint src/styles/",
-    "test": "npx liveblocks dev -p 1154 -c 'vitest run --coverage'",
+    "test": "pnpm dlx liveblocks dev -p 1165 -c 'vitest run --coverage'",
     "test:ci": "vitest run",
     "test:types": "vitest run --config ./vitest.config.typecheck.ts",
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@liveblocks/client": "3.18.2",
-    "@liveblocks/core": "3.18.2",
-    "@liveblocks/react": "3.18.2",
-    "@liveblocks/react-ui": "3.18.2"
+    "@liveblocks/client": "workspace:*",
+    "@liveblocks/core": "workspace:*",
+    "@liveblocks/react": "workspace:*",
+    "@liveblocks/react-ui": "workspace:*"
   },
   "peerDependencies": {
     "@xyflow/react": "^12",
@@ -82,19 +82,26 @@
     }
   },
   "devDependencies": {
-    "@liveblocks/eslint-config": "*",
-    "@liveblocks/node": "*",
-    "@liveblocks/rollup-config": "*",
-    "@liveblocks/vitest-config": "*",
-    "@testing-library/jest-dom": "^6.4.6",
-    "@testing-library/react": "^13.1.1",
+    "@liveblocks/eslint-config": "workspace:*",
+    "@liveblocks/node": "workspace:*",
+    "@liveblocks/rollup-config": "workspace:*",
+    "@liveblocks/vitest-config": "workspace:*",
+    "@testing-library/jest-dom": "^6.8.0",
+    "@testing-library/react": "^16.3.0",
     "@xyflow/react": "^12.10.1",
+    "esbuild": "^0.27.0",
+    "eslint": "^9.39.4",
     "eslint-plugin-react": "^7.33.2",
-    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "rollup": "3.28.1",
     "stylelint": "^15.10.2",
     "stylelint-config-standard": "^34.0.0",
     "stylelint-order": "^6.0.3",
-    "stylelint-plugin-logical-css": "^0.13.2"
+    "stylelint-plugin-logical-css": "^0.13.2",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.4"
   },
   "sideEffects": false,
   "bugs": {

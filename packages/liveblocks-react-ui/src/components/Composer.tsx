@@ -74,9 +74,9 @@ import type { ComposerBodyMark } from "../types";
 import { cn } from "../utils/cn";
 import { useControllableState } from "../utils/use-controllable-state";
 import { useIsGroupMentionMember } from "../utils/use-group-mention";
+import { GroupAvatar, UserAvatar } from "./Avatar";
 import { FileAttachment } from "./internal/Attachment";
 import { Attribution } from "./internal/Attribution";
-import { GroupAvatar, UserAvatar } from "./Avatar";
 import { Button } from "./internal/Button";
 import type { EmojiPickerProps } from "./internal/EmojiPicker";
 import { EmojiPicker, EmojiPickerTrigger } from "./internal/EmojiPicker";
@@ -241,18 +241,17 @@ export type ComposerProps<
     roomId?: string;
   };
 
-interface ComposerEditorContainerProps
-  extends Pick<
-    ComposerProps,
-    | "defaultValue"
-    | "showAttachments"
-    | "showFormattingControls"
-    | "showAttribution"
-    | "overrides"
-    | "actions"
-    | "autoFocus"
-    | "disabled"
-  > {
+interface ComposerEditorContainerProps extends Pick<
+  ComposerProps,
+  | "defaultValue"
+  | "showAttachments"
+  | "showFormattingControls"
+  | "showAttribution"
+  | "overrides"
+  | "actions"
+  | "autoFocus"
+  | "disabled"
+> {
   isCollapsed: boolean | undefined;
   onEmptyChange: (isEmpty: boolean) => void;
   hasResolveMentionSuggestions: boolean;

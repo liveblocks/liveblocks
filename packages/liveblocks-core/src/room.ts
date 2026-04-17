@@ -2215,7 +2215,7 @@ export function createRoom<
       }
     } else {
       // The incoming message is a partial presence update
-      context.others.patchOther(message.actor, message.data), message;
+      (context.others.patchOther(message.actor, message.data), message);
     }
 
     const user = context.others.getUser(message.actor);

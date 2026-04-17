@@ -4,8 +4,10 @@ import type { ComponentProps, ReactNode } from "react";
 
 import { Tooltip } from "./Tooltip";
 
-export interface SelectItem
-  extends Omit<ComponentProps<typeof RadixSelect.SelectItem>, "content"> {
+export interface SelectItem extends Omit<
+  ComponentProps<typeof RadixSelect.SelectItem>,
+  "content"
+> {
   value: string;
   content?: ReactNode;
 }

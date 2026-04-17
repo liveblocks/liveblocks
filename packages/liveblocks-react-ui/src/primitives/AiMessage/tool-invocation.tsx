@@ -83,7 +83,7 @@ export function AiMessageToolInvocation({
     // re-render. The reason this is needed is that `part` gets mutated
     // in-place by the delta handling, rather than part being replaced by a new
     // object on every chunk.
-    partialArgs;
+    partialArgs; // eslint-disable-line @typescript-eslint/no-unused-expressions
 
     const { type: _, ...rest } = part;
     return {

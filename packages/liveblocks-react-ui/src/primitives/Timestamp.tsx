@@ -15,8 +15,10 @@ const RENDER_INTERVAL = 30 * 1000; // 30 seconds
 
 const TIMESTAMP_NAME = "Timestamp";
 
-export interface TimestampProps
-  extends Omit<ComponentPropsWithSlot<"time">, "children" | "title"> {
+export interface TimestampProps extends Omit<
+  ComponentPropsWithSlot<"time">,
+  "children" | "title"
+> {
   /**
    * The date to display.
    */

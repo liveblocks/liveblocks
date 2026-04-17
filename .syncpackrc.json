@@ -1,0 +1,27 @@
+{
+  "$schema": "https://unpkg.com/syncpack@14/schema.json",
+  "versionGroups": [
+    {
+      "label": "Devtools has its own dependency versions (browser extension)",
+      "packages": ["@liveblocks/devtools"],
+      "isIgnored": true
+    },
+
+    {
+      "label": "react/react-dom versions vary across packages (TODO: align with Marc)",
+      "dependencies": ["react", "react-dom"],
+      "isIgnored": true
+    },
+
+    {
+      "label": "Peer dependencies are intentionally wider ranges",
+      "dependencyTypes": ["peer"],
+      "preferVersion": "highestSemver"
+    },
+
+    {
+      "label": "Default fallback",
+      "preferVersion": "highestSemver"
+    }
+  ]
+}

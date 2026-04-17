@@ -13,7 +13,8 @@ import { useOverrides } from "../../overrides";
 import { cn } from "../../utils/cn";
 
 export interface DropdownProps
-  extends Pick<
+  extends
+    Pick<
       DropdownMenuPrimitive.DropdownMenuProps,
       "defaultOpen" | "open" | "onOpenChange"
     >,
@@ -86,4 +87,5 @@ export const DropdownItem = forwardRef<HTMLDivElement, DropdownItemProps>(
   }
 );
 
-export const DropdownTrigger = DropdownMenuPrimitive.Trigger;
+export const DropdownTrigger: typeof DropdownMenuPrimitive.Trigger =
+  DropdownMenuPrimitive.Trigger;

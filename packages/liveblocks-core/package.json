@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/core",
-  "version": "3.18.2",
+  "version": "3.18.3",
   "description": "Private internals for Liveblocks. DO NOT import directly from this package!",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -37,11 +37,11 @@
     "format": "(eslint --fix src/ e2e/ || true) && prettier --write src/ e2e/",
     "lint": "eslint src/",
     "lint:package": "publint --strict && attw --pack",
-    "test": "npx liveblocks dev -p 1154 -c 'vitest run --coverage'",
+    "test": "pnpm dlx liveblocks dev -p 1160 -c 'vitest run --coverage'",
     "test:ci": "vitest run",
     "test:types": "vitest run --config ./vitest.config.typecheck.ts",
     "test:watch": "vitest",
-    "test:e2e": "npx liveblocks dev -p 1154 -c 'vitest run --config=./vitest.config.e2e.ts'",
+    "test:e2e": "pnpm dlx liveblocks dev -p 1160 -c 'vitest run --config=./vitest.config.e2e.ts'",
     "test:deps": "depcruise src --exclude __tests__",
     "showdeps": "depcruise src --include-only '^src' --exclude='__tests__' --output-type dot | dot -T svg > /tmp/dependency-graph.svg && open /tmp/dependency-graph.svg",
     "showdeps:high-level": "depcruise src --include-only '^src' --exclude='(^src/index.ts|shallow.ts|__tests__)' --collapse='^src/(refs|lib|compat|types|crdts|protocol)' --output-type dot | dot -T svg > /tmp/dependency-graph.svg && open /tmp/dependency-graph.svg"
@@ -49,13 +49,16 @@
   "license": "Apache-2.0",
   "author": "Liveblocks Inc.",
   "devDependencies": {
-    "@liveblocks/eslint-config": "*",
+    "@liveblocks/eslint-config": "workspace:*",
     "@liveblocks/query-parser": "^0.1.1",
-    "@liveblocks/vitest-config": "*",
+    "@liveblocks/vitest-config": "workspace:*",
+    "@types/json-schema": "^7.0.15",
     "@types/ws": "^8.5.10",
-    "eslint-plugin-rulesdir": "^0.2.2",
-    "fast-check": "^4.3.0",
+    "eslint": "^9.39.4",
+    "fast-check": "^4.6.0",
     "msw": "^2.10.4",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.4",
     "ws": "^8.17.1"
   },
   "peerDependencies": {

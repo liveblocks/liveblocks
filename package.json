@@ -1,20 +1,7 @@
 {
   "name": "@liveblocks/monorepo",
   "private": true,
-  "packageManager": "npm@10.8.1+sha256.b8807aebb9656758e2872fa6e7c564b506aa2faa9297439a478d471d2fe32483",
-  "workspaces": [
-    "shared/*",
-    "packages/*",
-    "!packages/liveblocks-server",
-    "!packages/liveblocks-python",
-    "!packages/liveblocks-python-codegen",
-    "tools/*",
-    "!tools/liveblocks-cli",
-    "e2e/next-ai-kitchen-sink",
-    "e2e/next-react-flow-kitchen-sink",
-    "e2e/next-sandbox",
-    "e2e/node-sandbox"
-  ],
+  "packageManager": "pnpm@10.33.0",
   "scripts": {
     "build": "turbo run build",
     "test": "turbo run test",
@@ -23,29 +10,36 @@
     "test:deps": "turbo run test:deps",
     "lint": "turbo run lint",
     "lint:package": "turbo run lint:package",
-    "format": "turbo run format"
+    "format": "turbo run format",
+    "postinstall": "syncpack lint"
   },
   "devDependencies": {
-    "@arethetypeswrong/cli": "^0.17.3",
-    "@types/node": "^18.19.70",
+    "@arethetypeswrong/cli": "^0.18.2",
+    "@types/node": "^24.12.2",
     "@types/react": "^18.3.17",
     "@types/react-dom": "^18.3.5",
-    "@vitest/coverage-istanbul": "^3.2.4",
-    "dependency-cruiser": "^16.9.0",
-    "prettier": "^3.4.2",
-    "publint": "^0.3.6",
-    "ts-morph": "^22.0.0",
-    "tsup": "^8.3.5",
-    "turbo": "^2.5.6",
-    "typescript": "^5.7.2",
-    "vitest": "^3.2.4"
+    "@vitest/coverage-istanbul": "^4.1.4",
+    "dependency-cruiser": "^17.3.10",
+    "eslint": "^9.39.4",
+    "syncpack": "^14.3.0",
+    "happy-dom": "^20.9.0",
+    "prettier": "^3.8.3",
+    "publint": "^0.3.18",
+    "ts-morph": "^28.0.0",
+    "tsup": "^8.5.1",
+    "turbo": "^2.9.6",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.4"
   },
   "engines": {
-    "node": ">=22.x"
+    "node": ">=24.x"
   },
-  "overrides": {
-    "@types/node": "$@types/node",
-    "@types/react": "$@types/react",
-    "@types/react-dom": "$@types/react-dom"
+  "pnpm": {
+    "peerDependencyRules": {
+      "allowedVersions": {
+        "use-sync-external-store>react": "19",
+        "htmlnano>svgo": "2"
+      }
+    }
   }
 }

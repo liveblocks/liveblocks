@@ -18,12 +18,12 @@ _private_ package. Customers should not use it directly.
 
 # Bash commands
 
-When running scripts, use `npx turbo`, not `npm`.
+When running scripts, use `pnpm exec turbo`, not `pnpm run` directly.
 
-- npx turbo run build: Build the project
-- npx turbo run build && tsc: Run typechecks
-- npx turbo run test:types: Run the type-level tests
-- npx turbo run lint:package: Run package tests
+- pnpm exec turbo run build: Build the project
+- pnpm exec turbo run build && tsc: Run typechecks
+- pnpm exec turbo run test:types: Run the type-level tests
+- pnpm exec turbo run lint:package: Run package tests
 
 # Code style
 
@@ -31,6 +31,13 @@ When running scripts, use `npx turbo`, not `npm`.
 - Use $-suffix for variables storing Promises
 - Use Σ-suffix for variables storing Signals (MutableSignal, Signal,
   DerivedSignal, etc)
+
+# Dependencies
+
+- When adding new peerDependencies, pin them to major version ranges initially
+  (e.g. `"^13"` for yjs, `"^1"` for y-prosemirror, `"^18 || ^19"` for react).
+  Widen after verification. To support multiple major versions, use
+  `"^1 || ^2"`.
 
 # Code quality
 
@@ -54,7 +61,7 @@ When running scripts, use `npx turbo`, not `npm`.
 - For AI the app is in e2e/next-ai-kitchen-sink
 
 Run e2e tests headlessly using Playwright:  
-npx turbo build && env HEADLESS=1 playwright test --retries=5 --
+pnpm exec turbo build && env HEADLESS=1 playwright test --retries=5 --
 
 # Examples
 

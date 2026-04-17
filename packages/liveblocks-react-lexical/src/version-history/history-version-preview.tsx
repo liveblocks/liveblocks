@@ -31,8 +31,7 @@ import { liveblocksConfig } from "../liveblocks-config";
 
 const AUTHORS_TRUNCATE = 3;
 
-export interface HistoryVersionPreviewProps
-  extends ComponentPropsWithoutRef<"div"> {
+export interface HistoryVersionPreviewProps extends ComponentPropsWithoutRef<"div"> {
   version: HistoryVersion;
   onVersionRestore?: (version: HistoryVersion) => void;
 }

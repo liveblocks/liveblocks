@@ -1,5 +1,13 @@
 ## vNEXT (not yet released)
 
+## v3.18.3
+
+### `@liveblocks/*`
+
+- Third-party libraries like `yjs`, `@tiptap/*`, and `@blocknote/*` are now
+  declared as peer dependencies instead of bundled dependencies across all
+  packages that use them.
+
 ## v3.18.2
 
 ### `@liveblocks/client`

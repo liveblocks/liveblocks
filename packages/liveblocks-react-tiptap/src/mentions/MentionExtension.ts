@@ -204,9 +204,9 @@ export const MentionExtension = Extension.create<MentionExtensionOptions>({
             $fromParentType.contentMatch.matchType(
               state.schema.nodes[LIVEBLOCKS_MENTION_TYPE]
             ) ||
-              $fromParentType.contentMatch.matchType(
-                state.schema.nodes[LIVEBLOCKS_GROUP_MENTION_TYPE]
-              )
+            $fromParentType.contentMatch.matchType(
+              state.schema.nodes[LIVEBLOCKS_GROUP_MENTION_TYPE]
+            )
           );
         },
         allowSpaces: true,

@@ -2,8 +2,6 @@
  * @vitest-environment node
  */
 
-// We're using node-fetch 2.X because 3+ only support ESM and jest is a pain to use with ESM
-import { Response as NodeFetchResponse } from "node-fetch";
 import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 
 import type { ClientOptions } from "../client";
@@ -16,10 +14,8 @@ import { waitUntilStatus } from "./_waitUtils";
 const token =
   "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2NjQ1NjY0MTAsImV4cCI6MTY2NDU3MDAxMCwicGlkIjoiNjA1YTRmZDMxYTM2ZDVlYTdhMmUwOGYxIiwidWlkIjoidXNlcjEiLCJwZXJtcyI6eyJvcmcxKiI6WyJyb29tOndyaXRlIl19LCJrIjoiYWNjIn0.H9EpvO91L5R20ACSIXoJgjmTUeWJRHt91yCxgZ7J0km_FsjaqhYmlyD-ln3N9HpIXnei2y7shyoVTsSKwuYandwVQYLbPXP0tnZSlyp7WbTVcXEz--5ngDj0ePDw5OkDHcDiY243DGJconYZrbru9J86BpgBLsO0d4zJfnmF4hgyGXD7nm7TdJ0DudT_2_gUDECYXcgCT7cRUFfYtkFvC2IYJK0MeFKd3OX06u3k5tw9umUTDRdGs42BAWs6lvUxU4SPkjy24gQVmRK0FCf2sYmtKYA6WmRebp2Y4wR_NLV7GVznZY4-jy8AxmPhzB3GgXj3-uOz_3KC04XHQv8wxg";
 
-const fetchMock = (async () =>
-  Promise.resolve(
-    new NodeFetchResponse(JSON.stringify({ token })) as unknown as Response
-  )) as typeof fetch;
+const fetchMock = () =>
+  Promise.resolve(new Response(JSON.stringify({ token })));
 
 function authEndpointCallback() {
   return Promise.resolve({ token });

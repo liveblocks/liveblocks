@@ -5,7 +5,7 @@ import type { Resolve } from "../lib/Resolve";
 
 export type JSONObjectSchema7 = JSONSchema7 & { type: "object" };
 
-// eslint-disable-next-line @typescript-eslint/ban-types
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 type NoFields = {};
 
 type Infer<T> = T extends JSONSchema7 ? InferFromSchema<T> : never;

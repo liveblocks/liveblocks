@@ -249,27 +249,27 @@
   }
 
   &:where(
-      :enabled:hover,
-      :enabled:focus-visible,
-      [aria-expanded="true"],
-      [aria-selected="true"]
-    ) {
+    :enabled:hover,
+    :enabled:focus-visible,
+    [aria-expanded="true"],
+    [aria-selected="true"]
+  ) {
     --lb-button-background: var(--lb-foreground-subtle);
 
     color: var(--lb-foreground-tertiary);
   }
 
   &:where(
-      [data-variant="default"]:not(
-          :is(
-            :enabled:hover,
-            :enabled:focus-visible,
-            [aria-expanded="true"],
-            [aria-selected="true"],
-            [aria-pressed]
-          )
-        )
-    ) {
+    [data-variant="default"]:not(
+      :is(
+        :enabled:hover,
+        :enabled:focus-visible,
+        [aria-expanded="true"],
+        [aria-selected="true"],
+        [aria-pressed]
+      )
+    )
+  ) {
     background: transparent;
   }
 
@@ -279,11 +279,11 @@
     color: var(--lb-accent-foreground);
 
     &:where(
-        :enabled:hover,
-        :enabled:focus-visible,
-        [aria-expanded="true"],
-        [aria-selected="true"]
-      ) {
+      :enabled:hover,
+      :enabled:focus-visible,
+      [aria-expanded="true"],
+      [aria-selected="true"]
+    ) {
       --lb-button-background: var(--lb-accent-secondary);
 
       color: var(--lb-accent-foreground);
@@ -296,11 +296,11 @@
     color: var(--lb-destructive-foreground);
 
     &:where(
-        :enabled:hover,
-        :enabled:focus-visible,
-        [aria-expanded="true"],
-        [aria-selected="true"]
-      ) {
+      :enabled:hover,
+      :enabled:focus-visible,
+      [aria-expanded="true"],
+      [aria-selected="true"]
+    ) {
       --lb-button-background: var(--lb-destructive-secondary);
 
       color: var(--lb-destructive-foreground);
@@ -345,11 +345,11 @@
     color: var(--lb-foreground-tertiary);
 
     &:where(
-        :enabled:hover,
-        :enabled:focus-visible,
-        [aria-expanded="true"],
-        [aria-selected="true"]
-      ) {
+      :enabled:hover,
+      :enabled:focus-visible,
+      [aria-expanded="true"],
+      [aria-selected="true"]
+    ) {
       --lb-button-background: var(--lb-foreground);
 
       color: var(--lb-dynamic-background);
@@ -427,12 +427,12 @@
 }
 
 .lb-dropdown-item:where(
-    :is(
-      [data-highlighted]:not([data-highlighted="false"]),
-      [data-selected]:not([data-selected="false"]),
-      [data-active]:not([data-active="false"])
-    )
-  ) {
+  :is(
+    [data-highlighted]:not([data-highlighted="false"]),
+    [data-selected]:not([data-selected="false"]),
+    [data-active]:not([data-active="false"])
+  )
+) {
   :where(.lb-icon-container) {
     color: var(--lb-foreground-tertiary);
   }
@@ -1493,11 +1493,11 @@
     box-shadow: inset 0 0 0 1px var(--lb-accent-moderate);
 
     &:where(
-        :enabled:hover,
-        :enabled:focus-visible,
-        [aria-expanded="true"],
-        [aria-selected="true"]
-      ) {
+      :enabled:hover,
+      :enabled:focus-visible,
+      [aria-expanded="true"],
+      [aria-selected="true"]
+    ) {
       color: var(--lb-accent);
     }
   }
@@ -2376,11 +2376,11 @@
   transition-property: background;
 
   &:where(
-      :hover,
-      :focus-visible,
-      :focus-within,
-      [data-selected]:not([data-selected="false"])
-    ) {
+    :hover,
+    :focus-visible,
+    :focus-within,
+    [data-selected]:not([data-selected="false"])
+  ) {
     --lb-dynamic-background: var(--lb-background-foreground-faint);
   }
 }
@@ -2502,7 +2502,8 @@
 
 /* 0,0,0 specificity to inherit any styles applied to `code` elements */
 :where(:is(.lb-root) code) {
-  font-family: ui-monospace, Menlo, Monaco, "Roboto Mono", "Cascadia Code",
+  font-family:
+    ui-monospace, Menlo, Monaco, "Roboto Mono", "Cascadia Code",
     "Source Code Pro", Consolas, "DejaVu Sans Mono", monospace;
 }
 
@@ -2577,10 +2578,10 @@
   .lb-emoji-picker-emoji
 ) {
   &:where(
-      [data-highlighted]:not([data-highlighted="false"]),
-      [data-selected]:not([data-selected="false"]),
-      [data-active]:not([data-active="false"])
-    ) {
+    [data-highlighted]:not([data-highlighted="false"]),
+    [data-selected]:not([data-selected="false"]),
+    [data-active]:not([data-active="false"])
+  ) {
     background: var(--lb-foreground-subtle);
     transition-duration: calc(var(--lb-transition-duration) / 2);
   }
@@ -2908,8 +2909,8 @@
      * Rich messages get more padding than plain text ones.
      */
     &:where(
-        :has(h1, h2, h3, h4, h5, h6, ul, ol, blockquote, table, .lb-code-block)
-      ) {
+      :has(h1, h2, h3, h4, h5, h6, ul, ol, blockquote, table, .lb-code-block)
+    ) {
       --lb-ai-chat-message-content-horizontal-padding: calc(
         1.375 * var(--lb-spacing)
       );

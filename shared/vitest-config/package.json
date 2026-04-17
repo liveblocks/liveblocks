@@ -8,9 +8,8 @@
     "./typecheck": "./typecheck.js"
   },
   "dependencies": {
-    "fast-check": "^4.3.0",
-    "jsdom": "^25.0.1",
-    "vite-tsconfig-paths": "^5.1.4",
+    "fast-check": "^4.6.0",
+    "happy-dom": "^20.9.0",
     "whatwg-fetch": "^3.6.20"
   }
 }

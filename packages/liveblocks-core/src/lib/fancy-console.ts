@@ -1,4 +1,4 @@
-/* eslint-disable rulesdir/console-must-be-fancy */
+/* eslint-disable local/console-must-be-fancy */
 
 const badge =
   "background:#0e0d12;border-radius:9999px;color:#fff;padding:3px 7px;font-family:sans-serif;font-weight:600;";

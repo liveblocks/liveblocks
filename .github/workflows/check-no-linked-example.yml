@@ -1,0 +1,27 @@
+name: Check no linked example
+
+on: [pull_request]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fail if link-locally-do-not-commit sentinel is present
+        run: |
+          if grep -r --include='*.json' --include='*.yaml' --include='*.yml' \
+               --exclude-dir='.github' \
+               -l 'link-locally-do-not-commit' . ; then
+            echo ""
+            echo "✘ Found the link-locally-do-not-commit sentinel in the files listed above."
+            echo "  This indicates leftover state from scripts/link-example-locally.sh."
+            echo ""
+            echo "  To fix:"
+            echo "    - Delete the pnpm.overrides block from root package.json"
+            echo "    - Revert any workspace:* deps in examples/**/package.json"
+            echo "    - Remove the example line from pnpm-workspace.yaml"
+            echo "    - Run pnpm install"
+            echo ""
+            exit 1
+          fi

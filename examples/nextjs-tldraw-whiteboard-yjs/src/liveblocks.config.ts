@@ -1,4 +1,4 @@
-import { LiveMap } from "@liveblocks/core";
+import { LiveMap } from "@liveblocks/client";
 
 declare global {
   interface Liveblocks {

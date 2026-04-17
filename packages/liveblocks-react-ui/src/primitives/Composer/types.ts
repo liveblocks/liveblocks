@@ -78,8 +78,7 @@ export type ComposerSuggestionsProps = ComponentPropsWithSlot<"div">;
 
 export type ComposerSuggestionsListProps = ComponentPropsWithSlot<"ul">;
 
-export interface ComposerSuggestionsListItemProps
-  extends ComponentPropsWithSlot<"li"> {
+export interface ComposerSuggestionsListItemProps extends ComponentPropsWithSlot<"li"> {
   /**
    * The suggestion's value.
    */
@@ -108,8 +107,10 @@ export interface ComposerEditorComponents {
   FloatingToolbar?: ComponentType<ComposerEditorFloatingToolbarProps>;
 }
 
-export interface ComposerEditorProps
-  extends Omit<ComponentPropsWithoutRef<"div">, "defaultValue" | "children"> {
+export interface ComposerEditorProps extends Omit<
+  ComponentPropsWithoutRef<"div">,
+  "defaultValue" | "children"
+> {
   /**
    * The reading direction of the editor and related elements.
    */
@@ -194,8 +195,7 @@ export type ComposerSubmitProps = ComponentPropsWithSlot<"button">;
 
 export type ComposerAttachFilesProps = ComponentPropsWithSlot<"button">;
 
-export interface ComposerMarkToggleProps
-  extends ComponentPropsWithSlot<"button"> {
+export interface ComposerMarkToggleProps extends ComponentPropsWithSlot<"button"> {
   /**
    * The text mark to toggle.
    */
@@ -207,8 +207,7 @@ export interface ComposerMarkToggleProps
   onValueChange?: (mark: ComposerBodyMark) => void;
 }
 
-export interface ComposerAttachmentsDropAreaProps
-  extends ComponentPropsWithSlot<"div"> {
+export interface ComposerAttachmentsDropAreaProps extends ComponentPropsWithSlot<"div"> {
   disabled?: boolean;
 }
 
@@ -254,15 +253,13 @@ export interface ComposerEditorFloatingToolbarWrapperProps {
   FloatingToolbar: ComponentType<ComposerEditorFloatingToolbarProps>;
 }
 
-export interface ComposerEditorMentionWrapperProps
-  extends RenderElementSpecificProps<ComposerBodyMention> {
+export interface ComposerEditorMentionWrapperProps extends RenderElementSpecificProps<ComposerBodyMention> {
   Mention: ComponentType<ComposerEditorMentionProps>;
 }
 
-export interface ComposerEditorLinkWrapperProps
-  extends RenderElementSpecificProps<
-    ComposerBodyAutoLink | ComposerBodyCustomLink
-  > {
+export interface ComposerEditorLinkWrapperProps extends RenderElementSpecificProps<
+  ComposerBodyAutoLink | ComposerBodyCustomLink
+> {
   Link: ComponentType<ComposerEditorLinkProps>;
 }
 

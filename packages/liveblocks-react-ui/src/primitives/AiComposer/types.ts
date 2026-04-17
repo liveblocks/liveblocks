@@ -41,8 +41,10 @@ export interface AiComposerFormProps extends ComponentPropsWithSlot<"form"> {
   disabled?: boolean;
 }
 
-export interface AiComposerEditorProps
-  extends Omit<ComponentPropsWithoutRef<"div">, "defaultValue" | "children"> {
+export interface AiComposerEditorProps extends Omit<
+  ComponentPropsWithoutRef<"div">,
+  "defaultValue" | "children"
+> {
   /**
    * The reading direction of the editor and related elements.
    */

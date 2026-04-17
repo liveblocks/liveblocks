@@ -22,38 +22,28 @@ function YItemNode({ selected, data }: NodeProps<NodeData>) {
 
   switch (true) {
     case data.item.content instanceof Y.ContentDeleted:
-      component = (
-        <ContentDeleted content={data.item.content as Y.ContentDeleted} />
-      );
+      component = <ContentDeleted content={data.item.content} />;
       break;
     case data.item.content instanceof Y.ContentString:
-      component = (
-        <ContentString content={data.item.content as Y.ContentString} />
-      );
+      component = <ContentString content={data.item.content} />;
       break;
     case data.item.content instanceof Y.ContentFormat:
-      component = (
-        <ContentFormat content={data.item.content as Y.ContentFormat} />
-      );
+      component = <ContentFormat content={data.item.content} />;
       break;
     case data.item.content instanceof Y.ContentJSON:
-      component = <ContentJSON content={data.item.content as Y.ContentJSON} />;
+      component = <ContentJSON content={data.item.content} />;
       break;
     case data.item.content instanceof Y.ContentAny:
-      component = <ContentAny content={data.item.content as Y.ContentAny} />;
+      component = <ContentAny content={data.item.content} />;
       break;
     case data.item.content instanceof Y.ContentType:
-      component = <ContentType content={data.item.content as Y.ContentType} />;
+      component = <ContentType content={data.item.content} />;
       break;
     case data.item.content instanceof Y.ContentBinary:
-      component = (
-        <ContentBinary content={data.item.content as Y.ContentBinary} />
-      );
+      component = <ContentBinary content={data.item.content} />;
       break;
     case data.item.content instanceof Y.ContentEmbed:
-      component = (
-        <ContentEmbed content={data.item.content as Y.ContentEmbed} />
-      );
+      component = <ContentEmbed content={data.item.content} />;
       break;
     default: {
       component = <FallbackContent content={data.item.content} />;

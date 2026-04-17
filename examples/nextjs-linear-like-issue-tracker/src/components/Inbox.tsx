@@ -11,7 +11,7 @@ import {
 import { InboxNotificationList } from "@liveblocks/react-ui";
 import { Comment } from "@liveblocks/react-ui/primitives";
 import { ErrorBoundary } from "react-error-boundary";
-import { InboxNotificationData } from "@liveblocks/core";
+import { InboxNotificationData } from "@liveblocks/client";
 import { Avatar } from "@/components/Avatar";
 import classNames from "classnames";
 import { useRoomInfo, useInboxNotificationThread } from "@liveblocks/react";

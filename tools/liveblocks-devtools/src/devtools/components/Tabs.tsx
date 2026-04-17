@@ -4,8 +4,10 @@ import type { ComponentProps, ReactNode } from "react";
 
 import { Tooltip } from "./Tooltip";
 
-export interface Tab
-  extends Omit<ComponentProps<typeof RadixTabs.Trigger>, "content"> {
+export interface Tab extends Omit<
+  ComponentProps<typeof RadixTabs.Trigger>,
+  "content"
+> {
   value: string;
   title: string;
   richTitle?: ReactNode;

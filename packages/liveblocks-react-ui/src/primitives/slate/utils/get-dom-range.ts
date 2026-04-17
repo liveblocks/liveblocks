@@ -14,7 +14,7 @@ export function getDOMRange(
 
   try {
     return ReactEditor.toDOMRange(editor, range);
-  } catch (error) {
+  } catch {
     return getDOMRange(
       editor,
       {

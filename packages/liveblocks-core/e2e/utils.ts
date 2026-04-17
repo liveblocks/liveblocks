@@ -14,7 +14,7 @@ import { mapValues, wait, withTimeout } from "../src/lib/utils";
 import type { BaseUserMeta } from "../src/protocol/BaseUserMeta";
 import type { Room, RoomEventMessage } from "../src/room";
 
-const BASE_URL = "http://localhost:1154";
+const BASE_URL = `http://localhost:${process.env.LIVEBLOCKS_DEV_SERVER_PORT ?? 1154}`;
 
 async function initializeRoomForTest<
   P extends JsonObject = JsonObject,
@@ -74,7 +74,6 @@ async function initializeRoomForTest<
     baseUrl: BASE_URL,
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
   const { room, leave } = client.enterRoom<P, S, E, TM, CM>(roomId, {
     initialPresence,
     initialStorage,

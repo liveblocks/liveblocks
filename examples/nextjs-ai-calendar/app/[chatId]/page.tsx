@@ -4,7 +4,7 @@ import { Calendar } from "./_components/calendar";
 import { Room } from "./_components/room";
 import { Chat } from "./_components/chat";
 import Link from "next/link";
-import { nanoid } from "@liveblocks/core";
+import { nanoid } from "nanoid";
 import { use } from "react";
 
 export default function Page({ params }: { params: Promise<{ chatId: string }> }) {

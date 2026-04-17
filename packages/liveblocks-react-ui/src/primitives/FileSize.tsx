@@ -9,8 +9,10 @@ import { formatFileSize } from "../utils/format-file-size";
 
 const FILE_SIZE_NAME = "FileSize";
 
-export interface FileSizeProps
-  extends Omit<ComponentPropsWithSlot<"span">, "children"> {
+export interface FileSizeProps extends Omit<
+  ComponentPropsWithSlot<"span">,
+  "children"
+> {
   /**
    * The file size to display.
    */

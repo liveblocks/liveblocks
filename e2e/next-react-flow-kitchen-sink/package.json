@@ -10,22 +10,22 @@
     "format": "(eslint --fix app/ test/ || true) && prettier --write app/ test/"
   },
   "dependencies": {
-    "@liveblocks/client": "*",
-    "@liveblocks/node": "*",
-    "@liveblocks/react": "*",
-    "@liveblocks/react-flow": "*",
-    "@liveblocks/react-ui": "*",
+    "@liveblocks/client": "workspace:*",
+    "@liveblocks/node": "workspace:*",
+    "@liveblocks/react": "workspace:*",
+    "@liveblocks/react-flow": "workspace:*",
+    "@liveblocks/react-ui": "workspace:*",
     "@xyflow/react": "^12.10.1",
     "next": "16.1.4",
     "react": "19.2.3",
     "react-dom": "19.2.3"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3",
-    "@tailwindcss/postcss": "^4",
-    "eslint": "^9",
+    "@eslint/eslintrc": "^3.3.3",
+    "@tailwindcss/postcss": "^4.1.18",
+    "eslint": "^9.39.4",
     "eslint-config-next": "16.1.4",
-    "tailwindcss": "^4",
-    "typescript": "^5"
+    "tailwindcss": "^4.1.18",
+    "typescript": "^5.9.3"
   }
 }

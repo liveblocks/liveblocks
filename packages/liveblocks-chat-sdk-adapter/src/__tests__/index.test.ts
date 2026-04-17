@@ -975,7 +975,7 @@ describe("LiveblocksAdapter", () => {
         expect(page1.nextCursor).toBeDefined();
         expect(decodePaginationCursorByCreatedAt(page1.nextCursor!)).toEqual({
           id: "c2",
-          createdAt: 2000,
+          createdAt: new Date(2000),
         });
 
         const page2 = await adapter.fetchMessages("liveblocks:room_1:th_1", {
@@ -1005,7 +1005,7 @@ describe("LiveblocksAdapter", () => {
         expect(result.nextCursor).toBeDefined();
         expect(decodePaginationCursorByCreatedAt(result.nextCursor!)).toEqual({
           id: "c2",
-          createdAt: 2000,
+          createdAt: new Date(2000),
         });
       });
 
@@ -1022,7 +1022,7 @@ describe("LiveblocksAdapter", () => {
         expect(page1.messages.map((m) => m.text)).toEqual(["msg-0", "msg-1"]);
         expect(decodePaginationCursorByCreatedAt(page1.nextCursor!)).toEqual({
           id: "c1",
-          createdAt: 1000,
+          createdAt: new Date(1000),
         });
 
         const page2 = await adapter.fetchMessages("liveblocks:room_1:th_1", {
@@ -1033,7 +1033,7 @@ describe("LiveblocksAdapter", () => {
         expect(page2.messages.map((m) => m.text)).toEqual(["msg-2", "msg-3"]);
         expect(decodePaginationCursorByCreatedAt(page2.nextCursor!)).toEqual({
           id: "c3",
-          createdAt: 3000,
+          createdAt: new Date(3000),
         });
 
         const page3 = await adapter.fetchMessages("liveblocks:room_1:th_1", {
@@ -1056,7 +1056,7 @@ describe("LiveblocksAdapter", () => {
           limit: 2,
         });
         const decoded = decodePaginationCursorByCreatedAt(result.nextCursor!);
-        expect(decoded).toEqual({ id: "c1", createdAt: 1000 });
+        expect(decoded).toEqual({ id: "c1", createdAt: new Date(1000) });
         expect(result.nextCursor).not.toContain("+");
         expect(result.nextCursor).not.toContain("/");
         expect(result.nextCursor).not.toContain("=");

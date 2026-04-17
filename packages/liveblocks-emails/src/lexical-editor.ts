@@ -21,13 +21,11 @@ export interface SerializedLexicalElementNode<
   group: "element";
 }
 
-export interface SerializedLexicalDecoratorNode
-  extends SerializedBaseLexicalNode {
+export interface SerializedLexicalDecoratorNode extends SerializedBaseLexicalNode {
   group: "decorator";
 }
 
-export interface SerializedLexicalMentionNode
-  extends SerializedLexicalDecoratorNode {
+export interface SerializedLexicalMentionNode extends SerializedLexicalDecoratorNode {
   type: "lb-mention";
   attributes: {
     __id: string;
@@ -36,8 +34,7 @@ export interface SerializedLexicalMentionNode
   };
 }
 
-export interface SerializedLexicalGroupMentionNode
-  extends SerializedLexicalDecoratorNode {
+export interface SerializedLexicalGroupMentionNode extends SerializedLexicalDecoratorNode {
   type: "lb-group-mention";
   attributes: {
     __id: string;
@@ -47,8 +44,7 @@ export interface SerializedLexicalGroupMentionNode
   };
 }
 
-export interface SerializedLexicalLineBreakNode
-  extends SerializedBaseLexicalNode {
+export interface SerializedLexicalLineBreakNode extends SerializedBaseLexicalNode {
   group: "linebreak";
 }
 
@@ -66,8 +62,7 @@ export type SerializedLexicalRootNodeChildren = Array<
   >
 >;
 
-export interface SerializedLexicalRootNode
-  extends Readonly<SerializedBaseLexicalNode> {
+export interface SerializedLexicalRootNode extends Readonly<SerializedBaseLexicalNode> {
   readonly type: "root";
   readonly children: SerializedLexicalRootNodeChildren;
 }

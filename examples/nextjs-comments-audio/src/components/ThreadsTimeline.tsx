@@ -4,7 +4,7 @@ import { Link } from "@/components/Link";
 import { Mention } from "@/components/Mention";
 import { useThreads, useUser } from "@liveblocks/react/suspense";
 import { useSkipTo } from "@/utils";
-import { ThreadData } from "@liveblocks/core";
+import { ThreadData } from "@liveblocks/client";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { Comment } from "@liveblocks/react-ui/primitives";
 import { CSSProperties, useCallback, useState } from "react";

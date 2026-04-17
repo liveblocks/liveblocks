@@ -229,7 +229,6 @@ export const Collaboration = Extension.create<
       return {
         destroy: () => {
           const hasUndoManSelf = undoManager.trackedOrigins.has(undoManager);
-          // eslint-disable-next-line no-underscore-dangle
           const observers = undoManager._observers;
 
           if (
@@ -245,7 +244,6 @@ export const Collaboration = Extension.create<
                 "afterTransaction",
                 undoManager.afterTransactionHandler
               );
-              // eslint-disable-next-line no-underscore-dangle
               undoManager._observers = observers;
             };
           }
@@ -286,6 +284,7 @@ export const Collaboration = Extension.create<
           // If the content is invalid, return false to prevent the transaction from being applied
           return false;
         }
+        return;
       });
     }
 

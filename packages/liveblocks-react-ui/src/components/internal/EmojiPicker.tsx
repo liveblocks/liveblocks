@@ -180,4 +180,5 @@ export const EmojiPicker = forwardRef<HTMLDivElement, EmojiPickerProps>(
   }
 );
 
-export const EmojiPickerTrigger = PopoverPrimitive.Trigger;
+export const EmojiPickerTrigger: typeof PopoverPrimitive.Trigger =
+  PopoverPrimitive.Trigger;

@@ -2,7 +2,6 @@ import { createClient } from "@liveblocks/client";
 import type { BaseUserMeta, JsonObject, User } from "@liveblocks/client";
 import { Liveblocks } from "@liveblocks/node";
 import { config } from "dotenv";
-import WebSocket from "ws";
 import { describe, test, expect, onTestFinished } from "vitest";
 
 type OpaqueUser = User<JsonObject, BaseUserMeta>;

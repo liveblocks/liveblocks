@@ -31,7 +31,7 @@ jobs:
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           token: ${{ secrets.RELEASE_COMMIT_WRITE_TOKEN }}
 
@@ -44,12 +44,14 @@ jobs:
       - name: Validate branch
         run: test "$(git rev-parse --abbrev-ref HEAD)" == "main"
 
-      - name: Use Node.js
-        uses: actions/setup-node@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4
+
+      - name: Setup Node
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
         with:
-          node-version: "22.x"
-          cache: "npm"
-          cache-dependency-path: "**/package-lock.json"
+          node-version-file: ".nvmrc"
+          cache: pnpm
 
       - name: Setup git config
         run: |
@@ -57,11 +59,11 @@ jobs:
           git config user.email "<>"
 
       - name: Install dependencies
-        run: npm install
+        run: pnpm install --frozen-lockfile
 
       - name: Turbo Cache
         id: turbo-cache
-        uses: actions/cache@v4
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5
         with:
           key: turbo-cache-@liveblocks/devtools-bust
           path: node_modules/.cache/turbo
@@ -81,10 +83,10 @@ jobs:
           DevTools to " "tools/liveblocks-devtools"
 
       - name: Build for Chromium
-        run: npx --no turbo run build --filter=@liveblocks/devtools
+        run: pnpm exec turbo run build --filter=@liveblocks/devtools
 
       - name: Build for Firefox
-        run: npx --no turbo run build:firefox --filter=@liveblocks/devtools
+        run: pnpm exec turbo run build:firefox --filter=@liveblocks/devtools
 
       - name: Browser Platform Publish
         uses: PlasmoHQ/bpp@v3

@@ -51,6 +51,7 @@ import { Timestamp } from "../primitives/Timestamp";
 import { useCurrentUserId } from "../shared";
 import type { SlotProp } from "../types";
 import { cn } from "../utils/cn";
+import { UserAvatar } from "./Avatar";
 import { Button } from "./internal/Button";
 import { CodeBlock } from "./internal/CodeBlock";
 import { Dropdown, DropdownItem, DropdownTrigger } from "./internal/Dropdown";
@@ -59,7 +60,6 @@ import {
   INBOX_NOTIFICATION_THREAD_MAX_COMMENTS,
   InboxNotificationComment,
 } from "./internal/InboxNotificationThread";
-import { UserAvatar } from "./Avatar";
 import { List } from "./internal/List";
 import { Room } from "./internal/Room";
 import { Tooltip, TooltipProvider } from "./internal/Tooltip";
@@ -89,7 +89,8 @@ interface InboxNotificationSharedProps {
 }
 
 export interface InboxNotificationProps
-  extends Omit<ComponentPropsWithoutRef<"a">, "title">,
+  extends
+    Omit<ComponentPropsWithoutRef<"a">, "title">,
     InboxNotificationSharedProps {
   /**
    * The inbox notification to display.
@@ -118,7 +119,8 @@ export interface InboxNotificationProps
 }
 
 export interface InboxNotificationThreadProps
-  extends Omit<InboxNotificationProps, "kinds" | "children">,
+  extends
+    Omit<InboxNotificationProps, "kinds" | "children">,
     InboxNotificationSharedProps {
   /**
    * The inbox notification to display.
@@ -142,8 +144,7 @@ export interface InboxNotificationThreadProps
 }
 
 export interface InboxNotificationTextMentionProps
-  extends Omit<InboxNotificationProps, "kinds">,
-    InboxNotificationSharedProps {
+  extends Omit<InboxNotificationProps, "kinds">, InboxNotificationSharedProps {
   /**
    * The inbox notification to display.
    */
@@ -156,7 +157,8 @@ export interface InboxNotificationTextMentionProps
 }
 
 export interface InboxNotificationInspectorProps
-  extends Omit<InboxNotificationProps, "kinds" | "children">,
+  extends
+    Omit<InboxNotificationProps, "kinds" | "children">,
     InboxNotificationSharedProps {
   /**
    * The inbox notification to display.
@@ -165,7 +167,8 @@ export interface InboxNotificationInspectorProps
 }
 
 export interface InboxNotificationCustomProps
-  extends Omit<InboxNotificationProps, "kinds">,
+  extends
+    Omit<InboxNotificationProps, "kinds">,
     InboxNotificationSharedProps,
     SlotProp {
   /**
@@ -217,7 +220,8 @@ export type InboxNotificationCustomKindProps<K extends KDAD = KDAD> = Omit<
 };
 
 interface InboxNotificationLayoutProps
-  extends Omit<ComponentPropsWithoutRef<"a">, "title">,
+  extends
+    Omit<ComponentPropsWithoutRef<"a">, "title">,
     InboxNotificationSharedProps,
     SlotProp {
   inboxNotification: InboxNotificationData;

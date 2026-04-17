@@ -7,12 +7,12 @@ import type { Patchable } from "./Patchable";
 
 type AiConnectionErrorContext = {
   type: "AI_CONNECTION_ERROR";
-  code: -1 | 4001 | (number & {}); // eslint-disable-line @typescript-eslint/ban-types
+  code: -1 | 4001 | (number & {});
 };
 
 type RoomConnectionErrorContext = {
   type: "ROOM_CONNECTION_ERROR";
-  code: -1 | 4001 | 4005 | 4006 | (number & {}); // eslint-disable-line @typescript-eslint/ban-types
+  code: -1 | 4001 | 4005 | 4006 | (number & {});
   roomId: string;
 };
 

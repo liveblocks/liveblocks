@@ -1,65 +1,86 @@
-module.exports = {
-  parser: "@typescript-eslint/parser",
-  parserOptions: {
-    // Each project's individual/local tsconfig.json defines the behavior
-    // of the parser
-    project: ["./tsconfig.json"],
-  },
+import js from "@eslint/js";
+import importPlugin from "eslint-plugin-import";
+import simpleImportSort from "eslint-plugin-simple-import-sort";
+import tseslint from "typescript-eslint";
 
-  plugins: [
-    "@typescript-eslint",
-    "eslint-plugin-import",
-    "eslint-plugin-simple-import-sort",
-  ],
+/**
+ * Creates the base ESLint flat config used by all packages in the monorepo.
+ *
+ * @param {string} tsconfigPath Path to the tsconfig.json (default: "./tsconfig.json")
+ * @returns {import("eslint").Linter.Config[]}
+ */
+export function makeConfig(tsconfigPath = "./tsconfig.json") {
+  return [
+    js.configs.recommended,
+    ...tseslint.configs.recommendedTypeChecked,
 
-  extends: [
-    "eslint:recommended",
-    "plugin:@typescript-eslint/recommended",
-    "plugin:@typescript-eslint/recommended-requiring-type-checking",
-  ],
+    {
+      languageOptions: {
+        parserOptions: {
+          // Each project's individual/local tsconfig.json defines the behavior
+          // of the parser
+          projectService: {
+            defaultProject: tsconfigPath,
+          },
+        },
+      },
 
-  // Rules that are enabled for _all_ packages by default
-  rules: {
-    "@typescript-eslint/no-explicit-any": "error",
+      plugins: {
+        import: importPlugin,
+        "simple-import-sort": simpleImportSort,
+      },
 
-    // -------------------------------
-    // Not interested in these checks:
-    // -------------------------------
-    "@typescript-eslint/no-empty-function": "off",
-    "@typescript-eslint/no-inferrable-types": "off",
-    "no-constant-condition": "off",
-    "@typescript-eslint/no-non-null-assertion": "off", // Because we have a custom no-restricted-syntax rule for this
-    "@typescript-eslint/no-base-to-string": "off", // Too many false positives for Yjs objects
+      // Rules that are enabled for _all_ packages by default
+      rules: {
+        "@typescript-eslint/no-explicit-any": "error",
 
-    // -----------------------------
-    // Enable auto-fixes for imports
-    // -----------------------------
-    "import/no-duplicates": "error",
-    "@typescript-eslint/consistent-type-imports": "error",
-    "simple-import-sort/imports": "error",
-    "simple-import-sort/exports": "error",
+        // -------------------------------
+        // Not interested in these checks:
+        // -------------------------------
+        "@typescript-eslint/no-empty-function": "off",
+        "@typescript-eslint/no-inferrable-types": "off",
+        "no-constant-condition": "off",
+        "@typescript-eslint/no-non-null-assertion": "off", // Because we have a custom no-restricted-syntax rule for this
+        "@typescript-eslint/no-base-to-string": "off", // Too many false positives for Yjs objects
 
-    // ------------------------
-    // Customized default rules
-    // ------------------------
-    eqeqeq: ["error", "always"],
-    quotes: [
-      "error",
-      "double",
-      { avoidEscape: true, allowTemplateLiterals: false },
-    ],
-    "object-shorthand": "error",
-    "@typescript-eslint/explicit-module-boundary-types": "error",
-    "@typescript-eslint/no-unused-vars": [
-      "warn",
-      // Unused variables are fine if they start with an underscore
-      { args: "all", argsIgnorePattern: "^_.*", varsIgnorePattern: "^_.*" },
-    ],
+        // -----------------------------
+        // Enable auto-fixes for imports
+        // -----------------------------
+        "import/no-duplicates": "error",
+        "@typescript-eslint/consistent-type-imports": "error",
+        "simple-import-sort/imports": "error",
+        "simple-import-sort/exports": "error",
 
-    // --------------------------------------------------------------
-    // "The Code is the To-Do List"
-    // https://www.executeprogram.com/blog/the-code-is-the-to-do-list
-    // --------------------------------------------------------------
-    "no-warning-comments": ["error", { terms: ["xxx"], location: "anywhere" }],
-  },
-};
+        // ------------------------
+        // Customized default rules
+        // ------------------------
+        eqeqeq: ["error", "always"],
+        quotes: [
+          "error",
+          "double",
+          { avoidEscape: true, allowTemplateLiterals: false },
+        ],
+        "object-shorthand": "error",
+        "@typescript-eslint/explicit-module-boundary-types": "error",
+        "@typescript-eslint/no-unused-vars": [
+          "warn",
+          // Unused variables are fine if they start with an underscore
+          {
+            args: "all",
+            argsIgnorePattern: "^_.*",
+            varsIgnorePattern: "^_.*",
+          },
+        ],
+
+        // --------------------------------------------------------------
+        // "The Code is the To-Do List"
+        // https://www.executeprogram.com/blog/the-code-is-the-to-do-list
+        // --------------------------------------------------------------
+        "no-warning-comments": [
+          "error",
+          { terms: ["xxx"], location: "anywhere" },
+        ],
+      },
+    },
+  ];
+}

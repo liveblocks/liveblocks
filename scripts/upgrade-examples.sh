@@ -33,4 +33,4 @@ shift $(($OPTIND - 1))
 
 VERSION="${1:-latest}"
 
-scripts/for-all-examples.sh -c "npx -y liveblocks@latest upgrade $VERSION" -f
+scripts/for-all-examples.sh -c "pnpm dlx liveblocks@latest upgrade $VERSION" -f

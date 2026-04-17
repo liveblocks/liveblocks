@@ -27,8 +27,10 @@ import { cn } from "../utils/cn";
 import { useSemiControllableState } from "../utils/use-controllable-state";
 import { CodeBlock } from "./internal/CodeBlock";
 
-export interface AiToolProps
-  extends Omit<ComponentProps<"div">, "title" | "children"> {
+export interface AiToolProps extends Omit<
+  ComponentProps<"div">,
+  "title" | "children"
+> {
   /**
    * The tool's title.
    *

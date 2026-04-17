@@ -3,7 +3,7 @@
 import { ClientSideSuspense, RoomProvider } from "@liveblocks/react/suspense";
 import { useSearchParams } from "next/navigation";
 import { ReactNode, useMemo } from "react";
-import { LiveMap } from "@liveblocks/core";
+import { LiveMap } from "@liveblocks/client";
 import { Loading } from "@/components/Loading";
 
 export function Room({ children }: { children: ReactNode }) {

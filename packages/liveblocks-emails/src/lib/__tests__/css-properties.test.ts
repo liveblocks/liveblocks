@@ -66,11 +66,9 @@ describe("to inline css string", () => {
   test("should ignore null, undefined, and boolean values", () => {
     const styles: CSSProperties = {
       color: "red",
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-expect-error - `null` is not a legal value, try to use it anyway
       backgroundColor: null,
       display: undefined,
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-expect-error - `true` is not a legal value, try to use it anyway
       visibility: true,
       opacity: 0.5,

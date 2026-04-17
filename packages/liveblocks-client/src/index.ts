@@ -88,6 +88,7 @@ export {
   LiveList,
   LiveMap,
   LiveObject,
+  nanoid,
   shallow,
   stringifyCommentBody,
   toPlainLson,

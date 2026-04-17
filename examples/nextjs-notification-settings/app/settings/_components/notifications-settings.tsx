@@ -1,6 +1,6 @@
 "use client";
 
-import type { NotificationChannelSettings } from "@liveblocks/core";
+import type { NotificationChannelSettings } from "@liveblocks/client";
 import {
   useNotificationSettings,
   isNotificationChannelEnabled,

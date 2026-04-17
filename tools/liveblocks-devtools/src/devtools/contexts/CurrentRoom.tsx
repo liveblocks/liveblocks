@@ -377,7 +377,7 @@ export function useCurrentRoomId(): string | null {
 }
 
 export function getRoom(roomId: string | null): Room | null {
-  return roomId ? roomsById.get(roomId) ?? null : null;
+  return roomId ? (roomsById.get(roomId) ?? null) : null;
 }
 
 export function useSetCurrentRoomId(): (roomId: string) => void {

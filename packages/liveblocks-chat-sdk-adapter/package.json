@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/chat-sdk-adapter",
-  "version": "3.18.2",
+  "version": "3.18.3",
   "description": "Liveblocks adapter for the Chat SDK.",
   "license": "Apache-2.0",
   "author": "Liveblocks Inc.",
@@ -35,16 +35,19 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@liveblocks/core": "3.18.2",
-    "@liveblocks/node": "3.18.2"
+    "@liveblocks/core": "workspace:*",
+    "@liveblocks/node": "workspace:*"
   },
   "peerDependencies": {
     "chat": ">=4.20.0"
   },
   "devDependencies": {
-    "@liveblocks/eslint-config": "*",
-    "@liveblocks/vitest-config": "*",
-    "chat": "^4.21.0"
+    "@liveblocks/eslint-config": "workspace:*",
+    "@liveblocks/vitest-config": "workspace:*",
+    "chat": "^4.21.0",
+    "eslint": "^9.39.4",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.4"
   },
   "sideEffects": false,
   "bugs": {

@@ -22,8 +22,7 @@ export interface SerializedTiptapItalicMark extends SerializedTiptapBaseMark {
   type: "italic";
 }
 
-export interface SerializedTiptapStrikethroughMark
-  extends SerializedTiptapBaseMark {
+export interface SerializedTiptapStrikethroughMark extends SerializedTiptapBaseMark {
   type: "strike";
 }
 
@@ -61,8 +60,7 @@ export interface SerializedTiptapMentionNode extends SerializedTiptapBaseNode {
   };
 }
 
-export interface SerializedTiptapGroupMentionNode
-  extends SerializedTiptapBaseNode {
+export interface SerializedTiptapGroupMentionNode extends SerializedTiptapBaseNode {
   type: "liveblocksGroupMention";
   attrs: {
     id: string;
@@ -71,8 +69,7 @@ export interface SerializedTiptapGroupMentionNode
   };
 }
 
-export interface SerializedTiptapEmptyParagraphNode
-  extends SerializedTiptapBaseNode {
+export interface SerializedTiptapEmptyParagraphNode extends SerializedTiptapBaseNode {
   type: "paragraph";
   content?: undefined;
 }
@@ -81,14 +78,12 @@ export interface SerializedTiptapEmptyParagraphNode
  * Hard breaks are created by using keys like
  * `shift+enter` or `mod+enter`
  */
-export interface SerializedTiptapHardBreakNode
-  extends SerializedTiptapBaseNode {
+export interface SerializedTiptapHardBreakNode extends SerializedTiptapBaseNode {
   type: "hardBreak";
   content?: undefined;
 }
 
-export interface SerializedTiptapParagraphNode
-  extends SerializedTiptapBaseNode {
+export interface SerializedTiptapParagraphNode extends SerializedTiptapBaseNode {
   type: "paragraph";
   content: Array<SerializedTiptapNode>;
 }
@@ -105,8 +100,7 @@ export type SerializedTiptapRootNodeContent = Array<
   Readonly<SerializedTiptapNode>
 >;
 
-export interface SerializedTiptapRootNode
-  extends Readonly<SerializedTiptapBaseNode> {
+export interface SerializedTiptapRootNode extends Readonly<SerializedTiptapBaseNode> {
   readonly type: "doc";
   readonly content: SerializedTiptapRootNodeContent;
 }

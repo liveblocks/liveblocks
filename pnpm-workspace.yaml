@@ -1,0 +1,29 @@
+engineStrict: true
+autoInstallPeers: false
+publicHoistPattern:
+  - "@types/*"
+
+packages:
+  - "shared/*"
+  - "packages/*"
+  - "!packages/liveblocks-server"
+  - "!packages/liveblocks-python"
+  - "!packages/liveblocks-python-codegen"
+  - "tools/*"
+  - "!tools/liveblocks-cli"
+  - "e2e/next-ai-kitchen-sink"
+  - "e2e/next-react-flow-kitchen-sink"
+  - "e2e/next-sandbox"
+  - "e2e/node-sandbox"
+
+allowBuilds:
+  "@parcel/watcher": true
+  "@swc/core": true
+  "@tailwindcss/oxide": true
+  esbuild: true
+  lmdb: true
+  sharp: true
+
+  # Optional — fall back to JS implementations
+  msgpackr-extract: false
+  msw: false

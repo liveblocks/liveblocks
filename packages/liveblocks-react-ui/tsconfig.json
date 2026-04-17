@@ -2,7 +2,8 @@
   // Use the same settings for all packages
   "extends": "../../shared/tsconfig.common.json",
   "compilerOptions": {
-    "lib": ["dom", "es2022"]
+    "lib": ["dom", "es2022"],
+    "types": ["@testing-library/jest-dom/vitest", "node"]
   },
   "include": [
     "_private",

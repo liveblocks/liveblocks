@@ -1,9 +1,5 @@
-import { mkdirSync, writeFileSync } from "fs";
-import { basename, dirname, join } from "path";
-import { fileURLToPath } from "url";
-
-const MONOREPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
-const TMP_DIR = "liveblocks-typecheck";
+import { existsSync, mkdirSync, writeFileSync } from "fs";
+import { join } from "path";
 
 /**
  * @param {string} name
@@ -29,35 +25,33 @@ function slugify(name) {
  * Prepare a Vitest config for typechecking test-d files. It writes a
  * temporary TS config that extends the package's `tsconfig.json`.
  *
- * @param {ImportMeta} importMeta Import meta object (e.g. `import.meta`).
+ * Uses process.cwd() instead of import.meta.url because vitest 4's
+ * module runner rewrites import.meta.url to a virtual .vite-temp/ path.
+ *
  * @param {string[]} testFiles Test files to typecheck, relative to the package root.
  * @param {string | undefined} [name] Name of the test group.
  * @returns {import("vitest/node").InlineConfig}
  */
-export function makeTypecheckTestConfig(importMeta, testFiles, name) {
-  const pkgDir = fileURLToPath(new URL(".", importMeta.url));
-  const tmpDirPath = join(
-    MONOREPO_ROOT,
-    "node_modules",
-    ".cache",
-    TMP_DIR,
-    basename(pkgDir)
-  );
-  const tmpTsConfigPath = join(tmpDirPath, `${slugify(name)}.json`);
-  const absoluteTestFiles = testFiles.map((file) => join(pkgDir, file));
+export function makeTypecheckTestConfig(testFiles, name) {
+  const pkgDir = process.cwd();
+  if (!existsSync(join(pkgDir, "tsconfig.json"))) {
+    throw new Error(
+      "makeTypecheckTestConfig must be run from a package directory"
+    );
+  }
+  const tmpDirPath = join(pkgDir, ".vitest-typecheck");
+  const tmpTsConfigName = `${slugify(name)}.json`;
 
-  // Vitest's `typecheck` needs a TS config to work, we generate a temporary one
-  // automatically to avoid having to keep them at the root and duplicating `include` paths.
   mkdirSync(tmpDirPath, { recursive: true });
   writeFileSync(
-    tmpTsConfigPath,
+    join(tmpDirPath, tmpTsConfigName),
     JSON.stringify({
-      extends: join(pkgDir, "tsconfig.json"),
+      extends: "../tsconfig.json",
       compilerOptions: {
         noUnusedLocals: false,
         noUnusedParameters: false,
       },
-      include: [join(pkgDir, "src"), ...absoluteTestFiles],
+      include: ["../src", ...testFiles.map((f) => `../${f}`)],
     })
   );
 
@@ -67,8 +61,8 @@ export function makeTypecheckTestConfig(importMeta, testFiles, name) {
       enabled: true,
       only: true,
       ignoreSourceErrors: true,
-      tsconfig: tmpTsConfigPath,
-      include: absoluteTestFiles,
+      tsconfig: `./.vitest-typecheck/${tmpTsConfigName}`,
+      include: testFiles,
     },
   };
 }

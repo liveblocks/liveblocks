@@ -1,7 +1,3 @@
-// TODO: apparently Yjs is full of anys or something, see if we can fix this
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import type { BaseUserMeta, JsonObject, User } from "@liveblocks/client";
 import type { OpaqueRoom } from "@liveblocks/core";
 import { Observable } from "lib0/observable";

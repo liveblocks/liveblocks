@@ -29,10 +29,13 @@ import {
   type ChatInstance,
   ConsoleLogger,
   defaultEmojiResolver,
+  type Delete,
   type EmojiValue,
+  type Emphasis,
   type FetchOptions,
   type FetchResult,
   type FormattedContent,
+  type InlineCode,
   type Link,
   type ListThreadsOptions,
   type ListThreadsResult,
@@ -42,15 +45,12 @@ import {
   parseMarkdown,
   type RawMessage,
   type Root,
+  type Strong,
   tableToAscii,
   type Text,
   type ThreadInfo,
   toPlainText,
   type WebhookOptions,
-  type Delete,
-  type Emphasis,
-  type InlineCode,
-  type Strong,
 } from "chat";
 
 type PhrasingContent = Paragraph["children"][number];
@@ -59,8 +59,7 @@ const ADAPTER_PREFIX = "liveblocks";
 export class LiveblocksAdapter<
   U extends BaseUserMeta = BaseUserMeta,
   DGI extends BaseGroupInfo = BaseGroupInfo,
-> implements Adapter<{ roomId: string; threadId: string }, CommentData>
-{
+> implements Adapter<{ roomId: string; threadId: string }, CommentData> {
   readonly name = "liveblocks";
   readonly userName: string;
   readonly #client: Liveblocks;

@@ -187,13 +187,15 @@ type TreeProps<TTreeNode extends DevTools.TreeNode | YLogsTreeNode> = Pick<
 > &
   ArboristTreeProps<TTreeNode>;
 
-interface RowProps<TTreeNode extends DevTools.TreeNode>
-  extends ComponentProps<"div"> {
+interface RowProps<
+  TTreeNode extends DevTools.TreeNode,
+> extends ComponentProps<"div"> {
   node: NodeApi<TTreeNode>;
 }
 
-interface YLogsRowProps<TTreeNode extends YLogsTreeNode>
-  extends ComponentProps<"div"> {
+interface YLogsRowProps<
+  TTreeNode extends YLogsTreeNode,
+> extends ComponentProps<"div"> {
   node: NodeApi<TTreeNode>;
 }
 
@@ -501,12 +503,14 @@ function summarize(node: DevTools.TreeNode): string {
       );
 
     case "LiveList":
-      return `${node.payload.length} item${node.payload.length !== 1 ? "s" : ""
-        }`;
+      return `${node.payload.length} item${
+        node.payload.length !== 1 ? "s" : ""
+      }`;
 
     case "LiveMap":
-      return `${node.payload.length} ${node.payload.length !== 1 ? "entries" : "entry"
-        }`;
+      return `${node.payload.length} ${
+        node.payload.length !== 1 ? "entries" : "entry"
+      }`;
 
     case "User":
       return wrapObject(
@@ -681,9 +685,9 @@ function Row<TTreeNode extends DevTools.TreeNode>({
         "row text-dark-400 dark:text-light-400 group flex h-full items-center gap-2 pr-2",
         isSelected
           ? [
-            background(node.data),
-            "tree-focus:text-light-0 bg-light-100 dark:bg-dark-100 hover:bg-light-200 dark:hover:bg-dark-200",
-          ]
+              background(node.data),
+              "tree-focus:text-light-0 bg-light-100 dark:bg-dark-100 hover:bg-light-200 dark:hover:bg-dark-200",
+            ]
           : isWithinSelectedParent
             ? "hover:bg-light-100 dark:hover:bg-dark-100 tree-focus:bg-light-100 dark:tree-focus:bg-dark-100 hover:tree-focus:bg-light-200 dark:tree-focus:hover:bg-dark-200"
             : "hover:bg-light-100 dark:hover:bg-dark-100"
@@ -725,11 +729,11 @@ function Row<TTreeNode extends DevTools.TreeNode>({
         className={cx(
           USE_GRID_LAYOUT
             ? [
-              "grid min-w-0 flex-1 items-center gap-[inherit]",
-              isOpen
-                ? "grid-cols-[1fr]"
-                : "grid-cols-[minmax(0,1fr)_calc(var(--width)_*_0.4)]",
-            ]
+                "grid min-w-0 flex-1 items-center gap-[inherit]",
+                isOpen
+                  ? "grid-cols-[1fr]"
+                  : "grid-cols-[minmax(0,1fr)_calc(var(--width)_*_0.4)]",
+              ]
             : "flex min-w-0 flex-1 items-center gap-[inherit]"
         )}
       >
@@ -757,9 +761,9 @@ function YLogsRow<TTreeNode extends YLogsTreeNode>({
         "row text-dark-400 dark:text-light-400 group flex h-full items-center gap-2 pr-2",
         isSelected
           ? [
-            yLogsBackground(node.data),
-            "tree-focus:text-light-0 bg-light-100 dark:bg-dark-100 hover:bg-light-200 dark:hover:bg-dark-200",
-          ]
+              yLogsBackground(node.data),
+              "tree-focus:text-light-0 bg-light-100 dark:bg-dark-100 hover:bg-light-200 dark:hover:bg-dark-200",
+            ]
           : isWithinSelectedParent
             ? "hover:bg-light-100 dark:hover:bg-dark-100 tree-focus:bg-light-100 dark:tree-focus:bg-dark-100 hover:tree-focus:bg-light-200 dark:tree-focus:hover:bg-dark-200"
             : "hover:bg-light-100 dark:hover:bg-dark-100"
@@ -789,11 +793,11 @@ function YLogsRow<TTreeNode extends YLogsTreeNode>({
         className={cx(
           USE_GRID_LAYOUT
             ? [
-              "grid min-w-0 flex-1 items-center gap-[inherit]",
-              isOpen
-                ? "grid-cols-[1fr]"
-                : "grid-cols-[minmax(0,1fr)_calc(var(--width)_*_0.4)]",
-            ]
+                "grid min-w-0 flex-1 items-center gap-[inherit]",
+                isOpen
+                  ? "grid-cols-[1fr]"
+                  : "grid-cols-[minmax(0,1fr)_calc(var(--width)_*_0.4)]",
+              ]
             : "flex min-w-0 flex-1 items-center gap-[inherit]"
         )}
       >
@@ -1585,16 +1589,16 @@ function presenceChildAccessor(
               value === undefined
                 ? []
                 : [
-                  makeJsonNode(
-                    `${node.id.substring(SPECIAL_HACK_PREFIX.length)}`,
-                    //                   ^^^^^^^^^^^^^^^^^^^
-                    //                   Undo the "special behavior" for the
-                    //                   subnodes, making them "normal Json" nodes
-                    //                   that aren't expandable
-                    key,
-                    value
-                  ),
-                ]
+                    makeJsonNode(
+                      `${node.id.substring(SPECIAL_HACK_PREFIX.length)}`,
+                      //                   ^^^^^^^^^^^^^^^^^^^
+                      //                   Undo the "special behavior" for the
+                      //                   subnodes, making them "normal Json" nodes
+                      //                   that aren't expandable
+                      key,
+                      value
+                    ),
+                  ]
             );
         }
       }
@@ -1858,7 +1862,7 @@ function collectYNode(
       case "Y.Text":
       case "Y.XmlText":
       case "Y.XmlElement":
-      case "Y.XmlFragment":
+      case "Y.XmlFragment": {
         let isIndirectMatch = false;
         for (const childNode of node.payload) {
           if (
@@ -1871,6 +1875,7 @@ function collectYNode(
           indirectMatches.add(node.id);
         }
         return isIndirectMatch;
+      }
     }
   }
 }

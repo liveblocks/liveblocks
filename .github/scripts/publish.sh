@@ -77,7 +77,7 @@ publish_to_npm () {
     fi
 
     echo "I'm ready to publish $PKGNAME to NPM, under $VERSION!"
-    npm publish --tag privaterollout
+    pnpm publish --no-git-checks --tag privaterollout
 }
 
 # Turns "packages/liveblocks-core" => "@liveblocks/core"

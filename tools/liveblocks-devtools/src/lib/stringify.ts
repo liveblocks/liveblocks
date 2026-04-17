@@ -20,13 +20,15 @@ export function wrapObject(values?: string) {
   return values ? `{ ${values} }` : "{}";
 }
 
-type YjsContentData = Number | Object | Boolean | Array<unknown> | String;
+type YjsContentData = number | object | boolean | Array<unknown> | string;
 
 export function stringify(
   value?: Json | YjsContentData | YjsContentData[],
   maxDepth = 2,
   depth = 0,
-  seen = new WeakSet<JsonObject | Json[] | YjsContentData>()
+  seen = new WeakSet<
+    JsonObject | Json[] | Exclude<YjsContentData, string | number | boolean>
+  >()
 ): string {
   if (Array.isArray(value)) {
     const isCircular = seen.has(value);

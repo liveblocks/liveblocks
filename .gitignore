@@ -5,6 +5,7 @@
 .plasmo/
 .svelte-kit/
 .turbo/
+.vitest-typecheck/
 .vercel/
 .vim/
 .vscode/

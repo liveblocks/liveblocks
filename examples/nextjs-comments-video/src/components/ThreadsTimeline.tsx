@@ -4,7 +4,7 @@ import { useThreads, useUser } from "@liveblocks/react/suspense";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { ErrorBoundary } from "react-error-boundary";
 import styles from "./ThreadsTimeline.module.css";
-import { ThreadData } from "@liveblocks/core";
+import { ThreadData } from "@liveblocks/client";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { Comment } from "@liveblocks/react-ui/primitives";
 import {

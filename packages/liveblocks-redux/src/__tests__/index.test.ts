@@ -17,7 +17,7 @@ import { randomRoomId, waitFor } from "./_utils";
 
 const { enterRoom: enterRoomAction, leaveRoom: leaveRoomAction } = actions;
 
-const DEV_SERVER = "http://localhost:1154";
+const DEV_SERVER = `http://localhost:${process.env.LIVEBLOCKS_DEV_SERVER_PORT ?? 1154}`;
 
 // ---------------------------------------------------------------------------
 // Dev-server helpers
