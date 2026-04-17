@@ -13,8 +13,8 @@ usage () {
     err "usage: link-example-locally.sh [-bcfhn]"
     err
     err "Run this script from within an example directory. It will turn that example"
-    err "from an standalone NPM project into a workspace, so that it will use the"
-    err "local @liveblocks/* packages instead of the last published version on NPM."
+    err "into a pnpm workspace member, so that it will use the local @liveblocks/*"
+    err "packages instead of the last published version on NPM."
     err
     err "Options:"
     err "-b    Build all @liveblocks packages before linking (otherwise use Turborepo to run the example)"
@@ -46,7 +46,7 @@ if [ "$no_modify" -eq 1 ] && [ "$force" -eq 1 ]; then
     exit 2
 fi
 
-if [[ "$reldir" != "examples/"* || ! -f ../../package.json ]]; then
+if [[ "$reldir" != "examples/"* || ! -f ../../pnpm-workspace.yaml ]]; then
     echo "Must run this script in one of our example directories" >&2
     exit 2
 fi
@@ -61,8 +61,8 @@ fi
 rm -rf ./node_modules
 rm -f ./package-lock.json
 
-# Step 3: Replace @liveblocks dependencies in the current example by a "*"
-# reference, so they will be picked up from the local workspaces instead.
+# Step 3: Replace @liveblocks dependencies in the current example by "file:"
+# references, so they will be picked up from the local workspaces instead.
 for dep in $(jq -r '.dependencies | keys[]' package.json | grep -Ee '@liveblocks/'); do
     jq ".dependencies.\"$dep\" = \"file:../../packages/liveblocks-${dep#@liveblocks/}\"" package.json | sponge package.json
 done
@@ -76,15 +76,15 @@ if [ "$build" -eq 1 ]; then
     fi
 fi
 
-# Step 5: Add this example to the top-level package.json to officially make it
+# Step 5: Add this example to pnpm-workspace.yaml to officially make it
 # a workspace.
-if ! grep -q "\"$reldir\"" ../../package.json; then
-    jq ".workspaces |= . + [\"$reldir\"]" ../../package.json | sponge ../../package.json
+if ! grep -q "\"$reldir\"" ../../pnpm-workspace.yaml; then
+    sed -i '' "/^packages:/a\\
+\\  - \"$reldir\"
+" ../../pnpm-workspace.yaml
 fi
 
-( cd ../../ && pnpm install > /dev/null )
-
-pnpm install
+( cd ../../ && pnpm install --ignore-scripts )
 
 # Reset all changes if no-modify mode is enabled
 if [ "$no_modify" -eq 1 ]; then
@@ -94,7 +94,7 @@ if [ "$no_modify" -eq 1 ]; then
     exit 0
 fi
 
-err "All good! Current example is now a local NPM workspace."
+err "All good! Current example is now a local pnpm workspace."
 
 # Step 6: Capture these changes in a Git commit, so you can easily undo this
 # later when you're done testing, by simply removing this commit from the
