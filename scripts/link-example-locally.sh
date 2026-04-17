@@ -102,19 +102,6 @@ fi
 
 ( cd ../../ && pnpm install --ignore-scripts --config.confirmModulesPurge=false )
 
-# Step 6: Delete each package's own copy of its peerDependencies. Without
-# this, pnpm's strict isolation causes @liveblocks/react (and friends) to
-# resolve react from their own devDeps (installed for testing) instead of
-# from the example's node_modules, resulting in two React instances and
-# "RoomProvider is missing from the React tree" errors at runtime.
-for pkg_json in ../../packages/*/package.json; do
-    pkg_dir="$(dirname "$pkg_json")"
-    peers="$(jq -r '.peerDependencies // {} | keys[]' "$pkg_json")"
-    for peer in $peers; do
-        rm -rf "$pkg_dir/node_modules/$peer"
-    done
-done
-
 # Reset all changes if no-modify mode is enabled
 if [ "$no_modify" -eq 1 ]; then
     git reset --hard HEAD
