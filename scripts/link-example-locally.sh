@@ -64,7 +64,7 @@ done
 # Step 4: Build all @liveblocks packages to ensure they're up-to-date (optional)
 if [ "$build" -eq 1 ]; then
     err "Building @liveblocks packages..."
-    if ! ( cd ../../ && pnpm run build --filter='packages/*' > /dev/null 2>&1 ); then
+    if ! ( cd ../../ && pnpm run build --filter='./packages/*' > /dev/null 2>&1 ); then
         err "Warning: Some packages failed to build. This may cause version mismatch issues."
         err "You can manually build packages with: pnpm run build"
     fi
