@@ -10,41 +10,31 @@ err () {
 }
 
 usage () {
-    err "usage: link-example-locally.sh [-bcfhn]"
+    err "usage: link-example-locally.sh [-bfh]"
     err
     err "Run this script from within an example directory. It will turn that example"
-    err "into a pnpm workspace member, so that it will use the local @liveblocks/*"
-    err "packages instead of the last published version on NPM."
+    err "into a pnpm workspace member so that it uses the local @liveblocks/* packages"
+    err "instead of the last published versions on NPM, and commit all the changes it"
+    err "makes into a single, clearly-marked commit that you can drop with git rebase"
+    err "when you're done. Pushing is blocked by a pre-push hook (and by CI) as long"
+    err "as that commit is in your branch."
     err
     err "Options:"
     err "-b    Build all @liveblocks packages before linking (otherwise use Turborepo to run the example)"
-    err "-c    Create Git commit with these changes (intended to be removed later)"
     err "-f    Proceed even if there are uncommitted Git changes"
     err "-h    Show this help"
-    err "-n    No-modify mode: reset all changes after linking (prevents accidental commits)"
 }
 
 build=0
-commit=0
 force=0
-no_modify=0
-while getopts bcfhn flag; do
+while getopts bfh flag; do
     case "$flag" in
         b) build=1 ;;
-        c) commit=1 ;;
         f) force=1 ;;
-        n) no_modify=1 ;;
         *) usage; exit 2;;
     esac
 done
 shift $(($OPTIND - 1))
-
-# Don't allow no-modify mode with force mode
-if [ "$no_modify" -eq 1 ] && [ "$force" -eq 1 ]; then
-    err "Error: Cannot use -n (no-modify) and -f (force) options together."
-    err "The -n option does a reset so using it could cause you to lose your work."
-    exit 2
-fi
 
 if [[ "$reldir" != "examples/"* || ! -f ../../pnpm-workspace.yaml ]]; then
     echo "Must run this script in one of our example directories" >&2
@@ -113,14 +103,6 @@ jq --argjson overrides "$overrides_json" '.pnpm = (.pnpm // {}) | .pnpm.override
 
 ( cd ../../ && pnpm install --ignore-scripts --config.confirmModulesPurge=false )
 
-# Reset all changes if no-modify mode is enabled
-if [ "$no_modify" -eq 1 ]; then
-    git reset --hard HEAD
-    err "No-modify mode: All changes have been reset after linking."
-    err "Local packages are linked for this session but no files were modified permanently."
-    exit 0
-fi
-
 # Step 7: Install a local pre-push hook that refuses to push any commit
 # containing the link-locally-do-not-commit sentinel. This is a local-only safety net;
 # CI has a matching check on every PR. The hook is never overwritten if one
@@ -170,18 +152,19 @@ fi
 
 err "All good! Current example is now a local pnpm workspace."
 
-# Step 8: Capture these changes in a Git commit, so you can easily undo this
-# later when you're done testing, by simply removing this commit from the
-# history.
-if [ "$commit" -eq 1 ]; then
-    if git is-dirty; then
-        git commit -qam "DO NOT KEEP THIS COMMIT - Link $reldir locally"
-        err "Changes committed to Git."
-        err ""
-        err "IMPORTANT! Please make sure to remove this commit from the Git history when you're done."
-        err ""
-    fi
-else
+# Step 8: Capture every change made above in one clearly-marked commit. This
+# is always done so that the entire set of changes is atomic: drop this commit
+# with `git rebase -i` when you're done testing to fully unlink. The pre-push
+# hook and CI both refuse to accept this commit, so there's no risk of pushing
+# it upstream.
+if git is-dirty; then
+    git commit -qam "DO NOT KEEP THIS COMMIT - Link $reldir locally"
     err ""
-    err "IMPORTANT! Please make sure to not commit any of these changes to Git."
+    err "All changes have been captured in a single commit:"
+    err ""
+    err "    $(git log -1 --oneline)"
+    err ""
+    err "When you're done, drop that commit with git rebase -i. You cannot push"
+    err "while that commit is in your branch."
+    err ""
 fi
