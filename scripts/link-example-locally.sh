@@ -100,6 +100,14 @@ if jq -e '.dependencies.next // .devDependencies.next' package.json > /dev/null 
     done
 fi
 
+# Step 5c: Pin every dep the example declares to the exact version the example
+# wants, using pnpm.overrides in the root package.json. Without this, our
+# packages' devDeps (e.g. react ^18.2.0, @lexical/react 0.35.0 with different
+# peer combos) resolve to different virtual pnpm copies than the example,
+# producing duplicate React / @lexical/react contexts at runtime.
+overrides_json="$(jq -c '[(.dependencies // {}), (.devDependencies // {})] | add | to_entries | map(select(.key | startswith("@liveblocks/") | not)) | from_entries' package.json)"
+jq --argjson overrides "$overrides_json" '.pnpm = (.pnpm // {}) | .pnpm.overrides = $overrides' ../../package.json | sponge ../../package.json
+
 ( cd ../../ && pnpm install --ignore-scripts --config.confirmModulesPurge=false )
 
 # Reset all changes if no-modify mode is enabled
