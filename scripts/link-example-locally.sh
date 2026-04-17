@@ -84,6 +84,16 @@ if ! grep -q "\"$reldir\"" ../../pnpm-workspace.yaml; then
 " ../../pnpm-workspace.yaml
 fi
 
+# Step 5b: If this is a Next.js example, set turbopack.root so it doesn't get
+# confused by the monorepo's pnpm-lock.yaml when resolving dependencies.
+if jq -e '.dependencies.next // .devDependencies.next' package.json > /dev/null 2>&1; then
+    for cfg in next.config.ts next.config.js next.config.mjs; do
+        if [ -f "$cfg" ]; then
+            sed -i '' 's|root: __dirname|root: "../../"|g' "$cfg"
+        fi
+    done
+fi
+
 ( cd ../../ && pnpm install --ignore-scripts )
 
 # Reset all changes if no-modify mode is enabled
