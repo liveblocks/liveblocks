@@ -44,6 +44,11 @@ list and feel free to give them credit at the end of a line, e.g.:
 - New example: [Handsontable comments](https://liveblocks.io/examples/handsontable-comments/nextjs-comments-handsontable).
 - New example: [Multiplayer Handsontable](https://liveblocks.io/examples/multiplayer-handsontable/nextjs-multiplayer-handsontable).
 
+## Website
+
+- New blog post: [Unveil Week recap: Realtime collaboration for humans and agents](https://liveblocks.io/blog/unveil-week-recap-realtime-collaboration-for-humans-and-agents).
+- New blog post: [Official n8n nodes for Liveblocks](https://liveblocks.io/blog/official-n8n-nodes-for-liveblocks).
+
 ## Contributors
 
 marcbouchenoire, ctnicholas, nvie, ofoucherot
