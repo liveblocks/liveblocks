@@ -62,10 +62,13 @@ fi
 rm -rf ./node_modules ./.turbo ./.next
 rm -f ./package-lock.json
 
-# Step 3: Replace @liveblocks dependencies in the current example by "file:"
-# references, so they will be picked up from the local workspaces instead.
+# Step 3: Replace @liveblocks dependencies with workspace:* protocol so pnpm
+# links them as real workspace members (via symlinks to the source), not as
+# physical copies. Copies break React context because pnpm's virtual store
+# ends up with a different @liveblocks/react than what @liveblocks/react-lexical
+# resolves to, producing duplicate React contexts at runtime.
 for dep in $(jq -r '.dependencies | keys[]' package.json | grep -Ee '@liveblocks/'); do
-    jq ".dependencies.\"$dep\" = \"file:../../packages/liveblocks-${dep#@liveblocks/}\"" package.json | sponge package.json
+    jq ".dependencies.\"$dep\" = \"workspace:*\"" package.json | sponge package.json
 done
 
 # Step 4: Build all @liveblocks packages to ensure they're up-to-date (optional)
@@ -99,18 +102,18 @@ fi
 
 ( cd ../../ && pnpm install --ignore-scripts --config.confirmModulesPurge=false )
 
-# Step 6: Strip devDependencies from workspace packages. Without this, pnpm's
-# strict isolation causes packages like @liveblocks/react to resolve react from
-# their own devDeps (installed for testing) instead of from the example's
-# node_modules, leading to duplicate React instances and broken context.
-# The filter restricts which projects' deps pnpm touches, so the example's
-# own node_modules is restored after in step 7.
-( cd ../../ && pnpm install -P --config.autoInstallPeers=true --ignore-scripts --config.confirmModulesPurge=false --filter './packages/*' )
-
-# Step 7: Re-install the example's own deps (stripped in step 6 because it
-# wasn't in the filter). Full install — example needs its devDeps (postcss,
-# tailwind, etc.) for Next.js to build.
-( cd ../../ && pnpm install --ignore-scripts --config.confirmModulesPurge=false --filter "./$reldir" )
+# Step 6: Delete each package's own copy of its peerDependencies. Without
+# this, pnpm's strict isolation causes @liveblocks/react (and friends) to
+# resolve react from their own devDeps (installed for testing) instead of
+# from the example's node_modules, resulting in two React instances and
+# "RoomProvider is missing from the React tree" errors at runtime.
+for pkg_json in ../../packages/*/package.json; do
+    pkg_dir="$(dirname "$pkg_json")"
+    peers="$(jq -r '.peerDependencies // {} | keys[]' "$pkg_json")"
+    for peer in $peers; do
+        rm -rf "$pkg_dir/node_modules/$peer"
+    done
+done
 
 # Reset all changes if no-modify mode is enabled
 if [ "$no_modify" -eq 1 ]; then
