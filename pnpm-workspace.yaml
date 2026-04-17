@@ -1,3 +1,8 @@
+engineStrict: true
+autoInstallPeers: false
+publicHoistPattern:
+  - "@types/*"
+
 packages:
   - "shared/*"
   - "packages/*"
