@@ -84,12 +84,14 @@ if ! grep -q "\"$reldir\"" ../../pnpm-workspace.yaml; then
 " ../../pnpm-workspace.yaml
 fi
 
-# Step 5b: If this is a Next.js example, set turbopack.root so it doesn't get
-# confused by the monorepo's pnpm-lock.yaml when resolving dependencies.
+# Step 5b: If this is a Next.js example, point turbopack.root at the monorepo
+# root so it can resolve pnpm-hoisted dependencies. Next.js requires an
+# absolute path here.
 if jq -e '.dependencies.next // .devDependencies.next' package.json > /dev/null 2>&1; then
+    abs_root="$(cd ../.. && pwd)"
     for cfg in next.config.ts next.config.js next.config.mjs; do
         if [ -f "$cfg" ]; then
-            sed -i '' 's|root: __dirname|root: "../../"|g' "$cfg"
+            sed -i '' "s|root: __dirname|root: \"$abs_root\"|g" "$cfg"
         fi
     done
 fi
