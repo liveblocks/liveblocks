@@ -3,7 +3,7 @@
 import { formatTime } from "@/components/Duration";
 import { useThreads } from "@liveblocks/react/suspense";
 import { useSkipTo } from "@/utils";
-import { ThreadData } from "@liveblocks/core";
+import { ThreadData } from "@liveblocks/client";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { Thread } from "@liveblocks/react-ui";
 import { useCallback, useRef, useState } from "react";

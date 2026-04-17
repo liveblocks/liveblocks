@@ -4,7 +4,7 @@ import { nanoid } from "nanoid";
 import { redirect } from "next/navigation";
 import { getRoomId, Metadata, RoomWithMetadata } from "@/config";
 import { liveblocks } from "@/liveblocks.server.config";
-import { LiveList, LiveObject, toPlainLson } from "@liveblocks/core";
+import { LiveList, LiveObject, toPlainLson } from "@liveblocks/client";
 
 export async function createIssue() {
   const issueId = nanoid();

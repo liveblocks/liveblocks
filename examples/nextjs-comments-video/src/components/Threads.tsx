@@ -15,7 +15,7 @@ import {
   useHighlightThreadListener,
   useSkipTo,
 } from "@/utils";
-import { ThreadData } from "@liveblocks/core";
+import { ThreadData } from "@liveblocks/client";
 import { formatTime } from "@/components/Duration";
 import { TimeIcon } from "@/icons/Time";
 import { EyeIcon } from "@/icons/Eye";

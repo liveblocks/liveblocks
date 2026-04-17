@@ -1,4 +1,4 @@
-import type { ResolveUsersArgs } from "@liveblocks/core";
+import type { ResolveUsersArgs } from "@liveblocks/client";
 import type { ResolveRoomInfoArgs } from "@liveblocks/emails";
 
 import { getUser } from "@/lib/database";
