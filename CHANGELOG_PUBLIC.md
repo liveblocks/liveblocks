@@ -20,6 +20,12 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 16 (2026-04-17)
 
+## v3.18.3
+
+### `@liveblocks/*`
+
+- Third-party libraries like `yjs`, `@tiptap/*`, and `@blocknote/*` are now declared as peer dependencies instead of bundled dependencies across all packages that use them.
+
 ## v3.18.2
 
 ### `@liveblocks/client`
@@ -37,6 +43,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ## Infrastructure
 
+- Moved the public monorepo from NPM to pnpm.
 - Started the transparent internal migration of old rooms still on the v1 realtime data storage engine to the new v2 engine, [learn more about the benefits](https://liveblocks.io/docs/guides/about-the-new-storage-engine).
 
 ## Examples
