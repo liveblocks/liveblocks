@@ -158,7 +158,21 @@ err "All good! Current example is now a local pnpm workspace."
 # hook and CI both refuse to accept this commit, so there's no risk of pushing
 # it upstream.
 if git is-dirty; then
-    git commit -qam "DO NOT KEEP THIS COMMIT - Link $reldir locally"
+    git commit -qa -F - <<EOF
+⚠️ DO NOT PUSH THIS COMMIT TO GITHUB - Temporarily link $reldir locally
+
+This commit was created by scripts/link-example-locally.sh and is intended
+to stay on your local machine only. Before pushing to GitHub, remove it
+with an interactive rebase:
+
+    git rebase -i main
+
+…then change "pick" to "drop" on the line for this commit, save, and exit.
+After that, run \`pnpm install\` to restore node_modules.
+
+The pre-push hook and CI will both refuse this commit, so pushing is
+blocked until you've dropped it.
+EOF
     err ""
     err "All changes have been captured in a single commit:"
     err ""
