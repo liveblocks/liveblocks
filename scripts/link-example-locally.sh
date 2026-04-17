@@ -97,7 +97,7 @@ if jq -e '.dependencies.next // .devDependencies.next' package.json > /dev/null 
     done
 fi
 
-( cd ../../ && pnpm install --ignore-scripts )
+( cd ../../ && pnpm install --ignore-scripts --config.confirmModulesPurge=false )
 
 # Step 6: Strip devDependencies from workspace packages. Without this, pnpm's
 # strict isolation causes packages like @liveblocks/react to resolve react from
