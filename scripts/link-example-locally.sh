@@ -103,7 +103,14 @@ fi
 # strict isolation causes packages like @liveblocks/react to resolve react from
 # their own devDeps (installed for testing) instead of from the example's
 # node_modules, leading to duplicate React instances and broken context.
+# The filter restricts which projects' deps pnpm touches, so the example's
+# own node_modules is restored after in step 7.
 ( cd ../../ && pnpm install -P --config.autoInstallPeers=true --ignore-scripts --config.confirmModulesPurge=false --filter './packages/*' )
+
+# Step 7: Re-install the example's own deps (stripped in step 6 because it
+# wasn't in the filter). Full install — example needs its devDeps (postcss,
+# tailwind, etc.) for Next.js to build.
+( cd ../../ && pnpm install --ignore-scripts --config.confirmModulesPurge=false --filter "$reldir" )
 
 # Reset all changes if no-modify mode is enabled
 if [ "$no_modify" -eq 1 ]; then
