@@ -110,7 +110,7 @@ fi
 # Step 7: Re-install the example's own deps (stripped in step 6 because it
 # wasn't in the filter). Full install — example needs its devDeps (postcss,
 # tailwind, etc.) for Next.js to build.
-( cd ../../ && pnpm install --ignore-scripts --config.confirmModulesPurge=false --filter "$reldir" )
+( cd ../../ && pnpm install --ignore-scripts --config.confirmModulesPurge=false --filter "./$reldir" )
 
 # Reset all changes if no-modify mode is enabled
 if [ "$no_modify" -eq 1 ]; then
