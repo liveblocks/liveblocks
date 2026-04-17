@@ -140,7 +140,12 @@ while read -r local_ref local_sha remote_ref remote_sha; do
     else
         range="$remote_sha..$local_sha"
     fi
-    if git log -p "$range" 2>/dev/null | grep -q 'link-locally-do-not-commit'; then
+    # Exclude the files that legitimately reference the sentinel string
+    # (the script itself, the installed hook template, and the CI workflow).
+    if git log -p "$range" -- \
+            ':!scripts/link-example-locally.sh' \
+            ':!.github/workflows/check-no-linked-example.yml' \
+            2>/dev/null | grep -q 'link-locally-do-not-commit'; then
         echo "" >&2
         echo "✘ Refusing to push: commits in this range contain the" >&2
         echo "  link-locally-do-not-commit sentinel left behind by" >&2

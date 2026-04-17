@@ -11,6 +11,7 @@ jobs:
       - name: Fail if link-locally-do-not-commit sentinel is present
         run: |
           if grep -r --include='*.json' --include='*.yaml' --include='*.yml' \
+               --exclude-dir='.github' \
                -l 'link-locally-do-not-commit' . ; then
             echo ""
             echo "✘ Found the link-locally-do-not-commit sentinel in the files listed above."
