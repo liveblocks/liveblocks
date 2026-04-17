@@ -96,6 +96,12 @@ fi
 
 ( cd ../../ && pnpm install --ignore-scripts )
 
+# Step 6: Strip devDependencies from workspace packages. Without this, pnpm's
+# strict isolation causes packages like @liveblocks/react to resolve react from
+# their own devDeps (installed for testing) instead of from the example's
+# node_modules, leading to duplicate React instances and broken context.
+( cd ../../ && pnpm install -P --ignore-scripts --config.confirmModulesPurge=false --filter 'packages/*' )
+
 # Reset all changes if no-modify mode is enabled
 if [ "$no_modify" -eq 1 ]; then
     git reset --hard HEAD
