@@ -10,7 +10,7 @@ err () {
 }
 
 usage () {
-    err "usage: link-example-locally.sh [-fh]"
+    err "usage: link-example-locally.sh [-h]"
     err
     err "Run this script from within an example directory. It will turn that example"
     err "into a pnpm workspace member so that it uses the local @liveblocks/* packages"
@@ -19,15 +19,14 @@ usage () {
     err "when you're done. Pushing is blocked by a pre-push hook (and by CI) as long"
     err "as that commit is in your branch."
     err
+    err "Requires a clean working tree — stash any in-progress changes first."
+    err
     err "Options:"
-    err "-f    Proceed even if there are uncommitted Git changes"
     err "-h    Show this help"
 }
 
-force=0
-while getopts fh flag; do
+while getopts h flag; do
     case "$flag" in
-        f) force=1 ;;
         *) usage; exit 2;;
     esac
 done
@@ -38,9 +37,17 @@ if [[ "$reldir" != "examples/"* || ! -f ../../pnpm-workspace.yaml ]]; then
     exit 2
 fi
 
-# Step 1: First make sure there are no local changes in the worktree
-if [ "$force" -ne 1 ]; then
-  git is-clean -v
+# Step 1: Require a clean working tree. The script commits everything it
+# changes into a single commit; if you have pending work, stash it first so
+# it doesn't get swept into the temporary link commit.
+if ! git is-clean -v; then
+    err ""
+    err "Working tree is not clean. Stash your changes first:"
+    err ""
+    err "    git stash"
+    err ""
+    err "…then re-run this script. Run 'git stash pop' when you're done."
+    exit 1
 fi
 
 # Step 2: Wipe local example's node_modules, build caches, and package-lock.
