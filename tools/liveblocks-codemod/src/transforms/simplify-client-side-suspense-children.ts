@@ -1,5 +1,14 @@
 import type { API, FileInfo, Options } from "jscodeshift";
 
+// Babel tracks `(x)` source formatting via `node.extra.parenthesized`, but
+// ast-types doesn't expose this field. Use a narrow typed-access helper.
+function clearParenthesized(node: object): void {
+  const extra = (node as { extra?: { parenthesized?: boolean } }).extra;
+  if (extra?.parenthesized) {
+    extra.parenthesized = false;
+  }
+}
+
 export default function transform(
   file: FileInfo,
   api: API,
@@ -59,11 +68,18 @@ export default function transform(
                 node.expression.body.comments = [];
               }
 
+              const body = node.expression.body;
+
+              // Clear Babel's `extra.parenthesized` marker (carried over from
+              // the source `() => (<JSX/>)`). Without this, recast would
+              // re-emit the parens at the new JSX-text insertion site, where
+              // `(` and `)` would be rendered as literal DOM text.
+              clearParenthesized(body);
+
               const newNode =
-                node.expression.body.type === "JSXElement" ||
-                node.expression.body.type === "JSXFragment"
-                  ? node.expression.body
-                  : j.jsxExpressionContainer(node.expression.body);
+                body.type === "JSXElement" || body.type === "JSXFragment"
+                  ? body
+                  : j.jsxExpressionContainer(body);
 
               j(innerPath).replaceWith(newNode);
 
