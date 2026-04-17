@@ -105,7 +105,10 @@ fi
 # packages' devDeps (e.g. react ^18.2.0, @lexical/react 0.35.0 with different
 # peer combos) resolve to different virtual pnpm copies than the example,
 # producing duplicate React / @lexical/react contexts at runtime.
-overrides_json="$(jq -c '[(.dependencies // {}), (.devDependencies // {})] | add | to_entries | map(select(.key | startswith("@liveblocks/") | not)) | from_entries' package.json)"
+# The "link-locally-do-not-commit" key is a sentinel. CI scans every PR for it and
+# refuses to merge anything that contains it, and the pre-push hook installed
+# in step 7 refuses to push commits that contain it. Do NOT remove.
+overrides_json="$(jq -c '[{"link-locally-do-not-commit": "0.0.0"}, (.dependencies // {}), (.devDependencies // {})] | add | to_entries | map(select(.key | startswith("@liveblocks/") | not)) | from_entries' package.json)"
 jq --argjson overrides "$overrides_json" '.pnpm = (.pnpm // {}) | .pnpm.overrides = $overrides' ../../package.json | sponge ../../package.json
 
 ( cd ../../ && pnpm install --ignore-scripts --config.confirmModulesPurge=false )
@@ -118,9 +121,51 @@ if [ "$no_modify" -eq 1 ]; then
     exit 0
 fi
 
+# Step 7: Install a local pre-push hook that refuses to push any commit
+# containing the link-locally-do-not-commit sentinel. This is a local-only safety net;
+# CI has a matching check on every PR. The hook is never overwritten if one
+# already exists.
+hook_path="$(git rev-parse --git-path hooks/pre-push)"
+if [ ! -e "$hook_path" ]; then
+    cat > "$hook_path" <<'HOOK_EOF'
+#!/bin/sh
+# Installed by scripts/link-example-locally.sh. Safe to delete at any time.
+# Refuses to push any commit containing the link-locally-do-not-commit sentinel left
+# behind by the link-example-locally.sh script.
+remote="$1"
+while read -r local_ref local_sha remote_ref remote_sha; do
+    [ "$local_sha" = "0000000000000000000000000000000000000000" ] && continue
+    if [ "$remote_sha" = "0000000000000000000000000000000000000000" ]; then
+        range="$local_sha"
+    else
+        range="$remote_sha..$local_sha"
+    fi
+    if git log -p "$range" 2>/dev/null | grep -q 'link-locally-do-not-commit'; then
+        echo "" >&2
+        echo "✘ Refusing to push: commits in this range contain the" >&2
+        echo "  link-locally-do-not-commit sentinel left behind by" >&2
+        echo "  scripts/link-example-locally.sh." >&2
+        echo "" >&2
+        echo "  Undo the linking first:" >&2
+        echo "    - Delete the pnpm.overrides block from root package.json" >&2
+        echo "    - Revert workspace:* deps in the example's package.json" >&2
+        echo "    - Remove the example line from pnpm-workspace.yaml" >&2
+        echo "    - Run pnpm install" >&2
+        echo "" >&2
+        exit 1
+    fi
+done
+HOOK_EOF
+    chmod +x "$hook_path"
+    err "Installed local pre-push hook at $hook_path"
+else
+    err "Pre-push hook already exists at $hook_path — leaving it alone."
+    err "If it doesn't refuse commits containing link-locally-do-not-commit, add that check yourself."
+fi
+
 err "All good! Current example is now a local pnpm workspace."
 
-# Step 6: Capture these changes in a Git commit, so you can easily undo this
+# Step 8: Capture these changes in a Git commit, so you can easily undo this
 # later when you're done testing, by simply removing this commit from the
 # history.
 if [ "$commit" -eq 1 ]; then
