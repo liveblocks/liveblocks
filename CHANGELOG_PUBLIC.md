@@ -37,7 +37,12 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ## Infrastructure
 
-- Started the transparent internal migration of old rooms still on the v1 realtime data storage engine to the new v2 engine. (To understand the benefits, [read more here](https://liveblocks.io/docs/guides/about-the-new-storage-engine).)
+- Started the transparent internal migration of old rooms still on the v1 realtime data storage engine to the new v2 engine, [learn more about the benefits](https://liveblocks.io/docs/guides/about-the-new-storage-engine).
+
+## Examples
+
+New example: [Handsontable comments](https://liveblocks.io/examples/handsontable-comments/nextjs-comments-handsontable).
+New example: [Multiplayer Handsontable](/examples/multiplayer-handsontable/nextjs-multiplayer-handsontable).
 
 ## Contributors
 
