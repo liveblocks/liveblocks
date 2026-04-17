@@ -16,7 +16,7 @@ import type { API, FileInfo, Options } from "jscodeshift";
 function nameOf(id: { name: unknown }): string;
 function nameOf(id: { name: unknown } | null | undefined): string | undefined;
 function nameOf(id: { name: unknown } | null | undefined): string | undefined {
-  if (id == null) return undefined;
+  if (id === null || id === undefined) return undefined;
   const n = id.name;
   if (typeof n !== "string") {
     throw new Error(
