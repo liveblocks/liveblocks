@@ -42,7 +42,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 ## Examples
 
 New example: [Handsontable comments](https://liveblocks.io/examples/handsontable-comments/nextjs-comments-handsontable).
-New example: [Multiplayer Handsontable](/examples/multiplayer-handsontable/nextjs-multiplayer-handsontable).
+New example: [Multiplayer Handsontable](https://liveblocks.io/examples/multiplayer-handsontable/nextjs-multiplayer-handsontable).
 
 ## Contributors
 
