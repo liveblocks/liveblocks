@@ -55,25 +55,8 @@ check_is_valid_version () {
 
 ROOT="$(git rev-parse --show-toplevel)"
 
-all_published_pkgnames () {
-    for pkgdir in "${PKGS_TO_RELEASE[@]}"; do
-        jq -r .name "$ROOT/$pkgdir/package.json"
-    done
-}
-
 get_package_name_from_dir () {
     ( cd "$1" && jq -r .name package.json )
-}
-
-update_dependencies_to_new_package_versions () {
-    for pkgname in $( all_published_pkgnames ); do
-      for key in dependencies devDependencies peerDependencies; do
-          currversion="$(jq -r ".${key}.\"${pkgname}\"" package.json)"
-          if [ "$currversion" != "null" -a "$currversion" != '*' ]; then
-              jq ".${key}.\"${pkgname}\" = \"$1\"" package.json | sponge package.json
-          fi
-      done
-    done
 }
 
 update_package_version () {
@@ -83,7 +66,7 @@ update_package_version () {
     PKGNAME="$( get_package_name_from_dir "$PKGDIR" )"
 
     echo "==> Updating package.json version for $PKGNAME"
-    ( cd "$PKGDIR" && npm version "$VERSION" $FORCE_FLAG --no-git-tag-version $WORKSPACES_UPDATE_FLAG && update_dependencies_to_new_package_versions "$2" )
+    ( cd "$PKGDIR" && npm version "$VERSION" $FORCE_FLAG --no-git-tag-version $WORKSPACES_UPDATE_FLAG )
 }
 
 commit_to_git () {
