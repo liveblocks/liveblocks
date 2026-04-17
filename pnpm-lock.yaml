@@ -630,7 +630,10 @@ importers:
         version: 0.43.0(@tiptap/extensions@3.22.3(@tiptap/core@3.22.3(@tiptap/pm@3.22.3))(@tiptap/pm@3.22.3))(@types/hast@3.0.4)
       '@blocknote/react':
         specifier: ^0.43.0
-        version: 0.43.0(@tiptap/extensions@3.22.3(@tiptap/core@3.22.3(@tiptap/pm@3.22.3))(@tiptap/pm@3.22.3))(@types/hast@3.0.4)(@types/react-dom@18.3.5(@types/react@18.3.28))(@types/react@18.3.28)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+        version: 0.43.0(@floating-ui/dom@1.7.6)(@tiptap/extensions@3.22.3(@tiptap/core@3.22.3(@tiptap/pm@3.22.3))(@tiptap/pm@3.22.3))(@types/hast@3.0.4)(@types/react-dom@18.3.5(@types/react@18.3.28))(@types/react@18.3.28)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+      '@floating-ui/dom':
+        specifier: ^1.7.6
+        version: 1.7.6
       '@liveblocks/eslint-config':
         specifier: workspace:*
         version: link:../../shared/eslint-config
@@ -11084,7 +11087,7 @@ snapshots:
       - sugar-high
       - supports-color
 
-  '@blocknote/react@0.43.0(@tiptap/extensions@3.22.3(@tiptap/core@3.22.3(@tiptap/pm@3.22.3))(@tiptap/pm@3.22.3))(@types/hast@3.0.4)(@types/react-dom@18.3.5(@types/react@18.3.28))(@types/react@18.3.28)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)':
+  '@blocknote/react@0.43.0(@floating-ui/dom@1.7.6)(@tiptap/extensions@3.22.3(@tiptap/core@3.22.3(@tiptap/pm@3.22.3))(@tiptap/pm@3.22.3))(@types/hast@3.0.4)(@types/react-dom@18.3.5(@types/react@18.3.28))(@types/react@18.3.28)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)':
     dependencies:
       '@blocknote/core': 0.43.0(@tiptap/extensions@3.22.3(@tiptap/core@3.22.3(@tiptap/pm@3.22.3))(@tiptap/pm@3.22.3))(@types/hast@3.0.4)
       '@emoji-mart/data': 1.2.1
