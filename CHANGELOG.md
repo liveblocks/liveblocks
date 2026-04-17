@@ -1,5 +1,7 @@
 ## vNEXT (not yet released)
 
+## v3.18.3
+
 ### `@liveblocks/*`
 
 - Third-party libraries like `yjs`, `@tiptap/*`, and `@blocknote/*` are now
