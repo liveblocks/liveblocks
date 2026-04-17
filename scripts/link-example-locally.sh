@@ -56,9 +56,10 @@ if [ "$force" -ne 1 ]; then
   git is-clean -v
 fi
 
-# Step 2: Wipe local example's node_modules and package-lock. We're going to
-# make it a workspace project after all, and those don't have them
-rm -rf ./node_modules
+# Step 2: Wipe local example's node_modules, build caches, and package-lock.
+# We're going to make it a workspace project after all, and those don't have
+# them. Stale build caches from a previous (non-linked) run also need to go.
+rm -rf ./node_modules ./.turbo ./.next
 rm -f ./package-lock.json
 
 # Step 3: Replace @liveblocks dependencies in the current example by "file:"
