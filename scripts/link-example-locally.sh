@@ -10,7 +10,7 @@ err () {
 }
 
 usage () {
-    err "usage: link-example-locally.sh [-bfh]"
+    err "usage: link-example-locally.sh [-fh]"
     err
     err "Run this script from within an example directory. It will turn that example"
     err "into a pnpm workspace member so that it uses the local @liveblocks/* packages"
@@ -20,16 +20,13 @@ usage () {
     err "as that commit is in your branch."
     err
     err "Options:"
-    err "-b    Build all @liveblocks packages before linking (otherwise use Turborepo to run the example)"
     err "-f    Proceed even if there are uncommitted Git changes"
     err "-h    Show this help"
 }
 
-build=0
 force=0
-while getopts bfh flag; do
+while getopts fh flag; do
     case "$flag" in
-        b) build=1 ;;
         f) force=1 ;;
         *) usage; exit 2;;
     esac
@@ -61,13 +58,13 @@ for dep in $(jq -r '.dependencies | keys[]' package.json | grep -Ee '@liveblocks
     jq ".dependencies.\"$dep\" = \"workspace:*\"" package.json | sponge package.json
 done
 
-# Step 4: Build all @liveblocks packages to ensure they're up-to-date (optional)
-if [ "$build" -eq 1 ]; then
-    err "Building @liveblocks packages..."
-    if ! ( cd ../../ && pnpm run build --filter='./packages/*' > /dev/null 2>&1 ); then
-        err "Warning: Some packages failed to build. This may cause version mismatch issues."
-        err "You can manually build packages with: pnpm run build"
-    fi
+# Step 4: Build all @liveblocks packages. Examples import from each package's
+# "main"/"exports" entry, which points to dist/, so the dist output must exist
+# or imports fail at runtime.
+err "Building @liveblocks packages..."
+if ! ( cd ../../ && pnpm run build --filter='./packages/*' > /dev/null 2>&1 ); then
+    err "Warning: Some packages failed to build. This may cause version mismatch issues."
+    err "You can manually build packages with: pnpm run build"
 fi
 
 # Step 5: Add this example to pnpm-workspace.yaml to officially make it
