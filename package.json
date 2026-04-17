@@ -15,7 +15,7 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.2",
-    "@types/node": "^18.19.70",
+    "@types/node": "^24.12.2",
     "@types/react": "^18.3.17",
     "@types/react-dom": "^18.3.5",
     "@vitest/coverage-istanbul": "^4.1.4",
