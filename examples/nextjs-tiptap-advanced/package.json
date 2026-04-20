@@ -10,11 +10,11 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@liveblocks/client": "^3.18.3",
-    "@liveblocks/node": "^3.18.3",
-    "@liveblocks/react": "^3.18.3",
-    "@liveblocks/react-tiptap": "^3.18.3",
-    "@liveblocks/react-ui": "^3.18.3",
+    "@liveblocks/client": "^3.18.4",
+    "@liveblocks/node": "^3.18.4",
+    "@liveblocks/react": "^3.18.4",
+    "@liveblocks/react-tiptap": "^3.18.4",
+    "@liveblocks/react-ui": "^3.18.4",
     "@radix-ui/react-dialog": "^1.0.5",
     "@radix-ui/react-popover": "^1.0.7",
     "@radix-ui/react-select": "^1.1.2",

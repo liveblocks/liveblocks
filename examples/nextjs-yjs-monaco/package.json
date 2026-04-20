@@ -10,10 +10,10 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@liveblocks/client": "^3.18.3",
-    "@liveblocks/node": "^3.18.3",
-    "@liveblocks/react": "^3.18.3",
-    "@liveblocks/yjs": "^3.18.3",
+    "@liveblocks/client": "^3.18.4",
+    "@liveblocks/node": "^3.18.4",
+    "@liveblocks/react": "^3.18.4",
+    "@liveblocks/yjs": "^3.18.4",
     "@monaco-editor/react": "^4.5.2",
     "@types/node": "^20.3.3",
     "@types/react": "^18.3.27",
