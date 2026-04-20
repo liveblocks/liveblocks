@@ -9,8 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@liveblocks/client": "^3.18.3",
-    "@liveblocks/zustand": "^3.18.3",
+    "@liveblocks/client": "^3.18.4",
+    "@liveblocks/zustand": "^3.18.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "zustand": "^5.0.10"
