@@ -1,5 +1,5 @@
 export function getIndexWithProperty<T extends {}, K extends keyof T>(
-  array: T[],
+  array: readonly T[],
   property: K,
   value: T[K]
 ) {

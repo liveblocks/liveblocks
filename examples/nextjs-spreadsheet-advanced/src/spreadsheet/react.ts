@@ -15,7 +15,7 @@ export interface ReactSpreadsheet {
   cells: Record<string, string>;
   clearColumn: Spreadsheet["clearColumn"];
   clearRow: Spreadsheet["clearRow"];
-  columns: Column[];
+  columns: readonly Column[];
   deleteCell: Spreadsheet["deleteCell"];
   deleteColumn: Spreadsheet["deleteColumn"];
   deleteRow: Spreadsheet["deleteRow"];
@@ -28,7 +28,7 @@ export interface ReactSpreadsheet {
   others: Record<string, UserInfo>;
   resizeColumn: Spreadsheet["resizeColumn"];
   resizeRow: Spreadsheet["resizeRow"];
-  rows: Row[];
+  rows: readonly Row[];
   selectCell: Spreadsheet["selectCell"];
   selection: CellAddress | null;
   setCellValue: Spreadsheet["setCellValue"];
@@ -38,8 +38,8 @@ export interface ReactSpreadsheet {
 export function useSpreadsheet(): ReactSpreadsheet | null {
   const room = useRoom();
   const [spreadsheet, setSpreadsheet] = useState<Spreadsheet | null>(null);
-  const [columns, setColumns] = useState<Column[]>([]);
-  const [rows, setRows] = useState<Row[]>([]);
+  const [columns, setColumns] = useState<readonly Column[]>([]);
+  const [rows, setRows] = useState<readonly Row[]>([]);
   const [cells, setCells] = useState<Record<string, string>>({});
   const [users, setUsers] = useState<readonly User<Presence, UserMeta>[]>([]);
   const [selection, setSelection] = useState<CellAddress | null>(null);

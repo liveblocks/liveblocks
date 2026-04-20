@@ -30,11 +30,11 @@ export interface Spreadsheet {
   moveColumn(from: number, to: number): void;
   moveRow(from: number, to: number): void;
   onCellsChange(callback: (cells: Record<string, string>) => void): () => void;
-  onColumnsChange(callback: (columns: Column[]) => void): () => void;
+  onColumnsChange(callback: (columns: readonly Column[]) => void): () => void;
   onOthersChange(
     callback: (others: readonly User<Presence, UserMeta>[]) => void
   ): () => void;
-  onRowsChange(callback: (rows: Row[]) => void): () => void;
+  onRowsChange(callback: (rows: readonly Row[]) => void): () => void;
   resizeColumn(index: number, width: number): void;
   resizeRow(index: number, height: number): void;
   selectCell(columnId: string, rowId: string): void;
@@ -260,16 +260,16 @@ export async function createSpreadsheet(
     }
   });
 
-  const columnsCallback: Array<(columns: Column[]) => void> = [];
-  function onColumnsChange(callback: (columns: Column[]) => void) {
+  const columnsCallback: Array<(columns: readonly Column[]) => void> = [];
+  function onColumnsChange(callback: (columns: readonly Column[]) => void) {
     columnsCallback.push(callback);
-    callback(spreadsheet.get("columns").map((col) => col.toObject()));
+    callback(spreadsheet.get("columns").toJSON());
     return () => removeFromArray(columnsCallback, callback);
   }
   room.subscribe(
     spreadsheet.get("columns"),
     () => {
-      const columns = spreadsheet.get("columns").map((col) => col.toObject());
+      const columns = spreadsheet.get("columns").toJSON();
       for (const callback of columnsCallback) {
         callback(columns);
       }
@@ -277,16 +277,16 @@ export async function createSpreadsheet(
     { isDeep: true }
   );
 
-  const rowsCallback: Array<(rows: Row[]) => void> = [];
-  function onRowsChange(callback: (rows: Row[]) => void) {
+  const rowsCallback: Array<(rows: readonly Row[]) => void> = [];
+  function onRowsChange(callback: (rows: readonly Row[]) => void) {
     rowsCallback.push(callback);
-    callback(spreadsheet.get("rows").map((row) => row.toObject()));
+    callback(spreadsheet.get("rows").toJSON());
     return () => removeFromArray(rowsCallback, callback);
   }
   room.subscribe(
     spreadsheet.get("rows"),
     () => {
-      const rows = spreadsheet.get("rows").map((row) => row.toObject());
+      const rows = spreadsheet.get("rows").toJSON();
       for (const callback of rowsCallback) {
         callback(rows);
       }
