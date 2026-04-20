@@ -18,6 +18,48 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 16 (2026-04-17)
+
+## v3.18.3
+
+### `@liveblocks/*`
+
+- Third-party libraries like `yjs`, `@tiptap/*`, and `@blocknote/*` are now declared as peer dependencies instead of bundled dependencies across all packages that use them.
+
+## v3.18.2
+
+### `@liveblocks/client`
+
+- New experimental `room.history.disable(fn)` API that allows running storage mutations without them appearing on the undo/redo stacks. Intended for background/async writes (e.g. writing back AI generation results) that should not be undoable.
+- Fix `ToJson` type losing specific value types for `Record<string, T>` fields in Storage
+
+## v3.18.1
+
+### `@liveblocks/react-ui`
+
+- Mentions suggestions now appear in more cases after typing `@`:
+  - After punctuation like `!`, `.`, `(`, etc. (e.g. `Hello!@`, `cc: the other team (@`)
+  - After emojis (e.g. `Hello 👋@`)
+
+## Infrastructure
+
+- Moved the public monorepo from NPM to pnpm.
+- Started the transparent internal migration of old rooms still on the v1 realtime data storage engine to the new v2 engine, [learn more about the benefits](https://liveblocks.io/docs/guides/about-the-new-storage-engine).
+
+## Examples
+
+- New example: [Handsontable comments](https://liveblocks.io/examples/handsontable-comments/nextjs-comments-handsontable).
+- New example: [Multiplayer Handsontable](https://liveblocks.io/examples/multiplayer-handsontable/nextjs-multiplayer-handsontable).
+
+## Website
+
+- New blog post: [Unveil Week recap: Realtime collaboration for humans and agents](https://liveblocks.io/blog/unveil-week-recap-realtime-collaboration-for-humans-and-agents).
+- New blog post: [Official n8n nodes for Liveblocks](https://liveblocks.io/blog/official-n8n-nodes-for-liveblocks).
+
+## Contributors
+
+marcbouchenoire, ctnicholas, nvie, ofoucherot
+
 # Week 15 (2026-04-10)
 
 ## v3.18.0
