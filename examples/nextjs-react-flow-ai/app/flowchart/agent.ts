@@ -43,7 +43,6 @@ const POSITION_ANIMATION_STEP_DISTANCE = 40;
 
 const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY!,
-  baseUrl: process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL,
 });
 
 const idSchema = z.object({ id: z.string() });
