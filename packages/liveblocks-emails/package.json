@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/emails",
-  "version": "3.18.3",
+  "version": "3.18.4",
   "description": "A set of functions and utilities to make sending emails based on Liveblocks notification events easy. Liveblocks is the all-in-one toolkit to build collaborative products like Figma, Notion, and more.",
   "license": "Apache-2.0",
   "author": "Liveblocks Inc.",
@@ -43,14 +43,6 @@
     "react": "^18 || ^19 || ^19.0.0-rc",
     "y-prosemirror": "^1",
     "yjs": "^13"
-  },
-  "peerDependenciesMeta": {
-    "y-prosemirror": {
-      "optional": true
-    },
-    "yjs": {
-      "optional": true
-    }
   },
   "devDependencies": {
     "@liveblocks/eslint-config": "workspace:*",
