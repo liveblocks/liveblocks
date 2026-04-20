@@ -84,14 +84,14 @@ const DRAGGING_CLASS = "dragging";
 export interface Props extends ComponentProps<"div"> {
   cells: Record<string, string>;
   clearHeader: (index: number) => void;
-  columns: Column[];
+  columns: readonly Column[];
   deleteHeader: (index: number) => void;
   insertHeader: (index: number, width: number) => void;
   max: number;
   moveHeader: (from: number, to: number) => void;
   onSortOver: (index?: number, position?: "after" | "before") => void;
   resizeHeader: (index: number, size: number) => void;
-  rows: Row[];
+  rows: readonly Row[];
   selectedHeader?: string;
   type: "column" | "row";
 }
@@ -113,10 +113,10 @@ export interface HeaderProps extends Omit<ComponentProps<"div">, "onResize"> {
 
 export interface HeaderDragOverlayProps extends ComponentProps<"div"> {
   cells: Record<string, string>;
-  columns: Column[];
+  columns: readonly Column[];
   header: Column | Row;
   index: number;
-  rows: Row[];
+  rows: readonly Row[];
 }
 
 interface ColumnCell extends Cell {
