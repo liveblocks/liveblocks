@@ -80,7 +80,7 @@ export async function createSpreadsheet(
   function innerClearColumn(index: number) {
     const column = spreadsheet.get("columns").get(index);
 
-    for (const row of spreadsheet.get("rows").toArray()) {
+    for (const row of spreadsheet.get("rows")) {
       spreadsheet
         .get("cells")
         .delete(getCellId(column!.get("id"), row.get("id")));
@@ -91,7 +91,7 @@ export async function createSpreadsheet(
   function innerClearRow(index: number) {
     const row = spreadsheet.get("rows").get(index);
 
-    for (const column of spreadsheet.get("columns").toArray()) {
+    for (const column of spreadsheet.get("columns")) {
       spreadsheet
         .get("cells")
         .delete(getCellId(column.get("id"), row!.get("id")));
