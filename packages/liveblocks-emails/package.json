@@ -44,14 +44,6 @@
     "y-prosemirror": "^1",
     "yjs": "^13"
   },
-  "peerDependenciesMeta": {
-    "y-prosemirror": {
-      "optional": true
-    },
-    "yjs": {
-      "optional": true
-    }
-  },
   "devDependencies": {
     "@liveblocks/eslint-config": "workspace:*",
     "@liveblocks/vitest-config": "workspace:*",
