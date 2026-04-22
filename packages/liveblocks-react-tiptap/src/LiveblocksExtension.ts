@@ -28,7 +28,6 @@ import {
   type CollaborationCaretOptions,
 } from "./collaboration-caret/collaboration-caret";
 import {
-  areSetsEqual,
   CommentsExtension,
   FILTERED_THREADS_PLUGIN_KEY,
 } from "./comments/CommentsExtension";
@@ -40,6 +39,7 @@ import type {
   ResolveContextualPromptResponse,
 } from "./types";
 import { LIVEBLOCKS_COMMENT_MARK_TYPE } from "./types";
+import { areSetsEqual } from "./utils";
 
 type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
 

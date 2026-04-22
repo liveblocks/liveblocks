@@ -116,7 +116,7 @@ export type CommentsExtensionStorage = {
 };
 
 export const enum ThreadPluginActions {
-  SET_SELECTED_THREAD_ID = "SET_SELECTED_THREAD_ID",
+  SET_ACTIVE_THREAD_IDS = "SET_ACTIVE_THREAD_IDS",
 }
 
 export type AiExtensionOptions = Required<
@@ -270,8 +270,11 @@ declare module "@tiptap/core" {
 }
 export type ThreadPluginState = {
   threadPositions: Map<string, { from: number; to: number }>;
-  selectedThreadId: string | null;
-  selectedThreadPos: number | null;
+  /**
+   * Thread IDs currently active at the selection (e.g. overlapping comment marks).
+   * Order matches ProseMirror mark order at the cursor.
+   */
+  activeThreadIds: string[];
   decorations: DecorationSet;
 };
 
