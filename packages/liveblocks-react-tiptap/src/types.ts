@@ -270,10 +270,6 @@ declare module "@tiptap/core" {
 }
 export type ThreadPluginState = {
   threadPositions: Map<string, { from: number; to: number }>;
-  /**
-   * Thread IDs currently active at the selection (e.g. overlapping comment marks).
-   * Order matches ProseMirror mark order at the cursor.
-   */
   activeThreadIds: string[];
   decorations: DecorationSet;
 };

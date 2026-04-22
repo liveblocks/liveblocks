@@ -67,28 +67,23 @@ export function FloatingThreads({
 }: FloatingThreadsProps) {
   const Thread = useStableComponent(components?.Thread, DefaultThread);
 
-  const { pluginState, isCollapsed } = useEditorState({
-    editor,
-    selector: (ctx) => {
-      if (!ctx?.editor?.state) {
-        return { pluginState: undefined, isCollapsed: false };
-      }
-      return {
-        pluginState: THREADS_PLUGIN_KEY.getState(ctx.editor.state),
-        isCollapsed: ctx.editor.state.selection.empty,
-      };
-    },
-    equalityFn: (prev, next) => {
-      if (!prev || !next) return false;
-      return (
-        prev.isCollapsed === next.isCollapsed &&
-        shallow(
-          prev.pluginState?.activeThreadIds,
-          next.pluginState?.activeThreadIds
-        )
-      );
-    },
-  }) ?? { pluginState: undefined, isCollapsed: false };
+  const activeThreadIds =
+    useEditorState({
+      editor,
+      selector: (ctx) => {
+        if (!ctx?.editor?.state) {
+          return undefined;
+        }
+
+        const state = THREADS_PLUGIN_KEY.getState(ctx.editor.state);
+
+        return state?.activeThreadIds;
+      },
+      equalityFn: (prev, next) => {
+        if (!prev || !next) return false;
+        return shallow(prev, next);
+      },
+    }) ?? undefined;
 
   const [range, setRange] = useState<{
     range: Range;
@@ -100,21 +95,19 @@ export function FloatingThreads({
       !editor ||
       !editor.view ||
       editor.view.isDestroyed ||
-      !pluginState ||
-      !isCollapsed
+      !activeThreadIds
     ) {
       setRange(null);
       return;
     }
 
-    const activeIds = pluginState.activeThreadIds;
-    if (activeIds.length === 0) {
+    if (activeThreadIds.length === 0) {
       setRange(null);
       return;
     }
 
     const activeThreads = (threads ?? []).filter(
-      (thread) => activeIds.includes(thread.id) && !thread.resolved
+      (thread) => activeThreadIds.includes(thread.id) && !thread.resolved
     );
     if (activeThreads.length === 0) {
       setRange(null);
@@ -125,7 +118,7 @@ export function FloatingThreads({
     // overlapping with another mark), so we collect every matching element and
     // build a DOM range spanning from the first to the last one.
     const elements = new Set<HTMLElement>();
-    for (const id of activeIds) {
+    for (const id of activeThreadIds) {
       const els = editor.view.dom.querySelectorAll<HTMLElement>(
         `span.lb-tiptap-thread-mark[data-lb-thread-id="${id}"]`
       );
@@ -142,7 +135,7 @@ export function FloatingThreads({
     domRange.setStartBefore(sorted[0]);
     domRange.setEndAfter(sorted[sorted.length - 1]);
     setRange({ range: domRange, threads: activeThreads });
-  }, [editor, pluginState, threads, isCollapsed]);
+  }, [editor, activeThreadIds, threads]);
 
   // Remote cursor updates and other edits can shift the underlying DOM
   // elements, so we recompute the range on every change.
