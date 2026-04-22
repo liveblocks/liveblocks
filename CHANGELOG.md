@@ -1,5 +1,10 @@
 ## vNEXT (not yet released)
 
+### `@liveblocks/react-tiptap`
+
+- Support overlapping comment marks, they now all appear in the
+  `AnchoredThreads` and `FloatingThreads` components.
+
 ## v3.18.4
 
 ### `@liveblocks/emails`
@@ -3546,13 +3551,11 @@ In **@liveblocks/react**:
   https://liveblocks.io/docs/guides/troubleshooting#stale-props-zombie-child
 
 - In **@liveblocks/zustand**:
-
   - Fix a confusing error message
 
 ## v0.18.2
 
 - In **@liveblocks/react**:
-
   - Make sure that `useOther` will not rerender if tracked users already left
     the room, so that child components won't get rerendered before the parent
     got the chance to unmount them.
@@ -3561,7 +3564,6 @@ In **@liveblocks/react**:
 ## v0.18.1
 
 - In **@liveblocks/react**:
-
   - Fix a bug that could cause an error when patching presence during local
     development. Not an issue in production builds. (#505)
 
@@ -3573,7 +3575,6 @@ For information, please read our
 ### New React hooks ✨
 
 - In **@liveblocks/react**:
-
   - [`useStorage`](https://liveblocks.io/docs/api-reference/liveblocks-react#useStorage)
   - [`useMutation`](https://liveblocks.io/docs/api-reference/liveblocks-react#useMutation)
   - [`useSelf`](https://liveblocks.io/docs/api-reference/liveblocks-react#useSelf)
@@ -3584,7 +3585,6 @@ For information, please read our
     (singular)
 
 - In **@liveblocks/client**:
-
   - New
     [`.toImmutable()`](https://liveblocks.io/docs/api-reference/liveblocks-client#LiveObject.toImmutable)
     method on `LiveObject`, `LiveList`, and `LiveMap` lets you work with an
@@ -3630,19 +3630,16 @@ In **@liveblocks/react**:
 ### New history APIs ↩️ ↪️
 
 - In **@liveblocks/client**:
-
   - Add `canUndo()` and `canRedo()` utilities to `room.history`
   - Add `"history"` event type to `room.subscribe()` to subscribe to the current
     user's history changes
 
 - In **@liveblocks/react**:
-
   - Add `useCanUndo()` and `useCanRedo()` hooks
 
 ## v0.17.7
 
 - In **@liveblocks/zustand**:
-
   - Simplify zustand middleware integration with Typescript. `TPresence`,
     `TStorage`, `TUserMeta`, and `TRoomEvent` are now optional.
 
@@ -3724,13 +3721,11 @@ useStore(state => state.liveblocks.others[0].presence?.isTyping)
 ## v0.17.6
 
 - In **@liveblocks/react**:
-
   - Expose `RoomContext` in the return value of `createRoomContext()`
 
 ## v0.17.5
 
 - In **@liveblocks/react**:
-
   - Fix bug where changing the `key` argument of `useMap()`, `useList()`,
     `useObject()` did not resubscribe to updates correctly
   - Ignore changes to the `RoomProvider`'s initial presence/storage props on
@@ -3782,12 +3777,10 @@ It's surprisingly simple!
 ### New APIs ✨
 
 - In **@liveblocks/react**:
-
   - [`createRoomContext()`](https://liveblocks.io/docs/api-reference/liveblocks-react#createRoomContext)
     is now the preferred way to initialize hooks.
 
 - In the API:
-
   - New endpoint to
     [Get Users in a Room](https://liveblocks.io/docs/api-reference/rest-api-endpoints#GetRoomUsers)
   - New endpoint to
@@ -3801,13 +3794,11 @@ It's surprisingly simple!
 ### Breaking changes
 
 - In **@liveblocks/client**:
-
   - Removed old `Room.unsubscribe()` API
 
 ### New deprecations
 
 - In **@liveblocks/client**:
-
   - The `defaultPresence` option to `client.enter()` will get renamed to
     `initialPresence`
   - The `defaultStorageRoot` option to `client.enter()` will get renamed to
@@ -3816,7 +3807,6 @@ It's surprisingly simple!
     or `new LiveMap([])`
 
 - In **@liveblocks/react**:
-
   - Importing the React hooks directly is deprecated, instead use the new
     `createRoomContext()` helper. For help, read the
     [Recommended Upgrade Steps section](https://liveblocks.io/docs/platform/upgrading/0.17#recommended-upgrade-steps)
@@ -3887,7 +3877,6 @@ Fix bug in example code suggested in deprecation warning.
 ### Bug fixes
 
 - In **@liveblocks/client**:
-
   - If you're using `@liveblocks/client` in a ES2015 context, you no longer have
     to polyfill `Object.fromEntries()`.
 
@@ -3905,15 +3894,12 @@ Fix bug in example code suggested in deprecation warning.
 ### Bug fixes
 
 - In **@liveblocks/client**:
-
   - Fix bug where internal presence state could not get restored correctly after
     undo/redo in certain circumstances.
 
 - In **@liveblocks/zustand** and **@liveblocks/redux**:
-
   - Fixes an issue when initializing an array with items would result in having
     duplicated items in other clients. Example:
-
     - Client A updates state : `{ list: [0] }`
     - Client B states is updated to : `{ list: [0, 0] }`
 
@@ -3922,7 +3908,6 @@ Fix bug in example code suggested in deprecation warning.
 ### Bug fixes
 
 - In **@liveblocks/client**:
-
   - Fix small bug related to new `JsonObject` type, which would reject some
     values that were legal JSON objects.
 
@@ -3931,7 +3916,6 @@ Fix bug in example code suggested in deprecation warning.
 ### Bug fixes
 
 - In **@liveblocks/react**:
-
   - Fix issue with React 18 and StrictMode.
 
 ## v0.16.0
