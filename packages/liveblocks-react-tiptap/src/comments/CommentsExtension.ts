@@ -1,8 +1,8 @@
 import { shallow } from "@liveblocks/core";
-import { Extension, type Editor, Mark, mergeAttributes } from "@tiptap/core";
+import { type Editor, Extension, Mark, mergeAttributes } from "@tiptap/core";
 import type {
-  MarkType,
   Mark as ProseMirrorMark,
+  MarkType,
   Node,
   ResolvedPos,
 } from "@tiptap/pm/model";

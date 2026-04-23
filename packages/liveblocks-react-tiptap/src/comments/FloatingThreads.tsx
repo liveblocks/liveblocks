@@ -9,10 +9,10 @@ import {
   useFloating,
 } from "@floating-ui/react-dom";
 import {
-  shallow,
   type BaseMetadata,
   type DCM,
   type DTM,
+  shallow,
   type ThreadData,
 } from "@liveblocks/core";
 import { useLayoutEffect } from "@liveblocks/react/_private";
