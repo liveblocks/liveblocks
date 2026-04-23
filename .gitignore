@@ -39,6 +39,3 @@ AGENTS.local.md
 # Playwright
 test-results/
 playwright-report/
-
-# Liveblocks local dev server storage
-.liveblocks/
