@@ -19,7 +19,7 @@ set of limits.
 | <a href="/docs/platform/account-management/manage-team-members">Team members</a>                                                                                                                                                                                                                       | <Limits.FreeMaxTeamMembersPerAccount />           | <Limits.ProTeamMembersPerAccount /> included<br /><span className="text-xs text-product-subtlest"><Limits.ProTeamMembersPerAccountOverage /></span>   | <Limits.TeamTeamMembersPerAccount /> included<br /><span className="text-xs text-product-subtlest"><Limits.TeamTeamMembersPerAccountOverage /></span>   | <Limits.EnterpriseTeamMembersPerAccount /> <InfoTooltip>Up to <Limits.EnterpriseMaxTeamMembersPerAccount /></InfoTooltip>                             |
 | <a href="#What's-a-simultaneous-connection-per-room" title="Learn more">Simultaneous connections per room</a>                                                                                                                                                                                          | <Limits.FreeMaxConnectionsPerRoom />              | <Limits.ProMaxConnectionsPerRoom />                                                                                                                   | <Limits.TeamMaxConnectionsPerRoom />                                                                                                                    | <Limits.EnterpriseMaxConnectionsPerRoom />                                                                                                            |
 | <a href="#What's-a-simultaneous-connection-per-project">Simultaneous connections per project</a>                                                                                                                                                                                                       | <Limits.FreeMaxConnectionsPerProject />           | <Limits.ProMaxConnectionsPerProject />                                                                                                                | <Limits.TeamMaxConnectionsPerProject />                                                                                                                 | <Limits.EnterpriseMaxConnectionsPerProject />                                                                                                         |
-| Monthly anonymous connections <InfoTooltip>Public key only recommended for prototyping. <a href="/docs/authentication" className="font-medium">Set up authentication</a>.</InfoTooltip>                                                                                                                | <Limits.FreeMaxAnonymousConnections />            | <Limits.ProMaxAnonymousConnections />                                                                                                                 | <Limits.TeamMaxAnonymousConnections />                                                                                                                  | <Limits.EnterpriseMaxAnonymousConnections />                                                                                                          |
+| <a href="#What-is-a-monthly-anonymous-connection">Monthly anonymous connections</a> <InfoTooltip>Applies when the client only has a public API key. We count this per connection, not per end user. <a href="/docs/platform/limits#What-is-a-monthly-anonymous-connection" className="font-medium">Learn more</a>. <a href="/docs/authentication" className="font-medium">Set up authentication</a>.</InfoTooltip> | <Limits.FreeMaxAnonymousConnections />            | <Limits.ProMaxAnonymousConnections />                                                                                                                 | <Limits.TeamMaxAnonymousConnections />                                                                                                                  | <Limits.EnterpriseMaxAnonymousConnections />                                                                                                          |
 | Realtime data storage <InfoTooltip>This is a cumulative calculation that represents all data that is currently stored. It does not reset monthly, and the total usage will continue to accrue over time as you add more content and data.</InfoTooltip>                                                | <Limits.FreeMaxRealtimeDataStorage />             | <Limits.ProRealtimeDataStorage /> included<br /><span className="text-xs text-product-subtlest"><Limits.ProRealtimeDataStorageOverage /></span>       | <Limits.TeamRealtimeDataStorage /> included<br /><span className="text-xs text-product-subtlest"><Limits.TeamRealtimeDataStorageOverage /></span>       | <Limits.EnterpriseRealtimeDataStorage /> <InfoTooltip>Up to <Limits.EnterpriseMaxRealtimeDataStorage /></InfoTooltip>                                 |
 | Realtime data stored per room                                                                                                                                                                                                                                                                          | <Limits.FreeMaxStorageSizePerRoom />              | <Limits.ProMaxStorageSizePerRoom />                                                                                                                   | <Limits.TeamMaxStorageSizePerRoom />                                                                                                                    | <Limits.EnterpriseMaxStorageSizePerRoom />                                                                                                            |
 | File storage <InfoTooltip>This is a cumulative calculation that represents all files that are stored with Liveblocks. It does not reset monthly, and the total usage will continue to accrue over time as you add more files. Files can be uploaded as comment attachments for instance.</InfoTooltip> | <Limits.FreeMaxFileStorage />                     | <Limits.ProFileStorage /> included<br /><span className="text-xs text-product-subtlest"><Limits.ProFileStorageOverage /></span>                       | <Limits.TeamFileStorage /> included<br /><span className="text-xs text-product-subtlest"><Limits.TeamFileStorageOverage /></span>                       | <Limits.EnterpriseMaxFileStorage />                                                                                                                   |
@@ -74,25 +74,65 @@ updates its content.
 ### What is a monthly active user?
 
 Monthly active users represents the number of users that have used any
-Liveblocks features within a given month. Users are identified by the `userId`
-property provided in your [authentication endpoint](/docs/authentication). This
-`userId` generally comes from your database or your authentication provider.
+Liveblocks features within a given month, when you identify them with a
+`userId` from your
+[authentication](/docs/authentication) endpoint. Your application issues
+[ID tokens](/docs/authentication) or
+[access tokens](/docs/authentication/access-token), and the `userId` generally
+comes from your database or your authentication provider.
 
-One unique `userId` corresponds to one user, no matter how long they connect
-for. For example, a user that connects for 5 minutes on 2 different days is
-counted as 1 MAU, and a user that connects 8 hours a day for a month is also
-counted as 1 MAU. This applies so long as usage falls under our
+If the client only connects with a
+[public API key](/docs/api-reference/liveblocks-client#createClientPublicKey) and
+never gets a `userId`, you should read about
+[monthly anonymous connections](#What-is-a-monthly-anonymous-connection)
+instead. MAU is not the right metric in that case.
+
+One unique `userId` counts as one user in the month, no matter how long or how
+often that person is online. For example, a user that’s connected for 5 minutes
+on 2 different days is 1 MAU, a user that’s online 8 hours a day is still 1 MAU,
+and a user that **reconnects** through the day is also 1 MAU. The same is true
+while usage stays within our
 [Fair Use Policy](/docs/platform/limits/fair-use-policy).
+
+### What is a monthly anonymous connection?
+
+This applies when you build the client with a
+[public API key](/docs/api-reference/liveblocks-client#createClientPublicKey) only.
+There is no `userId`, and we count that traffic toward
+**monthly anonymous connections** instead of MAU.
+
+We count this per connection, so **multiple tabs** and **reconnects** (for
+example after a network problem or a page refresh) can each add to the total. If
+a single person opens 116 new connections in one day, that can be 116 monthly
+anonymous connections. The same person, identified with a stable `userId` from
+your auth endpoint, is **1 MAU** in that month.
+
+We only recommend a public key for prototyping or a fully public page. In
+production, we recommend
+[ID token](/docs/authentication) or
+[access token](/docs/authentication/access-token) authentication so usage
+follows MAU per person.
 
 ### What’s a connection?
 
-A connection occurs when a user opens a web page containing a Liveblocks room.
-Each tab counts as one connection, which means that a user with two open tabs
-has two connections. A room is joined when using{" "}
-[`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider) in React or
+A connection occurs when a user opens a web page containing a Liveblocks room,
+or when the client **reconnects** and starts a new realtime session. Each tab
+counts as one connection, which means that a user with two open tabs has two
+connections. A room is joined when using{" "}
+[`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider) in React
+or
 [`enterRoom`](/docs/api-reference/liveblocks-client#Client.enterRoom) in
 JavaScript. Liveblocks connections are analogous to WebSocket connections,
 representing a realtime link to our server.
+
+If you use a [public
+key](/docs/api-reference/liveblocks-client#createClientPublicKey) only, we
+count that traffic under
+[monthly anonymous connections](#What-is-a-monthly-anonymous-connection), and
+each new connection, including a **reconnect**, can add to the total. If you
+use an auth endpoint and a `userId`, we use [monthly active
+users](#What-is-a-monthly-active-user) (1 per `userId` per month, subject to
+fair use).
 
 ### What’s a room?
 

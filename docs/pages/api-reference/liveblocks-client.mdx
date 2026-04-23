@@ -244,6 +244,12 @@ or on public landing pages, as it makes it possible for end users to access any
 room’s data. You should instead use an
 [auth endpoint](#createClientAuthEndpoint).
 
+With a public key, we count
+[monthly anonymous connections](/docs/platform/limits#What-is-a-monthly-anonymous-connection) (per
+connection; **reconnects** and **tabs** can each add to the total). When you
+use an `authEndpoint` and a `userId`, we use
+[monthly active users (MAU)](/docs/platform/limits#What-is-a-monthly-active-user) instead.
+
 ```ts
 import { createClient } from "@liveblocks/client";
 

@@ -8,6 +8,22 @@ For production applications, we recommend using your secret API key to
 authenticate users with **ID tokens**. Your public API key is only for
 prototyping and public applications.
 
+<Banner title="How public and secret keys affect usage">
+
+If the client only has a
+[public key](/docs/api-reference/liveblocks-client#createClientPublicKey), we
+count that usage
+as
+[monthly anonymous connections](/docs/platform/limits#What-is-a-monthly-anonymous-connection) (per
+connection, including **reconnects** and **tabs**). When you use
+[ID tokens](/docs/authentication) or
+[access tokens](/docs/authentication/access-token) with a `userId`, we count
+[monthly active users (MAU)](/docs/platform/limits#What-is-a-monthly-active-user) (1
+per user per month). In production, we recommend setting up an auth endpoint
+so your usage lines up with your customers, not just with connection counts.
+
+</Banner>
+
 ## Quickstart
 
 <ListGrid columns={3}>
