@@ -1,5 +1,7 @@
 ## vNEXT (not yet released)
 
+## v3.18.5
+
 ### `@liveblocks/react-tiptap`
 
 - Support overlapping comment marks, they now all appear in the
