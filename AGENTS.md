@@ -2,7 +2,7 @@
 
 This is a monorepo. Most relevant projects live in `packages/` directory.
 
-Dependency hierchy is:
+Dependency hierarchy is:
 
 - @liveblocks/core
   - @liveblocks/client
