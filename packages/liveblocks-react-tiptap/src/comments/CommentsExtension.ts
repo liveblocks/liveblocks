@@ -160,6 +160,8 @@ const Comment = Mark.create({
           const from = pos;
           const to = from + node.nodeSize;
 
+          // FloatingThreads component uses "to" as the position, so we always store the largest "to" found.
+          // AnchoredThreads component uses "from" as the position, so we always store the smallest "from" found.
           const current = threadPositions.get(threadId) ?? {
             from: Infinity,
             to: 0,
