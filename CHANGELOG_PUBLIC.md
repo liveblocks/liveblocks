@@ -20,7 +20,13 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 17 (2026-04-24)
 
+## Website
+
+- New blog post: [How CRDTs and sync engines keep realtime lists ordered with fractional indexing](https://liveblocks.io/blog/how-crdts-and-sync-engines-keep-realtime-lists-ordered-with-fractional-indexing).
+
 ## Contributors
+
+ctnicholas, nvie
 
 # Week 16 (2026-04-17)
 
