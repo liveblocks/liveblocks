@@ -30,8 +30,8 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ## Documentation
 
-- New get started guide: [Get started with a multiplayer Handsontable spreadsheet using Liveblocks and Next.js](https://liveblocks.io/docs/get-started/nextjs-multiplayer-handsontable).
-- New get started guide: [Get started with commenting in Handsontable using Liveblocks and Next.js](https://liveblocks.io/docs/get-started/nextjs-comments-handsontable).
+- New get started guide: [Multiplayer Handsontable](https://liveblocks.io/docs/get-started/nextjs-multiplayer-handsontable).
+- New get started guide: [Commenting in Handsontable](https://liveblocks.io/docs/get-started/nextjs-comments-handsontable).
 
 ## Contributors
 
