@@ -24,9 +24,13 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 - New blog post: [How CRDTs and sync engines keep realtime lists ordered with fractional indexing](https://liveblocks.io/blog/how-crdts-and-sync-engines-keep-realtime-lists-ordered-with-fractional-indexing).
 
+## Infrastructure
+
+- We're almost done migrating over all rooms to our new v2 realtime data storage engine–we're deep in the long tail! (For the benefits of this, [read more here](https://liveblocks.io/docs/guides/about-the-new-storage-engine).)
+
 ## Contributors
 
-ctnicholas, nvie
+ctnicholas, nvie, ofoucherot
 
 # Week 16 (2026-04-17)
 
