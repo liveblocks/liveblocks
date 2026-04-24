@@ -83,6 +83,36 @@ components from
 
   </Step>
   <Step>
+    <StepTitle>Add comment cell styles</StepTitle>
+    <StepContent>
+
+    Add CSS for the comment pins in your table cells. The trigger is hidden
+    by default and appears when hovering or when the composer is open.
+
+    ```css file="app/globals.css"
+    .comment-cell-trigger {
+      opacity: 0;
+      transition: opacity 0.15s ease;
+    }
+
+    .comment-cell:hover .comment-cell-trigger,
+    .comment-cell-trigger[data-open] {
+      opacity: 1;
+    }
+
+    .handsontable td {
+      vertical-align: middle;
+    }
+
+    .handsontable .comment-cell {
+      min-height: 40px;
+    }
+    ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
     <StepTitle>Create a Liveblocks room</StepTitle>
     <StepContent>
 
@@ -179,20 +209,27 @@ components from
     <StepTitle>Create a custom comment cell</StepTitle>
     <StepContent>
 
-      Create a custom cell renderer for your table that displays comment buttons alongside cell values using
+      Create a custom cell renderer for your table that displays comment pins alongside cell values using
+      [`CommentPin`](/docs/api-reference/liveblocks-react-ui#CommentPin),
       [`FloatingComposer`](/docs/api-reference/liveblocks-react-ui#FloatingComposer),
-      [`FloatingThread`](/docs/api-reference/liveblocks-react-ui#FloatingThread), and the context we created.
-      Clicking the buttons opens popovers for creating or viewing comment threads.
+      [`FloatingThread`](/docs/api-reference/liveblocks-react-ui#FloatingThread),
+      [`useSelf`](/docs/api-reference/liveblocks-react#useSelf), and the context we created.
+      Each cell shows a pin that opens a popover for creating or viewing comment threads.
 
       ```tsx file="app/CommentCell.tsx"
       "use client";
 
       import {
+        CommentPin,
         FloatingComposer,
         FloatingThread,
         Icon,
       } from "@liveblocks/react-ui";
       import type { HotRendererProps } from "@handsontable/react-wrapper";
+      // +++
+      import { useSelf } from "@liveblocks/react";
+      // +++
+      import { CSSProperties, useState } from "react";
       import { useCellThread } from "./CellThreadContext";
 
       export function CommentCell({
@@ -202,14 +239,51 @@ components from
         prop,
         value,
       }: HotRendererProps) {
-        const { threads, openCell, setOpenCell } = useCellThread();
-
         const columnId = String(prop);
         const rowId = String(instance.getDataAtRowProp(row, "id") ?? "");
 
         if (!rowId || !columnId) {
           return null;
         }
+
+        return (
+          <CommentCellBody
+            key={`${row}-${col}-${rowId}-${columnId}`}
+            rowId={rowId}
+            columnId={columnId}
+            value={value}
+          />
+        );
+      }
+
+      // +++
+      const COMMENT_PIN_SIZE = 24;
+
+      const commentPinStyle = {
+        "--lb-comment-pin-padding": "3px",
+        width: COMMENT_PIN_SIZE,
+        height: COMMENT_PIN_SIZE,
+        cursor: "pointer",
+        marginTop: 3,
+        boxSizing: "border-box",
+      } as CSSProperties;
+      // +++
+
+      function CommentCellBody({
+        rowId,
+        columnId,
+        value,
+      }: {
+        rowId: string;
+        columnId: string;
+        value: unknown;
+      }) {
+        const { threads, openCell, setOpenCell } = useCellThread();
+        const [isComposerOpen, setIsComposerOpen] = useState(false);
+
+        // +++
+        const currentUserId = useSelf((self) => self.id) ?? undefined;
+        // +++
 
         const thread = threads.find(
           ({ metadata }) =>
@@ -225,28 +299,43 @@ components from
 
         return (
           <div
+            className="comment-cell"
             style={{
               display: "flex",
               alignItems: "center",
-              justifyContent: "space-between",
-              gap: 16,
+              gap: 12,
             }}
           >
-            {/* Cell contents */}
-            {String(value ?? "")}
+            <span className="comment-cell-value">
+              {String(value ?? "")}
+            </span>
 
-            {/* Show thread if it exists, otherwise show thread composer */}
             {!thread ? (
-              <FloatingComposer
-                metadata={metadata}
-                onComposerSubmit={() => setOpenCell(metadata)}
-                style={{ zIndex: 10 }}
+              // +++
+              <div
+                className="comment-cell-trigger"
+                data-open={isComposerOpen || undefined}
               >
-                <button>
-                  <Icon.Plus style={{ width: 14, height: 14 }} />
-                </button>
-              </FloatingComposer>
+                <FloatingComposer
+                  metadata={metadata}
+                  onComposerSubmit={() => setOpenCell(metadata)}
+                  onOpenChange={setIsComposerOpen}
+                  style={{ zIndex: 10 }}
+                >
+                  <CommentPin
+                    corner="top-left"
+                    style={commentPinStyle}
+                    userId={currentUserId}
+                  >
+                    {!isComposerOpen ? (
+                      <Icon.Plus style={{ width: 14, height: 14 }} />
+                    ) : null}
+                  </CommentPin>
+                </FloatingComposer>
+              </div>
+              // +++
             ) : (
+              // +++
               <FloatingThread
                 thread={thread}
                 defaultOpen={defaultOpen}
@@ -259,8 +348,13 @@ components from
                 style={{ zIndex: 10 }}
                 autoFocus
               >
-                <button>💬</button>
+                <CommentPin
+                  corner="top-left"
+                  style={commentPinStyle}
+                  userId={thread.comments[0]?.userId}
+                />
               </FloatingThread>
+              // +++
             )}
           </div>
         );
@@ -312,6 +406,7 @@ components from
               autoWrapRow={true}
               autoWrapCol={true}
               stretchH="all"
+              minRowHeights={50}
             >
               {/* Use the custom comment cell renderer */}
               // +++
