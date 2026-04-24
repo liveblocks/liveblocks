@@ -55,21 +55,17 @@ application using the hooks from
       ```tsx file="liveblocks.config.ts"
       import type { LiveList } from "@liveblocks/client";
 
-      // +++
       export const GRID_ROWS = 10;
       export const GRID_COLS = 5;
-      // +++
 
       declare global {
         interface Liveblocks {
-          // +++
           Presence: {
             selectedCell: { row: number; col: number } | null;
           };
           Storage: {
             grid: LiveList<LiveList<string>>;
           };
-          // +++
         }
       }
       ```
@@ -112,7 +108,6 @@ application using the hooks from
       export function Room({ children }: { children: ReactNode }) {
         return (
           <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
-            // +++
             <RoomProvider
               id="my-room"
               initialPresence={{ selectedCell: null }}
@@ -125,7 +120,6 @@ application using the hooks from
                 ),
               }}
             >
-            // +++
               <ClientSideSuspense fallback={<div>Loading…</div>}>
                 {children}
               </ClientSideSuspense>
@@ -152,11 +146,9 @@ application using the hooks from
 
       export default function Page() {
         return (
-          // +++
           <Room>
             <Table />
           </Room>
-          // +++
         );
       }
       ```
@@ -198,7 +190,6 @@ application using the hooks from
         const hotRef = useRef<HotTableRef>(null);
 
         // Get the realtime grid contents from Liveblocks Storage
-        // +++
         const data = useStorage(
           (root) =>
             root.grid.map((row) =>
@@ -206,10 +197,8 @@ application using the hooks from
             ),
           shallow
         );
-        // +++
 
         // Update a cell's value
-        // +++
         const updateCell = useMutation(
           ({ storage }, rowIndex: number, colIndex: number, value: string) => {
             const grid = storage.get("grid");
@@ -220,7 +209,6 @@ application using the hooks from
           },
           []
         );
-        // +++
 
         // Update the grid when a cell is changed
         const afterChange = useCallback(
@@ -303,9 +291,7 @@ application using the hooks from
             rowHeaders={true}
             height={400}
             width={600}
-            // +++
             licenseKey="non-commercial-and-evaluation"
-            // +++
             autoWrapRow={true}
             autoWrapCol={true}
           />

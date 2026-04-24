@@ -53,12 +53,10 @@ components from
       ```tsx file="liveblocks.config.ts"
       declare global {
         interface Liveblocks {
-          // +++
           ThreadMetadata: {
             rowId: string;
             columnId: string;
           };
-          // +++
         }
       }
 
@@ -128,7 +126,7 @@ components from
       and use [`ClientSideSuspense`](/docs/api-reference/liveblocks-react#ClientSideSuspense)
       to add a loading spinner to your app.
 
-      ```tsx file="app/Room.tsx" highlight="12-18"
+      ```tsx file="app/Room.tsx"
       "use client";
 
       import { ReactNode } from "react";
@@ -226,9 +224,7 @@ components from
         Icon,
       } from "@liveblocks/react-ui";
       import type { HotRendererProps } from "@handsontable/react-wrapper";
-      // +++
       import { useSelf } from "@liveblocks/react";
-      // +++
       import { CSSProperties, useState } from "react";
       import { useCellThread } from "./CellThreadContext";
 
@@ -256,7 +252,6 @@ components from
         );
       }
 
-      // +++
       const COMMENT_PIN_SIZE = 24;
 
       const commentPinStyle = {
@@ -267,7 +262,6 @@ components from
         marginTop: 3,
         boxSizing: "border-box",
       } as CSSProperties;
-      // +++
 
       function CommentCellBody({
         rowId,
@@ -281,9 +275,7 @@ components from
         const { threads, openCell, setOpenCell } = useCellThread();
         const [isComposerOpen, setIsComposerOpen] = useState(false);
 
-        // +++
         const currentUserId = useSelf((self) => self.id) ?? undefined;
-        // +++
 
         const thread = threads.find(
           ({ metadata }) =>
@@ -311,7 +303,6 @@ components from
             </span>
 
             {!thread ? (
-              // +++
               <div
                 className="comment-cell-trigger"
                 data-open={isComposerOpen || undefined}
@@ -333,9 +324,7 @@ components from
                   </CommentPin>
                 </FloatingComposer>
               </div>
-              // +++
             ) : (
-              // +++
               <FloatingThread
                 thread={thread}
                 defaultOpen={defaultOpen}
@@ -354,7 +343,6 @@ components from
                   userId={thread.comments[0]?.userId}
                 />
               </FloatingThread>
-              // +++
             )}
           </div>
         );
@@ -379,9 +367,7 @@ components from
       import { CellThreadProvider } from "./CellThreadContext";
       import { CommentCell } from "./CommentCell";
 
-      // +++
       registerAllModules();
-      // +++
 
       type RowData = { id: string; name: string; price: number };
 
@@ -400,19 +386,15 @@ components from
               rowHeaders={false}
               height={200}
               width={500}
-              // +++
               licenseKey="non-commercial-and-evaluation"
-              // +++
               autoWrapRow={true}
               autoWrapCol={true}
               stretchH="all"
               minRowHeights={50}
             >
               {/* Use the custom comment cell renderer */}
-              // +++
               <HotColumn renderer={CommentCell} data="name" readOnly />
               <HotColumn renderer={CommentCell} data="price" readOnly />
-              // +++
             </HotTable>
           </CellThreadProvider>
         );
@@ -430,7 +412,7 @@ components from
       your room into your `page.tsx` file, and place
       your collaborative app components inside it.
 
-      ```tsx file="app/page.tsx" highlight="6-8"
+      ```tsx file="app/page.tsx"
       import { Room } from "./Room";
       import { CollaborativeApp } from "./CollaborativeApp";
 
