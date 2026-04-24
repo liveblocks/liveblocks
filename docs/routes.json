@@ -72,6 +72,16 @@
             "hidden": true
           },
           {
+            "title": "Comments / Handsontable",
+            "path": "/get-started/nextjs-comments-handsontable",
+            "hidden": true
+          },
+          {
+            "title": "Handsontable",
+            "path": "/get-started/nextjs-multiplayer-handsontable",
+            "hidden": true
+          },
+          {
             "title": "Notifications / In-app",
             "path": "/get-started/react-notifications-in-app",
             "hidden": true
