@@ -28,6 +28,11 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 - We're almost done migrating over all rooms to our new v2 realtime data storage engine–we're deep in the long tail! (For the benefits of this, [read more here](https://liveblocks.io/docs/guides/about-the-new-storage-engine).)
 
+## Documentation
+
+- New get started guide: [Get started with a multiplayer Handsontable spreadsheet using Liveblocks and Next.js](https://liveblocks.io/docs/get-started/nextjs-multiplayer-handsontable).
+- New get started guide: [Get started with commenting in Handsontable using Liveblocks and Next.js](https://liveblocks.io/docs/get-started/nextjs-comments-handsontable).
+
 ## Contributors
 
 ctnicholas, nvie, ofoucherot
