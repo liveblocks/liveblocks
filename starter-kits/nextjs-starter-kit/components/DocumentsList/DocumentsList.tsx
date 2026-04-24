@@ -109,6 +109,7 @@ export function DocumentsList({ filter = "all", className, ...props }: Props) {
               { value: "whiteboard", title: "Whiteboard" },
               { value: "canvas", title: "Canvas" },
               { value: "note", title: "Note" },
+              { value: "spreadsheet", title: "Spreadsheet" },
             ]}
             onChange={(value: "all" | DocumentType) => {
               setDocumentType(value);

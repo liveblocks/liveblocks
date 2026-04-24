@@ -1,0 +1,24 @@
+.handsontable td {
+  vertical-align: middle;
+}
+
+.spreadsheet-comment-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 22px;
+}
+
+.spreadsheet-comment-cell-trigger {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.spreadsheet-comment-cell:hover .spreadsheet-comment-cell-trigger,
+.spreadsheet-comment-cell-trigger[data-open] {
+  opacity: 1;
+}
+
+.handsontable .spreadsheet-comment-cell {
+  min-height: 22px;
+}
