@@ -23,6 +23,7 @@ import type {
   PlainLsonList,
   PlainLsonMap,
   PlainLsonObject,
+  PlainLsonText,
   RootStorageNode,
   SerializedList,
   StorageNode,
@@ -44,7 +45,7 @@ function generateId(state: { clock: number }) {
 
 function isSpecialPlainLsonValue(
   value: PlainLson
-): value is PlainLsonObject | PlainLsonMap | PlainLsonList {
+): value is PlainLsonObject | PlainLsonMap | PlainLsonList | PlainLsonText {
   return isJsonObject(value) && value.liveblocksType !== undefined;
 }
 
@@ -70,6 +71,19 @@ function* iterJson(
 
       case "LiveMap":
         yield* iterMap(key, data.data, parent, state);
+        return;
+
+      case "LiveText":
+        yield [
+          generateId(state),
+          {
+            type: CrdtType.TEXT,
+            data: data.data,
+            version: data.version ?? 0,
+            parentId: parent[0],
+            parentKey: key,
+          },
+        ];
         return;
 
       // istanbul ignore next
@@ -231,6 +245,12 @@ function buildNode(snapshot: IReadableSnapshot, id: string): PlainLson {
     return buildList(snapshot, id);
   } else if (node.type === CrdtType.MAP) {
     return buildMap(snapshot, id);
+  } else if (node.type === CrdtType.TEXT) {
+    return {
+      liveblocksType: "LiveText",
+      data: node.data,
+      version: node.version,
+    };
   } else {
     // TEMPORARY: `?? null` is only here to project legacy KV rooms that
     // contain data-less registers (under a LiveMap, representing `null`
@@ -308,6 +328,12 @@ function* emit(snapshot: IReadableSnapshot, id: string): StringGen {
     // TEMPORARY: see buildNode — remove `?? null` once all rooms are
     // migrated to SQLite.
     yield JSON.stringify(node.data ?? null);
+  } else if (node.type === CrdtType.TEXT) {
+    yield JSON.stringify({
+      liveblocksType: "LiveText",
+      data: node.data,
+      version: node.version,
+    });
   }
 }
 

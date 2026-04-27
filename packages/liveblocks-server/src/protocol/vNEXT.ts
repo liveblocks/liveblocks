@@ -42,6 +42,7 @@ export type {
   CreateObjectOp,
   CreateOp,
   CreateRegisterOp,
+  CreateTextOp,
   DeleteCrdtOp,
   DeleteObjectKeyOp,
   HasOpId,
@@ -50,4 +51,5 @@ export type {
   ServerWireOp,
   SetParentKeyOp,
   UpdateObjectOp,
+  UpdateTextOp,
 } from "@liveblocks/core";

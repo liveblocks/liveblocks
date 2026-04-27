@@ -41,6 +41,7 @@
  */
 
 import type { Json } from "../lib/Json";
+import type { LiveTextDelta } from "../protocol/Op";
 
 export type PlainLsonFields = Record<string, PlainLson>;
 
@@ -59,10 +60,17 @@ export type PlainLsonList = {
   data: PlainLson[];
 };
 
+export type PlainLsonText = {
+  liveblocksType: "LiveText";
+  data: LiveTextDelta;
+  version?: number;
+};
+
 export type PlainLson =
   | PlainLsonObject
   | PlainLsonMap
   | PlainLsonList
+  | PlainLsonText
 
   // Any "normal" Json value, as long as it's not an object with
   // a `liveblocksType` field :)

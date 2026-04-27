@@ -11,6 +11,7 @@ import {
   isMapStorageNode,
   isObjectStorageNode,
   isRegisterStorageNode,
+  isTextStorageNode,
 } from "../protocol/StorageNode";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
 import type { ManagedPool } from "./AbstractCrdt";
@@ -18,6 +19,7 @@ import { LiveList, type LiveListUpdates } from "./LiveList";
 import { LiveMap, type LiveMapUpdates } from "./LiveMap";
 import { LiveObject, type LiveObjectUpdates } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
+import { LiveText, type LiveTextUpdates } from "./LiveText";
 import type { LiveNode, LiveStructure, Lson, LsonObject } from "./Lson";
 import type { StorageUpdate } from "./StorageUpdates";
 
@@ -35,6 +37,8 @@ export function creationOpToLson(op: CreateOp): Lson {
       return new LiveMap();
     case OpCode.CREATE_LIST:
       return new LiveList([]);
+    case OpCode.CREATE_TEXT:
+      return new LiveText(op.data, op.version);
     default:
       return assertNever(op, "Unknown creation Op");
   }
@@ -63,6 +67,8 @@ export function deserialize(
     return LiveMap._deserialize(node, parentToChildren, pool);
   } else if (isRegisterStorageNode(node)) {
     return LiveRegister._deserialize(node, parentToChildren, pool);
+  } else if (isTextStorageNode(node)) {
+    return LiveText._deserialize(node, parentToChildren, pool);
   } else {
     throw new Error("Unexpected CRDT type");
   }
@@ -81,13 +87,20 @@ export function deserializeToLson(
     return LiveMap._deserialize(node, parentToChildren, pool);
   } else if (isRegisterStorageNode(node)) {
     return node[1].data;
+  } else if (isTextStorageNode(node)) {
+    return LiveText._deserialize(node, parentToChildren, pool);
   } else {
     throw new Error("Unexpected CRDT type");
   }
 }
 
 export function isLiveStructure(value: unknown): value is LiveStructure {
-  return isLiveList(value) || isLiveMap(value) || isLiveObject(value);
+  return (
+    isLiveList(value) ||
+    isLiveMap(value) ||
+    isLiveObject(value) ||
+    isLiveText(value)
+  );
 }
 
 export function isLiveNode(value: unknown): value is LiveNode {
@@ -104,6 +117,10 @@ export function isLiveMap(value: unknown): value is LiveMap<string, Lson> {
 
 export function isLiveObject(value: unknown): value is LiveObject<LsonObject> {
   return value instanceof LiveObject;
+}
+
+export function isLiveText(value: unknown): value is LiveText {
+  return value instanceof LiveText;
 }
 
 export function isLiveRegister(value: unknown): value is LiveRegister<Json> {
@@ -124,7 +141,8 @@ export function liveNodeToLson(obj: LiveNode): Lson {
   } else if (
     obj instanceof LiveList ||
     obj instanceof LiveMap ||
-    obj instanceof LiveObject
+    obj instanceof LiveObject ||
+    obj instanceof LiveText
   ) {
     return obj;
   } else {
@@ -136,7 +154,8 @@ export function lsonToLiveNode(value: Lson): LiveNode {
   if (
     value instanceof LiveObject ||
     value instanceof LiveMap ||
-    value instanceof LiveList
+    value instanceof LiveList ||
+    value instanceof LiveText
   ) {
     return value;
   } else {
@@ -195,6 +214,52 @@ export function getTreesDiffOperations(
           });
         }
       }
+      if (crdt.type === CrdtType.TEXT) {
+        if (
+          currentCrdt.type !== CrdtType.TEXT ||
+          stringify(crdt.data) !== stringify(currentCrdt.data) ||
+          crdt.version !== currentCrdt.version
+        ) {
+          ops.push({
+            type: OpCode.UPDATE_TEXT,
+            id,
+            baseVersion:
+              currentCrdt.type === CrdtType.TEXT ? currentCrdt.version : 0,
+            version: crdt.version,
+            ops: [
+              {
+                type: "delete",
+                index: 0,
+                length:
+                  currentCrdt.type === CrdtType.TEXT
+                    ? currentCrdt.data.reduce(
+                        (sum, item) => sum + item.insert.length,
+                        0
+                      )
+                    : 0,
+              },
+              ...crdt.data.map((item, index, items) =>
+                item.attributes === undefined
+                  ? {
+                      type: "insert" as const,
+                      index: items
+                        .slice(0, index)
+                        .reduce((sum, item) => sum + item.insert.length, 0),
+                      text: item.insert,
+                    }
+                  : {
+                      type: "insert" as const,
+                      index: items
+                        .slice(0, index)
+                        .reduce((sum, item) => sum + item.insert.length, 0),
+                      text: item.insert,
+                      attributes: item.attributes,
+                    }
+              ),
+            ],
+          });
+        }
+      }
       if (crdt.parentKey !== currentCrdt.parentKey) {
         ops.push({
           type: OpCode.SET_PARENT_KEY,
@@ -244,6 +309,16 @@ export function getTreesDiffOperations(
             parentKey: crdt.parentKey,
           });
           break;
+        case CrdtType.TEXT:
+          ops.push({
+            type: OpCode.CREATE_TEXT,
+            id,
+            parentId: crdt.parentId,
+            parentKey: crdt.parentKey,
+            data: crdt.data,
+            version: crdt.version,
+          });
+          break;
       }
     }
   });
@@ -290,6 +365,16 @@ function mergeListStorageUpdates<T extends Lson>(
   };
 }
 
+function mergeTextStorageUpdates(
+  first: LiveTextUpdates,
+  second: LiveTextUpdates
+): LiveTextUpdates {
+  return {
+    ...second,
+    updates: first.updates.concat(second.updates),
+  };
+}
+
 export function mergeStorageUpdates(
   first: StorageUpdate | undefined,
   second: StorageUpdate
@@ -304,6 +389,8 @@ export function mergeStorageUpdates(
     return mergeMapStorageUpdates(first, second);
   } else if (first.type === "LiveList" && second.type === "LiveList") {
     return mergeListStorageUpdates(first, second);
+  } else if (first.type === "LiveText" && second.type === "LiveText") {
+    return mergeTextStorageUpdates(first, second);
   } else {
     /* Mismatching merge types. Throw an error here? */
   }

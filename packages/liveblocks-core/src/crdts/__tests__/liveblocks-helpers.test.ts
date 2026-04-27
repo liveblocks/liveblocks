@@ -14,6 +14,7 @@ import { getTreesDiffOperations } from "../liveblocks-helpers";
 import { LiveList } from "../LiveList";
 import { LiveMap } from "../LiveMap";
 import { LiveObject } from "../LiveObject";
+import { LiveText } from "../LiveText";
 import { toPlainLson } from "../utils";
 
 test("Common first positions", () => {
@@ -248,6 +249,59 @@ describe("getTreesDiffOperations", () => {
       },
     ]);
   });
+
+  test("liveText create and update", () => {
+    const currentItems: NodeMap = new Map([
+      ["root", { type: CrdtType.OBJECT, data: {} }],
+    ]);
+
+    const newItems: NodeMap = new Map([
+      ["root", { type: CrdtType.OBJECT, data: {} }],
+      [
+        "0:1",
+        {
+          type: CrdtType.TEXT,
+          parentId: "root",
+          parentKey: "text",
+          data: [{ insert: "Hello" }],
+          version: 0,
+        },
+      ],
+    ]);
+
+    expect(getTreesDiffOperations(currentItems, newItems)).toEqual([
+      {
+        type: OpCode.CREATE_TEXT,
+        id: "0:1",
+        parentId: "root",
+        parentKey: "text",
+        data: [{ insert: "Hello" }],
+        version: 0,
+      },
+    ]);
+
+    const updatedItems: NodeMap = new Map(newItems);
+    updatedItems.set("0:1", {
+      type: CrdtType.TEXT,
+      parentId: "root",
+      parentKey: "text",
+      data: [{ insert: "Hello!" }],
+      version: 1,
+    });
+
+    expect(getTreesDiffOperations(newItems, updatedItems)).toEqual([
+      {
+        type: OpCode.UPDATE_TEXT,
+        id: "0:1",
+        baseVersion: 0,
+        version: 1,
+        ops: [
+          { type: "delete", index: 0, length: 5 },
+          { type: "insert", index: 0, text: "Hello!" },
+        ],
+      },
+    ]);
+  });
 });
 
 describe("toPlainLson", () => {
@@ -266,6 +320,7 @@ describe("toPlainLson", () => {
         ["broccoli", "delicious"],
         ["spinach", "also tasty"],
       ]),
+        text: new LiveText("Hello"),
     });
 
     // What the Plain Lson should look like if the util works
@@ -279,6 +334,11 @@ describe("toPlainLson", () => {
         vegetables: {
           liveblocksType: "LiveMap",
           data: { broccoli: "delicious", spinach: "also tasty" },
+        },
+        text: {
+          liveblocksType: "LiveText",
+          data: [{ insert: "Hello" }],
+          version: 0,
         },
       },
     };

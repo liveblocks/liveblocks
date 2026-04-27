@@ -2082,7 +2082,8 @@ export function createRoom<
         if (
           op.type === OpCode.CREATE_LIST ||
           op.type === OpCode.CREATE_MAP ||
-          op.type === OpCode.CREATE_OBJECT
+          op.type === OpCode.CREATE_OBJECT ||
+          op.type === OpCode.CREATE_TEXT
         ) {
           createdNodeIds.add(op.id);
         }
@@ -2107,6 +2108,7 @@ export function createRoom<
     switch (op.type) {
       case OpCode.DELETE_OBJECT_KEY:
       case OpCode.UPDATE_OBJECT:
+      case OpCode.UPDATE_TEXT:
       case OpCode.DELETE_CRDT: {
         const node = context.pool.nodes.get(op.id);
         if (node === undefined) {
@@ -2134,6 +2136,7 @@ export function createRoom<
       case OpCode.CREATE_OBJECT:
       case OpCode.CREATE_LIST:
       case OpCode.CREATE_MAP:
+      case OpCode.CREATE_TEXT:
       case OpCode.CREATE_REGISTER: {
         if (op.parentId === undefined) {
           return { modified: false };

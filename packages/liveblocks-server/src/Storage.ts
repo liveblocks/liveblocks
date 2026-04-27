@@ -17,8 +17,11 @@
 
 import type {
   Awaitable,
+  Json,
+  LiveTextDelta,
   SerializedChild,
   SerializedCrdt,
+  TextOperation,
 } from "@liveblocks/core";
 import {
   asPos,
@@ -38,6 +41,7 @@ import type {
   FixOp,
   HasOpId,
   SetParentKeyOp,
+  UpdateTextOp,
   UpdateObjectOp,
 } from "~/protocol";
 import type { Pos } from "~/types";
@@ -95,10 +99,155 @@ function nodeFromCreateChildOp(op: CreateOp): SerializedChild {
         data: op.data,
       };
 
+    case OpCode.CREATE_TEXT:
+      return {
+        type: CrdtType.TEXT,
+        parentId: op.parentId,
+        parentKey: op.parentKey,
+        data: op.data,
+        version: op.version,
+      };
+
     // istanbul ignore next
     default:
       return assertNever(op, "Unknown op code");
   }
+}
+
+function applyTextOps(delta: LiveTextDelta, ops: readonly TextOperation[]) {
+  let segments = delta.map((item) => ({
+    text: item.insert,
+    attributes: item.attributes,
+  }));
+
+  for (const op of ops) {
+    if (op.type === "insert") {
+      const index = Math.max(0, Math.min(op.index, textLength(segments)));
+      segments = splitSegmentsAt(segments, index);
+      let offset = 0;
+      const result = [];
+      let inserted = false;
+      for (const segment of segments) {
+        if (!inserted && offset === index) {
+          result.push({ text: op.text, attributes: op.attributes });
+          inserted = true;
+        }
+        result.push(segment);
+        offset += segment.text.length;
+      }
+      if (!inserted) {
+        result.push({ text: op.text, attributes: op.attributes });
+      }
+      segments = normalizeTextSegments(result);
+    } else if (op.type === "delete") {
+      const index = Math.max(0, Math.min(op.index, textLength(segments)));
+      const end = Math.max(
+        index,
+        Math.min(index + op.length, textLength(segments))
+      );
+      segments = splitSegmentsAt(splitSegmentsAt(segments, index), end).filter(
+        (_segment, segmentIndex, split) => {
+          const offset = split
+            .slice(0, segmentIndex)
+            .reduce((sum, segment) => sum + segment.text.length, 0);
+          return offset < index || offset >= end;
+        }
+      );
+      segments = normalizeTextSegments(segments);
+    } else {
+      const index = Math.max(0, Math.min(op.index, textLength(segments)));
+      const end = Math.max(
+        index,
+        Math.min(index + op.length, textLength(segments))
+      );
+      let offset = 0;
+      segments = splitSegmentsAt(splitSegmentsAt(segments, index), end).map(
+        (segment) => {
+          const nextOffset = offset + segment.text.length;
+          const isInside = offset >= index && nextOffset <= end;
+          offset = nextOffset;
+          if (!isInside) {
+            return segment;
+          }
+
+          const attributes = { ...(segment.attributes ?? {}) };
+          for (const [key, value] of Object.entries(op.attributes)) {
+            if (value === null) {
+              delete attributes[key];
+            } else {
+              attributes[key] = value;
+            }
+          }
+          return {
+            text: segment.text,
+            attributes:
+              Object.keys(attributes).length === 0 ? undefined : attributes,
+          };
+        }
+      );
+      segments = normalizeTextSegments(segments);
+    }
+  }
+
+  return segments.map((segment) =>
+    segment.attributes === undefined
+      ? { insert: segment.text }
+      : { insert: segment.text, attributes: segment.attributes }
+  );
+}
+
+type TextSegment = {
+  text: string;
+  attributes?: Record<string, Json>;
+};
+
+function textLength(segments: readonly TextSegment[]): number {
+  return segments.reduce((sum, segment) => sum + segment.text.length, 0);
+}
+
+function normalizeTextSegments(segments: readonly TextSegment[]): TextSegment[] {
+  const normalized: TextSegment[] = [];
+  for (const segment of segments) {
+    if (segment.text.length === 0) {
+      continue;
+    }
+    const last = normalized.at(-1);
+    if (
+      last !== undefined &&
+      JSON.stringify(last.attributes ?? {}) ===
+        JSON.stringify(segment.attributes ?? {})
+    ) {
+      last.text += segment.text;
+    } else {
+      normalized.push(segment);
+    }
+  }
+  return normalized;
+}
+
+function splitSegmentsAt(
+  segments: readonly TextSegment[],
+  index: number
+): TextSegment[] {
+  const result: TextSegment[] = [];
+  let offset = 0;
+  for (const segment of segments) {
+    const end = offset + segment.text.length;
+    if (index > offset && index < end) {
+      result.push({
+        text: segment.text.slice(0, index - offset),
+        attributes: segment.attributes,
+      });
+      result.push({
+        text: segment.text.slice(index - offset),
+        attributes: segment.attributes,
+      });
+    } else {
+      result.push(segment);
+    }
+    offset = end;
+  }
+  return result;
 }
 
 export class Storage {
@@ -165,10 +314,14 @@ export class Storage {
       case OpCode.CREATE_MAP:
       case OpCode.CREATE_REGISTER:
       case OpCode.CREATE_OBJECT:
+      case OpCode.CREATE_TEXT:
         return await this.applyCreateOp(op);
 
       case OpCode.UPDATE_OBJECT:
         return await this.applyUpdateObjectOp(op);
+
+      case OpCode.UPDATE_TEXT:
+        return await this.applyUpdateTextOp(op);
 
       case OpCode.SET_PARENT_KEY:
         return await this.applySetParentKeyOp(op);
@@ -226,7 +379,8 @@ export class Storage {
         return this.createChildAsListItem(op, node);
 
       case CrdtType.REGISTER:
-        // It's illegal for registers to have children
+      case CrdtType.TEXT:
+        // It's illegal for registers and text nodes to have children
         return ignore(op);
 
       // istanbul ignore next
@@ -322,6 +476,29 @@ export class Storage {
   ): Promise<ApplyOpResult> {
     await this.loadedDriver.set_object_data(op.id, op.data, true);
     return accept(op);
+  }
+
+  private async applyUpdateTextOp(
+    op: UpdateTextOp & HasOpId
+  ): Promise<ApplyOpResult> {
+    const node = this.loadedDriver.get_node(op.id);
+    if (node?.type !== CrdtType.TEXT) {
+      return ignore(op);
+    }
+
+    const version = Math.max(node.version, op.baseVersion) + 1;
+    const data = applyTextOps(node.data, op.ops);
+    await this.loadedDriver.set_child(
+      op.id,
+      {
+        ...node,
+        data,
+        version,
+      },
+      true
+    );
+
+    return accept({ ...op, baseVersion: node.version, version });
   }
 
   private async applyDeleteCrdtOp(

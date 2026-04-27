@@ -1,6 +1,7 @@
 import type { Json, LiveMap, Lson, LsonObject, StorageUpdate } from "..";
 import type { LiveListUpdates } from "../crdts/LiveList";
 import type { LiveObjectUpdateDelta } from "../crdts/LiveObject";
+import type { LiveTextUpdates } from "../crdts/LiveText";
 import type { ToJson } from "../crdts/Lson";
 import type { UpdateDelta } from "../crdts/UpdateDelta";
 import { lsonToJson } from "../immutable";
@@ -9,7 +10,8 @@ import { assertNever } from "../lib/assert";
 export type JsonStorageUpdate =
   | JsonLiveListUpdate<Lson>
   | JsonLiveObjectUpdate<LsonObject>
-  | JsonLiveMapUpdate<string, Lson>;
+  | JsonLiveMapUpdate<string, Lson>
+  | JsonLiveTextUpdate;
 
 export type JsonLiveListUpdate<TItem extends Lson> = {
   type: "LiveList";
@@ -50,6 +52,13 @@ export type JsonLiveMapUpdate<TKey extends string, TValue extends Lson> = {
   type: "LiveMap";
   node: ToJson<LiveMap<TKey, TValue>>;
   updates: { [key: string]: UpdateDelta };
+};
+
+export type JsonLiveTextUpdate = {
+  type: "LiveText";
+  node: ReturnType<LiveTextUpdates["node"]["toJSON"]>;
+  version: number;
+  updates: LiveTextUpdates["updates"];
 };
 
 export function liveListUpdateToJson<TItem extends Lson>(
@@ -113,6 +122,15 @@ export function serializeUpdateToJson(
     return {
       type: update.type,
       node: update.node.toJSON(),
+      updates: update.updates,
+    };
+  }
+
+  if (update.type === "LiveText") {
+    return {
+      type: update.type,
+      node: update.node.toJSON(),
+      version: update.version,
       updates: update.updates,
     };
   }

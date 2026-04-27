@@ -80,6 +80,15 @@ export { cloneLson, isLiveNode } from "./crdts/liveblocks-helpers";
 export { LiveList } from "./crdts/LiveList";
 export { LiveMap } from "./crdts/LiveMap";
 export { LiveObject } from "./crdts/LiveObject";
+export { LiveText } from "./crdts/LiveText";
+export type {
+  LiveTextAttributes,
+  LiveTextAttributesPatch,
+  LiveTextChange,
+  LiveTextDelta,
+  LiveTextOperation,
+  LiveTextUpdates,
+} from "./crdts/LiveText";
 export type {
   LiveNode,
   LiveStructure,
@@ -91,6 +100,7 @@ export type {
   LiveListUpdate,
   LiveMapUpdate,
   LiveObjectUpdate,
+  LiveTextUpdate,
   StorageUpdate,
 } from "./crdts/StorageUpdates";
 export { toPlainLson } from "./crdts/utils";
@@ -286,14 +296,18 @@ export type {
   CreateObjectOp,
   CreateOp,
   CreateRegisterOp,
+  CreateTextOp,
   DeleteCrdtOp,
   DeleteObjectKeyOp,
   HasOpId,
   IgnoredOp,
+  TextAttributes,
+  TextOperation,
   Op,
   ServerWireOp,
   SetParentKeyOp,
   UpdateObjectOp,
+  UpdateTextOp,
 } from "./protocol/Op";
 export { OpCode } from "./protocol/Op";
 export type {
@@ -334,6 +348,7 @@ export type {
   CompactObjectNode,
   CompactRegisterNode,
   CompactRootNode,
+  CompactTextNode,
   ListStorageNode,
   MapStorageNode,
   NodeMap,
@@ -348,7 +363,9 @@ export type {
   SerializedObject,
   SerializedRegister,
   SerializedRootObject,
+  SerializedText,
   StorageNode,
+  TextStorageNode,
 } from "./protocol/StorageNode";
 export {
   compactNodesToNodeStream,
@@ -358,6 +375,7 @@ export {
   isObjectStorageNode,
   isRegisterStorageNode,
   isRootStorageNode,
+  isTextStorageNode,
   nodeStreamToCompactNodes,
 } from "./protocol/StorageNode";
 export type {
@@ -430,6 +448,7 @@ export type {
   PlainLsonList,
   PlainLsonMap,
   PlainLsonObject,
+  PlainLsonText,
 } from "./types/PlainLson";
 export type { User } from "./types/User";
 export { detectDupes };

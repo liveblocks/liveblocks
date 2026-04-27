@@ -83,7 +83,7 @@ function buildReverseLookup(nodes: NodeMap) {
       }
     }
 
-    if (node.type !== CrdtType.REGISTER) {
+    if (node.type !== CrdtType.REGISTER && node.type !== CrdtType.TEXT) {
       queue.push(...revNodes.valuesAt(nodeId));
     } else {
       const parent = nodes.get(node.parentId);

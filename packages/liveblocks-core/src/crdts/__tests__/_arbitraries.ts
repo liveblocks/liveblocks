@@ -4,6 +4,7 @@ import type { Json, JsonObject } from "../../lib/Json";
 import { LiveList } from "../LiveList";
 import { LiveMap } from "../LiveMap";
 import { LiveObject } from "../LiveObject";
+import { LiveText } from "../LiveText";
 import type { LiveStructure, Lson } from "../Lson";
 
 export const key = fc.string().filter((s) => s !== "__proto__");
@@ -31,6 +32,7 @@ function makeLsonArbitraries(options?: LsonArbitraryOptions) {
         ...[
           tie("liveList"),
           tie("liveObject"),
+          tie("liveText"),
           ...(withLiveMap ? [tie("liveMap")] : []),
         ]
       )
@@ -39,6 +41,7 @@ function makeLsonArbitraries(options?: LsonArbitraryOptions) {
     liveMap: fc
       .array(fc.tuple(key, tie("lson")))
       .map((pairs) => new LiveMap(pairs as [string, Lson][])),
+    liveText: fc.string().map((text) => new LiveText(text)),
     liveObject: fc
       .array(fc.tuple(key, tie("lson")))
       .map(

@@ -1,10 +1,11 @@
 import type {
   Lson,
   LsonObject,
+  LiveTextDelta,
   ReadonlyJsonObject,
   ToJson,
 } from "@liveblocks/core";
-import { LiveList, LiveMap, LiveObject } from "@liveblocks/core";
+import { LiveList, LiveMap, LiveObject, LiveText } from "@liveblocks/core";
 import { describe, expectTypeOf, test } from "vitest";
 
 declare const str: string;
@@ -150,6 +151,13 @@ describe("ToJson", () => {
     ).toEqualTypeOf<{
       readonly [key: string]: readonly number[];
     }>();
+  });
+
+  // ---------------------------------------------------------------------------
+  // LiveText
+  // ---------------------------------------------------------------------------
+  test("LiveText", () => {
+    expectTypeOf(toJson(new LiveText("hello"))).toEqualTypeOf<LiveTextDelta>();
   });
 
   // ---------------------------------------------------------------------------

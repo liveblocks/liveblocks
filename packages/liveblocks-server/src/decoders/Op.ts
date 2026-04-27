@@ -17,7 +17,15 @@
 
 import { OpCode } from "@liveblocks/core";
 import type { Decoder } from "decoders";
-import { constant, object, optional, string, taggedUnion } from "decoders";
+import {
+  array,
+  constant,
+  number,
+  object,
+  optional,
+  string,
+  taggedUnion,
+} from "decoders";
 
 import type {
   ClientWireOp,
@@ -25,10 +33,12 @@ import type {
   CreateMapOp,
   CreateObjectOp,
   CreateRegisterOp,
+  CreateTextOp,
   DeleteCrdtOp,
   DeleteObjectKeyOp,
   SetParentKeyOp,
   UpdateObjectOp,
+  UpdateTextOp,
 } from "~/protocol";
 
 import { jsonObjectYolo, jsonYolo } from "./jsonYolo";
@@ -84,6 +94,55 @@ const createRegisterOp: Decoder<CreateRegisterOp & HasOpId> = object({
   deletedId: optional(string),
 });
 
+const textDelta = array(
+  object({
+    insert: string,
+    attributes: optional(jsonObjectYolo),
+  })
+);
+
+const textOperation = taggedUnion("type", {
+  insert: object({
+    type: constant("insert"),
+    index: number,
+    text: string,
+    attributes: optional(jsonObjectYolo),
+  }),
+  delete: object({
+    type: constant("delete"),
+    index: number,
+    length: number,
+  }),
+  format: object({
+    type: constant("format"),
+    index: number,
+    length: number,
+    attributes: jsonObjectYolo,
+  }),
+});
+
+const createTextOp: Decoder<CreateTextOp & HasOpId> = object({
+  type: constant(OpCode.CREATE_TEXT),
+  opId: string,
+  id: string,
+  parentId: string,
+  parentKey: string,
+  data: textDelta,
+  version: number,
+  intent: optional(constant("set")),
+  deletedId: optional(string),
+});
+
+const updateTextOp: Decoder<UpdateTextOp & HasOpId> = object({
+  type: constant(OpCode.UPDATE_TEXT),
+  opId: string,
+  id: string,
+  baseVersion: number,
+  version: optional(number),
+  ops: array(textOperation),
+  metadata: optional(jsonObjectYolo),
+});
+
 const deleteCrdtOp: Decoder<DeleteCrdtOp & HasOpId> = object({
   type: constant(OpCode.DELETE_CRDT),
   opId: string,
@@ -110,6 +169,8 @@ export const op: Decoder<ClientWireOp> = taggedUnion("type", {
   [OpCode.CREATE_LIST]: createListOp,
   [OpCode.CREATE_MAP]: createMapOp,
   [OpCode.CREATE_REGISTER]: createRegisterOp,
+  [OpCode.CREATE_TEXT]: createTextOp,
+  [OpCode.UPDATE_TEXT]: updateTextOp,
   [OpCode.DELETE_CRDT]: deleteCrdtOp,
   [OpCode.SET_PARENT_KEY]: setParentKeyOp,
   [OpCode.DELETE_OBJECT_KEY]: deleteObjectKeyOp,

@@ -12,6 +12,8 @@ export const OpCode = Object.freeze({
   DELETE_OBJECT_KEY: 6,
   CREATE_MAP: 7,
   CREATE_REGISTER: 8,
+  CREATE_TEXT: 9,
+  UPDATE_TEXT: 10,
 });
 
 export namespace OpCode {
@@ -24,7 +26,35 @@ export namespace OpCode {
   export type DELETE_OBJECT_KEY = typeof OpCode.DELETE_OBJECT_KEY;
   export type CREATE_MAP = typeof OpCode.CREATE_MAP;
   export type CREATE_REGISTER = typeof OpCode.CREATE_REGISTER;
+  export type CREATE_TEXT = typeof OpCode.CREATE_TEXT;
+  export type UPDATE_TEXT = typeof OpCode.UPDATE_TEXT;
 }
+
+export type TextAttributes = Record<string, Json>;
+
+export type LiveTextDelta = {
+  insert: string;
+  attributes?: TextAttributes;
+}[];
+
+export type TextOperation =
+  | {
+      type: "insert";
+      index: number;
+      text: string;
+      attributes?: TextAttributes;
+    }
+  | {
+      type: "delete";
+      index: number;
+      length: number;
+    }
+  | {
+      type: "format";
+      index: number;
+      length: number;
+      attributes: Record<string, Json | null>;
+    };
 
 /**
  * These operations are the payload for {@link UpdateStorageServerMsg} messages
@@ -33,6 +63,7 @@ export namespace OpCode {
 export type Op =
   | CreateOp
   | UpdateObjectOp
+  | UpdateTextOp
   | DeleteCrdtOp
   | SetParentKeyOp // Only for lists!
   | DeleteObjectKeyOp;
@@ -41,7 +72,8 @@ export type CreateOp =
   | CreateObjectOp
   | CreateRegisterOp
   | CreateMapOp
-  | CreateListOp;
+  | CreateListOp
+  | CreateTextOp;
 
 export type UpdateObjectOp = {
   readonly opId?: string;
@@ -90,6 +122,28 @@ export type CreateRegisterOp = {
   readonly parentId: string;
   readonly parentKey: string;
   readonly data: Json;
+};
+
+export type CreateTextOp = {
+  readonly opId?: string;
+  readonly id: string;
+  readonly intent?: "set";
+  readonly deletedId?: string;
+  readonly type: OpCode.CREATE_TEXT;
+  readonly parentId: string;
+  readonly parentKey: string;
+  readonly data: LiveTextDelta;
+  readonly version: number;
+};
+
+export type UpdateTextOp = {
+  readonly opId?: string;
+  readonly id: string;
+  readonly type: OpCode.UPDATE_TEXT;
+  readonly baseVersion: number;
+  readonly version?: number;
+  readonly ops: TextOperation[];
+  readonly metadata?: JsonObject;
 };
 
 export type DeleteCrdtOp = {
