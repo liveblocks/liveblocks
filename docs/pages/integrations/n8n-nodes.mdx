@@ -1,17 +1,15 @@
 ---
 meta:
-  title: "n8n nodes"
+  title: "n8n + Liveblocks"
   parentTitle: "Integrations"
   description:
-    "Use Liveblocks n8n nodes to connect Liveblocks to your n8n workflow."
+    "Use n8n with Liveblocks to call REST API operations and start workflows
+    from webhook events."
 ---
 
-n8n is a workflow automation platform that allows you to build agents visually,
-and you can install a set of Liveblocks nodes which you can use directly in your
-workflow. Each Liveblocks
-[REST API endpoint](/docs/api-reference/rest-api-endpoints) has a corresponding
-n8n node, allowing you to create rooms, add messages to feeds, update
-multiplayer state, and more.
+n8n is a workflow automation platform. Use n8n with Liveblocks to call the
+[REST API](/docs/api-reference/rest-api-endpoints) from a workflow, or start a
+workflow when Liveblocks sends a [webhook](/docs/platform/webhooks).
 
 <PromptCta />
 
@@ -39,16 +37,31 @@ _Liveblocks_ and _Liveblocks Trigger_ will now appear in the node palette.
   </video>
 </Figure>
 
+## Start with a webhook trigger
+
+The most common workflow starts when something happens in Liveblocks, for
+example when a comment is created.
+
+1. Add **Liveblocks Trigger** to your n8n workflow.
+2. Add your **Liveblocks Webhook Signing Secret API** credential.
+3. Copy the trigger's webhook URL.
+4. In the [Liveblocks dashboard](/dashboard), create a webhook endpoint with
+   that URL.
+5. Subscribe to [`commentCreated`](/docs/platform/webhooks#CommentCreatedEvent),
+   then run the n8n workflow.
+
+When a user creates a comment, Liveblocks sends a webhook to n8n and the
+workflow starts. Add more n8n nodes after the trigger to send messages, create
+tickets, update databases, or call another Liveblocks operation.
+
 ## Operations
 
 The package provides two nodes.
 
 ### Liveblocks (action node)
 
-Calls the
-[Liveblocks REST API](https://liveblocks.io/docs/api-reference/rest-api-endpoints).
-Choose a **resource**, then an **operation**. Operations map to the API (rooms,
-storage, Yjs, comments, inbox, webhooks-related server flows, etc.).
+Calls the [Liveblocks REST API](/docs/api-reference/rest-api-endpoints). Choose
+a **resource**, then an **operation**. Operations map to the API.
 
 | Resource         | What you can do (examples)                                                                                                                                              |
 | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -67,29 +80,34 @@ storage, Yjs, comments, inbox, webhooks-related server flows, etc.).
 The node builds requests from the fields you configure in the UI; some endpoints
 accept raw JSON for advanced bodies (for example JSON Patch or broadcast
 payloads). Refer to the
-[Liveblocks REST API reference](https://liveblocks.io/docs/api-reference/rest-api-endpoints)
-for request and response shapes.
+[REST API reference](/docs/api-reference/rest-api-endpoints) for request and
+response shapes.
 
 ### Liveblocks Trigger (webhook)
 
-Starts a workflow when Liveblocks sends a **webhook** to n8n. Configure the
-webhook URL from the trigger in your
-[Liveblocks dashboard](https://liveblocks.io/dashboard) webhook settings. You
-can filter by **event type** or leave the filter empty to receive all supported
-types.
+Starts a workflow when Liveblocks sends a [webhook](/docs/platform/webhooks) to
+n8n. Configure the webhook URL from the trigger in your
+[Liveblocks dashboard](/dashboard) webhook settings. You can filter by **event
+type** or leave the filter empty to receive all supported types.
 
-Supported event filters include: `commentCreated`, `commentDeleted`,
-`commentEdited`, `notification`, `storageUpdated`, `threadCreated`,
-`threadDeleted`, `threadMetadataUpdated`, `userEntered`, `userLeft`,
-`yjsUpdate`. The trigger verifies the request using your **webhook signing
-secret** before running the workflow.
+Supported event filters include
+[`commentCreated`](/docs/platform/webhooks#CommentCreatedEvent),
+[`commentDeleted`](/docs/platform/webhooks#CommentDeletedEvent),
+[`commentEdited`](/docs/platform/webhooks#CommentEditedEvent), `notification`,
+[`storageUpdated`](/docs/platform/webhooks#StorageUpdatedEvent),
+[`threadCreated`](/docs/platform/webhooks#ThreadCreatedEvent),
+[`threadDeleted`](/docs/platform/webhooks#ThreadDeletedEvent),
+[`threadMetadataUpdated`](/docs/platform/webhooks#ThreadMetadataUpdatedEvent),
+[`userEntered`](/docs/platform/webhooks#UserEnteredEvent),
+[`userLeft`](/docs/platform/webhooks#UserLeftEvent), and
+[`ydocUpdated`](/docs/platform/webhooks#YDocUpdatedEvent). The trigger verifies
+the request using your **webhook signing secret** before running the workflow.
 
 ## Credentials
 
 ### Liveblocks API (required for the Liveblocks action node)
 
-1. Create or open a project in the
-   [Liveblocks dashboard](https://liveblocks.io/dashboard).
+1. Create or open a project in the [Liveblocks dashboard](/dashboard).
 2. Copy the **secret key** (`sk_…`) from project settings.
 3. In n8n, create a credential of type **Liveblocks API** and paste the secret
    key.
@@ -120,18 +138,46 @@ with your n8n version and this package version.
 
 ## Usage
 
-- **Action node**: Add **Liveblocks**, select **resource** and **operation**,
-  then fill the parameters. Map data from previous nodes into room IDs, user
-  IDs, and bodies as needed. Use **Execute step** while designing to inspect API
-  responses and errors.
-- **Trigger**: Add **Liveblocks Trigger**, set credentials, copy the **webhook
-  URL** into the Liveblocks dashboard, and choose which events to listen for.
-  Use n8n’s test URL while building, then switch to the production URL when the
-  workflow is active.
-- **Errors**: Failed API calls surface as n8n errors with HTTP status and
-  message when the API returns them. If webhooks fail verification, check that
-  the signing secret matches the project and that the request is actually from
-  Liveblocks.
+### Call a Liveblocks operation
+
+Add **Liveblocks**, select a **resource** and **operation**, then fill in the
+parameters. Map data from previous nodes into room IDs, user IDs, and request
+bodies as needed.
+
+Use **Execute step** while designing to inspect API responses and errors.
+
+### Start from a Liveblocks event
+
+Add **Liveblocks Trigger**, set credentials, copy the **webhook URL** into the
+[Liveblocks dashboard](/dashboard), and choose which events to listen for.
+
+Use n8n's test URL while building, then switch to the production URL when the
+workflow is active.
+
+## Troubleshooting
+
+### API credential fails
+
+Check that the credential uses a Liveblocks secret key that starts with `sk_`.
+Use the key from the same project whose rooms, threads, or notifications the
+workflow should access.
+
+### Trigger does not run
+
+Check that the webhook endpoint in the [Liveblocks dashboard](/dashboard) uses
+the n8n trigger URL. If you are testing, use the test URL while the workflow is
+listening. For active workflows, use the production URL.
+
+### Webhook verification fails
+
+Check that the trigger credential uses the webhook signing secret that starts
+with `whsec_`. This is different from your Liveblocks API secret key.
+
+### API operation fails
+
+Failed API calls surface as n8n errors with HTTP status and message when the API
+returns them. Check the selected resource, operation, room ID, user ID, and JSON
+body against the [REST API reference](/docs/api-reference/rest-api-endpoints).
 
 New to n8n? See [Try it out](https://docs.n8n.io/try-it-out/) in the n8n docs.
 

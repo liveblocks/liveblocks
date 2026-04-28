@@ -2,11 +2,16 @@
 meta:
   title: "Integrations"
   description:
-    "Connect Liveblocks with developer tools, AI builders, workflow automation,
-    editor tools, and agent tools."
+    "Connect Liveblocks with databases, AI tools, workflow automation, developer
+    tools, and app builders."
 ---
 
-## AI
+Connect Liveblocks with the tools you already use to build collaborative apps.
+Use these integrations to add realtime collaboration to generated apps, automate
+workflows, mirror collaborative data into databases, and give AI tools the right
+Liveblocks context.
+
+## AI tools
 
 <ListGrid columns={2}>
   <DocsCard
@@ -21,6 +26,16 @@ meta:
   />
 </ListGrid>
 
+## Databases
+
+<ListGrid columns={2}>
+  <DocsCard
+    title="Supabase"
+    href="/docs/integrations/supabase"
+    description="Mirror Liveblocks Storage, Yjs, Comments, and Threads data into Supabase Postgres."
+  />
+</ListGrid>
+
 ## Workflow automation
 
 <ListGrid columns={2}>
@@ -30,3 +45,32 @@ meta:
     description="Use Liveblocks nodes to call the REST API and receive webhooks in n8n workflows."
   />
 </ListGrid>
+
+## Developer tools
+
+<ListGrid columns={2}>
+  <DocsCard
+    title="Cursor"
+    href="/docs/tools/mcp-server"
+    description="Inspect and modify Liveblocks projects from Cursor with the Liveblocks MCP server."
+  />
+  <DocsCard
+    title="DevTools"
+    href="/docs/tools/devtools"
+    description="Inspect rooms, presence, storage, users, threads, and notifications while developing."
+  />
+  <DocsCard
+    title="Dev server"
+    href="/docs/tools/dev-server"
+    description="Prototype Liveblocks features locally without setting up a production backend."
+  />
+</ListGrid>
+
+## Build your own integration
+
+Use [webhooks](/docs/platform/webhooks) and the
+[REST API](/docs/api-reference/rest-api-endpoints) to connect Liveblocks to
+other databases, automation tools, app builders, or internal systems.
+
+If you'd like to see an integration that is not currently available,
+[let us know on Discord](https://liveblocks.io/discord).

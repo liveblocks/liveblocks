@@ -1,0 +1,264 @@
+---
+meta:
+  title: "Supabase + Liveblocks"
+  parentTitle: "Integrations"
+  description:
+    "Use Supabase with Liveblocks to mirror realtime collaboration data into
+    Postgres for reporting, search, audit logs, and application workflows."
+---
+
+Use Supabase with Liveblocks when your collaborative app needs a Postgres copy
+of Liveblocks data for reporting, search, audit logs, or app workflows.
+
+Liveblocks remains the source of truth for
+[Storage](/docs/collaboration-features/multiplayer/sync-engine/liveblocks-storage),
+[Yjs](/docs/collaboration-features/multiplayer/sync-engine/liveblocks-yjs),
+[Comments](/docs/collaboration-features/comments), and
+[Threads](/docs/collaboration-features/comments/concepts). Supabase stores the
+mirrored records you choose to write from your backend.
+
+## Recommended architecture
+
+Use [webhooks](/docs/platform/webhooks) to learn when Liveblocks data changes.
+Then fetch the latest data with the
+[REST API](/docs/api-reference/rest-api-endpoints) and write it to Supabase.
+
+```mermaid
+graph TD
+  A[User edits Storage] --> B[Liveblocks sends storageUpdated webhook] --> C[Your backend verifies the webhook] --> D[Your backend fetches the Storage document] --> E[Your backend upserts a row in Supabase]
+```
+
+| System                | Responsibility                                                               |
+| --------------------- | ---------------------------------------------------------------------------- |
+| Liveblocks            | Realtime collaboration, rooms, permissions, Storage, Yjs, Comments, Threads. |
+| Your backend endpoint | Verify webhooks, fetch Liveblocks data, and write to Supabase.               |
+| Supabase Postgres     | Store mirrored rows for queries, reports, search, or audits.                 |
+
+## Set up Storage sync
+
+The recommended starting point is mirroring each room's Storage document into a
+Supabase row. This gives you one clear path before adding Yjs or Comments data.
+
+Before starting, create or open a Liveblocks project and a Supabase project. You
+will need:
+
+- A Liveblocks webhook signing secret.
+- A Liveblocks secret key for REST API calls.
+- A Supabase project URL.
+- A server-only Supabase key that can write to your mirror table.
+
+<Steps>
+  <Step>
+    <StepTitle>Create the Supabase table</StepTitle>
+    <StepContent>
+      Create one row per Liveblocks room.
+
+      ```sql
+      create table liveblocks_documents (
+        room_id text primary key,
+        data jsonb not null,
+        updated_at timestamptz not null default now()
+      );
+      ```
+    </StepContent>
+
+  </Step>
+
+  <Step>
+    <StepTitle>Create a webhook endpoint</StepTitle>
+    <StepContent>
+      Add a backend endpoint in your app, for example
+      `/api/liveblocks-supabase-sync`.
+
+      ```ts
+      export async function POST(request: Request) {
+        const body = await request.json();
+        const headers = request.headers;
+
+        // Verify the webhook, then sync to Supabase.
+        // ...
+
+        return new Response(null, { status: 200 });
+      }
+      ```
+    </StepContent>
+
+  </Step>
+
+  <Step>
+    <StepTitle>Subscribe to Storage updates</StepTitle>
+    <StepContent>
+      In the [Liveblocks dashboard](/dashboard), create a webhook endpoint for
+      your backend URL. Subscribe to
+      [`storageUpdated`](/docs/platform/webhooks#StorageUpdatedEvent), then copy
+      the webhook signing secret.
+    </StepContent>
+
+  </Step>
+
+  <Step lastStep>
+    <StepTitle>Sync Storage to Supabase</StepTitle>
+    <StepContent>
+      Verify the webhook with
+      [`WebhookHandler`](/docs/api-reference/liveblocks-node#WebhookHandler),
+      fetch the latest Storage document with
+      [Get Storage Document](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-storage),
+      then `upsert` the Supabase row.
+
+      ```ts
+      import { WebhookHandler } from "@liveblocks/node";
+      import { createClient } from "@supabase/supabase-js";
+
+      const webhookHandler = new WebhookHandler(
+        process.env.LIVEBLOCKS_WEBHOOK_SECRET!
+      );
+
+      const supabase = createClient(
+        process.env.SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+      );
+
+      export async function POST(request: Request) {
+        const body = await request.json();
+        const headers = request.headers;
+
+        let event;
+        try {
+          event = webhookHandler.verifyRequest({
+            headers,
+            rawBody: JSON.stringify(body),
+          });
+        } catch {
+          return new Response("Could not verify webhook call", { status: 400 });
+        }
+
+        if (event.type !== "storageUpdated") {
+          return new Response(null, { status: 200 });
+        }
+
+        const { roomId } = event.data;
+
+        const response = await fetch(
+          `https://api.liveblocks.io/v2/rooms/${roomId}/storage`,
+          {
+            headers: {
+              Authorization: `Bearer ${process.env.LIVEBLOCKS_SECRET_KEY}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          return new Response("Could not fetch Storage document", {
+            status: 500,
+          });
+        }
+
+        const data = await response.json();
+
+        const { error } = await supabase.from("liveblocks_documents").upsert({
+          room_id: roomId,
+          data,
+          updated_at: new Date().toISOString(),
+        });
+
+        if (error) {
+          return new Response("Could not write to Supabase", { status: 500 });
+        }
+
+        return new Response(null, { status: 200 });
+      }
+      ```
+    </StepContent>
+
+  </Step>
+</Steps>
+
+Use `upsert` instead of `insert` because the same room can update many times.
+
+## Sync Yjs documents
+
+```mermaid
+graph TD
+  A[Yjs update] --> B[Liveblocks sends ydocUpdated webhook]
+  B --> C[Your backend verifies the webhook]
+  C --> D[Your backend fetches /rooms/{roomId}/ydoc]
+  D --> E[Your backend upserts a row in Supabase]
+```
+
+For Yjs apps, use the same pattern with the
+[`ydocUpdated`](/docs/platform/webhooks#YDocUpdatedEvent) webhook and the
+[Get Yjs Document](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-ydoc)
+REST API.
+
+For a step-by-step walkthrough, read
+[Synchronize Liveblocks Yjs document data to Supabase Postgres](/docs/guides/how-to-synchronize-your-liveblocks-yjs-document-data-to-a-supabase-postgres-database).
+
+## Sync Comments and Threads
+
+```mermaid
+graph TD
+  A[Thread or comment event] --> B[Liveblocks sends a webhook]
+  B --> C[Your backend verifies the webhook]
+  C --> D[Your backend fetches thread data if needed]
+  D --> E[Your backend upserts or deletes Supabase index rows]
+```
+
+For Comments, mirror only the fields your database workflow needs, such as
+`roomId`, `threadId`, `commentId`, resolved state, metadata, timestamps, author
+IDs, or a normalized search representation.
+
+Start with these webhook events:
+
+- [`threadCreated`](/docs/platform/webhooks#ThreadCreatedEvent)
+- [`threadDeleted`](/docs/platform/webhooks#ThreadDeletedEvent)
+- [`threadMetadataUpdated`](/docs/platform/webhooks#ThreadMetadataUpdatedEvent)
+- [`commentCreated`](/docs/platform/webhooks#CommentCreatedEvent)
+- [`commentEdited`](/docs/platform/webhooks#CommentEditedEvent)
+- [`commentDeleted`](/docs/platform/webhooks#CommentDeletedEvent)
+
+Liveblocks should remain the source of truth for Comments and Threads. Use
+Supabase as an index for reporting, search, moderation, or audits.
+
+## Limits and troubleshooting
+
+### Storage or Yjs data is stale
+
+[`storageUpdated`](/docs/platform/webhooks#StorageUpdatedEvent) and
+[`ydocUpdated`](/docs/platform/webhooks#YDocUpdatedEvent) webhooks are throttled
+because collaborative documents can change many times per second. Treat Supabase
+as an eventually consistent mirror, not as the live editing channel.
+
+### Webhook verification fails
+
+Check that `LIVEBLOCKS_WEBHOOK_SECRET` is the signing secret for the webhook
+endpoint that sent the event. Also make sure your endpoint passes the same raw
+body string to
+[`verifyRequest`](/docs/api-reference/liveblocks-node#verifyRequest) that it
+received from Liveblocks.
+
+### Supabase writes fail
+
+Keep the Supabase service role key on the server. If Row Level Security is
+enabled on the mirror table, make sure your server client has permission to
+write to it.
+
+### Duplicate writes happen
+
+Webhook deliveries can be retried. Use `upsert` with a stable primary key such
+as `room_id`, `thread_id`, or `comment_id` so repeated deliveries update the
+same row.
+
+### Liveblocks REST requests fail
+
+Check that `LIVEBLOCKS_SECRET_KEY` is a secret key from the same Liveblocks
+project as the room. If the request still fails, return a non-2xx response so
+the webhook can be retried.
+
+## Related docs
+
+- [Synchronize Liveblocks Storage document data to Supabase Postgres](/docs/guides/how-to-synchronize-your-liveblocks-storage-document-data-to-a-supabase-postgres-database).
+- [Synchronize Liveblocks Yjs document data to Supabase Postgres](/docs/guides/how-to-synchronize-your-liveblocks-yjs-document-data-to-a-supabase-postgres-database).
+- [Webhooks](/docs/platform/webhooks).
+- [REST API reference](/docs/api-reference/rest-api-endpoints).
+- [Comments](/docs/collaboration-features/comments).
+- [Multiplayer](/docs/collaboration-features/multiplayer).

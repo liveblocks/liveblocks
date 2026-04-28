@@ -8,8 +8,9 @@ meta:
 # Provider page template
 
 Use this file as the starting point for new integration provider pages. Do not
-add this file to `docs/routes.json`; copy it to `docs/pages/integrations/{slug}.mdx`
-and route that page when the provider is ready to publish.
+add this file to `docs/routes.json`; copy it to
+`docs/pages/integrations/{slug}.mdx` and route that page when the provider is
+ready to publish.
 
 ## Route entry
 
@@ -53,7 +54,9 @@ searchable, and easy to review.
 ## What it enables
 
 Explain the integration outcome in product terms. Name the Liveblocks features
-the provider unlocks or complements.
+the provider unlocks or complements, and say whether the page is a ready-to-use
+integration, an implementation pattern, a marketplace listing, or partner
+submission prep.
 
 ## When to use Liveblocks with Provider
 
@@ -66,6 +69,17 @@ Show which system owns authentication, durable data, realtime collaboration,
 workflow automation, deployment, or generated code. Use a table when the split
 is important.
 
+If the page needs a diagram, use a Mermaid code fence. Keep labels short and
+describe system boundaries, not every implementation detail.
+
+```mermaid
+graph TD
+  A[User action] --> B[Liveblocks feature]
+  B --> C[Webhook or REST API]
+  C --> D[Your app endpoint]
+  D --> E[Provider API or database]
+```
+
 ## Setup
 
 Use `Steps`, `Step`, `StepTitle`, and `StepContent` for implementation steps.
@@ -76,6 +90,12 @@ the first Liveblocks feature to add.
 
 Link to runnable examples, starter kits, partner templates, marketplace entries,
 or closest existing Liveblocks examples.
+
+## Limitations and troubleshooting
+
+Document known constraints, rate limits, eventual consistency, permissions,
+secret handling, provider-specific gotchas, and when the provider should not be
+treated as the Liveblocks source of truth.
 
 ## Partner listing notes
 

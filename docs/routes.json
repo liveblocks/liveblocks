@@ -605,7 +605,11 @@
         "path": "/integrations"
       },
       {
-        "title": "n8n nodes",
+        "title": "Supabase",
+        "path": "/integrations/supabase"
+      },
+      {
+        "title": "n8n",
         "path": "/integrations/n8n-nodes"
       }
     ]
