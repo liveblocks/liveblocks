@@ -1,4 +1,4 @@
-import type { LsonObject } from "@liveblocks/client";
+import type { LsonObject, StorageUpdate } from "@liveblocks/client";
 import { LiveObject } from "@liveblocks/client";
 import type { Content } from "@tiptap/core";
 import { Extension } from "@tiptap/core";
@@ -6,6 +6,7 @@ import { Slice } from "@tiptap/pm/model";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import type { EditorView } from "@tiptap/pm/view";
 
+import { applyRemoteLiveTextUpdates } from "./remote";
 import {
   createDefaultDocument,
   createLiveblocksTiptapNode,
@@ -14,6 +15,7 @@ import {
   type ProseMirrorJsonNode,
   stringifyDocument,
 } from "./schema";
+import { applyIncrementalOperations, classifyTransaction } from "./steps";
 import type { LiveblocksTiptapRoom } from "./types";
 
 export const LIVEBLOCKS_COLLABORATION_PLUGIN_KEY = new PluginKey<{
@@ -76,7 +78,11 @@ function getDocumentRoot(
   field: string
 ): LiveblocksTiptapNode | undefined {
   const documentRoot = root.get(field);
-  return documentRoot instanceof LiveObject ? documentRoot : undefined;
+  if (!(documentRoot instanceof LiveObject)) {
+    return undefined;
+  }
+
+  return documentRoot as LiveblocksTiptapNode;
 }
 
 function setDocumentRoot(
@@ -104,7 +110,7 @@ function createLiveblocksCollaborationPlugin(
   let isApplyingRemoteUpdate = false;
   let lastDocument = "";
 
-  const applyStorageToEditor = () => {
+  const applyStorageToEditor = (updates?: StorageUpdate[]) => {
     if (view === undefined || root === undefined) {
       return;
     }
@@ -119,6 +125,24 @@ function createLiveblocksCollaborationPlugin(
 
     if (serializedDocument === lastDocument) {
       return;
+    }
+
+    if (updates !== undefined) {
+      const result = applyRemoteLiveTextUpdates(view, documentRoot, updates);
+      if (result.type === "applied") {
+        lastDocument = serializedDocument;
+        isApplyingRemoteUpdate = true;
+        try {
+          view.dispatch(
+            result.tr
+              .setMeta(LIVEBLOCKS_COLLABORATION_PLUGIN_KEY, { isRemote: true })
+              .setMeta("addToHistory", false)
+          );
+        } finally {
+          isApplyingRemoteUpdate = false;
+        }
+        return;
+      }
     }
 
     lastDocument = serializedDocument;
@@ -144,7 +168,7 @@ function createLiveblocksCollaborationPlugin(
           : state;
       },
     },
-    appendTransaction(transactions, _oldState, newState) {
+    appendTransaction(transactions, oldState, newState) {
       if (
         root === undefined ||
         isApplyingRemoteUpdate ||
@@ -167,8 +191,21 @@ function createLiveblocksCollaborationPlugin(
       }
 
       lastDocument = serializedDocument;
+      const documentRoot = getDocumentRoot(root, options.field);
+      const classified =
+        documentRoot !== undefined
+          ? classifyTransaction(
+              transactions,
+              oldState.doc,
+              newState.doc,
+              documentRoot
+            )
+          : { type: "unsupported" as const };
+
       room.batch(() => {
-        if (root !== undefined) {
+        if (classified.type === "incremental") {
+          applyIncrementalOperations(classified.operations);
+        } else if (root !== undefined) {
           setDocumentRoot(root, options.field, document);
         }
       });
@@ -190,7 +227,6 @@ function createLiveblocksCollaborationPlugin(
             options.initialContent,
             editorView
           );
-          lastDocument = stringifyDocument(initialDocument);
           room.history.disable(() => {
             setDocumentRoot(storageRoot, options.field, initialDocument);
           });

@@ -1,11 +1,14 @@
 "use client";
 
 import {
+  FloatingComposer,
+  FloatingThreads,
   FloatingToolbar,
   useLiveblocksExtension,
 } from "@liveblocks/react-tiptap";
+import { useThreads } from "@liveblocks/react/suspense";
 import { useStorage, useSyncStatus } from "@liveblocks/react/suspense";
-import { EditorContent, useEditor } from "@tiptap/react";
+import { type Editor, EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { useState } from "react";
 
@@ -22,6 +25,7 @@ const INITIAL_CONTENT = {
 export function TiptapLiveblocksEditor({ roomId }: { roomId: string }) {
   const syncStatus = useSyncStatus();
   const document = useStorage((root) => root.document);
+  const { threads } = useThreads();
   const liveblocks = useLiveblocksExtension({
     collaborationMode: "liveblocks",
     field: "document",
@@ -53,45 +57,10 @@ export function TiptapLiveblocksEditor({ roomId }: { roomId: string }) {
   return (
     <main>
       <section className="editor-shell">
-        <div className="toolbar">
-          <button
-            data-active={editor?.isActive("bold") ?? false}
-            disabled={!editor}
-            onClick={() => editor?.chain().focus().toggleBold().run()}
-          >
-            Bold
-          </button>
-          <button
-            data-active={editor?.isActive("italic") ?? false}
-            disabled={!editor}
-            onClick={() => editor?.chain().focus().toggleItalic().run()}
-          >
-            Italic
-          </button>
-          <button
-            data-active={editor?.isActive("heading", { level: 2 }) ?? false}
-            disabled={!editor}
-            onClick={() =>
-              editor?.chain().focus().toggleHeading({ level: 2 }).run()
-            }
-          >
-            Heading
-          </button>
-          <button
-            disabled={!editor}
-            onClick={() => editor?.chain().focus().toggleBulletList().run()}
-          >
-            Bullet list
-          </button>
-          <button disabled={!editor} onClick={() => editor?.commands.undo()}>
-            Undo
-          </button>
-          <button disabled={!editor} onClick={() => editor?.commands.redo()}>
-            Redo
-          </button>
-        </div>
+
 
         <EditorContent editor={editor} />
+        <FloatingComposer editor={editor} style={{ width: 350 }} />
         <FloatingToolbar editor={editor} />
       </section>
 
@@ -109,7 +78,27 @@ export function TiptapLiveblocksEditor({ roomId }: { roomId: string }) {
 
         <h3>Storage JSON</h3>
         <pre>{JSON.stringify(document, null, 2)}</pre>
+
+        <Threads threads={threads} editor={editor} />
       </aside>
     </main>
+  );
+}
+
+function Threads({
+  editor,
+  threads,
+}: {
+  editor: Editor | null;
+  threads: ReturnType<typeof useThreads>["threads"];
+}) {
+  if (!editor) {
+    return null;
+  }
+
+  return (
+    <>
+      <FloatingThreads threads={threads} editor={editor} />
+    </>
   );
 }

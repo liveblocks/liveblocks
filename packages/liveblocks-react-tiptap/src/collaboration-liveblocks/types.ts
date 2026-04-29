@@ -1,4 +1,9 @@
-import type { JsonObject, LiveObject, LsonObject } from "@liveblocks/client";
+import type {
+  JsonObject,
+  LiveObject,
+  LsonObject,
+  StorageUpdate,
+} from "@liveblocks/client";
 
 export type LiveblocksTiptapRoom = {
   batch(callback: () => void): void;
@@ -17,7 +22,7 @@ export type LiveblocksTiptapRoom = {
   };
   subscribe(
     node: LiveObject<LsonObject>,
-    callback: () => void,
+    callback: (updates: StorageUpdate[]) => void,
     options: { isDeep: true }
   ): () => void;
   updatePresence(patch: JsonObject): void;

@@ -1,9 +1,11 @@
 import type { JsonObject } from "@liveblocks/client";
 import { Extension } from "@tiptap/core";
+import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import type { EditorView } from "@tiptap/pm/view";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 
+import { LIVEBLOCKS_COLLABORATION_PLUGIN_KEY } from "./plugin";
 import type { LiveblocksTiptapRoom } from "./types";
 
 const PRESENCE_KEY = "liveblocksTiptap";
@@ -24,15 +26,28 @@ type CollaborationCaretStorage = {
   users: { clientId: number; [key: string]: unknown }[];
 };
 
+type RemoteCursor = {
+  anchor: number;
+  connectionId: number;
+  head: number;
+  rawAnchor: number;
+  rawHead: number;
+  user?: CursorUser;
+};
+
+type CollaborationCaretPluginState = {
+  cursors: RemoteCursor[];
+  decorations: DecorationSet;
+};
+
 type CollaborationCaretOptions = {
   room?: LiveblocksTiptapRoom;
   field: string;
   user: CursorUser;
 };
 
-export const LIVEBLOCKS_CARET_PLUGIN_KEY = new PluginKey<DecorationSet>(
-  "liveblocks-collaboration-caret"
-);
+export const LIVEBLOCKS_CARET_PLUGIN_KEY =
+  new PluginKey<CollaborationCaretPluginState>("liveblocks-collaboration-caret");
 
 function isCursorPresence(value: unknown): value is CursorPresence {
   return (
@@ -86,16 +101,16 @@ function createCursorElement(user: CursorUser | undefined): HTMLElement {
   return cursor;
 }
 
-function clampPosition(position: number, view: EditorView): number {
-  return Math.max(0, Math.min(position, view.state.doc.content.size));
+function clampPosition(position: number, doc: ProseMirrorNode): number {
+  return Math.max(0, Math.min(position, doc.content.size));
 }
 
-function buildDecorations(
+function getRemoteCursors(
   room: LiveblocksTiptapRoom,
   field: string,
-  view: EditorView
-): DecorationSet {
-  const decorations: Decoration[] = [];
+  previousCursors: readonly RemoteCursor[] = []
+): RemoteCursor[] {
+  const cursors: RemoteCursor[] = [];
 
   for (const other of room.getOthers()) {
     const rawPresence: unknown = other.presence[PRESENCE_KEY];
@@ -103,11 +118,42 @@ function buildDecorations(
       continue;
     }
 
-    const anchor = clampPosition(rawPresence.anchor, view);
-    const head = clampPosition(rawPresence.head, view);
+    const user = getCursorUser(rawPresence.user) ?? getCursorUser(other.info);
+    const previousCursor = previousCursors.find(
+      (cursor) => cursor.connectionId === other.connectionId
+    );
+    const hasPresencePositionChanged =
+      previousCursor === undefined ||
+      previousCursor.rawAnchor !== rawPresence.anchor ||
+      previousCursor.rawHead !== rawPresence.head;
+
+    cursors.push({
+      anchor: hasPresencePositionChanged
+        ? rawPresence.anchor
+        : previousCursor.anchor,
+      connectionId: other.connectionId,
+      head: hasPresencePositionChanged ? rawPresence.head : previousCursor.head,
+      rawAnchor: rawPresence.anchor,
+      rawHead: rawPresence.head,
+      user,
+    });
+  }
+
+  return cursors;
+}
+
+function buildDecorationsFromCursors(
+  cursors: readonly RemoteCursor[],
+  doc: ProseMirrorNode
+): DecorationSet {
+  const decorations: Decoration[] = [];
+
+  for (const cursor of cursors) {
+    const anchor = clampPosition(cursor.anchor, doc);
+    const head = clampPosition(cursor.head, doc);
     const from = Math.min(anchor, head);
     const to = Math.max(anchor, head);
-    const user = getCursorUser(rawPresence.user) ?? getCursorUser(other.info);
+    const user = cursor.user;
     const color = user?.color ?? "#0f83ff";
 
     if (from !== to) {
@@ -121,13 +167,13 @@ function buildDecorations(
 
     decorations.push(
       Decoration.widget(head, () => createCursorElement(user), {
-        key: `liveblocks-caret-${other.connectionId}`,
+        key: `liveblocks-caret-${cursor.connectionId}`,
         side: -1,
       })
     );
   }
 
-  return DecorationSet.create(view.state.doc, decorations);
+  return DecorationSet.create(doc, decorations);
 }
 
 function createLiveblocksCaretPlugin(
@@ -171,33 +217,71 @@ function createLiveblocksCaretPlugin(
       };
     });
 
+    const previousCursors =
+      LIVEBLOCKS_CARET_PLUGIN_KEY.getState(view.state)?.cursors ?? [];
+    const cursors = getRemoteCursors(room, options.field, previousCursors);
+
     view.dispatch(
-      view.state.tr.setMeta(
-        LIVEBLOCKS_CARET_PLUGIN_KEY,
-        buildDecorations(room, options.field, view)
-      )
+      view.state.tr.setMeta(LIVEBLOCKS_CARET_PLUGIN_KEY, {
+        cursors,
+      })
     );
   };
 
   return new Plugin({
     key: LIVEBLOCKS_CARET_PLUGIN_KEY,
     state: {
-      init: () => DecorationSet.empty,
-      apply(tr, decorations) {
-        const nextDecorations = tr.getMeta(LIVEBLOCKS_CARET_PLUGIN_KEY) as
-          | DecorationSet
+      init(_, state): CollaborationCaretPluginState {
+        return {
+          cursors: [],
+          decorations: DecorationSet.create(state.doc, []),
+        };
+      },
+      apply(tr, state): CollaborationCaretPluginState {
+        const meta = tr.getMeta(LIVEBLOCKS_CARET_PLUGIN_KEY) as
+          | { cursors: RemoteCursor[] }
           | undefined;
 
-        if (nextDecorations !== undefined) {
-          return nextDecorations;
+        if (meta !== undefined) {
+          return {
+            cursors: meta.cursors,
+            decorations: buildDecorationsFromCursors(meta.cursors, tr.doc),
+          };
         }
 
-        return tr.docChanged ? decorations.map(tr.mapping, tr.doc) : decorations;
+        if (!tr.docChanged) {
+          return state;
+        }
+
+        if (!tr.getMeta(LIVEBLOCKS_COLLABORATION_PLUGIN_KEY)) {
+          const cursors = state.cursors.map((cursor) => ({
+            ...cursor,
+            anchor: tr.mapping.map(cursor.anchor, -1),
+            head: tr.mapping.map(cursor.head, -1),
+          }));
+
+          return {
+            cursors,
+            decorations: buildDecorationsFromCursors(cursors, tr.doc),
+          };
+        }
+
+        // Remote presence can arrive before the matching remote document
+        // update. Keep the stored cursor positions and rebuild them against
+        // the new document so pre-arrived presence is no longer clamped to the
+        // old document size.
+        return {
+          cursors: state.cursors,
+          decorations: buildDecorationsFromCursors(state.cursors, tr.doc),
+        };
       },
     },
     props: {
       decorations(state) {
-        return LIVEBLOCKS_CARET_PLUGIN_KEY.getState(state) ?? DecorationSet.empty;
+        return (
+          LIVEBLOCKS_CARET_PLUGIN_KEY.getState(state)?.decorations ??
+          DecorationSet.empty
+        );
       },
     },
     view(editorView) {
@@ -216,6 +300,7 @@ function createLiveblocksCaretPlugin(
           ) {
             updatePresence(nextView);
           }
+
         },
         destroy() {
           unsubscribe?.();
@@ -231,8 +316,8 @@ function createLiveblocksCaretPlugin(
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
     collaborationCaret: {
-      updateUser: (attributes: Record<string, unknown>) => ReturnType;
-      user: (attributes: Record<string, unknown>) => ReturnType;
+      updateUser: (attributes: Record<string, any>) => ReturnType;
+      user: (attributes: Record<string, any>) => ReturnType;
     };
   }
 }

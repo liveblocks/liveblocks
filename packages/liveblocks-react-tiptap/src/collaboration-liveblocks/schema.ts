@@ -4,11 +4,12 @@ import {
   LiveList,
   LiveObject,
   LiveText,
+  type LiveTextAttributesPatch,
   type LiveTextDelta,
   nanoid,
 } from "@liveblocks/client";
 
-const TEXT_MARKS_ATTRIBUTE = "__liveblocks_tiptap_marks";
+export const TEXT_MARKS_ATTRIBUTE = "__liveblocks_tiptap_marks";
 
 export type ProseMirrorJsonNode = {
   type: string;
@@ -41,7 +42,7 @@ function isJsonObject(value: Json | undefined): value is JsonObject {
   );
 }
 
-function marksToAttributes(
+export function marksToAttributes(
   marks: ProseMirrorJsonMark[] | undefined
 ): JsonObject | undefined {
   if (marks === undefined || marks.length === 0) {
@@ -56,7 +57,7 @@ function marksToAttributes(
   };
 }
 
-function attributesToMarks(
+export function attributesToMarks(
   attributes: JsonObject | undefined
 ): ProseMirrorJsonMark[] | undefined {
   const rawMarks = attributes?.[TEXT_MARKS_ATTRIBUTE];
@@ -78,6 +79,18 @@ function attributesToMarks(
   }
 
   return marks.length > 0 ? marks : undefined;
+}
+
+export function marksToAttributesPatch(
+  marks: ProseMirrorJsonMark[] | undefined
+): LiveTextAttributesPatch {
+  const attributes = marksToAttributes(marks);
+  return {
+    [TEXT_MARKS_ATTRIBUTE]:
+      attributes?.[TEXT_MARKS_ATTRIBUTE] === undefined
+        ? null
+        : attributes[TEXT_MARKS_ATTRIBUTE],
+  };
 }
 
 export function createLiveblocksTiptapNode(
@@ -102,6 +115,39 @@ export function createLiveblocksTiptapNode(
       (node.content ?? []).map((child) => createLiveblocksTiptapNode(child))
     ),
   });
+}
+
+export function getLiveblocksNodeId(node: LiveblocksTiptapNode): string {
+  return node.get("id");
+}
+
+export function getLiveblocksNodeType(node: LiveblocksTiptapNode): string {
+  return node.get("type");
+}
+
+export function getLiveblocksNodeContent(
+  node: LiveblocksTiptapNode
+): LiveList<LiveblocksTiptapNode> | undefined {
+  const content = node.get("content");
+  return content instanceof LiveList ? content : undefined;
+}
+
+export function getLiveblocksNodeText(
+  node: LiveblocksTiptapNode
+): LiveText | undefined {
+  const text = node.get("text");
+  return text instanceof LiveText ? text : undefined;
+}
+
+export function updateLiveblocksNodeAttrs(
+  node: LiveblocksTiptapNode,
+  attrs: JsonObject | undefined
+): void {
+  if (attrs === undefined) {
+    node.delete("attrs");
+  } else {
+    node.set("attrs", attrs);
+  }
 }
 
 function liveTextToTextNodes(text: LiveText): ProseMirrorJsonNode[] {

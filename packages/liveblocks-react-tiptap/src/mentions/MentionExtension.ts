@@ -16,6 +16,7 @@ import { ReactRenderer } from "@tiptap/react";
 import Suggestion from "@tiptap/suggestion";
 import { ySyncPluginKey } from "y-prosemirror";
 
+import { LIVEBLOCKS_COLLABORATION_PLUGIN_KEY } from "../collaboration-liveblocks/plugin";
 import {
   LIVEBLOCKS_GROUP_MENTION_TYPE,
   LIVEBLOCKS_MENTION_EXTENSION,
@@ -88,7 +89,11 @@ const notifier = ({
       }
       // don't run if from collab
       if (
-        transactions.some((transaction) => transaction.getMeta(ySyncPluginKey))
+        transactions.some(
+          (transaction) =>
+            transaction.getMeta(ySyncPluginKey) ||
+            transaction.getMeta(LIVEBLOCKS_COLLABORATION_PLUGIN_KEY)
+        )
       ) {
         return;
       }
