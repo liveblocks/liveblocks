@@ -605,12 +605,40 @@
         "path": "/integrations"
       },
       {
-        "title": "Supabase",
-        "path": "/integrations/supabase"
+        "title": "Cursor",
+        "path": "/integrations/cursor"
+      },
+      {
+        "title": "Codex",
+        "path": "/integrations/codex"
+      },
+      {
+        "title": "Claude Code",
+        "path": "/integrations/claude-code"
+      },
+      {
+        "title": "Lovable",
+        "path": "/integrations/lovable"
       },
       {
         "title": "n8n",
         "path": "/integrations/n8n-nodes"
+      },
+      {
+        "title": "Neon",
+        "path": "/integrations/neon"
+      },
+      {
+        "title": "Replit",
+        "path": "/integrations/replit"
+      },
+      {
+        "title": "Supabase",
+        "path": "/integrations/supabase"
+      },
+      {
+        "title": "Vercel",
+        "path": "/integrations/vercel"
       }
     ]
   },

@@ -1,0 +1,108 @@
+---
+meta:
+  title: "OpenAI Codex + Liveblocks"
+  parentTitle: "Integrations"
+  description:
+    "Use OpenAI Codex with Liveblocks agent skills and the MCP server to build
+    collaborative apps with guided best practices."
+---
+
+Use OpenAI Codex with Liveblocks to implement multiplayer features while keeping
+Liveblocks patterns correct. Install [agent skills](/docs/tools/agent-skills)
+for Liveblocks and Yjs guidance, and optionally connect the bundled
+[MCP server](/docs/tools/mcp-server) if your Codex environment supports MCP.
+
+<PromptCta />
+
+## Setup
+
+<Steps>
+  <Step>
+    <StepTitle>Install Liveblocks skills</StepTitle>
+    <StepContent>
+      In your project directory, run:
+
+      ```bash
+      npx skills add liveblocks/skills
+      ```
+
+      This adds the Codex plugin (under `.codex-plugin/`) from
+      [liveblocks/skills](https://github.com/liveblocks/skills).
+    </StepContent>
+  </Step>
+
+  <Step>
+    <StepTitle>Configure MCP if supported</StepTitle>
+    <StepContent>
+      Default: use
+      [Smithery](https://smithery.ai/server/@liveblocks/liveblocks-mcp-server)
+      to install the MCP server with your development `LIVEBLOCKS_SECRET_KEY`.
+
+      Manual install (clone the repo, `npm run build`, point MCP at
+      `build/index.js`) matches **Manual setup** in
+      [MCP server](/docs/tools/mcp-server). Your Codex MCP docs define the config
+      file path and schema.
+    </StepContent>
+  </Step>
+
+  <Step lastStep>
+    <StepTitle>Try a prompt</StepTitle>
+    <StepContent>
+      Example prompts:
+
+      ```
+      Add Liveblocks Comments with threads anchored to elements in this component tree.
+      ```
+
+      ```
+      How do I issue access tokens from my Next.js route handler for Liveblocks?
+      ```
+    </StepContent>
+  </Step>
+</Steps>
+
+## What this adds
+
+- **Agent skills** — Best-practice references for Liveblocks features and Yjs
+  data modeling.
+- **MCP tools** — Optional access to project data and admin operations where MCP
+  is configured (same surface as the [REST API](/docs/api-reference/rest-api-endpoints)).
+
+Codex runs in your CLI or IDE; Liveblocks hosts realtime state.
+
+## When to use it
+
+Use this when you want Codex to scaffold or extend React/Next.js (or other)
+clients that use `@liveblocks/*`, or when you need help debugging collaboration
+behavior.
+
+Treat MCP keys as **development-only** credentials. Do not use your production
+app secret in an agent session—see [MCP server](/docs/tools/mcp-server).
+
+## How it fits together
+
+| Component      | Responsibility                                                  |
+| -------------- | --------------------------------------------------------------- |
+| Codex + skills | Coding guidance from `liveblocks/skills`.                       |
+| MCP (optional) | Tooling for rooms, Storage, Yjs, comments, etc.                 |
+| Your app       | Auth endpoint, user data, integration with Liveblocks client.   |
+| Liveblocks     | Realtime collaboration and room state.                          |
+
+## Limitations and troubleshooting
+
+### MCP is unavailable in your Codex build
+
+You can still rely on **agent skills** alone; use the dashboard or REST API
+manually for inspection.
+
+### Wrong project or room data
+
+Ensure the MCP `LIVEBLOCKS_SECRET_KEY` is from the same [project](/dashboard)
+as the app you are editing.
+
+## Related docs
+
+- [Agent skills](/docs/tools/agent-skills)
+- [MCP server](/docs/tools/mcp-server)
+- [Access token](/docs/authentication/access-token)
+- [REST API reference](/docs/api-reference/rest-api-endpoints)

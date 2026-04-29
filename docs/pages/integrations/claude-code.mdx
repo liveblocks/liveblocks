@@ -1,0 +1,112 @@
+---
+meta:
+  title: "Claude Code + Liveblocks"
+  parentTitle: "Integrations"
+  description:
+    "Use Claude Code with Liveblocks agent skills and the MCP server to build
+    multiplayer apps with guided best practices."
+---
+
+Use [Claude Code](https://www.anthropic.com/claude-code) with Liveblocks to
+iterate on collaborative UIs and backends. Install [agent skills](/docs/tools/agent-skills)
+for Liveblocks and Yjs references, and optionally use the bundled
+[MCP server](/docs/tools/mcp-server) for tool access to rooms and data from the
+terminal.
+
+<PromptCta />
+
+## Setup
+
+<Steps>
+  <Step>
+    <StepTitle>Install Liveblocks skills</StepTitle>
+    <StepContent>
+      In your project directory, run:
+
+      ```bash
+      npx skills add liveblocks/skills
+      ```
+
+      This adds the Claude Code plugin (under `.claude-plugin/`) from
+      [liveblocks/skills](https://github.com/liveblocks/skills).
+    </StepContent>
+  </Step>
+
+  <Step>
+    <StepTitle>Enable MCP (optional)</StepTitle>
+    <StepContent>
+      The skills package targets **Claude Code**. **MCP** uses the same
+      Liveblocks server and `LIVEBLOCKS_SECRET_KEY` pattern everywhere; only the
+      config location differs by app.
+
+      - **Claude Desktop** — follow **Automatic setup** or **Manual setup** in
+        [MCP server](/docs/tools/mcp-server) (`claude_desktop_config.json` for
+        manual install).
+      - **Claude Code** — enable MCP in Claude Code per Anthropic’s docs for your
+        version, then register the same `node …/build/index.js` command and env as
+        in [MCP server](/docs/tools/mcp-server) **Manual setup**.
+    </StepContent>
+  </Step>
+
+  <Step lastStep>
+    <StepTitle>Try a prompt</StepTitle>
+    <StepContent>
+      Example prompts:
+
+      ```
+      Set up Liveblocks Yjs with Tiptap in this repo; follow best practices for sync and awareness.
+      ```
+
+      ```
+      Debug why thread metadata updates are not showing in the inbox; trace the webhook and client hooks.
+      ```
+    </StepContent>
+  </Step>
+</Steps>
+
+## What this adds
+
+- **Agent skills** — References for Storage, Yjs, Comments, Notifications, AI
+  Copilots, and common pitfalls.
+- **MCP tools** — Operations aligned with the
+  [REST API](/docs/api-reference/rest-api-endpoints) for debugging and setup.
+
+Claude Code runs locally or in your dev environment; Liveblocks remains the
+hosted collaboration layer.
+
+## When to use it
+
+Use this for multi-file refactors (adding
+[`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider), hooks,
+notification channels) or when you want the agent to verify behavior against
+real Liveblocks data via MCP.
+
+Use a **non-production** secret key for MCP. See the warning in
+[MCP server](/docs/tools/mcp-server).
+
+## How it fits together
+
+| Component   | Responsibility                                               |
+| ----------- | ------------------------------------------------------------ |
+| Claude Code | Skills + optional MCP for Liveblocks API tooling.          |
+| Your app    | Auth, persistence, product logic, Liveblocks client usage. |
+| Liveblocks  | Rooms, permissions, Storage, Yjs, Comments, Threads.       |
+
+## Limitations and troubleshooting
+
+### Plugin path not detected
+
+Run the install command from the repository root. Confirm `.claude-plugin/`
+exists after installation.
+
+### Webhook or REST errors from MCP
+
+Confirm the secret key matches the [Liveblocks project](/dashboard) and that
+your network allows calls to `https://api.liveblocks.io`.
+
+## Related docs
+
+- [Agent skills](/docs/tools/agent-skills)
+- [MCP server](/docs/tools/mcp-server)
+- [Webhooks](/docs/platform/webhooks)
+- [Comments](/docs/collaboration-features/comments)

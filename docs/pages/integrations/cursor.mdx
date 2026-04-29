@@ -1,0 +1,106 @@
+---
+meta:
+  title: "Cursor + Liveblocks"
+  parentTitle: "Integrations"
+  description:
+    "Use Cursor with Liveblocks agent skills and the MCP server to build
+    multiplayer apps with guided best practices."
+---
+
+Use [Cursor](https://cursor.com/) with Liveblocks to add collaborative features
+to your app. Install [agent skills](/docs/tools/agent-skills) so your assistant
+follows Liveblocks and Yjs guidance, and optionally use the bundled
+[MCP server](/docs/tools/mcp-server) to inspect rooms, Storage, Yjs, comments,
+and threads while you work.
+
+<PromptCta />
+
+## Setup
+
+<Steps>
+  <Step>
+    <StepTitle>Install Liveblocks skills</StepTitle>
+    <StepContent>
+      In your project directory, run:
+
+      ```bash
+      npx skills add liveblocks/skills
+      ```
+
+      This adds the Cursor plugin (under `.cursor-plugin/`) and registers the
+      skills repo [liveblocks/skills](https://github.com/liveblocks/skills).
+    </StepContent>
+  </Step>
+
+  <Step>
+    <StepTitle>Confirm MCP (optional)</StepTitle>
+    <StepContent>
+      The plugin bundles the
+      [Liveblocks MCP server](https://github.com/liveblocks/liveblocks-mcp-server).
+      For Cursor, use **Automatic setup** in [MCP server](/docs/tools/mcp-server)
+      (Smithery one-liner or manual config).
+    </StepContent>
+  </Step>
+
+  <Step lastStep>
+    <StepTitle>Try a prompt</StepTitle>
+    <StepContent>
+      Example prompts:
+
+      ```
+      Add a Liveblocks RoomProvider with Storage and typed Presence for this route.
+      ```
+
+      ```
+      Why is my Yjs document size growing? How should I structure this data?
+      ```
+    </StepContent>
+  </Step>
+</Steps>
+
+## What this adds
+
+- **Agent skills** — `liveblocks-best-practices` and `yjs-best-practices`
+  material your assistant can use for Storage, Comments, Notifications, AI
+  Copilots, and Yjs.
+- **MCP tools** — Most [REST API](/docs/api-reference/rest-api-endpoints)
+  operations as tools, so you can check rooms and data from the editor.
+
+Cursor runs locally; Liveblocks stays the collaboration backend in the cloud.
+
+## When to use it
+
+Use this when you are building or refactoring a Liveblocks app and want the
+agent to follow correct patterns (auth, room setup, hooks, conflict handling),
+and optionally to debug using live project data via MCP.
+
+Keep product **secret keys** on the server. For MCP in development, use a
+**dedicated** secret key as in [MCP server](/docs/tools/mcp-server)—never paste
+your production app key into an AI tool.
+
+## How it fits together
+
+| Component        | Responsibility                                                         |
+| ---------------- | ---------------------------------------------------------------------- |
+| Cursor + plugins | Skills for coding guidance; MCP for optional Liveblocks API tool use. |
+| Your app         | Client SDKs, auth endpoint, durable data, business logic.              |
+| Liveblocks       | Realtime rooms, Storage, Yjs, Comments, Threads, notifications.      |
+
+## Limitations and troubleshooting
+
+### Skills do not load
+
+Re-run `npx skills add liveblocks/skills` from the repo root. Ensure Cursor can
+see the generated plugin files.
+
+### MCP returns auth errors
+
+Use a secret key from the same [Liveblocks project](/dashboard) as your app.
+Confirm `LIVEBLOCKS_SECRET_KEY` in the MCP config matches that project.
+
+## Related docs
+
+- [Agent skills](/docs/tools/agent-skills)
+- [MCP server](/docs/tools/mcp-server)
+- [Authentication](/docs/authentication)
+- [REST API reference](/docs/api-reference/rest-api-endpoints)

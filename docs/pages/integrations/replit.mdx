@@ -1,0 +1,119 @@
+---
+meta:
+  title: "Replit + Liveblocks"
+  parentTitle: "Integrations"
+  description:
+    "Run and share Liveblocks apps on Replit using Secrets for API keys and a
+    public Repl URL for quick demos and classroom-style collaboration."
+---
+
+[Replit](https://replit.com/) is a cloud IDE and hosting environment. Use it
+with Liveblocks when you want a shared workspace to prototype a multiplayer app,
+teach a workshop, or demo a forkable template—while keeping Liveblocks secrets
+in **Secrets** instead of source code.
+
+<PromptCta />
+
+## What it enables
+
+- **Fast onboarding** — import a Node or Next.js project and install
+  `@liveblocks/client` / `@liveblocks/react` from the shell.
+- **Secrets** — store `LIVEBLOCKS_SECRET_KEY` and `LIVEBLOCKS_WEBHOOK_SECRET`
+  outside the repo.
+- **Public URL** — use the Repl’s published URL for webhook smoke tests (mind
+  Repl sleep/cold start when testing).
+
+## When to use Liveblocks with Replit
+
+Use Replit for experiments and demos. For production traffic, prefer a dedicated
+host (for example [Vercel](/docs/integrations/vercel)) with proper scaling,
+monitoring, and custom domains.
+
+## Recommended architecture
+
+| Component    | Responsibility                                                |
+| ------------ | ------------------------------------------------------------- |
+| Replit shell | Install dependencies, run dev or production server.           |
+| Replit Secrets | `LIVEBLOCKS_SECRET_KEY`, optional webhook secret, auth keys. |
+| Your code    | Token route, Liveblocks client, UI.                           |
+| Liveblocks   | Realtime collaboration backend.                               |
+
+## Setup
+
+<Steps>
+  <Step>
+    <StepTitle>Create a Repl</StepTitle>
+    <StepContent>
+      **Default path:** In Replit, choose **Import from GitHub** (or **Import**)
+      and paste the URL of a repo that already runs your app—for example one you
+      created with `npx create-liveblocks-app@latest --next` locally and pushed.
+
+      Alternatively, start from a **Node.js** or **Next.js** Repl template, then
+      add Liveblocks packages in the next step.
+    </StepContent>
+  </Step>
+
+  <Step>
+    <StepTitle>Install Liveblocks packages</StepTitle>
+    <StepContent>
+      In the Repl shell:
+
+      ```bash
+      npm install @liveblocks/client @liveblocks/react
+      ```
+
+      Add `@liveblocks/node` (or your framework kit) if you implement an auth
+      route on the server.
+    </StepContent>
+  </Step>
+
+  <Step>
+    <StepTitle>Add Secrets</StepTitle>
+    <StepContent>
+      In **Secrets** (lock icon), add:
+
+      - `LIVEBLOCKS_SECRET_KEY` — from the [Liveblocks dashboard](/dashboard).
+      - Optional: `LIVEBLOCKS_WEBHOOK_SECRET` if you test [webhooks](/docs/platform/webhooks).
+
+      Read them with `process.env` only in server-side code.
+    </StepContent>
+  </Step>
+
+  <Step lastStep>
+    <StepTitle>Run and share</StepTitle>
+    <StepContent>
+      Start your app (`npm run dev` or the Repl **Run** button). Use the **public**
+      Repl URL for quick sharing. When testing webhooks, paste the HTTPS URL of
+      your API route into the Liveblocks dashboard; allow for Repl wake-up delay
+      on first request.
+
+      For classroom or team use, prefer a **private** Repl when your Secrets or
+      prototype data should not be world-readable.
+    </StepContent>
+  </Step>
+</Steps>
+
+## Limitations and troubleshooting
+
+### Repl sleeps and webhooks fail
+
+Sleeping Repls may miss or delay webhook deliveries. Use an always-on tier for
+serious webhook testing, or test locally with a tunnel (see
+[How to test webhooks on localhost](/docs/guides/how-to-test-webhooks-on-localhost)).
+
+### Secret exposed in client bundle
+
+Never import `LIVEBLOCKS_SECRET_KEY` in files bundled for the browser. Keep
+token minting on the server only—see [Access token](/docs/authentication/access-token).
+
+### Cold start latency
+
+First connection after idle can be slow; this is independent of Liveblocks edge
+latency once the page is running.
+
+## Related docs
+
+- [Vercel + Liveblocks](/docs/integrations/vercel) (production-style deploy).
+- [Authentication](/docs/authentication)
+- [Get started with Next.js](/docs/get-started/nextjs)
+- [REST API reference](/docs/api-reference/rest-api-endpoints)
