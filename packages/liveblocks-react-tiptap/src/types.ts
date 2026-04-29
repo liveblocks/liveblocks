@@ -86,6 +86,7 @@ export interface AiConfiguration {
 }
 
 export type LiveblocksExtensionOptions = {
+  collaborationMode?: "yjs" | "liveblocks";
   field?: string;
   comments?: boolean; // | CommentsConfiguration
   mentions?: boolean; // | MentionsConfiguration
@@ -104,12 +105,18 @@ export type LiveblocksExtensionOptions = {
   textEditorType?: TextEditorType;
 };
 
-export type LiveblocksExtensionStorage = {
-  unsubs: (() => void)[];
-  doc: Doc;
-  provider: LiveblocksYjsProvider;
-  permanentUserData?: PermanentUserData;
-};
+export type LiveblocksExtensionStorage =
+  | {
+      mode: "yjs";
+      unsubs: (() => void)[];
+      doc: Doc;
+      provider: LiveblocksYjsProvider;
+      permanentUserData?: PermanentUserData;
+    }
+  | {
+      mode: "liveblocks";
+      unsubs: (() => void)[];
+    };
 
 export type CommentsExtensionStorage = {
   pendingComment: boolean;

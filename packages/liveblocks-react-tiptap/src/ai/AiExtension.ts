@@ -27,6 +27,7 @@ import {
   type AiExtensionOptions,
   type AiExtensionStorage,
   type AiToolbarState,
+  type LiveblocksExtensionStorage,
   type ResolveContextualPromptResponse,
   type YSyncPluginState,
 } from "../types";
@@ -46,8 +47,11 @@ function getYjsBinding(editor: Editor) {
 function getLiveblocksYjsProvider(
   editor: Editor
 ): LiveblocksYjsProvider | undefined {
-  // Eslint doesn't seem to like Tiptap's Type declaration strategy
-  return editor.extensionStorage.liveblocksExtension?.provider;
+  // Tiptap extension storage is exposed as untyped extension data here.
+  const storage = editor.extensionStorage
+    .liveblocksExtension as LiveblocksExtensionStorage | undefined;
+
+  return storage?.mode === "yjs" ? storage.provider : undefined;
 }
 
 export function isContextualPromptDiffResponse(

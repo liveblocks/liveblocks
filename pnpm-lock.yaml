@@ -257,6 +257,64 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
+  e2e/next-tiptap-liveblocks:
+    dependencies:
+      '@liveblocks/client':
+        specifier: workspace:*
+        version: link:../../packages/liveblocks-client
+      '@liveblocks/node':
+        specifier: workspace:*
+        version: link:../../packages/liveblocks-node
+      '@liveblocks/react':
+        specifier: workspace:*
+        version: link:../../packages/liveblocks-react
+      '@liveblocks/react-tiptap':
+        specifier: workspace:*
+        version: link:../../packages/liveblocks-react-tiptap
+      '@liveblocks/react-ui':
+        specifier: workspace:*
+        version: link:../../packages/liveblocks-react-ui
+      '@tiptap/pm':
+        specifier: ^3.22.3
+        version: 3.22.3
+      '@tiptap/react':
+        specifier: ^3.22.3
+        version: 3.22.3(@floating-ui/dom@1.7.6)(@tiptap/core@3.22.3(@tiptap/pm@3.22.3))(@tiptap/pm@3.22.3)(@types/react-dom@18.3.5(@types/react@18.3.28))(@types/react@18.3.28)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@tiptap/starter-kit':
+        specifier: ^3.22.3
+        version: 3.22.3
+      next:
+        specifier: 16.1.4
+        version: 16.1.4(@playwright/test@1.55.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(sass@1.99.0)
+      react:
+        specifier: 19.2.3
+        version: 19.2.3
+      react-dom:
+        specifier: 19.2.3
+        version: 19.2.3(react@19.2.3)
+    devDependencies:
+      '@eslint/eslintrc':
+        specifier: ^3.3.3
+        version: 3.3.5
+      '@types/node':
+        specifier: ^24.12.2
+        version: 24.12.2
+      '@types/react':
+        specifier: ^18.3.17
+        version: 18.3.28
+      '@types/react-dom':
+        specifier: ^18.3.5
+        version: 18.3.5(@types/react@18.3.28)
+      eslint:
+        specifier: ^9.39.4
+        version: 9.39.4(jiti@2.6.1)
+      eslint-config-next:
+        specifier: 16.1.4
+        version: 16.1.4(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
   e2e/node-sandbox:
     dependencies:
       '@liveblocks/client':

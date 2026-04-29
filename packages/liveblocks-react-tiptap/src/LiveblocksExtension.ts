@@ -27,6 +27,8 @@ import {
   CollaborationCaret,
   type CollaborationCaretOptions,
 } from "./collaboration-caret/collaboration-caret";
+import { LiveblocksCollaborationCaret } from "./collaboration-liveblocks/cursors";
+import { LiveblocksCollaboration } from "./collaboration-liveblocks/plugin";
 import {
   CommentsExtension,
   FILTERED_THREADS_PLUGIN_KEY,
@@ -44,6 +46,7 @@ import { areSetsEqual } from "./utils";
 type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
 
 const DEFAULT_OPTIONS: WithRequired<LiveblocksExtensionOptions, "field"> = {
+  collaborationMode: "yjs",
   field: "default",
   comments: true,
   mentions: true,
@@ -194,10 +197,13 @@ export const useLiveblocksExtension = (
   const store = getUmbrellaStoreForClient(client);
   const roomId = room.id;
   const yjsProvider = useYjsProvider();
+  const isLiveblocksStorageMode = options.collaborationMode === "liveblocks";
+  const isReadyForSideEffects = isLiveblocksStorageMode || isEditorReady;
 
   // If the user provided initialContent, wait for ready and then set it
   useEffect(() => {
     if (
+      isLiveblocksStorageMode ||
       !isEditorReady ||
       !yjsProvider ||
       !options.initialContent ||
@@ -213,14 +219,19 @@ export const useLiveblocksExtension = (
       ydoc.getMap("liveblocks_config").set("hasContentSet", true);
       editor.current.commands.setContent(options.initialContent);
     }
-  }, [isEditorReady, yjsProvider, options.initialContent]);
+  }, [
+    isEditorReady,
+    isLiveblocksStorageMode,
+    yjsProvider,
+    options.initialContent,
+  ]);
 
   useReportTextEditor(textEditorType, options.field ?? DEFAULT_OPTIONS.field);
 
   const prevThreadsRef = useRef<Set<string> | undefined>(undefined);
 
   useEffect(() => {
-    if (!isEditorReady) return;
+    if (!isReadyForSideEffects) return;
 
     if (!editor.current) return;
 
@@ -246,7 +257,7 @@ export const useLiveblocksExtension = (
         })
       );
     }
-  }, [isEditorReady, options.threads_experimental]);
+  }, [isReadyForSideEffects, options.threads_experimental]);
 
   const createTextMention = useCreateTextMention();
   const deleteTextMention = useDeleteTextMention();
@@ -280,6 +291,16 @@ export const useLiveblocksExtension = (
         if (!info) {
           return;
         }
+        if (this.storage.mode === "liveblocks") {
+          this.editor.commands.updateUser({
+            name: info.name,
+            color: info.color,
+          });
+          return;
+        }
+
+        // y-prosemirror stores arbitrary user metadata in awareness, but its
+        // API does not expose a typed local-state shape.
         const { user: storedUser } =
           this.storage.provider.awareness.getLocalState() as {
             user: IUserInfo;
@@ -377,12 +398,20 @@ export const useLiveblocksExtension = (
       ];
     },
     addStorage() {
+      if (isLiveblocksStorageMode) {
+        return {
+          mode: "liveblocks",
+          unsubs: [],
+        };
+      }
+
       const provider = getYjsProviderForRoom(room, {
         enablePermanentUserData:
           !!options.ai || options.enablePermanentUserData,
         offlineSupport_experimental: options.offlineSupport_experimental,
       });
       return {
+        mode: "yjs",
         doc: provider.getYDoc(),
         provider,
         permanentUserData: provider.permanentUserData,
@@ -390,20 +419,47 @@ export const useLiveblocksExtension = (
       };
     },
     addExtensions() {
-      const extensions: AnyExtension[] = [
-        YChangeMark,
+      const selfInfo = room.getSelf()?.info;
+      const selfUser =
+        selfInfo !== undefined
+          ? {
+              name:
+                typeof selfInfo.name === "string" ? selfInfo.name : undefined,
+              color:
+                typeof selfInfo.color === "string"
+                  ? selfInfo.color
+                  : undefined,
+            }
+          : undefined;
 
-        LiveblocksCollab.configure({
-          ySyncOptions: {
-            permanentUserData: this.storage.permanentUserData,
-          },
-          document: this.storage.doc,
-          field: options.field,
-        }),
-        CollaborationCaret.configure({
-          provider: this.storage.provider,
-        }) as Extension<CollaborationCaretOptions>,
-      ];
+      const extensions: AnyExtension[] =
+        this.storage.mode === "liveblocks"
+          ? [
+              LiveblocksCollaboration.configure({
+                room,
+                field: options.field,
+                initialContent: options.initialContent,
+              }),
+              LiveblocksCollaborationCaret.configure({
+                room,
+                field: options.field,
+                user: selfUser ?? {},
+              }),
+            ]
+          : [
+              YChangeMark,
+
+              LiveblocksCollab.configure({
+                ySyncOptions: {
+                  permanentUserData: this.storage.permanentUserData,
+                },
+                document: this.storage.doc,
+                field: options.field,
+              }),
+              CollaborationCaret.configure({
+                provider: this.storage.provider,
+              }) as Extension<CollaborationCaretOptions>,
+            ];
 
       if (options.comments) {
         extensions.push(CommentsExtension);
@@ -419,6 +475,13 @@ export const useLiveblocksExtension = (
         );
       }
       if (options.ai) {
+        if (this.storage.mode === "liveblocks") {
+          console.warn(
+            "[Liveblocks] AI in @liveblocks/react-tiptap currently requires the Yjs collaboration mode."
+          );
+          return extensions;
+        }
+
         const resolveContextualPrompt = async ({
           prompt,
           context,

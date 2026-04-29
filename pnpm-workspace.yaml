@@ -14,6 +14,7 @@ packages:
   - "e2e/next-ai-kitchen-sink"
   - "e2e/next-react-flow-kitchen-sink"
   - "e2e/next-sandbox"
+  - "e2e/next-tiptap-liveblocks"
   - "e2e/node-sandbox"
 
 allowBuilds:
