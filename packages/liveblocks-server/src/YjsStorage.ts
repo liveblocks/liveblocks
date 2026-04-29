@@ -27,23 +27,8 @@ import type { Logger } from "~/lib/Logger";
 // How many updates to store before compacting
 const UPDATE_COUNT_THRESHOLD = 1_000;
 
-// log 10% of the time a merge would shrink
-const MERGE_SHRINK_WARN_SAMPLE_RATE = 0.1;
+// How much smaller the merged update can be than the sum of the updates before compacting
 const MERGE_SHRINK_THRESHOLD = 0.8;
-
-// Writes a log if the merge would shrink significantly
-function warnIfYjsMergeShrunk(
-  logger: Logger,
-  oldSize: number,
-  newSize: number
-): void {
-  if (
-    oldSize * MERGE_SHRINK_THRESHOLD > newSize &&
-    Math.random() < MERGE_SHRINK_WARN_SAMPLE_RATE
-  ) {
-    logger.warn(`merged < 80% of sum: ${oldSize} -> ${newSize}`);
-  }
-}
 
 export class YjsStorage {
   private readonly driver: IStorageDriver;
@@ -275,7 +260,7 @@ export class YjsStorage {
   };
 
   private _loadYDocFromDurableStorage = async (
-    logger: Logger,
+    _logger: Logger,
     doc: Y.Doc,
     docId: YDocId
   ): Promise<Y.Doc> => {
@@ -286,10 +271,12 @@ export class YjsStorage {
     const beforeSize = updates.reduce((acc, update) => acc + update.length, 0);
     const newupdate = Y.mergeUpdates(updates);
     const storedKeys = Object.keys(docUpdates);
-    warnIfYjsMergeShrunk(logger, beforeSize, newupdate.length);
     Y.applyUpdate(doc, newupdate);
     // after compaction, there will only be one unique key.
-    if (this.shouldCompact(storedKeys)) {
+    if (
+      this.shouldCompactByKeyCount(storedKeys) ||
+      this.shouldCompactBySize(beforeSize, newupdate.length)
+    ) {
       await this._compactYJSUpdates(doc, docId, storedKeys);
     } else {
       this.storedKeysById.set(docId, storedKeys);
@@ -347,7 +334,7 @@ export class YjsStorage {
     const storedKeys = this.storedKeysById.get(docId);
 
     // Every UPDATE_COUNT_THRESHOLD updates, we compact the updates
-    if (this.shouldCompact(storedKeys)) {
+    if (this.shouldCompactByKeyCount(storedKeys)) {
       await this._compactYJSUpdates(doc, docId, storedKeys || []);
       return;
     }
@@ -364,7 +351,11 @@ export class YjsStorage {
     }
   }
 
-  private shouldCompact(storedKeys: string[] | undefined): boolean {
+  private shouldCompactBySize(beforeSize: number, afterSize: number): boolean {
+    return beforeSize * MERGE_SHRINK_THRESHOLD > afterSize;
+  }
+
+  private shouldCompactByKeyCount(storedKeys: string[] | undefined): boolean {
     if (!storedKeys) {
       return false;
     }

@@ -1,5 +1,10 @@
 ## vNEXT (not yet released)
 
+### `@liveblocks/react-tiptap`
+
+- Fix keyboard shortcut in strikethrough tooltip. (Thanks @HellBoy-OP for the
+  contribution!)
+
 ## v3.18.5
 
 ### `@liveblocks/react-tiptap`

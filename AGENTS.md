@@ -1,0 +1,94 @@
+# Project structure
+
+This is a monorepo. Most relevant projects live in `packages/` directory.
+
+Dependency hierarchy is:
+
+- @liveblocks/core
+  - @liveblocks/client
+    - @liveblocks/node
+    - @liveblocks/react
+      - @liveblocks/react-ui
+    - @liveblocks/zustand
+    - @liveblocks/redux
+
+@liveblocks/core contains utility functions and types that are used by all other
+packages, including the Liveblocks backend (not part of this monorepo). It is a
+_private_ package. Customers should not use it directly.
+
+# Bash commands
+
+When running scripts, use `pnpm exec turbo`, not `pnpm run` directly.
+
+- pnpm exec turbo run build: Build the project
+- pnpm exec turbo run build && tsc: Run typechecks
+- pnpm exec turbo run test:types: Run the type-level tests
+- pnpm exec turbo run lint:package: Run package tests
+
+# Code style
+
+- Always try to add proper typing, limit the use of `any`. If needed, ask first.
+- Use $-suffix for variables storing Promises
+- Use Σ-suffix for variables storing Signals (MutableSignal, Signal,
+  DerivedSignal, etc)
+
+# Dependencies
+
+- When adding new peerDependencies, pin them to major version ranges initially
+  (e.g. `"^13"` for yjs, `"^1"` for y-prosemirror, `"^18 || ^19"` for react).
+  Widen after verification. To support multiple major versions, use
+  `"^1 || ^2"`.
+
+# Code quality
+
+- Never use `as` casts blindly -- explain the type issue and let me decide. If
+  that would interrupt the flow, leave an `// XXX` comment above it explaining
+  the issue instead (CI lint will flag it)
+- Never add vitest/globals -- use explicit imports
+- Always prefer the Liveblocks dev server for tests, over a mocked websocket
+  server
+
+# Workflow
+
+- Be sure to typecheck when you're done making a series of code changes
+- Prefer running single tests, and not the whole test suite, for performance
+
+# Testing
+
+- End-to-end applications are located in e2e/
+- For Storage, Presence, Inbox Notifications, Comments & Threads the app is
+  located in e2e/next-sandbox
+- For AI the app is in e2e/next-ai-kitchen-sink
+
+Run e2e tests headlessly using Playwright:  
+pnpm exec turbo build && env HEADLESS=1 playwright test --retries=5 --
+
+# Examples
+
+Examples live in the `examples/` directory but are NOT part of the monorepo
+workspace. They depend on the latest _published_ version of Liveblocks packages,
+not on the local source. You cannot test examples against local changes. They
+need to be updated separately when a new version is published.
+
+# Documentation
+
+All documentation lives in the `docs/` directory, as Markdown files.
+
+When adding a new page (e.g. an upgrading guide), the `.mdx` file alone is not
+enough. You must also register it in `docs/routes.json` or it won't be routable.
+
+# Changelog
+
+CHANGELOG.md entries should use public-facing package names as subheadings (e.g.
+``### `@liveblocks/client` `` or ``### `@liveblocks/react` ``), not generic
+categories like "Breaking changes" or "New features". Avoid referencing
+`@liveblocks/core` — it is not a public-facing package.
+
+# Packages maintained elsewhere
+
+The following packages are primarily maintained from our backend monorepo for
+ease of changes. If you have access to the Liveblocks backend repo, avoid making
+changes to them directly here — prefer editing the source in the backend repo.
+
+- `packages/liveblocks-server`
+- `tools/liveblocks-cli`
