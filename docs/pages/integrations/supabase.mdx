@@ -3,19 +3,23 @@ meta:
   title: "Supabase + Liveblocks"
   parentTitle: "Integrations"
   description:
-    "Use Supabase with Liveblocks to mirror realtime collaboration data into
-    Postgres for reporting, search, audit logs, and application workflows."
+    "Use Supabase with Liveblocks when your collaborative app needs to store
+    data in a Postgres database—for example mirrored collaboration data for
+    reporting, search, audit logs, and workflows."
 ---
 
-Use Supabase with Liveblocks when your collaborative app needs a Postgres copy
-of Liveblocks data for reporting, search, audit logs, or app workflows.
+Use Supabase with Liveblocks when your collaborative app needs to store data in
+a Postgres database—for example a mirrored copy of Liveblocks data for
+reporting, search, audit logs, or app workflows.
 
-Liveblocks remains the source of truth for
+Liveblocks is the realtime collaboration layer for
 [Storage](/docs/collaboration-features/multiplayer/sync-engine/liveblocks-storage),
 [Yjs](/docs/collaboration-features/multiplayer/sync-engine/liveblocks-yjs),
 [Comments](/docs/collaboration-features/comments), and
-[Threads](/docs/collaboration-features/comments/concepts). Supabase stores the
-mirrored records you choose to write from your backend.
+[Threads](/docs/collaboration-features/comments/concepts)—it keeps multiplayer
+state in sync between clients. Teams usually treat Postgres as where durable,
+queryable app data lives; Supabase holds the rows you upsert from your backend
+when you mirror collaboration data there.
 
 <PromptCta />
 
@@ -218,8 +222,9 @@ Start with these webhook events:
 - [`commentEdited`](/docs/platform/webhooks#CommentEditedEvent)
 - [`commentDeleted`](/docs/platform/webhooks#CommentDeletedEvent)
 
-Liveblocks should remain the source of truth for Comments and Threads. Use
-Supabase as an index for reporting, search, moderation, or audits.
+Comments and Threads are authored through Liveblocks so realtime collaboration
+stays correct. Use Supabase as an index for reporting, search, moderation, or
+audits.
 
 ## Limits and troubleshooting
 
