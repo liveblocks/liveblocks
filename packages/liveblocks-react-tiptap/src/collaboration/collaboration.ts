@@ -231,22 +231,24 @@ export const Collaboration = Extension.create<
           const hasUndoManSelf = undoManager.trackedOrigins.has(undoManager);
           const observers = undoManager._observers;
 
-          if (
-            "restore" in undoManager &&
-            typeof undoManager.restore === "function"
-          ) {
-            undoManager.restore = () => {
-              if (hasUndoManSelf) {
-                undoManager.trackedOrigins.add(undoManager);
-              }
+          // Always install the reattach `restore()`, regardless of whether
+          // one already exists on the UndoManager. The previous guarded
+          // version was a no-op for standard `Y.UndoManager` (which has no
+          // `restore` method), causing the UndoManager to be permanently
+          // orphaned after the first plugin reconfigure (e.g. BubbleMenu /
+          // DragHandle / SlashCommand mount). Matches upstream
+          // `@tiptap/extension-collaboration`.
+          undoManager.restore = () => {
+            if (hasUndoManSelf) {
+              undoManager.trackedOrigins.add(undoManager);
+            }
 
-              undoManager.doc.on(
-                "afterTransaction",
-                undoManager.afterTransactionHandler
-              );
-              undoManager._observers = observers;
-            };
-          }
+            undoManager.doc.on(
+              "afterTransaction",
+              undoManager.afterTransactionHandler
+            );
+            undoManager._observers = observers;
+          };
 
           if (viewRet?.destroy) {
             viewRet.destroy();

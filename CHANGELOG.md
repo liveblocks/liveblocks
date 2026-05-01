@@ -4,6 +4,11 @@
 
 - Fix keyboard shortcut in strikethrough tooltip. (Thanks @HellBoy-OP for the
   contribution!)
+- Fix Yjs undo/redo silently breaking after `editor.registerPlugin` /
+  `unregisterPlugin` is called (e.g. when Tiptap's `BubbleMenu`, `DragHandle`,
+  or `SlashCommand` mount). The reattach `restore()` is now installed
+  unconditionally on view destroy, matching upstream
+  `@tiptap/extension-collaboration`. (Thanks @lucasmotta for the contribution!)
 
 ## v3.18.5
 
