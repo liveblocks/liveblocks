@@ -65,8 +65,8 @@
     "README.md"
   ],
   "scripts": {
-    "dev": "rollup --config rollup.config.js --watch",
-    "build": "rollup --config rollup.config.js",
+    "dev": "tsdown --watch",
+    "build": "tsdown",
     "start": "pnpm run dev",
     "format": "eslint --fix src/; stylelint --fix src/styles/; prettier --write src/",
     "lint": "eslint src/; stylelint src/styles/",

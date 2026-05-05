@@ -52,6 +52,58 @@ function createExternals(dependencies) {
 }
 
 /**
+ * Run the same PostCSS pipeline as the Rollup `styles` plugin, writing CSS and
+ * external source maps next to each destination path (relative to `cwd`).
+ *
+ * @param {File[]} styleFiles
+ * @param {string} [cwd]
+ * @returns {Promise<void>}
+ */
+export async function buildStylesheets(styleFiles, cwd = process.cwd()) {
+  const processor = postcss([
+    require("stylelint"),
+    require("postcss-import"),
+    require("postcss-advanced-variables"),
+    require("postcss-functions")({
+      functions: {
+        "color-mix-scale": colorMixScale,
+      },
+    }),
+    require("postcss-nesting"),
+    require("postcss-combine-duplicated-selectors"),
+    require("postcss-sort-media-queries"),
+    require("postcss-lightningcss")({ browsers: ">= 1%" }),
+    require("postcss-reporter")({
+      clearReportedMessages: true,
+      plugins: ["stylelint"],
+      noPlugin: true,
+      throwError: true,
+    }),
+  ]);
+
+  for (const file of styleFiles) {
+    console.log(`🎨 Building ${file.entry}…`);
+
+    const entry = path.resolve(cwd, file.entry);
+    const destination = path.resolve(cwd, file.destination);
+
+    const { css, map } = await processor.process(
+      fs.readFileSync(entry, "utf8"),
+      {
+        from: entry,
+        to: destination,
+        map: {
+          inline: false,
+        },
+      }
+    );
+
+    createFile(destination, css);
+    createFile(`${destination}.map`, map.toString());
+  }
+}
+
+/**
  * Generates a scale of [50,100...900] colors based on a contrast
  * variable, which indicates the lowest percentage of the scale.
  *
@@ -144,47 +196,7 @@ export function createConfig({ pkg, entries, styles: styleFiles, external }) {
           return;
         }
 
-        const processor = postcss([
-          require("stylelint"),
-          require("postcss-import"),
-          require("postcss-advanced-variables"),
-          require("postcss-functions")({
-            functions: {
-              "color-mix-scale": colorMixScale,
-            },
-          }),
-          require("postcss-nesting"),
-          require("postcss-combine-duplicated-selectors"),
-          require("postcss-sort-media-queries"),
-          require("postcss-lightningcss")({ browsers: ">= 1%" }),
-          require("postcss-reporter")({
-            clearReportedMessages: true,
-            plugins: ["stylelint"],
-            noPlugin: true,
-            throwError: true,
-          }),
-        ]);
-
-        for (const file of files) {
-          console.log(`🎨 Building ${file.entry}…`);
-
-          const entry = path.resolve(file.entry);
-          const destination = path.resolve(file.destination);
-
-          const { css, map } = await processor.process(
-            fs.readFileSync(entry, "utf8"),
-            {
-              from: entry,
-              to: destination,
-              map: {
-                inline: false,
-              },
-            }
-          );
-
-          createFile(destination, css);
-          createFile(`${destination}.map`, map.toString());
-        }
+        await buildStylesheets(files);
 
         didStyles = true;
       },
@@ -349,3 +361,10 @@ export function createConfig({ pkg, entries, styles: styleFiles, external }) {
 
   return config;
 }
+
+export {
+  dualFormatLibraryDefines,
+  libraryNeverBundleDeps,
+  libraryOutExtensionsTypeModule,
+  preserveUseClientPlugin,
+} from "./tsdown-react.js";
