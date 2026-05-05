@@ -40,6 +40,7 @@
   },
   "devDependencies": {
     "@liveblocks/eslint-config": "workspace:*",
+    "@liveblocks/tsdown-config": "workspace:*",
     "@liveblocks/vitest-config": "workspace:*",
     "eslint": "^9.39.4",
     "typescript": "^5.9.3",

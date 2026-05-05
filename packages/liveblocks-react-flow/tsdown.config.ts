@@ -1,39 +1,15 @@
-import { fileURLToPath } from "node:url";
-
-import {
-  buildStylesheets,
-  dualFormatLibraryDefines,
-  libraryNeverBundleDeps,
-  libraryOutExtensionsTypeModule,
-} from "@liveblocks/tsdown-config";
-import { defineConfig } from "tsdown";
+import { createLiveblocksLibraryTsdownConfig } from "@liveblocks/tsdown-config";
 
 import pkg from "./package.json" with { type: "json" };
-
-const packageDir = fileURLToPath(new URL(".", import.meta.url));
 
 const STYLE_FILES = [
   { entry: "src/styles/index.css", destination: "styles.css" },
 ];
 
-export default defineConfig({
-  name: "@liveblocks/react-flow",
+export default createLiveblocksLibraryTsdownConfig({
+  pkg,
+  importMeta: import.meta,
+  mode: "unbundle",
   entry: ["src/index.ts", "src/node.ts"],
-  unbundle: true,
-  treeshake: false,
-  platform: "browser",
-  target: "es2022",
-  hash: false,
-  sourcemap: true,
-  clean: true,
-  dts: true,
-  failOnWarn: false,
-  outExtensions: libraryOutExtensionsTypeModule,
-  deps: {
-    neverBundle: libraryNeverBundleDeps(pkg),
-  },
-  format: dualFormatLibraryDefines(pkg.version),
-  onSuccess: async () => {
-    await buildStylesheets(STYLE_FILES, packageDir);
-  },
+  styleFiles: STYLE_FILES,
 });

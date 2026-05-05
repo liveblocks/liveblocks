@@ -1,19 +1,8 @@
-import { defineConfig } from "tsdown";
+import { createLiveblocksLibraryTsdownConfig } from "@liveblocks/tsdown-config";
 
-export default defineConfig({
-  entry: ["src/index.ts"],
-  dts: true,
-  clean: true,
-  format: ["esm", "cjs"],
-  outExtensions: ({ format }) => ({
-    js: format === "cjs" ? ".cjs" : ".js",
-  }),
-  sourcemap: true,
-  target: false,
+import pkg from "./package.json" with { type: "json" };
 
-  esbuildOptions(options, _context) {
-    // Replace __VERSION__ globals with concrete version
-    const pkg = require("./package.json");
-    options.define.__VERSION__ = JSON.stringify(pkg.version);
-  },
+export default createLiveblocksLibraryTsdownConfig({
+  pkg,
+  entry: "src/index.ts",
 });

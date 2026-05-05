@@ -297,6 +297,9 @@ importers:
       '@liveblocks/eslint-config':
         specifier: workspace:*
         version: link:../../shared/eslint-config
+      '@liveblocks/tsdown-config':
+        specifier: workspace:*
+        version: link:../../shared/tsdown-config
       '@liveblocks/vitest-config':
         specifier: workspace:*
         version: link:../../shared/vitest-config
@@ -322,6 +325,9 @@ importers:
       '@liveblocks/eslint-config':
         specifier: workspace:*
         version: link:../../shared/eslint-config
+      '@liveblocks/tsdown-config':
+        specifier: workspace:*
+        version: link:../../shared/tsdown-config
       '@liveblocks/vitest-config':
         specifier: workspace:*
         version: link:../../shared/vitest-config
@@ -343,6 +349,9 @@ importers:
       '@liveblocks/query-parser':
         specifier: ^0.1.1
         version: 0.1.1
+      '@liveblocks/tsdown-config':
+        specifier: workspace:*
+        version: link:../../shared/tsdown-config
       '@liveblocks/vitest-config':
         specifier: workspace:*
         version: link:../../shared/vitest-config
@@ -383,6 +392,9 @@ importers:
       '@liveblocks/eslint-config':
         specifier: workspace:*
         version: link:../../shared/eslint-config
+      '@liveblocks/tsdown-config':
+        specifier: workspace:*
+        version: link:../../shared/tsdown-config
       '@liveblocks/vitest-config':
         specifier: workspace:*
         version: link:../../shared/vitest-config
@@ -435,6 +447,9 @@ importers:
       '@liveblocks/eslint-config':
         specifier: workspace:*
         version: link:../../shared/eslint-config
+      '@liveblocks/tsdown-config':
+        specifier: workspace:*
+        version: link:../../shared/tsdown-config
       '@liveblocks/vitest-config':
         specifier: workspace:*
         version: link:../../shared/vitest-config
@@ -481,6 +496,9 @@ importers:
       '@liveblocks/eslint-config':
         specifier: workspace:*
         version: link:../../shared/eslint-config
+      '@liveblocks/tsdown-config':
+        specifier: workspace:*
+        version: link:../../shared/tsdown-config
       '@liveblocks/vitest-config':
         specifier: workspace:*
         version: link:../../shared/vitest-config
@@ -512,6 +530,9 @@ importers:
       '@liveblocks/eslint-config':
         specifier: workspace:*
         version: link:../../shared/eslint-config
+      '@liveblocks/tsdown-config':
+        specifier: workspace:*
+        version: link:../../shared/tsdown-config
       '@liveblocks/vitest-config':
         specifier: workspace:*
         version: link:../../shared/vitest-config
@@ -564,6 +585,9 @@ importers:
       '@liveblocks/query-parser':
         specifier: ^0.1.1
         version: 0.1.1
+      '@liveblocks/tsdown-config':
+        specifier: workspace:*
+        version: link:../../shared/tsdown-config
       '@liveblocks/vitest-config':
         specifier: workspace:*
         version: link:../../shared/vitest-config
@@ -1050,6 +1074,9 @@ importers:
       '@liveblocks/eslint-config':
         specifier: workspace:*
         version: link:../../shared/eslint-config
+      '@liveblocks/tsdown-config':
+        specifier: workspace:*
+        version: link:../../shared/tsdown-config
       '@liveblocks/vitest-config':
         specifier: workspace:*
         version: link:../../shared/vitest-config
@@ -1096,6 +1123,9 @@ importers:
       '@liveblocks/eslint-config':
         specifier: workspace:*
         version: link:../../shared/eslint-config
+      '@liveblocks/tsdown-config':
+        specifier: workspace:*
+        version: link:../../shared/tsdown-config
       '@liveblocks/vitest-config':
         specifier: workspace:*
         version: link:../../shared/vitest-config
@@ -1124,6 +1154,9 @@ importers:
       '@liveblocks/eslint-config':
         specifier: workspace:*
         version: link:../../shared/eslint-config
+      '@liveblocks/tsdown-config':
+        specifier: workspace:*
+        version: link:../../shared/tsdown-config
       '@liveblocks/vitest-config':
         specifier: workspace:*
         version: link:../../shared/vitest-config

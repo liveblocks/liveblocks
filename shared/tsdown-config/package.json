@@ -16,7 +16,8 @@
     "postcss-sort-media-queries": "5.2.0"
   },
   "peerDependencies": {
-    "stylelint": "^15 || ^16"
+    "stylelint": "^15 || ^16",
+    "tsdown": "^0.21.0"
   },
   "peerDependenciesMeta": {
     "stylelint": {

@@ -1,16 +1,8 @@
-import { defineConfig } from "tsdown";
+import { createLiveblocksLibraryTsdownConfig } from "@liveblocks/tsdown-config";
 
-export default defineConfig({
-  entry: ["src/index.ts"],
-  dts: true,
-  clean: true,
-  format: ["esm", "cjs"],
-  outExtensions: ({ format }) => ({
-    js: format === "cjs" ? ".cjs" : ".js",
-  }),
-  sourcemap: true,
-  target: false,
-  deps: {
-    neverBundle: ["chat"],
-  },
+import pkg from "./package.json" with { type: "json" };
+
+export default createLiveblocksLibraryTsdownConfig({
+  pkg,
+  entry: "src/index.ts",
 });

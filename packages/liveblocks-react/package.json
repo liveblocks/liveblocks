@@ -81,6 +81,7 @@
   },
   "devDependencies": {
     "@liveblocks/eslint-config": "workspace:*",
+    "@liveblocks/tsdown-config": "workspace:*",
     "@liveblocks/query-parser": "^0.1.1",
     "@liveblocks/vitest-config": "workspace:*",
     "@testing-library/jest-dom": "^6.8.0",

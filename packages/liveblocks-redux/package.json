@@ -43,6 +43,7 @@
   },
   "devDependencies": {
     "@liveblocks/eslint-config": "workspace:*",
+    "@liveblocks/tsdown-config": "workspace:*",
     "@liveblocks/vitest-config": "workspace:*",
     "@reduxjs/toolkit": "^2.8.2",
     "@testing-library/dom": "^10.4.0",

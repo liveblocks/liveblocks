@@ -49,6 +49,7 @@
   },
   "devDependencies": {
     "@liveblocks/eslint-config": "workspace:*",
+    "@liveblocks/tsdown-config": "workspace:*",
     "@liveblocks/vitest-config": "workspace:*",
     "@tiptap/core": "^3.22.3",
     "@tiptap/pm": "^3.22.3",
