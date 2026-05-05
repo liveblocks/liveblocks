@@ -1,5 +1,7 @@
 ## vNEXT (not yet released)
 
+## v3.19.0
+
 ### `@liveblocks/node`
 
 - Add new `markdownToCommentBody` helper to convert Markdown strings into
