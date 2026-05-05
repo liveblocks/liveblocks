@@ -48,6 +48,84 @@ describe("markdownToCommentBody", () => {
         ],
       });
     });
+
+    test("treats blank lines as paragraph separators", () => {
+      expect(
+        markdownToCommentBody(
+          "@stacy Can you review this update?\n\nYou can add **bold**, _italics_, ~~strikethrough~~, and `inline code`.\n\nRead more in [the docs](https://liveblocks.io/docs)."
+        )
+      ).toEqual({
+        version: 1,
+        content: [
+          {
+            type: "paragraph",
+            children: [
+              { type: "mention", kind: "user", id: "stacy" },
+              { text: " Can you review this update?" },
+            ],
+          },
+          {
+            type: "paragraph",
+            children: [
+              { text: "You can add " },
+              { text: "bold", bold: true },
+              { text: ", " },
+              { text: "italics", italic: true },
+              { text: ", " },
+              { text: "strikethrough", strikethrough: true },
+              { text: ", and " },
+              { text: "inline code", code: true },
+              { text: "." },
+            ],
+          },
+          {
+            type: "paragraph",
+            children: [
+              { text: "Read more in " },
+              {
+                type: "link",
+                url: "https://liveblocks.io/docs",
+                text: "the docs",
+              },
+              { text: "." },
+            ],
+          },
+        ],
+      });
+    });
+
+    test("keeps consecutive lines in one paragraph with line breaks", () => {
+      expect(
+        markdownToCommentBody(
+          "@stacy Can you review this update?\nYou can add **bold**, _italics_, ~~strikethrough~~, and `inline code`.\nRead more in [the docs](https://liveblocks.io/docs)."
+        )
+      ).toEqual({
+        version: 1,
+        content: [
+          {
+            type: "paragraph",
+            children: [
+              { type: "mention", kind: "user", id: "stacy" },
+              { text: " Can you review this update?\nYou can add " },
+              { text: "bold", bold: true },
+              { text: ", " },
+              { text: "italics", italic: true },
+              { text: ", " },
+              { text: "strikethrough", strikethrough: true },
+              { text: ", and " },
+              { text: "inline code", code: true },
+              { text: ".\nRead more in " },
+              {
+                type: "link",
+                url: "https://liveblocks.io/docs",
+                text: "the docs",
+              },
+              { text: "." },
+            ],
+          },
+        ],
+      });
+    });
   });
 
   describe("headings and blockquotes", () => {
