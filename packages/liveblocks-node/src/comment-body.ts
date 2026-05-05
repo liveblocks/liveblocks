@@ -26,7 +26,7 @@ type MarkdownTableCell = {
 
 const MENTION_REGEX = /(^|[^A-Za-z0-9_.-])@([A-Za-z0-9_][A-Za-z0-9_.-]*)/g;
 
-function parseMarkdownTokens(markdown: string): AnyToken[] {
+function tokenizeMarkdown(markdown: string): AnyToken[] {
   return new Lexer().lex(markdown);
 }
 
@@ -48,8 +48,38 @@ function toCommentBodyText(
   };
 }
 
+function appendPlainText(
+  inlines: CommentBodyInlineElement[],
+  text: string,
+  formatting: MarkdownTextFormatting
+): void {
+  if (text.length === 0) {
+    return;
+  }
+
+  inlines.push(toCommentBodyText(text, formatting));
+}
+
 function listIndent(listDepth: number): string {
   return "  ".repeat(listDepth);
+}
+
+function blockquotePrefix(blockquoteDepth: number): string {
+  return blockquoteDepth > 0 ? "> ".repeat(blockquoteDepth) : "";
+}
+
+function prependTextToParagraph(
+  paragraph: CommentBodyParagraph,
+  textPrefix: string
+): CommentBodyParagraph {
+  if (textPrefix.length === 0) {
+    return paragraph;
+  }
+
+  return {
+    ...paragraph,
+    children: [{ text: textPrefix }, ...paragraph.children],
+  };
 }
 
 function appendTextWithMentions(
@@ -89,12 +119,12 @@ function appendTextWithMentions(
   }
 }
 
-function appendFormattedInlineChildren(
+function appendFormattedInlinesFromTokens(
   inlines: CommentBodyInlineElement[],
   tokens: AnyToken[],
   formatting: MarkdownTextFormatting
 ): void {
-  inlines.push(...markdownTokensToCommentBodyInlines(tokens, formatting));
+  inlines.push(...tokensToCommentBodyInlines(tokens, formatting));
 }
 
 function listMarker(
@@ -102,15 +132,20 @@ function listMarker(
   start: number | "",
   index: number
 ): string {
-  return ordered ? `${(start || 1) + index}. ` : "- ";
+  if (!ordered) {
+    return "- ";
+  }
+
+  const firstItemNumber = start === "" ? 1 : start;
+  return `${firstItemNumber + index}. `;
 }
 
-function markdownTokensToPlainText(tokens: AnyToken[], listDepth = 0): string {
+function tokensToPlainText(tokens: AnyToken[], listDepth = 0): string {
   assertTokens(tokens);
-  return tokens.map((t) => markdownTokenToPlainText(t, listDepth)).join("");
+  return tokens.map((t) => tokenToPlainText(t, listDepth)).join("");
 }
 
-function markdownTokenToPlainText(token: Token, listDepth = 0): string {
+function tokenToPlainText(token: Token, listDepth = 0): string {
   switch (token.type) {
     case "escape":
     case "html":
@@ -127,7 +162,7 @@ function markdownTokenToPlainText(token: Token, listDepth = 0): string {
     case "em":
     case "del":
     case "link": {
-      return markdownTokensToPlainText(token.tokens, 0);
+      return tokensToPlainText(token.tokens, 0);
     }
 
     case "image": {
@@ -136,29 +171,23 @@ function markdownTokenToPlainText(token: Token, listDepth = 0): string {
 
     case "paragraph":
     case "heading": {
-      return markdownTokensToPlainText(token.tokens, listDepth);
+      return tokensToPlainText(token.tokens, listDepth);
     }
 
     case "blockquote": {
-      return markdownTokensToPlainText(token.tokens, listDepth);
+      return tokensToPlainText(token.tokens, listDepth);
     }
 
     case "list": {
       return token.items
         .map((item, index) =>
-          listItemToPlainText(
-            item,
-            token.ordered,
-            token.start,
-            index,
-            listDepth
-          )
+          listItemToText(item, token.ordered, token.start, index, listDepth)
         )
         .join("\n");
     }
 
     case "list_item": {
-      return markdownTokensToPlainText(token.tokens, listDepth);
+      return tokensToPlainText(token.tokens, listDepth);
     }
 
     case "code": {
@@ -166,7 +195,7 @@ function markdownTokenToPlainText(token: Token, listDepth = 0): string {
     }
 
     case "table": {
-      return tableToTextRows(token).join("\n");
+      return tableToMarkdownRows(token).join("\n");
     }
 
     case "space":
@@ -180,7 +209,7 @@ function markdownTokenToPlainText(token: Token, listDepth = 0): string {
   }
 }
 
-function listItemToPlainText(
+function listItemToText(
   item: Tokens.ListItem,
   ordered: boolean,
   start: number | "",
@@ -190,23 +219,33 @@ function listItemToPlainText(
   const indent = listIndent(listDepth);
   const marker = listMarker(ordered, start, index);
   const prefix = indent + marker;
-  return `${prefix}${markdownTokensToPlainText(item.tokens, listDepth + 1)}`;
+  return `${prefix}${tokensToPlainText(item.tokens, listDepth + 1)}`;
 }
 
-function tableToTextRows(table: Tokens.Table): string[] {
+function tableToMarkdownRows(table: Tokens.Table): string[] {
   const rows = [table.header, ...table.rows];
-
-  return rows.map((row) => {
-    const cells = row.map((cell) => tableCellToPlainText(cell));
+  const markdownRows = rows.map((row) => {
+    const cells = row.map((cell) => tableCellToText(cell));
     return `| ${cells.join(" | ")} |`;
   });
+
+  if (markdownRows.length === 0) {
+    return [];
+  }
+
+  const columnCount = table.header.length;
+  const separatorRow = `| ${new Array(columnCount).fill("---").join(" | ")} |`;
+
+  return [markdownRows[0], separatorRow, ...markdownRows.slice(1)].filter(
+    (row): row is string => row !== undefined
+  );
 }
 
-function tableCellToPlainText(cell: MarkdownTableCell): string {
-  return markdownTokensToPlainText(cell.tokens);
+function tableCellToText(cell: MarkdownTableCell): string {
+  return tokensToPlainText(cell.tokens);
 }
 
-function markdownTokensToCommentBodyInlines(
+function tokensToCommentBodyInlines(
   tokens: AnyToken[],
   formatting: MarkdownTextFormatting = {}
 ): CommentBodyInlineElement[] {
@@ -228,7 +267,7 @@ function markdownTokensToCommentBodyInlines(
       }
 
       case "strong": {
-        appendFormattedInlineChildren(inlines, token.tokens, {
+        appendFormattedInlinesFromTokens(inlines, token.tokens, {
           ...formatting,
           bold: true,
         });
@@ -236,7 +275,7 @@ function markdownTokensToCommentBodyInlines(
       }
 
       case "em": {
-        appendFormattedInlineChildren(inlines, token.tokens, {
+        appendFormattedInlinesFromTokens(inlines, token.tokens, {
           ...formatting,
           italic: true,
         });
@@ -244,7 +283,7 @@ function markdownTokensToCommentBodyInlines(
       }
 
       case "del": {
-        appendFormattedInlineChildren(inlines, token.tokens, {
+        appendFormattedInlinesFromTokens(inlines, token.tokens, {
           ...formatting,
           strikethrough: true,
         });
@@ -263,10 +302,10 @@ function markdownTokensToCommentBodyInlines(
 
       case "link": {
         const href = sanitizeUrl(token.href);
-        const text = markdownTokensToPlainText(token.tokens, 0);
+        const text = tokensToPlainText(token.tokens, 0);
 
         if (href === null) {
-          appendTextWithMentions(inlines, text, formatting);
+          appendPlainText(inlines, text, formatting);
           break;
         }
 
@@ -279,20 +318,12 @@ function markdownTokensToCommentBodyInlines(
       }
 
       case "image": {
-        const href = sanitizeUrl(token.href);
-        const text = token.text || token.href;
-
-        if (href === null) {
-          appendTextWithMentions(inlines, text, formatting);
-          break;
-        }
-
-        inlines.push(toCommentBodyText(token.text || href, formatting));
+        appendPlainText(inlines, token.raw, formatting);
         break;
       }
 
       default: {
-        const text = markdownTokenToPlainText(token, 0);
+        const text = tokenToPlainText(token, 0);
         if (text) {
           appendTextWithMentions(inlines, text, formatting);
         }
@@ -304,9 +335,10 @@ function markdownTokensToCommentBodyInlines(
   return inlines;
 }
 
-function markdownTokenToCommentBodyParagraphs(
+function tokenToCommentBodyParagraphs(
   token: Token,
-  listDepth = 0
+  listDepth = 0,
+  blockquoteDepth = 0
 ): CommentBodyParagraph[] {
   switch (token.type) {
     case "space":
@@ -316,16 +348,31 @@ function markdownTokenToCommentBodyParagraphs(
 
     case "paragraph":
     case "heading": {
+      const children = tokensToCommentBodyInlines(token.tokens);
+      if (children.length === 0) {
+        return [];
+      }
+
+      const headingPrefix =
+        token.type === "heading" ? `${"#".repeat(token.depth)} ` : "";
+
       return [
-        {
-          type: "paragraph",
-          children: markdownTokensToCommentBodyInlines(token.tokens),
-        },
+        prependTextToParagraph(
+          {
+            type: "paragraph",
+            children,
+          },
+          blockquotePrefix(blockquoteDepth) + headingPrefix
+        ),
       ];
     }
 
     case "blockquote": {
-      return markdownTokensToCommentBodyParagraphs(token.tokens, listDepth);
+      return tokensToCommentBodyParagraphs(
+        token.tokens,
+        listDepth,
+        blockquoteDepth + 1
+      );
     }
 
     case "list": {
@@ -333,78 +380,113 @@ function markdownTokenToCommentBodyParagraphs(
       return token.items.flatMap((item, index) => {
         const marker = listMarker(token.ordered, token.start, index);
         const prefix = indent + marker + taskListPrefix(item);
-        const paragraphs = markdownTokensToCommentBodyParagraphs(
+        const quotePrefix = blockquotePrefix(blockquoteDepth);
+        const paragraphs = tokensToCommentBodyParagraphs(
           item.tokens,
-          listDepth + 1
+          listDepth + 1,
+          blockquoteDepth
         );
-
-        if (paragraphs.length === 0) {
-          return [
-            {
-              type: "paragraph",
-              children: [{ text: prefix }],
-            },
-          ];
-        }
 
         const [firstParagraph, ...remainingParagraphs] = paragraphs;
 
         if (!firstParagraph) {
-          return [];
+          return [
+            {
+              type: "paragraph",
+              children: [{ text: quotePrefix + prefix }],
+            },
+          ];
+        }
+
+        const [firstChild, ...remainingChildren] = firstParagraph.children;
+        const firstChildText =
+          firstChild !== undefined && "text" in firstChild
+            ? firstChild.text
+            : undefined;
+
+        if (
+          quotePrefix.length > 0 &&
+          firstChild !== undefined &&
+          typeof firstChildText === "string" &&
+          firstChildText.startsWith(quotePrefix)
+        ) {
+          const firstParagraphWithListPrefix: CommentBodyParagraph = {
+            ...firstParagraph,
+            children: [
+              {
+                text:
+                  quotePrefix +
+                  prefix +
+                  firstChildText.slice(quotePrefix.length),
+              },
+              ...remainingChildren,
+            ],
+          };
+
+          return [firstParagraphWithListPrefix, ...remainingParagraphs];
         }
 
         return [
-          {
-            ...firstParagraph,
-            children: [{ text: prefix }, ...firstParagraph.children],
-          },
+          prependTextToParagraph(firstParagraph, prefix),
           ...remainingParagraphs,
         ];
       });
     }
 
     case "list_item": {
-      return markdownTokensToCommentBodyParagraphs(token.tokens, listDepth);
+      return tokensToCommentBodyParagraphs(
+        token.tokens,
+        listDepth,
+        blockquoteDepth
+      );
     }
 
     case "code": {
       return [
-        {
-          type: "paragraph",
-          children: [{ text: token.text }],
-        },
+        prependTextToParagraph(
+          {
+            type: "paragraph",
+            children: [{ text: token.text }],
+          },
+          blockquotePrefix(blockquoteDepth)
+        ),
       ];
     }
 
     case "table": {
-      return tableToTextRows(token).map((row) => ({
+      const quotePrefix = blockquotePrefix(blockquoteDepth);
+      return tableToMarkdownRows(token).map((row) => ({
         type: "paragraph",
-        children: [{ text: row }],
+        children: [{ text: quotePrefix + row }],
       }));
     }
 
     default: {
-      const inlines = markdownTokensToCommentBodyInlines([token]);
+      const inlines = tokensToCommentBodyInlines([token]);
 
       return inlines.length > 0
         ? [
-            {
-              type: "paragraph",
-              children: inlines,
-            },
+            prependTextToParagraph(
+              {
+                type: "paragraph",
+                children: inlines,
+              },
+              blockquotePrefix(blockquoteDepth)
+            ),
           ]
         : [];
     }
   }
 }
 
-function markdownTokensToCommentBodyParagraphs(
+function tokensToCommentBodyParagraphs(
   tokens: AnyToken[],
-  listDepth = 0
+  listDepth = 0,
+  blockquoteDepth = 0
 ): CommentBodyParagraph[] {
   assertTokens(tokens);
   return tokens.flatMap((token) =>
-    markdownTokenToCommentBodyParagraphs(token, listDepth)
+    tokenToCommentBodyParagraphs(token, listDepth, blockquoteDepth)
   );
 }
 
@@ -420,17 +502,13 @@ function assertTokens(_: AnyToken | AnyToken[]): asserts _ is Token | Token[] {}
 /**
  * Converts a Markdown string into a comment body. (`CommentBody`)
  *
- * This is a lossy conversion: `CommentBody` only supports paragraphs, inline
- * text formatting (bold, italic, strikethrough, code), links, and `@mention`
- * syntax. Block-level elements such as headings, lists, code blocks, and
- * tables are flattened to plain text.
+ * This is a lossy conversion as `CommentBody` only supports paragraphs, inline
+ * text formatting (bold, italic, strikethrough, code), links, and `@mentions`.
+ * Unsupported features are kept as plain text.
  */
 export function markdownToCommentBody(markdown: string): CommentBody {
   return {
     version: 1,
-    content: markdownTokensToCommentBodyParagraphs(
-      parseMarkdownTokens(markdown),
-      0
-    ),
+    content: tokensToCommentBodyParagraphs(tokenizeMarkdown(markdown)),
   };
 }

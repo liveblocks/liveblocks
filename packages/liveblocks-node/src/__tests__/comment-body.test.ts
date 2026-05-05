@@ -57,11 +57,11 @@ describe("markdownToCommentBody", () => {
         content: [
           {
             type: "paragraph",
-            children: [{ text: "Heading" }],
+            children: [{ text: "# " }, { text: "Heading" }],
           },
           {
             type: "paragraph",
-            children: [{ text: "Quote" }],
+            children: [{ text: "> " }, { text: "Quote" }],
           },
         ],
       });
@@ -71,8 +71,11 @@ describe("markdownToCommentBody", () => {
       expect(markdownToCommentBody("> outer\n> > inner")).toEqual({
         version: 1,
         content: [
-          { type: "paragraph", children: [{ text: "outer" }] },
-          { type: "paragraph", children: [{ text: "inner" }] },
+          { type: "paragraph", children: [{ text: "> " }, { text: "outer" }] },
+          {
+            type: "paragraph",
+            children: [{ text: "> > " }, { text: "inner" }],
+          },
         ],
       });
     });
@@ -83,7 +86,7 @@ describe("markdownToCommentBody", () => {
         content: [
           {
             type: "paragraph",
-            children: [{ text: "- " }, { text: "item" }],
+            children: [{ text: "> - " }, { text: "item" }],
           },
         ],
       });
@@ -287,6 +290,18 @@ describe("markdownToCommentBody", () => {
           {
             type: "paragraph",
             children: [{ text: "Click" }],
+          },
+        ],
+      });
+    });
+
+    test("does not parse mentions in unsafe link labels", () => {
+      expect(markdownToCommentBody("[Hi @chris](javascript:alert(1))")).toEqual({
+        version: 1,
+        content: [
+          {
+            type: "paragraph",
+            children: [{ text: "Hi @chris" }],
           },
         ],
       });
@@ -525,13 +540,17 @@ describe("markdownToCommentBody", () => {
           },
           {
             type: "paragraph",
+            children: [{ text: "| --- | --- |" }],
+          },
+          {
+            type: "paragraph",
             children: [{ text: "| Ada | 36 |" }],
           },
         ],
       });
     });
 
-    test("converts images to alt text or URL", () => {
+    test("keeps images as raw markdown", () => {
       expect(
         markdownToCommentBody(
           "![Diagram](https://example.com/diagram.png)\n\n![](https://example.com/image.png)"
@@ -541,23 +560,49 @@ describe("markdownToCommentBody", () => {
         content: [
           {
             type: "paragraph",
-            children: [{ text: "Diagram" }],
+            children: [{ text: "![Diagram](https://example.com/diagram.png)" }],
           },
           {
             type: "paragraph",
-            children: [{ text: "https://example.com/image.png" }],
+            children: [{ text: "![](https://example.com/image.png)" }],
           },
         ],
       });
     });
 
-    test("falls back to image alt text for unsafe image URLs", () => {
+    test("keeps raw markdown for images with unsafe URLs", () => {
       expect(markdownToCommentBody("![Preview](javascript:alert(1))")).toEqual({
         version: 1,
         content: [
           {
             type: "paragraph",
-            children: [{ text: "Preview" }],
+            children: [{ text: "![Preview](javascript:alert(1))" }],
+          },
+        ],
+      });
+    });
+
+    test("does not parse mentions inside raw image markdown", () => {
+      expect(markdownToCommentBody("![Hi @chris](javascript:alert(1))")).toEqual(
+        {
+          version: 1,
+          content: [
+            {
+              type: "paragraph",
+              children: [{ text: "![Hi @chris](javascript:alert(1))" }],
+            },
+          ],
+        }
+      );
+    });
+
+    test("keeps raw markdown when image alt is empty", () => {
+      expect(markdownToCommentBody("![](javascript:alert(1))")).toEqual({
+        version: 1,
+        content: [
+          {
+            type: "paragraph",
+            children: [{ text: "![](javascript:alert(1))" }],
           },
         ],
       });
@@ -626,6 +671,7 @@ describe("markdownToCommentBody", () => {
           {
             type: "paragraph",
             children: [
+              { text: "> " },
               { text: "Note", bold: true },
               { text: " " },
               { type: "mention", kind: "user", id: "pierre" },
