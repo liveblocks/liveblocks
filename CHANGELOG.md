@@ -3,7 +3,7 @@
 ### `@liveblocks/node`
 
 - Add new `markdownToCommentBody` helper to convert Markdown strings into
-  Liveblocks' `CommentBody` objects.
+  `CommentBody` objects.
 
 ### `@liveblocks/react-tiptap`
 

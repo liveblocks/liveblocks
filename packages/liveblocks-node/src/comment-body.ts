@@ -500,11 +500,13 @@ function assertTokens(_: AnyToken[]): asserts _ is Token[];
 function assertTokens(_: AnyToken | AnyToken[]): asserts _ is Token | Token[] {}
 
 /**
- * Converts a Markdown string into a comment body. (`CommentBody`)
+ * Converts a Markdown string into a `CommentBody` object that can be used to write
+ * comments with `createThread`, `createComment`, or `editComment`.
  *
- * This is a lossy conversion as `CommentBody` only supports paragraphs, inline
- * text formatting (bold, italic, strikethrough, code), links, and `@mentions`.
- * Unsupported features are kept as plain text.
+ * This is a lossy conversion because `CommentBody` only supports paragraphs,
+ * inline text formatting (bold, italic, strikethrough, code), links, and
+ * `@mentions`. Unsupported features like headings, lists, tables, or blockquotes
+ * are kept as plain text.
  */
 export function markdownToCommentBody(markdown: string): CommentBody {
   return {

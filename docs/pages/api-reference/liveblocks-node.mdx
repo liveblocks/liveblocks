@@ -3967,6 +3967,30 @@ await stringifyCommentBody(comment.body, {
 });
 ```
 
+#### markdownToCommentBody [#markdown-to-comment-body]
+
+Converts a Markdown string into a `CommentBody` object that can be used to write
+comments with [`createThread`](#post-rooms-roomId-threads),
+[`createComment`](#post-rooms-roomId-threads-threadId-comments), or
+[`editComment`](#post-rooms-roomId-threads-threadId-comments-commentId).
+
+```ts
+import { markdownToCommentBody } from "@liveblocks/node";
+
+const body = markdownToCommentBody(`
+@stacy Can you review this update?
+
+You can add **bold**, _italics_, ~~strikethrough~~, and \`inline code\`.
+
+Read more in [the docs](https://liveblocks.io/docs).
+`);
+```
+
+This is a lossy conversion because `CommentBody` only supports paragraphs,
+inline text formatting (bold, italic, strikethrough, code), links, and
+`@mentions`. Unsupported features like headings, lists, tables, or blockquotes
+are kept as plain text.
+
 ### WebhookHandler [#WebhookHandler]
 
 <Banner title="Need help implementing webhooks?">
