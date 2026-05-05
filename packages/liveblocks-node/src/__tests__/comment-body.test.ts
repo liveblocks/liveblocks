@@ -611,7 +611,7 @@ describe("markdownToCommentBody", () => {
   describe("tables and images", () => {
     test("converts tables to pipe-separated text rows", () => {
       expect(
-        markdownToCommentBody("| Name | Age |\n| --- | --- |\n| Ada | 36 |")
+        markdownToCommentBody("| Name | Age |\n| --- | --- |\n| Ada | 30 |")
       ).toEqual({
         version: 1,
         content: [
@@ -625,7 +625,7 @@ describe("markdownToCommentBody", () => {
           },
           {
             type: "paragraph",
-            children: [{ text: "| Ada | 36 |" }],
+            children: [{ text: "| Ada | 30 |" }],
           },
         ],
       });
@@ -780,6 +780,20 @@ describe("markdownToCommentBody", () => {
       });
 
       expect(output).toBe(input);
+    });
+
+    test("keeps unsupported markdown features", async () => {
+      const input =
+        "# Heading\n\n> quote\n\n| Name | Age |\n| --- | --- |\n| Ada | 30 |\n\n![Diagram](https://example.com/diagram.png)";
+
+      const commentBody = markdownToCommentBody(input);
+      const output = await stringifyCommentBody(commentBody, {
+        format: "markdown",
+      });
+
+      expect(output).toBe(
+        "# Heading\n\n> quote\n\n| Name | Age |\n\n| --- | --- |\n\n| Ada | 30 |\n\n![Diagram](https://example.com/diagram.png)"
+      );
     });
   });
 });
