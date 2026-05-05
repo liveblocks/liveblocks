@@ -1,4 +1,4 @@
-import { defineConfig } from "tsup";
+import { defineConfig } from "tsdown";
 
 export default defineConfig({
   entry: ["src/index.ts"],
@@ -7,6 +7,7 @@ export default defineConfig({
   clean: true,
   format: ["esm", "cjs"],
   sourcemap: true,
+  target: false,
 
   esbuildOptions(options, _context) {
     // Replace __VERSION__ globals with concrete version

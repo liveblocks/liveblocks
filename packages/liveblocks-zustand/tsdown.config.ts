@@ -1,12 +1,13 @@
-import { defineConfig } from "tsup";
+import { defineConfig } from "tsdown";
 
 export default defineConfig({
-  entry: ["src/index.ts", "src/suspense.ts", "src/_private.ts"],
+  entry: ["src/index.ts"],
   dts: true,
   splitting: true,
   clean: true,
   format: ["esm", "cjs"],
   sourcemap: true,
+  target: false,
 
   esbuildOptions(options, _context) {
     // Replace __VERSION__ globals with concrete version

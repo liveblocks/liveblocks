@@ -49,9 +49,9 @@
     "README.md"
   ],
   "scripts": {
-    "dev": "tsup --watch",
-    "build": "tsup",
-    "start": "tsup --watch",
+    "dev": "tsdown --watch",
+    "build": "tsdown",
+    "start": "tsdown --watch",
     "format": "(eslint --fix src/ || true) && prettier --write src/",
     "lint": "eslint src/",
     "lint:package": "publint --strict && attw --pack && bun scripts/check-exports.ts",
