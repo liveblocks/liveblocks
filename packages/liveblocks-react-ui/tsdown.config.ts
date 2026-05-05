@@ -5,7 +5,6 @@ import {
   dualFormatLibraryDefines,
   libraryNeverBundleDeps,
   libraryOutExtensionsTypeModule,
-  preserveUseClientPlugin,
 } from "@liveblocks/tsdown-config";
 import { defineConfig } from "tsdown";
 
@@ -42,7 +41,6 @@ export default defineConfig({
     neverBundle: libraryNeverBundleDeps(pkg),
   },
   format: dualFormatLibraryDefines(pkg.version),
-  plugins: [preserveUseClientPlugin()],
   onSuccess: async () => {
     await buildStylesheets(STYLE_FILES, packageDir);
   },

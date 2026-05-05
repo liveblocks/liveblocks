@@ -1163,9 +1163,6 @@ importers:
 
   shared/tsdown-config:
     dependencies:
-      magic-string:
-        specifier: ^0.30.0
-        version: 0.30.21
       postcss:
         specifier: 8.4.31
         version: 8.4.31

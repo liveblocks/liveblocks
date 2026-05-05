@@ -3,5 +3,4 @@ export {
   dualFormatLibraryDefines,
   libraryNeverBundleDeps,
   libraryOutExtensionsTypeModule,
-  preserveUseClientPlugin,
 } from "./tsdown-react.js";
