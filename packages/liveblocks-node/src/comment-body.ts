@@ -1,9 +1,9 @@
 import {
-  sanitizeUrl,
   type CommentBody,
   type CommentBodyInlineElement,
   type CommentBodyParagraph,
   type CommentBodyText,
+  sanitizeUrl,
 } from "@liveblocks/core";
 import {
   Lexer,

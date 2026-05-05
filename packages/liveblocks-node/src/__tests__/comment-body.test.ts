@@ -1,3 +1,4 @@
+import { stringifyCommentBody } from "@liveblocks/core";
 import { describe, expect, test } from "vitest";
 
 import { markdownToCommentBody } from "../comment-body";
@@ -374,15 +375,17 @@ describe("markdownToCommentBody", () => {
     });
 
     test("does not parse mentions in unsafe link labels", () => {
-      expect(markdownToCommentBody("[Hi @chris](javascript:alert(1))")).toEqual({
-        version: 1,
-        content: [
-          {
-            type: "paragraph",
-            children: [{ text: "Hi @chris" }],
-          },
-        ],
-      });
+      expect(markdownToCommentBody("[Hi @chris](javascript:alert(1))")).toEqual(
+        {
+          version: 1,
+          content: [
+            {
+              type: "paragraph",
+              children: [{ text: "Hi @chris" }],
+            },
+          ],
+        }
+      );
     });
   });
 
@@ -661,17 +664,17 @@ describe("markdownToCommentBody", () => {
     });
 
     test("does not parse mentions inside raw image markdown", () => {
-      expect(markdownToCommentBody("![Hi @chris](javascript:alert(1))")).toEqual(
-        {
-          version: 1,
-          content: [
-            {
-              type: "paragraph",
-              children: [{ text: "![Hi @chris](javascript:alert(1))" }],
-            },
-          ],
-        }
-      );
+      expect(
+        markdownToCommentBody("![Hi @chris](javascript:alert(1))")
+      ).toEqual({
+        version: 1,
+        content: [
+          {
+            type: "paragraph",
+            children: [{ text: "![Hi @chris](javascript:alert(1))" }],
+          },
+        ],
+      });
     });
 
     test("keeps raw markdown when image alt is empty", () => {
@@ -763,6 +766,20 @@ describe("markdownToCommentBody", () => {
           },
         ],
       });
+    });
+  });
+
+  describe("with stringifyCommentBody", () => {
+    test("returns the same markdown string with supported inline features", async () => {
+      const input =
+        "@stacy Can you review this update?\n\nYou can add **bold**, _italics_, ~~strikethrough~~, and `inline code`.\n\nRead more in [the docs](https://liveblocks.io/docs).";
+
+      const commentBody = markdownToCommentBody(input);
+      const output = await stringifyCommentBody(commentBody, {
+        format: "markdown",
+      });
+
+      expect(output).toBe(input);
     });
   });
 });
