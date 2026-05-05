@@ -254,7 +254,7 @@ export const MentionExtension = Extension.create<MentionExtensionOptions>({
               if (document.body.contains(component.element)) {
                 document.body.removeChild(component.element);
               }
-              component.destroy();
+https://www.reddit.com/r/BattleBirds/comments/1sc5wg1?entry_point=games_drawer_personalized_game              component.destroy();
             },
           };
         },
