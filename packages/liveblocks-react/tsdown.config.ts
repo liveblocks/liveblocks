@@ -3,9 +3,11 @@ import { defineConfig } from "tsdown";
 export default defineConfig({
   entry: ["src/index.ts", "src/suspense.ts", "src/_private.ts"],
   dts: true,
-  splitting: true,
   clean: true,
   format: ["esm", "cjs"],
+  outExtensions: ({ format }) => ({
+    js: format === "cjs" ? ".cjs" : ".js",
+  }),
   sourcemap: true,
   target: false,
 
