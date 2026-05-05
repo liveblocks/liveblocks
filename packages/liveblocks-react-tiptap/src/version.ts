@@ -1,6 +1,6 @@
 declare const __VERSION__: string;
-declare const ROLLUP_FORMAT: string;
+declare const __FORMAT__: string;
 
 export const PKG_NAME = "@liveblocks/react-tiptap";
 export const PKG_VERSION = typeof __VERSION__ === "string" && __VERSION__;
-export const PKG_FORMAT = typeof ROLLUP_FORMAT === "string" && ROLLUP_FORMAT;
+export const PKG_FORMAT = typeof __FORMAT__ === "string" && __FORMAT__;

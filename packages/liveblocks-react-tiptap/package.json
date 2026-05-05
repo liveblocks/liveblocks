@@ -33,8 +33,8 @@
     "README.md"
   ],
   "scripts": {
-    "dev": "rollup --config rollup.config.js --watch",
-    "build": "rollup --config rollup.config.js",
+    "dev": "tsdown --watch",
+    "build": "tsdown",
     "format": "eslint --fix src/; stylelint --fix src/styles/; prettier --write src/",
     "lint": "eslint src/; stylelint src/styles/",
     "lint:package": "publint --strict && attw --pack",
@@ -75,7 +75,7 @@
   },
   "devDependencies": {
     "@liveblocks/eslint-config": "workspace:*",
-    "@liveblocks/rollup-config": "workspace:*",
+    "@liveblocks/tsdown-config": "workspace:*",
     "@liveblocks/vitest-config": "workspace:*",
     "@tiptap/core": "^3.22.3",
     "@tiptap/extension-document": "^3.22.3",
@@ -90,7 +90,6 @@
     "msw": "^2.10.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "rollup": "3.28.1",
     "stylelint": "^15.10.2",
     "stylelint-config-standard": "^34.0.0",
     "stylelint-order": "^6.0.3",

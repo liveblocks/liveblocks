@@ -11,7 +11,6 @@
     "plugins",
     "src",
     "styles",
-    "rollup.config.js",
     "tsdown.config.ts"
   ]
 }

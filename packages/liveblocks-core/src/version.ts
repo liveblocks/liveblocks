@@ -1,6 +1,6 @@
 declare const __VERSION__: string;
-declare const TSUP_FORMAT: string;
+declare const __FORMAT__: string;
 
 export const PKG_NAME = "@liveblocks/core";
 export const PKG_VERSION = typeof __VERSION__ === "string" && __VERSION__;
-export const PKG_FORMAT = typeof TSUP_FORMAT === "string" && TSUP_FORMAT;
+export const PKG_FORMAT = typeof __FORMAT__ === "string" && __FORMAT__;

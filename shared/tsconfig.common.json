@@ -9,7 +9,7 @@
     "module": "esnext",
     "moduleResolution": "bundler",
 
-    // Don't produce *.js files when running TypeScript. We use `tsup` to
+    // Don't produce *.js files when running TypeScript. We use `tsdown` to
     // build our output files.
     "noEmit": true,
 

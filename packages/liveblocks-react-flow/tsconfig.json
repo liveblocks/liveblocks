@@ -4,5 +4,5 @@
   "compilerOptions": {
     "types": ["@testing-library/jest-dom/vitest", "node"]
   },
-  "include": ["src"]
+  "include": ["src", "tsdown.config.ts"]
 }

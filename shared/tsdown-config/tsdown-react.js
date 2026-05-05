@@ -1,7 +1,8 @@
 import MagicString from "magic-string";
 
 /**
- * Post-process chunks like Rollup `preserveUseClient` in {@link createConfig}.
+ * Collapse duplicate `"use client"` directives to a single top-of-file directive
+ * per emitted chunk (Rolldown / tsdown).
  *
  * @returns {import("rolldown").Plugin}
  */
@@ -42,9 +43,8 @@ export function preserveUseClientPlugin() {
 }
 
 /**
- * Replaces Rollup `@rollup/plugin-replace` for `__VERSION__` and `ROLLUP_FORMAT`
- * across ESM and CJS tsdown passes (same values as `createMainConfig` in this
- * package).
+ * Per-format compile-time defines for dual ESM/CJS library builds: package
+ * version and module format (`"esm"` | `"cjs"`), exposed as `__FORMAT__`.
  *
  * @param {string} version `package.json` `version`
  */
@@ -54,21 +54,21 @@ export function dualFormatLibraryDefines(version) {
     esm: {
       define: {
         __VERSION__: v,
-        ROLLUP_FORMAT: JSON.stringify("esm"),
+        __FORMAT__: JSON.stringify("esm"),
       },
     },
     cjs: {
       define: {
         __VERSION__: v,
-        ROLLUP_FORMAT: JSON.stringify("cjs"),
+        __FORMAT__: JSON.stringify("cjs"),
       },
     },
   };
 }
 
 /**
- * External list aligned with `createMainConfig` externals: all dependency and
- * peerDependency names, plus implicit `react-dom`.
+ * Dependency names that must not be bundled: all `dependencies` and
+ * `peerDependencies`, plus implicit `react-dom`.
  *
  * @param {{ dependencies?: Record<string, string>, peerDependencies?: Record<string, string> }} pkg
  * @returns {string[]}
@@ -82,8 +82,7 @@ export function libraryNeverBundleDeps(pkg) {
 }
 
 /**
- * ESM `.js` + CJS `.cjs` for packages with `"type": "module"` (matches Rollup
- * `entryFileNames` in `createMainConfig`).
+ * ESM `.js` + CJS `.cjs` for packages with `"type": "module"`.
  *
  * @param {{ format: string }} ctx
  */

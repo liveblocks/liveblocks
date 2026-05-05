@@ -15,19 +15,11 @@ const packageDir = fileURLToPath(new URL(".", import.meta.url));
 
 const STYLE_FILES = [
   { entry: "src/styles/index.css", destination: "styles.css" },
-  {
-    entry: "src/styles/dark/media-query.css",
-    destination: "styles/dark/media-query.css",
-  },
-  {
-    entry: "src/styles/dark/attributes.css",
-    destination: "styles/dark/attributes.css",
-  },
 ];
 
 export default defineConfig({
-  name: "@liveblocks/react-ui",
-  entry: ["src/index.ts", "src/primitives/index.ts", "src/_private/index.ts"],
+  name: "@liveblocks/react-tiptap",
+  entry: ["src/index.ts"],
   unbundle: true,
   treeshake: false,
   platform: "browser",
