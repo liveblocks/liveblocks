@@ -426,6 +426,62 @@ describe("markdownToCommentBody", () => {
       });
     });
 
+    test("does not include trailing sentence punctuation in mention IDs", () => {
+      expect(markdownToCommentBody("Ask @stacy. cc @chris.")).toEqual({
+        version: 1,
+        content: [
+          {
+            type: "paragraph",
+            children: [
+              { text: "Ask " },
+              { type: "mention", kind: "user", id: "stacy" },
+              { text: ". cc " },
+              { type: "mention", kind: "user", id: "chris" },
+              { text: "." },
+            ],
+          },
+        ],
+      });
+    });
+
+    test("supports email-like mention IDs", () => {
+      expect(markdownToCommentBody("Ping @email@example.com please")).toEqual({
+        version: 1,
+        content: [
+          {
+            type: "paragraph",
+            children: [
+              { text: "Ping " },
+              { type: "mention", kind: "user", id: "email@example.com" },
+              { text: " please" },
+            ],
+          },
+        ],
+      });
+    });
+
+    test("only trims trailing dot or hyphen when followed by whitespace or end", () => {
+      expect(
+        markdownToCommentBody("Use @stacy.-next and @chris. now @email@example.com.")
+      ).toEqual({
+        version: 1,
+        content: [
+          {
+            type: "paragraph",
+            children: [
+              { text: "Use " },
+              { type: "mention", kind: "user", id: "stacy.-next" },
+              { text: " and " },
+              { type: "mention", kind: "user", id: "chris" },
+              { text: ". now " },
+              { type: "mention", kind: "user", id: "email@example.com" },
+              { text: "." },
+            ],
+          },
+        ],
+      });
+    });
+
     test("does not treat escaped @ as a mention", () => {
       expect(markdownToCommentBody("email \\@chris")).toEqual({
         version: 1,

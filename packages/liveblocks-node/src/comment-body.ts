@@ -24,7 +24,7 @@ type MarkdownTableCell = {
   tokens: AnyToken[];
 };
 
-const MENTION_REGEX = /(^|[^A-Za-z0-9_.-])@([A-Za-z0-9_][A-Za-z0-9_.-]*)/g;
+const MENTION_REGEX = /(^|[^A-Za-z0-9_.-])@([A-Za-z0-9_][A-Za-z0-9_.@-]*)/g;
 
 function tokenizeMarkdown(markdown: string): AnyToken[] {
   return new Lexer().lex(markdown);
@@ -92,9 +92,9 @@ function appendTextWithMentions(
   for (const match of text.matchAll(MENTION_REGEX)) {
     const matchIndex = match.index;
     const prefix = match[1] ?? "";
-    const mentionId = match[2];
+    const matchedMentionId = match[2];
 
-    if (matchIndex === undefined || mentionId === undefined) {
+    if (matchIndex === undefined || matchedMentionId === undefined) {
       continue;
     }
 
@@ -105,13 +105,25 @@ function appendTextWithMentions(
       );
     }
 
+    let mentionId = matchedMentionId;
+    let mentionEndIndex = textEndIndex + 1 + matchedMentionId.length;
+    while (
+      mentionId.length > 0 &&
+      (mentionId.endsWith(".") || mentionId.endsWith("-")) &&
+      (mentionEndIndex === text.length ||
+        /\s/.test(text.charAt(mentionEndIndex) ?? ""))
+    ) {
+      mentionId = mentionId.slice(0, -1);
+      mentionEndIndex -= 1;
+    }
+
     inlines.push({
       type: "mention",
       kind: "user",
       id: mentionId,
     });
 
-    lastIndex = textEndIndex + mentionId.length + 1;
+    lastIndex = mentionEndIndex;
   }
 
   if (lastIndex < text.length) {
