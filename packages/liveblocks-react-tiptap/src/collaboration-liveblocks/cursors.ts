@@ -1,7 +1,7 @@
 import type { JsonObject } from "@liveblocks/client";
 import { Extension } from "@tiptap/core";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
-import { Plugin, PluginKey } from "@tiptap/pm/state";
+import { Plugin, PluginKey, Selection } from "@tiptap/pm/state";
 import type { EditorView } from "@tiptap/pm/view";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 
@@ -105,6 +105,17 @@ function clampPosition(position: number, doc: ProseMirrorNode): number {
   return Math.max(0, Math.min(position, doc.content.size));
 }
 
+function normalizeCaretPosition(position: number, doc: ProseMirrorNode): number {
+  const clampedPosition = clampPosition(position, doc);
+  const $position = doc.resolve(clampedPosition);
+
+  if ($position.parent.isTextblock) {
+    return clampedPosition;
+  }
+
+  return Selection.near($position, -1).anchor;
+}
+
 function getRemoteCursors(
   room: LiveblocksTiptapRoom,
   field: string,
@@ -166,10 +177,14 @@ function buildDecorationsFromCursors(
     }
 
     decorations.push(
-      Decoration.widget(head, () => createCursorElement(user), {
-        key: `liveblocks-caret-${cursor.connectionId}`,
-        side: -1,
-      })
+      Decoration.widget(
+        normalizeCaretPosition(head, doc),
+        () => createCursorElement(user),
+        {
+          key: `liveblocks-caret-${cursor.connectionId}`,
+          side: -1,
+        }
+      )
     );
   }
 

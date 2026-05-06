@@ -6,6 +6,11 @@ import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { describe, expect, test } from "vitest";
 
 import {
+  LIVEBLOCKS_CARET_PLUGIN_KEY,
+  LiveblocksCollaborationCaret,
+} from "../collaboration-liveblocks/cursors";
+import { LIVEBLOCKS_COLLABORATION_PLUGIN_KEY } from "../collaboration-liveblocks/plugin";
+import {
   applyRemoteLiveTextUpdates,
   applyRemoteStorageUpdates,
 } from "../collaboration-liveblocks/remote";
@@ -21,6 +26,7 @@ import {
   applyIncrementalOperations,
   classifyTransaction,
 } from "../collaboration-liveblocks/steps";
+import type { LiveblocksTiptapRoom } from "../collaboration-liveblocks/types";
 
 const Bold = Mark.create({
   name: "bold",
@@ -41,6 +47,73 @@ function createEditor(content: string) {
     extensions: [Document, Paragraph, Text, Bold],
     content,
   });
+}
+
+function createCaretTestRoom(initialPosition = 1) {
+  let onOthersUpdate: (() => void) | undefined;
+  let presence = {
+    liveblocksTiptap: {
+      field: "default",
+      anchor: initialPosition,
+      head: initialPosition,
+      user: { name: "Ada", color: "#f00" },
+    },
+  };
+
+  const room = {
+    batch(callback: () => void) {
+      callback();
+    },
+    getOthers() {
+      return [
+        {
+          connectionId: 1,
+          presence,
+        },
+      ];
+    },
+    getStorage: () =>
+      Promise.reject(new Error("Unexpected storage access in caret test")),
+    history: {
+      canUndo: () => false,
+      canRedo: () => false,
+      disable: <T>(callback: () => T) => callback(),
+      undo: () => {},
+      redo: () => {},
+    },
+    subscribe: () => () => {},
+    updatePresence: () => {},
+    events: {
+      others: {
+        subscribe(callback: () => void) {
+          onOthersUpdate = callback;
+          return () => {
+            onOthersUpdate = undefined;
+          };
+        },
+      },
+    },
+  } satisfies LiveblocksTiptapRoom;
+
+  return {
+    room,
+    setRemoteCursor(position: number) {
+      presence = {
+        liveblocksTiptap: {
+          ...presence.liveblocksTiptap,
+          anchor: position,
+          head: position,
+        },
+      };
+      onOthersUpdate?.();
+    },
+  };
+}
+
+function getRemoteCaretWidgetPosition(editor: Editor): number | undefined {
+  return LIVEBLOCKS_CARET_PLUGIN_KEY.getState(
+    editor.state
+  )?.decorations.find()[0]?.from;
 }
 
 function isProseMirrorJsonNode(value: unknown): value is ProseMirrorJsonNode {
@@ -554,6 +627,33 @@ describe("collaboration-liveblocks schema", () => {
       editor.view.dispatch(result.tr);
     }
     expect(editor.getJSON()).toEqual(liveblocksTiptapNodeToJson(storageNode));
+
+    editor.destroy();
+  });
+
+  test("renders stale end-of-paragraph carets inside the previous text block", () => {
+    const { room, setRemoteCursor } = createCaretTestRoom(6);
+    const editor = new Editor({
+      extensions: [
+        Document,
+        Paragraph,
+        Text,
+        LiveblocksCollaborationCaret.configure({ room }),
+      ],
+      content: "<p>Hello!</p><p>World</p>",
+    });
+
+    setRemoteCursor(7);
+    editor.view.dispatch(
+      editor.state.tr
+        .delete(6, 7)
+        .setMeta(LIVEBLOCKS_COLLABORATION_PLUGIN_KEY, { isRemote: true })
+    );
+
+    expect(
+      LIVEBLOCKS_CARET_PLUGIN_KEY.getState(editor.state)?.cursors[0]?.head
+    ).toBe(7);
+    expect(getRemoteCaretWidgetPosition(editor)).toBe(6);
 
     editor.destroy();
   });
