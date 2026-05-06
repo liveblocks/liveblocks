@@ -6,7 +6,7 @@ import { Slice } from "@tiptap/pm/model";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import type { EditorView } from "@tiptap/pm/view";
 
-import { applyRemoteLiveTextUpdates } from "./remote";
+import { applyRemoteStorageUpdates } from "./remote";
 import {
   createDefaultDocument,
   createLiveblocksTiptapNode,
@@ -61,14 +61,30 @@ function replaceEditorDocument(
   document: ProseMirrorJsonNode
 ): void {
   const nextDocument = view.state.schema.nodeFromJSON(document);
-  const tr = view.state.tr
-    .replace(
-      0,
-      view.state.doc.content.size,
-      new Slice(nextDocument.content, 0, 0)
-    )
-    .setMeta(LIVEBLOCKS_COLLABORATION_PLUGIN_KEY, { isRemote: true })
-    .setMeta("addToHistory", false);
+  const diffStart = view.state.doc.content.findDiffStart(nextDocument.content);
+
+  if (diffStart === null || !view.state.tr) {
+    return;
+  }
+
+  const diffEnd = view.state.doc.content.findDiffEnd(nextDocument.content);
+  const tr =
+    diffEnd === null
+      ? view.state.tr.replace(
+          0,
+          view.state.doc.content.size,
+          new Slice(nextDocument.content, 0, 0)
+        )
+      : view.state.tr.replace(
+          diffStart,
+          diffEnd.a,
+          nextDocument.slice(diffStart, diffEnd.b)
+        );
+
+  tr.setMeta(LIVEBLOCKS_COLLABORATION_PLUGIN_KEY, { isRemote: true }).setMeta(
+    "addToHistory",
+    false
+  );
 
   view.dispatch(tr);
 }
@@ -108,6 +124,7 @@ function createLiveblocksCollaborationPlugin(
   let unsubscribe: (() => void) | undefined;
   let destroyed = false;
   let isApplyingRemoteUpdate = false;
+  let isApplyingLocalUpdate = false;
   let lastDocument = "";
 
   const applyStorageToEditor = (updates?: StorageUpdate[]) => {
@@ -120,6 +137,10 @@ function createLiveblocksCollaborationPlugin(
       return;
     }
 
+    if (isApplyingLocalUpdate) {
+      return;
+    }
+
     const document = liveblocksTiptapNodeToJson(documentRoot);
     const serializedDocument = stringifyDocument(document);
 
@@ -128,7 +149,7 @@ function createLiveblocksCollaborationPlugin(
     }
 
     if (updates !== undefined) {
-      const result = applyRemoteLiveTextUpdates(view, documentRoot, updates);
+      const result = applyRemoteStorageUpdates(view, documentRoot, updates);
       if (result.type === "applied") {
         lastDocument = serializedDocument;
         isApplyingRemoteUpdate = true;
@@ -180,18 +201,9 @@ function createLiveblocksCollaborationPlugin(
         return null;
       }
 
-      const document: unknown = newState.doc.toJSON();
-      if (!isProseMirrorJsonNode(document)) {
-        return null;
-      }
+      const currentRoot = root;
 
-      const serializedDocument = stringifyDocument(document);
-      if (serializedDocument === lastDocument) {
-        return null;
-      }
-
-      lastDocument = serializedDocument;
-      const documentRoot = getDocumentRoot(root, options.field);
+      const documentRoot = getDocumentRoot(currentRoot, options.field);
       const classified =
         documentRoot !== undefined
           ? classifyTransaction(
@@ -204,9 +216,25 @@ function createLiveblocksCollaborationPlugin(
 
       room.batch(() => {
         if (classified.type === "incremental") {
-          applyIncrementalOperations(classified.operations);
-        } else if (root !== undefined) {
-          setDocumentRoot(root, options.field, document);
+          isApplyingLocalUpdate = true;
+          try {
+            applyIncrementalOperations(classified.operations);
+          } finally {
+            isApplyingLocalUpdate = false;
+          }
+        } else {
+          const document: unknown = newState.doc.toJSON();
+          if (!isProseMirrorJsonNode(document)) {
+            return;
+          }
+
+          const serializedDocument = stringifyDocument(document);
+          if (serializedDocument === lastDocument) {
+            return;
+          }
+
+          lastDocument = serializedDocument;
+          setDocumentRoot(currentRoot, options.field, document);
         }
       });
 
@@ -240,11 +268,9 @@ function createLiveblocksCollaborationPlugin(
         );
         editorView.dispatch(tr);
 
-        unsubscribe = room.subscribe(
-          storageRoot,
-          applyStorageToEditor,
-          { isDeep: true }
-        );
+        unsubscribe = room.subscribe(storageRoot, applyStorageToEditor, {
+          isDeep: true,
+        });
       });
 
       return {

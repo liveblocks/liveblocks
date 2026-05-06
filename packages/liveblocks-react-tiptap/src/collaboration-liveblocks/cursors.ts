@@ -294,10 +294,7 @@ function createLiveblocksCaretPlugin(
         update(nextView, prevState) {
           view = nextView;
 
-          if (
-            !nextView.state.selection.eq(prevState.selection) ||
-            nextView.state.doc !== prevState.doc
-          ) {
+          if (!nextView.state.selection.eq(prevState.selection)) {
             updatePresence(nextView);
           }
 

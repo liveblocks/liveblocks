@@ -4,6 +4,7 @@ import {
   LiveList,
   LiveObject,
   LiveText,
+  type LiveTextAttributes,
   type LiveTextAttributesPatch,
   type LiveTextDelta,
   nanoid,
@@ -44,7 +45,7 @@ function isJsonObject(value: Json | undefined): value is JsonObject {
 
 export function marksToAttributes(
   marks: ProseMirrorJsonMark[] | undefined
-): JsonObject | undefined {
+): LiveTextAttributes | undefined {
   if (marks === undefined || marks.length === 0) {
     return undefined;
   }

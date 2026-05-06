@@ -426,9 +426,7 @@ export const useLiveblocksExtension = (
               name:
                 typeof selfInfo.name === "string" ? selfInfo.name : undefined,
               color:
-                typeof selfInfo.color === "string"
-                  ? selfInfo.color
-                  : undefined,
+                typeof selfInfo.color === "string" ? selfInfo.color : undefined,
             }
           : undefined;
 
