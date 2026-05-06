@@ -170,6 +170,22 @@ describe("markdownToCommentBody", () => {
         ],
       });
     });
+
+    test("keeps blockquote prefix on all paragraphs from a list item", () => {
+      expect(markdownToCommentBody("> - first\n>   \n>   second")).toEqual({
+        version: 1,
+        content: [
+          {
+            type: "paragraph",
+            children: [{ text: "> - " }, { text: "first" }],
+          },
+          {
+            type: "paragraph",
+            children: [{ text: "> " }, { text: "second" }],
+          },
+        ],
+      });
+    });
   });
 
   describe("inline emphasis", () => {
@@ -615,6 +631,22 @@ describe("markdownToCommentBody", () => {
       });
     });
 
+    test("preserves inline formatting in tight list items", () => {
+      expect(markdownToCommentBody("- **bold** item")).toEqual({
+        version: 1,
+        content: [
+          {
+            type: "paragraph",
+            children: [
+              { text: "- " },
+              { text: "bold", bold: true },
+              { text: " item" },
+            ],
+          },
+        ],
+      });
+    });
+
     test("flattens lazy list continuation into a separate paragraph", () => {
       expect(markdownToCommentBody("- item\n\n  more")).toEqual({
         version: 1,
@@ -682,6 +714,28 @@ describe("markdownToCommentBody", () => {
           {
             type: "paragraph",
             children: [{ text: "| Ada | 30 |" }],
+          },
+        ],
+      });
+    });
+
+    test("preserves table alignment markers in the separator row", () => {
+      expect(
+        markdownToCommentBody("| Name | Age | Score |\n| :--- | :---: | ---: |\n| Ada | 30 | 10 |")
+      ).toEqual({
+        version: 1,
+        content: [
+          {
+            type: "paragraph",
+            children: [{ text: "| Name | Age | Score |" }],
+          },
+          {
+            type: "paragraph",
+            children: [{ text: "| :--- | :---: | ---: |" }],
+          },
+          {
+            type: "paragraph",
+            children: [{ text: "| Ada | 30 | 10 |" }],
           },
         ],
       });

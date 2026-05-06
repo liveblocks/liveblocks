@@ -230,8 +230,21 @@ function listItemToText(
 ): string {
   const indent = listIndent(listDepth);
   const marker = listMarker(ordered, start, index);
-  const prefix = indent + marker;
+  const prefix = indent + marker + taskListPrefix(item);
   return `${prefix}${tokensToPlainText(item.tokens, listDepth + 1)}`;
+}
+
+function tableAlignmentMarker(alignment: Tokens.Table["align"][number]): string {
+  switch (alignment) {
+    case "left":
+      return ":---";
+    case "center":
+      return ":---:";
+    case "right":
+      return "---:";
+    default:
+      return "---";
+  }
 }
 
 function tableToMarkdownRows(table: Tokens.Table): string[] {
@@ -245,8 +258,7 @@ function tableToMarkdownRows(table: Tokens.Table): string[] {
     return [];
   }
 
-  const columnCount = table.header.length;
-  const separatorRow = `| ${new Array(columnCount).fill("---").join(" | ")} |`;
+  const separatorRow = `| ${table.align.map(tableAlignmentMarker).join(" | ")} |`;
 
   return [markdownRows[0], separatorRow, ...markdownRows.slice(1)].filter(
     (row): row is string => row !== undefined
@@ -269,7 +281,11 @@ function tokensToCommentBodyInlines(
       case "escape":
       case "html":
       case "text": {
-        appendTextWithMentions(inlines, token.text, formatting);
+        if (token.type === "text" && token.tokens?.length) {
+          appendFormattedInlinesFromTokens(inlines, token.tokens, formatting);
+        } else {
+          appendTextWithMentions(inlines, token.text, formatting);
+        }
         break;
       }
 
@@ -389,14 +405,14 @@ function tokenToCommentBodyParagraphs(
 
     case "list": {
       const indent = listIndent(listDepth);
+      const quotePrefix = blockquotePrefix(blockquoteDepth);
       return token.items.flatMap((item, index) => {
         const marker = listMarker(token.ordered, token.start, index);
-        const prefix = indent + marker + taskListPrefix(item);
-        const quotePrefix = blockquotePrefix(blockquoteDepth);
+        const listPrefix = indent + marker + taskListPrefix(item);
         const paragraphs = tokensToCommentBodyParagraphs(
           item.tokens,
           listDepth + 1,
-          blockquoteDepth
+          0
         );
 
         const [firstParagraph, ...remainingParagraphs] = paragraphs;
@@ -405,43 +421,20 @@ function tokenToCommentBodyParagraphs(
           return [
             {
               type: "paragraph",
-              children: [{ text: quotePrefix + prefix }],
+              children: [{ text: quotePrefix + listPrefix }],
             },
           ];
         }
 
-        const [firstChild, ...remainingChildren] = firstParagraph.children;
-        const firstChildText =
-          firstChild !== undefined && "text" in firstChild
-            ? firstChild.text
-            : undefined;
+        const firstParagraphWithPrefixes = prependTextToParagraph(
+          firstParagraph,
+          quotePrefix + listPrefix
+        );
+        const remainingParagraphsWithQuotePrefix = remainingParagraphs.map(
+          (paragraph) => prependTextToParagraph(paragraph, quotePrefix)
+        );
 
-        if (
-          quotePrefix.length > 0 &&
-          firstChild !== undefined &&
-          typeof firstChildText === "string" &&
-          firstChildText.startsWith(quotePrefix)
-        ) {
-          const firstParagraphWithListPrefix: CommentBodyParagraph = {
-            ...firstParagraph,
-            children: [
-              {
-                text:
-                  quotePrefix +
-                  prefix +
-                  firstChildText.slice(quotePrefix.length),
-              },
-              ...remainingChildren,
-            ],
-          };
-
-          return [firstParagraphWithListPrefix, ...remainingParagraphs];
-        }
-
-        return [
-          prependTextToParagraph(firstParagraph, prefix),
-          ...remainingParagraphs,
-        ];
+        return [firstParagraphWithPrefixes, ...remainingParagraphsWithQuotePrefix];
       });
     }
 
