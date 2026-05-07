@@ -9,6 +9,7 @@ import {
   Lexer,
   type MarkedToken,
   type Token as DefaultToken,
+  Tokenizer,
   type Tokens,
 } from "marked";
 
@@ -20,14 +21,30 @@ type MarkdownTextFormatting = Pick<
 type Token = MarkedToken;
 type AnyToken = Token | DefaultToken;
 
-type MarkdownTableCell = {
-  tokens: AnyToken[];
-};
-
 const MENTION_REGEX = /(^|[^A-Za-z0-9_.-])@([A-Za-z0-9_][A-Za-z0-9_.@-]*)/g;
 
+/**
+ * Marked's GFM `url` tokenizer autolinks both bare URLs (e.g.
+ * `https://example.com`) and bare emails (e.g. `name@example.com`). We want to
+ * keep URL autolinking, but skip email autolinking: emails inside a mention id
+ * (e.g. `@email@example.com`) would otherwise be split across multiple tokens
+ * and break mention parsing, and standalone emails are better left as plain
+ * text in comment bodies.
+ */
+class MarkedCustomTokenizer extends Tokenizer {
+  override url(src: string): Tokens.Link | undefined {
+    const token = super.url(src);
+    if (token?.href.startsWith("mailto:")) {
+      return undefined;
+    }
+    return token;
+  }
+}
+
 function tokenizeMarkdown(markdown: string): AnyToken[] {
-  return new Lexer().lex(markdown);
+  return new Lexer({ gfm: true, tokenizer: new MarkedCustomTokenizer() }).lex(
+    markdown
+  );
 }
 
 function taskListPrefix(item: Tokens.ListItem): string {
@@ -234,7 +251,9 @@ function listItemToText(
   return `${prefix}${tokensToPlainText(item.tokens, listDepth + 1)}`;
 }
 
-function tableAlignmentMarker(alignment: Tokens.Table["align"][number]): string {
+function tableAlignmentMarker(
+  alignment: Tokens.Table["align"][number]
+): string {
   switch (alignment) {
     case "left":
       return ":---";
@@ -250,7 +269,7 @@ function tableAlignmentMarker(alignment: Tokens.Table["align"][number]): string 
 function tableToMarkdownRows(table: Tokens.Table): string[] {
   const rows = [table.header, ...table.rows];
   const markdownRows = rows.map((row) => {
-    const cells = row.map((cell) => tableCellToText(cell));
+    const cells = row.map((cell) => tokensToPlainText(cell.tokens));
     return `| ${cells.join(" | ")} |`;
   });
 
@@ -263,10 +282,6 @@ function tableToMarkdownRows(table: Tokens.Table): string[] {
   return [markdownRows[0], separatorRow, ...markdownRows.slice(1)].filter(
     (row): row is string => row !== undefined
   );
-}
-
-function tableCellToText(cell: MarkdownTableCell): string {
-  return tokensToPlainText(cell.tokens);
 }
 
 function tokensToCommentBodyInlines(
@@ -434,7 +449,10 @@ function tokenToCommentBodyParagraphs(
           (paragraph) => prependTextToParagraph(paragraph, quotePrefix)
         );
 
-        return [firstParagraphWithPrefixes, ...remainingParagraphsWithQuotePrefix];
+        return [
+          firstParagraphWithPrefixes,
+          ...remainingParagraphsWithQuotePrefix,
+        ];
       });
     }
 

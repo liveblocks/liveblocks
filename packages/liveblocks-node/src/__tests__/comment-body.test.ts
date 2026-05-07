@@ -245,6 +245,48 @@ describe("markdownToCommentBody", () => {
       });
     });
 
+    test("converts bare URL autolinks to link elements", () => {
+      expect(
+        markdownToCommentBody("See https://example.com for details")
+      ).toEqual({
+        version: 1,
+        content: [
+          {
+            type: "paragraph",
+            children: [
+              { text: "See " },
+              {
+                type: "link",
+                url: "https://example.com",
+                text: "https://example.com",
+              },
+              { text: " for details" },
+            ],
+          },
+        ],
+      });
+    });
+
+    test("converts www. autolinks to link elements", () => {
+      expect(markdownToCommentBody("Visit www.example.com today")).toEqual({
+        version: 1,
+        content: [
+          {
+            type: "paragraph",
+            children: [
+              { text: "Visit " },
+              {
+                type: "link",
+                url: "http://www.example.com",
+                text: "www.example.com",
+              },
+              { text: " today" },
+            ],
+          },
+        ],
+      });
+    });
+
     test("maps angle-bracket autolinks to link elements", () => {
       expect(markdownToCommentBody("<https://example.com>")).toEqual({
         version: 1,
@@ -432,9 +474,7 @@ describe("markdownToCommentBody", () => {
           {
             type: "paragraph",
             children: [
-              { text: "Email " },
-              { text: "alicia@example.com" },
-              { text: " or " },
+              { text: "Email alicia@example.com or " },
               { type: "mention", kind: "user", id: "alicia" },
             ],
           },
