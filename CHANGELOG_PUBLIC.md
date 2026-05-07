@@ -22,8 +22,8 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ## Liveblocks dev server (v1.4.1)
 
-- Fix: client.getOrCreateRoom() no longer errors when the room already exists, matching production behavior.
-- Fix: Yjs document updates made via PUT /v2/rooms/<roomId>/ydoc now get broadcast to connected WebSocket clients, matching production behavior.
+- Fix: `client.getOrCreateRoom()` no longer errors when the room already exists, matching production behavior.
+- Fix: Yjs document updates made via `PUT /v2/rooms/<roomId>/ydoc` now get broadcast to connected WebSocket clients, matching production behavior.
 
 ## Contributors
 
