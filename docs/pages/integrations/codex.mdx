@@ -7,10 +7,12 @@ meta:
     collaborative apps with guided best practices."
 ---
 
-Use OpenAI Codex with Liveblocks to implement multiplayer features while keeping
-Liveblocks patterns correct. Install [agent skills](/docs/tools/agent-skills)
-for Liveblocks and Yjs guidance, and optionally connect the bundled
-[MCP server](/docs/tools/mcp-server) if your Codex environment supports MCP.
+Use [OpenAI Codex](https://openai.com/codex/) with Liveblocks to add
+collaborative features to your app. Install
+[agent skills](/docs/tools/agent-skills) so your assistant follows Liveblocks
+and Yjs guidance, and use our [MCP server](/docs/tools/mcp-server) to allow AI
+to inspect and modify your data, such as rooms, Storage, Yjs, comments, and
+more.
 
 <PromptCta />
 
@@ -18,91 +20,119 @@ for Liveblocks and Yjs guidance, and optionally connect the bundled
 
 <Steps>
   <Step>
-    <StepTitle>Install Liveblocks skills</StepTitle>
+    <StepTitle>Install agent skills</StepTitle>
     <StepContent>
-      In your project directory, run:
+      To help AI follow best practices in your app, add [Liveblocks agent skills](/docs/tools/agent-skills)
+      to your system. Make sure to select Codex in the CLI. Global installation is easiest.
 
       ```bash
       npx skills add liveblocks/skills
       ```
 
-      This adds the Codex plugin (under `.codex-plugin/`) from
-      [liveblocks/skills](https://github.com/liveblocks/skills).
     </StepContent>
+
   </Step>
 
   <Step>
-    <StepTitle>Configure MCP if supported</StepTitle>
+    <StepTitle>Install MCP server</StepTitle>
     <StepContent>
-      Default: use
-      [Smithery](https://smithery.ai/server/@liveblocks/liveblocks-mcp-server)
-      to install the MCP server with your development `LIVEBLOCKS_SECRET_KEY`.
+      To allow AI to inspect and modify data in your project, first ensure the Codex CLI is installed:
+      
+      ```bash
+      npm i -g @openai/codex
+      ```
 
-      Manual install (clone the repo, `npm run build`, point MCP at
-      `build/index.js`) matches **Manual setup** in
-      [MCP server](/docs/tools/mcp-server). Your Codex MCP docs define the config
-      file path and schema.
+      Next, install the
+      [Liveblocks MCP server](/docs/tools/mcp-server), inserting your secret key
+      from [your dashboard](/dashboard):
+
+      ```bash
+      codex mcp add liveblocks \
+        --env LIVEBLOCKS_SECRET_KEY="{{SECRET_KEY}}" \
+        -- npx -y github:liveblocks/liveblocks-mcp-server
+      ```
+
+      <Banner type="warning" title="Only for development">
+        Do not use a secret key from a production project, as AI will have direct access to delete data.
+      </Banner>
+
     </StepContent>
+
   </Step>
 
   <Step lastStep>
-    <StepTitle>Try a prompt</StepTitle>
+    <StepTitle>Get help from your AI assistant</StepTitle>
     <StepContent>
-      Example prompts:
+      You can now use your AI assistant to help you structure and debug your Liveblocks application. 
+      Here are a few examples.
 
-      ```
-      Add Liveblocks Comments with threads anchored to elements in this component tree.
-      ```
+      > Q: Set up a Liveblocks room on this page.
+      >
+      > A: _Certainly, I've set up a Liveblocks room on this page using `RoomProvider`, it has…_
 
-      ```
-      How do I issue access tokens from my Next.js route handler for Liveblocks?
-      ```
+      <br />
+
+      > Q: How many rooms are there?
+      >
+      > A: _There are 10 rooms, the last was created 7 minutes ago. Its room ID is `l8Gaj9` and…_
+
+      <br />
+
+      > Q: Add placeholder comments to the `l8Gaj9` room.
+      >
+      > A: _I've filled the room with example commands and threads, following your instructions._
     </StepContent>
+
   </Step>
 </Steps>
 
-## What this adds
+## More information
 
-- **Agent skills** — Best-practice references for Liveblocks features and Yjs
-  data modeling.
-- **MCP tools** — Optional access to project data and admin operations where MCP
-  is configured (same surface as the [REST API](/docs/api-reference/rest-api-endpoints)).
+### Agent skills
 
-Codex runs in your CLI or IDE; Liveblocks hosts realtime state.
+Two agent skills are available to your assistant, `liveblocks-best-practices`
+and `yjs-best-practices`. These are collections of markdown files that detail
+various best practices for using Liveblocks and Yjs. We always recommend using
+these skills when building, debugging, or answering questions about Liveblocks
+and Yjs.
 
-## When to use it
+<Button href="/docs/tools/agent-skills">Agent skills documentation</Button>
 
-Use this when you want Codex to scaffold or extend React/Next.js (or other)
-clients that use `@liveblocks/*`, or when you need help debugging collaboration
-behavior.
+### MCP server
 
-Treat MCP keys as **development-only** credentials. Do not use your production
-app secret in an agent session—see [MCP server](/docs/tools/mcp-server).
+Most Liveblocks [REST API](/docs/api-reference/rest-api-endpoints) operations as
+tools, so your AI can inspect and edit rooms and data from the editor. This is
+helpful for fetching data when debugging, and also useful for creating
+placeholder content in your development app, for example you can ask AI to
+create new rooms and add placeholder comments and data.
 
-## How it fits together
+Each Liveblocks project has a unique secret key, which you pass when installing
+the MCP server. Only data from this project can be inspected. Never use a secret
+key from a production project, as giving AI direct access would be dangerous,
+allowing it to delete your production data.
 
-| Component      | Responsibility                                                  |
-| -------------- | --------------------------------------------------------------- |
-| Codex + skills | Coding guidance from `liveblocks/skills`.                       |
-| MCP (optional) | Tooling for rooms, Storage, Yjs, comments, etc.                 |
-| Your app       | Auth endpoint, user data, integration with Liveblocks client.   |
-| Liveblocks     | Realtime collaboration and room state.                          |
+<Button href="/docs/tools/mcp-server">MCP server documentation</Button>
 
 ## Limitations and troubleshooting
 
-### MCP is unavailable in your Codex build
+### Skills do not load
 
-You can still rely on **agent skills** alone; use the dashboard or REST API
-manually for inspection.
+Re-run `npx skills add liveblocks/skills` from the repo root. Ensure Codex can
+see the generated plugin files.
 
-### Wrong project or room data
+### MCP returns auth errors
 
-Ensure the MCP `LIVEBLOCKS_SECRET_KEY` is from the same [project](/dashboard)
-as the app you are editing.
+Use a secret key from the same [Liveblocks project](/dashboard) as your app.
+Confirm `LIVEBLOCKS_SECRET_KEY` in the MCP config matches that project.
+
+### MCP returns incorrect data
+
+Check that you’re using the correct secret key for your current project. Try
+uninstalling and reinstalling with the correct key.
 
 ## Related docs
 
 - [Agent skills](/docs/tools/agent-skills)
 - [MCP server](/docs/tools/mcp-server)
-- [Access token](/docs/authentication/access-token)
+- [Authentication](/docs/authentication)
 - [REST API reference](/docs/api-reference/rest-api-endpoints)
