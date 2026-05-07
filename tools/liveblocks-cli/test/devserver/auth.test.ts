@@ -195,13 +195,8 @@ function idToken(userId: string, groupIds?: string[]): string {
 }
 
 describe("authorizeWebSocket", () => {
-  beforeAll(() => {
-    Rooms.useEphemeralStorage();
-  });
-
-  afterAll(() => {
-    Rooms.cleanup();
-  });
+  beforeAll(() => Rooms.useEphemeralStorage());
+  afterAll(() => Rooms.cleanup()); // Needed in bun:test (unlike in Vitest)
 
   // -- Edge cases --
 

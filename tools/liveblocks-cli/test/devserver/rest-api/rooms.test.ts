@@ -15,10 +15,13 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+import { nanoid } from "@liveblocks/core";
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 
 import * as Rooms from "~/dev-server/db/rooms";
 import { zen } from "~/dev-server/routes/rest-api";
+
+import { makeExternalRoomId } from "../_helpers";
 
 const BASE = "http://localhost";
 const AUTH = { Authorization: "Bearer sk_localdev" };
@@ -46,20 +49,21 @@ async function api(
 }
 
 describe("REST API - rooms", () => {
-  beforeAll(() => {
-    Rooms.useEphemeralStorage();
-  });
-
-  afterAll(() => {
-    Rooms.cleanup();
-  });
+  beforeAll(() => Rooms.useEphemeralStorage());
+  afterAll(() => Rooms.cleanup()); // Needed in bun:test (unlike in Vitest)
 
   test("create three rooms with different metadata, then list/filter", async () => {
-    // Create three rooms with distinct metadata
+    // `alpha1` and `alpha2` share a prefix exercised by the prefix-filter
+    // assertion below; `beta1` does not.
+    const alphaPrefix = `alpha-${nanoid()}`;
+    const alpha1 = `${alphaPrefix}-1`;
+    const alpha2 = `${alphaPrefix}-2`;
+    const beta1 = makeExternalRoomId();
+
     expect(
       (
         await api("POST", "/v2/rooms", {
-          id: "project-alpha-1",
+          id: alpha1,
           metadata: {
             team: "frontend",
             priority: "high",
@@ -72,7 +76,7 @@ describe("REST API - rooms", () => {
     expect(
       (
         await api("POST", "/v2/rooms", {
-          id: "project-alpha-2",
+          id: alpha2,
           metadata: { team: "backend", priority: "low" },
         })
       ).status
@@ -81,7 +85,7 @@ describe("REST API - rooms", () => {
     expect(
       (
         await api("POST", "/v2/rooms", {
-          id: "project-beta-1",
+          id: beta1,
           metadata: { team: "frontend", priority: "low" },
         })
       ).status
@@ -92,17 +96,17 @@ describe("REST API - rooms", () => {
     expect(all.status).toBe(200);
     expect(all.body.data).toHaveLength(3);
 
-    // Filter by roomId prefix: "project-alpha"
+    // Filter by roomId prefix
     const prefix = await api(
       "GET",
-      `/v2/rooms?query=${encodeURIComponent('roomId^"project-alpha"')}`
+      `/v2/rooms?query=${encodeURIComponent(`roomId^"${alphaPrefix}"`)}`
     );
     expect(prefix.status).toBe(200);
     expect(prefix.body.data).toHaveLength(2);
     const prefixIds = (prefix.body.data as { id: string }[])
       .map((r) => r.id)
       .sort();
-    expect(prefixIds).toEqual(["project-alpha-1", "project-alpha-2"]);
+    expect(prefixIds).toEqual([alpha1, alpha2].sort());
 
     // Filter by metadata: team = "frontend"
     const meta = await api(
@@ -114,18 +118,16 @@ describe("REST API - rooms", () => {
     const metaIds = (meta.body.data as { id: string }[])
       .map((r) => r.id)
       .sort();
-    expect(metaIds).toEqual(["project-alpha-1", "project-beta-1"]);
+    expect(metaIds).toEqual([alpha1, beta1].sort());
 
     // Combined: roomId prefix + metadata
     const combined = await api(
       "GET",
-      `/v2/rooms?query=${encodeURIComponent('roomId^"project-alpha" metadata["team"]:"frontend"')}`
+      `/v2/rooms?query=${encodeURIComponent(`roomId^"${alphaPrefix}" metadata["team"]:"frontend"`)}`
     );
     expect(combined.status).toBe(200);
     expect(combined.body.data).toHaveLength(1);
-    expect((combined.body.data as { id: string }[])[0].id).toBe(
-      "project-alpha-1"
-    );
+    expect((combined.body.data as { id: string }[])[0].id).toBe(alpha1);
 
     // Filter by metadata: priority = "low"
     const low = await api(
@@ -135,13 +137,23 @@ describe("REST API - rooms", () => {
     expect(low.status).toBe(200);
     expect(low.body.data).toHaveLength(2);
     const lowIds = (low.body.data as { id: string }[]).map((r) => r.id).sort();
-    expect(lowIds).toEqual(["project-alpha-2", "project-beta-1"]);
+    expect(lowIds).toEqual([alpha2, beta1].sort());
   });
 
   test("get room returns metadata and permissions", async () => {
-    const { status, body } = await api("GET", "/v2/rooms/project-alpha-1");
+    const roomId = makeExternalRoomId();
+    await api("POST", "/v2/rooms", {
+      id: roomId,
+      metadata: {
+        team: "frontend",
+        priority: "high",
+        labels: ["bug", "urgent"],
+      },
+    });
+
+    const { status, body } = await api("GET", `/v2/rooms/${roomId}`);
     expect(status).toBe(200);
-    expect(body.id).toBe("project-alpha-1");
+    expect(body.id).toBe(roomId);
     expect(body.metadata).toEqual({
       team: "frontend",
       priority: "high",
@@ -151,19 +163,76 @@ describe("REST API - rooms", () => {
   });
 
   test("get non-existent room returns 404", async () => {
-    const { status } = await api("GET", "/v2/rooms/does-not-exist");
+    const { status } = await api("GET", `/v2/rooms/${makeExternalRoomId()}`);
     expect(status).toBe(404);
   });
 
   test("create duplicate room returns 409", async () => {
-    const { status } = await api("POST", "/v2/rooms", {
-      id: "project-alpha-1",
-    });
+    const roomId = makeExternalRoomId();
+    expect((await api("POST", "/v2/rooms", { id: roomId })).status).toBe(200);
+
+    const { status } = await api("POST", "/v2/rooms", { id: roomId });
     expect(status).toBe(409);
   });
 
+  test("create with ?idempotent returns existing room instead of 409", async () => {
+    const roomId = makeExternalRoomId();
+    const created = await api("POST", "/v2/rooms", {
+      id: roomId,
+      metadata: { team: "frontend" },
+    });
+    expect(created.status).toBe(200);
+
+    const { status, body } = await api("POST", "/v2/rooms?idempotent", {
+      id: roomId,
+      metadata: { team: "ignored" },
+    });
+    expect(status).toBe(200);
+    expect(body.id).toBe(roomId);
+    // Existing room is returned untouched - creation-time fields are ignored
+    expect(body.metadata).toEqual({ team: "frontend" });
+  });
+
+  test("create with ?idempotent creates room when it does not yet exist", async () => {
+    const roomId = makeExternalRoomId();
+    const { status, body } = await api("POST", "/v2/rooms?idempotent", {
+      id: roomId,
+      metadata: { team: "qa" },
+    });
+    expect(status).toBe(200);
+    expect(body.id).toBe(roomId);
+    expect(body.metadata).toEqual({ team: "qa" });
+  });
+
+  test.each([
+    "?idempotent",
+    "?idempotent=",
+    "?idempotent=true",
+    "?idempotent=false",
+    "?idempotent=0",
+  ])(
+    "?idempotent is a presence flag - %s suppresses 409 on duplicate",
+    async (qs) => {
+      const roomId = makeExternalRoomId();
+      expect((await api("POST", "/v2/rooms", { id: roomId })).status).toBe(200);
+
+      const { status } = await api("POST", `/v2/rooms${qs}`, { id: roomId });
+      expect(status).toBe(200);
+    }
+  );
+
   test("update room metadata", async () => {
-    const { status, body } = await api("POST", "/v2/rooms/project-alpha-1", {
+    const roomId = makeExternalRoomId();
+    await api("POST", "/v2/rooms", {
+      id: roomId,
+      metadata: {
+        team: "frontend",
+        priority: "high",
+        labels: ["bug", "urgent"],
+      },
+    });
+
+    const { status, body } = await api("POST", `/v2/rooms/${roomId}`, {
       metadata: { priority: "medium" },
     });
     expect(status).toBe(200);
@@ -176,9 +245,8 @@ describe("REST API - rooms", () => {
   });
 
   test("room created without explicit permissions defaults to room:write", async () => {
-    const { status, body } = await api("POST", "/v2/rooms", {
-      id: "default-perms-room",
-    });
+    const roomId = makeExternalRoomId();
+    const { status, body } = await api("POST", "/v2/rooms", { id: roomId });
     expect(status).toBe(200);
     expect(body.defaultAccesses).toEqual(["room:write"]);
     expect(body.usersAccesses).toEqual({});
@@ -186,8 +254,9 @@ describe("REST API - rooms", () => {
   });
 
   test("room created with explicit permissions is reflected in GET", async () => {
+    const roomId = makeExternalRoomId();
     const { status: createStatus } = await api("POST", "/v2/rooms", {
-      id: "perms-room",
+      id: roomId,
       defaultAccesses: ["room:read"],
       usersAccesses: {
         alice: ["room:write"],
@@ -199,7 +268,7 @@ describe("REST API - rooms", () => {
     });
     expect(createStatus).toBe(200);
 
-    const { status, body } = await api("GET", "/v2/rooms/perms-room");
+    const { status, body } = await api("GET", `/v2/rooms/${roomId}`);
     expect(status).toBe(200);
     expect(body.defaultAccesses).toEqual(["room:read"]);
     expect(body.usersAccesses).toEqual({
@@ -212,60 +281,85 @@ describe("REST API - rooms", () => {
   });
 
   test("delete room", async () => {
-    const del = await api("DELETE", "/v2/rooms/project-beta-1");
+    const roomId = makeExternalRoomId();
+    await api("POST", "/v2/rooms", { id: roomId });
+
+    const del = await api("DELETE", `/v2/rooms/${roomId}`);
     expect(del.status).toBe(204);
 
     // Verify it's gone
-    const get = await api("GET", "/v2/rooms/project-beta-1");
+    const get = await api("GET", `/v2/rooms/${roomId}`);
     expect(get.status).toBe(404);
 
     // Verify it no longer appears in the list
     const list = await api("GET", "/v2/rooms");
     const listIds = (list.body.data as { id: string }[]).map((r) => r.id);
-    expect(listIds).not.toContain("project-beta-1");
+    expect(listIds).not.toContain(roomId);
   });
 
-  test("room created without organizationId defaults to 'default'", () => {
-    const room = Rooms.getRoom("project-alpha-1");
+  test("room created without organizationId defaults to 'default'", async () => {
+    const roomId = makeExternalRoomId();
+    await api("POST", "/v2/rooms", { id: roomId });
+
+    const room = Rooms.getRoom(roomId);
     expect(room).toBeDefined();
     expect(room!.organizationId).toBe("default");
   });
 
   test("create room with explicit organizationId", async () => {
+    const roomId = makeExternalRoomId();
     const { status } = await api("POST", "/v2/rooms", {
-      id: "org-room-acme",
+      id: roomId,
       organizationId: "org_acme",
       metadata: { env: "test" },
     });
     expect(status).toBe(200);
 
-    const room = Rooms.getRoom("org-room-acme");
+    const room = Rooms.getRoom(roomId);
     expect(room).toBeDefined();
     expect(room!.organizationId).toBe("org_acme");
   });
 
   test("create room with different organizationId", async () => {
+    const roomId = makeExternalRoomId();
     const { status } = await api("POST", "/v2/rooms", {
-      id: "org-room-globex",
+      id: roomId,
       organizationId: "org_globex",
     });
     expect(status).toBe(200);
 
-    const room = Rooms.getRoom("org-room-globex");
+    const room = Rooms.getRoom(roomId);
     expect(room).toBeDefined();
     expect(room!.organizationId).toBe("org_globex");
   });
 
   test("list rooms filtered by organizationId", async () => {
-    const acme = await api("GET", "/v2/rooms?organizationId=org_acme");
+    // Unique org IDs so the listing assertions are scoped to this test's
+    // rooms and not polluted by other tests in the file that also create
+    // rooms in custom orgs.
+    const orgAcme = `org-acme-${nanoid()}`;
+    const orgGlobex = `org-globex-${nanoid()}`;
+    const acmeRoomId = makeExternalRoomId();
+    const globexRoomId = makeExternalRoomId();
+
+    await api("POST", "/v2/rooms", {
+      id: acmeRoomId,
+      organizationId: orgAcme,
+    });
+    await api("POST", "/v2/rooms", {
+      id: globexRoomId,
+      organizationId: orgGlobex,
+    });
+
+    const acme = await api("GET", `/v2/rooms?organizationId=${orgAcme}`);
     expect(acme.status).toBe(200);
     const acmeIds = (acme.body.data as { id: string }[]).map((r) => r.id);
-    expect(acmeIds).toEqual(["org-room-acme"]);
+    expect(acmeIds).toEqual([acmeRoomId]);
 
-    const globex = await api("GET", "/v2/rooms?organizationId=org_globex");
+    const globex = await api("GET", `/v2/rooms?organizationId=${orgGlobex}`);
     expect(globex.status).toBe(200);
     const globexIds = (globex.body.data as { id: string }[]).map((r) => r.id);
-    expect(globexIds).toEqual(["org-room-globex"]);
+    expect(globexIds).toEqual([globexRoomId]);
 
     // Default org rooms (created without explicit organizationId)
     const defaultOrg = await api("GET", "/v2/rooms?organizationId=default");
@@ -273,37 +367,33 @@ describe("REST API - rooms", () => {
     const defaultIds = (defaultOrg.body.data as { id: string }[]).map(
       (r) => r.id
     );
-    expect(defaultIds).not.toContain("org-room-acme");
-    expect(defaultIds).not.toContain("org-room-globex");
+    expect(defaultIds).not.toContain(acmeRoomId);
+    expect(defaultIds).not.toContain(globexRoomId);
   });
 
   test("update room with null groupsAccesses removes the group", async () => {
-    // Create a room with group permissions
+    const roomId = makeExternalRoomId();
     const { status: createStatus } = await api("POST", "/v2/rooms", {
-      id: "null-perms-room",
+      id: roomId,
       groupsAccesses: { editors: ["room:write"] },
       usersAccesses: { alice: ["room:write"] },
     });
     expect(createStatus).toBe(200);
 
     // Verify permissions are set
-    const before = await api("GET", "/v2/rooms/null-perms-room");
+    const before = await api("GET", `/v2/rooms/${roomId}`);
     expect(before.body.groupsAccesses).toEqual({ editors: ["room:write"] });
     expect(before.body.usersAccesses).toEqual({ alice: ["room:write"] });
 
     // Remove group by setting to null
-    const { status: updateStatus } = await api(
-      "POST",
-      "/v2/rooms/null-perms-room",
-      {
-        groupsAccesses: { editors: null },
-        usersAccesses: { alice: null },
-      }
-    );
+    const { status: updateStatus } = await api("POST", `/v2/rooms/${roomId}`, {
+      groupsAccesses: { editors: null },
+      usersAccesses: { alice: null },
+    });
     expect(updateStatus).toBe(200);
 
     // Verify permissions are removed
-    const after = await api("GET", "/v2/rooms/null-perms-room");
+    const after = await api("GET", `/v2/rooms/${roomId}`);
     expect(after.body.groupsAccesses).toEqual({});
     expect(after.body.usersAccesses).toEqual({});
   });
