@@ -7,6 +7,13 @@
 - Add new `markdownToCommentBody` helper to convert Markdown strings into
   `CommentBody` objects.
 
+### `@liveblocks/client`
+
+- `room.history.disable(fn)` is now officially supported and no longer
+  experimental. It allows running storage mutations without them appearing on
+  the undo/redo stacks and it’s intended for background/async writes (e.g.
+  writing back AI generation results) that should not be undoable.
+
 ### `@liveblocks/react-tiptap`
 
 - Fix keyboard shortcut in strikethrough tooltip. (Thanks @HellBoy-OP for the
