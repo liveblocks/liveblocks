@@ -13,6 +13,10 @@ import {
   type Tokens,
 } from "marked";
 
+const MENTION_REGEX = /(^|[^A-Za-z0-9_.-])@([A-Za-z0-9_][A-Za-z0-9_.@-]*)/g;
+const MENTION_TRAILING_PUNCTUATION_REGEX = /[.-]/;
+const WHITESPACE_REGEX = /\s/;
+
 type MarkdownTextFormatting = Pick<
   CommentBodyText,
   "bold" | "italic" | "strikethrough" | "code"
@@ -21,10 +25,8 @@ type MarkdownTextFormatting = Pick<
 type Token = MarkedToken;
 type AnyToken = Token | DefaultToken;
 
-const MENTION_REGEX = /(^|[^A-Za-z0-9_.-])@([A-Za-z0-9_][A-Za-z0-9_.@-]*)/g;
-
 /**
- * Marked's GFM `url` tokenizer autolinks both bare URLs (e.g.
+ * Marked.js's GFM `url` tokenizer autolinks both bare URLs (e.g.
  * `https://example.com`) and bare emails (e.g. `name@example.com`). We want to
  * keep URL autolinking, but skip email autolinking: emails inside a mention id
  * (e.g. `@email@example.com`) would otherwise be split across multiple tokens
@@ -41,18 +43,19 @@ class MarkedCustomTokenizer extends Tokenizer {
   }
 }
 
+/**
+ * Marked.js' `Token` union type includes a `Generic` token type which is
+ * too broad and makes narrowing difficult, we don't use generic/custom tokens
+ * so we can assert the `Generic` type away.
+ */
+function assertTokens(_: AnyToken): asserts _ is Token;
+function assertTokens(_: AnyToken[]): asserts _ is Token[];
+function assertTokens(_: AnyToken | AnyToken[]): asserts _ is Token | Token[] {}
+
 function tokenizeMarkdown(markdown: string): AnyToken[] {
   return new Lexer({ gfm: true, tokenizer: new MarkedCustomTokenizer() }).lex(
     markdown
   );
-}
-
-function taskListPrefix(item: Tokens.ListItem): string {
-  if (!item.task) {
-    return "";
-  }
-
-  return item.checked ? "[x] " : "[ ] ";
 }
 
 function toCommentBodyText(
@@ -85,6 +88,27 @@ function blockquotePrefix(blockquoteDepth: number): string {
   return blockquoteDepth > 0 ? "> ".repeat(blockquoteDepth) : "";
 }
 
+function listMarker(
+  ordered: boolean,
+  start: number | "",
+  index: number
+): string {
+  if (!ordered) {
+    return "- ";
+  }
+
+  const firstItemNumber = start === "" ? 1 : start;
+  return `${firstItemNumber + index}. `;
+}
+
+function taskListPrefix(item: Tokens.ListItem): string {
+  if (!item.task) {
+    return "";
+  }
+
+  return item.checked ? "[x] " : "[ ] ";
+}
+
 function prependTextToParagraph(
   paragraph: CommentBodyParagraph,
   textPrefix: string
@@ -104,47 +128,47 @@ function appendTextWithMentions(
   text: string,
   formatting: MarkdownTextFormatting
 ): void {
-  let lastIndex = 0;
+  let cursor = 0;
 
   for (const match of text.matchAll(MENTION_REGEX)) {
-    const matchIndex = match.index;
     const prefix = match[1] ?? "";
-    const matchedMentionId = match[2];
-
-    if (matchIndex === undefined || matchedMentionId === undefined) {
+    const rawId = match[2];
+    if (match.index === undefined || rawId === undefined) {
       continue;
     }
 
-    const textEndIndex = matchIndex + prefix.length;
-    if (textEndIndex > lastIndex) {
-      inlines.push(
-        toCommentBodyText(text.slice(lastIndex, textEndIndex), formatting)
-      );
+    const atSignIndex = match.index + prefix.length;
+    const idStart = atSignIndex + 1;
+    let idEnd = idStart + rawId.length;
+
+    // Trim trailing dots/hyphens that look like sentence punctuation
+    // (e.g. "@stacy." -> "stacy"), but only when followed by whitespace or
+    // end-of-input. Mid-word trailing punctuation like "@stacy.-next" is kept.
+    while (
+      idEnd > idStart &&
+      MENTION_TRAILING_PUNCTUATION_REGEX.test(text.charAt(idEnd - 1)) &&
+      (idEnd === text.length || WHITESPACE_REGEX.test(text.charAt(idEnd)))
+    ) {
+      idEnd -= 1;
     }
 
-    let mentionId = matchedMentionId;
-    let mentionEndIndex = textEndIndex + 1 + matchedMentionId.length;
-    while (
-      mentionId.length > 0 &&
-      (mentionId.endsWith(".") || mentionId.endsWith("-")) &&
-      (mentionEndIndex === text.length ||
-        /\s/.test(text.charAt(mentionEndIndex) ?? ""))
-    ) {
-      mentionId = mentionId.slice(0, -1);
-      mentionEndIndex -= 1;
+    if (atSignIndex > cursor) {
+      inlines.push(
+        toCommentBodyText(text.slice(cursor, atSignIndex), formatting)
+      );
     }
 
     inlines.push({
       type: "mention",
       kind: "user",
-      id: mentionId,
+      id: text.slice(idStart, idEnd),
     });
 
-    lastIndex = mentionEndIndex;
+    cursor = idEnd;
   }
 
-  if (lastIndex < text.length) {
-    inlines.push(toCommentBodyText(text.slice(lastIndex), formatting));
+  if (cursor < text.length) {
+    inlines.push(toCommentBodyText(text.slice(cursor), formatting));
   }
 }
 
@@ -156,17 +180,37 @@ function appendFormattedInlinesFromTokens(
   inlines.push(...tokensToCommentBodyInlines(tokens, formatting));
 }
 
-function listMarker(
-  ordered: boolean,
-  start: number | "",
-  index: number
+function tableAlignmentMarker(
+  alignment: Tokens.Table["align"][number]
 ): string {
-  if (!ordered) {
-    return "- ";
+  switch (alignment) {
+    case "left":
+      return ":---";
+    case "center":
+      return ":---:";
+    case "right":
+      return "---:";
+    default:
+      return "---";
+  }
+}
+
+function tableToMarkdownRows(table: Tokens.Table): string[] {
+  const rows = [table.header, ...table.rows];
+  const markdownRows = rows.map((row) => {
+    const cells = row.map((cell) => tokensToPlainText(cell.tokens));
+    return `| ${cells.join(" | ")} |`;
+  });
+
+  if (markdownRows.length === 0) {
+    return [];
   }
 
-  const firstItemNumber = start === "" ? 1 : start;
-  return `${firstItemNumber + index}. `;
+  const separatorRow = `| ${table.align.map(tableAlignmentMarker).join(" | ")} |`;
+
+  return [markdownRows[0], separatorRow, ...markdownRows.slice(1)].filter(
+    (row): row is string => row !== undefined
+  );
 }
 
 function tokensToPlainText(tokens: AnyToken[], listDepth = 0): string {
@@ -249,39 +293,6 @@ function listItemToText(
   const marker = listMarker(ordered, start, index);
   const prefix = indent + marker + taskListPrefix(item);
   return `${prefix}${tokensToPlainText(item.tokens, listDepth + 1)}`;
-}
-
-function tableAlignmentMarker(
-  alignment: Tokens.Table["align"][number]
-): string {
-  switch (alignment) {
-    case "left":
-      return ":---";
-    case "center":
-      return ":---:";
-    case "right":
-      return "---:";
-    default:
-      return "---";
-  }
-}
-
-function tableToMarkdownRows(table: Tokens.Table): string[] {
-  const rows = [table.header, ...table.rows];
-  const markdownRows = rows.map((row) => {
-    const cells = row.map((cell) => tokensToPlainText(cell.tokens));
-    return `| ${cells.join(" | ")} |`;
-  });
-
-  if (markdownRows.length === 0) {
-    return [];
-  }
-
-  const separatorRow = `| ${table.align.map(tableAlignmentMarker).join(" | ")} |`;
-
-  return [markdownRows[0], separatorRow, ...markdownRows.slice(1)].filter(
-    (row): row is string => row !== undefined
-  );
 }
 
 function tokensToCommentBodyInlines(
@@ -512,15 +523,6 @@ function tokensToCommentBodyParagraphs(
     tokenToCommentBodyParagraphs(token, listDepth, blockquoteDepth)
   );
 }
-
-/**
- * Marked.js' `Token` union type includes a `Generic` token type which is
- * too broad and makes narrowing difficult, we don't use generic/custom tokens
- * so we can assert the `Generic` type away.
- */
-function assertTokens(_: AnyToken): asserts _ is Token;
-function assertTokens(_: AnyToken[]): asserts _ is Token[];
-function assertTokens(_: AnyToken | AnyToken[]): asserts _ is Token | Token[] {}
 
 /**
  * Converts a Markdown string into a `CommentBody` object that can be used to write
