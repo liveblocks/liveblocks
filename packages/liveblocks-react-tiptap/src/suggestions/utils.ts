@@ -3,6 +3,8 @@ import type { JSONContent } from "@tiptap/core";
 import type { SuggestionKind } from "../types";
 import { LIVEBLOCKS_SUGGESTION_MARK_TYPE } from "../types";
 
+const SUGGESTION_DELETE_PLACEHOLDER = "\u200B";
+
 function getSuggestionKind(
   mark: NonNullable<JSONContent["marks"]>[number]
 ): SuggestionKind | null {
@@ -12,6 +14,15 @@ function getSuggestionKind(
 
   const kind: unknown = mark.attrs?.kind;
   return kind === "insert" || kind === "delete" ? kind : null;
+}
+
+function isSuggestionPlaceholder(
+  mark: NonNullable<JSONContent["marks"]>[number]
+): boolean {
+  return (
+    mark.type === LIVEBLOCKS_SUGGESTION_MARK_TYPE &&
+    mark.attrs?.isBlockPlaceholder === true
+  );
 }
 
 /**
@@ -28,6 +39,14 @@ export function getCleanSuggestionContent(
   );
 
   if (hasInsertSuggestion) {
+    return null;
+  }
+
+  if (
+    content.type === "text" &&
+    content.text === SUGGESTION_DELETE_PLACEHOLDER &&
+    marks.some(isSuggestionPlaceholder)
+  ) {
     return null;
   }
 

@@ -5,7 +5,11 @@ import {
   type Node,
   Slice,
 } from "@tiptap/pm/model";
-import type { EditorState, Transaction } from "@tiptap/pm/state";
+import {
+  type EditorState,
+  TextSelection,
+  type Transaction,
+} from "@tiptap/pm/state";
 import { Plugin } from "@tiptap/pm/state";
 import { Mapping, type Step, Transform } from "@tiptap/pm/transform";
 import { Decoration, DecorationSet, type EditorView } from "@tiptap/pm/view";
@@ -52,6 +56,7 @@ export type SuggestionsExtensionOptions = {
 };
 
 const DEFAULT_USER_ID = "anonymous";
+const SUGGESTION_DELETE_PLACEHOLDER = "\u200B";
 
 function createDefaultSuggestionId(): string {
   return globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2);
@@ -81,7 +86,9 @@ export function getSuggestionMarkAttributes(
     typeof attrs.suggestionId !== "string" ||
     typeof attrs.userId !== "string" ||
     !isSuggestionKind(attrs.kind) ||
-    typeof attrs.createdAt !== "string"
+    typeof attrs.createdAt !== "string" ||
+    (attrs.isBlockPlaceholder !== undefined &&
+      typeof attrs.isBlockPlaceholder !== "boolean")
   ) {
     return null;
   }
@@ -91,6 +98,10 @@ export function getSuggestionMarkAttributes(
     userId: attrs.userId,
     kind: attrs.kind,
     createdAt: attrs.createdAt,
+    isBlockPlaceholder:
+      typeof attrs.isBlockPlaceholder === "boolean"
+        ? attrs.isBlockPlaceholder
+        : undefined,
   };
 }
 
@@ -124,6 +135,27 @@ function findInsertionSuggestionMarkAround(
   );
 }
 
+function findDeleteSuggestionMarkAround(
+  doc: Node,
+  from: number,
+  to: number,
+  userId: string
+): ProseMirrorMark | null {
+  const $from = doc.resolve(Math.min(from, doc.content.size));
+  const $to = doc.resolve(Math.min(to, doc.content.size));
+  const isReusableDeletion = (attrs: SuggestionMarkAttributes) =>
+    attrs.kind === "delete" && attrs.userId === userId;
+
+  return (
+    findSuggestionMark($from.marks(), isReusableDeletion) ??
+    findSuggestionMark($from.nodeBefore?.marks ?? [], isReusableDeletion) ??
+    findSuggestionMark($from.nodeAfter?.marks ?? [], isReusableDeletion) ??
+    findSuggestionMark($to.marks(), isReusableDeletion) ??
+    findSuggestionMark($to.nodeBefore?.marks ?? [], isReusableDeletion) ??
+    findSuggestionMark($to.nodeAfter?.marks ?? [], isReusableDeletion)
+  );
+}
+
 function sliceHasSuggestionMark(slice: Slice): boolean {
   let found = false;
 
@@ -152,6 +184,114 @@ function sliceHasInlineContent(slice: Slice): boolean {
   });
 
   return found;
+}
+
+function addDeletionPlaceholdersToSlice(
+  slice: Slice,
+  doc: Node,
+  mark: ProseMirrorMark
+): Slice {
+  const addPlaceholdersToFragment = (fragment: Fragment): Fragment => {
+    const nodes: Node[] = [];
+
+    fragment.forEach((node) => {
+      if (node.isText) {
+        nodes.push(node);
+        return;
+      }
+
+      if (node.isTextblock && node.content.size === 0) {
+        nodes.push(
+          node.type.create(
+            node.attrs,
+            doc.type.schema.text(SUGGESTION_DELETE_PLACEHOLDER, [mark]),
+            node.marks
+          )
+        );
+        return;
+      }
+
+      nodes.push(
+        node.type.create(
+          node.attrs,
+          node.content.childCount > 0
+            ? addPlaceholdersToFragment(node.content)
+            : node.content,
+          node.marks
+        )
+      );
+    });
+
+    return Fragment.fromArray(nodes);
+  };
+
+  return new Slice(
+    addPlaceholdersToFragment(slice.content),
+    slice.openStart,
+    slice.openEnd
+  );
+}
+
+function isBlockPlaceholderSuggestion(doc: Node, range: SuggestionRange): boolean {
+  let found = false;
+
+  doc.nodesBetween(range.from, range.to, (node) => {
+    const mark = findSuggestionMark(
+      node.marks,
+      (attrs) =>
+        attrs.suggestionId === range.suggestionId &&
+        attrs.kind === "delete" &&
+        attrs.isBlockPlaceholder === true
+    );
+
+    if (mark && node.text === SUGGESTION_DELETE_PLACEHOLDER) {
+      found = true;
+      return false;
+    }
+
+    return undefined;
+  });
+
+  return found;
+}
+
+function getBlockPlaceholderDeleteRange(
+  doc: Node,
+  from: number
+): { from: number; to: number } {
+  const $from = doc.resolve(from);
+
+  for (let depth = $from.depth; depth > 0; depth--) {
+    const node = $from.node(depth);
+
+    if (
+      node.type.name === "listItem" &&
+      node.textContent === SUGGESTION_DELETE_PLACEHOLDER
+    ) {
+      if (depth > 1) {
+        const parent = $from.node(depth - 1);
+        if (
+          (parent.type.name === "bulletList" ||
+            parent.type.name === "orderedList") &&
+          parent.childCount === 1
+        ) {
+          return { from: $from.before(depth - 1), to: $from.after(depth - 1) };
+        }
+      }
+
+      return { from: $from.before(depth), to: $from.after(depth) };
+    }
+  }
+
+  for (let depth = $from.depth; depth > 0; depth--) {
+    const node = $from.node(depth);
+
+    if (node.isTextblock && node.textContent === SUGGESTION_DELETE_PLACEHOLDER) {
+      return { from: $from.before(depth), to: $from.after(depth) };
+    }
+  }
+
+  return { from, to: from + SUGGESTION_DELETE_PLACEHOLDER.length };
 }
 
 export function collectSuggestionRanges(doc: Node): SuggestionRange[] {
@@ -304,6 +444,18 @@ function dispatchSuggestionMeta(
   view: EditorView,
   meta: SuggestionsPluginMeta
 ): void {
+  const state = SUGGESTIONS_PLUGIN_KEY.getState(view.state);
+
+  if (
+    (!hasOwnProperty(meta, "activeSuggestionId") ||
+      meta.activeSuggestionId === state?.activeSuggestionId) &&
+    (!hasOwnProperty(meta, "hoveredSuggestionId") ||
+      meta.hoveredSuggestionId === state?.hoveredSuggestionId) &&
+    (!hasOwnProperty(meta, "mode") || meta.mode === state?.mode)
+  ) {
+    return;
+  }
+
   view.dispatch(view.state.tr.setMeta(SUGGESTIONS_PLUGIN_KEY, meta));
 }
 
@@ -336,11 +488,20 @@ function processSuggestionRanges(
   for (const suggestion of suggestions) {
     const from = tr.mapping.map(suggestion.from);
     const to = tr.mapping.map(suggestion.to);
+    const mappedSuggestion = { ...suggestion, from, to };
+    const isBlockPlaceholder =
+      suggestion.kind === "delete" &&
+      isBlockPlaceholderSuggestion(tr.doc, mappedSuggestion);
     const shouldDelete =
       (acceptOrReject === "accept" && suggestion.kind === "delete") ||
       (acceptOrReject === "reject" && suggestion.kind === "insert");
 
     if (shouldDelete) {
+      const range = isBlockPlaceholder
+        ? getBlockPlaceholderDeleteRange(tr.doc, from)
+        : { from, to };
+      tr.delete(range.from, range.to);
+    } else if (isBlockPlaceholder) {
       tr.delete(from, to);
     } else {
       tr.removeMark(from, to, markType);
@@ -397,6 +558,15 @@ export const SuggestionMark = Mark.create({
         renderHTML: (attributes) => ({
           "data-lb-created-at": String(attributes.createdAt),
         }),
+      },
+      isBlockPlaceholder: {
+        default: false,
+        parseHTML: (element) =>
+          element.getAttribute("data-lb-suggestion-placeholder") === "true",
+        renderHTML: (attributes) =>
+          attributes.isBlockPlaceholder
+            ? { "data-lb-suggestion-placeholder": "true" }
+            : {},
       },
     };
   },
@@ -544,6 +714,12 @@ export const SuggestionsExtension = Extension.create<
                 step.from,
                 userId
               );
+              const existingDeletionMark = findDeleteSuggestionMarkAround(
+                intermediateTr.doc,
+                step.from,
+                step.to,
+                userId
+              );
 
               if (removedSlice.size > 0 && sliceHasSuggestionMark(removedSlice)) {
                 return;
@@ -559,33 +735,60 @@ export const SuggestionsExtension = Extension.create<
                 ),
                 -1
               );
-              const createdAt = new Date().toISOString();
-              const suggestionId =
-                existingInsertionMark
-                  ? getSuggestionMarkAttributes(existingInsertionMark)
-                      ?.suggestionId
-                  : this.options.createSuggestionId();
-
-              if (!suggestionId) {
-                return;
-              }
+              const now = new Date().toISOString();
 
               const from = mappedFrom;
 
               if (removedSlice.size > 0) {
-                const deleteMark = createSuggestionMark(newState, {
-                  suggestionId,
-                  userId,
-                  kind: "delete",
-                  createdAt,
-                });
+                const shouldUseBlockPlaceholder =
+                  intermediateTr.doc.textBetween(step.from, step.to).length ===
+                    0;
+                const selectionText = oldState.selection.empty
+                  ? ""
+                  : oldState.doc.textBetween(
+                      oldState.selection.from,
+                      oldState.selection.to
+                    );
+                if (shouldUseBlockPlaceholder && selectionText.length > 0) {
+                  return;
+                }
+                const existingDeletionAttrs = existingDeletionMark
+                  ? getSuggestionMarkAttributes(existingDeletionMark)
+                  : null;
+                const deleteMark =
+                  existingDeletionMark ??
+                  createSuggestionMark(newState, {
+                    suggestionId:
+                      existingDeletionAttrs?.suggestionId ??
+                      this.options.createSuggestionId(),
+                    userId,
+                    kind: "delete",
+                    createdAt: existingDeletionAttrs?.createdAt ?? now,
+                    isBlockPlaceholder: shouldUseBlockPlaceholder,
+                  });
 
                 if (!deleteMark) {
                   return;
                 }
 
-                tr.replace(from, from, removedSlice);
-                tr.addMark(from, from + removedSlice.size, deleteMark);
+                const sliceToRestore = shouldUseBlockPlaceholder
+                  ? addDeletionPlaceholdersToSlice(
+                      removedSlice,
+                      oldState.doc,
+                      deleteMark
+                    )
+                  : removedSlice;
+
+                tr.replace(from, from, sliceToRestore);
+                if (!shouldUseBlockPlaceholder) {
+                  tr.addMark(from, from + sliceToRestore.size, deleteMark);
+                }
+                if (
+                  oldState.selection.empty &&
+                  oldState.selection.from === step.to
+                ) {
+                  tr.setSelection(TextSelection.create(tr.doc, from));
+                }
                 changed = true;
               }
 
@@ -594,13 +797,18 @@ export const SuggestionsExtension = Extension.create<
                 !restoredDeletionInTransaction &&
                 sliceHasInlineContent(step.slice)
               ) {
+                const existingInsertionAttrs = existingInsertionMark
+                  ? getSuggestionMarkAttributes(existingInsertionMark)
+                  : null;
                 const insertMark =
                   existingInsertionMark ??
                   createSuggestionMark(newState, {
-                    suggestionId,
+                    suggestionId:
+                      existingInsertionAttrs?.suggestionId ??
+                      this.options.createSuggestionId(),
                     userId,
                     kind: "insert",
-                    createdAt,
+                    createdAt: existingInsertionAttrs?.createdAt ?? now,
                   });
 
                 if (!insertMark) {

@@ -54,6 +54,7 @@ export type SuggestionMarkAttributes = {
   userId: string;
   kind: SuggestionKind;
   createdAt: string;
+  isBlockPlaceholder?: boolean;
 };
 
 export type SuggestionsConfiguration = {

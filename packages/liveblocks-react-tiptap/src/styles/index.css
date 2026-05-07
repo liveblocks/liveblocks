@@ -277,6 +277,12 @@
   text-decoration-thickness: 1px;
 }
 
+.lb-tiptap-suggestion-delete:where([data-lb-suggestion-placeholder]) {
+  &::before {
+    content: "¶";
+  }
+}
+
 .lb-tiptap-suggestion-selected {
   outline: 2px solid var(--lb-accent);
   outline-offset: 2px;

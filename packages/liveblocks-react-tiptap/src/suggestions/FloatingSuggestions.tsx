@@ -14,7 +14,7 @@ import { Portal } from "@liveblocks/react-ui/_private";
 import { TextSelection } from "@tiptap/pm/state";
 import { type Editor, useEditorState } from "@tiptap/react";
 import type { ComponentProps, MouseEvent, ReactNode } from "react";
-import { forwardRef } from "react";
+import { forwardRef, useCallback, useMemo } from "react";
 
 import type { ExtendedChainedCommands, SuggestionRange } from "../types";
 import { SUGGESTIONS_PLUGIN_KEY } from "../types";
@@ -112,10 +112,13 @@ export const FloatingSuggestions = forwardRef<
       autoUpdate(...args, { animationFrame: true }),
   });
 
-  const suggestionSelection =
-    editor && suggestion
-      ? TextSelection.create(editor.state.doc, suggestion.from, suggestion.to)
-      : null;
+  const suggestionSelection = useMemo(() => {
+    if (!editor || !suggestion) {
+      return null;
+    }
+
+    return TextSelection.create(editor.state.doc, suggestion.from, suggestion.to);
+  }, [editor, suggestion]);
 
   useLayoutEffect(() => {
     if (!editor || !suggestionSelection) {
@@ -126,6 +129,18 @@ export const FloatingSuggestions = forwardRef<
     const domRange = getDomRangeFromSelection(editor, suggestionSelection);
     setReference(domRange);
   }, [editor, suggestionSelection, setReference]);
+
+  const setFloatingRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      setFloating(node);
+      if (typeof forwardedRef === "function") {
+        forwardedRef(node);
+      } else if (forwardedRef) {
+        forwardedRef.current = node;
+      }
+    },
+    [forwardedRef, setFloating]
+  );
 
   if (!editor || !suggestion || !suggestionSelection) {
     return null;
@@ -174,14 +189,7 @@ export const FloatingSuggestions = forwardRef<
         ]
           .filter(Boolean)
           .join(" ")}
-        ref={(node) => {
-          setFloating(node);
-          if (typeof forwardedRef === "function") {
-            forwardedRef(node);
-          } else if (forwardedRef) {
-            forwardedRef.current = node;
-          }
-        }}
+        ref={setFloatingRef}
         style={{
           position: strategy,
           top: 0,
@@ -196,7 +204,9 @@ export const FloatingSuggestions = forwardRef<
         ) : (
           <>
             <span className="lb-tiptap-floating-suggestions-label">
-              {suggestion.kind === "insert" ? "Suggested addition" : "Suggested deletion"}
+              {suggestion.kind === "insert"
+                ? "Suggested addition"
+                : "Suggested deletion"}
             </span>
             <button
               className="lb-tiptap-floating-suggestions-button"
