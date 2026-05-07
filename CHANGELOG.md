@@ -2,6 +2,11 @@
 
 ## v3.19.0
 
+### `@liveblocks/node`
+
+- Add new `markdownToCommentBody` helper to convert Markdown strings into
+  `CommentBody` objects.
+
 ### `@liveblocks/react-tiptap`
 
 - Fix keyboard shortcut in strikethrough tooltip. (Thanks @HellBoy-OP for the
