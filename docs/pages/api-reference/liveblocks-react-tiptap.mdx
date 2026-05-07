@@ -1092,6 +1092,80 @@ import { Composer } from "@liveblocks/react-ui/primitives";
   </PropertiesListItem>
 </PropertiesList>
 
+### FloatingSuggestions
+
+Displays accept/reject controls near the current suggested edit. Suggestions are
+enabled with the `suggestions` option in [`useLiveblocksExtension`][].
+
+```tsx
+import {
+  FloatingSuggestions,
+  useLiveblocksExtension,
+} from "@liveblocks/react-tiptap";
+import { EditorContent, useEditor } from "@tiptap/react";
+
+function TextEditor() {
+  const liveblocks = useLiveblocksExtension({
+    suggestions: true,
+  });
+
+  const editor = useEditor({
+    extensions: [
+      liveblocks,
+      // ...
+    ],
+  });
+
+  return (
+    <>
+      <EditorContent editor={editor} />
+      <FloatingSuggestions editor={editor} />
+    </>
+  );
+}
+```
+
+Use the `setSuggestionMode` command to start recording local edits as
+suggestions. Suggested insertions and deletions remain visible in the editable
+document so selections and collaborative positions stay stable.
+
+```tsx
+<button onClick={() => editor?.commands.setSuggestionMode(true)}>
+  Suggest edits
+</button>
+```
+
+Accepting and rejecting suggestions can also be handled with commands.
+
+```tsx
+editor.commands.acceptSuggestion(suggestionId);
+editor.commands.rejectSuggestion(suggestionId);
+editor.commands.acceptAllSuggestions();
+editor.commands.rejectAllSuggestions();
+```
+
+If you need to render a document without pending suggestions, use
+`getCleanSuggestionContent` with Tiptap JSON output and pass the result to your
+renderer/export pipeline.
+
+```tsx
+import { getCleanSuggestionContent } from "@liveblocks/react-tiptap";
+
+const cleanContent = getCleanSuggestionContent(editor.getJSON());
+```
+
+#### Props [#FloatingSuggestions-props]
+
+<PropertiesList>
+  <PropertiesListItem name="editor" type="Editor | null" required>
+    The Tiptap editor.
+  </PropertiesListItem>
+  <PropertiesListItem name="children" type="function">
+    Customize the review controls. Receives the suggestion, plus `accept` and
+    `reject` callbacks.
+  </PropertiesListItem>
+</PropertiesList>
+
 ### FloatingThreads
 
 Displays floating [`Thread`][] components below text highlights in the editor.
@@ -2021,6 +2095,15 @@ const liveblocks = useLiveblocksExtension({
     type="boolean"
   >
     Enable mentions in the editor.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="options.suggestions"
+    defaultValue="false"
+    type="boolean | SuggestionsConfiguration"
+  >
+    Enable suggestion mode commands and marks. When suggestion mode is turned on
+    with `editor.commands.setSuggestionMode(true)`, local insertions and
+    deletions are recorded as suggested changes.
   </PropertiesListItem>
   <PropertiesListItem
     name="options.ai"

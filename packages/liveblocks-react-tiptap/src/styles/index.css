@@ -249,6 +249,71 @@
 }
 
 /*************************************
+ *        Suggested changes          *
+ *************************************/
+
+.lb-tiptap-suggestion {
+  border-radius: calc(0.375 * var(--lb-radius));
+  box-decoration-break: clone;
+  cursor: default;
+}
+
+.lb-tiptap-suggestion-insert {
+  background: color-mix(
+    in srgb,
+    var(--lb-accent) calc(var(--lb-accent-contrast) * 1.5),
+    transparent
+  );
+  color: var(--lb-accent);
+  text-decoration-line: underline;
+  text-decoration-color: var(--lb-accent-moderate);
+  text-underline-offset: 2px;
+}
+
+.lb-tiptap-suggestion-delete {
+  color: color-mix(in srgb, currentcolor 45%, transparent);
+  text-decoration-line: line-through;
+  text-decoration-color: currentcolor;
+  text-decoration-thickness: 1px;
+}
+
+.lb-tiptap-suggestion-selected {
+  outline: 2px solid var(--lb-accent);
+  outline-offset: 2px;
+}
+
+.lb-tiptap-floating-suggestions {
+  display: flex;
+  gap: calc(0.375 * var(--lb-spacing));
+  align-items: center;
+  padding: calc(0.375 * var(--lb-spacing));
+}
+
+.lb-tiptap-floating-suggestions-label {
+  padding-inline: calc(0.25 * var(--lb-spacing));
+  color: var(--lb-foreground-secondary);
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+
+.lb-tiptap-floating-suggestions-button {
+  padding: calc(0.25 * var(--lb-spacing)) calc(0.5 * var(--lb-spacing));
+  border: 0;
+  border-radius: calc(0.75 * var(--lb-radius));
+  background: var(--lb-foreground-subtle);
+  color: var(--lb-foreground);
+  font: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition-property: background, color;
+
+  &:where(:hover, :focus-visible) {
+    background: var(--lb-accent-subtle);
+    color: var(--lb-accent);
+  }
+}
+
+/*************************************
  *              Toolbar              *
  *************************************/
 

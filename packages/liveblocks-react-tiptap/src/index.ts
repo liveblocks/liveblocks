@@ -6,6 +6,8 @@ import type {
   CommentsCommands,
   CommentsExtensionStorage,
   LiveblocksExtensionStorage,
+  SuggestionsCommands,
+  SuggestionsExtensionStorage,
 } from "./types";
 import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 
@@ -24,6 +26,9 @@ export { useIsEditorReady } from "./LiveblocksExtension";
 export { GroupMentionNode } from "./mentions/GroupMentionNode";
 export { MentionExtension } from "./mentions/MentionExtension";
 export { MentionNode } from "./mentions/MentionNode";
+export type { FloatingSuggestionsProps } from "./suggestions/FloatingSuggestions";
+export { FloatingSuggestions } from "./suggestions/FloatingSuggestions";
+export { getCleanSuggestionContent } from "./suggestions/utils";
 export type { FloatingToolbarProps } from "./toolbar/FloatingToolbar";
 export { FloatingToolbar } from "./toolbar/FloatingToolbar";
 export type {
@@ -39,6 +44,11 @@ export type {
   AiConfiguration,
   ResolveContextualPromptArgs,
   ResolveContextualPromptResponse,
+  SuggestionKind,
+  SuggestionMarkAttributes,
+  SuggestionMode,
+  SuggestionRange,
+  SuggestionsConfiguration,
 } from "./types";
 export type { HistoryVersionPreviewProps } from "./version-history/HistoryVersionPreview";
 export { HistoryVersionPreview } from "./version-history/HistoryVersionPreview";
@@ -48,11 +58,13 @@ declare module "@tiptap/core" {
     liveblocksAi: AiExtensionStorage;
     liveblocksExtension: LiveblocksExtensionStorage;
     liveblocksComments: CommentsExtensionStorage;
+    liveblocksSuggestions: SuggestionsExtensionStorage;
   }
 
   interface Commands<ReturnType> {
     liveblocksComments: CommentsCommands<ReturnType>;
     liveblocksAi: AiCommands<ReturnType>;
+    liveblocksSuggestions: SuggestionsCommands<ReturnType>;
     collaborationCaret: {
       /**
        * Update details of the current user

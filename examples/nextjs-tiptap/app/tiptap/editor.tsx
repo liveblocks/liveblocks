@@ -1,7 +1,13 @@
 "use client";
 
 import NotificationsPopover from "../notifications-popover";
-import { useEditor, EditorContent, Editor, Extension } from "@tiptap/react";
+import {
+  useEditor,
+  EditorContent,
+  Editor,
+  Extension,
+  useEditorState,
+} from "@tiptap/react";
 import {
   useLiveblocksExtension,
   FloatingComposer,
@@ -9,6 +15,7 @@ import {
   AnchoredThreads,
   Toolbar,
   FloatingToolbar,
+  FloatingSuggestions,
 } from "@liveblocks/react-tiptap";
 import StarterKit from "@tiptap/starter-kit";
 import { useThreads } from "@liveblocks/react";
@@ -16,7 +23,9 @@ import { useIsMobile } from "./use-is-mobile";
 import VersionsDialog from "../version-history-dialog";
 
 export default function TiptapEditor() {
-  const liveblocks = useLiveblocksExtension();
+  const liveblocks = useLiveblocksExtension({
+    suggestions: true,
+  });
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -41,12 +50,17 @@ export default function TiptapEditor() {
         <NotificationsPopover />
       </div>
       <div className="border-b border-border/80 bg-background">
-        <Toolbar editor={editor} className="w-full" />
+        <Toolbar
+          editor={editor}
+          className="w-full"
+          after={<SuggestionModeToggle editor={editor} />}
+        />
       </div>
       <div className="relative flex flex-row justify-between w-full py-16 xl:pl-[250px] pl-[100px] gap-[50px]">
         <div className="relative flex flex-1 flex-col gap-2">
           <EditorContent editor={editor} />
           <FloatingComposer editor={editor} className="w-[350px]" />
+          <FloatingSuggestions editor={editor} />
           <FloatingToolbar editor={editor} />
         </div>
 
@@ -55,6 +69,32 @@ export default function TiptapEditor() {
         </div>
       </div>
     </div>
+  );
+}
+
+function SuggestionModeToggle({ editor }: { editor: Editor | null }) {
+  const isSuggesting =
+    useEditorState({
+      editor,
+      selector: (ctx) =>
+        ctx.editor?.storage.liveblocksSuggestions?.mode === "suggesting",
+      equalityFn: Object.is,
+    }) ?? false;
+
+  if (!editor || !("setSuggestionMode" in editor.commands)) {
+    return null;
+  }
+
+  // This example depends on published packages. To test local suggestion changes,
+  // build/link @liveblocks/react-tiptap into the example first.
+  return (
+    <Toolbar.Toggle
+      name="Suggest edits"
+      active={isSuggesting}
+      onClick={() => editor.commands.setSuggestionMode(!isSuggesting)}
+    >
+      Suggest
+    </Toolbar.Toggle>
   );
 }
 

@@ -35,8 +35,38 @@ export const THREADS_PLUGIN_KEY = new PluginKey<ThreadPluginState>(
 export const AI_TOOLBAR_SELECTION_PLUGIN = new PluginKey(
   "lb-ai-toolbar-selection-plugin"
 );
+export const SUGGESTIONS_PLUGIN_KEY = new PluginKey<SuggestionsPluginState>(
+  "lb-suggestions-plugin"
+);
+export const SUGGESTIONS_TRANSACTION_KEY = new PluginKey(
+  "lb-suggestions-transaction"
+);
 
 export const LIVEBLOCKS_COMMENT_MARK_TYPE = "liveblocksCommentMark";
+export const LIVEBLOCKS_SUGGESTION_MARK_TYPE = "liveblocksSuggestionMark";
+
+export type SuggestionKind = "insert" | "delete";
+
+export type SuggestionMode = "editing" | "suggesting" | "reviewing";
+
+export type SuggestionMarkAttributes = {
+  suggestionId: string;
+  userId: string;
+  kind: SuggestionKind;
+  createdAt: string;
+};
+
+export type SuggestionsConfiguration = {
+  /**
+   * The suggestion mode to use when the editor is created.
+   */
+  initialMode?: SuggestionMode;
+
+  /**
+   * Generate IDs for newly created suggestions.
+   */
+  createSuggestionId?: () => string;
+};
 
 /**
  * @beta
@@ -89,6 +119,7 @@ export type LiveblocksExtensionOptions = {
   field?: string;
   comments?: boolean; // | CommentsConfiguration
   mentions?: boolean; // | MentionsConfiguration
+  suggestions?: boolean | SuggestionsConfiguration;
   ai?: boolean | AiConfiguration;
   offlineSupport_experimental?: boolean;
   threads_experimental?: ThreadData[];
@@ -113,6 +144,23 @@ export type LiveblocksExtensionStorage = {
 
 export type CommentsExtensionStorage = {
   pendingComment: boolean;
+};
+
+export type SuggestionRange = SuggestionMarkAttributes & {
+  from: number;
+  to: number;
+};
+
+export type SuggestionsPluginState = {
+  mode: SuggestionMode;
+  activeSuggestionId: string | null;
+  hoveredSuggestionId: string | null;
+  suggestions: SuggestionRange[];
+  decorations: DecorationSet;
+};
+
+export type SuggestionsExtensionStorage = {
+  mode: SuggestionMode;
 };
 
 export const enum ThreadPluginActions {
@@ -236,10 +284,13 @@ declare module "@tiptap/core" {
     liveblocksAi: AiExtensionStorage;
     liveblocksExtension: LiveblocksExtensionStorage;
     liveblocksComments: CommentsExtensionStorage;
+    liveblocksSuggestions: SuggestionsExtensionStorage;
   }
   // TODO: this is already defined in collaboration-caret, we shouldn't need it, but something isn't working
   // maybe because we use configure?
   interface Commands<ReturnType> {
+    liveblocksSuggestions: SuggestionsCommands<ReturnType>;
+
     collaborationCaret: {
       /**
        * Update details of the current user
@@ -302,6 +353,38 @@ export type CommentsCommands<ReturnType = boolean> = {
 
   /** @internal */
   closePendingComment: () => ReturnType;
+};
+
+export type SuggestionsCommands<ReturnType = boolean> = {
+  /**
+   * Enable or disable suggestion mode.
+   */
+  setSuggestionMode: (enabled: boolean) => ReturnType;
+
+  /**
+   * Select a suggestion for review UI.
+   */
+  selectSuggestion: (id: string | null) => ReturnType;
+
+  /**
+   * Accept a suggestion.
+   */
+  acceptSuggestion: (id: string) => ReturnType;
+
+  /**
+   * Reject a suggestion.
+   */
+  rejectSuggestion: (id: string) => ReturnType;
+
+  /**
+   * Accept every suggestion in the document.
+   */
+  acceptAllSuggestions: () => ReturnType;
+
+  /**
+   * Reject every suggestion in the document.
+   */
+  rejectAllSuggestions: () => ReturnType;
 };
 
 export type AiCommands<ReturnType = boolean> = {

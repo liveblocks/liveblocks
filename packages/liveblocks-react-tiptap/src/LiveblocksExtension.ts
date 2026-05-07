@@ -32,6 +32,7 @@ import {
   FILTERED_THREADS_PLUGIN_KEY,
 } from "./comments/CommentsExtension";
 import { MentionExtension } from "./mentions/MentionExtension";
+import { SuggestionsExtension } from "./suggestions/SuggestionsExtension";
 import type {
   LiveblocksExtensionOptions,
   LiveblocksExtensionStorage,
@@ -47,6 +48,7 @@ const DEFAULT_OPTIONS: WithRequired<LiveblocksExtensionOptions, "field"> = {
   field: "default",
   comments: true,
   mentions: true,
+  suggestions: false,
   offlineSupport_experimental: false,
   enablePermanentUserData: false,
 };
@@ -415,6 +417,22 @@ export const useLiveblocksExtension = (
               createTextMention(mention.notificationId, mention);
             },
             onDeleteMention: deleteTextMention,
+          })
+        );
+      }
+      if (options.suggestions) {
+        const suggestionsOptions =
+          typeof options.suggestions === "boolean" ? {} : options.suggestions;
+
+        extensions.push(
+          SuggestionsExtension.configure({
+            initialMode: suggestionsOptions.initialMode ?? "editing",
+            createSuggestionId:
+              suggestionsOptions.createSuggestionId ??
+              (() =>
+                globalThis.crypto?.randomUUID?.() ??
+                Math.random().toString(36).slice(2)),
+            getUserId: () => room.getSelf()?.id ?? "anonymous",
           })
         );
       }
