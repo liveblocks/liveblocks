@@ -605,12 +605,8 @@
         "path": "/integrations"
       },
       {
-        "title": "Cursor",
-        "path": "/integrations/cursor"
-      },
-      {
-        "title": "Codex",
-        "path": "/integrations/codex"
+        "title": "Bolt",
+        "path": "/integrations/bolt"
       },
       {
         "title": "Claude Code",
@@ -621,8 +617,12 @@
         "path": "/integrations/claude-desktop"
       },
       {
-        "title": "Bolt",
-        "path": "/integrations/bolt"
+        "title": "Codex",
+        "path": "/integrations/codex"
+      },
+      {
+        "title": "Cursor",
+        "path": "/integrations/cursor"
       },
       {
         "title": "Lovable",
