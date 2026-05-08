@@ -621,6 +621,10 @@
         "path": "/integrations/claude-desktop"
       },
       {
+        "title": "Bolt",
+        "path": "/integrations/bolt"
+      },
+      {
         "title": "Lovable",
         "path": "/integrations/lovable"
       },
@@ -641,8 +645,8 @@
         "path": "/integrations/supabase"
       },
       {
-        "title": "Vercel",
-        "path": "/integrations/vercel"
+        "title": "v0",
+        "path": "/integrations/v0"
       }
     ]
   },

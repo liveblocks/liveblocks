@@ -1,15 +1,15 @@
 ---
 meta:
-  title: "Replit + Liveblocks"
+  title: "v0 + Liveblocks"
   parentTitle: "Integrations"
   description:
-    "Add Liveblocks to apps built with Replit Agent so you can ship realtime
+    "Add Liveblocks to apps built or exported from v0 so you can ship realtime
     presence, multiplayer editors, and comments alongside generated UI."
 ---
 
-[Replit](https://replit.com/) lets you build and run full-stack apps in the
-browser using Replit Agent. With Liveblocks, you can add realtime collaboration
-to your generated Replit app, such as
+[v0](https://v0.app/) helps you generate full-stack apps quickly using AI chats.
+With Liveblocks, you can add realtime collaboration to your generated v0 app,
+such as
 [collaborative text editing](/docs/collaboration-features/multiplayer/text-editor),
 [multiplayer documents](/docs/collaboration-features/multiplayer/sync-engine),
 [comment threads](/docs/collaboration-features/comments),
@@ -21,9 +21,9 @@ to your generated Replit app, such as
 <Steps>
 
 <Step>
-  <StepTitle>Ask the Agent to build with Liveblocks</StepTitle>
+  <StepTitle>Ask the chat to build with Liveblocks</StepTitle>
   <StepContent>
-    Add Liveblocks to your project by asking Replit Agent to add collaborative features, for example:
+    Add Liveblocks to your project by asking the chat to add collaborative features, for example:
 
     ```text title="Example prompt"
     Add a realtime text editor with Liveblocks and Tiptap.
@@ -39,7 +39,7 @@ to your generated Replit app, such as
   <Step>
     <StepTitle>Insert your secret key</StepTitle>
     <StepContent>
-      During the process, Replit Agent will prompt you to
+      During the process, v0 will prompt you to
       insert your Liveblocks secret key from the [dashboard](/dashboard/apikeys).
       Paste in your project’s key.
 
@@ -47,7 +47,8 @@ to your generated Replit app, such as
       {{SECRET_KEY}}
       ```
 
-      To manually edit your key in Replit, go to Tools & Files → Secrets → `LIVEBLOCKS_SECRET_KEY`.
+      To manually edit your key in v0, go to Settings → Environment
+      Variables → `LIVEBLOCKS_SECRET_KEY`.
     </StepContent>
 
   </Step>
@@ -55,7 +56,7 @@ to your generated Replit app, such as
   <Step lastStep>
     <StepTitle>Collaboration is ready</StepTitle>
     <StepContent>
-      Your app should now have live collaboration—use the Agent to continue building your Liveblocks app.
+      Your app should now have live collaboration—use the chat to continue building your Liveblocks app.
     </StepContent>
 
   </Step>
@@ -65,5 +66,5 @@ to your generated Replit app, such as
 
 ### Secret or public key issues
 
-To fix issues related to API keys, instruct Replit Agent to use a secret key
-instead of a public key, and authenticate your Liveblocks application.
+To fix issues related to API keys, instruct v0 to use a secret key instead of a
+public key, and authenticate your Liveblocks application.
