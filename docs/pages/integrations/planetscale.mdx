@@ -1,16 +1,17 @@
 ---
 meta:
-  title: "Neon + Liveblocks"
+  title: "PlanetScale + Liveblocks"
   parentTitle: "Integrations"
   description:
-    "Use Neon with Liveblocks when your collaborative app needs to store data in
-    a Postgres database—for example mirrored collaboration data for reporting,
-    search, audit logs, and workflows."
+    "Use PlanetScale with Liveblocks when your collaborative app needs to store
+    data in a MySQL database—for example mirrored collaboration data for
+    reporting, search, audit logs, and workflows."
 ---
 
-[Neon](https://neon.tech/) provides serverless Postgres with branching and
-autoscaling. Using webhooks, you can set up one-way synchronization of your
-Liveblocks data to Neon for reporting, search, audit logs, or app workflows.
+[PlanetScale](https://planetscale.com/) provides a serverless MySQL database
+with horizontal scaling and branching. Using webhooks, you can set up one-way
+synchronization of your Liveblocks data to PlanetScale for reporting, search,
+audit logs, or app workflows.
 
 <PromptCta />
 
@@ -19,7 +20,7 @@ Liveblocks data to Neon for reporting, search, audit logs, or app workflows.
 Liveblocks [webhooks](/docs/platform/webhooks) trigger when certain events
 happen, such as when a collaborative document updates. Liveblocks can trigger an
 endpoint in your back end, and from here, you can fetch the latest data and
-write it to Neon. Here’s an example of how it works with
+write it to PlanetScale. Here’s an example of how it works with
 [Liveblocks Storage](/docs/collaboration-features/multiplayer/sync-engine/liveblocks-storage).
 
 ```mermaid
@@ -27,20 +28,20 @@ sequenceDiagram
     actor User
     participant LB as Liveblocks app
     participant Webhook as Webhook endpoint
-    participant Neon
+    participant PlanetScale
 
     User->>LB: Edits document
     Note over LB: Throttle
     LB->>Webhook: **storageUpdated** webhook
     Webhook->>LB: **getStorageDocument** API
     LB-->>Webhook: Storage data
-    Webhook->>Neon: Upsert row data
-    Neon-->>Webhook: 200 OK
+    Webhook->>PlanetScale: Upsert row data
+    PlanetScale-->>Webhook: 200 OK
 ```
 
 ## Which data can be synced?
 
-Various types of Liveblocks data can be synched to Neon with webhooks.
+Various types of Liveblocks data can be synched to PlanetScale with webhooks.
 
 | Name                     | Description                     | Relevant webhook                                                | Relevant API                                                                         |
 | ------------------------ | ------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
@@ -62,21 +63,28 @@ Various types of Liveblocks data can be synched to Neon with webhooks.
 
 ## Setup
 
-Quickstart for synching Liveblocks data to Neon. In this example, we sync
-Liveblocks Storage data to Neon, but you can use the same pattern with other
-APIs and webhooks to sync other types of data.
+Quickstart for synching Liveblocks data to PlanetScale. In this example, we
+sync Liveblocks Storage data to PlanetScale, but you can use the same pattern
+with other APIs and webhooks to sync other types of data.
+
+<Banner title="Step-by-step guide">
+  We have a [full step-by-step guide available
+  here](/docs/guides/how-to-synchronize-your-liveblocks-storage-document-data-to-a-planetscale-mysql-database),
+  this page provides a quick summary.
+</Banner>
 
 <Steps>
   <Step>
-    <StepTitle>Create the Neon table</StepTitle>
+    <StepTitle>Create the PlanetScale table</StepTitle>
     <StepContent>
       Use one row for each Liveblocks room.
 
       ```sql
       create table liveblocks_documents (
-        room_id text primary key,
-        data jsonb not null,
-        updated_at timestamptz not null default now()
+        room_id varchar(255) primary key,
+        data json not null,
+        updated_at timestamp not null default current_timestamp
+          on update current_timestamp
       );
       ```
     </StepContent>
@@ -94,7 +102,7 @@ APIs and webhooks to sync other types of data.
         const body = await request.json();
         const headers = request.headers;
 
-        // Verify the webhook event, then sync to Neon
+        // Verify the webhook event, then sync to PlanetScale
         // ...
 
         return new Response(null, { status: 200 });
@@ -146,7 +154,7 @@ APIs and webhooks to sync other types of data.
         }
         // +++
 
-        // Sync to Neon
+        // Sync to PlanetScale
         // ...
 
         return new Response(null, { status: 200 });
@@ -157,21 +165,21 @@ APIs and webhooks to sync other types of data.
   </Step>
 
   <Step>
-    <StepTitle>Sync Storage to Neon</StepTitle>
+    <StepTitle>Sync Storage to PlanetScale</StepTitle>
     <StepContent>
-    Set up your Liveblocks and Neon clients, before fetching the Storage document data with
+    Set up your Liveblocks and PlanetScale clients, before fetching the Storage document data with
      [`getStorageDocument`](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-storage) and
-     upserting the Neon row with `on conflict … do update`.
+     upserting the PlanetScale row with `on duplicate key update`.
 
       ```ts
       import { Liveblocks, WebhookHandler } from "@liveblocks/node";
-      import { neon } from "@neondatabase/serverless";
+      import { connect } from "@planetscale/database";
 
       const liveblocks = new Liveblocks({
         secret: process.env.LIVEBLOCKS_SECRET_KEY!,
       });
 
-      const sql = neon(process.env.DATABASE_URL!);
+      const db = connect({ url: process.env.DATABASE_URL! });
 
       const webhookHandler = new WebhookHandler(
         process.env.LIVEBLOCKS_WEBHOOK_SECRET!
@@ -200,14 +208,13 @@ APIs and webhooks to sync other types of data.
           // Get Storage document data
           const data = await liveblocks.getStorageDocument(roomId, "json");
 
-          // Upsert into Neon
-          await sql`
-            insert into liveblocks_documents (room_id, data, updated_at)
-            values (${roomId}, ${JSON.stringify(data)}::jsonb, now())
-            on conflict (room_id) do update set
-              data = excluded.data,
-              updated_at = excluded.updated_at
-          `;
+          // Upsert into PlanetScale
+          await db.execute(
+            `insert into liveblocks_documents (room_id, data)
+             values (?, ?)
+             on duplicate key update data = values(data)`,
+            [roomId, JSON.stringify(data)]
+          );
         }
         // +++
 
@@ -221,7 +228,7 @@ APIs and webhooks to sync other types of data.
   <Step lastStep>
     <StepTitle>Data sync is set up!</StepTitle>
     <StepContent>
-      Your Liveblocks data is now automatically synched to Neon when the webhook event is fired.
+      Your Liveblocks data is now automatically synched to PlanetScale when the webhook event is fired.
     </StepContent>
   </Step>
 </Steps>
@@ -233,7 +240,7 @@ APIs and webhooks to sync other types of data.
 [`storageUpdated`](/docs/platform/webhooks#StorageUpdatedEvent) and
 [`ydocUpdated`](/docs/platform/webhooks#YDocUpdatedEvent) webhooks are throttled
 because collaborative documents can be modified up to 60 times per second. Treat
-Neon as an eventually consistent mirror, not as the live editing channel.
+PlanetScale as an eventually consistent mirror, not as the live editing channel.
 
 ### Webhook verification fails
 
@@ -243,15 +250,15 @@ body string to
 [`verifyRequest`](/docs/api-reference/liveblocks-node#verifyRequest) that it
 received from Liveblocks.
 
-### Neon writes fail
+### PlanetScale writes fail
 
-Keep `DATABASE_URL` on the server only. Use a role with permission to write the
-mirror tables. If you use Neon’s pooled connection string, follow Neon’s
-guidance for serverless and long-running workers.
+Keep `DATABASE_URL` on the server only. Use a database password with permission
+to write the mirror tables. PlanetScale doesn’t support foreign keys by
+default—if you need referential integrity, model it in application code.
 
 ### Duplicate writes happen
 
-Webhook deliveries can be retried. Use `on conflict … do update` upserts with a
+Webhook deliveries can be retried. Use `on duplicate key update` upserts with a
 stable primary key such as `room_id`, `thread_id`, or `comment_id` so repeated
 deliveries update the same row.
 
@@ -263,7 +270,8 @@ the webhook can be retried.
 
 ## Related docs
 
-- [Supabase + Liveblocks](/docs/integrations/supabase).
+- [Synchronize Liveblocks Storage document data to PlanetScale MySQL](/docs/guides/how-to-synchronize-your-liveblocks-storage-document-data-to-a-planetscale-mysql-database).
+- [Synchronize Liveblocks Yjs document data to PlanetScale MySQL](/docs/guides/how-to-synchronize-your-liveblocks-yjs-document-data-to-a-planetscale-mysql-database).
 - API references for, [webhooks](/docs/platform/webhooks),
   [Node.js](/docs/api-reference/liveblocks-node),
   [Python](/docs/api-reference/liveblocks-python), and
