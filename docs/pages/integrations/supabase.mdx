@@ -244,7 +244,7 @@ Supabase as an eventually consistent mirror, not as the live editing channel.
 
 ### Webhook verification fails
 
-Check that `LIVEBLOCKS_WEBHOOK_SECRET` is the signing secret for the webhook
+Check that `LIVEBLOCKS_WEBHOOK_SECRET` is the webhook secret for the webhook
 endpoint that sent the event. Also make sure your endpoint passes the same raw
 body string to
 [`verifyRequest`](/docs/api-reference/liveblocks-node#verifyRequest) that it

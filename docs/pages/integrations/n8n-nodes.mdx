@@ -101,7 +101,7 @@ Supported event filters include
 [`userEntered`](/docs/platform/webhooks#UserEnteredEvent),
 [`userLeft`](/docs/platform/webhooks#UserLeftEvent), and
 [`ydocUpdated`](/docs/platform/webhooks#YDocUpdatedEvent). The trigger verifies
-the request using your **webhook signing secret** before running the workflow.
+the request using your **webhook secret** before running the workflow.
 
 ## Credentials
 
@@ -115,10 +115,10 @@ the request using your **webhook signing secret** before running the workflow.
 The credential test calls the REST API (for example listing rooms) to confirm
 the key works.
 
-### Liveblocks Webhook Signing Secret (required for Liveblocks Trigger)
+### Liveblocks Webhook Secret (required for Liveblocks Trigger)
 
 1. In the Liveblocks dashboard, open your project’s **webhook** configuration
-   and copy the **signing secret** (`whsec_…`).
+   and copy the **webhook secret** (`whsec_…`).
 2. In n8n, create a credential of type **Liveblocks Webhook Signing Secret API**
    and paste that value.
 
@@ -170,8 +170,8 @@ listening. For active workflows, use the production URL.
 
 ### Webhook verification fails
 
-Check that the trigger credential uses the webhook signing secret that starts
-with `whsec_`. This is different from your Liveblocks API secret key.
+Check that the trigger credential uses the webhook secret that starts with
+`whsec_`. This is different from your Liveblocks API secret key.
 
 ### API operation fails
 
