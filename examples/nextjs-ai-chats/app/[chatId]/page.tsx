@@ -49,7 +49,9 @@ function ChatTitle({ chatId }: { chatId: string }) {
 
 // Overriding the empty chat state
 function Empty({ chatId }: AiChatComponentsEmptyProps) {
-  const sendMessage = useSendAiMessage(chatId);
+  const sendMessage = useSendAiMessage(chatId, {
+    copilotId: process.env.NEXT_PUBLIC_LIVEBLOCKS_COPILOT_ID || undefined,
+  });
 
   return (
     <div className="size-full mx-auto max-w-[--inner-app-width] flex items-end pb-[calc(3*var(--lb-spacing))]">
