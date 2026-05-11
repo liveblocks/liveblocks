@@ -1,0 +1,137 @@
+---
+meta:
+  title: "OpenAI Codex + Liveblocks"
+  parentTitle: "Integrations"
+  description:
+    "Use OpenAI Codex with Liveblocks agent skills and the MCP server to build
+    collaborative apps with guided best practices."
+---
+
+Use [OpenAI Codex](https://openai.com/codex/) with Liveblocks to add
+collaborative features to your app. Install
+[agent skills](/docs/tools/agent-skills) so your assistant follows Liveblocks
+and Yjs guidance, and use our [MCP server](/docs/tools/mcp-server) to allow AI
+to inspect and modify your data, such as rooms, Storage, Yjs, comments, and
+more.
+
+<PromptCta />
+
+## Setup
+
+<Steps>
+  <Step>
+    <StepTitle>Install agent skills</StepTitle>
+    <StepContent>
+      To help AI follow best practices in your app, add [Liveblocks agent skills](/docs/tools/agent-skills)
+      to your system. Make sure to select Codex in the CLI. Global installation is easiest.
+
+      ```bash
+      npx skills add liveblocks/skills
+      ```
+
+    </StepContent>
+
+  </Step>
+
+  <Step>
+    <StepTitle>Install MCP server</StepTitle>
+    <StepContent>
+      To allow AI to inspect and modify data in your project, first ensure the Codex CLI is installed:
+      
+      ```bash
+      npm i -g @openai/codex
+      ```
+
+      Next, install the
+      [Liveblocks MCP server](/docs/tools/mcp-server), inserting your secret key
+      from [your dashboard](/dashboard):
+
+      ```bash
+      codex mcp add liveblocks \
+        --env LIVEBLOCKS_SECRET_KEY="{{SECRET_KEY}}" \
+        -- npx -y github:liveblocks/liveblocks-mcp-server
+      ```
+
+      <Banner type="warning" title="Only for development">
+        Do not use a secret key from a production project, as AI will have direct access to delete data.
+      </Banner>
+
+    </StepContent>
+
+  </Step>
+
+  <Step lastStep>
+    <StepTitle>Get help from your AI assistant</StepTitle>
+    <StepContent>
+      You can now use your AI assistant to help you structure and debug your Liveblocks application. 
+      Here are a few examples.
+
+      > Q: Set up a Liveblocks room on this page.
+      >
+      > A: _Certainly, I've set up a Liveblocks room on this page using `RoomProvider`, it has…_
+
+      <br />
+
+      > Q: How many rooms are there?
+      >
+      > A: _There are 10 rooms, the last was created 7 minutes ago. Its room ID is `l8Gaj9` and…_
+
+      <br />
+
+      > Q: Add placeholder comments to the `l8Gaj9` room.
+      >
+      > A: _I've filled the room with example commands and threads, following your instructions._
+    </StepContent>
+
+  </Step>
+</Steps>
+
+## More information
+
+### Agent skills
+
+Two agent skills are available to your assistant, `liveblocks-best-practices`
+and `yjs-best-practices`. These are collections of markdown files that detail
+various best practices for using Liveblocks and Yjs. We always recommend using
+these skills when building, debugging, or answering questions about Liveblocks
+and Yjs.
+
+<Button href="/docs/tools/agent-skills">Agent skills documentation</Button>
+
+### MCP server
+
+Most Liveblocks [REST API](/docs/api-reference/rest-api-endpoints) operations as
+tools, so your AI can inspect and edit rooms and data from the editor. This is
+helpful for fetching data when debugging, and also useful for creating
+placeholder content in your development app, for example you can ask AI to
+create new rooms and add placeholder comments and data.
+
+Each Liveblocks project has a unique secret key, which you pass when installing
+the MCP server. Only data from this project can be inspected. Never use a secret
+key from a production project, as giving AI direct access would be dangerous,
+allowing it to delete your production data.
+
+<Button href="/docs/tools/mcp-server">MCP server documentation</Button>
+
+## Limitations and troubleshooting
+
+### Skills do not load
+
+Re-run `npx skills add liveblocks/skills` from the repo root. Ensure Codex can
+see the generated plugin files.
+
+### MCP returns auth errors
+
+Use a secret key from the same [Liveblocks project](/dashboard) as your app.
+Confirm `LIVEBLOCKS_SECRET_KEY` in the MCP config matches that project.
+
+### MCP returns incorrect data
+
+Check that you’re using the correct secret key for your current project. Try
+uninstalling and reinstalling with the correct key.
+
+## Related docs
+
+- [Agent skills](/docs/tools/agent-skills).
+- [MCP server](/docs/tools/mcp-server).
+- [REST API reference](/docs/api-reference/rest-api-endpoints).

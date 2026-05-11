@@ -289,7 +289,7 @@ nvie, ctnicholas, stevenfabre, marcbouchenoire
 
 ## Documentation
 
-- New page: [n8n nodes](https://liveblocks.io/docs/tools/n8n-nodes).
+- New page: [n8n nodes](https://liveblocks.io/docs/integrations/n8n-nodes).
 - New page:
   [AI Collaboration](https://liveblocks.io/docs/collaboration-features/ai-collaboration).
 - New get started:

@@ -598,6 +598,63 @@
     ]
   },
   {
+    "title": "Integrations",
+    "routes": [
+      {
+        "title": "Overview",
+        "path": "/integrations"
+      },
+      {
+        "title": "Bolt",
+        "path": "/integrations/bolt"
+      },
+      {
+        "title": "Claude Code",
+        "path": "/integrations/claude-code"
+      },
+      {
+        "title": "Claude Desktop",
+        "path": "/integrations/claude-desktop"
+      },
+      {
+        "title": "Codex",
+        "path": "/integrations/codex"
+      },
+      {
+        "title": "Cursor",
+        "path": "/integrations/cursor"
+      },
+      {
+        "title": "Lovable",
+        "path": "/integrations/lovable"
+      },
+      {
+        "title": "n8n",
+        "path": "/integrations/n8n-nodes"
+      },
+      {
+        "title": "Neon",
+        "path": "/integrations/neon"
+      },
+      {
+        "title": "PlanetScale",
+        "path": "/integrations/planetscale"
+      },
+      {
+        "title": "Replit",
+        "path": "/integrations/replit"
+      },
+      {
+        "title": "Supabase",
+        "path": "/integrations/supabase"
+      },
+      {
+        "title": "v0",
+        "path": "/integrations/v0"
+      }
+    ]
+  },
+  {
     "title": "Errors",
     "hidden": true,
     "routes": [
@@ -772,10 +829,6 @@
       {
         "title": "Next.js Starter Kit",
         "path": "/tools/nextjs-starter-kit"
-      },
-      {
-        "title": "n8n nodes",
-        "path": "/tools/n8n-nodes"
       },
       {
         "title": "Agent skills",

@@ -1,0 +1,109 @@
+---
+meta:
+  title: "Provider name"
+  parentTitle: "Integrations"
+  description: "Use Provider with Liveblocks to..."
+---
+
+# Provider page template
+
+Use this file as the starting point for new integration provider pages. Do not
+add this file to `docs/routes.json`; copy it to
+`docs/pages/integrations/{slug}.mdx` and route that page when the provider is
+ready to publish.
+
+## Route entry
+
+Add the published provider to the Integrations category in `docs/routes.json`.
+Keep the route visible unless the page must be generated without appearing in
+navigation.
+
+```json
+{
+  "title": "Provider name",
+  "path": "/integrations/provider-slug",
+  "keywords": [
+    "Provider name",
+    "provider-slug",
+    "integration",
+    "category",
+    "common product term"
+  ]
+}
+```
+
+## Metadata
+
+Use the same frontmatter shape on every provider page.
+
+```mdx
+---
+meta:
+  title: "Provider name"
+  parentTitle: "Integrations"
+  description:
+    "Use Provider with Liveblocks to add realtime collaboration to..."
+---
+```
+
+## Required sections
+
+Each provider page should include these headings so the page is predictable,
+searchable, and easy to review.
+
+## What it enables
+
+Explain the integration outcome in product terms. Name the Liveblocks features
+the provider unlocks or complements, and say whether the page is a ready-to-use
+integration, an implementation pattern, a marketplace listing, or partner
+submission prep.
+
+## When to use Liveblocks with Provider
+
+Describe the best-fit use cases and the boundary between Liveblocks and the
+provider.
+
+## Recommended architecture
+
+Show which system owns authentication, durable data, realtime collaboration,
+workflow automation, deployment, or generated code. Use a table when the split
+is important.
+
+If the page needs a diagram, use a Mermaid code fence. Keep labels short and
+describe system boundaries, not every implementation detail.
+
+```mermaid
+graph TD
+  A[User action] --> B[Liveblocks feature]
+  B --> C[Webhook or REST API]
+  C --> D[Your app endpoint]
+  D --> E[Provider API or database]
+```
+
+## Setup
+
+Use `Steps`, `Step`, `StepTitle`, and `StepContent` for implementation steps.
+Include environment variables, install commands, auth setup, provider setup, and
+the first Liveblocks feature to add.
+
+## Examples and templates
+
+Link to runnable examples, starter kits, partner templates, marketplace entries,
+or closest existing Liveblocks examples.
+
+## Limitations and troubleshooting
+
+Document known constraints, rate limits, eventual consistency, permissions,
+secret handling, provider-specific gotchas, and when the provider should not be
+treated as the Liveblocks source of truth.
+
+## Partner listing notes
+
+Record marketplace submission copy, category recommendations, listing URLs,
+owner notes, and any provider-specific requirements.
+
+## Related docs
+
+Link to the most relevant Liveblocks docs, such as Authentication, REST API,
+Webhooks, Comments, Notifications, Multiplayer, AI Copilots, MCP server, or n8n
+nodes.
