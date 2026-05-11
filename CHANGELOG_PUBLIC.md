@@ -63,6 +63,19 @@ nvie
 
 # Week 17 (2026-04-24)
 
+## v3.18.5
+
+### `@liveblocks/react-tiptap`
+
+- Support overlapping comment marks, they now all appear in the
+  `AnchoredThreads` and `FloatingThreads` components.
+
+## v3.18.4
+
+### `@liveblocks/emails`
+
+- Mark `yjs` and `y-prosemirror` as required peer dependencies.
+
 ## Website
 
 - New blog post:
@@ -83,7 +96,7 @@ nvie
 
 ## Contributors
 
-ctnicholas, nvie, ofoucherot
+ctnicholas, nvie, ofoucherot, marcbouchenoire
 
 # Week 16 (2026-04-17)
 
