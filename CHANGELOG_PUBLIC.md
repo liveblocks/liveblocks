@@ -44,12 +44,6 @@ list and feel free to give them credit at the end of a line, e.g.:
   unconditionally on view destroy, matching upstream
   `@tiptap/extension-collaboration`. (Thanks @lucasmotta for the contribution!)
 
-## Contributors
-
-marcbouchenoire, HellBoy-OP, lucasmotta
-
-# Week 18 (2026-05-01)
-
 ## Liveblocks dev server (v1.4.1)
 
 - Fix: `client.getOrCreateRoom()` no longer errors when the room already exists,
@@ -59,7 +53,7 @@ marcbouchenoire, HellBoy-OP, lucasmotta
 
 ## Contributors
 
-nvie
+nvie, marcbouchenoire, HellBoy-OP, lucasmotta
 
 # Week 17 (2026-04-24)
 
