@@ -18,24 +18,79 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
-# Week 17 (2026-04-24)
+# Week 19 (2026-05-08)
 
-## Website
+## v3.19.0
 
-- New blog post: [How CRDTs and sync engines keep realtime lists ordered with fractional indexing](https://liveblocks.io/blog/how-crdts-and-sync-engines-keep-realtime-lists-ordered-with-fractional-indexing).
+### `@liveblocks/node`
 
-## Infrastructure
+- Add new `markdownToCommentBody` helper to convert Markdown strings into
+  `CommentBody` objects.
 
-- We're almost done migrating over all rooms to our new v2 realtime data storage engine–we're deep in the long tail! (For the benefits of this, [read more here](https://liveblocks.io/docs/guides/about-the-new-storage-engine).)
+### `@liveblocks/client`
 
-## Documentation
+- `room.history.disable(fn)` is now officially supported and no longer
+  experimental. It allows running storage mutations without them appearing on
+  the undo/redo stacks and it’s intended for background/async writes (e.g.
+  writing back AI generation results) that should not be undoable.
 
-- New get started guide: [Multiplayer Handsontable](https://liveblocks.io/docs/get-started/nextjs-multiplayer-handsontable).
-- New get started guide: [Commenting in Handsontable](https://liveblocks.io/docs/get-started/nextjs-comments-handsontable).
+### `@liveblocks/react-tiptap`
+
+- Fix keyboard shortcut in strikethrough tooltip. (Thanks @HellBoy-OP for the
+  contribution!)
+- Fix Yjs undo/redo silently breaking after `editor.registerPlugin` /
+  `unregisterPlugin` is called (e.g. when Tiptap's `BubbleMenu`, `DragHandle`,
+  or `SlashCommand` mount). The reattach `restore()` is now installed
+  unconditionally on view destroy, matching upstream
+  `@tiptap/extension-collaboration`. (Thanks @lucasmotta for the contribution!)
+
+## Liveblocks dev server (v1.4.1)
+
+- Fix: `client.getOrCreateRoom()` no longer errors when the room already exists,
+  matching production behavior.
+- Fix: Yjs document updates made via `PUT /v2/rooms/<roomId>/ydoc` now get
+  broadcast to connected WebSocket clients, matching production behavior.
 
 ## Contributors
 
-ctnicholas, nvie, ofoucherot
+nvie, marcbouchenoire, HellBoy-OP, lucasmotta
+
+# Week 17 (2026-04-24)
+
+## v3.18.5
+
+### `@liveblocks/react-tiptap`
+
+- Support overlapping comment marks, they now all appear in the
+  `AnchoredThreads` and `FloatingThreads` components.
+
+## v3.18.4
+
+### `@liveblocks/emails`
+
+- Mark `yjs` and `y-prosemirror` as required peer dependencies.
+
+## Website
+
+- New blog post:
+  [How CRDTs and sync engines keep realtime lists ordered with fractional indexing](https://liveblocks.io/blog/how-crdts-and-sync-engines-keep-realtime-lists-ordered-with-fractional-indexing).
+
+## Infrastructure
+
+- We're almost done migrating over all rooms to our new v2 realtime data storage
+  engine–we're deep in the long tail! (For the benefits of this,
+  [read more here](https://liveblocks.io/docs/guides/about-the-new-storage-engine).)
+
+## Documentation
+
+- New get started guide:
+  [Multiplayer Handsontable](https://liveblocks.io/docs/get-started/nextjs-multiplayer-handsontable).
+- New get started guide:
+  [Commenting in Handsontable](https://liveblocks.io/docs/get-started/nextjs-comments-handsontable).
+
+## Contributors
+
+ctnicholas, nvie, ofoucherot, marcbouchenoire
 
 # Week 16 (2026-04-17)
 
@@ -43,37 +98,50 @@ ctnicholas, nvie, ofoucherot
 
 ### `@liveblocks/*`
 
-- Third-party libraries like `yjs`, `@tiptap/*`, and `@blocknote/*` are now declared as peer dependencies instead of bundled dependencies across all packages that use them.
+- Third-party libraries like `yjs`, `@tiptap/*`, and `@blocknote/*` are now
+  declared as peer dependencies instead of bundled dependencies across all
+  packages that use them.
 
 ## v3.18.2
 
 ### `@liveblocks/client`
 
-- New experimental `room.history.disable(fn)` API that allows running storage mutations without them appearing on the undo/redo stacks. Intended for background/async writes (e.g. writing back AI generation results) that should not be undoable.
-- Fix `ToJson` type losing specific value types for `Record<string, T>` fields in Storage
+- New experimental `room.history.disable(fn)` API that allows running storage
+  mutations without them appearing on the undo/redo stacks. Intended for
+  background/async writes (e.g. writing back AI generation results) that should
+  not be undoable.
+- Fix `ToJson` type losing specific value types for `Record<string, T>` fields
+  in Storage
 
 ## v3.18.1
 
 ### `@liveblocks/react-ui`
 
 - Mentions suggestions now appear in more cases after typing `@`:
-  - After punctuation like `!`, `.`, `(`, etc. (e.g. `Hello!@`, `cc: the other team (@`)
+  - After punctuation like `!`, `.`, `(`, etc. (e.g. `Hello!@`,
+    `cc: the other team (@`)
   - After emojis (e.g. `Hello 👋@`)
 
 ## Infrastructure
 
 - Moved the public monorepo from NPM to pnpm.
-- Started the transparent internal migration of old rooms still on the v1 realtime data storage engine to the new v2 engine, [learn more about the benefits](https://liveblocks.io/docs/guides/about-the-new-storage-engine).
+- Started the transparent internal migration of old rooms still on the v1
+  realtime data storage engine to the new v2 engine,
+  [learn more about the benefits](https://liveblocks.io/docs/guides/about-the-new-storage-engine).
 
 ## Examples
 
-- New example: [Handsontable comments](https://liveblocks.io/examples/handsontable-comments/nextjs-comments-handsontable).
-- New example: [Multiplayer Handsontable](https://liveblocks.io/examples/multiplayer-handsontable/nextjs-multiplayer-handsontable).
+- New example:
+  [Handsontable comments](https://liveblocks.io/examples/handsontable-comments/nextjs-comments-handsontable).
+- New example:
+  [Multiplayer Handsontable](https://liveblocks.io/examples/multiplayer-handsontable/nextjs-multiplayer-handsontable).
 
 ## Website
 
-- New blog post: [Unveil Week recap: Realtime collaboration for humans and agents](https://liveblocks.io/blog/unveil-week-recap-realtime-collaboration-for-humans-and-agents).
-- New blog post: [Official n8n nodes for Liveblocks](https://liveblocks.io/blog/official-n8n-nodes-for-liveblocks).
+- New blog post:
+  [Unveil Week recap: Realtime collaboration for humans and agents](https://liveblocks.io/blog/unveil-week-recap-realtime-collaboration-for-humans-and-agents).
+- New blog post:
+  [Official n8n nodes for Liveblocks](https://liveblocks.io/blog/official-n8n-nodes-for-liveblocks).
 
 ## Contributors
 
@@ -122,16 +190,24 @@ For full upgrade instructions, see the
 
 ## Website
 
-- New blog post: [AI agents are becoming native users of software](https://liveblocks.io/blog/ai-agents-are-becoming-native-users-of-software).
-- New blog post: [Introducing Feeds and APIs for Agent Workflows](https://liveblocks.io/blog/introducing-feeds-and-apis-for-agent-workflows).
-- New blog post: [Multiplayer SDK for React Flow: Realtime collaboration between humans and agents](https://liveblocks.io/blog/multiplayer-sdk-for-react-flow-realtime-collaboration-between-humans-and-agents).
-- New blog post: [Chat SDK adapter for Liveblocks](https://liveblocks.io/blog/chat-sdk-adapter-for-liveblocks).
-- New blog post: [Python SDK for Liveblocks](https://liveblocks.io/blog/python-sdk-for-liveblocks).
-- New blog post: [Agent skills for Liveblocks](https://liveblocks.io/blog/agent-skills-for-liveblocks).
+- New blog post:
+  [AI agents are becoming native users of software](https://liveblocks.io/blog/ai-agents-are-becoming-native-users-of-software).
+- New blog post:
+  [Introducing Feeds and APIs for Agent Workflows](https://liveblocks.io/blog/introducing-feeds-and-apis-for-agent-workflows).
+- New blog post:
+  [Multiplayer SDK for React Flow: Realtime collaboration between humans and agents](https://liveblocks.io/blog/multiplayer-sdk-for-react-flow-realtime-collaboration-between-humans-and-agents).
+- New blog post:
+  [Chat SDK adapter for Liveblocks](https://liveblocks.io/blog/chat-sdk-adapter-for-liveblocks).
+- New blog post:
+  [Python SDK for Liveblocks](https://liveblocks.io/blog/python-sdk-for-liveblocks).
+- New blog post:
+  [Agent skills for Liveblocks](https://liveblocks.io/blog/agent-skills-for-liveblocks).
 
 ## Documentation
 
-- Mention missing [`updatedAt`](https://liveblocks.io/docs/api-reference/liveblocks-node#patch-rooms-roomId-feeds-feedId-messages-messageId) field in `updateFeedMessage` reference.
+- Mention missing
+  [`updatedAt`](https://liveblocks.io/docs/api-reference/liveblocks-node#patch-rooms-roomId-feeds-feedId-messages-messageId)
+  field in `updateFeedMessage` reference.
 
 ## Contributors
 
@@ -208,22 +284,29 @@ nvie, ctnicholas, stevenfabre, marcbouchenoire
 
 ## Website
 
-- [Liveblocks Unveil](https://liveblocks.io/unveil/april-2026): April 6–10, 5 days of launches.
+- [Liveblocks Unveil](https://liveblocks.io/unveil/april-2026): April 6–10, 5
+  days of launches.
 
 ## Documentation
 
 - New page: [n8n nodes](https://liveblocks.io/docs/integrations/n8n-nodes).
-- New page: [AI Collaboration](https://liveblocks.io/docs/collaboration-features/ai-collaboration).
-- New get started: [Next.js + Realtime feeds](https://liveblocks.io/docs/get-started/nextjs-feeds).
-- New get started: [Next.js + React Flow](https://liveblocks.io/docs/get-started/nextjs-react-flow).
+- New page:
+  [AI Collaboration](https://liveblocks.io/docs/collaboration-features/ai-collaboration).
+- New get started:
+  [Next.js + Realtime feeds](https://liveblocks.io/docs/get-started/nextjs-feeds).
+- New get started:
+  [Next.js + React Flow](https://liveblocks.io/docs/get-started/nextjs-react-flow).
 - Add Feeds to API reference pages.
 - New concepts and WebSocket images.
 
 ## Examples
 
-- New example: [AI Comments](https://liveblocks.io/examples/ai-comments/nextjs-comments-ai).
-- New example: [Chat SDK Bot](https://liveblocks.io/examples/chat-sdk-bot/nextjs-chat-sdk-bot).
-- New example: [Chat SDK AI Bot](https://liveblocks.io/examples/chat-sdk-ai-bot/nextjs-chat-sdk-ai-bot).
+- New example:
+  [AI Comments](https://liveblocks.io/examples/ai-comments/nextjs-comments-ai).
+- New example:
+  [Chat SDK Bot](https://liveblocks.io/examples/chat-sdk-bot/nextjs-chat-sdk-bot).
+- New example:
+  [Chat SDK AI Bot](https://liveblocks.io/examples/chat-sdk-ai-bot/nextjs-chat-sdk-ai-bot).
 
 ## Contributors
 
@@ -256,7 +339,8 @@ New dev server features:
 
 ## Showcase
 
-- New item: [Realtime design like Figma](https://liveblocks.io/showcase/realtime-design-like-figma).
+- New item:
+  [Realtime design like Figma](https://liveblocks.io/showcase/realtime-design-like-figma).
 
 ## Contributors
 
@@ -299,26 +383,33 @@ New dev server features:
 - Room filtering support
 - Room Node.js methods and REST APIs are now fully supported
 
-See [dev server documentation](https://liveblocks.io/docs/tools/dev-server) for the updated feature matrix.
+See [dev server documentation](https://liveblocks.io/docs/tools/dev-server) for
+the updated feature matrix.
 
 ## Dashboard
 
-- We added support for setting description on projects for better documentation and organization
+- We added support for setting description on projects for better documentation
+  and organization
 - Fixed a bug preventing inviting new members correctly
-- Internal refactoring of dashboard components to improve performance and efficiency
+- Internal refactoring of dashboard components to improve performance and
+  efficiency
 
 ## Infrastructure
 
-- Mangement API: We added support for setting description on projects for better documentation and organization.
+- Mangement API: We added support for setting description on projects for better
+  documentation and organization.
 
 ## Documentation
 
-- New API reference: [Python SDK](https://liveblocks.io/docs/api-reference/liveblocks-python).
+- New API reference:
+  [Python SDK](https://liveblocks.io/docs/api-reference/liveblocks-python).
 
 ## Website
 
-- New blog post: [What's new in Liveblocks: February 2026](https://liveblocks.io/blog/whats-new-in-liveblocks-february-2026).
-- New blog post: [New React components for adding realtime presence and contextual commenting to your app](https://liveblocks.io/blog/new-react-components-for-adding-realtime-presence-and-contextual-commenting-to-your-app).
+- New blog post:
+  [What's new in Liveblocks: February 2026](https://liveblocks.io/blog/whats-new-in-liveblocks-february-2026).
+- New blog post:
+  [New React components for adding realtime presence and contextual commenting to your app](https://liveblocks.io/blog/new-react-components-for-adding-realtime-presence-and-contextual-commenting-to-your-app).
 
 ## Contributors
 
@@ -364,7 +455,8 @@ nvie, sugardarius, nimeshnayaju, pierrelevaillant, marcbouchenoire, ctnicholas
 
 ## Examples
 
-- Improve canvas comments example to prevent a conflict after moving a comment pin twice in rapid succession.
+- Improve canvas comments example to prevent a conflict after moving a comment
+  pin twice in rapid succession.
 
 ## Contributors
 
@@ -403,17 +495,24 @@ nvie, marcbouchenoire, ctnicholas
 
 ## Examples
 
-- New example: [AG Grid Comments](https://liveblocks.io/examples/ag-grid-comments/nextjs-comments-ag-grid).
+- New example:
+  [AG Grid Comments](https://liveblocks.io/examples/ag-grid-comments/nextjs-comments-ag-grid).
 - Update old examples to use new presence and commenting components.
 
 ## Documentation
 
-- New quickstart: [Draggable comments with Next.js](https://liveblocks.io/docs/get-started/nextjs-comments-canvas).
-- New quickstart: [Commenting inside AG Grid with Next.js](https://liveblocks.io/docs/get-started/nextjs-comments-ag-grid).
-- New quickstart: [Commenting inside a table with Next.js](https://liveblocks.io/docs/get-started/nextjs-comments-table).
-- New quickstart: [Realtime avatar and cursor presence with Next.js](https://liveblocks.io/docs/get-started/nextjs-presence).
-- New guide: [How to add users to Liveblocks presence components](https://liveblocks.io/docs/guides/how-to-add-users-to-liveblocks-presence-components).
-- Mention `sk_localdev` and `pk_localdev` keys more explicitly in dev server docs.
+- New quickstart:
+  [Draggable comments with Next.js](https://liveblocks.io/docs/get-started/nextjs-comments-canvas).
+- New quickstart:
+  [Commenting inside AG Grid with Next.js](https://liveblocks.io/docs/get-started/nextjs-comments-ag-grid).
+- New quickstart:
+  [Commenting inside a table with Next.js](https://liveblocks.io/docs/get-started/nextjs-comments-table).
+- New quickstart:
+  [Realtime avatar and cursor presence with Next.js](https://liveblocks.io/docs/get-started/nextjs-presence).
+- New guide:
+  [How to add users to Liveblocks presence components](https://liveblocks.io/docs/guides/how-to-add-users-to-liveblocks-presence-components).
+- Mention `sk_localdev` and `pk_localdev` keys more explicitly in dev server
+  docs.
 - Mention `["comments:write"]` permission under authentication.
 
 ## Contributors
@@ -433,29 +532,37 @@ nperez0111, marcbouchenoire, ctnicholas
 ## Zen Router
 
 - Zen Router was released, our open-source HTTP router.
-- [Documentation website for Zen Router](https://zenrouter.liveblocks.io) was published.
+- [Documentation website for Zen Router](https://zenrouter.liveblocks.io) was
+  published.
 - [Repo for Zen Router](https://github.com/liveblocks/zenrouter) was published.
 
 ## Website
 
-- New blog post: [Introducing Zen Router: our open-source type-safe router compatible with Cloudflare Workers](https://liveblocks.io/blog/introducing-zen-router-our-open-source-type-safe-router-compatible-with-cloudflare-workers).
+- New blog post:
+  [Introducing Zen Router: our open-source type-safe router compatible with Cloudflare Workers](https://liveblocks.io/blog/introducing-zen-router-our-open-source-type-safe-router-compatible-with-cloudflare-workers).
 
 ## Examples
 
-- [Next.js Starter Kit](https://liveblocks.io/nextjs/starter-kit) was updated to support [new features](https://github.com/liveblocks/liveblocks/pull/3109).
-  - Organization switcher powered by tenants/organizations, with separate inboxes in each.
+- [Next.js Starter Kit](https://liveblocks.io/nextjs/starter-kit) was updated to
+  support [new features](https://github.com/liveblocks/liveblocks/pull/3109).
+  - Organization switcher powered by tenants/organizations, with separate
+    inboxes in each.
   - New universal header built with `useIsInsideRoom`.
   - New share menu with private/org/public permissions.
   - Filters for private/org/public documents on dashboard.
   - New Document shape with new permissions added.
   - Better UX in various places and tidied project structure.
-- Fix text size in Next.js Starter Kit on mobile devices. Thank you [@chrrrs](https://github.com/chrrrs)!
+- Fix text size in Next.js Starter Kit on mobile devices. Thank you
+  [@chrrrs](https://github.com/chrrrs)!
 
 ## Showcase
 
-- New item: [Next.js Starter Kit for realtime collaboration](https://liveblocks.io/showcase/nextjs-starter-kit-for-realtime-collaboration).
-- New item: [An inbox for each workspace](https://liveblocks.io/showcase/an-inbox-for-each-workspace).
-- New item: [Share menu with live permissions](https://liveblocks.io/showcase/share-menu-with-live-permissions).
+- New item:
+  [Next.js Starter Kit for realtime collaboration](https://liveblocks.io/showcase/nextjs-starter-kit-for-realtime-collaboration).
+- New item:
+  [An inbox for each workspace](https://liveblocks.io/showcase/an-inbox-for-each-workspace).
+- New item:
+  [Share menu with live permissions](https://liveblocks.io/showcase/share-menu-with-live-permissions).
 
 ## Contributors
 
@@ -465,13 +572,19 @@ flowflorent, chrrrs, nvie, ctnicholas
 
 ## Open source
 
-This week we've [open-sourced the Liveblocks sync engine and dev server](https://liveblocks.io/blog/open-sourcing-the-liveblocks-sync-engine-and-dev-server).
+This week we've
+[open-sourced the Liveblocks sync engine and dev server](https://liveblocks.io/blog/open-sourcing-the-liveblocks-sync-engine-and-dev-server).
 
 ## v3.14 🥧
 
-This release adds support for opting-in to the new storage engine on a per-room basis. The new storage engine can support larger documents, is more performant, is considered more stable, and will eventually become our default engine for all new rooms in the future. As of this release, the default storage engine still remains engine version 1.
+This release adds support for opting-in to the new storage engine on a per-room
+basis. The new storage engine can support larger documents, is more performant,
+is considered more stable, and will eventually become our default engine for all
+new rooms in the future. As of this release, the default storage engine still
+remains engine version 1.
 
-To give it a try, simply pass `engine: 2` when entering a _new_ room. After a room is created, you cannot change the engine it was created with anymore.
+To give it a try, simply pass `engine: 2` when entering a _new_ room. After a
+room is created, you cannot change the engine it was created with anymore.
 
 ```ts
 // Vanilla JS
@@ -489,57 +602,85 @@ or:
 
 ### `@liveblocks/client`
 
-- Support for selecting the preferred engine when entering new rooms: `client.enterRoom("my-new-room", { engine: 2 })`
+- Support for selecting the preferred engine when entering new rooms:
+  `client.enterRoom("my-new-room", { engine: 2 })`
 - Internal protocol optimizations to support larger storage documents
-- Add new config option `createClient({ baseUrl: "https://..." })` to allow connecting to the [Liveblocks dev server](https://liveblocks.io/docs/tools/dev-server)
+- Add new config option `createClient({ baseUrl: "https://..." })` to allow
+  connecting to the
+  [Liveblocks dev server](https://liveblocks.io/docs/tools/dev-server)
 - Improve `LiveList` performance when processing large batches of operations
-- Improve `LiveList.push()` efficiency to prevent unbounded position string growth over time
+- Improve `LiveList.push()` efficiency to prevent unbounded position string
+  growth over time
 - Fix crash when clearing documents with a large number of keys
-- Remove the `largeMessageStrategy` client option. The WebSocket message limit has been increased from 1 MB to 32 MB, making this setting obsolete.
+- Remove the `largeMessageStrategy` client option. The WebSocket message limit
+  has been increased from 1 MB to 32 MB, making this setting obsolete.
 
 ### `@liveblocks/react`
 
-- Support for selecting the preferred engine when entering new rooms: `<RoomProvider id="my-new-room" engine={2}>...</RoomProvider>`
-- Add new config option `<LiveblocksProvider baseUrl="https://..." />` to allow connecting to the [Liveblocks dev server](https://liveblocks.io/docs/tools/dev-server)
-- Exclude marking a thread or inbox notification as read from blocking navigation when `preventUnsavedChanges` is enabled.
+- Support for selecting the preferred engine when entering new rooms:
+  `<RoomProvider id="my-new-room" engine={2}>...</RoomProvider>`
+- Add new config option `<LiveblocksProvider baseUrl="https://..." />` to allow
+  connecting to the
+  [Liveblocks dev server](https://liveblocks.io/docs/tools/dev-server)
+- Exclude marking a thread or inbox notification as read from blocking
+  navigation when `preventUnsavedChanges` is enabled.
 
 ### `@liveblocks/react-tiptap` and `@liveblocks/react-lexical`
 
-- Portaled elements now respect the `portalContainer` option from `@liveblocks/react-ui`’s `LiveblocksUiConfig` instead of always using `document.body`.
+- Portaled elements now respect the `portalContainer` option from
+  `@liveblocks/react-ui`’s `LiveblocksUiConfig` instead of always using
+  `document.body`.
 
 ### `@liveblocks/zustand` and `@liveblocks/redux`
 
-- Support for selecting the preferred engine when entering new rooms: `enterRoom("my-new-room", { engine: 2 })`
+- Support for selecting the preferred engine when entering new rooms:
+  `enterRoom("my-new-room", { engine: 2 })`
 
 ### `@liveblocks/node`
 
-- Add new `.setPresence()` method to set ephemeral presence for a user in a room via the REST API, without requiring a WebSocket connection
-- Deprecated `tenantId` parameter in client methods, use `organizationId` instead.
+- Add new `.setPresence()` method to set ephemeral presence for a user in a room
+  via the REST API, without requiring a WebSocket connection
+- Deprecated `tenantId` parameter in client methods, use `organizationId`
+  instead.
 
 ## Website
 
-- New blog post: [Open sourcing the Liveblocks sync engine and dev server](https://liveblocks.io/blog/open-sourcing-the-liveblocks-sync-engine-and-dev-server).
+- New blog post:
+  [Open sourcing the Liveblocks sync engine and dev server](https://liveblocks.io/blog/open-sourcing-the-liveblocks-sync-engine-and-dev-server).
 
 ## Documentation
 
 - New page: [Dev server](https://liveblocks.io/docs/tools/dev-server).
-- New page: [Management API](https://liveblocks.io/docs/platform/management-api).
-- New page: [Multi-Factor Authentication](https://liveblocks.io/docs/platform/account-management/mfa).
-- New guide: [How to set up Continuous Integration (CI) testing](https://liveblocks.io/docs/guides/how-to-set-up-continuous-integration-ci-testing).
-- New guide: [How to set up End-to-End (E2E) testing with Playwright](https://liveblocks.io/docs/guides/how-to-set-up-end-to-end-e2e-testing-with-playwright).
-- New guide: [The new Storage engine and its benefits](https://liveblocks.io/docs/guides/about-the-new-storage-engine).
-- Updated [overview information on Storage](https://liveblocks.io/docs/ready-made-features/multiplayer/sync-engine/liveblocks-storage).
-- Updated [overview inforamtion on Yjs](https://liveblocks.io/docs/ready-made-features/multiplayer/sync-engine/liveblocks-yjs).
+- New page:
+  [Management API](https://liveblocks.io/docs/platform/management-api).
+- New page:
+  [Multi-Factor Authentication](https://liveblocks.io/docs/platform/account-management/mfa).
+- New guide:
+  [How to set up Continuous Integration (CI) testing](https://liveblocks.io/docs/guides/how-to-set-up-continuous-integration-ci-testing).
+- New guide:
+  [How to set up End-to-End (E2E) testing with Playwright](https://liveblocks.io/docs/guides/how-to-set-up-end-to-end-e2e-testing-with-playwright).
+- New guide:
+  [The new Storage engine and its benefits](https://liveblocks.io/docs/guides/about-the-new-storage-engine).
+- Updated
+  [overview information on Storage](https://liveblocks.io/docs/ready-made-features/multiplayer/sync-engine/liveblocks-storage).
+- Updated
+  [overview inforamtion on Yjs](https://liveblocks.io/docs/ready-made-features/multiplayer/sync-engine/liveblocks-yjs).
 
 ## Dashboard
 
-- The [Management API](https://liveblocks.io/docs/platform/management-api) is now available in private beta for Enterprise customers. 
-- We added [Multi-Factor Authentication (MFA)](https://liveblocks.io/docs/platform/management-api) support. Users can now enable MFA in their account pesonal settings for enhanced security.
-- New toggle to opt-in to use v2 Storage engine for all new rooms created going forward.
+- The [Management API](https://liveblocks.io/docs/platform/management-api) is
+  now available in private beta for Enterprise customers.
+- We added
+  [Multi-Factor Authentication (MFA)](https://liveblocks.io/docs/platform/management-api)
+  support. Users can now enable MFA in their account pesonal settings for
+  enhanced security.
+- New toggle to opt-in to use v2 Storage engine for all new rooms created going
+  forward.
 
 ## Showcase
 
-- New item: [Develop locally with the dev server)[https://liveblocks.io/showcase/dev-server-tldraw].
+- New item: [Develop locally with the dev
+  server)[https://liveblocks.io/showcase/dev-server-tldraw].
 
 ## Examples
 
@@ -547,7 +688,8 @@ or:
 
 ## Contributors
 
-nvie, marcbouchenoire, flowflorent, jrowny, ctnicholas, sugardarius, pierrelevaillant, nimeshnayaju
+nvie, marcbouchenoire, flowflorent, jrowny, ctnicholas, sugardarius,
+pierrelevaillant, nimeshnayaju
 
 # Week 7 (2026-02-13)
 
@@ -555,17 +697,20 @@ nvie, marcbouchenoire, flowflorent, jrowny, ctnicholas, sugardarius, pierrelevai
 
 ### `@liveblocks/react-blocknote`
 
-- Replace `y-tiptap` with `y-prosemirror` to prevent plugin key conflict, which was causing change source to be incorrectly set in BlockNote.
+- Replace `y-tiptap` with `y-prosemirror` to prevent plugin key conflict, which
+  was causing change source to be incorrectly set in BlockNote.
 
 ## Documentation
 
 - Add `.md` to the end of any docs page to view a markdown representation of it.
 - This `.md` is mentioned as an `alternate` link on each docs page.
-- Fetching any docs page with a priority `text/markdown` header will return markdown.
+- Fetching any docs page with a priority `text/markdown` header will return
+  markdown.
 
 ## Showcase
 
-- New item: [Multiplayer table](https://liveblocks.io/showcase/multiplayer-table).
+- New item:
+  [Multiplayer table](https://liveblocks.io/showcase/multiplayer-table).
 
 ## Contributors
 
@@ -5359,13 +5504,11 @@ In **@liveblocks/react**:
   https://liveblocks.io/docs/guides/troubleshooting#stale-props-zombie-child
 
 - In **@liveblocks/zustand**:
-
   - Fix a confusing error message
 
 # v0.18.2
 
 - In **@liveblocks/react**:
-
   - Make sure that `useOther` will not rerender if tracked users already left
     the room, so that child components won't get rerendered before the parent
     got the chance to unmount them.
@@ -5374,7 +5517,6 @@ In **@liveblocks/react**:
 # v0.18.1
 
 - In **@liveblocks/react**:
-
   - Fix a bug that could cause an error when patching presence during local
     development. Not an issue in production builds. (#505)
 
@@ -5386,7 +5528,6 @@ For information, please read our
 ## New React hooks ✨
 
 - In **@liveblocks/react**:
-
   - [`useStorage`](https://liveblocks.io/docs/api-reference/liveblocks-react#useStorage)
   - [`useMutation`](https://liveblocks.io/docs/api-reference/liveblocks-react#useMutation)
   - [`useSelf`](https://liveblocks.io/docs/api-reference/liveblocks-react#useSelf)
@@ -5397,7 +5538,6 @@ For information, please read our
     (singular)
 
 - In **@liveblocks/client**:
-
   - New
     [`.toImmutable()`](https://liveblocks.io/docs/api-reference/liveblocks-client#LiveObject.toImmutable)
     method on `LiveObject`, `LiveList`, and `LiveMap` lets you work with an
@@ -5443,19 +5583,16 @@ In **@liveblocks/react**:
 ## New history APIs ↩️ ↪️
 
 - In **@liveblocks/client**:
-
   - Add `canUndo()` and `canRedo()` utilities to `room.history`
   - Add `"history"` event type to `room.subscribe()` to subscribe to the current
     user's history changes
 
 - In **@liveblocks/react**:
-
   - Add `useCanUndo()` and `useCanRedo()` hooks
 
 # v0.17.7
 
 - In **@liveblocks/zustand**:
-
   - Simplify zustand middleware integration with Typescript. `TPresence`,
     `TStorage`, `TUserMeta`, and `TRoomEvent` are now optional.
 
@@ -5537,13 +5674,11 @@ useStore(state => state.liveblocks.others[0].presence?.isTyping)
 # v0.17.6
 
 - In **@liveblocks/react**:
-
   - Expose `RoomContext` in the return value of `createRoomContext()`
 
 # v0.17.5
 
 - In **@liveblocks/react**:
-
   - Fix bug where changing the `key` argument of `useMap()`, `useList()`,
     `useObject()` did not resubscribe to updates correctly
   - Ignore changes to the `RoomProvider`'s initial presence/storage props on
@@ -5595,12 +5730,10 @@ It's surprisingly simple!
 ## New APIs ✨
 
 - In **@liveblocks/react**:
-
   - [`createRoomContext()`](https://liveblocks.io/docs/api-reference/liveblocks-react#createRoomContext)
     is now the preferred way to initialize hooks.
 
 - In the API:
-
   - New endpoint to
     [Get Users in a Room](https://liveblocks.io/docs/api-reference/rest-api-endpoints#GetRoomUsers)
   - New endpoint to
@@ -5614,13 +5747,11 @@ It's surprisingly simple!
 ## Breaking changes
 
 - In **@liveblocks/client**:
-
   - Removed old `Room.unsubscribe()` API
 
 ## New deprecations
 
 - In **@liveblocks/client**:
-
   - The `defaultPresence` option to `client.enter()` will get renamed to
     `initialPresence`
   - The `defaultStorageRoot` option to `client.enter()` will get renamed to
@@ -5629,7 +5760,6 @@ It's surprisingly simple!
     or `new LiveMap([])`
 
 - In **@liveblocks/react**:
-
   - Importing the React hooks directly is deprecated, instead use the new
     `createRoomContext()` helper. For help, read the
     [Recommended Upgrade Steps section](https://liveblocks.io/docs/platform/upgrading/0.17#recommended-upgrade-steps)
@@ -5700,7 +5830,6 @@ Fix bug in example code suggested in deprecation warning.
 ## Bug fixes
 
 - In **@liveblocks/client**:
-
   - If you're using `@liveblocks/client` in a ES2015 context, you no longer have
     to polyfill `Object.fromEntries()`.
 
@@ -5718,15 +5847,12 @@ Fix bug in example code suggested in deprecation warning.
 ## Bug fixes
 
 - In **@liveblocks/client**:
-
   - Fix bug where internal presence state could not get restored correctly after
     undo/redo in certain circumstances.
 
 - In **@liveblocks/zustand** and **@liveblocks/redux**:
-
   - Fixes an issue when initializing an array with items would result in having
     duplicated items in other clients. Example:
-
     - Client A updates state : `{ list: [0] }`
     - Client B states is updated to : `{ list: [0, 0] }`
 
@@ -5735,7 +5861,6 @@ Fix bug in example code suggested in deprecation warning.
 ## Bug fixes
 
 - In **@liveblocks/client**:
-
   - Fix small bug related to new `JsonObject` type, which would reject some
     values that were legal JSON objects.
 
@@ -5744,7 +5869,6 @@ Fix bug in example code suggested in deprecation warning.
 ## Bug fixes
 
 - In **@liveblocks/react**:
-
   - Fix issue with React 18 and StrictMode.
 
 # v0.16.0

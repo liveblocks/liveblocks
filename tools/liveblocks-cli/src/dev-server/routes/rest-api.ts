@@ -16,6 +16,7 @@
  */
 
 import type { Json, JsonObject, PlainLsonObject } from "@liveblocks/core";
+import { ServerMsgCode } from "@liveblocks/core";
 import { QueryParser } from "@liveblocks/query-parser";
 import type { Guid, YDocId } from "@liveblocks/server";
 import {
@@ -196,8 +197,12 @@ zen.route(
     usersAccesses: optional(record(string, array(string))),
     groupsAccesses: optional(record(string, array(string))),
   }),
-  ({ body }) => {
-    if (Rooms.getRoom(body.id)) {
+  ({ body, url }) => {
+    // If `?idempotent` flag is passed (value does not matter), don't throw
+    // when room already exists. Mirrors production behavior.
+    const idempotent = url.searchParams.has("idempotent");
+
+    if (!idempotent && Rooms.getRoom(body.id)) {
       return json(
         {
           error: "ROOM_ALREADY_EXISTS",
@@ -416,8 +421,26 @@ zen.route("PUT /v2/rooms/<roomId>/ydoc", async ({ req, url, p }) => {
     guidParam && guidParam !== ROOT_YDOC_ID ? (guidParam as Guid) : undefined;
 
   try {
-    await room.mutex.runExclusive(() =>
+    const result = await room.mutex.runExclusive(() =>
       room.yjsStorage.addYDocUpdate({} as unknown as Logger, update, guid, v2)
+    );
+
+    // `sendToAll` requires a `defer` callback for any async side effects
+    // (only triggered when a session's socket is broken and needs teardown).
+    // For the dev server we don't need to wait on those — fire-and-forget.
+    const defer = (p: Promise<void>) => void p;
+    room.sendToAll(
+      {
+        type: ServerMsgCode.UPDATE_YDOC,
+        update,
+        isSync: false,
+        stateVector: null,
+        guid,
+        v2,
+        remoteSnapshotHash: result.snapshotHash,
+      },
+      undefined,
+      defer
     );
 
     return new Response(JSON.stringify({ success: true }), {

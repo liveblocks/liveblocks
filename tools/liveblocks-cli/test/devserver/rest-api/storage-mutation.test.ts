@@ -21,6 +21,8 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import * as Rooms from "~/dev-server/db/rooms";
 import { zen } from "~/dev-server/routes/rest-api";
 
+import { makeExternalRoomId } from "../_helpers";
+
 const BASE = "http://localhost";
 const AUTH = { Authorization: "Bearer sk_localdev" };
 
@@ -46,29 +48,25 @@ function parseNdjson(text: string): unknown[] {
 }
 
 describe("REST API - storage mutation", () => {
-  beforeAll(() => {
-    Rooms.useEphemeralStorage();
-  });
-
-  afterAll(() => {
-    Rooms.cleanup();
-  });
+  beforeAll(() => Rooms.useEphemeralStorage());
+  afterAll(() => Rooms.cleanup()); // Needed in bun:test (unlike in Vitest)
 
   describe("POST /v2/rooms/<roomId>/request-storage-mutation", () => {
     test("returns 404 for non-existent room", async () => {
       const resp = await api(
         "POST",
-        "/v2/rooms/nonexistent/request-storage-mutation"
+        `/v2/rooms/${makeExternalRoomId()}/request-storage-mutation`
       );
       expect(resp.status).toBe(404);
     });
 
     test("returns actor and empty root for new room", async () => {
-      await api("POST", "/v2/rooms", { id: "mut-empty" });
+      const roomId = makeExternalRoomId();
+      await api("POST", "/v2/rooms", { id: roomId });
 
       const resp = await api(
         "POST",
-        "/v2/rooms/mut-empty/request-storage-mutation"
+        `/v2/rooms/${roomId}/request-storage-mutation`
       );
       expect(resp.status).toBe(200);
       expect(resp.headers.get("content-type")).toContain(
@@ -85,8 +83,9 @@ describe("REST API - storage mutation", () => {
     });
 
     test("returns storage nodes for room with data", async () => {
-      await api("POST", "/v2/rooms", { id: "mut-with-data" });
-      await api("POST", "/v2/rooms/mut-with-data/storage", {
+      const roomId = makeExternalRoomId();
+      await api("POST", "/v2/rooms", { id: roomId });
+      await api("POST", `/v2/rooms/${roomId}/storage`, {
         liveblocksType: "LiveObject",
         data: {
           name: "Alice",
@@ -96,7 +95,7 @@ describe("REST API - storage mutation", () => {
 
       const resp = await api(
         "POST",
-        "/v2/rooms/mut-with-data/request-storage-mutation"
+        `/v2/rooms/${roomId}/request-storage-mutation`
       );
       expect(resp.status).toBe(200);
 
@@ -114,18 +113,19 @@ describe("REST API - storage mutation", () => {
     });
 
     test("returns incrementing actor IDs", async () => {
-      await api("POST", "/v2/rooms", { id: "mut-actors" });
+      const roomId = makeExternalRoomId();
+      await api("POST", "/v2/rooms", { id: roomId });
 
       const resp1 = await api(
         "POST",
-        "/v2/rooms/mut-actors/request-storage-mutation"
+        `/v2/rooms/${roomId}/request-storage-mutation`
       );
       const lines1 = parseNdjson(await resp1.text());
       const actor1 = (lines1[0] as { actor: number }).actor;
 
       const resp2 = await api(
         "POST",
-        "/v2/rooms/mut-actors/request-storage-mutation"
+        `/v2/rooms/${roomId}/request-storage-mutation`
       );
       const lines2 = parseNdjson(await resp2.text());
       const actor2 = (lines2[0] as { actor: number }).actor;
@@ -136,25 +136,28 @@ describe("REST API - storage mutation", () => {
 
   describe("POST /v2/rooms/<roomId>/send-message", () => {
     test("returns 404 for non-existent room", async () => {
-      const resp = await api("POST", "/v2/rooms/nonexistent/send-message", {
-        messages: [],
-      });
+      const resp = await api(
+        "POST",
+        `/v2/rooms/${makeExternalRoomId()}/send-message`,
+        { messages: [] }
+      );
       expect(resp.status).toBe(404);
     });
 
     test("applies UPDATE_STORAGE ops to room storage", async () => {
-      await api("POST", "/v2/rooms", { id: "mut-send" });
+      const roomId = makeExternalRoomId();
+      await api("POST", "/v2/rooms", { id: roomId });
 
       // First, get an actor ID via request-storage-mutation
       const mutResp = await api(
         "POST",
-        "/v2/rooms/mut-send/request-storage-mutation"
+        `/v2/rooms/${roomId}/request-storage-mutation`
       );
       const lines = parseNdjson(await mutResp.text());
       const { actor } = lines[0] as { actor: number };
 
       // Send an UPDATE_STORAGE message that sets a key on root
-      const resp = await api("POST", "/v2/rooms/mut-send/send-message", {
+      const resp = await api("POST", `/v2/rooms/${roomId}/send-message`, {
         messages: [
           {
             type: ClientMsgCode.UPDATE_STORAGE,
@@ -175,7 +178,7 @@ describe("REST API - storage mutation", () => {
       expect(body).toHaveProperty("messages");
 
       // Verify the storage was actually updated
-      const storageResp = await api("GET", "/v2/rooms/mut-send/storage");
+      const storageResp = await api("GET", `/v2/rooms/${roomId}/storage`);
       const storage = (await storageResp.json()) as {
         liveblocksType: string;
         data: Record<string, unknown>;
@@ -184,17 +187,18 @@ describe("REST API - storage mutation", () => {
     });
 
     test("applies CreateObject ops", async () => {
-      await api("POST", "/v2/rooms", { id: "mut-create" });
+      const roomId = makeExternalRoomId();
+      await api("POST", "/v2/rooms", { id: roomId });
 
       const mutResp = await api(
         "POST",
-        "/v2/rooms/mut-create/request-storage-mutation"
+        `/v2/rooms/${roomId}/request-storage-mutation`
       );
       const lines = parseNdjson(await mutResp.text());
       const { actor } = lines[0] as { actor: number };
 
       // Create a child object under root
-      const resp = await api("POST", "/v2/rooms/mut-create/send-message", {
+      const resp = await api("POST", `/v2/rooms/${roomId}/send-message`, {
         messages: [
           {
             type: ClientMsgCode.UPDATE_STORAGE,
@@ -215,7 +219,7 @@ describe("REST API - storage mutation", () => {
       expect(resp.status).toBe(200);
 
       // Verify via GET storage
-      const storageResp = await api("GET", "/v2/rooms/mut-create/storage");
+      const storageResp = await api("GET", `/v2/rooms/${roomId}/storage`);
       const storage = (await storageResp.json()) as {
         liveblocksType: string;
         data: Record<string, unknown>;

@@ -1,5 +1,29 @@
 ## vNEXT (not yet released)
 
+## v3.19.0
+
+### `@liveblocks/node`
+
+- Add new `markdownToCommentBody` helper to convert Markdown strings into
+  `CommentBody` objects.
+
+### `@liveblocks/client`
+
+- `room.history.disable(fn)` is now officially supported and no longer
+  experimental. It allows running storage mutations without them appearing on
+  the undo/redo stacks and it’s intended for background/async writes (e.g.
+  writing back AI generation results) that should not be undoable.
+
+### `@liveblocks/react-tiptap`
+
+- Fix keyboard shortcut in strikethrough tooltip. (Thanks @HellBoy-OP for the
+  contribution!)
+- Fix Yjs undo/redo silently breaking after `editor.registerPlugin` /
+  `unregisterPlugin` is called (e.g. when Tiptap's `BubbleMenu`, `DragHandle`,
+  or `SlashCommand` mount). The reattach `restore()` is now installed
+  unconditionally on view destroy, matching upstream
+  `@tiptap/extension-collaboration`. (Thanks @lucasmotta for the contribution!)
+
 ## v3.18.5
 
 ### `@liveblocks/react-tiptap`
