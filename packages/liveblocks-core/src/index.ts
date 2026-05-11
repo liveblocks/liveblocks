@@ -220,11 +220,16 @@ export type { BaseMetadata } from "./protocol/Comments";
 export type {
   CommentBody,
   CommentBodyBlockElement,
+  CommentBodyBulletedList,
   CommentBodyElement,
   CommentBodyInlineElement,
   CommentBodyLink,
+  CommentBodyList,
+  CommentBodyListItem,
   CommentBodyMention,
+  CommentBodyNumberedList,
   CommentBodyParagraph,
+  CommentBodyTaskList,
   CommentBodyText,
 } from "./protocol/Comments";
 export type {
