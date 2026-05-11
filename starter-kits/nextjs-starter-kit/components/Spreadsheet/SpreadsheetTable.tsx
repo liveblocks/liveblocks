@@ -25,10 +25,6 @@ registerAllModules();
 
 export function SpreadsheetTable() {
   const hotRef = useRef<HotTableRef>(null);
-  const [selectedCell, setSelectedCell] = useState<{
-    row: number;
-    col: number;
-  } | null>(null);
 
   const colHeaders = useCallback((index: number) => columnLetters(index), []);
   const rowHeaders = useCallback((index: number) => String(index + 1), []);
@@ -109,15 +105,12 @@ export function SpreadsheetTable() {
       setMyPresence({
         selectedCell: { row: cellRow, col: cellCol },
       });
-
-      setSelectedCell({ row: cellRow, col: cellCol });
     },
     []
   );
 
   const clearSelectedCellPresence = useMutation(({ setMyPresence }) => {
     setMyPresence({ selectedCell: null });
-    setSelectedCell(null);
   }, []);
 
   const afterColumnResize = useMutation(
@@ -172,35 +165,39 @@ export function SpreadsheetTable() {
   return (
     <CellThreadProvider>
       <div className={styles.spreadsheet}>
-        <HotTable
-          ref={hotRef}
-          data={data}
-          hotRenderer={renderDataCell}
-          afterChange={afterChange}
-          afterSelection={syncSelectedCellToPresence}
-          afterSelectionEnd={syncSelectedCellToPresence}
-          afterSelectionFocusSet={syncSelectedCellToPresence}
-          afterDeselect={clearSelectedCellPresence}
-          afterColumnResize={afterColumnResize}
-          afterRowResize={afterRowResize}
-          colHeaders={colHeaders}
-          rowHeaders={rowHeaders}
-          colWidths={colWidths}
-          rowHeights={rowHeights}
-          manualColumnResize={true}
-          manualRowResize={true}
-          height="100%"
-          width="100%"
-          licenseKey="non-commercial-and-evaluation"
-          autoWrapRow={true}
-          autoWrapCol={true}
-          autoRowSize={false}
-          autoColumnSize={false}
-          stretchH="all"
-          rowHeaderWidth={44}
-          minRowHeights={MIN_ROW_HEIGHT}
-        />
-        <SpreadsheetComments selectedCell={selectedCell} />
+        <div className={styles.gridHost}>
+          <div className={styles.hotTableMount}>
+            <HotTable
+              ref={hotRef}
+              data={data}
+              hotRenderer={renderDataCell}
+              afterChange={afterChange}
+              afterSelection={syncSelectedCellToPresence}
+              afterSelectionEnd={syncSelectedCellToPresence}
+              afterSelectionFocusSet={syncSelectedCellToPresence}
+              afterDeselect={clearSelectedCellPresence}
+              afterColumnResize={afterColumnResize}
+              afterRowResize={afterRowResize}
+              colHeaders={colHeaders}
+              rowHeaders={rowHeaders}
+              colWidths={colWidths}
+              rowHeights={rowHeights}
+              manualColumnResize={true}
+              manualRowResize={true}
+              height="100%"
+              width="100%"
+              licenseKey="non-commercial-and-evaluation"
+              autoWrapRow={true}
+              autoWrapCol={true}
+              autoRowSize={false}
+              autoColumnSize={false}
+              stretchH="all"
+              rowHeaderWidth={44}
+              minRowHeights={MIN_ROW_HEIGHT}
+            />
+          </div>
+        </div>
+        <SpreadsheetComments />
       </div>
     </CellThreadProvider>
   );

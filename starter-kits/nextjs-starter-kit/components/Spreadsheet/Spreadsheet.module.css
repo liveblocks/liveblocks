@@ -1,6 +1,44 @@
+/* Fills `<main>` (flex column); prefer flex over `height: 100%` alone. */
+.shell {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+}
+
+/* Grid on the left, comments on the right (explicit row so it never stacks as a column). */
 .spreadsheet {
   display: flex;
+  flex: 1 1 auto;
+  flex-direction: row;
+  align-items: stretch;
+  min-height: 0;
+  min-width: 0;
   width: 100%;
-  height: 100%;
   overflow: hidden;
+}
+
+.gridHost {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.hotTableMount {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Handsontable’s root wrapper must participate in flex so `height: 100%` resolves. */
+.hotTableMount > * {
+  flex: 1 1 0;
+  min-height: 0;
+  min-width: 0;
 }

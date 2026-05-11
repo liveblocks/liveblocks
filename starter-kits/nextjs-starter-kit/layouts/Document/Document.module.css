@@ -16,3 +16,12 @@
 .main {
   position: relative;
 }
+
+/* Let the spreadsheet (and other full-height views) fill the grid row and pass height into flex children. */
+.main {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}

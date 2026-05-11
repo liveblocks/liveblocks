@@ -1,15 +1,13 @@
 "use client";
 
+import { useSelf } from "@liveblocks/react/suspense";
 import { Composer, Thread } from "@liveblocks/react-ui";
 import { useCellThread } from "./CellThreadContext";
 import styles from "./SpreadsheetComments.module.css";
 
-type Props = {
-  selectedCell: { row: number; col: number } | null;
-};
-
-export function SpreadsheetComments({ selectedCell }: Props) {
+export function SpreadsheetComments() {
   const { threads } = useCellThread();
+  const selectedCell = useSelf((me) => me.presence.selectedCell);
 
   const cellLabel = selectedCell
     ? `${columnLetters(selectedCell.col)}${selectedCell.row + 1}`
