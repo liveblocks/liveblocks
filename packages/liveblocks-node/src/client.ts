@@ -218,6 +218,7 @@ type OpenAiModel =
   | "o1-mini"
   | "o3"
   | "o3-mini"
+  | "o3-pro"
   | "o4-mini"
   | "gpt-4.1"
   | "gpt-4.1-mini"
@@ -227,12 +228,20 @@ type OpenAiModel =
   | "gpt-4-turbo"
   | "gpt-4"
   | "gpt-5"
+  | "gpt-5-pro"
   | "gpt-5-mini"
   | "gpt-5-nano"
   | "gpt-5-chat-latest"
   | "gpt-5.1"
   | "gpt-5.1-mini"
-  | "gpt-5.1-chat-latest";
+  | "gpt-5.1-chat-latest"
+  | "gpt-5.2"
+  | "gpt-5.2-pro"
+  | "gpt-5.4"
+  | "gpt-5.4-pro"
+  | "gpt-5.4-mini"
+  | "gpt-5.4-nano"
+  | "gpt-5.5-pro";
 
 type OpenAiProviderOptions = {
   openai: {
@@ -244,6 +253,10 @@ type OpenAiProviderOptions = {
 };
 
 type AnthropicModel =
+  | "claude-opus-4-7"
+  | "claude-sonnet-4-6"
+  | "claude-opus-4-6"
+  | "claude-opus-4-5-20251101"
   | "claude-sonnet-4-5-20250929"
   | "claude-haiku-4-5-20251001"
   | "claude-opus-4-1-20250805"
