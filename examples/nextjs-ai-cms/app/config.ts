@@ -5,7 +5,7 @@ const openai = createOpenAI({
 });
 
 /** Model used by the AI edit API route */
-export const aiModel = openai("gpt-4o-mini");
+export const aiModel = openai("gpt-5.5");
 
 export function getRoomId(postId: string) {
   return `liveblocks:examples:nextjs-ai-cms:${postId}`;
@@ -22,6 +22,3 @@ export function getPostUrl(postId: string) {
 
 /** Feed id (per room): AI draft preview (streamed); apply to Storage only on Accept */
 export const CMS_AI_DRAFT_FEED_ID = "cms-ai-draft";
-
-/** Presence user id for server-driven AI presence */
-export const AI_CMS_USER_ID = "ai@nextjs-ai-cms";

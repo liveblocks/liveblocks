@@ -1,4 +1,14 @@
+export const AI_USER_INFO = {
+  id: "__AI_AGENT",
+  info: {
+    name: "AI Assistant",
+    color: "#6366f1",
+    avatar: `https://liveblocks.io/api/avatar?u=__AI_AGENT&agent=true`,
+  },
+};
+
 const USER_INFO: Liveblocks["UserMeta"][] = [
+  AI_USER_INFO,
   {
     id: "charlie.layne@example.com",
     info: {
@@ -16,7 +26,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     },
   },
   {
-    id: "tatum-paolo@example.com",
+    id: "tatum.paolo@example.com",
     info: {
       name: "Tatum Paolo",
       color: "#F0D885",
@@ -24,19 +34,56 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     },
   },
   {
-    id: "anjali-wanda@example.com",
+    id: "anjali.wanda@example.com",
     info: {
       name: "Anjali Wanda",
       color: "#85EED6",
       avatar: "https://liveblocks.io/avatars/avatar-4.png",
     },
   },
+  {
+    id: "jody.hekla@example.com",
+    info: {
+      name: "Jody Hekla",
+      color: "#85BBF0",
+      avatar: "https://liveblocks.io/avatars/avatar-5.png",
+    },
+  },
+  {
+    id: "emil.joyce@example.com",
+    info: {
+      name: "Emil Joyce",
+      color: "#8594F0",
+      avatar: "https://liveblocks.io/avatars/avatar-6.png",
+    },
+  },
+  {
+    id: "jory.quispe@example.com",
+    info: {
+      name: "Jory Quispe",
+      color: "#85DBF0",
+      avatar: "https://liveblocks.io/avatars/avatar-7.png",
+    },
+  },
+  {
+    id: "quinn.elton@example.com",
+    info: {
+      name: "Quinn Elton",
+      color: "#87EE85",
+      avatar: "https://liveblocks.io/avatars/avatar-8.png",
+    },
+  },
 ];
 
 export function getRandomUser() {
-  return USER_INFO[Math.floor(Math.random() * USER_INFO.length)]!;
+  const realUsers = USER_INFO.filter(({ id }) => id !== "__AI_AGENT");
+  return realUsers[Math.floor(Math.random() * realUsers.length)];
 }
 
 export function getUser(id: string) {
   return USER_INFO.find((u) => u.id === id) || null;
+}
+
+export function getUsers() {
+  return USER_INFO;
 }

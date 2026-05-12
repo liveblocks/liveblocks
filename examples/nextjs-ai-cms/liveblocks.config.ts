@@ -17,6 +17,29 @@ export type CmsAiDraftSnapshot = {
   [K in keyof CmsPost]?: string | null;
 };
 
+/** Per-field AI lifecycle (emitted on the draft feed). */
+export type CmsAiFieldPhaseLabel =
+  | "waiting"
+  | "unchanged"
+  | "streaming"
+  | "ready"
+  | "complete"
+  | "error";
+
+export type CmsAiFieldPhaseEntry = {
+  field: keyof CmsPost;
+  phase: CmsAiFieldPhaseLabel;
+};
+
+/** Room-wide AI lifecycle (emitted on the draft feed). */
+export type CmsAiRunPhase =
+  | "preparing"
+  | "working"
+  | "generating"
+  | "finalizing"
+  | "complete"
+  | "error";
+
 declare global {
   interface Liveblocks {
     Presence: {
@@ -42,10 +65,14 @@ declare global {
     };
 
     FeedMessageData: {
-      kind: "start" | "partial" | "complete" | "error";
+      kind: "start" | "partial" | "complete" | "error" | "status" | "field_phases";
       /** Raw structured snapshot from the model (null = leave field as in Storage). */
       draft?: CmsAiDraftSnapshot;
       message?: string;
+      /** Latest room-wide phase (from `status` messages). */
+      phase?: CmsAiRunPhase;
+      /** Latest per-field phases (from `field_phases` messages). */
+      fieldPhases?: CmsAiFieldPhaseEntry[];
     };
   }
 }

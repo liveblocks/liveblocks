@@ -1,6 +1,5 @@
 import { Room } from "./Room";
-import { CmsEditor } from "./CmsEditor";
-import { ClientSideSuspense } from "@liveblocks/react";
+import { PostShell } from "./PostShell";
 
 export default async function PostPage({
   params,
@@ -11,7 +10,7 @@ export default async function PostPage({
 
   return (
     <Room postId={postId}>
-      <CmsEditor postId={postId} />
+      <PostShell postId={postId} />
     </Room>
   );
 }

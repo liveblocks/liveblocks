@@ -19,7 +19,8 @@ export function Providers({ children }: { children: ReactNode }) {
           throw new Error("Problem resolving users");
         }
 
-        return await response.json();
+        const users = await response.json();
+        return users;
       }}
       resolveRoomsInfo={async ({ roomIds }) => {
         return await getRoomsInfoForProvider(roomIds);

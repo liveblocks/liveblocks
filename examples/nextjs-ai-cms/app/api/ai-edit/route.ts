@@ -4,6 +4,7 @@ import { z } from "zod";
 import { aiModel, CMS_AI_DRAFT_FEED_ID } from "../../config";
 import { liveblocks } from "../../utils/liveblocks";
 import type { CmsPost, CmsAiDraftSnapshot } from "../../../liveblocks.config";
+import { CMS_DRAFT_KEYS, fieldPhaseEntriesFromPartial, type PartialDraft } from "../../lib/cms-ai-draft";
 
 export const maxDuration = 60;
 
@@ -98,6 +99,36 @@ export async function POST(req: NextRequest) {
     data: { kind: "start", message: prompt },
   });
 
+  await liveblocks.createFeedMessage({
+    roomId,
+    feedId: CMS_AI_DRAFT_FEED_ID,
+    data: {
+      kind: "status",
+      phase: "preparing",
+      message: "Preparing",
+    },
+  });
+
+  await liveblocks.createFeedMessage({
+    roomId,
+    feedId: CMS_AI_DRAFT_FEED_ID,
+    data: {
+      kind: "status",
+      phase: "working",
+      message: "Reading document",
+    },
+  });
+
+  await liveblocks.createFeedMessage({
+    roomId,
+    feedId: CMS_AI_DRAFT_FEED_ID,
+    data: {
+      kind: "status",
+      phase: "generating",
+      message: "Generating suggestions",
+    },
+  });
+
   const system = `You are proposing edits to a CMS document. Nothing is saved until the user accepts.
 
 Fields:
@@ -125,10 +156,12 @@ ${JSON.stringify(current.post, null, 2)}`;
   });
 
   try {
+    const merged: PartialDraft = {};
+
     for await (const partial of result.partialOutputStream) {
       if (!partial) continue;
 
-      await liveblocks.createFeedMessage({
+      liveblocks.createFeedMessage({
         roomId,
         feedId: CMS_AI_DRAFT_FEED_ID,
         data: {
@@ -136,9 +169,43 @@ ${JSON.stringify(current.post, null, 2)}`;
           draft: toDraftSnapshot(partial),
         },
       });
+
+      liveblocks.createFeedMessage({
+        roomId,
+        feedId: CMS_AI_DRAFT_FEED_ID,
+        data: {
+          kind: "field_phases",
+          fieldPhases: fieldPhaseEntriesFromPartial(partial, false, merged),
+        },
+      });
+
+      for (const k of CMS_DRAFT_KEYS) {
+        if (partial[k] !== undefined) {
+          merged[k] = partial[k];
+        }
+      }
     }
 
     const final = await result.output;
+
+    await liveblocks.createFeedMessage({
+      roomId,
+      feedId: CMS_AI_DRAFT_FEED_ID,
+      data: {
+        kind: "status",
+        phase: "finalizing",
+        message: "Finalizing",
+      },
+    });
+
+    await liveblocks.createFeedMessage({
+      roomId,
+      feedId: CMS_AI_DRAFT_FEED_ID,
+      data: {
+        kind: "field_phases",
+        fieldPhases: fieldPhaseEntriesFromPartial(final, true, merged),
+      },
+    });
 
     await liveblocks.createFeedMessage({
       roomId,
@@ -149,9 +216,39 @@ ${JSON.stringify(current.post, null, 2)}`;
       },
     });
 
+    await liveblocks.createFeedMessage({
+      roomId,
+      feedId: CMS_AI_DRAFT_FEED_ID,
+      data: {
+        kind: "status",
+        phase: "complete",
+        message: "Suggestions ready",
+      },
+    });
+
     return Response.json({ ok: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
+    await liveblocks.createFeedMessage({
+      roomId,
+      feedId: CMS_AI_DRAFT_FEED_ID,
+      data: {
+        kind: "status",
+        phase: "error",
+        message,
+      },
+    });
+    await liveblocks.createFeedMessage({
+      roomId,
+      feedId: CMS_AI_DRAFT_FEED_ID,
+      data: {
+        kind: "field_phases",
+        fieldPhases: CMS_DRAFT_KEYS.map((field) => ({
+          field,
+          phase: "error" as const,
+        })),
+      },
+    });
     await liveblocks.createFeedMessage({
       roomId,
       feedId: CMS_AI_DRAFT_FEED_ID,
