@@ -1,0 +1,35 @@
+{
+  "name": "@liveblocks-examples/nextjs-ai-cms",
+  "description": "Multiplayer CMS-style fields in Liveblocks Storage, with AI edits streamed via the Vercel AI SDK, feeds, and AI presence.",
+  "license": "Apache-2.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@ai-sdk/openai": "^3.0.20",
+    "@liveblocks/client": "^3.19.0",
+    "@liveblocks/node": "^3.19.0",
+    "@liveblocks/react": "^3.19.0",
+    "@liveblocks/react-ui": "^3.19.0",
+    "@types/node": "^18.11.19",
+    "@types/react": "^18.0.38",
+    "@types/react-dom": "^18.0.11",
+    "ai": "^6.0.53",
+    "nanoid": "^5.1.6",
+    "next": "^16.1.6",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "swr": "^2.2.5",
+    "typescript": "^5.2.2",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.23",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.19"
+  }
+}
