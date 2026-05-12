@@ -20,8 +20,8 @@ export function getPostUrl(postId: string) {
   return `/${postId}`;
 }
 
-/** Feed id (per room) used for AI edit streaming events */
-export const CMS_AI_FEED_ID = "cms-ai";
+/** Feed id (per room): AI draft preview (streamed); apply to Storage only on Accept */
+export const CMS_AI_DRAFT_FEED_ID = "cms-ai-draft";
 
 /** Presence user id for server-driven AI presence */
 export const AI_CMS_USER_ID = "ai@nextjs-ai-cms";

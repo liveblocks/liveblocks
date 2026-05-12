@@ -9,14 +9,18 @@ export type CmsPost = {
   publishedAt: string;
 };
 
-/** Storage updates: only string entries are applied. (AI uses null in its JSON for “unchanged”.) */
+/** Only string entries are written to Storage when the user accepts a draft. */
 export type CmsPostPatch = Partial<CmsPost>;
+
+/** Snapshot streamed in the draft feed (`string | null` from the model). */
+export type CmsAiDraftSnapshot = {
+  [K in keyof CmsPost]?: string | null;
+};
 
 declare global {
   interface Liveblocks {
     Presence: {
       cursor: null;
-      /** Field the user or AI is currently editing (AI via `setPresence`). */
       editingField: keyof CmsPost | null;
     };
 
@@ -39,8 +43,8 @@ declare global {
 
     FeedMessageData: {
       kind: "start" | "partial" | "complete" | "error";
-      /** Latest structured snapshot from the model stream */
-      fields?: CmsPostPatch;
+      /** Raw structured snapshot from the model (null = leave field as in Storage). */
+      draft?: CmsAiDraftSnapshot;
       message?: string;
     };
   }

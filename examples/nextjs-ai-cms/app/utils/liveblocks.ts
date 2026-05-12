@@ -1,7 +1,7 @@
 import { Liveblocks as LiveblocksNode, RoomData } from "@liveblocks/node";
 import { nanoid } from "nanoid";
 import type { CmsPost } from "../../liveblocks.config";
-import { CMS_AI_FEED_ID, getRoomId } from "../config";
+import { CMS_AI_DRAFT_FEED_ID, getRoomId } from "../config";
 
 import "../../liveblocks.config";
 
@@ -67,7 +67,7 @@ export async function createRoom() {
   try {
     await liveblocks.createFeed({
       roomId: room.id,
-      feedId: CMS_AI_FEED_ID,
+      feedId: CMS_AI_DRAFT_FEED_ID,
       metadata: { kind: "cms-ai-editor" },
     });
   } catch {
