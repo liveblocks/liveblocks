@@ -218,7 +218,6 @@ type OpenAiModel =
   | "o1-mini"
   | "o3"
   | "o3-mini"
-  | "o3-pro"
   | "o4-mini"
   | "gpt-4.1"
   | "gpt-4.1-mini"
@@ -241,7 +240,7 @@ type OpenAiModel =
   | "gpt-5.4-pro"
   | "gpt-5.4-mini"
   | "gpt-5.4-nano"
-  | "gpt-5.5-pro";
+  | "gpt-5.5";
 
 type OpenAiProviderOptions = {
   openai: {

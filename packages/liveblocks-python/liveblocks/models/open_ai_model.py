@@ -20,7 +20,6 @@ class OpenAiModel(StrEnum):
     GPT_5_4_NANO = "gpt-5.4-nano"
     GPT_5_4_PRO = "gpt-5.4-pro"
     GPT_5_5 = "gpt-5.5"
-    GPT_5_5_PRO = "gpt-5.5-pro"
     GPT_5_CHAT_LATEST = "gpt-5-chat-latest"
     GPT_5_MINI = "gpt-5-mini"
     GPT_5_NANO = "gpt-5-nano"
@@ -29,5 +28,4 @@ class OpenAiModel(StrEnum):
     O1_MINI = "o1-mini"
     O3 = "o3"
     O3_MINI = "o3-mini"
-    O3_PRO = "o3-pro"
     O4_MINI = "o4-mini"
