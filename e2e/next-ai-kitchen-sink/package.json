@@ -18,7 +18,7 @@
     "@liveblocks/node": "workspace:*",
     "@liveblocks/react": "workspace:*",
     "@liveblocks/react-ui": "workspace:*",
-    "next": "16.1.4",
+    "next": "16.2.6",
     "radix-ui": "^1.4.0",
     "react": "19.2.3",
     "react-dom": "19.2.3"
