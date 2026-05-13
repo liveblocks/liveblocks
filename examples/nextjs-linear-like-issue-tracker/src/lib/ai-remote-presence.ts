@@ -19,3 +19,13 @@ export async function setAiRemotePresenceEditing(
     ttl: AI_PRESENCE_TTL_SECONDS,
   });
 }
+
+/** Expire server-side AI presence in a room (same pattern as the assistant’s `hidePresence`). */
+export async function clearAiPresenceInRoom(roomId: string): Promise<void> {
+  await liveblocks.setPresence(roomId, {
+    ttl: 2,
+    userId: AI_USER_INFO.id,
+    userInfo: { ...AI_USER_INFO.info },
+    data: { editingTypes: [] },
+  });
+}

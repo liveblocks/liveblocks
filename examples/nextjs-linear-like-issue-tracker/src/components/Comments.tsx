@@ -207,6 +207,10 @@ function AiComment({
   }
 
   const createdIssueId = commentProps.comment.metadata?.createdIssueId;
+  const referencedIssueId =
+    typeof commentProps.comment.metadata?.referencedIssueId === "string"
+      ? commentProps.comment.metadata.referencedIssueId
+      : undefined;
 
   return (
     <StreamedComment
@@ -216,6 +220,7 @@ function AiComment({
       response={lastMessage.data.response}
       thinkingTime={lastMessage.data.thinkingTime}
       createdIssueId={createdIssueId}
+      referencedIssueId={referencedIssueId}
     />
   );
 }
@@ -274,6 +279,7 @@ function StreamedComment({
   response,
   thinkingTime,
   createdIssueId,
+  referencedIssueId,
 }: {
   commentProps: CommentProps;
   avatar: ReactNode;
@@ -281,8 +287,12 @@ function StreamedComment({
   response: string;
   thinkingTime: number;
   createdIssueId?: string;
+  referencedIssueId?: string;
 }) {
   const [open, setOpen] = useState(false);
+
+  const showReferenced =
+    referencedIssueId !== undefined && referencedIssueId !== createdIssueId;
 
   return (
     <Comment
@@ -330,6 +340,26 @@ function StreamedComment({
               </ClientSideSuspense>
             </div>
           ) : null}
+          {showReferenced ? (
+            <div className="mt-2">
+              <ClientSideSuspense
+                fallback={
+                  <div className="ml-1 flex items-start gap-1.5 pl-0.5">
+                    <IssueInlinePreviewLead />
+                    <span
+                      className="mt-0.5 inline-block h-3.5 w-3.5 shrink-0 rounded-full border-2 border-dashed border-neutral-300"
+                      aria-hidden
+                    />
+                    <span className="text-[13px] text-neutral-400">
+                      Loading issue…
+                    </span>
+                  </div>
+                }
+              >
+                <CreatedIssueInlineRef issueId={referencedIssueId} />
+              </ClientSideSuspense>
+            </div>
+          ) : null}
         </>
       }
     />
@@ -342,7 +372,7 @@ function IssueInlinePreviewLead({
   progress?: ProgressState | string;
 }) {
   return (
-    <span className="inline-flex shrink-0 items-start gap-0.5">
+    <span className="inline-flex shrink-0 items-start gap-1 -mr-0.5">
       <IssueThreadBranchIcon className="shrink-0 -mt-1 opacity-40" />
       <IssueInlinePreviewProgressIcon progress={progress} />
     </span>

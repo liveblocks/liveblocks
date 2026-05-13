@@ -12,12 +12,17 @@ import {
   ISSUE_PROGRESS_IDS,
   type IssuePropertyUpdates,
 } from "@/lib/issue-storage-enums";
+import { fetchRecentIssueRoomsForAi } from "@/lib/search-issue-rooms";
+import { getIssueId, getRoomId } from "@/config";
+import { liveblocks } from "@/liveblocks.server.config";
 import { tool } from "ai";
 import { z } from "zod";
 
 /** Mutable flags updated by tool `execute` handlers (read after `streamText` finishes). */
 export type AiIssueAssistantToolRunState = {
   createdIssueId?: string;
+  /** Issue id (nanoid) for inline “related issue” preview at bottom of AI comment; last link wins. */
+  referencedIssueId?: string;
   editorMarkdownApplied: boolean;
   issuePropertiesUpdated: boolean;
   issueLinksUpdated: boolean;
@@ -168,6 +173,64 @@ export function createAiIssueAssistantTools(
         await applyIssuePropertyUpdates(roomId, updates);
         state.issuePropertiesUpdated = true;
         return { updated: true as const };
+      },
+    }),
+    list_recent_issues: tool({
+      description:
+        "List the most recently created issues (Liveblocks rooms, newest first). Excludes the current thread’s issue. Optional `filter` narrows that list by substring on title or issue id (does not scan older pages). Use before **link_issue_in_reply** when you need candidate issueIds.",
+      inputSchema: z.object({
+        limit: z
+          .number()
+          .int()
+          .min(1)
+          .max(50)
+          .optional()
+          .default(25)
+          .describe("How many recent rooms to fetch (max 50)."),
+        filter: z
+          .string()
+          .max(200)
+          .optional()
+          .describe(
+            "Optional case-insensitive substring; if set, only issues in the recent page whose title or issue id contain it are returned."
+          ),
+      }),
+      execute: async ({ limit, filter }) => {
+        const issues = await fetchRecentIssueRoomsForAi({
+          limit,
+          excludeIssueId: getIssueId(roomId),
+          titleOrIdContains: filter,
+        });
+        return { issues };
+      },
+    }),
+    link_issue_in_reply: tool({
+      description:
+        "Attach one existing issue to the bottom of this AI comment as an inline preview + link (stored in comment metadata). Only the last successful call is kept if you call more than once. Use an issueId from **list_recent_issues** or from context; must be a real issue room.",
+      inputSchema: z.object({
+        issueId: z
+          .string()
+          .min(1)
+          .describe("The issue’s id (same as in URLs / room metadata), not the full room id."),
+      }),
+      execute: async ({ issueId }) => {
+        if (issueId === getIssueId(roomId)) {
+          return {
+            linked: false as const,
+            error: "Use link_issue_in_reply only for a different issue than this thread.",
+          };
+        }
+        const targetRoomId = getRoomId(issueId);
+        try {
+          await liveblocks.getRoom(targetRoomId);
+        } catch {
+          return {
+            linked: false as const,
+            error: "No issue found for that issueId.",
+          };
+        }
+        state.referencedIssueId = issueId;
+        return { linked: true as const, issueId };
       },
     }),
   };

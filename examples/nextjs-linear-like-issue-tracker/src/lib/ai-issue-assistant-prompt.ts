@@ -28,6 +28,8 @@ const ISSUE_PRIORITY_PROMPT_LABEL: Record<
 
 export type AiIssueAssistantSystemPromptInput = {
   aiUserId: string;
+  /** Nanoid id of the issue whose thread the assistant is replying in (for disambiguation). */
+  currentIssueId: string;
   assignableUsersLines: string;
   allUsersLines: string;
   issueContextMd: string;
@@ -36,6 +38,7 @@ export type AiIssueAssistantSystemPromptInput = {
 
 export function buildAiIssueAssistantSystemPrompt({
   aiUserId,
+  currentIssueId,
   assignableUsersLines,
   allUsersLines,
   issueContextMd,
@@ -62,12 +65,14 @@ export function buildAiIssueAssistantSystemPrompt({
 
 - Threads are comments on a single issue.
 - Your user ID is: ${aiUserId}
+- **Current issue id** (this thread’s issue): \`${currentIssueId}\` — do not use **link_issue_in_reply** with this same id.
 - Thread messages are prefixed with user id and time.
 - You may create a new issue with the **create_issue** tool when the user clearly asks for a new ticket, bug, task, or follow-up item that should be tracked separately. That tool can set an initial **description** (markdown), **labels** (array of ids), **links** (URLs), and **progress** / **priority** / **assignedTo** in one step — use **exact ids** from **Valid ids (tools)** below for labels, progress, and priority. Use those fields when the user wants them on the new issue so you do not rely on a second room. Put the summary in **title** only. **NEVER** start \`descriptionMarkdown\` with any markdown heading (\`#\`, \`##\`, \`###\`, etc.) — the **title** field is the issue’s title; the body must open with plain content (paragraph, list, quote, etc.), not a heading line.
 - You **can** edit the **issue description** (the main Lexical document): call **insert_issue_description_markdown** with GitHub-flavored markdown (lists, links, quotes, fenced code; headings only **after** an opening paragraph or two if you need subsections). Use **append** to add at the end; use **replace** only when the user explicitly wants to overwrite the whole description — **replace** clears the existing body first, so any content you omit from your markdown is removed. **NEVER** begin the inserted markdown with a heading line — the **title** property is shown above the body like an H1.
 - You **can** set **assignee**: call **update_issue_properties** with \`assignedTo\`. Use \`none\` to clear. Otherwise use an exact id from the list below. Thread messages are prefixed with \`userId at …\` — use that id when the user says "me", "assign to me", or refers to the author of a message.
 - You may update other **issue fields** (title, progress, priority, labels) with **update_issue_properties**. Only include keys you are changing. For \`progress\`, \`priority\`, and \`labels\`, use **exact ids** from **Valid ids (tools)** below.
 - You **can** add URLs to this issue’s **Links** sidebar (not the description): call **append_issue_links** with plain \`https://…\` URLs. Duplicates are skipped; the list is capped at 30 links.
+- You **can** list other issues with **list_recent_issues** (newest issue rooms first; optional \`filter\` substring on title or id within that page). Call it as needed in one reply. To show **one** related issue under your final comment (inline preview + link), call **link_issue_in_reply** with that issue’s \`issueId\` (from that list or context). If you call **link_issue_in_reply** more than once, **only the last** successful \`issueId\` is attached—pick the single issue you want highlighted at the bottom.
 
 **Assignable users** — use the exact \`id\` for \`assignedTo\` (create_issue or update_issue_properties), or \`none\` to clear:
 

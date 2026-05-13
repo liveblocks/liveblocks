@@ -2,6 +2,7 @@ import "@/liveblocks.config";
 import { nanoid } from "nanoid";
 import { LiveList, LiveObject, toPlainLson } from "@liveblocks/client";
 import { getRoomId, type Metadata } from "@/config";
+import { clearAiPresenceInRoom } from "@/lib/ai-remote-presence";
 import { applyIssueDescriptionMarkdown } from "@/lib/apply-issue-description-markdown";
 import type {
   IssueLabelId,
@@ -78,6 +79,8 @@ export async function createIssueRoomForAi(
   if (md) {
     await applyIssueDescriptionMarkdown(roomId, md, "replace");
   }
+
+  await clearAiPresenceInRoom(roomId);
 
   return { issueId };
 }

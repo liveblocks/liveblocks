@@ -5,6 +5,7 @@ import {
 } from "@/lib/ai-issue-assistant-tools";
 import { buildAiIssueAssistantSystemPrompt } from "@/lib/ai-issue-assistant-prompt";
 import { buildIssueContextMarkdown } from "@/lib/issue-context-markdown";
+import { getIssueId } from "@/config";
 import { liveblocks } from "@/liveblocks.server.config";
 import {
   getMentionsFromCommentBody,
@@ -61,6 +62,7 @@ export async function runAiIssueAssistant(
     const {
       response,
       createdIssueId,
+      referencedIssueId,
       editorMarkdownApplied,
       issuePropertiesUpdated,
       issueLinksUpdated,
@@ -69,6 +71,7 @@ export async function runAiIssueAssistant(
     const hasOutput =
       (response !== undefined && response.trim().length > 0) ||
       createdIssueId !== undefined ||
+      referencedIssueId !== undefined ||
       editorMarkdownApplied ||
       issuePropertiesUpdated ||
       issueLinksUpdated;
@@ -83,6 +86,7 @@ export async function runAiIssueAssistant(
       feedId,
       response,
       createdIssueId,
+      referencedIssueId,
     });
 
     // Let editing-type outlines linger briefly, then clear presence in-process.
@@ -160,6 +164,7 @@ async function streamResponse({
 
   const system = buildAiIssueAssistantSystemPrompt({
     aiUserId: AI_USER_INFO.id,
+    currentIssueId: getIssueId(roomId),
     assignableUsersLines,
     allUsersLines,
     issueContextMd,
@@ -186,7 +191,7 @@ ${content}
     model: anthropic("claude-sonnet-4-5"),
     system,
     messages,
-    stopWhen: stepCountIs(12),
+    stopWhen: stepCountIs(16),
     tools: createAiIssueAssistantTools(roomId, toolRunState),
     providerOptions: {
       anthropic: {
@@ -251,6 +256,7 @@ ${content}
     response: totalText,
     reasoning: totalReasoning,
     createdIssueId: toolRunState.createdIssueId,
+    referencedIssueId: toolRunState.referencedIssueId,
     editorMarkdownApplied: toolRunState.editorMarkdownApplied,
     issuePropertiesUpdated: toolRunState.issuePropertiesUpdated,
     issueLinksUpdated: toolRunState.issueLinksUpdated,
@@ -330,10 +336,12 @@ async function updatePlaceholderComment({
   feedId,
   response,
   createdIssueId,
+  referencedIssueId,
 }: CommentLocation & {
   feedId: string;
   response: string;
   createdIssueId?: string;
+  referencedIssueId?: string;
 }) {
   const trimmed = response.trim();
   const body =
@@ -354,6 +362,7 @@ async function updatePlaceholderComment({
       metadata: {
         feedId,
         ...(createdIssueId !== undefined ? { createdIssueId } : {}),
+        ...(referencedIssueId !== undefined ? { referencedIssueId } : {}),
       },
       body,
     },
