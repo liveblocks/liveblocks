@@ -19,11 +19,18 @@ declare global {
       referencedIssueIds?: string;
     };
 
-    FeedMetadata: {
-      type: "ai-comment-reply";
-      threadId: string;
-      commentId: string;
-    };
+    FeedMetadata:
+      | {
+          type: "ai-comment-reply";
+          threadId: string;
+          commentId: string;
+        }
+      | {
+          type: "ai-issue-sparkle";
+          kind: "links" | "properties" | "labels";
+          threadId: string;
+          commentId: string;
+        };
 
     FeedMessageData:
       | {
@@ -35,6 +42,11 @@ declare global {
           stage: "writing";
           response: string;
           responsePart: string;
+        }
+      | {
+          /** Progress line for sparkle assistants (optional). */
+          stage: "status";
+          label: string;
         }
       | {
           stage: "complete";

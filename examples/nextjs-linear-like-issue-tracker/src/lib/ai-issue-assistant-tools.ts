@@ -302,3 +302,30 @@ export function createAiIssueAssistantTools(
     }),
   };
 }
+
+/** Tools for sparkle “add links” only. */
+export function createAiIssueLinksOnlyTools(
+  roomId: string,
+  state: AiIssueAssistantToolRunState
+) {
+  const all = createAiIssueAssistantTools(roomId, state);
+  return { append_issue_links: all.append_issue_links };
+}
+
+/** Tools for sparkle “fill properties” only. */
+export function createAiIssuePropertiesOnlyTools(
+  roomId: string,
+  state: AiIssueAssistantToolRunState
+) {
+  const all = createAiIssueAssistantTools(roomId, state);
+  return { update_issue_properties: all.update_issue_properties };
+}
+
+/** Tools for sparkle “fill labels” only. */
+export function createAiIssueLabelsOnlyTools(
+  roomId: string,
+  state: AiIssueAssistantToolRunState
+) {
+  const all = createAiIssueAssistantTools(roomId, state);
+  return { update_issue_properties: all.update_issue_properties };
+}

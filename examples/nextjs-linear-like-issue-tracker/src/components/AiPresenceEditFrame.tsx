@@ -3,6 +3,7 @@
 import { useCallback, type ReactNode } from "react";
 import { useOthers, shallow } from "@liveblocks/react";
 import { AI_USER_INFO } from "@/database";
+import { SparklesIcon } from "@/icons/SparklesIcon";
 import type { AiEditingPresenceType } from "@/lib/ai-editing-presence-types";
 
 type Props = {
@@ -37,11 +38,12 @@ export function AiPresenceEditFrame({ editingType, children }: Props) {
       <span
         className={
           active
-            ? "absolute -left-[3px] bottom-full z-[1] mb-px rounded-t-sm bg-indigo-500 px-1 py-0.5 text-[11px] font-semibold leading-none text-white"
+            ? "absolute -left-[3px] bottom-full z-[1] mb-px inline-flex items-center gap-0.5 rounded-t-sm bg-indigo-500 px-1 py-[3px] text-[11px] font-semibold leading-none text-white max-w-full"
             : "sr-only"
         }
       >
-        {AI_USER_INFO.info.name}
+        <SparklesIcon className="h-2.5 w-2.5 shrink-0 opacity-95" />
+        <span className="truncate">{AI_USER_INFO.info.name}</span>
       </span>
       <div
         className={

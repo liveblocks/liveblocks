@@ -326,7 +326,7 @@ async function createPlaceholderComment({
   });
 }
 
-async function updatePlaceholderComment({
+export async function updatePlaceholderComment({
   roomId,
   threadId,
   commentId,

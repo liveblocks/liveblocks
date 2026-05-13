@@ -200,6 +200,18 @@ function AiComment({
     );
   }
 
+  if (lastMessage.data.stage === "status") {
+    return (
+      <StreamingComment
+        commentProps={commentProps}
+        avatar={avatar}
+        title={lastMessage.data.label}
+        responsePart=""
+        response=""
+      />
+    );
+  }
+
   if (lastMessage.data.stage === "thinking") {
     return (
       <StreamingComment
@@ -224,18 +236,30 @@ function AiComment({
     );
   }
 
-  const referencedIssueIds = parseReferencedIssueIdsFromCommentMetadata(
-    commentProps.comment.metadata
-  );
+  if (lastMessage.data.stage === "complete") {
+    const referencedIssueIds = parseReferencedIssueIdsFromCommentMetadata(
+      commentProps.comment.metadata
+    );
+
+    return (
+      <StreamedComment
+        commentProps={commentProps}
+        avatar={avatar}
+        reasoning={lastMessage.data.reasoning}
+        response={lastMessage.data.response}
+        thinkingTime={lastMessage.data.thinkingTime}
+        referencedIssueIds={referencedIssueIds}
+      />
+    );
+  }
 
   return (
-    <StreamedComment
+    <StreamingComment
       commentProps={commentProps}
       avatar={avatar}
-      reasoning={lastMessage.data.reasoning}
-      response={lastMessage.data.response}
-      thinkingTime={lastMessage.data.thinkingTime}
-      referencedIssueIds={referencedIssueIds}
+      title="Running…"
+      responsePart=""
+      response=""
     />
   );
 }
