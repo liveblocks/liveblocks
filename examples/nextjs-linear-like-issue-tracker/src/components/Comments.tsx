@@ -14,6 +14,7 @@ import {
   Icon,
   CommentProps,
 } from "@liveblocks/react-ui";
+import { Comment as CommentPrimitive } from "@liveblocks/react-ui/primitives";
 import { useFeedMessages } from "@liveblocks/react";
 import { type ComponentPropsWithoutRef, type ReactNode, useState } from "react";
 import Link from "next/link";
@@ -25,6 +26,7 @@ import { ProgressDoneIcon } from "@/icons/ProgressDoneIcon";
 import { ProgressInProgressIcon } from "@/icons/ProgressInProgressIcon";
 import { ProgressInReviewIcon } from "@/icons/ProgressInReviewIcon";
 import { ProgressTodoIcon } from "@/icons/ProgressTodoIcon";
+import { markdownToCommentBody } from "@liveblocks/node";
 
 function useUserIdPresence(userId: string) {
   const isSelf = useSelf((self) => self.id === userId) ?? false;
@@ -319,7 +321,9 @@ function StreamedComment({
               </div>
             </div>
           </details>
-          <div className="lb-comment-body whitespace-pre-wrap">{response}</div>
+          <div className="lb-comment-body whitespace-pre-wrap">
+            <CommentPrimitive.Body body={markdownToCommentBody(response)} />
+          </div>
           {createdIssueId ? (
             <div className="mt-2">
               <ClientSideSuspense
