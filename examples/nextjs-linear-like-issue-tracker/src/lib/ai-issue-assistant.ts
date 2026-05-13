@@ -61,8 +61,7 @@ export async function runAiIssueAssistant(
 
     const {
       response,
-      createdIssueId,
-      referencedIssueId,
+      referencedIssueIdsCsv,
       editorMarkdownApplied,
       issuePropertiesUpdated,
       issueLinksUpdated,
@@ -70,8 +69,8 @@ export async function runAiIssueAssistant(
 
     const hasOutput =
       (response !== undefined && response.trim().length > 0) ||
-      createdIssueId !== undefined ||
-      referencedIssueId !== undefined ||
+      (referencedIssueIdsCsv !== undefined &&
+        referencedIssueIdsCsv.length > 0) ||
       editorMarkdownApplied ||
       issuePropertiesUpdated ||
       issueLinksUpdated;
@@ -85,8 +84,7 @@ export async function runAiIssueAssistant(
       ...placeholderCommentLocation,
       feedId,
       response,
-      createdIssueId,
-      referencedIssueId,
+      referencedIssueIdsCsv,
     });
 
     // Let editing-type outlines linger briefly, then clear presence in-process.
@@ -255,8 +253,7 @@ ${content}
   return {
     response: totalText,
     reasoning: totalReasoning,
-    createdIssueId: toolRunState.createdIssueId,
-    referencedIssueId: toolRunState.referencedIssueId,
+    referencedIssueIdsCsv: toolRunState.referencedIssueIdsCsv,
     editorMarkdownApplied: toolRunState.editorMarkdownApplied,
     issuePropertiesUpdated: toolRunState.issuePropertiesUpdated,
     issueLinksUpdated: toolRunState.issueLinksUpdated,
@@ -335,13 +332,11 @@ async function updatePlaceholderComment({
   commentId,
   feedId,
   response,
-  createdIssueId,
-  referencedIssueId,
+  referencedIssueIdsCsv,
 }: CommentLocation & {
   feedId: string;
   response: string;
-  createdIssueId?: string;
-  referencedIssueId?: string;
+  referencedIssueIdsCsv?: string;
 }) {
   const trimmed = response.trim();
   const body =
@@ -361,8 +356,10 @@ async function updatePlaceholderComment({
     data: {
       metadata: {
         feedId,
-        ...(createdIssueId !== undefined ? { createdIssueId } : {}),
-        ...(referencedIssueId !== undefined ? { referencedIssueId } : {}),
+        ...(referencedIssueIdsCsv !== undefined &&
+        referencedIssueIdsCsv.length > 0
+          ? { referencedIssueIds: referencedIssueIdsCsv }
+          : {}),
       },
       body,
     },

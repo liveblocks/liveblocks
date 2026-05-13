@@ -18,11 +18,53 @@ import { liveblocks } from "@/liveblocks.server.config";
 import { tool } from "ai";
 import { z } from "zod";
 
-/** Mutable flags updated by tool `execute` handlers (read after `streamText` finishes). */
+/** Max linked issues on an AI reply (comma-separated in comment metadata). */
+const MAX_REFERENCED_ISSUES_IN_REPLY = 10;
+
+function mergeReferencedIssueIdsCsv(
+  previous: string | undefined,
+  additions: string[],
+  currentThreadIssueId: string,
+  mode: "append" | "prepend"
+): string {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  const push = (raw: string) => {
+    const id = raw.trim();
+    if (!id || seen.has(id)) {
+      return;
+    }
+    if (id === currentThreadIssueId) {
+      return;
+    }
+    seen.add(id);
+    out.push(id);
+  };
+  if (mode === "prepend") {
+    for (const id of additions) {
+      push(id);
+    }
+    if (previous) {
+      for (const p of previous.split(",")) {
+        push(p);
+      }
+    }
+  } else {
+    if (previous) {
+      for (const p of previous.split(",")) {
+        push(p);
+      }
+    }
+    for (const id of additions) {
+      push(id);
+    }
+  }
+  return out.slice(0, MAX_REFERENCED_ISSUES_IN_REPLY).join(",");
+}
+
 export type AiIssueAssistantToolRunState = {
-  createdIssueId?: string;
-  /** Issue id (nanoid) for inline “related issue” preview at bottom of AI comment; last link wins. */
-  referencedIssueId?: string;
+  /** Comma-separated issue ids for inline previews (new issue from create_issue is prepended here). */
+  referencedIssueIdsCsv?: string;
   editorMarkdownApplied: boolean;
   issuePropertiesUpdated: boolean;
   issueLinksUpdated: boolean;
@@ -35,7 +77,7 @@ export function createAiIssueAssistantTools(
   return {
     create_issue: tool({
       description:
-        "Create a new tracked issue. Required: title. Optional: descriptionMarkdown (GFM body — NEVER start with #/##/###; title is the title field), labels, links, progress, priority, assignedTo.",
+        "Create a new tracked issue. Required: title. Optional: descriptionMarkdown (GFM body — NEVER start with #/##/###; use blank lines between paragraphs / two newlines; title is the title field), labels, links, progress, priority, assignedTo. The new issue’s nanoid is prepended to comment \`referencedIssueIds\` for inline previews—do not pass that same id to link_issues_in_reply in the same reply.",
       inputSchema: z.object({
         title: z
           .string()
@@ -44,7 +86,7 @@ export function createAiIssueAssistantTools(
           .string()
           .optional()
           .describe(
-            "Body markdown: open with a paragraph, list, or quote — NEVER start with a heading line (# through ######); use the title field for the issue name. Headings allowed deeper in the body after opening text if needed."
+            "Body markdown: open with a paragraph, list, or quote — NEVER start with a heading line (# through ######); use the title field for the issue name. Headings allowed deeper in the body after opening text if needed. Between prose paragraphs use a blank line (two newlines), not a single newline."
           ),
         labels: z
           .array(z.enum(ISSUE_LABEL_IDS))
@@ -94,7 +136,13 @@ export function createAiIssueAssistantTools(
           priority: input.priority,
           assignedTo,
         });
-        state.createdIssueId = issueId;
+        const current = getIssueId(roomId);
+        state.referencedIssueIdsCsv = mergeReferencedIssueIdsCsv(
+          state.referencedIssueIdsCsv,
+          [issueId],
+          current,
+          "prepend"
+        );
         return { issueId };
       },
     }),
@@ -118,12 +166,12 @@ export function createAiIssueAssistantTools(
     }),
     insert_issue_description_markdown: tool({
       description:
-        "Insert markdown into this issue's main description (Lexical). The title property is the only top-level title — NEVER begin markdown with #/##/###. Prefer append.",
+        "Insert markdown into this issue's main description (Lexical). The title property is the only top-level title — NEVER begin markdown with #/##/###. Prefer append. Use blank lines (two newlines) between paragraphs.",
       inputSchema: z.object({
         markdown: z
           .string()
           .describe(
-            "Markdown for the body: first line must NOT be a heading (# … ######). Start with a paragraph or list; headings only after opening non-heading content if needed."
+            "Markdown for the body: first line must NOT be a heading (# … ######). Start with a paragraph or list; headings only after opening non-heading content if needed. Separate paragraphs with a blank line (two newlines), not a single newline between prose lines."
           ),
         mode: z
           .enum(["append", "replace"])
@@ -177,7 +225,7 @@ export function createAiIssueAssistantTools(
     }),
     list_recent_issues: tool({
       description:
-        "List the most recently created issues (Liveblocks rooms, newest first). Excludes the current thread’s issue. Optional `filter` narrows that list by substring on title or issue id (does not scan older pages). Use before **link_issue_in_reply** when you need candidate issueIds.",
+        "List the most recently created issues (newest first). Excludes the current thread’s issue. Optional \`filter\` narrows that page by title or id substring. When your answer names specific issues from the results, you must also call **link_issues_in_reply** with those nanoid ids (same reply)—do not only list them in text.",
       inputSchema: z.object({
         limit: z
           .number()
@@ -204,33 +252,52 @@ export function createAiIssueAssistantTools(
         return { issues };
       },
     }),
-    link_issue_in_reply: tool({
+    link_issues_in_reply: tool({
       description:
-        "Attach one existing issue to the bottom of this AI comment as an inline preview + link (stored in comment metadata). Only the last successful call is kept if you call more than once. Use an issueId from **list_recent_issues** or from context; must be a real issue room.",
+        "Required whenever you surface specific other issues in your answer (e.g. after list_recent_issues): attach them as inline previews under this comment via comment metadata (comma-separated issueIds, max 10 after merge). Do not ask the user for permission to link—call this tool with the nanoid ids you are discussing. Multiple calls merge (deduped). Each id must be a real issue room.",
       inputSchema: z.object({
-        issueId: z
-          .string()
+        issueIds: z
+          .array(z.string().min(1))
           .min(1)
-          .describe("The issue’s id (same as in URLs / room metadata), not the full room id."),
+          .max(MAX_REFERENCED_ISSUES_IN_REPLY)
+          .describe(
+            "Issue ids (nanoids), not full room ids. Duplicates and the current thread id are ignored."
+          ),
       }),
-      execute: async ({ issueId }) => {
-        if (issueId === getIssueId(roomId)) {
+      execute: async ({ issueIds }) => {
+        const current = getIssueId(roomId);
+        const validated: string[] = [];
+        for (const raw of issueIds) {
+          const id = raw.trim();
+          if (!id || id === current) {
+            continue;
+          }
+          try {
+            await liveblocks.getRoom(getRoomId(id));
+          } catch {
+            return {
+              linked: false as const,
+              error: `No issue found for issueId: ${id}`,
+            };
+          }
+          validated.push(id);
+        }
+        if (validated.length === 0) {
           return {
             linked: false as const,
-            error: "Use link_issue_in_reply only for a different issue than this thread.",
+            error: "No valid issue ids to link.",
           };
         }
-        const targetRoomId = getRoomId(issueId);
-        try {
-          await liveblocks.getRoom(targetRoomId);
-        } catch {
-          return {
-            linked: false as const,
-            error: "No issue found for that issueId.",
-          };
-        }
-        state.referencedIssueId = issueId;
-        return { linked: true as const, issueId };
+        state.referencedIssueIdsCsv = mergeReferencedIssueIdsCsv(
+          state.referencedIssueIdsCsv,
+          validated,
+          current,
+          "append"
+        );
+        return {
+          linked: true as const,
+          issueIds: state.referencedIssueIdsCsv.split(",").filter(Boolean),
+        };
       },
     }),
   };

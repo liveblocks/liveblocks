@@ -28,6 +28,22 @@ import { ProgressInReviewIcon } from "@/icons/ProgressInReviewIcon";
 import { ProgressTodoIcon } from "@/icons/ProgressTodoIcon";
 import { markdownToCommentBody } from "@liveblocks/node";
 
+function parseReferencedIssueIdsFromCommentMetadata(
+  metadata: CommentProps["comment"]["metadata"]
+): string[] {
+  const csv =
+    typeof metadata?.referencedIssueIds === "string"
+      ? metadata.referencedIssueIds
+      : "";
+  if (csv.trim().length === 0) {
+    return [];
+  }
+  return csv
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+}
+
 function useUserIdPresence(userId: string) {
   const isSelf = useSelf((self) => self.id === userId) ?? false;
   const isOther =
@@ -208,11 +224,9 @@ function AiComment({
     );
   }
 
-  const createdIssueId = commentProps.comment.metadata?.createdIssueId;
-  const referencedIssueId =
-    typeof commentProps.comment.metadata?.referencedIssueId === "string"
-      ? commentProps.comment.metadata.referencedIssueId
-      : undefined;
+  const referencedIssueIds = parseReferencedIssueIdsFromCommentMetadata(
+    commentProps.comment.metadata
+  );
 
   return (
     <StreamedComment
@@ -221,8 +235,7 @@ function AiComment({
       reasoning={lastMessage.data.reasoning}
       response={lastMessage.data.response}
       thinkingTime={lastMessage.data.thinkingTime}
-      createdIssueId={createdIssueId}
-      referencedIssueId={referencedIssueId}
+      referencedIssueIds={referencedIssueIds}
     />
   );
 }
@@ -280,21 +293,18 @@ function StreamedComment({
   reasoning,
   response,
   thinkingTime,
-  createdIssueId,
-  referencedIssueId,
+  referencedIssueIds,
 }: {
   commentProps: CommentProps;
   avatar: ReactNode;
   reasoning: string;
   response: string;
   thinkingTime: number;
-  createdIssueId?: string;
-  referencedIssueId?: string;
+  referencedIssueIds: string[];
 }) {
   const [open, setOpen] = useState(false);
 
-  const showReferenced =
-    referencedIssueId !== undefined && referencedIssueId !== createdIssueId;
+  const showReferenced = referencedIssueIds.length > 0;
 
   return (
     <Comment
@@ -322,46 +332,39 @@ function StreamedComment({
             </div>
           </details>
           <div className="lb-comment-body whitespace-pre-wrap">
-            <CommentPrimitive.Body body={markdownToCommentBody(response)} />
+            <CommentPrimitive.Body
+              body={markdownToCommentBody(response)}
+              components={{
+                Link: (props) => (
+                  <Link
+                    {...props}
+                    className="font-medium underline underline-offset-2 decoration-neutral-300 hover:decoration-neutral-500"
+                  />
+                ),
+              }}
+            />
           </div>
-          {createdIssueId ? (
-            <div className="mt-2">
-              <ClientSideSuspense
-                fallback={
-                  <div className="ml-1 flex items-start gap-1.5 pl-0.5">
-                    <IssueInlinePreviewLead />
-                    <span
-                      className="mt-0.5 inline-block h-3.5 w-3.5 shrink-0 rounded-full border-2 border-dashed border-neutral-300"
-                      aria-hidden
-                    />
-                    <span className="text-[13px] text-neutral-400">
-                      Loading issue…
-                    </span>
-                  </div>
-                }
-              >
-                <CreatedIssueInlineRef issueId={createdIssueId} />
-              </ClientSideSuspense>
-            </div>
-          ) : null}
           {showReferenced ? (
-            <div className="mt-2">
-              <ClientSideSuspense
-                fallback={
-                  <div className="ml-1 flex items-start gap-1.5 pl-0.5">
-                    <IssueInlinePreviewLead />
-                    <span
-                      className="mt-0.5 inline-block h-3.5 w-3.5 shrink-0 rounded-full border-2 border-dashed border-neutral-300"
-                      aria-hidden
-                    />
-                    <span className="text-[13px] text-neutral-400">
-                      Loading issue…
-                    </span>
-                  </div>
-                }
-              >
-                <CreatedIssueInlineRef issueId={referencedIssueId} />
-              </ClientSideSuspense>
+            <div className="mt-2 space-y-2">
+              {referencedIssueIds.map((issueId) => (
+                <ClientSideSuspense
+                  key={issueId}
+                  fallback={
+                    <div className="ml-1 flex items-start gap-1.5 pl-0.5">
+                      <IssueInlinePreviewLead />
+                      <span
+                        className="mt-0.5 inline-block h-3.5 w-3.5 shrink-0 rounded-full border-2 border-dashed border-neutral-300"
+                        aria-hidden
+                      />
+                      <span className="text-[13px] text-neutral-400">
+                        Loading issue…
+                      </span>
+                    </div>
+                  }
+                >
+                  <CreatedIssueInlineRef issueId={issueId} />
+                </ClientSideSuspense>
+              ))}
             </div>
           ) : null}
         </>
@@ -390,7 +393,7 @@ function IssueInlinePreviewProgressIcon({
 }) {
   const p = progress ?? "none";
   if (p === "none") {
-    return null;
+    return <span className="h-4 w-4 rounded-full bg-neutral-400/20" />;
   }
   switch (p) {
     case "todo":
@@ -443,7 +446,9 @@ function CreatedIssueInlineRef({ issueId }: { issueId: string }) {
         href={`/issue/${issueId}`}
         className="min-w-0 flex-1 text-left text-[13px] leading-snug text-neutral-700 hover:text-neutral-950 hover:underline underline-offset-2"
       >
-        <span className="text-neutral-800">{info.metadata.title}</span>
+        <span className="text-neutral-800 font-medium">
+          {info.metadata.title}
+        </span>
       </Link>
     </div>
   );

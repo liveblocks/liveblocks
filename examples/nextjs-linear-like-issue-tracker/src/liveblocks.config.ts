@@ -15,9 +15,8 @@ declare global {
 
     CommentMetadata: {
       feedId?: string;
-      createdIssueId?: string;
-      /** Existing issue to show as an inline link at the bottom of an AI reply (last tool call wins). */
-      referencedIssueId?: string;
+      /** Comma-separated issue ids (nanoids); includes issues from create_issue and link_issues_in_reply. */
+      referencedIssueIds?: string;
     };
 
     FeedMetadata: {
