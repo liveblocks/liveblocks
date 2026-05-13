@@ -1,5 +1,6 @@
 import { AI_USER_INFO, getUsers } from "@/database";
 import { applyIssueDescriptionMarkdown } from "@/lib/apply-issue-description-markdown";
+import { appendIssueLinks } from "@/lib/apply-issue-links";
 import { applyIssuePropertyUpdates } from "@/lib/apply-issue-property-updates";
 import {
   createIssueRoomForAi,
@@ -19,6 +20,7 @@ export type AiIssueAssistantToolRunState = {
   createdIssueId?: string;
   editorMarkdownApplied: boolean;
   issuePropertiesUpdated: boolean;
+  issueLinksUpdated: boolean;
 };
 
 export function createAiIssueAssistantTools(
@@ -89,6 +91,24 @@ export function createAiIssueAssistantTools(
         });
         state.createdIssueId = issueId;
         return { issueId };
+      },
+    }),
+    append_issue_links: tool({
+      description:
+        "Append one or more URLs to this issue’s Links section (plain https URLs, deduped; max 30 links total on an issue). Use when the user wants references attached to the ticket, not only markdown links in the body.",
+      inputSchema: z.object({
+        urls: z
+          .array(z.string().min(1).max(4000))
+          .min(1)
+          .max(30)
+          .describe("URLs to add (trimmed; duplicates and the cap are handled server-side)."),
+      }),
+      execute: async ({ urls }) => {
+        const { added } = await appendIssueLinks(roomId, urls);
+        if (added > 0) {
+          state.issueLinksUpdated = true;
+        }
+        return { added };
       },
     }),
     insert_issue_description_markdown: tool({

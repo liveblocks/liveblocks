@@ -7,8 +7,7 @@ import { IssueActions } from "@/components/IssueActions";
 import { liveblocks } from "@/liveblocks.server.config";
 import { withLexicalDocument } from "@liveblocks/node-lexical";
 import { getRoomId } from "@/config";
-import { HeadingNode, QuoteNode } from "@lexical/rich-text";
-import { ListItemNode, ListNode } from "@lexical/list";
+import { ISSUE_LEXICAL_NODES } from "@/lib/issue-lexical-nodes";
 import { IssueLinks } from "@/components/IssueLinks";
 import { $convertToMarkdownString, TRANSFORMERS } from "@lexical/markdown";
 import { marked } from "marked";
@@ -27,7 +26,7 @@ export async function Issue({ issueId }: { issueId: string }) {
     {
       roomId,
       client: liveblocks,
-      nodes: [HeadingNode, QuoteNode, ListNode, ListItemNode],
+      nodes: [...ISSUE_LEXICAL_NODES],
     },
     async (doc) => {
       let markdown = "";

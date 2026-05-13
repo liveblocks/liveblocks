@@ -8,7 +8,7 @@ import { buildIssueContextMarkdown } from "@/lib/issue-context-markdown";
 import { liveblocks } from "@/liveblocks.server.config";
 import {
   getMentionsFromCommentBody,
-  type CommentBodyParagraph,
+  markdownToCommentBody,
   type CommentData,
   type ThreadData,
 } from "@liveblocks/node";
@@ -63,13 +63,15 @@ export async function runAiIssueAssistant(
       createdIssueId,
       editorMarkdownApplied,
       issuePropertiesUpdated,
+      issueLinksUpdated,
     } = await streamResponse({ roomId, feedId, thread, comment });
 
     const hasOutput =
       (response !== undefined && response.trim().length > 0) ||
       createdIssueId !== undefined ||
       editorMarkdownApplied ||
-      issuePropertiesUpdated;
+      issuePropertiesUpdated ||
+      issueLinksUpdated;
 
     if (!hasOutput) {
       await hidePresence(commentLocation).catch(() => undefined);
@@ -153,6 +155,7 @@ async function streamResponse({
   const toolRunState: AiIssueAssistantToolRunState = {
     editorMarkdownApplied: false,
     issuePropertiesUpdated: false,
+    issueLinksUpdated: false,
   };
 
   const system = buildAiIssueAssistantSystemPrompt({
@@ -250,6 +253,7 @@ ${content}
     createdIssueId: toolRunState.createdIssueId,
     editorMarkdownApplied: toolRunState.editorMarkdownApplied,
     issuePropertiesUpdated: toolRunState.issuePropertiesUpdated,
+    issueLinksUpdated: toolRunState.issueLinksUpdated,
   };
 }
 
@@ -314,12 +318,7 @@ async function createPlaceholderComment({
     data: {
       userId: AI_USER_INFO.id,
       metadata: { feedId },
-      body: {
-        version: 1,
-        content: [
-          { type: "paragraph", children: [{ text: "Placeholder for a feed" }] },
-        ],
-      },
+      body: markdownToCommentBody("Placeholder for a feed"),
     },
   });
 }
@@ -336,13 +335,16 @@ async function updatePlaceholderComment({
   response: string;
   createdIssueId?: string;
 }) {
-  const bodyText = response.trim();
-  const content: CommentBodyParagraph[] =
-    bodyText.length === 0
-      ? [{ type: "paragraph", children: [{ text: "\u00a0" }] }]
-      : bodyText
-          .split("\n\n")
-          .map((line) => ({ type: "paragraph", children: [{ text: line }] }));
+  const trimmed = response.trim();
+  const body =
+    trimmed.length === 0
+      ? {
+          version: 1 as const,
+          content: [
+            { type: "paragraph" as const, children: [{ text: "\u00a0" }] },
+          ],
+        }
+      : markdownToCommentBody(trimmed);
 
   return await liveblocks.editComment({
     roomId,
@@ -353,7 +355,7 @@ async function updatePlaceholderComment({
         feedId,
         ...(createdIssueId !== undefined ? { createdIssueId } : {}),
       },
-      body: { version: 1, content },
+      body,
     },
   });
 }
