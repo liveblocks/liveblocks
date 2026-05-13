@@ -53,21 +53,17 @@ export async function runAiIssueAssistant(
     };
 
     await Promise.all([
-      createFeed({
-        feedId,
-        ...placeholderCommentLocation,
-      }),
+      createFeed({ feedId, ...placeholderCommentLocation }),
       showPresence(commentLocation),
       leaveReactionOnComment(commentLocation),
     ]);
 
-    const { response, createdIssueId, editorMarkdownApplied, issuePropertiesUpdated } =
-      await streamResponse({
-        roomId,
-        feedId,
-        thread,
-        comment,
-      });
+    const {
+      response,
+      createdIssueId,
+      editorMarkdownApplied,
+      issuePropertiesUpdated,
+    } = await streamResponse({ roomId, feedId, thread, comment });
 
     const hasOutput =
       (response !== undefined && response.trim().length > 0) ||
@@ -110,11 +106,7 @@ async function createFeed({
   return await liveblocks.createFeed({
     roomId,
     feedId,
-    metadata: {
-      type: "ai-comment-reply",
-      threadId,
-      commentId,
-    },
+    metadata: { type: "ai-comment-reply", threadId, commentId },
   });
 }
 
@@ -299,8 +291,9 @@ ${content}
 async function showPresence({ roomId }: CommentLocation) {
   return liveblocks.setPresence(roomId, {
     userId: AI_USER_INFO.id,
-    userInfo: AI_USER_INFO,
+    userInfo: AI_USER_INFO.info,
     data: {},
+    ttl: 3599,
   });
 }
 
@@ -308,7 +301,7 @@ async function hidePresence({ roomId }: CommentLocation) {
   return liveblocks.setPresence(roomId, {
     ttl: 2,
     userId: AI_USER_INFO.id,
-    userInfo: AI_USER_INFO,
+    userInfo: AI_USER_INFO.info,
     data: {},
   });
 }
@@ -332,11 +325,7 @@ async function leaveReactionOnComment({
     roomId,
     threadId,
     commentId,
-    data: {
-      emoji: "👀",
-      userId: AI_USER_INFO.id,
-      createdAt: new Date(),
-    },
+    data: { emoji: "👀", userId: AI_USER_INFO.id, createdAt: new Date() },
   });
 }
 
@@ -353,9 +342,7 @@ async function createPlaceholderComment({
   roomId,
   threadId,
   feedId,
-}: CommentLocation & {
-  feedId: string;
-}) {
+}: CommentLocation & { feedId: string }) {
   return await liveblocks.createComment({
     roomId,
     threadId,
@@ -365,10 +352,7 @@ async function createPlaceholderComment({
       body: {
         version: 1,
         content: [
-          {
-            type: "paragraph",
-            children: [{ text: "Placeholder for a feed" }],
-          },
+          { type: "paragraph", children: [{ text: "Placeholder for a feed" }] },
         ],
       },
     },
@@ -391,10 +375,9 @@ async function updatePlaceholderComment({
   const content: CommentBodyParagraph[] =
     bodyText.length === 0
       ? [{ type: "paragraph", children: [{ text: "\u00a0" }] }]
-      : bodyText.split("\n\n").map((line) => ({
-          type: "paragraph",
-          children: [{ text: line }],
-        }));
+      : bodyText
+          .split("\n\n")
+          .map((line) => ({ type: "paragraph", children: [{ text: line }] }));
 
   return await liveblocks.editComment({
     roomId,
@@ -405,10 +388,7 @@ async function updatePlaceholderComment({
         feedId,
         ...(createdIssueId !== undefined ? { createdIssueId } : {}),
       },
-      body: {
-        version: 1,
-        content,
-      },
+      body: { version: 1, content },
     },
   });
 }
