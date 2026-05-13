@@ -13,6 +13,8 @@ import { DeleteIcon } from "@/icons/DeleteIcon";
 import { PlusIcon } from "@/icons/PlusIcon";
 import { SubmitIcon } from "@/icons/SubmitIcon";
 import { ImmutableStorage } from "@/liveblocks.config";
+import { AiPresenceEditFrame } from "@/components/AiPresenceEditFrame";
+import { AI_EDITING_TYPE } from "@/lib/ai-editing-presence-types";
 
 export function IssueLinks({
   storageFallback,
@@ -68,7 +70,8 @@ function Links() {
   }, []);
 
   return (
-    <div>
+    <AiPresenceEditFrame editingType={AI_EDITING_TYPE.LINKS}>
+      <div>
       <div className="flex justify-between items-center text-sm font-medium text-neutral-500">
         Links
         <button onClick={() => setCreating(!creating)}>
@@ -114,6 +117,7 @@ function Links() {
         ))}
       </div>
     </div>
+    </AiPresenceEditFrame>
   );
 }
 

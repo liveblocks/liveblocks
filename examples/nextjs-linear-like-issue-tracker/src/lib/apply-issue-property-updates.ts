@@ -1,5 +1,7 @@
 import { liveblocks } from "@/liveblocks.server.config";
 import type { IssuePropertyUpdates } from "@/lib/issue-storage-enums";
+import { setAiRemotePresenceEditing } from "@/lib/ai-remote-presence";
+import { AI_EDITING_TYPE } from "@/lib/ai-editing-presence-types";
 
 /** Same prefix as `src/config.tsx` — used only to derive `issueId` for room metadata. */
 const ROOM_PREFIX = "liveblocks:examples:nextjs-project-manager-";
@@ -43,10 +45,23 @@ async function syncRoomMetadataFromStorage(roomId: string): Promise<void> {
  * `liveblocks.mutateStorage`, then mirrors those fields into **room metadata**
  * (for lists / `useRoomInfo`), matching `src/app/api/storage-webhook/route.ts`.
  *
- * AI **presence** is already shown for the whole assistant run: `showPresence` runs
- * before streaming and `hidePresence` after the reply — including while this runs
- * inside tool `execute` handlers.
+ * `editingTypes` is left set after this returns; `hidePresence` at the end of
+ * an AI run clears it.
  */
+function editingTypesFromPropertyUpdates(
+  updates: IssuePropertyUpdates
+): string[] {
+  const types: string[] = [];
+  if (updates.title !== undefined) types.push(AI_EDITING_TYPE.TITLE);
+  if (updates.progress !== undefined) types.push(AI_EDITING_TYPE.PROGRESS);
+  if (updates.priority !== undefined) types.push(AI_EDITING_TYPE.PRIORITY);
+  if (updates.assignedTo !== undefined) {
+    types.push(AI_EDITING_TYPE.ASSIGNED_TO);
+  }
+  if (updates.labels !== undefined) types.push(AI_EDITING_TYPE.LABELS);
+  return types;
+}
+
 export async function applyIssuePropertyUpdates(
   roomId: string,
   updates: IssuePropertyUpdates
@@ -55,6 +70,9 @@ export async function applyIssuePropertyUpdates(
   if (keys.length === 0) {
     return;
   }
+
+  const editingTypes = editingTypesFromPropertyUpdates(updates);
+  await setAiRemotePresenceEditing(roomId, editingTypes);
 
   await liveblocks.mutateStorage(roomId, ({ root }) => {
     if (updates.title !== undefined) {

@@ -3,6 +3,8 @@ import { $convertFromMarkdownString, TRANSFORMERS } from "@lexical/markdown";
 import { $getRoot } from "lexical";
 import { liveblocks } from "@/liveblocks.server.config";
 import { ISSUE_LEXICAL_NODES } from "@/lib/issue-lexical-nodes";
+import { AI_EDITING_TYPE } from "@/lib/ai-editing-presence-types";
+import { setAiRemotePresenceEditing } from "@/lib/ai-remote-presence";
 
 export type IssueDescriptionMarkdownMode = "append" | "replace";
 
@@ -11,6 +13,9 @@ export type IssueDescriptionMarkdownMode = "append" | "replace";
  * {@link https://liveblocks.io/docs/api-reference/liveblocks-node-lexical | withLexicalDocument}
  * and `doc.update`, following the same pattern as
  * `examples/nextjs-notion-like-ai-editor` (`createRoomWithLexicalDocument`).
+ *
+ * Sets AI presence `editingTypes` to include `content` before writing; does not
+ * clear it (the AI assistant clears presence when the run ends).
  */
 export async function applyIssueDescriptionMarkdown(
   roomId: string,
@@ -22,6 +27,7 @@ export async function applyIssueDescriptionMarkdown(
     return;
   }
 
+  await setAiRemotePresenceEditing(roomId, [AI_EDITING_TYPE.CONTENT]);
   await withLexicalDocument(
     {
       roomId,

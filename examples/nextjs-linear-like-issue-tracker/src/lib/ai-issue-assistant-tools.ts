@@ -28,7 +28,7 @@ export function createAiIssueAssistantTools(
   return {
     create_issue: tool({
       description:
-        "Create a new tracked issue. Required: title. Optional: descriptionMarkdown (body-only GFM — no leading # title that repeats title), labels, links, progress, priority, assignedTo.",
+        "Create a new tracked issue. Required: title. Optional: descriptionMarkdown (GFM body — NEVER start with #/##/###; title is the title field), labels, links, progress, priority, assignedTo.",
       inputSchema: z.object({
         title: z
           .string()
@@ -37,7 +37,7 @@ export function createAiIssueAssistantTools(
           .string()
           .optional()
           .describe(
-            "Body-only markdown: paragraphs, ## sections, lists, links, code. Do not start with a single # heading that duplicates the issue title — the title field is shown above the editor."
+            "Body markdown: open with a paragraph, list, or quote — NEVER start with a heading line (# through ######); use the title field for the issue name. Headings allowed deeper in the body after opening text if needed."
           ),
         labels: z
           .array(z.enum(ISSUE_LABEL_IDS))
@@ -93,12 +93,12 @@ export function createAiIssueAssistantTools(
     }),
     insert_issue_description_markdown: tool({
       description:
-        "Insert markdown into this issue's main description (Lexical). The issue title is shown above the body — do not open markdown with a # line that repeats it. Prefer mode append.",
+        "Insert markdown into this issue's main description (Lexical). The title property is the only top-level title — NEVER begin markdown with #/##/###. Prefer append.",
       inputSchema: z.object({
         markdown: z
           .string()
           .describe(
-            "Markdown for the body only: start with content or ## subheadings — not a top-level # title that duplicates the issue title (shown in the UI above this text)."
+            "Markdown for the body: first line must NOT be a heading (# … ######). Start with a paragraph or list; headings only after opening non-heading content if needed."
           ),
         mode: z
           .enum(["append", "replace"])

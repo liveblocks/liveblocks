@@ -53,6 +53,9 @@ declare global {
       labels: LiveList<string>;
       links: LiveList<string>;
     };
+    Presence: {
+      editingTypes: string[];
+    };
     RoomInfo: {
       id: string;
       metadata: Metadata;

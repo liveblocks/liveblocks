@@ -11,6 +11,8 @@ import { AI_USER_INFO, getUsers } from "@/database";
 import { Select } from "@/components/Select";
 import { ImmutableStorage } from "@/liveblocks.config";
 import { useAiCollaboration } from "@/components/AiCollaborationContext";
+import { AiPresenceEditFrame } from "@/components/AiPresenceEditFrame";
+import { AI_EDITING_TYPE } from "@/lib/ai-editing-presence-types";
 
 function usersForAssigneePicker(aiEnabled: boolean) {
   return getUsers().filter(
@@ -95,29 +97,35 @@ function Properties({
 
   return (
     <div className="text-sm flex flex-col gap-3 justify-start items-start font-medium">
-      <Select
-        id="progress"
-        value={properties.progress}
-        items={PROGRESS_STATES as any}
-        adjustFirstItem="split"
-        onValueChange={(val) => editProperty("progress", val)}
-      />
+      <AiPresenceEditFrame editingType={AI_EDITING_TYPE.PROGRESS}>
+        <Select
+          id="progress"
+          value={properties.progress}
+          items={PROGRESS_STATES as any}
+          adjustFirstItem="split"
+          onValueChange={(val) => editProperty("progress", val)}
+        />
+      </AiPresenceEditFrame>
 
-      <Select
-        id="priority"
-        value={properties.priority}
-        items={PRIORITY_STATES as any}
-        adjustFirstItem="split"
-        onValueChange={(val) => editProperty("priority", val)}
-      />
+      <AiPresenceEditFrame editingType={AI_EDITING_TYPE.PRIORITY}>
+        <Select
+          id="priority"
+          value={properties.priority}
+          items={PRIORITY_STATES as any}
+          adjustFirstItem="split"
+          onValueChange={(val) => editProperty("priority", val)}
+        />
+      </AiPresenceEditFrame>
 
-      <Select
-        id="assignedTo"
-        value={properties.assignedTo}
-        items={assigneeItems}
-        adjustFirstItem="split"
-        onValueChange={(val) => editProperty("assignedTo", val)}
-      />
+      <AiPresenceEditFrame editingType={AI_EDITING_TYPE.ASSIGNED_TO}>
+        <Select
+          id="assignedTo"
+          value={properties.assignedTo}
+          items={assigneeItems}
+          adjustFirstItem="split"
+          onValueChange={(val) => editProperty("assignedTo", val)}
+        />
+      </AiPresenceEditFrame>
     </div>
   );
 }
