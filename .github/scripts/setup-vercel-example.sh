@@ -129,24 +129,24 @@ create_project_body="$(
     --arg name "${project_name}" \
     --arg root_directory "${root_directory}" \
     --arg repository "${GITHUB_REPOSITORY}" \
+    --argjson framework "$(
+      # Source: https://vercel.com/docs/rest-api/projects/create-a-new-project#framework
+      [[ -n "${framework}" ]] \
+        && jq -n --arg f "${framework}" '$f' \
+        || echo "null"
+    )" \
     '{
       name: $name,
       buildCommand: "npm run build",
       installCommand: "npm install",
       rootDirectory: $root_directory,
+      framework: $framework,
       gitRepository: {
         type: "github",
         repo: $repository
       }
     }'
 )"
-
-if [[ -n "${framework}" ]]; then
-  # Source: https://vercel.com/docs/rest-api/projects/create-a-new-project#framework
-  create_project_body="$(
-    jq --arg framework "${framework}" '.framework = $framework' <<<"${create_project_body}"
-  )"
-fi
 
 # Create a Vercel project for this GitHub repository.
 # Source: https://vercel.com/docs/rest-api/projects/create-a-new-project
@@ -190,22 +190,22 @@ fi
 update_project_body="$(
   jq -n \
     --arg root_directory "${root_directory}" \
+    --argjson framework "$(
+      [[ -n "${framework}" ]] \
+        && jq -n --arg f "${framework}" '$f' \
+        || echo "null"
+    )" \
     '{
       buildCommand: "npm run build",
       installCommand: "npm install",
       rootDirectory: $root_directory,
+      framework: $framework,
       gitComments: {
         onCommit: false,
         onPullRequest: false
       }
     }'
 )"
-
-if [[ -n "${framework}" ]]; then
-  update_project_body="$(
-    jq --arg framework "${framework}" '.framework = $framework' <<<"${update_project_body}"
-  )"
-fi
 
 # Keep the project settings in sync on first runs and reruns.
 # Also disable Vercel for GitHub PR and commit comments.
