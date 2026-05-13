@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/chat-sdk-adapter",
-  "version": "3.19.0",
+  "version": "3.19.1",
   "description": "Liveblocks adapter for the Chat SDK.",
   "license": "Apache-2.0",
   "author": "Liveblocks Inc.",
