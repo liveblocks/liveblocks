@@ -1,5 +1,12 @@
 ## vNEXT (not yet released)
 
+## v3.19.1
+
+### `@liveblocks/node` and Python SDK
+
+- Update providers to support newer models up to GPT-5.5 variants, Sonnet 4.6,
+  Opus 4.7, and Gemini 3/3.1 variants.
+
 ## v3.19.0
 
 ### `@liveblocks/node`
