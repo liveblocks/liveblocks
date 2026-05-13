@@ -1,4 +1,14 @@
+export const AI_USER_INFO: Liveblocks["UserMeta"] = {
+  id: "__AI_AGENT",
+  info: {
+    name: "AI Assistant",
+    color: "#6366f1",
+    avatar: `https://liveblocks.io/api/avatar?u=__AI_AGENT&agent=true`,
+  },
+};
+
 const USER_INFO: Liveblocks["UserMeta"][] = [
+  AI_USER_INFO,
   {
     id: "charlie.layne@example.com",
     info: {
@@ -66,7 +76,8 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
 ];
 
 export function getRandomUser() {
-  return USER_INFO[Math.floor(Math.random() * 10) % USER_INFO.length];
+  const realUsers = USER_INFO.filter(({ id }) => id !== AI_USER_INFO.id);
+  return realUsers[Math.floor(Math.random() * realUsers.length)];
 }
 
 export function getUser(id: string) {

@@ -5,16 +5,30 @@ import {
   useMutation,
   useStorage,
 } from "@liveblocks/react/suspense";
+import { useMemo } from "react";
 import { PRIORITY_STATES, PROGRESS_STATES } from "@/config";
-import { getUsers } from "@/database";
+import { AI_USER_INFO, getUsers } from "@/database";
 import { Select } from "@/components/Select";
 import { ImmutableStorage } from "@/liveblocks.config";
+import { useAiCollaboration } from "@/components/AiCollaborationContext";
+
+function usersForAssigneePicker(aiEnabled: boolean) {
+  return getUsers().filter(
+    (u) => aiEnabled || u.id !== AI_USER_INFO.id
+  );
+}
 
 export function IssueProperties({
   storageFallback,
 }: {
   storageFallback: ImmutableStorage;
 }) {
+  const { aiEnabled } = useAiCollaboration();
+  const assigneeUsers = useMemo(
+    () => usersForAssigneePicker(aiEnabled),
+    [aiEnabled]
+  );
+
   return (
     <ClientSideSuspense
       fallback={
@@ -39,7 +53,7 @@ export function IssueProperties({
             ) : (
               <AvatarAndName
                 user={
-                  getUsers().find(
+                  assigneeUsers.find(
                     (p) => p.id === storageFallback.properties.assignedTo
                   ) || null
                 }
@@ -49,28 +63,35 @@ export function IssueProperties({
         </div>
       }
     >
-      <Properties />
+      <Properties assigneeUsers={assigneeUsers} />
     </ClientSideSuspense>
   );
 }
 
-const USERS = [
-  {
-    id: "none",
-    jsx: <div className="text-neutral-600">Not assigned</div>,
-  },
-  ...getUsers().map((user) => ({
-    id: user.id,
-    jsx: <AvatarAndName user={user} />,
-  })),
-];
-
-function Properties() {
+function Properties({
+  assigneeUsers,
+}: {
+  assigneeUsers: ReturnType<typeof usersForAssigneePicker>;
+}) {
   const properties = useStorage((root) => root.properties);
 
   const editProperty = useMutation(({ storage }, prop, value) => {
     storage.get("properties").set(prop, value);
   }, []);
+
+  const assigneeItems = useMemo(
+    () => [
+      {
+        id: "none",
+        jsx: <div className="text-neutral-600">Not assigned</div>,
+      },
+      ...assigneeUsers.map((user) => ({
+        id: user.id,
+        jsx: <AvatarAndName user={user} />,
+      })),
+    ],
+    [assigneeUsers]
+  );
 
   return (
     <div className="text-sm flex flex-col gap-3 justify-start items-start font-medium">
@@ -93,7 +114,7 @@ function Properties() {
       <Select
         id="assignedTo"
         value={properties.assignedTo}
-        items={USERS}
+        items={assigneeItems}
         adjustFirstItem="split"
         onValueChange={(val) => editProperty("assignedTo", val)}
       />

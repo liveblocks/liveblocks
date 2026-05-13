@@ -18,6 +18,8 @@ const inter = Inter({
 });
 
 export default function RootLayout({ children }: { children: ReactNode }) {
+  const aiEnabled = Boolean(process.env.LIVEBLOCKS_WEBHOOK_SECRET_KEY);
+
   return (
     <html lang="en" className={`${inter.className} absolute inset-0`}>
       <head>
@@ -35,7 +37,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
       </head>
       <body className="bg-neutral-200/50 text-neutral-900 antialiased h-full w-full overflow-hidden">
-        <Providers>{children}</Providers>
+        <Providers aiEnabled={aiEnabled}>{children}</Providers>
 
         <a
           className="fixed bottom-4 right-4"

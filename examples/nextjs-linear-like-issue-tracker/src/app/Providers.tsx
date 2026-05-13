@@ -3,13 +3,18 @@
 import { LiveblocksProvider } from "@liveblocks/react/suspense";
 import { PropsWithChildren, Suspense } from "react";
 import { InboxProvider } from "@/components/InboxContext";
+import { AiCollaborationProvider } from "@/components/AiCollaborationContext";
 import { getRoomsFromIds } from "@/actions/liveblocks";
 import { authWithRandomUser } from "@/example";
 
-export function Providers({ children }: PropsWithChildren) {
+export function Providers({
+  children,
+  aiEnabled,
+}: PropsWithChildren<{ aiEnabled: boolean }>) {
   return (
-    <InboxProvider>
-      <LiveblocksProvider
+    <AiCollaborationProvider aiEnabled={aiEnabled}>
+      <InboxProvider>
+        <LiveblocksProvider
         authEndpoint={authWithRandomUser("/api/liveblocks-auth")}
         // Get users' info from their ID
         resolveUsers={async ({ userIds }) => {
@@ -38,7 +43,8 @@ export function Providers({ children }: PropsWithChildren) {
           const userIds = await response.json();
           return userIds;
         }}
-        // Add room metadata to `useRoomInfo`
+        // Room metadata for `useRoomInfo` (cached client-side until
+        // `client.resolvers.invalidateRoomsInfo`)
         resolveRoomsInfo={async ({ roomIds }) => {
           const rooms = await getRoomsFromIds(roomIds);
           return rooms.map((room) => ({
@@ -47,8 +53,9 @@ export function Providers({ children }: PropsWithChildren) {
           }));
         }}
       >
-        <Suspense>{children}</Suspense>
-      </LiveblocksProvider>
-    </InboxProvider>
+          <Suspense>{children}</Suspense>
+        </LiveblocksProvider>
+      </InboxProvider>
+    </AiCollaborationProvider>
   );
 }

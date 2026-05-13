@@ -26,6 +26,8 @@ Users can create issues with a rich-text editor, giving them priorities,
 progress state, and labels. Comments can be left on issues and users receive
 notifications if they've been mentioned.
 
+You can optionally enable an **AI assistant**: when it is configured, `@AI Assistant` appears in mentions; tagging it in a comment starts a streamed reply. The assistant receives the **full user list** in its system prompt. It can **create issues** in one step with optional **description** (markdown), **labels**, **links**, **progress**, **priority**, and **assignee**; **append/replace the current issue description** from markdown ([`withLexicalDocument`](https://liveblocks.io/docs/api-reference/liveblocks-node-lexical)); **update issue properties** on the current issue (title, progress, priority, assignee, labels via [`mutateStorage`](https://liveblocks.io/docs/api-reference/liveblocks-node)); and your **presence** stays on for the whole run so others see the AI in the room while tools run. Without webhook setup, the example runs as before and the AI is hidden from mention suggestions.
+
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/linear-like-issue-tracker.png" width="536" alt="Issue tracker" />
 
 ## Getting started
@@ -55,6 +57,17 @@ Alternatively, you can set up your project manually:
 - Create an `.env.local` file and add your **secret** key as the
   `LIVEBLOCKS_SECRET_KEY` environment variable
 - Run `npm run dev` and go to [http://localhost:3000](http://localhost:3000)
+
+### AI assistant (optional)
+
+<details><summary>Read more</summary>
+
+<p></p>
+
+- Add `ANTHROPIC_API_KEY` to `.env.local` (same provider as the [comments AI example](https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-comments-ai)).
+- In the [Liveblocks dashboard](https://liveblocks.io/dashboard), open **Webhooks**, create a webhook pointing to your deployed URL **`/api/ai-comment-reply`** (or use a tunnel such as [ngrok](http://ngrok.com/) for local development), and subscribe to **`commentCreated`** events.
+- Set the webhook signing secret as **`LIVEBLOCKS_WEBHOOK_SECRET_KEY`** in `.env.local`. When this variable is unset, the AI user is omitted from mention search and the webhook route returns “not configured”.
+- For **local + ngrok**, `next.config.ts` already allows **`*.ngrok-free.app`** and **`*.ngrok.io`**. Restart **`npm run dev`** after changing `next.config.ts`. For other tunnels, set **`NEXT_DEV_ALLOWED_ORIGINS`** (comma-separated hostnames) in `.env.local`.
 
 </details>
 
