@@ -267,7 +267,8 @@ async function streamSparkleToFeed(
         : createAiIssueLabelsOnlyTools(roomId, toolRunState);
 
   const result = streamText({
-    model: anthropic("claude-sonnet-4-5"),
+    // Haiku for cost/latency vs Sonnet; extended thinking kept so reasoning streams into comments.
+    model: anthropic("claude-haiku-4-5"),
     system,
     messages: [userMessage],
     stopWhen: stepCountIs(8),
