@@ -111,6 +111,16 @@ if [[ ! -d "examples/${example_name}" ]]; then
   exit 1
 fi
 
+# Resolve the team URL segment for dashboard links (`https://vercel.com/<slug>/<project>`).
+# Source: https://vercel.com/docs/rest-api/reference/endpoints/teams/get-a-team
+team_response="$(
+  vercel_request \
+    "Fetching Vercel team metadata" \
+    "GET" \
+    "${vercel_api_url}/v2/teams/${VERCEL_TEAM_ID}"
+)"
+team_slug="$(jq -r '.slug // empty' <<<"${team_response}")"
+
 project_name="examples-${example_name}"
 root_directory="examples/${example_name}"
 domain="${example_name}.liveblocks.app"
@@ -123,6 +133,13 @@ echo "Custom domain: ${domain}"
 echo "GitHub repository: ${GITHUB_REPOSITORY}"
 echo "Production branch: ${examples_branch}"
 echo "Framework: ${framework:-"(none)"}"
+
+project_dashboard_url=""
+if [[ -n "${team_slug}" ]]; then
+  project_dashboard_url="https://vercel.com/${team_slug}/${project_name}"
+else
+  err "Warning: could not read team slug from GET /v2/teams/<team-id>; omitting Vercel dashboard project URL"
+fi
 
 create_project_body="$(
   jq -n \
@@ -304,7 +321,10 @@ fi
 echo
 echo "Setup complete"
 echo "Project: ${project_name}"
-echo "Domain: https://${domain}"
+echo "Deployment URL: https://${domain}"
+if [[ -n "${project_dashboard_url}" ]]; then
+  echo "Vercel project URL: ${project_dashboard_url}"
+fi
 echo "Deploy Hook: ${deploy_hook_url}"
 
 if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
@@ -313,7 +333,10 @@ if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
     echo
     echo "\`${example_name}\` has been configured on Vercel and will deploy from the \`${examples_branch}\` branch."
     echo
-    echo "🔗 Public URL: https://${domain}"
+    echo "🔗 Deployment URL: https://${domain}"
+    if [[ -n "${project_dashboard_url}" ]]; then
+      echo "🗂️ Vercel URL: ${project_dashboard_url}"
+    fi
     echo
     echo "### Deploy Hook"
     echo
