@@ -1,0 +1,40 @@
+name: Set up Vercel example
+
+on:
+  workflow_dispatch:
+    inputs:
+      example_name:
+        description:
+          "Name of the example's folder in the `examples/` directory (e.g.
+          `nextjs-comments`)"
+        required: true
+        type: string
+      framework:
+        description: "Framework preset (e.g. `nextjs`)"
+        required: false
+        type: choice
+        # Source: https://vercel.com/docs/rest-api/projects/create-a-new-project#framework
+        options:
+          - nextjs
+          - nuxtjs
+          - svelte
+          - sveltekit
+          - vite
+          - vue
+
+jobs:
+  setup-vercel-example:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Create and configure Vercel project
+        env:
+          EXAMPLE_NAME: ${{ inputs.example_name }}
+          FRAMEWORK: ${{ inputs.framework }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          VERCEL_TEAM_ID: ${{ secrets.VERCEL_TEAM_ID }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: bash ./.github/scripts/setup-vercel-example.sh
