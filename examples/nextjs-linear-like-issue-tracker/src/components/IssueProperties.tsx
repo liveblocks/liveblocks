@@ -10,25 +10,17 @@ import { PRIORITY_STATES, PROGRESS_STATES } from "@/config";
 import { AI_USER_INFO, getUsers } from "@/database";
 import { Select } from "@/components/Select";
 import { ImmutableStorage } from "@/liveblocks.config";
-import { useAiCollaboration } from "@/components/AiCollaborationContext";
 import { AiPresenceEditFrame } from "@/components/AiPresenceEditFrame";
 import { AI_EDITING_TYPE } from "@/lib/ai-editing-presence-types";
-
-function usersForAssigneePicker(aiEnabled: boolean) {
-  return getUsers().filter(
-    (u) => aiEnabled || u.id !== AI_USER_INFO.id
-  );
-}
 
 export function IssueProperties({
   storageFallback,
 }: {
   storageFallback: ImmutableStorage;
 }) {
-  const { aiEnabled } = useAiCollaboration();
   const assigneeUsers = useMemo(
-    () => usersForAssigneePicker(aiEnabled),
-    [aiEnabled]
+    () => getUsers().filter((u) => u.id !== AI_USER_INFO.id),
+    []
   );
 
   return (
@@ -73,20 +65,21 @@ export function IssueProperties({
 function Properties({
   assigneeUsers,
 }: {
-  assigneeUsers: ReturnType<typeof usersForAssigneePicker>;
+  assigneeUsers: Liveblocks["UserMeta"][];
 }) {
   const properties = useStorage((root) => root.properties);
 
   const editProperty = useMutation(({ storage }, prop, value) => {
+    if (prop === "assignedTo" && value === AI_USER_INFO.id) {
+      storage.get("properties").set(prop, "none");
+      return;
+    }
     storage.get("properties").set(prop, value);
   }, []);
 
   const assigneeItems = useMemo(
     () => [
-      {
-        id: "none",
-        jsx: <div className="text-neutral-600">Not assigned</div>,
-      },
+      { id: "none", jsx: <div className="text-neutral-600">Not assigned</div> },
       ...assigneeUsers.map((user) => ({
         id: user.id,
         jsx: <AvatarAndName user={user} />,
