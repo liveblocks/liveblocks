@@ -16,7 +16,6 @@ const ISSUE_PRIORITY_PROMPT_LABEL = Object.fromEntries(
 
 export type AiIssueAssistantSystemPromptInput = {
   aiUserId: string;
-  /** Nanoid id of the issue whose thread the assistant is replying in (for disambiguation). */
   currentIssueId: string;
   assignableUsersLines: string;
   allUsersLines: string;
@@ -32,9 +31,9 @@ export function buildAiIssueAssistantSystemPrompt({
   issueContextMd,
   stringifiedComment,
 }: AiIssueAssistantSystemPromptInput): string {
-  const labelsValidLines = LABELS.map(
-    (l) => `- \`${l.id}\` — ${l.text}`
-  ).join("\n");
+  const labelsValidLines = LABELS.map((l) => `- \`${l.id}\` — ${l.text}`).join(
+    "\n"
+  );
   const progressValidLines = ISSUE_PROGRESS_IDS.map(
     (id) => `- \`${id}\` — ${ISSUE_PROGRESS_PROMPT_LABEL[id]}`
   ).join("\n");

@@ -371,10 +371,6 @@ function StreamedComment({
                   fallback={
                     <div className="ml-1 flex items-start gap-1.5 pl-0.5">
                       <IssueInlinePreviewLead />
-                      <span
-                        className="mt-0.5 inline-block h-3.5 w-3.5 shrink-0 rounded-full border-2 border-dashed border-neutral-300"
-                        aria-hidden
-                      />
                       <span className="text-[13px] text-neutral-400">
                         Loading issue…
                       </span>
@@ -440,10 +436,6 @@ function CreatedIssueInlineRef({ issueId }: { issueId: string }) {
     return (
       <div className="ml-1 flex items-start gap-1.5 pl-0.5">
         <IssueInlinePreviewLead />
-        <span
-          className="mt-0.5 inline-block h-3.5 w-3.5 shrink-0 rounded-full border-2 border-dashed border-neutral-300 animate-pulse"
-          aria-hidden
-        />
         <span className="text-[13px] text-neutral-400">Loading issue…</span>
       </div>
     );

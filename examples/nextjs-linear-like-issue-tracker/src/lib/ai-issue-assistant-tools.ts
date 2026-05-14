@@ -63,18 +63,11 @@ function mergeReferencedIssueIdsCsv(
 }
 
 export type AiIssueAssistantToolRunState = {
-  /** Comma-separated issue ids for inline previews (new issue from create_issue is prepended here). */
-  referencedIssueIdsCsv?: string;
+  referencedIssueIdsCsv?: string; // Comma-separated issue IDs for comment previews
   editorMarkdownApplied: boolean;
   issuePropertiesUpdated: boolean;
   issueLinksUpdated: boolean;
 };
-
-/**
- * Per-tool factories. Each returns a single AI SDK `tool(...)` definition.
- * They share the same `AiIssueAssistantToolRunState`. AI presence is announced
- * by the `apply-issue-*` mutators themselves.
- */
 
 function createIssueTool(
   roomId: string,
@@ -207,10 +200,6 @@ function insertIssueDescriptionMarkdownTool(
   });
 }
 
-/**
- * Wide property-update tool used by the comment-thread assistant: accepts
- * title, progress, priority, assignedTo, labels.
- */
 function updateIssuePropertiesTool(
   roomId: string,
   state: AiIssueAssistantToolRunState

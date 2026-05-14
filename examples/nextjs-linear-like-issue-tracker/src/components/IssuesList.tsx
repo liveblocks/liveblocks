@@ -138,7 +138,7 @@ async function getMetadataFromRoom(room: RoomWithMetadata) {
   // We recommend setting up webhooks to automatically attach the Storage data
   // to room metadata on changes. Then you can directly use the room instead
   // of calling the Storage API below.
-  // More info inside the webhook route at /app/api/storage-webhook/route.ts
+  // More info inside the webhook route at /app/api/liveblocks-webhook/route.ts
   if (process.env.LIVEBLOCKS_WEBHOOK_SECRET_KEY) {
     return room.metadata;
   }
