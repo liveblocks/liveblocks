@@ -1,45 +1,19 @@
 "use server";
 
-import { nanoid } from "nanoid";
+import { unstable_noStore as noStore } from "next/cache";
+import { after } from "next/server";
 import { redirect } from "next/navigation";
-import { getRoomId, Metadata, RoomWithMetadata } from "@/config";
+import { RoomWithMetadata } from "@/config";
 import { liveblocks } from "@/liveblocks.server.config";
-import { LiveList, LiveObject, toPlainLson } from "@liveblocks/client";
+import { createIssueRoomForAi } from "@/lib/create-issue-room";
+import {
+  prepareAiIssueButton,
+  runAiIssueButtonStream,
+} from "@/lib/ai-issue-button";
+import type { AiIssueButtonKind } from "@/lib/ai-issue-button-prompts";
 
 export async function createIssue() {
-  const issueId = nanoid();
-  const roomId = getRoomId(issueId);
-
-  const metadata: Metadata = {
-    issueId,
-    title: "Untitled",
-    progress: "none",
-    priority: "none",
-    assignedTo: "none",
-    labels: [],
-  };
-
-  await liveblocks.createRoom(roomId, {
-    defaultAccesses: ["room:write"],
-    metadata,
-  });
-
-  const initialStorage: LiveObject<Liveblocks["Storage"]> = new LiveObject({
-    meta: new LiveObject({ title: "Untitled" }),
-    properties: new LiveObject({
-      progress: "none",
-      priority: "none",
-      assignedTo: "none",
-    }),
-    labels: new LiveList([]),
-    links: new LiveList([]),
-  });
-
-  await liveblocks.initializeStorageDocument(
-    roomId,
-    toPlainLson(initialStorage) as any
-  );
-
+  const { issueId } = await createIssueRoomForAi("Untitled");
   redirect(`/issue/${issueId}`);
 }
 
@@ -49,16 +23,44 @@ export async function getStorageDocument(roomId: string) {
 }
 
 export async function getRoomsFromIds(roomIds: string[]) {
-  const promises = [];
-
-  for (const roomId of roomIds) {
-    promises.push(await liveblocks.getRoom(roomId));
-  }
-
-  return (await Promise.all(promises)) as RoomWithMetadata[];
+  noStore();
+  const rooms = await Promise.all(
+    roomIds.map((roomId) => liveblocks.getRoom(roomId))
+  );
+  return rooms as RoomWithMetadata[];
 }
 
 export async function deleteRoom(roomId: string) {
   await liveblocks.deleteRoom(roomId);
   redirect("/");
+}
+
+export async function runIssueButtonAi(
+  kind: AiIssueButtonKind,
+  issueId: string,
+  requestedByUserId: string
+): Promise<{ ok: true; feedId: string } | { ok: false; error: string }> {
+  const prep = await prepareAiIssueButton({
+    issueId,
+    requestedByUserId,
+    kind,
+  });
+  if (!prep.ok) {
+    return { ok: false, error: prep.error };
+  }
+
+  after(() => {
+    void runAiIssueButtonStream(prep.ctx).then(
+      (result) => {
+        if (result.error) {
+          console.error("[issue-button]", kind, result.error);
+        }
+      },
+      (err) => {
+        console.error("[issue-button]", kind, err);
+      }
+    );
+  });
+
+  return { ok: true, feedId: prep.ctx.feedId };
 }

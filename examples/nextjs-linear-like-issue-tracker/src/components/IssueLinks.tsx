@@ -13,11 +13,16 @@ import { DeleteIcon } from "@/icons/DeleteIcon";
 import { PlusIcon } from "@/icons/PlusIcon";
 import { SubmitIcon } from "@/icons/SubmitIcon";
 import { ImmutableStorage } from "@/liveblocks.config";
+import { AiPresenceEditFrame } from "@/components/AiPresenceEditFrame";
+import { AI_EDITING_TYPE } from "@/lib/ai-editing-presence-types";
+import { IssueAiButton } from "@/components/IssueAiButton";
 
 export function IssueLinks({
   storageFallback,
+  issueId,
 }: {
   storageFallback: ImmutableStorage;
+  issueId: string;
 }) {
   return (
     <ClientSideSuspense
@@ -36,12 +41,12 @@ export function IssueLinks({
         </div>
       }
     >
-      <Links />
+      <Links issueId={issueId} />
     </ClientSideSuspense>
   );
 }
 
-function Links() {
+function Links({ issueId }: { issueId: string }) {
   const [creating, setCreating] = useState(false);
   const [url, setUrl] = useState("");
   const links = useStorage((root) => root.links);
@@ -68,52 +73,57 @@ function Links() {
   }, []);
 
   return (
-    <div>
-      <div className="flex justify-between items-center text-sm font-medium text-neutral-500">
-        Links
-        <button onClick={() => setCreating(!creating)}>
-          {creating ? (
-            <span>
-              <span className="sr-only">Close new link</span>
-              <DeleteIcon className="w-4 h-4" />
-            </span>
-          ) : (
-            <span>
-              <span className="sr-only">New Link</span>
-              <PlusIcon className="w-4 h-4" />
-            </span>
-          )}
-        </button>
-      </div>
-      {creating ? (
-        <form
-          className="flex justify-between items-center border border-neutral-200 has-[:focus]:border-neutral-400 rounded-lg overflow-hidden shadow-sm bg-white my-2"
-          onSubmit={addLink}
-        >
-          <input
-            placeholder="https://..."
-            className="px-3 py-2 flex-grow rounded-lg outline-0 text-sm"
-            type="url"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            autoFocus
-          />
-          <button className="text-neutral-600 hover:text-neutral-900 transition-colors px-3 py-2">
-            <span className="sr-only">Add new link</span>
-            <SubmitIcon className="w-4 h-4" />
-          </button>
-        </form>
-      ) : null}
+    <AiPresenceEditFrame editingType={AI_EDITING_TYPE.LINKS}>
       <div>
-        {links.toReversed().map((link) => (
-          <LinkPreview
-            key={link}
-            link={link}
-            onRemove={() => removeLink(link)}
-          />
-        ))}
+        <div className="flex justify-between items-center text-sm font-medium text-neutral-500">
+          Links
+          <div className="flex items-center gap-0.5">
+            <button type="button" onClick={() => setCreating(!creating)}>
+              {creating ? (
+                <span>
+                  <span className="sr-only">Close new link</span>
+                  <DeleteIcon className="w-4 h-4" />
+                </span>
+              ) : (
+                <span>
+                  <span className="sr-only">New Link</span>
+                  <PlusIcon className="w-4 h-4" />
+                </span>
+              )}
+            </button>
+            <IssueAiButton kind="links" issueId={issueId} />
+          </div>
+        </div>
+        {creating ? (
+          <form
+            className="flex justify-between items-center border border-neutral-200 has-[:focus]:border-neutral-400 rounded-lg overflow-hidden shadow-sm bg-white my-2"
+            onSubmit={addLink}
+          >
+            <input
+              placeholder="https://..."
+              className="px-3 py-2 flex-grow rounded-lg outline-0 text-sm"
+              type="url"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              autoFocus
+            />
+            <button className="text-neutral-600 hover:text-neutral-900 transition-colors px-3 py-2">
+              <span className="sr-only">Add new link</span>
+              <SubmitIcon className="w-4 h-4" />
+            </button>
+          </form>
+        ) : null}
+        <div>
+          {links.toReversed().map((link) => (
+            <LinkPreview
+              key={link}
+              link={link}
+              onRemove={() => removeLink(link)}
+            />
+          ))}
+        </div>
       </div>
-    </div>
+    </AiPresenceEditFrame>
   );
 }
 

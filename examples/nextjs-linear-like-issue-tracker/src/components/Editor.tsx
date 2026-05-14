@@ -12,6 +12,7 @@ import {
   useIsEditorReady,
 } from "@liveblocks/react-lexical";
 import { EditorTitle } from "@/components/EditorTitle";
+import { AiPresenceEditFrame } from "@/components/AiPresenceEditFrame";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { ListNode, ListItemNode } from "@lexical/list";
 import { ClientSideSuspense, useThreads } from "@liveblocks/react/suspense";
@@ -20,6 +21,7 @@ import { LinkNode } from "@lexical/link";
 import { CodeNode } from "@lexical/code";
 import { HorizontalRuleNode } from "@lexical/react/LexicalHorizontalRuleNode";
 import { ImmutableStorage } from "@/liveblocks.config";
+import { AI_EDITING_TYPE } from "@/lib/ai-editing-presence-types";
 import { EditorFloatingToolbar } from "./EditorFloatingToolbar";
 
 // Wrap your Lexical config with `liveblocksConfig`
@@ -59,42 +61,46 @@ export function Editor({
     <LexicalComposer initialConfig={initialConfig}>
       <div className="">
         <div className="my-6">
-          <ClientSideSuspense
-            fallback={
-              <div className="block w-full text-2xl font-bold my-6">
-                {storageFallback.meta.title}
-              </div>
-            }
-          >
-            <EditorTitle />
-          </ClientSideSuspense>
-        </div>
-        <div className="relative">
-          <LiveblocksPlugin>
-            {!ready ? (
-              <div className="select-none cursor-wait editor-styles">
-                {contentFallback}
-              </div>
-            ) : (
-              <RichTextPlugin
-                contentEditable={
-                  <ContentEditable className="outline-none editor-styles" />
-                }
-                placeholder={
-                  <div className="absolute top-0 left-0 pointer-events-none text-neutral-500 whitespace-nowrap">
-                    Start typing here…
-                  </div>
-                }
-                ErrorBoundary={LexicalErrorBoundary}
-              />
-            )}
-            <ClientSideSuspense fallback={null}>
-              <TextEditorThreads />
+          <AiPresenceEditFrame editingType={AI_EDITING_TYPE.TITLE}>
+            <ClientSideSuspense
+              fallback={
+                <div className="block w-full text-2xl font-bold my-6">
+                  {storageFallback.meta.title}
+                </div>
+              }
+            >
+              <EditorTitle />
             </ClientSideSuspense>
-            <FloatingComposer />
-            <EditorFloatingToolbar />
-          </LiveblocksPlugin>
+          </AiPresenceEditFrame>
         </div>
+        <AiPresenceEditFrame editingType={AI_EDITING_TYPE.CONTENT}>
+          <div className="relative">
+            <LiveblocksPlugin>
+              {!ready ? (
+                <div className="select-none cursor-wait editor-styles">
+                  {contentFallback}
+                </div>
+              ) : (
+                <RichTextPlugin
+                  contentEditable={
+                    <ContentEditable className="outline-none editor-styles" />
+                  }
+                  placeholder={
+                    <div className="absolute top-0 left-0 pointer-events-none text-neutral-500 whitespace-nowrap">
+                      Start typing here…
+                    </div>
+                  }
+                  ErrorBoundary={LexicalErrorBoundary}
+                />
+              )}
+              <ClientSideSuspense fallback={null}>
+                <TextEditorThreads />
+              </ClientSideSuspense>
+              <FloatingComposer />
+              <EditorFloatingToolbar />
+            </LiveblocksPlugin>
+          </div>
+        </AiPresenceEditFrame>
       </div>
     </LexicalComposer>
   );

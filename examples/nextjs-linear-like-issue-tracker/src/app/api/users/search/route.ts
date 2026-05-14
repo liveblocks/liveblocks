@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
 import { getUsers } from "@/database";
+import { NextRequest, NextResponse } from "next/server";
 
 /**
  * Returns a list of user IDs from a partial search input
@@ -11,9 +11,9 @@ export async function GET(request: NextRequest) {
   const text = searchParams.get("text") as string;
 
   const filteredUserIds = getUsers()
-    .filter((user) => {
-      return user.info.name.toLowerCase().includes(text.toLowerCase());
-    })
+    .filter((user) =>
+      user.info.name.toLowerCase().includes(text.toLowerCase())
+    )
     .map((user) => user.id);
 
   return NextResponse.json(filteredUserIds);
