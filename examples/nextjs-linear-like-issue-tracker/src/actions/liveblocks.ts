@@ -50,7 +50,7 @@ export async function runIssueButtonAi(
   }
 
   after(() => {
-    void runAiIssueButtonStream(prep.ctx, kind).then(
+    void runAiIssueButtonStream(prep.ctx).then(
       (result) => {
         if (result.error) {
           console.error("[issue-button]", kind, result.error);

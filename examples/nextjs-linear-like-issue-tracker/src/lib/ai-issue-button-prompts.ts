@@ -14,7 +14,7 @@ export function buildButtonLinksSystemPrompt(issueContextMd: string): string {
 - Use **append_issue_links** with plain \`https://…\` URLs only. Duplicates are skipped server-side; the list is capped at 30 links total.
 - Read the issue snapshot below. Prefer documentation, specs, standards, or clearly related references implied by the title or description. Do **not** add URLs that are already listed under Links.
 - Add a small, sensible set of links (typically 1–5) unless the issue clearly needs more.
-- Reply with a **very short** markdown note listing what you added (or that nothing was needed).
+- Do **not** write any reply text — only call the tool. The result is shown by the Links sidebar updating; no comment is posted.
 
 ## Issue snapshot
 
@@ -45,7 +45,7 @@ export function buildButtonPropertiesSystemPrompt(
 - If **progress** is \`none\` and the issue clearly needs triage, set it to **todo**. Do not overwrite \`progress\`, \`review\`, \`done\`, or \`progress\` (in progress) unless the snapshot is clearly wrong.
 - If **priority** is \`none\`, pick a sensible priority from the list. If it is already set, leave it unless obviously wrong.
 - Set **assignedTo** only when the title or description clearly implies a specific person and you can map them to an id from the list; otherwise omit \`assignedTo\`.
-- Reply with a **very short** markdown summary of what you changed (or that nothing was needed).
+- Do **not** write any reply text — only call the tool. The result is shown by the property fields updating; no comment is posted.
 
 ### Progress ids
 
@@ -74,7 +74,7 @@ export function buildButtonLabelsSystemPrompt(issueContextMd: string): string {
 ## Rules
 
 - Choose **label ids** from the list below that match the title and description (e.g. bug vs feature). If the current labels already fit, you may leave them unchanged.
-- Reply with a **very short** markdown summary.
+- Do **not** write any reply text — only call the tool. The result is shown by the label list updating; no comment is posted.
 
 ### Valid label ids
 

@@ -30,8 +30,6 @@ declare global {
       | {
           type: "ai-issue-button";
           kind: "links" | "properties" | "labels";
-          threadId: string;
-          commentId: string;
         };
 
     FeedMessageData:
