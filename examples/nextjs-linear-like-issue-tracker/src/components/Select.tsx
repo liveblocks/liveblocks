@@ -8,7 +8,7 @@ import { CheckIcon } from "@/icons/CheckIcon";
 type Props = {
   id: string;
   value: string;
-  items: { id: string; jsx: ReactNode; text?: string; disabled?: boolean }[];
+  items: { id: string; jsx: ReactNode; disabled?: boolean }[];
   adjustFirstItem?: "split" | "hide";
   onValueChange: (value: string) => void;
 };
@@ -34,7 +34,7 @@ export function Select({
         aria-label={id}
         className="flex items-center justify-between bg-transparent border-0 h-7 px-2 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring hover:bg-neutral-200/60 appearance-none data-[state=open]:bg-neutral-200/60"
       >
-        {current ? current.text || current.jsx : <RadixSelect.Value />}
+        {current ? current.jsx : <RadixSelect.Value />}
       </RadixSelect.Trigger>
       <RadixSelect.Portal>
         <RadixSelect.Content
