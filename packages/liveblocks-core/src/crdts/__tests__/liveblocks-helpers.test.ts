@@ -263,7 +263,7 @@ describe("getTreesDiffOperations", () => {
           type: CrdtType.TEXT,
           parentId: "root",
           parentKey: "text",
-          data: [{ insert: "Hello" }],
+          data: [{ text: "Hello" }],
           version: 0,
         },
       ],
@@ -275,7 +275,7 @@ describe("getTreesDiffOperations", () => {
         id: "0:1",
         parentId: "root",
         parentKey: "text",
-        data: [{ insert: "Hello" }],
+        data: [{ text: "Hello" }],
         version: 0,
       },
     ]);
@@ -285,7 +285,7 @@ describe("getTreesDiffOperations", () => {
       type: CrdtType.TEXT,
       parentId: "root",
       parentKey: "text",
-      data: [{ insert: "Hello!" }],
+      data: [{ text: "Hello!" }],
       version: 1,
     });
 
@@ -320,7 +320,7 @@ describe("toPlainLson", () => {
         ["broccoli", "delicious"],
         ["spinach", "also tasty"],
       ]),
-        text: new LiveText("Hello"),
+      text: new LiveText("Hello"),
     });
 
     // What the Plain Lson should look like if the util works
@@ -337,7 +337,7 @@ describe("toPlainLson", () => {
         },
         text: {
           liveblocksType: "LiveText",
-          data: [{ insert: "Hello" }],
+          data: [{ text: "Hello" }],
           version: 0,
         },
       },

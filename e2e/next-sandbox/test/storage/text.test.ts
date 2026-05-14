@@ -26,7 +26,7 @@ test.describe("Storage - LiveText", () => {
     const [page1, page2] = pages;
 
     await waitForJson(pages, "#plainText", "Hello");
-    await waitForJson(pages, "#text", [{ insert: "Hello" }]);
+    await waitForJson(pages, "#text", [{ text: "Hello" }]);
 
     await page1.click("#insert");
     await waitForJson(pages, "#plainText", "Hello world");
@@ -34,15 +34,15 @@ test.describe("Storage - LiveText", () => {
 
     await page2.click("#format");
     await waitForJson(pages, "#text", [
-      { insert: "Hello", attributes: { bold: true } },
-      { insert: " world" },
+      { text: "Hello", attributes: { bold: true } },
+      { text: " world" },
     ]);
 
     await page1.click("#unformat");
-    await waitForJson(pages, "#text", [{ insert: "Hello world" }]);
+    await waitForJson(pages, "#text", [{ text: "Hello world" }]);
 
     await page2.click("#delete");
     await waitForJson(pages, "#plainText", "ello world");
-    await waitForJson(pages, "#text", [{ insert: "ello world" }]);
+    await waitForJson(pages, "#text", [{ text: "ello world" }]);
   });
 });

@@ -108,7 +108,7 @@ function normalizeSegments(segments: readonly Segment[]): Segment[] {
 function deltaToSegments(delta: LiveTextDelta): Segment[] {
   return normalizeSegments(
     delta.map((item) => ({
-      text: item.insert,
+      text: item.text,
       attributes: item.attributes,
     }))
   );
@@ -117,8 +117,8 @@ function deltaToSegments(delta: LiveTextDelta): Segment[] {
 function segmentsToDelta(segments: readonly Segment[]): LiveTextDelta {
   return segments.map((segment) =>
     segment.attributes === undefined
-      ? { insert: segment.text }
-      : { insert: segment.text, attributes: { ...segment.attributes } }
+      ? { text: segment.text }
+      : { text: segment.text, attributes: { ...segment.attributes } }
   );
 }
 
@@ -151,7 +151,10 @@ function clipRange(
   textLength: number
 ): { index: number; length: number } {
   const clippedIndex = Math.max(0, Math.min(index, textLength));
-  const clippedEnd = Math.max(clippedIndex, Math.min(index + length, textLength));
+  const clippedEnd = Math.max(
+    clippedIndex,
+    Math.min(index + length, textLength)
+  );
   return { index: clippedIndex, length: clippedEnd - clippedIndex };
 }
 
@@ -191,7 +194,10 @@ function applyDelete(
   index: number,
   length: number
 ): { segments: Segment[]; deletedText: string } {
-  const split = splitSegmentsAt(splitSegmentsAt(segments, index), index + length);
+  const split = splitSegmentsAt(
+    splitSegmentsAt(segments, index),
+    index + length
+  );
   const result: Segment[] = [];
   let offset = 0;
   let deletedText = "";
@@ -215,7 +221,10 @@ function applyFormat(
   length: number,
   attributes: LiveTextAttributesPatch
 ): Segment[] {
-  const split = splitSegmentsAt(splitSegmentsAt(segments, index), index + length);
+  const split = splitSegmentsAt(
+    splitSegmentsAt(segments, index),
+    index + length
+  );
   const result: Segment[] = [];
   let offset = 0;
 
@@ -254,7 +263,10 @@ function formatReverseOperations(
   length: number,
   patch: LiveTextAttributesPatch
 ): TextOperation[] {
-  const split = splitSegmentsAt(splitSegmentsAt(segments, index), index + length);
+  const split = splitSegmentsAt(
+    splitSegmentsAt(segments, index),
+    index + length
+  );
   const result: TextOperation[] = [];
   let offset = 0;
 
@@ -314,7 +326,10 @@ export function rebaseTextOperations(
       };
     } else if (op.type === "delete" || op.type === "format") {
       const start = mapTextIndexThroughOperations(op.index, acceptedOps);
-      const end = mapTextIndexThroughOperations(op.index + op.length, acceptedOps);
+      const end = mapTextIndexThroughOperations(
+        op.index + op.length,
+        acceptedOps
+      );
       return { ...op, index: start, length: Math.max(0, end - start) };
     } else {
       return op;
@@ -419,7 +434,8 @@ export class LiveText extends AbstractCrdt {
     }
 
     const pending = Array.from(this.#pendingOps.values()).flat();
-    const ops = pending.length > 0 ? rebaseTextOperations(op.ops, pending) : op.ops;
+    const ops =
+      pending.length > 0 ? rebaseTextOperations(op.ops, pending) : op.ops;
     return this.#applyOperations(ops, op.version ?? this.#version + 1);
   }
 
@@ -433,7 +449,9 @@ export class LiveText extends AbstractCrdt {
     if (clipped.length === 0) {
       return;
     }
-    this.#dispatch([{ type: "delete", index: clipped.index, length: clipped.length }]);
+    this.#dispatch([
+      { type: "delete", index: clipped.index, length: clipped.length },
+    ]);
   }
 
   replace(

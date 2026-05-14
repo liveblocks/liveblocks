@@ -233,7 +233,7 @@ export function getTreesDiffOperations(
                 length:
                   currentCrdt.type === CrdtType.TEXT
                     ? currentCrdt.data.reduce(
-                        (sum, item) => sum + item.insert.length,
+                        (sum, item) => sum + item.text.length,
                         0
                       )
                     : 0,
@@ -244,15 +244,15 @@ export function getTreesDiffOperations(
                       type: "insert" as const,
                       index: items
                         .slice(0, index)
-                        .reduce((sum, item) => sum + item.insert.length, 0),
-                      text: item.insert,
+                        .reduce((sum, item) => sum + item.text.length, 0),
+                      text: item.text,
                     }
                   : {
                       type: "insert" as const,
                       index: items
                         .slice(0, index)
-                        .reduce((sum, item) => sum + item.insert.length, 0),
-                      text: item.insert,
+                        .reduce((sum, item) => sum + item.text.length, 0),
+                      text: item.text,
                       attributes: item.attributes,
                     }
               ),

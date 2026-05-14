@@ -33,7 +33,7 @@ export namespace OpCode {
 export type TextAttributes = Record<string, Json>;
 
 export type LiveTextDelta = {
-  insert: string;
+  text: string;
   attributes?: TextAttributes;
 }[];
 

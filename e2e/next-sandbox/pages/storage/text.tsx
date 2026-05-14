@@ -1,12 +1,7 @@
 import { LiveText } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 
-import {
-  getRoomFromUrl,
-  Row,
-  styles,
-  useRenderCount,
-} from "../../utils";
+import { getRoomFromUrl, Row, styles, useRenderCount } from "../../utils";
 import Button from "../../utils/Button";
 import { createLiveblocksClient } from "../../utils/createClient";
 
@@ -72,7 +67,7 @@ function Sandbox() {
     return <div>Loading...</div>;
   }
 
-  const plainText = text.map((item) => item.insert).join("");
+  const plainText = text.map((item) => item.text).join("");
 
   return (
     <div>

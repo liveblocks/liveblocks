@@ -36,11 +36,7 @@ type LiveblocksTiptapNodeData = {
 export type LiveblocksTiptapNode = LiveObject<LiveblocksTiptapNodeData>;
 
 function isJsonObject(value: Json | undefined): value is JsonObject {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    !Array.isArray(value)
-  );
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 export function marksToAttributes(
@@ -155,13 +151,13 @@ function liveTextToTextNodes(text: LiveText): ProseMirrorJsonNode[] {
   const nodes: ProseMirrorJsonNode[] = [];
 
   for (const delta of text.toDelta()) {
-    if (delta.insert.length === 0) {
+    if (delta.text.length === 0) {
       continue;
     }
 
     nodes.push({
       type: "text",
-      text: delta.insert,
+      text: delta.text,
       ...(delta.attributes !== undefined
         ? { marks: attributesToMarks(delta.attributes) }
         : {}),
