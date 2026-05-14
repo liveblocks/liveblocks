@@ -1,4 +1,10 @@
-import type { BaseMetadata, DCM, DTM, ThreadData } from "@liveblocks/core";
+import {
+  type BaseMetadata,
+  type DCM,
+  type DTM,
+  shallow,
+  type ThreadData,
+} from "@liveblocks/core";
 import { useLayoutEffect } from "@liveblocks/react/_private";
 import {
   Thread as DefaultThread,
@@ -71,14 +77,16 @@ export function AnchoredThreads({
     equalityFn: (prev, next) => {
       if (!prev || !next) return false;
       return (
-        prev.pluginState?.selectedThreadId ===
-          next.pluginState?.selectedThreadId &&
-        prev.pluginState?.threadPositions === next.pluginState?.threadPositions
-      ); // new map is made each time threadPos updates so shallow equality is fine
+        prev.pluginState?.threadPositions ===
+          next.pluginState?.threadPositions &&
+        shallow(
+          prev.pluginState?.activeThreadIds,
+          next.pluginState?.activeThreadIds
+        )
+      );
     },
   }) ?? { pluginState: undefined };
 
-  // TODO: lexical supoprts multiple threads being active, should probably do that here as well
   const handlePositionThreads = useCallback(() => {
     const container = containerRef.current;
     if (
@@ -90,13 +98,20 @@ export function AnchoredThreads({
       return;
     }
 
-    const activeIndex = orderedThreads.findIndex(
-      ({ thread }) => thread.id === pluginState?.selectedThreadId
-    );
+    const activeIds = pluginState?.activeThreadIds ?? [];
+
+    const firstActiveIndex =
+      activeIds.length === 0
+        ? -1
+        : orderedThreads.findIndex(({ thread }) =>
+            activeIds.includes(thread.id)
+          );
     const ascending =
-      activeIndex !== -1 ? orderedThreads.slice(activeIndex) : orderedThreads;
+      firstActiveIndex !== -1
+        ? orderedThreads.slice(firstActiveIndex)
+        : orderedThreads;
     const descending =
-      activeIndex !== -1 ? orderedThreads.slice(0, activeIndex) : [];
+      firstActiveIndex !== -1 ? orderedThreads.slice(0, firstActiveIndex) : [];
 
     const newPositions = new Map<string, number>();
 
@@ -142,7 +157,7 @@ export function AnchoredThreads({
     }
 
     setPositions(newPositions);
-  }, [editor, orderedThreads, pluginState?.selectedThreadId, elements]);
+  }, [editor, orderedThreads, pluginState?.activeThreadIds, elements]);
 
   useEffect(() => {
     if (!pluginState) return;
@@ -232,7 +247,8 @@ export function AnchoredThreads({
           top = positions.get(thread.id)!;
         }
 
-        const isActive = thread.id === pluginState?.selectedThreadId;
+        const isActive =
+          pluginState?.activeThreadIds.includes(thread.id) ?? false;
 
         return (
           <ThreadWrapper

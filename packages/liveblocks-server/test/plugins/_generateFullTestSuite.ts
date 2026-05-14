@@ -122,9 +122,8 @@ function expectToThrow(fn: () => Awaitable<unknown>, errorPattern: RegExp) {
 }
 
 // SYNC-SLOT: directives
-/* eslint-disable no-restricted-syntax */
-/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
-/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/await-thenable */
 // SYNC-SLOT-END: directives
 
 const KNOWN_DOC_KEYS = ["root", "0:do", "0:dl", "0:dm"];
@@ -208,12 +207,9 @@ export async function selfCheck(storage: Storage): Promise<void> {
     for (const [id, node] of inMemoryNodes) {
       if (id === "root") {
         assert(node.parentId === undefined, "Root node must have no parent ID", id, node); // prettier-ignore
-
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         assert(node.parentKey === undefined, "Root node must have no parent key", id, node); // prettier-ignore
       } else {
         assert(node.parentId !== undefined, `Node ${quote(id)} is missing parent ID`); // prettier-ignore
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         assert(node.parentKey !== undefined, `Node ${quote(id)} is missing parent key`); // prettier-ignore
 
         const parentId = nn(node.parentId);
@@ -356,7 +352,6 @@ function plainLsonTreeToNodeMap(
       plainLson.data.forEach((child) => {
         recurse(child, id, uniqPositions.next().value);
       });
-      // eslint-disable-next-line
     } else if (plainLson.liveblocksType === "LiveMap") {
       result.push([id, { type: CrdtType.MAP, parentId, parentKey }]);
 
@@ -1071,7 +1066,6 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
         // Call next_actor 1000 times concurrently
         const actors = new Set(
           await Promise.all(
-            // eslint-disable-next-line @typescript-eslint/await-thenable -- Awaitable<T> is fine with Promise.all
             Array.from({ length: 1000 }).map(() => driver.next_actor())
           )
         );
@@ -2157,8 +2151,9 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
               // Snapshot should return the same data as the driver
               for (const [id] of entries) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-                expect(snapshot.get_node(id)).toEqual(db.get_node(id) as any);
+                expect(snapshot.get_node(id)).toEqual(
+                  db.get_node(id) as SerializedChild
+                );
               }
             }
           )
@@ -2865,7 +2860,6 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
             async (entries) => {
               // Write all the entries (can have dupes)
               await Promise.all(
-                // eslint-disable-next-line @typescript-eslint/await-thenable -- Awaitable<T> is fine with Promise.all
                 Array.from(entries).map(([key, value]) =>
                   driver.put_meta(key, value)
                 )
@@ -3305,7 +3299,6 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
             async (entries) => {
               // Put all sessions concurrently
               await Promise.all(
-                // eslint-disable-next-line @typescript-eslint/await-thenable -- Awaitable<T> is fine with Promise.all
                 Array.from(entries).map(([sessionId, session]) => {
                   session.sessionId = sessionId;
                   return driver.put_leased_session(session);
@@ -3314,7 +3307,6 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
               // Verify all sessions exist
               const results = await Promise.all(
-                // eslint-disable-next-line @typescript-eslint/await-thenable -- Awaitable<T> is fine with Promise.all
                 Array.from(entries.keys()).map((sessionId) =>
                   driver.get_leased_session(sessionId)
                 )
@@ -3328,7 +3320,6 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
               // Cleanup: delete all sessions added in this iteration
               await Promise.all(
-                // eslint-disable-next-line @typescript-eslint/await-thenable -- Awaitable<T> is fine with Promise.all
                 Array.from(entries.keys()).map((sessionId) =>
                   driver.delete_leased_session(sessionId)
                 )
@@ -4582,7 +4573,6 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
                 parentKey: SECOND_POSITION,
               },
               // NOTE: Fix ops are generated server-side and don't preserve the input opId
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
               fix: expect.objectContaining({
                 type: OpCode.SET_PARENT_KEY,
                 id: "1:0",
@@ -4735,7 +4725,6 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
                 parentKey: SECOND_POSITION,
               },
               // NOTE: Fix ops are generated server-side and don't preserve the input opId
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
               fix: expect.objectContaining({
                 type: OpCode.SET_PARENT_KEY,
                 id: "1:0",
@@ -4821,7 +4810,6 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
                 parentKey: THIRD_POSITION,
               },
               // NOTE: Fix ops are generated server-side and don't preserve the input opId
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
               fix: expect.objectContaining({
                 type: OpCode.SET_PARENT_KEY,
                 id: "0:2",
@@ -4986,7 +4974,6 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
                 parentKey: SECOND_POSITION,
               },
               // NOTE: Fix ops are generated server-side and don't preserve the input opId
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
               fix: expect.objectContaining({
                 type: OpCode.SET_PARENT_KEY,
                 id: "1:0",
@@ -5078,7 +5065,6 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
                 parentKey: expectedPosition,
               },
               // NOTE: Fix ops are generated server-side and don't preserve the input opId
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
               fix: expect.objectContaining({
                 type: OpCode.SET_PARENT_KEY,
                 id: "1:0",
@@ -5269,7 +5255,6 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
                 parentKey: SECOND_POSITION,
               },
               // NOTE: Fix ops are generated server-side and don't preserve the input opId
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
               fix: expect.objectContaining({
                 type: OpCode.SET_PARENT_KEY,
                 id: "1:0",
@@ -5351,7 +5336,6 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
               // make sure that it won't lead to two clients seeing different
               // state.
               //
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
               fix: expect.objectContaining({
                 type: OpCode.DELETE_CRDT,
                 id: "0:2",
@@ -5516,7 +5500,7 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       const yjsStorage = new YjsStorage(driver);
 
       // Load the root doc
-      await yjsStorage.loadDocByIdIfNotAlreadyLoaded(guid);
+      await yjsStorage.loadDocByIdIfNotAlreadyLoaded(blackHole, guid);
 
       return await callback({ yjsStorage });
     }

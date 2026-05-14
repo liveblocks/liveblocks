@@ -26,6 +26,10 @@ Users can create issues with a rich-text editor, giving them priorities,
 progress state, and labels. Comments can be left on issues and users receive
 notifications if they've been mentioned.
 
+You can optionally enable an AI assistant that you can mention it comments and
+will stream in replies. The assistant can create new issues, and edit the
+current issue, showing AI presence as it works.
+
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/linear-like-issue-tracker.png" width="536" alt="Issue tracker" />
 
 ## Getting started
@@ -39,6 +43,30 @@ npx create-liveblocks-app@latest --example nextjs-linear-like-issue-tracker --ap
 This will download the example and ask permission to open your browser, enabling
 you to automatically get your API key from your
 [liveblocks.io](https://liveblocks.io) account.
+
+### Setting up webhooks
+
+You need to set up webhooks to use all features in this example.
+
+- Follow our guide on
+  [testing webhooks locally](https://liveblocks.io/docs/guides/how-to-test-webhooks-on-localhost),
+  making sure to
+  [check the “**commentCreated**” and “**storageUpdated**” events](https://liveblocks.io/docs/platform/webhooks#edit-endpoint-events)
+  when creating the webhook
+- In the webhooks dashboard, point to the `/api/liveblocks-webhook` path
+- Copy your **webhook secret key** from the webhooks dashboard
+- Add your webhook secret key to `.env.local` as the
+  `LIVEBLOCKS_WEBHOOK_SECRET_KEY` environment variable
+
+### Setting up Anthropic
+
+You need your own Anthropic API key to run the AI agent.
+
+- Create an account on [Anthropic](https://anthropic.com)
+- Create a new API key from the
+  [Anthropic Dashboard](https://platform.claude.com/settings/keys)
+- Add your Anthropic API key to `.env.local` as the `ANTHROPIC_API_KEY`
+  environment variable
 
 ### Manual setup
 
@@ -55,8 +83,6 @@ Alternatively, you can set up your project manually:
 - Create an `.env.local` file and add your **secret** key as the
   `LIVEBLOCKS_SECRET_KEY` environment variable
 - Run `npm run dev` and go to [http://localhost:3000](http://localhost:3000)
-
-</details>
 
 ### Dev server setup
 

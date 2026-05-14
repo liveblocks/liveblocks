@@ -9,6 +9,8 @@ import { LABELS } from "@/config";
 import { Select } from "@/components/Select";
 import { PlusIcon } from "@/icons/PlusIcon";
 import { ImmutableStorage } from "@/liveblocks.config";
+import { AiPresenceEditFrame } from "@/components/AiPresenceEditFrame";
+import { AI_EDITING_TYPE } from "@/lib/ai-editing-presence-types";
 
 export function IssueLabels({
   storageFallback,
@@ -59,9 +61,10 @@ function Labels() {
   }));
 
   return (
-    <div className="text-sm flex gap-1.5 justify-start items-start font-medium max-w-full flex-wrap">
-      {LABELS.filter((label) => labels.includes(label.id)).map(
-        ({ id, text }) => (
+    <AiPresenceEditFrame editingType={AI_EDITING_TYPE.LABELS}>
+      <div className="text-sm flex gap-1.5 justify-start items-start font-medium max-w-full flex-wrap">
+        {LABELS.filter((label) => labels.includes(label.id)).map(
+          ({ id, text }) => (
           <div
             key={id}
             className="text-sm font-medium rounded-full px-2 py-0.5 border shadow-xs flex items-center gap-1.5 select-none text-neutral-700"
@@ -95,5 +98,6 @@ function Labels() {
         />
       </div>
     </div>
+    </AiPresenceEditFrame>
   );
 }

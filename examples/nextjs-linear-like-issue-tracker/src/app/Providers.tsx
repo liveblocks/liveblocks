@@ -38,7 +38,7 @@ export function Providers({ children }: PropsWithChildren) {
           const userIds = await response.json();
           return userIds;
         }}
-        // Add room metadata to `useRoomInfo`
+        // Room metadata for `useRoomInfo`
         resolveRoomsInfo={async ({ roomIds }) => {
           const rooms = await getRoomsFromIds(roomIds);
           return rooms.map((room) => ({
@@ -47,7 +47,7 @@ export function Providers({ children }: PropsWithChildren) {
           }));
         }}
       >
-        <Suspense>{children}</Suspense>
+          <Suspense>{children}</Suspense>
       </LiveblocksProvider>
     </InboxProvider>
   );

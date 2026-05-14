@@ -266,9 +266,7 @@ export class Storage {
 
       // No conflict, node got inserted as intended
       return accept(op);
-    }
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    else if (intent === "set") {
+    } else if (intent === "set") {
       // The intent here is to "set", not insert, into the list, replacing the
       // existing item that
 

@@ -5,17 +5,19 @@ meta:
     "Learn about our improved v2 realtime data storage engine and its benefits"
 ---
 
-Since v3.14, rooms can be powered by our new v2 realtime data storage engine—a
-ground-up rearchitecture that removes server-side memory limits, enabling faster
-initial loads and support for much larger documents. Switching is **seamless and
-requires no code changes**. Rooms on v1 or v2 behave identically from your app’s
-perspective—the two sync engines we
-support—[Liveblocks Storage](/docs/ready-made-features/multiplayer/sync-engine/liveblocks-storage)
-and [Yjs](/docs/ready-made-features/multiplayer/sync-engine/liveblocks-yjs) all
-work the same way.
+<Banner title="Migration complete: all rooms are on v2" type="success">
+  As of May 2026, every Liveblocks room runs on the v2 realtime data storage
+  engine. The background migration of existing v1 rooms is finished—there is
+  nothing you need to do.
+</Banner>
 
-Since March 10, 2026, the v2 engine is the default for all newly created rooms.
-Existing rooms remain on v1 for now.
+Since v3.14, rooms are powered by our new v2 realtime data storage engine—a
+ground-up rearchitecture that removes server-side memory limits, enabling faster
+initial loads and support for much larger documents. The switch was **seamless
+and required no code changes**. The two sync engines we
+support—[Liveblocks Storage](/docs/ready-made-features/multiplayer/sync-engine/liveblocks-storage)
+and [Yjs](/docs/ready-made-features/multiplayer/sync-engine/liveblocks-yjs)—both
+run on top of the v2 engine.
 
 ## What are the benefits?
 
@@ -49,17 +51,14 @@ raised significantly for rooms on the v2 engine:
 
 ## How it works
 
-The engine version is assigned at room creation time and cannot be changed
-afterward. Since March 10, 2026, all newly created rooms automatically use the
-v2 engine. No opt-in or code changes are required.
+Since March 10, 2026, all newly created rooms automatically use the v2 engine.
+No opt-in or code changes are required.
 
 If you're on an older SDK version, we recommend upgrading to v3.14+ to take full
 advantage of the v2 engine: `npx liveblocks@latest upgrade`
 
 ### Migrating existing rooms
 
-Starting April 15, 2026, we are transparently migrating all existing room data
-from the v1 to the v2 engine. This happens in the background, and you can keep
-using your rooms like you normally would. We expect the majority of storage rooms
-to be migrated by the end of April, though the long tail may take until the end
-of May. We will update this document once the migration is complete for everyone.
+Between April 15 and May 2026, we transparently migrated all existing v1 room
+data over to the v2 engine in the background. **The migration is now complete**,
+and every room across the platform runs on v2.

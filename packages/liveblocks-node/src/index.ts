@@ -41,6 +41,7 @@ export type {
   WebKnowledgeSourceLink,
 } from "./client";
 export { Liveblocks, LiveblocksError } from "./client";
+export { markdownToCommentBody } from "./comment-body";
 export type {
   CommentCreatedEvent,
   CommentDeletedEvent,

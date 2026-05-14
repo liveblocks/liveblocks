@@ -1,8 +1,15 @@
-import { Extension, Mark, mergeAttributes } from "@tiptap/core";
-import type { Node } from "@tiptap/pm/model";
+import { shallow } from "@liveblocks/core";
+import { type Editor, Extension, Mark, mergeAttributes } from "@tiptap/core";
+import type {
+  Mark as ProseMirrorMark,
+  MarkType,
+  Node,
+  ResolvedPos,
+} from "@tiptap/pm/model";
 import { Fragment, Slice } from "@tiptap/pm/model";
-import type { Transaction } from "@tiptap/pm/state";
+import type { EditorState, Transaction } from "@tiptap/pm/state";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
+import type { EditorView } from "@tiptap/pm/view";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import { ySyncPluginKey } from "y-prosemirror";
 
@@ -13,21 +20,58 @@ import {
   THREADS_ACTIVE_SELECTION_PLUGIN,
   THREADS_PLUGIN_KEY,
 } from "../types";
+import { areSetsEqual } from "../utils";
 
 type ThreadPluginAction = {
   name: ThreadPluginActions;
-  data: string | null;
+  data: string[];
 };
 
 export const FILTERED_THREADS_PLUGIN_KEY = new PluginKey<{
   filteredThreads?: Set<string>;
 }>();
 
-/**
- * Known issues: Overlapping marks are merged when reloading the doc. May be related:
- * https://github.com/ueberdosis/tiptap/issues/4339
- * https://github.com/yjs/y-prosemirror/issues/47
- */
+function getFilteredThreads(state: EditorState): Set<string> | undefined {
+  return FILTERED_THREADS_PLUGIN_KEY.getState(state)?.filteredThreads;
+}
+
+function getVisibleThreadIdsFromMarks(
+  marks: readonly ProseMirrorMark[],
+  markType: MarkType,
+  filteredThreads: Set<string> | undefined
+): string[] {
+  const ids = new Set<string>();
+  for (const mark of marks) {
+    if (mark.type !== markType || mark.attrs.orphan) continue;
+    const threadId = mark.attrs.threadId as string | undefined;
+    if (!threadId) continue;
+    if (filteredThreads && !filteredThreads.has(threadId)) continue;
+    ids.add(threadId);
+  }
+  return [...ids];
+}
+
+function getVisibleThreadIdsAtPos(
+  state: EditorState,
+  $pos: ResolvedPos,
+  markType: MarkType
+): string[] {
+  return getVisibleThreadIdsFromMarks(
+    $pos.marks(),
+    markType,
+    getFilteredThreads(state)
+  );
+}
+
+function dispatchSetActiveThreadIds(view: EditorView, ids: string[]): void {
+  view.dispatch(
+    view.state.tr.setMeta(THREADS_PLUGIN_KEY, {
+      name: ThreadPluginActions.SET_ACTIVE_THREAD_IDS,
+      data: ids,
+    } satisfies ThreadPluginAction)
+  );
+}
+
 const Comment = Mark.create({
   name: LIVEBLOCKS_COMMENT_MARK_TYPE,
   excludes: "",
@@ -97,62 +141,59 @@ const Comment = Mark.create({
    * This plugin tracks the (first) position of each thread mark in the doc and creates a decoration for the selected thread
    */
   addProseMirrorPlugins() {
-    const updateState = (doc: Node, selectedThreadId: string | null) => {
+    const updateState = (
+      doc: Node,
+      activeThreadIds: string[],
+      { scroll }: { scroll: boolean }
+    ): ThreadPluginState => {
       const threadPositions = new Map<string, { from: number; to: number }>();
       const decorations: Decoration[] = [];
-      // find all thread marks and store their position + create decoration for selected thread
+      const activeSet = new Set(activeThreadIds);
+
       doc.descendants((node, pos) => {
-        node.marks.forEach((mark) => {
-          if (mark.type === this.type) {
-            const thisThreadId = (
-              mark.attrs as { threadId: string | undefined }
-            ).threadId;
-            if (!thisThreadId) {
-              return;
-            }
-            const from = pos;
-            const to = from + node.nodeSize;
+        for (const mark of node.marks) {
+          if (mark.type !== this.type) continue;
 
-            // FloatingThreads component uses "to" as the position, so always store the largest "to" found
-            // AnchoredThreads component uses "from" as the position, so always store the smallest "from" found
-            const currentPosition = threadPositions.get(thisThreadId) ?? {
-              from: Infinity,
-              to: 0,
-            };
-            threadPositions.set(thisThreadId, {
-              from: Math.min(from, currentPosition.from),
-              to: Math.max(to, currentPosition.to),
-            });
+          const threadId = (mark.attrs as { threadId?: string }).threadId;
+          if (!threadId) continue;
 
-            if (selectedThreadId === thisThreadId) {
-              decorations.push(
-                Decoration.inline(from, to, {
-                  class: "lb-root lb-tiptap-thread-mark-selected",
-                })
-              );
+          const from = pos;
+          const to = from + node.nodeSize;
 
-              const decoration = this.editor.view.dom.querySelector(
-                `.lb-tiptap-thread-mark[data-lb-thread-id="${thisThreadId}"]`
-              );
+          // FloatingThreads component uses "to" as the position, so we always store the largest "to" found.
+          // AnchoredThreads component uses "from" as the position, so we always store the smallest "from" found.
+          const current = threadPositions.get(threadId) ?? {
+            from: Infinity,
+            to: 0,
+          };
+          threadPositions.set(threadId, {
+            from: Math.min(from, current.from),
+            to: Math.max(to, current.to),
+          });
 
-              if (decoration) {
-                decoration.scrollIntoView({
-                  behavior: "smooth",
-                  block: "nearest",
-                });
-              }
-            }
+          if (activeSet.has(threadId)) {
+            decorations.push(
+              Decoration.inline(from, to, {
+                class: "lb-root lb-tiptap-thread-mark-selected",
+              })
+            );
           }
-        });
+        }
       });
+
+      // Only scroll when the active selection explicitly changes.
+      if (scroll && activeThreadIds.length > 0) {
+        const [scrollTargetId] = activeThreadIds;
+        const element = this.editor.view.dom.querySelector(
+          `.lb-tiptap-thread-mark[data-lb-thread-id="${scrollTargetId}"]`
+        );
+        element?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+
       return {
         decorations: DecorationSet.create(doc, decorations),
-        selectedThreadId,
+        activeThreadIds,
         threadPositions,
-        selectedThreadPos:
-          selectedThreadId !== null
-            ? (threadPositions.get(selectedThreadId)?.to ?? null)
-            : null,
       };
     };
 
@@ -208,30 +249,34 @@ const Comment = Mark.create({
       new Plugin({
         key: THREADS_PLUGIN_KEY,
         state: {
-          init() {
+          init(): ThreadPluginState {
             return {
-              threadPositions: new Map<string, { from: number; to: number }>(),
-              selectedThreadId: null,
-              selectedThreadPos: null,
+              threadPositions: new Map(),
+              activeThreadIds: [],
               decorations: DecorationSet.empty,
-            } as ThreadPluginState;
+            };
           },
           apply(tr, state) {
-            const action = tr.getMeta(THREADS_PLUGIN_KEY) as ThreadPluginAction;
+            const action = tr.getMeta(THREADS_PLUGIN_KEY) as
+              | ThreadPluginAction
+              | undefined;
+
             if (!tr.docChanged && !action) {
               return state;
             }
 
             if (!action) {
-              // Doc changed, but no action, just update rects
-              return updateState(tr.doc, state.selectedThreadId);
+              return updateState(tr.doc, state.activeThreadIds, {
+                scroll: false,
+              });
             }
-            // handle actions, possibly support more actions
-            if (
-              action.name === ThreadPluginActions.SET_SELECTED_THREAD_ID &&
-              state.selectedThreadId !== action.data
-            ) {
-              return updateState(tr.doc, action.data);
+
+            if (action.name === ThreadPluginActions.SET_ACTIVE_THREAD_IDS) {
+              const idsChanged = !shallow(action.data, state.activeThreadIds);
+              if (!tr.docChanged && !idsChanged) {
+                return state;
+              }
+              return updateState(tr.doc, action.data, { scroll: idsChanged });
             }
 
             return state;
@@ -245,43 +290,11 @@ const Comment = Mark.create({
             );
           },
           handleClick: (view, pos, event) => {
-            if (event.button !== 0) {
-              return;
-            }
+            if (event.button !== 0) return;
 
-            const selectThread = (threadId: string | null) => {
-              view.dispatch(
-                view.state.tr.setMeta(THREADS_PLUGIN_KEY, {
-                  name: ThreadPluginActions.SET_SELECTED_THREAD_ID,
-                  data: threadId,
-                })
-              );
-            };
-
-            const node = view.state.doc.nodeAt(pos);
-            if (!node) {
-              selectThread(null);
-              return;
-            }
-            const commentMark = node.marks.find(
-              (mark) => mark.type === this.type && !mark.attrs.orphan
-            );
-            // nothing to select
-            if (!commentMark) {
-              selectThread(null);
-              return;
-            }
-            const threadId = commentMark?.attrs.threadId as string | undefined;
-
-            const filtered = FILTERED_THREADS_PLUGIN_KEY.getState(
-              view.state
-            )?.filteredThreads;
-            if (threadId && filtered && !filtered.has(threadId)) {
-              selectThread(null);
-              return;
-            }
-
-            selectThread(threadId ?? null);
+            const $pos = view.state.doc.resolve(pos);
+            const ids = getVisibleThreadIdsAtPos(view.state, $pos, this.type);
+            dispatchSetActiveThreadIds(view, ids);
           },
         },
       }),
@@ -311,13 +324,8 @@ export const CommentsExtension = Extension.create<
         if (this.editor.state.selection.empty) {
           return false;
         }
-        // unselect any open threads
-        this.editor.view.dispatch(
-          this.editor.state.tr.setMeta(THREADS_PLUGIN_KEY, {
-            name: ThreadPluginActions.SET_SELECTED_THREAD_ID,
-            data: null,
-          })
-        );
+        // Unselect any open threads.
+        dispatchSetActiveThreadIds(this.editor.view, []);
         this.storage.pendingComment = true;
         return true;
       },
@@ -326,25 +334,13 @@ export const CommentsExtension = Extension.create<
         return true;
       },
       selectThread: (id: string | null) => () => {
-        const filtered = FILTERED_THREADS_PLUGIN_KEY.getState(
-          this.editor.state
-        )?.filteredThreads;
-        if (id && filtered && !filtered.has(id)) {
-          this.editor.view.dispatch(
-            this.editor.state.tr.setMeta(THREADS_PLUGIN_KEY, {
-              name: ThreadPluginActions.SET_SELECTED_THREAD_ID,
-              data: null,
-            })
-          );
-          return true;
-        }
+        // If the target thread is filtered out, clear the active selection
+        // instead of selecting an invisible thread.
+        const filtered = getFilteredThreads(this.editor.state);
+        const nextIds =
+          id === null || (filtered && !filtered.has(id)) ? [] : [id];
 
-        this.editor.view.dispatch(
-          this.editor.state.tr.setMeta(THREADS_PLUGIN_KEY, {
-            name: ThreadPluginActions.SET_SELECTED_THREAD_ID,
-            data: id,
-          })
-        );
+        dispatchSetActiveThreadIds(this.editor.view, nextIds);
         return true;
       },
       addComment:
@@ -363,15 +359,30 @@ export const CommentsExtension = Extension.create<
     };
   },
   onSelectionUpdate(
-    this: { storage: CommentsExtensionStorage }, // NOTE: there are more types here I didn't override, this gets removed after submitting PR to tiptap
-    { transaction }: { transaction: Transaction } // TODO: remove this after submitting PR to tiptap
+    this: { storage: CommentsExtensionStorage; editor: Editor },
+    { transaction }: { transaction: Transaction }
   ) {
-    // ignore changes made by yjs
-    if (!this.storage.pendingComment || transaction.getMeta(ySyncPluginKey)) {
-      return;
+    // Close any pending composer when the user moves the selection locally
+    // (but ignore remote Yjs-driven selection changes).
+    if (this.storage.pendingComment && !transaction.getMeta(ySyncPluginKey)) {
+      this.storage.pendingComment = false;
     }
-    // if selection changes, hide the composer. We could keep the composer open and move it to the new selection?
-    this.storage.pendingComment = false;
+
+    if (this.storage.pendingComment) return;
+
+    const { state } = this.editor;
+    const markType = state.schema.marks[LIVEBLOCKS_COMMENT_MARK_TYPE];
+    if (!markType) return;
+
+    const ids = getVisibleThreadIdsAtPos(
+      state,
+      state.selection.$from,
+      markType
+    );
+    const current = THREADS_PLUGIN_KEY.getState(state)?.activeThreadIds ?? [];
+    if (shallow(ids, current)) return;
+
+    dispatchSetActiveThreadIds(this.editor.view, ids);
   },
   addProseMirrorPlugins() {
     return [
@@ -447,16 +458,15 @@ export const CommentsExtension = Extension.create<
               ) {
                 syncDom();
 
-                const selected = THREADS_PLUGIN_KEY.getState(
-                  view.state
-                )?.selectedThreadId;
-                if (selected && curr && !curr.has(selected)) {
-                  view.dispatch(
-                    view.state.tr.setMeta(THREADS_PLUGIN_KEY, {
-                      name: ThreadPluginActions.SET_SELECTED_THREAD_ID,
-                      data: null,
-                    })
-                  );
+                const active =
+                  THREADS_PLUGIN_KEY.getState(view.state)?.activeThreadIds ??
+                  [];
+
+                if (active.length && curr) {
+                  const next = active.filter((id) => curr.has(id));
+                  if (next.length !== active.length) {
+                    dispatchSetActiveThreadIds(view, next);
+                  }
                 }
               }
             },
@@ -466,11 +476,3 @@ export const CommentsExtension = Extension.create<
     ];
   },
 });
-
-export function areSetsEqual(a?: Set<string>, b?: Set<string>): boolean {
-  if (a === b) return true;
-  if (!a || !b) return false;
-  if (a.size !== b.size) return false;
-  for (const v of a) if (!b.has(v)) return false;
-  return true;
-}

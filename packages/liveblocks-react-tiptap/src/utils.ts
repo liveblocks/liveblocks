@@ -66,6 +66,25 @@ export const getRectFromCoords = (coords: {
   };
 };
 
+export const compareDocumentPosition = (a: Node, b: Node) => {
+  const position = a.compareDocumentPosition(b);
+  if (position & Node.DOCUMENT_POSITION_FOLLOWING) {
+    return -1;
+  }
+  if (position & Node.DOCUMENT_POSITION_PRECEDING) {
+    return 1;
+  }
+  return 0;
+};
+
+export const areSetsEqual = (a?: Set<string>, b?: Set<string>): boolean => {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  if (a.size !== b.size) return false;
+  for (const v of a) if (!b.has(v)) return false;
+  return true;
+};
+
 export const getMentionsFromNode = (
   node: ProseMirrorNode,
   range: Range

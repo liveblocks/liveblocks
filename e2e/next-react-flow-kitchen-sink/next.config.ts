@@ -1,7 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  turbopack: {
+    resolveAlias: {
+      "@xyflow/react": "./node_modules/@xyflow/react",
+    },
+  },
 };
 
 export default nextConfig;

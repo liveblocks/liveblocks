@@ -343,6 +343,10 @@ const instances = new DefaultMap<
  * Switch to ephemeral (temp dir) storage. Returns the root temp directory.
  * Room data is stored in a `data/` subdirectory so that sibling files
  * (e.g. server.log) survive cleanup.
+ *
+ * Test callers must pair this with `afterAll(() => Rooms.cleanup())`. In
+ * vitest, returning the cleanup function from `beforeAll` would auto-schedule
+ * teardown, but bun:test doesn't support that pattern.
  */
 export function useEphemeralStorage(): string {
   const root = mkdtempSync(join(tmpdir(), "liveblocks-dev-"));

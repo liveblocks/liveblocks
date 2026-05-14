@@ -80,7 +80,7 @@ function getYTypedValue(
       return doc.getXmlFragment(key).toJSON();
     }
   }
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return value.toJSON();
 }
 
@@ -115,7 +115,6 @@ export function yDocToJson(
         }
       }
       return {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         [key]: getYTypedValue(doc, doc.share.get(key)!, key, formatting),
       };
     }

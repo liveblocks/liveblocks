@@ -1,0 +1,359 @@
+---
+meta:
+  title:
+    "Get started with a multiplayer Handsontable spreadsheet using Liveblocks
+    and Next.js"
+  parentTitle: "Quickstart"
+  description:
+    "Learn how to add a collaborative Handsontable spreadsheet using Liveblocks
+    and Next.js."
+---
+
+Liveblocks is a realtime collaboration infrastructure for building performant
+collaborative experiences. Follow the following steps to start adding
+multiplayer to a Handsontable spreadsheet in your Next.js `/app` directory
+application using the hooks from
+[`@liveblocks/react`](/docs/api-reference/liveblocks-react).
+
+## Quickstart
+
+<Steps>
+  <Step>
+    <StepTitle>Install Liveblocks and Handsontable</StepTitle>
+    <StepContent>
+
+      Every Liveblocks package should use the same version.
+
+      ```bash trackEvent="install_liveblocks"
+      npm install @liveblocks/client @liveblocks/react @handsontable/react-wrapper handsontable
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Initialize the `liveblocks.config.ts` file</StepTitle>
+    <StepContent>
+
+      We can use this file later to [define types for our application](/docs/api-reference/liveblocks-react#Typing-your-data).
+
+      ```bash
+      npx create-liveblocks-app@latest --init --framework react
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Define your Liveblocks types</StepTitle>
+    <StepContent>
+
+      Inside the `liveblocks.config.ts` file, define the
+      [`Storage`](/docs/api-reference/liveblocks-react#Storage) and
+      [`Presence`](/docs/api-reference/liveblocks-react#Presence) types for your application.
+      Storage will hold the grid data, and presence will track which cell each user has selected.
+
+      ```tsx file="liveblocks.config.ts"
+      import type { LiveList } from "@liveblocks/client";
+
+      export const GRID_ROWS = 10;
+      export const GRID_COLS = 5;
+
+      declare global {
+        interface Liveblocks {
+          Presence: {
+            selectedCell: { row: number; col: number } | null;
+          };
+          Storage: {
+            grid: LiveList<LiveList<string>>;
+          };
+        }
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Create a Liveblocks room</StepTitle>
+    <StepContent>
+
+      Liveblocks uses the concept of rooms, separate virtual spaces where people
+      collaborate, and to create a realtime experience, multiple users must
+      be connected to the same room. When using Next.js' `/app` router,
+      we recommend creating your room in a `Room.tsx` file in the same directory
+      as your current route.
+
+      Set up a Liveblocks client with
+      [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider),
+      join a room with [`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider),
+      and use [`ClientSideSuspense`](/docs/api-reference/liveblocks-react#ClientSideSuspense)
+      to add a loading spinner to your app.
+
+      Pass [`initialPresence`](/docs/api-reference/liveblocks-react#RoomProvider)
+      and [`initialStorage`](/docs/api-reference/liveblocks-react#RoomProvider)
+      to set up the default presence and an empty grid.
+
+      ```tsx file="app/Room.tsx"
+      "use client";
+
+      import { LiveList } from "@liveblocks/client";
+      import { ReactNode } from "react";
+      import {
+        LiveblocksProvider,
+        RoomProvider,
+        ClientSideSuspense,
+      } from "@liveblocks/react/suspense";
+      import { GRID_COLS, GRID_ROWS } from "../liveblocks.config";
+
+      export function Room({ children }: { children: ReactNode }) {
+        return (
+          <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
+            <RoomProvider
+              id="my-room"
+              initialPresence={{ selectedCell: null }}
+              initialStorage={{
+                grid: new LiveList(
+                  Array.from(
+                    { length: GRID_ROWS },
+                    () => new LiveList(Array.from({ length: GRID_COLS }, () => ""))
+                  )
+                ),
+              }}
+            >
+              <ClientSideSuspense fallback={<div>Loading…</div>}>
+                {children}
+              </ClientSideSuspense>
+            </RoomProvider>
+          </LiveblocksProvider>
+        );
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Add the Liveblocks room to your page</StepTitle>
+    <StepContent>
+
+      After creating your room file, it's time to join it. Import
+      your room into your `page.tsx` file, and place
+      your collaborative app components inside it.
+
+      ```tsx file="app/page.tsx"
+      import { Room } from "./Room";
+      import { Table } from "./Table";
+
+      export default function Page() {
+        return (
+          <Room>
+            <Table />
+          </Room>
+        );
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Set up the collaborative Handsontable spreadsheet</StepTitle>
+    <StepContent>
+
+      Now that Liveblocks is set up, integrate Handsontable in the `Table.tsx` file.
+      [`useStorage`](/docs/api-reference/liveblocks-react#useStorage)
+      reads the grid data from Liveblocks Storage, and
+      [`useMutation`](/docs/api-reference/liveblocks-react#useMutation)
+      writes cell changes back. We also use presence to highlight which cell
+      each user has selected.
+
+      ```tsx file="app/Table.tsx"
+      "use client";
+
+      import { shallow } from "@liveblocks/client";
+      import { HotTable } from "@handsontable/react-wrapper";
+      import { registerAllModules } from "handsontable/registry";
+      import { textRenderer } from "handsontable/renderers";
+      import type { CellChange, ChangeSource } from "handsontable/common";
+      import {
+        useMutation,
+        useOthersListener,
+        useStorage,
+      } from "@liveblocks/react/suspense";
+      import { useCallback, useRef } from "react";
+      import type { HotTableRef } from "@handsontable/react-wrapper";
+      import { GRID_COLS, GRID_ROWS } from "../liveblocks.config";
+
+      registerAllModules();
+
+      export function Table() {
+        const hotRef = useRef<HotTableRef>(null);
+
+        // Get the realtime grid contents from Liveblocks Storage
+        const data = useStorage(
+          (root) =>
+            root.grid.map((row) =>
+              Array.from({ length: GRID_COLS }, (_, c) => String(row[c] ?? ""))
+            ),
+          shallow
+        );
+
+        // Update a cell's value
+        const updateCell = useMutation(
+          ({ storage }, rowIndex: number, colIndex: number, value: string) => {
+            const grid = storage.get("grid");
+            const row = grid.get(rowIndex);
+            if (row) {
+              row.set(colIndex, value);
+            }
+          },
+          []
+        );
+
+        // Update the grid when a cell is changed
+        const afterChange = useCallback(
+          (changes: CellChange[] | null, source: ChangeSource) => {
+            if (!changes || source === "loadData") {
+              return;
+            }
+
+            for (const [row, prop, , newVal] of changes) {
+              if (typeof prop !== "number") {
+                continue;
+              }
+
+              updateCell(
+                row,
+                prop,
+                newVal === null || newVal === undefined ? "" : String(newVal)
+              );
+            }
+          },
+          [updateCell]
+        );
+
+        // Sync selected cell to presence
+        const syncSelectedCellToPresence = useMutation(
+          ({ setMyPresence }, row: number, col: number) => {
+            setMyPresence({
+              selectedCell: { row: row < 0 ? 0 : row, col: col < 0 ? 0 : col },
+            });
+          },
+          []
+        );
+
+        const clearSelectedCellPresence = useMutation(({ setMyPresence }) => {
+          setMyPresence({ selectedCell: null });
+        }, []);
+
+        // Render presence inside cells
+        const renderDataCell = useMutation(
+          ({ others }, ...props: Parameters<typeof textRenderer>) => {
+            textRenderer(...props);
+            const [, td, row, col] = props;
+
+            // Find users who have selected this cell
+            const selectedOthers = others.filter(
+              (o) =>
+                o.presence.selectedCell?.row === row &&
+                o.presence.selectedCell?.col === col
+            );
+
+            if (!selectedOthers.length) {
+              td.style.boxShadow = "";
+              return;
+            }
+
+            // Add inner borders for selected users
+            td.style.boxShadow = selectedOthers
+              .map((p, i) => `inset 0 0 0 ${2 + i * 2}px ${p.info.color}`)
+              .join(", ");
+          },
+          []
+        );
+
+        // Re-render the table when others update their presence
+        useOthersListener(({ type }) => {
+          if (type === "update") {
+            hotRef.current?.hotInstance?.render();
+          }
+        });
+
+        return (
+          <HotTable
+            ref={hotRef}
+            data={data}
+            hotRenderer={renderDataCell}
+            afterChange={afterChange}
+            afterSelection={syncSelectedCellToPresence}
+            afterDeselect={clearSelectedCellPresence}
+            colHeaders={true}
+            rowHeaders={true}
+            height={400}
+            width={600}
+            licenseKey="non-commercial-and-evaluation"
+            autoWrapRow={true}
+            autoWrapCol={true}
+          />
+        );
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step lastStep>
+    <StepTitle>Next: set up authentication</StepTitle>
+    <StepContent>
+
+      By default, Liveblocks is configured to work without an authentication endpoint
+      where everyone automatically has access to rooms. This approach is great for
+      prototyping and marketing pages where setting up your own security isn't always
+      required. If you want to limit access to a room for certain users, you'll need
+      to set up an authentication endpoint to enable permissions.
+
+      <Button asChild className="not-markdown">
+        <a href="/docs/authentication">
+          Set up authentication
+        </a>
+      </Button>
+    </StepContent>
+
+  </Step>
+</Steps>
+
+## What to read next
+
+Congratulations! You now have set up the foundation to start building a
+multiplayer Handsontable spreadsheet for your Next.js application.
+
+- [@liveblocks/react API Reference](/docs/api-reference/liveblocks-react)
+- [Next.js and React guides](/docs/guides?technologies=nextjs%2Creact)
+- [How to use Liveblocks Storage with React](/docs/guides/how-to-use-liveblocks-storage-with-react)
+
+---
+
+## Examples using Handsontable
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "Multiplayer Handsontable",
+      slug: "multiplayer-handsontable/nextjs-multiplayer-handsontable",
+      image:
+        "/images/examples/thumbnails/collaborative-spreadsheet-advanced.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Handsontable Comments",
+      slug: "handsontable-comments/nextjs-comments-handsontable",
+      image: "/images/examples/thumbnails/comments-table.png",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+</ListGrid>

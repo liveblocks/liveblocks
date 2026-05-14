@@ -15,7 +15,6 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import type { NodeStream, SerializedCrdt } from "@liveblocks/core";
 import { assertNever, CrdtType, OpCode } from "@liveblocks/core";
 import * as fc from "fast-check";

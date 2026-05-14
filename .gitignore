@@ -28,15 +28,14 @@ yarn-error.log*
 *.pem
 .DS_Store
 
+.claude/*
+!.claude/skills
+CLAUDE.local.md
+.agents/*
+!.agents/skills
+AGENTS.local.md
+.mcp.json
+
 # Playwright
 test-results/
 playwright-report/
-
-# Liveblocks local dev server storage
-.liveblocks/
-
-# Claude Code configs
-.claude/
-CLAUDE.local.md
-
-.mcp.json

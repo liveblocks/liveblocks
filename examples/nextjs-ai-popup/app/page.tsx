@@ -119,7 +119,10 @@ function Chat({ chatId }: { chatId: string }) {
         layout="compact"
         components={{
           Empty: ({ chatId }) => {
-            const sendMessage = useSendAiMessage(chatId);
+            const sendMessage = useSendAiMessage(chatId, {
+              copilotId:
+                process.env.NEXT_PUBLIC_LIVEBLOCKS_COPILOT_ID || undefined,
+            });
 
             return (
               <div className="p-[--spacing] h-full flex flex-col gap-5 justify-end">

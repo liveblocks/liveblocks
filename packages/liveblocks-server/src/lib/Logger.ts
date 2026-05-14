@@ -183,13 +183,11 @@ export class Logger {
       });
 
     this.o = {
-      /* eslint-disable @typescript-eslint/no-unsafe-enum-comparison */
       debug: minLevel <= LogLevel.DEBUG ? makeLogFn(LogLevel.DEBUG) : undefined,
       info: minLevel <= LogLevel.INFO ? makeLogFn(LogLevel.INFO) : undefined,
       warn:
         minLevel <= LogLevel.WARNING ? makeLogFn(LogLevel.WARNING) : undefined,
       error: minLevel <= LogLevel.ERROR ? makeLogFn(LogLevel.ERROR) : undefined,
-      /* eslint-enable @typescript-eslint/no-unsafe-enum-comparison */
     };
 
     this.debug = this.o.debug ?? noop;

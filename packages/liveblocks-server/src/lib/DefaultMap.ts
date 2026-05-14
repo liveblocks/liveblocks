@@ -54,7 +54,6 @@ export class DefaultMap<K, V> extends Map<K, V> {
    */
   getOrCreate(key: K, defaultFn?: (key: K) => V): V {
     if (super.has(key)) {
-      // eslint-disable-next-line no-restricted-syntax
       return super.get(key)!;
     } else {
       const fn =

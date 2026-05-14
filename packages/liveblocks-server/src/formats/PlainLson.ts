@@ -232,7 +232,11 @@ function buildNode(snapshot: IReadableSnapshot, id: string): PlainLson {
   } else if (node.type === CrdtType.MAP) {
     return buildMap(snapshot, id);
   } else {
-    return node.data;
+    // TEMPORARY: `?? null` is only here to project legacy KV rooms that
+    // contain data-less registers (under a LiveMap, representing `null`
+    // entries), so the KV projection matches how the SQLite migrator
+    // normalizes them. Remove once all rooms have been migrated to SQLite.
+    return node.data ?? null;
   }
 }
 
@@ -301,7 +305,9 @@ function* emit(snapshot: IReadableSnapshot, id: string): StringGen {
   } else if (node.type === CrdtType.MAP) {
     yield* emitMap(snapshot, id);
   } else if (node.type === CrdtType.REGISTER) {
-    yield JSON.stringify(node.data);
+    // TEMPORARY: see buildNode — remove `?? null` once all rooms are
+    // migrated to SQLite.
+    yield JSON.stringify(node.data ?? null);
   }
 }
 
