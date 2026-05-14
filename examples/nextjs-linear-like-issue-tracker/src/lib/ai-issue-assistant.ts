@@ -185,7 +185,7 @@ ${content}
   }
 
   const result = streamText({
-    model: anthropic("claude-sonnet-4-5"),
+    model: anthropic("claude-haiku-4-5"),
     system,
     messages,
     stopWhen: stepCountIs(16),

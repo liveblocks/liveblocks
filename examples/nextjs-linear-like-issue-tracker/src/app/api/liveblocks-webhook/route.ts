@@ -3,7 +3,6 @@ import {
   runAiReplyForCommentCreatedEvent,
 } from "@/lib/liveblocks-webhook-handlers";
 import { WebhookHandler } from "@liveblocks/node";
-import { after } from "next/server";
 import { NextResponse } from "next/server";
 
 const WEBHOOK_SECRET = process.env.LIVEBLOCKS_WEBHOOK_SECRET_KEY;
@@ -44,18 +43,10 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: true, handled: "storageUpdated" });
       }
       case "commentCreated": {
-        after(() => {
-          void runAiReplyForCommentCreatedEvent(event).then(
-            (result) => {
-              if (result.error) {
-                console.error("[liveblocks-webhook commentCreated]", result.error);
-              }
-            },
-            (err) => {
-              console.error("[liveblocks-webhook commentCreated]", err);
-            }
-          );
-        });
+        const result = await runAiReplyForCommentCreatedEvent(event);
+        if (result.error) {
+          console.error("[liveblocks-webhook commentCreated]", result.error);
+        }
         return NextResponse.json({ ok: true, handled: "commentCreated" });
       }
       default:
@@ -64,7 +55,10 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("[liveblocks-webhook]", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Webhook handler failed" },
+      {
+        error:
+          error instanceof Error ? error.message : "Webhook handler failed",
+      },
       { status: 400 }
     );
   }
