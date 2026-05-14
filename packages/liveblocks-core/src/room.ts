@@ -323,8 +323,6 @@ export interface History {
    *   root.set("generatedText", result);
    * });
    *
-   * @experimental This API is experimental and may change or be removed
-   * in a future release without following semver guarantees.
    */
   disable: <T>(fn: () => T) => T;
 }

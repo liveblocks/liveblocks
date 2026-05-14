@@ -10,8 +10,9 @@ meta:
 
 Liveblocks allows you to build collaborative applications with
 [Storage](/storage), a persisted conflict-free data store. Using our webhooks
-and REST API, you can then retrieve the Storage document data as it changes, and
-store it in your database.
+and the [`@liveblocks/node`](/docs/api-reference/liveblocks-node) package, you
+can then retrieve the Storage document data as it changes, and store it in your
+database.
 
 ## What we’re building
 
@@ -21,8 +22,8 @@ document data is automatically synchronized. This is enabled through the
 following:
 
 - [StorageUpdated](/docs/platform/webhooks#StorageUpdatedEvent) webhook event
-- [Get Storage Document](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-storage)
-  REST API
+- [`getStorageDocument`](/docs/api-reference/liveblocks-node#get-rooms-roomId-storage)
+  from [`@liveblocks/node`](/docs/api-reference/liveblocks-node)
 
 <Banner title="Have a project ready">
 
@@ -207,14 +208,14 @@ request from Liveblocks. You can set this up by setting up a
 [`WebhookHandler`](/docs/api-reference/liveblocks-node#WebhookHandler) and
 running [`verifyRequest`](/docs/api-reference/liveblocks-node#verifyRequest).
 
-Make sure to add your “Signing Secret” from the Liveblocks dashboard—in a real
+Make sure to add your “Webhook secret” from the Liveblocks dashboard—in a real
 project we’d recommend using an environment variable for this.
 
 ```ts highlight="1,3-5,11-21"
 import { WebhookHandler } from "@liveblocks/node";
 
-// Add your signing key from a project's webhooks dashboard
-const WEBHOOK_SECRET = "YOUR_SIGNING_SECRET";
+// Add your webhook secret from a project's webhooks dashboard
+const WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET";
 const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
 
 export async function POST(request: Request) {
@@ -246,8 +247,8 @@ We can then check we’re receiving the correct type of event, get the updated
 ```ts highlight="23-29"
 import { WebhookHandler } from "@liveblocks/node";
 
-// Add your signing key from a project's webhooks dashboard
-const WEBHOOK_SECRET = "YOUR_SIGNING_SECRET";
+// Add your webhook secret from a project's webhooks dashboard
+const WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET";
 const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
 
 export async function POST(request: Request) {
@@ -281,20 +282,22 @@ export async function POST(request: Request) {
 ## Get the current room’s Storage document data
 
 Before updating our database, we need to get the current room’s data. We can do
-this through the
-[Get Storage Document](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-storage)
-REST API. You use the REST API, you need to add your secret key from your
-project page.
+this with
+[`getStorageDocument`](/docs/api-reference/liveblocks-node#get-rooms-roomId-storage)
+from [`@liveblocks/node`](/docs/api-reference/liveblocks-node). To use it, you
+need to add your secret key from your project page.
 
-```ts highlight="7-8,30-43"
-import { WebhookHandler } from "@liveblocks/node";
+```ts
+import { Liveblocks, WebhookHandler } from "@liveblocks/node";
 
-// Add your signing key from a project's webhooks dashboard
-const WEBHOOK_SECRET = "YOUR_SIGNING_SECRET";
+// Add your webhook secret from a project's webhooks dashboard
+const WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET";
 const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
 
+// +++
 // Add your secret key from a project's API keys dashboard
-const API_SECRET = "{{SECRET_KEY}}";
+const liveblocks = new Liveblocks({ secret: "{{SECRET_KEY}}" });
+// +++
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -316,20 +319,10 @@ export async function POST(request: Request) {
   if (event.type === "storageUpdated") {
     const { roomId } = event.data;
 
-    // Get Storage data from Liveblocks REST API
-    const url = `https://api.liveblocks.io/v2/rooms/${roomId}/storage`;
-    const response = await fetch(url, {
-      headers: { Authorization: `Bearer ${API_SECRET}` },
-    });
-
-    if (!response.ok) {
-      return new Response("Problem accessing Liveblocks REST APIs", {
-        status: 500,
-      });
-    }
-
-    // Your JSON Storage document data as a string
-    const storageData = await response.text();
+    // +++
+    // Get Storage document data as JSON
+    const storageData = await liveblocks.getStorageDocument(roomId, "json");
+    // +++
 
     // Update database
     // ...
@@ -438,22 +431,24 @@ npm i @supabase/supabase-js
 Then implement the following to synchronize your data, making sure to add your
 Project URL:
 
-```ts highlight="2,11-15,52-62"
-import { WebhookHandler } from "@liveblocks/node";
+```ts
+import { Liveblocks, WebhookHandler } from "@liveblocks/node";
 import { createClient } from "@supabase/supabase-js";
 
-// Add your signing key from a project's webhooks dashboard
-const WEBHOOK_SECRET = "YOUR_SIGNING_SECRET";
+// Add your webhook secret from a project's webhooks dashboard
+const WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET";
 const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
 
 // Add your secret key from a project's API keys dashboard
-const API_SECRET = "{{SECRET_KEY}}";
+const liveblocks = new Liveblocks({ secret: "{{SECRET_KEY}}" });
 
+// +++
 // Create a Supabase client
 const supabase = createClient(
   "YOUR_SUPABASE_PROJECT_URL",
   "YOUR_SUPABASE_PUBLIC_ANON_KEY"
 );
+// +++
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -475,25 +470,14 @@ export async function POST(request: Request) {
   if (event.type === "storageUpdated") {
     const { roomId } = event.data;
 
-    // Get Storage data from Liveblocks REST API
-    const url = `https://api.liveblocks.io/v2/rooms/${roomId}/storage`;
-    const response = await fetch(url, {
-      headers: { Authorization: `Bearer ${API_SECRET}` },
-    });
+    // Get Storage document data as JSON
+    const storageData = await liveblocks.getStorageDocument(roomId, "json");
 
-    if (!response.ok) {
-      return new Response("Problem accessing Liveblocks REST APIs", {
-        status: 500,
-      });
-    }
-
-    // Your JSON Storage document data as a string
-    const storageData = await response.text();
-
+    // +++
     // Update database
     const { data, error } = await supabase
       .from("documents")
-      .insert({ roomid: roomId, storagedata: storageData })
+      .insert({ roomid: roomId, storagedata: JSON.stringify(storageData) })
       .select();
 
     if (error) {
@@ -501,6 +485,7 @@ export async function POST(request: Request) {
         status: 500,
       });
     }
+    // +++
   }
 
   return new Response(null, { status: 200 });
@@ -532,5 +517,5 @@ the 60 second throttle limit.
 ## Learn more
 
 You can learn more about Liveblocks webhooks in our full
-[webhooks guide](/docs/platform/webhooks). We also have an API reference for the
-[Get Storage Document API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-storage).
+[webhooks guide](/docs/platform/webhooks). We also have an API reference for
+[`getStorageDocument`](/docs/api-reference/liveblocks-node#get-rooms-roomId-storage).

@@ -15,6 +15,15 @@
   min-width: 130px;
 }
 
+.editor-styles li p {
+  margin: 0;
+}
+
+.editor-styles ul > li:not(:first-child),
+.editor-styles ol > li:not(:first-child) {
+  margin-top: 0.25rem;
+}
+
 .editor-styles p {
   margin: 0.8rem 0;
 }
@@ -65,8 +74,8 @@
 .editor-styles ul {
   display: block;
   list-style-type: disc;
-  margin-block-start: 1rem;
-  margin-block-end: 1rem;
+  margin-block-start: 0.5rem;
+  margin-block-end: 0.5rem;
   margin-inline-start: 0;
   margin-inline-end: 0;
   padding-inline-start: 40px;
@@ -76,8 +85,8 @@
 .editor-styles ol {
   display: block;
   list-style-type: decimal;
-  margin-block-start: 1rem;
-  margin-block-end: 1rem;
+  margin-block-start: 0.5rem;
+  margin-block-end: 0.5rem;
   margin-inline-start: 0;
   margin-inline-end: 0;
   padding-inline-start: 40px;

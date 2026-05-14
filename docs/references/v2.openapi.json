@@ -6394,7 +6394,8 @@
               "examples": {
                 "example": {
                   "value": {
-                    "expirationIn": "3 days"
+                    "expirationIn": "3 days",
+                    "newKeyExpirationIn": "30 days"
                   }
                 }
               }
@@ -10081,12 +10082,20 @@
           "gpt-4-turbo",
           "gpt-4",
           "gpt-5",
+          "gpt-5-pro",
           "gpt-5-mini",
           "gpt-5-nano",
           "gpt-5-chat-latest",
           "gpt-5.1",
           "gpt-5.1-mini",
-          "gpt-5.1-chat-latest"
+          "gpt-5.1-chat-latest",
+          "gpt-5.2",
+          "gpt-5.2-pro",
+          "gpt-5.4",
+          "gpt-5.4-pro",
+          "gpt-5.4-mini",
+          "gpt-5.4-nano",
+          "gpt-5.5"
         ],
         "example": "gpt-4o"
       },
@@ -10094,6 +10103,10 @@
         "title": "AnthropicModel",
         "type": "string",
         "enum": [
+          "claude-opus-4-7",
+          "claude-sonnet-4-6",
+          "claude-opus-4-6",
+          "claude-opus-4-5-20251101",
           "claude-sonnet-4-5-20250929",
           "claude-haiku-4-5-20251001",
           "claude-opus-4-1-20250805",
@@ -10110,6 +10123,8 @@
         "title": "GoogleModel",
         "type": "string",
         "enum": [
+          "gemini-3-flash-preview",
+          "gemini-3.1-pro-preview",
           "gemini-2.5-flash",
           "gemini-2.5-pro",
           "gemini-2.0-flash-001",
@@ -11160,11 +11175,37 @@
               "7 days"
             ],
             "default": "now"
+          },
+          "newKeyExpirationIn": {
+            "type": "string",
+            "enum": [
+              "now",
+              "1h",
+              "1hour",
+              "1 hour",
+              "24hrs",
+              "24hours",
+              "24 hours",
+              "3d",
+              "3days",
+              "3 days",
+              "7d",
+              "7days",
+              "7 days",
+              "30d",
+              "30days",
+              "30 days",
+              "1y",
+              "1year",
+              "1 year",
+              "one year"
+            ]
           }
         },
         "additionalProperties": false,
         "example": {
-          "expirationIn": "3 days"
+          "expirationIn": "3 days",
+          "newKeyExpirationIn": "30 days"
         }
       },
       "RollProjectSecretApiKeyResponse": {

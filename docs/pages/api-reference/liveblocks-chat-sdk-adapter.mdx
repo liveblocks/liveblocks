@@ -25,7 +25,7 @@ Before using this adapter, ensure you have:
 1. A [Liveblocks project](/docs/get-started) with rooms using
    [Comments](/docs/products/comments).
 2. A **secret key** (`sk_...`) from the Liveblocks dashboard for REST API calls.
-3. A **webhook signing secret** (`whsec_...`) from the dashboard to verify
+3. A **webhook secret** (`whsec_...`) from the dashboard to verify
    webhook payloads.
 4. Webhooks configured to subscribe to `commentCreated`, `commentReactionAdded`,
    and `commentReactionRemoved` events.
@@ -53,7 +53,7 @@ const adapter = createLiveblocksAdapter({
     Liveblocks secret key (`sk_...`) for REST API calls.
   </PropertiesListItem>
   <PropertiesListItem name="webhookSecret" type="string" required>
-    Webhook signing secret (`whsec_...`) from the dashboard.
+    Webhook secret (`whsec_...`) from the dashboard.
   </PropertiesListItem>
   <PropertiesListItem name="botUserId" type="string" required>
     User ID used when the bot creates, edits, or reacts to comments. Should

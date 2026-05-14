@@ -368,7 +368,7 @@ async function createPlaceholderComment({
         content: [
           {
             type: "paragraph",
-            children: [{ text: "Placeholder for a feed" }],
+            children: [{ text: "Thinking…" }],
           },
         ],
       },

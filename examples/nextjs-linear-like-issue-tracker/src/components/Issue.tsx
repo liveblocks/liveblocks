@@ -4,11 +4,11 @@ import { Editor } from "@/components/Editor";
 import { IssueProperties } from "@/components/IssueProperties";
 import { IssueLabels } from "@/components/IssueLabels";
 import { IssueActions } from "@/components/IssueActions";
+import { IssueAiButton } from "@/components/IssueAiButton";
 import { liveblocks } from "@/liveblocks.server.config";
 import { withLexicalDocument } from "@liveblocks/node-lexical";
 import { getRoomId } from "@/config";
-import { HeadingNode, QuoteNode } from "@lexical/rich-text";
-import { ListItemNode, ListNode } from "@lexical/list";
+import { ISSUE_LEXICAL_NODES } from "@/lib/issue-lexical-nodes";
 import { IssueLinks } from "@/components/IssueLinks";
 import { $convertToMarkdownString, TRANSFORMERS } from "@lexical/markdown";
 import { marked } from "marked";
@@ -27,7 +27,7 @@ export async function Issue({ issueId }: { issueId: string }) {
     {
       roomId,
       client: liveblocks,
-      nodes: [HeadingNode, QuoteNode, ListNode, ListItemNode],
+      nodes: [...ISSUE_LEXICAL_NODES],
     },
     async (doc) => {
       let markdown = "";
@@ -103,7 +103,7 @@ export async function Issue({ issueId }: { issueId: string }) {
                   }
                 />
                 <div className="my-6">
-                  <IssueLinks storageFallback={storage} />
+                  <IssueLinks storageFallback={storage} issueId={issueId} />
                 </div>
                 <div className="border-t my-6" />
                 <Comments />
@@ -112,15 +112,17 @@ export async function Issue({ issueId }: { issueId: string }) {
           </div>
           <div className="border-l flex-grow-0 flex-shrink-0 w-[200px] lg:w-[260px] px-4 flex flex-col gap-4">
             <div>
-              <div className="text-xs font-medium text-neutral-600 mb-2 h-10 flex items-center">
-                Properties
+              <div className="text-xs font-medium text-neutral-600 mb-2 flex h-10 items-center justify-between gap-1">
+                <span>Properties</span>
+                <IssueAiButton kind="properties" issueId={issueId} />
               </div>
               <IssueProperties storageFallback={storage} />
             </div>
 
             <div>
-              <div className="text-xs font-medium text-neutral-600 mb-0 h-10 flex items-center">
-                Labels
+              <div className="text-xs font-medium text-neutral-600 mb-0 flex h-10 items-center justify-between gap-1">
+                <span>Labels</span>
+                <IssueAiButton kind="labels" issueId={issueId} />
               </div>
               <IssueLabels storageFallback={storage} />
             </div>

@@ -1,0 +1,70 @@
+---
+meta:
+  title: "Lovable + Liveblocks"
+  parentTitle: "Integrations"
+  description:
+    "Add Liveblocks to apps built or exported from Lovable so you can ship
+    realtime presence, multiplayer editors, and comments alongside generated UI."
+---
+
+[Lovable](https://lovable.dev/) helps you generate full-stack apps quickly using
+AI chats. With Liveblocks, you can add realtime collaboration to your generated
+Lovable app, such as
+[collaborative text editing](/docs/collaboration-features/multiplayer/text-editor),
+[multiplayer documents](/docs/collaboration-features/multiplayer/sync-engine),
+[comment threads](/docs/collaboration-features/comments),
+[inbox notifications](/docs/collaboration-features/notifications), and
+[AI copilots](/docs/collaboration-features/ai-copilots).
+
+## Setup
+
+<Steps>
+
+<Step>
+  <StepTitle>Ask the chat to build with Liveblocks</StepTitle>
+  <StepContent>
+    Add Liveblocks to your project by asking the chat to add collaborative features, for example:
+
+    ```text title="Example prompt"
+    Add a realtime text editor with Liveblocks and Tiptap.
+    ```
+
+    <Banner>
+    To find more ways to use Liveblocks, visit our [showcase](/showcase) and read our [get started guides](/docs/get-started).
+    </Banner>
+
+  </StepContent>
+</Step>
+
+  <Step>
+    <StepTitle>Insert your secret key</StepTitle>
+    <StepContent>
+      During the process, Lovable will prompt you to 
+      insert your Liveblocks secret key from the [dashboard](/dashboard/apikeys).
+      Paste in your project’s key.
+
+      ```text title="Secret key"
+      {{SECRET_KEY}}
+      ```
+
+      To manually edit
+      your key in Lovable, go to Cloud → Secrets → `LIVEBLOCKS_SECRET_KEY`.
+    </StepContent>
+
+  </Step>
+
+  <Step lastStep>
+    <StepTitle>Collaboration is ready</StepTitle>
+    <StepContent>
+      Your app should now have live collaboration—use the chat to continue building your Liveblocks app.
+    </StepContent>
+
+  </Step>
+</Steps>
+
+## Limitations and troubleshooting
+
+### Secret or public key issues
+
+To fix issues related to API keys, instruct Lovable to use a secret key instead
+of a public key, and authenticate your Liveblocks application.

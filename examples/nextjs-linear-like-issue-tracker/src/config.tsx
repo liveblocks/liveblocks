@@ -1,4 +1,5 @@
 import { RoomData } from "@liveblocks/node";
+import { type ReactNode } from "react";
 import { PriorityHighIcon } from "@/icons/PriorityHighIcon";
 import { PriorityMediumIcon } from "@/icons/PriorityMediumIcon";
 import { PriorityLowIcon } from "@/icons/PriorityLowIcon";
@@ -9,17 +10,50 @@ import { ProgressInProgressIcon } from "@/icons/ProgressInProgressIcon";
 import { ProgressInReviewIcon } from "@/icons/ProgressInReviewIcon";
 import { ProgressDoneIcon } from "@/icons/ProgressDoneIcon";
 
+export const ISSUE_PROGRESS_IDS = [
+  "none",
+  "todo",
+  "progress",
+  "review",
+  "done",
+] as const;
+
+export const ISSUE_PRIORITY_IDS = [
+  "none",
+  "urgent",
+  "high",
+  "medium",
+  "low",
+] as const;
+
+export const ISSUE_LABEL_IDS = [
+  "feature",
+  "bug",
+  "engineering",
+  "design",
+  "product",
+] as const;
+
+export type IssueProgressId = (typeof ISSUE_PROGRESS_IDS)[number];
+export type IssuePriorityId = (typeof ISSUE_PRIORITY_IDS)[number];
+export type IssueLabelId = (typeof ISSUE_LABEL_IDS)[number];
+
 export const LABELS = [
   { id: "feature", text: "Feature", jsx: <>Feature</> },
   { id: "bug", text: "Bug", jsx: <>Bug</> },
   { id: "engineering", text: "Engineering", jsx: <>Engineering</> },
   { id: "design", text: "Design", jsx: <>Design</> },
   { id: "product", text: "Product", jsx: <>Product</> },
-] as const;
+] as const satisfies readonly {
+  id: IssueLabelId;
+  text: string;
+  jsx: ReactNode;
+}[];
 
 export const PRIORITY_STATES = [
   {
     id: "none",
+    text: "No priority",
     icon: <DashIcon className="w-4 h-4 text-neutral-600" />,
     jsx: (
       <div className="flex gap-2 items-center text-neutral-600">
@@ -29,6 +63,7 @@ export const PRIORITY_STATES = [
   },
   {
     id: "urgent",
+    text: "Urgent",
     icon: <PriorityUrgentIcon className="w-4 h-4 text-neutral-600" />,
     jsx: (
       <div className="flex gap-2 items-center">
@@ -39,6 +74,7 @@ export const PRIORITY_STATES = [
   },
   {
     id: "high",
+    text: "High",
     icon: <PriorityHighIcon className="w-4 h-4 text-neutral-600" />,
     jsx: (
       <div className="flex gap-2 items-center">
@@ -49,6 +85,7 @@ export const PRIORITY_STATES = [
   },
   {
     id: "medium",
+    text: "Medium",
     icon: <PriorityMediumIcon className="w-4 h-4 text-neutral-600" />,
     jsx: (
       <div className="flex gap-2 items-center">
@@ -59,6 +96,7 @@ export const PRIORITY_STATES = [
   },
   {
     id: "low",
+    text: "Low",
     icon: <PriorityLowIcon className="w-4 h-4 text-neutral-600" />,
     jsx: (
       <div className="flex gap-2 items-center">
@@ -67,11 +105,17 @@ export const PRIORITY_STATES = [
       </div>
     ),
   },
-] as const;
+] as const satisfies readonly {
+  id: IssuePriorityId;
+  text: string;
+  icon: ReactNode;
+  jsx: ReactNode;
+}[];
 
 export const PROGRESS_STATES = [
   {
     id: "none",
+    text: "No progress",
     jsx: (
       <div className="flex gap-2 items-center text-neutral-600">
         No progress
@@ -80,6 +124,7 @@ export const PROGRESS_STATES = [
   },
   {
     id: "todo",
+    text: "Todo",
     jsx: (
       <div className="flex gap-2 items-center">
         <ProgressTodoIcon className="w-4 h-4 text-neutral-500" />
@@ -89,6 +134,7 @@ export const PROGRESS_STATES = [
   },
   {
     id: "progress",
+    text: "In Progress",
     jsx: (
       <div className="flex gap-2 items-center">
         <ProgressInProgressIcon className="w-4 h-4 text-yellow-500" />
@@ -98,6 +144,7 @@ export const PROGRESS_STATES = [
   },
   {
     id: "review",
+    text: "In Review",
     jsx: (
       <div className="flex gap-2 items-center">
         <ProgressInReviewIcon className="w-4 h-4 text-emerald-500" />
@@ -107,6 +154,7 @@ export const PROGRESS_STATES = [
   },
   {
     id: "done",
+    text: "Done",
     jsx: (
       <div className="flex gap-2 items-center">
         <ProgressDoneIcon className="w-4 h-4 text-indigo-500" />
@@ -114,11 +162,11 @@ export const PROGRESS_STATES = [
       </div>
     ),
   },
-] as const;
-
-export type ProgressState = (typeof PROGRESS_STATES)[number]["id"];
-export type PriorityState = (typeof PRIORITY_STATES)[number]["id"];
-export type Label = (typeof LABELS)[number]["id"];
+] as const satisfies readonly {
+  id: IssueProgressId;
+  text: string;
+  jsx: ReactNode;
+}[];
 
 const ROOM_PREFIX = "liveblocks:examples:nextjs-project-manager-";
 
@@ -133,8 +181,8 @@ export function getIssueId(roomId: string) {
 export type Metadata = {
   issueId: string;
   title: string;
-  progress: ProgressState;
-  priority: PriorityState;
+  progress: IssueProgressId;
+  priority: IssuePriorityId;
   assignedTo: string | "none";
   labels: string[];
 };

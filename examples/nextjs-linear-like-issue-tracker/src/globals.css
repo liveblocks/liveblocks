@@ -10,3 +10,7 @@ select {
   background-size: 1.5em 1.5em;
   padding-right: 1.8rem;
 }
+
+#liveblocks-badge {
+  display: none;
+}
