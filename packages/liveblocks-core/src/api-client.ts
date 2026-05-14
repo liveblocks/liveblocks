@@ -1612,6 +1612,9 @@ export function createApiClient<
         roomId: options.roomId,
       })
     );
+    if (!result.ok) {
+      throw await HttpError.fromResponse(result);
+    }
     return (await result.json()) as StorageNode[];
   }
 
