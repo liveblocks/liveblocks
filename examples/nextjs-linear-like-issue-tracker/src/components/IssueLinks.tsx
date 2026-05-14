@@ -15,7 +15,7 @@ import { SubmitIcon } from "@/icons/SubmitIcon";
 import { ImmutableStorage } from "@/liveblocks.config";
 import { AiPresenceEditFrame } from "@/components/AiPresenceEditFrame";
 import { AI_EDITING_TYPE } from "@/lib/ai-editing-presence-types";
-import { IssueAiSparkleButton } from "@/components/IssueAiSparkleButton";
+import { IssueAiButton } from "@/components/IssueAiButton";
 
 export function IssueLinks({
   storageFallback,
@@ -91,7 +91,7 @@ function Links({ issueId }: { issueId: string }) {
                 </span>
               )}
             </button>
-            <IssueAiSparkleButton kind="links" issueId={issueId} />
+            <IssueAiButton kind="links" issueId={issueId} />
           </div>
         </div>
         {creating ? (

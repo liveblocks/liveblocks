@@ -1,5 +1,5 @@
 import { LiveList, LiveObject, ToJson } from "@liveblocks/client";
-import { Metadata, PriorityState, ProgressState } from "@/config";
+import { Metadata, IssuePriorityId, IssueProgressId } from "@/config";
 
 declare global {
   interface Liveblocks {
@@ -14,8 +14,10 @@ declare global {
     };
 
     CommentMetadata: {
+      // Feed ID attached to Ai comments
       feedId?: string;
-      /** Comma-separated issue ids (nanoids); includes issues from create_issue and link_issues_in_reply. */
+
+      // Comma-separated issue IDs that we display as links below comments
       referencedIssueIds?: string;
     };
 
@@ -26,7 +28,7 @@ declare global {
           commentId: string;
         }
       | {
-          type: "ai-issue-sparkle";
+          type: "ai-issue-button";
           kind: "links" | "properties" | "labels";
           threadId: string;
           commentId: string;
@@ -44,7 +46,6 @@ declare global {
           responsePart: string;
         }
       | {
-          /** Progress line for sparkle assistants (optional). */
           stage: "status";
           label: string;
         }
@@ -59,8 +60,8 @@ declare global {
         title: string;
       }>;
       properties: LiveObject<{
-        progress: ProgressState;
-        priority: PriorityState;
+        progress: IssueProgressId;
+        priority: IssuePriorityId;
         assignedTo: string | "none";
       }>;
       labels: LiveList<string>;

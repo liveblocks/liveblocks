@@ -1,20 +1,20 @@
 "use client";
 
-import { runIssueSparkleAi } from "@/actions/liveblocks";
+import { runIssueButtonAi } from "@/actions/liveblocks";
 import { AI_USER_INFO } from "@/database";
 import { SparklesIcon } from "@/icons/SparklesIcon";
 import { SpinnerIcon } from "@/icons/SpinnerIcon";
-import type { AiIssueSparkleKind } from "@/lib/ai-issue-sparkle-prompts";
+import type { AiIssueButtonKind } from "@/lib/ai-issue-button-prompts";
 import { useFeedMessages, useSelf } from "@liveblocks/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-const titles: Record<AiIssueSparkleKind, string> = {
+const titles: Record<AiIssueButtonKind, string> = {
   links: "Find and add relevant links",
   properties: "Fill missing properties",
   labels: "Fill missing labels",
 };
 
-function SparkleFeedCompleteWatcher({
+function ButtonFeedCompleteWatcher({
   feedId,
   onComplete,
 }: {
@@ -33,11 +33,11 @@ function SparkleFeedCompleteWatcher({
   return null;
 }
 
-export function IssueAiSparkleButton({
+export function IssueAiButton({
   kind,
   issueId,
 }: {
-  kind: AiIssueSparkleKind;
+  kind: AiIssueButtonKind;
   issueId: string;
 }) {
   const self = useSelf();
@@ -59,7 +59,7 @@ export function IssueAiSparkleButton({
     blockRef.current = true;
     setIsCalling(true);
     try {
-      const res = await runIssueSparkleAi(kind, issueId, self.id);
+      const res = await runIssueButtonAi(kind, issueId, self.id);
       if (!res.ok) {
         blockRef.current = false;
         return;
@@ -77,7 +77,7 @@ export function IssueAiSparkleButton({
   return (
     <>
       {activeFeedId ? (
-        <SparkleFeedCompleteWatcher
+        <ButtonFeedCompleteWatcher
           feedId={activeFeedId}
           onComplete={clearActiveFeed}
         />

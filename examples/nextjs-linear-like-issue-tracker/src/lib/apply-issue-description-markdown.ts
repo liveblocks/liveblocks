@@ -8,15 +8,7 @@ import { setAiRemotePresenceEditing } from "@/lib/ai-remote-presence";
 
 export type IssueDescriptionMarkdownMode = "append" | "replace";
 
-/**
- * Applies markdown to the collaborative Lexical issue description using
- * {@link https://liveblocks.io/docs/api-reference/liveblocks-node-lexical | withLexicalDocument}
- * and `doc.update`, following the same pattern as
- * `examples/nextjs-notion-like-ai-editor` (`createRoomWithLexicalDocument`).
- *
- * Sets AI presence `editingTypes` to include `content` before writing; does not
- * clear it (the AI assistant clears presence when the run ends).
- */
+// Adds markdown content to Lexical
 export async function applyIssueDescriptionMarkdown(
   roomId: string,
   markdown: string,

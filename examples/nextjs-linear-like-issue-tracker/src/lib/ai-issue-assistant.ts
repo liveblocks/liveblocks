@@ -1,5 +1,20 @@
 import { AI_USER_INFO, getUsers } from "@/database";
 import {
+  createAiPlaceholderComment,
+  updateAiPlaceholderComment,
+  type CommentLocation,
+} from "@/lib/ai-comment-bridge";
+import {
+  writeFeedComplete,
+  writeFeedThinking,
+  writeFeedWriting,
+} from "@/lib/ai-feed-messages";
+import {
+  hideAiPresence,
+  leaveAiReactionOnComment,
+  showAiPresence,
+} from "@/lib/ai-remote-presence";
+import {
   createAiIssueAssistantTools,
   type AiIssueAssistantToolRunState,
 } from "@/lib/ai-issue-assistant-tools";
@@ -9,7 +24,6 @@ import { getIssueId } from "@/config";
 import { liveblocks } from "@/liveblocks.server.config";
 import {
   getMentionsFromCommentBody,
-  markdownToCommentBody,
   type CommentData,
   type ThreadData,
 } from "@liveblocks/node";
@@ -17,12 +31,7 @@ import { stringifyCommentBody } from "@liveblocks/client";
 import { anthropic, AnthropicLanguageModelOptions } from "@ai-sdk/anthropic";
 import { ModelMessage, stepCountIs, streamText } from "ai";
 
-export type CommentLocation = {
-  roomId: string;
-  threadId: string;
-  commentId: string;
-};
-
+// Entry point for the comment reply assistant
 export async function runAiIssueAssistant(
   commentLocation: CommentLocation
 ): Promise<{ status: number; body?: string; error?: string }> {
@@ -44,8 +53,9 @@ export async function runAiIssueAssistant(
       return { status: 200, body: "AI is not mentioned in the comment" };
     }
 
-    const placeholderComment = await createPlaceholderComment({
-      ...commentLocation,
+    const placeholderComment = await createAiPlaceholderComment({
+      roomId,
+      threadId,
       feedId,
     });
     const placeholderCommentLocation: CommentLocation = {
@@ -54,9 +64,17 @@ export async function runAiIssueAssistant(
     };
 
     await Promise.all([
-      createFeed({ feedId, ...placeholderCommentLocation }),
-      showPresence(commentLocation),
-      leaveReactionOnComment(commentLocation),
+      liveblocks.createFeed({
+        roomId,
+        feedId,
+        metadata: {
+          type: "ai-comment-reply",
+          threadId,
+          commentId: placeholderComment.id,
+        },
+      }),
+      showAiPresence(roomId),
+      leaveAiReactionOnComment(commentLocation),
     ]);
 
     const {
@@ -65,7 +83,7 @@ export async function runAiIssueAssistant(
       editorMarkdownApplied,
       issuePropertiesUpdated,
       issueLinksUpdated,
-    } = await streamResponse({ roomId, feedId, thread, comment });
+    } = await streamCommentThreadReply({ roomId, feedId, thread, comment });
 
     const hasOutput =
       (response !== undefined && response.trim().length > 0) ||
@@ -76,49 +94,30 @@ export async function runAiIssueAssistant(
       issueLinksUpdated;
 
     if (!hasOutput) {
-      await hidePresence(commentLocation).catch(() => undefined);
+      await hideAiPresence(roomId).catch(() => undefined);
       return { status: 500, error: "Failed to generate response" };
     }
 
-    await updatePlaceholderComment({
+    await updateAiPlaceholderComment({
       ...placeholderCommentLocation,
       feedId,
       response,
       referencedIssueIdsCsv,
     });
 
-    // Let editing-type outlines linger briefly, then clear presence in-process.
-    // A fire-and-forget `setTimeout` often never runs after the route returns (serverless).
+    // Let the last AI presence stay for a couple secs
     await new Promise((resolve) => setTimeout(resolve, 2000));
-    await hidePresence(commentLocation);
+    await hideAiPresence(roomId);
 
     return { status: 200, body: "AI replied to comment" };
   } catch (err) {
-    await hidePresence(commentLocation).catch(() => undefined);
+    await hideAiPresence(roomId).catch(() => undefined);
 
     return { status: 400, error: `${err}` };
   }
 }
 
-async function createFeed({
-  roomId,
-  threadId,
-  commentId,
-  feedId,
-}: {
-  roomId: string;
-  threadId: string;
-  feedId: string;
-  commentId: string;
-}) {
-  return await liveblocks.createFeed({
-    roomId,
-    feedId,
-    metadata: { type: "ai-comment-reply", threadId, commentId },
-  });
-}
-
-async function streamResponse({
+async function streamCommentThreadReply({
   roomId,
   feedId,
   thread,
@@ -202,53 +201,35 @@ ${content}
   let totalReasoning = "";
   let totalText = "";
   const thinkingStartedAt = performance.now();
-  const promises: Promise<unknown>[] = [];
+  // Feed writes are fire-and-forget during streaming so model output is not paced
+  // by Liveblocks API latency; we drain them before the final `complete` message.
+  const feedWrites: Promise<unknown>[] = [];
 
   for await (const part of result.fullStream) {
     if (part.type === "reasoning-delta") {
       totalReasoning += part.text;
-
-      promises.push(
-        liveblocks.createFeedMessage({
-          roomId,
-          feedId,
-          data: {
-            stage: "thinking",
-            responsePart: part.text,
-            response: totalReasoning,
-          },
-        })
+      feedWrites.push(
+        writeFeedThinking({ roomId, feedId }, part.text, totalReasoning)
       );
     } else if (part.type === "text-delta") {
       totalText += part.text;
-
-      promises.push(
-        liveblocks.createFeedMessage({
-          roomId,
-          feedId,
-          data: {
-            stage: "writing",
-            responsePart: part.text,
-            response: totalText,
-          },
-        })
+      feedWrites.push(
+        writeFeedWriting({ roomId, feedId }, part.text, totalText)
       );
     }
   }
 
   const thinkingEndedAt = performance.now();
-  await Promise.all(promises);
+  await Promise.all(feedWrites);
 
-  await liveblocks.createFeedMessage({
-    roomId,
-    feedId,
-    data: {
-      stage: "complete",
+  await writeFeedComplete(
+    { roomId, feedId },
+    {
       response: totalText,
       reasoning: totalReasoning,
       thinkingTime: (thinkingEndedAt - thinkingStartedAt) / 1000,
-    },
-  });
+    }
+  );
 
   return {
     response: totalText,
@@ -258,24 +239,6 @@ ${content}
     issuePropertiesUpdated: toolRunState.issuePropertiesUpdated,
     issueLinksUpdated: toolRunState.issueLinksUpdated,
   };
-}
-
-async function showPresence({ roomId }: CommentLocation) {
-  return liveblocks.setPresence(roomId, {
-    userId: AI_USER_INFO.id,
-    userInfo: { ...AI_USER_INFO.info },
-    data: { editingTypes: [] },
-    ttl: 3599,
-  });
-}
-
-async function hidePresence({ roomId }: CommentLocation) {
-  return liveblocks.setPresence(roomId, {
-    ttl: 2,
-    userId: AI_USER_INFO.id,
-    userInfo: { ...AI_USER_INFO.info },
-    data: { editingTypes: [] },
-  });
 }
 
 async function getThreadAndComment({
@@ -288,19 +251,6 @@ async function getThreadAndComment({
   return { thread, comment: c };
 }
 
-async function leaveReactionOnComment({
-  roomId,
-  threadId,
-  commentId,
-}: CommentLocation) {
-  return liveblocks.addCommentReaction({
-    roomId,
-    threadId,
-    commentId,
-    data: { emoji: "👀", userId: AI_USER_INFO.id, createdAt: new Date() },
-  });
-}
-
 async function isAiMentionedInComment(comment: CommentData) {
   if (!comment.body) {
     return false;
@@ -308,60 +258,4 @@ async function isAiMentionedInComment(comment: CommentData) {
 
   const mentions = getMentionsFromCommentBody(comment.body);
   return mentions.map((m) => m.id).includes(AI_USER_INFO.id);
-}
-
-async function createPlaceholderComment({
-  roomId,
-  threadId,
-  feedId,
-}: CommentLocation & { feedId: string }) {
-  return await liveblocks.createComment({
-    roomId,
-    threadId,
-    data: {
-      userId: AI_USER_INFO.id,
-      metadata: { feedId },
-      body: markdownToCommentBody("Placeholder for a feed"),
-    },
-  });
-}
-
-export async function updatePlaceholderComment({
-  roomId,
-  threadId,
-  commentId,
-  feedId,
-  response,
-  referencedIssueIdsCsv,
-}: CommentLocation & {
-  feedId: string;
-  response: string;
-  referencedIssueIdsCsv?: string;
-}) {
-  const trimmed = response.trim();
-  const body =
-    trimmed.length === 0
-      ? {
-          version: 1 as const,
-          content: [
-            { type: "paragraph" as const, children: [{ text: "\u00a0" }] },
-          ],
-        }
-      : markdownToCommentBody(trimmed);
-
-  return await liveblocks.editComment({
-    roomId,
-    threadId,
-    commentId,
-    data: {
-      metadata: {
-        feedId,
-        ...(referencedIssueIdsCsv !== undefined &&
-        referencedIssueIdsCsv.length > 0
-          ? { referencedIssueIds: referencedIssueIdsCsv }
-          : {}),
-      },
-      body,
-    },
-  });
 }

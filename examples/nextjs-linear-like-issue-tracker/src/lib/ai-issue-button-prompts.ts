@@ -1,12 +1,12 @@
-import { LABELS } from "@/config";
 import {
   ISSUE_PRIORITY_IDS,
   ISSUE_PROGRESS_IDS,
-} from "@/lib/issue-storage-enums";
+  LABELS,
+} from "@/config";
 
-export type AiIssueSparkleKind = "links" | "properties" | "labels";
+export type AiIssueButtonKind = "links" | "properties" | "labels";
 
-export function buildSparkleLinksSystemPrompt(issueContextMd: string): string {
+export function buildButtonLinksSystemPrompt(issueContextMd: string): string {
   return `You help collaborators by adding **relevant external links** to an issue’s Links sidebar only.
 
 ## Rules
@@ -21,7 +21,7 @@ export function buildSparkleLinksSystemPrompt(issueContextMd: string): string {
 ${issueContextMd}`;
 }
 
-export function buildSparklePropertiesSystemPrompt(
+export function buildButtonPropertiesSystemPrompt(
   issueContextMd: string,
   assignableUsersLines: string
 ): string {
@@ -45,7 +45,6 @@ export function buildSparklePropertiesSystemPrompt(
 - If **progress** is \`none\` and the issue clearly needs triage, set it to **todo**. Do not overwrite \`progress\`, \`review\`, \`done\`, or \`progress\` (in progress) unless the snapshot is clearly wrong.
 - If **priority** is \`none\`, pick a sensible priority from the list. If it is already set, leave it unless obviously wrong.
 - Set **assignedTo** only when the title or description clearly implies a specific person and you can map them to an id from the list; otherwise omit \`assignedTo\`.
-- Do **not** change **title** or **labels** in this pass.
 - Reply with a **very short** markdown summary of what you changed (or that nothing was needed).
 
 ### Progress ids
@@ -65,17 +64,16 @@ ${assignableBlock}
 ${issueContextMd}`;
 }
 
-export function buildSparkleLabelsSystemPrompt(issueContextMd: string): string {
+export function buildButtonLabelsSystemPrompt(issueContextMd: string): string {
   const labelsValidLines = LABELS.map(
     (l) => `- \`${l.id}\` — ${l.text}`
   ).join("\n");
 
-  return `You set **labels** for this issue only (the full label set via **update_issue_properties** \`labels\` array).
+  return `You set **labels** for this issue only (the full label set via **update_issue_labels** \`labels\` array).
 
 ## Rules
 
 - Choose **label ids** from the list below that match the title and description (e.g. bug vs feature). If the current labels already fit, you may leave them unchanged.
-- Do **not** change **title**, **progress**, **priority**, or **assignedTo** in this pass—omit those keys.
 - Reply with a **very short** markdown summary.
 
 ### Valid label ids

@@ -17,8 +17,10 @@ import {
 import { Comment as CommentPrimitive } from "@liveblocks/react-ui/primitives";
 import { useFeedMessages } from "@liveblocks/react";
 import { type ComponentPropsWithoutRef, type ReactNode, useState } from "react";
-import Link from "next/link";
-import { getIssueId, getRoomId, type ProgressState } from "@/config";
+import { Mention } from "@/components/Mention";
+import { Link } from "@/components/Link";
+import NextLink from "next/link";
+import { getIssueId, getRoomId, type IssueProgressId } from "@/config";
 import { AiBrainIcon } from "@/icons/AiBrainIcon";
 import { AiCommentChevronIcon } from "@/icons/AiCommentChevronIcon";
 import { IssueThreadBranchIcon } from "@/icons/IssueThreadBranchIcon";
@@ -358,14 +360,7 @@ function StreamedComment({
           <div className="lb-comment-body whitespace-pre-wrap">
             <CommentPrimitive.Body
               body={markdownToCommentBody(response)}
-              components={{
-                Link: (props) => (
-                  <Link
-                    {...props}
-                    className="font-medium underline underline-offset-2 decoration-neutral-300 hover:decoration-neutral-500"
-                  />
-                ),
-              }}
+              components={{ Mention, Link }}
             />
           </div>
           {showReferenced ? (
@@ -400,7 +395,7 @@ function StreamedComment({
 function IssueInlinePreviewLead({
   progress,
 }: {
-  progress?: ProgressState | string;
+  progress?: IssueProgressId | string;
 }) {
   return (
     <span className="inline-flex shrink-0 items-start gap-1 -mr-0.5">
@@ -413,7 +408,7 @@ function IssueInlinePreviewLead({
 function IssueInlinePreviewProgressIcon({
   progress,
 }: {
-  progress?: ProgressState | string;
+  progress?: IssueProgressId | string;
 }) {
   const p = progress ?? "none";
   if (p === "none") {
@@ -466,14 +461,14 @@ function CreatedIssueInlineRef({ issueId }: { issueId: string }) {
   return (
     <div className="ml-1 flex items-start gap-1.5 pl-0.5">
       <IssueInlinePreviewLead progress={info.metadata.progress} />
-      <Link
+      <NextLink
         href={`/issue/${issueId}`}
         className="min-w-0 flex-1 text-left text-[13px] leading-snug text-neutral-700 hover:text-neutral-950 hover:underline underline-offset-2"
       >
         <span className="text-neutral-800 font-medium">
           {info.metadata.title}
         </span>
-      </Link>
+      </NextLink>
     </div>
   );
 }

@@ -1,20 +1,30 @@
 import { AI_USER_INFO, getUsers } from "@/database";
 import {
-  updatePlaceholderComment,
+  createAiPlaceholderComment,
+  updateAiPlaceholderComment,
   type CommentLocation,
-} from "@/lib/ai-issue-assistant";
+} from "@/lib/ai-comment-bridge";
 import {
-  createAiIssueLabelsOnlyTools,
-  createAiIssueLinksOnlyTools,
-  createAiIssuePropertiesOnlyTools,
+  writeFeedComplete,
+  writeFeedStatus,
+} from "@/lib/ai-feed-messages";
+import {
+  hideAiPresence,
+  leaveAiReactionOnComment,
+  showAiPresence,
+} from "@/lib/ai-remote-presence";
+import {
+  createButtonLabelsTools,
+  createButtonLinksTools,
+  createButtonPropertiesTools,
   type AiIssueAssistantToolRunState,
 } from "@/lib/ai-issue-assistant-tools";
 import {
-  buildSparkleLabelsSystemPrompt,
-  buildSparkleLinksSystemPrompt,
-  buildSparklePropertiesSystemPrompt,
-  type AiIssueSparkleKind,
-} from "@/lib/ai-issue-sparkle-prompts";
+  buildButtonLabelsSystemPrompt,
+  buildButtonLinksSystemPrompt,
+  buildButtonPropertiesSystemPrompt,
+  type AiIssueButtonKind,
+} from "@/lib/ai-issue-button-prompts";
 import { buildIssueContextMarkdown } from "@/lib/issue-context-markdown";
 import { getRoomId } from "@/config";
 import { liveblocks } from "@/liveblocks.server.config";
@@ -23,7 +33,7 @@ import { anthropic, AnthropicLanguageModelOptions } from "@ai-sdk/anthropic";
 import { ModelMessage, stepCountIs, streamText } from "ai";
 import { nanoid } from "nanoid";
 
-export type AiIssueSparkleRunContext = {
+export type AiIssueButtonRunContext = {
   roomId: string;
   feedId: string;
   placeholderCommentLocation: CommentLocation;
@@ -37,7 +47,7 @@ function isAllowedRequester(userId: string): boolean {
   return getUsers().some((u) => u.id === userId);
 }
 
-function threadStubMarkdown(kind: AiIssueSparkleKind): string {
+function threadStubMarkdown(kind: AiIssueButtonKind): string {
   switch (kind) {
     case "links":
       return "**AI: add links** — find relevant https URLs for this issue.";
@@ -48,39 +58,13 @@ function threadStubMarkdown(kind: AiIssueSparkleKind): string {
   }
 }
 
-async function showPresence({ roomId }: CommentLocation) {
-  return liveblocks.setPresence(roomId, {
-    userId: AI_USER_INFO.id,
-    userInfo: { ...AI_USER_INFO.info },
-    data: { editingTypes: [] },
-    ttl: 3599,
-  });
-}
-
-async function hidePresence({ roomId }: CommentLocation) {
-  return liveblocks.setPresence(roomId, {
-    ttl: 2,
-    userId: AI_USER_INFO.id,
-    userInfo: { ...AI_USER_INFO.info },
-    data: { editingTypes: [] },
-  });
-}
-
-async function leaveReactionOnComment(loc: CommentLocation) {
-  return liveblocks.addCommentReaction({
-    roomId: loc.roomId,
-    threadId: loc.threadId,
-    commentId: loc.commentId,
-    data: { emoji: "👀", userId: AI_USER_INFO.id, createdAt: new Date() },
-  });
-}
-
-export async function prepareAiIssueSparkle(input: {
+// Sets up context for AI buttons on page
+export async function prepareAiIssueButton(input: {
   issueId: string;
   requestedByUserId: string;
-  kind: AiIssueSparkleKind;
+  kind: AiIssueButtonKind;
 }): Promise<
-  | { ok: true; ctx: AiIssueSparkleRunContext }
+  | { ok: true; ctx: AiIssueButtonRunContext }
   | { ok: false; error: string }
 > {
   const { issueId, requestedByUserId, kind } = input;
@@ -107,16 +91,12 @@ export async function prepareAiIssueSparkle(input: {
       return { ok: false, error: "Thread created without first comment." };
     }
 
-    const feedId = `issue-sparkle-${kind}-${nanoid(10)}`;
+    const feedId = `issue-button-${kind}-${nanoid(10)}`;
 
-    const placeholder = await liveblocks.createComment({
+    const placeholder = await createAiPlaceholderComment({
       roomId,
       threadId: thread.id,
-      data: {
-        userId: AI_USER_INFO.id,
-        metadata: { feedId },
-        body: markdownToCommentBody("Placeholder for a feed"),
-      },
+      feedId,
     });
 
     const placeholderCommentLocation: CommentLocation = {
@@ -136,24 +116,17 @@ export async function prepareAiIssueSparkle(input: {
         roomId,
         feedId,
         metadata: {
-          type: "ai-issue-sparkle",
+          type: "ai-issue-button",
           kind,
           threadId: thread.id,
           commentId: placeholder.id,
         },
       }),
-      showPresence(presenceCommentLocation),
-      leaveReactionOnComment(presenceCommentLocation),
+      showAiPresence(roomId),
+      leaveAiReactionOnComment(presenceCommentLocation),
     ]);
 
-    await liveblocks.createFeedMessage({
-      roomId,
-      feedId,
-      data: {
-        stage: "status",
-        label: "Starting…",
-      },
-    });
+    await writeFeedStatus({ roomId, feedId }, "Starting…");
 
     return {
       ok: true,
@@ -169,21 +142,12 @@ export async function prepareAiIssueSparkle(input: {
   }
 }
 
-async function sendSparkleStatusMessage(
-  roomId: string,
-  feedId: string,
-  label: string
-) {
-  await liveblocks.createFeedMessage({
-    roomId,
-    feedId,
-    data: { stage: "status", label },
-  });
-}
-
 function statusLabelsForToolInput(toolName: string, input: unknown): string[] {
   if (toolName === "append_issue_links") {
     return ["Adding links…"];
+  }
+  if (toolName === "update_issue_labels") {
+    return ["Updating labels…"];
   }
   if (toolName === "update_issue_properties") {
     if (!input || typeof input !== "object") {
@@ -191,11 +155,9 @@ function statusLabelsForToolInput(toolName: string, input: unknown): string[] {
     }
     const o = input as Record<string, unknown>;
     const ordered: [string, string][] = [
-      ["title", "Updating title…"],
       ["assignedTo", "Assigning user…"],
       ["priority", "Updating priority…"],
       ["progress", "Updating progress…"],
-      ["labels", "Updating labels…"],
     ];
     const out: string[] = [];
     for (const [key, label] of ordered) {
@@ -208,9 +170,9 @@ function statusLabelsForToolInput(toolName: string, input: unknown): string[] {
   return [`Running ${toolName}…`];
 }
 
-async function streamSparkleToFeed(
-  ctx: AiIssueSparkleRunContext,
-  kind: AiIssueSparkleKind
+async function streamButtonToFeed(
+  ctx: AiIssueButtonRunContext,
+  kind: AiIssueButtonKind
 ) {
   const { roomId, feedId } = ctx;
 
@@ -232,13 +194,13 @@ async function streamSparkleToFeed(
 
   const system =
     kind === "links"
-      ? buildSparkleLinksSystemPrompt(issueContextMd)
+      ? buildButtonLinksSystemPrompt(issueContextMd)
       : kind === "properties"
-        ? buildSparklePropertiesSystemPrompt(
+        ? buildButtonPropertiesSystemPrompt(
             issueContextMd,
             assignableUsersLines
           )
-        : buildSparkleLabelsSystemPrompt(issueContextMd);
+        : buildButtonLabelsSystemPrompt(issueContextMd);
 
   const userMessage: ModelMessage =
     kind === "links"
@@ -261,10 +223,10 @@ async function streamSparkleToFeed(
 
   const tools =
     kind === "links"
-      ? createAiIssueLinksOnlyTools(roomId, toolRunState)
+      ? createButtonLinksTools(roomId, toolRunState)
       : kind === "properties"
-        ? createAiIssuePropertiesOnlyTools(roomId, toolRunState)
-        : createAiIssueLabelsOnlyTools(roomId, toolRunState);
+        ? createButtonPropertiesTools(roomId, toolRunState)
+        : createButtonLabelsTools(roomId, toolRunState);
 
   const result = streamText({
     // Haiku for cost/latency vs Sonnet; extended thinking kept so reasoning streams into comments.
@@ -294,13 +256,13 @@ async function streamSparkleToFeed(
       totalReasoning += part.text;
       if (!sentThinking) {
         sentThinking = true;
-        await sendSparkleStatusMessage(roomId, feedId, "Thinking…");
+        await writeFeedStatus({ roomId, feedId }, "Thinking…");
       }
     } else if (part.type === "text-delta") {
       totalText += part.text;
       if (!sentWriting) {
         sentWriting = true;
-        await sendSparkleStatusMessage(roomId, feedId, "Writing…");
+        await writeFeedStatus({ roomId, feedId }, "Writing…");
       }
     } else if (part.type === "tool-result") {
       if (reportedToolCalls.has(part.toolCallId)) {
@@ -309,25 +271,23 @@ async function streamSparkleToFeed(
       reportedToolCalls.add(part.toolCallId);
       const labels = statusLabelsForToolInput(part.toolName, part.input);
       for (const label of labels) {
-        await sendSparkleStatusMessage(roomId, feedId, label);
+        await writeFeedStatus({ roomId, feedId }, label);
       }
     }
   }
 
   const thinkingEndedAt = performance.now();
 
-  await sendSparkleStatusMessage(roomId, feedId, "Done…");
+  await writeFeedStatus({ roomId, feedId }, "Done…");
 
-  await liveblocks.createFeedMessage({
-    roomId,
-    feedId,
-    data: {
-      stage: "complete",
+  await writeFeedComplete(
+    { roomId, feedId },
+    {
       response: totalText,
       reasoning: totalReasoning,
       thinkingTime: (thinkingEndedAt - thinkingStartedAt) / 1000,
-    },
-  });
+    }
+  );
 
   return {
     response: totalText,
@@ -337,9 +297,10 @@ async function streamSparkleToFeed(
   };
 }
 
-export async function runAiIssueSparkleStream(
-  ctx: AiIssueSparkleRunContext,
-  kind: AiIssueSparkleKind
+// Main entry point for the button
+export async function runAiIssueButtonStream(
+  ctx: AiIssueButtonRunContext,
+  kind: AiIssueButtonKind
 ): Promise<{ status: number; error?: string }> {
   try {
     const {
@@ -347,7 +308,7 @@ export async function runAiIssueSparkleStream(
       referencedIssueIdsCsv,
       issuePropertiesUpdated,
       issueLinksUpdated,
-    } = await streamSparkleToFeed(ctx, kind);
+    } = await streamButtonToFeed(ctx, kind);
 
     const textOut = response !== undefined && response.trim().length > 0;
     const hasOutput =
@@ -356,8 +317,8 @@ export async function runAiIssueSparkleStream(
         : issuePropertiesUpdated || textOut;
 
     if (!hasOutput) {
-      await hidePresence(ctx.presenceCommentLocation).catch(() => undefined);
-      await updatePlaceholderComment({
+      await hideAiPresence(ctx.roomId).catch(() => undefined);
+      await updateAiPlaceholderComment({
         ...ctx.placeholderCommentLocation,
         feedId: ctx.feedId,
         response: "_Nothing was updated._",
@@ -365,7 +326,7 @@ export async function runAiIssueSparkleStream(
       return { status: 500, error: "No output" };
     }
 
-    await updatePlaceholderComment({
+    await updateAiPlaceholderComment({
       ...ctx.placeholderCommentLocation,
       feedId: ctx.feedId,
       response,
@@ -373,13 +334,13 @@ export async function runAiIssueSparkleStream(
     });
 
     await new Promise((resolve) => setTimeout(resolve, 2000));
-    await hidePresence(ctx.presenceCommentLocation);
+    await hideAiPresence(ctx.roomId);
 
     return { status: 200 };
   } catch (err) {
-    await hidePresence(ctx.presenceCommentLocation).catch(() => undefined);
+    await hideAiPresence(ctx.roomId).catch(() => undefined);
     const msg = `${err}`;
-    await updatePlaceholderComment({
+    await updateAiPlaceholderComment({
       ...ctx.placeholderCommentLocation,
       feedId: ctx.feedId,
       response: `_Something went wrong: ${msg}_`,

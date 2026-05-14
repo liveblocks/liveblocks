@@ -2,15 +2,11 @@ import { liveblocks } from "@/liveblocks.server.config";
 import { AI_EDITING_TYPE } from "@/lib/ai-editing-presence-types";
 import { setAiRemotePresenceEditing } from "@/lib/ai-remote-presence";
 
-/** Same cap as `create_issue` links in `ai-issue-assistant-tools.ts`. */
 const MAX_ISSUE_LINKS = 30;
 
 const MAX_URL_LENGTH = 4000;
 
-/**
- * Appends URLs to the issue’s **Links** LiveList (deduped, order preserved for
- * new entries). Does not update room metadata (links are storage-only here).
- */
+// Add to list of links
 export async function appendIssueLinks(
   roomId: string,
   urls: string[]

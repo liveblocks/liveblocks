@@ -1,15 +1,11 @@
 import { withLexicalDocument } from "@liveblocks/node-lexical";
+import { LABELS } from "@/config";
 import { liveblocks } from "@/liveblocks.server.config";
 import { ISSUE_LEXICAL_NODES } from "@/lib/issue-lexical-nodes";
 
-/** Display names — keep in sync with `src/config.tsx` `LABELS`. */
-const LABEL_DISPLAY: Record<string, string> = {
-  feature: "Feature",
-  bug: "Bug",
-  engineering: "Engineering",
-  design: "Design",
-  product: "Product",
-};
+const LABEL_DISPLAY: Record<string, string> = Object.fromEntries(
+  LABELS.map((l) => [l.id, l.text])
+);
 
 type RoomMetadataFields = {
   issueId?: string;
@@ -43,10 +39,7 @@ function formatLabelIds(ids: string[]): string {
     .join("\n");
 }
 
-/**
- * Markdown snapshot of the issue: room metadata, storage fields, labels,
- * links, and the Lexical body via {@link withLexicalDocument} `toMarkdown()`.
- */
+// Markdown snapshot of the issue: room metadata, storage fields, labels,
 export async function buildIssueContextMarkdown(roomId: string): Promise<string> {
   let storage: StorageJson;
   try {
@@ -80,7 +73,7 @@ export async function buildIssueContextMarkdown(roomId: string): Promise<string>
       }
     );
   } catch {
-    // Yjs / Lexical unavailable for this room
+    // Lexical unavailable for this room, should not happen
   }
 
   const labels = Array.isArray(storage.labels) ? storage.labels : [];

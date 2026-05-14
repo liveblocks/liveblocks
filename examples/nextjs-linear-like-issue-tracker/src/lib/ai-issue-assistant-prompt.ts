@@ -1,30 +1,18 @@
-import { LABELS } from "@/config";
 import {
   ISSUE_PRIORITY_IDS,
   ISSUE_PROGRESS_IDS,
-} from "@/lib/issue-storage-enums";
+  LABELS,
+  PRIORITY_STATES,
+  PROGRESS_STATES,
+} from "@/config";
 
-const ISSUE_PROGRESS_PROMPT_LABEL: Record<
-  (typeof ISSUE_PROGRESS_IDS)[number],
-  string
-> = {
-  none: "No progress",
-  todo: "Todo",
-  progress: "In progress",
-  review: "In review",
-  done: "Done",
-};
+const ISSUE_PROGRESS_PROMPT_LABEL = Object.fromEntries(
+  PROGRESS_STATES.map((s) => [s.id, s.text])
+) as Record<(typeof ISSUE_PROGRESS_IDS)[number], string>;
 
-const ISSUE_PRIORITY_PROMPT_LABEL: Record<
-  (typeof ISSUE_PRIORITY_IDS)[number],
-  string
-> = {
-  none: "No priority",
-  urgent: "Urgent",
-  high: "High",
-  medium: "Medium",
-  low: "Low",
-};
+const ISSUE_PRIORITY_PROMPT_LABEL = Object.fromEntries(
+  PRIORITY_STATES.map((s) => [s.id, s.text])
+) as Record<(typeof ISSUE_PRIORITY_IDS)[number], string>;
 
 export type AiIssueAssistantSystemPromptInput = {
   aiUserId: string;
@@ -72,7 +60,7 @@ export function buildAiIssueAssistantSystemPrompt({
 - You **can** set **assignee**: call **update_issue_properties** with \`assignedTo\`. Use \`none\` to clear. Otherwise use an exact id from the list below. Thread messages are prefixed with \`userId at …\` — use that id when the user says "me", "assign to me", or refers to the author of a message.
 - You may update other **issue fields** (title, progress, priority, labels) with **update_issue_properties**. Only include keys you are changing. For \`progress\`, \`priority\`, and \`labels\`, use **exact ids** from **Valid ids (tools)** below.
 - You **can** add URLs to this issue’s **Links** sidebar (not the description): call **append_issue_links** with plain \`https://…\` URLs. Duplicates are skipped; the list is capped at 30 links.
-- You **can** list other issues with **list_recent_issues** (newest first; optional \`filter\` on title or id within that page). Use nanoids from results (or context) with **link_issues_in_reply** and \`issueIds\`: they are stored in \`referencedIssueIds\` metadata (comma-separated, max 10); multiple calls merge (deduped). **create_issue** prepends the new issue id to the same \`referencedIssueIds\` for inline previews—do **not** pass that same nanoid again in **link_issues_in_reply** (redundant; merge still dedupes). Never include this thread’s issue id in **link_issues_in_reply**.
+- You **can** list other issues with **list_recent_issues** — it returns the 20 most recent issues (newest first) and takes no parameters. Use nanoids from those results (or context) with **link_issues_in_reply** and \`issueIds\`: they are stored in \`referencedIssueIds\` metadata (comma-separated, max 10); multiple calls merge (deduped). **create_issue** prepends the new issue id to the same \`referencedIssueIds\` for inline previews—do **not** pass that same nanoid again in **link_issues_in_reply** (redundant; merge still dedupes). Never include this thread’s issue id in **link_issues_in_reply**.
 
 **Assignable users** — use the exact \`id\` for \`assignedTo\` (create_issue or update_issue_properties), or \`none\` to clear:
 

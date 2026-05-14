@@ -1,36 +1,30 @@
 import "@/liveblocks.config";
 import { nanoid } from "nanoid";
 import { LiveList, LiveObject, toPlainLson } from "@liveblocks/client";
-import { getRoomId, type Metadata } from "@/config";
-import { clearAiPresenceInRoom } from "@/lib/ai-remote-presence";
+import {
+  getRoomId,
+  type IssueLabelId,
+  type IssuePriorityId,
+  type IssueProgressId,
+  type Metadata,
+} from "@/config";
+import { hideAiPresence } from "@/lib/ai-remote-presence";
 import { applyIssueDescriptionMarkdown } from "@/lib/apply-issue-description-markdown";
-import type {
-  IssueLabelId,
-  IssuePriorityId,
-  IssueProgressId,
-} from "@/lib/issue-storage-enums";
 import { liveblocks } from "@/liveblocks.server.config";
 
 export type CreateIssueRoomOptions = {
-  /** Initial issue description as GitHub-flavored markdown (Lexical body). */
   descriptionMarkdown?: string;
   labels?: IssueLabelId[];
-  /** External URLs for the issue’s Links section (plain strings, like the UI). */
   links?: string[];
   progress?: IssueProgressId;
   priority?: IssuePriorityId;
   assignedTo?: string | "none";
 };
 
-/**
- * Creates a new issue room (used by the AI tool and by the "New issue" action).
- */
 export async function createIssueRoomForAi(
   title: string,
   options?: CreateIssueRoomOptions
-): Promise<{
-  issueId: string;
-}> {
+): Promise<{ issueId: string }> {
   const issueId = nanoid();
   const roomId = getRoomId(issueId);
   const trimmed = title.trim();
@@ -60,18 +54,13 @@ export async function createIssueRoomForAi(
 
   const initialStorage: LiveObject<Liveblocks["Storage"]> = new LiveObject({
     meta: new LiveObject({ title: displayTitle }),
-    properties: new LiveObject({
-      progress,
-      priority,
-      assignedTo,
-    }),
+    properties: new LiveObject({ progress, priority, assignedTo }),
     labels: new LiveList(labelIds),
     links: new LiveList(linkStrs),
   });
 
   await liveblocks.initializeStorageDocument(
     roomId,
-    // Same cast as createIssue in actions/liveblocks.ts — storage JSON shape
     toPlainLson(initialStorage) as any
   );
 
@@ -80,7 +69,7 @@ export async function createIssueRoomForAi(
     await applyIssueDescriptionMarkdown(roomId, md, "replace");
   }
 
-  await clearAiPresenceInRoom(roomId);
+  await hideAiPresence(roomId);
 
   return { issueId };
 }

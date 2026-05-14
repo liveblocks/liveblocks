@@ -4,7 +4,7 @@ import { Editor } from "@/components/Editor";
 import { IssueProperties } from "@/components/IssueProperties";
 import { IssueLabels } from "@/components/IssueLabels";
 import { IssueActions } from "@/components/IssueActions";
-import { IssueAiSparkleButton } from "@/components/IssueAiSparkleButton";
+import { IssueAiButton } from "@/components/IssueAiButton";
 import { liveblocks } from "@/liveblocks.server.config";
 import { withLexicalDocument } from "@liveblocks/node-lexical";
 import { getRoomId } from "@/config";
@@ -114,7 +114,7 @@ export async function Issue({ issueId }: { issueId: string }) {
             <div>
               <div className="text-xs font-medium text-neutral-600 mb-2 flex h-10 items-center justify-between gap-1">
                 <span>Properties</span>
-                <IssueAiSparkleButton kind="properties" issueId={issueId} />
+                <IssueAiButton kind="properties" issueId={issueId} />
               </div>
               <IssueProperties storageFallback={storage} />
             </div>
@@ -122,7 +122,7 @@ export async function Issue({ issueId }: { issueId: string }) {
             <div>
               <div className="text-xs font-medium text-neutral-600 mb-0 flex h-10 items-center justify-between gap-1">
                 <span>Labels</span>
-                <IssueAiSparkleButton kind="labels" issueId={issueId} />
+                <IssueAiButton kind="labels" issueId={issueId} />
               </div>
               <IssueLabels storageFallback={storage} />
             </div>

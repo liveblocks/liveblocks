@@ -1,36 +1,34 @@
+import {
+  getIssueId,
+  type IssueLabelId,
+  type IssuePriorityId,
+  type IssueProgressId,
+} from "@/config";
+import type { ImmutableStorage } from "@/liveblocks.config";
 import { liveblocks } from "@/liveblocks.server.config";
-import type { IssuePropertyUpdates } from "@/lib/issue-storage-enums";
+import {
+  AI_EDITING_TYPE,
+  type AiEditingPresenceType,
+} from "@/lib/ai-editing-presence-types";
 import { setAiRemotePresenceEditing } from "@/lib/ai-remote-presence";
-import { AI_EDITING_TYPE } from "@/lib/ai-editing-presence-types";
 
-/** Same prefix as `src/config.tsx` — used only to derive `issueId` for room metadata. */
-const ROOM_PREFIX = "liveblocks:examples:nextjs-project-manager-";
-
-function issueIdFromRoomId(roomId: string): string {
-  return roomId.startsWith(ROOM_PREFIX)
-    ? roomId.slice(ROOM_PREFIX.length)
-    : roomId;
-}
-
-type StorageJson = {
-  meta: { title: string };
-  properties: {
-    progress: string;
-    priority: string;
-    assignedTo: string;
-  };
-  labels: string[];
+export type IssuePropertyUpdates = {
+  title?: string;
+  progress?: IssueProgressId;
+  priority?: IssuePriorityId;
+  assignedTo?: string | "none";
+  labels?: IssueLabelId[];
 };
 
 async function syncRoomMetadataFromStorage(roomId: string): Promise<void> {
   const doc = (await liveblocks.getStorageDocument(
     roomId,
     "json"
-  )) as unknown as StorageJson;
+  )) as unknown as ImmutableStorage;
 
   await liveblocks.updateRoom(roomId, {
     metadata: {
-      issueId: issueIdFromRoomId(roomId),
+      issueId: getIssueId(roomId),
       title: doc.meta.title,
       progress: doc.properties.progress,
       priority: doc.properties.priority,
@@ -40,18 +38,10 @@ async function syncRoomMetadataFromStorage(roomId: string): Promise<void> {
   });
 }
 
-/**
- * Updates issue **storage** (title, properties, labels) from the server using
- * `liveblocks.mutateStorage`, then mirrors those fields into **room metadata**
- * (for lists / `useRoomInfo`), matching `src/app/api/storage-webhook/route.ts`.
- *
- * `editingTypes` is left set after this returns; `hidePresence` at the end of
- * an AI run clears it.
- */
 function editingTypesFromPropertyUpdates(
   updates: IssuePropertyUpdates
-): string[] {
-  const types: string[] = [];
+): AiEditingPresenceType[] {
+  const types: AiEditingPresenceType[] = [];
   if (updates.title !== undefined) types.push(AI_EDITING_TYPE.TITLE);
   if (updates.progress !== undefined) types.push(AI_EDITING_TYPE.PROGRESS);
   if (updates.priority !== undefined) types.push(AI_EDITING_TYPE.PRIORITY);
@@ -62,6 +52,7 @@ function editingTypesFromPropertyUpdates(
   return types;
 }
 
+// Updates storage values and sets presence
 export async function applyIssuePropertyUpdates(
   roomId: string,
   updates: IssuePropertyUpdates
@@ -71,8 +62,10 @@ export async function applyIssuePropertyUpdates(
     return;
   }
 
-  const editingTypes = editingTypesFromPropertyUpdates(updates);
-  await setAiRemotePresenceEditing(roomId, editingTypes);
+  await setAiRemotePresenceEditing(
+    roomId,
+    editingTypesFromPropertyUpdates(updates)
+  );
 
   await liveblocks.mutateStorage(roomId, ({ root }) => {
     if (updates.title !== undefined) {

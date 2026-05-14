@@ -7,10 +7,10 @@ import { RoomWithMetadata } from "@/config";
 import { liveblocks } from "@/liveblocks.server.config";
 import { createIssueRoomForAi } from "@/lib/create-issue-room";
 import {
-  prepareAiIssueSparkle,
-  runAiIssueSparkleStream,
-} from "@/lib/ai-issue-sparkle-assistant";
-import type { AiIssueSparkleKind } from "@/lib/ai-issue-sparkle-prompts";
+  prepareAiIssueButton,
+  runAiIssueButtonStream,
+} from "@/lib/ai-issue-button";
+import type { AiIssueButtonKind } from "@/lib/ai-issue-button-prompts";
 
 export async function createIssue() {
   const { issueId } = await createIssueRoomForAi("Untitled");
@@ -35,12 +35,12 @@ export async function deleteRoom(roomId: string) {
   redirect("/");
 }
 
-export async function runIssueSparkleAi(
-  kind: AiIssueSparkleKind,
+export async function runIssueButtonAi(
+  kind: AiIssueButtonKind,
   issueId: string,
   requestedByUserId: string
 ): Promise<{ ok: true; feedId: string } | { ok: false; error: string }> {
-  const prep = await prepareAiIssueSparkle({
+  const prep = await prepareAiIssueButton({
     issueId,
     requestedByUserId,
     kind,
@@ -50,14 +50,14 @@ export async function runIssueSparkleAi(
   }
 
   after(() => {
-    void runAiIssueSparkleStream(prep.ctx, kind).then(
+    void runAiIssueButtonStream(prep.ctx, kind).then(
       (result) => {
         if (result.error) {
-          console.error("[issue-sparkle]", kind, result.error);
+          console.error("[issue-button]", kind, result.error);
         }
       },
       (err) => {
-        console.error("[issue-sparkle]", kind, err);
+        console.error("[issue-button]", kind, err);
       }
     );
   });
