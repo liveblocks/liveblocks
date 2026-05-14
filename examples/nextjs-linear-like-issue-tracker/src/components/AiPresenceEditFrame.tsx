@@ -7,18 +7,11 @@ import { SparklesIcon } from "@/icons/SparklesIcon";
 import type { AiEditingPresenceType } from "@/lib/ai-editing-presence-types";
 
 type Props = {
-  /** Must match strings the server puts in AI presence `editingTypes`. */
   editingType: AiEditingPresenceType;
   children: ReactNode;
 };
 
-/**
- * When the AI’s server presence lists this `editingType` in `editingTypes`,
- * draws a labeled outline so collaborators see what the assistant is editing.
- *
- * The DOM around `children` stays identical whether the chrome is visible or not,
- * so nested editors (e.g. Lexical) are not remounted when presence toggles.
- */
+// Draws an AI presence box if the `editingType` is help in AI presence
 export function AiPresenceEditFrame({ editingType, children }: Props) {
   const selector = useCallback(
     (others: readonly { id: string; presence: { editingTypes?: string[] } }[]) => {

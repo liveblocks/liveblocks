@@ -91,10 +91,10 @@ export function IssueAiButton({
         className={`shrink-0 rounded p-1 text-indigo-600 transition-colors hover:bg-indigo-50 disabled:pointer-events-none disabled:opacity-40 ${showSpinner ? "pointer-events-none cursor-wait" : ""}`}
       >
         <span className="sr-only">
-          {showSpinner ? "Working…" : titles[kind]}
+          {showSpinner ? "Thinking…" : titles[kind]}
         </span>
         {showSpinner ? (
-          <SpinnerIcon className="h-3.5 w-3.5 animate-spin" />
+          <SpinnerIcon className="h-3.5 w-3.5 animate-spin text-neutral-400" />
         ) : (
           <SparklesIcon className="h-3.5 w-3.5" />
         )}
