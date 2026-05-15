@@ -495,11 +495,91 @@ body {
     white-space: nowrap;
   }
 
+  .flowchart-toolbar-item-comment.lb-comment-pin:focus-visible {
+    outline: 2px solid var(--flowchart-accent);
+    outline-offset: 2px;
+  }
+
   .flowchart-toolbar-shape-button:focus-visible {
     outline: 2px solid var(--flowchart-accent);
     outline-offset: 3px;
     border-radius: 4px;
   }
+}
+
+.flowchart-comments {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  isolation: isolate;
+}
+
+.flowchart-flow-comment-pin-wrap {
+  .lb-comment-pin {
+    cursor: grab;
+  }
+
+  &:active .lb-comment-pin {
+    cursor: grabbing;
+  }
+}
+
+.flowchart-thread-composer-anchor {
+  pointer-events: auto;
+  z-index: 4;
+}
+
+.flowchart-ai-comment-summary {
+  display: flex;
+  align-items: baseline;
+  cursor: pointer;
+  margin-bottom: 0.25rem;
+  list-style: none;
+}
+
+.flowchart-ai-comment-summary-icon {
+  flex-shrink: 0;
+  margin-right: 0.25rem;
+}
+
+.flowchart-ai-comment-summary-chevron {
+  flex-shrink: 0;
+  margin: 0 0.25rem;
+}
+
+.flowchart-ai-comment-summary-chevron-muted {
+  opacity: 0.6;
+}
+
+.flowchart-ai-comment-preview {
+  opacity: 0.4;
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.875rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.flowchart-ai-comment-expanded {
+  border: 1px solid rgb(107 114 128 / 10%);
+  border-radius: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.flowchart-ai-comment-thought-time {
+  opacity: 0.5;
+  font-size: 0.875rem;
+}
+
+.flowchart-ai-comment-reasoning {
+  margin-bottom: 0.75rem;
+}
+
+.flowchart-ai-comment-response {
+  white-space: pre-wrap;
 }
 
 .flowchart-block-drag-preview {

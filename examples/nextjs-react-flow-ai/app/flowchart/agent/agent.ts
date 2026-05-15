@@ -1,5 +1,3 @@
-"use server";
-
 import { openai } from "@ai-sdk/openai";
 import { Liveblocks } from "@liveblocks/node";
 import { mutateFlow } from "@liveblocks/react-flow/node";
@@ -7,7 +5,7 @@ import { generateText, stepCountIs, tool } from "ai";
 import dedent from "dedent";
 import { nanoid } from "nanoid";
 import { z } from "zod";
-import { createAgentUser } from "../api/database";
+import { createAgentUser } from "../../api/database";
 import {
   BLOCK_COLORS,
   BLOCK_SHAPES,
@@ -29,7 +27,7 @@ import {
   type BlockColor,
   type Bounds,
   type Point,
-} from "./shared";
+} from "../shared";
 
 const PRESENCE_PROGRESS_TTL_SECONDS = 20;
 const PRESENCE_DONE_TTL_SECONDS = 2;
@@ -63,7 +61,15 @@ const edgeDataSchema = z.object({
   label: z.string().optional(),
 });
 
-async function runFlowchartAgent(roomId: string, prompt: string) {
+export type RunFlowchartAgentOptions = {
+  onProgress?: (message: string) => void | Promise<void>;
+};
+
+export async function runFlowchartAgent(
+  roomId: string,
+  prompt: string,
+  options?: RunFlowchartAgentOptions
+): Promise<{ text: string }> {
   const agentUser = createAgentUser();
   let lastCursor: Point | null = null;
   let lastThinking: boolean = true;
@@ -107,6 +113,8 @@ async function runFlowchartAgent(roomId: string, prompt: string) {
     return run;
   };
 
+  let agentText = "";
+
   await mutateFlow<FlowchartNode, FlowchartEdge>(
     {
       client: liveblocks,
@@ -134,7 +142,9 @@ async function runFlowchartAgent(roomId: string, prompt: string) {
       }
 
       try {
-        await generateText({
+        void options?.onProgress?.("Editing flowchart…");
+
+        const result = await generateText({
           model: openai("gpt-5.4-nano"),
           system: dedent`
           You edit a live collaborative React Flow flowchart.
@@ -566,8 +576,13 @@ async function runFlowchartAgent(roomId: string, prompt: string) {
             }),
           },
           stopWhen: stepCountIs(30),
-          experimental_onToolCallStart: stopThinkingInterval,
+          experimental_onToolCallStart: () => {
+            stopThinkingInterval();
+            void options?.onProgress?.("Editing flowchart…");
+          },
         });
+
+        agentText = result.text;
       } finally {
         stopThinkingInterval();
       }
@@ -575,32 +590,6 @@ async function runFlowchartAgent(roomId: string, prompt: string) {
   );
 
   await setPresence({ ttl: PRESENCE_DONE_TTL_SECONDS });
-}
 
-type FlowchartAgentActionState = { ok: true } | null;
-
-export async function submitFlowchartAgentAction(
-  _: FlowchartAgentActionState,
-  formData: FormData
-): Promise<FlowchartAgentActionState> {
-  if (!process.env.LIVEBLOCKS_SECRET_KEY || !process.env.OPENAI_API_KEY) {
-    return null;
-  }
-
-  const roomId = String(formData.get("roomId") ?? "").trim();
-  const prompt = String(formData.get("prompt") ?? "").trim();
-
-  if (roomId === "" || prompt === "") {
-    return null;
-  }
-
-  try {
-    await runFlowchartAgent(roomId, prompt);
-
-    return { ok: true };
-  } catch (error) {
-    console.error(error);
-
-    return null;
-  }
+  return { text: agentText };
 }

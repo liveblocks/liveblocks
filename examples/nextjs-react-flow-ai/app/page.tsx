@@ -29,6 +29,17 @@ export default function Page() {
         const users = await response.json();
         return users;
       }}
+      resolveMentionSuggestions={async ({ text }) => {
+        const response = await fetch(
+          `/api/users/search?text=${encodeURIComponent(text)}`
+        );
+
+        if (!response.ok) {
+          throw new Error("Problem resolving mention suggestions");
+        }
+
+        return await response.json();
+      }}
     >
       <RoomProvider id={roomId}>
         <ClientSideSuspense fallback={<Loading />}>
