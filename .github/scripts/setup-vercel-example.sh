@@ -276,39 +276,11 @@ resolve_vercel_project_dashboard_url() {
   fi
 }
 
-create_vercel_project() {
-  local create_vercel_project_body
+assert_no_existing_vercel_project() {
   local existing_vercel_project_response_file
   local existing_vercel_project_status
-  local framework_json
-  local vercel_project_response
 
-  if [[ -n "${framework}" ]]; then
-    framework_json="$(jq -n --arg framework "${framework}" '$framework')"
-  else
-    framework_json="null"
-  fi
-
-  create_vercel_project_body="$(
-    jq -n \
-      --arg name "${vercel_project_name}" \
-      --arg root_directory "${root_directory}" \
-      --arg repository "${GITHUB_REPOSITORY}" \
-      --argjson framework "${framework_json}" \
-      '{
-        name: $name,
-        buildCommand: "npm run build",
-        installCommand: "npm install",
-        rootDirectory: $root_directory,
-        framework: $framework,
-        gitRepository: {
-          type: "github",
-          repo: $repository
-        }
-      }'
-  )"
-
-  # Source: https://vercel.com/docs/rest-api/projects/create-a-new-project
+  # Source: https://vercel.com/docs/rest-api/projects/find-a-project-by-id-or-name
   existing_vercel_project_response_file="$(create_response_file)"
   if ! existing_vercel_project_status="$(
     curl_vercel \
@@ -322,34 +294,19 @@ create_vercel_project() {
 
   if [[ "${existing_vercel_project_status}" == "200" ]]; then
     duplicate_setup_error "Example '${example_name}' already exists: Vercel project '${vercel_project_name}' is already present."
-  elif [[ "${existing_vercel_project_status}" == "404" ]]; then
-    vercel_project_response="$(
-      vercel_request \
-        "Creating Vercel project" \
-        "POST" \
-        "$(vercel_url "/v11/projects")" \
-        "${create_vercel_project_body}"
-    )"
-  else
+  fi
+
+  if [[ "${existing_vercel_project_status}" != "404" ]]; then
     err "Looking up existing Vercel project failed with HTTP ${existing_vercel_project_status}"
     cat "${existing_vercel_project_response_file}" >&2
     exit 1
   fi
-
-  vercel_project_id="$(jq -r ".id // empty" <<<"${vercel_project_response}")"
-
-  if [[ -z "${vercel_project_id}" ]]; then
-    err "Vercel project response did not include an ID"
-    echo "${vercel_project_response}" >&2
-    exit 1
-  fi
 }
 
-create_liveblocks_project() {
+assert_no_existing_liveblocks_project() {
   local liveblocks_cursor=""
   local liveblocks_projects_response
   local liveblocks_projects_url
-  local liveblocks_project_response
 
   # Source: https://liveblocks.io/docs/api-reference/rest-api-endpoints#Management
   while true; do
@@ -380,6 +337,67 @@ create_liveblocks_project() {
 
     [[ -z "${liveblocks_cursor}" ]] && break
   done
+}
+
+preflight_setup() {
+  assert_no_existing_vercel_project
+  assert_no_existing_liveblocks_project
+}
+
+create_vercel_project() {
+  local create_vercel_project_body
+  local framework_json
+  local vercel_project_response
+
+  if [[ -n "${framework}" ]]; then
+    framework_json="$(jq -n --arg framework "${framework}" '$framework')"
+  else
+    framework_json="null"
+  fi
+
+  create_vercel_project_body="$(
+    jq -n \
+      --arg name "${vercel_project_name}" \
+      --arg root_directory "${root_directory}" \
+      --arg repository "${GITHUB_REPOSITORY}" \
+      --argjson framework "${framework_json}" \
+      '{
+        name: $name,
+        buildCommand: "npm run build",
+        installCommand: "npm install",
+        rootDirectory: $root_directory,
+        framework: $framework,
+        gitRepository: {
+          type: "github",
+          repo: $repository
+        }
+      }'
+  )"
+
+  assert_no_existing_vercel_project
+
+  # Source: https://vercel.com/docs/rest-api/projects/create-a-new-project
+  vercel_project_response="$(
+    vercel_request \
+      "Creating Vercel project" \
+      "POST" \
+      "$(vercel_url "/v11/projects")" \
+      "${create_vercel_project_body}"
+  )"
+
+  vercel_project_id="$(jq -r ".id // empty" <<<"${vercel_project_response}")"
+
+  if [[ -z "${vercel_project_id}" ]]; then
+    err "Vercel project response did not include an ID"
+    echo "${vercel_project_response}" >&2
+    exit 1
+  fi
+}
+
+create_liveblocks_project() {
+  local liveblocks_project_response
+
+  assert_no_existing_liveblocks_project
 
   # Examples are public deployments, so we create a Liveblocks production project.
   # Production secret keys are only accessible once at creation time.
@@ -658,6 +676,7 @@ main() {
   print_setup_overview
 
   resolve_vercel_project_dashboard_url
+  preflight_setup
   create_vercel_project
   create_liveblocks_project
   add_liveblocks_key_to_vercel
