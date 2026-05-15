@@ -11,8 +11,9 @@ html {
   line-height: 1.5;
   -webkit-text-size-adjust: 100%;
   tab-size: 4;
-  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
-    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  font-family:
+    ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+    "Segoe UI Symbol", "Noto Color Emoji";
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -86,7 +87,8 @@ body {
   --flowchart-gray-800: #1f2937;
   --flowchart-gray-900: #111827;
   --flowchart-accent: #3b82f6;
-  --flowchart-shadow: 0 0 0 1px rgb(0 0 0 / 4%), 0 2px 6px rgb(0 0 0 / 5%),
+  --flowchart-shadow:
+    0 0 0 1px rgb(0 0 0 / 4%), 0 2px 6px rgb(0 0 0 / 5%),
     0 8px 26px rgb(0 0 0 / 6%);
   --flowchart-radius: 10px;
 }
@@ -530,7 +532,6 @@ body {
   z-index: 4;
 }
 
-/* Match nextjs-comments-ai streaming row: flex baseline row + no native marker */
 .flowchart-ai-comment-details {
   width: 100%;
   min-width: 0;
