@@ -43,13 +43,17 @@ export async function POST(request: NextRequest) {
 
 // Imagine this is your auth setup
 async function getSession(request: NextRequest) {
-  // Used to deploy to https://liveblocks.io/examples
+  // `userId` is only used by some hosted example deployments; keep it in the
+  // request body for that route. Liveblocks `userId` must match ids returned
+  // by `/api/users` (team emails in `database.ts`) or Comments show "Anonymous".
   const { userId } = await request.json();
+  void userId;
+
   const user = users.find((user) => user.email === "charlie.layne@example.com");
 
   if (!user) {
     return null;
   }
 
-  return { ...user, email: (userId as string) || user.email };
+  return user;
 }

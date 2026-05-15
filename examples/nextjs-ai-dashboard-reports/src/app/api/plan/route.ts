@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { currentPlan } from "@/data/data";
+import { getDashboardPlanKnowledge } from "@/lib/dashboard-ai-knowledge";
 
 export async function GET() {
-  return NextResponse.json(currentPlan);
+  return NextResponse.json(getDashboardPlanKnowledge());
 }
