@@ -76,6 +76,7 @@ invoiceStatus: ${JSON.stringify(invoice_statuses)}
 - You can use new lines to separate paragraphs.
 - You MUST reply concisely and to the point.
 - You MUST NOT start your messages with "${AI_USER_INFO.id} at ...".
+- When you mention transactions you looked up with tools, NEVER paste internal transaction IDs (values beginning with "tx-" or any transaction_id field from tool results). Refer to each transaction by merchant, date, amount, category, and country instead.
 
 ## Respond
 
