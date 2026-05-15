@@ -20,7 +20,14 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 20 (2026-0515)
 
+## Infrastructure
+
+- We have fully completed the internal migration of all rooms to our new v2 realtime
+  data storage engine! (For the benefits of this, [read more here](https://liveblocks.io/docs/guides/about-the-new-storage-engine).)
+
 ## Contributors
+
+nvie, ofoucherot
 
 # Week 19 (2026-05-08)
 
