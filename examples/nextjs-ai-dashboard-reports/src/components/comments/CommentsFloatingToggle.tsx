@@ -6,7 +6,7 @@ import { useCommentsSidebar } from "@/components/comments/CommentsSidebarContext
 import { cx } from "@/lib/utils";
 
 const mobileHeaderButtonStyles =
-  "size-[38px] relative justify-center border text-center whitespace-nowrap transition-all duration-100 ease-in-out sm:text-sm disabled:pointer-events-none disabled:shadow-none outline-solid outline-offset-2 outline-0 focus-visible:outline-2 outline-blue-500 dark:outline-blue-500 shadow-none border-transparent text-neutral-900 dark:text-neutral-50 bg-transparent disabled:text-neutral-400 dark:disabled:text-neutral-600 group flex items-center rounded-md p-1.5 text-sm font-medium hover:bg-neutral-50 data-[state=open]:bg-neutral-400/10 dark:hover:bg-neutral-400/10";
+  "*:text-neutral-600 dark:*:text-neutral-400 size-[38px] relative justify-center border text-center whitespace-nowrap transition-all duration-100 ease-in-out sm:text-sm disabled:pointer-events-none disabled:shadow-none outline-solid outline-offset-2 outline-0 focus-visible:outline-2 outline-blue-500 dark:outline-blue-500 shadow-none border-transparent text-neutral-900 dark:text-neutral-50 bg-transparent disabled:text-neutral-400 dark:disabled:text-neutral-600 group flex items-center rounded-md p-1.5 text-sm font-medium hover:bg-neutral-50 data-[state=open]:bg-neutral-400/10 dark:hover:bg-neutral-400/10";
 
 const desktopFloatingButtonStyles =
   "mt-px inline-flex size-8 items-center justify-center rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-900";
