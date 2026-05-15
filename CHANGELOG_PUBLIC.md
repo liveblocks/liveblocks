@@ -20,6 +20,13 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 20 (2026-0515)
 
+## v3.19.1
+
+### `@liveblocks/node` and Python SDK
+
+- Update providers to support newer models up to GPT-5.5 variants, Sonnet 4.6,
+  Opus 4.7, and Gemini 3/3.1 variants.
+
 ## Infrastructure
 
 - We have fully completed the internal migration of all rooms to our new v2 realtime
@@ -27,7 +34,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ## Contributors
 
-nvie, ofoucherot
+nvie, ofoucherot, marcbouchenoire
 
 # Week 19 (2026-05-08)
 
