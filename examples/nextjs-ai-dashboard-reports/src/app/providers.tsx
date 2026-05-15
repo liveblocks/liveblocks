@@ -38,7 +38,7 @@ export function Providers({ children }: { children: ReactNode }) {
 
             return response.json();
           }}
-          badgeLocation="top-left"
+          badgeLocation="bottom-left"
         >
           <SWRConfig
             value={{
@@ -66,7 +66,7 @@ export function Providers({ children }: { children: ReactNode }) {
 
 // Not needed, just used to deploy to https://liveblocks.io/examples
 function authWithExampleId(endpoint: string) {
-  return async (room?: string) => {
+  return async (room?: string): Promise<{ token: string }> => {
     let userId = localStorage.getItem("liveblocks-example-id");
     if (!userId) {
       userId = Math.random().toString(36).substring(2);
@@ -79,6 +79,38 @@ function authWithExampleId(endpoint: string) {
       },
       body: JSON.stringify({ room, userId }),
     });
-    return await response.json();
+
+    const text = await response.text();
+    let data: unknown;
+    try {
+      data = text ? JSON.parse(text) : null;
+    } catch {
+      throw new Error(
+        text.startsWith("Authentication failed")
+          ? text
+          : `Authentication failed: ${text.slice(0, 120)}`,
+      );
+    }
+
+    if (!response.ok) {
+      const message =
+        typeof data === "object" &&
+        data !== null &&
+        "error" in data &&
+        typeof (data as { error: unknown }).error === "string"
+          ? (data as { error: string }).error
+          : `HTTP ${response.status}`;
+      throw new Error(message);
+    }
+
+    if (typeof data !== "object" || data === null || !("token" in data)) {
+      throw new Error("Invalid authentication response");
+    }
+    const token = (data as { token: unknown }).token;
+    if (typeof token !== "string") {
+      throw new Error("Invalid authentication response");
+    }
+
+    return { token };
   };
 }

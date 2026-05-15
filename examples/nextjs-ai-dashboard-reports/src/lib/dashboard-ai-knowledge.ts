@@ -20,7 +20,6 @@ export function getDashboardTeamKnowledge(): AiChatProps["knowledge"] {
   ];
 }
 
-/** Same object as `GET /api/plan`. */
 export function getDashboardPlanKnowledge() {
   return currentPlan;
 }

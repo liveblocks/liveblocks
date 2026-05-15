@@ -17,7 +17,8 @@ import {
 import { ArrowUpRight, Monitor, Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
 import * as React from "react"
-import { users } from "@/data/users"
+
+import { useLiveblocksDashboardUser } from "./useLiveblocksDashboardUser"
 
 export type DropdownUserProfileProps = {
   children: React.ReactNode
@@ -28,6 +29,7 @@ export function DropdownUserProfile({
   children,
   align = "start",
 }: DropdownUserProfileProps) {
+  const me = useLiveblocksDashboardUser()
   const [mounted, setMounted] = React.useState(false)
   const { theme, setTheme } = useTheme()
   React.useEffect(() => {
@@ -45,7 +47,9 @@ export function DropdownUserProfile({
           align={align}
           className="min-w-[calc(var(--radix-dropdown-menu-trigger-width))]!"
         >
-          <DropdownMenuLabel>{users[0].email}</DropdownMenuLabel>
+          <DropdownMenuLabel>
+            {me?.id ?? "Connecting…"}
+          </DropdownMenuLabel>
           <DropdownMenuGroup>
             <DropdownMenuSubMenu>
               <DropdownMenuSubMenuTrigger>Theme</DropdownMenuSubMenuTrigger>

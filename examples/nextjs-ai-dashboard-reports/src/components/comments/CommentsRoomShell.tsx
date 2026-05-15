@@ -9,24 +9,16 @@ import {
 } from "@/components/Drawer";
 import { useCommentsSidebar } from "@/components/comments/CommentsSidebarContext";
 import { ThreadsPanel } from "@/components/comments/ThreadsPanel";
-import { COMMENTS_ROOM_ID_BASE } from "@/lib/comments/constants";
 import { cx } from "@/lib/utils";
 import { RiLoader2Fill } from "@remixicon/react";
-import { ClientSideSuspense, RoomProvider } from "@liveblocks/react/suspense";
+import { ClientSideSuspense } from "@liveblocks/react/suspense";
 import { XIcon } from "lucide-react";
 import React from "react";
-import { useSearchParams } from "next/navigation";
 
 export function CommentsRoomShell({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const roomId = useExampleRoomId(COMMENTS_ROOM_ID_BASE);
-
-  return (
-    <RoomProvider id={roomId}>
-      <CommentsSidebarLayout>{children}</CommentsSidebarLayout>
-    </RoomProvider>
-  );
+  return <CommentsSidebarLayout>{children}</CommentsSidebarLayout>;
 }
 
 function CommentsSidebarLayout({
@@ -124,11 +116,3 @@ function useIsMinWidthLg() {
   );
 }
 
-function useExampleRoomId(roomId: string) {
-  const params = useSearchParams();
-  const exampleId = params?.get("exampleId");
-
-  return React.useMemo(() => {
-    return exampleId ? `${roomId}-${exampleId}` : roomId;
-  }, [roomId, exampleId]);
-}

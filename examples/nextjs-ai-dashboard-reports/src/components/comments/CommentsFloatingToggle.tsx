@@ -61,11 +61,11 @@ export function CommentsOpenButton({
 
 export function CommentsFloatingToggle() {
   return (
-    <div className="relative mr-px isolate">
+    <div className="relative mr-px isolate z-100">
       <CommentsOpenButton
         variant="desktop-floating"
         hideWhenOpen
-        className="comments-sidebar-trigger pointer-events-auto absolute top-3 right-2 z-40 hidden lg:inline-flex"
+        className="comments-sidebar-trigger pointer-events-auto absolute top-3 right-2 hidden lg:inline-flex"
       />
     </div>
   );

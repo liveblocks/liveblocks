@@ -88,3 +88,13 @@ export const users = [
     avatar: "https://liveblocks.io/avatars/avatar-8.png",
   },
 ];
+
+export type DashboardUser = (typeof users)[number];
+
+export function getUser(email: string): DashboardUser | undefined {
+  return users.find((u) => u.email === email);
+}
+
+export function getRandomUser(): DashboardUser {
+  return users[Math.floor(Math.random() * users.length)]!;
+}

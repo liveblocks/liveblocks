@@ -76,11 +76,6 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
   },
 ];
 
-export function getRandomUser() {
-  const realUsers = USER_INFO.filter(({ id }) => id !== AI_USER_INFO.id);
-  return realUsers[Math.floor(Math.random() * realUsers.length)];
-}
-
 export function getUser(id: string) {
   return USER_INFO.find((u) => u.id === id) || undefined;
 }
