@@ -33,14 +33,20 @@ function StreamingComment({
     <Comment
       {...commentProps}
       body={
-        <details open={open} onToggle={() => setOpen(!open)}>
+        <details
+          className="flowchart-ai-comment-details"
+          open={open}
+          onToggle={() => setOpen(!open)}
+        >
           <summary className="flowchart-ai-comment-summary">
             <span className="flowchart-ai-comment-summary-icon">
               <BrainIcon />
             </span>
-            <span className="lb-ai-chat-pending">{title}</span>
+            <span className="lb-ai-chat-pending flowchart-ai-comment-title">
+              {title}
+            </span>
             <span className="flowchart-ai-comment-summary-chevron">
-              {open ? <ChevronIcon rotate /> : <ChevronIcon />}
+              <ChevronIcon rotate={open} />
             </span>
             <span className="lb-comment-body flowchart-ai-comment-preview">
               {trimmedResponsePart.length ? `…${trimmedResponsePart}` : ""}
@@ -73,17 +79,17 @@ function StreamedComment({
       body={
         <>
           {hasReasoning ? (
-            <details open={open} onToggle={() => setOpen(!open)}>
+            <details
+              className="flowchart-ai-comment-details"
+              open={open}
+              onToggle={() => setOpen(!open)}
+            >
               <summary className="flowchart-ai-comment-summary">
                 <span className="flowchart-ai-comment-thought-time">
                   Thought for {Number(thinkingTime).toFixed(0)} seconds
                 </span>
                 <span className="flowchart-ai-comment-summary-chevron flowchart-ai-comment-summary-chevron-muted">
-                  {open ? (
-                    <ChevronIcon rotate size={14} />
-                  ) : (
-                    <ChevronIcon size={14} />
-                  )}
+                  <ChevronIcon rotate={open} size={14} />
                 </span>
               </summary>
               <div className="lb-comment-body flowchart-ai-comment-reasoning">
@@ -162,7 +168,11 @@ function ChevronIcon({
 }) {
   return (
     <svg
-      className={`relative top-0.5 ${rotate ? "rotate-180" : ""}`}
+      className={
+        rotate
+          ? "flowchart-ai-comment-chevron flowchart-ai-comment-chevron--open"
+          : "flowchart-ai-comment-chevron"
+      }
       width={size}
       height={size}
       viewBox="0 0 20 20"
@@ -181,7 +191,7 @@ function ChevronIcon({
 function BrainIcon() {
   return (
     <svg
-      className="vertical-align-middle opacity-50 relative top-[3px]"
+      className="flowchart-ai-comment-brain-icon"
       width={17}
       height={17}
       viewBox="0 0 24 24"
