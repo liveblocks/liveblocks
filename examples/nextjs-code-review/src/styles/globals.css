@@ -1,0 +1,19 @@
+@import "tailwindcss";
+@import "@liveblocks/react-ui/styles.css";
+@import "@liveblocks/react-ui/styles/dark/media-query.css";
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+.lb-root {
+  --lb-accent: #0969da;
+}
+
+@media (prefers-color-scheme: dark) {
+  .lb-root {
+    --lb-accent: #58a6ff;
+  }
+}
