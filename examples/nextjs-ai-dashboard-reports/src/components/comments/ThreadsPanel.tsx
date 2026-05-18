@@ -2,8 +2,8 @@
 
 import { useFeedMessages, useUser } from "@liveblocks/react";
 import { useThreads } from "@liveblocks/react/suspense";
-import { markdownToCommentBody } from "@liveblocks/node";
 import { Composer, Thread, Comment, CommentProps } from "@liveblocks/react-ui";
+import { Markdown } from "@liveblocks/react-ui/_private";
 import {
   Comment as CommentPrimitive,
   type CommentBodyLinkProps,
@@ -191,24 +191,24 @@ function StreamedComment({
               </div>
             </div>
           </details>
-          <MarkdownCommentBody markdown={response} />
+          {commentProps.comment.metadata.feedComplete ? (
+            <div className="lb-comment-body">
+              <CommentPrimitive.Body
+                body={commentProps.comment.body}
+                components={{
+                  Mention: CommentMarkdownMention,
+                  Link: CommentMarkdownLink,
+                }}
+              />
+            </div>
+          ) : (
+            <div className="whitespace-break-spaces">
+              <Markdown content={response} />
+            </div>
+          )}
         </>
       }
     />
-  );
-}
-
-function MarkdownCommentBody({ markdown }: { markdown: string }) {
-  return (
-    <div className="lb-comment-body">
-      <CommentPrimitive.Body
-        body={markdownToCommentBody(markdown)}
-        components={{
-          Mention: CommentMarkdownMention,
-          Link: CommentMarkdownLink,
-        }}
-      />
-    </div>
   );
 }
 

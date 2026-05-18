@@ -9,17 +9,17 @@ import { getAllUsers } from "../../database";
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const text = searchParams.get("text") ?? "";
-
-  const q = text.trim().toLowerCase();
-  if (!q) {
-    return NextResponse.json([]);
-  }
+  const query = text.trim().toLowerCase();
 
   const filteredUserIds = getAllUsers()
     .filter((user) => {
+      if (!query) {
+        return true;
+      }
+
       const name = user.info.name.toLowerCase();
       const id = user.id.toLowerCase();
-      return name.includes(q) || id.includes(q);
+      return name.includes(query) || id.includes(query);
     })
     .map((user) => user.id);
 
