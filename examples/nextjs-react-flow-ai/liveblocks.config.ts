@@ -21,6 +21,7 @@ declare global {
 
     CommentMetadata: {
       feedId?: string;
+      feedComplete?: boolean;
     };
 
     FeedMetadata: {

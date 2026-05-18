@@ -1,8 +1,12 @@
 "use client";
 
-import { useFeedMessages } from "@liveblocks/react";
+import { ClientSideSuspense, useFeedMessages } from "@liveblocks/react";
+import { useUser } from "@liveblocks/react/suspense";
 import { Comment, type CommentProps } from "@liveblocks/react-ui";
-import { useState } from "react";
+import { Comment as CommentPrimitive } from "@liveblocks/react-ui/primitives";
+import { Markdown } from "@liveblocks/react-ui/_private";
+import Link from "next/link";
+import { type ComponentProps, useState } from "react";
 
 export function FlowchartThreadComment(props: CommentProps) {
   const rawFeedId = props.comment.metadata?.feedId;
@@ -97,9 +101,28 @@ function StreamedComment({
               </div>
             </details>
           ) : null}
-          <div className="lb-comment-body flowchart-ai-comment-response">
-            {response}
-          </div>
+          {commentProps.comment.metadata.feedComplete ? (
+            <CommentPrimitive.Body
+              body={commentProps.comment.body}
+              components={{
+                Mention: ({ mention }) => (
+                  <span className="font-medium text-accent">
+                    @
+                    <ClientSideSuspense fallback="…">
+                      <User userId={mention.id} />
+                    </ClientSideSuspense>
+                  </span>
+                ),
+                Link: ({ href, children }) => (
+                  <Link href={href}>{children}</Link>
+                ),
+              }}
+            />
+          ) : (
+            <div className="whitespace-break-spaces">
+              <Markdown content={response} />
+            </div>
+          )}
         </>
       }
     />
@@ -205,4 +228,14 @@ function BrainIcon() {
       <path d="M19.967 17.483A4 4 0 1112 18a4 4 0 11-7.967-.517M6 18a4 4 0 01-2-7.464M6.003 5.125a4 4 0 00-2.526 5.77" />
     </svg>
   );
+}
+
+interface UserProps extends ComponentProps<"span"> {
+  userId: string;
+}
+
+function User({ userId, ...props }: UserProps) {
+  const { user } = useUser(userId);
+
+  return <span {...props}>{user?.name ?? userId}</span>;
 }
