@@ -47,7 +47,7 @@ You need to set up webhooks to make this example run.
   making sure to
   [check the “**commentCreated**” event](https://liveblocks.io/docs/platform/webhooks#edit-endpoint-events)
   when creating the webhook
-- In the webhooks dashboard, point to the `/api/ai-comment-reply` path
+- In the webhooks dashboard, point to the `/api/liveblocks-webhook` path
 - Copy your **webhook secret key** from the webhooks dashboard
 - Add your webhook secret key to `.env.local` as the
   `LIVEBLOCKS_WEBHOOK_SECRET_KEY` environment variable

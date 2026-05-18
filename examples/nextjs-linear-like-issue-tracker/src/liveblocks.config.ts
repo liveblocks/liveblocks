@@ -16,6 +16,7 @@ declare global {
     CommentMetadata: {
       // Feed ID attached to Ai comments
       feedId?: string;
+      feedComplete?: boolean;
 
       // Comma-separated issue IDs that we display as links below comments
       referencedIssueIds?: string;
