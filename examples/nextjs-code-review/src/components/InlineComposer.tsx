@@ -2,35 +2,20 @@
 
 import { Composer } from "@liveblocks/react-ui";
 import type { ComposerSubmitComment } from "@liveblocks/react-ui";
-import type { AnnotationSide } from "@pierre/diffs/react";
 
 interface Props {
-  filePath: string;
-  lineNumber: number;
-  side: AnnotationSide;
-  onSubmit: (
-    filePath: string,
-    lineNumber: number,
-    side: AnnotationSide,
-    body: ComposerSubmitComment["body"]
-  ) => void;
+  onSubmit: (body: ComposerSubmitComment["body"]) => void;
   onClose: () => void;
 }
 
-export function InlineComposer({
-  filePath,
-  lineNumber,
-  side,
-  onSubmit,
-  onClose,
-}: Props) {
+export function InlineComposer({ onSubmit, onClose }: Props) {
   return (
     <div className="flex flex-col gap-2 px-4 py-3 bg-zinc-50 border-t border-zinc-200 dark:bg-zinc-900 dark:border-zinc-700">
       <Composer
         className="rounded-md overflow-hidden shadow-sm ring-1 ring-black/5 dark:ring-white/10"
         onComposerSubmit={({ body }, event) => {
           event.preventDefault();
-          onSubmit(filePath, lineNumber, side, body);
+          onSubmit(body);
         }}
       />
       <button

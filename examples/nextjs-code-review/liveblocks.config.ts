@@ -11,8 +11,10 @@ declare global {
 
     ThreadMetadata: {
       filePath: string;
+      lineContent: string;
+      contextBefore: string;
+      contextAfter: string;
       lineNumber: number;
-      side: "deletions" | "additions";
     };
   }
 }
