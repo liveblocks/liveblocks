@@ -59,7 +59,7 @@ export default function Header() {
     <section
       aria-labelledby="reports-title"
       className={cx(
-        "sticky top-16 z-50 -my-6 flex flex-col gap-6 bg-white py-6 md:flex-row md:flex-wrap md:items-center md:justify-between lg:top-0 dark:bg-neutral-950",
+        "sticky top-16 -my-6 flex flex-col gap-6 bg-white py-6 md:flex-row md:flex-wrap md:items-center md:justify-between lg:top-0 dark:bg-neutral-950",
         scrolled &&
           "border-b border-neutral-200 transition-all dark:border-neutral-900",
       )}

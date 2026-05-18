@@ -8,11 +8,18 @@ import { getAllUsers } from "../../database";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const text = searchParams.get("text") as string;
+  const text = searchParams.get("text") ?? "";
+
+  const q = text.trim().toLowerCase();
+  if (!q) {
+    return NextResponse.json([]);
+  }
 
   const filteredUserIds = getAllUsers()
     .filter((user) => {
-      return user.info.name.toLowerCase().includes(text.toLowerCase());
+      const name = user.info.name.toLowerCase();
+      const id = user.id.toLowerCase();
+      return name.includes(q) || id.includes(q);
     })
     .map((user) => user.id);
 

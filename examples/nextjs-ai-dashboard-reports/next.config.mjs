@@ -2,6 +2,7 @@
 
 const nextConfig = {
   turbopack: { root: import.meta.dirname },
+  allowedDevOrigins: ["*.ngrok-free.app", "*.ngrok.io", "*.loca.lt"],
   redirects: async () => {
     return [
       {

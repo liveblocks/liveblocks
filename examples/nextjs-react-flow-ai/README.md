@@ -26,8 +26,9 @@ powered by [Liveblocks](https://liveblocks.io),
 [React Flow](https://reactflow.dev/), [Next.js](https://nextjs.org/), the
 [Vercel AI SDK](https://sdk.vercel.ai/), and [OpenAI](https://openai.com).
 
-You can place blocks, connect them, edit labels, undo and redo, and ask the AI
-to edit the diagram in real time for everyone in the room.
+You can place blocks, connect them, edit labels, undo and redo, add pinned
+comments on the canvas, and ask the AI to edit the diagram in real-time for
+everyone in the room. You can also talk to the AI Assistant in comment threads.
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/collaborative-flowchart-ai.png" width="536" alt="Collaborative React Flow with AI" />
 
@@ -42,6 +43,17 @@ npx create-liveblocks-app@latest --example nextjs-react-flow-ai --api-key
 This will download the example and ask permission to open your browser, enabling
 you to automatically get your API key from your
 [liveblocks.io](https://liveblocks.io) account.
+
+### Setting up webhooks
+
+To enable AI replies when you @mention **AI Assistant** in a comment:
+
+- Follow our guide on
+  [testing webhooks locally](https://liveblocks.io/docs/guides/how-to-test-webhooks-on-localhost),
+  making sure to check the **commentCreated** event when creating the webhook
+- Point the webhook to `/api/liveblocks-webhook`
+- Copy your webhook secret key and add it to `.env.local` as
+  `LIVEBLOCKS_WEBHOOK_SECRET_KEY`
 
 ### Setting up OpenAI
 

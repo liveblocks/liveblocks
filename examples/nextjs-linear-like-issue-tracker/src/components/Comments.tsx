@@ -28,7 +28,7 @@ import { ProgressDoneIcon } from "@/icons/ProgressDoneIcon";
 import { ProgressInProgressIcon } from "@/icons/ProgressInProgressIcon";
 import { ProgressInReviewIcon } from "@/icons/ProgressInReviewIcon";
 import { ProgressTodoIcon } from "@/icons/ProgressTodoIcon";
-import { markdownToCommentBody } from "@liveblocks/node";
+import { Markdown } from "@liveblocks/react-ui/_private";
 
 function parseReferencedIssueIdsFromCommentMetadata(
   metadata: CommentProps["comment"]["metadata"]
@@ -357,12 +357,16 @@ function StreamedComment({
               </div>
             </div>
           </details>
-          <div className="lb-comment-body whitespace-pre-wrap">
+          {commentProps.comment.metadata.feedComplete ? (
             <CommentPrimitive.Body
-              body={markdownToCommentBody(response)}
+              body={commentProps.comment.body}
               components={{ Mention, Link }}
             />
-          </div>
+          ) : (
+            <div className="whitespace-break-spaces">
+              <Markdown content={response} />
+            </div>
+          )}
           {showReferenced ? (
             <div className="mt-2 space-y-2">
               {referencedIssueIds.map((issueId) => (

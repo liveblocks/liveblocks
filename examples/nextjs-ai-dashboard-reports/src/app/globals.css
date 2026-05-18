@@ -168,3 +168,34 @@ button,
   --lb-dynamic-background: var(--color-neutral-900);
   --lb-foreground: var(--color-neutral-50);
 }
+
+.comments-sidebar .thread {
+  width: 100%;
+  max-width: none;
+  position: relative;
+}
+
+.comments-sidebar .composer {
+  width: 100%;
+  max-width: none;
+  position: relative;
+}
+
+.comments-sidebar .lb-thread {
+  width: 100%;
+  max-width: none;
+}
+
+.comments-sidebar .lb-comment {
+  background: transparent;
+}
+
+.comments-sidebar .lb-composer {
+  width: 100%;
+  max-width: none;
+}
+
+.dark .comments-sidebar .thread::after,
+.dark .comments-sidebar .composer::after {
+  display: none;
+}
