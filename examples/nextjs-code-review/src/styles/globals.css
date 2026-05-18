@@ -2,18 +2,121 @@
 @import "@liveblocks/react-ui/styles.css";
 @import "@liveblocks/react-ui/styles/dark/media-query.css";
 
-html,
 body {
-  margin: 0;
-  padding: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family:
+    var(--font-geist-sans), var(--font-geist), ui-sans-serif, system-ui,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
 .lb-root {
   --lb-accent: #0969da;
 }
 
+.code-review-shell {
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --border: oklch(0.922 0 0);
+  --border-opaque: color-mix(
+    in oklch,
+    var(--border) 100%,
+    var(--diffshub-sidebar-bg) 0%
+  );
+  --color-border: var(--border);
+  --color-border-opaque: var(--border-opaque);
+  --diffshub-sidebar-bg: light-dark(oklch(98.5% 0 0), oklch(20.5% 0 0));
+  --diffs-font-family:
+    var(--font-geist-mono), "SFMono-Regular", Consolas, "Liberation Mono",
+    Menlo, monospace;
+  --cv-gutter-vertical: 0px;
+  --cv-gutter-horizontal: 0px;
+  --cv-mini-gutter-vertical: 0px;
+  --cv-mini-gutter-horizontal: 0px;
+  contain: strict;
+  color-scheme: light;
+}
+
+.code-review-icon-button {
+  display: inline-flex;
+  width: 2rem;
+  height: 2rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 0.375rem;
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+  line-height: 1;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
+}
+
+.code-review-icon-button:hover:not(:disabled),
+.code-review-icon-button[aria-pressed="true"] {
+  background: transparent;
+  color: var(--muted-foreground);
+}
+
+.code-review-icon-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+.code-review-icon-button::-webkit-details-marker,
+.code-review-icon-button::marker {
+  display: none;
+  content: "";
+}
+
+.code-review-tab-button {
+  display: inline-flex;
+  width: 2rem;
+  height: 2rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.375rem;
+  color: var(--muted-foreground);
+  box-shadow: none;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+}
+
+.code-review-tab-button:hover,
+.code-review-tab-button[aria-selected="true"] {
+  background: var(--muted);
+  color: var(--foreground);
+}
+
 @media (prefers-color-scheme: dark) {
   .lb-root {
     --lb-accent: #58a6ff;
+  }
+
+  .code-review-shell {
+    --background: oklch(0.145 0 0);
+    --foreground: oklch(0.985 0 0);
+    --card: oklch(0.205 0 0);
+    --card-foreground: oklch(0.985 0 0);
+    --muted: oklch(0.269 0 0);
+    --muted-foreground: oklch(0.708 0 0);
+    --border: oklch(1 0 0 / 10%);
+    --border-opaque: color-mix(
+      in oklch,
+      var(--diffshub-sidebar-bg) 90%,
+      oklch(1 0 0)
+    );
+    --color-border: oklch(1 0 0 / 10%);
+    --color-border-opaque: var(--border-opaque);
+    color-scheme: dark;
   }
 }

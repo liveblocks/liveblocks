@@ -15,6 +15,10 @@ declare global {
       contextBefore: string;
       contextAfter: string;
       lineNumber: number;
+      rangeStartLineNumber?: number;
+      rangeEndLineNumber?: number;
+      rangeSide?: "additions" | "deletions";
+      rangeEndSide?: "additions" | "deletions";
     };
   }
 }
