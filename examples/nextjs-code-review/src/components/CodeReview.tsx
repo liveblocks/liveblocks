@@ -12,7 +12,7 @@ import type { CSSProperties } from "react";
 import { useThreads, useCreateThread } from "@liveblocks/react/suspense";
 import { Composer, Thread } from "@liveblocks/react-ui";
 import {
-  parseDiffFromFile,
+  parsePatchFiles,
   type AnnotationSide,
   type CodeViewDiffItem,
   type CodeViewItem,
@@ -24,14 +24,10 @@ import {
   type SelectedLineRange,
 } from "@pierre/diffs";
 import { CodeView, type CodeViewHandle } from "@pierre/diffs/react";
-import {
-  IconCodeStyleBg,
-  IconConvoFill,
-  IconFileTree,
-  IconPlus,
-} from "@pierre/icons";
+import { IconConvoFill, IconFileTree, IconPlus } from "@pierre/icons";
 import { FileTree, useFileTree } from "@pierre/trees/react";
-import { PR_FILES, PR_TITLE, PR_BRANCH, PR_BASE } from "../pr-data";
+import { DIFF } from "../diff";
+import type { DiffFile } from "../diff";
 
 type DiffStyle = "split" | "unified";
 type SidebarTab = "files" | "comments";
@@ -106,9 +102,36 @@ function useMediaQuery(query: string): boolean {
 }
 
 const CONTEXT_LINES = 3;
-const SORTED_FILES = [...PR_FILES].sort((a, b) =>
-  a.path.localeCompare(b.path, undefined, { sensitivity: "base" })
-);
+/**
+ * Sort files the same way the FileTree component does: directories before
+ * files, then alphabetically within each level (case-insensitive). This keeps
+ * the code view scroll position in sync with the tree selection.
+ */
+function treeSort(a: DiffFile, b: DiffFile): number {
+  const aParts = a.path.split("/");
+  const bParts = b.path.split("/");
+  const len = Math.max(aParts.length, bParts.length);
+
+  for (let i = 0; i < len; i++) {
+    const aSeg = aParts[i];
+    const bSeg = bParts[i];
+
+    if (aSeg === undefined) return -1;
+    if (bSeg === undefined) return 1;
+
+    const aIsDir = i < aParts.length - 1;
+    const bIsDir = i < bParts.length - 1;
+
+    if (aIsDir !== bIsDir) return aIsDir ? -1 : 1;
+
+    const cmp = aSeg.localeCompare(bSeg, undefined, { sensitivity: "base" });
+    if (cmp !== 0) return cmp;
+  }
+
+  return 0;
+}
+
+const SORTED_FILES = [...DIFF.changes].sort(treeSort);
 const FILE_PATHS = SORTED_FILES.map((f) => f.path);
 const GIT_STATUS = SORTED_FILES.map((f) => ({
   path: f.path,
@@ -155,40 +178,85 @@ function diffItemId(path: string): string {
 
 function getCachedDiff(file: {
   path: string;
-  oldContent: string;
-  newContent: string;
+  patch: string;
 }): FileDiffMetadata {
-  const cacheKey = `${file.path}:${file.oldContent.length}:${file.newContent.length}`;
+  const cacheKey = `${file.path}:${file.patch.length}`;
   const cached = diffCache.get(cacheKey);
   if (cached) return cached;
-  const diff = {
-    ...parseDiffFromFile(
-      { name: file.path, contents: file.oldContent },
-      { name: file.path, contents: file.newContent }
-    ),
-    cacheKey,
-  };
+  // parsePatchFiles requires a full git diff header; patches from GitHub's API
+  // only include hunk content starting with @@, so we prepend the header.
+  const fullPatch = `diff --git a/${file.path} b/${file.path}\n--- a/${file.path}\n+++ b/${file.path}\n${file.patch}`;
+  const parsed = parsePatchFiles(fullPatch, cacheKey);
+  const diff =
+    parsed[0]?.files[0] ??
+    parsePatchFiles(
+      `diff --git a/${file.path} b/${file.path}\n--- a/${file.path}\n+++ b/${file.path}\n`,
+      cacheKey
+    )[0]!.files[0]!;
   diffCache.set(cacheKey, diff);
   return diff;
 }
 
+/**
+ * Reconstruct a sparse line array (1-indexed) from a unified diff patch
+ * string. Only lines visible in the diff (changed + context) are present.
+ * Used for annotation anchor matching — annotations are always placed on
+ * visible diff lines, so this gives us sufficient coverage.
+ */
+function linesFromPatch(
+  patch: string,
+  side: "additions" | "deletions"
+): string[] {
+  const lines: string[] = [];
+  let lineNum = 0;
+
+  for (const raw of patch.split("\n")) {
+    if (raw.startsWith("@@")) {
+      // Parse hunk header: @@ -oldStart,oldCount +newStart,newCount @@
+      const match =
+        side === "additions" ? raw.match(/\+(\d+)/) : raw.match(/-(\d+)/);
+      lineNum = match ? parseInt(match[1], 10) : 1;
+      continue;
+    }
+    if (side === "additions") {
+      if (raw.startsWith("+")) {
+        lines[lineNum - 1] = raw.slice(1);
+        lineNum++;
+      } else if (raw.startsWith(" ")) {
+        lines[lineNum - 1] = raw.slice(1);
+        lineNum++;
+      }
+    } else {
+      if (raw.startsWith("-")) {
+        lines[lineNum - 1] = raw.slice(1);
+        lineNum++;
+      } else if (raw.startsWith(" ")) {
+        lines[lineNum - 1] = raw.slice(1);
+        lineNum++;
+      }
+    }
+  }
+  return lines;
+}
+
 function extractLineContext(
-  content: string,
+  lines: string[],
   lineNumber: number
 ): {
   lineContent: string;
   contextBefore: string;
   contextAfter: string;
 } {
-  const lines = content.split("\n");
   const index = lineNumber - 1;
   return {
     lineContent: lines[index] ?? "",
     contextBefore: lines
       .slice(Math.max(0, index - CONTEXT_LINES), index)
+      .filter(Boolean)
       .join("\n"),
     contextAfter: lines
       .slice(index + 1, Math.min(lines.length, index + 1 + CONTEXT_LINES))
+      .filter(Boolean)
       .join("\n"),
   };
 }
@@ -234,13 +302,18 @@ function findBestAnnotationMatch(
 
 function resolveAnnotation(
   anchor: AnnotationAnchor,
-  oldContent: string,
-  newContent: string
+  patch: string
 ): ResolvedAnnotation | null {
-  const newLine = findBestAnnotationMatch(anchor, newContent.split("\n"));
+  const newLine = findBestAnnotationMatch(
+    anchor,
+    linesFromPatch(patch, "additions")
+  );
   if (newLine !== null) return { lineNumber: newLine, side: "additions" };
 
-  const oldLine = findBestAnnotationMatch(anchor, oldContent.split("\n"));
+  const oldLine = findBestAnnotationMatch(
+    anchor,
+    linesFromPatch(patch, "deletions")
+  );
   if (oldLine !== null) return { lineNumber: oldLine, side: "deletions" };
 
   return null;
@@ -365,11 +438,7 @@ export function CodeReview() {
     for (const file of SORTED_FILES) {
       const fileThreads = threadsByFile.get(file.path) ?? [];
       for (const thread of fileThreads) {
-        const resolved = resolveAnnotation(
-          thread.metadata,
-          file.oldContent,
-          file.newContent
-        );
+        const resolved = resolveAnnotation(thread.metadata, file.patch);
         if (!resolved) continue;
         const range = getThreadRange(thread.metadata, resolved);
         const side = getRangeEndSide(range) ?? resolved.side;
@@ -536,9 +605,9 @@ export function CodeReview() {
       if (!side) return;
       const file = SORTED_FILES.find((f) => diffItemId(f.path) === item.id);
       if (!file) return;
-      const content = side === "additions" ? file.newContent : file.oldContent;
+      const lines = linesFromPatch(file.patch, side);
       const { lineContent, contextBefore, contextAfter } = extractLineContext(
-        content,
+        lines,
         range.end
       );
       const key = `draft-${nextComposerKeyRef.current++}`;
@@ -818,7 +887,7 @@ function Header() {
             Liveblocks
           </span>
           <h1 className="truncate text-sm font-semibold md:text-base">
-            {PR_TITLE}
+            {DIFF.title}
           </h1>
           <span className="rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
             Open
@@ -826,13 +895,13 @@ function Header() {
         </div>
         <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-[var(--muted-foreground)]">
           <code className="rounded bg-[var(--muted)] px-1.5 py-0.5 font-mono text-[var(--foreground)]">
-            {PR_BRANCH}
+            {DIFF.from}
           </code>
           <span>into</span>
           <code className="rounded bg-[var(--muted)] px-1.5 py-0.5 font-mono text-[var(--foreground)]">
-            {PR_BASE}
+            {DIFF.to}
           </code>
-          <span>{PR_FILES.length} files</span>
+          <span>{DIFF.changes.length} files</span>
         </div>
       </div>
     </header>
