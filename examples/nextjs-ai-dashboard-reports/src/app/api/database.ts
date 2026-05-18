@@ -1,5 +1,15 @@
+export const AI_USER_INFO = {
+  id: "__AI_AGENT",
+  info: {
+    name: "AI Assistant",
+    color: "#6366f1",
+    avatar: `https://liveblocks.io/api/avatar?u=__AI_AGENT&agent=true`,
+  },
+} satisfies Liveblocks["UserMeta"];
+
 // A mock database with example users
 const USER_INFO: Liveblocks["UserMeta"][] = [
+  AI_USER_INFO,
   {
     id: "charlie.layne@example.com",
     info: {
@@ -65,10 +75,6 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     },
   },
 ];
-
-export function getRandomUser() {
-  return USER_INFO[Math.floor(Math.random() * 10) % USER_INFO.length];
-}
 
 export function getUser(id: string) {
   return USER_INFO.find((u) => u.id === id) || undefined;

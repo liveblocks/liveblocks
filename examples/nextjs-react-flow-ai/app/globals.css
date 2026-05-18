@@ -11,8 +11,9 @@ html {
   line-height: 1.5;
   -webkit-text-size-adjust: 100%;
   tab-size: 4;
-  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
-    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  font-family:
+    ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+    "Segoe UI Symbol", "Noto Color Emoji";
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -86,7 +87,8 @@ body {
   --flowchart-gray-800: #1f2937;
   --flowchart-gray-900: #111827;
   --flowchart-accent: #3b82f6;
-  --flowchart-shadow: 0 0 0 1px rgb(0 0 0 / 4%), 0 2px 6px rgb(0 0 0 / 5%),
+  --flowchart-shadow:
+    0 0 0 1px rgb(0 0 0 / 4%), 0 2px 6px rgb(0 0 0 / 5%),
     0 8px 26px rgb(0 0 0 / 6%);
   --flowchart-radius: 10px;
 }
@@ -495,11 +497,130 @@ body {
     white-space: nowrap;
   }
 
+  .flowchart-toolbar-item-comment.lb-comment-pin:focus-visible {
+    outline: 2px solid var(--flowchart-accent);
+    outline-offset: 2px;
+  }
+
   .flowchart-toolbar-shape-button:focus-visible {
     outline: 2px solid var(--flowchart-accent);
     outline-offset: 3px;
     border-radius: 4px;
   }
+}
+
+.flowchart-comments {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  isolation: isolate;
+}
+
+.flowchart-flow-comment-pin-wrap {
+  .lb-comment-pin {
+    cursor: grab;
+  }
+
+  &:active .lb-comment-pin {
+    cursor: grabbing;
+  }
+}
+
+.flowchart-thread-composer-anchor {
+  pointer-events: auto;
+  z-index: 4;
+}
+
+.flowchart-ai-comment-details {
+  width: 100%;
+  min-width: 0;
+}
+
+.flowchart-ai-comment-summary {
+  display: flex;
+  align-items: baseline;
+  cursor: pointer;
+  margin-bottom: 0.25rem;
+  list-style: none;
+  width: 100%;
+  min-width: 0;
+}
+
+.flowchart-ai-comment-summary::-webkit-details-marker,
+.flowchart-ai-comment-summary::marker {
+  display: none;
+}
+
+.flowchart-ai-comment-summary-icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-right: 0.25rem;
+}
+
+.flowchart-ai-comment-brain-icon {
+  display: block;
+  opacity: 0.5;
+  position: relative;
+  top: 2px;
+}
+
+.flowchart-ai-comment-chevron {
+  display: block;
+  position: relative;
+  top: 2px;
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+.flowchart-ai-comment-chevron--open {
+  transform: rotate(180deg);
+}
+
+.flowchart-ai-comment-title {
+  flex-shrink: 0;
+}
+
+.flowchart-ai-comment-summary-chevron {
+  flex-shrink: 0;
+  margin: 0 0.25rem;
+  display: flex;
+  align-items: center;
+}
+
+.flowchart-ai-comment-summary-chevron-muted {
+  opacity: 0.6;
+}
+
+.flowchart-ai-comment-preview {
+  opacity: 0.4;
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.875rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.flowchart-ai-comment-expanded {
+  border: 1px solid rgb(107 114 128 / 10%);
+  border-radius: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.flowchart-ai-comment-thought-time {
+  opacity: 0.5;
+  font-size: 0.875rem;
+}
+
+.flowchart-ai-comment-reasoning {
+  margin-bottom: 0.75rem;
+}
+
+.flowchart-ai-comment-response {
+  white-space: pre-wrap;
 }
 
 .flowchart-block-drag-preview {

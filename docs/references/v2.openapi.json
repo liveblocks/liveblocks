@@ -6394,7 +6394,8 @@
               "examples": {
                 "example": {
                   "value": {
-                    "expirationIn": "3 days"
+                    "expirationIn": "3 days",
+                    "newKeyExpirationIn": "30 days"
                   }
                 }
               }
@@ -11174,11 +11175,37 @@
               "7 days"
             ],
             "default": "now"
+          },
+          "newKeyExpirationIn": {
+            "type": "string",
+            "enum": [
+              "now",
+              "1h",
+              "1hour",
+              "1 hour",
+              "24hrs",
+              "24hours",
+              "24 hours",
+              "3d",
+              "3days",
+              "3 days",
+              "7d",
+              "7days",
+              "7 days",
+              "30d",
+              "30days",
+              "30 days",
+              "1y",
+              "1year",
+              "1 year",
+              "one year"
+            ]
           }
         },
         "additionalProperties": false,
         "example": {
-          "expirationIn": "3 days"
+          "expirationIn": "3 days",
+          "newKeyExpirationIn": "30 days"
         }
       },
       "RollProjectSecretApiKeyResponse": {

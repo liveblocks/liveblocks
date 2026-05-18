@@ -362,7 +362,7 @@ async function createPlaceholderComment({
     threadId,
     data: {
       userId: AI_USER_INFO.id,
-      metadata: { feedId },
+      metadata: { feedId, feedComplete: false },
       body: {
         version: 1,
         content: [
@@ -402,7 +402,7 @@ async function updatePlaceholderComment({
     threadId,
     commentId,
     data: {
-      metadata: { feedId },
+      metadata: { feedId, feedComplete: true },
       body: {
         version: 1,
         content,

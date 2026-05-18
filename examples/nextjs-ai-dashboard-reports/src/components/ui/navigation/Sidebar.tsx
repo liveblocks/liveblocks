@@ -1,5 +1,6 @@
 "use client"
 import { siteConfig } from "@/app/siteConfig"
+import { CommentsOpenButton } from "@/components/comments/CommentsFloatingToggle"
 import { Tooltip } from "@/components/Tooltip"
 import { cx, focusRing } from "@/lib/utils"
 import {
@@ -225,6 +226,7 @@ export function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
         </span>
         <div className="flex items-center gap-1 sm:gap-2">
           <UserProfileMobile />
+          <CommentsOpenButton className="lg:hidden" />
           <MobileSidebar />
         </div>
       </div>

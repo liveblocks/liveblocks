@@ -8,8 +8,8 @@ https://liveblocks.io/changelog
 - Add each contributor's GitHub username.
 
 TEAM MEMBERS
-adigau, ctnicholas, flowflorent, jrowny, marcbouchenoire, nimeshnayaju,
-nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
+ctnicholas, jrowny, marcbouchenoire, nimeshnayaju, nvie, ofoucherot,
+pierrelevaillant, stacyschmitz, stevenfabre
 
 OTHER USERS
 If outside users have made contributions, add them to the Contributors
@@ -17,6 +17,37 @@ list and feel free to give them credit at the end of a line, e.g.:
 - ... Thank you [@username](https://github.com/username)!
 
 -->
+
+# Week 20 (2026-05-15)
+
+## v3.19.1
+
+### `@liveblocks/node` and Python SDK
+
+- Update providers to support newer models up to GPT-5.5 variants, Sonnet 4.6,
+  Opus 4.7, and Gemini 3/3.1 variants.
+
+## Infrastructure
+
+- We have fully completed the internal migration of all rooms to our new v2 realtime
+  data storage engine! [Learn about the benefits](https://liveblocks.io/docs/guides/about-the-new-storage-engine).
+
+## Documentation
+
+- New integrations section, featuring info on how to integrate Liveblocks into a number of new products.
+- Integrations pages include Bolt, Claude, Codex, Cursor, Lovable, Neon, PlanetScale, Reply, Supabase, v0.
+- Updated old guides and pages related to n8n, PlanetScale, Supabase.
+- New copy page dropdown for copying markdown into various AI tools.
+- Get started markdown homepage for AI.
+- New breadcrumb UI on docs pages.
+
+## Examples
+
+- Add AI features to [Linear-like Issue Tracker example](https://liveblocks.io/examples/linear-like-issue-tracker/nextjs-linear-like-issue-tracker). Tag AI in comments and it can edit the document, links, properties, and show AI presence as it makes changes.
+
+## Contributors
+
+nvie, ofoucherot, marcbouchenoire, pierrelevaillant, ctnicholas
 
 # Week 19 (2026-05-08)
 
