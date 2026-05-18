@@ -10,7 +10,7 @@ import {
 } from "react";
 import type { CSSProperties } from "react";
 import { useThreads, useCreateThread } from "@liveblocks/react/suspense";
-import { Composer, Thread } from "@liveblocks/react-ui";
+import { AvatarStack, Composer, Thread } from "@liveblocks/react-ui";
 import {
   parsePatchFiles,
   type AnnotationSide,
@@ -26,6 +26,12 @@ import {
 import { CodeView, type CodeViewHandle } from "@pierre/diffs/react";
 import { IconConvoFill, IconFileTree, IconPlus } from "@pierre/icons";
 import { FileTree, useFileTree } from "@pierre/trees/react";
+import {
+  createFileTreeIconResolver,
+  getBuiltInFileIconColor,
+  getBuiltInSpriteSheet,
+} from "@pierre/trees";
+import type { FileTreeRowDecorationRenderer } from "@pierre/trees";
 import { DIFF } from "../diff";
 import type { DiffFile } from "../diff";
 
@@ -138,8 +144,19 @@ const GIT_STATUS = SORTED_FILES.map((f) => ({
   status: f.status,
 }));
 const FILE_PATH_SET = new Set(FILE_PATHS);
+const DIFF_STATS = new Map(
+  SORTED_FILES.map((f) => {
+    let added = 0;
+    let removed = 0;
+    for (const line of f.patch.split("\n")) {
+      if (line.startsWith("+") && !line.startsWith("+++")) added++;
+      else if (line.startsWith("-") && !line.startsWith("---")) removed++;
+    }
+    return [f.path, { added, removed }] as const;
+  })
+);
 const LAYOUT_PADDING = 0;
-const CODE_VIEW_FILE_TREE_ITEM_HEIGHT = 24;
+const CODE_VIEW_FILE_TREE_ITEM_HEIGHT = 30;
 
 const CODE_VIEW_CUSTOM_CSS = `
 [data-diffs-header] {
@@ -158,17 +175,29 @@ const CODE_VIEW_CUSTOM_CSS = `
     background-color: var(--color-border-opaque);
   }
 }
+
+:host {
+  interpolate-size: allow-keywords;
+  transition: height 250ms ease;
+  overflow: hidden;
+}
+
+[data-gutter-utility-slot] {
+  pointer-events: none;
+}
 `;
 
 const FILE_TREE_STYLES: CSSProperties & CustomProperties = {
   "--trees-bg-override": "var(--diffshub-sidebar-bg)",
-  "--trees-density-override": 0.8,
   "--trees-selected-fg-override": "light-dark(#1c1c1e, #f0f0f2)",
   "--trees-padding-inline-override": 8,
   "--trees-bg-muted": "light-dark(#f5f5f5, #262626)",
   "--trees-search-bg-override": "light-dark(#fff, #262626)",
   "--trees-git-renamed-color-override": "light-dark(#007aff, #007aff)",
 };
+
+const { resolveIcon: resolveFileIcon } = createFileTreeIconResolver("standard");
+const FILE_TREE_SPRITE_SHEET = getBuiltInSpriteSheet("standard");
 
 const diffCache = new Map<string, FileDiffMetadata>();
 
@@ -376,6 +405,27 @@ export function CodeReview() {
     useState<PendingComposer | null>(null);
   const [selectedLines, setSelectedLines] =
     useState<CodeViewLineSelection | null>(null);
+  const [collapsedItems, setCollapsedItems] = useState(() => new Set<string>());
+  const [expandedResolvedThreadIds, setExpandedResolvedThreadIds] = useState(
+    () => new Set<string>()
+  );
+  const previouslyResolvedIdsRef = useRef(new Set<string>());
+  useEffect(() => {
+    const prevResolved = previouslyResolvedIdsRef.current;
+    const nowResolved = new Set(
+      threads.filter((t) => t.resolved).map((t) => t.id)
+    );
+    previouslyResolvedIdsRef.current = nowResolved;
+    const newlyResolved = threads
+      .filter((t) => t.resolved && !prevResolved.has(t.id))
+      .map((t) => t.id);
+    if (newlyResolved.length === 0) return;
+    setExpandedResolvedThreadIds((prev) => {
+      const next = new Set(prev);
+      for (const id of newlyResolved) next.delete(id);
+      return next;
+    });
+  }, [threads]);
   const [fileSearchQuery, setFileSearchQuery] = useState("");
   const [activeSidebarTab, setActiveSidebarTab] = useState<SidebarTab>("files");
   const isWideLayout = useMediaQuery("(min-width: 768px)");
@@ -403,19 +453,14 @@ export function CodeReview() {
     [fileSearchQuery]
   );
 
-  const { model: treeModel } = useFileTree({
-    flattenEmptyDirectories: true,
-    gitStatus: GIT_STATUS,
-    initialExpansion: "open",
-    initialVisibleRowCount,
-    itemHeight: CODE_VIEW_FILE_TREE_ITEM_HEIGHT,
-    paths: FILE_PATHS,
-    stickyFolders: true,
-  });
-
   useEffect(() => {
-    treeModel.resetPaths(filteredFilePaths);
-  }, [treeModel, filteredFilePaths]);
+    if (document.querySelector("[data-pierre-trees-sprite]")) return;
+    const container = document.createElement("div");
+    container.setAttribute("data-pierre-trees-sprite", "");
+    container.style.display = "none";
+    container.innerHTML = FILE_TREE_SPRITE_SHEET;
+    document.body.insertAdjacentElement("afterbegin", container);
+  }, []);
 
   const threadsByFile = useMemo(() => {
     const map = new Map<string, ThreadData[]>();
@@ -431,6 +476,53 @@ export function CodeReview() {
     }
     return map;
   }, [threads]);
+
+  const commentCountByFile = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const [path, fileThreads] of threadsByFile) {
+      let count = 0;
+      for (const thread of fileThreads) {
+        for (const comment of thread.comments) {
+          if (!comment.deletedAt) count++;
+        }
+      }
+      if (count > 0) map.set(path, count);
+    }
+    return map;
+  }, [threadsByFile]);
+
+  const commentCountByFileRef = useRef(commentCountByFile);
+  commentCountByFileRef.current = commentCountByFile;
+
+  const renderRowDecoration = useCallback<FileTreeRowDecorationRenderer>(
+    (context) => {
+      if (context.item.kind !== "file") return null;
+      const count = commentCountByFileRef.current.get(context.item.path) ?? 0;
+      if (count === 0) return null;
+      const label = `${count} comment${count !== 1 ? "s" : ""}`;
+      return { text: label, title: label };
+    },
+    []
+  );
+
+  const { model: treeModel } = useFileTree({
+    flattenEmptyDirectories: true,
+    gitStatus: GIT_STATUS,
+    initialExpansion: "open",
+    initialVisibleRowCount,
+    itemHeight: CODE_VIEW_FILE_TREE_ITEM_HEIGHT,
+    paths: FILE_PATHS,
+    renderRowDecoration,
+    stickyFolders: true,
+  });
+
+  useEffect(() => {
+    treeModel.resetPaths(filteredFilePaths);
+  }, [treeModel, filteredFilePaths]);
+
+  useEffect(() => {
+    treeModel.setGitStatus([...GIT_STATUS]);
+  }, [treeModel, commentCountByFile]);
 
   const resolvedThreads = useMemo((): ResolvedThread[] => {
     const nextResolvedThreads: ResolvedThread[] = [];
@@ -500,7 +592,9 @@ export function CodeReview() {
             : annotation.metadata.key
         )
         .join(",");
+      const isCollapsed = collapsedItems.has(diffItemId(file.path));
       let version = fileDiff.cacheKey?.length ?? 0;
+      if (isCollapsed) version = (version * 31 + 1) >>> 0;
       for (let i = 0; i < versionStr.length; i++) {
         version = (version * 31 + versionStr.charCodeAt(i)) >>> 0;
       }
@@ -511,9 +605,14 @@ export function CodeReview() {
         fileDiff,
         annotations,
         version,
+        collapsed: isCollapsed,
       };
     });
-  }, [fileDiffs, resolvedThreads, pendingComposer]);
+  }, [fileDiffs, resolvedThreads, pendingComposer, collapsedItems]);
+
+  const itemsRef = useRef(items);
+  itemsRef.current = items;
+  const selectedItemIdRef = useRef<string | null>(null);
 
   const diffStyle: DiffStyle = isWideLayout ? "split" : "unified";
 
@@ -644,14 +743,16 @@ export function CodeReview() {
       stickyHeaders: true,
       themeType: "system",
       unsafeCSS: CODE_VIEW_CUSTOM_CSS,
-      onGutterUtilityClick(range, context) {
-        if (context.item.type !== "diff") return;
-        createDraftComposer(range, context.item);
-      },
       onLineSelectionEnd(range) {
         if (range == null) {
           setSelectedLines(null);
+          return;
         }
+        const item = itemsRef.current.find(
+          (i) => i.id === selectedItemIdRef.current
+        );
+        if (item?.type !== "diff") return;
+        createDraftComposer(range, item);
       },
     }),
     [createDraftComposer, diffStyle]
@@ -669,7 +770,20 @@ export function CodeReview() {
 
       if (metadata.type === "composer") {
         return (
-          <div className="max-w-[600px] p-2">
+          <div
+            className="max-w-[600px] p-2 font-sans text-base"
+            onBlur={(event) => {
+              if (event.currentTarget.contains(event.relatedTarget as Node))
+                return;
+              const editor = event.currentTarget.querySelector(
+                "[contenteditable='true']"
+              );
+              if (!editor?.textContent?.trim()) {
+                setPendingComposer(null);
+                setSelectedLines(null);
+              }
+            }}
+          >
             <Composer
               autoFocus
               onComposerSubmit={({ body }, event) => {
@@ -700,71 +814,88 @@ export function CodeReview() {
       const thread = threads.find((t) => t.id === metadata.threadId);
       if (!thread) return null;
 
+      const isExpanded =
+        !thread.resolved || expandedResolvedThreadIds.has(thread.id);
+
       return (
         <div
-          className="max-w-[600px] p-2"
+          className="max-w-[600px] p-2 font-sans text-base"
           onClick={() =>
             setSelectedLines({ id: item.id, range: metadata.range })
           }
         >
-          <Thread
-            thread={thread}
-            className="rounded-xl bg-[var(--card)] shadow-sm dark:bg-neutral-800 overflow-hidden"
-          />
+          <div className="overflow-hidden rounded-xl bg-[var(--card)] border border-[var(--color-border-opaque)] dark:bg-neutral-800">
+            {thread.resolved && (
+              <button
+                type="button"
+                className={`flex h-10 w-full select-none items-center gap-2 px-3 text-left text-xs text-neutral-500 dark:text-neutral-400${isExpanded ? " border-b border-[var(--color-border-opaque)] cursor-pointer" : ""}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setExpandedResolvedThreadIds((prev) => {
+                    const next = new Set(prev);
+                    if (next.has(thread.id)) next.delete(thread.id);
+                    else next.add(thread.id);
+                    return next;
+                  });
+                }}
+              >
+                <svg
+                  viewBox="0 0 16 16"
+                  width="12"
+                  height="12"
+                  fill="currentColor"
+                  aria-hidden
+                  className="shrink-0 text-neutral-400 dark:text-neutral-500"
+                >
+                  <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z" />
+                </svg>
+                <span className="flex-1">
+                  This conversation was marked as resolved
+                </span>
+                <svg
+                  viewBox="0 0 16 16"
+                  width="16"
+                  height="16"
+                  aria-hidden
+                  className={`shrink-0 text-neutral-400 transition-transform duration-150 dark:text-neutral-500${isExpanded ? "" : " -rotate-90"}`}
+                >
+                  <use href="#file-tree-icon-chevron" />
+                </svg>
+              </button>
+            )}
+            {isExpanded && (
+              <Thread
+                thread={thread}
+                className="bg-[var(--card)] dark:bg-neutral-800"
+              />
+            )}
+          </div>
         </div>
       );
     },
-    [threads, createThread]
+    [threads, createThread, expandedResolvedThreadIds]
   );
 
   const toggleCollapsed = useCallback(
     (item: CodeViewItem<AnnotationMetadata>) => {
-      const viewer = codeViewRef.current;
-      const instance = viewer?.getInstance();
-      if (!viewer || !instance) return;
-      const itemTop = instance.getTopForItem(item.id);
-      item.collapsed = item.collapsed !== true;
-      item.version = typeof item.version === "number" ? item.version + 1 : 1;
-      if (!viewer.updateItem(item)) return;
-      if (itemTop != null && itemTop < instance.getScrollTop()) {
-        viewer.scrollTo({ type: "item", id: item.id, align: "start" });
+      const instance = codeViewRef.current?.getInstance();
+      const itemTop = instance?.getTopForItem(item.id);
+      const scrollTop = instance?.getScrollTop();
+      setCollapsedItems((prev) => {
+        const next = new Set(prev);
+        if (next.has(item.id)) next.delete(item.id);
+        else next.add(item.id);
+        return next;
+      });
+      if (itemTop != null && scrollTop != null && itemTop < scrollTop) {
+        codeViewRef.current?.scrollTo({
+          type: "item",
+          id: item.id,
+          align: "start",
+        });
       }
     },
     []
-  );
-
-  const renderHeaderPrefix = useCallback(
-    (item: CodeViewItem<AnnotationMetadata>) => {
-      if (item.type !== "diff") return null;
-      const emptyDiff =
-        item.fileDiff.splitLineCount === 0 &&
-        item.fileDiff.unifiedLineCount === 0;
-
-      return (
-        <button
-          type="button"
-          disabled={emptyDiff}
-          aria-label={item.collapsed ? "Expand diff" : "Collapse diff"}
-          className="ml-[-8px] inline-flex size-6 cursor-pointer items-center justify-center rounded-md text-neutral-500 transition hover:bg-neutral-200 hover:text-neutral-900 disabled:pointer-events-none disabled:opacity-40 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
-          onClick={(event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            toggleCollapsed(item);
-          }}
-        >
-          <span
-            className={
-              item.collapsed
-                ? "block rotate-[-90deg] transition-transform"
-                : "block transition-transform"
-            }
-          >
-            ▾
-          </span>
-        </button>
-      );
-    },
-    [toggleCollapsed]
   );
 
   const renderCustomHeader = useCallback(
@@ -772,27 +903,78 @@ export function CodeReview() {
       if (item.type !== "diff") return null;
       const file = SORTED_FILES.find((f) => diffItemId(f.path) === item.id);
       if (!file) return null;
-      const fileThreadCount = (threadsByFile.get(file.path) ?? []).length;
+      const emptyDiff =
+        item.fileDiff.splitLineCount === 0 &&
+        item.fileDiff.unifiedLineCount === 0;
+      const commentCount = commentCountByFile.get(file.path) ?? 0;
+      const stats = DIFF_STATS.get(file.path) ?? { added: 0, removed: 0 };
+      const lastSlash = file.path.lastIndexOf("/");
+      const fileName =
+        lastSlash === -1 ? file.path : file.path.slice(lastSlash + 1);
+      const dirPath = lastSlash === -1 ? "" : file.path.slice(0, lastSlash + 1);
+      const fileIcon = resolveFileIcon("file-tree-icon-file", file.path);
+      const fileIconColor = getBuiltInFileIconColor(fileIcon.token ?? "");
 
       return (
-        <div className="flex h-10 items-center gap-2 px-3 text-xs">
-          <span className="min-w-0 flex-1 truncate font-mono font-medium text-neutral-800 dark:text-neutral-200">
-            {file.path}
-          </span>
-          {file.status === "added" && (
-            <span className="shrink-0 rounded-full border border-emerald-300 bg-emerald-50 px-1.5 py-0.5 font-medium text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-              New
+        <div
+          className={`flex h-10 min-w-0 flex-1 cursor-pointer select-none items-center gap-2 px-3${emptyDiff ? " pointer-events-none" : ""}`}
+          role="button"
+          aria-label={item.collapsed ? "Expand diff" : "Collapse diff"}
+          onClick={() => toggleCollapsed(item)}
+        >
+          <svg
+            viewBox="0 0 16 16"
+            width="16"
+            height="16"
+            aria-hidden
+            className={`shrink-0 text-neutral-400 transition-transform duration-150 dark:text-neutral-500${item.collapsed ? " -rotate-90" : ""}${emptyDiff ? " opacity-40" : ""}`}
+          >
+            <use href="#file-tree-icon-chevron" />
+          </svg>
+          <svg
+            viewBox={`0 0 ${fileIcon.width ?? 16} ${fileIcon.height ?? 16}`}
+            width="16"
+            height="16"
+            aria-hidden
+            style={{ color: fileIconColor, flexShrink: 0 }}
+          >
+            <use href={`#${fileIcon.name}`} />
+          </svg>
+          <div className="flex min-w-0 flex-1 items-baseline gap-1.5">
+            <span className="shrink-0 font-medium text-neutral-800 dark:text-neutral-200">
+              {fileName}
             </span>
-          )}
-          {fileThreadCount > 0 && (
-            <span className="shrink-0 text-neutral-500 dark:text-neutral-400">
-              {fileThreadCount} comment{fileThreadCount !== 1 ? "s" : ""}
-            </span>
-          )}
+            {dirPath && (
+              <span className="min-w-0 truncate text-neutral-400 dark:text-neutral-500">
+                {dirPath}
+              </span>
+            )}
+          </div>
+          <div className="flex shrink-0 items-center gap-3 text-xs tabular-nums">
+            {(stats.added > 0 || stats.removed > 0) && (
+              <span className="flex gap-1.5">
+                {stats.added > 0 && (
+                  <span className="text-emerald-600 dark:text-emerald-400">
+                    +{stats.added}
+                  </span>
+                )}
+                {stats.removed > 0 && (
+                  <span className="text-rose-600 dark:text-rose-400">
+                    -{stats.removed}
+                  </span>
+                )}
+              </span>
+            )}
+            {commentCount > 0 && (
+              <span className="text-neutral-400 dark:text-neutral-500">
+                {commentCount} comment{commentCount !== 1 ? "s" : ""}
+              </span>
+            )}
+          </div>
         </div>
       );
     },
-    [threadsByFile]
+    [commentCountByFile, toggleCollapsed]
   );
 
   return (
@@ -867,11 +1049,14 @@ export function CodeReview() {
           items={items}
           options={options}
           selectedLines={selectedLines}
-          onSelectedLinesChange={setSelectedLines}
+          onSelectedLinesChange={(value) => {
+            setSelectedLines(value);
+            selectedItemIdRef.current = value?.id ?? null;
+            if (value === null) setPendingComposer(null);
+          }}
           onScroll={handleScroll}
           renderAnnotation={renderAnnotation}
           renderCustomHeader={renderCustomHeader}
-          renderHeaderPrefix={renderHeaderPrefix}
         />
       </main>
     </div>
@@ -894,16 +1079,17 @@ function Header() {
           </span>
         </div>
         <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-[var(--muted-foreground)]">
-          <code className="rounded bg-[var(--muted)] px-1.5 py-0.5 font-mono text-[var(--foreground)]">
+          <code className="rounded bg-[var(--muted)] px-1.5 py-0.5 text-[var(--foreground)]">
             {DIFF.from}
           </code>
           <span>into</span>
-          <code className="rounded bg-[var(--muted)] px-1.5 py-0.5 font-mono text-[var(--foreground)]">
+          <code className="rounded bg-[var(--muted)] px-1.5 py-0.5 text-[var(--foreground)]">
             {DIFF.to}
           </code>
           <span>{DIFF.changes.length} files</span>
         </div>
       </div>
+      <AvatarStack />
     </header>
   );
 }
@@ -949,7 +1135,7 @@ function CommentsSidebar({
           <section key={file.path}>
             <button
               type="button"
-              className="p-3 pb-2 text-left font-mono text-sm font-medium break-all text-[var(--muted-foreground)] transition hover:text-[var(--foreground)]"
+              className="p-3 pb-2 text-left text-sm font-medium break-all text-[var(--muted-foreground)] transition hover:text-[var(--foreground)]"
               onClick={() => scrollToFile(file.path)}
             >
               {file.path}
