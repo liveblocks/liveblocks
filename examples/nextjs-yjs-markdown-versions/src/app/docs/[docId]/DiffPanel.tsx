@@ -6,15 +6,13 @@ import type * as Y from "yjs";
 
 import { getVersionText, type VersionInfo } from "@/lib/yjs-versions";
 
-import styles from "./Panels.module.css";
+import { PanelHeader, panelShellClass } from "./PanelChrome";
 
 /**
  * Read-only Monaco DiffEditor that compares a version to its predecessor.
  *
  * Subscribes to both `Y.Text`s and feeds their plain-text snapshots into the
- * DiffEditor as `original` and `modified`. This is sufficient for an example —
- * a production app might use Liveblocks AI Editor's `useDiff` hook or maintain
- * its own diff state via Yjs `applyUpdate` history.
+ * DiffEditor as `original` and `modified`.
  */
 export function DiffPanel({
   yDoc,
@@ -31,17 +29,14 @@ export function DiffPanel({
   const modified = useYTextContents(yDoc, currentVersion.id);
 
   return (
-    <div className={styles.panel}>
-      <div className={styles.panelHeader}>
-        <span className={styles.panelLabel}>
-          Diff · v{Math.max(versionIndex, 1)}{" "}
-          {previousVersion ? `vs v${versionIndex}` : "(first version)"}
-        </span>
-        <span className={styles.panelMeta}>
-          {new Date(currentVersion.createdAt).toLocaleString()}
-        </span>
-      </div>
-      <div className={styles.panelBody}>
+    <div className={panelShellClass}>
+      <PanelHeader
+        label={`Diff · v${Math.max(versionIndex, 1)} ${
+          previousVersion ? `vs v${versionIndex}` : "(first version)"
+        }`}
+        meta={new Date(currentVersion.createdAt).toLocaleString()}
+      />
+      <div className="relative min-h-0 flex-1">
         <DiffEditor
           height="100%"
           width="100%"

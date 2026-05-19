@@ -1,6 +1,7 @@
 "use client";
 
 import { Editor } from "@monaco-editor/react";
+import clsx from "clsx";
 import type { editor } from "monaco-editor";
 import { useEffect, useRef, useState } from "react";
 import type { LiveblocksYjsProvider } from "@liveblocks/yjs";
@@ -10,7 +11,7 @@ import type * as Y from "yjs";
 
 import { getVersionText, type VersionInfo } from "@/lib/yjs-versions";
 
-import styles from "./Panels.module.css";
+import { PanelHeader, panelShellClass } from "./PanelChrome";
 
 /**
  * A single-pane Monaco editor bound to a version's `Y.Text` via `y-monaco`.
@@ -55,16 +56,17 @@ export function EditorPanel({
   }, [editorRef, yDoc, provider, version.id]);
 
   return (
-    <div className={styles.panel} data-readonly={readOnly}>
-      <div className={styles.panelHeader}>
-        <span className={styles.panelLabel}>
-          {readOnly ? "Snapshot" : "Editor"} · v{versionIndex + 1}
-        </span>
-        <span className={styles.panelMeta}>
-          {new Date(version.createdAt).toLocaleString()}
-        </span>
-      </div>
-      <div className={styles.panelBody}>
+    <div
+      className={clsx(
+        panelShellClass,
+        readOnly && "bg-bg border-dashed"
+      )}
+    >
+      <PanelHeader
+        label={`${readOnly ? "Snapshot" : "Editor"} · v${versionIndex + 1}`}
+        meta={new Date(version.createdAt).toLocaleString()}
+      />
+      <div className="relative min-h-0 flex-1">
         <Editor
           onMount={(e) => setEditorRef(e)}
           height="100%"

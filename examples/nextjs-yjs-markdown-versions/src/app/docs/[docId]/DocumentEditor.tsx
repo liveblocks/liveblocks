@@ -4,7 +4,7 @@ import { useRoom } from "@liveblocks/react";
 import { getYjsProviderForRoom, type LiveblocksYjsProvider } from "@liveblocks/yjs";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import type * as Y from "yjs";
+import clsx from "clsx";
 
 import { useVersions } from "@/lib/use-versions";
 import {
@@ -16,7 +16,6 @@ import {
 import { EditorCarousel } from "./EditorCarousel";
 import { VersionSidebar } from "./VersionSidebar";
 import { renameDoc } from "../actions";
-import styles from "./DocumentEditor.module.css";
 
 export type LeftPanelMode = "diff" | "preview";
 
@@ -54,8 +53,6 @@ export function DocumentEditor({
 
   const versions = useVersions(bootstrapped ? yDoc : null);
 
-  // The user-selected version examined in the left panel. If null, we default
-  // to the predecessor of the latest (i.e. diff "previous vs current").
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const effectiveSelectedIndex = useMemo(() => {
     if (versions.length === 0) return -1;
@@ -69,7 +66,7 @@ export function DocumentEditor({
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   return (
-    <div className={styles.layout}>
+    <div className="flex min-h-0 flex-1 overflow-hidden">
       <VersionSidebar
         open={sidebarOpen}
         onToggle={() => setSidebarOpen((v) => !v)}
@@ -78,7 +75,7 @@ export function DocumentEditor({
         onSelectIndex={(i) => setSelectedIndex(i)}
         currentDocId={docId}
       />
-      <div className={styles.main}>
+      <div className="flex min-w-0 flex-1 flex-col">
         <Toolbar
           docId={docId}
           initialTitle={initialTitle}
@@ -95,7 +92,7 @@ export function DocumentEditor({
           }}
           canDuplicate={effectiveSelectedIndex >= 0 && versions.length > 0}
         />
-        <div className={styles.carouselWrap}>
+        <div className="bg-bg-muted relative min-h-0 flex-1 overflow-hidden">
           {bootstrapped && versions.length > 0 ? (
             <EditorCarousel
               yDoc={yDoc}
@@ -105,7 +102,9 @@ export function DocumentEditor({
               leftMode={leftMode}
             />
           ) : (
-            <div className={styles.placeholder}>Preparing document…</div>
+            <div className="text-text-muted flex h-full items-center justify-center text-[13px]">
+              Preparing document…
+            </div>
           )}
         </div>
       </div>
@@ -133,13 +132,16 @@ function Toolbar({
   const [title, setTitle] = useState(initialTitle);
 
   return (
-    <div className={styles.toolbar}>
-      <div className={styles.toolbarLeft}>
-        <Link href="/docs" className={styles.backLink}>
+    <div className="bg-bg-elev border-border flex h-[52px] flex-none items-center justify-between gap-3 border-b px-4">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        <Link
+          href="/docs"
+          className="text-text-muted hover:text-text whitespace-nowrap text-xs"
+        >
           ← Documents
         </Link>
         <input
-          className={styles.titleInput}
+          className="text-text focus:bg-bg-muted min-w-0 flex-1 rounded-md border-0 bg-transparent px-2 py-1.5 text-[15px] font-semibold outline-none"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           onBlur={async () => {
@@ -150,36 +152,26 @@ function Toolbar({
           spellCheck={false}
         />
       </div>
-      <div className={styles.toolbarRight}>
-        <div className={styles.modeSwitch} role="tablist">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={leftMode === "diff"}
-            className={
-              leftMode === "diff" ? styles.modeButtonActive : styles.modeButton
-            }
+      <div className="flex items-center gap-2">
+        <div
+          role="tablist"
+          className="border-border-strong inline-flex overflow-hidden rounded-lg border"
+        >
+          <ModeButton
+            label="Diff"
+            active={leftMode === "diff"}
             onClick={() => onLeftModeChange("diff")}
-          >
-            Diff
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={leftMode === "preview"}
-            className={
-              leftMode === "preview"
-                ? styles.modeButtonActive
-                : styles.modeButton
-            }
+          />
+          <ModeButton
+            label="Preview"
+            active={leftMode === "preview"}
             onClick={() => onLeftModeChange("preview")}
-          >
-            Preview
-          </button>
+            borderLeft
+          />
         </div>
         <button
           type="button"
-          className={styles.secondaryButton}
+          className="border-border-strong text-text hover:bg-bg-muted h-[30px] cursor-pointer rounded-lg border bg-transparent px-3 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-50"
           onClick={onDuplicateSelected}
           disabled={!canDuplicate}
           title="Duplicate selected version as a new version"
@@ -188,12 +180,40 @@ function Toolbar({
         </button>
         <button
           type="button"
-          className={styles.primaryButton}
+          className="bg-accent text-accent-fg h-[30px] cursor-pointer rounded-lg border border-transparent px-3.5 text-xs font-semibold hover:brightness-105"
           onClick={onCreateVersion}
         >
           + New version
         </button>
       </div>
     </div>
+  );
+}
+
+function ModeButton({
+  label,
+  active,
+  onClick,
+  borderLeft,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+  borderLeft?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={active}
+      onClick={onClick}
+      className={clsx(
+        "h-[30px] cursor-pointer border-0 bg-transparent px-3 text-xs font-semibold",
+        active ? "bg-bg-muted text-text" : "text-text-muted",
+        borderLeft && "border-border-strong border-l"
+      )}
+    >
+      {label}
+    </button>
   );
 }

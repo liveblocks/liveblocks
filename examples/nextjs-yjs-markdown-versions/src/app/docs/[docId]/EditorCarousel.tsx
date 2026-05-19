@@ -1,5 +1,6 @@
 "use client";
 
+import clsx from "clsx";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import type * as Y from "yjs";
@@ -10,7 +11,6 @@ import type { LeftPanelMode } from "./DocumentEditor";
 import { DiffPanel } from "./DiffPanel";
 import { EditorPanel } from "./EditorPanel";
 import { PreviewPanel } from "./PreviewPanel";
-import styles from "./EditorCarousel.module.css";
 
 const PANEL_WIDTH_PERCENT = 50; // each panel = 50% of viewport
 const TRANSITION_MS = 320;
@@ -43,12 +43,12 @@ export function EditorCarousel({
 }) {
   const latestIndex = versions.length - 1;
 
-  // Special case: when there's a single version, just show the editor at full
-  // width. There's nothing to diff against.
+  // Special case: when there's only one version, just show the editor at
+  // full width. There's nothing to diff against.
   if (versions.length === 1) {
     return (
-      <div className={styles.viewport}>
-        <div className={styles.singleSlot}>
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute inset-0 p-3">
           <EditorPanel
             yDoc={yDoc}
             provider={provider}
@@ -94,10 +94,10 @@ function Tape({
   rightIndex: number;
   leftMode: LeftPanelMode;
 }) {
-  // Maintain the window of mounted panels. In steady state we keep three
-  // (left neighbor, current left, current right). Around a transition we
-  // union the previous and the new window so panels animating off-screen
-  // remain mounted for the duration of the transition.
+  // Window of mounted panels. In steady state we keep three (left neighbor,
+  // current left, current right). Across a transition we union the previous
+  // and the new windows so panels animating off-screen stay mounted for the
+  // duration of the transition.
   const [mounted, setMounted] = useState<number[]>(() =>
     neighborWindow(safeSelected, latestIndex)
   );
@@ -127,9 +127,9 @@ function Tape({
   const tapeWidth = `${(latestIndex + 2) * PANEL_WIDTH_PERCENT}%`;
 
   return (
-    <div className={styles.viewport}>
+    <div className="absolute inset-0 overflow-hidden">
       <div
-        className={styles.tape}
+        className="ease-carousel absolute left-0 top-0 h-full transition-transform will-change-transform"
         style={{
           width: tapeWidth,
           transform: tapeTransform,
@@ -146,14 +146,16 @@ function Tape({
           return (
             <div
               key={version.id}
-              className={styles.slot}
+              className={clsx(
+                "absolute inset-y-0 p-3",
+                isLeftSlot && "pr-1.5",
+                isRightSlot && "pl-1.5",
+                !isLeftSlot && !isRightSlot && "pointer-events-none"
+              )}
               style={{
                 left: `${versionIndex * PANEL_WIDTH_PERCENT}%`,
                 width: `${PANEL_WIDTH_PERCENT}%`,
               }}
-              data-role={
-                isLeftSlot ? "left" : isRightSlot ? "right" : "offscreen"
-              }
               aria-hidden={!isLeftSlot && !isRightSlot}
             >
               {isLeftSlot ? (

@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 
 import { auth, signIn } from "@/auth/manager";
-import styles from "./signin.module.css";
 
 export default async function SignInPage({
   searchParams,
@@ -16,10 +15,12 @@ export default async function SignInPage({
   }
 
   return (
-    <main className={styles.main}>
-      <div className={styles.card}>
-        <h1 className={styles.title}>Markdown Versions</h1>
-        <p className={styles.subtitle}>
+    <main className="bg-bg flex min-h-screen items-center justify-center p-6">
+      <div className="bg-bg-elev border-border w-full max-w-sm rounded-2xl border p-8 shadow-[0_1px_2px_rgba(0,0,0,0.04),_0_8px_24px_rgba(0,0,0,0.04)]">
+        <h1 className="text-text mb-1 text-2xl font-bold tracking-tight">
+          Markdown Versions
+        </h1>
+        <p className="text-text-muted mb-6 text-sm">
           Multiplayer markdown editor with version history.
         </p>
 
@@ -29,13 +30,16 @@ export default async function SignInPage({
             await signIn("github", { redirectTo: callbackUrl ?? "/docs" });
           }}
         >
-          <button type="submit" className={styles.signinButton}>
+          <button
+            type="submit"
+            className="inline-flex w-full items-center justify-center gap-2.5 rounded-lg border border-[#111] bg-[#111] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#1f1f1f]"
+          >
             <GitHubIcon />
             <span>Sign in with GitHub</span>
           </button>
         </form>
 
-        <p className={styles.help}>
+        <p className="text-text-muted mt-4 text-center text-xs">
           You will only see and edit your own documents.
         </p>
       </div>

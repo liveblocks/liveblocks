@@ -3,7 +3,6 @@
 import { ClientSideSuspense, RoomProvider } from "@liveblocks/react";
 
 import { DocumentEditor } from "./DocumentEditor";
-import styles from "./DocumentClient.module.css";
 
 export function DocumentClient({
   roomId,
@@ -18,7 +17,9 @@ export function DocumentClient({
     <RoomProvider id={roomId} initialPresence={{}}>
       <ClientSideSuspense
         fallback={
-          <div className={styles.loading}>Connecting to {initialTitle}…</div>
+          <div className="text-text-muted flex flex-1 items-center justify-center text-sm">
+            Connecting to {initialTitle}…
+          </div>
         }
       >
         <DocumentEditor docId={docId} initialTitle={initialTitle} />

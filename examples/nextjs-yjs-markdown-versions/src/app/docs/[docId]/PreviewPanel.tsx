@@ -7,7 +7,7 @@ import type * as Y from "yjs";
 
 import { getVersionText, type VersionInfo } from "@/lib/yjs-versions";
 
-import styles from "./Panels.module.css";
+import { PanelHeader, panelShellClass } from "./PanelChrome";
 
 export function PreviewPanel({
   yDoc,
@@ -31,20 +31,18 @@ export function PreviewPanel({
   }, [yDoc, version.id]);
 
   return (
-    <div className={styles.panel}>
-      <div className={styles.panelHeader}>
-        <span className={styles.panelLabel}>Preview · v{versionIndex + 1}</span>
-        <span className={styles.panelMeta}>
-          {new Date(version.createdAt).toLocaleString()}
-        </span>
-      </div>
-      <div className={styles.previewBody}>
+    <div className={panelShellClass}>
+      <PanelHeader
+        label={`Preview · v${versionIndex + 1}`}
+        meta={new Date(version.createdAt).toLocaleString()}
+      />
+      <div className="flex-1 overflow-y-auto px-6 pb-10 pt-5">
         {text.trim().length === 0 ? (
-          <p className={styles.previewEmpty}>
+          <p className="text-text-muted text-sm">
             <em>This version is empty.</em>
           </p>
         ) : (
-          <article className={styles.markdown}>
+          <article className="markdown">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
           </article>
         )}
