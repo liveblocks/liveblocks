@@ -20,7 +20,20 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 21 (2026-05-22)
 
+## Examples
+
+- Added AI comments, buttons, and presence to [Linear-like Issue Tracker](https://liveblocks.io/examples/linear-like-issue-tracker/nextjs-linear-like-issue-tracker). It can read and edit issue content and properties.
+- Added AI comment pins to [Collaborative Flowchart AI](https://liveblocks.io/examples/collaborative-flowchart-ai/nextjs-react-flow-ai). It can read and edit flow state.
+- Added AI comments to [AI Dashboard Reports](https://liveblocks.io/examples/ai-dashboard-reports/nextjs-ai-dashboard-reports). It can answer questions on the app's data.
+- Added markdown AI replies to [AI Comments](https://liveblocks.io/examples/ai-comments/nextjs-comments-ai) and improved how final the comment is shown.
+
+## Documentation
+
+- All get started guides now have a "Copy prompt" button for use in Cursor, Claude Code, more.
+
 ## Contributors
+
+ctnicholas
 
 # Week 20 (2026-05-15)
 
