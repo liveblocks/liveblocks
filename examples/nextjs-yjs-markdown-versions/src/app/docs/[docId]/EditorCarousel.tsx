@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import type * as Y from "yjs";
 
@@ -13,26 +13,35 @@ import { PreviewPanel } from "./PreviewPanel";
 import type { LeftPanelMode } from "./DocumentEditor";
 
 /**
- * Two-panel carousel. On every change to the visible "view" (e.g. the user
- * creates a new version, navigates with the sidebar, or toggles
- * Diff/Preview) the entire viewport literally slides:
+ * Two-panel carousel that performs a real horizontal slide whenever the
+ * visible view changes:
  *
- *   - The previous view slides off-screen to the left  (`slideOutLeft`).
- *   - The new view slides in from the right            (`slideInRight`).
+ *   - The previous view animates from `translateX(0)` to `translateX(-100%)`.
+ *   - The new view animates from `translateX(100%)` to `translateX(0)`.
  *
- * Both are absolutely-positioned 100%-wide layers stacked inside an
- * `overflow:hidden` container, so the motion is a clean horizontal slide.
- * `useLayoutEffect` makes sure both animations start in the same paint —
- * otherwise the incoming would briefly animate without an outgoing
- * counterpart for one frame.
+ * The big subtlety is keeping the **previous** view's React tree alive
+ * across the transition so its Monaco editor doesn't have to remount
+ * (which would otherwise cause a one-frame flash of an empty pane at the
+ * starting position of the slide).
  *
- * The visible view is always one of:
+ * We do that with two tricks:
  *
- *   - **single**: a brand-new document with exactly one version — one
- *     editable Monaco editor at full width, nothing to diff against.
- *   - **pair**:   LEFT panel = read-only Monaco DiffEditor (or markdown
- *     preview), RIGHT panel = plain Monaco editor for the focused
- *     version. Editable when that version is the latest.
+ * 1. **Set up the transition during render.** Storing the
+ *    `previousView` in `useEffect` / `useLayoutEffect` is too late —
+ *    React has already committed the new render and unmounted the old
+ *    view. Instead, we derive the transition state during render (the
+ *    `if (incoming.key !== tracking.view.key) setTracking(...)` pattern
+ *    is supported: React discards the in-progress render and re-runs
+ *    with the new state, *before* committing anything to the DOM).
+ *
+ * 2. **Use the same React key across renders.** Both the previous and
+ *    the current view are rendered as siblings using *their own*
+ *    `view.key` — not a prefixed `in-…`/`out-…` form. React's reconciler
+ *    matches children by key across renders even when their position in
+ *    the JSX changes, so the previous view's DOM element (and its
+ *    Monaco editor) is preserved. The only thing we change on it is its
+ *    `className`, which kicks the `slideOutLeft` keyframe off on an
+ *    already-mounted element.
  */
 export function EditorCarousel({
   yDoc,
@@ -47,11 +56,32 @@ export function EditorCarousel({
   selectedIndex: number;
   leftMode: LeftPanelMode;
 }) {
-  const view = buildView(versions, selectedIndex, leftMode);
+  const incoming = buildView(versions, selectedIndex, leftMode);
+
+  // The single source of truth for what's rendered. `view` is whatever
+  // the user is currently "on"; `previousView` is non-null only while a
+  // slide animation is in flight.
+  const [tracking, setTracking] = useState<{
+    view: View | null;
+    previousView: View | null;
+  }>(() => ({ view: incoming, previousView: null }));
+
+  // Derive the transition during render. When `incoming` changes (the
+  // user created a new version, navigated in the sidebar, toggled
+  // Diff/Preview, …) we promote the previously-tracked view into
+  // `previousView` and adopt the new one as `view`. React allows
+  // setState during render — it discards the in-progress render and
+  // re-runs with the updated state before committing anything, so the
+  // old view's DOM element is never torn down between the two states.
+  if ((incoming?.key ?? null) !== (tracking.view?.key ?? null)) {
+    setTracking({ view: incoming, previousView: tracking.view });
+  }
+
+  const { view, previousView } = tracking;
 
   // One scroll-sync coordinator per document. Only the incoming view
-  // registers its editors with it — the outgoing view is purely visual and
-  // shouldn't fight the sync as it slides off.
+  // registers its editors with it — the previous view is purely visual
+  // while it slides off.
   const syncRef = useRef<ScrollSync | null>(null);
   if (syncRef.current === null) {
     syncRef.current = new ScrollSync();
@@ -63,47 +93,36 @@ export function EditorCarousel({
     };
   }, []);
 
-  // Cross-fade-by-slide bookkeeping. Whenever the view key changes we
-  // capture the just-previous view as `outgoing`, then clear it when its
-  // slide-out animation finishes (or is replaced by another transition).
-  const previousKeyRef = useRef<string | undefined>(view?.key);
-  const previousViewRef = useRef<View | null>(view);
-  const isFirstRenderRef = useRef(true);
-  const [outgoing, setOutgoing] = useState<View | null>(null);
-
-  useLayoutEffect(() => {
-    if (!view) return;
-    const isInitial = isFirstRenderRef.current;
-    isFirstRenderRef.current = false;
-
-    if (
-      !isInitial &&
-      previousKeyRef.current &&
-      previousKeyRef.current !== view.key
-    ) {
-      setOutgoing(previousViewRef.current);
-    }
-    previousKeyRef.current = view.key;
-    previousViewRef.current = view;
-  }, [view?.key]);
-
   if (!view) return null;
+
+  const isTransitioning =
+    previousView !== null && previousView.key !== view.key;
 
   return (
     <div className="absolute inset-0 overflow-hidden">
-      {outgoing ? (
+      {isTransitioning ? (
         <div
-          key={`out-${outgoing.key}`}
+          key={previousView!.key}
           className="animate-slideOutLeft absolute inset-0 will-change-transform"
-          onAnimationEnd={() => setOutgoing(null)}
+          onAnimationEnd={() => {
+            // Clear `previousView` only if it's still the one we just
+            // animated out — a faster follow-up transition may have
+            // already replaced it, in which case we leave the new one
+            // alone.
+            setTracking((prev) =>
+              prev.previousView?.key === previousView!.key
+                ? { ...prev, previousView: null }
+                : prev
+            );
+          }}
         >
-          <ViewPanels view={outgoing} yDoc={yDoc} provider={provider} />
+          <ViewPanels view={previousView!} yDoc={yDoc} provider={provider} />
         </div>
       ) : null}
       <div
-        key={`in-${view.key}`}
+        key={view.key}
         className={
-          outgoing
+          isTransitioning
             ? "animate-slideInRight absolute inset-0 will-change-transform"
             : "absolute inset-0"
         }
