@@ -22,6 +22,23 @@
     --accent: 45 108 223;
     --accent-fg: 255 255 255;
     --danger: 210 53 53;
+
+    color-scheme: light;
+  }
+
+  .dark {
+    --bg: 17 18 22;
+    --bg-elev: 26 27 32;
+    --bg-muted: 36 38 44;
+    --border: 49 51 58;
+    --border-strong: 73 76 86;
+    --text: 235 236 240;
+    --text-muted: 156 160 168;
+    --accent: 96 165 250;
+    --accent-fg: 17 18 22;
+    --danger: 248 113 113;
+
+    color-scheme: dark;
   }
 
   html,
@@ -40,9 +57,6 @@
 }
 
 @layer components {
-  /* Rendered-markdown typography for the preview panel. Descendant selectors
-     are awkward in pure Tailwind without the typography plugin, so we keep
-     them here. */
   .markdown {
     @apply text-text max-w-[70ch] text-sm leading-relaxed;
   }
@@ -109,9 +123,7 @@
   }
 }
 
-/* Yjs awareness — selection background. The `--user-color` variable is
-   injected per-client by `Cursors.tsx`-style stylesheets in other examples;
-   here it falls back to black. */
+/* Yjs awareness — selection background. */
 .yRemoteSelection {
   opacity: 0.5;
   background-color: var(--user-color);

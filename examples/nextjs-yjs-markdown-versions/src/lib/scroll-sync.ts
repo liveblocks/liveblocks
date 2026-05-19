@@ -1,16 +1,23 @@
 import type { editor } from "monaco-editor";
 
 /**
- * Two-way scroll synchronizer for a pair of Monaco editors.
+ * Two-way line-anchored scroll synchronizer for a pair of Monaco editors.
  *
- * Used by `EditorCarousel` to keep the LEFT DiffEditor's modified pane and
- * the RIGHT plain Monaco editor aligned vertically (and horizontally) when
- * the user scrolls either one. Both editors show the same focused version,
- * so mirroring `scrollTop` / `scrollLeft` lines them up by line.
+ * The simplest sync — mirror `scrollTop` — drifts whenever Monaco's
+ * `DiffEditor` inserts an alignment view zone on its modified side (so
+ * that deleted-from-original lines show up as visual gaps). The two
+ * editors then have different *layout* heights even though they display
+ * the same source text.
  *
- * Each side is registered independently (via `setLeft` / `setRight`) so
- * panel components can plug in and out without the carousel having to know
- * about the editor lifecycle.
+ * Instead, we anchor on the topmost visible logical line of the
+ * source editor and place the same line at the same viewport-relative
+ * pixel offset in the destination editor — using `getTopForLineNumber`
+ * which already accounts for view zones, line wrapping, padding, etc.
+ *
+ *     anchorViewportY = sourceTopForLine(L) - source.scrollTop
+ *     destination.scrollTop = destinationTopForLine(L) - anchorViewportY
+ *
+ * Horizontal scroll is mirrored as-is.
  */
 export class ScrollSync {
   private left: editor.ICodeEditor | null = null;
@@ -50,16 +57,14 @@ export class ScrollSync {
     const right = this.right;
     if (!left || !right) return;
 
-    // Seed the right with the left's current position so they start aligned.
-    right.setScrollTop(left.getScrollTop());
-    right.setScrollLeft(left.getScrollLeft());
+    // Seed the right editor's position from the left.
+    this.mirror(left, right);
 
     this.leftDisposer = left.onDidScrollChange(() => {
       if (this.propagating) return;
       this.propagating = true;
       try {
-        right.setScrollTop(left.getScrollTop());
-        right.setScrollLeft(left.getScrollLeft());
+        this.mirror(left, right);
       } finally {
         this.propagating = false;
       }
@@ -69,11 +74,36 @@ export class ScrollSync {
       if (this.propagating) return;
       this.propagating = true;
       try {
-        left.setScrollTop(right.getScrollTop());
-        left.setScrollLeft(right.getScrollLeft());
+        this.mirror(right, left);
       } finally {
         this.propagating = false;
       }
     });
+  }
+
+  private mirror(source: editor.ICodeEditor, dest: editor.ICodeEditor) {
+    const visibleRanges = source.getVisibleRanges();
+    if (visibleRanges.length === 0) {
+      // No content visible (e.g. mid-layout) — fall back to a raw scrollTop
+      // mirror so we don't get stuck at 0.
+      dest.setScrollTop(source.getScrollTop());
+      dest.setScrollLeft(source.getScrollLeft());
+      return;
+    }
+
+    const anchorLine = visibleRanges[0].startLineNumber;
+    const sourceTopForLine = source.getTopForLineNumber(anchorLine);
+    const sourceScrollTop = source.getScrollTop();
+    // How many pixels above the editor's top edge the anchor line sits
+    // (positive when the line has scrolled above the viewport).
+    const anchorViewportY = sourceTopForLine - sourceScrollTop;
+
+    const destTopForLine = dest.getTopForLineNumber(anchorLine);
+    const target = destTopForLine - anchorViewportY;
+    // Avoid micro-jitter from sub-pixel rounding.
+    if (Math.abs(target - dest.getScrollTop()) > 0.5) {
+      dest.setScrollTop(target);
+    }
+    dest.setScrollLeft(source.getScrollLeft());
   }
 }

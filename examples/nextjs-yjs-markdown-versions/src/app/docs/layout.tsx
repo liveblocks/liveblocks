@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { ReactNode } from "react";
 
 import { auth, signOut } from "@/auth/manager";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default async function DocsLayout({ children }: { children: ReactNode }) {
   const session = await auth();
@@ -18,6 +19,7 @@ export default async function DocsLayout({ children }: { children: ReactNode }) 
       <header className="bg-bg-elev border-border flex h-[52px] flex-none items-center justify-between border-b px-4">
         <div className="text-sm font-bold tracking-tight">Markdown Versions</div>
         <div className="flex items-center gap-2.5">
+          <ThemeToggle />
           <div className="flex items-center gap-2">
             {avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element -- external avatar URL; small + cached

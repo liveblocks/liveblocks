@@ -2,11 +2,10 @@ import type { Config } from "tailwindcss";
 
 const config = {
   content: ["./src/**/*.{js,ts,jsx,tsx,mdx}"],
+  darkMode: "class",
   theme: {
     extend: {
       colors: {
-        // App tokens. Keep them as CSS variables so the same palette can be
-        // referenced from globals.css (e.g. for Yjs cursor styles).
         bg: "rgb(var(--bg) / <alpha-value>)",
         "bg-elev": "rgb(var(--bg-elev) / <alpha-value>)",
         "bg-muted": "rgb(var(--bg-muted) / <alpha-value>)",

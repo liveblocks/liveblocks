@@ -2,7 +2,7 @@
 
 import { Editor } from "@monaco-editor/react";
 import clsx from "clsx";
-import type { editor } from "monaco-editor";
+import { KeyCode, KeyMod, type editor } from "monaco-editor";
 import { useEffect, useRef, useState } from "react";
 import type { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import { MonacoBinding } from "y-monaco";
@@ -11,7 +11,9 @@ import type * as Y from "yjs";
 
 import { getVersionText, type VersionInfo } from "@/lib/yjs-versions";
 import { LocalTime } from "@/components/LocalTime";
+import { formatMarkdown } from "@/lib/format";
 import type { ScrollSync } from "@/lib/scroll-sync";
+import { useIsDark } from "@/lib/use-is-dark";
 
 import { PanelHeader, panelShellClass } from "./PanelChrome";
 
@@ -20,14 +22,12 @@ type Role = "single" | "current" | "snapshot";
 /**
  * Single-pane Monaco editor bound to a version's `Y.Text` via `y-monaco`.
  *
- * Used as:
- *   - role="single":   the only editor for a brand-new document (1 version)
- *   - role="current":  the RIGHT panel showing the latest version (editable)
- *   - role="snapshot": the RIGHT panel showing an older version that the
- *                      user has navigated to via the sidebar (read-only)
- *
- * Optionally registers itself with a shared `ScrollSync` so the LEFT
- * DiffEditor's modified pane scrolls in lockstep with this editor.
+ * When the editor is editable we register Prettier on:
+ *   - Cmd/Ctrl + S
+ *   - Cmd/Ctrl + Shift + P
+ * Pressing either runs Prettier's markdown formatter against the current
+ * value and applies the result through `executeEdits` (so the change flows
+ * through `MonacoBinding` as a Yjs transaction).
  */
 export function EditorPanel({
   yDoc,
@@ -48,6 +48,7 @@ export function EditorPanel({
 }) {
   const [editorRef, setEditorRef] = useState<editor.IStandaloneCodeEditor>();
   const bindingRef = useRef<MonacoBinding | null>(null);
+  const isDark = useIsDark();
 
   useEffect(() => {
     if (!editorRef) return;
@@ -76,6 +77,50 @@ export function EditorPanel({
     };
   }, [sync, editorRef]);
 
+  useEffect(() => {
+    if (!editorRef || readOnly) return;
+
+    const format = async () => {
+      const model = editorRef.getModel();
+      if (!model) return;
+      const current = model.getValue();
+      try {
+        const formatted = await formatMarkdown(current);
+        if (formatted === current) return;
+        editorRef.executeEdits("prettier", [
+          {
+            range: model.getFullModelRange(),
+            text: formatted,
+            forceMoveMarkers: true,
+          },
+        ]);
+      } catch (err) {
+        // Prettier throws on unparseable markdown — surface to console but
+        // don't crash the editor.
+        console.warn("[markdown-versions] prettier:", err);
+      }
+    };
+
+    const disposers = [
+      editorRef.addAction({
+        id: "format-markdown-save",
+        label: "Format markdown (Prettier)",
+        keybindings: [KeyMod.CtrlCmd | KeyCode.KeyS],
+        run: format,
+      }),
+      editorRef.addAction({
+        id: "format-markdown-palette",
+        label: "Format markdown (Prettier)",
+        keybindings: [KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyP],
+        run: format,
+      }),
+    ];
+
+    return () => {
+      disposers.forEach((d) => d?.dispose?.());
+    };
+  }, [editorRef, readOnly]);
+
   const label =
     role === "snapshot"
       ? `Snapshot · v${versionIndex + 1}`
@@ -89,7 +134,7 @@ export function EditorPanel({
           onMount={(e) => setEditorRef(e)}
           height="100%"
           width="100%"
-          theme="vs-light"
+          theme={isDark ? "vs-dark" : "vs-light"}
           defaultLanguage="markdown"
           defaultValue=""
           options={{

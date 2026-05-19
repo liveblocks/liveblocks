@@ -8,6 +8,7 @@ import type * as Y from "yjs";
 import { getVersionText, type VersionInfo } from "@/lib/yjs-versions";
 import { LocalTime } from "@/components/LocalTime";
 import type { ScrollSync } from "@/lib/scroll-sync";
+import { useIsDark } from "@/lib/use-is-dark";
 
 import { PanelHeader, panelShellClass } from "./PanelChrome";
 
@@ -36,6 +37,7 @@ export function DiffPanel({
 }) {
   const original = useYTextString(yDoc, previousVersion?.id ?? null);
   const modified = useYTextString(yDoc, currentVersion.id);
+  const isDark = useIsDark();
 
   const modifiedEditorRef = useRef<editor.ICodeEditor | null>(null);
 
@@ -63,7 +65,7 @@ export function DiffPanel({
         <DiffEditor
           height="100%"
           width="100%"
-          theme="vs-light"
+          theme={isDark ? "vs-dark" : "vs-light"}
           language="markdown"
           original={original}
           modified={modified}
