@@ -1,7 +1,11 @@
 "use client";
 
 import { DiffEditor } from "@monaco-editor/react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { editor } from "monaco-editor";
+import type { LiveblocksYjsProvider } from "@liveblocks/yjs";
+import { MonacoBinding } from "y-monaco";
+import type { Awareness } from "y-protocols/awareness";
 import type * as Y from "yjs";
 
 import { getVersionText, type VersionInfo } from "@/lib/yjs-versions";
@@ -9,31 +13,77 @@ import { getVersionText, type VersionInfo } from "@/lib/yjs-versions";
 import { PanelHeader, panelShellClass } from "./PanelChrome";
 
 /**
- * Read-only Monaco DiffEditor that compares a version to its predecessor.
+ * Monaco DiffEditor that compares two versions side-by-side.
  *
- * Subscribes to both `Y.Text`s and feeds their plain-text snapshots into the
- * DiffEditor as `original` and `modified`.
+ * The left (original) side is always read-only and is fed the predecessor
+ * version's text as a string. The right (modified) side:
+ *   - When `modifiedEditable` is true (i.e. this pair includes the latest
+ *     version): we bind it to the live `Y.Text` via `y-monaco`'s
+ *     `MonacoBinding`, so typing here is a real Yjs edit. The current
+ *     version's text is stored back into Yjs.
+ *   - Otherwise: a read-only snapshot, fed as a string.
  */
 export function DiffPanel({
   yDoc,
+  provider,
   previousVersion,
   currentVersion,
   versionIndex,
+  modifiedEditable,
 }: {
   yDoc: Y.Doc;
+  provider: LiveblocksYjsProvider;
   previousVersion: VersionInfo | null;
   currentVersion: VersionInfo;
   versionIndex: number;
+  modifiedEditable: boolean;
 }) {
-  const original = useYTextContents(yDoc, previousVersion?.id ?? null);
-  const modified = useYTextContents(yDoc, currentVersion.id);
+  const originalText = useYTextString(yDoc, previousVersion?.id ?? null);
+  const readOnlyModifiedText = useYTextString(
+    yDoc,
+    modifiedEditable ? null : currentVersion.id
+  );
+
+  // When the modified side is editable we set its initial value once (from
+  // the current Y.Text) and then let MonacoBinding own the model — passing
+  // a reactively-updating `modified` prop would race with the binding.
+  const initialModifiedText = useMemo(
+    () => getVersionText(yDoc, currentVersion.id).toString(),
+    [yDoc, currentVersion.id]
+  );
+
+  const bindingRef = useRef<MonacoBinding | null>(null);
+
+  const handleMount = (diffEditor: editor.IStandaloneDiffEditor) => {
+    if (!modifiedEditable) return;
+    const modifiedEditor = diffEditor.getModifiedEditor();
+    const model = modifiedEditor.getModel();
+    if (!model) return;
+
+    const yText = getVersionText(yDoc, currentVersion.id);
+    bindingRef.current = new MonacoBinding(
+      yText,
+      model,
+      new Set([modifiedEditor]),
+      provider.awareness as unknown as Awareness
+    );
+  };
+
+  useEffect(() => {
+    return () => {
+      bindingRef.current?.destroy();
+      bindingRef.current = null;
+    };
+  }, [currentVersion.id, modifiedEditable]);
+
+  const headerLabel = modifiedEditable
+    ? `Editor · v${versionIndex + 1} (diff vs v${versionIndex})`
+    : `Diff · v${versionIndex} → v${versionIndex + 1}`;
 
   return (
     <div className={panelShellClass}>
       <PanelHeader
-        label={`Diff · v${Math.max(versionIndex, 1)} ${
-          previousVersion ? `vs v${versionIndex}` : "(first version)"
-        }`}
+        label={headerLabel}
         meta={new Date(currentVersion.createdAt).toLocaleString()}
       />
       <div className="relative min-h-0 flex-1">
@@ -42,12 +92,14 @@ export function DiffPanel({
           width="100%"
           theme="vs-light"
           language="markdown"
-          original={original}
-          modified={modified}
+          original={originalText}
+          modified={modifiedEditable ? initialModifiedText : readOnlyModifiedText}
+          keepCurrentModifiedModel={modifiedEditable}
+          onMount={handleMount}
           options={{
-            readOnly: true,
-            renderSideBySide: true,
+            readOnly: !modifiedEditable,
             originalEditable: false,
+            renderSideBySide: true,
             renderOverviewRuler: false,
             scrollBeyondLastLine: false,
             wordWrap: "on",
@@ -62,7 +114,7 @@ export function DiffPanel({
   );
 }
 
-function useYTextContents(yDoc: Y.Doc, versionId: string | null): string {
+function useYTextString(yDoc: Y.Doc, versionId: string | null): string {
   const [text, setText] = useState<string>(() =>
     versionId ? getVersionText(yDoc, versionId).toString() : ""
   );

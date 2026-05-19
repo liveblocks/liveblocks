@@ -8,6 +8,8 @@ import { useMyDocs } from "@/lib/use-my-docs";
 import { parseRoomId } from "@/lib/room-ids";
 import type { VersionInfo } from "@/lib/yjs-versions";
 
+import { createDoc } from "../actions";
+
 type SidebarSection = "documents" | "versions";
 
 export function VersionSidebar({
@@ -161,68 +163,74 @@ function DocumentsSection({ currentDocId }: { currentDocId: string }) {
   const hasMore = lastPage ? lastPage.nextCursor != null : false;
   const isLoadingMore = isValidating && size > pages.length;
 
-  if (isLoading && pages.length === 0) {
-    return (
-      <div className="text-text-muted p-4 text-xs">Loading documents…</div>
-    );
-  }
-
-  if (docs.length === 0) {
-    return (
-      <div className="text-text-muted p-4 text-xs">No other documents.</div>
-    );
-  }
-
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <ul className="min-h-0 flex-1 list-none overflow-y-auto p-0 pb-1 pt-1">
-        {docs.map((room) => {
-          const parsed = parseRoomId(room.id);
-          const docId = parsed?.docId ?? room.id;
-          const isCurrent = docId === currentDocId;
-          const title = room.metadata?.title || "Untitled document";
+      <div className="border-border flex-none border-b p-2">
+        <form action={createDoc}>
+          <button
+            type="submit"
+            className="bg-accent text-accent-fg inline-flex h-8 w-full cursor-pointer items-center justify-center gap-1.5 rounded-md border border-transparent text-xs font-semibold hover:brightness-105"
+          >
+            <span aria-hidden>+</span>
+            <span>New document</span>
+          </button>
+        </form>
+      </div>
 
-          const inner = (
-            <>
-              <span
-                className={clsx(
-                  "block h-2 w-2 shrink-0 rounded-full",
-                  isCurrent ? "bg-accent" : "bg-border-strong"
+      {isLoading && pages.length === 0 ? (
+        <div className="text-text-muted p-4 text-xs">Loading documents…</div>
+      ) : docs.length === 0 ? (
+        <div className="text-text-muted p-4 text-xs">No other documents.</div>
+      ) : (
+        <ul className="min-h-0 flex-1 list-none overflow-y-auto p-0 pb-1 pt-1">
+          {docs.map((room) => {
+            const parsed = parseRoomId(room.id);
+            const docId = parsed?.docId ?? room.id;
+            const isCurrent = docId === currentDocId;
+            const title = room.metadata?.title || "Untitled document";
+
+            const inner = (
+              <>
+                <span
+                  className={clsx(
+                    "block h-2 w-2 shrink-0 rounded-full",
+                    isCurrent ? "bg-accent" : "bg-border-strong"
+                  )}
+                />
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <span className="truncate text-[13px] font-semibold">
+                    {title}
+                  </span>
+                  <span className="text-text-muted text-[11px]">
+                    {isCurrent
+                      ? "opened"
+                      : new Date(
+                          room.lastConnectionAt ?? room.createdAt
+                        ).toLocaleDateString()}
+                  </span>
+                </span>
+              </>
+            );
+
+            return (
+              <li key={room.id}>
+                {isCurrent ? (
+                  <div className="text-text bg-bg-muted border-accent flex w-full items-center gap-2.5 border-l-2 px-4 py-2">
+                    {inner}
+                  </div>
+                ) : (
+                  <Link
+                    href={`/docs/${docId}`}
+                    className="text-text hover:bg-bg-muted flex w-full items-center gap-2.5 border-l-2 border-transparent px-4 py-2 no-underline"
+                  >
+                    {inner}
+                  </Link>
                 )}
-              />
-              <span className="flex min-w-0 flex-1 flex-col">
-                <span className="truncate text-[13px] font-semibold">
-                  {title}
-                </span>
-                <span className="text-text-muted text-[11px]">
-                  {isCurrent
-                    ? "opened"
-                    : new Date(
-                        room.lastConnectionAt ?? room.createdAt
-                      ).toLocaleDateString()}
-                </span>
-              </span>
-            </>
-          );
-
-          return (
-            <li key={room.id}>
-              {isCurrent ? (
-                <div className="text-text bg-bg-muted border-accent flex w-full items-center gap-2.5 border-l-2 px-4 py-2">
-                  {inner}
-                </div>
-              ) : (
-                <Link
-                  href={`/docs/${docId}`}
-                  className="text-text hover:bg-bg-muted flex w-full items-center gap-2.5 border-l-2 border-transparent px-4 py-2 no-underline"
-                >
-                  {inner}
-                </Link>
-              )}
-            </li>
-          );
-        })}
-      </ul>
+              </li>
+            );
+          })}
+        </ul>
+      )}
 
       {hasMore ? (
         <div className="border-border flex-none border-t p-2">

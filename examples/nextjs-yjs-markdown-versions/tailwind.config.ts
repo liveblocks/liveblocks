@@ -25,6 +25,16 @@ const config = {
       transitionTimingFunction: {
         carousel: "cubic-bezier(0.22, 0.78, 0.32, 1)",
       },
+      keyframes: {
+        slideInRight: {
+          "0%": { transform: "translateX(24px)", opacity: "0" },
+          "100%": { transform: "translateX(0)", opacity: "1" },
+        },
+      },
+      animation: {
+        slideInRight:
+          "slideInRight 320ms cubic-bezier(0.22, 0.78, 0.32, 1) both",
+      },
     },
   },
 } satisfies Config;

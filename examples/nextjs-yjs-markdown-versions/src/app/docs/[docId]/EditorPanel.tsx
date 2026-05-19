@@ -13,11 +13,15 @@ import { getVersionText, type VersionInfo } from "@/lib/yjs-versions";
 
 import { PanelHeader, panelShellClass } from "./PanelChrome";
 
+type Role = "single" | "snapshot";
+
 /**
- * A single-pane Monaco editor bound to a version's `Y.Text` via `y-monaco`.
+ * Single-pane Monaco editor bound to a version's `Y.Text` via `y-monaco`.
  *
- * Only the latest version's panel is editable. Older panels are mounted in
- * read-only mode so users can review them while still seeing live cursors.
+ * Used in two places:
+ *   - role="single":   the only editor for a brand-new document (1 version)
+ *   - role="snapshot": the read-only LEFT panel showing the predecessor
+ *                      version when the document has ≥ 2 versions
  */
 export function EditorPanel({
   yDoc,
@@ -25,12 +29,14 @@ export function EditorPanel({
   version,
   versionIndex,
   readOnly,
+  role,
 }: {
   yDoc: Y.Doc;
   provider: LiveblocksYjsProvider;
   version: VersionInfo;
   versionIndex: number;
   readOnly: boolean;
+  role: Role;
 }) {
   const [editorRef, setEditorRef] = useState<editor.IStandaloneCodeEditor>();
   const bindingRef = useRef<MonacoBinding | null>(null);
@@ -41,19 +47,23 @@ export function EditorPanel({
     if (!model) return;
 
     const yText = getVersionText(yDoc, version.id);
-    const binding = new MonacoBinding(
+    bindingRef.current = new MonacoBinding(
       yText,
       model,
       new Set([editorRef]),
       provider.awareness as unknown as Awareness
     );
-    bindingRef.current = binding;
 
     return () => {
-      binding.destroy();
+      bindingRef.current?.destroy();
       bindingRef.current = null;
     };
   }, [editorRef, yDoc, provider, version.id]);
+
+  const label =
+    role === "snapshot"
+      ? `Snapshot · v${versionIndex + 1}`
+      : `Editor · v${versionIndex + 1}`;
 
   return (
     <div
@@ -63,7 +73,7 @@ export function EditorPanel({
       )}
     >
       <PanelHeader
-        label={`${readOnly ? "Snapshot" : "Editor"} · v${versionIndex + 1}`}
+        label={label}
         meta={new Date(version.createdAt).toLocaleString()}
       />
       <div className="relative min-h-0 flex-1">

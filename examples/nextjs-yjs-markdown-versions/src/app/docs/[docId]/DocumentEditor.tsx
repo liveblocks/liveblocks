@@ -17,7 +17,7 @@ import { EditorCarousel } from "./EditorCarousel";
 import { VersionSidebar } from "./VersionSidebar";
 import { renameDoc } from "../actions";
 
-export type LeftPanelMode = "diff" | "preview";
+export type LeftPanelMode = "source" | "preview";
 
 export function DocumentEditor({
   docId,
@@ -53,16 +53,19 @@ export function DocumentEditor({
 
   const versions = useVersions(bootstrapped ? yDoc : null);
 
+  // selectedIndex represents the LEFT panel's version. Valid range is
+  // 0..latest-1; the RIGHT panel always shows selectedIndex+1.
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const effectiveSelectedIndex = useMemo(() => {
     if (versions.length === 0) return -1;
+    if (versions.length === 1) return 0;
     if (selectedIndex === null) {
       return Math.max(0, versions.length - 2);
     }
-    return Math.min(selectedIndex, versions.length - 1);
+    return Math.min(Math.max(selectedIndex, 0), versions.length - 2);
   }, [selectedIndex, versions]);
 
-  const [leftMode, setLeftMode] = useState<LeftPanelMode>("diff");
+  const [leftMode, setLeftMode] = useState<LeftPanelMode>("source");
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   return (
@@ -91,6 +94,7 @@ export function DocumentEditor({
             setSelectedIndex(null);
           }}
           canDuplicate={effectiveSelectedIndex >= 0 && versions.length > 0}
+          showLeftModeSwitch={versions.length >= 2}
         />
         <div className="bg-bg-muted relative min-h-0 flex-1 overflow-hidden">
           {bootstrapped && versions.length > 0 ? (
@@ -120,6 +124,7 @@ function Toolbar({
   onCreateVersion,
   onDuplicateSelected,
   canDuplicate,
+  showLeftModeSwitch,
 }: {
   docId: string;
   initialTitle: string;
@@ -128,6 +133,7 @@ function Toolbar({
   onCreateVersion: () => void;
   onDuplicateSelected: () => void;
   canDuplicate: boolean;
+  showLeftModeSwitch: boolean;
 }) {
   const [title, setTitle] = useState(initialTitle);
 
@@ -153,22 +159,25 @@ function Toolbar({
         />
       </div>
       <div className="flex items-center gap-2">
-        <div
-          role="tablist"
-          className="border-border-strong inline-flex overflow-hidden rounded-lg border"
-        >
-          <ModeButton
-            label="Diff"
-            active={leftMode === "diff"}
-            onClick={() => onLeftModeChange("diff")}
-          />
-          <ModeButton
-            label="Preview"
-            active={leftMode === "preview"}
-            onClick={() => onLeftModeChange("preview")}
-            borderLeft
-          />
-        </div>
+        {showLeftModeSwitch ? (
+          <div
+            role="tablist"
+            className="border-border-strong inline-flex overflow-hidden rounded-lg border"
+            aria-label="Left panel mode"
+          >
+            <ModeButton
+              label="Source"
+              active={leftMode === "source"}
+              onClick={() => onLeftModeChange("source")}
+            />
+            <ModeButton
+              label="Preview"
+              active={leftMode === "preview"}
+              onClick={() => onLeftModeChange("preview")}
+              borderLeft
+            />
+          </div>
+        ) : null}
         <button
           type="button"
           className="border-border-strong text-text hover:bg-bg-muted h-[30px] cursor-pointer rounded-lg border bg-transparent px-3 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-50"
