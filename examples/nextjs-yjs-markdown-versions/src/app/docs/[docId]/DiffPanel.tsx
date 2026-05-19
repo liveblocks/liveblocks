@@ -7,6 +7,7 @@ import type * as Y from "yjs";
 
 import { getVersionText, type VersionInfo } from "@/lib/yjs-versions";
 import { LocalTime } from "@/components/LocalTime";
+import { registerMdx } from "@/lib/monaco-mdx";
 import type { ScrollSync } from "@/lib/scroll-sync";
 import { useIsDark } from "@/lib/use-is-dark";
 
@@ -14,13 +15,6 @@ import { PanelHeader, panelShellClass } from "./PanelChrome";
 
 /**
  * Read-only Monaco DiffEditor that compares two versions side-by-side.
- *
- * Both sides are fed as plain-text snapshots of the corresponding `Y.Text`s
- * and re-read whenever those texts change (e.g. while the user types into
- * the editable RIGHT panel — this DiffEditor reflects the live diff).
- *
- * Hooks the DiffEditor's modified-side editor into the shared `ScrollSync`
- * so it stays in lockstep with the plain editor on the right.
  */
 export function DiffPanel({
   yDoc,
@@ -63,10 +57,11 @@ export function DiffPanel({
       />
       <div className="relative min-h-0 flex-1">
         <DiffEditor
+          beforeMount={registerMdx}
           height="100%"
           width="100%"
           theme={isDark ? "vs-dark" : "vs-light"}
-          language="markdown"
+          language="mdx"
           original={original}
           modified={modified}
           onMount={handleMount}

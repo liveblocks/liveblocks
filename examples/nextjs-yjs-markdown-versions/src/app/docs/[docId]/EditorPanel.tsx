@@ -12,6 +12,7 @@ import type * as Y from "yjs";
 import { getVersionText, type VersionInfo } from "@/lib/yjs-versions";
 import { LocalTime } from "@/components/LocalTime";
 import { formatMarkdown } from "@/lib/format";
+import { registerMdx } from "@/lib/monaco-mdx";
 import type { ScrollSync } from "@/lib/scroll-sync";
 import { useIsDark } from "@/lib/use-is-dark";
 
@@ -25,9 +26,6 @@ type Role = "single" | "current" | "snapshot";
  * When the editor is editable we register Prettier on:
  *   - Cmd/Ctrl + S
  *   - Cmd/Ctrl + Shift + P
- * Pressing either runs Prettier's markdown formatter against the current
- * value and applies the result through `executeEdits` (so the change flows
- * through `MonacoBinding` as a Yjs transaction).
  */
 export function EditorPanel({
   yDoc,
@@ -95,22 +93,20 @@ export function EditorPanel({
           },
         ]);
       } catch (err) {
-        // Prettier throws on unparseable markdown — surface to console but
-        // don't crash the editor.
         console.warn("[markdown-versions] prettier:", err);
       }
     };
 
     const disposers = [
       editorRef.addAction({
-        id: "format-markdown-save",
-        label: "Format markdown (Prettier)",
+        id: "format-mdx-save",
+        label: "Format MDX (Prettier)",
         keybindings: [KeyMod.CtrlCmd | KeyCode.KeyS],
         run: format,
       }),
       editorRef.addAction({
-        id: "format-markdown-palette",
-        label: "Format markdown (Prettier)",
+        id: "format-mdx-palette",
+        label: "Format MDX (Prettier)",
         keybindings: [KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyP],
         run: format,
       }),
@@ -131,11 +127,12 @@ export function EditorPanel({
       <PanelHeader label={label} meta={<LocalTime date={version.createdAt} />} />
       <div className="relative min-h-0 flex-1">
         <Editor
+          beforeMount={registerMdx}
           onMount={(e) => setEditorRef(e)}
           height="100%"
           width="100%"
           theme={isDark ? "vs-dark" : "vs-light"}
-          defaultLanguage="markdown"
+          defaultLanguage="mdx"
           defaultValue=""
           options={{
             tabSize: 2,
