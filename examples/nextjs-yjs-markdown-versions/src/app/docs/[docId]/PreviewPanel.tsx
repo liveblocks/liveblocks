@@ -6,6 +6,7 @@ import remarkGfm from "remark-gfm";
 import type * as Y from "yjs";
 
 import { getVersionText, type VersionInfo } from "@/lib/yjs-versions";
+import { LocalTime } from "@/components/LocalTime";
 
 import { PanelHeader, panelShellClass } from "./PanelChrome";
 
@@ -34,7 +35,7 @@ export function PreviewPanel({
     <div className={panelShellClass}>
       <PanelHeader
         label={`Preview · v${versionIndex + 1}`}
-        meta={new Date(version.createdAt).toLocaleString()}
+        meta={<LocalTime date={version.createdAt} />}
       />
       <div className="flex-1 overflow-y-auto px-6 pb-10 pt-5">
         {text.trim().length === 0 ? (

@@ -6,6 +6,7 @@ import { useTransition } from "react";
 import { useMyDocs } from "@/lib/use-my-docs";
 import type { DocsPage } from "@/lib/docs-pagination";
 import { parseRoomId } from "@/lib/room-ids";
+import { LocalTime } from "@/components/LocalTime";
 
 import { deleteDoc } from "./actions";
 
@@ -53,9 +54,7 @@ export function DocsList({
                 </span>
                 <span className="text-text-muted text-xs">
                   Updated{" "}
-                  {new Date(
-                    room.lastConnectionAt ?? room.createdAt
-                  ).toLocaleString()}
+                  <LocalTime date={room.lastConnectionAt ?? room.createdAt} />
                 </span>
               </Link>
               <button

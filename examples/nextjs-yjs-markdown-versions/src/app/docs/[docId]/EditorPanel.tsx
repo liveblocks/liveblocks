@@ -10,18 +10,20 @@ import type { Awareness } from "y-protocols/awareness";
 import type * as Y from "yjs";
 
 import { getVersionText, type VersionInfo } from "@/lib/yjs-versions";
+import { LocalTime } from "@/components/LocalTime";
 
 import { PanelHeader, panelShellClass } from "./PanelChrome";
 
-type Role = "single" | "snapshot";
+type Role = "single" | "current" | "snapshot";
 
 /**
  * Single-pane Monaco editor bound to a version's `Y.Text` via `y-monaco`.
  *
- * Used in two places:
+ * Used as:
  *   - role="single":   the only editor for a brand-new document (1 version)
- *   - role="snapshot": the read-only LEFT panel showing the predecessor
- *                      version when the document has ≥ 2 versions
+ *   - role="current":  the RIGHT panel showing the latest version (editable)
+ *   - role="snapshot": the RIGHT panel showing an older version that the
+ *                      user has navigated to via the sidebar (read-only)
  */
 export function EditorPanel({
   yDoc,
@@ -66,16 +68,8 @@ export function EditorPanel({
       : `Editor · v${versionIndex + 1}`;
 
   return (
-    <div
-      className={clsx(
-        panelShellClass,
-        readOnly && "bg-bg border-dashed"
-      )}
-    >
-      <PanelHeader
-        label={label}
-        meta={new Date(version.createdAt).toLocaleString()}
-      />
+    <div className={clsx(panelShellClass, readOnly && "bg-bg border-dashed")}>
+      <PanelHeader label={label} meta={<LocalTime date={version.createdAt} />} />
       <div className="relative min-h-0 flex-1">
         <Editor
           onMount={(e) => setEditorRef(e)}

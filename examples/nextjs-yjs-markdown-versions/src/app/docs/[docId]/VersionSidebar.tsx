@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import { useMyDocs } from "@/lib/use-my-docs";
 import { parseRoomId } from "@/lib/room-ids";
+import { LocalTime } from "@/components/LocalTime";
 import type { VersionInfo } from "@/lib/yjs-versions";
 
 import { createDoc } from "../actions";
@@ -138,7 +139,7 @@ function VersionsSection({
                   {v.label ?? (isCurrent ? "Current draft" : "Snapshot")}
                 </span>
                 <span className="text-text-muted text-[11px]">
-                  {new Date(v.createdAt).toLocaleString()}
+                  <LocalTime date={v.createdAt} />
                 </span>
               </span>
               {isCurrent ? (
@@ -202,11 +203,14 @@ function DocumentsSection({ currentDocId }: { currentDocId: string }) {
                     {title}
                   </span>
                   <span className="text-text-muted text-[11px]">
-                    {isCurrent
-                      ? "opened"
-                      : new Date(
-                          room.lastConnectionAt ?? room.createdAt
-                        ).toLocaleDateString()}
+                    {isCurrent ? (
+                      "opened"
+                    ) : (
+                      <LocalTime
+                        date={room.lastConnectionAt ?? room.createdAt}
+                        format="date"
+                      />
+                    )}
                   </span>
                 </span>
               </>

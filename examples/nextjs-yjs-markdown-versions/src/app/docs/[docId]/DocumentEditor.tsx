@@ -17,7 +17,7 @@ import { EditorCarousel } from "./EditorCarousel";
 import { VersionSidebar } from "./VersionSidebar";
 import { renameDoc } from "../actions";
 
-export type LeftPanelMode = "source" | "preview";
+export type LeftPanelMode = "diff" | "preview";
 
 export function DocumentEditor({
   docId,
@@ -53,19 +53,17 @@ export function DocumentEditor({
 
   const versions = useVersions(bootstrapped ? yDoc : null);
 
-  // selectedIndex represents the LEFT panel's version. Valid range is
-  // 0..latest-1; the RIGHT panel always shows selectedIndex+1.
+  // `selectedIndex` is the FOCUSED (right-panel) version index. The LEFT
+  // panel automatically shows its predecessor (or "(first version)" if 0).
+  // When null we default to the latest, which is the editable one.
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const effectiveSelectedIndex = useMemo(() => {
     if (versions.length === 0) return -1;
-    if (versions.length === 1) return 0;
-    if (selectedIndex === null) {
-      return Math.max(0, versions.length - 2);
-    }
-    return Math.min(Math.max(selectedIndex, 0), versions.length - 2);
+    if (selectedIndex === null) return versions.length - 1;
+    return Math.min(Math.max(selectedIndex, 0), versions.length - 1);
   }, [selectedIndex, versions]);
 
-  const [leftMode, setLeftMode] = useState<LeftPanelMode>("source");
+  const [leftMode, setLeftMode] = useState<LeftPanelMode>("diff");
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   return (
@@ -166,9 +164,9 @@ function Toolbar({
             aria-label="Left panel mode"
           >
             <ModeButton
-              label="Source"
-              active={leftMode === "source"}
-              onClick={() => onLeftModeChange("source")}
+              label="Diff"
+              active={leftMode === "diff"}
+              onClick={() => onLeftModeChange("diff")}
             />
             <ModeButton
               label="Preview"

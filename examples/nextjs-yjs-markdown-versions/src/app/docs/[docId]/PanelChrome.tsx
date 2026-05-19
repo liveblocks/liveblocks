@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 export const panelShellClass =
   "bg-bg-elev border-border flex h-full flex-col overflow-hidden rounded-xl border shadow-[0_1px_2px_rgba(0,0,0,0.03)]";
 
@@ -6,7 +8,7 @@ export function PanelHeader({
   meta,
 }: {
   label: string;
-  meta?: string;
+  meta?: ReactNode;
 }) {
   return (
     <div className="border-border flex h-9 flex-none items-center justify-between border-b px-3 text-xs">
