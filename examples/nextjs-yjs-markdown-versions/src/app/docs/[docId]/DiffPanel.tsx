@@ -1,8 +1,9 @@
 "use client";
 
 import { DiffEditor } from "@monaco-editor/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import type { editor } from "monaco-editor";
+import { MonacoBinding } from "y-monaco";
 import type * as Y from "yjs";
 
 import { getVersionText, type VersionInfo } from "@/lib/yjs-versions";
@@ -15,6 +16,28 @@ import { PanelHeader, panelShellClass } from "./PanelChrome";
 
 /**
  * Read-only Monaco DiffEditor that compares two versions side-by-side.
+ *
+ * The naive approach — feed the diff via `original` / `modified` props
+ * and let `@monaco-editor/react` push the values onto Monaco's models —
+ * causes a one-frame "no diff" flash on every keystroke. Internally
+ * `@monaco-editor/react` reacts to prop changes by calling
+ * `model.setValue(...)` which replaces the entire content and forces
+ * Monaco to drop the existing diff decorations and recompute from
+ * scratch, so the decorations are missing for one paint between the
+ * value replace and the recomputation.
+ *
+ * Instead we set the initial values **once** (memoized on version IDs,
+ * which are stable for this component instance), tell
+ * `@monaco-editor/react` to keep the models with
+ * `keepCurrentOriginalModel` / `keepCurrentModifiedModel`, and then —
+ * inside `onMount` — bind the modified model directly to the live
+ * `Y.Text` via `y-monaco`'s `MonacoBinding`. From then on, Yjs deltas
+ * are applied to the model **incrementally**, so Monaco updates the
+ * diff in-place and the decorations never disappear.
+ *
+ * The DiffEditor is still read-only — `MonacoBinding`'s built-in mutex
+ * prevents loops, and we omit the awareness argument so the live
+ * editor on the right is the sole owner of the local cursor.
  */
 export function DiffPanel({
   yDoc,
@@ -29,19 +52,53 @@ export function DiffPanel({
   versionIndex: number;
   sync?: ScrollSync;
 }) {
-  const original = useYTextString(yDoc, previousVersion?.id ?? null);
-  const modified = useYTextString(yDoc, currentVersion.id);
   const isDark = useIsDark();
 
+  // Stable initial values. Memoized on the version ids — these don't
+  // change for the lifetime of this component instance because the
+  // parent `EditorCarousel` keys the panel on `<previousId>-><focusedId>`,
+  // so a new pair gets a fresh mount.
+  const initialOriginal = useMemo(
+    () =>
+      previousVersion ? getVersionText(yDoc, previousVersion.id).toString() : "",
+    [yDoc, previousVersion?.id]
+  );
+  const initialModified = useMemo(
+    () => getVersionText(yDoc, currentVersion.id).toString(),
+    [yDoc, currentVersion.id]
+  );
+
   const modifiedEditorRef = useRef<editor.ICodeEditor | null>(null);
+  const modifiedBindingRef = useRef<MonacoBinding | null>(null);
 
   const handleMount = (diffEditor: editor.IStandaloneDiffEditor) => {
-    modifiedEditorRef.current = diffEditor.getModifiedEditor();
-    sync?.setLeft(modifiedEditorRef.current);
+    const modifiedEditor = diffEditor.getModifiedEditor();
+    modifiedEditorRef.current = modifiedEditor;
+
+    // Bind the modified model to the same Y.Text that the editable
+    // editor on the right is writing to. Future user input flows from
+    // there through Yjs and into this model as a delta — no
+    // `setValue`, no flash.
+    const modifiedModel = modifiedEditor.getModel();
+    if (modifiedModel) {
+      const yText = getVersionText(yDoc, currentVersion.id);
+      modifiedBindingRef.current = new MonacoBinding(
+        yText,
+        modifiedModel,
+        new Set([modifiedEditor])
+        // No awareness — the editable RIGHT-panel editor owns the
+        // local cursor; we don't want this read-only diff pane to
+        // overwrite it.
+      );
+    }
+
+    sync?.setLeft(modifiedEditor);
   };
 
   useEffect(() => {
     return () => {
+      modifiedBindingRef.current?.destroy();
+      modifiedBindingRef.current = null;
       sync?.setLeft(null);
       modifiedEditorRef.current = null;
     };
@@ -62,8 +119,10 @@ export function DiffPanel({
           width="100%"
           theme={isDark ? "vs-dark" : "vs-light"}
           language="mdx"
-          original={original}
-          modified={modified}
+          original={initialOriginal}
+          modified={initialModified}
+          keepCurrentOriginalModel
+          keepCurrentModifiedModel
           onMount={handleMount}
           options={{
             readOnly: true,
@@ -81,24 +140,4 @@ export function DiffPanel({
       </div>
     </div>
   );
-}
-
-function useYTextString(yDoc: Y.Doc, versionId: string | null): string {
-  const [text, setText] = useState<string>(() =>
-    versionId ? getVersionText(yDoc, versionId).toString() : ""
-  );
-
-  useEffect(() => {
-    if (!versionId) {
-      setText("");
-      return;
-    }
-    const yText = getVersionText(yDoc, versionId);
-    const update = () => setText(yText.toString());
-    update();
-    yText.observe(update);
-    return () => yText.unobserve(update);
-  }, [yDoc, versionId]);
-
-  return text;
 }
