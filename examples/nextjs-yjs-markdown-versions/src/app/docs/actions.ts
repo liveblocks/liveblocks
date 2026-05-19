@@ -14,6 +14,7 @@ import {
   type DocRoom,
 } from "@/lib/liveblocks-server";
 import { ownerIdFromSession } from "@/lib/session-user";
+import { DOCS_PAGE_SIZE, type DocsPage } from "@/lib/docs-pagination";
 
 async function requireOwnerId(): Promise<{ ownerId: string; ownerName: string }> {
   const session = await auth();
@@ -29,37 +30,35 @@ async function requireOwnerId(): Promise<{ ownerId: string; ownerName: string }>
   return { ownerId, ownerName };
 }
 
-export async function listMyDocs(): Promise<DocRoom[]> {
+/**
+ * Returns a single page of the signed-in user's documents.
+ *
+ * `cursor` is the `nextCursor` returned by the previous call — pass `null`
+ * (or omit) to fetch the first page. The returned `nextCursor` is `null`
+ * when there are no more pages.
+ */
+export async function listMyDocsPage({
+  cursor,
+  limit = DOCS_PAGE_SIZE,
+}: {
+  cursor?: string | null;
+  limit?: number;
+} = {}): Promise<DocsPage> {
   const { ownerId } = await requireOwnerId();
 
-  // Pull every room namespaced under this user's ownerId. For an example app
-  // we read every page; in production you would paginate the UI itself.
-  const all: DocRoom[] = [];
-  let cursor: string | undefined = undefined;
-
-  do {
-    const { data, nextCursor } = await liveblocks.getRooms({
-      startingAfter: cursor,
-      limit: 100,
-      query: { roomId: { startsWith: `${ROOM_PREFIX}:${ownerId}:` } },
-    });
-
-    for (const room of data as DocRoom[]) {
-      if (room.metadata?.ownerId === ownerId) {
-        all.push(room);
-      }
-    }
-
-    cursor = nextCursor ?? undefined;
-  } while (cursor);
-
-  all.sort((a, b) => {
-    const at = new Date(a.lastConnectionAt ?? a.createdAt).getTime();
-    const bt = new Date(b.lastConnectionAt ?? b.createdAt).getTime();
-    return bt - at;
+  const { data, nextCursor } = await liveblocks.getRooms({
+    startingAfter: cursor ?? undefined,
+    limit,
+    query: { roomId: { startsWith: `${ROOM_PREFIX}:${ownerId}:` } },
   });
 
-  return all;
+  // Defensive filter: the room-id prefix should already restrict results to
+  // the current user's docs but we double-check via metadata too.
+  const docs = (data as DocRoom[]).filter(
+    (room) => room.metadata?.ownerId === ownerId
+  );
+
+  return { docs, nextCursor: nextCursor ?? null };
 }
 
 export async function createDoc(formData?: FormData): Promise<void> {
@@ -94,8 +93,6 @@ export async function deleteDoc(docId: string): Promise<void> {
   const { ownerId } = await requireOwnerId();
   const roomId = buildRoomId(ownerId, docId);
 
-  // Verify ownership before deletion to avoid acting on rooms the user
-  // shouldn't touch (even though the secret key could).
   let room: DocRoom;
   try {
     room = (await liveblocks.getRoom(roomId)) as DocRoom;
