@@ -11,6 +11,7 @@ import type * as Y from "yjs";
 
 import { getVersionText, type VersionInfo } from "@/lib/yjs-versions";
 import { LocalTime } from "@/components/LocalTime";
+import type { ScrollSync } from "@/lib/scroll-sync";
 
 import { PanelHeader, panelShellClass } from "./PanelChrome";
 
@@ -24,6 +25,9 @@ type Role = "single" | "current" | "snapshot";
  *   - role="current":  the RIGHT panel showing the latest version (editable)
  *   - role="snapshot": the RIGHT panel showing an older version that the
  *                      user has navigated to via the sidebar (read-only)
+ *
+ * Optionally registers itself with a shared `ScrollSync` so the LEFT
+ * DiffEditor's modified pane scrolls in lockstep with this editor.
  */
 export function EditorPanel({
   yDoc,
@@ -32,6 +36,7 @@ export function EditorPanel({
   versionIndex,
   readOnly,
   role,
+  sync,
 }: {
   yDoc: Y.Doc;
   provider: LiveblocksYjsProvider;
@@ -39,6 +44,7 @@ export function EditorPanel({
   versionIndex: number;
   readOnly: boolean;
   role: Role;
+  sync?: ScrollSync;
 }) {
   const [editorRef, setEditorRef] = useState<editor.IStandaloneCodeEditor>();
   const bindingRef = useRef<MonacoBinding | null>(null);
@@ -61,6 +67,14 @@ export function EditorPanel({
       bindingRef.current = null;
     };
   }, [editorRef, yDoc, provider, version.id]);
+
+  useEffect(() => {
+    if (!sync) return;
+    sync.setRight(editorRef ?? null);
+    return () => {
+      sync.setRight(null);
+    };
+  }, [sync, editorRef]);
 
   const label =
     role === "snapshot"

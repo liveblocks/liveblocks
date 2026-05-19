@@ -1,9 +1,11 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import type { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import type * as Y from "yjs";
 
 import type { VersionInfo } from "@/lib/yjs-versions";
+import { ScrollSync } from "@/lib/scroll-sync";
 
 import { DiffPanel } from "./DiffPanel";
 import { EditorPanel } from "./EditorPanel";
@@ -25,6 +27,10 @@ import type { LeftPanelMode } from "./DocumentEditor";
  *               is the latest; read-only when the user has navigated to
  *               an older snapshot.
  *
+ * The two panels' scroll positions are kept in sync via a shared
+ * `ScrollSync` (see `src/lib/scroll-sync.ts`) so the line shown on the
+ * left always lines up with the line shown on the right.
+ *
  * 3 Monaco editor instances are mounted at any time: 1 DiffEditor (with 2
  * internal editors) on the left + 1 plain Monaco editor on the right.
  */
@@ -42,6 +48,21 @@ export function EditorCarousel({
   leftMode: LeftPanelMode;
 }) {
   const latestIndex = versions.length - 1;
+
+  // One scroll-sync coordinator per document. Panels (re)register their
+  // editors on mount; the coordinator handles the rest. Stays alive across
+  // version-pair changes since the panels themselves clean up.
+  const syncRef = useRef<ScrollSync | null>(null);
+  if (syncRef.current === null) {
+    syncRef.current = new ScrollSync();
+  }
+  useEffect(() => {
+    return () => {
+      syncRef.current?.dispose();
+      syncRef.current = null;
+    };
+  }, []);
+  const sync = syncRef.current!;
 
   if (versions.length === 0) return null;
 
@@ -89,6 +110,7 @@ export function EditorCarousel({
             previousVersion={previousVersion}
             currentVersion={focusedVersion}
             versionIndex={focusedIndex}
+            sync={sync}
           />
         )}
       </div>
@@ -100,6 +122,7 @@ export function EditorCarousel({
           versionIndex={focusedIndex}
           readOnly={!isLatest}
           role={isLatest ? "current" : "snapshot"}
+          sync={sync}
         />
       </div>
     </div>

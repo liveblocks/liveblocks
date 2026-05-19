@@ -1,11 +1,13 @@
 "use client";
 
 import { DiffEditor } from "@monaco-editor/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { editor } from "monaco-editor";
 import type * as Y from "yjs";
 
 import { getVersionText, type VersionInfo } from "@/lib/yjs-versions";
 import { LocalTime } from "@/components/LocalTime";
+import type { ScrollSync } from "@/lib/scroll-sync";
 
 import { PanelHeader, panelShellClass } from "./PanelChrome";
 
@@ -15,20 +17,39 @@ import { PanelHeader, panelShellClass } from "./PanelChrome";
  * Both sides are fed as plain-text snapshots of the corresponding `Y.Text`s
  * and re-read whenever those texts change (e.g. while the user types into
  * the editable RIGHT panel — this DiffEditor reflects the live diff).
+ *
+ * Hooks the DiffEditor's modified-side editor into the shared `ScrollSync`
+ * so it stays in lockstep with the plain editor on the right.
  */
 export function DiffPanel({
   yDoc,
   previousVersion,
   currentVersion,
   versionIndex,
+  sync,
 }: {
   yDoc: Y.Doc;
   previousVersion: VersionInfo | null;
   currentVersion: VersionInfo;
   versionIndex: number;
+  sync?: ScrollSync;
 }) {
   const original = useYTextString(yDoc, previousVersion?.id ?? null);
   const modified = useYTextString(yDoc, currentVersion.id);
+
+  const modifiedEditorRef = useRef<editor.ICodeEditor | null>(null);
+
+  const handleMount = (diffEditor: editor.IStandaloneDiffEditor) => {
+    modifiedEditorRef.current = diffEditor.getModifiedEditor();
+    sync?.setLeft(modifiedEditorRef.current);
+  };
+
+  useEffect(() => {
+    return () => {
+      sync?.setLeft(null);
+      modifiedEditorRef.current = null;
+    };
+  }, [sync]);
 
   return (
     <div className={panelShellClass}>
@@ -46,6 +67,7 @@ export function DiffPanel({
           language="markdown"
           original={original}
           modified={modified}
+          onMount={handleMount}
           options={{
             readOnly: true,
             originalEditable: false,
@@ -55,7 +77,7 @@ export function DiffPanel({
             wordWrap: "on",
             minimap: { enabled: false },
             renderLineHighlight: "none",
-            fontSize: 13,
+            fontSize: 14,
             padding: { top: 16 },
           }}
         />
