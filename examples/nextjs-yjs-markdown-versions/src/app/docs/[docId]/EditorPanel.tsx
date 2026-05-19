@@ -81,17 +81,35 @@ export function EditorPanel({
     const format = async () => {
       const model = editorRef.getModel();
       if (!model) return;
+
+      const position = editorRef.getPosition();
+      const cursorOffsetBefore = position ? model.getOffsetAt(position) : 0;
       const current = model.getValue();
+
       try {
-        const formatted = await formatMarkdown(current);
+        const { formatted, cursorOffset } = await formatMarkdown(
+          current,
+          cursorOffsetBefore
+        );
         if (formatted === current) return;
+
         editorRef.executeEdits("prettier", [
           {
             range: model.getFullModelRange(),
             text: formatted,
-            forceMoveMarkers: true,
           },
         ]);
+
+        // Restore the caret at Prettier's recommended offset and reveal it.
+        // Without this, executeEdits parks the cursor at the end of the
+        // replaced range — i.e. the end of the document.
+        const restoredOffset = Math.max(
+          0,
+          Math.min(cursorOffset, formatted.length)
+        );
+        const restored = model.getPositionAt(restoredOffset);
+        editorRef.setPosition(restored);
+        editorRef.revealPositionInCenterIfOutsideViewport(restored);
       } catch (err) {
         console.warn("[markdown-versions] prettier:", err);
       }
