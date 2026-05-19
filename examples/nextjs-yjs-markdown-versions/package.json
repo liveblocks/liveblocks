@@ -1,0 +1,37 @@
+{
+  "name": "@liveblocks-examples/nextjs-yjs-markdown-versions",
+  "description": "A multiplayer markdown editor with per-document version history, powered by Liveblocks, Yjs, Monaco, NextAuth (GitHub) and Next.js.",
+  "license": "Apache-2.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@liveblocks/client": "^3.18.4",
+    "@liveblocks/node": "^3.18.4",
+    "@liveblocks/react": "^3.18.4",
+    "@liveblocks/yjs": "^3.18.4",
+    "@monaco-editor/react": "^4.5.2",
+    "monaco-editor": "^0.52.2",
+    "nanoid": "^5.0.7",
+    "next": "^16.1.6",
+    "next-auth": "^5.0.0-beta.30",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-markdown": "^9.0.1",
+    "remark-gfm": "^4.0.0",
+    "y-monaco": "^0.1.6",
+    "y-protocols": "^1.0.7",
+    "yjs": "^13.6.29"
+  },
+  "devDependencies": {
+    "@types/node": "^20.3.3",
+    "@types/react": "^18.3.27",
+    "@types/react-dom": "^18.2.25",
+    "prettier": "^3.3.3",
+    "typescript": "^5.4.5"
+  }
+}

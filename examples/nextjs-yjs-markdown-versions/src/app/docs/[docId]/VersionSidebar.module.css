@@ -1,0 +1,171 @@
+.sidebar {
+  width: var(--sidebar-width);
+  flex: 0 0 var(--sidebar-width);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-elev);
+  border-right: 1px solid var(--border);
+  position: relative;
+  transition: width 0.2s ease;
+  min-height: 0;
+}
+
+.sidebarCollapsed {
+  width: 28px;
+  flex: 0 0 28px;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-elev);
+  border-right: 1px solid var(--border);
+  position: relative;
+  transition: width 0.2s ease;
+}
+
+.toggleButton {
+  position: absolute;
+  top: 8px;
+  right: -10px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--bg-elev);
+  border: 1px solid var(--border-strong);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  cursor: pointer;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  padding: 0;
+}
+
+.toggleButton:hover {
+  background: var(--bg-muted);
+  color: var(--text);
+}
+
+.tabRow {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  flex: 0 0 auto;
+}
+
+.tab,
+.tabActive {
+  flex: 1 1 0;
+  padding: 14px 12px 10px;
+  border: 0;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+
+.tab:hover {
+  color: var(--text);
+}
+
+.tabActive {
+  color: var(--text);
+  border-bottom-color: var(--accent);
+}
+
+.list {
+  list-style: none;
+  padding: 4px 0 12px;
+  margin: 0;
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.item,
+.itemSelected {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  text-align: left;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  border-left: 2px solid transparent;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.item:hover {
+  background: var(--bg-muted);
+}
+
+.itemSelected {
+  background: var(--bg-muted);
+  border-left-color: var(--accent);
+  cursor: default;
+}
+
+.itemIndex {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+}
+
+.itemBody {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.itemLabel {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.itemTime {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.currentBadge {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  background: rgba(45, 108, 223, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.docDot {
+  width: 8px;
+  height: 8px;
+  background: var(--border-strong);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.itemSelected .docDot {
+  background: var(--accent);
+}
+
+.empty {
+  padding: 16px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
