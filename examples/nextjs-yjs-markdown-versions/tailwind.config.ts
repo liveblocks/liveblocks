@@ -26,13 +26,19 @@ const config = {
       },
       keyframes: {
         slideInRight: {
-          "0%": { transform: "translateX(24px)", opacity: "0" },
-          "100%": { transform: "translateX(0)", opacity: "1" },
+          "0%": { transform: "translateX(100%)" },
+          "100%": { transform: "translateX(0)" },
+        },
+        slideOutLeft: {
+          "0%": { transform: "translateX(0)" },
+          "100%": { transform: "translateX(-100%)" },
         },
       },
       animation: {
         slideInRight:
-          "slideInRight 320ms cubic-bezier(0.22, 0.78, 0.32, 1) both",
+          "slideInRight 420ms cubic-bezier(0.22, 0.78, 0.32, 1) both",
+        slideOutLeft:
+          "slideOutLeft 420ms cubic-bezier(0.22, 0.78, 0.32, 1) both",
       },
     },
   },
