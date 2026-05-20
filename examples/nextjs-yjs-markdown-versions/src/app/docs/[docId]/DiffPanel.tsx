@@ -75,6 +75,18 @@ export function DiffPanel({
     const modifiedEditor = diffEditor.getModifiedEditor();
     modifiedEditorRef.current = modifiedEditor;
 
+    // Hide the modified side's gutter (line numbers, fold column, glyph
+    // margin). The original side keeps its line numbers — that's the
+    // meaningful one for a read-only diff — and the inner gutter was
+    // just visual noise between the two panes.
+    modifiedEditor.updateOptions({
+      lineNumbers: "off",
+      glyphMargin: false,
+      folding: false,
+      lineDecorationsWidth: 0,
+      lineNumbersMinChars: 0,
+    });
+
     // Bind the modified model to the same Y.Text that the editable
     // editor on the right is writing to. Future user input flows from
     // there through Yjs and into this model as a delta — no
