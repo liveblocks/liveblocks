@@ -25,7 +25,7 @@ export async function formatMarkdown(
   const result = await prettier.formatWithCursor(source, {
     parser: "mdx",
     plugins: [markdownPlugin],
-    proseWrap: "preserve",
+    proseWrap: "always",
     printWidth: 80,
     cursorOffset,
   });
