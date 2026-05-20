@@ -14,8 +14,8 @@ importers:
         specifier: ^0.18.2
         version: 0.18.2
       '@types/node':
-        specifier: ^24.12.2
-        version: 24.12.2
+        specifier: ^25.9.1
+        version: 25.9.1
       '@types/react':
         specifier: ^18.3.17
         version: 18.3.28
@@ -57,7 +57,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^4.1.4
-        version: 4.1.4(@types/node@24.12.2)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@24.12.2)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
+        version: 4.1.4(@types/node@25.9.1)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@25.9.1)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
 
   e2e/next-ai-kitchen-sink:
     dependencies:
@@ -78,7 +78,7 @@ importers:
         version: link:../../packages/liveblocks-react-ui
       next:
         specifier: 16.1.4
-        version: 16.1.4(@playwright/test@1.55.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(sass@1.99.0)
+        version: 16.1.4(@babel/core@7.29.0)(@playwright/test@1.55.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(sass@1.99.0)
       radix-ui:
         specifier: ^1.4.0
         version: 1.4.3(@types/react-dom@18.3.5(@types/react@18.3.28))(@types/react@18.3.28)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -139,7 +139,7 @@ importers:
         version: 12.10.1(@types/react@18.3.28)(immer@10.1.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       next:
         specifier: 16.1.4
-        version: 16.1.4(@playwright/test@1.55.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(sass@1.99.0)
+        version: 16.1.4(@babel/core@7.29.0)(@playwright/test@1.55.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(sass@1.99.0)
       react:
         specifier: 19.2.3
         version: 19.2.3
@@ -200,7 +200,7 @@ importers:
         version: 0.1.13
       next:
         specifier: 16.1.4
-        version: 16.1.4(@playwright/test@1.55.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(sass@1.99.0)
+        version: 16.1.4(@babel/core@7.29.0)(@playwright/test@1.55.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(sass@1.99.0)
       react:
         specifier: ^18.2.0
         version: 18.2.0
@@ -283,7 +283,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^4.1.4
-        version: 4.1.4(@types/node@24.12.2)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@24.12.2)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
+        version: 4.1.4(@types/node@25.9.1)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@25.9.1)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
 
   packages/liveblocks-chat-sdk-adapter:
     dependencies:
@@ -311,7 +311,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^4.1.4
-        version: 4.1.4(@types/node@24.12.2)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@24.12.2)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
+        version: 4.1.4(@types/node@25.9.1)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@25.9.1)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
 
   packages/liveblocks-client:
     dependencies:
@@ -333,7 +333,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^4.1.4
-        version: 4.1.4(@types/node@24.12.2)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@24.12.2)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
+        version: 4.1.4(@types/node@25.9.1)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@25.9.1)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
 
   packages/liveblocks-core:
     devDependencies:
@@ -360,13 +360,13 @@ importers:
         version: 4.6.0
       msw:
         specifier: ^2.10.4
-        version: 2.10.4(@types/node@24.12.2)(typescript@5.9.3)
+        version: 2.10.4(@types/node@25.9.1)(typescript@5.9.3)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
       vitest:
         specifier: ^4.1.4
-        version: 4.1.4(@types/node@24.12.2)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@24.12.2)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
+        version: 4.1.4(@types/node@25.9.1)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@25.9.1)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
       ws:
         specifier: ^8.17.1
         version: 8.20.0
@@ -397,7 +397,7 @@ importers:
         version: 5.2.0(eslint@9.39.4(jiti@2.6.1))
       msw:
         specifier: ^2.10.4
-        version: 2.10.4(@types/node@24.12.2)(typescript@5.9.3)
+        version: 2.10.4(@types/node@25.9.1)(typescript@5.9.3)
       react:
         specifier: ^18.2.0
         version: 18.2.0
@@ -409,7 +409,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^4.1.4
-        version: 4.1.4(@types/node@24.12.2)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@24.12.2)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
+        version: 4.1.4(@types/node@25.9.1)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@25.9.1)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
       y-prosemirror:
         specifier: ^1.3.7
         version: 1.3.7(prosemirror-model@1.25.4)(prosemirror-state@1.4.4)(prosemirror-view@1.41.6)(y-protocols@1.0.7(yjs@13.6.27))(yjs@13.6.27)
@@ -449,7 +449,7 @@ importers:
         version: 9.39.4(jiti@2.6.1)
       msw:
         specifier: ^2.10.4
-        version: 2.10.4(@types/node@24.12.2)(typescript@5.9.3)
+        version: 2.10.4(@types/node@25.9.1)(typescript@5.9.3)
       svix:
         specifier: ^0.75.0
         version: 0.75.0(encoding@0.1.13)
@@ -458,7 +458,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^4.1.4
-        version: 4.1.4(@types/node@24.12.2)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@24.12.2)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
+        version: 4.1.4(@types/node@25.9.1)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@25.9.1)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
 
   packages/liveblocks-node-lexical:
     dependencies:
@@ -498,7 +498,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^4.1.4
-        version: 4.1.4(@types/node@24.12.2)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@24.12.2)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
+        version: 4.1.4(@types/node@25.9.1)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@25.9.1)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
       yjs:
         specifier: ^13.6.27
         version: 13.6.27
@@ -535,7 +535,7 @@ importers:
         version: 9.39.4(jiti@2.6.1)
       msw:
         specifier: ^2.10.4
-        version: 2.10.4(@types/node@24.12.2)(typescript@5.9.3)
+        version: 2.10.4(@types/node@25.9.1)(typescript@5.9.3)
       prosemirror-markdown:
         specifier: ^1.13.4
         version: 1.13.4
@@ -544,7 +544,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^4.1.4
-        version: 4.1.4(@types/node@24.12.2)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@24.12.2)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
+        version: 4.1.4(@types/node@25.9.1)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@25.9.1)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
       y-prosemirror:
         specifier: ^1.3.7
         version: 1.3.7(prosemirror-model@1.25.4)(prosemirror-state@1.4.4)(prosemirror-view@1.41.6)(y-protocols@1.0.7(yjs@13.6.27))(yjs@13.6.27)
@@ -590,7 +590,7 @@ importers:
         version: 2.3.2
       msw:
         specifier: ^2.10.4
-        version: 2.10.4(@types/node@24.12.2)(typescript@5.9.3)
+        version: 2.10.4(@types/node@25.9.1)(typescript@5.9.3)
       react:
         specifier: ^18.2.0
         version: 18.2.0
@@ -605,7 +605,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^4.1.4
-        version: 4.1.4(@types/node@24.12.2)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@24.12.2)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
+        version: 4.1.4(@types/node@25.9.1)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@25.9.1)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
 
   packages/liveblocks-react-blocknote:
     dependencies:
@@ -660,7 +660,7 @@ importers:
         version: 5.2.0(eslint@9.39.4(jiti@2.6.1))
       msw:
         specifier: ^2.10.4
-        version: 2.10.4(@types/node@24.12.2)(typescript@5.9.3)
+        version: 2.10.4(@types/node@25.9.1)(typescript@5.9.3)
       react:
         specifier: ^18.2.0
         version: 18.2.0
@@ -687,7 +687,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^4.1.4
-        version: 4.1.4(@types/node@24.12.2)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@24.12.2)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
+        version: 4.1.4(@types/node@25.9.1)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@25.9.1)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
 
   packages/liveblocks-react-flow:
     dependencies:
@@ -763,7 +763,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^4.1.4
-        version: 4.1.4(@types/node@24.12.2)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@24.12.2)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
+        version: 4.1.4(@types/node@25.9.1)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@25.9.1)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
 
   packages/liveblocks-react-lexical:
     dependencies:
@@ -827,7 +827,7 @@ importers:
         version: 0.35.0
       msw:
         specifier: ^2.10.4
-        version: 2.10.4(@types/node@24.12.2)(typescript@5.9.3)
+        version: 2.10.4(@types/node@25.9.1)(typescript@5.9.3)
       react:
         specifier: ^18.2.0
         version: 18.2.0
@@ -854,7 +854,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^4.1.4
-        version: 4.1.4(@types/node@24.12.2)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@24.12.2)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
+        version: 4.1.4(@types/node@25.9.1)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@25.9.1)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
       yjs:
         specifier: ^13.6.27
         version: 13.6.27
@@ -930,7 +930,7 @@ importers:
         version: 5.2.0(eslint@9.39.4(jiti@2.6.1))
       msw:
         specifier: ^2.10.4
-        version: 2.10.4(@types/node@24.12.2)(typescript@5.9.3)
+        version: 2.10.4(@types/node@25.9.1)(typescript@5.9.3)
       react:
         specifier: ^18.2.0
         version: 18.2.0
@@ -957,7 +957,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^4.1.4
-        version: 4.1.4(@types/node@24.12.2)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@24.12.2)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
+        version: 4.1.4(@types/node@25.9.1)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@25.9.1)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
       yjs:
         specifier: ^13.6.27
         version: 13.6.27
@@ -1027,7 +1027,7 @@ importers:
         version: 5.2.0(eslint@9.39.4(jiti@2.6.1))
       msw:
         specifier: ^2.10.4
-        version: 2.10.4(@types/node@24.12.2)(typescript@5.9.3)
+        version: 2.10.4(@types/node@25.9.1)(typescript@5.9.3)
       react:
         specifier: ^18.2.0
         version: 18.2.0
@@ -1054,7 +1054,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^4.1.4
-        version: 4.1.4(@types/node@24.12.2)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@24.12.2)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
+        version: 4.1.4(@types/node@25.9.1)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@25.9.1)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
 
   packages/liveblocks-redux:
     dependencies:
@@ -1088,7 +1088,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^4.1.4
-        version: 4.1.4(@types/node@24.12.2)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@24.12.2)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
+        version: 4.1.4(@types/node@25.9.1)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@25.9.1)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
 
   packages/liveblocks-yjs:
     dependencies:
@@ -1125,7 +1125,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^4.1.4
-        version: 4.1.4(@types/node@24.12.2)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@24.12.2)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
+        version: 4.1.4(@types/node@25.9.1)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@25.9.1)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
       yjs:
         specifier: ^13.6.27
         version: 13.6.27
@@ -1156,7 +1156,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^4.1.4
-        version: 4.1.4(@types/node@24.12.2)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@24.12.2)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
+        version: 4.1.4(@types/node@25.9.1)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@25.9.1)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
       zustand:
         specifier: ^5.0.2
         version: 5.0.2(@types/react@18.3.28)(immer@10.1.1)(react@19.2.3)(use-sync-external-store@1.6.0(react@19.2.3))
@@ -1359,7 +1359,7 @@ importers:
         version: 3.7.7
       plasmo:
         specifier: ^0.90.5
-        version: 0.90.5(@swc/core@1.6.6(@swc/helpers@0.5.15))(@swc/helpers@0.5.15)(@types/node@24.12.2)(lodash@4.17.21)(postcss@8.5.10)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+        version: 0.90.5(@swc/core@1.6.6(@swc/helpers@0.5.15))(@swc/helpers@0.5.15)(@types/node@25.9.1)(lodash@4.17.21)(postcss@8.5.10)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       prism-react-renderer:
         specifier: ^2.0.6
         version: 2.1.0(react@18.2.0)
@@ -1368,7 +1368,7 @@ importers:
         version: 18.2.0
       react-arborist:
         specifier: ^3.4.0
-        version: 3.4.0(@types/node@24.12.2)(@types/react@18.3.28)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+        version: 3.4.0(@types/node@25.9.1)(@types/react@18.3.28)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       react-dom:
         specifier: 18.2.0
         version: 18.2.0(react@18.2.0)
@@ -5448,6 +5448,9 @@ packages:
   '@types/node@24.12.2':
     resolution: {integrity: sha512-A1sre26ke7HDIuY/M23nd9gfB+nrmhtYyMINbjI1zHJxYteKR6qSMX56FsmjMcDb3SMcjJg5BiRRgOCC/yBD0g==}
 
+  '@types/node@25.9.1':
+    resolution: {integrity: sha512-xfrlY7UD5rMJk3ZVJP8BNzS28J36YJg+xp+LPXV1TdWxr8uMH5A860QNxYDGQe/ylDSgjxE52Q9VnO7p75tJxg==}
+
   '@types/normalize-package-data@2.4.4':
     resolution: {integrity: sha512-37i+OaWTh9qeK4LSHPsyRC7NahnGotNuZvjLSgcPzblpHB3rrCJxAOgI5gCdKm7coonsaX1Of0ILiTcnZjbfxA==}
 
@@ -5559,6 +5562,7 @@ packages:
 
   '@ungap/structured-clone@1.2.0':
     resolution: {integrity: sha512-zuVdFrMJiuCDQUMCzQaD6KL28MjnqqN8XnAqiEq9PNm/hCPTSGfrXCOfwj1ow4LFb/tNymJPwsNbVePc1xFqrQ==}
+    deprecated: Potential CWE-502 - Update to 1.3.1 or higher
 
   '@vitest/coverage-istanbul@4.1.4':
     resolution: {integrity: sha512-Pyi4F8RnqU6hBGiIDhS/e8gVD4FRcUvZJ2AbFiIlmIxHlEIsKyCxGOqufCECobty/dXELcN8oIH4Gms3hVOCYA==}
@@ -6196,6 +6200,7 @@ packages:
 
   cross-spawn-async@2.2.5:
     resolution: {integrity: sha512-snteb3aVrxYYOX9e8BabYFK9WhCDhTlw1YQktfTthBogxri4/2r9U2nQc0ffY73ZAxezDc+U8gvHAeU1wy1ubQ==}
+    deprecated: cross-spawn no longer requires a build toolchain, use it instead
 
   cross-spawn@7.0.6:
     resolution: {integrity: sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==}
@@ -6975,6 +6980,7 @@ packages:
 
   glob@7.2.3:
     resolution: {integrity: sha512-nFR0zLpU2YCaRxwoCJvL6UvCH2JFyFVIvwTLsIf21AuHlMskA1hhTdk+LlYJtOlYt9v6dvszD2BGRqBL+iQK9Q==}
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
   global-directory@4.0.1:
     resolution: {integrity: sha512-wHTUcDUoZ1H5/0iVqEudYW4/kAlN5cZ3j/bXn0Dpbizl9iaUVeWSHqiOjsgk6OW2bkLclbBjzewBz6weQ1zA2Q==}
@@ -7265,6 +7271,7 @@ packages:
 
   inflight@1.0.6:
     resolution: {integrity: sha512-k92I/b08q4wvFscXCLvqfsHCrjrF7yiXsQuIVvVE7N82W3+aqpzuUdBbfhWcy/FZR3/4IgflMgKLOsvPDrGCJA==}
+    deprecated: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
 
   inherits@2.0.4:
     resolution: {integrity: sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ==}
@@ -9220,6 +9227,7 @@ packages:
 
   rimraf@3.0.2:
     resolution: {integrity: sha512-JZkJMZkAGFFPP2YqXZXPbMlMBgsxzE8ILs4lMIX/2o0L9UBw9O/Y3o6wFw/i9YLapcUJWwqbi3kdxIPdC62TIA==}
+    deprecated: Rimraf versions prior to v4 are no longer supported
     hasBin: true
 
   rolldown@1.0.0-rc.15:
@@ -9458,6 +9466,7 @@ packages:
   source-map@0.8.0-beta.0:
     resolution: {integrity: sha512-2ymg6oRBpebeZi9UUNsgQ89bhx01TcTkmNTGnNO88imTmbSgy4nfujrgVEFKWpMTEGA11EDkTt7mqObTPdigIA==}
     engines: {node: '>= 8'}
+    deprecated: The work that was done in this beta branch won't be included in future versions
 
   space-separated-tokens@2.0.2:
     resolution: {integrity: sha512-PEGlAwrG8yXGXRjW32fGbg66JAlOAwbObuqVoJpv/mRgoWDQfgH1wDPvtzWyUSNAXBGSk8h755YDbbcEy3SH2Q==}
@@ -9483,6 +9492,7 @@ packages:
 
   stable@0.1.8:
     resolution: {integrity: sha512-ji9qxRnOVfcuLDySj9qzhGSEFVobyt1kIOSkj1qZzYLzq7Tos/oUUWvotUPQLlrsidqsK6tBH89Bc9kL5zHA6w==}
+    deprecated: 'Modern JS already guarantees Array#sort() is a stable sort, so this library is deprecated. See the compatibility table on MDN: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort#browser_compatibility'
 
   stackback@0.0.2:
     resolution: {integrity: sha512-1XMJE5fQo1jGH6Y/7ebnwPOBEkIEnT4QF32d5R1+VXdXveM0IBMJt8zfaxX1P3QhVwrYe+576+jkANtSS2mBbw==}
@@ -9988,6 +9998,9 @@ packages:
   undici-types@7.16.0:
     resolution: {integrity: sha512-Zz+aZWSj8LE6zoxD+xrjh4VfkIG8Ya6LvYkZqtUQGJPZjYl53ypCaUwWqo7eI0x66KBGeRo+mlBEkMSeSZ38Nw==}
 
+  undici-types@7.24.6:
+    resolution: {integrity: sha512-WRNW+sJgj5OBN4/0JpHFqtqzhpbnV0GuB+OozA9gCL7a993SmU+1JBZCzLNxYsbMfIeDL+lTsphD5jN5N+n0zg==}
+
   unicode-emoji-modifier-base@1.0.0:
     resolution: {integrity: sha512-yLSH4py7oFH3oG/9K+XWrz1pSi3dfUrWEnInbxMfArOfc1+33BlGPQtLsOYwvdMy11AwUBetYuaRxSPqgkq+8g==}
     engines: {node: '>=4'}
@@ -10095,6 +10108,7 @@ packages:
 
   uuid@8.3.2:
     resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
+    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
     hasBin: true
 
   validate-npm-package-license@3.0.4:
@@ -11293,128 +11307,128 @@ snapshots:
 
   '@inquirer/ansi@1.0.2': {}
 
-  '@inquirer/checkbox@4.3.2(@types/node@24.12.2)':
+  '@inquirer/checkbox@4.3.2(@types/node@25.9.1)':
     dependencies:
       '@inquirer/ansi': 1.0.2
-      '@inquirer/core': 10.3.2(@types/node@24.12.2)
+      '@inquirer/core': 10.3.2(@types/node@25.9.1)
       '@inquirer/figures': 1.0.15
-      '@inquirer/type': 3.0.10(@types/node@24.12.2)
+      '@inquirer/type': 3.0.10(@types/node@25.9.1)
       yoctocolors-cjs: 2.1.3
     optionalDependencies:
-      '@types/node': 24.12.2
+      '@types/node': 25.9.1
 
-  '@inquirer/confirm@5.1.21(@types/node@24.12.2)':
+  '@inquirer/confirm@5.1.21(@types/node@25.9.1)':
     dependencies:
-      '@inquirer/core': 10.3.2(@types/node@24.12.2)
-      '@inquirer/type': 3.0.10(@types/node@24.12.2)
+      '@inquirer/core': 10.3.2(@types/node@25.9.1)
+      '@inquirer/type': 3.0.10(@types/node@25.9.1)
     optionalDependencies:
-      '@types/node': 24.12.2
+      '@types/node': 25.9.1
 
-  '@inquirer/core@10.3.2(@types/node@24.12.2)':
+  '@inquirer/core@10.3.2(@types/node@25.9.1)':
     dependencies:
       '@inquirer/ansi': 1.0.2
       '@inquirer/figures': 1.0.15
-      '@inquirer/type': 3.0.10(@types/node@24.12.2)
+      '@inquirer/type': 3.0.10(@types/node@25.9.1)
       cli-width: 4.1.0
       mute-stream: 2.0.0
       signal-exit: 4.1.0
       wrap-ansi: 6.2.0
       yoctocolors-cjs: 2.1.3
     optionalDependencies:
-      '@types/node': 24.12.2
+      '@types/node': 25.9.1
 
-  '@inquirer/editor@4.2.23(@types/node@24.12.2)':
+  '@inquirer/editor@4.2.23(@types/node@25.9.1)':
     dependencies:
-      '@inquirer/core': 10.3.2(@types/node@24.12.2)
-      '@inquirer/external-editor': 1.0.3(@types/node@24.12.2)
-      '@inquirer/type': 3.0.10(@types/node@24.12.2)
+      '@inquirer/core': 10.3.2(@types/node@25.9.1)
+      '@inquirer/external-editor': 1.0.3(@types/node@25.9.1)
+      '@inquirer/type': 3.0.10(@types/node@25.9.1)
     optionalDependencies:
-      '@types/node': 24.12.2
+      '@types/node': 25.9.1
 
-  '@inquirer/expand@4.0.23(@types/node@24.12.2)':
+  '@inquirer/expand@4.0.23(@types/node@25.9.1)':
     dependencies:
-      '@inquirer/core': 10.3.2(@types/node@24.12.2)
-      '@inquirer/type': 3.0.10(@types/node@24.12.2)
+      '@inquirer/core': 10.3.2(@types/node@25.9.1)
+      '@inquirer/type': 3.0.10(@types/node@25.9.1)
       yoctocolors-cjs: 2.1.3
     optionalDependencies:
-      '@types/node': 24.12.2
+      '@types/node': 25.9.1
 
-  '@inquirer/external-editor@1.0.3(@types/node@24.12.2)':
+  '@inquirer/external-editor@1.0.3(@types/node@25.9.1)':
     dependencies:
       chardet: 2.1.1
       iconv-lite: 0.7.2
     optionalDependencies:
-      '@types/node': 24.12.2
+      '@types/node': 25.9.1
 
   '@inquirer/figures@1.0.15': {}
 
-  '@inquirer/input@4.3.1(@types/node@24.12.2)':
+  '@inquirer/input@4.3.1(@types/node@25.9.1)':
     dependencies:
-      '@inquirer/core': 10.3.2(@types/node@24.12.2)
-      '@inquirer/type': 3.0.10(@types/node@24.12.2)
+      '@inquirer/core': 10.3.2(@types/node@25.9.1)
+      '@inquirer/type': 3.0.10(@types/node@25.9.1)
     optionalDependencies:
-      '@types/node': 24.12.2
+      '@types/node': 25.9.1
 
-  '@inquirer/number@3.0.23(@types/node@24.12.2)':
+  '@inquirer/number@3.0.23(@types/node@25.9.1)':
     dependencies:
-      '@inquirer/core': 10.3.2(@types/node@24.12.2)
-      '@inquirer/type': 3.0.10(@types/node@24.12.2)
+      '@inquirer/core': 10.3.2(@types/node@25.9.1)
+      '@inquirer/type': 3.0.10(@types/node@25.9.1)
     optionalDependencies:
-      '@types/node': 24.12.2
+      '@types/node': 25.9.1
 
-  '@inquirer/password@4.0.23(@types/node@24.12.2)':
-    dependencies:
-      '@inquirer/ansi': 1.0.2
-      '@inquirer/core': 10.3.2(@types/node@24.12.2)
-      '@inquirer/type': 3.0.10(@types/node@24.12.2)
-    optionalDependencies:
-      '@types/node': 24.12.2
-
-  '@inquirer/prompts@7.10.1(@types/node@24.12.2)':
-    dependencies:
-      '@inquirer/checkbox': 4.3.2(@types/node@24.12.2)
-      '@inquirer/confirm': 5.1.21(@types/node@24.12.2)
-      '@inquirer/editor': 4.2.23(@types/node@24.12.2)
-      '@inquirer/expand': 4.0.23(@types/node@24.12.2)
-      '@inquirer/input': 4.3.1(@types/node@24.12.2)
-      '@inquirer/number': 3.0.23(@types/node@24.12.2)
-      '@inquirer/password': 4.0.23(@types/node@24.12.2)
-      '@inquirer/rawlist': 4.1.11(@types/node@24.12.2)
-      '@inquirer/search': 3.2.2(@types/node@24.12.2)
-      '@inquirer/select': 4.4.2(@types/node@24.12.2)
-    optionalDependencies:
-      '@types/node': 24.12.2
-
-  '@inquirer/rawlist@4.1.11(@types/node@24.12.2)':
-    dependencies:
-      '@inquirer/core': 10.3.2(@types/node@24.12.2)
-      '@inquirer/type': 3.0.10(@types/node@24.12.2)
-      yoctocolors-cjs: 2.1.3
-    optionalDependencies:
-      '@types/node': 24.12.2
-
-  '@inquirer/search@3.2.2(@types/node@24.12.2)':
-    dependencies:
-      '@inquirer/core': 10.3.2(@types/node@24.12.2)
-      '@inquirer/figures': 1.0.15
-      '@inquirer/type': 3.0.10(@types/node@24.12.2)
-      yoctocolors-cjs: 2.1.3
-    optionalDependencies:
-      '@types/node': 24.12.2
-
-  '@inquirer/select@4.4.2(@types/node@24.12.2)':
+  '@inquirer/password@4.0.23(@types/node@25.9.1)':
     dependencies:
       '@inquirer/ansi': 1.0.2
-      '@inquirer/core': 10.3.2(@types/node@24.12.2)
-      '@inquirer/figures': 1.0.15
-      '@inquirer/type': 3.0.10(@types/node@24.12.2)
+      '@inquirer/core': 10.3.2(@types/node@25.9.1)
+      '@inquirer/type': 3.0.10(@types/node@25.9.1)
+    optionalDependencies:
+      '@types/node': 25.9.1
+
+  '@inquirer/prompts@7.10.1(@types/node@25.9.1)':
+    dependencies:
+      '@inquirer/checkbox': 4.3.2(@types/node@25.9.1)
+      '@inquirer/confirm': 5.1.21(@types/node@25.9.1)
+      '@inquirer/editor': 4.2.23(@types/node@25.9.1)
+      '@inquirer/expand': 4.0.23(@types/node@25.9.1)
+      '@inquirer/input': 4.3.1(@types/node@25.9.1)
+      '@inquirer/number': 3.0.23(@types/node@25.9.1)
+      '@inquirer/password': 4.0.23(@types/node@25.9.1)
+      '@inquirer/rawlist': 4.1.11(@types/node@25.9.1)
+      '@inquirer/search': 3.2.2(@types/node@25.9.1)
+      '@inquirer/select': 4.4.2(@types/node@25.9.1)
+    optionalDependencies:
+      '@types/node': 25.9.1
+
+  '@inquirer/rawlist@4.1.11(@types/node@25.9.1)':
+    dependencies:
+      '@inquirer/core': 10.3.2(@types/node@25.9.1)
+      '@inquirer/type': 3.0.10(@types/node@25.9.1)
       yoctocolors-cjs: 2.1.3
     optionalDependencies:
-      '@types/node': 24.12.2
+      '@types/node': 25.9.1
 
-  '@inquirer/type@3.0.10(@types/node@24.12.2)':
+  '@inquirer/search@3.2.2(@types/node@25.9.1)':
+    dependencies:
+      '@inquirer/core': 10.3.2(@types/node@25.9.1)
+      '@inquirer/figures': 1.0.15
+      '@inquirer/type': 3.0.10(@types/node@25.9.1)
+      yoctocolors-cjs: 2.1.3
     optionalDependencies:
-      '@types/node': 24.12.2
+      '@types/node': 25.9.1
+
+  '@inquirer/select@4.4.2(@types/node@25.9.1)':
+    dependencies:
+      '@inquirer/ansi': 1.0.2
+      '@inquirer/core': 10.3.2(@types/node@25.9.1)
+      '@inquirer/figures': 1.0.15
+      '@inquirer/type': 3.0.10(@types/node@25.9.1)
+      yoctocolors-cjs: 2.1.3
+    optionalDependencies:
+      '@types/node': 25.9.1
+
+  '@inquirer/type@3.0.10(@types/node@25.9.1)':
+    optionalDependencies:
+      '@types/node': 25.9.1
 
   '@isaacs/cliui@8.0.2':
     dependencies:
@@ -15525,6 +15539,10 @@ snapshots:
     dependencies:
       undici-types: 7.16.0
 
+  '@types/node@25.9.1':
+    dependencies:
+      undici-types: 7.24.6
+
   '@types/normalize-package-data@2.4.4': {}
 
   '@types/parse-json@4.0.2': {}
@@ -15672,7 +15690,7 @@ snapshots:
       magicast: 0.5.2
       obug: 2.1.1
       tinyrainbow: 3.1.0
-      vitest: 4.1.4(@types/node@24.12.2)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@24.12.2)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
+      vitest: 4.1.4(@types/node@25.9.1)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@25.9.1)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
     transitivePeerDependencies:
       - supports-color
 
@@ -15685,14 +15703,14 @@ snapshots:
       chai: 6.2.2
       tinyrainbow: 3.1.0
 
-  '@vitest/mocker@4.1.4(msw@2.10.4(@types/node@24.12.2)(typescript@5.9.3))(vite@8.0.8(@types/node@24.12.2)(esbuild@0.27.7)(jiti@2.6.1)(less@4.2.1)(sass@1.99.0)(yaml@2.4.5))':
+  '@vitest/mocker@4.1.4(msw@2.10.4(@types/node@25.9.1)(typescript@5.9.3))(vite@8.0.8(@types/node@25.9.1)(esbuild@0.27.7)(jiti@2.6.1)(less@4.2.1)(sass@1.99.0)(yaml@2.4.5))':
     dependencies:
       '@vitest/spy': 4.1.4
       estree-walker: 3.0.3
       magic-string: 0.30.21
     optionalDependencies:
-      msw: 2.10.4(@types/node@24.12.2)(typescript@5.9.3)
-      vite: 8.0.8(@types/node@24.12.2)(esbuild@0.27.7)(jiti@2.6.1)(less@4.2.1)(sass@1.99.0)(yaml@2.4.5)
+      msw: 2.10.4(@types/node@25.9.1)(typescript@5.9.3)
+      vite: 8.0.8(@types/node@25.9.1)(esbuild@0.27.7)(jiti@2.6.1)(less@4.2.1)(sass@1.99.0)(yaml@2.4.5)
 
   '@vitest/pretty-format@4.1.4':
     dependencies:
@@ -17705,17 +17723,17 @@ snapshots:
 
   ini@4.1.1: {}
 
-  inquirer@12.5.0(@types/node@24.12.2):
+  inquirer@12.5.0(@types/node@25.9.1):
     dependencies:
-      '@inquirer/core': 10.3.2(@types/node@24.12.2)
-      '@inquirer/prompts': 7.10.1(@types/node@24.12.2)
-      '@inquirer/type': 3.0.10(@types/node@24.12.2)
+      '@inquirer/core': 10.3.2(@types/node@25.9.1)
+      '@inquirer/prompts': 7.10.1(@types/node@25.9.1)
+      '@inquirer/type': 3.0.10(@types/node@25.9.1)
       ansi-escapes: 4.3.2
       mute-stream: 2.0.0
       run-async: 3.0.0
       rxjs: 7.8.2
     optionalDependencies:
-      '@types/node': 24.12.2
+      '@types/node': 25.9.1
 
   inquirer@7.3.3:
     dependencies:
@@ -18739,12 +18757,12 @@ snapshots:
     optionalDependencies:
       msgpackr-extract: 3.0.2
 
-  msw@2.10.4(@types/node@24.12.2)(typescript@5.9.3):
+  msw@2.10.4(@types/node@25.9.1)(typescript@5.9.3):
     dependencies:
       '@bundled-es-modules/cookie': 2.0.1
       '@bundled-es-modules/statuses': 1.0.1
       '@bundled-es-modules/tough-cookie': 0.1.6
-      '@inquirer/confirm': 5.1.21(@types/node@24.12.2)
+      '@inquirer/confirm': 5.1.21(@types/node@25.9.1)
       '@mswjs/interceptors': 0.39.5
       '@open-draft/deferred-promise': 2.2.0
       '@open-draft/until': 2.1.0
@@ -18793,7 +18811,7 @@ snapshots:
 
   neo-async@2.6.2: {}
 
-  next@16.1.4(@playwright/test@1.55.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(sass@1.99.0):
+  next@16.1.4(@babel/core@7.29.0)(@playwright/test@1.55.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(sass@1.99.0):
     dependencies:
       '@next/env': 16.1.4
       '@swc/helpers': 0.5.15
@@ -18802,7 +18820,7 @@ snapshots:
       postcss: 8.4.31
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
-      styled-jsx: 5.1.6(react@18.2.0)
+      styled-jsx: 5.1.6(@babel/core@7.29.0)(react@18.2.0)
     optionalDependencies:
       '@next/swc-darwin-arm64': 16.1.4
       '@next/swc-darwin-x64': 16.1.4
@@ -18819,7 +18837,7 @@ snapshots:
       - '@babel/core'
       - babel-plugin-macros
 
-  next@16.1.4(@playwright/test@1.55.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(sass@1.99.0):
+  next@16.1.4(@babel/core@7.29.0)(@playwright/test@1.55.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(sass@1.99.0):
     dependencies:
       '@next/env': 16.1.4
       '@swc/helpers': 0.5.15
@@ -18828,7 +18846,7 @@ snapshots:
       postcss: 8.4.31
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
-      styled-jsx: 5.1.6(react@19.2.3)
+      styled-jsx: 5.1.6(@babel/core@7.29.0)(react@19.2.3)
     optionalDependencies:
       '@next/swc-darwin-arm64': 16.1.4
       '@next/swc-darwin-x64': 16.1.4
@@ -19123,7 +19141,7 @@ snapshots:
       mlly: 1.8.2
       pathe: 2.0.3
 
-  plasmo@0.90.5(@swc/core@1.6.6(@swc/helpers@0.5.15))(@swc/helpers@0.5.15)(@types/node@24.12.2)(lodash@4.17.21)(postcss@8.5.10)(react-dom@18.2.0(react@18.2.0))(react@18.2.0):
+  plasmo@0.90.5(@swc/core@1.6.6(@swc/helpers@0.5.15))(@swc/helpers@0.5.15)(@types/node@25.9.1)(lodash@4.17.21)(postcss@8.5.10)(react-dom@18.2.0(react@18.2.0))(react@18.2.0):
     dependencies:
       '@expo/spawn-async': 1.7.2
       '@parcel/core': 2.9.3
@@ -19144,7 +19162,7 @@ snapshots:
       get-port: 7.1.0
       got: 14.4.6
       ignore: 7.0.3
-      inquirer: 12.5.0(@types/node@24.12.2)
+      inquirer: 12.5.0(@types/node@25.9.1)
       is-path-inside: 4.0.0
       json5: 2.2.3
       mnemonic-id: 3.2.7
@@ -19670,10 +19688,10 @@ snapshots:
       minimist: 1.2.6
       strip-json-comments: 2.0.1
 
-  react-arborist@3.4.0(@types/node@24.12.2)(@types/react@18.3.28)(react-dom@18.2.0(react@18.2.0))(react@18.2.0):
+  react-arborist@3.4.0(@types/node@25.9.1)(@types/react@18.3.28)(react-dom@18.2.0(react@18.2.0))(react@18.2.0):
     dependencies:
       react: 18.2.0
-      react-dnd: 14.0.5(@types/node@24.12.2)(@types/react@18.3.28)(react@18.2.0)
+      react-dnd: 14.0.5(@types/node@25.9.1)(@types/react@18.3.28)(react@18.2.0)
       react-dnd-html5-backend: 14.1.0
       react-dom: 18.2.0(react@18.2.0)
       react-window: 1.8.10(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
@@ -19688,7 +19706,7 @@ snapshots:
     dependencies:
       dnd-core: 14.0.1
 
-  react-dnd@14.0.5(@types/node@24.12.2)(@types/react@18.3.28)(react@18.2.0):
+  react-dnd@14.0.5(@types/node@25.9.1)(@types/react@18.3.28)(react@18.2.0):
     dependencies:
       '@react-dnd/invariant': 2.0.0
       '@react-dnd/shallowequal': 2.0.0
@@ -19697,7 +19715,7 @@ snapshots:
       hoist-non-react-statics: 3.3.2
       react: 18.2.0
     optionalDependencies:
-      '@types/node': 24.12.2
+      '@types/node': 25.9.1
       '@types/react': 18.3.28
 
   react-dom@18.2.0(react@18.2.0):
@@ -20558,15 +20576,19 @@ snapshots:
 
   style-search@0.1.0: {}
 
-  styled-jsx@5.1.6(react@18.2.0):
+  styled-jsx@5.1.6(@babel/core@7.29.0)(react@18.2.0):
     dependencies:
       client-only: 0.0.1
       react: 18.2.0
+    optionalDependencies:
+      '@babel/core': 7.29.0
 
-  styled-jsx@5.1.6(react@19.2.3):
+  styled-jsx@5.1.6(@babel/core@7.29.0)(react@19.2.3):
     dependencies:
       client-only: 0.0.1
       react: 19.2.3
+    optionalDependencies:
+      '@babel/core': 7.29.0
 
   stylelint-config-recommended@13.0.0(stylelint@15.10.3(typescript@5.9.3)):
     dependencies:
@@ -21042,6 +21064,8 @@ snapshots:
 
   undici-types@7.16.0: {}
 
+  undici-types@7.24.6: {}
+
   unicode-emoji-modifier-base@1.0.0: {}
 
   unified@11.0.5:
@@ -21199,7 +21223,7 @@ snapshots:
       '@types/unist': 3.0.3
       vfile-message: 4.0.3
 
-  vite@8.0.8(@types/node@24.12.2)(esbuild@0.27.7)(jiti@2.6.1)(less@4.2.1)(sass@1.99.0)(yaml@2.4.5):
+  vite@8.0.8(@types/node@25.9.1)(esbuild@0.27.7)(jiti@2.6.1)(less@4.2.1)(sass@1.99.0)(yaml@2.4.5):
     dependencies:
       lightningcss: 1.32.0
       picomatch: 4.0.4
@@ -21207,7 +21231,7 @@ snapshots:
       rolldown: 1.0.0-rc.15
       tinyglobby: 0.2.16
     optionalDependencies:
-      '@types/node': 24.12.2
+      '@types/node': 25.9.1
       esbuild: 0.27.7
       fsevents: 2.3.3
       jiti: 2.6.1
@@ -21215,10 +21239,10 @@ snapshots:
       sass: 1.99.0
       yaml: 2.4.5
 
-  vitest@4.1.4(@types/node@24.12.2)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@24.12.2)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5):
+  vitest@4.1.4(@types/node@25.9.1)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@25.9.1)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5):
     dependencies:
       '@vitest/expect': 4.1.4
-      '@vitest/mocker': 4.1.4(msw@2.10.4(@types/node@24.12.2)(typescript@5.9.3))(vite@8.0.8(@types/node@24.12.2)(esbuild@0.27.7)(jiti@2.6.1)(less@4.2.1)(sass@1.99.0)(yaml@2.4.5))
+      '@vitest/mocker': 4.1.4(msw@2.10.4(@types/node@25.9.1)(typescript@5.9.3))(vite@8.0.8(@types/node@25.9.1)(esbuild@0.27.7)(jiti@2.6.1)(less@4.2.1)(sass@1.99.0)(yaml@2.4.5))
       '@vitest/pretty-format': 4.1.4
       '@vitest/runner': 4.1.4
       '@vitest/snapshot': 4.1.4
@@ -21235,10 +21259,10 @@ snapshots:
       tinyexec: 1.1.1
       tinyglobby: 0.2.16
       tinyrainbow: 3.1.0
-      vite: 8.0.8(@types/node@24.12.2)(esbuild@0.27.7)(jiti@2.6.1)(less@4.2.1)(sass@1.99.0)(yaml@2.4.5)
+      vite: 8.0.8(@types/node@25.9.1)(esbuild@0.27.7)(jiti@2.6.1)(less@4.2.1)(sass@1.99.0)(yaml@2.4.5)
       why-is-node-running: 2.3.0
     optionalDependencies:
-      '@types/node': 24.12.2
+      '@types/node': 25.9.1
       '@vitest/coverage-istanbul': 4.1.4(vitest@4.1.4)
       happy-dom: 20.9.0
     transitivePeerDependencies:
