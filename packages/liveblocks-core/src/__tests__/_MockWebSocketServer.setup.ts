@@ -96,13 +96,13 @@ export const FIFTH_POSITION = makePosition(FOURTH_POSITION);
 export function fakeSyncSource(): SyncSource {
   return {
     setSyncStatus: () => {
-      throw new Error("fakeSyncSource: setSyncStatus called");
+      // no-op
     },
     getStatus: () => {
-      throw new Error("fakeSyncSource: getStatus called");
+      throw new Error("fakeSyncSource: not implemented");
     },
     destroy: () => {
-      throw new Error("fakeSyncSource: destroy called");
+      // no-op
     },
   };
 }
