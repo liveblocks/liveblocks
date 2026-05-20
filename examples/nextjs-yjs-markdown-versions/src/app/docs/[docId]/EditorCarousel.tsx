@@ -19,8 +19,16 @@ import type { LeftPanelMode } from "./DocumentEditor";
 const PRERENDER_MS = 100;
 
 /**
- * Two-panel carousel that performs a real horizontal slide whenever the
- * visible view changes.
+ * Two-panel carousel. On every change to the visible "view" the carousel
+ * slides by exactly **one column** (50% of the viewport):
+ *
+ *   - The outgoing pair animates from `translateX(0)` to `translateX(-50%)`,
+ *     so its previously-LEFT column slides off-screen and its
+ *     previously-RIGHT column (the editor the user was just typing into)
+ *     lands in the LEFT slot.
+ *   - The incoming pair animates from `translateX(50%)` to `translateX(0)`,
+ *     so its LEFT column lands in the LEFT slot and its RIGHT column
+ *     (the new editable editor) lands in the RIGHT slot.
  *
  * Three things had to come together for the transition to feel right:
  *
@@ -30,21 +38,21 @@ const PRERENDER_MS = 100;
  *
  * 2. **Use the same React key across renders** for the persisting
  *    element. The previous and current views are rendered as siblings
- *    using their own `view.key` (no `in-…`/`out-…` prefix); React
- *    matches by key across renders even when their position in the
- *    JSX changes, so the previous view's element is preserved when it
- *    becomes the outgoing view — only its `className` changes, which
- *    kicks `slideOutLeft` off on an already-mounted element.
+ *    using their own `view.key`; React matches by key across renders
+ *    even when their position in the JSX changes, so the previous
+ *    view's element is preserved when it becomes the outgoing view —
+ *    only its `className` changes, which kicks `slideOutLeft` off on
+ *    an already-mounted element.
  *
- * 3. **Prerender the incoming view off-screen** before starting the
- *    slide. We mount the new pair at `translate-x-full` (i.e.
- *    translateX(100%)) for ~100 ms with no animation. Monaco mounts,
- *    paints, and the diff worker returns. After that we flip to the
- *    animate phase: `slideOutLeft` on the previous view,
- *    `slideInRight` on the (already-painted) new view. The slide-in
- *    starts at exactly the same transform as the prerender state
- *    (`translateX(100%)`) so there's no snap when the animation takes
- *    over.
+ * 3. **Prerender the incoming view at +50% offset**, behind the
+ *    outgoing pair. We mount the new pair at `translate-x-1/2` for
+ *    ~100 ms with no animation; its LEFT column sits behind the
+ *    outgoing pair's RIGHT column (we z-index the outgoing pair on
+ *    top), giving Monaco and the diff worker a chance to paint before
+ *    anything visible moves. After that we flip to the animate phase
+ *    and both layers slide by 50% in lockstep. When the outgoing pair
+ *    unmounts at animation end, the incoming pair's LEFT column —
+ *    already painted, diff and all — is revealed in the left slot.
  */
 export function EditorCarousel({
   yDoc,
@@ -123,8 +131,8 @@ export function EditorCarousel({
           key={previousView!.key}
           className={
             phase === "animate"
-              ? "animate-slideOutLeft absolute inset-0 will-change-transform"
-              : "absolute inset-0 will-change-transform"
+              ? "animate-slideOutLeft absolute inset-0 z-10 will-change-transform"
+              : "absolute inset-0 z-10 will-change-transform"
           }
           onAnimationEnd={() => {
             // Clear `previousView` only if it's still the one we just
@@ -144,7 +152,7 @@ export function EditorCarousel({
         key={view.key}
         className={
           phase === "prerender"
-            ? "absolute inset-0 translate-x-full will-change-transform"
+            ? "absolute inset-0 translate-x-1/2 will-change-transform"
             : phase === "animate"
               ? "animate-slideInRight absolute inset-0 will-change-transform"
               : "absolute inset-0"

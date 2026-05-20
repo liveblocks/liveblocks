@@ -25,13 +25,18 @@ const config = {
         carousel: "cubic-bezier(0.22, 0.78, 0.32, 1)",
       },
       keyframes: {
+        // Slide by ONE column (50% of the viewport), not by the full
+        // pair. The outgoing pair only moves half a viewport-width so
+        // its right column (the previously-editable editor) lands in
+        // the left slot, and the incoming pair slides in from one
+        // column to the right.
         slideInRight: {
-          "0%": { transform: "translateX(100%)" },
+          "0%": { transform: "translateX(50%)" },
           "100%": { transform: "translateX(0)" },
         },
         slideOutLeft: {
           "0%": { transform: "translateX(0)" },
-          "100%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(-50%)" },
         },
       },
       animation: {

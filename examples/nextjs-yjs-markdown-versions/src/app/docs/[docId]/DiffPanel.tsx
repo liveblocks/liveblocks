@@ -83,8 +83,6 @@ export function DiffPanel({
       lineNumbers: "off",
       glyphMargin: false,
       folding: false,
-      lineDecorationsWidth: 0,
-      lineNumbersMinChars: 0,
     });
 
     // Bind the modified model to the same Y.Text that the editable
