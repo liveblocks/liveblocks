@@ -294,6 +294,16 @@ export class FSM<
   }
 
   /**
+   * Like {@link currentState}, but returns `null` instead of throwing when
+   * the machine hasn't started yet or has already stopped. Useful for code
+   * that may run during teardown windows (e.g. a WebSocket message handler
+   * that can be invoked by a buffered event after the socket is closed).
+   */
+  public get currentStateOrNull(): TState | null {
+    return this.#currentStateOrNull;
+  }
+
+  /**
    * Starts the machine by entering the initial state.
    */
   public start(): this {

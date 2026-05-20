@@ -513,7 +513,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
     // Only emit PONG when the machine is actually waiting for one, to
     // avoid spamming didIgnoreEvent in the @ok.connected state (which has
     // no handler for PONG).
-    if (machine.currentState === "@ok.awaiting-pong") {
+    if (machine.currentStateOrNull === "@ok.awaiting-pong") {
       machine.send({ type: "PONG" });
     }
     if (event.data !== "pong") {
