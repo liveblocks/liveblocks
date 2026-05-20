@@ -91,7 +91,14 @@ export function DocumentEditor({
             duplicateVersion(yDoc, effectiveSelectedIndex);
             setSelectedIndex(null);
           }}
-          canDuplicate={effectiveSelectedIndex >= 0 && versions.length > 0}
+          canDuplicate={
+            effectiveSelectedIndex >= 0 &&
+            versions.length > 0 &&
+            // Duplicating the latest version is exactly what
+            // "+ New version" already does, so disable the button
+            // when the focused version IS the latest.
+            effectiveSelectedIndex !== versions.length - 1
+          }
           showLeftModeSwitch={versions.length >= 2}
         />
         <div className="bg-bg-muted relative min-h-0 flex-1 overflow-hidden">
@@ -181,7 +188,11 @@ function Toolbar({
           className="border-border-strong text-text hover:bg-bg-muted h-[30px] cursor-pointer rounded-lg border bg-transparent px-3 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-50"
           onClick={onDuplicateSelected}
           disabled={!canDuplicate}
-          title="Duplicate selected version as a new version"
+          title={
+            canDuplicate
+              ? "Duplicate selected version as a new version"
+              : "Use + New version to snapshot the current draft"
+          }
         >
           Duplicate version
         </button>
