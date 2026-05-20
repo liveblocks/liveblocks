@@ -503,10 +503,23 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
   const onSocketClose = (event: IWebSocketCloseEvent) =>
     machine.send({ type: "EXPLICIT_SOCKET_CLOSE", event });
 
-  const onSocketMessage = (event: IWebSocketMessageEvent) =>
-    event.data === "pong"
-      ? machine.send({ type: "PONG" })
-      : onMessage.notify(event);
+  const onSocketMessage = (event: IWebSocketMessageEvent) => {
+    // Any inbound message from the server proves the connection is alive,
+    // not just an explicit "pong". Without this, a long streaming response
+    // (e.g. a large initial storage state delivered as many frames) can
+    // delay pongs behind it on the same WebSocket and trip the heartbeat
+    // watchdog mid-stream.
+    //
+    // Only emit PONG when the machine is actually waiting for one, to
+    // avoid spamming didIgnoreEvent in the @ok.connected state (which has
+    // no handler for PONG).
+    if (machine.currentState === "@ok.awaiting-pong") {
+      machine.send({ type: "PONG" });
+    }
+    if (event.data !== "pong") {
+      onMessage.notify(event);
+    }
+  };
 
   function teardownSocket(socket: IWebSocketInstance | null) {
     if (socket) {
