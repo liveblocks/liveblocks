@@ -3,7 +3,7 @@
 import { useRoom } from "@liveblocks/react";
 import { getYjsProviderForRoom, type LiveblocksYjsProvider } from "@liveblocks/yjs";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import clsx from "clsx";
 
 import { useVersions } from "@/lib/use-versions";
@@ -66,6 +66,30 @@ export function DocumentEditor({
   const [leftMode, setLeftMode] = useState<LeftPanelMode>("diff");
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
+  const handleCreateVersion = useCallback(() => {
+    snapshotCurrentVersion(yDoc);
+    setSelectedIndex(null);
+  }, [yDoc]);
+
+  // Cmd/Ctrl + Enter creates a new version from anywhere on the page,
+  // including from inside a Monaco editor (Monaco doesn't bind this
+  // combo by default, so the event bubbles up to the document).
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (
+        e.key === "Enter" &&
+        (e.metaKey || e.ctrlKey) &&
+        !e.shiftKey &&
+        !e.altKey
+      ) {
+        e.preventDefault();
+        handleCreateVersion();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [handleCreateVersion]);
+
   return (
     <div className="flex min-h-0 flex-1 overflow-hidden">
       <VersionSidebar
@@ -82,10 +106,7 @@ export function DocumentEditor({
           initialTitle={initialTitle}
           leftMode={leftMode}
           onLeftModeChange={setLeftMode}
-          onCreateVersion={() => {
-            snapshotCurrentVersion(yDoc);
-            setSelectedIndex(null);
-          }}
+          onCreateVersion={handleCreateVersion}
           onDuplicateSelected={() => {
             if (effectiveSelectedIndex < 0) return;
             duplicateVersion(yDoc, effectiveSelectedIndex);
@@ -141,6 +162,11 @@ function Toolbar({
   showLeftModeSwitch: boolean;
 }) {
   const [title, setTitle] = useState(initialTitle);
+  const [isMac, setIsMac] = useState(false);
+
+  useEffect(() => {
+    setIsMac(/Mac|iPad|iPhone|iPod/.test(navigator.userAgent));
+  }, []);
 
   return (
     <div className="bg-bg-elev border-border flex h-[52px] flex-none items-center justify-between gap-3 border-b px-4">
@@ -198,10 +224,18 @@ function Toolbar({
         </button>
         <button
           type="button"
-          className="bg-accent text-accent-fg h-[30px] cursor-pointer rounded-lg border border-transparent px-3.5 text-xs font-semibold hover:brightness-105"
+          className="bg-accent text-accent-fg inline-flex h-[30px] cursor-pointer items-center gap-2 rounded-lg border border-transparent pl-3.5 pr-1.5 text-xs font-semibold hover:brightness-105"
           onClick={onCreateVersion}
+          title={`New version (${isMac ? "⌘" : "Ctrl"}+Enter)`}
         >
-          + New version
+          <span>+ New version</span>
+          <kbd className="font-mono inline-flex h-5 items-center rounded border border-white/25 bg-white/10 px-1.5 text-[10px] tracking-wide">
+            {isMac ? "⌘" : "Ctrl"}
+            <span aria-hidden className="mx-0.5">
+              +
+            </span>
+            ↵
+          </kbd>
         </button>
       </div>
     </div>
