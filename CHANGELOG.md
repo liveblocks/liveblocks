@@ -1,5 +1,13 @@
 ## vNEXT (not yet released)
 
+## v3.19.3
+
+### `@liveblocks/client`
+
+- Fix unexpected disconnects that could happen while receiving large or
+  long-running streaming responses from the server (e.g. when loading a large
+  initial storage state).
+
 ## v3.19.2
 
 ### `@liveblocks/client`
