@@ -88,10 +88,22 @@ export const THIRD_POSITION = makePosition(SECOND_POSITION);
 export const FOURTH_POSITION = makePosition(THIRD_POSITION);
 export const FIFTH_POSITION = makePosition(FOURTH_POSITION);
 
-export function makeSyncSource(): SyncSource {
+/**
+ * A `SyncSource` that throws on every accessor. Used as a placeholder in
+ * test fixtures: if a test ever exercises one of these methods, it fails
+ * loudly.
+ */
+export function fakeSyncSource(): SyncSource {
   return {
-    setSyncStatus: () => {},
-    destroy: () => {},
+    setSyncStatus: () => {
+      throw new Error("fakeSyncSource: setSyncStatus called");
+    },
+    getStatus: () => {
+      throw new Error("fakeSyncSource: getStatus called");
+    },
+    destroy: () => {
+      throw new Error("fakeSyncSource: destroy called");
+    },
   };
 }
 
@@ -118,7 +130,7 @@ function makeRoomConfig<TM extends BaseMetadata, CM extends BaseMetadata>(
       currentUserId: new Signal<string | undefined>(undefined),
     }),
     // Not used in unit tests (yet)
-    createSyncSource: makeSyncSource,
+    createSyncSource: fakeSyncSource,
   };
 }
 
