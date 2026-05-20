@@ -979,6 +979,10 @@ export function createClient<U extends BaseUserMeta = DU>(
       source.set(status);
     }
 
+    function getStatus(): InternalSyncStatus {
+      return source.get();
+    }
+
     function destroy() {
       unsub();
       const index = syncStatusSources.findIndex((item) => item === source);
@@ -993,7 +997,7 @@ export function createClient<U extends BaseUserMeta = DU>(
       }
     }
 
-    return { setSyncStatus, destroy };
+    return { setSyncStatus, getStatus, destroy };
   }
 
   // ----------------------------------------------------------------
