@@ -1,5 +1,20 @@
 import type * as monacoNs from "monaco-editor";
 
+// Reuse Monaco's bundled JavaScript / TypeScript Monarch tokenizers to power
+// the `jsx` and `tsx` languages we register below. They don't fully grok
+// JSX syntax but they at least give you keyword / string / number / comment
+// coloring inside ```jsx``` and ```tsx``` code fences.
+import {
+  conf as jsConf,
+  language as jsLanguage,
+  // @ts-expect-error - monaco-editor ships these but doesn't declare types
+} from "monaco-editor/esm/vs/basic-languages/javascript/javascript";
+import {
+  conf as tsConf,
+  language as tsLanguage,
+  // @ts-expect-error - monaco-editor ships these but doesn't declare types
+} from "monaco-editor/esm/vs/basic-languages/typescript/typescript";
+
 /**
  * Registers an `mdx` language with Monaco that highlights:
  *
@@ -17,6 +32,9 @@ import type * as monacoNs from "monaco-editor";
  * Idempotent: calling more than once is a no-op.
  */
 export function registerMdx(monaco: typeof monacoNs): void {
+  registerJsx(monaco);
+  registerTsx(monaco);
+
   if (monaco.languages.getLanguages().some((l) => l.id === "mdx")) return;
 
   monaco.languages.register({
@@ -55,6 +73,28 @@ export function registerMdx(monaco: typeof monacoNs): void {
   });
 
   monaco.languages.setMonarchTokensProvider("mdx", mdxLanguage);
+}
+
+function registerJsx(monaco: typeof monacoNs): void {
+  if (monaco.languages.getLanguages().some((l) => l.id === "jsx")) return;
+  monaco.languages.register({
+    id: "jsx",
+    extensions: [".jsx"],
+    aliases: ["JSX", "jsx"],
+  });
+  monaco.languages.setLanguageConfiguration("jsx", jsConf);
+  monaco.languages.setMonarchTokensProvider("jsx", jsLanguage);
+}
+
+function registerTsx(monaco: typeof monacoNs): void {
+  if (monaco.languages.getLanguages().some((l) => l.id === "tsx")) return;
+  monaco.languages.register({
+    id: "tsx",
+    extensions: [".tsx"],
+    aliases: ["TSX", "tsx"],
+  });
+  monaco.languages.setLanguageConfiguration("tsx", tsConf);
+  monaco.languages.setMonarchTokensProvider("tsx", tsLanguage);
 }
 
 const mdxLanguage: monacoNs.languages.IMonarchLanguage = {

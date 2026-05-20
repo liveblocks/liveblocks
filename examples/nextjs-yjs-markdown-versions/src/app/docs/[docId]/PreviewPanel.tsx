@@ -2,11 +2,17 @@
 
 import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import {
+  oneDark,
+  oneLight,
+} from "react-syntax-highlighter/dist/esm/styles/prism";
 import remarkGfm from "remark-gfm";
 import type * as Y from "yjs";
 
 import { getVersionText, type VersionInfo } from "@/lib/yjs-versions";
 import { LocalTime } from "@/components/LocalTime";
+import { useIsDark } from "@/lib/use-is-dark";
 
 import { PanelHeader, panelShellClass } from "./PanelChrome";
 
@@ -22,6 +28,7 @@ export function PreviewPanel({
   const [text, setText] = useState<string>(() =>
     getVersionText(yDoc, version.id).toString()
   );
+  const isDark = useIsDark();
 
   useEffect(() => {
     const yText = getVersionText(yDoc, version.id);
@@ -44,7 +51,51 @@ export function PreviewPanel({
           </p>
         ) : (
           <article className="markdown">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              components={{
+                code({ className, children, ...props }) {
+                  // react-markdown v9 invokes this component for both
+                  // inline `\`code\`` and fenced code blocks. Fenced
+                  // blocks carry a `language-XXX` class — that's how
+                  // we tell them apart.
+                  const match = /language-([\w+-]+)/.exec(className ?? "");
+                  if (!match) {
+                    return (
+                      <code className={className} {...props}>
+                        {children}
+                      </code>
+                    );
+                  }
+                  return (
+                    <SyntaxHighlighter
+                      language={match[1]}
+                      style={isDark ? oneDark : oneLight}
+                      PreTag="div"
+                      customStyle={{
+                        margin: 0,
+                        padding: "12px 14px",
+                        borderRadius: 8,
+                        fontSize: 12.5,
+                        background: isDark
+                          ? "rgb(var(--bg-muted))"
+                          : "rgb(var(--bg-muted))",
+                      }}
+                      codeTagProps={{
+                        style: {
+                          fontFamily: "var(--font-mono)",
+                          fontSize: "inherit",
+                        },
+                      }}
+                    >
+                      {String(children).replace(/\n$/, "")}
+                    </SyntaxHighlighter>
+                  );
+                },
+              }}
+            >
+              {text}
+            </ReactMarkdown>
           </article>
         )}
       </div>
