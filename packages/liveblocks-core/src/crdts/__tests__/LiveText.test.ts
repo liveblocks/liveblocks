@@ -7,6 +7,7 @@ import {
   type StorageNode,
 } from "../../protocol/StorageNode";
 import { LiveText, rebaseTextOperations } from "../LiveText";
+import { invertTextOperations } from "../liveTextOps";
 import { toPlainLson } from "../utils";
 
 describe("LiveText", () => {
@@ -72,6 +73,23 @@ describe("LiveText", () => {
         [{ type: "insert", index: 0, text: "A" }]
       )
     ).toEqual([{ type: "insert", index: 2, text: "!" }]);
+  });
+
+  test("invertTextOperations preserves attributes for multi-segment deletes", () => {
+    const text = new LiveText([
+      { text: "He", attributes: { bold: true } },
+      { text: "llo" },
+    ]);
+
+    expect(
+      invertTextOperations(
+        [{ text: "He", attributes: { bold: true } }, { text: "llo" }],
+        [{ type: "delete", index: 0, length: 5 }]
+      )
+    ).toEqual([
+      { type: "insert", index: 0, text: "He", attributes: { bold: true } },
+      { type: "insert", index: 2, text: "llo" },
+    ]);
   });
 
   test("round-trips compact storage nodes", () => {

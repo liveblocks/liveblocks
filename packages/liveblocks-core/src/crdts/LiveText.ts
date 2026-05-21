@@ -1,5 +1,4 @@
 import { nn } from "../lib/assert";
-import { freeze } from "../lib/freeze";
 import type { Json, ReadonlyJson } from "../lib/Json";
 import { nanoid } from "../lib/nanoid";
 import type {
@@ -19,6 +18,18 @@ import type { ParentToChildNodeMap } from "../types/NodeMap";
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { AbstractCrdt } from "./AbstractCrdt";
 import type { LiveNode } from "./Lson";
+import {
+  applyDelete,
+  applyFormat,
+  applyInsert,
+  applyTextOperationsToSegments,
+  clipRange,
+  deltaToSegments,
+  invertTextOperations,
+  rebaseTextOperations,
+  segmentsToDelta,
+  type TextSegment,
+} from "./liveTextOps";
 
 export type LiveTextAttributes = TextAttributes;
 export type LiveTextAttributesPatch = Readonly<Record<string, Json | null>>;
@@ -51,294 +62,10 @@ export type LiveTextUpdates = {
   updates: LiveTextChange[];
 };
 
-type Segment = {
-  text: string;
-  attributes?: TextAttributes;
-};
-
-function cloneAttributes(
-  attributes: TextAttributes | undefined
-): TextAttributes | undefined {
-  return attributes === undefined ? undefined : freeze({ ...attributes });
-}
-
-function attributesEqual(
-  left: TextAttributes | undefined,
-  right: TextAttributes | undefined
-): boolean {
-  if (left === right) {
-    return true;
-  }
-  if (left === undefined || right === undefined) {
-    return false;
-  }
-
-  const leftKeys = Object.keys(left);
-  const rightKeys = Object.keys(right);
-  if (leftKeys.length !== rightKeys.length) {
-    return false;
-  }
-
-  for (const key of leftKeys) {
-    if (left[key] !== right[key]) {
-      return false;
-    }
-  }
-  return true;
-}
-
-function normalizeSegments(segments: readonly Segment[]): Segment[] {
-  const normalized: Segment[] = [];
-  for (const segment of segments) {
-    if (segment.text.length === 0) {
-      continue;
-    }
-
-    const last = normalized.at(-1);
-    const attributes = cloneAttributes(segment.attributes);
-    if (last !== undefined && attributesEqual(last.attributes, attributes)) {
-      last.text += segment.text;
-    } else {
-      normalized.push({ text: segment.text, attributes });
-    }
-  }
-  return normalized;
-}
-
-function deltaToSegments(delta: LiveTextDelta): Segment[] {
-  return normalizeSegments(
-    delta.map((item) => ({
-      text: item.text,
-      attributes: item.attributes,
-    }))
-  );
-}
-
-function segmentsToDelta(segments: readonly Segment[]): LiveTextDelta {
-  return segments.map((segment) =>
-    segment.attributes === undefined
-      ? { text: segment.text }
-      : { text: segment.text, attributes: { ...segment.attributes } }
-  );
-}
-
-function splitSegmentsAt(
-  segments: readonly Segment[],
-  index: number
-): Segment[] {
-  const result: Segment[] = [];
-  let offset = 0;
-
-  for (const segment of segments) {
-    const end = offset + segment.text.length;
-    if (index > offset && index < end) {
-      const before = segment.text.slice(0, index - offset);
-      const after = segment.text.slice(index - offset);
-      result.push({ text: before, attributes: segment.attributes });
-      result.push({ text: after, attributes: segment.attributes });
-    } else {
-      result.push({ text: segment.text, attributes: segment.attributes });
-    }
-    offset = end;
-  }
-
-  return result;
-}
-
-function clipRange(
-  index: number,
-  length: number,
-  textLength: number
-): { index: number; length: number } {
-  const clippedIndex = Math.max(0, Math.min(index, textLength));
-  const clippedEnd = Math.max(
-    clippedIndex,
-    Math.min(index + length, textLength)
-  );
-  return { index: clippedIndex, length: clippedEnd - clippedIndex };
-}
-
-function applyInsert(
-  segments: readonly Segment[],
-  index: number,
-  text: string,
-  attributes?: TextAttributes
-): Segment[] {
-  if (text.length === 0) {
-    return normalizeSegments(segments);
-  }
-
-  const split = splitSegmentsAt(segments, index);
-  const result: Segment[] = [];
-  let offset = 0;
-  let inserted = false;
-
-  for (const segment of split) {
-    if (!inserted && offset === index) {
-      result.push({ text, attributes });
-      inserted = true;
-    }
-    result.push(segment);
-    offset += segment.text.length;
-  }
-
-  if (!inserted) {
-    result.push({ text, attributes });
-  }
-
-  return normalizeSegments(result);
-}
-
-function applyDelete(
-  segments: readonly Segment[],
-  index: number,
-  length: number
-): { segments: Segment[]; deletedText: string } {
-  const split = splitSegmentsAt(
-    splitSegmentsAt(segments, index),
-    index + length
-  );
-  const result: Segment[] = [];
-  let offset = 0;
-  let deletedText = "";
-
-  for (const segment of split) {
-    const end = offset + segment.text.length;
-    if (offset >= index && end <= index + length) {
-      deletedText += segment.text;
-    } else {
-      result.push(segment);
-    }
-    offset = end;
-  }
-
-  return { segments: normalizeSegments(result), deletedText };
-}
-
-function applyFormat(
-  segments: readonly Segment[],
-  index: number,
-  length: number,
-  attributes: LiveTextAttributesPatch
-): Segment[] {
-  const split = splitSegmentsAt(
-    splitSegmentsAt(segments, index),
-    index + length
-  );
-  const result: Segment[] = [];
-  let offset = 0;
-
-  for (const segment of split) {
-    const end = offset + segment.text.length;
-    if (offset >= index && end <= index + length) {
-      const nextAttributes: Record<string, Json> = {
-        ...(segment.attributes ?? {}),
-      };
-      for (const [key, value] of Object.entries(attributes)) {
-        if (value === null) {
-          delete nextAttributes[key];
-        } else {
-          nextAttributes[key] = value;
-        }
-      }
-      result.push({
-        text: segment.text,
-        attributes:
-          Object.keys(nextAttributes).length === 0
-            ? undefined
-            : freeze(nextAttributes),
-      });
-    } else {
-      result.push(segment);
-    }
-    offset = end;
-  }
-
-  return normalizeSegments(result);
-}
-
-function formatReverseOperations(
-  segments: readonly Segment[],
-  index: number,
-  length: number,
-  patch: LiveTextAttributesPatch
-): TextOperation[] {
-  const split = splitSegmentsAt(
-    splitSegmentsAt(segments, index),
-    index + length
-  );
-  const result: TextOperation[] = [];
-  let offset = 0;
-
-  for (const segment of split) {
-    const end = offset + segment.text.length;
-    if (offset >= index && end <= index + length) {
-      const attributes: Record<string, Json | null> = {};
-      for (const key of Object.keys(patch)) {
-        attributes[key] = segment.attributes?.[key] ?? null;
-      }
-      result.push({
-        type: "format",
-        index: offset,
-        length: segment.text.length,
-        attributes,
-      });
-    }
-    offset = end;
-  }
-
-  return result;
-}
-
-function mapIndexThroughOperation(index: number, op: TextOperation): number {
-  if (op.type === "insert") {
-    return op.index <= index ? index + op.text.length : index;
-  } else if (op.type === "delete") {
-    if (op.index >= index) {
-      return index;
-    }
-    return Math.max(op.index, index - op.length);
-  } else {
-    return index;
-  }
-}
-
-export function mapTextIndexThroughOperations(
-  index: number,
-  ops: readonly TextOperation[]
-): number {
-  let mapped = index;
-  for (const op of ops) {
-    mapped = mapIndexThroughOperation(mapped, op);
-  }
-  return mapped;
-}
-
-export function rebaseTextOperations(
-  ops: readonly TextOperation[],
-  acceptedOps: readonly TextOperation[]
-): TextOperation[] {
-  return ops.map((op) => {
-    if (op.type === "insert") {
-      return {
-        ...op,
-        index: mapTextIndexThroughOperations(op.index, acceptedOps),
-      };
-    } else if (op.type === "delete" || op.type === "format") {
-      const start = mapTextIndexThroughOperations(op.index, acceptedOps);
-      const end = mapTextIndexThroughOperations(
-        op.index + op.length,
-        acceptedOps
-      );
-      return { ...op, index: start, length: Math.max(0, end - start) };
-    } else {
-      return op;
-    }
-  });
-}
+export { applyLiveTextOperations, mapTextIndexThroughOperations, rebaseTextOperations } from "./liveTextOps";
 
 export class LiveText extends AbstractCrdt {
-  #segments: Segment[];
+  #segments: TextSegment[];
   #version: number;
   #pendingOps: Map<string, readonly TextOperation[]>;
 
@@ -428,7 +155,22 @@ export class LiveText extends AbstractCrdt {
     }
 
     if (op.opId !== undefined) {
+      const pending = this.#pendingOps.get(op.opId);
       this.#pendingOps.delete(op.opId);
+
+      const otherPending = Array.from(this.#pendingOps.values()).flat();
+      if (pending !== undefined && otherPending.length > 0) {
+        this.#segments = applyTextOperationsToSegments(
+          this.#segments,
+          invertTextOperations(this.#segments, pending)
+        );
+        const ops = rebaseTextOperations(op.ops, otherPending);
+        return this.#applyOperations(
+          ops,
+          op.version ?? Math.max(this.#version, op.baseVersion + 1)
+        );
+      }
+
       this.#version = op.version ?? Math.max(this.#version, op.baseVersion + 1);
       return { modified: false };
     }
@@ -599,43 +341,12 @@ export class LiveText extends AbstractCrdt {
   }
 
   #invertOperations(ops: readonly TextOperation[]): UpdateTextOp[] {
-    let shadow = this.#segments;
-    const reverse: TextOperation[] = [];
-
-    for (const op of ops) {
-      if (op.type === "insert") {
-        shadow = applyInsert(shadow, op.index, op.text, op.attributes);
-        reverse.unshift({
-          type: "delete",
-          index: op.index,
-          length: op.text.length,
-        });
-      } else if (op.type === "delete") {
-        const deleted = shadow
-          .map((segment) => segment.text)
-          .join("")
-          .slice(op.index, op.index + op.length);
-        const result = applyDelete(shadow, op.index, op.length);
-        shadow = result.segments;
-        reverse.unshift({ type: "insert", index: op.index, text: deleted });
-      } else {
-        const inverse = formatReverseOperations(
-          shadow,
-          op.index,
-          op.length,
-          op.attributes
-        );
-        shadow = applyFormat(shadow, op.index, op.length, op.attributes);
-        reverse.unshift(...inverse.reverse());
-      }
-    }
-
     return [
       {
         type: OpCode.UPDATE_TEXT,
         id: nn(this._id),
         baseVersion: this.#version,
-        ops: reverse,
+        ops: invertTextOperations(this.#segments, ops),
       },
     ];
   }
