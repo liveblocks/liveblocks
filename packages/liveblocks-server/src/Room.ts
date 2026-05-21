@@ -396,6 +396,10 @@ type RoomOptions<SM, CM extends JsonObject, C> = {
    * that can guarantee that no Ops from other clients can get interleaved
    * between the chunk generation until the last chunk has been sent.
    * Defaults to true, but is notably NOT safe to use from DOS-KV backends.
+   *
+   * @deprecated Only existed to support the DOS-KV backend, which is gone.
+   * All remaining drivers are streaming-safe; this flag should be removed
+   * and the streaming path made unconditional.
    */
   allowStreaming?: boolean;
 

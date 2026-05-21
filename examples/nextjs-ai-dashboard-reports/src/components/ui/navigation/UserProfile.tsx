@@ -2,11 +2,11 @@
 
 import { Button } from "@/components/Button"
 import { cx, focusRing } from "@/lib/utils"
-import { ChevronsUpDown, User } from "lucide-react"
+import { ChevronsUpDown, Loader2, User } from "lucide-react"
 import Image from "next/image"
-import { users } from "@/data/users"
 
 import { DropdownUserProfile } from "./DropdownUserProfile"
+import { useLiveblocksDashboardUser } from "./useLiveblocksDashboardUser"
 
 interface UserProfileDesktopProps {
   isCollapsed?: boolean
@@ -15,6 +15,8 @@ interface UserProfileDesktopProps {
 export const UserProfileDesktop = ({
   isCollapsed,
 }: UserProfileDesktopProps) => {
+  const me = useLiveblocksDashboardUser()
+
   return (
     <DropdownUserProfile>
       <Button
@@ -36,19 +38,36 @@ export const UserProfileDesktop = ({
           </div>
         ) : (
           <span className="flex items-center gap-2.5">
-            <Image
-              src={users[0].avatar}
-              alt="User avatar"
-              width={isCollapsed ? 20 : 32}
-              height={isCollapsed ? 20 : 32}
+            <span
               className={cx(
                 isCollapsed ? "size-5" : "size-8",
-                "rounded-full bg-black dark:bg-white",
+                "flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-neutral-100 dark:bg-neutral-800",
               )}
-              aria-hidden="true"
-            />
+            >
+              {me?.avatar ? (
+                <Image
+                  src={me.avatar}
+                  alt=""
+                  width={isCollapsed ? 20 : 32}
+                  height={isCollapsed ? 20 : 32}
+                  className={cx(
+                    isCollapsed ? "size-5" : "size-8",
+                    "rounded-full bg-black object-cover dark:bg-white",
+                  )}
+                  aria-hidden="true"
+                />
+              ) : (
+                <Loader2
+                  className={cx(
+                    isCollapsed ? "size-3.5" : "size-4",
+                    "animate-spin text-neutral-400 dark:text-neutral-500",
+                  )}
+                  aria-hidden="true"
+                />
+              )}
+            </span>
             <span className={cx(isCollapsed ? "hidden" : "block")}>
-              {users[0].name}
+              {me?.name ?? "Connecting…"}
             </span>
           </span>
         )}
@@ -64,6 +83,8 @@ export const UserProfileDesktop = ({
 }
 
 export const UserProfileMobile = () => {
+  const me = useLiveblocksDashboardUser()
+
   return (
     <DropdownUserProfile align="end">
       <Button
@@ -73,14 +94,23 @@ export const UserProfileMobile = () => {
           "group flex items-center rounded-md p-0.5 text-sm font-medium text-neutral-900 hover:bg-neutral-200/50 data-[state=open]:bg-neutral-200/50 sm:p-1 dark:hover:bg-neutral-900/50 dark:data-[state=open]:bg-neutral-800/50",
         )}
       >
-        <Image
-          src={users[0].avatar}
-          alt="User avatar"
-          width={32}
-          height={32}
-          className="size-8 shrink-0 rounded-full bg-black sm:size-7 dark:bg-white"
-          aria-hidden="true"
-        />
+        <span className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-neutral-100 sm:size-7 dark:bg-neutral-800">
+          {me?.avatar ? (
+            <Image
+              src={me.avatar}
+              alt=""
+              width={32}
+              height={32}
+              className="size-8 shrink-0 rounded-full bg-black object-cover sm:size-7 dark:bg-white"
+              aria-hidden="true"
+            />
+          ) : (
+            <Loader2
+              className="size-4 shrink-0 animate-spin text-neutral-400 dark:text-neutral-500"
+              aria-hidden="true"
+            />
+          )}
+        </span>
       </Button>
     </DropdownUserProfile>
   )

@@ -1198,6 +1198,7 @@ export interface IYjsProvider {
  */
 export interface SyncSource {
   setSyncStatus(status: InternalSyncStatus): void;
+  getStatus(): InternalSyncStatus;
   destroy(): void;
 }
 
@@ -1543,7 +1544,7 @@ export function createRoom<
     // - The `backgroundKeepAliveTimeout` client option is configured
     // - The browser window has been in the background for at least
     //   `backgroundKeepAliveTimeout` milliseconds
-    // - There are no pending changes
+    // - There are no pending changes scoped to this room (Storage, Yjs)
     //
     canZombie() {
       return (
@@ -1551,7 +1552,8 @@ export function createRoom<
         inBackgroundSince.current !== null &&
         Date.now() >
           inBackgroundSince.current + config.backgroundKeepAliveTimeout &&
-        getStorageStatus() !== "synchronizing"
+        syncSourceForStorage.getStatus() !== "synchronizing" &&
+        syncSourceForYjs.getStatus() !== "synchronizing"
       );
     },
   };

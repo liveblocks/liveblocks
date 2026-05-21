@@ -1,5 +1,16 @@
 import { nanoid } from "nanoid";
 
+export const COMMENT_AI_USER_ID = "__AI_AGENT";
+
+export const COMMENT_AI_USER_INFO: Liveblocks["UserMeta"] = {
+  id: COMMENT_AI_USER_ID,
+  info: {
+    name: "AI Assistant",
+    color: "#6366f1",
+    avatar: `https://liveblocks.io/api/avatar?u=${encodeURIComponent(COMMENT_AI_USER_ID)}&agent=true`,
+  },
+};
+
 const AI_AGENT_ID_PREFIX = "#agent";
 
 export function isAgentUserId(userId: string): boolean {
@@ -95,6 +106,10 @@ export function getRandomUser() {
 }
 
 export function getUser(id: string) {
+  if (id === COMMENT_AI_USER_ID) {
+    return COMMENT_AI_USER_INFO;
+  }
+
   return USER_INFO.find((u) => u.id === id) || undefined;
 }
 
@@ -103,5 +118,5 @@ export async function getUsers(ids: string[]) {
 }
 
 export function getAllUsers() {
-  return USER_INFO;
+  return [COMMENT_AI_USER_INFO, ...USER_INFO];
 }

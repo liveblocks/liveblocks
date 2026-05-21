@@ -1,5 +1,12 @@
 ## vNEXT (not yet released)
 
+## v3.19.2
+
+### `@liveblocks/client`
+
+- Fix: clients that have `backgroundKeepAliveTimeout` enabled will no longer
+  disconnect before any pending Yjs updates have been synced to the server.
+
 ## v3.19.1
 
 ### `@liveblocks/node` and Python SDK

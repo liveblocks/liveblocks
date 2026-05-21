@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useThreads } from "@liveblocks/react/suspense";
-import { useFeedMessages } from "@liveblocks/react";
+import { useFeedMessages, ClientSideSuspense } from "@liveblocks/react";
 import {
   AvatarStack,
   Composer,
@@ -10,7 +10,12 @@ import {
   Comment,
   CommentProps,
 } from "@liveblocks/react-ui";
+import { Comment as CommentPrimitive } from "@liveblocks/react-ui/primitives";
 import { BrainIcon, ChevronIcon } from "./icons";
+import { Markdown } from "@liveblocks/react-ui/_private";
+import Link from "next/link";
+import { useUser } from "@liveblocks/react/suspense";
+import { ComponentProps } from "react";
 
 /**
  * Displays a list of threads, along with a composer for creating
@@ -190,9 +195,40 @@ function StreamedComment({
               </div>
             </div>
           </details>
-          <div className="lb-comment-body whitespace-pre-wrap">{response}</div>
+          {commentProps.comment.metadata.feedComplete ? (
+            <CommentPrimitive.Body
+              body={commentProps.comment.body}
+              components={{
+                Mention: ({ mention }) => (
+                  <span className="font-medium text-accent">
+                    @
+                    <ClientSideSuspense fallback="…">
+                      <User userId={mention.id} />
+                    </ClientSideSuspense>
+                  </span>
+                ),
+                Link: ({ href, children }) => (
+                  <Link href={href}>{children}</Link>
+                ),
+              }}
+            />
+          ) : (
+            <div className="whitespace-break-spaces">
+              <Markdown content={response} />
+            </div>
+          )}
         </>
       }
     />
   );
+}
+
+interface UserProps extends ComponentProps<"span"> {
+  userId: string;
+}
+
+export function User({ userId, className, ...props }: UserProps) {
+  const { user } = useUser(userId);
+
+  return <span {...props}>{user?.name ?? userId}</span>;
 }

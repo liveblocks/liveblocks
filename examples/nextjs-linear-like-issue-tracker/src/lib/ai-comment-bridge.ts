@@ -23,7 +23,7 @@ export async function createAiPlaceholderComment({
     threadId,
     data: {
       userId: AI_USER_INFO.id,
-      metadata: { feedId },
+      metadata: { feedId, feedComplete: false },
       body: markdownToCommentBody("Thinking…"),
     },
   });
@@ -60,6 +60,7 @@ export async function updateAiPlaceholderComment({
     data: {
       metadata: {
         feedId,
+        feedComplete: true,
         ...(referencedIssueIdsCsv !== undefined &&
         referencedIssueIdsCsv.length > 0
           ? { referencedIssueIds: referencedIssueIdsCsv }

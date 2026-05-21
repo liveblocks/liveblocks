@@ -43,9 +43,14 @@ import {
   type MiniMapNodeProps,
   type NodeChange,
   type NodeProps,
+  type NodeRemoveChange,
   type OnResize,
 } from "@xyflow/react";
 import { AvatarStack, Cursor, Icon } from "@liveblocks/react-ui";
+import {
+  useEditThreadMetadata,
+  useThreads,
+} from "@liveblocks/react/suspense";
 import {
   ComponentProps,
   CSSProperties,
@@ -61,7 +66,13 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { isAgentUserId } from "../api/database";
-import { submitFlowchartAgentAction } from "./agent";
+import { submitFlowchartAgentAction } from "./agent/input-agent";
+import {
+  FlowchartCanvasComments,
+  FlowchartCommentToolbarButton,
+  getPlacementAtFlowPoint,
+  type CommentPlacementMode,
+} from "./comments";
 import {
   BLOCK_COLORS,
   BLOCK_SHAPES,
@@ -76,6 +87,7 @@ import {
   createFlowchartNode,
   getBlockColor,
   getBlockShape,
+  normalizedToFlowPoint,
   type BlockColor,
   type BlockHandleSide,
   type BlockShape,
@@ -729,12 +741,16 @@ function ToolbarShapeItem({
 
 function FlowToolbar({
   mode,
+  commentMode,
   onSelectShapeForPlacement,
+  onAddComment,
 }: {
   mode: PlacementMode;
+  commentMode: CommentPlacementMode;
   onSelectShapeForPlacement: (shape: BlockShape, pointer: Point) => void;
+  onAddComment: (pointer: Point) => void;
 }) {
-  if (mode.kind !== "idle") {
+  if (mode.kind !== "idle" || commentMode.kind !== "idle") {
     return null;
   }
 
@@ -747,6 +763,7 @@ function FlowToolbar({
           onSelectForPlacement={onSelectShapeForPlacement}
         />
       ))}
+      <FlowchartCommentToolbarButton onAddComment={onAddComment} />
     </div>
   );
 }
@@ -809,8 +826,16 @@ function Flow({ className, ...props }: ComponentProps<"div">) {
   const [placementMode, setPlacementMode] = useState<PlacementMode>({
     kind: "idle",
   });
-  const isPlacing = placementMode.kind !== "idle";
-  const isPickingPlacement = placementMode.kind === "placing-shape";
+  const [commentMode, setCommentMode] = useState<CommentPlacementMode>({
+    kind: "idle",
+  });
+  const { threads } = useThreads();
+  const editThreadMetadata = useEditThreadMetadata();
+  const isPlacing =
+    placementMode.kind !== "idle" || commentMode.kind !== "idle";
+  const isPickingPlacement =
+    placementMode.kind === "placing-shape" ||
+    commentMode.kind === "placing-comment";
   const roomId = useRoom().id;
   const [agentPrompt, setAgentPrompt] = useState("");
   const trimmedAgentPrompt = agentPrompt.trim();
@@ -832,6 +857,7 @@ function Flow({ className, ...props }: ComponentProps<"div">) {
 
   const resetPlacementMode = useCallback(() => {
     setPlacementMode({ kind: "idle" });
+    setCommentMode({ kind: "idle" });
   }, []);
 
   useEffect(() => {
@@ -854,7 +880,7 @@ function Flow({ className, ...props }: ComponentProps<"div">) {
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        if (placementMode.kind !== "idle") {
+        if (isPlacing) {
           resetPlacementMode();
         }
         return;
@@ -885,7 +911,7 @@ function Flow({ className, ...props }: ComponentProps<"div">) {
     return () => {
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, [placementMode.kind, resetPlacementMode, undo, redo, canUndo, canRedo]);
+  }, [isPlacing, resetPlacementMode, undo, redo, canUndo, canRedo]);
 
   const addBlockAtPosition = useCallback(
     (shape: BlockShape, position: Point) => {
@@ -915,9 +941,32 @@ function Flow({ className, ...props }: ComponentProps<"div">) {
     [reactFlow, onNodesChange]
   );
 
+  const commitThreadPlacementAtScreenPoint = useCallback(
+    (clientX: number, clientY: number) => {
+      if (commentMode.kind !== "placing-comment") {
+        return;
+      }
+
+      const flowPosition = reactFlow.screenToFlowPosition({
+        x: clientX,
+        y: clientY,
+      });
+
+      setCommentMode({
+        kind: "composing-comment",
+        placement: getPlacementAtFlowPoint(reactFlow.getNodes(), flowPosition),
+      });
+    },
+    [commentMode.kind, reactFlow]
+  );
+
   const handleCanvasClickForPlacement = useCallback(
     (event: ReactMouseEvent) => {
-      if (placementMode.kind !== "placing-shape") {
+      if (!isPlacing) {
+        return;
+      }
+
+      if (commentMode.kind === "composing-comment") {
         return;
       }
 
@@ -929,15 +978,78 @@ function Flow({ className, ...props }: ComponentProps<"div">) {
         y: event.clientY,
       });
 
-      const half = DEFAULT_BLOCK_SIZE / 2;
+      if (placementMode.kind === "placing-shape") {
+        const half = DEFAULT_BLOCK_SIZE / 2;
 
-      addBlockAtPosition(placementMode.shape, {
-        x: flowPosition.x - half,
-        y: flowPosition.y - half,
-      });
-      resetPlacementMode();
+        addBlockAtPosition(placementMode.shape, {
+          x: flowPosition.x - half,
+          y: flowPosition.y - half,
+        });
+        resetPlacementMode();
+        return;
+      }
+
+      if (commentMode.kind === "placing-comment") {
+        commitThreadPlacementAtScreenPoint(event.clientX, event.clientY);
+      }
     },
-    [addBlockAtPosition, placementMode, reactFlow, resetPlacementMode]
+    [
+      addBlockAtPosition,
+      commitThreadPlacementAtScreenPoint,
+      commentMode.kind,
+      isPlacing,
+      placementMode,
+      reactFlow,
+      resetPlacementMode,
+    ]
+  );
+
+  const onNodesChangeWithThreadDetach = useCallback(
+    (changes: NodeChange<FlowchartNode>[]) => {
+      const removedIds = changes
+        .filter(
+          (change): change is NodeRemoveChange => change.type === "remove"
+        )
+        .map((change) => change.id);
+
+      if (removedIds.length > 0) {
+        const currentNodes = reactFlow.getNodes();
+
+        for (const thread of threads) {
+          const { attachedToNodeId } = thread.metadata;
+
+          if (
+            attachedToNodeId == null ||
+            !removedIds.includes(attachedToNodeId)
+          ) {
+            continue;
+          }
+
+          const node = currentNodes.find(
+            (node) => node.id === attachedToNodeId
+          );
+
+          if (!node) {
+            continue;
+          }
+
+          const { x, y } = thread.metadata;
+          const point = normalizedToFlowPoint(node, { x, y });
+
+          editThreadMetadata({
+            threadId: thread.id,
+            metadata: {
+              attachedToNodeId: undefined,
+              x: point.x,
+              y: point.y,
+            },
+          });
+        }
+      }
+
+      onNodesChange(changes);
+    },
+    [editThreadMetadata, onNodesChange, reactFlow, threads]
   );
 
   const onReconnect = useCallback(
@@ -984,7 +1096,7 @@ function Flow({ className, ...props }: ComponentProps<"div">) {
       <ReactFlow
         nodes={nodes}
         edges={edges}
-        onNodesChange={onNodesChange}
+        onNodesChange={onNodesChangeWithThreadDetach}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onDelete={onDelete}
@@ -1018,69 +1130,78 @@ function Flow({ className, ...props }: ComponentProps<"div">) {
         onReconnect={onReconnect}
         onReconnectEnd={onReconnectEnd}
       >
-        <Cursors components={{ Cursor: FlowCursor }} />
-        <Controls orientation="horizontal" showInteractive={false}>
-          <ControlButton onClick={undo} disabled={!canUndo}>
-            <Icon.Undo />
-          </ControlButton>
-          <ControlButton onClick={redo} disabled={!canRedo}>
-            <Icon.Redo />
-          </ControlButton>
-        </Controls>
-        <MiniMap
-          nodeComponent={MiniMapNode}
-          nodeColor={(node: FlowchartNode) => getBlockColor(node.data.color)}
-          nodeStrokeWidth={0}
-        />
-        <Panel position="bottom-center">
-          <FlowToolbar
-            mode={placementMode}
-            onSelectShapeForPlacement={(shape, pointer) => {
-              setPlacementMode({ kind: "placing-shape", shape, pointer });
-            }}
+        <FlowchartCanvasComments
+          commentMode={commentMode}
+          onCancelPlacement={resetPlacementMode}
+        >
+          <Cursors components={{ Cursor: FlowCursor }} />
+          <Controls orientation="horizontal" showInteractive={false}>
+            <ControlButton onClick={undo} disabled={!canUndo}>
+              <Icon.Undo />
+            </ControlButton>
+            <ControlButton onClick={redo} disabled={!canRedo}>
+              <Icon.Redo />
+            </ControlButton>
+          </Controls>
+          <MiniMap
+            nodeComponent={MiniMapNode}
+            nodeColor={(node: FlowchartNode) => getBlockColor(node.data.color)}
+            nodeStrokeWidth={0}
           />
-        </Panel>
-        <Panel position="top-right">
-          <div className="flowchart-avatar-stack">
-            <AvatarStack size={32} gap={3} max={5} />
-          </div>
-        </Panel>
-        <Panel position="top-left">
-          <form className="flowchart-agent-panel" action={formAction}>
-            <input type="hidden" name="roomId" value={roomId} />
-            <textarea
-              id="flowchart-agent-prompt"
-              name="prompt"
-              className="flowchart-agent-textarea nodrag"
-              rows={3}
-              placeholder="Create a flowchart about… Update the flowchart…"
-              value={agentPrompt}
-              disabled={isAgentPending}
-              onChange={(event) => {
-                setAgentPrompt(event.target.value);
+          <Panel position="bottom-center">
+            <FlowToolbar
+              mode={placementMode}
+              commentMode={commentMode}
+              onSelectShapeForPlacement={(shape, pointer) => {
+                setPlacementMode({ kind: "placing-shape", shape, pointer });
               }}
-              onKeyDown={(event) => {
-                if (
-                  event.key === "Enter" &&
-                  !event.shiftKey &&
-                  !isAgentPending &&
-                  agentPrompt.trim() !== ""
-                ) {
-                  event.preventDefault();
-                  event.currentTarget.form?.requestSubmit();
-                }
+              onAddComment={(pointer) => {
+                setCommentMode({ kind: "placing-comment", pointer });
               }}
             />
-            <button
-              type="submit"
-              className="flowchart-agent-submit"
-              disabled={trimmedAgentPrompt === "" || isAgentPending}
-            >
-              {isAgentPending ? "Applying…" : "Apply"}
-            </button>
-          </form>
-        </Panel>
-        <Background />
+          </Panel>
+          <Panel position="top-right">
+            <div className="flowchart-avatar-stack">
+              <AvatarStack size={32} gap={3} max={5} />
+            </div>
+          </Panel>
+          <Panel position="top-left">
+            <form className="flowchart-agent-panel" action={formAction}>
+              <input type="hidden" name="roomId" value={roomId} />
+              <textarea
+                id="flowchart-agent-prompt"
+                name="prompt"
+                className="flowchart-agent-textarea nodrag"
+                rows={3}
+                placeholder="Create a flowchart about… Update the flowchart…"
+                value={agentPrompt}
+                disabled={isAgentPending}
+                onChange={(event) => {
+                  setAgentPrompt(event.target.value);
+                }}
+                onKeyDown={(event) => {
+                  if (
+                    event.key === "Enter" &&
+                    !event.shiftKey &&
+                    !isAgentPending &&
+                    agentPrompt.trim() !== ""
+                  ) {
+                    event.preventDefault();
+                    event.currentTarget.form?.requestSubmit();
+                  }
+                }}
+              />
+              <button
+                type="submit"
+                className="flowchart-agent-submit"
+                disabled={trimmedAgentPrompt === "" || isAgentPending}
+              >
+                {isAgentPending ? "Applying…" : "Apply"}
+              </button>
+            </form>
+          </Panel>
+          <Background />
+        </FlowchartCanvasComments>
       </ReactFlow>
     </div>
   );
