@@ -1,12 +1,12 @@
 import { AI_USER_INFO } from "@/database";
-import { getMentionsFromCommentBody, Liveblocks } from "@liveblocks/node";
+import {
+  getMentionsFromCommentBody,
+  Liveblocks,
+  markdownToCommentBody,
+} from "@liveblocks/node";
 import { streamText } from "ai";
 import { anthropic, AnthropicLanguageModelOptions } from "@ai-sdk/anthropic";
-import type {
-  ThreadData,
-  CommentData,
-  CommentBodyParagraph,
-} from "@liveblocks/node";
+import type { ThreadData, CommentData } from "@liveblocks/node";
 import { stringifyCommentBody } from "@liveblocks/client";
 import { ModelMessage } from "ai";
 
@@ -162,10 +162,9 @@ async function streamResponse({
 
 ## Rules
 
-- You MUST respond in plain text, for example: "Hi, how can I help you today?".
-- You can use new lines to format your response, for example: "Hi, how can I help you today?\nI'm here to help you with any questions you have.".
 - You MUST reply concisely and to the point.
-- You MUST NOT use markdown.
+- You MAY use Markdown for **bold**, _italics_, ~~strikethrough~~, \`inline code\`, and [links](https://example.com).
+- You MUST NOT use Markdown headings, lists, tables, or blockquotes — they will be rendered as plain text.
 - You MUST NOT start your messages with "${AI_USER_INFO.id} at ...".
 
 ## Example
@@ -389,24 +388,13 @@ async function updatePlaceholderComment({
 }) {
   "use step";
 
-  // Convert new lines into new paragraphs
-  const content: CommentBodyParagraph[] = response
-    .split("\n\n")
-    .map((line) => ({
-      type: "paragraph",
-      children: [{ text: line }],
-    }));
-
   return await liveblocks.editComment({
     roomId,
     threadId,
     commentId,
     data: {
       metadata: { feedId, feedComplete: true },
-      body: {
-        version: 1,
-        content,
-      },
+      body: markdownToCommentBody(response),
     },
   });
 }
