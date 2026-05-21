@@ -1,0 +1,426 @@
+---
+meta:
+  title: "Get started with AI replies in Comments using Liveblocks and Next.js"
+  parentTitle: "Quickstart"
+  description:
+    "Learn how to add an AI agent that replies in Liveblocks Comments threads
+    using Next.js"
+---
+
+Liveblocks is a realtime collaboration infrastructure for building performant
+collaborative experiences. Follow the following steps to add an AI agent that
+replies in [Comments](/docs/ready-made-features/comments) when mentioned in a
+thread, using [`@liveblocks/node`](/docs/api-reference/liveblocks-node), the
+[Vercel AI SDK](https://ai-sdk.dev), and [Anthropic](https://anthropic.com), in
+your Next.js `/app` directory application.
+
+## Quickstart
+
+<PromptCta />
+
+<Steps>
+  <Step>
+    <StepTitle>Have a Comments app ready</StepTitle>
+    <StepContent>
+
+      To add AI replies to comment thread, you first need to have a Liveblocks
+      Comments app set up with secret key authentication and resolved users.
+      Open up your app, or set up comments if you haven’t already.
+
+      <Button asChild className="not-markdown">
+        <a href="/docs/get-started/nextjs-comments">
+          Get started with comments
+        </a>
+      </Button>
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Install dependencies</StepTitle>
+    <StepContent>
+
+      Install [`@liveblocks/node`](/docs/api-reference/liveblocks-node) to verify
+      webhooks and write comments, along with the [Vercel AI SDK](https://ai-sdk.dev)
+      and the [Anthropic provider](https://ai-sdk.dev/providers/ai-sdk-providers/anthropic)
+      to generate AI responses.
+
+      ```bash trackEvent="install_liveblocks"
+      npm install @liveblocks/node ai @ai-sdk/anthropic
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Add your environment variables</StepTitle>
+    <StepContent>
+
+      Create a new `.env.local` file and add your Liveblocks secret key from
+      the [dashboard](/dashboard/apikeys), your Anthropic API key from the
+      [Anthropic dashboard](https://platform.claude.com/settings/keys), and a
+      placeholder for your Liveblocks webhook secret. You’ll create the
+      webhook secret in the final step.
+
+      ```env file=".env.local"
+      LIVEBLOCKS_SECRET_KEY="{{SECRET_KEY}}"
+      LIVEBLOCKS_WEBHOOK_SECRET_KEY="whsec_..."
+      ANTHROPIC_API_KEY="sk-ant-..."
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Add an AI user to your database</StepTitle>
+    <StepContent>
+
+      The AI agent posts replies like a regular user, so it needs a user ID
+      and info. Add a dedicated user for your agent next to your real users.
+      Where you resolve user info in
+      [`resolveUsers`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers) and
+      [`resolveMentionSuggestions`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveMentionSuggestions),
+      you should return this AI user so it can be `@`-mentioned and rendered
+      in threads.
+
+      ```tsx title="Find where you fetch data in your resolver functions…"
+      <LiveblocksProvider
+        authEndpoint="/api/liveblocks-auth"
+        resolveUsers={async ({ userIds }) => {
+          // +++
+          const users = await fetchUsers(userIds);
+          // +++
+          // ...
+        }}
+        resolveMentionSuggestions={async ({ text }) => {
+          // +++
+          const users = await fetchAllUsers();
+          // +++
+          // ...
+        }}
+      >
+        {children}
+      </LiveblocksProvider>
+      ```
+
+      ```ts title="…and modify the return values to include an AI user"
+      // +++
+      export const AI_USER_INFO = {
+        id: "__AI_AGENT",
+        info: {
+          name: "AI Assistant",
+          avatar: "https://liveblocks.io/api/avatar?u=__AI_AGENT&agent=true",
+        },
+      };
+      // +++
+
+      async function fetchUsers(userIds: string[]) {
+        const users = [];
+
+        for (const userId of userIds) {
+          // +++
+          if (userId === AI_USER_INFO.id) {
+            users.push(AI_USER_INFO);
+            continue;
+          }
+          // +++
+
+          const user = await __getUserFromDb__(userId);
+          users.push(user ? { id: userId, info: user.info } : undefined);
+        }
+
+        return users;
+      }
+
+      async function fetchAllUsers() {
+        const dbUsers = await __getAllUsersFromDb__();
+        // +++
+        return [AI_USER_INFO, ...dbUsers];
+        // +++
+      }
+      ```
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Create the webhook endpoint</StepTitle>
+    <StepContent>
+
+      Create an API route to receive Liveblocks webhooks. We’ll verify the
+      request, only respond to
+      [`commentCreated`](/docs/platform/webhooks#CommentCreatedEvent) events,
+      and ignore comments that weren’t written by a human, otherwise the AI
+      would reply to its own messages.
+
+      ```ts file="app/api/liveblocks-webhook/route.ts"
+      import { WebhookHandler } from "@liveblocks/node";
+      import { NextResponse } from "next/server";
+      import { AI_USER_INFO } from "@/app/database";
+      import { handleAiCommentReply } from "@/app/ai-comment-reply";
+
+      const webhookHandler = new WebhookHandler(
+        process.env.LIVEBLOCKS_WEBHOOK_SECRET_KEY!
+      );
+
+      export async function POST(request: Request) {
+        const body = await request.json();
+
+        let event;
+        try {
+          event = webhookHandler.verifyRequest({
+            headers: request.headers,
+            rawBody: JSON.stringify(body),
+          });
+        } catch (err) {
+          return new Response("Could not verify webhook call", { status: 400 });
+        }
+
+        if (event.type === "commentCreated") {
+          // Ignore comments posted by the AI itself
+          if (event.data.createdBy === AI_USER_INFO.id) {
+            return NextResponse.json({ message: "Ignored AI comment" });
+          }
+
+          // Run the AI reply in the background so the webhook responds quickly
+          handleAiCommentReply(event.data).catch(console.error);
+        }
+
+        return NextResponse.json({ message: "Received" });
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Create an AI reply</StepTitle>
+    <StepContent>
+
+    Next, create the AI response. There are a few steps to follow for a full user experience:
+
+      1. Get the thread with [`getThread`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId)
+      2. Check if the AI user was `@`-mentioned with [`getMentionsFromCommentBody`](/docs/api-reference/liveblocks-node#get-mentions-from-comment-body).
+      3. Add a “👀” reaction to the comment that mentioned the user with [`addCommentReaction`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-add-reaction).
+      4. Show AI presence in avatar stacks and [`useOthers`](/docs/api-reference/liveblocks-react#useOthers) with [`setPresence`](/docs/api-reference/liveblocks-node#post-rooms-roomId-presence).
+      5. Create a placeholder comment, “Thinking…”, with [`createComment`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments).
+      6. Convert the thread into chat messages and generate a response from Claude.
+      7. Update the placeholder comment with the AI response using [`editComment`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId).
+
+```ts file="app/ai-comment-reply.ts"
+import { Liveblocks, getMentionsFromCommentBody } from "@liveblocks/node";
+import { stringifyCommentBody } from "@liveblocks/client";
+import { generateText, type ModelMessage } from "ai";
+import { anthropic } from "@ai-sdk/anthropic";
+import { markdownToCommentBody } from "@liveblocks/node";
+import { AI_USER_INFO } from "@/app/database";
+
+const liveblocks = new Liveblocks({
+  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+});
+
+export async function handleAiCommentReply(data: {
+  roomId: string;
+  threadId: string;
+  commentId: string;
+}) {
+  const { roomId, threadId, commentId } = data;
+
+  // Get the thread and the comment that triggered the webhook
+  const thread = await liveblocks.getThread({ roomId, threadId });
+  const comment = thread.comments.find((c) => c.id === commentId);
+  if (!comment?.body) return;
+
+  // Only reply if the AI user was @-mentioned
+  const mentions = getMentionsFromCommentBody(comment.body);
+  if (!mentions.some((m) => m.id === AI_USER_INFO.id)) return;
+
+  // Add a “👀” reaction to the comment that mentioned the user
+  liveblocks.addCommentReaction({
+    roomId,
+    threadId,
+    commentId,
+    data: {
+      emoji: "👀",
+      userId: AI_USER_INFO.id,
+    },
+  });
+
+  // If you have an avatar stack, show AI presence for 30 secs
+  liveblocks.setPresence(roomId, {
+    userId: AI_USER_INFO.id,
+    data: {},
+    userInfo: AI_USER_INFO,
+    ttl: 30,
+  });
+
+  // Create a placeholder comment as the AI thinks
+  const aiComment = await liveblocks.createComment({
+    roomId,
+    threadId,
+    data: {
+      userId: AI_USER_INFO.id,
+      body: markdownToCommentBody("Thinking…"),
+      metadata: {},
+    },
+  });
+
+  // Convert the thread into chat messages
+  const messages: ModelMessage[] = await Promise.all(
+    thread.comments.map(async (c) => ({
+      role: c.userId === AI_USER_INFO.id ? "assistant" : "user",
+      content: c.body ? await stringifyCommentBody(c.body) : "Deleted comment",
+    }))
+  );
+
+  // Generate a response from Claude
+  const { text } = await generateText({
+    model: anthropic("claude-sonnet-4-5"),
+    system: `You are a helpful assistant replying inside a Liveblocks comment thread.
+
+  - Reply concisely and to the point.
+  - Reply in plain text. Do not use markdown.
+  - Your user ID is ${AI_USER_INFO.id}.`,
+    messages,
+  });
+
+  // Update the comment with the AI response
+  await liveblocks.editComment({
+    roomId,
+    threadId,
+    commentId: aiComment.id,
+    data: {
+      userId: AI_USER_INFO.id,
+      body: markdownToCommentBody(text),
+      metadata: {},
+    },
+  });
+}
+```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Generate the AI response</StepTitle>
+    <StepContent>
+
+      Turn each comment into a chat message and pass them to the AI SDK.
+      We use
+      [`stringifyCommentBody`](/docs/api-reference/liveblocks-client#stringify-comment-body)
+      to convert each comment’s rich-text body into plain text the model
+      can read.
+
+```ts file="app/ai-comment-reply.ts"
+// …continued from the previous step
+
+// Convert the thread into chat messages
+const messages: ModelMessage[] = await Promise.all(
+  thread.comments.map(async (c) => ({
+    role: c.userId === AI_USER_INFO.id ? "assistant" : "user",
+    content: c.body ? await stringifyCommentBody(c.body) : "Deleted comment",
+  }))
+);
+
+// Generate a response from Claude
+const { text } = await generateText({
+  model: anthropic("claude-sonnet-4-6"),
+  system: `You are a helpful assistant replying inside a Liveblocks comment thread.
+
+- Reply concisely and to the point.
+- You can use inline markdown.
+- Your user ID is ${AI_USER_INFO.id}.`,
+  messages,
+});
+```
+
+              </StepContent>
+
+            </Step>
+
+          <Step lastStep>
+
+      <StepTitle>Set up Liveblocks webhooks</StepTitle>
+
+  <StepContent>
+
+                The final step is to configure Liveblocks webhooks so the AI is
+                notified when new comments are created.
+
+                1. Follow the guide on
+                   [testing webhooks locally](/docs/guides/how-to-test-webhooks-on-localhost)
+                2. In the [dashboard](/dashboard), create a webhook endpoint that
+                   points to `/api/liveblocks-webhook` and enables the
+                   [`commentCreated`](/docs/platform/webhooks#CommentCreatedEvent)
+                   event
+                3. Copy your **webhook secret** (`whsec_...`) and add it to
+                   `.env.local` as `LIVEBLOCKS_WEBHOOK_SECRET_KEY`
+
+                Now whenever a user `@`-mentions your AI in a thread, your endpoint
+                will generate a response and post it back as a reply.
+
+                <Button asChild className="not-markdown">
+                  <a href="/docs/guides/how-to-test-webhooks-on-localhost">
+                    Set up webhooks
+                  </a>
+                </Button>
+
+              </StepContent>
+
+            </Step>
+
+        </Steps>
+
+## What to read next
+
+Congratulations! You’ve set up an AI agent that replies to mentions in
+Liveblocks Comments threads.
+
+- [@liveblocks/node API reference](/docs/api-reference/liveblocks-node)
+- [Comments overview](/docs/ready-made-features/comments)
+- [Webhooks documentation](/docs/platform/webhooks)
+- [How to test webhooks on localhost](/docs/guides/how-to-test-webhooks-on-localhost)
+
+---
+
+## Examples using AI in Comments
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "AI Comments",
+      slug: "ai-comments/nextjs-comments-ai",
+      image: "/images/examples/thumbnails/comments-ai.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Linear-like Issue Tracker",
+      slug: "linear-like-issue-tracker/nextjs-linear-like-issue-tracker",
+      image: "/images/examples/thumbnails/linear-like-issue-tracker.jpg",
+      advanced: true,
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Collaborative Flowchart AI",
+      slug: "collaborative-flowchart-ai/nextjs-react-flow-ai",
+      image: "/images/examples/thumbnails/collaborative-flowchart-ai.jpg",
+      advanced: true,
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "AI Reports Dashboard",
+      slug: "ai-dashboard-reports/nextjs-ai-dashboard-reports",
+      image: "/images/examples/thumbnails/ai-reports-dashboard.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+</ListGrid>
