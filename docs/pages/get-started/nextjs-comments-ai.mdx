@@ -300,42 +300,6 @@ export async function handleAiCommentReply(data: {
     </StepContent>
 
   </Step>
-  <Step>
-    <StepTitle>Generate the AI response</StepTitle>
-    <StepContent>
-
-      Turn each comment into a chat message and pass them to the AI SDK.
-      We use
-      [`stringifyCommentBody`](/docs/api-reference/liveblocks-client#stringify-comment-body)
-      to convert each comment’s rich-text body into plain text the model
-      can read.
-
-```ts file="app/ai-comment-reply.ts"
-// …continued from the previous step
-
-// Convert the thread into chat messages
-const messages: ModelMessage[] = await Promise.all(
-  thread.comments.map(async (c) => ({
-    role: c.userId === AI_USER_INFO.id ? "assistant" : "user",
-    content: c.body ? await stringifyCommentBody(c.body) : "Deleted comment",
-  }))
-);
-
-// Generate a response from Claude
-const { text } = await generateText({
-  model: anthropic("claude-sonnet-4-6"),
-  system: `You are a helpful assistant replying inside a Liveblocks comment thread.
-
-- Reply concisely and to the point.
-- You can use inline markdown.
-- Your user ID is ${AI_USER_INFO.id}.`,
-  messages,
-});
-```
-
-              </StepContent>
-
-            </Step>
 
   <Step>
 
