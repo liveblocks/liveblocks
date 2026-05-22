@@ -206,8 +206,12 @@ export function liveblocksTiptapNodeToJson(
 ): ProseMirrorJsonNode {
   const [jsonNode] = liveblocksTiptapNodeToJsonNodes(node);
 
-  if (jsonNode === undefined) {
-    return { type: "doc", content: [{ type: "paragraph" }] };
+  if (
+    jsonNode === undefined ||
+    (jsonNode.type === "doc" &&
+      (!Array.isArray(jsonNode.content) || jsonNode.content.length === 0))
+  ) {
+    return createDefaultDocument();
   }
 
   return jsonNode;

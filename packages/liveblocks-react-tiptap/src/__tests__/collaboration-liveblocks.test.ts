@@ -1,7 +1,9 @@
+import { LiveList, LiveObject, LiveText } from "@liveblocks/client";
 import { Editor, Mark, Node } from "@tiptap/core";
 import Document from "@tiptap/extension-document";
 import Paragraph from "@tiptap/extension-paragraph";
 import Text from "@tiptap/extension-text";
+import { Slice } from "@tiptap/pm/model";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { describe, expect, test } from "vitest";
 
@@ -631,6 +633,181 @@ describe("collaboration-liveblocks schema", () => {
     editor.destroy();
   });
 
+  test("applies remote LiveText delete when clearing the entire text node", () => {
+    const editor = createEditor(
+      "<p>Hello from LiveText-backed Tiptap.</p>"
+    );
+    const storageNode = createLiveblocksTiptapNode(
+      getDocumentJson(editor.state.doc)
+    );
+    const textNode = getFirstTextNode(storageNode);
+    expect(textNode).toBeDefined();
+    const text = getLiveblocksNodeText(textNode!);
+    expect(text).toBeDefined();
+
+    const deletedLength = text!.length;
+    text!.delete(0, deletedLength);
+
+    const result = applyRemoteLiveTextUpdates(editor.view, storageNode, [
+      {
+        type: "LiveText",
+        node: text!,
+        version: text!.version,
+        updates: [
+          {
+            type: "delete",
+            index: 0,
+            length: deletedLength,
+            deletedText: "Hello from LiveText-backed Tiptap.",
+          },
+        ],
+      },
+    ]);
+    expect(result.type).toBe("applied");
+    if (result.type === "applied") {
+      editor.view.dispatch(result.tr);
+    }
+    expect(editor.getJSON()).toEqual(liveblocksTiptapNodeToJson(storageNode));
+
+    editor.destroy();
+  });
+
+  test("falls back safely when remote updates delete all formatted text", () => {
+    const editor = createEditor("<p><strong>Hello</strong> world</p>");
+    const storageNode = createLiveblocksTiptapNode(
+      getDocumentJson(editor.state.doc)
+    );
+    const paragraph = getLiveblocksNodeContent(storageNode)?.get(0);
+    const paragraphContent = paragraph
+      ? getLiveblocksNodeContent(paragraph)
+      : undefined;
+
+    for (let index = 0; index < (paragraphContent?.length ?? 0); index++) {
+      const textNode = paragraphContent?.get(index);
+      const text = textNode ? getLiveblocksNodeText(textNode) : undefined;
+      text?.delete(0, text.length);
+    }
+
+    const document = liveblocksTiptapNodeToJson(storageNode);
+    expect(document).toEqual({
+      type: "doc",
+      content: [{ type: "paragraph" }],
+    });
+
+    const view = editor.view;
+    const nextDocument = view.state.schema.nodeFromJSON(document);
+    const diffStart = view.state.doc.content.findDiffStart(nextDocument.content);
+    expect(diffStart).not.toBeNull();
+
+    const diffEnd = view.state.doc.content.findDiffEnd(nextDocument.content);
+    expect(() => {
+      const tr =
+        diffEnd === null
+          ? view.state.tr.replace(
+              0,
+              view.state.doc.content.size,
+              new Slice(nextDocument.content, 0, 0)
+            )
+          : view.state.tr.replace(
+              diffStart!,
+              diffEnd.a,
+              nextDocument.slice(diffStart!, diffEnd.b)
+            );
+      view.dispatch(tr);
+    }).not.toThrow();
+    expect(editor.getJSON()).toEqual(document);
+
+    editor.destroy();
+  });
+
+  test("applies remote LiveText delete when clearing multi-segment formatted text", () => {
+    const editor = createEditor("<p><strong>Hello</strong> world</p>");
+    const text = new LiveText([
+      {
+        text: "Hello",
+        attributes: { __liveblocks_tiptap_marks: [{ type: "bold" }] },
+      },
+      { text: " world" },
+    ]);
+    const storageNode = new LiveObject({
+      id: "doc",
+      type: "doc",
+      content: new LiveList([
+        new LiveObject({
+          id: "paragraph",
+          type: "paragraph",
+          content: new LiveList([
+            new LiveObject({
+              id: "text",
+              type: "text",
+              text,
+            }),
+          ]),
+        }),
+      ]),
+    }) as unknown as ReturnType<typeof createLiveblocksTiptapNode>;
+
+    const deletedLength = text.length;
+    text.delete(0, deletedLength);
+
+    const result = applyRemoteLiveTextUpdates(editor.view, storageNode, [
+      {
+        type: "LiveText",
+        node: text,
+        version: text.version,
+        updates: [
+          {
+            type: "delete",
+            index: 0,
+            length: deletedLength,
+            deletedText: "Hello world",
+          },
+        ],
+      },
+    ]);
+
+    expect(result.type).toBe("applied");
+    if (result.type === "applied") {
+      editor.view.dispatch(result.tr);
+    }
+    expect(editor.getJSON()).toEqual(liveblocksTiptapNodeToJson(storageNode));
+
+    editor.destroy();
+  });
+
+  test("falls back safely when remote updates delete the last paragraph", () => {
+    const editor = createEditor(
+      "<p>Hello from LiveText-backed Tiptap.</p>"
+    );
+    const storageNode = createLiveblocksTiptapNode(
+      getDocumentJson(editor.state.doc)
+    );
+    const content = getLiveblocksNodeContent(storageNode);
+    expect(content).toBeDefined();
+
+    content!.delete(0);
+    const document = liveblocksTiptapNodeToJson(storageNode);
+    expect(document).toEqual({
+      type: "doc",
+      content: [{ type: "paragraph" }],
+    });
+
+    const view = editor.view;
+    const nextDocument = view.state.schema.nodeFromJSON(document);
+
+    expect(() => {
+      view.dispatch(
+        view.state.tr.replace(
+          0,
+          view.state.doc.content.size,
+          new Slice(nextDocument.content, 0, 0)
+        )
+      );
+    }).not.toThrow();
+
+    editor.destroy();
+  });
+
   test("renders stale end-of-paragraph carets inside the previous text block", () => {
     const { room, setRemoteCursor } = createCaretTestRoom(6);
     const editor = new Editor({
@@ -658,3 +835,4 @@ describe("collaboration-liveblocks schema", () => {
     editor.destroy();
   });
 });
+

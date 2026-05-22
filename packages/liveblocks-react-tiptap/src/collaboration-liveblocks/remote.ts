@@ -19,6 +19,7 @@ import {
 import {
   attributesToMarks,
   type LiveblocksTiptapNode,
+  getLiveblocksNodeText,
   liveblocksTiptapNodeToJsonNodes,
 } from "./schema";
 
@@ -86,6 +87,15 @@ function applyMarksFromAttributes(
   }
 }
 
+function findNodeRangeForLiveText(
+  index: ReturnType<typeof buildLiveblocksTreeIndex>,
+  text: LiveText
+) {
+  return index.nodeRanges.find(
+    (range) => getLiveblocksNodeText(range.node) === text
+  );
+}
+
 export function applyRemoteStorageUpdates(
   view: EditorView,
   liveRoot: LiveblocksTiptapNode,
@@ -105,7 +115,19 @@ export function applyRemoteStorageUpdates(
 
       for (const change of update.updates) {
         const index = buildLiveblocksTreeIndex(tr.doc, liveRoot);
-        const range = findTextRangeByLiveText(index, update.node);
+        let range = findTextRangeByLiveText(index, update.node);
+
+        if (range === undefined && change.type === "delete") {
+          const wrapperRange = findNodeRangeForLiveText(index, update.node);
+          if (wrapperRange !== undefined) {
+            const from = wrapperRange.from + change.index;
+            tr = tr.delete(from, from + change.length);
+            continue;
+          }
+
+          return { type: "unsupported" };
+        }
+
         if (range === undefined) {
           return { type: "unsupported" };
         }

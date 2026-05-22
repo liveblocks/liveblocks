@@ -60,26 +60,22 @@ function replaceEditorDocument(
   view: EditorView,
   document: ProseMirrorJsonNode
 ): void {
-  const nextDocument = view.state.schema.nodeFromJSON(document);
-  const diffStart = view.state.doc.content.findDiffStart(nextDocument.content);
-
-  if (diffStart === null || !view.state.tr) {
-    return;
+  let nextDocument;
+  try {
+    nextDocument = view.state.schema.nodeFromJSON(document);
+  } catch {
+    nextDocument = view.state.schema.nodeFromJSON(createDefaultDocument());
   }
 
-  const diffEnd = view.state.doc.content.findDiffEnd(nextDocument.content);
-  const tr =
-    diffEnd === null
-      ? view.state.tr.replace(
-          0,
-          view.state.doc.content.size,
-          new Slice(nextDocument.content, 0, 0)
-        )
-      : view.state.tr.replace(
-          diffStart,
-          diffEnd.a,
-          nextDocument.slice(diffStart, diffEnd.b)
-        );
+  if (nextDocument.childCount === 0) {
+    nextDocument = view.state.schema.nodeFromJSON(createDefaultDocument());
+  }
+
+  const tr = view.state.tr.replace(
+    0,
+    view.state.doc.content.size,
+    new Slice(nextDocument.content, 0, 0)
+  );
 
   tr.setMeta(LIVEBLOCKS_COLLABORATION_PLUGIN_KEY, { isRemote: true }).setMeta(
     "addToHistory",
