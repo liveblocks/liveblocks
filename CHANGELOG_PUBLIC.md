@@ -40,7 +40,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ## Liveblocks backend
 
-- Storage chunking has been improved for slightly faster initial load times
+- Storage chunking has been improved for slightly faster initial load times.
 
 ## Documentation
 
