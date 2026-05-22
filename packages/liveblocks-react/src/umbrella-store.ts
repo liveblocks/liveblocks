@@ -2066,6 +2066,11 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
     });
   }
 
+  /**
+   * Commits a server-confirmed thread patch after a successful mutation,
+   * replacing the corresponding optimistic update. Unlike delta reconciliation
+   * (`#updateThread` with an `updatedAt` guard), this always applies the patch.
+   */
   public patchThread(
     threadId: string,
     optimisticId: string | null,
@@ -2073,15 +2078,26 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
       // Only these fields are currently supported to patch
       metadata?: TM;
       resolved?: boolean;
-    },
-    updatedAt: Date // TODO We could look this up from the optimisticUpdate instead?
+    }
   ): void {
-    return this.#updateThread(
-      threadId,
-      optimisticId,
-      (thread) => ({ ...thread, ...compactObject(patch) }),
-      updatedAt
-    );
+    batch(() => {
+      if (optimisticId !== null) {
+        this.optimisticUpdates.remove(optimisticId);
+      }
+
+      const existing = this.threads.get(threadId);
+      if (!existing) return;
+
+      const committedAt = new Date(
+        Math.max(existing.updatedAt.getTime(), Date.now())
+      );
+
+      this.threads.upsert({
+        ...existing,
+        ...compactObject(patch),
+        updatedAt: committedAt,
+      });
+    });
   }
 
   public addReaction(
@@ -2469,14 +2485,8 @@ function applyOptimisticUpdates_forThreadifications<
         const thread = threadsDB.get(optimisticUpdate.threadId);
         if (thread === undefined) break;
 
-        // If the thread has been updated since the optimistic update, we do not apply the update
-        if (thread.updatedAt > optimisticUpdate.updatedAt) {
-          break;
-        }
-
         threadsDB.upsert({
           ...thread,
-          updatedAt: optimisticUpdate.updatedAt,
           metadata: {
             ...thread.metadata,
             ...optimisticUpdate.metadata,

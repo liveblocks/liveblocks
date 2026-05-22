@@ -2094,7 +2094,7 @@ function useEditRoomThreadMetadata<TM extends BaseMetadata>(roomId: string) {
         .then(
           (metadata) =>
             // Replace the optimistic update by the real thing
-            store.patchThread(threadId, optimisticId, { metadata }, updatedAt),
+            store.patchThread(threadId, optimisticId, { metadata }),
           (err: Error) =>
             onMutationFailure(
               optimisticId,
@@ -2706,12 +2706,7 @@ function useMarkRoomThreadAsResolved(roomId: string) {
         .then(
           () => {
             // Replace the optimistic update by the real thing
-            store.patchThread(
-              threadId,
-              optimisticId,
-              { resolved: true },
-              updatedAt
-            );
+            store.patchThread(threadId, optimisticId, { resolved: true });
           },
           (err: Error) =>
             onMutationFailure(
@@ -2766,12 +2761,7 @@ function useMarkRoomThreadAsUnresolved(roomId: string) {
         .then(
           () => {
             // Replace the optimistic update by the real thing
-            store.patchThread(
-              threadId,
-              optimisticId,
-              { resolved: false },
-              updatedAt
-            );
+            store.patchThread(threadId, optimisticId, { resolved: false });
           },
           (err: Error) =>
             onMutationFailure(

@@ -107,9 +107,7 @@ describe("useMarkThreadAsUnresolved", () => {
   // but still contains the old value because the change has not finished yet.
   // The local optimistic change must stay visible and take priority over the
   // remote value.
-  test.fails(
-    "should prioritize optimistic changes over remote values",
-    async () => {
+  test("should prioritize optimistic changes over remote values", async () => {
       const roomId = nanoid();
       const now = new Date();
       const initialThread = dummyThreadData({
@@ -216,6 +214,5 @@ describe("useMarkThreadAsUnresolved", () => {
       expect(result.current.threads![0]?.resolved).toBe(false);
 
       unmount();
-    }
-  );
+  });
 });
