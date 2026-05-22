@@ -23,7 +23,7 @@ your Next.js `/app` directory application.
     <StepTitle>Have a Comments app ready</StepTitle>
     <StepContent>
 
-      To add AI replies to comment thread, you first need to have a Liveblocks
+      To add AI replies to a comment thread, you first need to have a Liveblocks
       Comments app set up with secret key authentication and resolved users.
       Open up your app, or set up comments if you haven’t already.
 
@@ -278,7 +278,7 @@ export async function handleAiCommentReply(data: {
     system: `You are a helpful assistant replying inside a Liveblocks comment thread.
 
   - Reply concisely and to the point.
-  - Reply in plain text. Do not use markdown.
+  - You can use inline markdown.
   - Your user ID is ${AI_USER_INFO.id}.`,
     messages,
   });
@@ -336,7 +336,7 @@ export async function handleAiCommentReply(data: {
   <StepTitle>Complete!</StepTitle>
   <StepContent>
     You now have an AI agent capable of replying to mentions in comment threads.
-    When it’s mentioned in a acomment, it’ll leave a placeholder comment, and
+    When it’s mentioned in a comment, it’ll leave a placeholder comment, and
     edit it after generating a response.
   </StepContent>
 </Step>
