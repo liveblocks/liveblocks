@@ -20,6 +20,10 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 21 (2026-05-22)
 
+## v3.19.3
+
+- Fix unexpected disconnects that could happen while receiving large or long-running streaming responses from the server (e.g. when loading a large initial storage state).
+
 ## v3.19.2
 
 ### `@liveblocks/client`
@@ -33,6 +37,10 @@ list and feel free to give them credit at the end of a line, e.g.:
 - Added AI comment pins to [Collaborative Flowchart AI](https://liveblocks.io/examples/collaborative-flowchart-ai/nextjs-react-flow-ai). It can read and edit flow state.
 - Added AI comments to [AI Dashboard Reports](https://liveblocks.io/examples/ai-dashboard-reports/nextjs-ai-dashboard-reports). It can answer questions on the app's data.
 - Added markdown AI replies to [AI Comments](https://liveblocks.io/examples/ai-comments/nextjs-comments-ai) and improved how the final comment is shown.
+
+## Liveblocks backend
+
+- Storage chunking has been improved for slightly faster initial load times
 
 ## Documentation
 
