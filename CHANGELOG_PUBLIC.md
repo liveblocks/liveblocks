@@ -20,6 +20,13 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 21 (2026-05-22)
 
+## v3.19.2
+
+### `@liveblocks/client`
+
+- Fix: clients that have `backgroundKeepAliveTimeout` enabled will no longer
+  disconnect before any pending Yjs updates have been synced to the server.
+
 ## Examples
 
 - Added AI comments, buttons, and presence to [Linear-like Issue Tracker](https://liveblocks.io/examples/linear-like-issue-tracker/nextjs-linear-like-issue-tracker). It can read and edit issue content and properties.
@@ -38,7 +45,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ## Contributors
 
-ctnicholas
+ctnicholas, nvie
 
 # Week 20 (2026-05-15)
 
