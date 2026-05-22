@@ -18,6 +18,43 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 21 (2026-05-22)
+
+## v3.19.3
+
+- Fix unexpected disconnects that could happen while receiving large or long-running streaming responses from the server (e.g. when loading a large initial storage state).
+
+## v3.19.2
+
+### `@liveblocks/client`
+
+- Fix: clients that have `backgroundKeepAliveTimeout` enabled will no longer
+  disconnect before any pending Yjs updates have been synced to the server.
+
+## Examples
+
+- Added AI comments, buttons, and presence to [Linear-like Issue Tracker](https://liveblocks.io/examples/linear-like-issue-tracker/nextjs-linear-like-issue-tracker). It can read and edit issue content and properties.
+- Added AI comment pins to [Collaborative Flowchart AI](https://liveblocks.io/examples/collaborative-flowchart-ai/nextjs-react-flow-ai). It can read and edit flow state.
+- Added AI comments to [AI Dashboard Reports](https://liveblocks.io/examples/ai-dashboard-reports/nextjs-ai-dashboard-reports). It can answer questions on the app's data.
+- Added markdown AI replies to [AI Comments](https://liveblocks.io/examples/ai-comments/nextjs-comments-ai) and improved how the final comment is shown.
+
+## Liveblocks backend
+
+- Storage chunking has been improved for slightly faster initial load times.
+
+## Documentation
+
+- All get started guides now have a "Copy prompt" button for use in Cursor, Claude Code, more.
+- New guide: [Get started with AI replies in Comments using Liveblocks and Next.js](https://liveblocks.io/docs/get-started/nextjs-comments-ai).
+
+## Website
+
+- New AI button and prompt on [liveblocks.io](https://liveblocks.io) homepage, allowing you to get started with one click.
+
+## Contributors
+
+ctnicholas, nvie
+
 # Week 20 (2026-05-15)
 
 ## v3.19.1
