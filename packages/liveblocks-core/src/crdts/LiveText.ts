@@ -17,7 +17,6 @@ import type * as DevTools from "../types/DevToolsTreeNode";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { AbstractCrdt } from "./AbstractCrdt";
-import type { LiveNode } from "./Lson";
 import {
   applyDelete,
   applyFormat,
@@ -30,6 +29,7 @@ import {
   segmentsToDelta,
   type TextSegment,
 } from "./liveTextOps";
+import type { LiveNode } from "./Lson";
 
 export type LiveTextAttributes = TextAttributes;
 export type LiveTextAttributesPatch = Readonly<Record<string, Json | null>>;
