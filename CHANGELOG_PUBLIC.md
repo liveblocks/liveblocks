@@ -30,6 +30,11 @@ list and feel free to give them credit at the end of a line, e.g.:
 ## Documentation
 
 - All get started guides now have a "Copy prompt" button for use in Cursor, Claude Code, more.
+- New guide: [Get started with AI replies in Comments using Liveblocks and Next.js](https://liveblocks.io/docs/get-started/nextjs-comments-ai).
+
+## Website
+
+- New AI button and prompt on [liveblocks.io](https://liveblocks.io) homepage, allowing you to get started with one click.
 
 ## Contributors
 
