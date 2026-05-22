@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
 
-import { distance, FSM, patterns } from "../fsm";
+import { distance, FSM, IGNORE, patterns } from "../fsm";
 import { wait } from "../utils";
 
 async function failAfter(ms: number): Promise<void> {
@@ -555,7 +555,7 @@ describe("finite state machine", () => {
         GO: () =>
           n++ % 2 === 0
             ? "one" // Transition if n is even
-            : null, // Otherwise, do nothing
+            : IGNORE, // Otherwise, do nothing
       })
       .start();
 
@@ -570,6 +570,136 @@ describe("finite state machine", () => {
     expect(fsm.currentState).toEqual("two"); // Did *not* transition!
     fsm.send({ type: "GO" });
     expect(fsm.currentState).toEqual("one");
+  });
+
+  describe("IGNORE sentinel", () => {
+    test("static IGNORE keeps state unchanged", () => {
+      const fsm = new FSM({})
+        .addState("foo")
+        .addTransitions("foo", { GO: IGNORE })
+        .start();
+
+      expect(fsm.currentState).toEqual("foo");
+      fsm.send({ type: "GO" });
+      expect(fsm.currentState).toEqual("foo");
+    });
+
+    test("static IGNORE fires no observable notifications", () => {
+      const didReceive = vi.fn();
+      const willTransition = vi.fn();
+      const didIgnoreUnexpected = vi.fn();
+
+      const fsm = new FSM({})
+        .addState("foo")
+        .addTransitions("foo", { GO: IGNORE })
+        .start();
+
+      fsm.events.didReceiveEvent.subscribe(didReceive);
+      fsm.events.willTransition.subscribe(willTransition);
+      fsm.events.didIgnoreUnexpectedEvent.subscribe(didIgnoreUnexpected);
+
+      fsm.send({ type: "GO" });
+
+      expect(didReceive).not.toHaveBeenCalled();
+      expect(willTransition).not.toHaveBeenCalled();
+      expect(didIgnoreUnexpected).not.toHaveBeenCalled();
+    });
+
+    test("missing transition still fires didIgnoreUnexpectedEvent (control)", () => {
+      const didIgnoreUnexpected = vi.fn();
+
+      // Declare GO somewhere so the FSM accepts it as a known event type,
+      // but not in state "foo" — so sending GO in "foo" goes unhandled.
+      const fsm = new FSM({})
+        .addState("foo")
+        .addState("bar")
+        .addTransitions("bar", { GO: "foo" })
+        .start();
+
+      fsm.events.didIgnoreUnexpectedEvent.subscribe(didIgnoreUnexpected);
+
+      expect(fsm.currentState).toEqual("foo");
+      fsm.send({ type: "GO" });
+      expect(didIgnoreUnexpected).toHaveBeenCalledTimes(1);
+    });
+
+    test("dynamic IGNORE (function returning IGNORE) is silent except for didReceiveEvent", () => {
+      const didReceive = vi.fn();
+      const willTransition = vi.fn();
+      const didIgnoreUnexpected = vi.fn();
+
+      const fsm = new FSM({})
+        .addState("foo")
+        .addTransitions("foo", { GO: () => IGNORE })
+        .start();
+
+      fsm.events.didReceiveEvent.subscribe(didReceive);
+      fsm.events.willTransition.subscribe(willTransition);
+      fsm.events.didIgnoreUnexpectedEvent.subscribe(didIgnoreUnexpected);
+
+      fsm.send({ type: "GO" });
+
+      // We had to invoke the function to learn it returns IGNORE.
+      expect(didReceive).toHaveBeenCalledTimes(1);
+      // But no transition happened, and the event is not "unexpected".
+      expect(willTransition).not.toHaveBeenCalled();
+      expect(didIgnoreUnexpected).not.toHaveBeenCalled();
+      expect(fsm.currentState).toEqual("foo");
+    });
+
+    test("mixing IGNORE with real transitions in the same mapping", () => {
+      const fsm = new FSM({})
+        .addState("foo")
+        .addState("bar")
+        .addTransitions("foo", { GO: "bar", PING: IGNORE })
+        .start();
+
+      fsm.send({ type: "PING" });
+      expect(fsm.currentState).toEqual("foo"); // silent no-op
+
+      fsm.send({ type: "GO" });
+      expect(fsm.currentState).toEqual("bar"); // normal transition
+    });
+
+    test("IGNORE works via wildcard pattern for a state group", () => {
+      const didIgnoreUnexpected = vi.fn();
+
+      const fsm = new FSM({})
+        .addState("group.one")
+        .addState("group.two")
+        .addState("other")
+        .addTransitions("group.*", { PING: IGNORE, GO: "other" })
+        .start();
+
+      fsm.events.didIgnoreUnexpectedEvent.subscribe(didIgnoreUnexpected);
+
+      expect(fsm.currentState).toEqual("group.one");
+      fsm.send({ type: "PING" });
+      expect(fsm.currentState).toEqual("group.one");
+      expect(didIgnoreUnexpected).not.toHaveBeenCalled();
+
+      // Switch to group.two by adding a transition path; reuse "GO".
+      // To exercise PING in group.two we need to be there first.
+      // Build a separate FSM for that leg to keep this test focused.
+      const fsm2 = new FSM({})
+        .addState("group.two")
+        .addTransitions("group.*", { PING: IGNORE })
+        .start();
+      const didIgnoreUnexpected2 = vi.fn();
+      fsm2.events.didIgnoreUnexpectedEvent.subscribe(didIgnoreUnexpected2);
+      fsm2.send({ type: "PING" });
+      expect(fsm2.currentState).toEqual("group.two");
+      expect(didIgnoreUnexpected2).not.toHaveBeenCalled();
+    });
+
+    test("declaring IGNORE for an already-declared event still throws", () => {
+      expect(() =>
+        new FSM({})
+          .addState("foo")
+          .addTransitions("foo", { GO: "foo" })
+          .addTransitions("foo", { GO: IGNORE })
+      ).toThrow(/transition already exists/);
+    });
   });
 
   describe("time-based transitions", () => {
