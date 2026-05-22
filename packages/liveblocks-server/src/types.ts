@@ -18,6 +18,38 @@
 import type { asPos, IUserInfo, Json, SerializedCrdt } from "@liveblocks/core";
 
 export type Pos = ReturnType<typeof asPos>;
+
+declare const fromType: unique symbol;
+
+/**
+ * A string known to be a valid JSON-encoded value. Use this whenever a
+ * `string` already carries JSON, to keep that fact visible in the type system
+ * (instead of letting it look like a freeform `string`).
+ *
+ * Optionally parameterised by the *parsed* shape: `jstring<CompactNode>`
+ * means "a string whose `JSON.parse` result is a `CompactNode`". Without
+ * a type argument, defaults to `jstring<Json>` (any JSON value).
+ *
+ * At storage boundaries (e.g. reading `jdata` from SQLite), `as jstring`
+ * is acceptable — we trust the bytes are valid JSON because we wrote them as
+ * JSON ourselves.
+ *
+ * For example, these are valid JSON strings:
+ * - '0', '1', '2', '3', '3.14', etc.
+ * - 'null', 'true', 'false'
+ * - '{"foo":1}', '{ "foo": 1 }' (spaces are fine)
+ * - '[]', '[1,2, 3]', '[[]]', etc.
+ * - '["hi",{}]'
+ * - '"foo"'
+ *
+ * But these are not:
+ * - 'foo'
+ * - '1,2,3'
+ * - '{'
+ * - '[1,2,3,]' or '{"foo":1},' (trailing commas are not valid)
+ */
+export type jstring<J = Json> = string & { readonly [fromType]: J };
+
 export type NodeTuple<T extends SerializedCrdt = SerializedCrdt> = [
   id: string,
   value: T,

@@ -90,9 +90,9 @@ describe("PUT /v2/rooms/<roomId>/ydoc", () => {
     expect(resp.status).toBe(200);
 
     // The connected session should have received an UPDATE_YDOC broadcast
-    const broadcastMsgs = received.slice(initialMsgCount).map(
-      (s) => JSON.parse(s) as { type?: number }
-    );
+    const broadcastMsgs = received
+      .slice(initialMsgCount)
+      .map((s) => JSON.parse(s) as { type?: number });
     const updateYdocCount = broadcastMsgs.filter(
       (m) => m.type === ServerMsgCode.UPDATE_YDOC
     ).length;

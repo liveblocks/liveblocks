@@ -18,6 +18,7 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 /* eslint-disable @typescript-eslint/require-await */
 import type {
+  CompactNode,
   Json,
   JsonObject,
   NodeMap,
@@ -28,7 +29,13 @@ import type {
   SerializedObject,
   SerializedRootObject,
 } from "@liveblocks/core";
-import { asPos, CrdtType, isRootStorageNode, nn } from "@liveblocks/core";
+import {
+  asPos,
+  CrdtType,
+  isRootStorageNode,
+  nn,
+  nodeStreamToCompactNodes,
+} from "@liveblocks/core";
 import { ifilter, imap } from "itertools";
 
 import type { YDocId } from "~/decoders/y-types";
@@ -46,7 +53,7 @@ import type {
 import { NestedMap } from "~/lib/NestedMap";
 import { quote } from "~/lib/text";
 import { makeInMemorySnapshot } from "~/makeInMemorySnapshot";
-import type { Feed, FeedMessage, Pos } from "~/types";
+import type { Feed, FeedMessage, jstring, Pos } from "~/types";
 
 function buildRevNodes(nodeStream: NodeStream) {
   const result = new NestedMap<string, string, string>();
@@ -649,6 +656,18 @@ export class InMemoryDriver implements IStorageDriver {
        * Yield all nodes as [id, node] pairs. Must always include the root node.
        */
       iter_nodes: () => nodes as NodeStream,
+
+      /**
+       * Yield each node as a pre-built CompactNode JSON tuple string.
+       *
+       * This implementation IS the canonical reference for the invariant:
+       * iter_nodes_optimized` ≡ `nodeStreamToCompactNodes(iter_nodes())
+       */
+      *iter_nodes_optimized() {
+        for (const compact of nodeStreamToCompactNodes(nodes as NodeStream)) {
+          yield JSON.stringify(compact) as jstring<CompactNode>;
+        }
+      },
 
       /**
        * Return true iff a node with the given id exists. Must return true for "root".

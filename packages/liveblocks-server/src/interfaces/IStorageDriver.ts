@@ -17,6 +17,7 @@
 
 import type {
   Awaitable,
+  CompactNode,
   Json,
   JsonObject,
   PlainLsonObject,
@@ -28,7 +29,7 @@ import type {
 
 import type { YDocId } from "~/decoders/y-types";
 import type { Logger } from "~/lib/Logger";
-import type { Feed, FeedMessage, LeasedSession, Pos } from "~/types";
+import type { Feed, FeedMessage, jstring, LeasedSession, Pos } from "~/types";
 
 /**
  * Options for listing feeds with pagination and filtering.
@@ -126,6 +127,28 @@ export interface IStorageDriverNodeAPI {
    * Yield all nodes as [id, node] pairs. Must always include the root node.
    */
   iter_nodes(): Iterable<StorageNode>;
+
+  /**
+   * Yield each node as a pre-built `CompactNode` JSON tuple string, ready to
+   * be emitted directly into a STORAGE_CHUNK wire frame without JSON.parse()
+   * or JSON.stringify()'ing overhead. Implementations MUST produce text whose
+   * parsed shape exactly matches the `CompactNode` union type from
+   * @liveblocks/core. The emitted shapes are:
+   *
+   *   - Root node:          '["root",<data>]'
+   *   - OBJECT / REGISTER:  '["0:1",0,"root","a",<data>]'
+   *   - LIST   / MAP:       '["0:2",1,"0:1","b"]'
+   *
+   * Invariant (implementations MUST uphold; asserted by `_generateFullTestSuite`):
+   *
+   *     iter_nodes_optimized().map(JSON.parse)
+   *       ≡ nodeStreamToCompactNodes(iter_nodes())
+   *
+   * i.e. parsing each yielded string yields the same sequence of CompactNodes
+   * that the canonical `iter_nodes()` + `nodeStreamToCompactNodes()` path
+   * would produce.
+   */
+  iter_nodes_optimized(): Iterable<jstring<CompactNode>>;
 
   /**
    * Return true iff a node with the given id exists. Must return true for "root".

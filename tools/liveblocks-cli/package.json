@@ -40,7 +40,7 @@
     "eslint-plugin-license-header": "^0.9.0",
     "eslint-plugin-simple-import-sort": "^13.0.0",
     "fast-check": "^3.23.2",
-    "itertools": "^2.3.2",
+    "itertools": "^2.7.1",
     "prettier": "^3.3.2",
     "publint": "^0.3.17",
     "typescript": "^5.9.3"

@@ -62,6 +62,7 @@ import {
   makePosition,
   nanoid,
   nn,
+  nodeStreamToCompactNodes,
   OpCode,
   raise,
 } from "@liveblocks/core";
@@ -729,10 +730,8 @@ export function generateArbitraries() {
     },
 
     intent: () =>
-      fc.oneof(
-        { arbitrary: fc.constant(undefined), weight: 10 },
-        fc.constant("set" as const)
-      ),
+      // ~10:1 bias between undefined vs "set" (towards undefined)
+      fc.option(fc.constant(undefined), { freq: 11, nil: "set" as const }),
 
     opId: () => fc.stringMatching(/^[0-9]+:[0-9]+$/),
 
@@ -2070,6 +2069,37 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
               for (const [key, expected] of map) {
                 expect(db.get_node(key)).toEqual(expected);
               }
+            }
+          )
+        )
+      ));
+
+    test("iter_nodes_optimized agrees with iter_nodes (cross-driver parity)", () =>
+      runTest(async (driver) =>
+        fc.assert(
+          fc.asyncProperty(
+            arb.nodeMap(),
+
+            async (entries) => {
+              await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
+              const db = await driver.load_nodes_api(blackHole);
+              await write_nodes(db, entries as NodeStream);
+
+              // Parse the wire tuples back into CompactNodes and compare
+              // against what the canonical nodeStreamToCompactNodes would
+              // produce from iter_nodes(). Catches any divergence between the
+              // optimized SQL path and the readable JS path (string encoding,
+              // escaping, missing fields, type coercion, etc.).
+              const fromWire = Array.from(db.iter_nodes_optimized()).map(
+                (t) => JSON.parse(t) as unknown
+              );
+              const fromIter = Array.from(
+                nodeStreamToCompactNodes(db.iter_nodes())
+              ) as unknown[];
+              const byId = (a: unknown, b: unknown) =>
+                (a as [string])[0].localeCompare((b as [string])[0]);
+
+              expect(fromWire.sort(byId)).toEqual(fromIter.sort(byId));
             }
           )
         )

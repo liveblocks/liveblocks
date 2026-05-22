@@ -18,6 +18,7 @@
 import type {
   BaseUserMeta,
   Brand,
+  CompactNode,
   IUserInfo,
   Json,
   JsonObject,
@@ -25,7 +26,6 @@ import type {
 import {
   assertNever,
   ClientMsgCode,
-  nodeStreamToCompactNodes,
   OpCode,
   raise,
   ServerMsgCode as CoreServerMsgCode,
@@ -34,7 +34,7 @@ import {
 } from "@liveblocks/core";
 import { Mutex, tryAcquire } from "async-mutex";
 import { array, formatInline } from "decoders";
-import { chunked } from "itertools";
+import { chunkedByCost } from "itertools";
 import { nanoid } from "nanoid";
 
 import type { Guid } from "~/decoders";
@@ -74,8 +74,10 @@ import { UniqueMap } from "./lib/UniqueMap";
 import { feedFailureServerMsg, feedRequestFailed } from "./protocol/feedErrors";
 import { FeedMsgCode, FeedRequestErrorCode } from "./protocol/feedMessages";
 import { ProtocolVersion } from "./protocol/ProtocolVersion";
-import type { Feed, FeedMessage, LeasedSession } from "./types";
+import type { Feed, FeedMessage, jstring, LeasedSession } from "./types";
 import { isLeasedSessionExpired, makeRoomStateMsg } from "./utils";
+
+const MB = 1024 * 1024;
 
 const messagesDecoder = array(clientMsgDecoder);
 
@@ -96,6 +98,29 @@ const BLACK_HOLE = new Logger([
   /* No targets, i.e. black hole logger */
 ]);
 
+// Stream pre-built CompactNode tuple strings into raw STORAGE_CHUNK frames
+// (no parse/re-stringify of jdata). Each node is its own atomic unit for
+// chunkedByCost, so a single oversized row (≤ 2 MB CF limit) is the worst
+// case any output frame can exceed MAX_SIZE by.
+function groupNodesForWebSocketMessages(
+  input: Iterable<jstring<CompactNode>>
+): Iterable<jstring<CompactNode>[]> {
+  // Cap each outgoing WebSocket message at 16 MB. CF's 32 MB message size
+  // limit only applies inbound, so the real constraint here is memory
+  // pressure: the worker has 128 MB total, and stringifying a 16 MB message
+  // costs roughly that much again in transient allocations.
+  const MAX_SIZE = 16 * MB;
+
+  // Chunk to form ideal message sizes, per chunk:
+  //   chunks 0..2 → 1 MB each (fast start)
+  //   chunks 3..9 → 2, 3, 4, 5, 6, 7, 8 MB (slowly ramp up)
+  //   chunks 10+  → 8 MB (steady state)
+  const idealSize = (chunkIndex: number): number =>
+    chunkIndex < 3 ? 1 * MB : Math.min(8, chunkIndex - 1) * MB;
+
+  return chunkedByCost(input, (tup) => tup.length, MAX_SIZE, idealSize);
+}
+
 export type LoadingState = "initial" | "loading" | "loaded";
 export type ActorID = Brand<number, "ActorID">;
 /** Number of milliseconds since Unix epoch. */
@@ -109,7 +134,6 @@ export type Millis = Brand<number, "Millis">;
  */
 export type SessionKey = Brand<string, "SessionKey">;
 
-export type PreSerializedServerMsg = Brand<string, "PreSerializedServerMsg">;
 type ClientMsg =
   | GenericClientMsg<JsonObject, Json>
   | FetchFeedsClientMsg
@@ -138,10 +162,8 @@ function collectSideEffects() {
   };
 }
 
-function serialize(
-  msgs: ServerMsg | readonly ServerMsg[]
-): PreSerializedServerMsg {
-  return JSON.stringify(msgs) as PreSerializedServerMsg;
+function serialize(msgs: ServerMsg | readonly ServerMsg[]): jstring<ServerMsg> {
+  return JSON.stringify(msgs) as jstring<ServerMsg>;
 }
 
 export function ackIgnoredOp(opId: string): IgnoredOp {
@@ -297,7 +319,7 @@ export class BrowserSession<SM, CM extends JsonObject> {
     return sent;
   }
 
-  send(serverMsg: ServerMsg | ServerMsg[] | PreSerializedServerMsg): number {
+  send(serverMsg: ServerMsg | ServerMsg[] | jstring<ServerMsg>): number {
     const data =
       typeof serverMsg === "string" ? serverMsg : serialize(serverMsg);
     const sent = this.#_socket.send(data);
@@ -390,18 +412,6 @@ type RoomOptions<SM, CM extends JsonObject, C> = {
    */
   storage?: IStorageDriver;
   logger?: Logger;
-
-  /**
-   * Whether to allow streaming storage responses. Only safe with drivers
-   * that can guarantee that no Ops from other clients can get interleaved
-   * between the chunk generation until the last chunk has been sent.
-   * Defaults to true, but is notably NOT safe to use from DOS-KV backends.
-   *
-   * @deprecated Only existed to support the DOS-KV backend, which is gone.
-   * All remaining drivers are streaming-safe; this flag should be removed
-   * and the streaming path made unconditional.
-   */
-  allowStreaming?: boolean;
 
   // YYY Restructure these hooks to all take a single `event` param
   hooks?: {
@@ -526,14 +536,12 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
   };
 
   readonly #_debug: boolean;
-  readonly #_allowStreaming: boolean;
 
   constructor(meta: RM, options?: RoomOptions<SM, CM, C>) {
     const driver = options?.storage ?? makeNewInMemoryDriver();
     this.meta = meta;
     this.driver = driver;
     this.logger = options?.logger ?? BLACK_HOLE;
-    this.#_allowStreaming = options?.allowStreaming ?? true;
     this.hooks = {
       isClientMsgAllowed:
         options?.hooks?.isClientMsgAllowed ??
@@ -673,14 +681,14 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
   }
 
   public async createBackendSession_experimental(): Promise<
-    [session: BackendSession, outgoingMessages: PreSerializedServerMsg[]]
+    [session: BackendSession, outgoingMessages: jstring<ServerMsg>[]]
   > {
     const ticket = (await this.createTicket()) as Ticket<never, never>;
-    const capturedServerMsgs: PreSerializedServerMsg[] = [];
+    const capturedServerMsgs: jstring<ServerMsg>[] = [];
     const stub = {
       send: (data) => {
         if (typeof data === "string") {
-          capturedServerMsgs.push(data as PreSerializedServerMsg);
+          capturedServerMsgs.push(data as jstring<ServerMsg>);
         }
         return 0;
       },
@@ -1508,8 +1516,9 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
     // - Messages to reply back to the current sender (i.e. acks and rejections)
     const toFanOut: ServerMsg[] = [];
     const toReply: ServerMsg[] = [];
-    const replyImmediately = (msg: ServerMsg | ServerMsg[]) =>
-      void session.send(msg);
+    const replyImmediately = (
+      msg: ServerMsg | ServerMsg[] | jstring<ServerMsg>
+    ) => void session.send(msg);
     const scheduleFanOut = (msg: ServerMsg) => void toFanOut.push(msg);
     const scheduleReply = (msg: ServerMsg) => void toReply.push(msg);
 
@@ -1565,8 +1574,18 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
     const toReplyImmediately: ServerMsg[] = [];
     const toReplyAfter: ServerMsg[] = [];
 
-    const replyImmediately = (msg: ServerMsg | ServerMsg[]) => {
-      if (Array.isArray(msg)) {
+    const replyImmediately = (
+      msg: ServerMsg | ServerMsg[] | jstring<ServerMsg>
+    ) => {
+      if (typeof msg === "string") {
+        // Pre-serialized payload: flush any pending typed messages first so
+        // wire order matches call order, then send the raw string directly.
+        if (toReplyImmediately.length > 0) {
+          session.send(toReplyImmediately);
+          toReplyImmediately.length = 0;
+        }
+        session.send(msg);
+      } else if (Array.isArray(msg)) {
         for (const m of msg) {
           toReplyImmediately.push(m);
         }
@@ -1608,7 +1627,9 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
   private async handleOne(
     session: BrowserSession<SM, CM>,
     msg: ClientMsg,
-    replyImmediately: (msg: ServerMsg | ServerMsg[]) => void,
+    replyImmediately: (
+      msg: ServerMsg | ServerMsg[] | jstring<ServerMsg>
+    ) => void,
     scheduleFanOut: (msg: ServerMsg) => void,
     scheduleReply: (msg: ServerMsg) => void,
     ctx: C | undefined,
@@ -1642,32 +1663,21 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
 
       case ClientMsgCode.FETCH_STORAGE: {
         if (session.version >= ProtocolVersion.V8) {
-          if (this.#_allowStreaming) {
-            const NODES_PER_CHUNK = 250; // = arbitrary! Could be tuned later
-
-            for (const chunk of chunked(
-              nodeStreamToCompactNodes(this.storage.loadedDriver.iter_nodes()),
-              NODES_PER_CHUNK
-            )) {
-              // NOTE: We don't take a storage snapshot here, because this
-              // iteration is happening synchronously, so consistency of the
-              // current document automatically guaranteed. If we ever make
-              // this streaming asynchronous, however, we need to take
-              // a storage snapshot to guarantee document consistency.
-              replyImmediately({
-                type: ServerMsgCode.STORAGE_CHUNK,
-                nodes: chunk,
-              });
-            }
-          } else {
-            replyImmediately({
-              type: ServerMsgCode.STORAGE_CHUNK,
-              nodes: Array.from(
-                nodeStreamToCompactNodes(this.storage.loadedDriver.iter_nodes())
-              ),
-            });
+          //
+          // Turn storage nodes into WebSocket messages. They get chunked so
+          // that each individual WebSocket message won't be too big, but the
+          // total number of WebSocket messages needed is kept in check.
+          //
+          // NOTE: We use iter_nodes_optimized() here to avoid the JS overhead
+          // of parsing, mutating, serializing, and measuring each individual
+          // node, which can add up in large documents.
+          //
+          const rawStream = this.storage.loadedDriver.iter_nodes_optimized();
+          for (const chunk of groupNodesForWebSocketMessages(rawStream)) {
+            const frame =
+              `{"type":${ServerMsgCode.STORAGE_CHUNK},"nodes":[${chunk.join(",")}]}` as jstring<ServerMsg>;
+            replyImmediately(frame);
           }
-
           replyImmediately({ type: ServerMsgCode.STORAGE_STREAM_END });
         } else {
           replyImmediately({
