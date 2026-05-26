@@ -4,18 +4,10 @@ export type MentionData = Relax<UserMentionData | GroupMentionData>;
 
 export type TextMentionData = MentionData;
 
-export type UserMentionData = HumanUserMentionData | AgentUserMentionData;
-
-type HumanUserMentionData = {
+export type UserMentionData = {
   kind: "user";
   id: string;
-  role?: undefined;
-};
-
-type AgentUserMentionData = {
-  kind: "user";
-  id: string;
-  role: "agent";
+  role?: "agent";
 };
 
 export type GroupMentionData = {

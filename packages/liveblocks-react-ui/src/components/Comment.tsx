@@ -346,6 +346,23 @@ function CommentUserMention({
   );
 }
 
+// TODO: Differentiate between agent and user mentions
+function CommentAgentMention({
+  mention,
+  className,
+  ...props
+}: CommentMentionProps) {
+  return (
+    <CommentPrimitive.Mention
+      className={cn("lb-mention lb-comment-mention", className)}
+      {...props}
+    >
+      <span className="lb-mention-symbol">{MENTION_CHARACTER}</span>
+      <User userId={mention.id} />
+    </CommentPrimitive.Mention>
+  );
+}
+
 function CommentGroupMention({
   mention,
   className,
@@ -361,23 +378,6 @@ function CommentGroupMention({
     >
       <span className="lb-mention-symbol">{MENTION_CHARACTER}</span>
       <Group groupId={mention.id} />
-    </CommentPrimitive.Mention>
-  );
-}
-
-// TODO: Differentiate between agent and user mentions
-function CommentAgentMention({
-  mention,
-  className,
-  ...props
-}: CommentMentionProps) {
-  return (
-    <CommentPrimitive.Mention
-      className={cn("lb-mention lb-comment-mention", className)}
-      {...props}
-    >
-      <span className="lb-mention-symbol">{MENTION_CHARACTER}</span>
-      <User userId={mention.id} />
     </CommentPrimitive.Mention>
   );
 }

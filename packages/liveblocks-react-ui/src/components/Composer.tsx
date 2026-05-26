@@ -84,6 +84,7 @@ import { Group } from "./internal/Group";
 import { GroupDescription } from "./internal/GroupDescription";
 import { ShortcutTooltip, Tooltip, TooltipProvider } from "./internal/Tooltip";
 import { User } from "./internal/User";
+import { useCurrentUserId } from "../shared";
 
 interface EditorActionProps extends ComponentPropsWithoutRef<"button"> {
   label: string;
@@ -368,6 +369,21 @@ function ComposerAttachFilesEditorAction({
 }
 
 function ComposerUserMention({ mention }: ComposerMentionProps) {
+  const currentId = useCurrentUserId();
+
+  return (
+    <ComposerPrimitive.Mention
+      className="lb-mention lb-composer-mention"
+      data-self={mention.id === currentId ? "" : undefined}
+    >
+      <span className="lb-mention-symbol">{MENTION_CHARACTER}</span>
+      <User userId={mention.id} />
+    </ComposerPrimitive.Mention>
+  );
+}
+
+// TODO: Differentiate between agent and user mentions
+function ComposerAgentMention({ mention }: ComposerMentionProps) {
   return (
     <ComposerPrimitive.Mention className="lb-mention lb-composer-mention">
       <span className="lb-mention-symbol">{MENTION_CHARACTER}</span>
@@ -386,16 +402,6 @@ function ComposerGroupMention({ mention }: ComposerMentionProps) {
     >
       <span className="lb-mention-symbol">{MENTION_CHARACTER}</span>
       <Group groupId={mention.id} />
-    </ComposerPrimitive.Mention>
-  );
-}
-
-// TODO: Differentiate between agent and user mentions
-function ComposerAgentMention({ mention }: ComposerMentionProps) {
-  return (
-    <ComposerPrimitive.Mention className="lb-mention lb-composer-mention">
-      <span className="lb-mention-symbol">{MENTION_CHARACTER}</span>
-      <User userId={mention.id} />
     </ComposerPrimitive.Mention>
   );
 }

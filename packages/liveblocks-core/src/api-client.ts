@@ -54,7 +54,7 @@ import type {
   InboxNotificationDeleteInfo,
   InboxNotificationDeleteInfoPlain,
 } from "./protocol/InboxNotifications";
-import type { MentionData, TextMentionData } from "./protocol/MentionData";
+import type { TextMentionData } from "./protocol/MentionData";
 import type {
   NotificationSettingsPlain,
   PartialNotificationSettings,
@@ -348,7 +348,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
   }: {
     roomId: string;
     mentionId: string;
-    mention: MentionData;
+    mention: TextMentionData;
   }): Promise<void>;
 
   deleteTextMention({
