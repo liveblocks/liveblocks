@@ -58,6 +58,19 @@ export const MentionNode = Node.create({
           };
         },
       },
+      role: {
+        default: null,
+        parseHTML: (element) => element.getAttribute("data-role"),
+        renderHTML: (attributes) => {
+          if (attributes.role !== "agent") {
+            return {};
+          }
+
+          return {
+            "data-role": attributes.role as string, // "as" typing because TipTap doesn't have a way to type attributes
+          };
+        },
+      },
     };
   },
   addKeyboardShortcuts() {

@@ -176,9 +176,7 @@ export function MentionPlugin() {
   const [match, setMatch] = useState<RegExpExecArray | null>(null); // Represents the current match of the mention regex. A `null` value means there is no match.
   const matchingString = match?.[3];
 
-  const suggestions = useMentionSuggestions(room.id, matchingString, {
-    excludedKinds: { agent: true },
-  });
+  const suggestions = useMentionSuggestions(room.id, matchingString);
   const createTextMention = useCreateTextMention();
   const deleteTextMention = useDeleteTextMention();
 
@@ -201,6 +199,7 @@ export function MentionPlugin() {
               createTextMention(node.getId(), {
                 kind: "user",
                 id: node.getUserId(),
+                role: node.getRole(),
               });
             }
           });
@@ -409,7 +408,7 @@ export function MentionPlugin() {
 
         switch (mention.kind) {
           case "user":
-            mentionNode = $createMentionNode(mention.id);
+            mentionNode = $createMentionNode(mention.id, mention.role);
             break;
 
           case "group":

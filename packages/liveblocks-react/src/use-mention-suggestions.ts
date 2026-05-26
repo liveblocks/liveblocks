@@ -1,6 +1,6 @@
 import type { MentionData } from "@liveblocks/core";
 import { stableStringify } from "@liveblocks/core";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   useMentionSuggestionsCache,
@@ -27,70 +27,17 @@ function normalizeMentionSuggestions<T extends string[] | MentionData[]>(
   );
 }
 
-type ExcludedKinds = Partial<Record<MentionData["kind"], true>>;
-
-interface UseMentionSuggestionsOptions<
-  K extends ExcludedKinds | undefined = undefined,
-> {
-  /**
-   * Which mention kinds to exclude from the suggestions. Defaults to none.
-   */
-  excludedKinds?: K;
-}
-
-type NarrowedMentionData<
-  K extends Partial<Record<MentionData["kind"], true>> | undefined,
-> =
-  K extends Partial<Record<MentionData["kind"], true>>
-    ? Exclude<
-        MentionData,
-        | (K extends { user: true }
-            ? Extract<MentionData, { kind: "user" }>
-            : never)
-        | (K extends { group: true }
-            ? Extract<MentionData, { kind: "group" }>
-            : never)
-        | (K extends { agent: true }
-            ? Extract<MentionData, { kind: "agent" }>
-            : never)
-      >
-    : MentionData;
-
 /**
  * @private For internal use only. Do not rely on this hook.
  *
  * Simplistic debounced search, we don't need to worry too much about deduping
  * and race conditions as there can only be one search at a time.
  */
-export function useMentionSuggestions<
-  K extends ExcludedKinds | undefined = undefined,
->(
+export function useMentionSuggestions(
   roomId: string,
-  search?: string | undefined,
-  options?: UseMentionSuggestionsOptions<K>
-): NarrowedMentionData<K>[] | undefined {
-  const excludeUserMentions = options?.excludedKinds?.user ?? false;
-  const excludeGroupMentions = options?.excludedKinds?.group ?? false;
-  const excludeAgentMentions = options?.excludedKinds?.agent ?? false;
+  search?: string | undefined
+): MentionData[] | undefined {
   const [mentionSuggestions, setMentionSuggestions] = useState<MentionData[]>();
-  // Filtering happens per hook rather than in the cache to still allow
-  // sharing cached suggestions between different filter options (e.g. Comments and Text Editor)
-  const filteredMentionSuggestions = useMemo(() => {
-    return mentionSuggestions?.filter(
-      (mention): mention is NarrowedMentionData<K> => {
-        return (
-          (!excludeUserMentions && mention.kind === "user") ||
-          (!excludeGroupMentions && mention.kind === "group") ||
-          (!excludeAgentMentions && mention.kind === "agent")
-        );
-      }
-    );
-  }, [
-    mentionSuggestions,
-    excludeUserMentions,
-    excludeGroupMentions,
-    excludeAgentMentions,
-  ]);
   const lastInvokedAt = useRef<number>();
 
   const resolveMentionSuggestions = useResolveMentionSuggestions();
@@ -157,5 +104,5 @@ export function useMentionSuggestions<
     };
   }, [search, roomId, resolveMentionSuggestions, mentionSuggestionsCache]);
 
-  return filteredMentionSuggestions;
+  return mentionSuggestions;
 }

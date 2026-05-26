@@ -365,6 +365,7 @@ function CommentGroupMention({
   );
 }
 
+// TODO: Differentiate between agent and user mentions
 function CommentAgentMention({
   mention,
   className,
@@ -376,8 +377,7 @@ function CommentAgentMention({
       {...props}
     >
       <span className="lb-mention-symbol">{MENTION_CHARACTER}</span>
-      {/* TODO: Use the agent's name */}
-      <span>@{mention.id}</span>
+      <User userId={mention.id} />
     </CommentPrimitive.Mention>
   );
 }
@@ -385,13 +385,14 @@ function CommentAgentMention({
 export function CommentMention({ mention, ...props }: CommentMentionProps) {
   switch (mention.kind) {
     case "user":
+      if (mention.role === "agent") {
+        return <CommentAgentMention mention={mention} {...props} />;
+      }
+
       return <CommentUserMention mention={mention} {...props} />;
 
     case "group":
       return <CommentGroupMention mention={mention} {...props} />;
-
-    case "agent":
-      return <CommentAgentMention mention={mention} {...props} />;
 
     default:
       return assertNever(mention, "Unhandled mention kind");

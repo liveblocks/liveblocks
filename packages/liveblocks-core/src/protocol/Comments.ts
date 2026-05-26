@@ -114,13 +114,14 @@ export type CommentBodyParagraph = {
 };
 
 export type CommentBodyMention = Relax<
-  CommentBodyUserMention | CommentBodyGroupMention | CommentBodyAgentMention
+  CommentBodyUserMention | CommentBodyGroupMention
 >;
 
 type CommentBodyUserMention = {
   type: "mention";
   kind: "user";
   id: string;
+  role?: "agent";
 };
 
 type CommentBodyGroupMention = {
@@ -128,12 +129,6 @@ type CommentBodyGroupMention = {
   kind: "group";
   id: string;
   userIds?: string[];
-};
-
-type CommentBodyAgentMention = {
-  type: "mention";
-  kind: "agent";
-  id: string;
 };
 
 export type CommentBodyLink = {

@@ -103,6 +103,7 @@ export const getMentionsFromNode = (
           mentions.set(mention.notificationId, {
             kind: "user",
             id: mention.id,
+            role: mention.role,
             notificationId: mention.notificationId,
           });
         } else if (child.type.name === LIVEBLOCKS_GROUP_MENTION_TYPE) {

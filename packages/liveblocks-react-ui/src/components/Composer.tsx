@@ -390,12 +390,12 @@ function ComposerGroupMention({ mention }: ComposerMentionProps) {
   );
 }
 
+// TODO: Differentiate between agent and user mentions
 function ComposerAgentMention({ mention }: ComposerMentionProps) {
   return (
     <ComposerPrimitive.Mention className="lb-mention lb-composer-mention">
       <span className="lb-mention-symbol">{MENTION_CHARACTER}</span>
-      {/* TODO: Use the agent's name */}
-      <span>@{mention.id}</span>
+      <User userId={mention.id} />
     </ComposerPrimitive.Mention>
   );
 }
@@ -403,13 +403,14 @@ function ComposerAgentMention({ mention }: ComposerMentionProps) {
 export function ComposerMention({ mention, ...props }: ComposerMentionProps) {
   switch (mention.kind) {
     case "user":
+      if (mention.role === "agent") {
+        return <ComposerAgentMention mention={mention} {...props} />;
+      }
+
       return <ComposerUserMention mention={mention} {...props} />;
 
     case "group":
       return <ComposerGroupMention mention={mention} {...props} />;
-
-    case "agent":
-      return <ComposerAgentMention mention={mention} {...props} />;
 
     default:
       return assertNever(mention, "Unhandled mention kind");
@@ -429,7 +430,18 @@ function ComposerMentionSuggestions({
               className="lb-composer-suggestions-list-item lb-composer-mention-suggestion"
               value={mention.id}
             >
-              {mention.kind === "user" ? (
+              {mention.kind === "user" && mention.role === "agent" ? (
+                <>
+                  {/* TODO: Use the agent's avatar/icon */}
+                  <div className="lb-composer-mention-suggestion-avatar">
+                    <SparklesIcon />
+                  </div>
+                  {/* TODO: Use the agent's name */}
+                  <span className="lb-composer-mention-suggestion-agent">
+                    @{mention.id}
+                  </span>
+                </>
+              ) : mention.kind === "user" ? (
                 <>
                   <UserAvatar
                     userId={mention.id}
@@ -456,17 +468,6 @@ function ComposerMentionSuggestions({
                       className="lb-composer-mention-suggestion-group-description"
                     />
                   </Group>
-                </>
-              ) : mention.kind === "agent" ? (
-                <>
-                  {/* TODO: Use the agent's avatar/icon */}
-                  <div className="lb-composer-mention-suggestion-avatar">
-                    <SparklesIcon />
-                  </div>
-                  {/* TODO: Use the agent's name */}
-                  <span className="lb-composer-mention-suggestion-agent">
-                    @{mention.id}
-                  </span>
                 </>
               ) : (
                 assertNever(mention, "Unhandled mention kind")

@@ -44,9 +44,7 @@ export const MentionsList = forwardRef<MentionsListHandle, MentionsListProps>(
   (props, ref) => {
     const [selectedIndex, setSelectedIndex] = useState(0);
     const room = useRoom();
-    const suggestions = useMentionSuggestions(room.id, props.query, {
-      excludedKinds: { agent: true },
-    });
+    const suggestions = useMentionSuggestions(room.id, props.query);
     const { onMouseEnter, onClick } = props;
     const {
       refs: { setReference, setFloating },
@@ -93,6 +91,7 @@ export const MentionsList = forwardRef<MentionsListHandle, MentionsListProps>(
           props.command({
             kind: "user",
             id: mention.id,
+            role: mention.role,
             notificationId,
           });
           break;

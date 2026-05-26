@@ -1,7 +1,4 @@
-import type {
-  MentionData,
-  ResolveMentionSuggestionsArgs,
-} from "@liveblocks/core";
+import type { ResolveMentionSuggestionsArgs } from "@liveblocks/core";
 import { nanoid } from "@liveblocks/core";
 import { renderHook } from "@testing-library/react";
 import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
@@ -407,7 +404,7 @@ describe("useMentionSuggestions", () => {
     unmount();
   });
 
-  test("should filter out excluded mention kinds", async () => {
+  test("should support user mentions with agent roles", async () => {
     const roomId = nanoid();
 
     const {
@@ -417,16 +414,14 @@ describe("useMentionSuggestions", () => {
         { kind: "user", id: "a" },
         { kind: "user", id: "b" },
         { kind: "group", id: "here", userIds: ["a", "b"] },
-        { kind: "agent", id: "agent-1" },
-        { kind: "agent", id: "agent-2" },
+        { kind: "user", id: "agent-1", role: "agent" },
+        { kind: "user", id: "agent-2", role: "agent" },
       ],
     });
 
     const { result, unmount } = renderHook(
       () => ({
-        mentionSuggestions: useMentionSuggestions(roomId, "", {
-          excludedKinds: { agent: true },
-        }),
+        mentionSuggestions: useMentionSuggestions(roomId, ""),
       }),
       {
         wrapper: ({ children }) => (
@@ -437,93 +432,19 @@ describe("useMentionSuggestions", () => {
 
     expect(result.current.mentionSuggestions).toBeUndefined();
 
-    await waitFor(() =>
+    await vi.waitFor(() =>
       expect(result.current.mentionSuggestions).not.toBeUndefined()
     );
 
-    // Should exclude agent mentions but include user and group
     expect(result.current.mentionSuggestions).toEqual([
       { kind: "user", id: "a" },
       { kind: "user", id: "b" },
       { kind: "group", id: "here", userIds: ["a", "b"] },
+      { kind: "user", id: "agent-1", role: "agent" },
+      { kind: "user", id: "agent-2", role: "agent" },
     ]);
 
     unmount();
-  });
-
-  test("should cache results regardless of excluded mention kinds", async () => {
-    const roomId = nanoid();
-
-    const resolveMentionSuggestions = jest.fn(
-      (): Promise<MentionData[]> =>
-        Promise.resolve([
-          { kind: "user", id: "a" },
-          { kind: "user", id: "b" },
-          { kind: "group", id: "here", userIds: ["a", "b"] },
-          { kind: "agent", id: "agent-1" },
-          { kind: "agent", id: "agent-2" },
-        ])
-    );
-
-    const {
-      room: { RoomProvider },
-    } = createContextsForTest({
-      resolveMentionSuggestions,
-    });
-
-    const { result: result1, unmount: unmount1 } = renderHook(
-      () => ({
-        mentionSuggestions: useMentionSuggestions(roomId, "test"),
-      }),
-      {
-        wrapper: ({ children }) => (
-          <RoomProvider id={roomId}>{children}</RoomProvider>
-        ),
-      }
-    );
-
-    await waitFor(() =>
-      expect(result1.current.mentionSuggestions).not.toBeUndefined()
-    );
-
-    const { result: result2, unmount: unmount2 } = renderHook(
-      () => ({
-        mentionSuggestions: useMentionSuggestions(roomId, "test", {
-          excludedKinds: { agent: true },
-        }),
-      }),
-      {
-        wrapper: ({ children }) => (
-          <RoomProvider id={roomId}>{children}</RoomProvider>
-        ),
-      }
-    );
-
-    await waitFor(() =>
-      expect(result2.current.mentionSuggestions).not.toBeUndefined()
-    );
-
-    // First hook returned all mentions
-    expect(result1.current.mentionSuggestions).toEqual([
-      { kind: "user", id: "a" },
-      { kind: "user", id: "b" },
-      { kind: "group", id: "here", userIds: ["a", "b"] },
-      { kind: "agent", id: "agent-1" },
-      { kind: "agent", id: "agent-2" },
-    ]);
-
-    // Second hook excluded agent mentions
-    expect(result2.current.mentionSuggestions).toEqual([
-      { kind: "user", id: "a" },
-      { kind: "user", id: "b" },
-      { kind: "group", id: "here", userIds: ["a", "b"] },
-    ]);
-
-    // Both hooks should share the same cache so resolveMentionSuggestions should be called only once
-    expect(resolveMentionSuggestions).toHaveBeenCalledTimes(1);
-
-    unmount1();
-    unmount2();
   });
 
   test("should still support returning string[] for backward compatibility", async () => {

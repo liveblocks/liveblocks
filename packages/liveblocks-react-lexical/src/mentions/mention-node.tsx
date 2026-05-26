@@ -1,4 +1,5 @@
 import { createInboxNotificationId, MENTION_CHARACTER } from "@liveblocks/core";
+import type { UserMentionData } from "@liveblocks/core";
 import { User } from "@liveblocks/react-ui/_private";
 import type {
   DOMConversionMap,
@@ -16,17 +17,25 @@ import { Mention } from "./mention-component";
 export type SerializedMentionNode = Spread<
   {
     userId: string;
+    role?: UserMentionData["role"];
   },
   SerializedLexicalNode
 >;
 export class MentionNode extends DecoratorNode<JSX.Element> {
   __id: string;
   __userId: string;
+  __role: UserMentionData["role"];
 
-  constructor(id: string, userId: string, key?: NodeKey) {
+  constructor(
+    id: string,
+    userId: string,
+    role?: UserMentionData["role"],
+    key?: NodeKey
+  ) {
     super(key);
     this.__id = id;
     this.__userId = userId;
+    this.__role = role;
   }
 
   static getType(): string {
@@ -34,7 +43,7 @@ export class MentionNode extends DecoratorNode<JSX.Element> {
   }
 
   static clone(node: MentionNode): MentionNode {
-    return new MentionNode(node.__id, node.__userId, node.__key);
+    return new MentionNode(node.__id, node.__userId, node.__role, node.__key);
   }
 
   createDOM(): HTMLElement {
@@ -53,12 +62,16 @@ export class MentionNode extends DecoratorNode<JSX.Element> {
       span: () => ({
         conversion: (element) => {
           const userId = element.getAttribute("data-lexical-lb-mention");
+          const role = element.getAttribute("data-lexical-lb-mention-role");
 
           if (!userId) {
             return null;
           }
 
-          const node = $createMentionNode(userId);
+          const node = $createMentionNode(
+            userId,
+            role === "agent" ? role : undefined
+          );
           return { node };
         },
         priority: 1,
@@ -69,26 +82,40 @@ export class MentionNode extends DecoratorNode<JSX.Element> {
   exportDOM(): DOMExportOutput {
     const element = document.createElement("span");
     element.setAttribute("data-lexical-lb-mention", this.getUserId());
+    if (this.getRole() === "agent") {
+      element.setAttribute("data-lexical-lb-mention-role", this.getRole());
+    }
     element.textContent = this.getUserId();
     return { element };
   }
 
   static importJSON(serializedNode: SerializedMentionNode): MentionNode {
-    const node = $createMentionNode(serializedNode.userId);
+    const node = $createMentionNode(serializedNode.userId, serializedNode.role);
     return node;
   }
 
   exportJSON(): SerializedMentionNode {
-    return {
+    const serializedNode: SerializedMentionNode = {
       userId: this.__userId,
       type: "lb-mention",
       version: 1,
     };
+
+    if (this.__role === "agent") {
+      serializedNode.role = this.__role;
+    }
+
+    return serializedNode;
   }
 
   getUserId(): string {
     const self = this.getLatest();
     return self.__userId;
+  }
+
+  getRole(): UserMentionData["role"] {
+    const self = this.getLatest();
+    return self.__role;
   }
 
   getId(): string {
@@ -116,7 +143,10 @@ export function $isMentionNode(
   return node instanceof MentionNode;
 }
 
-export function $createMentionNode(userId: string): MentionNode {
-  const node = new MentionNode(createInboxNotificationId(), userId);
+export function $createMentionNode(
+  userId: string,
+  role?: UserMentionData["role"]
+): MentionNode {
+  const node = new MentionNode(createInboxNotificationId(), userId, role);
   return $applyNodeReplacement(node);
 }

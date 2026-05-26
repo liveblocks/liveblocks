@@ -82,6 +82,7 @@ export const Mention = ({
     const mention: UserMentionData = {
       kind: "user",
       id: attrs.id,
+      role: attrs.role,
     };
 
     return <UserMention mention={mention} isSelected={isSelected} />;

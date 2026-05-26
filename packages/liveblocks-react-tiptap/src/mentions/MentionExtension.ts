@@ -162,6 +162,7 @@ export const MentionExtension = Extension.create<MentionExtensionOptions>({
               type: LIVEBLOCKS_MENTION_TYPE,
               attrs: {
                 id: mention.id,
+                role: mention.role,
                 notificationId: mention.notificationId,
               },
             };
