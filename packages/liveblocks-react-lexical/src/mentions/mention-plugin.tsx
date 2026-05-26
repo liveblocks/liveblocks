@@ -26,6 +26,7 @@ import {
   GroupAvatar,
   GroupDescription,
   Portal,
+  SparklesIcon,
   User,
   UserAvatar,
   UsersIcon,
@@ -457,7 +458,18 @@ export function MentionPlugin() {
                     value={mention.id}
                     className="lb-lexical-suggestions-list-item lb-lexical-mention-suggestion"
                   >
-                    {mention.kind === "user" ? (
+                    {mention.kind === "user" && mention.role === "agent" ? (
+                      <>
+                        {/* TODO: Use the agent's avatar/icon */}
+                        <div className="lb-lexical-mention-suggestion-avatar">
+                          <SparklesIcon />
+                        </div>
+                        {/* TODO: Use the agent's name */}
+                        <span className="lb-lexical-mention-suggestion-agent">
+                          @{mention.id}
+                        </span>
+                      </>
+                    ) : mention.kind === "user" ? (
                       <>
                         <UserAvatar
                           userId={mention.id}

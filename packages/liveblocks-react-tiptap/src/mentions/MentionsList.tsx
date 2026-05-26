@@ -18,6 +18,7 @@ import {
   Group,
   GroupAvatar,
   GroupDescription,
+  SparklesIcon,
   User,
   UserAvatar,
   UsersIcon,
@@ -192,7 +193,18 @@ export const MentionsList = forwardRef<MentionsListHandle, MentionsListProps>(
                 onMouseEnter={handleMouseEnter(index)}
                 onClick={handleClick(index)}
               >
-                {mention.kind === "user" ? (
+                {mention.kind === "user" && mention.role === "agent" ? (
+                  <>
+                    {/* TODO: Use the agent's avatar/icon */}
+                    <div className="lb-tiptap-mention-suggestion-avatar">
+                      <SparklesIcon />
+                    </div>
+                    {/* TODO: Use the agent's name */}
+                    <span className="lb-tiptap-mention-suggestion-agent">
+                      @{mention.id}
+                    </span>
+                  </>
+                ) : mention.kind === "user" ? (
                   <>
                     <UserAvatar
                       userId={mention.id}
