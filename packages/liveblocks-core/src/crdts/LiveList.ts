@@ -860,8 +860,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @param element The element to add to the end of the LiveList.
    */
   push(element: TItem): void {
-    this._pool?.assertStorageIsWritable();
-    return this.insert(element, this.length);
+    return this.#injectAt(element, this.length, "push");
   }
 
   /**
@@ -870,6 +869,16 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @param index The index at which you want to insert the element.
    */
   insert(element: TItem, index: number): void {
+    return this.#injectAt(element, index, "insert");
+  }
+
+  /**
+   * Shared implementation of `insert` and `push`. A `"push"` intent leaves the
+   * client-computed position untouched (so optimistic rendering is unchanged),
+   * but tags the Op so the server appends it to the true end of the list
+   * instead of resolving its position against the client's stale view.
+   */
+  #injectAt(element: TItem, index: number, intent: "insert" | "push"): void {
     this._pool?.assertStorageIsWritable();
     if (index < 0 || index > this.#items.length) {
       throw new Error(
@@ -891,8 +900,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       const id = this._pool.generateId();
       value._attach(id, this._pool);
 
+      const ops = value._toOpsWithOpId(this._id, position, this._pool);
       this._pool.dispatch(
-        value._toOpsWithOpId(this._id, position, this._pool),
+        intent === "push" ? addIntentToOpTree(ops, "push") : ops,
         [{ type: OpCode.DELETE_CRDT, id }],
         new Map<string, LiveListUpdates<TItem>>([
           [this._id, makeUpdate(this, [insertDelta(index, value)])],
@@ -1352,15 +1362,18 @@ function moveDelta(
 }
 
 /**
- * Tags a serialized CreateOp sequence with an `intent` ("set") and
+ * Tags a serialized CreateOp sequence with an `intent` ("set" or "push") and
  * an optional `deletedId`, telling the server how to resolve the new node's
- * position in its parent list — replace an existing item ("set").
+ * position in its parent list — replace an existing item ("set") or append to
+ * the true end ("push").
  *
  * By default, no explicit intent means a regular insert.
  */
+function addIntentToOpTree<T extends CreateOp>(ops: T[], intent: "push"): T[];
+function addIntentToOpTree<T extends CreateOp>(ops: T[], intent: "set", deletedId?: string): T[]; // prettier-ignore
 function addIntentToOpTree<T extends CreateOp>(
   ops: T[],
-  intent: "set",
+  intent: "set" | "push",
   deletedId?: string
 ): T[] {
   return ops.map((op, index) => {

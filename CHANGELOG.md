@@ -1,5 +1,10 @@
 ## vNEXT (not yet released)
 
+### `@liveblocks/client`
+
+- Fix `LiveList.push()` so concurrent pushes from multiple clients no longer
+  settle out of order.
+
 ## v3.19.3
 
 ### `@liveblocks/client`

@@ -53,43 +53,43 @@ export type UpdateObjectOp = {
 export type CreateObjectOp = {
   readonly opId?: string;
   readonly id: string;
-  readonly intent?: "set";
-  readonly deletedId?: string;
   readonly type: OpCode.CREATE_OBJECT;
   readonly parentId: string;
   readonly parentKey: string;
   readonly data: JsonObject;
+  readonly intent?: "set" | "push";
+  readonly deletedId?: string;
 };
 
 export type CreateListOp = {
   readonly opId?: string;
   readonly id: string;
-  readonly intent?: "set";
-  readonly deletedId?: string;
   readonly type: OpCode.CREATE_LIST;
   readonly parentId: string;
   readonly parentKey: string;
+  readonly intent?: "set" | "push";
+  readonly deletedId?: string;
 };
 
 export type CreateMapOp = {
   readonly opId?: string;
   readonly id: string;
-  readonly intent?: "set";
-  readonly deletedId?: string;
   readonly type: OpCode.CREATE_MAP;
   readonly parentId: string;
   readonly parentKey: string;
+  readonly intent?: "set" | "push";
+  readonly deletedId?: string;
 };
 
 export type CreateRegisterOp = {
   readonly opId?: string;
   readonly id: string;
-  readonly intent?: "set";
-  readonly deletedId?: string;
   readonly type: OpCode.CREATE_REGISTER;
   readonly parentId: string;
   readonly parentKey: string;
   readonly data: Json;
+  readonly intent?: "set" | "push";
+  readonly deletedId?: string;
 };
 
 export type DeleteCrdtOp = {
