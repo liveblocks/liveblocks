@@ -9,7 +9,7 @@ import type {
   InboxNotificationTextMentionData,
   InboxNotificationThreadData,
   IUserInfo,
-  MentionData,
+  TextMentionData,
   ResolveGroupsInfoArgs,
   ResolveUsersArgs,
   ThreadData,
@@ -85,7 +85,7 @@ export const generateThreadId = (): string => "th_" + nanoid();
 export const generateInboxNotificationId = (): string => "in_" + nanoid();
 
 export const buildCommentBodyWithMention = (
-  mention: MentionData
+  mention: TextMentionData
 ): CommentBody => ({
   version: 1,
   content: [
@@ -588,7 +588,7 @@ export const makeTextMentionInboxNotification = ({
   notifiedAt,
   readAt,
 }: {
-  mention: MentionData;
+  mention: TextMentionData;
   mentionId: string;
   createdBy: string;
   notifiedAt?: Date;

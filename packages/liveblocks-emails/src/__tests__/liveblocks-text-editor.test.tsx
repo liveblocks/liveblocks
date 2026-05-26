@@ -80,6 +80,38 @@ describe("liveblocks text editor", () => {
       expect(nodes).toEqual(expected);
     });
 
+    test("should transform lexical agent mentions", () => {
+      const mentionId = generateInboxNotificationId();
+      const agentId = "agent-1";
+
+      const nodes = transformAsLiveblocksTextEditorNodes({
+        editor: "lexical",
+        mention: {
+          before: [],
+          mention: {
+            type: "lb-mention",
+            group: "decorator",
+            attributes: {
+              __type: "lb-mention",
+              __id: mentionId,
+              __userId: agentId,
+              __role: "agent",
+            },
+          },
+          after: [],
+        },
+      });
+
+      expect(nodes).toEqual([
+        {
+          type: "mention",
+          kind: "user",
+          id: agentId,
+          role: "agent",
+        },
+      ]);
+    });
+
     test("should transform tiptap nodes", () => {
       const mentionId = generateInboxNotificationId();
       const userId = "user-dracula";
@@ -168,6 +200,36 @@ describe("liveblocks text editor", () => {
       ];
 
       expect(nodes).toEqual(expected);
+    });
+
+    test("should transform tiptap agent mentions", () => {
+      const mentionId = generateInboxNotificationId();
+      const agentId = "agent-1";
+
+      const nodes = transformAsLiveblocksTextEditorNodes({
+        editor: "tiptap",
+        mention: {
+          before: [],
+          mention: {
+            type: "liveblocksMention",
+            attrs: {
+              id: agentId,
+              notificationId: mentionId,
+              role: "agent",
+            },
+          },
+          after: [],
+        },
+      });
+
+      expect(nodes).toEqual([
+        {
+          type: "mention",
+          kind: "user",
+          id: agentId,
+          role: "agent",
+        },
+      ]);
     });
   });
 });

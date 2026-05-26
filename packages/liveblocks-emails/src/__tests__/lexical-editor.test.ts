@@ -4,6 +4,7 @@ import type { SerializedLexicalRootNode } from "../lexical-editor";
 import {
   findLexicalMentionNodeWithContext,
   flattenLexicalTree,
+  getMentionDataFromLexicalNode,
   getSerializedLexicalState,
 } from "../lexical-editor";
 import { generateInboxNotificationId } from "./_helpers";
@@ -301,5 +302,27 @@ describe("Lexical editor", () => {
         ],
       });
     });
+  });
+
+  describe("getMentionDataFromLexicalNode", () => {
+    test("should include role for agent mentions", () => {
+      expect(
+        getMentionDataFromLexicalNode({
+          type: "lb-mention",
+          group: "decorator",
+          attributes: {
+            __type: "lb-mention",
+            __id: MENTION_ID,
+            __userId: MENTIONED_USER_ID,
+            __role: "agent",
+          },
+        })
+      ).toEqual({
+        kind: "user",
+        id: MENTIONED_USER_ID,
+        role: "agent",
+      });
+    });
+
   });
 });

@@ -4,6 +4,7 @@ import type { SerializedTiptapRootNode } from "../tiptap-editor";
 import {
   findTiptapMentionNodeWithContext,
   flattenTiptapTree,
+  getMentionDataFromTiptapNode,
   getSerializedTiptapState,
 } from "../tiptap-editor";
 import { generateInboxNotificationId } from "./_helpers";
@@ -247,6 +248,41 @@ describe("tiptap editor", () => {
             text: " fun right?",
           },
         ],
+      });
+    });
+  });
+
+  describe("getMentionDataFromTiptapNode", () => {
+    test("should include role for agent mentions", () => {
+      expect(
+        getMentionDataFromTiptapNode({
+          type: "liveblocksMention",
+          attrs: {
+            id: MENTIONED_USER_ID,
+            notificationId: MENTION_ID,
+            role: "agent",
+          },
+        })
+      ).toEqual({
+        kind: "user",
+        id: MENTIONED_USER_ID,
+        role: "agent",
+      });
+    });
+
+    test("should omit role when not set", () => {
+      expect(
+        getMentionDataFromTiptapNode({
+          type: "liveblocksMention",
+          attrs: {
+            id: MENTIONED_USER_ID,
+            notificationId: MENTION_ID,
+            role: null,
+          },
+        })
+      ).toEqual({
+        kind: "user",
+        id: MENTIONED_USER_ID,
       });
     });
   });

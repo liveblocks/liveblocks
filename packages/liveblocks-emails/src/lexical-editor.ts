@@ -1,4 +1,9 @@
-import type { Json, JsonObject, MentionData } from "@liveblocks/core";
+import type {
+  Json,
+  JsonObject,
+  TextMentionData,
+  UserMentionData,
+} from "@liveblocks/core";
 import { assertNever } from "@liveblocks/core";
 import * as Y from "yjs";
 
@@ -31,6 +36,7 @@ export interface SerializedLexicalMentionNode extends SerializedLexicalDecorator
     __id: string;
     __type: "lb-mention";
     __userId: string;
+    __role?: UserMentionData["role"];
   };
 }
 
@@ -483,11 +489,14 @@ export function findLexicalMentionNodeWithContext({
 
 export function getMentionDataFromLexicalNode(
   node: SerializedLexicalMentionNode | SerializedLexicalGroupMentionNode
-): MentionData {
+): TextMentionData {
   if (isSerializedMentionNode(node)) {
+    const { __userId, __role } = node.attributes;
+
     return {
       kind: "user",
-      id: node.attributes.__userId,
+      id: __userId,
+      ...(__role !== undefined ? { role: __role } : {}),
     };
   } else if (isSerializedGroupMentionNode(node)) {
     return {

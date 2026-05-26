@@ -7,7 +7,7 @@ import {
   html,
   htmlSafe,
   MENTION_CHARACTER,
-  type MentionData,
+  type TextMentionData,
   type ResolveGroupsInfoArgs,
   type ResolveUsersArgs,
 } from "@liveblocks/core";
@@ -66,7 +66,7 @@ export type TextMentionNotificationData = (
 ) & {
   createdAt: Date;
   createdBy: string;
-  mentionData: MentionData;
+  mentionData: TextMentionData;
 };
 
 /** @internal */
@@ -176,7 +176,7 @@ export const extractTextMentionNotificationData = async ({
 export type MentionEmailData<
   ContentType,
   U extends BaseUserMeta = DU,
-> = MentionData & {
+> = TextMentionData & {
   textMentionId: string;
   roomId: string;
   author: U; // Author of the mention

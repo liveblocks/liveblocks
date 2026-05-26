@@ -12,6 +12,7 @@ import type {
   Relax,
   ResolveGroupsInfoArgs,
   ResolveUsersArgs,
+  UserMentionData,
 } from "@liveblocks/core";
 
 import type {
@@ -55,6 +56,7 @@ type LiveblocksTextEditorUserMentionNode = {
   type: "mention";
   kind: "user";
   id: string;
+  role?: UserMentionData["role"];
 };
 
 export type LiveblocksTextEditorGroupMentionNode = {
@@ -87,6 +89,18 @@ const baseLiveblocksTextEditorTextFormat: LiveblocksTextEditorTextFormat = {
   strikethrough: false,
   code: false,
 };
+
+function createLiveblocksTextEditorUserMentionNode(
+  id: string,
+  role: UserMentionData["role"] | null | undefined
+): LiveblocksTextEditorUserMentionNode {
+  return {
+    type: "mention",
+    kind: "user",
+    id,
+    ...(role != null ? { role } : {}),
+  };
+}
 
 /**
  * -------------------------------------------------------------------------------------------------
@@ -168,11 +182,12 @@ const transformLexicalMentionNodeWithContext = (
         node.group === "decorator" &&
         isSerializedLexicalMentionNode(node)
       ) {
-        textEditorNodes.push({
-          type: "mention",
-          kind: "user",
-          id: node.attributes.__userId,
-        });
+        textEditorNodes.push(
+          createLiveblocksTextEditorUserMentionNode(
+            node.attributes.__userId,
+            node.attributes.__role
+          )
+        );
       } else if (
         node.group === "decorator" &&
         isSerializedLexicalGroupMentionNode(node)
@@ -187,14 +202,20 @@ const transformLexicalMentionNodeWithContext = (
   };
 
   transform(before);
-  textEditorNodes.push({
-    type: "mention",
-    kind: mention.type === "lb-group-mention" ? "group" : "user",
-    id:
-      mention.type === "lb-group-mention"
-        ? mention.attributes.__groupId
-        : mention.attributes.__userId,
-  });
+  if (mention.type === "lb-group-mention") {
+    textEditorNodes.push({
+      type: "mention",
+      kind: "group",
+      id: mention.attributes.__groupId,
+    });
+  } else {
+    textEditorNodes.push(
+      createLiveblocksTextEditorUserMentionNode(
+        mention.attributes.__userId,
+        mention.attributes.__role
+      )
+    );
+  }
   transform(after);
 
   return textEditorNodes;
@@ -246,11 +267,9 @@ const transformTiptapMentionNodeWithContext = (
           ...format,
         });
       } else if (isSerializedTiptapMentionNode(node)) {
-        textEditorNodes.push({
-          type: "mention",
-          kind: "user",
-          id: node.attrs.id,
-        });
+        textEditorNodes.push(
+          createLiveblocksTextEditorUserMentionNode(node.attrs.id, node.attrs.role)
+        );
       } else if (isSerializedTiptapGroupMentionNode(node)) {
         textEditorNodes.push({
           type: "mention",
@@ -262,11 +281,20 @@ const transformTiptapMentionNodeWithContext = (
   };
 
   transform(before);
-  textEditorNodes.push({
-    type: "mention",
-    kind: mention.type === "liveblocksGroupMention" ? "group" : "user",
-    id: mention.attrs.id,
-  });
+  if (mention.type === "liveblocksGroupMention") {
+    textEditorNodes.push({
+      type: "mention",
+      kind: "group",
+      id: mention.attrs.id,
+    });
+  } else {
+    textEditorNodes.push(
+      createLiveblocksTextEditorUserMentionNode(
+        mention.attrs.id,
+        mention.attrs.role
+      )
+    );
+  }
   transform(after);
 
   return textEditorNodes;

@@ -1,4 +1,8 @@
-import { assertNever, type MentionData } from "@liveblocks/core";
+import {
+  assertNever,
+  type TextMentionData,
+  type UserMentionData,
+} from "@liveblocks/core";
 import { yXmlFragmentToProsemirrorJSON } from "y-prosemirror";
 import * as Y from "yjs";
 
@@ -57,6 +61,7 @@ export interface SerializedTiptapMentionNode extends SerializedTiptapBaseNode {
   attrs: {
     id: string;
     notificationId: string;
+    role?: UserMentionData["role"] | null;
   };
 }
 
@@ -352,11 +357,14 @@ function deserializeGroupUserIds(
 
 export function getMentionDataFromTiptapNode(
   node: SerializedTiptapMentionNode | SerializedTiptapGroupMentionNode
-): MentionData {
+): TextMentionData {
   if (isSerializedMentionNode(node)) {
+    const { id, role } = node.attrs;
+
     return {
       kind: "user",
-      id: node.attrs.id,
+      id,
+      ...(role != null ? { role } : {}),
     };
   } else if (isSerializedGroupMentionNode(node)) {
     return {
