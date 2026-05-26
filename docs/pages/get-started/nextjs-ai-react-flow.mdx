@@ -1,7 +1,6 @@
 ---
 meta:
-  title:
-    "Get started with AI agents in React Flow using Liveblocks and Next.js"
+  title: "Get started with AI agents in React Flow using Liveblocks and Next.js"
   parentTitle: "Quickstart"
   description:
     "Learn how to let an AI agent edit a collaborative React Flow diagram from
@@ -14,8 +13,7 @@ can read and edit a collaborative [React Flow](https://reactflow.dev) diagram
 from your Next.js `/app` directory application using
 [`mutateFlow`](/docs/api-reference/liveblocks-react-flow#mutateFlow) from
 [`@liveblocks/react-flow`](/docs/api-reference/liveblocks-react-flow), the
-[Vercel AI SDK](https://ai-sdk.dev), and
-[OpenAI](https://platform.openai.com).
+[Vercel AI SDK](https://ai-sdk.dev), and [OpenAI](https://platform.openai.com).
 
 ## Quickstart
 
@@ -88,9 +86,7 @@ from your Next.js `/app` directory application using
       "use server";
 
       import { Liveblocks } from "@liveblocks/node";
-      // +++
       import { mutateFlow } from "@liveblocks/react-flow/node";
-      // +++
       import { generateText, stepCountIs, tool } from "ai";
       import { openai } from "@ai-sdk/openai";
       import { nanoid } from "nanoid";
@@ -105,65 +101,60 @@ from your Next.js `/app` directory application using
         const prompt = String(formData.get("prompt") ?? "").trim();
         if (!roomId || !prompt) return;
 
-        // +++
-        await mutateFlow(
-          { client: liveblocks, roomId },
-          async (flow) => {
-            await generateText({
-              model: openai("gpt-4.1-mini"),
-              system: `You edit a live collaborative React Flow diagram.
-- Each node has: { id, position: { x, y }, data: { label } }.
-- Each edge has: { id, source, target }.
-- Make small, deliberate changes that are easy to follow.
-- Use 150px horizontal and 100px vertical spacing between nodes.`,
-              prompt: `<diagram>${JSON.stringify(flow.toJSON(), null, 2)}</diagram>
-<user-message>${prompt}</user-message>`,
-              tools: {
-                addNode: tool({
-                  description: "Add a node to the diagram.",
-                  inputSchema: z.object({
-                    label: z.string(),
-                    position: z.object({ x: z.number(), y: z.number() }),
-                  }),
-                  execute: ({ label, position }) => {
-                    const id = `node-${nanoid(6)}`;
-                    flow.addNode({ id, position, data: { label } });
-                    return { ok: true, id };
-                  },
+        await mutateFlow({ client: liveblocks, roomId }, async (flow) => {
+          await generateText({
+            model: openai("gpt-4.1-mini"),
+            system: `You edit a live collaborative React Flow diagram.
+      - Each node has: { id, position: { x, y }, data: { label } }.
+      - Each edge has: { id, source, target }.
+      - Make small, deliberate changes that are easy to follow.
+      - Use 150px horizontal and 100px vertical spacing between nodes.`,
+            prompt: `<diagram>${JSON.stringify(flow.toJSON(), null, 2)}</diagram>
+      <user-message>${prompt}</user-message>`,
+            tools: {
+              addNode: tool({
+                description: "Add a node to the diagram.",
+                inputSchema: z.object({
+                  label: z.string(),
+                  position: z.object({ x: z.number(), y: z.number() }),
                 }),
-                updateNodeData: tool({
-                  description: "Update one node’s label.",
-                  inputSchema: z.object({
-                    id: z.string(),
-                    label: z.string(),
-                  }),
-                  execute: ({ id, label }) => {
-                    if (!flow.getNode(id)) return { ok: false, missing: true };
-                    flow.updateNodeData(id, { label });
-                    return { ok: true, id };
-                  },
+                execute: ({ label, position }) => {
+                  const id = `node-${nanoid(6)}`;
+                  flow.addNode({ id, position, data: { label } });
+                  return { ok: true, id };
+                },
+              }),
+              updateNodeData: tool({
+                description: "Update one node’s label.",
+                inputSchema: z.object({
+                  id: z.string(),
+                  label: z.string(),
                 }),
-                addEdge: tool({
-                  description: "Connect two existing nodes with an edge.",
-                  inputSchema: z.object({
-                    source: z.string(),
-                    target: z.string(),
-                  }),
-                  execute: ({ source, target }) => {
-                    if (!flow.getNode(source) || !flow.getNode(target)) {
-                      return { ok: false, missing: true };
-                    }
-                    const id = `e-${source}-${target}-${nanoid(4)}`;
-                    flow.addEdge({ id, source, target });
-                    return { ok: true, id };
-                  },
+                execute: ({ id, label }) => {
+                  if (!flow.getNode(id)) return { ok: false, missing: true };
+                  flow.updateNodeData(id, { label });
+                  return { ok: true, id };
+                },
+              }),
+              addEdge: tool({
+                description: "Connect two existing nodes with an edge.",
+                inputSchema: z.object({
+                  source: z.string(),
+                  target: z.string(),
                 }),
-              },
-              stopWhen: stepCountIs(20),
-            });
-          }
-        );
-        // +++
+                execute: ({ source, target }) => {
+                  if (!flow.getNode(source) || !flow.getNode(target)) {
+                    return { ok: false, missing: true };
+                  }
+                  const id = `e-${source}-${target}-${nanoid(4)}`;
+                  flow.addEdge({ id, source, target });
+                  return { ok: true, id };
+                },
+              }),
+            },
+            stopWhen: stepCountIs(20),
+          });
+        });
       }
       ```
 
@@ -195,13 +186,11 @@ from your Next.js `/app` directory application using
         const [prompt, setPrompt] = useState("");
 
         return (
-          // +++
           <form action={runFlowAgent} onSubmit={() => setPrompt("")}>
             <input type="hidden" name="roomId" value={roomId} />
             <textarea
               name="prompt"
-              rows={3}
-              placeholder="Create a flowchart about… Update the flowchart…"
+              placeholder="Create a flowchart about…"
               value={prompt}
               onChange={(event) => setPrompt(event.target.value)}
             />
@@ -209,7 +198,6 @@ from your Next.js `/app` directory application using
               Apply
             </button>
           </form>
-          // +++
         );
       }
       ```
@@ -242,8 +230,8 @@ from your Next.js `/app` directory application using
     <StepTitle>Next: show the agent in the room</StepTitle>
     <StepContent>
 
-      Your AI agent now reads and writes your React Flow diagram in realtime.
-      Next, give the agent a face — show its avatar in the avatar stack and
+      Your AI agent now reads and writes to your React Flow diagram in realtime.
+      Next, give the agent a face—show its avatar in the avatar stack and
       highlight the nodes it’s editing using Liveblocks Presence.
 
       <Button asChild className="not-markdown">
@@ -259,8 +247,8 @@ from your Next.js `/app` directory application using
 
 ## What to read next
 
-Congratulations! You’ve set up the foundation for an AI agent that can edit
-your collaborative React Flow diagrams.
+Congratulations! You’ve set up the foundation for an AI agent that can edit your
+collaborative React Flow diagrams.
 
 - [`mutateFlow` API reference](/docs/api-reference/liveblocks-react-flow#mutateFlow)
 - [`MutableFlow` API](/docs/api-reference/liveblocks-react-flow#mutable-flow)
@@ -277,16 +265,6 @@ your collaborative React Flow diagrams.
       title: "Collaborative Flowchart AI",
       slug: "collaborative-flowchart-ai/nextjs-react-flow-ai",
       image: "/images/examples/thumbnails/collaborative-flowchart-ai.jpg",
-      advanced: true,
-    }}
-    technologies={["nextjs"]}
-    openInNewWindow
-  />
-  <ExampleCard
-    example={{
-      title: "Collaborative Flowchart Builder",
-      slug: "collaborative-flowchart-builder/nextjs-flowchart-builder",
-      image: "/images/examples/thumbnails/collaborative-flowchart-builder.jpg",
       advanced: true,
     }}
     technologies={["nextjs"]}
