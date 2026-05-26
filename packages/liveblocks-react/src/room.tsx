@@ -34,13 +34,13 @@ import type {
   FeedsEventServerMsg,
   IYjsProvider,
   LiveblocksErrorContext,
-  MentionData,
   OpaqueClient,
   OpaqueRoom,
   RoomEventMessage,
   RoomSubscriptionSettings,
   SignalType,
   TextEditorType,
+  TextMentionData,
   ToJson,
   UnsubscribeCallback,
 } from "@liveblocks/core";
@@ -771,11 +771,11 @@ function useYjsProvider(): IYjsProvider | undefined {
 /** @private - Internal API, do not rely on it. */
 function useCreateTextMention(): (
   mentionId: string,
-  mention: MentionData
+  mention: TextMentionData
 ) => void {
   const room = useRoom();
   return useCallback(
-    (mentionId: string, mention: MentionData): void => {
+    (mentionId: string, mention: TextMentionData): void => {
       room[kInternal]
         .createTextMention(mentionId, mention)
         .catch((err): void => {

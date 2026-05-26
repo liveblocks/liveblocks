@@ -1,9 +1,9 @@
 import type {
   ContextualPromptContext,
   ContextualPromptResponse,
-  MentionData,
   Relax,
   TextEditorType,
+  TextMentionData,
   ThreadData,
 } from "@liveblocks/core";
 import type { LiveblocksYjsProvider } from "@liveblocks/yjs";
@@ -399,7 +399,7 @@ export type YSyncPluginState = {
   binding: ProsemirrorBinding;
 };
 
-export type TiptapMentionData = MentionData & {
+export type TiptapMentionData = TextMentionData & {
   notificationId: string;
 };
 

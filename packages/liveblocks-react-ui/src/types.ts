@@ -58,7 +58,9 @@ export type ComposerBodyCustomLink = {
 };
 
 export type ComposerBodyMention = Relax<
-  ComposerBodyUserMention | ComposerBodyGroupMention
+  | ComposerBodyUserMention
+  | ComposerBodyGroupMention
+  | ComposerBodyAgentMention
 >;
 
 type ComposerBodyUserMention = {
@@ -73,6 +75,13 @@ type ComposerBodyGroupMention = {
   kind: "group";
   id: string;
   userIds?: string[];
+  children: [SlateEmptyText];
+};
+
+type ComposerBodyAgentMention = {
+  type: "mention";
+  kind: "agent";
+  id: string;
   children: [SlateEmptyText];
 };
 

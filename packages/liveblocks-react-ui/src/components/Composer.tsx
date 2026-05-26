@@ -42,7 +42,7 @@ import {
 
 import { useLiveblocksUiConfig } from "../config";
 import { FLOATING_ELEMENT_SIDE_OFFSET } from "../constants";
-import { UsersIcon } from "../icons";
+import { SparklesIcon, UsersIcon } from "../icons";
 import { AttachmentIcon } from "../icons/Attachment";
 import { BoldIcon } from "../icons/Bold";
 import { CodeIcon } from "../icons/Code";
@@ -390,6 +390,16 @@ function ComposerGroupMention({ mention }: ComposerMentionProps) {
   );
 }
 
+function ComposerAgentMention({ mention }: ComposerMentionProps) {
+  return (
+    <ComposerPrimitive.Mention className="lb-mention lb-composer-mention">
+      <span className="lb-mention-symbol">{MENTION_CHARACTER}</span>
+      {/* TODO: Use the agent's name */}
+      <span>@{mention.id}</span>
+    </ComposerPrimitive.Mention>
+  );
+}
+
 export function ComposerMention({ mention, ...props }: ComposerMentionProps) {
   switch (mention.kind) {
     case "user":
@@ -397,6 +407,9 @@ export function ComposerMention({ mention, ...props }: ComposerMentionProps) {
 
     case "group":
       return <ComposerGroupMention mention={mention} {...props} />;
+
+    case "agent":
+      return <ComposerAgentMention mention={mention} {...props} />;
 
     default:
       return assertNever(mention, "Unhandled mention kind");
@@ -443,6 +456,17 @@ function ComposerMentionSuggestions({
                       className="lb-composer-mention-suggestion-group-description"
                     />
                   </Group>
+                </>
+              ) : mention.kind === "agent" ? (
+                <>
+                  {/* TODO: Use the agent's avatar/icon */}
+                  <div className="lb-composer-mention-suggestion-avatar">
+                    <SparklesIcon />
+                  </div>
+                  {/* TODO: Use the agent's name */}
+                  <span className="lb-composer-mention-suggestion-agent">
+                    @{mention.id}
+                  </span>
                 </>
               ) : (
                 assertNever(mention, "Unhandled mention kind")
