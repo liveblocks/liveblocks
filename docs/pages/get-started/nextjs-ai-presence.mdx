@@ -1,0 +1,368 @@
+---
+meta:
+  title:
+    "Get started with AI Presence using Liveblocks and Next.js"
+  parentTitle: "Quickstart"
+  description:
+    "Learn how to show AI agents in your avatar stack and highlight what they’re
+    editing using Liveblocks Presence and Next.js"
+---
+
+Liveblocks is a realtime collaboration infrastructure for building performant
+collaborative experiences. Follow the following steps to show an AI agent as
+a real user inside your Next.js `/app` directory application: in the avatar
+stack, and as a highlighted box around the form field or cell it’s currently
+editing, using
+[`setPresence`](/docs/api-reference/liveblocks-node#post-rooms-roomId-presence)
+from [`@liveblocks/node`](/docs/api-reference/liveblocks-node) and the
+[`useOthers`](/docs/api-reference/liveblocks-react#useOthers) hook from
+[`@liveblocks/react`](/docs/api-reference/liveblocks-react).
+
+## Quickstart
+
+<PromptCta />
+
+<Steps>
+  <Step>
+    <StepTitle>Have a Presence app ready</StepTitle>
+    <StepContent>
+
+      To add AI Presence on top of your existing app, you first need a Liveblocks
+      Presence setup with [`AvatarStack`](/docs/api-reference/liveblocks-react-ui#AvatarStack)
+      and authenticated users. Open up your app, or set up presence if you
+      haven’t already.
+
+      <Button asChild className="not-markdown">
+        <a href="/docs/get-started/nextjs-presence">
+          Get started with Presence
+        </a>
+      </Button>
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Install `@liveblocks/node`</StepTitle>
+    <StepContent>
+
+      We’ll set the AI agent’s presence from the server, so install
+      [`@liveblocks/node`](/docs/api-reference/liveblocks-node).
+
+      ```bash trackEvent="install_liveblocks"
+      npm install @liveblocks/node
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Add your secret key</StepTitle>
+    <StepContent>
+
+      Create a `.env.local` file and add your Liveblocks secret key from the
+      [dashboard](/dashboard/apikeys).
+
+      ```env file=".env.local"
+      LIVEBLOCKS_SECRET_KEY="{{SECRET_KEY}}"
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Add an AI user to your database</StepTitle>
+    <StepContent>
+
+      The AI agent appears in the room like any other user, so it needs an ID,
+      name, and avatar. Add a dedicated user for your agent alongside your real
+      users, and return it from
+      [`resolveUsers`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers)
+      so it can be rendered in
+      [`AvatarStack`](/docs/api-reference/liveblocks-react-ui#AvatarStack).
+
+      ```ts file="app/database.ts" highlight="1-8"
+      export const AI_USER_INFO = {
+        id: "__AI_AGENT",
+        info: {
+          name: "AI Agent",
+          color: "#6366f1",
+          avatar: "https://liveblocks.io/api/avatar?u=__AI_AGENT&agent=true",
+        },
+      };
+
+      async function fetchUsers(userIds: string[]) {
+        const users = [];
+
+        for (const userId of userIds) {
+          // +++
+          if (userId === AI_USER_INFO.id) {
+            users.push(AI_USER_INFO);
+            continue;
+          }
+          // +++
+
+          const user = await __getUserFromDb__(userId);
+          users.push(user ? { id: userId, info: user.info } : undefined);
+        }
+
+        return users;
+      }
+      ```
+
+      Then wire that into your `LiveblocksProvider`:
+
+      ```tsx file="app/Providers.tsx"
+      <LiveblocksProvider
+        authEndpoint="/api/liveblocks-auth"
+        // +++
+        resolveUsers={async ({ userIds }) => fetchUsers(userIds)}
+        // +++
+      >
+        {children}
+      </LiveblocksProvider>
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Show the AI in your avatar stack</StepTitle>
+    <StepContent>
+
+      To make the AI appear in
+      [`AvatarStack`](/docs/api-reference/liveblocks-react-ui#AvatarStack) without
+      a WebSocket connection, set its presence from the server using
+      [`setPresence`](/docs/api-reference/liveblocks-node#post-rooms-roomId-presence).
+      Call this from a server action or route handler whenever your agent starts
+      working in a room.
+
+      ```ts file="app/agent-presence.ts" highlight="11-16"
+      "use server";
+
+      import { Liveblocks } from "@liveblocks/node";
+      import { AI_USER_INFO } from "./database";
+
+      const liveblocks = new Liveblocks({
+        secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+      });
+
+      export async function showAgentInRoom(roomId: string) {
+        // +++
+        await liveblocks.setPresence(roomId, {
+          userId: AI_USER_INFO.id,
+          userInfo: AI_USER_INFO.info,
+          data: { editingTypes: [] },
+          ttl: 30,
+        });
+        // +++
+      }
+      ```
+
+      The agent will now appear in your `AvatarStack` alongside real users. `ttl`
+      is in seconds and accepts values between `2` and `3599` — set it long enough
+      to cover the agent’s work, and refresh it periodically while the agent is
+      still running.
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Create a frame to show what the AI is editing</StepTitle>
+    <StepContent>
+
+      Next, create a small component that draws a highlighted box around a form
+      field, cell, or any other piece of UI when the AI is editing it. It uses
+      [`useOthers`](/docs/api-reference/liveblocks-react#useOthers) to read the
+      agent’s presence and Tailwind to style the active state.
+
+      ```tsx file="app/AiPresenceEditFrame.tsx"
+      "use client";
+
+      import { useCallback, type ReactNode } from "react";
+      import { useOthers, shallow } from "@liveblocks/react";
+      import { AI_USER_INFO } from "./database";
+
+      type Props = {
+        editingType: string;
+        children: ReactNode;
+      };
+
+      export function AiPresenceEditFrame({ editingType, children }: Props) {
+        // +++
+        const selector = useCallback(
+          (others: readonly { id?: string; presence: { editingTypes?: string[] } }[]) => {
+            const ai = others.find((o) => o.id === AI_USER_INFO.id);
+            const editingTypes = ai?.presence?.editingTypes;
+            return Array.isArray(editingTypes) && editingTypes.includes(editingType);
+          },
+          [editingType]
+        );
+
+        const active = useOthers(selector, shallow);
+        // +++
+
+        return (
+          <div className="relative rounded-md">
+            <span
+              className={
+                active
+                  ? "absolute -left-[3px] bottom-full z-[1] mb-px inline-flex items-center gap-0.5 rounded-t-sm bg-indigo-500 px-1 py-[3px] text-[11px] font-semibold leading-none text-white max-w-full"
+                  : "sr-only"
+              }
+            >
+              <span className="truncate">{AI_USER_INFO.info.name}</span>
+            </span>
+            <div
+              className={
+                active
+                  ? "rounded-sm rounded-tl-none ring-2 ring-indigo-500 ring-offset-1 ring-offset-white"
+                  : "rounded-sm"
+              }
+            >
+              {children}
+            </div>
+          </div>
+        );
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Wrap your form fields</StepTitle>
+    <StepContent>
+
+      Now wrap any field, cell, or section your AI agent may edit with
+      `AiPresenceEditFrame`, and give each one a unique `editingType`. When the
+      agent is editing that field, a labelled indigo box will appear around it.
+
+      ```tsx file="app/IssueForm.tsx" highlight="10,15"
+      "use client";
+
+      import { AiPresenceEditFrame } from "./AiPresenceEditFrame";
+
+      export function IssueForm() {
+        return (
+          <form className="space-y-3">
+            <label className="block">
+              <span className="text-sm">Title</span>
+              <AiPresenceEditFrame editingType="title">
+                <input name="title" className="mt-1 block w-full rounded-sm border px-2 py-1" />
+              </AiPresenceEditFrame>
+            </label>
+            <label className="block">
+              <span className="text-sm">Description</span>
+              <AiPresenceEditFrame editingType="description">
+                <textarea name="description" className="mt-1 block w-full rounded-sm border px-2 py-1" rows={4} />
+              </AiPresenceEditFrame>
+            </label>
+          </form>
+        );
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Tell the room which field the AI is editing</StepTitle>
+    <StepContent>
+
+      Back on the server, call
+      [`setPresence`](/docs/api-reference/liveblocks-node#post-rooms-roomId-presence)
+      again whenever the agent switches fields. The `editingTypes` array drives
+      which `AiPresenceEditFrame` lights up. Update it as your agent moves between
+      fields.
+
+      ```ts file="app/agent-presence.ts" highlight="3-9"
+      export async function setAgentEditing(
+        roomId: string,
+        editingTypes: string[]
+      ) {
+        // +++
+        await liveblocks.setPresence(roomId, {
+          userId: AI_USER_INFO.id,
+          userInfo: AI_USER_INFO.info,
+          data: { editingTypes },
+          ttl: 15,
+        });
+        // +++
+      }
+      ```
+
+      For example, call `setAgentEditing(roomId, ["title"])` while the agent is
+      writing the title, then `setAgentEditing(roomId, ["description"])` when it
+      moves on to the description.
+
+    </StepContent>
+
+  </Step>
+  <Step lastStep>
+    <StepTitle>Hide the AI when it’s done</StepTitle>
+    <StepContent>
+
+      When the agent finishes, call `setPresence` one last time with `ttl: 2`.
+      Two seconds is the minimum
+      [allowed by the API](/docs/api-reference/liveblocks-node#post-rooms-roomId-presence),
+      so the AI’s avatar and edit frame will fade out almost immediately — without
+      needing any extra cleanup logic.
+
+      ```ts file="app/agent-presence.ts" highlight="3-9"
+      export async function hideAgent(roomId: string) {
+        // +++
+        await liveblocks.setPresence(roomId, {
+          userId: AI_USER_INFO.id,
+          userInfo: AI_USER_INFO.info,
+          data: { editingTypes: [] },
+          ttl: 2,
+        });
+        // +++
+      }
+      ```
+
+      That’s it — your AI agent now shows up in the avatar stack while it works,
+      highlights the field it’s editing in realtime, and disappears 2 seconds
+      after finishing.
+
+    </StepContent>
+
+  </Step>
+</Steps>
+
+## What to read next
+
+Congratulations! You’ve set up the foundation for AI Presence in your Next.js
+application.
+
+- [@liveblocks/node API Reference](/docs/api-reference/liveblocks-node#post-rooms-roomId-presence)
+- [@liveblocks/react API Reference](/docs/api-reference/liveblocks-react#useOthers)
+- [Add AI agents to React Flow](/docs/get-started/nextjs-ai-react-flow)
+- [Notify users when an AI agent finishes](/docs/get-started/nextjs-ai-notifications)
+
+---
+
+## Examples using AI Presence
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "Linear-like Issue Tracker",
+      slug: "linear-like-issue-tracker/nextjs-linear-like-issue-tracker",
+      image: "/images/examples/thumbnails/linear-like-issue-tracker.jpg",
+      advanced: true,
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Collaborative Flowchart AI",
+      slug: "collaborative-flowchart-ai/nextjs-react-flow-ai",
+      image: "/images/examples/thumbnails/collaborative-flowchart-ai.jpg",
+      advanced: true,
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+</ListGrid>
