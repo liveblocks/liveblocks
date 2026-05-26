@@ -751,6 +751,7 @@ describe("LiveList edge cases", () => {
             parentKey: FIRST_POSITION,
             data: "B",
             intent: "set",
+            deletedId: "0:1",
           },
         ]);
 
@@ -784,6 +785,7 @@ describe("LiveList edge cases", () => {
             parentKey: FIRST_POSITION,
             data: "B",
             intent: "set",
+            deletedId: "0:1",
           },
         ]);
 
@@ -828,6 +830,7 @@ describe("LiveList edge cases", () => {
             parentKey: FIRST_POSITION,
             data: "B",
             intent: "set",
+            deletedId: "0:1",
           },
         ]);
 
@@ -862,6 +865,7 @@ describe("LiveList edge cases", () => {
             parentKey: FIRST_POSITION,
             data: "B",
             intent: "set",
+            deletedId: "0:1",
           },
         ]);
 

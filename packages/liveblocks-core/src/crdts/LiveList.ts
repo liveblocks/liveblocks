@@ -117,9 +117,13 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
     for (const item of this.#items) {
       const parentKey = item._getParentKeyOrThrow();
-      const childOps = HACK_addIntentAndDeletedIdToOperation(
+      // Tag each child's create with "set" (no deletedId — nothing specific is
+      // being replaced). This routes the ack through the set path so a list
+      // created and immediately mutated doesn't transiently re-show its initial
+      // items (to avoid flicker, see PR 1177).
+      const childOps = addIntentToOpTree(
         item._toOps(this._id, parentKey),
-        undefined
+        "set"
       );
       for (const childOp of childOps) {
         ops.push(childOp);
@@ -546,8 +550,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       this.#items.remove(existingItem);
       this.#items.add(child);
 
-      const reverse = HACK_addIntentAndDeletedIdToOperation(
+      const reverse = addIntentToOpTree(
         existingItem._toOps(nn(this._id), key),
+        "set",
         op.id
       );
 
@@ -1085,13 +1090,15 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       const storageUpdates = new Map<string, LiveListUpdates<TItem>>();
       storageUpdates.set(this._id, makeUpdate(this, [setDelta(index, value)]));
 
-      const ops = HACK_addIntentAndDeletedIdToOperation(
+      const ops = addIntentToOpTree(
         value._toOpsWithOpId(this._id, position, this._pool),
+        "set",
         existingId
       );
       this.#unacknowledgedSets.set(position, nn(ops[0].opId));
-      const reverseOps = HACK_addIntentAndDeletedIdToOperation(
+      const reverseOps = addIntentToOpTree(
         existingItem._toOps(this._id, position),
+        "set",
         id
       );
 
@@ -1345,23 +1352,25 @@ function moveDelta(
 }
 
 /**
- * This function is only temporary.
- * As soon as we refactor the operations structure,
- * serializing a LiveStructure should not know anything about intent
+ * Tags a serialized CreateOp sequence with an `intent` ("set") and
+ * an optional `deletedId`, telling the server how to resolve the new node's
+ * position in its parent list — replace an existing item ("set").
+ *
+ * By default, no explicit intent means a regular insert.
  */
-function HACK_addIntentAndDeletedIdToOperation<T extends CreateOp>(
+function addIntentToOpTree<T extends CreateOp>(
   ops: T[],
-  deletedId: string | undefined
+  intent: "set",
+  deletedId?: string
 ): T[] {
   return ops.map((op, index) => {
     if (index === 0) {
-      // NOTE: Only patch the first Op here
+      // NOTE: Only the *first* Op is patched. `_toOps`/`_toOpsWithOpId` emit
+      // `ops[0]` for the value itself (whose parent is the list), followed by
+      // ops for that value's descendants (whose parent is the new node, not
+      // the list).
       const firstOp = op;
-      return {
-        ...firstOp,
-        intent: "set",
-        deletedId,
-      };
+      return { ...firstOp, intent, deletedId };
     } else {
       return op;
     }
