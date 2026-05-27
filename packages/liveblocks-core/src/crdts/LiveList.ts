@@ -47,12 +47,10 @@ function childNodeLt(a: LiveNode, b: LiveNode): boolean {
 export class LiveList<TItem extends Lson> extends AbstractCrdt {
   #items: SortedList<LiveNode>;
   #implicitlyDeletedItems: WeakSet<LiveNode>;
-  #unacknowledgedSets: Map<string, string>;
 
   constructor(items: TItem[]) {
     super();
     this.#implicitlyDeletedItems = new WeakSet();
-    this.#unacknowledgedSets = new Map();
 
     const nodes: LiveNode[] = [];
     let lastPos: Pos | undefined;
@@ -93,12 +91,13 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
   /**
    * @internal
-   * This function assumes that the resulting ops will be sent to the server if they have an 'opId'
-   * so we mutate _unacknowledgedSets to avoid potential flickering
-   * https://github.com/liveblocks/liveblocks/pull/1177
+   * Serializes this list (and its children) into Create ops. Each child's
+   * create is tagged with the "set" intent (in the loop below) so that a list
+   * created and immediately mutated doesn't transiently re-show its initial
+   * items (flicker, https://github.com/liveblocks/liveblocks/pull/1177).
    *
-   * This is quite unintuitive and should disappear as soon as
-   * we introduce an explicit LiveList.Set operation
+   * This is quite unintuitive and should disappear as soon as we introduce an
+   * explicit LiveList.Set operation.
    */
   _toOps(parentId: string, parentKey: string): CreateOp[] {
     if (this._id === undefined) {
@@ -117,10 +116,10 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
     for (const item of this.#items) {
       const parentKey = item._getParentKeyOrThrow();
-      // Tag each child's create with "set" (no deletedId — nothing specific is
-      // being replaced). This routes the ack through the set path so a list
-      // created and immediately mutated doesn't transiently re-show its initial
-      // items (to avoid flicker, see PR 1177).
+      // Tag each child's create with "set" (no deletedId, since nothing
+      // specific is being replaced). This routes the ack through the set path
+      // so a list created and immediately mutated doesn't transiently re-show
+      // its initial items (to avoid flicker, see PR 1177).
       const childOps = addIntentToOpTree(
         item._toOps(this._id, parentKey),
         "set"
@@ -169,6 +168,27 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     return this.#items.findIndex(
       (item) => item._getParentKeyOrThrow() === position
     );
+  }
+
+  /**
+   * The opId of this list's still-unacknowledged "set" op at the given position,
+   * or undefined if none. Derived from the room's unacknowledgedOps (the single
+   * source of truth) rather than tracked in a per-instance map. The pool's
+   * position index already scopes to this list's (parentId, position); the last
+   * match wins, matching the original last-write-wins map semantics.
+   */
+  #unacknowledgedSetOpIdAt(position: string): string | undefined {
+    if (this._pool === undefined || this._id === undefined) {
+      return undefined;
+    }
+
+    let opId: string | undefined;
+    for (const op of this._pool.getUnacknowledgedOps(this._id, position)) {
+      if (op.intent === "set") {
+        opId = op.opId;
+      }
+    }
+    return opId;
   }
 
   /** @internal */
@@ -286,16 +306,15 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       delta.push(deletedDelta);
     }
 
-    const unacknowledgedOpId = this.#unacknowledgedSets.get(op.parentKey);
-
-    if (unacknowledgedOpId !== undefined) {
-      if (unacknowledgedOpId !== op.opId) {
-        return delta.length === 0
-          ? { modified: false }
-          : { modified: makeUpdate(this, delta), reverse: [] };
-      } else {
-        this.#unacknowledgedSets.delete(op.parentKey);
-      }
+    // If a *different* set op is still pending at this position, our optimistic
+    // state is newer than this (now-stale) ack, so keep ours and ignore it.
+    // (Nothing to clear on a match: the derivation reflects unacknowledgedOps,
+    // which the room already updates on ack.)
+    const unacknowledgedOpId = this.#unacknowledgedSetOpIdAt(op.parentKey);
+    if (unacknowledgedOpId !== undefined && unacknowledgedOpId !== op.opId) {
+      return delta.length === 0
+        ? { modified: false }
+        : { modified: makeUpdate(this, delta), reverse: [] };
     }
 
     const indexOfItemWithSamePosition = this._indexOfPosition(op.parentKey);
@@ -531,8 +550,6 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     if (this._pool?.getNode(id) !== undefined) {
       return { modified: false };
     }
-
-    this.#unacknowledgedSets.set(key, nn(op.opId));
 
     const indexOfItemWithSameKey = this._indexOfPosition(key);
 
@@ -1105,7 +1122,6 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         "set",
         existingId
       );
-      this.#unacknowledgedSets.set(position, nn(ops[0].opId));
       const reverseOps = addIntentToOpTree(
         existingItem._toOps(this._id, position),
         "set",
@@ -1364,7 +1380,7 @@ function moveDelta(
 /**
  * Tags a serialized CreateOp sequence with an `intent` ("set" or "push") and
  * an optional `deletedId`, telling the server how to resolve the new node's
- * position in its parent list — replace an existing item ("set") or append to
+ * position in its parent list: replace an existing item ("set") or append to
  * the true end ("push").
  *
  * By default, no explicit intent means a regular insert.

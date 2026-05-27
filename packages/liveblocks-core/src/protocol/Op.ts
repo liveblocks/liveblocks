@@ -115,6 +115,15 @@ export function isIgnoredOp(op: ServerWireOp): op is IgnoredOp {
   return op.type === OpCode.DELETE_CRDT && op.id === "ACK";
 }
 
+export function isCreateOp<O extends Op>(op: O): op is O & CreateOp {
+  return (
+    op.type === OpCode.CREATE_OBJECT ||
+    op.type === OpCode.CREATE_REGISTER ||
+    op.type === OpCode.CREATE_MAP ||
+    op.type === OpCode.CREATE_LIST
+  );
+}
+
 export type SetParentKeyOp = {
   readonly opId?: string;
   readonly id: string;

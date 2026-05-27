@@ -53,6 +53,18 @@ export interface ManagedPool {
    * @returns {void}
    */
   assertStorageIsWritable: () => void;
+
+  /**
+   * Returns the client's still-unacknowledged Create ops at a given
+   * (parentId, parentKey) position: sent or pending-send, not yet confirmed by
+   * the server. O(1) lookup. Lets CRDTs reason about which of their own
+   * optimistic mutations the server hasn't settled yet from the single source
+   * of truth, instead of mirroring it in per-instance bookkeeping.
+   */
+  readonly getUnacknowledgedOps: (
+    parentId: string,
+    parentKey: string
+  ) => Iterable<ClientWireCreateOp>;
 }
 
 export type CreateManagedPoolOptions = {
@@ -79,6 +91,17 @@ export type CreateManagedPoolOptions = {
    * have an effect upstream.
    */
   isStorageWritable?: () => boolean;
+
+  /**
+   * Returns the client's still-unacknowledged Create ops at a given
+   * (parentId, parentKey) position. Used by CRDTs (e.g. LiveList) to know which
+   * of their optimistic mutations the server hasn't confirmed yet. Defaults to
+   * none.
+   */
+  getUnacknowledgedOps: (
+    parentId: string,
+    parentKey: string
+  ) => Iterable<ClientWireCreateOp>;
 };
 
 /**
@@ -92,6 +115,7 @@ export function createManagedPool(
     getCurrentConnectionId,
     onDispatch,
     isStorageWritable = () => true,
+    getUnacknowledgedOps,
   } = options;
 
   let clock = 0;
@@ -124,6 +148,8 @@ export function createManagedPool(
         );
       }
     },
+
+    getUnacknowledgedOps,
   };
 }
 

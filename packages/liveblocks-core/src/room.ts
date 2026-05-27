@@ -43,6 +43,7 @@ import { asPos } from "./lib/position";
 import { DerivedSignal, PatchableSignal, Signal } from "./lib/signals";
 import { makeStopWatch } from "./lib/stopwatch";
 import { stringifyOrLog as stringify } from "./lib/stringify";
+import { UnacknowledgedOps } from "./lib/UnacknowledgedOps";
 import {
   compact,
   deepClone,
@@ -1364,8 +1365,9 @@ type RoomState<
   } | null;
 
   // A registry of yet-unacknowledged Ops. These Ops have already been
-  // submitted to the server, but have not yet been acknowledged.
-  readonly unacknowledgedOps: Map<string, ClientWireOp>;
+  // submitted to the server, but have not yet been acknowledged. Indexed both
+  // by opId and by (parentId, parentKey) position. See UnacknowledgedOps.
+  readonly unacknowledgedOps: UnacknowledgedOps;
 };
 
 export type Polyfills = {
@@ -1595,6 +1597,8 @@ export function createRoom<
       getCurrentConnectionId,
       onDispatch,
       isStorageWritable,
+      getUnacknowledgedOps: (parentId, parentKey) =>
+        context.unacknowledgedOps.getAt(parentId, parentKey),
     }),
     root: undefined,
 
@@ -1603,7 +1607,7 @@ export function createRoom<
     pausedHistory: null,
 
     activeBatch: null,
-    unacknowledgedOps: new Map<string, ClientWireOp>(),
+    unacknowledgedOps: new UnacknowledgedOps(),
   };
 
   // Accumulates nodes as initial storage arrives in chunks via
@@ -2335,14 +2339,13 @@ export function createRoom<
     }
   }
 
-  function applyAndSendOfflineOps(unackedOps: Map<string, ClientWireOp>) {
-    if (unackedOps.size === 0) {
+  function applyAndSendOfflineOps(unackedOps: ClientWireOp[]) {
+    if (unackedOps.length === 0) {
       return;
     }
 
     const messages: ClientMsg<P, E>[] = [];
-    const inOps = Array.from(unackedOps.values());
-    const result = applyLocalOps(inOps);
+    const result = applyLocalOps(unackedOps);
     messages.push({
       type: ClientMsgCode.UPDATE_STORAGE,
       ops: result.opsToEmit,
@@ -2609,7 +2612,7 @@ export function createRoom<
     const storageOps = context.buffer.storageOperations;
     if (storageOps.length > 0) {
       for (const op of storageOps) {
-        context.unacknowledgedOps.set(op.opId, op);
+        context.unacknowledgedOps.add(op);
       }
       notifyStorageStatus();
     }
@@ -2944,7 +2947,7 @@ export function createRoom<
   }
 
   function processInitialStorage(nodes: NodeMap) {
-    const unacknowledgedOps = new Map(context.unacknowledgedOps);
+    const unacknowledgedOps = [...context.unacknowledgedOps.values()];
     createOrUpdateRootFromMessage(nodes);
     applyAndSendOfflineOps(unacknowledgedOps);
     _resolveStoragePromise?.();
