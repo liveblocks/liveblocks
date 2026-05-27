@@ -163,6 +163,52 @@ describe("LiveList edge cases", () => {
       });
     });
 
+    test("push-tail bump skips a pending push that left the list", async () => {
+      const { room, root, expectStorage } = await prepareIsolatedStorageTest<{
+        items: LiveList<string>;
+      }>(
+        [createSerializedRoot(), createSerializedList("0:1", "root", "items")],
+        1
+      );
+
+      const items = root.get("items");
+
+      // This client pushes x0 (id 1:0); its CREATE op stays unacknowledged.
+      items.push("x0");
+      expectStorage({ items: ["x0"] });
+
+      // A remote "set" lands at x0's position with a mismatching deletedId, so
+      // x0 is treated as a conflict: pulled out of the list but kept in the pool
+      // (an "implicitly deleted" item) while its push op is still pending.
+      simulateRemoteOps(room, [
+        {
+          type: OpCode.CREATE_REGISTER,
+          id: "2:0",
+          parentId: "0:1",
+          parentKey: FIRST_POSITION,
+          data: "y0",
+          intent: "set",
+          deletedId: "0:404", // not x0 (1:0) => conflict => x0 implicitly deleted
+        },
+      ]);
+      expectStorage({ items: ["y0"] });
+
+      // A further remote insert triggers the push-tail bump. x0 is still an
+      // unacked push living in the pool, but no longer in the list, so it must
+      // be skipped rather than repositioned (which threw "Cannot reposition
+      // item that is not in the list").
+      simulateRemoteOps(room, [
+        {
+          type: OpCode.CREATE_REGISTER,
+          id: "2:1",
+          parentId: "0:1",
+          parentKey: SECOND_POSITION,
+          data: "z0",
+        },
+      ]);
+      expectStorage({ items: ["y0", "z0"] });
+    });
+
     test("list conflicts with offline", async () => {
       const { room, root, expectStorage, wss } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(

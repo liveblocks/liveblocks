@@ -457,22 +457,26 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * Create op is still pending in the room's unacknowledgedOps). Derived from
    * the single source of truth, so an item drops out the instant its op is
    * acked, with no per-instance membership to leak. Yielded in push order.
+   *
+   * Restricted to items currently in `#items`: a pushed node whose op is still
+   * pending may have been pulled out of the list (e.g. implicitly deleted by a
+   * remote set, or removed by an undo) while still living in the pool, and such
+   * a node must not be repositioned.
    */
-  #unackedPushNodes(): Set<LiveNode> {
-    const nodes = new Set<LiveNode>();
+  *#unackedPushNodes(): Iterable<LiveNode> {
     if (this._pool === undefined || this._id === undefined) {
-      return nodes;
+      return;
     }
+
     for (const op of this._pool.unacknowledgedOps.getByParentId(this._id)) {
       if (op.intent !== "push") {
         continue;
       }
       const node = this._pool.getNode(op.id);
-      if (node !== undefined) {
-        nodes.add(node);
+      if (node !== undefined && this.#items.includes(node)) {
+        yield node;
       }
     }
-    return nodes;
   }
 
   /**
@@ -485,7 +489,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * the real acks overwrite these keys with the (identical) server keys.
    */
   #bumpUnackedPushesAbove(remoteKey: Pos): LiveListUpdateDelta[] {
-    const pending = this.#unackedPushNodes();
+    const pending = new Set(this.#unackedPushNodes());
     if (pending.size === 0) {
       return [];
     }
