@@ -1,19 +1,19 @@
 ---
 meta:
-  title:
-    "Get started with an in-app custom notification inbox using Liveblocks and
-    Next.js"
+  title: "Get started with AI agent notifications using Liveblocks and Next.js"
   parentTitle: "Quickstart"
   description:
-    "Learn how to add an in-app custom notification inbox using using Liveblocks
-    Liveblocks and Next.js"
+    "Learn how to notify users when an AI agent has completed its work using
+    Liveblocks notifications and Next.js"
 ---
 
 Liveblocks is a realtime collaboration infrastructure for building performant
-collaborative experiences. Follow this guide to start adding custom
-notifications to your Next.js `/app` directory application using the hooks from
-[`@liveblocks/react`](/docs/api-reference/liveblocks-react) and the components
-from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
+collaborative experiences. Follow this guide to create an inbox notification
+system in your app, and notify users when an AI agent has completed its work.
+This uses a Next.js `/app` directory application, with the hooks from
+[`@liveblocks/react`](/docs/api-reference/liveblocks-react), the components from
+[`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui), and
+[`@liveblocks/node`](/docs/api-reference/liveblocks-node) on the server.
 
 ## Quickstart
 
@@ -87,7 +87,7 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
               name: user.name,
               avatar: user.avatar,
             },
-          }
+          },
         );
 
         return new Response(body, { status });
@@ -206,14 +206,16 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
   </Step>
 
    <Step>
-    <StepTitle>Trigger a custom notification</StepTitle>
+    <StepTitle>Notify the user when your agent completes</StepTitle>
     <StepContent>
 
-      Trigger a custom notification using
+      Trigger a notification with
       [`triggerInboxNotification`](/docs/api-reference/liveblocks-node#post-inbox-notifications-trigger)
-      from a server action or route handler. In this example, a custom `$fileUploaded` notification is sent.
+      from a server action or route handler at the end of your agent’s work. In
+      this example, a custom `$agentCompleted` notification is sent once the
+      agent has finished a task.
 
-      ```ts
+      ```ts file="app/run-agent.ts"
       "use server";
 
       import { Liveblocks } from "@liveblocks/node";
@@ -222,35 +224,45 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
         secret: process.env.LIVEBLOCKS_SECRET_KEY!,
       });
 
-      // Call this in your app to create a custom notification
-      export async function triggerCustomNotification() {
-        // +++
-        await liveblocks.triggerInboxNotification({
-          // The user that will receive the notification
-          userId: "steven@example.com",
-          kind: "$fileUploaded",
-          subjectId: "my-file",
+      export async function runAgent({
+        userId,
+        task,
+      }: {
+        userId: string;
+        task: string;
+      }) {
+        const startedAt = Date.now();
 
-          // Custom data for this notification
+        // Run your AI agent here, e.g. generateText, mutateFlow, …
+        await __runYourAgent__({ task });
+
+        // +++
+        // Notify the user that the agent has finished
+        await liveblocks.triggerInboxNotification({
+          userId,
+          kind: "$agentCompleted",
+          subjectId: `agent-${task}`,
           activityData: {
-            file: "https://example.com/my-file.zip",
-            status: "pending",
+            task,
+            status: "complete",
+            durationMs: Date.now() - startedAt,
           },
         });
         // +++
       }
       ```
+
     </StepContent>
 
   </Step>
 
   <Step>
 
-  <StepTitle>Render the custom notification</StepTitle>
+  <StepTitle>Render the agent notification</StepTitle>
   <StepContent>
 
     After triggering the custom notification, modify `InboxNotification` to
-    [render it with custom UI](/docs/api-reference/liveblocks-react-ui#Rendering-notification-kinds-differently).
+    [render `$agentCompleted` with custom UI](/docs/api-reference/liveblocks-react-ui#Rendering-notification-kinds-differently).
 
     ```tsx file="app/page.tsx"
     "use client";
@@ -272,14 +284,14 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
               inboxNotification={inboxNotification}
               // +++
               kinds={{
-                $fileUploaded: (props) => (
+                $agentCompleted: (props) => (
                   <InboxNotification.Custom
                     {...props}
-                    title="File uploaded!"
-                    aside={<InboxNotification.Icon>📎</InboxNotification.Icon>}
+                    title="Agent finished"
+                    aside={<InboxNotification.Icon>✨</InboxNotification.Icon>}
                   >
-                    A new file has been uploaded:
-                    <b>{props.inboxNotification.activities[0].file}</b>
+                    Your agent finished working on{" "}
+                    <b>{props.inboxNotification.activities[0].data.task}</b>.
                   </InboxNotification.Custom>
                 ),
               }}
@@ -314,11 +326,13 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
 
 ## What to read next
 
-Congratulations! You’ve set up the foundation to start building a notifications
-experience for your React application.
+Congratulations! You’ve set up notifications that fire when your AI agent
+finishes its work.
 
 - [API reference](/docs/api-reference/liveblocks-react#Notifications)
 - [Component reference](/docs/api-reference/liveblocks-react-ui#Notifications)
+- [`triggerInboxNotification` reference](/docs/api-reference/liveblocks-node#post-inbox-notifications-trigger)
+- [AI Presence quickstart](/docs/get-started/nextjs-ai-presence)
 
 ---
 
@@ -327,20 +341,20 @@ experience for your React application.
 <ListGrid columns={2}>
   <ExampleCard
     example={{
-      title: "Comments notifications",
-      slug: "comments-notifications/nextjs-comments-notifications",
-      image: "/images/examples/thumbnails/comments-notifications.png",
+      title: "Custom notifications",
+      slug: "notifications-custom/nextjs-notifications-custom",
+      image: "/images/examples/thumbnails/custom-notifications.png",
     }}
     technologies={["nextjs", "react"]}
     openInNewWindow
   />
   <ExampleCard
     example={{
-      title: "Custom notifications",
-      slug: "notifications-custom/nextjs-notifications-custom",
-      image: "/images/examples/thumbnails/custom-notifications.png",
+      title: "AI Comments",
+      slug: "ai-comments/nextjs-comments-ai",
+      image: "/images/examples/thumbnails/comments-ai.jpg",
     }}
-    technologies={["nextjs", "react"]}
+    technologies={["nextjs"]}
     openInNewWindow
   />
   <ExampleCard
