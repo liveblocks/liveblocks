@@ -11,28 +11,30 @@ type PositionKey = `${string}\n${string}`;
 /**
  * The client's still-unacknowledged ops.
  *
- * Maintains two indexes that stay in lockstep (the whole point of keeping this
- * in one place):
+ * Maintains three indexes that stay in lockstep (the whole point of keeping
+ * this in one place):
  *
- * - `#byOpId`: the primary record, `opId → op`.
- * - `#createOpsByPosition`: a secondary index, `position → (opId → Create op)`.
- *   Lets CRDTs find the pending ops at a given position in O(1), without
- *   scanning the whole set. Only Create ops carry a position, so this index
- *   holds exactly those.
+ * - `#byOpId`: the primary record, `opId -> op`.
+ * - `#createOpsByPosition`: `position -> (opId -> Create op)`. Finds the pending
+ *   Create ops at one exact (parentId, parentKey) position in O(1), e.g. to
+ *   resolve set acks. Nested because more than one pending Create op can target
+ *   the same position (two rapid `set()`s at one index); keying the inner map
+ *   by opId keeps it in lockstep with `#byOpId` under any ack order.
+ * - `#createOpsByParent`: `parentId -> (opId -> Create op)`. Finds all pending
+ *   Create ops under one parent node in O(1), regardless of position, e.g. a
+ *   list's own optimistically-pushed items.
  *
- * The position index is nested (a map of maps) rather than flat
- * (`position → op`) because more than one pending Create op can target the same
- * position at once. For example, two rapid `set()`s at the same index each emit
- * a Create op with the same `parentKey`. Keying the inner map by opId lets
- * {@link delete} remove exactly the acked op, keeping this index in lockstep
- * with `#byOpId` regardless of the order acks arrive.
+ * Only Create ops carry a parent/position, so the two secondary indexes hold
+ * exactly those.
  */
 export class UnacknowledgedOps {
-  // opId → op
+  // opId -> op
   #byOpId: Map<string, ClientWireOp> = new Map();
-  // position → (opId → Create op)
+  // position -> (opId -> Create op)
   #createOpsByPosition: Map<PositionKey, Map<string, ClientWireCreateOp>> =
     new Map();
+  // parentId -> (opId -> Create op)
+  #createOpsByParent: Map<string, Map<string, ClientWireCreateOp>> = new Map();
 
   #posKey(parentId: string, parentKey: string): PositionKey {
     return `${parentId}\n${parentKey}`;
@@ -53,6 +55,13 @@ export class UnacknowledgedOps {
         this.#createOpsByPosition.set(posKey, atPosition);
       }
       atPosition.set(op.opId, op);
+
+      let inParent = this.#createOpsByParent.get(op.parentId);
+      if (inParent === undefined) {
+        inParent = new Map();
+        this.#createOpsByParent.set(op.parentId, inParent);
+      }
+      inParent.set(op.opId, op);
     }
   }
 
@@ -76,6 +85,12 @@ export class UnacknowledgedOps {
       if (atPosition !== undefined && atPosition.size === 0) {
         this.#createOpsByPosition.delete(posKey);
       }
+
+      const inParent = this.#createOpsByParent.get(op.parentId);
+      inParent?.delete(opId);
+      if (inParent !== undefined && inParent.size === 0) {
+        this.#createOpsByParent.delete(op.parentId);
+      }
     }
   }
 
@@ -84,7 +99,19 @@ export class UnacknowledgedOps {
    * position, in dispatch order. O(1) lookup. Empty if none.
    */
   getAt(parentId: string, parentKey: string): Iterable<ClientWireCreateOp> {
-    return this.#createOpsByPosition.get(this.#posKey(parentId, parentKey))?.values() ?? [];
+    return (
+      this.#createOpsByPosition
+        .get(this.#posKey(parentId, parentKey))
+        ?.values() ?? []
+    );
+  }
+
+  /**
+   * The still-unacknowledged Create ops under the given parent node, across all
+   * positions, in dispatch order. O(1) lookup. Empty if none.
+   */
+  getInParent(parentId: string): Iterable<ClientWireCreateOp> {
+    return this.#createOpsByParent.get(parentId)?.values() ?? [];
   }
 
   /** All still-unacknowledged ops, in dispatch order. */

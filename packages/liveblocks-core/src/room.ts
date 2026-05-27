@@ -1599,6 +1599,8 @@ export function createRoom<
       isStorageWritable,
       getUnacknowledgedOps: (parentId, parentKey) =>
         context.unacknowledgedOps.getAt(parentId, parentKey),
+      getUnacknowledgedOpsInParent: (parentId) =>
+        context.unacknowledgedOps.getInParent(parentId),
     }),
     root: undefined,
 

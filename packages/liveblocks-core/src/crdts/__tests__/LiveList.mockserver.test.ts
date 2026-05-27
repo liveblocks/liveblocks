@@ -129,8 +129,13 @@ describe("LiveList edge cases", () => {
         },
       ]);
 
+      // x0/x1 are this client's own still-unacked pushes, so the arriving
+      // remote y1 (processed first by the server) sorts before them. The
+      // pending push-tail stays contiguous after y1 rather than being
+      // interleaved into ["y0", "x0", "y1", "x1"] and then flipping. The
+      // SET_PARENT_KEY below confirms the server places x0 after y0/y1 too.
       expectStorage({
-        items: ["y0", "x0", "y1", "x1"],
+        items: ["y0", "y1", "x0", "x1"],
       });
 
       simulateRemoteOps(room, [

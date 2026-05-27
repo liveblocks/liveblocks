@@ -65,6 +65,15 @@ export interface ManagedPool {
     parentId: string,
     parentKey: string
   ) => Iterable<ClientWireCreateOp>;
+
+  /**
+   * Returns all of the client's still-unacknowledged Create ops under the given
+   * parent node, across all positions, in dispatch order. Lets LiveList find
+   * its own optimistically-pushed items the server hasn't confirmed yet.
+   */
+  readonly getUnacknowledgedOpsInParent: (
+    parentId: string
+  ) => Iterable<ClientWireCreateOp>;
 }
 
 export type CreateManagedPoolOptions = {
@@ -102,6 +111,15 @@ export type CreateManagedPoolOptions = {
     parentId: string,
     parentKey: string
   ) => Iterable<ClientWireCreateOp>;
+
+  /**
+   * Returns all of the client's still-unacknowledged Create ops under the
+   * given parent node, across all positions. Used by LiveList for its
+   * optimistic push no-flip.
+   */
+  getUnacknowledgedOpsInParent: (
+    parentId: string
+  ) => Iterable<ClientWireCreateOp>;
 };
 
 /**
@@ -116,6 +134,7 @@ export function createManagedPool(
     onDispatch,
     isStorageWritable = () => true,
     getUnacknowledgedOps,
+    getUnacknowledgedOpsInParent,
   } = options;
 
   let clock = 0;
@@ -150,6 +169,7 @@ export function createManagedPool(
     },
 
     getUnacknowledgedOps,
+    getUnacknowledgedOpsInParent,
   };
 }
 

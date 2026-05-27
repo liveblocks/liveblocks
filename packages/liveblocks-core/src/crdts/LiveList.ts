@@ -438,11 +438,88 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
     const { newItem, newIndex } = this.#createAttachItemAndSort(op, key);
 
-    // TODO: add move update?
+    const bumpDeltas = this.#bumpUnackedPushesAbove(key);
+
     return {
-      modified: makeUpdate(this, [insertDelta(newIndex, newItem)]),
+      modified: makeUpdate(this, [
+        insertDelta(newIndex, newItem),
+        ...bumpDeltas,
+      ]),
       reverse: [],
     };
+  }
+
+  /**
+   * This list's own still-unacknowledged pushed items (their `intent: "push"`
+   * Create op is still pending in the room's unacknowledgedOps). Derived from
+   * the single source of truth, so an item drops out the instant its op is
+   * acked, with no per-instance membership to leak. Yielded in push order.
+   */
+  #unackedPushNodes(): Set<LiveNode> {
+    const nodes = new Set<LiveNode>();
+    if (this._pool === undefined || this._id === undefined) {
+      return nodes;
+    }
+    for (const op of this._pool.getUnacknowledgedOpsInParent(this._id)) {
+      if (op.intent !== "push") {
+        continue;
+      }
+      const node = this._pool.getNode(op.id);
+      if (node !== undefined) {
+        nodes.add(node);
+      }
+    }
+    return nodes;
+  }
+
+  /**
+   * Optimistic no-flip for pushed items. When a remote op lands at or below my
+   * still-unacked pushed items, those items must end up *after* it: FIFO plus
+   * the room's serial processing guarantee the remote was processed first, so
+   * my unacked pushes belong behind it. Re-chain the whole unacked-push block,
+   * in push order, to sit after the highest confirmed sibling, so it keeps
+   * rendering as a contiguous tail instead of getting interleaved. Local-only;
+   * the real acks overwrite these keys with the (identical) server keys.
+   */
+  #bumpUnackedPushesAbove(remoteKey: Pos): LiveListUpdateDelta[] {
+    const pending = this.#unackedPushNodes();
+    if (pending.size === 0) {
+      return [];
+    }
+
+    // Only bump when the remote intruded into (at or below) the pending block.
+    // If it sorts entirely below, the block already renders above it.
+    let minPending: Pos | undefined;
+    for (const node of pending) {
+      const pos = node._parentPos;
+      if (minPending === undefined || pos < minPending) {
+        minPending = pos;
+      }
+    }
+    if (remoteKey < nn(minPending)) {
+      return [];
+    }
+
+    // Highest confirmed (non-pending) key. `#items` is sorted ascending, so the
+    // last non-pending item we see is the max.
+    let base: Pos | undefined;
+    for (const item of this.#items) {
+      if (!pending.has(item)) {
+        base = item._parentPos;
+      }
+    }
+
+    const deltas: LiveListUpdateDelta[] = [];
+    for (const node of pending) {
+      const previousIndex = this.#items.findIndex((item) => item === node);
+      base = makePosition(base);
+      this.#updateItemPosition(node, base);
+      const index = this.#items.findIndex((item) => item === node);
+      if (index !== previousIndex) {
+        deltas.push(moveDelta(previousIndex, index, node));
+      }
+    }
+    return deltas;
   }
 
   #applyInsertAck(op: CreateOp): ApplyResult {
