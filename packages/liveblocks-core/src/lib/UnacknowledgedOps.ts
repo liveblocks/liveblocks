@@ -9,6 +9,25 @@ import { isCreateOp } from "../protocol/Op";
 type PositionKey = `${string}\n${string}`;
 
 /**
+ * Read-only query surface over {@link UnacknowledgedOps}, handed to CRDTs so
+ * they can look up their own still-pending Create ops without being able to
+ * mutate the set (only the room adds/acks).
+ */
+export interface ReadonlyUnacknowledgedOps {
+  /** Still-unacknowledged Create ops whose `parentId` is the given one. */
+  getByParentId(parentId: string): Iterable<ClientWireCreateOp>;
+
+  /**
+   * Still-unacknowledged Create ops whose `parentId` and `parentKey` are both
+   * the given ones (i.e. targeting one exact position).
+   */
+  getByParentIdAndKey(
+    parentId: string,
+    parentKey: string
+  ): Iterable<ClientWireCreateOp>;
+}
+
+/**
  * The client's still-unacknowledged ops.
  *
  * Maintains three indexes that stay in lockstep (the whole point of keeping
@@ -27,7 +46,7 @@ type PositionKey = `${string}\n${string}`;
  * Only Create ops carry a parent/position, so the two secondary indexes hold
  * exactly those.
  */
-export class UnacknowledgedOps {
+export class UnacknowledgedOps implements ReadonlyUnacknowledgedOps {
   // opId -> op
   #byOpId: Map<string, ClientWireOp> = new Map();
   // position -> (opId -> Create op)
@@ -44,6 +63,9 @@ export class UnacknowledgedOps {
     return this.#byOpId.size;
   }
 
+  /**
+   * Mark the given Op as still unacknowledged.
+   */
   add(op: ClientWireOp): void {
     this.#byOpId.set(op.opId, op);
 
@@ -95,10 +117,14 @@ export class UnacknowledgedOps {
   }
 
   /**
-   * The still-unacknowledged Create ops at the given (parentId, parentKey)
-   * position, in dispatch order. O(1) lookup. Empty if none.
+   * The still-unacknowledged Create ops with the given `parentId` and
+   * `parentKey` (targeting one exact position), in dispatch order. O(1) lookup.
+   * Empty if none.
    */
-  getAt(parentId: string, parentKey: string): Iterable<ClientWireCreateOp> {
+  getByParentIdAndKey(
+    parentId: string,
+    parentKey: string
+  ): Iterable<ClientWireCreateOp> {
     return (
       this.#createOpsByPosition
         .get(this.#posKey(parentId, parentKey))
@@ -107,10 +133,10 @@ export class UnacknowledgedOps {
   }
 
   /**
-   * The still-unacknowledged Create ops under the given parent node, across all
-   * positions, in dispatch order. O(1) lookup. Empty if none.
+   * The still-unacknowledged Create ops with the given `parentId` (across all
+   * positions), in dispatch order. O(1) lookup. Empty if none.
    */
-  getInParent(parentId: string): Iterable<ClientWireCreateOp> {
+  getByParentId(parentId: string): Iterable<ClientWireCreateOp> {
     return this.#createOpsByParent.get(parentId)?.values() ?? [];
   }
 

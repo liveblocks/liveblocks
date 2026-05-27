@@ -1565,6 +1565,11 @@ export function createRoom<
     config.enableDebugLogging
   );
 
+  // The single source of truth for still-unacknowledged ops. Created up front
+  // so the pool can hold a (read-only) reference to the same instance the room
+  // mutates.
+  const unacknowledgedOps = new UnacknowledgedOps();
+
   // The room's internal stateful context
   const context: RoomState<P, S, U, E> = {
     buffer: {
@@ -1597,10 +1602,7 @@ export function createRoom<
       getCurrentConnectionId,
       onDispatch,
       isStorageWritable,
-      getUnacknowledgedOps: (parentId, parentKey) =>
-        context.unacknowledgedOps.getAt(parentId, parentKey),
-      getUnacknowledgedOpsInParent: (parentId) =>
-        context.unacknowledgedOps.getInParent(parentId),
+      unacknowledgedOps,
     }),
     root: undefined,
 
@@ -1609,7 +1611,7 @@ export function createRoom<
     pausedHistory: null,
 
     activeBatch: null,
-    unacknowledgedOps: new UnacknowledgedOps(),
+    unacknowledgedOps,
   };
 
   // Accumulates nodes as initial storage arrives in chunks via

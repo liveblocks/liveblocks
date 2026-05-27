@@ -183,7 +183,10 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     }
 
     let opId: string | undefined;
-    for (const op of this._pool.getUnacknowledgedOps(this._id, position)) {
+    for (const op of this._pool.unacknowledgedOps.getByParentIdAndKey(
+      this._id,
+      position
+    )) {
       if (op.intent === "set") {
         opId = op.opId;
       }
@@ -460,7 +463,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     if (this._pool === undefined || this._id === undefined) {
       return nodes;
     }
-    for (const op of this._pool.getUnacknowledgedOpsInParent(this._id)) {
+    for (const op of this._pool.unacknowledgedOps.getByParentId(this._id)) {
       if (op.intent !== "push") {
         continue;
       }

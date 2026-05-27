@@ -2,6 +2,7 @@ import { assertNever } from "../lib/assert";
 import type { ReadonlyJson } from "../lib/Json";
 import type { Pos } from "../lib/position";
 import { asPos } from "../lib/position";
+import type { ReadonlyUnacknowledgedOps } from "../lib/UnacknowledgedOps";
 import type {
   ClientWireCreateOp,
   ClientWireOp,
@@ -55,25 +56,10 @@ export interface ManagedPool {
   assertStorageIsWritable: () => void;
 
   /**
-   * Returns the client's still-unacknowledged Create ops at a given
-   * (parentId, parentKey) position: sent or pending-send, not yet confirmed by
-   * the server. O(1) lookup. Lets CRDTs reason about which of their own
-   * optimistic mutations the server hasn't settled yet from the single source
-   * of truth, instead of mirroring it in per-instance bookkeeping.
+   * Read-only view of the client's still-unacknowledged ops (sent or
+   * pending-send, not yet confirmed by the server).
    */
-  readonly getUnacknowledgedOps: (
-    parentId: string,
-    parentKey: string
-  ) => Iterable<ClientWireCreateOp>;
-
-  /**
-   * Returns all of the client's still-unacknowledged Create ops under the given
-   * parent node, across all positions, in dispatch order. Lets LiveList find
-   * its own optimistically-pushed items the server hasn't confirmed yet.
-   */
-  readonly getUnacknowledgedOpsInParent: (
-    parentId: string
-  ) => Iterable<ClientWireCreateOp>;
+  readonly unacknowledgedOps: ReadonlyUnacknowledgedOps;
 }
 
 export type CreateManagedPoolOptions = {
@@ -102,24 +88,11 @@ export type CreateManagedPoolOptions = {
   isStorageWritable?: () => boolean;
 
   /**
-   * Returns the client's still-unacknowledged Create ops at a given
-   * (parentId, parentKey) position. Used by CRDTs (e.g. LiveList) to know which
-   * of their optimistic mutations the server hasn't confirmed yet. Defaults to
-   * none.
+   * Read-only view of the client's still-unacknowledged ops. Used by CRDTs
+   * (e.g. LiveList) to know which of their optimistic mutations the server
+   * hasn't confirmed yet.
    */
-  getUnacknowledgedOps: (
-    parentId: string,
-    parentKey: string
-  ) => Iterable<ClientWireCreateOp>;
-
-  /**
-   * Returns all of the client's still-unacknowledged Create ops under the
-   * given parent node, across all positions. Used by LiveList for its
-   * optimistic push no-flip.
-   */
-  getUnacknowledgedOpsInParent: (
-    parentId: string
-  ) => Iterable<ClientWireCreateOp>;
+  unacknowledgedOps: ReadonlyUnacknowledgedOps;
 };
 
 /**
@@ -133,8 +106,7 @@ export function createManagedPool(
     getCurrentConnectionId,
     onDispatch,
     isStorageWritable = () => true,
-    getUnacknowledgedOps,
-    getUnacknowledgedOpsInParent,
+    unacknowledgedOps,
   } = options;
 
   let clock = 0;
@@ -168,8 +140,7 @@ export function createManagedPool(
       }
     },
 
-    getUnacknowledgedOps,
-    getUnacknowledgedOpsInParent,
+    unacknowledgedOps,
   };
 }
 
