@@ -2,7 +2,6 @@ import { assertNever } from "../lib/assert";
 import type { ReadonlyJson } from "../lib/Json";
 import type { Pos } from "../lib/position";
 import { asPos } from "../lib/position";
-import type { ReadonlyUnacknowledgedOps } from "../lib/UnacknowledgedOps";
 import type {
   ClientWireCreateOp,
   ClientWireOp,
@@ -14,6 +13,8 @@ import type { SerializedCrdt } from "../protocol/StorageNode";
 import type * as DevTools from "../types/DevToolsTreeNode";
 import type { LiveNode, Lson } from "./Lson";
 import type { StorageUpdate } from "./StorageUpdates";
+import type { ReadonlyUnacknowledgedOps } from "./UnacknowledgedOps";
+import { UnacknowledgedOps } from "./UnacknowledgedOps";
 
 export type ApplyResult =
   | { reverse: Op[]; modified: StorageUpdate }
@@ -90,9 +91,10 @@ export type CreateManagedPoolOptions = {
   /**
    * Read-only view of the client's still-unacknowledged ops. Used by CRDTs
    * (e.g. LiveList) to know which of their optimistic mutations the server
-   * hasn't confirmed yet.
+   * hasn't confirmed yet. Defaults to an empty view (e.g. server-side pools
+   * that dispatch-and-flush have no optimistic state to track).
    */
-  unacknowledgedOps: ReadonlyUnacknowledgedOps;
+  unacknowledgedOps?: ReadonlyUnacknowledgedOps;
 };
 
 /**
@@ -106,7 +108,7 @@ export function createManagedPool(
     getCurrentConnectionId,
     onDispatch,
     isStorageWritable = () => true,
-    unacknowledgedOps,
+    unacknowledgedOps = new UnacknowledgedOps(),
   } = options;
 
   let clock = 0;

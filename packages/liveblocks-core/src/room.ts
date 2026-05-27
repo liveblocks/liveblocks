@@ -17,6 +17,7 @@ import {
 import { LiveObject } from "./crdts/LiveObject";
 import type { LiveStructure, LsonObject } from "./crdts/Lson";
 import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
+import { UnacknowledgedOps } from "./crdts/UnacknowledgedOps";
 import type {
   DCM,
   DE,
@@ -43,7 +44,6 @@ import { asPos } from "./lib/position";
 import { DerivedSignal, PatchableSignal, Signal } from "./lib/signals";
 import { makeStopWatch } from "./lib/stopwatch";
 import { stringifyOrLog as stringify } from "./lib/stringify";
-import { UnacknowledgedOps } from "./lib/UnacknowledgedOps";
 import {
   compact,
   deepClone,
