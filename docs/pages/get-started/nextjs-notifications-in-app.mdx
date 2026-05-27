@@ -25,7 +25,7 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
       Every package should use the same version.
 
       ```bash trackEvent="install_liveblocks"
-      npm install @liveblocks/client @liveblocks/react @liveblocks/react-ui
+      npm install @liveblocks/client @liveblocks/react @liveblocks/react-ui @liveblocks/node
       ```
 
     </StepContent>
@@ -39,6 +39,57 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
 
       ```bash
       npx create-liveblocks-app@latest --init --framework react
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Add your secret key</StepTitle>
+    <StepContent>
+
+      Create a `.env.local` file and add your Liveblocks secret key from the
+      [dashboard](/dashboard/apikeys).
+
+      ```env file=".env.local"
+      LIVEBLOCKS_SECRET_KEY="{{SECRET_KEY}}"
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Set up authentication</StepTitle>
+    <StepContent>
+
+      Create an [authentication](/docs/authentication) API route with
+      [`identifyUser`](/docs/api-reference/liveblocks-node#id-tokens),
+      passing a unique user ID.
+
+      ```ts file="app/api/liveblocks-auth/route.ts"
+      import { Liveblocks } from "@liveblocks/node";
+
+      const liveblocks = new Liveblocks({
+        secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+      });
+
+      export async function POST(request: Request) {
+        // Get the current user from your database
+        const user = __getUserFromDB__(request);
+
+        // Identify the user and return the result
+        const { status, body } = await liveblocks.identifyUser(
+          { userId: user.id },
+          {
+            userInfo: {
+              name: user.name,
+              avatar: user.avatar,
+            },
+          }
+        );
+
+        return new Response(body, { status });
+      }
       ```
 
     </StepContent>
@@ -62,7 +113,7 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
 
       export function Providers({ children }: { children: ReactNode }) {
         return (
-          <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
+          <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
             {children}
           </LiveblocksProvider>
         );
@@ -152,11 +203,11 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
 
   </Step>
   <Step lastStep>
-    <StepTitle>Next: authenticate and add your users</StepTitle>
+    <StepTitle>Next: add your users</StepTitle>
     <StepContent>
 
-      Notifications is set up and working now, but each user is anonymous—the next step is to
-      authenticate each user as they connect, and attach their name and avatar to their notifications.
+      Notifications is set up and working now, but the auth route is using a placeholder
+      user—the next step is to connect it to your real users, and attach their name and avatar to their notifications.
 
       <Button asChild  className="not-markdown">
         <a href="/docs/guides/how-to-add-users-to-liveblocks-notifications">
