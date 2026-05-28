@@ -105,7 +105,7 @@ jobs:
 
       - name: Run unit tests
         if: needs.check_for_code_changes.outputs.changes == 'true'
-        run: pnpm run test:ci --filter ${{ matrix.pkg }} -- --coverage
+        run: pnpm run test:ci --filter ${{ matrix.pkg }}
 
       - name: Run type tests
         if: needs.check_for_code_changes.outputs.changes == 'true'

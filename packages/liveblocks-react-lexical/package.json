@@ -40,7 +40,7 @@
     "lint:package": "publint --strict && attw --pack",
     "start": "pnpm run dev",
     "test": "vitest run",
-    "test:ci": "vitest run",
+    "test:ci": "vitest run --coverage",
     "test:watch": "vitest"
   },
   "dependencies": {
