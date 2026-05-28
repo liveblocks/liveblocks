@@ -311,8 +311,12 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
     // If a *different* set op is still pending at this position, our optimistic
     // state is newer than this (now-stale) ack, so keep ours and ignore it.
-    // (Nothing to clear on a match: the derivation reflects unacknowledgedOps,
-    // which the room already updates on ack.)
+    // (Nothing to clear on a match: the room already removed op.opId from
+    // unacknowledgedOps before dispatching this ack, so this lookup returns
+    // undefined for the op being acked and only ever surfaces a *newer* pending
+    // set. This assumes acks for a single position arrive in dispatch order,
+    // which holds: one client sends them sequentially and the server preserves
+    // that order.)
     const unacknowledgedOpId = this.#unacknowledgedSetOpIdAt(op.parentKey);
     if (unacknowledgedOpId !== undefined && unacknowledgedOpId !== op.opId) {
       return delta.length === 0
@@ -441,6 +445,12 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
     const { newItem, newIndex } = this.#createAttachItemAndSort(op, key);
 
+    // A new remote sibling just landed among our items, so our still-unacked
+    // pushes may need bumping back to the tail. This is the only place that
+    // bumps: a remote insert or push is the only op that drops a *new* sibling
+    // into the list. Remote sets/moves are computed by the other client against
+    // a view that excludes our still-unacked pushes, so they can't address a
+    // position inside our pending tail block.
     const bumpDeltas = this.#bumpUnackedPushesAbove(key);
 
     return {
