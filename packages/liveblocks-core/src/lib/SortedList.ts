@@ -144,7 +144,7 @@ export class SortedList<T> {
   }
 
   /**
-   * Repositions an item to maintain sorted order after its sort key includes
+   * Repositions an item to maintain sorted order after its sort key has
    * been mutated in-place. For example:
    *
    *   const item = sorted.at(3);
