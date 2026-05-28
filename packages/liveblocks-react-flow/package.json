@@ -57,8 +57,8 @@
     "format": "(eslint --fix src/ || true) && stylelint --fix src/styles/ && prettier --write src/",
     "lint:package": "publint --strict && attw --pack && node check-node-entrypoint.mjs",
     "lint": "eslint src/ && stylelint src/styles/",
-    "test": "pnpm dlx liveblocks@rc dev -P -c 'vitest run --coverage'",
-    "test:ci": "pnpm dlx liveblocks@rc dev -P -c 'vitest run' --",
+    "test": "pnpm dlx liveblocks dev -P -c 'vitest run --coverage'",
+    "test:ci": "pnpm dlx liveblocks dev -P -c 'vitest run' --",
     "test:types": "vitest run --config ./vitest.config.typecheck.ts",
     "test:watch": "vitest"
   },
