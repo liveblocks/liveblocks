@@ -1,6 +1,6 @@
 {
   "name": "liveblocks",
-  "version": "1.4.2-pre1",
+  "version": "1.5.0",
   "description": "Liveblocks command line interface",
   "type": "module",
   "bin": {
