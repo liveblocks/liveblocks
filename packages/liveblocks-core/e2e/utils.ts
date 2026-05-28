@@ -29,6 +29,7 @@ async function initializeRoomForTest<
   class PausableWebSocket extends WebSocket {
     sendBuffer: string[] = [];
     _isSendPaused = false;
+    _dropIncoming = false;
 
     constructor(address: string | URL) {
       super(address);
@@ -62,6 +63,28 @@ async function initializeRoomForTest<
       } else {
         super.send(data);
       }
+    }
+
+    /**
+     * Silently drops every message the server sends from now on, as if the
+     * network ate them. Used to keep an op "pending" on this client even
+     * though the server already received and processed it: the server's
+     * ack/echo never reaches the client, so it never clears from
+     * unacknowledgedOps.
+     */
+    dropIncoming() {
+      this._dropIncoming = true;
+    }
+
+    // `ws` delivers incoming frames by emitting a "message" event (both
+    // addEventListener and .on() listeners run through this). Swallow those
+    // emissions while dropping, leaving every other event untouched.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- matches EventEmitter.emit's own signature
+    emit(eventName: string | symbol, ...args: any[]): boolean {
+      if (this._dropIncoming && eventName === "message") {
+        return false;
+      }
+      return super.emit(eventName, ...args);
     }
   }
 
@@ -126,6 +149,30 @@ export function prepareTestsConflicts<S extends LsonObject>(
        * until Client A has processed them.
        */
       flushB: () => Promise<void>;
+      /**
+       * Flushes Client A's buffered sends to the server without waiting for a
+       * beacon round-trip. Use when Client A is dropping incoming messages (so
+       * a beacon would never return).
+       */
+      flushSyncA: () => void;
+      /**
+       * Flushes Client B's buffered sends to the server without waiting for a
+       * beacon round-trip. Use when Client B is dropping incoming messages (so
+       * a beacon would never return).
+       */
+      flushSyncB: () => void;
+      /**
+       * Makes client A silently drop every message the server sends from now
+       * on, keeping its in-flight ops "pending" even after the server has
+       * processed them.
+       */
+      dropIncomingA: () => void;
+      /**
+       * Makes client B silently drop every message the server sends from now
+       * on, keeping its in-flight ops "pending" even after the server has
+       * processed them.
+       */
+      dropIncomingB: () => void;
     };
   }) => Promise<void>
 ): () => Promise<void> {
@@ -228,6 +275,24 @@ export function prepareTestsConflicts<S extends LsonObject>(
           8000,
           "Client A did not receive beacon from Client B within 8s"
         );
+      },
+
+      flushSyncA: () => {
+        actor1.ws.resume();
+        actor1.ws.pause();
+      },
+
+      flushSyncB: () => {
+        actor2.ws.resume();
+        actor2.ws.pause();
+      },
+
+      dropIncomingA: () => {
+        actor1.ws.dropIncoming();
+      },
+
+      dropIncomingB: () => {
+        actor2.ws.dropIncoming();
       },
     };
 
