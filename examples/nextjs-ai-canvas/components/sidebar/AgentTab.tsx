@@ -5,7 +5,7 @@ import {
   useCreateFeedMessage,
   useFeedMessages,
 } from "@liveblocks/react";
-import { Plus, Sparkles, SquareDashedMousePointer, X } from "lucide-react";
+import { ArrowUp, Plus, Sparkles, SquareDashedMousePointer, X } from "lucide-react";
 import {
   FormEvent,
   KeyboardEvent,
@@ -216,7 +216,7 @@ export function AgentTab({
           type="button"
           onClick={onNewChat}
           disabled={isSending}
-          className="inline-flex items-center gap-1 rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-100 disabled:opacity-50"
+          className="inline-flex items-center gap-1 rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50"
         >
           <Plus size={12} />
           New chat
@@ -243,7 +243,7 @@ export function AgentTab({
             return (
               <div key={message.id} className="flex justify-start">
                 <div className="agent-message max-w-[95%] rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-800">
-                  <div className="mb-1 flex items-center gap-1.5 text-xs font-medium text-emerald-700">
+                  <div className="mb-1 flex items-center gap-1.5 text-xs font-medium text-sky-700">
                     <Sparkles size={14} />
                     Canvas Agent · {message.data.status}
                   </div>
@@ -294,7 +294,7 @@ export function AgentTab({
                         editor.setSelectedShapes(nextIds);
                       }
                     }}
-                    className="rounded-sm hover:bg-blue-100"
+                    className="rounded-sm hover:bg-blue-50"
                   >
                     <X size={12} />
                   </button>
@@ -307,15 +307,16 @@ export function AgentTab({
             onChange={(event) => setInput(event.target.value)}
             onKeyDown={onComposerKeyDown}
             placeholder="Ask the agent to modify the canvas…"
-            className="h-24 w-full resize-none rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 pr-28 text-xs outline-none placeholder:text-xs focus:border-emerald-400"
+            className="h-24 w-full resize-none rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 pr-28 text-xs outline-none placeholder:text-xs focus:border-sky-400"
             style={{ paddingTop: `${composerPaddingTop}px` }}
           />
           <button
             type="submit"
             disabled={isSending || input.trim().length === 0}
-            className="absolute bottom-3 right-3 rounded-md border border-emerald-700 bg-emerald-600 px-2.5 py-1 text-[11px] font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+            className="absolute bottom-4 right-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-sky-700 bg-sky-700 text-white hover:bg-sky-600 disabled:opacity-50"
+            aria-label={isSending ? "Sending" : "Send"}
           >
-            {isSending ? "Sending…" : "Send"}
+            <ArrowUp size={12} className={isSending ? "opacity-70" : ""} />
           </button>
         </div>
       </form>

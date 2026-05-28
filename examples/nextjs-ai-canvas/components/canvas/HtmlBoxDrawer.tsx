@@ -78,7 +78,7 @@ export function HtmlBoxDrawer({
         <button
           type="button"
           onClick={onClose}
-          className="rounded-sm p-1 text-neutral-500 hover:bg-neutral-100"
+          className="rounded-sm p-1 text-neutral-500 hover:bg-neutral-50"
         >
           <X size={18} />
         </button>
@@ -110,7 +110,7 @@ export function HtmlBoxDrawer({
               <input
                 name="title"
                 defaultValue={selectedData?.title ?? ""}
-                className="w-full rounded-md border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-emerald-400"
+                className="w-full rounded-md border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-sky-400"
               />
             </label>
             <a
@@ -129,11 +129,11 @@ export function HtmlBoxDrawer({
             <textarea
               name="html"
               defaultValue={selectedData?.html ?? ""}
-              className="min-h-0 flex-1 resize-none rounded-md border border-neutral-200 bg-neutral-50 p-3 font-mono text-xs outline-none focus:border-emerald-400"
+              className="min-h-0 flex-1 resize-none rounded-md border border-neutral-200 bg-neutral-50 p-3 font-mono text-xs outline-none focus:border-sky-400"
             />
             <button
               type="submit"
-              className="mt-3 rounded-md border border-emerald-700 bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+              className="mt-3 rounded-md border border-sky-700 bg-sky-700 px-3 py-2 text-sm font-medium text-white hover:bg-sky-600"
             >
               Save HTML
             </button>

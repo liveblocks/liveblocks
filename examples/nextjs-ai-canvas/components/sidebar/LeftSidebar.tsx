@@ -33,11 +33,11 @@ export function LeftSidebar({
     <aside className="z-20 flex h-full w-[400px] shrink-0 flex-col border-r border-neutral-200 bg-white">
       <div className="border-b border-neutral-200 px-3 py-3">
         <div className="mb-2 flex items-center gap-2">
-          <div className="grid h-6 w-6 place-items-center rounded-lg bg-emerald-50 text-emerald-700">
+          <div className="grid h-6 w-6 place-items-center text-sky-700">
             <svg
               viewBox="0 0 72 72"
               aria-label="Liveblocks"
-              className="h-3.5 w-3.5"
+              className="h-4.5 w-4.5"
             >
               <path
                 fillRule="evenodd"
@@ -70,11 +70,11 @@ export function LeftSidebar({
                 setIsEditingTitle(false);
               }
             }}
-            className="-ml-1 w-[calc(100%+0.25rem)] rounded-sm bg-white px-2 py-1 text-[15px] font-medium leading-tight tracking-normal text-neutral-900 outline-none ring-0 focus:bg-neutral-50"
+            className="-ml-1.5 w-[calc(100%+0.25rem)] rounded-sm bg-white px-2 py-1 text-[15px] font-medium leading-tight tracking-normal text-neutral-900 outline-none ring-1 ring-sky-200 focus:bg-neutral-50 focus:ring-2 focus:ring-sky-300"
           />
         ) : (
           <button
-            className="-ml-1 inline-flex items-center gap-1 rounded-sm px-2 py-1 text-left text-[15px] font-medium leading-tight tracking-normal text-neutral-900"
+            className="-ml-1.5 inline-flex items-center gap-1 rounded-sm px-2 py-1 text-left text-[15px] font-medium leading-tight tracking-normal text-neutral-900"
             onClick={() => {
               setDraftTitle(storyTitle);
               setIsEditingTitle(true);
@@ -96,7 +96,7 @@ export function LeftSidebar({
               "rounded-md px-2.5 py-0.5 text-[13px] font-medium transition",
               activeTab === "agent"
                 ? "bg-neutral-100 text-neutral-900"
-                : "bg-transparent text-neutral-500 hover:bg-neutral-100"
+                : "bg-transparent text-neutral-500 hover:bg-neutral-50"
             )}
           >
             Agent
@@ -108,7 +108,7 @@ export function LeftSidebar({
               "rounded-md px-2.5 py-0.5 text-[13px] font-medium transition",
               activeTab === "components"
                 ? "bg-neutral-100 text-neutral-900"
-                : "bg-transparent text-neutral-500 hover:bg-neutral-100"
+                : "bg-transparent text-neutral-500 hover:bg-neutral-50"
             )}
           >
             Components
@@ -120,17 +120,17 @@ export function LeftSidebar({
               "rounded-md px-2.5 py-0.5 text-[13px] font-medium transition",
               activeTab === "libraries"
                 ? "bg-neutral-100 text-neutral-900"
-                : "bg-transparent text-neutral-500 hover:bg-neutral-100"
+                : "bg-transparent text-neutral-500 hover:bg-neutral-50"
             )}
           >
             Libraries
           </button>
         </div>
         <div className="flex items-center gap-1 text-neutral-400">
-          <button className="rounded-sm p-1 hover:bg-neutral-100">
+          <button className="rounded-sm p-1 hover:bg-neutral-50">
             <Settings size={14} />
           </button>
-          <button className="rounded-sm p-1 hover:bg-neutral-100">
+          <button className="rounded-sm p-1 hover:bg-neutral-50">
             <Link2 size={14} />
           </button>
         </div>

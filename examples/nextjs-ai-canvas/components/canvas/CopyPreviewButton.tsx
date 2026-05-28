@@ -15,7 +15,7 @@ export function CopyPreviewButton({ fileId }: { fileId: string }) {
         setCopied(true);
         window.setTimeout(() => setCopied(false), 1200);
       }}
-      className="absolute right-4 top-4 z-30 inline-flex h-8 items-center gap-1.5 rounded-md border border-emerald-700 bg-emerald-700 px-2.5 text-xs font-medium text-white shadow-sm hover:bg-emerald-800"
+      className="absolute right-4 top-4 z-30 inline-flex h-8 items-center gap-1.5 rounded-md border border-sky-700 bg-sky-700 px-2.5 text-xs font-medium text-white shadow-sm hover:bg-sky-600"
     >
       {copied ? (
         <Check size={14} className="opacity-80" />

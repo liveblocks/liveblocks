@@ -41,8 +41,8 @@ function ToolButton({
       className={clsx(
         "h-8.5 w-8.5 rounded-md flex items-center justify-center transition",
         active
-          ? "bg-emerald-50 text-emerald-700"
-          : "bg-white text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900",
+          ? "bg-sky-50 text-sky-700"
+          : "bg-white text-neutral-500 hover:bg-neutral-50 hover:text-neutral-900",
         disabled && "opacity-40 cursor-not-allowed"
       )}
     >
@@ -136,8 +136,8 @@ export function Toolbar({
                 className={clsx(
                   "grid h-8.5 w-8.5 place-items-center rounded-lg transition",
                   shapePreset === "rectangle"
-                    ? "bg-emerald-50 text-emerald-700"
-                    : "text-neutral-700 hover:bg-neutral-100"
+                    ? "bg-sky-50 text-sky-700"
+                    : "text-neutral-700 hover:bg-neutral-50"
                 )}
                 onClick={() => setGeoShape("rectangle")}
               >
@@ -149,8 +149,8 @@ export function Toolbar({
                 className={clsx(
                   "grid h-8.5 w-8.5 place-items-center rounded-lg transition",
                   shapePreset === "ellipse"
-                    ? "bg-emerald-50 text-emerald-700"
-                    : "text-neutral-700 hover:bg-neutral-100"
+                    ? "bg-sky-50 text-sky-700"
+                    : "text-neutral-700 hover:bg-neutral-50"
                 )}
                 onClick={() => setGeoShape("ellipse")}
               >
@@ -162,8 +162,8 @@ export function Toolbar({
                 className={clsx(
                   "grid h-8.5 w-8.5 place-items-center rounded-lg transition",
                   shapePreset === "line"
-                    ? "bg-emerald-50 text-emerald-700"
-                    : "text-neutral-700 hover:bg-neutral-100"
+                    ? "bg-sky-50 text-sky-700"
+                    : "text-neutral-700 hover:bg-neutral-50"
                 )}
                 onClick={setLineShape}
               >
@@ -175,8 +175,8 @@ export function Toolbar({
                 className={clsx(
                   "grid h-8.5 w-8.5 place-items-center rounded-lg transition",
                   shapePreset === "arrow"
-                    ? "bg-emerald-50 text-emerald-700"
-                    : "text-neutral-700 hover:bg-neutral-100"
+                    ? "bg-sky-50 text-sky-700"
+                    : "text-neutral-700 hover:bg-neutral-50"
                 )}
                 onClick={setArrowShape}
               >
