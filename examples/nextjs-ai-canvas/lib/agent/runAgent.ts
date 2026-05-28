@@ -195,14 +195,6 @@ function withCursorWobble(
   };
 }
 
-async function verifyShapeInStorage(roomId: string, shapeId: string) {
-  const liveblocks = getLiveblocks();
-  const doc = (await liveblocks.getStorageDocument(roomId, "json")) as {
-    records?: Record<string, unknown>;
-  };
-  return Boolean(doc.records?.[shapeId]);
-}
-
 async function createPlaceholderBox(roomId: string): Promise<BoxAnchor> {
   const liveblocks = getLiveblocks();
   const placeholderInput: AgentToolInputMap["html_canvas_box"] = {
@@ -242,13 +234,6 @@ async function createPlaceholderBox(roomId: string): Promise<BoxAnchor> {
       normalizeShapeLikeRecord(shape) as unknown as StorageRecord
     );
   });
-
-  const isPresent = await verifyShapeInStorage(roomId, shape.id);
-  if (!isPresent) {
-    throw new Error(
-      `Placeholder shape was not persisted to storage (roomId=${roomId}, shapeId=${shape.id})`
-    );
-  }
 
   return {
     shapeId: shape.id,
@@ -338,14 +323,6 @@ async function applyToolCall(
         );
         shapeId = shape.id;
       });
-      if (shapeId) {
-        const isPresent = await verifyShapeInStorage(roomId, shapeId);
-        if (!isPresent) {
-          throw new Error(
-            `Shape mutation did not persist (roomId=${roomId}, shapeId=${shapeId})`
-          );
-        }
-      }
       if (typeof input.x === "number" && typeof input.y === "number") {
         await setAgentPresence(roomId, {
           cursor: { x: input.x, y: input.y },
