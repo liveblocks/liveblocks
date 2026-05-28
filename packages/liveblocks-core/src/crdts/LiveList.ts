@@ -120,7 +120,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       // specific is being replaced). This routes the ack through the set path
       // so a list created and immediately mutated doesn't transiently re-show
       // its initial items (to avoid flicker, see PR 1177).
-      const childOps = addIntentToOpTree(
+      const childOps = addIntentToRootOp(
         item._toOps(this._id, parentKey),
         "set"
       );
@@ -661,7 +661,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       this.#items.remove(existingItem);
       this.#items.add(child);
 
-      const reverse = addIntentToOpTree(
+      const reverse = addIntentToRootOp(
         existingItem._toOps(nn(this._id), key),
         "set",
         op.id
@@ -1013,7 +1013,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
       const ops = value._toOpsWithOpId(this._id, position, this._pool);
       this._pool.dispatch(
-        intent === "push" ? addIntentToOpTree(ops, "push") : ops,
+        intent === "push" ? addIntentToRootOp(ops, "push") : ops,
         [{ type: OpCode.DELETE_CRDT, id }],
         new Map<string, LiveListUpdates<TItem>>([
           [this._id, makeUpdate(this, [insertDelta(index, value)])],
@@ -1211,12 +1211,12 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       const storageUpdates = new Map<string, LiveListUpdates<TItem>>();
       storageUpdates.set(this._id, makeUpdate(this, [setDelta(index, value)]));
 
-      const ops = addIntentToOpTree(
+      const ops = addIntentToRootOp(
         value._toOpsWithOpId(this._id, position, this._pool),
         "set",
         existingId
       );
-      const reverseOps = addIntentToOpTree(
+      const reverseOps = addIntentToRootOp(
         existingItem._toOps(this._id, position),
         "set",
         id
@@ -1472,16 +1472,21 @@ function moveDelta(
 }
 
 /**
- * Tags a serialized CreateOp sequence with an `intent` ("set" or "push") and
- * an optional `deletedId`, telling the server how to resolve the new node's
- * position in its parent list: replace an existing item ("set") or append to
- * the true end ("push").
+ * Tags the root op of a serialized CreateOp sequence with an `intent` ("set" or
+ * "push") and an optional `deletedId`, telling the server how to resolve the
+ * new node's position in its parent list: replace an existing item ("set") or
+ * append to the true end ("push"). Only the root is tagged; see the note in the
+ * body for why.
  *
  * By default, no explicit intent means a regular insert.
  */
-function addIntentToOpTree<T extends CreateOp>(ops: T[], intent: "push"): T[];
-function addIntentToOpTree<T extends CreateOp>(ops: T[], intent: "set", deletedId?: string): T[]; // prettier-ignore
-function addIntentToOpTree<T extends CreateOp>(
+function addIntentToRootOp<T extends CreateOp>(ops: T[], intent: "push"): T[];
+function addIntentToRootOp<T extends CreateOp>(
+  ops: T[],
+  intent: "set",
+  deletedId?: string
+): T[];
+function addIntentToRootOp<T extends CreateOp>(
   ops: T[],
   intent: "set" | "push",
   deletedId?: string
