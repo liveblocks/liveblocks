@@ -287,6 +287,13 @@ export function prepareTestsConflicts<S extends LsonObject>(
       actor1.leave();
       actor2.leave();
     } catch (er) {
+      // Surface the full storage pool of both clients (every node, its parent,
+      // its position key, and its value) so convergence failures are debuggable
+      // from the test output alone.
+      // eslint-disable-next-line no-console
+      console.error(
+        `\n=== Storage pool dump on failure ===\n${actor1.room._dump()}\n\n${actor2.room._dump()}\n`
+      );
       actor1.leave();
       actor2.leave();
       throw er;

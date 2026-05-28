@@ -8,6 +8,7 @@ import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt";
 import { createManagedPool, OpSource } from "./crdts/AbstractCrdt";
 import {
   cloneLson,
+  dumpPool,
   getTreesDiffOperations,
   isLiveList,
   isLiveNode,
@@ -894,6 +895,13 @@ export type Room<
    * connection. If the room is not connected yet, initiate it.
    */
   reconnect(): void;
+
+  /**
+   * @internal
+   * Returns a human-readable dump of every node in this room's storage pool
+   * (id, parent, parent key, value). For debugging convergence issues only.
+   */
+  _dump(): string;
 
   /**
    * Returns the threads within the current room and their associated inbox notifications.
@@ -3787,6 +3795,11 @@ export function createRoom<
       connect: () => managedSocket.connect(),
       reconnect: () => managedSocket.reconnect(),
       disconnect: () => managedSocket.disconnect(),
+
+      _dump: () => {
+        const n = context.pool.nodes.size;
+        return `Room "${roomId}" (${n} node${n === 1 ? "" : "s"}):\n${dumpPool(context.pool)}`;
+      },
       destroy: () => {
         pendingFeedsRequests.forEach((request) =>
           request.reject(new Error("Room destroyed"))

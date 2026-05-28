@@ -145,6 +145,57 @@ export function lsonToLiveNode(value: Lson): LiveNode {
 }
 
 /**
+ * Serializes every node currently in the pool into a flat, human-readable
+ * table: one line per node with its id, parent id, parent key, and value. The
+ * parent key is the fractional position key for list items, or the field/map
+ * key otherwise.
+ *
+ * Unlike `.toJSON()`, this also surfaces nodes that are still in the pool but
+ * detached from any parent (orphaned, or pending and not yet acknowledged),
+ * which is exactly the kind of discrepancy a convergence bug leaves behind.
+ * Intended for debugging only.
+ */
+export function dumpPool(pool: ManagedPool): string {
+  const rows = Array.from(pool.nodes.values(), (node) => {
+    const parent = node.parent;
+    const parentId =
+      parent.type === "HasParent"
+        ? (parent.node._id ?? "?")
+        : parent.type === "Orphaned"
+          ? "<orphaned>"
+          : "-";
+
+    let value: string;
+    if (node instanceof LiveRegister) {
+      value = stringify(node.data);
+    } else if (node instanceof LiveList) {
+      value = "<LiveList>";
+    } else if (node instanceof LiveMap) {
+      value = "<LiveMap>";
+    } else {
+      value = "<LiveObject>";
+    }
+
+    return { id: nn(node._id), parentId, key: node._parentKey ?? "", value };
+  });
+
+  // Group children of the same parent together, ordered by key. Compare keys
+  // by raw string order, matching how the CRDT itself orders positions
+  // (childNodeLt: a._parentPos < b._parentPos).
+  rows.sort((a, b) => {
+    if (a.parentId !== b.parentId) return a.parentId < b.parentId ? -1 : 1;
+    if (a.key !== b.key) return a.key < b.key ? -1 : 1;
+    return 0;
+  });
+
+  return rows
+    .map(
+      (r) => `  ${r.id}  parent=${r.parentId}  key=${r.key || "—"}  ${r.value}`
+    )
+    .join("\n");
+}
+
+/**
  * Computes the operations needed to transform one NodeMap into another.
  *
  * Used when the client receives a fresh storage snapshot from the server
