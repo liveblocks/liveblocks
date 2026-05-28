@@ -162,7 +162,9 @@ test.describe("Offline", () => {
 
     await page1.click("#push");
     await page1.click("#close-with-unexpected-condition");
-    await expectJson(page1, "#socketStatus", "reconnecting");
+    // The transition to "reconnecting" is driven by the async onclose event,
+    // so wait for it rather than reading the status one-shot.
+    await waitForJson(page1, "#socketStatus", "reconnecting");
 
     await page1.click("#push");
     await page1.click("#push");
@@ -180,7 +182,9 @@ test.describe("Offline", () => {
 
     await page1.click("#push");
     await page1.click("#close-with-abnormal-reason");
-    await expectJson(page1, "#socketStatus", "reconnecting");
+    // The transition to "reconnecting" is driven by the async onclose event,
+    // so wait for it rather than reading the status one-shot.
+    await waitForJson(page1, "#socketStatus", "reconnecting");
 
     await page1.click("#push");
     await page1.click("#push");
@@ -198,7 +202,9 @@ test.describe("Offline", () => {
 
     await page1.click("#push");
     await page1.click("#close-with-token-expired");
-    await expectJson(page1, "#socketStatus", "reconnecting");
+    // The transition to "reconnecting" is driven by the async onclose event,
+    // so wait for it rather than reading the status one-shot.
+    await waitForJson(page1, "#socketStatus", "reconnecting");
 
     await page1.click("#push");
     await page1.click("#push");
