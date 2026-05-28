@@ -1,12 +1,14 @@
 "use client";
 
 import { useUpdateMyPresence } from "@liveblocks/react/suspense";
+import { ExternalLink } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useValue, type Editor } from "tldraw";
+import { useValue, type Editor, type TLShape } from "tldraw";
 import { LeftSidebar } from "@/components/sidebar/LeftSidebar";
-import { AgentCursor } from "./AgentCursor";
+import { getHtmlBoxDataFromShapeLike } from "@/lib/htmlBox";
 import { Canvas } from "./Canvas";
 import { CopyPreviewButton } from "./CopyPreviewButton";
+import { HtmlBoxDrawer } from "./HtmlBoxDrawer";
 import { Toolbar } from "./Toolbar";
 
 export function CanvasShell({
@@ -21,11 +23,20 @@ export function CanvasShell({
   const updateMyPresence = useUpdateMyPresence();
   const [editor, setEditor] = useState<Editor | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(!readonly);
+  const [htmlToolOpen, setHtmlToolOpen] = useState(false);
 
   const selectedIds = useValue(
     "current-selected-shape-ids",
     () => editor?.getSelectedShapeIds() ?? [],
     [editor]
+  );
+  const selectedShapes = useValue(
+    "selected-shapes-for-html-tool",
+    () => editor?.getSelectedShapes() ?? [],
+    [editor]
+  ) as TLShape[];
+  const selectedHtmlShape = selectedShapes.find((shape) =>
+    getHtmlBoxDataFromShapeLike(shape)
   );
 
   useEffect(() => {
@@ -44,12 +55,44 @@ export function CanvasShell({
             editor={editor}
             sidebarOpen={sidebarOpen}
             setSidebarOpen={setSidebarOpen}
+            htmlToolOpen={htmlToolOpen}
+            setHtmlToolOpen={setHtmlToolOpen}
           />
         ) : null}
         <CopyPreviewButton fileId={fileId} />
+        {!readonly && selectedHtmlShape ? (
+          <div className="pointer-events-none absolute left-1/2 top-4 z-20 -translate-x-1/2">
+            <div className="pointer-events-auto flex items-center gap-2 rounded-xl border border-neutral-200 bg-white/95 px-3 py-2 shadow-md backdrop-blur">
+              <span className="text-xs font-medium text-neutral-700">HTML box selected</span>
+              <button
+                type="button"
+                onClick={() => setHtmlToolOpen(true)}
+                className="rounded-lg border border-neutral-200 px-2 py-1 text-xs hover:border-neutral-300"
+              >
+                View code
+              </button>
+              <a
+                href={`/files/readonly/${fileId}/${selectedHtmlShape.id}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 rounded-lg border border-neutral-200 px-2 py-1 text-xs hover:border-neutral-300"
+              >
+                <ExternalLink size={12} />
+                Preview
+              </a>
+            </div>
+          </div>
+        ) : null}
         <Canvas readonly={readonly} onEditorMount={setEditor} />
-        <AgentCursor />
       </div>
+      {!readonly ? (
+        <HtmlBoxDrawer
+          fileId={fileId}
+          selectedShapes={selectedShapes}
+          open={htmlToolOpen}
+          onClose={() => setHtmlToolOpen(false)}
+        />
+      ) : null}
     </div>
   );
 }

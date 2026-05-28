@@ -2,6 +2,7 @@
 
 import clsx from "clsx";
 import {
+  Code2,
   Hand,
   ImageIcon,
   MousePointer2,
@@ -50,10 +51,14 @@ export function Toolbar({
   editor,
   sidebarOpen,
   setSidebarOpen,
+  htmlToolOpen,
+  setHtmlToolOpen,
 }: {
   editor: Editor | null;
   sidebarOpen: boolean;
   setSidebarOpen: (value: boolean) => void;
+  htmlToolOpen: boolean;
+  setHtmlToolOpen: (value: boolean) => void;
 }) {
   const [shapeMenuOpen, setShapeMenuOpen] = useState(false);
 
@@ -127,6 +132,13 @@ export function Toolbar({
       </ToolButton>
       <ToolButton title="Draw" onClick={() => editor?.setCurrentTool("draw")}>
         <PenLine size={18} />
+      </ToolButton>
+      <ToolButton
+        active={htmlToolOpen}
+        title="HTML tool"
+        onClick={() => setHtmlToolOpen(!htmlToolOpen)}
+      >
+        <Code2 size={18} />
       </ToolButton>
     </div>
   );

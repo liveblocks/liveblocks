@@ -1,8 +1,7 @@
 "use client";
 
-import { useUpdateMyPresence } from "@liveblocks/react/suspense";
-import { useCallback } from "react";
 import { Tldraw, type Editor } from "tldraw";
+import { htmlBoxShapeUtils } from "@/components/canvas/HtmlBoxShapeUtil";
 import { useStorageStore } from "@/lib/useStorageStore";
 
 export function Canvas({
@@ -12,12 +11,9 @@ export function Canvas({
   readonly: boolean;
   onEditorMount: (editor: Editor) => void;
 }) {
-  const updateMyPresence = useUpdateMyPresence();
-  const { store, isReady } = useStorageStore();
-
-  const handlePointerLeave = useCallback(() => {
-    updateMyPresence({ cursor: null });
-  }, [updateMyPresence]);
+  const { store, isReady } = useStorageStore({
+    shapeUtils: htmlBoxShapeUtils,
+  });
 
   if (!isReady) {
     return (
@@ -28,21 +24,11 @@ export function Canvas({
   }
 
   return (
-    <div
-      className="relative h-full w-full"
-      onPointerMove={(event) => {
-        updateMyPresence({
-          cursor: {
-            x: event.clientX,
-            y: event.clientY,
-          },
-        });
-      }}
-      onPointerLeave={handlePointerLeave}
-    >
+    <div className="relative h-full w-full">
       <Tldraw
         hideUi
         store={store}
+        shapeUtils={htmlBoxShapeUtils}
         onMount={(editor) => {
           if (readonly) {
             editor.updateInstanceState({ isReadonly: true });

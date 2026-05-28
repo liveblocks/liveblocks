@@ -3,6 +3,11 @@ import type { LiveMap } from "@liveblocks/client";
 import { AI_USER } from "@/database";
 import { getLiveblocks } from "@/lib/liveblocksServer";
 import { AGENT_TOOLS, type AgentStatus, type AgentToolInputMap } from "./tools";
+import {
+  createHtmlBoxShapeRecord,
+  HTML_BOX_SHAPE_TYPE,
+  normalizeShapeLikeRecord,
+} from "@/lib/htmlBox";
 
 type StorageRecord = Liveblocks["Storage"]["records"] extends LiveMap<
   string,
@@ -30,45 +35,33 @@ type ToolUseCall = {
   input: unknown;
 };
 
+type BoxAnchor = {
+  shapeId: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+};
+
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
-function createGeoShapeRecord(input: AgentToolInputMap["create_shape"]) {
+function createHtmlBoxRecord(input: AgentToolInputMap["html_canvas_box"]) {
   const width = typeof input.w === "number" ? input.w : 320;
   const height = typeof input.h === "number" ? input.h : 180;
-  const labelText =
-    typeof input.props?.label === "string" ? input.props.label : "";
-
-  return {
-    id: `shape:${crypto.randomUUID()}`,
-    typeName: "shape",
-    type: "geo",
-    x: input.x,
-    y: input.y,
-    rotation: 0,
-    isLocked: false,
-    opacity: 1,
-    parentId: "page:page",
-    index: `a${Date.now().toString(36)}${Math.floor(Math.random() * 1000).toString(36)}`,
-    props: {
-      geo: "rectangle",
-      w: width,
-      h: height,
-      color: "black",
-      labelColor: "black",
-      fill: "none",
-      dash: "draw",
-      size: "m",
-      font: "draw",
-      align: "middle",
-      verticalAlign: "middle",
-      growY: 0,
-      url: "",
-      labelText,
-    },
-    meta: {},
-  };
+  const x = typeof input.x === "number" ? input.x : 220;
+  const y = typeof input.y === "number" ? input.y : 220;
+  const title = (input.title ?? "Generated UI").trim() || "Generated UI";
+  const html = input.html;
+  return createHtmlBoxShapeRecord({
+    x,
+    y,
+    w: width,
+    h: height,
+    title,
+    html,
+  });
 }
 
 function getToolCalls(content: unknown): ToolUseCall[] {
@@ -117,6 +110,30 @@ function getText(content: unknown): string {
     .join("\n");
 }
 
+function createFallbackResponsiveHtml(userMessage: string) {
+  const prompt = userMessage.trim() || "Landing page";
+  return `\
+<section style="padding:24px;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif">
+  <div style="max-width:960px;margin:0 auto">
+    <h1 style="font-size:clamp(1.5rem,4vw,2.5rem);line-height:1.15;margin:0 0 12px">Generated concept</h1>
+    <p style="font-size:clamp(1rem,2vw,1.125rem);color:#444;margin:0 0 20px">${prompt.replace(
+      /</g,
+      "&lt;"
+    )}</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
+      <article style="border:1px solid #ddd;border-radius:12px;padding:16px">
+        <h2 style="font-size:1rem;margin:0 0 8px">Feature one</h2>
+        <p style="margin:0;color:#555">Responsive card layout for quick iteration.</p>
+      </article>
+      <article style="border:1px solid #ddd;border-radius:12px;padding:16px">
+        <h2 style="font-size:1rem;margin:0 0 8px">Feature two</h2>
+        <p style="margin:0;color:#555">Edit this HTML from the right-side drawer.</p>
+      </article>
+    </div>
+  </div>
+</section>`;
+}
+
 async function setAgentPresence(
   roomId: string,
   data: {
@@ -140,92 +157,160 @@ async function setAgentPresence(
   });
 }
 
+function getShapeBoundsFromInput(input: AgentToolInputMap["html_canvas_box"]) {
+  const w = typeof input.w === "number" ? input.w : 320;
+  const h = typeof input.h === "number" ? input.h : 180;
+  const x = typeof input.x === "number" ? input.x : 220;
+  const y = typeof input.y === "number" ? input.y : 220;
+  return { x, y, w, h };
+}
+
+function boxCenter(anchor: Pick<BoxAnchor, "x" | "y" | "w" | "h">) {
+  return {
+    x: anchor.x + anchor.w / 2,
+    y: anchor.y + anchor.h / 2,
+  };
+}
+
+async function verifyShapeInStorage(roomId: string, shapeId: string) {
+  const liveblocks = getLiveblocks();
+  const doc = (await liveblocks.getStorageDocument(roomId, "json")) as {
+    records?: Record<string, unknown>;
+  };
+  return Boolean(doc.records?.[shapeId]);
+}
+
+async function createPlaceholderBox(roomId: string): Promise<BoxAnchor> {
+  const liveblocks = getLiveblocks();
+  const placeholderInput: AgentToolInputMap["html_canvas_box"] = {
+    title: "Generating UI...",
+    html: "<section aria-label=\"Generating\"><p>Generating...</p></section>",
+    x: 220,
+    y: 220,
+    w: 480,
+    h: 320,
+  };
+  const { x, y, w, h } = getShapeBoundsFromInput(placeholderInput);
+
+  const shape = createHtmlBoxRecord(placeholderInput);
+  await liveblocks.mutateStorage(roomId, ({ root }) => {
+    const records = root.get("records");
+    records.set(
+      shape.id,
+      normalizeShapeLikeRecord(shape) as unknown as StorageRecord
+    );
+  });
+
+  const isPresent = await verifyShapeInStorage(roomId, shape.id);
+  if (!isPresent) {
+    throw new Error(
+      `Placeholder shape was not persisted to storage (roomId=${roomId}, shapeId=${shape.id})`
+    );
+  }
+
+  return {
+    shapeId: shape.id,
+    x,
+    y,
+    w,
+    h,
+  };
+}
+
 async function applyToolCall(
   roomId: string,
-  call: ToolUseCall
+  call: ToolUseCall,
+  options?: { preferredTargetShapeId?: string }
 ): Promise<Record<string, unknown>> {
   const liveblocks = getLiveblocks();
   switch (call.name) {
-    case "create_shape": {
-      const input = call.input as AgentToolInputMap["create_shape"];
-      const shape = createGeoShapeRecord(input);
-      await liveblocks.mutateStorage(roomId, ({ root }) => {
-        // XXX tldraw records are stored as JSON-like values in Liveblocks Storage.
-        root.get("records").set(shape.id, shape as unknown as StorageRecord);
-      });
-      return { ok: true, id: shape.id };
-    }
+    case "html_canvas_box": {
+      const input = call.input as AgentToolInputMap["html_canvas_box"];
+      const title = (input.title ?? "Generated UI").trim() || "Generated UI";
+      const html = input.html;
+      if (typeof html !== "string" || html.trim().length === 0) {
+        return { ok: false, error: "Tool input html must be a non-empty string." };
+      }
 
-    case "update_shape": {
-      const input = call.input as AgentToolInputMap["update_shape"];
+      let shapeId = "";
       await liveblocks.mutateStorage(roomId, ({ root }) => {
         const records = root.get("records");
-        const existing = records.get(input.id);
-        if (!existing || typeof existing !== "object") {
-          return;
+        const existingId = input.targetShapeId ?? options?.preferredTargetShapeId;
+
+        if (existingId) {
+          const existing = records.get(existingId);
+          if (existing && typeof existing === "object") {
+            const existingRecord = existing as Record<string, unknown>;
+            if (existingRecord.type !== HTML_BOX_SHAPE_TYPE) {
+              // No migration path in this demo: only update existing html-box shapes.
+              const shape = createHtmlBoxRecord(input);
+              records.set(
+                shape.id,
+                normalizeShapeLikeRecord(shape) as unknown as StorageRecord
+              );
+              shapeId = shape.id;
+              return;
+            }
+            const existingProps =
+              typeof existingRecord.props === "object" && existingRecord.props !== null
+                ? (existingRecord.props as Record<string, unknown>)
+                : {};
+
+            const nextRecord = normalizeShapeLikeRecord({
+              ...existingRecord,
+              typeName: "shape",
+              type: HTML_BOX_SHAPE_TYPE,
+              ...(typeof input.x === "number" ? { x: input.x } : null),
+              ...(typeof input.y === "number" ? { y: input.y } : null),
+              props: {
+                ...existingProps,
+                ...(typeof input.w === "number" ? { w: input.w } : null),
+                ...(typeof input.h === "number" ? { h: input.h } : null),
+                title,
+                html,
+                updatedAt: new Date().toISOString(),
+              },
+            });
+
+            records.set(
+              existingId,
+              normalizeShapeLikeRecord(nextRecord) as unknown as StorageRecord
+            );
+            shapeId = existingId;
+            return;
+          }
         }
-        const patchObject =
-          input.patch && typeof input.patch === "object" ? input.patch : {};
-        const existingObject = existing as Record<string, unknown>;
-        const nextRecord = {
-          ...existingObject,
-          ...patchObject,
-          props: {
-            ...(typeof existingObject.props === "object" &&
-            existingObject.props !== null
-              ? (existingObject.props as Record<string, unknown>)
-              : {}),
-            ...(typeof patchObject.props === "object" && patchObject.props !== null
-              ? (patchObject.props as Record<string, unknown>)
-              : {}),
-          },
-        };
-        records.set(input.id, nextRecord as unknown as StorageRecord);
+
+        const shape = createHtmlBoxRecord(input);
+        records.set(
+          shape.id,
+          normalizeShapeLikeRecord(shape) as unknown as StorageRecord
+        );
+        shapeId = shape.id;
       });
-      return { ok: true, id: input.id };
+      if (shapeId) {
+        const isPresent = await verifyShapeInStorage(roomId, shapeId);
+        if (!isPresent) {
+          throw new Error(
+            `Shape mutation did not persist (roomId=${roomId}, shapeId=${shapeId})`
+          );
+        }
+      }
+      if (typeof input.x === "number" && typeof input.y === "number") {
+        await setAgentPresence(roomId, {
+          cursor: { x: input.x, y: input.y },
+          agentStatus: "editing",
+        });
+      }
+      return { ok: true, id: shapeId };
     }
 
-    case "delete_shape": {
-      const input = call.input as AgentToolInputMap["delete_shape"];
-      await liveblocks.mutateStorage(roomId, ({ root }) => {
-        root.get("records").delete(input.id);
-      });
-      return { ok: true, id: input.id };
-    }
-
-    case "select": {
-      const input = call.input as AgentToolInputMap["select"];
+    default: {
       await setAgentPresence(roomId, {
-        selection: input.ids,
-        agentStatus: "editing",
+        agentStatus: "thinking",
       });
-      return { ok: true };
-    }
-
-    case "move_cursor": {
-      const input = call.input as AgentToolInputMap["move_cursor"];
-      await setAgentPresence(roomId, {
-        cursor: { x: input.x, y: input.y },
-        agentStatus: "editing",
-      });
-      return { ok: true };
-    }
-
-    case "set_status": {
-      const input = call.input as AgentToolInputMap["set_status"];
-      await setAgentPresence(roomId, {
-        agentStatus: input.status,
-      });
-      return { ok: true };
-    }
-
-    case "finish": {
-      const input = call.input as AgentToolInputMap["finish"];
-      return { ok: true, message: input.message };
-    }
-
-    default:
       return { ok: false, error: "Unsupported tool" };
+    }
   }
 }
 
@@ -238,23 +323,37 @@ export async function runAgent({
 }: RunAgentParams) {
   const liveblocks = getLiveblocks();
   const storageDoc = await liveblocks.getStorageDocument(roomId, "json");
+  const placeholder = await createPlaceholderBox(roomId);
+  const placeholderCenter = boxCenter(placeholder);
 
   await setAgentPresence(roomId, {
-    selection: selectedShapeIds,
+    cursor: placeholderCenter,
+    selection: [placeholder.shapeId],
     agentStatus: "thinking",
+  }, 120);
+  await onProgress({
+    text: "Starting generation...",
+    status: "thinking",
+    isStreaming: true,
   });
-  await onProgress({ status: "thinking", isStreaming: true });
+
+  const selectedShapeIdsWithPlaceholder = Array.from(
+    new Set([placeholder.shapeId, ...selectedShapeIds])
+  );
 
   const prompt = [
-    "You are the canvas agent for a collaborative tldraw workspace.",
-    "Use tools to edit the canvas records in Liveblocks storage.",
-    "Always call set_status before editing and finish when done.",
+    "You are the canvas AI for a collaborative design workspace.",
+    "You have exactly one tool: html_canvas_box.",
+    "Do not call any other tools.",
+    "Use html_canvas_box to create/update design boxes with generated HTML for websites/apps.",
+    "Generate responsive HTML/CSS by default (mobile-first layout, fluid widths, and sensible breakpoints).",
+    "When the user asks to edit an existing selected box, set targetShapeId to one of selectedShapeIds.",
     "",
     "<context>",
     JSON.stringify(
       {
         userMessage,
-        selectedShapeIds,
+        selectedShapeIds: selectedShapeIdsWithPlaceholder,
         selectedShapes,
         roomStorage: storageDoc,
       },
@@ -273,14 +372,27 @@ export async function runAgent({
 
   let lastAssistantText = "";
   let reasoning = "";
-  let finishedMessage = "";
+  let successfulToolCallCount = 0;
 
   for (let step = 0; step < 4; step += 1) {
+    await setAgentPresence(
+      roomId,
+      {
+        cursor: placeholderCenter,
+        selection: [placeholder.shapeId],
+        agentStatus: "thinking",
+      },
+      120
+    );
+
     const response = await anthropic.messages.create({
       model: "claude-sonnet-4-6",
       max_tokens: 1400,
       // XXX Anthropic's Tool type is stricter than our reusable schema literal.
       tools: AGENT_TOOLS as never,
+      tool_choice: (step === 0
+        ? { type: "any" }
+        : { type: "auto" }) as never,
       messages: messages as never,
     });
 
@@ -290,7 +402,7 @@ export async function runAgent({
       reasoning = [reasoning, text].filter(Boolean).join("\n\n");
       await onProgress({
         reasoning,
-        text: finishedMessage || lastAssistantText,
+        text: lastAssistantText,
         status: "thinking",
         isStreaming: true,
       });
@@ -313,11 +425,13 @@ export async function runAgent({
         isStreaming: true,
       });
 
-      const result = await applyToolCall(roomId, call);
-      if (call.name === "finish" && typeof result.message === "string") {
-        finishedMessage = result.message;
+      const result = await applyToolCall(roomId, call, {
+        preferredTargetShapeId:
+          successfulToolCallCount === 0 ? placeholder.shapeId : undefined,
+      });
+      if (result.ok === true) {
+        successfulToolCallCount += 1;
       }
-
       toolResults.push({
         type: "tool_result",
         tool_use_id: call.id,
@@ -331,7 +445,29 @@ export async function runAgent({
     });
   }
 
-  const finalText = finishedMessage || lastAssistantText || "Done.";
+  if (successfulToolCallCount === 0) {
+    const html = createFallbackResponsiveHtml(userMessage);
+    await applyToolCall(roomId, {
+      id: `fallback-${crypto.randomUUID()}`,
+      name: "html_canvas_box",
+      input: {
+        targetShapeId: placeholder.shapeId,
+        title: "Generated UI",
+        html,
+      },
+    }, { preferredTargetShapeId: placeholder.shapeId });
+    successfulToolCallCount = 1;
+    await onProgress({
+      status: "editing",
+      isStreaming: true,
+    });
+  }
+
+  const finalText =
+    lastAssistantText ||
+    (successfulToolCallCount > 0
+      ? "Added an HTML box to the canvas. Open the HTML tool to inspect or edit the code."
+      : "I couldn't generate a box this turn. Please try again.");
 
   await onProgress({
     text: finalText,

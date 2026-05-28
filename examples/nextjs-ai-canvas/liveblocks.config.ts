@@ -13,8 +13,10 @@ type LiveblocksJsonObject = { [key: string]: LiveblocksJson };
 declare global {
   interface Liveblocks {
     Presence: {
-      cursor: { x: number; y: number } | null;
-      selection: string[];
+      // tldraw instance presence record used for native collaborator cursors.
+      presence?: LiveblocksJsonObject | null;
+      cursor?: { x: number; y: number } | null;
+      selection?: string[];
       isAgent?: boolean;
       agentStatus?: "thinking" | "editing" | "idle";
     };

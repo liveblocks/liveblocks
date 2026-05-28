@@ -2,8 +2,14 @@
 
 import { useMemo } from "react";
 import { useValue, type Editor, type TLShape } from "tldraw";
+import { getHtmlBoxDataFromShapeLike } from "@/lib/htmlBox";
 
 function getShapeLabel(shape: TLShape, index: number) {
+  const htmlBoxData = getHtmlBoxDataFromShapeLike(shape);
+  if (htmlBoxData) {
+    return htmlBoxData.title || `HTML Box ${index + 1}`;
+  }
+
   if (shape.type === "text") {
     const textValue =
       "text" in shape.props ? shape.props.text : "richText" in shape.props ? shape.props.richText : null;

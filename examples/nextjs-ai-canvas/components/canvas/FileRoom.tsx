@@ -2,15 +2,18 @@
 
 import { LiveMap } from "@liveblocks/client";
 import { ClientSideSuspense, RoomProvider } from "@liveblocks/react/suspense";
+import type { ReactNode } from "react";
 import { CanvasShell } from "./CanvasShell";
 import { getRoomId } from "@/lib/room";
 
 export function FileRoom({
   fileId,
   readonly,
+  children,
 }: {
   fileId: string;
   readonly: boolean;
+  children?: ReactNode;
 }) {
   const roomId = getRoomId(fileId);
 
@@ -34,7 +37,7 @@ export function FileRoom({
           </div>
         }
       >
-        <CanvasShell fileId={fileId} roomId={roomId} readonly={readonly} />
+        {children ?? <CanvasShell fileId={fileId} roomId={roomId} readonly={readonly} />}
       </ClientSideSuspense>
     </RoomProvider>
   );
