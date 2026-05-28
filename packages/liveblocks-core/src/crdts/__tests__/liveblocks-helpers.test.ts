@@ -248,6 +248,133 @@ describe("getTreesDiffOperations", () => {
       },
     ]);
   });
+
+  test("liveObject replacing a non-object node of the same id", () => {
+    const currentItems: NodeMap = new Map([
+      ["root", { type: CrdtType.OBJECT, data: {} }],
+      ["0:1", { type: CrdtType.LIST, parentId: "root", parentKey: "items" }],
+      [
+        "0:2",
+        {
+          type: CrdtType.REGISTER,
+          parentId: "0:1",
+          parentKey: FIRST_POSITION,
+          data: "A",
+        },
+      ],
+    ]);
+
+    const newItems: NodeMap = new Map([
+      ["root", { type: CrdtType.OBJECT, data: {} }],
+      ["0:1", { type: CrdtType.LIST, parentId: "root", parentKey: "items" }],
+      [
+        "0:2",
+        {
+          type: CrdtType.OBJECT,
+          parentId: "0:1",
+          parentKey: FIRST_POSITION,
+          data: { a: 1 },
+        },
+      ],
+    ]);
+
+    const ops = getTreesDiffOperations(currentItems, newItems);
+
+    expect(ops).toEqual([
+      {
+        type: OpCode.UPDATE_OBJECT,
+        id: "0:2",
+        data: { a: 1 },
+      },
+    ]);
+  });
+
+  test("new liveList", () => {
+    const currentItems: NodeMap = new Map([
+      ["root", { type: CrdtType.OBJECT, data: {} }],
+    ]);
+
+    const newItems = new Map(currentItems);
+    newItems.set("0:1", {
+      type: CrdtType.LIST,
+      parentId: "root",
+      parentKey: "items",
+    });
+
+    const ops = getTreesDiffOperations(currentItems, newItems);
+
+    expect(ops).toEqual([
+      {
+        type: OpCode.CREATE_LIST,
+        id: "0:1",
+        parentId: "root",
+        parentKey: "items",
+      },
+    ]);
+  });
+
+  test("new liveMap", () => {
+    const currentItems: NodeMap = new Map([
+      ["root", { type: CrdtType.OBJECT, data: {} }],
+    ]);
+
+    const newItems = new Map(currentItems);
+    newItems.set("0:1", {
+      type: CrdtType.MAP,
+      parentId: "root",
+      parentKey: "map",
+    });
+
+    const ops = getTreesDiffOperations(currentItems, newItems);
+
+    expect(ops).toEqual([
+      {
+        type: OpCode.CREATE_MAP,
+        id: "0:1",
+        parentId: "root",
+        parentKey: "map",
+      },
+    ]);
+  });
+
+  test("new liveObject", () => {
+    const currentItems: NodeMap = new Map([
+      ["root", { type: CrdtType.OBJECT, data: {} }],
+    ]);
+
+    const newItems = new Map(currentItems);
+    newItems.set("0:1", {
+      type: CrdtType.OBJECT,
+      parentId: "root",
+      parentKey: "item",
+      data: { a: 1 },
+    });
+
+    const ops = getTreesDiffOperations(currentItems, newItems);
+
+    expect(ops).toEqual([
+      {
+        type: OpCode.CREATE_OBJECT,
+        id: "0:1",
+        parentId: "root",
+        parentKey: "item",
+        data: { a: 1 },
+      },
+    ]);
+  });
+
+  test("new liveObject without a parent throws", () => {
+    const currentItems: NodeMap = new Map([
+      ["root", { type: CrdtType.OBJECT, data: {} }],
+    ]);
+
+    const newItems = new Map(currentItems);
+    newItems.set("0:1", { type: CrdtType.OBJECT, data: { a: 1 } });
+
+    expect(() => getTreesDiffOperations(currentItems, newItems)).toThrow(
+      "Internal error. Cannot serialize storage root into an operation"
+    );
+  });
 });
 
 describe("toPlainLson", () => {
