@@ -14,15 +14,16 @@ npx liveblocks dev
 
 Options:
 
-| Flag              | Description                                                                                                               | Default           |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------- | ----------------- |
-| `--port`, `-p`    | Port to listen on.                                                                                                        | `1153`            |
-| `--host`          | Host to bind to.                                                                                                          | `localhost`       |
-| `--cmd`, `-c`     | Run a one-off command against a fresh server instance, then shut down. Does not affect your local data in `.liveblocks/`. |                   |
-| `--ci`            | Start a fresh server instance on every boot, ideal for CI.                                                                |                   |
-| `--no-check`      | Skip project setup check on start.                                                                                        | Checks by default |
-| `--verbose`, `-v` | Show verbose output.                                                                                                      |                   |
-| `--help`, `-h`    | Show help.                                                                                                                |                   |
+| Flag                    | Description                                                                                                               | Default           |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| `--port`, `-p <port>`   | Port to listen on.                                                                                                        | `1153`            |
+| `--random-port`, `-P`   | Bind a random free port. The chosen port is exposed via the `LIVEBLOCKS_DEV_SERVER_PORT` env var. Ideal for CI.           |                   |
+| `--host <hostname>`     | Host to bind to.                                                                                                          | `localhost`       |
+| `--cmd`, `-c <command>` | Run a one-off command against a fresh server instance, then shut down. Does not affect your local data in `.liveblocks/`. |                   |
+| `--ci`                  | Start a fresh server instance on every boot, ideal for CI.                                                                |                   |
+| `--no-check`            | Skip project setup check on start.                                                                                        | Checks by default |
+| `--verbose`, `-v`       | Show verbose output.                                                                                                      |                   |
+| `--help`, `-h`          | Show help.                                                                                                                |                   |
 
 By default, the dev server scans your project on startup for common Liveblocks
 call sites (`<LiveblocksProvider>`, `createClient()`, `new Liveblocks()`) and

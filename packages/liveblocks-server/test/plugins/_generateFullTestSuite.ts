@@ -438,7 +438,7 @@ export function createObjectOp(
   parentId: string,
   parentKey: string,
   data: Partial<JsonObject>,
-  intent?: "set",
+  intent?: "set" | "push",
   deletedId?: string,
   opId = nanoid()
 ): CreateObjectOp & HasOpId {
@@ -458,7 +458,7 @@ export function createListOp(
   id: string,
   parentId: string,
   parentKey: string,
-  intent?: "set",
+  intent?: "set" | "push",
   deletedId?: string,
   opId = nanoid()
 ): CreateListOp & HasOpId {
@@ -478,7 +478,7 @@ export function createRegisterOp(
   parentId: string,
   parentKey: string,
   data: Json,
-  intent?: "set",
+  intent?: "set" | "push",
   deletedId?: string,
   opId = nanoid()
 ): CreateRegisterOp & HasOpId {
@@ -498,7 +498,7 @@ export function createMapOp(
   id: string,
   parentId: string,
   parentKey: string,
-  intent?: "set",
+  intent?: "set" | "push",
   deletedId?: string,
   opId = nanoid()
 ): CreateMapOp & HasOpId {
@@ -1587,6 +1587,81 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
         await db.delete_node("0:3");
         expect(db.get_next_sibling("0:0", FIRST_POSITION)).toBe(undefined);
+      }));
+
+    test("get_last_sibling: returns undefined for empty parent", () =>
+      runTest(async (driver) => {
+        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
+        const db = await driver.load_nodes_api(blackHole);
+
+        expect(db.get_last_sibling("root")).toBe(undefined);
+        expect(db.get_last_sibling("non-existing")).toBe(undefined);
+      }));
+
+    test("get_last_sibling: returns the rightmost position", () =>
+      runTest(async (driver) => {
+        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
+        const db = await driver.load_nodes_api(blackHole);
+
+        await db.set_child("0:0", {
+          type: CrdtType.LIST,
+          parentId: "root",
+          parentKey: "myList",
+        });
+        await db.set_child("0:1", {
+          type: CrdtType.REGISTER,
+          parentId: "0:0",
+          parentKey: FIRST_POSITION,
+          data: "item1",
+        });
+        expect(db.get_last_sibling("0:0")).toBe(FIRST_POSITION);
+
+        // Insert later positions out of order; the rightmost one wins
+        await db.set_child("0:3", {
+          type: CrdtType.REGISTER,
+          parentId: "0:0",
+          parentKey: THIRD_POSITION,
+          data: "item3",
+        });
+        await db.set_child("0:2", {
+          type: CrdtType.REGISTER,
+          parentId: "0:0",
+          parentKey: SECOND_POSITION,
+          data: "item2",
+        });
+        expect(db.get_last_sibling("0:0")).toBe(THIRD_POSITION);
+      }));
+
+    test("get_last_sibling: updates after delete", () =>
+      runTest(async (driver) => {
+        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
+        const db = await driver.load_nodes_api(blackHole);
+
+        await db.set_child("0:0", {
+          type: CrdtType.LIST,
+          parentId: "root",
+          parentKey: "myList",
+        });
+        await db.set_child("0:1", {
+          type: CrdtType.REGISTER,
+          parentId: "0:0",
+          parentKey: FIRST_POSITION,
+          data: "item1",
+        });
+        await db.set_child("0:2", {
+          type: CrdtType.REGISTER,
+          parentId: "0:0",
+          parentKey: SECOND_POSITION,
+          data: "item2",
+        });
+
+        expect(db.get_last_sibling("0:0")).toBe(SECOND_POSITION);
+
+        await db.delete_node("0:2");
+        expect(db.get_last_sibling("0:0")).toBe(FIRST_POSITION);
+
+        await db.delete_node("0:1");
+        expect(db.get_last_sibling("0:0")).toBe(undefined);
       }));
 
     test("move: changes parentKey of node", () =>

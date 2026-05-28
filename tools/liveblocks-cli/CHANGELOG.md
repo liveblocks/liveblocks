@@ -1,5 +1,14 @@
 ## vNEXT (not yet released)
 
+## v1.5.0
+
+- Add `--random-port` (`-P`) flag to `liveblocks dev`: bind a random free port
+  instead of an explicit port number. With `--cmd` (`-c`), the chosen port is
+  exposed to the command via `LIVEBLOCKS_DEV_SERVER_PORT`. Ideal for CI (no port
+  collisions ever).
+- Fix `LiveList.push()` so concurrent pushes from multiple clients no longer
+  settle out of order.
+
 ## v1.4.1
 
 - Fix: `client.getOrCreateRoom()` no longer errors when the room already exists,

@@ -46,10 +46,10 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@liveblocks/core": "3.18.0",
+    "@liveblocks/core": "3.20.0-pre1",
     "@liveblocks/query-parser": "workspace:^",
     "@liveblocks/server": "workspace:^",
-    "@liveblocks/zenrouter": "^1.0.17",
+    "@liveblocks/zenrouter": "^1.0.18",
     "decoders": "^2.9.0",
     "js-base64": "^3.7.5",
     "yjs": "^13.6.10"

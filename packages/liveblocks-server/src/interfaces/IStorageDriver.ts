@@ -176,6 +176,13 @@ export interface IStorageDriverNodeAPI {
   get_next_sibling(parentId: string, pos: Pos): Pos | undefined;
 
   /**
+   * Return the position of the last (rightmost) child under parentId, or
+   * undefined if the node has no children. Positions compare
+   * lexicographically.
+   */
+  get_last_sibling(parentId: string): Pos | undefined;
+
+  /**
    * Insert a child node with the given id.
    *
    * If allowOverwrite=false (default): throw if a node with this id exists.
