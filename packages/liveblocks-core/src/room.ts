@@ -1891,10 +1891,20 @@ export function createRoom<
         currentItems.set(id, crdt._serialize());
       }
 
-      // Get operations that represent the diff between 2 states.
+      // XXX_vincent Smell, needs a deeper refactor soon! A reconnect
+      // snapshot is a stream of *nodes* (the full authoritative state), but
+      // here we fabricate a diff of *ops* and replay it through the live
+      // op-apply path. That path carries live-only optimistic semantics (the
+      // LiveList push tail-bump, "temporary position until the backend sends
+      // a fix" shifts, pending-conflict resolution) that are nonsensical
+      // when the stream we are applying already IS the fix. The
+      // `fromSnapshot` flag below patches only the one leak that bit us (the
+      // bump); it does not address the others. The proper fix is
+      // a node-stream reconcile that updates the tree in place, unified with
+      // the `_fromItems` path used on initial load, so a node stream never
+      // enters the op path at all. Until then `fromSnapshot` is a stopgap.
       const ops = getTreesDiffOperations(currentItems, nodes);
-
-      const result = applyRemoteOps(ops);
+      const result = applyRemoteOps(ops, /* fromSnapshot */ true);
       notify(result.updates);
     } else {
       context.root = LiveObject._fromItems<S>(
@@ -2009,20 +2019,27 @@ export function createRoom<
     return { opsToEmit: opsWithOpIds, reverse, updates };
   }
 
-  function applyRemoteOps(ops: readonly ServerWireOp[]): {
+  function applyRemoteOps(
+    ops: readonly ServerWireOp[],
+    // True when `ops` reconstruct state from a server snapshot (the reconnect
+    // reconcile) rather than being live ops. Disables the live-only LiveList
+    // push tail-bump.
+    fromSnapshot: boolean = false
+  ): {
     // Updates to notify about afterwards
     updates: {
       storageUpdates: Map<string, StorageUpdate>;
       presence: boolean;
     };
   } {
-    return applyOps([], ops, /* isLocal */ false);
+    return applyOps([], ops, /* isLocal */ false, fromSnapshot);
   }
 
   function applyOps(
     pframes: readonly PresenceStackframe<P>[],
     ops: readonly Op[],
-    isLocal: boolean
+    isLocal: boolean,
+    fromSnapshot: boolean = false
   ): {
     reverse: Stackframe<P>[];
     updates: {
@@ -2077,7 +2094,7 @@ export function createRoom<
         source = OpSource.THEIRS;
       }
 
-      const applyOpResult = applyOp(op, source);
+      const applyOpResult = applyOp(op, source, fromSnapshot);
       if (applyOpResult.modified) {
         const nodeId = applyOpResult.modified.node._id;
 
@@ -2114,7 +2131,11 @@ export function createRoom<
     };
   }
 
-  function applyOp(op: Op, source: OpSource): ApplyResult {
+  function applyOp(
+    op: Op,
+    source: OpSource,
+    fromSnapshot: boolean = false
+  ): ApplyResult {
     // Explicit case to handle ignored Ops
     if (isIgnoredOp(op)) {
       return { modified: false };
@@ -2160,7 +2181,7 @@ export function createRoom<
           return { modified: false };
         }
 
-        return parentNode._attachChild(op, source);
+        return parentNode._attachChild(op, source, fromSnapshot);
       }
     }
   }

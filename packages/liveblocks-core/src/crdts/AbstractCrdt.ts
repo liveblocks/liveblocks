@@ -373,8 +373,19 @@ export abstract class AbstractCrdt {
     this.#pool = pool;
   }
 
-  /** @internal */
-  abstract _attachChild(op: CreateOp, source: OpSource): ApplyResult;
+  /**
+   * @internal
+   * `fromSnapshot` is set when the op is part of a full-state snapshot
+   * reconstruction (the reconnect reconcile) rather than a live incremental op.
+   * Only LiveList uses it, to suppress its optimistic push tail-bump: the bump
+   * predicts where the server will place pending pushes, but a snapshot already
+   * holds the final positions, so there's nothing to predict.
+   */
+  abstract _attachChild(
+    op: CreateOp,
+    source: OpSource,
+    fromSnapshot?: boolean
+  ): ApplyResult;
 
   /** @internal */
   _detach(): void {

@@ -429,7 +429,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     return result.modified.updates[0];
   }
 
-  #applyRemoteInsert(op: CreateOp): ApplyResult {
+  #applyRemoteInsert(op: CreateOp, fromSnapshot: boolean): ApplyResult {
     if (this._pool === undefined) {
       throw new Error("Can't attach child if managed pool is not present");
     }
@@ -451,7 +451,13 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     // into the list. Remote sets/moves are computed by the other client against
     // a view that excludes our still-unacked pushes, so they can't address a
     // position inside our pending tail block.
-    const bumpDeltas = this.#bumpUnackedPushesAbove(key);
+    //
+    // The bump is a purely-local, live-only anti-flicker prediction of where
+    // the server will place things. While reconstructing from a server snapshot
+    // (reconnect reconcile) we already have the answer, so we don't predict:
+    // bumping there would override the snapshot's positions with a guess, and
+    // the diff carries no corrective op to undo it.
+    const bumpDeltas = fromSnapshot ? [] : this.#bumpUnackedPushesAbove(key);
 
     return {
       modified: makeUpdate(this, [
@@ -695,7 +701,11 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   }
 
   /** @internal */
-  _attachChild(op: CreateOp, source: OpSource): ApplyResult {
+  _attachChild(
+    op: CreateOp,
+    source: OpSource,
+    fromSnapshot: boolean = false
+  ): ApplyResult {
     if (this._pool === undefined) {
       throw new Error("Can't attach child if managed pool is not present");
     }
@@ -712,7 +722,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       }
     } else {
       if (source === OpSource.THEIRS) {
-        result = this.#applyRemoteInsert(op);
+        result = this.#applyRemoteInsert(op, fromSnapshot);
       } else if (source === OpSource.OURS) {
         result = this.#applyInsertAck(op);
       } else {
