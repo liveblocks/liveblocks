@@ -16,7 +16,7 @@ export const AGENT_TOOLS = [
   {
     name: "html_canvas_box",
     description:
-      "Create or update an HTML canvas box. Use this to design app screens and website sections. HTML is stored in the box metadata and shown as a text preview inside the box.",
+      "Create or update an HTML canvas box. Use this to design app screens and website sections. Always provide a short 1-3 word title.",
     input_schema: {
       type: "object",
       properties: {
@@ -25,7 +25,7 @@ export const AGENT_TOOLS = [
         y: { type: "number", description: "Top-left y position (for create)." },
         w: { type: "number" },
         h: { type: "number" },
-        title: { type: "string" },
+        title: { type: "string", description: "Box title, 1-3 words." },
         html: {
           type: "string",
           description: "HTML content for the UI box.",

@@ -45,6 +45,44 @@ function normalizeRecord(record: TLRecord): TLRecord {
   ) as unknown as TLRecord;
 }
 
+type AgentPresencePayload = {
+  cursor?: { x: number; y: number } | null;
+  selection?: string[];
+  isAgent?: boolean;
+};
+
+function createSyntheticAgentPresence(params: {
+  connectionId: number;
+  userId: string;
+  userName: string;
+  color: string;
+  payload: AgentPresencePayload;
+  wobbleTick?: number;
+}): TLInstancePresence | null {
+  if (!params.payload.isAgent || !params.payload.cursor) {
+    return null;
+  }
+
+  const angle = (params.wobbleTick ?? 0) * 0.4 + params.connectionId;
+  const cursor = {
+    x: params.payload.cursor.x + Math.cos(angle) * 4,
+    y: params.payload.cursor.y + Math.sin(angle) * 3,
+    type: "default" as const,
+    rotation: 0,
+  };
+
+  return InstancePresenceRecordType.create({
+    id: InstancePresenceRecordType.createId(String(params.connectionId)),
+    currentPageId: "page:page" as TLPageId,
+    userId: params.userId,
+    userName: params.userName,
+    color: params.color,
+    cursor,
+    selectedShapeIds:
+      (params.payload.selection ?? []) as unknown as TLInstancePresence["selectedShapeIds"],
+  }) as unknown as TLInstancePresence;
+}
+
 export function useStorageStore({
   shapeUtils = [],
   bindingUtils = [],
@@ -60,6 +98,17 @@ export function useStorageStore({
     })
   );
   const remoteCacheRef = useRef(new Map<string, TLRecord>());
+  const animatedAgentPresenceRef = useRef(
+    new Map<
+      number,
+      {
+        userId: string;
+        userName: string;
+        color: string;
+        payload: AgentPresencePayload;
+      }
+    >()
+  );
 
   useEffect(() => {
     let isDisposed = false;
@@ -228,6 +277,7 @@ export function useStorageStore({
           switch (event.type) {
             case "leave": {
               if (event.user.connectionId) {
+                animatedAgentPresenceRef.current.delete(event.user.connectionId);
                 toRemove.push(
                   InstancePresenceRecordType.createId(
                     String(event.user.connectionId)
@@ -237,6 +287,7 @@ export function useStorageStore({
               break;
             }
             case "reset": {
+              animatedAgentPresenceRef.current.clear();
               others.forEach((other) => {
                 toRemove.push(
                   InstancePresenceRecordType.createId(String(other.connectionId))
@@ -251,6 +302,31 @@ export function useStorageStore({
                 // XXX Presence payload is JSON-typed in Liveblocks but contains
                 // TLInstancePresence data from tldraw.
                 toPut.push(remotePresence as unknown as TLInstancePresence);
+                if (event.user.connectionId) {
+                  animatedAgentPresenceRef.current.delete(event.user.connectionId);
+                }
+              } else if (event.user.connectionId) {
+                const presencePayload = event.user.presence as AgentPresencePayload;
+                const userInfo = (event.user.info ?? {}) as {
+                  name?: string;
+                  color?: string;
+                };
+                const synthesized = createSyntheticAgentPresence({
+                  connectionId: event.user.connectionId,
+                  userId: event.user.id ?? `agent-${event.user.connectionId}`,
+                  userName: userInfo.name ?? "AI Agent",
+                  color: userInfo.color ?? "#7C3AED",
+                  payload: presencePayload,
+                });
+                if (synthesized) {
+                  toPut.push(synthesized);
+                  animatedAgentPresenceRef.current.set(event.user.connectionId, {
+                    userId: event.user.id ?? `agent-${event.user.connectionId}`,
+                    userName: userInfo.name ?? "AI Agent",
+                    color: userInfo.color ?? "#7C3AED",
+                    payload: presencePayload,
+                  });
+                }
               }
               break;
             }
@@ -266,6 +342,36 @@ export function useStorageStore({
           });
         })
       );
+
+      const animationInterval = window.setInterval(() => {
+        const entries = Array.from(animatedAgentPresenceRef.current.entries());
+        if (entries.length === 0) {
+          return;
+        }
+
+        const toPut: TLInstancePresence[] = [];
+        const wobbleTick = Date.now() / 300;
+        for (const [connectionId, state] of entries) {
+          const synthesized = createSyntheticAgentPresence({
+            connectionId,
+            userId: state.userId,
+            userName: state.userName,
+            color: state.color,
+            payload: state.payload,
+            wobbleTick,
+          });
+          if (synthesized) {
+            toPut.push(synthesized);
+          }
+        }
+
+        if (toPut.length > 0) {
+          store.mergeRemoteChanges(() => {
+            store.put(toPut);
+          });
+        }
+      }, 220);
+      unsubs.push(() => window.clearInterval(animationInterval));
 
       if (!isDisposed) {
         setIsReady(true);

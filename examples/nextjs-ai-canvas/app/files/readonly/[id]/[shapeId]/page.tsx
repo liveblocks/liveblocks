@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getLiveblocks } from "@/lib/liveblocksServer";
 import { getRoomId } from "@/lib/room";
-import { getHtmlBoxDataFromShapeLike } from "@/lib/htmlBox";
+import { getHtmlBoxDataFromStorageRecord } from "@/lib/htmlBox";
 import { toRenderableHtmlDocument } from "@/lib/htmlPreview";
 
 export default async function ReadonlyShapeAliasPage({
@@ -16,8 +16,7 @@ export default async function ReadonlyShapeAliasPage({
   const doc = (await liveblocks.getStorageDocument(roomId, "json")) as {
     records?: Record<string, unknown>;
   };
-  const record = doc.records?.[shapeId];
-  const htmlBoxData = getHtmlBoxDataFromShapeLike(record);
+  const htmlBoxData = getHtmlBoxDataFromStorageRecord(doc.records, shapeId);
 
   if (!htmlBoxData) {
     notFound();

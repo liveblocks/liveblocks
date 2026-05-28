@@ -26,6 +26,23 @@ function createShapeIndex() {
   return `a${Date.now().toString(36)}${Math.floor(Math.random() * 1000).toString(36)}`;
 }
 
+export function normalizeBoxTitle(rawTitle: string, fallback = "New Design") {
+  const words = rawTitle
+    .replace(/[^a-zA-Z0-9\s-]/g, " ")
+    .split(/\s+/)
+    .map((word) => word.trim())
+    .filter(Boolean)
+    .slice(0, 3);
+
+  if (words.length === 0) {
+    return fallback;
+  }
+
+  return words
+    .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1).toLowerCase()}`)
+    .join(" ");
+}
+
 export function createRichText(text: string) {
   return {
     type: "doc",
@@ -90,23 +107,60 @@ export function getHtmlBoxDataFromShapeLike(value: unknown): HtmlBoxData | null 
     return null;
   }
 
-  if (shape.type !== HTML_BOX_SHAPE_TYPE) {
+  if (shape.type === HTML_BOX_SHAPE_TYPE) {
+    const props = asObject(shape.props);
+    if (!props) {
+      return null;
+    }
+    if (typeof props.title !== "string" || typeof props.html !== "string") {
+      return null;
+    }
+    return {
+      title: props.title,
+      html: props.html,
+      updatedAt: typeof props.updatedAt === "string" ? props.updatedAt : "",
+      w: typeof props.w === "number" ? props.w : 320,
+      h: typeof props.h === "number" ? props.h : 180,
+    };
+  }
+
+  // Read-only compatibility for pre-custom-shape demo records.
+  if (shape.type === "geo") {
+    const meta = getHtmlBoxMeta(shape.meta);
+    if (!meta) {
+      return null;
+    }
+    const props = asObject(shape.props);
+    return {
+      title: meta.title,
+      html: meta.html,
+      updatedAt: meta.updatedAt,
+      w: props && typeof props.w === "number" ? props.w : 320,
+      h: props && typeof props.h === "number" ? props.h : 180,
+    };
+  }
+
+  return null;
+}
+
+export function getHtmlBoxDataFromStorageRecord(
+  records: Record<string, unknown> | undefined,
+  shapeId: string
+): HtmlBoxData | null {
+  if (!records) {
     return null;
   }
-  const props = asObject(shape.props);
-  if (!props) {
-    return null;
+
+  const candidates = [shapeId, decodeURIComponent(shapeId)];
+  for (const candidate of candidates) {
+    const record = records[candidate];
+    const data = getHtmlBoxDataFromShapeLike(record);
+    if (data) {
+      return data;
+    }
   }
-  if (typeof props.title !== "string" || typeof props.html !== "string") {
-    return null;
-  }
-  return {
-    title: props.title,
-    html: props.html,
-    updatedAt: typeof props.updatedAt === "string" ? props.updatedAt : "",
-    w: typeof props.w === "number" ? props.w : 320,
-    h: typeof props.h === "number" ? props.h : 180,
-  };
+
+  return null;
 }
 
 export function createHtmlBoxShapeRecord(input: {
@@ -124,7 +178,7 @@ export function createHtmlBoxShapeRecord(input: {
   isLocked?: boolean;
   opacity?: number;
 }) {
-  const title = input.title.trim() || "Generated UI";
+  const title = normalizeBoxTitle(input.title, "New Design");
   const updatedAt = input.updatedAt ?? new Date().toISOString();
 
   return {

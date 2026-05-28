@@ -84,17 +84,14 @@ export class HtmlBoxShapeUtil extends ShapeUtil<HtmlBoxShape> {
   component(shape: HtmlBoxShape) {
     return (
       <HTMLContainer
-        className="overflow-hidden rounded-xl border border-neutral-300 bg-white shadow-sm"
+        className="overflow-hidden border border-neutral-300 bg-white shadow-sm"
         style={{ width: shape.props.w, height: shape.props.h }}
       >
-        <div className="border-b border-neutral-200 bg-neutral-50 px-2 py-1 text-[11px] text-neutral-600">
-          {shape.props.title}
-        </div>
         <iframe
           title={shape.props.title}
           sandbox="allow-same-origin"
           srcDoc={iframeDocument(shape.props.html)}
-          className="h-[calc(100%-26px)] w-full border-0 pointer-events-none"
+          className="h-full w-full border-0 pointer-events-none"
         />
       </HTMLContainer>
     );

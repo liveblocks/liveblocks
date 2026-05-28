@@ -6,6 +6,7 @@ import { AGENT_TOOLS, type AgentStatus, type AgentToolInputMap } from "./tools";
 import {
   createHtmlBoxShapeRecord,
   HTML_BOX_SHAPE_TYPE,
+  normalizeBoxTitle,
   normalizeShapeLikeRecord,
 } from "@/lib/htmlBox";
 
@@ -52,7 +53,7 @@ function createHtmlBoxRecord(input: AgentToolInputMap["html_canvas_box"]) {
   const height = typeof input.h === "number" ? input.h : 180;
   const x = typeof input.x === "number" ? input.x : 220;
   const y = typeof input.y === "number" ? input.y : 220;
-  const title = (input.title ?? "Generated UI").trim() || "Generated UI";
+  const title = normalizeBoxTitle(input.title ?? "", "New Design");
   const html = input.html;
   return createHtmlBoxShapeRecord({
     x,
@@ -62,6 +63,14 @@ function createHtmlBoxRecord(input: AgentToolInputMap["html_canvas_box"]) {
     title,
     html,
   });
+}
+
+function inferShortTitle(userMessage: string) {
+  const cleaned = userMessage
+    .replace(/[^\w\s-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return normalizeBoxTitle(cleaned, "New Design");
 }
 
 function getToolCalls(content: unknown): ToolUseCall[] {
@@ -172,6 +181,20 @@ function boxCenter(anchor: Pick<BoxAnchor, "x" | "y" | "w" | "h">) {
   };
 }
 
+function withCursorWobble(
+  cursor: { x: number; y: number } | null | undefined,
+  tick: number
+) {
+  if (!cursor) {
+    return null;
+  }
+  const angle = tick * 0.9;
+  return {
+    x: cursor.x + Math.cos(angle) * 6,
+    y: cursor.y + Math.sin(angle) * 4,
+  };
+}
+
 async function verifyShapeInStorage(roomId: string, shapeId: string) {
   const liveblocks = getLiveblocks();
   const doc = (await liveblocks.getStorageDocument(roomId, "json")) as {
@@ -183,8 +206,27 @@ async function verifyShapeInStorage(roomId: string, shapeId: string) {
 async function createPlaceholderBox(roomId: string): Promise<BoxAnchor> {
   const liveblocks = getLiveblocks();
   const placeholderInput: AgentToolInputMap["html_canvas_box"] = {
-    title: "Generating UI...",
-    html: "<section aria-label=\"Generating\"><p>Generating...</p></section>",
+    title: "Generating",
+    html: `<section
+  aria-label="Generating"
+  style="display:grid;place-items:center;width:100%;height:100%;min-height:100vh;background:#fff;"
+>
+  <div
+    style="
+      width:44px;
+      height:44px;
+      border:4px solid #e5e7eb;
+      border-top-color:#7c3aed;
+      border-radius:9999px;
+      animation:spin 0.8s linear infinite;
+    "
+  ></div>
+  <style>
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</section>`,
     x: 220,
     y: 220,
     w: 480,
@@ -226,7 +268,7 @@ async function applyToolCall(
   switch (call.name) {
     case "html_canvas_box": {
       const input = call.input as AgentToolInputMap["html_canvas_box"];
-      const title = (input.title ?? "Generated UI").trim() || "Generated UI";
+      const inputTitle = normalizeBoxTitle(input.title ?? "", "New Design");
       const html = input.html;
       if (typeof html !== "string" || html.trim().length === 0) {
         return { ok: false, error: "Tool input html must be a non-empty string." };
@@ -255,6 +297,14 @@ async function applyToolCall(
               typeof existingRecord.props === "object" && existingRecord.props !== null
                 ? (existingRecord.props as Record<string, unknown>)
                 : {};
+            const existingTitle =
+              typeof existingProps.title === "string"
+                ? normalizeBoxTitle(existingProps.title, "New Design")
+                : "New Design";
+            const title =
+              typeof input.title === "string" && input.title.trim().length > 0
+                ? inputTitle
+                : existingTitle;
 
             const nextRecord = normalizeShapeLikeRecord({
               ...existingRecord,
@@ -346,6 +396,7 @@ export async function runAgent({
     "You have exactly one tool: html_canvas_box.",
     "Do not call any other tools.",
     "Use html_canvas_box to create/update design boxes with generated HTML for websites/apps.",
+    "Always provide a short title of 1-3 words in the tool call title field.",
     "Generate responsive HTML/CSS by default (mobile-first layout, fluid widths, and sensible breakpoints).",
     "When the user asks to edit an existing selected box, set targetShapeId to one of selectedShapeIds.",
     "",
@@ -373,12 +424,14 @@ export async function runAgent({
   let lastAssistantText = "";
   let reasoning = "";
   let successfulToolCallCount = 0;
+  let wobbleTick = 0;
 
   for (let step = 0; step < 4; step += 1) {
+    wobbleTick += 1;
     await setAgentPresence(
       roomId,
       {
-        cursor: placeholderCenter,
+        cursor: withCursorWobble(placeholderCenter, wobbleTick),
         selection: [placeholder.shapeId],
         agentStatus: "thinking",
       },
@@ -429,6 +482,16 @@ export async function runAgent({
         preferredTargetShapeId:
           successfulToolCallCount === 0 ? placeholder.shapeId : undefined,
       });
+      wobbleTick += 1;
+      await setAgentPresence(
+        roomId,
+        {
+          cursor: withCursorWobble(placeholderCenter, wobbleTick),
+          selection: [placeholder.shapeId],
+          agentStatus: "editing",
+        },
+        120
+      );
       if (result.ok === true) {
         successfulToolCallCount += 1;
       }
@@ -452,7 +515,7 @@ export async function runAgent({
       name: "html_canvas_box",
       input: {
         targetShapeId: placeholder.shapeId,
-        title: "Generated UI",
+        title: inferShortTitle(userMessage),
         html,
       },
     }, { preferredTargetShapeId: placeholder.shapeId });

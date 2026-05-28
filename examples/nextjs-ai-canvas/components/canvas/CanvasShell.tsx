@@ -72,7 +72,7 @@ export function CanvasShell({
                 View code
               </button>
               <a
-                href={`/files/readonly/${fileId}/${selectedHtmlShape.id}`}
+                href={`/files/readonly/${fileId}/${encodeURIComponent(selectedHtmlShape.id)}`}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center gap-1 rounded-lg border border-neutral-200 px-2 py-1 text-xs hover:border-neutral-300"
