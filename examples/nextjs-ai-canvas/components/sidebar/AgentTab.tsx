@@ -5,8 +5,15 @@ import {
   useCreateFeedMessage,
   useFeedMessages,
 } from "@liveblocks/react";
-import { Sparkles, X } from "lucide-react";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { Plus, Sparkles, SquareDashedMousePointer, X } from "lucide-react";
+import {
+  FormEvent,
+  KeyboardEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useValue, type Editor, type TLShape } from "tldraw";
 import { getFeedId } from "@/lib/room";
 
@@ -47,13 +54,21 @@ function selectedShapeSummary(shape: TLShape) {
     }
     return "Text";
   }
-  if (
-    shape.type === "geo" &&
-    "labelText" in shape.props &&
-    typeof shape.props.labelText === "string" &&
-    shape.props.labelText.trim().length > 0
-  ) {
-    return shape.props.labelText;
+  if (shape.type === "geo" && "geo" in shape.props) {
+    switch (shape.props.geo) {
+      case "rectangle":
+        return "Rectangle";
+      case "ellipse":
+        return "Circle";
+      case "triangle":
+        return "Triangle";
+      case "diamond":
+        return "Diamond";
+      case "cloud":
+        return "Cloud";
+      default:
+        return "Shape";
+    }
   }
   return shape.type;
 }
@@ -67,22 +82,25 @@ export function AgentTab({
   roomId: string;
   editor: Editor | null;
 }) {
-  const feedId = getFeedId(fileId);
+  const baseFeedId = getFeedId(fileId);
   const createFeed = useCreateFeed();
   const createFeedMessage = useCreateFeedMessage();
-  const { messages, isLoading, error } = useFeedMessages(feedId);
+  const [activeFeedId, setActiveFeedId] = useState(baseFeedId);
+  const { messages, isLoading, error } = useFeedMessages(activeFeedId);
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const badgeAreaRef = useRef<HTMLDivElement | null>(null);
+  const [badgeAreaHeight, setBadgeAreaHeight] = useState(0);
 
   useEffect(() => {
-    void createFeed(feedId, {
+    void createFeed(activeFeedId, {
       metadata: {
         kind: "ai-canvas",
       },
     }).catch(() => {
       // Feed may already exist.
     });
-  }, [createFeed, feedId]);
+  }, [activeFeedId, createFeed]);
 
   const selectedShapes = useValue(
     "agent-selected-shapes",
@@ -113,7 +131,7 @@ export function AgentTab({
     setIsSending(true);
     setInput("");
 
-    await createFeedMessage(feedId, {
+    await createFeedMessage(activeFeedId, {
       role: "user",
       text,
       selectedShapeIds,
@@ -126,7 +144,7 @@ export function AgentTab({
       },
       body: JSON.stringify({
         roomId,
-        feedId,
+        feedId: activeFeedId,
         userMessage: text,
         context: {
           roomId,
@@ -139,46 +157,71 @@ export function AgentTab({
     setIsSending(false);
   }
 
+  function onComposerKeyDown(
+    event: KeyboardEvent<HTMLTextAreaElement>
+  ) {
+    if (event.key !== "Enter" || event.shiftKey) {
+      return;
+    }
+    event.preventDefault();
+    const form = event.currentTarget.form;
+    if (!form) {
+      return;
+    }
+    if (isSending || input.trim().length === 0) {
+      return;
+    }
+    form.requestSubmit();
+  }
+
+  async function onNewChat() {
+    if (isSending) {
+      return;
+    }
+    const nextFeedId = `${baseFeedId}-${Date.now().toString(36)}`;
+    await createFeed(nextFeedId, {
+      metadata: {
+        kind: "ai-canvas",
+      },
+    }).catch(() => {
+      // Feed may already exist.
+    });
+    setActiveFeedId(nextFeedId);
+    setInput("");
+  }
+
+  useEffect(() => {
+    if (!badgeAreaRef.current) {
+      setBadgeAreaHeight(0);
+      return;
+    }
+
+    const el = badgeAreaRef.current;
+    const updateHeight = () => setBadgeAreaHeight(el.offsetHeight);
+    updateHeight();
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateHeight();
+    });
+    resizeObserver.observe(el);
+    return () => resizeObserver.disconnect();
+  }, [selectedShapes]);
+
+  const composerPaddingTop = selectedShapes.length > 0 ? badgeAreaHeight + 14 : 12;
+
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="border-b border-neutral-200 px-3 py-2">
-        <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
-          Selection context
-        </p>
-        <div className="mt-2 flex flex-wrap gap-1.5">
-          {selectedShapes.length === 0 ? (
-            <span className="text-xs text-neutral-400">
-              Select a shape to send focused instructions.
-            </span>
-          ) : null}
-          {selectedShapes.map((shape) => (
-            <span
-              key={shape.id}
-              className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2.5 py-1 text-xs text-violet-700"
-            >
-              {selectedShapeSummary(shape)}
-              <button
-                type="button"
-                onClick={() => {
-                  if (!editor) {
-                    return;
-                  }
-                  const nextIds = selectedShapeIds.filter((id) => id !== shape.id);
-                  if (nextIds.length === 0) {
-                    editor.selectNone();
-                  } else {
-                    editor.setSelectedShapes(nextIds);
-                  }
-                }}
-                className="rounded-full hover:bg-violet-200"
-              >
-                <X size={12} />
-              </button>
-            </span>
-          ))}
-        </div>
+      <div className="border-b border-neutral-200 bg-white px-3 py-2">
+        <button
+          type="button"
+          onClick={onNewChat}
+          disabled={isSending}
+          className="inline-flex items-center gap-1 rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-100 disabled:opacity-50"
+        >
+          <Plus size={12} />
+          New chat
+        </button>
       </div>
-
       <div className="min-h-0 flex-1 overflow-y-auto p-3 agent-scrollbar space-y-2">
         {isLoading ? (
           <p className="text-sm text-neutral-500">Loading feed…</p>
@@ -189,7 +232,7 @@ export function AgentTab({
           if (isUserMessageData(message.data)) {
             return (
               <div key={message.id} className="flex justify-end">
-                <div className="max-w-[90%] rounded-xl bg-neutral-900 px-3 py-2 text-sm text-white">
+                <div className="max-w-[90%] rounded-lg bg-neutral-900 px-3 py-2 text-sm text-white">
                   {message.data.text}
                 </div>
               </div>
@@ -199,8 +242,8 @@ export function AgentTab({
           if (isAssistantMessageData(message.data)) {
             return (
               <div key={message.id} className="flex justify-start">
-                <div className="agent-message max-w-[95%] rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-800">
-                  <div className="mb-1 flex items-center gap-1.5 text-xs font-medium text-violet-600">
+                <div className="agent-message max-w-[95%] rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-800">
+                  <div className="mb-1 flex items-center gap-1.5 text-xs font-medium text-emerald-700">
                     <Sparkles size={14} />
                     Canvas Agent · {message.data.status}
                   </div>
@@ -209,7 +252,7 @@ export function AgentTab({
                       <summary className="cursor-pointer text-xs text-neutral-500">
                         Thought process
                       </summary>
-                      <pre className="mt-1 rounded-md bg-neutral-100 px-2 py-1 text-xs text-neutral-600">
+                      <pre className="mt-1 rounded-sm bg-neutral-100 px-2 py-1 text-xs text-neutral-600">
                         {message.data.reasoning}
                       </pre>
                     </details>
@@ -224,20 +267,57 @@ export function AgentTab({
         })}
       </div>
 
-      <form onSubmit={onSubmit} className="border-t border-neutral-200 p-3">
-        <textarea
-          value={input}
-          onChange={(event) => setInput(event.target.value)}
-          placeholder="Ask the agent to modify the canvas…"
-          className="h-20 w-full resize-none rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-violet-400"
-        />
-        <button
-          type="submit"
-          disabled={isSending || input.trim().length === 0}
-          className="mt-2 w-full rounded-xl bg-violet-600 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
-        >
-          {isSending ? "Sending…" : "Send to agent"}
-        </button>
+      <form onSubmit={onSubmit} className="border-t border-neutral-200 bg-white p-3">
+        <div className="relative">
+          {selectedShapes.length > 0 ? (
+            <div
+              ref={badgeAreaRef}
+              className="pointer-events-none absolute left-2 top-2 z-10 flex max-w-[75%] flex-wrap gap-1.5"
+            >
+              {selectedShapes.map((shape) => (
+                <span
+                  key={shape.id}
+                  className="pointer-events-auto inline-flex items-center gap-1 rounded-md bg-blue-50 px-2.5 py-1 text-xs text-blue-700"
+                >
+                  <SquareDashedMousePointer size={12} />
+                  {selectedShapeSummary(shape)}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!editor) {
+                        return;
+                      }
+                      const nextIds = selectedShapeIds.filter((id) => id !== shape.id);
+                      if (nextIds.length === 0) {
+                        editor.selectNone();
+                      } else {
+                        editor.setSelectedShapes(nextIds);
+                      }
+                    }}
+                    className="rounded-sm hover:bg-blue-100"
+                  >
+                    <X size={12} />
+                  </button>
+                </span>
+              ))}
+            </div>
+          ) : null}
+          <textarea
+            value={input}
+            onChange={(event) => setInput(event.target.value)}
+            onKeyDown={onComposerKeyDown}
+            placeholder="Ask the agent to modify the canvas…"
+            className="h-24 w-full resize-none rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 pr-28 text-xs outline-none placeholder:text-xs focus:border-emerald-400"
+            style={{ paddingTop: `${composerPaddingTop}px` }}
+          />
+          <button
+            type="submit"
+            disabled={isSending || input.trim().length === 0}
+            className="absolute bottom-3 right-3 rounded-md border border-emerald-700 bg-emerald-600 px-2.5 py-1 text-[11px] font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+          >
+            {isSending ? "Sending…" : "Send"}
+          </button>
+        </div>
       </form>
     </div>
   );

@@ -30,7 +30,7 @@ export function ShapeReadonlyPreview({ shapeId }: { shapeId: string }) {
   if (!boxData) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-neutral-50 p-6">
-        <div className="max-w-md rounded-xl border border-neutral-200 bg-white p-6 text-center">
+        <div className="max-w-md rounded-lg border border-neutral-200 bg-white p-6 text-center">
           <h1 className="text-lg font-semibold text-neutral-900">Preview unavailable</h1>
           <p className="mt-2 text-sm text-neutral-600">
             This shape is not an HTML box or no longer exists.

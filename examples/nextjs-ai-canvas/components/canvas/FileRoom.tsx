@@ -1,6 +1,6 @@
 "use client";
 
-import { LiveMap } from "@liveblocks/client";
+import { LiveMap, LiveObject } from "@liveblocks/client";
 import { ClientSideSuspense, RoomProvider } from "@liveblocks/react/suspense";
 import type { ReactNode } from "react";
 import { CanvasShell } from "./CanvasShell";
@@ -28,6 +28,9 @@ export function FileRoom({
       }}
       initialStorage={{
         records: new LiveMap(),
+        story: new LiveObject({
+          title: "Untitled Story",
+        }),
       }}
     >
       <ClientSideSuspense

@@ -49,7 +49,7 @@ export function CanvasShell({
         <LeftSidebar fileId={fileId} roomId={roomId} editor={editor} />
       ) : null}
 
-      <div className="relative min-w-0 flex-1 bg-white">
+      <div className="relative min-w-0 flex-1 bg-neutral-50">
         {!readonly ? (
           <Toolbar
             editor={editor}
@@ -62,12 +62,12 @@ export function CanvasShell({
         <CopyPreviewButton fileId={fileId} />
         {!readonly && selectedHtmlShape ? (
           <div className="pointer-events-none absolute left-1/2 top-4 z-20 -translate-x-1/2">
-            <div className="pointer-events-auto flex items-center gap-2 rounded-xl border border-neutral-200 bg-white/95 px-3 py-2 shadow-md backdrop-blur">
+            <div className="pointer-events-auto flex items-center gap-2 rounded-lg border border-neutral-200 bg-white/95 px-3 py-2 shadow-sm backdrop-blur">
               <span className="text-xs font-medium text-neutral-700">HTML box selected</span>
               <button
                 type="button"
                 onClick={() => setHtmlToolOpen(true)}
-                className="rounded-lg border border-neutral-200 px-2 py-1 text-xs hover:border-neutral-300"
+                className="rounded-md border border-neutral-200 px-2 py-1 text-xs hover:border-neutral-300"
               >
                 View code
               </button>
@@ -75,7 +75,7 @@ export function CanvasShell({
                 href={`/files/readonly/${fileId}/${encodeURIComponent(selectedHtmlShape.id)}`}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1 rounded-lg border border-neutral-200 px-2 py-1 text-xs hover:border-neutral-300"
+                className="inline-flex items-center gap-1 rounded-md border border-neutral-200 px-2 py-1 text-xs hover:border-neutral-300"
               >
                 <ExternalLink size={12} />
                 Preview

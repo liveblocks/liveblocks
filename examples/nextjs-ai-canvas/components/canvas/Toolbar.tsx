@@ -3,14 +3,18 @@
 import clsx from "clsx";
 import {
   Code2,
+  Circle,
   Hand,
   ImageIcon,
   MousePointer2,
   PanelsTopLeft,
   PenLine,
+  Slash,
+  Square,
   Shapes,
   SquareDashedMousePointer,
   Type,
+  ArrowUpRight,
 } from "lucide-react";
 import { useState } from "react";
 import { GeoShapeGeoStyle, type Editor } from "tldraw";
@@ -35,10 +39,10 @@ function ToolButton({
       title={title}
       onClick={onClick}
       className={clsx(
-        "h-10 w-10 rounded-xl border flex items-center justify-center transition",
+        "h-8.5 w-8.5 rounded-md flex items-center justify-center transition",
         active
-          ? "bg-neutral-900 border-neutral-900 text-white"
-          : "bg-white border-neutral-200 text-neutral-600 hover:border-neutral-300 hover:text-neutral-900",
+          ? "bg-emerald-50 text-emerald-700"
+          : "bg-white text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900",
         disabled && "opacity-40 cursor-not-allowed"
       )}
     >
@@ -61,18 +65,40 @@ export function Toolbar({
   setHtmlToolOpen: (value: boolean) => void;
 }) {
   const [shapeMenuOpen, setShapeMenuOpen] = useState(false);
+  const [shapePreset, setShapePreset] = useState<
+    "rectangle" | "ellipse" | "line" | "arrow"
+  >("rectangle");
 
-  const setGeoShape = (geo: "rectangle" | "ellipse" | "triangle") => {
+  const setGeoShape = (geo: "rectangle" | "ellipse") => {
     if (!editor) {
       return;
     }
     editor.setCurrentTool("geo");
     editor.setStyleForNextShapes(GeoShapeGeoStyle, geo);
+    setShapePreset(geo);
+    setShapeMenuOpen(false);
+  };
+
+  const setLineShape = () => {
+    if (!editor) {
+      return;
+    }
+    editor.setCurrentTool("line");
+    setShapePreset("line");
+    setShapeMenuOpen(false);
+  };
+
+  const setArrowShape = () => {
+    if (!editor) {
+      return;
+    }
+    editor.setCurrentTool("arrow");
+    setShapePreset("arrow");
     setShapeMenuOpen(false);
   };
 
   return (
-    <div className="absolute left-4 top-4 z-30 flex flex-col gap-2 rounded-2xl border border-neutral-200 bg-white/90 p-2 shadow-md backdrop-blur">
+    <div className="absolute left-3 top-3 z-30 flex flex-col gap-1 rounded-xl border border-neutral-200 bg-white/95 p-1 shadow-sm backdrop-blur">
       <ToolButton
         title={sidebarOpen ? "Hide panel" : "Show panel"}
         onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -102,28 +128,61 @@ export function Toolbar({
           <Shapes size={18} />
         </ToolButton>
         {shapeMenuOpen ? (
-          <div className="absolute left-full top-0 ml-2 flex flex-col gap-1 rounded-xl border border-neutral-200 bg-white p-2 shadow-md">
-            <button
-              type="button"
-              className="px-3 py-1.5 text-left text-sm rounded-md hover:bg-neutral-100"
-              onClick={() => setGeoShape("rectangle")}
-            >
-              Rectangle
-            </button>
-            <button
-              type="button"
-              className="px-3 py-1.5 text-left text-sm rounded-md hover:bg-neutral-100"
-              onClick={() => setGeoShape("ellipse")}
-            >
-              Ellipse
-            </button>
-            <button
-              type="button"
-              className="px-3 py-1.5 text-left text-sm rounded-md hover:bg-neutral-100"
-              onClick={() => setGeoShape("triangle")}
-            >
-              Triangle
-            </button>
+          <div className="absolute left-full top-1/2 ml-2.5 -translate-y-1/2 rounded-xl border border-neutral-200 bg-white p-1 shadow-sm">
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                title="Rectangle"
+                className={clsx(
+                  "grid h-8.5 w-8.5 place-items-center rounded-lg transition",
+                  shapePreset === "rectangle"
+                    ? "bg-emerald-50 text-emerald-700"
+                    : "text-neutral-700 hover:bg-neutral-100"
+                )}
+                onClick={() => setGeoShape("rectangle")}
+              >
+                <Square size={20} />
+              </button>
+              <button
+                type="button"
+                title="Circle"
+                className={clsx(
+                  "grid h-8.5 w-8.5 place-items-center rounded-lg transition",
+                  shapePreset === "ellipse"
+                    ? "bg-emerald-50 text-emerald-700"
+                    : "text-neutral-700 hover:bg-neutral-100"
+                )}
+                onClick={() => setGeoShape("ellipse")}
+              >
+                <Circle size={20} />
+              </button>
+              <button
+                type="button"
+                title="Line"
+                className={clsx(
+                  "grid h-8.5 w-8.5 place-items-center rounded-lg transition",
+                  shapePreset === "line"
+                    ? "bg-emerald-50 text-emerald-700"
+                    : "text-neutral-700 hover:bg-neutral-100"
+                )}
+                onClick={setLineShape}
+              >
+                <Slash size={20} />
+              </button>
+              <button
+                type="button"
+                title="Arrow"
+                className={clsx(
+                  "grid h-8.5 w-8.5 place-items-center rounded-lg transition",
+                  shapePreset === "arrow"
+                    ? "bg-emerald-50 text-emerald-700"
+                    : "text-neutral-700 hover:bg-neutral-100"
+                )}
+                onClick={setArrowShape}
+              >
+                <ArrowUpRight size={20} />
+              </button>
+            </div>
           </div>
         ) : null}
       </div>

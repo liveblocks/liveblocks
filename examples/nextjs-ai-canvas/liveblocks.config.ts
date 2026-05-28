@@ -1,4 +1,4 @@
-import { LiveMap } from "@liveblocks/client";
+import { LiveMap, LiveObject } from "@liveblocks/client";
 
 type LiveblocksJson =
   | string
@@ -22,6 +22,9 @@ declare global {
     };
     Storage: {
       records: LiveMap<string, LiveblocksJsonObject>;
+      story: LiveObject<{
+        title: string;
+      }>;
     };
     UserMeta: {
       id: string;

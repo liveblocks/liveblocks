@@ -4,6 +4,27 @@ import { useMemo } from "react";
 import { useValue, type Editor, type TLShape } from "tldraw";
 import { getHtmlBoxDataFromShapeLike } from "@/lib/htmlBox";
 
+function geoTypeLabel(shape: TLShape) {
+  if (shape.type !== "geo" || !("geo" in shape.props)) {
+    return null;
+  }
+  const geo = shape.props.geo;
+  switch (geo) {
+    case "rectangle":
+      return "Rectangle";
+    case "ellipse":
+      return "Circle";
+    case "triangle":
+      return "Triangle";
+    case "diamond":
+      return "Diamond";
+    case "cloud":
+      return "Cloud";
+    default:
+      return "Shape";
+  }
+}
+
 function getShapeLabel(shape: TLShape, index: number) {
   const htmlBoxData = getHtmlBoxDataFromShapeLike(shape);
   if (htmlBoxData) {
@@ -19,17 +40,21 @@ function getShapeLabel(shape: TLShape, index: number) {
     return `Text ${index + 1}`;
   }
 
-  if (
-    shape.type === "geo" &&
-    "labelText" in shape.props &&
-    typeof shape.props.labelText === "string" &&
-    shape.props.labelText.trim().length > 0
-  ) {
-    return shape.props.labelText;
+  const geoLabel = geoTypeLabel(shape);
+  if (geoLabel) {
+    return `${geoLabel} ${index + 1}`;
   }
 
   const type = shape.type.charAt(0).toUpperCase() + shape.type.slice(1);
   return `${type} ${index + 1}`;
+}
+
+function getShapeType(shape: TLShape) {
+  const geoLabel = geoTypeLabel(shape);
+  if (geoLabel) {
+    return geoLabel;
+  }
+  return shape.type.charAt(0).toUpperCase() + shape.type.slice(1);
 }
 
 export function LayerList({ editor }: { editor: Editor | null }) {
@@ -44,7 +69,7 @@ export function LayerList({ editor }: { editor: Editor | null }) {
       shapes.map((shape, index) => ({
         id: shape.id,
         label: getShapeLabel(shape, index),
-        type: shape.type,
+        type: getShapeType(shape),
       })),
     [shapes]
   );
@@ -68,7 +93,7 @@ export function LayerList({ editor }: { editor: Editor | null }) {
                 editor.select(row.id);
                 editor.zoomToSelection();
               }}
-              className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-left hover:border-neutral-300"
+              className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-left hover:border-neutral-300"
             >
               <p className="text-xs uppercase tracking-wide text-neutral-500">
                 {row.type}

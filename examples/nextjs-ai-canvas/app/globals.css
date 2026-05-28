@@ -3,7 +3,7 @@
 @import "@liveblocks/react-ui/styles.css";
 
 :root {
-  --background: #f5f6f8;
+  --background: #ffffff;
   --foreground: #0f172a;
 }
 
@@ -38,4 +38,9 @@ body {
 .agent-scrollbar::-webkit-scrollbar-thumb {
   background: rgba(100, 116, 139, 0.45);
   border-radius: 999px;
+}
+
+.lucide {
+  stroke-width: 1.7;
+  opacity: 0.9;
 }

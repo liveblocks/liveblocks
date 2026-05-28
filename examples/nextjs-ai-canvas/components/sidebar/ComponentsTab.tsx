@@ -5,7 +5,7 @@ import { LayerList } from "@/components/canvas/LayerList";
 
 export function ComponentsTab({ editor }: { editor: Editor | null }) {
   return (
-    <div className="h-full min-h-0 px-3 py-2">
+    <div className="h-full min-h-0 bg-neutral-50 px-3 py-2">
       <LayerList editor={editor} />
     </div>
   );

@@ -15,10 +15,14 @@ export function CopyPreviewButton({ fileId }: { fileId: string }) {
         setCopied(true);
         window.setTimeout(() => setCopied(false), 1200);
       }}
-      className="absolute right-4 top-4 z-30 flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-700 shadow-sm hover:border-neutral-300"
+      className="absolute right-4 top-4 z-30 inline-flex h-8 items-center gap-1.5 rounded-md border border-emerald-700 bg-emerald-700 px-2.5 text-xs font-medium text-white shadow-sm hover:bg-emerald-800"
     >
-      {copied ? <Check size={16} /> : <Copy size={16} />}
-      {copied ? "Preview link copied" : "Copy preview"}
+      {copied ? (
+        <Check size={14} className="opacity-80" />
+      ) : (
+        <Copy size={14} className="opacity-80" />
+      )}
+      {copied ? "Copied" : "Copy"}
     </button>
   );
 }
