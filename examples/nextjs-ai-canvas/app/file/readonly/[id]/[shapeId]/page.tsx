@@ -25,7 +25,7 @@ export default async function ReadonlyShapePage({
   return (
     <iframe
       title={htmlBoxData.title}
-      sandbox="allow-same-origin"
+      sandbox="allow-same-origin allow-scripts"
       srcDoc={toRenderableHtmlDocument(htmlBoxData.html)}
       className="h-screen w-screen border-0"
     />

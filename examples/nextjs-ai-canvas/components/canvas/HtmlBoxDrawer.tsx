@@ -3,12 +3,14 @@
 import type { LiveMap } from "@liveblocks/client";
 import { useMutation, useSelf } from "@liveblocks/react/suspense";
 import { ExternalLink, X } from "lucide-react";
+import { Highlight, themes } from "prism-react-renderer";
 import { useMemo } from "react";
 import type { TLShape } from "tldraw";
 import {
   getHtmlBoxDataFromShapeLike,
   normalizeShapeLikeRecord,
 } from "@/lib/htmlBox";
+import { htmlToReactComponent } from "@/lib/htmlToReact";
 
 type StorageRecord = Liveblocks["Storage"]["records"] extends LiveMap<
   string,
@@ -35,9 +37,13 @@ export function HtmlBoxDrawer({
   const selectedData = selectedHtmlShape
     ? getHtmlBoxDataFromShapeLike(selectedHtmlShape)
     : null;
+  const reactComponent = useMemo(
+    () => htmlToReactComponent(selectedData?.html ?? ""),
+    [selectedData?.html]
+  );
 
-  const saveHtmlMeta = useMutation(
-    ({ storage }, payload: { id: string; title: string; html: string }) => {
+  const saveTitle = useMutation(
+    ({ storage }, payload: { id: string; title: string }) => {
       if (!canWrite) {
         return;
       }
@@ -57,7 +63,6 @@ export function HtmlBoxDrawer({
         props: {
           ...existingProps,
           title: payload.title,
-          html: payload.html,
           updatedAt: new Date().toISOString(),
         },
       });
@@ -74,7 +79,7 @@ export function HtmlBoxDrawer({
     <aside className="z-20 flex h-full w-[420px] shrink-0 flex-col border-l border-neutral-200 bg-white">
       <div className="flex items-center justify-between border-b border-neutral-200 px-4 py-3">
         <div>
-          <p className="text-xs uppercase tracking-wide text-neutral-500">HTML tool</p>
+          <p className="text-xs uppercase tracking-wide text-neutral-500">Code</p>
           <h3 className="text-sm font-semibold text-neutral-900">
             {selectedHtmlShape ? "Selected box" : "No HTML box selected"}
           </h3>
@@ -90,32 +95,37 @@ export function HtmlBoxDrawer({
 
       {!selectedHtmlShape ? (
         <div className="p-4 text-sm text-neutral-500">
-          Select an AI-generated HTML box to inspect or edit its code.
+          Select an AI-generated HTML box to inspect its React component.
         </div>
       ) : (
-        <form
-          key={selectedHtmlShape.id}
-          className="contents"
-          onSubmit={(event) => {
-            event.preventDefault();
-            const formData = new FormData(event.currentTarget);
-            const titleValue = String(formData.get("title") ?? "").trim() || "Generated UI";
-            const htmlValue = String(formData.get("html") ?? "");
-            saveHtmlMeta({
-              id: selectedHtmlShape.id,
-              title: titleValue,
-              html: htmlValue,
-            });
-          }}
-        >
-          <div className="space-y-3 border-b border-neutral-200 p-4">
+        <div key={selectedHtmlShape.id} className="flex min-h-0 flex-1 flex-col">
+          <form
+            className="space-y-3 border-b border-neutral-200 p-4"
+            onSubmit={(event) => {
+              event.preventDefault();
+              const formData = new FormData(event.currentTarget);
+              const titleValue =
+                String(formData.get("title") ?? "").trim() || "Generated UI";
+              saveTitle({ id: selectedHtmlShape.id, title: titleValue });
+            }}
+          >
             <label className="block">
-              <span className="mb-1 block text-xs font-medium text-neutral-600">Title</span>
-              <input
-                name="title"
-                defaultValue={selectedData?.title ?? ""}
-                className="w-full rounded-md border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-sky-400"
-              />
+              <span className="mb-1 block text-xs font-medium text-neutral-600">
+                Title
+              </span>
+              <div className="flex gap-2">
+                <input
+                  name="title"
+                  defaultValue={selectedData?.title ?? ""}
+                  className="w-full rounded-md border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-sky-400"
+                />
+                <button
+                  type="submit"
+                  className="shrink-0 rounded-md border border-sky-700 bg-sky-700 px-3 py-2 text-sm font-medium text-white hover:bg-sky-600"
+                >
+                  Save
+                </button>
+              </div>
             </label>
             <a
               href={`/files/readonly/${fileId}/${encodeURIComponent(selectedHtmlShape.id)}`}
@@ -126,23 +136,39 @@ export function HtmlBoxDrawer({
               <ExternalLink size={14} />
               Preview in new window
             </a>
-          </div>
+          </form>
 
           <div className="flex min-h-0 flex-1 flex-col p-4">
-            <p className="mb-1 text-xs font-medium text-neutral-600">HTML code</p>
-            <textarea
-              name="html"
-              defaultValue={selectedData?.html ?? ""}
-              className="min-h-0 flex-1 resize-none rounded-md border border-neutral-200 bg-neutral-50 p-3 font-mono text-xs outline-none focus:border-sky-400"
-            />
-            <button
-              type="submit"
-              className="mt-3 rounded-md border border-sky-700 bg-sky-700 px-3 py-2 text-sm font-medium text-white hover:bg-sky-600"
-            >
-              Save HTML
-            </button>
+            <p className="mb-2 text-xs font-medium text-neutral-600">
+              React component
+            </p>
+            <div className="min-h-0 flex-1 overflow-auto rounded-md border border-neutral-200 bg-neutral-50">
+              <Highlight
+                theme={themes.vsLight}
+                code={reactComponent}
+                language="jsx"
+              >
+                {({ className, style, tokens, getLineProps, getTokenProps }) => (
+                  <pre
+                    className={`${className} m-0 w-max min-w-full whitespace-pre p-3 font-mono text-xs`}
+                    style={{ ...style, background: "transparent" }}
+                  >
+                    {tokens.map((line, lineIndex) => (
+                      <div key={lineIndex} {...getLineProps({ line })}>
+                        {line.map((token, tokenIndex) => (
+                          <span
+                            key={tokenIndex}
+                            {...getTokenProps({ token })}
+                          />
+                        ))}
+                      </div>
+                    ))}
+                  </pre>
+                )}
+              </Highlight>
+            </div>
           </div>
-        </form>
+        </div>
       )}
     </aside>
   );

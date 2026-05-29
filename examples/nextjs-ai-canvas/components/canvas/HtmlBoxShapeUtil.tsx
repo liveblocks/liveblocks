@@ -32,6 +32,7 @@ function iframeDocument(html: string) {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
       html, body { margin: 0; padding: 0; }
       body { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
@@ -89,7 +90,7 @@ export class HtmlBoxShapeUtil extends ShapeUtil<HtmlBoxShape> {
       >
         <iframe
           title={shape.props.title}
-          sandbox="allow-same-origin"
+          sandbox="allow-same-origin allow-scripts"
           srcDoc={iframeDocument(shape.props.html)}
           className="h-full w-full border-0 pointer-events-none"
         />
