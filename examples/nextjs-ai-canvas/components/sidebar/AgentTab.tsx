@@ -16,6 +16,7 @@ import {
 } from "react";
 import { useValue, type Editor, type TLShape } from "tldraw";
 import { getFeedId } from "@/lib/room";
+import { getHtmlBoxDataFromShapeLike } from "@/lib/htmlBox";
 import { Markdown } from "@liveblocks/react-ui/_private";
 
 type AssistantMessageData = {
@@ -34,9 +35,13 @@ function isAssistantMessageData(value: unknown): value is AssistantMessageData {
   return data.role === "assistant";
 }
 
-function isUserMessageData(
-  value: unknown
-): value is { role: "user"; text: string } {
+type UserMessageData = {
+  role: "user";
+  text: string;
+  selectedShapeNames?: string[];
+};
+
+function isUserMessageData(value: unknown): value is UserMessageData {
   if (!value || typeof value !== "object") {
     return false;
   }
@@ -45,6 +50,10 @@ function isUserMessageData(
 }
 
 function selectedShapeSummary(shape: TLShape) {
+  const htmlBox = getHtmlBoxDataFromShapeLike(shape);
+  if (htmlBox && htmlBox.title.trim().length > 0) {
+    return htmlBox.title;
+  }
   if (shape.type === "text") {
     const textValue =
       "text" in shape.props
@@ -130,6 +139,9 @@ export function AgentTab({
       y: shape.y,
       props: shape.props,
     }));
+    const selectedShapeNames = selectedShapes.map((shape) =>
+      selectedShapeSummary(shape)
+    );
 
     setIsSending(true);
     setInput("");
@@ -138,6 +150,7 @@ export function AgentTab({
       role: "user",
       text,
       selectedShapeIds,
+      selectedShapeNames,
     });
 
     await fetch("/api/copilot", {
@@ -232,9 +245,23 @@ export function AgentTab({
 
         {messages?.map((message) => {
           if (isUserMessageData(message.data)) {
+            const contextNames = message.data.selectedShapeNames ?? [];
             return (
-              <div key={message.id} className="flex justify-end">
-                <div className="w-full rounded-lg bg-neutral-100 px-3 py-2 border border-neutral-200">
+              <div key={message.id} className="flex flex-col items-end gap-1">
+                <div className="w-full rounded-lg bg-neutral-50 px-3 py-2 border border-neutral-200">
+                  {contextNames.length > 0 ? (
+                    <div className="flex max-w-full flex-wrap justify-start gap-1.5 -ml-1.5 mb-1">
+                      {contextNames.map((name, index) => (
+                        <span
+                          key={`${message.id}-context-${index}`}
+                          className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-0.5 text-xs text-blue-700"
+                        >
+                          <SquareDashedMousePointer size={12} />
+                          {name}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
                   {message.data.text}
                 </div>
               </div>

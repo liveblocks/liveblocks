@@ -195,6 +195,14 @@ function withCursorWobble(
   };
 }
 
+async function deleteShapeFromStorage(roomId: string, shapeId: string) {
+  const liveblocks = getLiveblocks();
+  await liveblocks.mutateStorage(roomId, ({ root }) => {
+    const records = root.get("records");
+    records.delete(shapeId);
+  });
+}
+
 async function createPlaceholderBox(roomId: string): Promise<BoxAnchor> {
   const liveblocks = getLiveblocks();
   const placeholderInput: AgentToolInputMap["html_canvas_box"] = {
@@ -401,6 +409,7 @@ export async function runAgent({
   let lastAssistantText = "";
   let reasoning = "";
   let successfulToolCallCount = 0;
+  let placeholderConsumed = false;
   let wobbleTick = 0;
 
   for (let step = 0; step < 4; step += 1) {
@@ -471,6 +480,9 @@ export async function runAgent({
       );
       if (result.ok === true) {
         successfulToolCallCount += 1;
+        if (result.id === placeholder.shapeId) {
+          placeholderConsumed = true;
+        }
       }
       toolResults.push({
         type: "tool_result",
@@ -497,10 +509,17 @@ export async function runAgent({
       },
     }, { preferredTargetShapeId: placeholder.shapeId });
     successfulToolCallCount = 1;
+    placeholderConsumed = true;
     await onProgress({
       status: "editing",
       isStreaming: true,
     });
+  }
+
+  // If the agent edited an existing box instead of reusing the placeholder,
+  // the placeholder spinner would otherwise linger forever. Remove it.
+  if (!placeholderConsumed) {
+    await deleteShapeFromStorage(roomId, placeholder.shapeId);
   }
 
   const finalText =

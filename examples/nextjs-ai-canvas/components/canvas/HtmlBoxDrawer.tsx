@@ -1,7 +1,7 @@
 "use client";
 
 import type { LiveMap } from "@liveblocks/client";
-import { useMutation } from "@liveblocks/react/suspense";
+import { useMutation, useSelf } from "@liveblocks/react/suspense";
 import { ExternalLink, X } from "lucide-react";
 import { useMemo } from "react";
 import type { TLShape } from "tldraw";
@@ -28,6 +28,7 @@ export function HtmlBoxDrawer({
   open: boolean;
   onClose: () => void;
 }) {
+  const canWrite = useSelf((me) => me.canWrite);
   const selectedHtmlShape = useMemo(() => {
     return selectedShapes.find((shape) => getHtmlBoxDataFromShapeLike(shape));
   }, [selectedShapes]);
@@ -37,6 +38,9 @@ export function HtmlBoxDrawer({
 
   const saveHtmlMeta = useMutation(
     ({ storage }, payload: { id: string; title: string; html: string }) => {
+      if (!canWrite) {
+        return;
+      }
       const records = storage.get("records");
       const existing = records.get(payload.id);
       if (!existing || typeof existing !== "object") {
@@ -59,7 +63,7 @@ export function HtmlBoxDrawer({
       });
       records.set(payload.id, nextRecord as unknown as StorageRecord);
     },
-    []
+    [canWrite]
   );
 
   if (!open) {

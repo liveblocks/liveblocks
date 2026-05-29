@@ -88,6 +88,7 @@ export function useStorageStore({
   bindingUtils = [],
 }: UseStorageStoreOptions = {}) {
   const room = useRoom();
+  const canWrite = useSelf((me) => me.canWrite);
   const id = useSelf((me) => me.id);
   const info = useSelf((me) => me.info);
   const [isReady, setIsReady] = useState(false);
@@ -156,6 +157,9 @@ export function useStorageStore({
       unsubs.push(
         store.listen(
           ({ changes }: TLStoreEventInfo) => {
+            if (!canWrite) {
+              return;
+            }
             room.batch(() => {
               Object.values(changes.added).forEach((record) => {
                 records.set(
@@ -384,7 +388,7 @@ export function useStorageStore({
       isDisposed = true;
       unsubs.forEach((fn) => fn());
     };
-  }, [id, info.avatar, info.color, info.name, room, store]);
+  }, [canWrite, id, info.avatar, info.color, info.name, room, store]);
 
   return { store, isReady };
 }

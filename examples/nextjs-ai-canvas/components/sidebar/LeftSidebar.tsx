@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { useMutation, useStorage } from "@liveblocks/react/suspense";
+import { useMutation, useSelf, useStorage } from "@liveblocks/react/suspense";
 import { ChevronDown, Link2, Settings } from "lucide-react";
 import { useState } from "react";
 import { type Editor } from "tldraw";
@@ -20,13 +20,17 @@ export function LeftSidebar({
   editor: Editor | null;
 }) {
   const [activeTab, setActiveTab] = useState<Tab>("agent");
+  const canWrite = useSelf((me) => me.canWrite);
   const storyTitle = useStorage((root) => root.story.title) || "Untitled Story";
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [draftTitle, setDraftTitle] = useState(storyTitle);
 
   const setStoryTitle = useMutation(({ storage }, nextTitle: string) => {
+    if (!canWrite) {
+      return;
+    }
     storage.get("story").set("title", nextTitle);
-  }, []);
+  }, [canWrite]);
 
   return (
     <aside className="z-20 flex h-full w-[400px] shrink-0 flex-col border-r border-neutral-200 bg-white">
