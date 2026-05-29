@@ -104,10 +104,12 @@ Use `error` to display a message if the initial fetch fails.
 
 ## MDX Conventions
 
-- Use `+++` markers inside code fences when the existing page highlights changed
-  lines that way.
-- Use code fence metadata already present nearby, such as `highlight`, `file`,
-  `title`, `showLineNumbers={false}`, `isCollapsed`, and `isCollapsable`.
+- Use `+++` markers inside code fences to highlight important lines.
+  - Prefer `+++` markers over the `highlight="5-10"` syntax
+  - When editing a code fence that already uses the `highlight="5-10"` syntax,
+    convert it to use `+++` markers instead.
+- Use code fence metadata already present nearby, such as `file`, `title`,
+  `showLineNumbers={false}`, `isCollapsed`, and `isCollapsable`.
 - Use `Banner` for warnings, constraints, important notes, or conceptual
   callouts.
 - Use `Figure` and `Image` for visual dashboard or component documentation.
