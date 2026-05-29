@@ -27,10 +27,14 @@ places users are likely to look.
 1. Identify the docs surface:
    - API reference: every new public API, prop, option, return value, or type.
    - Ready-made feature pages: user-facing workflows and common combinations.
+   - Guides: task-specific docs under `guides/pages`, registered in
+     `guides/guides.json`.
    - Platform pages: dashboard, account, project, webhook, REST, limits, or
      infrastructure behavior.
    - Get started pages: only when the setup flow changes or a feature should be
      part of onboarding.
+   - Interactive tutorials: step-by-step learning content under `tutorial`,
+     registered in `tutorial/tutorials.json`.
 
 2. Decide the release size:
    - Large features need API docs, a prominent feature page, and updates across
@@ -52,11 +56,13 @@ places users are likely to look.
      `### Name [#custom-anchor]`.
    - Use existing MDX components such as `PropertiesList`, `Banner`, `Figure`,
      `Steps`, `StepCompact`, and `ListGrid`.
-   - Register new pages in `docs/routes.json`.
+   - Register new docs pages in `docs/routes.json`, guides in
+     `guides/guides.json`, and interactive tutorials in
+     `tutorial/tutorials.json`.
 
 5. Verify:
    - Inspect changed MDX for broken links, malformed JSX, heading hierarchy, and
-     route registration.
+     route or guide registration.
 
 ## Style Rules
 

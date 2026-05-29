@@ -2,9 +2,9 @@
 
 ## Documentation Structure
 
-Docs live under `docs/pages`, with navigation in `docs/routes.json`. New `.mdx`
-files are not routable until they are registered. Most pages use frontmatter
-like:
+Docs pages live under `docs/pages`, with navigation in `docs/routes.json`. New
+docs `.mdx` files are not routable until they are registered. Most pages use
+frontmatter like:
 
 ```mdx
 ---
@@ -19,6 +19,14 @@ API reference pages are usually long package pages under
 `docs/pages/api-reference`. Feature docs live under
 `docs/pages/collaboration-features`, but many URLs are still written as
 `/docs/ready-made-features/...`; follow nearby links when editing.
+
+Guides live outside the docs tree under `guides/pages`, and new guides must be
+registered in `guides/guides.json`. Use guides for focused, task-specific
+instructions or features that need one single page connecting multiple APIs.
+
+Interactive tutorials live under `tutorial`, with tutorial metadata in
+`tutorial/tutorials.json`. Use these only for step-by-step learning experiences
+with editable project files.
 
 ## Where To Document Features
 
@@ -156,6 +164,10 @@ Each repetition should be short and contextual, not copied wholesale.
 
 - New public APIs have arguments, options, returns, and snippets.
 - New docs pages are added to `docs/routes.json`.
+- New guides are added under `guides/pages` and registered in
+  `guides/guides.json`.
+- New interactive tutorials are added under `tutorial` and registered in
+  `tutorial/tutorials.json`.
 - Feature docs link to API reference and API reference links back to feature
   docs.
 - The docs answer likely user questions: setup, common use, errors, limits,
