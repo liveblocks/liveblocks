@@ -103,6 +103,15 @@ export function AgentTab({
   const [isSending, setIsSending] = useState(false);
   const badgeAreaRef = useRef<HTMLDivElement | null>(null);
   const [badgeAreaHeight, setBadgeAreaHeight] = useState(0);
+  const messagesScrollRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const el = messagesScrollRef.current;
+    if (!el) {
+      return;
+    }
+    el.scrollTop = el.scrollHeight;
+  }, [messages]);
 
   useEffect(() => {
     void createFeed(activeFeedId, {
@@ -237,7 +246,10 @@ export function AgentTab({
           New chat
         </button>
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto p-3 agent-scrollbar space-y-2 text-sm">
+      <div
+        ref={messagesScrollRef}
+        className="min-h-0 flex-1 overflow-y-auto p-3 agent-scrollbar space-y-2 text-sm"
+      >
         {isLoading ? (
           <p className="text-sm text-neutral-500">Loading feed…</p>
         ) : null}
@@ -273,7 +285,7 @@ export function AgentTab({
               <div key={message.id} className="flex justify-start">
                 <div className="agent-message max-w-[95%] rounded-lg px-3 py-2 text-neutral-800">
                   {message.data.reasoning ? (
-                    <details open={message.data.isStreaming}>
+                    <details>
                       <summary className="cursor-pointer text-xs text-neutral-500">
                         Thought process
                       </summary>
