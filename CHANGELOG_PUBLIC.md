@@ -52,9 +52,14 @@ list and feel free to give them credit at the end of a line, e.g.:
 - New item: [Mention notifications inbox](https://liveblocks.io/showcase/mention-notifications-inbox).
 - New item: [AG Grid comment pins](https://liveblocks.io/showcase/ag-grid-comment-pins).
 
+## Liveblocks dev server (v1.5.0)
+
+- Add `--random-port` (`-P`) flag to `liveblocks dev`: bind a random free port instead of an explicit port number. With `--cmd` (`-c`), the chosen port is exposed to the command via `LIVEBLOCKS_DEV_SERVER_PORT`. Ideal for CI (no port collisions ever).
+- Fix `LiveList.push()` so concurrent pushes from multiple clients no longer settle out of order.
+
 ## Contributors
 
-ctnicholas
+ctnicholas, nvie
 
 # Week 21 (2026-05-22)
 
