@@ -20,7 +20,41 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 22 (2026-05-29)
 
+## Documentation
+
+- New guide: [Get started with AI Presence](https://liveblocks.io/docs/get-started/nextjs-ai-presence).
+- New guide: [Get started with AI agents in React Flow](https://liveblocks.io/docs/get-started/nextjs-ai-react-flow).
+- New guide: [Get started with AI agent notifications](https://liveblocks.io/docs/get-started/nextjs-ai-notifications).
+- Updated Notifications get started guide to use secret key.
+
+## Showcase
+
+- New item: [AI slideshow editor](https://liveblocks.io/showcase/ai-slideshow-editor).
+- New item: [AI replies in comment threads](https://liveblocks.io/showcase/ai-replies-in-comment-threads).
+- New item: [Multiplayer AI comment feeds](https://liveblocks.io/showcase/multiplayer-ai-comment-feeds).
+- New item: [AI generates slides with presence](https://liveblocks.io/showcase/ai-generates-slides-with-presence).
+- New item: [AI suggestions dropdown](https://liveblocks.io/showcase/ai-suggestions-dropdown).
+- New item: [Conflict-free multiplayer editing](https://liveblocks.io/showcase/conflict-free-multiplayer-editing).
+- New item: [AI comments bot with Chat SDK](https://liveblocks.io/showcase/ai-comments-bot-with-chat-sdk).
+- New item: [One AI bot for Slack and comments](https://liveblocks.io/showcase/one-ai-bot-for-slack-and-comments).
+- New item: [AI and humans editing together](https://liveblocks.io/showcase/ai-and-humans-editing-together).
+- New item: [Multiplayer sync for custom UIs](https://liveblocks.io/showcase/multiplayer-sync-for-custom-uis).
+- New item: [Agents work simultaneously](https://liveblocks.io/showcase/agents-work-simultaneously).
+- New item: [Multiplayer React Flow at 60fps](https://liveblocks.io/showcase/multiplayer-react-flow-at-60fps).
+- New item: [AI builds a flowchart with presence](https://liveblocks.io/showcase/ai-builds-a-flowchart-with-presence).
+- New item: [React Flow comment pins](https://liveblocks.io/showcase/react-flow-comment-pins).
+- New item: [Multiplayer undo in React Flow](https://liveblocks.io/showcase/multiplayer-undo-in-react-flow).
+- New item: [Handsontable realtime editing](https://liveblocks.io/showcase/handsontable-realtime-editing).
+- New item: [AI presence highlighting changes](https://liveblocks.io/showcase/ai-presence-highlighting-changes).
+- New item: [AI comments like Linear](https://liveblocks.io/showcase/ai-comments-like-linear).
+- New item: [Inline AI comments](https://liveblocks.io/showcase/inline-ai-comments).
+- New item: [Liveblocks n8n nodes](https://liveblocks.io/showcase/liveblocks-n8n-nodes).
+- New item: [Mention notifications inbox](https://liveblocks.io/showcase/mention-notifications-inbox).
+- New item: [AG Grid comment pins](https://liveblocks.io/showcase/ag-grid-comment-pins).
+
 ## Contributors
+
+ctnicholas
 
 # Week 21 (2026-05-22)
 
