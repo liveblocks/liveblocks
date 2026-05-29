@@ -5,7 +5,7 @@ import {
   useCreateFeedMessage,
   useFeedMessages,
 } from "@liveblocks/react";
-import { ArrowUp, Plus, Sparkles, SquareDashedMousePointer, X } from "lucide-react";
+import { ArrowUp, Plus, SquareDashedMousePointer, X } from "lucide-react";
 import {
   FormEvent,
   KeyboardEvent,
@@ -16,6 +16,7 @@ import {
 } from "react";
 import { useValue, type Editor, type TLShape } from "tldraw";
 import { getFeedId } from "@/lib/room";
+import { Markdown } from "@liveblocks/react-ui/_private";
 
 type AssistantMessageData = {
   role: "assistant";
@@ -25,9 +26,7 @@ type AssistantMessageData = {
   isStreaming: boolean;
 };
 
-function isAssistantMessageData(
-  value: unknown
-): value is AssistantMessageData {
+function isAssistantMessageData(value: unknown): value is AssistantMessageData {
   if (!value || typeof value !== "object") {
     return false;
   }
@@ -48,7 +47,11 @@ function isUserMessageData(
 function selectedShapeSummary(shape: TLShape) {
   if (shape.type === "text") {
     const textValue =
-      "text" in shape.props ? shape.props.text : "richText" in shape.props ? shape.props.richText : null;
+      "text" in shape.props
+        ? shape.props.text
+        : "richText" in shape.props
+          ? shape.props.richText
+          : null;
     if (typeof textValue === "string" && textValue.trim().length > 0) {
       return textValue;
     }
@@ -157,9 +160,7 @@ export function AgentTab({
     setIsSending(false);
   }
 
-  function onComposerKeyDown(
-    event: KeyboardEvent<HTMLTextAreaElement>
-  ) {
+  function onComposerKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key !== "Enter" || event.shiftKey) {
       return;
     }
@@ -207,7 +208,8 @@ export function AgentTab({
     return () => resizeObserver.disconnect();
   }, [selectedShapes]);
 
-  const composerPaddingTop = selectedShapes.length > 0 ? badgeAreaHeight + 14 : 12;
+  const composerPaddingTop =
+    selectedShapes.length > 0 ? badgeAreaHeight + 14 : 12;
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -222,7 +224,7 @@ export function AgentTab({
           New chat
         </button>
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto p-3 agent-scrollbar space-y-2">
+      <div className="min-h-0 flex-1 overflow-y-auto p-3 agent-scrollbar space-y-2 text-sm">
         {isLoading ? (
           <p className="text-sm text-neutral-500">Loading feed…</p>
         ) : null}
@@ -232,7 +234,7 @@ export function AgentTab({
           if (isUserMessageData(message.data)) {
             return (
               <div key={message.id} className="flex justify-end">
-                <div className="max-w-[90%] rounded-lg bg-neutral-900 px-3 py-2 text-sm text-white">
+                <div className="w-full rounded-lg bg-neutral-100 px-3 py-2 border border-neutral-200">
                   {message.data.text}
                 </div>
               </div>
@@ -242,11 +244,7 @@ export function AgentTab({
           if (isAssistantMessageData(message.data)) {
             return (
               <div key={message.id} className="flex justify-start">
-                <div className="agent-message max-w-[95%] rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-800">
-                  <div className="mb-1 flex items-center gap-1.5 text-xs font-medium text-sky-700">
-                    <Sparkles size={14} />
-                    Canvas Agent · {message.data.status}
-                  </div>
+                <div className="agent-message max-w-[95%] rounded-lg px-3 py-2 text-neutral-800">
                   {message.data.reasoning ? (
                     <details open={message.data.isStreaming}>
                       <summary className="cursor-pointer text-xs text-neutral-500">
@@ -257,7 +255,9 @@ export function AgentTab({
                       </pre>
                     </details>
                   ) : null}
-                  <p className="mt-2 whitespace-pre-wrap">{message.data.text}</p>
+                  <div className="mt-2 whitespace-pre-wrap">
+                    <Markdown content={message.data.text} />
+                  </div>
                 </div>
               </div>
             );
@@ -267,7 +267,10 @@ export function AgentTab({
         })}
       </div>
 
-      <form onSubmit={onSubmit} className="border-t border-neutral-200 bg-white p-3">
+      <form
+        onSubmit={onSubmit}
+        className="border-t border-neutral-200 bg-white p-3"
+      >
         <div className="relative">
           {selectedShapes.length > 0 ? (
             <div
@@ -287,7 +290,9 @@ export function AgentTab({
                       if (!editor) {
                         return;
                       }
-                      const nextIds = selectedShapeIds.filter((id) => id !== shape.id);
+                      const nextIds = selectedShapeIds.filter(
+                        (id) => id !== shape.id
+                      );
                       if (nextIds.length === 0) {
                         editor.selectNone();
                       } else {
