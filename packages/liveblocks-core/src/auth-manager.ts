@@ -7,22 +7,41 @@ import type {
   Authentication,
   CustomAuthenticationResult,
 } from "./protocol/Authentication";
-import type { AuthToken, ParsedAuthToken } from "./protocol/AuthToken";
-import { parseAuthToken, Permission, TokenKind } from "./protocol/AuthToken";
+import type {
+  AuthToken,
+  LiveblocksPermissions,
+  ParsedAuthToken,
+} from "./protocol/AuthToken";
+import { parseAuthToken, TokenKind } from "./protocol/AuthToken";
+import type {
+  RequiredAccessLevel,
+  RoomFeature,
+  RoomFeatures,
+} from "./permissions";
+import { resolveRoomFeaturePermissions } from "./permissions";
 import type { Polyfills } from "./room";
 
 export type AuthValue =
   | { type: "secret"; token: ParsedAuthToken }
   | { type: "public"; publicApiKey: string };
 
-export type RequestedScope = "room:read" | "comments:read";
+type RoomAuthRequest = {
+  roomId: string;
+  feature: Exclude<RoomFeature, "creation" | "personal">;
+  access: RequiredAccessLevel;
+};
+
+type UserAuthRequest = {
+  kind: "user";
+  feature: "personal";
+  access?: RequiredAccessLevel;
+};
+
+export type AuthRequest = RoomAuthRequest | UserAuthRequest;
 
 export type AuthManager = {
   reset(): void;
-  getAuthValue(requestOptions: {
-    requestedScope: RequestedScope;
-    roomId?: string;
-  }): Promise<AuthValue>;
+  getAuthValue(requestOptions: AuthRequest): Promise<AuthValue>;
 };
 
 type AuthEndpoint =
@@ -45,98 +64,40 @@ export function createAuthManager(
 
   const seenTokens: Set<string> = new Set();
 
-  const tokens: ParsedAuthToken[] = [];
-  const expiryTimes: number[] = []; // Supposed to always contain the same number of elements as `tokens`
+  const tokens: CachedToken[] = [];
 
   const requestPromises = new Map<string, Promise<ParsedAuthToken>>();
 
   function reset() {
     seenTokens.clear();
     tokens.length = 0;
-    expiryTimes.length = 0;
     requestPromises.clear();
   }
 
-  function hasCorrespondingScopes(
-    requestedScope: RequestedScope,
-    scopes: Permission[]
-  ) {
-    if (requestedScope === "comments:read") {
-      return (
-        scopes.includes(Permission.CommentsRead) ||
-        scopes.includes(Permission.CommentsWrite) ||
-        scopes.includes(Permission.Read) ||
-        scopes.includes(Permission.Write)
-      );
-    } else if (requestedScope === "room:read") {
-      return (
-        scopes.includes(Permission.Read) || scopes.includes(Permission.Write)
-      );
-    }
-
-    return false;
-  }
-
-  function getCachedToken(requestOptions: {
-    requestedScope: RequestedScope;
-    roomId?: string;
-  }): ParsedAuthToken | undefined {
+  function getCachedToken(
+    requestOptions: AuthRequest
+  ): ParsedAuthToken | undefined {
     const now = Math.ceil(Date.now() / 1000);
 
     for (let i = tokens.length - 1; i >= 0; i--) {
-      const token = tokens[i];
-      const expiresAt = expiryTimes[i];
+      const cachedToken = tokens[i];
 
       // If this token is expired, remove it from cache, as if it never existed
       // in the first place
-      if (expiresAt <= now) {
+      if (cachedToken.expiresAt <= now) {
         tokens.splice(i, 1);
-        expiryTimes.splice(i, 1);
         continue;
       }
 
-      if (token.parsed.k === TokenKind.ID_TOKEN) {
-        // When ID token method is used, only one token per user should be used and cached at the same time.
-        return token;
-      } else if (token.parsed.k === TokenKind.ACCESS_TOKEN) {
-        // In this version, we accept access tokens with zero permission when issuing token for resources outside a room.
-        if (
-          !requestOptions.roomId &&
-          Object.entries(token.parsed.perms).length === 0
-        ) {
-          return token;
-        }
-
-        for (const [resource, scopes] of Object.entries(token.parsed.perms)) {
-          // If the requester didn't pass a roomId,
-          // it means they need the token to access the user's resources (inbox notifications for example).
-          // We return any access token that contains a wildcard for the requested scope.
-          if (!requestOptions.roomId) {
-            if (
-              resource.includes("*") &&
-              hasCorrespondingScopes(requestOptions.requestedScope, scopes)
-            ) {
-              return token;
-            }
-          } else if (
-            (resource.includes("*") &&
-              requestOptions.roomId.startsWith(resource.replace("*", ""))) ||
-            (requestOptions.roomId === resource &&
-              hasCorrespondingScopes(requestOptions.requestedScope, scopes))
-          ) {
-            return token;
-          }
-        }
+      if (cachedTokenSatisfiesRequest(cachedToken, requestOptions)) {
+        return cachedToken.token;
       }
     }
 
     return undefined;
   }
 
-  async function makeAuthRequest(options: {
-    requestedScope: RequestedScope;
-    roomId?: string;
-  }): Promise<ParsedAuthToken> {
+  async function makeAuthRequest(options: AuthRequest): Promise<ParsedAuthToken> {
     const fetcher =
       authOptions.polyfills?.fetch ??
       (typeof window === "undefined" ? undefined : window.fetch);
@@ -149,7 +110,7 @@ export function createAuthManager(
       }
 
       const response = await fetchAuthEndpoint(fetcher, authentication.url, {
-        room: options.roomId,
+        room: getRoomIdForAuthRequest(options),
       });
       const parsed = parseAuthToken(response.token);
 
@@ -164,7 +125,9 @@ export function createAuthManager(
     }
 
     if (authentication.type === "custom") {
-      const response = await authentication.callback(options.roomId);
+      const response = await authentication.callback(
+        getRoomIdForAuthRequest(options)
+      );
       if (response && typeof response === "object") {
         if (typeof response.token === "string") {
           const parsed = parseAuthToken(response.token);
@@ -198,10 +161,7 @@ export function createAuthManager(
     );
   }
 
-  async function getAuthValue(requestOptions: {
-    requestedScope: RequestedScope;
-    roomId?: string;
-  }): Promise<AuthValue> {
+  async function getAuthValue(requestOptions: AuthRequest): Promise<AuthValue> {
     if (authentication.type === "public") {
       return { type: "public", publicApiKey: authentication.publicApiKey };
     }
@@ -212,11 +172,12 @@ export function createAuthManager(
     }
 
     let currentPromise;
-    if (requestOptions.roomId) {
-      currentPromise = requestPromises.get(requestOptions.roomId);
+    const requestKey = getAuthRequestKey(requestOptions);
+    if (requestKey !== undefined) {
+      currentPromise = requestPromises.get(requestKey);
       if (currentPromise === undefined) {
         currentPromise = makeAuthRequest(requestOptions);
-        requestPromises.set(requestOptions.roomId, currentPromise);
+        requestPromises.set(requestKey, currentPromise);
       }
     } else {
       currentPromise = requestPromises.get("liveblocks-user-token");
@@ -236,13 +197,20 @@ export function createAuthManager(
         BUFFER;
 
       seenTokens.add(token.raw);
-      tokens.push(token);
-      expiryTimes.push(expiresAt);
+      const cachedToken = makeCachedToken(token, expiresAt);
+
+      if (!cachedTokenSatisfiesRequest(cachedToken, requestOptions)) {
+        throw new StopRetrying(
+          "The Liveblocks auth token does not grant the requested permissions."
+        );
+      }
+
+      tokens.push(cachedToken);
 
       return { type: "secret", token };
     } finally {
-      if (requestOptions.roomId) {
-        requestPromises.delete(requestOptions.roomId);
+      if (requestKey !== undefined) {
+        requestPromises.delete(requestKey);
       } else {
         requestPromises.delete("liveblocks-user-token");
       }
@@ -253,6 +221,152 @@ export function createAuthManager(
     reset,
     getAuthValue,
   };
+}
+
+type CachedToken = {
+  token: ParsedAuthToken;
+  expiresAt: number;
+  permissions?: AuthTokenFeaturePermissions;
+};
+
+type AuthTokenFeaturePermissions = Array<{
+  resource: string;
+  features: RoomFeatures;
+  explicitFeatures: ReadonlySet<Exclude<RoomFeature, "creation" | "personal">>;
+  hasDefaultPermission: boolean;
+}>;
+
+function getRoomIdForAuthRequest(request: AuthRequest): string | undefined {
+  return "roomId" in request ? request.roomId : undefined;
+}
+
+function getAuthRequestKey(request: AuthRequest): string | undefined {
+  return "roomId" in request ? request.roomId : undefined;
+}
+
+function makeCachedToken(token: ParsedAuthToken, expiresAt: number): CachedToken {
+  if (token.parsed.k === TokenKind.ACCESS_TOKEN) {
+    return {
+      token,
+      expiresAt,
+      permissions: getAuthTokenFeaturePermissions(token.parsed.perms),
+    };
+  }
+
+  return { token, expiresAt };
+}
+
+function getAuthTokenFeaturePermissions(
+  permissions: LiveblocksPermissions
+): AuthTokenFeaturePermissions {
+  return Object.entries(permissions)
+    .map(([resource, scopes]) => {
+      const resolved = resolveRoomFeaturePermissions(scopes);
+      return {
+        resource,
+        features: resolved.features,
+        explicitFeatures: resolved.explicitFeatures,
+        hasDefaultPermission:
+          scopes.includes("room:read") || scopes.includes("room:write"),
+      };
+    })
+    .sort(compareResources);
+}
+
+function compareResources(
+  left: AuthTokenFeaturePermissions[number],
+  right: AuthTokenFeaturePermissions[number]
+): number {
+  const leftSpecificity = getResourceSpecificity(left.resource);
+  const rightSpecificity = getResourceSpecificity(right.resource);
+  return leftSpecificity - rightSpecificity;
+}
+
+function getResourceSpecificity(resource: string): number {
+  if (!resource.includes("*")) {
+    return Number.MAX_SAFE_INTEGER;
+  }
+
+  return resource.replace("*", "").length;
+}
+
+function cachedTokenSatisfiesRequest(
+  cachedToken: CachedToken,
+  request: AuthRequest
+): boolean {
+  if (cachedToken.token.parsed.k === TokenKind.ID_TOKEN) {
+    // When ID token method is used, only one token per user should be used and cached at the same time.
+    return true;
+  }
+
+  if (request.feature === "personal") {
+    return true;
+  }
+
+  const features = getFeaturesForRoom(
+    cachedToken.permissions ?? [],
+    request.roomId
+  );
+
+  return (
+    features !== undefined &&
+    hasRequiredAccess(features[request.feature], request.access)
+  );
+}
+
+function getFeaturesForRoom(
+  permissions: AuthTokenFeaturePermissions,
+  roomId: string
+): RoomFeatures | undefined {
+  const matchedPermissions = permissions.filter((permission) =>
+    resourceMatchesRoomId(permission.resource, roomId)
+  );
+
+  if (matchedPermissions.length === 0) {
+    return undefined;
+  }
+
+  let features: RoomFeatures = {
+    creation: "none",
+    presence: "none",
+    storage: "none",
+    comments: "none",
+    feeds: "none",
+    personal: "write",
+  };
+
+  for (const permission of matchedPermissions) {
+    if (permission.hasDefaultPermission) {
+      features = permission.features;
+      continue;
+    }
+
+    features = { ...features };
+    for (const feature of permission.explicitFeatures) {
+      features[feature] = permission.features[feature];
+    }
+  }
+
+  return features;
+}
+
+function resourceMatchesRoomId(resource: string, roomId: string): boolean {
+  if (resource.includes("*")) {
+    return roomId.startsWith(resource.replace("*", ""));
+  }
+
+  return resource === roomId;
+}
+
+function hasRequiredAccess(
+  access: RoomFeatures[RoomFeature],
+  requiredAccess: RequiredAccessLevel
+): boolean {
+  return (
+    (access === "write" && requiredAccess === "write") ||
+    access === "write" ||
+    (access === "read" && requiredAccess === "read")
+  );
 }
 
 function prepareAuthentication(

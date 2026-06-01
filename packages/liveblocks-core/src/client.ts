@@ -692,7 +692,8 @@ export function createClient<U extends BaseUserMeta = DU>(
       ),
       authenticate: async () => {
         const resp = await authManager.getAuthValue({
-          requestedScope: "room:read",
+          kind: "user",
+          feature: "personal",
         });
         if (resp.type === "public") {
           throw new StopRetrying(

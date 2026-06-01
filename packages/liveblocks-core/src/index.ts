@@ -198,7 +198,18 @@ export type {
   ContextualPromptResponse,
 } from "./protocol/Ai";
 export type { CustomAuthenticationResult } from "./protocol/Authentication";
-export { Permission } from "./protocol/AuthToken";
+export type {
+  AccessLevel,
+  RequiredAccessLevel,
+  RoomFeature,
+  RoomFeatures,
+} from "./permissions";
+export {
+  hasRoomFeatureAccess,
+  isPermission,
+  roomFeaturesFromScopes,
+  Permission,
+} from "./permissions";
 export type { BaseActivitiesData } from "./protocol/BaseActivitiesData";
 export type { BaseGroupInfo } from "./protocol/BaseGroupInfo";
 export type { BaseRoomInfo } from "./protocol/BaseRoomInfo";

@@ -20,7 +20,8 @@ import { makePosition } from "../lib/position";
 import { Signal } from "../lib/signals";
 import { deepClone } from "../lib/utils";
 import type { AccessToken, IDToken } from "../protocol/AuthToken";
-import { Permission, TokenKind } from "../protocol/AuthToken";
+import { Permission } from "../permissions";
+import { TokenKind } from "../protocol/AuthToken";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { ClientMsg } from "../protocol/ClientMsg";
 import { ClientMsgCode } from "../protocol/ClientMsg";
@@ -58,7 +59,7 @@ export function makeAccessToken(): AccessToken {
     exp: Date.now() / 1000 + 60, // Valid for 1 minute
     pid: "my-app",
     uid: "user1",
-    perms: { "my-room": [Permission.Write] },
+    perms: { "my-room": [Permission.RoomWrite] },
   };
 }
 
