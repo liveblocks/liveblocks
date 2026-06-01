@@ -3,9 +3,10 @@
 import { useEffect, useRef } from "react";
 import { getYjsProviderForRoom } from "@liveblocks/yjs";
 import { useRoom, useSelf } from "@liveblocks/react/suspense";
-import { Avatars } from "@/components/Avatars";
 import styles from "./CollaborativeEditor.module.css";
 import "superdoc/style.css";
+import "@liveblocks/react-ui/styles.css";
+import { AvatarStack } from "@liveblocks/react-ui";
 
 // Collaborative DOCX editor with live cursors and live avatars, powered by SuperDoc
 export function CollaborativeEditor() {
@@ -74,7 +75,7 @@ export function CollaborativeEditor() {
     <div className={styles.container}>
       <div className={styles.editorHeader}>
         <div id="superdoc-toolbar" className={styles.toolbar} />
-        <Avatars />
+        <AvatarStack size={32} />
       </div>
       <div className={styles.editorContainer}>
         <div id="superdoc" className={styles.editor} />

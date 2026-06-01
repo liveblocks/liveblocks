@@ -13,6 +13,7 @@
     "@liveblocks/client": "^3.19.3",
     "@liveblocks/node": "^3.19.3",
     "@liveblocks/react": "^3.19.3",
+    "@liveblocks/react-ui": "^3.19.3",
     "@liveblocks/yjs": "^3.19.3",
     "@types/node": "^20.3.3",
     "@types/react": "^18.3.27",
