@@ -515,3 +515,105 @@ test("LiveObject: nested-object→scalar transition fires equivalent notificatio
     expected
   );
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Allowed divergence: collapse
+//
+// The reconnect snapshot carries only the *final* state, not the intermediate
+// steps B went through while A was offline. So when B makes multiple changes to
+// the same region offline, A's reconnect notifications collapse to the net
+// delta, whereas the online path sees every intermediate step. This is the one
+// divergence the tech design permits.
+//
+// These tests therefore do NOT assert online === reconnect. They assert:
+//   - both phases converge to the same final state (bothPhases already waits on
+//     this), and
+//   - the online path saw the intermediate churn while the reconnect path saw
+//     only the collapsed net result.
+//
+// Unlike the bug-spec tests above, these are expected to PASS on the current
+// path — they lock in the collapse semantics so the reconcile refactor can't
+// regress them.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const insertedItems = (deltas: ListUpdate["updates"]): unknown[] =>
+  deltas.filter((d) => d.type === "insert").map((d) => (d as { item: unknown }).item);
+
+test("collapse: a net-zero list change (insert then delete) notifies online but is silent on reconnect", async () => {
+  const { online, reconnect } = await bothPhases(
+    () => ({ list: new LiveList<string>(["a"]) }),
+    (r) => {
+      r.get("list").push("x"); // ["a", "x"]
+      r.get("list").delete(1); // ["a"]  — net change is nothing
+    }
+  );
+
+  // Online saw the churn: an insert of "x" and its delete.
+  const onlineDeltas = collectListDeltas(online.batches, online.root.get("list"));
+  expect(onlineDeltas).toEqual([
+    { type: "insert", index: 1, item: "x" },
+    { type: "delete", index: 1, deletedItem: "x" },
+  ]);
+
+  // Reconnect snapshot equals A's pre-disconnect state, so nothing is notified.
+  expect(
+    collectListDeltas(reconnect.batches, reconnect.root.get("list"))
+  ).toEqual([]);
+
+  // Both converge to the unchanged list.
+  expect(online.root.get("list").toJSON()).toEqual(["a"]);
+  expect(reconnect.root.get("list").toJSON()).toEqual(["a"]);
+});
+
+test("collapse: a net-zero object change (add then delete a key) notifies online but is silent on reconnect", async () => {
+  const { online, reconnect } = await bothPhases(
+    () => ({ obj: new LiveObject<{ a: number; b?: number }>({ a: 1 }) }),
+    (r) => {
+      r.get("obj").set("b", 2); // { a: 1, b: 2 }
+      r.get("obj").delete("b"); // { a: 1 }  — net change is nothing
+    }
+  );
+
+  // Online saw "b" appear and disappear (merged last-write-wins to its delete).
+  expect(mergeObjUpdates(online.batches, online.root.get("obj"))).toEqual({
+    b: { type: "delete", deletedItem: 2 },
+  });
+
+  // Reconnect snapshot equals A's pre-disconnect state, so nothing is notified.
+  expect(mergeObjUpdates(reconnect.batches, reconnect.root.get("obj"))).toEqual(
+    {}
+  );
+
+  expect(online.root.get("obj").toJSON()).toEqual({ a: 1 });
+  expect(reconnect.root.get("obj").toJSON()).toEqual({ a: 1 });
+});
+
+test("collapse: an intermediate list item B adds then removes offline is never seen on reconnect", async () => {
+  const { online, reconnect } = await bothPhases(
+    () => ({ list: new LiveList<string>([]) }),
+    (r) => {
+      r.get("list").push("a");
+      r.get("list").push("b"); // intermediate — removed below
+      r.get("list").push("c");
+      r.get("list").delete(1); // remove "b"  → net ["a", "c"]
+    }
+  );
+
+  // Online witnessed "b" being inserted (and later deleted)...
+  const onlineDeltas = collectListDeltas(online.batches, online.root.get("list"));
+  expect(insertedItems(onlineDeltas)).toContain("b");
+
+  // ...but the reconnect snapshot only carries the net result: a, c. "b" never
+  // appears.
+  const reconnectDeltas = collectListDeltas(
+    reconnect.batches,
+    reconnect.root.get("list")
+  );
+  expect(reconnectDeltas).toEqual([
+    { type: "insert", index: 0, item: "a" },
+    { type: "insert", index: 1, item: "c" },
+  ]);
+
+  expect(online.root.get("list").toJSON()).toEqual(["a", "c"]);
+  expect(reconnect.root.get("list").toJSON()).toEqual(["a", "c"]);
+});
