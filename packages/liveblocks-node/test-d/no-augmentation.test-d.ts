@@ -1,4 +1,5 @@
 import { Liveblocks } from "@liveblocks/node";
+import type { RoomPermission } from "@liveblocks/node";
 import { describe, expectTypeOf, test } from "vitest";
 import type {
   CommentReaction,
@@ -47,6 +48,23 @@ describe("Liveblocks client without Liveblocks augmentation", () => {
     });
   });
 
+  test("should accept known permissions for session authorization", () => {
+    const session = client.prepareSession("user-123");
+
+    session.allow("my-room", { default: "read", storage: "none" });
+    session.allow("my-room", { comments: "write" });
+
+    session.allow("invalid-presence", {
+      // @ts-expect-error presence cannot be set to write
+      presence: "write",
+    });
+
+    session.allow("invalid-storage", {
+      // @ts-expect-error unknown storage permission level
+      storage: "full",
+    });
+  });
+
   test("should accept identifyUser() without userInfo", async () => {
     await client.identifyUser("user-123");
   });
@@ -71,6 +89,58 @@ describe("Liveblocks client without Liveblocks augmentation", () => {
         // @ts-expect-error non-JSON in userInfo
         notJson: new Date(),
       },
+    });
+  });
+
+  test("should accept known permissions for room management", () => {
+    expectTypeOf<RoomPermission>().toEqualTypeOf<
+      import("@liveblocks/node").RoomPermissionList
+    >();
+
+    client.createRoom("my-room", {
+      defaultAccesses: ["room:read"],
+      groupsAccesses: {
+        product: { comments: "write" },
+      },
+    });
+
+    client.getOrCreateRoom("my-room", {
+      defaultAccesses: { default: "read", presence: "none" },
+      usersAccesses: {
+        alice: ["room:comments:read"],
+      },
+    });
+
+    client.updateRoom("my-room", {
+      defaultAccesses: null,
+      usersAccesses: {
+        alice: null,
+        bob: ["room:comments:none"],
+      },
+    });
+
+    client.upsertRoom("my-room", {
+      update: {
+        groupsAccesses: {
+          product: { storage: "read", comments: "none" },
+        },
+      },
+      create: {
+        defaultAccesses: { default: "write" },
+      },
+    });
+
+    client.createRoom("legacy-comments", {
+      defaultAccesses: ["comments:write"],
+    });
+
+    client.updateRoom("legacy-presence", {
+      defaultAccesses: ["room:presence:write"],
+    });
+
+    client.createRoom("invalid-permission", {
+      // @ts-expect-error unknown permissions cannot be used for room management
+      defaultAccesses: ["not-a-permission"],
     });
   });
 

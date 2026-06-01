@@ -81,6 +81,14 @@ import {
 import { asyncConsume, runConcurrently } from "./lib/itertools";
 import { LineStream, NdJsonStream } from "./lib/ndjson";
 import { xwarn } from "./lib/xwarn";
+import {
+  normalizeCreateRoomOptionsInput,
+  normalizeUpdateRoomOptionsInput,
+  type RoomAccesses,
+  type RoomAccessesInput,
+  type RoomPermissionList,
+  type RoomPermissionInput,
+} from "./roomAccess";
 import { Session } from "./Session";
 import {
   assertNonEmpty,
@@ -173,17 +181,13 @@ export type CreateCommentOptions<CM extends BaseMetadata> = {
   } & PartialUnless<CM, { metadata: CM }>;
 };
 
-export type RoomPermission =
-  | []
-  | ["room:write"]
-  | ["room:read", "room:presence:write"]
-  | ["room:read", "room:presence:write", "comments:write"];
-export type RoomAccesses = Record<
-  string,
-  | ["room:write"]
-  | ["room:read", "room:presence:write"]
-  | ["room:read", "room:presence:write", "comments:write"]
->;
+export type {
+  RoomAccesses,
+  RoomAccessesInput,
+  RoomPermissionInput,
+  RoomPermissionList,
+} from "./roomAccess";
+export type RoomPermission = RoomPermissionList;
 export type RoomMetadata = Record<string, string | string[]>;
 type QueryRoomMetadata = Record<string, string>;
 
@@ -193,7 +197,7 @@ export type RoomData = {
   createdAt: Date;
   lastConnectionAt?: Date;
   organizationId: string;
-  defaultAccesses: RoomPermission;
+  defaultAccesses: RoomPermissionList;
   usersAccesses: RoomAccesses;
   groupsAccesses: RoomAccesses;
   metadata: RoomMetadata;
@@ -467,9 +471,9 @@ export type GetInboxNotificationsOptions =
   & PaginationOptions;
 
 export type CreateRoomOptions = {
-  defaultAccesses: RoomPermission;
-  groupsAccesses?: RoomAccesses;
-  usersAccesses?: RoomAccesses;
+  defaultAccesses: RoomPermissionInput;
+  groupsAccesses?: RoomAccessesInput;
+  usersAccesses?: RoomAccessesInput;
   metadata?: RoomMetadata;
   /**
    * @deprecated Use `organizationId` instead.
@@ -485,15 +489,9 @@ export type CreateRoomOptions = {
 };
 
 export type UpdateRoomOptions = {
-  defaultAccesses?: RoomPermission | null;
-  groupsAccesses?: Record<
-    string,
-    ["room:write"] | ["room:read", "room:presence:write"] | null
-  >;
-  usersAccesses?: Record<
-    string,
-    ["room:write"] | ["room:read", "room:presence:write"] | null
-  >;
+  defaultAccesses?: RoomPermissionInput | null;
+  groupsAccesses?: Record<string, RoomPermissionInput | null>;
+  usersAccesses?: Record<string, RoomPermissionInput | null>;
   metadata?: Record<string, string | string[] | null>;
 };
 
@@ -1121,11 +1119,11 @@ export class Liveblocks {
       metadata,
       tenantId,
       organizationId,
-    } = params;
+    } = normalizeCreateRoomOptionsInput(params);
 
     const body: {
       id: string;
-      defaultAccesses: RoomPermission;
+      defaultAccesses: RoomPermissionList;
       groupsAccesses?: RoomAccesses;
       usersAccesses?: RoomAccesses;
       metadata?: RoomMetadata;
@@ -1196,9 +1194,17 @@ export class Liveblocks {
     params: UpsertRoomOptions,
     options?: RequestOptions
   ): Promise<RoomData> {
+    const body: UpsertRoomOptions = {
+      update: normalizeUpdateRoomOptionsInput(params.update),
+      create:
+        params.create === undefined
+          ? undefined
+          : normalizeCreateRoomOptionsInput(params.create),
+    };
+
     const res = await this.#post(
       url`/v2/rooms/${roomId}/upsert`,
-      params,
+      body,
       options
     );
     if (!res.ok) {
@@ -1245,7 +1251,8 @@ export class Liveblocks {
     params: UpdateRoomOptions,
     options?: RequestOptions
   ): Promise<RoomData> {
-    const { defaultAccesses, groupsAccesses, usersAccesses, metadata } = params;
+    const { defaultAccesses, groupsAccesses, usersAccesses, metadata } =
+      normalizeUpdateRoomOptionsInput(params);
 
     const res = await this.#post(
       url`/v2/rooms/${roomId}`,

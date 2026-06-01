@@ -5,7 +5,7 @@ import { Liveblocks } from "../client";
 const P1 = "room:read";
 const P2 = "room:write";
 const P3 = "comments:read";
-// const P4 = "comments:write";
+const P4 = "room:storage:write";
 
 function makeSession(options?: {
   secret?: string;
@@ -78,7 +78,69 @@ describe("authorization (new API)", () => {
     expect(
       session.allow("xyz", session.READ_ACCESS).serializePermissions()
     ).toEqual({
-      xyz: ["room:read", "room:presence:write", "comments:read"],
+      xyz: ["room:read", "room:presence:write", "room:comments:read"],
+    });
+  });
+
+  test("can assign new room-scoped permissions", () => {
+    expect(
+      makeSession()
+        .allow("xyz", [
+          "room:presence:none",
+          "room:storage:read",
+          "room:comments:write",
+          "room:feeds:none",
+        ])
+        .serializePermissions()
+    ).toEqual({
+      xyz: [
+        "room:presence:none",
+        "room:storage:read",
+        "room:comments:write",
+        "room:feeds:none",
+      ],
+    });
+  });
+
+  test("can assign permissions with object notation", () => {
+    expect(
+      makeSession()
+        .allow("xyz", {
+          default: "read",
+          presence: "none",
+          storage: "write",
+          comments: "read",
+          feeds: "none",
+        })
+        .serializePermissions()
+    ).toEqual({
+      xyz: [
+        "room:read",
+        "room:presence:none",
+        "room:storage:write",
+        "room:comments:read",
+        "room:feeds:none",
+      ],
+    });
+  });
+
+  test("still accepts legacy permissions", () => {
+    expect(
+      makeSession()
+        .allow("xyz", [
+          "room:presence:write",
+          "comments:read",
+          "comments:write",
+          "feeds:write",
+        ])
+        .serializePermissions()
+    ).toEqual({
+      xyz: [
+        "room:presence:write",
+        "comments:read",
+        "comments:write",
+        "feeds:write",
+      ],
     });
   });
 
@@ -99,6 +161,21 @@ describe("authorization (new API)", () => {
     expect(() => makeSession().allow("foobar", [])).toThrow(
       "Permission list cannot be empty"
     );
+  });
+
+  test("throws when permission object is empty", () => {
+    expect(() => makeSession().allow("foobar", {})).toThrow(
+      "Room permission object cannot be empty"
+    );
+  });
+
+  test("throws when permission object values are invalid", () => {
+    expect(() =>
+      makeSession().allow("foobar", {
+        // @ts-expect-error: testing JS callers with invalid values
+        storage: "full",
+      })
+    ).toThrow('Invalid room permission object value for "storage"');
   });
 
   test("throws when room name contains asterisk", () => {
@@ -151,10 +228,10 @@ describe("authorization (new API)", () => {
       makeSession()
         .allow("foo", [P1])
         .allow("bar", [P2])
-        .allow("foo", [P3])
+        .allow("foo", [P4])
         .serializePermissions()
     ).toEqual({
-      foo: [P1, P3],
+      foo: [P1, P4],
       bar: [P2],
     });
   });

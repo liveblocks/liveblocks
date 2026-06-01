@@ -2,48 +2,40 @@ import type {
   IUserInfo,
   Json,
   JsonObject,
+  LiveblocksPermission,
   URLSafeString,
 } from "@liveblocks/core";
-import { url } from "@liveblocks/core";
+import { isLiveblocksPermission, Permission, url } from "@liveblocks/core";
 
 import type { AuthResponse } from "./client";
+import type { RoomPermissionObject } from "./permissions";
+import { normalizeRoomPermissions } from "./permissions";
 import { assertNonEmpty, normalizeStatusCode } from "./utils";
 
-// As defined in the source of truth in ApiScope in
-// https://github.com/liveblocks/liveblocks-cloudflare/blob/main/src/security.ts
-const ALL_PERMISSIONS = Object.freeze([
-  "room:write",
-  "room:read",
-  "room:presence:write",
-  "comments:write",
-  "comments:read",
-  "feeds:write",
-] as const);
-
-export type Permission = (typeof ALL_PERMISSIONS)[number];
-
-function isPermission(value: string): value is Permission {
-  return (ALL_PERMISSIONS as readonly unknown[]).includes(value);
+function isPermissionList(
+  value: readonly LiveblocksPermission[] | RoomPermissionObject
+): value is readonly LiveblocksPermission[] {
+  return Array.isArray(value);
 }
 
 const MAX_PERMS_PER_SET = 10;
 
 /**
  * Assign this to a room (or wildcard pattern) if you want to grant the user
- * read permissions to the storage and comments data for this room. (Note that
- * the user will still have permissions to update their own presence.)
+ * read permissions to the storage and comments data for this room. This preset
+ * includes legacy permissions for backwards compatibility.
  */
 const READ_ACCESS = Object.freeze([
-  "room:read",
-  "room:presence:write", // TODO: Remove once backend no longer requires this
-  "comments:read", // TODO: Remove — implied by room:read
+  Permission.RoomRead,
+  Permission.LegacyRoomPresenceWrite,
+  Permission.RoomCommentsRead,
 ] as const);
 
 /**
  * Assign this to a room (or wildcard pattern) if you want to grant the user
  * permissions to read and write to the room's storage and comments.
  */
-const FULL_ACCESS = Object.freeze(["room:write"] as const);
+const FULL_ACCESS = Object.freeze([Permission.RoomWrite] as const);
 
 const roomPatternRegex = /^([*]|[^*]{1,128}[*]?)$/;
 
@@ -73,16 +65,14 @@ type PostFn = (path: URLSafeString, json: Json) => Promise<Response>;
  * You can define at most 10 room IDs (or patterns) in a single token,
  * otherwise the token would become too large and unwieldy.
  *
- * All permissions granted are additive. You cannot "remove" permissions once
- * you grant them. For example:
+ * Permissions are additive across separate `.allow()` calls. You can also
+ * restrict specific resources within a grant using resource-level `read` or
+ * `none` entries. For example:
  *
- *    session
- *      .allow('abc:*',   session.FULL_ACCESS)
- *      .allow('abc:123', session.READ_ACCESS)
+ *    session.allow('abc:*', { default: "write", storage: "none" })
  *
- * Here, room `abc:123` would have full access. The second .allow() call only
- * _adds_ read permissions, but that has no effect since full access
- * permissions were already added to the set.
+ * Here, matching rooms have write access to most resources, but no storage
+ * access.
  */
 export class Session {
   public readonly FULL_ACCESS = FULL_ACCESS;
@@ -95,7 +85,7 @@ export class Session {
   /** Only used as a hint to produce better error messages. */
   #localDev: boolean;
   #sealed = false;
-  readonly #permissions: Map<string, Set<Permission>> = new Map();
+  readonly #permissions: Map<string, Set<LiveblocksPermission>> = new Map();
 
   /** @internal */
   constructor(
@@ -114,7 +104,7 @@ export class Session {
     this.#localDev = localDev ?? false;
   }
 
-  #getOrCreate(roomId: string): Set<Permission> {
+  #getOrCreate(roomId: string): Set<LiveblocksPermission> {
     if (this.#sealed) {
       throw new Error("You can no longer change these permissions.");
     }
@@ -129,13 +119,16 @@ export class Session {
         );
       }
 
-      perms = new Set<Permission>();
+      perms = new Set<LiveblocksPermission>();
       this.#permissions.set(roomId, perms);
       return perms;
     }
   }
 
-  public allow(roomIdOrPattern: string, newPerms: readonly Permission[]): this {
+  public allow(
+    roomIdOrPattern: string,
+    newPerms: readonly LiveblocksPermission[] | RoomPermissionObject
+  ): this {
     if (typeof roomIdOrPattern !== "string") {
       throw new Error("Room name or pattern must be a string");
     }
@@ -143,13 +136,17 @@ export class Session {
       throw new Error("Invalid room name or pattern");
     }
 
-    if (newPerms.length === 0) {
+    const permissions = isPermissionList(newPerms)
+      ? newPerms
+      : normalizeRoomPermissions(newPerms);
+
+    if (permissions.length === 0) {
       throw new Error("Permission list cannot be empty");
     }
 
     const existingPerms = this.#getOrCreate(roomIdOrPattern);
-    for (const perm of newPerms) {
-      if (!isPermission(perm as string)) {
+    for (const perm of permissions) {
+      if (!isLiveblocksPermission(perm)) {
         throw new Error(`Not a valid permission: ${perm}`);
       }
       existingPerms.add(perm);

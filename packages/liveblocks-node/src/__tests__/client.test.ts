@@ -16,9 +16,11 @@ import { afterAll, afterEach, beforeAll, describe, expect, test } from "vitest";
 import {
   type AiCopilot,
   type CreateAiCopilotOptions,
+  type CreateRoomOptions,
   Liveblocks,
   LiveblocksError,
   type UpdateAiCopilotOptions,
+  type UpdateRoomOptions,
 } from "../client";
 import { getBaseUrl } from "../utils";
 
@@ -651,6 +653,213 @@ describe("client", () => {
         usersAccesses: undefined,
         metadata: undefined,
       });
+    });
+
+    test("should pass new room permissions to the request", async () => {
+      const roomId = "test-room";
+      const createRoomParams: CreateRoomOptions = {
+        defaultAccesses: { default: "read", storage: "read" },
+        groupsAccesses: {
+          product: { comments: "write", feeds: "none" },
+        },
+        usersAccesses: {
+          alice: { presence: "none" },
+        },
+      };
+
+      let capturedRequestData: unknown = null;
+
+      server.use(
+        http.post(`${DEFAULT_BASE_URL}/v2/rooms`, async ({ request }) => {
+          capturedRequestData = await request.json();
+          return HttpResponse.json(room, { status: 200 });
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+      await client.createRoom(roomId, createRoomParams);
+
+      expect(capturedRequestData).toEqual({
+        id: roomId,
+        defaultAccesses: ["room:read", "room:storage:read"],
+        groupsAccesses: {
+          product: ["room:comments:write", "room:feeds:none"],
+        },
+        usersAccesses: {
+          alice: ["room:presence:none"],
+        },
+        metadata: undefined,
+      });
+    });
+
+    test("should pass new room permissions to getOrCreateRoom requests", async () => {
+      const roomId = "test-room";
+      let capturedRequestData: unknown = null;
+
+      server.use(
+        http.post(`${DEFAULT_BASE_URL}/v2/rooms`, async ({ request }) => {
+          capturedRequestData = await request.json();
+          return HttpResponse.json(room, { status: 200 });
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+      await client.getOrCreateRoom(roomId, {
+        defaultAccesses: { default: "read", storage: "none" },
+        groupsAccesses: {
+          product: { comments: "write" },
+        },
+        usersAccesses: {
+          alice: ["room:presence:none"],
+        },
+      });
+
+      expect(capturedRequestData).toEqual({
+        id: roomId,
+        defaultAccesses: ["room:read", "room:storage:none"],
+        groupsAccesses: {
+          product: ["room:comments:write"],
+        },
+        usersAccesses: {
+          alice: ["room:presence:none"],
+        },
+        metadata: undefined,
+      });
+    });
+
+    test("should throw when createRoom permission object values are invalid", async () => {
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(
+        client.createRoom("test-room", {
+          defaultAccesses: {
+            // @ts-expect-error: testing JS callers with invalid values
+            storage: "full",
+          },
+        })
+      ).rejects.toThrow('Invalid room permission object value for "storage"');
+    });
+  });
+
+  describe("update room", () => {
+    test("should pass new room permissions and null access updates to the request", async () => {
+      const roomId = "test-room";
+      const updateRoomParams: UpdateRoomOptions = {
+        defaultAccesses: { storage: "none" },
+        groupsAccesses: {
+          product: { comments: "none" },
+          support: null,
+        },
+        usersAccesses: {
+          alice: { feeds: "read" },
+        },
+      };
+
+      let capturedRequestData: unknown = null;
+
+      server.use(
+        http.post(
+          `${DEFAULT_BASE_URL}/v2/rooms/${roomId}`,
+          async ({ request }) => {
+            capturedRequestData = await request.json();
+            return HttpResponse.json(room, { status: 200 });
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+      await client.updateRoom(roomId, updateRoomParams);
+
+      expect(capturedRequestData).toEqual({
+        defaultAccesses: ["room:storage:none"],
+        groupsAccesses: {
+          product: ["room:comments:none"],
+          support: null,
+        },
+        usersAccesses: {
+          alice: ["room:feeds:read"],
+        },
+        metadata: undefined,
+      });
+    });
+
+    test("should throw when updateRoom permission object values are invalid", async () => {
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(
+        client.updateRoom("test-room", {
+          defaultAccesses: {
+            // @ts-expect-error: testing JS callers with invalid values
+            comments: "full",
+          },
+        })
+      ).rejects.toThrow('Invalid room permission object value for "comments"');
+    });
+  });
+
+  describe("upsert room", () => {
+    test("should pass new room permission objects to the request", async () => {
+      const roomId = "test-room";
+
+      let capturedRequestData: unknown = null;
+
+      server.use(
+        http.post(
+          `${DEFAULT_BASE_URL}/v2/rooms/${roomId}/upsert`,
+          async ({ request }) => {
+            capturedRequestData = await request.json();
+            return HttpResponse.json(room, { status: 200 });
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+      await client.upsertRoom(roomId, {
+        update: {
+          defaultAccesses: { comments: "none" },
+          groupsAccesses: {
+            support: null,
+          },
+        },
+        create: {
+          defaultAccesses: { default: "write" },
+          usersAccesses: {
+            alice: { storage: "write", feeds: "read" },
+          },
+        },
+      });
+
+      expect(capturedRequestData).toEqual({
+        update: {
+          defaultAccesses: ["room:comments:none"],
+          groupsAccesses: {
+            support: null,
+          },
+          usersAccesses: undefined,
+        },
+        create: {
+          defaultAccesses: ["room:write"],
+          usersAccesses: {
+            alice: ["room:storage:write", "room:feeds:read"],
+          },
+          groupsAccesses: undefined,
+        },
+      });
+    });
+
+    test("should throw when upsertRoom permission object values are invalid", async () => {
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(
+        client.upsertRoom("test-room", {
+          update: {
+            defaultAccesses: {
+              // @ts-expect-error: testing JS callers with invalid values
+              feeds: "full",
+            },
+          },
+        })
+      ).rejects.toThrow('Invalid room permission object value for "feeds"');
     });
   });
 

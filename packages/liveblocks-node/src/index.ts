@@ -27,8 +27,11 @@ export type {
   Page,
   PaginationOptions,
   RoomAccesses,
+  RoomAccessesInput,
   RoomData,
   RoomPermission,
+  RoomPermissionInput,
+  RoomPermissionList,
   RoomsQueryCriteria,
   RoomUser,
   SetPresenceOptions,
@@ -42,6 +45,23 @@ export type {
 } from "./client";
 export { Liveblocks, LiveblocksError } from "./client";
 export { markdownToCommentBody } from "./comment-body";
+export type {
+  AccessLevel,
+  RequiredAccessLevel,
+  RoomFeature,
+  RoomPermissionObject,
+  RoomPermissions,
+  RoomPermissionString,
+} from "./permissions";
+export {
+  LEGACY_ROOM_PERMISSIONS,
+  Permission,
+  ROOM_PERMISSIONS,
+  canReadRoomFeature,
+  canWriteRoomFeature,
+  hasRoomFeatureAccess,
+  roomPermissionsFromScopes,
+} from "./permissions";
 export type {
   CommentCreatedEvent,
   CommentDeletedEvent,
