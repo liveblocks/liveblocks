@@ -3725,23 +3725,46 @@ function useCanUseRoomFeature(
   requiredAccess: RequiredAccessLevel
 ): boolean {
   const permissions = useRoomPermissions(roomId);
+  const fallback = useSelfRoomFeatureFallback(roomId, feature, requiredAccess);
+
+  return permissions !== undefined
+    ? hasFeatureAccess(permissions, feature, requiredAccess)
+    : fallback;
+}
+
+function useSelfRoomFeatureFallback(
+  roomId: string,
+  feature: RoomFeature,
+  requiredAccess: RequiredAccessLevel
+): boolean {
   const room = useRoom_withRoomContext(GlobalRoomContext, {
     allowOutsideRoom: true,
   });
 
-  if (permissions !== undefined) {
-    return hasFeatureAccess(permissions, feature, requiredAccess);
-  }
+  const subscribe = useCallback(
+    (callback: () => void) => {
+      if (room === null || room.id !== roomId) {
+        return () => {};
+      }
 
-  const self = room?.id === roomId ? room.getSelf() : null;
-  if (feature === "comments" && requiredAccess === "write") {
-    return self?.canComment ?? true;
-  }
-  if (feature === "storage" && requiredAccess === "write") {
-    return self?.canWrite ?? true;
-  }
+      return room.events.self.subscribe(callback);
+    },
+    [room, roomId]
+  );
 
-  return true;
+  const getSnapshot = useCallback(() => {
+    const self = room?.id === roomId ? room.getSelf() : null;
+    if (feature === "comments" && requiredAccess === "write") {
+      return self?.canComment ?? true;
+    }
+    if (feature === "storage" && requiredAccess === "write") {
+      return self?.canWrite ?? true;
+    }
+
+    return true;
+  }, [feature, requiredAccess, room, roomId]);
+
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
 function hasFeatureAccess(
