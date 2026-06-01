@@ -1,0 +1,32 @@
+{
+  "name": "@liveblocks-examples/nextjs-yjs-superdoc",
+  "description": "This example shows how to build a collaborative DOCX editor with Liveblocks, Yjs, SuperDoc, and Next.js.",
+  "license": "Apache-2.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@liveblocks/client": "^3.19.3",
+    "@liveblocks/node": "^3.19.3",
+    "@liveblocks/react": "^3.19.3",
+    "@liveblocks/react-ui": "^3.19.3",
+    "@liveblocks/yjs": "^3.19.3",
+    "@superdoc-dev/react": "^1.9.0",
+    "@types/node": "^20.3.3",
+    "@types/react": "^18.3.27",
+    "@types/react-dom": "^18.2.25",
+    "next": "^16.2.6",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "superdoc": "^1.38.0",
+    "yjs": "^13.6.31"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3",
+    "typescript": "^5.4.5"
+  }
+}
