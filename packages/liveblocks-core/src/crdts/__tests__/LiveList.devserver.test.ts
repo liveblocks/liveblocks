@@ -110,7 +110,7 @@ describe("LiveList", () => {
           liveblocksType: "LiveObject",
           data: { items: { liveblocksType: "LiveList", data: [] } },
         },
-        { permissions: ["room:read", "room:presence:write"] }
+        { permissions: ["room:read"] }
       );
 
       const items = root.get("items");
@@ -239,7 +239,7 @@ describe("LiveList", () => {
           liveblocksType: "LiveObject",
           data: { items: { liveblocksType: "LiveList", data: [] } },
         },
-        { permissions: ["room:read", "room:presence:write"] }
+        { permissions: ["room:read"] }
       );
 
       const items = root.get("items");
@@ -316,7 +316,7 @@ describe("LiveList", () => {
           liveblocksType: "LiveObject",
           data: { items: { liveblocksType: "LiveList", data: [] } },
         },
-        { permissions: ["room:read", "room:presence:write"] }
+        { permissions: ["room:read"] }
       );
 
       const items = root.get("items");
@@ -432,7 +432,7 @@ describe("LiveList", () => {
           liveblocksType: "LiveObject",
           data: { items: { liveblocksType: "LiveList", data: [] } },
         },
-        { permissions: ["room:read", "room:presence:write"] }
+        { permissions: ["room:read"] }
       );
 
       const items = root.get("items");
@@ -556,7 +556,7 @@ describe("LiveList", () => {
           liveblocksType: "LiveObject",
           data: { items: { liveblocksType: "LiveList", data: [] } },
         },
-        { permissions: ["room:read", "room:presence:write"] }
+        { permissions: ["room:read"] }
       );
 
       const items = root.get("items");
@@ -679,7 +679,7 @@ describe("LiveList", () => {
           liveblocksType: "LiveObject",
           data: { items: { liveblocksType: "LiveList", data: [] } },
         },
-        { permissions: ["room:read", "room:presence:write"] }
+        { permissions: ["room:read"] }
       );
 
       const items = root.get("items");

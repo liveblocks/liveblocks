@@ -54,8 +54,12 @@ import type {
   ContextualPromptContext,
   ContextualPromptResponse,
 } from "./protocol/Ai";
-import type { Permission } from "./protocol/AuthToken";
-import { canComment, canWriteStorage } from "./protocol/AuthToken";
+import {
+  Permission,
+  canUseRoomPermission,
+  canWriteRoomFeature,
+  resolveRoomPermissions,
+} from "./protocol/Permission";
 import type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
 import type {
   AddFeedClientMsg,
@@ -1756,7 +1760,9 @@ export function createRoom<
   function isStorageWritable(): boolean {
     const scopes = context.dynamicSessionInfoSig.get()?.scopes;
     // If we aren't connected yet, assume we can write
-    return scopes !== undefined ? canWriteStorage(scopes) : true;
+    return scopes !== undefined
+      ? canUseRoomPermission(scopes, Permission.RoomStorageWrite)
+      : true;
   }
 
   const eventHub = {
@@ -1837,14 +1843,15 @@ export function createRoom<
       if (staticSession === null || dynamicSession === null) {
         return null;
       } else {
-        const canWrite = canWriteStorage(dynamicSession.scopes);
+        const permissions = resolveRoomPermissions(dynamicSession.scopes);
+        const canWrite = canWriteRoomFeature(permissions, "storage");
         return {
           connectionId: dynamicSession.actor,
           id: staticSession.userId,
           info: staticSession.userInfo,
           presence: myPresence,
           canWrite,
-          canComment: canComment(dynamicSession.scopes),
+          canComment: canWriteRoomFeature(permissions, "comments"),
         };
       }
     }
@@ -4055,7 +4062,10 @@ export function makeAuthDelegateForRoom(
   authManager: AuthManager
 ): () => Promise<AuthValue> {
   return async () => {
-    return authManager.getAuthValue({ requestedScope: "room:read", roomId });
+    return authManager.getAuthValue({
+      requestedScope: Permission.RoomPresenceRead,
+      roomId,
+    });
   };
 }
 

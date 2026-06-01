@@ -8,14 +8,23 @@ import type {
   CustomAuthenticationResult,
 } from "./protocol/Authentication";
 import type { AuthToken, ParsedAuthToken } from "./protocol/AuthToken";
-import { parseAuthToken, Permission, TokenKind } from "./protocol/AuthToken";
+import { parseAuthToken, TokenKind } from "./protocol/AuthToken";
+import {
+  Permission,
+  canUseResolvedRoomPermission,
+  resolveRoomPermissions,
+  resolveRoomPermissionsWithOverrides,
+  type LiveblocksPermission,
+  type RoomPermissionLevels,
+  type RequestedScope,
+} from "./protocol/Permission";
 import type { Polyfills } from "./room";
+
+export type { RequestedScope } from "./protocol/Permission";
 
 export type AuthValue =
   | { type: "secret"; token: ParsedAuthToken }
   | { type: "public"; publicApiKey: string };
-
-export type RequestedScope = "room:read" | "comments:read";
 
 export type AuthManager = {
   reset(): void;
@@ -25,9 +34,16 @@ export type AuthManager = {
   }): Promise<AuthValue>;
 };
 
-type AuthEndpoint =
-  | string
-  | ((room?: string) => Promise<CustomAuthenticationResult>);
+export type AuthEndpointCallback = (
+  room?: string
+) => Promise<CustomAuthenticationResult>;
+
+type AuthEndpoint = string | AuthEndpointCallback;
+
+type CachedTokenPermissions = {
+  readonly roomPermissionsById: Map<string, RoomPermissionLevels | null>;
+  readonly roomlessPermissionsByResource: Map<string, RoomPermissionLevels>;
+};
 
 export type AuthenticationOptions = {
   polyfills?: Polyfills;
@@ -36,6 +52,46 @@ export type AuthenticationOptions = {
 const NON_RETRY_STATUS_CODES = [
   400, 401, 403, 404, 405, 410, 412, 414, 422, 431, 451,
 ];
+
+function canUseRoomlessTokenWithoutPermissions(requestOptions: {
+  requestedScope: RequestedScope;
+  roomId?: string;
+}): boolean {
+  return (
+    requestOptions.roomId === undefined &&
+    requestOptions.requestedScope === Permission.RoomCommentsRead
+  );
+}
+
+function getMatchingPermissionScopes(
+  permissions: Record<string, LiveblocksPermission[]>,
+  roomId: string
+): LiveblocksPermission[][] {
+  return Object.entries(permissions)
+    .map(([resource, scopes]) => {
+      if (resource === roomId) {
+        return { scopes, specificity: resource.length + 1 };
+      }
+
+      if (resource.includes("*")) {
+        const prefix = resource.replace("*", "");
+        if (roomId.startsWith(prefix)) {
+          return { scopes, specificity: prefix.length };
+        }
+      }
+
+      return undefined;
+    })
+    .filter(
+      (
+        entry
+      ): entry is { scopes: LiveblocksPermission[]; specificity: number } => {
+        return entry !== undefined;
+      }
+    )
+    .sort((left, right) => left.specificity - right.specificity)
+    .map((entry) => entry.scopes);
+}
 
 export function createAuthManager(
   authOptions: AuthenticationOptions,
@@ -47,6 +103,7 @@ export function createAuthManager(
 
   const tokens: ParsedAuthToken[] = [];
   const expiryTimes: number[] = []; // Supposed to always contain the same number of elements as `tokens`
+  const cachedTokenPermissions: CachedTokenPermissions[] = []; // Supposed to always contain the same number of elements as `tokens`
 
   const requestPromises = new Map<string, Promise<ParsedAuthToken>>();
 
@@ -54,27 +111,54 @@ export function createAuthManager(
     seenTokens.clear();
     tokens.length = 0;
     expiryTimes.length = 0;
+    cachedTokenPermissions.length = 0;
     requestPromises.clear();
   }
 
-  function hasCorrespondingScopes(
-    requestedScope: RequestedScope,
-    scopes: Permission[]
-  ) {
-    if (requestedScope === "comments:read") {
-      return (
-        scopes.includes(Permission.CommentsRead) ||
-        scopes.includes(Permission.CommentsWrite) ||
-        scopes.includes(Permission.Read) ||
-        scopes.includes(Permission.Write)
-      );
-    } else if (requestedScope === "room:read") {
-      return (
-        scopes.includes(Permission.Read) || scopes.includes(Permission.Write)
-      );
+  function getResolvedRoomPermissions(
+    token: ParsedAuthToken,
+    permissionsCache: CachedTokenPermissions,
+    roomId: string
+  ): RoomPermissionLevels | undefined {
+    if (permissionsCache.roomPermissionsById.has(roomId)) {
+      return permissionsCache.roomPermissionsById.get(roomId) ?? undefined;
     }
 
-    return false;
+    if (token.parsed.k !== TokenKind.ACCESS_TOKEN) {
+      permissionsCache.roomPermissionsById.set(roomId, null);
+      return undefined;
+    }
+
+    const matchingScopes = getMatchingPermissionScopes(
+      token.parsed.perms,
+      roomId
+    );
+
+    if (matchingScopes.length === 0) {
+      permissionsCache.roomPermissionsById.set(roomId, null);
+      return undefined;
+    }
+
+    const permissions = resolveRoomPermissionsWithOverrides(matchingScopes);
+    permissionsCache.roomPermissionsById.set(roomId, permissions);
+    return permissions;
+  }
+
+  function getResolvedRoomlessPermissions(
+    permissionsCache: CachedTokenPermissions,
+    resource: string,
+    scopes: readonly LiveblocksPermission[]
+  ): RoomPermissionLevels {
+    const cachedPermissions =
+      permissionsCache.roomlessPermissionsByResource.get(resource);
+
+    if (cachedPermissions !== undefined) {
+      return cachedPermissions;
+    }
+
+    const permissions = resolveRoomPermissions(scopes);
+    permissionsCache.roomlessPermissionsByResource.set(resource, permissions);
+    return permissions;
   }
 
   function getCachedToken(requestOptions: {
@@ -86,12 +170,14 @@ export function createAuthManager(
     for (let i = tokens.length - 1; i >= 0; i--) {
       const token = tokens[i];
       const expiresAt = expiryTimes[i];
+      const permissionsCache = cachedTokenPermissions[i];
 
       // If this token is expired, remove it from cache, as if it never existed
       // in the first place
       if (expiresAt <= now) {
         tokens.splice(i, 1);
         expiryTimes.splice(i, 1);
+        cachedTokenPermissions.splice(i, 1);
         continue;
       }
 
@@ -104,33 +190,65 @@ export function createAuthManager(
           !requestOptions.roomId &&
           Object.entries(token.parsed.perms).length === 0
         ) {
-          return token;
+          if (canUseRoomlessTokenWithoutPermissions(requestOptions)) {
+            return token;
+          }
+
+          continue;
+        }
+
+        if (requestOptions.roomId) {
+          const permissions = getResolvedRoomPermissions(
+            token,
+            permissionsCache,
+            requestOptions.roomId
+          );
+
+          if (
+            permissions !== undefined &&
+            canUseResolvedRoomPermission(
+              permissions,
+              requestOptions.requestedScope
+            )
+          ) {
+            return token;
+          }
+
+          continue;
         }
 
         for (const [resource, scopes] of Object.entries(token.parsed.perms)) {
           // If the requester didn't pass a roomId,
           // it means they need the token to access the user's resources (inbox notifications for example).
           // We return any access token that contains a wildcard for the requested scope.
-          if (!requestOptions.roomId) {
+          if (resource.includes("*")) {
+            const permissions = getResolvedRoomlessPermissions(
+              permissionsCache,
+              resource,
+              scopes
+            );
+
             if (
-              resource.includes("*") &&
-              hasCorrespondingScopes(requestOptions.requestedScope, scopes)
+              canUseResolvedRoomPermission(
+                permissions,
+                requestOptions.requestedScope
+              )
             ) {
               return token;
             }
-          } else if (
-            (resource.includes("*") &&
-              requestOptions.roomId.startsWith(resource.replace("*", ""))) ||
-            (requestOptions.roomId === resource &&
-              hasCorrespondingScopes(requestOptions.requestedScope, scopes))
-          ) {
-            return token;
           }
         }
       }
     }
 
     return undefined;
+  }
+
+  function getRequestPromiseKey(requestOptions: {
+    requestedScope: RequestedScope;
+    roomId?: string;
+  }): string {
+    return `${requestOptions.roomId ?? "liveblocks-user-token"}:${requestOptions.requestedScope}`;
   }
 
   async function makeAuthRequest(options: {
@@ -150,6 +268,7 @@ export function createAuthManager(
 
       const response = await fetchAuthEndpoint(fetcher, authentication.url, {
         room: options.roomId,
+        requestedScope: options.requestedScope,
       });
       const parsed = parseAuthToken(response.token);
 
@@ -211,19 +330,11 @@ export function createAuthManager(
       return { type: "secret", token: cachedToken };
     }
 
-    let currentPromise;
-    if (requestOptions.roomId) {
-      currentPromise = requestPromises.get(requestOptions.roomId);
-      if (currentPromise === undefined) {
-        currentPromise = makeAuthRequest(requestOptions);
-        requestPromises.set(requestOptions.roomId, currentPromise);
-      }
-    } else {
-      currentPromise = requestPromises.get("liveblocks-user-token");
-      if (currentPromise === undefined) {
-        currentPromise = makeAuthRequest(requestOptions);
-        requestPromises.set("liveblocks-user-token", currentPromise);
-      }
+    const requestPromiseKey = getRequestPromiseKey(requestOptions);
+    let currentPromise = requestPromises.get(requestPromiseKey);
+    if (currentPromise === undefined) {
+      currentPromise = makeAuthRequest(requestOptions);
+      requestPromises.set(requestPromiseKey, currentPromise);
     }
 
     try {
@@ -238,14 +349,14 @@ export function createAuthManager(
       seenTokens.add(token.raw);
       tokens.push(token);
       expiryTimes.push(expiresAt);
+      cachedTokenPermissions.push({
+        roomPermissionsById: new Map(),
+        roomlessPermissionsByResource: new Map(),
+      });
 
       return { type: "secret", token };
     } finally {
-      if (requestOptions.roomId) {
-        requestPromises.delete(requestOptions.roomId);
-      } else {
-        requestPromises.delete("liveblocks-user-token");
-      }
+      requestPromises.delete(requestPromiseKey);
     }
   }
 
@@ -308,6 +419,7 @@ async function fetchAuthEndpoint(
   endpoint: string,
   body: {
     room?: string;
+    requestedScope: RequestedScope;
   }
 ): Promise<{ token: string }> {
   const res = await fetch(endpoint, {

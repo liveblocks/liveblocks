@@ -116,7 +116,7 @@ describe("LiveMap", () => {
         liveblocksType: "LiveObject",
         data: { map: { liveblocksType: "LiveMap", data: {} } },
       },
-      { permissions: ["room:read", "room:presence:write"] }
+      { permissions: ["room:read"] }
     );
 
     const map = root.get("map");
@@ -198,7 +198,7 @@ describe("LiveMap", () => {
           liveblocksType: "LiveObject",
           data: { map: { liveblocksType: "LiveMap", data: {} } },
         },
-        { permissions: ["room:read", "room:presence:write"] }
+        { permissions: ["room:read"] }
       );
 
       const map = root.get("map");

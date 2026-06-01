@@ -30,7 +30,7 @@ import type {
   ContextualPromptContext,
   ContextualPromptResponse,
 } from "./protocol/Ai";
-import type { Permission } from "./protocol/AuthToken";
+import { Permission } from "./protocol/Permission";
 import type {
   BaseMetadata,
   CommentAttachment,
@@ -577,7 +577,7 @@ export function createApiClient<
     }>(
       url`/v2/c/rooms/${options.roomId}/threads/delta`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
+        requestedScope: Permission.RoomCommentsRead,
         roomId: options.roomId,
       }),
       {
@@ -641,7 +641,7 @@ export function createApiClient<
       }>(
         url`/v2/c/rooms/${options.roomId}/threads`,
         await authManager.getAuthValue({
-          requestedScope: "comments:read",
+          requestedScope: Permission.RoomCommentsRead,
           roomId: options.roomId,
         }),
         {
@@ -707,7 +707,7 @@ export function createApiClient<
     }>(
       url`/v2/c/rooms/${options.roomId}/threads/comments/search`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
+        requestedScope: Permission.RoomCommentsRead,
         roomId: options.roomId,
       }),
       {
@@ -739,7 +739,7 @@ export function createApiClient<
     const thread = await httpClient.post<ThreadDataPlain<TM, CM>>(
       url`/v2/c/rooms/${options.roomId}/threads`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
+        requestedScope: Permission.RoomCommentsWrite,
         roomId: options.roomId,
       }),
       {
@@ -761,7 +761,7 @@ export function createApiClient<
     await httpClient.delete(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
+        requestedScope: Permission.RoomCommentsWrite,
         roomId: options.roomId,
       })
     );
@@ -771,7 +771,7 @@ export function createApiClient<
     const response = await httpClient.rawGet(
       url`/v2/c/rooms/${options.roomId}/thread-with-notification/${options.threadId}`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
+        requestedScope: Permission.RoomCommentsRead,
         roomId: options.roomId,
       })
     );
@@ -813,7 +813,7 @@ export function createApiClient<
     return await httpClient.post<TM>(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/metadata`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
+        requestedScope: Permission.RoomCommentsWrite,
         roomId: options.roomId,
       }),
       options.metadata
@@ -829,7 +829,7 @@ export function createApiClient<
     return await httpClient.post<CM>(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments/${options.commentId}/metadata`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
+        requestedScope: Permission.RoomCommentsWrite,
         roomId: options.roomId,
       }),
       options.metadata
@@ -848,7 +848,7 @@ export function createApiClient<
     const comment = await httpClient.post<CommentDataPlain<CM>>(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
+        requestedScope: Permission.RoomCommentsWrite,
         roomId: options.roomId,
       }),
       {
@@ -872,7 +872,7 @@ export function createApiClient<
     const comment = await httpClient.post<CommentDataPlain<CM>>(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments/${options.commentId}`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
+        requestedScope: Permission.RoomCommentsWrite,
         roomId: options.roomId,
       }),
       {
@@ -893,7 +893,7 @@ export function createApiClient<
     await httpClient.delete(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments/${options.commentId}`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
+        requestedScope: Permission.RoomCommentsWrite,
         roomId: options.roomId,
       })
     );
@@ -908,7 +908,7 @@ export function createApiClient<
     const reaction = await httpClient.post<CommentUserReactionPlain>(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments/${options.commentId}/reactions`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
+        requestedScope: Permission.RoomCommentsWrite,
         roomId: options.roomId,
       }),
       { emoji: options.emoji }
@@ -926,7 +926,7 @@ export function createApiClient<
     await httpClient.delete<CommentDataPlain<CM>>(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments/${options.commentId}/reactions/${options.emoji}`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
+        requestedScope: Permission.RoomCommentsWrite,
         roomId: options.roomId,
       })
     );
@@ -939,7 +939,7 @@ export function createApiClient<
     await httpClient.post(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/mark-as-resolved`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
+        requestedScope: Permission.RoomCommentsWrite,
         roomId: options.roomId,
       })
     );
@@ -952,7 +952,7 @@ export function createApiClient<
     await httpClient.post(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/mark-as-unresolved`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
+        requestedScope: Permission.RoomCommentsWrite,
         roomId: options.roomId,
       })
     );
@@ -965,7 +965,7 @@ export function createApiClient<
     const subscription = await httpClient.post<SubscriptionDataPlain>(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/subscribe`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
+        requestedScope: Permission.RoomCommentsRead,
         roomId: options.roomId,
       })
     );
@@ -980,7 +980,7 @@ export function createApiClient<
     await httpClient.post(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/unsubscribe`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
+        requestedScope: Permission.RoomCommentsRead,
         roomId: options.roomId,
       })
     );
@@ -1053,7 +1053,7 @@ export function createApiClient<
           httpClient.putBlob<CommentAttachment>(
             url`/v2/c/rooms/${roomId}/attachments/${attachment.id}/upload/${encodeURIComponent(attachment.name)}`,
             await authManager.getAuthValue({
-              requestedScope: "comments:read",
+              requestedScope: Permission.RoomCommentsWrite,
               roomId,
             }),
             attachment.file,
@@ -1081,7 +1081,7 @@ export function createApiClient<
           }>(
             url`/v2/c/rooms/${roomId}/attachments/${attachment.id}/multipart/${encodeURIComponent(attachment.name)}`,
             await authManager.getAuthValue({
-              requestedScope: "comments:read",
+              requestedScope: Permission.RoomCommentsWrite,
               roomId,
             }),
             undefined,
@@ -1122,7 +1122,7 @@ export function createApiClient<
                   }>(
                     url`/v2/c/rooms/${roomId}/attachments/${attachment.id}/multipart/${createMultiPartUpload.uploadId}/${String(partNumber)}`,
                     await authManager.getAuthValue({
-                      requestedScope: "comments:read",
+                      requestedScope: Permission.RoomCommentsWrite,
                       roomId,
                     }),
                     part,
@@ -1152,7 +1152,7 @@ export function createApiClient<
         return httpClient.post<CommentAttachment>(
           url`/v2/c/rooms/${roomId}/attachments/${attachment.id}/multipart/${uploadId}/complete`,
           await authManager.getAuthValue({
-            requestedScope: "comments:read",
+            requestedScope: Permission.RoomCommentsWrite,
             roomId,
           }),
           { parts: sortedUploadedParts },
@@ -1170,7 +1170,7 @@ export function createApiClient<
             await httpClient.rawDelete(
               url`/v2/c/rooms/${roomId}/attachments/${attachment.id}/multipart/${uploadId}`,
               await authManager.getAuthValue({
-                requestedScope: "comments:read",
+                requestedScope: Permission.RoomCommentsWrite,
                 roomId,
               })
             );
@@ -1196,7 +1196,7 @@ export function createApiClient<
         }>(
           url`/v2/c/rooms/${roomId}/attachments/presigned-urls`,
           await authManager.getAuthValue({
-            requestedScope: "comments:read",
+            requestedScope: Permission.RoomCommentsRead,
             roomId,
           }),
           { attachmentIds }
@@ -1245,7 +1245,9 @@ export function createApiClient<
     if (options.attachment.file.size <= ATTACHMENT_PART_SIZE) {
       await httpClient.putBlob(
         url`/v2/c/chats/${chatId}/attachments/${attachment.id}/upload/${encodeURIComponent(attachment.file.name)}`,
-        await authManager.getAuthValue({ requestedScope: "comments:read" }),
+        await authManager.getAuthValue({
+          requestedScope: Permission.RoomCommentsWrite,
+        }),
         attachment.file,
         { fileSize: attachment.file.size },
         { signal }
@@ -1256,7 +1258,9 @@ export function createApiClient<
         key: string;
       }>(
         url`/v2/c/chats/${chatId}/attachments/${attachment.id}/multipart/${encodeURIComponent(attachment.file.name)}`,
-        await authManager.getAuthValue({ requestedScope: "comments:read" }),
+        await authManager.getAuthValue({
+          requestedScope: Permission.RoomCommentsWrite,
+        }),
         undefined,
         { signal },
         { fileSize: attachment.file.size }
@@ -1288,7 +1292,7 @@ export function createApiClient<
               }>(
                 url`/v2/c/chats/${chatId}/attachments/${attachment.id}/multipart/${multipartUpload.uploadId}/${String(number)}`,
                 await authManager.getAuthValue({
-                  requestedScope: "comments:read",
+                  requestedScope: Permission.RoomCommentsWrite,
                 }),
                 part,
                 undefined,
@@ -1300,7 +1304,9 @@ export function createApiClient<
 
         await httpClient.post(
           url`/v2/c/chats/${chatId}/attachments/${attachment.id}/multipart/${multipartUpload.uploadId}/complete`,
-          await authManager.getAuthValue({ requestedScope: "comments:read" }),
+          await authManager.getAuthValue({
+            requestedScope: Permission.RoomCommentsWrite,
+          }),
           { parts: uploadedParts.sort((a, b) => a.number - b.number) },
           { signal }
         );
@@ -1308,7 +1314,9 @@ export function createApiClient<
         try {
           await httpClient.delete(
             url`/v2/c/chats/${chatId}/attachments/${attachment.id}/multipart/${multipartUpload.uploadId}`,
-            await authManager.getAuthValue({ requestedScope: "comments:read" })
+            await authManager.getAuthValue({
+              requestedScope: Permission.RoomCommentsWrite,
+            })
           );
         } catch {
           // Ignore the error, we are probably offline
@@ -1330,7 +1338,7 @@ export function createApiClient<
         }>(
           url`/v2/c/chats/${chatId}/attachments/presigned-urls`,
           await authManager.getAuthValue({
-            requestedScope: "comments:read",
+            requestedScope: Permission.RoomCommentsRead,
           }),
           { attachmentIds }
         );
@@ -1370,7 +1378,7 @@ export function createApiClient<
     return httpClient.get<RoomSubscriptionSettings>(
       url`/v2/c/rooms/${options.roomId}/subscription-settings`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
+        requestedScope: Permission.RoomCommentsRead,
         roomId: options.roomId,
       }),
       undefined,
@@ -1387,7 +1395,7 @@ export function createApiClient<
     return httpClient.post<RoomSubscriptionSettings>(
       url`/v2/c/rooms/${options.roomId}/subscription-settings`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
+        requestedScope: Permission.RoomCommentsRead,
         roomId: options.roomId,
       }),
       options.settings
@@ -1408,7 +1416,7 @@ export function createApiClient<
           await httpClient.post(
             url`/v2/c/rooms/${roomId}/inbox-notifications/read`,
             await authManager.getAuthValue({
-              requestedScope: "comments:read",
+              requestedScope: Permission.RoomCommentsRead,
               roomId,
             }),
             { inboxNotificationIds }
@@ -1442,7 +1450,7 @@ export function createApiClient<
     await httpClient.rawPost(
       url`/v2/c/rooms/${options.roomId}/text-mentions`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
+        requestedScope: Permission.RoomCommentsRead,
         roomId: options.roomId,
       }),
       {
@@ -1466,7 +1474,7 @@ export function createApiClient<
     await httpClient.rawDelete(
       url`/v2/c/rooms/${options.roomId}/text-mentions/${options.mentionId}`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
+        requestedScope: Permission.RoomCommentsRead,
         roomId: options.roomId,
       })
     );
@@ -1479,7 +1487,7 @@ export function createApiClient<
     return httpClient.rawGet(
       url`/v2/c/rooms/${options.roomId}/y-version/${options.versionId}`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
+        requestedScope: Permission.RoomCommentsRead,
         roomId: options.roomId,
       })
     );
@@ -1489,7 +1497,7 @@ export function createApiClient<
     await httpClient.rawPost(
       url`/v2/c/rooms/${options.roomId}/version`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
+        requestedScope: Permission.RoomCommentsRead,
         roomId: options.roomId,
       })
     );
@@ -1503,7 +1511,7 @@ export function createApiClient<
     await httpClient.rawPost(
       url`/v2/c/rooms/${options.roomId}/text-metadata`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
+        requestedScope: Permission.RoomCommentsRead,
         roomId: options.roomId,
       }),
       {
@@ -1528,7 +1536,7 @@ export function createApiClient<
     }>(
       url`/v2/c/rooms/${options.roomId}/ai/contextual-prompt`,
       await authManager.getAuthValue({
-        requestedScope: "room:read",
+        requestedScope: Permission.RoomStorageRead,
         roomId: options.roomId,
       }),
       {
@@ -1557,7 +1565,7 @@ export function createApiClient<
     }>(
       url`/v2/c/rooms/${options.roomId}/versions`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
+        requestedScope: Permission.RoomStorageRead,
         roomId: options.roomId,
       })
     );
@@ -1586,7 +1594,7 @@ export function createApiClient<
     }>(
       url`/v2/c/rooms/${options.roomId}/versions/delta`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
+        requestedScope: Permission.RoomStorageRead,
         roomId: options.roomId,
       }),
       { since: options.since.toISOString() },
@@ -1608,7 +1616,7 @@ export function createApiClient<
     const result = await httpClient.rawGet(
       url`/v2/c/rooms/${options.roomId}/storage`,
       await authManager.getAuthValue({
-        requestedScope: "room:read",
+        requestedScope: Permission.RoomStorageRead,
         roomId: options.roomId,
       })
     );
@@ -1641,7 +1649,9 @@ export function createApiClient<
       };
     }>(
       url`/v2/c/inbox-notifications`,
-      await authManager.getAuthValue({ requestedScope: "comments:read" }),
+      await authManager.getAuthValue({
+        requestedScope: Permission.RoomCommentsRead,
+      }),
       {
         cursor: options?.cursor,
         limit: PAGE_SIZE,
@@ -1689,7 +1699,9 @@ export function createApiClient<
       };
     }>(
       url`/v2/c/inbox-notifications/delta`,
-      await authManager.getAuthValue({ requestedScope: "comments:read" }),
+      await authManager.getAuthValue({
+        requestedScope: Permission.RoomCommentsRead,
+      }),
       { since: options.since.toISOString(), query },
       { signal: options.signal }
     );
@@ -1727,7 +1739,9 @@ export function createApiClient<
 
     const { count } = await httpClient.get<{ count: number }>(
       url`/v2/c/inbox-notifications/count`,
-      await authManager.getAuthValue({ requestedScope: "comments:read" }),
+      await authManager.getAuthValue({
+        requestedScope: Permission.RoomCommentsRead,
+      }),
       { query },
       { signal: options?.signal }
     );
@@ -1737,7 +1751,9 @@ export function createApiClient<
   async function markAllInboxNotificationsAsRead() {
     await httpClient.post(
       url`/v2/c/inbox-notifications/read`,
-      await authManager.getAuthValue({ requestedScope: "comments:read" }),
+      await authManager.getAuthValue({
+        requestedScope: Permission.RoomCommentsRead,
+      }),
       {
         inboxNotificationIds: "all",
       }
@@ -1747,7 +1763,9 @@ export function createApiClient<
   async function markInboxNotificationsAsRead(inboxNotificationIds: string[]) {
     await httpClient.post(
       url`/v2/c/inbox-notifications/read`,
-      await authManager.getAuthValue({ requestedScope: "comments:read" }),
+      await authManager.getAuthValue({
+        requestedScope: Permission.RoomCommentsRead,
+      }),
       {
         inboxNotificationIds,
       }
@@ -1772,14 +1790,18 @@ export function createApiClient<
   async function deleteAllInboxNotifications() {
     await httpClient.delete(
       url`/v2/c/inbox-notifications`,
-      await authManager.getAuthValue({ requestedScope: "comments:read" })
+      await authManager.getAuthValue({
+        requestedScope: Permission.RoomCommentsRead,
+      })
     );
   }
 
   async function deleteInboxNotification(inboxNotificationId: string) {
     await httpClient.delete(
       url`/v2/c/inbox-notifications/${inboxNotificationId}`,
-      await authManager.getAuthValue({ requestedScope: "comments:read" })
+      await authManager.getAuthValue({
+        requestedScope: Permission.RoomCommentsRead,
+      })
     );
   }
 
@@ -1792,7 +1814,9 @@ export function createApiClient<
   }): Promise<NotificationSettingsPlain> {
     return httpClient.get<NotificationSettingsPlain>(
       url`/v2/c/notification-settings`,
-      await authManager.getAuthValue({ requestedScope: "comments:read" }),
+      await authManager.getAuthValue({
+        requestedScope: Permission.RoomCommentsRead,
+      }),
       undefined,
       { signal: options?.signal }
     );
@@ -1803,7 +1827,9 @@ export function createApiClient<
   ): Promise<NotificationSettingsPlain> {
     return httpClient.post<NotificationSettingsPlain>(
       url`/v2/c/notification-settings`,
-      await authManager.getAuthValue({ requestedScope: "comments:read" }),
+      await authManager.getAuthValue({
+        requestedScope: Permission.RoomCommentsRead,
+      }),
       settings
     );
   }
@@ -1841,7 +1867,9 @@ export function createApiClient<
       };
     }>(
       url`/v2/c/threads`,
-      await authManager.getAuthValue({ requestedScope: "comments:read" }),
+      await authManager.getAuthValue({
+        requestedScope: Permission.RoomCommentsRead,
+      }),
       {
         cursor: options?.cursor,
         query,
@@ -1878,7 +1906,9 @@ export function createApiClient<
       };
     }>(
       url`/v2/c/threads/delta`,
-      await authManager.getAuthValue({ requestedScope: "comments:read" }),
+      await authManager.getAuthValue({
+        requestedScope: Permission.RoomCommentsRead,
+      }),
       { since: options.since.toISOString() },
       { signal: options.signal }
     );
@@ -1916,7 +1946,7 @@ export function createApiClient<
       }>(
         url`/v2/c/groups/find`,
         await authManager.getAuthValue({
-          requestedScope: "comments:read",
+          requestedScope: Permission.RoomCommentsRead,
         }),
         { groupIds }
       );
@@ -1944,7 +1974,9 @@ export function createApiClient<
   async function getUrlMetadata(_url: string) {
     const { metadata } = await httpClient.get<{ metadata: UrlMetadata }>(
       url`/v2/c/urls/metadata`,
-      await authManager.getAuthValue({ requestedScope: "comments:read" }),
+      await authManager.getAuthValue({
+        requestedScope: Permission.RoomCommentsRead,
+      }),
       { url: _url }
     );
 

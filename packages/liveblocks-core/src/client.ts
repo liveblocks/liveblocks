@@ -33,6 +33,7 @@ import type { Resolve } from "./lib/Resolve";
 import { Signal } from "./lib/signals";
 import { warnOnceIf } from "./lib/warnings";
 import type { CustomAuthenticationResult } from "./protocol/Authentication";
+import { Permission } from "./protocol/Permission";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type {
   BaseMetadata,
@@ -692,7 +693,7 @@ export function createClient<U extends BaseUserMeta = DU>(
       ),
       authenticate: async () => {
         const resp = await authManager.getAuthValue({
-          requestedScope: "room:read",
+          requestedScope: Permission.RoomPresenceRead,
         });
         if (resp.type === "public") {
           throw new StopRetrying(

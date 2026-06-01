@@ -155,7 +155,7 @@ describe("LiveObject", () => {
   test.skip("update throws on read-only", async () => {
     const { root } = await prepareIsolatedStorageTest<{ a: number }>(
       { liveblocksType: "LiveObject", data: { a: 0 } },
-      { permissions: ["room:read", "room:presence:write"] }
+      { permissions: ["room:read"] }
     );
 
     expect(() => root.update({ a: 1 })).toThrow(
@@ -235,7 +235,7 @@ describe("LiveObject", () => {
   // See https://linear.app/liveblocks/issue/LB-3528/dev-server-needs-support-for-read-only-rooms
   test.skip("set throws on read-only", async () => {
     const { root } = await prepareIsolatedStorageTest(undefined, {
-      permissions: ["room:read", "room:presence:write"],
+      permissions: ["room:read"],
     });
 
     expect(() => root.set("a", 1)).toThrow(
@@ -591,7 +591,7 @@ describe("LiveObject", () => {
             child: { liveblocksType: "LiveObject", data: { b: 2 } },
           },
         },
-        { permissions: ["room:read", "room:presence:write"] }
+        { permissions: ["room:read"] }
       );
 
       expect(() => root.get("child").delete("a")).toThrow(
