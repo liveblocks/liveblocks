@@ -6,6 +6,7 @@ type CopilotBody = {
   roomId?: string;
   feedId?: string;
   userMessage?: string;
+  agentName?: string;
   context?: {
     selectedShapeIds?: string[];
     selectedShapes?: Array<Record<string, unknown>>;
@@ -17,6 +18,7 @@ export async function POST(request: Request) {
   const roomId = body.roomId;
   const feedId = body.feedId;
   const userMessage = body.userMessage;
+  const agentName = body.agentName?.trim() || "Agent";
 
   if (!roomId || !feedId || !userMessage) {
     return NextResponse.json(
@@ -40,6 +42,7 @@ export async function POST(request: Request) {
     feedId,
     data: {
       role: "assistant",
+      agentName,
       text: "",
       reasoning: "",
       status: "thinking",
@@ -47,26 +50,59 @@ export async function POST(request: Request) {
     },
   });
 
-  await runAgent({
-    roomId,
-    userMessage,
-    selectedShapeIds: body.context?.selectedShapeIds ?? [],
-    selectedShapes: body.context?.selectedShapes ?? [],
-    onProgress: async (update) => {
-      await liveblocks.updateFeedMessage({
-        roomId,
-        feedId,
-        messageId: assistantMessage.id,
-        data: {
-          role: "assistant",
-          text: update.text ?? "",
-          reasoning: update.reasoning ?? "",
-          status: update.status ?? "thinking",
-          isStreaming: update.isStreaming ?? true,
-        },
-      });
-    },
-  });
+  let latestText = "";
+  let latestReasoning = "";
+  let latestStatus: "thinking" | "editing" | "idle" = "thinking";
+  let latestIsStreaming = true;
+
+  try {
+    await runAgent({
+      roomId,
+      userMessage,
+      agentName,
+      selectedShapeIds: body.context?.selectedShapeIds ?? [],
+      selectedShapes: body.context?.selectedShapes ?? [],
+      onProgress: async (update) => {
+        latestText = update.text ?? latestText;
+        latestReasoning = update.reasoning ?? latestReasoning;
+        latestStatus = update.status ?? latestStatus;
+        latestIsStreaming = update.isStreaming ?? latestIsStreaming;
+        await liveblocks.updateFeedMessage({
+          roomId,
+          feedId,
+          messageId: assistantMessage.id,
+          data: {
+            role: "assistant",
+            agentName,
+            text: latestText,
+            reasoning: latestReasoning,
+            status: latestStatus,
+            isStreaming: latestIsStreaming,
+          },
+        });
+      },
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Unknown agent error";
+    console.error("[copilot] agent run failed", { roomId, agentName, message });
+    await liveblocks.updateFeedMessage({
+      roomId,
+      feedId,
+      messageId: assistantMessage.id,
+      data: {
+        role: "assistant",
+        agentName,
+        text:
+          latestText ||
+          "I hit an error while generating that design. Please try again.",
+        reasoning: latestReasoning,
+        status: "idle",
+        isStreaming: false,
+      },
+    });
+    return NextResponse.json({ ok: false, error: message }, { status: 500 });
+  }
 
   return NextResponse.json({ ok: true });
 }

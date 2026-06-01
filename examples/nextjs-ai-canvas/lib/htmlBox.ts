@@ -177,6 +177,8 @@ export function createHtmlBoxShapeRecord(input: {
   rotation?: number;
   isLocked?: boolean;
   opacity?: number;
+  agentName?: string;
+  agentStatus?: string;
 }) {
   const title = normalizeBoxTitle(input.title, "New Design");
   const updatedAt = input.updatedAt ?? new Date().toISOString();
@@ -198,6 +200,8 @@ export function createHtmlBoxShapeRecord(input: {
       title,
       html: input.html,
       updatedAt,
+      agentName: input.agentName ?? "",
+      agentStatus: input.agentStatus ?? "",
     },
     // Keep metadata for backwards compatibility with previous drawer/preview logic.
     meta: {
@@ -221,6 +225,10 @@ export function normalizeHtmlBoxShapeLikeRecord(
   const title = data?.title ?? "Generated UI";
   const html = data?.html ?? "";
   const updatedAt = data?.updatedAt || new Date().toISOString();
+  const agentName =
+    props && typeof props.agentName === "string" ? props.agentName : "";
+  const agentStatus =
+    props && typeof props.agentStatus === "string" ? props.agentStatus : "";
 
   return {
     ...record,
@@ -230,6 +238,8 @@ export function normalizeHtmlBoxShapeLikeRecord(
       title,
       html,
       updatedAt,
+      agentName,
+      agentStatus,
     },
     meta: {
       kind: "html-canvas-box",

@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { LiveMap } from "@liveblocks/client";
-import { AI_USER } from "@/database";
+import type { MutateStorageCallback } from "@liveblocks/node";
 import { getLiveblocks } from "@/lib/liveblocksServer";
 import { AGENT_TOOLS, type AgentStatus, type AgentToolInputMap } from "./tools";
 import {
@@ -20,6 +20,7 @@ type StorageRecord = Liveblocks["Storage"]["records"] extends LiveMap<
 type RunAgentParams = {
   roomId: string;
   userMessage: string;
+  agentName: string;
   selectedShapeIds: string[];
   selectedShapes: Array<Record<string, unknown>>;
   onProgress: (update: {
@@ -59,7 +60,43 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
-function createHtmlBoxRecord(input: BoxInput & { html: string; id?: string }) {
+// Storage mutations can fail transiently, especially when multiple agents
+// mutate the same room concurrently. Retry with backoff so a single agent's
+// hiccup doesn't silently drop its box.
+async function mutateStorageWithRetry(
+  roomId: string,
+  label: string,
+  mutator: MutateStorageCallback
+) {
+  const liveblocks = getLiveblocks();
+  const maxAttempts = 4;
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      await liveblocks.mutateStorage(roomId, mutator);
+      return;
+    } catch (error) {
+      lastError = error;
+      console.error("[copilot] mutateStorage failed", {
+        roomId,
+        label,
+        attempt,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      await new Promise((resolve) =>
+        setTimeout(resolve, 150 * attempt + Math.random() * 150)
+      );
+    }
+  }
+  throw lastError;
+}
+
+type AgentBoxState = { agentName: string; agentStatus: string };
+
+function createHtmlBoxRecord(
+  input: BoxInput & { html: string; id?: string },
+  agent?: AgentBoxState
+) {
   const width = typeof input.w === "number" ? input.w : 320;
   const height = typeof input.h === "number" ? input.h : 180;
   const x = typeof input.x === "number" ? input.x : 220;
@@ -74,14 +111,17 @@ function createHtmlBoxRecord(input: BoxInput & { html: string; id?: string }) {
     h: height,
     title,
     html,
+    agentName: agent?.agentName ?? "",
+    agentStatus: agent?.agentStatus ?? "",
   });
 }
 
 // Build an updated html-box record, reusing existing values when the tool
-// input omits a field (used by edit_box and create_box-into-placeholder).
+// input omits a field. Optionally stamps the active agent state onto the box.
 function buildUpdatedBoxRecord(
   existingRecord: Record<string, unknown>,
-  input: BoxInput
+  input: BoxInput,
+  agent?: AgentBoxState
 ): Record<string, unknown> {
   const existingProps =
     typeof existingRecord.props === "object" && existingRecord.props !== null
@@ -115,7 +155,44 @@ function buildUpdatedBoxRecord(
       title,
       html,
       updatedAt: new Date().toISOString(),
+      ...(agent
+        ? { agentName: agent.agentName, agentStatus: agent.agentStatus }
+        : null),
     },
+  });
+}
+
+// Stamp (or clear) the active-agent state on an existing html-box so the
+// canvas can render a cursor attached to the box.
+async function writeBoxAgentState(
+  roomId: string,
+  shapeId: string,
+  agent: AgentBoxState
+) {
+  await mutateStorageWithRetry(roomId, "writeBoxAgentState", ({ root }) => {
+    const records = root.get("records");
+    const existing = records.get(shapeId);
+    if (
+      !existing ||
+      typeof existing !== "object" ||
+      (existing as Record<string, unknown>).type !== HTML_BOX_SHAPE_TYPE
+    ) {
+      return;
+    }
+    const record = existing as Record<string, unknown>;
+    const props =
+      typeof record.props === "object" && record.props !== null
+        ? (record.props as Record<string, unknown>)
+        : {};
+    const next = normalizeShapeLikeRecord({
+      ...record,
+      props: {
+        ...props,
+        agentName: agent.agentName,
+        agentStatus: agent.agentStatus,
+      },
+    });
+    records.set(shapeId, next as unknown as StorageRecord);
   });
 }
 
@@ -222,56 +299,12 @@ function createErrorFallbackHtml() {
 </section>`;
 }
 
-async function setAgentPresence(
-  roomId: string,
-  data: {
-    cursor?: { x: number; y: number } | null;
-    selection?: string[];
-    agentStatus?: AgentStatus;
-  },
-  ttl = 30
-) {
-  const liveblocks = getLiveblocks();
-  await liveblocks.setPresence(roomId, {
-    userId: AI_USER.id,
-    userInfo: AI_USER.info,
-    data: {
-      cursor: data.cursor ?? null,
-      selection: data.selection ?? [],
-      isAgent: true,
-      agentStatus: data.agentStatus ?? "idle",
-    },
-    ttl,
-  });
-}
-
 function getShapeBoundsFromInput(input: BoxInput) {
   const w = typeof input.w === "number" ? input.w : 320;
   const h = typeof input.h === "number" ? input.h : 180;
   const x = typeof input.x === "number" ? input.x : 220;
   const y = typeof input.y === "number" ? input.y : 220;
   return { x, y, w, h };
-}
-
-function boxCenter(anchor: Pick<BoxAnchor, "x" | "y" | "w" | "h">) {
-  return {
-    x: anchor.x + anchor.w / 2,
-    y: anchor.y + anchor.h / 2,
-  };
-}
-
-function withCursorWobble(
-  cursor: { x: number; y: number } | null | undefined,
-  tick: number
-) {
-  if (!cursor) {
-    return null;
-  }
-  const angle = tick * 0.9;
-  return {
-    x: cursor.x + Math.cos(angle) * 6,
-    y: cursor.y + Math.sin(angle) * 4,
-  };
 }
 
 const PLACEHOLDER_SPINNER_HTML = `<section
@@ -299,9 +332,9 @@ const PLACEHOLDER_SPINNER_HTML = `<section
 // inside create_box (never before we know we're creating a new box).
 async function createPlaceholderBox(
   roomId: string,
-  bounds?: Pick<BoxInput, "x" | "y" | "w" | "h">
+  bounds: Pick<BoxInput, "x" | "y" | "w" | "h">,
+  agent: AgentBoxState
 ): Promise<BoxAnchor> {
-  const liveblocks = getLiveblocks();
   const { x, y, w, h } = getShapeBoundsFromInput({
     x: bounds?.x,
     y: bounds?.y,
@@ -309,15 +342,18 @@ async function createPlaceholderBox(
     h: typeof bounds?.h === "number" ? bounds.h : 320,
   });
 
-  const shape = createHtmlBoxRecord({
-    title: "Generating",
-    html: PLACEHOLDER_SPINNER_HTML,
-    x,
-    y,
-    w,
-    h,
-  });
-  await liveblocks.mutateStorage(roomId, ({ root }) => {
+  const shape = createHtmlBoxRecord(
+    {
+      title: "Generating",
+      html: PLACEHOLDER_SPINNER_HTML,
+      x,
+      y,
+      w,
+      h,
+    },
+    agent
+  );
+  await mutateStorageWithRetry(roomId, "createPlaceholderBox", ({ root }) => {
     const records = root.get("records");
     records.set(
       shape.id,
@@ -336,18 +372,18 @@ async function createPlaceholderBox(
 
 async function applyToolCall(
   roomId: string,
-  call: ToolUseCall
+  call: ToolUseCall,
+  agentName: string,
+  options?: { existingBoxId?: string }
 ): Promise<Record<string, unknown>> {
-  const liveblocks = getLiveblocks();
-
   if (call.name !== "create_box" && call.name !== "edit_box") {
-    await setAgentPresence(roomId, { agentStatus: "thinking" });
     return { ok: false, error: "Unsupported tool" };
   }
 
   const input = call.input as BoxInput;
   const isEdit = call.name === "edit_box";
   const html = input.html;
+  const agent: AgentBoxState = { agentName, agentStatus: "editing" };
 
   if (!isEdit && (typeof html !== "string" || html.trim().length === 0)) {
     return { ok: false, error: "create_box requires non-empty html." };
@@ -356,12 +392,10 @@ async function applyToolCall(
     return { ok: false, error: "edit_box requires targetShapeId." };
   }
 
-  const center = boxCenter(getShapeBoundsFromInput(input));
-
   // edit_box: update the existing target box in place (no placeholder).
   if (isEdit) {
     let shapeId = "";
-    await liveblocks.mutateStorage(roomId, ({ root }) => {
+    await mutateStorageWithRetry(roomId, "edit_box", ({ root }) => {
       const records = root.get("records");
       const targetId = input.targetShapeId;
       if (!targetId) {
@@ -375,7 +409,8 @@ async function applyToolCall(
       ) {
         const nextRecord = buildUpdatedBoxRecord(
           existing as Record<string, unknown>,
-          input
+          input,
+          agent
         );
         records.set(targetId, nextRecord as unknown as StorageRecord);
         shapeId = targetId;
@@ -388,56 +423,51 @@ async function applyToolCall(
         error: "edit_box could not resolve an html-box with that targetShapeId.",
       };
     }
-    await setAgentPresence(roomId, {
-      cursor: center,
-      selection: [shapeId],
-      agentStatus: "editing",
-    });
-    return { ok: true, id: shapeId, center };
+    return { ok: true, id: shapeId };
   }
 
-  // create_box: now that we know a new box is being created, drop a spinner
-  // placeholder at the chosen bounds, then fill it with the generated HTML.
-  const placeholder = await createPlaceholderBox(roomId, input);
-  await setAgentPresence(
-    roomId,
-    {
-      cursor: center,
-      selection: [placeholder.shapeId],
-      agentStatus: "editing",
-    },
-    120
-  );
+  // create_box: reuse the spinner placeholder created the moment the model
+  // committed to create_box (so the box already showed up). If there isn't one
+  // yet, create it now. Then fill it with the generated HTML.
+  const placeholderId =
+    options?.existingBoxId ??
+    (await createPlaceholderBox(roomId, input, agent)).shapeId;
 
-  await liveblocks.mutateStorage(roomId, ({ root }) => {
+  await mutateStorageWithRetry(roomId, "create_box.fill", ({ root }) => {
     const records = root.get("records");
-    const shape = createHtmlBoxRecord({
-      ...input,
-      html: html as string,
-      id: placeholder.shapeId,
-    });
-    records.set(
-      placeholder.shapeId,
-      normalizeShapeLikeRecord(shape) as unknown as StorageRecord
-    );
+    const existing = records.get(placeholderId);
+    const next =
+      existing &&
+      typeof existing === "object" &&
+      (existing as Record<string, unknown>).type === HTML_BOX_SHAPE_TYPE
+        ? buildUpdatedBoxRecord(existing as Record<string, unknown>, input, agent)
+        : normalizeShapeLikeRecord(
+            createHtmlBoxRecord(
+              { ...input, html: html as string, id: placeholderId },
+              agent
+            )
+          );
+    records.set(placeholderId, next as unknown as StorageRecord);
   });
 
-  return { ok: true, id: placeholder.shapeId, center };
+  return { ok: true, id: placeholderId };
 }
 
 export async function runAgent({
   roomId,
   userMessage,
+  agentName,
   selectedShapeIds,
   selectedShapes,
   onProgress,
 }: RunAgentParams) {
+  console.log("[copilot] agent run started", { roomId, agentName });
   const liveblocks = getLiveblocks();
   const storageDoc = await liveblocks.getStorageDocument(roomId, "json");
 
   // Decide create vs edit up front. If the user already has an html-box
-  // selected, treat this as an edit turn and show NO placeholder; otherwise
-  // create a placeholder spinner box for immediate feedback while generating.
+  // selected, treat this as an edit turn; otherwise a spinner box is created
+  // lazily inside create_box.
   let editAnchor: BoxAnchor | null = null;
   for (const shape of selectedShapes) {
     const anchor = getSelectedBoxAnchor(shape);
@@ -447,19 +477,19 @@ export async function runAgent({
     }
   }
 
-  // No placeholder up front — a spinner box is only created inside create_box,
-  // once we're sure the agent is making a new box. For edits we focus the
-  // selected box; for creates there is no box to focus until create_box runs.
-  let focusCenter: { x: number; y: number } | null = editAnchor
-    ? boxCenter(editAnchor)
-    : null;
-  const focusSelection = editAnchor ? [editAnchor.shapeId] : [];
+  // Track every box this agent touches so we can clear its cursor at the end.
+  const touchedBoxIds = new Set<string>();
 
-  await setAgentPresence(roomId, {
-    cursor: focusCenter,
-    selection: focusSelection,
-    agentStatus: "thinking",
-  }, 120);
+  // For edits, attach the agent cursor to the selected box right away (while
+  // thinking). For creates there is no box yet until create_box runs.
+  if (editAnchor) {
+    touchedBoxIds.add(editAnchor.shapeId);
+    await writeBoxAgentState(roomId, editAnchor.shapeId, {
+      agentName,
+      agentStatus: "thinking",
+    });
+  }
+
   await onProgress({
     text: editAnchor ? "Editing..." : "Starting generation...",
     status: "thinking",
@@ -486,10 +516,10 @@ export async function runAgent({
       ? `The user selected an existing box to edit. Prefer edit_box with targetShapeId "${editAnchor.shapeId}".`
       : "There is no selected box; prefer create_box for a new design.",
     "",
-    "When you call a tool, write your detailed design reasoning as the accompanying message text: explain the layout, sections, and styling choices you made. This narration is shown to the user as their 'thought process' panel, so put all of your explanation here.",
-    "After you finish all edits, send a FINAL message with no tool call. It MUST be a single short sentence (under ~20 words) that only confirms the result. Do NOT include any steps, details, or restated reasoning in the final message.",
+    "Do ALL planning and reasoning silently in your private thinking. NEVER write plans, outlines, numbered steps, or explanations as visible message text.",
+    "Send exactly ONE visible message: the final confirmation, after all edits are done, with no tool call. It MUST be a single short sentence (under ~20 words) confirming the result.",
     'Good final messages: "Done! The box is now a full marketing homepage for a paint brand called BrushstrokeCo." / "I\'ve converted it into a marketing homepage for a placeholder paint brand." / "Complete! The element now depicts a marketing homepage for a paint company."',
-    "Bad final message: a long paragraph describing everything you did, followed by a short line. Keep ONLY the short confirmation sentence.",
+    "Never output anything longer than that single short sentence as visible text.",
     "",
     "<context>",
     JSON.stringify(
@@ -515,32 +545,25 @@ export async function runAgent({
   let lastAssistantText = "";
   let reasoning = "";
   let successfulToolCallCount = 0;
-  let wobbleTick = 0;
+  // Spinner box created the moment the model commits to create_box (mid-stream),
+  // so the box shows up immediately instead of only when generation finishes.
+  let earlyPlaceholderId: string | null = null;
+  let earlyPlaceholderConsumed = false;
 
   for (let step = 0; step < 4; step += 1) {
-    wobbleTick += 1;
-    await setAgentPresence(
-      roomId,
-      {
-        cursor: withCursorWobble(focusCenter, wobbleTick),
-        selection: focusSelection,
-        agentStatus: "thinking",
-      },
-      120
-    );
-
-    // Stream the model response so reasoning/text flow into the feed live.
+    // Stream only the reasoning (chain-of-thought) into the feed live. The
+    // visible message body is never streamed, so the model can't show a plan.
     let liveThinking = "";
-    let liveText = "";
     let lastFlush = 0;
     let flushInFlight = false;
+    let earlyPlaceholderPromise: Promise<void> | null = null;
 
-    const flush = async (force = false) => {
+    const flush = async () => {
       if (flushInFlight) {
         return;
       }
       const now = Date.now();
-      if (!force && now - lastFlush < 250) {
+      if (now - lastFlush < 250) {
         return;
       }
       flushInFlight = true;
@@ -551,7 +574,6 @@ export async function runAgent({
           .join("\n\n");
         await onProgress({
           reasoning: liveReasoning,
-          text: liveText,
           status: "thinking",
           isStreaming: true,
         });
@@ -577,12 +599,34 @@ export async function runAgent({
       liveThinking += delta;
       void flush();
     });
-    stream.on("text", (delta: string) => {
-      liveText += delta;
-      void flush();
+    stream.on("streamEvent", (event) => {
+      // As soon as a create_box tool call begins, drop the spinner box.
+      const e = event as {
+        type?: string;
+        content_block?: { type?: string; name?: string };
+      };
+      if (
+        e.type === "content_block_start" &&
+        e.content_block?.type === "tool_use" &&
+        e.content_block?.name === "create_box" &&
+        !editAnchor &&
+        earlyPlaceholderId === null &&
+        earlyPlaceholderPromise === null
+      ) {
+        earlyPlaceholderPromise = createPlaceholderBox(roomId, {}, {
+          agentName,
+          agentStatus: "editing",
+        }).then((placeholder) => {
+          earlyPlaceholderId = placeholder.shapeId;
+          touchedBoxIds.add(placeholder.shapeId);
+        });
+      }
     });
 
     const response = await stream.finalMessage();
+    if (earlyPlaceholderPromise) {
+      await earlyPlaceholderPromise;
+    }
 
     const thinking = getThinking(response.content);
     const text = getText(response.content);
@@ -628,27 +672,24 @@ export async function runAgent({
         isStreaming: true,
       });
 
-      const result = await applyToolCall(roomId, call);
-      // Follow the resulting box with the agent cursor.
-      const resultCenter = (result as { center?: { x: number; y: number } })
-        .center;
-      if (resultCenter) {
-        focusCenter = resultCenter;
-      }
-      wobbleTick += 1;
-      await setAgentPresence(
+      const reuseEarly =
+        call.name === "create_box" &&
+        earlyPlaceholderId !== null &&
+        !earlyPlaceholderConsumed;
+      const result = await applyToolCall(
         roomId,
-        {
-          cursor: withCursorWobble(focusCenter, wobbleTick),
-          selection: result.ok === true && typeof result.id === "string"
-            ? [result.id]
-            : focusSelection,
-          agentStatus: "editing",
-        },
-        120
+        call,
+        agentName,
+        reuseEarly ? { existingBoxId: earlyPlaceholderId ?? undefined } : undefined
       );
+      if (reuseEarly) {
+        earlyPlaceholderConsumed = true;
+      }
       if (result.ok === true) {
         successfulToolCallCount += 1;
+        if (typeof result.id === "string") {
+          touchedBoxIds.add(result.id);
+        }
       } else {
         console.error("[copilot] tool call failed", {
           roomId,
@@ -677,15 +718,28 @@ export async function runAgent({
       { roomId, userMessage }
     );
     const html = createErrorFallbackHtml();
-    await applyToolCall(roomId, {
-      id: `fallback-${crypto.randomUUID()}`,
-      name: editAnchor ? "edit_box" : "create_box",
-      input: {
-        ...(editAnchor ? { targetShapeId: editAnchor.shapeId } : null),
-        title: "Failed",
-        html,
+    const reuseEarly =
+      !editAnchor && earlyPlaceholderId !== null && !earlyPlaceholderConsumed;
+    const fallbackResult = await applyToolCall(
+      roomId,
+      {
+        id: `fallback-${crypto.randomUUID()}`,
+        name: editAnchor ? "edit_box" : "create_box",
+        input: {
+          ...(editAnchor ? { targetShapeId: editAnchor.shapeId } : null),
+          title: "Failed",
+          html,
+        },
       },
-    });
+      agentName,
+      reuseEarly ? { existingBoxId: earlyPlaceholderId ?? undefined } : undefined
+    );
+    if (reuseEarly) {
+      earlyPlaceholderConsumed = true;
+    }
+    if (typeof fallbackResult.id === "string") {
+      touchedBoxIds.add(fallbackResult.id);
+    }
     successfulToolCallCount = 1;
     await onProgress({
       status: "editing",
@@ -704,15 +758,21 @@ export async function runAgent({
     isStreaming: false,
   });
 
-  await setAgentPresence(
+  // The agent has finished: clear its cursor from every box it touched.
+  for (const shapeId of touchedBoxIds) {
+    await writeBoxAgentState(roomId, shapeId, {
+      agentName: "",
+      agentStatus: "",
+    });
+  }
+
+  console.log("[copilot] agent run finished", {
     roomId,
-    {
-      cursor: null,
-      selection: [],
-      agentStatus: "idle",
-    },
-    2
-  );
+    agentName,
+    successfulToolCallCount,
+    didFail,
+    touchedBoxes: touchedBoxIds.size,
+  });
 
   return {
     text: finalText,

@@ -11,6 +11,7 @@ import {
   resizeBox,
 } from "tldraw";
 import { HTML_BOX_SHAPE_TYPE } from "@/lib/htmlBox";
+import { agentStatusLabel, colorFromName } from "@/lib/agentName";
 
 declare module "tldraw" {
   interface TLGlobalShapePropsMap {
@@ -20,6 +21,8 @@ declare module "tldraw" {
       title: string;
       html: string;
       updatedAt: string;
+      agentName: string;
+      agentStatus: string;
     };
   }
 }
@@ -50,6 +53,8 @@ export class HtmlBoxShapeUtil extends ShapeUtil<HtmlBoxShape> {
     title: T.string,
     html: T.string,
     updatedAt: T.string,
+    agentName: T.string,
+    agentStatus: T.string,
   };
 
   getDefaultProps(): HtmlBoxShape["props"] {
@@ -59,6 +64,8 @@ export class HtmlBoxShapeUtil extends ShapeUtil<HtmlBoxShape> {
       title: "Generated UI",
       html: "<section><p>Start generating...</p></section>",
       updatedAt: new Date().toISOString(),
+      agentName: "",
+      agentStatus: "",
     };
   }
 
@@ -83,9 +90,13 @@ export class HtmlBoxShapeUtil extends ShapeUtil<HtmlBoxShape> {
   }
 
   component(shape: HtmlBoxShape) {
+    const { agentName, agentStatus } = shape.props;
+    const agentColor = agentName ? colorFromName(agentName) : "";
+    const statusLabel = agentStatusLabel(agentStatus);
+
     return (
       <HTMLContainer
-        className="overflow-hidden border border-neutral-300 bg-white shadow-sm"
+        className="relative overflow-hidden border border-neutral-300 bg-white shadow-sm"
         style={{ width: shape.props.w, height: shape.props.h }}
       >
         <iframe
@@ -94,6 +105,30 @@ export class HtmlBoxShapeUtil extends ShapeUtil<HtmlBoxShape> {
           srcDoc={iframeDocument(shape.props.html)}
           className="h-full w-full border-0 pointer-events-none"
         />
+        {agentName ? (
+          <div
+            className="pointer-events-none absolute left-1/2 top-1/2 z-10 flex -translate-x-1/2 -translate-y-1/2 items-center gap-1"
+            style={{ color: agentColor }}
+          >
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              style={{
+                filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.25))",
+              }}
+            >
+              <path d="M5.5 3.2l13.3 7.6c.7.4.6 1.5-.2 1.7l-5.5 1.5-2.7 5.2c-.4.7-1.5.6-1.7-.2L5.1 4.2c-.2-.8.6-1.4 1.3-1z" />
+            </svg>
+            <span
+              className="rounded-md px-1.5 py-0.5 text-[11px] font-medium leading-none text-white"
+              style={{ background: agentColor }}
+            >
+              {statusLabel ? `${agentName} · ${statusLabel}` : agentName}
+            </span>
+          </div>
+        ) : null}
       </HTMLContainer>
     );
   }

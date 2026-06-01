@@ -17,10 +17,16 @@ import {
 import { useValue, type Editor, type TLShape } from "tldraw";
 import { getFeedId } from "@/lib/room";
 import { getHtmlBoxDataFromShapeLike } from "@/lib/htmlBox";
+import {
+  agentStatusLabel,
+  colorFromName,
+  randomAgentName,
+} from "@/lib/agentName";
 import { Markdown } from "@liveblocks/react-ui/_private";
 
 type AssistantMessageData = {
   role: "assistant";
+  agentName?: string;
   text: string;
   reasoning: string;
   status: "thinking" | "editing" | "idle";
@@ -100,7 +106,6 @@ export function AgentTab({
   const [activeFeedId, setActiveFeedId] = useState(baseFeedId);
   const { messages, isLoading, error } = useFeedMessages(activeFeedId);
   const [input, setInput] = useState("");
-  const [isSending, setIsSending] = useState(false);
   const badgeAreaRef = useRef<HTMLDivElement | null>(null);
   const [badgeAreaHeight, setBadgeAreaHeight] = useState(0);
   const messagesScrollRef = useRef<HTMLDivElement | null>(null);
@@ -151,8 +156,8 @@ export function AgentTab({
     const selectedShapeNames = selectedShapes.map((shape) =>
       selectedShapeSummary(shape)
     );
+    const agentName = randomAgentName();
 
-    setIsSending(true);
     setInput("");
 
     await createFeedMessage(activeFeedId, {
@@ -162,7 +167,8 @@ export function AgentTab({
       selectedShapeNames,
     });
 
-    await fetch("/api/copilot", {
+    // Fire and forget so another agent can be triggered while this one runs.
+    void fetch("/api/copilot", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -171,15 +177,16 @@ export function AgentTab({
         roomId,
         feedId: activeFeedId,
         userMessage: text,
+        agentName,
         context: {
           roomId,
           selectedShapeIds,
           selectedShapes: selectedShapeContext,
         },
       }),
+    }).catch(() => {
+      // The assistant feed message surfaces failures.
     });
-
-    setIsSending(false);
   }
 
   function onComposerKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
@@ -191,16 +198,13 @@ export function AgentTab({
     if (!form) {
       return;
     }
-    if (isSending || input.trim().length === 0) {
+    if (input.trim().length === 0) {
       return;
     }
     form.requestSubmit();
   }
 
   async function onNewChat() {
-    if (isSending) {
-      return;
-    }
     const nextFeedId = `${baseFeedId}-${Date.now().toString(36)}`;
     await createFeed(nextFeedId, {
       metadata: {
@@ -239,8 +243,7 @@ export function AgentTab({
         <button
           type="button"
           onClick={onNewChat}
-          disabled={isSending}
-          className="inline-flex items-center gap-1 rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50"
+          className="inline-flex items-center gap-1 rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-50"
         >
           <Plus size={12} />
           New chat
@@ -281,22 +284,40 @@ export function AgentTab({
           }
 
           if (isAssistantMessageData(message.data)) {
+            const data = message.data;
+            const running = data.status !== "idle";
+            const statusLabel = agentStatusLabel(data.status);
+            const agentColor = data.agentName
+              ? colorFromName(data.agentName)
+              : undefined;
             return (
               <div key={message.id} className="flex justify-start">
                 <div className="agent-message max-w-[95%] rounded-lg px-3 py-2 text-neutral-800">
-                  {message.data.reasoning ? (
+                  {data.agentName ? (
+                    <div className="mb-1 flex items-center gap-1.5 text-xs font-medium">
+                      <span style={{ color: agentColor }}>{data.agentName}</span>
+                      {running && statusLabel ? (
+                        <span className="font-normal text-neutral-400">
+                          · {statusLabel}
+                        </span>
+                      ) : null}
+                    </div>
+                  ) : null}
+                  {data.reasoning ? (
                     <details>
                       <summary className="cursor-pointer text-xs text-neutral-500">
                         Thought process
                       </summary>
                       <pre className="mt-1 rounded-sm bg-neutral-100 px-2 py-1 text-xs text-neutral-600">
-                        {message.data.reasoning}
+                        {data.reasoning}
                       </pre>
                     </details>
                   ) : null}
-                  <div className="mt-2 whitespace-pre-wrap">
-                    <Markdown content={message.data.text} />
-                  </div>
+                  {data.text ? (
+                    <div className="mt-1 whitespace-pre-wrap">
+                      <Markdown content={data.text} />
+                    </div>
+                  ) : null}
                 </div>
               </div>
             );
@@ -356,11 +377,11 @@ export function AgentTab({
           />
           <button
             type="submit"
-            disabled={isSending || input.trim().length === 0}
+            disabled={input.trim().length === 0}
             className="absolute bottom-4 right-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-sky-700 bg-sky-700 text-white hover:bg-sky-600 disabled:opacity-50"
-            aria-label={isSending ? "Sending" : "Send"}
+            aria-label="Send"
           >
-            <ArrowUp size={12} className={isSending ? "opacity-70" : ""} />
+            <ArrowUp size={12} />
           </button>
         </div>
       </form>
