@@ -125,13 +125,17 @@ collaboration to your Next.js application using the APIs from the
 
       import { useMemo } from "react";
       import { getYjsProviderForRoom } from "@liveblocks/yjs";
-      import { useRoom } from "@liveblocks/react/suspense";
+      import { useRoom, useSelf } from "@liveblocks/react/suspense";
       import { SuperDocEditor } from "@superdoc-dev/react";
 
       // Collaborative DOCX editor with live cursors, powered by SuperDoc
       export function Editor() {
         const room = useRoom();
         const yProvider = getYjsProviderForRoom(room);
+
+        // Get the current user's info from Liveblocks
+        const userInfo = useSelf((me) => me.info);
+        const userId = useSelf((me) => me.id);
 
         const modules = useMemo(
           () => ({
@@ -147,10 +151,7 @@ collaboration to your Next.js application using the APIs from the
             <SuperDocEditor
               documentMode="editing"
               // Identify the current user for live cursors
-              user={{
-                name: "User " + Math.floor(Math.random() * 1000),
-                email: "user@example.com",
-              }}
+              user={{ name: userInfo.name, email: userId }}
               modules={modules}
               style={{ height: "100%" }}
             />
