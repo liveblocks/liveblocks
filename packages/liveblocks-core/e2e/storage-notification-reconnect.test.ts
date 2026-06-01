@@ -133,11 +133,14 @@ const sameJson = <S extends LsonObject>(a: Actor<S>, b: Actor<S>): boolean =>
 // connection/handshake noise leaks into the batches.
 async function bothPhases<S extends LsonObject>(
   initialStorageFn: () => S,
-  mutate: (root: LiveObject<S>) => void
+  mutate: (root: LiveObject<S>) => void,
+  opts: { convergeTimeoutMs?: number } = {}
 ): Promise<{
   online: { batches: StorageUpdate[][]; root: LiveObject<S> };
   reconnect: { batches: StorageUpdate[][]; root: LiveObject<S> };
 }> {
+  const convergeTimeoutMs = opts.convergeTimeoutMs ?? 10_000;
+
   // ── Phase 1: online ──────────────────────────────────────────────────────
   const roomId1 = "notif-equiv-" + nanoid();
   const a1 = await createActor(roomId1, initialStorageFn());
@@ -147,8 +150,12 @@ async function bothPhases<S extends LsonObject>(
   a1.room.subscribe(a1.root, (u) => onlineBatches.push(u), { isDeep: true });
 
   mutate(b1.root);
-  await waitUntil(() => sameJson(a1, b1), "Phase 1: A converges to B");
-  await sleep(100);
+  await waitUntil(
+    () => sameJson(a1, b1),
+    "Phase 1: A converges to B",
+    convergeTimeoutMs
+  );
+  await sleep(50); // settle async notification delivery
 
   // ── Phase 2: offline + reconnect ─────────────────────────────────────────
   const roomId2 = "notif-equiv-" + nanoid();
@@ -158,7 +165,12 @@ async function bothPhases<S extends LsonObject>(
   // A goes offline; B applies the mutations and flushes them to the server.
   a2.room.disconnect();
   mutate(b2.root);
-  await sleep(300); // let the server store B's changes before A re-fetches
+  // Wait until the server has acknowledged B's ops (so a reconnect snapshot is
+  // guaranteed to include them), rather than guessing with a fixed sleep.
+  await waitUntil(
+    () => b2.room.getStorageStatus() === "synchronized",
+    "B's changes acknowledged by the server"
+  );
 
   // Subscribe only now, so the batches contain exactly the reconnect reconcile.
   const reconnectBatches: StorageUpdate[][] = [];
@@ -167,9 +179,10 @@ async function bothPhases<S extends LsonObject>(
   a2.room.reconnect();
   await waitUntil(
     () => sameJson(a2, b2),
-    "Phase 2: A converges to B after reconnect"
+    "Phase 2: A converges to B after reconnect",
+    convergeTimeoutMs
   );
-  await sleep(100);
+  await sleep(50); // settle async notification delivery
 
   return {
     online: { batches: onlineBatches, root: a1.root },
@@ -349,7 +362,10 @@ test.fails("LiveObject: scalar deletes fire equivalent notifications online and 
     () => ({ obj: new LiveObject({ a: 1, b: 2 }) }),
     (r) => {
       r.get("obj").delete("b"); // a survives
-    }
+    },
+    // This case never converges on reconnect (the deleted key persists); cap the
+    // wait so the known failure surfaces fast instead of burning the full 10s.
+    { convergeTimeoutMs: 2_000 }
   );
   const expected = { b: { type: "delete", deletedItem: 2 } };
   expect(mergeObjUpdates(online.batches, online.root.get("obj"))).toEqual(
