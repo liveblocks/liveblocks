@@ -9,7 +9,7 @@ import type {
   GroupMentionData,
   Patchable,
 } from "@liveblocks/core";
-import { assertNever, MENTION_CHARACTER, Permission } from "@liveblocks/core";
+import { assertNever, MENTION_CHARACTER } from "@liveblocks/core";
 import { useRoom } from "@liveblocks/react";
 import {
   useCreateRoomComment,
@@ -17,7 +17,6 @@ import {
   useEditRoomComment,
   useLayoutEffect,
   useResolveMentionSuggestions,
-  useRoomPermissions,
 } from "@liveblocks/react/_private";
 import type {
   ComponentPropsWithoutRef,
@@ -31,14 +30,7 @@ import type {
   RefAttributes,
   SyntheticEvent,
 } from "react";
-import {
-  createContext,
-  forwardRef,
-  useCallback,
-  useMemo,
-  useRef,
-  useSyncExternalStore,
-} from "react";
+import { createContext, forwardRef, useCallback, useMemo, useRef } from "react";
 
 import { useLiveblocksUiConfig } from "../config";
 import { FLOATING_ELEMENT_SIDE_OFFSET } from "../constants";
@@ -70,6 +62,7 @@ import type {
   ComposerSubmitComment,
 } from "../primitives/Composer/types";
 import { useComposerAttachmentsDropArea } from "../primitives/Composer/utils";
+import { useCanComment } from "../shared";
 import type { ComposerBodyMark } from "../types";
 import { cn } from "../utils/cn";
 import { useControllableState } from "../utils/use-controllable-state";
@@ -761,26 +754,7 @@ export const Composer = forwardRef(
       controlledOnCollapsedChange
     );
 
-    const canCommentFallback = useSyncExternalStore(
-      useCallback(
-        (callback) => {
-          if (room === null) return () => {};
-          return room.events.self.subscribeOnce(callback);
-        },
-        [room]
-      ),
-      useCallback(() => {
-        return room?.getSelf()?.canComment ?? true;
-      }, [room]),
-      useCallback(() => true, [])
-    );
-
-    const permissions = useRoomPermissions(roomId);
-    const canComment =
-      permissions.size > 0
-        ? permissions.has(Permission.CommentsWrite) ||
-          permissions.has(Permission.Write)
-        : canCommentFallback;
+    const canComment = useCanComment(roomId);
 
     const setEmptyRef = useCallback((isEmpty: boolean) => {
       isEmptyRef.current = isEmpty;

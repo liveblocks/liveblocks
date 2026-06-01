@@ -10,7 +10,6 @@ import {
   type GroupMentionData,
   MENTION_CHARACTER,
   type MentionData,
-  Permission,
 } from "@liveblocks/core";
 import {
   useAddRoomCommentReaction,
@@ -18,7 +17,6 @@ import {
   useEditRoomComment,
   useRemoveRoomCommentReaction,
   useRoomAttachmentUrl,
-  useRoomPermissions,
 } from "@liveblocks/react/_private";
 import { Toggle as TogglePrimitive } from "radix-ui";
 import type {
@@ -67,7 +65,7 @@ import type {
 } from "../primitives/Comment/types";
 import * as ComposerPrimitive from "../primitives/Composer";
 import { Timestamp } from "../primitives/Timestamp";
-import { useCurrentUserId } from "../shared";
+import { useCanComment, useCurrentUserId } from "../shared";
 import type { CommentAttachmentArgs } from "../types";
 import { cn } from "../utils/cn";
 import { download } from "../utils/download";
@@ -735,12 +733,7 @@ export const Comment = Object.assign(
         return separateMediaAttachments(comment.attachments);
       }, [comment.attachments]);
 
-      const permissions = useRoomPermissions(comment.roomId);
-      const canComment =
-        permissions.size > 0
-          ? permissions.has(Permission.CommentsWrite) ||
-            permissions.has(Permission.Write)
-          : true;
+      const canComment = useCanComment(comment.roomId);
 
       const stopPropagation = useCallback((event: SyntheticEvent) => {
         event.stopPropagation();
@@ -854,7 +847,7 @@ export const Comment = Object.assign(
       }
 
       const commentDropdownItems =
-        comment.userId === currentUserId ? (
+        comment.userId === currentUserId && canComment ? (
           <>
             <CommentDropdownItem onSelect={handleEdit} icon={<EditIcon />}>
               {$.COMMENT_EDIT}

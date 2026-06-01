@@ -6,14 +6,12 @@ import {
   type DCM,
   type DTM,
   findLastIndex,
-  Permission,
   type ThreadData,
 } from "@liveblocks/core";
 import {
   useMarkRoomThreadAsRead,
   useMarkRoomThreadAsResolved,
   useMarkRoomThreadAsUnresolved,
-  useRoomPermissions,
   useRoomThreadSubscription,
 } from "@liveblocks/react/_private";
 import { Toggle as TogglePrimitive } from "radix-ui";
@@ -47,6 +45,7 @@ import type {
   ThreadOverrides,
 } from "../overrides";
 import { useOverrides } from "../overrides";
+import { useCanComment } from "../shared";
 import { cn } from "../utils/cn";
 import { useStableComponent } from "../utils/use-stable-component";
 import { useIntersectionCallback } from "../utils/use-visible";
@@ -439,12 +438,7 @@ export const Thread = forwardRef(
       }
     }, [unreadIndex]);
 
-    const permissions = useRoomPermissions(thread.roomId);
-    const canComment =
-      permissions.size > 0
-        ? permissions.has(Permission.CommentsWrite) ||
-          permissions.has(Permission.Write)
-        : true;
+    const canComment = useCanComment(thread.roomId);
 
     const stopPropagation = useCallback((event: SyntheticEvent) => {
       event.stopPropagation();

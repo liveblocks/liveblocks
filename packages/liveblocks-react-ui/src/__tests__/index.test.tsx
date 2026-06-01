@@ -1,10 +1,11 @@
 import type { CommentData, ThreadData } from "@liveblocks/core";
+import { render as renderWithoutRoomProvider } from "@testing-library/react";
 import { describe, expect, test } from "vitest";
 
 import { Comment } from "../components/Comment";
 import { Composer } from "../components/Composer";
 import { Thread } from "../components/Thread";
-import { render } from "./_utils"; // Basically re-exports from @testing-library/react
+import { createContextsForTest, render } from "./_utils"; // Basically re-exports from @testing-library/react
 
 const comment: CommentData = {
   type: "comment",
@@ -124,11 +125,39 @@ describe("Thread", () => {
 
     expect(container).not.toBeEmptyDOMElement();
   });
+
+  test("should render outside RoomProvider", () => {
+    const {
+      liveblocks: { LiveblocksProvider },
+    } = createContextsForTest();
+
+    const { container } = renderWithoutRoomProvider(
+      <LiveblocksProvider>
+        <Thread thread={thread} />
+      </LiveblocksProvider>
+    );
+
+    expect(container).not.toBeEmptyDOMElement();
+  });
 });
 
 describe("Comment", () => {
   test("should render", () => {
     const { container } = render(<Comment comment={comment} />);
+
+    expect(container).not.toBeEmptyDOMElement();
+  });
+
+  test("should render outside RoomProvider", () => {
+    const {
+      liveblocks: { LiveblocksProvider },
+    } = createContextsForTest();
+
+    const { container } = renderWithoutRoomProvider(
+      <LiveblocksProvider>
+        <Comment comment={comment} />
+      </LiveblocksProvider>
+    );
 
     expect(container).not.toBeEmptyDOMElement();
   });
