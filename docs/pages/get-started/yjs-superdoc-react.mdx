@@ -24,7 +24,7 @@ collaboration to your React application using the APIs from the
       Every Liveblocks package should use the same version.
 
       ```bash trackEvent="install_liveblocks"
-      npm install @liveblocks/client @liveblocks/react @liveblocks/yjs yjs superdoc
+      npm install @liveblocks/client @liveblocks/react @liveblocks/yjs yjs @superdoc-dev/react
       ```
 
     </StepContent>
@@ -114,83 +114,46 @@ collaboration to your React application using the APIs from the
 
       Now that we set up Liveblocks, we can start integrating SuperDoc and Yjs in the `Editor.tsx` file.
       We use [`getYjsProviderForRoom`](/docs/api-reference/liveblocks-yjs#getYjsProviderForRoom) to
-      get a Yjs document and provider, then pass them to SuperDoc through `modules.collaboration`. SuperDoc
-      relies on browser APIs, so we import it on the client and wait for the provider’s first `sync` before
-      mounting the editor.
+      get a Yjs document and provider, then pass them to the
+      [`<SuperDocEditor />`](https://docs.superdoc.dev/editor/react/overview) component through
+      `modules.collaboration`. The component handles mounting, cleanup, and SSR for you. It rebuilds
+      when `modules` changes, so we memoize it.
 
       ```tsx file="Editor.tsx"
       "use client";
 
-      import { useEffect, useRef } from "react";
+      import { useMemo } from "react";
       import { getYjsProviderForRoom } from "@liveblocks/yjs";
-      import { useRoom, useSelf } from "@liveblocks/react/suspense";
-      import "superdoc/style.css";
+      import { useRoom } from "@liveblocks/react/suspense";
+      import { SuperDocEditor } from "@superdoc-dev/react";
+      import "@superdoc-dev/react/style.css";
 
       // Collaborative DOCX editor with live cursors, powered by SuperDoc
       export function Editor() {
         const room = useRoom();
         const yProvider = getYjsProviderForRoom(room);
-        const userInfo = useSelf((me) => me.info);
-        const userId = useSelf((me) => me.id);
 
-        const superdocRef = useRef<{ destroy?: () => void } | null>(null);
-
-        useEffect(() => {
-          const yDoc = yProvider.getYDoc();
-          let cancelled = false;
-
-          async function initSuperDoc() {
-            // SuperDoc uses browser APIs, so it's imported on the client only
-            const { SuperDoc } = await import("superdoc");
-
-            if (cancelled) {
-              return;
-            }
-
-            superdocRef.current = new SuperDoc({
-              selector: "#superdoc",
-              toolbar: "#superdoc-toolbar",
-              documentMode: "editing",
-              // Place the current user's info into Yjs awareness for live cursors
-              user: {
-                name: userInfo.name,
-                email: userId,
-              },
-              modules: {
-                // The collaboration contract is the same for every Yjs provider:
-                // pass the shared `ydoc` and `provider`
-                collaboration: {
-                  ydoc: yDoc,
-                  provider: yProvider as any,
-                },
-              },
-            });
-          }
-
-          // Wait for the initial sync so the document isn't created twice
-          if ((yProvider as any).synced) {
-            initSuperDoc();
-          } else {
-            const handleSync = (synced: boolean) => {
-              if (synced) {
-                yProvider.off("sync", handleSync);
-                initSuperDoc();
-              }
-            };
-            yProvider.on("sync", handleSync);
-          }
-
-          return () => {
-            cancelled = true;
-            superdocRef.current?.destroy?.();
-            superdocRef.current = null;
-          };
-        }, [yProvider, userInfo, userId]);
+        const modules = useMemo(
+          () => ({
+            // The collaboration contract is the same for every Yjs provider:
+            // pass the shared `ydoc` and `provider`
+            collaboration: { ydoc: yProvider.getYDoc(), provider: yProvider },
+          }),
+          [yProvider]
+        );
 
         return (
-          <div>
-            <div id="superdoc-toolbar" />
-            <div id="superdoc" style={{ height: 700 }} />
+          <div style={{ height: "100vh" }}>
+            <SuperDocEditor
+              documentMode="editing"
+              // Identify the current user for live cursors
+              user={{
+                name: "User " + Math.floor(Math.random() * 1000),
+                email: "user@example.com",
+              }}
+              modules={modules}
+              style={{ height: "100%" }}
+            />
           </div>
         );
       }
