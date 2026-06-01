@@ -956,24 +956,33 @@ function createStore_forUrlsMetadata() {
 
 function createStore_forPermissionHints() {
   const permissionsByRoomId = new DefaultMap(
-    () => new Signal<Set<Permission>>(new Set())
+    () => new Signal<Set<Permission> | undefined>(undefined)
   );
+  const lastRequestedAtByRoomId = new Map<RoomId, number>();
 
-  function update(newHints: Record<string, Permission[]>) {
+  function update(newHints: Record<string, Permission[]>, requestedAt: Date) {
+    const timestamp = requestedAt.getTime();
+
     batch(() => {
       for (const [roomId, permissions] of Object.entries(newHints)) {
-        const signal = permissionsByRoomId.getOrCreate(roomId);
-        // Get the existing set of permissions for the room and only ever add permission to this set
-        const existingPermissions = new Set(signal.get());
-        for (const permission of permissions) {
-          existingPermissions.add(permission);
+        const previousTimestamp = lastRequestedAtByRoomId.get(roomId);
+        if (
+          previousTimestamp !== undefined &&
+          previousTimestamp > timestamp
+        ) {
+          continue;
         }
-        signal.set(existingPermissions);
+
+        lastRequestedAtByRoomId.set(roomId, timestamp);
+        const signal = permissionsByRoomId.getOrCreate(roomId);
+        signal.set(new Set(permissions));
       }
     });
   }
 
-  function getPermissionForRoomΣ(roomId: string): ISignal<Set<Permission>> {
+  function getPermissionForRoomΣ(
+    roomId: string
+  ): ISignal<Set<Permission> | undefined> {
     return permissionsByRoomId.getOrCreate(roomId);
   }
 
@@ -1390,7 +1399,10 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
             result.subscriptions
           );
 
-          this.permissionHints.update(result.permissionHints);
+          this.permissionHints.update(
+            result.permissionHints,
+            result.requestedAt
+          );
 
           // We initialize the `_userThreadsLastRequestedAt` date using the server timestamp after we've loaded the first page of inbox notifications.
           if (this.#userThreadsLastRequestedAt === null) {
@@ -1451,7 +1463,10 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
             result.subscriptions
           );
 
-          this.permissionHints.update(result.permissionHints);
+          this.permissionHints.update(
+            result.permissionHints,
+            result.requestedAt
+          );
 
           const lastRequestedAt =
             this.#roomThreadsLastRequestedAtByRoom.get(roomId);
@@ -1464,7 +1479,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
            */
           if (
             lastRequestedAt === undefined ||
-            lastRequestedAt > result.requestedAt
+            lastRequestedAt < result.requestedAt
           ) {
             this.#roomThreadsLastRequestedAtByRoom.set(
               roomId,
@@ -2341,7 +2356,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
       updates.subscriptions.deleted
     );
 
-    this.permissionHints.update(updates.permissionHints);
+    this.permissionHints.update(updates.permissionHints, updates.requestedAt);
 
     if (lastRequestedAt < updates.requestedAt) {
       // Update the `lastRequestedAt` value for the room to the timestamp returned by the current request
@@ -2363,7 +2378,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
     });
 
     if (lastRequestedAt < result.requestedAt) {
-      this.#notificationsLastRequestedAt = result.requestedAt;
+      this.#userThreadsLastRequestedAt = result.requestedAt;
     }
 
     this.updateThreadifications(
@@ -2375,7 +2390,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
       result.subscriptions.deleted
     );
 
-    this.permissionHints.update(result.permissionHints);
+    this.permissionHints.update(result.permissionHints, result.requestedAt);
   }
 
   public async fetchRoomVersionsDeltaUpdate(
