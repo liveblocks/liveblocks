@@ -307,6 +307,21 @@
             "hidden": true
           },
           {
+            "title": "Yjs SuperDoc Svelte",
+            "path": "/get-started/yjs-superdoc-svelte",
+            "hidden": true
+          },
+          {
+            "title": "Yjs SuperDoc Vue.js",
+            "path": "/get-started/yjs-superdoc-vuejs",
+            "hidden": true
+          },
+          {
+            "title": "Yjs SuperDoc JavaScript",
+            "path": "/get-started/yjs-superdoc-javascript",
+            "hidden": true
+          },
+          {
             "title": "Yjs Tiptap Svelte",
             "path": "/get-started/yjs-tiptap-svelte",
             "hidden": true
