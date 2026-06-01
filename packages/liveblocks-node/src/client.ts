@@ -81,6 +81,19 @@ import {
 import { asyncConsume, runConcurrently } from "./lib/itertools";
 import { LineStream, NdJsonStream } from "./lib/ndjson";
 import { xwarn } from "./lib/xwarn";
+import type {
+  RoomAccesses,
+  RoomAccessesInput,
+  RoomAccessesUpdateInput,
+  RoomPermission,
+  RoomPermissionInput,
+  RoomPermissionObject,
+} from "./room-permissions";
+import {
+  normalizeRoomAccessesInput,
+  normalizeRoomAccessesUpdateInput,
+  normalizeRoomPermissionInput,
+} from "./room-permissions";
 import { Session } from "./Session";
 import {
   assertNonEmpty,
@@ -173,17 +186,12 @@ export type CreateCommentOptions<CM extends BaseMetadata> = {
   } & PartialUnless<CM, { metadata: CM }>;
 };
 
-export type RoomPermission =
-  | []
-  | ["room:write"]
-  | ["room:read", "room:presence:write"]
-  | ["room:read", "room:presence:write", "comments:write"];
-export type RoomAccesses = Record<
-  string,
-  | ["room:write"]
-  | ["room:read", "room:presence:write"]
-  | ["room:read", "room:presence:write", "comments:write"]
->;
+export type {
+  RoomAccesses,
+  RoomPermission,
+  RoomPermissionInput,
+  RoomPermissionObject,
+};
 export type RoomMetadata = Record<string, string | string[]>;
 type QueryRoomMetadata = Record<string, string>;
 
@@ -467,9 +475,9 @@ export type GetInboxNotificationsOptions =
   & PaginationOptions;
 
 export type CreateRoomOptions = {
-  defaultAccesses: RoomPermission;
-  groupsAccesses?: RoomAccesses;
-  usersAccesses?: RoomAccesses;
+  defaultAccesses: RoomPermissionInput;
+  groupsAccesses?: RoomAccessesInput;
+  usersAccesses?: RoomAccessesInput;
   metadata?: RoomMetadata;
   /**
    * @deprecated Use `organizationId` instead.
@@ -485,21 +493,38 @@ export type CreateRoomOptions = {
 };
 
 export type UpdateRoomOptions = {
-  defaultAccesses?: RoomPermission | null;
-  groupsAccesses?: Record<
-    string,
-    ["room:write"] | ["room:read", "room:presence:write"] | null
-  >;
-  usersAccesses?: Record<
-    string,
-    ["room:write"] | ["room:read", "room:presence:write"] | null
-  >;
+  defaultAccesses?: RoomPermissionInput | null;
+  groupsAccesses?: RoomAccessesUpdateInput;
+  usersAccesses?: RoomAccessesUpdateInput;
   metadata?: Record<string, string | string[] | null>;
 };
 
 export type UpsertRoomOptions = {
   update: UpdateRoomOptions;
   create?: CreateRoomOptions;
+};
+
+type NormalizedCreateRoomOptions = Omit<
+  CreateRoomOptions,
+  "defaultAccesses" | "groupsAccesses" | "usersAccesses"
+> & {
+  defaultAccesses: RoomPermission;
+  groupsAccesses?: RoomAccesses;
+  usersAccesses?: RoomAccesses;
+};
+
+type NormalizedUpdateRoomOptions = Omit<
+  UpdateRoomOptions,
+  "defaultAccesses" | "groupsAccesses" | "usersAccesses"
+> & {
+  defaultAccesses?: RoomPermission | null;
+  groupsAccesses?: Record<string, RoomPermission | null>;
+  usersAccesses?: Record<string, RoomPermission | null>;
+};
+
+type NormalizedUpsertRoomOptions = {
+  update: NormalizedUpdateRoomOptions;
+  create?: NormalizedCreateRoomOptions;
 };
 
 export type GetAiCopilotsOptions = PaginationOptions;
@@ -713,6 +738,31 @@ function inflateRoomData(room: RoomDataPlain): RoomData {
     ...room,
     createdAt,
     lastConnectionAt,
+  };
+}
+
+function normalizeCreateRoomOptions(
+  options: CreateRoomOptions
+): NormalizedCreateRoomOptions {
+  return {
+    ...options,
+    defaultAccesses: normalizeRoomPermissionInput(options.defaultAccesses),
+    groupsAccesses: normalizeRoomAccessesInput(options.groupsAccesses),
+    usersAccesses: normalizeRoomAccessesInput(options.usersAccesses),
+  };
+}
+
+function normalizeUpdateRoomOptions(
+  options: UpdateRoomOptions
+): NormalizedUpdateRoomOptions {
+  return {
+    ...options,
+    defaultAccesses:
+      options.defaultAccesses === undefined || options.defaultAccesses === null
+        ? options.defaultAccesses
+        : normalizeRoomPermissionInput(options.defaultAccesses),
+    groupsAccesses: normalizeRoomAccessesUpdateInput(options.groupsAccesses),
+    usersAccesses: normalizeRoomAccessesUpdateInput(options.usersAccesses),
   };
 }
 
@@ -1132,9 +1182,9 @@ export class Liveblocks {
       organizationId?: string;
     } = {
       id: roomId,
-      defaultAccesses,
-      groupsAccesses,
-      usersAccesses,
+      defaultAccesses: normalizeRoomPermissionInput(defaultAccesses),
+      groupsAccesses: normalizeRoomAccessesInput(groupsAccesses),
+      usersAccesses: normalizeRoomAccessesInput(usersAccesses),
       metadata,
     };
 
@@ -1196,9 +1246,17 @@ export class Liveblocks {
     params: UpsertRoomOptions,
     options?: RequestOptions
   ): Promise<RoomData> {
+    const body: NormalizedUpsertRoomOptions = {
+      update: normalizeUpdateRoomOptions(params.update),
+      create:
+        params.create === undefined
+          ? undefined
+          : normalizeCreateRoomOptions(params.create),
+    };
+
     const res = await this.#post(
       url`/v2/rooms/${roomId}/upsert`,
-      params,
+      body,
       options
     );
     if (!res.ok) {
@@ -1245,7 +1303,8 @@ export class Liveblocks {
     params: UpdateRoomOptions,
     options?: RequestOptions
   ): Promise<RoomData> {
-    const { defaultAccesses, groupsAccesses, usersAccesses, metadata } = params;
+    const { defaultAccesses, groupsAccesses, usersAccesses, metadata } =
+      normalizeUpdateRoomOptions(params);
 
     const res = await this.#post(
       url`/v2/rooms/${roomId}`,

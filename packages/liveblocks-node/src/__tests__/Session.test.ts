@@ -82,6 +82,31 @@ describe("authorization (new API)", () => {
     });
   });
 
+  test("can assign object notation permissions", () => {
+    expect(
+      makeSession()
+        .allow("xyz", { default: "read", storage: "none" })
+        .serializePermissions()
+    ).toEqual({
+      xyz: ["room:read", "room:storage:none"],
+    });
+  });
+
+  test("rejects invalid object notation permissions", () => {
+    expect(() =>
+      makeSession()
+        .allow("xyz", {
+          // @ts-expect-error - Deliberate incorrect value
+          presence: "write",
+        })
+        .serializePermissions()
+    ).toThrow("Invalid permission level for presence: write");
+
+    expect(() => makeSession().allow("xyz", {})).toThrow(
+      "Permission object cannot be empty"
+    );
+  });
+
   test("throws when no room name", () => {
     const session = makeSession();
     expect(() =>

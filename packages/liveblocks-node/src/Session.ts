@@ -7,24 +7,14 @@ import type {
 import { url } from "@liveblocks/core";
 
 import type { AuthResponse } from "./client";
+import type {
+  RoomPermissionInput,
+  RoomPermissionString,
+} from "./room-permissions";
+import { normalizeRoomPermissionInput } from "./room-permissions";
 import { assertNonEmpty, normalizeStatusCode } from "./utils";
 
-// As defined in the source of truth in ApiScope in
-// https://github.com/liveblocks/liveblocks-cloudflare/blob/main/src/security.ts
-const ALL_PERMISSIONS = Object.freeze([
-  "room:write",
-  "room:read",
-  "room:presence:write",
-  "comments:write",
-  "comments:read",
-  "feeds:write",
-] as const);
-
-export type Permission = (typeof ALL_PERMISSIONS)[number];
-
-function isPermission(value: string): value is Permission {
-  return (ALL_PERMISSIONS as readonly unknown[]).includes(value);
-}
+export type Permission = RoomPermissionString;
 
 const MAX_PERMS_PER_SET = 10;
 
@@ -73,16 +63,9 @@ type PostFn = (path: URLSafeString, json: Json) => Promise<Response>;
  * You can define at most 10 room IDs (or patterns) in a single token,
  * otherwise the token would become too large and unwieldy.
  *
- * All permissions granted are additive. You cannot "remove" permissions once
- * you grant them. For example:
+ * You can also use object notation for feature-specific access:
  *
- *    session
- *      .allow('abc:*',   session.FULL_ACCESS)
- *      .allow('abc:123', session.READ_ACCESS)
- *
- * Here, room `abc:123` would have full access. The second .allow() call only
- * _adds_ read permissions, but that has no effect since full access
- * permissions were already added to the set.
+ *    session.allow('my-room', { default: 'write', storage: 'none' })
  */
 export class Session {
   public readonly FULL_ACCESS = FULL_ACCESS;
@@ -95,7 +78,7 @@ export class Session {
   /** Only used as a hint to produce better error messages. */
   #localDev: boolean;
   #sealed = false;
-  readonly #permissions: Map<string, Set<Permission>> = new Map();
+  readonly #permissions: Map<string, Set<RoomPermissionString>> = new Map();
 
   /** @internal */
   constructor(
@@ -114,7 +97,7 @@ export class Session {
     this.#localDev = localDev ?? false;
   }
 
-  #getOrCreate(roomId: string): Set<Permission> {
+  #getOrCreate(roomId: string): Set<RoomPermissionString> {
     if (this.#sealed) {
       throw new Error("You can no longer change these permissions.");
     }
@@ -129,13 +112,13 @@ export class Session {
         );
       }
 
-      perms = new Set<Permission>();
+      perms = new Set<RoomPermissionString>();
       this.#permissions.set(roomId, perms);
       return perms;
     }
   }
 
-  public allow(roomIdOrPattern: string, newPerms: readonly Permission[]): this {
+  public allow(roomIdOrPattern: string, newPerms: RoomPermissionInput): this {
     if (typeof roomIdOrPattern !== "string") {
       throw new Error("Room name or pattern must be a string");
     }
@@ -143,15 +126,14 @@ export class Session {
       throw new Error("Invalid room name or pattern");
     }
 
-    if (newPerms.length === 0) {
+    const normalizedPermissions = normalizeRoomPermissionInput(newPerms);
+
+    if (normalizedPermissions.length === 0) {
       throw new Error("Permission list cannot be empty");
     }
 
     const existingPerms = this.#getOrCreate(roomIdOrPattern);
-    for (const perm of newPerms) {
-      if (!isPermission(perm as string)) {
-        throw new Error(`Not a valid permission: ${perm}`);
-      }
+    for (const perm of normalizedPermissions) {
       existingPerms.add(perm);
     }
     return this; // To allow chaining multiple allow calls

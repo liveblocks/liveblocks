@@ -71,7 +71,10 @@ const ACCESS_RANKS: Record<AccessLevel, number> = {
   write: 2,
 };
 
-const FEATURE_PERMISSIONS = {
+const FEATURE_PERMISSIONS: Record<
+  Exclude<RoomFeature, "creation" | "personal">,
+  Partial<Record<AccessLevel, readonly Permission[]>>
+> = {
   presence: {
     read: [Permission.RoomPresenceRead, Permission.RoomPresenceWrite],
     none: [Permission.RoomPresenceNone],
@@ -91,10 +94,7 @@ const FEATURE_PERMISSIONS = {
     read: [Permission.RoomFeedsRead],
     none: [Permission.RoomFeedsNone],
   },
-} satisfies Record<
-  Exclude<RoomFeature, "creation" | "personal">,
-  Partial<Record<AccessLevel, readonly Permission[]>>
->;
+};
 
 export function isPermission(value: string): value is Permission {
   return ALL_PERMISSIONS.includes(value as Permission);

@@ -652,6 +652,117 @@ describe("client", () => {
         metadata: undefined,
       });
     });
+
+    test("should normalize object notation access fields", async () => {
+      const roomId = "test-room";
+      let capturedRequestData: unknown = null;
+
+      server.use(
+        http.post(`${DEFAULT_BASE_URL}/v2/rooms`, async ({ request }) => {
+          capturedRequestData = await request.json();
+          return HttpResponse.json(room, { status: 200 });
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+      await client.createRoom(roomId, {
+        defaultAccesses: { default: "read", storage: "none" },
+        groupsAccesses: {
+          marketing: { comments: "write", feeds: "none" },
+        },
+        usersAccesses: {
+          alice: { default: "write", comments: "none" },
+        },
+      });
+
+      expect(capturedRequestData).toEqual({
+        id: roomId,
+        defaultAccesses: ["room:read", "room:storage:none"],
+        groupsAccesses: {
+          marketing: ["room:comments:write", "room:feeds:none"],
+        },
+        usersAccesses: {
+          alice: ["room:write", "room:comments:none"],
+        },
+        metadata: undefined,
+      });
+    });
+  });
+
+  describe("update room", () => {
+    test("should normalize object notation access fields and preserve null deletions", async () => {
+      const roomId = "test-room";
+      let capturedRequestData: unknown = null;
+
+      server.use(
+        http.post(`${DEFAULT_BASE_URL}/v2/rooms/:roomId`, async ({ request }) => {
+          capturedRequestData = await request.json();
+          return HttpResponse.json(room, { status: 200 });
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+      await client.updateRoom(roomId, {
+        defaultAccesses: { default: "write", storage: "none" },
+        groupsAccesses: {
+          marketing: null,
+        },
+        usersAccesses: {
+          alice: { comments: "read" },
+        },
+      });
+
+      expect(capturedRequestData).toEqual({
+        defaultAccesses: ["room:write", "room:storage:none"],
+        groupsAccesses: {
+          marketing: null,
+        },
+        usersAccesses: {
+          alice: ["room:comments:read"],
+        },
+        metadata: undefined,
+      });
+    });
+  });
+
+  describe("upsert room", () => {
+    test("should normalize object notation in update and create params", async () => {
+      const roomId = "test-room";
+      let capturedRequestData: unknown = null;
+
+      server.use(
+        http.post(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/upsert`,
+          async ({ request }) => {
+            capturedRequestData = await request.json();
+            return HttpResponse.json(room, { status: 200 });
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+      await client.upsertRoom(roomId, {
+        update: {
+          usersAccesses: {
+            alice: { storage: "none" },
+          },
+        },
+        create: {
+          defaultAccesses: { default: "read", comments: "write" },
+        },
+      });
+
+      expect(capturedRequestData).toEqual({
+        update: {
+          usersAccesses: {
+            alice: ["room:storage:none"],
+          },
+        },
+        create: {
+          defaultAccesses: ["room:read", "room:comments:write"],
+        },
+      });
+    });
   });
 
   describe("prewarm room", () => {

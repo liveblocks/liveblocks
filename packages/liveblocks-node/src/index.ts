@@ -29,6 +29,8 @@ export type {
   RoomAccesses,
   RoomData,
   RoomPermission,
+  RoomPermissionInput,
+  RoomPermissionObject,
   RoomsQueryCriteria,
   RoomUser,
   SetPresenceOptions,
