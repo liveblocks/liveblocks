@@ -4,6 +4,8 @@
 
 - Fix `LiveList.push()` so concurrent pushes from multiple clients no longer
   settle out of order.
+- Fix a bug where a `LiveObject` key deleted while a client was offline would
+  reappear on reconnect, preventing the two clients from reconverging.
 
 ## v3.19.3
 

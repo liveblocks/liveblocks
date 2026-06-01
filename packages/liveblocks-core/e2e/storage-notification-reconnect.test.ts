@@ -364,16 +364,15 @@ test.fails(
 );
 
 test.fails(
-  "LiveObject: scalar deletes fire equivalent notifications online and on reconnect",
+  "LiveObject: deleting a scalar key does not re-notify a surviving sibling",
   async () => {
     const { online, reconnect } = await bothPhases(
-      () => ({ obj: new LiveObject({ a: 1, b: 2 }) }),
+      () => ({
+        obj: new LiveObject<{ a: number; b?: number }>({ a: 1, b: 2 }),
+      }),
       (r) => {
-        r.get("obj").delete("b"); // a survives
-      },
-      // This case never converges on reconnect (the deleted key persists); cap the
-      // wait so the known failure surfaces fast instead of burning the full 10s.
-      { convergeTimeoutMs: 2_000 }
+        r.get("obj").delete("b"); // a survives and must not be re-notified
+      }
     );
     const expected = { b: { type: "delete", deletedItem: 2 } };
     expect(mergeObjUpdates(online.batches, online.root.get("obj"))).toEqual(
@@ -423,6 +422,25 @@ test("LiveMap: deletes fire equivalent notifications online and on reconnect", a
     expected
   );
   expect(mergeMapUpdates(reconnect.batches, reconnect.root.get("map"))).toEqual(
+    expected
+  );
+});
+
+test("LiveObject: scalar deletes fire equivalent notifications online and on reconnect", async () => {
+  // Delete the object's sole key, so there is no surviving scalar sibling whose
+  // full-data re-send would trip the separate spurious-update issue (covered by
+  // "untouched scalar keys"). This keeps the test focused on the delete itself.
+  const { online, reconnect } = await bothPhases(
+    () => ({ obj: new LiveObject<{ b?: number }>({ b: 2 }) }),
+    (r) => {
+      r.get("obj").delete("b");
+    }
+  );
+  const expected = { b: { type: "delete", deletedItem: 2 } };
+  expect(mergeObjUpdates(online.batches, online.root.get("obj"))).toEqual(
+    expected
+  );
+  expect(mergeObjUpdates(reconnect.batches, reconnect.root.get("obj"))).toEqual(
     expected
   );
 });

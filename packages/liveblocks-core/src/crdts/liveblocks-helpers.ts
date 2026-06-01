@@ -245,6 +245,16 @@ export function getTreesDiffOperations(
             data: crdt.data,
           });
         }
+        // UPDATE_OBJECT only adds/overwrites keys, so keys present locally but
+        // absent from the snapshot must be deleted explicitly, otherwise they
+        // linger and the two clients diverge.
+        if (currentCrdt.type === CrdtType.OBJECT) {
+          for (const key of Object.keys(currentCrdt.data)) {
+            if (!(key in crdt.data)) {
+              ops.push({ type: OpCode.DELETE_OBJECT_KEY, id, key });
+            }
+          }
+        }
       }
       if (crdt.parentKey !== currentCrdt.parentKey) {
         ops.push({

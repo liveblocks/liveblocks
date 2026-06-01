@@ -246,6 +246,11 @@ describe("getTreesDiffOperations", () => {
         id: "0:2",
         data: { c: 1 },
       },
+      {
+        type: OpCode.DELETE_OBJECT_KEY,
+        id: "0:2",
+        key: "b",
+      },
     ]);
   });
 
