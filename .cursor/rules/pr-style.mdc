@@ -11,10 +11,10 @@ to less. A reviewer should understand the change in a few seconds.
 
 ## Titles
 
-- Write the title as a short, high-level sentence in present tense, ending with
-  a period. It usually reads like a trimmed version of the description's summary
-  line.
-  - e.g. `Adds Superdoc example and get started guide.`
+- Write the title as a short, high-level sentence in present tense, with NO
+  trailing period. It usually reads like a trimmed version of the description's
+  summary line (which does end in a period — the title does not).
+  - e.g. `Adds Superdoc example and get started guide`
 - Use present-tense `-s` verbs: `Adds`, `Updates`, `Fixes`, `Removes`,
   `Improves` — not the imperative (`Add`, `Update`, `Fix`).
 - Stay high-level. Omit internal package/folder names and framework qualifiers
@@ -30,7 +30,7 @@ Worked example for titles:
 
 - Too detailed (avoid):
   `Add nextjs-yjs-superdoc example and SuperDoc React get-started guide`
-- Target (do this): `Adds Superdoc example and get started guide.`
+- Target (do this): `Adds Superdoc example and get started guide`
 
 ## Descriptions
 
@@ -102,5 +102,5 @@ This is the target (do this):
 - Restating the diff line by line.
 - Build/CI status, "How to test", or "Risks" sections unless genuinely useful.
 - Full file paths where a base name is clearer.
-- Title Case titles, or imperative verbs (`Add`, `Fix`) where the present-tense
-  `Adds`/`Fixes` reads better.
+- Title Case titles, a trailing period in the title, or imperative verbs (`Add`,
+  `Fix`) where the present-tense `Adds`/`Fixes` reads better.
