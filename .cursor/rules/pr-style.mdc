@@ -11,18 +11,26 @@ to less. A reviewer should understand the change in a few seconds.
 
 ## Titles
 
-- Keep it short and descriptive. Capitalize the first word; otherwise use
-  sentence case (not Title Case). Proper feature names keep their casing (e.g.
-  `AI`, `CHANGELOG`).
-- No trailing period.
-- Write "get started" in lowercase (e.g. "AI Comments get started guide").
+- Write the title as a short, high-level sentence in present tense, ending with
+  a period. It usually reads like a trimmed version of the description's summary
+  line.
+  - e.g. `Adds Superdoc example and get started guide.`
+- Use present-tense `-s` verbs: `Adds`, `Updates`, `Fixes`, `Removes`,
+  `Improves` — not the imperative (`Add`, `Update`, `Fix`).
+- Stay high-level. Omit internal package/folder names and framework qualifiers
+  unless essential. Prefer `Superdoc example` over `nextjs-yjs-superdoc
+  example`, and drop redundant words like "React".
+- Sentence case (not Title Case). Proper names keep their casing (e.g. `AI`,
+  `CHANGELOG`).
+- Write "get started" with a space, not "get-started".
 - Optionally prefix with a scope and a colon when it helps, especially for
   examples: `Example:` for one, `Examples:` for several.
-  - e.g. `Example: Add AI comments to AI dashboard`
-  - e.g. `Examples: Add AI comments to various`
-- Good examples: `New AI get started guides`,
-  `Update comment streaming in dashboard example`,
-  `Remove outdated private beta mentions`.
+
+Worked example for titles:
+
+- Too detailed (avoid):
+  `Add nextjs-yjs-superdoc example and SuperDoc React get-started guide`
+- Target (do this): `Adds Superdoc example and get started guide.`
 
 ## Descriptions
 
@@ -94,4 +102,5 @@ This is the target (do this):
 - Restating the diff line by line.
 - Build/CI status, "How to test", or "Risks" sections unless genuinely useful.
 - Full file paths where a base name is clearer.
-- Title Case titles or trailing periods in the title.
+- Title Case titles, or imperative verbs (`Add`, `Fix`) where the present-tense
+  `Adds`/`Fixes` reads better.
