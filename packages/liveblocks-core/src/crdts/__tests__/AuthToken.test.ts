@@ -1,6 +1,28 @@
 import { describe, expect, test } from "vitest";
 
 import { parseAuthToken } from "../../protocol/AuthToken";
+import {
+  canReadRoomFeature,
+  canUseResolvedRoomPermission,
+  canUseRoomPermission,
+  canWriteRoomFeature,
+  hasRoomFeatureAccess,
+  isLiveblocksPermission,
+  Permission,
+  resolveRoomPermissions,
+  resolveRoomPermissionsWithOverrides,
+  roomPermissionsFromScopes,
+  type PermissionScopes,
+  type RequestedScope,
+} from "../../protocol/Permission";
+
+function expectCanUse(
+  scopes: PermissionScopes,
+  requestedScope: RequestedScope,
+  expected: boolean
+) {
+  expect(canUseRoomPermission(scopes, requestedScope)).toBe(expected);
+}
 
 describe("parseRoomAuthToken", () => {
   const exampleAccessToken =
@@ -50,5 +72,233 @@ describe("parseRoomAuthToken", () => {
         )
       );
     }
+  });
+
+  test("validates liveblocks permission strings", () => {
+    expect(isLiveblocksPermission("room:read")).toBe(true);
+    expect(isLiveblocksPermission("comments:read")).toBe(true);
+    expect(isLiveblocksPermission("room:comments:read")).toBe(true);
+    expect(isLiveblocksPermission("not-a-permission")).toBe(false);
+  });
+
+  test("infers storage and comments capabilities from new permissions", () => {
+    expectCanUse(
+      [Permission.RoomStorageRead],
+      Permission.RoomStorageRead,
+      true
+    );
+    expectCanUse(
+      [Permission.RoomStorageWrite],
+      Permission.RoomStorageRead,
+      true
+    );
+    expectCanUse(
+      [Permission.RoomWrite, Permission.RoomStorageNone],
+      Permission.RoomStorageRead,
+      false
+    );
+
+    expectCanUse(
+      [Permission.RoomStorageWrite],
+      Permission.RoomStorageWrite,
+      true
+    );
+    expectCanUse(
+      [Permission.RoomStorageRead],
+      Permission.RoomStorageWrite,
+      false
+    );
+    expectCanUse(
+      [Permission.RoomWrite, Permission.RoomStorageRead],
+      Permission.RoomStorageWrite,
+      false
+    );
+    expectCanUse(
+      [Permission.RoomWrite, Permission.RoomStorageNone],
+      Permission.RoomStorageWrite,
+      false
+    );
+
+    expectCanUse([Permission.RoomFeedsRead], Permission.RoomFeedsRead, true);
+    expectCanUse([Permission.RoomFeedsWrite], Permission.RoomFeedsWrite, true);
+    expectCanUse(
+      [Permission.RoomWrite, Permission.RoomFeedsNone],
+      Permission.RoomFeedsWrite,
+      false
+    );
+    expectCanUse(
+      [Permission.RoomWrite, Permission.RoomFeedsNone],
+      Permission.RoomFeedsRead,
+      false
+    );
+
+    expectCanUse(
+      [Permission.RoomPresenceRead],
+      Permission.RoomPresenceRead,
+      true
+    );
+    expectCanUse([Permission.RoomRead], Permission.RoomPresenceRead, true);
+    expectCanUse([Permission.RoomWrite], Permission.RoomPresenceRead, true);
+    expectCanUse(
+      [Permission.LegacyRoomPresenceWrite],
+      Permission.RoomPresenceRead,
+      true
+    );
+    expectCanUse(
+      [Permission.RoomStorageRead],
+      Permission.RoomPresenceRead,
+      false
+    );
+    expectCanUse(
+      [Permission.RoomWrite, Permission.RoomPresenceNone],
+      Permission.RoomPresenceRead,
+      false
+    );
+    expectCanUse([], Permission.RoomPresenceRead, false);
+
+    expectCanUse(
+      [Permission.RoomCommentsRead],
+      Permission.RoomCommentsRead,
+      true
+    );
+    expectCanUse(
+      [Permission.RoomCommentsWrite],
+      Permission.RoomCommentsWrite,
+      true
+    );
+    expectCanUse(
+      [Permission.RoomCommentsRead],
+      Permission.RoomCommentsWrite,
+      false
+    );
+    expectCanUse(
+      [Permission.RoomWrite, Permission.RoomCommentsNone],
+      Permission.RoomCommentsRead,
+      false
+    );
+    expectCanUse(
+      [Permission.RoomWrite, Permission.RoomCommentsRead],
+      Permission.RoomCommentsWrite,
+      false
+    );
+    expectCanUse(
+      [Permission.RoomWrite, Permission.RoomCommentsNone],
+      Permission.RoomCommentsWrite,
+      false
+    );
+    expectCanUse(
+      new Set([Permission.LegacyCommentsWrite]),
+      Permission.RoomCommentsWrite,
+      true
+    );
+  });
+
+  test("should resolve permissions to feature levels", () => {
+    expect(resolveRoomPermissions([Permission.RoomRead])).toEqual({
+      presence: "read",
+      storage: "read",
+      comments: "read",
+      feeds: "read",
+    });
+
+    expect(
+      resolveRoomPermissions([
+        Permission.RoomWrite,
+        Permission.RoomStorageRead,
+        Permission.RoomCommentsNone,
+        Permission.RoomFeedsWrite,
+      ])
+    ).toEqual({
+      presence: "write",
+      storage: "read",
+      comments: "none",
+      feeds: "write",
+    });
+
+    expect(
+      resolveRoomPermissions([
+        Permission.RoomWrite,
+        Permission.RoomPresenceNone,
+        Permission.RoomStorageWrite,
+      ])
+    ).toEqual({
+      presence: "none",
+      storage: "write",
+      comments: "write",
+      feeds: "write",
+    });
+  });
+
+  test("should resolve permissions to centralized feature levels", () => {
+    expect(
+      roomPermissionsFromScopes([
+        Permission.RoomWrite,
+        Permission.RoomStorageRead,
+        Permission.RoomCommentsNone,
+        Permission.RoomFeedsWrite,
+      ])
+    ).toEqual({
+      presence: "write",
+      storage: "read",
+      comments: "none",
+      feeds: "write",
+      personal: "write",
+    });
+
+    expect(
+      hasRoomFeatureAccess(
+        [Permission.RoomWrite, Permission.RoomStorageRead],
+        "storage",
+        "write"
+      )
+    ).toBe(false);
+  });
+
+  test("should expose permission checks from resolved levels", () => {
+    const permissions = resolveRoomPermissions([
+      Permission.RoomWrite,
+      Permission.RoomStorageRead,
+      Permission.RoomCommentsNone,
+    ]);
+
+    expect(permissions.storage).toBe("read");
+    expect(canReadRoomFeature(permissions, "storage")).toBe(true);
+    expect(canWriteRoomFeature(permissions, "storage")).toBe(false);
+    expect(canWriteRoomFeature(permissions, "comments")).toBe(false);
+    expect(
+      canUseResolvedRoomPermission(permissions, Permission.RoomStorageRead)
+    ).toBe(true);
+    expect(
+      canUseResolvedRoomPermission(permissions, Permission.RoomStorageWrite)
+    ).toBe(false);
+    expect(
+      canUseResolvedRoomPermission(permissions, Permission.RoomCommentsWrite)
+    ).toBe(false);
+  });
+
+  test("should resolve permission overrides in precedence order", () => {
+    expect(
+      resolveRoomPermissionsWithOverrides([
+        [Permission.RoomWrite],
+        [Permission.RoomStorageNone],
+      ])
+    ).toEqual({
+      presence: "write",
+      storage: "none",
+      comments: "write",
+      feeds: "write",
+    });
+
+    expect(
+      resolveRoomPermissionsWithOverrides([
+        [Permission.RoomWrite],
+        [Permission.RoomCommentsRead],
+      ])
+    ).toEqual({
+      presence: "write",
+      storage: "write",
+      comments: "read",
+      feeds: "write",
+    });
   });
 });

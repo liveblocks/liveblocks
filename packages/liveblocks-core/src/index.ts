@@ -198,7 +198,35 @@ export type {
   ContextualPromptResponse,
 } from "./protocol/Ai";
 export type { CustomAuthenticationResult } from "./protocol/Authentication";
-export { Permission } from "./protocol/AuthToken";
+export type {
+  AccessLevel,
+  LegacyRoomPermission,
+  LiveblocksPermission,
+  PermissionScopes,
+  RequiredAccessLevel,
+  RoomFeature,
+  RoomPermission,
+  RoomPermissionFeature,
+  RoomPermissionLevels,
+  RoomPermissions,
+  RequestedScope,
+  ResolvedRoomPermissionLevel,
+} from "./protocol/Permission";
+export {
+  canReadRoomFeature,
+  canUseResolvedRoomPermission,
+  canUseRoomPermission,
+  canWriteRoomFeature,
+  hasRoomFeatureAccess,
+  isLiveblocksPermission,
+  LEGACY_ROOM_PERMISSIONS,
+  Permission,
+  ROOM_PERMISSION_OBJECT_FIELDS,
+  ROOM_PERMISSIONS,
+  resolveRoomPermissions,
+  resolveRoomPermissionsWithOverrides,
+  roomPermissionsFromScopes,
+} from "./protocol/Permission";
 export type { BaseActivitiesData } from "./protocol/BaseActivitiesData";
 export type { BaseGroupInfo } from "./protocol/BaseGroupInfo";
 export type { BaseRoomInfo } from "./protocol/BaseRoomInfo";
