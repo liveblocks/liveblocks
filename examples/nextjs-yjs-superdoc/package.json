@@ -14,6 +14,7 @@
     "@liveblocks/node": "^3.19.3",
     "@liveblocks/react": "^3.19.3",
     "@liveblocks/yjs": "^3.19.3",
+    "@superdoc-dev/react": "^1.9.0",
     "@types/node": "^20.3.3",
     "@types/react": "^18.3.27",
     "@types/react-dom": "^18.2.25",
