@@ -617,3 +617,137 @@ test("collapse: an intermediate list item B adds then removes offline is never s
   expect(online.root.get("list").toJSON()).toEqual(["a", "c"]);
   expect(reconnect.root.get("list").toJSON()).toEqual(["a", "c"]);
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LiveList.set, nested live items, deep trees, and map control key
+// ─────────────────────────────────────────────────────────────────────────────
+
+// For list deltas whose `item`/`deletedItem` is a live node (not a scalar),
+// compare only the structural shape (type + index). Item *content* is asserted
+// separately via the converged final state.
+const listShapes = (
+  deltas: ListUpdate["updates"]
+): { type: string; index: number }[] =>
+  deltas.map((d) => ({ type: d.type, index: d.index }));
+
+test("LiveList: set (replace at index) fires equivalent notifications online and on reconnect", async () => {
+  const { online, reconnect } = await bothPhases(
+    () => ({ list: new LiveList<string>(["a", "b", "c"]) }),
+    (r) => {
+      r.get("list").set(1, "B"); // replace "b" with "B"
+    }
+  );
+  // Online: a single "set" delta. On reconnect the old register is gone and a
+  // new one is created, so the diff path may instead emit delete+insert — this
+  // is one of the divergences the reconcile refactor must eliminate.
+  const expected = [{ type: "set", index: 1, item: "B" }];
+  expect(collectListDeltas(online.batches, online.root.get("list"))).toEqual(
+    expected
+  );
+  expect(
+    collectListDeltas(reconnect.batches, reconnect.root.get("list"))
+  ).toEqual(expected);
+});
+
+test("LiveList: inserting a nested LiveObject fires equivalent notifications online and on reconnect", async () => {
+  const { online, reconnect } = await bothPhases(
+    () => ({ list: new LiveList<LiveObject<{ v: number }>>([]) }),
+    (r) => {
+      r.get("list").push(new LiveObject({ v: 1 }));
+    }
+  );
+  const expectedShape = [{ type: "insert", index: 0 }];
+  expect(
+    listShapes(collectListDeltas(online.batches, online.root.get("list")))
+  ).toEqual(expectedShape);
+  expect(
+    listShapes(collectListDeltas(reconnect.batches, reconnect.root.get("list")))
+  ).toEqual(expectedShape);
+  expect(online.root.get("list").toJSON()).toEqual([{ v: 1 }]);
+  expect(reconnect.root.get("list").toJSON()).toEqual([{ v: 1 }]);
+});
+
+test("LiveList: deleting a nested LiveObject fires equivalent notifications online and on reconnect", async () => {
+  const { online, reconnect } = await bothPhases(
+    () => ({
+      list: new LiveList<LiveObject<{ v: number }>>([
+        new LiveObject({ v: 1 }),
+        new LiveObject({ v: 2 }),
+      ]),
+    }),
+    (r) => {
+      r.get("list").delete(0);
+    }
+  );
+  const expectedShape = [{ type: "delete", index: 0 }];
+  expect(
+    listShapes(collectListDeltas(online.batches, online.root.get("list")))
+  ).toEqual(expectedShape);
+  expect(
+    listShapes(collectListDeltas(reconnect.batches, reconnect.root.get("list")))
+  ).toEqual(expectedShape);
+  expect(online.root.get("list").toJSON()).toEqual([{ v: 2 }]);
+  expect(reconnect.root.get("list").toJSON()).toEqual([{ v: 2 }]);
+});
+
+test("deep tree: inserting a nested subtree fires equivalent notifications online and on reconnect", async () => {
+  type Leaf = LiveObject<{ n: number }>;
+  type Item = LiveObject<{ label: string; kids: LiveList<Leaf> }>;
+  const { online, reconnect } = await bothPhases(
+    () => ({
+      tree: new LiveObject<{ items: LiveList<Item> }>({
+        items: new LiveList<Item>([]),
+      }),
+    }),
+    (r) => {
+      // A whole parent→child→grandchild subtree, which on reconnect must attach
+      // parents-before-children for the snapshot to reconcile correctly.
+      r.get("tree")
+        .get("items")
+        .push(
+          new LiveObject({
+            label: "x",
+            kids: new LiveList([new LiveObject({ n: 1 })]),
+          })
+        );
+    }
+  );
+
+  const onlineItems = online.root.get("tree").get("items");
+  const reconnectItems = reconnect.root.get("tree").get("items");
+
+  const expectedShape = [{ type: "insert", index: 0 }];
+  expect(listShapes(collectListDeltas(online.batches, onlineItems))).toEqual(
+    expectedShape
+  );
+  expect(
+    listShapes(collectListDeltas(reconnect.batches, reconnectItems))
+  ).toEqual(expectedShape);
+
+  const expectedTree = { items: [{ label: "x", kids: [{ n: 1 }] }] };
+  expect(online.root.get("tree").toJSON()).toEqual(expectedTree);
+  expect(reconnect.root.get("tree").toJSON()).toEqual(expectedTree);
+});
+
+test("LiveMap: untouched keys are never re-notified online or on reconnect", async () => {
+  const { online, reconnect } = await bothPhases(
+    () => ({
+      map: new LiveMap<string, number>([
+        ["x", 1],
+        ["keep", 0],
+      ]),
+    }),
+    (r) => {
+      r.get("map").set("x", 99); // keep is untouched
+    }
+  );
+  // Map values are stored as child nodes (not inline data), so an unchanged key
+  // is a node absent from the diff — it must never be re-notified.
+  const expected = { x: { type: "update" } };
+  expect(mergeMapUpdates(online.batches, online.root.get("map"))).toEqual(
+    expected
+  );
+  expect(mergeMapUpdates(reconnect.batches, reconnect.root.get("map"))).toEqual(
+    expected
+  );
+});
