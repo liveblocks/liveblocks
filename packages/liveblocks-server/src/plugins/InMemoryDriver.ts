@@ -502,6 +502,18 @@ export class InMemoryDriver implements IStorageDriver {
       return nextPos;
     }
 
+    function get_last_sibling(parentId: string): Pos | undefined {
+      let lastPos: Pos | undefined;
+      // Find the largest position under this parent
+      for (const siblingKey of revNodes.keysAt(parentId)) {
+        const siblingPos = asPos(siblingKey);
+        if (lastPos === undefined || siblingPos > lastPos) {
+          lastPos = siblingPos;
+        }
+      }
+      return lastPos;
+    }
+
     /**
      * Inserts a node in the storage tree, deleting any nodes that already exist
      * under this key (including all of its children), if any.
@@ -693,6 +705,12 @@ export class InMemoryDriver implements IStorageDriver {
        * does not have to exist already. Positions compare lexicographically.
        */
       get_next_sibling,
+
+      /**
+       * Return the position of the last (rightmost) child under parentId, or
+       * undefined if the node has no children.
+       */
+      get_last_sibling,
 
       /**
        * Insert a child node with the given id.

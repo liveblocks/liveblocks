@@ -239,34 +239,26 @@ export class Storage {
     op: CreateOp & HasOpId,
     node: SerializedChild
   ): Promise<ApplyOpResult> {
-    let fix: FixOp | undefined;
-
     // The default intent, when not explicitly provided, is to insert, not set,
     // into the list.
-    const intent: "insert" | "set" = op.intent ?? "insert";
+    const intent: "insert" | "set" | "push" = op.intent ?? "insert";
 
     // istanbul ignore else
     if (intent === "insert") {
-      const insertedParentKey = await this.insertIntoList(op.id, node);
-
-      // If the inserted parent key is different from the input, it means there
-      // was a conflict and the node has been inserted in an alternative free
-      // list position. We should broadcast a modified Op to all clients that
-      // has the modified position, and send a "fix" op back to the originating
-      // client.
-      if (insertedParentKey !== node.parentKey) {
-        op = { ...op, parentKey: insertedParentKey };
-        fix = {
-          type: OpCode.SET_PARENT_KEY,
-          id: op.id,
-          parentKey: insertedParentKey,
-        };
-        return accept(op, fix);
-      }
-
-      // No conflict, node got inserted as intended
-      return accept(op);
+      // Insert at the client's preferred position, resolving any collision to a
+      // nearby free slot.
+      return this.acceptAndFix(
+        op,
+        node,
+        await this.insertIntoList(op.id, node)
+      );
+    } else if (intent === "push") {
+      // Server-authoritative append: place the node after the authoritative
+      // end of the list (see `appendToList`), regardless of the client's preference.
+      return this.acceptAndFix(op, node, await this.appendToList(op.id, node));
     } else if (intent === "set") {
+      let fix: FixOp | undefined;
+
       // The intent here is to "set", not insert, into the list, replacing the
       // existing item that
 
@@ -308,6 +300,25 @@ export class Storage {
     } else {
       return assertNever(intent, "Invalid intent");
     }
+  }
+
+  /**
+   * Accept a freshly placed list item. If the server chose a different
+   * position in the end (conflict resolution), broadcast only the corrected Op
+   * to all clients and send a "fix" op back to the originating client.
+   */
+  private acceptAndFix(
+    op: CreateOp & HasOpId,
+    node: SerializedChild,
+    finalKey: string
+  ): ApplyOpResult {
+    if (finalKey !== node.parentKey) {
+      return accept(
+        { ...op, parentKey: finalKey },
+        { type: OpCode.SET_PARENT_KEY, id: op.id, parentKey: finalKey }
+      );
+    }
+    return accept(op);
   }
 
   private async applyDeleteObjectKeyOp(
@@ -376,6 +387,33 @@ export class Storage {
     }
     await this.loadedDriver.set_child(id, node);
     return node.parentKey;
+  }
+
+  /**
+   * Server-authoritative append: places the node strictly after every existing
+   * sibling under its list parent. If the client's preferred key already sorts
+   * after the current last sibling it's kept as-is (guaranteed free, since
+   * it's beyond the max); otherwise the node is placed right after the last
+   * sibling. Because Ops are processed serially, the chosen key is always
+   * free, so concurrent pushes never collide.
+   *
+   * Returns the final key that was used for the insertion.
+   */
+  private async appendToList(
+    id: string,
+    node: SerializedChild
+  ): Promise<string> {
+    const lastPos = this.loadedDriver.get_last_sibling(node.parentId);
+    const preferredPos = asPos(node.parentKey);
+    const finalKey =
+      lastPos === undefined || preferredPos > lastPos
+        ? preferredPos
+        : makePosition(lastPos);
+    await this.loadedDriver.set_child(
+      id,
+      finalKey !== node.parentKey ? { ...node, parentKey: finalKey } : node
+    );
+    return finalKey;
   }
 
   /**
