@@ -198,6 +198,9 @@ jobs:
           echo Triggering deployment for nextjs-yjs-slate
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_N5cFn4z7l5eXsFsEVltEfmeEkw4U/OvuxtPuMwX; echo
 
+          echo Triggering deployment for nextjs-yjs-superdoc
+          curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_WNC4WDsWcg0OjrzjJkekt42PhqJY/hpdG8YI5vj; echo
+
           echo Triggering deployment for nextjs-yjs-tiptap
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_y3mEp1yQYraCLNghy7NcFcj5CPuS/JKf0W69EpG; echo
 
