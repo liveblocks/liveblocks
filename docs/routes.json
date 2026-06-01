@@ -302,6 +302,11 @@
             "hidden": true
           },
           {
+            "title": "Yjs SuperDoc Next.js",
+            "path": "/get-started/yjs-superdoc-nextjs",
+            "hidden": true
+          },
+          {
             "title": "Yjs SuperDoc React",
             "path": "/get-started/yjs-superdoc-react",
             "hidden": true
