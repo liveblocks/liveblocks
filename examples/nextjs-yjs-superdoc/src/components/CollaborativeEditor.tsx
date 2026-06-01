@@ -11,18 +11,17 @@ import "@liveblocks/react-ui/styles.css";
 
 // Collaborative DOCX editor with live cursors and live avatars, powered by SuperDoc
 export function CollaborativeEditor() {
+  /// Set up Yjs
   const room = useRoom();
-  // Set up the Liveblocks Yjs provider
   const provider = getYjsProviderForRoom(room);
-  // Get user info from the Liveblocks authentication endpoint
+
+  // Get user info
   const userInfo = useSelf((me) => me.info);
   const userId = useSelf((me) => me.id);
 
-  // The `<SuperDocEditor />` rebuilds when `modules` changes, so keep it stable
+  // Set up SuperDoc
   const modules = useMemo(
     () => ({
-      // The collaboration contract is the same for every Yjs provider:
-      // pass the shared `ydoc` and `provider`
       collaboration: { ydoc: provider.getYDoc(), provider: provider as any },
     }),
     [provider]
