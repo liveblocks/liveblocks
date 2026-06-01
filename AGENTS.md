@@ -84,6 +84,12 @@ CHANGELOG.md entries should use public-facing package names as subheadings (e.g.
 categories like "Breaking changes" or "New features". Avoid referencing
 `@liveblocks/core` — it is not a public-facing package.
 
+# Pull requests
+
+When creating or updating a PR, follow the maintainer's PR style documented in
+`.cursor/rules/pr-style.mdc` (concise titles in sentence case, short
+information-dense descriptions, no PR-template headings).
+
 # Packages maintained elsewhere
 
 The following packages are primarily maintained from our backend monorepo for

@@ -1,0 +1,53 @@
+---
+description: How to write pull request titles and descriptions in the maintainer's (CTNicholas) preferred style. Read and follow this before creating or updating any PR in this repo.
+globs:
+alwaysApply: false
+---
+
+# Pull request style
+
+Write PRs the way CTNicholas does: short, plain, and information-dense. Default
+to less. A reviewer should understand the change in a few seconds.
+
+## Titles
+
+- Keep it short and descriptive. Capitalize the first word; otherwise use
+  sentence case (not Title Case). Proper feature names keep their casing (e.g.
+  `AI`, `CHANGELOG`).
+- No trailing period.
+- Write "get started" in lowercase (e.g. "AI Comments get started guide").
+- Optionally prefix with a scope and a colon when it helps, especially for
+  examples: `Example:` for one, `Examples:` for several.
+  - e.g. `Example: Add AI comments to AI dashboard`
+  - e.g. `Examples: Add AI comments to various`
+- Good examples: `New AI get started guides`,
+  `Update comment streaming in dashboard example`,
+  `Remove outdated private beta mentions`.
+
+## Descriptions
+
+- Be concise. For trivial changes, a single sentence (or even an empty body) is
+  fine. Don't pad.
+- Do NOT use PR-template-style headings such as `## Description`,
+  `## Implementation notes`, or `## How to test it`. Just write the content
+  directly.
+- When there's more than one change, lead with a one-sentence summary, then a
+  bullet list. Format names, paths, and identifiers in backticks, followed by a
+  short description after a colon:
+  - `` - `nextjs-ai-presence`: Show AI presence in avatar stacks ``
+- Reference related PRs and issues as bare URLs on their own lines.
+- For visual or UI changes, include evidence: screenshots via `<img ...>` and
+  videos via `<video>` / attachment URLs.
+- Tuck long supplementary content (prompts, large code samples, examples) inside
+  `<details><summary>…</summary> … </details>`.
+- Track follow-up work with bold `**TODO**` / `**TODO AFTER**` sections using
+  checkbox lists (`- [ ]` / `- [x]`).
+- Plain tone. No emoji. No marketing language. No "this PR…" preamble when a
+  direct statement works.
+
+## Anti-patterns (avoid)
+
+- Long, sectioned write-ups with multiple `##` headings for a small change.
+- Restating the diff line by line.
+- Boilerplate "How to test" / "Risks" sections unless genuinely useful.
+- Title Case titles or trailing periods in the title.
