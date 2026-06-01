@@ -2,11 +2,17 @@ import { NextResponse } from "next/server";
 import { getLiveblocks } from "@/lib/liveblocksServer";
 import { runAgent } from "@/lib/agent/runAgent";
 
+type ChatHistoryMessage = {
+  role: "user" | "assistant";
+  text: string;
+};
+
 type CopilotBody = {
   roomId?: string;
   feedId?: string;
   userMessage?: string;
   agentName?: string;
+  history?: ChatHistoryMessage[];
   context?: {
     selectedShapeIds?: string[];
     selectedShapes?: Array<Record<string, unknown>>;
@@ -60,6 +66,7 @@ export async function POST(request: Request) {
       roomId,
       userMessage,
       agentName,
+      history: Array.isArray(body.history) ? body.history : [],
       selectedShapeIds: body.context?.selectedShapeIds ?? [],
       selectedShapes: body.context?.selectedShapes ?? [],
       onProgress: async (update) => {

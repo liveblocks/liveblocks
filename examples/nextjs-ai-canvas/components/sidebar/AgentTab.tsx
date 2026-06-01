@@ -158,6 +158,25 @@ export function AgentTab({
     );
     const agentName = randomAgentName();
 
+    // Send the existing chat (oldest first) so the agent can resolve references
+    // to earlier requests. The new message is sent separately as userMessage.
+    const history = (messages ?? [])
+      .map((message) => {
+        const data = message.data;
+        if (isUserMessageData(data)) {
+          return { role: "user" as const, text: data.text };
+        }
+        if (isAssistantMessageData(data) && data.text.trim().length > 0) {
+          return { role: "assistant" as const, text: data.text };
+        }
+        return null;
+      })
+      .filter(
+        (entry): entry is { role: "user" | "assistant"; text: string } =>
+          entry !== null
+      )
+      .slice(-40);
+
     setInput("");
 
     await createFeedMessage(activeFeedId, {
@@ -178,6 +197,7 @@ export function AgentTab({
         feedId: activeFeedId,
         userMessage: text,
         agentName,
+        history,
         context: {
           roomId,
           selectedShapeIds,

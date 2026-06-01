@@ -17,10 +17,16 @@ type StorageRecord = Liveblocks["Storage"]["records"] extends LiveMap<
   ? TValue
   : never;
 
+type ChatHistoryMessage = {
+  role: "user" | "assistant";
+  text: string;
+};
+
 type RunAgentParams = {
   roomId: string;
   userMessage: string;
   agentName: string;
+  history: ChatHistoryMessage[];
   selectedShapeIds: string[];
   selectedShapes: Array<Record<string, unknown>>;
   onProgress: (update: {
@@ -457,6 +463,7 @@ export async function runAgent({
   roomId,
   userMessage,
   agentName,
+  history,
   selectedShapeIds,
   selectedShapes,
   onProgress,
@@ -516,6 +523,8 @@ export async function runAgent({
       ? `The user selected an existing box to edit. Prefer edit_box with targetShapeId "${editAnchor.shapeId}".`
       : "There is no selected box; prefer create_box for a new design.",
     "",
+    "The context includes conversationHistory: earlier messages in this chat, oldest first. Use it to understand references to previous requests (e.g. \"the previous one\", \"make it blue\", \"the homepage you made\"). Match such references to existing boxes in roomStorage and edit them with edit_box.",
+    "",
     "Do ALL planning and reasoning silently in your private thinking. NEVER write plans, outlines, numbered steps, or explanations as visible message text.",
     "Send exactly ONE visible message: the final confirmation, after all edits are done, with no tool call. It MUST be a single short sentence (under ~20 words) confirming the result.",
     'Good final messages: "Done! The box is now a full marketing homepage for a paint brand called BrushstrokeCo." / "I\'ve converted it into a marketing homepage for a placeholder paint brand." / "Complete! The element now depicts a marketing homepage for a paint company."',
@@ -525,6 +534,7 @@ export async function runAgent({
     JSON.stringify(
       {
         userMessage,
+        conversationHistory: history,
         selectedShapeIds: contextSelectedShapeIds,
         selectedShapes,
         roomStorage: storageDoc,
