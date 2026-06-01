@@ -10,18 +10,18 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@liveblocks/client": "^3.18.4",
-    "@liveblocks/node": "^3.18.4",
-    "@liveblocks/react": "^3.18.4",
-    "@liveblocks/yjs": "^3.18.4",
+    "@liveblocks/client": "^3.19.3",
+    "@liveblocks/node": "^3.19.3",
+    "@liveblocks/react": "^3.19.3",
+    "@liveblocks/yjs": "^3.19.3",
     "@types/node": "^20.3.3",
     "@types/react": "^18.3.27",
     "@types/react-dom": "^18.2.25",
-    "next": "^16.1.6",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "next": "^16.2.6",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
     "superdoc": "^1.38.0",
-    "yjs": "^13.6.29"
+    "yjs": "^13.6.31"
   },
   "devDependencies": {
     "prettier": "^3.3.3",
