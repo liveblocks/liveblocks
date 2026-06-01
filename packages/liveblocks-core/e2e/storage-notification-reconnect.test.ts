@@ -318,63 +318,72 @@ test("LiveList: moves fire equivalent notifications online and on reconnect", as
 // LiveObject
 // ─────────────────────────────────────────────────────────────────────────────
 
-test.fails("LiveObject: updates/adds fire equivalent notifications online and on reconnect", async () => {
-  const { online, reconnect } = await bothPhases(
-    // `keep` is a control key the mutation never touches (see file header).
-    () => ({
-      obj: new LiveObject<{ x: number; keep: number; z?: string }>({
-        x: 1,
-        keep: 0,
+test.fails(
+  "LiveObject: updates/adds fire equivalent notifications online and on reconnect",
+  async () => {
+    const { online, reconnect } = await bothPhases(
+      // `keep` is a control key the mutation never touches (see file header).
+      () => ({
+        obj: new LiveObject<{ x: number; keep: number; z?: string }>({
+          x: 1,
+          keep: 0,
+        }),
       }),
-    }),
-    (r) => {
-      r.get("obj").set("x", 99);
-      r.get("obj").set("z", "new");
-    }
-  );
-  const expected = { x: { type: "update" }, z: { type: "update" } };
-  expect(mergeObjUpdates(online.batches, online.root.get("obj"))).toEqual(
-    expected
-  );
-  expect(mergeObjUpdates(reconnect.batches, reconnect.root.get("obj"))).toEqual(
-    expected
-  );
-});
+      (r) => {
+        r.get("obj").set("x", 99);
+        r.get("obj").set("z", "new");
+      }
+    );
+    const expected = { x: { type: "update" }, z: { type: "update" } };
+    expect(mergeObjUpdates(online.batches, online.root.get("obj"))).toEqual(
+      expected
+    );
+    expect(
+      mergeObjUpdates(reconnect.batches, reconnect.root.get("obj"))
+    ).toEqual(expected);
+  }
+);
 
-test.fails("LiveObject: untouched scalar keys are never re-notified online or on reconnect", async () => {
-  const { online, reconnect } = await bothPhases(
-    () => ({ obj: new LiveObject({ a: 1, b: 2, c: 3 }) }),
-    (r) => {
-      r.get("obj").set("a", 99); // b and c are untouched
-    }
-  );
-  const expected = { a: { type: "update" } };
-  expect(mergeObjUpdates(online.batches, online.root.get("obj"))).toEqual(
-    expected
-  );
-  expect(mergeObjUpdates(reconnect.batches, reconnect.root.get("obj"))).toEqual(
-    expected
-  );
-});
+test.fails(
+  "LiveObject: untouched scalar keys are never re-notified online or on reconnect",
+  async () => {
+    const { online, reconnect } = await bothPhases(
+      () => ({ obj: new LiveObject({ a: 1, b: 2, c: 3 }) }),
+      (r) => {
+        r.get("obj").set("a", 99); // b and c are untouched
+      }
+    );
+    const expected = { a: { type: "update" } };
+    expect(mergeObjUpdates(online.batches, online.root.get("obj"))).toEqual(
+      expected
+    );
+    expect(
+      mergeObjUpdates(reconnect.batches, reconnect.root.get("obj"))
+    ).toEqual(expected);
+  }
+);
 
-test.fails("LiveObject: scalar deletes fire equivalent notifications online and on reconnect", async () => {
-  const { online, reconnect } = await bothPhases(
-    () => ({ obj: new LiveObject({ a: 1, b: 2 }) }),
-    (r) => {
-      r.get("obj").delete("b"); // a survives
-    },
-    // This case never converges on reconnect (the deleted key persists); cap the
-    // wait so the known failure surfaces fast instead of burning the full 10s.
-    { convergeTimeoutMs: 2_000 }
-  );
-  const expected = { b: { type: "delete", deletedItem: 2 } };
-  expect(mergeObjUpdates(online.batches, online.root.get("obj"))).toEqual(
-    expected
-  );
-  expect(mergeObjUpdates(reconnect.batches, reconnect.root.get("obj"))).toEqual(
-    expected
-  );
-});
+test.fails(
+  "LiveObject: scalar deletes fire equivalent notifications online and on reconnect",
+  async () => {
+    const { online, reconnect } = await bothPhases(
+      () => ({ obj: new LiveObject({ a: 1, b: 2 }) }),
+      (r) => {
+        r.get("obj").delete("b"); // a survives
+      },
+      // This case never converges on reconnect (the deleted key persists); cap the
+      // wait so the known failure surfaces fast instead of burning the full 10s.
+      { convergeTimeoutMs: 2_000 }
+    );
+    const expected = { b: { type: "delete", deletedItem: 2 } };
+    expect(mergeObjUpdates(online.batches, online.root.get("obj"))).toEqual(
+      expected
+    );
+    expect(
+      mergeObjUpdates(reconnect.batches, reconnect.root.get("obj"))
+    ).toEqual(expected);
+  }
+);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LiveMap
@@ -429,33 +438,36 @@ test("LiveMap: deletes fire equivalent notifications online and on reconnect", a
 // control scalar so the snapshot's full-data UPDATE_OBJECT is exercised.
 // ─────────────────────────────────────────────────────────────────────────────
 
-test.fails("LiveObject: nested-object deletes fire equivalent notifications online and on reconnect", async () => {
-  const { online, reconnect } = await bothPhases(
-    () => ({
-      obj: new LiveObject<{
-        child: LiveObject<{ x: number }>;
-        sibling: LiveObject<{ y: number }>;
-        keep: number;
-      }>({
-        child: new LiveObject({ x: 1 }),
-        sibling: new LiveObject({ y: 2 }),
-        keep: 0,
+test.fails(
+  "LiveObject: nested-object deletes fire equivalent notifications online and on reconnect",
+  async () => {
+    const { online, reconnect } = await bothPhases(
+      () => ({
+        obj: new LiveObject<{
+          child: LiveObject<{ x: number }>;
+          sibling: LiveObject<{ y: number }>;
+          keep: number;
+        }>({
+          child: new LiveObject({ x: 1 }),
+          sibling: new LiveObject({ y: 2 }),
+          keep: 0,
+        }),
       }),
-    }),
-    (r) => {
-      r.get("obj").delete("child");
-    }
-  );
-  // Deleting a nested live node fires { type: "delete" } with no deletedItem
-  // (deletedItem is only set for scalar values).
-  const expected = { child: { type: "delete" } };
-  expect(mergeObjUpdates(online.batches, online.root.get("obj"))).toEqual(
-    expected
-  );
-  expect(mergeObjUpdates(reconnect.batches, reconnect.root.get("obj"))).toEqual(
-    expected
-  );
-});
+      (r) => {
+        r.get("obj").delete("child");
+      }
+    );
+    // Deleting a nested live node fires { type: "delete" } with no deletedItem
+    // (deletedItem is only set for scalar values).
+    const expected = { child: { type: "delete" } };
+    expect(mergeObjUpdates(online.batches, online.root.get("obj"))).toEqual(
+      expected
+    );
+    expect(
+      mergeObjUpdates(reconnect.batches, reconnect.root.get("obj"))
+    ).toEqual(expected);
+  }
+);
 
 // Baseline (passes today): when the transitioned key is the object's *only*
 // scalar, moving it into a child node empties the object's `data`, so the
@@ -482,55 +494,61 @@ test("LiveObject: scalar→nested-object transition (sole key) fires equivalent 
   );
 });
 
-test.fails("LiveObject: scalar→nested-object transition fires equivalent notifications online and on reconnect", async () => {
-  const { online, reconnect } = await bothPhases(
-    () => ({
-      obj: new LiveObject<{
-        a: number | LiveObject<{ x: number }>;
-        keep: number;
-      }>({ a: 1, keep: 0 }),
-    }),
-    (r) => {
-      r.get("obj").set("a", new LiveObject({ x: 10 }));
-    }
-  );
-  // _attachChild always fires { type: "update" } regardless of the previous
-  // value type (scalar or live node).
-  const expected = { a: { type: "update" } };
-  expect(mergeObjUpdates(online.batches, online.root.get("obj"))).toEqual(
-    expected
-  );
-  expect(mergeObjUpdates(reconnect.batches, reconnect.root.get("obj"))).toEqual(
-    expected
-  );
-});
-
-test.fails("LiveObject: nested-object→scalar transition fires equivalent notifications online and on reconnect", async () => {
-  const { online, reconnect } = await bothPhases(
-    () => ({
-      obj: new LiveObject<{
-        nested: LiveObject<{ x: number }> | number;
-        keep: number;
-      }>({
-        nested: new LiveObject({ x: 1 }),
-        keep: 0,
+test.fails(
+  "LiveObject: scalar→nested-object transition fires equivalent notifications online and on reconnect",
+  async () => {
+    const { online, reconnect } = await bothPhases(
+      () => ({
+        obj: new LiveObject<{
+          a: number | LiveObject<{ x: number }>;
+          keep: number;
+        }>({ a: 1, keep: 0 }),
       }),
-    }),
-    (r) => {
-      r.get("obj").set("nested", 99);
-    }
-  );
-  // Replacing a live node with a scalar: _detachChild fires { type: "delete" }
-  // then #applyUpdate fires { type: "update" }; merging last-write-wins gives
-  // { type: "update" }.
-  const expected = { nested: { type: "update" } };
-  expect(mergeObjUpdates(online.batches, online.root.get("obj"))).toEqual(
-    expected
-  );
-  expect(mergeObjUpdates(reconnect.batches, reconnect.root.get("obj"))).toEqual(
-    expected
-  );
-});
+      (r) => {
+        r.get("obj").set("a", new LiveObject({ x: 10 }));
+      }
+    );
+    // _attachChild always fires { type: "update" } regardless of the previous
+    // value type (scalar or live node).
+    const expected = { a: { type: "update" } };
+    expect(mergeObjUpdates(online.batches, online.root.get("obj"))).toEqual(
+      expected
+    );
+    expect(
+      mergeObjUpdates(reconnect.batches, reconnect.root.get("obj"))
+    ).toEqual(expected);
+  }
+);
+
+test.fails(
+  "LiveObject: nested-object→scalar transition fires equivalent notifications online and on reconnect",
+  async () => {
+    const { online, reconnect } = await bothPhases(
+      () => ({
+        obj: new LiveObject<{
+          nested: LiveObject<{ x: number }> | number;
+          keep: number;
+        }>({
+          nested: new LiveObject({ x: 1 }),
+          keep: 0,
+        }),
+      }),
+      (r) => {
+        r.get("obj").set("nested", 99);
+      }
+    );
+    // Replacing a live node with a scalar: _detachChild fires { type: "delete" }
+    // then #applyUpdate fires { type: "update" }; merging last-write-wins gives
+    // { type: "update" }.
+    const expected = { nested: { type: "update" } };
+    expect(mergeObjUpdates(online.batches, online.root.get("obj"))).toEqual(
+      expected
+    );
+    expect(
+      mergeObjUpdates(reconnect.batches, reconnect.root.get("obj"))
+    ).toEqual(expected);
+  }
+);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Allowed divergence: collapse
@@ -553,7 +571,9 @@ test.fails("LiveObject: nested-object→scalar transition fires equivalent notif
 // ─────────────────────────────────────────────────────────────────────────────
 
 const insertedItems = (deltas: ListUpdate["updates"]): unknown[] =>
-  deltas.filter((d) => d.type === "insert").map((d) => (d as { item: unknown }).item);
+  deltas
+    .filter((d) => d.type === "insert")
+    .map((d) => (d as { item: unknown }).item);
 
 test("collapse: a net-zero list change (insert then delete) notifies online but is silent on reconnect", async () => {
   const { online, reconnect } = await bothPhases(
@@ -565,7 +585,10 @@ test("collapse: a net-zero list change (insert then delete) notifies online but 
   );
 
   // Online saw the churn: an insert of "x" and its delete.
-  const onlineDeltas = collectListDeltas(online.batches, online.root.get("list"));
+  const onlineDeltas = collectListDeltas(
+    online.batches,
+    online.root.get("list")
+  );
   expect(onlineDeltas).toEqual([
     { type: "insert", index: 1, item: "x" },
     { type: "delete", index: 1, deletedItem: "x" },
@@ -616,7 +639,10 @@ test("collapse: an intermediate list item B adds then removes offline is never s
   );
 
   // Online witnessed "b" being inserted (and later deleted)...
-  const onlineDeltas = collectListDeltas(online.batches, online.root.get("list"));
+  const onlineDeltas = collectListDeltas(
+    online.batches,
+    online.root.get("list")
+  );
   expect(insertedItems(onlineDeltas)).toContain("b");
 
   // ...but the reconnect snapshot only carries the net result: a, c. "b" never
@@ -646,24 +672,27 @@ const listShapes = (
 ): { type: string; index: number }[] =>
   deltas.map((d) => ({ type: d.type, index: d.index }));
 
-test.fails("LiveList: set (replace at index) fires equivalent notifications online and on reconnect", async () => {
-  const { online, reconnect } = await bothPhases(
-    () => ({ list: new LiveList<string>(["a", "b", "c"]) }),
-    (r) => {
-      r.get("list").set(1, "B"); // replace "b" with "B"
-    }
-  );
-  // Online: a single "set" delta. On reconnect the old register is gone and a
-  // new one is created, so the diff path may instead emit delete+insert — this
-  // is one of the divergences the reconcile refactor must eliminate.
-  const expected = [{ type: "set", index: 1, item: "B" }];
-  expect(collectListDeltas(online.batches, online.root.get("list"))).toEqual(
-    expected
-  );
-  expect(
-    collectListDeltas(reconnect.batches, reconnect.root.get("list"))
-  ).toEqual(expected);
-});
+test.fails(
+  "LiveList: set (replace at index) fires equivalent notifications online and on reconnect",
+  async () => {
+    const { online, reconnect } = await bothPhases(
+      () => ({ list: new LiveList<string>(["a", "b", "c"]) }),
+      (r) => {
+        r.get("list").set(1, "B"); // replace "b" with "B"
+      }
+    );
+    // Online: a single "set" delta. On reconnect the old register is gone and a
+    // new one is created, so the diff path may instead emit delete+insert — this
+    // is one of the divergences the reconcile refactor must eliminate.
+    const expected = [{ type: "set", index: 1, item: "B" }];
+    expect(collectListDeltas(online.batches, online.root.get("list"))).toEqual(
+      expected
+    );
+    expect(
+      collectListDeltas(reconnect.batches, reconnect.root.get("list"))
+    ).toEqual(expected);
+  }
+);
 
 test("LiveList: inserting a nested LiveObject fires equivalent notifications online and on reconnect", async () => {
   const { online, reconnect } = await bothPhases(
