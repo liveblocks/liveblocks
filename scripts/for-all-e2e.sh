@@ -1,5 +1,6 @@
 #!/bin/sh
 set -eu
+CDPATH=''  # Don't let inherited CDPATHs hijack our relative cd's
 
 # Ensure this script can assume it's run from the repo's
 # root directory, even if the current working directory is

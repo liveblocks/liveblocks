@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/server",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "description": "Liveblocks backend server foundation.",
   "type": "module",
   "main": "./dist/index.js",
@@ -69,10 +69,10 @@
   },
   "sideEffects": false,
   "dependencies": {
-    "@liveblocks/core": "3.18.0",
+    "@liveblocks/core": "3.20.0-pre1",
     "async-mutex": "^0.4.0",
     "decoders": "^2.9.0",
-    "itertools": "^2.3.2",
+    "itertools": "^2.7.1",
     "js-base64": "^3.7.5",
     "nanoid": "^3",
     "yjs": "^13.6.10"

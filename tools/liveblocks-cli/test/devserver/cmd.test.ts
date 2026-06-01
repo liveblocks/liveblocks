@@ -131,6 +131,21 @@ describe("liveblocks dev -c", () => {
     expect(stdout).toContain("LIVEBLOCKS_DEV_SERVER_PORT=7777");
   });
 
+  test("--random-port (-P) injects a random free port instead of the default", async () => {
+    const { stdout, exitCode } = await runDevCommand([
+      "-P",
+      "-c",
+      "env | grep LIVEBLOCKS_DEV_SERVER_PORT",
+    ]);
+    expect(exitCode).toBe(0);
+
+    const match = stdout.match(/LIVEBLOCKS_DEV_SERVER_PORT=(\d+)/);
+    const port = match ? Number(match[1]) : undefined;
+    expect(port).toBeGreaterThan(0);
+    // A free port was picked by the OS, not the static default.
+    expect(port).not.toBe(1153);
+  });
+
   test("does not change cwd of child process", async () => {
     const { stdout, exitCode } = await runDevCommand([
       "-p",

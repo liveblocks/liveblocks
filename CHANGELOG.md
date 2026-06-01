@@ -1,5 +1,20 @@
 ## vNEXT (not yet released)
 
+## v3.19.3
+
+### `@liveblocks/client`
+
+- Fix unexpected disconnects that could happen while receiving large or
+  long-running streaming responses from the server (e.g. when loading a large
+  initial storage state).
+
+## v3.19.2
+
+### `@liveblocks/client`
+
+- Fix: clients that have `backgroundKeepAliveTimeout` enabled will no longer
+  disconnect before any pending Yjs updates have been synced to the server.
+
 ## v3.19.1
 
 ### `@liveblocks/node` and Python SDK

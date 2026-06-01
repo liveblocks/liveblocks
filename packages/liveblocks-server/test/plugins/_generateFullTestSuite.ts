@@ -62,6 +62,7 @@ import {
   makePosition,
   nanoid,
   nn,
+  nodeStreamToCompactNodes,
   OpCode,
   raise,
 } from "@liveblocks/core";
@@ -437,7 +438,7 @@ export function createObjectOp(
   parentId: string,
   parentKey: string,
   data: Partial<JsonObject>,
-  intent?: "set",
+  intent?: "set" | "push",
   deletedId?: string,
   opId = nanoid()
 ): CreateObjectOp & HasOpId {
@@ -457,7 +458,7 @@ export function createListOp(
   id: string,
   parentId: string,
   parentKey: string,
-  intent?: "set",
+  intent?: "set" | "push",
   deletedId?: string,
   opId = nanoid()
 ): CreateListOp & HasOpId {
@@ -477,7 +478,7 @@ export function createRegisterOp(
   parentId: string,
   parentKey: string,
   data: Json,
-  intent?: "set",
+  intent?: "set" | "push",
   deletedId?: string,
   opId = nanoid()
 ): CreateRegisterOp & HasOpId {
@@ -497,7 +498,7 @@ export function createMapOp(
   id: string,
   parentId: string,
   parentKey: string,
-  intent?: "set",
+  intent?: "set" | "push",
   deletedId?: string,
   opId = nanoid()
 ): CreateMapOp & HasOpId {
@@ -544,10 +545,7 @@ function getSampleYDocUpdate(isV2: boolean = false) {
   return encode(doc);
 }
 
-export function generateArbitraries(config?: {
-  nodeKey?: () => fc.Arbitrary<string>;
-  metaKey?: () => fc.Arbitrary<string>;
-}) {
+export function generateArbitraries() {
   const arb = {
     docId: () =>
       fc.oneof(
@@ -566,15 +564,24 @@ export function generateArbitraries(config?: {
         fc.stringMatching(/^[0-9A-Za-z_-]+$/)
       ),
 
-    nodeKey: () => config?.nodeKey?.() ?? arb.key(),
-    metaKey: () => config?.metaKey?.() ?? arb.key(),
-
     jsonObject: () =>
       arb
         .json()
         .filter(
           (v): v is JsonObject =>
             v !== null && typeof v === "object" && !Array.isArray(v)
+        )
+        // `set_object_data` drops top-level `__proto__` keys (assigning would
+        // route through Object.prototype's setter, and rebuilding the object
+        // via defineProperty on every write is too slow for this hot path).
+        // Mirror that contract here so the round-trip property test stops
+        // rediscovering this as a counterexample on every CI run.
+        .map((obj) =>
+          Object.prototype.hasOwnProperty.call(obj, "__proto__")
+            ? (Object.fromEntries(
+                Object.entries(obj).filter(([k]) => k !== "__proto__")
+              ) as JsonObject)
+            : obj
         ),
 
     json: () =>
@@ -585,19 +592,10 @@ export function generateArbitraries(config?: {
           .jsonValue({ depthSize: "xsmall" })
           .filter((v) => {
             const jsonText = JSON.stringify(v);
-            return (
-              // Avoid generating floating point numbers in scientific notation
-              // (like 1.2e-237), as they can round differently between Node and
-              // SQLite. This is making isEqual comparisons annoying.
-              !/\d+([.]\d{1,})?e[-+]\d{2,}/.test(jsonText) &&
-              //
-              // Also avoid generating objects with "__proto__" keys because those
-              // don't survive a serialization/deserialization roundtrip in
-              // DOS-KV storage. While is is typically a good thing in
-              // production, it means that we cannot express that "what goes in
-              // comes out" if inputs are generated this way.
-              !/"__proto__"/.test(jsonText)
-            );
+            // Avoid generating floating point numbers in scientific notation
+            // (like 1.2e-237), as they can round differently between Node and
+            // SQLite. This is making isEqual comparisons annoying.
+            return !/\d+([.]\d{1,})?e[-+]\d{2,}/.test(jsonText);
           })
           .map(
             (v) =>
@@ -614,7 +612,7 @@ export function generateArbitraries(config?: {
     childNodeTuple: () => {
       return fc
         .tuple(
-          arb.nodeKey().filter((k) => !KNOWN_DOC_KEYS.includes(k)),
+          arb.key().filter((k) => !KNOWN_DOC_KEYS.includes(k)),
           arb.serializedChild()
         )
         .map((x) => x as ChildStorageNode);
@@ -638,29 +636,29 @@ export function generateArbitraries(config?: {
             type: fc.constant(CrdtType.OBJECT),
             data: arb.jsonObject(),
             parentId,
-            parentKey: arb.nodeKey(),
+            parentKey: arb.key(),
           }),
           fc.record<SerializedChild>({
             type: fc.constant(CrdtType.LIST),
             parentId,
-            parentKey: arb.nodeKey(),
+            parentKey: arb.key(),
           }),
           fc.record<SerializedChild>({
             type: fc.constant(CrdtType.MAP),
             parentId,
-            parentKey: arb.nodeKey(),
+            parentKey: arb.key(),
           }),
           fc.record<SerializedChild>({
             type: fc.constant(CrdtType.REGISTER),
             data: arb.json(),
             parentId: nonObjectParentId,
-            parentKey: arb.nodeKey(),
+            parentKey: arb.key(),
           })
         )
         .filter(wouldNotOverwriteDefaultDoc);
     },
 
-    metaPair: () => fc.tuple(arb.metaKey(), arb.json()),
+    metaPair: () => fc.tuple(arb.key(), arb.json()),
 
     sessionId: () =>
       fc.oneof({ withCrossShrink: true }, fc.constant("session-1"), fc.uuid()),
@@ -726,10 +724,8 @@ export function generateArbitraries(config?: {
     },
 
     intent: () =>
-      fc.oneof(
-        { arbitrary: fc.constant(undefined), weight: 10 },
-        fc.constant("set" as const)
-      ),
+      // ~10:1 bias between undefined vs "set" (towards undefined)
+      fc.option(fc.constant(undefined), { freq: 11, nil: "set" as const }),
 
     opId: () => fc.stringMatching(/^[0-9]+:[0-9]+$/),
 
@@ -785,7 +781,7 @@ export function generateArbitraries(config?: {
         .tuple(
           arb.plainLsonTree(options),
           // Filter out "root" since that ID is reserved for the root node
-          arb.infiniteUniqueStream(arb.nodeKey().filter((k) => k !== "root")),
+          arb.infiniteUniqueStream(arb.key().filter((k) => k !== "root")),
           arb.infiniteStream(arb.pos())
         )
         .map(([plainLsonTree, uniqNodeIds, positions]) =>
@@ -856,14 +852,14 @@ export function generateArbitraries(config?: {
       fc.record<CreateObjectOp & HasOpId>({
         type: fc.constant(OpCode.CREATE_OBJECT),
         opId: arb.opId(),
-        id: options?.id ?? arb.nodeKey(),
-        parentId: options?.parentId ?? arb.nodeKey(),
+        id: options?.id ?? arb.key(),
+        parentId: options?.parentId ?? arb.key(),
         parentKey: options?.parentKey ?? arb.parentKey(),
         data: options?.data ?? arb.jsonObject(),
         intent: options?.intent ?? arb.intent(),
         deletedId:
           options?.deletedId ??
-          fc.option(arb.nodeKey(), { freq: 10, nil: undefined }),
+          fc.option(arb.key(), { freq: 10, nil: undefined }),
       }),
 
     createListOp: (options?: {
@@ -876,13 +872,13 @@ export function generateArbitraries(config?: {
       fc.record<CreateListOp & HasOpId>({
         type: fc.constant(OpCode.CREATE_LIST),
         opId: arb.opId(),
-        id: options?.id ?? arb.nodeKey(),
-        parentId: options?.parentId ?? arb.nodeKey(),
+        id: options?.id ?? arb.key(),
+        parentId: options?.parentId ?? arb.key(),
         parentKey: options?.parentKey ?? arb.parentKey(),
         intent: options?.intent ?? arb.intent(),
         deletedId:
           options?.deletedId ??
-          fc.option(arb.nodeKey(), { freq: 10, nil: undefined }),
+          fc.option(arb.key(), { freq: 10, nil: undefined }),
       }),
 
     createMapOp: (options?: {
@@ -895,13 +891,13 @@ export function generateArbitraries(config?: {
       fc.record<CreateMapOp & HasOpId>({
         type: fc.constant(OpCode.CREATE_MAP),
         opId: arb.opId(),
-        id: options?.id ?? arb.nodeKey(),
-        parentId: options?.parentId ?? arb.nodeKey(),
+        id: options?.id ?? arb.key(),
+        parentId: options?.parentId ?? arb.key(),
         parentKey: options?.parentKey ?? arb.parentKey(),
         intent: options?.intent ?? arb.intent(),
         deletedId:
           options?.deletedId ??
-          fc.option(arb.nodeKey(), { freq: 10, nil: undefined }),
+          fc.option(arb.key(), { freq: 10, nil: undefined }),
       }),
 
     createRegisterOp: (options?: {
@@ -915,14 +911,14 @@ export function generateArbitraries(config?: {
       fc.record<CreateRegisterOp & HasOpId>({
         type: fc.constant(OpCode.CREATE_REGISTER),
         opId: arb.opId(),
-        id: options?.id ?? arb.nodeKey(),
-        parentId: options?.parentId ?? arb.nodeKey(),
+        id: options?.id ?? arb.key(),
+        parentId: options?.parentId ?? arb.key(),
         parentKey: options?.parentKey ?? arb.parentKey(),
         data: options?.data ?? arb.json(),
         intent: options?.intent ?? arb.intent(),
         deletedId:
           options?.deletedId ??
-          fc.option(arb.nodeKey(), { freq: 10, nil: undefined }),
+          fc.option(arb.key(), { freq: 10, nil: undefined }),
       }),
 
     createOp: (options?: {
@@ -943,14 +939,14 @@ export function generateArbitraries(config?: {
       fc.record<DeleteCrdtOp & HasOpId>({
         type: fc.constant(OpCode.DELETE_CRDT),
         opId: arb.opId(),
-        id: arb.nodeKey(),
+        id: arb.key(),
       }),
 
     updateObjectOpArb: () =>
       fc.record<UpdateObjectOp & HasOpId>({
         type: fc.constant(OpCode.UPDATE_OBJECT),
         opId: arb.opId(),
-        id: arb.nodeKey(),
+        id: arb.key(),
         data: arb.jsonObject(),
       }),
 
@@ -958,7 +954,7 @@ export function generateArbitraries(config?: {
       fc.record<SetParentKeyOp & HasOpId>({
         type: fc.constant(OpCode.SET_PARENT_KEY),
         opId: arb.opId(),
-        id: arb.nodeKey(),
+        id: arb.key(),
         parentKey: arb.pos(),
       }),
 
@@ -966,7 +962,7 @@ export function generateArbitraries(config?: {
       fc.record<DeleteObjectKeyOp & HasOpId>({
         type: fc.constant(OpCode.DELETE_OBJECT_KEY),
         opId: arb.opId(),
-        id: arb.nodeKey(),
+        id: arb.key(),
         key: arb.parentKey(),
       }),
 
@@ -1034,15 +1030,8 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
   name: string;
   /** Runs a test with a driver, optionally pre-populating raw storage data */
   runTest: (options: RunTestOptions, testFn: TestFn<TDriver>) => Promise<void>;
-  customArbitraries?: {
-    nodeKey?: () => fc.Arbitrary<string>;
-    metaKey?: () => fc.Arbitrary<string>;
-  };
 }) {
-  const arb = generateArbitraries({
-    nodeKey: config.customArbitraries?.nodeKey,
-    metaKey: config.customArbitraries?.metaKey,
-  });
+  const arb = generateArbitraries();
 
   // Wrapper that allows calling runTest with or without options
   function runTest(testFn: TestFn<TDriver>): Promise<void>;
@@ -1098,7 +1087,7 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       runTest(async (driver) =>
         fc.assert(
           fc.asyncProperty(
-            arb.nodeKey(),
+            arb.key(),
 
             async (key) => {
               fc.pre(key !== "root");
@@ -1210,8 +1199,8 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       runTest(async (driver) =>
         fc.assert(
           fc.asyncProperty(
-            arb.nodeKey(),
-            arb.nodeKey(),
+            arb.key(),
+            arb.key(),
 
             async (parentId, parentKey) => {
               await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
@@ -1428,8 +1417,8 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       runTest(async (driver) =>
         fc.assert(
           fc.asyncProperty(
-            arb.nodeKey(),
-            arb.nodeKey(),
+            arb.key(),
+            arb.key(),
 
             async (parentId, parentKey) => {
               await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
@@ -1465,8 +1454,8 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
         fc.assert(
           fc.asyncProperty(
             arb.nodeStream(),
-            arb.nodeKey(),
-            arb.nodeKey(),
+            arb.key(),
+            arb.key(),
 
             async (entries, parentId, parentKey) => {
               await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
@@ -1598,6 +1587,81 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
         await db.delete_node("0:3");
         expect(db.get_next_sibling("0:0", FIRST_POSITION)).toBe(undefined);
+      }));
+
+    test("get_last_sibling: returns undefined for empty parent", () =>
+      runTest(async (driver) => {
+        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
+        const db = await driver.load_nodes_api(blackHole);
+
+        expect(db.get_last_sibling("root")).toBe(undefined);
+        expect(db.get_last_sibling("non-existing")).toBe(undefined);
+      }));
+
+    test("get_last_sibling: returns the rightmost position", () =>
+      runTest(async (driver) => {
+        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
+        const db = await driver.load_nodes_api(blackHole);
+
+        await db.set_child("0:0", {
+          type: CrdtType.LIST,
+          parentId: "root",
+          parentKey: "myList",
+        });
+        await db.set_child("0:1", {
+          type: CrdtType.REGISTER,
+          parentId: "0:0",
+          parentKey: FIRST_POSITION,
+          data: "item1",
+        });
+        expect(db.get_last_sibling("0:0")).toBe(FIRST_POSITION);
+
+        // Insert later positions out of order; the rightmost one wins
+        await db.set_child("0:3", {
+          type: CrdtType.REGISTER,
+          parentId: "0:0",
+          parentKey: THIRD_POSITION,
+          data: "item3",
+        });
+        await db.set_child("0:2", {
+          type: CrdtType.REGISTER,
+          parentId: "0:0",
+          parentKey: SECOND_POSITION,
+          data: "item2",
+        });
+        expect(db.get_last_sibling("0:0")).toBe(THIRD_POSITION);
+      }));
+
+    test("get_last_sibling: updates after delete", () =>
+      runTest(async (driver) => {
+        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
+        const db = await driver.load_nodes_api(blackHole);
+
+        await db.set_child("0:0", {
+          type: CrdtType.LIST,
+          parentId: "root",
+          parentKey: "myList",
+        });
+        await db.set_child("0:1", {
+          type: CrdtType.REGISTER,
+          parentId: "0:0",
+          parentKey: FIRST_POSITION,
+          data: "item1",
+        });
+        await db.set_child("0:2", {
+          type: CrdtType.REGISTER,
+          parentId: "0:0",
+          parentKey: SECOND_POSITION,
+          data: "item2",
+        });
+
+        expect(db.get_last_sibling("0:0")).toBe(SECOND_POSITION);
+
+        await db.delete_node("0:2");
+        expect(db.get_last_sibling("0:0")).toBe(FIRST_POSITION);
+
+        await db.delete_node("0:1");
+        expect(db.get_last_sibling("0:0")).toBe(undefined);
       }));
 
     test("move: changes parentKey of node", () =>
@@ -1933,7 +1997,7 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       runTest(async (driver) =>
         fc.assert(
           fc.asyncProperty(
-            arb.nodeKey(),
+            arb.key(),
             arb.serializedChild(),
             arb.serializedChild(),
 
@@ -2074,6 +2138,37 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
               for (const [key, expected] of map) {
                 expect(db.get_node(key)).toEqual(expected);
               }
+            }
+          )
+        )
+      ));
+
+    test("iter_nodes_optimized agrees with iter_nodes (cross-driver parity)", () =>
+      runTest(async (driver) =>
+        fc.assert(
+          fc.asyncProperty(
+            arb.nodeMap(),
+
+            async (entries) => {
+              await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
+              const db = await driver.load_nodes_api(blackHole);
+              await write_nodes(db, entries as NodeStream);
+
+              // Parse the wire tuples back into CompactNodes and compare
+              // against what the canonical nodeStreamToCompactNodes would
+              // produce from iter_nodes(). Catches any divergence between the
+              // optimized SQL path and the readable JS path (string encoding,
+              // escaping, missing fields, type coercion, etc.).
+              const fromWire = Array.from(db.iter_nodes_optimized()).map(
+                (t) => JSON.parse(t) as unknown
+              );
+              const fromIter = Array.from(
+                nodeStreamToCompactNodes(db.iter_nodes())
+              ) as unknown[];
+              const byId = (a: unknown, b: unknown) =>
+                (a as [string])[0].localeCompare((b as [string])[0]);
+
+              expect(fromWire.sort(byId)).toEqual(fromIter.sort(byId));
             }
           )
         )
@@ -2789,7 +2884,7 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       runTest(async (driver) =>
         fc.assert(
           fc.asyncProperty(
-            arb.metaKey(),
+            arb.key(),
 
             async (key) => {
               expect(await driver.get_meta(key)).toEqual(undefined);
@@ -2835,7 +2930,7 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       runTest(async (driver) =>
         fc.assert(
           fc.asyncProperty(
-            arb.metaKey(),
+            arb.key(),
             arb.json(),
             arb.json(),
 
@@ -3333,7 +3428,6 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
   describe("feed API impl", () => {
     test("list_feeds on empty store is empty", () =>
       runTest(async (driver) => {
-        if (config.name === "dos-kv") return Promise.resolve();
         const result = await driver.list_feeds();
         expect(result.feeds).toEqual([]);
         expect(result.nextCursor).toBeUndefined();
@@ -3341,7 +3435,6 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
     test("get_feed on empty store is undefined", () =>
       runTest(async (driver) => {
-        if (config.name === "dos-kv") return Promise.resolve();
         return fc.assert(
           fc.asyncProperty(arb.feedId(), async (feedId) => {
             expect(await driver.get_feed(feedId)).toEqual(undefined);
@@ -3351,7 +3444,6 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
     test("create_feed + get_feed", () =>
       runTest(async (driver) => {
-        if (config.name === "dos-kv") return Promise.resolve();
         return fc.assert(
           fc.asyncProperty(arb.feed(), async (feed) => {
             await driver.create_feed(feed);
@@ -3365,7 +3457,6 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
     test("update_feed_metadata", () =>
       runTest(async (driver) => {
-        if (config.name === "dos-kv") return Promise.resolve();
         return fc.assert(
           fc.asyncProperty(
             arb.feed(),
@@ -3391,7 +3482,6 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
     test("delete_feed", () =>
       runTest(async (driver) => {
-        if (config.name === "dos-kv") return Promise.resolve();
         return fc.assert(
           fc.asyncProperty(arb.feed(), async (feed) => {
             // Ensure feed doesn't already exist
@@ -3408,7 +3498,6 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
     test("delete_feed on non-existent feed is no-op", () =>
       runTest(async (driver) => {
-        if (config.name === "dos-kv") return Promise.resolve();
         return fc.assert(
           fc.asyncProperty(arb.feedId(), async (feedId) => {
             await driver.delete_feed(feedId);
@@ -3419,7 +3508,6 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
     test("list_feeds returns all feeds", () =>
       runTest(async (driver) => {
-        if (config.name === "dos-kv") return Promise.resolve();
         return fc.assert(
           fc.asyncProperty(
             fc
@@ -3459,7 +3547,6 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
     test("list_feeds with pagination", () =>
       runTest(async (driver) => {
-        if (config.name === "dos-kv") return Promise.resolve();
         // Create 3 feeds with different createdAt timestamps
         const feeds: Feed[] = [
           {
@@ -3511,7 +3598,6 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
     test("list_feeds with since filter", () =>
       runTest(async (driver) => {
-        if (config.name === "dos-kv") return Promise.resolve();
         const feeds: Feed[] = [
           {
             feedId: "feed-old",
@@ -3544,7 +3630,6 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
     test("add_feed_message", () =>
       runTest(async (driver) => {
-        if (config.name === "dos-kv") return Promise.resolve();
         return fc.assert(
           fc.asyncProperty(
             arb.feed(),
@@ -3573,7 +3658,6 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
     test("list_feed_messages", () =>
       runTest(async (driver) => {
-        if (config.name === "dos-kv") return Promise.resolve();
         return fc.assert(
           fc.asyncProperty(arb.feed(), async (feed) => {
             // Ensure feed doesn't already exist
@@ -3592,7 +3676,6 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
     test("list_feed_messages with pagination", () =>
       runTest(async (driver) => {
-        if (config.name === "dos-kv") return Promise.resolve();
         const messages: FeedMessage[] = [
           {
             id: "msg-1",
@@ -3653,7 +3736,6 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
     test("update_feed_message", () =>
       runTest(async (driver) => {
-        if (config.name === "dos-kv") return Promise.resolve();
         return fc.assert(
           fc.asyncProperty(
             arb.feed(),
@@ -3689,7 +3771,6 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
     test("update_feed_message ignores stale timestamped updates for same message", () =>
       runTest(async (driver) => {
-        if (config.name === "dos-kv") return Promise.resolve();
         const feed: Feed = {
           feedId: "test-feed",
           metadata: {},
@@ -3735,7 +3816,6 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
     test("list_feed_messages order remains by createdAt after update", () =>
       runTest(async (driver) => {
-        if (config.name === "dos-kv") return Promise.resolve();
         const feed: Feed = {
           feedId: "test-feed",
           metadata: {},
@@ -3787,7 +3867,6 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
     test("delete_feed_message", () =>
       runTest(async (driver) => {
-        if (config.name === "dos-kv") return Promise.resolve();
         return fc.assert(
           fc.asyncProperty(
             arb.feed(),
@@ -3818,7 +3897,6 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
     test("delete_feed_message on non-existent message is no-op", () =>
       runTest(async (driver) => {
-        if (config.name === "dos-kv") return Promise.resolve();
         return fc.assert(
           fc.asyncProperty(
             arb.feed(),
@@ -3849,7 +3927,6 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
     test("delete_feed deletes all messages", () =>
       runTest(async (driver) => {
-        if (config.name === "dos-kv") return Promise.resolve();
         return fc.assert(
           fc.asyncProperty(
             arb.feed(),

@@ -4,7 +4,7 @@ import type { Observable } from "./lib/EventSource";
 import { makeBufferableEventSource, makeEventSource } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
 import type { BuiltinEvent, Patchable, Target } from "./lib/fsm";
-import { FSM } from "./lib/fsm";
+import { FSM, IGNORE } from "./lib/fsm";
 import type { Json } from "./lib/Json";
 import { tryParseJson, withTimeout } from "./lib/utils";
 import { ServerMsgCode } from "./protocol/ServerMsg";
@@ -98,7 +98,7 @@ type Event =
   | { type: "NAVIGATOR_OFFLINE" } // e.g. browser goes offline
 
   // Events that the connection manager will internally deal with
-  | { type: "PONG" }
+  | { type: "ALIVE" } // Previously called "PONG", but widened to include any socket activity
   | { type: "EXPLICIT_SOCKET_ERROR"; event: IWebSocketEvent }
   | { type: "EXPLICIT_SOCKET_CLOSE"; event: IWebSocketCloseEvent }
 
@@ -171,8 +171,9 @@ const BACKOFF_DELAYS_SLOW = [2_000, 30_000, 60_000, 300_000] as const;
 
 /**
  * The client will send a PING to the server every 30 seconds, after which it
- * must receive a PONG back within the next 2 seconds. If that doesn't happen,
- * this is interpreted as an implicit connection loss event.
+ * must receive a PONG (or any other sign of activity) back within the next
+ * 2 seconds. If nothing arrives in that window, the connection is treated as
+ * implicitly lost.
  */
 const HEARTBEAT_INTERVAL = 30_000;
 const PONG_TIMEOUT = 2_000;
@@ -302,8 +303,8 @@ function enableTracing(machine: FSM<Context, Event, State>) {
     machine.events.didExitState.subscribe(({ state, durationMs }) =>
       log(`Exited ${state} after ${durationMs.toFixed(0)}ms`)
     ),
-    machine.events.didIgnoreEvent.subscribe((e) =>
-      log("Ignored event", e.type, e, "(current state won't handle it)")
+    machine.events.didIgnoreUnexpectedEvent.subscribe((e) =>
+      log("Ignored unexpected event", e.type, e, "(no transition declared)")
     ),
   ];
   return () => {
@@ -503,10 +504,14 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
   const onSocketClose = (event: IWebSocketCloseEvent) =>
     machine.send({ type: "EXPLICIT_SOCKET_CLOSE", event });
 
-  const onSocketMessage = (event: IWebSocketMessageEvent) =>
-    event.data === "pong"
-      ? machine.send({ type: "PONG" })
-      : onMessage.notify(event);
+  const onSocketMessage = (event: IWebSocketMessageEvent) => {
+    // Every inbound message counts as activity, not just explicit PONGs
+    machine.send({ type: "ALIVE" });
+
+    if (event.data !== "pong") {
+      onMessage.notify(event);
+    }
+  };
 
   function teardownSocket(socket: IWebSocketInstance | null) {
     if (socket) {
@@ -764,18 +769,25 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
           effect: [increaseBackoffDelay, logPrematureErrorOrCloseEvent(err)],
         };
       }
-    );
+    )
+    .addTransitions("@connecting.busy", {
+      // The socket message listener is attached during @connecting.busy (see
+      // onEnterAsync above), so server frames (most notably the actor-id
+      // handshake) can fire onSocketMessage and emit a ALIVE before we
+      // reach @ok.*. That's fine. Heartbeat only matters in @ok.*.
+      ALIVE: IGNORE,
+    });
 
   //
   // Configure the @ok.* states
   //
   // Keeps a heartbeat alive with the server whenever in the @ok.* state group.
   // 30 seconds after entering the "@ok.connected" state, it will emit
-  // a heartbeat, and awaits a PONG back that should arrive within 2 seconds.
-  // If this happens, then it transitions back to normal "connected" state, and
-  // the cycle repeats. If the PONG is not received timely, then we interpret
-  // it as an implicit connection loss, and transition to reconnect (throw away
-  // this socket, and open a new one).
+  // a heartbeat, and awaits a PONG (or any other sign of activity) back that
+  // should arrive within 2 seconds. If this happens, it transitions back to
+  // "@ok.connected" and the cycle repeats. If nothing arrives in time, we
+  // interpret it as an implicit connection loss and transition to reconnect
+  // (throw away this socket, and open a new one).
   //
 
   const sendHeartbeat: Target<Context, Event | BuiltinEvent, State> = {
@@ -799,6 +811,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
     .addTransitions("@ok.connected", {
       NAVIGATOR_OFFLINE: maybeHeartbeat, // Don't take the browser's word for it when it says it's offline. Do a ping/pong to make sure.
       WINDOW_GOT_FOCUS: sendHeartbeat,
+      ALIVE: IGNORE,
     });
 
   machine.addTransitions("@idle.zombie", {
@@ -827,7 +840,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
       };
     })
 
-    .addTransitions("@ok.awaiting-pong", { PONG: "@ok.connected" })
+    .addTransitions("@ok.awaiting-pong", { ALIVE: "@ok.connected" })
     .addTimedTransition("@ok.awaiting-pong", PONG_TIMEOUT, {
       target: "@connecting.busy",
       // Log implicit connection loss and drop the current open socket
@@ -844,7 +857,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
       EXPLICIT_SOCKET_ERROR: (_, context) => {
         if (context.socket?.readyState === 1 /* WebSocket.OPEN */) {
           // TODO Do we need to forward this error to the client?
-          return null; /* Do not leave OK state, socket is still usable */
+          return IGNORE; /* Do not leave OK state, socket is still usable */
         }
 
         return {
