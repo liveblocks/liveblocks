@@ -26,15 +26,29 @@ to less. A reviewer should understand the change in a few seconds.
 
 ## Descriptions
 
-- Be concise. For trivial changes, a single sentence (or even an empty body) is
-  fine. Don't pad.
+Aim very low on length. Most PRs are a one-line summary plus a few short
+bullets. Describe the change at a high level, from the reader's/user's point of
+view — what was added or what it does — not how it's wired internally.
+
+- Lead with one short summary sentence. Link the product/feature name when there
+  is one. Don't enumerate the tech stack or list every sub-change.
+  - e.g. `Adds a [Superdoc](https://www.superdoc.dev/) example and matching get started guide.`
+- Then a short bullet list, one bullet per notable item. In each bullet,
+  backtick the **short identifying name** (the example folder name or a file's
+  base name), then `: ` and a brief, **capitalized, period-terminated** sentence
+  describing what it is or does.
+  - Use the base name, NOT the full path: `` `nextjs-yjs-superdoc` `` and
+    `` `yjs-superdoc-react.mdx` ``, not `examples/nextjs-yjs-superdoc` or
+    `docs/pages/get-started/yjs-superdoc-react.mdx`.
+  - e.g. `` - `nextjs-yjs-superdoc`: Basic example with live cursors in the text editor. ``
+  - e.g. `` - `yjs-superdoc-react.mdx`: Get started guide for Superdoc. ``
+- Do NOT include implementation/wiring details (which APIs are called, how
+  modules/props are passed, client-import timing, type casts, etc.) unless a
+  reviewer genuinely needs them.
+- Do NOT include build/test/CI status or "how to test" notes unless they're
+  genuinely important.
 - Do NOT use PR-template-style headings such as `## Description`,
-  `## Implementation notes`, or `## How to test it`. Just write the content
-  directly.
-- When there's more than one change, lead with a one-sentence summary, then a
-  bullet list. Format names, paths, and identifiers in backticks, followed by a
-  short description after a colon:
-  - `` - `nextjs-ai-presence`: Show AI presence in avatar stacks ``
+  `## Implementation notes`, or `## How to test it`.
 - Reference related PRs and issues as bare URLs on their own lines.
 - For visual or UI changes, include evidence: screenshots via `<img ...>` and
   videos via `<video>` / attachment URLs.
@@ -44,10 +58,40 @@ to less. A reviewer should understand the change in a few seconds.
   checkbox lists (`- [ ]` / `- [x]`).
 - Plain tone. No emoji. No marketing language. No "this PR…" preamble when a
   direct statement works.
+- Match the maintainer's casual product casing when they have one (e.g.
+  `Superdoc`); don't fuss over official brand casing.
+
+### Worked example
+
+For a PR adding a SuperDoc example plus its guide, this is too verbose (avoid):
+
+> ## Description
+>
+> Adds a new collaborative DOCX editor example, `examples/nextjs-yjs-superdoc`,
+> built with Liveblocks, Yjs, SuperDoc, and Next.js. It follows the same
+> structure as the other `nextjs-yjs-*` examples …
+>
+> ### Implementation notes
+> - `CollaborativeEditor` gets the shared Yjs doc/provider via
+>   `getYjsProviderForRoom(room)` and passes them to SuperDoc through
+>   `modules.collaboration` …
+>
+> ### How to test it
+> - `npm run build` passes …
+
+This is the target (do this):
+
+> Adds a [Superdoc](https://www.superdoc.dev/) example and matching get started
+> guide.
+>
+> - `nextjs-yjs-superdoc`: Basic example with live cursors in the text editor.
+> - `yjs-superdoc-react.mdx`: Get started guide for Superdoc.
 
 ## Anti-patterns (avoid)
 
-- Long, sectioned write-ups with multiple `##` headings for a small change.
+- Long, sectioned write-ups with multiple `##` headings.
+- Implementation/wiring details and tech-stack enumeration.
 - Restating the diff line by line.
-- Boilerplate "How to test" / "Risks" sections unless genuinely useful.
+- Build/CI status, "How to test", or "Risks" sections unless genuinely useful.
+- Full file paths where a base name is clearer.
 - Title Case titles or trailing periods in the title.
