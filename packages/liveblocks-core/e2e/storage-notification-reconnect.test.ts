@@ -447,36 +447,41 @@ test("LiveObject: scalar deletes fire equivalent notifications online and on rec
 // control scalar so the snapshot's full-data UPDATE_OBJECT is exercised.
 // ─────────────────────────────────────────────────────────────────────────────
 
-test.fails(
-  "LiveObject: nested-object deletes fire equivalent notifications online and on reconnect",
-  async () => {
-    const { online, reconnect } = await bothPhases(
-      () => ({
-        obj: new LiveObject<{
-          child: LiveObject<{ x: number }>;
-          sibling: LiveObject<{ y: number }>;
-          keep: number;
-        }>({
-          child: new LiveObject({ x: 1 }),
-          sibling: new LiveObject({ y: 2 }),
-          keep: 0,
-        }),
+test("LiveObject: nested-object deletes fire equivalent notifications online and on reconnect", async () => {
+  const { online, reconnect } = await bothPhases(
+    () => ({
+      obj: new LiveObject<{
+        child: LiveObject<{ x: number }>;
+        sibling: LiveObject<{ y: number }>;
+        keep: number;
+      }>({
+        child: new LiveObject({ x: 1 }),
+        sibling: new LiveObject({ y: 2 }),
+        keep: 0,
       }),
-      (r) => {
-        r.get("obj").delete("child");
-      }
-    );
-    // Deleting a nested live node fires { type: "delete" } with no deletedItem
-    // (deletedItem is only set for scalar values).
-    const expected = { child: { type: "delete" } };
-    expect(mergeObjUpdates(online.batches, online.root.get("obj"))).toEqual(
-      expected
-    );
-    expect(
+    }),
+    (r) => {
+      r.get("obj").delete("child");
+    }
+  );
+  // Deleting a nested live node fires { type: "delete", deletedItem } where
+  // deletedItem is the removed LiveObject. Compare its JSON, since the delta
+  // carries a live node instance.
+  const deletedChildJson = (updates: ObjUpdate["updates"]): unknown => {
+    const delta = updates.child;
+    return delta?.type === "delete" && delta.deletedItem instanceof LiveObject
+      ? delta.deletedItem.toJSON()
+      : delta;
+  };
+  expect(
+    deletedChildJson(mergeObjUpdates(online.batches, online.root.get("obj")))
+  ).toEqual({ x: 1 });
+  expect(
+    deletedChildJson(
       mergeObjUpdates(reconnect.batches, reconnect.root.get("obj"))
-    ).toEqual(expected);
-  }
-);
+    )
+  ).toEqual({ x: 1 });
+});
 
 // Baseline (passes today): when the transitioned key is the object's *only*
 // scalar, moving it into a child node empties the object's `data`, so the

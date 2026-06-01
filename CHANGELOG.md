@@ -8,6 +8,8 @@
   reappear on reconnect, preventing the two clients from reconverging.
 - Fix a bug where reconnecting would emit too many update notifications for
   `LiveObject` keys whose values had not actually changed.
+- Fix a bug where deleting a nested live value from a `LiveObject` omitted the
+  removed value (`deletedItem`) from the change notification.
 
 ## v3.19.3
 
