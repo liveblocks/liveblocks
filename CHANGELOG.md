@@ -6,6 +6,8 @@
   settle out of order.
 - Fix a bug where a `LiveObject` key deleted while a client was offline would
   reappear on reconnect, preventing the two clients from reconverging.
+- Fix a bug where reconnecting would emit too many update notifications for
+  `LiveObject` keys whose values had not actually changed.
 
 ## v3.19.3
 
