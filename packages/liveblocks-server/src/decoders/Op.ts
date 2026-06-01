@@ -45,6 +45,8 @@ import { jsonObjectYolo, jsonYolo } from "./jsonYolo";
 
 type HasOpId = { opId: string };
 
+const intent = oneOf(["set", "push"] as const);
+
 const updateObjectOp: Decoder<UpdateObjectOp & HasOpId> = object({
   type: constant(OpCode.UPDATE_OBJECT),
   opId: string,
@@ -59,7 +61,7 @@ const createObjectOp: Decoder<CreateObjectOp & HasOpId> = object({
   parentId: string,
   parentKey: string,
   data: jsonObjectYolo,
-  intent: optional(constant("set")),
+  intent: optional(intent),
   deletedId: optional(string),
 });
 
@@ -69,7 +71,7 @@ const createListOp: Decoder<CreateListOp & HasOpId> = object({
   id: string,
   parentId: string,
   parentKey: string,
-  intent: optional(constant("set")),
+  intent: optional(intent),
   deletedId: optional(string),
 });
 
@@ -79,7 +81,7 @@ const createMapOp: Decoder<CreateMapOp & HasOpId> = object({
   id: string,
   parentId: string,
   parentKey: string,
-  intent: optional(constant("set")),
+  intent: optional(intent),
   deletedId: optional(string),
 });
 
@@ -90,7 +92,7 @@ const createRegisterOp: Decoder<CreateRegisterOp & HasOpId> = object({
   parentId: string,
   parentKey: string,
   data: jsonYolo,
-  intent: optional(constant("set")),
+  intent: optional(intent),
   deletedId: optional(string),
 });
 

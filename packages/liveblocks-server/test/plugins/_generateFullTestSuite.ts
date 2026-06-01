@@ -62,6 +62,7 @@ import {
   makePosition,
   nanoid,
   nn,
+  nodeStreamToCompactNodes,
   OpCode,
   raise,
 } from "@liveblocks/core";
@@ -437,7 +438,7 @@ export function createObjectOp(
   parentId: string,
   parentKey: string,
   data: Partial<JsonObject>,
-  intent?: "set",
+  intent?: "set" | "push",
   deletedId?: string,
   opId = nanoid()
 ): CreateObjectOp & HasOpId {
@@ -457,7 +458,7 @@ export function createListOp(
   id: string,
   parentId: string,
   parentKey: string,
-  intent?: "set",
+  intent?: "set" | "push",
   deletedId?: string,
   opId = nanoid()
 ): CreateListOp & HasOpId {
@@ -477,7 +478,7 @@ export function createRegisterOp(
   parentId: string,
   parentKey: string,
   data: Json,
-  intent?: "set",
+  intent?: "set" | "push",
   deletedId?: string,
   opId = nanoid()
 ): CreateRegisterOp & HasOpId {
@@ -497,7 +498,7 @@ export function createMapOp(
   id: string,
   parentId: string,
   parentKey: string,
-  intent?: "set",
+  intent?: "set" | "push",
   deletedId?: string,
   opId = nanoid()
 ): CreateMapOp & HasOpId {
@@ -723,10 +724,8 @@ export function generateArbitraries() {
     },
 
     intent: () =>
-      fc.oneof(
-        { arbitrary: fc.constant(undefined), weight: 10 },
-        fc.constant("set" as const)
-      ),
+      // ~10:1 bias between undefined vs "set" (towards undefined)
+      fc.option(fc.constant(undefined), { freq: 11, nil: "set" as const }),
 
     opId: () => fc.stringMatching(/^[0-9]+:[0-9]+$/),
 
@@ -1590,6 +1589,81 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
         expect(db.get_next_sibling("0:0", FIRST_POSITION)).toBe(undefined);
       }));
 
+    test("get_last_sibling: returns undefined for empty parent", () =>
+      runTest(async (driver) => {
+        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
+        const db = await driver.load_nodes_api(blackHole);
+
+        expect(db.get_last_sibling("root")).toBe(undefined);
+        expect(db.get_last_sibling("non-existing")).toBe(undefined);
+      }));
+
+    test("get_last_sibling: returns the rightmost position", () =>
+      runTest(async (driver) => {
+        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
+        const db = await driver.load_nodes_api(blackHole);
+
+        await db.set_child("0:0", {
+          type: CrdtType.LIST,
+          parentId: "root",
+          parentKey: "myList",
+        });
+        await db.set_child("0:1", {
+          type: CrdtType.REGISTER,
+          parentId: "0:0",
+          parentKey: FIRST_POSITION,
+          data: "item1",
+        });
+        expect(db.get_last_sibling("0:0")).toBe(FIRST_POSITION);
+
+        // Insert later positions out of order; the rightmost one wins
+        await db.set_child("0:3", {
+          type: CrdtType.REGISTER,
+          parentId: "0:0",
+          parentKey: THIRD_POSITION,
+          data: "item3",
+        });
+        await db.set_child("0:2", {
+          type: CrdtType.REGISTER,
+          parentId: "0:0",
+          parentKey: SECOND_POSITION,
+          data: "item2",
+        });
+        expect(db.get_last_sibling("0:0")).toBe(THIRD_POSITION);
+      }));
+
+    test("get_last_sibling: updates after delete", () =>
+      runTest(async (driver) => {
+        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
+        const db = await driver.load_nodes_api(blackHole);
+
+        await db.set_child("0:0", {
+          type: CrdtType.LIST,
+          parentId: "root",
+          parentKey: "myList",
+        });
+        await db.set_child("0:1", {
+          type: CrdtType.REGISTER,
+          parentId: "0:0",
+          parentKey: FIRST_POSITION,
+          data: "item1",
+        });
+        await db.set_child("0:2", {
+          type: CrdtType.REGISTER,
+          parentId: "0:0",
+          parentKey: SECOND_POSITION,
+          data: "item2",
+        });
+
+        expect(db.get_last_sibling("0:0")).toBe(SECOND_POSITION);
+
+        await db.delete_node("0:2");
+        expect(db.get_last_sibling("0:0")).toBe(FIRST_POSITION);
+
+        await db.delete_node("0:1");
+        expect(db.get_last_sibling("0:0")).toBe(undefined);
+      }));
+
     test("move: changes parentKey of node", () =>
       runTest(async (driver) => {
         await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
@@ -2064,6 +2138,37 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
               for (const [key, expected] of map) {
                 expect(db.get_node(key)).toEqual(expected);
               }
+            }
+          )
+        )
+      ));
+
+    test("iter_nodes_optimized agrees with iter_nodes (cross-driver parity)", () =>
+      runTest(async (driver) =>
+        fc.assert(
+          fc.asyncProperty(
+            arb.nodeMap(),
+
+            async (entries) => {
+              await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
+              const db = await driver.load_nodes_api(blackHole);
+              await write_nodes(db, entries as NodeStream);
+
+              // Parse the wire tuples back into CompactNodes and compare
+              // against what the canonical nodeStreamToCompactNodes would
+              // produce from iter_nodes(). Catches any divergence between the
+              // optimized SQL path and the readable JS path (string encoding,
+              // escaping, missing fields, type coercion, etc.).
+              const fromWire = Array.from(db.iter_nodes_optimized()).map(
+                (t) => JSON.parse(t) as unknown
+              );
+              const fromIter = Array.from(
+                nodeStreamToCompactNodes(db.iter_nodes())
+              ) as unknown[];
+              const byId = (a: unknown, b: unknown) =>
+                (a as [string])[0].localeCompare((b as [string])[0]);
+
+              expect(fromWire.sort(byId)).toEqual(fromIter.sort(byId));
             }
           )
         )

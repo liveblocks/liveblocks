@@ -37,6 +37,21 @@
             "hidden": true
           },
           {
+            "title": "AI Presence",
+            "path": "/get-started/nextjs-ai-presence",
+            "hidden": true
+          },
+          {
+            "title": "AI / React Flow",
+            "path": "/get-started/nextjs-ai-react-flow",
+            "hidden": true
+          },
+          {
+            "title": "AI / Notifications",
+            "path": "/get-started/nextjs-ai-notifications",
+            "hidden": true
+          },
+          {
             "title": "Feeds",
             "path": "/get-started/nextjs-feeds",
             "hidden": true
@@ -284,6 +299,31 @@
           {
             "title": "Yjs Slate React",
             "path": "/get-started/yjs-slate-react",
+            "hidden": true
+          },
+          {
+            "title": "Yjs SuperDoc Next.js",
+            "path": "/get-started/yjs-superdoc-nextjs",
+            "hidden": true
+          },
+          {
+            "title": "Yjs SuperDoc React",
+            "path": "/get-started/yjs-superdoc-react",
+            "hidden": true
+          },
+          {
+            "title": "Yjs SuperDoc Svelte",
+            "path": "/get-started/yjs-superdoc-svelte",
+            "hidden": true
+          },
+          {
+            "title": "Yjs SuperDoc Vue.js",
+            "path": "/get-started/yjs-superdoc-vuejs",
+            "hidden": true
+          },
+          {
+            "title": "Yjs SuperDoc JavaScript",
+            "path": "/get-started/yjs-superdoc-javascript",
             "hidden": true
           },
           {

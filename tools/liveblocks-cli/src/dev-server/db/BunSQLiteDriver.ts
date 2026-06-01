@@ -17,6 +17,7 @@
 
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import type {
+  CompactNode,
   IUserInfo,
   Json,
   JsonObject,
@@ -27,13 +28,19 @@ import type {
   SerializedObject,
   SerializedRootObject,
 } from "@liveblocks/core";
-import { asPos, CrdtType, nn } from "@liveblocks/core";
+import {
+  asPos,
+  CrdtType,
+  nn,
+  nodeStreamToCompactNodes,
+} from "@liveblocks/core";
 import type {
   Feed,
   FeedMessage,
   IReadableSnapshot,
   IStorageDriver,
   IStorageDriverNodeAPI,
+  jstring,
   LeasedSession,
   ListFeedMessagesOptions,
   ListFeedMessagesResult,
@@ -63,17 +70,17 @@ function tryParseJson<J extends Json>(
 
 type StorageNodesRow = {
   node_id: string;
-  crdt_json: string;
+  crdt_json: jstring;
 };
 
 type MetadataRow = {
   key: string;
-  jval: string;
+  jval: jstring;
 };
 
 type RoomInfoRow = {
   setting: string;
-  jval: string;
+  jval: jstring;
 };
 
 type YdocsRow = {
@@ -84,7 +91,7 @@ type YdocsRow = {
 
 type FeedRow = {
   feed_id: string;
-  jmetadata: string;
+  jmetadata: jstring;
   created_at: number;
   updated_at: number;
 };
@@ -92,16 +99,16 @@ type FeedRow = {
 type FeedMessageRow = {
   feed_id: string;
   message_id: string;
-  jdata: string;
+  jdata: jstring;
   created_at: number;
   updated_at: number;
 };
 
 type LeasedSessionRow = {
   session_id: string;
-  jpresence: string; // JSON
+  jpresence: jstring;
   updated_at: number; // timestamp in milliseconds
-  juserinfo: string; // JSON (IUserInfo)
+  juserinfo: jstring; // IUserInfo
   ttl: number; // milliseconds
   actor_id: number;
 };
@@ -455,6 +462,18 @@ export class BunSQLiteDriver implements IStorageDriver {
       return nextPos;
     }
 
+    function get_last_sibling(parentId: string): Pos | undefined {
+      let lastPos: Pos | undefined;
+      // Find the largest position under this parent
+      for (const siblingKey of revNodes.keysAt(parentId)) {
+        const siblingPos = asPos(siblingKey);
+        if (lastPos === undefined || siblingPos > lastPos) {
+          lastPos = siblingPos;
+        }
+      }
+      return lastPos;
+    }
+
     /**
      * Inserts a node in the storage tree, deleting any nodes that already exist
      * under this key (including all of its children), if any.
@@ -617,6 +636,20 @@ export class BunSQLiteDriver implements IStorageDriver {
       iter_nodes: () => nodes.entries() as NodeStream,
 
       /**
+       * Yield each node as a pre-built CompactNode JSON tuple string.
+       * Schema here stores nodes as a single JSON blob per row, so there's
+       * no SQL-level optimization to apply — wrap iter_nodes() and let the
+       * core converter produce the tuple shape.
+       */
+      *iter_nodes_optimized() {
+        for (const compact of nodeStreamToCompactNodes(
+          nodes.entries() as NodeStream
+        )) {
+          yield JSON.stringify(compact) as jstring<CompactNode>;
+        }
+      },
+
+      /**
        * Return true iff a node with the given id exists. Must return true for "root".
        */
       has_node: (id: string) => nodes.has(id),
@@ -640,6 +673,12 @@ export class BunSQLiteDriver implements IStorageDriver {
        * does not have to exist already. Positions compare lexicographically.
        */
       get_next_sibling,
+
+      /**
+       * Return the position of the last (rightmost) child under parentId, or
+       * undefined if the node has no children.
+       */
+      get_last_sibling,
 
       /**
        * Insert a child node with the given id.

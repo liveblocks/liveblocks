@@ -37,6 +37,7 @@ export * from "~/Room";
 export type {
   Feed,
   FeedMessage,
+  jstring,
   LeasedSession,
   NodeMap,
   NodeStream,

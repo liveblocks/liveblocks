@@ -28,6 +28,19 @@ export type AsyncErrorEvent = {
 export type BaseEvent = { readonly type: string };
 export type BuiltinEvent = TimerEvent | AsyncOKEvent<unknown> | AsyncErrorEvent;
 
+/**
+ * Sentinel target value declaring "this event is intentionally a silent
+ * no-op in this state". Use as a static mapping value
+ * (`{ EVENT: IGNORE }`) or as a return value from a target function.
+ *
+ * Unlike a missing transition (which fires `didIgnoreUnexpectedEvent`),
+ * an IGNORE'd event is fully silent: no state change, no effects, and
+ * no observable notifications. The static form is also cheap — the
+ * dispatcher short-circuits before invoking any transition machinery.
+ */
+export const IGNORE: unique symbol = Symbol("fsm.ignore");
+export type IGNORE = typeof IGNORE;
+
 export type Patchable<TContext> = Readonly<TContext> & {
   patch(patch: Partial<TContext>): void;
 };
@@ -44,7 +57,7 @@ export type TargetFn<
 > = (
   event: TEvent,
   context: Readonly<TContext>
-) => TState | TargetObject<TContext, TEvent, TState> | null;
+) => TState | TargetObject<TContext, TEvent, TState> | IGNORE;
 
 export type Effect<TContext, TEvent extends BaseEvent> = (
   context: Patchable<TContext>,
@@ -209,13 +222,13 @@ export class FSM<
 
   #allowedTransitions: Map<
     TState,
-    Map<TEvent["type"], TargetFn<TContext, TEvent, TState>>
+    Map<TEvent["type"], TargetFn<TContext, TEvent, TState> | IGNORE>
   >;
 
   readonly #eventHub: {
     readonly didReceiveEvent: EventSource<TEvent | BuiltinEvent>;
     readonly willTransition: EventSource<{ from: TState; to: TState }>;
-    readonly didIgnoreEvent: EventSource<TEvent | BuiltinEvent>;
+    readonly didIgnoreUnexpectedEvent: EventSource<TEvent | BuiltinEvent>;
     readonly willExitState: EventSource<TState>;
     readonly didEnterState: EventSource<TState>;
     readonly didExitState: EventSource<{
@@ -227,7 +240,13 @@ export class FSM<
   public readonly events: {
     readonly didReceiveEvent: Observable<TEvent | BuiltinEvent>;
     readonly willTransition: Observable<{ from: TState; to: TState }>;
-    readonly didIgnoreEvent: Observable<TEvent | BuiltinEvent>;
+    /**
+     * Fires when an event is sent to a state that has no transition
+     * declared for it. Use this to surface programmer-error or unexpected
+     * runtime conditions. Events deliberately declared as `IGNORE` (either
+     * statically or via a `TargetFn` returning `IGNORE`) are silent here.
+     */
+    readonly didIgnoreUnexpectedEvent: Observable<TEvent | BuiltinEvent>;
     readonly willExitState: Observable<TState>;
     readonly didEnterState: Observable<TState>;
     readonly didExitState: Observable<{
@@ -334,7 +353,7 @@ export class FSM<
     this.#eventHub = {
       didReceiveEvent: makeEventSource(),
       willTransition: makeEventSource(),
-      didIgnoreEvent: makeEventSource(),
+      didIgnoreUnexpectedEvent: makeEventSource(),
       willExitState: makeEventSource(),
       didEnterState: makeEventSource(),
       didExitState: makeEventSource(),
@@ -342,7 +361,8 @@ export class FSM<
     this.events = {
       didReceiveEvent: this.#eventHub.didReceiveEvent.observable,
       willTransition: this.#eventHub.willTransition.observable,
-      didIgnoreEvent: this.#eventHub.didIgnoreEvent.observable,
+      didIgnoreUnexpectedEvent:
+        this.#eventHub.didIgnoreUnexpectedEvent.observable,
       willExitState: this.#eventHub.willExitState.observable,
       didEnterState: this.#eventHub.didEnterState.observable,
       didExitState: this.#eventHub.didExitState.observable,
@@ -493,14 +513,19 @@ export class FSM<
    * `context` params to conditionally decide which next state to transition
    * to.
    *
-   * If you set it to `null`, then the transition will be explicitly forbidden
-   * and throw an error. If you don't define a target for a transition, then
-   * such events will get ignored.
+   * If you don't define a target for a transition, the event is treated
+   * as unhandled in this state: `didIgnoreUnexpectedEvent` fires and the
+   * state does not change.
+   *
+   * To declare an event as an intentional silent no-op in this state, use
+   * the {@link IGNORE} sentinel — either statically (`{ EVENT: IGNORE }`)
+   * or as a return value from a target function. IGNORE'd events do not
+   * fire `didIgnoreUnexpectedEvent`.
    */
   public addTransitions(
     nameOrPattern: TState | Wildcard<TState>,
     mapping: {
-      [E in TEvent as E["type"]]?: Target<TContext, E, TState> | null;
+      [E in TEvent as E["type"]]?: Target<TContext, E, TState> | IGNORE;
     }
   ): this {
     if (this.#runningState !== RunningState.NOT_STARTED_YET) {
@@ -523,11 +548,19 @@ export class FSM<
 
         const target = target_ as
           | Target<TContext, TEvent, TState>
-          | null
+          | IGNORE
           | undefined;
         this.#knownEventTypes.add(type);
 
-        if (target !== undefined) {
+        if (target === undefined) {
+          continue;
+        }
+
+        if (target === IGNORE) {
+          // Store the sentinel as-is so the dispatcher can short-circuit
+          // before any transition machinery runs.
+          map.set(type, IGNORE);
+        } else {
           const targetFn = typeof target === "function" ? target : () => target;
           map.set(type, targetFn);
         }
@@ -568,7 +601,7 @@ export class FSM<
 
   #getTargetFn(
     eventName: TEvent["type"]
-  ): TargetFn<TContext, TEvent, TState> | undefined {
+  ): TargetFn<TContext, TEvent, TState> | IGNORE | undefined {
     return this.#allowedTransitions.get(this.currentState)?.get(eventName);
   }
 
@@ -670,13 +703,16 @@ export class FSM<
       return;
     }
 
-    const targetFn = this.#getTargetFn(event.type);
-    if (targetFn !== undefined) {
-      return this.#transition(event, targetFn);
-    } else {
-      // Ignore the event otherwise
-      this.#eventHub.didIgnoreEvent.notify(event);
+    const entry = this.#getTargetFn(event.type);
+    if (entry === IGNORE) {
+      // Explicit silent no-op: short-circuit before any notification fires.
+      return;
     }
+    if (entry !== undefined) {
+      return this.#transition(event, entry);
+    }
+    // No transition declared for this event in this state — surface it.
+    this.#eventHub.didIgnoreUnexpectedEvent.notify(event);
   }
 
   #transition<E extends TEvent | BuiltinEvent>(
@@ -691,9 +727,10 @@ export class FSM<
     const nextTarget = targetFn(event, this.#currentContext.current);
     let nextState: TState;
     let effects: Effect<TContext, E>[] | undefined = undefined;
-    if (nextTarget === null) {
-      // Do not transition
-      this.#eventHub.didIgnoreEvent.notify(event);
+    if (nextTarget === IGNORE) {
+      // Target function chose to ignore this event in this state — silent
+      // no-op. `didReceiveEvent` already fired above, since we had to
+      // invoke the function to find out.
       return;
     }
 
