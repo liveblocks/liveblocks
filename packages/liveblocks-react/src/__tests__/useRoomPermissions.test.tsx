@@ -2,7 +2,7 @@ import { Permission } from "@liveblocks/core";
 import type { ReactNode } from "react";
 import { describe, expect, test } from "vitest";
 
-import { useRoomPermissions } from "../_private";
+import { useCanComment, useRoomPermissions } from "../_private";
 import { act, createContextsForTest, renderHook } from "./_utils";
 
 function toPermissionList(
@@ -57,50 +57,160 @@ describe("useRoomPermissions", () => {
     act(() => {
       umbrellaStore.permissionHints.update(
         {
-          [roomId]: [Permission.CommentsNone],
+          [roomId]: [Permission.RoomCommentsNone],
         },
         new Date("2026-06-01T07:11:09.000Z")
       );
     });
 
-    expect(toPermissionList(result.current)).toEqual([Permission.CommentsNone]);
+    expect(toPermissionList(result.current)).toEqual([
+      Permission.RoomCommentsNone,
+    ]);
 
     act(() => {
       umbrellaStore.permissionHints.update(
         {
-          [roomId]: [Permission.CommentsWrite],
+          [roomId]: [Permission.RoomCommentsWrite],
         },
         new Date("2026-06-01T07:12:09.000Z")
       );
     });
 
     expect(toPermissionList(result.current)).toEqual([
-      Permission.CommentsWrite,
+      Permission.RoomCommentsWrite,
     ]);
 
     act(() => {
       umbrellaStore.permissionHints.update(
         {
-          [roomId]: [Permission.CommentsNone],
+          [roomId]: [Permission.RoomCommentsNone],
         },
         new Date("2026-06-01T07:10:09.000Z")
       );
     });
 
     expect(toPermissionList(result.current)).toEqual([
-      Permission.CommentsWrite,
+      Permission.RoomCommentsWrite,
     ]);
 
     act(() => {
       umbrellaStore.permissionHints.update(
         {
-          [roomId]: [Permission.CommentsNone],
+          [roomId]: [Permission.RoomCommentsNone],
         },
         new Date("2026-06-01T07:13:09.000Z")
       );
     });
 
-    expect(toPermissionList(result.current)).toEqual([Permission.CommentsNone]);
+    expect(toPermissionList(result.current)).toEqual([
+      Permission.RoomCommentsNone,
+    ]);
+
+    unmount();
+  });
+});
+
+describe("useCanComment", () => {
+  test("falls back to self permissions while hints are unknown", () => {
+    const roomId = "room";
+    const {
+      liveblocks: { LiveblocksProvider },
+    } = createContextsForTest();
+
+    const { result, unmount } = renderHook(() => useCanComment(roomId), {
+      wrapper: ({ children }: { children: ReactNode }) => (
+        <LiveblocksProvider>{children}</LiveblocksProvider>
+      ),
+    });
+
+    expect(result.current).toBe(true);
+
+    unmount();
+  });
+
+  test("uses known room permission hints", () => {
+    const roomId = "room";
+    const {
+      liveblocks: { LiveblocksProvider },
+      umbrellaStore,
+    } = createContextsForTest();
+
+    const { result, unmount } = renderHook(() => useCanComment(roomId), {
+      wrapper: ({ children }: { children: ReactNode }) => (
+        <LiveblocksProvider>{children}</LiveblocksProvider>
+      ),
+    });
+
+    act(() => {
+      umbrellaStore.permissionHints.update(
+        {
+          [roomId]: [],
+        },
+        new Date("2026-06-01T07:11:09.000Z")
+      );
+    });
+
+    expect(result.current).toBe(false);
+
+    act(() => {
+      umbrellaStore.permissionHints.update(
+        {
+          [roomId]: [Permission.RoomCommentsWrite],
+        },
+        new Date("2026-06-01T07:12:09.000Z")
+      );
+    });
+
+    expect(result.current).toBe(true);
+
+    act(() => {
+      umbrellaStore.permissionHints.update(
+        {
+          [roomId]: [Permission.RoomCommentsNone],
+        },
+        new Date("2026-06-01T07:13:09.000Z")
+      );
+    });
+
+    expect(result.current).toBe(false);
+
+    unmount();
+  });
+
+  test("ignores stale permission hint updates", () => {
+    const roomId = "room";
+    const {
+      liveblocks: { LiveblocksProvider },
+      umbrellaStore,
+    } = createContextsForTest();
+
+    const { result, unmount } = renderHook(() => useCanComment(roomId), {
+      wrapper: ({ children }: { children: ReactNode }) => (
+        <LiveblocksProvider>{children}</LiveblocksProvider>
+      ),
+    });
+
+    act(() => {
+      umbrellaStore.permissionHints.update(
+        {
+          [roomId]: [Permission.RoomCommentsWrite],
+        },
+        new Date("2026-06-01T07:12:09.000Z")
+      );
+    });
+
+    expect(result.current).toBe(true);
+
+    act(() => {
+      umbrellaStore.permissionHints.update(
+        {
+          [roomId]: [Permission.RoomCommentsNone],
+        },
+        new Date("2026-06-01T07:11:09.000Z")
+      );
+    });
+
+    expect(result.current).toBe(true);
 
     unmount();
   });

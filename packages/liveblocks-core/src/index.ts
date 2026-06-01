@@ -198,35 +198,6 @@ export type {
   ContextualPromptResponse,
 } from "./protocol/Ai";
 export type { CustomAuthenticationResult } from "./protocol/Authentication";
-export type {
-  AccessLevel,
-  LegacyRoomPermission,
-  LiveblocksPermission,
-  PermissionScopes,
-  RequiredAccessLevel,
-  RoomFeature,
-  RoomPermission,
-  RoomPermissionFeature,
-  RoomPermissionLevels,
-  RoomPermissions,
-  RequestedScope,
-  ResolvedRoomPermissionLevel,
-} from "./protocol/Permission";
-export {
-  canReadRoomFeature,
-  canUseResolvedRoomPermission,
-  canUseRoomPermission,
-  canWriteRoomFeature,
-  hasRoomFeatureAccess,
-  isLiveblocksPermission,
-  LEGACY_ROOM_PERMISSIONS,
-  Permission,
-  ROOM_PERMISSION_OBJECT_FIELDS,
-  ROOM_PERMISSIONS,
-  resolveRoomPermissions,
-  resolveRoomPermissionsWithOverrides,
-  roomPermissionsFromScopes,
-} from "./protocol/Permission";
 export type { BaseActivitiesData } from "./protocol/BaseActivitiesData";
 export type { BaseGroupInfo } from "./protocol/BaseGroupInfo";
 export type { BaseRoomInfo } from "./protocol/BaseRoomInfo";
@@ -324,6 +295,34 @@ export type {
   UpdateObjectOp,
 } from "./protocol/Op";
 export { OpCode } from "./protocol/Op";
+export type {
+  AccessLevel,
+  LegacyRoomPermission,
+  LiveblocksPermission,
+  PermissionGrantMatcher,
+  PermissionRequest,
+  PermissionScopes,
+  RequestedScope,
+  RequiredAccessLevel,
+  RoomPermission,
+  RoomPermissionFeature,
+  RoomPermissionLevels,
+} from "./protocol/Permission";
+export {
+  canReadRoomFeature,
+  canUseResolvedRoomPermission,
+  canUseRoomPermission,
+  canWriteRoomFeature,
+  createPermissionGrantMatcher,
+  hasRoomFeatureAccess,
+  isLiveblocksPermission,
+  LEGACY_ROOM_PERMISSIONS,
+  Permission,
+  resolveRoomPermissions,
+  resolveRoomPermissionsWithOverrides,
+  ROOM_PERMISSION_OBJECT_FIELDS,
+  ROOM_PERMISSIONS,
+} from "./protocol/Permission";
 export type {
   RoomSubscriptionSettings,
   UserRoomSubscriptionSettings,

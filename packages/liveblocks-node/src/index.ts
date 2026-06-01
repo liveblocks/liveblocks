@@ -48,19 +48,19 @@ export { markdownToCommentBody } from "./comment-body";
 export type {
   AccessLevel,
   RequiredAccessLevel,
-  RoomFeature,
+  RoomPermissionFeature,
+  RoomPermissionLevels,
   RoomPermissionObject,
-  RoomPermissions,
   RoomPermissionString,
 } from "./permissions";
 export {
-  LEGACY_ROOM_PERMISSIONS,
-  Permission,
-  ROOM_PERMISSIONS,
   canReadRoomFeature,
   canWriteRoomFeature,
   hasRoomFeatureAccess,
-  roomPermissionsFromScopes,
+  LEGACY_ROOM_PERMISSIONS,
+  Permission,
+  resolveRoomPermissions,
+  ROOM_PERMISSIONS,
 } from "./permissions";
 export type {
   CommentCreatedEvent,

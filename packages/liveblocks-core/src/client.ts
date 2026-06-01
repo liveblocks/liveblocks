@@ -33,7 +33,6 @@ import type { Resolve } from "./lib/Resolve";
 import { Signal } from "./lib/signals";
 import { warnOnceIf } from "./lib/warnings";
 import type { CustomAuthenticationResult } from "./protocol/Authentication";
-import { Permission } from "./protocol/Permission";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type {
   BaseMetadata,
@@ -50,6 +49,7 @@ import type {
   PartialNotificationSettings,
 } from "./protocol/NotificationSettings";
 import { createNotificationSettings } from "./protocol/NotificationSettings";
+import { Permission } from "./protocol/Permission";
 import type {
   SubscriptionData,
   SubscriptionDeleteInfo,

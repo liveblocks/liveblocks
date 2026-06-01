@@ -54,12 +54,6 @@ import type {
   ContextualPromptContext,
   ContextualPromptResponse,
 } from "./protocol/Ai";
-import {
-  Permission,
-  canUseRoomPermission,
-  canWriteRoomFeature,
-  resolveRoomPermissions,
-} from "./protocol/Permission";
 import type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
 import type {
   AddFeedClientMsg,
@@ -96,6 +90,7 @@ import type {
 import type { MentionData } from "./protocol/MentionData";
 import type { ClientWireOp, Op, ServerWireOp } from "./protocol/Op";
 import { isIgnoredOp, OpCode } from "./protocol/Op";
+import { canUseRoomPermission, Permission } from "./protocol/Permission";
 import type { RoomSubscriptionSettings } from "./protocol/RoomSubscriptionSettings";
 import type {
   CommentsEventServerMsg,
@@ -1843,15 +1838,17 @@ export function createRoom<
       if (staticSession === null || dynamicSession === null) {
         return null;
       } else {
-        const permissions = resolveRoomPermissions(dynamicSession.scopes);
-        const canWrite = canWriteRoomFeature(permissions, "storage");
+        const { scopes } = dynamicSession;
         return {
           connectionId: dynamicSession.actor,
           id: staticSession.userId,
           info: staticSession.userInfo,
           presence: myPresence,
-          canWrite,
-          canComment: canWriteRoomFeature(permissions, "comments"),
+          canWrite: canUseRoomPermission(scopes, Permission.RoomStorageWrite),
+          canComment: canUseRoomPermission(
+            scopes,
+            Permission.RoomCommentsWrite
+          ),
         };
       }
     }

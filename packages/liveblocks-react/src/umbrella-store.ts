@@ -966,10 +966,7 @@ function createStore_forPermissionHints() {
     batch(() => {
       for (const [roomId, permissions] of Object.entries(newHints)) {
         const previousTimestamp = lastRequestedAtByRoomId.get(roomId);
-        if (
-          previousTimestamp !== undefined &&
-          previousTimestamp > timestamp
-        ) {
+        if (previousTimestamp !== undefined && previousTimestamp > timestamp) {
           continue;
         }
 

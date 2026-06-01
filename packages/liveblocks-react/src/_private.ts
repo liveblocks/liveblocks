@@ -7,6 +7,7 @@ export { useLayoutEffect } from "./lib/use-layout-effect";
 export { getUmbrellaStoreForClient } from "./liveblocks";
 export {
   useAddRoomCommentReaction,
+  useCanComment,
   useCreateRoomComment,
   useCreateRoomThread,
   useCreateTextMention,

@@ -35,6 +35,12 @@ export const Permission = {
   /**
    * Legacy
    */
+  Read: "room:read",
+  Write: "room:write",
+  PresenceWrite: "room:presence:write",
+  CommentsWrite: "comments:write",
+  CommentsRead: "comments:read",
+  FeedsWrite: "feeds:write",
   LegacyRoomPresenceWrite: "room:presence:write",
   LegacyCommentsWrite: "comments:write",
   LegacyCommentsRead: "comments:read",
@@ -116,24 +122,82 @@ export function isLiveblocksPermission(
 }
 
 export type AccessLevel = "write" | "read" | "none";
+export type RequiredAccessLevel = Exclude<AccessLevel, "none">;
 
-export type RoomPermissions = {
-  presence: AccessLevel;
-  storage: AccessLevel;
-  comments: AccessLevel;
-  feeds: AccessLevel;
-  personal: "write";
-};
+const ROOM_PERMISSION_FEATURES = [
+  "presence",
+  "storage",
+  "comments",
+  "feeds",
+] as const;
 
-export type RoomFeature = keyof RoomPermissions;
-
-export type RequiredAccessLevel = "read" | "write";
+export type RoomPermissionFeature = (typeof ROOM_PERMISSION_FEATURES)[number];
+export type RoomPermissionLevels = Record<RoomPermissionFeature, AccessLevel>;
 
 const ACCESS_LEVEL_RANK: Record<AccessLevel, number> = {
   none: 0,
   read: 1,
   write: 2,
 };
+
+type FeaturePermissionCandidate = {
+  readonly level: AccessLevel;
+  readonly permission: Permission;
+};
+
+type FeaturePermissionConfig = {
+  readonly candidates: readonly FeaturePermissionCandidate[];
+};
+
+const ROOM_FEATURE_PERMISSION_CONFIG: Record<
+  RoomPermissionFeature,
+  FeaturePermissionConfig
+> = {
+  presence: {
+    candidates: [
+      { level: "none", permission: Permission.RoomPresenceNone },
+      { level: "read", permission: Permission.RoomPresenceRead },
+      { level: "write", permission: Permission.LegacyRoomPresenceWrite },
+    ],
+  },
+  storage: {
+    candidates: [
+      { level: "none", permission: Permission.RoomStorageNone },
+      { level: "read", permission: Permission.RoomStorageRead },
+      { level: "write", permission: Permission.RoomStorageWrite },
+    ],
+  },
+  comments: {
+    candidates: [
+      { level: "none", permission: Permission.RoomCommentsNone },
+      { level: "read", permission: Permission.RoomCommentsRead },
+      { level: "write", permission: Permission.RoomCommentsWrite },
+      { level: "read", permission: Permission.LegacyCommentsRead },
+      { level: "write", permission: Permission.LegacyCommentsWrite },
+    ],
+  },
+  feeds: {
+    candidates: [
+      { level: "none", permission: Permission.RoomFeedsNone },
+      { level: "read", permission: Permission.RoomFeedsRead },
+      { level: "write", permission: Permission.RoomFeedsWrite },
+      { level: "write", permission: Permission.LegacyFeedsWrite },
+    ],
+  },
+};
+
+const GLOBAL_ROOM_PERMISSIONS = [
+  Permission.RoomRead,
+  Permission.RoomWrite,
+] as const;
+
+function featurePermissionStrings(
+  feature: RoomPermissionFeature
+): readonly Permission[] {
+  return ROOM_FEATURE_PERMISSION_CONFIG[feature].candidates.map(
+    (candidate) => candidate.permission
+  );
+}
 
 function getBaseAccessLevel(scopes: ReadonlySet<Permission>): AccessLevel {
   if (scopes.has(Permission.RoomWrite)) {
@@ -170,75 +234,27 @@ function featureAccessLevel(
   return resolved ?? fallback;
 }
 
-/**
- * Resolves a permission scope array into per-feature access levels.
- *
- * `room:write` and `room:read` set the default access level for every feature.
- * Feature-specific scopes (e.g. `room:storage:none`) opt in or out of that
- * default. Deprecated scopes are still recognized for backwards compatibility.
- * `personal` is always `write`, independent of scopes.
- */
-export function roomPermissionsFromScopes(
-  scopes: readonly Permission[]
-): RoomPermissions {
-  const scopeSet = new Set(scopes);
-  const base = getBaseAccessLevel(scopeSet);
-  return {
-    presence: featureAccessLevel(
-      scopeSet,
-      [
-        { level: "none", permission: Permission.RoomPresenceNone },
-        { level: "read", permission: Permission.RoomPresenceRead },
-        { level: "write", permission: Permission.LegacyRoomPresenceWrite },
-      ],
-      base
-    ),
-    storage: featureAccessLevel(
-      scopeSet,
-      [
-        { level: "none", permission: Permission.RoomStorageNone },
-        { level: "read", permission: Permission.RoomStorageRead },
-        { level: "write", permission: Permission.RoomStorageWrite },
-      ],
-      base
-    ),
-    comments: featureAccessLevel(
-      scopeSet,
-      [
-        { level: "none", permission: Permission.RoomCommentsNone },
-        { level: "read", permission: Permission.RoomCommentsRead },
-        { level: "write", permission: Permission.RoomCommentsWrite },
-        { level: "read", permission: Permission.LegacyCommentsRead },
-        { level: "write", permission: Permission.LegacyCommentsWrite },
-      ],
-      base
-    ),
-    feeds: featureAccessLevel(
-      scopeSet,
-      [
-        { level: "none", permission: Permission.RoomFeedsNone },
-        { level: "read", permission: Permission.RoomFeedsRead },
-        { level: "write", permission: Permission.RoomFeedsWrite },
-        { level: "write", permission: Permission.LegacyFeedsWrite },
-      ],
-      base
-    ),
-    personal: "write",
-  };
+function roomFeatureAccessLevel(
+  feature: RoomPermissionFeature,
+  scopes: ReadonlySet<Permission>,
+  fallback: AccessLevel
+): AccessLevel {
+  return featureAccessLevel(
+    scopes,
+    ROOM_FEATURE_PERMISSION_CONFIG[feature].candidates,
+    fallback
+  );
 }
 
 export function hasRoomFeatureAccess(
   scopes: readonly Permission[],
-  feature: RoomFeature,
+  feature: RoomPermissionFeature,
   requiredAccess: RequiredAccessLevel
 ): boolean {
-  const access = roomPermissionsFromScopes(scopes)[feature];
-
-  if (requiredAccess === "write") {
-    return access === "write";
-  }
-
-  return access === "read" || access === "write";
+  const levels = resolveRoomPermissions(scopes);
+  return requiredAccess === "write"
+    ? canWriteRoomFeature(levels, feature)
+    : canReadRoomFeature(levels, feature);
 }
 
 export type PermissionScopes = readonly string[] | ReadonlySet<string>;
@@ -250,22 +266,15 @@ export type RequestedScope =
   | typeof Permission.RoomCommentsWrite
   | typeof Permission.RoomFeedsRead
   | typeof Permission.RoomFeedsWrite;
-export type RoomPermissionFeature =
-  | "presence"
-  | "storage"
-  | "comments"
-  | "feeds";
-export type ResolvedRoomPermissionLevel = AccessLevel;
-export type RoomPermissionLevels = Readonly<
-  Record<RoomPermissionFeature, ResolvedRoomPermissionLevel>
->;
 
-const ROOM_PERMISSION_FEATURES: readonly RoomPermissionFeature[] = [
-  "presence",
-  "storage",
-  "comments",
-  "feeds",
-];
+export type PermissionRequest = {
+  readonly requestedScope?: RequestedScope;
+  readonly roomId?: string;
+};
+
+export type PermissionGrantMatcher = {
+  canUse(request: PermissionRequest): boolean;
+};
 
 export function asPermissionSet(
   scopes: PermissionScopes
@@ -281,19 +290,12 @@ export function asPermissionSet(
   return permissionSet;
 }
 
-function hasPermission(
-  scopes: ReadonlySet<Permission>,
-  permission: Permission
-) {
-  return scopes.has(permission);
-}
-
 function hasAnyPermission(
   scopes: ReadonlySet<Permission>,
   permissions: readonly Permission[]
 ): boolean {
   for (const permission of permissions) {
-    if (hasPermission(scopes, permission)) {
+    if (scopes.has(permission)) {
       return true;
     }
   }
@@ -304,13 +306,13 @@ export function resolveRoomPermissions(
   scopes: PermissionScopes
 ): RoomPermissionLevels {
   const permissionSet = asPermissionSet(scopes);
-  const resolved = roomPermissionsFromScopes(Array.from(permissionSet));
+  const base = getBaseAccessLevel(permissionSet);
 
   return {
-    presence: resolved.presence,
-    storage: resolved.storage,
-    comments: resolved.comments,
-    feeds: resolved.feeds,
+    presence: roomFeatureAccessLevel("presence", permissionSet, base),
+    storage: roomFeatureAccessLevel("storage", permissionSet, base),
+    comments: roomFeatureAccessLevel("comments", permissionSet, base),
+    feeds: roomFeatureAccessLevel("feeds", permissionSet, base),
   };
 }
 
@@ -318,57 +320,18 @@ function resolveRoomPermissionOverrides(
   scopes: ReadonlySet<Permission>
 ): Partial<RoomPermissionLevels> {
   const resolved = resolveRoomPermissions(scopes);
-  const overrides: Partial<
-    Record<RoomPermissionFeature, ResolvedRoomPermissionLevel>
-  > = {};
+  const overrides: Partial<RoomPermissionLevels> = {};
 
-  if (hasAnyPermission(scopes, [Permission.RoomRead, Permission.RoomWrite])) {
+  if (hasAnyPermission(scopes, GLOBAL_ROOM_PERMISSIONS)) {
     for (const feature of ROOM_PERMISSION_FEATURES) {
       overrides[feature] = resolved[feature];
     }
   }
 
-  if (
-    hasAnyPermission(scopes, [
-      Permission.RoomPresenceRead,
-      Permission.RoomPresenceNone,
-      Permission.LegacyRoomPresenceWrite,
-    ])
-  ) {
-    overrides.presence = resolved.presence;
-  }
-
-  if (
-    hasAnyPermission(scopes, [
-      Permission.RoomStorageRead,
-      Permission.RoomStorageWrite,
-      Permission.RoomStorageNone,
-    ])
-  ) {
-    overrides.storage = resolved.storage;
-  }
-
-  if (
-    hasAnyPermission(scopes, [
-      Permission.RoomCommentsRead,
-      Permission.RoomCommentsWrite,
-      Permission.RoomCommentsNone,
-      Permission.LegacyCommentsRead,
-      Permission.LegacyCommentsWrite,
-    ])
-  ) {
-    overrides.comments = resolved.comments;
-  }
-
-  if (
-    hasAnyPermission(scopes, [
-      Permission.RoomFeedsRead,
-      Permission.RoomFeedsWrite,
-      Permission.RoomFeedsNone,
-      Permission.LegacyFeedsWrite,
-    ])
-  ) {
-    overrides.feeds = resolved.feeds;
+  for (const feature of ROOM_PERMISSION_FEATURES) {
+    if (hasAnyPermission(scopes, featurePermissionStrings(feature))) {
+      overrides[feature] = resolved[feature];
+    }
   }
 
   return overrides;
@@ -377,7 +340,7 @@ function resolveRoomPermissionOverrides(
 export function resolveRoomPermissionsWithOverrides(
   scopesByPrecedence: readonly PermissionScopes[]
 ): RoomPermissionLevels {
-  const levels: Record<RoomPermissionFeature, ResolvedRoomPermissionLevel> = {
+  const levels: Record<RoomPermissionFeature, AccessLevel> = {
     presence: "none",
     storage: "none",
     comments: "none",
@@ -398,18 +361,18 @@ export function resolveRoomPermissionsWithOverrides(
   return levels;
 }
 
-function canReadLevel(level: ResolvedRoomPermissionLevel): boolean {
+function canReadLevel(level: AccessLevel): boolean {
   return level === "read" || level === "write";
 }
 
-function canWriteLevel(level: ResolvedRoomPermissionLevel): boolean {
+function canWriteLevel(level: AccessLevel): boolean {
   return level === "write";
 }
 
 function canUseFeature(
   levels: RoomPermissionLevels,
   feature: RoomPermissionFeature,
-  level: Exclude<ResolvedRoomPermissionLevel, "none">
+  level: RequiredAccessLevel
 ): boolean {
   const actualLevel = levels[feature];
   return level === "read"
@@ -431,56 +394,154 @@ export function canWriteRoomFeature(
   return canUseFeature(levels, feature, "write");
 }
 
+const REQUESTED_SCOPE_ACCESS: Record<
+  RequestedScope,
+  {
+    feature: RoomPermissionFeature;
+    level: RequiredAccessLevel;
+  }
+> = {
+  [Permission.RoomPresenceRead]: { feature: "presence", level: "read" },
+  [Permission.RoomStorageRead]: { feature: "storage", level: "read" },
+  [Permission.RoomStorageWrite]: { feature: "storage", level: "write" },
+  [Permission.RoomCommentsRead]: { feature: "comments", level: "read" },
+  [Permission.RoomCommentsWrite]: { feature: "comments", level: "write" },
+  [Permission.RoomFeedsRead]: { feature: "feeds", level: "read" },
+  [Permission.RoomFeedsWrite]: { feature: "feeds", level: "write" },
+};
+
 export function canUseResolvedRoomPermission(
   levels: RoomPermissionLevels,
   requestedScope: RequestedScope
 ): boolean {
-  switch (requestedScope) {
-    case Permission.RoomPresenceRead:
-      return canUseFeature(levels, "presence", "read");
-    case Permission.RoomStorageRead:
-      return canUseFeature(levels, "storage", "read");
-    case Permission.RoomStorageWrite:
-      return canUseFeature(levels, "storage", "write");
-    case Permission.RoomCommentsRead:
-      return canUseFeature(levels, "comments", "read");
-    case Permission.RoomCommentsWrite:
-      return canUseFeature(levels, "comments", "write");
-    case Permission.RoomFeedsRead:
-      return canUseFeature(levels, "feeds", "read");
-    case Permission.RoomFeedsWrite:
-      return canUseFeature(levels, "feeds", "write");
-    default: {
-      const _exhaustive: never = requestedScope;
-      return _exhaustive;
-    }
-  }
+  const { feature, level } = REQUESTED_SCOPE_ACCESS[requestedScope];
+  return canUseFeature(levels, feature, level);
 }
 
 export function canUseRoomPermission(
   scopes: PermissionScopes,
   requestedScope: RequestedScope
 ): boolean {
-  const scopeList = Array.from(asPermissionSet(scopes));
+  return canUseResolvedRoomPermission(
+    resolveRoomPermissions(scopes),
+    requestedScope
+  );
+}
 
-  switch (requestedScope) {
-    case Permission.RoomPresenceRead:
-      return hasRoomFeatureAccess(scopeList, "presence", "read");
-    case Permission.RoomStorageRead:
-      return hasRoomFeatureAccess(scopeList, "storage", "read");
-    case Permission.RoomStorageWrite:
-      return hasRoomFeatureAccess(scopeList, "storage", "write");
-    case Permission.RoomCommentsRead:
-      return hasRoomFeatureAccess(scopeList, "comments", "read");
-    case Permission.RoomCommentsWrite:
-      return hasRoomFeatureAccess(scopeList, "comments", "write");
-    case Permission.RoomFeedsRead:
-      return hasRoomFeatureAccess(scopeList, "feeds", "read");
-    case Permission.RoomFeedsWrite:
-      return hasRoomFeatureAccess(scopeList, "feeds", "write");
-    default: {
-      const _exhaustive: never = requestedScope;
-      return _exhaustive;
+function getMatchingPermissionScopes(
+  permissions: LiveblocksPermissions,
+  roomId: string
+): LiveblocksPermission[][] {
+  return Object.entries(permissions)
+    .map(([resource, scopes]) => {
+      if (resource === roomId) {
+        return { scopes, specificity: resource.length + 1 };
+      }
+
+      if (resource.includes("*")) {
+        const prefix = resource.replace("*", "");
+        if (roomId.startsWith(prefix)) {
+          return { scopes, specificity: prefix.length };
+        }
+      }
+
+      return undefined;
+    })
+    .filter(
+      (
+        entry
+      ): entry is {
+        scopes: LiveblocksPermission[];
+        specificity: number;
+      } => {
+        return entry !== undefined;
+      }
+    )
+    .sort((left, right) => left.specificity - right.specificity)
+    .map((entry) => entry.scopes);
+}
+
+export function createPermissionGrantMatcher(
+  permissions: LiveblocksPermissions
+): PermissionGrantMatcher {
+  const roomPermissionsById = new Map<string, RoomPermissionLevels | null>();
+  const roomlessPermissionsByResource = new Map<string, RoomPermissionLevels>();
+
+  function getResolvedRoomPermissions(
+    roomId: string
+  ): RoomPermissionLevels | undefined {
+    if (roomPermissionsById.has(roomId)) {
+      return roomPermissionsById.get(roomId) ?? undefined;
     }
+
+    const matchingScopes = getMatchingPermissionScopes(permissions, roomId);
+
+    if (matchingScopes.length === 0) {
+      roomPermissionsById.set(roomId, null);
+      return undefined;
+    }
+
+    const resolved = resolveRoomPermissionsWithOverrides(matchingScopes);
+    roomPermissionsById.set(roomId, resolved);
+    return resolved;
   }
+
+  function getResolvedRoomlessPermissions(
+    resource: string,
+    scopes: readonly LiveblocksPermission[]
+  ): RoomPermissionLevels {
+    const cachedPermissions = roomlessPermissionsByResource.get(resource);
+
+    if (cachedPermissions !== undefined) {
+      return cachedPermissions;
+    }
+
+    const resolved = resolveRoomPermissions(scopes);
+    roomlessPermissionsByResource.set(resource, resolved);
+    return resolved;
+  }
+
+  return {
+    canUse(request: PermissionRequest): boolean {
+      if (!request.roomId && request.requestedScope === undefined) {
+        return true;
+      }
+
+      if (!request.roomId && Object.entries(permissions).length === 0) {
+        return request.requestedScope === Permission.RoomCommentsRead;
+      }
+
+      if (request.requestedScope === undefined) {
+        return false;
+      }
+
+      if (request.roomId) {
+        const roomPermissions = getResolvedRoomPermissions(request.roomId);
+        return (
+          roomPermissions !== undefined &&
+          canUseResolvedRoomPermission(
+            roomPermissions,
+            request.requestedScope
+          )
+        );
+      }
+
+      for (const [resource, scopes] of Object.entries(permissions)) {
+        if (!resource.includes("*")) {
+          continue;
+        }
+
+        if (
+          canUseResolvedRoomPermission(
+            getResolvedRoomlessPermissions(resource, scopes),
+            request.requestedScope
+          )
+        ) {
+          return true;
+        }
+      }
+
+      return false;
+    },
+  };
 }

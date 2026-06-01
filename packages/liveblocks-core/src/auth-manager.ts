@@ -10,12 +10,8 @@ import type {
 import type { AuthToken, ParsedAuthToken } from "./protocol/AuthToken";
 import { parseAuthToken, TokenKind } from "./protocol/AuthToken";
 import {
-  Permission,
-  canUseResolvedRoomPermission,
-  resolveRoomPermissions,
-  resolveRoomPermissionsWithOverrides,
-  type LiveblocksPermission,
-  type RoomPermissionLevels,
+  createPermissionGrantMatcher,
+  type PermissionGrantMatcher,
   type RequestedScope,
 } from "./protocol/Permission";
 import type { Polyfills } from "./room";
@@ -26,12 +22,22 @@ export type AuthValue =
   | { type: "secret"; token: ParsedAuthToken }
   | { type: "public"; publicApiKey: string };
 
+type ScopedAuthRequest = {
+  requestedScope: RequestedScope;
+  roomId: string;
+};
+
+type RoomlessAuthRequest = {
+  requestedScope?: RequestedScope;
+  roomId?: undefined;
+};
+
+type AuthRequestOptions = ScopedAuthRequest | RoomlessAuthRequest;
+
 export type AuthManager = {
   reset(): void;
-  getAuthValue(requestOptions: {
-    requestedScope: RequestedScope;
-    roomId?: string;
-  }): Promise<AuthValue>;
+  getAuthValue(): Promise<AuthValue>;
+  getAuthValue(requestOptions: AuthRequestOptions): Promise<AuthValue>;
 };
 
 export type AuthEndpointCallback = (
@@ -40,11 +46,6 @@ export type AuthEndpointCallback = (
 
 type AuthEndpoint = string | AuthEndpointCallback;
 
-type CachedTokenPermissions = {
-  readonly roomPermissionsById: Map<string, RoomPermissionLevels | null>;
-  readonly roomlessPermissionsByResource: Map<string, RoomPermissionLevels>;
-};
-
 export type AuthenticationOptions = {
   polyfills?: Polyfills;
 } & Relax<{ publicApiKey: string } | { authEndpoint: AuthEndpoint }>;
@@ -52,46 +53,6 @@ export type AuthenticationOptions = {
 const NON_RETRY_STATUS_CODES = [
   400, 401, 403, 404, 405, 410, 412, 414, 422, 431, 451,
 ];
-
-function canUseRoomlessTokenWithoutPermissions(requestOptions: {
-  requestedScope: RequestedScope;
-  roomId?: string;
-}): boolean {
-  return (
-    requestOptions.roomId === undefined &&
-    requestOptions.requestedScope === Permission.RoomCommentsRead
-  );
-}
-
-function getMatchingPermissionScopes(
-  permissions: Record<string, LiveblocksPermission[]>,
-  roomId: string
-): LiveblocksPermission[][] {
-  return Object.entries(permissions)
-    .map(([resource, scopes]) => {
-      if (resource === roomId) {
-        return { scopes, specificity: resource.length + 1 };
-      }
-
-      if (resource.includes("*")) {
-        const prefix = resource.replace("*", "");
-        if (roomId.startsWith(prefix)) {
-          return { scopes, specificity: prefix.length };
-        }
-      }
-
-      return undefined;
-    })
-    .filter(
-      (
-        entry
-      ): entry is { scopes: LiveblocksPermission[]; specificity: number } => {
-        return entry !== undefined;
-      }
-    )
-    .sort((left, right) => left.specificity - right.specificity)
-    .map((entry) => entry.scopes);
-}
 
 export function createAuthManager(
   authOptions: AuthenticationOptions,
@@ -103,7 +64,7 @@ export function createAuthManager(
 
   const tokens: ParsedAuthToken[] = [];
   const expiryTimes: number[] = []; // Supposed to always contain the same number of elements as `tokens`
-  const cachedTokenPermissions: CachedTokenPermissions[] = []; // Supposed to always contain the same number of elements as `tokens`
+  const permissionMatchers: PermissionGrantMatcher[] = []; // Supposed to always contain the same number of elements as `tokens`
 
   const requestPromises = new Map<string, Promise<ParsedAuthToken>>();
 
@@ -111,150 +72,82 @@ export function createAuthManager(
     seenTokens.clear();
     tokens.length = 0;
     expiryTimes.length = 0;
-    cachedTokenPermissions.length = 0;
+    permissionMatchers.length = 0;
     requestPromises.clear();
   }
 
-  function getResolvedRoomPermissions(
+  function accessTokenMatchesRequest(
     token: ParsedAuthToken,
-    permissionsCache: CachedTokenPermissions,
-    roomId: string
-  ): RoomPermissionLevels | undefined {
-    if (permissionsCache.roomPermissionsById.has(roomId)) {
-      return permissionsCache.roomPermissionsById.get(roomId) ?? undefined;
-    }
-
+    matcher: PermissionGrantMatcher,
+    requestOptions: AuthRequestOptions
+  ): boolean {
     if (token.parsed.k !== TokenKind.ACCESS_TOKEN) {
-      permissionsCache.roomPermissionsById.set(roomId, null);
-      return undefined;
+      return false;
     }
 
-    const matchingScopes = getMatchingPermissionScopes(
-      token.parsed.perms,
-      roomId
-    );
-
-    if (matchingScopes.length === 0) {
-      permissionsCache.roomPermissionsById.set(roomId, null);
-      return undefined;
-    }
-
-    const permissions = resolveRoomPermissionsWithOverrides(matchingScopes);
-    permissionsCache.roomPermissionsById.set(roomId, permissions);
-    return permissions;
+    return matcher.canUse(requestOptions);
   }
 
-  function getResolvedRoomlessPermissions(
-    permissionsCache: CachedTokenPermissions,
-    resource: string,
-    scopes: readonly LiveblocksPermission[]
-  ): RoomPermissionLevels {
-    const cachedPermissions =
-      permissionsCache.roomlessPermissionsByResource.get(resource);
-
-    if (cachedPermissions !== undefined) {
-      return cachedPermissions;
-    }
-
-    const permissions = resolveRoomPermissions(scopes);
-    permissionsCache.roomlessPermissionsByResource.set(resource, permissions);
-    return permissions;
-  }
-
-  function getCachedToken(requestOptions: {
-    requestedScope: RequestedScope;
-    roomId?: string;
-  }): ParsedAuthToken | undefined {
+  function getCachedToken(
+    requestOptions: AuthRequestOptions
+  ): ParsedAuthToken | undefined {
     const now = Math.ceil(Date.now() / 1000);
 
     for (let i = tokens.length - 1; i >= 0; i--) {
       const token = tokens[i];
       const expiresAt = expiryTimes[i];
-      const permissionsCache = cachedTokenPermissions[i];
+      const permissionMatcher = permissionMatchers[i];
 
       // If this token is expired, remove it from cache, as if it never existed
       // in the first place
       if (expiresAt <= now) {
         tokens.splice(i, 1);
         expiryTimes.splice(i, 1);
-        cachedTokenPermissions.splice(i, 1);
+        permissionMatchers.splice(i, 1);
         continue;
       }
 
       if (token.parsed.k === TokenKind.ID_TOKEN) {
         // When ID token method is used, only one token per user should be used and cached at the same time.
         return token;
-      } else if (token.parsed.k === TokenKind.ACCESS_TOKEN) {
-        // In this version, we accept access tokens with zero permission when issuing token for resources outside a room.
-        if (
-          !requestOptions.roomId &&
-          Object.entries(token.parsed.perms).length === 0
-        ) {
-          if (canUseRoomlessTokenWithoutPermissions(requestOptions)) {
-            return token;
-          }
+      }
 
-          continue;
-        }
-
-        if (requestOptions.roomId) {
-          const permissions = getResolvedRoomPermissions(
-            token,
-            permissionsCache,
-            requestOptions.roomId
-          );
-
-          if (
-            permissions !== undefined &&
-            canUseResolvedRoomPermission(
-              permissions,
-              requestOptions.requestedScope
-            )
-          ) {
-            return token;
-          }
-
-          continue;
-        }
-
-        for (const [resource, scopes] of Object.entries(token.parsed.perms)) {
-          // If the requester didn't pass a roomId,
-          // it means they need the token to access the user's resources (inbox notifications for example).
-          // We return any access token that contains a wildcard for the requested scope.
-          if (resource.includes("*")) {
-            const permissions = getResolvedRoomlessPermissions(
-              permissionsCache,
-              resource,
-              scopes
-            );
-
-            if (
-              canUseResolvedRoomPermission(
-                permissions,
-                requestOptions.requestedScope
-              )
-            ) {
-              return token;
-            }
-          }
-        }
+      if (accessTokenMatchesRequest(token, permissionMatcher, requestOptions)) {
+        return token;
       }
     }
 
     return undefined;
   }
 
-  function getRequestPromiseKey(requestOptions: {
-    requestedScope: RequestedScope;
-    roomId?: string;
-  }): string {
-    return `${requestOptions.roomId ?? "liveblocks-user-token"}:${requestOptions.requestedScope}`;
+  function getRequestPromiseKey(requestOptions: { roomId?: string }): string {
+    return requestOptions.roomId ?? "liveblocks-user-token";
   }
 
-  async function makeAuthRequest(options: {
-    requestedScope: RequestedScope;
-    roomId?: string;
-  }): Promise<ParsedAuthToken> {
+  function cacheToken(token: ParsedAuthToken): void {
+    if (tokens.some((cachedToken) => cachedToken.raw === token.raw)) {
+      return;
+    }
+
+    // Translate "server timestamps" to "local timestamps" in case clocks aren't in sync
+    const BUFFER = 30; // Expire tokens 30 seconds sooner than they have to
+    const expiresAt =
+      Math.floor(Date.now() / 1000) +
+      (token.parsed.exp - token.parsed.iat) -
+      BUFFER;
+
+    tokens.push(token);
+    expiryTimes.push(expiresAt);
+    permissionMatchers.push(
+      createPermissionGrantMatcher(
+        token.parsed.k === TokenKind.ACCESS_TOKEN ? token.parsed.perms : {}
+      )
+    );
+  }
+
+  async function makeAuthRequest(
+    options: AuthRequestOptions
+  ): Promise<ParsedAuthToken> {
     const fetcher =
       authOptions.polyfills?.fetch ??
       (typeof window === "undefined" ? undefined : window.fetch);
@@ -268,7 +161,6 @@ export function createAuthManager(
 
       const response = await fetchAuthEndpoint(fetcher, authentication.url, {
         room: options.roomId,
-        requestedScope: options.requestedScope,
       });
       const parsed = parseAuthToken(response.token);
 
@@ -277,6 +169,7 @@ export function createAuthManager(
           "The same Liveblocks auth token was issued from the backend before. Caching Liveblocks tokens is not supported."
         );
       }
+      seenTokens.add(parsed.raw);
 
       onAuthenticate?.(parsed.parsed);
       return parsed;
@@ -317,10 +210,9 @@ export function createAuthManager(
     );
   }
 
-  async function getAuthValue(requestOptions: {
-    requestedScope: RequestedScope;
-    roomId?: string;
-  }): Promise<AuthValue> {
+  async function getAuthValue(
+    requestOptions: AuthRequestOptions = {}
+  ): Promise<AuthValue> {
     if (authentication.type === "public") {
       return { type: "public", publicApiKey: authentication.publicApiKey };
     }
@@ -331,33 +223,37 @@ export function createAuthManager(
     }
 
     const requestPromiseKey = getRequestPromiseKey(requestOptions);
-    let currentPromise = requestPromises.get(requestPromiseKey);
-    if (currentPromise === undefined) {
-      currentPromise = makeAuthRequest(requestOptions);
-      requestPromises.set(requestPromiseKey, currentPromise);
+    let token: ParsedAuthToken | undefined;
+    let remainingAttempts = 2;
+
+    while (remainingAttempts > 0) {
+      remainingAttempts--;
+      let currentPromise = requestPromises.get(requestPromiseKey);
+      if (currentPromise === undefined) {
+        currentPromise = makeAuthRequest(requestOptions);
+        requestPromises.set(requestPromiseKey, currentPromise);
+      }
+
+      try {
+        token = await currentPromise;
+        cacheToken(token);
+
+        const matchingToken = getCachedToken(requestOptions);
+        if (matchingToken !== undefined) {
+          return { type: "secret", token: matchingToken };
+        }
+      } finally {
+        if (requestPromises.get(requestPromiseKey) === currentPromise) {
+          requestPromises.delete(requestPromiseKey);
+        }
+      }
     }
 
-    try {
-      const token = await currentPromise;
-      // Translate "server timestamps" to "local timestamps" in case clocks aren't in sync
-      const BUFFER = 30; // Expire tokens 30 seconds sooner than they have to
-      const expiresAt =
-        Math.floor(Date.now() / 1000) +
-        (token.parsed.exp - token.parsed.iat) -
-        BUFFER;
-
-      seenTokens.add(token.raw);
-      tokens.push(token);
-      expiryTimes.push(expiresAt);
-      cachedTokenPermissions.push({
-        roomPermissionsById: new Map(),
-        roomlessPermissionsByResource: new Map(),
-      });
-
-      return { type: "secret", token };
-    } finally {
-      requestPromises.delete(requestPromiseKey);
+    if (token === undefined) {
+      throw new Error("Unexpected authentication state.");
     }
+
+    return { type: "secret", token };
   }
 
   return {
@@ -419,7 +315,6 @@ async function fetchAuthEndpoint(
   endpoint: string,
   body: {
     room?: string;
-    requestedScope: RequestedScope;
   }
 ): Promise<{ token: string }> {
   const res = await fetch(endpoint, {

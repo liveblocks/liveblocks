@@ -46,6 +46,7 @@ import type {
 } from "@liveblocks/core";
 import {
   assert,
+  canUseRoomPermission,
   console,
   createCommentId,
   createThreadId,
@@ -55,6 +56,7 @@ import {
   HttpError,
   kInternal,
   makePoller,
+  Permission,
   ServerMsgCode,
   stableStringify,
 } from "@liveblocks/core";
@@ -3712,6 +3714,33 @@ function useRoomPermissions(roomId: string) {
   return useSignal(store.permissionHints.getPermissionForRoomΣ(roomId));
 }
 
+function useSelfCanComment(): boolean {
+  const room = useRoom({ allowOutsideRoom: true });
+
+  return useSyncExternalStore(
+    useCallback(
+      (callback) => {
+        if (room === null) return () => {};
+        return room.events.self.subscribe(callback);
+      },
+      [room]
+    ),
+    useCallback(() => {
+      return room?.getSelf()?.canComment ?? true;
+    }, [room]),
+    useCallback(() => true, [])
+  );
+}
+
+function useCanComment(roomId: string): boolean {
+  const selfCanComment = useSelfCanComment();
+  const permissions = useRoomPermissions(roomId);
+
+  return permissions !== undefined
+    ? canUseRoomPermission(permissions, Permission.RoomCommentsWrite)
+    : selfCanComment;
+}
+
 /**
  * Creates a RoomProvider and a set of typed hooks to use in your app. Note
  * that any RoomProvider created in this way does not need to be nested in
@@ -4922,6 +4951,7 @@ export {
   useAttachmentUrl,
   useAttachmentUrlSuspense,
   _useBroadcastEvent as useBroadcastEvent,
+  useCanComment,
   useCanRedo,
   useCanUndo,
   _useCreateComment as useCreateComment,

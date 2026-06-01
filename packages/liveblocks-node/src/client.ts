@@ -86,9 +86,9 @@ import {
   normalizeUpdateRoomOptionsInput,
   type RoomAccesses,
   type RoomAccessesInput,
-  type RoomPermissionList,
   type RoomPermissionInput,
-} from "./roomAccess";
+  type RoomPermissionList,
+} from "./permissions";
 import { Session } from "./Session";
 import {
   assertNonEmpty,
@@ -186,7 +186,7 @@ export type {
   RoomAccessesInput,
   RoomPermissionInput,
   RoomPermissionList,
-} from "./roomAccess";
+} from "./permissions";
 export type RoomPermission = RoomPermissionList;
 export type RoomMetadata = Record<string, string | string[]>;
 type QueryRoomMetadata = Record<string, string>;

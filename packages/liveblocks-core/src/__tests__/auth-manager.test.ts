@@ -135,10 +135,10 @@ describe("auth-manager - secret auth", () => {
     expect(requestCount).toBe(1);
   });
 
-  test("should send room and requestedScope to the auth endpoint", async () => {
+  test("should send room to the auth endpoint", async () => {
     let capturedBody: unknown;
     server.use(
-      http.post("/api/access-auth-with-scope", async ({ request }) => {
+      http.post("/api/access-auth-with-room", async ({ request }) => {
         requestCount++;
         capturedBody = await request.json();
         return HttpResponse.json({ token: accessToken });
@@ -146,7 +146,7 @@ describe("auth-manager - secret auth", () => {
     );
 
     const authManager = createAuthManager({
-      authEndpoint: "/api/access-auth-with-scope",
+      authEndpoint: "/api/access-auth-with-room",
     });
 
     await authManager.getAuthValue({
@@ -156,12 +156,11 @@ describe("auth-manager - secret auth", () => {
 
     expect(capturedBody).toEqual({
       room: "org1.room1",
-      requestedScope: Permission.RoomCommentsWrite,
     });
   });
 
   test("should pass room to custom auth callback", async () => {
-    const callback = vi.fn(async () => ({ token: accessToken }));
+    const callback = vi.fn(() => Promise.resolve({ token: accessToken }));
     const authManager = createAuthManager({ authEndpoint: callback });
 
     await authManager.getAuthValue({
@@ -191,6 +190,62 @@ describe("auth-manager - secret auth", () => {
     expect(results[0].type).toEqual("secret");
     expect(results[1].type).toEqual("secret");
     expect(requestCount).toBe(1);
+  });
+
+  test("should deduplicate concurrent requests on same room with different scopes", async () => {
+    const authManager = createAuthManager({
+      authEndpoint: "/api/access-auth",
+    });
+
+    const results = await Promise.all([
+      authManager.getAuthValue({
+        requestedScope: Permission.RoomPresenceRead,
+        roomId: "org1.room1",
+      }),
+      authManager.getAuthValue({
+        requestedScope: Permission.RoomCommentsWrite,
+        roomId: "org1.room1",
+      }),
+    ]);
+
+    expect(results[0].type).toEqual("secret");
+    expect(results[1].type).toEqual("secret");
+    expect(requestCount).toBe(1);
+  });
+
+  test("should retry a shared same-room request when it does not grant the requested scope", async () => {
+    let localRequestCount = 0;
+    const accessTokenStorageRead = makeAccessToken({
+      "org1*": [Permission.RoomStorageRead],
+    });
+
+    server.use(
+      http.post("/api/access-auth-storage-read-then-write", () => {
+        localRequestCount++;
+        return HttpResponse.json({
+          token: localRequestCount === 1 ? accessTokenStorageRead : accessToken,
+        });
+      })
+    );
+
+    const authManager = createAuthManager({
+      authEndpoint: "/api/access-auth-storage-read-then-write",
+    });
+
+    const results = await Promise.all([
+      authManager.getAuthValue({
+        requestedScope: Permission.RoomStorageRead,
+        roomId: "org1.room1",
+      }),
+      authManager.getAuthValue({
+        requestedScope: Permission.RoomPresenceRead,
+        roomId: "org1.room1",
+      }),
+    ]);
+
+    expect(results[0].type).toEqual("secret");
+    expect(results[1].type).toEqual("secret");
+    expect(localRequestCount).toBe(2);
   });
 
   test("should use cache when access token has correct permissions", async () => {
@@ -297,6 +352,45 @@ describe("auth-manager - secret auth", () => {
 
     expect(authValueReq1.token.raw).toEqual(accessTokenWithNoPermission);
     expect(authValueReq2.token.raw).toEqual(accessTokenWithNoPermission);
+    expect(requestCount).toBe(1);
+  });
+
+  test("when no roomId and no requested scope, should accept any access token", async () => {
+    const authManager = createAuthManager({
+      authEndpoint: "/api/access-auth-no-permission",
+    });
+
+    const authValueReq1 = (await authManager.getAuthValue()) as {
+      type: "secret";
+      token: ParsedAuthToken;
+    };
+
+    const authValueReq2 = (await authManager.getAuthValue()) as {
+      type: "secret";
+      token: ParsedAuthToken;
+    };
+
+    expect(authValueReq1.token.raw).toEqual(accessTokenWithNoPermission);
+    expect(authValueReq2.token.raw).toEqual(accessTokenWithNoPermission);
+    expect(requestCount).toBe(1);
+  });
+
+  test("when no roomId and no requested scope, should reuse any cached access token", async () => {
+    const authManager = createAuthManager({
+      authEndpoint: "/api/access-auth-comments-read",
+    });
+
+    const scopedAuthValue = (await authManager.getAuthValue({
+      requestedScope: Permission.RoomCommentsRead,
+    })) as { type: "secret"; token: ParsedAuthToken };
+
+    const roomlessAuthValue = (await authManager.getAuthValue()) as {
+      type: "secret";
+      token: ParsedAuthToken;
+    };
+
+    expect(scopedAuthValue.token.raw).toEqual(accessTokenWildcardCommentsRead);
+    expect(roomlessAuthValue.token.raw).toEqual(accessTokenWildcardCommentsRead);
     expect(requestCount).toBe(1);
   });
 
@@ -552,36 +646,46 @@ describe("auth-manager - secret auth", () => {
     );
   });
 
-  test("should use cache when access token only grants storage read", async () => {
-    const accessTokenStorageRead = makeAccessToken({
-      "org1*": [Permission.RoomStorageRead],
-    });
-
-    server.use(
-      http.post("/api/access-auth-storage-read", () => {
-        requestCount++;
-        return HttpResponse.json({ token: accessTokenStorageRead });
-      })
-    );
-
-    const authManager = createAuthManager({
-      authEndpoint: "/api/access-auth-storage-read",
-    });
-
-    const storageAuthValue = (await authManager.getAuthValue({
+  test.each([
+    {
+      endpoint: "/api/access-auth-storage-read",
       requestedScope: Permission.RoomStorageRead,
-      roomId: "org1.room1",
-    })) as { type: "secret"; token: ParsedAuthToken };
+      perms: { "org1*": [Permission.RoomStorageRead] },
+    },
+    {
+      endpoint: "/api/access-auth-feeds-read",
+      requestedScope: Permission.RoomFeedsRead,
+      perms: { "org1*": [Permission.RoomFeedsRead] },
+    },
+  ] as const)(
+    "should use cache when access token only grants $requestedScope",
+    async ({ endpoint, requestedScope, perms }) => {
+      const accessTokenLimitedRead = makeAccessToken(perms);
 
-    const storageAuthValue2 = (await authManager.getAuthValue({
-      requestedScope: Permission.RoomStorageRead,
-      roomId: "org1.room2",
-    })) as { type: "secret"; token: ParsedAuthToken };
+      server.use(
+        http.post(endpoint, () => {
+          requestCount++;
+          return HttpResponse.json({ token: accessTokenLimitedRead });
+        })
+      );
 
-    expect(storageAuthValue.token.raw).toEqual(accessTokenStorageRead);
-    expect(storageAuthValue2.token.raw).toEqual(accessTokenStorageRead);
-    expect(requestCount).toBe(1);
-  });
+      const authManager = createAuthManager({ authEndpoint: endpoint });
+
+      const authValue1 = (await authManager.getAuthValue({
+        requestedScope,
+        roomId: "org1.room1",
+      })) as { type: "secret"; token: ParsedAuthToken };
+
+      const authValue2 = (await authManager.getAuthValue({
+        requestedScope,
+        roomId: "org1.room2",
+      })) as { type: "secret"; token: ParsedAuthToken };
+
+      expect(authValue1.token.raw).toEqual(accessTokenLimitedRead);
+      expect(authValue2.token.raw).toEqual(accessTokenLimitedRead);
+      expect(requestCount).toBe(1);
+    }
+  );
 
   test("should fetch a new token when cached token only grants storage read but room entry is requested", async () => {
     let localRequestCount = 0;
@@ -615,37 +719,6 @@ describe("auth-manager - secret auth", () => {
     expect(storageAuthValue.token.raw).toEqual(accessTokenStorageRead);
     expect(roomAuthValue.token.raw).toEqual(accessToken);
     expect(localRequestCount).toBe(2);
-  });
-
-  test("should use cache when access token only grants feeds read", async () => {
-    const accessTokenFeedsRead = makeAccessToken({
-      "org1*": [Permission.RoomFeedsRead],
-    });
-
-    server.use(
-      http.post("/api/access-auth-feeds-read", () => {
-        requestCount++;
-        return HttpResponse.json({ token: accessTokenFeedsRead });
-      })
-    );
-
-    const authManager = createAuthManager({
-      authEndpoint: "/api/access-auth-feeds-read",
-    });
-
-    const feedsAuthValue = (await authManager.getAuthValue({
-      requestedScope: Permission.RoomFeedsRead,
-      roomId: "org1.room1",
-    })) as { type: "secret"; token: ParsedAuthToken };
-
-    const feedsAuthValue2 = (await authManager.getAuthValue({
-      requestedScope: Permission.RoomFeedsRead,
-      roomId: "org1.room2",
-    })) as { type: "secret"; token: ParsedAuthToken };
-
-    expect(feedsAuthValue.token.raw).toEqual(accessTokenFeedsRead);
-    expect(feedsAuthValue2.token.raw).toEqual(accessTokenFeedsRead);
-    expect(requestCount).toBe(1);
   });
 
   test("should fetch a new token when cached write token opts out of storage", async () => {

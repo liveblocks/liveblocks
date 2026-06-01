@@ -30,7 +30,6 @@ import type {
   ContextualPromptContext,
   ContextualPromptResponse,
 } from "./protocol/Ai";
-import { Permission } from "./protocol/Permission";
 import type {
   BaseMetadata,
   CommentAttachment,
@@ -59,6 +58,7 @@ import type {
   NotificationSettingsPlain,
   PartialNotificationSettings,
 } from "./protocol/NotificationSettings";
+import { Permission } from "./protocol/Permission";
 import type { RoomSubscriptionSettings } from "./protocol/RoomSubscriptionSettings";
 import type { StorageNode } from "./protocol/StorageNode";
 import type {
@@ -1337,9 +1337,7 @@ export function createApiClient<
           urls: (string | null)[];
         }>(
           url`/v2/c/chats/${chatId}/attachments/presigned-urls`,
-          await authManager.getAuthValue({
-            requestedScope: Permission.RoomCommentsRead,
-          }),
+          await authManager.getAuthValue(),
           { attachmentIds }
         );
 
@@ -1649,9 +1647,7 @@ export function createApiClient<
       };
     }>(
       url`/v2/c/inbox-notifications`,
-      await authManager.getAuthValue({
-        requestedScope: Permission.RoomCommentsRead,
-      }),
+      await authManager.getAuthValue(),
       {
         cursor: options?.cursor,
         limit: PAGE_SIZE,
@@ -1699,9 +1695,7 @@ export function createApiClient<
       };
     }>(
       url`/v2/c/inbox-notifications/delta`,
-      await authManager.getAuthValue({
-        requestedScope: Permission.RoomCommentsRead,
-      }),
+      await authManager.getAuthValue(),
       { since: options.since.toISOString(), query },
       { signal: options.signal }
     );
@@ -1739,9 +1733,7 @@ export function createApiClient<
 
     const { count } = await httpClient.get<{ count: number }>(
       url`/v2/c/inbox-notifications/count`,
-      await authManager.getAuthValue({
-        requestedScope: Permission.RoomCommentsRead,
-      }),
+      await authManager.getAuthValue(),
       { query },
       { signal: options?.signal }
     );
@@ -1751,9 +1743,7 @@ export function createApiClient<
   async function markAllInboxNotificationsAsRead() {
     await httpClient.post(
       url`/v2/c/inbox-notifications/read`,
-      await authManager.getAuthValue({
-        requestedScope: Permission.RoomCommentsRead,
-      }),
+      await authManager.getAuthValue(),
       {
         inboxNotificationIds: "all",
       }
@@ -1763,9 +1753,7 @@ export function createApiClient<
   async function markInboxNotificationsAsRead(inboxNotificationIds: string[]) {
     await httpClient.post(
       url`/v2/c/inbox-notifications/read`,
-      await authManager.getAuthValue({
-        requestedScope: Permission.RoomCommentsRead,
-      }),
+      await authManager.getAuthValue(),
       {
         inboxNotificationIds,
       }
@@ -1790,18 +1778,14 @@ export function createApiClient<
   async function deleteAllInboxNotifications() {
     await httpClient.delete(
       url`/v2/c/inbox-notifications`,
-      await authManager.getAuthValue({
-        requestedScope: Permission.RoomCommentsRead,
-      })
+      await authManager.getAuthValue()
     );
   }
 
   async function deleteInboxNotification(inboxNotificationId: string) {
     await httpClient.delete(
       url`/v2/c/inbox-notifications/${inboxNotificationId}`,
-      await authManager.getAuthValue({
-        requestedScope: Permission.RoomCommentsRead,
-      })
+      await authManager.getAuthValue()
     );
   }
 
@@ -1814,9 +1798,7 @@ export function createApiClient<
   }): Promise<NotificationSettingsPlain> {
     return httpClient.get<NotificationSettingsPlain>(
       url`/v2/c/notification-settings`,
-      await authManager.getAuthValue({
-        requestedScope: Permission.RoomCommentsRead,
-      }),
+      await authManager.getAuthValue(),
       undefined,
       { signal: options?.signal }
     );
@@ -1827,9 +1809,7 @@ export function createApiClient<
   ): Promise<NotificationSettingsPlain> {
     return httpClient.post<NotificationSettingsPlain>(
       url`/v2/c/notification-settings`,
-      await authManager.getAuthValue({
-        requestedScope: Permission.RoomCommentsRead,
-      }),
+      await authManager.getAuthValue(),
       settings
     );
   }
@@ -1867,9 +1847,7 @@ export function createApiClient<
       };
     }>(
       url`/v2/c/threads`,
-      await authManager.getAuthValue({
-        requestedScope: Permission.RoomCommentsRead,
-      }),
+      await authManager.getAuthValue(),
       {
         cursor: options?.cursor,
         query,
@@ -1906,9 +1884,7 @@ export function createApiClient<
       };
     }>(
       url`/v2/c/threads/delta`,
-      await authManager.getAuthValue({
-        requestedScope: Permission.RoomCommentsRead,
-      }),
+      await authManager.getAuthValue(),
       { since: options.since.toISOString() },
       { signal: options.signal }
     );
@@ -1945,9 +1921,7 @@ export function createApiClient<
         groups: GroupDataPlain[];
       }>(
         url`/v2/c/groups/find`,
-        await authManager.getAuthValue({
-          requestedScope: Permission.RoomCommentsRead,
-        }),
+        await authManager.getAuthValue(),
         { groupIds }
       );
 
@@ -1974,9 +1948,7 @@ export function createApiClient<
   async function getUrlMetadata(_url: string) {
     const { metadata } = await httpClient.get<{ metadata: UrlMetadata }>(
       url`/v2/c/urls/metadata`,
-      await authManager.getAuthValue({
-        requestedScope: Permission.RoomCommentsRead,
-      }),
+      await authManager.getAuthValue(),
       { url: _url }
     );
 

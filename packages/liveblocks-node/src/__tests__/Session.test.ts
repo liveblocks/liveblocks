@@ -78,7 +78,7 @@ describe("authorization (new API)", () => {
     expect(
       session.allow("xyz", session.READ_ACCESS).serializePermissions()
     ).toEqual({
-      xyz: ["room:read", "room:presence:write", "room:comments:read"],
+      xyz: ["room:read", "room:presence:write", "comments:read"],
     });
   });
 

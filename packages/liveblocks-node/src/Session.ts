@@ -28,7 +28,7 @@ const MAX_PERMS_PER_SET = 10;
 const READ_ACCESS = Object.freeze([
   Permission.RoomRead,
   Permission.LegacyRoomPresenceWrite,
-  Permission.RoomCommentsRead,
+  Permission.LegacyCommentsRead,
 ] as const);
 
 /**
@@ -147,7 +147,7 @@ export class Session {
     const existingPerms = this.#getOrCreate(roomIdOrPattern);
     for (const perm of permissions) {
       if (!isLiveblocksPermission(perm)) {
-        throw new Error(`Not a valid permission: ${perm}`);
+        throw new Error(`Not a valid permission: ${String(perm)}`);
       }
       existingPerms.add(perm);
     }

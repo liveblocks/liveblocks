@@ -2,11 +2,8 @@ import { freeze } from "../lib/freeze";
 import type { JsonObject } from "../lib/Json";
 import { DerivedSignal, merge, MutableSignal } from "../lib/signals";
 import { compact, compactObject } from "../lib/utils";
-import {
-  canWriteRoomFeature,
-  resolveRoomPermissions,
-} from "../protocol/Permission";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
+import { canUseRoomPermission, Permission } from "../protocol/Permission";
 import type { User } from "../types/User";
 
 type Connection<U extends BaseUserMeta> = {
@@ -21,15 +18,20 @@ function makeUser<P extends JsonObject, U extends BaseUserMeta>(
   presence: P
 ): User<P, U> {
   const { connectionId, id, info } = conn;
-  const permissions = resolveRoomPermissions(conn.scopes);
-  const canWrite = canWriteRoomFeature(permissions, "storage");
+  const canWrite = canUseRoomPermission(
+    conn.scopes,
+    Permission.RoomStorageWrite
+  );
   return freeze(
     compactObject({
       connectionId,
       id,
       info,
       canWrite,
-      canComment: canWriteRoomFeature(permissions, "comments"),
+      canComment: canUseRoomPermission(
+        conn.scopes,
+        Permission.RoomCommentsWrite
+      ),
       isReadOnly: !canWrite, // Deprecated, kept for backward-compatibility
       presence,
     })

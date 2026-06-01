@@ -20,13 +20,13 @@ import { makePosition } from "../lib/position";
 import { Signal } from "../lib/signals";
 import { deepClone } from "../lib/utils";
 import type { AccessToken, IDToken } from "../protocol/AuthToken";
-import { Permission } from "../protocol/Permission";
 import { TokenKind } from "../protocol/AuthToken";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { ClientMsg } from "../protocol/ClientMsg";
 import { ClientMsgCode } from "../protocol/ClientMsg";
 import type { BaseMetadata } from "../protocol/Comments";
 import type { Op, ServerWireOp } from "../protocol/Op";
+import { Permission } from "../protocol/Permission";
 import type { ServerMsg } from "../protocol/ServerMsg";
 import { ServerMsgCode } from "../protocol/ServerMsg";
 import type {
