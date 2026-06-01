@@ -46,7 +46,7 @@ import type {
 } from "@liveblocks/core";
 import {
   assert,
-  canUseRoomPermission,
+  canUseResolvedRoomPermission,
   console,
   createCommentId,
   createThreadId,
@@ -3737,7 +3737,7 @@ function useCanComment(roomId: string): boolean {
   const permissions = useRoomPermissions(roomId);
 
   return permissions !== undefined
-    ? canUseRoomPermission(permissions, Permission.RoomCommentsWrite)
+    ? canUseResolvedRoomPermission(permissions, Permission.RoomCommentsWrite)
     : selfCanComment;
 }
 

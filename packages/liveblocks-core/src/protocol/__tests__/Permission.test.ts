@@ -5,7 +5,6 @@ import {
   canUseResolvedRoomPermission,
   canUseRoomPermission,
   canWriteRoomFeature,
-  createPermissionGrantMatcher,
   hasRoomFeatureAccess,
   isLiveblocksPermission,
   Permission,
@@ -14,6 +13,7 @@ import {
   resolveRoomPermissions,
   resolveRoomPermissionsWithOverrides,
 } from "../Permission";
+import { createAuthTokenPermissionMatcher } from "../../auth-token-permissions";
 
 function expectCanUse(
   scopes: PermissionScopes,
@@ -186,6 +186,19 @@ describe("Permission", () => {
       comments: "write",
       feeds: "write",
     });
+
+    expect(
+      resolveRoomPermissions([
+        Permission.RoomWrite,
+        Permission.RoomStorageWrite,
+        Permission.RoomStorageNone,
+      ])
+    ).toEqual({
+      presence: "write",
+      storage: "none",
+      comments: "write",
+      feeds: "write",
+    });
   });
 
   test("should check feature access from scopes", () => {
@@ -247,7 +260,7 @@ describe("Permission", () => {
   });
 
   test("should match room permission grants by exact and wildcard resources", () => {
-    const matcher = createPermissionGrantMatcher({
+    const matcher = createAuthTokenPermissionMatcher({
       "org1*": [Permission.RoomWrite],
       "org1.room1": [Permission.RoomStorageNone],
     });
@@ -279,24 +292,33 @@ describe("Permission", () => {
   });
 
   test("should match roomless wildcard grants", () => {
-    const matcher = createPermissionGrantMatcher({
+    const matcher = createAuthTokenPermissionMatcher({
       "org1*": [Permission.RoomCommentsRead],
       "org1.room1": [Permission.RoomCommentsWrite],
     });
 
     expect(
-      matcher.canUse({ requestedScope: Permission.RoomCommentsRead })
+      matcher.canUse({
+        kind: "user",
+        requestedScope: Permission.RoomCommentsRead,
+      })
     ).toBe(true);
     expect(
-      matcher.canUse({ requestedScope: Permission.RoomCommentsWrite })
+      matcher.canUse({
+        kind: "user",
+        requestedScope: Permission.RoomCommentsWrite,
+      })
     ).toBe(false);
     expect(
-      matcher.canUse({ requestedScope: Permission.RoomCommentsWrite })
+      matcher.canUse({
+        kind: "user",
+        requestedScope: Permission.RoomCommentsWrite,
+      })
     ).toBe(false);
   });
 
   test("should match legacy grants", () => {
-    const matcher = createPermissionGrantMatcher({
+    const matcher = createAuthTokenPermissionMatcher({
       room1: [
         Permission.LegacyRoomPresenceWrite,
         Permission.LegacyCommentsWrite,
@@ -325,13 +347,19 @@ describe("Permission", () => {
   });
 
   test("should preserve empty roomless grant behavior", () => {
-    const matcher = createPermissionGrantMatcher({});
+    const matcher = createAuthTokenPermissionMatcher({});
 
     expect(
-      matcher.canUse({ requestedScope: Permission.RoomCommentsRead })
+      matcher.canUse({
+        kind: "user",
+        requestedScope: Permission.RoomCommentsRead,
+      })
     ).toBe(true);
     expect(
-      matcher.canUse({ requestedScope: Permission.RoomCommentsWrite })
+      matcher.canUse({
+        kind: "user",
+        requestedScope: Permission.RoomCommentsWrite,
+      })
     ).toBe(false);
     expect(
       matcher.canUse({
@@ -339,6 +367,6 @@ describe("Permission", () => {
         roomId: "room1",
       })
     ).toBe(false);
-    expect(matcher.canUse({})).toBe(true);
+    expect(matcher.canUse({ kind: "user" })).toBe(true);
   });
 });

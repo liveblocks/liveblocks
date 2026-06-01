@@ -788,8 +788,8 @@ describe("client", () => {
 
       await expect(
         client.updateRoom("test-room", {
+          // @ts-expect-error: testing JS callers with invalid values
           defaultAccesses: {
-            // @ts-expect-error: testing JS callers with invalid values
             comments: "full",
           },
         })
@@ -853,8 +853,8 @@ describe("client", () => {
       await expect(
         client.upsertRoom("test-room", {
           update: {
+            // @ts-expect-error: testing JS callers with invalid values
             defaultAccesses: {
-              // @ts-expect-error: testing JS callers with invalid values
               feeds: "full",
             },
           },

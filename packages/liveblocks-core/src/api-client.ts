@@ -1246,6 +1246,7 @@ export function createApiClient<
       await httpClient.putBlob(
         url`/v2/c/chats/${chatId}/attachments/${attachment.id}/upload/${encodeURIComponent(attachment.file.name)}`,
         await authManager.getAuthValue({
+          kind: "user",
           requestedScope: Permission.RoomCommentsWrite,
         }),
         attachment.file,
@@ -1259,6 +1260,7 @@ export function createApiClient<
       }>(
         url`/v2/c/chats/${chatId}/attachments/${attachment.id}/multipart/${encodeURIComponent(attachment.file.name)}`,
         await authManager.getAuthValue({
+          kind: "user",
           requestedScope: Permission.RoomCommentsWrite,
         }),
         undefined,
@@ -1292,6 +1294,7 @@ export function createApiClient<
               }>(
                 url`/v2/c/chats/${chatId}/attachments/${attachment.id}/multipart/${multipartUpload.uploadId}/${String(number)}`,
                 await authManager.getAuthValue({
+                  kind: "user",
                   requestedScope: Permission.RoomCommentsWrite,
                 }),
                 part,
@@ -1305,6 +1308,7 @@ export function createApiClient<
         await httpClient.post(
           url`/v2/c/chats/${chatId}/attachments/${attachment.id}/multipart/${multipartUpload.uploadId}/complete`,
           await authManager.getAuthValue({
+            kind: "user",
             requestedScope: Permission.RoomCommentsWrite,
           }),
           { parts: uploadedParts.sort((a, b) => a.number - b.number) },
@@ -1315,6 +1319,7 @@ export function createApiClient<
           await httpClient.delete(
             url`/v2/c/chats/${chatId}/attachments/${attachment.id}/multipart/${multipartUpload.uploadId}`,
             await authManager.getAuthValue({
+              kind: "user",
               requestedScope: Permission.RoomCommentsWrite,
             })
           );
@@ -1337,7 +1342,10 @@ export function createApiClient<
           urls: (string | null)[];
         }>(
           url`/v2/c/chats/${chatId}/attachments/presigned-urls`,
-          await authManager.getAuthValue(),
+          await authManager.getAuthValue({
+            kind: "user",
+            requestedScope: Permission.RoomCommentsRead,
+          }),
           { attachmentIds }
         );
 
@@ -1647,7 +1655,10 @@ export function createApiClient<
       };
     }>(
       url`/v2/c/inbox-notifications`,
-      await authManager.getAuthValue(),
+      await authManager.getAuthValue({
+        kind: "user",
+        requestedScope: Permission.RoomCommentsRead,
+      }),
       {
         cursor: options?.cursor,
         limit: PAGE_SIZE,
@@ -1695,7 +1706,10 @@ export function createApiClient<
       };
     }>(
       url`/v2/c/inbox-notifications/delta`,
-      await authManager.getAuthValue(),
+      await authManager.getAuthValue({
+        kind: "user",
+        requestedScope: Permission.RoomCommentsRead,
+      }),
       { since: options.since.toISOString(), query },
       { signal: options.signal }
     );
@@ -1733,7 +1747,10 @@ export function createApiClient<
 
     const { count } = await httpClient.get<{ count: number }>(
       url`/v2/c/inbox-notifications/count`,
-      await authManager.getAuthValue(),
+      await authManager.getAuthValue({
+        kind: "user",
+        requestedScope: Permission.RoomCommentsRead,
+      }),
       { query },
       { signal: options?.signal }
     );
@@ -1743,7 +1760,10 @@ export function createApiClient<
   async function markAllInboxNotificationsAsRead() {
     await httpClient.post(
       url`/v2/c/inbox-notifications/read`,
-      await authManager.getAuthValue(),
+      await authManager.getAuthValue({
+        kind: "user",
+        requestedScope: Permission.RoomCommentsRead,
+      }),
       {
         inboxNotificationIds: "all",
       }
@@ -1753,7 +1773,10 @@ export function createApiClient<
   async function markInboxNotificationsAsRead(inboxNotificationIds: string[]) {
     await httpClient.post(
       url`/v2/c/inbox-notifications/read`,
-      await authManager.getAuthValue(),
+      await authManager.getAuthValue({
+        kind: "user",
+        requestedScope: Permission.RoomCommentsRead,
+      }),
       {
         inboxNotificationIds,
       }
@@ -1778,14 +1801,20 @@ export function createApiClient<
   async function deleteAllInboxNotifications() {
     await httpClient.delete(
       url`/v2/c/inbox-notifications`,
-      await authManager.getAuthValue()
+      await authManager.getAuthValue({
+        kind: "user",
+        requestedScope: Permission.RoomCommentsRead,
+      })
     );
   }
 
   async function deleteInboxNotification(inboxNotificationId: string) {
     await httpClient.delete(
       url`/v2/c/inbox-notifications/${inboxNotificationId}`,
-      await authManager.getAuthValue()
+      await authManager.getAuthValue({
+        kind: "user",
+        requestedScope: Permission.RoomCommentsRead,
+      })
     );
   }
 
@@ -1798,7 +1827,10 @@ export function createApiClient<
   }): Promise<NotificationSettingsPlain> {
     return httpClient.get<NotificationSettingsPlain>(
       url`/v2/c/notification-settings`,
-      await authManager.getAuthValue(),
+      await authManager.getAuthValue({
+        kind: "user",
+        requestedScope: Permission.RoomCommentsRead,
+      }),
       undefined,
       { signal: options?.signal }
     );
@@ -1809,7 +1841,10 @@ export function createApiClient<
   ): Promise<NotificationSettingsPlain> {
     return httpClient.post<NotificationSettingsPlain>(
       url`/v2/c/notification-settings`,
-      await authManager.getAuthValue(),
+      await authManager.getAuthValue({
+        kind: "user",
+        requestedScope: Permission.RoomCommentsRead,
+      }),
       settings
     );
   }
@@ -1847,7 +1882,10 @@ export function createApiClient<
       };
     }>(
       url`/v2/c/threads`,
-      await authManager.getAuthValue(),
+      await authManager.getAuthValue({
+        kind: "user",
+        requestedScope: Permission.RoomCommentsRead,
+      }),
       {
         cursor: options?.cursor,
         query,
@@ -1884,7 +1922,10 @@ export function createApiClient<
       };
     }>(
       url`/v2/c/threads/delta`,
-      await authManager.getAuthValue(),
+      await authManager.getAuthValue({
+        kind: "user",
+        requestedScope: Permission.RoomCommentsRead,
+      }),
       { since: options.since.toISOString() },
       { signal: options.signal }
     );
@@ -1921,7 +1962,10 @@ export function createApiClient<
         groups: GroupDataPlain[];
       }>(
         url`/v2/c/groups/find`,
-        await authManager.getAuthValue(),
+        await authManager.getAuthValue({
+          kind: "user",
+          requestedScope: Permission.RoomCommentsRead,
+        }),
         { groupIds }
       );
 
@@ -1948,7 +1992,10 @@ export function createApiClient<
   async function getUrlMetadata(_url: string) {
     const { metadata } = await httpClient.get<{ metadata: UrlMetadata }>(
       url`/v2/c/urls/metadata`,
-      await authManager.getAuthValue(),
+      await authManager.getAuthValue({
+        kind: "user",
+        requestedScope: Permission.RoomCommentsRead,
+      }),
       { url: _url }
     );
 

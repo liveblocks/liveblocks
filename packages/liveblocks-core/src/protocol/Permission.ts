@@ -49,78 +49,6 @@ export const Permission = {
 
 export type Permission = (typeof Permission)[keyof typeof Permission];
 
-export const ROOM_PERMISSIONS = Object.freeze([
-  Permission.RoomRead,
-  Permission.RoomWrite,
-  Permission.RoomPresenceRead,
-  Permission.RoomPresenceNone,
-  Permission.RoomStorageRead,
-  Permission.RoomStorageWrite,
-  Permission.RoomStorageNone,
-  Permission.RoomCommentsRead,
-  Permission.RoomCommentsWrite,
-  Permission.RoomCommentsNone,
-  Permission.RoomFeedsRead,
-  Permission.RoomFeedsWrite,
-  Permission.RoomFeedsNone,
-] as const);
-
-export const LEGACY_ROOM_PERMISSIONS = Object.freeze([
-  Permission.LegacyRoomPresenceWrite,
-  Permission.LegacyCommentsRead,
-  Permission.LegacyCommentsWrite,
-  Permission.LegacyFeedsWrite,
-] as const);
-
-export const ROOM_PERMISSION_OBJECT_FIELDS = Object.freeze({
-  default: {
-    read: Permission.RoomRead,
-    write: Permission.RoomWrite,
-  },
-  presence: {
-    none: Permission.RoomPresenceNone,
-    read: Permission.RoomPresenceRead,
-  },
-  storage: {
-    none: Permission.RoomStorageNone,
-    read: Permission.RoomStorageRead,
-    write: Permission.RoomStorageWrite,
-  },
-  comments: {
-    none: Permission.RoomCommentsNone,
-    read: Permission.RoomCommentsRead,
-    write: Permission.RoomCommentsWrite,
-  },
-  feeds: {
-    none: Permission.RoomFeedsNone,
-    read: Permission.RoomFeedsRead,
-    write: Permission.RoomFeedsWrite,
-  },
-} as const);
-
-export type RoomPermission = `${(typeof ROOM_PERMISSIONS)[number]}`;
-export type LegacyRoomPermission =
-  `${(typeof LEGACY_ROOM_PERMISSIONS)[number]}`;
-export type LiveblocksPermission = RoomPermission | LegacyRoomPermission;
-export type LiveblocksPermissions = Record<string, LiveblocksPermission[]>;
-
-const ROOM_PERMISSION_SET: ReadonlySet<string> = new Set(ROOM_PERMISSIONS);
-
-const LIVEBLOCKS_PERMISSIONS_SET: ReadonlySet<string> = new Set([
-  ...ROOM_PERMISSIONS,
-  ...LEGACY_ROOM_PERMISSIONS,
-]);
-
-export function isRoomPermission(value: string): value is RoomPermission {
-  return ROOM_PERMISSION_SET.has(value);
-}
-
-export function isLiveblocksPermission(
-  value: string
-): value is LiveblocksPermission {
-  return LIVEBLOCKS_PERMISSIONS_SET.has(value);
-}
-
 export type AccessLevel = "write" | "read" | "none";
 export type RequiredAccessLevel = Exclude<AccessLevel, "none">;
 
@@ -134,203 +62,368 @@ const ROOM_PERMISSION_FEATURES = [
 export type RoomPermissionFeature = (typeof ROOM_PERMISSION_FEATURES)[number];
 export type RoomPermissionLevels = Record<RoomPermissionFeature, AccessLevel>;
 
-const ACCESS_LEVEL_RANK: Record<AccessLevel, number> = {
-  none: 0,
-  read: 1,
-  write: 2,
-};
-
-type FeaturePermissionCandidate = {
-  readonly level: AccessLevel;
-  readonly permission: Permission;
-};
-
-type FeaturePermissionConfig = {
-  readonly candidates: readonly FeaturePermissionCandidate[];
-};
-
-const ROOM_FEATURE_PERMISSION_CONFIG: Record<
-  RoomPermissionFeature,
-  FeaturePermissionConfig
-> = {
-  presence: {
-    candidates: [
-      { level: "none", permission: Permission.RoomPresenceNone },
-      { level: "read", permission: Permission.RoomPresenceRead },
-      { level: "write", permission: Permission.LegacyRoomPresenceWrite },
-    ],
+const PERMISSION_RULES = [
+  {
+    permission: Permission.RoomRead,
+    namespace: "room",
+    grant: { kind: "all", level: "read" },
+    input: { field: "default", level: "read" },
   },
-  storage: {
-    candidates: [
-      { level: "none", permission: Permission.RoomStorageNone },
-      { level: "read", permission: Permission.RoomStorageRead },
-      { level: "write", permission: Permission.RoomStorageWrite },
-    ],
+  {
+    permission: Permission.RoomWrite,
+    namespace: "room",
+    grant: { kind: "all", level: "write" },
+    input: { field: "default", level: "write" },
   },
-  comments: {
-    candidates: [
-      { level: "none", permission: Permission.RoomCommentsNone },
-      { level: "read", permission: Permission.RoomCommentsRead },
-      { level: "write", permission: Permission.RoomCommentsWrite },
-      { level: "read", permission: Permission.LegacyCommentsRead },
-      { level: "write", permission: Permission.LegacyCommentsWrite },
-    ],
+  {
+    permission: Permission.RoomPresenceRead,
+    namespace: "room",
+    grant: { kind: "feature", feature: "presence", level: "read" },
+    input: { field: "presence", level: "read" },
+    request: true,
   },
-  feeds: {
-    candidates: [
-      { level: "none", permission: Permission.RoomFeedsNone },
-      { level: "read", permission: Permission.RoomFeedsRead },
-      { level: "write", permission: Permission.RoomFeedsWrite },
-      { level: "write", permission: Permission.LegacyFeedsWrite },
-    ],
+  {
+    permission: Permission.RoomPresenceNone,
+    namespace: "room",
+    grant: { kind: "feature", feature: "presence", level: "none" },
+    input: { field: "presence", level: "none" },
   },
-};
-
-const GLOBAL_ROOM_PERMISSIONS = [
-  Permission.RoomRead,
-  Permission.RoomWrite,
+  {
+    permission: Permission.RoomStorageRead,
+    namespace: "room",
+    grant: { kind: "feature", feature: "storage", level: "read" },
+    input: { field: "storage", level: "read" },
+    request: true,
+  },
+  {
+    permission: Permission.RoomStorageWrite,
+    namespace: "room",
+    grant: { kind: "feature", feature: "storage", level: "write" },
+    input: { field: "storage", level: "write" },
+    request: true,
+  },
+  {
+    permission: Permission.RoomStorageNone,
+    namespace: "room",
+    grant: { kind: "feature", feature: "storage", level: "none" },
+    input: { field: "storage", level: "none" },
+  },
+  {
+    permission: Permission.RoomCommentsRead,
+    namespace: "room",
+    grant: { kind: "feature", feature: "comments", level: "read" },
+    input: { field: "comments", level: "read" },
+    request: true,
+  },
+  {
+    permission: Permission.RoomCommentsWrite,
+    namespace: "room",
+    grant: { kind: "feature", feature: "comments", level: "write" },
+    input: { field: "comments", level: "write" },
+    request: true,
+  },
+  {
+    permission: Permission.RoomCommentsNone,
+    namespace: "room",
+    grant: { kind: "feature", feature: "comments", level: "none" },
+    input: { field: "comments", level: "none" },
+  },
+  {
+    permission: Permission.RoomFeedsRead,
+    namespace: "room",
+    grant: { kind: "feature", feature: "feeds", level: "read" },
+    input: { field: "feeds", level: "read" },
+    request: true,
+  },
+  {
+    permission: Permission.RoomFeedsWrite,
+    namespace: "room",
+    grant: { kind: "feature", feature: "feeds", level: "write" },
+    input: { field: "feeds", level: "write" },
+    request: true,
+  },
+  {
+    permission: Permission.RoomFeedsNone,
+    namespace: "room",
+    grant: { kind: "feature", feature: "feeds", level: "none" },
+    input: { field: "feeds", level: "none" },
+  },
+  {
+    permission: Permission.LegacyRoomPresenceWrite,
+    namespace: "legacy",
+    grant: { kind: "feature", feature: "presence", level: "write" },
+  },
+  {
+    permission: Permission.LegacyCommentsRead,
+    namespace: "legacy",
+    grant: { kind: "feature", feature: "comments", level: "read" },
+  },
+  {
+    permission: Permission.LegacyCommentsWrite,
+    namespace: "legacy",
+    grant: { kind: "feature", feature: "comments", level: "write" },
+  },
+  {
+    permission: Permission.LegacyFeedsWrite,
+    namespace: "legacy",
+    grant: { kind: "feature", feature: "feeds", level: "write" },
+  },
 ] as const;
 
-function featurePermissionStrings(
-  feature: RoomPermissionFeature
-): readonly Permission[] {
-  return ROOM_FEATURE_PERMISSION_CONFIG[feature].candidates.map(
-    (candidate) => candidate.permission
-  );
-}
+type PermissionRule = (typeof PERMISSION_RULES)[number];
+type RoomPermissionRule = Extract<PermissionRule, { namespace: "room" }>;
+type LegacyRoomPermissionRule = Extract<
+  PermissionRule,
+  { namespace: "legacy" }
+>;
+type PermissionInputRule = Extract<
+  PermissionRule,
+  { input: { field: string; level: string } }
+>;
+type RequestedPermissionRule = Extract<PermissionRule, { request: true }>;
 
-function getBaseAccessLevel(scopes: ReadonlySet<Permission>): AccessLevel {
-  if (scopes.has(Permission.RoomWrite)) {
-    return "write";
-  }
+export type RoomPermission = RoomPermissionRule["permission"];
+export type LegacyRoomPermission = LegacyRoomPermissionRule["permission"];
+export type LiveblocksPermission = PermissionRule["permission"];
+export type RequestedScope = RequestedPermissionRule["permission"];
+export type LiveblocksPermissions = Record<string, LiveblocksPermission[]>;
 
-  if (scopes.has(Permission.RoomRead)) {
-    return "read";
-  }
+type RoomPermissionObjectField = PermissionInputRule["input"]["field"];
 
-  return "none";
-}
+export type RoomPermissionObject = Partial<{
+  [Field in RoomPermissionObjectField]: Extract<
+    PermissionInputRule,
+    { input: { field: Field } }
+  >["input"]["level"];
+}>;
 
-function featureAccessLevel(
-  scopes: ReadonlySet<Permission>,
-  candidates: readonly { level: AccessLevel; permission: Permission }[],
-  fallback: AccessLevel
-): AccessLevel {
-  let resolved: AccessLevel | undefined;
-
-  for (const { level, permission } of candidates) {
-    if (!scopes.has(permission)) {
-      continue;
-    }
-
-    if (
-      resolved === undefined ||
-      ACCESS_LEVEL_RANK[level] > ACCESS_LEVEL_RANK[resolved]
-    ) {
-      resolved = level;
-    }
-  }
-
-  return resolved ?? fallback;
-}
-
-function roomFeatureAccessLevel(
-  feature: RoomPermissionFeature,
-  scopes: ReadonlySet<Permission>,
-  fallback: AccessLevel
-): AccessLevel {
-  return featureAccessLevel(
-    scopes,
-    ROOM_FEATURE_PERMISSION_CONFIG[feature].candidates,
-    fallback
-  );
-}
-
-export function hasRoomFeatureAccess(
-  scopes: readonly Permission[],
-  feature: RoomPermissionFeature,
-  requiredAccess: RequiredAccessLevel
-): boolean {
-  const levels = resolveRoomPermissions(scopes);
-  return requiredAccess === "write"
-    ? canWriteRoomFeature(levels, feature)
-    : canReadRoomFeature(levels, feature);
-}
-
+/** Normalized room permission strings for a single room (REST API shape). */
+export type RoomPermissionList = LiveblocksPermission[];
+export type RoomPermissionInput =
+  | readonly LiveblocksPermission[]
+  | RoomPermissionObject;
+export type RoomAccesses = Record<string, RoomPermissionList>;
+export type RoomAccessesInput = Record<string, RoomPermissionInput>;
 export type PermissionScopes = readonly string[] | ReadonlySet<string>;
-export type RequestedScope =
-  | typeof Permission.RoomPresenceRead
-  | typeof Permission.RoomStorageRead
-  | typeof Permission.RoomStorageWrite
-  | typeof Permission.RoomCommentsRead
-  | typeof Permission.RoomCommentsWrite
-  | typeof Permission.RoomFeedsRead
-  | typeof Permission.RoomFeedsWrite;
 
-export type PermissionRequest = {
-  readonly requestedScope?: RequestedScope;
-  readonly roomId?: string;
+function isRoomPermissionRule(
+  rule: PermissionRule
+): rule is RoomPermissionRule {
+  return rule.namespace === "room";
+}
+
+function isLegacyRoomPermissionRule(
+  rule: PermissionRule
+): rule is LegacyRoomPermissionRule {
+  return rule.namespace === "legacy";
+}
+
+export const ROOM_PERMISSIONS: readonly RoomPermission[] = Object.freeze(
+  PERMISSION_RULES.filter(isRoomPermissionRule).map((rule) => rule.permission)
+);
+
+export const LEGACY_ROOM_PERMISSIONS: readonly LegacyRoomPermission[] =
+  Object.freeze(
+    PERMISSION_RULES.filter(isLegacyRoomPermissionRule).map(
+      (rule) => rule.permission
+    )
+  );
+
+const PERMISSION_RULES_BY_PERMISSION = new Map<string, PermissionRule>(
+  PERMISSION_RULES.map((rule) => [rule.permission, rule])
+);
+
+const ROOM_PERMISSION_INPUT_FIELDS = [
+  "default",
+  "presence",
+  "storage",
+  "comments",
+  "feeds",
+] as const;
+
+const EXPLICIT_ACCESS_LEVEL_RANK: Record<AccessLevel, number> = {
+  read: 1,
+  write: 2,
+  none: 3,
 };
 
-export type PermissionGrantMatcher = {
-  canUse(request: PermissionRequest): boolean;
-};
+export function isRoomPermission(value: string): value is RoomPermission {
+  const rule = PERMISSION_RULES_BY_PERMISSION.get(value);
+  return rule !== undefined && rule.namespace === "room";
+}
 
-export function asPermissionSet(
+export function isLiveblocksPermission(
+  value: string
+): value is LiveblocksPermission {
+  return PERMISSION_RULES_BY_PERMISSION.has(value);
+}
+
+function formatAllowedValues(field: RoomPermissionObjectField): string {
+  const allowedValues: string[] = [];
+
+  for (const rule of PERMISSION_RULES) {
+    if ("input" in rule && rule.input.field === field) {
+      allowedValues.push(`"${rule.input.level}"`);
+    }
+  }
+
+  return allowedValues.join(", ");
+}
+
+function normalizePermissionValue(
+  field: RoomPermissionObjectField,
+  value: string | undefined
+): LiveblocksPermission | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  for (const rule of PERMISSION_RULES) {
+    if (
+      "input" in rule &&
+      rule.input.field === field &&
+      rule.input.level === value
+    ) {
+      return rule.permission;
+    }
+  }
+
+  throw new Error(
+    `Invalid room permission object value for "${field}": ${String(
+      value
+    )}. Expected one of ${formatAllowedValues(field)}.`
+  );
+}
+
+export function normalizeRoomPermissions(
+  permissions: RoomPermissionObject
+): RoomPermissionList {
+  const normalized: RoomPermissionList = [];
+
+  for (const field of ROOM_PERMISSION_INPUT_FIELDS) {
+    const permission = normalizePermissionValue(field, permissions[field]);
+    if (permission !== undefined) {
+      normalized.push(permission);
+    }
+  }
+
+  if (normalized.length === 0) {
+    throw new Error("Room permission object cannot be empty");
+  }
+
+  return normalized;
+}
+
+export function normalizeRoomPermissionList(
+  permissions: readonly string[]
+): RoomPermissionList {
+  const normalized: RoomPermissionList = [];
+
+  for (const permission of permissions) {
+    if (!isLiveblocksPermission(permission)) {
+      throw new Error(`Not a valid permission: ${String(permission)}`);
+    }
+
+    normalized.push(permission);
+  }
+
+  return normalized;
+}
+
+function isRoomPermissionList(
+  permissions: RoomPermissionInput
+): permissions is readonly LiveblocksPermission[] {
+  return Array.isArray(permissions);
+}
+
+export function normalizeRoomPermissionInput(
+  permissions: RoomPermissionInput
+): RoomPermissionList {
+  return isRoomPermissionList(permissions)
+    ? normalizeRoomPermissionList(permissions)
+    : normalizeRoomPermissions(permissions);
+}
+
+function asPermissionSet(
   scopes: PermissionScopes
-): ReadonlySet<Permission> {
-  const permissionSet = new Set<Permission>();
+): ReadonlySet<PermissionRule> {
+  const permissionSet = new Set<PermissionRule>();
 
   for (const scope of scopes) {
-    if (isLiveblocksPermission(scope)) {
-      permissionSet.add(scope);
+    const rule = PERMISSION_RULES_BY_PERMISSION.get(scope);
+    if (rule !== undefined) {
+      permissionSet.add(rule);
     }
   }
 
   return permissionSet;
 }
 
-function hasAnyPermission(
-  scopes: ReadonlySet<Permission>,
-  permissions: readonly Permission[]
-): boolean {
-  for (const permission of permissions) {
-    if (scopes.has(permission)) {
-      return true;
+function emptyRoomPermissionLevels(level: AccessLevel): RoomPermissionLevels {
+  return {
+    presence: level,
+    storage: level,
+    comments: level,
+    feeds: level,
+  };
+}
+
+function getBaseAccessLevel(rules: ReadonlySet<PermissionRule>): AccessLevel {
+  for (const rule of rules) {
+    if (rule.grant.kind === "all" && rule.grant.level === "write") {
+      return "write";
     }
   }
-  return false;
+
+  for (const rule of rules) {
+    if (rule.grant.kind === "all" && rule.grant.level === "read") {
+      return "read";
+    }
+  }
+
+  return "none";
 }
 
 export function resolveRoomPermissions(
   scopes: PermissionScopes
 ): RoomPermissionLevels {
-  const permissionSet = asPermissionSet(scopes);
-  const base = getBaseAccessLevel(permissionSet);
+  const rules = asPermissionSet(scopes);
+  const levels = emptyRoomPermissionLevels(getBaseAccessLevel(rules));
+  const explicitRanks = new Map<RoomPermissionFeature, number>();
 
-  return {
-    presence: roomFeatureAccessLevel("presence", permissionSet, base),
-    storage: roomFeatureAccessLevel("storage", permissionSet, base),
-    comments: roomFeatureAccessLevel("comments", permissionSet, base),
-    feeds: roomFeatureAccessLevel("feeds", permissionSet, base),
-  };
-}
+  for (const rule of rules) {
+    if (rule.grant.kind !== "feature") {
+      continue;
+    }
 
-function resolveRoomPermissionOverrides(
-  scopes: ReadonlySet<Permission>
-): Partial<RoomPermissionLevels> {
-  const resolved = resolveRoomPermissions(scopes);
-  const overrides: Partial<RoomPermissionLevels> = {};
+    const { feature, level } = rule.grant;
+    const rank = EXPLICIT_ACCESS_LEVEL_RANK[level];
+    const previousRank = explicitRanks.get(feature);
 
-  if (hasAnyPermission(scopes, GLOBAL_ROOM_PERMISSIONS)) {
-    for (const feature of ROOM_PERMISSION_FEATURES) {
-      overrides[feature] = resolved[feature];
+    if (previousRank === undefined || rank > previousRank) {
+      levels[feature] = level;
+      explicitRanks.set(feature, rank);
     }
   }
 
-  for (const feature of ROOM_PERMISSION_FEATURES) {
-    if (hasAnyPermission(scopes, featurePermissionStrings(feature))) {
-      overrides[feature] = resolved[feature];
+  return levels;
+}
+
+function resolveRoomPermissionOverrides(
+  rules: ReadonlySet<PermissionRule>
+): Partial<RoomPermissionLevels> {
+  const resolved = resolveRoomPermissions(
+    Array.from(rules, (rule) => rule.permission)
+  );
+  const overrides: Partial<RoomPermissionLevels> = {};
+
+  for (const rule of rules) {
+    if (rule.grant.kind === "all") {
+      for (const feature of ROOM_PERMISSION_FEATURES) {
+        overrides[feature] = resolved[feature];
+      }
+    } else {
+      overrides[rule.grant.feature] = resolved[rule.grant.feature];
     }
   }
 
@@ -340,12 +433,7 @@ function resolveRoomPermissionOverrides(
 export function resolveRoomPermissionsWithOverrides(
   scopesByPrecedence: readonly PermissionScopes[]
 ): RoomPermissionLevels {
-  const levels: Record<RoomPermissionFeature, AccessLevel> = {
-    presence: "none",
-    storage: "none",
-    comments: "none",
-    feeds: "none",
-  };
+  const levels = emptyRoomPermissionLevels("none");
 
   for (const scopes of scopesByPrecedence) {
     const overrides = resolveRoomPermissionOverrides(asPermissionSet(scopes));
@@ -394,27 +482,31 @@ export function canWriteRoomFeature(
   return canUseFeature(levels, feature, "write");
 }
 
-const REQUESTED_SCOPE_ACCESS: Record<
-  RequestedScope,
-  {
-    feature: RoomPermissionFeature;
-    level: RequiredAccessLevel;
+function requestedScopeAccess(requestedScope: RequestedScope): {
+  feature: RoomPermissionFeature;
+  level: RequiredAccessLevel;
+} {
+  const rule = PERMISSION_RULES_BY_PERMISSION.get(requestedScope);
+
+  if (
+    rule === undefined ||
+    rule.grant.kind !== "feature" ||
+    rule.grant.level === "none"
+  ) {
+    throw new Error(`Not a valid requested permission: ${requestedScope}`);
   }
-> = {
-  [Permission.RoomPresenceRead]: { feature: "presence", level: "read" },
-  [Permission.RoomStorageRead]: { feature: "storage", level: "read" },
-  [Permission.RoomStorageWrite]: { feature: "storage", level: "write" },
-  [Permission.RoomCommentsRead]: { feature: "comments", level: "read" },
-  [Permission.RoomCommentsWrite]: { feature: "comments", level: "write" },
-  [Permission.RoomFeedsRead]: { feature: "feeds", level: "read" },
-  [Permission.RoomFeedsWrite]: { feature: "feeds", level: "write" },
-};
+
+  return {
+    feature: rule.grant.feature,
+    level: rule.grant.level,
+  };
+}
 
 export function canUseResolvedRoomPermission(
   levels: RoomPermissionLevels,
   requestedScope: RequestedScope
 ): boolean {
-  const { feature, level } = REQUESTED_SCOPE_ACCESS[requestedScope];
+  const { feature, level } = requestedScopeAccess(requestedScope);
   return canUseFeature(levels, feature, level);
 }
 
@@ -428,120 +520,13 @@ export function canUseRoomPermission(
   );
 }
 
-function getMatchingPermissionScopes(
-  permissions: LiveblocksPermissions,
-  roomId: string
-): LiveblocksPermission[][] {
-  return Object.entries(permissions)
-    .map(([resource, scopes]) => {
-      if (resource === roomId) {
-        return { scopes, specificity: resource.length + 1 };
-      }
-
-      if (resource.includes("*")) {
-        const prefix = resource.replace("*", "");
-        if (roomId.startsWith(prefix)) {
-          return { scopes, specificity: prefix.length };
-        }
-      }
-
-      return undefined;
-    })
-    .filter(
-      (
-        entry
-      ): entry is {
-        scopes: LiveblocksPermission[];
-        specificity: number;
-      } => {
-        return entry !== undefined;
-      }
-    )
-    .sort((left, right) => left.specificity - right.specificity)
-    .map((entry) => entry.scopes);
-}
-
-export function createPermissionGrantMatcher(
-  permissions: LiveblocksPermissions
-): PermissionGrantMatcher {
-  const roomPermissionsById = new Map<string, RoomPermissionLevels | null>();
-  const roomlessPermissionsByResource = new Map<string, RoomPermissionLevels>();
-
-  function getResolvedRoomPermissions(
-    roomId: string
-  ): RoomPermissionLevels | undefined {
-    if (roomPermissionsById.has(roomId)) {
-      return roomPermissionsById.get(roomId) ?? undefined;
-    }
-
-    const matchingScopes = getMatchingPermissionScopes(permissions, roomId);
-
-    if (matchingScopes.length === 0) {
-      roomPermissionsById.set(roomId, null);
-      return undefined;
-    }
-
-    const resolved = resolveRoomPermissionsWithOverrides(matchingScopes);
-    roomPermissionsById.set(roomId, resolved);
-    return resolved;
-  }
-
-  function getResolvedRoomlessPermissions(
-    resource: string,
-    scopes: readonly LiveblocksPermission[]
-  ): RoomPermissionLevels {
-    const cachedPermissions = roomlessPermissionsByResource.get(resource);
-
-    if (cachedPermissions !== undefined) {
-      return cachedPermissions;
-    }
-
-    const resolved = resolveRoomPermissions(scopes);
-    roomlessPermissionsByResource.set(resource, resolved);
-    return resolved;
-  }
-
-  return {
-    canUse(request: PermissionRequest): boolean {
-      if (!request.roomId && request.requestedScope === undefined) {
-        return true;
-      }
-
-      if (!request.roomId && Object.entries(permissions).length === 0) {
-        return request.requestedScope === Permission.RoomCommentsRead;
-      }
-
-      if (request.requestedScope === undefined) {
-        return false;
-      }
-
-      if (request.roomId) {
-        const roomPermissions = getResolvedRoomPermissions(request.roomId);
-        return (
-          roomPermissions !== undefined &&
-          canUseResolvedRoomPermission(
-            roomPermissions,
-            request.requestedScope
-          )
-        );
-      }
-
-      for (const [resource, scopes] of Object.entries(permissions)) {
-        if (!resource.includes("*")) {
-          continue;
-        }
-
-        if (
-          canUseResolvedRoomPermission(
-            getResolvedRoomlessPermissions(resource, scopes),
-            request.requestedScope
-          )
-        ) {
-          return true;
-        }
-      }
-
-      return false;
-    },
-  };
+export function hasRoomFeatureAccess(
+  scopes: readonly Permission[],
+  feature: RoomPermissionFeature,
+  requiredAccess: RequiredAccessLevel
+): boolean {
+  const levels = resolveRoomPermissions(scopes);
+  return requiredAccess === "write"
+    ? canWriteRoomFeature(levels, feature)
+    : canReadRoomFeature(levels, feature);
 }

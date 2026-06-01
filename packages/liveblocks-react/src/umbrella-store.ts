@@ -22,6 +22,7 @@ import type {
   PartialNotificationSettings,
   Patchable,
   Permission,
+  RoomPermissionLevels,
   Resolve,
   RoomSubscriptionSettings,
   SubscriptionData,
@@ -47,6 +48,7 @@ import {
   nanoid,
   nn,
   patchNotificationSettings,
+  resolveRoomPermissions,
   shallow,
   shallow2,
   Signal,
@@ -956,7 +958,7 @@ function createStore_forUrlsMetadata() {
 
 function createStore_forPermissionHints() {
   const permissionsByRoomId = new DefaultMap(
-    () => new Signal<Set<Permission> | undefined>(undefined)
+    () => new Signal<RoomPermissionLevels | undefined>(undefined)
   );
   const lastRequestedAtByRoomId = new Map<RoomId, number>();
 
@@ -972,14 +974,14 @@ function createStore_forPermissionHints() {
 
         lastRequestedAtByRoomId.set(roomId, timestamp);
         const signal = permissionsByRoomId.getOrCreate(roomId);
-        signal.set(new Set(permissions));
+        signal.set(resolveRoomPermissions(permissions));
       }
     });
   }
 
   function getPermissionForRoomΣ(
     roomId: string
-  ): ISignal<Set<Permission> | undefined> {
+  ): ISignal<RoomPermissionLevels | undefined> {
     return permissionsByRoomId.getOrCreate(roomId);
   }
 

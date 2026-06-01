@@ -693,6 +693,7 @@ export function createClient<U extends BaseUserMeta = DU>(
       ),
       authenticate: async () => {
         const resp = await authManager.getAuthValue({
+          kind: "user",
           requestedScope: Permission.RoomPresenceRead,
         });
         if (resp.type === "public") {

@@ -1,14 +1,20 @@
 import { Permission } from "@liveblocks/core";
+import type { RoomPermissionLevels } from "@liveblocks/core";
 import type { ReactNode } from "react";
 import { describe, expect, test } from "vitest";
 
 import { useCanComment, useRoomPermissions } from "../_private";
 import { act, createContextsForTest, renderHook } from "./_utils";
 
-function toPermissionList(
-  permissions: ReadonlySet<Permission> | undefined
-): Permission[] | undefined {
-  return permissions === undefined ? undefined : Array.from(permissions);
+function roomPermissionLevels(
+  comments: RoomPermissionLevels["comments"] = "none"
+): RoomPermissionLevels {
+  return {
+    presence: "none",
+    storage: "none",
+    comments,
+    feeds: "none",
+  };
 }
 
 describe("useRoomPermissions", () => {
@@ -36,7 +42,7 @@ describe("useRoomPermissions", () => {
       );
     });
 
-    expect(toPermissionList(result.current)).toEqual([]);
+    expect(result.current).toEqual(roomPermissionLevels());
 
     unmount();
   });
@@ -63,9 +69,7 @@ describe("useRoomPermissions", () => {
       );
     });
 
-    expect(toPermissionList(result.current)).toEqual([
-      Permission.RoomCommentsNone,
-    ]);
+    expect(result.current).toEqual(roomPermissionLevels());
 
     act(() => {
       umbrellaStore.permissionHints.update(
@@ -76,9 +80,7 @@ describe("useRoomPermissions", () => {
       );
     });
 
-    expect(toPermissionList(result.current)).toEqual([
-      Permission.RoomCommentsWrite,
-    ]);
+    expect(result.current).toEqual(roomPermissionLevels("write"));
 
     act(() => {
       umbrellaStore.permissionHints.update(
@@ -89,9 +91,7 @@ describe("useRoomPermissions", () => {
       );
     });
 
-    expect(toPermissionList(result.current)).toEqual([
-      Permission.RoomCommentsWrite,
-    ]);
+    expect(result.current).toEqual(roomPermissionLevels("write"));
 
     act(() => {
       umbrellaStore.permissionHints.update(
@@ -102,9 +102,7 @@ describe("useRoomPermissions", () => {
       );
     });
 
-    expect(toPermissionList(result.current)).toEqual([
-      Permission.RoomCommentsNone,
-    ]);
+    expect(result.current).toEqual(roomPermissionLevels());
 
     unmount();
   });

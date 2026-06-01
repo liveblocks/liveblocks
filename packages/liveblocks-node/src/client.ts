@@ -186,6 +186,7 @@ export type {
   RoomAccessesInput,
   RoomPermissionInput,
   RoomPermissionList,
+  RoomPermissionObject,
 } from "./permissions";
 export type RoomPermission = RoomPermissionList;
 export type RoomMetadata = Record<string, string | string[]>;
@@ -1194,7 +1195,7 @@ export class Liveblocks {
     params: UpsertRoomOptions,
     options?: RequestOptions
   ): Promise<RoomData> {
-    const body: UpsertRoomOptions = {
+    const body = {
       update: normalizeUpdateRoomOptionsInput(params.update),
       create:
         params.create === undefined

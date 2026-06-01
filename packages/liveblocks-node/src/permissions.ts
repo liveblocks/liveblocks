@@ -1,123 +1,22 @@
-import type {
-  LiveblocksPermission,
-  Permission as CorePermissionType,
-} from "@liveblocks/core";
 import {
-  Permission as CorePermission,
-  ROOM_PERMISSION_OBJECT_FIELDS,
+  normalizeRoomPermissionInput,
+  normalizeRoomPermissions,
 } from "@liveblocks/core";
-
-export const Permission = CorePermission;
-export type Permission = CorePermissionType;
+import type {
+  RoomAccesses,
+  RoomAccessesInput,
+  RoomPermissionInput,
+  RoomPermissionList,
+} from "@liveblocks/core";
 
 export type {
-  AccessLevel,
-  RequiredAccessLevel,
-  RoomPermissionFeature,
-  RoomPermissionLevels,
+  RoomAccesses,
+  RoomAccessesInput,
+  RoomPermissionInput,
+  RoomPermissionList,
+  RoomPermissionObject,
 } from "@liveblocks/core";
-export {
-  canReadRoomFeature,
-  canWriteRoomFeature,
-  hasRoomFeatureAccess,
-  LEGACY_ROOM_PERMISSIONS,
-  resolveRoomPermissions,
-  ROOM_PERMISSIONS,
-} from "@liveblocks/core";
-
-type RoomPermissionObjectFields = typeof ROOM_PERMISSION_OBJECT_FIELDS;
-type RoomPermissionObjectField = keyof RoomPermissionObjectFields;
-
-export type RoomPermissionObject = Partial<{
-  [Field in RoomPermissionObjectField]: keyof RoomPermissionObjectFields[Field];
-}>;
-
-export type RoomPermissionString = LiveblocksPermission;
-
-/** Normalized room permission strings for a single room (REST API shape). */
-export type RoomPermissionList = RoomPermissionString[];
-
-export type RoomAccesses = Record<string, RoomPermissionList>;
-export type RoomPermissionInput = RoomPermissionList | RoomPermissionObject;
-export type RoomAccessesInput = Record<string, RoomPermissionInput>;
-
-function formatAllowedValues(
-  permissions: Readonly<Record<string, RoomPermissionString>>
-) {
-  return Object.keys(permissions)
-    .map((value) => `"${value}"`)
-    .join(", ");
-}
-
-function normalizePermissionValue<
-  TPermissions extends Readonly<Record<string, RoomPermissionString>>,
->(
-  field: string,
-  value: Extract<keyof TPermissions, string> | undefined,
-  permissions: TPermissions
-): RoomPermissionString | undefined {
-  if (value === undefined) {
-    return undefined;
-  }
-
-  if (!Object.prototype.hasOwnProperty.call(permissions, value)) {
-    throw new Error(
-      `Invalid room permission object value for "${field}": ${String(
-        value
-      )}. Expected one of ${formatAllowedValues(permissions)}.`
-    );
-  }
-
-  return permissions[value];
-}
-
-export function normalizeRoomPermissions(
-  permissions: RoomPermissionObject
-): RoomPermissionString[] {
-  const normalized = [
-    normalizePermissionValue(
-      "default",
-      permissions.default,
-      ROOM_PERMISSION_OBJECT_FIELDS.default
-    ),
-    normalizePermissionValue(
-      "presence",
-      permissions.presence,
-      ROOM_PERMISSION_OBJECT_FIELDS.presence
-    ),
-    normalizePermissionValue(
-      "storage",
-      permissions.storage,
-      ROOM_PERMISSION_OBJECT_FIELDS.storage
-    ),
-    normalizePermissionValue(
-      "comments",
-      permissions.comments,
-      ROOM_PERMISSION_OBJECT_FIELDS.comments
-    ),
-    normalizePermissionValue(
-      "feeds",
-      permissions.feeds,
-      ROOM_PERMISSION_OBJECT_FIELDS.feeds
-    ),
-  ].filter(
-    (permission): permission is RoomPermissionString => permission !== undefined
-  );
-
-  if (normalized.length === 0) {
-    throw new Error("Room permission object cannot be empty");
-  }
-
-  return normalized;
-}
-
-export function normalizeRoomPermissionInput(
-  permissions: RoomPermissionInput
-): RoomPermissionList {
-  return Array.isArray(permissions)
-    ? permissions
-    : normalizeRoomPermissions(permissions);
-}
+export { normalizeRoomPermissionInput, normalizeRoomPermissions };
 
 export function mapRoomAccesses(
   accesses: RoomAccessesInput | undefined,

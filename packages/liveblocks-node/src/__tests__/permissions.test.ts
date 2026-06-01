@@ -1,6 +1,9 @@
 import { describe, expect, test } from "vitest";
 
-import { normalizeRoomPermissions } from "../permissions";
+import {
+  normalizeRoomPermissionInput,
+  normalizeRoomPermissions,
+} from "../permissions";
 
 describe("normalizeRoomPermissions", () => {
   test("normalizes default room permissions", () => {
@@ -101,5 +104,14 @@ describe("normalizeRoomPermissions", () => {
         feeds: "full",
       })
     ).toThrow('Invalid room permission object value for "feeds"');
+  });
+
+  test("throws when permission arrays contain invalid strings", () => {
+    expect(() =>
+      normalizeRoomPermissionInput([
+        // @ts-expect-error: testing JS callers with invalid values
+        "not-a-permission",
+      ])
+    ).toThrow("Not a valid permission: not-a-permission");
   });
 });

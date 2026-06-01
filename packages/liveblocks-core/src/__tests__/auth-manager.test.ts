@@ -19,7 +19,7 @@ const SECONDS = 1 * 1000;
 const MINUTES = 60 * SECONDS;
 const HOURS = 60 * MINUTES;
 
-function makeAccessToken(perms: Record<string, string[]>) {
+function makeAccessToken(perms: Record<string, readonly string[]>) {
   const payload = {
     iat: 1664566410,
     exp: 1664570010,
@@ -165,10 +165,10 @@ describe("auth-manager - secret auth", () => {
 
     await authManager.getAuthValue({
       requestedScope: Permission.RoomStorageRead,
-      roomId: "room1",
+      roomId: "org1.room1",
     });
 
-    expect(callback).toHaveBeenCalledWith("room1");
+    expect(callback).toHaveBeenCalledWith("org1.room1");
   });
 
   test("should deduplicate concurrent requests on same room", async () => {
@@ -213,7 +213,7 @@ describe("auth-manager - secret auth", () => {
     expect(requestCount).toBe(1);
   });
 
-  test("should retry a shared same-room request when it does not grant the requested scope", async () => {
+  test("should reject a shared same-room request when the token does not grant the requested scope", async () => {
     let localRequestCount = 0;
     const accessTokenStorageRead = makeAccessToken({
       "org1*": [Permission.RoomStorageRead],
@@ -232,19 +232,52 @@ describe("auth-manager - secret auth", () => {
       authEndpoint: "/api/access-auth-storage-read-then-write",
     });
 
-    const results = await Promise.all([
-      authManager.getAuthValue({
-        requestedScope: Permission.RoomStorageRead,
-        roomId: "org1.room1",
-      }),
-      authManager.getAuthValue({
-        requestedScope: Permission.RoomPresenceRead,
-        roomId: "org1.room1",
-      }),
-    ]);
+    const storageAuthValue$ = authManager.getAuthValue({
+      requestedScope: Permission.RoomStorageRead,
+      roomId: "org1.room1",
+    });
+    const presenceAuthValue$ = authManager.getAuthValue({
+      requestedScope: Permission.RoomPresenceRead,
+      roomId: "org1.room1",
+    });
 
-    expect(results[0].type).toEqual("secret");
-    expect(results[1].type).toEqual("secret");
+    await expect(storageAuthValue$).resolves.toMatchObject({ type: "secret" });
+    await expect(presenceAuthValue$).rejects.toThrow(
+      "Authentication failed: the returned access token does not grant the requested permissions."
+    );
+    expect(localRequestCount).toBe(1);
+  });
+
+  test("should fetch a new same-room token after a previous token did not grant the requested scope", async () => {
+    let localRequestCount = 0;
+    const accessTokenStorageRead = makeAccessToken({
+      "org1*": [Permission.RoomStorageRead],
+    });
+
+    server.use(
+      http.post("/api/access-auth-storage-read-then-write", () => {
+        localRequestCount++;
+        return HttpResponse.json({
+          token: localRequestCount === 1 ? accessTokenStorageRead : accessToken,
+        });
+      })
+    );
+
+    const authManager = createAuthManager({
+      authEndpoint: "/api/access-auth-storage-read-then-write",
+    });
+
+    const storageAuthValue = (await authManager.getAuthValue({
+      requestedScope: Permission.RoomStorageRead,
+      roomId: "org1.room1",
+    })) as { type: "secret"; token: ParsedAuthToken };
+    const presenceAuthValue = (await authManager.getAuthValue({
+      requestedScope: Permission.RoomPresenceRead,
+      roomId: "org1.room1",
+    })) as { type: "secret"; token: ParsedAuthToken };
+
+    expect(storageAuthValue.token.raw).toEqual(accessTokenStorageRead);
+    expect(presenceAuthValue.token.raw).toEqual(accessToken);
     expect(localRequestCount).toBe(2);
   });
 
@@ -274,10 +307,12 @@ describe("auth-manager - secret auth", () => {
     });
 
     const authValueReq1 = (await authManager.getAuthValue({
+      kind: "user",
       requestedScope: Permission.RoomCommentsRead,
     })) as { type: "secret"; token: ParsedAuthToken };
 
     const authValueReq2 = (await authManager.getAuthValue({
+      kind: "user",
       requestedScope: Permission.RoomCommentsRead,
     })) as { type: "secret"; token: ParsedAuthToken };
 
@@ -292,10 +327,12 @@ describe("auth-manager - secret auth", () => {
     });
 
     const authValueReq1 = (await authManager.getAuthValue({
+      kind: "user",
       requestedScope: Permission.RoomCommentsRead,
     })) as { type: "secret"; token: ParsedAuthToken };
 
     const authValueReq2 = (await authManager.getAuthValue({
+      kind: "user",
       requestedScope: Permission.RoomCommentsRead,
     })) as { type: "secret"; token: ParsedAuthToken };
 
@@ -343,10 +380,12 @@ describe("auth-manager - secret auth", () => {
     });
 
     const authValueReq1 = (await authManager.getAuthValue({
+      kind: "user",
       requestedScope: Permission.RoomCommentsRead,
     })) as { type: "secret"; token: ParsedAuthToken };
 
     const authValueReq2 = (await authManager.getAuthValue({
+      kind: "user",
       requestedScope: Permission.RoomCommentsRead,
     })) as { type: "secret"; token: ParsedAuthToken };
 
@@ -355,17 +394,21 @@ describe("auth-manager - secret auth", () => {
     expect(requestCount).toBe(1);
   });
 
-  test("when no roomId and no requested scope, should accept any access token", async () => {
+  test("when no roomId and no requested scope, should accept access tokens with no permissions", async () => {
     const authManager = createAuthManager({
       authEndpoint: "/api/access-auth-no-permission",
     });
 
-    const authValueReq1 = (await authManager.getAuthValue()) as {
+    const authValueReq1 = (await authManager.getAuthValue({
+      kind: "user",
+    })) as {
       type: "secret";
       token: ParsedAuthToken;
     };
 
-    const authValueReq2 = (await authManager.getAuthValue()) as {
+    const authValueReq2 = (await authManager.getAuthValue({
+      kind: "user",
+    })) as {
       type: "secret";
       token: ParsedAuthToken;
     };
@@ -375,23 +418,43 @@ describe("auth-manager - secret auth", () => {
     expect(requestCount).toBe(1);
   });
 
-  test("when no roomId and no requested scope, should reuse any cached access token", async () => {
+  test("when no roomId and no requested scope, should not reuse a room-scoped access token", async () => {
+    let localRequestCount = 0;
+    const accessTokenRoomCommentsRead = makeAccessToken({
+      "org1.room1": [Permission.RoomCommentsRead],
+    });
+
+    server.use(
+      http.post("/api/access-auth-room-then-no-permission", () => {
+        localRequestCount++;
+        return HttpResponse.json({
+          token:
+            localRequestCount === 1
+              ? accessTokenRoomCommentsRead
+              : accessTokenWithNoPermission,
+        });
+      })
+    );
+
     const authManager = createAuthManager({
-      authEndpoint: "/api/access-auth-comments-read",
+      authEndpoint: "/api/access-auth-room-then-no-permission",
     });
 
     const scopedAuthValue = (await authManager.getAuthValue({
       requestedScope: Permission.RoomCommentsRead,
+      roomId: "org1.room1",
     })) as { type: "secret"; token: ParsedAuthToken };
 
-    const roomlessAuthValue = (await authManager.getAuthValue()) as {
+    const roomlessAuthValue = (await authManager.getAuthValue({
+      kind: "user",
+    })) as {
       type: "secret";
       token: ParsedAuthToken;
     };
 
-    expect(scopedAuthValue.token.raw).toEqual(accessTokenWildcardCommentsRead);
-    expect(roomlessAuthValue.token.raw).toEqual(accessTokenWildcardCommentsRead);
-    expect(requestCount).toBe(1);
+    expect(scopedAuthValue.token.raw).toEqual(accessTokenRoomCommentsRead);
+    expect(roomlessAuthValue.token.raw).toEqual(accessTokenWithNoPermission);
+    expect(localRequestCount).toBe(2);
   });
 
   test("when no roomId, should fetch a new token when cached token has no permission but write is requested", async () => {
@@ -417,10 +480,12 @@ describe("auth-manager - secret auth", () => {
     });
 
     const readAuthValue = (await authManager.getAuthValue({
+      kind: "user",
       requestedScope: Permission.RoomCommentsRead,
     })) as { type: "secret"; token: ParsedAuthToken };
 
     const writeAuthValue = (await authManager.getAuthValue({
+      kind: "user",
       requestedScope: Permission.RoomCommentsWrite,
     })) as { type: "secret"; token: ParsedAuthToken };
 

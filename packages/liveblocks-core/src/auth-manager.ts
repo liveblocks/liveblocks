@@ -3,17 +3,17 @@ import { isPlainObject } from "./lib/guards";
 import type { Json } from "./lib/Json";
 import type { Relax } from "./lib/Relax";
 import { stringifyOrLog as stringify } from "./lib/stringify";
+import {
+  createAuthTokenPermissionMatcher,
+  type AuthTokenPermissionMatcher,
+} from "./auth-token-permissions";
 import type {
   Authentication,
   CustomAuthenticationResult,
 } from "./protocol/Authentication";
 import type { AuthToken, ParsedAuthToken } from "./protocol/AuthToken";
 import { parseAuthToken, TokenKind } from "./protocol/AuthToken";
-import {
-  createPermissionGrantMatcher,
-  type PermissionGrantMatcher,
-  type RequestedScope,
-} from "./protocol/Permission";
+import type { RequestedScope } from "./protocol/Permission";
 import type { Polyfills } from "./room";
 
 export type { RequestedScope } from "./protocol/Permission";
@@ -23,20 +23,20 @@ export type AuthValue =
   | { type: "public"; publicApiKey: string };
 
 type ScopedAuthRequest = {
+  kind?: "room";
   requestedScope: RequestedScope;
   roomId: string;
 };
 
 type RoomlessAuthRequest = {
+  kind: "user";
   requestedScope?: RequestedScope;
-  roomId?: undefined;
 };
 
 type AuthRequestOptions = ScopedAuthRequest | RoomlessAuthRequest;
 
 export type AuthManager = {
   reset(): void;
-  getAuthValue(): Promise<AuthValue>;
   getAuthValue(requestOptions: AuthRequestOptions): Promise<AuthValue>;
 };
 
@@ -64,7 +64,7 @@ export function createAuthManager(
 
   const tokens: ParsedAuthToken[] = [];
   const expiryTimes: number[] = []; // Supposed to always contain the same number of elements as `tokens`
-  const permissionMatchers: PermissionGrantMatcher[] = []; // Supposed to always contain the same number of elements as `tokens`
+  const permissionMatchers: AuthTokenPermissionMatcher[] = []; // Supposed to always contain the same number of elements as `tokens`
 
   const requestPromises = new Map<string, Promise<ParsedAuthToken>>();
 
@@ -78,14 +78,18 @@ export function createAuthManager(
 
   function accessTokenMatchesRequest(
     token: ParsedAuthToken,
-    matcher: PermissionGrantMatcher,
+    matcher: AuthTokenPermissionMatcher,
     requestOptions: AuthRequestOptions
   ): boolean {
     if (token.parsed.k !== TokenKind.ACCESS_TOKEN) {
       return false;
     }
 
-    return matcher.canUse(requestOptions);
+    return matcher.canUse(
+      requestOptions.kind === "user"
+        ? requestOptions
+        : { ...requestOptions, kind: "room" }
+    );
   }
 
   function getCachedToken(
@@ -120,8 +124,10 @@ export function createAuthManager(
     return undefined;
   }
 
-  function getRequestPromiseKey(requestOptions: { roomId?: string }): string {
-    return requestOptions.roomId ?? "liveblocks-user-token";
+  function getRequestPromiseKey(requestOptions: AuthRequestOptions): string {
+    return requestOptions.kind === "user"
+      ? "liveblocks-user-token"
+      : requestOptions.roomId;
   }
 
   function cacheToken(token: ParsedAuthToken): void {
@@ -139,7 +145,7 @@ export function createAuthManager(
     tokens.push(token);
     expiryTimes.push(expiresAt);
     permissionMatchers.push(
-      createPermissionGrantMatcher(
+      createAuthTokenPermissionMatcher(
         token.parsed.k === TokenKind.ACCESS_TOKEN ? token.parsed.perms : {}
       )
     );
@@ -160,7 +166,7 @@ export function createAuthManager(
       }
 
       const response = await fetchAuthEndpoint(fetcher, authentication.url, {
-        room: options.roomId,
+        room: options.kind === "user" ? undefined : options.roomId,
       });
       const parsed = parseAuthToken(response.token);
 
@@ -176,7 +182,9 @@ export function createAuthManager(
     }
 
     if (authentication.type === "custom") {
-      const response = await authentication.callback(options.roomId);
+      const response = await authentication.callback(
+        options.kind === "user" ? undefined : options.roomId
+      );
       if (response && typeof response === "object") {
         if (typeof response.token === "string") {
           const parsed = parseAuthToken(response.token);
@@ -211,7 +219,7 @@ export function createAuthManager(
   }
 
   async function getAuthValue(
-    requestOptions: AuthRequestOptions = {}
+    requestOptions: AuthRequestOptions
   ): Promise<AuthValue> {
     if (authentication.type === "public") {
       return { type: "public", publicApiKey: authentication.publicApiKey };
@@ -223,37 +231,29 @@ export function createAuthManager(
     }
 
     const requestPromiseKey = getRequestPromiseKey(requestOptions);
-    let token: ParsedAuthToken | undefined;
-    let remainingAttempts = 2;
+    let currentPromise = requestPromises.get(requestPromiseKey);
+    if (currentPromise === undefined) {
+      currentPromise = makeAuthRequest(requestOptions);
+      requestPromises.set(requestPromiseKey, currentPromise);
+    }
 
-    while (remainingAttempts > 0) {
-      remainingAttempts--;
-      let currentPromise = requestPromises.get(requestPromiseKey);
-      if (currentPromise === undefined) {
-        currentPromise = makeAuthRequest(requestOptions);
-        requestPromises.set(requestPromiseKey, currentPromise);
+    try {
+      const token = await currentPromise;
+      cacheToken(token);
+
+      const matchingToken = getCachedToken(requestOptions);
+      if (matchingToken !== undefined) {
+        return { type: "secret", token: matchingToken };
       }
-
-      try {
-        token = await currentPromise;
-        cacheToken(token);
-
-        const matchingToken = getCachedToken(requestOptions);
-        if (matchingToken !== undefined) {
-          return { type: "secret", token: matchingToken };
-        }
-      } finally {
-        if (requestPromises.get(requestPromiseKey) === currentPromise) {
-          requestPromises.delete(requestPromiseKey);
-        }
+    } finally {
+      if (requestPromises.get(requestPromiseKey) === currentPromise) {
+        requestPromises.delete(requestPromiseKey);
       }
     }
 
-    if (token === undefined) {
-      throw new Error("Unexpected authentication state.");
-    }
-
-    return { type: "secret", token };
+    throw new Error(
+      "Authentication failed: the returned access token does not grant the requested permissions."
+    );
   }
 
   return {
