@@ -22,6 +22,7 @@ import type {
   PartialNotificationSettings,
   Patchable,
   Permission,
+  RoomFeatures,
   Resolve,
   RoomSubscriptionSettings,
   SubscriptionData,
@@ -47,6 +48,7 @@ import {
   nanoid,
   nn,
   patchNotificationSettings,
+  roomFeaturesFromScopes,
   shallow,
   shallow2,
   Signal,
@@ -954,26 +956,40 @@ function createStore_forUrlsMetadata() {
   };
 }
 
+type PermissionHint = {
+  requestedAt: Date;
+  permissions: RoomFeatures;
+};
+
 function createStore_forPermissionHints() {
   const permissionsByRoomId = new DefaultMap(
-    () => new Signal<Set<Permission>>(new Set())
+    () => new Signal<PermissionHint | undefined>(undefined)
   );
 
-  function update(newHints: Record<string, Permission[]>) {
+  function update(newHints: Record<string, Permission[]>, requestedAt: Date) {
     batch(() => {
       for (const [roomId, permissions] of Object.entries(newHints)) {
         const signal = permissionsByRoomId.getOrCreate(roomId);
-        // Get the existing set of permissions for the room and only ever add permission to this set
-        const existingPermissions = new Set(signal.get());
-        for (const permission of permissions) {
-          existingPermissions.add(permission);
+
+        const existingHint = signal.get();
+        if (
+          existingHint !== undefined &&
+          existingHint.requestedAt > requestedAt
+        ) {
+          continue;
         }
-        signal.set(existingPermissions);
+
+        signal.set({
+          requestedAt,
+          permissions: roomFeaturesFromScopes(permissions),
+        });
       }
     });
   }
 
-  function getPermissionForRoomΣ(roomId: string): ISignal<Set<Permission>> {
+  function getPermissionForRoomΣ(
+    roomId: string
+  ): ISignal<PermissionHint | undefined> {
     return permissionsByRoomId.getOrCreate(roomId);
   }
 
@@ -1390,7 +1406,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
             result.subscriptions
           );
 
-          this.permissionHints.update(result.permissionHints);
+          this.permissionHints.update(result.permissionHints, result.requestedAt);
 
           // We initialize the `_userThreadsLastRequestedAt` date using the server timestamp after we've loaded the first page of inbox notifications.
           if (this.#userThreadsLastRequestedAt === null) {
@@ -1451,7 +1467,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
             result.subscriptions
           );
 
-          this.permissionHints.update(result.permissionHints);
+          this.permissionHints.update(result.permissionHints, result.requestedAt);
 
           const lastRequestedAt =
             this.#roomThreadsLastRequestedAtByRoom.get(roomId);
@@ -2341,7 +2357,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
       updates.subscriptions.deleted
     );
 
-    this.permissionHints.update(updates.permissionHints);
+    this.permissionHints.update(updates.permissionHints, updates.requestedAt);
 
     if (lastRequestedAt < updates.requestedAt) {
       // Update the `lastRequestedAt` value for the room to the timestamp returned by the current request
@@ -2375,7 +2391,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
       result.subscriptions.deleted
     );
 
-    this.permissionHints.update(result.permissionHints);
+    this.permissionHints.update(result.permissionHints, result.requestedAt);
   }
 
   public async fetchRoomVersionsDeltaUpdate(

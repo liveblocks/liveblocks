@@ -113,7 +113,7 @@ describe("useThreads", () => {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
             permissionHints: {
-              [roomId]: [Permission.Write],
+              [roomId]: [Permission.RoomWrite],
             },
           },
         });
@@ -163,7 +163,7 @@ describe("useThreads", () => {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
             permissionHints: {
-              [roomId]: [Permission.Write],
+              [roomId]: [Permission.RoomWrite],
             },
           },
         });
@@ -221,7 +221,7 @@ describe("useThreads", () => {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
             permissionHints: {
-              [roomId]: [Permission.Write],
+              [roomId]: [Permission.RoomWrite],
             },
           },
         });
@@ -287,7 +287,7 @@ describe("useThreads", () => {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
             permissionHints: {
-              [roomId]: [Permission.Write],
+              [roomId]: [Permission.RoomWrite],
             },
           },
         });
@@ -361,7 +361,7 @@ describe("useThreads", () => {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
             permissionHints: {
-              [roomId]: [Permission.Write],
+              [roomId]: [Permission.RoomWrite],
             },
           },
         });
@@ -460,7 +460,7 @@ describe("useThreads", () => {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
             permissionHints: {
-              [roomId]: [Permission.Write],
+              [roomId]: [Permission.RoomWrite],
             },
           },
         });
@@ -917,7 +917,7 @@ describe("useThreads", () => {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
             permissionHints: {
-              [roomId]: [Permission.Write],
+              [roomId]: [Permission.RoomWrite],
             },
           },
         });
@@ -983,7 +983,7 @@ describe("useThreads", () => {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
             permissionHints: {
-              [roomId]: [Permission.Write],
+              [roomId]: [Permission.RoomWrite],
             },
           },
         });
@@ -1045,7 +1045,7 @@ describe("useThreads", () => {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
             permissionHints: {
-              [roomId]: [Permission.Write],
+              [roomId]: [Permission.RoomWrite],
             },
           },
         });
@@ -1136,7 +1136,7 @@ describe("useThreads", () => {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
               permissionHints: {
-                [roomId]: [Permission.Write],
+                [roomId]: [Permission.RoomWrite],
               },
             },
           });
@@ -1149,7 +1149,7 @@ describe("useThreads", () => {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
               permissionHints: {
-                [roomId]: [Permission.Write],
+                [roomId]: [Permission.RoomWrite],
               },
             },
           });
@@ -1234,7 +1234,7 @@ describe("useThreads", () => {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
               permissionHints: {
-                [roomId]: [Permission.Write],
+                [roomId]: [Permission.RoomWrite],
               },
             },
           });
@@ -1247,7 +1247,7 @@ describe("useThreads", () => {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
               permissionHints: {
-                [roomId]: [Permission.Write],
+                [roomId]: [Permission.RoomWrite],
               },
             },
           });
@@ -1399,7 +1399,7 @@ describe("useThreads", () => {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
             permissionHints: {
-              [roomId]: [Permission.Write],
+              [roomId]: [Permission.RoomWrite],
             },
           },
         });
@@ -1463,7 +1463,7 @@ describe("useThreads", () => {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
             permissionHints: {
-              [roomId]: [Permission.Write],
+              [roomId]: [Permission.RoomWrite],
             },
           },
         });
@@ -1548,7 +1548,7 @@ describe("useThreads", () => {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
             permissionHints: {
-              [roomId]: [Permission.Write],
+              [roomId]: [Permission.RoomWrite],
             },
           },
         });
@@ -1622,7 +1622,7 @@ describe("useThreads", () => {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
             permissionHints: {
-              [roomId]: [Permission.Write],
+              [roomId]: [Permission.RoomWrite],
             },
           },
         });
@@ -1683,7 +1683,7 @@ describe("useThreads", () => {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
             permissionHints: {
-              [roomId]: [Permission.Write],
+              [roomId]: [Permission.RoomWrite],
             },
           },
         });
@@ -1711,7 +1711,7 @@ describe("useThreads", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               permissionHints: {
-                [roomId]: [Permission.Write],
+                [roomId]: [Permission.RoomWrite],
               },
             },
           });
@@ -1807,7 +1807,7 @@ describe("useThreads", () => {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
             permissionHints: {
-              [roomId]: [Permission.Write],
+              [roomId]: [Permission.RoomWrite],
             },
           },
         });
@@ -1874,7 +1874,7 @@ describe("useThreads", () => {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
             permissionHints: {
-              [roomId]: [Permission.Write],
+              [roomId]: [Permission.RoomWrite],
             },
           },
         });
@@ -1899,7 +1899,7 @@ describe("useThreads", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               permissionHints: {
-                [roomId]: [Permission.Write],
+                [roomId]: [Permission.RoomWrite],
               },
             },
           });
@@ -1989,7 +1989,7 @@ describe("useThreads", () => {
           meta: {
             requestedAt: new Date().toISOString(),
             permissionHints: {
-              [roomId]: [Permission.Write],
+              [roomId]: [Permission.RoomWrite],
             },
           },
         });
@@ -2062,7 +2062,7 @@ describe("useThreads", () => {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
             permissionHints: {
-              [roomId]: [Permission.Write],
+              [roomId]: [Permission.RoomWrite],
             },
           },
         });
@@ -2089,7 +2089,7 @@ describe("useThreads", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               permissionHints: {
-                [roomId]: [Permission.Write],
+                [roomId]: [Permission.RoomWrite],
               },
             },
           });
@@ -2320,7 +2320,7 @@ describe("useThreads: polling", () => {
             requestedAt: now,
             nextCursor: null,
             permissionHints: {
-              [roomId]: [Permission.Write],
+              [roomId]: [Permission.RoomWrite],
             },
           },
         });
@@ -2337,7 +2337,7 @@ describe("useThreads: polling", () => {
           meta: {
             requestedAt: now,
             permissionHints: {
-              [roomId]: [Permission.Write],
+              [roomId]: [Permission.RoomWrite],
             },
           },
         });
@@ -2398,7 +2398,7 @@ describe("useThreads: polling", () => {
             requestedAt: now,
             nextCursor: null,
             permissionHints: {
-              [roomId]: [Permission.Write],
+              [roomId]: [Permission.RoomWrite],
             },
           },
         });
@@ -2451,7 +2451,7 @@ describe("WebSocket events", () => {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
             permissionHints: {
-              [roomId]: [Permission.Write],
+              [roomId]: [Permission.RoomWrite],
             },
           },
         });
@@ -2523,7 +2523,7 @@ describe("WebSocket events", () => {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
             permissionHints: {
-              [roomId]: [Permission.Write],
+              [roomId]: [Permission.RoomWrite],
             },
           },
         });
@@ -2592,7 +2592,7 @@ describe("WebSocket events", () => {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
             permissionHints: {
-              [roomId]: [Permission.Write],
+              [roomId]: [Permission.RoomWrite],
             },
           },
         });
@@ -2670,7 +2670,7 @@ describe("WebSocket events", () => {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
             permissionHints: {
-              [roomId]: [Permission.Write],
+              [roomId]: [Permission.RoomWrite],
             },
           },
         });
@@ -2772,7 +2772,7 @@ describe("useThreadsSuspense", () => {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
             permissionHints: {
-              [roomId]: [Permission.Write],
+              [roomId]: [Permission.RoomWrite],
             },
           },
         });
@@ -2826,7 +2826,7 @@ describe("useThreadsSuspense", () => {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
             permissionHints: {
-              [roomId]: [Permission.Write],
+              [roomId]: [Permission.RoomWrite],
             },
           },
         });
@@ -3015,7 +3015,7 @@ describe("useThreads: pagination", () => {
               requestedAt: new Date().toISOString(),
               nextCursor: "cursor-2",
               permissionHints: {
-                [roomId]: [Permission.Write],
+                [roomId]: [Permission.RoomWrite],
               },
             },
           });
@@ -3031,7 +3031,7 @@ describe("useThreads: pagination", () => {
               requestedAt: new Date().toISOString(),
               nextCursor: "cursor-3",
               permissionHints: {
-                [roomId]: [Permission.Write],
+                [roomId]: [Permission.RoomWrite],
               },
             },
           });
@@ -3047,7 +3047,7 @@ describe("useThreads: pagination", () => {
               requestedAt: new Date().toISOString(),
               nextCursor: "cursor-1",
               permissionHints: {
-                [roomId]: [Permission.Write],
+                [roomId]: [Permission.RoomWrite],
               },
             },
           });
@@ -3155,7 +3155,7 @@ describe("useThreads: pagination", () => {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
               permissionHints: {
-                [roomId]: [Permission.Write],
+                [roomId]: [Permission.RoomWrite],
               },
             },
           });
@@ -3170,7 +3170,7 @@ describe("useThreads: pagination", () => {
               requestedAt: new Date().toISOString(),
               nextCursor: "cursor-1",
               permissionHints: {
-                [roomId]: [Permission.Write],
+                [roomId]: [Permission.RoomWrite],
               },
             },
           });
@@ -3243,7 +3243,7 @@ describe("useThreads: pagination", () => {
               requestedAt: new Date().toISOString(),
               nextCursor: "cursor-1",
               permissionHints: {
-                [roomId]: [Permission.Write],
+                [roomId]: [Permission.RoomWrite],
               },
             },
           });

@@ -37,6 +37,9 @@ import type {
   MentionData,
   OpaqueClient,
   OpaqueRoom,
+  RequiredAccessLevel,
+  RoomFeature,
+  RoomFeatures,
   RoomEventMessage,
   RoomSubscriptionSettings,
   SignalType,
@@ -3709,7 +3712,45 @@ function useAttachmentUrlSuspense(attachmentId: string) {
 function useRoomPermissions(roomId: string) {
   const client = useClient();
   const store = getRoomExtrasForClient(client).store;
-  return useSignal(store.permissionHints.getPermissionForRoomΣ(roomId));
+  return useSignal(store.permissionHints.getPermissionForRoomΣ(roomId))
+    ?.permissions;
+}
+
+/**
+ * @private For internal use only. Do not rely on this hook.
+ */
+function useCanUseRoomFeature(
+  roomId: string,
+  feature: RoomFeature,
+  requiredAccess: RequiredAccessLevel
+): boolean {
+  const permissions = useRoomPermissions(roomId);
+  const room = useRoom_withRoomContext(GlobalRoomContext, {
+    allowOutsideRoom: true,
+  });
+
+  if (permissions !== undefined) {
+    return hasFeatureAccess(permissions, feature, requiredAccess);
+  }
+
+  const self = room?.id === roomId ? room.getSelf() : null;
+  if (feature === "comments" && requiredAccess === "write") {
+    return self?.canComment ?? true;
+  }
+  if (feature === "storage" && requiredAccess === "write") {
+    return self?.canWrite ?? true;
+  }
+
+  return true;
+}
+
+function hasFeatureAccess(
+  permissions: RoomFeatures,
+  feature: RoomFeature,
+  requiredAccess: RequiredAccessLevel
+): boolean {
+  const access = permissions[feature];
+  return access === "write" || (access === "read" && requiredAccess === "read");
 }
 
 /**
@@ -4922,6 +4963,7 @@ export {
   useAttachmentUrl,
   useAttachmentUrlSuspense,
   _useBroadcastEvent as useBroadcastEvent,
+  useCanUseRoomFeature,
   useCanRedo,
   useCanUndo,
   _useCreateComment as useCreateComment,

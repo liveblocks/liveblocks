@@ -49,7 +49,7 @@ describe("useCreateThread", () => {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
             permissionHints: {
-              [roomId]: [Permission.Write],
+              [roomId]: [Permission.RoomWrite],
             },
           },
         });
@@ -140,7 +140,7 @@ describe("useCreateThread", () => {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
             permissionHints: {
-              [roomId]: [Permission.Write],
+              [roomId]: [Permission.RoomWrite],
             },
           },
         });
@@ -212,7 +212,7 @@ describe("useCreateThread", () => {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
             permissionHints: {
-              [roomId]: [Permission.Write],
+              [roomId]: [Permission.RoomWrite],
             },
           },
         });
