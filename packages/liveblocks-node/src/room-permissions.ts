@@ -24,6 +24,53 @@ export type RoomAccessesUpdateInput = Record<
   RoomPermissionInput | null
 >;
 
+const ROOM_PERMISSION_OBJECT_KEYS = new Set<string>([
+  "default",
+  "presence",
+  "storage",
+  "comments",
+  "feeds",
+]);
+
+const DEFAULT_PERMISSIONS: readonly RoomPermissionString[] = [
+  Permission.RoomRead,
+  Permission.RoomWrite,
+] as const;
+
+const PRESENCE_PERMISSIONS: readonly RoomPermissionString[] = [
+  Permission.RoomPresenceRead,
+  Permission.RoomPresenceWrite,
+  Permission.RoomPresenceNone,
+] as const;
+
+const STORAGE_PERMISSIONS: readonly RoomPermissionString[] = [
+  Permission.RoomStorageRead,
+  Permission.RoomStorageWrite,
+  Permission.RoomStorageNone,
+] as const;
+
+const COMMENTS_PERMISSIONS: readonly RoomPermissionString[] = [
+  Permission.RoomCommentsRead,
+  Permission.RoomCommentsWrite,
+  Permission.RoomCommentsNone,
+  Permission.CommentsRead,
+  Permission.CommentsWrite,
+] as const;
+
+const FEEDS_PERMISSIONS: readonly RoomPermissionString[] = [
+  Permission.RoomFeedsRead,
+  Permission.RoomFeedsWrite,
+  Permission.RoomFeedsNone,
+  Permission.FeedsWrite,
+] as const;
+
+const FEATURE_PERMISSIONS: readonly RoomPermissionString[] = [
+  ...PRESENCE_PERMISSIONS,
+  ...STORAGE_PERMISSIONS,
+  ...COMMENTS_PERMISSIONS,
+  ...FEEDS_PERMISSIONS,
+] as const;
+
 export function normalizeRoomPermissionInput(
   input: RoomPermissionInput
 ): RoomPermission {
@@ -38,6 +85,12 @@ export function normalizeRoomPermissionInput(
 
   if (!isRoomPermissionObject(input)) {
     throw new Error("Permissions must be an array or an object");
+  }
+
+  for (const key of Object.keys(input)) {
+    if (!ROOM_PERMISSION_OBJECT_KEYS.has(key)) {
+      throw new Error(`Unknown permission field: ${key}`);
+    }
   }
 
   const permissions: RoomPermission = [];
@@ -63,6 +116,27 @@ export function normalizeRoomPermissionInput(
   }
 
   return permissions;
+}
+
+export function getRoomPermissionConflicts(
+  permission: RoomPermissionString
+): readonly RoomPermissionString[] {
+  if (DEFAULT_PERMISSIONS.includes(permission)) {
+    return [...DEFAULT_PERMISSIONS, ...FEATURE_PERMISSIONS];
+  }
+  if (PRESENCE_PERMISSIONS.includes(permission)) {
+    return PRESENCE_PERMISSIONS;
+  }
+  if (STORAGE_PERMISSIONS.includes(permission)) {
+    return STORAGE_PERMISSIONS;
+  }
+  if (COMMENTS_PERMISSIONS.includes(permission)) {
+    return COMMENTS_PERMISSIONS;
+  }
+  if (FEEDS_PERMISSIONS.includes(permission)) {
+    return FEEDS_PERMISSIONS;
+  }
+  return [];
 }
 
 export function normalizeRoomAccessesInput(

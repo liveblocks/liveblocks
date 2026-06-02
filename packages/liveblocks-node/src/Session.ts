@@ -11,7 +11,10 @@ import type {
   RoomPermissionInput,
   RoomPermissionString,
 } from "./room-permissions";
-import { normalizeRoomPermissionInput } from "./room-permissions";
+import {
+  getRoomPermissionConflicts,
+  normalizeRoomPermissionInput,
+} from "./room-permissions";
 import { assertNonEmpty, normalizeStatusCode } from "./utils";
 
 export type Permission = RoomPermissionString;
@@ -134,6 +137,9 @@ export class Session {
 
     const existingPerms = this.#getOrCreate(roomIdOrPattern);
     for (const perm of normalizedPermissions) {
+      for (const conflictingPerm of getRoomPermissionConflicts(perm)) {
+        existingPerms.delete(conflictingPerm);
+      }
       existingPerms.add(perm);
     }
     return this; // To allow chaining multiple allow calls

@@ -105,6 +105,16 @@ describe("authorization (new API)", () => {
     expect(() => makeSession().allow("xyz", {})).toThrow(
       "Permission object cannot be empty"
     );
+
+    expect(() =>
+      makeSession()
+        .allow("xyz", {
+          default: "write",
+          // @ts-expect-error - Deliberate misspelled field
+          storag: "none",
+        })
+        .serializePermissions()
+    ).toThrow("Unknown permission field: storag");
   });
 
   test("throws when no room name", () => {
@@ -184,19 +194,35 @@ describe("authorization (new API)", () => {
     });
   });
 
+  test("permissions replace previous defaults and feature-specific values", () => {
+    expect(
+      makeSession()
+        .allow("r", { default: "write", storage: "none" })
+        .allow("r", { storage: "read" })
+        .serializePermissions()
+    ).toEqual({
+      r: ["room:write", "room:storage:read"],
+    });
+
+    expect(
+      makeSession()
+        .allow("r", { default: "write", storage: "none" })
+        .allow("r", ["room:write"])
+        .serializePermissions()
+    ).toEqual({
+      r: ["room:write"],
+    });
+  });
+
   test("permissions are deduped", () => {
     expect(
       makeSession()
         .allow("r", [P1])
-        .allow("r", [P2, P3])
-        .allow("r", [P1, P3])
-        .allow("r", [P3])
-        .allow("r", [P3])
-        .allow("r", [P3])
-        .allow("r", [P3])
+        .allow("r", [P1])
+        .allow("r", [P1])
         .serializePermissions()
     ).toEqual({
-      r: [P1, P2, P3],
+      r: [P1],
     });
   });
 
