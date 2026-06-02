@@ -4,7 +4,7 @@ import type {
   JsonObject,
   URLSafeString,
 } from "@liveblocks/core";
-import { url } from "@liveblocks/core";
+import { Permission, url } from "@liveblocks/core";
 
 import type { AuthResponse } from "./client";
 import type {
@@ -17,8 +17,6 @@ import {
 } from "./room-permissions";
 import { assertNonEmpty, normalizeStatusCode } from "./utils";
 
-export type Permission = RoomPermissionString;
-
 const MAX_PERMS_PER_SET = 10;
 
 /**
@@ -27,16 +25,16 @@ const MAX_PERMS_PER_SET = 10;
  * the user will still have permissions to update their own presence.)
  */
 const READ_ACCESS = Object.freeze([
-  "room:read",
-  "room:presence:write", // TODO: Remove once backend no longer requires this
-  "comments:read", // TODO: Remove — implied by room:read
+  Permission.RoomRead,
+  Permission.LegacyRoomPresenceWrite, // TODO: Remove once backend no longer requires this
+  Permission.LegacyCommentsRead, // TODO: Remove — implied by room:read
 ] as const);
 
 /**
  * Assign this to a room (or wildcard pattern) if you want to grant the user
  * permissions to read and write to the room's storage and comments.
  */
-const FULL_ACCESS = Object.freeze(["room:write"] as const);
+const FULL_ACCESS = Object.freeze([Permission.RoomWrite] as const);
 
 const roomPatternRegex = /^([*]|[^*]{1,128}[*]?)$/;
 

@@ -33,10 +33,8 @@ describe("roomFeaturesFromScopes", () => {
 
   test("allows feature opt-outs from a room default", () => {
     expect(
-      roomFeaturesFromScopes([
-        Permission.RoomWrite,
-        Permission.RoomStorageNone,
-      ]).storage
+      roomFeaturesFromScopes([Permission.RoomWrite, Permission.RoomStorageNone])
+        .storage
     ).toBe("none");
     expect(
       roomFeaturesFromScopes([
@@ -73,10 +71,18 @@ describe("roomFeaturesFromScopes", () => {
 
   test("supports deprecated permission strings", () => {
     expect(
-      hasRoomFeatureAccess([Permission.CommentsWrite], "comments", "write")
+      hasRoomFeatureAccess(
+        [Permission.LegacyCommentsWrite],
+        "comments",
+        "write"
+      )
     ).toBe(true);
     expect(
-      hasRoomFeatureAccess([Permission.RoomPresenceWrite], "presence", "read")
+      hasRoomFeatureAccess(
+        [Permission.LegacyRoomPresenceWrite],
+        "presence",
+        "read"
+      )
     ).toBe(true);
   });
 

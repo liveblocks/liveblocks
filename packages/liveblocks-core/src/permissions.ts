@@ -33,12 +33,12 @@ export const Permission = {
   RoomFeedsNone: "room:feeds:none",
 
   /**
-   * Deprecated
+   * Legacy
    */
-  RoomPresenceWrite: "room:presence:write",
-  CommentsWrite: "comments:write",
-  CommentsRead: "comments:read",
-  FeedsWrite: "feeds:write",
+  LegacyRoomPresenceWrite: "room:presence:write",
+  LegacyCommentsWrite: "comments:write",
+  LegacyCommentsRead: "comments:read",
+  LegacyFeedsWrite: "feeds:write",
 } as const;
 
 export type Permission = (typeof Permission)[keyof typeof Permission];
@@ -73,13 +73,14 @@ export type RoomPermissionObject = {
   feeds?: "read" | "write" | "none";
 };
 
-export type RoomPermissionInput =
-  | readonly Permission[]
-  | RoomPermissionObject;
+export type RoomPermissionInput = readonly Permission[] | RoomPermissionObject;
 
 export type RoomAccesses = Record<string, RoomPermission>;
 export type RoomAccessesInput = Record<string, RoomPermissionInput>;
-export type RoomAccessesUpdateInput = Record<string, RoomPermissionInput | null>;
+export type RoomAccessesUpdateInput = Record<
+  string,
+  RoomPermissionInput | null
+>;
 
 const ALL_PERMISSIONS = Object.freeze(Object.values(Permission));
 
@@ -112,7 +113,7 @@ const FEATURE_PERMISSIONS = {
     write: [],
   },
   presence: {
-    read: [Permission.RoomPresenceRead, Permission.RoomPresenceWrite],
+    read: [Permission.RoomPresenceRead, Permission.LegacyRoomPresenceWrite],
     none: [Permission.RoomPresenceNone],
   },
   storage: {
@@ -121,12 +122,12 @@ const FEATURE_PERMISSIONS = {
     none: [Permission.RoomStorageNone],
   },
   comments: {
-    write: [Permission.RoomCommentsWrite, Permission.CommentsWrite],
-    read: [Permission.RoomCommentsRead, Permission.CommentsRead],
+    write: [Permission.RoomCommentsWrite, Permission.LegacyCommentsWrite],
+    read: [Permission.RoomCommentsRead, Permission.LegacyCommentsRead],
     none: [Permission.RoomCommentsNone],
   },
   feeds: {
-    write: [Permission.RoomFeedsWrite, Permission.FeedsWrite],
+    write: [Permission.RoomFeedsWrite, Permission.LegacyFeedsWrite],
     read: [Permission.RoomFeedsRead],
     none: [Permission.RoomFeedsNone],
   },
@@ -351,7 +352,9 @@ function normalizeDefaultPermission(
     case "write":
       return Permission.RoomWrite;
     default:
-      throw new Error(`Invalid permission level for default: ${String(access)}`);
+      throw new Error(
+        `Invalid permission level for default: ${String(access)}`
+      );
   }
 }
 
