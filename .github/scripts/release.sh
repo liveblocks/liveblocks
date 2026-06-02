@@ -91,6 +91,57 @@ commit_to_git () {
     ) )
 }
 
+# A "final" release is X.Y.Z with no -prerelease suffix. Pre-releases like
+# 3.19.4-rc2 are intentionally excluded from CHANGELOG heading insertion.
+is_final_release () {
+    [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+}
+
+# True if CHANGELOG.md already has a "## vX.Y.Z" heading for this version.
+changelog_has_heading () {
+    grep -qE "^## v${VERSION//./\\.}( .*)?\$" "$ROOT/CHANGELOG.md"
+}
+
+# Insert a "## vX.Y.Z" heading right below the "vNEXT (not yet released)"
+# section, claiming all accumulated entries for this release. No-op for
+# pre-releases and for versions that already have a heading.
+inject_changelog_heading () {
+    CHANGELOG="$ROOT/CHANGELOG.md"
+
+    if ! is_final_release; then
+        echo "==> Skipping CHANGELOG heading for pre-release $VERSION"
+        return
+    fi
+    if [ ! -f "$CHANGELOG" ]; then
+        err "WARNING: $CHANGELOG not found, skipping CHANGELOG heading"
+        return
+    fi
+    if changelog_has_heading; then
+        echo "==> CHANGELOG already has a heading for v$VERSION, leaving as-is"
+        return
+    fi
+
+    echo "==> Adding CHANGELOG heading for v$VERSION"
+    tmp="$(mktemp)"
+    if awk -v ver="$VERSION" '
+        !done && /^## vNEXT \(not yet released\)$/ {
+            print
+            print ""
+            print "## v" ver
+            done = 1
+            next
+        }
+        { print }
+        END { exit (done ? 0 : 3) }
+    ' "$CHANGELOG" > "$tmp"; then
+        mv "$tmp" "$CHANGELOG"
+    else
+        rm -f "$tmp"
+        err "WARNING: Could not find a '## vNEXT (not yet released)' section in"
+        err "$CHANGELOG; skipping CHANGELOG heading insertion."
+    fi
+}
+
 check_is_valid_version "$VERSION"
 
 # Run a fresh install to ensure the lock file isn't outdated before continuing
@@ -104,4 +155,7 @@ done
 # Update pnpm-lock.yaml with newly bumped versions
 pnpm install --no-frozen-lockfile
 
-commit_to_git "${COMMIT_MESSAGE}${VERSION}" "pnpm-lock.yaml" "packages/" "tools/"
+# Add a CHANGELOG heading for this release if one doesn't exist yet
+inject_changelog_heading
+
+commit_to_git "${COMMIT_MESSAGE}${VERSION}" "pnpm-lock.yaml" "packages/" "tools/" "CHANGELOG.md"
