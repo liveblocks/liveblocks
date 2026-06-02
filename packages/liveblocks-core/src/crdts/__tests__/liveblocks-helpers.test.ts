@@ -1,7 +1,6 @@
 import fc from "fast-check";
 import { describe, expect, test } from "vitest";
 
-import { stableStringify } from "../../lib/stringify";
 import {
   FIFTH_POSITION,
   FIRST_POSITION,
@@ -9,6 +8,7 @@ import {
   SECOND_POSITION,
   THIRD_POSITION,
 } from "../../__tests__/_MockWebSocketServer.setup";
+import { stableStringify } from "../../lib/stringify";
 import { OpCode } from "../../protocol/Op";
 import type { NodeMap } from "../../protocol/StorageNode";
 import { CrdtType } from "../../protocol/StorageNode";
