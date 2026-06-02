@@ -84,14 +84,17 @@ collaboration to your JavaScript application using the APIs from the
       const yDoc = yProvider.getYDoc();
 
       function initSuperDoc() {
+        // Get the current user's info from Liveblocks
+        const { id, info } = room.getSelf();
+
         new SuperDoc({
           selector: "#superdoc",
           toolbar: "#superdoc-toolbar",
           documentMode: "editing",
           user: {
-            email: "user@example.com",
-            name: "User " + Math.floor(Math.random() * 1000),
-            image: undefined,
+            email: id,
+            name: info?.name ?? "Anonymous",
+            image: info?.avatar ?? undefined,
           },
           modules: {
             // The collaboration contract is the same for every Yjs provider:
