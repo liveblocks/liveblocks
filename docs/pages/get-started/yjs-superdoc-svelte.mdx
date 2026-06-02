@@ -76,13 +76,17 @@ collaboration to your Svelte application using the APIs from the
         let superdoc;
 
         function initSuperDoc() {
+          // Get the current user's info from Liveblocks
+          const { id, info } = room.getSelf();
+
           superdoc = new SuperDoc({
             selector: "#superdoc",
             toolbar: "#superdoc-toolbar",
             documentMode: "editing",
             user: {
-              name: "User " + Math.floor(Math.random() * 1000),
-              email: "user@example.com",
+              email: id,
+              name: info?.name ?? "Anonymous",
+              image: info?.avatar ?? undefined,
             },
             modules: {
               // The collaboration contract is the same for every Yjs provider:

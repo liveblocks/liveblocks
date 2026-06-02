@@ -151,7 +151,11 @@ collaboration to your Next.js application using the APIs from the
             <SuperDocEditor
               documentMode="editing"
               // Identify the current user for live cursors
-              user={{ name: userInfo.name, email: userId }}
+              user={{
+                email: userId,
+                name: userInfo?.name ?? "Anonymous",
+                image: userInfo?.avatar ?? undefined,
+              }}
               modules={modules}
               style={{ height: "100%" }}
             />
