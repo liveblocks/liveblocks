@@ -300,7 +300,7 @@ function cachedTokenSatisfiesRequest(
   }
 
   if (request.feature === "personal") {
-    return true;
+    return accessTokenSatisfiesPersonalRequest(cachedToken.permissions ?? []);
   }
 
   const features = getFeaturesForRoom(
@@ -311,6 +311,21 @@ function cachedTokenSatisfiesRequest(
   return (
     features !== undefined &&
     hasRequiredAccess(features[request.feature], request.access)
+  );
+}
+
+function accessTokenSatisfiesPersonalRequest(
+  permissions: AuthTokenFeaturePermissions
+): boolean {
+  if (permissions.length === 0) {
+    // Legacy roomless APIs accepted access tokens with no room permissions.
+    return true;
+  }
+
+  return permissions.some(
+    (permission) =>
+      permission.resource.includes("*") &&
+      hasRequiredAccess(permission.features.comments, "read")
   );
 }
 

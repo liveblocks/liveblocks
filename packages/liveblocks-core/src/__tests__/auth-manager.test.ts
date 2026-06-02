@@ -347,6 +347,41 @@ describe("auth-manager - secret auth", () => {
     expect(localRequestCount).toBe(2);
   });
 
+  test("should not use cached exact room access token for user APIs", async () => {
+    let localRequestCount = 0;
+    const exactRoomToken = makeAccessToken({
+      "org1.room1": [Permission.RoomWrite],
+    });
+    const emptyPermissionToken = makeAccessToken({});
+
+    server.use(
+      http.post("/api/access-auth-exact-room-then-empty", () => {
+        localRequestCount++;
+        return HttpResponse.json({
+          token: localRequestCount === 1 ? exactRoomToken : emptyPermissionToken,
+        });
+      })
+    );
+
+    const authManager = createAuthManager({
+      authEndpoint: "/api/access-auth-exact-room-then-empty",
+    });
+
+    const roomAuthValue = (await authManager.getAuthValue({
+      feature: "presence",
+      access: "read",
+      roomId: "org1.room1",
+    })) as { type: "secret"; token: ParsedAuthToken };
+    const userAuthValue = (await authManager.getAuthValue({
+      kind: "user",
+      feature: "personal",
+    })) as { type: "secret"; token: ParsedAuthToken };
+
+    expect(roomAuthValue.token.raw).toEqual(exactRoomToken);
+    expect(userAuthValue.token.raw).toEqual(emptyPermissionToken);
+    expect(localRequestCount).toBe(2);
+  });
+
   test("when no roomId, should use cache when access token has correct permissions", async () => {
     const authManager = createAuthManager({
       authEndpoint: "/api/access-auth-comments-read",

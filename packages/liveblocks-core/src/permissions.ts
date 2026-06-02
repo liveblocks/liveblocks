@@ -131,7 +131,7 @@ export function resolveRoomFeaturePermissions(
     Exclude<RoomFeature, "creation" | "personal">
   >) {
     const permissions = FEATURE_PERMISSIONS[feature];
-    let strongestAccess: AccessLevel | undefined;
+    let featureAccess: AccessLevel | undefined;
 
     for (const access of ["none", "read", "write"] satisfies AccessLevel[]) {
       const scopedPermissions = permissions[access];
@@ -140,17 +140,21 @@ export function resolveRoomFeaturePermissions(
         scopedPermissions.some((permission) => scopes.includes(permission))
       ) {
         explicitFeatures.add(feature);
+        if (access === "none") {
+          featureAccess = "none";
+          break;
+        }
         if (
-          strongestAccess === undefined ||
-          ACCESS_RANKS[access] > ACCESS_RANKS[strongestAccess]
+          featureAccess === undefined ||
+          ACCESS_RANKS[access] > ACCESS_RANKS[featureAccess]
         ) {
-          strongestAccess = access;
+          featureAccess = access;
         }
       }
     }
 
-    if (strongestAccess !== undefined) {
-      features[feature] = strongestAccess;
+    if (featureAccess !== undefined) {
+      features[feature] = featureAccess;
     }
   }
 

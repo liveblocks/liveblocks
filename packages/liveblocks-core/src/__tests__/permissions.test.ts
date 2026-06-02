@@ -36,14 +36,29 @@ describe("roomFeaturesFromScopes", () => {
         Permission.RoomStorageNone,
       ]).storage
     ).toBe("none");
-  });
-
-  test("uses the strongest explicit feature access", () => {
     expect(
       roomFeaturesFromScopes([
-        Permission.RoomStorageNone,
-        Permission.RoomStorageWrite,
-      ]).storage
+        Permission.RoomWrite,
+        Permission.RoomCommentsNone,
+      ]).comments
+    ).toBe("none");
+  });
+
+  test("explicit none overrides same-feature write", () => {
+    expect(
+      roomFeaturesFromScopes([
+        Permission.RoomCommentsWrite,
+        Permission.RoomCommentsNone,
+      ]).comments
+    ).toBe("none");
+  });
+
+  test("uses the strongest non-none explicit feature access", () => {
+    expect(
+      roomFeaturesFromScopes([
+        Permission.RoomCommentsRead,
+        Permission.RoomCommentsWrite,
+      ]).comments
     ).toBe("write");
   });
 
