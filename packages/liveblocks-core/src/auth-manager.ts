@@ -33,6 +33,7 @@ export type AuthRequest = Relax<
       access: RequiredAccessLevel;
     }
   | {
+      // Not a JWT scope. Used for roomless APIs (inbox, notification settings, etc.)
       feature: "personal";
       access: "write";
     }
@@ -199,6 +200,8 @@ export function createAuthManager(
       const cachedToken = makeCachedToken(token, expiresAt);
 
       if (!cachedTokenSatisfiesRequest(cachedToken, requestOptions)) {
+        // The backend returned a token, but it doesn't cover this request.
+        // Retrying the same endpoint won't help until the auth handler is fixed.
         throw new StopRetrying(
           "The Liveblocks auth token does not grant the requested permissions."
         );
@@ -268,6 +271,7 @@ function getAuthTokenFeaturePermissions(
           scopes.includes("room:read") || scopes.includes("room:write"),
       };
     })
+    // Less-specific wildcard patterns first, so exact room IDs can override them.
     .sort(compareResources);
 }
 
@@ -352,6 +356,9 @@ function getFeaturesForRoom(
     personal: "write",
   };
 
+  // A room can match multiple token resources (e.g. "org1*" and "org1.room1").
+  // Entries with room:read/write replace the whole feature set; feature-only
+  // entries patch individual features without resetting the rest.
   for (const permission of matchedPermissions) {
     if (permission.hasDefaultPermission) {
       features = permission.features;

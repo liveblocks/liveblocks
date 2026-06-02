@@ -972,6 +972,8 @@ function createStore_forPermissionHints() {
         const signal = permissionsByRoomId.getOrCreate(roomId);
 
         const existingHint = signal.get();
+        // Ignore out-of-order REST responses so an older permissionHints payload
+        // cannot overwrite a newer one after parallel fetches.
         if (
           existingHint !== undefined &&
           existingHint.requestedAt > requestedAt

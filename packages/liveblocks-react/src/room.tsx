@@ -3732,6 +3732,8 @@ function useCanUseRoomFeature(
     : fallback;
 }
 
+// Permission hints come from REST; until they exist, fall back to scopes from
+// the room connection (same optimistic defaults as isStorageWritable).
 function useSelfRoomFeatureFallback(
   roomId: string,
   feature: RoomFeature,

@@ -102,6 +102,7 @@ const ROOM_PERMISSION_OBJECT_KEYS = new Set<string>([
   "feeds",
 ]);
 
+// Include legacy scope strings so older tokens still resolve correctly.
 const FEATURE_PERMISSIONS = {
   creation: {
     read: [Permission.RoomRead],
@@ -245,6 +246,7 @@ export function normalizeRoomAccessesUpdateInput(
   );
 }
 
+// Scopes that cannot coexist with `permission` in the same room/pattern set.
 export function getRoomPermissionConflicts(
   permission: Permission
 ): readonly Permission[] {
@@ -270,6 +272,9 @@ export function getRoomPermissionConflicts(
 export function resolveRoomFeaturePermissions(
   scopes: readonly string[]
 ): RoomFeaturePermissions {
+  // room:read/write set the default for all features; feature-specific scopes
+  // override. explicitFeatures tracks which features were set explicitly (for
+  // auth-manager token merging). A feature-specific "none" wins immediately.
   const baseAccess = scopes.includes(Permission.RoomWrite)
     ? "write"
     : scopes.includes(Permission.RoomRead)

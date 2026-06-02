@@ -4065,6 +4065,7 @@ export function makeAuthDelegateForRoom(
   authManager: AuthManager
 ): () => Promise<AuthValue> {
   return async () => {
+    // Websocket connect only needs presence read, not full room default access.
     return authManager.getAuthValue({
       roomId,
       feature: "presence",
