@@ -1,6 +1,10 @@
 import { freeze } from "../lib/freeze";
-import type { Json } from "../lib/Json";
-import type { LiveTextDelta, TextAttributes, TextOperation } from "../protocol/Op";
+import type { Json, JsonObject } from "../lib/Json";
+import type {
+  LiveTextDelta,
+  TextAttributes,
+  TextOperation,
+} from "../protocol/Op";
 
 export type TextSegment = {
   text: string;
@@ -38,7 +42,9 @@ function cloneAttributes(
   return attributes === undefined ? undefined : freeze({ ...attributes });
 }
 
-export function normalizeSegments(segments: readonly TextSegment[]): TextSegment[] {
+export function normalizeSegments(
+  segments: readonly TextSegment[]
+): TextSegment[] {
   const normalized: TextSegment[] = [];
   for (const segment of segments) {
     if (segment.text.length === 0) {
@@ -65,7 +71,9 @@ export function deltaToSegments(delta: LiveTextDelta): TextSegment[] {
   );
 }
 
-export function segmentsToDelta(segments: readonly TextSegment[]): LiveTextDelta {
+export function segmentsToDelta(
+  segments: readonly TextSegment[]
+): LiveTextDelta {
   return segments.map((segment) =>
     segment.attributes === undefined
       ? { text: segment.text }
@@ -174,7 +182,11 @@ export function applyDelete(
   segments: readonly TextSegment[],
   index: number,
   length: number
-): { segments: TextSegment[]; deletedText: string; deletedSegments: TextSegment[] } {
+): {
+  segments: TextSegment[];
+  deletedText: string;
+  deletedSegments: TextSegment[];
+} {
   const deletedSegments = extractDeletedSegments(segments, index, length);
   const split = splitSegmentsAt(
     splitSegmentsAt(segments, index),
@@ -205,7 +217,7 @@ export function applyFormat(
   segments: readonly TextSegment[],
   index: number,
   length: number,
-  attributes: Readonly<Record<string, Json | null>>
+  attributes: JsonObject
 ): TextSegment[] {
   const split = splitSegmentsAt(
     splitSegmentsAt(segments, index),
@@ -217,7 +229,7 @@ export function applyFormat(
   for (const segment of split) {
     const end = offset + segment.text.length;
     if (offset >= index && end <= index + length) {
-      const nextAttributes: Record<string, Json> = {
+      const nextAttributes: JsonObject = {
         ...(segment.attributes ?? {}),
       };
       for (const [key, value] of Object.entries(attributes)) {
@@ -247,7 +259,7 @@ export function formatReverseOperations(
   segments: readonly TextSegment[],
   index: number,
   length: number,
-  patch: Readonly<Record<string, Json | null>>
+  patch: JsonObject
 ): TextOperation[] {
   const split = splitSegmentsAt(
     splitSegmentsAt(segments, index),
@@ -351,7 +363,9 @@ export function applyLiveTextOperations(
   delta: LiveTextDelta,
   ops: readonly TextOperation[]
 ): LiveTextDelta {
-  return segmentsToDelta(applyTextOperationsToSegments(deltaToSegments(delta), ops));
+  return segmentsToDelta(
+    applyTextOperationsToSegments(deltaToSegments(delta), ops)
+  );
 }
 
 export function invertTextOperations(

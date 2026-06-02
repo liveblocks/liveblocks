@@ -30,7 +30,7 @@ export namespace OpCode {
   export type UPDATE_TEXT = typeof OpCode.UPDATE_TEXT;
 }
 
-export type TextAttributes = Record<string, Json>;
+export type TextAttributes = JsonObject;
 
 export type LiveTextDelta = {
   text: string;
@@ -53,7 +53,7 @@ export type TextOperation =
       type: "format";
       index: number;
       length: number;
-      attributes: Record<string, Json | null>;
+      attributes: JsonObject;
     };
 
 /**

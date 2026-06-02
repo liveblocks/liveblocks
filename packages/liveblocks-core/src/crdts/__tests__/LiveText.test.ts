@@ -76,11 +76,6 @@ describe("LiveText", () => {
   });
 
   test("invertTextOperations preserves attributes for multi-segment deletes", () => {
-    const text = new LiveText([
-      { text: "He", attributes: { bold: true } },
-      { text: "llo" },
-    ]);
-
     expect(
       invertTextOperations(
         [{ text: "He", attributes: { bold: true } }, { text: "llo" }],

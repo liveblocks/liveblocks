@@ -5,6 +5,7 @@ import {
   prepareIsolatedStorageTest,
 } from "../../__tests__/_MockWebSocketServer.setup";
 import { OpCode } from "../../protocol/Op";
+import type { StorageNode } from "../../protocol/StorageNode";
 import { CrdtType } from "../../protocol/StorageNode";
 import { createManagedPool } from "../AbstractCrdt";
 import { LiveText } from "../LiveText";
@@ -13,7 +14,7 @@ import {
   rebaseTextOperations,
 } from "../liveTextOps";
 
-const initialNodes = [
+const initialNodes: StorageNode[] = [
   createSerializedRoot(),
   [
     "0:1",
@@ -29,8 +30,9 @@ const initialNodes = [
 
 describe("LiveText concurrency", () => {
   test("local client rebases remote insert over pending local insert", async () => {
-    const { root, applyRemoteOperations } =
-      await prepareIsolatedStorageTest<{ text: LiveText }>(initialNodes, 0);
+    const { root, applyRemoteOperations } = await prepareIsolatedStorageTest<{
+      text: LiveText;
+    }>(initialNodes, 0);
 
     const text = root.get("text");
     text.insert(0, "A");
@@ -50,8 +52,9 @@ describe("LiveText concurrency", () => {
   });
 
   test("local client rebases remote delete over pending local insert", async () => {
-    const { root, applyRemoteOperations } =
-      await prepareIsolatedStorageTest<{ text: LiveText }>(initialNodes, 0);
+    const { root, applyRemoteOperations } = await prepareIsolatedStorageTest<{
+      text: LiveText;
+    }>(initialNodes, 0);
 
     const text = root.get("text");
     text.insert(0, "Hi");

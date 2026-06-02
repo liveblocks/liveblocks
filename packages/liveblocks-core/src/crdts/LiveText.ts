@@ -1,5 +1,5 @@
 import { nn } from "../lib/assert";
-import type { Json, ReadonlyJson } from "../lib/Json";
+import type { JsonObject, ReadonlyJson } from "../lib/Json";
 import { nanoid } from "../lib/nanoid";
 import type {
   CreateOp,
@@ -32,7 +32,7 @@ import {
 import type { LiveNode } from "./Lson";
 
 export type LiveTextAttributes = TextAttributes;
-export type LiveTextAttributesPatch = Readonly<Record<string, Json | null>>;
+export type LiveTextAttributesPatch = JsonObject;
 export type { LiveTextDelta, TextOperation as LiveTextOperation };
 
 export type LiveTextChange =
@@ -62,7 +62,11 @@ export type LiveTextUpdates = {
   updates: LiveTextChange[];
 };
 
-export { applyLiveTextOperations, mapTextIndexThroughOperations, rebaseTextOperations } from "./liveTextOps";
+export {
+  applyLiveTextOperations,
+  mapTextIndexThroughOperations,
+  rebaseTextOperations,
+} from "./liveTextOps";
 
 export class LiveText extends AbstractCrdt {
   #segments: TextSegment[];
