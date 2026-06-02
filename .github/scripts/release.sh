@@ -97,26 +97,58 @@ is_final_release () {
     [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
 }
 
-# True if CHANGELOG.md already has a "## vX.Y.Z" heading for this version.
+# True if the given CHANGELOG already has a "## vX.Y.Z" heading for this version.
 changelog_has_heading () {
-    grep -qE "^## v${VERSION//./\\.}( .*)?\$" "$ROOT/CHANGELOG.md"
+    grep -qE "^## v${VERSION//./\\.}( .*)?\$" "$1"
 }
 
-# Insert a "## vX.Y.Z" heading right below the "vNEXT (not yet released)"
-# section, claiming all accumulated entries for this release. No-op for
-# pre-releases and for versions that already have a heading.
+# True if a fresh "## vX.Y.Z" heading is due to be inserted into this CHANGELOG.
+changelog_needs_heading () {
+    is_final_release && [ -f "$1" ] && ! changelog_has_heading "$1"
+}
+
+# Classify the "## vNEXT" section of a CHANGELOG: prints "nonempty", "empty"
+# (immediately followed by another "## " heading or only blank lines), or
+# "missing" (no vNEXT section at all).
+vnext_state () {
+    awk '
+        /^## vNEXT( .*)?$/ { seen = 1; next }
+        seen && /^## /          { print "empty"; found = 1; exit }
+        seen && /[^[:space:]]/  { print "nonempty"; found = 1; exit }
+        END { if (!found) print (seen ? "empty" : "missing") }
+    ' "$1"
+}
+
+# Fail fast (before any version bump) if a heading is due for this release but
+# there are no entries to release under "## vNEXT". A skipped heading
+# (pre-release, or already present) needs no entries and is left alone.
+assert_changelog_ready () {
+    CHANGELOG="$1"
+    changelog_needs_heading "$CHANGELOG" || return 0
+    case "$( vnext_state "$CHANGELOG" )" in
+        nonempty) ;;
+        empty)
+            err "ERROR: No changelog entries under '## vNEXT' in $CHANGELOG."
+            err "Add release notes there before releasing v$VERSION."
+            exit 2 ;;
+        missing)
+            err "ERROR: No '## vNEXT' section found in $CHANGELOG."
+            err "Cannot insert a heading for v$VERSION."
+            exit 2 ;;
+    esac
+}
+
+# Insert a "## vX.Y.Z" heading right below the "vNEXT" section, claiming all
+# accumulated entries for this release. No-op for pre-releases and for versions
+# that already have a heading.
 inject_changelog_heading () {
-    CHANGELOG="$ROOT/CHANGELOG.md"
+    CHANGELOG="$1"
 
     if ! is_final_release; then
         echo "==> Skipping CHANGELOG heading for pre-release $VERSION"
         return
     fi
-    if [ ! -f "$CHANGELOG" ]; then
-        err "WARNING: $CHANGELOG not found, skipping CHANGELOG heading"
-        return
-    fi
-    if changelog_has_heading; then
+    if changelog_has_heading "$CHANGELOG"; then
         echo "==> CHANGELOG already has a heading for v$VERSION, leaving as-is"
         return
     fi
@@ -144,6 +176,9 @@ inject_changelog_heading () {
 
 check_is_valid_version "$VERSION"
 
+# Fail fast if a heading is due for this release but vNEXT has no entries
+assert_changelog_ready "$ROOT/CHANGELOG.md"
+
 # Run a fresh install to ensure the lock file isn't outdated before continuing
 pnpm install --no-frozen-lockfile
 git is-clean -v
@@ -156,6 +191,6 @@ done
 pnpm install --no-frozen-lockfile
 
 # Add a CHANGELOG heading for this release if one doesn't exist yet
-inject_changelog_heading
+inject_changelog_heading "$ROOT/CHANGELOG.md"
 
 commit_to_git "${COMMIT_MESSAGE}${VERSION}" "pnpm-lock.yaml" "packages/" "tools/" "CHANGELOG.md"
