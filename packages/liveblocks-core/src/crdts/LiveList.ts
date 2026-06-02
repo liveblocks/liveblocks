@@ -47,12 +47,10 @@ function childNodeLt(a: LiveNode, b: LiveNode): boolean {
 export class LiveList<TItem extends Lson> extends AbstractCrdt {
   #items: SortedList<LiveNode>;
   #implicitlyDeletedItems: WeakSet<LiveNode>;
-  #unacknowledgedSets: Map<string, string>;
 
   constructor(items: TItem[]) {
     super();
     this.#implicitlyDeletedItems = new WeakSet();
-    this.#unacknowledgedSets = new Map();
 
     const nodes: LiveNode[] = [];
     let lastPos: Pos | undefined;
@@ -93,12 +91,13 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
   /**
    * @internal
-   * This function assumes that the resulting ops will be sent to the server if they have an 'opId'
-   * so we mutate _unacknowledgedSets to avoid potential flickering
-   * https://github.com/liveblocks/liveblocks/pull/1177
+   * Serializes this list (and its children) into Create ops. Each child's
+   * create is tagged with the "set" intent (in the loop below) so that a list
+   * created and immediately mutated doesn't transiently re-show its initial
+   * items (flicker, https://github.com/liveblocks/liveblocks/pull/1177).
    *
-   * This is quite unintuitive and should disappear as soon as
-   * we introduce an explicit LiveList.Set operation
+   * This is quite unintuitive and should disappear as soon as we introduce an
+   * explicit LiveList.Set operation.
    */
   _toOps(parentId: string, parentKey: string): CreateOp[] {
     if (this._id === undefined) {
@@ -117,9 +116,13 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
     for (const item of this.#items) {
       const parentKey = item._getParentKeyOrThrow();
-      const childOps = HACK_addIntentAndDeletedIdToOperation(
+      // Tag each child's create with "set" (no deletedId, since nothing
+      // specific is being replaced). This routes the ack through the set path
+      // so a list created and immediately mutated doesn't transiently re-show
+      // its initial items (to avoid flicker, see PR 1177).
+      const childOps = addIntentToRootOp(
         item._toOps(this._id, parentKey),
-        undefined
+        "set"
       );
       for (const childOp of childOps) {
         ops.push(childOp);
@@ -165,6 +168,30 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     return this.#items.findIndex(
       (item) => item._getParentKeyOrThrow() === position
     );
+  }
+
+  /**
+   * The opId of this list's still-unacknowledged "set" op at the given position,
+   * or undefined if none. Derived from the room's unacknowledgedOps (the single
+   * source of truth) rather than tracked in a per-instance map. The pool's
+   * position index already scopes to this list's (parentId, position); the last
+   * match wins, matching the original last-write-wins map semantics.
+   */
+  #unacknowledgedSetOpIdAt(position: string): string | undefined {
+    if (this._pool === undefined || this._id === undefined) {
+      return undefined;
+    }
+
+    let opId: string | undefined;
+    for (const op of this._pool.unacknowledgedOps.getByParentIdAndKey(
+      this._id,
+      position
+    )) {
+      if (op.intent === "set") {
+        opId = op.opId;
+      }
+    }
+    return opId;
   }
 
   /** @internal */
@@ -282,16 +309,19 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       delta.push(deletedDelta);
     }
 
-    const unacknowledgedOpId = this.#unacknowledgedSets.get(op.parentKey);
-
-    if (unacknowledgedOpId !== undefined) {
-      if (unacknowledgedOpId !== op.opId) {
-        return delta.length === 0
-          ? { modified: false }
-          : { modified: makeUpdate(this, delta), reverse: [] };
-      } else {
-        this.#unacknowledgedSets.delete(op.parentKey);
-      }
+    // If a *different* set op is still pending at this position, our optimistic
+    // state is newer than this (now-stale) ack, so keep ours and ignore it.
+    // (Nothing to clear on a match: the room already removed op.opId from
+    // unacknowledgedOps before dispatching this ack, so this lookup returns
+    // undefined for the op being acked and only ever surfaces a *newer* pending
+    // set. This assumes acks for a single position arrive in dispatch order,
+    // which holds: one client sends them sequentially and the server preserves
+    // that order.)
+    const unacknowledgedOpId = this.#unacknowledgedSetOpIdAt(op.parentKey);
+    if (unacknowledgedOpId !== undefined && unacknowledgedOpId !== op.opId) {
+      return delta.length === 0
+        ? { modified: false }
+        : { modified: makeUpdate(this, delta), reverse: [] };
     }
 
     const indexOfItemWithSamePosition = this._indexOfPosition(op.parentKey);
@@ -399,7 +429,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     return result.modified.updates[0];
   }
 
-  #applyRemoteInsert(op: CreateOp): ApplyResult {
+  #applyRemoteInsert(op: CreateOp, fromSnapshot: boolean): ApplyResult {
     if (this._pool === undefined) {
       throw new Error("Can't attach child if managed pool is not present");
     }
@@ -415,11 +445,104 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
     const { newItem, newIndex } = this.#createAttachItemAndSort(op, key);
 
-    // TODO: add move update?
+    // A new remote sibling just landed among our items, so our still-unacked
+    // pushes may need bumping back to the tail. This is the only place that
+    // bumps: a remote insert or push is the only op that drops a *new* sibling
+    // into the list. Remote sets/moves are computed by the other client against
+    // a view that excludes our still-unacked pushes, so they can't address a
+    // position inside our pending tail block.
+    //
+    // The bump is a purely-local, live-only anti-flicker prediction of where
+    // the server will place things. While reconstructing from a server snapshot
+    // (reconnect reconcile) we already have the answer, so we don't predict:
+    // bumping there would override the snapshot's positions with a guess, and
+    // the diff carries no corrective op to undo it.
+    const bumpDeltas = fromSnapshot ? [] : this.#bumpUnackedPushesAbove(key);
+
     return {
-      modified: makeUpdate(this, [insertDelta(newIndex, newItem)]),
+      modified: makeUpdate(this, [
+        insertDelta(newIndex, newItem),
+        ...bumpDeltas,
+      ]),
       reverse: [],
     };
+  }
+
+  /**
+   * This list's own still-unacknowledged pushed items (their `intent: "push"`
+   * Create op is still pending in the room's unacknowledgedOps). Derived from
+   * the single source of truth, so an item drops out the instant its op is
+   * acked, with no per-instance membership to leak. Yielded in push order.
+   *
+   * Restricted to items currently in `#items`: a pushed node whose op is still
+   * pending may have been pulled out of the list (e.g. implicitly deleted by a
+   * remote set, or removed by an undo) while still living in the pool, and such
+   * a node must not be repositioned.
+   */
+  *#unackedPushNodes(): Iterable<LiveNode> {
+    if (this._pool === undefined || this._id === undefined) {
+      return;
+    }
+
+    for (const op of this._pool.unacknowledgedOps.getByParentId(this._id)) {
+      if (op.intent !== "push") {
+        continue;
+      }
+      const node = this._pool.getNode(op.id);
+      if (node !== undefined && this.#items.includes(node)) {
+        yield node;
+      }
+    }
+  }
+
+  /**
+   * Optimistic no-flip for pushed items. When a remote op lands at or below my
+   * still-unacked pushed items, those items must end up *after* it: FIFO plus
+   * the room's serial processing guarantee the remote was processed first, so
+   * my unacked pushes belong behind it. Re-chain the whole unacked-push block,
+   * in push order, to sit after the highest confirmed sibling, so it keeps
+   * rendering as a contiguous tail instead of getting interleaved. Local-only;
+   * the real acks overwrite these keys with the (identical) server keys.
+   */
+  #bumpUnackedPushesAbove(remoteKey: Pos): LiveListUpdateDelta[] {
+    const pending = new Set(this.#unackedPushNodes());
+    if (pending.size === 0) {
+      return [];
+    }
+
+    // Only bump when the remote intruded into (at or below) the pending block.
+    // If it sorts entirely below, the block already renders above it.
+    let minPending: Pos | undefined;
+    for (const node of pending) {
+      const pos = node._parentPos;
+      if (minPending === undefined || pos < minPending) {
+        minPending = pos;
+      }
+    }
+    if (remoteKey < nn(minPending)) {
+      return [];
+    }
+
+    // Highest confirmed (non-pending) key. `#items` is sorted ascending, so the
+    // last non-pending item we see is the max.
+    let base: Pos | undefined;
+    for (const item of this.#items) {
+      if (!pending.has(item)) {
+        base = item._parentPos;
+      }
+    }
+
+    const deltas: LiveListUpdateDelta[] = [];
+    for (const node of pending) {
+      const previousIndex = this.#items.findIndex((item) => item === node);
+      base = makePosition(base);
+      this.#updateItemPosition(node, base);
+      const index = this.#items.findIndex((item) => item === node);
+      if (index !== previousIndex) {
+        deltas.push(moveDelta(previousIndex, index, node));
+      }
+    }
+    return deltas;
   }
 
   #applyInsertAck(op: CreateOp): ApplyResult {
@@ -528,8 +651,6 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       return { modified: false };
     }
 
-    this.#unacknowledgedSets.set(key, nn(op.opId));
-
     const indexOfItemWithSameKey = this._indexOfPosition(key);
 
     child._attach(id, nn(this._pool));
@@ -546,8 +667,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       this.#items.remove(existingItem);
       this.#items.add(child);
 
-      const reverse = HACK_addIntentAndDeletedIdToOperation(
+      const reverse = addIntentToRootOp(
         existingItem._toOps(nn(this._id), key),
+        "set",
         op.id
       );
 
@@ -579,7 +701,11 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   }
 
   /** @internal */
-  _attachChild(op: CreateOp, source: OpSource): ApplyResult {
+  _attachChild(
+    op: CreateOp,
+    source: OpSource,
+    fromSnapshot: boolean = false
+  ): ApplyResult {
     if (this._pool === undefined) {
       throw new Error("Can't attach child if managed pool is not present");
     }
@@ -596,7 +722,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       }
     } else {
       if (source === OpSource.THEIRS) {
-        result = this.#applyRemoteInsert(op);
+        result = this.#applyRemoteInsert(op, fromSnapshot);
       } else if (source === OpSource.OURS) {
         result = this.#applyInsertAck(op);
       } else {
@@ -855,8 +981,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @param element The element to add to the end of the LiveList.
    */
   push(element: TItem): void {
-    this._pool?.assertStorageIsWritable();
-    return this.insert(element, this.length);
+    return this.#injectAt(element, this.length, "push");
   }
 
   /**
@@ -865,6 +990,16 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @param index The index at which you want to insert the element.
    */
   insert(element: TItem, index: number): void {
+    return this.#injectAt(element, index, "insert");
+  }
+
+  /**
+   * Shared implementation of `insert` and `push`. A `"push"` intent leaves the
+   * client-computed position untouched (so optimistic rendering is unchanged),
+   * but tags the Op so the server appends it to the true end of the list
+   * instead of resolving its position against the client's stale view.
+   */
+  #injectAt(element: TItem, index: number, intent: "insert" | "push"): void {
     this._pool?.assertStorageIsWritable();
     if (index < 0 || index > this.#items.length) {
       throw new Error(
@@ -886,8 +1021,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       const id = this._pool.generateId();
       value._attach(id, this._pool);
 
+      const ops = value._toOpsWithOpId(this._id, position, this._pool);
       this._pool.dispatch(
-        value._toOpsWithOpId(this._id, position, this._pool),
+        intent === "push" ? addIntentToRootOp(ops, "push") : ops,
         [{ type: OpCode.DELETE_CRDT, id }],
         new Map<string, LiveListUpdates<TItem>>([
           [this._id, makeUpdate(this, [insertDelta(index, value)])],
@@ -1085,13 +1221,14 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       const storageUpdates = new Map<string, LiveListUpdates<TItem>>();
       storageUpdates.set(this._id, makeUpdate(this, [setDelta(index, value)]));
 
-      const ops = HACK_addIntentAndDeletedIdToOperation(
+      const ops = addIntentToRootOp(
         value._toOpsWithOpId(this._id, position, this._pool),
+        "set",
         existingId
       );
-      this.#unacknowledgedSets.set(position, nn(ops[0].opId));
-      const reverseOps = HACK_addIntentAndDeletedIdToOperation(
+      const reverseOps = addIntentToRootOp(
         existingItem._toOps(this._id, position),
+        "set",
         id
       );
 
@@ -1345,23 +1482,33 @@ function moveDelta(
 }
 
 /**
- * This function is only temporary.
- * As soon as we refactor the operations structure,
- * serializing a LiveStructure should not know anything about intent
+ * Tags the root op of a serialized CreateOp sequence with an `intent` ("set" or
+ * "push") and an optional `deletedId`, telling the server how to resolve the
+ * new node's position in its parent list: replace an existing item ("set") or
+ * append to the true end ("push"). Only the root is tagged; see the note in the
+ * body for why.
+ *
+ * By default, no explicit intent means a regular insert.
  */
-function HACK_addIntentAndDeletedIdToOperation<T extends CreateOp>(
+function addIntentToRootOp<T extends CreateOp>(ops: T[], intent: "push"): T[];
+function addIntentToRootOp<T extends CreateOp>(
   ops: T[],
-  deletedId: string | undefined
+  intent: "set",
+  deletedId?: string
+): T[];
+function addIntentToRootOp<T extends CreateOp>(
+  ops: T[],
+  intent: "set" | "push",
+  deletedId?: string
 ): T[] {
   return ops.map((op, index) => {
     if (index === 0) {
-      // NOTE: Only patch the first Op here
+      // NOTE: Only the *first* Op is patched. `_toOps`/`_toOpsWithOpId` emit
+      // `ops[0]` for the value itself (whose parent is the list), followed by
+      // ops for that value's descendants (whose parent is the new node, not
+      // the list).
       const firstOp = op;
-      return {
-        ...firstOp,
-        intent: "set",
-        deletedId,
-      };
+      return { ...firstOp, intent, deletedId };
     } else {
       return op;
     }

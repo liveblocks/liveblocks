@@ -62,14 +62,19 @@ test.describe("Client logout", () => {
 
     await test.step("Logout and verify reconnection", async () => {
       await page.click("#logout");
-      await waitForJson(page, "#socketStatus_1", "connected");
-      await waitForJson(page, "#socketStatus_2", "connected");
-      await waitForJson(page, "#socketStatus_3", "connected");
+
+      // logout() clears the auth cache and reconnects every room, so each must
+      // re-auth before connecting. That path is bounded by AUTH_TIMEOUT (10s),
+      // well above waitForJson's 5s default, so widen the window past it.
+      const timeout = 15_000;
+      await waitForJson(page, "#socketStatus_1", "connected", { timeout });
+      await waitForJson(page, "#socketStatus_2", "connected", { timeout });
+      await waitForJson(page, "#socketStatus_3", "connected", { timeout });
 
       // All three rooms get re-connected (and thus increment their connection ID)
-      await waitForJson(page, "#connectionId_1", connId1 + 1);
-      await waitForJson(page, "#connectionId_2", connId2 + 1);
-      await waitForJson(page, "#connectionId_3", connId3 + 1);
+      await waitForJson(page, "#connectionId_1", connId1 + 1, { timeout });
+      await waitForJson(page, "#connectionId_2", connId2 + 1, { timeout });
+      await waitForJson(page, "#connectionId_3", connId3 + 1, { timeout });
     });
   });
 

@@ -209,6 +209,25 @@ export class SortedList<T> {
     return this.#data.length;
   }
 
+  /**
+   * Whether the given value is present, by identity. O(log n) plus the length
+   * of any run of items that share its sort key (normally 1). Bisects on the
+   * value's own key, so it only finds values sitting at their sorted position,
+   * which is true for any item currently in the list.
+   */
+  includes(value: T): boolean {
+    for (
+      let i = bisectRight(this.#data, value, this.#lt) - 1;
+      i >= 0 && !this.#lt(this.#data[i], value);
+      i--
+    ) {
+      if (this.#data[i] === value) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   *filter(predicate: (value: T) => boolean): IterableIterator<T> {
     for (const item of this.#data) {
       if (predicate(item)) {

@@ -60,6 +60,25 @@ describe("LiveList", () => {
       list.clear();
       expect(list.toJSON()).toEqual([]);
     });
+
+    test("mutations update local state when not attached", () => {
+      const list = new LiveList<string>(["a", "b"]);
+
+      list.push("c");
+      expect(list.toJSON()).toEqual(["a", "b", "c"]);
+
+      list.insert("x", 1);
+      expect(list.toJSON()).toEqual(["a", "x", "b", "c"]);
+
+      list.move(0, 2);
+      expect(list.toJSON()).toEqual(["x", "b", "a", "c"]);
+
+      list.set(0, "y");
+      expect(list.toJSON()).toEqual(["y", "b", "a", "c"]);
+
+      list.delete(3);
+      expect(list.toJSON()).toEqual(["y", "b", "a"]);
+    });
   });
 
   describe("deserialization", () => {
