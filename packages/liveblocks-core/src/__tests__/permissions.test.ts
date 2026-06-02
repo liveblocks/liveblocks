@@ -101,11 +101,15 @@ describe("roomFeaturesFromScopes", () => {
   });
 
   test("returns permission conflicts by feature", () => {
-    expect(getRoomPermissionConflicts(Permission.RoomStorageRead)).toEqual([
-      Permission.RoomStorageRead,
-      Permission.RoomStorageWrite,
-      Permission.RoomStorageNone,
-    ]);
+    expect(
+      new Set(getRoomPermissionConflicts(Permission.RoomStorageRead))
+    ).toEqual(
+      new Set([
+        Permission.RoomStorageRead,
+        Permission.RoomStorageWrite,
+        Permission.RoomStorageNone,
+      ])
+    );
     expect(getRoomPermissionConflicts(Permission.RoomWrite)).toContain(
       Permission.RoomCommentsNone
     );

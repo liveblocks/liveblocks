@@ -13,8 +13,6 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.json(
-    userIds.map(
-      (userId) => USERS.find((u) => u.id === userId)?.info ?? null
-    )
+    userIds.map((userId) => USERS.find((u) => u.id === userId)?.info ?? null)
   );
 }
