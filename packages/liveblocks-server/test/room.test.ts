@@ -116,7 +116,7 @@ describe("room", () => {
   test.skip('room will throw "no such session" errors when used before the session is started', async () => {
     const room = new Room("my-room");
     await room.load();
-    const ticket = await room.createTicket();
+    const ticket = room.createTicket();
     const key = ticket.sessionKey;
 
     // Errors will happen if used before .startBrowserSession() is used
@@ -127,11 +127,11 @@ describe("room", () => {
   test("starting multiple sessions", async () => {
     const room = new Room("my-room");
     await room.load();
-    const ticket1 = await room.createTicket();
-    const ticket2 = await room.createTicket();
-    const ticket3 = await room.createTicket();
-    const ticket4 = await room.createTicket();
-    const ticket5 = await room.createTicket();
+    const ticket1 = room.createTicket();
+    const ticket2 = room.createTicket();
+    const ticket3 = room.createTicket();
+    const ticket4 = room.createTicket();
+    const ticket5 = room.createTicket();
     await room.startBrowserSession(ticket1, new MockServerWebSocket());
     await room.startBrowserSession(ticket2, new MockServerWebSocket());
     await room.startBrowserSession(ticket3, new MockServerWebSocket());
@@ -143,9 +143,9 @@ describe("room", () => {
   test("starting a second session for an actor kicks the first one", async () => {
     const room = new Room("my-room");
     await room.load();
-    const ticket1 = await room.createTicket({ actor: 13 as ActorID });
-    const ticket2 = await room.createTicket();
-    const ticket3 = await room.createTicket({ actor: 13 as ActorID });
+    const ticket1 = room.createTicket({ actor: 13 as ActorID });
+    const ticket2 = room.createTicket();
+    const ticket3 = room.createTicket({ actor: 13 as ActorID });
     expect(room.numSessions).toEqual(0);
     await room.startBrowserSession(ticket1, new MockServerWebSocket());
     expect(room.numSessions).toEqual(1);
@@ -158,7 +158,7 @@ describe("room", () => {
   test("enter + leave", async () => {
     const room = new Room("my-room");
     await room.load();
-    const ticket = await room.createTicket();
+    const ticket = room.createTicket();
     await room.startBrowserSession(ticket, new MockServerWebSocket());
     room.endBrowserSession(ticket.sessionKey, 1001, "bleh");
   });
@@ -264,11 +264,9 @@ describe("room (w/ last actor ID)", () => {
 
     // Create 1000 tickets
     const actors = new Set(
-      (
-        await Promise.all(
-          Array.from({ length: 1000 }).map(() => room.createTicket())
-        )
-      ).map((t) => t.actor)
+      Array.from({ length: 1000 })
+        .map(() => room.createTicket())
+        .map((t) => t.actor)
     );
 
     // The set contains 1000 unique elements

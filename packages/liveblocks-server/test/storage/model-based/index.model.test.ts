@@ -43,21 +43,20 @@ describe("Storage (model-based test)", () => {
             }),
           }),
 
-          async ({ initialNodes, commands }) => {
+          ({ initialNodes, commands }) =>
             // Set up real and reference model
             // In this case, there is no reference model, because the real model
             // will perform a self-check
 
-            await runWithStorage(initialNodes, async ({ storage: real }) => {
-              await selfCheck(real);
+            runWithStorage(initialNodes, ({ storage: real }) => {
+              selfCheck(real);
 
               const model = new Model(real.loadedDriver.iter_nodes());
 
               // Tries running randomized sequences of commands (think calling
               // "applyOp(<random op>)" a million times)
-              await fc.asyncModelRun(() => ({ model, real }), commands);
-            });
-          }
+              fc.modelRun(() => ({ model, real }), commands);
+            })
         ),
         {
           numRuns: 200, // Stop after 200 iterations, or...

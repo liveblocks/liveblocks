@@ -617,6 +617,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
    * to call multiple times. After awaiting `room.load()` the Room is ready to
    * be used.
    */
+  // XXXX We should now be able to remove this asyncness here too
   public async load(ctx?: C): Promise<void> {
     if (this._loadData$ === null) {
       this._data = null;
@@ -657,15 +658,13 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
    * connection is established. If the socket is never established, this
    * unused Ticket will simply get garbage collected.
    */
-  public async createTicket(
-    options?: CreateTicketOptions<SM, CM>
-  ): Promise<Ticket<SM, CM>> {
-    const actor$ = options?.actor ?? this.getNextActor();
+  public createTicket(options?: CreateTicketOptions<SM, CM>): Ticket<SM, CM> {
+    const actor = options?.actor ?? this.getNextActor();
     const sessionKey = nanoid() as SessionKey;
     const info = options?.info;
     const ticket: Ticket<SM, CM> = {
       version: options?.version ?? HIGHEST_PROTOCOL_VERSION,
-      actor: await actor$,
+      actor,
       sessionKey,
       meta: options?.meta,
       publicMeta: options?.publicMeta,
@@ -680,10 +679,11 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
     return ticket;
   }
 
-  public async createBackendSession_experimental(): Promise<
-    [session: BackendSession, outgoingMessages: jstring<ServerMsg>[]]
-  > {
-    const ticket = (await this.createTicket()) as Ticket<never, never>;
+  public createBackendSession_experimental(): [
+    session: BackendSession,
+    outgoingMessages: jstring<ServerMsg>[],
+  ] {
+    const ticket = this.createTicket() as Ticket<never, never>;
     const capturedServerMsgs: jstring<ServerMsg>[] = [];
     const stub = {
       send: (data) => {
@@ -1069,7 +1069,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
    * Upsert a leased session. Creates a new session if it doesn't exist (or is expired),
    * or updates an existing session with merged presence.
    */
-  public async upsertLeasedSession(
+  public upsertLeasedSession(
     sessionId: string,
     presence: JsonObject,
     ttl: number,
@@ -1081,18 +1081,18 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
           "Pass a `defer` callback to upsertLeasedSession() to collect async side effects."
       );
     }
-  ): Promise<void> {
-    const existingSession = await this.driver.get_leased_session(sessionId);
+  ): void {
+    const existingSession = this.driver.get_leased_session(sessionId);
     const isExpired =
       existingSession !== undefined && isLeasedSessionExpired(existingSession);
 
     if (isExpired) {
-      await this.deleteLeasedSession(existingSession, ctx, defer);
+      this.deleteLeasedSession(existingSession, ctx, defer);
     }
 
     if (existingSession === undefined || isExpired) {
       // Creating new session (or was expired)
-      const actorId = await this.getNextActor();
+      const actorId = this.getNextActor();
       const now = Date.now();
       const session: LeasedSession = {
         sessionId,
@@ -1103,7 +1103,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
         actorId,
       };
 
-      await this.driver.put_leased_session(session);
+      this.driver.put_leased_session(session);
 
       // Broadcast USER_JOINED to all existing sessions
       this.sendToAll(
@@ -1143,7 +1143,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
         ttl,
       };
 
-      await this.driver.put_leased_session(updatedSession);
+      this.driver.put_leased_session(updatedSession);
 
       // Broadcast UPDATE_PRESENCE WITHOUT targetActor to all sessions (patch)
       this.sendToAll(
@@ -1172,7 +1172,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
     }
   ): Promise<LeasedSession[]> {
     await this.load(ctx);
-    const sessions = await this.driver.list_leased_sessions();
+    const sessions = this.driver.list_leased_sessions();
     const validSessions: LeasedSession[] = [];
     const toDelete: LeasedSession[] = [];
     for (const [_, session] of sessions) {
@@ -1184,7 +1184,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
     }
 
     for (const session of toDelete) {
-      await this.deleteLeasedSession(session, ctx, defer);
+      this.deleteLeasedSession(session, ctx, defer);
     }
 
     return validSessions;
@@ -1193,7 +1193,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
   /**
    * Delete a server session and broadcast USER_LEFT to all sessions.
    */
-  public async deleteLeasedSession(
+  public deleteLeasedSession(
     session: LeasedSession,
     ctx?: C,
     defer: (promise: Promise<void>) => void = () => {
@@ -1202,7 +1202,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
           "Pass a `defer` callback to deleteLeasedSession() to collect async side effects."
       );
     }
-  ): Promise<void> {
+  ): void {
     // Broadcast USER_LEFT to all sessions
     this.sendToAll(
       {
@@ -1212,7 +1212,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
       ctx,
       defer
     );
-    await this.driver.delete_leased_session(session.sessionId);
+    this.driver.delete_leased_session(session.sessionId);
   }
 
   /**
@@ -1228,9 +1228,9 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
     }
   ): Promise<void> {
     await this.load(ctx);
-    const sessions = await this.driver.list_leased_sessions();
+    const sessions = this.driver.list_leased_sessions();
     for (const [_, session] of sessions) {
-      await this.deleteLeasedSession(session, ctx, defer);
+      this.deleteLeasedSession(session, ctx, defer);
     }
   }
 
@@ -1241,59 +1241,56 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
   /**
    * List feeds with pagination and filtering.
    */
-  public async listFeeds(options?: ListFeedsOptions): Promise<ListFeedsResult> {
-    return await this.driver.list_feeds(options);
+  public listFeeds(options?: ListFeedsOptions): ListFeedsResult {
+    return this.driver.list_feeds(options);
   }
 
   /**
    * Get a specific feed by feed ID.
    */
-  public async getFeed(feedId: string): Promise<Feed | undefined> {
-    return await this.driver.get_feed(feedId);
+  public getFeed(feedId: string): Feed | undefined {
+    return this.driver.get_feed(feedId);
   }
 
   /**
    * Create a new feed.
    * If timestamp is not provided, current server time is used.
    */
-  public async createFeed(
+  public createFeed(
     feed: Omit<Feed, "createdAt" | "updatedAt"> & { timestamp?: number }
-  ): Promise<Feed> {
+  ): Feed {
     const now = feed.timestamp ?? Date.now();
     const fullFeed: Feed = {
       ...feed,
       createdAt: now,
       updatedAt: now,
     };
-    await this.driver.create_feed(fullFeed);
+    this.driver.create_feed(fullFeed);
     return fullFeed;
   }
 
   /**
    * Update a feed's metadata.
    */
-  public async updateFeedMetadata(
-    feedId: string,
-    metadata: Json
-  ): Promise<void> {
-    await this.driver.update_feed_metadata(feedId, metadata);
+  public updateFeedMetadata(feedId: string, metadata: Json): void {
+    this.driver.update_feed_metadata(feedId, metadata);
   }
 
   /**
    * Delete a feed.
    */
-  public async deleteFeed(feedId: string): Promise<void> {
-    await this.driver.delete_feed(feedId);
+  public deleteFeed(feedId: string): void {
+    this.driver.delete_feed(feedId);
   }
 
   /**
    * List feed messages for a feed with pagination.
    */
-  public async listFeedMessages(
+  public listFeedMessages(
     feedId: string,
     options?: ListFeedMessagesOptions
-  ): Promise<ListFeedMessagesResult> {
-    return await this.driver.list_feed_messages(feedId, options);
+  ): ListFeedMessagesResult {
+    return this.driver.list_feed_messages(feedId, options);
   }
 
   /**
@@ -1301,11 +1298,11 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
    * If message id is not provided, a unique ID is automatically generated.
    * If timestamp is not provided, current server time is used.
    */
-  public async addFeedMessage(
+  public addFeedMessage(
     feedId: string,
     message: Omit<FeedMessage, "id" | "createdAt" | "updatedAt"> &
       Partial<Pick<FeedMessage, "id">> & { timestamp?: number }
-  ): Promise<FeedMessage> {
+  ): FeedMessage {
     const now = message.timestamp ?? Date.now();
     const fullMessage: FeedMessage = {
       id: message.id ?? nanoid(),
@@ -1313,7 +1310,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
       updatedAt: now,
       data: message.data,
     };
-    await this.driver.add_feed_message(feedId, fullMessage);
+    this.driver.add_feed_message(feedId, fullMessage);
     return fullMessage;
   }
 
@@ -1321,13 +1318,13 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
    * Update a feed message's data.
    * Returns the updated message.
    */
-  public async updateFeedMessage(
+  public updateFeedMessage(
     feedId: string,
     messageId: string,
     data: Json,
     timestamp?: number
-  ): Promise<FeedMessage> {
-    return await this.driver.update_feed_message(
+  ): FeedMessage {
+    return this.driver.update_feed_message(
       feedId,
       messageId,
       data,
@@ -1338,11 +1335,8 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
   /**
    * Delete a feed message.
    */
-  public async deleteFeedMessage(
-    feedId: string,
-    messageId: string
-  ): Promise<void> {
-    await this.driver.delete_feed_message(feedId, messageId);
+  public deleteFeedMessage(feedId: string, messageId: string): void {
+    this.driver.delete_feed_message(feedId, messageId);
   }
 
   /**
@@ -1409,6 +1403,13 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
     }
   }
 
+  /**
+   * Returns a new, unique, actor ID.
+   */
+  public getNextActor(): ActorID {
+    return this.driver.next_actor() as ActorID;
+  }
+
   // ------------------------------------------------------------------------------------
   // Private APIs
   // ------------------------------------------------------------------------------------
@@ -1440,13 +1441,6 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
     };
 
     await this.hooks.onRoomDidLoad?.(ctx);
-  }
-
-  /**
-   * Returns a new, unique, actor ID.
-   */
-  private async getNextActor(): Promise<ActorID> {
-    return (await this.driver.next_actor()) as ActorID;
   }
 
   /**
@@ -1694,7 +1688,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
         // semantics to provide snapshot isolation.
         this.driver.bump_storage_version?.();
 
-        const result = await this.storage.applyOps(msg.ops);
+        const result = this.storage.applyOps(msg.ops);
 
         const opsToForward: ServerWireOp[] = result.flatMap((r) =>
           r.action === "accepted" ? [r.op] : []
@@ -1807,7 +1801,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
       // Feed messages
       case FeedMsgCode.FETCH_FEEDS: {
         const fetchMsg = msg;
-        const [result, err] = await tryCatch(
+        const [result, err] = await tryCatch(() =>
           this.listFeeds({
             cursor: fetchMsg.cursor,
             since: fetchMsg.since,
@@ -1830,7 +1824,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
 
       case FeedMsgCode.FETCH_FEED_MESSAGES: {
         const fetchMsg = msg;
-        const [result, err] = await tryCatch(
+        const [result, err] = await tryCatch(() =>
           this.listFeedMessages(fetchMsg.feedId, {
             cursor: fetchMsg.cursor,
             since: fetchMsg.since,
@@ -1853,7 +1847,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
 
       case FeedMsgCode.ADD_FEED: {
         const addMsg = msg;
-        const [feed, err] = await tryCatch(
+        const [feed, err] = await tryCatch(() =>
           this.createFeed({
             feedId: addMsg.feedId,
             metadata: (addMsg.metadata as Json) ?? {},
@@ -1874,14 +1868,14 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
 
       case FeedMsgCode.UPDATE_FEED: {
         const updateMsg = msg;
-        const [, metaErr] = await tryCatch(
+        const [, metaErr] = await tryCatch(() =>
           this.updateFeedMetadata(updateMsg.feedId, updateMsg.metadata as Json)
         );
         if (metaErr) {
           replyImmediately(feedFailureServerMsg(updateMsg.requestId, metaErr));
           break;
         }
-        const feed = await this.getFeed(updateMsg.feedId);
+        const feed = this.getFeed(updateMsg.feedId);
         if (!feed) {
           replyImmediately(
             feedRequestFailed(
@@ -1902,7 +1896,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
 
       case FeedMsgCode.DELETE_FEED: {
         const deleteMsg = msg;
-        const [, err] = await tryCatch(this.deleteFeed(deleteMsg.feedId));
+        const [, err] = await tryCatch(() => this.deleteFeed(deleteMsg.feedId));
         if (err) {
           replyImmediately(feedFailureServerMsg(deleteMsg.requestId, err));
           break;
@@ -1918,7 +1912,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
 
       case FeedMsgCode.ADD_FEED_MESSAGE: {
         const addMsg = msg;
-        const [message, err] = await tryCatch(
+        const [message, err] = await tryCatch(() =>
           this.addFeedMessage(addMsg.feedId, {
             data: addMsg.data as Json,
             id: addMsg.id,
@@ -1940,7 +1934,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
 
       case FeedMsgCode.UPDATE_FEED_MESSAGE: {
         const updateMsg = msg;
-        const [message, err] = await tryCatch(
+        const [message, err] = await tryCatch(() =>
           this.updateFeedMessage(
             updateMsg.feedId,
             updateMsg.messageId,
@@ -1963,7 +1957,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
 
       case FeedMsgCode.DELETE_FEED_MESSAGE: {
         const deleteMsg = msg;
-        const [, err] = await tryCatch(
+        const [, err] = await tryCatch(() =>
           this.deleteFeedMessage(deleteMsg.feedId, deleteMsg.messageId)
         );
         if (err) {

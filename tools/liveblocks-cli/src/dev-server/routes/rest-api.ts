@@ -335,7 +335,7 @@ zen.route(
     }
 
     // Initialize storage
-    await room.driver.DANGEROUSLY_reset_nodes(body);
+    room.driver.DANGEROUSLY_reset_nodes(body);
     room.unload();
 
     return new Response(JSON.stringify(body), {
@@ -360,7 +360,7 @@ zen.route("DELETE /v2/rooms/<roomId>/storage", async ({ p }) => {
     liveblocksType: "LiveObject",
     data: {},
   };
-  await room.driver.DANGEROUSLY_reset_nodes(emptyStorage);
+  room.driver.DANGEROUSLY_reset_nodes(emptyStorage);
   room.unload();
 
   return new Response(null, { status: 204 });
@@ -641,7 +641,7 @@ zen.route(
     const room = Rooms.getRoomInstance(p.roomId);
     await room.load();
 
-    const actor = await room.driver.next_actor();
+    const actor = room.getNextActor();
     const snapshot = room.storage.loadedDriver.get_snapshot(false);
     return ndjsonStream(
       chain<Json>([{ actor }], snapshotToNodeStream(snapshot))
@@ -663,7 +663,7 @@ zen.route(
     await room.load();
 
     const [session, capturedServerMsgs] =
-      await room.createBackendSession_experimental();
+      room.createBackendSession_experimental();
 
     await room.processClientMsgFromBackendSession(session, body.messages);
 

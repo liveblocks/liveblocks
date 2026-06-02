@@ -36,7 +36,7 @@ export class YjsStorage {
 
   private readonly doc: Y.Doc = new Y.Doc(); // the root document
   private readonly lastSnapshotById = new Map<YDocId, Y.Snapshot>();
-  private readonly initPromisesById: Map<YDocId, Promise<Y.Doc>> = new Map();
+  private readonly initPromisesById: Map<YDocId, Y.Doc> = new Map();
   private readonly storedKeysById: Map<YDocId, string[]> = new Map();
 
   constructor(
@@ -56,9 +56,9 @@ export class YjsStorage {
   // Public API
   // ------------------------------------------------------------------------------------
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   public async getYDoc(logger: Logger, docId: YDocId): Promise<Y.Doc> {
-    const doc = await this.loadDocByIdIfNotAlreadyLoaded(logger, docId);
-    return doc;
+    return this.loadDocByIdIfNotAlreadyLoaded(logger, docId);
   }
 
   /**
@@ -170,7 +170,7 @@ export class YjsStorage {
       // Check the snapshot before/after to see if the update had an effect
       const updated = !Y.equalSnapshots(beforeSnapshot, afterSnapshot);
       if (updated) {
-        await this.handleYDocUpdate(doc, updateAsU8, isV2);
+        this.handleYDocUpdate(doc, updateAsU8, isV2);
       }
 
       return {
@@ -186,25 +186,24 @@ export class YjsStorage {
     }
   }
 
-  public loadDocByIdIfNotAlreadyLoaded(
-    logger: Logger,
-    docId: YDocId
-  ): Promise<Y.Doc> {
-    let loaded$ = this.initPromisesById.get(docId);
+  public loadDocByIdIfNotAlreadyLoaded(logger: Logger, docId: YDocId): Y.Doc {
+    let loaded = this.initPromisesById.get(docId);
     let doc = docId === ROOT_YDOC_ID ? this.doc : this.findYSubdocByGuid(docId);
     if (!doc) {
       // An API call can load a subdoc without the root doc (this._doc) being loaded, we account for that by just instantiating a doc here.
       doc = new Y.Doc();
     }
-    if (loaded$ === undefined) {
-      loaded$ = this._loadYDocFromDurableStorage(logger, doc, docId);
-      this.initPromisesById.set(docId, loaded$);
+    if (loaded === undefined) {
+      loaded = this._loadYDocFromDurableStorage(logger, doc, docId);
+      this.initPromisesById.set(docId, loaded);
     }
-    return loaded$;
+    return loaded;
   }
 
+  // XXXX We should now be able to remove this asyncness here too
+  // eslint-disable-next-line @typescript-eslint/require-await
   public async load(logger: Logger): Promise<void> {
-    await this.loadDocByIdIfNotAlreadyLoaded(logger, ROOT_YDOC_ID);
+    this.loadDocByIdIfNotAlreadyLoaded(logger, ROOT_YDOC_ID);
   }
 
   /**
@@ -246,27 +245,25 @@ export class YjsStorage {
   }
 
   // compact the updates into a single update and write it to the durable storage
-  private _compactYJSUpdates = async (
+  private _compactYJSUpdates = (
     doc: Y.Doc,
     docId: YDocId,
     storedKeys: string[]
-  ): Promise<void> => {
+  ): void => {
     const compactedUpdate = Y.encodeStateAsUpdate(doc);
     const newKey = nanoid();
-    await this.driver.write_y_updates(docId, newKey, compactedUpdate);
+    this.driver.write_y_updates(docId, newKey, compactedUpdate);
     // Todo: after we kill the kv driver, we should have an overwrite method in the driverso we don't need to delete and write
-    await this.driver.delete_y_updates(docId, storedKeys);
+    this.driver.delete_y_updates(docId, storedKeys);
     this.storedKeysById.set(docId, [newKey]);
   };
 
-  private _loadYDocFromDurableStorage = async (
+  private _loadYDocFromDurableStorage = (
     _logger: Logger,
     doc: Y.Doc,
     docId: YDocId
-  ): Promise<Y.Doc> => {
-    const docUpdates = Object.fromEntries(
-      await this.driver.iter_y_updates(docId)
-    );
+  ): Y.Doc => {
+    const docUpdates = Object.fromEntries(this.driver.iter_y_updates(docId));
     const updates = Object.values(docUpdates);
     const beforeSize = updates.reduce((acc, update) => acc + update.length, 0);
     const newupdate = Y.mergeUpdates(updates);
@@ -277,7 +274,7 @@ export class YjsStorage {
       this.shouldCompactByKeyCount(storedKeys) ||
       this.shouldCompactBySize(beforeSize, newupdate.length)
     ) {
-      await this._compactYJSUpdates(doc, docId, storedKeys);
+      this._compactYJSUpdates(doc, docId, storedKeys);
     } else {
       this.storedKeysById.set(docId, storedKeys);
     }
@@ -310,21 +307,22 @@ export class YjsStorage {
   }
 
   // gets a subdoc, it will be loaded if not already loaded
+  // eslint-disable-next-line @typescript-eslint/require-await
   private async getYSubdoc(logger: Logger, guid: Guid): Promise<Y.Doc | null> {
     const subdoc = this.findYSubdocByGuid(guid);
     if (!subdoc) {
       return null;
     }
-    await this.loadDocByIdIfNotAlreadyLoaded(logger, guid);
+    this.loadDocByIdIfNotAlreadyLoaded(logger, guid);
     return subdoc;
   }
 
   // When the YJS doc changes, update it in durable storage
-  private async handleYDocUpdate(
+  private handleYDocUpdate(
     doc: Y.Doc,
     update: Uint8Array,
     isV2: boolean | undefined
-  ): Promise<void> {
+  ): void {
     // Todo: in the future, we should pass this detail to the driver so it can store the version as metadata
     // this will be easy for sqlite drivers, but not for the KV driver
     const v1update = isV2 ? Y.convertUpdateFormatV2ToV1(update) : update;
@@ -335,13 +333,13 @@ export class YjsStorage {
 
     // Every UPDATE_COUNT_THRESHOLD updates, we compact the updates
     if (this.shouldCompactByKeyCount(storedKeys)) {
-      await this._compactYJSUpdates(doc, docId, storedKeys || []);
+      this._compactYJSUpdates(doc, docId, storedKeys || []);
       return;
     }
 
     // the whole concept of storing keys is not needed when we kill the kv driver, all of this stuff is trivial in sqlite
     const newKey = nanoid();
-    await this.driver.write_y_updates(docId, newKey, v1update);
+    this.driver.write_y_updates(docId, newKey, v1update);
 
     // update the stored keys, which we'll need for compaction.
     if (!storedKeys) {

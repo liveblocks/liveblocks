@@ -267,7 +267,7 @@ const dev: SubCommand = {
             const room = Rooms.getRoomInstance(roomId);
             await room.load();
 
-            const ticket = await room.createTicket(ticketData);
+            const ticket = room.createTicket(ticketData);
             const sessionKey = ticket.sessionKey;
             const success = server.upgrade(req, {
               data: { room, ticket, sessionKey },

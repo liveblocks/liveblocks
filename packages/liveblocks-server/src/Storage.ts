@@ -15,11 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import type {
-  Awaitable,
-  SerializedChild,
-  SerializedCrdt,
-} from "@liveblocks/core";
+import type { SerializedChild, SerializedCrdt } from "@liveblocks/core";
 import {
   asPos,
   assertNever,
@@ -123,7 +119,7 @@ export class Storage {
   }
 
   // REFACTOR NOTE: Eventually raw_iter_nodes has to be removed here
-  raw_iter_nodes(): Awaitable<Iterable<[string, SerializedCrdt]>> {
+  raw_iter_nodes(): Iterable<[string, SerializedCrdt]> {
     return this.coreDriver.raw_iter_nodes();
   }
 
@@ -133,8 +129,11 @@ export class Storage {
    * Storage tree, and special keys where we store usage metrics, or room
    * metadata.
    */
+  // XXXX Now that the driver has become fully sync, we no longer need this
+  // .load() construct. We should be able to refactor it away.
+  // eslint-disable-next-line @typescript-eslint/require-await
   async load(logger: Logger): Promise<void> {
-    this._loadedDriver = await this.coreDriver.load_nodes_api(logger);
+    this._loadedDriver = this.coreDriver.load_nodes_api(logger);
   }
 
   unload(): void {
@@ -144,10 +143,10 @@ export class Storage {
   /**
    * Applies a batch of Ops.
    */
-  async applyOps(ops: ClientWireOp[]): Promise<ApplyOpResult[]> {
+  applyOps(ops: ClientWireOp[]): ApplyOpResult[] {
     const results: ApplyOpResult[] = [];
     for (const op of ops) {
-      results.push(await this.applyOp(op));
+      results.push(this.applyOp(op));
     }
     return results;
   }
@@ -159,25 +158,25 @@ export class Storage {
   /**
    * Applies a single Op.
    */
-  private async applyOp(op: ClientWireOp): Promise<ApplyOpResult> {
+  private applyOp(op: ClientWireOp): ApplyOpResult {
     switch (op.type) {
       case OpCode.CREATE_LIST:
       case OpCode.CREATE_MAP:
       case OpCode.CREATE_REGISTER:
       case OpCode.CREATE_OBJECT:
-        return await this.applyCreateOp(op);
+        return this.applyCreateOp(op);
 
       case OpCode.UPDATE_OBJECT:
-        return await this.applyUpdateObjectOp(op);
+        return this.applyUpdateObjectOp(op);
 
       case OpCode.SET_PARENT_KEY:
-        return await this.applySetParentKeyOp(op);
+        return this.applySetParentKeyOp(op);
 
       case OpCode.DELETE_OBJECT_KEY:
-        return await this.applyDeleteObjectKeyOp(op);
+        return this.applyDeleteObjectKeyOp(op);
 
       case OpCode.DELETE_CRDT:
-        return await this.applyDeleteCrdtOp(op);
+        return this.applyDeleteCrdtOp(op);
 
       // istanbul ignore next
       default:
@@ -189,7 +188,7 @@ export class Storage {
     }
   }
 
-  private async applyCreateOp(op: CreateOp & HasOpId): Promise<ApplyOpResult> {
+  private applyCreateOp(op: CreateOp & HasOpId): ApplyOpResult {
     if (this.loadedDriver.has_node(op.id)) {
       // Node already exists, the operation is ignored
       return ignore(op);
@@ -217,7 +216,7 @@ export class Storage {
 
       case CrdtType.MAP:
         // Children of maps and objects require no special needs
-        await this.loadedDriver.set_child(op.id, node, true);
+        this.loadedDriver.set_child(op.id, node, true);
         return accept(op);
 
       case CrdtType.LIST:
@@ -235,10 +234,10 @@ export class Storage {
     }
   }
 
-  private async createChildAsListItem(
+  private createChildAsListItem(
     op: CreateOp & HasOpId,
     node: SerializedChild
-  ): Promise<ApplyOpResult> {
+  ): ApplyOpResult {
     // The default intent, when not explicitly provided, is to insert, not set,
     // into the list.
     const intent: "insert" | "set" | "push" = op.intent ?? "insert";
@@ -247,15 +246,11 @@ export class Storage {
     if (intent === "insert") {
       // Insert at the client's preferred position, resolving any collision to a
       // nearby free slot.
-      return this.acceptAndFix(
-        op,
-        node,
-        await this.insertIntoList(op.id, node)
-      );
+      return this.acceptAndFix(op, node, this.insertIntoList(op.id, node));
     } else if (intent === "push") {
       // Server-authoritative append: place the node after the authoritative
       // end of the list (see `appendToList`), regardless of the client's preference.
-      return this.acceptAndFix(op, node, await this.appendToList(op.id, node));
+      return this.acceptAndFix(op, node, this.appendToList(op.id, node));
     } else if (intent === "set") {
       let fix: FixOp | undefined;
 
@@ -277,7 +272,7 @@ export class Storage {
           : undefined;
 
       if (deletedId !== undefined) {
-        await this.loadedDriver.delete_node(deletedId);
+        this.loadedDriver.delete_node(deletedId);
       }
 
       const prevItemId = this.loadedDriver.get_child_at(
@@ -294,7 +289,7 @@ export class Storage {
         };
       }
 
-      await this.loadedDriver.set_child(op.id, node, true);
+      this.loadedDriver.set_child(op.id, node, true);
 
       return accept(op, fix);
     } else {
@@ -321,31 +316,25 @@ export class Storage {
     return accept(op);
   }
 
-  private async applyDeleteObjectKeyOp(
+  private applyDeleteObjectKeyOp(
     op: DeleteObjectKeyOp & HasOpId
-  ): Promise<ApplyOpResult> {
-    await this.loadedDriver.delete_child_key(op.id, op.key);
+  ): ApplyOpResult {
+    this.loadedDriver.delete_child_key(op.id, op.key);
     return accept(op);
   }
 
-  private async applyUpdateObjectOp(
-    op: UpdateObjectOp & HasOpId
-  ): Promise<ApplyOpResult> {
-    await this.loadedDriver.set_object_data(op.id, op.data, true);
+  private applyUpdateObjectOp(op: UpdateObjectOp & HasOpId): ApplyOpResult {
+    this.loadedDriver.set_object_data(op.id, op.data, true);
     return accept(op);
   }
 
-  private async applyDeleteCrdtOp(
-    op: DeleteCrdtOp & HasOpId
-  ): Promise<ApplyOpResult> {
-    await this.loadedDriver.delete_node(op.id);
+  private applyDeleteCrdtOp(op: DeleteCrdtOp & HasOpId): ApplyOpResult {
+    this.loadedDriver.delete_node(op.id);
     return accept(op);
   }
 
-  private async applySetParentKeyOp(
-    op: SetParentKeyOp & HasOpId
-  ): Promise<ApplyOpResult> {
-    const newPosition = await this.moveToPosInList(op.id, op.parentKey);
+  private applySetParentKeyOp(op: SetParentKeyOp & HasOpId): ApplyOpResult {
+    const newPosition = this.moveToPosInList(op.id, op.parentKey);
     if (newPosition === undefined) {
       // The operation got rejected because it didn't make sense, ignore it
       return ignore(op);
@@ -376,16 +365,13 @@ export class Storage {
    *
    * Returns the key that was used for the insertion.
    */
-  private async insertIntoList(
-    id: string,
-    node: SerializedChild
-  ): Promise<string> {
+  private insertIntoList(id: string, node: SerializedChild): string {
     // First, compute the key to use to insert this node
     const key = this.findFreeListPosition(node.parentId, asPos(node.parentKey));
     if (key !== node.parentKey) {
       node = { ...node, parentKey: key };
     }
-    await this.loadedDriver.set_child(id, node);
+    this.loadedDriver.set_child(id, node);
     return node.parentKey;
   }
 
@@ -399,17 +385,14 @@ export class Storage {
    *
    * Returns the final key that was used for the insertion.
    */
-  private async appendToList(
-    id: string,
-    node: SerializedChild
-  ): Promise<string> {
+  private appendToList(id: string, node: SerializedChild): string {
     const lastPos = this.loadedDriver.get_last_sibling(node.parentId);
     const preferredPos = asPos(node.parentKey);
     const finalKey =
       lastPos === undefined || preferredPos > lastPos
         ? preferredPos
         : makePosition(lastPos);
-    await this.loadedDriver.set_child(
+    this.loadedDriver.set_child(
       id,
       finalKey !== node.parentKey ? { ...node, parentKey: finalKey } : node
     );
@@ -428,10 +411,7 @@ export class Storage {
    * Will return `undefined` if this action could not be interpreted. Will be
    * a no-op for non-list items.
    */
-  private async moveToPosInList(
-    id: string,
-    targetKey: string
-  ): Promise<string | undefined> {
+  private moveToPosInList(id: string, targetKey: string): string | undefined {
     const node = this.loadedDriver.get_node(id);
     if (node?.parentId === undefined) {
       return; /* reject */
@@ -450,7 +430,7 @@ export class Storage {
     // First, compute the key to use to insert this node
     const key = this.findFreeListPosition(node.parentId, asPos(targetKey));
     if (key !== node.parentKey) {
-      await this.loadedDriver.move_sibling(id, key);
+      this.loadedDriver.move_sibling(id, key);
     }
     return key;
   }

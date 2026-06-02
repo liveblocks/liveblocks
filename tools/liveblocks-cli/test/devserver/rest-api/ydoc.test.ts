@@ -76,7 +76,7 @@ describe("PUT /v2/rooms/<roomId>/ydoc", () => {
     const room = Rooms.getRoomInstance(roomId);
     await room.load();
     const { received, socket } = makeFakeSocket();
-    const ticket = await room.createTicket({});
+    const ticket = room.createTicket({});
     await room.startBrowserSession(ticket, socket);
 
     // Mark how much was sent during session bootstrap so we only inspect
