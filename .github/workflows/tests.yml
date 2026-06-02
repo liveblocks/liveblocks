@@ -293,7 +293,7 @@ jobs:
         if: needs.check_for_code_changes.outputs.changes == 'true'
         run: pnpm install --frozen-lockfile
 
-      - name: Run e2e client specs tests (against dev server)
+      - name: Run e2e client specs tests (against local dev server)
         if: needs.check_for_code_changes.outputs.changes == 'true'
         run: pnpm run test:e2e
         working-directory: packages/liveblocks-core
