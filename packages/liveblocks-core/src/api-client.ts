@@ -1268,7 +1268,10 @@ export function createApiClient<
     if (options.attachment.file.size <= ATTACHMENT_PART_SIZE) {
       await httpClient.putBlob(
         url`/v2/c/chats/${chatId}/attachments/${attachment.id}/upload/${encodeURIComponent(attachment.file.name)}`,
-        await authManager.getAuthValue({ kind: "user", feature: "personal" }),
+        await authManager.getAuthValue({
+          feature: "personal",
+          access: "write",
+        }),
         attachment.file,
         { fileSize: attachment.file.size },
         { signal }
@@ -1279,7 +1282,10 @@ export function createApiClient<
         key: string;
       }>(
         url`/v2/c/chats/${chatId}/attachments/${attachment.id}/multipart/${encodeURIComponent(attachment.file.name)}`,
-        await authManager.getAuthValue({ kind: "user", feature: "personal" }),
+        await authManager.getAuthValue({
+          feature: "personal",
+          access: "write",
+        }),
         undefined,
         { signal },
         { fileSize: attachment.file.size }
@@ -1311,8 +1317,8 @@ export function createApiClient<
               }>(
                 url`/v2/c/chats/${chatId}/attachments/${attachment.id}/multipart/${multipartUpload.uploadId}/${String(number)}`,
                 await authManager.getAuthValue({
-                  kind: "user",
                   feature: "personal",
+                  access: "write",
                 }),
                 part,
                 undefined,
@@ -1324,7 +1330,10 @@ export function createApiClient<
 
         await httpClient.post(
           url`/v2/c/chats/${chatId}/attachments/${attachment.id}/multipart/${multipartUpload.uploadId}/complete`,
-          await authManager.getAuthValue({ kind: "user", feature: "personal" }),
+          await authManager.getAuthValue({
+            feature: "personal",
+            access: "write",
+          }),
           { parts: uploadedParts.sort((a, b) => a.number - b.number) },
           { signal }
         );
@@ -1332,7 +1341,10 @@ export function createApiClient<
         try {
           await httpClient.delete(
             url`/v2/c/chats/${chatId}/attachments/${attachment.id}/multipart/${multipartUpload.uploadId}`,
-            await authManager.getAuthValue({ kind: "user", feature: "personal" })
+            await authManager.getAuthValue({
+              feature: "personal",
+              access: "write",
+            })
           );
         } catch {
           // Ignore the error, we are probably offline
@@ -1354,8 +1366,8 @@ export function createApiClient<
         }>(
           url`/v2/c/chats/${chatId}/attachments/presigned-urls`,
           await authManager.getAuthValue({
-            kind: "user",
             feature: "personal",
+            access: "write",
           }),
           { attachmentIds }
         );
@@ -1592,7 +1604,7 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/versions`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        feature: "comments",
+        feature: "storage",
         access: "read",
       })
     );
@@ -1622,7 +1634,7 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/versions/delta`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        feature: "comments",
+        feature: "storage",
         access: "read",
       }),
       { since: options.since.toISOString() },
@@ -1678,7 +1690,7 @@ export function createApiClient<
       };
     }>(
       url`/v2/c/inbox-notifications`,
-      await authManager.getAuthValue({ kind: "user", feature: "personal" }),
+      await authManager.getAuthValue({ feature: "personal", access: "write" }),
       {
         cursor: options?.cursor,
         limit: PAGE_SIZE,
@@ -1726,7 +1738,7 @@ export function createApiClient<
       };
     }>(
       url`/v2/c/inbox-notifications/delta`,
-      await authManager.getAuthValue({ kind: "user", feature: "personal" }),
+      await authManager.getAuthValue({ feature: "personal", access: "write" }),
       { since: options.since.toISOString(), query },
       { signal: options.signal }
     );
@@ -1764,7 +1776,7 @@ export function createApiClient<
 
     const { count } = await httpClient.get<{ count: number }>(
       url`/v2/c/inbox-notifications/count`,
-      await authManager.getAuthValue({ kind: "user", feature: "personal" }),
+      await authManager.getAuthValue({ feature: "personal", access: "write" }),
       { query },
       { signal: options?.signal }
     );
@@ -1774,7 +1786,7 @@ export function createApiClient<
   async function markAllInboxNotificationsAsRead() {
     await httpClient.post(
       url`/v2/c/inbox-notifications/read`,
-      await authManager.getAuthValue({ kind: "user", feature: "personal" }),
+      await authManager.getAuthValue({ feature: "personal", access: "write" }),
       {
         inboxNotificationIds: "all",
       }
@@ -1784,7 +1796,7 @@ export function createApiClient<
   async function markInboxNotificationsAsRead(inboxNotificationIds: string[]) {
     await httpClient.post(
       url`/v2/c/inbox-notifications/read`,
-      await authManager.getAuthValue({ kind: "user", feature: "personal" }),
+      await authManager.getAuthValue({ feature: "personal", access: "write" }),
       {
         inboxNotificationIds,
       }
@@ -1809,14 +1821,14 @@ export function createApiClient<
   async function deleteAllInboxNotifications() {
     await httpClient.delete(
       url`/v2/c/inbox-notifications`,
-      await authManager.getAuthValue({ kind: "user", feature: "personal" })
+      await authManager.getAuthValue({ feature: "personal", access: "write" })
     );
   }
 
   async function deleteInboxNotification(inboxNotificationId: string) {
     await httpClient.delete(
       url`/v2/c/inbox-notifications/${inboxNotificationId}`,
-      await authManager.getAuthValue({ kind: "user", feature: "personal" })
+      await authManager.getAuthValue({ feature: "personal", access: "write" })
     );
   }
 
@@ -1829,7 +1841,7 @@ export function createApiClient<
   }): Promise<NotificationSettingsPlain> {
     return httpClient.get<NotificationSettingsPlain>(
       url`/v2/c/notification-settings`,
-      await authManager.getAuthValue({ kind: "user", feature: "personal" }),
+      await authManager.getAuthValue({ feature: "personal", access: "write" }),
       undefined,
       { signal: options?.signal }
     );
@@ -1840,7 +1852,7 @@ export function createApiClient<
   ): Promise<NotificationSettingsPlain> {
     return httpClient.post<NotificationSettingsPlain>(
       url`/v2/c/notification-settings`,
-      await authManager.getAuthValue({ kind: "user", feature: "personal" }),
+      await authManager.getAuthValue({ feature: "personal", access: "write" }),
       settings
     );
   }
@@ -1878,7 +1890,7 @@ export function createApiClient<
       };
     }>(
       url`/v2/c/threads`,
-      await authManager.getAuthValue({ kind: "user", feature: "personal" }),
+      await authManager.getAuthValue({ feature: "personal", access: "write" }),
       {
         cursor: options?.cursor,
         query,
@@ -1915,7 +1927,7 @@ export function createApiClient<
       };
     }>(
       url`/v2/c/threads/delta`,
-      await authManager.getAuthValue({ kind: "user", feature: "personal" }),
+      await authManager.getAuthValue({ feature: "personal", access: "write" }),
       { since: options.since.toISOString() },
       { signal: options.signal }
     );
@@ -1953,8 +1965,8 @@ export function createApiClient<
       }>(
         url`/v2/c/groups/find`,
         await authManager.getAuthValue({
-          kind: "user",
           feature: "personal",
+          access: "write",
         }),
         { groupIds }
       );
@@ -1982,7 +1994,7 @@ export function createApiClient<
   async function getUrlMetadata(_url: string) {
     const { metadata } = await httpClient.get<{ metadata: UrlMetadata }>(
       url`/v2/c/urls/metadata`,
-      await authManager.getAuthValue({ kind: "user", feature: "personal" }),
+      await authManager.getAuthValue({ feature: "personal", access: "write" }),
       { url: _url }
     );
 

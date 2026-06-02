@@ -358,7 +358,8 @@ describe("auth-manager - secret auth", () => {
       http.post("/api/access-auth-exact-room-then-empty", () => {
         localRequestCount++;
         return HttpResponse.json({
-          token: localRequestCount === 1 ? exactRoomToken : emptyPermissionToken,
+          token:
+            localRequestCount === 1 ? exactRoomToken : emptyPermissionToken,
         });
       })
     );
@@ -373,8 +374,8 @@ describe("auth-manager - secret auth", () => {
       roomId: "org1.room1",
     })) as { type: "secret"; token: ParsedAuthToken };
     const userAuthValue = (await authManager.getAuthValue({
-      kind: "user",
       feature: "personal",
+      access: "write",
     })) as { type: "secret"; token: ParsedAuthToken };
 
     expect(roomAuthValue.token.raw).toEqual(exactRoomToken);
@@ -388,17 +389,11 @@ describe("auth-manager - secret auth", () => {
     });
 
     const authValueReq1 = (await authManager.getAuthValue({
-      kind: "user",
       feature: "personal",
-    })) as { type: "secret"; token: ParsedAuthToken };
-
-    const authValueReq2 = (await authManager.getAuthValue({
-      kind: "user",
-      feature: "personal",
+      access: "write",
     })) as { type: "secret"; token: ParsedAuthToken };
 
     expect(authValueReq1.token.raw).toEqual(accessTokenWildcardCommentsRead);
-    expect(authValueReq2.token.raw).toEqual(accessTokenWildcardCommentsRead);
     expect(requestCount).toBe(1);
   });
 
@@ -408,13 +403,13 @@ describe("auth-manager - secret auth", () => {
     });
 
     const authValueReq1 = (await authManager.getAuthValue({
-      kind: "user",
       feature: "personal",
+      access: "write",
     })) as { type: "secret"; token: ParsedAuthToken };
 
     const authValueReq2 = (await authManager.getAuthValue({
-      kind: "user",
       feature: "personal",
+      access: "write",
     })) as { type: "secret"; token: ParsedAuthToken };
 
     expect(authValueReq1.token.raw).toEqual(accessToken);
@@ -428,13 +423,13 @@ describe("auth-manager - secret auth", () => {
     });
 
     const authValueReq1 = (await authManager.getAuthValue({
-      kind: "user",
       feature: "personal",
+      access: "write",
     })) as { type: "secret"; token: ParsedAuthToken };
 
     const authValueReq2 = (await authManager.getAuthValue({
-      kind: "user",
       feature: "personal",
+      access: "write",
     })) as { type: "secret"; token: ParsedAuthToken };
 
     expect(authValueReq1.token.raw).toEqual(accessTokenWithNoPermission);

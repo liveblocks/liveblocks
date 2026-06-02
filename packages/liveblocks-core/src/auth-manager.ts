@@ -25,19 +25,18 @@ export type AuthValue =
   | { type: "secret"; token: ParsedAuthToken }
   | { type: "public"; publicApiKey: string };
 
-type RoomAuthRequest = {
-  roomId: string;
-  feature: Exclude<RoomFeature, "creation" | "personal">;
-  access: RequiredAccessLevel;
-};
-
-type UserAuthRequest = {
-  kind: "user";
-  feature: "personal";
-  access?: RequiredAccessLevel;
-};
-
-export type AuthRequest = RoomAuthRequest | UserAuthRequest;
+export type AuthRequest = Relax<
+  | { feature: "creation"; access: RequiredAccessLevel }
+  | {
+      feature: Exclude<RoomFeature, "personal" | "creation">;
+      roomId: string;
+      access: RequiredAccessLevel;
+    }
+  | {
+      feature: "personal";
+      access: "write";
+    }
+>;
 
 export type AuthManager = {
   reset(): void;
@@ -97,7 +96,9 @@ export function createAuthManager(
     return undefined;
   }
 
-  async function makeAuthRequest(options: AuthRequest): Promise<ParsedAuthToken> {
+  async function makeAuthRequest(
+    options: AuthRequest
+  ): Promise<ParsedAuthToken> {
     const fetcher =
       authOptions.polyfills?.fetch ??
       (typeof window === "undefined" ? undefined : window.fetch);
@@ -110,7 +111,7 @@ export function createAuthManager(
       }
 
       const response = await fetchAuthEndpoint(fetcher, authentication.url, {
-        room: getRoomIdForAuthRequest(options),
+        room: options.roomId,
       });
       const parsed = parseAuthToken(response.token);
 
@@ -125,9 +126,7 @@ export function createAuthManager(
     }
 
     if (authentication.type === "custom") {
-      const response = await authentication.callback(
-        getRoomIdForAuthRequest(options)
-      );
+      const response = await authentication.callback(options.roomId);
       if (response && typeof response === "object") {
         if (typeof response.token === "string") {
           const parsed = parseAuthToken(response.token);
@@ -236,15 +235,14 @@ type AuthTokenFeaturePermissions = Array<{
   hasDefaultPermission: boolean;
 }>;
 
-function getRoomIdForAuthRequest(request: AuthRequest): string | undefined {
-  return "roomId" in request ? request.roomId : undefined;
-}
-
 function getAuthRequestKey(request: AuthRequest): string | undefined {
-  return "roomId" in request ? request.roomId : undefined;
+  return request.roomId;
 }
 
-function makeCachedToken(token: ParsedAuthToken, expiresAt: number): CachedToken {
+function makeCachedToken(
+  token: ParsedAuthToken,
+  expiresAt: number
+): CachedToken {
   if (token.parsed.k === TokenKind.ACCESS_TOKEN) {
     return {
       token,
@@ -301,6 +299,10 @@ function cachedTokenSatisfiesRequest(
 
   if (request.feature === "personal") {
     return accessTokenSatisfiesPersonalRequest(cachedToken.permissions ?? []);
+  }
+
+  if (request.roomId === undefined || request.access === undefined) {
+    return false;
   }
 
   const features = getFeaturesForRoom(
