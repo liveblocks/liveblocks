@@ -34,3 +34,8 @@ main {
   padding: 16px;
   background: #e8eaee;
 }
+
+.presentation-editor__remote-label {
+  margin: -5px 0 0 -1px;
+  border-bottom-left-radius: 0 !important;
+}
