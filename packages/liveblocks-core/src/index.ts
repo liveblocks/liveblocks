@@ -201,12 +201,22 @@ export type { CustomAuthenticationResult } from "./protocol/Authentication";
 export type {
   AccessLevel,
   RequiredAccessLevel,
+  RoomAccesses,
+  RoomAccessesInput,
+  RoomAccessesUpdateInput,
   RoomFeature,
   RoomFeatures,
+  RoomPermission,
+  RoomPermissionInput,
+  RoomPermissionObject,
 } from "./permissions";
 export {
+  getRoomPermissionConflicts,
   hasRoomFeatureAccess,
   isPermission,
+  normalizeRoomAccessesInput,
+  normalizeRoomAccessesUpdateInput,
+  normalizeRoomPermissionInput,
   roomFeaturesFromScopes,
   Permission,
 } from "./permissions";

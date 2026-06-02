@@ -1,7 +1,9 @@
 import { describe, expect, test } from "vitest";
 
 import {
+  getRoomPermissionConflicts,
   hasRoomFeatureAccess,
+  normalizeRoomPermissionInput,
   Permission,
   roomFeaturesFromScopes,
 } from "../permissions";
@@ -76,5 +78,30 @@ describe("roomFeaturesFromScopes", () => {
     expect(
       hasRoomFeatureAccess([Permission.RoomPresenceWrite], "presence", "read")
     ).toBe(true);
+  });
+
+  test("normalizes object notation permissions", () => {
+    expect(
+      normalizeRoomPermissionInput({
+        default: "write",
+        storage: "none",
+        comments: "read",
+      })
+    ).toEqual([
+      Permission.RoomWrite,
+      Permission.RoomStorageNone,
+      Permission.RoomCommentsRead,
+    ]);
+  });
+
+  test("returns permission conflicts by feature", () => {
+    expect(getRoomPermissionConflicts(Permission.RoomStorageRead)).toEqual([
+      Permission.RoomStorageRead,
+      Permission.RoomStorageWrite,
+      Permission.RoomStorageNone,
+    ]);
+    expect(getRoomPermissionConflicts(Permission.RoomWrite)).toContain(
+      Permission.RoomCommentsNone
+    );
   });
 });

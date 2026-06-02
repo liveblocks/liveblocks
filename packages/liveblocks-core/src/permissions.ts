@@ -63,6 +63,24 @@ export type RoomFeaturePermissions = {
   explicitFeatures: ReadonlySet<Exclude<RoomFeature, "creation" | "personal">>;
 };
 
+export type RoomPermission = Permission[];
+
+export type RoomPermissionObject = {
+  default?: "read" | "write";
+  presence?: "read" | "none";
+  storage?: "read" | "write" | "none";
+  comments?: "read" | "write" | "none";
+  feeds?: "read" | "write" | "none";
+};
+
+export type RoomPermissionInput =
+  | readonly Permission[]
+  | RoomPermissionObject;
+
+export type RoomAccesses = Record<string, RoomPermission>;
+export type RoomAccessesInput = Record<string, RoomPermissionInput>;
+export type RoomAccessesUpdateInput = Record<string, RoomPermissionInput | null>;
+
 const ALL_PERMISSIONS = Object.freeze(Object.values(Permission));
 
 const ACCESS_RANKS: Record<AccessLevel, number> = {
@@ -71,10 +89,27 @@ const ACCESS_RANKS: Record<AccessLevel, number> = {
   write: 2,
 };
 
-const FEATURE_PERMISSIONS: Record<
-  Exclude<RoomFeature, "creation" | "personal">,
-  Partial<Record<AccessLevel, readonly Permission[]>>
-> = {
+const DEFAULT_PERMISSIONS: readonly Permission[] = [
+  Permission.RoomRead,
+  Permission.RoomWrite,
+] as const;
+
+const ROOM_PERMISSION_OBJECT_KEYS = new Set<string>([
+  "default",
+  "presence",
+  "storage",
+  "comments",
+  "feeds",
+]);
+
+const FEATURE_PERMISSIONS = {
+  creation: {
+    read: [Permission.RoomRead],
+    write: [Permission.RoomWrite],
+  },
+  personal: {
+    write: [],
+  },
   presence: {
     read: [Permission.RoomPresenceRead, Permission.RoomPresenceWrite],
     none: [Permission.RoomPresenceNone],
@@ -94,7 +129,34 @@ const FEATURE_PERMISSIONS: Record<
     read: [Permission.RoomFeedsRead],
     none: [Permission.RoomFeedsNone],
   },
+} satisfies Record<
+  RoomFeature,
+  Partial<Record<AccessLevel, readonly Permission[]>>
+>;
+
+const ROOM_FEATURE_PERMISSIONS: Record<
+  Exclude<RoomFeature, "creation" | "personal">,
+  Partial<Record<AccessLevel, readonly Permission[]>>
+> = {
+  presence: FEATURE_PERMISSIONS.presence,
+  storage: FEATURE_PERMISSIONS.storage,
+  comments: FEATURE_PERMISSIONS.comments,
+  feeds: FEATURE_PERMISSIONS.feeds,
 };
+
+const FEATURE_SPECIFIC_PERMISSIONS = [
+  ...FEATURE_PERMISSIONS.presence.read,
+  ...FEATURE_PERMISSIONS.presence.none,
+  ...FEATURE_PERMISSIONS.storage.write,
+  ...FEATURE_PERMISSIONS.storage.read,
+  ...FEATURE_PERMISSIONS.storage.none,
+  ...FEATURE_PERMISSIONS.comments.write,
+  ...FEATURE_PERMISSIONS.comments.read,
+  ...FEATURE_PERMISSIONS.comments.none,
+  ...FEATURE_PERMISSIONS.feeds.write,
+  ...FEATURE_PERMISSIONS.feeds.read,
+  ...FEATURE_PERMISSIONS.feeds.none,
+] as const;
 
 export function isPermission(value: string): value is Permission {
   return ALL_PERMISSIONS.includes(value as Permission);
@@ -104,6 +166,105 @@ export function roomFeaturesFromScopes(
   scopes: readonly string[]
 ): RoomFeatures {
   return resolveRoomFeaturePermissions(scopes).features;
+}
+
+export function normalizeRoomPermissionInput(
+  input: RoomPermissionInput
+): RoomPermission {
+  if (Array.isArray(input)) {
+    return input.map((permission) => {
+      if (!isPermission(permission)) {
+        throw new Error(`Not a valid permission: ${permission}`);
+      }
+      return permission;
+    });
+  }
+
+  if (!isRoomPermissionObject(input)) {
+    throw new Error("Permissions must be an array or an object");
+  }
+
+  for (const key of Object.keys(input)) {
+    if (!ROOM_PERMISSION_OBJECT_KEYS.has(key)) {
+      throw new Error(`Unknown permission field: ${key}`);
+    }
+  }
+
+  const permissions: RoomPermission = [];
+
+  if (input.default !== undefined) {
+    permissions.push(normalizeDefaultPermission(input.default));
+  }
+  if (input.presence !== undefined) {
+    permissions.push(normalizeFeaturePermission("presence", input.presence));
+  }
+  if (input.storage !== undefined) {
+    permissions.push(normalizeFeaturePermission("storage", input.storage));
+  }
+  if (input.comments !== undefined) {
+    permissions.push(normalizeFeaturePermission("comments", input.comments));
+  }
+  if (input.feeds !== undefined) {
+    permissions.push(normalizeFeaturePermission("feeds", input.feeds));
+  }
+
+  if (permissions.length === 0) {
+    throw new Error("Permission object cannot be empty");
+  }
+
+  return permissions;
+}
+
+export function normalizeRoomAccessesInput(
+  input: RoomAccessesInput | undefined
+): RoomAccesses | undefined {
+  if (input === undefined) {
+    return undefined;
+  }
+
+  return Object.fromEntries(
+    Object.entries(input).map(([id, permissions]) => [
+      id,
+      normalizeRoomPermissionInput(permissions),
+    ])
+  );
+}
+
+export function normalizeRoomAccessesUpdateInput(
+  input: RoomAccessesUpdateInput | undefined
+): Record<string, RoomPermission | null> | undefined {
+  if (input === undefined) {
+    return undefined;
+  }
+
+  return Object.fromEntries(
+    Object.entries(input).map(([id, permissions]) => [
+      id,
+      permissions === null ? null : normalizeRoomPermissionInput(permissions),
+    ])
+  );
+}
+
+export function getRoomPermissionConflicts(
+  permission: Permission
+): readonly Permission[] {
+  if (DEFAULT_PERMISSIONS.includes(permission)) {
+    return [...DEFAULT_PERMISSIONS, ...FEATURE_SPECIFIC_PERMISSIONS];
+  }
+
+  for (const feature of [
+    "presence",
+    "storage",
+    "comments",
+    "feeds",
+  ] satisfies Array<Exclude<RoomFeature, "creation" | "personal">>) {
+    const permissions = Object.values(FEATURE_PERMISSIONS[feature]).flat();
+    if (permissions.includes(permission)) {
+      return permissions;
+    }
+  }
+
+  return [];
 }
 
 export function resolveRoomFeaturePermissions(
@@ -127,10 +288,10 @@ export function resolveRoomFeaturePermissions(
     Exclude<RoomFeature, "creation" | "personal">
   >();
 
-  for (const feature of Object.keys(FEATURE_PERMISSIONS) as Array<
+  for (const feature of Object.keys(ROOM_FEATURE_PERMISSIONS) as Array<
     Exclude<RoomFeature, "creation" | "personal">
   >) {
-    const permissions = FEATURE_PERMISSIONS[feature];
+    const permissions = ROOM_FEATURE_PERMISSIONS[feature];
     let featureAccess: AccessLevel | undefined;
 
     for (const access of ["none", "read", "write"] satisfies AccessLevel[]) {
@@ -168,4 +329,71 @@ export function hasRoomFeatureAccess(
 ): boolean {
   const access = roomFeaturesFromScopes(scopes)[feature];
   return ACCESS_RANKS[access] >= ACCESS_RANKS[requiredAccess];
+}
+
+function isRoomPermissionObject(
+  value: RoomPermissionInput
+): value is RoomPermissionObject {
+  return typeof value === "object" && value !== null;
+}
+
+function normalizeDefaultPermission(
+  access: RoomPermissionObject["default"]
+): Permission {
+  switch (access) {
+    case "read":
+      return Permission.RoomRead;
+    case "write":
+      return Permission.RoomWrite;
+    default:
+      throw new Error(`Invalid permission level for default: ${String(access)}`);
+  }
+}
+
+function normalizeFeaturePermission(
+  feature: Exclude<RoomFeature, "creation" | "personal">,
+  access: string
+): Permission {
+  switch (feature) {
+    case "presence":
+      switch (access) {
+        case "read":
+          return FEATURE_PERMISSIONS.presence.read[0];
+        case "none":
+          return FEATURE_PERMISSIONS.presence.none[0];
+      }
+      break;
+    case "storage":
+      switch (access) {
+        case "read":
+          return FEATURE_PERMISSIONS.storage.read[0];
+        case "write":
+          return FEATURE_PERMISSIONS.storage.write[0];
+        case "none":
+          return FEATURE_PERMISSIONS.storage.none[0];
+      }
+      break;
+    case "comments":
+      switch (access) {
+        case "read":
+          return FEATURE_PERMISSIONS.comments.read[0];
+        case "write":
+          return FEATURE_PERMISSIONS.comments.write[0];
+        case "none":
+          return FEATURE_PERMISSIONS.comments.none[0];
+      }
+      break;
+    case "feeds":
+      switch (access) {
+        case "read":
+          return FEATURE_PERMISSIONS.feeds.read[0];
+        case "write":
+          return FEATURE_PERMISSIONS.feeds.write[0];
+        case "none":
+          return FEATURE_PERMISSIONS.feeds.none[0];
+      }
+      break;
+  }
+
+  throw new Error(`Invalid permission level for ${feature}: ${String(access)}`);
 }
