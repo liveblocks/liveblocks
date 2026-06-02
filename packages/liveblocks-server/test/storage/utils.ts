@@ -97,7 +97,7 @@ export async function runWithStorage<R>(
   // Also run an integrity check after initializing _corrupted_ storage.
   // Because the Storage class ignores any such corruptions, even when loading
   // corruptions the in-memory nodemap should be consistent.
-  await selfCheck(storage);
+  selfCheck(storage);
 
   return callback({ storage, loadedDriver: storage.loadedDriver });
 }

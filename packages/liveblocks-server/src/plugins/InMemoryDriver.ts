@@ -16,7 +16,6 @@
  */
 
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
-/* eslint-disable @typescript-eslint/require-await */
 import type {
   CompactNode,
   Json,
@@ -90,7 +89,7 @@ function buildReverseLookup(nodes: NodeMap) {
       }
     }
 
-    if (node.type !== CrdtType.REGISTER && node.type !== CrdtType.TEXT) {
+    if (node.type !== CrdtType.REGISTER) {
       queue.push(...revNodes.valuesAt(nodeId));
     } else {
       const parent = nodes.get(node.parentId);
@@ -170,29 +169,29 @@ export class InMemoryDriver implements IStorageDriver {
     }
   }
 
-  async get_meta(key: string) {
+  get_meta(key: string) {
     return this._metadb.get(key);
   }
-  async put_meta(key: string, value: Json) {
+  put_meta(key: string, value: Json) {
     this._metadb.set(key, value);
   }
-  async delete_meta(key: string) {
+  delete_meta(key: string) {
     this._metadb.delete(key);
   }
 
-  async list_leased_sessions() {
+  list_leased_sessions() {
     return this._leasedSessions.entries();
   }
 
-  async get_leased_session(sessionId: string) {
+  get_leased_session(sessionId: string) {
     return this._leasedSessions.get(sessionId);
   }
 
-  async put_leased_session(session: LeasedSession) {
+  put_leased_session(session: LeasedSession) {
     this._leasedSessions.set(session.sessionId, session);
   }
 
-  async delete_leased_session(sessionId: string) {
+  delete_leased_session(sessionId: string) {
     this._leasedSessions.delete(sessionId);
   }
 
@@ -204,7 +203,7 @@ export class InMemoryDriver implements IStorageDriver {
   // Feed APIs
   // ---------------------------------------------------------------------------
 
-  async list_feeds(options?: ListFeedsOptions): Promise<ListFeedsResult> {
+  list_feeds(options?: ListFeedsOptions): ListFeedsResult {
     const limit = Math.min(options?.limit ?? 20, 100);
     const since = options?.since;
     const cursor = options?.cursor;
@@ -285,7 +284,7 @@ export class InMemoryDriver implements IStorageDriver {
     return { feeds, nextCursor };
   }
 
-  async get_feed(feedId: string): Promise<Feed | undefined> {
+  get_feed(feedId: string): Feed | undefined {
     const feed = this._feeds.get(feedId);
     if (feed === undefined) {
       return undefined;
@@ -294,7 +293,7 @@ export class InMemoryDriver implements IStorageDriver {
     return feed;
   }
 
-  async create_feed(feed: Feed): Promise<void> {
+  create_feed(feed: Feed): void {
     // Check if feed already exists
     if (this._feeds.has(feed.feedId)) {
       throw new Error(`Feed ${feed.feedId} already exists`);
@@ -309,7 +308,7 @@ export class InMemoryDriver implements IStorageDriver {
     });
   }
 
-  async update_feed_metadata(feedId: string, metadata: Json): Promise<void> {
+  update_feed_metadata(feedId: string, metadata: Json): void {
     const existing = this._feeds.get(feedId);
     if (existing === undefined) {
       throw new Error(`Feed ${feedId} not found`);
@@ -321,7 +320,7 @@ export class InMemoryDriver implements IStorageDriver {
     });
   }
 
-  async delete_feed(feedId: string): Promise<void> {
+  delete_feed(feedId: string): void {
     // Delete all messages for this feed
     const messageKeys: string[] = [];
     for (const [key] of this._feedMessages.entries()) {
@@ -337,10 +336,10 @@ export class InMemoryDriver implements IStorageDriver {
     this._feeds.delete(feedId);
   }
 
-  async list_feed_messages(
+  list_feed_messages(
     feedId: string,
     options?: ListFeedMessagesOptions
-  ): Promise<ListFeedMessagesResult> {
+  ): ListFeedMessagesResult {
     const limit = Math.min(options?.limit ?? 20, 100);
     const since = options?.since;
     const cursor = options?.cursor;
@@ -408,7 +407,7 @@ export class InMemoryDriver implements IStorageDriver {
     return { messages, nextCursor };
   }
 
-  async add_feed_message(feedId: string, message: FeedMessage): Promise<void> {
+  add_feed_message(feedId: string, message: FeedMessage): void {
     // Verify feed exists
     const feed = this._feeds.get(feedId);
     if (feed === undefined) {
@@ -418,12 +417,12 @@ export class InMemoryDriver implements IStorageDriver {
     this._feedMessages.set(`${feedId}:${message.id}`, message);
   }
 
-  async update_feed_message(
+  update_feed_message(
     feedId: string,
     messageId: string,
     data: Json,
     timestamp?: number
-  ): Promise<FeedMessage> {
+  ): FeedMessage {
     const key = `${feedId}:${messageId}`;
     const message = this._feedMessages.get(key);
 
@@ -447,7 +446,7 @@ export class InMemoryDriver implements IStorageDriver {
     return updatedMessage;
   }
 
-  async delete_feed_message(feedId: string, messageId: string): Promise<void> {
+  delete_feed_message(feedId: string, messageId: string): void {
     this._feedMessages.delete(`${feedId}:${messageId}`);
   }
 
@@ -455,24 +454,24 @@ export class InMemoryDriver implements IStorageDriver {
     return ++this._nextActor;
   }
 
-  async iter_y_updates(docId: YDocId) {
+  iter_y_updates(docId: YDocId) {
     const prefix = `${docId}@|@`;
     return imap(
       ifilter(this._ydb.entries(), ([k]) => k.startsWith(prefix)),
       ([k, v]) => [k.slice(prefix.length), v] as [string, Uint8Array]
     );
   }
-  async write_y_updates(docId: YDocId, key: string, data: Uint8Array) {
+  write_y_updates(docId: YDocId, key: string, data: Uint8Array) {
     this._ydb.set(`${docId}@|@${key}`, data);
   }
-  async delete_y_updates(docId: YDocId, keys: string[]) {
+  delete_y_updates(docId: YDocId, keys: string[]) {
     for (const key of keys) {
       this._ydb.delete(`${docId}@|@${key}`);
     }
   }
 
   /** @private Only use this in unit tests, never in production. */
-  async DANGEROUSLY_wipe_all_y_updates() {
+  DANGEROUSLY_wipe_all_y_updates() {
     this._ydb.clear();
   }
 
@@ -518,11 +517,11 @@ export class InMemoryDriver implements IStorageDriver {
      * Inserts a node in the storage tree, deleting any nodes that already exist
      * under this key (including all of its children), if any.
      */
-    async function set_child(
+    function set_child(
       id: string,
       node: SerializedChild,
       allowOverwrite = false
-    ): Promise<void> {
+    ): void {
       const parentNode = nodes.get(node.parentId);
       // Reject orphans - parent must exist
       if (parentNode === undefined) {
@@ -566,7 +565,7 @@ export class InMemoryDriver implements IStorageDriver {
      * delete-then-insert would would immediately destroy all (grand)children
      * when it's deleted.
      */
-    async function move_sibling(id: string, newPos: Pos): Promise<void> {
+    function move_sibling(id: string, newPos: Pos): void {
       const node = nodes.get(id);
       if (node?.parentId === undefined) {
         return;
@@ -591,11 +590,11 @@ export class InMemoryDriver implements IStorageDriver {
      * But if `allowOverwrite` is set to true, the conflicting child node (and
      * its entire subtree) will be deleted to make room for the new static data.
      */
-    async function set_object_data(
+    function set_object_data(
       id: string,
       data: JsonObject,
       allowOverwrite = false
-    ): Promise<void> {
+    ): void {
       const node = nodes.get(id);
       if (node?.type !== CrdtType.OBJECT) {
         // Nothing to do

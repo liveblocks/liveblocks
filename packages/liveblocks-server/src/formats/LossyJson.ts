@@ -49,8 +49,6 @@ function buildNode(snapshot: IReadableSnapshot, id: string): Json {
     return buildList(snapshot, id);
   } else if (node.type === CrdtType.MAP) {
     return buildMap(snapshot, id);
-  } else if (node.type === CrdtType.TEXT) {
-    return node.data as Json;
   } else {
     return node.data;
   }
@@ -121,8 +119,6 @@ function* emit(snapshot: IReadableSnapshot, id: string): StringGen {
   } else if (node.type === CrdtType.MAP) {
     yield* emitMap(snapshot, id);
   } else if (node.type === CrdtType.REGISTER) {
-    yield JSON.stringify(node.data);
-  } else if (node.type === CrdtType.TEXT) {
     yield JSON.stringify(node.data);
   }
 }

@@ -8,6 +8,7 @@ import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt";
 import { createManagedPool, OpSource } from "./crdts/AbstractCrdt";
 import {
   cloneLson,
+  dumpPool,
   getTreesDiffOperations,
   isLiveList,
   isLiveNode,
@@ -17,6 +18,7 @@ import {
 import { LiveObject } from "./crdts/LiveObject";
 import type { LiveStructure, LsonObject } from "./crdts/Lson";
 import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
+import { UnacknowledgedOps } from "./crdts/UnacknowledgedOps";
 import type {
   DCM,
   DE,
@@ -895,6 +897,13 @@ export type Room<
   reconnect(): void;
 
   /**
+   * @internal
+   * Returns a human-readable dump of every node in this room's storage pool
+   * (id, parent, parent key, value). For debugging convergence issues only.
+   */
+  _dump(): string;
+
+  /**
    * Returns the threads within the current room and their associated inbox notifications.
    * It also returns the request date that can be used for subsequent polling.
    *
@@ -1364,8 +1373,9 @@ type RoomState<
   } | null;
 
   // A registry of yet-unacknowledged Ops. These Ops have already been
-  // submitted to the server, but have not yet been acknowledged.
-  readonly unacknowledgedOps: Map<string, ClientWireOp>;
+  // submitted to the server, but have not yet been acknowledged. Indexed both
+  // by opId and by (parentId, parentKey) position. See UnacknowledgedOps.
+  readonly unacknowledgedOps: UnacknowledgedOps;
 };
 
 export type Polyfills = {
@@ -1563,6 +1573,11 @@ export function createRoom<
     config.enableDebugLogging
   );
 
+  // The single source of truth for still-unacknowledged ops. Created up front
+  // so the pool can hold a (read-only) reference to the same instance the room
+  // mutates.
+  const unacknowledgedOps = new UnacknowledgedOps();
+
   // The room's internal stateful context
   const context: RoomState<P, S, U, E> = {
     buffer: {
@@ -1595,6 +1610,7 @@ export function createRoom<
       getCurrentConnectionId,
       onDispatch,
       isStorageWritable,
+      unacknowledgedOps,
     }),
     root: undefined,
 
@@ -1603,7 +1619,7 @@ export function createRoom<
     pausedHistory: null,
 
     activeBatch: null,
-    unacknowledgedOps: new Map<string, ClientWireOp>(),
+    unacknowledgedOps,
   };
 
   // Accumulates nodes as initial storage arrives in chunks via
@@ -1875,10 +1891,20 @@ export function createRoom<
         currentItems.set(id, crdt._serialize());
       }
 
-      // Get operations that represent the diff between 2 states.
+      // XXX_vincent Smell, needs a deeper refactor soon! A reconnect
+      // snapshot is a stream of *nodes* (the full authoritative state), but
+      // here we fabricate a diff of *ops* and replay it through the live
+      // op-apply path. That path carries live-only optimistic semantics (the
+      // LiveList push tail-bump, "temporary position until the backend sends
+      // a fix" shifts, pending-conflict resolution) that are nonsensical
+      // when the stream we are applying already IS the fix. The
+      // `fromSnapshot` flag below patches only the one leak that bit us (the
+      // bump); it does not address the others. The proper fix is
+      // a node-stream reconcile that updates the tree in place, unified with
+      // the `_fromItems` path used on initial load, so a node stream never
+      // enters the op path at all. Until then `fromSnapshot` is a stopgap.
       const ops = getTreesDiffOperations(currentItems, nodes);
-
-      const result = applyRemoteOps(ops);
+      const result = applyRemoteOps(ops, /* fromSnapshot */ true);
       notify(result.updates);
     } else {
       context.root = LiveObject._fromItems<S>(
@@ -1993,20 +2019,27 @@ export function createRoom<
     return { opsToEmit: opsWithOpIds, reverse, updates };
   }
 
-  function applyRemoteOps(ops: readonly ServerWireOp[]): {
+  function applyRemoteOps(
+    ops: readonly ServerWireOp[],
+    // True when `ops` reconstruct state from a server snapshot (the reconnect
+    // reconcile) rather than being live ops. Disables the live-only LiveList
+    // push tail-bump.
+    fromSnapshot: boolean = false
+  ): {
     // Updates to notify about afterwards
     updates: {
       storageUpdates: Map<string, StorageUpdate>;
       presence: boolean;
     };
   } {
-    return applyOps([], ops, /* isLocal */ false);
+    return applyOps([], ops, /* isLocal */ false, fromSnapshot);
   }
 
   function applyOps(
     pframes: readonly PresenceStackframe<P>[],
     ops: readonly Op[],
-    isLocal: boolean
+    isLocal: boolean,
+    fromSnapshot: boolean = false
   ): {
     reverse: Stackframe<P>[];
     updates: {
@@ -2061,7 +2094,7 @@ export function createRoom<
         source = OpSource.THEIRS;
       }
 
-      const applyOpResult = applyOp(op, source);
+      const applyOpResult = applyOp(op, source, fromSnapshot);
       if (applyOpResult.modified) {
         const nodeId = applyOpResult.modified.node._id;
 
@@ -2099,7 +2132,11 @@ export function createRoom<
     };
   }
 
-  function applyOp(op: Op, source: OpSource): ApplyResult {
+  function applyOp(
+    op: Op,
+    source: OpSource,
+    fromSnapshot: boolean = false
+  ): ApplyResult {
     // Explicit case to handle ignored Ops
     if (isIgnoredOp(op)) {
       return { modified: false };
@@ -2147,7 +2184,7 @@ export function createRoom<
           return { modified: false };
         }
 
-        return parentNode._attachChild(op, source);
+        return parentNode._attachChild(op, source, fromSnapshot);
       }
     }
   }
@@ -2338,14 +2375,13 @@ export function createRoom<
     }
   }
 
-  function applyAndSendOfflineOps(unackedOps: Map<string, ClientWireOp>) {
-    if (unackedOps.size === 0) {
+  function applyAndSendOfflineOps(unackedOps: ClientWireOp[]) {
+    if (unackedOps.length === 0) {
       return;
     }
 
     const messages: ClientMsg<P, E>[] = [];
-    const inOps = Array.from(unackedOps.values());
-    const result = applyLocalOps(inOps);
+    const result = applyLocalOps(unackedOps);
     messages.push({
       type: ClientMsgCode.UPDATE_STORAGE,
       ops: result.opsToEmit,
@@ -2612,7 +2648,7 @@ export function createRoom<
     const storageOps = context.buffer.storageOperations;
     if (storageOps.length > 0) {
       for (const op of storageOps) {
-        context.unacknowledgedOps.set(op.opId, op);
+        context.unacknowledgedOps.add(op);
       }
       notifyStorageStatus();
     }
@@ -2947,7 +2983,7 @@ export function createRoom<
   }
 
   function processInitialStorage(nodes: NodeMap) {
-    const unacknowledgedOps = new Map(context.unacknowledgedOps);
+    const unacknowledgedOps = [...context.unacknowledgedOps.values()];
     createOrUpdateRootFromMessage(nodes);
     applyAndSendOfflineOps(unacknowledgedOps);
     _resolveStoragePromise?.();
@@ -3783,6 +3819,11 @@ export function createRoom<
       connect: () => managedSocket.connect(),
       reconnect: () => managedSocket.reconnect(),
       disconnect: () => managedSocket.disconnect(),
+
+      _dump: () => {
+        const n = context.pool.nodes.size;
+        return `Room "${roomId}" (${n} node${n === 1 ? "" : "s"}):\n${dumpPool(context.pool)}`;
+      },
       destroy: () => {
         pendingFeedsRequests.forEach((request) =>
           request.reject(new Error("Room destroyed"))

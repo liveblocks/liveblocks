@@ -13,6 +13,8 @@ import type { SerializedCrdt } from "../protocol/StorageNode";
 import type * as DevTools from "../types/DevToolsTreeNode";
 import type { LiveNode, Lson } from "./Lson";
 import type { StorageUpdate } from "./StorageUpdates";
+import type { ReadonlyUnacknowledgedOps } from "./UnacknowledgedOps";
+import { UnacknowledgedOps } from "./UnacknowledgedOps";
 
 export type ApplyResult =
   | { reverse: Op[]; modified: StorageUpdate }
@@ -53,6 +55,12 @@ export interface ManagedPool {
    * @returns {void}
    */
   assertStorageIsWritable: () => void;
+
+  /**
+   * Read-only view of the client's still-unacknowledged ops (sent or
+   * pending-send, not yet confirmed by the server).
+   */
+  readonly unacknowledgedOps: ReadonlyUnacknowledgedOps;
 }
 
 export type CreateManagedPoolOptions = {
@@ -79,6 +87,14 @@ export type CreateManagedPoolOptions = {
    * have an effect upstream.
    */
   isStorageWritable?: () => boolean;
+
+  /**
+   * Read-only view of the client's still-unacknowledged ops. Used by CRDTs
+   * (e.g. LiveList) to know which of their optimistic mutations the server
+   * hasn't confirmed yet. Defaults to an empty view (e.g. server-side pools
+   * that dispatch-and-flush have no optimistic state to track).
+   */
+  unacknowledgedOps?: ReadonlyUnacknowledgedOps;
 };
 
 /**
@@ -92,6 +108,7 @@ export function createManagedPool(
     getCurrentConnectionId,
     onDispatch,
     isStorageWritable = () => true,
+    unacknowledgedOps = new UnacknowledgedOps(),
   } = options;
 
   let clock = 0;
@@ -124,6 +141,8 @@ export function createManagedPool(
         );
       }
     },
+
+    unacknowledgedOps,
   };
 }
 
@@ -354,8 +373,19 @@ export abstract class AbstractCrdt {
     this.#pool = pool;
   }
 
-  /** @internal */
-  abstract _attachChild(op: CreateOp, source: OpSource): ApplyResult;
+  /**
+   * @internal
+   * `fromSnapshot` is set when the op is part of a full-state snapshot
+   * reconstruction (the reconnect reconcile) rather than a live incremental op.
+   * Only LiveList uses it, to suppress its optimistic push tail-bump: the bump
+   * predicts where the server will place pending pushes, but a snapshot already
+   * holds the final positions, so there's nothing to predict.
+   */
+  abstract _attachChild(
+    op: CreateOp,
+    source: OpSource,
+    fromSnapshot?: boolean
+  ): ApplyResult;
 
   /** @internal */
   _detach(): void {
