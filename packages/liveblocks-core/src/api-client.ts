@@ -1407,9 +1407,8 @@ export function createApiClient<
     return httpClient.get<RoomSubscriptionSettings>(
       url`/v2/c/rooms/${options.roomId}/subscription-settings`,
       await authManager.getAuthValue({
-        roomId: options.roomId,
-        feature: "comments",
-        access: "read",
+        feature: "personal",
+        access: "write",
       }),
       undefined,
       {
@@ -1425,9 +1424,8 @@ export function createApiClient<
     return httpClient.post<RoomSubscriptionSettings>(
       url`/v2/c/rooms/${options.roomId}/subscription-settings`,
       await authManager.getAuthValue({
-        roomId: options.roomId,
-        feature: "comments",
-        access: "read",
+        feature: "personal",
+        access: "write",
       }),
       options.settings
     );
@@ -1483,8 +1481,8 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/text-mentions`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        feature: "comments",
-        access: "read",
+        feature: "storage",
+        access: "write",
       }),
       {
         userId:
@@ -1508,8 +1506,8 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/text-mentions/${options.mentionId}`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        feature: "comments",
-        access: "read",
+        feature: "storage",
+        access: "write",
       })
     );
   }
@@ -1522,7 +1520,7 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/y-version/${options.versionId}`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        feature: "comments",
+        feature: "storage",
         access: "read",
       })
     );
@@ -1533,8 +1531,8 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/version`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        feature: "comments",
-        access: "read",
+        feature: "storage",
+        access: "write",
       })
     );
   }
@@ -1548,7 +1546,7 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/text-metadata`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        feature: "comments",
+        feature: "storage",
         access: "read",
       }),
       {
