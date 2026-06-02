@@ -124,7 +124,7 @@ inject_changelog_heading () {
     echo "==> Adding CHANGELOG heading for v$VERSION"
     tmp="$(mktemp)"
     if awk -v ver="$VERSION" '
-        !done && /^## vNEXT \(not yet released\)$/ {
+        !done && /^## vNEXT( .*)?$/ {
             print
             print ""
             print "## v" ver
@@ -137,7 +137,7 @@ inject_changelog_heading () {
         mv "$tmp" "$CHANGELOG"
     else
         rm -f "$tmp"
-        err "WARNING: Could not find a '## vNEXT (not yet released)' section in"
+        err "WARNING: Could not find a '## vNEXT' section in"
         err "$CHANGELOG; skipping CHANGELOG heading insertion."
     fi
 }
