@@ -33,7 +33,7 @@ export function toPlainLson(lson: Lson): PlainLson {
   } else if (lson instanceof LiveText) {
     return {
       liveblocksType: "LiveText",
-      data: lson.toDelta(),
+      data: lson.toJSON(),
       version: lson.version,
     };
   } else {

@@ -86,8 +86,9 @@ export type {
   LiveTextAttributes,
   LiveTextAttributesPatch,
   LiveTextChange,
-  LiveTextDelta,
+  LiveTextData,
   LiveTextOperation,
+  LiveTextSegment,
   LiveTextUpdates,
 } from "./crdts/LiveText";
 export type {

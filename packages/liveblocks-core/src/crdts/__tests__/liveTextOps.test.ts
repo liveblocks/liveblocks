@@ -3,7 +3,7 @@ import { describe, expect, test } from "vitest";
 import {
   applyLiveTextOperations,
   attributesEqual,
-  deltaToSegments,
+  dataToSegments,
   invertTextOperations,
   normalizeSegments,
   rebaseTextOperations,
@@ -25,21 +25,21 @@ describe("liveTextOps", () => {
   });
 
   test("applyLiveTextOperations inserts, deletes, and formats", () => {
-    const delta = applyLiveTextOperations([{ text: "Hello" }], [
+    const data = applyLiveTextOperations([["Hello"]], [
       { type: "insert", index: 5, text: "!" },
       { type: "format", index: 0, length: 5, attributes: { bold: true } },
     ]);
 
-    expect(delta).toEqual([
-      { text: "Hello", attributes: { bold: true } },
-      { text: "!" },
+    expect(data).toEqual([
+      ["Hello", { bold: true }],
+      ["!"],
     ]);
   });
 
   test("invertTextOperations preserves attributes for deleted segments", () => {
-    const segments = deltaToSegments([
-      { text: "He", attributes: { bold: true } },
-      { text: "llo" },
+    const segments = dataToSegments([
+      ["He", { bold: true }],
+      ["llo"],
     ]);
 
     expect(

@@ -268,7 +268,7 @@ describe("getTreesDiffOperations", () => {
           type: CrdtType.TEXT,
           parentId: "root",
           parentKey: "text",
-          data: [{ text: "Hello" }],
+          data: [["Hello"]],
           version: 0,
         },
       ],
@@ -280,7 +280,7 @@ describe("getTreesDiffOperations", () => {
         id: "0:1",
         parentId: "root",
         parentKey: "text",
-        data: [{ text: "Hello" }],
+        data: [["Hello"]],
         version: 0,
       },
     ]);
@@ -290,7 +290,7 @@ describe("getTreesDiffOperations", () => {
       type: CrdtType.TEXT,
       parentId: "root",
       parentKey: "text",
-      data: [{ text: "Hello!" }],
+      data: [["Hello!"]],
       version: 1,
     });
 
@@ -469,7 +469,7 @@ describe("toPlainLson", () => {
         },
         text: {
           liveblocksType: "LiveText",
-          data: [{ text: "Hello" }],
+          data: [["Hello"]],
           version: 0,
         },
       },

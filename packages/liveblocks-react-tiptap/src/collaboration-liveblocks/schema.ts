@@ -6,7 +6,7 @@ import {
   LiveText,
   type LiveTextAttributes,
   type LiveTextAttributesPatch,
-  type LiveTextDelta,
+  type LiveTextData,
   nanoid,
 } from "@liveblocks/client";
 
@@ -150,16 +150,16 @@ export function updateLiveblocksNodeAttrs(
 function liveTextToTextNodes(text: LiveText): ProseMirrorJsonNode[] {
   const nodes: ProseMirrorJsonNode[] = [];
 
-  for (const delta of text.toDelta()) {
-    if (delta.text.length === 0) {
+  for (const [segmentText, segmentAttributes] of text.toJSON()) {
+    if (segmentText.length === 0) {
       continue;
     }
 
     nodes.push({
       type: "text",
-      text: delta.text,
-      ...(delta.attributes !== undefined
-        ? { marks: attributesToMarks(delta.attributes) }
+      text: segmentText,
+      ...(segmentAttributes !== undefined
+        ? { marks: attributesToMarks(segmentAttributes) }
         : {}),
     });
   }
@@ -225,4 +225,4 @@ export function stringifyDocument(node: ProseMirrorJsonNode): string {
   return JSON.stringify(node);
 }
 
-export type { LiveTextDelta };
+export type { LiveTextData };

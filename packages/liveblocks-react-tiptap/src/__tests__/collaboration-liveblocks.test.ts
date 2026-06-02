@@ -723,11 +723,8 @@ describe("collaboration-liveblocks schema", () => {
   test("applies remote LiveText delete when clearing multi-segment formatted text", () => {
     const editor = createEditor("<p><strong>Hello</strong> world</p>");
     const text = new LiveText([
-      {
-        text: "Hello",
-        attributes: { __liveblocks_tiptap_marks: [{ type: "bold" }] },
-      },
-      { text: " world" },
+      ["Hello", { __liveblocks_tiptap_marks: [{ type: "bold" }] }],
+      [" world"],
     ]);
     const storageNode = new LiveObject({
       id: "doc",

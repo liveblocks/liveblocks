@@ -2,7 +2,7 @@ import type { LiveList } from "../crdts/LiveList";
 import type { LiveMap } from "../crdts/LiveMap";
 import type { LiveObject } from "../crdts/LiveObject";
 import type { LiveRegister } from "../crdts/LiveRegister";
-import type { LiveText, LiveTextDelta } from "../crdts/LiveText";
+import type { LiveText, LiveTextData } from "../crdts/LiveText";
 import type { Json, ReadonlyJson, ReadonlyJsonObject } from "../lib/Json";
 
 export type LiveStructure =
@@ -74,7 +74,7 @@ export type ToJson<L extends Lson | LsonObject> =
 
   // A LiveText serializes to a delta so inline attributes are preserved
   L extends LiveText ?
-    LiveTextDelta :
+    LiveTextData :
 
   // Any LsonObject recursively becomes a JsonObject
   // Short-circuit generic string-keyed objects to ReadonlyJsonObject to avoid

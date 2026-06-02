@@ -22,7 +22,7 @@ const initialNodes: StorageNode[] = [
       type: CrdtType.TEXT,
       parentId: "root",
       parentKey: "text",
-      data: [{ text: "Hello" }],
+      data: [["Hello"]],
       version: 0,
     },
   ] as const,
@@ -48,7 +48,7 @@ describe("LiveText concurrency", () => {
     ]);
 
     expect(text.toString()).toBe("ABHello");
-    expect(text.toDelta()).toEqual([{ text: "ABHello" }]);
+    expect(text.toJSON()).toEqual([["ABHello"]]);
   });
 
   test("local client rebases remote delete over pending local insert", async () => {
@@ -142,7 +142,7 @@ describe("LiveText acknowledgement", () => {
     );
 
     expect(text.toString()).toBe("ABHello");
-    expect(text.toDelta()).toEqual([{ text: "ABHello" }]);
+    expect(text.toJSON()).toEqual([["ABHello"]]);
   });
 
   test("re-applies acknowledged operations when multiple local edits are pending", () => {

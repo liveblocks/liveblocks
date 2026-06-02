@@ -1,7 +1,7 @@
 import type {
   Lson,
   LsonObject,
-  LiveTextDelta,
+  LiveTextData,
   ReadonlyJsonObject,
   ToJson,
 } from "@liveblocks/core";
@@ -157,7 +157,7 @@ describe("ToJson", () => {
   // LiveText
   // ---------------------------------------------------------------------------
   test("LiveText", () => {
-    expectTypeOf(toJson(new LiveText("hello"))).toEqualTypeOf<LiveTextDelta>();
+    expectTypeOf(toJson(new LiveText("hello"))).toEqualTypeOf<LiveTextData>();
   });
 
   // ---------------------------------------------------------------------------

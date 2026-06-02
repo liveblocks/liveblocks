@@ -1,5 +1,5 @@
 import type { Json, JsonObject } from "../lib/Json";
-import type { LiveTextDelta } from "./Op";
+import type { LiveTextData } from "./Op";
 
 export type IdTuple<T> = [id: string, value: T];
 
@@ -68,7 +68,7 @@ export type SerializedText = {
   readonly type: CrdtType.TEXT;
   readonly parentId: string;
   readonly parentKey: string;
-  readonly data: LiveTextDelta;
+  readonly data: LiveTextData;
   readonly version: number;
 };
 
@@ -165,7 +165,7 @@ export type CompactTextNode = readonly [
   type: CrdtType.TEXT,
   parentId: string,
   parentKey: string,
-  data: LiveTextDelta,
+  data: LiveTextData,
   version: number,
 ];
 

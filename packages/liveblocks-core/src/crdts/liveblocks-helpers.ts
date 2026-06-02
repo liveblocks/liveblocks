@@ -350,29 +350,30 @@ export function getTreesDiffOperations(
                 length:
                   currentCrdt.type === CrdtType.TEXT
                     ? currentCrdt.data.reduce(
-                        (sum, item) => sum + item.text.length,
+                        (sum, segment) => sum + segment[0].length,
                         0
                       )
                     : 0,
               },
-              ...crdt.data.map((item, index, items) =>
-                item.attributes === undefined
+              ...crdt.data.map((segment, index, items) => {
+                const [text, attributes] = segment;
+                const insertIndex = items
+                  .slice(0, index)
+                  .reduce((sum, item) => sum + item[0].length, 0);
+
+                return attributes === undefined
                   ? {
                       type: "insert" as const,
-                      index: items
-                        .slice(0, index)
-                        .reduce((sum, item) => sum + item.text.length, 0),
-                      text: item.text,
+                      index: insertIndex,
+                      text,
                     }
                   : {
                       type: "insert" as const,
-                      index: items
-                        .slice(0, index)
-                        .reduce((sum, item) => sum + item.text.length, 0),
-                      text: item.text,
-                      attributes: item.attributes,
-                    }
-              ),
+                      index: insertIndex,
+                      text,
+                      attributes,
+                    };
+              }),
             ],
           });
         }

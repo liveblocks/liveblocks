@@ -1,7 +1,7 @@
 import { freeze } from "../lib/freeze";
 import type { Json, JsonObject } from "../lib/Json";
 import type {
-  LiveTextDelta,
+  LiveTextData,
   TextAttributes,
   TextOperation,
 } from "../protocol/Op";
@@ -62,22 +62,20 @@ export function normalizeSegments(
   return normalized;
 }
 
-export function deltaToSegments(delta: LiveTextDelta): TextSegment[] {
+export function dataToSegments(data: LiveTextData): TextSegment[] {
   return normalizeSegments(
-    delta.map((item) => ({
-      text: item.text,
-      attributes: item.attributes,
+    data.map(([text, attributes]) => ({
+      text,
+      attributes,
     }))
   );
 }
 
-export function segmentsToDelta(
-  segments: readonly TextSegment[]
-): LiveTextDelta {
+export function segmentsToData(segments: readonly TextSegment[]): LiveTextData {
   return segments.map((segment) =>
     segment.attributes === undefined
-      ? { text: segment.text }
-      : { text: segment.text, attributes: { ...segment.attributes } }
+      ? [segment.text]
+      : [segment.text, { ...segment.attributes }]
   );
 }
 
@@ -360,11 +358,11 @@ export function applyTextOperationsToSegments(
 }
 
 export function applyLiveTextOperations(
-  delta: LiveTextDelta,
+  data: LiveTextData,
   ops: readonly TextOperation[]
-): LiveTextDelta {
-  return segmentsToDelta(
-    applyTextOperationsToSegments(deltaToSegments(delta), ops)
+): LiveTextData {
+  return segmentsToData(
+    applyTextOperationsToSegments(dataToSegments(data), ops)
   );
 }
 

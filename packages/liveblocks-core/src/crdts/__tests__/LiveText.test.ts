@@ -11,13 +11,13 @@ import { invertTextOperations } from "../liveTextOps";
 import { toPlainLson } from "../utils";
 
 describe("LiveText", () => {
-  test("stores plain text and serializes to a delta", () => {
+  test("stores plain text and serializes to JSON", () => {
     const text = new LiveText("Hello");
 
     expect(text.toString()).toBe("Hello");
     expect(text.length).toBe(5);
-    expect(text.toDelta()).toEqual([{ text: "Hello" }]);
-    expect(text.toJSON()).toEqual([{ text: "Hello" }]);
+    expect(text.toJSON()).toEqual([["Hello"]]);
+    expect(text.toJSON()).toEqual([["Hello"]]);
   });
 
   test("inserts, deletes, and replaces text", () => {
@@ -28,7 +28,7 @@ describe("LiveText", () => {
     text.replace(0, 4, "Hi");
 
     expect(text.toString()).toBe("Hi world");
-    expect(text.toDelta()).toEqual([{ text: "Hi world" }]);
+    expect(text.toJSON()).toEqual([["Hi world"]]);
   });
 
   test("formats ranges and normalizes adjacent segments", () => {
@@ -38,30 +38,28 @@ describe("LiveText", () => {
     text.insert(5, "!", { bold: true });
     text.format(0, 6, { bold: null });
 
-    expect(text.toDelta()).toEqual([{ text: "Hello! world" }]);
+    expect(text.toJSON()).toEqual([["Hello! world"]]);
   });
 
   test("clones without sharing mutable state", () => {
-    const text = new LiveText([{ text: "Hello", attributes: { bold: true } }]);
+    const text = new LiveText([["Hello", { bold: true }]]);
     const clone = text.clone();
 
     clone.insert(5, "!");
 
-    expect(text.toDelta()).toEqual([
-      { text: "Hello", attributes: { bold: true } },
-    ]);
-    expect(clone.toDelta()).toEqual([
-      { text: "Hello", attributes: { bold: true } },
-      { text: "!" },
+    expect(text.toJSON()).toEqual([["Hello", { bold: true }]]);
+    expect(clone.toJSON()).toEqual([
+      ["Hello", { bold: true }],
+      ["!"],
     ]);
   });
 
   test("serializes to Plain LSON", () => {
-    const text = new LiveText([{ text: "Hello", attributes: { bold: true } }]);
+    const text = new LiveText([["Hello", { bold: true }]]);
 
     expect(toPlainLson(text)).toEqual({
       liveblocksType: "LiveText",
-      data: [{ text: "Hello", attributes: { bold: true } }],
+      data: [["Hello", { bold: true }]],
       version: 0,
     });
   });
@@ -78,7 +76,10 @@ describe("LiveText", () => {
   test("invertTextOperations preserves attributes for multi-segment deletes", () => {
     expect(
       invertTextOperations(
-        [{ text: "He", attributes: { bold: true } }, { text: "llo" }],
+        [
+          { text: "He", attributes: { bold: true } },
+          { text: "llo" },
+        ],
         [{ type: "delete", index: 0, length: 5 }]
       )
     ).toEqual([
@@ -96,7 +97,7 @@ describe("LiveText", () => {
           type: CrdtType.TEXT,
           parentId: "root",
           parentKey: "text",
-          data: [{ text: "Hello" }],
+          data: [["Hello"]],
           version: 2,
         },
       ],
@@ -106,7 +107,7 @@ describe("LiveText", () => {
 
     expect(compact).toEqual([
       ["root", {}],
-      ["0:1", CrdtType.TEXT, "root", "text", [{ text: "Hello" }], 2],
+      ["0:1", CrdtType.TEXT, "root", "text", [["Hello"]], 2],
     ]);
     expect(Array.from(compactNodesToNodeStream(compact))).toEqual(nodes);
   });

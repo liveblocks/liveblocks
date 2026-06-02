@@ -67,7 +67,7 @@ function Sandbox() {
     return <div>Loading...</div>;
   }
 
-  const plainText = text.map((item) => item.text).join("");
+  const plainText = text.map(([segmentText]) => segmentText).join("");
 
   return (
     <div>

@@ -32,10 +32,11 @@ export namespace OpCode {
 
 export type TextAttributes = JsonObject;
 
-export type LiveTextDelta = {
-  text: string;
-  attributes?: TextAttributes;
-}[];
+export type LiveTextSegment =
+  | [text: string]
+  | [text: string, attributes: TextAttributes];
+
+export type LiveTextData = LiveTextSegment[];
 
 export type TextOperation =
   | {
@@ -132,7 +133,7 @@ export type CreateTextOp = {
   readonly type: OpCode.CREATE_TEXT;
   readonly parentId: string;
   readonly parentKey: string;
-  readonly data: LiveTextDelta;
+  readonly data: LiveTextData;
   readonly version: number;
 };
 

@@ -4,7 +4,7 @@ import { nanoid } from "../lib/nanoid";
 import type {
   CreateOp,
   CreateTextOp,
-  LiveTextDelta,
+  LiveTextData,
   Op,
   TextAttributes,
   TextOperation,
@@ -23,17 +23,21 @@ import {
   applyInsert,
   applyTextOperationsToSegments,
   clipRange,
-  deltaToSegments,
+  dataToSegments,
   invertTextOperations,
   rebaseTextOperations,
-  segmentsToDelta,
+  segmentsToData,
   type TextSegment,
 } from "./liveTextOps";
 import type { LiveNode } from "./Lson";
 
 export type LiveTextAttributes = TextAttributes;
 export type LiveTextAttributesPatch = JsonObject;
-export type { LiveTextDelta, TextOperation as LiveTextOperation };
+export type {
+  LiveTextData,
+  LiveTextSegment,
+  TextOperation as LiveTextOperation,
+} from "../protocol/Op";
 
 export type LiveTextChange =
   | {
@@ -73,14 +77,14 @@ export class LiveText extends AbstractCrdt {
   #version: number;
   #pendingOps: Map<string, readonly TextOperation[]>;
 
-  constructor(textOrDelta: string | LiveTextDelta = "", version = 0) {
+  constructor(textOrData: string | LiveTextData = "", version = 0) {
     super();
     this.#segments =
-      typeof textOrDelta === "string"
-        ? textOrDelta.length === 0
+      typeof textOrData === "string"
+        ? textOrData.length === 0
           ? []
-          : [{ text: textOrDelta }]
-        : deltaToSegments(textOrDelta);
+          : [{ text: textOrData }]
+        : dataToSegments(textOrData);
     this.#version = version;
     this.#pendingOps = new Map();
   }
@@ -116,7 +120,7 @@ export class LiveText extends AbstractCrdt {
         id: this._id,
         parentId,
         parentKey,
-        data: this.toDelta(),
+        data: this.toJSON(),
         version: this.#version,
       },
     ];
@@ -132,7 +136,7 @@ export class LiveText extends AbstractCrdt {
       type: CrdtType.TEXT,
       parentId: nn(this.parent.node._id, "Parent node expected to have ID"),
       parentKey: this.parent.key,
-      data: this.toDelta(),
+      data: this.toJSON(),
       version: this.#version,
     };
   }
@@ -359,17 +363,13 @@ export class LiveText extends AbstractCrdt {
     return this.#segments.map((segment) => segment.text).join("");
   }
 
-  toDelta(): LiveTextDelta {
-    return segmentsToDelta(this.#segments);
-  }
-
-  toJSON(): LiveTextDelta {
-    return super.toJSON() as LiveTextDelta;
+  toJSON(): LiveTextData {
+    return super.toJSON() as LiveTextData;
   }
 
   /** @internal */
   _toJSON(): ReadonlyJson {
-    return this.toDelta() as ReadonlyJson;
+    return segmentsToData(this.#segments) as ReadonlyJson;
   }
 
   /** @internal */
@@ -390,6 +390,6 @@ export class LiveText extends AbstractCrdt {
   }
 
   clone(): LiveText {
-    return new LiveText(this.toDelta(), this.#version);
+    return new LiveText(this.toJSON(), this.#version);
   }
 }
