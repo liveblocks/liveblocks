@@ -106,25 +106,141 @@ collaboration to your React application using the hooks from the
 
   </Step>
   <Step>
-    <StepTitle>Use the Liveblocks hooks</StepTitle>
+    <StepTitle>Create a multiplayer input</StepTitle>
     <StepContent>
 
-      Now that we’re connected to a room, we can start using the Liveblocks hooks.
-      The first we’ll add is [`useOthers`](/docs/api-reference/liveblocks-react#useOthers), a hook that provides information about
-      which other users are connected to the room.
+      From this point, you can use Liveblocks hooks to create your multiplayer app. For example, you can create
+      a shared input that stays in sync across users. To set it up, first [define your storage
+      type](/docs/api-reference/liveblocks-client#Typing-your-data) in `liveblocks.config.ts`. An `input` [`LiveObject`](/docs/api-reference/liveblocks-client#LiveObject)
+      can store the text of the input.
 
-      ```tsx file="Room.tsx" highlight="6"
+      ```ts file="liveblocks.config.ts"
+      import { LiveObject } from "@liveblocks/client";
+
+      declare global {
+        interface Liveblocks {
+          // +++
+          Storage: {
+            input: LiveObject<{ text: string }>;
+          };
+          // +++
+        }
+      }
+
+      export {};
+      ```
+
+      Next, set an initial value for `input` on [`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider),
+      a new `LiveObject` with a `text` value.
+
+      ```tsx file="App.tsx"
       "use client";
 
-      import { useOthers } from "./liveblocks.config";
+      import { LiveObject } from "@liveblocks/client";
+      import {
+        LiveblocksProvider,
+        RoomProvider,
+        ClientSideSuspense,
+      } from "@liveblocks/react/suspense";
+      import { Room } from "./Room";
 
-      export function Room() {
-        const others = useOthers();
-        const userCount = others.length;
-
-        return <div>There are {userCount} other user(s) online</div>;
+      export default function App() {
+        return (
+          <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
+            <RoomProvider
+              id="my-room"
+              // +++
+              initialStorage={{
+                input: new LiveObject({ text: "" }),
+              }}
+              // +++
+            >
+              <ClientSideSuspense fallback={<div>Loading…</div>}>
+                <Room />
+              </ClientSideSuspense>
+            </RoomProvider>
+          </LiveblocksProvider>
+        );
       }
       ```
+
+      Now, use [`useStorage`](/docs/api-reference/liveblocks-react#useStorage) to read the value of `input.text` and
+      [`useMutation`](/docs/api-reference/liveblocks-react#useMutation) to update it.
+
+      ```tsx file="Room.tsx"
+      "use client";
+
+      import { useStorage, useMutation } from "@liveblocks/react/suspense";
+
+      export function Room() {
+        // +++
+        const text = useStorage((root) => root.input.text);
+        // +++
+
+        // +++
+        const updateText = useMutation(({ storage }, newText: string) => {
+          const input = storage.get("input");
+          input.set("text", newText);
+        }, []);
+        // +++
+
+        return (
+          <input
+            // +++
+            value={text}
+            onChange={(e) => updateText(e.target.value)}
+            // +++
+            placeholder="Start typing…"
+          />
+        );
+      }
+      ```
+
+      Open your app in two browser tabs to see the input update in realtime.
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Show custom presence</StepTitle>
+    <StepContent>
+
+      [`useOthers`](/docs/api-reference/liveblocks-react#useOthers) allows you to
+      access a list of users that are currently connected to the room. Build a
+      simple avatar stack from the list of connected users.
+
+      ```tsx file="Avatars.tsx"
+      "use client";
+
+      import { useOthers } from "@liveblocks/react/suspense";
+
+      export function Avatars() {
+        // +++
+        const others = useOthers();
+        // +++
+
+        return (
+          <div style={{ display: "flex", alignItems: "center" }}>
+            {others.map(({ connectionId }, index) => (
+              <img
+                key={connectionId}
+                src={`https://liveblocks.io/avatars/avatar-${connectionId % 30}.png`}
+                alt=""
+                width={28}
+                height={28}
+                style={{
+                  borderRadius: "50%",
+                  border: "2px solid white",
+                  marginLeft: index === 0 ? 0 : -8,
+                }}
+              />
+            ))}
+          </div>
+        );
+      }
+      ```
+
+      Open your app in two browser tabs to see avatars appear for each user.
 
     </StepContent>
 
