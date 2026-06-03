@@ -221,7 +221,9 @@ collaboration to your React application using the hooks from the
 
         return (
           <div style={{ display: "flex", alignItems: "center" }}>
+            // +++
             {others.map(({ connectionId }, index) => (
+              // +++
               <img
                 key={connectionId}
                 src={`https://liveblocks.io/avatars/avatar-${connectionId % 30}.png`}
