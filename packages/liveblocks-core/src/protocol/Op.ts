@@ -128,13 +128,13 @@ export type CreateRegisterOp = {
 export type CreateTextOp = {
   readonly opId?: string;
   readonly id: string;
-  readonly intent?: "set";
-  readonly deletedId?: string;
   readonly type: OpCode.CREATE_TEXT;
   readonly parentId: string;
   readonly parentKey: string;
   readonly data: LiveTextData;
   readonly version: number;
+  readonly intent?: "set" | "push";
+  readonly deletedId?: string;
 };
 
 export type UpdateTextOp = {
