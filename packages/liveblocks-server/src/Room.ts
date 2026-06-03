@@ -482,7 +482,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
 
   public meta: RM;
   public readonly driver: IStorageDriver;
-  public logger: Logger;
+  #logger: Logger;
 
   /**
    * While a room is in "maintenance mode", all WebSocket connections to the
@@ -541,7 +541,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
     const driver = options?.storage ?? makeNewInMemoryDriver();
     this.meta = meta;
     this.driver = driver;
-    this.logger = options?.logger ?? BLACK_HOLE;
+    this.#logger = options?.logger ?? BLACK_HOLE;
     this.hooks = {
       isClientMsgAllowed:
         options?.hooks?.isClientMsgAllowed ??
@@ -566,6 +566,14 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
       postClientMsgYdocDidUpdate: options?.hooks?.postClientMsgYdocDidUpdate,
     };
     this.#_debug = options?.enableDebugLogging ?? false;
+  }
+
+  public get logger(): Logger {
+    return this.#logger;
+  }
+
+  public addLoggerContext(attrs: JsonObject): void {
+    this.#logger = this.#logger.withContext(attrs);
   }
 
   public get loadingState(): LoadingState {
@@ -828,7 +836,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
         defer
       );
 
-      this.logger.warn(
+      this.#logger.warn(
         `Previous session for actor ${ticket.actor} killed in favor of new session`
       );
     }
@@ -1416,13 +1424,13 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
 
   private async _loadStorage(): Promise<Storage> {
     const storage = new Storage(this.driver);
-    await storage.load(this.logger);
+    await storage.load(this.#logger);
     return storage;
   }
 
   private async _loadYjsStorage(): Promise<YjsStorage> {
     const yjsStorage = new YjsStorage(this.driver);
-    await yjsStorage.load(this.logger);
+    await yjsStorage.load(this.#logger);
     return yjsStorage;
   }
 
@@ -1476,7 +1484,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
   private async handlePing(sessionKey: SessionKey, ctx?: C): Promise<void> {
     const session = this.sessions.get(sessionKey);
     if (session === undefined) {
-      this.logger
+      this.#logger
         .withContext({ sessionKey })
         .warn("[probe] in handlePing, no such session exists");
       return;
@@ -1499,7 +1507,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
   ): Promise<void> {
     const session = this.sessions.get(sessionKey);
     if (!session) {
-      this.logger
+      this.#logger
         .withContext({ sessionKey })
         .warn("[probe] in handleClientMsgs, no such session exists");
       return;
@@ -1746,9 +1754,9 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
         const guid = msg.guid as Guid | undefined;
         const isV2 = msg.v2;
         const [update, stateVector, snapshotHash] = await Promise.all([
-          this.yjsStorage.getYDocUpdate(this.logger, vector, guid, isV2),
-          this.yjsStorage.getYStateVector(this.logger, guid),
-          this.yjsStorage.getSnapshotHash(this.logger, { guid, isV2 }),
+          this.yjsStorage.getYDocUpdate(this.#logger, vector, guid, isV2),
+          this.yjsStorage.getYStateVector(this.#logger, guid),
+          this.yjsStorage.getSnapshotHash(this.#logger, { guid, isV2 }),
         ]);
 
         if (update !== null && snapshotHash !== null) {
@@ -1770,7 +1778,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
         const guid = msg.guid as Guid | undefined;
         const isV2 = msg.v2;
         const [result, error] = await tryCatch(
-          this.yjsStorage.addYDocUpdate(this.logger, update, guid, isV2)
+          this.yjsStorage.addYDocUpdate(this.#logger, update, guid, isV2)
         );
 
         if (error)
