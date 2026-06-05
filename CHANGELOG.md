@@ -1,6 +1,10 @@
 ## vNEXT (not yet released)
 
-- Export internal utility
+### `@liveblocks/client`
+
+- Fix a `LiveList` divergence after reconnects: a pending `push` could under
+  specific timing conditions during a reconnect still cause a divergence between
+  clients, despite the fix from 3.19.4.
 
 ## v3.19.4
 
