@@ -21,16 +21,15 @@ async function waitUntil(
 }
 
 /**
- * Deterministic reproduction of the offline.test.ts "client synchronizes
- * offline changes" divergence.
+ * Deterministic version of the offline.test.ts "client synchronizes offline
+ * changes" scenario.
  *
- * The trigger is an item that the server has already stored but that the
+ * The tricky case is an item that the server has already stored but that the
  * pushing client still considers pending (unacknowledged), because the client
- * never received the ack. On reconnect, the client's optimistic tail-bump
- * moves that pending push past a sibling the other client added, re-sends it at
- * its original key, and the server bare-acks it (already stored, no
- * reposition), so the bump is never undone. The two clients then disagree on
- * the order.
+ * never received the ack. On reconnect, the snapshot also carries a sibling
+ * the other client appended in the meantime. The still-pending item must keep
+ * its server position (before the sibling) on both clients, rather than being
+ * optimistically bumped past it by its own re-sent push.
  */
 test(
   "a pending push the server already stored keeps its server position after reconnect",
@@ -40,9 +39,10 @@ test(
       const list1 = root1.get("list");
       const list2 = root2.get("list");
 
-      // 1. Client A pushes P and flushes it to the server, but drops every
-      //    incoming message first, so the server's ack/echo never reaches A: P
-      //    is stored server-side (so B sees it) yet stays *pending* on A.
+      // 1. Client A pushes P and flushes it to the server, but stalls its
+      //    downlink first, so the server's ack/echo never reaches A before the
+      //    connection drops: P is stored server-side (so B sees it) yet stays
+      //    *pending* on A.
       list1.push("P");
       control.dropIncomingA();
       control.flushSyncA();
@@ -62,9 +62,9 @@ test(
         "Client B sees [P, Q]"
       );
 
-      // 4. A reconnects. The snapshot carries both P and Q; A's tail-bump moves
-      //    its still-pending P past Q, then re-sends P at its original key. The
-      //    server bare-acks (P already there), so A's bump is never undone.
+      // 4. A reconnects. The snapshot carries both P and Q, and A re-sends its
+      //    still-pending P. P is already stored server-side, so it must keep
+      //    its server position (before Q) on both clients.
       room1.reconnect();
 
       await waitUntil(
