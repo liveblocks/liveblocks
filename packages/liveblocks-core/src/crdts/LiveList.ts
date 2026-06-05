@@ -429,7 +429,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     return result.modified.updates[0];
   }
 
-  #applyRemoteInsert(op: CreateOp, fromSnapshot: boolean): ApplyResult {
+  #applyRemoteInsert(op: CreateOp): ApplyResult {
     if (this._pool === undefined) {
       throw new Error("Can't attach child if managed pool is not present");
     }
@@ -452,12 +452,11 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     // a view that excludes our still-unacked pushes, so they can't address a
     // position inside our pending tail block.
     //
-    // The bump is a purely-local, live-only anti-flicker prediction of where
-    // the server will place things. While reconstructing from a server snapshot
-    // (reconnect reconcile) we already have the answer, so we don't predict:
-    // bumping there would override the snapshot's positions with a guess, and
-    // the diff carries no corrective op to undo it.
-    const bumpDeltas = fromSnapshot ? [] : this.#bumpUnackedPushesAbove(key);
+    // The bump is a purely-local anti-flicker prediction of where the server
+    // will place things. It's sound because #unackedPushNodes only yields ops
+    // the server has provably not processed yet (ops whose fate became
+    // unknown in a disconnect are excluded at that source).
+    const bumpDeltas = this.#bumpUnackedPushesAbove(key);
 
     return {
       modified: makeUpdate(this, [
@@ -711,11 +710,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   }
 
   /** @internal */
-  _attachChild(
-    op: CreateOp,
-    source: OpSource,
-    fromSnapshot: boolean = false
-  ): ApplyResult {
+  _attachChild(op: CreateOp, source: OpSource): ApplyResult {
     if (this._pool === undefined) {
       throw new Error("Can't attach child if managed pool is not present");
     }
@@ -732,7 +727,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       }
     } else {
       if (source === OpSource.THEIRS) {
-        result = this.#applyRemoteInsert(op, fromSnapshot);
+        result = this.#applyRemoteInsert(op);
       } else if (source === OpSource.OURS) {
         result = this.#applyInsertAck(op);
       } else {
