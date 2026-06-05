@@ -337,6 +337,10 @@ export function prepareTestsConflicts<S extends LsonObject>(
       resumeIncomingB: () => actor2.ws.resumeIncoming(),
     };
 
+    // TODO Maybe make this the default behavior of the ControlledWebSocket
+    // class, and clearly document this. _Send_ is paused by default, but
+    // _recv_ is not. I think that'd be a nice default?
+    // TODO Not super sure though how it related to the one-time sync below.
     actor1.ws.pause();
     actor2.ws.pause();
 
