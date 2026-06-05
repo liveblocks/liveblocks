@@ -23,36 +23,29 @@ import type {
   JsonObject,
   NodeStream,
   PlainLsonObject,
+  Relax,
   SerializedChild,
   SerializedCrdt,
   SerializedObject,
   SerializedRootObject,
 } from "@liveblocks/core";
-import {
-  asPos,
-  CrdtType,
-  nn,
-  nodeStreamToCompactNodes,
-} from "@liveblocks/core";
+import { asPos, CrdtType, raise } from "@liveblocks/core";
 import type {
   Feed,
   FeedMessage,
   IReadableSnapshot,
   IStorageDriver,
-  IStorageDriverNodeAPI,
   jstring,
   LeasedSession,
   ListFeedMessagesOptions,
   ListFeedMessagesResult,
   ListFeedsOptions,
   ListFeedsResult,
-  Logger,
   Pos,
   YDocId,
 } from "@liveblocks/server";
 import {
   makeInMemorySnapshot,
-  NestedMap,
   plainLsonToNodeStream,
   quote,
 } from "@liveblocks/server";
@@ -68,10 +61,57 @@ function tryParseJson<J extends Json>(
   }
 }
 
-type StorageNodesRow = {
-  node_id: string;
-  crdt_json: jstring;
-};
+function parseJson<J extends Json>(text: string): J {
+  return JSON.parse(text) as J;
+}
+
+// Table `nodes`
+type NodeRow =
+  | {
+      id: "root";
+      type: CrdtType.OBJECT;
+      parent_id: null;
+      parent_key: null;
+      jdata: jstring;
+    }
+  | {
+      id: string;
+      type: CrdtType.OBJECT | CrdtType.REGISTER;
+      parent_id: string;
+      parent_key: string;
+      jdata: jstring;
+    }
+  | {
+      id: string;
+      type: CrdtType.LIST | CrdtType.MAP;
+      parent_id: string;
+      parent_key: string;
+      jdata: null;
+    };
+
+function rowToSerializedCrdt(row: NodeRow): SerializedCrdt {
+  const { type, parent_id: parentId, parent_key: parentKey, jdata } = row;
+  switch (type) {
+    case CrdtType.OBJECT:
+      return parentId === null
+        ? { type, data: parseJson(jdata) }
+        : { type, parentId, parentKey, data: parseJson(jdata) };
+
+    case CrdtType.REGISTER:
+      return { type, parentId, parentKey, data: parseJson(jdata) };
+
+    case CrdtType.LIST:
+    case CrdtType.MAP:
+      return { type, parentId, parentKey };
+
+    default:
+      raise("Unhandled case");
+  }
+}
+
+function rowToIdTuple(row: NodeRow): [string, SerializedCrdt] {
+  return [row.id, rowToSerializedCrdt(row)];
+}
 
 type MetadataRow = {
   key: string;
@@ -123,204 +163,76 @@ function nparams(count: number): string {
   return new Array(count).fill("?").join(",");
 }
 
-function consume<T>(it: Iterable<T>): T[] {
-  return Array.isArray(it) ? (it as T[]) : Array.from(it);
-}
+// ----------------------------------------------------------------------------
+// Sanitization helpers
+// Run lazily on first node access (at most once per driver instance) to fix
+// any data corruption.
+// Optimized for the happy path (no corruption) to be as fast as possible.
+// ----------------------------------------------------------------------------
 
-function safeSelect(
-  db: Database
-): Iterable<[key: string, value: SerializedCrdt]> {
-  return (
-    db
-      .query<StorageNodesRow, []>("SELECT node_id, crdt_json FROM nodes")
-      .values() as [string, string][]
-  ).map(([node_id, crdt_json]) => [
-    node_id,
-    tryParseJson<SerializedCrdt>(crdt_json)!,
-  ]);
-}
-
-function safeUpdate(db: Database, entries: Iterable<[string, SerializedCrdt]>) {
-  const stm = db.prepare(
-    `INSERT INTO nodes (node_id, crdt_json)
-      VALUES (?, ?)
-      ON CONFLICT (node_id) DO UPDATE SET crdt_json = ?`
+/**
+ * Ensures the root node exists. Required for FK constraints to work.
+ *
+ * Common case is also the happy path: root already exists, this is a no-op.
+ */
+function sanitize_missingRoot(db: Database): void {
+  db.run(
+    `INSERT OR IGNORE INTO nodes (id, type, parent_id, parent_key, jdata)
+     VALUES ('root', 0, NULL, NULL, '{}')`
   );
-  const insertMany = db.transaction(
-    (pairs: Iterable<[string, SerializedCrdt]>) => {
-      for (const [key, value] of pairs) {
-        const crdt_json = JSON.stringify(value);
-        stm.run(key, crdt_json, crdt_json);
-      }
-    }
-  );
-  insertMany(entries);
-}
-
-function safeDelete(db: Database, ids_: Iterable<string>) {
-  // Since we need to know the number of items here, we'll need to consume
-  // the (potentially lazy) iterable entirely first
-  const ids = consume(ids_);
-  const n = ids.length;
-
-  db.query(`DELETE FROM nodes WHERE node_id IN (${nparams(n)})`).run(...ids);
-}
-
-//
-// TODO: Refactor to leverage SQL more. Ideas:
-// - Remove in-memory revNodes building, use SQL indexes/queries instead
-// - Use SQL constraints (UNIQUE, FOREIGN KEY) for integrity instead of runtime fixes
-// - Consider a normalized schema: separate parent_id/parent_key columns with indexes
-//
-
-function buildRevNodes(nodeStream: NodeStream) {
-  const result = new NestedMap<string, string, string>();
-  for (const [id, node] of nodeStream) {
-    if (node.parentId === undefined) continue;
-    // Highest node id wins in case of conflict (deterministic across backends)
-    const existing = result.get(node.parentId, node.parentKey);
-    if (existing === undefined || id > existing) {
-      result.set(node.parentId, node.parentKey, id);
-    }
-  }
-  return result;
 }
 
 /**
- * Builds the reverse node index, and corrects any data corruption found
- * along the way.
+ * Deletes illegal tree nodes and their subtrees:
+ * 1. Registers under Objects
+ * 2. Any child node under a Register
+ *
+ * Common case is also the happy path: no rows match, this is a no-op.
  */
-function buildReverseLookup(
-  db: Database,
-  logger: Logger
-): {
-  nodes: Map<string, SerializedCrdt>;
-  revNodes: NestedMap<string, string, string>;
-} {
-  const rawNodes = new Map(safeSelect(db));
-  if (!rawNodes.has("root")) {
-    // In-memory, the root node always exists (this is not true on disk per se)
-    rawNodes.set("root", { type: CrdtType.OBJECT, data: {} });
+function sanitize_illegalNodes(db: Database): void {
+  // Find all illegal nodes (roots of subtrees to delete)
+  const illegalNodes = db
+    .query<Pick<NodeRow, "id">, []>(
+      `SELECT c.id
+         FROM nodes c
+         JOIN nodes p ON p.id = c.parent_id
+         WHERE
+           (c.type = ${CrdtType.REGISTER} AND p.type = ${CrdtType.OBJECT})
+           OR
+           p.type = ${CrdtType.REGISTER}`
+    )
+    .all();
+
+  // Delete each illegal subtree
+  for (const { id } of illegalNodes) {
+    delete_node(db, id);
   }
+}
 
-  // Record in here which nodes have been changed (in case their data keys had a conflict)
-  const nodesToFix: Set<string> = new Set();
+/**
+ * Fixes Object nodes where static data keys conflict with child node keys.
+ * Child nodes always win - conflicting keys are removed from jdata.
+ *
+ * Common case is also the happy path: no nodes have conflicts, this is a no-op.
+ */
+function sanitize_staticDataConflicts(db: Database): void {
+  // Detection query - returns empty on happy path
+  const conflicts = db
+    .query<{ id: string; key: string }, []>(
+      `SELECT p.id, c.parent_key AS key
+         FROM nodes p
+         JOIN nodes c ON c.parent_id = p.id
+         WHERE p.type = ${CrdtType.OBJECT}
+           AND json_type(p.jdata, '$.' || json_quote(c.parent_key)) IS NOT NULL`
+    )
+    .all();
 
-  //
-  // Now, we're going to build up the raw NodeMap (which may not be sound, i.e.
-  // have corruptions) in a way that will guarantee that the final result will
-  // always be a sound (correct) NodeMap.
-  //
-  // The algorithm works as follows:
-  // 1. We generate a reverse lookup table from the rawNodes input. This
-  //    will effectively give us the nodes to pick as "winners" in case of
-  //    conflict, because it's not possible to have multiple values under the
-  //    same key. Also, we need the last entry to "win", because that's how
-  //    clients work, too, so this automatically works.
-  // 2. We build up the tree from the root, then adding all of its "winner"
-  //    children to the map, etc. This way, it's impossible to read conflicts
-  //    into memory. Orphans, ref cycles, and conflicting siblings cannot be
-  //    included this way.
-  // 3. Reporting pass. We loop over the raw node map once more, to see which
-  //    nodes we dropped along the way, and report about those.
-  //
-
-  const queue: string[] = ["root"];
-
-  const nodes: Map<string, SerializedCrdt> = new Map();
-
-  // Step (1)
-  const winners: NestedMap<string, string, string> = buildRevNodes(
-    rawNodes as NodeStream
-  );
-
-  // Step (2)
-  while (queue.length > 0) {
-    const nodeId = queue.pop()!;
-    const node = nn(rawNodes.get(nodeId));
-
-    if (node.type === CrdtType.OBJECT) {
-      // Now check if any of the child keys exist in the node's data. If so,
-      // remove those from the `data` key. Nodes always win over `data` fields.
-      for (const key of winners.keysAt(nodeId)) {
-        if (Object.prototype.hasOwnProperty.call(node.data, key)) {
-          // TODO: Investigate this later? V8 might not always like the delete keyword.
-          // See this blog post https://akashsingh.blog/javascript-delete-operator-might-cause-some-unexpected-performance-issues
-          delete node.data[key];
-          nodesToFix.add(nodeId);
-          logger.warn(`[integrity] Found data key ${quote(key)} from ${quote(nodeId)} (conflicted with child node)`); // prettier-ignore
-        }
-      }
-    }
-
-    // Add all "winner" child nodes to the queue to process in the next loop
-    // (except if the current node is a register, which is not allowed to have children)
-    if (node.type !== CrdtType.REGISTER) {
-      queue.push(...winners.valuesAt(nodeId));
-    } else {
-      // This is a REGISTER node. If its parent turns out to be an OBJECT node,
-      // it means there is a data corruption, because objects should store JSON
-      // key/value pairs directly into their `data` attribute instead of using
-      // registers. It will be dropped as if it were an orphan.
-      const parent = rawNodes.get(node.parentId);
-      if (parent?.type === CrdtType.OBJECT) {
-        continue;
-      }
-    }
-
-    // "Hang" the validated node in the tree
-    nodes.set(nodeId, node);
+  // Remove each conflicting key directly in SQLite (no JS parsing needed)
+  for (const { id, key } of conflicts) {
+    db.query(
+      "UPDATE nodes SET jdata = json_remove(jdata, '$.' || json_quote(?)) WHERE id = ?"
+    ).run(key, id);
   }
-
-  // Step (3)
-  // Collect all node IDs here that need to be removed, because they are
-  // unreachable orphans, contain ref cycles, or are at conflict with other
-  // data. We'll collect them here in order to batch-delete them at the end.
-  const nodesToDelete: Set<string> = new Set();
-
-  // Emit logs so we can see what corruptions have been resolved
-  for (const [id, node] of rawNodes) {
-    if (!nodes.has(id)) {
-      if (node.parentId !== undefined && nodes.has(node.parentId)) {
-        if (nodes.get(node.parentId)?.type === CrdtType.REGISTER) {
-          logger.warn(`[integrity] Found unreachable node ${quote(id)} (child of live register)`); // prettier-ignore
-        } else {
-          logger.warn(`[integrity] Found conflicting sibling ${quote(id)} (conflicted with ${quote(winners.get(node.parentId, node.parentKey))} at ${quote(node.parentKey)})`); // prettier-ignore
-        }
-      } else {
-        logger.warn(`[integrity] Found orphan ${quote(id)}`); // prettier-ignore
-      }
-
-      nodesToDelete.add(id);
-      nodesToFix.delete(id); // Just in case this node was also marked as "to update"
-    }
-  }
-
-  if (nodesToFix.size > 0 || nodesToDelete.size > 0) {
-    // Persist the fixes to disk
-    if (nodesToFix.size > 0) {
-      const fixedNodes = new Map<string, SerializedCrdt>();
-      for (const id of nodesToFix) {
-        const node = nodes.get(id);
-        if (node !== undefined) {
-          fixedNodes.set(id, node);
-        }
-      }
-      safeUpdate(db, fixedNodes);
-    }
-    if (nodesToDelete.size > 0) {
-      safeDelete(db, nodesToDelete);
-    }
-  }
-
-  const revNodes =
-    // If no nodes were dropped (i.e. the 99% happy path), `winners` is our
-    // correct reverse node map already, no need to recompute it. Otherwise,
-    // on the non-happy path, we'll simply recompute it again at the end. This
-    // way we don't have to keep a complex administration.
-    nodesToDelete.size === 0 ? winners : buildRevNodes(nodes as NodeStream);
-
-  return { nodes, revNodes };
 }
 
 function hasStaticDataAt(
@@ -334,11 +246,287 @@ function hasStaticDataAt(
   );
 }
 
+// ----------------------------------------------------------------------------
+// Node storage operations
+// ----------------------------------------------------------------------------
+
+function get_node(db: Database, id: string): SerializedCrdt | undefined {
+  const row = db
+    .query<
+      NodeRow,
+      [string]
+    >("SELECT id, type, parent_id, parent_key, jdata FROM nodes WHERE id = ?")
+    .get(id);
+  return row ? rowToSerializedCrdt(row) : undefined;
+}
+
+function iter_nodes(db: Database): Iterable<[string, SerializedCrdt]> {
+  return db
+    .query<
+      NodeRow,
+      []
+    >("SELECT id, type, parent_id, parent_key, jdata FROM nodes")
+    .all()
+    .map(rowToIdTuple);
+}
+
+//
+// IMPORTANT: the JSON tuples emitted by this query MUST match the
+// `CompactNode` shape (from @liveblocks/core) if they get JSON.parse()'ed.
+//
+// This contract is unit tested in `_generateFullTestSuite`.
+//
+function iter_nodes_optimized(db: Database): Iterable<jstring<CompactNode>> {
+  return db
+    .query<{ tuple: jstring<CompactNode> }, []>(
+      `SELECT
+         CASE
+           WHEN parent_id IS NULL THEN
+             '[' || json_quote(id) || ',' || jdata || ']'
+           WHEN jdata IS NULL THEN
+             '[' || json_quote(id) || ',' || type || ',' ||
+                    json_quote(parent_id) || ',' || json_quote(parent_key) || ']'
+           ELSE
+             '[' || json_quote(id) || ',' || type || ',' ||
+                    json_quote(parent_id) || ',' || json_quote(parent_key) || ',' || jdata || ']'
+         END AS tuple
+       FROM nodes`
+    )
+    .all()
+    .map((row) => row.tuple);
+}
+
+function get_child_at(
+  db: Database,
+  parentId: string,
+  parentKey: string
+): string | undefined {
+  const row = db
+    .query<
+      Pick<NodeRow, "id">,
+      [string, string]
+    >("SELECT id FROM nodes WHERE parent_id = ? AND parent_key = ?")
+    .get(parentId, parentKey);
+  return row?.id;
+}
+
+function has_child_at(
+  db: Database,
+  parentId: string,
+  parentKey: string
+): boolean {
+  return get_child_at(db, parentId, parentKey) !== undefined;
+}
+
+function get_next_sibling(
+  db: Database,
+  parentId: string,
+  pos: Pos
+): Pos | undefined {
+  const row = db
+    .query<
+      Pick<NodeRow, "parent_key">,
+      [string, string]
+    >("SELECT parent_key FROM nodes WHERE parent_id = ? AND parent_key > ? ORDER BY parent_key LIMIT 1")
+    .get(parentId, pos);
+  // parent_key is never null here since we filter on parent_id (root has parent_id=null)
+  return row ? asPos(row.parent_key!) : undefined;
+}
+
+function get_last_sibling(db: Database, parentId: string): Pos | undefined {
+  const row = db
+    .query<
+      Pick<NodeRow, "parent_key">,
+      [string]
+    >("SELECT parent_key FROM nodes WHERE parent_id = ? ORDER BY parent_key DESC LIMIT 1")
+    .get(parentId);
+  // parent_key is never null here since we filter on parent_id (root has parent_id=null)
+  return row ? asPos(row.parent_key!) : undefined;
+}
+
+function upsert_node(db: Database, id: string, node: SerializedCrdt): void {
+  const parentId = id === "root" ? null : (node.parentId ?? null);
+  const parentKey = id === "root" ? null : (node.parentKey ?? null);
+  const jdata =
+    node.type === CrdtType.OBJECT || node.type === CrdtType.REGISTER
+      ? JSON.stringify(node.data)
+      : null;
+
+  db.query(
+    `INSERT INTO nodes (id, type, parent_id, parent_key, jdata)
+      VALUES (?, ?, ?, ?, ?)
+     ON CONFLICT (id) DO
+      UPDATE SET type = excluded.type, parent_id = excluded.parent_id, parent_key = excluded.parent_key, jdata = excluded.jdata`
+  ).run(id, node.type, parentId, parentKey, jdata);
+}
+
+/**
+ * Deletes a node and all its descendants using a depth-first traversal.
+ *
+ * Because the FK is ON DELETE RESTRICT (mirroring the production driver), we
+ * must delete leaves before their parents rather than relying on cascade.
+ */
+function delete_node(db: Database, id: string): void {
+  if (id === "root") return;
+
+  // Stack items: either "visit this node" or "delete this node"
+  // Visit going down (growing the stack), delete going back up (shrinking the stack).
+  const stack: Relax<{ visit: string } | { delete: string }>[] = [
+    { visit: id },
+  ];
+
+  while (stack.length > 0) {
+    const item = stack.pop()!;
+
+    if (item.delete !== undefined) {
+      db.query("DELETE FROM nodes WHERE id = ?").run(item.delete);
+    } else {
+      // Schedule delete (will run after children due to LIFO)
+      stack.push({ delete: item.visit });
+      // Schedule children to be visited first
+      const children = db
+        .query<
+          { id: string },
+          [string]
+        >("SELECT id FROM nodes WHERE parent_id = ?")
+        .all(item.visit);
+      for (const row of children) {
+        stack.push({ visit: row.id });
+      }
+    }
+  }
+}
+
+function delete_child_key(db: Database, id: string, key: string): void {
+  // At most one of these will do something, the other is a no-op
+  const node = get_node(db, id);
+  if (hasStaticDataAt(node, key)) {
+    delete node.data[key];
+    upsert_node(db, id, node);
+  }
+
+  const childId = get_child_at(db, id, key);
+  if (childId !== undefined) {
+    delete_node(db, childId);
+  }
+}
+
+function set_child(
+  db: Database,
+  id: string,
+  node: SerializedChild,
+  allowOverwrite = false
+): void {
+  const parentNode = get_node(db, node.parentId);
+  if (parentNode === undefined) {
+    throw new Error(`No such parent ${quote(node.parentId)}`);
+  }
+
+  if (node.type === CrdtType.REGISTER && parentNode.type === CrdtType.OBJECT) {
+    throw new Error("Cannot add register under object");
+  }
+
+  const conflictingSiblingId = get_child_at(db, node.parentId, node.parentKey);
+  if (conflictingSiblingId !== id) {
+    const hasConflictingData = hasStaticDataAt(parentNode, node.parentKey);
+    if (conflictingSiblingId !== undefined || hasConflictingData) {
+      if (allowOverwrite) {
+        delete_child_key(db, node.parentId, node.parentKey);
+      } else {
+        throw new Error(`Key ${quote(node.parentKey)} already exists`); // prettier-ignore
+      }
+    }
+  }
+
+  upsert_node(db, id, node);
+}
+
+function move_sibling(db: Database, id: string, newPos: Pos): void {
+  const node = get_node(db, id);
+  if (node?.parentId === undefined) {
+    return;
+  }
+
+  // If there is a conflicting sibling at the new position, disallow the move
+  if (has_child_at(db, node.parentId, newPos))
+    throw new Error(`Pos ${quote(newPos)} already taken`); // prettier-ignore
+
+  const newNode = { ...node, parentKey: newPos };
+  upsert_node(db, id, newNode);
+}
+
+function set_object_data(
+  db: Database,
+  id: string,
+  data: JsonObject,
+  allowOverwrite = false
+): void {
+  const node = get_node(db, id);
+  if (node?.type !== CrdtType.OBJECT) {
+    // Nothing to do
+    return;
+  }
+
+  let changed = false;
+
+  for (const [key, value] of Object.entries(data)) {
+    // Drop `__proto__`: assigning to it would invoke Object.prototype's
+    // setter rather than create an own property, and rebuilding the object
+    // via defineProperty on every write is too expensive for this hot path.
+    if (key === "__proto__") continue;
+
+    // Handle if conflict!
+    const childId = get_child_at(db, id, key);
+    if (childId !== undefined) {
+      if (allowOverwrite) {
+        delete_node(db, childId);
+      } else {
+        throw new Error(`Child node already exists under ${key}`); // prettier-ignore
+      }
+    }
+
+    if (node.data[key] === value) {
+      // No change, so skip
+      continue;
+    }
+
+    node.data[key] = value;
+    changed = true;
+  }
+
+  if (changed) {
+    upsert_node(db, id, node);
+  }
+}
+
+/**
+ * The lazily-initialized part of the driver that implements all node-related
+ * APIs.
+ */
+type NodesAPI = Pick<
+  IStorageDriver,
+  | "get_node"
+  | "iter_nodes"
+  | "iter_nodes_optimized"
+  | "has_node"
+  | "get_child_at"
+  | "has_child_at"
+  | "get_next_sibling"
+  | "get_last_sibling"
+  | "set_child"
+  | "move_sibling"
+  | "delete_node"
+  | "delete_child_key"
+  | "set_object_data"
+  | "get_snapshot"
+>;
+
 /**
  * Implements a simple SQLite-backed store.
  */
 export class BunSQLiteDriver implements IStorageDriver {
   private db: Database;
+  private _nodesApi?: NodesAPI;
 
   constructor(path: string) {
     const db = new Database(path, { create: true });
@@ -359,10 +547,26 @@ export class BunSQLiteDriver implements IStorageDriver {
     // Create a table to read/write CRDT nodes
     db.run(
       `CREATE TABLE IF NOT EXISTS nodes (
-         node_id TEXT NOT NULL,
-         crdt_json TEXT NOT NULL,
-         PRIMARY KEY (node_id)
-       )`
+         id          TEXT NOT NULL PRIMARY KEY,
+
+         type        INTEGER NOT NULL CHECK (type >= 0 AND type <= 3),
+                  -- ^^^^^^^ 0=LiveObject, 1=LiveList, 2=LiveMap, 3=Register
+         parent_id   TEXT,  -- NULL only for root
+         parent_key  TEXT,  -- NULL only for root
+         jdata       TEXT,  -- JSON data for LiveObject and Register; NULL for LiveList/LiveMap
+
+         UNIQUE (parent_id, parent_key),
+
+         -- Root must always be a LiveObject
+         CHECK (id != 'root' OR type = 0),
+
+         -- Only 'root' is allowed to have no parent!
+         CHECK (id != 'root' OR (parent_id IS NULL AND parent_key IS NULL)),
+         CHECK (id = 'root' OR (parent_id IS NOT NULL AND parent_key IS NOT NULL)),
+
+         -- Foreign key: parent_id must reference an existing node
+         FOREIGN KEY (parent_id) REFERENCES nodes (id) ON DELETE RESTRICT
+       ) STRICT`
     );
 
     // Create a table to read/write JSON values
@@ -431,322 +635,139 @@ export class BunSQLiteDriver implements IStorageDriver {
     this.db = db;
   }
 
-  load_nodes_api(logger: Logger): IStorageDriverNodeAPI {
+  /**
+   * The lazily-built node API. Building it runs the corruption sanitizers.
+   * Invalidated by DANGEROUSLY_reset_nodes(), after which the next access
+   * rebuilds it.
+   */
+  private get loadedApi(): NodesAPI {
+    return (this._nodesApi ??= this._loadNodesApi());
+  }
+
+  get_node(id: string): SerializedCrdt | undefined {
+    return this.loadedApi.get_node(id);
+  }
+
+  iter_nodes(): NodeStream {
+    return this.loadedApi.iter_nodes();
+  }
+
+  iter_nodes_optimized(): Iterable<jstring<CompactNode>> {
+    return this.loadedApi.iter_nodes_optimized();
+  }
+
+  has_node(id: string): boolean {
+    return this.loadedApi.has_node(id);
+  }
+
+  get_child_at(parentId: string, parentKey: string): string | undefined {
+    return this.loadedApi.get_child_at(parentId, parentKey);
+  }
+
+  has_child_at(parentId: string, parentKey: string): boolean {
+    return this.loadedApi.has_child_at(parentId, parentKey);
+  }
+
+  get_next_sibling(parentId: string, pos: Pos): Pos | undefined {
+    return this.loadedApi.get_next_sibling(parentId, pos);
+  }
+
+  get_last_sibling(parentId: string): Pos | undefined {
+    return this.loadedApi.get_last_sibling(parentId);
+  }
+
+  set_child(id: string, node: SerializedChild, allowOverwrite?: boolean): void {
+    this.loadedApi.set_child(id, node, allowOverwrite);
+  }
+
+  move_sibling(id: string, newPos: Pos): void {
+    this.loadedApi.move_sibling(id, newPos);
+  }
+
+  delete_node(id: string): void {
+    this.loadedApi.delete_node(id);
+  }
+
+  delete_child_key(id: string, key: string): void {
+    this.loadedApi.delete_child_key(id, key);
+  }
+
+  set_object_data(
+    id: string,
+    data: JsonObject,
+    allowOverwrite?: boolean
+  ): void {
+    this.loadedApi.set_object_data(id, data, allowOverwrite);
+  }
+
+  get_snapshot(lowMemory?: boolean): IReadableSnapshot {
+    return this.loadedApi.get_snapshot(lowMemory);
+  }
+
+  private _loadNodesApi(): NodesAPI {
     const db = this.db;
 
-    // REFACTOR NOTE: This logic was inlined here for backward compatibility,
-    // but it makes no sense to build this reverse lookup table here in the
-    // Bun-SQLite setting, where we could directly read the reverse lookups
-    // from the database instead of keeping them in memory. Refactor later.
-    const { nodes, revNodes } = buildReverseLookup(db, logger);
+    // Run sanitizers to fix any data corruption (optimized for happy path)
+    sanitize_missingRoot(db);
+    sanitize_illegalNodes(db);
+    sanitize_staticDataConflicts(db);
 
-    // Helpers used by multiple sync functions below
-    const get_node = (id: string) => nodes.get(id);
-    const get_child_at = (parentId: string, parentKey: string) =>
-      revNodes.get(parentId, parentKey);
-    const has_child_at = (parentId: string, parentKey: string) =>
-      revNodes.has(parentId, parentKey);
-
-    function get_next_sibling(parentId: string, pos: Pos): Pos | undefined {
-      let nextPos: Pos | undefined;
-      // Find the smallest position greater than current
-      for (const siblingKey of revNodes.keysAt(parentId)) {
-        const siblingPos = asPos(siblingKey);
-        if (
-          siblingPos > pos &&
-          (nextPos === undefined || siblingPos < nextPos)
-        ) {
-          nextPos = siblingPos;
-        }
-      }
-      return nextPos;
-    }
-
-    function get_last_sibling(parentId: string): Pos | undefined {
-      let lastPos: Pos | undefined;
-      // Find the largest position under this parent
-      for (const siblingKey of revNodes.keysAt(parentId)) {
-        const siblingPos = asPos(siblingKey);
-        if (lastPos === undefined || siblingPos > lastPos) {
-          lastPos = siblingPos;
-        }
-      }
-      return lastPos;
-    }
-
-    /**
-     * Inserts a node in the storage tree, deleting any nodes that already exist
-     * under this key (including all of its children), if any.
-     */
-    function set_child(
-      id: string,
-      node: SerializedChild,
-      allowOverwrite = false
-    ): void {
-      const parentNode = get_node(node.parentId);
-      if (parentNode === undefined) {
-        throw new Error(`No such parent ${quote(node.parentId)}`);
-      }
-
-      if (
-        node.type === CrdtType.REGISTER &&
-        parentNode.type === CrdtType.OBJECT
-      ) {
-        throw new Error("Cannot add register under object");
-      }
-
-      const conflictingSiblingId = get_child_at(node.parentId, node.parentKey);
-      if (conflictingSiblingId !== id) {
-        // Conflict!
-        const hasConflictingData = hasStaticDataAt(parentNode, node.parentKey);
-        if (conflictingSiblingId !== undefined || hasConflictingData) {
-          if (allowOverwrite) {
-            delete_child_key(node.parentId, node.parentKey);
-          } else {
-            throw new Error(`Key ${quote(node.parentKey)} already exists`); // prettier-ignore
-          }
-        }
-
-        // Finally, modify revNodes
-        revNodes.set(node.parentId, node.parentKey, id);
-      }
-
-      nodes.set(id, node);
-      safeUpdate(db, [[id, node]]);
-    }
-
-    /**
-     * Conceptually this is like "detaching" the node from its parent, and
-     * "reattaching" it at the new position.
-     *
-     * However, this is a native operation, because doing a naive
-     * delete-then-insert would would immediately destroy all (grand)children
-     * when it's deleted.
-     */
-    function move_sibling(id: string, newPos: Pos): void {
-      const node = get_node(id);
-      if (node?.parentId === undefined) {
-        return;
-      }
-
-      // If there is a conflicting sibling at the new position, disallow the move
-      if (has_child_at(node.parentId, newPos))
-        throw new Error(`Pos ${quote(newPos)} already taken`); // prettier-ignore
-
-      revNodes.delete(node.parentId, node.parentKey);
-      const newNode = { ...node, parentKey: newPos };
-      nodes.set(id, newNode);
-      revNodes.set(node.parentId, newPos, id);
-      safeUpdate(db, [[id, newNode]]);
-    }
-
-    /**
-     * Sets some static data on a node. The node must be an OBJECT node, or this
-     * method will be a no-op.
-     *
-     * If any keys exist that also conflict with a child node, then the conflict
-     * mode will determine what will happen. By default, an error will be thrown.
-     * But if `allowOverwrite` is set to true, the conflicting child node (and
-     * its entire subtree) will be deleted to make room for the new static data.
-     */
-    function set_object_data(
-      id: string,
-      data: JsonObject,
-      allowOverwrite = false
-    ): void {
-      const node = get_node(id);
-      if (node?.type !== CrdtType.OBJECT) {
-        // Nothing to do
-        return;
-      }
-
-      for (const key of Object.keys(data)) {
-        // Handle if conflict!
-        const childId = get_child_at(id, key);
-        if (childId !== undefined) {
-          if (allowOverwrite) {
-            delete_node(childId);
-          } else {
-            throw new Error(`Child node already exists under ${key}`); // prettier-ignore
-          }
-        }
-      }
-
-      const newNode = { ...node, data: { ...node.data, ...data } };
-      nodes.set(id, newNode);
-      safeUpdate(db, [[id, newNode]]);
-    }
-
-    /**
-     * Delete a node from the in-memory and on-disk tree, including all of its
-     * children.
-     */
-    function delete_node(id: string): void {
-      const node = get_node(id);
-      if (node?.parentId === undefined) {
-        return;
-      }
-
-      // Delete the entry in the parent's children administration for this node
-      revNodes.delete(node.parentId, node.parentKey);
-
-      // Now proceed to deleting the node tree recursively
-      const idsToDelete: string[] = [];
-      const queue = [id];
-      while (queue.length > 0) {
-        const currid = queue.pop()!;
-        queue.push(...revNodes.valuesAt(currid));
-        nodes.delete(currid);
-        revNodes.deleteAll(currid);
-        idsToDelete.push(currid);
-      }
-      safeDelete(db, idsToDelete);
-    }
-
-    /**
-     * Deletes the child key under a given node, whether it's a static object
-     * field, or a child node.
-     */
-    function delete_child_key(id: string, key: string): void {
-      // At most one of these will do something, the other is a no-op
-      const node = get_node(id);
-      if (hasStaticDataAt(node, key)) {
-        const { [key]: _, ...rest } = node.data;
-        const newNode = { ...node, data: rest };
-        nodes.set(id, newNode);
-        safeUpdate(db, [[id, newNode]]);
-      }
-
-      const childId = get_child_at(id, key);
-      if (childId !== undefined) {
-        delete_node(childId);
-      }
-    }
-
-    const api: IStorageDriverNodeAPI = {
-      /**
-       * Return the node with the given id, or undefined if no such node exists.
-       * Must always return a valid root node for id="root", even if empty.
-       */
-      get_node,
+    const api: NodesAPI = {
+      get_node: (id) => get_node(db, id),
+      iter_nodes: () => iter_nodes(db) as NodeStream,
+      iter_nodes_optimized: () => iter_nodes_optimized(db),
+      has_node: (id) => get_node(db, id) !== undefined,
+      get_child_at: (parentId, parentKey) =>
+        get_child_at(db, parentId, parentKey),
+      has_child_at: (parentId, parentKey) =>
+        has_child_at(db, parentId, parentKey),
+      get_next_sibling: (parentId, pos) => get_next_sibling(db, parentId, pos),
+      get_last_sibling: (parentId) => get_last_sibling(db, parentId),
+      set_child: (id, node, allowOverwrite) =>
+        set_child(db, id, node, allowOverwrite),
+      move_sibling: (id, newPos) => move_sibling(db, id, newPos),
+      delete_node: (id) => delete_node(db, id),
+      delete_child_key: (id, key) => delete_child_key(db, id, key),
+      set_object_data: (id, data, allowOverwrite) =>
+        set_object_data(db, id, data, allowOverwrite),
 
       /**
-       * Yield all nodes as [id, node] pairs. Must always include the root node.
-       */
-      iter_nodes: () => nodes.entries() as NodeStream,
-
-      /**
-       * Yield each node as a pre-built CompactNode JSON tuple string.
-       * Schema here stores nodes as a single JSON blob per row, so there's
-       * no SQL-level optimization to apply — wrap iter_nodes() and let the
-       * core converter produce the tuple shape.
-       */
-      *iter_nodes_optimized() {
-        for (const compact of nodeStreamToCompactNodes(
-          nodes.entries() as NodeStream
-        )) {
-          yield JSON.stringify(compact) as jstring<CompactNode>;
-        }
-      },
-
-      /**
-       * Return true iff a node with the given id exists. Must return true for "root".
-       */
-      has_node: (id: string) => nodes.has(id),
-
-      /**
-       * Return the id of the child node at (parentId, parentKey), or undefined if
-       * none. Only checks child nodes registered via set_child, NOT static data
-       * keys on OBJECT nodes.
-       */
-      get_child_at,
-
-      /**
-       * Return true iff a child node exists at (parentId, parentKey). Static data
-       * keys on OBJECT nodes do not count—return false for those.
-       */
-      has_child_at,
-
-      /**
-       * Return the position of the closest sibling "to the right" of `pos` under
-       * parentId, or undefined if no such sibling exists. The given `pos` may, but
-       * does not have to exist already. Positions compare lexicographically.
-       */
-      get_next_sibling,
-
-      /**
-       * Return the position of the last (rightmost) child under parentId, or
-       * undefined if the node has no children.
-       */
-      get_last_sibling,
-
-      /**
-       * Insert a child node with the given id.
-       *
-       * If allowOverwrite=false (default): throw if a node with this id exists.
-       * If allowOverwrite=true: replace any existing node at this id, deleting its
-       * entire subtree if it has children.
-       */
-      set_child,
-
-      /**
-       * Change a node's parentKey, effectively repositioning the node within its
-       * parent. The new position must be free.
-       * Throw if another node already occupies (parentId, newPos).
-       */
-      move_sibling,
-
-      /**
-       * Delete a node and its entire subtree recursively.
-       * Ignore if id="root" (root is immortal).
-       */
-      delete_node,
-
-      /**
-       * Delete a key from node `id`. Handle two cases:
-       *
-       * 1. If id is an OBJECT with `key` in its data: remove that data field.
-       * 2. If a child exists at (id, key): delete that child and all its
-       *    descendants recursively.
-       *
-       * No-op if neither applies or if the node doesn't exist.
-       */
-      delete_child_key,
-
-      /**
-       * Replace the data object of an OBJECT node.
-       *
-       * If allowOverwrite=false (default): throw if any key in `data` conflicts
-       * with an existing child's parentKey.
-       * If allowOverwrite=true: first delete any conflicting children (and their
-       * entire subtrees), then set the data.
-       */
-      set_object_data,
-
-      /**
-       * Return a readable snapshot of the storage tree.
-       *
-       * @param lowMemory When true, the call site hints that the snapshot should
-       * be optimized for lower memory consumption, even if that means slower
-       * access.
+       * Return a readable snapshot of the storage tree. The dev server always
+       * uses an in-memory snapshot regardless of the lowMemory hint.
        */
       get_snapshot(_lowMemory?: boolean): IReadableSnapshot {
-        return makeInMemorySnapshot(nodes);
+        return makeInMemorySnapshot(iter_nodes(db) as NodeStream);
       },
     };
     return api;
   }
 
+  reinitialize(): void {
+    this._nodesApi = undefined;
+  }
+
   /** Deletes all nodes and replaces them with the given document. */
   DANGEROUSLY_reset_nodes(doc: PlainLsonObject) {
-    const deleteStm = this.db.prepare("DELETE FROM nodes");
+    // Invalidate the cached node API: the next access re-runs the sanitizers
+    // against the replaced node set.
+    this.reinitialize();
+
     const insertStm = this.db.prepare(
-      "INSERT INTO nodes (node_id, crdt_json) VALUES (?, ?)"
+      "INSERT INTO nodes (id, type, parent_id, parent_key, jdata) VALUES (?, ?, ?, ?, ?)"
     );
     const resetNodes = this.db.transaction(() => {
-      deleteStm.run();
-      for (const [key, value] of plainLsonToNodeStream(doc)) {
-        insertStm.run(key, JSON.stringify(value));
+      // Defer FK checks until the end of the transaction so the bulk DELETE
+      // doesn't transiently violate the self-referencing parent_id FK.
+      this.db.run("PRAGMA defer_foreign_keys = ON");
+      this.db.run("DELETE FROM nodes");
+      for (const [id, node] of plainLsonToNodeStream(doc)) {
+        const parentId = id === "root" ? null : (node.parentId ?? null);
+        const parentKey = id === "root" ? null : (node.parentKey ?? null);
+        const jdata =
+          node.type === CrdtType.OBJECT || node.type === CrdtType.REGISTER
+            ? JSON.stringify(node.data)
+            : null;
+        insertStm.run(id, node.type, parentId, parentKey, jdata);
       }
     });
     resetNodes();
@@ -754,14 +775,13 @@ export class BunSQLiteDriver implements IStorageDriver {
 
   /* @deprecated Had to introduce this ugly API for now during refactoring, try to remove this again later */
   raw_iter_nodes(): Iterable<[key: string, value: SerializedCrdt]> {
-    return (
-      this.db
-        .query<StorageNodesRow, []>("SELECT node_id, crdt_json FROM nodes")
-        .values() as [string, string][]
-    ).map(([node_id, crdt_json]) => [
-      node_id,
-      tryParseJson<SerializedCrdt>(crdt_json)!,
-    ]);
+    return this.db
+      .query<
+        NodeRow,
+        []
+      >("SELECT id, type, parent_id, parent_key, jdata FROM nodes")
+      .all()
+      .map(rowToIdTuple);
   }
 
   get_meta(key: string) {

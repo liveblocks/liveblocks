@@ -85,37 +85,9 @@ describe("room", () => {
     }
   });
 
-  test("loading multiple times is a no-op (but fine)", async () => {
-    // In series
-    {
-      const room = new Room("my-room");
-      await room.load();
-      await room.load();
-      await room.load();
-    }
-
-    // Or in parallel
-    {
-      const room = new Room("my-room");
-      await Promise.all([room.load(), room.load(), room.load()]);
-    }
-  });
-
-  test("loading state", async () => {
-    const room = new Room("my-room");
-    expect(room.loadingState).toBe("initial");
-    const promise$ = room.load();
-    expect(room.loadingState).toBe("loading");
-    await promise$;
-    expect(room.loadingState).toBe("loaded");
-    room.unload();
-    expect(room.loadingState).toBe("initial");
-  });
-
   // YYY Ideally, this test would be possible to re-enable
   test.skip('room will throw "no such session" errors when used before the session is started', async () => {
     const room = new Room("my-room");
-    await room.load();
     const ticket = room.createTicket();
     const key = ticket.sessionKey;
 
@@ -124,42 +96,39 @@ describe("room", () => {
     await expectToThrow(() => room.handleData(key, "[]"), "No such session");
   });
 
-  test("starting multiple sessions", async () => {
+  test("starting multiple sessions", () => {
     const room = new Room("my-room");
-    await room.load();
     const ticket1 = room.createTicket();
     const ticket2 = room.createTicket();
     const ticket3 = room.createTicket();
     const ticket4 = room.createTicket();
     const ticket5 = room.createTicket();
-    await room.startBrowserSession(ticket1, new MockServerWebSocket());
-    await room.startBrowserSession(ticket2, new MockServerWebSocket());
-    await room.startBrowserSession(ticket3, new MockServerWebSocket());
-    await room.startBrowserSession(ticket4, new MockServerWebSocket());
-    await room.startBrowserSession(ticket5, new MockServerWebSocket());
+    room.startBrowserSession(ticket1, new MockServerWebSocket());
+    room.startBrowserSession(ticket2, new MockServerWebSocket());
+    room.startBrowserSession(ticket3, new MockServerWebSocket());
+    room.startBrowserSession(ticket4, new MockServerWebSocket());
+    room.startBrowserSession(ticket5, new MockServerWebSocket());
     expect(room.numSessions).toEqual(5);
   });
 
-  test("starting a second session for an actor kicks the first one", async () => {
+  test("starting a second session for an actor kicks the first one", () => {
     const room = new Room("my-room");
-    await room.load();
     const ticket1 = room.createTicket({ actor: 13 as ActorID });
     const ticket2 = room.createTicket();
     const ticket3 = room.createTicket({ actor: 13 as ActorID });
     expect(room.numSessions).toEqual(0);
-    await room.startBrowserSession(ticket1, new MockServerWebSocket());
+    room.startBrowserSession(ticket1, new MockServerWebSocket());
     expect(room.numSessions).toEqual(1);
-    await room.startBrowserSession(ticket2, new MockServerWebSocket());
+    room.startBrowserSession(ticket2, new MockServerWebSocket());
     expect(room.numSessions).toEqual(2);
-    await room.startBrowserSession(ticket3, new MockServerWebSocket());
+    room.startBrowserSession(ticket3, new MockServerWebSocket());
     expect(room.numSessions).toEqual(2); // Session 1 will have been kicked!
   });
 
-  test("enter + leave", async () => {
+  test("enter + leave", () => {
     const room = new Room("my-room");
-    await room.load();
     const ticket = room.createTicket();
-    await room.startBrowserSession(ticket, new MockServerWebSocket());
+    room.startBrowserSession(ticket, new MockServerWebSocket());
     room.endBrowserSession(ticket.sessionKey, 1001, "bleh");
   });
 });
@@ -257,10 +226,9 @@ describe("maintenance mode", () => {
 });
 
 describe("room (w/ last actor ID)", () => {
-  test("many simultaneous calls will all get a unique actor (with specific start)", async () => {
+  test("many simultaneous calls will all get a unique actor (with specific start)", () => {
     const storage = setupStorage({ actorId: 7 });
     const room = new Room("my-room", { storage });
-    await room.load();
 
     // Create 1000 tickets
     const actors = new Set(

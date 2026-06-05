@@ -1,5 +1,7 @@
 ## vNEXT (not yet released)
 
+- Export internal utility
+
 ## v3.19.4
 
 ### `@liveblocks/client`

@@ -42,7 +42,6 @@ import { plainLsonToNodeStream } from "~/formats/PlainLson";
 import type {
   IReadableSnapshot,
   IStorageDriver,
-  IStorageDriverNodeAPI,
   LeasedSession,
   ListFeedMessagesOptions,
   ListFeedMessagesResult,
@@ -127,12 +126,35 @@ function hasStaticDataAt(
 }
 
 /**
+ * The lazily-initialized part of the driver that implements all node-related
+ * APIs.
+ */
+type NodesAPI = Pick<
+  IStorageDriver,
+  | "get_node"
+  | "iter_nodes"
+  | "iter_nodes_optimized"
+  | "has_node"
+  | "get_child_at"
+  | "has_child_at"
+  | "get_next_sibling"
+  | "get_last_sibling"
+  | "set_child"
+  | "move_sibling"
+  | "delete_node"
+  | "delete_child_key"
+  | "set_object_data"
+  | "get_snapshot"
+>;
+
+/**
  * Implements the most basic in-memory store. Used if no explicit store is
  * provided.
  */
 export class InMemoryDriver implements IStorageDriver {
   private _nextActor;
   private _nodes: NodeMap;
+  private _nodesApi?: NodesAPI;
   private _metadb: Map<string, Json>;
   private _ydb: Map<string, Uint8Array>;
   private _leasedSessions: Map<string, LeasedSession>;
@@ -161,8 +183,16 @@ export class InMemoryDriver implements IStorageDriver {
     return this._nodes[Symbol.iterator]();
   }
 
+  reinitialize(): void {
+    this._nodesApi = undefined;
+  }
+
   /** Deletes all nodes and replaces them with the given document. */
   DANGEROUSLY_reset_nodes(doc: PlainLsonObject) {
+    // Invalidate the cached node API: its reverse-lookup index is built from
+    // the node map we're about to replace. The next access rebuilds it.
+    this.reinitialize();
+
     this._nodes.clear();
     for (const [id, node] of plainLsonToNodeStream(doc)) {
       this._nodes.set(id, node);
@@ -475,8 +505,80 @@ export class InMemoryDriver implements IStorageDriver {
     this._ydb.clear();
   }
 
-  // Intercept load_nodes_api to add caching layer
-  load_nodes_api(): IStorageDriverNodeAPI {
+  // ---------------------------------------------------------------------------
+  // Node APIs
+  // ---------------------------------------------------------------------------
+
+  /**
+   * The lazily-built node API. Building it ensures the root node exists and
+   * constructs the reverse-lookup index. Invalidated by
+   * DANGEROUSLY_reset_nodes(), after which the next access rebuilds it.
+   */
+  private get loadedApi(): NodesAPI {
+    return (this._nodesApi ??= this._loadNodesApi());
+  }
+
+  get_node(id: string): SerializedCrdt | undefined {
+    return this.loadedApi.get_node(id);
+  }
+
+  iter_nodes(): NodeStream {
+    return this.loadedApi.iter_nodes();
+  }
+
+  iter_nodes_optimized(): Iterable<jstring<CompactNode>> {
+    return this.loadedApi.iter_nodes_optimized();
+  }
+
+  has_node(id: string): boolean {
+    return this.loadedApi.has_node(id);
+  }
+
+  get_child_at(parentId: string, parentKey: string): string | undefined {
+    return this.loadedApi.get_child_at(parentId, parentKey);
+  }
+
+  has_child_at(parentId: string, parentKey: string): boolean {
+    return this.loadedApi.has_child_at(parentId, parentKey);
+  }
+
+  get_next_sibling(parentId: string, pos: Pos): Pos | undefined {
+    return this.loadedApi.get_next_sibling(parentId, pos);
+  }
+
+  get_last_sibling(parentId: string): Pos | undefined {
+    return this.loadedApi.get_last_sibling(parentId);
+  }
+
+  set_child(id: string, node: SerializedChild, allowOverwrite?: boolean): void {
+    this.loadedApi.set_child(id, node, allowOverwrite);
+  }
+
+  move_sibling(id: string, newPos: Pos): void {
+    this.loadedApi.move_sibling(id, newPos);
+  }
+
+  delete_node(id: string): void {
+    this.loadedApi.delete_node(id);
+  }
+
+  delete_child_key(id: string, key: string): void {
+    this.loadedApi.delete_child_key(id, key);
+  }
+
+  set_object_data(
+    id: string,
+    data: JsonObject,
+    allowOverwrite?: boolean
+  ): void {
+    this.loadedApi.set_object_data(id, data, allowOverwrite);
+  }
+
+  get_snapshot(lowMemory?: boolean): IReadableSnapshot {
+    return this.loadedApi.get_snapshot(lowMemory);
+  }
+
+  private _loadNodesApi(): NodesAPI {
     // For the in-memory backend, this._nodes IS the "on-disk" storage,
     // so we operate on it directly (no separate cache needed).
     const nodes = this._nodes;
@@ -656,7 +758,7 @@ export class InMemoryDriver implements IStorageDriver {
       }
     }
 
-    const api: IStorageDriverNodeAPI = {
+    const api: NodesAPI = {
       /**
        * Return the node with the given id, or undefined if no such node exists.
        * Must always return a valid root node for id="root", even if empty.
