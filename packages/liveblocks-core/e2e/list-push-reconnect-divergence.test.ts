@@ -44,7 +44,7 @@ test(
       //    connection drops: P is stored server-side (so B sees it) yet stays
       //    *pending* on A.
       list1.push("P");
-      control.dropIncomingA();
+      control.pauseIncomingA();
       control.flushSyncA();
       await waitUntil(
         () => [...list2].includes("P"),
@@ -76,8 +76,8 @@ test(
       await sleep(500);
 
       // Both clients must agree on the server's order, [P, Q].
-      expect([...list1]).toEqual([...list2]);
-      expect([...list2]).toEqual(["P", "Q"]);
+      expect(list1.toJSON()).toEqual(list2.toJSON());
+      expect(list2.toJSON()).toEqual(["P", "Q"]);
     }
   )
 );
