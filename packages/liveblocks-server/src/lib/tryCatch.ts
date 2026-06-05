@@ -39,13 +39,38 @@
  *   }
  *   doAnotherThing(result);
  *
+ * When given a sync callback, the tuple is returned synchronously (no await
+ * needed):
+ *
+ *   const [result, error] = tryCatch(() => doSomethingSync());
+ *
  */
-export async function tryCatch<T, E = Error>(
-  promise: Promise<T> | (() => Promise<T>) | (() => T)
-): Promise<[T, undefined] | [undefined, E]> {
+function isThenable<T>(value: T | PromiseLike<T>): value is PromiseLike<T> {
+  return (
+    value !== null &&
+    (typeof value === "object" || typeof value === "function") &&
+    typeof (value as { then?: unknown }).then === "function"
+  );
+}
+
+export function tryCatch<T, E = Error>(
+  promise: PromiseLike<T> | (() => PromiseLike<T>)
+): Promise<[T, undefined] | [undefined, E]>;
+export function tryCatch<T, E = Error>(
+  fn: () => T
+): [T, undefined] | [undefined, E];
+export function tryCatch<T, E = Error>(
+  promise: PromiseLike<T> | (() => PromiseLike<T>) | (() => T)
+): Promise<[T, undefined] | [undefined, E]> | [T, undefined] | [undefined, E] {
   try {
-    const data = await (typeof promise === "function" ? promise() : promise);
-    return [data, undefined];
+    const result = typeof promise === "function" ? promise() : promise;
+    if (isThenable(result)) {
+      return Promise.resolve(result).then(
+        (data: T): [T, undefined] => [data, undefined],
+        (error: unknown): [undefined, E] => [undefined, error as E]
+      );
+    }
+    return [result, undefined];
   } catch (error) {
     return [undefined, error as E];
   }

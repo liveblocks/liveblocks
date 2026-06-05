@@ -45,7 +45,7 @@ async () => {
   const ticket = room.createTicket({ meta: { my: "session-meta" } });
 
   // Room.startBrowserSession() API
-  expectType<void>(await room.startBrowserSession(ticket, socket));
+  expectType<void>(room.startBrowserSession(ticket, socket));
 
   // Room.endBrowserSession() API
   expectType<void>(

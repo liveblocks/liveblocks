@@ -24,8 +24,7 @@ import {
   OpCode,
 } from "@liveblocks/core";
 
-import type { IStorageDriver, IStorageDriverNodeAPI } from "~/interfaces";
-import type { Logger } from "~/lib/Logger";
+import type { IStorageDriver } from "~/interfaces";
 import type {
   ClientWireOp,
   CreateOp,
@@ -99,45 +98,20 @@ function nodeFromCreateChildOp(op: CreateOp): SerializedChild {
 
 export class Storage {
   // The actual underlying storage API (could be backed by in-memory store,
-  // SQLite, Redis, Postgres, Cloudflare Durable Object Storage, etc.)
-  private readonly coreDriver: IStorageDriver;
-  private _loadedDriver: IStorageDriverNodeAPI | undefined;
+  // SQLite, Postgres, etc.)
+  public readonly driver: IStorageDriver;
 
-  constructor(coreDriver: IStorageDriver) {
-    this.coreDriver = coreDriver;
+  constructor(driver: IStorageDriver) {
+    this.driver = driver;
   }
 
   // -------------------------------------------------------------------------
   // Public API (for Storage)
   // -------------------------------------------------------------------------
 
-  get loadedDriver(): IStorageDriverNodeAPI {
-    if (this._loadedDriver === undefined) {
-      throw new Error("Cannot access tree before it's been loaded");
-    }
-    return this._loadedDriver;
-  }
-
   // REFACTOR NOTE: Eventually raw_iter_nodes has to be removed here
   raw_iter_nodes(): Iterable<[string, SerializedCrdt]> {
-    return this.coreDriver.raw_iter_nodes();
-  }
-
-  /**
-   * Load the room data from object storage into memory. Persisted room
-   * data consists of the main node map, which represents the Liveblocks
-   * Storage tree, and special keys where we store usage metrics, or room
-   * metadata.
-   */
-  // XXXX Now that the driver has become fully sync, we no longer need this
-  // .load() construct. We should be able to refactor it away.
-  // eslint-disable-next-line @typescript-eslint/require-await
-  async load(logger: Logger): Promise<void> {
-    this._loadedDriver = this.coreDriver.load_nodes_api(logger);
-  }
-
-  unload(): void {
-    this._loadedDriver = undefined;
+    return this.driver.raw_iter_nodes();
   }
 
   /**
@@ -189,14 +163,14 @@ export class Storage {
   }
 
   private applyCreateOp(op: CreateOp & HasOpId): ApplyOpResult {
-    if (this.loadedDriver.has_node(op.id)) {
+    if (this.driver.has_node(op.id)) {
       // Node already exists, the operation is ignored
       return ignore(op);
     }
 
     const node = nodeFromCreateChildOp(op);
 
-    const parent = this.loadedDriver.get_node(node.parentId);
+    const parent = this.driver.get_node(node.parentId);
     if (parent === undefined) {
       // Parent does not exist because the op is invalid or because it was deleted in race condition.
       return ignore(op);
@@ -216,7 +190,7 @@ export class Storage {
 
       case CrdtType.MAP:
         // Children of maps and objects require no special needs
-        this.loadedDriver.set_child(op.id, node, true);
+        this.driver.set_child(op.id, node, true);
         return accept(op);
 
       case CrdtType.LIST:
@@ -267,15 +241,15 @@ export class Storage {
       const deletedId =
         op.deletedId !== undefined &&
         op.deletedId !== op.id &&
-        this.loadedDriver.get_node(op.deletedId)?.parentId === node.parentId
+        this.driver.get_node(op.deletedId)?.parentId === node.parentId
           ? op.deletedId
           : undefined;
 
       if (deletedId !== undefined) {
-        this.loadedDriver.delete_node(deletedId);
+        this.driver.delete_node(deletedId);
       }
 
-      const prevItemId = this.loadedDriver.get_child_at(
+      const prevItemId = this.driver.get_child_at(
         node.parentId,
         node.parentKey
       );
@@ -289,7 +263,7 @@ export class Storage {
         };
       }
 
-      this.loadedDriver.set_child(op.id, node, true);
+      this.driver.set_child(op.id, node, true);
 
       return accept(op, fix);
     } else {
@@ -319,17 +293,17 @@ export class Storage {
   private applyDeleteObjectKeyOp(
     op: DeleteObjectKeyOp & HasOpId
   ): ApplyOpResult {
-    this.loadedDriver.delete_child_key(op.id, op.key);
+    this.driver.delete_child_key(op.id, op.key);
     return accept(op);
   }
 
   private applyUpdateObjectOp(op: UpdateObjectOp & HasOpId): ApplyOpResult {
-    this.loadedDriver.set_object_data(op.id, op.data, true);
+    this.driver.set_object_data(op.id, op.data, true);
     return accept(op);
   }
 
   private applyDeleteCrdtOp(op: DeleteCrdtOp & HasOpId): ApplyOpResult {
-    this.loadedDriver.delete_node(op.id);
+    this.driver.delete_node(op.id);
     return accept(op);
   }
 
@@ -371,7 +345,7 @@ export class Storage {
     if (key !== node.parentKey) {
       node = { ...node, parentKey: key };
     }
-    this.loadedDriver.set_child(id, node);
+    this.driver.set_child(id, node);
     return node.parentKey;
   }
 
@@ -386,13 +360,13 @@ export class Storage {
    * Returns the final key that was used for the insertion.
    */
   private appendToList(id: string, node: SerializedChild): string {
-    const lastPos = this.loadedDriver.get_last_sibling(node.parentId);
+    const lastPos = this.driver.get_last_sibling(node.parentId);
     const preferredPos = asPos(node.parentKey);
     const finalKey =
       lastPos === undefined || preferredPos > lastPos
         ? preferredPos
         : makePosition(lastPos);
-    this.loadedDriver.set_child(
+    this.driver.set_child(
       id,
       finalKey !== node.parentKey ? { ...node, parentKey: finalKey } : node
     );
@@ -412,12 +386,12 @@ export class Storage {
    * a no-op for non-list items.
    */
   private moveToPosInList(id: string, targetKey: string): string | undefined {
-    const node = this.loadedDriver.get_node(id);
+    const node = this.driver.get_node(id);
     if (node?.parentId === undefined) {
       return; /* reject */
     }
 
-    if (this.loadedDriver.get_node(node.parentId)?.type !== CrdtType.LIST) {
+    if (this.driver.get_node(node.parentId)?.type !== CrdtType.LIST) {
       // SetParentKeyOp is a no-op for all nodes, except list items
       return; /* reject */
     }
@@ -430,7 +404,7 @@ export class Storage {
     // First, compute the key to use to insert this node
     const key = this.findFreeListPosition(node.parentId, asPos(targetKey));
     if (key !== node.parentKey) {
-      this.loadedDriver.move_sibling(id, key);
+      this.driver.move_sibling(id, key);
     }
     return key;
   }
@@ -443,12 +417,12 @@ export class Storage {
    * to use as parentKey.
    */
   private findFreeListPosition(parentId: string, parentPos: Pos): Pos {
-    if (!this.loadedDriver.has_child_at(parentId, parentPos)) {
+    if (!this.driver.has_child_at(parentId, parentPos)) {
       return parentPos;
     }
 
     const currPos = parentPos;
-    const nextPos = this.loadedDriver.get_next_sibling(parentId, currPos);
+    const nextPos = this.driver.get_next_sibling(parentId, currPos);
     if (nextPos !== undefined) {
       return makePosition(currPos, nextPos); // Between current and next
     } else {

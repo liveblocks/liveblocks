@@ -1,5 +1,9 @@
 ## vNEXT (not yet released)
 
+- Update internal storage format of dev server. Note that your local dev rooms
+  are not automatically migrated and will appear as empty rooms after the
+  upgrade.
+
 ## v1.5.0
 
 - Add `--random-port` (`-P`) flag to `liveblocks dev`: bind a random free port

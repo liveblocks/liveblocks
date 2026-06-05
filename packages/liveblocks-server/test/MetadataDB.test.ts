@@ -20,24 +20,10 @@ import { CrdtType } from "@liveblocks/core";
 import { integer, number, string } from "decoders";
 import { describe, expect, test } from "vitest";
 
-import { Logger as LoggerImpl, LogLevel, LogTarget } from "~/lib/Logger";
 import { makeMetadataDB } from "~/MetadataDB";
 import { makeNewInMemoryDriver } from "~/plugins/InMemoryDriver";
 
 const rounded = number.transform((n) => Math.round(n));
-
-class VoidTarget extends LogTarget {
-  constructor() {
-    super((LogLevel.ERROR as number) + 1);
-  }
-
-  log(): void {
-    /* Do nothing */
-  }
-}
-
-/** A black hole, where logs disappear beyond the event horizon */
-const blackHole = new LoggerImpl(new VoidTarget());
 
 describe("test in-memory driver", () => {
   test("basic", () => {
@@ -47,8 +33,7 @@ describe("test in-memory driver", () => {
     // Before loading, root node should not exist
     expect(new Map(driver.raw_iter_nodes())).toEqual(new Map());
     // After loading, root node should exist
-    const nodesApi = driver.load_nodes_api(blackHole);
-    expect(new Map<string, SerializedCrdt>(nodesApi.iter_nodes())).toEqual(
+    expect(new Map<string, SerializedCrdt>(driver.iter_nodes())).toEqual(
       new Map([["root", { type: CrdtType.OBJECT, data: {} }]])
     );
   });
@@ -96,7 +81,6 @@ describe("test in-memory driver", () => {
   test("two namespaces of the same type don't conflict", () => {
     const driver = makeNewInMemoryDriver();
     const metadataDB = makeMetadataDB(driver);
-    const nodeDriver = driver.load_nodes_api(blackHole);
 
     metadataDB.put("foo", null);
     metadataDB.put("foo", 123);
@@ -115,8 +99,8 @@ describe("test in-memory driver", () => {
       parentId: "root",
       parentKey: "b",
     };
-    nodeDriver.set_child("foo", node1);
-    nodeDriver.set_child("bar", node2);
+    driver.set_child("foo", node1);
+    driver.set_child("bar", node2);
 
     // Namespaces don't conflict
     expect(metadataDB.get("foo")).toEqual("bar");
@@ -129,7 +113,7 @@ describe("test in-memory driver", () => {
         ["bar", node2],
       ])
     );
-    expect(new Map<string, SerializedCrdt>(nodeDriver.iter_nodes())).toEqual(
+    expect(new Map<string, SerializedCrdt>(driver.iter_nodes())).toEqual(
       new Map<string, SerializedCrdt>([
         ["root", { type: CrdtType.OBJECT, data: {} }],
         ["foo", node1],
@@ -142,9 +126,7 @@ describe("test in-memory driver", () => {
     expect(metadataDB.get("foo")).toEqual(undefined);
     expect(new Map(driver.raw_iter_nodes()).get("foo")).toEqual(node1);
     expect(
-      new Map<string, SerializedCrdt>(
-        driver.load_nodes_api(blackHole).iter_nodes()
-      ).get("foo")
+      new Map<string, SerializedCrdt>(driver.iter_nodes()).get("foo")
     ).toEqual(node1);
   });
 });

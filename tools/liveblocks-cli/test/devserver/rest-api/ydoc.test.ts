@@ -74,10 +74,9 @@ describe("PUT /v2/rooms/<roomId>/ydoc", () => {
     // Connect a real WebSocket session into the room (via a fake socket that
     // records messages sent to it).
     const room = Rooms.getRoomInstance(roomId);
-    await room.load();
     const { received, socket } = makeFakeSocket();
     const ticket = room.createTicket({});
-    await room.startBrowserSession(ticket, socket);
+    room.startBrowserSession(ticket, socket);
 
     // Mark how much was sent during session bootstrap so we only inspect
     // messages produced by the REST PUT below.
