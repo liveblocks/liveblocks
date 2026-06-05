@@ -474,6 +474,13 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * the single source of truth, so an item drops out the instant its op is
    * acked, with no per-instance membership to leak. Yielded in push order.
    *
+   * Excludes ops that may already be stored on the server (they were in
+   * flight when a connection died, so their fate is unknown): the bump
+   * prediction assumes the server has not processed the op yet, which is only
+   * guaranteed for ops sent on the current connection. For these excluded
+   * ops, the server's (re-)ack states the authoritative position; predicting
+   * locally could produce a wrong position that no ack would correct.
+   *
    * Restricted to items currently in `#items`: a pushed node whose op is still
    * pending may have been pulled out of the list (e.g. implicitly deleted by a
    * remote set, or removed by an undo) while still living in the pool, and such
@@ -486,6 +493,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
     for (const op of this._pool.unacknowledgedOps.getByParentId(this._id)) {
       if (op.intent !== "push") {
+        continue;
+      }
+      if (this._pool.unacknowledgedOps.isPossiblyStored(op.opId)) {
         continue;
       }
       const node = this._pool.getNode(op.id);

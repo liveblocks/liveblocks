@@ -1715,6 +1715,14 @@ export function createRoom<
 
   function onDidDisconnect() {
     clearTimeout(context.buffer.flushTimerID);
+
+    // Every op still pending at this point was in flight on the connection
+    // that just died: the server may have processed it (with its ack lost in
+    // the disconnect), or never received it. Mark them, so that optimistic
+    // position predictions (like the LiveList tail-bump) stop applying to
+    // them: such predictions are only sound for ops the server has provably
+    // not processed yet.
+    context.unacknowledgedOps.markAllAsPossiblyStored();
   }
 
   // Register events handlers for events coming from the socket
