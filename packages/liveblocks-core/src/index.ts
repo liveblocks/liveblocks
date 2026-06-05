@@ -80,8 +80,6 @@ export { cloneLson, isLiveNode } from "./crdts/liveblocks-helpers";
 export { LiveList } from "./crdts/LiveList";
 export { LiveMap } from "./crdts/LiveMap";
 export { LiveObject } from "./crdts/LiveObject";
-export { applyLiveTextOperations } from "./crdts/liveTextOps";
-export { LiveText } from "./crdts/LiveText";
 export type {
   LiveTextAttributes,
   LiveTextAttributesPatch,
@@ -91,6 +89,8 @@ export type {
   LiveTextSegment,
   LiveTextUpdates,
 } from "./crdts/LiveText";
+export { LiveText } from "./crdts/LiveText";
+export { applyLiveTextOperations } from "./crdts/liveTextOps";
 export type {
   LiveNode,
   LiveStructure,
@@ -304,11 +304,11 @@ export type {
   DeleteObjectKeyOp,
   HasOpId,
   IgnoredOp,
-  TextAttributes,
-  TextOperation,
   Op,
   ServerWireOp,
   SetParentKeyOp,
+  TextAttributes,
+  TextOperation,
   UpdateObjectOp,
   UpdateTextOp,
 } from "./protocol/Op";

@@ -35,8 +35,8 @@ export type LiveTextAttributes = TextAttributes;
 export type LiveTextAttributesPatch = JsonObject;
 export type {
   LiveTextData,
-  LiveTextSegment,
   TextOperation as LiveTextOperation,
+  LiveTextSegment,
 } from "../protocol/Op";
 
 export type LiveTextChange =

@@ -79,7 +79,6 @@ async function initializeRoomForTest<
     // `ws` delivers incoming frames by emitting a "message" event (both
     // addEventListener and .on() listeners run through this). Swallow those
     // emissions while dropping, leaving every other event untouched.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- matches EventEmitter.emit's own signature
     emit(eventName: string | symbol, ...args: any[]): boolean {
       if (this._dropIncoming && eventName === "message") {
         return false;
@@ -355,7 +354,6 @@ export function prepareTestsConflicts<S extends LsonObject>(
       // Surface the full storage pool of both clients (every node, its parent,
       // its position key, and its value) so convergence failures are debuggable
       // from the test output alone.
-      // eslint-disable-next-line no-console
       console.error(
         `\n=== Storage pool dump on failure ===\n${actor1.room._dump()}\n\n${actor2.room._dump()}\n`
       );

@@ -25,22 +25,19 @@ describe("liveTextOps", () => {
   });
 
   test("applyLiveTextOperations inserts, deletes, and formats", () => {
-    const data = applyLiveTextOperations([["Hello"]], [
-      { type: "insert", index: 5, text: "!" },
-      { type: "format", index: 0, length: 5, attributes: { bold: true } },
-    ]);
+    const data = applyLiveTextOperations(
+      [["Hello"]],
+      [
+        { type: "insert", index: 5, text: "!" },
+        { type: "format", index: 0, length: 5, attributes: { bold: true } },
+      ]
+    );
 
-    expect(data).toEqual([
-      ["Hello", { bold: true }],
-      ["!"],
-    ]);
+    expect(data).toEqual([["Hello", { bold: true }], ["!"]]);
   });
 
   test("invertTextOperations preserves attributes for deleted segments", () => {
-    const segments = dataToSegments([
-      ["He", { bold: true }],
-      ["llo"],
-    ]);
+    const segments = dataToSegments([["He", { bold: true }], ["llo"]]);
 
     expect(
       invertTextOperations(segments, [{ type: "delete", index: 0, length: 5 }])

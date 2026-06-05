@@ -48,10 +48,7 @@ describe("LiveText", () => {
     clone.insert(5, "!");
 
     expect(text.toJSON()).toEqual([["Hello", { bold: true }]]);
-    expect(clone.toJSON()).toEqual([
-      ["Hello", { bold: true }],
-      ["!"],
-    ]);
+    expect(clone.toJSON()).toEqual([["Hello", { bold: true }], ["!"]]);
   });
 
   test("serializes to Plain LSON", () => {
@@ -76,10 +73,7 @@ describe("LiveText", () => {
   test("invertTextOperations preserves attributes for multi-segment deletes", () => {
     expect(
       invertTextOperations(
-        [
-          { text: "He", attributes: { bold: true } },
-          { text: "llo" },
-        ],
+        [{ text: "He", attributes: { bold: true } }, { text: "llo" }],
         [{ type: "delete", index: 0, length: 5 }]
       )
     ).toEqual([
