@@ -20,7 +20,27 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 23 (2026-06-05)
 
+## Examples
+
+- New example: [Collaborative SuperDoc editor](https://liveblocks.io/examples/collaborative-text-editor/nextjs-yjs-superdoc).
+
+## Documentation
+
+- New guide: [Get started with SuperDoc and Next.js](https://liveblocks.io/docs/get-started/yjs-superdoc-nextjs).
+- New guide: [Get started with SuperDoc and JavaScript](https://liveblocks.io/docs/get-started/yjs-superdoc-javascript).
+- New guide: [Get started with SuperDoc and React](https://liveblocks.io/docs/get-started/yjs-superdoc-react).
+- New guide: [Get started with SuperDoc and Svelte](https://liveblocks.io/docs/get-started/yjs-superdoc-svelte).
+- New guide: [Get started with SuperDoc and Vue.js](https://liveblocks.io/docs/get-started/yjs-superdoc-vuejs).
+- Updated get started guides for Liveblocks Storage, featuring more hook examples.
+
+## Website
+
+- New blog post: [How humans and AI will work together in the next generation of apps](https://liveblocks.io/blog/how-humans-and-ai-will-work-together-in-the-next-generation-of-apps).
+- New blog post: [What's new in Liveblocks: May 2026](https://liveblocks.io/blog/whats-new-in-liveblocks-may-2026).
+
 ## Contributors
+
+ctnicholas
 
 # Week 22 (2026-05-29)
 
