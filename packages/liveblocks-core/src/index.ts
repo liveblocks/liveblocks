@@ -77,7 +77,6 @@ export type {
 } from "./crdts/AbstractCrdt";
 export { createManagedPool } from "./crdts/AbstractCrdt";
 export { cloneLson, isLiveNode } from "./crdts/liveblocks-helpers";
-export { deepLiveify } from "./crdts/reconcile";
 export { LiveList } from "./crdts/LiveList";
 export { LiveMap } from "./crdts/LiveMap";
 export { LiveObject } from "./crdts/LiveObject";
@@ -88,6 +87,7 @@ export type {
   LsonObject,
   ToJson,
 } from "./crdts/Lson";
+export { deepLiveify } from "./crdts/reconcile";
 export type {
   LiveListUpdate,
   LiveMapUpdate,
