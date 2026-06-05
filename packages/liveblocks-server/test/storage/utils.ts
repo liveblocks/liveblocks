@@ -27,7 +27,6 @@ import type {
 } from "@liveblocks/core";
 import { CrdtType } from "@liveblocks/core";
 
-import type { Logger } from "~/lib/Logger";
 import { makeNewInMemoryDriver } from "~/plugins/InMemoryDriver";
 import { Storage } from "~/Storage";
 import { selfCheck } from "~test/plugins/_generateFullTestSuite";
@@ -73,11 +72,11 @@ export function register(
  * the initial nodes (which can contain invalid/corrupted data) to the
  * backend, then loads Storage on top.
  */
-export async function runWithStorage<R>(
+export function runWithStorage<R>(
   nodeStream: NodeStream,
   callback: (arg: {
     storage: Storage;
-    loadedDriver: Storage["loadedDriver"];
+    driver: Storage["driver"];
   }) => R | Promise<R>
 ): Promise<R> {
   const nodeMap: NodeMap = new Map<string, SerializedCrdt>(nodeStream);
@@ -88,16 +87,10 @@ export async function runWithStorage<R>(
   // Create the *access layer* around it (the API that we use)
   const storage = new Storage(backend);
 
-  const logger = {
-    warn: () => {},
-    error: () => {},
-  } as unknown as Logger;
-  await storage.load(logger);
-
   // Also run an integrity check after initializing _corrupted_ storage.
   // Because the Storage class ignores any such corruptions, even when loading
   // corruptions the in-memory nodemap should be consistent.
-  await selfCheck(storage);
+  selfCheck(storage);
 
-  return callback({ storage, loadedDriver: storage.loadedDriver });
+  return Promise.resolve(callback({ storage, driver: storage.driver }));
 }

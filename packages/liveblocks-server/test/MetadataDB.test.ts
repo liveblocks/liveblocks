@@ -20,88 +20,72 @@ import { CrdtType } from "@liveblocks/core";
 import { integer, number, string } from "decoders";
 import { describe, expect, test } from "vitest";
 
-import { Logger as LoggerImpl, LogLevel, LogTarget } from "~/lib/Logger";
 import { makeMetadataDB } from "~/MetadataDB";
 import { makeNewInMemoryDriver } from "~/plugins/InMemoryDriver";
 
 const rounded = number.transform((n) => Math.round(n));
 
-class VoidTarget extends LogTarget {
-  constructor() {
-    super((LogLevel.ERROR as number) + 1);
-  }
-
-  log(): void {
-    /* Do nothing */
-  }
-}
-
-/** A black hole, where logs disappear beyond the event horizon */
-const blackHole = new LoggerImpl(new VoidTarget());
-
 describe("test in-memory driver", () => {
-  test("basic", async () => {
+  test("basic", () => {
     const driver = makeNewInMemoryDriver();
     const metadataDB = makeMetadataDB(driver);
-    expect(await metadataDB.get("foo")).toEqual(undefined);
+    expect(metadataDB.get("foo")).toEqual(undefined);
     // Before loading, root node should not exist
-    expect(new Map(await driver.raw_iter_nodes())).toEqual(new Map());
+    expect(new Map(driver.raw_iter_nodes())).toEqual(new Map());
     // After loading, root node should exist
-    const nodesApi = await driver.load_nodes_api(blackHole);
-    expect(new Map<string, SerializedCrdt>(nodesApi.iter_nodes())).toEqual(
+    expect(new Map<string, SerializedCrdt>(driver.iter_nodes())).toEqual(
       new Map([["root", { type: CrdtType.OBJECT, data: {} }]])
     );
   });
 
-  test("put and get are async", async () => {
+  test("put and get are async", () => {
     const driver = makeNewInMemoryDriver();
     const metadataDB = makeMetadataDB(driver);
-    expect(await metadataDB.get("foo")).toEqual(undefined);
-    await metadataDB.put("foo", "bar");
-    expect(await metadataDB.get("foo")).toEqual("bar");
+    expect(metadataDB.get("foo")).toEqual(undefined);
+    metadataDB.put("foo", "bar");
+    expect(metadataDB.get("foo")).toEqual("bar");
   });
 
-  test("getters with decoders", async () => {
+  test("getters with decoders", () => {
     const driver = makeNewInMemoryDriver();
     const metadataDB = makeMetadataDB(driver);
-    await metadataDB.put("foo", "hi");
-    expect(await metadataDB.get("foo")).toEqual("hi");
-    expect(await metadataDB.get(number, "foo")).toEqual(undefined);
-    expect(await metadataDB.get(rounded, "foo")).toEqual(undefined);
-    expect(await metadataDB.get(string, "foo")).toEqual("hi");
+    metadataDB.put("foo", "hi");
+    expect(metadataDB.get("foo")).toEqual("hi");
+    expect(metadataDB.get(number, "foo")).toEqual(undefined);
+    expect(metadataDB.get(rounded, "foo")).toEqual(undefined);
+    expect(metadataDB.get(string, "foo")).toEqual("hi");
 
     // Override
-    await metadataDB.put("foo", 123);
-    expect(await metadataDB.get("foo")).toEqual(123);
-    expect(await metadataDB.get(number, "foo")).toEqual(123);
-    expect(await metadataDB.get(integer, "foo")).toEqual(123);
-    expect(await metadataDB.get(rounded, "foo")).toEqual(123);
-    expect(await metadataDB.get(string, "foo")).toEqual(undefined);
+    metadataDB.put("foo", 123);
+    expect(metadataDB.get("foo")).toEqual(123);
+    expect(metadataDB.get(number, "foo")).toEqual(123);
+    expect(metadataDB.get(integer, "foo")).toEqual(123);
+    expect(metadataDB.get(rounded, "foo")).toEqual(123);
+    expect(metadataDB.get(string, "foo")).toEqual(undefined);
 
-    await metadataDB.put("foo", 3.999);
-    expect(await metadataDB.get("foo")).toEqual(3.999);
-    expect(await metadataDB.get(number, "foo")).toEqual(3.999);
-    expect(await metadataDB.get(integer, "foo")).toEqual(undefined);
-    expect(await metadataDB.get(rounded, "foo")).toEqual(4);
-    expect(await metadataDB.get(string, "foo")).toEqual(undefined);
+    metadataDB.put("foo", 3.999);
+    expect(metadataDB.get("foo")).toEqual(3.999);
+    expect(metadataDB.get(number, "foo")).toEqual(3.999);
+    expect(metadataDB.get(integer, "foo")).toEqual(undefined);
+    expect(metadataDB.get(rounded, "foo")).toEqual(4);
+    expect(metadataDB.get(string, "foo")).toEqual(undefined);
 
-    await metadataDB.put("foo", -3.999);
-    expect(await metadataDB.get("foo")).toEqual(-3.999);
-    expect(await metadataDB.get(number, "foo")).toEqual(-3.999);
-    expect(await metadataDB.get(integer, "foo")).toEqual(undefined);
-    expect(await metadataDB.get(rounded, "foo")).toEqual(-4);
-    expect(await metadataDB.get(string, "foo")).toEqual(undefined);
+    metadataDB.put("foo", -3.999);
+    expect(metadataDB.get("foo")).toEqual(-3.999);
+    expect(metadataDB.get(number, "foo")).toEqual(-3.999);
+    expect(metadataDB.get(integer, "foo")).toEqual(undefined);
+    expect(metadataDB.get(rounded, "foo")).toEqual(-4);
+    expect(metadataDB.get(string, "foo")).toEqual(undefined);
   });
 
-  test("two namespaces of the same type don't conflict", async () => {
+  test("two namespaces of the same type don't conflict", () => {
     const driver = makeNewInMemoryDriver();
     const metadataDB = makeMetadataDB(driver);
-    const nodeDriver = await driver.load_nodes_api(blackHole);
 
-    await metadataDB.put("foo", null);
-    await metadataDB.put("foo", 123);
-    await metadataDB.put("foo", "bar");
-    await metadataDB.put("bar", [42, 1337]);
+    metadataDB.put("foo", null);
+    metadataDB.put("foo", 123);
+    metadataDB.put("foo", "bar");
+    metadataDB.put("bar", [42, 1337]);
 
     const node1 = {
       type: CrdtType.OBJECT,
@@ -115,21 +99,21 @@ describe("test in-memory driver", () => {
       parentId: "root",
       parentKey: "b",
     };
-    await nodeDriver.set_child("foo", node1);
-    await nodeDriver.set_child("bar", node2);
+    driver.set_child("foo", node1);
+    driver.set_child("bar", node2);
 
     // Namespaces don't conflict
-    expect(await metadataDB.get("foo")).toEqual("bar");
-    expect(await metadataDB.get("bar")).toEqual([42, 1337]);
+    expect(metadataDB.get("foo")).toEqual("bar");
+    expect(metadataDB.get("bar")).toEqual([42, 1337]);
     // Both raw_iter_nodes and iter_nodes include root
-    expect(new Map(await driver.raw_iter_nodes())).toEqual(
+    expect(new Map(driver.raw_iter_nodes())).toEqual(
       new Map<string, SerializedCrdt>([
         ["root", { type: CrdtType.OBJECT, data: {} }],
         ["foo", node1],
         ["bar", node2],
       ])
     );
-    expect(new Map<string, SerializedCrdt>(nodeDriver.iter_nodes())).toEqual(
+    expect(new Map<string, SerializedCrdt>(driver.iter_nodes())).toEqual(
       new Map<string, SerializedCrdt>([
         ["root", { type: CrdtType.OBJECT, data: {} }],
         ["foo", node1],
@@ -138,13 +122,11 @@ describe("test in-memory driver", () => {
     );
 
     // Deleting foo from metadata namespace has no effect on other namespaces
-    await metadataDB.delete("foo");
-    expect(await metadataDB.get("foo")).toEqual(undefined);
-    expect(new Map(await driver.raw_iter_nodes()).get("foo")).toEqual(node1);
+    metadataDB.delete("foo");
+    expect(metadataDB.get("foo")).toEqual(undefined);
+    expect(new Map(driver.raw_iter_nodes()).get("foo")).toEqual(node1);
     expect(
-      new Map<string, SerializedCrdt>(
-        (await driver.load_nodes_api(blackHole)).iter_nodes()
-      ).get("foo")
+      new Map<string, SerializedCrdt>(driver.iter_nodes()).get("foo")
     ).toEqual(node1);
   });
 });
