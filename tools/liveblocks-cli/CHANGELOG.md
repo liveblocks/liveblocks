@@ -1,5 +1,7 @@
 ## vNEXT (not yet released)
 
+## v1.6.0
+
 - Update internal storage format of dev server. Note that your local dev rooms
   are not automatically migrated and will appear as empty rooms after the
   upgrade.
