@@ -1,6 +1,7 @@
 "use client";
 
 import { useUpdateMyPresence } from "@liveblocks/react/suspense";
+import { AvatarStack } from "@liveblocks/react-ui";
 import { ExternalLink } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useValue, type Editor, type TLShape } from "tldraw";
@@ -59,7 +60,10 @@ export function CanvasShell({
             setHtmlToolOpen={setHtmlToolOpen}
           />
         ) : null}
-        <CopyPreviewButton fileId={fileId} />
+        <div className="absolute right-4 top-4 z-30 flex items-center gap-3">
+          <AvatarStack size={28} />
+          <CopyPreviewButton fileId={fileId} />
+        </div>
         {!readonly && selectedHtmlShape ? (
           <div className="pointer-events-none absolute left-1/2 top-4 z-20 -translate-x-1/2">
             <div className="pointer-events-auto flex items-center gap-2 rounded-lg border border-neutral-200 bg-white/95 px-3 py-2 shadow-sm backdrop-blur">

@@ -44,3 +44,9 @@ body {
   stroke-width: 1.7;
   opacity: 0.9;
 }
+
+/* Temp hide watermarks or recording */
+#liveblocks-badge,
+.tl-watermark_SEE-LICENSE {
+  display: none !important;
+}

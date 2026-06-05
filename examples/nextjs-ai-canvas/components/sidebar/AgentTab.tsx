@@ -315,7 +315,9 @@ export function AgentTab({
                 <div className="agent-message max-w-[95%] rounded-lg px-3 py-2 text-neutral-800">
                   {data.agentName ? (
                     <div className="mb-1 flex items-center gap-1.5 text-xs font-medium">
-                      <span style={{ color: agentColor }}>{data.agentName}</span>
+                      <span style={{ color: agentColor }}>
+                        {data.agentName}
+                      </span>
                       {running && statusLabel ? (
                         <span className="font-normal text-neutral-400">
                           · {statusLabel}
@@ -325,8 +327,8 @@ export function AgentTab({
                   ) : null}
                   {data.reasoning ? (
                     <details>
-                      <summary className="cursor-pointer text-xs text-neutral-500">
-                        Thought process
+                      <summary className="cursor-pointer text-xs text-neutral-500 my-1">
+                        <span className="ml-0.5">Thought process</span>
                       </summary>
                       <pre className="mt-1 rounded-sm bg-neutral-100 px-2 py-1 text-xs text-neutral-600">
                         {data.reasoning}
