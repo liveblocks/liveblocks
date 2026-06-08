@@ -1,68 +1,33 @@
-export const Permission = {
-  /**
-   * Default permission for a room
-   */
-  RoomWrite: "room:write",
-  RoomRead: "room:read",
+import {
+  ACCESS_RANKS,
+  DEFAULT_PERMISSION_RESOURCE,
+  Permission,
+  RESOURCE_PERMISSIONS,
+  ROOM_PERMISSION_RESOURCES,
+  resolveFullPermissionCapabilities,
+  resolvePermissionCapabilities,
+} from "./protocol/Permissions";
+import type {
+  AccessLevel,
+  PermissionCapabilities,
+  PermissionResources,
+} from "./protocol/Permissions";
 
-  /**
-   * Presence (LiveRoom Websocket access)
-   */
-  RoomPresenceRead: "room:presence:read",
-  RoomPresenceNone: "room:presence:none",
-
-  /**
-   * Storage
-   */
-  RoomStorageRead: "room:storage:read",
-  RoomStorageWrite: "room:storage:write",
-  RoomStorageNone: "room:storage:none",
-
-  /**
-   * Comments
-   */
-  RoomCommentsWrite: "room:comments:write",
-  RoomCommentsRead: "room:comments:read",
-  RoomCommentsNone: "room:comments:none",
-
-  /**
-   * Feeds
-   */
-  RoomFeedsRead: "room:feeds:read",
-  RoomFeedsWrite: "room:feeds:write",
-  RoomFeedsNone: "room:feeds:none",
-
-  /**
-   * Legacy
-   */
-  LegacyRoomPresenceWrite: "room:presence:write",
-  LegacyCommentsWrite: "comments:write",
-  LegacyCommentsRead: "comments:read",
-  LegacyFeedsWrite: "feeds:write",
-} as const;
-
-export type Permission = (typeof Permission)[keyof typeof Permission];
-
-export type AccessLevel = "write" | "read" | "none";
-
-export type RequiredAccessLevel = "read" | "write";
-
-export type PermissionCapabilities = {
-  creation: AccessLevel;
-  presence: AccessLevel;
-  storage: AccessLevel;
-  comments: AccessLevel;
-  feeds: AccessLevel;
-  personal: "write";
-};
-
-export type PermissionResources = keyof PermissionCapabilities;
-
-export type ResolvedPermissionCapabilities = {
-  hasDefaultPermission: boolean;
-  baseAccess: AccessLevel;
-  capabilities: Partial<PermissionCapabilities>;
-};
+export {
+  Permission,
+  hasPermissionCapability,
+  hasPermissionCapabilityAccess,
+  permissionCapabilitiesFromScopes,
+  resolveFullPermissionCapabilities,
+  resolvePermissionCapabilities,
+} from "./protocol/Permissions";
+export type {
+  AccessLevel,
+  PermissionCapabilities,
+  PermissionResources,
+  RequiredAccessLevel,
+  ResolvedPermissionCapabilities,
+} from "./protocol/Permissions";
 
 export type RoomPermissionScopes = {
   resource: string;
@@ -88,81 +53,14 @@ export type RoomAccessesUpdateInput = Record<
   RoomPermissionInput | null
 >;
 
-type RoomPermissionResource = keyof Omit<RoomPermissionObject, "default">;
-
-type ResourcePermissionMap = Record<
-  PermissionResources,
-  Partial<Record<AccessLevel, readonly Permission[]>>
->;
-
 const ALL_PERMISSIONS: readonly string[] = Object.freeze(
   Object.values(Permission)
 );
-
-const ACCESS_LEVELS = [
-  "none",
-  "read",
-  "write",
-] as const satisfies ReadonlyArray<AccessLevel>;
-
-const ACCESS_RANKS: Record<AccessLevel, number> = {
-  none: 0,
-  read: 1,
-  write: 2,
-};
 
 const DEFAULT_PERMISSIONS: readonly Permission[] = [
   Permission.RoomRead,
   Permission.RoomWrite,
 ] as const;
-
-const NO_PERMISSION_CAPABILITIES: PermissionCapabilities = {
-  creation: "none",
-  presence: "none",
-  storage: "none",
-  comments: "none",
-  feeds: "none",
-  personal: "write",
-};
-
-// Include legacy scope strings so older tokens still resolve correctly.
-const RESOURCE_PERMISSIONS: ResourcePermissionMap = {
-  creation: {
-    read: [Permission.RoomRead],
-    write: [Permission.RoomWrite],
-  },
-  personal: {
-    write: [],
-  },
-  presence: {
-    read: [Permission.RoomPresenceRead, Permission.LegacyRoomPresenceWrite],
-    none: [Permission.RoomPresenceNone],
-  },
-  storage: {
-    write: [Permission.RoomStorageWrite],
-    read: [Permission.RoomStorageRead],
-    none: [Permission.RoomStorageNone],
-  },
-  comments: {
-    write: [Permission.RoomCommentsWrite, Permission.LegacyCommentsWrite],
-    read: [Permission.RoomCommentsRead, Permission.LegacyCommentsRead],
-    none: [Permission.RoomCommentsNone],
-  },
-  feeds: {
-    write: [Permission.RoomFeedsWrite, Permission.LegacyFeedsWrite],
-    read: [Permission.RoomFeedsRead],
-    none: [Permission.RoomFeedsNone],
-  },
-};
-
-const DEFAULT_PERMISSION_RESOURCE = "creation" satisfies PermissionResources;
-
-const ROOM_PERMISSION_RESOURCES = [
-  "presence",
-  "storage",
-  "comments",
-  "feeds",
-] as const satisfies ReadonlyArray<RoomPermissionResource>;
 
 const ROOM_PERMISSION_OBJECT_KEYS = new Set<string>([
   "default",
@@ -172,32 +70,6 @@ const ROOM_PERMISSION_OBJECT_KEYS = new Set<string>([
 const RESOURCE_SPECIFIC_PERMISSIONS = ROOM_PERMISSION_RESOURCES.flatMap(
   (resource) => Object.values(RESOURCE_PERMISSIONS[resource]).flat()
 );
-
-function resolveResourceAccess(
-  scopes: readonly string[],
-  resource: RoomPermissionResource
-): AccessLevel | undefined {
-  const permissions: Partial<Record<AccessLevel, readonly Permission[]>> =
-    RESOURCE_PERMISSIONS[resource];
-  let resourceAccess: AccessLevel | undefined;
-
-  for (const access of ACCESS_LEVELS) {
-    const scopedPermissions = permissions[access];
-    if (
-      scopedPermissions !== undefined &&
-      scopedPermissions.some((permission) => scopes.includes(permission))
-    ) {
-      if (
-        resourceAccess === undefined ||
-        ACCESS_RANKS[access] > ACCESS_RANKS[resourceAccess]
-      ) {
-        resourceAccess = access;
-      }
-    }
-  }
-
-  return resourceAccess;
-}
 
 function permissionForAccessLevel(
   resource: PermissionResources,
@@ -216,34 +88,6 @@ function permissionForAccessLevel(
 
 export function isPermission(value: string): value is Permission {
   return ALL_PERMISSIONS.includes(value);
-}
-
-export function resolveFullPermissionCapabilities(
-  resolved: ResolvedPermissionCapabilities
-): PermissionCapabilities {
-  if (!resolved.hasDefaultPermission) {
-    return { ...NO_PERMISSION_CAPABILITIES, ...resolved.capabilities };
-  }
-
-  const capabilities: PermissionCapabilities = {
-    ...NO_PERMISSION_CAPABILITIES,
-    [DEFAULT_PERMISSION_RESOURCE]: resolved.baseAccess,
-  };
-
-  for (const resource of ROOM_PERMISSION_RESOURCES) {
-    capabilities[resource] =
-      resolved.capabilities[resource] ?? resolved.baseAccess;
-  }
-
-  return capabilities;
-}
-
-export function permissionCapabilitiesFromScopes(
-  scopes: readonly string[]
-): PermissionCapabilities {
-  return resolveFullPermissionCapabilities(
-    resolvePermissionCapabilities(scopes)
-  );
 }
 
 export function resolveRoomPermissionCapabilities(
@@ -390,31 +234,6 @@ export function getRoomPermissionConflicts(
   return [];
 }
 
-export function resolvePermissionCapabilities(
-  scopes: readonly string[]
-): ResolvedPermissionCapabilities {
-  const hasDefaultPermission =
-    scopes.includes(Permission.RoomWrite) ||
-    scopes.includes(Permission.RoomRead);
-
-  const baseAccess: AccessLevel = scopes.includes(Permission.RoomWrite)
-    ? "write"
-    : scopes.includes(Permission.RoomRead)
-      ? "read"
-      : "none";
-
-  const capabilities: Partial<PermissionCapabilities> = {};
-
-  for (const resource of ROOM_PERMISSION_RESOURCES) {
-    const access = resolveResourceAccess(scopes, resource);
-    if (access !== undefined) {
-      capabilities[resource] = access;
-    }
-  }
-
-  return { hasDefaultPermission, baseAccess, capabilities };
-}
-
 function strongestAccess(left: AccessLevel, right: AccessLevel): AccessLevel {
   return ACCESS_RANKS[right] > ACCESS_RANKS[left] ? right : left;
 }
@@ -425,26 +244,4 @@ function resourceMatchesRoomId(resource: string, roomId: string): boolean {
   }
 
   return resource === roomId;
-}
-
-export function hasPermissionCapability(
-  scopes: readonly string[],
-  resource: PermissionResources,
-  requiredAccess: RequiredAccessLevel
-): boolean {
-  const access = permissionCapabilitiesFromScopes(scopes)[resource];
-  return hasPermissionCapabilityAccess(
-    { [resource]: access },
-    resource,
-    requiredAccess
-  );
-}
-
-export function hasPermissionCapabilityAccess(
-  capabilities: Partial<PermissionCapabilities>,
-  resource: PermissionResources,
-  requiredAccess: RequiredAccessLevel
-): boolean {
-  const access = capabilities[resource] ?? "none";
-  return ACCESS_RANKS[access] >= ACCESS_RANKS[requiredAccess];
 }
