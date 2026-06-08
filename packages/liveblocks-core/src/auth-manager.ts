@@ -254,7 +254,11 @@ const ACCESS_RANKS: Record<AccessLevel, number> = {
 };
 
 function getAuthRequestKey(request: AuthRequest): string | undefined {
-  return request.roomId;
+  if (request.roomId === undefined) {
+    return undefined;
+  }
+
+  return `${request.roomId}:${request.resource}:${request.access}`;
 }
 
 function makeCachedToken(

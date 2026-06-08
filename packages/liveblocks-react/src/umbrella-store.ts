@@ -966,9 +966,18 @@ function createStore_forPermissionHints() {
     () => new Signal<PermissionHint | undefined>(undefined)
   );
 
-  function update(newHints: Record<string, Permission[]>, requestedAt: Date) {
+  function update(
+    newHints: Record<string, Permission[]>,
+    requestedAt: Date,
+    roomIds?: readonly string[]
+  ) {
     batch(() => {
-      for (const [roomId, permissions] of Object.entries(newHints)) {
+      const updatedRoomIds =
+        roomIds === undefined
+          ? Object.keys(newHints)
+          : new Set([...roomIds, ...Object.keys(newHints)]);
+
+      for (const roomId of updatedRoomIds) {
         const signal = permissionsByRoomId.getOrCreate(roomId);
 
         const existingHint = signal.get();
@@ -983,7 +992,7 @@ function createStore_forPermissionHints() {
 
         signal.set({
           requestedAt,
-          permissions: permissionCapabilitiesFromScopes(permissions),
+          permissions: permissionCapabilitiesFromScopes(newHints[roomId] ?? []),
         });
       }
     });
@@ -1469,7 +1478,9 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
             result.subscriptions
           );
 
-          this.permissionHints.update(result.permissionHints, result.requestedAt);
+          this.permissionHints.update(result.permissionHints, result.requestedAt, [
+            roomId,
+          ]);
 
           const lastRequestedAt =
             this.#roomThreadsLastRequestedAtByRoom.get(roomId);
@@ -2359,7 +2370,9 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
       updates.subscriptions.deleted
     );
 
-    this.permissionHints.update(updates.permissionHints, updates.requestedAt);
+    this.permissionHints.update(updates.permissionHints, updates.requestedAt, [
+      roomId,
+    ]);
 
     if (lastRequestedAt < updates.requestedAt) {
       // Update the `lastRequestedAt` value for the room to the timestamp returned by the current request

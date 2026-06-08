@@ -131,4 +131,55 @@ describe("Umbrella Store", () => {
 
     expect(permissionHintΣ.get()?.permissions.comments).toBe("none");
   });
+
+  test("scoped permission hint updates clear missing room hints", () => {
+    const store = new UmbrellaStore(NO_CLIENT);
+    const permissionHintΣ = store.permissionHints.getPermissionForRoomΣ("room-a");
+
+    store.permissionHints.update(
+      { "room-a": [Permission.RoomWrite] },
+      new Date("2026-01-01T00:00:00.000Z")
+    );
+    expect(permissionHintΣ.get()?.permissions.comments).toBe("write");
+
+    store.permissionHints.update(
+      {},
+      new Date("2026-01-01T00:00:01.000Z"),
+      ["room-a"]
+    );
+
+    expect(permissionHintΣ.get()?.permissions.comments).toBe("none");
+  });
+
+  test("permission hints do not clear missing rooms from unscoped updates", () => {
+    const store = new UmbrellaStore(NO_CLIENT);
+    const permissionHintΣ = store.permissionHints.getPermissionForRoomΣ("room-a");
+
+    store.permissionHints.update(
+      { "room-a": [Permission.RoomWrite] },
+      new Date("2026-01-01T00:00:00.000Z")
+    );
+
+    store.permissionHints.update({}, new Date("2026-01-01T00:00:01.000Z"));
+
+    expect(permissionHintΣ.get()?.permissions.comments).toBe("write");
+  });
+
+  test("scoped permission hint updates do not clear newer hints", () => {
+    const store = new UmbrellaStore(NO_CLIENT);
+    const permissionHintΣ = store.permissionHints.getPermissionForRoomΣ("room-a");
+
+    store.permissionHints.update(
+      { "room-a": [Permission.RoomWrite] },
+      new Date("2026-01-01T00:00:01.000Z")
+    );
+
+    store.permissionHints.update(
+      {},
+      new Date("2026-01-01T00:00:00.000Z"),
+      ["room-a"]
+    );
+
+    expect(permissionHintΣ.get()?.permissions.comments).toBe("write");
+  });
 });

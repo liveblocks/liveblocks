@@ -167,21 +167,26 @@ describe("auth-manager - secret auth", () => {
     expect(requestCount).toBe(1);
   });
 
-  test("should reject a shared same-room request when the token does not grant the requested resource", async () => {
+  test("should not deduplicate concurrent same-room requests with different permission requirements", async () => {
     let localRequestCount = 0;
     const storageReadToken = makeAccessToken({
       "org1*": [Permission.RoomStorageRead],
     });
+    const roomReadToken = makeAccessToken({
+      "org1*": [Permission.RoomRead],
+    });
 
     server.use(
-      http.post("/api/access-auth-storage-read", () => {
+      http.post("/api/access-auth-storage-then-room-read", () => {
         localRequestCount++;
-        return HttpResponse.json({ token: storageReadToken });
+        return HttpResponse.json({
+          token: localRequestCount === 1 ? storageReadToken : roomReadToken,
+        });
       })
     );
 
     const authManager = createAuthManager({
-      authEndpoint: "/api/access-auth-storage-read",
+      authEndpoint: "/api/access-auth-storage-then-room-read",
     });
 
     const storageAuthValue$ = authManager.getAuthValue({
@@ -195,11 +200,22 @@ describe("auth-manager - secret auth", () => {
       roomId: "org1.room1",
     });
 
-    await expect(storageAuthValue$).resolves.toMatchObject({ type: "secret" });
-    await expect(presenceAuthValue$).rejects.toThrow(
-      "The Liveblocks auth token does not grant the requested permissions."
-    );
-    expect(localRequestCount).toBe(1);
+    const [storageAuthValue, presenceAuthValue] = await Promise.all([
+      storageAuthValue$,
+      presenceAuthValue$,
+    ]);
+
+    expect(storageAuthValue.type).toEqual("secret");
+    expect(presenceAuthValue.type).toEqual("secret");
+    if (
+      storageAuthValue.type !== "secret" ||
+      presenceAuthValue.type !== "secret"
+    ) {
+      throw new Error("Expected secret auth values");
+    }
+    expect(storageAuthValue.token.raw).toEqual(storageReadToken);
+    expect(presenceAuthValue.token.raw).toEqual(roomReadToken);
+    expect(localRequestCount).toBe(2);
   });
 
   test("should use cache when access token has correct permissions", async () => {
