@@ -1,5 +1,7 @@
 ## vNEXT (not yet released)
 
+## v1.6.1
+
 - Fix a `LiveList` divergence after reconnects: when a client re-sends a pending
   `push` op whose node the server had already stored (the original ack got lost
   in the disconnect)
