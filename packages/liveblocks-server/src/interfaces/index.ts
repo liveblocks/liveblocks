@@ -19,7 +19,6 @@ export type { IServerWebSocket } from "./IServerWebSocket";
 export type {
   IReadableSnapshot,
   IStorageDriver,
-  IStorageDriverNodeAPI,
   ListFeedMessagesOptions,
   ListFeedMessagesResult,
   ListFeedsOptions,

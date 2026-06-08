@@ -33,7 +33,7 @@ describe("push intent — server-authoritative append", () => {
   test("keeps the guessed position when it already sorts after the tail (no fix)", () =>
     runWithStorage(
       [rootObj(), list("0:1", "root", "list")],
-      ({ storage, loadedDriver }) => {
+      ({ storage, driver }) => {
         // Empty list; the client guessed THIRD. It already sorts after every
         // existing sibling (there are none), so the server keeps it as-is
         // rather than pointlessly relocating it to the canonical first slot.
@@ -41,7 +41,7 @@ describe("push intent — server-authoritative append", () => {
           createRegisterOp("1:0", "0:1", THIRD, "a", "push"),
         ]);
 
-        expect(loadedDriver.get_child_at("0:1", THIRD)).toBe("1:0");
+        expect(driver.get_child_at("0:1", THIRD)).toBe("1:0");
         if (!res || res.action !== "accepted") {
           throw new Error("expected the push op to be accepted");
         }
@@ -56,14 +56,14 @@ describe("push intent — server-authoritative append", () => {
         list("0:1", "root", "list"),
         register("0:2", "0:1", FIRST, "a"),
       ],
-      ({ storage, loadedDriver }) => {
+      ({ storage, driver }) => {
         // Client knows about "a" and guesses SECOND, which is also where the
         // server appends — no correction needed.
         const [res] = storage.applyOps([
           createRegisterOp("1:0", "0:1", SECOND, "b", "push"),
         ]);
 
-        expect(loadedDriver.get_child_at("0:1", SECOND)).toBe("1:0");
+        expect(driver.get_child_at("0:1", SECOND)).toBe("1:0");
         if (!res || res.action !== "accepted") {
           throw new Error("expected the push op to be accepted");
         }
@@ -79,13 +79,13 @@ describe("push intent — server-authoritative append", () => {
         register("0:2", "0:1", FIRST, "a"),
         register("0:3", "0:1", SECOND, "b"),
       ],
-      ({ storage, loadedDriver }) => {
+      ({ storage, driver }) => {
         // Stale guess of the head position; the server appends after "b".
         const [res] = storage.applyOps([
           createRegisterOp("1:0", "0:1", FIRST, "c", "push"),
         ]);
 
-        expect(loadedDriver.get_child_at("0:1", THIRD)).toBe("1:0");
+        expect(driver.get_child_at("0:1", THIRD)).toBe("1:0");
         if (!res || res.action !== "accepted") {
           throw new Error("expected the push op to be accepted");
         }
@@ -100,7 +100,7 @@ describe("push intent — server-authoritative append", () => {
   test("concurrent pushes all guessing the head settle in arrival order", () =>
     runWithStorage(
       [rootObj(), list("0:1", "root", "list")],
-      ({ storage, loadedDriver }) => {
+      ({ storage, driver }) => {
         // Three independent clients each guess the head position. Applied
         // serially (as the room mutex guarantees), each appends after the
         // previous one — strictly increasing keys, no wedge.
@@ -110,9 +110,9 @@ describe("push intent — server-authoritative append", () => {
           createRegisterOp("3:0", "0:1", FIRST, "c", "push"),
         ]);
 
-        expect(loadedDriver.get_child_at("0:1", FIRST)).toBe("1:0");
-        expect(loadedDriver.get_child_at("0:1", SECOND)).toBe("2:0");
-        expect(loadedDriver.get_child_at("0:1", THIRD)).toBe("3:0");
+        expect(driver.get_child_at("0:1", FIRST)).toBe("1:0");
+        expect(driver.get_child_at("0:1", SECOND)).toBe("2:0");
+        expect(driver.get_child_at("0:1", THIRD)).toBe("3:0");
       }
     ));
 });

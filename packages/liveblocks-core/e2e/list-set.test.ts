@@ -215,7 +215,7 @@ test(
       list: new LiveList(["a"]),
     },
     async ({ root1, root2, control, assert }) => {
-      // Client A replaces "a" with "X"
+      // Client A replaces "a" with "🟢"
       root1.get("list").set(0, "🟢");
 
       // Client B simultaneously deletes "a"
@@ -245,8 +245,6 @@ test(
     },
     async ({ root1, root2, control, assert }) => {
       // Client A changes "a" to "🟢" and moves it after "b"
-      // This is done in a batch to ensure the default throttling won't
-      // send the second operation in the message queue
       root1.get("list").set(0, "🟢");
       root1.get("list").move(0, 1);
       assert(

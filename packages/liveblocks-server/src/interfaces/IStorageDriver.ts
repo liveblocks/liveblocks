@@ -27,7 +27,6 @@ import type {
 } from "@liveblocks/core";
 
 import type { YDocId } from "~/decoders/y-types";
-import type { Logger } from "~/lib/Logger";
 import type { Feed, FeedMessage, jstring, LeasedSession, Pos } from "~/types";
 
 /**
@@ -108,14 +107,24 @@ export interface IReadableSnapshot {
 }
 
 /**
- * CRDT node storage with synchronous reads and async persistence.
+ * Persistent storage backend for Liveblocks room data: CRDT nodes, metadata,
+ * actor IDs, and Yjs updates.
+ *
+ * The node methods will initialize lazily (but synchronously): on first node
+ * access, the driver loads/repairs its node state internally, at most once per
+ * instance. DANGEROUSLY_reset_nodes() invalidates that state, after which the
+ * next access transparently re-runs the load/repair sanitization.
  *
  * INVARIANTS:
  * - A virtual root node `{type: OBJECT, data: {}}` always exists.
  * - All non-root nodes have parentId and parentKey forming a tree.
- * - Reads reflect writes immediately, before the returned Promise resolves.
+ * - Reads reflect writes immediately.
  */
-export interface IStorageDriverNodeAPI {
+export interface IStorageDriver {
+  // ---------------------------------------------------------------------------
+  // Node APIs
+  // ---------------------------------------------------------------------------
+
   /**
    * Return the node with the given id, or undefined if no such node exists.
    * Must always return a valid root node for id="root", even if empty.
@@ -232,35 +241,20 @@ export interface IStorageDriverNodeAPI {
    * access.
    */
   get_snapshot(lowMemory?: boolean): IReadableSnapshot;
-}
-
-/**
- * Persistent storage backend for Liveblocks room data: CRDT nodes, metadata,
- * actor IDs, and Yjs updates. All methods may be async.
- */
-export interface IStorageDriver {
-  // ---------------------------------------------------------------------------
-  // Node APIs
-  // ---------------------------------------------------------------------------
 
   /**
-   * Load all nodes from storage, validate/repair corruptions (orphans, cycles,
-   * conflicting siblings), and return an IStorageDriverNodeAPI for operations.
-   *
-   * After DANGEROUSLY_reset_nodes(), any previously-loaded instance is
-   * invalid—must call this again to get a fresh one.
+   * Release any lazily-initialized in-memory node state (caches/indexes
+   * built on first node access), freeing it up for garbage collection.
+   * Persisted data is NOT touched — the next node access transparently
+   * re-initializes. (Contrast with DANGEROUSLY_reset_nodes(), which deletes
+   * the actual data.)
    */
-  // XXXX Now that this method has become sync, we could rip it out entirely and
-  // just move the methods from the IStorageDriverNodeAPI interface up to
-  // IStorageDriver. The main reason this interface existed was to support the
-  // KV case which was asynchronous. None of our remaining implementations are
-  // async any longer, so... YAGNI!
-  load_nodes_api(logger: Logger): IStorageDriverNodeAPI;
+  reinitialize(): void;
 
   /**
    * Delete all CRDT nodes and replace them with the given document.
    * Does NOT affect metadata, actor IDs, or Yjs updates.
-   * Invalidates any previously-loaded IStorageDriverNodeAPI.
+   * Invalidates the driver's internally loaded node state.
    *
    * Pass `{ liveblocksType: "LiveObject", data: {} }` to reset to an empty root.
    */

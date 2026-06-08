@@ -20,6 +20,7 @@ import os from "node:os";
 import stdPath from "node:path";
 
 import type { NodeMap } from "@liveblocks/core";
+import { CrdtType } from "@liveblocks/core";
 import { Database } from "bun:sqlite";
 import { describe } from "bun:test";
 
@@ -27,15 +28,28 @@ import { BunSQLiteDriver } from "~/dev-server/db/BunSQLiteDriver";
 
 import { generateFullTestSuite } from "./_generateFullTestSuite";
 
-/** Directly write raw nodes to Bun SQLite, bypassing driver */
+/** Directly insert raw nodes into SQLite, bypassing driver constraints */
 function initBunSQLite(dbPath: string, rawNodes: NodeMap): void {
   const db = new Database(dbPath);
-  for (const [nodeId, node] of rawNodes) {
-    db.run("INSERT INTO nodes (node_id, crdt_json) VALUES (?, ?)", [
-      nodeId,
-      JSON.stringify(node),
-    ]);
+
+  // Disable FK constraints during test setup to allow inserting nodes in any
+  // order, or with missing parents (to test recovery scenarios)
+  db.run("PRAGMA foreign_keys = OFF");
+
+  for (const [id, node] of rawNodes) {
+    const parentId = id === "root" ? null : (node.parentId ?? null);
+    const parentKey = id === "root" ? null : (node.parentKey ?? null);
+    const jdata =
+      node.type === CrdtType.OBJECT || node.type === CrdtType.REGISTER
+        ? JSON.stringify(node.data)
+        : null;
+
+    db.run(
+      "INSERT INTO nodes (id, type, parent_id, parent_key, jdata) VALUES (?, ?, ?, ?, ?)",
+      [id, node.type, parentId, parentKey, jdata]
+    );
   }
+
   db.close();
 }
 

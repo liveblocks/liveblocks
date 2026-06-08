@@ -51,7 +51,7 @@ describe("Storage (model-based test)", () => {
             runWithStorage(initialNodes, ({ storage: real }) => {
               selfCheck(real);
 
-              const model = new Model(real.loadedDriver.iter_nodes());
+              const model = new Model(real.driver.iter_nodes());
 
               // Tries running randomized sequences of commands (think calling
               // "applyOp(<random op>)" a million times)

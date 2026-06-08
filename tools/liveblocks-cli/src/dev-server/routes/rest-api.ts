@@ -269,7 +269,7 @@ zen.route("DELETE /v2/rooms/<roomId>", async ({ p }) => {
 /**
  * Get storage for a room
  */
-zen.route("GET /v2/rooms/<roomId>/storage", async ({ url, p }) => {
+zen.route("GET /v2/rooms/<roomId>/storage", ({ url, p }) => {
   if (!Rooms.getRoom(p.roomId)) {
     throw ROOM_NOT_FOUND(p.roomId);
   }
@@ -279,9 +279,8 @@ zen.route("GET /v2/rooms/<roomId>/storage", async ({ url, p }) => {
     SerializationFormat.PlainLson;
 
   const room = Rooms.getRoomInstance(p.roomId);
-  await room.load();
 
-  const snapshot = room.storage.loadedDriver.get_snapshot(false);
+  const snapshot = room.storage.driver.get_snapshot(false);
   const storage =
     format === SerializationFormat.LossyJson
       ? snapshotToLossyJson_eager(snapshot)
@@ -307,16 +306,15 @@ zen.route(
     data: jsonObjectYolo,
   }).refineType<PlainLsonObject>(),
 
-  async ({ p, body }) => {
+  ({ p, body }) => {
     if (!Rooms.getRoom(p.roomId)) {
       throw ROOM_NOT_FOUND(p.roomId);
     }
 
     const room = Rooms.getRoomInstance(p.roomId);
-    await room.load();
 
     // Check if storage already has data
-    const snapshot = room.storage.loadedDriver.get_snapshot(false);
+    const snapshot = room.storage.driver.get_snapshot(false);
     const existingStorage = snapshotToPlainLson_eager(snapshot);
 
     if (Object.keys(existingStorage.data).length > 0) {
@@ -348,13 +346,12 @@ zen.route(
 /**
  * Delete storage for a room (reset to empty)
  */
-zen.route("DELETE /v2/rooms/<roomId>/storage", async ({ p }) => {
+zen.route("DELETE /v2/rooms/<roomId>/storage", ({ p }) => {
   if (!Rooms.getRoom(p.roomId)) {
     throw ROOM_NOT_FOUND(p.roomId);
   }
 
   const room = Rooms.getRoomInstance(p.roomId);
-  await room.load();
 
   const emptyStorage: PlainLsonObject = {
     liveblocksType: "LiveObject",
@@ -366,20 +363,19 @@ zen.route("DELETE /v2/rooms/<roomId>/storage", async ({ p }) => {
   return new Response(null, { status: 204 });
 });
 
-zen.route("GET /v2/rooms/<roomId>/ydoc", async ({ url, p }) => {
+zen.route("GET /v2/rooms/<roomId>/ydoc", ({ url, p }) => {
   if (!Rooms.getRoom(p.roomId)) {
     throw ROOM_NOT_FOUND(p.roomId);
   }
 
   const room = Rooms.getRoomInstance(p.roomId);
-  await room.load();
 
   const key = url.searchParams.get("key") ?? "";
   const type = url.searchParams.get("type") ?? "";
   const ydocId = (url.searchParams.get("guid") ?? ROOT_YDOC_ID) as YDocId;
   const formatting = url.searchParams.get("formatting") !== null;
   const logger = new Logger(new ConsoleTarget("warning"));
-  const doc = await room.yjsStorage.getYDoc(logger, ydocId);
+  const doc = room.yjsStorage.getYDoc(logger, ydocId);
   const result = yDocToJson(doc, key, formatting, type);
 
   return new Response(JSON.stringify(result), {
@@ -408,7 +404,6 @@ zen.route("PUT /v2/rooms/<roomId>/ydoc", async ({ req, url, p }) => {
   }
 
   const room = Rooms.getRoomInstance(p.roomId);
-  await room.load();
 
   const buffer: ArrayBuffer = await req.arrayBuffer();
   const update = Base64.fromUint8Array(new Uint8Array(buffer));
@@ -463,19 +458,18 @@ zen.route("PUT /v2/rooms/<roomId>/ydoc", async ({ req, url, p }) => {
   }
 });
 
-zen.route("GET /v2/rooms/<roomId>/ydoc-binary", async ({ url, p }) => {
+zen.route("GET /v2/rooms/<roomId>/ydoc-binary", ({ url, p }) => {
   if (!Rooms.getRoom(p.roomId)) {
     throw ROOM_NOT_FOUND(p.roomId);
   }
 
   const room = Rooms.getRoomInstance(p.roomId);
-  await room.load();
 
   const ydocId = (url.searchParams.get("guid") ?? ROOT_YDOC_ID) as YDocId;
   const encoder = url.searchParams.get("encoder");
 
   const logger = new Logger(new ConsoleTarget("warning"));
-  const doc = await room.yjsStorage.getYDoc(logger, ydocId);
+  const doc = room.yjsStorage.getYDoc(logger, ydocId);
   const update =
     encoder === "v2"
       ? Y.encodeStateAsUpdateV2(doc)
@@ -633,16 +627,15 @@ zen.route("POST /v2/rooms/<roomId>/feeds/<feedId>/messages", ({ p }) => {
 zen.route(
   "POST /v2/rooms/<roomId>/request-storage-mutation",
 
-  async ({ p }) => {
+  ({ p }) => {
     if (!Rooms.getRoom(p.roomId)) {
       throw ROOM_NOT_FOUND(p.roomId);
     }
 
     const room = Rooms.getRoomInstance(p.roomId);
-    await room.load();
 
     const actor = room.getNextActor();
-    const snapshot = room.storage.loadedDriver.get_snapshot(false);
+    const snapshot = room.storage.driver.get_snapshot(false);
     return ndjsonStream(
       chain<Json>([{ actor }], snapshotToNodeStream(snapshot))
     );
@@ -660,7 +653,6 @@ zen.route(
     }
 
     const room = Rooms.getRoomInstance(p.roomId);
-    await room.load();
 
     const [session, capturedServerMsgs] =
       room.createBackendSession_experimental();

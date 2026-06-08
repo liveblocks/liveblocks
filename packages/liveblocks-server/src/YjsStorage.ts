@@ -15,6 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+import { createHash } from "node:crypto";
+
 import { Base64 } from "js-base64";
 import { nanoid } from "nanoid";
 import * as Y from "yjs";
@@ -34,9 +36,15 @@ export class YjsStorage {
   private readonly driver: IStorageDriver;
   private readonly updateCountThreshold: number;
 
-  private readonly doc: Y.Doc = new Y.Doc(); // the root document
+  /**
+   * The root Y.Doc instance, which may not have been hydrated from storage
+   * yet. Use getRootDoc() instead, which lazily hydrates it on first access —
+   * only touch this field directly when the unhydrated instance is fine
+   * (e.g. identity checks, subdoc traversal).
+   */
+  private readonly rawRootDoc: Y.Doc = new Y.Doc();
   private readonly lastSnapshotById = new Map<YDocId, Y.Snapshot>();
-  private readonly initPromisesById: Map<YDocId, Y.Doc> = new Map();
+  private readonly docsById: Map<YDocId, Y.Doc> = new Map();
   private readonly storedKeysById: Map<YDocId, string[]> = new Map();
 
   constructor(
@@ -45,7 +53,7 @@ export class YjsStorage {
   ) {
     this.driver = driver;
     this.updateCountThreshold = updateCountThreshold;
-    this.doc.on("subdocs", ({ removed }) => {
+    this.rawRootDoc.on("subdocs", ({ removed }) => {
       removed.forEach((subdoc: Y.Doc) => {
         subdoc.destroy(); // will remove listeners
       });
@@ -56,9 +64,33 @@ export class YjsStorage {
   // Public API
   // ------------------------------------------------------------------------------------
 
-  // eslint-disable-next-line @typescript-eslint/require-await
-  public async getYDoc(logger: Logger, docId: YDocId): Promise<Y.Doc> {
-    return this.loadDocByIdIfNotAlreadyLoaded(logger, docId);
+  public getYDoc(logger: Logger, docId: YDocId): Y.Doc {
+    if (docId !== ROOT_YDOC_ID) {
+      // Subdocs hang off the root doc, so make sure that one is loaded first
+      // (otherwise the subdoc lookup below would come up empty)
+      this.getRootDoc(logger);
+    }
+
+    let loaded = this.docsById.get(docId);
+    let doc =
+      docId === ROOT_YDOC_ID ? this.rawRootDoc : this.findYSubdocByGuid(docId);
+    if (!doc) {
+      // An API call can load a subdoc without the root doc being loaded, we account for that by just instantiating a doc here.
+      doc = new Y.Doc();
+    }
+    if (loaded === undefined) {
+      loaded = this._loadYDocFromDurableStorage(doc, docId);
+      this.docsById.set(docId, loaded);
+    }
+    return loaded;
+  }
+
+  /**
+   * Returns the root Y.Doc, lazily loading it from storage first if it
+   * hasn't been loaded yet during this instance's lifetime.
+   */
+  private getRootDoc(logger: Logger): Y.Doc {
+    return this.getYDoc(logger, ROOT_YDOC_ID);
   }
 
   /**
@@ -67,30 +99,27 @@ export class YjsStorage {
    * @param stateVector a base64 encoded target state vector created by running Y.encodeStateVector(Doc) on the client
    * @returns a base64 encoded array of YJS updates
    */
-  public async getYDocUpdate(
+  public getYDocUpdate(
     logger: Logger,
     stateVector: string = "",
     guid?: Guid,
     isV2: boolean = false
-  ): Promise<string | null> {
-    const update = await this.getYDocUpdateBinary(
-      logger,
-      stateVector,
-      guid,
-      isV2
-    );
+  ): string | null {
+    const update = this.getYDocUpdateBinary(logger, stateVector, guid, isV2);
     if (!update) return null;
     return Base64.fromUint8Array(update);
   }
 
-  public async getYDocUpdateBinary(
+  public getYDocUpdateBinary(
     logger: Logger,
     stateVector: string = "",
     guid?: Guid,
     isV2: boolean = false
-  ): Promise<Uint8Array<ArrayBuffer> | null> {
+  ): Uint8Array<ArrayBuffer> | null {
     const doc =
-      guid !== undefined ? await this.getYSubdoc(logger, guid) : this.doc;
+      guid !== undefined
+        ? this.getYSubdoc(logger, guid)
+        : this.getRootDoc(logger);
     if (!doc) {
       return null;
     }
@@ -110,29 +139,25 @@ export class YjsStorage {
     return Y.encodeStateAsUpdate(doc, encodedTargetVector);
   }
 
-  public async getYStateVector(
-    logger: Logger,
-    guid?: Guid
-  ): Promise<string | null> {
+  public getYStateVector(logger: Logger, guid?: Guid): string | null {
     const doc =
-      guid !== undefined ? await this.getYSubdoc(logger, guid) : this.doc;
+      guid !== undefined
+        ? this.getYSubdoc(logger, guid)
+        : this.getRootDoc(logger);
     if (!doc) {
       return null;
     }
     return Base64.fromUint8Array(Y.encodeStateVector(doc));
   }
 
-  public async getSnapshotHash(
+  public getSnapshotHash(
     logger: Logger,
-    options: {
-      guid?: Guid;
-      isV2?: boolean;
-    }
-  ): Promise<string | null> {
+    options: { guid?: Guid; isV2?: boolean }
+  ): string | null {
     const doc =
       options.guid !== undefined
-        ? await this.getYSubdoc(logger, options.guid)
-        : this.doc;
+        ? this.getYSubdoc(logger, options.guid)
+        : this.getRootDoc(logger);
     if (!doc) {
       return null;
     }
@@ -146,14 +171,16 @@ export class YjsStorage {
    *   isUpdated: true if the update had an effect on the YDoc
    *   snapshotHash: the hash of the new snapshot
    */
-  public async addYDocUpdate(
+  public addYDocUpdate(
     logger: Logger,
     update: string | Uint8Array,
     guid?: Guid,
     isV2?: boolean
-  ): Promise<{ isUpdated: boolean; snapshotHash: string }> {
+  ): { isUpdated: boolean; snapshotHash: string } {
     const doc =
-      guid !== undefined ? await this.getYSubdoc(logger, guid) : this.doc;
+      guid !== undefined
+        ? this.getYSubdoc(logger, guid)
+        : this.getRootDoc(logger);
     if (!doc) {
       throw new Error(`YDoc with guid ${guid} not found`);
     }
@@ -175,7 +202,7 @@ export class YjsStorage {
 
       return {
         isUpdated: updated,
-        snapshotHash: await this.calculateSnapshotHash(afterSnapshot, { isV2 }),
+        snapshotHash: this.calculateSnapshotHash(afterSnapshot, { isV2 }),
       };
     } catch (e) {
       // The only reason this would happen is if a user would send bad data
@@ -186,40 +213,6 @@ export class YjsStorage {
     }
   }
 
-  public loadDocByIdIfNotAlreadyLoaded(logger: Logger, docId: YDocId): Y.Doc {
-    let loaded = this.initPromisesById.get(docId);
-    let doc = docId === ROOT_YDOC_ID ? this.doc : this.findYSubdocByGuid(docId);
-    if (!doc) {
-      // An API call can load a subdoc without the root doc (this._doc) being loaded, we account for that by just instantiating a doc here.
-      doc = new Y.Doc();
-    }
-    if (loaded === undefined) {
-      loaded = this._loadYDocFromDurableStorage(logger, doc, docId);
-      this.initPromisesById.set(docId, loaded);
-    }
-    return loaded;
-  }
-
-  // XXXX We should now be able to remove this asyncness here too
-  // eslint-disable-next-line @typescript-eslint/require-await
-  public async load(logger: Logger): Promise<void> {
-    this.loadDocByIdIfNotAlreadyLoaded(logger, ROOT_YDOC_ID);
-  }
-
-  /**
-   * Unloads the Yjs documents from memory.
-   */
-  public unload(): void {
-    // YYY Implement this later!
-    // YYY We're currently never unloading data read into memory, but let's
-    // sync this with the .unload() method from Storage, so there will not be
-    // any surprises here later!
-    //
-    // this.doc = new Y.Doc();
-    // this.initPromisesById.clear();
-    // this.lastSnapshotById.clear();
-  }
-
   // ------------------------------------------------------------------------------------
   // Private APIs
   // ------------------------------------------------------------------------------------
@@ -227,7 +220,7 @@ export class YjsStorage {
   // NOTE: We could instead store the hash of snapshot instead of the whole snapshot to optimize memory usage.
   private _getOrPutLastSnapshot(doc: Y.Doc): Y.Snapshot {
     const docId: YDocId =
-      doc.guid === this.doc.guid ? ROOT_YDOC_ID : (doc.guid as Guid);
+      doc.guid === this.rawRootDoc.guid ? ROOT_YDOC_ID : (doc.guid as Guid);
     const snapshot = this.lastSnapshotById.get(docId);
     if (snapshot) {
       return snapshot;
@@ -238,7 +231,7 @@ export class YjsStorage {
   // NOTE: We could instead store the hash of snapshot instead of the whole snapshot to optimize memory usage.
   private _putLastSnapshot(doc: Y.Doc): Y.Snapshot {
     const docId: YDocId =
-      doc.guid === this.doc.guid ? ROOT_YDOC_ID : (doc.guid as Guid);
+      doc.guid === this.rawRootDoc.guid ? ROOT_YDOC_ID : (doc.guid as Guid);
     const snapshot = Y.snapshot(doc);
     this.lastSnapshotById.set(docId, snapshot);
     return snapshot;
@@ -258,11 +251,7 @@ export class YjsStorage {
     this.storedKeysById.set(docId, [newKey]);
   };
 
-  private _loadYDocFromDurableStorage = (
-    _logger: Logger,
-    doc: Y.Doc,
-    docId: YDocId
-  ): Y.Doc => {
+  private _loadYDocFromDurableStorage = (doc: Y.Doc, docId: YDocId): Y.Doc => {
     const docUpdates = Object.fromEntries(this.driver.iter_y_updates(docId));
     const updates = Object.values(docUpdates);
     const beforeSize = updates.reduce((acc, update) => acc + update.length, 0);
@@ -284,7 +273,7 @@ export class YjsStorage {
   };
 
   private findYSubdocByGuid(guid: Guid): Y.Doc | null {
-    for (const subdoc of this.doc.getSubdocs()) {
+    for (const subdoc of this.rawRootDoc.getSubdocs()) {
       if (subdoc.guid === guid) {
         return subdoc;
       }
@@ -292,28 +281,26 @@ export class YjsStorage {
     return null;
   }
 
-  private async calculateSnapshotHash(
+  private calculateSnapshotHash(
     snapshot: Y.Snapshot,
     { isV2 }: { isV2?: boolean }
-  ): Promise<string> {
+  ): string {
     const encodedSnapshot = isV2
       ? Y.encodeSnapshotV2(snapshot)
       : Y.encodeSnapshot(snapshot);
-    return Base64.fromUint8Array(
-      new Uint8Array(
-        await crypto.subtle.digest("SHA-256", new Uint8Array(encodedSnapshot))
-      )
-    );
+    return createHash("sha256").update(encodedSnapshot).digest("base64");
   }
 
   // gets a subdoc, it will be loaded if not already loaded
-  // eslint-disable-next-line @typescript-eslint/require-await
-  private async getYSubdoc(logger: Logger, guid: Guid): Promise<Y.Doc | null> {
+  private getYSubdoc(logger: Logger, guid: Guid): Y.Doc | null {
+    // Subdocs hang off the root doc, so make sure that one is loaded first
+    this.getRootDoc(logger);
+
     const subdoc = this.findYSubdocByGuid(guid);
     if (!subdoc) {
       return null;
     }
-    this.loadDocByIdIfNotAlreadyLoaded(logger, guid);
+    this.getYDoc(logger, guid);
     return subdoc;
   }
 
@@ -327,7 +314,7 @@ export class YjsStorage {
     // this will be easy for sqlite drivers, but not for the KV driver
     const v1update = isV2 ? Y.convertUpdateFormatV2ToV1(update) : update;
     const docId: YDocId =
-      doc.guid === this.doc.guid ? ROOT_YDOC_ID : (doc.guid as Guid);
+      doc.guid === this.rawRootDoc.guid ? ROOT_YDOC_ID : (doc.guid as Guid);
 
     const storedKeys = this.storedKeysById.get(docId);
 

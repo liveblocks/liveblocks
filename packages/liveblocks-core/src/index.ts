@@ -98,6 +98,7 @@ export type {
   LsonObject,
   ToJson,
 } from "./crdts/Lson";
+export { deepLiveify } from "./crdts/reconcile";
 export type {
   LiveListUpdate,
   LiveMapUpdate,
