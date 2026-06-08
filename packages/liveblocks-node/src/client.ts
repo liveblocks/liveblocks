@@ -88,12 +88,12 @@ import type {
   RoomPermission,
   RoomPermissionInput,
   RoomPermissionObject,
-} from "./room-permissions";
+} from "@liveblocks/core";
 import {
   normalizeRoomAccessesInput,
   normalizeRoomAccessesUpdateInput,
   normalizeRoomPermissionInput,
-} from "./room-permissions";
+} from "@liveblocks/core";
 import { Session } from "./Session";
 import {
   assertNonEmpty,

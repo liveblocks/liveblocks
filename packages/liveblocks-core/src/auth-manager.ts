@@ -18,7 +18,10 @@ import type {
   RoomFeature,
   RoomFeatures,
 } from "./permissions";
-import { resolveRoomFeaturePermissions } from "./permissions";
+import {
+  resolveFullRoomFeatures,
+  resolveRoomFeaturePermissions,
+} from "./permissions";
 import type { Polyfills } from "./room";
 
 export type AuthValue =
@@ -233,9 +236,8 @@ type CachedToken = {
 
 type AuthTokenFeaturePermissions = Array<{
   resource: string;
-  features: RoomFeatures;
-  explicitFeatures: ReadonlySet<Exclude<RoomFeature, "creation" | "personal">>;
   hasDefaultPermission: boolean;
+  features: Partial<RoomFeatures>;
 }>;
 
 function getAuthRequestKey(request: AuthRequest): string | undefined {
@@ -261,16 +263,10 @@ function getAuthTokenFeaturePermissions(
   permissions: LiveblocksPermissions
 ): AuthTokenFeaturePermissions {
   return Object.entries(permissions)
-    .map(([resource, scopes]) => {
-      const resolved = resolveRoomFeaturePermissions(scopes);
-      return {
-        resource,
-        features: resolved.features,
-        explicitFeatures: resolved.explicitFeatures,
-        hasDefaultPermission:
-          scopes.includes("room:read") || scopes.includes("room:write"),
-      };
-    })
+    .map(([resource, scopes]) => ({
+      resource,
+      ...resolveRoomFeaturePermissions(scopes),
+    }))
     // Less-specific wildcard patterns first, so exact room IDs can override them.
     .sort(compareResources);
 }
@@ -331,7 +327,10 @@ function accessTokenSatisfiesPersonalRequest(
   return permissions.some(
     (permission) =>
       permission.resource.includes("*") &&
-      hasRequiredAccess(permission.features.comments, "read")
+      hasRequiredAccess(
+        resolveFullRoomFeatures(permission).comments,
+        "read"
+      )
   );
 }
 
@@ -361,14 +360,11 @@ function getFeaturesForRoom(
   // entries patch individual features without resetting the rest.
   for (const permission of matchedPermissions) {
     if (permission.hasDefaultPermission) {
-      features = permission.features;
+      features = resolveFullRoomFeatures(permission);
       continue;
     }
 
-    features = { ...features };
-    for (const feature of permission.explicitFeatures) {
-      features[feature] = permission.features[feature];
-    }
+    features = { ...features, ...permission.features };
   }
 
   return features;

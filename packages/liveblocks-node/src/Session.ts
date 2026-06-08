@@ -7,14 +7,11 @@ import type {
 import { Permission, url } from "@liveblocks/core";
 
 import type { AuthResponse } from "./client";
-import type {
-  RoomPermissionInput,
-  RoomPermissionString,
-} from "./room-permissions";
+import type { RoomPermissionInput } from "@liveblocks/core";
 import {
   getRoomPermissionConflicts,
   normalizeRoomPermissionInput,
-} from "./room-permissions";
+} from "@liveblocks/core";
 import { assertNonEmpty, normalizeStatusCode } from "./utils";
 
 const MAX_PERMS_PER_SET = 10;
@@ -79,7 +76,7 @@ export class Session {
   /** Only used as a hint to produce better error messages. */
   #localDev: boolean;
   #sealed = false;
-  readonly #permissions: Map<string, Set<RoomPermissionString>> = new Map();
+  readonly #permissions: Map<string, Set<Permission>> = new Map();
 
   /** @internal */
   constructor(
@@ -98,7 +95,7 @@ export class Session {
     this.#localDev = localDev ?? false;
   }
 
-  #getOrCreate(roomId: string): Set<RoomPermissionString> {
+  #getOrCreate(roomId: string): Set<Permission> {
     if (this.#sealed) {
       throw new Error("You can no longer change these permissions.");
     }
@@ -113,7 +110,7 @@ export class Session {
         );
       }
 
-      perms = new Set<RoomPermissionString>();
+      perms = new Set<Permission>();
       this.#permissions.set(roomId, perms);
       return perms;
     }
