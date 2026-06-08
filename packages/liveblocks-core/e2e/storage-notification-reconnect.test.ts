@@ -17,9 +17,10 @@
  *
  * NOTE ON CONTROL KEYS: several LiveObject tests carry an unchanged scalar key
  * (e.g. `keep`) that the mutation never touches. The reconnect path routes a
- * snapshot through `getTreesDiffOperations`, which re-sends the *full*
- * UPDATE_OBJECT data — so an unchanged key can be spuriously re-notified. The
- * control key is what makes that bug observable; do not remove it.
+ * snapshot through `getTreesDiffOperations`, whose UPDATE_OBJECT ops must
+ * carry only the keys that actually changed — a full-data re-send would
+ * spuriously re-notify the unchanged key. The control key is what makes that
+ * observable; do not remove it.
  */
 import { expect, onTestFinished, test } from "vitest";
 import WebSocket from "ws";
@@ -483,11 +484,10 @@ test("LiveObject: nested-object deletes fire equivalent notifications online and
   ).toEqual({ x: 1 });
 });
 
-// Baseline (passes today): when the transitioned key is the object's *only*
-// scalar, moving it into a child node empties the object's `data`, so the
-// snapshot diff produces an UPDATE_OBJECT with empty data — nothing left for
-// the full-data re-send to spuriously re-notify. Contrast with the next test,
-// which adds a surviving scalar sibling and exposes that exact leak.
+// Baseline: when the transitioned key is the object's *only* scalar, moving
+// it into a child node empties the object's `data`, so the snapshot diff has
+// no other scalar keys to consider. The next test adds a surviving scalar
+// sibling, which the diff must not spuriously re-notify.
 test("LiveObject: scalar→nested-object transition (sole key) fires equivalent notifications online and on reconnect", async () => {
   const { online, reconnect } = await bothPhases(
     () => ({
@@ -573,9 +573,8 @@ test("LiveObject: nested-object→scalar transition fires equivalent notificatio
 //   - the online path saw the intermediate churn while the reconnect path saw
 //     only the collapsed net result.
 //
-// Unlike the bug-spec tests above, these are expected to PASS on the current
-// path — they lock in the collapse semantics so the reconcile refactor can't
-// regress them.
+// These lock in the collapse semantics so the reconcile refactor can't regress
+// them.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const insertedItems = (deltas: ListUpdate["updates"]): unknown[] =>

@@ -91,7 +91,7 @@ test(
     // This test verifies that undo/redo operations maintain consistency across clients
     // when operations are performed on different clients in a distributed environment.
     async ({ root1, root2, room1, room2, control, assert }) => {
-      // Client A does a move operation: move C (index 2) to position 0
+      // Client A moves 🟢 (index 2) to position 0; Client B deletes it
       root1.get("list").move(2, 0);
       root2.get("list").delete(2);
       assert(
