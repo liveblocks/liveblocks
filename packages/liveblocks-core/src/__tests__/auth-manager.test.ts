@@ -347,25 +347,23 @@ describe("auth-manager - secret auth", () => {
     expect(localRequestCount).toBe(2);
   });
 
-  test("should not use cached exact room access token for user APIs", async () => {
+  test("should use cached exact room access token for personal APIs", async () => {
     let localRequestCount = 0;
     const exactRoomToken = makeAccessToken({
       "org1.room1": [Permission.RoomWrite],
     });
-    const emptyPermissionToken = makeAccessToken({});
 
     server.use(
-      http.post("/api/access-auth-exact-room-then-empty", () => {
+      http.post("/api/access-auth-exact-room", () => {
         localRequestCount++;
         return HttpResponse.json({
-          token:
-            localRequestCount === 1 ? exactRoomToken : emptyPermissionToken,
+          token: exactRoomToken,
         });
       })
     );
 
     const authManager = createAuthManager({
-      authEndpoint: "/api/access-auth-exact-room-then-empty",
+      authEndpoint: "/api/access-auth-exact-room",
     });
 
     const roomAuthValue = (await authManager.getAuthValue({
@@ -379,8 +377,8 @@ describe("auth-manager - secret auth", () => {
     })) as { type: "secret"; token: ParsedAuthToken };
 
     expect(roomAuthValue.token.raw).toEqual(exactRoomToken);
-    expect(userAuthValue.token.raw).toEqual(emptyPermissionToken);
-    expect(localRequestCount).toBe(2);
+    expect(userAuthValue.token.raw).toEqual(exactRoomToken);
+    expect(localRequestCount).toBe(1);
   });
 
   test("when no roomId, should use cache when access token has correct permissions", async () => {
