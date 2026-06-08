@@ -1,32 +1,32 @@
-import {
-  ACCESS_RANKS,
-  DEFAULT_PERMISSION_RESOURCE,
-  Permission,
-  RESOURCE_PERMISSIONS,
-  ROOM_PERMISSION_RESOURCES,
-  resolveFullPermissionCapabilities,
-  resolvePermissionCapabilities,
-} from "./protocol/Permissions";
 import type {
   AccessLevel,
   PermissionCapabilities,
   PermissionResources,
 } from "./protocol/Permissions";
-
-export {
+import {
+  ACCESS_RANKS,
+  DEFAULT_PERMISSION_RESOURCE,
   Permission,
-  hasPermissionCapability,
-  hasPermissionCapabilityAccess,
-  permissionCapabilitiesFromScopes,
   resolveFullPermissionCapabilities,
   resolvePermissionCapabilities,
+  RESOURCE_PERMISSIONS,
+  ROOM_PERMISSION_RESOURCES,
 } from "./protocol/Permissions";
+
 export type {
   AccessLevel,
   PermissionCapabilities,
   PermissionResources,
   RequiredAccessLevel,
   ResolvedPermissionCapabilities,
+} from "./protocol/Permissions";
+export {
+  hasPermissionCapability,
+  hasPermissionCapabilityAccess,
+  Permission,
+  permissionCapabilitiesFromScopes,
+  resolveFullPermissionCapabilities,
+  resolvePermissionCapabilities,
 } from "./protocol/Permissions";
 
 export type RoomPermissionScopes = {

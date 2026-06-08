@@ -12,10 +12,10 @@ import {
   type MentionData,
 } from "@liveblocks/core";
 import {
-  useHasPermissionCapability,
   useAddRoomCommentReaction,
   useDeleteRoomComment,
   useEditRoomComment,
+  useHasPermissionCapability,
   useRemoveRoomCommentReaction,
   useRoomAttachmentUrl,
 } from "@liveblocks/react/_private";

@@ -12,10 +12,10 @@ import type {
 import { assertNever, MENTION_CHARACTER } from "@liveblocks/core";
 import { useRoom } from "@liveblocks/react";
 import {
-  useHasPermissionCapability,
   useCreateRoomComment,
   useCreateRoomThread,
   useEditRoomComment,
+  useHasPermissionCapability,
   useLayoutEffect,
   useResolveMentionSuggestions,
 } from "@liveblocks/react/_private";
@@ -31,13 +31,7 @@ import type {
   RefAttributes,
   SyntheticEvent,
 } from "react";
-import {
-  createContext,
-  forwardRef,
-  useCallback,
-  useMemo,
-  useRef,
-} from "react";
+import { createContext, forwardRef, useCallback, useMemo, useRef } from "react";
 
 import { useLiveblocksUiConfig } from "../config";
 import { FLOATING_ELEMENT_SIDE_OFFSET } from "../constants";
