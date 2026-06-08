@@ -36,8 +36,7 @@ describe("permissionCapabilitiesFromScopes", () => {
       permissionCapabilitiesFromScopes([
         Permission.RoomWrite,
         Permission.RoomStorageNone,
-      ])
-        .storage
+      ]).storage
     ).toBe("none");
     expect(
       permissionCapabilitiesFromScopes([
@@ -47,13 +46,13 @@ describe("permissionCapabilitiesFromScopes", () => {
     ).toBe("none");
   });
 
-  test("explicit none overrides same-resource write", () => {
+  test("uses the strongest same-resource access", () => {
     expect(
       permissionCapabilitiesFromScopes([
         Permission.RoomCommentsWrite,
         Permission.RoomCommentsNone,
       ]).comments
-    ).toBe("none");
+    ).toBe("write");
   });
 
   test("uses the strongest non-none explicit resource access", () => {
@@ -69,9 +68,7 @@ describe("permissionCapabilitiesFromScopes", () => {
     const scopes = [Permission.RoomWrite, Permission.RoomCommentsRead];
 
     expect(hasPermissionCapability(scopes, "comments", "read")).toBe(true);
-    expect(hasPermissionCapability(scopes, "comments", "write")).toBe(
-      false
-    );
+    expect(hasPermissionCapability(scopes, "comments", "write")).toBe(false);
   });
 
   test("supports deprecated permission strings", () => {

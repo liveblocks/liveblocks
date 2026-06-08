@@ -14,15 +14,13 @@ import type {
 } from "./protocol/AuthToken";
 import { parseAuthToken, TokenKind } from "./protocol/AuthToken";
 import type {
+  AccessLevel,
   PermissionCapabilities,
   PermissionResources,
   RequiredAccessLevel,
   ResolvedPermissionCapabilities,
 } from "./permissions";
-import {
-  resolveFullPermissionCapabilities,
-  resolvePermissionCapabilities,
-} from "./permissions";
+import { resolvePermissionCapabilities } from "./permissions";
 import type { Polyfills } from "./room";
 
 export type AuthValue =
@@ -235,9 +233,25 @@ type CachedToken = {
   permissions?: AuthTokenPermissionCapabilities;
 };
 
-type AuthTokenPermissionCapabilities = Array<
-  { resource: string } & ResolvedPermissionCapabilities
+type AuthTokenPermissionCapabilities = Array<{
+  resource: string;
+  capabilities: ResolvedPermissionCapabilities;
+}>;
+
+const ROOM_PERMISSION_RESOURCES = [
+  "presence",
+  "storage",
+  "comments",
+  "feeds",
+] as const satisfies ReadonlyArray<
+  Exclude<PermissionResources, "creation" | "personal">
 >;
+
+const ACCESS_RANKS: Record<AccessLevel, number> = {
+  none: 0,
+  read: 1,
+  write: 2,
+};
 
 function getAuthRequestKey(request: AuthRequest): string | undefined {
   return request.roomId;
@@ -261,30 +275,10 @@ function makeCachedToken(
 function getAuthTokenPermissionCapabilities(
   permissions: LiveblocksPermissions
 ): AuthTokenPermissionCapabilities {
-  return Object.entries(permissions)
-    .map(([resource, scopes]) => ({
-      resource,
-      ...resolvePermissionCapabilities(scopes),
-    }))
-    // Less-specific wildcard patterns first, so exact room IDs can override them.
-    .sort(compareResources);
-}
-
-function compareResources(
-  left: AuthTokenPermissionCapabilities[number],
-  right: AuthTokenPermissionCapabilities[number]
-): number {
-  const leftSpecificity = getResourceSpecificity(left.resource);
-  const rightSpecificity = getResourceSpecificity(right.resource);
-  return leftSpecificity - rightSpecificity;
-}
-
-function getResourceSpecificity(resource: string): number {
-  if (!resource.includes("*")) {
-    return Number.MAX_SAFE_INTEGER;
-  }
-
-  return resource.replace("*", "").length;
+  return Object.entries(permissions).map(([resource, scopes]) => ({
+    resource,
+    capabilities: resolvePermissionCapabilities(scopes),
+  }));
 }
 
 function cachedTokenSatisfiesRequest(
@@ -327,8 +321,34 @@ function getCapabilitiesForRoom(
     return undefined;
   }
 
-  let capabilities: PermissionCapabilities = {
-    creation: "none",
+  let hasDefaultPermission = false;
+  let baseAccess: AccessLevel = "none";
+  const explicitCapabilities: Partial<
+    Record<(typeof ROOM_PERMISSION_RESOURCES)[number], AccessLevel>
+  > = {};
+
+  for (const permission of matchedPermissions) {
+    if (permission.capabilities.hasDefaultPermission) {
+      hasDefaultPermission = true;
+      baseAccess = strongestAccess(
+        baseAccess,
+        permission.capabilities.baseAccess
+      );
+    }
+
+    for (const resource of ROOM_PERMISSION_RESOURCES) {
+      const access = permission.capabilities.capabilities[resource];
+      if (access !== undefined) {
+        explicitCapabilities[resource] = strongestAccess(
+          explicitCapabilities[resource] ?? "none",
+          access
+        );
+      }
+    }
+  }
+
+  const capabilities: PermissionCapabilities = {
+    creation: hasDefaultPermission ? baseAccess : "none",
     presence: "none",
     storage: "none",
     comments: "none",
@@ -336,19 +356,17 @@ function getCapabilitiesForRoom(
     personal: "write",
   };
 
-  // A room can match multiple token resources (e.g. "org1*" and "org1.room1").
-  // Entries with room:read/write replace the whole capability set; resource-only
-  // entries patch individual capabilities without resetting the rest.
-  for (const permission of matchedPermissions) {
-    if (permission.hasDefaultPermission) {
-      capabilities = resolveFullPermissionCapabilities(permission);
-      continue;
-    }
-
-    capabilities = { ...capabilities, ...permission.capabilities };
+  for (const resource of ROOM_PERMISSION_RESOURCES) {
+    capabilities[resource] =
+      explicitCapabilities[resource] ??
+      (hasDefaultPermission ? baseAccess : "none");
   }
 
   return capabilities;
+}
+
+function strongestAccess(left: AccessLevel, right: AccessLevel): AccessLevel {
+  return ACCESS_RANKS[right] > ACCESS_RANKS[left] ? right : left;
 }
 
 function resourceMatchesRoomId(resource: string, roomId: string): boolean {

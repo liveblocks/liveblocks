@@ -347,6 +347,36 @@ describe("auth-manager - secret auth", () => {
     expect(localRequestCount).toBe(2);
   });
 
+  test("should combine matching resource-only access token permissions by strongest access", async () => {
+    let localRequestCount = 0;
+    const storageConflictToken = makeAccessToken({
+      "org1*": [Permission.RoomStorageWrite],
+      "org1.room1": [Permission.RoomStorageNone],
+    });
+
+    server.use(
+      http.post("/api/access-auth-storage-conflict", () => {
+        localRequestCount++;
+        return HttpResponse.json({
+          token: storageConflictToken,
+        });
+      })
+    );
+
+    const authManager = createAuthManager({
+      authEndpoint: "/api/access-auth-storage-conflict",
+    });
+
+    const storageAuthValue = (await authManager.getAuthValue({
+      resource: "storage",
+      access: "write",
+      roomId: "org1.room1",
+    })) as { type: "secret"; token: ParsedAuthToken };
+
+    expect(storageAuthValue.token.raw).toEqual(storageConflictToken);
+    expect(localRequestCount).toBe(1);
+  });
+
   test("should use cached exact room access token for personal APIs", async () => {
     let localRequestCount = 0;
     const exactRoomToken = makeAccessToken({

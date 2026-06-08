@@ -58,15 +58,11 @@ export type PermissionResources = keyof PermissionCapabilities;
 
 export type RequiredAccessLevel = "read" | "write";
 
-export type ResolvedPermissionCapabilities =
-  | {
-      hasDefaultPermission: true;
-      capabilities: PermissionCapabilities;
-    }
-  | {
-      hasDefaultPermission: false;
-      capabilities: Partial<PermissionCapabilities>;
-    };
+export type ResolvedPermissionCapabilities = {
+  hasDefaultPermission: boolean;
+  baseAccess: AccessLevel;
+  capabilities: Partial<PermissionCapabilities>;
+};
 
 export type RoomPermission = Permission[];
 
@@ -96,9 +92,11 @@ type ResourcePermissionMap = Record<
 
 const ALL_PERMISSIONS = Object.freeze(Object.values(Permission));
 
-const ACCESS_LEVELS = ["none", "read", "write"] as const satisfies ReadonlyArray<
-  AccessLevel
->;
+const ACCESS_LEVELS = [
+  "none",
+  "read",
+  "write",
+] as const satisfies ReadonlyArray<AccessLevel>;
 
 const ACCESS_RANKS: Record<AccessLevel, number> = {
   none: 0,
@@ -184,9 +182,6 @@ function resolveResourceAccess(
         scopes.includes(permission)
       )
     ) {
-      if (access === "none") {
-        return "none";
-      }
       if (
         resourceAccess === undefined ||
         ACCESS_RANKS[access] > ACCESS_RANKS[resourceAccess]
@@ -221,17 +216,29 @@ export function isPermission(value: string): value is Permission {
 export function resolveFullPermissionCapabilities(
   resolved: ResolvedPermissionCapabilities
 ): PermissionCapabilities {
-  if (resolved.hasDefaultPermission) {
-    return resolved.capabilities;
+  if (!resolved.hasDefaultPermission) {
+    return { ...NO_PERMISSION_CAPABILITIES, ...resolved.capabilities };
   }
 
-  return { ...NO_PERMISSION_CAPABILITIES, ...resolved.capabilities };
+  const capabilities: PermissionCapabilities = {
+    ...NO_PERMISSION_CAPABILITIES,
+    [DEFAULT_PERMISSION_RESOURCE]: resolved.baseAccess,
+  };
+
+  for (const resource of ROOM_PERMISSION_RESOURCES) {
+    capabilities[resource] =
+      resolved.capabilities[resource] ?? resolved.baseAccess;
+  }
+
+  return capabilities;
 }
 
 export function permissionCapabilitiesFromScopes(
   scopes: readonly string[]
 ): PermissionCapabilities {
-  return resolveFullPermissionCapabilities(resolvePermissionCapabilities(scopes));
+  return resolveFullPermissionCapabilities(
+    resolvePermissionCapabilities(scopes)
+  );
 }
 
 export function normalizeRoomPermissionInput(
@@ -351,20 +358,7 @@ export function resolvePermissionCapabilities(
     }
   }
 
-  if (!hasDefaultPermission) {
-    return { hasDefaultPermission: false, capabilities };
-  }
-
-  const fullCapabilities: PermissionCapabilities = {
-    ...NO_PERMISSION_CAPABILITIES,
-    [DEFAULT_PERMISSION_RESOURCE]: baseAccess,
-  };
-
-  for (const resource of ROOM_PERMISSION_RESOURCES) {
-    fullCapabilities[resource] = capabilities[resource] ?? baseAccess;
-  }
-
-  return { hasDefaultPermission: true, capabilities: fullCapabilities };
+  return { hasDefaultPermission, baseAccess, capabilities };
 }
 
 export function hasPermissionCapability(
