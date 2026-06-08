@@ -25,6 +25,16 @@ export interface ReadonlyUnacknowledgedOps {
     parentId: string,
     parentKey: string
   ): Iterable<ClientWireCreateOp>;
+
+  /**
+   * Whether the given pending op may already have been processed by the
+   * server. True for ops that were in flight when a connection died: the
+   * server may have stored them with the ack getting lost in the disconnect,
+   * or may never have received them. Until the (re-sent) op's ack arrives,
+   * the client cannot know which, so optimistic predictions that assume the
+   * op has not been processed yet are unsound for these ops.
+   */
+  isPossiblyStored(opId: string): boolean;
 }
 
 /**
@@ -54,6 +64,9 @@ export class UnacknowledgedOps implements ReadonlyUnacknowledgedOps {
     new Map();
   // parentId -> (opId -> Create op)
   #createOpsByParent: Map<string, Map<string, ClientWireCreateOp>> = new Map();
+  // opIds of pending ops that were in flight when a connection died, so the
+  // server may already have processed them. See isPossiblyStored().
+  #possiblyStoredOpIds: Set<string> = new Set();
 
   #posKey(parentId: string, parentKey: string): PositionKey {
     return `${parentId}\n${parentKey}`;
@@ -99,6 +112,7 @@ export class UnacknowledgedOps implements ReadonlyUnacknowledgedOps {
     }
 
     this.#byOpId.delete(opId);
+    this.#possiblyStoredOpIds.delete(opId);
 
     if (isCreateOp(op)) {
       const posKey = this.#posKey(op.parentId, op.parentKey);
@@ -143,5 +157,20 @@ export class UnacknowledgedOps implements ReadonlyUnacknowledgedOps {
   /** All still-unacknowledged ops, in dispatch order. */
   values(): IterableIterator<ClientWireOp> {
     return this.#byOpId.values();
+  }
+
+  isPossiblyStored(opId: string): boolean {
+    return this.#possiblyStoredOpIds.has(opId);
+  }
+
+  /**
+   * Mark every currently pending op as possibly stored on the server. Called
+   * when the connection dies: all of these ops were in flight, and their
+   * (possibly lost) acks would have been the only way to know their fate.
+   */
+  markAllAsPossiblyStored(): void {
+    for (const opId of this.#byOpId.keys()) {
+      this.#possiblyStoredOpIds.add(opId);
+    }
   }
 }

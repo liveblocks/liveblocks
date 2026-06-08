@@ -1715,6 +1715,14 @@ export function createRoom<
 
   function onDidDisconnect() {
     clearTimeout(context.buffer.flushTimerID);
+
+    // Every op still pending at this point was in flight on the connection
+    // that just died: the server may have processed it (with its ack lost in
+    // the disconnect), or never received it. Mark them, so that optimistic
+    // position predictions (like the LiveList tail-bump) stop applying to
+    // them: such predictions are only sound for ops the server has provably
+    // not processed yet.
+    context.unacknowledgedOps.markAllAsPossiblyStored();
   }
 
   // Register events handlers for events coming from the socket
@@ -1894,17 +1902,17 @@ export function createRoom<
       // XXX_vincent Smell, needs a deeper refactor soon! A reconnect
       // snapshot is a stream of *nodes* (the full authoritative state), but
       // here we fabricate a diff of *ops* and replay it through the live
-      // op-apply path. That path carries live-only optimistic semantics (the
-      // LiveList push tail-bump, "temporary position until the backend sends
-      // a fix" shifts, pending-conflict resolution) that are nonsensical
-      // when the stream we are applying already IS the fix. The
-      // `fromSnapshot` flag below patches only the one leak that bit us (the
-      // bump); it does not address the others. The proper fix is
-      // a node-stream reconcile that updates the tree in place, unified with
-      // the `_fromItems` path used on initial load, so a node stream never
-      // enters the op path at all. Until then `fromSnapshot` is a stopgap.
+      // op-apply path. That path carries live-only optimistic semantics
+      // ("temporary position until the backend sends a fix" shifts,
+      // pending-conflict resolution) that are nonsensical when the stream we
+      // are applying already IS the fix. (The LiveList push tail-bump is
+      // fine, though: it skips every op whose position the snapshot may
+      // already own, so replaying the diff cannot mispredict.) The proper
+      // fix is a node-stream reconcile that updates the tree in place,
+      // unified with the `_fromItems` path used on initial load, so a node
+      // stream never enters the op path at all.
       const ops = getTreesDiffOperations(currentItems, nodes);
-      const result = applyRemoteOps(ops, /* fromSnapshot */ true);
+      const result = applyRemoteOps(ops);
       notify(result.updates);
     } else {
       context.root = LiveObject._fromItems<S>(
@@ -2019,27 +2027,20 @@ export function createRoom<
     return { opsToEmit: opsWithOpIds, reverse, updates };
   }
 
-  function applyRemoteOps(
-    ops: readonly ServerWireOp[],
-    // True when `ops` reconstruct state from a server snapshot (the reconnect
-    // reconcile) rather than being live ops. Disables the live-only LiveList
-    // push tail-bump.
-    fromSnapshot: boolean = false
-  ): {
+  function applyRemoteOps(ops: readonly ServerWireOp[]): {
     // Updates to notify about afterwards
     updates: {
       storageUpdates: Map<string, StorageUpdate>;
       presence: boolean;
     };
   } {
-    return applyOps([], ops, /* isLocal */ false, fromSnapshot);
+    return applyOps([], ops, /* isLocal */ false);
   }
 
   function applyOps(
     pframes: readonly PresenceStackframe<P>[],
     ops: readonly Op[],
-    isLocal: boolean,
-    fromSnapshot: boolean = false
+    isLocal: boolean
   ): {
     reverse: Stackframe<P>[];
     updates: {
@@ -2094,7 +2095,7 @@ export function createRoom<
         source = OpSource.THEIRS;
       }
 
-      const applyOpResult = applyOp(op, source, fromSnapshot);
+      const applyOpResult = applyOp(op, source);
       if (applyOpResult.modified) {
         const nodeId = applyOpResult.modified.node._id;
 
@@ -2132,11 +2133,7 @@ export function createRoom<
     };
   }
 
-  function applyOp(
-    op: Op,
-    source: OpSource,
-    fromSnapshot: boolean = false
-  ): ApplyResult {
+  function applyOp(op: Op, source: OpSource): ApplyResult {
     // Explicit case to handle ignored Ops
     if (isIgnoredOp(op)) {
       return { modified: false };
@@ -2184,7 +2181,7 @@ export function createRoom<
           return { modified: false };
         }
 
-        return parentNode._attachChild(op, source, fromSnapshot);
+        return parentNode._attachChild(op, source);
       }
     }
   }

@@ -18,6 +18,45 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 23 (2026-06-05)
+
+## v3.19.4
+
+### `@liveblocks/client`
+
+- Fix `LiveList.push()` so concurrent pushes from multiple clients no longer settle out of order.
+- Fix a bug where a `LiveObject` key deleted while a client was offline would reappear on reconnect, preventing the two clients from reconverging.
+- Fix a bug where reconnecting would emit too many update notifications for `LiveObject` keys whose values had not actually changed.
+- Fix a bug where deleting a nested live value from a `LiveObject` omitted the removed value (`deletedItem`) from the change notification.
+
+## Examples
+
+- New example: [Collaborative SuperDoc editor](https://liveblocks.io/examples/collaborative-text-editor/nextjs-yjs-superdoc).
+
+## Documentation
+
+- New guide: [Get started with SuperDoc and Next.js](https://liveblocks.io/docs/get-started/yjs-superdoc-nextjs).
+- New guide: [Get started with SuperDoc and JavaScript](https://liveblocks.io/docs/get-started/yjs-superdoc-javascript).
+- New guide: [Get started with SuperDoc and React](https://liveblocks.io/docs/get-started/yjs-superdoc-react).
+- New guide: [Get started with SuperDoc and Svelte](https://liveblocks.io/docs/get-started/yjs-superdoc-svelte).
+- New guide: [Get started with SuperDoc and Vue.js](https://liveblocks.io/docs/get-started/yjs-superdoc-vuejs).
+- Updated get started guides for Liveblocks Storage, featuring more hook examples.
+
+## Website
+
+- New blog post: [How humans and AI will work together in the next generation of apps](https://liveblocks.io/blog/how-humans-and-ai-will-work-together-in-the-next-generation-of-apps).
+- New blog post: [What's new in Liveblocks: May 2026](https://liveblocks.io/blog/whats-new-in-liveblocks-may-2026).
+
+## Liveblocks dev server (v1.6.0)
+
+- Update internal storage format of dev server. Note that your local dev rooms
+  are not automatically migrated and will appear as empty rooms after the
+  upgrade.
+
+## Contributors
+
+ctnicholas, nvie
+
 # Week 22 (2026-05-29)
 
 ## Documentation

@@ -429,7 +429,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     return result.modified.updates[0];
   }
 
-  #applyRemoteInsert(op: CreateOp, fromSnapshot: boolean): ApplyResult {
+  #applyRemoteInsert(op: CreateOp): ApplyResult {
     if (this._pool === undefined) {
       throw new Error("Can't attach child if managed pool is not present");
     }
@@ -452,12 +452,11 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     // a view that excludes our still-unacked pushes, so they can't address a
     // position inside our pending tail block.
     //
-    // The bump is a purely-local, live-only anti-flicker prediction of where
-    // the server will place things. While reconstructing from a server snapshot
-    // (reconnect reconcile) we already have the answer, so we don't predict:
-    // bumping there would override the snapshot's positions with a guess, and
-    // the diff carries no corrective op to undo it.
-    const bumpDeltas = fromSnapshot ? [] : this.#bumpUnackedPushesAbove(key);
+    // The bump is a purely-local anti-flicker prediction of where the server
+    // will place things. It's sound because #unackedPushNodes only yields ops
+    // the server has provably not processed yet (ops whose fate became
+    // unknown in a disconnect are excluded at that source).
+    const bumpDeltas = this.#bumpUnackedPushesAbove(key);
 
     return {
       modified: makeUpdate(this, [
@@ -474,6 +473,13 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * the single source of truth, so an item drops out the instant its op is
    * acked, with no per-instance membership to leak. Yielded in push order.
    *
+   * Excludes ops that may already be stored on the server (they were in
+   * flight when a connection died, so their fate is unknown): the bump
+   * prediction assumes the server has not processed the op yet, which is only
+   * guaranteed for ops sent on the current connection. For these excluded
+   * ops, the server's (re-)ack states the authoritative position; predicting
+   * locally could produce a wrong position that no ack would correct.
+   *
    * Restricted to items currently in `#items`: a pushed node whose op is still
    * pending may have been pulled out of the list (e.g. implicitly deleted by a
    * remote set, or removed by an undo) while still living in the pool, and such
@@ -486,6 +492,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
     for (const op of this._pool.unacknowledgedOps.getByParentId(this._id)) {
       if (op.intent !== "push") {
+        continue;
+      }
+      if (this._pool.unacknowledgedOps.isPossiblyStored(op.opId)) {
         continue;
       }
       const node = this._pool.getNode(op.id);
@@ -701,11 +710,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   }
 
   /** @internal */
-  _attachChild(
-    op: CreateOp,
-    source: OpSource,
-    fromSnapshot: boolean = false
-  ): ApplyResult {
+  _attachChild(op: CreateOp, source: OpSource): ApplyResult {
     if (this._pool === undefined) {
       throw new Error("Can't attach child if managed pool is not present");
     }
@@ -722,7 +727,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       }
     } else {
       if (source === OpSource.THEIRS) {
-        result = this.#applyRemoteInsert(op, fromSnapshot);
+        result = this.#applyRemoteInsert(op);
       } else if (source === OpSource.OURS) {
         result = this.#applyInsertAck(op);
       } else {

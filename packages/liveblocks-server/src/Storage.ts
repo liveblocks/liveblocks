@@ -37,7 +37,18 @@ import type {
 } from "~/protocol";
 import type { Pos } from "~/types";
 
-type ApplyOpResult = OpAccepted | OpIgnored;
+/**
+ * The three possible outcomes of applying a client op. They differ along
+ * when the op (first) changed storage state, who hears about it, and what
+ * gets sent back to the originating client:
+ *
+ * |             | state change | fan out to others | reply to sender  |
+ * |-------------|--------------|-------------------|------------------|
+ * | OpAccepted  | now          | yes               | ack echo (+ fix) |
+ * | OpRectified | in the past  | no                | ack echo + fix   |
+ * | OpIgnored   | never        | no                | bare (H)Ack      |
+ */
+type ApplyOpResult = OpAccepted | OpIgnored | OpRectified;
 
 export type OpAccepted = {
   action: "accepted";
@@ -50,12 +61,39 @@ export type OpIgnored = {
   ignoredOpId?: string;
 };
 
+export type OpRectified = {
+  action: "rectified";
+  /**
+   * Echo of the client's op, with the stored, authoritative parentKey. Sent
+   * back to the originating client as the acknowledgement, instead of the
+   * bare (H)Ack. Used for re-sent CREATE ops whose node the server already
+   * stored: the echo carries the authoritative position, so the client can
+   * correct any optimistic local position it may have predicted while the op
+   * was pending. Never fanned out to others: they already received the op
+   * when it was originally accepted.
+   */
+  ackOp: CreateOp & HasOpId;
+  /**
+   * A corrective op to send back to the originating client, stating that
+   * same authoritative position (see ackOp).
+   */
+  fix: FixOp;
+};
+
 function accept(op: ClientWireOp, fix?: FixOp): OpAccepted {
   return { action: "accepted", op, fix };
 }
 
 function ignore(ignoredOp: ClientWireOp): OpIgnored {
   return { action: "ignored", ignoredOpId: ignoredOp.opId };
+}
+
+function rectify(op: CreateOp & HasOpId, parentKey: string): OpRectified {
+  return {
+    action: "rectified",
+    ackOp: { ...op, parentKey },
+    fix: { type: OpCode.SET_PARENT_KEY, id: op.id, parentKey },
+  };
 }
 
 function nodeFromCreateChildOp(op: CreateOp): SerializedChild {
@@ -164,7 +202,25 @@ export class Storage {
 
   private applyCreateOp(op: CreateOp & HasOpId): ApplyOpResult {
     if (this.driver.has_node(op.id)) {
-      // Node already exists, the operation is ignored
+      // Node already exists, meaning this op was already applied earlier
+      // (e.g. it was re-sent after a reconnect because its original ack
+      // never arrived), so it won't get applied again. For pushed list
+      // items, rectify: send the stored, authoritative position back to the
+      // originating client, because a bare ack would leave any optimistic
+      // local position prediction on that client uncorrected. Only pushes
+      // need this: they're the only ops the client locally repositions while
+      // pending. Note that unlike acceptAndFix, rectifying happens even when
+      // the stored key equals the op's key: the client's *local* key may
+      // have drifted from both, and the server cannot see that.
+      if (op.intent === "push") {
+        const stored = this.driver.get_node(op.id);
+        if (
+          stored?.parentId !== undefined &&
+          this.driver.get_node(stored.parentId)?.type === CrdtType.LIST
+        ) {
+          return rectify(op, stored.parentKey);
+        }
+      }
       return ignore(op);
     }
 

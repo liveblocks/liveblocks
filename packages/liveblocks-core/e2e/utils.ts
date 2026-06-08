@@ -24,12 +24,23 @@ async function initializeRoomForTest<
   TM extends BaseMetadata = BaseMetadata,
   CM extends BaseMetadata = BaseMetadata,
 >(roomId: string, initialPresence: NoInfr<P>, initialStorage: NoInfr<S>) {
-  let ws: PausableWebSocket | null = null;
+  let ws: ControlledWebSocket | null = null;
 
-  class PausableWebSocket extends WebSocket {
-    sendBuffer: string[] = [];
-    _isSendPaused = false;
-    _dropIncoming = false;
+  /**
+   * A WebSocket whose two directions can each be stalled, like a real
+   * network pipe. A stalled direction buffers frames FIFO; un-stalling
+   * delivers them in their original order, so the stream order can never be
+   * changed by these controls, only delayed.
+   *
+   * All state is per-socket. A reconnect creates a fresh, unstalled socket,
+   * and whatever was still buffered on the old socket is simply never
+   * delivered: those frames were in flight when the connection died.
+   */
+  class ControlledWebSocket extends WebSocket {
+    // When non-null, the direction is stalled and the array buffers its
+    // frames, in order. When null, frames flow through.
+    sendBuffer: string[] | null = null;
+    recvBuffer: unknown[][] | null = null;
 
     constructor(address: string | URL) {
       super(address);
@@ -38,49 +49,65 @@ async function initializeRoomForTest<
     }
 
     /**
-     * Stops sending messages through to the server. Effectively starts
-     * buffering messages in-memory until .resume() is called.
+     * Stalls the uplink: outgoing messages are buffered in-memory instead of
+     * sent, until .resume() is called. Models a slow upload or backpressure.
      */
     pause() {
-      this._isSendPaused = true;
+      this.sendBuffer ??= [];
     }
 
     /**
-     * Immediately sends all buffered messages to the server and stops
-     * buffering any new messages.
+     * Stalls the downlink: messages the server sends are buffered instead of
+     * delivered, until .resumeIncoming() is called. Models slow delivery.
+     *
+     * Stalling the downlink and then reconnecting simulates "the server
+     * received and processed our op, but its ack/echo never reached us": the
+     * buffered ack dies with the socket, and the op stays pending
+     * (unacknowledged) on this client across the reconnect.
+     */
+    pauseIncoming() {
+      this.recvBuffer ??= [];
+    }
+
+    /**
+     * Immediately sends all buffered messages to the server, in order, and
+     * stops buffering any new messages.
      */
     resume() {
-      this._isSendPaused = false;
-      for (const item of this.sendBuffer) {
+      const sendBuffer = this.sendBuffer;
+      this.sendBuffer = null;
+      for (const item of sendBuffer ?? []) {
         super.send(item);
       }
-      this.sendBuffer = [];
+    }
+
+    /**
+     * Immediately delivers all buffered incoming messages, in order, and
+     * stops buffering any new ones.
+     */
+    resumeIncoming() {
+      const recvBuffer = this.recvBuffer;
+      this.recvBuffer = null;
+      for (const args of recvBuffer ?? []) {
+        super.emit("message", ...args);
+      }
     }
 
     send(data: string) {
-      if (this._isSendPaused) {
+      if (this.sendBuffer !== null) {
         this.sendBuffer.push(data);
       } else {
         super.send(data);
       }
     }
 
-    /**
-     * Silently drops every message the server sends from now on, as if the
-     * network ate them. Used to keep an op "pending" on this client even
-     * though the server already received and processed it: the server's
-     * ack/echo never reaches the client, so it never clears from
-     * unacknowledgedOps.
-     */
-    dropIncoming() {
-      this._dropIncoming = true;
-    }
-
     // `ws` delivers incoming frames by emitting a "message" event (both
-    // addEventListener and .on() listeners run through this). Swallow those
-    // emissions while dropping, leaving every other event untouched.
+    // addEventListener and .on() listeners run through this). Buffer those
+    // emissions while the downlink is stalled, leaving every other event
+    // untouched.
     emit(eventName: string | symbol, ...args: any[]): boolean {
-      if (this._dropIncoming && eventName === "message") {
+      if (this.recvBuffer !== null && eventName === "message") {
+        this.recvBuffer.push(args);
         return false;
       }
       return super.emit(eventName, ...args);
@@ -91,7 +118,7 @@ async function initializeRoomForTest<
     __DANGEROUSLY_disableThrottling: true,
     publicApiKey: "pk_localdev",
     polyfills: {
-      WebSocket: PausableWebSocket,
+      WebSocket: ControlledWebSocket,
     },
     baseUrl: BASE_URL,
   });
@@ -139,39 +166,55 @@ export function prepareTestsConflicts<S extends LsonObject>(
     /** Test utilities to exactly control message passing */
     control: {
       /**
-       * Sends all buffered messages from Client A to Client B, and waits
-       * until Client B has processed them.
+       * Flushes all messages from Client A and waits until Client B has
+       * received them.
+       * Note that this will hang if client B's downlink has been stalled, as
+       * it's unable to receive any messages until resumed.
        */
+      // TODO: Rename to flushAtoB() later
       flushA: () => Promise<void>;
       /**
-       * Sends all buffered messages from Client B to Client A, and waits
-       * until Client A has processed them.
+       * Flushes all messages from Client B and waits until Client A has
+       * received them.
+       * Note that this will hang if client A's downlink has been stalled, as
+       * it's unable to receive any messages until resumed.
        */
+      // TODO: Rename to flushBtoA() later
       flushB: () => Promise<void>;
       /**
-       * Flushes Client A's buffered sends to the server without waiting for a
-       * beacon round-trip. Use when Client A is dropping incoming messages (so
-       * a beacon would never return).
+       * Flushes Client A's buffered sends to the server (unlike flushA,
+       * without waiting for any confirmation).
        */
+      // TODO: Rename to flushToServerA() later
       flushSyncA: () => void;
       /**
-       * Flushes Client B's buffered sends to the server without waiting for a
-       * beacon round-trip. Use when Client B is dropping incoming messages (so
-       * a beacon would never return).
+       * Flushes Client B's buffered sends to the server (unlike flushB,
+       * without waiting for any confirmation).
        */
+      // TODO: Rename to flushToServerB() later
       flushSyncB: () => void;
       /**
-       * Makes client A silently drop every message the server sends from now
-       * on, keeping its in-flight ops "pending" even after the server has
-       * processed them.
+       * Stalls client A's uplink: outgoing messages buffer in order instead
+       * of being sent, until the next flush. Note that this stalls the
+       * *current* socket; a socket freshly created by a reconnect starts
+       * unstalled.
        */
-      dropIncomingA: () => void;
+      pauseA: () => void;
+      /** Same as pauseA, for client B. */
+      pauseB: () => void;
       /**
-       * Makes client B silently drop every message the server sends from now
-       * on, keeping its in-flight ops "pending" even after the server has
-       * processed them.
+       * Stalls client A's downlink: messages from the server buffer in order
+       * instead of being delivered, until resumeIncomingA(). Stalled messages
+       * die with the socket, so following this up with a reconnect simulates
+       * "the server processed our op, but its ack never reached us".
        */
-      dropIncomingB: () => void;
+      pauseIncomingA: () => void;
+      /** Same as pauseIncomingA, for client B. */
+      pauseIncomingB: () => void;
+      /** Delivers client A's stalled incoming messages, and stops stalling. */
+      resumeIncomingA: () => void;
+      /** Delivers client B's stalled incoming messages, and stops stalling. */
+      resumeIncomingB: () => void;
     };
   }) => Promise<void>
 ): () => Promise<void> {
@@ -286,15 +329,18 @@ export function prepareTestsConflicts<S extends LsonObject>(
         actor2.ws.pause();
       },
 
-      dropIncomingA: () => {
-        actor1.ws.dropIncoming();
-      },
-
-      dropIncomingB: () => {
-        actor2.ws.dropIncoming();
-      },
+      pauseA: () => actor1.ws.pause(),
+      pauseB: () => actor2.ws.pause(),
+      pauseIncomingA: () => actor1.ws.pauseIncoming(),
+      pauseIncomingB: () => actor2.ws.pauseIncoming(),
+      resumeIncomingA: () => actor1.ws.resumeIncoming(),
+      resumeIncomingB: () => actor2.ws.resumeIncoming(),
     };
 
+    // TODO Maybe make this the default behavior of the ControlledWebSocket
+    // class, and clearly document this. _Send_ is paused by default, but
+    // _recv_ is not. I think that'd be a nice default?
+    // TODO Not super sure though how it related to the one-time sync below.
     actor1.ws.pause();
     actor2.ws.pause();
 
@@ -420,7 +466,7 @@ export function prepareSingleClientTest<S extends LsonObject>(
  * asynchronously reached a particular status. Status must be reached within
  * a limited time window, or else this will fail, to avoid hanging.
  */
-async function waitUntilStatus(
+export async function waitUntilStatus(
   room: Room<JsonObject, LsonObject, BaseUserMeta, Json, BaseMetadata>,
   targetStatus: Status
 ): Promise<void> {
