@@ -9,7 +9,7 @@ import {
   type ThreadData,
 } from "@liveblocks/core";
 import {
-  useCanUseRoomFeature,
+  useHasPermissionCapability,
   useMarkRoomThreadAsRead,
   useMarkRoomThreadAsResolved,
   useMarkRoomThreadAsUnresolved,
@@ -438,7 +438,7 @@ export const Thread = forwardRef(
       }
     }, [unreadIndex]);
 
-    const canComment = useCanUseRoomFeature(
+    const canComment = useHasPermissionCapability(
       thread.roomId,
       "comments",
       "write"

@@ -55,7 +55,7 @@ import type {
   ContextualPromptResponse,
 } from "./protocol/Ai";
 import type { Permission } from "./permissions";
-import { hasRoomFeatureAccess } from "./permissions";
+import { hasPermissionCapability } from "./permissions";
 import type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
 import type {
   AddFeedClientMsg,
@@ -1757,7 +1757,7 @@ export function createRoom<
     const scopes = context.dynamicSessionInfoSig.get()?.scopes;
     // If we aren't connected yet, assume we can write
     return scopes !== undefined
-      ? hasRoomFeatureAccess(scopes, "storage", "write")
+      ? hasPermissionCapability(scopes, "storage", "write")
       : true;
   }
 
@@ -1839,7 +1839,7 @@ export function createRoom<
       if (staticSession === null || dynamicSession === null) {
         return null;
       } else {
-        const canWrite = hasRoomFeatureAccess(
+        const canWrite = hasPermissionCapability(
           dynamicSession.scopes,
           "storage",
           "write"
@@ -1850,7 +1850,7 @@ export function createRoom<
           info: staticSession.userInfo,
           presence: myPresence,
           canWrite,
-          canComment: hasRoomFeatureAccess(
+          canComment: hasPermissionCapability(
             dynamicSession.scopes,
             "comments",
             "write"
@@ -4068,7 +4068,7 @@ export function makeAuthDelegateForRoom(
     // Websocket connect only needs presence read, not full room default access.
     return authManager.getAuthValue({
       roomId,
-      feature: "presence",
+      resource: "presence",
       access: "read",
     });
   };

@@ -61,7 +61,7 @@ type PostFn = (path: URLSafeString, json: Json) => Promise<Response>;
  * You can define at most 10 room IDs (or patterns) in a single token,
  * otherwise the token would become too large and unwieldy.
  *
- * You can also use object notation for feature-specific access:
+ * You can also use object notation for resource-specific access:
  *
  *    session.allow('my-room', { default: 'write', storage: 'none' })
  */

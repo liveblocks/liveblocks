@@ -45,7 +45,7 @@ export type Permission = (typeof Permission)[keyof typeof Permission];
 
 export type AccessLevel = "write" | "read" | "none";
 
-export type RoomFeatures = {
+export type PermissionCapabilities = {
   creation: AccessLevel;
   presence: AccessLevel;
   storage: AccessLevel;
@@ -54,14 +54,19 @@ export type RoomFeatures = {
   personal: "write";
 };
 
-export type RoomFeature = keyof RoomFeatures;
+export type PermissionResources = keyof PermissionCapabilities;
 
 export type RequiredAccessLevel = "read" | "write";
 
-export type RoomFeaturePermissions = {
-  hasDefaultPermission: boolean;
-  features: Partial<RoomFeatures>;
-};
+export type ResolvedPermissionCapabilities =
+  | {
+      hasDefaultPermission: true;
+      capabilities: PermissionCapabilities;
+    }
+  | {
+      hasDefaultPermission: false;
+      capabilities: Partial<PermissionCapabilities>;
+    };
 
 export type RoomPermission = Permission[];
 
@@ -82,10 +87,10 @@ export type RoomAccessesUpdateInput = Record<
   RoomPermissionInput | null
 >;
 
-type RoomPermissionFeature = keyof Omit<RoomPermissionObject, "default">;
+type RoomPermissionResource = keyof Omit<RoomPermissionObject, "default">;
 
-type FeaturePermissionMap = Record<
-  RoomFeature,
+type ResourcePermissionMap = Record<
+  PermissionResources,
   Partial<Record<AccessLevel, readonly Permission[]>>
 >;
 
@@ -106,7 +111,7 @@ const DEFAULT_PERMISSIONS: readonly Permission[] = [
   Permission.RoomWrite,
 ] as const;
 
-const NO_ACCESS_ROOM_FEATURES: RoomFeatures = {
+const NO_PERMISSION_CAPABILITIES: PermissionCapabilities = {
   creation: "none",
   presence: "none",
   storage: "none",
@@ -116,7 +121,7 @@ const NO_ACCESS_ROOM_FEATURES: RoomFeatures = {
 };
 
 // Include legacy scope strings so older tokens still resolve correctly.
-const FEATURE_PERMISSIONS: FeaturePermissionMap = {
+const RESOURCE_PERMISSIONS: ResourcePermissionMap = {
   creation: {
     read: [Permission.RoomRead],
     write: [Permission.RoomWrite],
@@ -145,31 +150,31 @@ const FEATURE_PERMISSIONS: FeaturePermissionMap = {
   },
 };
 
-const DEFAULT_PERMISSION_FEATURE = "creation" satisfies RoomFeature;
+const DEFAULT_PERMISSION_RESOURCE = "creation" satisfies PermissionResources;
 
-const ROOM_PERMISSION_FEATURES = (
-  Object.keys(FEATURE_PERMISSIONS) as RoomFeature[]
+const ROOM_PERMISSION_RESOURCES = (
+  Object.keys(RESOURCE_PERMISSIONS) as PermissionResources[]
 ).filter(
-  (feature): feature is RoomPermissionFeature =>
-    FEATURE_PERMISSIONS[feature].none !== undefined
+  (resource): resource is RoomPermissionResource =>
+    RESOURCE_PERMISSIONS[resource].none !== undefined
 );
 
 const ROOM_PERMISSION_OBJECT_KEYS = new Set<string>([
   "default",
-  ...ROOM_PERMISSION_FEATURES,
+  ...ROOM_PERMISSION_RESOURCES,
 ]);
 
-const FEATURE_SPECIFIC_PERMISSIONS = ROOM_PERMISSION_FEATURES.flatMap((feature) =>
-  Object.values(FEATURE_PERMISSIONS[feature]).flat()
+const RESOURCE_SPECIFIC_PERMISSIONS = ROOM_PERMISSION_RESOURCES.flatMap(
+  (resource) => Object.values(RESOURCE_PERMISSIONS[resource]).flat()
 );
 
-function resolveFeatureAccess(
+function resolveResourceAccess(
   scopes: readonly string[],
-  feature: RoomPermissionFeature
+  resource: RoomPermissionResource
 ): AccessLevel | undefined {
   const permissions: Partial<Record<AccessLevel, readonly Permission[]>> =
-    FEATURE_PERMISSIONS[feature];
-  let featureAccess: AccessLevel | undefined;
+    RESOURCE_PERMISSIONS[resource];
+  let resourceAccess: AccessLevel | undefined;
 
   for (const access of ACCESS_LEVELS) {
     const scopedPermissions = permissions[access];
@@ -183,27 +188,27 @@ function resolveFeatureAccess(
         return "none";
       }
       if (
-        featureAccess === undefined ||
-        ACCESS_RANKS[access] > ACCESS_RANKS[featureAccess]
+        resourceAccess === undefined ||
+        ACCESS_RANKS[access] > ACCESS_RANKS[resourceAccess]
       ) {
-        featureAccess = access;
+        resourceAccess = access;
       }
     }
   }
 
-  return featureAccess;
+  return resourceAccess;
 }
 
 function permissionForAccessLevel(
-  feature: RoomFeature,
+  resource: PermissionResources,
   access: string
 ): Permission {
   const levels: Partial<Record<AccessLevel, readonly Permission[]>> =
-    FEATURE_PERMISSIONS[feature];
+    RESOURCE_PERMISSIONS[resource];
   const permissions = levels[access as AccessLevel];
   if (permissions === undefined || permissions.length === 0) {
     throw new Error(
-      `Invalid permission level for ${feature}: ${String(access)}`
+      `Invalid permission level for ${resource}: ${String(access)}`
     );
   }
   return permissions[0];
@@ -213,20 +218,20 @@ export function isPermission(value: string): value is Permission {
   return ALL_PERMISSIONS.includes(value as Permission);
 }
 
-export function resolveFullRoomFeatures(
-  resolved: RoomFeaturePermissions
-): RoomFeatures {
+export function resolveFullPermissionCapabilities(
+  resolved: ResolvedPermissionCapabilities
+): PermissionCapabilities {
   if (resolved.hasDefaultPermission) {
-    return resolved.features as RoomFeatures;
+    return resolved.capabilities;
   }
 
-  return { ...NO_ACCESS_ROOM_FEATURES, ...resolved.features };
+  return { ...NO_PERMISSION_CAPABILITIES, ...resolved.capabilities };
 }
 
-export function roomFeaturesFromScopes(
+export function permissionCapabilitiesFromScopes(
   scopes: readonly string[]
-): RoomFeatures {
-  return resolveFullRoomFeatures(resolveRoomFeaturePermissions(scopes));
+): PermissionCapabilities {
+  return resolveFullPermissionCapabilities(resolvePermissionCapabilities(scopes));
 }
 
 export function normalizeRoomPermissionInput(
@@ -258,14 +263,14 @@ function normalizeRoomPermissionObject(
 
   if (objectInput.default !== undefined) {
     permissions.push(
-      permissionForAccessLevel(DEFAULT_PERMISSION_FEATURE, objectInput.default)
+      permissionForAccessLevel(DEFAULT_PERMISSION_RESOURCE, objectInput.default)
     );
   }
 
-  for (const feature of ROOM_PERMISSION_FEATURES) {
-    const access = objectInput[feature];
+  for (const resource of ROOM_PERMISSION_RESOURCES) {
+    const access = objectInput[resource];
     if (access !== undefined) {
-      permissions.push(permissionForAccessLevel(feature, access));
+      permissions.push(permissionForAccessLevel(resource, access));
     }
   }
 
@@ -311,11 +316,11 @@ export function getRoomPermissionConflicts(
   permission: Permission
 ): readonly Permission[] {
   if (DEFAULT_PERMISSIONS.includes(permission)) {
-    return [...DEFAULT_PERMISSIONS, ...FEATURE_SPECIFIC_PERMISSIONS];
+    return [...DEFAULT_PERMISSIONS, ...RESOURCE_SPECIFIC_PERMISSIONS];
   }
 
-  for (const feature of ROOM_PERMISSION_FEATURES) {
-    const permissions = Object.values(FEATURE_PERMISSIONS[feature]).flat();
+  for (const resource of ROOM_PERMISSION_RESOURCES) {
+    const permissions = Object.values(RESOURCE_PERMISSIONS[resource]).flat();
     if (permissions.includes(permission)) {
       return permissions;
     }
@@ -324,9 +329,9 @@ export function getRoomPermissionConflicts(
   return [];
 }
 
-export function resolveRoomFeaturePermissions(
+export function resolvePermissionCapabilities(
   scopes: readonly string[]
-): RoomFeaturePermissions {
+): ResolvedPermissionCapabilities {
   const hasDefaultPermission =
     scopes.includes(Permission.RoomWrite) ||
     scopes.includes(Permission.RoomRead);
@@ -337,36 +342,36 @@ export function resolveRoomFeaturePermissions(
       ? "read"
       : "none";
 
-  const features: Partial<RoomFeatures> = {};
+  const capabilities: Partial<PermissionCapabilities> = {};
 
-  for (const feature of ROOM_PERMISSION_FEATURES) {
-    const access = resolveFeatureAccess(scopes, feature);
+  for (const resource of ROOM_PERMISSION_RESOURCES) {
+    const access = resolveResourceAccess(scopes, resource);
     if (access !== undefined) {
-      features[feature] = access;
+      capabilities[resource] = access;
     }
   }
 
   if (!hasDefaultPermission) {
-    return { hasDefaultPermission: false, features };
+    return { hasDefaultPermission: false, capabilities };
   }
 
-  const fullFeatures: RoomFeatures = {
-    ...NO_ACCESS_ROOM_FEATURES,
-    [DEFAULT_PERMISSION_FEATURE]: baseAccess,
+  const fullCapabilities: PermissionCapabilities = {
+    ...NO_PERMISSION_CAPABILITIES,
+    [DEFAULT_PERMISSION_RESOURCE]: baseAccess,
   };
 
-  for (const feature of ROOM_PERMISSION_FEATURES) {
-    fullFeatures[feature] = features[feature] ?? baseAccess;
+  for (const resource of ROOM_PERMISSION_RESOURCES) {
+    fullCapabilities[resource] = capabilities[resource] ?? baseAccess;
   }
 
-  return { hasDefaultPermission: true, features: fullFeatures };
+  return { hasDefaultPermission: true, capabilities: fullCapabilities };
 }
 
-export function hasRoomFeatureAccess(
+export function hasPermissionCapability(
   scopes: readonly string[],
-  feature: RoomFeature,
+  resource: PermissionResources,
   requiredAccess: RequiredAccessLevel
 ): boolean {
-  const access = roomFeaturesFromScopes(scopes)[feature];
+  const access = permissionCapabilitiesFromScopes(scopes)[resource];
   return ACCESS_RANKS[access] >= ACCESS_RANKS[requiredAccess];
 }

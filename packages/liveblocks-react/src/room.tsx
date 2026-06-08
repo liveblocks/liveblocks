@@ -37,9 +37,9 @@ import type {
   MentionData,
   OpaqueClient,
   OpaqueRoom,
+  PermissionCapabilities,
+  PermissionResources,
   RequiredAccessLevel,
-  RoomFeature,
-  RoomFeatures,
   RoomEventMessage,
   RoomSubscriptionSettings,
   SignalType,
@@ -3719,24 +3719,24 @@ function useRoomPermissions(roomId: string) {
 /**
  * @private For internal use only. Do not rely on this hook.
  */
-function useCanUseRoomFeature(
+function useHasPermissionCapability(
   roomId: string,
-  feature: RoomFeature,
+  resource: PermissionResources,
   requiredAccess: RequiredAccessLevel
 ): boolean {
   const permissions = useRoomPermissions(roomId);
-  const fallback = useSelfRoomFeatureFallback(roomId, feature, requiredAccess);
+  const fallback = useSelfPermissionCapabilityFallback(roomId, resource, requiredAccess);
 
   return permissions !== undefined
-    ? hasFeatureAccess(permissions, feature, requiredAccess)
+    ? hasPermissionCapability(permissions, resource, requiredAccess)
     : fallback;
 }
 
 // Permission hints come from REST; until they exist, fall back to scopes from
 // the room connection (same optimistic defaults as isStorageWritable).
-function useSelfRoomFeatureFallback(
+function useSelfPermissionCapabilityFallback(
   roomId: string,
-  feature: RoomFeature,
+  resource: PermissionResources,
   requiredAccess: RequiredAccessLevel
 ): boolean {
   const room = useRoom_withRoomContext(GlobalRoomContext, {
@@ -3756,25 +3756,25 @@ function useSelfRoomFeatureFallback(
 
   const getSnapshot = useCallback(() => {
     const self = room?.id === roomId ? room.getSelf() : null;
-    if (feature === "comments" && requiredAccess === "write") {
+    if (resource === "comments" && requiredAccess === "write") {
       return self?.canComment ?? true;
     }
-    if (feature === "storage" && requiredAccess === "write") {
+    if (resource === "storage" && requiredAccess === "write") {
       return self?.canWrite ?? true;
     }
 
     return true;
-  }, [feature, requiredAccess, room, roomId]);
+  }, [resource, requiredAccess, room, roomId]);
 
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
-function hasFeatureAccess(
-  permissions: RoomFeatures,
-  feature: RoomFeature,
+function hasPermissionCapability(
+  permissions: PermissionCapabilities,
+  resource: PermissionResources,
   requiredAccess: RequiredAccessLevel
 ): boolean {
-  const access = permissions[feature];
+  const access = permissions[resource];
   return access === "write" || (access === "read" && requiredAccess === "read");
 }
 
@@ -4988,7 +4988,7 @@ export {
   useAttachmentUrl,
   useAttachmentUrlSuspense,
   _useBroadcastEvent as useBroadcastEvent,
-  useCanUseRoomFeature,
+  useHasPermissionCapability,
   useCanRedo,
   useCanUndo,
   _useCreateComment as useCreateComment,

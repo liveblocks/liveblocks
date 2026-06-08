@@ -14,13 +14,14 @@ import type {
 } from "./protocol/AuthToken";
 import { parseAuthToken, TokenKind } from "./protocol/AuthToken";
 import type {
+  PermissionCapabilities,
+  PermissionResources,
   RequiredAccessLevel,
-  RoomFeature,
-  RoomFeatures,
+  ResolvedPermissionCapabilities,
 } from "./permissions";
 import {
-  resolveFullRoomFeatures,
-  resolveRoomFeaturePermissions,
+  resolveFullPermissionCapabilities,
+  resolvePermissionCapabilities,
 } from "./permissions";
 import type { Polyfills } from "./room";
 
@@ -29,15 +30,15 @@ export type AuthValue =
   | { type: "public"; publicApiKey: string };
 
 export type AuthRequest = Relax<
-  | { feature: "creation"; access: RequiredAccessLevel }
+  | { resource: "creation"; access: RequiredAccessLevel }
   | {
-      feature: Exclude<RoomFeature, "personal" | "creation">;
+      resource: Exclude<PermissionResources, "personal" | "creation">;
       roomId: string;
       access: RequiredAccessLevel;
     }
   | {
       // Not a JWT scope. Used for roomless APIs (inbox, notification settings, etc.)
-      feature: "personal";
+      resource: "personal";
       access: "write";
     }
 >;
@@ -231,14 +232,12 @@ export function createAuthManager(
 type CachedToken = {
   token: ParsedAuthToken;
   expiresAt: number;
-  permissions?: AuthTokenFeaturePermissions;
+  permissions?: AuthTokenPermissionCapabilities;
 };
 
-type AuthTokenFeaturePermissions = Array<{
-  resource: string;
-  hasDefaultPermission: boolean;
-  features: Partial<RoomFeatures>;
-}>;
+type AuthTokenPermissionCapabilities = Array<
+  { resource: string } & ResolvedPermissionCapabilities
+>;
 
 function getAuthRequestKey(request: AuthRequest): string | undefined {
   return request.roomId;
@@ -252,28 +251,28 @@ function makeCachedToken(
     return {
       token,
       expiresAt,
-      permissions: getAuthTokenFeaturePermissions(token.parsed.perms),
+      permissions: getAuthTokenPermissionCapabilities(token.parsed.perms),
     };
   }
 
   return { token, expiresAt };
 }
 
-function getAuthTokenFeaturePermissions(
+function getAuthTokenPermissionCapabilities(
   permissions: LiveblocksPermissions
-): AuthTokenFeaturePermissions {
+): AuthTokenPermissionCapabilities {
   return Object.entries(permissions)
     .map(([resource, scopes]) => ({
       resource,
-      ...resolveRoomFeaturePermissions(scopes),
+      ...resolvePermissionCapabilities(scopes),
     }))
     // Less-specific wildcard patterns first, so exact room IDs can override them.
     .sort(compareResources);
 }
 
 function compareResources(
-  left: AuthTokenFeaturePermissions[number],
-  right: AuthTokenFeaturePermissions[number]
+  left: AuthTokenPermissionCapabilities[number],
+  right: AuthTokenPermissionCapabilities[number]
 ): number {
   const leftSpecificity = getResourceSpecificity(left.resource);
   const rightSpecificity = getResourceSpecificity(right.resource);
@@ -297,7 +296,7 @@ function cachedTokenSatisfiesRequest(
     return true;
   }
 
-  if (request.feature === "personal") {
+  if (request.resource === "personal") {
     return true;
   }
 
@@ -305,21 +304,21 @@ function cachedTokenSatisfiesRequest(
     return false;
   }
 
-  const features = getFeaturesForRoom(
+  const capabilities = getCapabilitiesForRoom(
     cachedToken.permissions ?? [],
     request.roomId
   );
 
   return (
-    features !== undefined &&
-    hasRequiredAccess(features[request.feature], request.access)
+    capabilities !== undefined &&
+    hasRequiredAccess(capabilities[request.resource], request.access)
   );
 }
 
-function getFeaturesForRoom(
-  permissions: AuthTokenFeaturePermissions,
+function getCapabilitiesForRoom(
+  permissions: AuthTokenPermissionCapabilities,
   roomId: string
-): RoomFeatures | undefined {
+): PermissionCapabilities | undefined {
   const matchedPermissions = permissions.filter((permission) =>
     resourceMatchesRoomId(permission.resource, roomId)
   );
@@ -328,7 +327,7 @@ function getFeaturesForRoom(
     return undefined;
   }
 
-  let features: RoomFeatures = {
+  let capabilities: PermissionCapabilities = {
     creation: "none",
     presence: "none",
     storage: "none",
@@ -338,18 +337,18 @@ function getFeaturesForRoom(
   };
 
   // A room can match multiple token resources (e.g. "org1*" and "org1.room1").
-  // Entries with room:read/write replace the whole feature set; feature-only
-  // entries patch individual features without resetting the rest.
+  // Entries with room:read/write replace the whole capability set; resource-only
+  // entries patch individual capabilities without resetting the rest.
   for (const permission of matchedPermissions) {
     if (permission.hasDefaultPermission) {
-      features = resolveFullRoomFeatures(permission);
+      capabilities = resolveFullPermissionCapabilities(permission);
       continue;
     }
 
-    features = { ...features, ...permission.features };
+    capabilities = { ...capabilities, ...permission.capabilities };
   }
 
-  return features;
+  return capabilities;
 }
 
 function resourceMatchesRoomId(resource: string, roomId: string): boolean {
@@ -361,7 +360,7 @@ function resourceMatchesRoomId(resource: string, roomId: string): boolean {
 }
 
 function hasRequiredAccess(
-  access: RoomFeatures[RoomFeature],
+  access: PermissionCapabilities[PermissionResources],
   requiredAccess: RequiredAccessLevel
 ): boolean {
   return (

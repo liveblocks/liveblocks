@@ -194,7 +194,7 @@ describe("authorization (new API)", () => {
     });
   });
 
-  test("permissions replace previous defaults and feature-specific values", () => {
+  test("permissions replace previous defaults and resource-specific values", () => {
     expect(
       makeSession()
         .allow("r", { default: "write", storage: "none" })

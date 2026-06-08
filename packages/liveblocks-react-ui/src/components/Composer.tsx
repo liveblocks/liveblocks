@@ -12,7 +12,7 @@ import type {
 import { assertNever, MENTION_CHARACTER } from "@liveblocks/core";
 import { useRoom } from "@liveblocks/react";
 import {
-  useCanUseRoomFeature,
+  useHasPermissionCapability,
   useCreateRoomComment,
   useCreateRoomThread,
   useEditRoomComment,
@@ -760,7 +760,7 @@ export const Composer = forwardRef(
       controlledOnCollapsedChange
     );
 
-    const canComment = useCanUseRoomFeature(roomId, "comments", "write");
+    const canComment = useHasPermissionCapability(roomId, "comments", "write");
 
     const setEmptyRef = useCallback((isEmpty: boolean) => {
       isEmptyRef.current = isEmpty;

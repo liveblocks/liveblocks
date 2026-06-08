@@ -12,7 +12,7 @@ import {
   type MentionData,
 } from "@liveblocks/core";
 import {
-  useCanUseRoomFeature,
+  useHasPermissionCapability,
   useAddRoomCommentReaction,
   useDeleteRoomComment,
   useEditRoomComment,
@@ -734,7 +734,7 @@ export const Comment = Object.assign(
         return separateMediaAttachments(comment.attachments);
       }, [comment.attachments]);
 
-      const canComment = useCanUseRoomFeature(
+      const canComment = useHasPermissionCapability(
         comment.roomId,
         "comments",
         "write"

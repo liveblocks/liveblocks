@@ -578,7 +578,7 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/threads/delta`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        feature: "comments",
+        resource: "comments",
         access: "read",
       }),
       {
@@ -643,7 +643,7 @@ export function createApiClient<
         url`/v2/c/rooms/${options.roomId}/threads`,
         await authManager.getAuthValue({
           roomId: options.roomId,
-          feature: "comments",
+          resource: "comments",
           access: "read",
         }),
         {
@@ -710,7 +710,7 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/threads/comments/search`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        feature: "comments",
+        resource: "comments",
         access: "read",
       }),
       {
@@ -743,7 +743,7 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/threads`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        feature: "comments",
+        resource: "comments",
         access: "write",
       }),
       {
@@ -766,7 +766,7 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        feature: "comments",
+        resource: "comments",
         access: "write",
       })
     );
@@ -777,7 +777,7 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/thread-with-notification/${options.threadId}`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        feature: "comments",
+        resource: "comments",
         access: "read",
       })
     );
@@ -820,7 +820,7 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/metadata`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        feature: "comments",
+        resource: "comments",
         access: "write",
       }),
       options.metadata
@@ -837,7 +837,7 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments/${options.commentId}/metadata`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        feature: "comments",
+        resource: "comments",
         access: "write",
       }),
       options.metadata
@@ -857,7 +857,7 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        feature: "comments",
+        resource: "comments",
         access: "write",
       }),
       {
@@ -882,7 +882,7 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments/${options.commentId}`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        feature: "comments",
+        resource: "comments",
         access: "write",
       }),
       {
@@ -904,7 +904,7 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments/${options.commentId}`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        feature: "comments",
+        resource: "comments",
         access: "write",
       })
     );
@@ -920,7 +920,7 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments/${options.commentId}/reactions`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        feature: "comments",
+        resource: "comments",
         access: "write",
       }),
       { emoji: options.emoji }
@@ -939,7 +939,7 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments/${options.commentId}/reactions/${options.emoji}`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        feature: "comments",
+        resource: "comments",
         access: "write",
       })
     );
@@ -953,7 +953,7 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/mark-as-resolved`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        feature: "comments",
+        resource: "comments",
         access: "write",
       })
     );
@@ -967,7 +967,7 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/mark-as-unresolved`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        feature: "comments",
+        resource: "comments",
         access: "write",
       })
     );
@@ -981,7 +981,7 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/subscribe`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        feature: "comments",
+        resource: "comments",
         access: "read",
       })
     );
@@ -997,7 +997,7 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/unsubscribe`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        feature: "comments",
+        resource: "comments",
         access: "read",
       })
     );
@@ -1071,7 +1071,7 @@ export function createApiClient<
             url`/v2/c/rooms/${roomId}/attachments/${attachment.id}/upload/${encodeURIComponent(attachment.name)}`,
             await authManager.getAuthValue({
               roomId,
-              feature: "comments",
+              resource: "comments",
               access: "write",
             }),
             attachment.file,
@@ -1100,7 +1100,7 @@ export function createApiClient<
             url`/v2/c/rooms/${roomId}/attachments/${attachment.id}/multipart/${encodeURIComponent(attachment.name)}`,
             await authManager.getAuthValue({
               roomId,
-              feature: "comments",
+              resource: "comments",
               access: "write",
             }),
             undefined,
@@ -1142,7 +1142,7 @@ export function createApiClient<
                     url`/v2/c/rooms/${roomId}/attachments/${attachment.id}/multipart/${createMultiPartUpload.uploadId}/${String(partNumber)}`,
                     await authManager.getAuthValue({
                       roomId,
-                      feature: "comments",
+                      resource: "comments",
                       access: "write",
                     }),
                     part,
@@ -1173,7 +1173,7 @@ export function createApiClient<
           url`/v2/c/rooms/${roomId}/attachments/${attachment.id}/multipart/${uploadId}/complete`,
           await authManager.getAuthValue({
             roomId,
-            feature: "comments",
+            resource: "comments",
             access: "write",
           }),
           { parts: sortedUploadedParts },
@@ -1192,7 +1192,7 @@ export function createApiClient<
               url`/v2/c/rooms/${roomId}/attachments/${attachment.id}/multipart/${uploadId}`,
               await authManager.getAuthValue({
                 roomId,
-                feature: "comments",
+                resource: "comments",
                 access: "write",
               })
             );
@@ -1219,7 +1219,7 @@ export function createApiClient<
           url`/v2/c/rooms/${roomId}/attachments/presigned-urls`,
           await authManager.getAuthValue({
             roomId,
-            feature: "comments",
+            resource: "comments",
             access: "read",
           }),
           { attachmentIds }
@@ -1269,7 +1269,7 @@ export function createApiClient<
       await httpClient.putBlob(
         url`/v2/c/chats/${chatId}/attachments/${attachment.id}/upload/${encodeURIComponent(attachment.file.name)}`,
         await authManager.getAuthValue({
-          feature: "personal",
+          resource: "personal",
           access: "write",
         }),
         attachment.file,
@@ -1283,7 +1283,7 @@ export function createApiClient<
       }>(
         url`/v2/c/chats/${chatId}/attachments/${attachment.id}/multipart/${encodeURIComponent(attachment.file.name)}`,
         await authManager.getAuthValue({
-          feature: "personal",
+          resource: "personal",
           access: "write",
         }),
         undefined,
@@ -1317,7 +1317,7 @@ export function createApiClient<
               }>(
                 url`/v2/c/chats/${chatId}/attachments/${attachment.id}/multipart/${multipartUpload.uploadId}/${String(number)}`,
                 await authManager.getAuthValue({
-                  feature: "personal",
+                  resource: "personal",
                   access: "write",
                 }),
                 part,
@@ -1331,7 +1331,7 @@ export function createApiClient<
         await httpClient.post(
           url`/v2/c/chats/${chatId}/attachments/${attachment.id}/multipart/${multipartUpload.uploadId}/complete`,
           await authManager.getAuthValue({
-            feature: "personal",
+            resource: "personal",
             access: "write",
           }),
           { parts: uploadedParts.sort((a, b) => a.number - b.number) },
@@ -1342,7 +1342,7 @@ export function createApiClient<
           await httpClient.delete(
             url`/v2/c/chats/${chatId}/attachments/${attachment.id}/multipart/${multipartUpload.uploadId}`,
             await authManager.getAuthValue({
-              feature: "personal",
+              resource: "personal",
               access: "write",
             })
           );
@@ -1366,7 +1366,7 @@ export function createApiClient<
         }>(
           url`/v2/c/chats/${chatId}/attachments/presigned-urls`,
           await authManager.getAuthValue({
-            feature: "personal",
+            resource: "personal",
             access: "write",
           }),
           { attachmentIds }
@@ -1407,7 +1407,7 @@ export function createApiClient<
     return httpClient.get<RoomSubscriptionSettings>(
       url`/v2/c/rooms/${options.roomId}/subscription-settings`,
       await authManager.getAuthValue({
-        feature: "personal",
+        resource: "personal",
         access: "write",
       }),
       undefined,
@@ -1424,7 +1424,7 @@ export function createApiClient<
     return httpClient.post<RoomSubscriptionSettings>(
       url`/v2/c/rooms/${options.roomId}/subscription-settings`,
       await authManager.getAuthValue({
-        feature: "personal",
+        resource: "personal",
         access: "write",
       }),
       options.settings
@@ -1446,7 +1446,7 @@ export function createApiClient<
             url`/v2/c/rooms/${roomId}/inbox-notifications/read`,
             await authManager.getAuthValue({
               roomId,
-              feature: "comments",
+              resource: "comments",
               access: "read",
             }),
             { inboxNotificationIds }
@@ -1481,7 +1481,7 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/text-mentions`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        feature: "storage",
+        resource: "storage",
         access: "write",
       }),
       {
@@ -1506,7 +1506,7 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/text-mentions/${options.mentionId}`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        feature: "storage",
+        resource: "storage",
         access: "write",
       })
     );
@@ -1520,7 +1520,7 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/y-version/${options.versionId}`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        feature: "storage",
+        resource: "storage",
         access: "read",
       })
     );
@@ -1531,7 +1531,7 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/version`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        feature: "storage",
+        resource: "storage",
         access: "write",
       })
     );
@@ -1546,7 +1546,7 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/text-metadata`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        feature: "storage",
+        resource: "storage",
         access: "read",
       }),
       {
@@ -1572,7 +1572,7 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/ai/contextual-prompt`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        feature: "storage",
+        resource: "storage",
         access: "read",
       }),
       {
@@ -1602,7 +1602,7 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/versions`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        feature: "storage",
+        resource: "storage",
         access: "read",
       })
     );
@@ -1632,7 +1632,7 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/versions/delta`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        feature: "storage",
+        resource: "storage",
         access: "read",
       }),
       { since: options.since.toISOString() },
@@ -1655,7 +1655,7 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/storage`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        feature: "storage",
+        resource: "storage",
         access: "read",
       })
     );
@@ -1688,7 +1688,7 @@ export function createApiClient<
       };
     }>(
       url`/v2/c/inbox-notifications`,
-      await authManager.getAuthValue({ feature: "personal", access: "write" }),
+      await authManager.getAuthValue({ resource: "personal", access: "write" }),
       {
         cursor: options?.cursor,
         limit: PAGE_SIZE,
@@ -1736,7 +1736,7 @@ export function createApiClient<
       };
     }>(
       url`/v2/c/inbox-notifications/delta`,
-      await authManager.getAuthValue({ feature: "personal", access: "write" }),
+      await authManager.getAuthValue({ resource: "personal", access: "write" }),
       { since: options.since.toISOString(), query },
       { signal: options.signal }
     );
@@ -1774,7 +1774,7 @@ export function createApiClient<
 
     const { count } = await httpClient.get<{ count: number }>(
       url`/v2/c/inbox-notifications/count`,
-      await authManager.getAuthValue({ feature: "personal", access: "write" }),
+      await authManager.getAuthValue({ resource: "personal", access: "write" }),
       { query },
       { signal: options?.signal }
     );
@@ -1784,7 +1784,7 @@ export function createApiClient<
   async function markAllInboxNotificationsAsRead() {
     await httpClient.post(
       url`/v2/c/inbox-notifications/read`,
-      await authManager.getAuthValue({ feature: "personal", access: "write" }),
+      await authManager.getAuthValue({ resource: "personal", access: "write" }),
       {
         inboxNotificationIds: "all",
       }
@@ -1794,7 +1794,7 @@ export function createApiClient<
   async function markInboxNotificationsAsRead(inboxNotificationIds: string[]) {
     await httpClient.post(
       url`/v2/c/inbox-notifications/read`,
-      await authManager.getAuthValue({ feature: "personal", access: "write" }),
+      await authManager.getAuthValue({ resource: "personal", access: "write" }),
       {
         inboxNotificationIds,
       }
@@ -1819,14 +1819,14 @@ export function createApiClient<
   async function deleteAllInboxNotifications() {
     await httpClient.delete(
       url`/v2/c/inbox-notifications`,
-      await authManager.getAuthValue({ feature: "personal", access: "write" })
+      await authManager.getAuthValue({ resource: "personal", access: "write" })
     );
   }
 
   async function deleteInboxNotification(inboxNotificationId: string) {
     await httpClient.delete(
       url`/v2/c/inbox-notifications/${inboxNotificationId}`,
-      await authManager.getAuthValue({ feature: "personal", access: "write" })
+      await authManager.getAuthValue({ resource: "personal", access: "write" })
     );
   }
 
@@ -1839,7 +1839,7 @@ export function createApiClient<
   }): Promise<NotificationSettingsPlain> {
     return httpClient.get<NotificationSettingsPlain>(
       url`/v2/c/notification-settings`,
-      await authManager.getAuthValue({ feature: "personal", access: "write" }),
+      await authManager.getAuthValue({ resource: "personal", access: "write" }),
       undefined,
       { signal: options?.signal }
     );
@@ -1850,7 +1850,7 @@ export function createApiClient<
   ): Promise<NotificationSettingsPlain> {
     return httpClient.post<NotificationSettingsPlain>(
       url`/v2/c/notification-settings`,
-      await authManager.getAuthValue({ feature: "personal", access: "write" }),
+      await authManager.getAuthValue({ resource: "personal", access: "write" }),
       settings
     );
   }
@@ -1888,7 +1888,7 @@ export function createApiClient<
       };
     }>(
       url`/v2/c/threads`,
-      await authManager.getAuthValue({ feature: "personal", access: "write" }),
+      await authManager.getAuthValue({ resource: "personal", access: "write" }),
       {
         cursor: options?.cursor,
         query,
@@ -1925,7 +1925,7 @@ export function createApiClient<
       };
     }>(
       url`/v2/c/threads/delta`,
-      await authManager.getAuthValue({ feature: "personal", access: "write" }),
+      await authManager.getAuthValue({ resource: "personal", access: "write" }),
       { since: options.since.toISOString() },
       { signal: options.signal }
     );
@@ -1963,7 +1963,7 @@ export function createApiClient<
       }>(
         url`/v2/c/groups/find`,
         await authManager.getAuthValue({
-          feature: "personal",
+          resource: "personal",
           access: "write",
         }),
         { groupIds }
@@ -1992,7 +1992,7 @@ export function createApiClient<
   async function getUrlMetadata(_url: string) {
     const { metadata } = await httpClient.get<{ metadata: UrlMetadata }>(
       url`/v2/c/urls/metadata`,
-      await authManager.getAuthValue({ feature: "personal", access: "write" }),
+      await authManager.getAuthValue({ resource: "personal", access: "write" }),
       { url: _url }
     );
 

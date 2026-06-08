@@ -2,15 +2,15 @@ import { describe, expect, test } from "vitest";
 
 import {
   getRoomPermissionConflicts,
-  hasRoomFeatureAccess,
+  hasPermissionCapability,
   normalizeRoomPermissionInput,
   Permission,
-  roomFeaturesFromScopes,
+  permissionCapabilitiesFromScopes,
 } from "../permissions";
 
-describe("roomFeaturesFromScopes", () => {
+describe("permissionCapabilitiesFromScopes", () => {
   test("resolves room read", () => {
-    expect(roomFeaturesFromScopes([Permission.RoomRead])).toEqual({
+    expect(permissionCapabilitiesFromScopes([Permission.RoomRead])).toEqual({
       creation: "read",
       presence: "read",
       storage: "read",
@@ -21,7 +21,7 @@ describe("roomFeaturesFromScopes", () => {
   });
 
   test("resolves room write", () => {
-    expect(roomFeaturesFromScopes([Permission.RoomWrite])).toEqual({
+    expect(permissionCapabilitiesFromScopes([Permission.RoomWrite])).toEqual({
       creation: "write",
       presence: "write",
       storage: "write",
@@ -31,54 +31,59 @@ describe("roomFeaturesFromScopes", () => {
     });
   });
 
-  test("allows feature opt-outs from a room default", () => {
+  test("allows resource opt-outs from a room default", () => {
     expect(
-      roomFeaturesFromScopes([Permission.RoomWrite, Permission.RoomStorageNone])
+      permissionCapabilitiesFromScopes([
+        Permission.RoomWrite,
+        Permission.RoomStorageNone,
+      ])
         .storage
     ).toBe("none");
     expect(
-      roomFeaturesFromScopes([
+      permissionCapabilitiesFromScopes([
         Permission.RoomWrite,
         Permission.RoomCommentsNone,
       ]).comments
     ).toBe("none");
   });
 
-  test("explicit none overrides same-feature write", () => {
+  test("explicit none overrides same-resource write", () => {
     expect(
-      roomFeaturesFromScopes([
+      permissionCapabilitiesFromScopes([
         Permission.RoomCommentsWrite,
         Permission.RoomCommentsNone,
       ]).comments
     ).toBe("none");
   });
 
-  test("uses the strongest non-none explicit feature access", () => {
+  test("uses the strongest non-none explicit resource access", () => {
     expect(
-      roomFeaturesFromScopes([
+      permissionCapabilitiesFromScopes([
         Permission.RoomCommentsRead,
         Permission.RoomCommentsWrite,
       ]).comments
     ).toBe("write");
   });
 
-  test("allows read but not write when a feature is downgraded", () => {
+  test("allows read but not write when a resource is downgraded", () => {
     const scopes = [Permission.RoomWrite, Permission.RoomCommentsRead];
 
-    expect(hasRoomFeatureAccess(scopes, "comments", "read")).toBe(true);
-    expect(hasRoomFeatureAccess(scopes, "comments", "write")).toBe(false);
+    expect(hasPermissionCapability(scopes, "comments", "read")).toBe(true);
+    expect(hasPermissionCapability(scopes, "comments", "write")).toBe(
+      false
+    );
   });
 
   test("supports deprecated permission strings", () => {
     expect(
-      hasRoomFeatureAccess(
+      hasPermissionCapability(
         [Permission.LegacyCommentsWrite],
         "comments",
         "write"
       )
     ).toBe(true);
     expect(
-      hasRoomFeatureAccess(
+      hasPermissionCapability(
         [Permission.LegacyRoomPresenceWrite],
         "presence",
         "read"
@@ -100,7 +105,7 @@ describe("roomFeaturesFromScopes", () => {
     ]);
   });
 
-  test("returns permission conflicts by feature", () => {
+  test("returns permission conflicts by resource", () => {
     expect(
       new Set(getRoomPermissionConflicts(Permission.RoomStorageRead))
     ).toEqual(
