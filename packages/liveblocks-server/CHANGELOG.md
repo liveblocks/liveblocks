@@ -1,5 +1,9 @@
 ## vNEXT (not yet released)
 
+- Fix a `LiveList` divergence after reconnects: when a client re-sends a pending
+  `push` op whose node the server had already stored (the original ack got lost
+  in the disconnect)
+
 ## v1.6.0
 
 - Update internal storage format of dev server. Note that your local dev rooms

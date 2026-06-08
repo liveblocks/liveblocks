@@ -1617,24 +1617,31 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
           r.action === "accepted" ? [r.op] : []
         );
 
-        const opsToSendBack: ServerWireOp[] = result.flatMap((r) => {
-          switch (r.action) {
-            case "ignored":
-              // HACK! We send a cleverly composed message, that will act
-              // as an acknowledgement to all old clients out there in
-              // the wild.
-              return r.ignoredOpId !== undefined
-                ? [ackIgnoredOp(r.ignoredOpId)]
-                : [];
+        const opsToSendBack: ServerWireOp[] = result.flatMap(
+          (r): ServerWireOp[] => {
+            switch (r.action) {
+              case "ignored":
+                // HACK! We send a cleverly composed message, that will act
+                // as an acknowledgement to all old clients out there in
+                // the wild.
+                return r.ignoredOpId !== undefined
+                  ? [ackIgnoredOp(r.ignoredOpId)]
+                  : [];
 
-            case "accepted":
-              return r.fix !== undefined ? [r.fix] : [];
+              case "rectified":
+                // The op was already applied earlier; re-acknowledge it with
+                // its stored, authoritative position.
+                return [r.ackOp, r.fix];
 
-            // istanbul ignore next
-            default:
-              return assertNever(r, "Unhandled case");
+              case "accepted":
+                return r.fix !== undefined ? [r.fix] : [];
+
+              // istanbul ignore next
+              default:
+                return assertNever(r, "Unhandled case");
+            }
           }
-        });
+        );
 
         if (opsToForward.length > 0) {
           scheduleFanOut({
