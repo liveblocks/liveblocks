@@ -695,10 +695,13 @@ describe("client", () => {
       let capturedRequestData: unknown = null;
 
       server.use(
-        http.post(`${DEFAULT_BASE_URL}/v2/rooms/:roomId`, async ({ request }) => {
-          capturedRequestData = await request.json();
-          return HttpResponse.json(room, { status: 200 });
-        })
+        http.post(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId`,
+          async ({ request }) => {
+            capturedRequestData = await request.json();
+            return HttpResponse.json(room, { status: 200 });
+          }
+        )
       );
 
       const client = new Liveblocks({ secret: "sk_xxx" });

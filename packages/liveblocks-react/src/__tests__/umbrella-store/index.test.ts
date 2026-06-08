@@ -101,7 +101,8 @@ describe("Umbrella Store", () => {
 
   test("permission hints replace previous hints", () => {
     const store = new UmbrellaStore(NO_CLIENT);
-    const permissionHintΣ = store.permissionHints.getPermissionForRoomΣ("room-a");
+    const permissionHintΣ =
+      store.permissionHints.getPermissionForRoomΣ("room-a");
 
     store.permissionHints.update(
       { "room-a": [Permission.RoomWrite] },
@@ -118,7 +119,8 @@ describe("Umbrella Store", () => {
 
   test("permission hints ignore stale updates", () => {
     const store = new UmbrellaStore(NO_CLIENT);
-    const permissionHintΣ = store.permissionHints.getPermissionForRoomΣ("room-a");
+    const permissionHintΣ =
+      store.permissionHints.getPermissionForRoomΣ("room-a");
 
     store.permissionHints.update(
       { "room-a": [Permission.RoomWrite, Permission.RoomCommentsNone] },
@@ -134,7 +136,8 @@ describe("Umbrella Store", () => {
 
   test("scoped permission hint updates clear missing room hints", () => {
     const store = new UmbrellaStore(NO_CLIENT);
-    const permissionHintΣ = store.permissionHints.getPermissionForRoomΣ("room-a");
+    const permissionHintΣ =
+      store.permissionHints.getPermissionForRoomΣ("room-a");
 
     store.permissionHints.update(
       { "room-a": [Permission.RoomWrite] },
@@ -142,18 +145,17 @@ describe("Umbrella Store", () => {
     );
     expect(permissionHintΣ.get()?.permissions.comments).toBe("write");
 
-    store.permissionHints.update(
-      {},
-      new Date("2026-01-01T00:00:01.000Z"),
-      ["room-a"]
-    );
+    store.permissionHints.update({}, new Date("2026-01-01T00:00:01.000Z"), [
+      "room-a",
+    ]);
 
     expect(permissionHintΣ.get()?.permissions.comments).toBe("none");
   });
 
   test("permission hints do not clear missing rooms from unscoped updates", () => {
     const store = new UmbrellaStore(NO_CLIENT);
-    const permissionHintΣ = store.permissionHints.getPermissionForRoomΣ("room-a");
+    const permissionHintΣ =
+      store.permissionHints.getPermissionForRoomΣ("room-a");
 
     store.permissionHints.update(
       { "room-a": [Permission.RoomWrite] },
@@ -167,18 +169,17 @@ describe("Umbrella Store", () => {
 
   test("scoped permission hint updates do not clear newer hints", () => {
     const store = new UmbrellaStore(NO_CLIENT);
-    const permissionHintΣ = store.permissionHints.getPermissionForRoomΣ("room-a");
+    const permissionHintΣ =
+      store.permissionHints.getPermissionForRoomΣ("room-a");
 
     store.permissionHints.update(
       { "room-a": [Permission.RoomWrite] },
       new Date("2026-01-01T00:00:01.000Z")
     );
 
-    store.permissionHints.update(
-      {},
-      new Date("2026-01-01T00:00:00.000Z"),
-      ["room-a"]
-    );
+    store.permissionHints.update({}, new Date("2026-01-01T00:00:00.000Z"), [
+      "room-a",
+    ]);
 
     expect(permissionHintΣ.get()?.permissions.comments).toBe("write");
   });

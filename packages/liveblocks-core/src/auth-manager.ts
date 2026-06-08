@@ -4,6 +4,15 @@ import type { Json } from "./lib/Json";
 import type { Relax } from "./lib/Relax";
 import { stringifyOrLog as stringify } from "./lib/stringify";
 import type {
+  PermissionResources,
+  RequiredAccessLevel,
+  RoomPermissionScopes,
+} from "./permissions";
+import {
+  hasPermissionCapabilityAccess,
+  resolveRoomPermissionCapabilities,
+} from "./permissions";
+import type {
   Authentication,
   CustomAuthenticationResult,
 } from "./protocol/Authentication";
@@ -13,14 +22,6 @@ import type {
   ParsedAuthToken,
 } from "./protocol/AuthToken";
 import { parseAuthToken, TokenKind } from "./protocol/AuthToken";
-import type {
-  AccessLevel,
-  PermissionCapabilities,
-  PermissionResources,
-  RequiredAccessLevel,
-  ResolvedPermissionCapabilities,
-} from "./permissions";
-import { resolvePermissionCapabilities } from "./permissions";
 import type { Polyfills } from "./room";
 
 export type AuthValue =
@@ -28,10 +29,14 @@ export type AuthValue =
   | { type: "public"; publicApiKey: string };
 
 export type AuthRequest = Relax<
-  | { resource: "creation"; access: RequiredAccessLevel }
   | {
       resource: Exclude<PermissionResources, "personal" | "creation">;
       roomId: string;
+      access: RequiredAccessLevel;
+    }
+  | {
+      // Not a JWT scope. Used for room-specific APIs
+      resource: "creation";
       access: RequiredAccessLevel;
     }
   | {
@@ -230,27 +235,7 @@ export function createAuthManager(
 type CachedToken = {
   token: ParsedAuthToken;
   expiresAt: number;
-  permissions?: AuthTokenPermissionCapabilities;
-};
-
-type AuthTokenPermissionCapabilities = Array<{
-  resource: string;
-  capabilities: ResolvedPermissionCapabilities;
-}>;
-
-const ROOM_PERMISSION_RESOURCES = [
-  "presence",
-  "storage",
-  "comments",
-  "feeds",
-] as const satisfies ReadonlyArray<
-  Exclude<PermissionResources, "creation" | "personal">
->;
-
-const ACCESS_RANKS: Record<AccessLevel, number> = {
-  none: 0,
-  read: 1,
-  write: 2,
+  permissions?: RoomPermissionScopes[];
 };
 
 function getAuthRequestKey(request: AuthRequest): string | undefined {
@@ -269,19 +254,19 @@ function makeCachedToken(
     return {
       token,
       expiresAt,
-      permissions: getAuthTokenPermissionCapabilities(token.parsed.perms),
+      permissions: getAuthTokenPermissionScopes(token.parsed.perms),
     };
   }
 
   return { token, expiresAt };
 }
 
-function getAuthTokenPermissionCapabilities(
+function getAuthTokenPermissionScopes(
   permissions: LiveblocksPermissions
-): AuthTokenPermissionCapabilities {
+): RoomPermissionScopes[] {
   return Object.entries(permissions).map(([resource, scopes]) => ({
     resource,
-    capabilities: resolvePermissionCapabilities(scopes),
+    scopes,
   }));
 }
 
@@ -298,97 +283,22 @@ function cachedTokenSatisfiesRequest(
     return true;
   }
 
-  if (request.roomId === undefined || request.access === undefined) {
+  if (request.roomId === undefined) {
     return false;
   }
 
-  const capabilities = getCapabilitiesForRoom(
+  const capabilities = resolveRoomPermissionCapabilities(
     cachedToken.permissions ?? [],
     request.roomId
   );
 
   return (
     capabilities !== undefined &&
-    hasRequiredAccess(capabilities[request.resource], request.access)
-  );
-}
-
-function getCapabilitiesForRoom(
-  permissions: AuthTokenPermissionCapabilities,
-  roomId: string
-): PermissionCapabilities | undefined {
-  const matchedPermissions = permissions.filter((permission) =>
-    resourceMatchesRoomId(permission.resource, roomId)
-  );
-
-  if (matchedPermissions.length === 0) {
-    return undefined;
-  }
-
-  let hasDefaultPermission = false;
-  let baseAccess: AccessLevel = "none";
-  const explicitCapabilities: Partial<
-    Record<(typeof ROOM_PERMISSION_RESOURCES)[number], AccessLevel>
-  > = {};
-
-  for (const permission of matchedPermissions) {
-    if (permission.capabilities.hasDefaultPermission) {
-      hasDefaultPermission = true;
-      baseAccess = strongestAccess(
-        baseAccess,
-        permission.capabilities.baseAccess
-      );
-    }
-
-    for (const resource of ROOM_PERMISSION_RESOURCES) {
-      const access = permission.capabilities.capabilities[resource];
-      if (access !== undefined) {
-        explicitCapabilities[resource] = strongestAccess(
-          explicitCapabilities[resource] ?? "none",
-          access
-        );
-      }
-    }
-  }
-
-  const capabilities: PermissionCapabilities = {
-    creation: hasDefaultPermission ? baseAccess : "none",
-    presence: "none",
-    storage: "none",
-    comments: "none",
-    feeds: "none",
-    personal: "write",
-  };
-
-  for (const resource of ROOM_PERMISSION_RESOURCES) {
-    capabilities[resource] =
-      explicitCapabilities[resource] ??
-      (hasDefaultPermission ? baseAccess : "none");
-  }
-
-  return capabilities;
-}
-
-function strongestAccess(left: AccessLevel, right: AccessLevel): AccessLevel {
-  return ACCESS_RANKS[right] > ACCESS_RANKS[left] ? right : left;
-}
-
-function resourceMatchesRoomId(resource: string, roomId: string): boolean {
-  if (resource.includes("*")) {
-    return roomId.startsWith(resource.replace("*", ""));
-  }
-
-  return resource === roomId;
-}
-
-function hasRequiredAccess(
-  access: PermissionCapabilities[PermissionResources],
-  requiredAccess: RequiredAccessLevel
-): boolean {
-  return (
-    (access === "write" && requiredAccess === "write") ||
-    access === "write" ||
-    (access === "read" && requiredAccess === "read")
+    hasPermissionCapabilityAccess(
+      capabilities,
+      request.resource,
+      request.access
+    )
   );
 }
 

@@ -6,6 +6,7 @@ import {
   normalizeRoomPermissionInput,
   Permission,
   permissionCapabilitiesFromScopes,
+  resolveRoomPermissionCapabilities,
 } from "../permissions";
 
 describe("permissionCapabilitiesFromScopes", () => {
@@ -115,5 +116,56 @@ describe("permissionCapabilitiesFromScopes", () => {
     expect(getRoomPermissionConflicts(Permission.RoomWrite)).toContain(
       Permission.RoomCommentsNone
     );
+  });
+
+  test("resolves room capabilities from wildcard resources", () => {
+    expect(
+      resolveRoomPermissionCapabilities(
+        [{ resource: "org1*", scopes: [Permission.RoomWrite] }],
+        "org1.room1"
+      )
+    ).toEqual({
+      creation: "write",
+      presence: "write",
+      storage: "write",
+      comments: "write",
+      feeds: "write",
+      personal: "write",
+    });
+  });
+
+  test("combines matching room permissions by strongest resource access", () => {
+    expect(
+      resolveRoomPermissionCapabilities(
+        [
+          { resource: "org1*", scopes: [Permission.RoomStorageWrite] },
+          { resource: "org1.room1", scopes: [Permission.RoomStorageNone] },
+        ],
+        "org1.room1"
+      )?.storage
+    ).toBe("write");
+  });
+
+  test("lets exact room opt-outs override wildcard defaults without clearing other resources", () => {
+    const capabilities = resolveRoomPermissionCapabilities(
+      [
+        { resource: "org1*", scopes: [Permission.RoomWrite] },
+        { resource: "org1.room1", scopes: [Permission.RoomStorageNone] },
+      ],
+      "org1.room1"
+    );
+
+    expect(capabilities?.presence).toBe("write");
+    expect(capabilities?.comments).toBe("write");
+    expect(capabilities?.storage).toBe("none");
+  });
+
+  test("returns undefined when no room permissions match", () => {
+    expect(
+      resolveRoomPermissionCapabilities(
+        [{ resource: "org2*", scopes: [Permission.RoomWrite] }],
+        "org1.room1"
+      )
+    ).toBeUndefined();
   });
 });

@@ -50,12 +50,12 @@ import {
   partition,
   tryParseJson,
 } from "./lib/utils";
+import type { Permission } from "./permissions";
+import { hasPermissionCapability } from "./permissions";
 import type {
   ContextualPromptContext,
   ContextualPromptResponse,
 } from "./protocol/Ai";
-import type { Permission } from "./permissions";
-import { hasPermissionCapability } from "./permissions";
 import type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
 import type {
   AddFeedClientMsg,

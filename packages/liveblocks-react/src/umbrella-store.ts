@@ -47,8 +47,8 @@ import {
   MutableSignal,
   nanoid,
   nn,
-  permissionCapabilitiesFromScopes,
   patchNotificationSettings,
+  permissionCapabilitiesFromScopes,
   shallow,
   shallow2,
   Signal,
@@ -1417,7 +1417,10 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
             result.subscriptions
           );
 
-          this.permissionHints.update(result.permissionHints, result.requestedAt);
+          this.permissionHints.update(
+            result.permissionHints,
+            result.requestedAt
+          );
 
           // We initialize the `_userThreadsLastRequestedAt` date using the server timestamp after we've loaded the first page of inbox notifications.
           if (this.#userThreadsLastRequestedAt === null) {
@@ -1478,9 +1481,11 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
             result.subscriptions
           );
 
-          this.permissionHints.update(result.permissionHints, result.requestedAt, [
-            roomId,
-          ]);
+          this.permissionHints.update(
+            result.permissionHints,
+            result.requestedAt,
+            [roomId]
+          );
 
           const lastRequestedAt =
             this.#roomThreadsLastRequestedAtByRoom.get(roomId);

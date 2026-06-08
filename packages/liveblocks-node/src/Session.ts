@@ -2,16 +2,17 @@ import type {
   IUserInfo,
   Json,
   JsonObject,
+  RoomPermissionInput,
   URLSafeString,
 } from "@liveblocks/core";
-import { Permission, url } from "@liveblocks/core";
-
-import type { AuthResponse } from "./client";
-import type { RoomPermissionInput } from "@liveblocks/core";
 import {
   getRoomPermissionConflicts,
   normalizeRoomPermissionInput,
+  Permission,
+  url,
 } from "@liveblocks/core";
+
+import type { AuthResponse } from "./client";
 import { assertNonEmpty, normalizeStatusCode } from "./utils";
 
 const MAX_PERMS_PER_SET = 10;

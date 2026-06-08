@@ -37,7 +37,6 @@ import type {
   MentionData,
   OpaqueClient,
   OpaqueRoom,
-  PermissionCapabilities,
   PermissionResources,
   RequiredAccessLevel,
   RoomEventMessage,
@@ -55,6 +54,7 @@ import {
   DefaultMap,
   errorIf,
   getSubscriptionKey,
+  hasPermissionCapabilityAccess,
   HttpError,
   kInternal,
   makePoller,
@@ -3725,10 +3725,14 @@ function useHasPermissionCapability(
   requiredAccess: RequiredAccessLevel
 ): boolean {
   const permissions = useRoomPermissions(roomId);
-  const fallback = useSelfPermissionCapabilityFallback(roomId, resource, requiredAccess);
+  const fallback = useSelfPermissionCapabilityFallback(
+    roomId,
+    resource,
+    requiredAccess
+  );
 
   return permissions !== undefined
-    ? hasPermissionCapability(permissions, resource, requiredAccess)
+    ? hasPermissionCapabilityAccess(permissions, resource, requiredAccess)
     : fallback;
 }
 
@@ -3767,15 +3771,6 @@ function useSelfPermissionCapabilityFallback(
   }, [resource, requiredAccess, room, roomId]);
 
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-}
-
-function hasPermissionCapability(
-  permissions: PermissionCapabilities,
-  resource: PermissionResources,
-  requiredAccess: RequiredAccessLevel
-): boolean {
-  const access = permissions[resource];
-  return access === "write" || (access === "read" && requiredAccess === "read");
 }
 
 /**
@@ -4988,7 +4983,6 @@ export {
   useAttachmentUrl,
   useAttachmentUrlSuspense,
   _useBroadcastEvent as useBroadcastEvent,
-  useHasPermissionCapability,
   useCanRedo,
   useCanUndo,
   _useCreateComment as useCreateComment,
@@ -5016,6 +5010,7 @@ export {
   _useFeedMessagesSuspense as useFeedMessagesSuspense,
   _useFeeds as useFeeds,
   _useFeedsSuspense as useFeedsSuspense,
+  useHasPermissionCapability,
   useHistory,
   useHistoryVersionData,
   _useHistoryVersions as useHistoryVersions,

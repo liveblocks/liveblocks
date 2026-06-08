@@ -26,11 +26,11 @@ import { stringifyOrLog as stringify } from "./lib/stringify";
 import type { QueryParams, URLSafeString } from "./lib/url";
 import { url, urljoin } from "./lib/url";
 import { raise } from "./lib/utils";
+import type { Permission } from "./permissions";
 import type {
   ContextualPromptContext,
   ContextualPromptResponse,
 } from "./protocol/Ai";
-import type { Permission } from "./permissions";
 import type {
   BaseMetadata,
   CommentAttachment,

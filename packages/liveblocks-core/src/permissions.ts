@@ -45,6 +45,8 @@ export type Permission = (typeof Permission)[keyof typeof Permission];
 
 export type AccessLevel = "write" | "read" | "none";
 
+export type RequiredAccessLevel = "read" | "write";
+
 export type PermissionCapabilities = {
   creation: AccessLevel;
   presence: AccessLevel;
@@ -56,12 +58,15 @@ export type PermissionCapabilities = {
 
 export type PermissionResources = keyof PermissionCapabilities;
 
-export type RequiredAccessLevel = "read" | "write";
-
 export type ResolvedPermissionCapabilities = {
   hasDefaultPermission: boolean;
   baseAccess: AccessLevel;
   capabilities: Partial<PermissionCapabilities>;
+};
+
+export type RoomPermissionScopes = {
+  resource: string;
+  scopes: readonly string[];
 };
 
 export type RoomPermission = Permission[];
@@ -90,7 +95,9 @@ type ResourcePermissionMap = Record<
   Partial<Record<AccessLevel, readonly Permission[]>>
 >;
 
-const ALL_PERMISSIONS = Object.freeze(Object.values(Permission));
+const ALL_PERMISSIONS: readonly string[] = Object.freeze(
+  Object.values(Permission)
+);
 
 const ACCESS_LEVELS = [
   "none",
@@ -150,12 +157,12 @@ const RESOURCE_PERMISSIONS: ResourcePermissionMap = {
 
 const DEFAULT_PERMISSION_RESOURCE = "creation" satisfies PermissionResources;
 
-const ROOM_PERMISSION_RESOURCES = (
-  Object.keys(RESOURCE_PERMISSIONS) as PermissionResources[]
-).filter(
-  (resource): resource is RoomPermissionResource =>
-    RESOURCE_PERMISSIONS[resource].none !== undefined
-);
+const ROOM_PERMISSION_RESOURCES = [
+  "presence",
+  "storage",
+  "comments",
+  "feeds",
+] as const satisfies ReadonlyArray<RoomPermissionResource>;
 
 const ROOM_PERMISSION_OBJECT_KEYS = new Set<string>([
   "default",
@@ -178,9 +185,7 @@ function resolveResourceAccess(
     const scopedPermissions = permissions[access];
     if (
       scopedPermissions !== undefined &&
-      scopedPermissions.some((permission: Permission) =>
-        scopes.includes(permission)
-      )
+      scopedPermissions.some((permission) => scopes.includes(permission))
     ) {
       if (
         resourceAccess === undefined ||
@@ -196,11 +201,11 @@ function resolveResourceAccess(
 
 function permissionForAccessLevel(
   resource: PermissionResources,
-  access: string
+  access: AccessLevel
 ): Permission {
   const levels: Partial<Record<AccessLevel, readonly Permission[]>> =
     RESOURCE_PERMISSIONS[resource];
-  const permissions = levels[access as AccessLevel];
+  const permissions = levels[access];
   if (permissions === undefined || permissions.length === 0) {
     throw new Error(
       `Invalid permission level for ${resource}: ${String(access)}`
@@ -210,7 +215,7 @@ function permissionForAccessLevel(
 }
 
 export function isPermission(value: string): value is Permission {
-  return ALL_PERMISSIONS.includes(value as Permission);
+  return ALL_PERMISSIONS.includes(value);
 }
 
 export function resolveFullPermissionCapabilities(
@@ -241,11 +246,55 @@ export function permissionCapabilitiesFromScopes(
   );
 }
 
+export function resolveRoomPermissionCapabilities(
+  permissions: readonly RoomPermissionScopes[],
+  roomId: string
+): PermissionCapabilities | undefined {
+  const matchedPermissions = permissions.filter((permission) =>
+    resourceMatchesRoomId(permission.resource, roomId)
+  );
+
+  if (matchedPermissions.length === 0) {
+    return undefined;
+  }
+
+  let hasDefaultPermission = false;
+  let baseAccess: AccessLevel = "none";
+  const explicitCapabilities: Partial<PermissionCapabilities> = {};
+
+  for (const permission of matchedPermissions) {
+    const resolved = resolvePermissionCapabilities(permission.scopes);
+
+    if (resolved.hasDefaultPermission) {
+      hasDefaultPermission = true;
+      baseAccess = strongestAccess(baseAccess, resolved.baseAccess);
+    }
+
+    for (const resource of ROOM_PERMISSION_RESOURCES) {
+      const access = resolved.capabilities[resource];
+      if (access !== undefined) {
+        explicitCapabilities[resource] = strongestAccess(
+          explicitCapabilities[resource] ?? "none",
+          access
+        );
+      }
+    }
+  }
+
+  return resolveFullPermissionCapabilities({
+    hasDefaultPermission,
+    baseAccess,
+    capabilities: explicitCapabilities,
+  });
+}
+
 export function normalizeRoomPermissionInput(
   input: RoomPermissionInput
 ): RoomPermission {
-  if (Array.isArray(input)) {
-    return input.map((permission) => {
+  const permissionInput: readonly string[] | RoomPermissionObject = input;
+
+  if (isReadonlyStringArray(permissionInput)) {
+    return permissionInput.map((permission) => {
       if (!isPermission(permission)) {
         throw new Error(`Not a valid permission: ${permission}`);
       }
@@ -253,8 +302,13 @@ export function normalizeRoomPermissionInput(
     });
   }
 
-  // Array.isArray does not narrow readonly arrays out of this public union.
-  return normalizeRoomPermissionObject(input as RoomPermissionObject);
+  return normalizeRoomPermissionObject(permissionInput);
+}
+
+function isReadonlyStringArray(
+  input: readonly string[] | RoomPermissionObject
+): input is readonly string[] {
+  return Array.isArray(input);
 }
 
 function normalizeRoomPermissionObject(
@@ -361,11 +415,36 @@ export function resolvePermissionCapabilities(
   return { hasDefaultPermission, baseAccess, capabilities };
 }
 
+function strongestAccess(left: AccessLevel, right: AccessLevel): AccessLevel {
+  return ACCESS_RANKS[right] > ACCESS_RANKS[left] ? right : left;
+}
+
+function resourceMatchesRoomId(resource: string, roomId: string): boolean {
+  if (resource.includes("*")) {
+    return roomId.startsWith(resource.replace("*", ""));
+  }
+
+  return resource === roomId;
+}
+
 export function hasPermissionCapability(
   scopes: readonly string[],
   resource: PermissionResources,
   requiredAccess: RequiredAccessLevel
 ): boolean {
   const access = permissionCapabilitiesFromScopes(scopes)[resource];
+  return hasPermissionCapabilityAccess(
+    { [resource]: access },
+    resource,
+    requiredAccess
+  );
+}
+
+export function hasPermissionCapabilityAccess(
+  capabilities: Partial<PermissionCapabilities>,
+  resource: PermissionResources,
+  requiredAccess: RequiredAccessLevel
+): boolean {
+  const access = capabilities[resource] ?? "none";
   return ACCESS_RANKS[access] >= ACCESS_RANKS[requiredAccess];
 }

@@ -194,11 +194,6 @@ export {
 } from "./lib/utils";
 export { warnOnce, warnOnceIf } from "./lib/warnings";
 export type {
-  ContextualPromptContext,
-  ContextualPromptResponse,
-} from "./protocol/Ai";
-export type { CustomAuthenticationResult } from "./protocol/Authentication";
-export type {
   AccessLevel,
   PermissionCapabilities,
   PermissionResources,
@@ -213,13 +208,19 @@ export type {
 export {
   getRoomPermissionConflicts,
   hasPermissionCapability,
+  hasPermissionCapabilityAccess,
   isPermission,
   normalizeRoomAccessesInput,
   normalizeRoomAccessesUpdateInput,
   normalizeRoomPermissionInput,
-  permissionCapabilitiesFromScopes,
   Permission,
+  permissionCapabilitiesFromScopes,
 } from "./permissions";
+export type {
+  ContextualPromptContext,
+  ContextualPromptResponse,
+} from "./protocol/Ai";
+export type { CustomAuthenticationResult } from "./protocol/Authentication";
 export type { BaseActivitiesData } from "./protocol/BaseActivitiesData";
 export type { BaseGroupInfo } from "./protocol/BaseGroupInfo";
 export type { BaseRoomInfo } from "./protocol/BaseRoomInfo";

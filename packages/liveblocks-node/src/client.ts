@@ -44,6 +44,12 @@ import type {
   PlainLsonObject,
   QueryMetadata,
   QueryParams,
+  RoomAccesses,
+  RoomAccessesInput,
+  RoomAccessesUpdateInput,
+  RoomPermission,
+  RoomPermissionInput,
+  RoomPermissionObject,
   RoomSubscriptionSettings,
   StorageNode,
   StorageUpdate,
@@ -72,6 +78,9 @@ import {
   isPlainObject,
   LiveObject,
   makeAbortController,
+  normalizeRoomAccessesInput,
+  normalizeRoomAccessesUpdateInput,
+  normalizeRoomPermissionInput,
   objectToQuery,
   tryParseJson,
   url,
@@ -81,19 +90,6 @@ import {
 import { asyncConsume, runConcurrently } from "./lib/itertools";
 import { LineStream, NdJsonStream } from "./lib/ndjson";
 import { xwarn } from "./lib/xwarn";
-import type {
-  RoomAccesses,
-  RoomAccessesInput,
-  RoomAccessesUpdateInput,
-  RoomPermission,
-  RoomPermissionInput,
-  RoomPermissionObject,
-} from "@liveblocks/core";
-import {
-  normalizeRoomAccessesInput,
-  normalizeRoomAccessesUpdateInput,
-  normalizeRoomPermissionInput,
-} from "@liveblocks/core";
 import { Session } from "./Session";
 import {
   assertNonEmpty,
@@ -1164,6 +1160,7 @@ export class Liveblocks {
     params: CreateRoomOptions,
     options?: RequestOptions & { idempotent?: boolean }
   ): Promise<RoomData> {
+    const normalizedParams = normalizeCreateRoomOptions(params);
     const {
       defaultAccesses,
       groupsAccesses,
@@ -1171,7 +1168,7 @@ export class Liveblocks {
       metadata,
       tenantId,
       organizationId,
-    } = params;
+    } = normalizedParams;
 
     const body: {
       id: string;
@@ -1182,9 +1179,9 @@ export class Liveblocks {
       organizationId?: string;
     } = {
       id: roomId,
-      defaultAccesses: normalizeRoomPermissionInput(defaultAccesses),
-      groupsAccesses: normalizeRoomAccessesInput(groupsAccesses),
-      usersAccesses: normalizeRoomAccessesInput(usersAccesses),
+      defaultAccesses,
+      groupsAccesses,
+      usersAccesses,
       metadata,
     };
 
