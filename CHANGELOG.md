@@ -1,5 +1,7 @@
 ## vNEXT (not yet released)
 
+## v3.19.5
+
 ### `@liveblocks/client`
 
 - Fix a `LiveList` divergence after reconnects: a pending `push` could under
