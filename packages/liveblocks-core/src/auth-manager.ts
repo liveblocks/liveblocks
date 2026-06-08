@@ -205,15 +205,6 @@ export function createAuthManager(
 
       seenTokens.add(token.raw);
       const cachedToken = makeCachedToken(token, expiresAt);
-
-      if (!cachedTokenSatisfiesRequest(cachedToken, requestOptions)) {
-        // The backend returned a token, but it doesn't cover this request.
-        // Retrying the same endpoint won't help until the auth handler is fixed.
-        throw new StopRetrying(
-          "The Liveblocks auth token does not grant the requested permissions."
-        );
-      }
-
       tokens.push(cachedToken);
 
       return { type: "secret", token };
