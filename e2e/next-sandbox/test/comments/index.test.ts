@@ -41,6 +41,15 @@ test.describe("Comments", () => {
       const [page1, page2] = pages;
 
       await waitForJson(pages, "#isLoading", false, { timeout: 15_000 });
+
+      // Both pages must be connected to the room's WebSocket before we mutate.
+      // Thread/comment updates are delivered as live socket events that are
+      // never replayed: a page that isn't connected yet when its peer creates a
+      // thread silently misses the event and won't recover until the next poll
+      // (5 minutes), long past any test timeout.
+      await waitForJson(pages, "#socketStatus", "connected", {
+        timeout: 15_000,
+      });
       await waitUntilEqualOnAllPages(pages, "#numOfThreads", { interval: 250 });
 
       // Read starting value n

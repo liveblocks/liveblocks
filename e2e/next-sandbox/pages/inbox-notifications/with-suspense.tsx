@@ -56,7 +56,7 @@ const {
 } = createLiveblocksContext(client);
 
 const {
-  suspense: { RoomProvider, useSelf, useThreads, useDeleteComment },
+  suspense: { RoomProvider, useSelf, useStatus, useThreads, useDeleteComment },
 } = createRoomContext(client);
 
 function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
@@ -144,6 +144,7 @@ function TopPart() {
   const me = useSelf();
   const { threads } = useThreads();
   const inboxNotifications = useInboxNotificationsForThisPage();
+  const status = useStatus();
   const smoothSyncStatus = useSyncStatus({ smooth: true });
   const isSynced = smoothSyncStatus === "synchronized";
 
@@ -170,6 +171,7 @@ function TopPart() {
         <tbody>
           <Row id="userId" name="userId" value={me.id} />
           <Row id="name" name="name" value={me.info?.name} />
+          <Row id="socketStatus" name="WebSocket status" value={status} />
           <Row
             id="numOfThreads"
             name="Number of Threads"

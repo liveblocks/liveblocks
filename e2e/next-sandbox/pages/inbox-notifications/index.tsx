@@ -51,7 +51,7 @@ const client = createLiveblocksClient({
 const { LiveblocksProvider, useInboxNotifications } =
   createLiveblocksContext(client);
 
-const { RoomProvider, useSelf, useThreads, useDeleteComment } =
+const { RoomProvider, useSelf, useStatus, useThreads, useDeleteComment } =
   createRoomContext(client);
 
 function WithRoomProvider(props: PropsWithChildren) {
@@ -120,6 +120,7 @@ function TopPart() {
   const me = useSelf();
   const { threads } = useThreads();
   const inboxNotifications = useInboxNotificationsForThisPage();
+  const status = useStatus();
   const syncStatus = useSyncStatus({ smooth: true });
   const isSynced = syncStatus === "synchronized";
 
@@ -148,6 +149,7 @@ function TopPart() {
         <tbody>
           <Row id="userId" name="userId" value={me?.id} />
           <Row id="name" name="name" value={me?.info?.name} />
+          <Row id="socketStatus" name="WebSocket status" value={status} />
           <Row
             id="numOfThreads"
             name="Number of Threads"

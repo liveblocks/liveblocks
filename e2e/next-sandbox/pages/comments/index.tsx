@@ -7,8 +7,13 @@ import { createLiveblocksClient } from "../../utils/createClient";
 
 const client = createLiveblocksClient();
 
-const { RoomProvider, useThreads, useCreateThread, useDeleteComment } =
-  createRoomContext(client);
+const {
+  RoomProvider,
+  useStatus,
+  useThreads,
+  useCreateThread,
+  useDeleteComment,
+} = createRoomContext(client);
 
 export default function Home() {
   const roomId = getRoomFromUrl();
@@ -21,6 +26,7 @@ export default function Home() {
 }
 
 function Sandbox() {
+  const status = useStatus();
   const { threads, isLoading } = useThreads();
   const threadInfoRef = useRef<{
     threadId: string;
@@ -33,6 +39,7 @@ function Sandbox() {
     <>
       <table>
         <tbody>
+          <Row id="socketStatus" name="WebSocket status" value={status} />
           <Row id="isLoading" name="isLoading" value={isLoading} />
           <Row
             id="numOfThreads"

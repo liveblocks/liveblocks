@@ -39,6 +39,13 @@ test.describe("Inbox notifications", () => {
     await waitForJson(page1, "#name", "Vincent D.", SLOW);
     await waitForJson(page2, "#name", "Marc B.", SLOW);
 
+    // Both pages must be connected to the room's WebSocket before we mutate.
+    // Thread/comment/notification updates are delivered as live socket events
+    // that are never replayed: a page that isn't connected yet when its peer
+    // creates a thread silently misses the event and won't recover until the
+    // next poll (minutes away), long past any test timeout.
+    await waitForJson(pages, "#socketStatus", "connected", SLOW);
+
     // Clear out any existing comments before starting the test
     await page1.locator("#delete-all-mine").click({ force: true });
     await page2.locator("#delete-all-mine").click({ force: true });
@@ -78,10 +85,10 @@ test.describe("Inbox notifications", () => {
       // Assert 1: two comments + one notification should show up on the other side
       //
       // Synchronize
-      await waitForJson(pages, "#numOfThreads", 1);
+      await waitForJson(pages, "#numOfThreads", 1, SLOW);
       await waitForJson(pages, "#numOfComments", 2, SLOW);
       await waitForJson(page1, "#numOfNotifications", 0);
-      await waitForJson(page2, "#numOfNotifications", 1);
+      await waitForJson(page2, "#numOfNotifications", 1, SLOW);
 
       // The two comments (on the left)
       await expect(page2.locator("#left")).toContainText("Hi team!");
@@ -110,9 +117,9 @@ test.describe("Inbox notifications", () => {
       //
       // Assert 1: Marc's reply will show up on the other side and also create a notification for Vincent
       //
-      await waitForJson(pages, "#numOfThreads", 1);
+      await waitForJson(pages, "#numOfThreads", 1, SLOW);
       await waitForJson(pages, "#numOfComments", 3, SLOW);
-      await waitForJson(pages, "#numOfNotifications", 1);
+      await waitForJson(pages, "#numOfNotifications", 1, SLOW);
 
       // The two comments (on the left)
       await expect(page1.locator("#left")).toContainText("Cool stuff");
