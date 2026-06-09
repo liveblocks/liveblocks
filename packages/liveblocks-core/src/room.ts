@@ -8,8 +8,8 @@ import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt";
 import { createManagedPool, OpSource } from "./crdts/AbstractCrdt";
 import {
   cloneLson,
+  diffNodeMap,
   dumpPool,
-  getTreesDiffOperations,
   isLiveList,
   isLiveNode,
   isSameNodeOrChildOf,
@@ -1911,7 +1911,7 @@ export function createRoom<
       // fix is a node-stream reconcile that updates the tree in place,
       // unified with the `_fromItems` path used on initial load, so a node
       // stream never enters the op path at all.
-      const ops = getTreesDiffOperations(currentItems, nodes);
+      const ops = diffNodeMap(currentItems, nodes);
       const result = applyRemoteOps(ops);
       notify(result.updates);
     } else {
