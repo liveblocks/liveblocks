@@ -22,7 +22,7 @@ import stdPath from "node:path";
 import type { NodeMap } from "@liveblocks/core";
 import { CrdtType } from "@liveblocks/core";
 import { Database } from "bun:sqlite";
-import { describe } from "bun:test";
+import { describe, expect, test } from "bun:test";
 
 import { BunSQLiteDriver } from "~/dev-server/db/BunSQLiteDriver";
 
@@ -40,13 +40,16 @@ function initBunSQLite(dbPath: string, rawNodes: NodeMap): void {
     const parentId = id === "root" ? null : (node.parentId ?? null);
     const parentKey = id === "root" ? null : (node.parentKey ?? null);
     const jdata =
-      node.type === CrdtType.OBJECT || node.type === CrdtType.REGISTER
+      node.type === CrdtType.OBJECT ||
+      node.type === CrdtType.REGISTER ||
+      node.type === CrdtType.TEXT
         ? JSON.stringify(node.data)
         : null;
+    const version = node.type === CrdtType.TEXT ? node.version : null;
 
     db.run(
-      "INSERT INTO nodes (id, type, parent_id, parent_key, jdata) VALUES (?, ?, ?, ?, ?)",
-      [id, node.type, parentId, parentKey, jdata]
+      "INSERT INTO nodes (id, type, parent_id, parent_key, jdata, version) VALUES (?, ?, ?, ?, ?, ?)",
+      [id, node.type, parentId, parentKey, jdata, version]
     );
   }
 
@@ -73,5 +76,67 @@ describe("Bun SQLite driver", () => {
         driver.close();
       }
     },
+  });
+});
+
+describe("Bun SQLite driver LiveText history", () => {
+  test("stores, purges, and deletes LiveText operation history", () => {
+    const tmpdir = fs.mkdtempSync(stdPath.join(os.tmpdir(), "lb-sqlite-test-"));
+    const dbPath = stdPath.join(tmpdir, "my-test-room.db");
+    const driver = new BunSQLiteDriver(dbPath);
+
+    try {
+      driver.set_child(
+        "0:1",
+        {
+          type: CrdtType.TEXT,
+          parentId: "root",
+          parentKey: "text",
+          data: [["Hello"]],
+          version: 0,
+        },
+        true
+      );
+
+      driver.append_live_text_history({
+        nodeId: "0:1",
+        baseVersion: 0,
+        version: 1,
+        opId: "op:1",
+        ops: [{ type: "insert", index: 5, text: "!" }],
+      });
+      driver.append_live_text_history({
+        nodeId: "0:1",
+        baseVersion: 1,
+        version: 2,
+        opId: "op:2",
+        ops: [{ type: "delete", index: 0, length: 1 }],
+      });
+
+      expect(driver.get_live_text_history_by_op_id("0:1", "op:1")).toEqual({
+        nodeId: "0:1",
+        baseVersion: 0,
+        version: 1,
+        opId: "op:1",
+        ops: [{ type: "insert", index: 5, text: "!" }],
+      });
+      expect(driver.get_live_text_history_since("0:1", 0)).toHaveLength(2);
+
+      driver.purge_live_text_history_before("0:1", 2);
+      expect(driver.get_live_text_history_since("0:1", 0)).toEqual([
+        {
+          nodeId: "0:1",
+          baseVersion: 1,
+          version: 2,
+          opId: "op:2",
+          ops: [{ type: "delete", index: 0, length: 1 }],
+        },
+      ]);
+
+      driver.delete_node("0:1");
+      expect(driver.get_live_text_history_since("0:1", 0)).toEqual([]);
+    } finally {
+      driver.close();
+    }
   });
 });

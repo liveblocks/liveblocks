@@ -145,6 +145,50 @@ describe("LiveText acknowledgement", () => {
     expect(text.toJSON()).toEqual([["ABHello"]]);
   });
 
+  test("acknowledgement applies server-rebased operations", () => {
+    let acknowledgedOpId = "";
+    const pool = createManagedPool("room", {
+      getCurrentConnectionId: () => 0,
+      onDispatch: (ops) => {
+        acknowledgedOpId = ops[0]?.opId ?? "";
+      },
+    });
+    const text = new LiveText("Hello");
+    text._attach("0:1", pool);
+
+    text.delete(0, 2);
+    expect(text.toString()).toBe("llo");
+    expect(acknowledgedOpId).not.toBe("");
+
+    text._apply(
+      {
+        type: OpCode.UPDATE_TEXT,
+        id: "0:1",
+        baseVersion: 0,
+        version: 1,
+        ops: [{ type: "insert", index: 0, text: "A" }],
+      },
+      false
+    );
+
+    expect(text.toString()).toBe("Allo");
+
+    text._apply(
+      {
+        type: OpCode.UPDATE_TEXT,
+        id: "0:1",
+        opId: acknowledgedOpId,
+        baseVersion: 1,
+        version: 2,
+        ops: [{ type: "delete", index: 1, length: 2 }],
+      },
+      false
+    );
+
+    expect(text.toString()).toBe("Allo");
+    expect(text.toJSON()).toEqual([["Allo"]]);
+  });
+
   test("re-applies acknowledged operations when multiple local edits are pending", () => {
     let firstOpId = "";
     let secondOpId = "";

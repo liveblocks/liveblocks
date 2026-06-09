@@ -21,6 +21,7 @@ import type {
   IUserInfo,
   Json,
   JsonObject,
+  LiveTextData,
   NodeStream,
   PlainLsonObject,
   Relax,
@@ -28,6 +29,7 @@ import type {
   SerializedCrdt,
   SerializedObject,
   SerializedRootObject,
+  TextOperation,
 } from "@liveblocks/core";
 import { asPos, CrdtType, raise } from "@liveblocks/core";
 import type {
@@ -51,6 +53,14 @@ import {
 } from "@liveblocks/server";
 import { Database, type SQLQueryBindings } from "bun:sqlite";
 
+type LiveTextHistoryEntry = {
+  nodeId: string;
+  version: number;
+  baseVersion: number;
+  opId: string;
+  ops: TextOperation[];
+};
+
 function tryParseJson<J extends Json>(
   value: string | undefined
 ): J | undefined {
@@ -73,6 +83,7 @@ type NodeRow =
       parent_id: null;
       parent_key: null;
       jdata: jstring;
+      version: null;
     }
   | {
       id: string;
@@ -80,6 +91,15 @@ type NodeRow =
       parent_id: string;
       parent_key: string;
       jdata: jstring;
+      version: null;
+    }
+  | {
+      id: string;
+      type: CrdtType.TEXT;
+      parent_id: string;
+      parent_key: string;
+      jdata: jstring;
+      version: number;
     }
   | {
       id: string;
@@ -87,7 +107,28 @@ type NodeRow =
       parent_id: string;
       parent_key: string;
       jdata: null;
+      version: null;
     };
+
+type LiveTextHistoryRow = {
+  node_id: string;
+  version: number;
+  base_version: number;
+  op_id: string;
+  ops: jstring;
+};
+
+function rowToLiveTextHistoryEntry(
+  row: LiveTextHistoryRow
+): LiveTextHistoryEntry {
+  return {
+    nodeId: row.node_id,
+    version: row.version,
+    baseVersion: row.base_version,
+    opId: row.op_id,
+    ops: parseJson(row.ops),
+  };
+}
 
 function rowToSerializedCrdt(row: NodeRow): SerializedCrdt {
   const { type, parent_id: parentId, parent_key: parentKey, jdata } = row;
@@ -99,6 +140,15 @@ function rowToSerializedCrdt(row: NodeRow): SerializedCrdt {
 
     case CrdtType.REGISTER:
       return { type, parentId, parentKey, data: parseJson(jdata) };
+
+    case CrdtType.TEXT:
+      return {
+        type,
+        parentId,
+        parentKey,
+        data: parseJson<LiveTextData>(jdata),
+        version: row.version,
+      };
 
     case CrdtType.LIST:
     case CrdtType.MAP:
@@ -177,15 +227,15 @@ function nparams(count: number): string {
  */
 function sanitize_missingRoot(db: Database): void {
   db.run(
-    `INSERT OR IGNORE INTO nodes (id, type, parent_id, parent_key, jdata)
-     VALUES ('root', 0, NULL, NULL, '{}')`
+    `INSERT OR IGNORE INTO nodes (id, type, parent_id, parent_key, jdata, version)
+     VALUES ('root', 0, NULL, NULL, '{}', NULL)`
   );
 }
 
 /**
  * Deletes illegal tree nodes and their subtrees:
  * 1. Registers under Objects
- * 2. Any child node under a Register
+ * 2. Any child node under a Register or Text
  *
  * Common case is also the happy path: no rows match, this is a no-op.
  */
@@ -199,7 +249,7 @@ function sanitize_illegalNodes(db: Database): void {
          WHERE
            (c.type = ${CrdtType.REGISTER} AND p.type = ${CrdtType.OBJECT})
            OR
-           p.type = ${CrdtType.REGISTER}`
+           p.type IN (${CrdtType.REGISTER}, ${CrdtType.TEXT})`
     )
     .all();
 
@@ -255,7 +305,7 @@ function get_node(db: Database, id: string): SerializedCrdt | undefined {
     .query<
       NodeRow,
       [string]
-    >("SELECT id, type, parent_id, parent_key, jdata FROM nodes WHERE id = ?")
+    >("SELECT id, type, parent_id, parent_key, jdata, version FROM nodes WHERE id = ?")
     .get(id);
   return row ? rowToSerializedCrdt(row) : undefined;
 }
@@ -265,7 +315,7 @@ function iter_nodes(db: Database): Iterable<[string, SerializedCrdt]> {
     .query<
       NodeRow,
       []
-    >("SELECT id, type, parent_id, parent_key, jdata FROM nodes")
+    >("SELECT id, type, parent_id, parent_key, jdata, version FROM nodes")
     .all()
     .map(rowToIdTuple);
 }
@@ -286,6 +336,10 @@ function iter_nodes_optimized(db: Database): Iterable<jstring<CompactNode>> {
            WHEN jdata IS NULL THEN
              '[' || json_quote(id) || ',' || type || ',' ||
                     json_quote(parent_id) || ',' || json_quote(parent_key) || ']'
+           WHEN type = ${CrdtType.TEXT} THEN
+             '[' || json_quote(id) || ',' || type || ',' ||
+                    json_quote(parent_id) || ',' || json_quote(parent_key) || ',' ||
+                    jdata || ',' || version || ']'
            ELSE
              '[' || json_quote(id) || ',' || type || ',' ||
                     json_quote(parent_id) || ',' || json_quote(parent_key) || ',' || jdata || ']'
@@ -348,16 +402,19 @@ function upsert_node(db: Database, id: string, node: SerializedCrdt): void {
   const parentId = id === "root" ? null : (node.parentId ?? null);
   const parentKey = id === "root" ? null : (node.parentKey ?? null);
   const jdata =
-    node.type === CrdtType.OBJECT || node.type === CrdtType.REGISTER
+    node.type === CrdtType.OBJECT ||
+    node.type === CrdtType.REGISTER ||
+    node.type === CrdtType.TEXT
       ? JSON.stringify(node.data)
       : null;
+  const version = node.type === CrdtType.TEXT ? node.version : null;
 
   db.query(
-    `INSERT INTO nodes (id, type, parent_id, parent_key, jdata)
-      VALUES (?, ?, ?, ?, ?)
+    `INSERT INTO nodes (id, type, parent_id, parent_key, jdata, version)
+      VALUES (?, ?, ?, ?, ?, ?)
      ON CONFLICT (id) DO
-      UPDATE SET type = excluded.type, parent_id = excluded.parent_id, parent_key = excluded.parent_key, jdata = excluded.jdata`
-  ).run(id, node.type, parentId, parentKey, jdata);
+      UPDATE SET type = excluded.type, parent_id = excluded.parent_id, parent_key = excluded.parent_key, jdata = excluded.jdata, version = excluded.version`
+  ).run(id, node.type, parentId, parentKey, jdata, version);
 }
 
 /**
@@ -549,11 +606,12 @@ export class BunSQLiteDriver implements IStorageDriver {
       `CREATE TABLE IF NOT EXISTS nodes (
          id          TEXT NOT NULL PRIMARY KEY,
 
-         type        INTEGER NOT NULL CHECK (type >= 0 AND type <= 3),
-                  -- ^^^^^^^ 0=LiveObject, 1=LiveList, 2=LiveMap, 3=Register
+         type        INTEGER NOT NULL CHECK (type >= 0 AND type <= 4),
+                  -- ^^^^^^^ 0=LiveObject, 1=LiveList, 2=LiveMap, 3=Register, 4=LiveText
          parent_id   TEXT,  -- NULL only for root
          parent_key  TEXT,  -- NULL only for root
-         jdata       TEXT,  -- JSON data for LiveObject and Register; NULL for LiveList/LiveMap
+         jdata       TEXT,  -- JSON data for LiveObject, Register, and LiveText; NULL for LiveList/LiveMap
+         version     INTEGER,  -- LiveText version; NULL for all other types
 
          UNIQUE (parent_id, parent_key),
 
@@ -564,9 +622,39 @@ export class BunSQLiteDriver implements IStorageDriver {
          CHECK (id != 'root' OR (parent_id IS NULL AND parent_key IS NULL)),
          CHECK (id = 'root' OR (parent_id IS NOT NULL AND parent_key IS NOT NULL)),
 
+         -- Types must have the correct/expected jdata
+         CHECK (type != 0 OR jdata IS NOT NULL),  -- LiveObject must have jdata
+         CHECK (type != 1 OR jdata IS NULL),      -- LiveList must NOT have jdata
+         CHECK (type != 2 OR jdata IS NULL),      -- LiveMap must NOT have jdata
+         CHECK (type != 3 OR jdata IS NOT NULL),  -- Register must have jdata (even "null" is stored as JSON string)
+         CHECK (type != 4 OR jdata IS NOT NULL),  -- LiveText must have jdata
+
+         -- Only LiveText carries a version
+         CHECK (type = 4 OR version IS NULL),     -- non-LiveText must NOT have a version
+         CHECK (type != 4 OR version IS NOT NULL),  -- LiveText must have a version
+
          -- Foreign key: parent_id must reference an existing node
          FOREIGN KEY (parent_id) REFERENCES nodes (id) ON DELETE RESTRICT
        ) STRICT`
+    );
+
+    db.run(
+      `CREATE TABLE IF NOT EXISTS live_text_op_history (
+         node_id       TEXT NOT NULL,
+         version       INTEGER NOT NULL,
+         base_version  INTEGER NOT NULL,
+         op_id         TEXT NOT NULL,
+         ops           TEXT NOT NULL,
+         created_at    INTEGER NOT NULL DEFAULT (unixepoch()),
+
+         PRIMARY KEY (node_id, version),
+         UNIQUE (node_id, op_id),
+         FOREIGN KEY (node_id) REFERENCES nodes (id) ON DELETE CASCADE
+       ) STRICT`
+    );
+    db.run(
+      `CREATE INDEX IF NOT EXISTS live_text_op_history_node_version_idx
+         ON live_text_op_history (node_id, version)`
     );
 
     // Create a table to read/write JSON values
@@ -704,6 +792,64 @@ export class BunSQLiteDriver implements IStorageDriver {
     return this.loadedApi.get_snapshot(lowMemory);
   }
 
+  get_live_text_history_since(
+    nodeId: string,
+    version: number
+  ): LiveTextHistoryEntry[] {
+    const rows = this.db
+      .query<LiveTextHistoryRow, SQLQueryBindings[]>(
+        `SELECT node_id, version, base_version, op_id, ops
+         FROM live_text_op_history
+         WHERE node_id = ? AND version > ?
+         ORDER BY version ASC`
+      )
+      .all(nodeId, version);
+    return rows.map(rowToLiveTextHistoryEntry);
+  }
+
+  get_live_text_history_by_op_id(
+    nodeId: string,
+    opId: string
+  ): LiveTextHistoryEntry | undefined {
+    const row = this.db
+      .query<LiveTextHistoryRow, SQLQueryBindings[]>(
+        `SELECT node_id, version, base_version, op_id, ops
+         FROM live_text_op_history
+         WHERE node_id = ? AND op_id = ?
+         LIMIT 1`
+      )
+      .get(nodeId, opId);
+    return row === null ? undefined : rowToLiveTextHistoryEntry(row);
+  }
+
+  append_live_text_history(entry: LiveTextHistoryEntry): void {
+    this.db
+      .query(
+        `INSERT INTO live_text_op_history
+         (node_id, version, base_version, op_id, ops)
+         VALUES (?, ?, ?, ?, ?)`
+      )
+      .run(
+        entry.nodeId,
+        entry.version,
+        entry.baseVersion,
+        entry.opId,
+        JSON.stringify(entry.ops)
+      );
+  }
+
+  purge_live_text_history_before(
+    nodeId: string,
+    minVersionToKeep: number
+  ): void {
+    this.db
+      .query(
+        `DELETE FROM live_text_op_history
+         WHERE node_id = ? AND version < ?`
+      )
+      .run(nodeId, minVersionToKeep);
+  }
+
   private _loadNodesApi(): NodesAPI {
     const db = this.db;
 
@@ -753,7 +899,7 @@ export class BunSQLiteDriver implements IStorageDriver {
     this.reinitialize();
 
     const insertStm = this.db.prepare(
-      "INSERT INTO nodes (id, type, parent_id, parent_key, jdata) VALUES (?, ?, ?, ?, ?)"
+      "INSERT INTO nodes (id, type, parent_id, parent_key, jdata, version) VALUES (?, ?, ?, ?, ?, ?)"
     );
     const resetNodes = this.db.transaction(() => {
       // Defer FK checks until the end of the transaction so the bulk DELETE
@@ -764,10 +910,13 @@ export class BunSQLiteDriver implements IStorageDriver {
         const parentId = id === "root" ? null : (node.parentId ?? null);
         const parentKey = id === "root" ? null : (node.parentKey ?? null);
         const jdata =
-          node.type === CrdtType.OBJECT || node.type === CrdtType.REGISTER
+          node.type === CrdtType.OBJECT ||
+          node.type === CrdtType.REGISTER ||
+          node.type === CrdtType.TEXT
             ? JSON.stringify(node.data)
             : null;
-        insertStm.run(id, node.type, parentId, parentKey, jdata);
+        const version = node.type === CrdtType.TEXT ? node.version : null;
+        insertStm.run(id, node.type, parentId, parentKey, jdata, version);
       }
     });
     resetNodes();
@@ -779,7 +928,7 @@ export class BunSQLiteDriver implements IStorageDriver {
       .query<
         NodeRow,
         []
-      >("SELECT id, type, parent_id, parent_key, jdata FROM nodes")
+      >("SELECT id, type, parent_id, parent_key, jdata, version FROM nodes")
       .all()
       .map(rowToIdTuple);
   }

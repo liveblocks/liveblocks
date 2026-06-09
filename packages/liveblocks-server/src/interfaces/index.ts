@@ -19,6 +19,7 @@ export type { IServerWebSocket } from "./IServerWebSocket";
 export type {
   IReadableSnapshot,
   IStorageDriver,
+  LiveTextHistoryEntry,
   ListFeedMessagesOptions,
   ListFeedMessagesResult,
   ListFeedsOptions,

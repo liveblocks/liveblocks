@@ -17,12 +17,14 @@
 
 import type { SerializedChild, SerializedCrdt } from "@liveblocks/core";
 import {
+  applyLiveTextOperations,
   asPos,
   assertNever,
   CrdtType,
   makePosition,
   OpCode,
 } from "@liveblocks/core";
+import type { TextOperation } from "@liveblocks/core";
 
 import type { IStorageDriver } from "~/interfaces";
 import type {
@@ -34,21 +36,65 @@ import type {
   HasOpId,
   SetParentKeyOp,
   UpdateObjectOp,
+  UpdateTextOp,
 } from "~/protocol";
 import type { Pos } from "~/types";
 
+const LIVE_TEXT_HISTORY_LIMIT = 1000;
+const LIVE_TEXT_HISTORY_TOO_OLD_REASON =
+  "LiveText operation is older than retained history";
+
+function mapTextIndexThroughOperations(
+  index: number,
+  ops: readonly TextOperation[]
+): number {
+  let mapped = index;
+  for (const op of ops) {
+    if (op.type === "insert") {
+      mapped = op.index <= mapped ? mapped + op.text.length : mapped;
+    } else if (op.type === "delete" && op.index < mapped) {
+      mapped = Math.max(op.index, mapped - op.length);
+    }
+  }
+  return mapped;
+}
+
+function rebaseTextOperations(
+  ops: readonly TextOperation[],
+  acceptedOps: readonly TextOperation[]
+): TextOperation[] {
+  return ops.map((op) => {
+    if (op.type === "insert") {
+      return {
+        ...op,
+        index: mapTextIndexThroughOperations(op.index, acceptedOps),
+      };
+    } else if (op.type === "delete" || op.type === "format") {
+      const start = mapTextIndexThroughOperations(op.index, acceptedOps);
+      const end = mapTextIndexThroughOperations(
+        op.index + op.length,
+        acceptedOps
+      );
+      return { ...op, index: start, length: Math.max(0, end - start) };
+    } else {
+      return op;
+    }
+  });
+}
+
 /**
- * The three possible outcomes of applying a client op. They differ along
+ * The possible outcomes of applying a client op. They differ along
  * when the op (first) changed storage state, who hears about it, and what
  * gets sent back to the originating client:
  *
- * |             | state change | fan out to others | reply to sender  |
- * |-------------|--------------|-------------------|------------------|
- * | OpAccepted  | now          | yes               | ack echo (+ fix) |
- * | OpRectified | in the past  | no                | ack echo + fix   |
- * | OpIgnored   | never        | no                | bare (H)Ack      |
+ * |            | state change | fan out to others | reply to sender  |
+ * |------------|--------------|-------------------|------------------|
+ * | OpAccepted | now          | yes               | ack echo (+ fix) |
+ * | OpRectified| in the past  | no                | ack echo (+ fix) |
+ * | OpIgnored  | never        | no                | bare (H)Ack      |
+ * | OpRejected | never        | no                | rejection        |
  */
-type ApplyOpResult = OpAccepted | OpIgnored | OpRectified;
+type ApplyOpResult = OpAccepted | OpIgnored | OpRectified | OpRejected;
 
 export type OpAccepted = {
   action: "accepted";
@@ -64,20 +110,22 @@ export type OpIgnored = {
 export type OpRectified = {
   action: "rectified";
   /**
-   * Echo of the client's op, with the stored, authoritative parentKey. Sent
-   * back to the originating client as the acknowledgement, instead of the
-   * bare (H)Ack. Used for re-sent CREATE ops whose node the server already
-   * stored: the echo carries the authoritative position, so the client can
-   * correct any optimistic local position it may have predicted while the op
-   * was pending. Never fanned out to others: they already received the op
-   * when it was originally accepted.
+   * Echo of the client's op with authoritative server fields. Sent back to the
+   * originating client as the acknowledgement, instead of the bare (H)Ack.
+   * Never fanned out to others: they already received the op when it was
+   * originally accepted.
    */
-  ackOp: CreateOp & HasOpId;
+  ackOp: ClientWireOp;
   /**
-   * A corrective op to send back to the originating client, stating that
-   * same authoritative position (see ackOp).
+   * Optional corrective op to send back to the originating client.
    */
-  fix: FixOp;
+  fix?: FixOp;
+};
+
+export type OpRejected = {
+  action: "rejected";
+  opIds: string[];
+  reason: string;
 };
 
 function accept(op: ClientWireOp, fix?: FixOp): OpAccepted {
@@ -88,12 +136,12 @@ function ignore(ignoredOp: ClientWireOp): OpIgnored {
   return { action: "ignored", ignoredOpId: ignoredOp.opId };
 }
 
-function rectify(op: CreateOp & HasOpId, parentKey: string): OpRectified {
-  return {
-    action: "rectified",
-    ackOp: { ...op, parentKey },
-    fix: { type: OpCode.SET_PARENT_KEY, id: op.id, parentKey },
-  };
+function reject(op: ClientWireOp, reason: string): OpRejected {
+  return { action: "rejected", opIds: [op.opId], reason };
+}
+
+function rectify(ackOp: ClientWireOp, fix?: FixOp): OpRectified {
+  return { action: "rectified", ackOp, fix };
 }
 
 function nodeFromCreateChildOp(op: CreateOp): SerializedChild {
@@ -128,6 +176,15 @@ function nodeFromCreateChildOp(op: CreateOp): SerializedChild {
         data: op.data,
       };
 
+    case OpCode.CREATE_TEXT:
+      return {
+        type: CrdtType.TEXT,
+        parentId: op.parentId,
+        parentKey: op.parentKey,
+        data: op.data,
+        version: op.version,
+      };
+
     // istanbul ignore next
     default:
       return assertNever(op, "Unknown op code");
@@ -141,6 +198,7 @@ export class Storage {
 
   constructor(driver: IStorageDriver) {
     this.driver = driver;
+    this.purgeLiveTextHistory();
   }
 
   // -------------------------------------------------------------------------
@@ -167,6 +225,19 @@ export class Storage {
   // Private APIs (for Storage)
   // -------------------------------------------------------------------------
 
+  private purgeLiveTextHistory(): void {
+    for (const [nodeId, node] of this.driver.iter_nodes()) {
+      if (node.type !== CrdtType.TEXT) {
+        continue;
+      }
+
+      this.driver.purge_live_text_history_before(
+        nodeId,
+        Math.max(0, node.version - LIVE_TEXT_HISTORY_LIMIT + 1)
+      );
+    }
+  }
+
   /**
    * Applies a single Op.
    */
@@ -176,10 +247,14 @@ export class Storage {
       case OpCode.CREATE_MAP:
       case OpCode.CREATE_REGISTER:
       case OpCode.CREATE_OBJECT:
+      case OpCode.CREATE_TEXT:
         return this.applyCreateOp(op);
 
       case OpCode.UPDATE_OBJECT:
         return this.applyUpdateObjectOp(op);
+
+      case OpCode.UPDATE_TEXT:
+        return this.applyUpdateTextOp(op);
 
       case OpCode.SET_PARENT_KEY:
         return this.applySetParentKeyOp(op);
@@ -218,7 +293,10 @@ export class Storage {
           stored?.parentId !== undefined &&
           this.driver.get_node(stored.parentId)?.type === CrdtType.LIST
         ) {
-          return rectify(op, stored.parentKey);
+          return rectify(
+            { ...op, parentKey: stored.parentKey },
+            { type: OpCode.SET_PARENT_KEY, id: op.id, parentKey: stored.parentKey }
+          );
         }
       }
       return ignore(op);
@@ -255,7 +333,8 @@ export class Storage {
         return this.createChildAsListItem(op, node);
 
       case CrdtType.REGISTER:
-        // It's illegal for registers to have children
+      case CrdtType.TEXT:
+        // It's illegal for registers and text nodes to have children
         return ignore(op);
 
       // istanbul ignore next
@@ -356,6 +435,67 @@ export class Storage {
   private applyUpdateObjectOp(op: UpdateObjectOp & HasOpId): ApplyOpResult {
     this.driver.set_object_data(op.id, op.data, true);
     return accept(op);
+  }
+
+  private applyUpdateTextOp(op: UpdateTextOp & HasOpId): ApplyOpResult {
+    const node = this.driver.get_node(op.id);
+    if (node?.type !== CrdtType.TEXT) {
+      return ignore(op);
+    }
+
+    const duplicate = this.driver.get_live_text_history_by_op_id(
+      op.id,
+      op.opId
+    );
+    if (duplicate !== undefined) {
+      return rectify({
+        ...op,
+        baseVersion: duplicate.baseVersion,
+        version: duplicate.version,
+        ops: [...duplicate.ops],
+      });
+    }
+
+    if (op.baseVersion > node.version) {
+      return reject(op, "LiveText operation base version is ahead of storage");
+    }
+
+    const history =
+      op.baseVersion < node.version
+        ? this.driver.get_live_text_history_since(op.id, op.baseVersion)
+        : [];
+    if (
+      op.baseVersion < node.version &&
+      history.length !== node.version - op.baseVersion
+    ) {
+      return reject(op, LIVE_TEXT_HISTORY_TOO_OLD_REASON);
+    }
+
+    const acceptedOps = history.flatMap((entry) => entry.ops);
+    const ops =
+      acceptedOps.length > 0
+        ? rebaseTextOperations(op.ops, acceptedOps)
+        : op.ops;
+    const version = node.version + 1;
+    const data = applyLiveTextOperations(node.data, ops);
+    this.driver.set_child(
+      op.id,
+      {
+        ...node,
+        data,
+        version,
+      },
+      true
+    );
+    this.driver.append_live_text_history({
+      nodeId: op.id,
+      baseVersion: node.version,
+      version,
+      opId: op.opId,
+      ops: [...ops],
+    });
+
+    return accept({ ...op, baseVersion: node.version, version, ops: [...ops] });
   }
 
   private applyDeleteCrdtOp(op: DeleteCrdtOp & HasOpId): ApplyOpResult {
