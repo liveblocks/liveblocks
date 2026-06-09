@@ -207,7 +207,6 @@ export type {
   RoomPermissionObject,
 } from "./permissions";
 export {
-  getRoomPermissionConflicts,
   hasPermissionCapability,
   hasPermissionCapabilityAccess,
   normalizeRoomAccessesInput,

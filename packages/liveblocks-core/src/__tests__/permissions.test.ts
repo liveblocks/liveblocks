@@ -1,7 +1,6 @@
 import { describe, expect, test } from "vitest";
 
 import {
-  getRoomPermissionConflicts,
   hasPermissionCapability,
   normalizeRoomPermissionInput,
   Permission,
@@ -101,21 +100,6 @@ describe("permissionCapabilitiesFromScopes", () => {
       Permission.RoomStorageNone,
       Permission.RoomCommentsRead,
     ]);
-  });
-
-  test("returns permission conflicts by resource", () => {
-    expect(
-      new Set(getRoomPermissionConflicts(Permission.RoomStorageRead))
-    ).toEqual(
-      new Set([
-        Permission.RoomStorageRead,
-        Permission.RoomStorageWrite,
-        Permission.RoomStorageNone,
-      ])
-    );
-    expect(getRoomPermissionConflicts(Permission.RoomWrite)).toContain(
-      Permission.RoomCommentsNone
-    );
   });
 
   test("resolves room capabilities from wildcard resources", () => {

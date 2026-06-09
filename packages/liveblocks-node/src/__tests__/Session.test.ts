@@ -78,7 +78,7 @@ describe("authorization (new API)", () => {
     expect(
       session.allow("xyz", session.READ_ACCESS).serializePermissions()
     ).toEqual({
-      xyz: ["room:read", "room:presence:write", "comments:read"],
+      xyz: ["room:read"],
     });
   });
 
@@ -97,10 +97,10 @@ describe("authorization (new API)", () => {
       makeSession()
         .allow("xyz", {
           // @ts-expect-error - Deliberate incorrect value
-          presence: "write",
+          default: "none",
         })
         .serializePermissions()
-    ).toThrow("Invalid permission level for presence: write");
+    ).toThrow('Invalid permission level for default: "none"');
 
     expect(() => makeSession().allow("xyz", {})).toThrow(
       "Permission object cannot be empty"
@@ -194,14 +194,14 @@ describe("authorization (new API)", () => {
     });
   });
 
-  test("permissions replace previous defaults and resource-specific values", () => {
+  test("permissions are preserved when adding defaults and resource-specific values", () => {
     expect(
       makeSession()
         .allow("r", { default: "write", storage: "none" })
         .allow("r", { storage: "read" })
         .serializePermissions()
     ).toEqual({
-      r: ["room:write", "room:storage:read"],
+      r: ["room:write", "room:storage:none", "room:storage:read"],
     });
 
     expect(
@@ -210,7 +210,7 @@ describe("authorization (new API)", () => {
         .allow("r", ["room:write"])
         .serializePermissions()
     ).toEqual({
-      r: ["room:write"],
+      r: ["room:write", "room:storage:none"],
     });
   });
 

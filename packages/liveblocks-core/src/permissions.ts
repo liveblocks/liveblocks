@@ -55,40 +55,22 @@ export type RoomAccessesUpdateInput = Record<
 
 const VALID_PERMISSIONS = new Set<string>(Object.values(Permission));
 
-const DEFAULT_PERMISSIONS: readonly Permission[] = [
-  Permission.RoomRead,
-  Permission.RoomWrite,
-] as const;
-
 const ROOM_PERMISSION_OBJECT_KEYS = new Set<string>([
   "default",
   ...ROOM_PERMISSION_RESOURCES,
 ]);
 
-const RESOURCE_SPECIFIC_PERMISSIONS_BY_RESOURCE = {
-  presence: Object.values(RESOURCE_PERMISSIONS.presence).flat(),
-  storage: Object.values(RESOURCE_PERMISSIONS.storage).flat(),
-  comments: Object.values(RESOURCE_PERMISSIONS.comments).flat(),
-  feeds: Object.values(RESOURCE_PERMISSIONS.feeds).flat(),
-} satisfies Record<
-  (typeof ROOM_PERMISSION_RESOURCES)[number],
-  readonly Permission[]
->;
-
-const RESOURCE_SPECIFIC_PERMISSIONS = ROOM_PERMISSION_RESOURCES.flatMap(
-  (resource) => RESOURCE_SPECIFIC_PERMISSIONS_BY_RESOURCE[resource]
-);
-
 function permissionForAccessLevel(
   resource: PermissionResources,
-  access: AccessLevel
+  access: AccessLevel,
+  field: string = resource
 ): Permission {
   const levels: Partial<Record<AccessLevel, readonly Permission[]>> =
     RESOURCE_PERMISSIONS[resource];
   const permissions = levels[access];
   if (permissions === undefined || permissions.length === 0) {
     throw new Error(
-      `Invalid permission level for ${resource}: ${String(access)}`
+      `Invalid permission level for ${field}: ${JSON.stringify(access) ?? String(access)}`
     );
   }
   return permissions[0];
@@ -170,7 +152,11 @@ function normalizeRoomPermissionObject(
 
   if (objectInput.default !== undefined) {
     permissions.push(
-      permissionForAccessLevel(DEFAULT_PERMISSION_RESOURCE, objectInput.default)
+      permissionForAccessLevel(
+        DEFAULT_PERMISSION_RESOURCE,
+        objectInput.default,
+        "default"
+      )
     );
   }
 
@@ -216,24 +202,6 @@ export function normalizeRoomAccessesUpdateInput(
       permissions === null ? null : normalizeRoomPermissionInput(permissions),
     ])
   );
-}
-
-// Scopes that cannot coexist with `permission` in the same room/pattern set.
-export function getRoomPermissionConflicts(
-  permission: Permission
-): readonly Permission[] {
-  if (DEFAULT_PERMISSIONS.includes(permission)) {
-    return [...DEFAULT_PERMISSIONS, ...RESOURCE_SPECIFIC_PERMISSIONS];
-  }
-
-  for (const resource of ROOM_PERMISSION_RESOURCES) {
-    const permissions = RESOURCE_SPECIFIC_PERMISSIONS_BY_RESOURCE[resource];
-    if (permissions.includes(permission)) {
-      return permissions;
-    }
-  }
-
-  return [];
 }
 
 function strongestAccess(left: AccessLevel, right: AccessLevel): AccessLevel {

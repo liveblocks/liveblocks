@@ -6,7 +6,6 @@ import type {
   URLSafeString,
 } from "@liveblocks/core";
 import {
-  getRoomPermissionConflicts,
   normalizeRoomPermissionInput,
   Permission,
   url,
@@ -129,11 +128,6 @@ export class Session {
 
     const existingPerms = this.#getOrCreate(roomIdOrPattern);
     for (const perm of normalizedPermissions) {
-      // Replacing conflicting scopes lets later allow() calls narrow permissions
-      // for the same room pattern (e.g. wildcard write + exact-room storage:none).
-      for (const conflictingPerm of getRoomPermissionConflicts(perm)) {
-        existingPerms.delete(conflictingPerm);
-      }
       existingPerms.add(perm);
     }
     return this; // To allow chaining multiple allow calls
