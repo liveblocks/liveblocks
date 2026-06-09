@@ -52,7 +52,7 @@ export class Model {
   }
 }
 
-class ApplyOpCommand implements fc.AsyncCommand<Model, RealStorage> {
+class ApplyOpCommand implements fc.Command<Model, RealStorage> {
   constructor(
     readonly op: ClientWireOp,
     readonly version: ProtocolVersion
@@ -94,8 +94,8 @@ class ApplyOpCommand implements fc.AsyncCommand<Model, RealStorage> {
    * deleting nodes that don't exist are much less likely to be produced. (See
    * the `check` method above.)
    */
-  async run(model: Model, real: RealStorage): Promise<void> {
-    await real.applyOps([this.op]);
+  run(model: Model, real: RealStorage): void {
+    real.applyOps([this.op]);
 
     switch (this.op.type) {
       case OpCode.CREATE_OBJECT:
@@ -132,7 +132,7 @@ class ApplyOpCommand implements fc.AsyncCommand<Model, RealStorage> {
         return assertNever(this.op, "Unhandled case");
     }
 
-    await selfCheck(real);
+    selfCheck(real);
   }
 
   /**

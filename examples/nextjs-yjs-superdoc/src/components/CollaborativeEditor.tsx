@@ -36,7 +36,11 @@ export function CollaborativeEditor() {
         <SuperDocEditor
           documentMode="editing"
           // Place the current user's info into Yjs awareness for live cursors
-          user={{ name: userInfo.name, email: userId }}
+          user={{
+            email: userId,
+            name: userInfo?.name ?? "Anonymous",
+            image: userInfo?.avatar ?? undefined,
+          }}
           modules={modules}
           style={{ height: "100%" }}
         />

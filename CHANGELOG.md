@@ -1,5 +1,26 @@
 ## vNEXT (not yet released)
 
+## v3.19.5
+
+### `@liveblocks/client`
+
+- Fix a `LiveList` divergence after reconnects: a pending `push` could under
+  specific timing conditions during a reconnect still cause a divergence between
+  clients, despite the fix from 3.19.4.
+
+## v3.19.4
+
+### `@liveblocks/client`
+
+- Fix `LiveList.push()` so concurrent pushes from multiple clients no longer
+  settle out of order.
+- Fix a bug where a `LiveObject` key deleted while a client was offline would
+  reappear on reconnect, preventing the two clients from reconverging.
+- Fix a bug where reconnecting would emit too many update notifications for
+  `LiveObject` keys whose values had not actually changed.
+- Fix a bug where deleting a nested live value from a `LiveObject` omitted the
+  removed value (`deletedItem`) from the change notification.
+
 ## v3.19.3
 
 ### `@liveblocks/client`

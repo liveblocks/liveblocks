@@ -144,7 +144,7 @@ describe("LiveObject edge cases", () => {
         modified: {
           node: obj,
           type: "LiveObject",
-          updates: { b: { type: "delete" } },
+          updates: { b: { type: "delete", deletedItem: secondItem } },
         },
         reverse: [
           {

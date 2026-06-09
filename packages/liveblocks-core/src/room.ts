@@ -8,6 +8,7 @@ import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt";
 import { createManagedPool, OpSource } from "./crdts/AbstractCrdt";
 import {
   cloneLson,
+  dumpPool,
   getTreesDiffOperations,
   isLiveList,
   isLiveNode,
@@ -17,6 +18,7 @@ import {
 import { LiveObject } from "./crdts/LiveObject";
 import type { LiveStructure, LsonObject } from "./crdts/Lson";
 import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
+import { UnacknowledgedOps } from "./crdts/UnacknowledgedOps";
 import type {
   DCM,
   DE,
@@ -895,6 +897,13 @@ export type Room<
   reconnect(): void;
 
   /**
+   * @internal
+   * Returns a human-readable dump of every node in this room's storage pool
+   * (id, parent, parent key, value). For debugging convergence issues only.
+   */
+  _dump(): string;
+
+  /**
    * Returns the threads within the current room and their associated inbox notifications.
    * It also returns the request date that can be used for subsequent polling.
    *
@@ -1364,8 +1373,9 @@ type RoomState<
   } | null;
 
   // A registry of yet-unacknowledged Ops. These Ops have already been
-  // submitted to the server, but have not yet been acknowledged.
-  readonly unacknowledgedOps: Map<string, ClientWireOp>;
+  // submitted to the server, but have not yet been acknowledged. Indexed both
+  // by opId and by (parentId, parentKey) position. See UnacknowledgedOps.
+  readonly unacknowledgedOps: UnacknowledgedOps;
 };
 
 export type Polyfills = {
@@ -1563,6 +1573,11 @@ export function createRoom<
     config.enableDebugLogging
   );
 
+  // The single source of truth for still-unacknowledged ops. Created up front
+  // so the pool can hold a (read-only) reference to the same instance the room
+  // mutates.
+  const unacknowledgedOps = new UnacknowledgedOps();
+
   // The room's internal stateful context
   const context: RoomState<P, S, U, E> = {
     buffer: {
@@ -1595,6 +1610,7 @@ export function createRoom<
       getCurrentConnectionId,
       onDispatch,
       isStorageWritable,
+      unacknowledgedOps,
     }),
     root: undefined,
 
@@ -1603,7 +1619,7 @@ export function createRoom<
     pausedHistory: null,
 
     activeBatch: null,
-    unacknowledgedOps: new Map<string, ClientWireOp>(),
+    unacknowledgedOps,
   };
 
   // Accumulates nodes as initial storage arrives in chunks via
@@ -1699,6 +1715,14 @@ export function createRoom<
 
   function onDidDisconnect() {
     clearTimeout(context.buffer.flushTimerID);
+
+    // Every op still pending at this point was in flight on the connection
+    // that just died: the server may have processed it (with its ack lost in
+    // the disconnect), or never received it. Mark them, so that optimistic
+    // position predictions (like the LiveList tail-bump) stop applying to
+    // them: such predictions are only sound for ops the server has provably
+    // not processed yet.
+    context.unacknowledgedOps.markAllAsPossiblyStored();
   }
 
   // Register events handlers for events coming from the socket
@@ -1885,9 +1909,19 @@ export function createRoom<
         currentItems.set(id, crdt._serialize());
       }
 
-      // Get operations that represent the diff between 2 states.
+      // XXX_vincent Smell, needs a deeper refactor soon! A reconnect
+      // snapshot is a stream of *nodes* (the full authoritative state), but
+      // here we fabricate a diff of *ops* and replay it through the live
+      // op-apply path. That path carries live-only optimistic semantics
+      // ("temporary position until the backend sends a fix" shifts,
+      // pending-conflict resolution) that are nonsensical when the stream we
+      // are applying already IS the fix. (The LiveList push tail-bump is
+      // fine, though: it skips every op whose position the snapshot may
+      // already own, so replaying the diff cannot mispredict.) The proper
+      // fix is a node-stream reconcile that updates the tree in place,
+      // unified with the `_fromItems` path used on initial load, so a node
+      // stream never enters the op path at all.
       const ops = getTreesDiffOperations(currentItems, nodes);
-
       const result = applyRemoteOps(ops);
       notify(result.updates);
     } else {
@@ -2345,14 +2379,13 @@ export function createRoom<
     }
   }
 
-  function applyAndSendOfflineOps(unackedOps: Map<string, ClientWireOp>) {
-    if (unackedOps.size === 0) {
+  function applyAndSendOfflineOps(unackedOps: ClientWireOp[]) {
+    if (unackedOps.length === 0) {
       return;
     }
 
     const messages: ClientMsg<P, E>[] = [];
-    const inOps = Array.from(unackedOps.values());
-    const result = applyLocalOps(inOps);
+    const result = applyLocalOps(unackedOps);
     messages.push({
       type: ClientMsgCode.UPDATE_STORAGE,
       ops: result.opsToEmit,
@@ -2619,7 +2652,7 @@ export function createRoom<
     const storageOps = context.buffer.storageOperations;
     if (storageOps.length > 0) {
       for (const op of storageOps) {
-        context.unacknowledgedOps.set(op.opId, op);
+        context.unacknowledgedOps.add(op);
       }
       notifyStorageStatus();
     }
@@ -2954,7 +2987,7 @@ export function createRoom<
   }
 
   function processInitialStorage(nodes: NodeMap) {
-    const unacknowledgedOps = new Map(context.unacknowledgedOps);
+    const unacknowledgedOps = [...context.unacknowledgedOps.values()];
     createOrUpdateRootFromMessage(nodes);
     applyAndSendOfflineOps(unacknowledgedOps);
     _resolveStoragePromise?.();
@@ -3790,6 +3823,11 @@ export function createRoom<
       connect: () => managedSocket.connect(),
       reconnect: () => managedSocket.reconnect(),
       disconnect: () => managedSocket.disconnect(),
+
+      _dump: () => {
+        const n = context.pool.nodes.size;
+        return `Room "${roomId}" (${n} node${n === 1 ? "" : "s"}):\n${dumpPool(context.pool)}`;
+      },
       destroy: () => {
         pendingFeedsRequests.forEach((request) =>
           request.reject(new Error("Room destroyed"))

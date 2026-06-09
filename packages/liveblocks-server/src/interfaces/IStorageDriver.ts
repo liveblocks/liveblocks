@@ -16,7 +16,6 @@
  */
 
 import type {
-  Awaitable,
   CompactNode,
   Json,
   JsonObject,
@@ -28,7 +27,6 @@ import type {
 } from "@liveblocks/core";
 
 import type { YDocId } from "~/decoders/y-types";
-import type { Logger } from "~/lib/Logger";
 import type { Feed, FeedMessage, jstring, LeasedSession, Pos } from "~/types";
 
 /**
@@ -109,14 +107,24 @@ export interface IReadableSnapshot {
 }
 
 /**
- * CRDT node storage with synchronous reads and async persistence.
+ * Persistent storage backend for Liveblocks room data: CRDT nodes, metadata,
+ * actor IDs, and Yjs updates.
+ *
+ * The node methods will initialize lazily (but synchronously): on first node
+ * access, the driver loads/repairs its node state internally, at most once per
+ * instance. DANGEROUSLY_reset_nodes() invalidates that state, after which the
+ * next access transparently re-runs the load/repair sanitization.
  *
  * INVARIANTS:
  * - A virtual root node `{type: OBJECT, data: {}}` always exists.
  * - All non-root nodes have parentId and parentKey forming a tree.
- * - Reads reflect writes immediately, before the returned Promise resolves.
+ * - Reads reflect writes immediately.
  */
-export interface IStorageDriverNodeAPI {
+export interface IStorageDriver {
+  // ---------------------------------------------------------------------------
+  // Node APIs
+  // ---------------------------------------------------------------------------
+
   /**
    * Return the node with the given id, or undefined if no such node exists.
    * Must always return a valid root node for id="root", even if empty.
@@ -189,20 +197,20 @@ export interface IStorageDriverNodeAPI {
    * If allowOverwrite=true: replace any existing node at this id, deleting its
    * entire subtree if it has children.
    */
-  set_child(id: string, node: SerializedChild, allowOverwrite?: boolean): Awaitable<void>; // prettier-ignore
+  set_child(id: string, node: SerializedChild, allowOverwrite?: boolean): void;
 
   /**
    * Change a node's parentKey, effectively repositioning the node within its
    * parent. The new position must be free.
    * Throw if another node already occupies (parentId, newPos).
    */
-  move_sibling(id: string, newPos: Pos): Awaitable<void>;
+  move_sibling(id: string, newPos: Pos): void;
 
   /**
    * Delete a node and its entire subtree recursively.
    * Ignore if id="root" (root is immortal).
    */
-  delete_node(id: string): Awaitable<void>;
+  delete_node(id: string): void;
 
   /**
    * Delete a key from node `id`. Handle two cases:
@@ -213,7 +221,7 @@ export interface IStorageDriverNodeAPI {
    *
    * No-op if neither applies or if the node doesn't exist.
    */
-  delete_child_key(id: string, key: string): Awaitable<void>;
+  delete_child_key(id: string, key: string): void;
 
   /**
    * Replace the data object of an OBJECT node.
@@ -223,7 +231,7 @@ export interface IStorageDriverNodeAPI {
    * If allowOverwrite=true: first delete any conflicting children (and their
    * entire subtrees), then set the data.
    */
-  set_object_data(id: string, data: JsonObject, allowOverwrite?: boolean): Awaitable<void>; // prettier-ignore
+  set_object_data(id: string, data: JsonObject, allowOverwrite?: boolean): void;
 
   /**
    * Return a readable snapshot of the storage tree.
@@ -233,41 +241,31 @@ export interface IStorageDriverNodeAPI {
    * access.
    */
   get_snapshot(lowMemory?: boolean): IReadableSnapshot;
-}
-
-/**
- * Persistent storage backend for Liveblocks room data: CRDT nodes, metadata,
- * actor IDs, and Yjs updates. All methods may be async.
- */
-export interface IStorageDriver {
-  // ---------------------------------------------------------------------------
-  // Node APIs
-  // ---------------------------------------------------------------------------
 
   /**
-   * Load all nodes from storage, validate/repair corruptions (orphans, cycles,
-   * conflicting siblings), and return an IStorageDriverNodeAPI for operations.
-   *
-   * After DANGEROUSLY_reset_nodes(), any previously-loaded instance is
-   * invalid—must call this again to get a fresh one.
+   * Release any lazily-initialized in-memory node state (caches/indexes
+   * built on first node access), freeing it up for garbage collection.
+   * Persisted data is NOT touched — the next node access transparently
+   * re-initializes. (Contrast with DANGEROUSLY_reset_nodes(), which deletes
+   * the actual data.)
    */
-  load_nodes_api(logger: Logger): Awaitable<IStorageDriverNodeAPI>;
+  reinitialize(): void;
 
   /**
    * Delete all CRDT nodes and replace them with the given document.
    * Does NOT affect metadata, actor IDs, or Yjs updates.
-   * Invalidates any previously-loaded IStorageDriverNodeAPI.
+   * Invalidates the driver's internally loaded node state.
    *
    * Pass `{ liveblocksType: "LiveObject", data: {} }` to reset to an empty root.
    */
-  DANGEROUSLY_reset_nodes(doc: PlainLsonObject): Awaitable<void>;
+  DANGEROUSLY_reset_nodes(doc: PlainLsonObject): void;
 
   /**
    * Read raw node data directly from storage.
    *
    * @internal Test-only API
    */
-  raw_iter_nodes(): Awaitable<Iterable<[string, SerializedCrdt]>>;
+  raw_iter_nodes(): Iterable<[string, SerializedCrdt]>;
 
   // ---------------------------------------------------------------------------
   // Metadata APIs (key-value store, isolated from nodes)
@@ -276,17 +274,17 @@ export interface IStorageDriver {
   /**
    * Return the value for `key`, or undefined if not set.
    */
-  get_meta(key: string): Awaitable<Json | undefined>;
+  get_meta(key: string): Json | undefined;
 
   /**
    * Store `value` under `key`. Overwrite any existing value.
    */
-  put_meta(key: string, value: Json): Awaitable<void>;
+  put_meta(key: string, value: Json): void;
 
   /**
    * Delete the value under `key`. No-op if not set.
    */
-  delete_meta(key: string): Awaitable<void>;
+  delete_meta(key: string): void;
 
   // ---------------------------------------------------------------------------
   // System APIs
@@ -296,7 +294,7 @@ export interface IStorageDriver {
    * Return a unique actor ID. Each call must return a distinct integer ≥ 0.
    * Concurrent calls must never return duplicates.
    */
-  next_actor(): Awaitable<number>;
+  next_actor(): number;
 
   /**
    * If defined, called once before each storage mutation batch. Can be used by
@@ -311,23 +309,23 @@ export interface IStorageDriver {
   /**
    * Return all Yjs updates for docId as [key, data] pairs. Return empty if none.
    */
-  iter_y_updates(docId: YDocId): Awaitable<Iterable<[string, Uint8Array]>>; // prettier-ignore
+  iter_y_updates(docId: YDocId): Iterable<[string, Uint8Array]>;
 
   /**
    * Store a Yjs update under (docId, key). Overwrite if key exists.
    */
-  write_y_updates(docId: YDocId, key: string, data: Uint8Array): Awaitable<void>; // prettier-ignore
+  write_y_updates(docId: YDocId, key: string, data: Uint8Array): void;
 
   /**
    * Delete the specified keys for docId.
    */
-  delete_y_updates(docId: YDocId, keys: string[]): Awaitable<void>; // prettier-ignore
+  delete_y_updates(docId: YDocId, keys: string[]): void;
 
   /**
    * Delete ALL Yjs updates across ALL documents.
    * @private Test-only: never use in production.
    */
-  DANGEROUSLY_wipe_all_y_updates(): Awaitable<void>;
+  DANGEROUSLY_wipe_all_y_updates(): void;
 
   // ---------------------------------------------------------------------------
   // Leased Session APIs (key-value store for leased sessions)
@@ -338,28 +336,26 @@ export interface IStorageDriver {
    * Note: Does NOT filter by expiration - returns all stored sessions.
    * Expiration logic is handled at the Room.ts level.
    */
-  list_leased_sessions(): Awaitable<
-    Iterable<[sessionId: string, session: LeasedSession]>
-  >;
+  list_leased_sessions(): Iterable<[sessionId: string, session: LeasedSession]>;
 
   /**
    * Get a specific leased session by session ID.
    * Note: Does NOT check expiration - returns the stored session if it exists.
    * Expiration logic is handled at the Room.ts level.
    */
-  get_leased_session(sessionId: string): Awaitable<LeasedSession | undefined>;
+  get_leased_session(sessionId: string): LeasedSession | undefined;
 
   /**
    * Create or update a leased session.
    * Note: This is a full replace operation - the caller is responsible for
    * merging/patching presence if needed.
    */
-  put_leased_session(session: LeasedSession): Awaitable<void>;
+  put_leased_session(session: LeasedSession): void;
 
   /**
    * Delete a leased session by session ID.
    */
-  delete_leased_session(sessionId: string): Awaitable<void>;
+  delete_leased_session(sessionId: string): void;
 
   /**
    * Return the number of storage rows written since last call to this method,
@@ -375,7 +371,7 @@ export interface IStorageDriver {
    * List feeds with pagination, filtering, and metadata querying.
    * Feeds are sorted by createdAt descending (newest first).
    */
-  list_feeds(options?: ListFeedsOptions): Awaitable<ListFeedsResult>;
+  list_feeds(options?: ListFeedsOptions): ListFeedsResult;
 
   /**
    * Get a specific feed by feed ID.
@@ -383,26 +379,26 @@ export interface IStorageDriver {
    * Use list_feed_messages to retrieve messages for this feed.
    * Returns undefined if the feed doesn't exist.
    */
-  get_feed(feedId: string): Awaitable<Feed | undefined>;
+  get_feed(feedId: string): Feed | undefined;
 
   /**
    * Create a new feed.
    * If feedId already exists, throws an error.
    */
-  create_feed(feed: Feed): Awaitable<void>;
+  create_feed(feed: Feed): void;
 
   /**
    * Update a feed's metadata.
    * The feed must exist, otherwise throws an error.
    */
-  update_feed_metadata(feedId: string, metadata: Json): Awaitable<void>;
+  update_feed_metadata(feedId: string, metadata: Json): void;
 
   /**
    * Delete a feed by feed ID.
    * Also deletes all messages associated with the feed (via CASCADE).
    * No-op if feed doesn't exist.
    */
-  delete_feed(feedId: string): Awaitable<void>;
+  delete_feed(feedId: string): void;
 
   /**
    * List feed messages for a feed with pagination.
@@ -411,14 +407,14 @@ export interface IStorageDriver {
   list_feed_messages(
     feedId: string,
     options?: ListFeedMessagesOptions
-  ): Awaitable<ListFeedMessagesResult>;
+  ): ListFeedMessagesResult;
 
   /**
    * Add a message to a feed.
    * The message must have id, createdAt, and updatedAt already set (handled by Room layer).
    * The feed must exist, otherwise throws an error.
    */
-  add_feed_message(feedId: string, message: FeedMessage): Awaitable<void>;
+  add_feed_message(feedId: string, message: FeedMessage): void;
 
   /**
    * Update a feed message's data.
@@ -432,11 +428,11 @@ export interface IStorageDriver {
     messageId: string,
     data: Json,
     timestamp?: number
-  ): Awaitable<FeedMessage>;
+  ): FeedMessage;
 
   /**
    * Delete a feed message.
    * The feed and message must exist, otherwise throws an error.
    */
-  delete_feed_message(feedId: string, messageId: string): Awaitable<void>;
+  delete_feed_message(feedId: string, messageId: string): void;
 }

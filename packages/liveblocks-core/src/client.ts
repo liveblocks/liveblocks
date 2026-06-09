@@ -395,6 +395,13 @@ export type Client<
   ): Room<P, S, U, E, TM2, CM2, FM2, FMD2> | null;
 
   /**
+   * @internal
+   * Returns a human-readable dump of every storage node in every room this
+   * client has entered. For debugging convergence issues only.
+   */
+  _dump(): string;
+
+  /**
    * Enter a room.
    * @param roomId The id of the room
    * @param options Optional. You can provide initializers for the Presence or Storage when entering the Room.
@@ -1046,6 +1053,9 @@ export function createClient<U extends BaseUserMeta = DU>(
     {
       enterRoom,
       getRoom,
+
+      _dump: () =>
+        Array.from(roomsById.values(), ({ room }) => room._dump()).join("\n\n"),
 
       logout,
 

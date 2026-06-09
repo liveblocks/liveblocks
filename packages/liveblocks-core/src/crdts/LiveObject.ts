@@ -33,6 +33,7 @@ import {
   deserializeToLson,
   isLiveNode,
   isLiveStructure,
+  liveNodeToLson,
 } from "./liveblocks-helpers";
 import type { SyncConfig } from "./reconcile";
 import { reconcileLiveObject } from "./reconcile";
@@ -314,6 +315,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       const id = nn(this._id);
       const parentKey = nn(child._parentKey);
       const reverse = child._toOps(id, parentKey);
+      const deletedItem = liveNodeToLson(child);
 
       for (const [key, value] of this.#synced) {
         if (value === child) {
@@ -328,7 +330,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
         node: this,
         type: "LiveObject",
         updates: {
-          [parentKey]: { type: "delete" },
+          [parentKey]: { type: "delete", deletedItem },
         } as { [K in keyof O]: UpdateDelta },
       };
 
