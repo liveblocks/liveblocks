@@ -2,9 +2,11 @@ import { describe, expect, test } from "vitest";
 
 import {
   hasPermissionCapability,
+  mergePermissionCapabilities,
   normalizeRoomPermissionInput,
   Permission,
   permissionCapabilitiesFromScopes,
+  permissionCapabilitiesToScopes,
   resolveRoomPermissionCapabilities,
 } from "../permissions";
 
@@ -151,5 +153,33 @@ describe("permissionCapabilitiesFromScopes", () => {
         "org1.room1"
       )
     ).toBeUndefined();
+  });
+});
+
+describe("permission capability helpers", () => {
+  test("merges capabilities by taking the strongest access per resource", () => {
+    const capabilities = mergePermissionCapabilities([
+      permissionCapabilitiesFromScopes([Permission.RoomWrite]),
+      permissionCapabilitiesFromScopes([Permission.RoomStorageNone]),
+    ]);
+
+    expect(capabilities.storage).toBe("write");
+  });
+
+  test("serializes permission capabilities to minimal scopes", () => {
+    expect(
+      permissionCapabilitiesToScopes({
+        creation: "read",
+        presence: "write",
+        storage: "none",
+        comments: "read",
+        feeds: "read",
+        personal: "write",
+      })
+    ).toEqual([
+      Permission.RoomRead,
+      Permission.LegacyRoomPresenceWrite,
+      Permission.RoomStorageNone,
+    ]);
   });
 });

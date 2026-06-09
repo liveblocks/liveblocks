@@ -209,11 +209,13 @@ export type {
 export {
   hasPermissionCapability,
   hasPermissionCapabilityAccess,
+  mergePermissionCapabilities,
   normalizeRoomAccessesInput,
   normalizeRoomAccessesUpdateInput,
   normalizeRoomPermissionInput,
   Permission,
   permissionCapabilitiesFromScopes,
+  permissionCapabilitiesToScopes,
 } from "./permissions";
 export type {
   ContextualPromptContext,

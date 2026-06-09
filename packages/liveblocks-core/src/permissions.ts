@@ -204,6 +204,51 @@ export function normalizeRoomAccessesUpdateInput(
   );
 }
 
+export function mergePermissionCapabilities(
+  sources: readonly PermissionCapabilities[]
+): PermissionCapabilities {
+  return {
+    creation: strongestCapabilityAccess(sources, "creation"),
+    presence: strongestCapabilityAccess(sources, "presence"),
+    storage: strongestCapabilityAccess(sources, "storage"),
+    comments: strongestCapabilityAccess(sources, "comments"),
+    feeds: strongestCapabilityAccess(sources, "feeds"),
+    personal: "write",
+  };
+}
+
+export function permissionCapabilitiesToScopes(
+  capabilities: PermissionCapabilities
+): RoomPermission {
+  const scopes: RoomPermission = [];
+  const baseAccess = capabilities.creation;
+
+  if (baseAccess !== "none") {
+    scopes.push(
+      permissionForAccessLevel(DEFAULT_PERMISSION_RESOURCE, baseAccess)
+    );
+  }
+
+  for (const capability of ROOM_PERMISSION_RESOURCES) {
+    const access = capabilities[capability];
+    if (access !== baseAccess) {
+      scopes.push(permissionForAccessLevel(capability, access));
+    }
+  }
+
+  return scopes;
+}
+
+function strongestCapabilityAccess(
+  sources: readonly PermissionCapabilities[],
+  resource: PermissionResources
+): AccessLevel {
+  return sources.reduce<AccessLevel>(
+    (strongest, source) => strongestAccess(strongest, source[resource]),
+    "none"
+  );
+}
+
 function strongestAccess(left: AccessLevel, right: AccessLevel): AccessLevel {
   return ACCESS_RANKS[right] > ACCESS_RANKS[left] ? right : left;
 }
