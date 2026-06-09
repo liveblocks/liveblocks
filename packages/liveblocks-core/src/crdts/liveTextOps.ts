@@ -400,7 +400,7 @@ export function invertTextOperations(
         insertIndex += segment.text.length;
       }
       for (let index = inserts.length - 1; index >= 0; index--) {
-        reverse.unshift(inserts[index]!);
+        reverse.unshift(inserts[index]);
       }
     } else {
       const inverse = formatReverseOperations(
