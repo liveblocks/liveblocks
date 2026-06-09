@@ -3816,7 +3816,9 @@ export function createRoom<
 
       _dump: () => {
         const n = context.pool.nodes.size;
-        return `Room "${roomId}" (${n} node${n === 1 ? "" : "s"}):\n${dumpPool(context.pool)}`;
+        return `Room "${roomId}" (${n} node${n === 1 ? "" : "s"}):\n${dumpPool(
+          context.pool
+        )}`;
       },
       destroy: () => {
         pendingFeedsRequests.forEach((request) =>
