@@ -53,9 +53,7 @@ export type RoomAccessesUpdateInput = Record<
   RoomPermissionInput | null
 >;
 
-const ALL_PERMISSIONS: readonly string[] = Object.freeze(
-  Object.values(Permission)
-);
+const VALID_PERMISSIONS = new Set<string>(Object.values(Permission));
 
 const DEFAULT_PERMISSIONS: readonly Permission[] = [
   Permission.RoomRead,
@@ -67,8 +65,18 @@ const ROOM_PERMISSION_OBJECT_KEYS = new Set<string>([
   ...ROOM_PERMISSION_RESOURCES,
 ]);
 
+const RESOURCE_SPECIFIC_PERMISSIONS_BY_RESOURCE = {
+  presence: Object.values(RESOURCE_PERMISSIONS.presence).flat(),
+  storage: Object.values(RESOURCE_PERMISSIONS.storage).flat(),
+  comments: Object.values(RESOURCE_PERMISSIONS.comments).flat(),
+  feeds: Object.values(RESOURCE_PERMISSIONS.feeds).flat(),
+} satisfies Record<
+  (typeof ROOM_PERMISSION_RESOURCES)[number],
+  readonly Permission[]
+>;
+
 const RESOURCE_SPECIFIC_PERMISSIONS = ROOM_PERMISSION_RESOURCES.flatMap(
-  (resource) => Object.values(RESOURCE_PERMISSIONS[resource]).flat()
+  (resource) => RESOURCE_SPECIFIC_PERMISSIONS_BY_RESOURCE[resource]
 );
 
 function permissionForAccessLevel(
@@ -84,10 +92,6 @@ function permissionForAccessLevel(
     );
   }
   return permissions[0];
-}
-
-export function isPermission(value: string): value is Permission {
-  return ALL_PERMISSIONS.includes(value);
 }
 
 export function resolveRoomPermissionCapabilities(
@@ -132,27 +136,25 @@ export function resolveRoomPermissionCapabilities(
   });
 }
 
+function isRoomPermissionArray(
+  input: RoomPermissionInput
+): input is readonly Permission[] {
+  return Array.isArray(input);
+}
+
 export function normalizeRoomPermissionInput(
   input: RoomPermissionInput
 ): RoomPermission {
-  const permissionInput: readonly string[] | RoomPermissionObject = input;
-
-  if (isReadonlyStringArray(permissionInput)) {
-    return permissionInput.map((permission) => {
-      if (!isPermission(permission)) {
+  if (isRoomPermissionArray(input)) {
+    return input.map((permission) => {
+      if (!VALID_PERMISSIONS.has(permission)) {
         throw new Error(`Not a valid permission: ${permission}`);
       }
       return permission;
     });
   }
 
-  return normalizeRoomPermissionObject(permissionInput);
-}
-
-function isReadonlyStringArray(
-  input: readonly string[] | RoomPermissionObject
-): input is readonly string[] {
-  return Array.isArray(input);
+  return normalizeRoomPermissionObject(input);
 }
 
 function normalizeRoomPermissionObject(
@@ -225,7 +227,7 @@ export function getRoomPermissionConflicts(
   }
 
   for (const resource of ROOM_PERMISSION_RESOURCES) {
-    const permissions = Object.values(RESOURCE_PERMISSIONS[resource]).flat();
+    const permissions = RESOURCE_SPECIFIC_PERMISSIONS_BY_RESOURCE[resource];
     if (permissions.includes(permission)) {
       return permissions;
     }

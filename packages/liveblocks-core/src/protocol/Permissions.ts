@@ -149,12 +149,7 @@ function resolveResourceAccess(
       scopedPermissions !== undefined &&
       scopedPermissions.some((permission) => scopes.includes(permission))
     ) {
-      if (
-        resourceAccess === undefined ||
-        ACCESS_RANKS[access] > ACCESS_RANKS[resourceAccess]
-      ) {
-        resourceAccess = access;
-      }
+      resourceAccess = access;
     }
   }
 
@@ -220,11 +215,7 @@ export function hasPermissionCapability(
   requiredAccess: RequiredAccessLevel
 ): boolean {
   const access = permissionCapabilitiesFromScopes(scopes)[resource];
-  return hasPermissionCapabilityAccess(
-    { [resource]: access },
-    resource,
-    requiredAccess
-  );
+  return ACCESS_RANKS[access] >= ACCESS_RANKS[requiredAccess];
 }
 
 export function hasPermissionCapabilityAccess(

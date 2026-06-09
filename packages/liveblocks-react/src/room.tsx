@@ -3767,7 +3767,7 @@ function useSelfPermissionCapabilityFallback(
       return self?.canWrite ?? true;
     }
 
-    return true;
+    return false;
   }, [resource, requiredAccess, room, roomId]);
 
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);

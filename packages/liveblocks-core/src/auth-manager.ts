@@ -271,6 +271,7 @@ function cachedTokenSatisfiesRequest(
   }
 
   if (request.resource === "personal") {
+    // Any valid token grants access to the user's personal resources (e.g. inbox notifications, notification settings, etc.)
     return true;
   }
 

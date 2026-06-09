@@ -209,7 +209,6 @@ export {
   getRoomPermissionConflicts,
   hasPermissionCapability,
   hasPermissionCapabilityAccess,
-  isPermission,
   normalizeRoomAccessesInput,
   normalizeRoomAccessesUpdateInput,
   normalizeRoomPermissionInput,
