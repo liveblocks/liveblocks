@@ -84,7 +84,7 @@ describe("permissionCapabilitiesFromScopes", () => {
       hasPermissionCapability(
         [Permission.LegacyRoomPresenceWrite],
         "presence",
-        "read"
+        "write"
       )
     ).toBe(true);
   });

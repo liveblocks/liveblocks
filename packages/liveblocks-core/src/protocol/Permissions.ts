@@ -105,7 +105,8 @@ export const RESOURCE_PERMISSIONS: ResourcePermissionMap = {
     write: [],
   },
   presence: {
-    read: [Permission.RoomPresenceRead, Permission.LegacyRoomPresenceWrite],
+    write: [Permission.LegacyRoomPresenceWrite],
+    read: [Permission.RoomPresenceRead],
     none: [Permission.RoomPresenceNone],
   },
   storage: {
