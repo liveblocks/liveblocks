@@ -13,17 +13,47 @@ if TYPE_CHECKING:
 Permission = Literal[
     "room:write",
     "room:read",
+    "room:presence:read",
+    "room:presence:none",
+    "room:storage:read",
+    "room:storage:write",
+    "room:storage:none",
+    "room:comments:write",
+    "room:comments:read",
+    "room:comments:none",
+    "room:feeds:read",
+    "room:feeds:write",
+    "room:feeds:none",
     "room:presence:write",
     "comments:write",
     "comments:read",
+    "feeds:write",
 ]
 
 ALL_PERMISSIONS: frozenset[str] = frozenset(
-    ["room:write", "room:read", "room:presence:write", "comments:write", "comments:read"]
+    [
+        "room:write",
+        "room:read",
+        "room:presence:read",
+        "room:presence:none",
+        "room:storage:read",
+        "room:storage:write",
+        "room:storage:none",
+        "room:comments:write",
+        "room:comments:read",
+        "room:comments:none",
+        "room:feeds:read",
+        "room:feeds:write",
+        "room:feeds:none",
+        "room:presence:write",
+        "comments:write",
+        "comments:read",
+        "feeds:write",
+    ]
 )
 
-READ_ACCESS: tuple[Permission, ...] = ("room:read", "room:presence:write", "comments:read")
-FULL_ACCESS: tuple[Permission, ...] = ("room:write", "comments:write")
+READ_ACCESS: tuple[Permission, ...] = ("room:read",)
+FULL_ACCESS: tuple[Permission, ...] = ("room:write",)
 
 _MAX_PERMS_PER_SET = 10
 _ROOM_PATTERN_RE = re.compile(r"^([*]|[^*]{1,128}[*]?)$")

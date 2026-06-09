@@ -7182,32 +7182,43 @@
           "type": "whiteboard"
         }
       },
+      "RoomPermissionItem": {
+        "title": "RoomPermissionItem",
+        "type": "string",
+        "enum": [
+          "room:write",
+          "room:read",
+          "room:presence:read",
+          "room:presence:none",
+          "room:storage:read",
+          "room:storage:write",
+          "room:storage:none",
+          "room:comments:write",
+          "room:comments:read",
+          "room:comments:none",
+          "room:feeds:read",
+          "room:feeds:write",
+          "room:feeds:none",
+          "room:presence:write",
+          "comments:write",
+          "comments:read",
+          "feeds:write"
+        ]
+      },
       "RoomPermission": {
         "type": "array",
         "items": {
-          "type": "string",
-          "enum": [
-            "room:write",
-            "room:read",
-            "room:presence:write",
-            "comments:write"
-          ]
+          "$ref": "#/components/schemas/RoomPermissionItem"
         },
         "uniqueItems": true,
-        "example": ["room:read", "room:presence:write"]
+        "example": ["room:read"]
       },
       "RoomAccesses": {
         "type": "object",
         "additionalProperties": {
           "type": "array",
           "items": {
-            "type": "string",
-            "enum": [
-              "room:write",
-              "room:read",
-              "room:presence:write",
-              "comments:write"
-            ]
+            "$ref": "#/components/schemas/RoomPermissionItem"
           }
         },
         "example": {
@@ -7329,13 +7340,7 @@
                 {
                   "type": "array",
                   "items": {
-                    "type": "string",
-                    "enum": [
-                      "room:write",
-                      "room:read",
-                      "room:presence:write",
-                      "comments:write"
-                    ]
+                    "$ref": "#/components/schemas/RoomPermissionItem"
                   }
                 },
                 {
@@ -7352,13 +7357,7 @@
                 {
                   "type": "array",
                   "items": {
-                    "type": "string",
-                    "enum": [
-                      "room:write",
-                      "room:read",
-                      "room:presence:write",
-                      "comments:write"
-                    ]
+                    "$ref": "#/components/schemas/RoomPermissionItem"
                   }
                 },
                 {

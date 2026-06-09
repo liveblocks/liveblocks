@@ -37,13 +37,13 @@ class TestPermissions:
     def test_full_access_permissions(self):
         session = make_session()
         assert session.allow("xyz", session.FULL_ACCESS)._serialize_permissions() == {
-            "xyz": ["room:write", "comments:write"],
+            "xyz": ["room:write"],
         }
 
     def test_read_access_permissions(self):
         session = make_session()
         assert session.allow("xyz", session.READ_ACCESS)._serialize_permissions() == {
-            "xyz": ["room:read", "room:presence:write", "comments:read"],
+            "xyz": ["room:read"],
         }
 
     def test_raises_on_empty_room_name(self):

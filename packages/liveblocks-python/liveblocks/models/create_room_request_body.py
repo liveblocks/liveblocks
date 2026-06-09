@@ -23,7 +23,7 @@ class CreateRoomRequestBody:
 
     Attributes:
         id (str):
-        default_accesses (list[RoomPermissionItem]):  Example: ['room:read', 'room:presence:write'].
+        default_accesses (list[RoomPermissionItem]):  Example: ['room:read'].
         organization_id (str | Unset): The organization ID to associate with the room. Defaults to "default" if not
             provided.
         users_accesses (RoomAccesses | Unset):  Example: {'alice': ['room:write'], 'bob': ['room:read',
