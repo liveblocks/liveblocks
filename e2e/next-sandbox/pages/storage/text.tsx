@@ -151,7 +151,7 @@ function Sandbox() {
           Setup "Hello, world!"
         </Button>
         <Button id="deleteCommaWorld" onClick={deleteCommaWorld}>
-          Delete ", world"
+          Delete Index 5-7
         </Button>
         <Button id="morphToLorem" onClick={() => void morphToLorem()}>
           Morph → "Lorem ipsum…"

@@ -4,6 +4,7 @@ import {
   createSerializedRoot,
   prepareIsolatedStorageTest,
 } from "../../__tests__/_MockWebSocketServer.setup";
+import type { UpdateTextOp } from "../../protocol/Op";
 import { OpCode } from "../../protocol/Op";
 import type { StorageNode } from "../../protocol/StorageNode";
 import { CrdtType } from "../../protocol/StorageNode";
@@ -101,6 +102,49 @@ describe("LiveText concurrency", () => {
 });
 
 describe("LiveText acknowledgement", () => {
+  test("undo of an acknowledged insert emits current-version operations", () => {
+    let insertOpId = "";
+    let undoOps: UpdateTextOp[] = [];
+    const pool = createManagedPool("room", {
+      getCurrentConnectionId: () => 0,
+      onDispatch: (ops, reverse) => {
+        insertOpId = ops[0]?.opId ?? insertOpId;
+        undoOps = reverse as UpdateTextOp[];
+      },
+    });
+    const text = new LiveText("Hello");
+    text._attach("0:1", pool);
+
+    text.insert(5, " world");
+    expect(text.toString()).toBe("Hello world");
+
+    text._apply(
+      {
+        type: OpCode.UPDATE_TEXT,
+        id: "0:1",
+        opId: insertOpId,
+        baseVersion: 0,
+        version: 1,
+        ops: [{ type: "insert", index: 5, text: " world" }],
+      },
+      false
+    );
+
+    const undoOp = undoOps[0];
+    if (undoOp === undefined) {
+      throw new Error("Expected undo operation");
+    }
+
+    const outgoingUndoOp = { ...undoOp, opId: "undo" };
+    text._apply(outgoingUndoOp, true);
+
+    expect(outgoingUndoOp).toMatchObject({
+      baseVersion: 1,
+      ops: [{ type: "delete", index: 5, length: 6 }],
+    });
+    expect(text.toString()).toBe("Hello");
+  });
+
   test("acknowledgement preserves state after concurrent remote edits", () => {
     let acknowledgedOpId = "";
     const pool = createManagedPool("room", {
@@ -147,10 +191,12 @@ describe("LiveText acknowledgement", () => {
 
   test("acknowledgement applies server-rebased operations", () => {
     let acknowledgedOpId = "";
+    let undoOps: UpdateTextOp[] = [];
     const pool = createManagedPool("room", {
       getCurrentConnectionId: () => 0,
-      onDispatch: (ops) => {
+      onDispatch: (ops, reverse) => {
         acknowledgedOpId = ops[0]?.opId ?? "";
+        undoOps = reverse as UpdateTextOp[];
       },
     });
     const text = new LiveText("Hello");
@@ -187,6 +233,20 @@ describe("LiveText acknowledgement", () => {
 
     expect(text.toString()).toBe("Allo");
     expect(text.toJSON()).toEqual([["Allo"]]);
+
+    const undoOp = undoOps[0];
+    if (undoOp === undefined) {
+      throw new Error("Expected undo operation");
+    }
+
+    const outgoingUndoOp = { ...undoOp, opId: "undo" };
+    text._apply(outgoingUndoOp, true);
+
+    expect(outgoingUndoOp).toMatchObject({
+      baseVersion: 2,
+      ops: [{ type: "insert", index: 1, text: "He" }],
+    });
+    expect(text.toString()).toBe("AHello");
   });
 
   test("re-applies acknowledged operations when multiple local edits are pending", () => {

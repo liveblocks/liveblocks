@@ -66,6 +66,50 @@ export type LiveTextUpdates = {
   updates: LiveTextChange[];
 };
 
+type AcceptedTextOperations = {
+  version: number;
+  ops: readonly TextOperation[];
+};
+
+const ACCEPTED_OPS_HISTORY_LIMIT = 1000;
+
+function isInverseOperation(
+  op: TextOperation,
+  accepted: TextOperation
+): boolean {
+  if (op.type === "delete" && accepted.type === "insert") {
+    return op.index === accepted.index && op.length === accepted.text.length;
+  } else if (op.type === "insert" && accepted.type === "delete") {
+    return op.index === accepted.index && op.text.length === accepted.length;
+  } else if (op.type === "format" && accepted.type === "format") {
+    return op.index === accepted.index && op.length === accepted.length;
+  } else {
+    return false;
+  }
+}
+
+function areInverseOperations(
+  ops: readonly TextOperation[],
+  acceptedOps: readonly TextOperation[]
+): boolean {
+  if (ops.length !== acceptedOps.length) {
+    return false;
+  }
+
+  for (let index = 0; index < ops.length; index++) {
+    const op = ops[index];
+    const accepted = acceptedOps[acceptedOps.length - 1 - index];
+    if (
+      op === undefined ||
+      accepted === undefined ||
+      !isInverseOperation(op, accepted)
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
+
 export {
   applyLiveTextOperations,
   mapTextIndexThroughOperations,
@@ -76,6 +120,7 @@ export class LiveText extends AbstractCrdt {
   #segments: TextSegment[];
   #version: number;
   #pendingOps: Map<string, readonly TextOperation[]>;
+  #acceptedOps: AcceptedTextOperations[];
 
   constructor(textOrData: string | LiveTextData = "", version = 0) {
     super();
@@ -87,6 +132,7 @@ export class LiveText extends AbstractCrdt {
         : dataToSegments(textOrData);
     this.#version = version;
     this.#pendingOps = new Map();
+    this.#acceptedOps = [];
   }
 
   get version(): number {
@@ -158,13 +204,23 @@ export class LiveText extends AbstractCrdt {
     }
 
     if (isLocal) {
-      this.#pendingOps.set(nn(op.opId), op.ops);
-      return this.#applyOperations(op.ops, op.version ?? this.#version);
+      const { baseVersion, ops } = this.#rebaseLocalOperations(op);
+      if (baseVersion !== op.baseVersion || ops !== op.ops) {
+        const mutableOp = op as {
+          baseVersion: number;
+          ops: TextOperation[];
+        };
+        mutableOp.baseVersion = baseVersion;
+        mutableOp.ops = [...ops];
+      }
+      this.#pendingOps.set(nn(op.opId), ops);
+      return this.#applyOperations(ops, op.version ?? this.#version);
     }
 
     if (op.opId !== undefined) {
       const pending = this.#pendingOps.get(op.opId);
       this.#pendingOps.delete(op.opId);
+      this.#recordAcceptedOperations(op);
 
       const otherPending = Array.from(this.#pendingOps.values()).flat();
       if (pending !== undefined && otherPending.length > 0) {
@@ -184,6 +240,7 @@ export class LiveText extends AbstractCrdt {
     }
 
     const pending = Array.from(this.#pendingOps.values()).flat();
+    this.#recordAcceptedOperations(op);
     const ops =
       pending.length > 0 ? rebaseTextOperations(op.ops, pending) : op.ops;
     return this.#applyOperations(ops, op.version ?? this.#version + 1);
@@ -301,6 +358,49 @@ export class LiveText extends AbstractCrdt {
         version: this.#version,
         updates: changes,
       },
+    };
+  }
+
+  #recordAcceptedOperations(op: UpdateTextOp): void {
+    const version = op.version ?? Math.max(this.#version, op.baseVersion + 1);
+    if (this.#acceptedOps.some((entry) => entry.version === version)) {
+      return;
+    }
+
+    this.#acceptedOps.push({ version, ops: [...op.ops] });
+    this.#acceptedOps.sort((left, right) => left.version - right.version);
+    if (this.#acceptedOps.length > ACCEPTED_OPS_HISTORY_LIMIT) {
+      this.#acceptedOps.splice(
+        0,
+        this.#acceptedOps.length - ACCEPTED_OPS_HISTORY_LIMIT
+      );
+    }
+  }
+
+  #rebaseLocalOperations(op: UpdateTextOp): {
+    baseVersion: number;
+    ops: readonly TextOperation[];
+  } {
+    if (op.baseVersion >= this.#version) {
+      return { baseVersion: op.baseVersion, ops: op.ops };
+    }
+
+    const acceptedEntries = this.#acceptedOps.filter(
+      (entry) => entry.version > op.baseVersion
+    );
+    let ops = op.ops;
+
+    for (const entry of acceptedEntries) {
+      if (areInverseOperations(ops, entry.ops)) {
+        continue;
+      }
+      ops = rebaseTextOperations(ops, entry.ops);
+    }
+
+    return {
+      baseVersion:
+        acceptedEntries.length > 0 ? this.#version : op.baseVersion,
+      ops,
     };
   }
 
