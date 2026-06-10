@@ -24,7 +24,6 @@ import {
   makePosition,
   OpCode,
 } from "@liveblocks/core";
-import type { TextOperation } from "@liveblocks/core";
 
 import type { IStorageDriver } from "~/interfaces";
 import type {
@@ -40,47 +39,11 @@ import type {
 } from "~/protocol";
 import type { Pos } from "~/types";
 
+import { transformTextOperations } from "./liveTextTransform";
+
 const LIVE_TEXT_HISTORY_LIMIT = 1000;
 const LIVE_TEXT_HISTORY_TOO_OLD_REASON =
   "LiveText operation is older than retained history";
-
-function mapTextIndexThroughOperations(
-  index: number,
-  ops: readonly TextOperation[]
-): number {
-  let mapped = index;
-  for (const op of ops) {
-    if (op.type === "insert") {
-      mapped = op.index <= mapped ? mapped + op.text.length : mapped;
-    } else if (op.type === "delete" && op.index < mapped) {
-      mapped = Math.max(op.index, mapped - op.length);
-    }
-  }
-  return mapped;
-}
-
-function rebaseTextOperations(
-  ops: readonly TextOperation[],
-  acceptedOps: readonly TextOperation[]
-): TextOperation[] {
-  return ops.map((op) => {
-    if (op.type === "insert") {
-      return {
-        ...op,
-        index: mapTextIndexThroughOperations(op.index, acceptedOps),
-      };
-    } else if (op.type === "delete" || op.type === "format") {
-      const start = mapTextIndexThroughOperations(op.index, acceptedOps);
-      const end = mapTextIndexThroughOperations(
-        op.index + op.length,
-        acceptedOps
-      );
-      return { ...op, index: start, length: Math.max(0, end - start) };
-    } else {
-      return op;
-    }
-  });
-}
 
 /**
  * The possible outcomes of applying a client op. They differ along
@@ -295,7 +258,11 @@ export class Storage {
         ) {
           return rectify(
             { ...op, parentKey: stored.parentKey },
-            { type: OpCode.SET_PARENT_KEY, id: op.id, parentKey: stored.parentKey }
+            {
+              type: OpCode.SET_PARENT_KEY,
+              id: op.id,
+              parentKey: stored.parentKey,
+            }
           );
         }
       }
@@ -456,6 +423,13 @@ export class Storage {
       });
     }
 
+    if (op.ops.length === 0) {
+      // Empty updates are pure acknowledgement vehicles (e.g. an undo whose
+      // content was queued behind another in-flight op on the client). Ack
+      // without applying or bumping the version.
+      return ignore(op);
+    }
+
     if (op.baseVersion > node.version) {
       return reject(op, "LiveText operation base version is ahead of storage");
     }
@@ -474,7 +448,7 @@ export class Storage {
     const acceptedOps = history.flatMap((entry) => entry.ops);
     const ops =
       acceptedOps.length > 0
-        ? rebaseTextOperations(op.ops, acceptedOps)
+        ? transformTextOperations(op.ops, acceptedOps, "after")
         : op.ops;
     const version = node.version + 1;
     const data = applyLiveTextOperations(node.data, ops);
@@ -494,6 +468,12 @@ export class Storage {
       opId: op.opId,
       ops: [...ops],
     });
+    // Keep the retained history bounded as the document evolves (the
+    // constructor-time purge only covers room (re)loads).
+    this.driver.purge_live_text_history_before(
+      op.id,
+      Math.max(0, version - LIVE_TEXT_HISTORY_LIMIT + 1)
+    );
 
     return accept({ ...op, baseVersion: node.version, version, ops: [...ops] });
   }

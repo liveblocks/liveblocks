@@ -296,18 +296,10 @@ describe("getTreesDiffOperations", () => {
       version: 1,
     });
 
-    expect(getTreesDiffOperations(newItems, updatedItems)).toEqual([
-      {
-        type: OpCode.UPDATE_TEXT,
-        id: "0:1",
-        baseVersion: 0,
-        version: 1,
-        ops: [
-          { type: "delete", index: 0, length: 5 },
-          { type: "insert", index: 0, text: "Hello!" },
-        ],
-      },
-    ]);
+    // Content changes of existing LiveText nodes are deliberately NOT part
+    // of the op diff: snapshots are reconciled via LiveText._resyncText
+    // (driven by the room), not via UPDATE_TEXT ops.
+    expect(getTreesDiffOperations(newItems, updatedItems)).toEqual([]);
   });
 
   test("liveObject replacing a non-object node of the same id", () => {

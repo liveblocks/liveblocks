@@ -4,6 +4,7 @@ import {
   createSerializedRoot,
   prepareIsolatedStorageTest,
 } from "../../__tests__/_MockWebSocketServer.setup";
+import { nn } from "../../lib/assert";
 import type { UpdateTextOp } from "../../protocol/Op";
 import { OpCode } from "../../protocol/Op";
 import type { StorageNode } from "../../protocol/StorageNode";
@@ -48,8 +49,11 @@ describe("LiveText concurrency", () => {
       },
     ]);
 
-    expect(text.toString()).toBe("ABHello");
-    expect(text.toJSON()).toEqual([["ABHello"]]);
+    // The remote insert was accepted by the server first, so on a same-index
+    // tie it stays left of our still-pending local insert. This matches the
+    // outcome on the server (and on every other client).
+    expect(text.toString()).toBe("BAHello");
+    expect(text.toJSON()).toEqual([["BAHello"]]);
   });
 
   test("local client rebases remote delete over pending local insert", async () => {
@@ -171,22 +175,26 @@ describe("LiveText acknowledgement", () => {
       false
     );
 
-    expect(text.toString()).toBe("ABHello");
+    // The remote insert was accepted first, so it wins the same-index tie.
+    expect(text.toString()).toBe("BAHello");
 
+    // The server acknowledges our op with its authoritative (rebased) form:
+    // our insert was shifted right over the accepted remote insert.
     text._apply(
       {
         type: OpCode.UPDATE_TEXT,
         id: "0:1",
         opId: acknowledgedOpId,
-        baseVersion: 0,
+        baseVersion: 1,
         version: 2,
-        ops: [{ type: "insert", index: 0, text: "A" }],
+        ops: [{ type: "insert", index: 1, text: "A" }],
       },
       false
     );
 
-    expect(text.toString()).toBe("ABHello");
-    expect(text.toJSON()).toEqual([["ABHello"]]);
+    expect(text.toString()).toBe("BAHello");
+    expect(text.toJSON()).toEqual([["BAHello"]]);
+    expect(text.version).toBe(2);
   });
 
   test("acknowledgement applies server-rebased operations", () => {
@@ -249,16 +257,15 @@ describe("LiveText acknowledgement", () => {
     expect(text.toString()).toBe("AHello");
   });
 
-  test("re-applies acknowledged operations when multiple local edits are pending", () => {
-    let firstOpId = "";
-    let secondOpId = "";
+  test("queues local edits behind the in-flight op and flushes them on ack", () => {
+    const dispatched: UpdateTextOp[] = [];
     const pool = createManagedPool("room", {
       getCurrentConnectionId: () => 0,
       onDispatch: (ops) => {
-        if (firstOpId === "") {
-          firstOpId = ops[0]?.opId ?? "";
-        } else if (secondOpId === "") {
-          secondOpId = ops[0]?.opId ?? "";
+        for (const op of ops) {
+          if (op.type === OpCode.UPDATE_TEXT) {
+            dispatched.push(op);
+          }
         }
       },
     });
@@ -269,11 +276,19 @@ describe("LiveText acknowledgement", () => {
     text.insert(6, "!");
     expect(text.toString()).toBe("AHello!");
 
+    // Only the first edit goes on the wire; the second is queued behind it
+    // (one in-flight op at a time keeps wire ops in server coordinates).
+    expect(dispatched).toHaveLength(1);
+    expect(dispatched[0]).toMatchObject({
+      baseVersion: 0,
+      ops: [{ type: "insert", index: 0, text: "A" }],
+    });
+
     text._apply(
       {
         type: OpCode.UPDATE_TEXT,
         id: "0:1",
-        opId: firstOpId,
+        opId: nn(dispatched[0]?.opId),
         baseVersion: 0,
         version: 1,
         ops: [{ type: "insert", index: 0, text: "A" }],
@@ -284,11 +299,18 @@ describe("LiveText acknowledgement", () => {
     expect(text.toString()).toBe("AHello!");
     expect(text.version).toBe(1);
 
+    // The ack flushed the queued edit as the next in-flight op.
+    expect(dispatched).toHaveLength(2);
+    expect(dispatched[1]).toMatchObject({
+      baseVersion: 1,
+      ops: [{ type: "insert", index: 6, text: "!" }],
+    });
+
     text._apply(
       {
         type: OpCode.UPDATE_TEXT,
         id: "0:1",
-        opId: secondOpId,
+        opId: nn(dispatched[1]?.opId),
         baseVersion: 1,
         version: 2,
         ops: [{ type: "insert", index: 6, text: "!" }],
