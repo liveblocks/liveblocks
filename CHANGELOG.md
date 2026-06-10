@@ -2,7 +2,33 @@
 
 ## v3.20.0
 
+We're reshaping the version history APIs ahead of upcoming Storage support, so a
+version represents the whole room rather than just its Yjs document. The old
+names are deprecated now and will be removed in 3.21 or later.
+
+### `@liveblocks/client`
+
+- Deprecate `HistoryVersion` type in favor of `VersionRef`.
 - Deprecate `room.getStorageSnapshot()` in favor of `room.getStorageOrNull()`.
+
+### `@liveblocks/react`
+
+- Deprecate `useHistoryVersions` hook in favor of `useVersionHistory`.
+- Deprecate `useHistoryVersionsSuspense` hook in favor of
+  `useVersionHistorySuspense`.
+- Deprecate `useHistoryVersionData` hook in favor of `useVersion`.
+
+### `@liveblocks/react-ui`
+
+- Deprecate `<HistoryVersionSummary />` component in favor of
+  `<VersionSummary />`.
+- Deprecate `<HistoryVersionSummaryList />` component in favor of
+  `<VersionSummaryList />`.
+
+### `@liveblocks/react-lexical`, `@liveblocks/react-tiptap`, and `@liveblocks/react-blocknote`
+
+- Deprecate `<HistoryVersionPreview />` component in favor of
+  `<YjsVersionPreview />`.
 
 ## v3.19.5
 
