@@ -2,6 +2,22 @@
 
 ## v3.20.0
 
+### `@liveblocks/node` and Python SDK
+
+- Add support for new resource-specific permissions. You can now grant or deny
+  access per resource (presence, storage, comments, feeds) using new permission
+  strings like `room:storage:none` or `room:comments:read`, in addition to the
+  existing `room:read` and `room:write` defaults.
+
+### `@liveblocks/node`
+
+- Add an optional object notation for permissions
+  - `session.allow("my-room", { default: "write", storage: "none", comments: "read" })`
+
+### All client-side packages
+
+- Support new resource-specific permissions.
+
 ## v3.19.5
 
 ### `@liveblocks/client`
