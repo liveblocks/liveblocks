@@ -113,11 +113,7 @@ import type {
   YDocUpdateServerMsg,
 } from "./protocol/ServerMsg";
 import { ServerMsgCode } from "./protocol/ServerMsg";
-import type {
-  NodeMap,
-  NodeStream,
-  SerializedCrdt,
-} from "./protocol/StorageNode";
+import type { NodeMap, NodeStream } from "./protocol/StorageNode";
 import { compactNodesToNodeStream } from "./protocol/StorageNode";
 import type {
   SubscriptionData,
@@ -1434,13 +1430,6 @@ export type RoomConfig<TM extends BaseMetadata, CM extends BaseMetadata> = {
   lostConnectionTimeout: number;
   backgroundKeepAliveTimeout?: number;
 
-  /**
-   * @deprecated All rooms will be migrated to the v2 storage engine in the
-   * future, which has native support for streaming. After that migration, this
-   * flag will no longer have any effect and will be removed in a future version.
-   */
-  unstable_streamData?: boolean;
-
   polyfills?: Polyfills;
 
   roomHttpClient: RoomHttpApi<TM, CM>;
@@ -1714,7 +1703,7 @@ export function createRoom<
     // If a storage fetch has ever been initiated, we assume the client is
     // interested in storage, so we will refresh it after a reconnection.
     if (_getStorage$ !== null) {
-      refreshStorage({ flush: false });
+      refreshStorage({ flush: false }); // XXX VINCENT TO TAKE A LOOK SOON
     }
     flushNowOrSoon();
   }
@@ -2979,23 +2968,9 @@ export function createRoom<
     eventHub.storageDidLoad.notify();
   }
 
-  async function streamStorage() {
-    // TODO: Handle potential race conditions where the room get disconnected while the request is pending
-    if (!managedSocket.authValue) return;
-    const nodes = new Map<string, SerializedCrdt>(
-      await httpClient.streamStorage({ roomId })
-    );
-    processInitialStorage(nodes);
-  }
-
   function refreshStorage(options: { flush: boolean }) {
     const messages = context.buffer.messages;
-    if (config.unstable_streamData) {
-      // instead of sending a fetch message over WS, stream over HTTP
-      void streamStorage();
-    } else if (
-      !messages.some((msg) => msg.type === ClientMsgCode.FETCH_STORAGE)
-    ) {
+    if (!messages.some((msg) => msg.type === ClientMsgCode.FETCH_STORAGE)) {
       // Only add the fetch message to the outgoing message queue if it isn't
       // already there
       messages.push({ type: ClientMsgCode.FETCH_STORAGE });
