@@ -53,7 +53,7 @@ import {
   tryParseJson,
 } from "./lib/utils";
 import type { Permission } from "./permissions";
-import { hasPermissionCapability } from "./permissions";
+import { hasPermissionAccess } from "./permissions";
 import type {
   ContextualPromptContext,
   ContextualPromptResponse,
@@ -1781,7 +1781,7 @@ export function createRoom<
     const scopes = context.dynamicSessionInfoSig.get()?.scopes;
     // If we aren't connected yet, assume we can write
     return scopes !== undefined
-      ? hasPermissionCapability(scopes, "storage", "write")
+      ? hasPermissionAccess(scopes, "storage", "write")
       : true;
   }
 
@@ -1863,7 +1863,7 @@ export function createRoom<
       if (staticSession === null || dynamicSession === null) {
         return null;
       } else {
-        const canWrite = hasPermissionCapability(
+        const canWrite = hasPermissionAccess(
           dynamicSession.scopes,
           "storage",
           "write"
@@ -1874,7 +1874,7 @@ export function createRoom<
           info: staticSession.userInfo,
           presence: myPresence,
           canWrite,
-          canComment: hasPermissionCapability(
+          canComment: hasPermissionAccess(
             dynamicSession.scopes,
             "comments",
             "write"

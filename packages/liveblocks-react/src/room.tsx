@@ -54,7 +54,7 @@ import {
   DefaultMap,
   errorIf,
   getSubscriptionKey,
-  hasPermissionCapabilityAccess,
+  hasPermissionAccess,
   HttpError,
   kInternal,
   makePoller,
@@ -3719,26 +3719,22 @@ function useRoomPermissions(roomId: string) {
 /**
  * @private For internal use only. Do not rely on this hook.
  */
-function useHasPermissionCapability(
+function useHasPermissionAccess(
   roomId: string,
   resource: PermissionResources,
   requiredAccess: RequiredAccessLevel
 ): boolean {
   const permissions = useRoomPermissions(roomId);
-  const fallback = useSelfPermissionCapabilityFallback(
-    roomId,
-    resource,
-    requiredAccess
-  );
+  const fallback = useSelfAccessFallback(roomId, resource, requiredAccess);
 
   return permissions !== undefined
-    ? hasPermissionCapabilityAccess(permissions, resource, requiredAccess)
+    ? hasPermissionAccess(permissions, resource, requiredAccess)
     : fallback;
 }
 
 // Permission hints come from REST; until they exist, fall back to scopes from
 // the room connection (same optimistic defaults as isStorageWritable).
-function useSelfPermissionCapabilityFallback(
+function useSelfAccessFallback(
   roomId: string,
   resource: PermissionResources,
   requiredAccess: RequiredAccessLevel
@@ -5010,7 +5006,7 @@ export {
   _useFeedMessagesSuspense as useFeedMessagesSuspense,
   _useFeeds as useFeeds,
   _useFeedsSuspense as useFeedsSuspense,
-  useHasPermissionCapability,
+  useHasPermissionAccess,
   useHistory,
   useHistoryVersionData,
   _useHistoryVersions as useHistoryVersions,

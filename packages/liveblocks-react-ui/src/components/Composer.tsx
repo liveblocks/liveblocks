@@ -15,7 +15,7 @@ import {
   useCreateRoomComment,
   useCreateRoomThread,
   useEditRoomComment,
-  useHasPermissionCapability,
+  useHasPermissionAccess,
   useLayoutEffect,
   useResolveMentionSuggestions,
 } from "@liveblocks/react/_private";
@@ -754,7 +754,7 @@ export const Composer = forwardRef(
       controlledOnCollapsedChange
     );
 
-    const canComment = useHasPermissionCapability(roomId, "comments", "write");
+    const canComment = useHasPermissionAccess(roomId, "comments", "write");
 
     const setEmptyRef = useCallback((isEmpty: boolean) => {
       isEmptyRef.current = isEmpty;

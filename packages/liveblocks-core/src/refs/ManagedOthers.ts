@@ -3,7 +3,7 @@ import type { JsonObject } from "../lib/Json";
 import { DerivedSignal, merge, MutableSignal } from "../lib/signals";
 import { compact, compactObject } from "../lib/utils";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
-import { hasPermissionCapability } from "../protocol/Permissions";
+import { hasPermissionAccess } from "../protocol/Permissions";
 import type { User } from "../types/User";
 
 type Connection<U extends BaseUserMeta> = {
@@ -18,14 +18,14 @@ function makeUser<P extends JsonObject, U extends BaseUserMeta>(
   presence: P
 ): User<P, U> {
   const { connectionId, id, info } = conn;
-  const canWrite = hasPermissionCapability(conn.scopes, "storage", "write");
+  const canWrite = hasPermissionAccess(conn.scopes, "storage", "write");
   return freeze(
     compactObject({
       connectionId,
       id,
       info,
       canWrite,
-      canComment: hasPermissionCapability(conn.scopes, "comments", "write"),
+      canComment: hasPermissionAccess(conn.scopes, "comments", "write"),
       isReadOnly: !canWrite, // Deprecated, kept for backward-compatibility
       presence,
     })

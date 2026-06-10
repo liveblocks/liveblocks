@@ -22,7 +22,7 @@ import type {
   PartialNotificationSettings,
   Patchable,
   Permission,
-  PermissionCapabilities,
+  PermissionMatrix,
   Resolve,
   RoomSubscriptionSettings,
   SubscriptionData,
@@ -48,7 +48,7 @@ import {
   nanoid,
   nn,
   patchNotificationSettings,
-  permissionCapabilitiesFromScopes,
+  permissionMatrixFromScopes,
   shallow,
   shallow2,
   Signal,
@@ -958,7 +958,7 @@ function createStore_forUrlsMetadata() {
 
 type PermissionHint = {
   requestedAt: Date;
-  permissions: PermissionCapabilities;
+  permissions: PermissionMatrix;
 };
 
 function createStore_forPermissionHints() {
@@ -992,7 +992,7 @@ function createStore_forPermissionHints() {
 
         signal.set({
           requestedAt,
-          permissions: permissionCapabilitiesFromScopes(newHints[roomId] ?? []),
+          permissions: permissionMatrixFromScopes(newHints[roomId] ?? []),
         });
       }
     });

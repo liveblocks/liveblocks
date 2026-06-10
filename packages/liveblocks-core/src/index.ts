@@ -196,26 +196,26 @@ export {
 export { warnOnce, warnOnceIf } from "./lib/warnings";
 export type {
   AccessLevel,
-  PermissionCapabilities,
+  PermissionMatrix,
   PermissionResources,
   RequiredAccessLevel,
   RoomAccesses,
   RoomAccessesInput,
   RoomAccessesUpdateInput,
   RoomPermission,
+  RoomPermissionGrant,
   RoomPermissionInput,
   RoomPermissionObject,
 } from "./permissions";
 export {
-  hasPermissionCapability,
-  hasPermissionCapabilityAccess,
-  mergePermissionCapabilities,
+  hasPermissionAccess,
+  mergePermissionMatrices,
   normalizeRoomAccessesInput,
   normalizeRoomAccessesUpdateInput,
   normalizeRoomPermissionInput,
   Permission,
-  permissionCapabilitiesFromScopes,
-  permissionCapabilitiesToScopes,
+  permissionMatrixFromScopes,
+  permissionMatrixToScopes,
 } from "./permissions";
 export type {
   ContextualPromptContext,

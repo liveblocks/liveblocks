@@ -47,8 +47,8 @@ export type AccessLevel = "write" | "read" | "none";
 
 export type RequiredAccessLevel = "read" | "write";
 
-export type PermissionCapabilities = {
-  creation: AccessLevel;
+export type PermissionMatrix = {
+  room: AccessLevel;
   presence: AccessLevel;
   storage: AccessLevel;
   comments: AccessLevel;
@@ -56,18 +56,15 @@ export type PermissionCapabilities = {
   personal: "write";
 };
 
-export type PermissionResources = keyof PermissionCapabilities;
+export type PermissionResources = keyof PermissionMatrix;
 
-export type ResolvedPermissionCapabilities = {
+export type ResolvedPermissionMatrix = {
   hasDefaultPermission: boolean;
   baseAccess: AccessLevel;
-  capabilities: Partial<PermissionCapabilities>;
+  matrix: Partial<PermissionMatrix>;
 };
 
-type RoomPermissionResource = Exclude<
-  PermissionResources,
-  "creation" | "personal"
->;
+type RoomPermissionResource = Exclude<PermissionResources, "room" | "personal">;
 
 type ResourcePermissionMap = Record<
   PermissionResources,
@@ -86,8 +83,8 @@ export const ACCESS_RANKS: Record<AccessLevel, number> = {
   write: 2,
 };
 
-const NO_PERMISSION_CAPABILITIES: PermissionCapabilities = {
-  creation: "none",
+const NO_PERMISSION_MATRIX: PermissionMatrix = {
+  room: "none",
   presence: "none",
   storage: "none",
   comments: "none",
@@ -97,7 +94,7 @@ const NO_PERMISSION_CAPABILITIES: PermissionCapabilities = {
 
 // Include legacy scope strings so older tokens still resolve correctly.
 export const RESOURCE_PERMISSIONS: ResourcePermissionMap = {
-  creation: {
+  room: {
     read: [Permission.RoomRead],
     write: [Permission.RoomWrite],
   },
@@ -126,8 +123,7 @@ export const RESOURCE_PERMISSIONS: ResourcePermissionMap = {
   },
 };
 
-export const DEFAULT_PERMISSION_RESOURCE =
-  "creation" satisfies PermissionResources;
+export const DEFAULT_PERMISSION_RESOURCE = "room" satisfies PermissionResources;
 
 export const ROOM_PERMISSION_RESOURCES = [
   "presence",
@@ -157,37 +153,34 @@ function resolveResourceAccess(
   return resourceAccess;
 }
 
-export function resolveFullPermissionCapabilities(
-  resolved: ResolvedPermissionCapabilities
-): PermissionCapabilities {
+export function resolveFullPermissionMatrix(
+  resolved: ResolvedPermissionMatrix
+): PermissionMatrix {
   if (!resolved.hasDefaultPermission) {
-    return { ...NO_PERMISSION_CAPABILITIES, ...resolved.capabilities };
+    return { ...NO_PERMISSION_MATRIX, ...resolved.matrix };
   }
 
-  const capabilities: PermissionCapabilities = {
-    ...NO_PERMISSION_CAPABILITIES,
+  const matrix: PermissionMatrix = {
+    ...NO_PERMISSION_MATRIX,
     [DEFAULT_PERMISSION_RESOURCE]: resolved.baseAccess,
   };
 
   for (const resource of ROOM_PERMISSION_RESOURCES) {
-    capabilities[resource] =
-      resolved.capabilities[resource] ?? resolved.baseAccess;
+    matrix[resource] = resolved.matrix[resource] ?? resolved.baseAccess;
   }
 
-  return capabilities;
+  return matrix;
 }
 
-export function permissionCapabilitiesFromScopes(
+export function permissionMatrixFromScopes(
   scopes: readonly string[]
-): PermissionCapabilities {
-  return resolveFullPermissionCapabilities(
-    resolvePermissionCapabilities(scopes)
-  );
+): PermissionMatrix {
+  return resolveFullPermissionMatrix(resolvePermissionMatrix(scopes));
 }
 
-export function resolvePermissionCapabilities(
+export function resolvePermissionMatrix(
   scopes: readonly string[]
-): ResolvedPermissionCapabilities {
+): ResolvedPermissionMatrix {
   const hasDefaultPermission =
     scopes.includes(Permission.RoomWrite) ||
     scopes.includes(Permission.RoomRead);
@@ -198,32 +191,42 @@ export function resolvePermissionCapabilities(
       ? "read"
       : "none";
 
-  const capabilities: Partial<PermissionCapabilities> = {};
+  const matrix: Partial<PermissionMatrix> = {};
 
   for (const resource of ROOM_PERMISSION_RESOURCES) {
     const access = resolveResourceAccess(scopes, resource);
     if (access !== undefined) {
-      capabilities[resource] = access;
+      matrix[resource] = access;
     }
   }
 
-  return { hasDefaultPermission, baseAccess, capabilities };
+  return { hasDefaultPermission, baseAccess, matrix };
 }
 
-export function hasPermissionCapability(
+export function hasPermissionAccess(
   scopes: readonly string[],
   resource: PermissionResources,
   requiredAccess: RequiredAccessLevel
-): boolean {
-  const access = permissionCapabilitiesFromScopes(scopes)[resource];
-  return ACCESS_RANKS[access] >= ACCESS_RANKS[requiredAccess];
-}
-
-export function hasPermissionCapabilityAccess(
-  capabilities: Partial<PermissionCapabilities>,
+): boolean;
+export function hasPermissionAccess(
+  matrix: Partial<PermissionMatrix>,
+  resource: PermissionResources,
+  requiredAccess: RequiredAccessLevel
+): boolean;
+export function hasPermissionAccess(
+  source: readonly string[] | Partial<PermissionMatrix>,
   resource: PermissionResources,
   requiredAccess: RequiredAccessLevel
 ): boolean {
-  const access = capabilities[resource] ?? "none";
+  const matrix = isPermissionScopes(source)
+    ? permissionMatrixFromScopes(source)
+    : source;
+  const access = matrix[resource] ?? "none";
   return ACCESS_RANKS[access] >= ACCESS_RANKS[requiredAccess];
+}
+
+function isPermissionScopes(
+  source: readonly string[] | Partial<PermissionMatrix>
+): source is readonly string[] {
+  return Array.isArray(source);
 }

@@ -6,11 +6,11 @@ import { stringifyOrLog as stringify } from "./lib/stringify";
 import type {
   PermissionResources,
   RequiredAccessLevel,
-  RoomPermissionScopes,
+  RoomPermissionGrant,
 } from "./permissions";
 import {
-  hasPermissionCapabilityAccess,
-  resolveRoomPermissionCapabilities,
+  hasPermissionAccess,
+  resolveRoomPermissionMatrix,
 } from "./permissions";
 import type {
   Authentication,
@@ -30,13 +30,13 @@ export type AuthValue =
 
 export type AuthRequest = Relax<
   | {
-      resource: Exclude<PermissionResources, "personal" | "creation">;
+      resource: Exclude<PermissionResources, "personal" | "room">;
       roomId: string;
       access: RequiredAccessLevel;
     }
   | {
       // Not a JWT scope. Used for room-specific APIs
-      resource: "creation";
+      resource: "room";
       access: RequiredAccessLevel;
     }
   | {
@@ -226,7 +226,7 @@ export function createAuthManager(
 type CachedToken = {
   token: ParsedAuthToken;
   expiresAt: number;
-  permissions?: RoomPermissionScopes[];
+  permissions?: RoomPermissionGrant[];
 };
 
 function getAuthRequestKey(request: AuthRequest): string | undefined {
@@ -254,7 +254,7 @@ function makeCachedToken(
 
 function getAuthTokenPermissionScopes(
   permissions: LiveblocksPermissions
-): RoomPermissionScopes[] {
+): RoomPermissionGrant[] {
   return Object.entries(permissions).map(([resource, scopes]) => ({
     resource,
     scopes,
@@ -279,18 +279,14 @@ function cachedTokenSatisfiesRequest(
     return false;
   }
 
-  const capabilities = resolveRoomPermissionCapabilities(
+  const matrix = resolveRoomPermissionMatrix(
     cachedToken.permissions ?? [],
     request.roomId
   );
 
   return (
-    capabilities !== undefined &&
-    hasPermissionCapabilityAccess(
-      capabilities,
-      request.resource,
-      request.access
-    )
+    matrix !== undefined &&
+    hasPermissionAccess(matrix, request.resource, request.access)
   );
 }
 
