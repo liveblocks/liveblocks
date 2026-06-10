@@ -48,7 +48,7 @@ describe("auth-manager - public api key", () => {
     const authManager = createAuthManager({ publicApiKey: "pk_123" });
 
     const authValue = (await authManager.getAuthValue({
-      resource: "presence",
+      resource: "room",
       access: "read",
       roomId: "room1",
     })) as { type: "public"; publicApiKey: string };
@@ -134,7 +134,7 @@ describe("auth-manager - secret auth", () => {
     });
 
     const authValue = (await authManager.getAuthValue({
-      resource: "presence",
+      resource: "room",
       access: "read",
       roomId: "org1.room1",
     })) as { type: "secret"; token: ParsedAuthToken };
@@ -151,12 +151,12 @@ describe("auth-manager - secret auth", () => {
 
     const results = await Promise.all([
       authManager.getAuthValue({
-        resource: "presence",
+        resource: "room",
         access: "read",
         roomId: "org1.room1",
       }),
       authManager.getAuthValue({
-        resource: "presence",
+        resource: "room",
         access: "read",
         roomId: "org1.room1",
       }),
@@ -170,10 +170,10 @@ describe("auth-manager - secret auth", () => {
   test("should not deduplicate concurrent same-room requests with different permission requirements", async () => {
     let localRequestCount = 0;
     const storageReadToken = makeAccessToken({
-      "org1*": [Permission.RoomStorageRead],
+      "org1*": [Permission.Read, Permission.StorageRead],
     });
     const roomReadToken = makeAccessToken({
-      "org1*": [Permission.RoomRead],
+      "org1*": [Permission.Read],
     });
 
     server.use(
@@ -195,7 +195,7 @@ describe("auth-manager - secret auth", () => {
       roomId: "org1.room1",
     });
     const presenceAuthValue$ = authManager.getAuthValue({
-      resource: "presence",
+      resource: "room",
       access: "read",
       roomId: "org1.room1",
     });
@@ -224,13 +224,13 @@ describe("auth-manager - secret auth", () => {
     });
 
     const authValueReq1 = (await authManager.getAuthValue({
-      resource: "presence",
+      resource: "room",
       access: "read",
       roomId: "org1.room1",
     })) as { type: "secret"; token: ParsedAuthToken };
 
     const authValueReq2 = (await authManager.getAuthValue({
-      resource: "presence",
+      resource: "room",
       access: "read",
       roomId: "org1.room2",
     })) as { type: "secret"; token: ParsedAuthToken };
@@ -243,10 +243,10 @@ describe("auth-manager - secret auth", () => {
   test("should fetch a new token when cached comments read token cannot write", async () => {
     let localRequestCount = 0;
     const commentsReadToken = makeAccessToken({
-      "org1*": [Permission.RoomCommentsRead],
+      "org1*": [Permission.Read, Permission.CommentsRead],
     });
     const commentsWriteToken = makeAccessToken({
-      "org1*": [Permission.RoomCommentsWrite],
+      "org1*": [Permission.Read, Permission.CommentsWrite],
     });
 
     server.use(
@@ -282,10 +282,10 @@ describe("auth-manager - secret auth", () => {
   test("should fetch a new token when cached resource-only token cannot access room presence", async () => {
     let localRequestCount = 0;
     const storageReadToken = makeAccessToken({
-      "org1*": [Permission.RoomStorageRead],
+      "org1*": [Permission.StorageRead],
     });
     const roomReadToken = makeAccessToken({
-      "org1*": [Permission.RoomRead],
+      "org1*": [Permission.Read],
     });
 
     server.use(
@@ -307,7 +307,7 @@ describe("auth-manager - secret auth", () => {
       roomId: "org1.room1",
     })) as { type: "secret"; token: ParsedAuthToken };
     const presenceAuthValue = (await authManager.getAuthValue({
-      resource: "presence",
+      resource: "room",
       access: "read",
       roomId: "org1.room1",
     })) as { type: "secret"; token: ParsedAuthToken };
@@ -320,11 +320,11 @@ describe("auth-manager - secret auth", () => {
   test("should let exact room opt-outs override wildcard permissions without clearing other resources", async () => {
     let localRequestCount = 0;
     const storageOptOutToken = makeAccessToken({
-      "org1*": [Permission.RoomWrite],
-      "org1.room1": [Permission.RoomStorageNone],
+      "org1*": [Permission.Write],
+      "org1.room1": [Permission.Write, Permission.StorageNone],
     });
     const storageReadToken = makeAccessToken({
-      "org1*": [Permission.RoomStorageRead],
+      "org1*": [Permission.Read, Permission.StorageRead],
     });
 
     server.use(
@@ -342,7 +342,7 @@ describe("auth-manager - secret auth", () => {
     });
 
     const presenceAuthValue = (await authManager.getAuthValue({
-      resource: "presence",
+      resource: "room",
       access: "read",
       roomId: "org1.room1",
     })) as { type: "secret"; token: ParsedAuthToken };
@@ -366,8 +366,8 @@ describe("auth-manager - secret auth", () => {
   test("should combine matching resource-only access token permissions by strongest access", async () => {
     let localRequestCount = 0;
     const storageConflictToken = makeAccessToken({
-      "org1*": [Permission.RoomStorageWrite],
-      "org1.room1": [Permission.RoomStorageNone],
+      "org1*": [Permission.Read, Permission.StorageWrite],
+      "org1.room1": [Permission.Read, Permission.StorageNone],
     });
 
     server.use(
@@ -413,7 +413,7 @@ describe("auth-manager - secret auth", () => {
     });
 
     const roomAuthValue = (await authManager.getAuthValue({
-      resource: "presence",
+      resource: "room",
       access: "read",
       roomId: "org1.room1",
     })) as { type: "secret"; token: ParsedAuthToken };
@@ -487,13 +487,13 @@ describe("auth-manager - secret auth", () => {
     });
 
     const authValueReq1 = (await authManager.getAuthValue({
-      resource: "presence",
+      resource: "room",
       access: "read",
       roomId: "org1.room1",
     })) as { type: "secret"; token: ParsedAuthToken };
 
     const authValueReq2 = (await authManager.getAuthValue({
-      resource: "presence",
+      resource: "room",
       access: "read",
       roomId: "org1.room2",
     })) as { type: "secret"; token: ParsedAuthToken };
@@ -510,7 +510,7 @@ describe("auth-manager - secret auth", () => {
       // Should throw because this mock will return the exact same (expired) token
       const $promise = expect(
         authManager.getAuthValue({
-          resource: "presence",
+          resource: "room",
           access: "read",
           roomId: "org1.room1",
         })
@@ -534,13 +534,13 @@ describe("auth-manager - secret auth", () => {
     });
 
     const authValueReq1 = (await authManager.getAuthValue({
-      resource: "presence",
+      resource: "room",
       access: "read",
       roomId: "room1",
     })) as { type: "secret"; token: ParsedAuthToken };
 
     const authValueReq2 = (await authManager.getAuthValue({
-      resource: "presence",
+      resource: "room",
       access: "read",
       roomId: "room2",
     })) as { type: "secret"; token: ParsedAuthToken };
@@ -556,13 +556,13 @@ describe("auth-manager - secret auth", () => {
     });
 
     const authValueReq1 = (await authManager.getAuthValue({
-      resource: "presence",
+      resource: "room",
       access: "read",
       roomId: "room1",
     })) as { type: "secret"; token: ParsedAuthToken };
 
     const authValueReq2 = (await authManager.getAuthValue({
-      resource: "presence",
+      resource: "room",
       access: "read",
       roomId: "room2",
     })) as { type: "secret"; token: ParsedAuthToken };
@@ -579,7 +579,7 @@ describe("auth-manager - secret auth", () => {
       // Should throw because this mock will return the exact same (expired) token
       const $promise = expect(
         authManager.getAuthValue({
-          resource: "presence",
+          resource: "room",
           access: "read",
           roomId: "room1",
         })
@@ -610,7 +610,7 @@ describe("auth-manager - secret auth", () => {
 
       await expect(
         authManager.getAuthValue({
-          resource: "presence",
+          resource: "room",
           access: "read",
           roomId: "room1",
         })
@@ -628,7 +628,7 @@ describe("auth-manager - secret auth", () => {
 
     await expect(
       authManager.getAuthValue({
-        resource: "presence",
+        resource: "room",
         access: "read",
         roomId: "room1",
       })
@@ -642,7 +642,7 @@ describe("auth-manager - secret auth", () => {
 
     await expect(
       authManager.getAuthValue({
-        resource: "presence",
+        resource: "room",
         access: "read",
         roomId: "room1",
       })
@@ -656,7 +656,7 @@ describe("auth-manager - secret auth", () => {
 
     await expect(
       authManager.getAuthValue({
-        resource: "presence",
+        resource: "room",
         access: "read",
         roomId: "room1",
       })
@@ -672,7 +672,7 @@ describe("auth-manager - secret auth", () => {
 
     await expect(
       authManager.getAuthValue({
-        resource: "presence",
+        resource: "room",
         access: "read",
         roomId: "room1",
       })
@@ -688,7 +688,7 @@ describe("auth-manager - secret auth", () => {
 
     await expect(
       authManager.getAuthValue({
-        resource: "presence",
+        resource: "room",
         access: "read",
         roomId: "room1",
       })
@@ -704,7 +704,7 @@ describe("auth-manager - secret auth", () => {
 
     await expect(
       authManager.getAuthValue({
-        resource: "presence",
+        resource: "room",
         access: "read",
         roomId: "room1",
       })

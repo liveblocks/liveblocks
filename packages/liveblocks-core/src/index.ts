@@ -205,7 +205,6 @@ export type {
   RoomPermission,
   RoomPermissionGrant,
   RoomPermissionInput,
-  RoomPermissionObject,
 } from "./permissions";
 export {
   hasPermissionAccess,

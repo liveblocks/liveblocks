@@ -1,44 +1,41 @@
 export const Permission = {
   /**
-   * Default permission for a room
+   * Default permission for a room.
+   */
+  Read: "*:read",
+  Write: "*:write",
+
+  /**
+   * Legacy aliases for default room permissions.
    */
   RoomWrite: "room:write",
   RoomRead: "room:read",
 
   /**
-   * Presence (LiveRoom Websocket access)
-   */
-  RoomPresenceRead: "room:presence:read",
-  RoomPresenceNone: "room:presence:none",
-
-  /**
    * Storage
    */
-  RoomStorageRead: "room:storage:read",
-  RoomStorageWrite: "room:storage:write",
-  RoomStorageNone: "room:storage:none",
+  StorageRead: "storage:read",
+  StorageWrite: "storage:write",
+  StorageNone: "storage:none",
 
   /**
    * Comments
    */
-  RoomCommentsWrite: "room:comments:write",
-  RoomCommentsRead: "room:comments:read",
-  RoomCommentsNone: "room:comments:none",
+  CommentsWrite: "comments:write",
+  CommentsRead: "comments:read",
+  CommentsNone: "comments:none",
 
   /**
    * Feeds
    */
-  RoomFeedsRead: "room:feeds:read",
-  RoomFeedsWrite: "room:feeds:write",
-  RoomFeedsNone: "room:feeds:none",
+  FeedsRead: "feeds:read",
+  FeedsWrite: "feeds:write",
+  FeedsNone: "feeds:none",
 
   /**
    * Legacy
    */
   LegacyRoomPresenceWrite: "room:presence:write",
-  LegacyCommentsWrite: "comments:write",
-  LegacyCommentsRead: "comments:read",
-  LegacyFeedsWrite: "feeds:write",
 } as const;
 
 export type Permission = (typeof Permission)[keyof typeof Permission];
@@ -49,7 +46,6 @@ export type RequiredAccessLevel = "read" | "write";
 
 export type PermissionMatrix = {
   room: AccessLevel;
-  presence: AccessLevel;
   storage: AccessLevel;
   comments: AccessLevel;
   feeds: AccessLevel;
@@ -85,48 +81,40 @@ export const ACCESS_RANKS: Record<AccessLevel, number> = {
 
 const NO_PERMISSION_MATRIX: PermissionMatrix = {
   room: "none",
-  presence: "none",
   storage: "none",
   comments: "none",
   feeds: "none",
   personal: "write",
 };
 
-// Include legacy scope strings so older tokens still resolve correctly.
 export const RESOURCE_PERMISSIONS: ResourcePermissionMap = {
   room: {
-    read: [Permission.RoomRead],
-    write: [Permission.RoomWrite],
+    read: [Permission.Read, Permission.RoomRead],
+    write: [Permission.Write, Permission.RoomWrite],
   },
   personal: {
     write: [],
   },
-  presence: {
-    write: [Permission.LegacyRoomPresenceWrite],
-    read: [Permission.RoomPresenceRead],
-    none: [Permission.RoomPresenceNone],
-  },
   storage: {
-    write: [Permission.RoomStorageWrite],
-    read: [Permission.RoomStorageRead],
-    none: [Permission.RoomStorageNone],
+    write: [Permission.StorageWrite],
+    read: [Permission.StorageRead],
+    none: [Permission.StorageNone],
   },
   comments: {
-    write: [Permission.RoomCommentsWrite, Permission.LegacyCommentsWrite],
-    read: [Permission.RoomCommentsRead, Permission.LegacyCommentsRead],
-    none: [Permission.RoomCommentsNone],
+    write: [Permission.CommentsWrite],
+    read: [Permission.CommentsRead],
+    none: [Permission.CommentsNone],
   },
   feeds: {
-    write: [Permission.RoomFeedsWrite, Permission.LegacyFeedsWrite],
-    read: [Permission.RoomFeedsRead],
-    none: [Permission.RoomFeedsNone],
+    write: [Permission.FeedsWrite],
+    read: [Permission.FeedsRead],
+    none: [Permission.FeedsNone],
   },
 };
 
 export const DEFAULT_PERMISSION_RESOURCE = "room" satisfies PermissionResources;
 
 export const ROOM_PERMISSION_RESOURCES = [
-  "presence",
   "storage",
   "comments",
   "feeds",
@@ -157,7 +145,7 @@ export function resolveFullPermissionMatrix(
   resolved: ResolvedPermissionMatrix
 ): PermissionMatrix {
   if (!resolved.hasDefaultPermission) {
-    return { ...NO_PERMISSION_MATRIX, ...resolved.matrix };
+    return NO_PERMISSION_MATRIX;
   }
 
   const matrix: PermissionMatrix = {
@@ -182,14 +170,17 @@ export function resolvePermissionMatrix(
   scopes: readonly string[]
 ): ResolvedPermissionMatrix {
   const hasDefaultPermission =
+    scopes.includes(Permission.Write) ||
+    scopes.includes(Permission.Read) ||
     scopes.includes(Permission.RoomWrite) ||
     scopes.includes(Permission.RoomRead);
 
-  const baseAccess: AccessLevel = scopes.includes(Permission.RoomWrite)
-    ? "write"
-    : scopes.includes(Permission.RoomRead)
-      ? "read"
-      : "none";
+  const baseAccess: AccessLevel =
+    scopes.includes(Permission.Write) || scopes.includes(Permission.RoomWrite)
+      ? "write"
+      : scopes.includes(Permission.Read) || scopes.includes(Permission.RoomRead)
+        ? "read"
+        : "none";
 
   const matrix: Partial<PermissionMatrix> = {};
 

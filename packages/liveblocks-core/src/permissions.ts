@@ -35,15 +35,7 @@ export type RoomPermissionGrant = {
 
 export type RoomPermission = Permission[];
 
-export type RoomPermissionObject = {
-  default?: "read" | "write";
-  presence?: "read" | "none";
-  storage?: "read" | "write" | "none";
-  comments?: "read" | "write" | "none";
-  feeds?: "read" | "write" | "none";
-};
-
-export type RoomPermissionInput = readonly Permission[] | RoomPermissionObject;
+export type RoomPermissionInput = readonly Permission[];
 
 export type RoomAccesses = Record<string, RoomPermission>;
 export type RoomAccessesInput = Record<string, RoomPermissionInput>;
@@ -53,11 +45,6 @@ export type RoomAccessesUpdateInput = Record<
 >;
 
 const VALID_PERMISSIONS = new Set<string>(Object.values(Permission));
-
-const ROOM_PERMISSION_OBJECT_KEYS = new Set<string>([
-  "default",
-  ...ROOM_PERMISSION_RESOURCES,
-]);
 
 function permissionForAccessLevel(
   resource: PermissionResources,
@@ -90,9 +77,11 @@ export function resolveRoomPermissionMatrix(
   let hasDefaultPermission = false;
   let baseAccess: AccessLevel = "none";
   const explicitMatrix: Partial<PermissionMatrix> = {};
+  const explicitSpecificity: Partial<Record<PermissionResources, number>> = {};
 
   for (const permission of matchedPermissions) {
     const resolved = resolvePermissionMatrix(permission.scopes);
+    const specificity = getResourceSpecificity(permission.resource);
 
     if (resolved.hasDefaultPermission) {
       hasDefaultPermission = true;
@@ -102,10 +91,17 @@ export function resolveRoomPermissionMatrix(
     for (const resource of ROOM_PERMISSION_RESOURCES) {
       const access = resolved.matrix[resource];
       if (access !== undefined) {
-        explicitMatrix[resource] = strongestAccess(
-          explicitMatrix[resource] ?? "none",
-          access
-        );
+        const currentSpecificity = explicitSpecificity[resource] ?? -1;
+
+        if (specificity > currentSpecificity) {
+          explicitMatrix[resource] = access;
+          explicitSpecificity[resource] = specificity;
+        } else if (specificity === currentSpecificity) {
+          explicitMatrix[resource] = strongestAccess(
+            explicitMatrix[resource] ?? "none",
+            access
+          );
+        }
       }
     }
   }
@@ -117,60 +113,19 @@ export function resolveRoomPermissionMatrix(
   });
 }
 
-function isRoomPermissionArray(
-  input: RoomPermissionInput
-): input is readonly Permission[] {
-  return Array.isArray(input);
-}
-
 export function normalizeRoomPermissionInput(
   input: RoomPermissionInput
 ): RoomPermission {
-  if (isRoomPermissionArray(input)) {
-    return input.map((permission) => {
-      if (!VALID_PERMISSIONS.has(permission)) {
-        throw new Error(`Not a valid permission: ${permission}`);
-      }
-      return permission;
-    });
+  if (!Array.isArray(input)) {
+    throw new Error("Permission list must be an array");
   }
 
-  return normalizeRoomPermissionObject(input);
-}
-
-function normalizeRoomPermissionObject(
-  objectInput: RoomPermissionObject
-): RoomPermission {
-  for (const key of Object.keys(objectInput)) {
-    if (!ROOM_PERMISSION_OBJECT_KEYS.has(key)) {
-      throw new Error(`Unknown permission field: ${key}`);
+  return input.map((permission) => {
+    if (!VALID_PERMISSIONS.has(permission)) {
+      throw new Error(`Not a valid permission: ${permission}`);
     }
-  }
-
-  const permissions: RoomPermission = [];
-
-  if (objectInput.default !== undefined) {
-    permissions.push(
-      permissionForAccessLevel(
-        DEFAULT_PERMISSION_RESOURCE,
-        objectInput.default,
-        "default"
-      )
-    );
-  }
-
-  for (const resource of ROOM_PERMISSION_RESOURCES) {
-    const access = objectInput[resource];
-    if (access !== undefined) {
-      permissions.push(permissionForAccessLevel(resource, access));
-    }
-  }
-
-  if (permissions.length === 0) {
-    throw new Error("Permission object cannot be empty");
-  }
-
-  return permissions;
+    return permission;
+  });
 }
 
 export function normalizeRoomAccessesInput(
@@ -208,7 +163,6 @@ export function mergePermissionMatrices(
 ): PermissionMatrix {
   return {
     room: strongestMatrixAccess(sources, "room"),
-    presence: strongestMatrixAccess(sources, "presence"),
     storage: strongestMatrixAccess(sources, "storage"),
     comments: strongestMatrixAccess(sources, "comments"),
     feeds: strongestMatrixAccess(sources, "feeds"),
@@ -258,4 +212,8 @@ function resourceMatchesRoomId(resource: string, roomId: string): boolean {
   }
 
   return resource === roomId;
+}
+
+function getResourceSpecificity(resource: string): number {
+  return resource.replace("*", "").length;
 }

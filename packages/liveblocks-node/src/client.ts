@@ -49,7 +49,6 @@ import type {
   RoomAccessesUpdateInput,
   RoomPermission,
   RoomPermissionInput,
-  RoomPermissionObject,
   RoomSubscriptionSettings,
   StorageNode,
   StorageUpdate,
@@ -182,12 +181,7 @@ export type CreateCommentOptions<CM extends BaseMetadata> = {
   } & PartialUnless<CM, { metadata: CM }>;
 };
 
-export type {
-  RoomAccesses,
-  RoomPermission,
-  RoomPermissionInput,
-  RoomPermissionObject,
-};
+export type { RoomAccesses, RoomPermission, RoomPermissionInput };
 export type RoomMetadata = Record<string, string | string[]>;
 type QueryRoomMetadata = Record<string, string>;
 

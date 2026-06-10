@@ -30,13 +30,8 @@ export type AuthValue =
 
 export type AuthRequest = Relax<
   | {
-      resource: Exclude<PermissionResources, "personal" | "room">;
+      resource: Exclude<PermissionResources, "personal">;
       roomId: string;
-      access: RequiredAccessLevel;
-    }
-  | {
-      // Not a JWT scope. Used for room-specific APIs
-      resource: "room";
       access: RequiredAccessLevel;
     }
   | {
