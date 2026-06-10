@@ -131,12 +131,6 @@ export type EnterOptions<P extends JsonObject = DP, S extends LsonObject = DS> =
      * the authentication endpoint or connect via WebSocket.
      */
     autoConnect?: boolean;
-
-    /**
-     * @deprecated This flag no longer has any effect and will be removed in
-     * a future version. All rooms now use the v2 storage engine by default.
-     */
-    engine?: 1 | 2;
   }
 
   // Initial presence is only mandatory if the custom type requires it to be
