@@ -39,7 +39,9 @@ import type { Room } from "../src/room";
 // Infrastructure
 // ─────────────────────────────────────────────────────────────────────────────
 
-const BASE_URL = `http://localhost:${process.env.LIVEBLOCKS_DEV_SERVER_PORT ?? 1154}`;
+const BASE_URL = `http://localhost:${
+  process.env.LIVEBLOCKS_DEV_SERVER_PORT ?? 1154
+}`;
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
 async function waitUntil(
