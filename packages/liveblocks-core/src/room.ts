@@ -772,10 +772,16 @@ export type Room<
 
   /**
    * Get the room's storage synchronously.
-   * The storage's root is a {@link LiveObject}.
+   * The storage's root is a LiveObject.
    *
    * @example
-   * const root = room.getStorageSnapshot();
+   * const root = room.getStorageOrNull();
+   */
+  getStorageOrNull(): LiveObject<S> | null;
+
+  /**
+   * @deprecated Renamed to `Room.getStorageOrNull`. This alias will be
+   * removed in the future.
    */
   getStorageSnapshot(): LiveObject<S> | null;
 
@@ -3033,7 +3039,7 @@ export function createRoom<
    * Once Storage is loaded, will return a stable reference to the storage
    * root.
    */
-  function getStorageSnapshot(): LiveObject<S> | null {
+  function getStorageOrNull(): LiveObject<S> | null {
     const root = context.root;
     if (root !== undefined) {
       // Done loading
@@ -3470,7 +3476,7 @@ export function createRoom<
   }
 
   function isStorageReady() {
-    return getStorageSnapshot() !== null;
+    return getStorageOrNull() !== null;
   }
 
   async function waitUntilStorageReady(): Promise<void> {
@@ -3872,7 +3878,8 @@ export function createRoom<
       updateFeedMessage,
       deleteFeedMessage,
       getStorage,
-      getStorageSnapshot,
+      getStorageOrNull,
+      getStorageSnapshot: getStorageOrNull, // Deprecated alias, will be removed in the future
       getStorageStatus,
 
       isPresenceReady,

@@ -164,7 +164,7 @@ function makeMutationContext<
 
   return {
     get storage() {
-      const mutableRoot = room.getStorageSnapshot();
+      const mutableRoot = room.getStorageOrNull();
       if (mutableRoot === null) {
         throw new Error(needsStorage);
       }
@@ -1360,7 +1360,7 @@ function useMutableStorageRoot_withRoomContext<S extends LsonObject>(
     RoomContext
   );
   const subscribe = room.events.storageDidLoad.subscribeOnce;
-  const getSnapshot = room.getStorageSnapshot;
+  const getSnapshot = room.getStorageOrNull;
   const getServerSnapshot = alwaysNull;
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
