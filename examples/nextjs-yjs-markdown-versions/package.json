@@ -1,0 +1,45 @@
+{
+  "name": "@liveblocks-examples/nextjs-yjs-markdown-versions",
+  "description": "A multiplayer markdown editor with per-document version history, powered by Liveblocks, Yjs, Monaco, NextAuth (GitHub) and Next.js.",
+  "license": "Apache-2.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@liveblocks/client": "^3.18.4",
+    "@liveblocks/node": "^3.18.4",
+    "@liveblocks/react": "^3.18.4",
+    "@liveblocks/yjs": "^3.18.4",
+    "@monaco-editor/react": "^4.5.2",
+    "clsx": "^2.1.1",
+    "monaco-editor": "^0.52.2",
+    "nanoid": "^5.0.7",
+    "next": "^16.1.6",
+    "next-auth": "^5.0.0-beta.30",
+    "prettier": "^3.3.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-markdown": "^9.0.1",
+    "react-syntax-highlighter": "^15.5.0",
+    "remark-gfm": "^4.0.0",
+    "swr": "^2.2.5",
+    "y-monaco": "^0.1.6",
+    "y-protocols": "^1.0.7",
+    "yjs": "^13.6.29"
+  },
+  "devDependencies": {
+    "@types/node": "^20.3.3",
+    "@types/react": "^18.3.27",
+    "@types/react-dom": "^18.2.25",
+    "@types/react-syntax-highlighter": "^15.5.13",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "prettier-plugin-tailwindcss": "^0.6.8",
+    "tailwindcss": "^3.4.19",
+    "typescript": "^5.4.5"
+  }
+}
