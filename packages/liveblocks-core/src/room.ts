@@ -1905,18 +1905,6 @@ export function createRoom<
         currentItems.set(id, crdt._serialize());
       }
 
-      // XXX_vincent Smell, needs a deeper refactor soon! A reconnect
-      // snapshot is a stream of *nodes* (the full authoritative state), but
-      // here we fabricate a diff of *ops* and replay it through the live
-      // op-apply path. That path carries live-only optimistic semantics
-      // ("temporary position until the backend sends a fix" shifts,
-      // pending-conflict resolution) that are nonsensical when the stream we
-      // are applying already IS the fix. (The LiveList push tail-bump is
-      // fine, though: it skips every op whose position the snapshot may
-      // already own, so replaying the diff cannot mispredict.) The proper
-      // fix is a node-stream reconcile that updates the tree in place,
-      // unified with the `_fromItems` path used on initial load, so a node
-      // stream never enters the op path at all.
       const ops = diffNodeMap(currentItems, nodes);
       const result = applyRemoteOps(ops);
       notify(result.updates);
