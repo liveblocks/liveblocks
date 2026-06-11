@@ -1703,7 +1703,7 @@ export function createRoom<
     // If a storage fetch has ever been initiated, we assume the client is
     // interested in storage, so we will refresh it after a reconnection.
     if (_getStorage$ !== null) {
-      refreshStorage({ flush: false }); // XXX VINCENT TO TAKE A LOOK SOON
+      refreshStorage();
     }
     flushNowOrSoon();
   }
@@ -2968,7 +2968,7 @@ export function createRoom<
     eventHub.storageDidLoad.notify();
   }
 
-  function refreshStorage(options: { flush: boolean }) {
+  function refreshStorage() {
     const messages = context.buffer.messages;
     if (!messages.some((msg) => msg.type === ClientMsgCode.FETCH_STORAGE)) {
       // Only add the fetch message to the outgoing message queue if it isn't
@@ -2977,15 +2977,12 @@ export function createRoom<
       nodeMapBuffer.take(); // Reset any partial state from previous fetch
       stopwatch?.start();
     }
-
-    if (options.flush) {
-      flushNowOrSoon();
-    }
   }
 
   function startLoadingStorage(): Promise<void> {
     if (_getStorage$ === null) {
-      refreshStorage({ flush: true });
+      refreshStorage();
+      flushNowOrSoon();
       _getStorage$ = new Promise((resolve) => {
         _resolveStoragePromise = resolve;
       });
