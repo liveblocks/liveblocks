@@ -100,7 +100,6 @@ export type {
 } from "./crdts/Lson";
 export { deepLiveify } from "./crdts/reconcile";
 export type {
-  InternalStorageUpdate,
   LiveListUpdate,
   LiveMapUpdate,
   LiveObjectUpdate,
