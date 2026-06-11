@@ -2,13 +2,11 @@ from enum import StrEnum
 
 
 class RoomPermissionItem(StrEnum):
-    READ = "*:read"
-    WRITE = "*:write"
-    COMMENTSREAD = "comments:read"
     COMMENTSNONE = "comments:none"
+    COMMENTSREAD = "comments:read"
     COMMENTSWRITE = "comments:write"
-    FEEDSREAD = "feeds:read"
     FEEDSNONE = "feeds:none"
+    FEEDSREAD = "feeds:read"
     FEEDSWRITE = "feeds:write"
     ROOMPRESENCEWRITE = "room:presence:write"
     ROOMREAD = "room:read"
@@ -16,3 +14,5 @@ class RoomPermissionItem(StrEnum):
     STORAGENONE = "storage:none"
     STORAGEREAD = "storage:read"
     STORAGEWRITE = "storage:write"
+    READ = "*:read"
+    WRITE = "*:write"
