@@ -37,10 +37,6 @@ export type { FloatingComposerProps } from "./components/FloatingComposer";
 export { FloatingComposer } from "./components/FloatingComposer";
 export type { FloatingThreadProps } from "./components/FloatingThread";
 export { FloatingThread } from "./components/FloatingThread";
-export type { HistoryVersionSummaryProps } from "./components/HistoryVersionSummary";
-export { HistoryVersionSummary } from "./components/HistoryVersionSummary";
-export type { HistoryVersionSummaryListProps } from "./components/HistoryVersionSummaryList";
-export { HistoryVersionSummaryList } from "./components/HistoryVersionSummaryList";
 export type {
   InboxNotificationAvatarProps,
   InboxNotificationCustomKindProps,
@@ -58,6 +54,22 @@ export type { InboxNotificationListProps } from "./components/InboxNotificationL
 export { InboxNotificationList } from "./components/InboxNotificationList";
 export type { ThreadProps } from "./components/Thread";
 export { Thread } from "./components/Thread";
+export type {
+  HistoryVersionSummaryProps,
+  VersionSummaryProps,
+} from "./components/VersionSummary";
+export {
+  HistoryVersionSummary,
+  VersionSummary,
+} from "./components/VersionSummary";
+export type {
+  HistoryVersionSummaryListProps,
+  VersionSummaryListProps,
+} from "./components/VersionSummaryList";
+export {
+  HistoryVersionSummaryList,
+  VersionSummaryList,
+} from "./components/VersionSummaryList";
 export { LiveblocksUiConfig } from "./config";
 export * as Icon from "./icon";
 export type {

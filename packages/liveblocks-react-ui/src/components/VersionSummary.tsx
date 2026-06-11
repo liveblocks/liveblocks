@@ -1,6 +1,6 @@
 "use client";
 
-import type { HistoryVersion } from "@liveblocks/core";
+import type { HistoryVersion, VersionRef } from "@liveblocks/core";
 import type { ComponentPropsWithoutRef } from "react";
 import { forwardRef } from "react";
 
@@ -12,8 +12,8 @@ import { User } from "./internal/User";
 
 const AUTHORS_TRUNCATE = 3;
 
-export interface HistoryVersionSummaryProps extends ComponentPropsWithoutRef<"button"> {
-  version: HistoryVersion;
+export interface VersionSummaryProps extends ComponentPropsWithoutRef<"button"> {
+  version: VersionRef;
   selected?: boolean;
 }
 
@@ -21,11 +21,11 @@ export interface HistoryVersionSummaryProps extends ComponentPropsWithoutRef<"bu
  * Displays some information about a version.
  *
  * @example
- * <HistoryVersionSummary version={version} />
+ * <VersionSummary version={version} />
  */
-export const HistoryVersionSummary = forwardRef<
+export const VersionSummary = forwardRef<
   HTMLButtonElement,
-  HistoryVersionSummaryProps
+  VersionSummaryProps
 >(({ version, selected, className, ...props }, forwardedRef) => {
   const $ = useOverrides();
 
@@ -54,3 +54,31 @@ export const HistoryVersionSummary = forwardRef<
     </button>
   );
 });
+
+/**
+ * @deprecated Use {@link VersionSummaryProps} instead.
+ */
+export interface HistoryVersionSummaryProps extends ComponentPropsWithoutRef<"button"> {
+  version: HistoryVersion;
+  selected?: boolean;
+}
+
+/**
+ * Displays some information about a version.
+ *
+ * @deprecated Use {@link VersionSummary} instead.
+ *
+ * @example
+ * <HistoryVersionSummary version={version} />
+ */
+export const HistoryVersionSummary = forwardRef<
+  HTMLButtonElement,
+  HistoryVersionSummaryProps
+>(({ version, ...props }, forwardedRef) => (
+  <VersionSummary
+    ref={forwardedRef}
+    // The server guarantees version ids carry the `vh_` prefix.
+    version={{ ...version, id: version.id as `vh_${string}` }}
+    {...props}
+  />
+));
