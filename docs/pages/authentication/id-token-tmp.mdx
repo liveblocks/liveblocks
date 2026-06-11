@@ -218,8 +218,8 @@ access level to your room.
 // Public - everyone can edit and view the room
 "defaultAccesses": ["room:write"]
 
-// Read-only - everyone can view the room, but only presence can be edited
-"defaultAccesses": ["room:read", "room:presence:write"]
+// Read-only - everyone can view the room
+"defaultAccesses": ["room:read"]
 ```
 
 #### Setting room access
@@ -296,7 +296,7 @@ with `engineering` as a `groupId`:
 ```ts highlight="3"
 const room = await liveblocks.updateRoom("a32wQXid4A9", {
   groupsAccesses: {
-    engineering: ["room:read", "room:presence:write"],
+    engineering: ["room:read"],
   },
 });
 ```

@@ -792,7 +792,7 @@ const room = await liveblocks.createRoom("my-room-id", {
   // Optional, the room's group ID permissions
   groupsAccesses: {
     design: ["room:write"],
-    engineering: ["room:presence:write", "room:read"],
+    engineering: ["room:read"],
   },
 
   // Optional, the room's user ID permissions
@@ -858,7 +858,7 @@ const room = await liveblocks.getOrCreateRoom("my-room-id", {
   // Optional, the room's group ID permissions
   groupsAccesses: {
     design: ["room:write"],
-    engineering: ["room:presence:write", "room:read"],
+    engineering: ["room:read"],
   },
 
   // Optional, the room's user ID permissions
@@ -909,7 +909,7 @@ const room = await liveblocks.updateRoom("my-room-id", {
   // Optional, update the room's group ID permissions
   groupsAccesses: {
     design: ["room:write"],
-    engineering: ["room:presence:write", "room:read"],
+    engineering: ["room:read"],
   },
 
   // Optional, update the room's user ID permissions
@@ -966,7 +966,7 @@ const room = await liveblocks.upsertRoom("my-room-id", {
     // Optional, the room's group ID permissions
     groupsAccesses: {
       design: ["room:write"],
-      engineering: ["room:presence:write", "room:read"],
+      engineering: ["room:read"],
     },
 
     // Optional, the room's user ID permissions
