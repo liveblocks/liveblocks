@@ -21,7 +21,12 @@ import { LiveObject, type LiveObjectUpdates } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
 import { LiveText, type LiveTextUpdates } from "./LiveText";
 import type { LiveNode, LiveStructure, Lson, LsonObject } from "./Lson";
-import type { StorageUpdate } from "./StorageUpdates";
+import { kStorageUpdateSource } from "../internal";
+import type {
+  InternalStorageUpdate,
+  StorageUpdate,
+  StorageUpdateSource,
+} from "./StorageUpdates";
 
 export function creationOpToLiveNode(op: CreateOp): LiveNode {
   return lsonToLiveNode(creationOpToLson(op));
@@ -501,17 +506,26 @@ export function mergeStorageUpdates(
     return second;
   }
 
+  let merged: StorageUpdate;
   if (first.type === "LiveObject" && second.type === "LiveObject") {
-    return mergeObjectStorageUpdates(first, second);
+    merged = mergeObjectStorageUpdates(first, second);
   } else if (first.type === "LiveMap" && second.type === "LiveMap") {
-    return mergeMapStorageUpdates(first, second);
+    merged = mergeMapStorageUpdates(first, second);
   } else if (first.type === "LiveList" && second.type === "LiveList") {
-    return mergeListStorageUpdates(first, second);
+    merged = mergeListStorageUpdates(first, second);
   } else if (first.type === "LiveText" && second.type === "LiveText") {
-    return mergeTextStorageUpdates(first, second);
+    merged = mergeTextStorageUpdates(first, second);
   } else {
     /* Mismatching merge types. Throw an error here? */
+    merged = second;
   }
 
-  return second;
+  const sa = (first as InternalStorageUpdate)[kStorageUpdateSource];
+  const sb = (second as InternalStorageUpdate)[kStorageUpdateSource];
+  if (sa !== undefined || sb !== undefined) {
+    (merged as { [kStorageUpdateSource]?: StorageUpdateSource })[
+      kStorageUpdateSource
+    ] = sa === "remote" || sb === "remote" ? "remote" : "local";
+  }
+  return merged;
 }

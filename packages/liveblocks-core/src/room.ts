@@ -17,7 +17,11 @@ import {
 } from "./crdts/liveblocks-helpers";
 import { LiveObject } from "./crdts/LiveObject";
 import type { LiveStructure, LsonObject } from "./crdts/Lson";
-import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
+import type {
+  StorageCallback,
+  StorageUpdate,
+  StorageUpdateSource,
+} from "./crdts/StorageUpdates";
 import { UnacknowledgedOps } from "./crdts/UnacknowledgedOps";
 import type {
   DCM,
@@ -29,7 +33,7 @@ import type {
   DTM,
   DU,
 } from "./globals/augmentation";
-import { kInternal } from "./internal";
+import { kInternal, kStorageUpdateSource } from "./internal";
 import { assertNever, nn } from "./lib/assert";
 import type { BatchStore } from "./lib/batch";
 import { Promise_withResolvers } from "./lib/controlledPromise";
@@ -1751,6 +1755,12 @@ export function createRoom<
     reverse: Op[],
     storageUpdates: Map<string, StorageUpdate>
   ): void {
+    for (const value of storageUpdates.values()) {
+      (value as { [kStorageUpdateSource]?: StorageUpdateSource })[
+        kStorageUpdateSource
+      ] = "local";
+    }
+
     if (context.activeBatch) {
       for (const op of ops) {
         context.activeBatch.ops.push(op);
@@ -2097,6 +2107,11 @@ export function createRoom<
 
       const applyOpResult = applyOp(op, source);
       if (applyOpResult.modified) {
+        (applyOpResult.modified as {
+          [kStorageUpdateSource]?: StorageUpdateSource;
+        })[kStorageUpdateSource] =
+          source === OpSource.THEIRS ? "remote" : "local";
+
         const nodeId = applyOpResult.modified.node._id;
 
         // If the modified node was created in the same batch, we don't want

@@ -100,11 +100,13 @@ export type {
 } from "./crdts/Lson";
 export { deepLiveify } from "./crdts/reconcile";
 export type {
+  InternalStorageUpdate,
   LiveListUpdate,
   LiveMapUpdate,
   LiveObjectUpdate,
   LiveTextUpdate,
   StorageUpdate,
+  StorageUpdateSource,
 } from "./crdts/StorageUpdates";
 export { toPlainLson } from "./crdts/utils";
 export type {
@@ -122,7 +124,7 @@ export type {
   KDAD,
 } from "./globals/augmentation";
 export type { SyncConfig, SyncMode } from "./immutable";
-export { kInternal } from "./internal";
+export { kInternal, kStorageUpdateSource } from "./internal";
 export { makeAbortController } from "./lib/abortController";
 export { assert, assertNever, nn } from "./lib/assert";
 export type {
