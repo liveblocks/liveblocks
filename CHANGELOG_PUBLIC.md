@@ -18,6 +18,22 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 24 (2026-06-12)
+
+## v3.19.5
+
+### `@liveblocks/client`
+
+- Fix a `LiveList` divergence after reconnects: a pending `push` could under specific timing conditions during a reconnect still cause a divergence between clients, despite the fix from 3.19.4.
+
+## Liveblocks dev server (v1.6.1)
+
+- Fix a `LiveList` divergence after reconnects: when a client re-sends a pending `push` op whose node the server had already stored (the original ack got lost in the disconnect)
+
+## Contributors
+
+nvie
+
 # Week 23 (2026-06-05)
 
 ## v3.19.4
@@ -49,9 +65,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ## Liveblocks dev server (v1.6.0)
 
-- Update internal storage format of dev server. Note that your local dev rooms
-  are not automatically migrated and will appear as empty rooms after the
-  upgrade.
+- Update internal storage format of dev server. Note that your local dev rooms are not automatically migrated and will appear as empty rooms after the upgrade.
 
 ## Contributors
 
