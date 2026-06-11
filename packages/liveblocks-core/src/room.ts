@@ -52,8 +52,8 @@ import {
   partition,
   tryParseJson,
 } from "./lib/utils";
-import type { Permission } from "./permissions";
-import { hasPermissionAccess } from "./permissions";
+import type { Permission, PermissionMatrix } from "./permissions";
+import { hasPermissionAccess, permissionMatrixFromScopes } from "./permissions";
 import type {
   ContextualPromptContext,
   ContextualPromptResponse,
@@ -1293,7 +1293,7 @@ export type StaticSessionInfo = {
 export type DynamicSessionInfo = {
   readonly actor: number;
   readonly nonce: string;
-  readonly scopes: string[];
+  readonly permissionMatrix: PermissionMatrix;
   readonly meta: JsonObject;
 };
 
@@ -1778,10 +1778,11 @@ export function createRoom<
   }
 
   function isStorageWritable(): boolean {
-    const scopes = context.dynamicSessionInfoSig.get()?.scopes;
+    const permissionMatrix =
+      context.dynamicSessionInfoSig.get()?.permissionMatrix;
     // If we aren't connected yet, assume we can write
-    return scopes !== undefined
-      ? hasPermissionAccess(scopes, "storage", "write")
+    return permissionMatrix !== undefined
+      ? hasPermissionAccess(permissionMatrix, "storage", "write")
       : true;
   }
 
@@ -1864,7 +1865,7 @@ export function createRoom<
         return null;
       } else {
         const canWrite = hasPermissionAccess(
-          dynamicSession.scopes,
+          dynamicSession.permissionMatrix,
           "storage",
           "write"
         );
@@ -1875,7 +1876,7 @@ export function createRoom<
           presence: myPresence,
           canWrite,
           canComment: hasPermissionAccess(
-            dynamicSession.scopes,
+            dynamicSession.permissionMatrix,
             "comments",
             "write"
           ),
@@ -2292,7 +2293,7 @@ export function createRoom<
     context.dynamicSessionInfoSig.set({
       actor: message.actor,
       nonce: message.nonce,
-      scopes: message.scopes,
+      permissionMatrix: permissionMatrixFromScopes(message.scopes),
       meta: message.meta,
     });
     context.idFactory = makeIdFactory(message.actor);

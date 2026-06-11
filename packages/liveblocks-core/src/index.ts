@@ -205,6 +205,7 @@ export type {
   RoomPermission,
   RoomPermissionGrant,
   RoomPermissionInput,
+  RoomPermissionSources,
 } from "./permissions";
 export {
   hasPermissionAccess,
@@ -215,6 +216,7 @@ export {
   Permission,
   permissionMatrixFromScopes,
   permissionMatrixToScopes,
+  mergeRoomPermissionScopes,
 } from "./permissions";
 export type {
   ContextualPromptContext,

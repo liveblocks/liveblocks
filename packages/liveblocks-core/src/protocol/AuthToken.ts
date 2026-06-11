@@ -2,7 +2,7 @@ import { isPlainObject } from "../lib/guards";
 import type { Json } from "../lib/Json";
 import { b64decode, tryParseJson } from "../lib/utils";
 import type { IUserInfo } from "./BaseUserMeta";
-import type { Permission } from "./Permissions";
+import type { Permission } from "../permissions";
 
 export type LiveblocksPermissions = Record<string, Permission[]>;
 
