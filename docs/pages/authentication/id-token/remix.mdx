@@ -124,12 +124,12 @@ start building your own security logic.
       });
 
       const room = await liveblocks.createRoom("my-room-id", {
-        defaultAccesses: ["room:read"],
+        defaultAccesses: ["*:read"],
         groupsAccesses: {
-          "my-group-id": ["room:write"],
+          "my-group-id": ["*:write"],
         },
         usersAccesses: {
-          "my-user-id": ["room:write"],
+          "my-user-id": ["*:write"],
         },
       });
       ```

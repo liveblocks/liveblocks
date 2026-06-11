@@ -182,7 +182,7 @@ await liveblocks.broadcastEvent("my-room-id", { type: "REFRESH" });
 
 // ⚠️ Room APIs are supported but permissions and metadata are ignored
 await liveblocks.createRoom("my-new-room-id", {
-  defaultAccesses: ["room:write"],
+  defaultAccesses: ["*:write"],
   metadata: { title: "My title" },
 });
 // { metadata: {}, defaultAccesses: [], ... }

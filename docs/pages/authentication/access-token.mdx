@@ -92,11 +92,12 @@ later.
 
 ## Workspace permissions [#permissions]
 
-Using [organizations](/docs/authentication/organizations), you can create workspaces in your
-application, compartmentalizing all resources such as inbox notifications and
-rooms. This includes everything associated with rooms such as comment threads,
-realtime data stored, and more. This allows you to add a workspace switcher to
-your application, separating each of your customers/organizations.
+Using [organizations](/docs/authentication/organizations), you can create
+workspaces in your application, compartmentalizing all resources such as inbox
+notifications and rooms. This includes everything associated with rooms such as
+comment threads, realtime data stored, and more. This allows you to add a
+workspace switcher to your application, separating each of your
+customers/organizations.
 
 <Figure>
   <Image
@@ -110,8 +111,9 @@ your application, separating each of your customers/organizations.
 
 ### Set up workspace permissions
 
-To set up workspace permissions, pass an `organizationId` when authenticating a user,
-ensuring that the user will only have access to resources within this workspace.
+To set up workspace permissions, pass an `organizationId` when authenticating a
+user, ensuring that the user will only have access to resources within this
+workspace.
 
 ```ts
 const session = liveblocks.prepareSession("olivier@example.com", {
@@ -121,12 +123,12 @@ const session = liveblocks.prepareSession("olivier@example.com", {
 });
 ```
 
-When creating a resource on the server, such as a room, pass the `organizationId` to
-the resource, to allow the user access.
+When creating a resource on the server, such as a room, pass the
+`organizationId` to the resource, to allow the user access.
 
 ```ts
 const room = await liveblocks.createRoom("my-room-id", {
-  defaultAccesses: ["room:write"],
+  defaultAccesses: ["*:write"],
   // +++
   organizationId: "acme",
   // +++

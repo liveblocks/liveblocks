@@ -135,7 +135,7 @@ When creating a resource on the server, such as a room, pass the
 
 ```ts
 const room = await liveblocks.createRoom("my-room-id", {
-  defaultAccesses: ["room:write"],
+  defaultAccesses: ["*:write"],
   // +++
   organizationId: "my-organization-id",
   // +++
@@ -171,7 +171,7 @@ const room = await liveblocks.createRoom("a32wQXid4A9", {
 
   // But Olivier can enter
   usersAccesses: {
-    "olivier@example.com": ["room:read"],
+    "olivier@example.com": ["*:read"],
   },
 });
 ```
@@ -191,7 +191,7 @@ entry systems.
 </dl>
 
 Each level further down will override access levels defined above, for example a
-room with private access will allow a user with `room:write` access to enter.
+room with private access will allow a user with `*:write` access to enter.
 
 ### Default room permissions
 
@@ -216,10 +216,10 @@ access level to your room.
 "defaultAccesses": []
 
 // Public - everyone can edit and view the room
-"defaultAccesses": ["room:write"]
+"defaultAccesses": ["*:write"]
 
 // Read-only - everyone can view the room
-"defaultAccesses": ["room:read"]
+"defaultAccesses": ["*:read"]
 ```
 
 #### Setting room access
@@ -230,7 +230,7 @@ create a new room with public access levels:
 
 ```ts highlight="2"
 const room = await liveblocks.createRoom("a32wQXid4A9", {
-  defaultAccesses: ["room:write"],
+  defaultAccesses: ["*:write"],
 });
 ```
 
@@ -282,7 +282,7 @@ and an array of permissions as the value.
 ```ts
 // "engineering" group has access to view and edit
 "groupsAccesses": {
-  "engineering": ["room:write"],
+  "engineering": ["*:write"],
 }
 ```
 
@@ -296,7 +296,7 @@ with `engineering` as a `groupId`:
 ```ts highlight="3"
 const room = await liveblocks.updateRoom("a32wQXid4A9", {
   groupsAccesses: {
-    engineering: ["room:read"],
+    engineering: ["*:read"],
   },
 });
 ```
@@ -347,12 +347,12 @@ export async function POST(request: Request) {
 ```
 
 Then, if you want the user with the `userId` id to make edits, set `userId` to
-`["room:write"]` within `usersAccesses` when creating or updating a room.
+`["*:write"]` within `usersAccesses` when creating or updating a room.
 
 ```ts
 // user with userId "ellen@acme.inc" has access to view and edit
 "usersAccesses": {
-  "ellen@acme.inc": ["room:write"]
+  "ellen@acme.inc": ["*:write"]
 }
 ```
 
@@ -365,7 +365,7 @@ setting write access on their `userId`:
 ```ts highlight="3"
 const room = await liveblocks.updateRoom("a32wQXid4A9", {
   usersAccesses: {
-    "ellen@acme.inc": ["room:write"],
+    "ellen@acme.inc": ["*:write"],
   },
 });
 ```
@@ -377,7 +377,7 @@ and check `usersAccesses`:
 ```ts
 const room = await liveblocks.getRoom("a32wQXid4A9");
 
-// { "ellen@acme.inc": ["room:write"] }
+// { "ellen@acme.inc": ["*:write"] }
 console.log(room.data.usersAccesses);
 ```
 
