@@ -213,6 +213,7 @@ export {
   Permission,
   permissionMatrixFromScopes,
   permissionMatrixToScopes,
+  validatePermissionsSet,
 } from "./permissions";
 export type {
   ContextualPromptContext,

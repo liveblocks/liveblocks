@@ -56,6 +56,13 @@ export type PermissionMatrix = {
 
 export type PermissionResources = keyof PermissionMatrix;
 
+const basePermissionScopes = new Set<string>([
+  Permission.Read,
+  Permission.Write,
+  Permission.RoomRead,
+  Permission.RoomWrite,
+]);
+
 type ResolvedPermissionScopes = {
   hasDefaultPermission: boolean;
   baseAccess: AccessLevel;
@@ -406,4 +413,50 @@ function resourceMatchesRoomId(resource: string, roomId: string): boolean {
 
 function getResourceSpecificity(resource: string): number {
   return resource.replace("*", "").length;
+}
+
+/**
+ * Validates a set of permissions:
+ * - every scope must be a known permission scope,
+ * - exactly one base permission is required (*:read, *:write, or the legacy
+ *   aliases room:read, room:write),
+ * - at most one scope per feature (storage, comments, feeds, ...),
+ * - room:presence:write is accepted as an extra legacy scope.
+ *
+ * Returns `true` when the set is valid, or an error message otherwise.
+ */
+export function validatePermissionsSet(
+  scopes: readonly string[]
+): true | string {
+  const unknownScopes = scopes.filter((scope) => !VALID_PERMISSIONS.has(scope));
+  if (unknownScopes.length > 0) {
+    return `Unknown permission scope(s): ${unknownScopes.join(", ")}`;
+  }
+
+  const baseScopes = scopes.filter((scope) => basePermissionScopes.has(scope));
+  if (baseScopes.length !== 1) {
+    return (
+      `Permissions must include exactly one of ${Permission.Read}, ${Permission.Write} ` +
+      `(or the legacy aliases ${Permission.RoomRead}, ${Permission.RoomWrite}), ` +
+      `got ${baseScopes.length === 0 ? "none" : baseScopes.join(", ")}`
+    );
+  }
+
+  const seenFeatures = new Set<string>();
+  for (const scope of scopes) {
+    if (
+      basePermissionScopes.has(scope) ||
+      scope === Permission.LegacyRoomPresenceWrite
+    ) {
+      continue;
+    }
+
+    const feature = scope.slice(0, scope.indexOf(":"));
+    if (seenFeatures.has(feature)) {
+      return `Permissions can include at most one scope per feature, got multiple "${feature}" scopes`;
+    }
+    seenFeatures.add(feature);
+  }
+
+  return true;
 }

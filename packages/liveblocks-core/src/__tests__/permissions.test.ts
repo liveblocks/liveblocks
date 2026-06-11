@@ -8,6 +8,7 @@ import {
   permissionMatrixFromScopes,
   permissionMatrixToScopes,
   resolveRoomPermissionMatrix,
+  validatePermissionsSet,
 } from "../permissions";
 
 describe("permissionMatrixFromScopes", () => {
@@ -308,5 +309,73 @@ describe("mergeRoomPermissionScopes", () => {
         userAccesses: [Permission.Read, Permission.StorageWrite],
       })
     ).toEqual([Permission.Write, Permission.CommentsRead]);
+  });
+});
+
+describe("validatePermissionsSet", () => {
+  test("accepts a read base permission", () => {
+    expect(validatePermissionsSet([Permission.Read])).toBe(true);
+  });
+
+  test("accepts a write base permission", () => {
+    expect(validatePermissionsSet([Permission.Write])).toBe(true);
+  });
+
+  test("accepts legacy room base aliases", () => {
+    expect(validatePermissionsSet([Permission.RoomRead])).toBe(true);
+    expect(validatePermissionsSet([Permission.RoomWrite])).toBe(true);
+  });
+
+  test("accepts one permission per feature", () => {
+    expect(
+      validatePermissionsSet([
+        Permission.Write,
+        Permission.StorageNone,
+        Permission.CommentsRead,
+        Permission.FeedsWrite,
+      ])
+    ).toBe(true);
+  });
+
+  test("accepts the legacy presence scope as an extra room scope", () => {
+    expect(
+      validatePermissionsSet([
+        Permission.Read,
+        Permission.LegacyRoomPresenceWrite,
+      ])
+    ).toBe(true);
+  });
+
+  test("rejects unknown permission scopes", () => {
+    expect(validatePermissionsSet([Permission.Read, "comments:delete"])).toBe(
+      "Unknown permission scope(s): comments:delete"
+    );
+  });
+
+  test("rejects permission sets without a base permission", () => {
+    expect(validatePermissionsSet([Permission.CommentsRead])).toBe(
+      `Permissions must include exactly one of ${Permission.Read}, ${Permission.Write} ` +
+        `(or the legacy aliases ${Permission.RoomRead}, ${Permission.RoomWrite}), got none`
+    );
+  });
+
+  test("rejects permission sets with multiple base permissions", () => {
+    expect(validatePermissionsSet([Permission.Read, Permission.RoomRead])).toBe(
+      `Permissions must include exactly one of ${Permission.Read}, ${Permission.Write} ` +
+        `(or the legacy aliases ${Permission.RoomRead}, ${Permission.RoomWrite}), ` +
+        `got ${Permission.Read}, ${Permission.RoomRead}`
+    );
+  });
+
+  test("rejects multiple scopes for the same feature", () => {
+    expect(
+      validatePermissionsSet([
+        Permission.Read,
+        Permission.CommentsRead,
+        Permission.CommentsWrite,
+      ])
+    ).toBe(
+      `Permissions can include at most one scope per feature, got multiple "comments" scopes`
+    );
   });
 });
