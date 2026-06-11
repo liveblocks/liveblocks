@@ -355,6 +355,12 @@ export function permissionMatrixToScopes(
   return scopes;
 }
 
+/**
+ * Merges permission scopes from multiple sources, by priority: explicit user
+ * accesses override group accesses, which override the room defaults. Groups
+ * all share the same priority, so they are first merged together by taking
+ * the highest access level per feature (and base).
+ */
 export function mergeRoomPermissionScopes({
   defaultAccesses,
   groupsAccesses,
@@ -364,13 +370,65 @@ export function mergeRoomPermissionScopes({
   groupsAccesses: RoomPermissions[];
   userAccesses: RoomPermissions;
 }): RoomPermissions {
-  return permissionMatrixToScopes(
-    mergePermissionMatrices([
-      permissionMatrixFromScopes(defaultAccesses),
-      ...groupsAccesses.map(permissionMatrixFromScopes),
-      permissionMatrixFromScopes(userAccesses),
-    ])
-  );
+  // Ordered from lowest to highest priority
+  const sources = [
+    resolvePermissionScopes(defaultAccesses),
+    mergeResolvedScopesByHighestAccess(
+      groupsAccesses.map(resolvePermissionScopes)
+    ),
+    resolvePermissionScopes(userAccesses),
+  ];
+
+  const merged: ResolvedPermissionScopes = {
+    hasDefaultPermission: false,
+    baseAccess: "none",
+    matrix: {},
+  };
+
+  for (const source of sources) {
+    if (source.hasDefaultPermission) {
+      merged.hasDefaultPermission = true;
+      merged.baseAccess = source.baseAccess;
+    }
+
+    for (const resource of ROOM_PERMISSION_RESOURCES) {
+      const access = source.matrix[resource];
+      if (access !== undefined) {
+        merged.matrix[resource] = access;
+      }
+    }
+  }
+
+  return permissionMatrixToScopes(permissionMatrixFromResolvedScopes(merged));
+}
+
+function mergeResolvedScopesByHighestAccess(
+  sources: ResolvedPermissionScopes[]
+): ResolvedPermissionScopes {
+  const merged: ResolvedPermissionScopes = {
+    hasDefaultPermission: false,
+    baseAccess: "none",
+    matrix: {},
+  };
+
+  for (const source of sources) {
+    if (source.hasDefaultPermission) {
+      merged.hasDefaultPermission = true;
+      merged.baseAccess = strongestAccess(merged.baseAccess, source.baseAccess);
+    }
+
+    for (const resource of ROOM_PERMISSION_RESOURCES) {
+      const access = source.matrix[resource];
+      if (access !== undefined) {
+        merged.matrix[resource] = strongestAccess(
+          merged.matrix[resource] ?? "none",
+          access
+        );
+      }
+    }
+  }
+
+  return merged;
 }
 
 function permissionForAccessLevel(

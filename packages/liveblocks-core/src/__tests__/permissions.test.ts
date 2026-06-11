@@ -220,7 +220,7 @@ describe("mergeRoomPermissionScopes", () => {
     ).toEqual([Permission.Read]);
   });
 
-  test("picks the highest access level per feature across sources", () => {
+  test("combines explicit accesses per feature across sources", () => {
     expect(
       permissionMatrixFromScopes(
         mergeRoomPermissionScopes({
@@ -250,7 +250,7 @@ describe("mergeRoomPermissionScopes", () => {
     ).toBe("write");
   });
 
-  test("group write beats user read on the same feature", () => {
+  test("explicit user read overrides group write on the same feature", () => {
     expect(
       permissionMatrixFromScopes(
         mergeRoomPermissionScopes({
@@ -259,7 +259,25 @@ describe("mergeRoomPermissionScopes", () => {
           userAccesses: [Permission.Read, Permission.CommentsRead],
         })
       ).comments
-    ).toBe("write");
+    ).toBe("read");
+  });
+
+  test("explicit group access overrides the room default", () => {
+    expect(
+      permissionMatrixFromScopes(
+        mergeRoomPermissionScopes({
+          defaultAccesses: [Permission.Write],
+          groupsAccesses: [[Permission.Read, Permission.CommentsRead]],
+          userAccesses: [],
+        })
+      )
+    ).toEqual({
+      room: "read",
+      storage: "read",
+      comments: "read",
+      feeds: "read",
+      personal: "write",
+    });
   });
 
   test("merges multiple groups by taking the highest level per feature", () => {
@@ -277,7 +295,7 @@ describe("mergeRoomPermissionScopes", () => {
     ).toBe("write");
   });
 
-  test("does not let a source-specific none downgrade a higher default", () => {
+  test("explicit user none downgrades a higher default", () => {
     expect(
       permissionMatrixFromScopes(
         mergeRoomPermissionScopes({
@@ -286,7 +304,7 @@ describe("mergeRoomPermissionScopes", () => {
           userAccesses: [Permission.Read, Permission.StorageNone],
         })
       ).storage
-    ).toBe("write");
+    ).toBe("none");
   });
 
   test("explicit none on all sources grants no access", () => {
@@ -308,7 +326,11 @@ describe("mergeRoomPermissionScopes", () => {
         groupsAccesses: [[Permission.Write, Permission.CommentsNone]],
         userAccesses: [Permission.Read, Permission.StorageWrite],
       })
-    ).toEqual([Permission.Write, Permission.CommentsRead]);
+    ).toEqual([
+      Permission.Read,
+      Permission.StorageWrite,
+      Permission.CommentsNone,
+    ]);
   });
 });
 
