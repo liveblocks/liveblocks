@@ -2,12 +2,12 @@ import { freeze } from "../lib/freeze";
 import type { JsonObject } from "../lib/Json";
 import { DerivedSignal, merge, MutableSignal } from "../lib/signals";
 import { compact, compactObject } from "../lib/utils";
-import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import {
   hasPermissionAccess,
   type PermissionMatrix,
   permissionMatrixFromScopes,
 } from "../permissions";
+import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { User } from "../types/User";
 
 type Connection<U extends BaseUserMeta> = {

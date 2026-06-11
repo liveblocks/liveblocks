@@ -62,33 +62,23 @@ type ResolvedPermissionScopes = {
   matrix: Partial<PermissionMatrix>;
 };
 
-export type RoomPermissionGrant = {
+export type RoomPermissionsGrant = {
   resource: string;
-  scopes: readonly Permission[];
+  scopes: RoomPermissions;
 };
 
-export type RoomPermission = Permission[];
+export type RoomPermissions = Permission[];
 
-export type RoomPermissionInput = readonly Permission[];
+export type RoomAccesses = Record<string, RoomPermissions>;
 
-export type RoomAccesses = Record<string, RoomPermission>;
-export type RoomAccessesInput = Record<string, RoomPermissionInput>;
-export type RoomAccessesUpdateInput = Record<
-  string,
-  RoomPermissionInput | null
+type RoomPermissionsResource = Exclude<
+  PermissionResources,
+  "room" | "personal"
 >;
 
-export type RoomPermissionSources = {
-  defaultAccesses: readonly Permission[];
-  groupsAccesses: readonly (readonly Permission[])[];
-  userAccesses?: readonly Permission[] | undefined;
-};
-
-type RoomPermissionResource = Exclude<PermissionResources, "room" | "personal">;
-
-type ResourcePermissionMap = Record<
+type ResourcePermissionsMap = Record<
   PermissionResources,
-  Partial<Record<AccessLevel, readonly Permission[]>>
+  Partial<Record<AccessLevel, RoomPermissions>>
 >;
 
 const ACCESS_LEVEL_RANKS: Record<AccessLevel, number> = {
@@ -97,7 +87,7 @@ const ACCESS_LEVEL_RANKS: Record<AccessLevel, number> = {
   write: 2,
 };
 
-const PERMISSIONS_BY_RESOURCE: ResourcePermissionMap = {
+const PERMISSIONS_BY_RESOURCE: ResourcePermissionsMap = {
   room: {
     read: [Permission.Read, Permission.RoomRead],
     write: [Permission.Write, Permission.RoomWrite],
@@ -136,15 +126,15 @@ const ROOM_PERMISSION_RESOURCES = [
   "storage",
   "comments",
   "feeds",
-] as const satisfies ReadonlyArray<RoomPermissionResource>;
+] as const satisfies RoomPermissionsResource[];
 
 const VALID_PERMISSIONS = new Set<string>(Object.values(Permission));
 
 function resolveResourceAccess(
-  scopes: readonly string[],
-  resource: RoomPermissionResource
+  scopes: string[],
+  resource: RoomPermissionsResource
 ): AccessLevel | undefined {
-  const permissions: Partial<Record<AccessLevel, readonly Permission[]>> =
+  const permissions: Partial<Record<AccessLevel, RoomPermissions>> =
     PERMISSIONS_BY_RESOURCE[resource];
   let resourceAccess: AccessLevel | undefined;
 
@@ -181,15 +171,11 @@ function permissionMatrixFromResolvedScopes(
   return matrix;
 }
 
-export function permissionMatrixFromScopes(
-  scopes: readonly string[]
-): PermissionMatrix {
+export function permissionMatrixFromScopes(scopes: string[]): PermissionMatrix {
   return permissionMatrixFromResolvedScopes(resolvePermissionScopes(scopes));
 }
 
-function resolvePermissionScopes(
-  scopes: readonly string[]
-): ResolvedPermissionScopes {
+function resolvePermissionScopes(scopes: string[]): ResolvedPermissionScopes {
   const hasDefaultPermission =
     scopes.includes(Permission.Write) ||
     scopes.includes(Permission.Read) ||
@@ -225,7 +211,7 @@ export function hasPermissionAccess(
 }
 
 export function resolveRoomPermissionMatrix(
-  permissions: readonly RoomPermissionGrant[],
+  permissions: RoomPermissionsGrant[],
   roomId: string
 ): PermissionMatrix | undefined {
   const matchedPermissions = permissions.filter((permission) =>
@@ -275,14 +261,14 @@ export function resolveRoomPermissionMatrix(
   });
 }
 
-export function normalizeRoomPermissionInput(
-  input: RoomPermissionInput
-): RoomPermission {
-  if (!Array.isArray(input)) {
+export function normalizeRoomPermissions(
+  permissions: RoomPermissions
+): RoomPermissions {
+  if (!Array.isArray(permissions)) {
     throw new Error("Permission list must be an array");
   }
 
-  return input.map((permission) => {
+  return permissions.map((permission) => {
     if (!VALID_PERMISSIONS.has(permission)) {
       throw new Error(`Not a valid permission: ${permission}`);
     }
@@ -290,52 +276,37 @@ export function normalizeRoomPermissionInput(
   });
 }
 
-export function normalizeRoomAccessesInput(
-  input: RoomAccessesInput | undefined
+export function normalizeRoomAccesses(
+  accesses: RoomAccesses | undefined
 ): RoomAccesses | undefined {
-  if (input === undefined) {
+  if (accesses === undefined) {
     return undefined;
   }
 
   return Object.fromEntries(
-    Object.entries(input).map(([id, permissions]) => [
+    Object.entries(accesses).map(([id, permissions]) => [
       id,
-      normalizeRoomPermissionInput(permissions),
-    ])
-  );
-}
-
-export function normalizeRoomAccessesUpdateInput(
-  input: RoomAccessesUpdateInput | undefined
-): Record<string, RoomPermission | null> | undefined {
-  if (input === undefined) {
-    return undefined;
-  }
-
-  return Object.fromEntries(
-    Object.entries(input).map(([id, permissions]) => [
-      id,
-      permissions === null ? null : normalizeRoomPermissionInput(permissions),
+      normalizeRoomPermissions(permissions),
     ])
   );
 }
 
 export function mergePermissionMatrices(
-  sources: readonly PermissionMatrix[]
+  matrices: PermissionMatrix[]
 ): PermissionMatrix {
   return {
-    room: strongestMatrixAccess(sources, "room"),
-    storage: strongestMatrixAccess(sources, "storage"),
-    comments: strongestMatrixAccess(sources, "comments"),
-    feeds: strongestMatrixAccess(sources, "feeds"),
-    personal: strongestMatrixAccess(sources, "personal"),
+    room: strongestMatrixAccess(matrices, "room"),
+    storage: strongestMatrixAccess(matrices, "storage"),
+    comments: strongestMatrixAccess(matrices, "comments"),
+    feeds: strongestMatrixAccess(matrices, "feeds"),
+    personal: strongestMatrixAccess(matrices, "personal"),
   };
 }
 
 export function permissionMatrixToScopes(
   matrix: PermissionMatrix
-): RoomPermission {
-  const scopes: RoomPermission = [];
+): RoomPermissions {
+  const scopes: RoomPermissions = [];
   const baseAccess = matrix.room;
 
   if (baseAccess !== "none") {
@@ -356,16 +327,18 @@ export function mergeRoomPermissionScopes({
   defaultAccesses,
   groupsAccesses,
   userAccesses,
-}: RoomPermissionSources): Permission[] {
-  const sources = [
-    permissionMatrixFromScopes(defaultAccesses),
-    ...groupsAccesses.map((scopes) => permissionMatrixFromScopes(scopes)),
-    ...(userAccesses !== undefined
-      ? [permissionMatrixFromScopes(userAccesses)]
-      : []),
-  ];
-
-  return permissionMatrixToScopes(mergePermissionMatrices(sources));
+}: {
+  defaultAccesses: RoomPermissions;
+  groupsAccesses: RoomPermissions;
+  userAccesses: RoomPermissions;
+}): RoomPermissions {
+  return permissionMatrixToScopes(
+    mergePermissionMatrices([
+      permissionMatrixFromScopes(defaultAccesses),
+      permissionMatrixFromScopes(groupsAccesses),
+      permissionMatrixFromScopes(userAccesses),
+    ])
+  );
 }
 
 function permissionForAccessLevel(
@@ -373,7 +346,7 @@ function permissionForAccessLevel(
   access: AccessLevel,
   field: string = resource
 ): Permission {
-  const levels: Partial<Record<AccessLevel, readonly Permission[]>> =
+  const levels: Partial<Record<AccessLevel, RoomPermissions>> =
     PERMISSIONS_BY_RESOURCE[resource];
   const permissions = levels[access];
   if (permissions === undefined || permissions.length === 0) {
@@ -385,11 +358,11 @@ function permissionForAccessLevel(
 }
 
 function strongestMatrixAccess(
-  sources: readonly PermissionMatrix[],
+  matrices: PermissionMatrix[],
   resource: PermissionResources
 ): AccessLevel {
-  return sources.reduce<AccessLevel>(
-    (strongest, source) => strongestAccess(strongest, source[resource]),
+  return matrices.reduce<AccessLevel>(
+    (strongest, matrix) => strongestAccess(strongest, matrix[resource]),
     "none"
   );
 }

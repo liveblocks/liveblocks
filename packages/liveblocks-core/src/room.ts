@@ -52,7 +52,7 @@ import {
   partition,
   tryParseJson,
 } from "./lib/utils";
-import type { Permission, PermissionMatrix } from "./permissions";
+import type { PermissionMatrix, RoomPermissions } from "./permissions";
 import { hasPermissionAccess, permissionMatrixFromScopes } from "./permissions";
 import type {
   ContextualPromptContext,
@@ -921,7 +921,7 @@ export type Room<
     subscriptions: SubscriptionData[];
     requestedAt: Date;
     nextCursor: string | null;
-    permissionHints: Record<string, Permission[]>;
+    permissionHints: Record<string, RoomPermissions>;
   }>;
 
   /**
@@ -946,7 +946,7 @@ export type Room<
       deleted: SubscriptionDeleteInfo[];
     };
     requestedAt: Date;
-    permissionHints: Record<string, Permission[]>;
+    permissionHints: Record<string, RoomPermissions>;
   }>;
 
   /**

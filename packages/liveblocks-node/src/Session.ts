@@ -2,14 +2,10 @@ import type {
   IUserInfo,
   Json,
   JsonObject,
-  RoomPermissionInput,
+  RoomPermissions,
   URLSafeString,
 } from "@liveblocks/core";
-import {
-  normalizeRoomPermissionInput,
-  Permission,
-  url,
-} from "@liveblocks/core";
+import { normalizeRoomPermissions, Permission, url } from "@liveblocks/core";
 
 import type { AuthResponse } from "./client";
 import { assertNonEmpty, normalizeStatusCode } from "./utils";
@@ -109,7 +105,7 @@ export class Session {
     }
   }
 
-  public allow(roomIdOrPattern: string, newPerms: RoomPermissionInput): this {
+  public allow(roomIdOrPattern: string, newPerms: RoomPermissions): this {
     if (typeof roomIdOrPattern !== "string") {
       throw new Error("Room name or pattern must be a string");
     }
@@ -117,7 +113,7 @@ export class Session {
       throw new Error("Invalid room name or pattern");
     }
 
-    const normalizedPermissions = normalizeRoomPermissionInput(newPerms);
+    const normalizedPermissions = normalizeRoomPermissions(newPerms);
 
     if (normalizedPermissions.length === 0) {
       throw new Error("Permission list cannot be empty");

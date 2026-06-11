@@ -6,7 +6,7 @@ import { stringifyOrLog as stringify } from "./lib/stringify";
 import type {
   PermissionResources,
   RequiredAccessLevel,
-  RoomPermissionGrant,
+  RoomPermissionsGrant,
 } from "./permissions";
 import {
   hasPermissionAccess,
@@ -221,7 +221,7 @@ export function createAuthManager(
 type CachedToken = {
   token: ParsedAuthToken;
   expiresAt: number;
-  permissions?: RoomPermissionGrant[];
+  permissions?: RoomPermissionsGrant[];
 };
 
 function getAuthRequestKey(request: AuthRequest): string | undefined {
@@ -249,7 +249,7 @@ function makeCachedToken(
 
 function getAuthTokenPermissionScopes(
   permissions: LiveblocksPermissions
-): RoomPermissionGrant[] {
+): RoomPermissionsGrant[] {
   return Object.entries(permissions).map(([resource, scopes]) => ({
     resource,
     scopes,

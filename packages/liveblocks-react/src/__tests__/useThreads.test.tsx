@@ -1,6 +1,7 @@
 import type {
   InboxNotificationData,
   InboxNotificationDataPlain,
+  RoomPermissions,
   SubscriptionData,
   ThreadData,
 } from "@liveblocks/core";
@@ -76,7 +77,7 @@ function mockGetThreadsSince(
       deletedSubscriptions: SubscriptionData[];
       meta: {
         requestedAt: string;
-        permissionHints: Record<string, Permission[]>;
+        permissionHints: Record<string, RoomPermissions>;
       };
     }
   >

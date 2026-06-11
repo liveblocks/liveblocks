@@ -26,7 +26,7 @@ import { stringifyOrLog as stringify } from "./lib/stringify";
 import type { QueryParams, URLSafeString } from "./lib/url";
 import { url, urljoin } from "./lib/url";
 import { raise } from "./lib/utils";
-import type { Permission } from "./permissions";
+import type { RoomPermissions } from "./permissions";
 import type {
   ContextualPromptContext,
   ContextualPromptResponse,
@@ -88,7 +88,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     subscriptions: SubscriptionData[];
     requestedAt: Date;
     nextCursor: string | null;
-    permissionHints: Record<string, Permission[]>;
+    permissionHints: Record<string, RoomPermissions>;
   }>;
 
   getThreadsSince(options: {
@@ -109,7 +109,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
       deleted: SubscriptionDeleteInfo[];
     };
     requestedAt: Date;
-    permissionHints: Record<string, Permission[]>;
+    permissionHints: Record<string, RoomPermissions>;
   }>;
 
   searchComments(
@@ -496,7 +496,7 @@ export interface LiveblocksHttpApi<
     subscriptions: SubscriptionData[];
     nextCursor: string | null;
     requestedAt: Date;
-    permissionHints: Record<string, Permission[]>;
+    permissionHints: Record<string, RoomPermissions>;
   }>;
 
   getUserThreadsSince_experimental(options: {
@@ -516,7 +516,7 @@ export interface LiveblocksHttpApi<
       deleted: SubscriptionDeleteInfo[];
     };
     requestedAt: Date;
-    permissionHints: Record<string, Permission[]>;
+    permissionHints: Record<string, RoomPermissions>;
   }>;
 
   groupsStore: BatchStore<GroupData | undefined, string>;
@@ -556,7 +556,7 @@ export function createApiClient<
       deletedSubscriptions: SubscriptionDeleteInfoPlain[];
       meta: {
         requestedAt: string;
-        permissionHints: Record<string, Permission[]>;
+        permissionHints: Record<string, RoomPermissions>;
       };
     }>(
       url`/v2/c/rooms/${options.roomId}/threads/delta`,
@@ -621,7 +621,7 @@ export function createApiClient<
         meta: {
           requestedAt: string;
           nextCursor: string | null;
-          permissionHints: Record<string, Permission[]>;
+          permissionHints: Record<string, RoomPermissions>;
         };
       }>(
         url`/v2/c/rooms/${options.roomId}/threads`,
@@ -1720,7 +1720,7 @@ export function createApiClient<
       meta: {
         requestedAt: string;
         nextCursor: string | null;
-        permissionHints: Record<string, Permission[]>;
+        permissionHints: Record<string, RoomPermissions>;
       };
     }>(
       url`/v2/c/threads`,
@@ -1757,7 +1757,7 @@ export function createApiClient<
       deletedSubscriptions: SubscriptionDeleteInfoPlain[];
       meta: {
         requestedAt: string;
-        permissionHints: Record<string, Permission[]>;
+        permissionHints: Record<string, RoomPermissions>;
       };
     }>(
       url`/v2/c/threads/delta`,

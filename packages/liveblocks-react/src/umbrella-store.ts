@@ -24,6 +24,7 @@ import type {
   Permission,
   PermissionMatrix,
   Resolve,
+  RoomPermissions,
   RoomSubscriptionSettings,
   SubscriptionData,
   SubscriptionDeleteInfo,
@@ -967,7 +968,7 @@ function createStore_forPermissionHints() {
   );
 
   function update(
-    newHints: Record<string, Permission[]>,
+    newHints: Record<string, RoomPermissions>,
     requestedAt: Date,
     roomIds?: readonly string[]
   ) {
