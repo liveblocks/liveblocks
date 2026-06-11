@@ -699,7 +699,6 @@ export function createClient<U extends BaseUserMeta = DU>(
       ),
       authenticate: async () => {
         const resp = await authManager.getAuthValue({
-          // TODO: Should we have permissions for AI Copilots?
           resource: "personal",
           access: "write",
         });
