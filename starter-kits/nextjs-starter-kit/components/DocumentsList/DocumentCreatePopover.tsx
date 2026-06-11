@@ -79,6 +79,16 @@ export function DocumentCreatePopover({ userId, children, ...props }: Props) {
           >
             Note
           </Button>
+          <Button
+            icon={<PlusIcon />}
+            onClick={() => {
+              createNewDocument("Untitled", "spreadsheet");
+            }}
+            variant="subtle"
+            disabled={disableButtons}
+          >
+            Spreadsheet
+          </Button>
         </div>
       }
       modal
