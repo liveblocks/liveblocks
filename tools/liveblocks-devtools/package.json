@@ -42,7 +42,7 @@
     "@types/webextension-polyfill": "^0.10.0",
     "autoprefixer": "^10.4.13",
     "eslint-plugin-react-hooks": "^5.2.0",
-    "postcss": "^8.4.20",
+    "postcss": "^8.5.10",
     "prettier-plugin-tailwindcss": "^0.5.4",
     "tailwindcss": "^3.2.4",
     "typescript": "^5.9.3",
