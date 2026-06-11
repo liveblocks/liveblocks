@@ -6,7 +6,7 @@ import type {
   InboxNotificationData,
   NotificationSettingsPlain,
   PartialNotificationSettings,
-  Permission,
+  RoomPermissions,
   RoomSubscriptionSettings,
   SubscriptionData,
   ThreadData,
@@ -26,7 +26,7 @@ export function mockGetThreads(
       meta: {
         nextCursor: string | null;
         requestedAt: string;
-        permissionHints: Record<string, Permission[]>;
+        permissionHints: Record<string, RoomPermissions>;
       };
     }
   >

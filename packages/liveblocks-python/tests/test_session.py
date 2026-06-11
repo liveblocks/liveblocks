@@ -5,8 +5,8 @@ import pytest
 
 from liveblocks.client import AsyncLiveblocks, Liveblocks
 
-P1 = "room:read"
-P2 = "room:write"
+P1 = "*:read"
+P2 = "*:write"
 P3 = "comments:read"
 
 
@@ -37,13 +37,13 @@ class TestPermissions:
     def test_full_access_permissions(self):
         session = make_session()
         assert session.allow("xyz", session.FULL_ACCESS)._serialize_permissions() == {
-            "xyz": ["room:write"],
+            "xyz": ["*:write"],
         }
 
     def test_read_access_permissions(self):
         session = make_session()
         assert session.allow("xyz", session.READ_ACCESS)._serialize_permissions() == {
-            "xyz": ["room:read"],
+            "xyz": ["*:read"],
         }
 
     def test_raises_on_empty_room_name(self):

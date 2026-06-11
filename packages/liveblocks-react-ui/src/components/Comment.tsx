@@ -15,7 +15,7 @@ import {
   useAddRoomCommentReaction,
   useDeleteRoomComment,
   useEditRoomComment,
-  useHasPermissionCapability,
+  useHasPermissionAccess,
   useRemoveRoomCommentReaction,
   useRoomAttachmentUrl,
 } from "@liveblocks/react/_private";
@@ -734,7 +734,7 @@ export const Comment = Object.assign(
         return separateMediaAttachments(comment.attachments);
       }, [comment.attachments]);
 
-      const canComment = useHasPermissionCapability(
+      const canComment = useHasPermissionAccess(
         comment.roomId,
         "comments",
         "write"

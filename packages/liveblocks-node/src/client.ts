@@ -45,11 +45,7 @@ import type {
   QueryMetadata,
   QueryParams,
   RoomAccesses,
-  RoomAccessesInput,
-  RoomAccessesUpdateInput,
-  RoomPermission,
-  RoomPermissionInput,
-  RoomPermissionObject,
+  RoomPermissions,
   RoomSubscriptionSettings,
   StorageNode,
   StorageUpdate,
@@ -78,9 +74,8 @@ import {
   isPlainObject,
   LiveObject,
   makeAbortController,
-  normalizeRoomAccessesInput,
-  normalizeRoomAccessesUpdateInput,
-  normalizeRoomPermissionInput,
+  normalizeRoomAccesses,
+  normalizeRoomPermissions,
   objectToQuery,
   tryParseJson,
   url,
@@ -182,12 +177,6 @@ export type CreateCommentOptions<CM extends BaseMetadata> = {
   } & PartialUnless<CM, { metadata: CM }>;
 };
 
-export type {
-  RoomAccesses,
-  RoomPermission,
-  RoomPermissionInput,
-  RoomPermissionObject,
-};
 export type RoomMetadata = Record<string, string | string[]>;
 type QueryRoomMetadata = Record<string, string>;
 
@@ -197,7 +186,7 @@ export type RoomData = {
   createdAt: Date;
   lastConnectionAt?: Date;
   organizationId: string;
-  defaultAccesses: RoomPermission;
+  defaultAccesses: RoomPermissions;
   usersAccesses: RoomAccesses;
   groupsAccesses: RoomAccesses;
   metadata: RoomMetadata;
@@ -471,9 +460,9 @@ export type GetInboxNotificationsOptions =
   & PaginationOptions;
 
 export type CreateRoomOptions = {
-  defaultAccesses: RoomPermissionInput;
-  groupsAccesses?: RoomAccessesInput;
-  usersAccesses?: RoomAccessesInput;
+  defaultAccesses: RoomPermissions;
+  groupsAccesses?: RoomAccesses;
+  usersAccesses?: RoomAccesses;
   metadata?: RoomMetadata;
   /**
    * @deprecated Use `organizationId` instead.
@@ -489,9 +478,9 @@ export type CreateRoomOptions = {
 };
 
 export type UpdateRoomOptions = {
-  defaultAccesses?: RoomPermissionInput | null;
-  groupsAccesses?: RoomAccessesUpdateInput;
-  usersAccesses?: RoomAccessesUpdateInput;
+  defaultAccesses?: RoomPermissions | null;
+  groupsAccesses?: RoomAccesses;
+  usersAccesses?: RoomAccesses;
   metadata?: Record<string, string | string[] | null>;
 };
 
@@ -504,7 +493,7 @@ type NormalizedCreateRoomOptions = Omit<
   CreateRoomOptions,
   "defaultAccesses" | "groupsAccesses" | "usersAccesses"
 > & {
-  defaultAccesses: RoomPermission;
+  defaultAccesses: RoomPermissions;
   groupsAccesses?: RoomAccesses;
   usersAccesses?: RoomAccesses;
 };
@@ -513,9 +502,9 @@ type NormalizedUpdateRoomOptions = Omit<
   UpdateRoomOptions,
   "defaultAccesses" | "groupsAccesses" | "usersAccesses"
 > & {
-  defaultAccesses?: RoomPermission | null;
-  groupsAccesses?: Record<string, RoomPermission | null>;
-  usersAccesses?: Record<string, RoomPermission | null>;
+  defaultAccesses?: RoomPermissions | null;
+  groupsAccesses?: RoomAccesses;
+  usersAccesses?: RoomAccesses;
 };
 
 type NormalizedUpsertRoomOptions = {
@@ -742,9 +731,9 @@ function normalizeCreateRoomOptions(
 ): NormalizedCreateRoomOptions {
   return {
     ...options,
-    defaultAccesses: normalizeRoomPermissionInput(options.defaultAccesses),
-    groupsAccesses: normalizeRoomAccessesInput(options.groupsAccesses),
-    usersAccesses: normalizeRoomAccessesInput(options.usersAccesses),
+    defaultAccesses: normalizeRoomPermissions(options.defaultAccesses),
+    groupsAccesses: normalizeRoomAccesses(options.groupsAccesses),
+    usersAccesses: normalizeRoomAccesses(options.usersAccesses),
   };
 }
 
@@ -756,9 +745,9 @@ function normalizeUpdateRoomOptions(
     defaultAccesses:
       options.defaultAccesses === undefined || options.defaultAccesses === null
         ? options.defaultAccesses
-        : normalizeRoomPermissionInput(options.defaultAccesses),
-    groupsAccesses: normalizeRoomAccessesUpdateInput(options.groupsAccesses),
-    usersAccesses: normalizeRoomAccessesUpdateInput(options.usersAccesses),
+        : normalizeRoomPermissions(options.defaultAccesses),
+    groupsAccesses: normalizeRoomAccesses(options.groupsAccesses),
+    usersAccesses: normalizeRoomAccesses(options.usersAccesses),
   };
 }
 
@@ -1172,7 +1161,7 @@ export class Liveblocks {
 
     const body: {
       id: string;
-      defaultAccesses: RoomPermission;
+      defaultAccesses: RoomPermissions;
       groupsAccesses?: RoomAccesses;
       usersAccesses?: RoomAccesses;
       metadata?: RoomMetadata;

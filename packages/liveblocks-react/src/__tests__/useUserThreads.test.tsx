@@ -1,5 +1,6 @@
 import type {
   InboxNotificationData,
+  RoomPermissions,
   SubscriptionData,
   ThreadData,
   ThreadDataWithDeleteInfo,
@@ -54,7 +55,7 @@ function mockGetUserThreads(
       meta: {
         nextCursor: string | null;
         requestedAt: string;
-        permissionHints: Record<string, Permission[]>;
+        permissionHints: Record<string, RoomPermissions>;
       };
     }
   >
@@ -75,7 +76,7 @@ function mockGetUserThreadsDelta(
       deletedSubscriptions: SubscriptionData[];
       meta: {
         requestedAt: string; // ISO date
-        permissionHints: Record<string, Permission[]>;
+        permissionHints: Record<string, RoomPermissions>;
       };
     }
   >

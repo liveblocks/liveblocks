@@ -2,8 +2,8 @@ import { describe, expect, test } from "vitest";
 
 import { Liveblocks } from "../client";
 
-const P1 = "room:read";
-const P2 = "room:write";
+const P1 = "*:read";
+const P2 = "*:write";
 const P3 = "comments:read";
 // const P4 = "comments:write";
 
@@ -69,7 +69,7 @@ describe("authorization (new API)", () => {
     expect(
       session.allow("xyz", session.FULL_ACCESS).serializePermissions()
     ).toEqual({
-      xyz: ["room:write"],
+      xyz: ["*:write"],
     });
   });
 
@@ -78,43 +78,17 @@ describe("authorization (new API)", () => {
     expect(
       session.allow("xyz", session.READ_ACCESS).serializePermissions()
     ).toEqual({
-      xyz: ["room:read"],
+      xyz: ["*:read"],
     });
   });
 
-  test("can assign object notation permissions", () => {
-    expect(
-      makeSession()
-        .allow("xyz", { default: "read", storage: "none" })
-        .serializePermissions()
-    ).toEqual({
-      xyz: ["room:read", "room:storage:none"],
-    });
-  });
-
-  test("rejects invalid object notation permissions", () => {
+  test("rejects non-array permissions", () => {
     expect(() =>
       makeSession()
-        .allow("xyz", {
-          // @ts-expect-error - Deliberate incorrect value
-          default: "none",
-        })
+        // @ts-expect-error - Deliberate incorrect value
+        .allow("xyz", { default: "none" })
         .serializePermissions()
-    ).toThrow('Invalid permission level for default: "none"');
-
-    expect(() => makeSession().allow("xyz", {})).toThrow(
-      "Permission object cannot be empty"
-    );
-
-    expect(() =>
-      makeSession()
-        .allow("xyz", {
-          default: "write",
-          // @ts-expect-error - Deliberate misspelled field
-          storag: "none",
-        })
-        .serializePermissions()
-    ).toThrow("Unknown permission field: storag");
+    ).toThrow("Permission list must be an array");
   });
 
   test("throws when no room name", () => {
@@ -197,20 +171,20 @@ describe("authorization (new API)", () => {
   test("permissions are preserved when adding defaults and resource-specific values", () => {
     expect(
       makeSession()
-        .allow("r", { default: "write", storage: "none" })
-        .allow("r", { storage: "read" })
+        .allow("r", ["*:write", "storage:none"])
+        .allow("r", ["storage:read"])
         .serializePermissions()
     ).toEqual({
-      r: ["room:write", "room:storage:none", "room:storage:read"],
+      r: ["*:write", "storage:none", "storage:read"],
     });
 
     expect(
       makeSession()
-        .allow("r", { default: "write", storage: "none" })
-        .allow("r", ["room:write"])
+        .allow("r", ["*:write", "storage:none"])
+        .allow("r", ["*:write"])
         .serializePermissions()
     ).toEqual({
-      r: ["room:write", "room:storage:none"],
+      r: ["*:write", "storage:none"],
     });
   });
 

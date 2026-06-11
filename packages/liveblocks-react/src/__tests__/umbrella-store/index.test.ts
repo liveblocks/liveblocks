@@ -111,7 +111,7 @@ describe("Umbrella Store", () => {
     expect(permissionHintΣ.get()?.permissions.comments).toBe("write");
 
     store.permissionHints.update(
-      { "room-a": [Permission.RoomWrite, Permission.RoomCommentsNone] },
+      { "room-a": [Permission.Write, Permission.CommentsNone] },
       new Date("2026-01-01T00:00:01.000Z")
     );
     expect(permissionHintΣ.get()?.permissions.comments).toBe("none");
@@ -123,7 +123,7 @@ describe("Umbrella Store", () => {
       store.permissionHints.getPermissionForRoomΣ("room-a");
 
     store.permissionHints.update(
-      { "room-a": [Permission.RoomWrite, Permission.RoomCommentsNone] },
+      { "room-a": [Permission.Write, Permission.CommentsNone] },
       new Date("2026-01-01T00:00:01.000Z")
     );
     store.permissionHints.update(

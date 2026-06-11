@@ -11,49 +11,43 @@ if TYPE_CHECKING:
     from liveblocks.models.authorize_user_response import AuthorizeUserResponse
 
 Permission = Literal[
+    "*:read",
+    "*:write",
     "room:write",
     "room:read",
-    "room:presence:read",
-    "room:presence:none",
-    "room:storage:read",
-    "room:storage:write",
-    "room:storage:none",
-    "room:comments:write",
-    "room:comments:read",
-    "room:comments:none",
-    "room:feeds:read",
-    "room:feeds:write",
-    "room:feeds:none",
     "room:presence:write",
-    "comments:write",
+    "storage:read",
+    "storage:write",
+    "storage:none",
     "comments:read",
+    "comments:write",
+    "comments:none",
+    "feeds:read",
     "feeds:write",
+    "feeds:none",
 ]
 
 ALL_PERMISSIONS: frozenset[str] = frozenset(
     [
+        "*:read",
+        "*:write",
         "room:write",
         "room:read",
-        "room:presence:read",
-        "room:presence:none",
-        "room:storage:read",
-        "room:storage:write",
-        "room:storage:none",
-        "room:comments:write",
-        "room:comments:read",
-        "room:comments:none",
-        "room:feeds:read",
-        "room:feeds:write",
-        "room:feeds:none",
         "room:presence:write",
-        "comments:write",
+        "storage:read",
+        "storage:write",
+        "storage:none",
         "comments:read",
+        "comments:write",
+        "comments:none",
+        "feeds:read",
         "feeds:write",
+        "feeds:none",
     ]
 )
 
-READ_ACCESS: tuple[Permission, ...] = ("room:read",)
-FULL_ACCESS: tuple[Permission, ...] = ("room:write",)
+READ_ACCESS: tuple[Permission, ...] = ("*:read",)
+FULL_ACCESS: tuple[Permission, ...] = ("*:write",)
 
 _MAX_PERMS_PER_SET = 10
 _ROOM_PATTERN_RE = re.compile(r"^([*]|[^*]{1,128}[*]?)$")

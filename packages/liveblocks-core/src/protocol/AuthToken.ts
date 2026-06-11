@@ -1,10 +1,10 @@
 import { isPlainObject } from "../lib/guards";
 import type { Json } from "../lib/Json";
 import { b64decode, tryParseJson } from "../lib/utils";
+import type { RoomPermissions } from "../permissions";
 import type { IUserInfo } from "./BaseUserMeta";
-import type { Permission } from "./Permissions";
 
-export type LiveblocksPermissions = Record<string, Permission[]>;
+export type LiveblocksPermissions = Record<string, RoomPermissions>;
 
 export enum TokenKind {
   ACCESS_TOKEN = "acc",

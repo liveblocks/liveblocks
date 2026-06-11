@@ -653,7 +653,7 @@ describe("client", () => {
       });
     });
 
-    test("should normalize object notation access fields", async () => {
+    test("should send granular access fields", async () => {
       const roomId = "test-room";
       let capturedRequestData: unknown = null;
 
@@ -666,23 +666,23 @@ describe("client", () => {
 
       const client = new Liveblocks({ secret: "sk_xxx" });
       await client.createRoom(roomId, {
-        defaultAccesses: { default: "read", storage: "none" },
+        defaultAccesses: ["*:read", "storage:none"],
         groupsAccesses: {
-          marketing: { comments: "write", feeds: "none" },
+          marketing: ["*:read", "comments:write", "feeds:none"],
         },
         usersAccesses: {
-          alice: { default: "write", comments: "none" },
+          alice: ["*:write", "comments:none"],
         },
       });
 
       expect(capturedRequestData).toEqual({
         id: roomId,
-        defaultAccesses: ["room:read", "room:storage:none"],
+        defaultAccesses: ["*:read", "storage:none"],
         groupsAccesses: {
-          marketing: ["room:comments:write", "room:feeds:none"],
+          marketing: ["*:read", "comments:write", "feeds:none"],
         },
         usersAccesses: {
-          alice: ["room:write", "room:comments:none"],
+          alice: ["*:write", "comments:none"],
         },
         metadata: undefined,
       });
@@ -690,7 +690,7 @@ describe("client", () => {
   });
 
   describe("update room", () => {
-    test("should normalize object notation access fields and preserve null deletions", async () => {
+    test("should send granular access fields and preserve null deletions", async () => {
       const roomId = "test-room";
       let capturedRequestData: unknown = null;
 
@@ -706,22 +706,22 @@ describe("client", () => {
 
       const client = new Liveblocks({ secret: "sk_xxx" });
       await client.updateRoom(roomId, {
-        defaultAccesses: { default: "write", storage: "none" },
+        defaultAccesses: ["*:write", "storage:none"],
         groupsAccesses: {
           marketing: null,
         },
         usersAccesses: {
-          alice: { comments: "read" },
+          alice: ["*:read", "comments:read"],
         },
       });
 
       expect(capturedRequestData).toEqual({
-        defaultAccesses: ["room:write", "room:storage:none"],
+        defaultAccesses: ["*:write", "storage:none"],
         groupsAccesses: {
           marketing: null,
         },
         usersAccesses: {
-          alice: ["room:comments:read"],
+          alice: ["*:read", "comments:read"],
         },
         metadata: undefined,
       });
@@ -729,7 +729,7 @@ describe("client", () => {
   });
 
   describe("upsert room", () => {
-    test("should normalize object notation in update and create params", async () => {
+    test("should send granular permissions in update and create params", async () => {
       const roomId = "test-room";
       let capturedRequestData: unknown = null;
 
@@ -747,22 +747,22 @@ describe("client", () => {
       await client.upsertRoom(roomId, {
         update: {
           usersAccesses: {
-            alice: { storage: "none" },
+            alice: ["*:write", "storage:none"],
           },
         },
         create: {
-          defaultAccesses: { default: "read", comments: "write" },
+          defaultAccesses: ["*:read", "comments:write"],
         },
       });
 
       expect(capturedRequestData).toEqual({
         update: {
           usersAccesses: {
-            alice: ["room:storage:none"],
+            alice: ["*:write", "storage:none"],
           },
         },
         create: {
-          defaultAccesses: ["room:read", "room:comments:write"],
+          defaultAccesses: ["*:read", "comments:write"],
         },
       });
     });

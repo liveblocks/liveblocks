@@ -2,13 +2,17 @@ import { freeze } from "../lib/freeze";
 import type { JsonObject } from "../lib/Json";
 import { DerivedSignal, merge, MutableSignal } from "../lib/signals";
 import { compact, compactObject } from "../lib/utils";
+import {
+  hasPermissionAccess,
+  type PermissionMatrix,
+  permissionMatrixFromScopes,
+} from "../permissions";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
-import { hasPermissionCapability } from "../protocol/Permissions";
 import type { User } from "../types/User";
 
 type Connection<U extends BaseUserMeta> = {
   readonly connectionId: number;
-  readonly scopes: string[];
+  readonly permissionMatrix: PermissionMatrix;
   readonly id: U["id"];
   readonly info: U["info"];
 };
@@ -18,14 +22,22 @@ function makeUser<P extends JsonObject, U extends BaseUserMeta>(
   presence: P
 ): User<P, U> {
   const { connectionId, id, info } = conn;
-  const canWrite = hasPermissionCapability(conn.scopes, "storage", "write");
+  const canWrite = hasPermissionAccess(
+    conn.permissionMatrix,
+    "storage",
+    "write"
+  );
   return freeze(
     compactObject({
       connectionId,
       id,
       info,
       canWrite,
-      canComment: hasPermissionCapability(conn.scopes, "comments", "write"),
+      canComment: hasPermissionAccess(
+        conn.permissionMatrix,
+        "comments",
+        "write"
+      ),
       isReadOnly: !canWrite, // Deprecated, kept for backward-compatibility
       presence,
     })
@@ -127,7 +139,7 @@ export class ManagedOthers<P extends JsonObject, U extends BaseUserMeta> {
           connectionId,
           id: metaUserId,
           info: metaUserInfo,
-          scopes,
+          permissionMatrix: permissionMatrixFromScopes(scopes),
         })
       );
       if (!state.presences.has(connectionId)) {

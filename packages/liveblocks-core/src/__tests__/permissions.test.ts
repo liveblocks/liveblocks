@@ -1,20 +1,19 @@
 import { describe, expect, test } from "vitest";
 
 import {
-  hasPermissionCapability,
-  mergePermissionCapabilities,
-  normalizeRoomPermissionInput,
+  hasPermissionAccess,
+  mergePermissionMatrices,
+  mergeRoomPermissionScopes,
   Permission,
-  permissionCapabilitiesFromScopes,
-  permissionCapabilitiesToScopes,
-  resolveRoomPermissionCapabilities,
+  permissionMatrixFromScopes,
+  permissionMatrixToScopes,
+  resolveRoomPermissionMatrix,
 } from "../permissions";
 
-describe("permissionCapabilitiesFromScopes", () => {
-  test("resolves room read", () => {
-    expect(permissionCapabilitiesFromScopes([Permission.RoomRead])).toEqual({
-      creation: "read",
-      presence: "read",
+describe("permissionMatrixFromScopes", () => {
+  test("resolves read access", () => {
+    expect(permissionMatrixFromScopes([Permission.Read])).toEqual({
+      room: "read",
       storage: "read",
       comments: "read",
       feeds: "read",
@@ -22,10 +21,9 @@ describe("permissionCapabilitiesFromScopes", () => {
     });
   });
 
-  test("resolves room write", () => {
-    expect(permissionCapabilitiesFromScopes([Permission.RoomWrite])).toEqual({
-      creation: "write",
-      presence: "write",
+  test("resolves write access", () => {
+    expect(permissionMatrixFromScopes([Permission.Write])).toEqual({
+      room: "write",
       storage: "write",
       comments: "write",
       feeds: "write",
@@ -33,86 +31,112 @@ describe("permissionCapabilitiesFromScopes", () => {
     });
   });
 
+  test("resolves room read and write as aliases", () => {
+    expect(permissionMatrixFromScopes([Permission.RoomRead])).toEqual(
+      permissionMatrixFromScopes([Permission.Read])
+    );
+    expect(permissionMatrixFromScopes([Permission.RoomWrite])).toEqual(
+      permissionMatrixFromScopes([Permission.Write])
+    );
+  });
+
   test("allows resource opt-outs from a room default", () => {
     expect(
-      permissionCapabilitiesFromScopes([
-        Permission.RoomWrite,
-        Permission.RoomStorageNone,
-      ]).storage
+      permissionMatrixFromScopes([Permission.Write, Permission.StorageNone])
+        .storage
     ).toBe("none");
     expect(
-      permissionCapabilitiesFromScopes([
-        Permission.RoomWrite,
-        Permission.RoomCommentsNone,
-      ]).comments
+      permissionMatrixFromScopes([Permission.Write, Permission.CommentsNone])
+        .comments
     ).toBe("none");
   });
 
   test("uses the strongest same-resource access", () => {
     expect(
-      permissionCapabilitiesFromScopes([
-        Permission.RoomCommentsWrite,
-        Permission.RoomCommentsNone,
+      permissionMatrixFromScopes([
+        Permission.Write,
+        Permission.CommentsWrite,
+        Permission.CommentsNone,
       ]).comments
     ).toBe("write");
   });
 
   test("uses the strongest non-none explicit resource access", () => {
     expect(
-      permissionCapabilitiesFromScopes([
-        Permission.RoomCommentsRead,
-        Permission.RoomCommentsWrite,
+      permissionMatrixFromScopes([
+        Permission.Write,
+        Permission.CommentsRead,
+        Permission.CommentsWrite,
       ]).comments
     ).toBe("write");
   });
 
   test("allows read but not write when a resource is downgraded", () => {
-    const scopes = [Permission.RoomWrite, Permission.RoomCommentsRead];
+    const matrix = permissionMatrixFromScopes([
+      Permission.Write,
+      Permission.CommentsRead,
+    ]);
 
-    expect(hasPermissionCapability(scopes, "comments", "read")).toBe(true);
-    expect(hasPermissionCapability(scopes, "comments", "write")).toBe(false);
+    expect(hasPermissionAccess(matrix, "comments", "read")).toBe(true);
+    expect(hasPermissionAccess(matrix, "comments", "write")).toBe(false);
   });
 
-  test("supports deprecated permission strings", () => {
+  test("feature permissions require a base permission", () => {
     expect(
-      hasPermissionCapability(
-        [Permission.LegacyCommentsWrite],
+      hasPermissionAccess(
+        permissionMatrixFromScopes([Permission.CommentsWrite]),
         "comments",
         "write"
       )
-    ).toBe(true);
+    ).toBe(false);
     expect(
-      hasPermissionCapability(
-        [Permission.LegacyRoomPresenceWrite],
-        "presence",
+      hasPermissionAccess(
+        permissionMatrixFromScopes([Permission.LegacyRoomPresenceWrite]),
+        "room",
+        "write"
+      )
+    ).toBe(false);
+  });
+
+  test("does not grant personal access without a base permission", () => {
+    expect(permissionMatrixFromScopes([]).personal).toBe("none");
+    expect(
+      hasPermissionAccess(
+        permissionMatrixFromScopes([Permission.CommentsWrite]),
+        "personal",
+        "write"
+      )
+    ).toBe(false);
+  });
+
+  test("grants personal access with a base permission", () => {
+    expect(permissionMatrixFromScopes([Permission.Read]).personal).toBe(
+      "write"
+    );
+    expect(
+      hasPermissionAccess(
+        permissionMatrixFromScopes([Permission.Read]),
+        "personal",
         "write"
       )
     ).toBe(true);
   });
 
-  test("normalizes object notation permissions", () => {
-    expect(
-      normalizeRoomPermissionInput({
-        default: "write",
-        storage: "none",
-        comments: "read",
-      })
-    ).toEqual([
-      Permission.RoomWrite,
-      Permission.RoomStorageNone,
-      Permission.RoomCommentsRead,
-    ]);
+  test("returns a fresh matrix for each resolution", () => {
+    const first = permissionMatrixFromScopes([]);
+    first.room = "write";
+
+    expect(permissionMatrixFromScopes([]).room).toBe("none");
   });
 
-  test("resolves room capabilities from wildcard resources", () => {
+  test("resolves room permission matrix from wildcard resources", () => {
     expect(
-      resolveRoomPermissionCapabilities(
+      resolveRoomPermissionMatrix(
         [{ resource: "org1*", scopes: [Permission.RoomWrite] }],
         "org1.room1"
       )
     ).toEqual({
-      creation: "write",
-      presence: "write",
+      room: "write",
       storage: "write",
       comments: "write",
       feeds: "write",
@@ -122,10 +146,10 @@ describe("permissionCapabilitiesFromScopes", () => {
 
   test("combines matching room permissions by strongest resource access", () => {
     expect(
-      resolveRoomPermissionCapabilities(
+      resolveRoomPermissionMatrix(
         [
-          { resource: "org1*", scopes: [Permission.RoomStorageWrite] },
-          { resource: "org1.room1", scopes: [Permission.RoomStorageNone] },
+          { resource: "org1*", scopes: [Permission.Write] },
+          { resource: "org1.room1", scopes: [Permission.StorageWrite] },
         ],
         "org1.room1"
       )?.storage
@@ -133,22 +157,22 @@ describe("permissionCapabilitiesFromScopes", () => {
   });
 
   test("lets exact room opt-outs override wildcard defaults without clearing other resources", () => {
-    const capabilities = resolveRoomPermissionCapabilities(
+    const matrix = resolveRoomPermissionMatrix(
       [
-        { resource: "org1*", scopes: [Permission.RoomWrite] },
-        { resource: "org1.room1", scopes: [Permission.RoomStorageNone] },
+        { resource: "org1*", scopes: [Permission.Write] },
+        { resource: "org1.room1", scopes: [Permission.StorageNone] },
       ],
       "org1.room1"
     );
 
-    expect(capabilities?.presence).toBe("write");
-    expect(capabilities?.comments).toBe("write");
-    expect(capabilities?.storage).toBe("none");
+    expect(matrix?.room).toBe("write");
+    expect(matrix?.comments).toBe("write");
+    expect(matrix?.storage).toBe("none");
   });
 
   test("returns undefined when no room permissions match", () => {
     expect(
-      resolveRoomPermissionCapabilities(
+      resolveRoomPermissionMatrix(
         [{ resource: "org2*", scopes: [Permission.RoomWrite] }],
         "org1.room1"
       )
@@ -156,30 +180,130 @@ describe("permissionCapabilitiesFromScopes", () => {
   });
 });
 
-describe("permission capability helpers", () => {
-  test("merges capabilities by taking the strongest access per resource", () => {
-    const capabilities = mergePermissionCapabilities([
-      permissionCapabilitiesFromScopes([Permission.RoomWrite]),
-      permissionCapabilitiesFromScopes([Permission.RoomStorageNone]),
+describe("permission matrix helpers", () => {
+  test("merges permission matrices by taking the strongest access per resource", () => {
+    const matrix = mergePermissionMatrices([
+      permissionMatrixFromScopes([]),
+      permissionMatrixFromScopes([Permission.Write]),
+      permissionMatrixFromScopes([Permission.Write, Permission.StorageNone]),
     ]);
 
-    expect(capabilities.storage).toBe("write");
+    expect(matrix.storage).toBe("write");
+    expect(matrix.personal).toBe("write");
   });
 
-  test("serializes permission capabilities to minimal scopes", () => {
+  test("serializes permission matrix to minimal scopes", () => {
     expect(
-      permissionCapabilitiesToScopes({
-        creation: "read",
-        presence: "write",
+      permissionMatrixToScopes({
+        room: "read",
         storage: "none",
         comments: "read",
         feeds: "read",
         personal: "write",
       })
-    ).toEqual([
-      Permission.RoomRead,
-      Permission.LegacyRoomPresenceWrite,
-      Permission.RoomStorageNone,
-    ]);
+    ).toEqual([Permission.Read, Permission.StorageNone]);
+  });
+});
+
+describe("mergeRoomPermissionScopes", () => {
+  test("uses room defaults when no group or user overrides exist", () => {
+    expect(
+      mergeRoomPermissionScopes({
+        defaultAccesses: [
+          Permission.RoomRead,
+          Permission.LegacyRoomPresenceWrite,
+        ],
+        groupsAccesses: [],
+      })
+    ).toEqual([Permission.Read]);
+  });
+
+  test("picks the highest access level per feature across sources", () => {
+    expect(
+      permissionMatrixFromScopes(
+        mergeRoomPermissionScopes({
+          defaultAccesses: [Permission.Read],
+          groupsAccesses: [[Permission.Read, Permission.CommentsRead]],
+          userAccesses: [Permission.Read, Permission.StorageWrite],
+        })
+      )
+    ).toEqual({
+      room: "read",
+      storage: "write",
+      comments: "read",
+      feeds: "read",
+      personal: "write",
+    });
+  });
+
+  test("user write beats default read on the same feature", () => {
+    expect(
+      permissionMatrixFromScopes(
+        mergeRoomPermissionScopes({
+          defaultAccesses: [Permission.Read],
+          groupsAccesses: [],
+          userAccesses: [Permission.Read, Permission.CommentsWrite],
+        })
+      ).comments
+    ).toBe("write");
+  });
+
+  test("group write beats user read on the same feature", () => {
+    expect(
+      permissionMatrixFromScopes(
+        mergeRoomPermissionScopes({
+          defaultAccesses: [Permission.Read],
+          groupsAccesses: [[Permission.Read, Permission.CommentsWrite]],
+          userAccesses: [Permission.Read, Permission.CommentsRead],
+        })
+      ).comments
+    ).toBe("write");
+  });
+
+  test("merges multiple groups by taking the highest level per feature", () => {
+    expect(
+      permissionMatrixFromScopes(
+        mergeRoomPermissionScopes({
+          defaultAccesses: [],
+          groupsAccesses: [
+            [Permission.Read, Permission.StorageRead],
+            [Permission.Read, Permission.StorageWrite],
+          ],
+        })
+      ).storage
+    ).toBe("write");
+  });
+
+  test("does not let a source-specific none downgrade a higher default", () => {
+    expect(
+      permissionMatrixFromScopes(
+        mergeRoomPermissionScopes({
+          defaultAccesses: [Permission.Write],
+          groupsAccesses: [],
+          userAccesses: [Permission.Read, Permission.StorageNone],
+        })
+      ).storage
+    ).toBe("write");
+  });
+
+  test("explicit none on all sources grants no access", () => {
+    expect(
+      permissionMatrixFromScopes(
+        mergeRoomPermissionScopes({
+          defaultAccesses: [Permission.Write, Permission.StorageNone],
+          groupsAccesses: [],
+        })
+      ).storage
+    ).toBe("none");
+  });
+
+  test("handles mixed legacy and new base aliases", () => {
+    expect(
+      mergeRoomPermissionScopes({
+        defaultAccesses: [Permission.RoomRead],
+        groupsAccesses: [[Permission.Write, Permission.CommentsNone]],
+        userAccesses: [Permission.Read, Permission.StorageWrite],
+      })
+    ).toEqual([Permission.Write, Permission.CommentsRead]);
   });
 });

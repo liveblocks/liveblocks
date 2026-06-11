@@ -2,14 +2,10 @@ import type {
   IUserInfo,
   Json,
   JsonObject,
-  RoomPermissionInput,
+  RoomPermissions,
   URLSafeString,
 } from "@liveblocks/core";
-import {
-  normalizeRoomPermissionInput,
-  Permission,
-  url,
-} from "@liveblocks/core";
+import { normalizeRoomPermissions, Permission, url } from "@liveblocks/core";
 
 import type { AuthResponse } from "./client";
 import { assertNonEmpty, normalizeStatusCode } from "./utils";
@@ -21,13 +17,13 @@ const MAX_PERMS_PER_SET = 10;
  * read permissions to the room. (Note that the user will still have permissions
  * to update their own presence.)
  */
-const READ_ACCESS = Object.freeze([Permission.RoomRead] as const);
+const READ_ACCESS = Object.freeze([Permission.Read] as const);
 
 /**
  * Assign this to a room (or wildcard pattern) if you want to grant the user
  * permissions to read and write to the room.
  */
-const FULL_ACCESS = Object.freeze([Permission.RoomWrite] as const);
+const FULL_ACCESS = Object.freeze([Permission.Write] as const);
 
 const roomPatternRegex = /^([*]|[^*]{1,128}[*]?)$/;
 
@@ -57,9 +53,6 @@ type PostFn = (path: URLSafeString, json: Json) => Promise<Response>;
  * You can define at most 10 room IDs (or patterns) in a single token,
  * otherwise the token would become too large and unwieldy.
  *
- * You can also use object notation for resource-specific access:
- *
- *    session.allow('my-room', { default: 'write', storage: 'none' })
  */
 export class Session {
   public readonly FULL_ACCESS = FULL_ACCESS;
@@ -112,7 +105,7 @@ export class Session {
     }
   }
 
-  public allow(roomIdOrPattern: string, newPerms: RoomPermissionInput): this {
+  public allow(roomIdOrPattern: string, newPerms: RoomPermissions): this {
     if (typeof roomIdOrPattern !== "string") {
       throw new Error("Room name or pattern must be a string");
     }
@@ -120,7 +113,7 @@ export class Session {
       throw new Error("Invalid room name or pattern");
     }
 
-    const normalizedPermissions = normalizeRoomPermissionInput(newPerms);
+    const normalizedPermissions = normalizeRoomPermissions(newPerms);
 
     if (normalizedPermissions.length === 0) {
       throw new Error("Permission list cannot be empty");

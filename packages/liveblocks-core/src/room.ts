@@ -52,8 +52,8 @@ import {
   partition,
   tryParseJson,
 } from "./lib/utils";
-import type { Permission } from "./permissions";
-import { hasPermissionCapability } from "./permissions";
+import type { PermissionMatrix, RoomPermissions } from "./permissions";
+import { hasPermissionAccess, permissionMatrixFromScopes } from "./permissions";
 import type {
   ContextualPromptContext,
   ContextualPromptResponse,
@@ -921,7 +921,7 @@ export type Room<
     subscriptions: SubscriptionData[];
     requestedAt: Date;
     nextCursor: string | null;
-    permissionHints: Record<string, Permission[]>;
+    permissionHints: Record<string, RoomPermissions>;
   }>;
 
   /**
@@ -946,7 +946,7 @@ export type Room<
       deleted: SubscriptionDeleteInfo[];
     };
     requestedAt: Date;
-    permissionHints: Record<string, Permission[]>;
+    permissionHints: Record<string, RoomPermissions>;
   }>;
 
   /**
@@ -1293,7 +1293,7 @@ export type StaticSessionInfo = {
 export type DynamicSessionInfo = {
   readonly actor: number;
   readonly nonce: string;
-  readonly scopes: string[];
+  readonly permissionMatrix: PermissionMatrix;
   readonly meta: JsonObject;
 };
 
@@ -1778,10 +1778,11 @@ export function createRoom<
   }
 
   function isStorageWritable(): boolean {
-    const scopes = context.dynamicSessionInfoSig.get()?.scopes;
+    const permissionMatrix =
+      context.dynamicSessionInfoSig.get()?.permissionMatrix;
     // If we aren't connected yet, assume we can write
-    return scopes !== undefined
-      ? hasPermissionCapability(scopes, "storage", "write")
+    return permissionMatrix !== undefined
+      ? hasPermissionAccess(permissionMatrix, "storage", "write")
       : true;
   }
 
@@ -1863,8 +1864,8 @@ export function createRoom<
       if (staticSession === null || dynamicSession === null) {
         return null;
       } else {
-        const canWrite = hasPermissionCapability(
-          dynamicSession.scopes,
+        const canWrite = hasPermissionAccess(
+          dynamicSession.permissionMatrix,
           "storage",
           "write"
         );
@@ -1874,8 +1875,8 @@ export function createRoom<
           info: staticSession.userInfo,
           presence: myPresence,
           canWrite,
-          canComment: hasPermissionCapability(
-            dynamicSession.scopes,
+          canComment: hasPermissionAccess(
+            dynamicSession.permissionMatrix,
             "comments",
             "write"
           ),
@@ -2292,7 +2293,7 @@ export function createRoom<
     context.dynamicSessionInfoSig.set({
       actor: message.actor,
       nonce: message.nonce,
-      scopes: message.scopes,
+      permissionMatrix: permissionMatrixFromScopes(message.scopes),
       meta: message.meta,
     });
     context.idFactory = makeIdFactory(message.actor);
@@ -3826,7 +3827,9 @@ export function createRoom<
 
       _dump: () => {
         const n = context.pool.nodes.size;
-        return `Room "${roomId}" (${n} node${n === 1 ? "" : "s"}):\n${dumpPool(context.pool)}`;
+        return `Room "${roomId}" (${n} node${n === 1 ? "" : "s"}):\n${dumpPool(
+          context.pool
+        )}`;
       },
       destroy: () => {
         pendingFeedsRequests.forEach((request) =>
@@ -4103,10 +4106,10 @@ export function makeAuthDelegateForRoom(
   authManager: AuthManager
 ): () => Promise<AuthValue> {
   return async () => {
-    // Websocket connect only needs presence read, not full room default access.
+    // Websocket connect needs base room access. Presence itself is not configurable.
     return authManager.getAuthValue({
       roomId,
-      resource: "presence",
+      resource: "room",
       access: "read",
     });
   };
