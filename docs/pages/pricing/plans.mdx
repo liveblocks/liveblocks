@@ -5,17 +5,18 @@ meta:
   description: "Learn about the different plans available on Liveblocks."
 ---
 
-Liveblocks offers three plans: Free, Pro, and Enterprise. Each plan is designed
-to meet the needs of different types of developers, from personal projects to
-large enterprises.
+Liveblocks offers four plans: Free, Pro, Team, and Enterprise. Each plan is
+designed to meet the needs of different types of developers, from personal
+projects to large enterprises.
 
 ## Free
 
 The Free plan is ideal for personal projects, prototyping, and testing. It
 includes access to Liveblocks’ collaboration infrastructure, ready-made features
 (Comments, Multiplayer, AI Agents, Notifications), and pre-built components,
-with free monthly credits included. When you exceed your free limits, users
-won’t be able to join rooms.
+with free monthly credits included. When you exceed a meter’s included amount on
+Free, that feature pauses until your limits reset at the start of the next
+billing cycle.
 
 [Learn more about the Free plan](/docs/pricing/plans/free)
 
@@ -32,19 +33,19 @@ monthly credits.
 
 The Team plan is designed for teams shipping collaborative experiences in
 production with the ability to scale. It includes everything in Pro, plus SAML
-Single Sign-on (SSO), SOC 2, and a private Slack channel. Team starts at
+Single Sign-on (SSO), SOC 2, and a private Slack channel.
 
-<Limits.TeamMonthlyCredits /> monthly credits, and volume discounts can be
-applied by purchasing more credits. You can also request a HIPAA Business
-Associate Agreement (BAA) as a paid add-on.
+Team comes with <Limits.TeamMonthlyCredits /> monthly credits, and volume
+discounts can be applied by purchasing more credits. You can also request a
+HIPAA Business Associate Agreement (BAA) as a paid add-on.
 
 [Learn more about the Team plan](/docs/pricing/plans/team)
 
 ### Add-ons
 
-| Add-on    | Price                                                     |
-| --------- | --------------------------------------------------------- |
-| HIPAA BAA | $350 per month <InfoTooltip>Billed annually</InfoTooltip> |
+| Add-on    | Price                                                                                 |
+| --------- | ------------------------------------------------------------------------------------- |
+| HIPAA BAA | <Limits.HipaaBaaPricePerMonth /> per month <InfoTooltip>Billed annually</InfoTooltip> |
 
 ## Enterprise
 
@@ -58,6 +59,13 @@ SLAs and solution engineering.
 
 ## General billing information
 
+### How does pricing work?
+
+Each plan includes a monthly bundle of credits you spend across all features.
+Bundles reset at the start of each billing cycle and don't roll over. Once
+you've used your bundle, additional usage on Pro and Team is billed at
+pay-as-you-go rates. Free hits hard limits per feature instead.
+
 ### Where do I understand my usage?
 
 You can monitor usage for your projects on the [usage page](/dashboard/usage) of
@@ -70,8 +78,8 @@ their [usage limits](/docs/platform/limits).
 
 Free plans will be paused when they exceed the included free tier usage.
 
-For Pro and Enterprise plans, when you reach 100% usage your projects are not
-automatically stopped. Rather, Liveblocks continues billing metered usage as
+For Pro, Team, and Enterprise plans, when you reach 100% usage your projects are
+not automatically stopped. Rather, Liveblocks continues billing metered usage as
 your application grows. It’s important to be aware of
 [the usage page](/dashboard/usage) of your dashboard to see if you are
 approaching your limit.
