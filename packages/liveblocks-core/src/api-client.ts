@@ -343,7 +343,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     mentionId: string;
   }): Promise<void>;
 
-  getTextVersion({
+  getYjsHistoryVersion({
     roomId,
     versionId,
   }: {
@@ -351,7 +351,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     versionId: string;
   }): Promise<Response>;
 
-  createTextVersion({ roomId }: { roomId: string }): Promise<void>;
+  createVersionHistorySnapshot({ roomId }: { roomId: string }): Promise<void>;
 
   reportTextEditor({
     roomId,
@@ -363,12 +363,12 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     rootKey: string;
   }): Promise<void>;
 
-  listTextVersions({ roomId }: { roomId: string }): Promise<{
+  listHistoryVersions({ roomId }: { roomId: string }): Promise<{
     versions: HistoryVersion[];
     requestedAt: Date;
   }>;
 
-  listTextVersionsSince({
+  listHistoryVersionsSince({
     roomId,
     since,
     signal,
@@ -1330,7 +1330,7 @@ export function createApiClient<
     );
   }
 
-  async function getTextVersion(options: {
+  async function getYjsHistoryVersion(options: {
     roomId: string;
     versionId: string;
   }) {
@@ -1344,7 +1344,7 @@ export function createApiClient<
     );
   }
 
-  async function createTextVersion(options: { roomId: string }) {
+  async function createVersionHistorySnapshot(options: { roomId: string }) {
     await httpClient.rawPost(
       url`/v2/c/rooms/${options.roomId}/versions`,
       await authManager.getAuthValue({
@@ -1410,7 +1410,7 @@ export function createApiClient<
     return result.content[0].text;
   }
 
-  async function listTextVersions(options: { roomId: string }) {
+  async function listHistoryVersions(options: { roomId: string }) {
     const result = await httpClient.get<{
       versions: DateToString<HistoryVersion>[];
       meta: {
@@ -1436,7 +1436,7 @@ export function createApiClient<
     };
   }
 
-  async function listTextVersionsSince(options: {
+  async function listHistoryVersionsSince(options: {
     roomId: string;
     since: Date;
     signal?: AbortSignal;
@@ -1843,11 +1843,11 @@ export function createApiClient<
     // Room text editor
     createTextMention,
     deleteTextMention,
-    getTextVersion,
-    createTextVersion,
+    getYjsHistoryVersion,
+    createVersionHistorySnapshot,
     reportTextEditor,
-    listTextVersions,
-    listTextVersionsSince,
+    listHistoryVersions,
+    listHistoryVersionsSince,
     // Room attachments
     getAttachmentUrl,
     uploadAttachment,

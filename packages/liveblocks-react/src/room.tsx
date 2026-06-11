@@ -3103,7 +3103,7 @@ function useHistoryVersionData_withRoomContext(
     setState({ isLoading: true });
     const load = async () => {
       try {
-        const response = await room[kInternal].getTextVersion(versionId);
+        const response = await room[kInternal].getYjsHistoryVersion(versionId);
         const buffer = await response.arrayBuffer();
         const data = new Uint8Array(buffer);
         setState({

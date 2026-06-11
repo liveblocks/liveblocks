@@ -1245,17 +1245,19 @@ export type PrivateRoomApi = {
 
   createTextMention(mentionId: string, mention: MentionData): Promise<void>;
   deleteTextMention(mentionId: string): Promise<void>;
-  listTextVersions(): Promise<{
+
+  // Version History APIs
+  listHistoryVersions(): Promise<{
     versions: HistoryVersion[];
     requestedAt: Date;
   }>;
-  listTextVersionsSince(options: ListTextVersionsSinceOptions): Promise<{
+  listHistoryVersionsSince(options: ListTextVersionsSinceOptions): Promise<{
     versions: HistoryVersion[];
     requestedAt: Date;
   }>;
 
-  getTextVersion(versionId: string): Promise<Response>;
-  createTextVersion(): Promise<void>;
+  getYjsHistoryVersion(versionId: string): Promise<Response>;
+  createVersionHistorySnapshot(): Promise<void>;
 
   executeContextualPrompt(options: {
     prompt: string;
@@ -1828,24 +1830,24 @@ export function createRoom<
     await httpClient.reportTextEditor({ roomId, type, rootKey });
   }
 
-  async function listTextVersions() {
-    return httpClient.listTextVersions({ roomId });
+  async function listHistoryVersions() {
+    return httpClient.listHistoryVersions({ roomId });
   }
 
-  async function listTextVersionsSince(options: ListTextVersionsSinceOptions) {
-    return httpClient.listTextVersionsSince({
+  async function listHistoryVersionsSince(options: ListTextVersionsSinceOptions) {
+    return httpClient.listHistoryVersionsSince({
       roomId,
       since: options.since,
       signal: options.signal,
     });
   }
 
-  async function getTextVersion(versionId: string) {
-    return httpClient.getTextVersion({ roomId, versionId });
+  async function getYjsHistoryVersion(versionId: string) {
+    return httpClient.getYjsHistoryVersion({ roomId, versionId });
   }
 
-  async function createTextVersion() {
-    return httpClient.createTextVersion({ roomId });
+  async function createVersionHistorySnapshot() {
+    return httpClient.createVersionHistorySnapshot({ roomId });
   }
 
   async function executeContextualPrompt(options: {
@@ -3772,13 +3774,13 @@ export function createRoom<
         // delete a text mention when using a text editor
         deleteTextMention,
         // list versions of the document
-        listTextVersions,
+        listHistoryVersions,
         // List versions of the document since the specified date
-        listTextVersionsSince,
+        listHistoryVersionsSince,
         // get a specific version
-        getTextVersion,
+        getYjsHistoryVersion,
         // create a version
-        createTextVersion,
+        createVersionHistorySnapshot,
         // execute a contextual prompt
         executeContextualPrompt,
 
