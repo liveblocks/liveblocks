@@ -77,6 +77,8 @@ export type {
   ToJson,
   UploadAttachmentOptions,
   User,
+  Version,
+  VersionRef,
 } from "@liveblocks/core";
 export {
   createClient,

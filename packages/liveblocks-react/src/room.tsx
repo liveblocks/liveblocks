@@ -7,6 +7,7 @@ import type {
   FeedCreateMetadata,
   FeedUpdateMetadata,
   History,
+  HistoryVersion,
   Json,
   JsonObject,
   LiveObject,
@@ -17,6 +18,8 @@ import type {
   Status,
   ThreadData,
   User,
+  Version,
+  VersionRef,
 } from "@liveblocks/client";
 import { shallow } from "@liveblocks/client";
 import type {
@@ -77,6 +80,7 @@ import {
   useIsInsideRoom,
   useRoomOrNull,
 } from "./contexts";
+import { ASYNC_ERR, ASYNC_LOADING, ASYNC_OK } from "./lib/AsyncResult";
 import { ensureNotServerSide } from "./lib/ssr";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
@@ -116,6 +120,9 @@ import type {
   UseFeedsOptions,
   UseSearchCommentsOptions,
   UseThreadsOptions,
+  VersionAsyncResult,
+  VersionHistoryAsyncResult,
+  VersionHistoryAsyncSuccess,
 } from "./types";
 import type { UmbrellaStore } from "./umbrella-store";
 import {
@@ -3125,7 +3132,9 @@ function useHistoryVersionData_withRoomContext(
 }
 
 /**
- * Returns the version data bianry for a given version
+ * Returns the version data binary for a given version.
+ *
+ * @deprecated Use {@link useVersion} instead, and read `.data.yjs`.
  *
  * @example
  * const {data} = useHistoryVersionData(versionId);
@@ -3134,6 +3143,43 @@ function useHistoryVersionData(
   versionId: string
 ): HistoryVersionDataAsyncResult {
   return useHistoryVersionData_withRoomContext(GlobalRoomContext, versionId);
+}
+
+/**
+ * @internal
+ */
+function useVersion_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>,
+  versionId: string
+): VersionAsyncResult {
+  const content = useHistoryVersionData_withRoomContext(RoomContext, versionId);
+  const history = useVersionHistory_withRoomContext(RoomContext);
+  return useMemo<VersionAsyncResult>(() => {
+    if (content.isLoading || history.isLoading) {
+      return ASYNC_LOADING;
+    }
+    if (content.error) {
+      return ASYNC_ERR(content.error);
+    }
+    if (history.error) {
+      return ASYNC_ERR(history.error);
+    }
+    const ref = history.versions.find((v) => v.id === versionId);
+    if (ref === undefined) {
+      return ASYNC_ERR(new Error(`Version '${versionId}' was not found`));
+    }
+    return ASYNC_OK<Version>({ ...ref, yjs: content.data });
+  }, [content, history, versionId]);
+}
+
+/**
+ * (Private beta) Returns a specific version of the current room.
+ *
+ * @example
+ * const { data } = useVersion(versionId);
+ */
+function useVersion(versionId: string): VersionAsyncResult {
+  return useVersion_withRoomContext(GlobalRoomContext, versionId);
 }
 
 /**
@@ -3176,11 +3222,47 @@ function useHistoryVersions_withRoomContext(
 /**
  * (Private beta) Returns a history of versions of the current room.
  *
+ * @deprecated Use {@link useVersionHistory} instead.
+ *
  * @example
  * const { versions, error, isLoading } = useHistoryVersions();
  */
 function useHistoryVersions(): HistoryVersionsAsyncResult {
   return useHistoryVersions_withRoomContext(GlobalRoomContext);
+}
+
+function toVersionRef(deprecatedVersion: HistoryVersion): VersionRef {
+  return {
+    // The server guarantees version ids carry the `vh_` prefix.
+    id: deprecatedVersion.id as `vh_${string}`,
+    createdAt: deprecatedVersion.createdAt,
+    authors: deprecatedVersion.authors,
+  };
+}
+
+/**
+ * @internal
+ */
+function useVersionHistory_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+): VersionHistoryAsyncResult {
+  const result = useHistoryVersions_withRoomContext(RoomContext);
+  return useMemo<VersionHistoryAsyncResult>(() => {
+    if (result.isLoading || result.error) {
+      return result;
+    }
+    return ASYNC_OK("versions", result.versions.map(toVersionRef));
+  }, [result]);
+}
+
+/**
+ * (Private beta) Returns a history of versions of the current room.
+ *
+ * @example
+ * const { versions, error, isLoading } = useVersionHistory();
+ */
+function useVersionHistory(): VersionHistoryAsyncResult {
+  return useVersionHistory_withRoomContext(GlobalRoomContext);
 }
 
 /**
@@ -3207,11 +3289,36 @@ function useHistoryVersionsSuspense_withRoomContext(
 /**
  * (Private beta) Returns a history of versions of the current room.
  *
+ * @deprecated Use {@link useVersionHistory} instead.
+ *
  * @example
  * const { versions } = useHistoryVersions();
  */
 function useHistoryVersionsSuspense(): HistoryVersionsAsyncSuccess {
   return useHistoryVersionsSuspense_withRoomContext(GlobalRoomContext);
+}
+
+/**
+ * @internal
+ */
+function useVersionHistorySuspense_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+): VersionHistoryAsyncSuccess {
+  const result = useHistoryVersionsSuspense_withRoomContext(RoomContext);
+  return useMemo<VersionHistoryAsyncSuccess>(
+    () => ASYNC_OK("versions", result.versions.map(toVersionRef)),
+    [result]
+  );
+}
+
+/**
+ * (Private beta) Returns a history of versions of the current room.
+ *
+ * @example
+ * const { versions } = useVersionHistory();
+ */
+function useVersionHistorySuspense(): VersionHistoryAsyncSuccess {
+  return useVersionHistorySuspense_withRoomContext(GlobalRoomContext);
 }
 
 /**
@@ -4008,6 +4115,20 @@ export function createRoomContext<
     return useHistoryVersionData_withRoomContext(BoundRoomContext, ...args);
   }
 
+  function useVersionHistory_withBoundRoomContext() {
+    return useVersionHistory_withRoomContext(BoundRoomContext);
+  }
+
+  function useVersionHistorySuspense_withBoundRoomContext() {
+    return useVersionHistorySuspense_withRoomContext(BoundRoomContext);
+  }
+
+  function useVersion_withBoundRoomContext(
+    ...args: Parameters<typeof useVersion>
+  ) {
+    return useVersion_withRoomContext(BoundRoomContext, ...args);
+  }
+
   function useRoomSubscriptionSettings_withBoundRoomContext() {
     return useRoomSubscriptionSettings_withRoomContext(BoundRoomContext);
   }
@@ -4174,6 +4295,10 @@ export function createRoomContext<
     useSearchComments: useSearchComments_withBoundRoomContext as TRoomBundle["useSearchComments"],
 
     // prettier-ignore
+    useVersionHistory: useVersionHistory_withBoundRoomContext as TRoomBundle["useVersionHistory"],
+    // prettier-ignore
+    useVersion: useVersion_withBoundRoomContext as TRoomBundle["useVersion"],
+    // prettier-ignore
     useHistoryVersions: useHistoryVersions_withBoundRoomContext as TRoomBundle["useHistoryVersions"],
     // prettier-ignore
     useHistoryVersionData: useHistoryVersionData_withBoundRoomContext as TRoomBundle["useHistoryVersionData"],
@@ -4287,6 +4412,8 @@ export function createRoomContext<
       // prettier-ignore
       useAttachmentUrl: useAttachmentUrlSuspense_withBoundRoomContext as TRoomBundle["suspense"]["useAttachmentUrl"],
 
+      // prettier-ignore
+      useVersionHistory: useVersionHistorySuspense_withBoundRoomContext as TRoomBundle["suspense"]["useVersionHistory"],
       // prettier-ignore
       useHistoryVersions: useHistoryVersionsSuspense_withBoundRoomContext as TRoomBundle["suspense"]["useHistoryVersions"],
 
@@ -4649,6 +4776,23 @@ const _useHistoryVersionsSuspense: TypedBundle["suspense"]["useHistoryVersions"]
   useHistoryVersionsSuspense;
 
 /**
+ * (Private beta) Returns a history of versions of the current room.
+ *
+ * @example
+ * const { versions, error, isLoading } = useVersionHistory();
+ */
+const _useVersionHistory: TypedBundle["useVersionHistory"] = useVersionHistory;
+
+/**
+ * (Private beta) Returns a history of versions of the current room.
+ *
+ * @example
+ * const { versions } = useVersionHistory();
+ */
+const _useVersionHistorySuspense: TypedBundle["suspense"]["useVersionHistory"] =
+  useVersionHistorySuspense;
+
+/**
  * Given a connection ID (as obtained by using `useOthersConnectionIds`), you
  * can call this selector deep down in your component stack to only have the
  * component re-render if properties for this particular user change.
@@ -5002,5 +5146,8 @@ export {
   useUpdateFeedMetadata,
   _useUpdateMyPresence as useUpdateMyPresence,
   useUpdateRoomSubscriptionSettings,
+  useVersion,
+  _useVersionHistory as useVersionHistory,
+  _useVersionHistorySuspense as useVersionHistorySuspense,
   useYjsProvider,
 };

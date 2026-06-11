@@ -75,6 +75,7 @@ export {
   useUpdateMyPresence,
   useUpdateRoomSubscriptionSettings,
   useHistoryVersionData,
+  useVersion,
 } from "./room";
 
 // Export the classic (non-Suspense) versions of our hooks
@@ -98,6 +99,7 @@ export {
   useSearchComments,
   useAttachmentUrl,
   useHistoryVersions,
+  useVersionHistory,
   useRoomSubscriptionSettings,
 } from "./room";
 export {

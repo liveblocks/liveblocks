@@ -96,6 +96,7 @@ export {
   useThreadsSuspense as useThreads,
   useAttachmentUrlSuspense as useAttachmentUrl,
   useHistoryVersionsSuspense as useHistoryVersions,
+  useVersionHistorySuspense as useVersionHistory,
   useRoomSubscriptionSettingsSuspense as useRoomSubscriptionSettings,
   useFeedsSuspense as useFeeds,
   useFeedMessagesSuspense as useFeedMessages,

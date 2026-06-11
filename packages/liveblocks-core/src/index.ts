@@ -372,7 +372,11 @@ export type {
 } from "./protocol/Subscriptions";
 export { getSubscriptionKey } from "./protocol/Subscriptions";
 export type { UrlMetadata } from "./protocol/UrlMetadata";
-export type { HistoryVersion } from "./protocol/VersionHistory";
+export type {
+  HistoryVersion,
+  Version,
+  VersionRef,
+} from "./protocol/VersionHistory";
 export type { IYjsProvider, PrivateRoomApi, YjsSyncStatus } from "./room";
 export type {
   BroadcastOptions,

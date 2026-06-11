@@ -2,6 +2,7 @@ import type {
   BaseUserMeta,
   BroadcastOptions,
   History,
+  HistoryVersion,
   Json,
   JsonObject,
   LiveObject,
@@ -12,6 +13,8 @@ import type {
   RoomSubscriptionSettings,
   Status,
   User,
+  Version,
+  VersionRef,
 } from "@liveblocks/client";
 import type {
   AiChat,
@@ -35,7 +38,6 @@ import type {
   FeedMessage,
   FeedUpdateMetadata,
   GroupData,
-  HistoryVersion,
   InboxNotificationData,
   LiveblocksError,
   MessageId,
@@ -352,9 +354,17 @@ export type NotificationSettingsAsyncSuccess = AsyncSuccess<NotificationSettings
 export type RoomSubscriptionSettingsAsyncSuccess = AsyncSuccess<RoomSubscriptionSettings, "settings">; // prettier-ignore
 export type RoomSubscriptionSettingsAsyncResult = AsyncResult<RoomSubscriptionSettings, "settings">; // prettier-ignore
 
+export type VersionAsyncResult = AsyncResult<Version>;
+
+export type VersionHistoryAsyncSuccess = AsyncSuccess<VersionRef[], "versions">; // prettier-ignore
+export type VersionHistoryAsyncResult = AsyncResult<VersionRef[], "versions">; // prettier-ignore
+
+/** @deprecated Use {@link VersionAsyncResult} instead. */
 export type HistoryVersionDataAsyncResult = AsyncResult<Uint8Array>;
 
+/** @deprecated Use {@link VersionHistoryAsyncSuccess} instead. */
 export type HistoryVersionsAsyncSuccess = AsyncSuccess<HistoryVersion[], "versions">; // prettier-ignore
+/** @deprecated Use {@link VersionHistoryAsyncResult} instead. */
 export type HistoryVersionsAsyncResult = AsyncResult<HistoryVersion[], "versions">; // prettier-ignore
 
 export type AiChatsAsyncSuccess = PagedAsyncSuccess<AiChat[], "chats">; // prettier-ignore
@@ -1330,7 +1340,25 @@ export type RoomContextBundle<
       useAttachmentUrl(attachmentId: string): AttachmentUrlAsyncResult;
 
       /**
-       * (Private beta)  Returns a history of versions of the current room.
+       * (Private beta) Returns a history of versions of the current room.
+       *
+       * @example
+       * const { versions, error, isLoading } = useVersionHistory();
+       */
+      useVersionHistory(): VersionHistoryAsyncResult;
+
+      /**
+       * (Private beta) Returns a specific version of the current room.
+       *
+       * @example
+       * const { data, error, isLoading } = useVersion(version.id);
+       */
+      useVersion(id: string): VersionAsyncResult;
+
+      /**
+       * (Private beta) Returns a history of versions of the current room.
+       *
+       * @deprecated Use {@link useVersionHistory} instead.
        *
        * @example
        * const { versions, error, isLoading } = useHistoryVersions();
@@ -1339,6 +1367,8 @@ export type RoomContextBundle<
 
       /**
        * (Private beta) Returns the data of a specific version of the current room.
+       *
+       * @deprecated Use {@link useVersion} instead, and read `.data.yjs`.
        *
        * @example
        * const { data, error, isLoading } = useHistoryVersionData(version.id);
@@ -1462,17 +1492,19 @@ export type RoomContextBundle<
              * (Private beta) Returns a history of versions of the current room.
              *
              * @example
+             * const { versions } = useVersionHistory();
+             */
+            useVersionHistory(): VersionHistoryAsyncSuccess;
+
+            /**
+             * (Private beta) Returns a history of versions of the current room.
+             *
+             * @deprecated Use {@link useVersionHistory} instead.
+             *
+             * @example
              * const { versions } = useHistoryVersions();
              */
             useHistoryVersions(): HistoryVersionsAsyncSuccess;
-
-            // /**
-            //  * Returns the data of a specific version of the current room's history.
-            //  *
-            //  * @example
-            //  * const { data } = useHistoryVersionData(version.id);
-            //  */
-            // useHistoryVersionData(versionId: string): HistoryVersionDataState;
 
             /**
              * Returns the user's subscription settings for the current room
