@@ -71,6 +71,8 @@ export type RoomPermissions = Permission[];
 
 export type RoomAccesses = Record<string, RoomPermissions>;
 
+export type UpdateRoomAccesses = Record<string, RoomPermissions | null>;
+
 type RoomPermissionsResource = Exclude<
   PermissionResources,
   "room" | "personal"
@@ -270,7 +272,7 @@ export function resolveRoomPermissionMatrix(
 }
 
 export function normalizeRoomPermissions(
-  permissions: string[]
+  permissions: string[] | readonly string[]
 ): RoomPermissions {
   if (!Array.isArray(permissions)) {
     throw new Error("Permission list must be an array");
@@ -295,6 +297,21 @@ export function normalizeRoomAccesses(
     Object.entries(accesses).map(([id, permissions]) => [
       id,
       normalizeRoomPermissions(permissions),
+    ])
+  );
+}
+
+export function normalizeUpdateRoomAccesses(
+  accesses: UpdateRoomAccesses | undefined
+): UpdateRoomAccesses | undefined {
+  if (accesses === undefined) {
+    return undefined;
+  }
+
+  return Object.fromEntries(
+    Object.entries(accesses).map(([id, permissions]) => [
+      id,
+      permissions === null ? null : normalizeRoomPermissions(permissions),
     ])
   );
 }

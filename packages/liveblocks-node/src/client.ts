@@ -54,6 +54,7 @@ import type {
   ThreadData,
   ThreadDataPlain,
   ToJson,
+  UpdateRoomAccesses,
   URLSafeString,
   UserRoomSubscriptionSettings,
   UserSubscriptionData,
@@ -76,6 +77,7 @@ import {
   makeAbortController,
   normalizeRoomAccesses,
   normalizeRoomPermissions,
+  normalizeUpdateRoomAccesses,
   objectToQuery,
   tryParseJson,
   url,
@@ -479,8 +481,8 @@ export type CreateRoomOptions = {
 
 export type UpdateRoomOptions = {
   defaultAccesses?: RoomPermissions | null;
-  groupsAccesses?: RoomAccesses;
-  usersAccesses?: RoomAccesses;
+  groupsAccesses?: UpdateRoomAccesses;
+  usersAccesses?: UpdateRoomAccesses;
   metadata?: Record<string, string | string[] | null>;
 };
 
@@ -503,8 +505,8 @@ type NormalizedUpdateRoomOptions = Omit<
   "defaultAccesses" | "groupsAccesses" | "usersAccesses"
 > & {
   defaultAccesses?: RoomPermissions | null;
-  groupsAccesses?: RoomAccesses;
-  usersAccesses?: RoomAccesses;
+  groupsAccesses?: UpdateRoomAccesses;
+  usersAccesses?: UpdateRoomAccesses;
 };
 
 type NormalizedUpsertRoomOptions = {
@@ -746,8 +748,8 @@ function normalizeUpdateRoomOptions(
       options.defaultAccesses === undefined || options.defaultAccesses === null
         ? options.defaultAccesses
         : normalizeRoomPermissions(options.defaultAccesses),
-    groupsAccesses: normalizeRoomAccesses(options.groupsAccesses),
-    usersAccesses: normalizeRoomAccesses(options.usersAccesses),
+    groupsAccesses: normalizeUpdateRoomAccesses(options.groupsAccesses),
+    usersAccesses: normalizeUpdateRoomAccesses(options.usersAccesses),
   };
 }
 

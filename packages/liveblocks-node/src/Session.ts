@@ -2,7 +2,6 @@ import type {
   IUserInfo,
   Json,
   JsonObject,
-  RoomPermissions,
   URLSafeString,
 } from "@liveblocks/core";
 import { normalizeRoomPermissions, Permission, url } from "@liveblocks/core";
@@ -105,7 +104,7 @@ export class Session {
     }
   }
 
-  public allow(roomIdOrPattern: string, newPerms: RoomPermissions): this {
+  public allow(roomIdOrPattern: string, newPerms: readonly Permission[]): this {
     if (typeof roomIdOrPattern !== "string") {
       throw new Error("Room name or pattern must be a string");
     }

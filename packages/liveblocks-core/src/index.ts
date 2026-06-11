@@ -201,6 +201,7 @@ export type {
   RequiredAccessLevel,
   RoomAccesses,
   RoomPermissions,
+  UpdateRoomAccesses,
 } from "./permissions";
 export {
   hasPermissionAccess,
@@ -208,6 +209,7 @@ export {
   mergeRoomPermissionScopes,
   normalizeRoomAccesses,
   normalizeRoomPermissions,
+  normalizeUpdateRoomAccesses,
   Permission,
   permissionMatrixFromScopes,
   permissionMatrixToScopes,
