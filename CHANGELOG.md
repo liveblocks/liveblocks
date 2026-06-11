@@ -2,6 +2,8 @@
 
 ## v3.20.0
 
+- Deprecate `room.getStorageSnapshot()` in favor of `room.getStorageOrNull()`.
+
 ## v3.19.5
 
 ### `@liveblocks/client`

@@ -131,12 +131,6 @@ export type EnterOptions<P extends JsonObject = DP, S extends LsonObject = DS> =
      * the authentication endpoint or connect via WebSocket.
      */
     autoConnect?: boolean;
-
-    /**
-     * @deprecated This flag no longer has any effect and will be removed in
-     * a future version. All rooms now use the v2 storage engine by default.
-     */
-    engine?: 1 | 2;
   }
 
   // Initial presence is only mandatory if the custom type requires it to be
@@ -537,12 +531,6 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
   backgroundKeepAliveTimeout?: number; // in milliseconds
   polyfills?: Polyfills;
   /**
-   * @deprecated All rooms will be migrated to the v2 storage engine in the
-   * future, which has native support for streaming. After that migration, this
-   * flag will no longer have any effect and will be removed in a future version.
-   */
-  unstable_streamData?: boolean;
-  /**
    * A function that returns a list of mention suggestions matching a string.
    */
   resolveMentionSuggestions?: (
@@ -820,7 +808,6 @@ export function createClient<U extends BaseUserMeta = DU>(
         enableDebugLogging: clientOptions.enableDebugLogging,
         baseUrl,
         errorEventSource: liveblocksErrorSource,
-        unstable_streamData: !!clientOptions.unstable_streamData,
         roomHttpClient: httpClient as LiveblocksHttpApi<TM, CM>,
         createSyncSource,
         badgeLocation: clientOptions.badgeLocation ?? "bottom-right",
