@@ -74,10 +74,9 @@ describe("PUT /v2/rooms/<roomId>/ydoc", () => {
     // Connect a real WebSocket session into the room (via a fake socket that
     // records messages sent to it).
     const room = Rooms.getRoomInstance(roomId);
-    await room.load();
     const { received, socket } = makeFakeSocket();
-    const ticket = await room.createTicket({});
-    await room.startBrowserSession(ticket, socket);
+    const ticket = room.createTicket({});
+    room.startBrowserSession(ticket, socket);
 
     // Mark how much was sent during session bootstrap so we only inspect
     // messages produced by the REST PUT below.
@@ -90,9 +89,9 @@ describe("PUT /v2/rooms/<roomId>/ydoc", () => {
     expect(resp.status).toBe(200);
 
     // The connected session should have received an UPDATE_YDOC broadcast
-    const broadcastMsgs = received.slice(initialMsgCount).map(
-      (s) => JSON.parse(s) as { type?: number }
-    );
+    const broadcastMsgs = received
+      .slice(initialMsgCount)
+      .map((s) => JSON.parse(s) as { type?: number });
     const updateYdocCount = broadcastMsgs.filter(
       (m) => m.type === ServerMsgCode.UPDATE_YDOC
     ).length;

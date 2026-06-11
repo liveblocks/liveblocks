@@ -34,13 +34,6 @@ jobs:
     needs: check_for_code_changes
     runs-on: ubuntu-latest
 
-    # Run the Liveblocks dev server on port 1154 for all tests
-    services:
-      liveblocks:
-        image: ghcr.io/liveblocks/dev-server:main
-        ports:
-          - 1154:1153
-
     strategy:
       matrix:
         pkg:
@@ -112,7 +105,7 @@ jobs:
 
       - name: Run unit tests
         if: needs.check_for_code_changes.outputs.changes == 'true'
-        run: pnpm run test:ci --filter ${{ matrix.pkg }} -- --coverage
+        run: pnpm run test:ci --filter ${{ matrix.pkg }}
 
       - name: Run type tests
         if: needs.check_for_code_changes.outputs.changes == 'true'
@@ -169,7 +162,7 @@ jobs:
         run: pnpm exec playwright install chromium --no-shell --with-deps
         working-directory: e2e/next-sandbox
 
-      - name: Run Playwright tests
+      - name: Run Playwright tests (against real production backend)
         if: needs.check_for_code_changes.outputs.changes == 'true'
         run: pnpm run test --filter @liveblocks/next-sandbox
 
@@ -219,7 +212,7 @@ jobs:
         run: pnpm exec playwright install chromium --no-shell --with-deps
         working-directory: e2e/next-ai-kitchen-sink
 
-      - name: Run AI Playwright tests
+      - name: Run AI Playwright tests (against real production backend)
         if: needs.check_for_code_changes.outputs.changes == 'true'
         run: pnpm run test --filter @liveblocks/next-ai-kitchen-sink
 
@@ -265,7 +258,7 @@ jobs:
         if: needs.check_for_code_changes.outputs.changes == 'true'
         run: pnpm install --frozen-lockfile
 
-      - name: Run node-sandbox tests
+      - name: Run node-sandbox tests (against real production backend)
         if: needs.check_for_code_changes.outputs.changes == 'true'
         run: pnpm run test --filter node-sandbox
 
@@ -300,7 +293,7 @@ jobs:
         if: needs.check_for_code_changes.outputs.changes == 'true'
         run: pnpm install --frozen-lockfile
 
-      - name: Run e2e client specs tests
+      - name: Run e2e client specs tests (against local dev server)
         if: needs.check_for_code_changes.outputs.changes == 'true'
         run: pnpm run test:e2e
         working-directory: packages/liveblocks-core

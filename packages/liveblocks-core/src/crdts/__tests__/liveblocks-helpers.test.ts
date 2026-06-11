@@ -1,3 +1,4 @@
+import fc from "fast-check";
 import { describe, expect, test } from "vitest";
 
 import {
@@ -7,10 +8,11 @@ import {
   SECOND_POSITION,
   THIRD_POSITION,
 } from "../../__tests__/_MockWebSocketServer.setup";
+import { stableStringify } from "../../lib/stringify";
 import { OpCode } from "../../protocol/Op";
 import type { NodeMap } from "../../protocol/StorageNode";
 import { CrdtType } from "../../protocol/StorageNode";
-import { getTreesDiffOperations } from "../liveblocks-helpers";
+import { getTreesDiffOperations, isJsonEq } from "../liveblocks-helpers";
 import { LiveList } from "../LiveList";
 import { LiveMap } from "../LiveMap";
 import { LiveObject } from "../LiveObject";
@@ -246,7 +248,139 @@ describe("getTreesDiffOperations", () => {
         id: "0:2",
         data: { c: 1 },
       },
+      {
+        type: OpCode.DELETE_OBJECT_KEY,
+        id: "0:2",
+        key: "b",
+      },
     ]);
+  });
+
+  test("liveObject replacing a non-object node of the same id", () => {
+    const currentItems: NodeMap = new Map([
+      ["root", { type: CrdtType.OBJECT, data: {} }],
+      ["0:1", { type: CrdtType.LIST, parentId: "root", parentKey: "items" }],
+      [
+        "0:2",
+        {
+          type: CrdtType.REGISTER,
+          parentId: "0:1",
+          parentKey: FIRST_POSITION,
+          data: "A",
+        },
+      ],
+    ]);
+
+    const newItems: NodeMap = new Map([
+      ["root", { type: CrdtType.OBJECT, data: {} }],
+      ["0:1", { type: CrdtType.LIST, parentId: "root", parentKey: "items" }],
+      [
+        "0:2",
+        {
+          type: CrdtType.OBJECT,
+          parentId: "0:1",
+          parentKey: FIRST_POSITION,
+          data: { a: 1 },
+        },
+      ],
+    ]);
+
+    const ops = getTreesDiffOperations(currentItems, newItems);
+
+    expect(ops).toEqual([
+      {
+        type: OpCode.UPDATE_OBJECT,
+        id: "0:2",
+        data: { a: 1 },
+      },
+    ]);
+  });
+
+  test("new liveList", () => {
+    const currentItems: NodeMap = new Map([
+      ["root", { type: CrdtType.OBJECT, data: {} }],
+    ]);
+
+    const newItems = new Map(currentItems);
+    newItems.set("0:1", {
+      type: CrdtType.LIST,
+      parentId: "root",
+      parentKey: "items",
+    });
+
+    const ops = getTreesDiffOperations(currentItems, newItems);
+
+    expect(ops).toEqual([
+      {
+        type: OpCode.CREATE_LIST,
+        id: "0:1",
+        parentId: "root",
+        parentKey: "items",
+      },
+    ]);
+  });
+
+  test("new liveMap", () => {
+    const currentItems: NodeMap = new Map([
+      ["root", { type: CrdtType.OBJECT, data: {} }],
+    ]);
+
+    const newItems = new Map(currentItems);
+    newItems.set("0:1", {
+      type: CrdtType.MAP,
+      parentId: "root",
+      parentKey: "map",
+    });
+
+    const ops = getTreesDiffOperations(currentItems, newItems);
+
+    expect(ops).toEqual([
+      {
+        type: OpCode.CREATE_MAP,
+        id: "0:1",
+        parentId: "root",
+        parentKey: "map",
+      },
+    ]);
+  });
+
+  test("new liveObject", () => {
+    const currentItems: NodeMap = new Map([
+      ["root", { type: CrdtType.OBJECT, data: {} }],
+    ]);
+
+    const newItems = new Map(currentItems);
+    newItems.set("0:1", {
+      type: CrdtType.OBJECT,
+      parentId: "root",
+      parentKey: "item",
+      data: { a: 1 },
+    });
+
+    const ops = getTreesDiffOperations(currentItems, newItems);
+
+    expect(ops).toEqual([
+      {
+        type: OpCode.CREATE_OBJECT,
+        id: "0:1",
+        parentId: "root",
+        parentKey: "item",
+        data: { a: 1 },
+      },
+    ]);
+  });
+
+  test("new liveObject without a parent throws", () => {
+    const currentItems: NodeMap = new Map([
+      ["root", { type: CrdtType.OBJECT, data: {} }],
+    ]);
+
+    const newItems = new Map(currentItems);
+    newItems.set("0:1", { type: CrdtType.OBJECT, data: { a: 1 } });
+
+    expect(() => getTreesDiffOperations(currentItems, newItems)).toThrow(
+      "Internal error. Cannot serialize storage root into an operation"
+    );
   });
 });
 
@@ -306,5 +440,25 @@ describe("toPlainLson", () => {
     };
 
     expect(toPlainLson(mockLsonObject)).toEqual(plainLsonValue);
+  });
+});
+
+describe("isJsonEq", () => {
+  test("[property] true iff the stable stringifications match", () => {
+    fc.assert(
+      fc.property(fc.jsonValue(), fc.jsonValue(), (j1, j2) => {
+        expect(isJsonEq(j1, j2)).toBe(
+          stableStringify(j1) === stableStringify(j2)
+        );
+      })
+    );
+  });
+
+  test("[property] reflexive: a value always equals (a clone of) itself", () => {
+    fc.assert(
+      fc.property(fc.jsonValue(), (j) => {
+        expect(isJsonEq(j, structuredClone(j))).toBe(true);
+      })
+    );
   });
 });

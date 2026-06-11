@@ -618,4 +618,56 @@ describe("SortedList", () => {
       )
     );
   });
+
+  describe("includes", () => {
+    test("empty list", () => {
+      expect(SortedList.from<number>([], asc).includes(13)).toBe(false);
+    });
+
+    test("present / absent by value (primitives)", () => {
+      const s = SortedList.from([1, 3, 5, 7], asc);
+      expect(s.includes(1)).toBe(true); // first
+      expect(s.includes(7)).toBe(true); // last
+      expect(s.includes(5)).toBe(true); // middle
+      expect(s.includes(4)).toBe(false); // gap
+      expect(s.includes(0)).toBe(false); // below min
+      expect(s.includes(9)).toBe(false); // above max
+    });
+
+    test("matches by identity, not by sort key", () => {
+      const lt = (a: { k: number }, b: { k: number }) => a.k < b.k;
+      const a = { k: 1 };
+      const b = { k: 2 };
+      const s = SortedList.from([a, b], lt);
+
+      expect(s.includes(a)).toBe(true);
+      expect(s.includes(b)).toBe(true);
+      // Same sort key, different object: not present.
+      expect(s.includes({ k: 1 })).toBe(false);
+      // The crux of the bump fix: a node removed from the list (but whose stale
+      // key still collides with a live one) must report absent.
+      const removed = { k: 2 };
+      expect(s.includes(removed)).toBe(false);
+    });
+
+    test("finds the exact object within a run of equal keys", () => {
+      const lt = (a: { k: number }, b: { k: number }) => a.k < b.k;
+      const dupes = [{ k: 5 }, { k: 5 }, { k: 5 }];
+      const s = SortedList.from([{ k: 1 }, ...dupes, { k: 9 }], lt);
+
+      for (const d of dupes) {
+        expect(s.includes(d)).toBe(true);
+      }
+      expect(s.includes({ k: 5 })).toBe(false); // impostor with the same key
+    });
+
+    test("reflects add / remove", () => {
+      const s = SortedList.from<number>([], asc);
+      expect(s.includes(42)).toBe(false);
+      s.add(42);
+      expect(s.includes(42)).toBe(true);
+      s.remove(42);
+      expect(s.includes(42)).toBe(false);
+    });
+  });
 });

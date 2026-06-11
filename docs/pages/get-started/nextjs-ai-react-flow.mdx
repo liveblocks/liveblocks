@@ -1,0 +1,273 @@
+---
+meta:
+  title: "Get started with AI agents in React Flow using Liveblocks and Next.js"
+  parentTitle: "Quickstart"
+  description:
+    "Learn how to let an AI agent edit a collaborative React Flow diagram from
+    your Next.js server using Liveblocks."
+---
+
+Liveblocks is a realtime collaboration infrastructure for building performant
+collaborative experiences. Follow the following steps to add an AI agent that
+can read and edit a collaborative [React Flow](https://reactflow.dev) diagram
+from your Next.js `/app` directory application using
+[`mutateFlow`](/docs/api-reference/liveblocks-react-flow#mutateFlow) from
+[`@liveblocks/react-flow`](/docs/api-reference/liveblocks-react-flow), the
+[Vercel AI SDK](https://ai-sdk.dev), and [OpenAI](https://platform.openai.com).
+
+## Quickstart
+
+<PromptCta />
+
+<Steps>
+  <Step>
+    <StepTitle>Have a React Flow app ready</StepTitle>
+    <StepContent>
+
+      To let an AI edit your diagram, you first need a Liveblocks React Flow
+      app set up with secret key authentication. Open up your app, or set up
+      React Flow if you haven’t already.
+
+      <Button asChild className="not-markdown">
+        <a href="/docs/get-started/nextjs-react-flow">
+          Get started with React Flow
+        </a>
+      </Button>
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Install dependencies</StepTitle>
+    <StepContent>
+
+      Install [`@liveblocks/node`](/docs/api-reference/liveblocks-node) and the
+      Node-side [`@liveblocks/react-flow`](/docs/api-reference/liveblocks-react-flow#mutateFlow)
+      entry point, along with the [Vercel AI SDK](https://ai-sdk.dev), the
+      [OpenAI provider](https://ai-sdk.dev/providers/ai-sdk-providers/openai),
+      and [`zod`](https://zod.dev) to validate tool inputs.
+
+      ```bash trackEvent="install_liveblocks"
+      npm install @liveblocks/node @liveblocks/react-flow ai @ai-sdk/openai zod
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Add your environment variables</StepTitle>
+    <StepContent>
+
+      Create a `.env.local` file and add your Liveblocks secret key from the
+      [dashboard](/dashboard/apikeys), and your OpenAI API key from the
+      [OpenAI dashboard](https://platform.openai.com/api-keys).
+
+      ```env file=".env.local"
+      LIVEBLOCKS_SECRET_KEY="{{SECRET_KEY}}"
+      OPENAI_API_KEY="sk-..."
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Create the AI agent</StepTitle>
+    <StepContent>
+
+      Create a server action that uses
+      [`mutateFlow`](/docs/api-reference/liveblocks-react-flow#mutateFlow) to
+      open the room’s flow on the server and let the AI add and update nodes
+      and edges. Each [Vercel AI SDK tool](https://ai-sdk.dev/docs/foundations/tools)
+      maps to one of the
+      [`MutableFlow`](/docs/api-reference/liveblocks-react-flow#mutable-flow)
+      methods like `flow.addNode`, `flow.updateNodeData`, or `flow.addEdge`.
+
+      ```ts file="app/run-flow-agent.ts"
+      "use server";
+
+      import { Liveblocks } from "@liveblocks/node";
+      import { mutateFlow } from "@liveblocks/react-flow/node";
+      import { generateText, stepCountIs, tool } from "ai";
+      import { openai } from "@ai-sdk/openai";
+      import { nanoid } from "nanoid";
+      import { z } from "zod";
+
+      const liveblocks = new Liveblocks({
+        secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+      });
+
+      export async function runFlowAgent(formData: FormData) {
+        const roomId = String(formData.get("roomId") ?? "").trim();
+        const prompt = String(formData.get("prompt") ?? "").trim();
+        if (!roomId || !prompt) return;
+
+        await mutateFlow({ client: liveblocks, roomId }, async (flow) => {
+          await generateText({
+            model: openai("gpt-4.1-mini"),
+            system: `You edit a live collaborative React Flow diagram.
+      - Each node has: { id, position: { x, y }, data: { label } }.
+      - Each edge has: { id, source, target }.
+      - Make small, deliberate changes that are easy to follow.
+      - Use 150px horizontal and 100px vertical spacing between nodes.`,
+            prompt: `<diagram>${JSON.stringify(flow.toJSON(), null, 2)}</diagram>
+      <user-message>${prompt}</user-message>`,
+            tools: {
+              addNode: tool({
+                description: "Add a node to the diagram.",
+                inputSchema: z.object({
+                  label: z.string(),
+                  position: z.object({ x: z.number(), y: z.number() }),
+                }),
+                execute: ({ label, position }) => {
+                  const id = `node-${nanoid(6)}`;
+                  flow.addNode({ id, position, data: { label } });
+                  return { ok: true, id };
+                },
+              }),
+              updateNodeData: tool({
+                description: "Update one node’s label.",
+                inputSchema: z.object({
+                  id: z.string(),
+                  label: z.string(),
+                }),
+                execute: ({ id, label }) => {
+                  if (!flow.getNode(id)) return { ok: false, missing: true };
+                  flow.updateNodeData(id, { label });
+                  return { ok: true, id };
+                },
+              }),
+              addEdge: tool({
+                description: "Connect two existing nodes with an edge.",
+                inputSchema: z.object({
+                  source: z.string(),
+                  target: z.string(),
+                }),
+                execute: ({ source, target }) => {
+                  if (!flow.getNode(source) || !flow.getNode(target)) {
+                    return { ok: false, missing: true };
+                  }
+                  const id = `e-${source}-${target}-${nanoid(4)}`;
+                  flow.addEdge({ id, source, target });
+                  return { ok: true, id };
+                },
+              }),
+            },
+            stopWhen: stepCountIs(20),
+          });
+        });
+      }
+      ```
+
+      `mutateFlow` opens the room’s flow for reading _and_ mutating. Any changes
+      made through the `flow` object are intelligently synced to all connected
+      clients via Liveblocks Storage, so the diagram updates in realtime as the
+      AI works.
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Add a prompt form to the page</StepTitle>
+    <StepContent>
+
+      Now add a small form that lets users describe what the agent should do.
+      It uses [`useRoom`](/docs/api-reference/liveblocks-react#useRoom) to get
+      the current room ID and passes it to the server action.
+
+      ```tsx file="app/FlowAgentForm.tsx"
+      "use client";
+
+      import { useRoom } from "@liveblocks/react/suspense";
+      import { useState } from "react";
+      import { runFlowAgent } from "./run-flow-agent";
+
+      export function FlowAgentForm() {
+        const roomId = useRoom().id;
+        const [prompt, setPrompt] = useState("");
+
+        return (
+          <form action={runFlowAgent} onSubmit={() => setPrompt("")}>
+            <input type="hidden" name="roomId" value={roomId} />
+            <textarea
+              name="prompt"
+              placeholder="Create a flowchart about…"
+              value={prompt}
+              onChange={(event) => setPrompt(event.target.value)}
+            />
+            <button type="submit" disabled={prompt.trim() === ""}>
+              Apply
+            </button>
+          </form>
+        );
+      }
+      ```
+
+      Then render it next to your existing `Flow` component:
+
+      ```tsx file="app/page.tsx"
+      import { Room } from "./Room";
+      import { Flow } from "./Flow";
+      // +++
+      import { FlowAgentForm } from "./FlowAgentForm";
+      // +++
+
+      export default function Page() {
+        return (
+          <Room>
+            // +++
+            <FlowAgentForm />
+            // +++
+            <Flow />
+          </Room>
+        );
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step lastStep>
+    <StepTitle>Next: show the agent in the room</StepTitle>
+    <StepContent>
+
+      Your AI agent now reads and writes to your React Flow diagram in realtime.
+      Next, give the agent a face—show its avatar in the avatar stack and
+      highlight the nodes it’s editing using Liveblocks Presence.
+
+      <Button asChild className="not-markdown">
+        <a href="/docs/get-started/nextjs-ai-presence">
+          Add AI Presence
+        </a>
+      </Button>
+
+    </StepContent>
+
+  </Step>
+</Steps>
+
+## What to read next
+
+Congratulations! You’ve set up the foundation for an AI agent that can edit your
+collaborative React Flow diagrams.
+
+- [`mutateFlow` API reference](/docs/api-reference/liveblocks-react-flow#mutateFlow)
+- [`MutableFlow` API](/docs/api-reference/liveblocks-react-flow#mutable-flow)
+- [@liveblocks/react-flow API reference](/docs/api-reference/liveblocks-react-flow)
+- [Vercel AI SDK tools](https://ai-sdk.dev/docs/foundations/tools)
+
+---
+
+## Examples using React Flow and AI
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "Collaborative Flowchart AI",
+      slug: "collaborative-flowchart-ai/nextjs-react-flow-ai",
+      image: "/images/examples/thumbnails/collaborative-flowchart-ai.jpg",
+      advanced: true,
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+</ListGrid>

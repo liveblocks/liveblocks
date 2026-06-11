@@ -122,6 +122,7 @@ function shellEscape(arg: string): string {
 
 type Options = {
   port: string;
+  "random-port": boolean;
   host?: string;
   cmd?: string;
   help: boolean;
@@ -138,6 +139,7 @@ const dev: SubCommand = {
       argv,
       {
         port: { type: "string", short: "p", default: DEFAULT_PORT.toString() },
+        "random-port": { type: "boolean", short: "P", default: false },
         host: { type: "string" },
         cmd: { type: "string", short: "c" },
         help: { type: "boolean", short: "h", default: false },
@@ -169,6 +171,9 @@ const dev: SubCommand = {
       console.log();
       console.log("Options:");
       console.log(`  --port, -p      Port to listen on (default: ${DEFAULT_PORT})`); // prettier-ignore
+      console.log("  --random-port, -P  Bind a random free port instead of --port (no collisions,"); // prettier-ignore
+      console.log("                    ever). With --cmd, the chosen port is exposed to the command"); // prettier-ignore
+      console.log("                    via LIVEBLOCKS_DEV_SERVER_PORT. Ideal for CI."); // prettier-ignore
       console.log("  --host          Host to bind to (default: localhost)");
       console.log("  --cmd, -c       Run a one-off command against a fresh server instance, then"); // prettier-ignore
       console.log("                    shut down. Does not affect your local data in .liveblocks/."); // prettier-ignore
@@ -197,19 +202,23 @@ const dev: SubCommand = {
       options["no-check"] = true;
     }
 
-    // Precedence: CLI flag > env var > default
-    const port =
-      parsePort(options.port) ??
-      parsePort(process.env.LIVEBLOCKS_DEVSERVER_PORT) ??
-      DEFAULT_PORT;
+    // With --random-port, bind to port 0 so the OS hands us a guaranteed-free
+    // port at bind time (no collisions, ever). Otherwise the precedence is:
+    // CLI flag > env var > default. The actually-bound port is read back from
+    // `server.port` after binding and used for everything downstream.
+    const requestedPort = options["random-port"]
+      ? 0
+      : (parsePort(options.port) ??
+        parsePort(process.env.LIVEBLOCKS_DEVSERVER_PORT) ??
+        DEFAULT_PORT);
     const hostname =
       options.host || process.env.LIVEBLOCKS_DEVSERVER_HOST || "localhost";
 
     const ephemeralPath = ephemeral ? Rooms.useEphemeralStorage() : null;
 
-    if (await isPortInUse(port, hostname)) {
+    if (requestedPort !== 0 && (await isPortInUse(requestedPort, hostname))) {
       console.error(
-        `Port ${port} is already in use.\nIs another dev server already running?`
+        `Port ${requestedPort} is already in use.\nIs another dev server already running?`
       );
       process.exit(1);
     }
@@ -217,10 +226,15 @@ const dev: SubCommand = {
     let server: Bun.Server<SocketData>;
     let verbose = false;
 
+    // The port to bind on. Starts as the requested port (0 for --random-port)
+    // and gets pinned to the OS-assigned port after the first bind, so a
+    // reboot() rebinds the same port instead of drawing a fresh random one.
+    let listenPort = requestedPort;
+
     function createServer() {
-      return Bun.serve<SocketData>({
+      const newServer = Bun.serve<SocketData>({
         hostname,
-        port,
+        port: listenPort,
 
         async fetch(req, server) {
           // WebSocket bypass - handle upgrades directly
@@ -251,9 +265,8 @@ const dev: SubCommand = {
 
             // Look up or create the room for the requested room ID
             const room = Rooms.getRoomInstance(roomId);
-            await room.load();
 
-            const ticket = await room.createTicket(ticketData);
+            const ticket = room.createTicket(ticketData);
             const sessionKey = ticket.sessionKey;
             const success = server.upgrade(req, {
               data: { room, ticket, sessionKey },
@@ -333,7 +346,7 @@ const dev: SubCommand = {
 
         websocket: {
           // The socket is opened
-          async open(ws): Promise<void> {
+          open(ws): void {
             const { refuseConnection, room, ticket } = ws.data;
 
             // If this connection should be refused, close it immediately
@@ -343,7 +356,7 @@ const dev: SubCommand = {
             }
 
             if (room && ticket) {
-              await room.startBrowserSession(ticket, ws);
+              room.startBrowserSession(ticket, ws);
             }
           },
 
@@ -373,6 +386,8 @@ const dev: SubCommand = {
           // },
         },
       });
+      listenPort = newServer.port!;
+      return newServer;
     }
 
     server = createServer();
@@ -417,7 +432,7 @@ const dev: SubCommand = {
           env: {
             ...process.env,
             LIVEBLOCKS_DEV_SERVER_HOST: hostname,
-            LIVEBLOCKS_DEV_SERVER_PORT: String(port),
+            LIVEBLOCKS_DEV_SERVER_PORT: String(server.port),
           },
         });
 
@@ -438,7 +453,7 @@ const dev: SubCommand = {
       process.exit(code);
     } else {
       // Check if the current project is configured to use the local dev server
-      const baseUrl = `http://${hostname}:${port}`;
+      const baseUrl = `http://${hostname}:${server.port}`;
       const configIssues = options["no-check"] ? [] : await checkLiveblocksSetup(baseUrl); // prettier-ignore
 
       // -----------------------------------------------------------------------

@@ -1,0 +1,224 @@
+---
+meta:
+  title: "Get started with a SuperDoc DOCX editor using Liveblocks and Next.js"
+  parentTitle: "Quickstart"
+  description:
+    "Learn how to install a SuperDoc DOCX editor using Liveblocks and Next.js"
+---
+
+Liveblocks is a realtime collaboration infrastructure for building performant
+collaborative experiences. Follow the following steps to start adding
+collaboration to your Next.js application using the APIs from the
+[`@liveblocks/yjs`](/docs/api-reference/liveblocks-yjs) package, and
+[SuperDoc](https://superdoc.dev), a collaborative DOCX editor for the web.
+
+## Quickstart
+
+<PromptCta />
+
+<Steps>
+  <Step>
+    <StepTitle>Install Liveblocks, Yjs, and SuperDoc</StepTitle>
+    <StepContent>
+
+      Every Liveblocks package should use the same version.
+
+      ```bash trackEvent="install_liveblocks"
+      npm install @liveblocks/client @liveblocks/react @liveblocks/yjs yjs @superdoc-dev/react
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Initialize the `liveblocks.config.ts` file</StepTitle>
+    <StepContent>
+
+      We can use this file later to [define types for our application](/docs/api-reference/liveblocks-react#Typing-your-data).
+
+      ```bash
+      npx create-liveblocks-app@latest --init --framework react
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Create a Liveblocks room</StepTitle>
+    <StepContent>
+
+      Liveblocks uses the concept of rooms, separate virtual spaces where people
+      collaborate, and to create a realtime experience, multiple users must
+      be connected to the same room. When using Next.js’ `/app` router,
+      we recommend creating your room in a `Room.tsx` file in the same directory
+      as your current route.
+
+      Set up a Liveblocks client with
+      [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider),
+      join a room with [`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider),
+      and use [`ClientSideSuspense`](/docs/api-reference/liveblocks-react#ClientSideSuspense)
+      to add a loading spinner to your app.
+
+      ```tsx file="app/Room.tsx" highlight="12-18"
+      "use client";
+
+      import { ReactNode } from "react";
+      import {
+        LiveblocksProvider,
+        RoomProvider,
+        ClientSideSuspense,
+      } from "@liveblocks/react/suspense";
+
+      export function Room({ children }: { children: ReactNode }) {
+        return (
+          <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
+            <RoomProvider id="my-room">
+              <ClientSideSuspense fallback={<div>Loading…</div>}>
+                {children}
+              </ClientSideSuspense>
+            </RoomProvider>
+          </LiveblocksProvider>
+        );
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Add the Liveblocks room to your page</StepTitle>
+    <StepContent>
+
+      After creating your room file, it’s time to join it. Import
+      your room into your `page.tsx` file, and place
+      your collaborative app components inside it.
+
+      ```tsx file="app/page.tsx" highlight="6-8"
+      import { Room } from "./Room";
+      import { Editor } from "./Editor";
+
+      export default function Page() {
+        return (
+          <Room>
+            <Editor />
+          </Room>
+        );
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Set up the collaborative SuperDoc editor</StepTitle>
+    <StepContent>
+
+      Now that we set up Liveblocks, we can start integrating SuperDoc and Yjs in the `Editor.tsx` file.
+      We use [`getYjsProviderForRoom`](/docs/api-reference/liveblocks-yjs#getYjsProviderForRoom) to
+      get a Yjs document and provider, then pass them to the
+      [`<SuperDocEditor />`](https://docs.superdoc.dev/editor/react/overview) component through
+      `modules.collaboration`. The component is SSR-safe and handles mounting and cleanup for you. It
+      rebuilds when `modules` changes, so we memoize it.
+
+      ```tsx file="app/Editor.tsx"
+      "use client";
+
+      import { useMemo } from "react";
+      import { getYjsProviderForRoom } from "@liveblocks/yjs";
+      import { useRoom, useSelf } from "@liveblocks/react/suspense";
+      import { SuperDocEditor } from "@superdoc-dev/react";
+
+      // Collaborative DOCX editor with live cursors, powered by SuperDoc
+      export function Editor() {
+        const room = useRoom();
+        const yProvider = getYjsProviderForRoom(room);
+
+        // Get the current user's info from Liveblocks
+        const userInfo = useSelf((me) => me.info);
+        const userId = useSelf((me) => me.id);
+
+        const modules = useMemo(
+          () => ({
+            // The collaboration contract is the same for every Yjs provider:
+            // pass the shared `ydoc` and `provider`
+            collaboration: { ydoc: yProvider.getYDoc(), provider: yProvider },
+          }),
+          [yProvider]
+        );
+
+        return (
+          <div style={{ height: "100vh" }}>
+            <SuperDocEditor
+              documentMode="editing"
+              // Identify the current user for live cursors
+              user={{
+                email: userId,
+                name: userInfo?.name ?? "Anonymous",
+                image: userInfo?.avatar ?? undefined,
+              }}
+              modules={modules}
+              style={{ height: "100%" }}
+            />
+          </div>
+        );
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Import the SuperDoc styles</StepTitle>
+    <StepContent>
+
+      Import the SuperDoc styles into the root layout of your app, so the editor
+      and toolbar are styled correctly.
+
+      ```tsx file="app/layout.tsx"
+      import "@superdoc-dev/react/style.css";
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step lastStep>
+    <StepTitle>Next: authenticate and add your users</StepTitle>
+    <StepContent>
+      Text Editor is set up and working now, but each user is anonymous—the next step is to
+      authenticate each user as they connect, and attach their name, color, and avatar, to their cursors and mentions.
+
+      <Button asChild className="not-markdown">
+        <a href="/docs/guides/how-to-add-users-to-liveblocks-text-editor">
+          Add your users to Text Editor
+        </a>
+      </Button>
+    </StepContent>
+
+  </Step>
+</Steps>
+
+## What to read next
+
+Congratulations! You now have set up the foundation for your collaborative
+SuperDoc DOCX editor inside your Next.js application.
+
+- [@liveblocks/yjs API Reference](/docs/api-reference/liveblocks-yjs)
+- [@liveblocks/react API Reference](/docs/api-reference/liveblocks-react)
+- [SuperDoc website](https://superdoc.dev)
+- [SuperDoc collaboration docs](https://docs.superdoc.dev/editor/collaboration/overview)
+
+---
+
+## Examples using SuperDoc
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "Collaborative DOCX Editor",
+      slug: "collaborative-text-editor/nextjs-yjs-superdoc",
+      image: "/images/examples/thumbnails/text-editor.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+</ListGrid>

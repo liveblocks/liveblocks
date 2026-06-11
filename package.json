@@ -11,7 +11,7 @@
     "lint": "turbo run lint",
     "lint:package": "turbo run lint:package",
     "format": "turbo run format",
-    "postinstall": "syncpack lint"
+    "prepare": "syncpack lint"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.2",

@@ -1,9 +1,11 @@
-import { defineConfig } from "vitest/config";
+import { defaultExclude, defineConfig } from "vitest/config";
 
 export default defineConfig({
   resolve: { tsconfigPaths: true },
 
   test: {
+    exclude: [...defaultExclude, "**/dist/**"],
+
     // Will avoid having to put import `describe`, `test`, `expect`, etc in
     // every test file.
     globals: true,

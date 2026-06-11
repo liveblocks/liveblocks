@@ -1,0 +1,378 @@
+---
+meta:
+  title: "Get started with AI agent notifications using Liveblocks and Next.js"
+  parentTitle: "Quickstart"
+  description:
+    "Learn how to notify users when an AI agent has completed its work using
+    Liveblocks notifications and Next.js"
+---
+
+Liveblocks is a realtime collaboration infrastructure for building performant
+collaborative experiences. Follow this guide to create an inbox notification
+system in your app, and notify users when an AI agent has completed its work.
+This uses a Next.js `/app` directory application, with the hooks from
+[`@liveblocks/react`](/docs/api-reference/liveblocks-react), the components from
+[`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui), and
+[`@liveblocks/node`](/docs/api-reference/liveblocks-node) on the server.
+
+## Quickstart
+
+<PromptCta />
+
+<Steps>
+  <Step>
+    <StepTitle>Install Liveblocks</StepTitle>
+    <StepContent>
+
+      Every package should use the same version.
+
+      ```bash trackEvent="install_liveblocks"
+      npm install @liveblocks/client @liveblocks/react @liveblocks/react-ui @liveblocks/node
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Initialize the `liveblocks.config.ts` file</StepTitle>
+    <StepContent>
+
+      We can use this file later to [define types for our application](/docs/api-reference/liveblocks-react#Typing-your-data).
+
+      ```bash
+      npx create-liveblocks-app@latest --init --framework react
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Add your secret key</StepTitle>
+    <StepContent>
+
+      Create a `.env.local` file and add your Liveblocks secret key from the
+      [dashboard](/dashboard/apikeys).
+
+      ```env file=".env.local"
+      LIVEBLOCKS_SECRET_KEY="{{SECRET_KEY}}"
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Set up authentication</StepTitle>
+    <StepContent>
+
+      Create an [authentication](/docs/authentication) API route with
+      [`identifyUser`](/docs/api-reference/liveblocks-node#id-tokens),
+      passing a unique user ID.
+
+      ```ts file="app/api/liveblocks-auth/route.ts"
+      import { Liveblocks } from "@liveblocks/node";
+
+      const liveblocks = new Liveblocks({
+        secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+      });
+
+      export async function POST(request: Request) {
+        // Get the current user from your database
+        const user = __getUserFromDB__(request);
+
+        // Identify the user and return the result
+        const { status, body } = await liveblocks.identifyUser(
+          { userId: user.id },
+          {
+            userInfo: {
+              name: user.name,
+              avatar: user.avatar,
+            },
+          },
+        );
+
+        return new Response(body, { status });
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Create a Liveblocks provider</StepTitle>
+    <StepContent>
+
+      Liveblocks Notifications uses the concept of projects, which relate to
+      projects in [your dashboard](/dashboard). Notifications are sent between
+      users in the same project. To connect and receive notifications, you must
+      add [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider)
+      to a client component in your app.
+
+      ```tsx file="app/Providers.tsx" highlight="8-10"
+      "use client";
+
+      import { ReactNode } from "react";
+      import { LiveblocksProvider } from "@liveblocks/react";
+
+      export function Providers({ children }: { children: ReactNode }) {
+        return (
+          <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
+            {children}
+          </LiveblocksProvider>
+        );
+      }
+    ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Add the provider to your layout</StepTitle>
+    <StepContent>
+
+      After creating your provider file, it’s time to use it. Import
+      your room into your `layout.tsx` file.
+
+      ```tsx file="app/layout.tsx"
+      import { Providers } from "./Providers";
+
+      export default function Layout({ children }) {
+        return (
+          <html>
+            <body>
+              // +++
+              <Providers>
+                {children}
+              </Providers>
+              // +++
+            </body>
+          </html>
+        );
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Use the Liveblocks hooks and components</StepTitle>
+    <StepContent>
+
+      Now that we’ve set up the provider, we can start using the Liveblocks hooks and components.
+      We’ll add [`useInboxNotifications`](/docs/api-reference/liveblocks-react#useInboxNotifications)
+      to get the current project’s notifications, then we’ll
+      use [`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification) and [`InboxNotificationList`](/docs/api-reference/liveblocks-react-ui#InboxNotificationList) to render them.
+
+      ```tsx file="app/page.tsx" highlight="10,13-20"
+      "use client";
+
+      import { useInboxNotifications } from "@liveblocks/react/suspense";
+      import {
+        InboxNotification,
+        InboxNotificationList,
+      } from "@liveblocks/react-ui";
+
+      export default function Page() {
+        const { inboxNotifications } = useInboxNotifications();
+
+        return (
+          <InboxNotificationList>
+            {inboxNotifications.map((inboxNotification) => (
+              <InboxNotification
+                key={inboxNotification.id}
+                inboxNotification={inboxNotification}
+              />
+            ))}
+          </InboxNotificationList>
+        );
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+   <Step>
+    <StepTitle>Import default styles</StepTitle>
+    <StepContent>
+
+    The default components come with default styles, you can import them into the
+    root layout of your app or directly into a CSS file with `@import`.
+
+    ```tsx file="app/layout.tsx"
+    import "@liveblocks/react-ui/styles.css";
+    ```
+
+    </StepContent>
+
+  </Step>
+
+   <Step>
+    <StepTitle>Notify the user when your agent completes</StepTitle>
+    <StepContent>
+
+      Trigger a notification with
+      [`triggerInboxNotification`](/docs/api-reference/liveblocks-node#post-inbox-notifications-trigger)
+      from a server action or route handler at the end of your agent’s work. In
+      this example, a custom `$agentCompleted` notification is sent once the
+      agent has finished a task.
+
+      ```ts file="app/run-agent.ts"
+      "use server";
+
+      import { Liveblocks } from "@liveblocks/node";
+
+      const liveblocks = new Liveblocks({
+        secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+      });
+
+      export async function runAgent({
+        userId,
+        task,
+      }: {
+        userId: string;
+        task: string;
+      }) {
+        const startedAt = Date.now();
+
+        // Run your AI agent here, e.g. generateText, mutateFlow, …
+        await __runYourAgent__({ task });
+
+        // +++
+        // Notify the user that the agent has finished
+        await liveblocks.triggerInboxNotification({
+          userId,
+          kind: "$agentCompleted",
+          subjectId: `agent-${task}`,
+          activityData: {
+            task,
+            status: "complete",
+            durationMs: Date.now() - startedAt,
+          },
+        });
+        // +++
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+
+  <Step>
+
+  <StepTitle>Render the agent notification</StepTitle>
+  <StepContent>
+
+    After triggering the custom notification, modify `InboxNotification` to
+    [render `$agentCompleted` with custom UI](/docs/api-reference/liveblocks-react-ui#Rendering-notification-kinds-differently).
+
+    ```tsx file="app/page.tsx"
+    "use client";
+
+    import { useInboxNotifications } from "@liveblocks/react/suspense";
+    import {
+      InboxNotification,
+      InboxNotificationList,
+    } from "@liveblocks/react-ui";
+
+    export default function Page() {
+      const { inboxNotifications } = useInboxNotifications();
+
+      return (
+        <InboxNotificationList>
+          {inboxNotifications.map((inboxNotification) => (
+            <InboxNotification
+              key={inboxNotification.id}
+              inboxNotification={inboxNotification}
+              // +++
+              kinds={{
+                $agentCompleted: (props) => (
+                  <InboxNotification.Custom
+                    {...props}
+                    title="Agent finished"
+                    aside={<InboxNotification.Icon>✨</InboxNotification.Icon>}
+                  >
+                    Your agent finished working on{" "}
+                    <b>{props.inboxNotification.activities[0].data.task}</b>.
+                  </InboxNotification.Custom>
+                ),
+              }}
+              // +++
+            />
+          ))}
+        </InboxNotificationList>
+      );
+    }
+    ```
+
+  </StepContent>
+
+  </Step>
+
+  <Step lastStep>
+    <StepTitle>Next: add your users</StepTitle>
+    <StepContent>
+
+      Notifications is set up and working now, but the auth route is using a placeholder
+      user—the next step is to connect it to your real users, and attach their name and avatar to their notifications.
+
+      <Button asChild  className="not-markdown">
+        <a href="/docs/guides/how-to-add-users-to-liveblocks-notifications">
+          Add your users to Notifications
+        </a>
+      </Button>
+    </StepContent>
+
+  </Step>
+</Steps>
+
+## What to read next
+
+Congratulations! You’ve set up notifications that fire when your AI agent
+finishes its work.
+
+- [API reference](/docs/api-reference/liveblocks-react#Notifications)
+- [Component reference](/docs/api-reference/liveblocks-react-ui#Notifications)
+- [`triggerInboxNotification` reference](/docs/api-reference/liveblocks-node#post-inbox-notifications-trigger)
+- [AI Presence quickstart](/docs/get-started/nextjs-ai-presence)
+
+---
+
+## Examples using Notifications
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "Custom notifications",
+      slug: "notifications-custom/nextjs-notifications-custom",
+      image: "/images/examples/thumbnails/custom-notifications.png",
+    }}
+    technologies={["nextjs", "react"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "AI Comments",
+      slug: "ai-comments/nextjs-comments-ai",
+      image: "/images/examples/thumbnails/comments-ai.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Notification settings",
+      slug: "notification-settings/nextjs-notification-settings",
+      image: "/images/examples/thumbnails/notification-settings.png",
+    }}
+    technologies={["nextjs", "react"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Notion-like AI Editor",
+      slug: "notion-like-ai-editor/nextjs-notion-like-ai-editor",
+      image: "/images/examples/thumbnails/notion-like-ai-editor.png",
+    }}
+    technologies={["nextjs", "react"]}
+    openInNewWindow
+  />
+</ListGrid>

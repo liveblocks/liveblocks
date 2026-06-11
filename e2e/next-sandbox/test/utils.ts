@@ -228,11 +228,68 @@ async function getBoth(pages: [Page, Page], selector: IDSelector) {
   return [value1, value2];
 }
 
+type TraceEntry = { t: number; dir: string; raw: string };
+
+/**
+ * Reads the recorded WebSocket trace (see utils/recordingWebSocket.ts) from
+ * each page and prints it. Called when pages disagree, so a (usually flaky,
+ * timing-related) CI failure leaves the exact client/server protocol exchange
+ * in the logs instead of just "expected X to be Y".
+ */
+async function dumpDivergence(
+  pages: [Page, Page],
+  selector: IDSelector,
+  values: [Json | undefined, Json | undefined]
+) {
+  /* eslint-disable no-console */
+  console.error(`\n========== DIVERGENCE on #${selector} ==========`);
+  console.error(`  page1: ${JSON.stringify(values[0])}`);
+  console.error(`  page2: ${JSON.stringify(values[1])}`);
+
+  for (let i = 0; i < pages.length; i++) {
+    // Full storage pool of this page's client (every node, its parent, its
+    // position key, and its value). `_dump` is @internal, present at runtime.
+    let pool: string | null = null;
+    try {
+      pool = await pages[i].evaluate(
+        () =>
+          // @ts-expect-error -- _dump is @internal and not typed, but it exists at runtime
+          globalThis.__lbClient?._dump?.() ?? null
+      );
+    } catch {
+      // Client absent or page closed; skip.
+    }
+    if (pool) {
+      console.error(`\n--- page${i + 1}: storage pool ---\n${pool}`);
+    }
+
+    let trace: TraceEntry[] = [];
+    try {
+      trace = await pages[i].evaluate(
+        () => (globalThis as { __lbTrace?: TraceEntry[] }).__lbTrace ?? []
+      );
+    } catch {
+      // Page may be closed/navigated; skip.
+    }
+    console.error(`\n--- page${i + 1}: ${trace.length} WebSocket frames ---`);
+    for (const e of trace) {
+      console.error(
+        `  [${String(e.t).padStart(7)}ms ${e.dir.toUpperCase().padEnd(5)}] ${e.raw}`
+      );
+    }
+  }
+  console.error(`================================================\n`);
+  /* eslint-enable no-console */
+}
+
 export async function expectJsonEqualOnAllPages(
   pages: [Page, Page],
   selector: IDSelector
 ) {
   const [value1, value2] = await getBoth(pages, selector);
+  if (!_.isEqual(value1, value2)) {
+    await dumpDivergence(pages, selector, [value1, value2]);
+  }
   expect(value1).toEqual(value2);
 }
 

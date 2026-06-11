@@ -16,8 +16,8 @@
  */
 
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
-/* eslint-disable @typescript-eslint/require-await */
 import type {
+  CompactNode,
   Json,
   JsonObject,
   NodeMap,
@@ -28,7 +28,13 @@ import type {
   SerializedObject,
   SerializedRootObject,
 } from "@liveblocks/core";
-import { asPos, CrdtType, isRootStorageNode, nn } from "@liveblocks/core";
+import {
+  asPos,
+  CrdtType,
+  isRootStorageNode,
+  nn,
+  nodeStreamToCompactNodes,
+} from "@liveblocks/core";
 import { ifilter, imap } from "itertools";
 
 import type { YDocId } from "~/decoders/y-types";
@@ -36,7 +42,6 @@ import { plainLsonToNodeStream } from "~/formats/PlainLson";
 import type {
   IReadableSnapshot,
   IStorageDriver,
-  IStorageDriverNodeAPI,
   LeasedSession,
   ListFeedMessagesOptions,
   ListFeedMessagesResult,
@@ -46,7 +51,7 @@ import type {
 import { NestedMap } from "~/lib/NestedMap";
 import { quote } from "~/lib/text";
 import { makeInMemorySnapshot } from "~/makeInMemorySnapshot";
-import type { Feed, FeedMessage, Pos } from "~/types";
+import type { Feed, FeedMessage, jstring, Pos } from "~/types";
 
 function buildRevNodes(nodeStream: NodeStream) {
   const result = new NestedMap<string, string, string>();
@@ -121,12 +126,35 @@ function hasStaticDataAt(
 }
 
 /**
+ * The lazily-initialized part of the driver that implements all node-related
+ * APIs.
+ */
+type NodesAPI = Pick<
+  IStorageDriver,
+  | "get_node"
+  | "iter_nodes"
+  | "iter_nodes_optimized"
+  | "has_node"
+  | "get_child_at"
+  | "has_child_at"
+  | "get_next_sibling"
+  | "get_last_sibling"
+  | "set_child"
+  | "move_sibling"
+  | "delete_node"
+  | "delete_child_key"
+  | "set_object_data"
+  | "get_snapshot"
+>;
+
+/**
  * Implements the most basic in-memory store. Used if no explicit store is
  * provided.
  */
 export class InMemoryDriver implements IStorageDriver {
   private _nextActor;
   private _nodes: NodeMap;
+  private _nodesApi?: NodesAPI;
   private _metadb: Map<string, Json>;
   private _ydb: Map<string, Uint8Array>;
   private _leasedSessions: Map<string, LeasedSession>;
@@ -155,37 +183,45 @@ export class InMemoryDriver implements IStorageDriver {
     return this._nodes[Symbol.iterator]();
   }
 
+  reinitialize(): void {
+    this._nodesApi = undefined;
+  }
+
   /** Deletes all nodes and replaces them with the given document. */
   DANGEROUSLY_reset_nodes(doc: PlainLsonObject) {
+    // Invalidate the cached node API: its reverse-lookup index is built from
+    // the node map we're about to replace. The next access rebuilds it.
+    this.reinitialize();
+
     this._nodes.clear();
     for (const [id, node] of plainLsonToNodeStream(doc)) {
       this._nodes.set(id, node);
     }
   }
 
-  async get_meta(key: string) {
+  get_meta(key: string) {
     return this._metadb.get(key);
   }
-  async put_meta(key: string, value: Json) {
+  put_meta(key: string, value: Json) {
     this._metadb.set(key, value);
   }
-  async delete_meta(key: string) {
+  delete_meta(key: string) {
     this._metadb.delete(key);
   }
 
-  async list_leased_sessions() {
+  list_leased_sessions() {
     return this._leasedSessions.entries();
   }
 
-  async get_leased_session(sessionId: string) {
+  get_leased_session(sessionId: string) {
     return this._leasedSessions.get(sessionId);
   }
 
-  async put_leased_session(session: LeasedSession) {
+  put_leased_session(session: LeasedSession) {
     this._leasedSessions.set(session.sessionId, session);
   }
 
-  async delete_leased_session(sessionId: string) {
+  delete_leased_session(sessionId: string) {
     this._leasedSessions.delete(sessionId);
   }
 
@@ -197,7 +233,7 @@ export class InMemoryDriver implements IStorageDriver {
   // Feed APIs
   // ---------------------------------------------------------------------------
 
-  async list_feeds(options?: ListFeedsOptions): Promise<ListFeedsResult> {
+  list_feeds(options?: ListFeedsOptions): ListFeedsResult {
     const limit = Math.min(options?.limit ?? 20, 100);
     const since = options?.since;
     const cursor = options?.cursor;
@@ -278,7 +314,7 @@ export class InMemoryDriver implements IStorageDriver {
     return { feeds, nextCursor };
   }
 
-  async get_feed(feedId: string): Promise<Feed | undefined> {
+  get_feed(feedId: string): Feed | undefined {
     const feed = this._feeds.get(feedId);
     if (feed === undefined) {
       return undefined;
@@ -287,7 +323,7 @@ export class InMemoryDriver implements IStorageDriver {
     return feed;
   }
 
-  async create_feed(feed: Feed): Promise<void> {
+  create_feed(feed: Feed): void {
     // Check if feed already exists
     if (this._feeds.has(feed.feedId)) {
       throw new Error(`Feed ${feed.feedId} already exists`);
@@ -302,7 +338,7 @@ export class InMemoryDriver implements IStorageDriver {
     });
   }
 
-  async update_feed_metadata(feedId: string, metadata: Json): Promise<void> {
+  update_feed_metadata(feedId: string, metadata: Json): void {
     const existing = this._feeds.get(feedId);
     if (existing === undefined) {
       throw new Error(`Feed ${feedId} not found`);
@@ -314,7 +350,7 @@ export class InMemoryDriver implements IStorageDriver {
     });
   }
 
-  async delete_feed(feedId: string): Promise<void> {
+  delete_feed(feedId: string): void {
     // Delete all messages for this feed
     const messageKeys: string[] = [];
     for (const [key] of this._feedMessages.entries()) {
@@ -330,10 +366,10 @@ export class InMemoryDriver implements IStorageDriver {
     this._feeds.delete(feedId);
   }
 
-  async list_feed_messages(
+  list_feed_messages(
     feedId: string,
     options?: ListFeedMessagesOptions
-  ): Promise<ListFeedMessagesResult> {
+  ): ListFeedMessagesResult {
     const limit = Math.min(options?.limit ?? 20, 100);
     const since = options?.since;
     const cursor = options?.cursor;
@@ -401,7 +437,7 @@ export class InMemoryDriver implements IStorageDriver {
     return { messages, nextCursor };
   }
 
-  async add_feed_message(feedId: string, message: FeedMessage): Promise<void> {
+  add_feed_message(feedId: string, message: FeedMessage): void {
     // Verify feed exists
     const feed = this._feeds.get(feedId);
     if (feed === undefined) {
@@ -411,12 +447,12 @@ export class InMemoryDriver implements IStorageDriver {
     this._feedMessages.set(`${feedId}:${message.id}`, message);
   }
 
-  async update_feed_message(
+  update_feed_message(
     feedId: string,
     messageId: string,
     data: Json,
     timestamp?: number
-  ): Promise<FeedMessage> {
+  ): FeedMessage {
     const key = `${feedId}:${messageId}`;
     const message = this._feedMessages.get(key);
 
@@ -440,7 +476,7 @@ export class InMemoryDriver implements IStorageDriver {
     return updatedMessage;
   }
 
-  async delete_feed_message(feedId: string, messageId: string): Promise<void> {
+  delete_feed_message(feedId: string, messageId: string): void {
     this._feedMessages.delete(`${feedId}:${messageId}`);
   }
 
@@ -448,29 +484,101 @@ export class InMemoryDriver implements IStorageDriver {
     return ++this._nextActor;
   }
 
-  async iter_y_updates(docId: YDocId) {
+  iter_y_updates(docId: YDocId) {
     const prefix = `${docId}@|@`;
     return imap(
       ifilter(this._ydb.entries(), ([k]) => k.startsWith(prefix)),
       ([k, v]) => [k.slice(prefix.length), v] as [string, Uint8Array]
     );
   }
-  async write_y_updates(docId: YDocId, key: string, data: Uint8Array) {
+  write_y_updates(docId: YDocId, key: string, data: Uint8Array) {
     this._ydb.set(`${docId}@|@${key}`, data);
   }
-  async delete_y_updates(docId: YDocId, keys: string[]) {
+  delete_y_updates(docId: YDocId, keys: string[]) {
     for (const key of keys) {
       this._ydb.delete(`${docId}@|@${key}`);
     }
   }
 
   /** @private Only use this in unit tests, never in production. */
-  async DANGEROUSLY_wipe_all_y_updates() {
+  DANGEROUSLY_wipe_all_y_updates() {
     this._ydb.clear();
   }
 
-  // Intercept load_nodes_api to add caching layer
-  load_nodes_api(): IStorageDriverNodeAPI {
+  // ---------------------------------------------------------------------------
+  // Node APIs
+  // ---------------------------------------------------------------------------
+
+  /**
+   * The lazily-built node API. Building it ensures the root node exists and
+   * constructs the reverse-lookup index. Invalidated by
+   * DANGEROUSLY_reset_nodes(), after which the next access rebuilds it.
+   */
+  private get loadedApi(): NodesAPI {
+    return (this._nodesApi ??= this._loadNodesApi());
+  }
+
+  get_node(id: string): SerializedCrdt | undefined {
+    return this.loadedApi.get_node(id);
+  }
+
+  iter_nodes(): NodeStream {
+    return this.loadedApi.iter_nodes();
+  }
+
+  iter_nodes_optimized(): Iterable<jstring<CompactNode>> {
+    return this.loadedApi.iter_nodes_optimized();
+  }
+
+  has_node(id: string): boolean {
+    return this.loadedApi.has_node(id);
+  }
+
+  get_child_at(parentId: string, parentKey: string): string | undefined {
+    return this.loadedApi.get_child_at(parentId, parentKey);
+  }
+
+  has_child_at(parentId: string, parentKey: string): boolean {
+    return this.loadedApi.has_child_at(parentId, parentKey);
+  }
+
+  get_next_sibling(parentId: string, pos: Pos): Pos | undefined {
+    return this.loadedApi.get_next_sibling(parentId, pos);
+  }
+
+  get_last_sibling(parentId: string): Pos | undefined {
+    return this.loadedApi.get_last_sibling(parentId);
+  }
+
+  set_child(id: string, node: SerializedChild, allowOverwrite?: boolean): void {
+    this.loadedApi.set_child(id, node, allowOverwrite);
+  }
+
+  move_sibling(id: string, newPos: Pos): void {
+    this.loadedApi.move_sibling(id, newPos);
+  }
+
+  delete_node(id: string): void {
+    this.loadedApi.delete_node(id);
+  }
+
+  delete_child_key(id: string, key: string): void {
+    this.loadedApi.delete_child_key(id, key);
+  }
+
+  set_object_data(
+    id: string,
+    data: JsonObject,
+    allowOverwrite?: boolean
+  ): void {
+    this.loadedApi.set_object_data(id, data, allowOverwrite);
+  }
+
+  get_snapshot(lowMemory?: boolean): IReadableSnapshot {
+    return this.loadedApi.get_snapshot(lowMemory);
+  }
+
+  private _loadNodesApi(): NodesAPI {
     // For the in-memory backend, this._nodes IS the "on-disk" storage,
     // so we operate on it directly (no separate cache needed).
     const nodes = this._nodes;
@@ -495,15 +603,27 @@ export class InMemoryDriver implements IStorageDriver {
       return nextPos;
     }
 
+    function get_last_sibling(parentId: string): Pos | undefined {
+      let lastPos: Pos | undefined;
+      // Find the largest position under this parent
+      for (const siblingKey of revNodes.keysAt(parentId)) {
+        const siblingPos = asPos(siblingKey);
+        if (lastPos === undefined || siblingPos > lastPos) {
+          lastPos = siblingPos;
+        }
+      }
+      return lastPos;
+    }
+
     /**
      * Inserts a node in the storage tree, deleting any nodes that already exist
      * under this key (including all of its children), if any.
      */
-    async function set_child(
+    function set_child(
       id: string,
       node: SerializedChild,
       allowOverwrite = false
-    ): Promise<void> {
+    ): void {
       const parentNode = nodes.get(node.parentId);
       // Reject orphans - parent must exist
       if (parentNode === undefined) {
@@ -547,7 +667,7 @@ export class InMemoryDriver implements IStorageDriver {
      * delete-then-insert would would immediately destroy all (grand)children
      * when it's deleted.
      */
-    async function move_sibling(id: string, newPos: Pos): Promise<void> {
+    function move_sibling(id: string, newPos: Pos): void {
       const node = nodes.get(id);
       if (node?.parentId === undefined) {
         return;
@@ -572,11 +692,11 @@ export class InMemoryDriver implements IStorageDriver {
      * But if `allowOverwrite` is set to true, the conflicting child node (and
      * its entire subtree) will be deleted to make room for the new static data.
      */
-    async function set_object_data(
+    function set_object_data(
       id: string,
       data: JsonObject,
       allowOverwrite = false
-    ): Promise<void> {
+    ): void {
       const node = nodes.get(id);
       if (node?.type !== CrdtType.OBJECT) {
         // Nothing to do
@@ -638,7 +758,7 @@ export class InMemoryDriver implements IStorageDriver {
       }
     }
 
-    const api: IStorageDriverNodeAPI = {
+    const api: NodesAPI = {
       /**
        * Return the node with the given id, or undefined if no such node exists.
        * Must always return a valid root node for id="root", even if empty.
@@ -649,6 +769,18 @@ export class InMemoryDriver implements IStorageDriver {
        * Yield all nodes as [id, node] pairs. Must always include the root node.
        */
       iter_nodes: () => nodes as NodeStream,
+
+      /**
+       * Yield each node as a pre-built CompactNode JSON tuple string.
+       *
+       * This implementation IS the canonical reference for the invariant:
+       * iter_nodes_optimized` ≡ `nodeStreamToCompactNodes(iter_nodes())
+       */
+      *iter_nodes_optimized() {
+        for (const compact of nodeStreamToCompactNodes(nodes as NodeStream)) {
+          yield JSON.stringify(compact) as jstring<CompactNode>;
+        }
+      },
 
       /**
        * Return true iff a node with the given id exists. Must return true for "root".
@@ -674,6 +806,12 @@ export class InMemoryDriver implements IStorageDriver {
        * does not have to exist already. Positions compare lexicographically.
        */
       get_next_sibling,
+
+      /**
+       * Return the position of the last (rightmost) child under parentId, or
+       * undefined if the node has no children.
+       */
+      get_last_sibling,
 
       /**
        * Insert a child node with the given id.

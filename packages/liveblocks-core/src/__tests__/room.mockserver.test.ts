@@ -55,8 +55,8 @@ import {
   createSerializedList,
   createSerializedRegister,
   createSerializedRoot,
+  fakeSyncSource,
   FIRST_POSITION,
-  makeSyncSource,
   prepareIsolatedStorageTest,
   prepareRoomWithStorage_loadWithDelay,
   prepareStorageTest,
@@ -101,7 +101,7 @@ function createDefaultRoomConfig<
       currentUserId: new Signal<string | undefined>(undefined),
     }),
     // Not used in unit tests (yet)
-    createSyncSource: makeSyncSource,
+    createSyncSource: fakeSyncSource,
   };
 }
 

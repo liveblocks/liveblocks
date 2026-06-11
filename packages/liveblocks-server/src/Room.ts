@@ -18,6 +18,7 @@
 import type {
   BaseUserMeta,
   Brand,
+  CompactNode,
   IUserInfo,
   Json,
   JsonObject,
@@ -25,7 +26,6 @@ import type {
 import {
   assertNever,
   ClientMsgCode,
-  nodeStreamToCompactNodes,
   OpCode,
   raise,
   ServerMsgCode as CoreServerMsgCode,
@@ -34,7 +34,7 @@ import {
 } from "@liveblocks/core";
 import { Mutex, tryAcquire } from "async-mutex";
 import { array, formatInline } from "decoders";
-import { chunked } from "itertools";
+import { chunkedByCost } from "itertools";
 import { nanoid } from "nanoid";
 
 import type { Guid } from "~/decoders";
@@ -74,8 +74,10 @@ import { UniqueMap } from "./lib/UniqueMap";
 import { feedFailureServerMsg, feedRequestFailed } from "./protocol/feedErrors";
 import { FeedMsgCode, FeedRequestErrorCode } from "./protocol/feedMessages";
 import { ProtocolVersion } from "./protocol/ProtocolVersion";
-import type { Feed, FeedMessage, LeasedSession } from "./types";
+import type { Feed, FeedMessage, jstring, LeasedSession } from "./types";
 import { isLeasedSessionExpired, makeRoomStateMsg } from "./utils";
+
+const MB = 1024 * 1024;
 
 const messagesDecoder = array(clientMsgDecoder);
 
@@ -96,7 +98,29 @@ const BLACK_HOLE = new Logger([
   /* No targets, i.e. black hole logger */
 ]);
 
-export type LoadingState = "initial" | "loading" | "loaded";
+// Stream pre-built CompactNode tuple strings into raw STORAGE_CHUNK frames
+// (no parse/re-stringify of jdata). Each node is its own atomic unit for
+// chunkedByCost, so a single oversized row (≤ 2 MB CF limit) is the worst
+// case any output frame can exceed MAX_SIZE by.
+function groupNodesForWebSocketMessages(
+  input: Iterable<jstring<CompactNode>>
+): Iterable<jstring<CompactNode>[]> {
+  // Cap each outgoing WebSocket message at 16 MB. CF's 32 MB message size
+  // limit only applies inbound, so the real constraint here is memory
+  // pressure: the worker has 128 MB total, and stringifying a 16 MB message
+  // costs roughly that much again in transient allocations.
+  const MAX_SIZE = 16 * MB;
+
+  // Chunk to form ideal message sizes, per chunk:
+  //   chunks 0..2 → 1 MB each (fast start)
+  //   chunks 3..9 → 2, 3, 4, 5, 6, 7, 8 MB (slowly ramp up)
+  //   chunks 10+  → 8 MB (steady state)
+  const idealSize = (chunkIndex: number): number =>
+    chunkIndex < 3 ? 1 * MB : Math.min(8, chunkIndex - 1) * MB;
+
+  return chunkedByCost(input, (tup) => tup.length, MAX_SIZE, idealSize);
+}
+
 export type ActorID = Brand<number, "ActorID">;
 /** Number of milliseconds since Unix epoch. */
 export type Millis = Brand<number, "Millis">;
@@ -109,7 +133,6 @@ export type Millis = Brand<number, "Millis">;
  */
 export type SessionKey = Brand<string, "SessionKey">;
 
-export type PreSerializedServerMsg = Brand<string, "PreSerializedServerMsg">;
 type ClientMsg =
   | GenericClientMsg<JsonObject, Json>
   | FetchFeedsClientMsg
@@ -138,10 +161,8 @@ function collectSideEffects() {
   };
 }
 
-function serialize(
-  msgs: ServerMsg | readonly ServerMsg[]
-): PreSerializedServerMsg {
-  return JSON.stringify(msgs) as PreSerializedServerMsg;
+function serialize(msgs: ServerMsg | readonly ServerMsg[]): jstring<ServerMsg> {
+  return JSON.stringify(msgs) as jstring<ServerMsg>;
 }
 
 export function ackIgnoredOp(opId: string): IgnoredOp {
@@ -297,7 +318,7 @@ export class BrowserSession<SM, CM extends JsonObject> {
     return sent;
   }
 
-  send(serverMsg: ServerMsg | ServerMsg[] | PreSerializedServerMsg): number {
+  send(serverMsg: ServerMsg | ServerMsg[] | jstring<ServerMsg>): number {
     const data =
       typeof serverMsg === "string" ? serverMsg : serialize(serverMsg);
     const sent = this.#_socket.send(data);
@@ -378,26 +399,12 @@ export type CreateTicketOptions<SM, CM extends JsonObject> = {
   actor?: ActorID;
 };
 
-type InternalData = {
-  readonly storage: Storage;
-  readonly yjsStorage: YjsStorage;
-  readonly mutex: Mutex;
-};
-
 type RoomOptions<SM, CM extends JsonObject, C> = {
   /**
    * Bring your own persistence backend
    */
   storage?: IStorageDriver;
   logger?: Logger;
-
-  /**
-   * Whether to allow streaming storage responses. Only safe with drivers
-   * that can guarantee that no Ops from other clients can get interleaved
-   * between the chunk generation until the last chunk has been sent.
-   * Defaults to true, but is notably NOT safe to use from DOS-KV backends.
-   */
-  allowStreaming?: boolean;
 
   // YYY Restructure these hooks to all take a single `event` param
   hooks?: {
@@ -410,15 +417,8 @@ type RoomOptions<SM, CM extends JsonObject, C> = {
     /** Called whenever the server acknowledged a ping with a pong */
     onDidPong?: (ctx?: C) => void | Promise<void>;
 
-    /** Called before the room is attempted to be loaded */
-    onRoomWillLoad?: (ctx?: C) => void | Promise<void>;
-    /** Called right after the room's contents are loaded, but before any session has been started */
-    onRoomDidLoad?: (ctx?: C) => void | Promise<void>;
-
     /** Called right before the room is attempted to be unloaded. Synchronous. May throw to abort the unloading. */
     onRoomWillUnload?: (ctx?: C) => void;
-    /** Called right after the room has been unloaded from memory. Synchronous. */
-    onRoomDidUnload?: (ctx?: C) => void;
 
     /** Called when a new user entered the room. */
     onSessionDidStart?: (
@@ -468,7 +468,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
 
   public meta: RM;
   public readonly driver: IStorageDriver;
-  public logger: Logger;
+  #logger: Logger;
 
   /**
    * While a room is in "maintenance mode", all WebSocket connections to the
@@ -480,8 +480,13 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
    */
   private readonly _maintenanceMode = new Mutex();
 
-  private _loadData$: Promise<void> | null = null;
-  private _data: InternalData | null = null;
+  private _storage: Storage;
+  private _yjsStorage: YjsStorage;
+  public readonly mutex: Mutex = new Mutex();
+
+  public get storage(): Storage { return this._storage; } // prettier-ignore
+  public get yjsStorage(): YjsStorage { return this._yjsStorage; } // prettier-ignore
+
   private _qsize = 0;
 
   private readonly sessions = new UniqueMap<
@@ -498,11 +503,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
 
     onDidPong?: (ctx?: C) => void | Promise<void>;
 
-    onRoomWillLoad?: (ctx?: C) => void | Promise<void>;
-    onRoomDidLoad?: (ctx?: C) => void | Promise<void>;
-
     onRoomWillUnload?: (ctx?: C) => void;
-    onRoomDidUnload?: (ctx?: C) => void;
 
     onSessionDidStart?: (
       session: BrowserSession<SM, CM>,
@@ -522,14 +523,15 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
   };
 
   readonly #_debug: boolean;
-  readonly #_allowStreaming: boolean;
 
   constructor(meta: RM, options?: RoomOptions<SM, CM, C>) {
     const driver = options?.storage ?? makeNewInMemoryDriver();
     this.meta = meta;
     this.driver = driver;
-    this.logger = options?.logger ?? BLACK_HOLE;
-    this.#_allowStreaming = options?.allowStreaming ?? true;
+    this._storage = new Storage(this.driver);
+    this._yjsStorage = new YjsStorage(this.driver);
+
+    this.#logger = options?.logger ?? BLACK_HOLE;
     this.hooks = {
       isClientMsgAllowed:
         options?.hooks?.isClientMsgAllowed ??
@@ -539,12 +541,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
           };
         }),
 
-      // YYY .load() isn't called on the RoomServer yet! As soon as it does, these hooks will get called
-      onRoomWillLoad: options?.hooks?.onRoomWillLoad,
-      onRoomDidLoad: options?.hooks?.onRoomDidLoad,
-
       onRoomWillUnload: options?.hooks?.onRoomWillUnload,
-      onRoomDidUnload: options?.hooks?.onRoomDidUnload,
 
       onSessionDidStart: options?.hooks?.onSessionDidStart,
       onSessionDidEnd: options?.hooks?.onSessionDidEnd,
@@ -556,24 +553,15 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
     this.#_debug = options?.enableDebugLogging ?? false;
   }
 
-  public get loadingState(): LoadingState {
-    if (this._loadData$ === null) {
-      return "initial";
-    } else if (this._data === null) {
-      return "loading";
-    } else {
-      return "loaded";
-    }
+  public get logger(): Logger {
+    return this.#logger;
+  }
+
+  public addLoggerContext(attrs: JsonObject): void {
+    this.#logger = this.#logger.withContext(attrs);
   }
 
   public  get numSessions(): number     { return this.sessions.size; } // prettier-ignore
-
-  public  get storage(): Storage        { return this.data.storage; } // prettier-ignore
-  public  get yjsStorage(): YjsStorage  { return this.data.yjsStorage; } // prettier-ignore
-
-  public get mutex(): Mutex            { return this.data.mutex; } // prettier-ignore
-
-  private get data(): InternalData      { return this._data ?? raise("Cannot use room before it's loaded"); } // prettier-ignore
 
   // ------------------------------------------------------------------------------------
   // Maintenance mode
@@ -592,7 +580,9 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
    * If the room is already in maintenance mode, throws E_ALREADY_LOCKED
    * immediately instead of queuing the request.
    */
-  public async runInMaintenanceMode<T>(callback: () => Promise<T>): Promise<T> {
+  public async runInMaintenanceMode<T>(
+    callback: () => T | Promise<T>
+  ): Promise<T> {
     return tryAcquire(this._maintenanceMode).runExclusive(callback);
   }
 
@@ -601,37 +591,19 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
   // ------------------------------------------------------------------------------------
 
   /**
-   * Initializes the Room, so it's ready to start accepting connections. Safe
-   * to call multiple times. After awaiting `room.load()` the Room is ready to
-   * be used.
-   */
-  public async load(ctx?: C): Promise<void> {
-    if (this._loadData$ === null) {
-      this._data = null;
-      this._loadData$ = this._load(ctx).catch((e) => {
-        this._data = null;
-        this._loadData$ = null;
-        throw e;
-      });
-    }
-    return this._loadData$;
-  }
-
-  /**
-   * Releases the currently-loaded storage tree from worker memory, freeing it
-   * up to be garbage collected. The next time a user will join the room, the
-   * room will be reloaded from storage.
+   * Releases the currently-loaded storage tree and Yjs documents from worker
+   * memory, freeing them up to be garbage collected. The next time the room
+   * is used, fresh instances will lazily be created.
    */
   public unload(ctx?: C): void {
     this.hooks.onRoomWillUnload?.(ctx); // May throw to cancel unloading
-    if (this._data) {
-      this.storage.unload();
-      this.yjsStorage.unload();
-    }
-    // YYY Abort any potentially in-flight _loadData$ calls here
-    this._loadData$ = null;
-    // this._data = null;  // YYY Should we also clear _data? I think so!
-    this.hooks.onRoomDidUnload?.(ctx);
+
+    // NOTE: this.mutex is deliberately left untouched here. It guards
+    // in-flight message processing for the lifetime of this Room instance,
+    // and force-releasing a held lock would allow concurrent writers.
+    this.driver.reinitialize();
+    this._storage = new Storage(this.driver);
+    this._yjsStorage = new YjsStorage(this.driver);
   }
 
   /**
@@ -645,15 +617,13 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
    * connection is established. If the socket is never established, this
    * unused Ticket will simply get garbage collected.
    */
-  public async createTicket(
-    options?: CreateTicketOptions<SM, CM>
-  ): Promise<Ticket<SM, CM>> {
-    const actor$ = options?.actor ?? this.getNextActor();
+  public createTicket(options?: CreateTicketOptions<SM, CM>): Ticket<SM, CM> {
+    const actor = options?.actor ?? this.getNextActor();
     const sessionKey = nanoid() as SessionKey;
     const info = options?.info;
     const ticket: Ticket<SM, CM> = {
       version: options?.version ?? HIGHEST_PROTOCOL_VERSION,
-      actor: await actor$,
+      actor,
       sessionKey,
       meta: options?.meta,
       publicMeta: options?.publicMeta,
@@ -668,15 +638,16 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
     return ticket;
   }
 
-  public async createBackendSession_experimental(): Promise<
-    [session: BackendSession, outgoingMessages: PreSerializedServerMsg[]]
-  > {
-    const ticket = (await this.createTicket()) as Ticket<never, never>;
-    const capturedServerMsgs: PreSerializedServerMsg[] = [];
+  public createBackendSession_experimental(): [
+    session: BackendSession,
+    outgoingMessages: jstring<ServerMsg>[],
+  ] {
+    const ticket = this.createTicket() as Ticket<never, never>;
+    const capturedServerMsgs: jstring<ServerMsg>[] = [];
     const stub = {
       send: (data) => {
         if (typeof data === "string") {
-          capturedServerMsgs.push(data as PreSerializedServerMsg);
+          capturedServerMsgs.push(data as jstring<ServerMsg>);
         }
         return 0;
       },
@@ -721,7 +692,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
     }
   }
 
-  private async sendSessionStartMessages(
+  private sendSessionStartMessages(
     newSession: BrowserSession<SM, CM>,
     ticket: Ticket<SM, CM>,
     ctx?: C,
@@ -731,7 +702,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
           "Pass a `defer` callback to sendSessionStartMessages() to collect async side effects."
       );
     }
-  ): Promise<void> {
+  ): void {
     const users: Record<ActorID, BaseUserMeta & { scopes: string[] }> = {};
     // Add regular sessions
     for (const session of this.otherSessions(ticket.sessionKey)) {
@@ -743,10 +714,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
     }
 
     // List all active server sessions
-    const leasedSessions: LeasedSession[] = await this.listLeasedSessions(
-      ctx,
-      defer
-    );
+    const leasedSessions: LeasedSession[] = this.listLeasedSessions(ctx, defer);
     // Add server sessions
     for (const leasedSession of leasedSessions) {
       users[leasedSession.actorId as ActorID] = {
@@ -787,7 +755,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
    * - Sends a ROOM_STATE message to the socket.
    * - Broadcasts a USER_JOINED message to all other sessions in the room.
    */
-  public async startBrowserSession(
+  public startBrowserSession(
     ticket: Ticket<SM, CM>,
     socket: IServerWebSocket,
     ctx?: C,
@@ -797,7 +765,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
           "Pass a `defer` callback to startBrowserSession() to collect async side effects."
       );
     }
-  ): Promise<void> {
+  ): void {
     let existing: SessionKey | undefined;
     while (
       (existing = this.sessions.lookupPrimaryKey(ticket.actor)) !== undefined
@@ -816,7 +784,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
         defer
       );
 
-      this.logger.warn(
+      this.#logger.warn(
         `Previous session for actor ${ticket.actor} killed in favor of new session`
       );
     }
@@ -825,7 +793,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
     this.sessions.set(ticket.sessionKey, newSession);
 
     // send sessions start messages
-    await this.sendSessionStartMessages(newSession, ticket, ctx, defer);
+    this.sendSessionStartMessages(newSession, ticket, ctx, defer);
 
     this.sendToOthers(
       ticket.sessionKey,
@@ -992,7 +960,6 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
     messages: ClientMsg[],
     ctx?: C
   ): Promise<void> {
-    await this.load(ctx);
     const { defer, waitAll } = collectSideEffects();
     await this.mutex.runExclusive(() =>
       this._processClientMsg_withExclusiveAccess(key, messages, ctx, defer)
@@ -1027,7 +994,6 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
     messages: ClientMsg[],
     ctx?: C
   ): Promise<void> {
-    await this.load(ctx);
     const { defer, waitAll } = collectSideEffects();
     await this.mutex.runExclusive(() =>
       this._processClientMsgFromBackendSession_withExclusiveAccess(
@@ -1057,7 +1023,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
    * Upsert a leased session. Creates a new session if it doesn't exist (or is expired),
    * or updates an existing session with merged presence.
    */
-  public async upsertLeasedSession(
+  public upsertLeasedSession(
     sessionId: string,
     presence: JsonObject,
     ttl: number,
@@ -1069,18 +1035,18 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
           "Pass a `defer` callback to upsertLeasedSession() to collect async side effects."
       );
     }
-  ): Promise<void> {
-    const existingSession = await this.driver.get_leased_session(sessionId);
+  ): void {
+    const existingSession = this.driver.get_leased_session(sessionId);
     const isExpired =
       existingSession !== undefined && isLeasedSessionExpired(existingSession);
 
     if (isExpired) {
-      await this.deleteLeasedSession(existingSession, ctx, defer);
+      this.deleteLeasedSession(existingSession, ctx, defer);
     }
 
     if (existingSession === undefined || isExpired) {
       // Creating new session (or was expired)
-      const actorId = await this.getNextActor();
+      const actorId = this.getNextActor();
       const now = Date.now();
       const session: LeasedSession = {
         sessionId,
@@ -1091,7 +1057,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
         actorId,
       };
 
-      await this.driver.put_leased_session(session);
+      this.driver.put_leased_session(session);
 
       // Broadcast USER_JOINED to all existing sessions
       this.sendToAll(
@@ -1131,7 +1097,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
         ttl,
       };
 
-      await this.driver.put_leased_session(updatedSession);
+      this.driver.put_leased_session(updatedSession);
 
       // Broadcast UPDATE_PRESENCE WITHOUT targetActor to all sessions (patch)
       this.sendToAll(
@@ -1150,7 +1116,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
   /**
    * List all server sessions. As a side effect, it will delete expired sessions.
    */
-  public async listLeasedSessions(
+  public listLeasedSessions(
     ctx?: C,
     defer: (promise: Promise<void>) => void = () => {
       throw new Error(
@@ -1158,9 +1124,8 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
           "Pass a `defer` callback to listLeasedSessions() to collect async side effects."
       );
     }
-  ): Promise<LeasedSession[]> {
-    await this.load(ctx);
-    const sessions = await this.driver.list_leased_sessions();
+  ): LeasedSession[] {
+    const sessions = this.driver.list_leased_sessions();
     const validSessions: LeasedSession[] = [];
     const toDelete: LeasedSession[] = [];
     for (const [_, session] of sessions) {
@@ -1172,7 +1137,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
     }
 
     for (const session of toDelete) {
-      await this.deleteLeasedSession(session, ctx, defer);
+      this.deleteLeasedSession(session, ctx, defer);
     }
 
     return validSessions;
@@ -1181,7 +1146,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
   /**
    * Delete a server session and broadcast USER_LEFT to all sessions.
    */
-  public async deleteLeasedSession(
+  public deleteLeasedSession(
     session: LeasedSession,
     ctx?: C,
     defer: (promise: Promise<void>) => void = () => {
@@ -1190,7 +1155,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
           "Pass a `defer` callback to deleteLeasedSession() to collect async side effects."
       );
     }
-  ): Promise<void> {
+  ): void {
     // Broadcast USER_LEFT to all sessions
     this.sendToAll(
       {
@@ -1200,13 +1165,13 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
       ctx,
       defer
     );
-    await this.driver.delete_leased_session(session.sessionId);
+    this.driver.delete_leased_session(session.sessionId);
   }
 
   /**
    * Delete all server sessions and broadcast USER_LEFT to all sessions.
    */
-  public async deleteAllLeasedSessions(
+  public deleteAllLeasedSessions(
     ctx?: C,
     defer: (promise: Promise<void>) => void = () => {
       throw new Error(
@@ -1214,11 +1179,10 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
           "Pass a `defer` callback to deleteAllLeasedSessions() to collect async side effects."
       );
     }
-  ): Promise<void> {
-    await this.load(ctx);
-    const sessions = await this.driver.list_leased_sessions();
+  ): void {
+    const sessions = this.driver.list_leased_sessions();
     for (const [_, session] of sessions) {
-      await this.deleteLeasedSession(session, ctx, defer);
+      this.deleteLeasedSession(session, ctx, defer);
     }
   }
 
@@ -1229,59 +1193,56 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
   /**
    * List feeds with pagination and filtering.
    */
-  public async listFeeds(options?: ListFeedsOptions): Promise<ListFeedsResult> {
-    return await this.driver.list_feeds(options);
+  public listFeeds(options?: ListFeedsOptions): ListFeedsResult {
+    return this.driver.list_feeds(options);
   }
 
   /**
    * Get a specific feed by feed ID.
    */
-  public async getFeed(feedId: string): Promise<Feed | undefined> {
-    return await this.driver.get_feed(feedId);
+  public getFeed(feedId: string): Feed | undefined {
+    return this.driver.get_feed(feedId);
   }
 
   /**
    * Create a new feed.
    * If timestamp is not provided, current server time is used.
    */
-  public async createFeed(
+  public createFeed(
     feed: Omit<Feed, "createdAt" | "updatedAt"> & { timestamp?: number }
-  ): Promise<Feed> {
+  ): Feed {
     const now = feed.timestamp ?? Date.now();
     const fullFeed: Feed = {
       ...feed,
       createdAt: now,
       updatedAt: now,
     };
-    await this.driver.create_feed(fullFeed);
+    this.driver.create_feed(fullFeed);
     return fullFeed;
   }
 
   /**
    * Update a feed's metadata.
    */
-  public async updateFeedMetadata(
-    feedId: string,
-    metadata: Json
-  ): Promise<void> {
-    await this.driver.update_feed_metadata(feedId, metadata);
+  public updateFeedMetadata(feedId: string, metadata: Json): void {
+    this.driver.update_feed_metadata(feedId, metadata);
   }
 
   /**
    * Delete a feed.
    */
-  public async deleteFeed(feedId: string): Promise<void> {
-    await this.driver.delete_feed(feedId);
+  public deleteFeed(feedId: string): void {
+    this.driver.delete_feed(feedId);
   }
 
   /**
    * List feed messages for a feed with pagination.
    */
-  public async listFeedMessages(
+  public listFeedMessages(
     feedId: string,
     options?: ListFeedMessagesOptions
-  ): Promise<ListFeedMessagesResult> {
-    return await this.driver.list_feed_messages(feedId, options);
+  ): ListFeedMessagesResult {
+    return this.driver.list_feed_messages(feedId, options);
   }
 
   /**
@@ -1289,11 +1250,11 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
    * If message id is not provided, a unique ID is automatically generated.
    * If timestamp is not provided, current server time is used.
    */
-  public async addFeedMessage(
+  public addFeedMessage(
     feedId: string,
     message: Omit<FeedMessage, "id" | "createdAt" | "updatedAt"> &
       Partial<Pick<FeedMessage, "id">> & { timestamp?: number }
-  ): Promise<FeedMessage> {
+  ): FeedMessage {
     const now = message.timestamp ?? Date.now();
     const fullMessage: FeedMessage = {
       id: message.id ?? nanoid(),
@@ -1301,7 +1262,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
       updatedAt: now,
       data: message.data,
     };
-    await this.driver.add_feed_message(feedId, fullMessage);
+    this.driver.add_feed_message(feedId, fullMessage);
     return fullMessage;
   }
 
@@ -1309,13 +1270,13 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
    * Update a feed message's data.
    * Returns the updated message.
    */
-  public async updateFeedMessage(
+  public updateFeedMessage(
     feedId: string,
     messageId: string,
     data: Json,
     timestamp?: number
-  ): Promise<FeedMessage> {
-    return await this.driver.update_feed_message(
+  ): FeedMessage {
+    return this.driver.update_feed_message(
       feedId,
       messageId,
       data,
@@ -1326,11 +1287,8 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
   /**
    * Delete a feed message.
    */
-  public async deleteFeedMessage(
-    feedId: string,
-    messageId: string
-  ): Promise<void> {
-    await this.driver.delete_feed_message(feedId, messageId);
+  public deleteFeedMessage(feedId: string, messageId: string): void {
+    this.driver.delete_feed_message(feedId, messageId);
   }
 
   /**
@@ -1397,45 +1355,16 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
     }
   }
 
-  // ------------------------------------------------------------------------------------
-  // Private APIs
-  // ------------------------------------------------------------------------------------
-
-  private async _loadStorage(): Promise<Storage> {
-    const storage = new Storage(this.driver);
-    await storage.load(this.logger);
-    return storage;
-  }
-
-  private async _loadYjsStorage(): Promise<YjsStorage> {
-    const yjsStorage = new YjsStorage(this.driver);
-    await yjsStorage.load(this.logger);
-    return yjsStorage;
-  }
-
-  // Don't ever manually call this!
-  private async _load(ctx?: C): Promise<void> {
-    await this.hooks.onRoomWillLoad?.(ctx);
-
-    // YYY Maybe later run these in parallel? See https://github.com/liveblocks/liveblocks-cloudflare/pull/721#discussion_r1489076389
-    const storage = await this._loadStorage();
-    const yjsStorage = await this._loadYjsStorage();
-
-    this._data = {
-      mutex: new Mutex(),
-      storage,
-      yjsStorage,
-    };
-
-    await this.hooks.onRoomDidLoad?.(ctx);
-  }
-
   /**
    * Returns a new, unique, actor ID.
    */
-  private async getNextActor(): Promise<ActorID> {
-    return (await this.driver.next_actor()) as ActorID;
+  public getNextActor(): ActorID {
+    return this.driver.next_actor() as ActorID;
   }
+
+  // ------------------------------------------------------------------------------------
+  // Private APIs
+  // ------------------------------------------------------------------------------------
 
   /**
    * Iterates over all *other* Sessions and their session keys.
@@ -1470,7 +1399,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
   private async handlePing(sessionKey: SessionKey, ctx?: C): Promise<void> {
     const session = this.sessions.get(sessionKey);
     if (session === undefined) {
-      this.logger
+      this.#logger
         .withContext({ sessionKey })
         .warn("[probe] in handlePing, no such session exists");
       return;
@@ -1485,15 +1414,15 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
     }
   }
 
-  private async _processClientMsg_withExclusiveAccess(
+  private _processClientMsg_withExclusiveAccess(
     sessionKey: SessionKey,
     messages: ClientMsg[],
     ctx: C | undefined,
     defer: (p: Promise<void>) => void
-  ): Promise<void> {
+  ): void {
     const session = this.sessions.get(sessionKey);
     if (!session) {
-      this.logger
+      this.#logger
         .withContext({ sessionKey })
         .warn("[probe] in handleClientMsgs, no such session exists");
       return;
@@ -1504,15 +1433,16 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
     // - Messages to reply back to the current sender (i.e. acks and rejections)
     const toFanOut: ServerMsg[] = [];
     const toReply: ServerMsg[] = [];
-    const replyImmediately = (msg: ServerMsg | ServerMsg[]) =>
-      void session.send(msg);
+    const replyImmediately = (
+      msg: ServerMsg | ServerMsg[] | jstring<ServerMsg>
+    ) => void session.send(msg);
     const scheduleFanOut = (msg: ServerMsg) => void toFanOut.push(msg);
     const scheduleReply = (msg: ServerMsg) => void toReply.push(msg);
 
     for (const msg of messages) {
       const isMsgAllowed = this.hooks.isClientMsgAllowed(msg, session);
       if (isMsgAllowed.allowed) {
-        await this.handleOne(
+        this.handleOne(
           session,
           msg,
           replyImmediately,
@@ -1548,12 +1478,12 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
   // TODO It's a bit bothering how much duplication there is between this method
   // and the _processClientMsg_withExclusiveAccess version. A better
   // abstraction is needed.
-  private async _processClientMsgFromBackendSession_withExclusiveAccess(
+  private _processClientMsgFromBackendSession_withExclusiveAccess(
     session: BackendSession,
     messages: ClientMsg[],
     ctx: C | undefined,
     defer: (p: Promise<void>) => void
-  ): Promise<void> {
+  ): void {
     // Keep two ServerMsg buffers to send at the end:
     // - Messages to fan-out to all *others* (current session not included)
     // - Messages to reply back to the current sender (i.e. acks and rejections)
@@ -1561,8 +1491,18 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
     const toReplyImmediately: ServerMsg[] = [];
     const toReplyAfter: ServerMsg[] = [];
 
-    const replyImmediately = (msg: ServerMsg | ServerMsg[]) => {
-      if (Array.isArray(msg)) {
+    const replyImmediately = (
+      msg: ServerMsg | ServerMsg[] | jstring<ServerMsg>
+    ) => {
+      if (typeof msg === "string") {
+        // Pre-serialized payload: flush any pending typed messages first so
+        // wire order matches call order, then send the raw string directly.
+        if (toReplyImmediately.length > 0) {
+          session.send(toReplyImmediately);
+          toReplyImmediately.length = 0;
+        }
+        session.send(msg);
+      } else if (Array.isArray(msg)) {
         for (const m of msg) {
           toReplyImmediately.push(m);
         }
@@ -1574,7 +1514,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
     const scheduleReply = (msg: ServerMsg) => void toReplyAfter.push(msg);
 
     for (const msg of messages) {
-      await this.handleOne(
+      this.handleOne(
         session,
         msg,
         replyImmediately,
@@ -1601,15 +1541,17 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
     }
   }
 
-  private async handleOne(
+  private handleOne(
     session: BrowserSession<SM, CM>,
     msg: ClientMsg,
-    replyImmediately: (msg: ServerMsg | ServerMsg[]) => void,
+    replyImmediately: (
+      msg: ServerMsg | ServerMsg[] | jstring<ServerMsg>
+    ) => void,
     scheduleFanOut: (msg: ServerMsg) => void,
     scheduleReply: (msg: ServerMsg) => void,
     ctx: C | undefined,
     defer: (p: Promise<void>) => void
-  ): Promise<void> {
+  ): void {
     if (!this.mutex.isLocked()) {
       throw new Error("Handling messages requires exclusive access");
     }
@@ -1638,37 +1580,26 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
 
       case ClientMsgCode.FETCH_STORAGE: {
         if (session.version >= ProtocolVersion.V8) {
-          if (this.#_allowStreaming) {
-            const NODES_PER_CHUNK = 250; // = arbitrary! Could be tuned later
-
-            for (const chunk of chunked(
-              nodeStreamToCompactNodes(this.storage.loadedDriver.iter_nodes()),
-              NODES_PER_CHUNK
-            )) {
-              // NOTE: We don't take a storage snapshot here, because this
-              // iteration is happening synchronously, so consistency of the
-              // current document automatically guaranteed. If we ever make
-              // this streaming asynchronous, however, we need to take
-              // a storage snapshot to guarantee document consistency.
-              replyImmediately({
-                type: ServerMsgCode.STORAGE_CHUNK,
-                nodes: chunk,
-              });
-            }
-          } else {
-            replyImmediately({
-              type: ServerMsgCode.STORAGE_CHUNK,
-              nodes: Array.from(
-                nodeStreamToCompactNodes(this.storage.loadedDriver.iter_nodes())
-              ),
-            });
+          //
+          // Turn storage nodes into WebSocket messages. They get chunked so
+          // that each individual WebSocket message won't be too big, but the
+          // total number of WebSocket messages needed is kept in check.
+          //
+          // NOTE: We use iter_nodes_optimized() here to avoid the JS overhead
+          // of parsing, mutating, serializing, and measuring each individual
+          // node, which can add up in large documents.
+          //
+          const rawStream = this.storage.driver.iter_nodes_optimized();
+          for (const chunk of groupNodesForWebSocketMessages(rawStream)) {
+            const frame =
+              `{"type":${ServerMsgCode.STORAGE_CHUNK},"nodes":[${chunk.join(",")}]}` as jstring<ServerMsg>;
+            replyImmediately(frame);
           }
-
           replyImmediately({ type: ServerMsgCode.STORAGE_STREAM_END });
         } else {
           replyImmediately({
             type: ServerMsgCode.STORAGE_STATE_V7,
-            items: Array.from(this.storage.loadedDriver.iter_nodes()),
+            items: Array.from(this.storage.driver.iter_nodes()),
           });
         }
         break;
@@ -1680,30 +1611,37 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
         // semantics to provide snapshot isolation.
         this.driver.bump_storage_version?.();
 
-        const result = await this.storage.applyOps(msg.ops);
+        const result = this.storage.applyOps(msg.ops);
 
         const opsToForward: ServerWireOp[] = result.flatMap((r) =>
           r.action === "accepted" ? [r.op] : []
         );
 
-        const opsToSendBack: ServerWireOp[] = result.flatMap((r) => {
-          switch (r.action) {
-            case "ignored":
-              // HACK! We send a cleverly composed message, that will act
-              // as an acknowledgement to all old clients out there in
-              // the wild.
-              return r.ignoredOpId !== undefined
-                ? [ackIgnoredOp(r.ignoredOpId)]
-                : [];
+        const opsToSendBack: ServerWireOp[] = result.flatMap(
+          (r): ServerWireOp[] => {
+            switch (r.action) {
+              case "ignored":
+                // HACK! We send a cleverly composed message, that will act
+                // as an acknowledgement to all old clients out there in
+                // the wild.
+                return r.ignoredOpId !== undefined
+                  ? [ackIgnoredOp(r.ignoredOpId)]
+                  : [];
 
-            case "accepted":
-              return r.fix !== undefined ? [r.fix] : [];
+              case "rectified":
+                // The op was already applied earlier; re-acknowledge it with
+                // its stored, authoritative position.
+                return [r.ackOp, r.fix];
 
-            // istanbul ignore next
-            default:
-              return assertNever(r, "Unhandled case");
+              case "accepted":
+                return r.fix !== undefined ? [r.fix] : [];
+
+              // istanbul ignore next
+              default:
+                return assertNever(r, "Unhandled case");
+            }
           }
-        });
+        );
 
         if (opsToForward.length > 0) {
           scheduleFanOut({
@@ -1737,11 +1675,17 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
         const vector = msg.vector;
         const guid = msg.guid as Guid | undefined;
         const isV2 = msg.v2;
-        const [update, stateVector, snapshotHash] = await Promise.all([
-          this.yjsStorage.getYDocUpdate(this.logger, vector, guid, isV2),
-          this.yjsStorage.getYStateVector(this.logger, guid),
-          this.yjsStorage.getSnapshotHash(this.logger, { guid, isV2 }),
-        ]);
+        const update = this.yjsStorage.getYDocUpdate(
+          this.#logger,
+          vector,
+          guid,
+          isV2
+        );
+        const stateVector = this.yjsStorage.getYStateVector(this.#logger, guid);
+        const snapshotHash = this.yjsStorage.getSnapshotHash(this.#logger, {
+          guid,
+          isV2,
+        });
 
         if (update !== null && snapshotHash !== null) {
           replyImmediately({
@@ -1761,8 +1705,8 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
         const update = msg.update;
         const guid = msg.guid as Guid | undefined;
         const isV2 = msg.v2;
-        const [result, error] = await tryCatch(
-          this.yjsStorage.addYDocUpdate(this.logger, update, guid, isV2)
+        const [result, error] = tryCatch(() =>
+          this.yjsStorage.addYDocUpdate(this.#logger, update, guid, isV2)
         );
 
         if (error)
@@ -1793,7 +1737,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
       // Feed messages
       case FeedMsgCode.FETCH_FEEDS: {
         const fetchMsg = msg;
-        const [result, err] = await tryCatch(
+        const [result, err] = tryCatch(() =>
           this.listFeeds({
             cursor: fetchMsg.cursor,
             since: fetchMsg.since,
@@ -1816,7 +1760,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
 
       case FeedMsgCode.FETCH_FEED_MESSAGES: {
         const fetchMsg = msg;
-        const [result, err] = await tryCatch(
+        const [result, err] = tryCatch(() =>
           this.listFeedMessages(fetchMsg.feedId, {
             cursor: fetchMsg.cursor,
             since: fetchMsg.since,
@@ -1839,7 +1783,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
 
       case FeedMsgCode.ADD_FEED: {
         const addMsg = msg;
-        const [feed, err] = await tryCatch(
+        const [feed, err] = tryCatch(() =>
           this.createFeed({
             feedId: addMsg.feedId,
             metadata: (addMsg.metadata as Json) ?? {},
@@ -1860,14 +1804,14 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
 
       case FeedMsgCode.UPDATE_FEED: {
         const updateMsg = msg;
-        const [, metaErr] = await tryCatch(
+        const [, metaErr] = tryCatch(() =>
           this.updateFeedMetadata(updateMsg.feedId, updateMsg.metadata as Json)
         );
         if (metaErr) {
           replyImmediately(feedFailureServerMsg(updateMsg.requestId, metaErr));
           break;
         }
-        const feed = await this.getFeed(updateMsg.feedId);
+        const feed = this.getFeed(updateMsg.feedId);
         if (!feed) {
           replyImmediately(
             feedRequestFailed(
@@ -1888,7 +1832,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
 
       case FeedMsgCode.DELETE_FEED: {
         const deleteMsg = msg;
-        const [, err] = await tryCatch(this.deleteFeed(deleteMsg.feedId));
+        const [, err] = tryCatch(() => this.deleteFeed(deleteMsg.feedId));
         if (err) {
           replyImmediately(feedFailureServerMsg(deleteMsg.requestId, err));
           break;
@@ -1904,7 +1848,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
 
       case FeedMsgCode.ADD_FEED_MESSAGE: {
         const addMsg = msg;
-        const [message, err] = await tryCatch(
+        const [message, err] = tryCatch(() =>
           this.addFeedMessage(addMsg.feedId, {
             data: addMsg.data as Json,
             id: addMsg.id,
@@ -1926,7 +1870,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
 
       case FeedMsgCode.UPDATE_FEED_MESSAGE: {
         const updateMsg = msg;
-        const [message, err] = await tryCatch(
+        const [message, err] = tryCatch(() =>
           this.updateFeedMessage(
             updateMsg.feedId,
             updateMsg.messageId,
@@ -1949,7 +1893,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
 
       case FeedMsgCode.DELETE_FEED_MESSAGE: {
         const deleteMsg = msg;
-        const [, err] = await tryCatch(
+        const [, err] = tryCatch(() =>
           this.deleteFeedMessage(deleteMsg.feedId, deleteMsg.messageId)
         );
         if (err) {

@@ -1,0 +1,149 @@
+---
+meta:
+  title: "Get started with a SuperDoc DOCX editor using Liveblocks and Vue.js"
+  parentTitle: "Quickstart"
+  description:
+    "Learn how to install a SuperDoc DOCX editor using Liveblocks and Vue.js"
+---
+
+Liveblocks is a realtime collaboration infrastructure for building performant
+collaborative experiences. Follow the following steps to start adding
+collaboration to your Vue.js application using the APIs from the
+[`@liveblocks/yjs`](/docs/api-reference/liveblocks-yjs) package, and
+[SuperDoc](https://superdoc.dev), a collaborative DOCX editor for the web.
+
+## Quickstart
+
+<PromptCta />
+
+<Steps>
+  <Step>
+    <StepTitle>Install Liveblocks, Yjs, and SuperDoc</StepTitle>
+    <StepContent>
+
+      Every Liveblocks package should use the same version.
+
+      ```bash trackEvent="install_liveblocks"
+      npm install @liveblocks/client @liveblocks/yjs yjs superdoc
+      ```
+    </StepContent>
+
+  </Step>
+
+  <Step>
+    <StepTitle>Initialize the `liveblocks.config.ts` file</StepTitle>
+    <StepContent>
+
+      We can use this file later to [define types for our application](/docs/api-reference/liveblocks-client#Typing-your-data).
+
+      ```bash
+      npx create-liveblocks-app@latest --init --framework javascript
+      ```
+
+    </StepContent>
+
+  </Step>
+
+  <Step>
+    <StepTitle>Set up your collaborative SuperDoc editor</StepTitle>
+    <StepContent>
+
+      SuperDoc relies on browser APIs, so we wait for the provider’s first `sync`
+      before mounting the editor, and pass the shared `ydoc` and `provider` to
+      SuperDoc through `modules.collaboration`.
+
+      ```html file="Editor.vue"
+      <script setup>
+      import { onMounted, onUnmounted } from "vue";
+      import { createClient } from "@liveblocks/client";
+      import { getYjsProviderForRoom } from "@liveblocks/yjs";
+      import { SuperDoc } from "superdoc";
+      import "superdoc/style.css";
+
+      // Set up Liveblocks client
+      const client = createClient({
+        publicApiKey: "{{PUBLIC_KEY}}",
+      });
+
+      // Enter a multiplayer room
+      const { room, leave } = client.enterRoom("my-room");
+
+      // Set up Yjs document and Liveblocks Yjs provider
+      const yProvider = getYjsProviderForRoom(room);
+      const yDoc = yProvider.getYDoc();
+
+      let superdoc = null;
+
+      function initSuperDoc() {
+        // Get the current user's info from Liveblocks
+        const { id, info } = room.getSelf();
+
+        superdoc = new SuperDoc({
+          selector: "#superdoc",
+          toolbar: "#superdoc-toolbar",
+          documentMode: "editing",
+          user: {
+            email: id,
+            name: info?.name ?? "Anonymous",
+            image: info?.avatar ?? undefined,
+          },
+          modules: {
+            // The collaboration contract is the same for every Yjs provider:
+            // pass the shared `ydoc` and `provider`
+            collaboration: { ydoc: yDoc, provider: yProvider },
+          },
+        });
+      }
+
+      onMounted(() => {
+        // Wait for the initial sync so the document isn’t created twice
+        if (yProvider.synced) {
+          initSuperDoc();
+        } else {
+          yProvider.on("sync", initSuperDoc);
+        }
+      });
+
+      onUnmounted(() => {
+        superdoc?.destroy?.();
+        leave();
+      });
+      </script>
+
+      <template>
+        <div id="superdoc-toolbar" />
+        <div id="superdoc" style="height: 700px" />
+      </template>
+      ```
+    </StepContent>
+
+  </Step>
+
+  <Step lastStep>
+    <StepTitle>Next: set up authentication</StepTitle>
+    <StepContent>
+      By default, Liveblocks is configured to work without an authentication endpoint
+      where everyone automatically has access to rooms. This approach is great for
+      prototyping and marketing pages where setting up your own security isn’t always
+      required. If you want to limit access to a room for certain users, you’ll need
+      to set up an authentication endpoint to enable permissions.
+
+      <Button asChild className="not-markdown">
+        <a href="/docs/authentication">
+          Set up authentication
+        </a>
+      </Button>
+    </StepContent>
+
+  </Step>
+</Steps>
+
+## What to read next
+
+Congratulations! You now have set up the foundation for your collaborative
+SuperDoc DOCX editor inside your Vue.js application.
+
+- [@liveblocks/yjs API Reference](/docs/api-reference/liveblocks-yjs)
+- [@liveblocks/client API Reference](/docs/api-reference/liveblocks-client)
+- [SuperDoc website](https://superdoc.dev)
+- [SuperDoc collaboration docs](https://docs.superdoc.dev/editor/collaboration/overview)

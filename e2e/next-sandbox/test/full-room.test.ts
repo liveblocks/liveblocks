@@ -9,6 +9,11 @@ import { genRoomId, preparePages, waitForJson } from "./utils";
 
 const TEST_URL = "http://localhost:3007/offline/";
 
+// Launching 10 full Chromium instances starves CPU/network, so the first
+// WebSocket connect legitimately takes longer than the 5s default. Give the
+// connection waits extra headroom for this load scenario.
+const LOAD_TIMEOUT = 15_000;
+
 // These load tests sometimes fail on CI, possibly because they're too
 // resource-intensive for the limited GitHub Actions runners (too many tabs
 // open, or too slow, hitting the timeout limit). So for now, we'll just skip
@@ -36,8 +41,12 @@ test.describe("Room completely full", () => {
       const batch = await preparePages(url, { n: 5 }); // ...of 5 windows each
       batches.push(batch);
       pagesToClose.push(...batch);
-      await waitForJson(batch, "#socketStatus", "connected");
-      await waitForJson(pagesToClose, "#numOthers", pagesToClose.length - 1);
+      await waitForJson(batch, "#socketStatus", "connected", {
+        timeout: LOAD_TIMEOUT,
+      });
+      await waitForJson(pagesToClose, "#numOthers", pagesToClose.length - 1, {
+        timeout: LOAD_TIMEOUT,
+      });
     }
 
     // Close the first batch of 5 windows
@@ -60,8 +69,12 @@ test.describe("Room completely full", () => {
         const batch = await preparePages(url, { n: 5 }); // ...of 5 windows each
         batches.push(batch);
         pagesToClose.push(...batch);
-        await waitForJson(batch, "#socketStatus", "connected");
-        await waitForJson(pagesToClose, "#numOthers", pagesToClose.length - 1);
+        await waitForJson(batch, "#socketStatus", "connected", {
+          timeout: LOAD_TIMEOUT,
+        });
+        await waitForJson(pagesToClose, "#numOthers", pagesToClose.length - 1, {
+          timeout: LOAD_TIMEOUT,
+        });
       }
 
       // Try to open one more... this will FAIL, because the room can hold max 20 connections

@@ -19,42 +19,20 @@ import type {
   Json,
   JsonObject,
   ListStorageNode,
-  MapStorageNode,
   NodeMap,
   NodeStream,
-  ObjectStorageNode,
   RegisterStorageNode,
   SerializedCrdt,
   SerializedRootObject,
 } from "@liveblocks/core";
-import { CrdtType, OpCode } from "@liveblocks/core";
+import { CrdtType } from "@liveblocks/core";
 
-import type { Logger } from "~/lib/Logger";
 import { makeNewInMemoryDriver } from "~/plugins/InMemoryDriver";
-import type {
-  CreateListOp,
-  CreateMapOp,
-  CreateObjectOp,
-  CreateRegisterOp,
-  DeleteCrdtOp,
-  DeleteObjectKeyOp,
-  SetParentKeyOp,
-  UpdateObjectOp,
-} from "~/protocol";
 import { Storage } from "~/Storage";
 import { selfCheck } from "~test/plugins/_generateFullTestSuite";
 
 export function rootObj(data: JsonObject = {}): ["root", SerializedRootObject] {
   return ["root", { type: CrdtType.OBJECT, data }];
-}
-
-export function obj(
-  id: string,
-  data: JsonObject,
-  parentId: string,
-  parentKey: string
-): ObjectStorageNode {
-  return [id, { type: CrdtType.OBJECT, data, parentId, parentKey }];
 }
 
 export function list(
@@ -66,21 +44,6 @@ export function list(
     id,
     {
       type: CrdtType.LIST,
-      parentId,
-      parentKey,
-    },
-  ];
-}
-
-export function map(
-  id: string,
-  parentId: string,
-  parentKey: string
-): MapStorageNode {
-  return [
-    id,
-    {
-      type: CrdtType.MAP,
       parentId,
       parentKey,
     },
@@ -104,125 +67,16 @@ export function register(
   ];
 }
 
-export function updateObjectOp(
-  id: string,
-  data: Partial<JsonObject>
-): UpdateObjectOp {
-  return {
-    type: OpCode.UPDATE_OBJECT,
-    data,
-    id,
-  };
-}
-
-export function createObjectOp(
-  id: string,
-  parentId: string,
-  parentKey: string,
-  data: Partial<JsonObject>,
-  intent?: "set",
-  deletedId?: string
-): CreateObjectOp {
-  return {
-    type: OpCode.CREATE_OBJECT,
-    data,
-    id,
-    parentId,
-    parentKey,
-    intent,
-    deletedId,
-  };
-}
-
-export function createListOp(
-  id: string,
-  parentId: string,
-  parentKey: string,
-  intent?: "set",
-  deletedId?: string
-): CreateListOp {
-  return {
-    type: OpCode.CREATE_LIST,
-    id,
-    parentId,
-    parentKey,
-    intent,
-    deletedId,
-  };
-}
-
-export function createRegisterOp(
-  id: string,
-  parentId: string,
-  parentKey: string,
-  data: Json,
-  intent?: "set",
-  deletedId?: string
-): CreateRegisterOp {
-  return {
-    type: OpCode.CREATE_REGISTER,
-    id,
-    parentId,
-    parentKey,
-    data,
-    intent,
-    deletedId,
-  };
-}
-
-export function createMapOp(
-  id: string,
-  parentId: string,
-  parentKey: string,
-  intent?: "set",
-  deletedId?: string,
-  opId?: string
-): CreateMapOp {
-  return {
-    type: OpCode.CREATE_MAP,
-    opId,
-    id,
-    parentId,
-    parentKey,
-    intent,
-    deletedId,
-  };
-}
-
-export function deleteCrdtOp(id: string, opId?: string): DeleteCrdtOp {
-  return {
-    type: OpCode.DELETE_CRDT,
-    opId,
-    id,
-  };
-}
-
-export function setParentKeyOp(id: string, parentKey: string): SetParentKeyOp {
-  return {
-    id,
-    type: OpCode.SET_PARENT_KEY,
-    parentKey,
-  };
-}
-
-export function deleteObjectKeyOp(id: string, key: string): DeleteObjectKeyOp {
-  return {
-    id,
-    type: OpCode.DELETE_OBJECT_KEY,
-    key,
-  };
-}
-
 /**
  * Helper to create a Storage instance backed by the current driver. Writes
  * the initial nodes (which can contain invalid/corrupted data) to the
  * backend, then loads Storage on top.
  */
-export async function runWithStorage<R>(
+export function runWithStorage<R>(
   nodeStream: NodeStream,
   callback: (arg: {
     storage: Storage;
-    loadedDriver: Storage["loadedDriver"];
+    driver: Storage["driver"];
   }) => R | Promise<R>
 ): Promise<R> {
   const nodeMap: NodeMap = new Map<string, SerializedCrdt>(nodeStream);
@@ -233,16 +87,10 @@ export async function runWithStorage<R>(
   // Create the *access layer* around it (the API that we use)
   const storage = new Storage(backend);
 
-  const logger = {
-    warn: () => {},
-    error: () => {},
-  } as unknown as Logger;
-  await storage.load(logger);
-
   // Also run an integrity check after initializing _corrupted_ storage.
   // Because the Storage class ignores any such corruptions, even when loading
   // corruptions the in-memory nodemap should be consistent.
-  await selfCheck(storage);
+  selfCheck(storage);
 
-  return callback({ storage, loadedDriver: storage.loadedDriver });
+  return Promise.resolve(callback({ storage, driver: storage.driver }));
 }

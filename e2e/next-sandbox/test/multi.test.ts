@@ -280,15 +280,17 @@ test.describe("Multiple rooms (index)", () => {
     await page.click("#mount_1");
     await waitForJson(page, "#socketStatus_1", "connected");
 
-    // Ensure that, when initialRoom_1 equals the roomA value
-    await expectJson(page, "#initialRoom_1", roomA);
+    // Wait until storage has loaded and initialRoom_1 reflects roomA. A
+    // "connected" socket does not imply storage has finished loading, so a
+    // one-shot read here races and can still see null.
+    await waitForJson(page, "#initialRoom_1", roomA);
 
     // Change room ID to roomB (without unmounting)
     await page.fill("#input_1", roomB);
     await waitForJson(page, "#socketStatus_1", "connected");
 
-    // Ensure that, when initialRoom_1 equals the roomB value
-    await expectJson(page, "#initialRoom_1", roomB);
+    // Wait until the room switch settles and initialRoom_1 reflects roomB.
+    await waitForJson(page, "#initialRoom_1", roomB);
 
     // Unmount
     await page.click("#unmount_1");
@@ -601,15 +603,17 @@ test.describe("Multiple rooms (global augmentation)", () => {
     await page.click("#mount_1");
     await waitForJson(page, "#socketStatus_1", "connected");
 
-    // Ensure that, when initialRoom_1 equals the roomA value
-    await expectJson(page, "#initialRoom_1", roomA);
+    // Wait until storage has loaded and initialRoom_1 reflects roomA. A
+    // "connected" socket does not imply storage has finished loading, so a
+    // one-shot read here races and can still see null.
+    await waitForJson(page, "#initialRoom_1", roomA);
 
     // Change room ID to roomB (without unmounting)
     await page.fill("#input_1", roomB);
     await waitForJson(page, "#socketStatus_1", "connected");
 
-    // Ensure that, when initialRoom_1 equals the roomB value
-    await expectJson(page, "#initialRoom_1", roomB);
+    // Wait until the room switch settles and initialRoom_1 reflects roomB.
+    await waitForJson(page, "#initialRoom_1", roomB);
 
     // Unmount
     await page.click("#unmount_1");

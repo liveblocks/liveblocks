@@ -92,7 +92,10 @@ test.describe("Presence", () => {
       await page1.click("#set-bar");
 
       await waitForJson(page2, "#numOthers", 1);
-      await expectJson(page2, "#theirPresence", {
+      // numOthers becoming 1 only means the peer is known; its presence
+      // payload arrives in a separate message and can still be {} here, so
+      // wait until theirPresence settles instead of reading it one-shot.
+      await waitForJson(page2, "#theirPresence", {
         bar: "hey",
         qux: 1337,
       });
@@ -139,7 +142,9 @@ test.describe("Presence (w/ specific window timing)", () => {
     const page2 = await preparePage(url + BG_COLOR_2);
     await waitForJson([page1, page2], "#numOthers", 1);
 
-    await expectJson(page2, "#theirPresence", { foo: 1 });
+    // The peer's presence propagates separately from the join, so wait until
+    // theirPresence settles rather than reading it one-shot.
+    await waitForJson(page2, "#theirPresence", { foo: 1 });
 
     await page1.close();
     await page2.close();

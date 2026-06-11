@@ -15,18 +15,18 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import type { Awaitable, Json } from "@liveblocks/core";
+import type { Json } from "@liveblocks/core";
 import type { Decoder } from "decoders";
 
 import type { IStorageDriver } from "~/interfaces";
 
 export interface MetadataDB {
   // Getter supports optional decoder
-  get(key: string): Promise<Json | undefined>;
-  get<T>(decoder: Decoder<T>, key: string): Promise<T | undefined>;
+  get(key: string): Json | undefined;
+  get<T>(decoder: Decoder<T>, key: string): T | undefined;
 
-  put(key: string, value: Json): Awaitable<void>;
-  delete(key: string): Awaitable<void>;
+  put(key: string, value: Json): void;
+  delete(key: string): void;
 }
 
 /**
@@ -34,19 +34,13 @@ export interface MetadataDB {
  * functionality, including type-safe reads.
  */
 export function makeMetadataDB(driver: IStorageDriver): MetadataDB {
-  async function get(key: string): Promise<Json | undefined>;
-  async function get<T>(
-    decoder: Decoder<T>,
-    key: string
-  ): Promise<T | undefined>;
-  async function get<T>(
-    a1: string | Decoder<T>,
-    a2?: string
-  ): Promise<T | Json | undefined> {
+  function get(key: string): Json | undefined;
+  function get<T>(decoder: Decoder<T>, key: string): T | undefined;
+  function get<T>(a1: string | Decoder<T>, a2?: string): T | Json | undefined {
     if (a2 === undefined) {
-      return await driver.get_meta(a1 as string);
+      return driver.get_meta(a1 as string);
     } else {
-      return (a1 as Decoder<T>).value(await driver.get_meta(a2));
+      return (a1 as Decoder<T>).value(driver.get_meta(a2));
     }
   }
 
