@@ -16,28 +16,32 @@ Authentication and permissions solve two different problems:
 
 A user has access to a room through a list of permissions.
 
-A permission has a resource (e.g. `room`, or `room:comments`) and a scope
-(`read`, `write`, or `none`).
+A permission has a left part, the resource (e.g. `*`, or `comments`) and the
+right part, the scope (`read`, `write`, or `none`).
 
-### Default scopes
+### Base permissions
 
-By setting the permission for the resource `room`, you define the default scope
-for all the resources of the room. You can choose one of these three scopes:
+By setting the permission for the resource `*`, you define the base scope for
+all the resources of the room. You can choose between read or write access:
 
-- `room:read` => by default, the user will have read access to everything in the
-  room.
-- `room:write` => by default, the user will have write access to everything in
-  the room.
-- `room:none` => by default, the user will have no access to the room.
+- `*:read` => the user will have read access to everything in the room.
+- `*:write` => the user will have write access to everything in the room.
+
+<Banner title="Legacy naming convention">
+
+The legacy naming convention `room:read` and `room:write` are still supported,
+they are equivalent to `*:read` and `*:write` respectively, but we recommend
+using the new naming convention.
+
+</Banner>
 
 ### More granular permissions
 
 You can opt in to or opt out of access to specific room resources:
 
-- **Presence** with `room:presence:read|none`.
-- **Storage** with `room:storage:write|read|none`.
+- **Storage** with `storage:write|read|none`.
 - **Comments** with `comments:write|read|none`.
-- **Feeds** with `room:feeds:write|read|none`.
+- **Feeds** with `feeds:write|read|none`.
 
 **Here are some examples**
 
@@ -45,18 +49,19 @@ You can opt in to or opt out of access to specific room resources:
 
 ```
 [
-  "room:write",  // default
-  "room:storage:read"  // opt-out storage
+  "*:write",
+  "storage:read"  // opt-out storage from write to read
 ]
 ```
 
-2. Only access to Presence and Comments:
+2. Read access to everything, expect write acces to comments ad no access to
+   feeds:
 
 ```
 [
-  "room:none",  // default
-  "room:presence:read",  // opt-in presence
-  "room:comments:write"  // opt-in comments
+  "*:read",
+  "comments:write"  // opt-in comments write
+  "feeds:none"  // opt-out feeds
 ]
 ```
 
