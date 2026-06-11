@@ -164,7 +164,7 @@ function makeMutationContext<
 
   return {
     get storage() {
-      const mutableRoot = room.getStorageSnapshot();
+      const mutableRoot = room.getStorageOrNull();
       if (mutableRoot === null) {
         throw new Error(needsStorage);
       }
@@ -473,7 +473,6 @@ function RoomProviderInner<
       initialPresence: props.initialPresence,
       initialStorage: props.initialStorage,
       autoConnect: props.autoConnect ?? typeof window !== "undefined",
-      engine: props.engine,
     },
     roomId
   ) as EnterOptions<P, S>;
@@ -1360,7 +1359,7 @@ function useMutableStorageRoot_withRoomContext<S extends LsonObject>(
     RoomContext
   );
   const subscribe = room.events.storageDidLoad.subscribeOnce;
-  const getSnapshot = room.getStorageSnapshot;
+  const getSnapshot = room.getStorageOrNull;
   const getServerSnapshot = alwaysNull;
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
