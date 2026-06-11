@@ -33,5 +33,11 @@ export type {
   ToolbarToggleProps,
 } from "./toolbar/toolbar";
 export { Toolbar } from "./toolbar/toolbar";
-export type { HistoryVersionPreviewProps } from "./version-history/history-version-preview";
-export { HistoryVersionPreview } from "./version-history/history-version-preview";
+export type {
+  HistoryVersionPreviewProps,
+  YjsVersionPreviewProps,
+} from "./version-history/history-version-preview";
+export {
+  HistoryVersionPreview,
+  YjsVersionPreview,
+} from "./version-history/history-version-preview";

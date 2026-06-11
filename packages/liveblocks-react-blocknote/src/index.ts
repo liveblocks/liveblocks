@@ -11,5 +11,8 @@ export { FloatingThreads } from "./comments/FloatingThreads";
 export { withLiveblocksEditorOptions } from "./initialization/liveblocksEditorOptions";
 export { withLiveblocksSchema } from "./initialization/schema";
 export { useCreateBlockNoteWithLiveblocks } from "./initialization/useCreateBlockNoteWithLiveblocks";
-export { HistoryVersionPreview } from "./version-history/HistoryVersionPreview";
+export {
+  HistoryVersionPreview,
+  YjsVersionPreview,
+} from "./version-history/HistoryVersionPreview";
 export { useIsEditorReady } from "@liveblocks/react-tiptap";

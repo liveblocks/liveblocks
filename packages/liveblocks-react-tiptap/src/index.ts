@@ -40,8 +40,14 @@ export type {
   ResolveContextualPromptArgs,
   ResolveContextualPromptResponse,
 } from "./types";
-export type { HistoryVersionPreviewProps } from "./version-history/HistoryVersionPreview";
-export { HistoryVersionPreview } from "./version-history/HistoryVersionPreview";
+export type {
+  HistoryVersionPreviewProps,
+  YjsVersionPreviewProps,
+} from "./version-history/HistoryVersionPreview";
+export {
+  HistoryVersionPreview,
+  YjsVersionPreview,
+} from "./version-history/HistoryVersionPreview";
 
 declare module "@tiptap/core" {
   interface Storage {

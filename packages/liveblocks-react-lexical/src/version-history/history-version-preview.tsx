@@ -10,8 +10,8 @@ import {
   syncLexicalUpdateToYjs,
   syncYjsChangesToLexical,
 } from "@lexical/yjs";
-import type { HistoryVersion } from "@liveblocks/core";
-import { useHistoryVersionData } from "@liveblocks/react";
+import type { HistoryVersion, VersionRef } from "@liveblocks/core";
+import { useVersion } from "@liveblocks/react";
 import { useOverrides } from "@liveblocks/react-ui";
 import {
   Button,
@@ -31,7 +31,17 @@ import { liveblocksConfig } from "../liveblocks-config";
 
 const AUTHORS_TRUNCATE = 3;
 
-export interface HistoryVersionPreviewProps extends ComponentPropsWithoutRef<"div"> {
+export interface YjsVersionPreviewProps
+  extends ComponentPropsWithoutRef<"div"> {
+  version: VersionRef;
+  onVersionRestore?: (version: VersionRef) => void;
+}
+
+/**
+ * @deprecated Use {@link YjsVersionPreviewProps} instead.
+ */
+export interface HistoryVersionPreviewProps
+  extends ComponentPropsWithoutRef<"div"> {
   version: HistoryVersion;
   onVersionRestore?: (version: HistoryVersion) => void;
 }
@@ -103,16 +113,17 @@ function registerCollaborationListeners(
  * Displays a specific version of the current Lexical document.
  *
  * @example
- * <HistoryVersionPreview version={version} />
+ * <YjsVersionPreview version={version} />
  */
-export const HistoryVersionPreview = forwardRef<
+export const YjsVersionPreview = forwardRef<
   HTMLDivElement,
-  HistoryVersionPreviewProps
+  YjsVersionPreviewProps
 >(({ version, onVersionRestore, className, ...props }, forwardedRef) => {
   const [parentEditor, parentContext] = useLexicalComposerContext();
   const editor = useRef<LexicalEditor>();
   const $ = useOverrides();
-  const { isLoading, data, error } = useHistoryVersionData(version.id);
+  const { isLoading, data, error } = useVersion(version.id);
+  const bytes = data?.yjs;
 
   const initialConfig = useMemo(() => {
     const nodes = Array.from(parentEditor._nodes.values()).map((n) => n.klass);
@@ -127,7 +138,7 @@ export const HistoryVersionPreview = forwardRef<
   }, [parentEditor, parentContext]);
 
   useEffect(() => {
-    if (error || !data || !editor.current || !data.length) {
+    if (error || !bytes || !editor.current || !bytes.length) {
       return;
     }
     const doc = new Doc();
@@ -147,13 +158,13 @@ export const HistoryVersionPreview = forwardRef<
     );
 
     try {
-      applyUpdate(doc, data);
+      applyUpdate(doc, bytes);
     } catch (err) {
       console.warn(err);
     }
 
     return unsubscribe;
-  }, [data, version.id, isLoading, error]);
+  }, [bytes, version.id, isLoading, error]);
 
   const restore = useCallback(() => {
     if (!editor.current || !parentEditor) {
@@ -213,7 +224,7 @@ export const HistoryVersionPreview = forwardRef<
         <div className="lb-history-version-preview-actions">
           <Button
             onClick={restore}
-            disabled={!data || !parentEditor}
+            disabled={!bytes || !parentEditor}
             variant="primary"
             size="large"
             className="lb-history-version-preview-action"
@@ -226,3 +237,39 @@ export const HistoryVersionPreview = forwardRef<
     </div>
   );
 });
+
+/**
+ * Displays a specific version of the current Lexical document.
+ *
+ * @deprecated Use {@link YjsVersionPreview} instead.
+ *
+ * @example
+ * <HistoryVersionPreview version={version} />
+ */
+export const HistoryVersionPreview = forwardRef<
+  HTMLDivElement,
+  HistoryVersionPreviewProps
+>(({ version, onVersionRestore, ...props }, forwardedRef) => (
+  <YjsVersionPreview
+    ref={forwardedRef}
+    version={{
+      // The server guarantees version ids carry the `vh_` prefix.
+      id: version.id as `vh_${string}`,
+      createdAt: version.createdAt,
+      authors: version.authors,
+    }}
+    onVersionRestore={
+      onVersionRestore
+        ? (v) =>
+            onVersionRestore({
+              type: "historyVersion",
+              kind: "yjs",
+              id: v.id,
+              createdAt: v.createdAt,
+              authors: v.authors,
+            })
+        : undefined
+    }
+    {...props}
+  />
+));

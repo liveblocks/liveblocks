@@ -1,5 +1,5 @@
-import type { HistoryVersion } from "@liveblocks/core";
-import { useHistoryVersionData } from "@liveblocks/react";
+import type { HistoryVersion, VersionRef } from "@liveblocks/core";
+import { useVersion } from "@liveblocks/react";
 import { useOverrides } from "@liveblocks/react-ui";
 import {
   Button,
@@ -18,7 +18,18 @@ import { applyUpdate, Doc } from "yjs";
 
 const AUTHORS_TRUNCATE = 3;
 
-export interface HistoryVersionPreviewProps extends ComponentPropsWithoutRef<"div"> {
+export interface YjsVersionPreviewProps
+  extends ComponentPropsWithoutRef<"div"> {
+  version: VersionRef;
+  editor: Editor;
+  onVersionRestore?: (version: VersionRef) => void;
+}
+
+/**
+ * @deprecated Use {@link YjsVersionPreviewProps} instead.
+ */
+export interface HistoryVersionPreviewProps
+  extends ComponentPropsWithoutRef<"div"> {
   version: HistoryVersion;
   editor: Editor;
   onVersionRestore?: (version: HistoryVersion) => void;
@@ -28,18 +39,19 @@ export interface HistoryVersionPreviewProps extends ComponentPropsWithoutRef<"di
  * Displays a specific version of the current TipTap document.
  *
  * @example
- * <HistoryVersionPreview version={version} />
+ * <YjsVersionPreview version={version} />
  */
-export const HistoryVersionPreview = forwardRef<
+export const YjsVersionPreview = forwardRef<
   HTMLDivElement,
-  HistoryVersionPreviewProps
+  YjsVersionPreviewProps
 >(
   (
     { version, editor: parentEditor, onVersionRestore, className, ...props },
     forwardedRef
   ) => {
     const $ = useOverrides();
-    const { isLoading, data, error } = useHistoryVersionData(version.id);
+    const { isLoading, data, error } = useVersion(version.id);
+    const bytes = data?.yjs;
 
     const previewEditor = useEditor({
       // ignore extensions, only get marks/nodes
@@ -50,9 +62,9 @@ export const HistoryVersionPreview = forwardRef<
       ),
     });
     useEffect(() => {
-      if (data && previewEditor) {
+      if (bytes && previewEditor) {
         const doc = new Doc();
-        applyUpdate(doc, data);
+        applyUpdate(doc, bytes);
         const root = doc.getXmlFragment("default"); // TODO: lookup field
         const node = yXmlFragmentToProseMirrorRootNode(
           root,
@@ -60,7 +72,7 @@ export const HistoryVersionPreview = forwardRef<
         );
         previewEditor.commands.setContent(node.toJSON() as Content);
       }
-    }, [data, previewEditor, parentEditor]);
+    }, [bytes, previewEditor, parentEditor]);
     const restore = useCallback(() => {
       parentEditor.commands.setContent(previewEditor?.getJSON() ?? "");
       onVersionRestore?.(version);
@@ -104,7 +116,7 @@ export const HistoryVersionPreview = forwardRef<
           <div className="lb-history-version-preview-actions">
             <Button
               onClick={restore}
-              disabled={!data}
+              disabled={!bytes}
               variant="primary"
               size="large"
               className="lb-history-version-preview-action"
@@ -118,3 +130,39 @@ export const HistoryVersionPreview = forwardRef<
     );
   }
 );
+
+/**
+ * Displays a specific version of the current TipTap document.
+ *
+ * @deprecated Use {@link YjsVersionPreview} instead.
+ *
+ * @example
+ * <HistoryVersionPreview version={version} />
+ */
+export const HistoryVersionPreview = forwardRef<
+  HTMLDivElement,
+  HistoryVersionPreviewProps
+>(({ version, onVersionRestore, ...props }, forwardedRef) => (
+  <YjsVersionPreview
+    ref={forwardedRef}
+    version={{
+      // The server guarantees version ids carry the `vh_` prefix.
+      id: version.id as `vh_${string}`,
+      createdAt: version.createdAt,
+      authors: version.authors,
+    }}
+    onVersionRestore={
+      onVersionRestore
+        ? (v) =>
+            onVersionRestore({
+              type: "historyVersion",
+              kind: "yjs",
+              id: v.id,
+              createdAt: v.createdAt,
+              authors: v.authors,
+            })
+        : undefined
+    }
+    {...props}
+  />
+));
