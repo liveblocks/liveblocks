@@ -11,19 +11,43 @@ if TYPE_CHECKING:
     from liveblocks.models.authorize_user_response import AuthorizeUserResponse
 
 Permission = Literal[
+    "*:read",
+    "*:write",
     "room:write",
     "room:read",
     "room:presence:write",
-    "comments:write",
+    "storage:read",
+    "storage:write",
+    "storage:none",
     "comments:read",
+    "comments:write",
+    "comments:none",
+    "feeds:read",
+    "feeds:write",
+    "feeds:none",
 ]
 
 ALL_PERMISSIONS: frozenset[str] = frozenset(
-    ["room:write", "room:read", "room:presence:write", "comments:write", "comments:read"]
+    [
+        "*:read",
+        "*:write",
+        "room:write",
+        "room:read",
+        "room:presence:write",
+        "storage:read",
+        "storage:write",
+        "storage:none",
+        "comments:read",
+        "comments:write",
+        "comments:none",
+        "feeds:read",
+        "feeds:write",
+        "feeds:none",
+    ]
 )
 
-READ_ACCESS: tuple[Permission, ...] = ("room:read", "room:presence:write", "comments:read")
-FULL_ACCESS: tuple[Permission, ...] = ("room:write", "comments:write")
+READ_ACCESS: tuple[Permission, ...] = ("*:read",)
+FULL_ACCESS: tuple[Permission, ...] = ("*:write",)
 
 _MAX_PERMS_PER_SET = 10
 _ROOM_PATTERN_RE = re.compile(r"^([*]|[^*]{1,128}[*]?)$")

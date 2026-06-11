@@ -195,11 +195,30 @@ export {
 } from "./lib/utils";
 export { warnOnce, warnOnceIf } from "./lib/warnings";
 export type {
+  AccessLevel,
+  PermissionMatrix,
+  PermissionResources,
+  RequiredAccessLevel,
+  RoomAccesses,
+  RoomPermissions,
+  UpdateRoomAccesses,
+} from "./permissions";
+export {
+  hasPermissionAccess,
+  mergePermissionMatrices,
+  mergeRoomPermissionScopes,
+  normalizeRoomAccesses,
+  normalizeRoomPermissions,
+  normalizeUpdateRoomAccesses,
+  Permission,
+  permissionMatrixFromScopes,
+  permissionMatrixToScopes,
+} from "./permissions";
+export type {
   ContextualPromptContext,
   ContextualPromptResponse,
 } from "./protocol/Ai";
 export type { CustomAuthenticationResult } from "./protocol/Authentication";
-export { Permission } from "./protocol/AuthToken";
 export type { BaseActivitiesData } from "./protocol/BaseActivitiesData";
 export type { BaseGroupInfo } from "./protocol/BaseGroupInfo";
 export type { BaseRoomInfo } from "./protocol/BaseRoomInfo";

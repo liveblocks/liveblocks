@@ -2,6 +2,13 @@
 
 ## v3.20.0
 
+### All packages
+
+- Add support for new resource-specific permissions. You can now start from a
+  `*:read` or `*:write` base, then grant or deny access per resource (storage,
+  comments, feeds) using new permission strings like `storage:none` or
+  `comments:read`.
+
 ## v3.19.5
 
 ### `@liveblocks/client`

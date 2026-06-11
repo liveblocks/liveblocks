@@ -4,46 +4,25 @@ import type {
   JsonObject,
   URLSafeString,
 } from "@liveblocks/core";
-import { url } from "@liveblocks/core";
+import { normalizeRoomPermissions, Permission, url } from "@liveblocks/core";
 
 import type { AuthResponse } from "./client";
 import { assertNonEmpty, normalizeStatusCode } from "./utils";
-
-// As defined in the source of truth in ApiScope in
-// https://github.com/liveblocks/liveblocks-cloudflare/blob/main/src/security.ts
-const ALL_PERMISSIONS = Object.freeze([
-  "room:write",
-  "room:read",
-  "room:presence:write",
-  "comments:write",
-  "comments:read",
-  "feeds:write",
-] as const);
-
-export type Permission = (typeof ALL_PERMISSIONS)[number];
-
-function isPermission(value: string): value is Permission {
-  return (ALL_PERMISSIONS as readonly unknown[]).includes(value);
-}
 
 const MAX_PERMS_PER_SET = 10;
 
 /**
  * Assign this to a room (or wildcard pattern) if you want to grant the user
- * read permissions to the storage and comments data for this room. (Note that
- * the user will still have permissions to update their own presence.)
+ * read permissions to the room. (Note that the user will still have permissions
+ * to update their own presence.)
  */
-const READ_ACCESS = Object.freeze([
-  "room:read",
-  "room:presence:write", // TODO: Remove once backend no longer requires this
-  "comments:read", // TODO: Remove — implied by room:read
-] as const);
+const READ_ACCESS = Object.freeze([Permission.Read] as const);
 
 /**
  * Assign this to a room (or wildcard pattern) if you want to grant the user
- * permissions to read and write to the room's storage and comments.
+ * permissions to read and write to the room.
  */
-const FULL_ACCESS = Object.freeze(["room:write"] as const);
+const FULL_ACCESS = Object.freeze([Permission.Write] as const);
 
 const roomPatternRegex = /^([*]|[^*]{1,128}[*]?)$/;
 
@@ -73,16 +52,6 @@ type PostFn = (path: URLSafeString, json: Json) => Promise<Response>;
  * You can define at most 10 room IDs (or patterns) in a single token,
  * otherwise the token would become too large and unwieldy.
  *
- * All permissions granted are additive. You cannot "remove" permissions once
- * you grant them. For example:
- *
- *    session
- *      .allow('abc:*',   session.FULL_ACCESS)
- *      .allow('abc:123', session.READ_ACCESS)
- *
- * Here, room `abc:123` would have full access. The second .allow() call only
- * _adds_ read permissions, but that has no effect since full access
- * permissions were already added to the set.
  */
 export class Session {
   public readonly FULL_ACCESS = FULL_ACCESS;
@@ -143,15 +112,14 @@ export class Session {
       throw new Error("Invalid room name or pattern");
     }
 
-    if (newPerms.length === 0) {
+    const normalizedPermissions = normalizeRoomPermissions(newPerms);
+
+    if (normalizedPermissions.length === 0) {
       throw new Error("Permission list cannot be empty");
     }
 
     const existingPerms = this.#getOrCreate(roomIdOrPattern);
-    for (const perm of newPerms) {
-      if (!isPermission(perm as string)) {
-        throw new Error(`Not a valid permission: ${perm}`);
-      }
+    for (const perm of normalizedPermissions) {
       existingPerms.add(perm);
     }
     return this; // To allow chaining multiple allow calls

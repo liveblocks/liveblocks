@@ -10,15 +10,14 @@ import {
   type GroupMentionData,
   MENTION_CHARACTER,
   type MentionData,
-  Permission,
 } from "@liveblocks/core";
 import {
   useAddRoomCommentReaction,
   useDeleteRoomComment,
   useEditRoomComment,
+  useHasPermissionAccess,
   useRemoveRoomCommentReaction,
   useRoomAttachmentUrl,
-  useRoomPermissions,
 } from "@liveblocks/react/_private";
 import { Toggle as TogglePrimitive } from "radix-ui";
 import type {
@@ -735,12 +734,11 @@ export const Comment = Object.assign(
         return separateMediaAttachments(comment.attachments);
       }, [comment.attachments]);
 
-      const permissions = useRoomPermissions(comment.roomId);
-      const canComment =
-        permissions.size > 0
-          ? permissions.has(Permission.CommentsWrite) ||
-            permissions.has(Permission.Write)
-          : true;
+      const canComment = useHasPermissionAccess(
+        comment.roomId,
+        "comments",
+        "write"
+      );
 
       const stopPropagation = useCallback((event: SyntheticEvent) => {
         event.stopPropagation();
