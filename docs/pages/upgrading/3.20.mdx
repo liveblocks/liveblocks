@@ -1,0 +1,134 @@
+---
+meta:
+  title: "Upgrading to 3.20"
+  parentTitle: "Upgrading"
+  description: "Guide to upgrade to Liveblocks version 3.20"
+---
+
+Liveblocks 3.20 reshapes the version history APIs. A version now represents a
+snapshot of the **whole room** at a point in time, rather than just its Yjs
+document. The APIs are renamed to match, and the old names are **deprecated**:
+they keep working in 3.20 but will be removed in a future version. This guide
+shows how to migrate.
+
+## Why this change? [#why-this-change]
+
+The original version history APIs only worked for Yjs documents. We're adding
+version history for Storage now, and a version is best understood as a snapshot
+of the entire room, so the Yjs document _and_ the Storage document together,
+rather than two separate universes.
+
+## How to upgrade [#how-to-upgrade]
+
+First, upgrade all Liveblocks dependencies to their latest versions:
+
+```bash
+npx liveblocks@latest upgrade
+```
+
+Nothing breaks in 3.20: the old types and APIs still work. But they're
+deprecated, so we recommend migrating now.
+
+## Does this affect you? [#does-this-affect-you]
+
+**If you use `useHistoryVersions`, `useHistoryVersionData`, the `HistoryVersion`
+type, or any `HistoryVersion*` component**, those names are deprecated. See the
+migration tables below.
+
+Otherwise, you can simply upgrade your packages and no changes are needed.
+
+## React hooks [#react-hooks]
+
+In `@liveblocks/react` (and `@liveblocks/react/suspense`):
+
+| ❌ Deprecated             | ✅ Use instead        |
+| ------------------------- | --------------------- |
+| `useHistoryVersions()`    | `useVersionHistory()` |
+| `useHistoryVersionData()` | `useVersion()`        |
+
+`useVersionHistory()` returns the same `{ versions }` shape as before.
+
+`useVersion()` replaces `useHistoryVersionData()`, but it returns the whole
+version rather than just the raw bytes. Read the Yjs bytes from `.data.yjs`:
+
+```tsx
+// ❌ Before
+const { data } = useHistoryVersionData(versionId);
+// `data` is a `Uint8Array`
+
+// ✅ After
+const { data } = useVersion(versionId);
+// `data` is a `Version` ({ id, createdAt, authors, yjs })
+const bytes = data?.yjs;
+```
+
+## Types [#types]
+
+In `@liveblocks/client`:
+
+| ❌ Deprecated    | ✅ Use instead |
+| ---------------- | -------------- |
+| `HistoryVersion` | `VersionRef`   |
+
+`VersionRef` is the metadata for a version, `{ id, createdAt, authors }`). The
+new `Version` type is `VersionRef` plus the contents
+(`{ id, createdAt, authors, data: { storage, yjs }}`).
+
+## Components [#components]
+
+In `@liveblocks/react-ui`:
+
+| ❌ Deprecated                 | ✅ Use instead         |
+| ----------------------------- | ---------------------- |
+| `<HistoryVersionSummary>`     | `<VersionSummary>`     |
+| `<HistoryVersionSummaryList>` | `<VersionSummaryList>` |
+
+In `@liveblocks/react-lexical`, `@liveblocks/react-tiptap`, and
+`@liveblocks/react-blocknote`:
+
+| ❌ Deprecated             | ✅ Use instead        |
+| ------------------------- | --------------------- |
+| `<HistoryVersionPreview>` | `<YjsVersionPreview>` |
+
+The preview component keeps a `Yjs` qualifier on purpose: rendering a version's
+contents requires knowing the editor's exact text format, so it's inherently
+Yjs-specific and does not generalize to Storage.
+
+A full example, before and after:
+
+```tsx
+// ❌ Before
+import { useHistoryVersions } from "@liveblocks/react";
+import {
+  HistoryVersionSummaryList,
+  HistoryVersionSummary,
+} from "@liveblocks/react-ui";
+import { HistoryVersionPreview } from "@liveblocks/react-lexical";
+
+function Versions() {
+  const { versions } = useHistoryVersions();
+  return (
+    <HistoryVersionSummaryList>
+      {versions?.map((version) => (
+        <HistoryVersionSummary key={version.id} version={version} />
+      ))}
+    </HistoryVersionSummaryList>
+  );
+}
+
+// ✅ After
+import { useVersionHistory } from "@liveblocks/react";
+import { VersionSummaryList, VersionSummary } from "@liveblocks/react-ui";
+import { YjsVersionPreview } from "@liveblocks/react-lexical";
+
+function Versions() {
+  const { versions } = useVersionHistory();
+  return (
+    <VersionSummaryList>
+      {versions?.map((version) => (
+        <VersionSummary key={version.id} version={version} />
+      ))}
+    </VersionSummaryList>
+  );
+}
+```
