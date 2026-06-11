@@ -21,7 +21,6 @@ import type {
   OpaqueClient,
   PartialNotificationSettings,
   Patchable,
-  Permission,
   PermissionMatrix,
   Resolve,
   RoomPermissions,

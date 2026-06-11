@@ -6,7 +6,6 @@ import { stringifyOrLog as stringify } from "./lib/stringify";
 import type {
   PermissionResources,
   RequiredAccessLevel,
-  RoomPermissions,
   RoomPermissionsGrant,
 } from "./permissions";
 import {
@@ -246,7 +245,7 @@ function makeCachedToken(
 }
 
 function getAuthTokenPermissionScopes(
-  permissions: Record<string, RoomPermissions>
+  permissions: Record<string, string[]>
 ): RoomPermissionsGrant[] {
   return Object.entries(permissions).map(([resource, scopes]) => ({
     resource,
