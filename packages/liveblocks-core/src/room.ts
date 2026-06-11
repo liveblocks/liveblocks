@@ -53,7 +53,11 @@ import {
   tryParseJson,
 } from "./lib/utils";
 import type { PermissionMatrix, RoomPermissions } from "./permissions";
-import { hasPermissionAccess, permissionMatrixFromScopes } from "./permissions";
+import {
+  hasPermissionAccess,
+  normalizeRoomPermissions,
+  permissionMatrixFromScopes,
+} from "./permissions";
 import type {
   ContextualPromptContext,
   ContextualPromptResponse,
@@ -1271,6 +1275,18 @@ export type PrivateRoomApi = {
   attachmentUrlsStore: BatchStore<string, string>;
 };
 
+function connectionAccessFromScopes(scopes: string[]): {
+  canWrite: boolean;
+  canComment: boolean;
+} {
+  const roomPermissions = normalizeRoomPermissions(scopes);
+  const matrix = permissionMatrixFromScopes(roomPermissions);
+  return {
+    canWrite: hasPermissionAccess(matrix, "storage", "write"),
+    canComment: hasPermissionAccess(matrix, "comments", "write"),
+  };
+}
+
 function makeIdFactory(connectionId: number): IdFactory {
   let count = 0;
   return () => `${connectionId}:${count++}`;
@@ -2293,7 +2309,9 @@ export function createRoom<
     context.dynamicSessionInfoSig.set({
       actor: message.actor,
       nonce: message.nonce,
-      permissionMatrix: permissionMatrixFromScopes(message.scopes),
+      permissionMatrix: permissionMatrixFromScopes(
+        normalizeRoomPermissions(message.scopes)
+      ),
       meta: message.meta,
     });
     context.idFactory = makeIdFactory(message.actor);
@@ -2318,7 +2336,7 @@ export function createRoom<
         connectionId,
         user.id,
         user.info,
-        user.scopes
+        connectionAccessFromScopes(user.scopes)
       );
     }
 
@@ -2345,7 +2363,7 @@ export function createRoom<
       message.actor,
       message.id,
       message.info,
-      message.scopes
+      connectionAccessFromScopes(message.scopes)
     );
     // Send current presence to new user
     // TODO: Consider storing it on the backend

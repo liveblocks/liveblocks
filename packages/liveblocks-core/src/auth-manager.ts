@@ -6,21 +6,19 @@ import { stringifyOrLog as stringify } from "./lib/stringify";
 import type {
   PermissionResources,
   RequiredAccessLevel,
+  RoomPermissions,
   RoomPermissionsGrant,
 } from "./permissions";
 import {
   hasPermissionAccess,
+  normalizeRoomPermissions,
   resolveRoomPermissionMatrix,
 } from "./permissions";
 import type {
   Authentication,
   CustomAuthenticationResult,
 } from "./protocol/Authentication";
-import type {
-  AuthToken,
-  LiveblocksPermissions,
-  ParsedAuthToken,
-} from "./protocol/AuthToken";
+import type { AuthToken, ParsedAuthToken } from "./protocol/AuthToken";
 import { parseAuthToken, TokenKind } from "./protocol/AuthToken";
 import type { Polyfills } from "./room";
 
@@ -248,11 +246,11 @@ function makeCachedToken(
 }
 
 function getAuthTokenPermissionScopes(
-  permissions: LiveblocksPermissions
+  permissions: Record<string, RoomPermissions>
 ): RoomPermissionsGrant[] {
   return Object.entries(permissions).map(([resource, scopes]) => ({
     resource,
-    scopes,
+    scopes: normalizeRoomPermissions(scopes),
   }));
 }
 

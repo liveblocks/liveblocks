@@ -130,8 +130,12 @@ const ROOM_PERMISSION_RESOURCES = [
 
 const VALID_PERMISSIONS = new Set<string>(Object.values(Permission));
 
+function isPermission(permission: string): permission is Permission {
+  return VALID_PERMISSIONS.has(permission);
+}
+
 function resolveResourceAccess(
-  scopes: string[],
+  scopes: RoomPermissions,
   resource: RoomPermissionsResource
 ): AccessLevel | undefined {
   const permissions: Partial<Record<AccessLevel, RoomPermissions>> =
@@ -171,11 +175,15 @@ function permissionMatrixFromResolvedScopes(
   return matrix;
 }
 
-export function permissionMatrixFromScopes(scopes: string[]): PermissionMatrix {
+export function permissionMatrixFromScopes(
+  scopes: RoomPermissions
+): PermissionMatrix {
   return permissionMatrixFromResolvedScopes(resolvePermissionScopes(scopes));
 }
 
-function resolvePermissionScopes(scopes: string[]): ResolvedPermissionScopes {
+function resolvePermissionScopes(
+  scopes: RoomPermissions
+): ResolvedPermissionScopes {
   const hasDefaultPermission =
     scopes.includes(Permission.Write) ||
     scopes.includes(Permission.Read) ||
@@ -262,14 +270,14 @@ export function resolveRoomPermissionMatrix(
 }
 
 export function normalizeRoomPermissions(
-  permissions: RoomPermissions
+  permissions: string[]
 ): RoomPermissions {
   if (!Array.isArray(permissions)) {
     throw new Error("Permission list must be an array");
   }
 
   return permissions.map((permission) => {
-    if (!VALID_PERMISSIONS.has(permission)) {
+    if (!isPermission(permission)) {
       throw new Error(`Not a valid permission: ${permission}`);
     }
     return permission;
@@ -329,13 +337,13 @@ export function mergeRoomPermissionScopes({
   userAccesses,
 }: {
   defaultAccesses: RoomPermissions;
-  groupsAccesses: RoomPermissions;
+  groupsAccesses: RoomPermissions[];
   userAccesses: RoomPermissions;
 }): RoomPermissions {
   return permissionMatrixToScopes(
     mergePermissionMatrices([
       permissionMatrixFromScopes(defaultAccesses),
-      permissionMatrixFromScopes(groupsAccesses),
+      ...groupsAccesses.map(permissionMatrixFromScopes),
       permissionMatrixFromScopes(userAccesses),
     ])
   );

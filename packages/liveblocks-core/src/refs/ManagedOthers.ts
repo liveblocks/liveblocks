@@ -2,17 +2,17 @@ import { freeze } from "../lib/freeze";
 import type { JsonObject } from "../lib/Json";
 import { DerivedSignal, merge, MutableSignal } from "../lib/signals";
 import { compact, compactObject } from "../lib/utils";
-import {
-  hasPermissionAccess,
-  type PermissionMatrix,
-  permissionMatrixFromScopes,
-} from "../permissions";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { User } from "../types/User";
 
+type ConnectionAccess = {
+  readonly canWrite: boolean;
+  readonly canComment: boolean;
+};
+
 type Connection<U extends BaseUserMeta> = {
   readonly connectionId: number;
-  readonly permissionMatrix: PermissionMatrix;
+  readonly access: ConnectionAccess;
   readonly id: U["id"];
   readonly info: U["info"];
 };
@@ -21,23 +21,15 @@ function makeUser<P extends JsonObject, U extends BaseUserMeta>(
   conn: Connection<U>,
   presence: P
 ): User<P, U> {
-  const { connectionId, id, info } = conn;
-  const canWrite = hasPermissionAccess(
-    conn.permissionMatrix,
-    "storage",
-    "write"
-  );
+  const { connectionId, id, info, access } = conn;
+  const { canWrite, canComment } = access;
   return freeze(
     compactObject({
       connectionId,
       id,
       info,
       canWrite,
-      canComment: hasPermissionAccess(
-        conn.permissionMatrix,
-        "comments",
-        "write"
-      ),
+      canComment,
       isReadOnly: !canWrite, // Deprecated, kept for backward-compatibility
       presence,
     })
@@ -130,7 +122,7 @@ export class ManagedOthers<P extends JsonObject, U extends BaseUserMeta> {
     connectionId: number,
     metaUserId: U["id"],
     metaUserInfo: U["info"],
-    scopes: string[]
+    access: ConnectionAccess
   ): void {
     this.#internal.mutate((state) => {
       state.connections.set(
@@ -139,7 +131,7 @@ export class ManagedOthers<P extends JsonObject, U extends BaseUserMeta> {
           connectionId,
           id: metaUserId,
           info: metaUserInfo,
-          permissionMatrix: permissionMatrixFromScopes(scopes),
+          access,
         })
       );
       if (!state.presences.has(connectionId)) {

@@ -214,6 +214,7 @@ describe("mergeRoomPermissionScopes", () => {
           Permission.LegacyRoomPresenceWrite,
         ],
         groupsAccesses: [],
+        userAccesses: [],
       })
     ).toEqual([Permission.Read]);
   });
@@ -269,6 +270,7 @@ describe("mergeRoomPermissionScopes", () => {
             [Permission.Read, Permission.StorageRead],
             [Permission.Read, Permission.StorageWrite],
           ],
+          userAccesses: [],
         })
       ).storage
     ).toBe("write");
@@ -292,6 +294,7 @@ describe("mergeRoomPermissionScopes", () => {
         mergeRoomPermissionScopes({
           defaultAccesses: [Permission.Write, Permission.StorageNone],
           groupsAccesses: [],
+          userAccesses: [],
         })
       ).storage
     ).toBe("none");
