@@ -90,7 +90,10 @@ export type {
   LiveTextUpdates,
 } from "./crdts/LiveText";
 export { LiveText } from "./crdts/LiveText";
-export { applyLiveTextOperations } from "./crdts/liveTextOps";
+export {
+  applyLiveTextOperations,
+  transformTextOperations,
+} from "./crdts/liveTextOps";
 export type {
   LiveNode,
   LiveStructure,

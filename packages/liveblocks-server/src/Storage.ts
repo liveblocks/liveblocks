@@ -23,6 +23,7 @@ import {
   CrdtType,
   makePosition,
   OpCode,
+  transformTextOperations,
 } from "@liveblocks/core";
 
 import type { IStorageDriver } from "~/interfaces";
@@ -38,8 +39,6 @@ import type {
   UpdateTextOp,
 } from "~/protocol";
 import type { Pos } from "~/types";
-
-import { transformTextOperations } from "./liveTextTransform";
 
 const LIVE_TEXT_HISTORY_LIMIT = 1000;
 const LIVE_TEXT_HISTORY_TOO_OLD_REASON =
