@@ -6,7 +6,7 @@ import {
   dataToSegments,
   invertTextOperations,
   normalizeSegments,
-  rebaseTextOperations,
+  transformTextOperations,
 } from "../liveTextOps";
 
 describe("liveTextOps", () => {
@@ -47,11 +47,12 @@ describe("liveTextOps", () => {
     ]);
   });
 
-  test("rebaseTextOperations shifts indices over accepted inserts", () => {
+  test("transformTextOperations shifts indices over accepted inserts", () => {
     expect(
-      rebaseTextOperations(
+      transformTextOperations(
         [{ type: "insert", index: 1, text: "!" }],
-        [{ type: "insert", index: 0, text: "A" }]
+        [{ type: "insert", index: 0, text: "A" }],
+        "after"
       )
     ).toEqual([{ type: "insert", index: 2, text: "!" }]);
   });

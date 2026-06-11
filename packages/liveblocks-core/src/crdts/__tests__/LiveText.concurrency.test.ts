@@ -13,7 +13,7 @@ import { createManagedPool } from "../AbstractCrdt";
 import { LiveText } from "../LiveText";
 import {
   applyTextOperationsToSegments,
-  rebaseTextOperations,
+  transformTextOperations,
 } from "../liveTextOps";
 
 const initialNodes: StorageNode[] = [
@@ -77,27 +77,29 @@ describe("LiveText concurrency", () => {
     expect(text.toString()).toBe("Hillo");
   });
 
-  test("rebase and apply converge for overlapping delete operations", () => {
+  test("transform and apply converge for overlapping delete operations", () => {
     const segments = [{ text: "Hello" }];
     const accepted = [{ type: "delete" as const, index: 0, length: 2 }];
-    const rebased = rebaseTextOperations(
+    const transformed = transformTextOperations(
       [{ type: "delete", index: 0, length: 2 }],
-      accepted
+      accepted,
+      "after"
     );
 
     expect(
       applyTextOperationsToSegments(
         applyTextOperationsToSegments(segments, accepted),
-        rebased
+        transformed
       )
     ).toEqual(applyTextOperationsToSegments(segments, accepted));
   });
 
-  test("rebase shifts format ranges over accepted inserts", () => {
+  test("transform shifts format ranges over accepted inserts", () => {
     expect(
-      rebaseTextOperations(
+      transformTextOperations(
         [{ type: "format", index: 1, length: 2, attributes: { bold: true } }],
-        [{ type: "insert", index: 0, text: "A" }]
+        [{ type: "insert", index: 0, text: "A" }],
+        "after"
       )
     ).toEqual([
       { type: "format", index: 2, length: 2, attributes: { bold: true } },

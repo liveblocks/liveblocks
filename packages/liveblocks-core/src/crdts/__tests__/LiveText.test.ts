@@ -6,8 +6,8 @@ import {
   nodeStreamToCompactNodes,
   type StorageNode,
 } from "../../protocol/StorageNode";
-import { LiveText, rebaseTextOperations } from "../LiveText";
-import { invertTextOperations } from "../liveTextOps";
+import { LiveText } from "../LiveText";
+import { invertTextOperations, transformTextOperations } from "../liveTextOps";
 import { toPlainLson } from "../utils";
 
 describe("LiveText", () => {
@@ -61,11 +61,12 @@ describe("LiveText", () => {
     });
   });
 
-  test("rebases text operations over accepted operations", () => {
+  test("transforms text operations over accepted operations", () => {
     expect(
-      rebaseTextOperations(
+      transformTextOperations(
         [{ type: "insert", index: 1, text: "!" }],
-        [{ type: "insert", index: 0, text: "A" }]
+        [{ type: "insert", index: 0, text: "A" }],
+        "after"
       )
     ).toEqual([{ type: "insert", index: 2, text: "!" }]);
   });

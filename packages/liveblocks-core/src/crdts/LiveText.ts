@@ -92,7 +92,6 @@ const ACCEPTED_OPS_HISTORY_LIMIT = 1000;
 export {
   applyLiveTextOperations,
   mapTextIndexThroughOperations,
-  rebaseTextOperations,
   transformTextOperations,
 } from "./liveTextOps";
 

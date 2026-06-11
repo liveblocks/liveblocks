@@ -584,18 +584,6 @@ export function transformTextOperations(
 }
 
 /**
- * Rebase not-yet-accepted operations over already-accepted operations.
- *
- * Alias for `transformTextOperations(ops, acceptedOps, "after")`.
- */
-export function rebaseTextOperations(
-  ops: readonly TextOperation[],
-  acceptedOps: readonly TextOperation[]
-): TextOperation[] {
-  return transformTextOperations(ops, acceptedOps, "after");
-}
-
-/**
  * Structural equality of two operation sequences (order-insensitive for
  * attribute keys).
  */
