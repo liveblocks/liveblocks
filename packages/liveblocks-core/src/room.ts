@@ -1241,6 +1241,13 @@ export type PrivateRoomApi = {
 
   createTextMention(mentionId: string, mention: MentionData): Promise<void>;
   deleteTextMention(mentionId: string): Promise<void>;
+
+  // Version History APIs
+  //
+  // XXX These still return now-deprecated HistoryVersion[]. They should become
+  //     the new `Version` shape; the backend can switch the /versions response
+  //     non-breakingly by gating on our `X-LB-Client` version (see api-client.ts
+  //     and liveblocks-backend apps/cloudflare/src/api/v2/c-routes.ts).
   listTextVersions(): Promise<{
     versions: HistoryVersion[];
     requestedAt: Date;

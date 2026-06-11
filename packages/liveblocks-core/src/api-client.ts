@@ -1472,6 +1472,9 @@ export function createApiClient<
     );
   }
 
+  // XXX Backend plans to deprecate GET /v2/c/rooms/<roomId>/y-version/<id> (kept
+  //     for old clients < 3.21) and add a sibling that serves both Yjs and
+  //     Storage version content. See the matching XXX in liveblocks-backend.
   async function getTextVersion(options: {
     roomId: string;
     versionId: string;
@@ -1485,6 +1488,8 @@ export function createApiClient<
     );
   }
 
+  // XXX Backend plans to extend POST /v2/c/rooms/<roomId>/version to also
+  //     snapshot Storage (not just Yjs). See the matching XXX in liveblocks-backend.
   async function createTextVersion(options: { roomId: string }) {
     await httpClient.rawPost(
       url`/v2/c/rooms/${options.roomId}/version`,
@@ -1548,6 +1553,12 @@ export function createApiClient<
     return result.content[0].text;
   }
 
+  // XXX This calls GET /v2/c/rooms/<roomId>/versions, which today returns
+  //     now-deprecated HistoryVersion objects. The backend wants to keep this
+  //     clean URL but switch the response to the new `Version` shape, gated on
+  //     our SDK version via the `X-LB-Client` header (see the matching XXX in
+  //     liveblocks-backend apps/cloudflare/src/api/v2/c-routes.ts). When that
+  //     lands, this parser must branch on the response shape for >= 3.21 clients.
   async function listTextVersions(options: { roomId: string }) {
     const result = await httpClient.get<{
       versions: DateToString<HistoryVersion>[];
@@ -1573,6 +1584,8 @@ export function createApiClient<
     };
   }
 
+  // XXX Same return-shape consideration as `listTextVersions` above; this hits
+  //     GET /v2/c/rooms/<roomId>/versions/delta.
   async function listTextVersionsSince(options: {
     roomId: string;
     since: Date;
@@ -2080,6 +2093,13 @@ class HttpClient {
 
         // Cannot be overriden by custom headers
         Authorization: `Bearer ${getBearerTokenFromAuthValue(authValue)}`,
+        // XXX This header is load-bearing going forward: the backend uses our SDK
+        //     version to decide the response shape of versioned /v2/c/* endpoints
+        //     (so we can change shapes without breaking old clients). We must keep
+        //     sending `X-LB-Client` with an accurate version on every /v2/c/*
+        //     request. See liveblocks-backend apps/cloudflare/src/api/v2/c-routes.ts.
+        //     (Sent on every /v2/c/* request since client 2.8.2; absent header =>
+        //     client older than 2.8.2.)
         "X-LB-Client": PKG_VERSION || "dev",
       },
     });
