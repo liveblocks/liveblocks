@@ -9,7 +9,7 @@ Authentication and permissions solve two different problems:
 
 - **Authentication** confirms who the current user is (`userId`) and optionally
   which workspace they belong to (`organizationId`).
-- **Permissions** define what that authenticated user can do in Liveblocks
+- **Permissions** define what a authenticated user can do with Liveblocks
   resources such as rooms, comments, and feeds.
 
 ## How permissions work
@@ -24,8 +24,8 @@ right part, the scope (`read`, `write`, or `none`).
 By setting the permission for the resource `*`, you define the base scope for
 all the resources of the room. You can choose between read or write access:
 
-- `*:read` => the user will have read access to everything in the room.
-- `*:write` => the user will have write access to everything in the room.
+- `*:read` → the user will have read access to everything in the room.
+- `*:write` → the user will have write access to everything in the room.
 
 <Banner title="Legacy naming convention">
 
@@ -37,11 +37,11 @@ using the new naming convention.
 
 ### More granular permissions
 
-You can opt in to or opt out of access to specific room resources:
+You can opt into or opt out of access to specific room resources:
 
-- **Storage** with `storage:write|read|none`.
-- **Comments** with `comments:write|read|none`.
-- **Feeds** with `feeds:write|read|none`.
+- **Storage** with `storage:read`, `storage:write`, or `storage:none`.
+- **Comments** with `comments:read`, `comments:write`, or `comments:none`.
+- **Feeds** with `feeds:read`, `feeds:write`, or `feeds:none`.
 
 **Here are some examples**
 
@@ -50,18 +50,18 @@ You can opt in to or opt out of access to specific room resources:
 ```
 [
   "*:write",
-  "storage:read"  // opt-out storage from write to read
+  "storage:read"  // Lower storage access from write to read
 ]
 ```
 
-2. Read access to everything, expect write acces to comments ad no access to
+2. Read access to everything, expect write acces to comments and no access to
    feeds:
 
 ```
 [
   "*:read",
-  "comments:write"  // opt-in comments write
-  "feeds:none"  // opt-out feeds
+  "comments:write"  // Raise comments access to write
+  "feeds:none"  // Remove access to feeds
 ]
 ```
 
