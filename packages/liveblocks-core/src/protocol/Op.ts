@@ -32,11 +32,26 @@ export namespace OpCode {
 
 export type TextAttributes = JsonObject;
 
+/**
+ * A single segment in a {@link LiveTextData} document.
+ *
+ * @example
+ * ["Hello world"]
+ * ["Hello ", { bold: true }]
+ */
 export type LiveTextSegment =
-  | [text: string]
-  | [text: string, attributes: TextAttributes];
+  | readonly [text: string]
+  | readonly [text: string, attributes: TextAttributes];
 
-export type LiveTextData = LiveTextSegment[];
+/**
+ * Serialized form of a {@link LiveText} document: an ordered list of text
+ * segments with optional inline attributes.
+ *
+ * @example
+ * [["Hello world"]]
+ * [["Hello ", { bold: true }], ["world"]]
+ */
+export type LiveTextData = readonly LiveTextSegment[];
 
 export type TextOperation =
   | {
