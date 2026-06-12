@@ -69,11 +69,12 @@ You can opt into or opt out of access to specific room resources:
 
 Choose one of these approaches for generating auth tokens:
 
-- [ID token authentication](/docs/authentication/id-token) (recommended): define
-  permissions on rooms with Liveblocks APIs, then authenticate users with
-  `identifyUser`.
-- [Access token authentication](/docs/authentication/access-token): define
-  allowed room IDs (often with wildcard patterns) every time you issue a token.
+- [ID token authentication](/docs/authentication/id-token?source=authentication)
+  (recommended): define permissions on rooms with Liveblocks APIs, then
+  authenticate users with `identifyUser`.
+- [Access token authentication](/docs/authentication/access-token?source=authentication):
+  define allowed room IDs (often with wildcard patterns) every time you issue a
+  token.
 
 <Banner title="Use ID tokens for most production apps" type="warning">
 
@@ -84,6 +85,12 @@ logic entirely in your own auth endpoint.
 </Banner>
 
 <ListGrid columns={2}>
-  <DocsCard title="ID token" href="/docs/authentication/id-token" />
-  <DocsCard title="Access token" href="/docs/authentication/access-token" />
+  <DocsCard
+    title="ID token"
+    href="/docs/authentication/id-token?source=authentication"
+  />
+  <DocsCard
+    title="Access token"
+    href="/docs/authentication/access-token?source=authentication"
+  />
 </ListGrid>

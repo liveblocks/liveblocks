@@ -418,7 +418,8 @@
         "routes": [
           {
             "title": "ID Token",
-            "path": "/authentication/id-token-tmp",
+            "path": "/authentication/id-token",
+            "href": "/authentication/id-token?source=authentication",
             "routes": [
               {
                 "title": "Next.js",
@@ -455,6 +456,7 @@
           {
             "title": "Access token",
             "path": "/authentication/access-token",
+            "href": "/authentication/access-token?source=authentication",
             "routes": [
               {
                 "title": "Next.js",
