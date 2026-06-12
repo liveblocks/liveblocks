@@ -3,6 +3,7 @@ import type { LiveMapUpdates } from "../crdts/LiveMap";
 import type { LiveObjectUpdates } from "../crdts/LiveObject";
 import type { LiveTextUpdates } from "../crdts/LiveText";
 import type { Lson, LsonObject } from "../crdts/Lson";
+import { kStorageUpdateSource } from "../internal";
 
 export type StorageCallback = (updates: StorageUpdate[]) => void;
 
@@ -21,3 +22,10 @@ export type StorageUpdate =
   | LiveObjectUpdate
   | LiveListUpdate
   | LiveTextUpdate;
+
+export type StorageUpdateSource = "local" | "remote";
+
+/** @internal */
+export type InternalStorageUpdate = StorageUpdate & {
+  readonly [kStorageUpdateSource]?: StorageUpdateSource;
+};

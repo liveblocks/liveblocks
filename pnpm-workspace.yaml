@@ -16,6 +16,7 @@ packages:
   - "e2e/next-sandbox"
   - "e2e/next-tiptap-liveblocks"
   - "e2e/node-sandbox"
+  - "e2e/next-codemirror-liveblocks"
 
 allowBuilds:
   "@parcel/watcher": true
