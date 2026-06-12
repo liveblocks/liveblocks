@@ -20,6 +20,17 @@ export type ApplyResult =
   | { reverse: Op[]; modified: StorageUpdate }
   | { modified: false };
 
+export type DispatchOptions = {
+  /**
+   * Whether this dispatch should clear the redo stack. Defaults to true when
+   * any forward ops are included (a fresh local mutation), false otherwise.
+   * LiveText uses this to dispatch queued ops after an acknowledgement
+   * (which should not clear redo), and to register fresh local edits that
+   * don't carry wire ops yet (which should).
+   */
+  clearRedoStack?: boolean;
+};
+
 /**
  * The managed pool is a namespace registry (i.e. a context) that "owns" all
  * the individual live nodes, ensuring each one has a unique ID, and holding on
@@ -44,7 +55,8 @@ export interface ManagedPool {
   dispatch: (
     ops: ClientWireOp[],
     reverseOps: Op[],
-    storageUpdates: Map<string, StorageUpdate>
+    storageUpdates: Map<string, StorageUpdate>,
+    options?: DispatchOptions
   ) => void;
 
   /**
@@ -77,7 +89,8 @@ export type CreateManagedPoolOptions = {
   onDispatch?: (
     ops: ClientWireOp[],
     reverse: Op[],
-    storageUpdates: Map<string, StorageUpdate>
+    storageUpdates: Map<string, StorageUpdate>,
+    options?: DispatchOptions
   ) => void;
 
   /**
@@ -129,9 +142,10 @@ export function createManagedPool(
     dispatch(
       ops: ClientWireOp[],
       reverse: Op[],
-      storageUpdates: Map<string, StorageUpdate>
+      storageUpdates: Map<string, StorageUpdate>,
+      options?: DispatchOptions
     ) {
-      onDispatch?.(ops, reverse, storageUpdates);
+      onDispatch?.(ops, reverse, storageUpdates, options);
     },
 
     assertStorageIsWritable: () => {

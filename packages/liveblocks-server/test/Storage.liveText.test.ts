@@ -334,17 +334,99 @@ describe("Storage LiveText", () => {
       expect(result[0]?.action).toBe("accepted");
     }
 
-    expect(storage.driver.get_live_text_history_since("0:1", 0)).toHaveLength(
-      1002
-    );
-
-    const reloadedStorage = new Storage(driver);
-    const history = reloadedStorage.driver.get_live_text_history_since(
-      "0:1",
-      0
-    );
+    // History is purged continuously as ops are appended, not just when a
+    // room (re)loads.
+    const history = storage.driver.get_live_text_history_since("0:1", 0);
     expect(history).toHaveLength(1000);
     expect(history[0]?.version).toBe(3);
     expect(history[history.length - 1]?.version).toBe(1002);
+
+    // Reloading keeps the same bounded window.
+    const reloadedStorage = new Storage(driver);
+    const reloadedHistory = reloadedStorage.driver.get_live_text_history_since(
+      "0:1",
+      0
+    );
+    expect(reloadedHistory).toHaveLength(1000);
+    expect(reloadedHistory[0]?.version).toBe(3);
+    expect(reloadedHistory[reloadedHistory.length - 1]?.version).toBe(1002);
+  });
+
+  test("ignores empty updates without bumping the version", () => {
+    const driver = new InMemoryDriver();
+    initInMemory(
+      driver,
+      new Map([
+        ["root", { type: CrdtType.OBJECT, data: {} }],
+        [
+          "0:1",
+          {
+            type: CrdtType.TEXT,
+            parentId: "root",
+            parentKey: "text",
+            data: [["Hello"]],
+            version: 0,
+          },
+        ],
+      ])
+    );
+
+    const storage = new Storage(driver);
+    const result = storage.applyOps([updateTextOp("0:1", 0, [])]);
+
+    expect(result[0]?.action).toBe("ignored");
+    expect(storage.driver.get_node("0:1")).toEqual({
+      type: CrdtType.TEXT,
+      parentId: "root",
+      parentKey: "text",
+      data: [["Hello"]],
+      version: 0,
+    });
+    expect(storage.driver.get_live_text_history_since("0:1", 0)).toHaveLength(
+      0
+    );
+  });
+
+  test("a delete rebased over a concurrent interior insert preserves the insert", () => {
+    const driver = new InMemoryDriver();
+    initInMemory(
+      driver,
+      new Map([
+        ["root", { type: CrdtType.OBJECT, data: {} }],
+        [
+          "0:1",
+          {
+            type: CrdtType.TEXT,
+            parentId: "root",
+            parentKey: "text",
+            data: [["abcdef"]],
+            version: 0,
+          },
+        ],
+      ])
+    );
+
+    const storage = new Storage(driver);
+
+    // Client A inserts "ZZ" at index 3 (accepted first)
+    const insertResult = storage.applyOps([
+      updateTextOp("0:1", 0, [{ type: "insert", index: 3, text: "ZZ" }], "a:1"),
+    ]);
+    expect(insertResult[0]?.action).toBe("accepted");
+
+    // Client B concurrently deletes [1, 5) ("bcde"), based on version 0
+    const deleteResult = storage.applyOps([
+      updateTextOp("0:1", 0, [{ type: "delete", index: 1, length: 4 }], "b:1"),
+    ]);
+    expect(deleteResult[0]?.action).toBe("accepted");
+
+    // The concurrently inserted text survives the spanning delete
+    expect(storage.driver.get_node("0:1")).toEqual({
+      type: CrdtType.TEXT,
+      parentId: "root",
+      parentKey: "text",
+      data: [["aZZf"]],
+      version: 2,
+    });
   });
 });

@@ -336,53 +336,11 @@ export function getTreesDiffOperations(
           }
         }
       }
-      if (crdt.type === CrdtType.TEXT) {
-        if (
-          currentCrdt.type !== CrdtType.TEXT ||
-          stringify(crdt.data) !== stringify(currentCrdt.data) ||
-          crdt.version !== currentCrdt.version
-        ) {
-          ops.push({
-            type: OpCode.UPDATE_TEXT,
-            id,
-            baseVersion:
-              currentCrdt.type === CrdtType.TEXT ? currentCrdt.version : 0,
-            version: crdt.version,
-            ops: [
-              {
-                type: "delete",
-                index: 0,
-                length:
-                  currentCrdt.type === CrdtType.TEXT
-                    ? currentCrdt.data.reduce(
-                        (sum, segment) => sum + segment[0].length,
-                        0
-                      )
-                    : 0,
-              },
-              ...crdt.data.map((segment, index, items) => {
-                const [text, attributes] = segment;
-                const insertIndex = items
-                  .slice(0, index)
-                  .reduce((sum, item) => sum + item[0].length, 0);
-
-                return attributes === undefined
-                  ? {
-                      type: "insert" as const,
-                      index: insertIndex,
-                      text,
-                    }
-                  : {
-                      type: "insert" as const,
-                      index: insertIndex,
-                      text,
-                      attributes,
-                    };
-              }),
-            ],
-          });
-        }
-      }
+      // NOTE: CrdtType.TEXT nodes that exist on both sides are deliberately
+      // NOT diffed into UPDATE_TEXT ops here. The UPDATE_TEXT op path
+      // carries pending-op transformation semantics that don't apply to
+      // authoritative snapshots; LiveText nodes are reconciled against the
+      // snapshot directly (see LiveText._resyncText, called from the room).
       if (crdt.parentKey !== currentCrdt.parentKey) {
         ops.push({
           type: OpCode.SET_PARENT_KEY,

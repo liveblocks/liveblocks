@@ -4,7 +4,11 @@ import { injectBrandBadge } from "./brand";
 import type { InternalSyncStatus } from "./client";
 import type { Delegates, LostConnectionEvent, Status } from "./connection";
 import { ManagedSocket, StopRetrying } from "./connection";
-import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt";
+import type {
+  ApplyResult,
+  DispatchOptions,
+  ManagedPool,
+} from "./crdts/AbstractCrdt";
 import { createManagedPool, OpSource } from "./crdts/AbstractCrdt";
 import {
   cloneLson,
@@ -12,6 +16,7 @@ import {
   getTreesDiffOperations,
   isLiveList,
   isLiveNode,
+  isLiveText,
   isSameNodeOrChildOf,
   mergeStorageUpdates,
 } from "./crdts/liveblocks-helpers";
@@ -122,7 +127,7 @@ import type {
   NodeStream,
   SerializedCrdt,
 } from "./protocol/StorageNode";
-import { compactNodesToNodeStream } from "./protocol/StorageNode";
+import { compactNodesToNodeStream, CrdtType } from "./protocol/StorageNode";
 import type {
   SubscriptionData,
   SubscriptionDeleteInfo,
@@ -1753,7 +1758,8 @@ export function createRoom<
   function onDispatch(
     ops: ClientWireOp[],
     reverse: Op[],
-    storageUpdates: Map<string, StorageUpdate>
+    storageUpdates: Map<string, StorageUpdate>,
+    options?: DispatchOptions
   ): void {
     for (const value of storageUpdates.values()) {
       (value as { [kStorageUpdateSource]?: StorageUpdateSource })[
@@ -1779,8 +1785,10 @@ export function createRoom<
       if (reverse.length > 0) {
         addToUndoStack(reverse);
       }
-      if (ops.length > 0) {
+      if (options?.clearRedoStack ?? ops.length > 0) {
         context.redoStack.length = 0;
+      }
+      if (ops.length > 0) {
         dispatchOps(ops);
       }
       notify({ storageUpdates });
@@ -1923,6 +1931,30 @@ export function createRoom<
       // stream never enters the op path at all.
       const ops = getTreesDiffOperations(currentItems, nodes);
       const result = applyRemoteOps(ops);
+
+      // LiveText nodes are not covered by the op diff above (their op path
+      // carries pending-op transformation semantics that don't apply to
+      // authoritative snapshots). Reconcile them against the snapshot
+      // directly; locally pending text ops are preserved on top and re-sent
+      // by the offline-ops replay.
+      for (const [id, crdt] of nodes) {
+        if (crdt.type === CrdtType.TEXT) {
+          const node = context.pool.nodes.get(id);
+          if (node !== undefined && isLiveText(node)) {
+            const update = node._resyncText(crdt.data, crdt.version);
+            if (update !== undefined) {
+              result.updates.storageUpdates.set(
+                id,
+                mergeStorageUpdates(
+                  result.updates.storageUpdates.get(id),
+                  update
+                )
+              );
+            }
+          }
+        }
+      }
+
       notify(result.updates);
     } else {
       context.root = LiveObject._fromItems<S>(
@@ -2515,17 +2547,43 @@ export function createRoom<
           break;
         }
 
-        // Receiving a RejectedOps message in the client means that the server is no
-        // longer in sync with the client. Trying to synchronize the client again by
-        // rolling back particular Ops may be hard/impossible. It's fine to not try and
-        // accept the out-of-sync reality and throw an error.
+        // Receiving a RejectedOps message means the server refused some of
+        // our ops, so our optimistic local state is out of sync with the
+        // server. For LiveText ops this is a normal (if rare) situation —
+        // e.g. a client that was offline long enough to fall outside the
+        // server's retained history window — and we can recover: drop the
+        // rejected pending state and re-fetch the authoritative storage
+        // snapshot. For other ops (e.g. permission rejections), rolling back
+        // particular Ops is hard/impossible, so we keep the old behavior of
+        // accepting the out-of-sync reality and surfacing an error.
         case ServerMsgCode.REJECT_STORAGE_OP: {
           console.errorWithTitle(
             "Storage mutation rejection error",
             message.reason
           );
 
-          if (process.env.NODE_ENV !== "production") {
+          let needsStorageResync = false;
+          for (const opId of message.opIds) {
+            const rejectedOp = context.unacknowledgedOps.get(opId);
+            context.unacknowledgedOps.delete(opId);
+            context.buffer.storageOperations =
+              context.buffer.storageOperations.filter((op) => op.opId !== opId);
+
+            if (
+              rejectedOp !== undefined &&
+              rejectedOp.type === OpCode.UPDATE_TEXT
+            ) {
+              const node = context.pool.nodes.get(rejectedOp.id);
+              if (node !== undefined && isLiveText(node)) {
+                node._rejectPendingOp(opId);
+                needsStorageResync = true;
+              }
+            }
+          }
+
+          if (needsStorageResync) {
+            refreshStorage({ flush: true });
+          } else if (process.env.NODE_ENV !== "production") {
             throw new Error(
               `Storage mutations rejected by server: ${message.reason}`
             );

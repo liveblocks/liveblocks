@@ -175,7 +175,8 @@ export function isCreateOp<O extends Op>(op: O): op is O & CreateOp {
     op.type === OpCode.CREATE_OBJECT ||
     op.type === OpCode.CREATE_REGISTER ||
     op.type === OpCode.CREATE_MAP ||
-    op.type === OpCode.CREATE_LIST
+    op.type === OpCode.CREATE_LIST ||
+    op.type === OpCode.CREATE_TEXT
   );
 }
 
