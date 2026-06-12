@@ -49,7 +49,7 @@ const { body, status } = await liveblocks.identifyUser({
 ```
 
 <Banner>
-  Learn how to [get started with ID tokens](/docs/authentication).
+  Learn how to [get started with ID tokens](/docs/authentication/id-token).
 </Banner>
 
 A number of options are also available, enabling you to set up permissions and
@@ -766,15 +766,15 @@ rooms to delete.
 #### Liveblocks.createRoom [#post-rooms]
 
 Programmatically creates a new room from a room ID. The `defaultAccesses` option
-is required. Setting `defaultAccesses` to `["room:write"]` creates a public
-room, whereas setting it to `[]` will create a private room that needs
+is required. Setting `defaultAccesses` to `["*:write"]` creates a public room,
+whereas setting it to `[]` will create a private room that needs
 [ID token permission to enter](/docs/authentication/id-token). This is a wrapper
 around the [Create Room API](/docs/api-reference/rest-api-endpoints#post-rooms)
 and returns the same response.
 
 ```ts
 const room = await liveblocks.createRoom("my-room-id", {
-  defaultAccesses: ["room:write"],
+  defaultAccesses: ["*:write"],
 });
 
 // { type: "room", id: "my-room-id", metadata: {...}, ... }
@@ -786,18 +786,18 @@ and attach custom metadata.
 
 ```ts
 const room = await liveblocks.createRoom("my-room-id", {
-  // The default room permissions. `[]` for private, `["room:write"]` for public.
+  // The default room permissions. `[]` for private, `["*:write"]` for public.
   defaultAccesses: [],
 
   // Optional, the room's group ID permissions
   groupsAccesses: {
-    design: ["room:write"],
-    engineering: ["room:presence:write", "room:read"],
+    design: ["*:write"],
+    engineering: ["*:read"],
   },
 
   // Optional, the room's user ID permissions
   usersAccesses: {
-    "my-user-id": ["room:write"],
+    "my-user-id": ["*:write"],
   },
 
   // Optional, custom metadata to attach to the room
@@ -831,16 +831,15 @@ console.log(room);
 #### Liveblocks.getOrCreateRoom [#get-or-create-rooms-roomId]
 
 Get a room by its ID. If the room doesn’t exist, create it instead. The
-`defaultAccesses` option is required. Setting `defaultAccesses` to
-`["room:write"]` creates a public room, whereas setting it to `[]` will create a
-private room that needs
-[ID token permission to enter](/docs/authentication/id-token). Returns the same
-response as the
+`defaultAccesses` option is required. Setting `defaultAccesses` to `["*:write"]`
+creates a public room, whereas setting it to `[]` will create a private room
+that needs [ID token permission to enter](/docs/authentication/id-token).
+Returns the same response as the
 [Create Room API](/docs/api-reference/rest-api-endpoints#post-rooms).
 
 ```ts
 const room = await liveblocks.getOrCreateRoom("my-room-id", {
-  defaultAccesses: ["room:write"],
+  defaultAccesses: ["*:write"],
 });
 
 // { type: "room", id: "my-room-id", metadata: {...}, ... }
@@ -852,18 +851,18 @@ and attach custom metadata.
 
 ```ts
 const room = await liveblocks.getOrCreateRoom("my-room-id", {
-  // The default room permissions. `[]` for private, `["room:write"]` for public.
+  // The default room permissions. `[]` for private, `["*:write"]` for public.
   defaultAccesses: [],
 
   // Optional, the room's group ID permissions
   groupsAccesses: {
-    design: ["room:write"],
-    engineering: ["room:presence:write", "room:read"],
+    design: ["*:write"],
+    engineering: ["*:read"],
   },
 
   // Optional, the room's user ID permissions
   usersAccesses: {
-    "my-user-id": ["room:write"],
+    "my-user-id": ["*:write"],
   },
 
   // Optional, custom metadata to attach to the room
@@ -903,18 +902,18 @@ delete the property.
 
 ```ts
 const room = await liveblocks.updateRoom("my-room-id", {
-  // Optional, update the default room permissions. `[]` for private, `["room:write"]` for public.
+  // Optional, update the default room permissions. `[]` for private, `["*:write"]` for public.
   defaultAccesses: [],
 
   // Optional, update the room's group ID permissions
   groupsAccesses: {
-    design: ["room:write"],
-    engineering: ["room:presence:write", "room:read"],
+    design: ["*:write"],
+    engineering: ["*:read"],
   },
 
   // Optional, update the room's user ID permissions
   usersAccesses: {
-    "my-user-id": ["room:write"],
+    "my-user-id": ["*:write"],
   },
 
   // Optional, custom metadata to update on the room
@@ -932,7 +931,7 @@ more about [managing permission with ID tokens](/docs/authentication/id-token).
 
 Update a room’s properties by its ID. If the room doesn’t exist, create it
 instead. The `defaultAccesses` option is required. Setting `defaultAccesses` to
-`["room:write"]` creates a public room, whereas setting it to `[]` will create a
+`["*:write"]` creates a public room, whereas setting it to `[]` will create a
 private room that needs
 [ID token permission to enter](/docs/authentication/id-token). Returns the same
 response as the
@@ -946,7 +945,7 @@ const room = await liveblocks.upsertRoom("my-room-id", {
   },
   // These fields will only be set when the room will get created
   create: {
-    defaultAccesses: ["room:write"],
+    defaultAccesses: ["*:write"],
   },
 });
 
@@ -960,18 +959,18 @@ permissions and attach custom metadata.
 ```ts
 const room = await liveblocks.upsertRoom("my-room-id", {
   update: {
-    // The default room permissions. `[]` for private, `["room:write"]` for public.
+    // The default room permissions. `[]` for private, `["*:write"]` for public.
     defaultAccesses: [],
 
     // Optional, the room's group ID permissions
     groupsAccesses: {
-      design: ["room:write"],
-      engineering: ["room:presence:write", "room:read"],
+      design: ["*:write"],
+      engineering: ["*:read"],
     },
 
     // Optional, the room's user ID permissions
     usersAccesses: {
-      "my-user-id": ["room:write"],
+      "my-user-id": ["*:write"],
     },
 
     // Optional, custom metadata to attach to the room
@@ -1438,7 +1437,7 @@ and returns the same response.
 ```ts
 // Create a new room
 const room = await liveblocks.createRoom("my-room-id", {
-  defaultAccesses: ["room:write"],
+  defaultAccesses: ["*:write"],
 });
 
 // Initialize Storage
@@ -1458,7 +1457,7 @@ import { toPlainLson, LiveList, LiveObject } from "@liveblocks/client";
 
 // Create a new room
 const room = await liveblocks.createRoom("my-room-id", {
-  defaultAccesses: ["room:write"],
+  defaultAccesses: ["*:write"],
 });
 
 // If this were your Storage type...
@@ -1487,7 +1486,7 @@ It’s also possible to create plain LSON manually, without the helper function.
 ```ts highlight="9-11,17-23"
 // Create a new room
 const room = await liveblocks.createRoom("my-room-id", {
-  defaultAccesses: ["room:write"],
+  defaultAccesses: ["*:write"],
 });
 
 // If this were your Storage type...

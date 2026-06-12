@@ -32,7 +32,7 @@ supports other APIs. [Learn more](#Partially-supported-features).
 | [Text editors](/docs/ready-made-features/multiplayer/text-editor) (Tiptap, BlockNote, Lexical)                                     | ✅ ¹    |
 | [Public key authentication](/docs/api-reference/liveblocks-react#LiveblocksProviderPublicKey)                                      | ✅      |
 | [Access token authentication](/docs/authentication/access-token)                                                                   | ✅      |
-| [ID token authentication](/docs/authentication)                                                                                    | ✅      |
+| [ID token authentication](/docs/authentication/id-token)                                                                           | ✅      |
 | [Room Node.js methods](/docs/api-reference/liveblocks-node#Room)                                                                   | ✅      |
 | [Room REST APIs](/docs/api-reference/rest-api-endpoints#Room)                                                                      | ✅      |
 | [Comments](/docs/ready-made-features/comments)                                                                                     | ❌ ²    |
@@ -182,7 +182,7 @@ await liveblocks.broadcastEvent("my-room-id", { type: "REFRESH" });
 
 // ⚠️ Room APIs are supported but permissions and metadata are ignored
 await liveblocks.createRoom("my-new-room-id", {
-  defaultAccesses: ["room:write"],
+  defaultAccesses: ["*:write"],
   metadata: { title: "My title" },
 });
 // { metadata: {}, defaultAccesses: [], ... }

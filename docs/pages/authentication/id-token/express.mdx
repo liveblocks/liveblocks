@@ -132,12 +132,12 @@ Follow the following steps to start configure your authentication endpoint where
         });
 
         const room = await liveblocks.createRoom("my-room-id", {
-          defaultAccesses: ["room:read", "room:presence:write"],
+          defaultAccesses: ["*:read"],
           groupsAccesses: {
-            "my-group-id": ["room:write"],
+            "my-group-id": ["*:write"],
           },
           usersAccesses: {
-            "my-user-id": ["room:write"],
+            "my-user-id": ["*:write"],
           },
         });
       ```
