@@ -24,7 +24,11 @@ import { LiveList } from "../crdts/LiveList";
 import { LiveMap } from "../crdts/LiveMap";
 import { LiveObject } from "../crdts/LiveObject";
 import type { LsonObject } from "../crdts/Lson";
-import { kInternal } from "../internal";
+import type {
+  StorageUpdate,
+  StorageUpdateSource,
+} from "../crdts/StorageUpdates";
+import { kInternal, kStorageUpdateSource } from "../internal";
 import { makeEventSource } from "../lib/EventSource";
 import * as console from "../lib/fancy-console";
 import type { Json, JsonObject } from "../lib/Json";
@@ -2673,6 +2677,86 @@ describe("room", () => {
       expect(result2.nextCursor).toBeUndefined();
 
       room.destroy();
+    });
+  });
+
+  describe("storage update source", () => {
+    function readSources(updates: StorageUpdate[]): StorageUpdateSource[] {
+      return updates.map(
+        (update) =>
+          (update as { [kStorageUpdateSource]?: StorageUpdateSource })[
+            kStorageUpdateSource
+          ]!
+      );
+    }
+
+    test("local mutations are tagged local", async () => {
+      const { room, root } = await prepareIsolatedStorageTest<{ a: number }>(
+        [createSerializedRoot({ a: 0 })],
+        0,
+        { a: 0 }
+      );
+
+      const sources: StorageUpdateSource[] = [];
+      onTestFinished(
+        room.events.storageBatch.subscribe((updates) => {
+          sources.push(...readSources(updates));
+        })
+      );
+
+      root.set("a", 1);
+
+      expect(sources).toEqual(["local"]);
+    });
+
+    test("remote ops without opId are tagged remote", async () => {
+      const { room, root, applyRemoteOperations } =
+        await prepareIsolatedStorageTest<{ a: number }>(
+          [createSerializedRoot({ a: 0 })],
+          0,
+          { a: 0 }
+        );
+
+      const sources: StorageUpdateSource[] = [];
+      onTestFinished(
+        room.events.storageBatch.subscribe((updates) => {
+          sources.push(...readSources(updates));
+        })
+      );
+
+      applyRemoteOperations([
+        {
+          type: OpCode.UPDATE_OBJECT,
+          id: "root",
+          data: { a: 2 },
+        },
+      ]);
+
+      expect(sources).toEqual(["remote"]);
+      expect(root.get("a")).toBe(2);
+    });
+
+    test("undo produces local-tagged storage updates", async () => {
+      const { room, root } = await prepareIsolatedStorageTest<{ a: number }>(
+        [createSerializedRoot({ a: 0 })],
+        0,
+        { a: 0 }
+      );
+
+      const sources: StorageUpdateSource[] = [];
+      onTestFinished(
+        room.events.storageBatch.subscribe((updates) => {
+          sources.push(...readSources(updates));
+        })
+      );
+
+      root.set("a", 1);
+      expect(sources).toEqual(["local"]);
+
+      sources.length = 0;
+      room.history.undo();
+
+      expect(sources).toEqual(["local"]);
     });
   });
 });

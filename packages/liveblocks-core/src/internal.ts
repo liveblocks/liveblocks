@@ -16,3 +16,5 @@
  * );
  */
 export const kInternal = Symbol();
+
+export const kStorageUpdateSource = Symbol();
