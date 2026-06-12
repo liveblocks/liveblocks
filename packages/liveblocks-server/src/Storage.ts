@@ -160,7 +160,6 @@ export class Storage {
 
   constructor(driver: IStorageDriver) {
     this.driver = driver;
-    this.purgeLiveTextHistory();
   }
 
   // -------------------------------------------------------------------------
@@ -187,18 +186,6 @@ export class Storage {
   // Private APIs (for Storage)
   // -------------------------------------------------------------------------
 
-  private purgeLiveTextHistory(): void {
-    for (const [nodeId, node] of this.driver.iter_nodes()) {
-      if (node.type !== CrdtType.TEXT) {
-        continue;
-      }
-
-      this.driver.purge_live_text_history_before(
-        nodeId,
-        Math.max(0, node.version - LIVE_TEXT_HISTORY_LIMIT + 1)
-      );
-    }
-  }
 
   /**
    * Applies a single Op.
