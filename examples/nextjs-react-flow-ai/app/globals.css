@@ -148,7 +148,8 @@ body {
 
     &.lb-help-control {
       order: -1;
-      margin-right: 5px;
+      padding-right: 8px;
+      margin-right: 6px;
       border-right: 1px solid var(--flowchart-gray-300);
       border-radius: 6px 0 0 6px;
     }
