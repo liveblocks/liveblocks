@@ -3897,7 +3897,7 @@ export function createRoom<
       [kInternal]: {
         get presenceBuffer() { return deepClone(context.buffer.presenceUpdates?.data ?? null) }, // prettier-ignore
         get undoStack() {
-          return deepClone(
+          return structuredClone(
             context.undoStack.map((item) => ({
               id: item.id,
               frames: item.frames,
@@ -3905,7 +3905,7 @@ export function createRoom<
           );
         }, // prettier-ignore
         get redoStack() {
-          return deepClone(
+          return structuredClone(
             context.redoStack.map((item) => ({
               id: item.id,
               frames: item.frames,
