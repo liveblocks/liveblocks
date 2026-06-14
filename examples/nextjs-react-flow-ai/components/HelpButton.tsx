@@ -39,7 +39,7 @@ const FEATURES: Feature[] = [
     icon: <CommentIcon />,
     title: "Pinned comments with AI",
     description:
-      "Drop pinned comments on the canvas and @mention the AI Assistant to reply in threads.",
+      "Drop pinned comments on the canvas and @mention the AI Assistant to make changes and reply in threads.",
   },
 ];
 
