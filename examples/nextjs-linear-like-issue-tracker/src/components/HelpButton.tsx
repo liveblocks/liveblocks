@@ -25,7 +25,7 @@ const FEATURES: Feature[] = [
     icon: <ProgressInProgressIcon className="w-4 h-4" />,
     title: "Edit issue properties in real-time",
     description:
-      "Change priority, progress, labels, and assignees — updates sync instantly for everyone.",
+      "Change priority, progress, labels, and assignees. Updates sync instantly for everyone.",
   },
   {
     icon: <InboxIcon className="w-4 h-4" />,
@@ -37,7 +37,7 @@ const FEATURES: Feature[] = [
     icon: <SparklesIcon className="w-4 h-4" />,
     title: "AI Assistant",
     description:
-      "@mention the “AI Assistant” in a comment to get a streamed reply. It can create new issues and edit the current one. Requires webhooks and an Anthropic API key.",
+      "@mention the “AI Assistant” in a comment to get a streamed reply. It can create new issues and edit the current one. The sparkle buttons also auto-fill properties, labels, and links.",
   },
   {
     icon: <CreateIcon className="w-4 h-4" />,
@@ -92,11 +92,17 @@ export function HelpButton() {
                   id="help-modal-title"
                   className="text-sm font-semibold text-neutral-900"
                 >
-                  How to use this example
+                  <a
+                    href="https://liveblocks.io/examples/linear-like-issue-tracker/nextjs-linear-like-issue-tracker"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="hover:underline"
+                  >
+                    Linear-like issue tracker
+                  </a>
                 </h2>
                 <p className="text-sm text-neutral-500 mt-1">
-                  A Linear-inspired collaborative issue tracker built with
-                  Liveblocks.
+                  How to use this example
                 </p>
               </div>
               <button
@@ -110,7 +116,7 @@ export function HelpButton() {
 
             <ul className="p-5 flex flex-col gap-4">
               {FEATURES.map((feature) => (
-                <li key={feature.title} className="flex items-start gap-3">
+                <li key={feature.title} className="flex items-start gap-4">
                   <span className="shrink-0 mt-0.5 flex items-center justify-center w-7 h-7 rounded bg-neutral-100 text-neutral-700">
                     {feature.icon}
                   </span>
