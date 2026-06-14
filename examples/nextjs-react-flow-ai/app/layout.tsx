@@ -4,6 +4,7 @@ import "@liveblocks/react-ui/styles.css";
 import "@liveblocks/react-flow/styles.css";
 import "./globals.css";
 import { Suspense } from "react";
+import { HelpButton } from "../components/HelpButton";
 
 export const metadata: Metadata = {
   title: "Liveblocks",
@@ -32,6 +33,7 @@ export default function RootLayout({
       </head>
       <body>
         <Suspense>{children}</Suspense>
+        <HelpButton />
       </body>
     </html>
   );

@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import React from "react";
 import { Providers } from "./providers";
 import { AiPopup } from "@/ai-popup/AiPopup";
+import { HelpButton } from "@/components/HelpButton";
 import "@liveblocks/react-ui/styles.css";
 import "@liveblocks/react-ui/styles/dark/attributes.css";
 import "./globals.css";
@@ -46,6 +47,7 @@ export default function RootLayout({
         <Providers>
           <div>{children}</div>
           <AiPopup />
+          <HelpButton />
         </Providers>
       </body>
     </html>
