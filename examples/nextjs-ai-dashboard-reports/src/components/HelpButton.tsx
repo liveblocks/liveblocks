@@ -1,6 +1,8 @@
 "use client";
 
 import { CSSProperties, ReactNode, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+import { cx, focusRing } from "@/lib/utils";
 
 const EXAMPLE_NAME = "AI Reports Dashboard";
 
@@ -41,23 +43,6 @@ const FEATURES: Feature[] = [
 ];
 
 const styles: Record<string, CSSProperties> = {
-  button: {
-    position: "fixed",
-    bottom: 16,
-    left: 16,
-    zIndex: 50,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: 36,
-    height: 36,
-    background: "#ffffff",
-    border: "1px solid #e5e5e5",
-    borderRadius: 9999,
-    boxShadow: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
-    color: "#737373",
-    cursor: "pointer",
-  },
   backdrop: {
     position: "fixed",
     inset: 0,
@@ -155,12 +140,11 @@ const styles: Record<string, CSSProperties> = {
 };
 
 const HOVER_CSS = `
-.lb-help-button:hover { background:#fafafa !important; color:#171717 !important; }
 .lb-help-title-link:hover { text-decoration: underline !important; }
 .lb-help-close:hover { background:#f5f5f5 !important; color:#171717 !important; }
 `;
 
-export function HelpButton() {
+export function HelpButton({ isCollapsed = false }: { isCollapsed?: boolean }) {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
@@ -183,15 +167,20 @@ export function HelpButton() {
       <style>{HOVER_CSS}</style>
       <button
         type="button"
-        className="lb-help-button"
-        style={styles.button}
         aria-label="How to use this example"
         onClick={() => setIsOpen(true)}
+        className={cx(
+          isCollapsed ? "justify-center" : "justify-start gap-x-2.5",
+          focusRing,
+          "flex w-full items-center rounded-md p-2 text-sm font-medium text-neutral-700 transition hover:bg-neutral-200/50 hover:text-black dark:text-neutral-300 dark:hover:bg-neutral-900 dark:hover:text-white",
+        )}
       >
-        <HelpIcon />
+        <HelpIcon className="size-4 shrink-0 opacity-70" />
+        {!isCollapsed ? "Help" : null}
       </button>
 
-      {isOpen ? (
+      {isOpen && typeof document !== "undefined"
+        ? createPortal(
         <div
           style={styles.backdrop}
           role="dialog"
@@ -238,17 +227,18 @@ export function HelpButton() {
               ))}
             </ul>
           </div>
-        </div>
-      ) : null}
+        </div>,
+            document.body,
+          )
+        : null}
     </>
   );
 }
 
-function HelpIcon() {
+function HelpIcon({ className }: { className?: string }) {
   return (
     <svg
-      width={20}
-      height={20}
+      className={className}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
