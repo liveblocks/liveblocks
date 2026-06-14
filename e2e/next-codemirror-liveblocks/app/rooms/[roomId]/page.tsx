@@ -125,6 +125,7 @@ function Editor({ roomId }: { roomId: string }) {
             {
               key: "Mod-z",
               run: () => {
+                room.history.resume();
                 if (!room.history.canUndo()) return false;
                 room.history.undo();
                 return true;
@@ -135,6 +136,7 @@ function Editor({ roomId }: { roomId: string }) {
               key: "Mod-y",
               mac: "Shift-Mod-z",
               run: () => {
+                room.history.resume();
                 if (!room.history.canRedo()) return false;
                 room.history.redo();
                 return true;
@@ -186,6 +188,14 @@ export function createLiveblocksSyncPlugin(
       >();
       private unsubscribeFromStorageUpdates: () => void;
       private unsubscribeFromPrivateHistory: () => void;
+      private groupingTimer: ReturnType<typeof setTimeout> | null = null;
+      private prevLocalChanges: ChangeSet | null = null;
+      private prevTime: number | null = null;
+      private pendingSelectionBefore: {
+        anchor: number;
+        head: number;
+        version: number;
+      } | null = null;
 
       constructor(private view: EditorView) {
         const document = root.get("document");
@@ -297,7 +307,29 @@ export function createLiveblocksSyncPlugin(
 
         this.unsubscribeFromPrivateHistory = room[kInternal].history.subscribe(
           (event) => {
-            if (event.action === "discard") {
+            if (event.action === "push") {
+              if (this.pendingSelectionBefore !== null) {
+                const text = root.get("document");
+                const afterMain = this.view.state.selection.main;
+                const afterAnchor = text[kInternal].encodeIndex(
+                  afterMain.anchor
+                );
+                this.selectionByHistoryId.set(event.id, {
+                  before: this.pendingSelectionBefore,
+                  after: {
+                    anchor: afterAnchor,
+                    head:
+                      afterMain.head === afterMain.anchor
+                        ? afterAnchor
+                        : text[kInternal].encodeIndex(afterMain.head),
+                    version: text.version,
+                  },
+                });
+                this.pendingSelectionBefore = null;
+                this.prevLocalChanges = null;
+                this.prevTime = null;
+              }
+            } else if (event.action === "discard") {
               for (const id of event.ids) this.selectionByHistoryId.delete(id);
             } else if (event.action === "clear") {
               this.selectionByHistoryId.clear();
@@ -307,24 +339,66 @@ export function createLiveblocksSyncPlugin(
       }
 
       update(update: ViewUpdate) {
-        if (!update.docChanged) return;
         if (
           update.transactions.some((tr) => tr.annotation(Transaction.remote))
         ) {
           return;
         }
 
-        const text = root.get("document");
-        const beforeMain = update.startState.selection.main;
-        const beforeAnchor = text[kInternal].encodeIndex(beforeMain.anchor);
-        const beforeHead =
-          beforeMain.head === beforeMain.anchor
-            ? beforeAnchor
-            : text[kInternal].encodeIndex(beforeMain.head);
-        const beforeVersion = text.version;
+        if (!update.docChanged) {
+          if (update.selectionSet && this.prevLocalChanges !== null) {
+            if (this.groupingTimer !== null) {
+              clearTimeout(this.groupingTimer);
+              this.groupingTimer = null;
+            }
+            room.history.resume();
+          }
+          return;
+        }
 
+        let userEvent: string | undefined;
+        let time = Date.now();
+        for (const tr of update.transactions) {
+          const e = tr.annotation(Transaction.userEvent);
+          if (e !== undefined) userEvent = e;
+          const t = tr.annotation(Transaction.time);
+          if (t !== undefined) time = t;
+        }
+        const isCompose = userEvent === "input.type.compose";
+
+        if (this.prevLocalChanges !== null && !isCompose) {
+          const joinable =
+            userEvent === undefined || JOINABLE_USER_EVENT.test(userEvent);
+          if (
+            !joinable ||
+            (this.prevTime !== null && time - this.prevTime >= 500) ||
+            !isAdjacent(this.prevLocalChanges, update.changes)
+          ) {
+            if (this.groupingTimer !== null) {
+              clearTimeout(this.groupingTimer);
+              this.groupingTimer = null;
+            }
+            room.history.resume();
+          }
+        }
+
+        const text = root.get("document");
+
+        if (this.pendingSelectionBefore === null) {
+          const beforeMain = update.startState.selection.main;
+          const beforeAnchor = text[kInternal].encodeIndex(beforeMain.anchor);
+          this.pendingSelectionBefore = {
+            anchor: beforeAnchor,
+            head:
+              beforeMain.head === beforeMain.anchor
+                ? beforeAnchor
+                : text[kInternal].encodeIndex(beforeMain.head),
+            version: text.version,
+          };
+        }
+
+        room.history.pause();
         room.batch(() => {
-          // Tracks cumulative length delta from operations already applied to liveText.
           let offset = 0;
           update.changes.iterChanges((fromA, toA, _fromB, _toB, inserted) => {
             const deleteLength = toA - fromA;
@@ -334,30 +408,26 @@ export function createLiveblocksSyncPlugin(
           });
         });
 
-        const id = room[kInternal].undoStack.at(-1)?.id;
-        if (id !== undefined) {
-          const afterMain = update.state.selection.main;
-          const afterAnchor = text[kInternal].encodeIndex(afterMain.anchor);
-          const afterHead =
-            afterMain.head === afterMain.anchor
-              ? afterAnchor
-              : text[kInternal].encodeIndex(afterMain.head);
-          this.selectionByHistoryId.set(id, {
-            before: {
-              anchor: beforeAnchor,
-              head: beforeHead,
-              version: beforeVersion,
-            },
-            after: {
-              anchor: afterAnchor,
-              head: afterHead,
-              version: text.version,
-            },
-          });
+        this.prevLocalChanges = this.prevLocalChanges
+          ? this.prevLocalChanges.compose(update.changes)
+          : update.changes;
+        this.prevTime = time;
+
+        if (this.groupingTimer !== null) {
+          clearTimeout(this.groupingTimer);
         }
+        this.groupingTimer = setTimeout(() => {
+          room.history.resume();
+          this.groupingTimer = null;
+        }, 500);
       }
 
       destroy() {
+        if (this.groupingTimer !== null) {
+          clearTimeout(this.groupingTimer);
+          this.groupingTimer = null;
+        }
+        room.history.resume();
         this.unsubscribeFromStorageUpdates();
         this.unsubscribeFromPrivateHistory();
       }
@@ -822,4 +892,20 @@ function clamp(
   { min, max }: { min: number; max: number }
 ): number {
   return Math.max(min, Math.min(value, max));
+}
+
+const JOINABLE_USER_EVENT = /^(input\.type|delete)($|\.)/;
+
+function isAdjacent(prev: ChangeSet, next: ChangeSet): boolean {
+  const ranges: number[] = [];
+  let adjacent = false;
+  prev.iterChangedRanges((_f, _t, f, t) => ranges.push(f, t));
+  next.iterChangedRanges((f, t) => {
+    for (let i = 0; i < ranges.length; ) {
+      const from = ranges[i++];
+      const to = ranges[i++];
+      if (t >= from && f <= to) adjacent = true;
+    }
+  });
+  return adjacent;
 }

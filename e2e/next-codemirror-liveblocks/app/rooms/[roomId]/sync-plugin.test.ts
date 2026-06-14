@@ -2,10 +2,16 @@ import {
   ChangeSet,
   EditorSelection,
   EditorState,
+  Transaction,
 } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { LiveObject, LiveText, Room } from "@liveblocks/client";
-import { CrdtType, kInternal, kStorageUpdateSource, OpCode } from "@liveblocks/core";
+import {
+  CrdtType,
+  kInternal,
+  kStorageUpdateSource,
+  OpCode,
+} from "@liveblocks/core";
 import { describe, expect, onTestFinished, test, vi } from "vitest";
 
 import {
@@ -669,6 +675,7 @@ describe("createLiveblocksSyncPlugin", () => {
         expect(root.get("document").toString()).toBe("Hello, world!");
         expect(view.state.doc.toString()).toBe("Hello, world!");
 
+        room.history.resume();
         room.history.undo();
 
         const storageText = root.get("document").toString();
@@ -725,11 +732,13 @@ describe("createLiveblocksSyncPlugin", () => {
         expect(root.get("document").toString()).toBe("Hello, world!");
         expect(view.state.doc.toString()).toBe("Hello, world!");
 
+        room.history.resume();
         room.history.undo();
 
         expect(root.get("document").toString()).toBe(initialDoc);
         expect(view.state.doc.toString()).toBe(initialDoc);
 
+        room.history.resume();
         room.history.redo();
 
         const storageText = root.get("document").toString();
@@ -738,6 +747,417 @@ describe("createLiveblocksSyncPlugin", () => {
         expect(storageText).toBe("Hello, world!");
         expect(editorText).toBe("Hello, world!");
         expect(editorText).toBe(storageText);
+      });
+    });
+
+    describe("grouping", () => {
+      test("consecutive typing is undone in one step", async () => {
+        const initialDoc = "Hello, world";
+
+        const { room, root } = (await prepareIsolatedStorageTest(
+          [
+            createSerializedRoot(),
+            [
+              "0:1",
+              {
+                type: CrdtType.TEXT,
+                parentId: "root",
+                parentKey: "document",
+                data: [[initialDoc]],
+                version: 0,
+              },
+            ],
+          ],
+          0
+        )) as unknown as {
+          room: Room;
+          root: LiveObject<{ document: LiveText }>;
+        };
+
+        const parent = document.createElement("div");
+        document.body.appendChild(parent);
+
+        const view = new EditorView({
+          state: EditorState.create({
+            doc: initialDoc,
+            extensions: [createLiveblocksSyncPlugin(room, root)],
+          }),
+          parent,
+        });
+
+        onTestFinished(() => {
+          view.destroy();
+          parent.remove();
+        });
+
+        for (const char of "!!") {
+          view.dispatch({
+            changes: {
+              from: view.state.doc.length,
+              insert: char,
+            },
+            selection: EditorSelection.single(view.state.doc.length + 1),
+            annotations: [
+              Transaction.userEvent.of("input.type"),
+              Transaction.time.of(Date.now()),
+            ],
+          });
+        }
+
+        expect(view.state.doc.toString()).toBe("Hello, world!!");
+
+        room.history.resume();
+        room.history.undo();
+
+        expect(view.state.doc.toString()).toBe(initialDoc);
+        expect(root.get("document").toString()).toBe(initialDoc);
+      });
+
+      test("non-adjacent edits undo separately", async () => {
+        const initialDoc = "012345678901234567890";
+
+        const { room, root } = (await prepareIsolatedStorageTest(
+          [
+            createSerializedRoot(),
+            [
+              "0:1",
+              {
+                type: CrdtType.TEXT,
+                parentId: "root",
+                parentKey: "document",
+                data: [[initialDoc]],
+                version: 0,
+              },
+            ],
+          ],
+          0
+        )) as unknown as {
+          room: Room;
+          root: LiveObject<{ document: LiveText }>;
+        };
+
+        const parent = document.createElement("div");
+        document.body.appendChild(parent);
+
+        const view = new EditorView({
+          state: EditorState.create({
+            doc: initialDoc,
+            extensions: [createLiveblocksSyncPlugin(room, root)],
+          }),
+          parent,
+        });
+
+        onTestFinished(() => {
+          view.destroy();
+          parent.remove();
+        });
+
+        const time = Date.now();
+        view.dispatch({
+          changes: { from: 0, insert: "A" },
+          selection: EditorSelection.single(1),
+          annotations: [
+            Transaction.userEvent.of("input.type"),
+            Transaction.time.of(time),
+          ],
+        });
+        view.dispatch({
+          changes: { from: view.state.doc.length, insert: "B" },
+          selection: EditorSelection.single(view.state.doc.length + 1),
+          annotations: [
+            Transaction.userEvent.of("input.type"),
+            Transaction.time.of(time + 1),
+          ],
+        });
+
+        expect(view.state.doc.toString()).toBe("A012345678901234567890B");
+
+        room.history.resume();
+        room.history.undo();
+        expect(view.state.doc.toString()).toBe("A012345678901234567890");
+
+        room.history.undo();
+        expect(view.state.doc.toString()).toBe(initialDoc);
+      });
+
+      test("selection change starts a new undo group", async () => {
+        const initialDoc = "Hello, world";
+
+        const { room, root } = (await prepareIsolatedStorageTest(
+          [
+            createSerializedRoot(),
+            [
+              "0:1",
+              {
+                type: CrdtType.TEXT,
+                parentId: "root",
+                parentKey: "document",
+                data: [[initialDoc]],
+                version: 0,
+              },
+            ],
+          ],
+          0
+        )) as unknown as {
+          room: Room;
+          root: LiveObject<{ document: LiveText }>;
+        };
+
+        const parent = document.createElement("div");
+        document.body.appendChild(parent);
+
+        const view = new EditorView({
+          state: EditorState.create({
+            doc: initialDoc,
+            extensions: [createLiveblocksSyncPlugin(room, root)],
+          }),
+          parent,
+        });
+
+        onTestFinished(() => {
+          view.destroy();
+          parent.remove();
+        });
+
+        const time = Date.now();
+        view.dispatch({
+          changes: { from: initialDoc.length, insert: "!" },
+          selection: EditorSelection.single(initialDoc.length + 1),
+          annotations: [
+            Transaction.userEvent.of("input.type"),
+            Transaction.time.of(time),
+          ],
+        });
+        view.dispatch({
+          selection: EditorSelection.single(0),
+          annotations: [
+            Transaction.userEvent.of("select.pointer"),
+            Transaction.time.of(time + 1),
+          ],
+        });
+        view.dispatch({
+          changes: { from: 0, insert: "X" },
+          selection: EditorSelection.single(1),
+          annotations: [
+            Transaction.userEvent.of("input.type"),
+            Transaction.time.of(time + 2),
+          ],
+        });
+
+        expect(view.state.doc.toString()).toBe("XHello, world!");
+
+        room.history.resume();
+        room.history.undo();
+        expect(view.state.doc.toString()).toBe("Hello, world!");
+
+        room.history.undo();
+        expect(view.state.doc.toString()).toBe(initialDoc);
+      });
+
+      test("paste starts a new undo group", async () => {
+        const initialDoc = "Hello, world";
+
+        const { room, root } = (await prepareIsolatedStorageTest(
+          [
+            createSerializedRoot(),
+            [
+              "0:1",
+              {
+                type: CrdtType.TEXT,
+                parentId: "root",
+                parentKey: "document",
+                data: [[initialDoc]],
+                version: 0,
+              },
+            ],
+          ],
+          0
+        )) as unknown as {
+          room: Room;
+          root: LiveObject<{ document: LiveText }>;
+        };
+
+        const parent = document.createElement("div");
+        document.body.appendChild(parent);
+
+        const view = new EditorView({
+          state: EditorState.create({
+            doc: initialDoc,
+            extensions: [createLiveblocksSyncPlugin(room, root)],
+          }),
+          parent,
+        });
+
+        onTestFinished(() => {
+          view.destroy();
+          parent.remove();
+        });
+
+        const cursor = initialDoc.length;
+        const time = Date.now();
+        view.dispatch({
+          changes: { from: cursor, insert: "!" },
+          selection: EditorSelection.single(cursor + 1),
+          annotations: [
+            Transaction.userEvent.of("input.type"),
+            Transaction.time.of(time),
+          ],
+        });
+        view.dispatch({
+          changes: { from: cursor + 1, insert: "?" },
+          selection: EditorSelection.single(cursor + 2),
+          annotations: [
+            Transaction.userEvent.of("input.paste"),
+            Transaction.time.of(time + 1),
+          ],
+        });
+
+        expect(view.state.doc.toString()).toBe("Hello, world!?");
+
+        room.history.resume();
+        room.history.undo();
+        expect(view.state.doc.toString()).toBe("Hello, world!");
+
+        room.history.undo();
+        expect(view.state.doc.toString()).toBe(initialDoc);
+      });
+
+      test("a 500ms gap between edits starts a new undo group", async () => {
+        const initialDoc = "Hello, world";
+
+        const { room, root } = (await prepareIsolatedStorageTest(
+          [
+            createSerializedRoot(),
+            [
+              "0:1",
+              {
+                type: CrdtType.TEXT,
+                parentId: "root",
+                parentKey: "document",
+                data: [[initialDoc]],
+                version: 0,
+              },
+            ],
+          ],
+          0
+        )) as unknown as {
+          room: Room;
+          root: LiveObject<{ document: LiveText }>;
+        };
+
+        const parent = document.createElement("div");
+        document.body.appendChild(parent);
+
+        const view = new EditorView({
+          state: EditorState.create({
+            doc: initialDoc,
+            extensions: [createLiveblocksSyncPlugin(room, root)],
+          }),
+          parent,
+        });
+
+        vi.useFakeTimers();
+        onTestFinished(() => {
+          vi.useRealTimers();
+          view.destroy();
+          parent.remove();
+        });
+
+        const cursor = initialDoc.length;
+        view.dispatch({
+          changes: { from: cursor, insert: "!" },
+          selection: EditorSelection.single(cursor + 1),
+          annotations: [
+            Transaction.userEvent.of("input.type"),
+            Transaction.time.of(0),
+          ],
+        });
+        view.dispatch({
+          changes: {
+            from: view.state.doc.length,
+            insert: "?",
+          },
+          selection: EditorSelection.single(view.state.doc.length + 1),
+          annotations: [
+            Transaction.userEvent.of("input.type"),
+            Transaction.time.of(600),
+          ],
+        });
+
+        expect(view.state.doc.toString()).toBe("Hello, world!?");
+
+        room.history.resume();
+        room.history.undo();
+        expect(view.state.doc.toString()).toBe("Hello, world!");
+
+        room.history.undo();
+        expect(view.state.doc.toString()).toBe(initialDoc);
+      });
+
+      test("IME compose merges into the previous group", async () => {
+        const initialDoc = "Hello, world";
+
+        const { room, root } = (await prepareIsolatedStorageTest(
+          [
+            createSerializedRoot(),
+            [
+              "0:1",
+              {
+                type: CrdtType.TEXT,
+                parentId: "root",
+                parentKey: "document",
+                data: [[initialDoc]],
+                version: 0,
+              },
+            ],
+          ],
+          0
+        )) as unknown as {
+          room: Room;
+          root: LiveObject<{ document: LiveText }>;
+        };
+
+        const parent = document.createElement("div");
+        document.body.appendChild(parent);
+
+        const view = new EditorView({
+          state: EditorState.create({
+            doc: initialDoc,
+            extensions: [createLiveblocksSyncPlugin(room, root)],
+          }),
+          parent,
+        });
+
+        onTestFinished(() => {
+          view.destroy();
+          parent.remove();
+        });
+
+        const cursor = initialDoc.length;
+        view.dispatch({
+          changes: { from: cursor, insert: "!" },
+          selection: EditorSelection.single(cursor + 1),
+          annotations: [
+            Transaction.userEvent.of("input.type"),
+            Transaction.time.of(0),
+          ],
+        });
+        view.dispatch({
+          changes: { from: cursor + 1, insert: "?" },
+          selection: EditorSelection.single(cursor + 2),
+          annotations: [
+            Transaction.userEvent.of("input.type.compose"),
+            Transaction.time.of(600),
+          ],
+        });
+
+        expect(view.state.doc.toString()).toBe("Hello, world!?");
+
+        room.history.resume();
+        room.history.undo();
+
+        expect(view.state.doc.toString()).toBe(initialDoc);
+        expect(root.get("document").toString()).toBe(initialDoc);
       });
     });
 
@@ -788,6 +1208,7 @@ describe("createLiveblocksSyncPlugin", () => {
           selection: EditorSelection.single(cursor + 1),
         });
 
+        room.history.resume();
         room.history.undo();
 
         expect(view.state.doc.toString()).toBe(initialDoc);
@@ -843,7 +1264,9 @@ describe("createLiveblocksSyncPlugin", () => {
 
         const afterCursor = cursor + 1;
 
+        room.history.resume();
         room.history.undo();
+        room.history.resume();
         room.history.redo();
 
         expect(view.state.doc.toString()).toBe("Hello, world!");
@@ -903,6 +1326,7 @@ describe("createLiveblocksSyncPlugin", () => {
         expect(view.state.doc.toString()).toBe("Hello");
         expect(view.state.selection.main.head).toBe(deleteFrom);
 
+        room.history.resume();
         room.history.undo();
 
         expect(view.state.doc.toString()).toBe(initialDoc);
@@ -984,6 +1408,7 @@ describe("createLiveblocksSyncPlugin", () => {
 
         expect(view.state.doc.toString()).toBe("XHello, world!");
 
+        room.history.resume();
         room.history.undo();
 
         // Local "!" undone; peer "X" remains. Cursor was at 12 before the local
@@ -1042,12 +1467,14 @@ describe("createLiveblocksSyncPlugin", () => {
         expect(view.state.selection.main.anchor).toBe(2);
         expect(view.state.selection.main.head).toBe(2);
 
+        room.history.resume();
         room.history.undo();
 
         expect(view.state.doc.toString()).toBe(initialDoc);
         expect(view.state.selection.main.anchor).toBe(0);
         expect(view.state.selection.main.head).toBe(5);
 
+        room.history.resume();
         room.history.redo();
 
         expect(view.state.doc.toString()).toBe("Hi, world");
@@ -1146,6 +1573,7 @@ describe("createLiveblocksSyncPlugin", () => {
           { isDeep: true }
         );
 
+        room.history.resume();
         room.history.undo();
         sub();
 
