@@ -6,7 +6,9 @@
     "dev": "next dev --port 3009",
     "build": "next build",
     "start": "next start --port 3009",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@codemirror/lang-javascript": "^6.2.5",
@@ -21,6 +23,8 @@
     "react-dom": "19.2.3"
   },
   "devDependencies": {
+    "@liveblocks/core": "workspace:*",
+    "@liveblocks/vitest-config": "workspace:*",
     "@eslint/eslintrc": "^3.3.3",
     "@tailwindcss/postcss": "^4.2.2",
     "@types/node": "^24.12.2",
@@ -29,6 +33,7 @@
     "eslint": "^9.39.4",
     "eslint-config-next": "16.1.4",
     "tailwindcss": "^4.3.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.4"
   }
 }

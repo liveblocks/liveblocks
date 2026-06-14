@@ -14,7 +14,7 @@ import type {
   StorageUpdate,
   StorageUpdateSource,
 } from "../crdts/StorageUpdates";
-import { kStorageUpdateSource } from "../internal";
+import { kInternal, kStorageUpdateSource } from "../internal";
 import { nn } from "../lib/assert";
 import {
   prepareIsolatedStorageTest,
@@ -652,12 +652,7 @@ describe("room (dev server)", () => {
 
   describe("storage update source", () => {
     function readSources(updates: StorageUpdate[]): StorageUpdateSource[] {
-      return updates.map(
-        (update) =>
-          (update as { [kStorageUpdateSource]?: StorageUpdateSource })[
-            kStorageUpdateSource
-          ]!
-      );
+      return updates.map((update) => update[kStorageUpdateSource]!);
     }
 
     test("local LiveObject mutations are tagged local", async () => {
@@ -675,7 +670,7 @@ describe("room (dev server)", () => {
 
       root.set("a", 1);
 
-      expect(sources).toEqual(["local"]);
+      expect(sources).toEqual([{ origin: "local", via: "mutation" }]);
     });
 
     test("local LiveText mutations are tagged local on the envelope only", async () => {
@@ -699,9 +694,7 @@ describe("room (dev server)", () => {
               continue;
             }
             updates.push({
-              source: (update as { [kStorageUpdateSource]?: StorageUpdateSource })[
-                kStorageUpdateSource
-              ]!,
+              source: update[kStorageUpdateSource]!,
               changeHasSource: update.updates.some(
                 (change) => kStorageUpdateSource in change
               ),
@@ -713,7 +706,10 @@ describe("room (dev server)", () => {
       root.get("text").insert(5, " world");
 
       expect(updates).toEqual([
-        { source: "local", changeHasSource: false },
+        {
+          source: { origin: "local", via: "mutation" },
+          changeHasSource: false,
+        },
       ]);
     });
 
@@ -736,7 +732,7 @@ describe("room (dev server)", () => {
         expect(sources.length).toBeGreaterThan(0);
       });
 
-      expect(sources).toEqual(["remote"]);
+      expect(sources).toEqual([{ origin: "remote" }]);
     });
 
     test("remote LiveText mutations are tagged remote on the receiving client", async () => {
@@ -762,10 +758,10 @@ describe("room (dev server)", () => {
         expect(sources.length).toBeGreaterThan(0);
       });
 
-      expect(sources).toEqual(["remote"]);
+      expect(sources).toEqual([{ origin: "remote" }]);
     });
 
-    test("undo produces local-tagged storage updates", async () => {
+    test("undo produces history-tagged storage updates", async () => {
       const { room, root } = await prepareIsolatedStorageTest<{ a: number }>({
         liveblocksType: "LiveObject",
         data: { a: 0 },
@@ -779,12 +775,14 @@ describe("room (dev server)", () => {
       );
 
       root.set("a", 1);
-      expect(sources).toEqual(["local"]);
+      expect(sources).toEqual([{ origin: "local", via: "mutation" }]);
 
       sources.length = 0;
       room.history.undo();
 
-      expect(sources).toEqual(["local"]);
+      expect(sources).toEqual([
+        { origin: "local", via: "history", action: "undo" },
+      ]);
     });
   });
 });

@@ -13,6 +13,7 @@ import { javascript } from "@codemirror/lang-javascript";
 import {
   EditorView,
   highlightActiveLineGutter,
+  keymap,
   lineNumbers,
   ViewPlugin,
   ViewUpdate,
@@ -24,8 +25,8 @@ import {
   StateEffect,
   Transaction,
 } from "@codemirror/state";
-import { LiveObject, LiveText, Room, StorageUpdate } from "@liveblocks/client";
-import { kStorageUpdateSource, StorageUpdateSource } from "@liveblocks/core";
+import { LiveObject, LiveText, Room } from "@liveblocks/client";
+import { kInternal, kStorageUpdateSource } from "@liveblocks/core";
 
 export default function RoomPage({
   params,
@@ -80,7 +81,7 @@ function Editor({ roomId }: { roomId: string }) {
 
     view.dispatch({
       effects: StateEffect.appendConfig.of(
-        compartment.of(createLiveblocksSyncPlugin(room, root))
+        compartment.of([createLiveblocksSyncPlugin(room, root)])
       ),
     });
 
@@ -90,6 +91,49 @@ function Editor({ roomId }: { roomId: string }) {
       });
     };
   }, [editor, room, root]);
+
+  useEffect(() => {
+    if (editor.current === null) return;
+
+    const view = editor.current.getView();
+    if (view === null) return;
+
+    const compartment = new Compartment();
+
+    view.dispatch({
+      effects: StateEffect.appendConfig.of(
+        compartment.of(
+          keymap.of([
+            {
+              key: "Mod-z",
+              run: () => {
+                if (!room.history.canUndo()) return false;
+                room.history.undo();
+                return true;
+              },
+              preventDefault: true,
+            },
+            {
+              key: "Mod-y",
+              mac: "Shift-Mod-z",
+              run: () => {
+                if (!room.history.canRedo()) return false;
+                room.history.redo();
+                return true;
+              },
+              preventDefault: true,
+            },
+          ])
+        )
+      ),
+    });
+
+    return () => {
+      view.dispatch({
+        effects: compartment.reconfigure([]),
+      });
+    };
+  }, [editor, room]);
 
   return (
     <CodeMirror
@@ -109,13 +153,21 @@ function useRoot(room: Room) {
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
-function createLiveblocksSyncPlugin(
+export function createLiveblocksSyncPlugin(
   room: Room,
   root: LiveObject<{ document: LiveText }>
 ) {
   return ViewPlugin.fromClass(
     class {
+      private selectionByHistoryId = new Map<
+        number,
+        {
+          before: { anchor: number; head: number; version: number };
+          after: { anchor: number; head: number; version: number };
+        }
+      >();
       private unsubscribeFromStorageUpdates: () => void;
+      private unsubscribeFromPrivateHistory: () => void;
 
       constructor(private view: EditorView) {
         const document = root.get("document");
@@ -127,12 +179,10 @@ function createLiveblocksSyncPlugin(
                 continue;
               }
 
-              const source = (
-                update as StorageUpdate & {
-                  readonly [kStorageUpdateSource]?: StorageUpdateSource;
-                }
-              )[kStorageUpdateSource];
-              if (source === "local") continue;
+              const source = update[kStorageUpdateSource];
+              if (source?.origin === "local" && source.via === "mutation") {
+                continue;
+              }
 
               let changes = ChangeSet.empty(view.state.doc.length);
               let currentLength = view.state.doc.length;
@@ -159,16 +209,82 @@ function createLiveblocksSyncPlugin(
 
               if (changes.empty) continue;
 
+              let selection: EditorSelection | undefined;
+              if (source?.origin === "local" && source.via === "history") {
+                const id =
+                  source.action === "undo"
+                    ? room[kInternal].redoStack.at(-1)?.id
+                    : room[kInternal].undoStack.at(-1)?.id;
+                const meta =
+                  id === undefined
+                    ? undefined
+                    : this.selectionByHistoryId.get(id);
+                if (meta !== undefined) {
+                  if (source.action === "undo") {
+                    if (meta.before.anchor !== meta.before.head) {
+                      selection = EditorSelection.single(
+                        clamp(meta.before.anchor, {
+                          min: 0,
+                          max: changes.newLength,
+                        }),
+                        clamp(meta.before.head, {
+                          min: 0,
+                          max: changes.newLength,
+                        })
+                      );
+                    } else {
+                      const anchor = document[kInternal].decodeIndex(
+                        meta.before.anchor,
+                        meta.before.version
+                      );
+                      if (anchor !== null) {
+                        selection = EditorSelection.single(anchor);
+                      } else {
+                        selection = EditorSelection.single(
+                          clamp(meta.before.anchor, {
+                            min: 0,
+                            max: changes.newLength,
+                          })
+                        );
+                      }
+                    }
+                  } else {
+                    const anchor = document[kInternal].decodeIndex(
+                      meta.after.anchor,
+                      meta.after.version
+                    );
+                    const head = document[kInternal].decodeIndex(
+                      meta.after.head,
+                      meta.after.version
+                    );
+                    if (anchor !== null && head !== null) {
+                      selection = EditorSelection.single(anchor, head);
+                    }
+                  }
+                }
+              }
+
               this.view.dispatch({
                 changes: changes,
                 annotations: [
                   Transaction.addToHistory.of(false),
                   Transaction.remote.of(true),
                 ],
+                ...(selection !== undefined ? { selection } : {}),
               });
             }
           },
           { isDeep: true }
+        );
+
+        this.unsubscribeFromPrivateHistory = room[kInternal].history.subscribe(
+          (event) => {
+            if (event.action === "discard") {
+              for (const id of event.ids) this.selectionByHistoryId.delete(id);
+            } else if (event.action === "clear") {
+              this.selectionByHistoryId.clear();
+            }
+          }
         );
       }
 
@@ -181,6 +297,13 @@ function createLiveblocksSyncPlugin(
         }
 
         const text = root.get("document");
+        const beforeMain = update.startState.selection.main;
+        const beforeAnchor = text[kInternal].encodeIndex(beforeMain.anchor);
+        const beforeHead =
+          beforeMain.head === beforeMain.anchor
+            ? beforeAnchor
+            : text[kInternal].encodeIndex(beforeMain.head);
+        const beforeVersion = text.version;
 
         room.batch(() => {
           // Tracks cumulative length delta from operations already applied to liveText.
@@ -192,11 +315,41 @@ function createLiveblocksSyncPlugin(
             offset += insertText.length - deleteLength;
           });
         });
+
+        const id = room[kInternal].undoStack.at(-1)?.id;
+        if (id !== undefined) {
+          const afterMain = update.state.selection.main;
+          const afterAnchor = text[kInternal].encodeIndex(afterMain.anchor);
+          const afterHead =
+            afterMain.head === afterMain.anchor
+              ? afterAnchor
+              : text[kInternal].encodeIndex(afterMain.head);
+          this.selectionByHistoryId.set(id, {
+            before: {
+              anchor: beforeAnchor,
+              head: beforeHead,
+              version: beforeVersion,
+            },
+            after: {
+              anchor: afterAnchor,
+              head: afterHead,
+              version: text.version,
+            },
+          });
+        }
       }
 
       destroy() {
         this.unsubscribeFromStorageUpdates();
+        this.unsubscribeFromPrivateHistory();
       }
     }
   );
+}
+
+function clamp(
+  value: number,
+  { min, max }: { min: number; max: number }
+): number {
+  return Math.max(min, Math.min(value, max));
 }

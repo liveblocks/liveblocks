@@ -311,6 +311,51 @@ export function mapTextIndexThroughOperations(
   return mapped;
 }
 
+/**
+ * Inverse of {@link mapIndexThroughOperation}: given an index in the
+ * document *after* `op` was applied, return an equivalent index in the
+ * document *before* it was applied.
+ *
+ * At ambiguous boundaries this picks the conventional inverse of
+ * {@link mapIndexThroughOperation}:
+ * - For an insert, positions inside the inserted range collapse to the
+ *   left edge (the original insertion point).
+ * - For a delete, a position at the deletion site is mapped to the right
+ *   edge of where the deleted range used to be.
+ */
+function inverseMapIndexThroughOperation(
+  index: number,
+  op: TextOperation
+): number {
+  if (op.type === "insert") {
+    if (index <= op.index) {
+      return index;
+    }
+    return Math.max(op.index, index - op.text.length);
+  } else if (op.type === "delete") {
+    return op.index <= index ? index + op.length : index;
+  } else {
+    return index;
+  }
+}
+
+/**
+ * Inverse of {@link mapTextIndexThroughOperations}: given an index in the
+ * document *after* `ops` were applied in order, return an equivalent index
+ * in the document *before* any of them were applied. Inverts the ops in
+ * reverse order.
+ */
+export function inverseMapTextIndexThroughOperations(
+  index: number,
+  ops: readonly TextOperation[]
+): number {
+  let mapped = index;
+  for (let i = ops.length - 1; i >= 0; i--) {
+    mapped = inverseMapIndexThroughOperation(mapped, ops[i]);
+  }
+  return mapped;
+}
+
 // -----------------------------------------------------------------------------
 // Operational transform
 // -----------------------------------------------------------------------------

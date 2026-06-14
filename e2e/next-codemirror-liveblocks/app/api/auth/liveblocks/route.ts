@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 const USERS = [
   {
-    id: "tiptap-user-0",
+    id: "codemirror-user-0",
     info: {
       name: "Ada Lovelace",
       color: "#e11d48",
@@ -11,7 +11,7 @@ const USERS = [
     },
   },
   {
-    id: "tiptap-user-1",
+    id: "codemirror-user-1",
     info: {
       name: "Grace Hopper",
       color: "#2563eb",
@@ -19,7 +19,7 @@ const USERS = [
     },
   },
   {
-    id: "tiptap-user-2",
+    id: "codemirror-user-2",
     info: {
       name: "Katherine Johnson",
       color: "#16a34a",

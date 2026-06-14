@@ -4,7 +4,9 @@ import {
   applyLiveTextOperations,
   attributesEqual,
   dataToSegments,
+  inverseMapTextIndexThroughOperations,
   invertTextOperations,
+  mapTextIndexThroughOperations,
   normalizeSegments,
   transformTextOperations,
 } from "../liveTextOps";
@@ -55,5 +57,85 @@ describe("liveTextOps", () => {
         "after"
       )
     ).toEqual([{ type: "insert", index: 2, text: "!" }]);
+  });
+
+  describe("inverseMapTextIndexThroughOperations", () => {
+    test("identity when there are no ops", () => {
+      expect(inverseMapTextIndexThroughOperations(7, [])).toBe(7);
+    });
+
+    test("undoes a single insert: positions past insertion shift left", () => {
+      const op = { type: "insert" as const, index: 5, text: "ab" };
+      expect(inverseMapTextIndexThroughOperations(8, [op])).toBe(6);
+    });
+
+    test("undoes a single insert: positions before insertion are unchanged", () => {
+      const op = { type: "insert" as const, index: 5, text: "ab" };
+      expect(inverseMapTextIndexThroughOperations(3, [op])).toBe(3);
+    });
+
+    test("undoes a single insert: positions inside insertion collapse to insertion point", () => {
+      const op = { type: "insert" as const, index: 5, text: "abc" };
+      expect(inverseMapTextIndexThroughOperations(5, [op])).toBe(5);
+      expect(inverseMapTextIndexThroughOperations(6, [op])).toBe(5);
+      expect(inverseMapTextIndexThroughOperations(7, [op])).toBe(5);
+      expect(inverseMapTextIndexThroughOperations(8, [op])).toBe(5);
+      expect(inverseMapTextIndexThroughOperations(9, [op])).toBe(6);
+    });
+
+    test("undoes a single delete: positions before deletion are unchanged", () => {
+      const op = { type: "delete" as const, index: 5, length: 2 };
+      expect(inverseMapTextIndexThroughOperations(3, [op])).toBe(3);
+      expect(inverseMapTextIndexThroughOperations(4, [op])).toBe(4);
+    });
+
+    test("undoes a single delete: positions past deletion shift right", () => {
+      const op = { type: "delete" as const, index: 5, length: 2 };
+      expect(inverseMapTextIndexThroughOperations(6, [op])).toBe(8);
+      expect(inverseMapTextIndexThroughOperations(10, [op])).toBe(12);
+    });
+
+    test("undoes a single delete: position at the deletion point lands on the right edge", () => {
+      const op = { type: "delete" as const, index: 5, length: 3 };
+      expect(inverseMapTextIndexThroughOperations(5, [op])).toBe(8);
+    });
+
+    test("format ops are positionally neutral", () => {
+      const op = {
+        type: "format" as const,
+        index: 1,
+        length: 4,
+        attributes: { bold: true },
+      };
+      expect(inverseMapTextIndexThroughOperations(3, [op])).toBe(3);
+    });
+
+    test("ops are inverted in reverse order", () => {
+      const ops = [
+        { type: "insert" as const, index: 0, text: "Hi " },
+        { type: "delete" as const, index: 6, length: 1 },
+      ];
+      // Forward: from "World" → "Hi World" → "Hi Wold" (delete the "r" at index 6).
+      // Position 4 in the final string ("Wo|ld") should inverse-map back to
+      // position 1 in the original "World" ("W|orld"), which the forward map
+      // confirms: forward(1, ops) = 4.
+      expect(mapTextIndexThroughOperations(1, ops)).toBe(4);
+      expect(inverseMapTextIndexThroughOperations(4, ops)).toBe(1);
+    });
+
+    test("forward then inverse is identity on positions clearly outside any op range", () => {
+      const ops = [
+        { type: "insert" as const, index: 2, text: "XY" },
+        { type: "delete" as const, index: 10, length: 3 },
+      ];
+      for (const index of [0, 1, 15, 20, 100]) {
+        expect(
+          inverseMapTextIndexThroughOperations(
+            mapTextIndexThroughOperations(index, ops),
+            ops
+          )
+        ).toBe(index);
+      }
+    });
   });
 });

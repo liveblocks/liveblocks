@@ -22,11 +22,7 @@ import { LiveRegister } from "./LiveRegister";
 import { LiveText, type LiveTextUpdates } from "./LiveText";
 import type { LiveNode, LiveStructure, Lson, LsonObject } from "./Lson";
 import { kStorageUpdateSource } from "../internal";
-import type {
-  InternalStorageUpdate,
-  StorageUpdate,
-  StorageUpdateSource,
-} from "./StorageUpdates";
+import type { StorageUpdate } from "./StorageUpdates";
 
 export function creationOpToLiveNode(op: CreateOp): LiveNode {
   return lsonToLiveNode(creationOpToLson(op));
@@ -478,12 +474,20 @@ export function mergeStorageUpdates(
     merged = second;
   }
 
-  const sa = (first as InternalStorageUpdate)[kStorageUpdateSource];
-  const sb = (second as InternalStorageUpdate)[kStorageUpdateSource];
+  const sa = first[kStorageUpdateSource];
+  const sb = second[kStorageUpdateSource];
   if (sa !== undefined || sb !== undefined) {
-    (merged as { [kStorageUpdateSource]?: StorageUpdateSource })[
-      kStorageUpdateSource
-    ] = sa === "remote" || sb === "remote" ? "remote" : "local";
+    if (sa?.origin === "remote" || sb?.origin === "remote") {
+      merged[kStorageUpdateSource] = { origin: "remote" };
+    } else if (sa?.via === "history" || sb?.via === "history") {
+      const historySource =
+        sb?.via === "history" ? sb : sa?.via === "history" ? sa : undefined;
+      if (historySource?.via === "history") {
+        merged[kStorageUpdateSource] = historySource;
+      }
+    } else {
+      merged[kStorageUpdateSource] = { origin: "local", via: "mutation" };
+    }
   }
   return merged;
 }

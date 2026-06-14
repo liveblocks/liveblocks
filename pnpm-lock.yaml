@@ -153,6 +153,12 @@ importers:
       '@eslint/eslintrc':
         specifier: ^3.3.3
         version: 3.3.5
+      '@liveblocks/core':
+        specifier: workspace:*
+        version: link:../../packages/liveblocks-core
+      '@liveblocks/vitest-config':
+        specifier: workspace:*
+        version: link:../../shared/vitest-config
       '@tailwindcss/postcss':
         specifier: ^4.2.2
         version: 4.2.2
@@ -177,6 +183,9 @@ importers:
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
+      vitest:
+        specifier: ^4.1.4
+        version: 4.1.4(@types/node@24.12.2)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@24.12.2)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
 
   e2e/next-react-flow-kitchen-sink:
     dependencies:

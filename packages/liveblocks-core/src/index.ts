@@ -88,6 +88,7 @@ export type {
   LiveTextOperation,
   LiveTextSegment,
   LiveTextUpdates,
+  PrivateLiveTextApi,
 } from "./crdts/LiveText";
 export { LiveText } from "./crdts/LiveText";
 export {

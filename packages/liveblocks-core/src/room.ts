@@ -343,6 +343,14 @@ export type HistoryEvent = {
   canRedo: boolean;
 };
 
+/** @internal */
+export type PrivateHistoryEvent =
+  | { action: "push"; id: number }
+  | { action: "undo"; id: number }
+  | { action: "redo"; id: number }
+  | { action: "clear" }
+  | { action: "discard"; ids: number[] };
+
 export type RoomEventName = Extract<
   keyof RoomEventCallbackMap<never, never, never>,
   string
@@ -1231,7 +1239,14 @@ export interface SyncSource {
 export type PrivateRoomApi = {
   // For introspection in unit tests only
   presenceBuffer: Json | undefined;
-  undoStack: readonly (readonly Readonly<Stackframe<JsonObject>>[])[];
+  undoStack: readonly {
+    readonly id: number;
+    readonly frames: readonly Readonly<Stackframe<JsonObject>>[];
+  }[];
+  redoStack: readonly {
+    readonly id: number;
+    readonly frames: readonly Readonly<Stackframe<JsonObject>>[];
+  }[];
   nodeCount: number;
 
   // Get/set the associated Yjs provider on this room
@@ -1278,6 +1293,14 @@ export type PrivateRoomApi = {
   };
 
   attachmentUrlsStore: BatchStore<string, string>;
+
+  readonly history: Observable<
+    | { action: "push"; id: number }
+    | { action: "undo"; id: number }
+    | { action: "redo"; id: number }
+    | { action: "clear" }
+    | { action: "discard"; ids: number[] }
+  >;
 };
 
 function makeIdFactory(connectionId: number): IdFactory {
@@ -1290,6 +1313,11 @@ type Stackframe<P extends JsonObject> = Op | PresenceStackframe<P>;
 type PresenceStackframe<P extends JsonObject> = {
   readonly type: "presence";
   readonly data: P;
+};
+
+type HistoryStackItem<P extends JsonObject> = {
+  id: number;
+  frames: Stackframe<P>[];
 };
 
 type IdFactory = () => string;
@@ -1353,8 +1381,8 @@ type RoomState<
   pool: ManagedPool;
   root: LiveObject<S> | undefined;
 
-  undoStack: Stackframe<P>[][];
-  redoStack: Stackframe<P>[][];
+  undoStack: HistoryStackItem<P>[];
+  redoStack: HistoryStackItem<P>[];
 
   /**
    * When history is paused, all operations will get queued up here. When
@@ -1631,6 +1659,10 @@ export function createRoom<
     unacknowledgedOps,
   };
 
+  let nextHistoryItemId = 0;
+  // Depth counter for nested history.disable() calls, 0 means history is not disabled
+  let historyDisabled = 0;
+
   // Accumulates nodes as initial storage arrives in chunks via
   // STORAGE_CHUNK messages. Once the final chunk arrives (with
   // done: true), the complete map is passed to processInitialStorage().
@@ -1762,9 +1794,7 @@ export function createRoom<
     options?: DispatchOptions
   ): void {
     for (const value of storageUpdates.values()) {
-      (value as { [kStorageUpdateSource]?: StorageUpdateSource })[
-        kStorageUpdateSource
-      ] = "local";
+      value[kStorageUpdateSource] = { origin: "local", via: "mutation" };
     }
 
     if (context.activeBatch) {
@@ -1786,7 +1816,7 @@ export function createRoom<
         addToUndoStack(reverse);
       }
       if (options?.clearRedoStack ?? ops.length > 0) {
-        context.redoStack.length = 0;
+        clearRedoStack();
       }
       if (ops.length > 0) {
         dispatchOps(ops);
@@ -1811,6 +1841,7 @@ export function createRoom<
     others: makeEventSource<OthersEvent<P, U>>(),
     storageBatch: makeEventSource<StorageUpdate[]>(),
     history: makeEventSource<HistoryEvent>(),
+    privateHistory: makeEventSource<PrivateHistoryEvent>(),
     storageDidLoad: makeEventSource<void>(),
     storageStatus: makeEventSource<StorageStatus>(),
     ydoc: makeEventSource<YDocUpdateServerMsg | UpdateYDocClientMsg>(),
@@ -1982,13 +2013,30 @@ export function createRoom<
     });
   }
 
+  function notifyPrivateHistory(event: PrivateHistoryEvent) {
+    if (historyDisabled > 0) return;
+    eventHub.privateHistory.notify(event);
+  }
+
+  function clearRedoStack() {
+    if (context.redoStack.length === 0) return;
+    const ids = context.redoStack.map((item) => item.id);
+    context.redoStack.length = 0;
+    notifyPrivateHistory({ action: "discard", ids });
+  }
+
   function _addToRealUndoStack(frames: Stackframe<P>[]) {
     // If undo stack is too large, we remove the older item
     if (context.undoStack.length >= 50) {
-      context.undoStack.shift();
+      const evicted = context.undoStack.shift();
+      if (evicted !== undefined) {
+        notifyPrivateHistory({ action: "discard", ids: [evicted.id] });
+      }
     }
 
-    context.undoStack.push(frames);
+    const id = nextHistoryItemId++;
+    context.undoStack.push({ id, frames });
+    notifyPrivateHistory({ action: "push", id });
     onHistoryChange();
   }
 
@@ -2040,7 +2088,13 @@ export function createRoom<
     );
   }
 
-  function applyLocalOps(frames: readonly Stackframe<P>[]): {
+  function applyLocalOps(
+    frames: readonly Stackframe<P>[],
+    localStorageUpdateSource: Extract<
+      StorageUpdateSource,
+      { origin: "local" }
+    > = { origin: "local", via: "mutation" }
+  ): {
     opsToEmit: ClientWireOp[]; // Ops to send over the wire afterwards
     reverse: Stackframe<P>[]; // Reverse ops to add to the undo stack aftwards
     // Updates to notify about afterwards
@@ -2064,7 +2118,8 @@ export function createRoom<
     const { reverse, updates } = applyOps(
       pframes,
       opsWithOpIds,
-      /* isLocal */ true
+      /* isLocal */ true,
+      localStorageUpdateSource
     );
     return { opsToEmit: opsWithOpIds, reverse, updates };
   }
@@ -2082,7 +2137,11 @@ export function createRoom<
   function applyOps(
     pframes: readonly PresenceStackframe<P>[],
     ops: readonly Op[],
-    isLocal: boolean
+    isLocal: boolean,
+    localStorageUpdateSource: Extract<
+      StorageUpdateSource,
+      { origin: "local" }
+    > = { origin: "local", via: "mutation" }
   ): {
     reverse: Stackframe<P>[];
     updates: {
@@ -2139,10 +2198,10 @@ export function createRoom<
 
       const applyOpResult = applyOp(op, source);
       if (applyOpResult.modified) {
-        (applyOpResult.modified as {
-          [kStorageUpdateSource]?: StorageUpdateSource;
-        })[kStorageUpdateSource] =
-          source === OpSource.THEIRS ? "remote" : "local";
+        applyOpResult.modified[kStorageUpdateSource] =
+          source === OpSource.THEIRS
+            ? { origin: "remote" }
+            : localStorageUpdateSource;
 
         const nodeId = applyOpResult.modified.node._id;
 
@@ -3351,16 +3410,21 @@ export function createRoom<
     if (context.activeBatch) {
       throw new Error("undo is not allowed during a batch");
     }
-    const frames = context.undoStack.pop();
-    if (frames === undefined) {
+    const item = context.undoStack.pop();
+    if (item === undefined) {
       return;
     }
 
     context.pausedHistory = null;
-    const result = applyLocalOps(frames);
+    const result = applyLocalOps(item.frames, {
+      origin: "local",
+      via: "history",
+      action: "undo",
+    });
 
+    context.redoStack.push({ id: item.id, frames: result.reverse });
+    notifyPrivateHistory({ action: "undo", id: item.id });
     notify(result.updates);
-    context.redoStack.push(result.reverse);
     onHistoryChange();
 
     for (const op of result.opsToEmit) {
@@ -3374,16 +3438,21 @@ export function createRoom<
       throw new Error("redo is not allowed during a batch");
     }
 
-    const frames = context.redoStack.pop();
-    if (frames === undefined) {
+    const item = context.redoStack.pop();
+    if (item === undefined) {
       return;
     }
 
     context.pausedHistory = null;
-    const result = applyLocalOps(frames);
+    const result = applyLocalOps(item.frames, {
+      origin: "local",
+      via: "history",
+      action: "redo",
+    });
 
+    context.undoStack.push({ id: item.id, frames: result.reverse });
+    notifyPrivateHistory({ action: "redo", id: item.id });
     notify(result.updates);
-    context.undoStack.push(result.reverse);
     onHistoryChange();
 
     for (const op of result.opsToEmit) {
@@ -3395,6 +3464,8 @@ export function createRoom<
   function clear() {
     context.undoStack.length = 0;
     context.redoStack.length = 0;
+    notifyPrivateHistory({ action: "clear" });
+    onHistoryChange();
   }
 
   function batch<T>(callback: () => T): T {
@@ -3436,7 +3507,7 @@ export function createRoom<
       if (currentBatch.ops.length > 0) {
         // Only clear the redo stack if something has changed during a batch
         // Clear the redo stack because batch is always called from a local operation
-        context.redoStack.length = 0;
+        clearRedoStack();
       }
 
       if (currentBatch.ops.length > 0) {
@@ -3472,14 +3543,11 @@ export function createRoom<
     commitPausedHistoryToUndoStack();
   }
 
-  // Depth counter for nested history.disable() calls, 0 means history is not disabled
-  let historyDisabled = 0;
-
   function disableHistory<T>(fn: () => T): T {
     const origUndo = context.undoStack;
     const origRedo = context.redoStack;
-    const tempUndo: Stackframe<P>[][] = [];
-    const tempRedo: Stackframe<P>[][] = [];
+    const tempUndo: HistoryStackItem<P>[] = [];
+    const tempRedo: HistoryStackItem<P>[] = [];
     context.undoStack = tempUndo;
     context.redoStack = tempRedo;
     historyDisabled++;
@@ -3828,8 +3896,25 @@ export function createRoom<
     {
       [kInternal]: {
         get presenceBuffer() { return deepClone(context.buffer.presenceUpdates?.data ?? null) }, // prettier-ignore
-        get undoStack() { return deepClone(context.undoStack) }, // prettier-ignore
+        get undoStack() {
+          return deepClone(
+            context.undoStack.map((item) => ({
+              id: item.id,
+              frames: item.frames,
+            }))
+          );
+        }, // prettier-ignore
+        get redoStack() {
+          return deepClone(
+            context.redoStack.map((item) => ({
+              id: item.id,
+              frames: item.frames,
+            }))
+          );
+        }, // prettier-ignore
         get nodeCount() { return context.pool.nodes.size }, // prettier-ignore
+
+        history: eventHub.privateHistory.observable,
 
         getYjsProvider() {
           return context.yjsProvider;

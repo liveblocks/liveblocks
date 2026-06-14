@@ -40,7 +40,7 @@ import { OpCode } from "../protocol/Op";
 import { ServerMsgCode } from "../protocol/ServerMsg";
 import type { StorageNode } from "../protocol/StorageNode";
 import { CrdtType, nodeStreamToCompactNodes } from "../protocol/StorageNode";
-import type { RoomConfig, RoomDelegates } from "../room";
+import type { RoomConfig, RoomDelegates, PrivateHistoryEvent } from "../room";
 import { createRoom } from "../room";
 import { WebsocketCloseCodes } from "../types/IWebSocket";
 import type { LiveblocksError } from "../types/LiveblocksError";
@@ -2682,12 +2682,7 @@ describe("room", () => {
 
   describe("storage update source", () => {
     function readSources(updates: StorageUpdate[]): StorageUpdateSource[] {
-      return updates.map(
-        (update) =>
-          (update as { [kStorageUpdateSource]?: StorageUpdateSource })[
-            kStorageUpdateSource
-          ]!
-      );
+      return updates.map((update) => update[kStorageUpdateSource]!);
     }
 
     test("local mutations are tagged local", async () => {
@@ -2706,7 +2701,7 @@ describe("room", () => {
 
       root.set("a", 1);
 
-      expect(sources).toEqual(["local"]);
+      expect(sources).toEqual([{ origin: "local", via: "mutation" }]);
     });
 
     test("remote ops without opId are tagged remote", async () => {
@@ -2732,11 +2727,29 @@ describe("room", () => {
         },
       ]);
 
-      expect(sources).toEqual(["remote"]);
+      expect(sources).toEqual([{ origin: "remote" }]);
       expect(root.get("a")).toBe(2);
     });
 
-    test("undo produces local-tagged storage updates", async () => {
+    test("peer client receives remote-tagged updates via prepareStorageTest", async () => {
+      const { refRoom, storage } = await prepareStorageTest<{ a: number }>(
+        [createSerializedRoot({ a: 0 })],
+        0
+      );
+
+      const sources: StorageUpdateSource[] = [];
+      onTestFinished(
+        refRoom.events.storageBatch.subscribe((updates) => {
+          sources.push(...readSources(updates));
+        })
+      );
+
+      storage.root.set("a", 1);
+
+      expect(sources).toEqual([{ origin: "remote" }]);
+    });
+
+    test("undo and redo produce history-tagged storage updates with action", async () => {
       const { room, root } = await prepareIsolatedStorageTest<{ a: number }>(
         [createSerializedRoot({ a: 0 })],
         0,
@@ -2751,12 +2764,183 @@ describe("room", () => {
       );
 
       root.set("a", 1);
-      expect(sources).toEqual(["local"]);
+      expect(sources).toEqual([{ origin: "local", via: "mutation" }]);
 
       sources.length = 0;
       room.history.undo();
 
-      expect(sources).toEqual(["local"]);
+      expect(sources).toEqual([
+        { origin: "local", via: "history", action: "undo" },
+      ]);
+
+      sources.length = 0;
+      room.history.redo();
+
+      expect(sources).toEqual([
+        { origin: "local", via: "history", action: "redo" },
+      ]);
+    });
+  });
+
+  describe("private history events", () => {
+    test("undo and redo notify history before storage", async () => {
+      const { room, root } = await prepareIsolatedStorageTest<{ a: number }>(
+        [createSerializedRoot({ a: 1 })],
+        0,
+        { a: 1 }
+      );
+
+      const order: string[] = [];
+      onTestFinished(
+        room[kInternal].history.subscribe((event) => {
+          if (event.action === "undo" || event.action === "redo") {
+            order.push(`history:${event.action}`);
+          }
+        })
+      );
+      onTestFinished(
+        room.events.storageBatch.subscribe(() => {
+          order.push("storage");
+        })
+      );
+
+      root.set("a", 2);
+
+      order.length = 0;
+      room.history.undo();
+      expect(order).toEqual(["history:undo", "storage"]);
+
+      order.length = 0;
+      room.history.redo();
+      expect(order).toEqual(["history:redo", "storage"]);
+    });
+
+    test("push, undo, and redo emit stable ids", async () => {
+      const { room, root } = await prepareIsolatedStorageTest<{ a: number }>(
+        [createSerializedRoot({ a: 1 })],
+        0,
+        { a: 1 }
+      );
+
+      const events: PrivateHistoryEvent[] = [];
+      onTestFinished(
+        room[kInternal].history.subscribe((event) => events.push(event))
+      );
+
+      root.set("a", 2);
+      expect(events).toEqual([{ action: "push", id: 0 }]);
+
+      events.length = 0;
+      room.history.undo();
+      expect(events).toEqual([{ action: "undo", id: 0 }]);
+
+      events.length = 0;
+      room.history.redo();
+      expect(events).toEqual([{ action: "redo", id: 0 }]);
+    });
+
+    test("new edit after undo discards redo ids", async () => {
+      const { room, root } = await prepareIsolatedStorageTest<{ a: number }>(
+        [createSerializedRoot({ a: 1 })],
+        0,
+        { a: 1 }
+      );
+
+      const events: PrivateHistoryEvent[] = [];
+      onTestFinished(
+        room[kInternal].history.subscribe((event) => events.push(event))
+      );
+
+      root.set("a", 2);
+      room.history.undo();
+
+      events.length = 0;
+      root.set("a", 3);
+
+      expect(events).toEqual([
+        { action: "push", id: 1 },
+        { action: "discard", ids: [0] },
+      ]);
+    });
+
+    test("clear emits a clear event", async () => {
+      const { room, root } = await prepareIsolatedStorageTest<{ a: number }>(
+        [createSerializedRoot({ a: 1 })],
+        0,
+        { a: 1 }
+      );
+
+      const events: PrivateHistoryEvent[] = [];
+      onTestFinished(
+        room[kInternal].history.subscribe((event) => events.push(event))
+      );
+
+      root.set("a", 2);
+      room.history.undo();
+
+      events.length = 0;
+      room.history.clear();
+
+      expect(events).toEqual([{ action: "clear" }]);
+    });
+
+    test("batch coalesces to one push", async () => {
+      const { room, root } = await prepareIsolatedStorageTest<{ a: number }>(
+        [createSerializedRoot({ a: 1 })],
+        0,
+        { a: 1 }
+      );
+
+      const events: PrivateHistoryEvent[] = [];
+      onTestFinished(
+        room[kInternal].history.subscribe((event) => events.push(event))
+      );
+
+      room.batch(() => {
+        root.set("a", 2);
+        root.set("a", 3);
+      });
+
+      expect(events).toEqual([{ action: "push", id: 0 }]);
+    });
+
+    test("history.disable suppresses private history events", async () => {
+      const { room, root } = await prepareIsolatedStorageTest<{ a: number }>(
+        [createSerializedRoot({ a: 1 })],
+        0,
+        { a: 1 }
+      );
+
+      const events: PrivateHistoryEvent[] = [];
+      onTestFinished(
+        room[kInternal].history.subscribe((event) => events.push(event))
+      );
+
+      room.history.disable(() => {
+        root.set("a", 2);
+      });
+
+      expect(events).toEqual([]);
+    });
+
+    test("evicting the oldest undo item emits discard", async () => {
+      const { room, root } = await prepareIsolatedStorageTest<{ a: number }>(
+        [createSerializedRoot({ a: 0 })],
+        0,
+        { a: 0 }
+      );
+
+      const events: PrivateHistoryEvent[] = [];
+      onTestFinished(
+        room[kInternal].history.subscribe((event) => events.push(event))
+      );
+
+      for (let i = 1; i <= 51; i++) {
+        root.set("a", i);
+      }
+
+      expect(events.at(-2)).toEqual({ action: "discard", ids: [0] });
+      expect(events.at(-1)).toEqual({ action: "push", id: 50 });
     });
   });
 });

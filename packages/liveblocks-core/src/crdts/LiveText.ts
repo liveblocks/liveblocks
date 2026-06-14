@@ -1,3 +1,4 @@
+import { kInternal } from "../internal";
 import { nn } from "../lib/assert";
 import * as console from "../lib/fancy-console";
 import type { JsonObject, ReadonlyJson } from "../lib/Json";
@@ -26,7 +27,9 @@ import {
   applyTextOperationsToSegments,
   clipRange,
   dataToSegments,
+  inverseMapTextIndexThroughOperations,
   invertTextOperations,
+  mapTextIndexThroughOperations,
   segmentsToData,
   textLength,
   textOperationsEqual,
@@ -87,6 +90,28 @@ type AcceptedTextOperations = {
   ops: readonly TextOperation[];
 };
 
+/**
+ * @private
+ *
+ * Private methods on a LiveText node. As a user of Liveblocks, NEVER USE ANY
+ * OF THESE DIRECTLY, because bad things will probably happen if you do.
+ */
+export type PrivateLiveTextApi = {
+  /**
+   * Encode a local-document index into server-confirmed coordinates suitable
+   * for broadcasting to peers via presence or any other side channel. Pair
+   * the result with {@link LiveText.version} at the same instant when
+   * sending.
+   */
+  encodeIndex(localIndex: number): number;
+
+  /**
+   * Decode an `(index, fromVersion)` pair from a peer into an offset in this
+   * LiveText's current local document.
+   */
+  decodeIndex(index: number, fromVersion: number): number | null;
+};
+
 const ACCEPTED_OPS_HISTORY_LIMIT = 1000;
 
 export {
@@ -112,6 +137,15 @@ export {
  * order), keeping them in server coordinates at all times.
  */
 export class LiveText extends AbstractCrdt {
+  /**
+   * @private
+   *
+   * Private methods and variables used in the core internals, but as a user
+   * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
+   * will probably happen if you do.
+   */
+  declare readonly [kInternal]: PrivateLiveTextApi;
+
   /** The local document: #confirmed ⊕ #inFlightOps ⊕ #queuedOps. */
   #segments: TextSegment[];
   /** The server-confirmed document (only authoritative ops applied). */
@@ -137,6 +171,15 @@ export class LiveText extends AbstractCrdt {
         : dataToSegments(textOrData);
     this.#confirmed = [...this.#segments];
     this.#version = version;
+
+    Object.defineProperty(this, kInternal, {
+      value: {
+        encodeIndex: (localIndex: number) => this.#encodeIndex(localIndex),
+        decodeIndex: (index: number, fromVersion: number) =>
+          this.#decodeIndex(index, fromVersion),
+      },
+      enumerable: false,
+    });
   }
 
   get version(): number {
@@ -261,6 +304,77 @@ export class LiveText extends AbstractCrdt {
       ops.push({ type: "insert", index: clipped.index, text, attributes });
     }
     this.#dispatch(ops);
+  }
+
+  /**
+   * Encode a local-document index (an offset into this LiveText's current
+   * #segments, which CodeMirror or any consumer mirrors as its document)
+   * into server-confirmed coordinates suitable for broadcasting to peers via
+   * presence or any other side channel.
+   *
+   * The returned index is in this LiveText's current #confirmed coordinates
+   * — that is, with this client's local pending ops inverse-mapped out.
+   * Pair it with the current {@link LiveText.version} when sending so the
+   * receiver can call {@link PrivateLiveTextApi.decodeIndex} to land the
+   * position in their own local document coordinates regardless of their
+   * private pending ops.
+   *
+   * Index ambiguity at boundaries is resolved by an inverse-of-forward
+   * convention: a position at or before a local insertion is reported as
+   * the position right before the insertion in #confirmed; a position past
+   * the insertion shifts left by the insertion's length. Positions inside
+   * an own-pending insertion collapse to the insertion point.
+   */
+  #encodeIndex(localIndex: number): number {
+    let mapped = Math.max(0, Math.min(localIndex, this.length));
+    mapped = inverseMapTextIndexThroughOperations(mapped, this.#queuedOps);
+    mapped = inverseMapTextIndexThroughOperations(mapped, this.#inFlightOps);
+    return mapped;
+  }
+
+  /**
+   * Decode an `(index, fromVersion)` pair produced by
+   * {@link PrivateLiveTextApi.encodeIndex} — typically on a peer — into an
+   * offset in this LiveText's current local document (an index suitable for
+   * placing a CodeMirror marker, an annotation anchor, or anything else that
+   * lives over #segments).
+   *
+   * Composes the accepted ops applied since `fromVersion` (drawn from
+   * #acceptedOps in locally-applied form) with this client's own local
+   * pending ops, in that order. The result is in current #segments
+   * coordinates.
+   *
+   * Returns `null` when the position cannot be decoded against the current
+   * state:
+   *  - `fromVersion` is greater than this LiveText's current version: the
+   *    peer is ahead of us. The caller should park the message and retry
+   *    after more accepted ops arrive.
+   *  - `fromVersion` falls outside the retained accepted-ops history. This
+   *    only happens after very long-lived disconnections; the caller can
+   *    fall back to using the raw index and letting subsequent local
+   *    transactions map it (with bounded drift).
+   */
+  #decodeIndex(index: number, fromVersion: number): number | null {
+    if (fromVersion > this.#version) {
+      return null;
+    }
+    if (fromVersion < this.#version) {
+      const oldest = this.#acceptedOps[0]?.version;
+      if (oldest === undefined || oldest > fromVersion + 1) {
+        return null;
+      }
+    }
+
+    let mapped = index;
+    for (const entry of this.#acceptedOps) {
+      if (entry.version <= fromVersion) continue;
+      if (entry.version > this.#version) break;
+      if (entry.ops.length === 0) continue;
+      mapped = mapTextIndexThroughOperations(mapped, entry.ops);
+    }
+    mapped = mapTextIndexThroughOperations(mapped, this.#inFlightOps);
+    mapped = mapTextIndexThroughOperations(mapped, this.#queuedOps);
+    return Math.max(0, Math.min(mapped, this.length));
   }
 
   format(
