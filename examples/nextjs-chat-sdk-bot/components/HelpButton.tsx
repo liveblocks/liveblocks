@@ -11,7 +11,7 @@ const EXAMPLE_URL =
 type Feature = {
   icon: ReactNode;
   title: string;
-  description: string;
+  description: ReactNode;
 };
 
 const FEATURES: Feature[] = [
@@ -36,8 +36,20 @@ const FEATURES: Feature[] = [
   {
     icon: <ZapIcon />,
     title: "Powered by the Chat SDK",
-    description:
-      "The bot runs server-side through Liveblocks webhooks and the Chat SDK adapter.",
+    description: (
+      <>
+        The bot runs server-side through Liveblocks webhooks and the{" "}
+        <a
+          className="lb-help-link"
+          href="https://chat-sdk.dev"
+          target="_blank"
+          rel="noreferrer"
+        >
+          Chat SDK
+        </a>{" "}
+        adapter.
+      </>
+    ),
   },
 ];
 
@@ -159,6 +171,8 @@ const HOVER_CSS = `
 .lb-help-button:hover { background:#fafafa !important; color:#171717 !important; }
 .lb-help-title-link:hover { text-decoration: underline !important; }
 .lb-help-close:hover { background:#f5f5f5 !important; color:#171717 !important; }
+.lb-help-link { color:#404040 !important; text-decoration: underline !important; }
+.lb-help-link:hover { color:#171717 !important; }
 .lb-help, .lb-help * { box-sizing: border-box; }
 .lb-help h2 { font-size: 14px !important; font-weight: 600 !important; line-height: 1.4 !important; margin: 0 !important; }
 .lb-help h2 a { font-size: inherit !important; font-weight: inherit !important; }

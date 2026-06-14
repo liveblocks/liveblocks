@@ -11,7 +11,7 @@ const EXAMPLE_URL =
 type Feature = {
   icon: ReactNode;
   title: string;
-  description: string;
+  description: ReactNode;
 };
 
 const FEATURES: Feature[] = [
@@ -38,6 +38,24 @@ const FEATURES: Feature[] = [
     title: "Real-time collaboration",
     description:
       "Comments sync in real time across everyone connected to the room.",
+  },
+  {
+    icon: <ZapIcon />,
+    title: "Powered by the Chat SDK",
+    description: (
+      <>
+        Liveblocks Comments are mapped to{" "}
+        <a
+          className="lb-help-link"
+          href="https://chat-sdk.dev"
+          target="_blank"
+          rel="noreferrer"
+        >
+          Chat SDK
+        </a>{" "}
+        channels via the adapter.
+      </>
+    ),
   },
 ];
 
@@ -159,6 +177,8 @@ const HOVER_CSS = `
 .lb-help-button:hover { background:#fafafa !important; color:#171717 !important; }
 .lb-help-title-link:hover { text-decoration: underline !important; }
 .lb-help-close:hover { background:#f5f5f5 !important; color:#171717 !important; }
+.lb-help-link { color:#404040 !important; text-decoration: underline !important; }
+.lb-help-link:hover { color:#171717 !important; }
 .lb-help, .lb-help * { box-sizing: border-box; }
 .lb-help h2 { font-size: 14px !important; font-weight: 600 !important; line-height: 1.4 !important; margin: 0 !important; }
 .lb-help h2 a { font-size: inherit !important; font-weight: inherit !important; }
@@ -346,6 +366,14 @@ function UsersIcon() {
       <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
       <circle cx={9} cy={7} r={4} />
       <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
+    </FeatureIconBase>
+  );
+}
+
+function ZapIcon() {
+  return (
+    <FeatureIconBase>
+      <path d="M13 2L3 14h7l-1 8 10-12h-7z" />
     </FeatureIconBase>
   );
 }
