@@ -163,6 +163,12 @@ const HOVER_CSS = `
 .lb-help-button:hover { background:#fafafa !important; color:#171717 !important; }
 .lb-help-title-link:hover { text-decoration: underline !important; }
 .lb-help-close:hover { background:#f5f5f5 !important; color:#171717 !important; }
+.lb-help, .lb-help * { box-sizing: border-box; }
+.lb-help h2 { font-size: 14px !important; font-weight: 600 !important; line-height: 1.4 !important; margin: 0 !important; }
+.lb-help h2 a { font-size: inherit !important; font-weight: inherit !important; }
+.lb-help h3 { font-size: 14px !important; font-weight: 500 !important; line-height: 1.4 !important; margin: 0 !important; }
+.lb-help p { font-size: 14px !important; line-height: 1.45 !important; }
+.lb-help ul { list-style: none !important; }
 `;
 
 export function HelpButton() {
@@ -204,7 +210,11 @@ export function HelpButton() {
           aria-labelledby="lb-help-title"
           onClick={() => setIsOpen(false)}
         >
-          <div style={styles.panel} onClick={(event) => event.stopPropagation()}>
+          <div
+            className="lb-help"
+            style={styles.panel}
+            onClick={(event) => event.stopPropagation()}
+          >
             <div style={styles.header}>
               <div>
                 <h2 id="lb-help-title" style={styles.title}>
