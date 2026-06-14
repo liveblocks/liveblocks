@@ -144,6 +144,13 @@ body {
   .react-flow__controls-button {
     border-radius: 6px;
 
+    &.lb-help-control {
+      order: -1;
+      margin-right: 5px;
+      border-right: 1px solid var(--flowchart-gray-300);
+      border-radius: 6px 0 0 6px;
+    }
+
     &:disabled {
       opacity: 0.35;
       cursor: not-allowed;

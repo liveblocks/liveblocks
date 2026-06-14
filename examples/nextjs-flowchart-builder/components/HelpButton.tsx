@@ -2,6 +2,8 @@
 
 import { CSSProperties, ReactNode, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { ControlButton } from "@xyflow/react";
+import { Icon } from "@liveblocks/react-ui";
 
 const EXAMPLE_NAME = "Collaborative Flowchart Builder";
 
@@ -48,23 +50,6 @@ const FEATURES: Feature[] = [
 ];
 
 const styles: Record<string, CSSProperties> = {
-  button: {
-    position: "fixed",
-    bottom: 16,
-    left: 16,
-    zIndex: 2147483000,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: 36,
-    height: 36,
-    background: "#ffffff",
-    border: "1px solid #e5e5e5",
-    borderRadius: 9999,
-    boxShadow: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
-    color: "#737373",
-    cursor: "pointer",
-  },
   backdrop: {
     position: "fixed",
     inset: 0,
@@ -162,7 +147,6 @@ const styles: Record<string, CSSProperties> = {
 };
 
 const HOVER_CSS = `
-.lb-help-button:hover { background:#fafafa !important; color:#171717 !important; }
 .lb-help-title-link:hover { text-decoration: underline !important; }
 .lb-help-close:hover { background:#f5f5f5 !important; color:#171717 !important; }
 .lb-help, .lb-help * { box-sizing: border-box; }
@@ -173,9 +157,30 @@ const HOVER_CSS = `
 .lb-help ul { list-style: none !important; }
 `;
 
-export function HelpButton() {
+export function HelpControl() {
   const [isOpen, setIsOpen] = useState(false);
 
+  return (
+    <>
+      <ControlButton
+        className="lb-help-control"
+        onClick={() => setIsOpen(true)}
+        aria-label="How to use this example"
+      >
+        <Icon.QuestionMark />
+      </ControlButton>
+      <HelpDialog isOpen={isOpen} onClose={() => setIsOpen(false)} />
+    </>
+  );
+}
+
+function HelpDialog({
+  isOpen,
+  onClose,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+}) {
   useEffect(() => {
     if (!isOpen) {
       return;
@@ -183,104 +188,72 @@ export function HelpButton() {
 
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
-        setIsOpen(false);
+        onClose();
       }
     }
 
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [isOpen]);
+  }, [isOpen, onClose]);
 
-  return (
-    <>
-      <style>{HOVER_CSS}</style>
-      <button
-        type="button"
-        className="lb-help-button"
-        style={styles.button}
-        aria-label="How to use this example"
-        onClick={() => setIsOpen(true)}
-      >
-        <HelpIcon />
-      </button>
+  if (!isOpen || typeof document === "undefined") {
+    return null;
+  }
 
-      {isOpen && typeof document !== "undefined"
-        ? createPortal(
-        <div
-          style={styles.backdrop}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="lb-help-title"
-          onClick={() => setIsOpen(false)}
-        >
-          <div
-            className="lb-help"
-            style={styles.panel}
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div style={styles.header}>
-              <div>
-                <h2 id="lb-help-title" style={styles.title}>
-                  <a
-                    className="lb-help-title-link"
-                    style={styles.titleLink}
-                    href={EXAMPLE_URL}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    {EXAMPLE_NAME}
-                  </a>
-                </h2>
-                <p style={styles.desc}>How to use this example</p>
-              </div>
-              <button
-                type="button"
-                className="lb-help-close"
-                style={styles.close}
-                aria-label="Close"
-                onClick={() => setIsOpen(false)}
-              >
-                <CloseIcon />
-              </button>
-            </div>
-
-            <ul style={styles.list}>
-              {FEATURES.map((feature) => (
-                <li key={feature.title} style={styles.item}>
-                  <span style={styles.iconWrap}>{feature.icon}</span>
-                  <div>
-                    <h3 style={styles.featureTitle}>{feature.title}</h3>
-                    <p style={styles.featureDesc}>{feature.description}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>,
-            document.body,
-          )
-        : null}
-    </>
-  );
-}
-
-function HelpIcon() {
-  return (
-    <svg
-      width={20}
-      height={20}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
+  return createPortal(
+    <div
+      style={styles.backdrop}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="lb-help-title"
+      onClick={onClose}
     >
-      <circle cx={12} cy={12} r={10} />
-      <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" />
-      <path d="M12 17h.01" />
-    </svg>
+      <style>{HOVER_CSS}</style>
+      <div
+        className="lb-help"
+        style={styles.panel}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div style={styles.header}>
+          <div>
+            <h2 id="lb-help-title" style={styles.title}>
+              <a
+                className="lb-help-title-link"
+                style={styles.titleLink}
+                href={EXAMPLE_URL}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {EXAMPLE_NAME}
+              </a>
+            </h2>
+            <p style={styles.desc}>How to use this example</p>
+          </div>
+          <button
+            type="button"
+            className="lb-help-close"
+            style={styles.close}
+            aria-label="Close"
+            onClick={onClose}
+          >
+            <CloseIcon />
+          </button>
+        </div>
+
+        <ul style={styles.list}>
+          {FEATURES.map((feature) => (
+            <li key={feature.title} style={styles.item}>
+              <span style={styles.iconWrap}>{feature.icon}</span>
+              <div>
+                <h3 style={styles.featureTitle}>{feature.title}</h3>
+                <p style={styles.featureDesc}>{feature.description}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>,
+    document.body,
   );
 }
 

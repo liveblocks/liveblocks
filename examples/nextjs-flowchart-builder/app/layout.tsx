@@ -3,7 +3,6 @@ import "@xyflow/react/dist/style.css";
 import "@liveblocks/react-ui/styles.css";
 import "@liveblocks/react-flow/styles.css";
 import "./globals.css";
-import { HelpButton } from "../components/HelpButton";
 
 export const metadata: Metadata = {
   title: "Liveblocks",
@@ -30,10 +29,7 @@ export default function RootLayout({
           type="image/png"
         />
       </head>
-      <body>
-        {children}
-        <HelpButton />
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
