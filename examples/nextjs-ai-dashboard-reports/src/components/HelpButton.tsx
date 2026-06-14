@@ -2,13 +2,10 @@
 
 import { CSSProperties, ReactNode, useEffect, useState } from "react";
 
-// REPLACE: the human-readable example name shown as the popup title.
-const EXAMPLE_NAME = "AI chat in reports dashboard";
+const EXAMPLE_NAME = "AI Reports Dashboard";
 
-// REPLACE: the example's page on liveblocks.io (take the slug from the README
-// "live preview" badge URL, without the trailing "/preview").
 const EXAMPLE_URL =
-  "https://liveblocks.io/examples/collaborative-text-editor/nextjs-ai-dashboard-reports";
+  "https://liveblocks.io/examples/ai-dashboard-reports/nextjs-ai-dashboard-reports";
 
 type Feature = {
   icon: ReactNode;
@@ -16,9 +13,6 @@ type Feature = {
   description: string;
 };
 
-// REPLACE: 2-5 features that are accurate to THIS example. Keep descriptions to
-// one short sentence. Use simple inline SVG icons (see FeatureIcon examples at
-// the bottom of this file). Never use an em dash with a space on either side.
 const FEATURES: Feature[] = [
   {
     icon: <SparklesIcon />,
@@ -287,12 +281,6 @@ function CloseIcon() {
     </svg>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Feature icons. Reuse / adapt these or write your own. Each should be a 16x16
-// inline SVG using viewBox="0 0 24 24" and stroke="currentColor".
-// Delete any you don't use so there are no unused-variable lint errors.
-// ---------------------------------------------------------------------------
 
 function FeatureIconBase({ children }: { children: ReactNode }) {
   return (

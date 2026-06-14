@@ -2,10 +2,10 @@
 
 import { CSSProperties, ReactNode, useEffect, useState } from "react";
 
-const EXAMPLE_NAME = "Collaborative React Flow with AI";
+const EXAMPLE_NAME = "Collaborative Flowchart AI";
 
 const EXAMPLE_URL =
-  "https://liveblocks.io/examples/react-flow/nextjs-react-flow-ai";
+  "https://liveblocks.io/examples/collaborative-flowchart-ai/nextjs-react-flow-ai";
 
 type Feature = {
   icon: ReactNode;
@@ -281,12 +281,6 @@ function CloseIcon() {
     </svg>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Feature icons. Reuse / adapt these or write your own. Each should be a 16x16
-// inline SVG using viewBox="0 0 24 24" and stroke="currentColor".
-// Delete any you don't use so there are no unused-variable lint errors.
-// ---------------------------------------------------------------------------
 
 function FeatureIconBase({ children }: { children: ReactNode }) {
   return (
