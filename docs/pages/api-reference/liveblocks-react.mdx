@@ -3530,7 +3530,7 @@ whiteboard, or cells in a spreadsheet.
 
 ### Data structures
 
-Storage provides three different conflict-free data structures, which you can
+Storage provides four different conflict-free data structures, which you can
 use to build your application. All structures are permanent and persist when all
 users have left the room, unlike [Presence](/docs/ready-made-features/presence)
 which is temporary.
@@ -3549,6 +3549,11 @@ which is temporary.
   all have the same structure. For example, to store an index of `Person` values
   by their name. If multiple users update the same property simultaneously, the
   last modification received by the Liveblocks servers is the winner.
+
+- [`LiveText`][] - A collaborative rich-text document. Use this to store plain
+  text with optional inline formatting attributes (for example `{ bold: true }`).
+  Concurrent insertions, deletions, and formatting changes are merged
+  automatically using server-ordered operational transformation.
 
 ### Typing Storage [#typing-storage]
 
@@ -3682,6 +3687,183 @@ function App() {
   );
 }
 ```
+
+### LiveText
+
+[`LiveText`][] is a collaborative rich-text document stored in Storage. Use it
+when you need to synchronize plain text with optional inline formatting
+attributes across clients—for example, a notes field, a code editor buffer, or
+the backing store for a custom text editor.
+
+#### Typing and initial value
+
+```ts file="liveblocks.config.ts"
+import { LiveText } from "@liveblocks/client";
+
+declare global {
+  interface Liveblocks {
+    Storage: {
+      document: LiveText;
+    };
+  }
+}
+```
+
+```tsx
+import { LiveText } from "@liveblocks/client";
+import { RoomProvider } from "@liveblocks/react/suspense";
+
+function App() {
+  return (
+    <RoomProvider
+      id="my-room-name"
+      initialStorage={{ document: new LiveText("Hello world") }}
+    >
+      {/* children */}
+    </RoomProvider>
+  );
+}
+```
+
+#### Editing with useMutation
+
+Inside [`useMutation`][], you receive the mutable `LiveText` instance from
+Storage. Call [`insert`][], [`delete`][], [`replace`][], or [`format`][] to edit
+the document.
+
+```tsx
+import { useMutation } from "@liveblocks/react/suspense";
+
+function EditorToolbar() {
+  const insertText = useMutation(({ storage }) => {
+    const document = storage.get("document");
+    document.insert(document.length, "!");
+  }, []);
+
+  const makeBold = useMutation(({ storage }) => {
+    const document = storage.get("document");
+    document.format(0, document.length, { bold: true });
+  }, []);
+
+  return (
+    <>
+      <button onClick={insertText}>Insert !</button>
+      <button onClick={makeBold}>Bold all</button>
+    </>
+  );
+}
+```
+
+`LiveText` edits support [undo and redo](#useUndo) through the room’s history.
+
+#### Reading with useStorage
+
+[`useStorage`][] returns an immutable copy of the document as `LiveTextData`—an
+array of text segments. Each segment is either a plain string or a
+`[text, attributes]` tuple.
+
+To get the plain text content without attributes, join the segment texts. This is
+equivalent to calling [`.toString()`][] on a `LiveText` instance—for example
+via `storage.get("document")` inside [`useMutation`][].
+
+```tsx
+import { useStorage } from "@liveblocks/react/suspense";
+
+function DocumentPreview() {
+  const document = useStorage((root) => root.document);
+
+  if (document === null) {
+    return null;
+  }
+
+  // LiveTextData, e.g. [["Hello ", { bold: true }], ["world"]]
+  const plainText = document.map(([text]) => text).join("");
+  // Same result as storage.get("document").toString()
+
+  return <p>{plainText}</p>;
+}
+```
+
+#### Rendering formatted text
+
+Because `useStorage` returns plain data, you can map segments to React elements:
+
+```tsx
+import { useStorage } from "@liveblocks/react/suspense";
+
+function FormattedDocument() {
+  const document = useStorage((root) => root.document);
+
+  if (document === null) {
+    return null;
+  }
+
+  return (
+    <p>
+      {document.map(([text, attributes], index) => (
+        <span
+          key={index}
+          style={{ fontWeight: attributes?.bold ? "bold" : undefined }}
+        >
+          {text}
+        </span>
+      ))}
+    </p>
+  );
+}
+```
+
+#### Listening for granular updates
+
+For custom editor integrations, subscribe to granular `LiveText` changes with
+[`useRoom`][] and `room.subscribe` using the `isDeep` option. Each update
+includes the change type (`insert`, `delete`, or `format`), index, and affected
+text. Learn more about [listening for nested changes](/docs/api-reference/liveblocks-client#listening-for-nested-changes).
+
+```tsx
+import { LiveText } from "@liveblocks/client";
+import { useRoom } from "@liveblocks/react/suspense";
+import { useEffect } from "react";
+
+function LiveTextSync({ document }: { document: LiveText }) {
+  const room = useRoom();
+
+  useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
+
+    void room.getStorage().then(({ root }) => {
+      unsubscribe = room.subscribe(
+        root,
+        (updates) => {
+          for (const update of updates) {
+            if (update.type !== "LiveText" || update.node !== document) {
+              continue;
+            }
+
+            for (const change of update.updates) {
+              if (change.type === "insert") {
+                // Apply insertion to your local editor at change.index
+                console.log(`+ "${change.text}" at ${change.index}`);
+              } else if (change.type === "delete") {
+                // Apply deletion to your local editor
+                console.log(`- ${change.length} chars at ${change.index}`);
+              }
+            }
+          }
+        },
+        { isDeep: true }
+      );
+    });
+
+    return () => unsubscribe?.();
+  }, [room, document]);
+
+  return null;
+}
+```
+
+Learn more about the `LiveText` API in the
+[`@liveblocks/client` reference](/docs/api-reference/liveblocks-client#LiveText).
 
 <Banner title="Need help troubleshooting Storage?">
 
@@ -7072,6 +7254,13 @@ And the following timeline:
 [`livelist`]: /docs/api-reference/liveblocks-client#LiveList
 [`livemap`]: /docs/api-reference/liveblocks-client#LiveMap
 [`liveobject`]: /docs/api-reference/liveblocks-client#LiveObject
+[`livetext`]: /docs/api-reference/liveblocks-client#LiveText
+[`insert`]: /docs/api-reference/liveblocks-client#LiveText.insert
+[`delete`]: /docs/api-reference/liveblocks-client#LiveText.delete
+[`replace`]: /docs/api-reference/liveblocks-client#LiveText.replace
+[`format`]: /docs/api-reference/liveblocks-client#LiveText.format
+[`useRoom`]: /docs/api-reference/liveblocks-react#useRoom
+[`.toString()`]: /docs/api-reference/liveblocks-client#LiveText.toString
 [`lostconnectiontimeout`]:
   /docs/api-reference/liveblocks-client#createClientLostConnectionTimeout
 [`room.history`]: /docs/api-reference/liveblocks-client#Room.history

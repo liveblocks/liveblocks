@@ -50,24 +50,28 @@ export type {
 
 export type LiveTextChange =
   | {
+      /** Text was inserted at {@link LiveTextChange.index}. */
       readonly type: "insert";
       readonly index: number;
       readonly text: string;
       readonly attributes?: TextAttributes;
     }
   | {
+      /** Text was deleted starting at {@link LiveTextChange.index}. */
       readonly type: "delete";
       readonly index: number;
       readonly length: number;
       readonly deletedText: string;
     }
   | {
+      /** Inline attributes were updated on a range of text. */
       readonly type: "format";
       readonly index: number;
       readonly length: number;
       readonly attributes: LiveTextAttributesPatch;
     };
 
+/** Notification payload when a {@link LiveText} node changes. */
 export type LiveTextUpdates = {
   type: "LiveText";
   node: LiveText;
@@ -124,6 +128,10 @@ export {
  * LiveText is a collaborative rich-text primitive built on server-ordered
  * operational transformation.
  *
+ * Use it to store plain text with optional inline formatting attributes in
+ * Liveblocks Storage. Each document is a flat sequence of text segments; it
+ * cannot contain child Storage structures.
+ *
  * Outbound model (one-in-flight): at most one UpdateTextOp per node is
  * awaiting server acknowledgement at any time. Local edits made while an op
  * is in flight are queued and sent (composed into a single op) once the ack
@@ -135,6 +143,25 @@ export {
  * ops before being applied ("before" order: the accepted op wins ties), and
  * the pending ops are re-expressed over the remote op in turn ("after"
  * order), keeping them in server coordinates at all times.
+ *
+ * @example
+ * const text = new LiveText("Hello");
+ * text.insert(5, " world");
+ * text.format(0, 5, { bold: true });
+ *
+ * // [["Hello", { bold: true }], [" world"]]
+ * text.toJSON();
+ *
+ * @example
+ * // Use in Storage
+ * declare global {
+ *   interface Liveblocks {
+ *     Storage: { document: LiveText };
+ *   }
+ * }
+ *
+ * const { root } = await room.getStorage();
+ * root.get("document").replace(0, root.get("document").length, "Updated");
  */
 export class LiveText extends AbstractCrdt {
   /**
@@ -161,6 +188,17 @@ export class LiveText extends AbstractCrdt {
 
   #acceptedOps: AcceptedTextOperations[] = [];
 
+  /**
+   * Creates a new LiveText document.
+   *
+   * @param textOrData Initial plain text, or an array of `[text]` /
+   *   `[text, attributes]` segments. Defaults to an empty document.
+   *
+   * @example
+   * new LiveText();
+   * new LiveText("Hello world");
+   * new LiveText([["Hello ", { bold: true }], ["world"]]);
+   */
   constructor(textOrData: string | LiveTextData = "", version = 0) {
     super();
     this.#segments =
@@ -270,11 +308,31 @@ export class LiveText extends AbstractCrdt {
     return this.#applyRemote(op);
   }
 
+  /**
+   * Inserts text at the given index.
+   *
+   * @param index Character index at which to insert. Values outside the
+   *   document range are clipped.
+   * @param text Text to insert.
+   * @param attributes Optional inline attributes for the inserted text.
+   *
+   * @example
+   * const text = new LiveText("Hello");
+   * text.insert(5, " world");
+   * text.insert(0, "Say: ", { italic: true });
+   */
   insert(index: number, text: string, attributes?: TextAttributes): void {
     const clippedIndex = Math.max(0, Math.min(index, this.length));
     this.#dispatch([{ type: "insert", index: clippedIndex, text, attributes }]);
   }
 
+  /**
+   * Deletes `length` characters starting at `index`.
+   *
+   * @example
+   * const text = new LiveText("Hello world");
+   * text.delete(5, 6); // "Hello"
+   */
   delete(index: number, length: number): void {
     const clipped = clipRange(index, length, this.length);
     if (clipped.length === 0) {
@@ -285,6 +343,13 @@ export class LiveText extends AbstractCrdt {
     ]);
   }
 
+  /**
+   * Replaces a range of text with new text.
+   *
+   * @example
+   * const text = new LiveText("Hello world");
+   * text.replace(0, 5, "Hi"); // "Hi world"
+   */
   replace(
     index: number,
     length: number,
@@ -377,6 +442,16 @@ export class LiveText extends AbstractCrdt {
     return Math.max(0, Math.min(mapped, this.length));
   }
 
+  /**
+   * Applies or removes inline attributes on a range of text.
+   *
+   * Set an attribute to `null` to remove it from the range.
+   *
+   * @example
+   * const text = new LiveText("Hello world");
+   * text.format(0, 5, { bold: true });
+   * text.format(0, 5, { bold: null });
+   */
   format(
     index: number,
     length: number,
@@ -811,10 +886,19 @@ export class LiveText extends AbstractCrdt {
     ];
   }
 
+  /** Returns the plain text content without attributes. Equivalent to joining the text from each segment in {@link LiveText.toJSON}. */
   toString(): string {
     return this.#segments.map((segment) => segment.text).join("");
   }
 
+  /**
+   * Returns a JSON-compatible snapshot of the document as a {@link LiveTextData}
+   * array.
+   *
+   * @example
+   * new LiveText([["Hello ", { bold: true }], ["world"]]).toJSON();
+   * // [["Hello ", { bold: true }], ["world"]]
+   */
   toJSON(): LiveTextData {
     return super.toJSON() as LiveTextData;
   }
