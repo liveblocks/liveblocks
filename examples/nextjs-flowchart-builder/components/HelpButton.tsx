@@ -1,6 +1,7 @@
 "use client";
 
 import { CSSProperties, ReactNode, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 
 const EXAMPLE_NAME = "Collaborative Flowchart Builder";
 
@@ -51,7 +52,7 @@ const styles: Record<string, CSSProperties> = {
     position: "fixed",
     bottom: 16,
     left: 16,
-    zIndex: 50,
+    zIndex: 2147483000,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -67,7 +68,7 @@ const styles: Record<string, CSSProperties> = {
   backdrop: {
     position: "fixed",
     inset: 0,
-    zIndex: 50,
+    zIndex: 2147483000,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -203,7 +204,8 @@ export function HelpButton() {
         <HelpIcon />
       </button>
 
-      {isOpen ? (
+      {isOpen && typeof document !== "undefined"
+        ? createPortal(
         <div
           style={styles.backdrop}
           role="dialog"
@@ -254,8 +256,10 @@ export function HelpButton() {
               ))}
             </ul>
           </div>
-        </div>
-      ) : null}
+        </div>,
+            document.body,
+          )
+        : null}
     </>
   );
 }

@@ -46,7 +46,7 @@ const styles: Record<string, CSSProperties> = {
   backdrop: {
     position: "fixed",
     inset: 0,
-    zIndex: 50,
+    zIndex: 2147483000,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
