@@ -4,11 +4,11 @@ import { LiveList } from "../src/crdts/LiveList";
 import { prepareTestsConflicts } from "./utils";
 
 // Two actors append to the same LiveList near-simultaneously: client A appends
-// a1 then a2; client B appends b1 without yet having seen a1/a2, so b1 guesses
-// the head position. By the time b1 reaches the server, a1 and a2 are already
-// stored, and the position conflict is resolved *between* them — so the list
-// settles as [a1, b1, a2] instead of append order [a1, a2, b1].
-// A server-authoritative append must place b1 at the true end.
+// a1 then a2; client B appends b1 without yet having seen a1/a2, so b1's
+// client-computed position is stale by the time it reaches the server (a1 and
+// a2 are already stored there). Because the op is tagged with intent: "push",
+// the server ignores that stale position and appends b1 at the true end, so
+// both clients settle in append order: [a1, a2, b1].
 test(
   "concurrent pushes settle in append order, never wedged",
   prepareTestsConflicts(

@@ -74,8 +74,7 @@ import * as Y from "yjs";
 
 import type { Guid, Pos } from "~";
 import type { YDocId } from "~/decoders/y-types";
-import type { IStorageDriver, IStorageDriverNodeAPI } from "~/interfaces";
-import type { Logger } from "~/lib/Logger";
+import type { IStorageDriver } from "~/interfaces";
 import { Logger as LoggerImpl, LogLevel, LogTarget } from "~/lib/Logger";
 import { quote } from "~/lib/text";
 import type {
@@ -111,15 +110,9 @@ function bytesToB64(bytes: Uint8Array): string {
 /** Empty document for resetting storage in tests */
 const EMPTY_DOC: PlainLsonObject = { liveblocksType: "LiveObject", data: {} };
 
-function asPromise<R>(fn: () => Awaitable<R>): Promise<R> {
-  return (async () => fn())();
-}
-
-/**
- * Expect-throw assertion that works with both sync and async functions.
- */
-function expectToThrow(fn: () => Awaitable<unknown>, errorPattern: RegExp) {
-  return expect(asPromise(() => fn())).rejects.toThrow(errorPattern);
+/** Expect-throw assertion. */
+function expectToThrow(fn: () => unknown, errorPattern: RegExp) {
+  expect(fn).toThrow(errorPattern);
 }
 
 // SYNC-SLOT: directives
@@ -155,17 +148,14 @@ function wouldNotOverwriteDefaultDoc(n: {
  * This way, every test can assume that these "roots" objects
  * exist, in order to express tests more succinctly.
  */
-async function withDefaultDocument(driver: IStorageDriver) {
-  await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-  const db = await driver.load_nodes_api(blackHole);
+function resetToDefaultNodes<T extends IStorageDriver>(driver: T) {
+  driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
 
-  await write_nodes(db, [
+  write_nodes(driver, [
     list("0:dl", "root", "l"),
     map("0:dm", "root", "m"),
     obj("0:do", {}, "root", "o"),
   ]);
-
-  return db;
 }
 
 function assert(
@@ -193,8 +183,8 @@ function assert(
  * (in-memory and on-disk), and will throw if _anything_ is in an inconsistent
  * state.
  */
-export async function selfCheck(storage: Storage): Promise<void> {
-  const driver: IStorageDriverNodeAPI = storage.loadedDriver;
+export function selfCheck(storage: Storage): void {
+  const driver: IStorageDriver = storage.driver;
 
   {
     // Check in-memory node tree integrity
@@ -255,7 +245,7 @@ export async function selfCheck(storage: Storage): Promise<void> {
     // Loading the persisted data back in from storage now, it should match
     // whatever we still have in memory (ignoring the metadata and usage
     // metrics keys)
-    const onDiskNodes = new Map(await storage.raw_iter_nodes());
+    const onDiskNodes = new Map(storage.raw_iter_nodes());
     for (const [id, inMemoryNode] of driver.iter_nodes()) {
       if (inMemoryNode.parentId === undefined) {
         // This is the root node, which needs special treatment. Root nodes are
@@ -979,7 +969,7 @@ export function generateArbitraries() {
 }
 
 function getAll(storage: Storage) {
-  return Array.from(storage.loadedDriver.iter_nodes());
+  return Array.from(storage.driver.iter_nodes());
 }
 
 class VoidTarget extends LogTarget {
@@ -994,7 +984,7 @@ class VoidTarget extends LogTarget {
 
 function countChildrenOf(storage: Storage, parentId: string): number {
   let count = 0;
-  for (const [, node] of storage.loadedDriver.iter_nodes()) {
+  for (const [, node] of storage.driver.iter_nodes()) {
     if (node.parentId === parentId) {
       count++;
     }
@@ -1002,28 +992,28 @@ function countChildrenOf(storage: Storage, parentId: string): number {
   return count;
 }
 
-async function write_nodes(db: IStorageDriverNodeAPI, nodeStream: NodeStream) {
+function write_nodes(driver: IStorageDriver, nodeStream: NodeStream) {
   for (const node of nodeStream) {
     if (isRootStorageNode(node)) {
       const crdt = node[1];
-      await db.set_object_data("root", crdt.data, true);
+      driver.set_object_data("root", crdt.data, true);
     } else {
       const [id, crdt] = node;
-      await db.set_child(id, crdt, true);
+      driver.set_child(id, crdt, true);
     }
   }
 }
 
-async function delete_nodes(db: IStorageDriverNodeAPI, ids: Iterable<string>) {
+function delete_nodes(driver: IStorageDriver, ids: Iterable<string>) {
   for (const id of ids) {
-    await db.delete_node(id);
+    driver.delete_node(id);
   }
 }
 
 /** A black hole, where logs disappear beyond the event horizon */
 const blackHole = new LoggerImpl(new VoidTarget());
 
-type TestFn<TDriver> = (driver: TDriver) => Promise<void>;
+type TestFn<TDriver> = (driver: TDriver) => Awaitable<void>;
 type RunTestOptions = { initialNodes?: NodeMap };
 
 export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
@@ -1072,29 +1062,27 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
   describe("nodes API impl", () => {
     test("get_node and iter_nodes with empty store contains root", () =>
-      runTest(async (driver) => {
-        const db = await driver.load_nodes_api(blackHole);
-        expect(db.get_node("non-existing")).toEqual(undefined);
+      runTest((driver) => {
+        expect(driver.get_node("non-existing")).toEqual(undefined);
 
         // Root node always exists, even in an empty store
-        expect(db.get_node("root")).toEqual({
+        expect(driver.get_node("root")).toEqual({
           type: CrdtType.OBJECT,
           data: {},
         });
       }));
 
     test("get_node and iter_nodes with empty store contains root", () =>
-      runTest(async (driver) =>
+      runTest((driver) =>
         fc.assert(
-          fc.asyncProperty(
+          fc.property(
             arb.key(),
 
-            async (key) => {
+            (key) => {
               fc.pre(key !== "root");
 
-              const db = await driver.load_nodes_api(blackHole);
-              expect(db.get_node(key)).toEqual(undefined);
-              expect(Array.from(db.iter_nodes())).toEqual([
+              expect(driver.get_node(key)).toEqual(undefined);
+              expect(Array.from(driver.iter_nodes())).toEqual([
                 ["root", { type: CrdtType.OBJECT, data: {} }],
               ]);
             }
@@ -1103,84 +1091,109 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       ));
 
     test("set_object_data + get_node", () =>
-      runTest(async (driver) =>
+      runTest((driver) =>
         fc.assert(
-          fc.asyncProperty(
+          fc.property(
             arb.rootNodeTuple(),
 
-            async ([key, value]) => {
-              const db = await withDefaultDocument(driver);
+            ([key, value]) => {
+              resetToDefaultNodes(driver);
 
-              await db.set_object_data("root", value.data, true);
-              expect(db.get_node(key)).toEqual(value);
+              driver.set_object_data("root", value.data, true);
+              expect(driver.get_node(key)).toEqual(value);
             }
           )
         )
       ));
 
+    test("set_object_data: no-op if called on a non-object node", () =>
+      runTest((driver) => {
+        resetToDefaultNodes(driver);
+
+        const listBefore = driver.get_node("0:dl");
+        const mapBefore = driver.get_node("0:dm");
+
+        // set_object_data on a LiveList is a no-op
+        driver.set_object_data("0:dl", { foo: 42 });
+        expect(driver.get_node("0:dl")).toEqual(listBefore);
+
+        // set_object_data on a LiveMap is a no-op
+        driver.set_object_data("0:dm", { foo: 42 });
+        expect(driver.get_node("0:dm")).toEqual(mapBefore);
+
+        // set_object_data on a LiveObject should work
+        driver.set_object_data("0:do", { foo: 42 });
+        expect(driver.get_node("0:do")).toEqual({
+          type: CrdtType.OBJECT,
+          parentId: "root",
+          parentKey: "o",
+          data: { foo: 42 },
+        });
+      }));
+
     test("set_child + get_node", () =>
-      runTest(async (driver) =>
+      runTest((driver) =>
         fc.assert(
-          fc.asyncProperty(
+          fc.property(
             arb.childNodeTuple(),
 
-            async ([key, value]) => {
-              const db = await withDefaultDocument(driver);
+            ([key, value]) => {
+              resetToDefaultNodes(driver);
 
-              await db.set_child(key, value, true);
-              expect(db.get_node(key)).toEqual(value);
+              driver.set_child(key, value, true);
+              expect(driver.get_node(key)).toEqual(value);
             }
           )
         )
       ));
 
     test("has_node: root always exists", () =>
-      runTest(async (driver) => {
-        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-        const db = await driver.load_nodes_api(blackHole);
-        expect(db.has_node("root")).toBe(true);
+      runTest((driver) => {
+        driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
+        expect(driver.has_node("root")).toBe(true);
       }));
 
     test("has_node: non-existing node returns false", () =>
-      runTest(async (driver) => {
-        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-        const db = await driver.load_nodes_api(blackHole);
-        expect(db.has_node("non-existing")).toBe(false);
+      runTest((driver) => {
+        driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
+        expect(driver.has_node("non-existing")).toBe(false);
       }));
 
     test("has_node: returns true after set, false after delete", () =>
-      runTest(async (driver) =>
+      runTest((driver) =>
         fc.assert(
-          fc.asyncProperty(
+          fc.property(
             arb.childNodeTuple(),
 
-            async ([key, value]) => {
-              const db = await withDefaultDocument(driver);
+            ([key, value]) => {
+              resetToDefaultNodes(driver);
 
-              expect(db.has_node(key)).toBe(false);
-              await db.set_child(key, value, true);
-              expect(db.has_node(key)).toBe(true);
-              await db.delete_node(key);
-              expect(db.has_node(key)).toBe(false);
+              expect(driver.has_node(key)).toBe(false);
+              driver.set_child(key, value, true);
+              expect(driver.has_node(key)).toBe(true);
+              driver.delete_node(key);
+              expect(driver.has_node(key)).toBe(false);
             }
           )
         )
       ));
 
     test("has_node: consistent with get_node", () =>
-      runTest(async (driver) =>
+      runTest((driver) =>
         fc.assert(
-          fc.asyncProperty(
+          fc.property(
             arb.nodeStream(),
 
-            async (entries) => {
-              await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-              const db = await driver.load_nodes_api(blackHole);
-              await write_nodes(db, entries);
+            (entries) => {
+              driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
+
+              write_nodes(driver, entries);
 
               // has_node should be true iff get_node returns a value
               for (const [key] of entries) {
-                expect(db.has_node(key)).toBe(db.get_node(key) !== undefined);
+                expect(driver.has_node(key)).toBe(
+                  driver.get_node(key) !== undefined
+                );
               }
             }
           )
@@ -1188,38 +1201,36 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       ));
 
     test("get_child_at: returns undefined for empty store", () =>
-      runTest(async (driver) => {
-        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-        const db = await driver.load_nodes_api(blackHole);
-        expect(db.get_child_at("root", "someKey")).toBe(undefined);
-        expect(db.get_child_at("non-existing", "someKey")).toBe(undefined);
+      runTest((driver) => {
+        driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
+
+        expect(driver.get_child_at("root", "someKey")).toBe(undefined);
+        expect(driver.get_child_at("non-existing", "someKey")).toBe(undefined);
       }));
 
     test("get_child_at: returns undefined for empty store (property)", () =>
-      runTest(async (driver) =>
+      runTest((driver) =>
         fc.assert(
-          fc.asyncProperty(
+          fc.property(
             arb.key(),
             arb.key(),
 
-            async (parentId, parentKey) => {
-              await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-              const db = await driver.load_nodes_api(blackHole);
-              expect(db.get_child_at(parentId, parentKey)).toBe(undefined);
+            (parentId, parentKey) => {
+              driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
+              expect(driver.get_child_at(parentId, parentKey)).toBe(undefined);
             }
           )
         )
       ));
 
     test("set_child: throws if parent does not exist (orphan)", () =>
-      runTest(async (driver) => {
-        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-        const db = await driver.load_nodes_api(blackHole);
+      runTest((driver) => {
+        driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
 
         // Trying to add a node with a non-existent parentId should throw
-        await expectToThrow(
+        expectToThrow(
           () =>
-            db.set_child("0:0", {
+            driver.set_child("0:0", {
               type: CrdtType.LIST,
               parentId: "nonexistent-parent",
               parentKey: "myList",
@@ -1229,14 +1240,13 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       }));
 
     test("set_child: throws if parent does not exist (ref cycle)", () =>
-      runTest(async (driver) => {
-        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-        const db = await driver.load_nodes_api(blackHole);
+      runTest((driver) => {
+        driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
 
         // Trying to add a node with a non-existent parentId should throw
-        await expectToThrow(
+        expectToThrow(
           () =>
-            db.set_child("0:0", {
+            driver.set_child("0:0", {
               type: CrdtType.LIST,
               parentId: "0:0",
               parentKey: "myList",
@@ -1246,13 +1256,12 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       }));
 
     test("set_child: orphan node is not added after throw", () =>
-      runTest(async (driver) => {
-        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-        const db = await driver.load_nodes_api(blackHole);
+      runTest((driver) => {
+        driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
 
         // Try to add orphan, catch the error
         try {
-          await db.set_child("0:0", {
+          driver.set_child("0:0", {
             type: CrdtType.LIST,
             parentId: "nonexistent-parent",
             parentKey: "myList",
@@ -1262,15 +1271,15 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
         }
 
         // The orphan node should not exist in storage
-        expect(db.get_node("0:0")).toBe(undefined);
+        expect(driver.get_node("0:0")).toBe(undefined);
       }));
 
     test("set_child: throws if adding a register under an object", () =>
-      runTest(async (driver) => {
-        const db = await withDefaultDocument(driver);
+      runTest((driver) => {
+        resetToDefaultNodes(driver);
 
         // Register under LiveList works
-        await db.set_child("0:0", {
+        driver.set_child("0:0", {
           type: CrdtType.REGISTER,
           parentId: "0:dl", // LiveList
           parentKey: "r",
@@ -1278,7 +1287,7 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
         });
 
         // Register under LiveMap works
-        await db.set_child("0:1", {
+        driver.set_child("0:1", {
           type: CrdtType.REGISTER,
           parentId: "0:dm", // LiveMap
           parentKey: "r",
@@ -1286,9 +1295,9 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
         });
 
         // Register under LiveObject does not work
-        await expectToThrow(
+        expectToThrow(
           () =>
-            db.set_child("0:2", {
+            driver.set_child("0:2", {
               type: CrdtType.REGISTER,
               parentId: "0:do",
               parentKey: "r",
@@ -1298,9 +1307,9 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
         );
 
         // Root is also a LiveObject, so this also does not work
-        await expectToThrow(
+        expectToThrow(
           () =>
-            db.set_child("0:3", {
+            driver.set_child("0:3", {
               type: CrdtType.REGISTER,
               parentId: "root",
               parentKey: "r",
@@ -1311,93 +1320,89 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       }));
 
     test("get_child_at: returns child id after set", () =>
-      runTest(async (driver) => {
-        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-        const db = await driver.load_nodes_api(blackHole);
+      runTest((driver) => {
+        driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
 
-        await db.set_child("0:0", {
+        driver.set_child("0:0", {
           type: CrdtType.LIST,
           parentId: "root",
           parentKey: "myList",
         });
 
-        expect(db.get_child_at("root", "myList")).toBe("0:0");
-        expect(db.get_child_at("root", "otherKey")).toBe(undefined);
+        expect(driver.get_child_at("root", "myList")).toBe("0:0");
+        expect(driver.get_child_at("root", "otherKey")).toBe(undefined);
       }));
 
     test("get_child_at: returns undefined after delete", () =>
-      runTest(async (driver) => {
-        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-        const db = await driver.load_nodes_api(blackHole);
+      runTest((driver) => {
+        driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
 
-        await db.set_child("0:0", {
+        driver.set_child("0:0", {
           type: CrdtType.LIST,
           parentId: "root",
           parentKey: "myList",
         });
-        expect(db.get_child_at("root", "myList")).toBe("0:0");
+        expect(driver.get_child_at("root", "myList")).toBe("0:0");
 
-        await db.delete_node("0:0");
-        expect(db.get_child_at("root", "myList")).toBe(undefined);
+        driver.delete_node("0:0");
+        expect(driver.get_child_at("root", "myList")).toBe(undefined);
       }));
 
     test("get_child_at: returns undefined after set_object_data would overwrite it", () =>
-      runTest(async (driver) => {
-        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-        const db = await driver.load_nodes_api(blackHole);
+      runTest((driver) => {
+        driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
 
-        await db.set_child("0:0", {
+        driver.set_child("0:0", {
           type: CrdtType.LIST,
           parentId: "root",
           parentKey: "myList",
         });
-        expect(db.get_child_at("root", "myList")).toBe("0:0");
+        expect(driver.get_child_at("root", "myList")).toBe("0:0");
 
-        await db.set_object_data("root", { myList: [1, 2, 3] }, true);
-        expect(db.get_child_at("root", "myList")).toBe(undefined);
+        driver.set_object_data("root", { myList: [1, 2, 3] }, true);
+        expect(driver.get_child_at("root", "myList")).toBe(undefined);
       }));
 
     test("get_child_at: tracks nested children", () =>
-      runTest(async (driver) => {
-        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-        const db = await driver.load_nodes_api(blackHole);
+      runTest((driver) => {
+        driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
 
         // root -> list -> register
-        await db.set_child("0:0", {
+        driver.set_child("0:0", {
           type: CrdtType.LIST,
           parentId: "root",
           parentKey: "myList",
         });
-        await db.set_child("0:1", {
+        driver.set_child("0:1", {
           type: CrdtType.REGISTER,
           parentId: "0:0",
           parentKey: FIRST_POSITION,
           data: "hello",
         });
 
-        expect(db.get_child_at("root", "myList")).toBe("0:0");
-        expect(db.get_child_at("0:0", FIRST_POSITION)).toBe("0:1");
-        expect(db.get_child_at("0:1", "anything")).toBe(undefined);
+        expect(driver.get_child_at("root", "myList")).toBe("0:0");
+        expect(driver.get_child_at("0:0", FIRST_POSITION)).toBe("0:1");
+        expect(driver.get_child_at("0:1", "anything")).toBe(undefined);
       }));
 
     test("get_child_at: consistent with iter_nodes", () =>
-      runTest(async (driver) =>
+      runTest((driver) =>
         fc.assert(
-          fc.asyncProperty(
+          fc.property(
             arb.nodeStream(),
 
-            async (entries) => {
-              await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-              const db = await driver.load_nodes_api(blackHole);
-              await write_nodes(db, entries);
+            (entries) => {
+              driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
+
+              write_nodes(driver, entries);
 
               // For each node with a parent, get_child_at(parentId, parentKey) should return the node's id
-              for (const node of db.iter_nodes()) {
+              for (const node of driver.iter_nodes()) {
                 if (!isRootStorageNode(node)) {
                   const [id, crdt] = node;
-                  expect(db.get_child_at(crdt.parentId, crdt.parentKey)).toBe(
-                    id
-                  );
+                  expect(
+                    driver.get_child_at(crdt.parentId, crdt.parentKey)
+                  ).toBe(id);
                 }
               }
             }
@@ -1406,65 +1411,64 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       ));
 
     test("has_child_at: returns false for empty store", () =>
-      runTest(async (driver) => {
-        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-        const db = await driver.load_nodes_api(blackHole);
-        expect(db.has_child_at("root", "someKey")).toBe(false);
-        expect(db.has_child_at("non-existing", "someKey")).toBe(false);
+      runTest((driver) => {
+        driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
+
+        expect(driver.has_child_at("root", "someKey")).toBe(false);
+        expect(driver.has_child_at("non-existing", "someKey")).toBe(false);
       }));
 
     test("has_child_at: returns false for empty store (property)", () =>
-      runTest(async (driver) =>
+      runTest((driver) =>
         fc.assert(
-          fc.asyncProperty(
+          fc.property(
             arb.key(),
             arb.key(),
 
-            async (parentId, parentKey) => {
-              await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-              const db = await driver.load_nodes_api(blackHole);
-              expect(db.has_child_at(parentId, parentKey)).toBe(false);
+            (parentId, parentKey) => {
+              driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
+
+              expect(driver.has_child_at(parentId, parentKey)).toBe(false);
             }
           )
         )
       ));
 
     test("has_child_at: returns true after set, false after delete", () =>
-      runTest(async (driver) => {
-        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-        const db = await driver.load_nodes_api(blackHole);
+      runTest((driver) => {
+        driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
 
-        expect(db.has_child_at("root", "myList")).toBe(false);
+        expect(driver.has_child_at("root", "myList")).toBe(false);
 
-        await db.set_child("0:0", {
+        driver.set_child("0:0", {
           type: CrdtType.LIST,
           parentId: "root",
           parentKey: "myList",
         });
 
-        expect(db.has_child_at("root", "myList")).toBe(true);
-        expect(db.has_child_at("root", "otherKey")).toBe(false);
+        expect(driver.has_child_at("root", "myList")).toBe(true);
+        expect(driver.has_child_at("root", "otherKey")).toBe(false);
 
-        await db.delete_node("0:0");
-        expect(db.has_child_at("root", "myList")).toBe(false);
+        driver.delete_node("0:0");
+        expect(driver.has_child_at("root", "myList")).toBe(false);
       }));
 
     test("has_child_at: consistent with get_child_at", () =>
-      runTest(async (driver) =>
+      runTest((driver) =>
         fc.assert(
-          fc.asyncProperty(
+          fc.property(
             arb.nodeStream(),
             arb.key(),
             arb.key(),
 
-            async (entries, parentId, parentKey) => {
-              await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-              const db = await driver.load_nodes_api(blackHole);
-              await write_nodes(db, entries);
+            (entries, parentId, parentKey) => {
+              driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
+
+              write_nodes(driver, entries);
 
               // has_child_at should be true iff get_child_at returns a value
-              expect(db.has_child_at(parentId, parentKey)).toBe(
-                db.get_child_at(parentId, parentKey) !== undefined
+              expect(driver.has_child_at(parentId, parentKey)).toBe(
+                driver.get_child_at(parentId, parentKey) !== undefined
               );
             }
           )
@@ -1472,29 +1476,27 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       ));
 
     test("get_next_sibling: returns undefined for empty parent", () =>
-      runTest(async (driver) => {
-        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-        const db = await driver.load_nodes_api(blackHole);
+      runTest((driver) => {
+        driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
 
         // No children under root, so no next position
-        expect(db.get_next_sibling("root", FIRST_POSITION)).toBe(undefined);
-        expect(db.get_next_sibling("non-existing", FIRST_POSITION)).toBe(
+        expect(driver.get_next_sibling("root", FIRST_POSITION)).toBe(undefined);
+        expect(driver.get_next_sibling("non-existing", FIRST_POSITION)).toBe(
           undefined
         );
       }));
 
     test("get_next_sibling: returns undefined when no positions after", () =>
-      runTest(async (driver) => {
-        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-        const db = await driver.load_nodes_api(blackHole);
+      runTest((driver) => {
+        driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
 
         // Add a list with one item at FIRST_POSITION
-        await db.set_child("0:0", {
+        driver.set_child("0:0", {
           type: CrdtType.LIST,
           parentId: "root",
           parentKey: "myList",
         });
-        await db.set_child("0:1", {
+        driver.set_child("0:1", {
           type: CrdtType.REGISTER,
           parentId: "0:0",
           parentKey: SECOND_POSITION,
@@ -1502,47 +1504,46 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
         });
 
         // No position after 2nd
-        expect(db.get_next_sibling("0:0", SECOND_POSITION)).toBe(undefined);
+        expect(driver.get_next_sibling("0:0", SECOND_POSITION)).toBe(undefined);
         // Position before 2nd should find 1st
-        expect(db.get_next_sibling("0:0", FIRST_POSITION)).toBe(
+        expect(driver.get_next_sibling("0:0", FIRST_POSITION)).toBe(
           SECOND_POSITION
         );
       }));
 
     test("get_next_sibling: finds next position in ordered list", () =>
-      runTest(async (driver) => {
-        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-        const db = await driver.load_nodes_api(blackHole);
+      runTest((driver) => {
+        driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
 
         // Create list with items at FIRST, SECOND, THIRD positions
-        await db.set_child("0:0", {
+        driver.set_child("0:0", {
           type: CrdtType.LIST,
           parentId: "root",
           parentKey: "myList",
         });
-        await db.set_child("0:1", {
+        driver.set_child("0:1", {
           type: CrdtType.REGISTER,
           parentId: "0:0",
           parentKey: SECOND_POSITION,
           data: "item1",
         });
-        await db.set_child("0:2", {
+        driver.set_child("0:2", {
           type: CrdtType.REGISTER,
           parentId: "0:0",
           parentKey: THIRD_POSITION,
           data: "item2",
         });
 
-        expect(db.get_next_sibling("0:0", FIRST_POSITION)).toBe(
+        expect(driver.get_next_sibling("0:0", FIRST_POSITION)).toBe(
           SECOND_POSITION
         );
-        expect(db.get_next_sibling("0:0", SECOND_POSITION)).toBe(
+        expect(driver.get_next_sibling("0:0", SECOND_POSITION)).toBe(
           THIRD_POSITION
         );
-        expect(db.get_next_sibling("0:0", THIRD_POSITION)).toBe(undefined);
+        expect(driver.get_next_sibling("0:0", THIRD_POSITION)).toBe(undefined);
         // From 2.5'th position, still goes to 3rd
         expect(
-          db.get_next_sibling(
+          driver.get_next_sibling(
             "0:0",
             makePosition(SECOND_POSITION, THIRD_POSITION)
           )
@@ -1550,147 +1551,144 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       }));
 
     test("get_next_sibling: updates after delete", () =>
-      runTest(async (driver) => {
-        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-        const db = await driver.load_nodes_api(blackHole);
+      runTest((driver) => {
+        driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
 
-        await db.set_child("0:0", {
+        driver.set_child("0:0", {
           type: CrdtType.LIST,
           parentId: "root",
           parentKey: "myList",
         });
-        await db.set_child("0:1", {
+        driver.set_child("0:1", {
           type: CrdtType.REGISTER,
           parentId: "0:0",
           parentKey: FIRST_POSITION,
           data: "item1",
         });
-        await db.set_child("0:3", {
+        driver.set_child("0:3", {
           type: CrdtType.REGISTER,
           parentId: "0:0",
           parentKey: THIRD_POSITION,
           data: "item3",
         });
-        await db.set_child("0:2", {
+        driver.set_child("0:2", {
           type: CrdtType.REGISTER,
           parentId: "0:0",
           parentKey: SECOND_POSITION,
           data: "item2",
         });
 
-        expect(db.get_next_sibling("0:0", FIRST_POSITION)).toBe(
+        expect(driver.get_next_sibling("0:0", FIRST_POSITION)).toBe(
           SECOND_POSITION
         );
 
-        await db.delete_node("0:2");
-        expect(db.get_next_sibling("0:0", FIRST_POSITION)).toBe(THIRD_POSITION);
+        driver.delete_node("0:2");
+        expect(driver.get_next_sibling("0:0", FIRST_POSITION)).toBe(
+          THIRD_POSITION
+        );
 
-        await db.delete_node("0:3");
-        expect(db.get_next_sibling("0:0", FIRST_POSITION)).toBe(undefined);
+        driver.delete_node("0:3");
+        expect(driver.get_next_sibling("0:0", FIRST_POSITION)).toBe(undefined);
       }));
 
     test("get_last_sibling: returns undefined for empty parent", () =>
-      runTest(async (driver) => {
-        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-        const db = await driver.load_nodes_api(blackHole);
+      runTest((driver) => {
+        driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
 
-        expect(db.get_last_sibling("root")).toBe(undefined);
-        expect(db.get_last_sibling("non-existing")).toBe(undefined);
+        expect(driver.get_last_sibling("root")).toBe(undefined);
+        expect(driver.get_last_sibling("non-existing")).toBe(undefined);
       }));
 
     test("get_last_sibling: returns the rightmost position", () =>
-      runTest(async (driver) => {
-        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-        const db = await driver.load_nodes_api(blackHole);
+      runTest((driver) => {
+        driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
 
-        await db.set_child("0:0", {
+        driver.set_child("0:0", {
           type: CrdtType.LIST,
           parentId: "root",
           parentKey: "myList",
         });
-        await db.set_child("0:1", {
+        driver.set_child("0:1", {
           type: CrdtType.REGISTER,
           parentId: "0:0",
           parentKey: FIRST_POSITION,
           data: "item1",
         });
-        expect(db.get_last_sibling("0:0")).toBe(FIRST_POSITION);
+        expect(driver.get_last_sibling("0:0")).toBe(FIRST_POSITION);
 
         // Insert later positions out of order; the rightmost one wins
-        await db.set_child("0:3", {
+        driver.set_child("0:3", {
           type: CrdtType.REGISTER,
           parentId: "0:0",
           parentKey: THIRD_POSITION,
           data: "item3",
         });
-        await db.set_child("0:2", {
+        driver.set_child("0:2", {
           type: CrdtType.REGISTER,
           parentId: "0:0",
           parentKey: SECOND_POSITION,
           data: "item2",
         });
-        expect(db.get_last_sibling("0:0")).toBe(THIRD_POSITION);
+        expect(driver.get_last_sibling("0:0")).toBe(THIRD_POSITION);
       }));
 
     test("get_last_sibling: updates after delete", () =>
-      runTest(async (driver) => {
-        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-        const db = await driver.load_nodes_api(blackHole);
+      runTest((driver) => {
+        driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
 
-        await db.set_child("0:0", {
+        driver.set_child("0:0", {
           type: CrdtType.LIST,
           parentId: "root",
           parentKey: "myList",
         });
-        await db.set_child("0:1", {
+        driver.set_child("0:1", {
           type: CrdtType.REGISTER,
           parentId: "0:0",
           parentKey: FIRST_POSITION,
           data: "item1",
         });
-        await db.set_child("0:2", {
+        driver.set_child("0:2", {
           type: CrdtType.REGISTER,
           parentId: "0:0",
           parentKey: SECOND_POSITION,
           data: "item2",
         });
 
-        expect(db.get_last_sibling("0:0")).toBe(SECOND_POSITION);
+        expect(driver.get_last_sibling("0:0")).toBe(SECOND_POSITION);
 
-        await db.delete_node("0:2");
-        expect(db.get_last_sibling("0:0")).toBe(FIRST_POSITION);
+        driver.delete_node("0:2");
+        expect(driver.get_last_sibling("0:0")).toBe(FIRST_POSITION);
 
-        await db.delete_node("0:1");
-        expect(db.get_last_sibling("0:0")).toBe(undefined);
+        driver.delete_node("0:1");
+        expect(driver.get_last_sibling("0:0")).toBe(undefined);
       }));
 
     test("move: changes parentKey of node", () =>
-      runTest(async (driver) => {
-        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-        const db = await driver.load_nodes_api(blackHole);
+      runTest((driver) => {
+        driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
 
-        await db.set_child("0:0", {
+        driver.set_child("0:0", {
           type: CrdtType.LIST,
           parentId: "root",
           parentKey: "myList",
         });
-        await db.set_child("0:1", {
+        driver.set_child("0:1", {
           type: CrdtType.REGISTER,
           parentId: "0:0",
           parentKey: FIRST_POSITION,
           data: "item",
         });
 
-        expect(db.get_child_at("0:0", FIRST_POSITION)).toBe("0:1");
-        expect(db.get_child_at("0:0", SECOND_POSITION)).toBe(undefined);
+        expect(driver.get_child_at("0:0", FIRST_POSITION)).toBe("0:1");
+        expect(driver.get_child_at("0:0", SECOND_POSITION)).toBe(undefined);
 
-        await db.move_sibling("0:1", SECOND_POSITION);
+        driver.move_sibling("0:1", SECOND_POSITION);
 
-        expect(db.get_child_at("0:0", FIRST_POSITION)).toBe(undefined);
-        expect(db.get_child_at("0:0", SECOND_POSITION)).toBe("0:1");
+        expect(driver.get_child_at("0:0", FIRST_POSITION)).toBe(undefined);
+        expect(driver.get_child_at("0:0", SECOND_POSITION)).toBe("0:1");
 
         // Verify node data is preserved
-        const node = db.get_node("0:1");
+        const node = driver.get_node("0:1");
         expect(node).toEqual({
           type: CrdtType.REGISTER,
           parentId: "0:0",
@@ -1700,22 +1698,21 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       }));
 
     test("move: updates get_next_sibling correctly", () =>
-      runTest(async (driver) => {
-        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-        const db = await driver.load_nodes_api(blackHole);
+      runTest((driver) => {
+        driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
 
-        await db.set_child("0:0", {
+        driver.set_child("0:0", {
           type: CrdtType.LIST,
           parentId: "root",
           parentKey: "myList",
         });
-        await db.set_child("0:1", {
+        driver.set_child("0:1", {
           type: CrdtType.REGISTER,
           parentId: "0:0",
           parentKey: FIRST_POSITION,
           data: "item1",
         });
-        await db.set_child("0:2", {
+        driver.set_child("0:2", {
           type: CrdtType.REGISTER,
           parentId: "0:0",
           parentKey: THIRD_POSITION,
@@ -1723,72 +1720,72 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
         });
 
         // Before move: FIRST -> THIRD
-        expect(db.get_next_sibling("0:0", FIRST_POSITION)).toBe(THIRD_POSITION);
+        expect(driver.get_next_sibling("0:0", FIRST_POSITION)).toBe(
+          THIRD_POSITION
+        );
 
         // Move first item to second position
-        await db.move_sibling("0:1", SECOND_POSITION);
+        driver.move_sibling("0:1", SECOND_POSITION);
 
         // After move: SECOND -> THIRD
-        expect(db.get_next_sibling("0:0", FIRST_POSITION)).toBe(
+        expect(driver.get_next_sibling("0:0", FIRST_POSITION)).toBe(
           SECOND_POSITION
         );
-        expect(db.get_next_sibling("0:0", SECOND_POSITION)).toBe(
+        expect(driver.get_next_sibling("0:0", SECOND_POSITION)).toBe(
           THIRD_POSITION
         );
       }));
 
     test("move: multiple moves on same node", () =>
-      runTest(async (driver) => {
-        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-        const db = await driver.load_nodes_api(blackHole);
+      runTest((driver) => {
+        driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
 
-        await db.set_child("0:0", {
+        driver.set_child("0:0", {
           type: CrdtType.LIST,
           parentId: "root",
           parentKey: "myList",
         });
-        await db.set_child("0:1", {
+        driver.set_child("0:1", {
           type: CrdtType.REGISTER,
           parentId: "0:0",
           parentKey: FIRST_POSITION,
           data: "item",
         });
 
-        await db.move_sibling("0:1", SECOND_POSITION);
-        expect(db.get_child_at("0:0", SECOND_POSITION)).toBe("0:1");
+        driver.move_sibling("0:1", SECOND_POSITION);
+        expect(driver.get_child_at("0:0", SECOND_POSITION)).toBe("0:1");
 
-        await db.move_sibling("0:1", THIRD_POSITION);
-        expect(db.get_child_at("0:0", SECOND_POSITION)).toBe(undefined);
-        expect(db.get_child_at("0:0", THIRD_POSITION)).toBe("0:1");
+        driver.move_sibling("0:1", THIRD_POSITION);
+        expect(driver.get_child_at("0:0", SECOND_POSITION)).toBe(undefined);
+        expect(driver.get_child_at("0:0", THIRD_POSITION)).toBe("0:1");
 
-        await db.move_sibling("0:1", FIRST_POSITION);
-        expect(db.get_child_at("0:0", THIRD_POSITION)).toBe(undefined);
-        expect(db.get_child_at("0:0", FIRST_POSITION)).toBe("0:1");
+        driver.move_sibling("0:1", FIRST_POSITION);
+        expect(driver.get_child_at("0:0", THIRD_POSITION)).toBe(undefined);
+        expect(driver.get_child_at("0:0", FIRST_POSITION)).toBe("0:1");
       }));
 
     test("move: preserves other siblings", () =>
-      runTest(async (driver) => {
-        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-        const db = await driver.load_nodes_api(blackHole);
+      runTest((driver) => {
+        driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
 
-        await db.set_child("0:0", {
+        driver.set_child("0:0", {
           type: CrdtType.LIST,
           parentId: "root",
           parentKey: "myList",
         });
-        await db.set_child("0:1", {
+        driver.set_child("0:1", {
           type: CrdtType.REGISTER,
           parentId: "0:0",
           parentKey: FIRST_POSITION,
           data: "item1",
         });
-        await db.set_child("0:2", {
+        driver.set_child("0:2", {
           type: CrdtType.REGISTER,
           parentId: "0:0",
           parentKey: SECOND_POSITION,
           data: "item2",
         });
-        await db.set_child("0:3", {
+        driver.set_child("0:3", {
           type: CrdtType.REGISTER,
           parentId: "0:0",
           parentKey: THIRD_POSITION,
@@ -1800,32 +1797,33 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
           FIRST_POSITION,
           SECOND_POSITION
         );
-        await db.move_sibling("0:2", BETWEEN_FIRST_AND_SECOND);
+        driver.move_sibling("0:2", BETWEEN_FIRST_AND_SECOND);
 
         // Other items should be unaffected
-        expect(db.get_child_at("0:0", FIRST_POSITION)).toBe("0:1");
-        expect(db.get_child_at("0:0", THIRD_POSITION)).toBe("0:3");
-        expect(db.get_child_at("0:0", BETWEEN_FIRST_AND_SECOND)).toBe("0:2");
-        expect(db.get_child_at("0:0", SECOND_POSITION)).toBe(undefined);
+        expect(driver.get_child_at("0:0", FIRST_POSITION)).toBe("0:1");
+        expect(driver.get_child_at("0:0", THIRD_POSITION)).toBe("0:3");
+        expect(driver.get_child_at("0:0", BETWEEN_FIRST_AND_SECOND)).toBe(
+          "0:2"
+        );
+        expect(driver.get_child_at("0:0", SECOND_POSITION)).toBe(undefined);
       }));
 
     test("move: throws when target position is occupied", () =>
-      runTest(async (driver) => {
-        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-        const db = await driver.load_nodes_api(blackHole);
+      runTest((driver) => {
+        driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
 
-        await db.set_child("0:0", {
+        driver.set_child("0:0", {
           type: CrdtType.LIST,
           parentId: "root",
           parentKey: "myList",
         });
-        await db.set_child("0:1", {
+        driver.set_child("0:1", {
           type: CrdtType.REGISTER,
           parentId: "0:0",
           parentKey: FIRST_POSITION,
           data: "item1",
         });
-        await db.set_child("0:2", {
+        driver.set_child("0:2", {
           type: CrdtType.REGISTER,
           parentId: "0:0",
           parentKey: SECOND_POSITION,
@@ -1833,155 +1831,149 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
         });
 
         // Move 0:1 to SECOND_POSITION should throw since 0:2 is there
-        await expectToThrow(
-          () => db.move_sibling("0:1", SECOND_POSITION),
+        expectToThrow(
+          () => driver.move_sibling("0:1", SECOND_POSITION),
           /pos.*already taken/i
         );
 
         // Both nodes should remain unchanged
-        expect(db.get_child_at("0:0", FIRST_POSITION)).toBe("0:1");
-        expect(db.get_child_at("0:0", SECOND_POSITION)).toBe("0:2");
-        expect(db.has_node("0:1")).toBe(true);
-        expect(db.has_node("0:2")).toBe(true);
+        expect(driver.get_child_at("0:0", FIRST_POSITION)).toBe("0:1");
+        expect(driver.get_child_at("0:0", SECOND_POSITION)).toBe("0:2");
+        expect(driver.has_node("0:1")).toBe(true);
+        expect(driver.has_node("0:2")).toBe(true);
       }));
 
     test("delete_child_key: removes static data key from object", () =>
-      runTest(async (driver) => {
-        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-        const db = await driver.load_nodes_api(blackHole);
+      runTest((driver) => {
+        driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
 
-        await db.set_object_data("root", { a: 1, b: 2, c: 3 });
+        driver.set_object_data("root", { a: 1, b: 2, c: 3 });
 
-        expect(db.get_node("root")).toEqual({
+        expect(driver.get_node("root")).toEqual({
           type: CrdtType.OBJECT,
           data: { a: 1, b: 2, c: 3 },
         });
 
-        await db.delete_child_key("root", "b");
+        driver.delete_child_key("root", "b");
 
-        expect(db.get_node("root")).toEqual({
+        expect(driver.get_node("root")).toEqual({
           type: CrdtType.OBJECT,
           data: { a: 1, c: 3 },
         });
       }));
 
     test("delete_child_key: removes child node", () =>
-      runTest(async (driver) => {
-        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-        const db = await driver.load_nodes_api(blackHole);
+      runTest((driver) => {
+        driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
 
-        await db.set_child("0:0", {
+        driver.set_child("0:0", {
           type: CrdtType.LIST,
           parentId: "root",
           parentKey: "myList",
         });
 
-        expect(db.has_node("0:0")).toBe(true);
-        expect(db.get_child_at("root", "myList")).toBe("0:0");
+        expect(driver.has_node("0:0")).toBe(true);
+        expect(driver.get_child_at("root", "myList")).toBe("0:0");
 
-        await db.delete_child_key("root", "myList");
+        driver.delete_child_key("root", "myList");
 
-        expect(db.has_node("0:0")).toBe(false);
-        expect(db.get_child_at("root", "myList")).toBe(undefined);
+        expect(driver.has_node("0:0")).toBe(false);
+        expect(driver.get_child_at("root", "myList")).toBe(undefined);
       }));
 
     test("delete_child_key: removes child node and its descendants recursively", () =>
-      runTest(async (driver) => {
-        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-        const db = await driver.load_nodes_api(blackHole);
+      runTest((driver) => {
+        driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
 
         // root -> list -> register
-        await db.set_child("0:0", {
+        driver.set_child("0:0", {
           type: CrdtType.LIST,
           parentId: "root",
           parentKey: "myList",
         });
-        await db.set_child("0:1", {
+        driver.set_child("0:1", {
           type: CrdtType.REGISTER,
           parentId: "0:0",
           parentKey: FIRST_POSITION,
           data: "item1",
         });
-        await db.set_child("0:2", {
+        driver.set_child("0:2", {
           type: CrdtType.REGISTER,
           parentId: "0:0",
           parentKey: SECOND_POSITION,
           data: "item2",
         });
 
-        expect(db.has_node("0:0")).toBe(true);
-        expect(db.has_node("0:1")).toBe(true);
-        expect(db.has_node("0:2")).toBe(true);
+        expect(driver.has_node("0:0")).toBe(true);
+        expect(driver.has_node("0:1")).toBe(true);
+        expect(driver.has_node("0:2")).toBe(true);
 
-        await db.delete_child_key("root", "myList");
+        driver.delete_child_key("root", "myList");
 
-        expect(db.has_node("0:0")).toBe(false);
-        expect(db.has_node("0:1")).toBe(false);
-        expect(db.has_node("0:2")).toBe(false);
+        expect(driver.has_node("0:0")).toBe(false);
+        expect(driver.has_node("0:1")).toBe(false);
+        expect(driver.has_node("0:2")).toBe(false);
       }));
 
     test("delete_child_key: no-op for non-existing key", () =>
-      runTest(async (driver) => {
-        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-        const db = await driver.load_nodes_api(blackHole);
+      runTest((driver) => {
+        driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
 
-        await db.set_object_data("root", { a: 1 });
+        driver.set_object_data("root", { a: 1 });
 
         // Should not throw
-        await db.delete_child_key("root", "nonexistent");
-        await db.delete_child_key("nonexistent-node", "somekey");
+        driver.delete_child_key("root", "nonexistent");
+        driver.delete_child_key("nonexistent-node", "somekey");
 
-        expect(db.get_node("root")).toEqual({
+        expect(driver.get_node("root")).toEqual({
           type: CrdtType.OBJECT,
           data: { a: 1 },
         });
       }));
 
     test("delete_child_key: preserves sibling data and nodes", () =>
-      runTest(async (driver) => {
-        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-        const db = await driver.load_nodes_api(blackHole);
+      runTest((driver) => {
+        driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
 
-        await db.set_object_data("root", { a: 1, b: 2 });
-        await db.set_child("0:0", {
+        driver.set_object_data("root", { a: 1, b: 2 });
+        driver.set_child("0:0", {
           type: CrdtType.LIST,
           parentId: "root",
           parentKey: "list1",
         });
-        await db.set_child("0:1", {
+        driver.set_child("0:1", {
           type: CrdtType.LIST,
           parentId: "root",
           parentKey: "list2",
         });
 
-        await db.delete_child_key("root", "a");
-        await db.delete_child_key("root", "list1");
+        driver.delete_child_key("root", "a");
+        driver.delete_child_key("root", "list1");
 
         // Siblings should be preserved
-        const rootNode = db.get_node("root");
+        const rootNode = driver.get_node("root");
         expect(rootNode).toEqual({
           type: CrdtType.OBJECT,
           data: { b: 2 },
         });
-        expect(db.has_node("0:0")).toBe(false);
-        expect(db.has_node("0:1")).toBe(true);
-        expect(db.get_child_at("root", "list2")).toBe("0:1");
+        expect(driver.has_node("0:0")).toBe(false);
+        expect(driver.has_node("0:1")).toBe(true);
+        expect(driver.get_child_at("root", "list2")).toBe("0:1");
       }));
 
     test("set + iter_nodes", () =>
-      runTest(async (driver) =>
+      runTest((driver) =>
         fc.assert(
-          fc.asyncProperty(
+          fc.property(
             arb.nodeMap(),
 
-            async (entries) => {
-              await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-              const db = await driver.load_nodes_api(blackHole);
+            (entries) => {
+              driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
 
-              await write_nodes(db, entries as NodeStream);
+              write_nodes(driver, entries as NodeStream);
 
               // iter_nodes includes all inserted children
-              for (const [key, value] of db.iter_nodes()) {
+              for (const [key, value] of driver.iter_nodes()) {
                 if (entries.has(key)) {
                   expect(value).toEqual(entries.get(key)!);
                 } else {
@@ -1994,33 +1986,33 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       ));
 
     test("set_child overwrites existing node, delete_node removes it", () =>
-      runTest(async (driver) =>
+      runTest((driver) =>
         fc.assert(
-          fc.asyncProperty(
+          fc.property(
             arb.key(),
             arb.serializedChild(),
             arb.serializedChild(),
 
-            async (key, value1, value2) => {
+            (key, value1, value2) => {
               fc.pre(key !== "root");
 
-              const db = await withDefaultDocument(driver);
+              resetToDefaultNodes(driver);
 
-              await db.set_child(key, value1, true);
-              await db.set_child(key, value2, true); // overwrite same key
-              expect(db.get_node(key)).toEqual(value2);
+              driver.set_child(key, value1, true);
+              driver.set_child(key, value2, true); // overwrite same key
+              expect(driver.get_node(key)).toEqual(value2);
 
-              await delete_nodes(db, [key]);
-              expect(db.get_node(key)).toEqual(undefined);
+              delete_nodes(driver, [key]);
+              expect(driver.get_node(key)).toEqual(undefined);
             }
           )
         )
       ));
 
     test("delete_nodes (single key)", () =>
-      runTest(async (driver) =>
+      runTest((driver) =>
         fc.assert(
-          fc.asyncProperty(
+          fc.property(
             // Generate 3 non-root pairs where all node IDs and parentIds are unique
             // (6 unique values total), ensuring no cross-references between entries
             fc
@@ -2041,25 +2033,26 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
                   ]).size === 6
               ),
 
-            async ([entry1, entry2, entry3]) => {
-              const db = await withDefaultDocument(driver);
-              await write_nodes(db, [entry1, entry2, entry3]);
+            ([entry1, entry2, entry3]) => {
+              resetToDefaultNodes(driver);
+
+              write_nodes(driver, [entry1, entry2, entry3]);
 
               const key1 = entry1[0];
               const key2 = entry2[0];
               const key3 = entry3[0];
 
-              expect(new Set(imap(db.iter_nodes(), ([k]) => k))).toEqual(
+              expect(new Set(imap(driver.iter_nodes(), ([k]) => k))).toEqual(
                 new Set([...KNOWN_DOC_KEYS, key1, key2, key3])
               );
-              await delete_nodes(db, [key1]);
-              await delete_nodes(db, [key1]); // Deleting twice has no effect
-              expect(new Set(imap(db.iter_nodes(), ([k]) => k))).toEqual(
+              delete_nodes(driver, [key1]);
+              delete_nodes(driver, [key1]); // Deleting twice has no effect
+              expect(new Set(imap(driver.iter_nodes(), ([k]) => k))).toEqual(
                 new Set([...KNOWN_DOC_KEYS, key2, key3])
               );
-              await delete_nodes(db, [key2]);
-              await delete_nodes(db, [key2]); // Deleting twice has no effect
-              expect(new Set(imap(db.iter_nodes(), ([k]) => k))).toEqual(
+              delete_nodes(driver, [key2]);
+              delete_nodes(driver, [key2]); // Deleting twice has no effect
+              expect(new Set(imap(driver.iter_nodes(), ([k]) => k))).toEqual(
                 new Set([...KNOWN_DOC_KEYS, key3])
               );
             }
@@ -2068,41 +2061,41 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       ));
 
     test("deleting the root is a no-op", () =>
-      runTest(async (driver) => {
-        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-        const db = await driver.load_nodes_api(blackHole);
-        await db.set_object_data("root", { foo: 42 });
+      runTest((driver) => {
+        driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
+
+        driver.set_object_data("root", { foo: 42 });
 
         // Try to delete the root node
-        await db.delete_node("root");
+        driver.delete_node("root");
 
         // ...it should not work
-        expect(Array.from(db.iter_nodes())).toEqual([
+        expect(Array.from(driver.iter_nodes())).toEqual([
           ["root", { type: CrdtType.OBJECT, data: { foo: 42 } }],
           //                                      ^^^^^^^^^^^ Still there
         ]);
       }));
 
     test("write_nodes + get_node loop", () =>
-      runTest(async (driver) =>
+      runTest((driver) =>
         fc.assert(
-          fc.asyncProperty(
+          fc.property(
             arb.nodeMap(),
 
-            async (entries) => {
-              await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-              const db = await driver.load_nodes_api(blackHole);
-              expect(Array.from(db.iter_nodes())).toEqual([
+            (entries) => {
+              driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
+
+              expect(Array.from(driver.iter_nodes())).toEqual([
                 ["root", { type: CrdtType.OBJECT, data: {} }],
               ]);
 
               // Write all the entries (can have dupes)
-              await write_nodes(db, entries as NodeStream);
+              write_nodes(driver, entries as NodeStream);
 
               // Check that get_node returns expected results
               const map = new Map<string, SerializedCrdt>(entries); // de-dupe
               for (const [key, expected] of map) {
-                expect(db.get_node(key)).toEqual(expected);
+                expect(driver.get_node(key)).toEqual(expected);
               }
             }
           )
@@ -2110,22 +2103,22 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       ));
 
     test("write_nodes + iter_nodes", () =>
-      runTest(async (driver) =>
+      runTest((driver) =>
         fc.assert(
-          fc.asyncProperty(
+          fc.property(
             arb.nodeMap(),
 
-            async (entries) => {
-              await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-              const db = await driver.load_nodes_api(blackHole);
-              expect(Array.from(db.iter_nodes())).toEqual([
+            (entries) => {
+              driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
+
+              expect(Array.from(driver.iter_nodes())).toEqual([
                 ["root", { type: CrdtType.OBJECT, data: {} }],
               ]);
 
               // Write all the entries (can have dupes)
-              await write_nodes(db, entries as NodeStream);
+              write_nodes(driver, entries as NodeStream);
 
-              for (const [key, value] of db.iter_nodes()) {
+              for (const [key, value] of driver.iter_nodes()) {
                 if (entries.has(key)) {
                   expect(value).toEqual(entries.get(key)!);
                 } else {
@@ -2136,7 +2129,7 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
               // Check that readone will also have the same results
               const map = new Map(entries); // de-dupe
               for (const [key, expected] of map) {
-                expect(db.get_node(key)).toEqual(expected);
+                expect(driver.get_node(key)).toEqual(expected);
               }
             }
           )
@@ -2144,26 +2137,26 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       ));
 
     test("iter_nodes_optimized agrees with iter_nodes (cross-driver parity)", () =>
-      runTest(async (driver) =>
+      runTest((driver) =>
         fc.assert(
-          fc.asyncProperty(
+          fc.property(
             arb.nodeMap(),
 
-            async (entries) => {
-              await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-              const db = await driver.load_nodes_api(blackHole);
-              await write_nodes(db, entries as NodeStream);
+            (entries) => {
+              driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
+
+              write_nodes(driver, entries as NodeStream);
 
               // Parse the wire tuples back into CompactNodes and compare
               // against what the canonical nodeStreamToCompactNodes would
               // produce from iter_nodes(). Catches any divergence between the
               // optimized SQL path and the readable JS path (string encoding,
               // escaping, missing fields, type coercion, etc.).
-              const fromWire = Array.from(db.iter_nodes_optimized()).map(
+              const fromWire = Array.from(driver.iter_nodes_optimized()).map(
                 (t) => JSON.parse(t) as unknown
               );
               const fromIter = Array.from(
-                nodeStreamToCompactNodes(db.iter_nodes())
+                nodeStreamToCompactNodes(driver.iter_nodes())
               ) as unknown[];
               const byId = (a: unknown, b: unknown) =>
                 (a as [string])[0].localeCompare((b as [string])[0]);
@@ -2175,21 +2168,21 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       ));
 
     test("delete_nodes", () =>
-      runTest(async (driver) =>
+      runTest((driver) =>
         fc.assert(
-          fc.asyncProperty(
+          fc.property(
             arb.nodeStream(),
 
-            async (entries) => {
-              await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-              const db = await driver.load_nodes_api(blackHole);
-              await write_nodes(db, entries);
+            (entries) => {
+              driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
 
-              await delete_nodes(
-                db,
+              write_nodes(driver, entries);
+
+              delete_nodes(
+                driver,
                 new Map<string, SerializedCrdt>(entries).keys()
               );
-              for (const [key] of db.iter_nodes()) {
+              for (const [key] of driver.iter_nodes()) {
                 // Only "root" should remain - all entries should be deleted
                 expect(key).toEqual("root");
               }
@@ -2199,31 +2192,31 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       ));
 
     test("delete_nodes (with more than 64 keys)", () =>
-      runTest(async (driver) =>
+      runTest((driver) =>
         fc.assert(
-          fc.asyncProperty(
+          fc.property(
             arb.nodeStream({
               depthSize: "xlarge",
               maxKeys: 100,
               maxLength: 100,
             }),
 
-            async (entries) => {
-              const db = await withDefaultDocument(driver);
-              await write_nodes(db, entries);
+            (entries) => {
+              resetToDefaultNodes(driver);
+              write_nodes(driver, entries);
 
-              expect(Array.from(db.iter_nodes()).length).toBeGreaterThan(2); // "root" + at least 1 node
+              expect(Array.from(driver.iter_nodes()).length).toBeGreaterThan(2); // "root" + at least 1 node
 
               const originalRootData = (
-                db.get_node("root") as SerializedRootObject
+                driver.get_node("root") as SerializedRootObject
               ).data;
 
-              await delete_nodes(
-                db,
+              delete_nodes(
+                driver,
                 new Map<string, SerializedCrdt>(entries).keys()
               );
-              await delete_nodes(db, KNOWN_DOC_KEYS); // finally also delete the keys from the default document
-              expect(Array.from(db.iter_nodes())).toEqual([
+              delete_nodes(driver, KNOWN_DOC_KEYS); // finally also delete the keys from the default document
+              expect(Array.from(driver.iter_nodes())).toEqual([
                 ["root", { type: CrdtType.OBJECT, data: originalRootData }],
               ]);
             }
@@ -2233,21 +2226,21 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       ));
 
     test("get_snapshot: get_node returns same data as driver (when unchanged)", () =>
-      runTest(async (driver) =>
+      runTest((driver) =>
         fc.assert(
-          fc.asyncProperty(
+          fc.property(
             arb.nodeStream(),
 
-            async (entries) => {
-              const db = await withDefaultDocument(driver);
-              await write_nodes(db, entries);
+            (entries) => {
+              resetToDefaultNodes(driver);
+              write_nodes(driver, entries);
 
-              const snapshot = db.get_snapshot();
+              const snapshot = driver.get_snapshot();
 
               // Snapshot should return the same data as the driver
               for (const [id] of entries) {
                 expect(snapshot.get_node(id)).toEqual(
-                  db.get_node(id) as SerializedChild
+                  driver.get_node(id) as SerializedChild
                 );
               }
             }
@@ -2256,20 +2249,20 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       ));
 
     test("get_snapshot: iter_children returns same data as driver (when unchanged)", () =>
-      runTest(async (driver) =>
+      runTest((driver) =>
         fc.assert(
-          fc.asyncProperty(
+          fc.property(
             arb.nodeStream(),
 
-            async (entries) => {
-              const db = await withDefaultDocument(driver);
-              await write_nodes(db, entries);
+            (entries) => {
+              resetToDefaultNodes(driver);
+              write_nodes(driver, entries);
 
-              const snapshot = db.get_snapshot();
+              const snapshot = driver.get_snapshot();
 
               // Build expected children of root from driver's nodes
               const expected: [string, string][] = [];
-              for (const node of db.iter_nodes()) {
+              for (const node of driver.iter_nodes()) {
                 if (!isRootStorageNode(node)) {
                   const [childId, crdt] = node;
                   if (crdt.parentId === "root") {
@@ -2293,11 +2286,11 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
     // This test verifies snapshot isolation. Writes after taking a snapshot
     // should NOT be visible in the snapshot.
     test("get_snapshot: new nodes after snapshot are not visible", () =>
-      runTest(async (driver) => {
-        const db = await withDefaultDocument(driver);
+      runTest((driver) => {
+        resetToDefaultNodes(driver);
 
         // Take snapshot before adding new node
-        const snapshot = db.get_snapshot();
+        const snapshot = driver.get_snapshot();
 
         // Add a new node after taking the snapshot
         const newNode = {
@@ -2305,10 +2298,10 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
           parentId: "root",
           parentKey: "newList",
         } as const;
-        await db.set_child("si:new-node-id", newNode);
+        driver.set_child("si:new-node-id", newNode);
 
         // The new node should exist in the driver
-        expect(db.get_node("si:new-node-id")).toEqual(newNode);
+        expect(driver.get_node("si:new-node-id")).toEqual(newNode);
 
         // But NOT in the snapshot (snapshot isolation)
         expect(() => snapshot.get_node("si:new-node-id")).toThrow();
@@ -2321,8 +2314,8 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
     // This test verifies snapshot isolation. Deletes after taking a snapshot
     // should NOT affect the snapshot.
     test("get_snapshot: deleted nodes after snapshot are still visible", () =>
-      runTest(async (driver) => {
-        const db = await withDefaultDocument(driver);
+      runTest((driver) => {
+        resetToDefaultNodes(driver);
 
         // Add a node first
         const node = {
@@ -2330,19 +2323,19 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
           parentId: "root",
           parentKey: "myMap",
         } as const;
-        await db.set_child("si:node-to-delete", node);
+        driver.set_child("si:node-to-delete", node);
 
         // Take snapshot before deleting
-        const snapshot = db.get_snapshot();
+        const snapshot = driver.get_snapshot();
 
         // Verify node exists in both driver and snapshot
-        expect(db.get_node("si:node-to-delete")).toEqual(node);
+        expect(driver.get_node("si:node-to-delete")).toEqual(node);
 
         // Delete the node after taking the snapshot
-        await db.delete_node("si:node-to-delete");
+        driver.delete_node("si:node-to-delete");
 
         // The node should NOT exist in the driver anymore
-        expect(db.get_node("si:node-to-delete")).toBeUndefined();
+        expect(driver.get_node("si:node-to-delete")).toBeUndefined();
 
         // But should STILL exist in the snapshot (snapshot isolation)
         const snapshotChildren = [...snapshot.iter_children("root")];
@@ -2354,19 +2347,19 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       }));
 
     test("get_snapshot: delete_child_key on static data does not affect snapshot", () =>
-      runTest(async (driver) => {
-        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-        const db = await driver.load_nodes_api(blackHole);
-        await db.set_object_data("root", { a: 1, b: 2, c: 3 });
+      runTest((driver) => {
+        driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
+
+        driver.set_object_data("root", { a: 1, b: 2, c: 3 });
 
         // Take snapshot before deleting a key
-        const snapshot = db.get_snapshot();
+        const snapshot = driver.get_snapshot();
 
         // Delete a static data key after taking the snapshot
-        await db.delete_child_key("root", "b");
+        driver.delete_child_key("root", "b");
 
         // Driver should reflect the deletion
-        expect(db.get_node("root")).toEqual({
+        expect(driver.get_node("root")).toEqual({
           type: CrdtType.OBJECT,
           data: { a: 1, c: 3 },
         });
@@ -2379,19 +2372,19 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       }));
 
     test("get_snapshot: set_object_data after snapshot does not affect snapshot", () =>
-      runTest(async (driver) => {
-        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-        const db = await driver.load_nodes_api(blackHole);
-        await db.set_object_data("root", { a: 1, b: 2 });
+      runTest((driver) => {
+        driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
+
+        driver.set_object_data("root", { a: 1, b: 2 });
 
         // Take snapshot before mutating
-        const snapshot = db.get_snapshot();
+        const snapshot = driver.get_snapshot();
 
         // Mutate data after taking the snapshot
-        await db.set_object_data("root", { a: 1, b: 2, c: 3 });
+        driver.set_object_data("root", { a: 1, b: 2, c: 3 });
 
         // Driver should reflect the update
-        expect(db.get_node("root")).toEqual({
+        expect(driver.get_node("root")).toEqual({
           type: CrdtType.OBJECT,
           data: { a: 1, b: 2, c: 3 },
         });
@@ -2404,23 +2397,23 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       }));
 
     test("get_snapshot: iter_all returns same nodes as driver", () =>
-      runTest(async (driver) =>
+      runTest((driver) =>
         fc.assert(
-          fc.asyncProperty(
+          fc.property(
             arb.nodeStream(),
 
-            async (entries) => {
-              const db = await withDefaultDocument(driver);
-              await write_nodes(db, entries);
+            (entries) => {
+              resetToDefaultNodes(driver);
+              write_nodes(driver, entries);
 
-              const snapshot = db.get_snapshot();
+              const snapshot = driver.get_snapshot();
               const snapshotNodes = new Map<string, SerializedCrdt>([
                 ...snapshot.iter_all(),
               ]);
 
               // Should contain the same node ids as the driver
               const driverNodes = new Map<string, SerializedCrdt>([
-                ...db.iter_nodes(),
+                ...driver.iter_nodes(),
               ]);
               expect(snapshotNodes.size).toBe(driverNodes.size);
               for (const [id, crdt] of driverNodes) {
@@ -2432,8 +2425,8 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       ));
 
     test("get_snapshot: iter_all has snapshot isolation", () =>
-      runTest(async (driver) => {
-        const db = await withDefaultDocument(driver);
+      runTest((driver) => {
+        resetToDefaultNodes(driver);
 
         // Add a node
         const node = {
@@ -2441,13 +2434,13 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
           parentId: "root",
           parentKey: "myList",
         } as const;
-        await db.set_child("si:before-snap", node);
+        driver.set_child("si:before-snap", node);
 
         // Take snapshot
-        const snapshot = db.get_snapshot();
+        const snapshot = driver.get_snapshot();
 
         // Add another node after snapshot
-        await db.set_child("si:after-snap", {
+        driver.set_child("si:after-snap", {
           type: CrdtType.MAP,
           parentId: "root",
           parentKey: "myMap",
@@ -2463,463 +2456,56 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       }));
 
     test("get_snapshot: iter_all on empty room returns only root", () =>
-      runTest(async (driver) => {
-        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-        const db = await driver.load_nodes_api(blackHole);
-        const snapshot = db.get_snapshot();
+      runTest((driver) => {
+        driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
+
+        const snapshot = driver.get_snapshot();
         const nodes = [...snapshot.iter_all()];
         expect(nodes).toEqual([["root", { type: CrdtType.OBJECT, data: {} }]]);
       }));
   });
 
-  describe("synchronous read-after-write semantics", () => {
-    // These tests verify that writes are immediately visible to synchronous reads,
-    // even before the returned Promise is awaited. This is critical behavior for
-    // the INewNodeStorageDriver API.
-
-    test("set: read sees new node before await", () =>
-      runTest(async (driver) => {
-        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-        const db = await driver.load_nodes_api(blackHole);
-
-        const node = {
-          type: CrdtType.LIST,
-          parentId: "root",
-          parentKey: "myList",
-        } as const;
-
-        // Call set but don't await yet
-        const p$ = db.set_child("0:0", node);
-
-        // Read should see the node immediately (synchronously)
-        expect(db.get_node("0:0")).toEqual(node);
-        expect(db.has_node("0:0")).toBe(true);
-        expect(db.get_child_at("root", "myList")).toBe("0:0");
-        expect(db.has_child_at("root", "myList")).toBe(true);
-
-        // After await, should still see the node
-        await p$;
-        expect(db.get_node("0:0")).toEqual(node);
-        expect(db.has_node("0:0")).toBe(true);
-        expect(db.get_child_at("root", "myList")).toBe("0:0");
-        expect(db.has_child_at("root", "myList")).toBe(true);
-      }));
-
-    test("delete: read sees deletion before await", () =>
-      runTest(async (driver) => {
-        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-        const db = await driver.load_nodes_api(blackHole);
-
-        // First create a node
-        await db.set_child("0:0", {
-          type: CrdtType.LIST,
-          parentId: "root",
-          parentKey: "myList",
-        });
-        expect(db.has_node("0:0")).toBe(true);
-
-        // Call delete but don't await yet
-        const p$ = db.delete_node("0:0");
-
-        // Read should NOT see the node immediately (synchronously)
-        expect(db.get_node("0:0")).toBe(undefined);
-        expect(db.has_node("0:0")).toBe(false);
-        expect(db.get_child_at("root", "myList")).toBe(undefined);
-        expect(db.has_child_at("root", "myList")).toBe(false);
-
-        // After await, should still NOT see the node
-        await p$;
-        expect(db.get_node("0:0")).toBe(undefined);
-        expect(db.has_node("0:0")).toBe(false);
-        expect(db.get_child_at("root", "myList")).toBe(undefined);
-        expect(db.has_child_at("root", "myList")).toBe(false);
-      }));
-
-    test("move: read sees new position before await", () =>
-      runTest(async (driver) => {
-        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-        const db = await driver.load_nodes_api(blackHole);
-
-        // Create a list with an item
-        await db.set_child("0:0", {
-          type: CrdtType.LIST,
-          parentId: "root",
-          parentKey: "myList",
-        });
-        await db.set_child("0:1", {
-          type: CrdtType.REGISTER,
-          parentId: "0:0",
-          parentKey: FIRST_POSITION,
-          data: "item",
-        });
-        expect(db.get_child_at("0:0", FIRST_POSITION)).toBe("0:1");
-        expect(db.get_child_at("0:0", SECOND_POSITION)).toBe(undefined);
-
-        // Call move but don't await yet
-        const p$ = db.move_sibling("0:1", SECOND_POSITION);
-
-        // Read should see the new position immediately (synchronously)
-        expect(db.get_child_at("0:0", FIRST_POSITION)).toBe(undefined);
-        expect(db.get_child_at("0:0", SECOND_POSITION)).toBe("0:1");
-        expect(db.get_node("0:1")).toEqual({
-          type: CrdtType.REGISTER,
-          parentId: "0:0",
-          parentKey: SECOND_POSITION,
-          data: "item",
-        });
-
-        // After await, should still see the new position
-        await p$;
-        expect(db.get_child_at("0:0", FIRST_POSITION)).toBe(undefined);
-        expect(db.get_child_at("0:0", SECOND_POSITION)).toBe("0:1");
-        expect(db.get_node("0:1")).toEqual({
-          type: CrdtType.REGISTER,
-          parentId: "0:0",
-          parentKey: SECOND_POSITION,
-          data: "item",
-        });
-      }));
-
-    test("set_object_data: read sees new data before await", () =>
-      runTest(async (driver) => {
-        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-        const db = await driver.load_nodes_api(blackHole);
-
-        // Start with empty root
-        expect(db.get_node("root")).toEqual({
-          type: CrdtType.OBJECT,
-          data: {},
-        });
-
-        // Call set_object_data but don't await yet
-        const p$ = db.set_object_data("root", { foo: 42, bar: "hello" });
-
-        // Read should see the new data immediately (synchronously)
-        expect(db.get_node("root")).toEqual({
-          type: CrdtType.OBJECT,
-          data: { foo: 42, bar: "hello" },
-        });
-
-        // After await, should still see the new data
-        await p$;
-        expect(db.get_node("root")).toEqual({
-          type: CrdtType.OBJECT,
-          data: { foo: 42, bar: "hello" },
-        });
-      }));
-
-    test("set_object_data: no-op if called on a non-object node", () =>
-      runTest(async (driver) => {
-        const db = await withDefaultDocument(driver);
-
-        const listBefore = db.get_node("0:dl");
-        const mapBefore = db.get_node("0:dm");
-
-        // set_object_data on a LiveList is a no-op
-        await db.set_object_data("0:dl", { foo: 42 });
-        expect(db.get_node("0:dl")).toEqual(listBefore);
-
-        // set_object_data on a LiveMap is a no-op
-        await db.set_object_data("0:dm", { foo: 42 });
-        expect(db.get_node("0:dm")).toEqual(mapBefore);
-
-        // set_object_data on a LiveObject should work
-        await db.set_object_data("0:do", { foo: 42 });
-        expect(db.get_node("0:do")).toEqual({
-          type: CrdtType.OBJECT,
-          parentId: "root",
-          parentKey: "o",
-          data: { foo: 42 },
-        });
-      }));
-
-    test("delete_child_key: read sees deletion before await", () =>
-      runTest(async (driver) => {
-        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-        const db = await driver.load_nodes_api(blackHole);
-
-        // Set up root with static data and a child node
-        await db.set_object_data("root", { a: 1, b: 2 });
-        await db.set_child("0:0", {
-          type: CrdtType.LIST,
-          parentId: "root",
-          parentKey: "myList",
-        });
-
-        expect(db.get_node("root")).toEqual({
-          type: CrdtType.OBJECT,
-          data: { a: 1, b: 2 },
-        });
-        expect(db.has_node("0:0")).toBe(true);
-
-        // Call delete_child_key for static data but don't await yet
-        const p1$ = db.delete_child_key("root", "a");
-
-        // Read should see the deletion immediately (synchronously)
-        expect(db.get_node("root")).toEqual({
-          type: CrdtType.OBJECT,
-          data: { b: 2 },
-        });
-
-        await p1$;
-
-        // Call delete_child_key for child node but don't await yet
-        const p2$ = db.delete_child_key("root", "myList");
-
-        // Read should see the child deletion immediately (synchronously)
-        expect(db.has_node("0:0")).toBe(false);
-        expect(db.get_child_at("root", "myList")).toBe(undefined);
-        expect(db.has_child_at("root", "myList")).toBe(false);
-
-        // After await, should still see the deletion
-        await p2$;
-        expect(db.has_node("0:0")).toBe(false);
-        expect(db.get_child_at("root", "myList")).toBe(undefined);
-        expect(db.has_child_at("root", "myList")).toBe(false);
-      }));
-
-    test("multiple writes: all visible before any await", () =>
-      runTest(async (driver) => {
-        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-        const db = await driver.load_nodes_api(blackHole);
-
-        // Perform multiple writes without awaiting any of them
-        const p1$ = db.set_child("0:0", {
-          type: CrdtType.LIST,
-          parentId: "root",
-          parentKey: "list1",
-        });
-        const p2$ = db.set_child("0:1", {
-          type: CrdtType.LIST,
-          parentId: "root",
-          parentKey: "list2",
-        });
-        const p3$ = db.set_child("0:2", {
-          type: CrdtType.REGISTER,
-          parentId: "0:0",
-          parentKey: FIRST_POSITION,
-          data: "item",
-        });
-
-        // All writes should be visible synchronously
-        expect(db.has_node("0:0")).toBe(true);
-        expect(db.has_node("0:1")).toBe(true);
-        expect(db.has_node("0:2")).toBe(true);
-        expect(db.get_child_at("root", "list1")).toBe("0:0");
-        expect(db.get_child_at("root", "list2")).toBe("0:1");
-        expect(db.get_child_at("0:0", FIRST_POSITION)).toBe("0:2");
-
-        // iter_nodes should see all nodes
-        const nodes = new Map<string, SerializedCrdt>(db.iter_nodes());
-        expect(nodes.size).toBe(4); // root + 3 nodes
-        expect(nodes.has("root")).toBe(true);
-        expect(nodes.has("0:0")).toBe(true);
-        expect(nodes.has("0:1")).toBe(true);
-        expect(nodes.has("0:2")).toBe(true);
-
-        // After awaiting, should still see all nodes
-        await Promise.all([p1$, p2$, p3$]);
-        expect(db.has_node("0:0")).toBe(true);
-        expect(db.has_node("0:1")).toBe(true);
-        expect(db.has_node("0:2")).toBe(true);
-      }));
-
-    test("interleaved write and delete: reads see correct state", () =>
-      runTest(async (driver) => {
-        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-        const db = await driver.load_nodes_api(blackHole);
-
-        // Create a node
-        const p1$ = db.set_child("0:0", {
-          type: CrdtType.LIST,
-          parentId: "root",
-          parentKey: "myList",
-        });
-
-        // Should be visible immediately
-        expect(db.has_node("0:0")).toBe(true);
-
-        // Delete it (without awaiting the create)
-        const p2$ = db.delete_node("0:0");
-
-        // Should NOT be visible anymore
-        expect(db.has_node("0:0")).toBe(false);
-        expect(db.get_child_at("root", "myList")).toBe(undefined);
-
-        // Re-create it (without awaiting the delete)
-        const p3$ = db.set_child("0:1", {
-          type: CrdtType.MAP,
-          parentId: "root",
-          parentKey: "myList",
-        });
-
-        // Should see the new node
-        expect(db.has_node("0:1")).toBe(true);
-        expect(db.get_child_at("root", "myList")).toBe("0:1");
-        expect(db.get_node("0:1")).toEqual({
-          type: CrdtType.MAP,
-          parentId: "root",
-          parentKey: "myList",
-        });
-
-        // After awaiting all, state should be consistent
-        await Promise.all([p1$, p2$, p3$]);
-        expect(db.has_node("0:0")).toBe(false);
-        expect(db.has_node("0:1")).toBe(true);
-        expect(db.get_child_at("root", "myList")).toBe("0:1");
-      }));
-
-    test("get_next_sibling: updated before await", () =>
-      runTest(async (driver) => {
-        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-        const db = await driver.load_nodes_api(blackHole);
-
-        // Create a list with two items
-        await db.set_child("0:0", {
-          type: CrdtType.LIST,
-          parentId: "root",
-          parentKey: "myList",
-        });
-        await db.set_child("0:1", {
-          type: CrdtType.REGISTER,
-          parentId: "0:0",
-          parentKey: FIRST_POSITION,
-          data: "first",
-        });
-        await db.set_child("0:2", {
-          type: CrdtType.REGISTER,
-          parentId: "0:0",
-          parentKey: THIRD_POSITION,
-          data: "third",
-        });
-
-        expect(db.get_next_sibling("0:0", FIRST_POSITION)).toBe(THIRD_POSITION);
-
-        // Add a node in between without awaiting
-        const p$ = db.set_child("0:3", {
-          type: CrdtType.REGISTER,
-          parentId: "0:0",
-          parentKey: SECOND_POSITION,
-          data: "second",
-        });
-
-        // get_next_sibling should see the new node immediately
-        expect(db.get_next_sibling("0:0", FIRST_POSITION)).toBe(
-          SECOND_POSITION
-        );
-        expect(db.get_next_sibling("0:0", SECOND_POSITION)).toBe(
-          THIRD_POSITION
-        );
-
-        // After await, should still work correctly
-        await p$;
-        expect(db.get_next_sibling("0:0", FIRST_POSITION)).toBe(
-          SECOND_POSITION
-        );
-        expect(db.get_next_sibling("0:0", SECOND_POSITION)).toBe(
-          THIRD_POSITION
-        );
-      }));
-
-    test("set with overwrite: read sees update before await", () =>
-      runTest(async (driver) => {
-        await driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
-        const db = await driver.load_nodes_api(blackHole);
-
-        // Create a list to hold registers
-        await db.set_child("0:0", {
-          type: CrdtType.LIST,
-          parentId: "root",
-          parentKey: "myList",
-        });
-
-        // Create initial register in the list
-        await db.set_child("0:1", {
-          type: CrdtType.REGISTER,
-          parentId: "0:0",
-          parentKey: FIRST_POSITION,
-          data: "initial",
-        });
-
-        expect(db.get_node("0:1")).toEqual({
-          type: CrdtType.REGISTER,
-          parentId: "0:0",
-          parentKey: FIRST_POSITION,
-          data: "initial",
-        });
-
-        // Overwrite with allowOverwrite=true but don't await
-        const p$ = db.set_child(
-          "0:1",
-          {
-            type: CrdtType.REGISTER,
-            parentId: "0:0",
-            parentKey: FIRST_POSITION,
-            data: "updated",
-          },
-          true
-        );
-
-        // Should see updated value immediately
-        expect(db.get_node("0:1")).toEqual({
-          type: CrdtType.REGISTER,
-          parentId: "0:0",
-          parentKey: FIRST_POSITION,
-          data: "updated",
-        });
-
-        // After await, should still see updated value
-        await p$;
-        expect(db.get_node("0:1")).toEqual({
-          type: CrdtType.REGISTER,
-          parentId: "0:0",
-          parentKey: FIRST_POSITION,
-          data: "updated",
-        });
-      }));
-  });
-
   describe("meta API impl", () => {
     test("get_meta with empty store is undefined", () =>
-      runTest(async (driver) =>
+      runTest((driver) =>
         fc.assert(
-          fc.asyncProperty(
+          fc.property(
             arb.key(),
 
-            async (key) => {
-              expect(await driver.get_meta(key)).toEqual(undefined);
+            (key) => {
+              expect(driver.get_meta(key)).toEqual(undefined);
             }
           )
         )
       ));
 
     test("put_meta + get_meta", () =>
-      runTest(async (driver) =>
+      runTest((driver) =>
         fc.assert(
-          fc.asyncProperty(
+          fc.property(
             arb.metaPair(),
 
-            async ([key, value]) => {
-              await driver.put_meta(key, value);
-              expect(await driver.get_meta(key)).toEqual(value);
+            ([key, value]) => {
+              driver.put_meta(key, value);
+              expect(driver.get_meta(key)).toEqual(value);
             }
           )
         )
       ));
 
     test("put_meta + get_meta loop", () =>
-      runTest(async (driver) =>
+      runTest((driver) =>
         fc.assert(
-          fc.asyncProperty(
+          fc.property(
             fc.array(arb.metaPair()).map((x) => new Map(x)),
 
-            async (entries) => {
+            (entries) => {
               for (const [key, value] of entries) {
-                await driver.put_meta(key, value);
+                driver.put_meta(key, value);
               }
 
               for (const [key, value] of entries) {
-                expect(await driver.get_meta(key)).toEqual(value);
+                expect(driver.get_meta(key)).toEqual(value);
               }
             }
           )
@@ -2927,43 +2513,41 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       ));
 
     test("put_meta + delete_meta + get_meta", () =>
-      runTest(async (driver) =>
+      runTest((driver) =>
         fc.assert(
-          fc.asyncProperty(
+          fc.property(
             arb.key(),
             arb.json(),
             arb.json(),
 
-            async (key, value1, value2) => {
-              await driver.put_meta(key, value1);
-              await driver.put_meta(key, value2); // override
-              expect(await driver.get_meta(key)).toEqual(value2);
+            (key, value1, value2) => {
+              driver.put_meta(key, value1);
+              driver.put_meta(key, value2); // override
+              expect(driver.get_meta(key)).toEqual(value2);
 
-              await driver.delete_meta(key);
-              expect(await driver.get_meta(key)).toEqual(undefined);
+              driver.delete_meta(key);
+              expect(driver.get_meta(key)).toEqual(undefined);
             }
           )
         )
       ));
 
     test("put_meta loop + get_meta loop", () =>
-      runTest(async (driver) =>
+      runTest((driver) =>
         fc.assert(
-          fc.asyncProperty(
+          fc.property(
             arb.metaEntries(),
 
-            async (entries) => {
+            (entries) => {
               // Write all the entries (can have dupes)
-              await Promise.all(
-                Array.from(entries).map(([key, value]) =>
-                  driver.put_meta(key, value)
-                )
-              );
+              for (const [key, value] of entries) {
+                driver.put_meta(key, value);
+              }
 
               // Check that readone will also have the same results
               const map = new Map(entries); // de-dupe
               for (const [key, expected] of map) {
-                expect(await driver.get_meta(key)).toEqual(expected);
+                expect(driver.get_meta(key)).toEqual(expected);
               }
             }
           )
@@ -2971,21 +2555,21 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       ));
 
     test("put_meta + get_meta loop", () =>
-      runTest(async (driver) =>
+      runTest((driver) =>
         fc.assert(
-          fc.asyncProperty(
+          fc.property(
             arb.metaEntries(),
 
-            async (entries) => {
+            (entries) => {
               // Write all the entries (can have dupes)
               for (const [key, value] of entries) {
-                await driver.put_meta(key, value);
+                driver.put_meta(key, value);
               }
 
               // Check that readone will also have the same results
               const map = new Map(entries); // de-dupe
               for (const [key, expected] of map) {
-                expect(await driver.get_meta(key)).toEqual(expected);
+                expect(driver.get_meta(key)).toEqual(expected);
               }
             }
           )
@@ -2993,21 +2577,21 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       ));
 
     test("delete_meta (all keys)", () =>
-      runTest(async (driver) =>
+      runTest((driver) =>
         fc.assert(
-          fc.asyncProperty(
+          fc.property(
             arb.metaEntries(),
 
-            async (entries) => {
+            (entries) => {
               for (const [key, value] of entries) {
-                await driver.put_meta(key, value);
+                driver.put_meta(key, value);
               }
 
               for (const key of new Map(entries).keys()) {
-                await driver.delete_meta(key);
+                driver.delete_meta(key);
               }
               for (const [key] of entries) {
-                expect(await driver.get_meta(key)).toEqual(undefined);
+                expect(driver.get_meta(key)).toEqual(undefined);
               }
             }
           )
@@ -3015,41 +2599,39 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       ));
 
     test("delete_meta", () =>
-      runTest(async (driver) =>
+      runTest((driver) =>
         fc.assert(
-          fc.asyncProperty(
+          fc.property(
             arb.metaPair(),
             arb.metaPair(),
             arb.metaPair(),
 
-            async (entry1, entry2, entry3) => {
+            (entry1, entry2, entry3) => {
               fc.pre(entry1[0] !== entry2[0]);
               fc.pre(entry1[0] !== entry3[0]);
               fc.pre(entry2[0] !== entry3[0]);
 
-              await Promise.all([
-                driver.put_meta(...entry1),
-                driver.put_meta(...entry2),
-                driver.put_meta(...entry3),
-              ]);
+              driver.put_meta(...entry1);
+              driver.put_meta(...entry2);
+              driver.put_meta(...entry3);
 
               const key1 = entry1[0];
               const key2 = entry2[0];
               const key3 = entry3[0];
 
-              expect(await driver.get_meta(key1)).not.toEqual(undefined);
-              expect(await driver.get_meta(key2)).not.toEqual(undefined);
-              expect(await driver.get_meta(key3)).not.toEqual(undefined);
-              await driver.delete_meta(key1);
-              await driver.delete_meta(key1);
-              expect(await driver.get_meta(key1)).toEqual(undefined);
-              expect(await driver.get_meta(key2)).not.toEqual(undefined);
-              expect(await driver.get_meta(key3)).not.toEqual(undefined);
-              await driver.delete_meta(key2);
-              await driver.delete_meta(key2);
-              expect(await driver.get_meta(key1)).toEqual(undefined);
-              expect(await driver.get_meta(key2)).toEqual(undefined);
-              expect(await driver.get_meta(key3)).not.toEqual(undefined);
+              expect(driver.get_meta(key1)).not.toEqual(undefined);
+              expect(driver.get_meta(key2)).not.toEqual(undefined);
+              expect(driver.get_meta(key3)).not.toEqual(undefined);
+              driver.delete_meta(key1);
+              driver.delete_meta(key1);
+              expect(driver.get_meta(key1)).toEqual(undefined);
+              expect(driver.get_meta(key2)).not.toEqual(undefined);
+              expect(driver.get_meta(key3)).not.toEqual(undefined);
+              driver.delete_meta(key2);
+              driver.delete_meta(key2);
+              expect(driver.get_meta(key1)).toEqual(undefined);
+              expect(driver.get_meta(key2)).toEqual(undefined);
+              expect(driver.get_meta(key3)).not.toEqual(undefined);
             }
           )
         )
@@ -3058,41 +2640,37 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
   describe("ydoc API impl", () => {
     test("iter_y_updates on an empty store is empty", () =>
-      runTest(async (driver) =>
+      runTest((driver) =>
         fc.assert(
-          fc.asyncProperty(
+          fc.property(
             arb.docId(),
 
-            async (docId) => {
-              expect(Array.from(await driver.iter_y_updates(docId))).toEqual(
-                []
-              );
+            (docId) => {
+              expect(Array.from(driver.iter_y_updates(docId))).toEqual([]);
             }
           )
         )
       ));
 
     test("write_y_updates + iter_y_updates", () =>
-      runTest(async (driver) =>
+      runTest((driver) =>
         fc.assert(
-          fc.asyncProperty(
+          fc.property(
             fc.tuple(arb.docId(), arb.docId()).filter(([a, b]) => a !== b),
             fc
               .array(fc.tuple(arb.key(), fc.uint8Array()))
               .map((x) => new Map(x)),
 
-            async ([docId, anotherDocId], entries) => {
-              await driver.DANGEROUSLY_wipe_all_y_updates();
+            ([docId, anotherDocId], entries) => {
+              driver.DANGEROUSLY_wipe_all_y_updates();
 
               for (const [key, data] of entries) {
-                await driver.write_y_updates(docId, key, data);
+                driver.write_y_updates(docId, key, data);
               }
-              expect(new Map(await driver.iter_y_updates(docId))).toEqual(
-                entries
+              expect(new Map(driver.iter_y_updates(docId))).toEqual(entries);
+              expect(new Map(driver.iter_y_updates(anotherDocId))).toEqual(
+                new Map()
               );
-              expect(
-                new Map(await driver.iter_y_updates(anotherDocId))
-              ).toEqual(new Map());
             }
           )
         )
@@ -3101,132 +2679,118 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
   describe("leased session API impl", () => {
     test("list_leased_sessions on empty store is empty", () =>
-      runTest(async (driver) => {
-        const sessions = Array.from(await driver.list_leased_sessions());
+      runTest((driver) => {
+        const sessions = Array.from(driver.list_leased_sessions());
         expect(sessions).toEqual([]);
       }));
 
     test("get_leased_session on empty store is undefined", () =>
-      runTest(async (driver) =>
+      runTest((driver) =>
         fc.assert(
-          fc.asyncProperty(arb.sessionId(), async (sessionId) => {
-            expect(await driver.get_leased_session(sessionId)).toEqual(
-              undefined
-            );
+          fc.property(arb.sessionId(), (sessionId) => {
+            expect(driver.get_leased_session(sessionId)).toEqual(undefined);
           })
         )
       ));
 
     test("put_leased_session + get_leased_session", () =>
-      runTest(async (driver) =>
+      runTest((driver) =>
         fc.assert(
-          fc.asyncProperty(
+          fc.property(
             arb.sessionId(),
             arb.leasedSession(),
 
-            async (sessionId, session) => {
+            (sessionId, session) => {
               session.sessionId = sessionId;
-              await driver.put_leased_session(session);
-              expect(await driver.get_leased_session(sessionId)).toEqual(
-                session
-              );
+              driver.put_leased_session(session);
+              expect(driver.get_leased_session(sessionId)).toEqual(session);
 
               // Cleanup: delete the session added in this iteration
-              await driver.delete_leased_session(sessionId);
+              driver.delete_leased_session(sessionId);
             }
           )
         )
       ));
 
     test("put_leased_session (overwrite) + get_leased_session", () =>
-      runTest(async (driver) =>
+      runTest((driver) =>
         fc.assert(
-          fc.asyncProperty(
+          fc.property(
             arb.sessionId(),
             arb.leasedSession(),
             arb.leasedSession(),
 
-            async (sessionId, session1, session2) => {
+            (sessionId, session1, session2) => {
               // Put first session
               session1.sessionId = sessionId;
-              await driver.put_leased_session(session1);
-              expect(await driver.get_leased_session(sessionId)).toEqual(
-                session1
-              );
+              driver.put_leased_session(session1);
+              expect(driver.get_leased_session(sessionId)).toEqual(session1);
 
               // Overwrite with second session
               session2.sessionId = sessionId;
-              await driver.put_leased_session(session2);
-              expect(await driver.get_leased_session(sessionId)).toEqual(
-                session2
-              );
+              driver.put_leased_session(session2);
+              expect(driver.get_leased_session(sessionId)).toEqual(session2);
 
               // Cleanup: delete the session added in this iteration
-              await driver.delete_leased_session(sessionId);
+              driver.delete_leased_session(sessionId);
             }
           )
         )
       ));
 
     test("put_leased_session + delete_leased_session + get_leased_session", () =>
-      runTest(async (driver) =>
+      runTest((driver) =>
         fc.assert(
-          fc.asyncProperty(
+          fc.property(
             arb.sessionId(),
             arb.leasedSession(),
 
-            async (sessionId, session) => {
+            (sessionId, session) => {
               session.sessionId = sessionId;
-              await driver.put_leased_session(session);
-              expect(await driver.get_leased_session(sessionId)).toEqual(
-                session
-              );
+              driver.put_leased_session(session);
+              expect(driver.get_leased_session(sessionId)).toEqual(session);
 
-              await driver.delete_leased_session(sessionId);
-              expect(await driver.get_leased_session(sessionId)).toEqual(
-                undefined
-              );
+              driver.delete_leased_session(sessionId);
+              expect(driver.get_leased_session(sessionId)).toEqual(undefined);
             }
           )
         )
       ));
 
     test("delete_leased_session on non-existent session is no-op", () =>
-      runTest(async (driver) =>
+      runTest((driver) =>
         fc.assert(
-          fc.asyncProperty(arb.sessionId(), async (sessionId) => {
+          fc.property(arb.sessionId(), (sessionId) => {
             // Deleting a session that doesn't exist should not throw
-            await driver.delete_leased_session(sessionId);
-            expect(await driver.get_leased_session(sessionId)).toEqual(
-              undefined
-            );
+            driver.delete_leased_session(sessionId);
+            expect(driver.get_leased_session(sessionId)).toEqual(undefined);
           })
         )
       ));
 
     test("put_leased_session + list_leased_sessions", () =>
-      runTest(async (driver) =>
+      runTest((driver) =>
         fc.assert(
-          fc.asyncProperty(
+          fc.property(
             fc
               .array(arb.leasedSessionPair())
               .map((x) => new Map(x))
               .filter((m) => m.size > 0), // At least one session
 
-            async (entries) => {
+            (entries) => {
               // Put all sessions
               for (const [sessionId, session] of entries) {
                 session.sessionId = sessionId;
-                await driver.put_leased_session(session);
+                driver.put_leased_session(session);
               }
 
               // List should return all sessions
-              const listed = new Map(await driver.list_leased_sessions());
+              const listed = new Map(driver.list_leased_sessions());
               expect(listed).toEqual(entries);
 
               // Cleanup: delete all sessions added in this iteration
               for (const [sessionId] of entries) {
-                await driver.delete_leased_session(sessionId);
+                driver.delete_leased_session(sessionId);
               }
             }
           )
@@ -3234,28 +2798,28 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       ));
 
     test("put multiple sessions + get each individually", () =>
-      runTest(async (driver) =>
+      runTest((driver) =>
         fc.assert(
-          fc.asyncProperty(
+          fc.property(
             fc.array(arb.leasedSessionPair()).map((x) => new Map(x)),
 
-            async (entries) => {
+            (entries) => {
               // Put all sessions
               for (const [sessionId, session] of entries) {
                 session.sessionId = sessionId;
-                await driver.put_leased_session(session);
+                driver.put_leased_session(session);
               }
 
               // Get each session individually and verify
               for (const [sessionId, expectedSession] of entries) {
-                expect(await driver.get_leased_session(sessionId)).toEqual(
+                expect(driver.get_leased_session(sessionId)).toEqual(
                   expectedSession
                 );
               }
 
               // Cleanup: delete all sessions added in this iteration
               for (const [sessionId] of entries) {
-                await driver.delete_leased_session(sessionId);
+                driver.delete_leased_session(sessionId);
               }
             }
           )
@@ -3263,14 +2827,14 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       ));
 
     test("delete specific session leaves others intact", () =>
-      runTest(async (driver) =>
+      runTest((driver) =>
         fc.assert(
-          fc.asyncProperty(
+          fc.property(
             arb.leasedSessionPair(),
             arb.leasedSessionPair(),
             arb.leasedSessionPair(),
 
-            async (entry1, entry2, entry3) => {
+            (entry1, entry2, entry3) => {
               const [sessionId1, session1] = entry1;
               const [sessionId2, session2] = entry2;
               const [sessionId3, session3] = entry3;
@@ -3284,86 +2848,58 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
               session1.sessionId = sessionId1;
               session2.sessionId = sessionId2;
               session3.sessionId = sessionId3;
-              await Promise.all([
-                driver.put_leased_session(session1),
-                driver.put_leased_session(session2),
-                driver.put_leased_session(session3),
-              ]);
+              driver.put_leased_session(session1);
+              driver.put_leased_session(session2);
+              driver.put_leased_session(session3);
 
               // Verify all exist
-              expect(await driver.get_leased_session(sessionId1)).toEqual(
-                session1
-              );
-              expect(await driver.get_leased_session(sessionId2)).toEqual(
-                session2
-              );
-              expect(await driver.get_leased_session(sessionId3)).toEqual(
-                session3
-              );
+              expect(driver.get_leased_session(sessionId1)).toEqual(session1);
+              expect(driver.get_leased_session(sessionId2)).toEqual(session2);
+              expect(driver.get_leased_session(sessionId3)).toEqual(session3);
 
               // Delete first session
-              await driver.delete_leased_session(sessionId1);
-              expect(await driver.get_leased_session(sessionId1)).toEqual(
-                undefined
-              );
-              expect(await driver.get_leased_session(sessionId2)).toEqual(
-                session2
-              );
-              expect(await driver.get_leased_session(sessionId3)).toEqual(
-                session3
-              );
+              driver.delete_leased_session(sessionId1);
+              expect(driver.get_leased_session(sessionId1)).toEqual(undefined);
+              expect(driver.get_leased_session(sessionId2)).toEqual(session2);
+              expect(driver.get_leased_session(sessionId3)).toEqual(session3);
 
               // Delete second session
-              await driver.delete_leased_session(sessionId2);
-              expect(await driver.get_leased_session(sessionId1)).toEqual(
-                undefined
-              );
-              expect(await driver.get_leased_session(sessionId2)).toEqual(
-                undefined
-              );
-              expect(await driver.get_leased_session(sessionId3)).toEqual(
-                session3
-              );
+              driver.delete_leased_session(sessionId2);
+              expect(driver.get_leased_session(sessionId1)).toEqual(undefined);
+              expect(driver.get_leased_session(sessionId2)).toEqual(undefined);
+              expect(driver.get_leased_session(sessionId3)).toEqual(session3);
 
               // Delete third session
-              await driver.delete_leased_session(sessionId3);
-              expect(await driver.get_leased_session(sessionId1)).toEqual(
-                undefined
-              );
-              expect(await driver.get_leased_session(sessionId2)).toEqual(
-                undefined
-              );
-              expect(await driver.get_leased_session(sessionId3)).toEqual(
-                undefined
-              );
+              driver.delete_leased_session(sessionId3);
+              expect(driver.get_leased_session(sessionId1)).toEqual(undefined);
+              expect(driver.get_leased_session(sessionId2)).toEqual(undefined);
+              expect(driver.get_leased_session(sessionId3)).toEqual(undefined);
 
               // List should be empty
-              expect(Array.from(await driver.list_leased_sessions())).toEqual(
-                []
-              );
+              expect(Array.from(driver.list_leased_sessions())).toEqual([]);
             }
           )
         )
       ));
 
     test("list_leased_sessions returns all sessions in any order", () =>
-      runTest(async (driver) =>
+      runTest((driver) =>
         fc.assert(
-          fc.asyncProperty(
+          fc.property(
             fc
               .array(arb.leasedSessionPair())
               .map((x) => new Map(x))
               .filter((m) => m.size > 0),
 
-            async (entries) => {
+            (entries) => {
               // Put all sessions
               for (const [sessionId, session] of entries) {
                 session.sessionId = sessionId;
-                await driver.put_leased_session(session);
+                driver.put_leased_session(session);
               }
 
               // Get listed sessions and convert to a map
-              const listed = new Map(await driver.list_leased_sessions());
+              const listed = new Map(driver.list_leased_sessions());
 
               // Both should have the same size
               expect(listed.size).toEqual(entries.size);
@@ -3375,7 +2911,7 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
               // Cleanup: delete all sessions added in this iteration
               for (const [sessionId] of entries) {
-                await driver.delete_leased_session(sessionId);
+                driver.delete_leased_session(sessionId);
               }
             }
           )
@@ -3383,28 +2919,24 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       ));
 
     test("concurrent put_leased_session operations", () =>
-      runTest(async (driver) =>
+      runTest((driver) =>
         fc.assert(
-          fc.asyncProperty(
+          fc.property(
             fc
               .array(arb.leasedSessionPair(), { minLength: 3, maxLength: 10 })
               .map((x) => new Map(x))
               .filter((m) => m.size >= 3),
 
-            async (entries) => {
-              // Put all sessions concurrently
-              await Promise.all(
-                Array.from(entries).map(([sessionId, session]) => {
-                  session.sessionId = sessionId;
-                  return driver.put_leased_session(session);
-                })
-              );
+            (entries) => {
+              // Put all sessions
+              for (const [sessionId, session] of entries) {
+                session.sessionId = sessionId;
+                driver.put_leased_session(session);
+              }
 
               // Verify all sessions exist
-              const results = await Promise.all(
-                Array.from(entries.keys()).map((sessionId) =>
-                  driver.get_leased_session(sessionId)
-                )
+              const results = Array.from(entries.keys()).map((sessionId) =>
+                driver.get_leased_session(sessionId)
               );
 
               let idx = 0;
@@ -3414,11 +2946,9 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
               }
 
               // Cleanup: delete all sessions added in this iteration
-              await Promise.all(
-                Array.from(entries.keys()).map((sessionId) =>
-                  driver.delete_leased_session(sessionId)
-                )
-              );
+              for (const sessionId of entries.keys()) {
+                driver.delete_leased_session(sessionId);
+              }
             }
           )
         )
@@ -3427,107 +2957,103 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
   describe("feed API impl", () => {
     test("list_feeds on empty store is empty", () =>
-      runTest(async (driver) => {
-        const result = await driver.list_feeds();
+      runTest((driver) => {
+        const result = driver.list_feeds();
         expect(result.feeds).toEqual([]);
         expect(result.nextCursor).toBeUndefined();
       }));
 
     test("get_feed on empty store is undefined", () =>
-      runTest(async (driver) => {
+      runTest((driver) => {
         return fc.assert(
-          fc.asyncProperty(arb.feedId(), async (feedId) => {
-            expect(await driver.get_feed(feedId)).toEqual(undefined);
+          fc.property(arb.feedId(), (feedId) => {
+            expect(driver.get_feed(feedId)).toEqual(undefined);
           })
         );
       }));
 
     test("create_feed + get_feed", () =>
-      runTest(async (driver) => {
+      runTest((driver) => {
         return fc.assert(
-          fc.asyncProperty(arb.feed(), async (feed) => {
-            await driver.create_feed(feed);
-            expect(await driver.get_feed(feed.feedId)).toEqual(feed);
+          fc.property(arb.feed(), (feed) => {
+            driver.create_feed(feed);
+            expect(driver.get_feed(feed.feedId)).toEqual(feed);
 
             // Cleanup
-            await driver.delete_feed(feed.feedId);
+            driver.delete_feed(feed.feedId);
           })
         );
       }));
 
     test("update_feed_metadata", () =>
-      runTest(async (driver) => {
+      runTest((driver) => {
         return fc.assert(
-          fc.asyncProperty(
-            arb.feed(),
-            arb.json(),
-            async (feed, newMetadata) => {
-              // Ensure feed doesn't already exist
-              await driver.delete_feed(feed.feedId);
+          fc.property(arb.feed(), arb.json(), (feed, newMetadata) => {
+            // Ensure feed doesn't already exist
+            driver.delete_feed(feed.feedId);
 
-              await driver.create_feed(feed);
+            driver.create_feed(feed);
 
-              await driver.update_feed_metadata(feed.feedId, newMetadata);
+            driver.update_feed_metadata(feed.feedId, newMetadata);
 
-              const updated = await driver.get_feed(feed.feedId);
-              expect(updated?.metadata).toEqual(newMetadata);
-              expect(updated?.feedId).toEqual(feed.feedId);
+            const updated = driver.get_feed(feed.feedId);
+            expect(updated?.metadata).toEqual(newMetadata);
+            expect(updated?.feedId).toEqual(feed.feedId);
 
-              // Cleanup
-              await driver.delete_feed(feed.feedId);
-            }
-          )
+            // Cleanup
+            driver.delete_feed(feed.feedId);
+          })
         );
       }));
 
     test("delete_feed", () =>
-      runTest(async (driver) => {
+      runTest((driver) => {
         return fc.assert(
-          fc.asyncProperty(arb.feed(), async (feed) => {
+          fc.property(arb.feed(), (feed) => {
             // Ensure feed doesn't already exist
-            await driver.delete_feed(feed.feedId);
+            driver.delete_feed(feed.feedId);
 
-            await driver.create_feed(feed);
-            expect(await driver.get_feed(feed.feedId)).toEqual(feed);
+            driver.create_feed(feed);
+            expect(driver.get_feed(feed.feedId)).toEqual(feed);
 
-            await driver.delete_feed(feed.feedId);
-            expect(await driver.get_feed(feed.feedId)).toBeUndefined();
+            driver.delete_feed(feed.feedId);
+            expect(driver.get_feed(feed.feedId)).toBeUndefined();
           })
         );
       }));
 
     test("delete_feed on non-existent feed is no-op", () =>
-      runTest(async (driver) => {
+      runTest((driver) => {
         return fc.assert(
-          fc.asyncProperty(arb.feedId(), async (feedId) => {
-            await driver.delete_feed(feedId);
-            expect(await driver.get_feed(feedId)).toBeUndefined();
+          fc.property(arb.feedId(), (feedId) => {
+            driver.delete_feed(feedId);
+            expect(driver.get_feed(feedId)).toBeUndefined();
           })
         );
       }));
 
     test("list_feeds returns all feeds", () =>
-      runTest(async (driver) => {
+      runTest((driver) => {
         return fc.assert(
-          fc.asyncProperty(
+          fc.property(
             fc
               .array(arb.feedPair())
               .map((x) => new Map(x))
               .filter((m) => m.size > 0 && m.size <= 5),
 
-            async (entries) => {
+            (entries) => {
               // Ensure feeds don't already exist
               for (const [feedId] of entries) {
-                await driver.delete_feed(feedId);
+                driver.delete_feed(feedId);
               }
 
               // Create all feeds
               for (const [, feed] of entries) {
-                await driver.create_feed(feed);
+                driver.create_feed(feed);
               }
 
               // List all feeds
-              const result = await driver.list_feeds();
+              const result = driver.list_feeds();
 
               // Should return all feeds
               expect(result.feeds.length).toEqual(entries.size);
@@ -3538,7 +3064,7 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
               // Cleanup
               for (const [feedId] of entries) {
-                await driver.delete_feed(feedId);
+                driver.delete_feed(feedId);
               }
             }
           )
@@ -3546,7 +3072,7 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       }));
 
     test("list_feeds with pagination", () =>
-      runTest(async (driver) => {
+      runTest((driver) => {
         // Create 3 feeds with different createdAt timestamps
         const feeds: Feed[] = [
           {
@@ -3570,11 +3096,11 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
         ];
 
         for (const feed of feeds) {
-          await driver.create_feed(feed);
+          driver.create_feed(feed);
         }
 
         // List with limit
-        const page1 = await driver.list_feeds({ limit: 2 });
+        const page1 = driver.list_feeds({ limit: 2 });
         expect(page1.feeds.length).toBe(2);
         expect(page1.nextCursor).toBeDefined();
 
@@ -3583,7 +3109,7 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
         expect(page1.feeds[1]?.feedId).toBe("feed-2");
 
         // Get next page
-        const page2 = await driver.list_feeds({
+        const page2 = driver.list_feeds({
           cursor: page1.nextCursor,
         });
         expect(page2.feeds.length).toBe(1);
@@ -3592,12 +3118,12 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
         // Cleanup
         for (const feed of feeds) {
-          await driver.delete_feed(feed.feedId);
+          driver.delete_feed(feed.feedId);
         }
       }));
 
     test("list_feeds with since filter", () =>
-      runTest(async (driver) => {
+      runTest((driver) => {
         const feeds: Feed[] = [
           {
             feedId: "feed-old",
@@ -3614,68 +3140,64 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
         ];
 
         for (const feed of feeds) {
-          await driver.create_feed(feed);
+          driver.create_feed(feed);
         }
 
         // List feeds since 2000
-        const result = await driver.list_feeds({ since: 2000 });
+        const result = driver.list_feeds({ since: 2000 });
         expect(result.feeds.length).toBe(1);
         expect(result.feeds[0]?.feedId).toBe("feed-new");
 
         // Cleanup
         for (const feed of feeds) {
-          await driver.delete_feed(feed.feedId);
+          driver.delete_feed(feed.feedId);
         }
       }));
 
     test("add_feed_message", () =>
-      runTest(async (driver) => {
+      runTest((driver) => {
         return fc.assert(
-          fc.asyncProperty(
-            arb.feed(),
-            arb.feedMessage(),
-            async (feed, message) => {
-              // Ensure feed doesn't already exist
-              await driver.delete_feed(feed.feedId);
+          fc.property(arb.feed(), arb.feedMessage(), (feed, message) => {
+            // Ensure feed doesn't already exist
+            driver.delete_feed(feed.feedId);
 
-              // Create feed
-              await driver.create_feed(feed);
+            // Create feed
+            driver.create_feed(feed);
 
-              // Add message
-              await driver.add_feed_message(feed.feedId, message);
+            // Add message
+            driver.add_feed_message(feed.feedId, message);
 
-              // List messages and verify message was added
-              const result = await driver.list_feed_messages(feed.feedId);
-              expect(result.messages).toHaveLength(1);
-              expect(result.messages[0]).toEqual(message);
+            // List messages and verify message was added
+            const result = driver.list_feed_messages(feed.feedId);
+            expect(result.messages).toHaveLength(1);
+            expect(result.messages[0]).toEqual(message);
 
-              // Cleanup
-              await driver.delete_feed(feed.feedId);
-            }
-          )
+            // Cleanup
+            driver.delete_feed(feed.feedId);
+          })
         );
       }));
 
     test("list_feed_messages", () =>
-      runTest(async (driver) => {
+      runTest((driver) => {
         return fc.assert(
-          fc.asyncProperty(arb.feed(), async (feed) => {
+          fc.property(arb.feed(), (feed) => {
             // Ensure feed doesn't already exist
-            await driver.delete_feed(feed.feedId);
+            driver.delete_feed(feed.feedId);
 
-            await driver.create_feed(feed);
+            driver.create_feed(feed);
 
-            const result = await driver.list_feed_messages(feed.feedId);
+            const result = driver.list_feed_messages(feed.feedId);
             expect(result.messages.length).toBe(0);
 
             // Cleanup
-            await driver.delete_feed(feed.feedId);
+            driver.delete_feed(feed.feedId);
           })
         );
       }));
 
     test("list_feed_messages with pagination", () =>
-      runTest(async (driver) => {
+      runTest((driver) => {
         const messages: FeedMessage[] = [
           {
             id: "msg-1",
@@ -3704,15 +3226,15 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
           updatedAt: Date.now(),
         };
 
-        await driver.create_feed(feed);
+        driver.create_feed(feed);
 
         // Add messages one by one
         for (const message of messages) {
-          await driver.add_feed_message(feed.feedId, message);
+          driver.add_feed_message(feed.feedId, message);
         }
 
         // List with limit
-        const page1 = await driver.list_feed_messages(feed.feedId, {
+        const page1 = driver.list_feed_messages(feed.feedId, {
           limit: 2,
         });
         expect(page1.messages.length).toBe(2);
@@ -3723,7 +3245,7 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
         expect(page1.messages[1]?.id).toBe("msg-2");
 
         // Get next page
-        const page2 = await driver.list_feed_messages(feed.feedId, {
+        const page2 = driver.list_feed_messages(feed.feedId, {
           cursor: page1.nextCursor,
         });
         expect(page2.messages.length).toBe(1);
@@ -3731,46 +3253,42 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
         expect(page2.nextCursor).toBeUndefined();
 
         // Cleanup
-        await driver.delete_feed(feed.feedId);
+        driver.delete_feed(feed.feedId);
       }));
 
     test("update_feed_message", () =>
-      runTest(async (driver) => {
+      runTest((driver) => {
         return fc.assert(
-          fc.asyncProperty(
+          fc.property(
             arb.feed(),
             arb.feedMessage(),
             arb.json(),
-            async (feed, message, newData) => {
+            (feed, message, newData) => {
               // Ensure feed doesn't already exist
-              await driver.delete_feed(feed.feedId);
+              driver.delete_feed(feed.feedId);
 
-              await driver.create_feed(feed);
+              driver.create_feed(feed);
 
               // Add message to the feed
-              await driver.add_feed_message(feed.feedId, message);
+              driver.add_feed_message(feed.feedId, message);
 
-              await driver.update_feed_message(
-                feed.feedId,
-                message.id,
-                newData
-              );
+              driver.update_feed_message(feed.feedId, message.id, newData);
 
-              const result = await driver.list_feed_messages(feed.feedId);
+              const result = driver.list_feed_messages(feed.feedId);
               const updatedMessage = result.messages.find(
                 (m) => m.id === message.id
               );
               expect(updatedMessage?.data).toEqual(newData);
 
               // Cleanup
-              await driver.delete_feed(feed.feedId);
+              driver.delete_feed(feed.feedId);
             }
           )
         );
       }));
 
     test("update_feed_message ignores stale timestamped updates for same message", () =>
-      runTest(async (driver) => {
+      runTest((driver) => {
         const feed: Feed = {
           feedId: "test-feed",
           metadata: {},
@@ -3784,11 +3302,11 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
           data: { value: "original" },
         };
 
-        await driver.delete_feed(feed.feedId);
-        await driver.create_feed(feed);
-        await driver.add_feed_message(feed.feedId, message);
+        driver.delete_feed(feed.feedId);
+        driver.create_feed(feed);
+        driver.add_feed_message(feed.feedId, message);
 
-        const newer = await driver.update_feed_message(
+        const newer = driver.update_feed_message(
           feed.feedId,
           message.id,
           { value: "newer-update" },
@@ -3797,7 +3315,7 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
         expect(newer.updatedAt).toBe(2000);
         expect(newer.data).toEqual({ value: "newer-update" });
 
-        const stale = await driver.update_feed_message(
+        const stale = driver.update_feed_message(
           feed.feedId,
           message.id,
           { value: "stale-update" },
@@ -3806,16 +3324,16 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
         expect(stale.updatedAt).toBe(2000);
         expect(stale.data).toEqual({ value: "newer-update" });
 
-        const result = await driver.list_feed_messages(feed.feedId);
+        const result = driver.list_feed_messages(feed.feedId);
         const latest = result.messages.find((m) => m.id === message.id);
         expect(latest?.updatedAt).toBe(2000);
         expect(latest?.data).toEqual({ value: "newer-update" });
 
-        await driver.delete_feed(feed.feedId);
+        driver.delete_feed(feed.feedId);
       }));
 
     test("list_feed_messages order remains by createdAt after update", () =>
-      runTest(async (driver) => {
+      runTest((driver) => {
         const feed: Feed = {
           feedId: "test-feed",
           metadata: {},
@@ -3837,24 +3355,24 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
           },
         ];
 
-        await driver.delete_feed(feed.feedId);
-        await driver.create_feed(feed);
+        driver.delete_feed(feed.feedId);
+        driver.create_feed(feed);
         for (const m of messages) {
-          await driver.add_feed_message(feed.feedId, m);
+          driver.add_feed_message(feed.feedId, m);
         }
 
-        const beforeUpdate = await driver.list_feed_messages(feed.feedId);
+        const beforeUpdate = driver.list_feed_messages(feed.feedId);
         expect(beforeUpdate.messages[0]?.id).toBe("msg-second");
         expect(beforeUpdate.messages[1]?.id).toBe("msg-first");
 
-        await driver.update_feed_message(
+        driver.update_feed_message(
           feed.feedId,
           "msg-first",
           { value: "first-updated" },
           9999
         );
 
-        const afterUpdate = await driver.list_feed_messages(feed.feedId);
+        const afterUpdate = driver.list_feed_messages(feed.feedId);
         expect(afterUpdate.messages[0]?.id).toBe("msg-second");
         expect(afterUpdate.messages[1]?.id).toBe("msg-first");
         expect(afterUpdate.messages[1]?.data).toEqual({
@@ -3862,92 +3380,77 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
         });
         expect(afterUpdate.messages[1]?.updatedAt).toBe(9999);
 
-        await driver.delete_feed(feed.feedId);
+        driver.delete_feed(feed.feedId);
       }));
 
     test("delete_feed_message", () =>
-      runTest(async (driver) => {
+      runTest((driver) => {
         return fc.assert(
-          fc.asyncProperty(
-            arb.feed(),
-            arb.feedMessage(),
-            async (feed, message) => {
-              // Ensure feed doesn't already exist
-              await driver.delete_feed(feed.feedId);
+          fc.property(arb.feed(), arb.feedMessage(), (feed, message) => {
+            // Ensure feed doesn't already exist
+            driver.delete_feed(feed.feedId);
 
-              await driver.create_feed(feed);
+            driver.create_feed(feed);
 
-              // Add message to the feed
-              await driver.add_feed_message(feed.feedId, message);
+            // Add message to the feed
+            driver.add_feed_message(feed.feedId, message);
 
-              await driver.delete_feed_message(feed.feedId, message.id);
+            driver.delete_feed_message(feed.feedId, message.id);
 
-              const result = await driver.list_feed_messages(feed.feedId);
-              expect(result.messages.length).toBe(0);
-              expect(
-                result.messages.find((m) => m.id === message.id)
-              ).toBeUndefined();
+            const result = driver.list_feed_messages(feed.feedId);
+            expect(result.messages.length).toBe(0);
+            expect(
+              result.messages.find((m) => m.id === message.id)
+            ).toBeUndefined();
 
-              // Cleanup
-              await driver.delete_feed(feed.feedId);
-            }
-          )
+            // Cleanup
+            driver.delete_feed(feed.feedId);
+          })
         );
       }));
 
     test("delete_feed_message on non-existent message is no-op", () =>
-      runTest(async (driver) => {
+      runTest((driver) => {
         return fc.assert(
-          fc.asyncProperty(
-            arb.feed(),
-            arb.feedMessage(),
-            async (feed, message) => {
-              // Ensure feed doesn't already exist
-              await driver.delete_feed(feed.feedId);
+          fc.property(arb.feed(), arb.feedMessage(), (feed, message) => {
+            // Ensure feed doesn't already exist
+            driver.delete_feed(feed.feedId);
 
-              await driver.create_feed(feed);
+            driver.create_feed(feed);
 
-              // Add message to the feed
-              await driver.add_feed_message(feed.feedId, message);
+            // Add message to the feed
+            driver.add_feed_message(feed.feedId, message);
 
-              await driver.delete_feed_message(
-                feed.feedId,
-                "non-existent-message-id"
-              );
+            driver.delete_feed_message(feed.feedId, "non-existent-message-id");
 
-              const result = await driver.list_feed_messages(feed.feedId);
-              expect(result.messages.length).toBe(1);
+            const result = driver.list_feed_messages(feed.feedId);
+            expect(result.messages.length).toBe(1);
 
-              // Cleanup
-              await driver.delete_feed(feed.feedId);
-            }
-          )
+            // Cleanup
+            driver.delete_feed(feed.feedId);
+          })
         );
       }));
 
     test("delete_feed deletes all messages", () =>
-      runTest(async (driver) => {
+      runTest((driver) => {
         return fc.assert(
-          fc.asyncProperty(
-            arb.feed(),
-            arb.feedMessage(),
-            async (feed, message) => {
-              // Ensure feed doesn't already exist
-              await driver.delete_feed(feed.feedId);
+          fc.property(arb.feed(), arb.feedMessage(), (feed, message) => {
+            // Ensure feed doesn't already exist
+            driver.delete_feed(feed.feedId);
 
-              await driver.create_feed(feed);
-              await driver.add_feed_message(feed.feedId, message);
+            driver.create_feed(feed);
+            driver.add_feed_message(feed.feedId, message);
 
-              await driver.delete_feed(feed.feedId);
+            driver.delete_feed(feed.feedId);
 
-              // Feed should be gone
-              expect(await driver.get_feed(feed.feedId)).toBeUndefined();
+            // Feed should be gone
+            expect(driver.get_feed(feed.feedId)).toBeUndefined();
 
-              // Messages should be gone too
-              const result = await driver.list_feed_messages(feed.feedId);
-              expect(result.messages).toEqual([]);
-            }
-          )
+            // Messages should be gone too
+            const result = driver.list_feed_messages(feed.feedId);
+            expect(result.messages).toEqual([]);
+          })
         );
       }));
   });
@@ -3964,16 +3467,9 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       // Create the access layer around the plugin
       const storage = new Storage(driver);
 
-      const logger = {
-        warn: () => {},
-        error: () => {},
-      } as unknown as Logger;
-
       return (async () => {
-        await storage.load(logger);
-
         // Self-check after loading
-        await selfCheck(storage);
+        selfCheck(storage);
 
         return callback({ storage });
       })();
@@ -3997,9 +3493,9 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
      *       - If it exists → it MUST be empty
      *       - If it doesn't exist → that's fine too
      */
-    async function assert(s: Storage, expectedNodes: StorageNode[]) {
-      const memory = Array.from(s.loadedDriver.iter_nodes());
-      const storage = Array.from(await s.raw_iter_nodes());
+    function assert(s: Storage, expectedNodes: StorageNode[]) {
+      const memory = Array.from(s.driver.iter_nodes());
+      const storage = Array.from(s.raw_iter_nodes());
 
       expectedNodes = [...expectedNodes].sort(cmpById);
       const inMemoryNodes = [...memory].sort(cmpById);
@@ -4036,19 +3532,19 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
     }
 
     test("loading storage should not persist empty root node in storage", () =>
-      runTest(async (driver) => {
-        await runWithStorage(driver, async ({ storage }) => {
-          await assert(storage, [rootObj()]);
-        });
-      }));
+      runTest((driver) =>
+        runWithStorage(driver, ({ storage }) => {
+          assert(storage, [rootObj()]);
+        })
+      ));
 
     test("loading storage should persist root node in storage (with data)", () => {
       const nodesOnDisk: NodeMap = new Map();
       nodesOnDisk.set("root", { data: { a: 1 }, type: CrdtType.OBJECT });
 
       return runTest({ initialNodes: nodesOnDisk }, async (driver) => {
-        await runWithStorage(driver, async ({ storage }) => {
-          await assert(storage, [rootObj({ a: 1 })]);
+        await runWithStorage(driver, ({ storage }) => {
+          assert(storage, [rootObj({ a: 1 })]);
         });
       });
     });
@@ -4063,11 +3559,8 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       });
 
       return runTest({ initialNodes: nodesOnDisk }, async (driver) => {
-        await runWithStorage(driver, async ({ storage }) => {
-          await assert(storage, [
-            obj("0:1", { a: 1 }, "root", "child"),
-            rootObj(),
-          ]);
+        await runWithStorage(driver, ({ storage }) => {
+          assert(storage, [obj("0:1", { a: 1 }, "root", "child"), rootObj()]);
         });
       });
     });
@@ -4090,9 +3583,9 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
         return runTest(
           { initialNodes: corruptedNodesOnDisk },
           async (driver) => {
-            await runWithStorage(driver, async ({ storage }) => {
+            await runWithStorage(driver, ({ storage }) => {
               // Child node wins - "static value" should have been removed
-              await assert(storage, [
+              assert(storage, [
                 rootObj({ otherkey: "kept" }), // mykey removed from data
                 obj("0:0", { nested: 42 }, "root", "mykey"), // child node preserved
               ]);
@@ -4118,9 +3611,9 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
         return runTest(
           { initialNodes: corruptedNodesOnDisk },
           async (driver) => {
-            await runWithStorage(driver, async ({ storage }) => {
+            await runWithStorage(driver, ({ storage }) => {
               // Register under object is dropped (it's a corruption)
-              await assert(storage, [
+              assert(storage, [
                 rootObj({ existing: "value" }), // register is gone, not converted
               ]);
             });
@@ -4150,9 +3643,9 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
         return runTest(
           { initialNodes: corruptedNodesOnDisk },
           async (driver) => {
-            await runWithStorage(driver, async ({ storage }) => {
+            await runWithStorage(driver, ({ storage }) => {
               // Register under object is dropped
-              await assert(storage, [
+              assert(storage, [
                 rootObj(),
                 obj("0:0", { existing: "value" }, "root", "child"),
               ]);
@@ -4197,9 +3690,9 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
         return runTest(
           { initialNodes: corruptedNodesOnDisk },
           async (driver) => {
-            await runWithStorage(driver, async ({ storage }) => {
+            await runWithStorage(driver, ({ storage }) => {
               // Entire illegal subtree is dropped
-              await assert(storage, [rootObj()]);
+              assert(storage, [rootObj()]);
             });
           }
         );
@@ -4244,9 +3737,9 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
         return runTest(
           { initialNodes: corruptedNodesOnDisk },
           async (driver) => {
-            await runWithStorage(driver, async ({ storage }) => {
+            await runWithStorage(driver, ({ storage }) => {
               // Only root and list remain, the illegal subtree is dropped
-              await assert(storage, [
+              assert(storage, [
                 rootObj(),
                 list("0:0", "root", "list"),
                 register("0:1", "0:0", "A0:", "valid register"),
@@ -4277,9 +3770,9 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
         return runTest(
           { initialNodes: corruptedNodesOnDisk },
           async (driver) => {
-            await runWithStorage(driver, async ({ storage }) => {
+            await runWithStorage(driver, ({ storage }) => {
               // The "a" key should be removed from root's data, "b" kept
-              await assert(storage, [
+              assert(storage, [
                 rootObj({ b: "keep" }),
                 obj("0:0", { nested: "value" }, "root", "a"),
               ]);
@@ -4331,8 +3824,8 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
           return runTest(
             { initialNodes: corruptedNodesOnDisk },
             async (driver) => {
-              await runWithStorage(driver, async ({ storage }) => {
-                await assert(storage, [
+              await runWithStorage(driver, ({ storage }) => {
+                assert(storage, [
                   rootObj({ keep: "yes" }),
                   obj("0:0", { nested: "value" }, "root", key),
                 ]);
@@ -4382,9 +3875,9 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
         return runTest(
           { initialNodes: corruptedNodesOnDisk },
           async (driver) => {
-            await runWithStorage(driver, async ({ storage }) => {
+            await runWithStorage(driver, ({ storage }) => {
               // Highest node id wins (deterministic across all backends)
-              await assert(storage, [
+              assert(storage, [
                 rootObj(),
                 obj("1:0", { id: "1:0", winner: true }, "root", "slot1"),
                 obj("1:1", { id: "1:1", winner: true }, "root", "slot2"),
@@ -4395,10 +3888,12 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       });
 
       test("loading storage fixes orphaned nodes", () => {
-        // DOS-SQLite has a FK constraint (parent_id REFERENCES nodes(id)), so orphaned
-        // nodes can't exist - the database itself prevents inserting nodes with
-        // non-existent parents. This test only applies to backends without FK constraints.
-        if (config.name === "dos-sqlite") return Promise.resolve();
+        // The SQLite backends (dos-sqlite, bun-sqlite) have a FK constraint
+        // (parent_id REFERENCES nodes(id)), so orphaned nodes can't exist - the
+        // database itself prevents inserting nodes with non-existent parents.
+        // This test only applies to backends without FK constraints.
+        if (config.name === "dos-sqlite" || config.name === "bun-sqlite")
+          return Promise.resolve();
 
         const corruptedNodesOnDisk: NodeMap = new Map();
         corruptedNodesOnDisk.set("root", {
@@ -4428,22 +3923,21 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
         return runTest(
           { initialNodes: corruptedNodesOnDisk },
           async (driver) => {
-            await runWithStorage(driver, async ({ storage }) => {
+            await runWithStorage(driver, ({ storage }) => {
               // Orphans are excluded from in-memory view
-              await assert(storage, [
-                rootObj(),
-                obj("0:0", {}, "root", "connected"),
-              ]);
+              assert(storage, [rootObj(), obj("0:0", {}, "root", "connected")]);
             });
           }
         );
       });
 
       test("loading storage removes node cycles as if the entire tree is orphaned", () => {
-        // DOS-SQLite has a FK constraint (parent_id REFERENCES nodes(id)), so cycles
-        // can't be created - inserting a node requires its parent to already exist.
-        // This test only applies to backends without FK constraints.
-        if (config.name === "dos-sqlite") return Promise.resolve();
+        // The SQLite backends (dos-sqlite, bun-sqlite) have a FK constraint
+        // (parent_id REFERENCES nodes(id)), so cycles can't be created -
+        // inserting a node requires its parent to already exist. This test only
+        // applies to backends without FK constraints.
+        if (config.name === "dos-sqlite" || config.name === "bun-sqlite")
+          return Promise.resolve();
 
         const corruptedNodesOnDisk: NodeMap = new Map();
         corruptedNodesOnDisk.set("root", {
@@ -4479,12 +3973,9 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
         return runTest(
           { initialNodes: corruptedNodesOnDisk },
           async (driver) => {
-            await runWithStorage(driver, async ({ storage }) => {
+            await runWithStorage(driver, ({ storage }) => {
               // Cycles are unreachable from root, treated as orphans
-              await assert(storage, [
-                rootObj(),
-                obj("0:0", {}, "root", "connected"),
-              ]);
+              assert(storage, [rootObj(), obj("0:0", {}, "root", "connected")]);
             });
           }
         );
@@ -4493,15 +3984,15 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
     test("UpdateObject is a no-op on non-object nodes", () =>
       runTest(async (driver) => {
-        await runWithStorage(driver, async ({ storage }) => {
-          await storage.applyOps([
+        await runWithStorage(driver, ({ storage }) => {
+          storage.applyOps([
             createObjectOp("0:1", "root", "o", { a: 0 }),
             createListOp("0:2", "root", "l"),
             createMapOp("0:3", "root", "m"),
             createRegisterOp("0:4", "0:3", "r", 42),
           ]);
 
-          await assert(storage, [
+          assert(storage, [
             rootObj(),
             obj("0:1", { a: 0 }, "root", "o"),
             list("0:2", "root", "l"),
@@ -4510,12 +4001,12 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
           ]);
 
           // Calling updateObjectOp on non-objects is a no-op...
-          await storage.applyOps([updateObjectOp("0:0", { a: 1337 })]);
-          await storage.applyOps([updateObjectOp("0:2", { a: 1337 })]);
-          await storage.applyOps([updateObjectOp("0:3", { a: 1337 })]);
-          await storage.applyOps([updateObjectOp("0:4", { a: 1337 })]);
+          storage.applyOps([updateObjectOp("0:0", { a: 1337 })]);
+          storage.applyOps([updateObjectOp("0:2", { a: 1337 })]);
+          storage.applyOps([updateObjectOp("0:3", { a: 1337 })]);
+          storage.applyOps([updateObjectOp("0:4", { a: 1337 })]);
 
-          await assert(storage, [
+          assert(storage, [
             rootObj(),
             obj("0:1", { a: 0 }, "root", "o"),
             list("0:2", "root", "l"),
@@ -4524,9 +4015,9 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
           ]);
 
           // ...but calling it on an object will not be
-          await storage.applyOps([updateObjectOp("0:1", { a: 1337 })]);
+          storage.applyOps([updateObjectOp("0:1", { a: 1337 })]);
 
-          await assert(storage, [
+          assert(storage, [
             rootObj(),
             obj("0:1", { a: 1337 }, "root", "o"),
             list("0:2", "root", "l"),
@@ -4538,74 +4029,72 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
     test("UpdateObject missing object should not create a new object", () =>
       runTest(async (driver) => {
-        await runWithStorage(driver, async ({ storage }) => {
-          await storage.applyOps([updateObjectOp("xxx", { a: 0 })]);
+        await runWithStorage(driver, ({ storage }) => {
+          storage.applyOps([updateObjectOp("xxx", { a: 0 })]);
 
-          await assert(storage, [rootObj()]);
+          assert(storage, [rootObj()]);
         });
       }));
 
     test("UpdateObject single property with native value", () =>
       runTest(async (driver) => {
-        await runWithStorage(driver, async ({ storage }) => {
-          await storage.applyOps([updateObjectOp("root", { a: 0 })]);
+        await runWithStorage(driver, ({ storage }) => {
+          storage.applyOps([updateObjectOp("root", { a: 0 })]);
 
-          await assert(storage, [rootObj({ a: 0 })]);
+          assert(storage, [rootObj({ a: 0 })]);
         });
       }));
 
     test("UpdateObject remove child object recursively", () =>
       runTest(async (driver) => {
-        await runWithStorage(driver, async ({ storage }) => {
-          await storage.applyOps([
+        await runWithStorage(driver, ({ storage }) => {
+          storage.applyOps([
             createObjectOp("0:1", "root", "child", { a: 0 }),
             createObjectOp("0:2", "0:1", "grandChild", { b: 0 }),
           ]);
 
-          await assert(storage, [
+          assert(storage, [
             rootObj(),
             obj("0:1", { a: 0 }, "root", "child"),
             obj("0:2", { b: 0 }, "0:1", "grandChild"),
           ]);
 
-          await storage.applyOps([updateObjectOp("root", { child: null })]);
+          storage.applyOps([updateObjectOp("root", { child: null })]);
 
-          await assert(storage, [rootObj({ child: null })]);
+          assert(storage, [rootObj({ child: null })]);
         });
       }));
 
     test("UpdateObject can be used to update the root object", () =>
       runTest(async (driver) => {
-        await runWithStorage(driver, async ({ storage }) => {
-          await assert(storage, [rootObj()]);
+        await runWithStorage(driver, ({ storage }) => {
+          assert(storage, [rootObj()]);
 
-          await storage.applyOps([updateObjectOp("root", { a: 0 })]);
-          await assert(storage, [rootObj({ a: 0 })]);
+          storage.applyOps([updateObjectOp("root", { a: 0 })]);
+          assert(storage, [rootObj({ a: 0 })]);
 
-          await storage.applyOps([deleteObjectKeyOp("root", "a")]);
-          await assert(storage, [rootObj()]);
+          storage.applyOps([deleteObjectKeyOp("root", "a")]);
+          assert(storage, [rootObj()]);
         });
       }));
 
     test("CreateRegister in map should remove previous one", () =>
       runTest(async (driver) => {
-        await runWithStorage(driver, async ({ storage }) => {
-          await storage.applyOps([
+        await runWithStorage(driver, ({ storage }) => {
+          storage.applyOps([
             createMapOp("0:1", "root", "map"),
             createRegisterOp("0:2", "0:1", "boolean", true),
           ]);
 
-          await assert(storage, [
+          assert(storage, [
             rootObj(),
             map("0:1", "root", "map"),
             register("0:2", "0:1", "boolean", true),
           ]);
 
-          await storage.applyOps([
-            createRegisterOp("0:3", "0:1", "boolean", false),
-          ]);
+          storage.applyOps([createRegisterOp("0:3", "0:1", "boolean", false)]);
 
-          await assert(storage, [
+          assert(storage, [
             rootObj(),
             map("0:1", "root", "map"),
             register("0:3", "0:1", "boolean", false),
@@ -4615,11 +4104,11 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
     test("CreateRegister inside a list", () =>
       runTest(async (driver) => {
-        await runWithStorage(driver, async ({ storage }) => {
-          await storage.applyOps([createListOp("0:0", "root", "items")]);
+        await runWithStorage(driver, ({ storage }) => {
+          storage.applyOps([createListOp("0:0", "root", "items")]);
 
           const op = createRegisterOp("1:0", "0:0", FIRST_POSITION, "A");
-          const result = await storage.applyOps([op]);
+          const result = storage.applyOps([op]);
 
           expect(result).toEqual([{ action: "accepted", op }]);
 
@@ -4633,14 +4122,14 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
     test("CreateRegister inside a list with a parent key that already exists should fix operation", () =>
       runTest(async (driver) => {
-        await runWithStorage(driver, async ({ storage }) => {
-          await storage.applyOps([
+        await runWithStorage(driver, ({ storage }) => {
+          storage.applyOps([
             createListOp("0:0", "root", "items"),
             createRegisterOp("0:1", "0:0", FIRST_POSITION, "A"),
           ]);
 
           const inputOp = createRegisterOp("1:0", "0:0", FIRST_POSITION, "B");
-          const result = await storage.applyOps([inputOp]);
+          const result = storage.applyOps([inputOp]);
 
           expect(result).toMatchObject([
             {
@@ -4669,8 +4158,8 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
     test("CreateRegister inside a list with a parent key that already exists and set intent should replace existing child", () =>
       runTest(async (driver) => {
-        await runWithStorage(driver, async ({ storage }) => {
-          await storage.applyOps([
+        await runWithStorage(driver, ({ storage }) => {
+          storage.applyOps([
             createListOp("0:0", "root", "items"),
             createRegisterOp("0:1", "0:0", FIRST_POSITION, "A"),
           ]);
@@ -4683,7 +4172,7 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
             "set",
             "0:1"
           );
-          const result = await storage.applyOps([op]);
+          const result = storage.applyOps([op]);
 
           expect(result).toEqual([{ action: "accepted", op }]);
 
@@ -4697,16 +4186,16 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
     test("CreateRegister inside a list with set intent should set it as child", () =>
       runTest(async (driver) => {
-        await runWithStorage(driver, async ({ storage }) => {
-          await storage.applyOps([createListOp("0:0", "root", "items")]);
+        await runWithStorage(driver, ({ storage }) => {
+          storage.applyOps([createListOp("0:0", "root", "items")]);
 
           // Should only happen when a client has deleted a child while another client replace it with a set
           const op = createRegisterOp("1:0", "0:0", FIRST_POSITION, "B", "set");
-          const result = await storage.applyOps([op]);
+          const result = storage.applyOps([op]);
 
           expect(result).toEqual([{ action: "accepted", op }]);
 
-          await assert(storage, [
+          assert(storage, [
             rootObj(),
             list("0:0", "root", "items"),
             register("1:0", "0:0", FIRST_POSITION, "B"),
@@ -4716,17 +4205,15 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
     test("CreateRegister when register already exists should ignore op and not throw error", () =>
       runTest(async (driver) => {
-        await runWithStorage(driver, async ({ storage }) => {
-          await storage.applyOps([
+        await runWithStorage(driver, ({ storage }) => {
+          storage.applyOps([
             createMapOp("0:0", "root", "map"),
             createRegisterOp("0:1", "0:0", "boolean", true),
           ]);
 
-          await storage.applyOps([
-            createRegisterOp("0:1", "0:0", "boolean", false),
-          ]);
+          storage.applyOps([createRegisterOp("0:1", "0:0", "boolean", false)]);
 
-          await assert(storage, [
+          assert(storage, [
             rootObj(),
             map("0:0", "root", "map"),
             register("0:1", "0:0", "boolean", true),
@@ -4749,50 +4236,50 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       ]);
 
       return runTest({ initialNodes: nodesOnDisk }, async (driver) => {
-        await runWithStorage(driver, async ({ storage }) => {
+        await runWithStorage(driver, ({ storage }) => {
           const expectedNodes = [
             list("0:0", "root", "list"),
             register("0:1", "0:0", "reg", 42),
             rootObj(),
           ];
-          await assert(storage, expectedNodes);
+          assert(storage, expectedNodes);
 
-          await storage.applyOps([createObjectOp("0:2", "0:1", "obj", {})]);
-          await assert(storage, expectedNodes);
+          storage.applyOps([createObjectOp("0:2", "0:1", "obj", {})]);
+          assert(storage, expectedNodes);
 
-          await storage.applyOps([createListOp("0:3", "0:1", "list")]);
-          await assert(storage, expectedNodes);
+          storage.applyOps([createListOp("0:3", "0:1", "list")]);
+          assert(storage, expectedNodes);
 
-          await storage.applyOps([createMapOp("0:4", "0:1", "map")]);
-          await assert(storage, expectedNodes);
+          storage.applyOps([createMapOp("0:4", "0:1", "map")]);
+          assert(storage, expectedNodes);
 
-          await storage.applyOps([
+          storage.applyOps([
             createRegisterOp("0:5", "0:1", "anotherreg", 1337),
           ]);
-          await assert(storage, expectedNodes);
+          assert(storage, expectedNodes);
         });
       });
     });
 
     test("CreateMap in root", () =>
       runTest(async (driver) => {
-        await runWithStorage(driver, async ({ storage }) => {
-          await storage.applyOps([createMapOp("0:1", "root", "map")]);
+        await runWithStorage(driver, ({ storage }) => {
+          storage.applyOps([createMapOp("0:1", "root", "map")]);
 
-          await assert(storage, [rootObj(), map("0:1", "root", "map")]);
+          assert(storage, [rootObj(), map("0:1", "root", "map")]);
         });
       }));
 
     test("CreateMap inside a list with a parent key that already exists should fix operation", () =>
       runTest(async (driver) => {
-        await runWithStorage(driver, async ({ storage }) => {
-          await storage.applyOps([
+        await runWithStorage(driver, ({ storage }) => {
+          storage.applyOps([
             createListOp("0:0", "root", "items"),
             createMapOp("0:1", "0:0", FIRST_POSITION),
           ]);
 
           const inputOp = createMapOp("1:0", "0:0", FIRST_POSITION);
-          const result = await storage.applyOps([inputOp]);
+          const result = storage.applyOps([inputOp]);
 
           expect(result).toMatchObject([
             {
@@ -4821,14 +4308,14 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
     test("CreateMap inside a list with a parent key that already exists and set intent should replace existing child", () =>
       runTest(async (driver) => {
-        await runWithStorage(driver, async ({ storage }) => {
-          await storage.applyOps([
+        await runWithStorage(driver, ({ storage }) => {
+          storage.applyOps([
             createListOp("0:0", "root", "items"),
             createMapOp("0:1", "0:0", FIRST_POSITION),
           ]);
 
           const op = createMapOp("1:0", "0:0", FIRST_POSITION, "set", "0:1");
-          const result = await storage.applyOps([op]);
+          const result = storage.applyOps([op]);
 
           expect(result).toEqual([{ action: "accepted", op }]);
 
@@ -4842,18 +4329,18 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
     test("CreateMap when map already exists should ignore op and not throw error", () =>
       runTest(async (driver) => {
-        await runWithStorage(driver, async ({ storage }) => {
-          await storage.applyOps([createMapOp("0:1", "root", "map")]);
-          await storage.applyOps([createMapOp("0:1", "root", "map")]);
+        await runWithStorage(driver, ({ storage }) => {
+          storage.applyOps([createMapOp("0:1", "root", "map")]);
+          storage.applyOps([createMapOp("0:1", "root", "map")]);
 
-          await assert(storage, [rootObj(), map("0:1", "root", "map")]);
+          assert(storage, [rootObj(), map("0:1", "root", "map")]);
         });
       }));
 
     test("SetParentKey changes positions of list items", () =>
       runTest(async (driver) => {
-        await runWithStorage(driver, async ({ storage }) => {
-          await storage.applyOps([
+        await runWithStorage(driver, ({ storage }) => {
+          storage.applyOps([
             createListOp("0:1", "root", "items"),
             createRegisterOp("0:2", "0:1", FIRST_POSITION, "A"),
             createRegisterOp("0:3", "0:1", SECOND_POSITION, "B"),
@@ -4861,7 +4348,7 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
           const op = setParentKeyOp("0:2", THIRD_POSITION);
 
-          const ops = await storage.applyOps([op]);
+          const ops = storage.applyOps([op]);
 
           expect(ops).toEqual([{ action: "accepted", op }]);
         });
@@ -4869,15 +4356,15 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
     test("SetParentKey changes positions of list items (with conflict)", () =>
       runTest(async (driver) => {
-        await runWithStorage(driver, async ({ storage }) => {
-          await storage.applyOps([
+        await runWithStorage(driver, ({ storage }) => {
+          storage.applyOps([
             createListOp("0:1", "root", "items"),
             createRegisterOp("0:2", "0:1", FIRST_POSITION, "A"),
             createRegisterOp("0:3", "0:1", SECOND_POSITION, "B"),
           ]);
 
           const inputOp = setParentKeyOp("0:2", SECOND_POSITION);
-          const ops = await storage.applyOps([inputOp]);
+          const ops = storage.applyOps([inputOp]);
 
           expect(ops).toMatchObject([
             {
@@ -4899,18 +4386,18 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
     test("SetParentKey persists list item position changes to disk", () =>
       runTest(async (driver) => {
-        await runWithStorage(driver, async ({ storage }) => {
-          await storage.applyOps([
+        await runWithStorage(driver, ({ storage }) => {
+          storage.applyOps([
             createListOp("0:1", "root", "items"),
             createRegisterOp("0:2", "0:1", FIRST_POSITION, "A"),
             createRegisterOp("0:3", "0:1", SECOND_POSITION, "B"),
           ]);
 
           // Move item from FIRST_POSITION to THIRD_POSITION
-          await storage.applyOps([setParentKeyOp("0:2", THIRD_POSITION)]);
+          storage.applyOps([setParentKeyOp("0:2", THIRD_POSITION)]);
 
           // selfCheck verifies disk matches memory
-          await selfCheck(storage);
+          selfCheck(storage);
         });
       }));
 
@@ -4929,8 +4416,8 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
           async (parentNode) => {
             await runTest(async (driver) => {
-              await runWithStorage(driver, async ({ storage }) => {
-                await storage.applyOps([
+              await runWithStorage(driver, ({ storage }) => {
+                storage.applyOps([
                   parentNode,
                   createRegisterOp("0:2", parentNode.id, FIRST_POSITION, "A"),
                   createRegisterOp("0:3", parentNode.id, SECOND_POSITION, "B"),
@@ -4941,7 +4428,7 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
                 // The actual test: setParentKeyOp should be a no-op for all nodes
                 // that aren't list child items
                 const op = setParentKeyOp("0:2", THIRD_POSITION);
-                const results = await storage.applyOps([op]);
+                const results = storage.applyOps([op]);
 
                 // Nothing should have changed!
                 expect(getAll(storage)).toEqual(nodesBefore);
@@ -4964,19 +4451,19 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       ]);
 
       return runTest({ initialNodes: nodesOnDisk }, async (driver) => {
-        await runWithStorage(driver, async ({ storage }) => {
+        await runWithStorage(driver, ({ storage }) => {
           // Move the map to a new position in the list
           const op = setParentKeyOp("0:2", SECOND_POSITION);
-          await storage.applyOps([op]);
+          storage.applyOps([op]);
 
           // Verify the children where not deleted
-          expect(storage.loadedDriver.get_node("0:3")).toEqual({
+          expect(storage.driver.get_node("0:3")).toEqual({
             type: CrdtType.REGISTER,
             parentId: "0:2",
             parentKey: "a",
             data: "A",
           });
-          expect(storage.loadedDriver.get_node("0:4")).toEqual({
+          expect(storage.driver.get_node("0:4")).toEqual({
             type: CrdtType.REGISTER,
             parentId: "0:2",
             parentKey: "b",
@@ -4988,30 +4475,23 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
     test("CreateObject in root", () =>
       runTest(async (driver) => {
-        await runWithStorage(driver, async ({ storage }) => {
-          await storage.applyOps([
-            createObjectOp("0:1", "root", "child", { a: 0 }),
-          ]);
+        await runWithStorage(driver, ({ storage }) => {
+          storage.applyOps([createObjectOp("0:1", "root", "child", { a: 0 })]);
 
-          await assert(storage, [
-            rootObj(),
-            obj("0:1", { a: 0 }, "root", "child"),
-          ]);
+          assert(storage, [rootObj(), obj("0:1", { a: 0 }, "root", "child")]);
         });
       }));
 
     test("CreateObject in map", () =>
       runTest(async (driver) => {
-        await runWithStorage(driver, async ({ storage }) => {
-          await storage.applyOps([createMapOp("0:1", "root", "map")]);
+        await runWithStorage(driver, ({ storage }) => {
+          storage.applyOps([createMapOp("0:1", "root", "map")]);
 
-          await assert(storage, [rootObj(), map("0:1", "root", "map")]);
+          assert(storage, [rootObj(), map("0:1", "root", "map")]);
 
-          await storage.applyOps([
-            createObjectOp("0:2", "0:1", "first", { a: 0 }),
-          ]);
+          storage.applyOps([createObjectOp("0:2", "0:1", "first", { a: 0 })]);
 
-          await assert(storage, [
+          assert(storage, [
             rootObj(),
             map("0:1", "root", "map"),
             obj("0:2", { a: 0 }, "0:1", "first"),
@@ -5021,12 +4501,12 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
     test("CreateObject should ignore op if parent does not exist", () =>
       runTest(async (driver) => {
-        await runWithStorage(driver, async ({ storage }) => {
-          const result = await storage.applyOps([
+        await runWithStorage(driver, ({ storage }) => {
+          const result = storage.applyOps([
             createObjectOp("1:0", "42:42", "item", {}),
           ]);
 
-          await assert(storage, [rootObj()]);
+          assert(storage, [rootObj()]);
 
           expect(result.filter((r) => r.action !== "ignored")).toEqual([]);
         });
@@ -5034,14 +4514,14 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
     test("CreateObject inside a list with a parent key that already exists should fix operation", () =>
       runTest(async (driver) => {
-        await runWithStorage(driver, async ({ storage }) => {
-          await storage.applyOps([
+        await runWithStorage(driver, ({ storage }) => {
+          storage.applyOps([
             createListOp("0:0", "root", "items"),
             createObjectOp("0:1", "0:0", FIRST_POSITION, {}),
           ]);
 
           const inputOp = createObjectOp("1:0", "0:0", FIRST_POSITION, {});
-          const result = await storage.applyOps([inputOp]);
+          const result = storage.applyOps([inputOp]);
 
           expect(result).toMatchObject([
             {
@@ -5070,8 +4550,8 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
     test("CreateObject inside a list with a parent key that already exists and set intent should replace existing child", () =>
       runTest(async (driver) => {
-        await runWithStorage(driver, async ({ storage }) => {
-          await storage.applyOps([
+        await runWithStorage(driver, ({ storage }) => {
+          storage.applyOps([
             createListOp("0:0", "root", "items"),
             createObjectOp("0:1", "0:0", FIRST_POSITION, {}),
           ]);
@@ -5084,7 +4564,7 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
             "set",
             "0:1"
           );
-          const result = await storage.applyOps([op]);
+          const result = storage.applyOps([op]);
 
           expect(result).toEqual([{ action: "accepted", op }]);
 
@@ -5119,15 +4599,15 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
     test("CreateObject inside a list with that matches multiple keys should modify the op with the right subsequent key", () =>
       runTest(async (driver) => {
-        await runWithStorage(driver, async ({ storage }) => {
-          await storage.applyOps([
+        await runWithStorage(driver, ({ storage }) => {
+          storage.applyOps([
             createListOp("0:1", "root", "items"),
             createObjectOp("0:2", "0:1", FIRST_POSITION, {}),
             createObjectOp("0:3", "0:1", SECOND_POSITION, {}),
           ]);
 
           const inputOp = createObjectOp("1:0", "0:1", FIRST_POSITION, {});
-          const result = await storage.applyOps([inputOp]);
+          const result = storage.applyOps([inputOp]);
 
           // The new expected position is in between the first and second positions
           const expectedPosition = makePosition(
@@ -5154,14 +4634,14 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
     test("DeleteObjectKey from root", () =>
       runTest(async (driver) => {
-        await runWithStorage(driver, async ({ storage }) => {
-          await storage.applyOps([updateObjectOp("root", { a: 0, b: 0 })]);
+        await runWithStorage(driver, ({ storage }) => {
+          storage.applyOps([updateObjectOp("root", { a: 0, b: 0 })]);
 
-          await assert(storage, [rootObj({ a: 0, b: 0 })]);
+          assert(storage, [rootObj({ a: 0, b: 0 })]);
 
-          await storage.applyOps([deleteObjectKeyOp("root", "a")]);
+          storage.applyOps([deleteObjectKeyOp("root", "a")]);
 
-          await assert(storage, [rootObj({ b: 0 })]);
+          assert(storage, [rootObj({ b: 0 })]);
         });
       }));
 
@@ -5180,18 +4660,18 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       });
 
       return runTest({ initialNodes: nodesOnDisk }, async (driver) => {
-        await runWithStorage(driver, async ({ storage }) => {
-          await storage.applyOps([deleteObjectKeyOp("0:1", "x")]);
+        await runWithStorage(driver, ({ storage }) => {
+          storage.applyOps([deleteObjectKeyOp("0:1", "x")]);
 
-          await assert(storage, [obj("0:1", {}, "root", "o"), rootObj()]);
+          assert(storage, [obj("0:1", {}, "root", "o"), rootObj()]);
         });
       });
     });
 
     test("DeleteCrdt with the root node is a no-op (virtual)", () =>
       runTest(async (driver) => {
-        await runWithStorage(driver, async ({ storage }) => {
-          await storage.applyOps([
+        await runWithStorage(driver, ({ storage }) => {
+          storage.applyOps([
             createListOp("0:1", "root", "items"),
             createRegisterOp("0:2", "0:1", FIRST_POSITION, "A"),
           ]);
@@ -5202,17 +4682,17 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
             register("0:2", "0:1", FIRST_POSITION, "A"),
           ];
 
-          await assert(storage, expectedNodes);
+          assert(storage, expectedNodes);
 
-          await storage.applyOps([deleteCrdtOp("root")]);
-          await assert(storage, expectedNodes);
+          storage.applyOps([deleteCrdtOp("root")]);
+          assert(storage, expectedNodes);
         });
       }));
 
     test("DeleteCrdt with the root node is a no-op (explicit)", () =>
       runTest(async (driver) => {
-        await runWithStorage(driver, async ({ storage }) => {
-          await storage.applyOps([
+        await runWithStorage(driver, ({ storage }) => {
+          storage.applyOps([
             updateObjectOp("root", { a: 1, b: 2 }),
             createListOp("0:1", "root", "items"),
             createRegisterOp("0:2", "0:1", FIRST_POSITION, "A"),
@@ -5224,22 +4704,22 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
             register("0:2", "0:1", FIRST_POSITION, "A"),
           ];
 
-          await assert(storage, expectedNodes);
+          assert(storage, expectedNodes);
 
-          await storage.applyOps([deleteCrdtOp("root")]);
-          await assert(storage, expectedNodes);
+          storage.applyOps([deleteCrdtOp("root")]);
+          assert(storage, expectedNodes);
         });
       }));
 
     test("DeleteCrdt should remove link", () =>
       runTest(async (driver) => {
-        await runWithStorage(driver, async ({ storage }) => {
-          await storage.applyOps([
+        await runWithStorage(driver, ({ storage }) => {
+          storage.applyOps([
             createListOp("0:1", "root", "items"),
             createRegisterOp("0:2", "0:1", FIRST_POSITION, "A"),
           ]);
 
-          await assert(storage, [
+          assert(storage, [
             rootObj(),
             list("0:1", "root", "items"),
             register("0:2", "0:1", FIRST_POSITION, "A"),
@@ -5247,23 +4727,23 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
           expect(countChildrenOf(storage, "0:1")).toBe(1);
 
-          await storage.applyOps([deleteCrdtOp("0:2")]);
+          storage.applyOps([deleteCrdtOp("0:2")]);
 
-          await assert(storage, [rootObj(), list("0:1", "root", "items")]);
+          assert(storage, [rootObj(), list("0:1", "root", "items")]);
           expect(countChildrenOf(storage, "0:1")).toBe(0);
         });
       }));
 
     test("DeleteCrdt remove child records recursively with delete record", () =>
       runTest(async (driver) => {
-        await runWithStorage(driver, async ({ storage }) => {
-          await storage.applyOps([
+        await runWithStorage(driver, ({ storage }) => {
+          storage.applyOps([
             createListOp("0:1", "root", "items"),
             createObjectOp("0:2", "0:1", FIRST_POSITION, {}),
             createObjectOp("0:3", "0:2", "child", { a: 0 }),
           ]);
 
-          await assert(storage, [
+          assert(storage, [
             rootObj(),
             list("0:1", "root", "items"),
             obj("0:2", {}, "0:1", FIRST_POSITION),
@@ -5273,9 +4753,9 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
           expect(countChildrenOf(storage, "0:1")).toBe(1);
           expect(countChildrenOf(storage, "0:2")).toBe(1);
 
-          await storage.applyOps([deleteCrdtOp("0:2")]);
+          storage.applyOps([deleteCrdtOp("0:2")]);
 
-          await assert(storage, [rootObj(), list("0:1", "root", "items")]);
+          assert(storage, [rootObj(), list("0:1", "root", "items")]);
 
           expect(countChildrenOf(storage, "0:1")).toBe(0);
           expect(countChildrenOf(storage, "0:2")).toBe(0);
@@ -5284,7 +4764,7 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
     test("DeleteCrdt remove multiple batch child records recursively with delete record", () =>
       runTest(async (driver) => {
-        await runWithStorage(driver, async ({ storage }) => {
+        await runWithStorage(driver, ({ storage }) => {
           const ops: ClientWireOp[] = [
             createListOp("0:1", "root", "items"),
             createObjectOp("0:2", "0:1", FIRST_POSITION, {}),
@@ -5294,35 +4774,35 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
             ops.push(createObjectOp(`0:${i}`, "0:2", `child-${i}`, { a: 0 }));
           }
 
-          await storage.applyOps(ops);
+          storage.applyOps(ops);
 
-          await storage.applyOps([deleteCrdtOp("0:2")]);
+          storage.applyOps([deleteCrdtOp("0:2")]);
 
-          await assert(storage, [rootObj(), list("0:1", "root", "items")]);
+          assert(storage, [rootObj(), list("0:1", "root", "items")]);
         });
       }));
 
     test("CreateList when list already exists should ignore op and not throw error", () =>
       runTest(async (driver) => {
-        await runWithStorage(driver, async ({ storage }) => {
-          await storage.applyOps([createListOp("0:1", "root", "list")]);
+        await runWithStorage(driver, ({ storage }) => {
+          storage.applyOps([createListOp("0:1", "root", "list")]);
 
-          await storage.applyOps([createListOp("0:1", "root", "list")]);
+          storage.applyOps([createListOp("0:1", "root", "list")]);
 
-          await assert(storage, [rootObj(), list("0:1", "root", "list")]);
+          assert(storage, [rootObj(), list("0:1", "root", "list")]);
         });
       }));
 
     test("CreateList inside a list with a parent key that already exists should fix operation", () =>
       runTest(async (driver) => {
-        await runWithStorage(driver, async ({ storage }) => {
-          await storage.applyOps([
+        await runWithStorage(driver, ({ storage }) => {
+          storage.applyOps([
             createListOp("0:0", "root", "items"),
             createListOp("0:1", "0:0", FIRST_POSITION),
           ]);
 
           const inputOp = createListOp("1:0", "0:0", FIRST_POSITION);
-          const result = await storage.applyOps([inputOp]);
+          const result = storage.applyOps([inputOp]);
 
           expect(result).toMatchObject([
             {
@@ -5351,14 +4831,14 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
     test("CreateList inside a list with a parent key that already exists and set intent should replace existing child", () =>
       runTest(async (driver) => {
-        await runWithStorage(driver, async ({ storage }) => {
-          await storage.applyOps([
+        await runWithStorage(driver, ({ storage }) => {
+          storage.applyOps([
             createListOp("0:0", "root", "items"),
             createListOp("0:1", "0:0", FIRST_POSITION),
           ]);
 
           const op = createListOp("1:0", "0:0", FIRST_POSITION, "set", "0:1");
-          const result = await storage.applyOps([op]);
+          const result = storage.applyOps([op]);
 
           expect(result).toEqual([{ action: "accepted", op }]);
 
@@ -5372,8 +4852,8 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
     test("CreateList inside a list with a parent key that already exists and set intent should replace existing child (even if it got moved in the mean time)", () =>
       runTest(async (driver) => {
-        await runWithStorage(driver, async ({ storage }) => {
-          await storage.applyOps([
+        await runWithStorage(driver, ({ storage }) => {
+          storage.applyOps([
             createListOp("0:0", "root", "items"),
             createListOp("0:1", "0:0", FIRST_POSITION),
             createListOp("0:2", "0:0", SECOND_POSITION),
@@ -5384,14 +4864,14 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
           // - Client B tries to replace the item in first position with a new one
 
           // Client A
-          await storage.applyOps([
+          storage.applyOps([
             setParentKeyOp("0:1", THIRD_POSITION),
             setParentKeyOp("0:2", FIRST_POSITION),
           ]);
 
           // Client B
           const op = createListOp("0:3", "0:0", FIRST_POSITION, "set", "0:1");
-          const result = await storage.applyOps([op]);
+          const result = storage.applyOps([op]);
 
           expect(result).toMatchObject([
             {
@@ -5431,14 +4911,14 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
     test("ensure execution order of Ops is well-defined", () =>
       runTest(async (driver) => {
-        await runWithStorage(driver, async ({ storage }) => {
-          await storage.applyOps([
+        await runWithStorage(driver, ({ storage }) => {
+          storage.applyOps([
             createObjectOp("0:0", "root", "child", { a: 0 }),
             updateObjectOp("0:0", { a: 1 }),
             createObjectOp("0:1", "0:0", "a", { b: 0 }),
           ]);
 
-          await assert(storage, [
+          assert(storage, [
             rootObj(),
             obj("0:0", {}, "root", "child"),
             obj("0:1", { b: 0 }, "0:0", "a"),
@@ -5450,8 +4930,8 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
     // incoming Ops, ever, get ignored
     test("ensure no operations get ignored", () =>
       runTest(async (driver) => {
-        await runWithStorage(driver, async ({ storage }) => {
-          const result = await storage.applyOps([
+        await runWithStorage(driver, ({ storage }) => {
+          const result = storage.applyOps([
             createMapOp("0:0", "root", "map"),
             createRegisterOp("0:1", "0:0", "first", 0),
             createRegisterOp("0:2", "0:0", "first", 1),
@@ -5469,8 +4949,8 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
         ]);
 
         return runTest({ initialNodes: nodesOnDisk }, async (driver) => {
-          await runWithStorage(driver, async ({ storage }) => {
-            await storage.applyOps([
+          await runWithStorage(driver, ({ storage }) => {
+            storage.applyOps([
               createListOp("0:2", "0:1", "b", "set"),
               createObjectOp("0:3", "0:2", "c", {}, "set", "0:1"),
               //                                           ^^^^^ 🔑
@@ -5478,9 +4958,9 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
               //                             should not cause data corruption!
             ]);
 
-            await selfCheck(storage);
+            selfCheck(storage);
 
-            await assert(storage, [
+            assert(storage, [
               list("0:1", "root", "a"),
               rootObj(),
               list("0:2", "0:1", "b"),
@@ -5504,20 +4984,20 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
         ]);
 
         return runTest({ initialNodes: nodesOnDisk }, async (driver) => {
-          await runWithStorage(driver, async ({ storage }) => {
-            await assert(storage, [
+          await runWithStorage(driver, ({ storage }) => {
+            assert(storage, [
               obj("0:1", { a: 1, b: 2, c: 3, d: 4, e: 5 }, "root", "obj"),
               rootObj(),
             ]);
 
-            await storage.applyOps([
+            storage.applyOps([
               createRegisterOp("0:2", "0:1", "a", "stuff"), // Register Op will get ignored because parent is object
               createObjectOp("0:3", "0:1", "b", {}),
               createListOp("0:4", "0:1", "c"),
               createMapOp("0:5", "0:1", "d"),
             ]);
 
-            await assert(storage, [
+            assert(storage, [
               obj("0:1", { a: 1, e: 5 }, "root", "obj"),
               //         ^^^^^^^^^^^^^^ The overwritten fields should be gone
               rootObj(),
@@ -5527,7 +5007,7 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
             ]);
 
             // Which means that if we remove the children again...
-            await storage.applyOps([
+            storage.applyOps([
               deleteCrdtOp("0:2"),
               deleteCrdtOp("0:3"),
               deleteCrdtOp("0:4"),
@@ -5535,7 +5015,7 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
             ]);
 
             // ...the previously masked static fields become visible again to clients
-            await assert(storage, [
+            assert(storage, [
               obj("0:1", { a: 1, e: 5 }, "root", "obj"),
               //         ^^^^^^^^^^^^^^ Still gone
               rootObj(),
@@ -5546,14 +5026,14 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
       test("creating registers under objects is impossible", () =>
         runTest(async (driver) => {
-          await runWithStorage(driver, async ({ storage }) => {
-            await assert(storage, [rootObj()]);
-            await selfCheck(storage);
+          await runWithStorage(driver, ({ storage }) => {
+            assert(storage, [rootObj()]);
+            selfCheck(storage);
 
-            await storage.applyOps([createRegisterOp("0:0", "root", "a", 42)]); // 👈 Op should get ignored
-            await selfCheck(storage);
+            storage.applyOps([createRegisterOp("0:0", "root", "a", 42)]); // 👈 Op should get ignored
+            selfCheck(storage);
 
-            await assert(storage, [rootObj()]);
+            assert(storage, [rootObj()]);
           });
         }));
     });
@@ -5570,14 +5050,14 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       // Pre-populate with yjs updates if provided
       if (yjsUpdates.length > 0) {
         for (const update of yjsUpdates) {
-          await driver.write_y_updates(guid, nanoid(), update);
+          driver.write_y_updates(guid, nanoid(), update);
         }
       }
 
       const yjsStorage = new YjsStorage(driver);
 
       // Load the root doc
-      await yjsStorage.loadDocByIdIfNotAlreadyLoaded(blackHole, guid);
+      await yjsStorage.getYDoc(blackHole, guid);
 
       return await callback({ yjsStorage });
     }
@@ -5632,9 +5112,9 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
         await runWithYjsStorage(driver, [], async ({ yjsStorage }) => {
           const update = getSampleYDocUpdate();
           await yjsStorage.addYDocUpdate(blackHole, bytesToB64(update));
-          await expect(
+          expect(() =>
             yjsStorage.addYDocUpdate(blackHole, "obviouslynotvalidbase64update")
-          ).rejects.toThrow(
+          ).toThrow(
             "Bad YDoc update. Data is corrupted, or data does not match the encoding."
           );
           const loadedUpdate = await yjsStorage.getYDocUpdate(blackHole);

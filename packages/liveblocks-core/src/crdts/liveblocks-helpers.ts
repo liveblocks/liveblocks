@@ -201,7 +201,7 @@ export function dumpPool(pool: ManagedPool): string {
  * and nested arrays/objects are compared by traversal (key-by-key, so key order
  * is irrelevant).
  */
-function isJsonEq(a: Json | undefined, b: Json | undefined): boolean {
+export function isJsonEq(a: Json | undefined, b: Json | undefined): boolean {
   if (a === b) {
     return true;
   }

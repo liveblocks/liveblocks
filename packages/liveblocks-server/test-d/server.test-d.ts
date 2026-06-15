@@ -37,15 +37,15 @@ async () => {
 
   // Room.createTicket() API
   expectType<Ticket<SM, CM>>(
-    await room.createTicket({ version: ProtocolVersion.V8 })
+    room.createTicket({ version: ProtocolVersion.V8 })
   );
-  expectType<Ticket<SM, CM>>(await room.createTicket());
-  expectType<Ticket<SM, CM>>(await room.createTicket());
+  expectType<Ticket<SM, CM>>(room.createTicket());
+  expectType<Ticket<SM, CM>>(room.createTicket());
 
-  const ticket = await room.createTicket({ meta: { my: "session-meta" } });
+  const ticket = room.createTicket({ meta: { my: "session-meta" } });
 
   // Room.startBrowserSession() API
-  expectType<void>(await room.startBrowserSession(ticket, socket));
+  expectType<void>(room.startBrowserSession(ticket, socket));
 
   // Room.endBrowserSession() API
   expectType<void>(

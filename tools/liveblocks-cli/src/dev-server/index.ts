@@ -265,9 +265,8 @@ const dev: SubCommand = {
 
             // Look up or create the room for the requested room ID
             const room = Rooms.getRoomInstance(roomId);
-            await room.load();
 
-            const ticket = await room.createTicket(ticketData);
+            const ticket = room.createTicket(ticketData);
             const sessionKey = ticket.sessionKey;
             const success = server.upgrade(req, {
               data: { room, ticket, sessionKey },
@@ -347,7 +346,7 @@ const dev: SubCommand = {
 
         websocket: {
           // The socket is opened
-          async open(ws): Promise<void> {
+          open(ws): void {
             const { refuseConnection, room, ticket } = ws.data;
 
             // If this connection should be refused, close it immediately
@@ -357,7 +356,7 @@ const dev: SubCommand = {
             }
 
             if (room && ticket) {
-              await room.startBrowserSession(ticket, ws);
+              room.startBrowserSession(ticket, ws);
             }
           },
 
