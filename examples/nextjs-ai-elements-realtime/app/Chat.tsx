@@ -510,33 +510,6 @@ function ChatWindow({
               );
             })
           )}
-
-          {/* {aiThinking && !streamingInProgress ? (
-            <Message from="assistant">
-              <MessageContent>
-                <div className={`flex items-center gap-1.5`}>
-                  <Avatar
-                    // `lb-root` provides the CSS variables the avatar
-                    // needs (radius, colors) when used standalone.
-                    className="lb-root"
-                    src={AI_USER_AVATAR}
-                    name={AI_USER_NAME}
-                    style={{ width: 20, height: 20 }}
-                  />
-                  <span className="font-medium text-xs">{AI_USER_NAME}</span>
-                </div>
-                <Shimmer>Thinking…</Shimmer>
-              </MessageContent>
-              <MessageActions>
-                <MessageAction tooltip="Copy" disabled={!true}>
-                  <CopyIcon className="size-4" />
-                </MessageAction>
-                <MessageAction tooltip="Regenerate" disabled={true}>
-                  <RefreshCcwIcon className="size-4" />
-                </MessageAction>
-              </MessageActions>
-            </Message>
-          ) : null} */}
         </ConversationContent>
         <ConversationScrollButton />
       </Conversation>
