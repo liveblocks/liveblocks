@@ -1,4 +1,4 @@
-import type { LiveText } from "@liveblocks/client";
+import type { LiveText } from "@liveblocks/core";
 
 declare global {
   interface Liveblocks {

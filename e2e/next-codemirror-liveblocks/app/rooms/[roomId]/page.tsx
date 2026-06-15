@@ -30,8 +30,8 @@ import {
   StateField,
   Transaction,
 } from "@codemirror/state";
-import { LiveObject, LiveText, Room } from "@liveblocks/client";
-import { kInternal, kStorageUpdateSource } from "@liveblocks/core";
+import { LiveObject, Room } from "@liveblocks/client";
+import { kInternal, kStorageUpdateSource, LiveText } from "@liveblocks/core";
 
 export default function RoomPage({
   params,

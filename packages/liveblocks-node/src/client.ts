@@ -33,6 +33,7 @@ import type {
   InboxNotificationDataPlain,
   Json,
   JsonObject,
+  ReadonlyJson,
   KDAD,
   NotificationSettings,
   NotificationSettingsPlain,
@@ -767,7 +768,7 @@ export class Liveblocks {
 
   async #post(
     path: URLSafeString,
-    json: Json,
+    json: ReadonlyJson,
     options?: RequestOptions
   ): Promise<Response> {
     const url = urljoin(this.#baseUrl, path);
@@ -788,7 +789,7 @@ export class Liveblocks {
 
   async #patch(
     path: URLSafeString,
-    json: Json,
+    json: ReadonlyJson,
     options?: RequestOptions
   ): Promise<Response> {
     const url = urljoin(this.#baseUrl, path);

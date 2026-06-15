@@ -1,7 +1,7 @@
 import { EditorSelection, EditorState, Transaction } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
-import { LiveObject, LiveText, Room } from "@liveblocks/client";
-import { CrdtType, kInternal } from "@liveblocks/core";
+import { LiveObject, Room } from "@liveblocks/client";
+import { CrdtType, kInternal, LiveText } from "@liveblocks/core";
 import { describe, expect, onTestFinished, test, vi } from "vitest";
 
 import {

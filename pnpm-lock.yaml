@@ -96,7 +96,7 @@ importers:
         specifier: ^1.55.0
         version: 1.55.0
       '@tailwindcss/postcss':
-        specifier: ^4.1.18
+        specifier: ^4.2.2
         version: 4.2.2
       dotenv:
         specifier: ^16.0.0
@@ -111,8 +111,8 @@ importers:
         specifier: ^1.55.0
         version: 1.55.0
       tailwindcss:
-        specifier: ^4.1.18
-        version: 4.2.1
+        specifier: ^4.3.0
+        version: 4.3.0
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -221,7 +221,7 @@ importers:
         specifier: ^3.3.3
         version: 3.3.5
       '@tailwindcss/postcss':
-        specifier: ^4.1.18
+        specifier: ^4.2.2
         version: 4.2.2
       eslint:
         specifier: ^9.39.4
@@ -230,8 +230,8 @@ importers:
         specifier: 16.1.4
         version: 16.1.4(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)
       tailwindcss:
-        specifier: ^4.1.18
-        version: 4.2.1
+        specifier: ^4.3.0
+        version: 4.3.0
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -9877,9 +9877,6 @@ packages:
     resolution: {integrity: sha512-KqjHOJKogOUt5Bs752ykCeiwvi0fKVkr5oqsFNt/8px/tA8scFPIlkygsf6jXrfCqGHz7VflA6+yytWuM+XhFw==}
     engines: {node: '>=14.0.0'}
     hasBin: true
-
-  tailwindcss@4.2.1:
-    resolution: {integrity: sha512-/tBrSQ36vCleJkAOsy9kbNTgaxvGbyOamC30PRePTQe/o1MFwEKHQk4Cn7BNGaPtjp+PuUrByJehM1hgxfq4sw==}
 
   tailwindcss@4.2.2:
     resolution: {integrity: sha512-KWBIxs1Xb6NoLdMVqhbhgwZf2PGBpPEiwOqgI4pFIYbNTfBXiKYyWoTsXgBQ9WFg/OlhnvHaY+AEpW7wSmFo2Q==}
@@ -20995,8 +20992,6 @@ snapshots:
       sucrase: 3.35.0
     transitivePeerDependencies:
       - ts-node
-
-  tailwindcss@4.2.1: {}
 
   tailwindcss@4.2.2: {}
 

@@ -5,11 +5,12 @@ import {
   Transaction,
 } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
-import { LiveObject, LiveText, Room } from "@liveblocks/client";
+import { LiveObject, Room } from "@liveblocks/client";
 import {
   CrdtType,
   kInternal,
   kStorageUpdateSource,
+  LiveText,
   OpCode,
 } from "@liveblocks/core";
 import { describe, expect, onTestFinished, test, vi } from "vitest";
