@@ -11,16 +11,46 @@ declare global {
       };
     };
 
+    // Realtime presence, shared with everyone in the room. We use it to show a
+    // live "AI is thinking…" status to all connected users, not just whoever
+    // sent the message.
+    Presence: {
+      isPromptingAi: boolean;
+    };
+
     // The shape of every message stored in a feed. Because feeds hold
-    // arbitrary JSON, we enrich assistant replies with reasoning, sources,
-    // and follow-up suggestions to showcase more AI Elements components.
+    // arbitrary JSON, we store the author (so everyone sees who sent what) and
+    // enrich assistant replies with reasoning, sources, and follow-up
+    // suggestions to showcase more AI Elements components.
     FeedMessageData: {
       role: "user" | "assistant";
       content: string;
+      userId?: string;
+      name?: string;
+      avatar?: string;
       model?: string;
       reasoning?: string;
       sources?: { title: string; url: string }[];
       suggestions?: string[];
+      // Step-by-step plan, rendered with the AI Elements `ChainOfThought`.
+      chainOfThought?: {
+        label: string;
+        description?: string;
+        status?: "complete" | "active" | "pending";
+        search?: string[];
+      }[];
+      // A tool the assistant "called", rendered with `Tool` (+ `CodeBlock`).
+      tool?: {
+        name: string;
+        input: Record<string, string | number>;
+        output?: string;
+      };
+      // Token usage, rendered with the `Context` component.
+      usedTokens?: number;
+      maxTokens?: number;
+      // True while the assistant message is still being streamed in via
+      // `updateFeedMessage`. Cleared on the final update.
+      streaming?: boolean;
     };
 
     // Custom metadata attached to a feed

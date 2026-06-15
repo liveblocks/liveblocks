@@ -12,7 +12,7 @@ export default function Page() {
   const roomId = useExampleRoomId();
 
   return (
-    <RoomProvider id={roomId}>
+    <RoomProvider id={roomId} initialPresence={{ isPromptingAi: false }}>
       <ClientSideSuspense
         fallback={
           <div className="flex h-dvh items-center justify-center text-muted-foreground">

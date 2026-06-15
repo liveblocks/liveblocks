@@ -5,30 +5,22 @@ import { PropsWithChildren } from "react";
 
 export function Providers({ children }: PropsWithChildren) {
   return (
-    <LiveblocksProvider authEndpoint={authWithExampleId("/api/liveblocks-auth")}>
+    <LiveblocksProvider
+      authEndpoint="/api/liveblocks-auth"
+      // Resolve user info (name, avatar) from their id. Used by AvatarStack and
+      // any other presence UI to show who's currently in the room.
+      resolveUsers={async ({ userIds }) => {
+        const search = new URLSearchParams(
+          userIds.map((userId) => ["userIds", userId])
+        );
+        const response = await fetch(`/api/users?${search}`);
+        if (!response.ok) {
+          throw new Error("Problem resolving users");
+        }
+        return await response.json();
+      }}
+    >
       {children}
     </LiveblocksProvider>
   );
-}
-
-// This function adds a stable random user id when deploying on liveblocks.io.
-// You can replace it with `authEndpoint="/api/liveblocks-auth"` when running
-// the example locally.
-function authWithExampleId(endpoint: string) {
-  return async (room?: string) => {
-    let userId = localStorage.getItem("liveblocks-example-id");
-    if (!userId) {
-      userId = Math.random().toString(36).substring(2);
-      localStorage.setItem("liveblocks-example-id", userId);
-    }
-
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ room, userId }),
-    });
-    return await response.json();
-  };
 }

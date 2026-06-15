@@ -1,13 +1,13 @@
 import { Liveblocks } from "@liveblocks/node";
 import { NextRequest, NextResponse } from "next/server";
-import { getRandomUser, getUser } from "@/app/database";
+import { getRandomUser } from "@/app/database";
 
 /**
  * Authenticating your Liveblocks application
  * https://liveblocks.io/docs/authentication
  */
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   if (!process.env.LIVEBLOCKS_SECRET_KEY) {
     return new NextResponse("Missing LIVEBLOCKS_SECRET_KEY", { status: 403 });
   }
@@ -16,22 +16,17 @@ export async function POST(request: NextRequest) {
     secret: process.env.LIVEBLOCKS_SECRET_KEY,
   });
 
-  // Used to deploy to https://liveblocks.io/examples. When running locally, a
-  // random user is picked instead.
-  const { userId } = await request.json().catch(() => ({ userId: undefined }));
-  const user = (userId && getUser(userId)) || getRandomUser();
-  const id = userId || user.id;
+  // Pick a random example user so each connection has a name and avatar that
+  // resolve through `resolveUsers` (used by AvatarStack and presence UI).
+  const user = getRandomUser();
 
-  // Create a session for the current user
-  // userInfo is made available in Liveblocks presence hooks, e.g. useOthers
-  const session = liveblocks.prepareSession(`${id}`, {
+  const session = liveblocks.prepareSession(`${user.id}`, {
     userInfo: user.info,
   });
 
   // Use a naming pattern to allow access to rooms with a wildcard
   session.allow(`liveblocks:examples:*`, session.FULL_ACCESS);
 
-  // Authorize the user and return the result
   const { status, body } = await session.authorize();
   return new NextResponse(body, { status });
 }

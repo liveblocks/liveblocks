@@ -12,6 +12,7 @@
     "@liveblocks/client": "^3.18.4",
     "@liveblocks/node": "^3.18.4",
     "@liveblocks/react": "^3.18.4",
+    "@liveblocks/react-ui": "^3.18.4",
     "@radix-ui/react-use-controllable-state": "^1.2.3",
     "@xyflow/react": "^12.11.0",
     "ai": "^6.0.205",

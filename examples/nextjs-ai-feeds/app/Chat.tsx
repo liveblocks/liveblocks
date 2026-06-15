@@ -8,7 +8,10 @@ import {
   useFeedMessages,
   useFeeds,
   useOthers,
+  useSelf,
+  useUpdateMyPresence,
 } from "@liveblocks/react/suspense";
+import { Avatar, AvatarStack } from "@liveblocks/react-ui";
 import {
   CopyIcon,
   RefreshCcwIcon,
@@ -26,13 +29,28 @@ import {
   MessageActions,
   MessageContent,
   MessageResponse,
-  MessageToolbar,
 } from "@/components/ai-elements/message";
 import {
   Reasoning,
   ReasoningContent,
   ReasoningTrigger,
 } from "@/components/ai-elements/reasoning";
+import {
+  ChainOfThought,
+  ChainOfThoughtContent,
+  ChainOfThoughtHeader,
+  ChainOfThoughtSearchResult,
+  ChainOfThoughtSearchResults,
+  ChainOfThoughtStep,
+} from "@/components/ai-elements/chain-of-thought";
+import {
+  Tool,
+  ToolContent,
+  ToolHeader,
+  ToolInput,
+  ToolOutput,
+} from "@/components/ai-elements/tool";
+import { Context, ContextTrigger } from "@/components/ai-elements/context";
 import {
   Source,
   Sources,
@@ -63,9 +81,10 @@ const FEED_ID = "ai-chat";
 
 // Model ids resolved through the Vercel AI Gateway in the server route.
 const MODELS = [
-  { id: "openai/gpt-4o-mini", name: "GPT-4o mini" },
-  { id: "openai/gpt-4o", name: "GPT-4o" },
-  { id: "anthropic/claude-sonnet-4", name: "Claude Sonnet 4" },
+  { id: "openai/gpt-5.5", name: "GPT-5.5" },
+  { id: "anthropic/claude-opus-4.7", name: "Claude Opus 4.7" },
+  { id: "google/gemini-3-pro", name: "Gemini 3 Pro" },
+  { id: "xai/grok-4.3", name: "Grok 4.3" },
 ];
 
 const STARTER_PROMPTS = [
@@ -81,10 +100,18 @@ export function Chat({ roomId }: { roomId: string }) {
   const createFeed = useCreateFeed();
   const createFeedMessage = useCreateFeedMessage();
   const deleteFeedMessage = useDeleteFeedMessage();
-  const others = useOthers();
+  const self = useSelf();
+  const updateMyPresence = useUpdateMyPresence();
+
+  // The AI "thinking" status is shared via presence, so everyone in the room
+  // sees it — not just whoever triggered the reply.
+  const selfPrompting = self.presence.isPromptingAi;
+  const othersPrompting = useOthers((others) =>
+    others.some((other) => other.presence.isPromptingAi)
+  );
+  const aiThinking = selfPrompting || othersPrompting;
 
   const [model, setModel] = useState(MODELS[0].id);
-  const [pending, setPending] = useState(false);
 
   // Ensure the feed exists before the first message is added.
   const feedReady = useRef(feeds.some((feed) => feed.feedId === FEED_ID));
@@ -125,10 +152,16 @@ export function Chat({ roomId }: { roomId: string }) {
       }
 
       inFlight.current = true;
-      setPending(true);
+      updateMyPresence({ isPromptingAi: true });
       try {
         await ensureFeed();
-        await createFeedMessage(FEED_ID, { role: "user", content });
+        await createFeedMessage(FEED_ID, {
+          role: "user",
+          content,
+          userId: self.id,
+          name: self.info.name,
+          avatar: self.info.avatar,
+        });
 
         const history = [
           ...sorted.map((message) => ({
@@ -141,11 +174,11 @@ export function Chat({ roomId }: { roomId: string }) {
       } catch {
         // Best-effort in this demo; errors are non-fatal to the UI.
       } finally {
-        setPending(false);
+        updateMyPresence({ isPromptingAi: false });
         inFlight.current = false;
       }
     },
-    [ensureFeed, createFeedMessage, sorted, postReply]
+    [ensureFeed, createFeedMessage, self, sorted, postReply, updateMyPresence]
   );
 
   const regenerate = useCallback(
@@ -156,7 +189,7 @@ export function Chat({ roomId }: { roomId: string }) {
       }
 
       inFlight.current = true;
-      setPending(true);
+      updateMyPresence({ isPromptingAi: true });
       try {
         const history = sorted.slice(0, index).map((message) => ({
           role: message.data.role,
@@ -167,16 +200,26 @@ export function Chat({ roomId }: { roomId: string }) {
       } catch {
         // Best-effort in this demo; errors are non-fatal to the UI.
       } finally {
-        setPending(false);
+        updateMyPresence({ isPromptingAi: false });
         inFlight.current = false;
       }
     },
-    [sorted, deleteFeedMessage, postReply]
+    [sorted, deleteFeedMessage, postReply, updateMyPresence]
+  );
+
+  // Total context-window usage across the conversation, shown in the composer.
+  const usedTokens = sorted.reduce(
+    (sum, message) => sum + (message.data.usedTokens ?? 0),
+    0
   );
 
   const lastMessage = sorted.at(-1);
+  const streamingInProgress =
+    lastMessage?.data.role === "assistant" && !!lastMessage.data.streaming;
   const followUps =
-    !pending && lastMessage?.data.role === "assistant"
+    !aiThinking &&
+    lastMessage?.data.role === "assistant" &&
+    !lastMessage.data.streaming
       ? lastMessage.data.suggestions
       : undefined;
 
@@ -188,12 +231,13 @@ export function Chat({ roomId }: { roomId: string }) {
             <SparklesIcon className="size-4" />
             <h1 className="font-semibold text-sm">AI Feeds</h1>
           </div>
-          <p className="text-muted-foreground text-xs">
-            {others.length === 0
-              ? "Only you are here"
-              : `${others.length + 1} people here`}
-            {" · "}realtime via Liveblocks Feeds
-          </p>
+          <div className="flex items-center gap-3">
+            <span className="hidden text-muted-foreground text-xs sm:inline">
+              realtime via Liveblocks Feeds
+            </span>
+            {/* Live presence: everyone currently in the room */}
+            <AvatarStack size={28} />
+          </div>
         </header>
 
         <Conversation>
@@ -220,18 +264,95 @@ export function Chat({ roomId }: { roomId: string }) {
               </ConversationEmptyState>
             ) : (
               sorted.map((message) => {
-                const { role, content, reasoning, sources, model: usedModel } =
-                  message.data;
+                const {
+                  role,
+                  content,
+                  reasoning,
+                  sources,
+                  name,
+                  avatar,
+                  streaming,
+                  chainOfThought,
+                  tool,
+                } = message.data;
                 const isAssistant = role === "assistant";
 
                 return (
                   <Message from={role} key={message.id}>
                     <MessageContent>
+                      <div
+                        className={`flex items-center gap-1.5 ${
+                          isAssistant ? "" : "flex-row-reverse"
+                        }`}
+                      >
+                        <Avatar
+                          // `lb-root` provides the CSS variables the avatar
+                          // needs (radius, colors) when used standalone.
+                          className="lb-root"
+                          src={avatar}
+                          name={name ?? (isAssistant ? "AI" : "User")}
+                          style={{ width: 20, height: 20 }}
+                        />
+                        <span className="font-medium text-xs">
+                          {name ?? (isAssistant ? "Liveblocks AI" : "Someone")}
+                        </span>
+                      </div>
+
+                      {isAssistant &&
+                      chainOfThought &&
+                      chainOfThought.length > 0 ? (
+                        <ChainOfThought defaultOpen={false}>
+                          <ChainOfThoughtHeader>
+                            Chain of thought
+                          </ChainOfThoughtHeader>
+                          <ChainOfThoughtContent>
+                            {chainOfThought.map((step, index) => (
+                              <ChainOfThoughtStep
+                                key={index}
+                                label={step.label}
+                                description={step.description}
+                                status={step.status ?? "complete"}
+                              >
+                                {step.search && step.search.length > 0 ? (
+                                  <ChainOfThoughtSearchResults>
+                                    {step.search.map((term) => (
+                                      <ChainOfThoughtSearchResult key={term}>
+                                        {term}
+                                      </ChainOfThoughtSearchResult>
+                                    ))}
+                                  </ChainOfThoughtSearchResults>
+                                ) : null}
+                              </ChainOfThoughtStep>
+                            ))}
+                          </ChainOfThoughtContent>
+                        </ChainOfThought>
+                      ) : null}
+
                       {isAssistant && reasoning ? (
-                        <Reasoning defaultOpen={false}>
+                        <Reasoning
+                          isStreaming={!!streaming}
+                          defaultOpen={!!streaming}
+                        >
                           <ReasoningTrigger />
                           <ReasoningContent>{reasoning}</ReasoningContent>
                         </Reasoning>
+                      ) : null}
+
+                      {isAssistant && tool ? (
+                        <Tool>
+                          <ToolHeader
+                            type={`tool-${tool.name}`}
+                            state="output-available"
+                            title={tool.name}
+                          />
+                          <ToolContent>
+                            <ToolInput input={tool.input} />
+                            <ToolOutput
+                              output={tool.output}
+                              errorText={undefined}
+                            />
+                          </ToolContent>
+                        </Tool>
                       ) : null}
 
                       {isAssistant && sources && sources.length > 0 ? (
@@ -249,35 +370,36 @@ export function Chat({ roomId }: { roomId: string }) {
                         </Sources>
                       ) : null}
 
-                      <MessageResponse>{content}</MessageResponse>
+                      {content ? (
+                        <MessageResponse>{content}</MessageResponse>
+                      ) : null}
 
-                      {isAssistant ? (
-                        <MessageToolbar>
-                          <MessageActions>
-                            <MessageAction
-                              tooltip="Copy"
-                              onClick={() => {
-                                void navigator.clipboard
-                                  ?.writeText(content)
-                                  ?.catch(() => {});
-                              }}
-                            >
-                              <CopyIcon className="size-4" />
-                            </MessageAction>
-                            <MessageAction
-                              tooltip="Regenerate"
-                              onClick={() => regenerate(message.id)}
-                            >
-                              <RefreshCcwIcon className="size-4" />
-                            </MessageAction>
-                          </MessageActions>
-                          {usedModel ? (
-                            <span className="text-muted-foreground text-xs">
-                              {MODELS.find((m) => m.id === usedModel)?.name ??
-                                usedModel}
-                            </span>
-                          ) : null}
-                        </MessageToolbar>
+                      {isAssistant && streaming && !content && !reasoning ? (
+                        <span className="flex items-center gap-2 text-muted-foreground text-sm">
+                          <Loader size={14} />
+                          Generating…
+                        </span>
+                      ) : null}
+
+                      {isAssistant && !streaming ? (
+                        <MessageActions>
+                          <MessageAction
+                            tooltip="Copy"
+                            onClick={() => {
+                              void navigator.clipboard
+                                ?.writeText(content)
+                                ?.catch(() => {});
+                            }}
+                          >
+                            <CopyIcon className="size-4" />
+                          </MessageAction>
+                          <MessageAction
+                            tooltip="Regenerate"
+                            onClick={() => regenerate(message.id)}
+                          >
+                            <RefreshCcwIcon className="size-4" />
+                          </MessageAction>
+                        </MessageActions>
                       ) : null}
                     </MessageContent>
                   </Message>
@@ -285,12 +407,12 @@ export function Chat({ roomId }: { roomId: string }) {
               })
             )}
 
-            {pending ? (
+            {aiThinking && !streamingInProgress ? (
               <Message from="assistant">
                 <MessageContent>
                   <span className="flex items-center gap-2 text-muted-foreground text-sm">
                     <Loader size={14} />
-                    Thinking…
+                    Liveblocks AI is thinking…
                   </span>
                 </MessageContent>
               </Message>
@@ -329,10 +451,17 @@ export function Chat({ roomId }: { roomId: string }) {
                   </PromptInputSelectContent>
                 </PromptInputSelect>
               </PromptInputTools>
-              <PromptInputSubmit
-                disabled={pending}
-                status={pending ? "submitted" : undefined}
-              />
+              <div className="flex items-center gap-1">
+                {usedTokens > 0 ? (
+                  <Context usedTokens={usedTokens} maxTokens={128000}>
+                    <ContextTrigger />
+                  </Context>
+                ) : null}
+                <PromptInputSubmit
+                  disabled={aiThinking}
+                  status={aiThinking ? "submitted" : undefined}
+                />
+              </div>
             </PromptInputFooter>
           </PromptInput>
         </div>
