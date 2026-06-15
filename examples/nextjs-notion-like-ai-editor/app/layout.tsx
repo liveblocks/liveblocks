@@ -4,6 +4,7 @@ import "./globals.css";
 import { Suspense } from "react";
 import { Providers } from "./Providers";
 import DefaultLayout from "./components/DefaultLayout";
+import { HelpButton } from "../components/HelpButton";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -35,6 +36,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <DefaultLayout>{children}</DefaultLayout>
             </Providers>
           </Suspense>
+          <HelpButton />
         </main>
       </body>
     </html>

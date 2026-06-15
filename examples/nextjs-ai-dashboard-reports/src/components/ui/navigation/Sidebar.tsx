@@ -15,6 +15,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import MobileSidebar from "./MobileSidebar"
 import { UserProfileDesktop, UserProfileMobile } from "./UserProfile"
+import { HelpButton } from "@/components/HelpButton"
 
 const navigation = [
   { name: "Reports", href: siteConfig.baseLinks.reports, icon: BarChartBig },
@@ -207,7 +208,8 @@ export function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
               </ul>
             </div> */}
           </nav>
-          <div className="mt-auto">
+          <div className="mt-auto flex flex-col gap-1">
+            <HelpButton isCollapsed={isCollapsed} />
             <UserProfileDesktop isCollapsed={isCollapsed} />
           </div>
         </aside>
