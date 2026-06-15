@@ -1,6 +1,7 @@
 import "./globals.css";
 import { Providers } from "./Providers";
 import { Suspense } from "react";
+import { HelpButton } from "../components/HelpButton";
 
 export default function RootLayout({
   children,
@@ -30,6 +31,7 @@ export default function RootLayout({
         <Providers>
           <Suspense>{children}</Suspense>
         </Providers>
+        <HelpButton />
       </body>
     </html>
   );

@@ -63,6 +63,7 @@ import {
   Cursor,
   Icon,
 } from "@liveblocks/react-ui";
+import { HelpControl } from "../components/HelpButton";
 import {
   DndContext,
   type DragEndEvent,
@@ -1666,6 +1667,7 @@ function Flow({ className, ...props }: ComponentProps<"div">) {
         >
           <Cursors components={{ Cursor: FlowCursor }} />
           <Controls orientation="horizontal" showInteractive={false}>
+            <HelpControl />
             <ControlButton onClick={undo} disabled={!canUndo}>
               <Icon.Undo />
             </ControlButton>
