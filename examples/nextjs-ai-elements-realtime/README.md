@@ -7,34 +7,37 @@
   </a>
 </p>
 
-# AI Feeds
+# Realtime AI chat with AI Elements
 
 <p>
-  <a href="https://liveblocks.io/examples/ai-feeds/nextjs-ai-feeds">
+  <a href="https://liveblocks.io/examples/nextjs-ai-elements-realtime">
     <img src="https://img.shields.io/badge/live%20preview-message?style=flat&logo=data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTE2Ljg0OSA0Ljc1SDBsNC44NDggNS4wNzV2Ny4wMDhsMTItMTIuMDgzWk03LjE1IDE5LjI1SDI0bC00Ljg0OS01LjA3NVY3LjE2N2wtMTIgMTIuMDgzWiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==&color=333" alt="Live Preview" />
   </a>
-  <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-ai-feeds">
+  <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-ai-elements-realtime">
     <img src="https://img.shields.io/badge/open%20in%20codesandbox-message?style=flat&logo=codesandbox&color=333&logoColor=fff" alt="Open in CodeSandbox" />
   </a>
   <img src="https://img.shields.io/badge/react-message?style=flat&logo=react&color=0bd&logoColor=fff" alt="React" />
   <img src="https://img.shields.io/badge/next.js-message?style=flat&logo=next.js&color=07f&logoColor=fff" alt="Next.js" />
 </p>
 
-This example shows how to build a realtime AI chat with
+This example shows how to build a realtime, multiplayer AI chat with
 [Liveblocks Feeds](https://liveblocks.io/docs/collaboration-features/ai-collaboration),
 [Next.js](https://nextjs.org/), and [AI Elements](https://ai-sdk.dev/elements).
 
-Messages live in a shared feed inside a Liveblocks room, so they sync instantly
-to everyone connected. The AI reply is generated on the server and written back
-into the feed with `@liveblocks/node`, then rendered live for all users through
-the `useFeedMessages` hook.
+Each chat is a feed inside a Liveblocks room, so messages sync instantly to
+everyone connected, complete with shared presence (avatar stack and a live "AI
+is thinking…" status). The AI reply is generated on the server and streamed back
+into the feed with `@liveblocks/node` (`createFeedMessage` + `updateFeedMessage`),
+then rendered live for all users through the `useFeedMessages` hook — including
+reasoning, chain of thought, tool calls, sources, and token usage via AI
+Elements.
 
 ## Getting started
 
 Run the following command to try this example locally:
 
 ```bash
-npx create-liveblocks-app@latest --example nextjs-ai-feeds --api-key
+npx create-liveblocks-app@latest --example nextjs-ai-elements-realtime --api-key
 ```
 
 This will download the example and ask permission to open your browser, enabling
@@ -76,7 +79,7 @@ To both deploy on [Vercel](https://vercel.com), and run the example locally, use
 the following command:
 
 ```bash
-npx create-liveblocks-app@latest --example nextjs-ai-feeds --vercel
+npx create-liveblocks-app@latest --example nextjs-ai-elements-realtime --vercel
 ```
 
 This will download the example and ask permission to open your browser, enabling
@@ -91,7 +94,7 @@ you to deploy to Vercel.
 <p></p>
 
 After forking
-[this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-ai-feeds)
+[this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-ai-elements-realtime)
 on CodeSandbox, create the `LIVEBLOCKS_SECRET_KEY` environment variable as a
 [secret](https://codesandbox.io/docs/secrets).
 

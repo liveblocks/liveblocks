@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 
-const BASE_ROOM_ID = "liveblocks:examples:nextjs-ai-feeds";
+const BASE_ROOM_ID = "liveblocks:examples:nextjs-ai-elements-realtime";
 
 /**
  * This hook is used when deploying an example on liveblocks.io, where multiple

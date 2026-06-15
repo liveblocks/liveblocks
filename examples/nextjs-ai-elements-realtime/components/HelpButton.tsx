@@ -3,9 +3,9 @@
 import { CSSProperties, ReactNode, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
-const EXAMPLE_NAME = "AI Feeds";
+const EXAMPLE_NAME = "Realtime AI chat with AI Elements";
 const EXAMPLE_URL =
-  "https://liveblocks.io/examples/ai-feeds/nextjs-ai-feeds";
+  "https://liveblocks.io/examples/nextjs-ai-elements-realtime";
 
 type Feature = {
   icon: ReactNode;

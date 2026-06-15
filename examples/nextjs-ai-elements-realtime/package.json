@@ -1,6 +1,6 @@
 {
-  "name": "@liveblocks-examples/nextjs-ai-feeds",
-  "description": "This example shows how to build a realtime AI chat with Liveblocks Feeds, Next.js, and AI Elements.",
+  "name": "@liveblocks-examples/nextjs-ai-elements-realtime",
+  "description": "This example shows how to build a realtime, multiplayer AI chat with Liveblocks Feeds, Vercel AI Elements, and Next.js.",
   "license": "Apache-2.0",
   "private": true,
   "scripts": {

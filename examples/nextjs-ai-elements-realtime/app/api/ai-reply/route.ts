@@ -68,7 +68,10 @@ export async function POST(request: NextRequest) {
   };
 
   // Only allow writing into this example's rooms.
-  if (!roomId?.startsWith("liveblocks:examples:nextjs-ai-feeds") || !feedId) {
+  if (
+    !roomId?.startsWith("liveblocks:examples:nextjs-ai-elements-realtime") ||
+    !feedId
+  ) {
     return new NextResponse("Invalid room or feed", { status: 400 });
   }
 
