@@ -20,6 +20,7 @@ import {
   prepareIsolatedStorageTest,
   prepareStorageTest,
 } from "../../../../../packages/liveblocks-core/src/__tests__/_MockWebSocketServer.setup";
+import { LIVEBLOCKS_COMMENT_ATTR } from "./comments-plugin";
 import { createLiveblocksSyncPlugin } from "./page";
 
 describe("createLiveblocksSyncPlugin", () => {
@@ -177,6 +178,54 @@ describe("createLiveblocksSyncPlugin", () => {
       expect(storageText).toBe("Hi, everyone");
       expect(editorText).toBe("Hi, everyone");
       expect(editorText).toBe(storageText);
+    });
+
+    test("local insert inside comment range preserves the thread id", async () => {
+      const initialDoc = "Hello";
+
+      const { room, root } = (await prepareIsolatedStorageTest(
+        [
+          createSerializedRoot(),
+          [
+            "0:1",
+            {
+              type: CrdtType.TEXT,
+              parentId: "root",
+              parentKey: "document",
+              data: [[initialDoc, { [LIVEBLOCKS_COMMENT_ATTR]: "th_1" }]],
+              version: 0,
+            },
+          ],
+        ],
+        0
+      )) as unknown as {
+        room: Room;
+        root: LiveObject<{ document: LiveText }>;
+      };
+
+      const parent = document.createElement("div");
+      document.body.appendChild(parent);
+
+      const view = new EditorView({
+        state: EditorState.create({
+          doc: initialDoc,
+          extensions: [createLiveblocksSyncPlugin(room, root)],
+        }),
+        parent,
+      });
+
+      onTestFinished(() => {
+        view.destroy();
+        parent.remove();
+      });
+
+      view.dispatch({
+        changes: { from: 2, insert: "y" },
+      });
+
+      expect(root.get("document").toJSON()).toEqual([
+        ["Heyllo", { [LIVEBLOCKS_COMMENT_ATTR]: "th_1" }],
+      ]);
     });
   });
 
