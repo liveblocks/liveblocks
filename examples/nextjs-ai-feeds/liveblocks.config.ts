@@ -11,11 +11,11 @@ declare global {
       };
     };
 
-    // Realtime presence, shared with everyone in the room. We use it to show a
-    // live "AI is thinking…" status to all connected users, not just whoever
-    // sent the message.
+    // Realtime presence, shared with everyone in the room. Holds the id of the
+    // feed (chat) the user is currently prompting the AI in, so the live
+    // "AI is thinking…" status shows in the right chat for everyone.
     Presence: {
-      isPromptingAi: boolean;
+      promptingFeedId: string | null;
     };
 
     // The shape of every message stored in a feed. Because feeds hold
