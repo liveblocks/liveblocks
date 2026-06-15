@@ -1,4 +1,3 @@
-import "@liveblocks/react-tiptap/styles.css";
 import "@liveblocks/react-ui/styles.css";
 import "./globals.css";
 
