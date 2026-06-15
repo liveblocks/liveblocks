@@ -49,7 +49,9 @@ const AUTHOR = {
 const SYSTEM_PROMPT =
   "You are a friendly, concise assistant inside a realtime collaborative chat " +
   "powered by Liveblocks Feeds. Reply in clear Markdown. Keep answers short " +
-  "unless asked for detail.";
+  "unless asked for detail. Separate ideas into proper paragraphs with a blank " +
+  "line between them — never use <br> tags or manual line breaks to space out " +
+  "text.";
 
 export async function POST(request: NextRequest) {
   if (!process.env.LIVEBLOCKS_SECRET_KEY) {
@@ -106,10 +108,13 @@ export async function POST(request: NextRequest) {
     } else {
       await streamMockReply(messages, update);
     }
-  } catch {
-    // Make sure the message doesn't get stuck in the "streaming" state.
+  } catch (error) {
+    // Make sure the message doesn't get stuck in the "streaming" state, and
+    // surface the reason (e.g. an unknown model id) to make debugging easy.
+    const reason = error instanceof Error ? error.message : "Unknown error";
     await update({
-      content: created.data.content || "Sorry, something went wrong.",
+      content:
+        created.data.content || `Sorry, something went wrong.\n\n\`${reason}\``,
       streaming: false,
     }).catch(() => {});
   }
@@ -130,7 +135,7 @@ async function streamRealReply(
   // AI SDK v6 resolves bare string model ids (e.g. "openai/gpt-5.5") through
   // the Vercel AI Gateway when AI_GATEWAY_API_KEY is set.
   const result = streamText({
-    model: model ?? "openai/gpt-5.5",
+    model: model ?? "openai/gpt-5.4-mini",
     system: SYSTEM_PROMPT,
     messages,
     // Turn reasoning on. Unknown options are ignored by providers that don't
