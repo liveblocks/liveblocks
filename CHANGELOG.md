@@ -9,6 +9,11 @@
   comments, feeds) using new permission strings like `storage:none` or
   `comments:read`.
 
+### `@liveblocks/node`
+
+- Deprecate `session.FULL_ACCESS` and `session.READ_ACCESS` in favor of
+  `["*:write"]` and `["*:read"]` respectively.
+
 ### `@liveblocks/client`
 
 - Deprecate `room.getStorageSnapshot()` in favor of `room.getStorageOrNull()`.
