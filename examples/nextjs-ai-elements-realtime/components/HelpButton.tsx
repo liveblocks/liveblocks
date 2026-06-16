@@ -2,6 +2,7 @@
 
 import { CSSProperties, ReactNode, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { Button } from "./ui/button";
 
 const EXAMPLE_NAME = "Realtime AI chat with AI Elements";
 const EXAMPLE_URL =
@@ -131,7 +132,12 @@ const styles: Record<string, CSSProperties> = {
     color: "#404040",
   },
   featureTitle: { fontSize: 14, fontWeight: 500, color: "#171717", margin: 0 },
-  featureDesc: { fontSize: 14, color: "#737373", marginTop: 2, marginBottom: 0 },
+  featureDesc: {
+    fontSize: 14,
+    color: "#737373",
+    marginTop: 2,
+    marginBottom: 0,
+  },
 };
 
 const HOVER_CSS = `
@@ -164,15 +170,14 @@ export function HelpButton() {
   return (
     <>
       <style>{HOVER_CSS}</style>
-      <button
-        type="button"
-        className="lb-help-button"
-        style={styles.button}
-        aria-label="How to use this example"
+      <Button
+        variant="ghost"
+        size="icon-sm"
         onClick={() => setIsOpen(true)}
+        aria-label="How to use this example"
       >
         <HelpIcon />
-      </button>
+      </Button>
 
       {isOpen && typeof document !== "undefined"
         ? createPortal(
