@@ -323,18 +323,6 @@ export function normalizeUpdateRoomAccesses(
   );
 }
 
-export function mergePermissionMatrices(
-  matrices: PermissionMatrix[]
-): PermissionMatrix {
-  return {
-    room: strongestMatrixAccess(matrices, "room"),
-    storage: strongestMatrixAccess(matrices, "storage"),
-    comments: strongestMatrixAccess(matrices, "comments"),
-    feeds: strongestMatrixAccess(matrices, "feeds"),
-    personal: strongestMatrixAccess(matrices, "personal"),
-  };
-}
-
 export function permissionMatrixToScopes(
   matrix: PermissionMatrix
 ): RoomPermissions {
@@ -445,16 +433,6 @@ function permissionForAccessLevel(
     );
   }
   return permissions[0];
-}
-
-function strongestMatrixAccess(
-  matrices: PermissionMatrix[],
-  resource: PermissionResources
-): AccessLevel {
-  return matrices.reduce<AccessLevel>(
-    (strongest, matrix) => strongestAccess(strongest, matrix[resource]),
-    "none"
-  );
 }
 
 function strongestAccess(left: AccessLevel, right: AccessLevel): AccessLevel {

@@ -3,7 +3,6 @@ import { describe, expect, test } from "vitest";
 
 import {
   hasPermissionAccess,
-  mergePermissionMatrices,
   mergeRoomPermissionScopes,
   Permission,
   type PermissionMatrix,
@@ -56,6 +55,37 @@ function hasBasePermission(scopes: readonly Permission[]): boolean {
 function accessRank(resource: PermissionResources, matrix: PermissionMatrix) {
   return ACCESS_LEVEL_RANKS[matrix[resource]];
 }
+
+function hasExplicitFeatureScope(
+  scopes: readonly Permission[],
+  resource: "storage" | "comments" | "feeds"
+): boolean {
+  return scopes.some((scope) => scope.startsWith(`${resource}:`));
+}
+
+function mergeRoomPermissionMatrix({
+  defaultAccesses,
+  groupsAccesses,
+  userAccesses,
+}: {
+  defaultAccesses: Permission[];
+  groupsAccesses: Permission[][];
+  userAccesses: Permission[];
+}): PermissionMatrix {
+  return permissionMatrixFromScopes(
+    mergeRoomPermissionScopes({
+      defaultAccesses,
+      groupsAccesses,
+      userAccesses,
+    })
+  );
+}
+
+const mergeRoomPermissionInputs = fc.record({
+  defaultAccesses: scopeSet,
+  groupsAccesses: fc.array(scopeSet, { maxLength: 4 }),
+  userAccesses: scopeSet,
+});
 
 describe("permissionMatrixFromScopes", () => {
   test("resolves read access", () => {
@@ -228,14 +258,16 @@ describe("permissionMatrixFromScopes", () => {
 });
 
 describe("permission matrix helpers", () => {
-  test("merges permission matrices by taking the strongest access per resource", () => {
-    const matrix = mergePermissionMatrices([
-      permissionMatrixFromScopes([]),
-      permissionMatrixFromScopes([Permission.Write]),
-      permissionMatrixFromScopes([Permission.Write, Permission.StorageNone]),
-    ]);
+  test("merges layered scopes so higher-priority sources can downgrade features", () => {
+    const matrix = permissionMatrixFromScopes(
+      mergeRoomPermissionScopes({
+        defaultAccesses: [],
+        groupsAccesses: [[Permission.Write]],
+        userAccesses: [Permission.Write, Permission.StorageNone],
+      })
+    );
 
-    expect(matrix.storage).toBe("write");
+    expect(matrix.storage).toBe("none");
     expect(matrix.personal).toBe("write");
   });
 
@@ -499,19 +531,6 @@ describe("property tests", () => {
     );
   });
 
-  test("merging permission matrices is commutative", () => {
-    fc.assert(
-      fc.property(scopeSet, scopeSet, (leftScopes, rightScopes) => {
-        const left = permissionMatrixFromScopes(leftScopes);
-        const right = permissionMatrixFromScopes(rightScopes);
-
-        expect(mergePermissionMatrices([left, right])).toEqual(
-          mergePermissionMatrices([right, left])
-        );
-      })
-    );
-  });
-
   test("legacy room base aliases resolve identically to wildcard bases", () => {
     fc.assert(
       fc.property(scopeSet, (scopes) => {
@@ -559,6 +578,160 @@ describe("property tests", () => {
           expect(hasPermissionAccess(matrix, resource, "write")).toBe(
             accessRank(resource, matrix) >= ACCESS_LEVEL_RANKS.write
           );
+        }
+      })
+    );
+  });
+
+  test("mergeRoomPermissionScopes round-trips through matrix serialization", () => {
+    fc.assert(
+      fc.property(mergeRoomPermissionInputs, (inputs) => {
+        const merged = mergeRoomPermissionScopes(inputs);
+        const matrix = permissionMatrixFromScopes(merged);
+
+        expect(
+          permissionMatrixFromScopes(permissionMatrixToScopes(matrix))
+        ).toEqual(matrix);
+      })
+    );
+  });
+
+  test("mergeRoomPermissionScopes returns only known permission scopes", () => {
+    fc.assert(
+      fc.property(mergeRoomPermissionInputs, (inputs) => {
+        const merged = mergeRoomPermissionScopes(inputs);
+
+        for (const scope of merged) {
+          expect(ALL_PERMISSIONS).toContain(scope);
+        }
+      })
+    );
+  });
+
+  test("non-empty mergeRoomPermissionScopes output validates", () => {
+    fc.assert(
+      fc.property(mergeRoomPermissionInputs, (inputs) => {
+        const merged = mergeRoomPermissionScopes(inputs);
+
+        if (merged.length > 0) {
+          expect(validatePermissionsSet(merged)).toBe(true);
+        }
+      })
+    );
+  });
+
+  test("mergeRoomPermissionScopes preserves a single valid source unchanged", () => {
+    fc.assert(
+      fc.property(validScopeSet, (scopes) => {
+        expect(
+          mergeRoomPermissionMatrix({
+            defaultAccesses: scopes,
+            groupsAccesses: [],
+            userAccesses: [],
+          })
+        ).toEqual(permissionMatrixFromScopes(scopes));
+
+        expect(
+          mergeRoomPermissionMatrix({
+            defaultAccesses: [],
+            groupsAccesses: [scopes],
+            userAccesses: [],
+          })
+        ).toEqual(permissionMatrixFromScopes(scopes));
+
+        expect(
+          mergeRoomPermissionMatrix({
+            defaultAccesses: [],
+            groupsAccesses: [],
+            userAccesses: scopes,
+          })
+        ).toEqual(permissionMatrixFromScopes(scopes));
+      })
+    );
+  });
+
+  test("mergeRoomPermissionScopes merges groups independently of their order", () => {
+    fc.assert(
+      fc.property(mergeRoomPermissionInputs, (inputs) => {
+        const forward = mergeRoomPermissionScopes(inputs);
+        const backward = mergeRoomPermissionScopes({
+          ...inputs,
+          groupsAccesses: [...inputs.groupsAccesses].reverse(),
+        });
+
+        expect(forward).toEqual(backward);
+      })
+    );
+  });
+
+  test("mergeRoomPermissionScopes takes the highest explicit access per feature across groups", () => {
+    fc.assert(
+      fc.property(validScopeSet, validScopeSet, (left, right) => {
+        const merged = mergeRoomPermissionMatrix({
+          defaultAccesses: [],
+          groupsAccesses: [left, right],
+          userAccesses: [],
+        });
+        const leftMatrix = permissionMatrixFromScopes(left);
+        const rightMatrix = permissionMatrixFromScopes(right);
+
+        if (!hasBasePermission(left) && !hasBasePermission(right)) {
+          expect(merged).toEqual(permissionMatrixFromScopes([]));
+          return;
+        }
+
+        const expectedRoom = Math.max(
+          hasBasePermission(left) ? accessRank("room", leftMatrix) : 0,
+          hasBasePermission(right) ? accessRank("room", rightMatrix) : 0
+        );
+        expect(accessRank("room", merged)).toBe(expectedRoom);
+
+        for (const resource of ["storage", "comments", "feeds"] as const) {
+          const explicitRanks = [left, right]
+            .filter((scopes) => hasExplicitFeatureScope(scopes, resource))
+            .map((scopes) =>
+              accessRank(resource, permissionMatrixFromScopes(scopes))
+            );
+
+          if (explicitRanks.length === 0) {
+            expect(accessRank(resource, merged)).toBe(accessRank("room", merged));
+          } else {
+            expect(accessRank(resource, merged)).toBe(Math.max(...explicitRanks));
+          }
+        }
+      })
+    );
+  });
+
+  test("mergeRoomPermissionScopes lets user base permissions replace lower layers", () => {
+    fc.assert(
+      fc.property(mergeRoomPermissionInputs, (inputs) => {
+        if (!hasBasePermission(inputs.userAccesses)) {
+          return;
+        }
+
+        const matrix = mergeRoomPermissionMatrix(inputs);
+        const userMatrix = permissionMatrixFromScopes(inputs.userAccesses);
+
+        expect(matrix.room).toBe(userMatrix.room);
+      })
+    );
+  });
+
+  test("mergeRoomPermissionScopes lets explicit user feature scopes override lower layers", () => {
+    fc.assert(
+      fc.property(mergeRoomPermissionInputs, (inputs) => {
+        if (!hasBasePermission(inputs.userAccesses)) {
+          return;
+        }
+
+        const matrix = mergeRoomPermissionMatrix(inputs);
+        const userMatrix = permissionMatrixFromScopes(inputs.userAccesses);
+
+        for (const resource of ["storage", "comments", "feeds"] as const) {
+          if (hasExplicitFeatureScope(inputs.userAccesses, resource)) {
+            expect(matrix[resource]).toBe(userMatrix[resource]);
+          }
         }
       })
     );
