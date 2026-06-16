@@ -2,6 +2,7 @@
 
 import { CSSProperties, ReactNode, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { Button } from "./ui/button";
 
 const EXAMPLE_NAME = "Realtime AI chat with AI Elements";
 const EXAMPLE_URL =
@@ -54,19 +55,14 @@ const FEATURES: Feature[] = [
 
 const styles: Record<string, CSSProperties> = {
   button: {
-    position: "fixed",
-    bottom: 16,
-    left: 16,
-    zIndex: 2147483000,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    width: 36,
-    height: 36,
-    background: "#ffffff",
-    border: "1px solid #e5e5e5",
-    borderRadius: 9999,
-    boxShadow: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+    width: 28,
+    height: 28,
+    background: "transparent",
+    border: "none",
+    borderRadius: 6,
     color: "#737373",
     cursor: "pointer",
   },
@@ -136,7 +132,12 @@ const styles: Record<string, CSSProperties> = {
     color: "#404040",
   },
   featureTitle: { fontSize: 14, fontWeight: 500, color: "#171717", margin: 0 },
-  featureDesc: { fontSize: 14, color: "#737373", marginTop: 2, marginBottom: 0 },
+  featureDesc: {
+    fontSize: 14,
+    color: "#737373",
+    marginTop: 2,
+    marginBottom: 0,
+  },
 };
 
 const HOVER_CSS = `
@@ -169,15 +170,14 @@ export function HelpButton() {
   return (
     <>
       <style>{HOVER_CSS}</style>
-      <button
-        type="button"
-        className="lb-help-button"
-        style={styles.button}
-        aria-label="How to use this example"
+      <Button
+        variant="ghost"
+        size="icon-sm"
         onClick={() => setIsOpen(true)}
+        aria-label="How to use this example"
       >
         <HelpIcon />
-      </button>
+      </Button>
 
       {isOpen && typeof document !== "undefined"
         ? createPortal(
@@ -242,8 +242,8 @@ export function HelpButton() {
 function HelpIcon() {
   return (
     <svg
-      width={20}
-      height={20}
+      width={16}
+      height={16}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
