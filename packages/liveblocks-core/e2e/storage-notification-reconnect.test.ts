@@ -17,7 +17,7 @@
  *
  * NOTE ON CONTROL KEYS: several LiveObject tests carry an unchanged scalar key
  * (e.g. `keep`) that the mutation never touches. The reconnect path routes a
- * snapshot through `getTreesDiffOperations`, whose UPDATE_OBJECT ops must
+ * snapshot through `diffNodeMap`, whose UPDATE_OBJECT ops must
  * carry only the keys that actually changed — a full-data re-send would
  * spuriously re-notify the unchanged key. The control key is what makes that
  * observable; do not remove it.

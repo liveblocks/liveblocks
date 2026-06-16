@@ -9,6 +9,10 @@
   comments, feeds) using new permission strings like `storage:none` or
   `comments:read`.
 
+### `@liveblocks/client`
+
+- Deprecate `room.getStorageSnapshot()` in favor of `room.getStorageOrNull()`.
+
 ## v3.19.5
 
 ### `@liveblocks/client`

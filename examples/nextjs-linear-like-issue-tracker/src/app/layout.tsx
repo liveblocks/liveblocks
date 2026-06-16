@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { ReactNode } from "react";
 import { Providers } from "./Providers";
+import { HelpButton } from "@/components/HelpButton";
 import "../globals.css";
 import "../liveblocks.css";
 
@@ -36,6 +37,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </head>
       <body className="bg-neutral-200/50 text-neutral-900 antialiased h-full w-full overflow-hidden">
         <Providers>{children}</Providers>
+
+        <HelpButton />
 
         <a
           className="fixed bottom-4 right-4"

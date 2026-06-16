@@ -22,18 +22,6 @@ import type { FullBackgroundToPanelMessage } from "../protocol";
 import type { YDocNode } from "../tabs/yjs/to-y-node";
 import { toYNode } from "../tabs/yjs/to-y-node";
 
-// Old/legacy connection statuses sent by old clients, prior to Liveblocks 1.1.
-// These will be removed from a future version of Liveblocks, but DevTools will
-// have to support these status codes to remain backward compatible with old
-// clients.
-type OldConnectionStatus =
-  | "closed"
-  | "authenticating"
-  | "connecting"
-  | "open"
-  | "unavailable"
-  | "failed";
-
 export type YUpdate = {
   ds: DeleteSet;
   structs: (Y.Item | Y.GC | Skip)[];
@@ -41,7 +29,7 @@ export type YUpdate = {
 
 type Room = {
   readonly roomId: string;
-  status: Status | OldConnectionStatus | null;
+  status: Status | null;
   storage: readonly DevTools.LsonTreeNode[] | null;
   me: DevTools.UserTreeNode | null;
   others: readonly DevTools.UserTreeNode[];
@@ -391,7 +379,7 @@ export function useRoomIds(): string[] {
   return useSyncExternalStore(onRoomCountChanged.subscribe, () => allRoomIds);
 }
 
-export function useStatus(): Status | OldConnectionStatus | null {
+export function useStatus(): Status | null {
   const currentRoomId = useCurrentRoomId();
   return useSyncExternalStore(
     getSubscribe(currentRoomId, "onStatus") ?? nosub,

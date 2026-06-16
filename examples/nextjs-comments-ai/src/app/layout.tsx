@@ -1,5 +1,6 @@
 import "../styles/globals.css";
 import { Providers } from "./Providers";
+import { HelpButton } from "@/components/HelpButton";
 
 export default function RootLayout({
   children,
@@ -27,6 +28,7 @@ export default function RootLayout({
       </head>
       <body>
         <Providers>{children}</Providers>
+        <HelpButton />
       </body>
     </html>
   );

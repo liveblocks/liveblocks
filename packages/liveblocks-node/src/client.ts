@@ -471,12 +471,6 @@ export type CreateRoomOptions = {
    */
   tenantId?: string;
   organizationId?: string;
-
-  /**
-   * @deprecated This flag no longer has any effect and will be removed in
-   * a future version. All rooms now use the v2 storage engine by default.
-   */
-  engine?: 1 | 2;
 };
 
 export type UpdateRoomOptions = {
