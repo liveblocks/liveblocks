@@ -191,6 +191,18 @@ describe("WebhookHandler", () => {
         },
       ],
       [
+        "agentMentionedInComment",
+        {
+          projectId: "605a50b01a36d5ea7a2e9104",
+          threadId: "605a50b01a36d5ea7a2e9104",
+          commentId: "605a50b01a36d5ea7a2e9104",
+          mentionedAt: "2023-01-27T20:33:23.737Z",
+          mentionedBy: "authorId",
+          agentId: "agentId",
+          roomId: "examples-hero-21-07-2022",
+        },
+      ],
+      [
         "notification",
         {
           kind: "thread",
@@ -573,6 +585,22 @@ describe("Type guards", () => {
         expected: false,
       },
       {
+        name: "agentMentionedInComment",
+        event: {
+          type: "agentMentionedInComment",
+          data: {
+            projectId: "605a50b01a36d5ea7a2e9104",
+            threadId: "605a50b01a36d5ea7a2e9104",
+            commentId: "605a50b01a36d5ea7a2e9104",
+            mentionedAt: "2023-01-27T20:33:23.737Z",
+            mentionedBy: "authorId",
+            agentId: "agentId",
+            roomId: "examples-hero-21-07-2022",
+          },
+        },
+        expected: false,
+      },
+      {
         name: "commentCreated",
         event: {
           type: "commentCreated",
@@ -629,6 +657,22 @@ describe("Type guards", () => {
             userId: "userId",
             createdAt: "2023-01-27T20:33:23.737Z",
             triggeredAt: "2023-01-27T20:28:23.737Z",
+          },
+        },
+        expected: false,
+      },
+      {
+        name: "agentMentionedInComment",
+        event: {
+          type: "agentMentionedInComment",
+          data: {
+            projectId: "605a50b01a36d5ea7a2e9104",
+            threadId: "605a50b01a36d5ea7a2e9104",
+            commentId: "605a50b01a36d5ea7a2e9104",
+            mentionedAt: "2023-01-27T20:33:23.737Z",
+            mentionedBy: "authorId",
+            agentId: "agentId",
+            roomId: "examples-hero-21-07-2022",
           },
         },
         expected: false,

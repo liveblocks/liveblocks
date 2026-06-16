@@ -155,6 +155,7 @@ export class WebhookHandler {
         "threadDeleted",
         "ydocUpdated",
         "notification",
+        "agentMentionedInComment",
         "threadMarkedAsResolved",
         "threadMarkedAsUnresolved",
       ].includes(event.type)
@@ -236,6 +237,7 @@ type WebhookEvent =
   | CommentReactionAdded
   | CommentReactionRemoved
   | CommentMetadataUpdatedEvent
+  | AgentMentionedInCommentEvent
   | ThreadMetadataUpdatedEvent
   | NotificationEvent
   | ThreadCreatedEvent
@@ -362,6 +364,23 @@ type CommentDeletedEvent = {
      * @example "2021-03-01T12:00:00.000Z"
      */
     deletedAt: string;
+  };
+};
+
+type AgentMentionedInCommentEvent = {
+  type: "agentMentionedInComment";
+  data: {
+    projectId: string;
+    roomId: string;
+    threadId: string;
+    commentId: string;
+    /**
+     * ISO 8601 datestring
+     * @example "2021-03-01T12:00:00.000Z"
+     */
+    mentionedAt: string;
+    mentionedBy: string;
+    agentId: string;
   };
 };
 
@@ -593,6 +612,7 @@ type NotificationEvent =
   | CustomNotificationEvent;
 
 export type {
+  AgentMentionedInCommentEvent,
   CommentCreatedEvent,
   CommentDeletedEvent,
   CommentEditedEvent,
