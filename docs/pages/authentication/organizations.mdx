@@ -100,7 +100,7 @@ When authorizing a user with Liveblocks, you can specify the organization they
 belong to. Each user is only authorized for one organization at a time, meaning
 they need to re-authenticate to access resources in another organization, such
 as notifications. Organizations can be used with both
-[ID Token](/docs/authentication/id-token) and
+[ID Token](/docs/authentication#id-token) and
 [Access Token](/docs/authentication/access-token) authentication.
 
 #### With ID tokens
@@ -120,7 +120,8 @@ const { body, status } = await liveblocks.identifyUser({
 console.log(body);
 ```
 
-Learn more about [ID tokens](/docs/authentication/id-token).
+Learn more about
+[ID tokens](/docs/authentication#id-token-workspace-permissions).
 
 #### With access tokens
 

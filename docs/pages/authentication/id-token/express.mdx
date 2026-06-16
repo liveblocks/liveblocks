@@ -120,7 +120,7 @@ Follow the following steps to start configure your authentication endpoint where
     <StepContent>
       A room can have `defaultAccesses`, `usersAccesses`, and `groupsAccesses` defined.
       Permissions are then checked when users try to connect to a room. For security purposes,
-      [room permissions](/docs/authentication/id-token#permissions) can only be set on the back-end through `@liveblocks/node` or our REST API.
+      [room permissions](/docs/authentication#id-token-room-permissions) can only be set on the back-end through `@liveblocks/node` or our REST API.
       For instance, you can use [`liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms)
       to create a new room with read-only public access levels while giving write access to specific groups and users.
 
@@ -142,7 +142,7 @@ Follow the following steps to start configure your authentication endpoint where
         });
       ```
 
-      For more information, make sure to read the section on [room permissions](/docs/authentication/id-token#permissions).
+      For more information, make sure to read the section on [room permissions](/docs/authentication#id-token-room-permissions).
 
     </StepContent>
 

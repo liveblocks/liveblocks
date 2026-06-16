@@ -49,7 +49,8 @@ const { body, status } = await liveblocks.identifyUser({
 ```
 
 <Banner>
-  Learn how to [get started with ID tokens](/docs/authentication/id-token).
+  Learn how to
+  [get started with ID tokens](/docs/authentication#id-token).
 </Banner>
 
 A number of options are also available, enabling you to set up permissions and
@@ -90,8 +91,8 @@ expired.
 ##### Granting ID token permissions
 
 You can pass additional options to `identifyUser`, enabling you to create
-complex [workspace permissions](/docs/authentication#permissions) and
-[room permissions](/docs/authentication#Room-permissions). For example, this
+complex [workspace permissions](/docs/authentication#id-token-workspace-permissions) and
+[room permissions](/docs/authentication#id-token-room-permissions). For example, this
 user can only see resources in the `acme-corp` workspace, and they’re part of a
 `marketing` rooms group within it.
 
@@ -113,7 +114,7 @@ const { body, status } = await liveblocks.identifyUser({
 ```
 
 <Banner>
-  Learn more about [ID token permissions](/docs/authentication#permissions).
+  Learn more about [ID token permissions](/docs/authentication#id-token-room-permissions).
 </Banner>
 
 ##### Text editor user data
@@ -183,10 +184,11 @@ console.log(currentUser.info.avatar);
 The purpose of this API is to help you implement your custom authentication back
 end (i.e. the _server_ part of the diagram). You use the
 `liveblocks.identifyUser()` API if you’d like to issue
-[ID tokens](/docs/authentication/id-token) from your back end. An ID token does
-not grant any permissions in the token directly. Instead, it only securely
-identifies your user, and then uses any permissions set via the [Permissions
-REST API][] to decide whether to allow the user on a room-by-room basis.
+[ID tokens](/docs/authentication#id-token-authenticating) from your back end. An
+ID token does not grant any permissions in the token directly. Instead, it only
+securely identifies your user, and then uses any permissions set via the
+[Permissions REST API][] to decide whether to allow the user on a room-by-room
+basis.
 
 Use this approach if you’d like Liveblocks to be the source of truth for your
 user’s permissions.
@@ -251,7 +253,7 @@ their avatar URL.
 
 Here’s a real-world example of ID tokens in a Next.js route handler/endpoint.
 You can find examples for other frameworks in our
-[authentication section](/docs/authentication/id-token).
+[authentication section](/docs/authentication#select-your-framework).
 
 ```ts file="Next.js"
 import { Liveblocks } from "@liveblocks/node";
@@ -768,9 +770,10 @@ rooms to delete.
 Programmatically creates a new room from a room ID. The `defaultAccesses` option
 is required. Setting `defaultAccesses` to `["*:write"]` creates a public room,
 whereas setting it to `[]` will create a private room that needs
-[ID token permission to enter](/docs/authentication/id-token). This is a wrapper
-around the [Create Room API](/docs/api-reference/rest-api-endpoints#post-rooms)
-and returns the same response.
+[ID token permission to enter](/docs/authentication#id-token-room-permissions).
+This is a wrapper around the
+[Create Room API](/docs/api-reference/rest-api-endpoints#post-rooms) and returns
+the same response.
 
 ```ts
 const room = await liveblocks.createRoom("my-room-id", {
@@ -812,7 +815,8 @@ const room = await liveblocks.createRoom("my-room-id", {
 
 Group and user permissions are only used with
 [ID token authorization](/docs/api-reference/liveblocks-node#id-tokens), learn
-more about [managing permission with ID tokens](/docs/authentication/id-token).
+more about
+[managing permission with ID tokens](/docs/authentication#id-token-room-permissions).
 
 #### Liveblocks.getRoom [#get-rooms-roomId]
 
@@ -833,7 +837,8 @@ console.log(room);
 Get a room by its ID. If the room doesn’t exist, create it instead. The
 `defaultAccesses` option is required. Setting `defaultAccesses` to `["*:write"]`
 creates a public room, whereas setting it to `[]` will create a private room
-that needs [ID token permission to enter](/docs/authentication/id-token).
+that needs
+[ID token permission to enter](/docs/authentication#id-token-room-permissions).
 Returns the same response as the
 [Create Room API](/docs/api-reference/rest-api-endpoints#post-rooms).
 
@@ -877,7 +882,8 @@ const room = await liveblocks.getOrCreateRoom("my-room-id", {
 
 Group and user permissions are only used with
 [ID token authorization](/docs/api-reference/liveblocks-node#id-tokens), learn
-more about [managing permission with ID tokens](/docs/authentication/id-token).
+more about
+[managing permission with ID tokens](/docs/authentication#id-token-room-permissions).
 
 #### Liveblocks.updateRoom [#post-rooms-roomId]
 
@@ -925,7 +931,8 @@ const room = await liveblocks.updateRoom("my-room-id", {
 
 Group and user permissions are only used with
 [ID token authorization](/docs/api-reference/liveblocks-node#id-tokens), learn
-more about [managing permission with ID tokens](/docs/authentication/id-token).
+more about
+[managing permission with ID tokens](/docs/authentication#id-token-room-permissions).
 
 #### Liveblocks.upsertRoom [#upsert-rooms-roomId]
 
@@ -933,8 +940,8 @@ Update a room’s properties by its ID. If the room doesn’t exist, create it
 instead. The `defaultAccesses` option is required. Setting `defaultAccesses` to
 `["*:write"]` creates a public room, whereas setting it to `[]` will create a
 private room that needs
-[ID token permission to enter](/docs/authentication/id-token). Returns the same
-response as the
+[ID token permission to enter](/docs/authentication#id-token-room-permissions).
+Returns the same response as the
 [Create Room API](/docs/api-reference/rest-api-endpoints#post-rooms).
 
 ```ts
@@ -983,7 +990,8 @@ const room = await liveblocks.upsertRoom("my-room-id", {
 
 Group and user permissions are only used with
 [ID token authorization](/docs/api-reference/liveblocks-node#id-tokens), learn
-more about [managing permission with ID tokens](/docs/authentication/id-token).
+more about
+[managing permission with ID tokens](/docs/authentication#id-token-room-permissions).
 
 #### Liveblocks.deleteRoom [#delete-rooms-roomId]
 
@@ -4159,4 +4167,4 @@ if (isCustomNotificationEvent(event)) {
 The check is made against the event type and event data kind.
 
 [`room.getothers`]: /docs/api-reference/liveblocks-client#Room.getOthers
-[Permissions REST API]: /docs/authentication/id-token
+[Permissions REST API]: /docs/authentication#id-token-room-permissions
