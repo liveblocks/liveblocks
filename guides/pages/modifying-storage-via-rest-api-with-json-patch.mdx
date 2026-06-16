@@ -40,8 +40,9 @@ Never expose your secret key in client-side code.
 Storage is a tree of Liveblocks types:
 [LiveObject](/docs/api-reference/liveblocks-client#LiveObject),
 [LiveList](/docs/api-reference/liveblocks-client#LiveList), and
-[LiveMap](/docs/api-reference/liveblocks-client#LiveMap). When building your
-patch:
+[LiveMap](/docs/api-reference/liveblocks-client#LiveMap). It can also contain
+[LiveText](/docs/api-reference/liveblocks-client#LiveText) nodes. When building
+your patch:
 
 - **Be as specific as possible** with your target path.
 - **Every parent** in the chain of path segments must be a LiveObject, LiveList,
@@ -50,6 +51,10 @@ patch:
 - **Nested values in `add` and `replace`:** If you pass a complex nested object
   or array as the `value` for an `add` or `replace` operation, it is
   automatically converted into LiveObjects and LiveLists on the server.
+- **LiveText values:** Patch LiveText using its Plain LSON shape:
+  `{ "liveblocksType": "LiveText", "data": LiveTextData }`. You can patch
+  fields under `data`, for example `/text/data/0/0`. LiveText versioning is an
+  internal detail and is not part of this API.
 
 ## Operations and examples
 
@@ -126,6 +131,39 @@ fails and no changes are applied. Use `test` to guard against concurrent updates
 [
   { "op": "test", "path": "/version", "value": 1 },
   { "op": "replace", "path": "/version", "value": 2 }
+]
+```
+
+## LiveText examples
+
+LiveText is patched with standard JSON Patch operations against its serialized
+segments. Each segment is `[text]` or `[text, attributes]`.
+
+```json
+[
+  { "op": "replace", "path": "/text/data/0/0", "value": "Hello" },
+  { "op": "add", "path": "/text/data/0/1", "value": { "bold": true } }
+]
+```
+
+You can replace a whole LiveText node by passing a Plain LSON LiveText value.
+
+```json
+[
+  {
+    "op": "replace",
+    "path": "/text",
+    "value": { "liveblocksType": "LiveText", "data": [["Hello world"]] }
+  }
+]
+```
+
+Use `test` for optimistic checks against the current text data.
+
+```json
+[
+  { "op": "test", "path": "/text/data", "value": [["Original"]] },
+  { "op": "replace", "path": "/text/data/0/0", "value": "Updated" }
 ]
 ```
 
