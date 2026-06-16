@@ -69,8 +69,8 @@ type ResolvedPermissionScopes = {
   matrix: Partial<PermissionMatrix>;
 };
 
-export type RoomPermissionsGrant = {
-  resource: string;
+export type RoomPatternPermissions = {
+  pattern: string;
   scopes: RoomPermissions;
 };
 
@@ -228,11 +228,11 @@ export function hasPermissionAccess(
 }
 
 export function resolveRoomPermissionMatrix(
-  permissions: RoomPermissionsGrant[],
+  permissions: RoomPatternPermissions[],
   roomId: string
 ): PermissionMatrix | undefined {
-  const matchedPermissions = permissions.filter((permission) =>
-    resourceMatchesRoomId(permission.resource, roomId)
+  const matchedPermissions = permissions.filter((entry) =>
+    roomPatternMatches(entry.pattern, roomId)
   );
 
   if (matchedPermissions.length === 0) {
@@ -244,9 +244,9 @@ export function resolveRoomPermissionMatrix(
   const explicitMatrix: Partial<PermissionMatrix> = {};
   const explicitSpecificity: Partial<Record<PermissionResources, number>> = {};
 
-  for (const permission of matchedPermissions) {
-    const resolved = resolvePermissionScopes(permission.scopes);
-    const specificity = getResourceSpecificity(permission.resource);
+  for (const entry of matchedPermissions) {
+    const resolved = resolvePermissionScopes(entry.scopes);
+    const specificity = roomPatternSpecificity(entry.pattern);
 
     if (resolved.hasDefaultPermission) {
       hasDefaultPermission = true;
@@ -439,16 +439,16 @@ function strongestAccess(left: AccessLevel, right: AccessLevel): AccessLevel {
   return ACCESS_LEVEL_RANKS[right] > ACCESS_LEVEL_RANKS[left] ? right : left;
 }
 
-function resourceMatchesRoomId(resource: string, roomId: string): boolean {
-  if (resource.includes("*")) {
-    return roomId.startsWith(resource.replace("*", ""));
+function roomPatternMatches(pattern: string, roomId: string): boolean {
+  if (pattern.includes("*")) {
+    return roomId.startsWith(pattern.replace("*", ""));
   }
 
-  return resource === roomId;
+  return pattern === roomId;
 }
 
-function getResourceSpecificity(resource: string): number {
-  return resource.replace("*", "").length;
+function roomPatternSpecificity(pattern: string): number {
+  return pattern.replace("*", "").length;
 }
 
 /**

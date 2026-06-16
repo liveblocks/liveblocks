@@ -209,7 +209,7 @@ describe("permissionMatrixFromScopes", () => {
   test("resolves room permission matrix from wildcard resources", () => {
     expect(
       resolveRoomPermissionMatrix(
-        [{ resource: "org1*", scopes: [Permission.RoomWrite] }],
+        [{ pattern: "org1*", scopes: [Permission.RoomWrite] }],
         "org1.room1"
       )
     ).toEqual({
@@ -225,8 +225,8 @@ describe("permissionMatrixFromScopes", () => {
     expect(
       resolveRoomPermissionMatrix(
         [
-          { resource: "org1*", scopes: [Permission.Write] },
-          { resource: "org1.room1", scopes: [Permission.StorageWrite] },
+          { pattern: "org1*", scopes: [Permission.Write] },
+          { pattern: "org1.room1", scopes: [Permission.StorageWrite] },
         ],
         "org1.room1"
       )?.storage
@@ -236,8 +236,8 @@ describe("permissionMatrixFromScopes", () => {
   test("lets exact room opt-outs override wildcard defaults without clearing other resources", () => {
     const matrix = resolveRoomPermissionMatrix(
       [
-        { resource: "org1*", scopes: [Permission.Write] },
-        { resource: "org1.room1", scopes: [Permission.StorageNone] },
+        { pattern: "org1*", scopes: [Permission.Write] },
+        { pattern: "org1.room1", scopes: [Permission.StorageNone] },
       ],
       "org1.room1"
     );
@@ -250,7 +250,7 @@ describe("permissionMatrixFromScopes", () => {
   test("returns undefined when no room permissions match", () => {
     expect(
       resolveRoomPermissionMatrix(
-        [{ resource: "org2*", scopes: [Permission.RoomWrite] }],
+        [{ pattern: "org2*", scopes: [Permission.RoomWrite] }],
         "org1.room1"
       )
     ).toBeUndefined();
