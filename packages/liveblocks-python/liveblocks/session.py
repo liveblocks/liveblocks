@@ -46,7 +46,9 @@ ALL_PERMISSIONS: frozenset[str] = frozenset(
     ]
 )
 
+# Deprecated: use ``["*:read"]`` instead.
 READ_ACCESS: tuple[Permission, ...] = ("*:read",)
+# Deprecated: use ``["*:write"]`` instead.
 FULL_ACCESS: tuple[Permission, ...] = ("*:write",)
 
 _MAX_PERMS_PER_SET = 10
@@ -56,7 +58,9 @@ _ROOM_PATTERN_RE = re.compile(r"^([*]|[^*]{1,128}[*]?)$")
 class _BaseSession:
     """Shared permission-building logic for sync and async sessions."""
 
+    # Deprecated: use ``["*:write"]`` instead.
     FULL_ACCESS = FULL_ACCESS
+    # Deprecated: use ``["*:read"]`` instead.
     READ_ACCESS = READ_ACCESS
 
     def __init__(
@@ -161,7 +165,7 @@ class Session(_BaseSession):
     Usage::
 
         session = client.prepare_session("user-123")
-        session.allow("my-room", session.FULL_ACCESS)
+        session.allow("my-room", ["*:write"])
         result = session.authorize()
     """
 
@@ -190,7 +194,7 @@ class AsyncSession(_BaseSession):
     Usage::
 
         session = client.prepare_session("user-123")
-        session.allow("my-room", session.FULL_ACCESS)
+        session.allow("my-room", ["*:write"])
         result = await session.authorize()
     """
 
