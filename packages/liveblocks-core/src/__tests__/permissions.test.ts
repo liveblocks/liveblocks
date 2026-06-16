@@ -1,3 +1,4 @@
+import * as fc from "fast-check";
 import { describe, expect, test } from "vitest";
 
 import {
@@ -5,11 +6,56 @@ import {
   mergePermissionMatrices,
   mergeRoomPermissionScopes,
   Permission,
+  type PermissionMatrix,
   permissionMatrixFromScopes,
   permissionMatrixToScopes,
+  type PermissionResources,
   resolveRoomPermissionMatrix,
   validatePermissionsSet,
 } from "../permissions";
+
+const ALL_PERMISSIONS = Object.values(Permission);
+
+const PERMISSION_RESOURCES = [
+  "room",
+  "storage",
+  "comments",
+  "feeds",
+  "personal",
+] as const satisfies readonly PermissionResources[];
+
+const ACCESS_LEVEL_RANKS = {
+  none: 0,
+  read: 1,
+  write: 2,
+} as const;
+
+const permissionScope = fc.constantFrom(...ALL_PERMISSIONS);
+
+const scopeSet = fc.uniqueArray(permissionScope, { maxLength: 8 });
+
+const validScopeSet = scopeSet.filter(
+  (scopes) => validatePermissionsSet(scopes) === true
+);
+
+const noneScope = fc.constantFrom(
+  Permission.StorageNone,
+  Permission.CommentsNone,
+  Permission.FeedsNone
+);
+
+function hasBasePermission(scopes: readonly Permission[]): boolean {
+  return (
+    scopes.includes(Permission.Read) ||
+    scopes.includes(Permission.Write) ||
+    scopes.includes(Permission.RoomRead) ||
+    scopes.includes(Permission.RoomWrite)
+  );
+}
+
+function accessRank(resource: PermissionResources, matrix: PermissionMatrix) {
+  return ACCESS_LEVEL_RANKS[matrix[resource]];
+}
 
 describe("permissionMatrixFromScopes", () => {
   test("resolves read access", () => {
@@ -397,7 +443,124 @@ describe("validatePermissionsSet", () => {
         Permission.CommentsWrite,
       ])
     ).toBe(
-      `Permissions can include at most one scope per feature, got multiple "comments" scopes`
+      'Permissions can include at most one scope per feature, got multiple "comments" scopes'
+    );
+  });
+});
+
+describe("property tests", () => {
+  test("resolving scopes to a matrix is idempotent via minimal scopes", () => {
+    fc.assert(
+      fc.property(scopeSet, (scopes) => {
+        const matrix = permissionMatrixFromScopes(scopes);
+        expect(
+          permissionMatrixFromScopes(permissionMatrixToScopes(matrix))
+        ).toEqual(matrix);
+      })
+    );
+  });
+
+  test("valid scope sets round-trip through matrix serialization", () => {
+    fc.assert(
+      fc.property(validScopeSet, (scopes) => {
+        const matrix = permissionMatrixFromScopes(scopes);
+        const serialized = permissionMatrixToScopes(matrix);
+
+        expect(validatePermissionsSet(serialized)).toBe(true);
+        expect(permissionMatrixFromScopes(serialized)).toEqual(matrix);
+      })
+    );
+  });
+
+  test("personal access is write iff a base permission is present", () => {
+    fc.assert(
+      fc.property(scopeSet, (scopes) => {
+        const matrix = permissionMatrixFromScopes(scopes);
+
+        expect(matrix.personal).toBe(
+          hasBasePermission(scopes) ? "write" : "none"
+        );
+      })
+    );
+  });
+
+  test("adding a resource none scope never increases access", () => {
+    fc.assert(
+      fc.property(scopeSet, noneScope, (scopes, none) => {
+        const before = permissionMatrixFromScopes(scopes);
+        const after = permissionMatrixFromScopes([...scopes, none]);
+
+        for (const resource of PERMISSION_RESOURCES) {
+          expect(accessRank(resource, after)).toBeLessThanOrEqual(
+            accessRank(resource, before)
+          );
+        }
+      })
+    );
+  });
+
+  test("merging permission matrices is commutative", () => {
+    fc.assert(
+      fc.property(scopeSet, scopeSet, (leftScopes, rightScopes) => {
+        const left = permissionMatrixFromScopes(leftScopes);
+        const right = permissionMatrixFromScopes(rightScopes);
+
+        expect(mergePermissionMatrices([left, right])).toEqual(
+          mergePermissionMatrices([right, left])
+        );
+      })
+    );
+  });
+
+  test("legacy room base aliases resolve identically to wildcard bases", () => {
+    fc.assert(
+      fc.property(scopeSet, (scopes) => {
+        const withoutLegacyBases = scopes.filter(
+          (scope) =>
+            scope !== Permission.RoomRead && scope !== Permission.RoomWrite
+        );
+
+        const withReadAlias = withoutLegacyBases.includes(Permission.Read)
+          ? withoutLegacyBases.map((scope) =>
+              scope === Permission.Read ? Permission.RoomRead : scope
+            )
+          : withoutLegacyBases;
+
+        const withWriteAlias = withoutLegacyBases.includes(Permission.Write)
+          ? withoutLegacyBases.map((scope) =>
+              scope === Permission.Write ? Permission.RoomWrite : scope
+            )
+          : withoutLegacyBases;
+
+        if (withoutLegacyBases.includes(Permission.Read)) {
+          expect(permissionMatrixFromScopes(withReadAlias)).toEqual(
+            permissionMatrixFromScopes(withoutLegacyBases)
+          );
+        }
+
+        if (withoutLegacyBases.includes(Permission.Write)) {
+          expect(permissionMatrixFromScopes(withWriteAlias)).toEqual(
+            permissionMatrixFromScopes(withoutLegacyBases)
+          );
+        }
+      })
+    );
+  });
+
+  test("hasPermissionAccess matches matrix access ranks", () => {
+    fc.assert(
+      fc.property(scopeSet, (scopes) => {
+        const matrix = permissionMatrixFromScopes(scopes);
+
+        for (const resource of PERMISSION_RESOURCES) {
+          expect(hasPermissionAccess(matrix, resource, "read")).toBe(
+            accessRank(resource, matrix) >= ACCESS_LEVEL_RANKS.read
+          );
+          expect(hasPermissionAccess(matrix, resource, "write")).toBe(
+            accessRank(resource, matrix) >= ACCESS_LEVEL_RANKS.write
+          );
+        }
+      })
     );
   });
 });
