@@ -856,6 +856,10 @@
             "path": "/pricing/plans/enterprise"
           }
         ]
+      },
+      {
+        "title": "Examples",
+        "path": "/pricing/examples"
       }
     ]
   },
