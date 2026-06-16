@@ -1,4 +1,4 @@
-import { detectDupes, RoomPermissions } from "@liveblocks/core";
+import { detectDupes, type RoomPermissions } from "@liveblocks/core";
 
 import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 
