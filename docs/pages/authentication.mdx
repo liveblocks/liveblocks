@@ -1,9 +1,48 @@
 ---
 meta:
   title: "Authentication"
-  description:
-    "Understand authentication and permissions, then start authenticating users
-    with ID tokens."
+  description: "Authenticate your users in your application with ID tokens."
+---
+
+For production applications, we recommend using your secret API key to
+authenticate users with **ID tokens**. Your public API key is only for
+prototyping and public applications.
+
+## Quickstart
+
+<ListGrid columns={3}>
+  <DocsCard
+    title="Next.js"
+    href="/docs/authentication/id-token/nextjs"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    title="Remix"
+    href="/docs/authentication/id-token/remix"
+    visual={<DocsRemixIcon />}
+  />
+  <DocsCard
+    title="SvelteKit"
+    href="/docs/authentication/id-token/sveltekit"
+    visual={<DocsSvelteIcon />}
+  />
+  <DocsCard
+    title="Nuxt.js"
+    href="/docs/authentication/id-token/nuxtjs"
+    visual={<DocsNuxtjsIcon />}
+  />
+  <DocsCard
+    title="Express"
+    href="/docs/authentication/id-token/express"
+    visual={<DocsExpressIcon />}
+  />
+  <DocsCard
+    title="Firebase"
+    href="/docs/authentication/id-token/firebase"
+    visual={<DocsFirebaseIcon />}
+  />
+</ListGrid>
+
 ---
 
 Authentication and permissions solve two different problems:
@@ -12,60 +51,7 @@ Authentication and permissions solve two different problems:
   which workspace they belong to (`organizationId`).
 - **Permissions** define what an authenticated user can do with Liveblocks
   resources such as rooms, comments, and feeds.
-
-## How permissions work
-
-A user’s access to a room is defined by a list of permissions.
-
-Each permission uses the format `resource:scope`. The resource can be `*` for
-the whole room, or a specific resource such as `comments`. The scope can be
-`read`, `write`, or `none`.
-
-### Base permissions
-
-By setting the permission for the resource `*`, you define the base scope for
-all the resources of the room. You can choose between read or write access:
-
-- `*:read` → the user will have read access to everything in the room.
-- `*:write` → the user will have write access to everything in the room.
-
-<Banner title="Legacy naming convention">
-
-The legacy names `room:read` and `room:write` are still supported. They’re
-equivalent to `*:read` and `*:write`, but we recommend using the new naming
-convention.
-
-</Banner>
-
-### More granular permissions
-
-You can opt into or opt out of access to specific room resources:
-
-- **Storage** with `storage:read`, `storage:write`, or `storage:none`.
-- **Comments** with `comments:read`, `comments:write`, or `comments:none`.
-- **Feeds** with `feeds:read`, `feeds:write`, or `feeds:none`.
-
-**Here are some examples:**
-
-1. Write access to everything except read-only access to storage:
-
-```
-[
-  "*:write",
-  "storage:read"  // Lower storage access from write to read
-]
-```
-
-2. Read access to everything, except write access to comments and no access to
-   feeds:
-
-```
-[
-  "*:read",
-  "comments:write",  // Raise comments access to write
-  "feeds:none"       // Remove access to feeds
-]
-```
+  [Learn how permissions work](/docs/authentication/permissions).
 
 ## Authenticate users with ID tokens [#id-token]
 
@@ -79,6 +65,8 @@ the source of truth. Later, when a user tries to enter the room, Liveblocks
 checks those permissions and denies access when the user isn’t allowed in.
 
 Permissions can be set for individual users, groups of users, or the whole room.
+For available permission formats and scopes, see the
+[permissions](/docs/authentication/permissions) page.
 
 <Figure>
   <Image

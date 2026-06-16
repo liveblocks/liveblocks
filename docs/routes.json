@@ -417,6 +417,10 @@
         "path": "/authentication",
         "routes": [
           {
+            "title": "Permissions",
+            "path": "/authentication/permissions"
+          },
+          {
             "title": "Organizations",
             "path": "/authentication/organizations"
           },
