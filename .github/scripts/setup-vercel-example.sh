@@ -509,6 +509,30 @@ add_liveblocks_key_to_vercel() {
   vercel_liveblocks_env_name="${liveblocks_key_env_name}"
 }
 
+add_manual_env_vars_to_vercel() {
+  local manual_env_name
+
+  ((${#manual_env_names[@]} == 0)) && return
+
+  # Any non-Liveblocks variable in `.env.example` is added as an empty placeholder
+  # for preview deployments. Their values must be filled in manually on Vercel later.
+  for manual_env_name in "${manual_env_names[@]}"; do
+    vercel_request \
+      "Adding placeholder env var ${manual_env_name} to Vercel preview" \
+      "POST" \
+      "$(vercel_url "/v10/projects/${vercel_project_id}/env")" \
+      "$(jq -n \
+        --arg key "${manual_env_name}" \
+        '{
+          key: $key,
+          value: "",
+          type: "encrypted",
+          target: ["preview"]
+        }')" \
+      >/dev/null
+  done
+}
+
 configure_vercel_project() {
   local framework_json
   local update_vercel_project_body
@@ -674,7 +698,7 @@ write_success_summary() {
     fi
     echo
     if ((${#manual_env_names[@]} > 0)); then
-      echo "Still needs to be added manually on Vercel:"
+      echo "Added to Vercel for preview as empty placeholders (fill in their values manually):"
       echo
       for manual_env_name in "${manual_env_names[@]}"; do
         echo "- \`${manual_env_name}\`"
@@ -708,6 +732,7 @@ main() {
   create_vercel_project
   create_liveblocks_project
   add_liveblocks_key_to_vercel
+  add_manual_env_vars_to_vercel
   configure_vercel_project
   create_vercel_deploy_hook
   add_vercel_custom_domain
