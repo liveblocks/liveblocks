@@ -2,8 +2,8 @@
 meta:
   title: "Authentication"
   description:
-    "Understand authentication, permissions, and start authenticating your users
-    in your application with ID tokens."
+    "Understand authentication and permissions, then start authenticating users
+    with ID tokens."
 ---
 
 Authentication and permissions solve two different problems:
@@ -15,10 +15,11 @@ Authentication and permissions solve two different problems:
 
 ## How permissions work
 
-A user has access to a room through a list of permissions.
+A user’s access to a room is defined by a list of permissions.
 
-A permission has a left part, the resource (e.g. `*`, or `comments`) and the
-right part, the scope (`read`, `write`, or `none`).
+Each permission uses the format `resource:scope`. The resource can be `*` for
+the whole room, or a specific resource such as `comments`. The scope can be
+`read`, `write`, or `none`.
 
 ### Base permissions
 
@@ -30,9 +31,9 @@ all the resources of the room. You can choose between read or write access:
 
 <Banner title="Legacy naming convention">
 
-The legacy naming convention `room:read` and `room:write` are still supported,
-they are equivalent to `*:read` and `*:write` respectively, but we recommend
-using the new naming convention.
+The legacy names `room:read` and `room:write` are still supported. They’re
+equivalent to `*:read` and `*:write`, but we recommend using the new naming
+convention.
 
 </Banner>
 
@@ -44,7 +45,7 @@ You can opt into or opt out of access to specific room resources:
 - **Comments** with `comments:read`, `comments:write`, or `comments:none`.
 - **Feeds** with `feeds:read`, `feeds:write`, or `feeds:none`.
 
-**Here are some examples**
+**Here are some examples:**
 
 1. Write access to everything except read-only access to storage:
 
@@ -61,8 +62,8 @@ You can opt into or opt out of access to specific room resources:
 ```
 [
   "*:read",
-  "comments:write"  // Raise comments access to write
-  "feeds:none"  // Remove access to feeds
+  "comments:write",  // Raise comments access to write
+  "feeds:none"       // Remove access to feeds
 ]
 ```
 
@@ -73,13 +74,11 @@ authenticate users with **ID tokens**. Your public API key is only for
 prototyping and public applications.
 
 ID token authentication lets Liveblocks handle permissions for you. When you
-create or modify a room, you can set permissions on the room itself, making the
-room the source of truth. Later, when a user tries to enter a room, Liveblocks
-checks if the user has permission and denies access if the permissions aren’t
-set.
+create or update a room, you set permissions on the room itself, making the room
+the source of truth. Later, when a user tries to enter the room, Liveblocks
+checks those permissions and denies access when the user isn’t allowed in.
 
-Permissions aren’t just for individual users, but can also be set for groups of
-users, or for the whole room at once.
+Permissions can be set for individual users, groups of users, or the whole room.
 
 <Figure>
   <Image
@@ -91,7 +90,7 @@ users, or for the whole room at once.
   />
 </Figure>
 
-<Banner title="You prefer to handle permissions yourself?">
+<Banner title="Prefer to handle permissions yourself?">
 
 If you don’t need fine-grained permissions, or if you’d prefer storing
 individual room permissions in your own system, you can use
@@ -102,9 +101,9 @@ individual room permissions in your own system, you can use
 ### Authenticating [#id-token-authenticating]
 
 Authenticating with ID tokens means creating a
-[JSON Web Token](https://en.wikipedia.org/wiki/JSON_Web_Token) (JWT) that’s used
-to verify the identity of the current user when connecting to a Liveblocks room.
-This token is created using
+[JSON Web Token](https://en.wikipedia.org/wiki/JSON_Web_Token) (JWT) that
+identifies the current user when they connect to a Liveblocks room. Create this
+token with
 [`liveblocks.identifyUser`](/docs/api-reference/liveblocks-node#id-tokens) or
 [`/identify-user`](/docs/api-reference/rest-api-endpoints#post-identify-user).
 
@@ -138,9 +137,8 @@ customers/organizations.
 
 #### Set up workspace permissions
 
-To set up workspace permissions, pass an `organizationId` when authenticating a
-user, ensuring that the user will only have access to resources within this
-workspace.
+To set up workspace permissions, pass an `organizationId` when authenticating
+the user. The user will only be able to access resources in that organization.
 
 ```ts
 const { body, status } = await liveblocks.identifyUser({
