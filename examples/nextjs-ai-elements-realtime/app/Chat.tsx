@@ -88,6 +88,7 @@ import {
 } from "@/components/ai-elements/prompt-input";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Shimmer } from "@/components/ai-elements/shimmer";
+import { HelpButton } from "@/components/HelpButton";
 import { AI_USER_AVATAR, AI_USER_NAME } from "./database";
 
 // Each chat is a feed in the room. Everyone connected reads and writes to the
@@ -172,6 +173,7 @@ export function Chat({ roomId }: { roomId: string }) {
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
+            <HelpButton />
           </div>
 
           {/* Live presence: everyone currently in the room */}

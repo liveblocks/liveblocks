@@ -54,19 +54,14 @@ const FEATURES: Feature[] = [
 
 const styles: Record<string, CSSProperties> = {
   button: {
-    position: "fixed",
-    bottom: 16,
-    left: 16,
-    zIndex: 2147483000,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    width: 36,
-    height: 36,
-    background: "#ffffff",
-    border: "1px solid #e5e5e5",
-    borderRadius: 9999,
-    boxShadow: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+    width: 28,
+    height: 28,
+    background: "transparent",
+    border: "none",
+    borderRadius: 6,
     color: "#737373",
     cursor: "pointer",
   },
@@ -242,8 +237,8 @@ export function HelpButton() {
 function HelpIcon() {
   return (
     <svg
-      width={20}
-      height={20}
+      width={16}
+      height={16}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
