@@ -65,7 +65,7 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
         // +++
 
         // Give the user access to AI chats
-        session.allow(`*`, session.FULL_ACCESS);
+        session.allow(`*`, ["*:write"]);
 
         // Authorize the user and return the result
         const { status, body } = await session.authorize();

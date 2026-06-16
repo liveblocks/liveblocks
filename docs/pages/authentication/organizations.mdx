@@ -14,8 +14,8 @@ notification inbox.
 
 <Banner title="Using organizations is optional">
 
-If you don't specify an organization, no configuration is needed. By default, resources
-belong to the `default` organization ID.
+If you don't specify an organization, no configuration is needed. By default,
+resources belong to the `default` organization ID.
 
 </Banner>
 
@@ -31,8 +31,8 @@ belong to the `default` organization ID.
 
 ### Setting up organizations
 
-To set up Organizations, you just need to set a `organizationId` when creating a resource,
-for example, when creating a room.
+To set up Organizations, you just need to set a `organizationId` when creating a
+resource, for example, when creating a room.
 
 ```ts
 const room = await liveblocks.createRoom("my-room-id", {
@@ -44,15 +44,15 @@ const room = await liveblocks.createRoom("my-room-id", {
 
 <Banner title="You can't change a resource's organization" type="warning">
 
-It's not possible to change a resource's `organizationId` after creation. You will
-need to migrate the resource into a new room in the correct organization.
+It's not possible to change a resource's `organizationId` after creation. You
+will need to migrate the resource into a new room in the correct organization.
 
 </Banner>
 
 #### Resources using organizations
 
-A number of Liveblocks resources use organizations, such as rooms, comments, text
-editors, Yjs, Storage, inbox notifications, mention groups.
+A number of Liveblocks resources use organizations, such as rooms, comments,
+text editors, Yjs, Storage, inbox notifications, mention groups.
 
 ```ts
 const { data: rooms, nextCursor } = await liveblocks.getRooms({
@@ -96,17 +96,19 @@ using organizations. Organizations can also be used with the
 
 ### Authentication
 
-When authorizing a user with Liveblocks, you can specify the organization they belong
-to. Each user is only authorized for one organization at a time, meaning they need to
-re-authenticate to access resources in another organization, such as notifications.
-Organizations can be used with both [ID Token](/docs/authentication/id-token) and
+When authorizing a user with Liveblocks, you can specify the organization they
+belong to. Each user is only authorized for one organization at a time, meaning
+they need to re-authenticate to access resources in another organization, such
+as notifications. Organizations can be used with both
+[ID Token](/docs/authentication/id-token) and
 [Access Token](/docs/authentication/access-token) authentication.
 
 #### With ID tokens
 
-When using ID tokens, you can set the `organizationId` when using `identifyUser`.
-Tokens generated for a specific organization, will only allow access to resources
-inside this organization, even if the user has access to rooms in other organizations.
+When using ID tokens, you can set the `organizationId` when using
+`identifyUser`. Tokens generated for a specific organization, will only allow
+access to resources inside this organization, even if the user has access to
+rooms in other organizations.
 
 ```ts highlight="3"
 const { body, status } = await liveblocks.identifyUser({
@@ -122,9 +124,10 @@ Learn more about [ID tokens](/docs/authentication/id-token).
 
 #### With access tokens
 
-When using access tokens, you can set the `organizationId` when you prepare a session.
-Tokens generated for a specific organization, will only allow access to resources
-inside this organization, even if the token has permissions to rooms in other organizations.
+When using access tokens, you can set the `organizationId` when you prepare a
+session. Tokens generated for a specific organization, will only allow access to
+resources inside this organization, even if the token has permissions to rooms
+in other organizations.
 
 ```ts highlight="2"
 const session = liveblocks.prepareSession("olivier@example.com", {
@@ -132,10 +135,10 @@ const session = liveblocks.prepareSession("olivier@example.com", {
 });
 
 // Giving full access to one room
-session.allow("Vu78Rt:design:9Hdu73", session.FULL_ACCESS);
+session.allow("Vu78Rt:design:9Hdu73", ["*:write"]);
 
 // Give full access to every room with an ID beginning with "Vu78Rt:product:"
-session.allow("Vu78Rt:product:*", session.FULL_ACCESS);
+session.allow("Vu78Rt:product:*", ["*:write"]);
 
 const { body, status } = await session.authorize();
 ```
@@ -145,5 +148,5 @@ Learn more about [access tokens](/docs/authentication/access-token).
 #### Switching organizations
 
 The easiest way to switch organizations is to refresh the page, for example with
-`location.reload()`, then pass a new `organizationId` to your chosen authentication
-method.
+`location.reload()`, then pass a new `organizationId` to your chosen
+authentication method.

@@ -355,14 +355,14 @@ const session = liveblocks.prepareSession(
 );
 
 // Giving access to an individual rooms
-session.allow("room-id-1", session.FULL_ACCESS);
+session.allow("room-id-1", ["*:write"]);
 
 // Giving read-only access to this room
-session.allow("room-id-2", session.READ_ACCESS);
+session.allow("room-id-2", ["*:read"]);
 
 // Giving access to multiple rooms with a wildcard
 // `design-room-1`, `design-room-2`, etc.
-session.allow("design-room:*", session.FULL_ACCESS);
+session.allow("design-room:*", ["*:write"]);
 ```
 
 <Banner>
@@ -518,10 +518,10 @@ To implement your back end, follow these steps:
     <StepTitle>Decide which permissions to allow this session</StepTitle>
     <StepContent>
       ```ts showLineNumbers={false}
-      session.allow("my-room-1", session.FULL_ACCESS);
-      session.allow("my-room-2", session.FULL_ACCESS);
-      session.allow("my-room-3", session.FULL_ACCESS);
-      session.allow("my-team:*", session.READ_ACCESS);
+      session.allow("my-room-1", ["*:write"]);
+      session.allow("my-room-2", ["*:write"]);
+      session.allow("my-room-3", ["*:write"]);
+      session.allow("my-team:*", ["*:read"]);
       ```
 
       <Banner title="Be diligent" type="warning">
@@ -585,7 +585,7 @@ export async function POST(request: Request) {
   // Implement your own security, and give the user access to the room
   const { room } = await request.json();
   if (room && __shouldUserHaveAccess__(user, room)) {
-    session.allow(room, session.FULL_ACCESS);
+    session.allow(room, ["*:write"]);
   }
 
   // Retrieve a token from the Liveblocks servers and pass it to the
