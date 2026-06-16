@@ -423,8 +423,36 @@ liveblocks_key_value() {
     ensure_liveblocks_public_key
     jq -r '.publicKey.value // empty' <<<"${liveblocks_project}"
   else
+    ensure_liveblocks_secret_key
     jq -r '.secretKey.value // empty' <<<"${liveblocks_project}"
   fi
+}
+
+ensure_liveblocks_secret_key() {
+  local liveblocks_secret_key_response
+  local secret_key_value
+
+  secret_key_value="$(jq -r '.secretKey.value // empty' <<<"${liveblocks_project}")"
+
+  [[ -n "${secret_key_value}" ]] && return
+
+  # Production secret keys are not returned at creation time, so roll one to obtain its value.
+  # Source: https://liveblocks.io/docs/api-reference/rest-api-endpoints#roll-project-secret-api-key
+  liveblocks_secret_key_response="$(
+    liveblocks_request \
+      "Rolling Liveblocks secret key" \
+      "POST" \
+      "${liveblocks_management_api_url}/projects/${liveblocks_project_id}/api-keys/secret/roll"
+  )"
+  secret_key_value="$(jq -r '.secretKey.value // empty' <<<"${liveblocks_secret_key_response}")"
+
+  if [[ -z "${secret_key_value}" ]]; then
+    err "Liveblocks secret key roll response did not include a value"
+    echo "${liveblocks_secret_key_response}" >&2
+    exit 1
+  fi
+
+  liveblocks_project="$(jq -c --arg value "${secret_key_value}" '.secretKey = { value: $value }' <<<"${liveblocks_project}")"
 }
 
 ensure_liveblocks_public_key() {
