@@ -818,16 +818,6 @@
             "path": "/platform/account-management/delete-an-account"
           }
         ]
-      },
-      {
-        "title": "Limits",
-        "path": "/platform/limits",
-        "routes": [
-          {
-            "title": "Fair use guidelines",
-            "path": "/platform/limits/fair-use-guidelines"
-          }
-        ]
       }
     ]
   },
@@ -835,6 +825,10 @@
     "title": "Pricing",
     "defaultCollapsed": true,
     "routes": [
+      {
+        "title": "Overview",
+        "path": "/pricing/overview"
+      },
       {
         "title": "Plans",
         "path": "/pricing/plans",
@@ -858,8 +852,44 @@
         ]
       },
       {
-        "title": "Examples",
-        "path": "/pricing/examples"
+        "title": "Billing",
+        "path": "/pricing/billing"
+      },
+      {
+        "title": "Limits",
+        "path": "/platform/limits",
+        "routes": [
+          {
+            "title": "Fair use guidelines",
+            "path": "/platform/limits/fair-use-guidelines"
+          }
+        ]
+      },
+      {
+        "title": "Pricing examples",
+        "path": "/pricing/examples",
+        "routes": [
+          {
+            "title": "Document editor",
+            "path": "/pricing/examples/document-editor"
+          },
+          {
+            "title": "Notification inbox",
+            "path": "/pricing/examples/notification-inbox"
+          },
+          {
+            "title": "Canvas",
+            "path": "/pricing/examples/canvas"
+          },
+          {
+            "title": "Comments",
+            "path": "/pricing/examples/comments"
+          }
+        ]
+      },
+      {
+        "title": "Pricing FAQs",
+        "path": "/pricing/faqs"
       }
     ]
   },

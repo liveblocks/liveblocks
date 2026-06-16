@@ -5,11 +5,43 @@ meta:
   description: "Learn about the Liveblocks Enterprise plan."
 ---
 
-The Enterprise plan is tailored for organizations with advanced security,
-compliance, and scalability requirements. It includes everything in Team, plus
-multi-region hosting, a management API, SCIM/directory sync, advanced
-permissions, custom usage allocations, and higher-touch support options with
-SLAs and solution engineering.
+The Enterprise plan is for organizations with advanced security, compliance, and
+scalability requirements. It includes everything in Team, plus multi-region
+hosting, a management API, SCIM/directory sync, advanced permissions, custom
+usage allocations, and higher-touch support with SLAs.
+
+[Contact sales](/contact/sales) for pricing, custom credit allocations, and
+invoice billing.
+
+## Metered usage
+
+Metered usage is billed per unit, only for what you actually use. Enterprise
+plans include a custom monthly credit allowance negotiated for your workload.
+Usage above your credits is overage, billed at agreed per-unit rates.
+
+See [Team metered usage](/docs/pricing/plans/team#Metered-usage) for reference
+rates. Your contract may include volume discounts or custom allocations.
+
+## Other limits
+
+Enterprise limits are customized for your organization. See
+[Limits](/docs/platform/limits) for reference values and
+[contact sales](/contact/sales) to discuss your requirements.
+
+| Item                                                                                                                                                                                                                                                                                                          | Enterprise limit                                                                                                                                                                     |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| <a href="/docs/platform/limits#What-is-a-monthly-active-user">Monthly active users</a>                                                                                                                                                                                                                        | <Limits.EnterpriseMaxMau />                                                                                                                                                          |
+| Monthly active rooms                                                                                                                                                                                                                                                                                          | <Limits.EnterpriseComparePlansMonthlyActiveRoomsLabel />                                                                                                                             |
+| <a href="/docs/platform/projects">Projects</a>                                                                                                                                                                                                                                                                | <Limits.EnterpriseProjectsIncluded /> included<br /><span className="text-sm text-product-subtle">Up to <Limits.EnterpriseMaxProjects /></span>                                      |
+| Dashboard seats<br /><span className="text-sm text-product-subtle">Team members with Owner or Member role. They can configure projects, roll keys, and more.</span>                                                                                                                                           | <Limits.EnterpriseTeamMembersPerAccount /> included<br /><span className="text-sm text-product-subtle">Up to <Limits.EnterpriseMaxTeamMembersPerAccount /></span>                    |
+| <a href="/docs/platform/limits#What's-a-simultaneous-connection-per-room" title="Learn more">Simultaneous connections per room</a>                                                                                                                                                                            | <Limits.EnterpriseMaxConnectionsPerRoom />                                                                                                                                           |
+| <a href="/docs/platform/limits#What's-a-simultaneous-connection-per-project">Simultaneous connections per project</a>                                                                                                                                                                                         | <Limits.EnterpriseMaxConnectionsPerProject />                                                                                                                                        |
+| Monthly anonymous connections<br /><span className="text-sm text-product-subtle">Public key only recommended for prototyping. <a href="/docs/authentication" className="font-medium">Set up authentication</a>.</span>                                                                                        | <Limits.EnterpriseMaxAnonymousConnections />                                                                                                                                         |
+| Max file upload size                                                                                                                                                                                                                                                                                          | <Limits.EnterpriseFileUploadSize /><br /><span className="text-sm text-product-subtle">Up to <Limits.EnterpriseMaxFileUploadSize /></span>                                           |
+| Webhook event frequency<br /><span className="text-sm text-product-subtle">The frequency at which `yDocUpdated` (Yjs) and `storageUpdated` (Liveblocks Storage) events are sent to your webhook endpoint. <a href="/docs/platform/webhooks#StorageUpdatedEvent" className="font-medium">Learn more</a></span> | <Limits.EnterpriseStorageUpdatedWebhookEventThrottle /><br /><span className="text-sm text-product-subtle">Down to <Limits.EnterpriseMaxStorageUpdatedWebhookEventThrottle /></span> |
+| Version history<br /><span className="text-sm text-product-subtle">APIs, hooks, and pre-built components to access the previous versions of the realtime data stored in rooms.</span>                                                                                                                         | <Limits.EnterpriseVersionHistory />                                                                                                                                                  |
+| Event log retention                                                                                                                                                                                                                                                                                           | <Limits.EnterpriseEventLogRetention /><br /><span className="text-sm text-product-subtle">Up to <Limits.EnterpriseMaxEventLogRetention /></span>                                     |
+| Environments                                                                                                                                                                                                                                                                                                  | <Limits.EnterpriseEnvironments />                                                                                                                                                    |
 
 ## Security and compliance
 
@@ -25,16 +57,18 @@ Built-in support for global security and data protection standards, including:
 
 ## Observability and reporting
 
-Gain actionable insights with enhanced observability & logging:
-
 - Extended event log retention
 - External observability integrations (soon)
 
 ## Administration and support
 
-The Enterprise plan allows for streamlined team collaboration and offers robust
-support with:
-
 - Role-Based Access Control (RBAC)
 - A dedicated solution engineer
 - SLAs, including response time
+
+## Billing cycle
+
+The Enterprise plan follows a monthly billing cycle that starts on the 1st of
+each month and ends on the last day of the month. Monthly credits renew at the
+beginning of each billing cycle and are applied to metered usage. Any usage not
+covered by credits appears on your invoice.

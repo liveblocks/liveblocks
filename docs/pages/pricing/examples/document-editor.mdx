@@ -1,0 +1,46 @@
+---
+meta:
+  title: "Document editor"
+  parentTitle: "Pricing examples"
+  description:
+    "Pricing example for a collaborative document editor using Storage."
+---
+
+A collaborative editor where people and AI edit the same document together,
+synced and versioned through
+[Storage](/docs/collaboration-features/multiplayer/sync-engine/liveblocks-storage).
+
+This example uses the [Pro plan](/docs/pricing/plans/pro) at $30/mo.
+
+## Scenario
+
+- 500 monthly active users
+- 100 editing daily
+- ~10 min each per day
+
+## Metered usage
+
+| Item                                                                    | Calculation                                      | Total       |
+| ----------------------------------------------------------------------- | ------------------------------------------------ | ----------- |
+| [Realtime collaboration minutes](/docs/pricing/plans/pro#Metered-usage) | 100 editors × 10 min × 22 days                   | 22,000 mins |
+| Collaboration cost                                                      | 22,000 × $0.002                                  | $44         |
+| [Realtime data storage updates](/docs/pricing/plans/pro#Metered-usage)  | <span className="text-product-disabled">–</span> | 10,000,000  |
+| Update cost                                                             | 10M × $0.000001                                  | $10         |
+| [Realtime data stored](/docs/pricing/plans/pro#Metered-usage)           | <span className="text-product-disabled">–</span> | 5 GB        |
+| Storage cost                                                            | 5 × $0.15                                        | $0.75       |
+| **Credits used**                                                        | $44 + $10 + $0.75                                | **~$55**    |
+
+Storage is cumulative and does not reset monthly. See
+[Limits](/docs/platform/limits) for other caps.
+
+## Your bill
+
+| Item             | Calculation                                      | Total       |
+| ---------------- | ------------------------------------------------ | ----------- |
+| Credits used     | <span className="text-product-disabled">–</span> | ~$55        |
+| Plan base (Pro)  | <span className="text-product-disabled">–</span> | $30         |
+| Included credits | <span className="text-product-disabled">–</span> | $30         |
+| Overage          | $55 − $30                                        | ~$25        |
+| **Total**        | $30 + $25                                        | **~$55/mo** |
+
+Pro includes $30 of credits for $30. Usage above $30 is billed as overage.
