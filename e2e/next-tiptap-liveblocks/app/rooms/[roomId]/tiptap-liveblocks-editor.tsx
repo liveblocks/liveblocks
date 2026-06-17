@@ -79,7 +79,7 @@ export function TiptapLiveblocksEditor({ roomId }: { roomId: string }) {
 }
 
 function Diagnostics({ editor }: { editor: Editor | null }) {
-  const document = useStorage((root) => root.document);
+  const document = useStorage((root) => root._tiptap_docs?.document);
   const [editorJson, setEditorJson] = useState<unknown>(null);
 
   const editorJsonText = useMemo(

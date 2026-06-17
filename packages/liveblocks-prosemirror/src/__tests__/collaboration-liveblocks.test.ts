@@ -1,4 +1,5 @@
-import { LiveList, LiveObject, LiveText } from "@liveblocks/client";
+import type { LsonObject, StorageUpdate } from "@liveblocks/client";
+import { LiveList, LiveMap, LiveObject, LiveText } from "@liveblocks/client";
 import { Editor, Extension, Mark, Node } from "@tiptap/core";
 import Document from "@tiptap/extension-document";
 import Paragraph from "@tiptap/extension-paragraph";
@@ -11,7 +12,11 @@ import {
   createLiveblocksCollaborationCaretPlugin,
   LIVEBLOCKS_CARET_PLUGIN_KEY,
 } from "../cursors";
-import { LIVEBLOCKS_COLLABORATION_PLUGIN_KEY } from "../plugin";
+import {
+  createLiveblocksCollaborationPlugin,
+  LIVEBLOCKS_COLLABORATION_PLUGIN_KEY,
+  LIVEBLOCKS_TIPTAP_DOCUMENTS_KEY,
+} from "../plugin";
 import {
   applyRemoteLiveTextUpdates,
   applyRemoteStorageUpdates,
@@ -24,17 +29,16 @@ import {
   liveblocksProsemirrorNodeToJson,
   type ProseMirrorJsonNode,
 } from "../schema";
-import {
-  applyIncrementalOperations,
-  classifyTransaction,
-} from "../steps";
+import { applyIncrementalOperations, classifyTransaction } from "../steps";
 import type { LiveblocksProsemirrorRoom } from "../types";
 
 function createDefaultDocument(): ProseMirrorJsonNode {
   return { type: "doc", content: [{ type: "paragraph" }] };
 }
 
-function liveblocksNodeToJson(node: ReturnType<typeof createLiveblocksProsemirrorNode>) {
+function liveblocksNodeToJson(
+  node: ReturnType<typeof createLiveblocksProsemirrorNode>
+) {
   return liveblocksProsemirrorNodeToJson(node, createDefaultDocument);
 }
 
@@ -59,6 +63,28 @@ const TestLiveblocksCollaborationCaret = Extension.create({
   },
 });
 
+const TestLiveblocksCollaboration = Extension.create({
+  name: "collaboration",
+  addOptions() {
+    return {
+      room: undefined as LiveblocksProsemirrorRoom | undefined,
+      field: "default",
+      initialContent: undefined as ProseMirrorJsonNode | undefined,
+      fallbackDocument: createDefaultDocument,
+    };
+  },
+  addProseMirrorPlugins() {
+    return [
+      createLiveblocksCollaborationPlugin({
+        room: this.options.room,
+        field: this.options.field,
+        initialContent: this.options.initialContent,
+        fallbackDocument: this.options.fallbackDocument,
+      }),
+    ];
+  },
+});
+
 const Bold = Mark.create({
   name: "bold",
   parseHTML: () => [{ tag: "strong" }],
@@ -78,6 +104,49 @@ function createEditor(content: string) {
     extensions: [Document, Paragraph, Text, Bold],
     content,
   });
+}
+
+function createCollaborationTestRoom(root = new LiveObject<LsonObject>({})) {
+  const room = {
+    batch(callback: () => void) {
+      callback();
+    },
+    getOthers() {
+      return [];
+    },
+    getStorage: async () => ({ root }),
+    history: {
+      canUndo: () => false,
+      canRedo: () => false,
+      disable: <T>(callback: () => T) => callback(),
+      undo: () => {},
+      redo: () => {},
+    },
+    subscribe(
+      _node: LiveObject<LsonObject>,
+      _callback: (updates: StorageUpdate[]) => void
+    ) {
+      return () => {
+        // no-op
+      };
+    },
+    updatePresence: () => {},
+    events: {
+      others: {
+        subscribe: () => () => {},
+      },
+    },
+  } satisfies LiveblocksProsemirrorRoom;
+
+  return {
+    room,
+    root,
+  };
+}
+
+async function flushAsyncWork() {
+  await Promise.resolve();
+  await Promise.resolve();
 }
 
 function createCaretTestRoom(initialPosition = 1) {
@@ -165,7 +234,9 @@ function getDocumentJson(doc: ProseMirrorNode): ProseMirrorJsonNode {
   return json;
 }
 
-function getFirstTextNode(root: ReturnType<typeof createLiveblocksProsemirrorNode>) {
+function getFirstTextNode(
+  root: ReturnType<typeof createLiveblocksProsemirrorNode>
+) {
   const docContent = getLiveblocksNodeContent(root);
   const paragraph = docContent?.get(0);
   const paragraphContent =
@@ -229,9 +300,7 @@ describe("collaboration-liveblocks schema", () => {
     expect(nextTextNode).toBeDefined();
     expect(getLiveblocksNodeId(nextTextNode!)).toBe(textNodeId);
     expect(getLiveblocksNodeText(nextTextNode!)?.toString()).toBe("Hello!");
-    expect(liveblocksNodeToJson(storageNode)).toEqual(
-      newState.doc.toJSON()
-    );
+    expect(liveblocksNodeToJson(storageNode)).toEqual(newState.doc.toJSON());
 
     editor.destroy();
   });
@@ -264,9 +333,7 @@ describe("collaboration-liveblocks schema", () => {
     expect(nextTextNode).toBeDefined();
     expect(getLiveblocksNodeId(nextTextNode!)).toBe(textNodeId);
     expect(getLiveblocksNodeText(nextTextNode!)?.toString()).toBe("Hello");
-    expect(liveblocksNodeToJson(storageNode)).toEqual(
-      newState.doc.toJSON()
-    );
+    expect(liveblocksNodeToJson(storageNode)).toEqual(newState.doc.toJSON());
 
     editor.destroy();
   });
@@ -299,9 +366,7 @@ describe("collaboration-liveblocks schema", () => {
     const nextTextNode = getFirstTextNode(storageNode);
     expect(nextTextNode).toBeDefined();
     expect(getLiveblocksNodeId(nextTextNode!)).toBe(textNodeId);
-    expect(liveblocksNodeToJson(storageNode)).toEqual(
-      newState.doc.toJSON()
-    );
+    expect(liveblocksNodeToJson(storageNode)).toEqual(newState.doc.toJSON());
 
     editor.destroy();
   });
@@ -339,9 +404,7 @@ describe("collaboration-liveblocks schema", () => {
     const nextFirstParagraph = content!.get(0);
     expect(nextFirstParagraph).toBeDefined();
     expect(getLiveblocksNodeId(nextFirstParagraph!)).toBe(firstParagraphId);
-    expect(liveblocksNodeToJson(storageNode)).toEqual(
-      newState.doc.toJSON()
-    );
+    expect(liveblocksNodeToJson(storageNode)).toEqual(newState.doc.toJSON());
 
     editor.destroy();
   });
@@ -368,9 +431,7 @@ describe("collaboration-liveblocks schema", () => {
       applyIncrementalOperations(classified.operations);
     }
 
-    expect(liveblocksNodeToJson(storageNode)).toEqual(
-      newState.doc.toJSON()
-    );
+    expect(liveblocksNodeToJson(storageNode)).toEqual(newState.doc.toJSON());
 
     editor.destroy();
   });
@@ -399,9 +460,7 @@ describe("collaboration-liveblocks schema", () => {
       applyIncrementalOperations(classified.operations);
     }
 
-    expect(liveblocksNodeToJson(storageNode)).toEqual(
-      newState.doc.toJSON()
-    );
+    expect(liveblocksNodeToJson(storageNode)).toEqual(newState.doc.toJSON());
 
     editor.destroy();
   });
@@ -430,9 +489,7 @@ describe("collaboration-liveblocks schema", () => {
       applyIncrementalOperations(classified.operations);
     }
 
-    expect(liveblocksNodeToJson(storageNode)).toEqual(
-      newState.doc.toJSON()
-    );
+    expect(liveblocksNodeToJson(storageNode)).toEqual(newState.doc.toJSON());
 
     editor.destroy();
   });
@@ -469,9 +526,106 @@ describe("collaboration-liveblocks schema", () => {
       applyIncrementalOperations(classified.operations);
     }
 
-    expect(liveblocksNodeToJson(storageNode)).toEqual(
-      newState.doc.toJSON()
+    expect(liveblocksNodeToJson(storageNode)).toEqual(newState.doc.toJSON());
+
+    editor.destroy();
+  });
+
+  test("stores collaboration documents inside the reserved documents map", async () => {
+    const { room, root } = createCollaborationTestRoom();
+    const editor = new Editor({
+      extensions: [
+        Document,
+        Paragraph,
+        Text,
+        TestLiveblocksCollaboration.configure({ room }),
+      ],
+      content: "<p>Hello</p>",
+    });
+
+    await flushAsyncWork();
+
+    const documents = root.get(LIVEBLOCKS_TIPTAP_DOCUMENTS_KEY);
+    expect(documents).toBeInstanceOf(LiveMap);
+
+    const storedDocument =
+      documents instanceof LiveMap ? documents.get("default") : undefined;
+    expect(storedDocument).toBeInstanceOf(LiveObject);
+    expect(liveblocksNodeToJson(storedDocument!)).toEqual(editor.getJSON());
+
+    editor.destroy();
+  });
+
+  test("stores different collaboration fields as separate documents", async () => {
+    const root = new LiveObject<LsonObject>({});
+    const first = createCollaborationTestRoom(root);
+    const second = createCollaborationTestRoom(root);
+    const firstEditor = new Editor({
+      extensions: [
+        Document,
+        Paragraph,
+        Text,
+        TestLiveblocksCollaboration.configure({
+          room: first.room,
+          field: "one",
+        }),
+      ],
+      content: "<p>Hello</p>",
+    });
+    const secondEditor = new Editor({
+      extensions: [
+        Document,
+        Paragraph,
+        Text,
+        TestLiveblocksCollaboration.configure({
+          room: second.room,
+          field: "two",
+        }),
+      ],
+      content: "<p>World</p>",
+    });
+
+    await flushAsyncWork();
+
+    const documents = root.get(LIVEBLOCKS_TIPTAP_DOCUMENTS_KEY);
+    expect(documents).toBeInstanceOf(LiveMap);
+
+    const firstDocument =
+      documents instanceof LiveMap ? documents.get("one") : undefined;
+    const secondDocument =
+      documents instanceof LiveMap ? documents.get("two") : undefined;
+    expect(firstDocument).toBeInstanceOf(LiveObject);
+    expect(secondDocument).toBeInstanceOf(LiveObject);
+    expect(liveblocksNodeToJson(firstDocument!)).toEqual(firstEditor.getJSON());
+    expect(liveblocksNodeToJson(secondDocument!)).toEqual(
+      secondEditor.getJSON()
     );
+
+    firstEditor.destroy();
+    secondEditor.destroy();
+  });
+
+  test("writes local collaboration updates back into the matching documents map entry", async () => {
+    const { room, root } = createCollaborationTestRoom();
+    const editor = new Editor({
+      extensions: [
+        Document,
+        Paragraph,
+        Text,
+        TestLiveblocksCollaboration.configure({ room, field: "body" }),
+      ],
+      content: "<p>Hello</p>",
+    });
+
+    await flushAsyncWork();
+
+    editor.commands.setContent("<p>Hello world</p>");
+
+    const documents = root.get(LIVEBLOCKS_TIPTAP_DOCUMENTS_KEY);
+    const storedDocument =
+      documents instanceof LiveMap ? documents.get("body") : undefined;
+    expect(storedDocument).toBeInstanceOf(LiveObject);
+    expect(liveblocksNodeToJson(storedDocument!)).toEqual(editor.getJSON());
 
     editor.destroy();
   });
@@ -663,9 +817,7 @@ describe("collaboration-liveblocks schema", () => {
   });
 
   test("applies remote LiveText delete when clearing the entire text node", () => {
-    const editor = createEditor(
-      "<p>Hello from LiveText-backed Tiptap.</p>"
-    );
+    const editor = createEditor("<p>Hello from LiveText-backed Tiptap.</p>");
     const storageNode = createLiveblocksProsemirrorNode(
       getDocumentJson(editor.state.doc)
     );
@@ -725,7 +877,9 @@ describe("collaboration-liveblocks schema", () => {
 
     const view = editor.view;
     const nextDocument = view.state.schema.nodeFromJSON(document);
-    const diffStart = view.state.doc.content.findDiffStart(nextDocument.content);
+    const diffStart = view.state.doc.content.findDiffStart(
+      nextDocument.content
+    );
     expect(diffStart).not.toBeNull();
 
     const diffEnd = view.state.doc.content.findDiffEnd(nextDocument.content);
@@ -802,9 +956,7 @@ describe("collaboration-liveblocks schema", () => {
   });
 
   test("falls back safely when remote updates delete the last paragraph", () => {
-    const editor = createEditor(
-      "<p>Hello from LiveText-backed Tiptap.</p>"
-    );
+    const editor = createEditor("<p>Hello from LiveText-backed Tiptap.</p>");
     const storageNode = createLiveblocksProsemirrorNode(
       getDocumentJson(editor.state.doc)
     );

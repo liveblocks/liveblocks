@@ -306,6 +306,18 @@ function TextEditor() {
 }
 ```
 
+When using `collaborationMode: "liveblocks"`, editor documents are grouped
+inside `root._tiptap_docs`, keyed by each editor’s `field`. This makes it easy
+to render editors dynamically from storage.
+
+```tsx
+function Editors() {
+  const fields = useStorage((root) => Object.keys(root._tiptap_docs ?? {}));
+
+  return fields.map((field) => <Editor key={field} field={field} />);
+}
+```
+
 Learn more about
 [using multiple editors](/docs/api-reference/liveblocks-react-tiptap#Multiple-editors).
 

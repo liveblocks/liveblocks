@@ -1988,8 +1988,9 @@ const liveblocks = useLiveblocksExtension({
   </PropertiesListItem>
   <PropertiesListItem name="options.field" type="string">
     The name of this text editor’s field. Allows you to use multiple editors on
-    one page, if each has a separate field value. [Learn
-    more](#Multiple-editors).
+    one page, if each has a separate field value. In `collaborationMode:
+    "liveblocks"`, documents are stored in `root._tiptap_docs` and keyed by this
+    field. [Learn more](#Multiple-editors).
   </PropertiesListItem>
   <PropertiesListItem
     name="options.offlineSupport_experimental"
@@ -2096,6 +2097,18 @@ function TextEditor({ field }: { field: string }) {
       <EditorContent editor={editor} />
     </div>
   );
+}
+```
+
+When using `collaborationMode: "liveblocks"`, these editors are stored in
+`root._tiptap_docs`, keyed by their `field` values. That means you can list all
+known editors directly from storage.
+
+```tsx
+function TextEditors() {
+  const fields = useStorage((root) => Object.keys(root._tiptap_docs ?? {}));
+
+  return fields.map((field) => <TextEditor key={field} field={field} />);
 }
 ```
 

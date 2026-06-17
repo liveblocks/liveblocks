@@ -1,5 +1,5 @@
 import type { LsonObject, StorageUpdate } from "@liveblocks/client";
-import { LiveObject } from "@liveblocks/client";
+import { LiveMap, LiveObject } from "@liveblocks/client";
 import { Slice } from "prosemirror-model";
 import { Plugin, PluginKey } from "prosemirror-state";
 import type { EditorView } from "prosemirror-view";
@@ -18,6 +18,7 @@ import type { LiveblocksProsemirrorRoom } from "./types";
 export const LIVEBLOCKS_COLLABORATION_PLUGIN_KEY = new PluginKey<{
   isReady: boolean;
 }>("liveblocks-collaboration");
+export const LIVEBLOCKS_TIPTAP_DOCUMENTS_KEY = "_tiptap_docs";
 
 export type LiveblocksCollaborationOptions = {
   room?: LiveblocksProsemirrorRoom;
@@ -102,7 +103,12 @@ function getDocumentRoot(
   root: LiveObject<LsonObject>,
   field: string
 ): LiveblocksProsemirrorNode | undefined {
-  const documentRoot = root.get(field);
+  const documents = root.get(LIVEBLOCKS_TIPTAP_DOCUMENTS_KEY);
+  if (!(documents instanceof LiveMap)) {
+    return undefined;
+  }
+
+  const documentRoot = documents.get(field);
   if (!(documentRoot instanceof LiveObject)) {
     return undefined;
   }
@@ -115,7 +121,13 @@ function setDocumentRoot(
   field: string,
   document: ProseMirrorJsonNode
 ): void {
-  root.set(field, createLiveblocksProsemirrorNode(document));
+  let documents = root.get(LIVEBLOCKS_TIPTAP_DOCUMENTS_KEY);
+  if (!(documents instanceof LiveMap)) {
+    documents = new LiveMap<string, LiveblocksProsemirrorNode>();
+    root.set(LIVEBLOCKS_TIPTAP_DOCUMENTS_KEY, documents);
+  }
+
+  documents.set(field, createLiveblocksProsemirrorNode(document));
 }
 
 export function createLiveblocksCollaborationPlugin(
