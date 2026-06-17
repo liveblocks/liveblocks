@@ -287,9 +287,16 @@ export function normalizeRoomPermissions(
     throw new Error("Permission list must be an array");
   }
 
-  return permissions.filter((permission): permission is Permission =>
-    isPermission(permission)
-  );
+  const result: RoomPermissions = [];
+
+  for (const permission of permissions) {
+    if (!isPermission(permission)) {
+      throw new Error(`Not a valid permission: ${permission}`);
+    }
+    result.push(permission);
+  }
+
+  return result;
 }
 
 export function normalizeRoomAccesses(

@@ -152,7 +152,19 @@ describe("authorization (new API)", () => {
           ["x", "y"]
         )
         .serializePermissions()
-    ).toThrow("Permission list cannot be empty");
+    ).toThrow("Not a valid permission: x");
+  });
+
+  test("rejects unknown permissions even when mixed with valid ones", () => {
+    expect(() =>
+      makeSession()
+        .allow(
+          "foobar",
+          // @ts-expect-error - Deliberate incorrect string value
+          ["*:write", "future:scope"]
+        )
+        .serializePermissions()
+    ).toThrow("Not a valid permission: future:scope");
   });
 
   test("permissions are additive", () => {

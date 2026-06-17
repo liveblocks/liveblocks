@@ -95,20 +95,14 @@ describe("normalizeRoomPermissions", () => {
     ).toEqual([Permission.Read, Permission.StorageWrite]);
   });
 
-  test("filters out unknown permission scopes", () => {
-    expect(
+  test("throws for unknown permission scopes", () => {
+    expect(() =>
       normalizeRoomPermissions([
         Permission.Read,
         "comments:delete",
         "future:write",
       ])
-    ).toEqual([Permission.Read]);
-  });
-
-  test("returns an empty array when all scopes are unknown", () => {
-    expect(
-      normalizeRoomPermissions(["comments:delete", "future:write"])
-    ).toEqual([]);
+    ).toThrow("Not a valid permission: comments:delete");
   });
 
   test("throws when the input is not an array", () => {

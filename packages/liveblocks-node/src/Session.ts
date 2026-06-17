@@ -122,14 +122,14 @@ export class Session {
       throw new Error("Invalid room name or pattern");
     }
 
-    const normalizedPermissions = normalizeRoomPermissions(newPerms);
-
-    if (normalizedPermissions.length === 0) {
+    if (newPerms.length === 0) {
       throw new Error("Permission list cannot be empty");
     }
 
+    const permissions = normalizeRoomPermissions(newPerms);
+
     const existingPerms = this.#getOrCreate(roomIdOrPattern);
-    for (const perm of normalizedPermissions) {
+    for (const perm of permissions) {
       existingPerms.add(perm);
     }
     return this; // To allow chaining multiple allow calls
