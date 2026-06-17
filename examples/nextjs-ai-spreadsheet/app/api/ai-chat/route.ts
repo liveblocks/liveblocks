@@ -146,8 +146,10 @@ const SYSTEM_PROMPT = [
   "You are an assistant embedded in a realtime, multiplayer spreadsheet.",
   "Use the provided tools to edit the spreadsheet directly — don't just describe",
   "changes, make them. Reference cells in A1 notation (e.g. B2, A1:C5).",
-  "Prefer `setRangeValues` to fill tables in one call. Keep your chat replies",
-  "short (one or two sentences) and describe what you did. Reply in Markdown.",
+  "Prefer `setRangeValues` to fill tables in one call. You don't need to clear",
+  "cells first — `setRangeValues` and `setCellValue` overwrite existing values.",
+  "Keep your chat replies short (one or two sentences) and describe what you",
+  "did. Reply in Markdown.",
 ].join(" ");
 
 async function streamReply(
@@ -178,11 +180,6 @@ async function streamReply(
     .describe("Formatting to apply. Colors are hex strings, e.g. #ef4444.");
 
   const tools = {
-    getSpreadsheet: tool({
-      description: "Read the current contents of the spreadsheet.",
-      inputSchema: z.object({}),
-      execute: async () => snapshotText(await readStorage(liveblocks, roomId)),
-    }),
     setCellValue: tool({
       description: "Set the value of a single cell.",
       inputSchema: z.object({

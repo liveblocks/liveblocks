@@ -1,11 +1,15 @@
 "use client";
 
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { HotTable, type HotTableRef } from "@handsontable/react-wrapper";
 import { registerAllModules } from "handsontable/registry";
 import type { CellChange, ChangeSource } from "handsontable/common";
 import { shallow } from "@liveblocks/client";
-import { useStorage, useUpdateMyPresence } from "@liveblocks/react/suspense";
+import {
+  useStorage,
+  useThreads,
+  useUpdateMyPresence,
+} from "@liveblocks/react/suspense";
 import {
   cellKey,
   DEFAULT_COL_WIDTH,
@@ -57,6 +61,14 @@ export function Table() {
   const actions = useSpreadsheetActions();
   const setSelection = useSetSelection();
   const updateMyPresence = useUpdateMyPresence();
+
+  // Repaint the grid whenever the set of comment threads changes, so the
+  // comment marker appears immediately on any cell — including never-edited
+  // (empty) cells that Handsontable would otherwise not repaint on its own.
+  const { threads } = useThreads();
+  useEffect(() => {
+    hotRef.current?.hotInstance?.render();
+  }, [threads]);
 
   // Stable id order (re-used by the cell renderer and every grid handler).
   const rowIds = useStorage((root) => [...root.rowIds], shallow);

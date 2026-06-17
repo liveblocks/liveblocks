@@ -3,8 +3,8 @@ import type { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
 // Initial grid size. Rows and columns are addressed by stable ids (see below),
 // so these are only the *starting* dimensions — rows/columns can be inserted,
 // deleted, moved, and sorted afterwards.
-export const DEFAULT_ROWS = 100;
-export const DEFAULT_COLS = 52;
+export const DEFAULT_ROWS = 50;
+export const DEFAULT_COLS = 26;
 
 export const DEFAULT_COL_WIDTH = 110;
 export const DEFAULT_ROW_HEIGHT = 28;

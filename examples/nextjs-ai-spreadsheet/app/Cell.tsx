@@ -1,25 +1,19 @@
 "use client";
 
-import { CSSProperties, useLayoutEffect } from "react";
+import { memo, useLayoutEffect } from "react";
 import type { HotRendererProps } from "@handsontable/react-wrapper";
-import { shallow } from "@liveblocks/client";
-import { useStorage } from "@liveblocks/react/suspense";
-import {
-  CommentPin,
-  FloatingComposer,
-  FloatingThread,
-  Icon,
-} from "@liveblocks/react-ui";
-import { cellKey } from "@/liveblocks.config";
+import { FloatingComposer, FloatingThread } from "@liveblocks/react-ui";
 import { formatDisplayValue, valueStyleFromFormat } from "@/lib/format";
 import { useOrder } from "./OrderContext";
 import { useCellThread } from "./CellThreadContext";
-import { useCellSelectors, useCurrentUserId } from "./CellPresenceContext";
+import { useCellSelectors } from "./CellPresenceContext";
+import { useCellFormat } from "./CellFormatContext";
 
 // A single Handsontable cell, rendered as a React component. It combines:
 //  - the value + per-cell formatting (from Storage)
 //  - other users' (and the AI's) live selection borders (from presence)
-//  - a comment pin / composer / thread anchored to the cell
+//  - a "has a comment" triangle marker (top-right), with the thread/composer
+//    popover anchored to the cell's top-right corner
 export function Cell(props: HotRendererProps) {
   const { row, col, value, TD } = props;
   const { rowIds, colIds } = useOrder();
@@ -43,16 +37,7 @@ export function Cell(props: HotRendererProps) {
   );
 }
 
-const COMMENT_PIN_SIZE = 22;
-
-const commentPinStyle: CSSProperties = {
-  width: COMMENT_PIN_SIZE,
-  height: COMMENT_PIN_SIZE,
-  cursor: "pointer",
-  boxSizing: "border-box",
-};
-
-function CellBody({
+const CellBody = memo(function CellBody({
   rowId,
   colId,
   value,
@@ -63,19 +48,16 @@ function CellBody({
   value: unknown;
   td: HTMLTableCellElement;
 }) {
-  // `useStorage` exposes Storage in immutable form: a LiveMap reads as a plain
-  // object keyed by string, so we index it rather than call `.get()`.
-  const format = useStorage(
-    (root) => root.cells[cellKey(rowId, colId)]?.format,
-    shallow
-  );
+  // Per-cell formatting, read from a single shared subscription (see
+  // `CellFormatContext`) so the hundreds of cells mounted/unmounted during
+  // virtualized scrolling don't each open their own `useStorage` subscription.
+  const format = useCellFormat(rowId, colId);
 
   // Everyone (human or AI) whose selection is on this cell. Sourced from a
   // single shared presence subscription (see `CellPresenceContext`) so each
   // cell only re-renders when its own selectors change.
   const selectors = useCellSelectors(rowId, colId);
 
-  const currentUserId = useCurrentUserId();
   const { getThread, openCell, setOpenCell } = useCellThread();
   const thread = getThread(rowId, colId);
   const isOpen = openCell?.rowId === rowId && openCell?.colId === colId;
@@ -117,9 +99,26 @@ function CellBody({
         {display}
       </span>
 
-      {thread ? null : isOpen ? (
-        // Only the actively-opened empty cell mounts a composer popover, so we
-        // don't pay for hundreds of popovers across the visible grid.
+      {thread ? (
+        // A commented cell shows the triangle marker (the popover's anchor). The
+        // thread opens when the cell is selected (controlled by `openCell`, via
+        // the selection effect), and clicking the marker toggles it open/closed
+        // — so it can be reopened after closing without changing selection.
+        <FloatingThread
+          className="ht-theme-main"
+          thread={thread}
+          open={isOpen}
+          onOpenChange={(open) => setOpenCell(open ? metadata : null)}
+          onComposerSubmit={() => setOpenCell(metadata)}
+          style={{ zIndex: 50 }}
+          autoFocus
+        >
+          <span className="cell-comment-marker" aria-label="Open comment" />
+        </FloatingThread>
+      ) : isOpen ? (
+        // A cell with no thread mounts the composer only while it's the open
+        // cell (e.g. via the toolbar "Comment on cell" button), anchored to a
+        // minimal invisible element at the top-right corner.
         <FloatingComposer
           className="ht-theme-main"
           metadata={metadata}
@@ -128,45 +127,9 @@ function CellBody({
           onComposerSubmit={() => setOpenCell(metadata)}
           style={{ zIndex: 50 }}
         >
-          <CommentPin
-            corner="top-left"
-            style={commentPinStyle}
-            userId={currentUserId}
-          />
+          <span className="cell-comment-anchor" aria-hidden="true" />
         </FloatingComposer>
-      ) : (
-        <button
-          type="button"
-          className="cell-comment-trigger flex items-center justify-center rounded-full border bg-background text-muted-foreground shadow-sm transition-transform hover:scale-110 active:scale-[0.96]"
-          style={commentPinStyle}
-          onClick={() => setOpenCell(metadata)}
-          aria-label="Comment on cell"
-        >
-          <Icon.Plus style={{ width: 12, height: 12 }} />
-        </button>
-      )}
-
-      {thread ? (
-        <FloatingThread
-          className="ht-theme-main"
-          thread={thread}
-          defaultOpen={isOpen}
-          onOpenChange={(open) => {
-            if (!open && isOpen) {
-              setOpenCell(null);
-            }
-          }}
-          onComposerSubmit={() => setOpenCell(metadata)}
-          style={{ zIndex: 50 }}
-          autoFocus
-        >
-          <CommentPin
-            corner="top-left"
-            style={commentPinStyle}
-            userId={thread.comments[0]?.userId}
-          />
-        </FloatingThread>
       ) : null}
     </div>
   );
-}
+});

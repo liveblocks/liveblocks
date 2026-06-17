@@ -3,13 +3,16 @@
 import {
   createContext,
   useContext,
+  useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 import { useThreads } from "@liveblocks/react/suspense";
 import type { ThreadData } from "@liveblocks/client";
 import { cellKey } from "@/liveblocks.config";
+import { useSelectionValue } from "./SelectionContext";
 
 export type OpenCell = { rowId: string; colId: string } | null;
 
@@ -26,23 +29,45 @@ const CellThreadContext = createContext<CellThreadContextValue | null>(null);
 export function CellThreadProvider({ children }: { children: ReactNode }) {
   const { threads } = useThreads();
   const [openCell, setOpenCell] = useState<OpenCell>(null);
+  const selection = useSelectionValue();
 
-  const value = useMemo<CellThreadContextValue>(() => {
-    // Index the most recent thread per cell for O(1) lookups in each renderer.
-    const byCell = new Map<string, ThreadData>();
+  // Index the most recent thread per cell for O(1) lookups in each renderer.
+  const byCell = useMemo(() => {
+    const map = new Map<string, ThreadData>();
     for (const thread of threads) {
       const { rowId, colId } = thread.metadata;
       if (rowId && colId) {
-        byCell.set(cellKey(rowId, colId), thread);
+        map.set(cellKey(rowId, colId), thread);
       }
     }
+    return map;
+  }, [threads]);
 
-    return {
+  // Single-click to open: when the selected (anchor) cell already has a thread,
+  // open it. Keyed on the live selection value only, so it fires once per
+  // selection change — it won't reopen after the user closes the thread, and
+  // doesn't fight the grid's selection dedupe. `byCell` is read via a ref to
+  // avoid re-running on unrelated thread updates.
+  const byCellRef = useRef(byCell);
+  byCellRef.current = byCell;
+  useEffect(() => {
+    if (!selection) {
+      return;
+    }
+    const { anchor } = selection;
+    if (byCellRef.current.has(cellKey(anchor.rowId, anchor.colId))) {
+      setOpenCell(anchor);
+    }
+  }, [selection]);
+
+  const value = useMemo<CellThreadContextValue>(
+    () => ({
       getThread: (rowId, colId) => byCell.get(cellKey(rowId, colId)),
       openCell,
       setOpenCell,
-    };
-  }, [threads, openCell]);
+    }),
+    [byCell, openCell]
+  );
 
   return (
     <CellThreadContext.Provider value={value}>
