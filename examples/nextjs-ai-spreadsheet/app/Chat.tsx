@@ -1,0 +1,460 @@
+"use client";
+
+import { useCallback, useMemo, useRef, useState } from "react";
+import { nanoid } from "nanoid";
+import {
+  ClientSideSuspense,
+  useCreateFeed,
+  useCreateFeedMessage,
+  useDeleteFeedMessage,
+  useFeedMessages,
+  useFeeds,
+  useOthers,
+  useSelf,
+  useUpdateMyPresence,
+} from "@liveblocks/react/suspense";
+import { Avatar } from "@liveblocks/react-ui";
+import { HistoryIcon, PlusIcon, RefreshCcwIcon, SparklesIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Conversation,
+  ConversationContent,
+  ConversationEmptyState,
+  ConversationScrollButton,
+} from "@/components/ai-elements/conversation";
+import {
+  Message,
+  MessageAction,
+  MessageActions,
+  MessageContent,
+  MessageResponse,
+} from "@/components/ai-elements/message";
+import {
+  Reasoning,
+  ReasoningContent,
+  ReasoningTrigger,
+} from "@/components/ai-elements/reasoning";
+import {
+  Tool,
+  ToolContent,
+  ToolHeader,
+  ToolInput,
+  ToolOutput,
+} from "@/components/ai-elements/tool";
+import { Context, ContextTrigger } from "@/components/ai-elements/context";
+import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
+import { Loader } from "@/components/ai-elements/loader";
+import {
+  PromptInput,
+  PromptInputBody,
+  PromptInputFooter,
+  PromptInputSelect,
+  PromptInputSelectContent,
+  PromptInputSelectItem,
+  PromptInputSelectTrigger,
+  PromptInputSelectValue,
+  PromptInputSubmit,
+  PromptInputTextarea,
+  PromptInputTools,
+  type PromptInputMessage,
+} from "@/components/ai-elements/prompt-input";
+import { Shimmer } from "@/components/ai-elements/shimmer";
+
+// Cheap, capable models, resolved through the Vercel AI Gateway in the server
+// route.
+const MODELS = [
+  { id: "openai/gpt-5.4-mini", name: "GPT-5.4 mini" },
+  { id: "google/gemini-3-flash", name: "Gemini 3 Flash" },
+  { id: "anthropic/claude-haiku-4.5", name: "Claude Haiku 4.5" },
+];
+
+const STARTER_PROMPTS = [
+  "Fill in a 5-row sample sales table",
+  "Add a Q2 column with projected values",
+  "Make the header row bold and blue",
+  "Total the Planned and Actual columns",
+];
+
+const MAX_TOKENS = 128_000;
+
+export function Chat({ roomId }: { roomId: string }) {
+  const { feeds } = useFeeds();
+
+  const chats = useMemo(
+    () => [...feeds].sort((a, b) => b.createdAt - a.createdAt),
+    [feeds]
+  );
+
+  const [feedId, setFeedId] = useState(() => chats[0]?.feedId ?? "main");
+  const [model, setModel] = useState(MODELS[0].id);
+
+  const newChat = useCallback(() => setFeedId(nanoid()), []);
+
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      <header className="flex items-center justify-between border-b px-3 py-2">
+        <div className="flex items-center gap-1.5">
+          <SparklesIcon className="size-4 text-muted-foreground" />
+          <span className="text-sm font-medium">AI assistant</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={newChat}
+            aria-label="New chat"
+          >
+            <PlusIcon className="size-4" />
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon-sm" aria-label="Chat history">
+                <HistoryIcon className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64">
+              <DropdownMenuLabel>Chat history</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {chats.length === 0 ? (
+                <DropdownMenuItem disabled>No chats yet</DropdownMenuItem>
+              ) : (
+                chats.map((chat) => (
+                  <DropdownMenuItem
+                    key={chat.feedId}
+                    onClick={() => setFeedId(chat.feedId)}
+                    className={chat.feedId === feedId ? "bg-accent" : undefined}
+                  >
+                    <span className="truncate">
+                      {chat.metadata?.title || "Untitled chat"}
+                    </span>
+                  </DropdownMenuItem>
+                ))
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </header>
+
+      <ClientSideSuspense
+        fallback={
+          <div className="flex flex-1 items-center justify-center text-muted-foreground">
+            <Loader size={20} />
+          </div>
+        }
+      >
+        <ChatWindow
+          key={feedId}
+          roomId={roomId}
+          feedId={feedId}
+          model={model}
+          setModel={setModel}
+        />
+      </ClientSideSuspense>
+    </div>
+  );
+}
+
+function ChatWindow({
+  roomId,
+  feedId,
+  model,
+  setModel,
+}: {
+  roomId: string;
+  feedId: string;
+  model: string;
+  setModel: (model: string) => void;
+}) {
+  const { messages } = useFeedMessages(feedId);
+  const createFeed = useCreateFeed();
+  const createFeedMessage = useCreateFeedMessage();
+  const deleteFeedMessage = useDeleteFeedMessage();
+  const self = useSelf();
+  const updateMyPresence = useUpdateMyPresence();
+
+  const selfPrompting = self.presence.promptingFeedId === feedId;
+  const othersPrompting = useOthers((others) =>
+    others.some((other) => other.presence.promptingFeedId === feedId)
+  );
+  const aiThinking = selfPrompting || othersPrompting;
+
+  const ensuredFeeds = useRef(new Set(messages.length > 0 ? [feedId] : []));
+  const ensureFeed = useCallback(
+    async (id: string, title: string) => {
+      if (ensuredFeeds.current.has(id)) {
+        return;
+      }
+      ensuredFeeds.current.add(id);
+      try {
+        await createFeed(id, { metadata: { title } });
+      } catch {
+        // Feed already exists (likely created by another user), ignore.
+      }
+    },
+    [createFeed]
+  );
+
+  const inFlight = useRef(false);
+  const sorted = [...messages].sort((a, b) => a.createdAt - b.createdAt);
+
+  const postReply = useCallback(
+    async (history: { role: "user" | "assistant"; content: string }[]) => {
+      await fetch("/api/ai-chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ roomId, feedId, model, messages: history }),
+      });
+    },
+    [roomId, feedId, model]
+  );
+
+  const send = useCallback(
+    async (text: string) => {
+      const content = text.trim();
+      if (!content || inFlight.current) {
+        return;
+      }
+
+      inFlight.current = true;
+      updateMyPresence({ promptingFeedId: feedId });
+      try {
+        await ensureFeed(feedId, content.slice(0, 60));
+        await createFeedMessage(feedId, {
+          role: "user",
+          content,
+          userId: self.id,
+          name: self.info.name,
+          avatar: self.info.avatar,
+        });
+
+        const history = [
+          ...sorted.map((message) => ({
+            role: message.data.role,
+            content: message.data.content,
+          })),
+          { role: "user" as const, content },
+        ];
+        await postReply(history);
+      } catch {
+        // Best-effort in this demo; errors are non-fatal to the UI.
+      } finally {
+        updateMyPresence({ promptingFeedId: null });
+        inFlight.current = false;
+      }
+    },
+    [
+      feedId,
+      ensureFeed,
+      createFeedMessage,
+      self,
+      sorted,
+      postReply,
+      updateMyPresence,
+    ]
+  );
+
+  const regenerate = useCallback(
+    async (messageId: string) => {
+      const index = sorted.findIndex((message) => message.id === messageId);
+      if (index === -1 || inFlight.current) {
+        return;
+      }
+
+      inFlight.current = true;
+      updateMyPresence({ promptingFeedId: feedId });
+      try {
+        const history = sorted.slice(0, index).map((message) => ({
+          role: message.data.role,
+          content: message.data.content,
+        }));
+        await deleteFeedMessage(feedId, messageId);
+        await postReply(history);
+      } catch {
+        // Best-effort in this demo; errors are non-fatal to the UI.
+      } finally {
+        updateMyPresence({ promptingFeedId: null });
+        inFlight.current = false;
+      }
+    },
+    [feedId, sorted, deleteFeedMessage, postReply, updateMyPresence]
+  );
+
+  const usedTokens = sorted.reduce(
+    (sum, message) => sum + (message.data.usedTokens ?? 0),
+    0
+  );
+
+  const lastMessage = sorted.at(-1);
+  const followUps =
+    !aiThinking &&
+    lastMessage?.data.role === "assistant" &&
+    !lastMessage.data.streaming
+      ? lastMessage.data.suggestions
+      : undefined;
+
+  return (
+    <>
+      <Conversation>
+        <ConversationContent>
+          {sorted.length === 0 ? (
+            <ConversationEmptyState>
+              <SparklesIcon className="size-6 text-muted-foreground" />
+              <div className="space-y-1">
+                <h3 className="text-sm font-medium">Edit the sheet with AI</h3>
+                <p className="text-sm text-muted-foreground">
+                  Ask the assistant to fill, format, or restructure the grid. It
+                  writes to the shared spreadsheet live as it replies.
+                </p>
+              </div>
+              <Suggestions className="mt-2 w-full flex-wrap justify-center">
+                {STARTER_PROMPTS.map((prompt) => (
+                  <Suggestion key={prompt} suggestion={prompt} onClick={send} />
+                ))}
+              </Suggestions>
+            </ConversationEmptyState>
+          ) : (
+            sorted.map((message) => {
+              const {
+                role,
+                content,
+                reasoning,
+                name,
+                avatar,
+                streaming,
+                tools,
+              } = message.data;
+              const isAssistant = role === "assistant";
+
+              return (
+                <Message from={role} key={message.id}>
+                  <MessageContent>
+                    <div
+                      className={`flex items-center gap-1.5 ${
+                        isAssistant ? "" : "flex-row-reverse"
+                      }`}
+                    >
+                      <Avatar
+                        className="lb-root"
+                        src={avatar}
+                        name={name ?? (isAssistant ? "AI" : "User")}
+                        style={{ width: 20, height: 20 }}
+                      />
+                      <span className="text-xs font-medium">
+                        {name ?? (isAssistant ? "Liveblocks AI" : "Someone")}
+                      </span>
+                    </div>
+
+                    {isAssistant && reasoning ? (
+                      <Reasoning
+                        isStreaming={!!streaming}
+                        defaultOpen={!!streaming}
+                      >
+                        <ReasoningTrigger />
+                        <ReasoningContent>{reasoning}</ReasoningContent>
+                      </Reasoning>
+                    ) : null}
+
+                    {isAssistant && tools && tools.length > 0
+                      ? tools.map((tool, index) => (
+                          <Tool key={index}>
+                            <ToolHeader
+                              type={`tool-${tool.name}`}
+                              state="output-available"
+                              title={tool.name}
+                            />
+                            <ToolContent>
+                              <ToolInput input={tool.input} />
+                              <ToolOutput
+                                output={tool.output}
+                                errorText={undefined}
+                              />
+                            </ToolContent>
+                          </Tool>
+                        ))
+                      : null}
+
+                    <div className="min-h-lh">
+                      {content ? (
+                        <MessageResponse>{content}</MessageResponse>
+                      ) : null}
+
+                      {isAssistant && streaming && !content && !reasoning ? (
+                        <Shimmer>Working…</Shimmer>
+                      ) : null}
+                    </div>
+
+                    {isAssistant ? (
+                      <MessageActions>
+                        <MessageAction
+                          tooltip="Regenerate"
+                          onClick={() => regenerate(message.id)}
+                          disabled={streaming}
+                        >
+                          <RefreshCcwIcon className="size-4" />
+                        </MessageAction>
+                      </MessageActions>
+                    ) : null}
+                  </MessageContent>
+                </Message>
+              );
+            })
+          )}
+        </ConversationContent>
+        <ConversationScrollButton />
+      </Conversation>
+
+      <div className="flex flex-col gap-3 p-3">
+        {followUps && followUps.length > 0 ? (
+          <Suggestions className="w-full flex-wrap">
+            {followUps.map((prompt) => (
+              <Suggestion key={prompt} suggestion={prompt} onClick={send} />
+            ))}
+          </Suggestions>
+        ) : null}
+
+        <PromptInput
+          onSubmit={(message: PromptInputMessage) => send(message.text)}
+        >
+          <PromptInputBody>
+            <PromptInputTextarea placeholder="Ask the AI to edit the sheet…" />
+          </PromptInputBody>
+          <PromptInputFooter>
+            <PromptInputTools>
+              <PromptInputSelect value={model} onValueChange={setModel}>
+                <PromptInputSelectTrigger>
+                  <PromptInputSelectValue />
+                </PromptInputSelectTrigger>
+                <PromptInputSelectContent>
+                  {MODELS.map((m) => (
+                    <PromptInputSelectItem key={m.id} value={m.id}>
+                      {m.name}
+                    </PromptInputSelectItem>
+                  ))}
+                </PromptInputSelectContent>
+              </PromptInputSelect>
+            </PromptInputTools>
+            <div className="flex items-center gap-1">
+              {usedTokens > 0 ? (
+                <Context usedTokens={usedTokens} maxTokens={MAX_TOKENS}>
+                  <ContextTrigger />
+                </Context>
+              ) : null}
+              <PromptInputSubmit
+                disabled={aiThinking}
+                status={aiThinking ? "submitted" : undefined}
+              />
+            </div>
+          </PromptInputFooter>
+        </PromptInput>
+      </div>
+    </>
+  );
+}
