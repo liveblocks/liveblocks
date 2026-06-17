@@ -5,38 +5,47 @@ meta:
   description: "Pricing example for a multiplayer canvas with Presence."
 ---
 
-A shared visual canvas where collaborators make changes simultaneously and see
-each other's cursors and selections through
-[Presence](/docs/ready-made-features/presence) and
-[Multiplayer](/docs/collaboration-features/multiplayer).
+This example estimates a monthly bill for a multiplayer canvas with
+[Presence](/docs/ready-made-features/presence). It assumes <strong>2,000 monthly
+active</strong> users, with <strong>400 collaborating daily</strong> for
+<strong>80 minutes each</strong> (22 working days).
 
-This example uses the [Team plan](/docs/pricing/plans/team) at $900/mo.
+<Figure>
+  <Image
+    src="/assets/presence/cursors.png"
+    alt="Live cursors on a shared canvas"
+    width={768}
+    height={461}
+  />
+</Figure>
 
-## Scenario
+Recommended plan: [Team](/docs/pricing/plans/team) at $900/mo ($1,000 credits
+included).
 
-- 2,000 monthly active users
-- 400 collaborating daily
-- ~80 min each per day
+## What you're billed for
 
-## Metered usage
+[Realtime collaboration minutes](/docs/pricing/plans/team#Metered-usage): active
+time each user spends connected in a room, billed at $0.002 per minute.
 
-| Item                                                                     | Calculation                                      | Total        |
-| ------------------------------------------------------------------------ | ------------------------------------------------ | ------------ |
-| [Realtime collaboration minutes](/docs/pricing/plans/team#Metered-usage) | 400 daily × 80 min × 22 days                     | 704,000 mins |
-| Session cost                                                             | 704,000 × $0.002                                 | $1,408       |
-| **Credits used**                                                         | <span className="text-product-disabled">–</span> | **$1,408**   |
+## Usage estimate
 
-Collaboration minutes count active time in a room, billed per minute.
+| Item                                                                     | Calculation                  | Total        |
+| ------------------------------------------------------------------------ | ---------------------------- | ------------ |
+| [Realtime collaboration minutes](/docs/pricing/plans/team#Metered-usage) | 400 daily × 80 min × 22 days | 704,000 mins |
+| Session cost                                                             | 704,000 × $0.002             | $1,408       |
+| **Total usage**                                                          |                              | **$1,408**   |
 
 ## Your bill
 
-| Item             | Calculation                                      | Total         |
-| ---------------- | ------------------------------------------------ | ------------- |
-| Credits used     | <span className="text-product-disabled">–</span> | $1,408        |
-| Plan base (Team) | <span className="text-product-disabled">–</span> | $900          |
-| Included credits | <span className="text-product-disabled">–</span> | $1,000        |
-| Overage          | $1,408 − $1,000                                  | $408          |
-| **Total**        | $900 + $408                                      | **$1,308/mo** |
+| Item                        | Billed monthly | Billed annually |
+| --------------------------- | -------------- | --------------- |
+| Team plan ($1,000 credits)  | $900/mo        | $750/mo         |
+| Usage beyond credits (PAYG) | $408           | $408            |
+| **Total**                   | **$1,308/mo**  | **$1,158/mo**   |
 
-The Team $900 plan includes $1,000 in credits, $100 more than the plan price.
-You only pay overage above $1,000.
+Credits apply to usage first; overage is billed at the same rates. See
+[Billing](/docs/pricing/billing) for how credits, plan base, and PAYG add up.
+Billing annually saves 2 months on the plan price; overage is unchanged.
+
+The $900/mo Team plan includes $1,000 in credits, $100 more than the plan price.
+You only pay overage above that allowance.
