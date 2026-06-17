@@ -127,26 +127,36 @@ function CellBody({
         {display}
       </span>
 
-      {!thread ? (
-        <div className="cell-comment-trigger" data-open={isOpen || undefined}>
-          <FloatingComposer
-            className="ht-theme-main"
-            metadata={metadata}
-            open={isOpen}
-            onOpenChange={(open) => setOpenCell(open ? metadata : null)}
-            onComposerSubmit={() => setOpenCell(metadata)}
-            style={{ zIndex: 50 }}
-          >
-            <CommentPin
-              corner="top-left"
-              style={commentPinStyle}
-              userId={currentUserId}
-            >
-              {!isOpen ? <Icon.Plus style={{ width: 12, height: 12 }} /> : null}
-            </CommentPin>
-          </FloatingComposer>
-        </div>
+      {thread ? null : isOpen ? (
+        // Only the actively-opened empty cell mounts a composer popover, so we
+        // don't pay for hundreds of popovers across the visible grid.
+        <FloatingComposer
+          className="ht-theme-main"
+          metadata={metadata}
+          open
+          onOpenChange={(open) => setOpenCell(open ? metadata : null)}
+          onComposerSubmit={() => setOpenCell(metadata)}
+          style={{ zIndex: 50 }}
+        >
+          <CommentPin
+            corner="top-left"
+            style={commentPinStyle}
+            userId={currentUserId}
+          />
+        </FloatingComposer>
       ) : (
+        <button
+          type="button"
+          className="cell-comment-trigger flex items-center justify-center rounded-full border bg-background text-muted-foreground shadow-sm"
+          style={commentPinStyle}
+          onClick={() => setOpenCell(metadata)}
+          aria-label="Comment on cell"
+        >
+          <Icon.Plus style={{ width: 12, height: 12 }} />
+        </button>
+      )}
+
+      {thread ? (
         <FloatingThread
           className="ht-theme-main"
           thread={thread}
@@ -166,7 +176,7 @@ function CellBody({
             userId={thread.comments[0]?.userId}
           />
         </FloatingThread>
-      )}
+      ) : null}
     </div>
   );
 }
