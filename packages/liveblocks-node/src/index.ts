@@ -38,7 +38,6 @@ export type {
   UpsertRoomOptions,
   WebKnowledgeSourceLink,
 } from "./client";
-export type { RoomAccesses, RoomPermissions } from "@liveblocks/core";
 export { Liveblocks, LiveblocksError } from "./client";
 export { markdownToCommentBody } from "./comment-body";
 export type {
@@ -71,6 +70,7 @@ export {
   isThreadNotificationEvent,
   WebhookHandler,
 } from "./webhooks";
+export type { RoomAccesses, RoomPermissions } from "@liveblocks/core";
 export type {
   CommentBody,
   CommentBodyBlockElement,

@@ -694,9 +694,13 @@ describe("property tests", () => {
             );
 
           if (explicitRanks.length === 0) {
-            expect(accessRank(resource, merged)).toBe(accessRank("room", merged));
+            expect(accessRank(resource, merged)).toBe(
+              accessRank("room", merged)
+            );
           } else {
-            expect(accessRank(resource, merged)).toBe(Math.max(...explicitRanks));
+            expect(accessRank(resource, merged)).toBe(
+              Math.max(...explicitRanks)
+            );
           }
         }
       })
