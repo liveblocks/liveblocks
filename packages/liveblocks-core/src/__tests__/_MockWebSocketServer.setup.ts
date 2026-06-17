@@ -17,7 +17,6 @@ import { kInternal } from "../internal";
 import { makeEventSource } from "../lib/EventSource";
 import type { Json, JsonObject } from "../lib/Json";
 import { makePosition } from "../lib/position";
-import { Signal } from "../lib/signals";
 import { deepClone } from "../lib/utils";
 import { Permission } from "../permissions";
 import type { AccessToken, IDToken } from "../protocol/AuthToken";
@@ -128,7 +127,6 @@ function makeRoomConfig<TM extends BaseMetadata, CM extends BaseMetadata>(
       authManager: createAuthManager({
         authEndpoint: "/api/auth",
       }),
-      currentUserId: new Signal<string | undefined>(undefined),
     }),
     // Not used in unit tests (yet)
     createSyncSource: fakeSyncSource,

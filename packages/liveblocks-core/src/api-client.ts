@@ -21,7 +21,6 @@ import { DefaultMap } from "./lib/DefaultMap";
 import * as console from "./lib/fancy-console";
 import type { JsonObject } from "./lib/Json";
 import { objectToQuery } from "./lib/objectToQuery";
-import type { Signal } from "./lib/signals";
 import { stringifyOrLog as stringify } from "./lib/stringify";
 import type { QueryParams, URLSafeString } from "./lib/url";
 import { url, urljoin } from "./lib/url";
@@ -534,7 +533,6 @@ export function createApiClient<
 }: {
   baseUrl: string;
   authManager: AuthManager;
-  currentUserId: Signal<string | undefined>;
   fetchPolyfill: typeof fetch;
 }): LiveblocksHttpApi<TM, CM> {
   const httpClient = new HttpClient(baseUrl, fetchPolyfill);
