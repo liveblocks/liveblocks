@@ -147,7 +147,7 @@ function CellBody({
       ) : (
         <button
           type="button"
-          className="cell-comment-trigger flex items-center justify-center rounded-full border bg-background text-muted-foreground shadow-sm"
+          className="cell-comment-trigger flex items-center justify-center rounded-full border bg-background text-muted-foreground shadow-sm transition-transform hover:scale-110 active:scale-[0.96]"
           style={commentPinStyle}
           onClick={() => setOpenCell(metadata)}
           aria-label="Comment on cell"

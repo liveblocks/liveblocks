@@ -147,6 +147,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  /* Align digits in columns of numbers. */
+  font-variant-numeric: tabular-nums;
 }
 
 /* Hover affordance for adding a comment to a cell without a thread yet. */
