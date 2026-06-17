@@ -1,0 +1,160 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --user-color: #000000;
+    --font-sans:
+      -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+      Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+    --font-mono:
+      ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+      "Liberation Mono", monospace;
+
+    --bg: 247 247 248;
+    --bg-elev: 255 255 255;
+    --bg-muted: 242 242 244;
+    --border: 230 230 234;
+    --border-strong: 212 212 220;
+    --text: 28 29 34;
+    --text-muted: 107 111 118;
+    --accent: 45 108 223;
+    --accent-fg: 255 255 255;
+    --danger: 210 53 53;
+
+    color-scheme: light;
+  }
+
+  .dark {
+    --bg: 17 18 22;
+    --bg-elev: 26 27 32;
+    --bg-muted: 36 38 44;
+    --border: 49 51 58;
+    --border-strong: 73 76 86;
+    --text: 235 236 240;
+    --text-muted: 156 160 168;
+    --accent: 96 165 250;
+    --accent-fg: 17 18 22;
+    --danger: 248 113 113;
+
+    color-scheme: dark;
+  }
+
+  html,
+  body {
+    @apply m-0 bg-bg p-0 font-sans text-text antialiased;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  button {
+    font-family: inherit;
+  }
+}
+
+@layer components {
+  .markdown {
+    @apply text-text max-w-[70ch] text-sm leading-relaxed;
+  }
+
+  .markdown h1,
+  .markdown h2,
+  .markdown h3,
+  .markdown h4 {
+    @apply mb-1.5 mt-6 leading-tight tracking-tight;
+  }
+
+  .markdown h1 {
+    @apply border-border border-b pb-2 text-2xl font-semibold;
+  }
+
+  .markdown h2 {
+    @apply text-xl font-semibold;
+  }
+
+  .markdown h3 {
+    @apply text-[17px] font-semibold;
+  }
+
+  .markdown p {
+    @apply my-2.5;
+  }
+
+  .markdown code {
+    @apply bg-bg-muted border-border font-mono rounded border px-1 text-[12.5px];
+  }
+
+  .markdown pre {
+    @apply bg-bg-muted border-border overflow-x-auto rounded-lg border p-3 text-[12.5px];
+  }
+
+  .markdown pre code {
+    @apply border-0 bg-transparent p-0;
+  }
+
+  .markdown blockquote {
+    @apply border-border-strong text-text-muted my-2.5 border-l-[3px] px-3.5 py-1;
+  }
+
+  .markdown ul,
+  .markdown ol {
+    @apply pl-6;
+  }
+
+  .markdown a {
+    @apply text-accent underline;
+  }
+
+  .markdown table {
+    @apply w-full border-collapse text-[13px];
+  }
+
+  .markdown th,
+  .markdown td {
+    @apply border-border border px-2.5 py-1.5 text-left;
+  }
+
+  .markdown th {
+    @apply bg-bg-muted;
+  }
+}
+
+/* Yjs awareness — selection background. */
+.yRemoteSelection {
+  opacity: 0.5;
+  background-color: var(--user-color);
+  margin-right: -1px;
+}
+
+/* Yjs awareness — caret */
+.yRemoteSelectionHead {
+  position: absolute;
+  box-sizing: border-box;
+  height: 100%;
+  border-left: 2px solid var(--user-color);
+}
+
+.yRemoteSelectionHead::after {
+  position: absolute;
+  top: -1.4em;
+  left: -2px;
+  padding: 2px 6px;
+  background: var(--user-color);
+  color: #fff;
+  border: 0;
+  border-radius: 6px;
+  border-bottom-left-radius: 0;
+  line-height: normal;
+  white-space: nowrap;
+  font-size: 12px;
+  font-family: var(--font-sans);
+  font-style: normal;
+  font-weight: 600;
+  pointer-events: none;
+  user-select: none;
+  z-index: 1000;
+}
