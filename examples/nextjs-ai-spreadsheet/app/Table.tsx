@@ -13,7 +13,7 @@ import {
 } from "@/liveblocks.config";
 import { colIndexToLetters } from "@/lib/a1";
 import { useSpreadsheetActions } from "./useSpreadsheetActions";
-import { useSelection } from "./SelectionContext";
+import { useSetSelection } from "./SelectionContext";
 import { OrderProvider } from "./OrderContext";
 import { Cell } from "./Cell";
 
@@ -55,7 +55,7 @@ function compareValues(a: string, b: string): number {
 export function Table() {
   const hotRef = useRef<HotTableRef>(null);
   const actions = useSpreadsheetActions();
-  const { setSelection } = useSelection();
+  const setSelection = useSetSelection();
   const updateMyPresence = useUpdateMyPresence();
 
   // Stable id order (re-used by the cell renderer and every grid handler).
@@ -98,6 +98,7 @@ export function Table() {
   colIdsRef.current = colIds;
   const valuesRef = useRef(values);
   valuesRef.current = values;
+  const lastSelKey = useRef<string>("");
 
   // We cancel Handsontable's own sort (see `beforeColumnSort`), so the
   // columnSorting plugin's per-column state never advances and the `sortOrder`
@@ -154,6 +155,11 @@ export function Table() {
         rowId: rowIdsRef.current[Math.max(0, row)] ?? selectedRowIds[0],
         colId: colIdsRef.current[Math.max(0, col)] ?? selectedColIds[0],
       };
+      const key = `${r1},${c1},${r2},${c2}`;
+      if (key === lastSelKey.current) {
+        return;
+      }
+      lastSelKey.current = key;
       setSelection({
         rowIds: selectedRowIds,
         colIds: selectedColIds,
@@ -165,6 +171,7 @@ export function Table() {
   );
 
   const onDeselect = useCallback(() => {
+    lastSelKey.current = "";
     setSelection(null);
     updateMyPresence({ selectedCell: null });
   }, [setSelection, updateMyPresence]);
@@ -283,7 +290,7 @@ export function Table() {
         manualRowResize={true}
         manualRowMove={true}
         manualColumnMove={true}
-        columnSorting={true}
+        columnSorting={{ headerAction: false, indicator: false }}
         width="100%"
         height="100%"
         licenseKey="non-commercial-and-evaluation"

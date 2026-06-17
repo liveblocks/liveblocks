@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, type ReactNode } from "react";
+import { useMemo, useRef, type ReactNode } from "react";
 import { shallow } from "@liveblocks/client";
 import {
   useCanRedo,
@@ -46,7 +46,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cellKey, type CellFormat, type NumberFormat } from "@/liveblocks.config";
-import { useSelection } from "./SelectionContext";
+import { useSelectionValue, type Selection } from "./SelectionContext";
 import { useCellThread } from "./CellThreadContext";
 import {
   useSpreadsheetActions,
@@ -76,7 +76,18 @@ const FILL_COLORS = [
 ];
 
 export function Toolbar() {
-  const { selection } = useSelection();
+  // Interacting with the toolbar can momentarily pull focus out of
+  // Handsontable, which deselects the grid (`onDeselect` → `setSelection(null)`)
+  // before a button's `onClick` runs. Retain the last non-null selection so
+  // every toolbar action — including the comment composer and the (portaled)
+  // dropdown menus — still targets the active cell. The `ToolButton`s also
+  // prevent the focus-pull at the source via `onMouseDown`.
+  const liveSelection = useSelectionValue();
+  const lastSelection = useRef<Selection | null>(null);
+  if (liveSelection) {
+    lastSelection.current = liveSelection;
+  }
+  const selection = liveSelection ?? lastSelection.current;
   const { setOpenCell } = useCellThread();
   const actions = useSpreadsheetActions();
   const undo = useUndo();
@@ -371,6 +382,9 @@ function ToolButton({
         <Button
           variant={active ? "secondary" : "ghost"}
           size="icon-sm"
+          // Keep Handsontable's selection: prevent the mousedown from moving
+          // focus out of the grid (which would deselect it before `onClick`).
+          onMouseDown={(event) => event.preventDefault()}
           onClick={onClick}
           disabled={disabled}
           aria-label={label}

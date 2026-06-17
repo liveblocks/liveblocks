@@ -226,21 +226,25 @@ export async function setRangeValues(
   if (!start) {
     return `Invalid start cell "${startA1}".`;
   }
-  const ids = await idsForA1(liveblocks, roomId, startA1);
-  if (ids) {
-    await showAiEditing(liveblocks, roomId, ids);
-  }
-  await liveblocks.mutateStorage(roomId, ({ root }) => {
-    const cells = root.get("cells");
-    rows.forEach((cols, r) => {
-      cols.forEach((value, c) => {
-        const target = rowColIds(root, start.row + r, start.col + c);
-        if (target) {
-          writeValue(cells, target.rowId, target.colId, value);
-        }
+  // Resolve the stable ids once, then write one cell per step — moving the AI's
+  // presence to each cell just before writing it. Each `await` is paced by its
+  // own network round-trip, so the AI's selection border visibly travels across
+  // the range as it fills, instead of flashing on the start cell only.
+  const storage = await readStorage(liveblocks, roomId);
+  for (let r = 0; r < rows.length; r++) {
+    const cols = rows[r];
+    for (let c = 0; c < cols.length; c++) {
+      const rowId = storage.rowIds[start.row + r];
+      const colId = storage.colIds[start.col + c];
+      if (!rowId || !colId) {
+        continue;
+      }
+      await showAiEditing(liveblocks, roomId, { rowId, colId });
+      await liveblocks.mutateStorage(roomId, ({ root }) => {
+        writeValue(root.get("cells"), rowId, colId, cols[c]);
       });
-    });
-  });
+    }
+  }
   const rowCount = rows.length;
   const colCount = rows.reduce((max, row) => Math.max(max, row.length), 0);
   return `Filled ${rowCount}×${colCount} cells starting at ${startA1.toUpperCase()}.`;
@@ -254,6 +258,13 @@ export async function clearRange(
   const range = parseA1Range(rangeA1);
   if (!range) {
     return `Invalid range "${rangeA1}".`;
+  }
+  // Show the AI's presence on the range being cleared. A clear can span a large
+  // range cheaply (just two corners), so we pin to the start cell rather than
+  // stepping cell-by-cell, to avoid a round-trip per cell.
+  const ids = await idsForA1(liveblocks, roomId, toA1(range.start.row, range.start.col));
+  if (ids) {
+    await showAiEditing(liveblocks, roomId, ids);
   }
   await liveblocks.mutateStorage(roomId, ({ root }) => {
     const cells = root.get("cells");

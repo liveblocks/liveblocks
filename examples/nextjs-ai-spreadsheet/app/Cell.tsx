@@ -3,7 +3,7 @@
 import { CSSProperties, useLayoutEffect } from "react";
 import type { HotRendererProps } from "@handsontable/react-wrapper";
 import { shallow } from "@liveblocks/client";
-import { useOthers, useSelf, useStorage } from "@liveblocks/react/suspense";
+import { useStorage } from "@liveblocks/react/suspense";
 import {
   CommentPin,
   FloatingComposer,
@@ -14,6 +14,7 @@ import { cellKey } from "@/liveblocks.config";
 import { formatDisplayValue, valueStyleFromFormat } from "@/lib/format";
 import { useOrder } from "./OrderContext";
 import { useCellThread } from "./CellThreadContext";
+import { useCellSelectors, useCurrentUserId } from "./CellPresenceContext";
 
 // A single Handsontable cell, rendered as a React component. It combines:
 //  - the value + per-cell formatting (from Storage)
@@ -69,23 +70,12 @@ function CellBody({
     shallow
   );
 
-  // Everyone (human or AI) whose selection is on this cell.
-  const selectors = useOthers(
-    (others) =>
-      others
-        .filter(
-          (other) =>
-            other.presence.selectedCell?.rowId === rowId &&
-            other.presence.selectedCell?.colId === colId
-        )
-        .map((other) => ({
-          name: other.info?.name ?? "Someone",
-          color: other.info?.color ?? "#888888",
-        })),
-    shallow
-  );
+  // Everyone (human or AI) whose selection is on this cell. Sourced from a
+  // single shared presence subscription (see `CellPresenceContext`) so each
+  // cell only re-renders when its own selectors change.
+  const selectors = useCellSelectors(rowId, colId);
 
-  const currentUserId = useSelf((self) => self.id) ?? undefined;
+  const currentUserId = useCurrentUserId();
   const { getThread, openCell, setOpenCell } = useCellThread();
   const thread = getThread(rowId, colId);
   const isOpen = openCell?.rowId === rowId && openCell?.colId === colId;

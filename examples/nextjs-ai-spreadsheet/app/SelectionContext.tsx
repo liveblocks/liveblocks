@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useMemo, useState } from "react";
+import { createContext, useContext, useState } from "react";
 import type { ReactNode } from "react";
 
 // The cells currently selected in the grid, expressed with stable ids so the
@@ -13,27 +13,37 @@ export type Selection = {
   anchor: { rowId: string; colId: string };
 };
 
-type SelectionContextValue = {
-  selection: Selection | null;
-  setSelection: (selection: Selection | null) => void;
-};
+type SetSelection = (selection: Selection | null) => void;
 
-const SelectionContext = createContext<SelectionContextValue | null>(null);
+// Split into two contexts: the current selection *value* (changes on every
+// click) and the *setter* (referentially stable for the lifetime of the
+// provider). This lets the grid subscribe to only the setter, so moving the
+// selection never re-renders the <HotTable> subtree — only consumers that
+// actually read the value (the toolbar) re-render.
+const SelectionStateContext = createContext<Selection | null>(null);
+const SelectionSetContext = createContext<SetSelection | null>(null);
 
 export function SelectionProvider({ children }: { children: ReactNode }) {
   const [selection, setSelection] = useState<Selection | null>(null);
-  const value = useMemo(() => ({ selection, setSelection }), [selection]);
   return (
-    <SelectionContext.Provider value={value}>
-      {children}
-    </SelectionContext.Provider>
+    <SelectionSetContext.Provider value={setSelection}>
+      <SelectionStateContext.Provider value={selection}>
+        {children}
+      </SelectionStateContext.Provider>
+    </SelectionSetContext.Provider>
   );
 }
 
-export function useSelection(): SelectionContextValue {
-  const context = useContext(SelectionContext);
-  if (!context) {
-    throw new Error("useSelection must be used within a SelectionProvider");
+// Read the current selection. Re-renders when the selection changes.
+export function useSelectionValue(): Selection | null {
+  return useContext(SelectionStateContext);
+}
+
+// Get the (stable) selection setter without subscribing to selection changes.
+export function useSetSelection(): SetSelection {
+  const setSelection = useContext(SelectionSetContext);
+  if (!setSelection) {
+    throw new Error("useSetSelection must be used within a SelectionProvider");
   }
-  return context;
+  return setSelection;
 }
