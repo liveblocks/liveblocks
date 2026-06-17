@@ -164,6 +164,53 @@ describe("auth-manager - secret auth", () => {
     expect(requestCount).toBe(1);
   });
 
+  test("should reuse a concurrent duplicate same-room token when it satisfies different permission requirements", async () => {
+    let localRequestCount = 0;
+    const commentsWriteToken = makeAccessToken({
+      "org1*": [Permission.Read, Permission.CommentsWrite],
+    });
+
+    server.use(
+      http.post("/api/access-auth-comments-duplicate", async () => {
+        localRequestCount++;
+        if (localRequestCount === 2) {
+          await new Promise((resolve) => setTimeout(resolve, 10));
+        }
+
+        return HttpResponse.json({ token: commentsWriteToken });
+      })
+    );
+
+    const authManager = createAuthManager({
+      authEndpoint: "/api/access-auth-comments-duplicate",
+    });
+
+    const readAuthValue$ = authManager.getAuthValue({
+      resource: "comments",
+      access: "read",
+      roomId: "org1.room1",
+    });
+    const writeAuthValue$ = authManager.getAuthValue({
+      resource: "comments",
+      access: "write",
+      roomId: "org1.room1",
+    });
+
+    const [readAuthValue, writeAuthValue] = await Promise.all([
+      readAuthValue$,
+      writeAuthValue$,
+    ]);
+
+    expect(readAuthValue.type).toEqual("secret");
+    expect(writeAuthValue.type).toEqual("secret");
+    if (readAuthValue.type !== "secret" || writeAuthValue.type !== "secret") {
+      throw new Error("Expected secret auth values");
+    }
+    expect(readAuthValue.token.raw).toEqual(commentsWriteToken);
+    expect(writeAuthValue.token.raw).toEqual(commentsWriteToken);
+    expect(localRequestCount).toBe(2);
+  });
+
   test("should not deduplicate concurrent same-room requests with different permission requirements", async () => {
     let localRequestCount = 0;
     const storageReadToken = makeAccessToken({
