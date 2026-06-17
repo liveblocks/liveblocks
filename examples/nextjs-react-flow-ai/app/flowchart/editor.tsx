@@ -47,6 +47,7 @@ import {
   type OnResize,
 } from "@xyflow/react";
 import { AvatarStack, Cursor, Icon } from "@liveblocks/react-ui";
+import { HelpControl } from "../../components/HelpButton";
 import {
   useEditThreadMetadata,
   useThreads,
@@ -1136,6 +1137,7 @@ function Flow({ className, ...props }: ComponentProps<"div">) {
         >
           <Cursors components={{ Cursor: FlowCursor }} />
           <Controls orientation="horizontal" showInteractive={false}>
+            <HelpControl />
             <ControlButton onClick={undo} disabled={!canUndo}>
               <Icon.Undo />
             </ControlButton>

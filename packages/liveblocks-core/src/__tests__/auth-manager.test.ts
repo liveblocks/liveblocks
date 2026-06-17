@@ -12,11 +12,8 @@ import {
 } from "vitest";
 
 import { createAuthManager } from "../auth-manager";
-import { Permission } from "../permissions";
-import type {
-  LiveblocksPermissions,
-  ParsedAuthToken,
-} from "../protocol/AuthToken";
+import { Permission, type RoomPermissions } from "../permissions";
+import type { ParsedAuthToken } from "../protocol/AuthToken";
 
 const SECONDS = 1 * 1000;
 const MINUTES = 60 * SECONDS;
@@ -24,7 +21,7 @@ const HOURS = 60 * MINUTES;
 
 let fakeTokenCounter = 0;
 
-function makeAccessToken(permissions: LiveblocksPermissions): string {
+function makeAccessToken(permissions: Record<string, RoomPermissions>): string {
   const now = Math.floor(Date.now() / 1000);
   fakeTokenCounter++;
 

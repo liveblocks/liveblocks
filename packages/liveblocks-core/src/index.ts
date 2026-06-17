@@ -201,16 +201,17 @@ export type {
   RequiredAccessLevel,
   RoomAccesses,
   RoomPermissions,
+  UpdateRoomAccesses,
 } from "./permissions";
 export {
   hasPermissionAccess,
-  mergePermissionMatrices,
   mergeRoomPermissionScopes,
   normalizeRoomAccesses,
   normalizeRoomPermissions,
+  normalizeUpdateRoomAccesses,
   Permission,
   permissionMatrixFromScopes,
-  permissionMatrixToScopes,
+  validatePermissionsSet,
 } from "./permissions";
 export type {
   ContextualPromptContext,

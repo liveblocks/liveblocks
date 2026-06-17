@@ -1,10 +1,7 @@
 import { isPlainObject } from "../lib/guards";
 import type { Json } from "../lib/Json";
 import { b64decode, tryParseJson } from "../lib/utils";
-import type { RoomPermissions } from "../permissions";
 import type { IUserInfo } from "./BaseUserMeta";
-
-export type LiveblocksPermissions = Record<string, RoomPermissions>;
 
 export enum TokenKind {
   ACCESS_TOKEN = "acc",
@@ -23,7 +20,7 @@ export type AccessToken = {
   k: TokenKind.ACCESS_TOKEN;
   pid: string; // project id
   uid: string; // user id
-  perms: LiveblocksPermissions; // permissions
+  perms: Record<string, string[]>; // permissions
   ui?: IUserInfo; // user info
 } & JwtMeta;
 

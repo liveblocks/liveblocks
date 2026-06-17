@@ -1,4 +1,4 @@
-import { detectDupes } from "@liveblocks/core";
+import { detectDupes, type RoomPermissions } from "@liveblocks/core";
 
 import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 
@@ -38,6 +38,7 @@ export type {
   UpsertRoomOptions,
   WebKnowledgeSourceLink,
 } from "./client";
+export type { RoomAccesses, RoomPermissions } from "@liveblocks/core";
 export { Liveblocks, LiveblocksError } from "./client";
 export { markdownToCommentBody } from "./comment-body";
 export type {
@@ -108,3 +109,8 @@ export {
   LiveObject,
   stringifyCommentBody,
 } from "@liveblocks/core";
+
+/**
+ * @deprecated Use `RoomPermissions` instead.
+ */
+export type RoomPermission = RoomPermissions;

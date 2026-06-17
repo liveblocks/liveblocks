@@ -6,21 +6,18 @@ import { stringifyOrLog as stringify } from "./lib/stringify";
 import type {
   PermissionResources,
   RequiredAccessLevel,
-  RoomPermissionsGrant,
+  RoomPatternPermissions,
 } from "./permissions";
 import {
   hasPermissionAccess,
+  normalizeRoomPermissions,
   resolveRoomPermissionMatrix,
 } from "./permissions";
 import type {
   Authentication,
   CustomAuthenticationResult,
 } from "./protocol/Authentication";
-import type {
-  AuthToken,
-  LiveblocksPermissions,
-  ParsedAuthToken,
-} from "./protocol/AuthToken";
+import type { AuthToken, ParsedAuthToken } from "./protocol/AuthToken";
 import { parseAuthToken, TokenKind } from "./protocol/AuthToken";
 import type { Polyfills } from "./room";
 
@@ -221,7 +218,7 @@ export function createAuthManager(
 type CachedToken = {
   token: ParsedAuthToken;
   expiresAt: number;
-  permissions?: RoomPermissionsGrant[];
+  permissions?: RoomPatternPermissions[];
 };
 
 function getAuthRequestKey(request: AuthRequest): string | undefined {
@@ -240,20 +237,16 @@ function makeCachedToken(
     return {
       token,
       expiresAt,
-      permissions: getAuthTokenPermissionScopes(token.parsed.perms),
+      permissions: Object.entries(token.parsed.perms).map(
+        ([pattern, scopes]) => ({
+          pattern,
+          scopes: normalizeRoomPermissions(scopes),
+        })
+      ),
     };
   }
 
   return { token, expiresAt };
-}
-
-function getAuthTokenPermissionScopes(
-  permissions: LiveblocksPermissions
-): RoomPermissionsGrant[] {
-  return Object.entries(permissions).map(([resource, scopes]) => ({
-    resource,
-    scopes,
-  }));
 }
 
 function cachedTokenSatisfiesRequest(

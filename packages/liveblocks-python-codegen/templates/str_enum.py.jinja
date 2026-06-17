@@ -2,5 +2,11 @@ from enum import StrEnum
 
 class {{ enum.class_info.name }}(StrEnum):
     {% for key, value in enum.values|dictsort(true) %}
+    {% if enum.class_info.name == "RoomPermissionItem" and value == "*:read" %}
+    READ = "*:read"
+    {% elif enum.class_info.name == "RoomPermissionItem" and value == "*:write" %}
+    WRITE = "*:write"
+    {% else %}
     {{ key }} = "{{ value }}"
+    {% endif %}
     {% endfor %}

@@ -2,7 +2,6 @@ import type {
   IUserInfo,
   Json,
   JsonObject,
-  RoomPermissions,
   URLSafeString,
 } from "@liveblocks/core";
 import { normalizeRoomPermissions, Permission, url } from "@liveblocks/core";
@@ -30,32 +29,42 @@ const roomPatternRegex = /^([*]|[^*]{1,128}[*]?)$/;
 type PostFn = (path: URLSafeString, json: Json) => Promise<Response>;
 
 /**
- * Class to help you construct the exact permission set to grant a user, used
- * when making `.authorizeUser()` calls.
+ * Class to help you construct the exact permission set to grant a user.
  *
  * Usage:
  *
  *    const session = liveblocks.prepareSession();
- *    session.allow(roomId, permissions)  // or...
+ *    session.allow(roomId, permissions)
  *
- * For the `permissions` argument, you can pass a list of specific permissions,
- * or use one of our presets:
+ * For the `permissions` argument, pass a list of permission scopes.
  *
- *    session.allow('my-room', session.FULL_ACCESS)  // Read + write access to room storage and comments
- *    session.allow('my-room', session.READ_ACCESS)  // Read-only access to room storage and comments
+ *    session.allow('my-room', ['*:write'])   // Read + write access
+ *    session.allow('my-room', ['*:read'])    // Read-only access
+ *    session.allow('my-room', [
+ *      '*:write',                            // Read + write access by default
+ *      'comments:read'                       // But read-only access to comments
+ *      'feeds:none'                          // And no access to feeds
+ *    ])
  *
  * Rooms can be specified with a prefix match, if the name ends in an asterisk.
  * In that case, access is granted to *all* rooms that start with that prefix:
  *
  *    // Read + write access to *all* rooms that start with "abc:"
- *    session.allow('abc:*', session.FULL_ACCESS)
+ *    session.allow('abc:*', ['*:write'])
  *
  * You can define at most 10 room IDs (or patterns) in a single token,
  * otherwise the token would become too large and unwieldy.
  *
  */
 export class Session {
+  /**
+   * @deprecated Use `["*:write"]` instead.
+   */
   public readonly FULL_ACCESS = FULL_ACCESS;
+
+  /**
+   * @deprecated Use `["*:read"]` instead.
+   */
   public readonly READ_ACCESS = READ_ACCESS;
 
   #postFn: PostFn;
@@ -105,7 +114,7 @@ export class Session {
     }
   }
 
-  public allow(roomIdOrPattern: string, newPerms: RoomPermissions): this {
+  public allow(roomIdOrPattern: string, newPerms: readonly Permission[]): this {
     if (typeof roomIdOrPattern !== "string") {
       throw new Error("Room name or pattern must be a string");
     }
