@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
 
   // Give the user access to the room
   const { room } = await request.json();
-  session.allow(room, session.FULL_ACCESS);
+  session.allow(room, ["*:write"]);
 
   // Authorize the user and return the result
   const { body, status } = await session.authorize();
@@ -118,7 +118,7 @@ export default async function handler(
 
   // Give the user access to the room
   const { room } = request.body;
-  session.allow(room, session.FULL_ACCESS);
+  session.allow(room, ["*:write"]);
 
   // Authorize the user and return the result
   const { status, body } = await session.authorize();

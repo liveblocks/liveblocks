@@ -13,7 +13,7 @@ from ..models.room_permission_item import RoomPermissionItem
 class RoomAccesses:
     """
     Example:
-        {'alice': ['room:write'], 'bob': ['room:read', 'room:presence:write']}
+        {'alice': ['*:write'], 'bob': ['*:read']}
 
     """
 

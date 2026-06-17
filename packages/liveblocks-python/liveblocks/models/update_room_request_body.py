@@ -18,8 +18,8 @@ if TYPE_CHECKING:
 class UpdateRoomRequestBody:
     """
     Example:
-        {'defaultAccesses': ['room:write'], 'usersAccesses': {'alice': ['room:write']}, 'groupsAccesses': {'marketing':
-            ['room:write']}, 'metadata': {'color': 'blue'}}
+        {'defaultAccesses': ['*:write'], 'usersAccesses': {'alice': ['*:write']}, 'groupsAccesses': {'marketing':
+            ['*:write']}, 'metadata': {'color': 'blue'}}
 
     Attributes:
         default_accesses (list[RoomPermissionItem] | None | Unset):

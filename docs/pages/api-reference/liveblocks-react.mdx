@@ -3109,7 +3109,7 @@ that particular selection changes. For full details, see [how selectors work][].
 
 It’s possible to check if a user has a specific permission by using the
 `canWrite` and `canComment` properties of the `User` object. This is set via
-your [room permissions](/docs/authentication#Room-permissions).
+your [room permissions](/docs/authentication#id-token-room-permissions).
 
 ```ts
 import { useSelf } from "@liveblocks/react/suspense";
@@ -6821,12 +6821,12 @@ const user = room.getSelf();
   <PropertiesListItem name="canWrite" type="boolean">
     `true` if the user can mutate the Room’s Storage and/or YDoc, `false` if
     they can only read but not mutate it. Set via your [room
-    permissions](/docs/authentication#Room-permissions).
+    permissions](/docs/authentication#id-token-room-permissions).
   </PropertiesListItem>
   <PropertiesListItem name="canComment" type="boolean">
     `true` if the user can leave a comment in the room, `false` if they can only
     read comments but not leave them. Set via your [room
-    permissions](/docs/authentication#Room-permissions).
+    permissions](/docs/authentication#id-token-room-permissions).
   </PropertiesListItem>
 </PropertiesList>
 

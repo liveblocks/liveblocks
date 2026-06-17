@@ -2,7 +2,7 @@ import { RoomData } from "@liveblocks/node";
 
 /**
  * Learn more about ID token permissions
- * https://liveblocks.io/docs/authentication/id-token#permission-types
+ * https://liveblocks.io/docs/authentication#id-token-permission-types
  */
 
 interface UserAccessProps {

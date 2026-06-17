@@ -110,9 +110,9 @@ print(result)
 ### create_room
 
 This endpoint creates a new room. `id` and `defaultAccesses` are required. When provided with a `?idempotent` query argument, will not return a 409 when the room already exists, but instead return the existing room as-is. Corresponds to [`liveblocks.createRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms), or to [`liveblocks.getOrCreateRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-or-create-rooms-roomId) when `?idempotent` is provided. 
-- `defaultAccesses` could be `[]` or `["room:write"]` (private or public). 
+- `defaultAccesses` could be `[]` or `["*:write"]` (private or public). 
 - `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.
-- `usersAccesses` could be `[]` or `["room:write"]` for every records. `usersAccesses` can contain 1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
+- `usersAccesses` could be `[]` or `["*:write"]` for every records. `usersAccesses` can contain 1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
 - `groupsAccesses` are optional fields.
 
 
@@ -184,10 +184,10 @@ Setting a property to `null` means to delete this property. For example, if you 
 }``
 `defaultAccesses`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.
 
-- `defaultAccesses` could be `[]` or `["room:write"]` (private or public). 
+- `defaultAccesses` could be `[]` or `["*:write"]` (private or public). 
 - `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.
-- `usersAccesses` could be `[]` or `["room:write"]` for every records. `usersAccesses` can contain 1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
-- `groupsAccesses` could be `[]` or `["room:write"]` for every records. `groupsAccesses` can contain 1000 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.
+- `usersAccesses` could be `[]` or `["*:write"]` for every records. `usersAccesses` can contain 1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
+- `groupsAccesses` could be `[]` or `["*:write"]` for every records. `groupsAccesses` can contain 1000 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.
 
 ```python
 from liveblocks.models import UpdateRoomRequestBody
@@ -276,10 +276,10 @@ Setting a property to `null` means to delete this property. For example, if you 
 }``
 `defaultAccesses`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.
 
-- `defaultAccesses` could be `[]` or `["room:write"]` (private or public). 
+- `defaultAccesses` could be `[]` or `["*:write"]` (private or public). 
 - `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.
-- `usersAccesses` could be `[]` or `["room:write"]` for every records. `usersAccesses` can contain 1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
-- `groupsAccesses` could be `[]` or `["room:write"]` for every records. `groupsAccesses` can contain 1000 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.
+- `usersAccesses` could be `[]` or `["*:write"]` for every records. `usersAccesses` can contain 1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
+- `groupsAccesses` could be `[]` or `["*:write"]` for every records. `groupsAccesses` can contain 1000 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.
 
 ```python
 from liveblocks.models import UpsertRoomRequestBody
@@ -2028,7 +2028,7 @@ print(result)
 
 ### identify_user
 
-This endpoint lets your application server (your back end) obtain a token that one of its clients (your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own application’s custom authentication endpoint. When using this endpoint to obtain ID tokens, you should manage your permissions by assigning user and/or group permissions to rooms explicitly, see our [Manage permissions with ID tokens](https://liveblocks.io/docs/authentication/id-token) section.
+This endpoint lets your application server (your back end) obtain a token that one of its clients (your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own application’s custom authentication endpoint. When using this endpoint to obtain ID tokens, you should manage your permissions by assigning user and/or group permissions to rooms explicitly, see our [Manage permissions with ID tokens](https://liveblocks.io/docs/authentication#id-token-room-permissions) section.
 
 **Important:** The difference with an [access token](#post-authorize-user) is that an ID token doesn’t hold any permissions itself. With ID tokens, permissions are set in the Liveblocks back end (through REST API calls) and "checked at the door" every time they are used to enter a room. With access tokens, all permissions are set in the token itself, and thus controlled from your back end entirely.
 
@@ -2036,7 +2036,7 @@ This endpoint lets your application server (your back end) obtain a token that o
 
 You can pass the property `userId` in the request’s body. This can be whatever internal identifier you use for your user accounts as long as it uniquely identifies an account. The property `userId` is used by Liveblocks to calculate your account’s Monthly Active Users. One unique `userId` corresponds to one MAU.
 
-If you want to use group permissions, you can also declare which `groupIds` this user belongs to. The group ID values are yours, but they will have to match the group IDs you assign permissions to when assigning permissions to rooms, see [Manage permissions with ID tokens](https://liveblocks.io/docs/authentication/id-token)).
+If you want to use group permissions, you can also declare which `groupIds` this user belongs to. The group ID values are yours, but they will have to match the group IDs you assign permissions to when assigning permissions to rooms, see [Manage permissions with ID tokens](https://liveblocks.io/docs/authentication#id-token-room-permissions)).
 
 Additionally, you can set custom metadata to the token, which will be publicly accessible by other clients through the `user.info` property. This is useful for storing static data like avatar images or the user’s display name.
 

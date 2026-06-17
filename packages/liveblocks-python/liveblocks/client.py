@@ -239,11 +239,11 @@ class Liveblocks:
         reference/liveblocks-node#post-rooms), or to
         [`liveblocks.getOrCreateRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-or-
         create-rooms-roomId) when `?idempotent` is provided.
-        - `defaultAccesses` could be `[]` or `[\"room:write\"]` (private or public).
+        - `defaultAccesses` could be `[]` or `[\"*:write\"]` (private or public).
         - `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries.
         Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum.
         `metadata` is optional field.
-        - `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain
+        - `usersAccesses` could be `[]` or `[\"*:write\"]` for every records. `usersAccesses` can contain
         1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
         - `groupsAccesses` are optional fields.
 
@@ -253,8 +253,8 @@ class Liveblocks:
                 [`liveblocks.getOrCreateRoom`](https://liveblocks.io/docs/api-reference/liveblocks-
                 node#get-or-create-rooms-roomId). Example: True.
             body (CreateRoomRequestBody):  Example: {'id': 'my-room-id', 'defaultAccesses':
-                ['room:write'], 'metadata': {'color': 'blue'}, 'usersAccesses': {'alice': ['room:write']},
-                'groupsAccesses': {'product': ['room:write']}}.
+                ['*:write'], 'metadata': {'color': 'blue'}, 'usersAccesses': {'alice': ['*:write']},
+                'groupsAccesses': {'product': ['*:write']}}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -321,21 +321,20 @@ class Liveblocks:
         }``
         `defaultAccesses`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.
 
-        - `defaultAccesses` could be `[]` or `[\"room:write\"]` (private or public).
+        - `defaultAccesses` could be `[]` or `[\"*:write\"]` (private or public).
         - `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries.
         Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum.
         `metadata` is optional field.
-        - `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain
+        - `usersAccesses` could be `[]` or `[\"*:write\"]` for every records. `usersAccesses` can contain
         1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
-        - `groupsAccesses` could be `[]` or `[\"room:write\"]` for every records. `groupsAccesses` can
-        contain 1000 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional
-        field.
+        - `groupsAccesses` could be `[]` or `[\"*:write\"]` for every records. `groupsAccesses` can contain
+        1000 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.
 
         Args:
             room_id (str): ID of the room Example: my-room-id.
-            body (UpdateRoomRequestBody):  Example: {'defaultAccesses': ['room:write'],
-                'usersAccesses': {'alice': ['room:write']}, 'groupsAccesses': {'marketing':
-                ['room:write']}, 'metadata': {'color': 'blue'}}.
+            body (UpdateRoomRequestBody):  Example: {'defaultAccesses': ['*:write'], 'usersAccesses':
+                {'alice': ['*:write']}, 'groupsAccesses': {'marketing': ['*:write']}, 'metadata':
+                {'color': 'blue'}}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -434,21 +433,20 @@ class Liveblocks:
         }``
         `defaultAccesses`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.
 
-        - `defaultAccesses` could be `[]` or `[\"room:write\"]` (private or public).
+        - `defaultAccesses` could be `[]` or `[\"*:write\"]` (private or public).
         - `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries.
         Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum.
         `metadata` is optional field.
-        - `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain
+        - `usersAccesses` could be `[]` or `[\"*:write\"]` for every records. `usersAccesses` can contain
         1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
-        - `groupsAccesses` could be `[]` or `[\"room:write\"]` for every records. `groupsAccesses` can
-        contain 1000 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional
-        field.
+        - `groupsAccesses` could be `[]` or `[\"*:write\"]` for every records. `groupsAccesses` can contain
+        1000 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.
 
         Args:
             room_id (str): ID of the room Example: my-room-id.
             body (UpsertRoomRequestBody):  Example: {'update': {'usersAccesses': {'alice':
-                ['room:write']}, 'groupsAccesses': {'marketing': ['room:write']}, 'metadata': {'color':
-                'blue'}}, 'create': {'defaultAccesses': ['room:write']}}.
+                ['*:write']}, 'groupsAccesses': {'marketing': ['*:write']}, 'metadata': {'color':
+                'blue'}}, 'create': {'defaultAccesses': ['*:write']}}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2099,8 +2097,8 @@ class Liveblocks:
         Args:
             body (AuthorizeUserRequestBody):  Example: {'userId': 'user-123', 'userInfo': {'name':
                 'bob', 'avatar': 'https://example.org/images/user123.jpg'}, 'organizationId': 'acme-corp',
-                'permissions': {'my-room-1': ['room:write'], 'my-room-2': ['room:write'], 'my-room-*':
-                ['room:read']}}.
+                'permissions': {'my-room-1': ['*:write'], 'my-room-2': ['*:write'], 'my-room-*':
+                ['*:read']}}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2128,7 +2126,8 @@ class Liveblocks:
         (your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own
         application’s custom authentication endpoint. When using this endpoint to obtain ID tokens, you
         should manage your permissions by assigning user and/or group permissions to rooms explicitly, see
-        our [Manage permissions with ID tokens](https://liveblocks.io/docs/authentication/id-token) section.
+        our [Manage permissions with ID tokens](https://liveblocks.io/docs/authentication#id-token-room-
+        permissions) section.
 
         **Important:** The difference with an [access token](#post-authorize-user) is that an ID token
         doesn’t hold any permissions itself. With ID tokens, permissions are set in the Liveblocks back end
@@ -2148,7 +2147,7 @@ class Liveblocks:
         If you want to use group permissions, you can also declare which `groupIds` this user belongs to.
         The group ID values are yours, but they will have to match the group IDs you assign permissions to
         when assigning permissions to rooms, see [Manage permissions with ID
-        tokens](https://liveblocks.io/docs/authentication/id-token)).
+        tokens](https://liveblocks.io/docs/authentication#id-token-room-permissions)).
 
         Additionally, you can set custom metadata to the token, which will be publicly accessible by other
         clients through the `user.info` property. This is useful for storing static data like avatar images
@@ -3374,11 +3373,11 @@ class AsyncLiveblocks:
         reference/liveblocks-node#post-rooms), or to
         [`liveblocks.getOrCreateRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-or-
         create-rooms-roomId) when `?idempotent` is provided.
-        - `defaultAccesses` could be `[]` or `[\"room:write\"]` (private or public).
+        - `defaultAccesses` could be `[]` or `[\"*:write\"]` (private or public).
         - `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries.
         Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum.
         `metadata` is optional field.
-        - `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain
+        - `usersAccesses` could be `[]` or `[\"*:write\"]` for every records. `usersAccesses` can contain
         1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
         - `groupsAccesses` are optional fields.
 
@@ -3388,8 +3387,8 @@ class AsyncLiveblocks:
                 [`liveblocks.getOrCreateRoom`](https://liveblocks.io/docs/api-reference/liveblocks-
                 node#get-or-create-rooms-roomId). Example: True.
             body (CreateRoomRequestBody):  Example: {'id': 'my-room-id', 'defaultAccesses':
-                ['room:write'], 'metadata': {'color': 'blue'}, 'usersAccesses': {'alice': ['room:write']},
-                'groupsAccesses': {'product': ['room:write']}}.
+                ['*:write'], 'metadata': {'color': 'blue'}, 'usersAccesses': {'alice': ['*:write']},
+                'groupsAccesses': {'product': ['*:write']}}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -3456,21 +3455,20 @@ class AsyncLiveblocks:
         }``
         `defaultAccesses`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.
 
-        - `defaultAccesses` could be `[]` or `[\"room:write\"]` (private or public).
+        - `defaultAccesses` could be `[]` or `[\"*:write\"]` (private or public).
         - `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries.
         Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum.
         `metadata` is optional field.
-        - `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain
+        - `usersAccesses` could be `[]` or `[\"*:write\"]` for every records. `usersAccesses` can contain
         1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
-        - `groupsAccesses` could be `[]` or `[\"room:write\"]` for every records. `groupsAccesses` can
-        contain 1000 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional
-        field.
+        - `groupsAccesses` could be `[]` or `[\"*:write\"]` for every records. `groupsAccesses` can contain
+        1000 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.
 
         Args:
             room_id (str): ID of the room Example: my-room-id.
-            body (UpdateRoomRequestBody):  Example: {'defaultAccesses': ['room:write'],
-                'usersAccesses': {'alice': ['room:write']}, 'groupsAccesses': {'marketing':
-                ['room:write']}, 'metadata': {'color': 'blue'}}.
+            body (UpdateRoomRequestBody):  Example: {'defaultAccesses': ['*:write'], 'usersAccesses':
+                {'alice': ['*:write']}, 'groupsAccesses': {'marketing': ['*:write']}, 'metadata':
+                {'color': 'blue'}}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -3569,21 +3567,20 @@ class AsyncLiveblocks:
         }``
         `defaultAccesses`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.
 
-        - `defaultAccesses` could be `[]` or `[\"room:write\"]` (private or public).
+        - `defaultAccesses` could be `[]` or `[\"*:write\"]` (private or public).
         - `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries.
         Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum.
         `metadata` is optional field.
-        - `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain
+        - `usersAccesses` could be `[]` or `[\"*:write\"]` for every records. `usersAccesses` can contain
         1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
-        - `groupsAccesses` could be `[]` or `[\"room:write\"]` for every records. `groupsAccesses` can
-        contain 1000 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional
-        field.
+        - `groupsAccesses` could be `[]` or `[\"*:write\"]` for every records. `groupsAccesses` can contain
+        1000 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.
 
         Args:
             room_id (str): ID of the room Example: my-room-id.
             body (UpsertRoomRequestBody):  Example: {'update': {'usersAccesses': {'alice':
-                ['room:write']}, 'groupsAccesses': {'marketing': ['room:write']}, 'metadata': {'color':
-                'blue'}}, 'create': {'defaultAccesses': ['room:write']}}.
+                ['*:write']}, 'groupsAccesses': {'marketing': ['*:write']}, 'metadata': {'color':
+                'blue'}}, 'create': {'defaultAccesses': ['*:write']}}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5234,8 +5231,8 @@ class AsyncLiveblocks:
         Args:
             body (AuthorizeUserRequestBody):  Example: {'userId': 'user-123', 'userInfo': {'name':
                 'bob', 'avatar': 'https://example.org/images/user123.jpg'}, 'organizationId': 'acme-corp',
-                'permissions': {'my-room-1': ['room:write'], 'my-room-2': ['room:write'], 'my-room-*':
-                ['room:read']}}.
+                'permissions': {'my-room-1': ['*:write'], 'my-room-2': ['*:write'], 'my-room-*':
+                ['*:read']}}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5263,7 +5260,8 @@ class AsyncLiveblocks:
         (your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own
         application’s custom authentication endpoint. When using this endpoint to obtain ID tokens, you
         should manage your permissions by assigning user and/or group permissions to rooms explicitly, see
-        our [Manage permissions with ID tokens](https://liveblocks.io/docs/authentication/id-token) section.
+        our [Manage permissions with ID tokens](https://liveblocks.io/docs/authentication#id-token-room-
+        permissions) section.
 
         **Important:** The difference with an [access token](#post-authorize-user) is that an ID token
         doesn’t hold any permissions itself. With ID tokens, permissions are set in the Liveblocks back end
@@ -5283,7 +5281,7 @@ class AsyncLiveblocks:
         If you want to use group permissions, you can also declare which `groupIds` this user belongs to.
         The group ID values are yours, but they will have to match the group IDs you assign permissions to
         when assigning permissions to rooms, see [Manage permissions with ID
-        tokens](https://liveblocks.io/docs/authentication/id-token)).
+        tokens](https://liveblocks.io/docs/authentication#id-token-room-permissions)).
 
         Additionally, you can set custom metadata to the token, which will be publicly accessible by other
         clients through the `user.info` property. This is useful for storing static data like avatar images
