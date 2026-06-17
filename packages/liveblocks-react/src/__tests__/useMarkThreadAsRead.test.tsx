@@ -60,7 +60,7 @@ describe("useMarkThreadAsRead", () => {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
               permissionHints: {
-                [roomId]: [Permission.Write],
+                [roomId]: [Permission.RoomWrite],
               },
             },
           },
@@ -147,7 +147,7 @@ describe("useMarkThreadAsRead", () => {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
               permissionHints: {
-                [roomId]: [Permission.Write],
+                [roomId]: [Permission.RoomWrite],
               },
             },
           },

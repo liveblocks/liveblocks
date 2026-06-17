@@ -12,7 +12,7 @@ import { stableStringify } from "../../lib/stringify";
 import { OpCode } from "../../protocol/Op";
 import type { NodeMap } from "../../protocol/StorageNode";
 import { CrdtType } from "../../protocol/StorageNode";
-import { getTreesDiffOperations, isJsonEq } from "../liveblocks-helpers";
+import { diffNodeMap, isJsonEq } from "../liveblocks-helpers";
 import { LiveList } from "../LiveList";
 import { LiveMap } from "../LiveMap";
 import { LiveObject } from "../LiveObject";
@@ -26,7 +26,7 @@ test("Common first positions", () => {
   expect.soft(FIFTH_POSITION).toBe("!$");
 });
 
-describe("getTreesDiffOperations", () => {
+describe("diffNodeMap", () => {
   test("new liveList Register item", () => {
     const currentItems: NodeMap = new Map([
       ["root", { type: CrdtType.OBJECT, data: {} }],
@@ -50,7 +50,7 @@ describe("getTreesDiffOperations", () => {
       data: "B",
     });
 
-    const ops = getTreesDiffOperations(currentItems, newItems);
+    const ops = diffNodeMap(currentItems, newItems);
 
     expect(ops).toEqual([
       {
@@ -90,7 +90,7 @@ describe("getTreesDiffOperations", () => {
     const newItems = new Map(currentItems);
     newItems.delete("0:2");
 
-    const ops = getTreesDiffOperations(currentItems, newItems);
+    const ops = diffNodeMap(currentItems, newItems);
 
     expect(ops).toEqual([
       {
@@ -147,7 +147,7 @@ describe("getTreesDiffOperations", () => {
       ],
     ]);
 
-    const ops = getTreesDiffOperations(currentItems, newItems);
+    const ops = diffNodeMap(currentItems, newItems);
 
     expect(ops).toEqual([
       {
@@ -235,7 +235,7 @@ describe("getTreesDiffOperations", () => {
       ],
     ]);
 
-    const ops = getTreesDiffOperations(currentItems, newItems);
+    const ops = diffNodeMap(currentItems, newItems);
 
     expect(ops).toEqual([
       {
@@ -285,7 +285,7 @@ describe("getTreesDiffOperations", () => {
       ],
     ]);
 
-    const ops = getTreesDiffOperations(currentItems, newItems);
+    const ops = diffNodeMap(currentItems, newItems);
 
     expect(ops).toEqual([
       {
@@ -308,7 +308,7 @@ describe("getTreesDiffOperations", () => {
       parentKey: "items",
     });
 
-    const ops = getTreesDiffOperations(currentItems, newItems);
+    const ops = diffNodeMap(currentItems, newItems);
 
     expect(ops).toEqual([
       {
@@ -332,7 +332,7 @@ describe("getTreesDiffOperations", () => {
       parentKey: "map",
     });
 
-    const ops = getTreesDiffOperations(currentItems, newItems);
+    const ops = diffNodeMap(currentItems, newItems);
 
     expect(ops).toEqual([
       {
@@ -357,7 +357,7 @@ describe("getTreesDiffOperations", () => {
       data: { a: 1 },
     });
 
-    const ops = getTreesDiffOperations(currentItems, newItems);
+    const ops = diffNodeMap(currentItems, newItems);
 
     expect(ops).toEqual([
       {
@@ -378,7 +378,7 @@ describe("getTreesDiffOperations", () => {
     const newItems = new Map(currentItems);
     newItems.set("0:1", { type: CrdtType.OBJECT, data: { a: 1 } });
 
-    expect(() => getTreesDiffOperations(currentItems, newItems)).toThrow(
+    expect(() => diffNodeMap(currentItems, newItems)).toThrow(
       "Internal error. Cannot serialize storage root into an operation"
     );
   });

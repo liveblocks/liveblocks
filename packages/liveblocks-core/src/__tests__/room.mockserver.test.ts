@@ -28,7 +28,6 @@ import { kInternal } from "../internal";
 import { makeEventSource } from "../lib/EventSource";
 import * as console from "../lib/fancy-console";
 import type { Json, JsonObject } from "../lib/Json";
-import { Signal } from "../lib/signals";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import { ClientMsgCode } from "../protocol/ClientMsg";
 import type { BaseMetadata } from "../protocol/Comments";
@@ -98,7 +97,6 @@ function createDefaultRoomConfig<
       authManager: createAuthManager({
         authEndpoint: "/api/auth",
       }),
-      currentUserId: new Signal<string | undefined>(undefined),
     }),
     // Not used in unit tests (yet)
     createSyncSource: fakeSyncSource,

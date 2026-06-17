@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     userInfo: user.info,
   });
 
-  session.allow(`liveblocks:examples:*`, session.FULL_ACCESS);
+  session.allow(`liveblocks:examples:*`, ["*:write"]);
 
   const { status, body: responseBody } = await session.authorize();
   return new Response(responseBody, { status });

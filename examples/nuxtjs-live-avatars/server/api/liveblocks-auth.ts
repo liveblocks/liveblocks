@@ -41,7 +41,7 @@ export default defineEventHandler(async (event) => {
     );
 
     // Use a naming pattern to allow access to rooms with a wildcard
-    session.allow(`liveblocks:examples:*`, session.FULL_ACCESS);
+    session.allow(`liveblocks:examples:*`, ["*:write"]);
 
     const { status, body: authBody } = await session.authorize();
     setResponseStatus(event, status);
