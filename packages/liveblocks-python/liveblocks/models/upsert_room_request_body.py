@@ -16,12 +16,12 @@ if TYPE_CHECKING:
 class UpsertRoomRequestBody:
     """
     Example:
-        {'update': {'usersAccesses': {'alice': ['room:write']}, 'groupsAccesses': {'marketing': ['room:write']},
-            'metadata': {'color': 'blue'}}, 'create': {'defaultAccesses': ['room:write']}}
+        {'update': {'usersAccesses': {'alice': ['*:write']}, 'groupsAccesses': {'marketing': ['*:write']}, 'metadata':
+            {'color': 'blue'}}, 'create': {'defaultAccesses': ['*:write']}}
 
     Attributes:
-        update (UpdateRoomRequestBody):  Example: {'defaultAccesses': ['room:write'], 'usersAccesses': {'alice':
-            ['room:write']}, 'groupsAccesses': {'marketing': ['room:write']}, 'metadata': {'color': 'blue'}}.
+        update (UpdateRoomRequestBody):  Example: {'defaultAccesses': ['*:write'], 'usersAccesses': {'alice':
+            ['*:write']}, 'groupsAccesses': {'marketing': ['*:write']}, 'metadata': {'color': 'blue'}}.
         create (UpsertRoomRequestBodyCreate | Unset): Fields to use when creating the room if it does not exist. Unlike
             the create-room endpoint, `id` is not included here because it is provided in the URL path.
     """

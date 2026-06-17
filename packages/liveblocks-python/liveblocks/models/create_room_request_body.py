@@ -18,18 +18,16 @@ if TYPE_CHECKING:
 class CreateRoomRequestBody:
     """
     Example:
-        {'id': 'my-room-id', 'defaultAccesses': ['room:write'], 'metadata': {'color': 'blue'}, 'usersAccesses':
-            {'alice': ['room:write']}, 'groupsAccesses': {'product': ['room:write']}}
+        {'id': 'my-room-id', 'defaultAccesses': ['*:write'], 'metadata': {'color': 'blue'}, 'usersAccesses': {'alice':
+            ['*:write']}, 'groupsAccesses': {'product': ['*:write']}}
 
     Attributes:
         id (str):
-        default_accesses (list[RoomPermissionItem]):  Example: ['room:read'].
+        default_accesses (list[RoomPermissionItem]):  Example: ['*:read'].
         organization_id (str | Unset): The organization ID to associate with the room. Defaults to "default" if not
             provided.
-        users_accesses (RoomAccesses | Unset):  Example: {'alice': ['room:write'], 'bob': ['room:read',
-            'room:presence:write']}.
-        groups_accesses (RoomAccesses | Unset):  Example: {'alice': ['room:write'], 'bob': ['room:read',
-            'room:presence:write']}.
+        users_accesses (RoomAccesses | Unset):  Example: {'alice': ['*:write'], 'bob': ['*:read']}.
+        groups_accesses (RoomAccesses | Unset):  Example: {'alice': ['*:write'], 'bob': ['*:read']}.
         metadata (RoomMetadata | Unset):  Example: {'color': 'blue', 'type': 'whiteboard'}.
         engine (CreateRoomRequestBodyEngine | Unset): Preferred storage engine version to use when creating new rooms.
             The v2 Storage engine supports larger documents, is more performant, has native streaming support, and will
