@@ -58,7 +58,7 @@ describe("POST /v2/authorize-user", () => {
     expect(payload!.k).toBe("acc");
     expect(payload!.uid).toBe("user-1");
     if (payload!.k === "acc") {
-      expect(payload!.perms).toEqual({ "room-*": [Permission.Write] });
+      expect(payload!.perms).toEqual({ "room-*": [Permission.RoomWrite] });
     }
   });
 
@@ -221,35 +221,35 @@ describe("authorizeWebSocket", () => {
 
   describe("access tokens", () => {
     test("exact room match grants scopes", () => {
-      const tok = accToken("user-1", { "my-room": [Permission.Write] });
+      const tok = accToken("user-1", { "my-room": [Permission.RoomWrite] });
       const result = authorizeWebSocket(wsReq({ roomId: "my-room", tok }));
       expect(result.ok).toBe(true);
       if (result.ok) {
-        expect(result.ticketData.scopes).toEqual([Permission.Write]);
+        expect(result.ticketData.scopes).toEqual([Permission.RoomWrite]);
       }
     });
 
     test("wildcard pattern match grants scopes", () => {
-      const tok = accToken("user-1", { "project-*": [Permission.Write] });
+      const tok = accToken("user-1", { "project-*": [Permission.RoomWrite] });
       const result = authorizeWebSocket(wsReq({ roomId: "project-abc", tok }));
       expect(result.ok).toBe(true);
       if (result.ok) {
-        expect(result.ticketData.scopes).toEqual([Permission.Write]);
+        expect(result.ticketData.scopes).toEqual([Permission.RoomWrite]);
       }
     });
 
     test("no matching room/pattern is denied", () => {
-      const tok = accToken("user-1", { "other-room": [Permission.Write] });
+      const tok = accToken("user-1", { "other-room": [Permission.RoomWrite] });
       const result = authorizeWebSocket(wsReq({ roomId: "my-room", tok }));
       expect(result.ok).toBe(false);
     });
 
     test("read-only permission in token gives read-only scopes", () => {
-      const tok = accToken("user-1", { "my-room": [Permission.Read] });
+      const tok = accToken("user-1", { "my-room": [Permission.RoomRead] });
       const result = authorizeWebSocket(wsReq({ roomId: "my-room", tok }));
       expect(result.ok).toBe(true);
       if (result.ok) {
-        expect(result.ticketData.scopes).toEqual([Permission.Read]);
+        expect(result.ticketData.scopes).toEqual([Permission.RoomRead]);
       }
     });
   });
@@ -259,7 +259,7 @@ describe("authorizeWebSocket", () => {
   describe("ID tokens", () => {
     test("write room grants write scopes", () => {
       Rooms.getOrCreateRoom("id-write-room", {
-        defaultAccesses: [Permission.Write],
+        defaultAccesses: [Permission.RoomWrite],
       });
       const tok = idToken("user-1");
       const result = authorizeWebSocket(
@@ -273,7 +273,7 @@ describe("authorizeWebSocket", () => {
 
     test("read-only room grants read-only scopes", () => {
       Rooms.getOrCreateRoom("id-readonly-room", {
-        defaultAccesses: [Permission.Read],
+        defaultAccesses: [Permission.RoomRead],
       });
       const tok = idToken("user-1");
       const result = authorizeWebSocket(
@@ -293,18 +293,16 @@ describe("authorizeWebSocket", () => {
 
     test("usersAccesses override for specific user", () => {
       Rooms.getOrCreateRoom("id-user-override-room", {
-        defaultAccesses: [Permission.Read],
-        usersAccesses: { "vip-user": [Permission.Write] },
+        defaultAccesses: [Permission.RoomRead],
+        usersAccesses: { "vip-user": [Permission.RoomWrite] },
       });
-      // VIP user gets both read (from default) and write (from usersAccesses)
       const tok1 = idToken("vip-user");
       const result1 = authorizeWebSocket(
         wsReq({ roomId: "id-user-override-room", tok: tok1 })
       );
       expect(result1.ok).toBe(true);
       if (result1.ok) {
-        expect(result1.ticketData.scopes).toContain(Permission.Read);
-        expect(result1.ticketData.scopes).toContain(Permission.Write);
+        expect(result1.ticketData.scopes).toEqual([Permission.Write]);
       }
       // Regular user gets read only
       const tok2 = idToken("regular-user");
@@ -320,7 +318,7 @@ describe("authorizeWebSocket", () => {
     test("groupsAccesses grants group-based permissions", () => {
       Rooms.getOrCreateRoom("id-group-room", {
         defaultAccesses: [],
-        groupsAccesses: { "team-a": [Permission.Write] },
+        groupsAccesses: { "team-a": [Permission.RoomWrite] },
       });
       // Member of team-a gets write
       const tok1 = idToken("user-1", ["team-a"]);
@@ -339,10 +337,10 @@ describe("authorizeWebSocket", () => {
       expect(result2.ok).toBe(false);
     });
 
-    test("union of defaultAccesses + groupsAccesses", () => {
+    test("merged defaultAccesses and groupsAccesses", () => {
       Rooms.getOrCreateRoom("id-union-room", {
-        defaultAccesses: [Permission.Read],
-        groupsAccesses: { editors: [Permission.Write] },
+        defaultAccesses: [Permission.RoomRead],
+        groupsAccesses: { editors: [Permission.RoomWrite] },
       });
       const tok = idToken("user-1", ["editors"]);
       const result = authorizeWebSocket(
@@ -350,8 +348,7 @@ describe("authorizeWebSocket", () => {
       );
       expect(result.ok).toBe(true);
       if (result.ok) {
-        expect(result.ticketData.scopes).toContain(Permission.Read);
-        expect(result.ticketData.scopes).toContain(Permission.Write);
+        expect(result.ticketData.scopes).toEqual([Permission.Write]);
       }
     });
   });
@@ -365,14 +362,14 @@ describe("authorizeWebSocket", () => {
       );
       expect(result.ok).toBe(true);
       if (result.ok) {
-        expect(result.ticketData.scopes).toEqual([Permission.Write]);
+        expect(result.ticketData.scopes).toEqual([Permission.RoomWrite]);
       }
     });
 
     test("always grants write even on a read-only room", () => {
       // Explicitly create a room with read-only default access
       Rooms.getOrCreateRoom("pk-readonly-room", {
-        defaultAccesses: [Permission.Read],
+        defaultAccesses: [Permission.RoomRead],
       });
       // Pubkey auth ignores the room's defaultAccesses and always grants write
       const result = authorizeWebSocket(
@@ -380,7 +377,7 @@ describe("authorizeWebSocket", () => {
       );
       expect(result.ok).toBe(true);
       if (result.ok) {
-        expect(result.ticketData.scopes).toEqual([Permission.Write]);
+        expect(result.ticketData.scopes).toEqual([Permission.RoomWrite]);
       }
     });
 
