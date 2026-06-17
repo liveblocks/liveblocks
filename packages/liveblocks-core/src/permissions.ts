@@ -250,6 +250,8 @@ export function resolveRoomPermissionMatrix(
 
     if (resolved.hasDefaultPermission) {
       hasDefaultPermission = true;
+      // Base access is additive across all matching patterns (highest wins),
+      // unlike resource-specific overrides which use most-specific-wins.
       baseAccess = strongestAccess(baseAccess, resolved.baseAccess);
     }
 
@@ -285,12 +287,9 @@ export function normalizeRoomPermissions(
     throw new Error("Permission list must be an array");
   }
 
-  return permissions.map((permission) => {
-    if (!isPermission(permission)) {
-      throw new Error(`Not a valid permission: ${permission}`);
-    }
-    return permission;
-  });
+  return permissions.filter((permission): permission is Permission =>
+    isPermission(permission)
+  );
 }
 
 export function normalizeRoomAccesses(

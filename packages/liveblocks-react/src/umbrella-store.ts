@@ -2375,9 +2375,8 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
       updates.subscriptions.deleted
     );
 
-    this.permissionHints.update(updates.permissionHints, updates.requestedAt, [
-      roomId,
-    ]);
+    // If the delta omits permission hints, keep the hint from the last fetch.
+    this.permissionHints.update(updates.permissionHints, updates.requestedAt);
 
     if (lastRequestedAt < updates.requestedAt) {
       // Update the `lastRequestedAt` value for the room to the timestamp returned by the current request

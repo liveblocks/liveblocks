@@ -152,7 +152,7 @@ describe("authorization (new API)", () => {
           ["x", "y"]
         )
         .serializePermissions()
-    ).toThrow("Not a valid permission: x");
+    ).toThrow("Permission list cannot be empty");
   });
 
   test("permissions are additive", () => {

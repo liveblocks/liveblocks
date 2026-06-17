@@ -4,6 +4,7 @@ import { describe, expect, test } from "vitest";
 import {
   hasPermissionAccess,
   mergeRoomPermissionScopes,
+  normalizeRoomPermissions,
   Permission,
   type PermissionMatrix,
   permissionMatrixFromScopes,
@@ -85,6 +86,36 @@ const mergeRoomPermissionInputs = fc.record({
   defaultAccesses: scopeSet,
   groupsAccesses: fc.array(scopeSet, { maxLength: 4 }),
   userAccesses: scopeSet,
+});
+
+describe("normalizeRoomPermissions", () => {
+  test("keeps known permission scopes", () => {
+    expect(
+      normalizeRoomPermissions([Permission.Read, Permission.StorageWrite])
+    ).toEqual([Permission.Read, Permission.StorageWrite]);
+  });
+
+  test("filters out unknown permission scopes", () => {
+    expect(
+      normalizeRoomPermissions([
+        Permission.Read,
+        "comments:delete",
+        "future:write",
+      ])
+    ).toEqual([Permission.Read]);
+  });
+
+  test("returns an empty array when all scopes are unknown", () => {
+    expect(
+      normalizeRoomPermissions(["comments:delete", "future:write"])
+    ).toEqual([]);
+  });
+
+  test("throws when the input is not an array", () => {
+    expect(() => normalizeRoomPermissions(null as unknown as string[])).toThrow(
+      "Permission list must be an array"
+    );
+  });
 });
 
 describe("permissionMatrixFromScopes", () => {
@@ -231,6 +262,20 @@ describe("permissionMatrixFromScopes", () => {
         "org1.room1"
       )?.storage
     ).toBe("write");
+  });
+
+  test("combines matching base access by strongest level regardless of pattern specificity", () => {
+    const matrix = resolveRoomPermissionMatrix(
+      [
+        { pattern: "org1*", scopes: [Permission.Write] },
+        { pattern: "org1.room1", scopes: [Permission.Read] },
+      ],
+      "org1.room1"
+    );
+
+    expect(matrix?.room).toBe("write");
+    expect(matrix?.storage).toBe("write");
+    expect(matrix?.comments).toBe("write");
   });
 
   test("lets exact room opt-outs override wildcard defaults without clearing other resources", () => {
