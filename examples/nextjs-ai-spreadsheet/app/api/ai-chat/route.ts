@@ -22,6 +22,7 @@ import {
   sortByColumn,
 } from "@/lib/spreadsheet-server";
 import { lettersToColIndex } from "@/lib/a1";
+import type { JsonObject } from "@/liveblocks.config";
 
 /**
  * Generates an assistant reply that *edits the spreadsheet* and streams its
@@ -36,7 +37,7 @@ type ChatMessage = { role: "user" | "assistant"; content: string };
 
 type ToolDisplay = {
   name: string;
-  input: Record<string, unknown>;
+  input: JsonObject;
   output?: string;
 };
 
@@ -306,7 +307,8 @@ async function streamReply(
       toolIndexById.set(part.toolCallId, toolsDisplay.length);
       toolsDisplay.push({
         name: part.toolName,
-        input: (part.input ?? {}) as Record<string, unknown>,
+        // Tool-call args from the AI SDK are JSON-serializable by construction.
+        input: (part.input ?? {}) as JsonObject,
       });
       await flush(true);
     } else if (part.type === "tool-result") {

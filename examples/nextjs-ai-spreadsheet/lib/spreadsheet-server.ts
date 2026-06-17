@@ -1,7 +1,7 @@
 import {
   LiveMap,
   LiveObject,
-  Liveblocks,
+  Liveblocks as LiveblocksClient,
   type CommentBody,
 } from "@liveblocks/node";
 import {
@@ -44,7 +44,7 @@ const AI_USER_INFO = {
 // --- Reading -----------------------------------------------------------------
 
 export async function readStorage(
-  liveblocks: Liveblocks,
+  liveblocks: LiveblocksClient,
   roomId: string
 ): Promise<StorageJson> {
   // The "json" format is a lossy-but-simple JSON tree (LiveMap → object,
@@ -148,7 +148,7 @@ function writeFormat(
 // --- Presence ----------------------------------------------------------------
 
 export async function showAiEditing(
-  liveblocks: Liveblocks,
+  liveblocks: LiveblocksClient,
   roomId: string,
   cell: { rowId: string; colId: string } | null
 ): Promise<void> {
@@ -161,7 +161,7 @@ export async function showAiEditing(
 }
 
 export async function hideAiEditing(
-  liveblocks: Liveblocks,
+  liveblocks: LiveblocksClient,
   roomId: string
 ): Promise<void> {
   await liveblocks.setPresence(roomId, {
@@ -174,7 +174,7 @@ export async function hideAiEditing(
 
 // Resolve the stable ids of an A1 cell from a fresh storage read, for presence.
 async function idsForA1(
-  liveblocks: Liveblocks,
+  liveblocks: LiveblocksClient,
   roomId: string,
   a1: string
 ): Promise<{ rowId: string; colId: string } | null> {
@@ -194,7 +194,7 @@ async function idsForA1(
 // --- Edit operations (used by the AI tools) ----------------------------------
 
 export async function setCellValue(
-  liveblocks: Liveblocks,
+  liveblocks: LiveblocksClient,
   roomId: string,
   a1: string,
   value: string
@@ -217,7 +217,7 @@ export async function setCellValue(
 }
 
 export async function setRangeValues(
-  liveblocks: Liveblocks,
+  liveblocks: LiveblocksClient,
   roomId: string,
   startA1: string,
   rows: string[][]
@@ -247,7 +247,7 @@ export async function setRangeValues(
 }
 
 export async function clearRange(
-  liveblocks: Liveblocks,
+  liveblocks: LiveblocksClient,
   roomId: string,
   rangeA1: string
 ): Promise<string> {
@@ -270,7 +270,7 @@ export async function clearRange(
 }
 
 export async function formatCells(
-  liveblocks: Liveblocks,
+  liveblocks: LiveblocksClient,
   roomId: string,
   rangeA1: string,
   patch: Partial<CellFormat>
@@ -298,7 +298,7 @@ export async function formatCells(
 }
 
 export async function sortByColumn(
-  liveblocks: Liveblocks,
+  liveblocks: LiveblocksClient,
   roomId: string,
   column: string,
   direction: "asc" | "desc"
@@ -345,7 +345,7 @@ export async function sortByColumn(
 }
 
 export async function insertRow(
-  liveblocks: Liveblocks,
+  liveblocks: LiveblocksClient,
   roomId: string,
   atRow: number
 ): Promise<string> {
@@ -359,7 +359,7 @@ export async function insertRow(
 }
 
 export async function insertColumn(
-  liveblocks: Liveblocks,
+  liveblocks: LiveblocksClient,
   roomId: string,
   atCol: number
 ): Promise<string> {
@@ -373,7 +373,7 @@ export async function insertColumn(
 }
 
 export async function deleteRow(
-  liveblocks: Liveblocks,
+  liveblocks: LiveblocksClient,
   roomId: string,
   atRow: number
 ): Promise<string> {
@@ -396,7 +396,7 @@ export async function deleteRow(
 }
 
 export async function deleteColumn(
-  liveblocks: Liveblocks,
+  liveblocks: LiveblocksClient,
   roomId: string,
   atCol: number
 ): Promise<string> {
@@ -419,7 +419,7 @@ export async function deleteColumn(
 }
 
 export async function addComment(
-  liveblocks: Liveblocks,
+  liveblocks: LiveblocksClient,
   roomId: string,
   a1: string,
   text: string

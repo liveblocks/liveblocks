@@ -91,7 +91,7 @@ export function Toolbar() {
   const anchorFormat = useStorage(
     (root) =>
       selection
-        ? root.cells.get(cellKey(selection.anchor.rowId, selection.anchor.colId))
+        ? root.cells[cellKey(selection.anchor.rowId, selection.anchor.colId)]
             ?.format
         : undefined,
     shallow

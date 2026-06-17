@@ -63,7 +63,10 @@ export function Spreadsheet() {
 
             <div className="flex min-h-0 flex-1">
               <div className="relative min-w-0 flex-1">
-                <Table />
+                {/* Absolute fill so Handsontable gets a concrete-sized box. */}
+                <div className="absolute inset-0">
+                  <Table />
+                </div>
               </div>
               {chatOpen ? (
                 <aside className="flex w-[380px] shrink-0 flex-col border-l">

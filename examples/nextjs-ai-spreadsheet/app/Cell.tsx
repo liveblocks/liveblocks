@@ -62,8 +62,10 @@ function CellBody({
   value: unknown;
   td: HTMLTableCellElement;
 }) {
+  // `useStorage` exposes Storage in immutable form: a LiveMap reads as a plain
+  // object keyed by string, so we index it rather than call `.get()`.
   const format = useStorage(
-    (root) => root.cells.get(cellKey(rowId, colId))?.format,
+    (root) => root.cells[cellKey(rowId, colId)]?.format,
     shallow
   );
 

@@ -67,9 +67,10 @@ export function Table() {
 
   // Sparse value map → only changes when a value (not formatting) changes, so
   // the Handsontable data array isn't rebuilt on formatting/size edits.
+  // (In immutable form, the `cells` LiveMap reads as a plain object.)
   const values = useStorage((root) => {
     const out: Record<string, string> = {};
-    for (const [key, cell] of root.cells) {
+    for (const [key, cell] of Object.entries(root.cells)) {
       if (cell.value) {
         out[key] = cell.value;
       }
@@ -78,11 +79,11 @@ export function Table() {
   }, shallow);
 
   const colWidths = useStorage(
-    (root) => [...root.colIds].map((id) => root.colWidths.get(id) ?? DEFAULT_COL_WIDTH),
+    (root) => [...root.colIds].map((id) => root.colWidths[id] ?? DEFAULT_COL_WIDTH),
     shallow
   );
   const rowHeights = useStorage(
-    (root) => [...root.rowIds].map((id) => root.rowHeights.get(id) ?? DEFAULT_ROW_HEIGHT),
+    (root) => [...root.rowIds].map((id) => root.rowHeights[id] ?? DEFAULT_ROW_HEIGHT),
     shallow
   );
 
@@ -181,7 +182,12 @@ export function Table() {
   // Cancel Handsontable's own visual move and reorder the shared id list
   // instead. The grid stays a pure identity projection of Storage.
   const beforeRowMove = useCallback(
-    (movedRows: number[], finalIndex: number, _drop: number, movePossible: boolean) => {
+    (
+      movedRows: number[],
+      finalIndex: number,
+      _drop: number | undefined,
+      movePossible: boolean
+    ) => {
       if (!movePossible) {
         return;
       }
@@ -193,7 +199,12 @@ export function Table() {
   );
 
   const beforeColumnMove = useCallback(
-    (movedColumns: number[], finalIndex: number, _drop: number, movePossible: boolean) => {
+    (
+      movedColumns: number[],
+      finalIndex: number,
+      _drop: number | undefined,
+      movePossible: boolean
+    ) => {
       if (!movePossible) {
         return;
       }

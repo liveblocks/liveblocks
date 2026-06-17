@@ -31,6 +31,16 @@ export type CellData = {
   format?: CellFormat;
 };
 
+// JSON-safe value types, used for tool-call inputs stored in feed messages.
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | Json[]
+  | { [key: string]: Json };
+export type JsonObject = { [key: string]: Json };
+
 export type SelectedCell = {
   rowId: string;
   colId: string;
@@ -99,7 +109,7 @@ declare global {
       // `Tool` component.
       tools?: {
         name: string;
-        input: Record<string, unknown>;
+        input: JsonObject;
         output?: string;
       }[];
       usedTokens?: number;
