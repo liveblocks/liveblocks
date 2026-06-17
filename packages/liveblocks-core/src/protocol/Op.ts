@@ -40,8 +40,8 @@ export type TextAttributes = JsonObject;
  * ["Hello ", { bold: true }]
  */
 export type LiveTextSegment =
-  | readonly [text: string]
-  | readonly [text: string, attributes: TextAttributes];
+  | [text: string]
+  | [text: string, attributes: TextAttributes];
 
 /**
  * Serialized form of a {@link LiveText} document: an ordered list of text
@@ -51,7 +51,7 @@ export type LiveTextSegment =
  * [["Hello world"]]
  * [["Hello ", { bold: true }], ["world"]]
  */
-export type LiveTextData = readonly LiveTextSegment[];
+export type LiveTextData = LiveTextSegment[];
 
 export type TextOperation =
   | {

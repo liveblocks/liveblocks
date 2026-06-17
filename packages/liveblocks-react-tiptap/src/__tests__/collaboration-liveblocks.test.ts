@@ -1,835 +1,197 @@
-import { LiveList, LiveObject, LiveText } from "@liveblocks/client";
-import { Editor, Mark, Node } from "@tiptap/core";
+import { type AnyExtension, Editor } from "@tiptap/core";
 import Document from "@tiptap/extension-document";
 import Paragraph from "@tiptap/extension-paragraph";
 import Text from "@tiptap/extension-text";
-import { Slice } from "@tiptap/pm/model";
-import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
-import { describe, expect, test } from "vitest";
+import { Plugin, PluginKey } from "@tiptap/pm/state";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
-import {
-  LIVEBLOCKS_CARET_PLUGIN_KEY,
-  LiveblocksCollaborationCaret,
-} from "../collaboration-liveblocks/cursors";
-import { LIVEBLOCKS_COLLABORATION_PLUGIN_KEY } from "../collaboration-liveblocks/plugin";
-import {
-  applyRemoteLiveTextUpdates,
-  applyRemoteStorageUpdates,
-} from "../collaboration-liveblocks/remote";
-import {
-  createLiveblocksTiptapNode,
-  getLiveblocksNodeContent,
-  getLiveblocksNodeId,
-  getLiveblocksNodeText,
-  liveblocksTiptapNodeToJson,
-  type ProseMirrorJsonNode,
-} from "../collaboration-liveblocks/schema";
-import {
-  applyIncrementalOperations,
-  classifyTransaction,
-} from "../collaboration-liveblocks/steps";
-import type { LiveblocksTiptapRoom } from "../collaboration-liveblocks/types";
-
-const Bold = Mark.create({
-  name: "bold",
-  parseHTML: () => [{ tag: "strong" }],
-  renderHTML: () => ["strong", 0],
+const mocks = vi.hoisted(() => {
+  return {
+    createLiveblocksCollaborationPlugin: vi.fn(),
+    createLiveblocksCollaborationCaretPlugin: vi.fn(),
+  };
 });
 
-const Panel = Node.create({
-  name: "panel",
-  group: "block",
-  content: "inline*",
-  parseHTML: () => [{ tag: "section" }],
-  renderHTML: () => ["section", 0],
-});
+vi.mock("@liveblocks/prosemirror", () => {
+  return {
+    LIVEBLOCKS_COLLABORATION_PLUGIN_KEY: new PluginKey(
+      "liveblocks-collaboration"
+    ),
+    LIVEBLOCKS_CARET_PLUGIN_KEY: new PluginKey(
+      "liveblocks-collaboration-caret"
+    ),
+    createLiveblocksCollaborationPlugin:
+      mocks.createLiveblocksCollaborationPlugin,
+    createLiveblocksCollaborationCaretPlugin:
+      mocks.createLiveblocksCollaborationCaretPlugin,
+    getCursorUser(value: unknown) {
+      if (typeof value !== "object" || value === null) {
+        return undefined;
+      }
 
-function createEditor(content: string) {
-  return new Editor({
-    extensions: [Document, Paragraph, Text, Bold],
-    content,
-  });
-}
-
-function createCaretTestRoom(initialPosition = 1) {
-  let onOthersUpdate: (() => void) | undefined;
-  let presence = {
-    liveblocksTiptap: {
-      field: "default",
-      anchor: initialPosition,
-      head: initialPosition,
-      user: { name: "Ada", color: "#f00" },
+      const user = value as { name?: unknown; color?: unknown };
+      const name = typeof user.name === "string" ? user.name : undefined;
+      const color = typeof user.color === "string" ? user.color : undefined;
+      return name !== undefined || color !== undefined
+        ? { name, color }
+        : undefined;
+    },
+    presencePatch({
+      field,
+      anchor,
+      head,
+      user,
+    }: {
+      field: string;
+      anchor: number;
+      head: number;
+      user?: { name?: string; color?: string };
+    }) {
+      return {
+        liveblocksTiptap: {
+          field,
+          anchor,
+          head,
+          ...(user !== undefined ? { user } : {}),
+        },
+      };
     },
   };
+});
 
-  const room = {
+import { LiveblocksCollaborationCaret } from "../collaboration-liveblocks/cursors";
+import { LiveblocksCollaboration } from "../collaboration-liveblocks/plugin";
+
+type CollaborationPluginOptions = {
+  fallbackDocument: () => unknown;
+};
+
+function createRoom() {
+  return {
     batch(callback: () => void) {
       callback();
     },
-    getOthers() {
-      return [
-        {
-          connectionId: 1,
-          presence,
-        },
-      ];
-    },
-    getStorage: () =>
-      Promise.reject(new Error("Unexpected storage access in caret test")),
+    getOthers: () => [],
+    getStorage: () => Promise.reject(new Error("Unexpected storage access")),
     history: {
-      canUndo: () => false,
-      canRedo: () => false,
+      canUndo: vi.fn(() => true),
+      canRedo: vi.fn(() => true),
       disable: <T>(callback: () => T) => callback(),
-      undo: () => {},
-      redo: () => {},
+      undo: vi.fn(),
+      redo: vi.fn(),
     },
-    subscribe: () => () => {},
-    updatePresence: () => {},
+    subscribe: vi.fn(() => () => {}),
+    updatePresence: vi.fn(),
     events: {
       others: {
-        subscribe(callback: () => void) {
-          onOthersUpdate = callback;
-          return () => {
-            onOthersUpdate = undefined;
-          };
-        },
+        subscribe: vi.fn(() => () => {}),
       },
-    },
-  } satisfies LiveblocksTiptapRoom;
-
-  return {
-    room,
-    setRemoteCursor(position: number) {
-      presence = {
-        liveblocksTiptap: {
-          ...presence.liveblocksTiptap,
-          anchor: position,
-          head: position,
-        },
-      };
-      onOthersUpdate?.();
     },
   };
 }
 
-function getRemoteCaretWidgetPosition(editor: Editor): number | undefined {
-  return LIVEBLOCKS_CARET_PLUGIN_KEY.getState(
-    editor.state
-  )?.decorations.find()[0]?.from;
+function createEditor(extensions: AnyExtension[]) {
+  return new Editor({
+    extensions: [Document, Paragraph, Text, ...(extensions ?? [])],
+    content: "<p>Hello</p>",
+  });
 }
 
-function isProseMirrorJsonNode(value: unknown): value is ProseMirrorJsonNode {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    "type" in value &&
-    typeof value.type === "string"
-  );
-}
+describe("Liveblocks ProseMirror Tiptap adapters", () => {
+  beforeEach(() => {
+    mocks.createLiveblocksCollaborationPlugin.mockReset();
+    mocks.createLiveblocksCollaborationCaretPlugin.mockReset();
+    mocks.createLiveblocksCollaborationPlugin.mockReturnValue(new Plugin({}));
+    mocks.createLiveblocksCollaborationCaretPlugin.mockReturnValue(
+      new Plugin({})
+    );
+  });
 
-function getDocumentJson(doc: ProseMirrorNode): ProseMirrorJsonNode {
-  const json: unknown = doc.toJSON();
-  if (!isProseMirrorJsonNode(json)) {
-    throw new Error("Expected ProseMirror document JSON");
-  }
-
-  return json;
-}
-
-function getFirstTextNode(root: ReturnType<typeof createLiveblocksTiptapNode>) {
-  const docContent = getLiveblocksNodeContent(root);
-  const paragraph = docContent?.get(0);
-  const paragraphContent =
-    paragraph !== undefined ? getLiveblocksNodeContent(paragraph) : undefined;
-  return paragraphContent?.get(0);
-}
-
-describe("collaboration-liveblocks schema", () => {
-  test("round-trips a ProseMirror document through Liveblocks storage nodes", () => {
-    const document = {
+  test("passes field, initialContent, and Tiptap fallback document to the collaboration plugin", () => {
+    const room = createRoom();
+    const initialContent = {
       type: "doc",
-      content: [
-        {
-          type: "paragraph",
-          attrs: { textAlign: "left" },
-          content: [
-            {
-              type: "text",
-              text: "Hello",
-              marks: [{ type: "bold" }],
-            },
-            {
-              type: "text",
-              text: " world",
-            },
-          ],
-        },
-      ],
+      content: [{ type: "paragraph" }],
     };
+    const editor = createEditor([
+      LiveblocksCollaboration.configure({
+        room,
+        field: "custom",
+        initialContent,
+      }),
+    ]);
 
-    const storageNode = createLiveblocksTiptapNode(document);
-
-    expect(liveblocksTiptapNodeToJson(storageNode)).toEqual(document);
-  });
-
-  test("applies plain text insertion to an existing LiveText node", () => {
-    const editor = createEditor("<p>Hello</p>");
-    const oldState = editor.state;
-    const storageNode = createLiveblocksTiptapNode(
-      getDocumentJson(oldState.doc)
-    );
-    const textNode = getFirstTextNode(storageNode);
-    expect(textNode).toBeDefined();
-    const textNodeId = getLiveblocksNodeId(textNode!);
-
-    const tr = oldState.tr.insertText("!", 6);
-    const newState = oldState.apply(tr);
-    const classified = classifyTransaction(
-      [tr],
-      oldState.doc,
-      newState.doc,
-      storageNode
-    );
-
-    expect(classified.type).toBe("incremental");
-    if (classified.type === "incremental") {
-      applyIncrementalOperations(classified.operations);
-    }
-
-    const nextTextNode = getFirstTextNode(storageNode);
-    expect(nextTextNode).toBeDefined();
-    expect(getLiveblocksNodeId(nextTextNode!)).toBe(textNodeId);
-    expect(getLiveblocksNodeText(nextTextNode!)?.toString()).toBe("Hello!");
-    expect(liveblocksTiptapNodeToJson(storageNode)).toEqual(
-      newState.doc.toJSON()
-    );
-
-    editor.destroy();
-  });
-
-  test("applies text deletion to an existing LiveText node", () => {
-    const editor = createEditor("<p>Hello!</p>");
-    const oldState = editor.state;
-    const storageNode = createLiveblocksTiptapNode(
-      getDocumentJson(oldState.doc)
-    );
-    const textNode = getFirstTextNode(storageNode);
-    expect(textNode).toBeDefined();
-    const textNodeId = getLiveblocksNodeId(textNode!);
-
-    const tr = oldState.tr.delete(6, 7);
-    const newState = oldState.apply(tr);
-    const classified = classifyTransaction(
-      [tr],
-      oldState.doc,
-      newState.doc,
-      storageNode
-    );
-
-    expect(classified.type).toBe("incremental");
-    if (classified.type === "incremental") {
-      applyIncrementalOperations(classified.operations);
-    }
-
-    const nextTextNode = getFirstTextNode(storageNode);
-    expect(nextTextNode).toBeDefined();
-    expect(getLiveblocksNodeId(nextTextNode!)).toBe(textNodeId);
-    expect(getLiveblocksNodeText(nextTextNode!)?.toString()).toBe("Hello");
-    expect(liveblocksTiptapNodeToJson(storageNode)).toEqual(
-      newState.doc.toJSON()
-    );
-
-    editor.destroy();
-  });
-
-  test("applies mark changes to LiveText formatting", () => {
-    const editor = createEditor("<p>Hello</p>");
-    const oldState = editor.state;
-    const storageNode = createLiveblocksTiptapNode(
-      getDocumentJson(oldState.doc)
-    );
-    const textNode = getFirstTextNode(storageNode);
-    expect(textNode).toBeDefined();
-    const textNodeId = getLiveblocksNodeId(textNode!);
-    const bold = oldState.schema.marks.bold;
-
-    const tr = oldState.tr.addMark(1, 6, bold.create());
-    const newState = oldState.apply(tr);
-    const classified = classifyTransaction(
-      [tr],
-      oldState.doc,
-      newState.doc,
-      storageNode
-    );
-
-    expect(classified.type).toBe("incremental");
-    if (classified.type === "incremental") {
-      applyIncrementalOperations(classified.operations);
-    }
-
-    const nextTextNode = getFirstTextNode(storageNode);
-    expect(nextTextNode).toBeDefined();
-    expect(getLiveblocksNodeId(nextTextNode!)).toBe(textNodeId);
-    expect(liveblocksTiptapNodeToJson(storageNode)).toEqual(
-      newState.doc.toJSON()
-    );
-
-    editor.destroy();
-  });
-
-  test("applies local paragraph insertion to the existing LiveList", () => {
-    const editor = createEditor("<p>Hello</p>");
-    const oldState = editor.state;
-    const storageNode = createLiveblocksTiptapNode(
-      getDocumentJson(oldState.doc)
-    );
-    const content = getLiveblocksNodeContent(storageNode);
-    expect(content).toBeDefined();
-    const firstParagraph = content!.get(0);
-    expect(firstParagraph).toBeDefined();
-    const firstParagraphId = getLiveblocksNodeId(firstParagraph!);
-    const paragraphType = oldState.schema.nodes.paragraph;
-    expect(paragraphType).toBeDefined();
-    const tr = oldState.tr.insert(
-      oldState.doc.content.size,
-      paragraphType.create(undefined, oldState.schema.text("World"))
-    );
-    const newState = oldState.apply(tr);
-    const classified = classifyTransaction(
-      [tr],
-      oldState.doc,
-      newState.doc,
-      storageNode
-    );
-
-    expect(classified.type).toBe("incremental");
-    if (classified.type === "incremental") {
-      applyIncrementalOperations(classified.operations);
-    }
-
-    const nextFirstParagraph = content!.get(0);
-    expect(nextFirstParagraph).toBeDefined();
-    expect(getLiveblocksNodeId(nextFirstParagraph!)).toBe(firstParagraphId);
-    expect(liveblocksTiptapNodeToJson(storageNode)).toEqual(
-      newState.doc.toJSON()
-    );
-
-    editor.destroy();
-  });
-
-  test("applies local paragraph deletion to the existing LiveList", () => {
-    const editor = createEditor("<p>Hello</p><p>World</p>");
-    const oldState = editor.state;
-    const storageNode = createLiveblocksTiptapNode(
-      getDocumentJson(oldState.doc)
-    );
-    const from = oldState.doc.child(0).nodeSize;
-    const to = from + oldState.doc.child(1).nodeSize;
-    const tr = oldState.tr.delete(from, to);
-    const newState = oldState.apply(tr);
-    const classified = classifyTransaction(
-      [tr],
-      oldState.doc,
-      newState.doc,
-      storageNode
-    );
-
-    expect(classified.type).toBe("incremental");
-    if (classified.type === "incremental") {
-      applyIncrementalOperations(classified.operations);
-    }
-
-    expect(liveblocksTiptapNodeToJson(storageNode)).toEqual(
-      newState.doc.toJSON()
-    );
-
-    editor.destroy();
-  });
-
-  test("applies local paragraph split without replacing the document root", () => {
-    const editor = createEditor("<p>Hello</p>");
-    const oldState = editor.state;
-    const storageNode = createLiveblocksTiptapNode(
-      getDocumentJson(oldState.doc)
-    );
-    const tr = oldState.tr.split(3);
-    const newState = oldState.apply(tr);
-    const classified = classifyTransaction(
-      [tr],
-      oldState.doc,
-      newState.doc,
-      storageNode
-    );
-
-    expect(classified.type).toBe("incremental");
-    if (classified.type === "incremental") {
-      expect(classified.operations).toEqual([
-        expect.objectContaining({ type: "setNode", index: 0 }),
-        expect.objectContaining({ type: "insertNode", index: 1 }),
-      ]);
-      applyIncrementalOperations(classified.operations);
-    }
-
-    expect(liveblocksTiptapNodeToJson(storageNode)).toEqual(
-      newState.doc.toJSON()
-    );
-
-    editor.destroy();
-  });
-
-  test("applies local paragraph merge without replacing the document root", () => {
-    const editor = createEditor("<p>Hello</p><p>World</p>");
-    const oldState = editor.state;
-    const storageNode = createLiveblocksTiptapNode(
-      getDocumentJson(oldState.doc)
-    );
-    const tr = oldState.tr.join(oldState.doc.child(0).nodeSize);
-    const newState = oldState.apply(tr);
-    const classified = classifyTransaction(
-      [tr],
-      oldState.doc,
-      newState.doc,
-      storageNode
-    );
-
-    expect(classified.type).toBe("incremental");
-    if (classified.type === "incremental") {
-      expect(classified.operations).toEqual([
-        expect.objectContaining({ type: "setNode", index: 0 }),
-        expect.objectContaining({ type: "deleteNode", index: 1 }),
-      ]);
-      applyIncrementalOperations(classified.operations);
-    }
-
-    expect(liveblocksTiptapNodeToJson(storageNode)).toEqual(
-      newState.doc.toJSON()
-    );
-
-    editor.destroy();
-  });
-
-  test("applies local whole-node replacement to the existing LiveList", () => {
-    const editor = new Editor({
-      extensions: [Document, Paragraph, Text, Panel],
-      content: "<p>Hello</p>",
+    expect(mocks.createLiveblocksCollaborationPlugin).toHaveBeenCalledWith({
+      room,
+      field: "custom",
+      initialContent,
+      fallbackDocument: expect.any(Function),
     });
-    const oldState = editor.state;
-    const storageNode = createLiveblocksTiptapNode(
-      getDocumentJson(oldState.doc)
-    );
-    const panelType = oldState.schema.nodes.panel;
-    expect(panelType).toBeDefined();
-    const tr = oldState.tr.replaceWith(
-      0,
-      oldState.doc.child(0).nodeSize,
-      panelType.create(undefined, oldState.schema.text("World"))
-    );
-    const newState = oldState.apply(tr);
-    const classified = classifyTransaction(
-      [tr],
-      oldState.doc,
-      newState.doc,
-      storageNode
-    );
-
-    expect(classified.type).toBe("incremental");
-    if (classified.type === "incremental") {
-      expect(classified.operations).toEqual([
-        expect.objectContaining({ type: "setNode", index: 0 }),
-      ]);
-      applyIncrementalOperations(classified.operations);
-    }
-
-    expect(liveblocksTiptapNodeToJson(storageNode)).toEqual(
-      newState.doc.toJSON()
-    );
-
-    editor.destroy();
-  });
-
-  test("applies remote LiveList insert updates to the editor document", () => {
-    const editor = createEditor("<p>Hello</p>");
-    const storageNode = createLiveblocksTiptapNode(
-      getDocumentJson(editor.state.doc)
-    );
-    const content = getLiveblocksNodeContent(storageNode);
-    expect(content).toBeDefined();
-    const inserted = createLiveblocksTiptapNode({
-      type: "paragraph",
-      content: [{ type: "text", text: "World" }],
-    });
-
-    editor.commands.setTextSelection(3);
-    content!.insert(inserted, 1);
-    const result = applyRemoteStorageUpdates(editor.view, storageNode, [
-      {
-        type: "LiveList",
-        node: content!,
-        updates: [{ type: "insert", index: 1, item: inserted }],
-      },
-    ]);
-
-    expect(result.type).toBe("applied");
-    if (result.type === "applied") {
-      editor.view.dispatch(result.tr);
-    }
-    expect(editor.getJSON()).toEqual(liveblocksTiptapNodeToJson(storageNode));
-    expect(editor.state.selection.anchor).toBe(3);
-
-    editor.destroy();
-  });
-
-  test("applies remote LiveList delete updates to the editor document", () => {
-    const editor = createEditor("<p>Hello</p><p>World</p>");
-    const storageNode = createLiveblocksTiptapNode(
-      getDocumentJson(editor.state.doc)
-    );
-    const content = getLiveblocksNodeContent(storageNode);
-    expect(content).toBeDefined();
-    const deletedItem = content!.get(1);
-    expect(deletedItem).toBeDefined();
-
-    content!.delete(1);
-    const result = applyRemoteStorageUpdates(editor.view, storageNode, [
-      {
-        type: "LiveList",
-        node: content!,
-        updates: [{ type: "delete", index: 1, deletedItem: deletedItem! }],
-      },
-    ]);
-
-    expect(result.type).toBe("applied");
-    if (result.type === "applied") {
-      editor.view.dispatch(result.tr);
-    }
-    expect(editor.getJSON()).toEqual(liveblocksTiptapNodeToJson(storageNode));
-
-    editor.destroy();
-  });
-
-  test("applies remote LiveList set updates to the editor document", () => {
-    const editor = createEditor("<p>Hello</p><p>World</p>");
-    const storageNode = createLiveblocksTiptapNode(
-      getDocumentJson(editor.state.doc)
-    );
-    const content = getLiveblocksNodeContent(storageNode);
-    expect(content).toBeDefined();
-    const replacement = createLiveblocksTiptapNode({
-      type: "paragraph",
-      content: [{ type: "text", text: "Everyone" }],
-    });
-
-    content!.set(1, replacement);
-    const result = applyRemoteStorageUpdates(editor.view, storageNode, [
-      {
-        type: "LiveList",
-        node: content!,
-        updates: [{ type: "set", index: 1, item: replacement }],
-      },
-    ]);
-
-    expect(result.type).toBe("applied");
-    if (result.type === "applied") {
-      editor.view.dispatch(result.tr);
-    }
-    expect(editor.getJSON()).toEqual(liveblocksTiptapNodeToJson(storageNode));
-
-    editor.destroy();
-  });
-
-  test("applies remote paragraph split updates using updated positions", () => {
-    const editor = createEditor("<p>Hello</p>");
-    const storageNode = createLiveblocksTiptapNode(
-      getDocumentJson(editor.state.doc)
-    );
-    const content = getLiveblocksNodeContent(storageNode);
-    expect(content).toBeDefined();
-    const firstHalf = createLiveblocksTiptapNode({
-      type: "paragraph",
-      content: [{ type: "text", text: "He" }],
-    });
-    const secondHalf = createLiveblocksTiptapNode({
-      type: "paragraph",
-      content: [{ type: "text", text: "llo" }],
-    });
-
-    content!.set(0, firstHalf);
-    content!.insert(secondHalf, 1);
-    const result = applyRemoteStorageUpdates(editor.view, storageNode, [
-      {
-        type: "LiveList",
-        node: content!,
-        updates: [
-          { type: "set", index: 0, item: firstHalf },
-          { type: "insert", index: 1, item: secondHalf },
-        ],
-      },
-    ]);
-
-    expect(result.type).toBe("applied");
-    if (result.type === "applied") {
-      editor.view.dispatch(result.tr);
-    }
-    expect(editor.getJSON()).toEqual(liveblocksTiptapNodeToJson(storageNode));
-
-    editor.destroy();
-  });
-
-  test("applies remote LiveText insert updates to the editor document", () => {
-    const editor = createEditor("<p>Hello</p>");
-    const storageNode = createLiveblocksTiptapNode(
-      getDocumentJson(editor.state.doc)
-    );
-    const textNode = getFirstTextNode(storageNode);
-    expect(textNode).toBeDefined();
-    const text = getLiveblocksNodeText(textNode!);
-    expect(text).toBeDefined();
-
-    text!.insert(5, "!");
-    const result = applyRemoteLiveTextUpdates(editor.view, storageNode, [
-      {
-        type: "LiveText",
-        node: text!,
-        version: text!.version,
-        updates: [{ type: "insert", index: 5, text: "!" }],
-      },
-    ]);
-
-    expect(result.type).toBe("applied");
-    if (result.type === "applied") {
-      editor.view.dispatch(result.tr);
-    }
-    expect(editor.getJSON()).toEqual(liveblocksTiptapNodeToJson(storageNode));
-
-    editor.destroy();
-  });
-
-  test("applies remote LiveText delete updates to the editor document", () => {
-    const editor = createEditor("<p>Hello!</p>");
-    const storageNode = createLiveblocksTiptapNode(
-      getDocumentJson(editor.state.doc)
-    );
-    const textNode = getFirstTextNode(storageNode);
-    expect(textNode).toBeDefined();
-    const text = getLiveblocksNodeText(textNode!);
-    expect(text).toBeDefined();
-
-    text!.delete(5, 1);
-    const result = applyRemoteLiveTextUpdates(editor.view, storageNode, [
-      {
-        type: "LiveText",
-        node: text!,
-        version: text!.version,
-        updates: [{ type: "delete", index: 5, length: 1, deletedText: "!" }],
-      },
-    ]);
-
-    expect(result.type).toBe("applied");
-    if (result.type === "applied") {
-      editor.view.dispatch(result.tr);
-    }
-    expect(editor.getJSON()).toEqual(liveblocksTiptapNodeToJson(storageNode));
-
-    editor.destroy();
-  });
-
-  test("applies remote LiveText delete when clearing the entire text node", () => {
-    const editor = createEditor(
-      "<p>Hello from LiveText-backed Tiptap.</p>"
-    );
-    const storageNode = createLiveblocksTiptapNode(
-      getDocumentJson(editor.state.doc)
-    );
-    const textNode = getFirstTextNode(storageNode);
-    expect(textNode).toBeDefined();
-    const text = getLiveblocksNodeText(textNode!);
-    expect(text).toBeDefined();
-
-    const deletedLength = text!.length;
-    text!.delete(0, deletedLength);
-
-    const result = applyRemoteLiveTextUpdates(editor.view, storageNode, [
-      {
-        type: "LiveText",
-        node: text!,
-        version: text!.version,
-        updates: [
-          {
-            type: "delete",
-            index: 0,
-            length: deletedLength,
-            deletedText: "Hello from LiveText-backed Tiptap.",
-          },
-        ],
-      },
-    ]);
-    expect(result.type).toBe("applied");
-    if (result.type === "applied") {
-      editor.view.dispatch(result.tr);
-    }
-    expect(editor.getJSON()).toEqual(liveblocksTiptapNodeToJson(storageNode));
-
-    editor.destroy();
-  });
-
-  test("falls back safely when remote updates delete all formatted text", () => {
-    const editor = createEditor("<p><strong>Hello</strong> world</p>");
-    const storageNode = createLiveblocksTiptapNode(
-      getDocumentJson(editor.state.doc)
-    );
-    const paragraph = getLiveblocksNodeContent(storageNode)?.get(0);
-    const paragraphContent = paragraph
-      ? getLiveblocksNodeContent(paragraph)
-      : undefined;
-
-    for (let index = 0; index < (paragraphContent?.length ?? 0); index++) {
-      const textNode = paragraphContent?.get(index);
-      const text = textNode ? getLiveblocksNodeText(textNode) : undefined;
-      text?.delete(0, text.length);
-    }
-
-    const document = liveblocksTiptapNodeToJson(storageNode);
-    expect(document).toEqual({
+    const options = mocks.createLiveblocksCollaborationPlugin.mock
+      .calls[0]?.[0] as CollaborationPluginOptions | undefined;
+    expect(options?.fallbackDocument()).toEqual({
       type: "doc",
       content: [{ type: "paragraph" }],
     });
 
-    const view = editor.view;
-    const nextDocument = view.state.schema.nodeFromJSON(document);
-    const diffStart = view.state.doc.content.findDiffStart(nextDocument.content);
-    expect(diffStart).not.toBeNull();
+    editor.destroy();
+  });
 
-    const diffEnd = view.state.doc.content.findDiffEnd(nextDocument.content);
-    expect(() => {
-      const tr =
-        diffEnd === null
-          ? view.state.tr.replace(
-              0,
-              view.state.doc.content.size,
-              new Slice(nextDocument.content, 0, 0)
-            )
-          : view.state.tr.replace(
-              diffStart!,
-              diffEnd.a,
-              nextDocument.slice(diffStart!, diffEnd.b)
-            );
-      view.dispatch(tr);
-    }).not.toThrow();
-    expect(editor.getJSON()).toEqual(document);
+  test("keeps undo and redo wired to Liveblocks room history", () => {
+    const room = createRoom();
+    const editor = createEditor([
+      LiveblocksCollaboration.configure({ room }),
+    ]);
+
+    expect(editor.commands.undo()).toBe(true);
+    expect(room.history.undo).toHaveBeenCalledTimes(1);
+
+    expect(editor.commands.redo()).toBe(true);
+    expect(room.history.redo).toHaveBeenCalledTimes(1);
 
     editor.destroy();
   });
 
-  test("applies remote LiveText delete when clearing multi-segment formatted text", () => {
-    const editor = createEditor("<p><strong>Hello</strong> world</p>");
-    const text = new LiveText([
-      ["Hello", { __liveblocks_tiptap_marks: [{ type: "bold" }] }],
-      [" world"],
+  test("passes caret options and storage to the extracted caret plugin", () => {
+    const room = createRoom();
+    const editor = createEditor([
+      LiveblocksCollaborationCaret.configure({
+        room,
+        field: "custom",
+        user: { name: "Ada", color: "#f00" },
+      }),
     ]);
-    const storageNode = new LiveObject({
-      id: "doc",
-      type: "doc",
-      content: new LiveList([
-        new LiveObject({
-          id: "paragraph",
-          type: "paragraph",
-          content: new LiveList([
-            new LiveObject({
-              id: "text",
-              type: "text",
-              text,
-            }),
-          ]),
-        }),
-      ]),
-    }) as unknown as ReturnType<typeof createLiveblocksTiptapNode>;
 
-    const deletedLength = text.length;
-    text.delete(0, deletedLength);
+    expect(mocks.createLiveblocksCollaborationCaretPlugin).toHaveBeenCalledWith(
+      expect.objectContaining({
+        room,
+        field: "custom",
+        user: { name: "Ada", color: "#f00" },
+      }),
+      expect.objectContaining({ users: [] })
+    );
 
-    const result = applyRemoteLiveTextUpdates(editor.view, storageNode, [
-      {
-        type: "LiveText",
-        node: text,
-        version: text.version,
-        updates: [
-          {
-            type: "delete",
-            index: 0,
-            length: deletedLength,
-            deletedText: "Hello world",
-          },
-        ],
+    editor.destroy();
+  });
+
+  test("keeps updateUser wired to Liveblocks presence", () => {
+    const room = createRoom();
+    const editor = createEditor([
+      LiveblocksCollaborationCaret.configure({ room }),
+    ]);
+
+    expect(editor.commands.updateUser({ name: "Ada", color: "#f00" })).toBe(
+      true
+    );
+    expect(room.updatePresence).toHaveBeenCalledWith({
+      liveblocksTiptap: {
+        field: "default",
+        anchor: 1,
+        head: 1,
+        user: { name: "Ada", color: "#f00" },
       },
-    ]);
-
-    expect(result.type).toBe("applied");
-    if (result.type === "applied") {
-      editor.view.dispatch(result.tr);
-    }
-    expect(editor.getJSON()).toEqual(liveblocksTiptapNodeToJson(storageNode));
-
-    editor.destroy();
-  });
-
-  test("falls back safely when remote updates delete the last paragraph", () => {
-    const editor = createEditor(
-      "<p>Hello from LiveText-backed Tiptap.</p>"
-    );
-    const storageNode = createLiveblocksTiptapNode(
-      getDocumentJson(editor.state.doc)
-    );
-    const content = getLiveblocksNodeContent(storageNode);
-    expect(content).toBeDefined();
-
-    content!.delete(0);
-    const document = liveblocksTiptapNodeToJson(storageNode);
-    expect(document).toEqual({
-      type: "doc",
-      content: [{ type: "paragraph" }],
     });
-
-    const view = editor.view;
-    const nextDocument = view.state.schema.nodeFromJSON(document);
-
-    expect(() => {
-      view.dispatch(
-        view.state.tr.replace(
-          0,
-          view.state.doc.content.size,
-          new Slice(nextDocument.content, 0, 0)
-        )
-      );
-    }).not.toThrow();
-
-    editor.destroy();
-  });
-
-  test("renders stale end-of-paragraph carets inside the previous text block", () => {
-    const { room, setRemoteCursor } = createCaretTestRoom(6);
-    const editor = new Editor({
-      extensions: [
-        Document,
-        Paragraph,
-        Text,
-        LiveblocksCollaborationCaret.configure({ room }),
-      ],
-      content: "<p>Hello!</p><p>World</p>",
-    });
-
-    setRemoteCursor(7);
-    editor.view.dispatch(
-      editor.state.tr
-        .delete(6, 7)
-        .setMeta(LIVEBLOCKS_COLLABORATION_PLUGIN_KEY, { isRemote: true })
-    );
-
-    expect(
-      LIVEBLOCKS_CARET_PLUGIN_KEY.getState(editor.state)?.cursors[0]?.head
-    ).toBe(7);
-    expect(getRemoteCaretWidgetPosition(editor)).toBe(6);
 
     editor.destroy();
   });
 });
-

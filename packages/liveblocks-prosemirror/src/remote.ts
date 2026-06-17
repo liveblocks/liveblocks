@@ -5,9 +5,9 @@ import {
   LiveText,
   type StorageUpdate,
 } from "@liveblocks/client";
-import { Fragment, type MarkType, type Schema, Slice } from "@tiptap/pm/model";
-import type { Transaction } from "@tiptap/pm/state";
-import type { EditorView } from "@tiptap/pm/view";
+import { Fragment, type MarkType, type Schema, Slice } from "prosemirror-model";
+import type { Transaction } from "prosemirror-state";
+import type { EditorView } from "prosemirror-view";
 
 import {
   buildLiveblocksTreeIndex,
@@ -18,9 +18,9 @@ import {
 } from "./mapping";
 import {
   attributesToMarks,
-  type LiveblocksTiptapNode,
   getLiveblocksNodeText,
-  liveblocksTiptapNodeToJsonNodes,
+  type LiveblocksProsemirrorNode,
+  liveblocksProsemirrorNodeToJsonNodes,
 } from "./schema";
 
 type RemoteApplyResult =
@@ -40,7 +40,7 @@ function isJsonObject(value: unknown): value is JsonObject {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function isLiveblocksTiptapNode(value: unknown): value is LiveblocksTiptapNode {
+function isLiveblocksProsemirrorNode(value: unknown): value is LiveblocksProsemirrorNode {
   return (
     value instanceof LiveObject &&
     typeof value.get("id") === "string" &&
@@ -49,7 +49,7 @@ function isLiveblocksTiptapNode(value: unknown): value is LiveblocksTiptapNode {
 }
 
 function getLiveblocksNodeAttrs(
-  node: LiveblocksTiptapNode
+  node: LiveblocksProsemirrorNode
 ): JsonObject | undefined {
   const attrs = node.get("attrs");
   return isJsonObject(attrs) ? attrs : undefined;
@@ -57,9 +57,9 @@ function getLiveblocksNodeAttrs(
 
 function createSliceFromLiveblocksNode(
   schema: Schema,
-  node: LiveblocksTiptapNode
+  node: LiveblocksProsemirrorNode
 ): Slice {
-  const nodes = liveblocksTiptapNodeToJsonNodes(node).map((jsonNode) =>
+  const nodes = liveblocksProsemirrorNodeToJsonNodes(node).map((jsonNode) =>
     schema.nodeFromJSON(jsonNode)
   );
 
@@ -98,7 +98,7 @@ function findNodeRangeForLiveText(
 
 export function applyRemoteStorageUpdates(
   view: EditorView,
-  liveRoot: LiveblocksTiptapNode,
+  liveRoot: LiveblocksProsemirrorNode,
   updates: readonly StorageUpdate[]
 ): RemoteApplyResult {
   if (updates.length === 0) {
@@ -115,7 +115,7 @@ export function applyRemoteStorageUpdates(
 
       for (const change of update.updates) {
         const index = buildLiveblocksTreeIndex(tr.doc, liveRoot);
-        let range = findTextRangeByLiveText(index, update.node);
+        const range = findTextRangeByLiveText(index, update.node);
 
         if (range === undefined && change.type === "delete") {
           const wrapperRange = findNodeRangeForLiveText(index, update.node);
@@ -170,7 +170,7 @@ export function applyRemoteStorageUpdates(
         }
 
         if (change.type === "insert") {
-          if (!isLiveblocksTiptapNode(change.item)) {
+          if (!isLiveblocksProsemirrorNode(change.item)) {
             return { type: "unsupported" };
           }
 
@@ -197,7 +197,7 @@ export function applyRemoteStorageUpdates(
 
           tr = tr.delete(from, to);
         } else if (change.type === "set") {
-          if (!isLiveblocksTiptapNode(change.item)) {
+          if (!isLiveblocksProsemirrorNode(change.item)) {
             return { type: "unsupported" };
           }
 
@@ -217,7 +217,7 @@ export function applyRemoteStorageUpdates(
             createSliceFromLiveblocksNode(view.state.schema, change.item)
           );
         } else {
-          if (!isLiveblocksTiptapNode(change.item)) {
+          if (!isLiveblocksProsemirrorNode(change.item)) {
             return { type: "unsupported" };
           }
 
@@ -260,7 +260,7 @@ export function applyRemoteStorageUpdates(
     }
 
     if (update.type === "LiveObject") {
-      if (!isLiveblocksTiptapNode(update.node)) {
+      if (!isLiveblocksProsemirrorNode(update.node)) {
         return { type: "unsupported" };
       }
 
@@ -292,7 +292,7 @@ export function applyRemoteStorageUpdates(
 
 export function applyRemoteLiveTextUpdates(
   view: EditorView,
-  liveRoot: LiveblocksTiptapNode,
+  liveRoot: LiveblocksProsemirrorNode,
   updates: readonly StorageUpdate[]
 ): RemoteApplyResult {
   if (!updates.every((update) => update.type === "LiveText")) {

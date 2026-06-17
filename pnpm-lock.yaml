@@ -680,6 +680,61 @@ importers:
         specifier: ^13.6.27
         version: 13.6.27
 
+  packages/liveblocks-prosemirror:
+    dependencies:
+      '@liveblocks/client':
+        specifier: workspace:*
+        version: link:../liveblocks-client
+      '@liveblocks/core':
+        specifier: workspace:*
+        version: link:../liveblocks-core
+    devDependencies:
+      '@liveblocks/eslint-config':
+        specifier: workspace:*
+        version: link:../../shared/eslint-config
+      '@liveblocks/rollup-config':
+        specifier: workspace:*
+        version: link:../../shared/rollup-config
+      '@liveblocks/vitest-config':
+        specifier: workspace:*
+        version: link:../../shared/vitest-config
+      '@tiptap/core':
+        specifier: ^3.22.3
+        version: 3.22.3(@tiptap/pm@3.22.3)
+      '@tiptap/extension-document':
+        specifier: ^3.22.3
+        version: 3.22.3(@tiptap/core@3.22.3(@tiptap/pm@3.22.3))
+      '@tiptap/extension-paragraph':
+        specifier: ^3.22.3
+        version: 3.22.3(@tiptap/core@3.22.3(@tiptap/pm@3.22.3))
+      '@tiptap/extension-text':
+        specifier: ^3.22.3
+        version: 3.22.3(@tiptap/core@3.22.3(@tiptap/pm@3.22.3))
+      '@tiptap/pm':
+        specifier: ^3.22.3
+        version: 3.22.3
+      eslint:
+        specifier: ^9.39.4
+        version: 9.39.4(jiti@2.6.1)
+      prosemirror-model:
+        specifier: ^1.25.4
+        version: 1.25.4
+      prosemirror-state:
+        specifier: ^1.4.4
+        version: 1.4.4
+      prosemirror-view:
+        specifier: ^1.41.6
+        version: 1.41.6
+      rollup:
+        specifier: 3.28.1
+        version: 3.28.1
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.4
+        version: 4.1.4(@types/node@24.12.2)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@24.12.2)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
+
   packages/liveblocks-react:
     dependencies:
       '@liveblocks/client':
@@ -998,6 +1053,9 @@ importers:
       '@liveblocks/core':
         specifier: workspace:*
         version: link:../liveblocks-core
+      '@liveblocks/prosemirror':
+        specifier: workspace:*
+        version: link:../liveblocks-prosemirror
       '@liveblocks/react':
         specifier: workspace:*
         version: link:../liveblocks-react

@@ -5,7 +5,7 @@ import type {
   StorageUpdate,
 } from "@liveblocks/client";
 
-export type LiveblocksTiptapRoom = {
+export type LiveblocksProsemirrorRoom = {
   batch(callback: () => void): void;
   getOthers(): readonly {
     connectionId: number;

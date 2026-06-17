@@ -1,6 +1,6 @@
 import { type JsonObject, type LiveList, LiveText } from "@liveblocks/client";
-import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
-import type { Transaction } from "@tiptap/pm/state";
+import type { Node as ProseMirrorNode } from "prosemirror-model";
+import type { Transaction } from "prosemirror-state";
 
 import {
   buildLiveblocksTreeIndex,
@@ -9,9 +9,9 @@ import {
   type LiveblocksTreeIndex,
 } from "./mapping";
 import {
-  createLiveblocksTiptapNode,
+  createLiveblocksProsemirrorNode,
   getLiveblocksNodeContent,
-  type LiveblocksTiptapNode,
+  type LiveblocksProsemirrorNode,
   marksToAttributes,
   marksToAttributesPatch,
   type ProseMirrorJsonMark,
@@ -25,42 +25,42 @@ export type IncrementalOperation =
       text: string;
       index: number;
       attributes?: ReturnType<typeof marksToAttributes>;
-      node: LiveblocksTiptapNode;
+      node: LiveblocksProsemirrorNode;
     }
   | {
       type: "delete";
       index: number;
       length: number;
-      node: LiveblocksTiptapNode;
+      node: LiveblocksProsemirrorNode;
     }
   | {
       type: "format";
       index: number;
       length: number;
       attributes: ReturnType<typeof marksToAttributesPatch>;
-      node: LiveblocksTiptapNode;
+      node: LiveblocksProsemirrorNode;
     }
   | {
       type: "insertNode";
-      content: LiveList<LiveblocksTiptapNode>;
+      content: LiveList<LiveblocksProsemirrorNode>;
       index: number;
-      node: LiveblocksTiptapNode;
+      node: LiveblocksProsemirrorNode;
     }
   | {
       type: "deleteNode";
-      content: LiveList<LiveblocksTiptapNode>;
+      content: LiveList<LiveblocksProsemirrorNode>;
       index: number;
     }
   | {
       type: "setNode";
-      content: LiveList<LiveblocksTiptapNode>;
+      content: LiveList<LiveblocksProsemirrorNode>;
       index: number;
-      node: LiveblocksTiptapNode;
+      node: LiveblocksProsemirrorNode;
     }
   | {
       type: "updateAttrs";
       attrs: JsonObject | undefined;
-      node: LiveblocksTiptapNode;
+      node: LiveblocksProsemirrorNode;
     };
 
 export type ClassifiedTransaction =
@@ -222,7 +222,7 @@ function getTextContentFromSlice(
 function classifyReplaceStep(
   step: ReplaceStepJson,
   oldDoc: ProseMirrorNode,
-  liveRoot: LiveblocksTiptapNode
+  liveRoot: LiveblocksProsemirrorNode
 ): IncrementalOperation[] | undefined {
   const inserted = getTextContentFromSlice(step.slice);
   if (inserted === undefined) {
@@ -337,7 +337,7 @@ function classifyMarkStep(
 
 function createNodeOperation(
   type: "insertNode" | "setNode",
-  content: LiveList<LiveblocksTiptapNode>,
+  content: LiveList<LiveblocksProsemirrorNode>,
   index: number,
   node: ProseMirrorNode
 ): IncrementalOperation | undefined {
@@ -350,14 +350,14 @@ function createNodeOperation(
     type,
     content,
     index,
-    node: createLiveblocksTiptapNode(jsonNode),
+    node: createLiveblocksProsemirrorNode(jsonNode),
   };
 }
 
 function classifyAttrsChange(
   oldNode: ProseMirrorNode,
   newNode: ProseMirrorNode,
-  liveNode: LiveblocksTiptapNode
+  liveNode: LiveblocksProsemirrorNode
 ): IncrementalOperation[] | undefined {
   if (
     oldNode.isText ||
@@ -413,7 +413,7 @@ function findCommonSuffix(
 function classifyChildrenChange(
   oldParent: ProseMirrorNode,
   newParent: ProseMirrorNode,
-  liveParent: LiveblocksTiptapNode
+  liveParent: LiveblocksProsemirrorNode
 ): IncrementalOperation[] | undefined {
   const content = getLiveblocksNodeContent(liveParent);
   if (content === undefined) {
@@ -527,7 +527,7 @@ function classifyChildrenChange(
 function classifyNodeChange(
   oldNode: ProseMirrorNode,
   newNode: ProseMirrorNode,
-  liveNode: LiveblocksTiptapNode
+  liveNode: LiveblocksProsemirrorNode
 ): IncrementalOperation[] | undefined {
   const attrOperations = classifyAttrsChange(oldNode, newNode, liveNode) ?? [];
   const childOperations =
@@ -542,7 +542,7 @@ function classifyNodeChange(
 function classifyStructuralChange(
   oldDoc: ProseMirrorNode,
   newDoc: ProseMirrorNode,
-  liveRoot: LiveblocksTiptapNode
+  liveRoot: LiveblocksProsemirrorNode
 ): IncrementalOperation[] | undefined {
   return classifyNodeChange(oldDoc, newDoc, liveRoot);
 }
@@ -551,7 +551,7 @@ export function classifyTransaction(
   transactions: readonly Transaction[],
   oldDoc: ProseMirrorNode,
   newDoc: ProseMirrorNode,
-  liveRoot: LiveblocksTiptapNode
+  liveRoot: LiveblocksProsemirrorNode
 ): ClassifiedTransaction {
   const changedTransactions = transactions.filter(
     (transaction) => transaction.docChanged

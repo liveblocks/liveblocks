@@ -1,23 +1,23 @@
 import type { LiveList, LiveText } from "@liveblocks/client";
-import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
-import type { Selection } from "@tiptap/pm/state";
+import type { Node as ProseMirrorNode } from "prosemirror-model";
+import type { Selection } from "prosemirror-state";
 
 import {
   getLiveblocksNodeContent,
   getLiveblocksNodeId,
   getLiveblocksNodeText,
   getLiveblocksNodeType,
-  type LiveblocksTiptapNode,
+  type LiveblocksProsemirrorNode,
 } from "./schema";
 
-export type LiveblocksTiptapPosition = {
+export type LiveblocksProsemirrorPosition = {
   anchor: number;
   head: number;
 };
 
 export function selectionToLiveblocksPosition(
   selection: Selection
-): LiveblocksTiptapPosition {
+): LiveblocksProsemirrorPosition {
   return {
     anchor: selection.anchor,
     head: selection.head,
@@ -25,9 +25,9 @@ export function selectionToLiveblocksPosition(
 }
 
 export function clampLiveblocksPosition(
-  position: LiveblocksTiptapPosition,
+  position: LiveblocksProsemirrorPosition,
   max: number
-): LiveblocksTiptapPosition {
+): LiveblocksProsemirrorPosition {
   return {
     anchor: Math.max(0, Math.min(position.anchor, max)),
     head: Math.max(0, Math.min(position.head, max)),
@@ -38,26 +38,26 @@ export type LiveblocksTextRange = {
   from: number;
   to: number;
   liveOffset: number;
-  node: LiveblocksTiptapNode;
+  node: LiveblocksProsemirrorNode;
   nodeId: string;
   text: LiveText;
 };
 
 export type LiveblocksNodeRange = {
   childIndex?: number;
-  content?: LiveList<LiveblocksTiptapNode>;
+  content?: LiveList<LiveblocksProsemirrorNode>;
   from: number;
-  node: LiveblocksTiptapNode;
+  node: LiveblocksProsemirrorNode;
   nodeId: string;
-  parent?: LiveblocksTiptapNode;
+  parent?: LiveblocksProsemirrorNode;
   pmNode: ProseMirrorNode;
   to: number;
 };
 
 export type LiveblocksListRange = {
-  content: LiveList<LiveblocksTiptapNode>;
+  content: LiveList<LiveblocksProsemirrorNode>;
   from: number;
-  node: LiveblocksTiptapNode;
+  node: LiveblocksProsemirrorNode;
   nodeId: string;
   pmNode: ProseMirrorNode;
   to: number;
@@ -78,7 +78,7 @@ function indexChildren(
   listRanges: LiveblocksListRange[],
   textRanges: LiveblocksTextRange[],
   pmParent: ProseMirrorNode,
-  liveParent: LiveblocksTiptapNode,
+  liveParent: LiveblocksProsemirrorNode,
   parentPos: number
 ): void {
   const liveContent = getLiveblocksNodeContent(liveParent);
@@ -169,7 +169,7 @@ function indexChildren(
 
 export function buildLiveblocksTreeIndex(
   pmDoc: ProseMirrorNode,
-  liveRoot: LiveblocksTiptapNode
+  liveRoot: LiveblocksProsemirrorNode
 ): LiveblocksTreeIndex {
   const nodeRanges: LiveblocksNodeRange[] = [
     {
@@ -197,7 +197,7 @@ export function findTextRangeAtPosition(
 
 function findTextRangeAtPositionInChildren(
   pmParent: ProseMirrorNode,
-  liveParent: LiveblocksTiptapNode,
+  liveParent: LiveblocksProsemirrorNode,
   parentPos: number,
   position: number
 ): LiveblocksTextRange | undefined {
@@ -275,7 +275,7 @@ function findTextRangeAtPositionInChildren(
 
 export function findTextRangeAtPositionInDocument(
   pmDoc: ProseMirrorNode,
-  liveRoot: LiveblocksTiptapNode,
+  liveRoot: LiveblocksProsemirrorNode,
   position: number
 ): LiveblocksTextRange | undefined {
   return findTextRangeAtPositionInChildren(pmDoc, liveRoot, 0, position);
@@ -300,7 +300,7 @@ export function findTextRangeByLiveText(
 
 export function findNodeRangeByLiveNode(
   index: LiveblocksTreeIndex,
-  node: LiveblocksTiptapNode
+  node: LiveblocksProsemirrorNode
 ): LiveblocksNodeRange | undefined {
   return index.nodeRanges.find((range) => range.node === node);
 }

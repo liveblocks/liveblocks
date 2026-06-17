@@ -1,29 +1,18 @@
-import type { LsonObject, StorageUpdate } from "@liveblocks/client";
-import { LiveObject } from "@liveblocks/client";
+import {
+  createLiveblocksCollaborationPlugin,
+  LIVEBLOCKS_COLLABORATION_PLUGIN_KEY,
+  type LiveblocksProsemirrorRoom,
+  type ProseMirrorJsonNode,
+} from "@liveblocks/prosemirror";
 import type { Content } from "@tiptap/core";
 import { Extension } from "@tiptap/core";
-import { Slice } from "@tiptap/pm/model";
-import { Plugin, PluginKey } from "@tiptap/pm/state";
-import type { EditorView } from "@tiptap/pm/view";
 
-import { applyRemoteStorageUpdates } from "./remote";
-import {
-  createDefaultDocument,
-  createLiveblocksTiptapNode,
-  type LiveblocksTiptapNode,
-  liveblocksTiptapNodeToJson,
-  type ProseMirrorJsonNode,
-  stringifyDocument,
-} from "./schema";
-import { applyIncrementalOperations, classifyTransaction } from "./steps";
-import type { LiveblocksTiptapRoom } from "./types";
+import { createDefaultDocument } from "./schema";
 
-export const LIVEBLOCKS_COLLABORATION_PLUGIN_KEY = new PluginKey<{
-  isReady: boolean;
-}>("liveblocks-collaboration");
+export { LIVEBLOCKS_COLLABORATION_PLUGIN_KEY };
 
 type LiveblocksCollaborationOptions = {
-  room?: LiveblocksTiptapRoom;
+  room?: LiveblocksProsemirrorRoom;
   field: string;
   initialContent?: Content;
 };
@@ -38,251 +27,6 @@ function isProseMirrorJsonNode(value: unknown): value is ProseMirrorJsonNode {
     value !== null &&
     typeof (value as { type?: unknown }).type === "string"
   );
-}
-
-function getInitialDocument(
-  initialContent: Content | undefined,
-  view: EditorView
-): ProseMirrorJsonNode {
-  if (isProseMirrorJsonNode(initialContent)) {
-    return initialContent;
-  }
-
-  const currentDocument: unknown = view.state.doc.toJSON();
-  if (isProseMirrorJsonNode(currentDocument)) {
-    return currentDocument;
-  }
-
-  return createDefaultDocument();
-}
-
-function replaceEditorDocument(
-  view: EditorView,
-  document: ProseMirrorJsonNode
-): void {
-  let nextDocument;
-  try {
-    nextDocument = view.state.schema.nodeFromJSON(document);
-  } catch {
-    nextDocument = view.state.schema.nodeFromJSON(createDefaultDocument());
-  }
-
-  if (nextDocument.childCount === 0) {
-    nextDocument = view.state.schema.nodeFromJSON(createDefaultDocument());
-  }
-
-  const tr = view.state.tr.replace(
-    0,
-    view.state.doc.content.size,
-    new Slice(nextDocument.content, 0, 0)
-  );
-
-  tr.setMeta(LIVEBLOCKS_COLLABORATION_PLUGIN_KEY, { isRemote: true }).setMeta(
-    "addToHistory",
-    false
-  );
-
-  view.dispatch(tr);
-}
-
-function getDocumentRoot(
-  root: LiveObject<LsonObject>,
-  field: string
-): LiveblocksTiptapNode | undefined {
-  const documentRoot = root.get(field);
-  if (!(documentRoot instanceof LiveObject)) {
-    return undefined;
-  }
-
-  return documentRoot as LiveblocksTiptapNode;
-}
-
-function setDocumentRoot(
-  root: LiveObject<LsonObject>,
-  field: string,
-  document: ProseMirrorJsonNode
-): void {
-  root.set(field, createLiveblocksTiptapNode(document));
-}
-
-function createLiveblocksCollaborationPlugin(
-  options: LiveblocksCollaborationOptions
-): Plugin {
-  const room = options.room;
-  if (room === undefined) {
-    throw new Error(
-      "[Liveblocks] The Liveblocks collaboration plugin requires a room."
-    );
-  }
-
-  let view: EditorView | undefined;
-  let root: LiveObject<LsonObject> | undefined;
-  let unsubscribe: (() => void) | undefined;
-  let destroyed = false;
-  let isApplyingRemoteUpdate = false;
-  let isApplyingLocalUpdate = false;
-  let lastDocument = "";
-
-  const applyStorageToEditor = (updates?: StorageUpdate[]) => {
-    if (view === undefined || root === undefined) {
-      return;
-    }
-
-    const documentRoot = getDocumentRoot(root, options.field);
-    if (documentRoot === undefined) {
-      return;
-    }
-
-    if (isApplyingLocalUpdate) {
-      return;
-    }
-
-    const document = liveblocksTiptapNodeToJson(documentRoot);
-    const serializedDocument = stringifyDocument(document);
-
-    if (serializedDocument === lastDocument) {
-      return;
-    }
-
-    if (updates !== undefined) {
-      const result = applyRemoteStorageUpdates(view, documentRoot, updates);
-      if (result.type === "applied") {
-        lastDocument = serializedDocument;
-        isApplyingRemoteUpdate = true;
-        try {
-          view.dispatch(
-            result.tr
-              .setMeta(LIVEBLOCKS_COLLABORATION_PLUGIN_KEY, { isRemote: true })
-              .setMeta("addToHistory", false)
-          );
-        } finally {
-          isApplyingRemoteUpdate = false;
-        }
-        return;
-      }
-    }
-
-    lastDocument = serializedDocument;
-    isApplyingRemoteUpdate = true;
-    try {
-      replaceEditorDocument(view, document);
-    } finally {
-      isApplyingRemoteUpdate = false;
-    }
-  };
-
-  return new Plugin({
-    key: LIVEBLOCKS_COLLABORATION_PLUGIN_KEY,
-    state: {
-      init: () => ({ isReady: false }),
-      apply(tr, state) {
-        const meta = tr.getMeta(LIVEBLOCKS_COLLABORATION_PLUGIN_KEY) as
-          | { isReady?: boolean }
-          | undefined;
-
-        return meta?.isReady !== undefined
-          ? { ...state, isReady: meta.isReady }
-          : state;
-      },
-    },
-    appendTransaction(transactions, oldState, newState) {
-      if (
-        root === undefined ||
-        isApplyingRemoteUpdate ||
-        !transactions.some((transaction) => transaction.docChanged) ||
-        transactions.some((transaction) =>
-          Boolean(transaction.getMeta(LIVEBLOCKS_COLLABORATION_PLUGIN_KEY))
-        )
-      ) {
-        return null;
-      }
-
-      const currentRoot = root;
-
-      const documentRoot = getDocumentRoot(currentRoot, options.field);
-      const classified =
-        documentRoot !== undefined
-          ? classifyTransaction(
-              transactions,
-              oldState.doc,
-              newState.doc,
-              documentRoot
-            )
-          : { type: "unsupported" as const };
-
-      room.batch(() => {
-        if (classified.type === "incremental") {
-          isApplyingLocalUpdate = true;
-          try {
-            applyIncrementalOperations(classified.operations);
-          } finally {
-            isApplyingLocalUpdate = false;
-          }
-        } else {
-          const document: unknown = newState.doc.toJSON();
-          if (!isProseMirrorJsonNode(document)) {
-            return;
-          }
-
-          const serializedDocument = stringifyDocument(document);
-          if (serializedDocument === lastDocument) {
-            return;
-          }
-
-          lastDocument = serializedDocument;
-          setDocumentRoot(currentRoot, options.field, document);
-        }
-      });
-
-      return null;
-    },
-    view(editorView) {
-      view = editorView;
-
-      room.getStorage().then(({ root: storageRoot }) => {
-        if (destroyed) {
-          return;
-        }
-
-        root = storageRoot;
-
-        if (getDocumentRoot(storageRoot, options.field) === undefined) {
-          const initialDocument = getInitialDocument(
-            options.initialContent,
-            editorView
-          );
-          room.history.disable(() => {
-            setDocumentRoot(storageRoot, options.field, initialDocument);
-          });
-        }
-
-        applyStorageToEditor();
-
-        const tr = editorView.state.tr.setMeta(
-          LIVEBLOCKS_COLLABORATION_PLUGIN_KEY,
-          { isReady: true }
-        );
-        editorView.dispatch(tr);
-
-        unsubscribe = room.subscribe(storageRoot, applyStorageToEditor, {
-          isDeep: true,
-        });
-      });
-
-      return {
-        update(nextView) {
-          view = nextView;
-        },
-        destroy() {
-          destroyed = true;
-          unsubscribe?.();
-          unsubscribe = undefined;
-          view = undefined;
-          root = undefined;
-        },
-      };
-    },
-  });
 }
 
 declare module "@tiptap/core" {
@@ -365,6 +109,15 @@ export const LiveblocksCollaboration = Extension.create<
   },
 
   addProseMirrorPlugins() {
-    return [createLiveblocksCollaborationPlugin(this.options)];
+    return [
+      createLiveblocksCollaborationPlugin({
+        room: this.options.room,
+        field: this.options.field,
+        initialContent: isProseMirrorJsonNode(this.options.initialContent)
+          ? this.options.initialContent
+          : undefined,
+        fallbackDocument: createDefaultDocument,
+      }),
+    ];
   },
 });
