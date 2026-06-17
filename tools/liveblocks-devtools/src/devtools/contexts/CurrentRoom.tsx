@@ -1,4 +1,4 @@
-import type { DevTools, DevToolsMsg, Status } from "@liveblocks/core";
+import type { DevTools, DevToolsMsg, Status as CoreStatus } from "@liveblocks/core";
 import { Base64 } from "js-base64";
 import type { ReactNode } from "react";
 import {
@@ -26,6 +26,16 @@ export type YUpdate = {
   ds: DeleteSet;
   structs: (Y.Item | Y.GC | Skip)[];
 };
+
+// Older Liveblocks clients used a broader set of connection status strings.
+// The devtools need to accept those messages without changing the core API.
+export type Status =
+  | CoreStatus
+  | "open"
+  | "authenticating"
+  | "unavailable"
+  | "closed"
+  | "failed";
 
 type Room = {
   readonly roomId: string;
