@@ -310,6 +310,8 @@ export function Table() {
         autoWrapCol={true}
         autoRowSize={false}
         autoColumnSize={false}
+        renderAllRows={true}
+        renderAllColumns={true}
         stretchH="none"
         rowHeaderWidth={48}
       />

@@ -1,13 +1,14 @@
 "use client";
 
-import { memo, useLayoutEffect } from "react";
+import { useLayoutEffect } from "react";
 import type { HotRendererProps } from "@handsontable/react-wrapper";
+import { shallow } from "@liveblocks/client";
+import { useOthers, useStorage } from "@liveblocks/react/suspense";
 import { FloatingComposer, FloatingThread } from "@liveblocks/react-ui";
+import { cellKey } from "@/liveblocks.config";
 import { formatDisplayValue, valueStyleFromFormat } from "@/lib/format";
 import { useOrder } from "./OrderContext";
 import { useCellThread } from "./CellThreadContext";
-import { useCellSelectors } from "./CellPresenceContext";
-import { useCellFormat } from "./CellFormatContext";
 
 // A single Handsontable cell, rendered as a React component. It combines:
 //  - the value + per-cell formatting (from Storage)
@@ -37,7 +38,7 @@ export function Cell(props: HotRendererProps) {
   );
 }
 
-const CellBody = memo(function CellBody({
+function CellBody({
   rowId,
   colId,
   value,
@@ -48,15 +49,29 @@ const CellBody = memo(function CellBody({
   value: unknown;
   td: HTMLTableCellElement;
 }) {
-  // Per-cell formatting, read from a single shared subscription (see
-  // `CellFormatContext`) so the hundreds of cells mounted/unmounted during
-  // virtualized scrolling don't each open their own `useStorage` subscription.
-  const format = useCellFormat(rowId, colId);
+  // `useStorage` exposes Storage in immutable form: a LiveMap reads as a plain
+  // object keyed by string, so we index it rather than call `.get()`.
+  const format = useStorage(
+    (root) => root.cells[cellKey(rowId, colId)]?.format,
+    shallow
+  );
 
-  // Everyone (human or AI) whose selection is on this cell. Sourced from a
-  // single shared presence subscription (see `CellPresenceContext`) so each
-  // cell only re-renders when its own selectors change.
-  const selectors = useCellSelectors(rowId, colId);
+  // Everyone (human or AI) whose selection is on this cell. The AI's presence
+  // is set server-side via the REST API, but still arrives through `useOthers`.
+  const selectors = useOthers(
+    (others) =>
+      others
+        .filter(
+          (other) =>
+            other.presence.selectedCell?.rowId === rowId &&
+            other.presence.selectedCell?.colId === colId
+        )
+        .map((other) => ({
+          name: other.info?.name ?? "Someone",
+          color: other.info?.color ?? "#888888",
+        })),
+    shallow
+  );
 
   const { getThread, openCell, setOpenCell } = useCellThread();
   const thread = getThread(rowId, colId);
@@ -132,4 +147,4 @@ const CellBody = memo(function CellBody({
       ) : null}
     </div>
   );
-});
+}

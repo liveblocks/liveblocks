@@ -152,23 +152,14 @@ export async function showAiEditing(
   roomId: string,
   cell: { rowId: string; colId: string } | null
 ): Promise<void> {
+  // Short TTL: presence is refreshed before each edit and is never explicitly
+  // cleared, so the AI's selection lingers while it works and fades on its own
+  // a few seconds after the last edit.
   await liveblocks.setPresence(roomId, {
     userId: AI_USER_ID,
     userInfo: AI_USER_INFO,
     data: { selectedCell: cell, promptingFeedId: null },
-    ttl: 20,
-  });
-}
-
-export async function hideAiEditing(
-  liveblocks: LiveblocksClient,
-  roomId: string
-): Promise<void> {
-  await liveblocks.setPresence(roomId, {
-    userId: AI_USER_ID,
-    userInfo: AI_USER_INFO,
-    data: { selectedCell: null, promptingFeedId: null },
-    ttl: 2,
+    ttl: 3,
   });
 }
 

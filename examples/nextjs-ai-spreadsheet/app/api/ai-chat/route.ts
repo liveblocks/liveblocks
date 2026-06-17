@@ -11,7 +11,6 @@ import {
   deleteColumn,
   deleteRow,
   formatCells,
-  hideAiEditing,
   insertColumn,
   insertRow,
   readStorage,
@@ -133,8 +132,6 @@ export async function POST(request: NextRequest) {
       content: `Sorry, something went wrong.\n\n\`${reason}\``,
       streaming: false,
     }).catch(() => {});
-  } finally {
-    await hideAiEditing(liveblocks, roomId).catch(() => {});
   }
 
   return NextResponse.json({ ok: true });
