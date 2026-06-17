@@ -21,16 +21,15 @@ import { DefaultMap } from "./lib/DefaultMap";
 import * as console from "./lib/fancy-console";
 import type { JsonObject } from "./lib/Json";
 import { objectToQuery } from "./lib/objectToQuery";
-import type { Signal } from "./lib/signals";
 import { stringifyOrLog as stringify } from "./lib/stringify";
 import type { QueryParams, URLSafeString } from "./lib/url";
 import { url, urljoin } from "./lib/url";
 import { raise } from "./lib/utils";
+import type { RoomPermissions } from "./permissions";
 import type {
   ContextualPromptContext,
   ContextualPromptResponse,
 } from "./protocol/Ai";
-import type { Permission } from "./protocol/AuthToken";
 import type {
   BaseMetadata,
   CommentAttachment,
@@ -88,7 +87,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     subscriptions: SubscriptionData[];
     requestedAt: Date;
     nextCursor: string | null;
-    permissionHints: Record<string, Permission[]>;
+    permissionHints: Record<string, RoomPermissions>;
   }>;
 
   getThreadsSince(options: {
@@ -109,7 +108,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
       deleted: SubscriptionDeleteInfo[];
     };
     requestedAt: Date;
-    permissionHints: Record<string, Permission[]>;
+    permissionHints: Record<string, RoomPermissions>;
   }>;
 
   searchComments(
@@ -325,21 +324,6 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
 
   getOrCreateAttachmentUrlsStore(roomId: string): BatchStore<string, string>;
 
-  uploadChatAttachment({
-    chatId,
-    attachment,
-    signal,
-  }: {
-    chatId: string;
-    attachment: { id: string; file: File };
-    signal?: AbortSignal;
-  }): Promise<void>;
-
-  getOrCreateChatAttachmentUrlsStore(
-    chatId: string
-  ): BatchStore<string, string>;
-  getChatAttachmentUrl(options: { attachmentId: string }): Promise<string>;
-
   // Text editor
   createTextMention({
     roomId,
@@ -511,7 +495,7 @@ export interface LiveblocksHttpApi<
     subscriptions: SubscriptionData[];
     nextCursor: string | null;
     requestedAt: Date;
-    permissionHints: Record<string, Permission[]>;
+    permissionHints: Record<string, RoomPermissions>;
   }>;
 
   getUserThreadsSince_experimental(options: {
@@ -531,7 +515,7 @@ export interface LiveblocksHttpApi<
       deleted: SubscriptionDeleteInfo[];
     };
     requestedAt: Date;
-    permissionHints: Record<string, Permission[]>;
+    permissionHints: Record<string, RoomPermissions>;
   }>;
 
   groupsStore: BatchStore<GroupData | undefined, string>;
@@ -545,12 +529,10 @@ export function createApiClient<
 >({
   baseUrl,
   authManager,
-  currentUserId,
   fetchPolyfill,
 }: {
   baseUrl: string;
   authManager: AuthManager;
-  currentUserId: Signal<string | undefined>;
   fetchPolyfill: typeof fetch;
 }): LiveblocksHttpApi<TM, CM> {
   const httpClient = new HttpClient(baseUrl, fetchPolyfill);
@@ -572,13 +554,14 @@ export function createApiClient<
       deletedSubscriptions: SubscriptionDeleteInfoPlain[];
       meta: {
         requestedAt: string;
-        permissionHints: Record<string, Permission[]>;
+        permissionHints: Record<string, RoomPermissions>;
       };
     }>(
       url`/v2/c/rooms/${options.roomId}/threads/delta`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
         roomId: options.roomId,
+        resource: "comments",
+        access: "read",
       }),
       {
         since: options.since.toISOString(),
@@ -636,13 +619,14 @@ export function createApiClient<
         meta: {
           requestedAt: string;
           nextCursor: string | null;
-          permissionHints: Record<string, Permission[]>;
+          permissionHints: Record<string, RoomPermissions>;
         };
       }>(
         url`/v2/c/rooms/${options.roomId}/threads`,
         await authManager.getAuthValue({
-          requestedScope: "comments:read",
           roomId: options.roomId,
+          resource: "comments",
+          access: "read",
         }),
         {
           cursor: options.cursor,
@@ -707,8 +691,9 @@ export function createApiClient<
     }>(
       url`/v2/c/rooms/${options.roomId}/threads/comments/search`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
         roomId: options.roomId,
+        resource: "comments",
+        access: "read",
       }),
       {
         text: options.query.text,
@@ -739,8 +724,9 @@ export function createApiClient<
     const thread = await httpClient.post<ThreadDataPlain<TM, CM>>(
       url`/v2/c/rooms/${options.roomId}/threads`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
         roomId: options.roomId,
+        resource: "comments",
+        access: "write",
       }),
       {
         id: threadId,
@@ -761,8 +747,9 @@ export function createApiClient<
     await httpClient.delete(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
         roomId: options.roomId,
+        resource: "comments",
+        access: "write",
       })
     );
   }
@@ -771,8 +758,9 @@ export function createApiClient<
     const response = await httpClient.rawGet(
       url`/v2/c/rooms/${options.roomId}/thread-with-notification/${options.threadId}`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
         roomId: options.roomId,
+        resource: "comments",
+        access: "read",
       })
     );
 
@@ -813,8 +801,9 @@ export function createApiClient<
     return await httpClient.post<TM>(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/metadata`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
         roomId: options.roomId,
+        resource: "comments",
+        access: "write",
       }),
       options.metadata
     );
@@ -829,8 +818,9 @@ export function createApiClient<
     return await httpClient.post<CM>(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments/${options.commentId}/metadata`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
         roomId: options.roomId,
+        resource: "comments",
+        access: "write",
       }),
       options.metadata
     );
@@ -848,8 +838,9 @@ export function createApiClient<
     const comment = await httpClient.post<CommentDataPlain<CM>>(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
         roomId: options.roomId,
+        resource: "comments",
+        access: "write",
       }),
       {
         id: commentId,
@@ -872,8 +863,9 @@ export function createApiClient<
     const comment = await httpClient.post<CommentDataPlain<CM>>(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments/${options.commentId}`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
         roomId: options.roomId,
+        resource: "comments",
+        access: "write",
       }),
       {
         body: options.body,
@@ -893,8 +885,9 @@ export function createApiClient<
     await httpClient.delete(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments/${options.commentId}`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
         roomId: options.roomId,
+        resource: "comments",
+        access: "write",
       })
     );
   }
@@ -908,8 +901,9 @@ export function createApiClient<
     const reaction = await httpClient.post<CommentUserReactionPlain>(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments/${options.commentId}/reactions`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
         roomId: options.roomId,
+        resource: "comments",
+        access: "write",
       }),
       { emoji: options.emoji }
     );
@@ -926,8 +920,9 @@ export function createApiClient<
     await httpClient.delete<CommentDataPlain<CM>>(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments/${options.commentId}/reactions/${options.emoji}`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
         roomId: options.roomId,
+        resource: "comments",
+        access: "write",
       })
     );
   }
@@ -939,8 +934,9 @@ export function createApiClient<
     await httpClient.post(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/mark-as-resolved`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
         roomId: options.roomId,
+        resource: "comments",
+        access: "write",
       })
     );
   }
@@ -952,8 +948,9 @@ export function createApiClient<
     await httpClient.post(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/mark-as-unresolved`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
         roomId: options.roomId,
+        resource: "comments",
+        access: "write",
       })
     );
   }
@@ -965,8 +962,9 @@ export function createApiClient<
     const subscription = await httpClient.post<SubscriptionDataPlain>(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/subscribe`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
         roomId: options.roomId,
+        resource: "comments",
+        access: "read",
       })
     );
 
@@ -980,8 +978,9 @@ export function createApiClient<
     await httpClient.post(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/unsubscribe`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
         roomId: options.roomId,
+        resource: "comments",
+        access: "read",
       })
     );
   }
@@ -1053,8 +1052,9 @@ export function createApiClient<
           httpClient.putBlob<CommentAttachment>(
             url`/v2/c/rooms/${roomId}/attachments/${attachment.id}/upload/${encodeURIComponent(attachment.name)}`,
             await authManager.getAuthValue({
-              requestedScope: "comments:read",
               roomId,
+              resource: "comments",
+              access: "write",
             }),
             attachment.file,
             { fileSize: attachment.size },
@@ -1081,8 +1081,9 @@ export function createApiClient<
           }>(
             url`/v2/c/rooms/${roomId}/attachments/${attachment.id}/multipart/${encodeURIComponent(attachment.name)}`,
             await authManager.getAuthValue({
-              requestedScope: "comments:read",
               roomId,
+              resource: "comments",
+              access: "write",
             }),
             undefined,
             { signal: abortSignal },
@@ -1122,8 +1123,9 @@ export function createApiClient<
                   }>(
                     url`/v2/c/rooms/${roomId}/attachments/${attachment.id}/multipart/${createMultiPartUpload.uploadId}/${String(partNumber)}`,
                     await authManager.getAuthValue({
-                      requestedScope: "comments:read",
                       roomId,
+                      resource: "comments",
+                      access: "write",
                     }),
                     part,
                     undefined,
@@ -1152,8 +1154,9 @@ export function createApiClient<
         return httpClient.post<CommentAttachment>(
           url`/v2/c/rooms/${roomId}/attachments/${attachment.id}/multipart/${uploadId}/complete`,
           await authManager.getAuthValue({
-            requestedScope: "comments:read",
             roomId,
+            resource: "comments",
+            access: "write",
           }),
           { parts: sortedUploadedParts },
           { signal: abortSignal }
@@ -1170,8 +1173,9 @@ export function createApiClient<
             await httpClient.rawDelete(
               url`/v2/c/rooms/${roomId}/attachments/${attachment.id}/multipart/${uploadId}`,
               await authManager.getAuthValue({
-                requestedScope: "comments:read",
                 roomId,
+                resource: "comments",
+                access: "write",
               })
             );
           } catch {
@@ -1196,8 +1200,9 @@ export function createApiClient<
         }>(
           url`/v2/c/rooms/${roomId}/attachments/presigned-urls`,
           await authManager.getAuthValue({
-            requestedScope: "comments:read",
             roomId,
+            resource: "comments",
+            access: "read",
           }),
           { attachmentIds }
         );
@@ -1225,142 +1230,6 @@ export function createApiClient<
   }
 
   /* -------------------------------------------------------------------------------------------------
-   * Attachments (Chat level)
-   * -----------------------------------------------------------------------------------------------*/
-  async function uploadChatAttachment(options: {
-    chatId: string;
-    attachment: {
-      id: string;
-      file: File;
-    };
-    signal?: AbortSignal;
-  }): Promise<void> {
-    const { chatId, attachment, signal } = options;
-    const userId = currentUserId.get();
-    if (userId === undefined) {
-      throw new Error("Attachment upload requires an authenticated user.");
-    }
-    const ATTACHMENT_PART_SIZE = 5 * 1024 * 1024; // 5 MB
-
-    if (options.attachment.file.size <= ATTACHMENT_PART_SIZE) {
-      await httpClient.putBlob(
-        url`/v2/c/chats/${chatId}/attachments/${attachment.id}/upload/${encodeURIComponent(attachment.file.name)}`,
-        await authManager.getAuthValue({ requestedScope: "comments:read" }),
-        attachment.file,
-        { fileSize: attachment.file.size },
-        { signal }
-      );
-    } else {
-      const multipartUpload = await httpClient.post<{
-        uploadId: string;
-        key: string;
-      }>(
-        url`/v2/c/chats/${chatId}/attachments/${attachment.id}/multipart/${encodeURIComponent(attachment.file.name)}`,
-        await authManager.getAuthValue({ requestedScope: "comments:read" }),
-        undefined,
-        { signal },
-        { fileSize: attachment.file.size }
-      );
-
-      try {
-        const uploadedParts: { etag: string; number: number }[] = [];
-
-        const parts: { number: number; part: Blob }[] = [];
-        let start = 0;
-        while (start < attachment.file.size) {
-          const end = Math.min(
-            start + ATTACHMENT_PART_SIZE,
-            attachment.file.size
-          );
-          parts.push({
-            number: parts.length + 1,
-            part: attachment.file.slice(start, end),
-          });
-          start = end;
-        }
-
-        uploadedParts.push(
-          ...(await Promise.all(
-            parts.map(async ({ number, part }) => {
-              return await httpClient.putBlob<{
-                etag: string;
-                number: number;
-              }>(
-                url`/v2/c/chats/${chatId}/attachments/${attachment.id}/multipart/${multipartUpload.uploadId}/${String(number)}`,
-                await authManager.getAuthValue({
-                  requestedScope: "comments:read",
-                }),
-                part,
-                undefined,
-                { signal }
-              );
-            })
-          ))
-        );
-
-        await httpClient.post(
-          url`/v2/c/chats/${chatId}/attachments/${attachment.id}/multipart/${multipartUpload.uploadId}/complete`,
-          await authManager.getAuthValue({ requestedScope: "comments:read" }),
-          { parts: uploadedParts.sort((a, b) => a.number - b.number) },
-          { signal }
-        );
-      } catch (err) {
-        try {
-          await httpClient.delete(
-            url`/v2/c/chats/${chatId}/attachments/${attachment.id}/multipart/${multipartUpload.uploadId}`,
-            await authManager.getAuthValue({ requestedScope: "comments:read" })
-          );
-        } catch {
-          // Ignore the error, we are probably offline
-        }
-        throw err;
-      }
-    }
-  }
-
-  const attachmentUrlsBatchStoresByChat = new DefaultMap<
-    string,
-    BatchStore<string, string>
-  >((chatId) => {
-    const batch = new Batch<string, string>(
-      async (batchedAttachmentIds) => {
-        const attachmentIds = batchedAttachmentIds.flat();
-        const { urls } = await httpClient.post<{
-          urls: (string | null)[];
-        }>(
-          url`/v2/c/chats/${chatId}/attachments/presigned-urls`,
-          await authManager.getAuthValue({
-            requestedScope: "comments:read",
-          }),
-          { attachmentIds }
-        );
-
-        return urls.map(
-          (url) =>
-            url ??
-            new Error("There was an error while getting this attachment's URL")
-        );
-      },
-      { delay: 50 }
-    );
-    return createBatchStore(batch);
-  });
-
-  function getOrCreateChatAttachmentUrlsStore(
-    chatId: string
-  ): BatchStore<string, string> {
-    return attachmentUrlsBatchStoresByChat.getOrCreate(chatId);
-  }
-
-  function getChatAttachmentUrl(options: {
-    chatId: string;
-    attachmentId: string;
-  }) {
-    const batch = getOrCreateChatAttachmentUrlsStore(options.chatId).batch;
-    return batch.get(options.attachmentId);
-  }
-
-  /* -------------------------------------------------------------------------------------------------
    * Notifications (Room level)
    * -----------------------------------------------------------------------------------------------*/
   async function getSubscriptionSettings(options: {
@@ -1370,8 +1239,9 @@ export function createApiClient<
     return httpClient.get<RoomSubscriptionSettings>(
       url`/v2/c/rooms/${options.roomId}/subscription-settings`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
         roomId: options.roomId,
+        resource: "comments",
+        access: "read",
       }),
       undefined,
       {
@@ -1387,8 +1257,9 @@ export function createApiClient<
     return httpClient.post<RoomSubscriptionSettings>(
       url`/v2/c/rooms/${options.roomId}/subscription-settings`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
         roomId: options.roomId,
+        resource: "comments",
+        access: "read",
       }),
       options.settings
     );
@@ -1408,8 +1279,9 @@ export function createApiClient<
           await httpClient.post(
             url`/v2/c/rooms/${roomId}/inbox-notifications/read`,
             await authManager.getAuthValue({
-              requestedScope: "comments:read",
               roomId,
+              resource: "comments",
+              access: "read",
             }),
             { inboxNotificationIds }
           );
@@ -1442,8 +1314,9 @@ export function createApiClient<
     await httpClient.rawPost(
       url`/v2/c/rooms/${options.roomId}/text-mentions`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
         roomId: options.roomId,
+        resource: "storage",
+        access: "write",
       }),
       {
         userId:
@@ -1466,8 +1339,9 @@ export function createApiClient<
     await httpClient.rawDelete(
       url`/v2/c/rooms/${options.roomId}/text-mentions/${options.mentionId}`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
         roomId: options.roomId,
+        resource: "storage",
+        access: "write",
       })
     );
   }
@@ -1479,8 +1353,9 @@ export function createApiClient<
     return httpClient.rawGet(
       url`/v2/c/rooms/${options.roomId}/y-version/${options.versionId}`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
         roomId: options.roomId,
+        resource: "storage",
+        access: "read",
       })
     );
   }
@@ -1489,8 +1364,9 @@ export function createApiClient<
     await httpClient.rawPost(
       url`/v2/c/rooms/${options.roomId}/version`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
         roomId: options.roomId,
+        resource: "storage",
+        access: "write",
       })
     );
   }
@@ -1503,8 +1379,9 @@ export function createApiClient<
     await httpClient.rawPost(
       url`/v2/c/rooms/${options.roomId}/text-metadata`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
         roomId: options.roomId,
+        resource: "storage",
+        access: "read",
       }),
       {
         type: options.type,
@@ -1528,8 +1405,9 @@ export function createApiClient<
     }>(
       url`/v2/c/rooms/${options.roomId}/ai/contextual-prompt`,
       await authManager.getAuthValue({
-        requestedScope: "room:read",
         roomId: options.roomId,
+        resource: "storage",
+        access: "read",
       }),
       {
         prompt: options.prompt,
@@ -1557,8 +1435,9 @@ export function createApiClient<
     }>(
       url`/v2/c/rooms/${options.roomId}/versions`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
         roomId: options.roomId,
+        resource: "storage",
+        access: "read",
       })
     );
 
@@ -1586,8 +1465,9 @@ export function createApiClient<
     }>(
       url`/v2/c/rooms/${options.roomId}/versions/delta`,
       await authManager.getAuthValue({
-        requestedScope: "comments:read",
         roomId: options.roomId,
+        resource: "storage",
+        access: "read",
       }),
       { since: options.since.toISOString() },
       { signal: options.signal }
@@ -1608,8 +1488,9 @@ export function createApiClient<
     const result = await httpClient.rawGet(
       url`/v2/c/rooms/${options.roomId}/storage`,
       await authManager.getAuthValue({
-        requestedScope: "room:read",
         roomId: options.roomId,
+        resource: "storage",
+        access: "read",
       })
     );
     return (await result.json()) as StorageNode[];
@@ -1641,7 +1522,7 @@ export function createApiClient<
       };
     }>(
       url`/v2/c/inbox-notifications`,
-      await authManager.getAuthValue({ requestedScope: "comments:read" }),
+      await authManager.getAuthValue({ resource: "personal", access: "write" }),
       {
         cursor: options?.cursor,
         limit: PAGE_SIZE,
@@ -1689,7 +1570,7 @@ export function createApiClient<
       };
     }>(
       url`/v2/c/inbox-notifications/delta`,
-      await authManager.getAuthValue({ requestedScope: "comments:read" }),
+      await authManager.getAuthValue({ resource: "personal", access: "write" }),
       { since: options.since.toISOString(), query },
       { signal: options.signal }
     );
@@ -1727,7 +1608,7 @@ export function createApiClient<
 
     const { count } = await httpClient.get<{ count: number }>(
       url`/v2/c/inbox-notifications/count`,
-      await authManager.getAuthValue({ requestedScope: "comments:read" }),
+      await authManager.getAuthValue({ resource: "personal", access: "write" }),
       { query },
       { signal: options?.signal }
     );
@@ -1737,7 +1618,7 @@ export function createApiClient<
   async function markAllInboxNotificationsAsRead() {
     await httpClient.post(
       url`/v2/c/inbox-notifications/read`,
-      await authManager.getAuthValue({ requestedScope: "comments:read" }),
+      await authManager.getAuthValue({ resource: "personal", access: "write" }),
       {
         inboxNotificationIds: "all",
       }
@@ -1747,7 +1628,7 @@ export function createApiClient<
   async function markInboxNotificationsAsRead(inboxNotificationIds: string[]) {
     await httpClient.post(
       url`/v2/c/inbox-notifications/read`,
-      await authManager.getAuthValue({ requestedScope: "comments:read" }),
+      await authManager.getAuthValue({ resource: "personal", access: "write" }),
       {
         inboxNotificationIds,
       }
@@ -1772,14 +1653,14 @@ export function createApiClient<
   async function deleteAllInboxNotifications() {
     await httpClient.delete(
       url`/v2/c/inbox-notifications`,
-      await authManager.getAuthValue({ requestedScope: "comments:read" })
+      await authManager.getAuthValue({ resource: "personal", access: "write" })
     );
   }
 
   async function deleteInboxNotification(inboxNotificationId: string) {
     await httpClient.delete(
       url`/v2/c/inbox-notifications/${inboxNotificationId}`,
-      await authManager.getAuthValue({ requestedScope: "comments:read" })
+      await authManager.getAuthValue({ resource: "personal", access: "write" })
     );
   }
 
@@ -1792,7 +1673,7 @@ export function createApiClient<
   }): Promise<NotificationSettingsPlain> {
     return httpClient.get<NotificationSettingsPlain>(
       url`/v2/c/notification-settings`,
-      await authManager.getAuthValue({ requestedScope: "comments:read" }),
+      await authManager.getAuthValue({ resource: "personal", access: "write" }),
       undefined,
       { signal: options?.signal }
     );
@@ -1803,7 +1684,7 @@ export function createApiClient<
   ): Promise<NotificationSettingsPlain> {
     return httpClient.post<NotificationSettingsPlain>(
       url`/v2/c/notification-settings`,
-      await authManager.getAuthValue({ requestedScope: "comments:read" }),
+      await authManager.getAuthValue({ resource: "personal", access: "write" }),
       settings
     );
   }
@@ -1837,11 +1718,11 @@ export function createApiClient<
       meta: {
         requestedAt: string;
         nextCursor: string | null;
-        permissionHints: Record<string, Permission[]>;
+        permissionHints: Record<string, RoomPermissions>;
       };
     }>(
       url`/v2/c/threads`,
-      await authManager.getAuthValue({ requestedScope: "comments:read" }),
+      await authManager.getAuthValue({ resource: "personal", access: "write" }),
       {
         cursor: options?.cursor,
         query,
@@ -1874,11 +1755,11 @@ export function createApiClient<
       deletedSubscriptions: SubscriptionDeleteInfoPlain[];
       meta: {
         requestedAt: string;
-        permissionHints: Record<string, Permission[]>;
+        permissionHints: Record<string, RoomPermissions>;
       };
     }>(
       url`/v2/c/threads/delta`,
-      await authManager.getAuthValue({ requestedScope: "comments:read" }),
+      await authManager.getAuthValue({ resource: "personal", access: "write" }),
       { since: options.since.toISOString() },
       { signal: options.signal }
     );
@@ -1916,7 +1797,8 @@ export function createApiClient<
       }>(
         url`/v2/c/groups/find`,
         await authManager.getAuthValue({
-          requestedScope: "comments:read",
+          resource: "personal",
+          access: "write",
         }),
         { groupIds }
       );
@@ -1944,7 +1826,7 @@ export function createApiClient<
   async function getUrlMetadata(_url: string) {
     const { metadata } = await httpClient.get<{ metadata: UrlMetadata }>(
       url`/v2/c/urls/metadata`,
-      await authManager.getAuthValue({ requestedScope: "comments:read" }),
+      await authManager.getAuthValue({ resource: "personal", access: "write" }),
       { url: _url }
     );
 
@@ -1986,10 +1868,6 @@ export function createApiClient<
     getAttachmentUrl,
     uploadAttachment,
     getOrCreateAttachmentUrlsStore,
-    // User attachments
-    uploadChatAttachment,
-    getOrCreateChatAttachmentUrlsStore,
-    getChatAttachmentUrl,
     // Room storage
     streamStorage,
     // Notifications

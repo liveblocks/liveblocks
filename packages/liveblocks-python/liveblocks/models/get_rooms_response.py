@@ -15,8 +15,8 @@ class GetRoomsResponse:
     Example:
         {'nextCursor': 'eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9', 'data': [{'type': 'room', 'id': 'my-room-id',
             'lastConnectionAt': '2022-08-08T23:23:15.281Z', 'createdAt': '2022-08-08T23:23:15.281Z', 'organizationId':
-            'org_123456789', 'metadata': {'color': 'blue'}, 'defaultAccesses': ['room:write'], 'groupsAccesses': {'product':
-            ['room:write']}, 'usersAccesses': {'alice': ['room:write']}}]}
+            'org_123456789', 'metadata': {'color': 'blue'}, 'defaultAccesses': ['*:write'], 'groupsAccesses': {'product':
+            ['*:write']}, 'usersAccesses': {'alice': ['*:write']}}]}
 
     Attributes:
         next_cursor (None | str):

@@ -9,15 +9,15 @@ import type {
   GroupMentionData,
   Patchable,
 } from "@liveblocks/core";
-import { assertNever, MENTION_CHARACTER, Permission } from "@liveblocks/core";
+import { assertNever, MENTION_CHARACTER } from "@liveblocks/core";
 import { useRoom } from "@liveblocks/react";
 import {
   useCreateRoomComment,
   useCreateRoomThread,
   useEditRoomComment,
+  useHasPermissionAccess,
   useLayoutEffect,
   useResolveMentionSuggestions,
-  useRoomPermissions,
 } from "@liveblocks/react/_private";
 import type {
   ComponentPropsWithoutRef,
@@ -31,14 +31,7 @@ import type {
   RefAttributes,
   SyntheticEvent,
 } from "react";
-import {
-  createContext,
-  forwardRef,
-  useCallback,
-  useMemo,
-  useRef,
-  useSyncExternalStore,
-} from "react";
+import { createContext, forwardRef, useCallback, useMemo, useRef } from "react";
 
 import { useLiveblocksUiConfig } from "../config";
 import { FLOATING_ELEMENT_SIDE_OFFSET } from "../constants";
@@ -761,26 +754,7 @@ export const Composer = forwardRef(
       controlledOnCollapsedChange
     );
 
-    const canCommentFallback = useSyncExternalStore(
-      useCallback(
-        (callback) => {
-          if (room === null) return () => {};
-          return room.events.self.subscribeOnce(callback);
-        },
-        [room]
-      ),
-      useCallback(() => {
-        return room?.getSelf()?.canComment ?? true;
-      }, [room]),
-      useCallback(() => true, [])
-    );
-
-    const permissions = useRoomPermissions(roomId);
-    const canComment =
-      permissions.size > 0
-        ? permissions.has(Permission.CommentsWrite) ||
-          permissions.has(Permission.Write)
-        : canCommentFallback;
+    const canComment = useHasPermissionAccess(roomId, "comments", "write");
 
     const setEmptyRef = useCallback((isEmpty: boolean) => {
       isEmptyRef.current = isEmpty;

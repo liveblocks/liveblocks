@@ -2,8 +2,8 @@ import { describe, expect, test } from "vitest";
 
 import { Liveblocks } from "../client";
 
-const P1 = "room:read";
-const P2 = "room:write";
+const P1 = "*:read";
+const P2 = "*:write";
 const P3 = "comments:read";
 // const P4 = "comments:write";
 
@@ -69,7 +69,7 @@ describe("authorization (new API)", () => {
     expect(
       session.allow("xyz", session.FULL_ACCESS).serializePermissions()
     ).toEqual({
-      xyz: ["room:write"],
+      xyz: ["*:write"],
     });
   });
 
@@ -78,8 +78,17 @@ describe("authorization (new API)", () => {
     expect(
       session.allow("xyz", session.READ_ACCESS).serializePermissions()
     ).toEqual({
-      xyz: ["room:read", "room:presence:write", "comments:read"],
+      xyz: ["*:read"],
     });
+  });
+
+  test("rejects non-array permissions", () => {
+    expect(() =>
+      makeSession()
+        // @ts-expect-error - Deliberate incorrect value
+        .allow("xyz", { default: "none" })
+        .serializePermissions()
+    ).toThrow("Permission list must be an array");
   });
 
   test("throws when no room name", () => {
@@ -146,6 +155,18 @@ describe("authorization (new API)", () => {
     ).toThrow("Not a valid permission: x");
   });
 
+  test("rejects unknown permissions even when mixed with valid ones", () => {
+    expect(() =>
+      makeSession()
+        .allow(
+          "foobar",
+          // @ts-expect-error - Deliberate incorrect string value
+          ["*:write", "future:scope"]
+        )
+        .serializePermissions()
+    ).toThrow("Not a valid permission: future:scope");
+  });
+
   test("permissions are additive", () => {
     expect(
       makeSession()
@@ -159,19 +180,35 @@ describe("authorization (new API)", () => {
     });
   });
 
+  test("permissions are preserved when adding defaults and resource-specific values", () => {
+    expect(
+      makeSession()
+        .allow("r", ["*:write", "storage:none"])
+        .allow("r", ["storage:read"])
+        .serializePermissions()
+    ).toEqual({
+      r: ["*:write", "storage:none", "storage:read"],
+    });
+
+    expect(
+      makeSession()
+        .allow("r", ["*:write", "storage:none"])
+        .allow("r", ["*:write"])
+        .serializePermissions()
+    ).toEqual({
+      r: ["*:write", "storage:none"],
+    });
+  });
+
   test("permissions are deduped", () => {
     expect(
       makeSession()
         .allow("r", [P1])
-        .allow("r", [P2, P3])
-        .allow("r", [P1, P3])
-        .allow("r", [P3])
-        .allow("r", [P3])
-        .allow("r", [P3])
-        .allow("r", [P3])
+        .allow("r", [P1])
+        .allow("r", [P1])
         .serializePermissions()
     ).toEqual({
-      r: [P1, P2, P3],
+      r: [P1],
     });
   });
 

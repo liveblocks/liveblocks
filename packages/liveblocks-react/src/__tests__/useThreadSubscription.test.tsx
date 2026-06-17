@@ -58,7 +58,7 @@ describe("useThreadSubscription", () => {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
             permissionHints: {
-              [roomId]: [Permission.Write],
+              [roomId]: [Permission.RoomWrite],
             },
           },
         });
@@ -133,7 +133,7 @@ describe("useThreadSubscription", () => {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
             permissionHints: {
-              [roomId]: [Permission.Write],
+              [roomId]: [Permission.RoomWrite],
             },
           },
         });
@@ -198,7 +198,7 @@ describe("useThreadSubscription", () => {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
             permissionHints: {
-              [roomId]: [Permission.Write],
+              [roomId]: [Permission.RoomWrite],
             },
           },
         });
@@ -268,7 +268,7 @@ describe("useThreadSubscription", () => {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
             permissionHints: {
-              [roomId]: [Permission.Write],
+              [roomId]: [Permission.RoomWrite],
             },
           },
         });
@@ -341,7 +341,7 @@ describe("useThreadSubscription", () => {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
             permissionHints: {
-              [roomId]: [Permission.Write],
+              [roomId]: [Permission.RoomWrite],
             },
           },
         });

@@ -17,8 +17,8 @@ class AuthorizeUserRequestBody:
     """
     Example:
         {'userId': 'user-123', 'userInfo': {'name': 'bob', 'avatar': 'https://example.org/images/user123.jpg'},
-            'organizationId': 'acme-corp', 'permissions': {'my-room-1': ['room:write'], 'my-room-2': ['room:write'], 'my-
-            room-*': ['room:read']}}
+            'organizationId': 'acme-corp', 'permissions': {'my-room-1': ['*:write'], 'my-room-2': ['*:write'], 'my-room-*':
+            ['*:read']}}
 
     Attributes:
         user_id (str):

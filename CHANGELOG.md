@@ -2,6 +2,20 @@
 
 ## v3.20.0
 
+### All packages
+
+- Add support for new resource-specific permissions. You can now start from a
+  `*:read` or `*:write` base, then grant or deny access per resource (storage,
+  comments, feeds) using new permission strings like `storage:none` or
+  `comments:read`.
+
+### `@liveblocks/node`
+
+- Deprecate `session.FULL_ACCESS` and `session.READ_ACCESS` in favor of
+  `["*:write"]` and `["*:read"]` respectively.
+
+### `@liveblocks/client`
+
 - Deprecate `room.getStorageSnapshot()` in favor of `room.getStorageOrNull()`.
 
 ## v3.19.5

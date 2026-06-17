@@ -417,42 +417,16 @@
         "path": "/authentication",
         "routes": [
           {
+            "title": "Permissions",
+            "path": "/authentication/permissions"
+          },
+          {
             "title": "Organizations",
             "path": "/authentication/organizations"
           },
           {
             "title": "Access token",
             "path": "/authentication/access-token"
-          },
-          {
-            "title": "Next.js",
-            "path": "/authentication/access-token/nextjs",
-            "hidden": true
-          },
-          {
-            "title": "Remix",
-            "path": "/authentication/access-token/remix",
-            "hidden": true
-          },
-          {
-            "title": "SvelteKit",
-            "path": "/authentication/access-token/sveltekit",
-            "hidden": true
-          },
-          {
-            "title": "Nuxt.js",
-            "path": "/authentication/access-token/nuxtjs",
-            "hidden": true
-          },
-          {
-            "title": "Firebase",
-            "path": "/authentication/access-token/firebase",
-            "hidden": true
-          },
-          {
-            "title": "Express",
-            "path": "/authentication/access-token/express",
-            "hidden": true
           },
           {
             "title": "Next.js",
@@ -482,6 +456,36 @@
           {
             "title": "Express",
             "path": "/authentication/id-token/express",
+            "hidden": true
+          },
+          {
+            "title": "Next.js",
+            "path": "/authentication/access-token/nextjs",
+            "hidden": true
+          },
+          {
+            "title": "Remix",
+            "path": "/authentication/access-token/remix",
+            "hidden": true
+          },
+          {
+            "title": "SvelteKit",
+            "path": "/authentication/access-token/sveltekit",
+            "hidden": true
+          },
+          {
+            "title": "Nuxt.js",
+            "path": "/authentication/access-token/nuxtjs",
+            "hidden": true
+          },
+          {
+            "title": "Firebase",
+            "path": "/authentication/access-token/firebase",
+            "hidden": true
+          },
+          {
+            "title": "Express",
+            "path": "/authentication/access-token/express",
             "hidden": true
           }
         ]

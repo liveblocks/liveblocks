@@ -45,5 +45,5 @@ npx turbo test:e2e -- e2e/list-insert.test.ts
 ```
 
 **Note**: These tests run against a local Liveblocks dev server, which the
-`test:e2e` script starts automatically (`liveblocks dev`). No API key is
-needed; set `LIVEBLOCKS_DEV_SERVER_PORT` to override the default port (1154).
+`test:e2e` script starts automatically (`liveblocks dev`). No API key is needed;
+set `LIVEBLOCKS_DEV_SERVER_PORT` to override the default port (1154).

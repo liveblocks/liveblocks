@@ -30,7 +30,10 @@ describe('Read-only "others" ref cache', () => {
       // information is known for this user. Normally, this information is
       // known before the .setOther() call is made, unlike how this test case
       // is structured.
-      others.setConnection(2, "user-123", undefined, ["room:write"]);
+      others.setConnection(2, "user-123", undefined, {
+        canWrite: true,
+        canComment: true,
+      });
       expect(others.get()).toStrictEqual([
         {
           connectionId: 2,
@@ -45,8 +48,14 @@ describe('Read-only "others" ref cache', () => {
 
     test("setting other", () => {
       const others = new ManagedOthers<P, M>();
-      others.setConnection(2, "user-123", undefined, ["room:write"]);
-      others.setConnection(3, "user-567", undefined, ["room:write"]);
+      others.setConnection(2, "user-123", undefined, {
+        canWrite: true,
+        canComment: true,
+      });
+      others.setConnection(3, "user-567", undefined, {
+        canWrite: true,
+        canComment: true,
+      });
 
       others.setOther(2, { x: 2, y: 2 });
       others.setOther(3, { x: 3, y: 3 });
@@ -74,8 +83,14 @@ describe('Read-only "others" ref cache', () => {
 
     test("setting other as read-only", () => {
       const others = new ManagedOthers<P, M>();
-      others.setConnection(2, "user-123", undefined, ["room:read"]);
-      others.setConnection(3, "user-567", undefined, ["room:write"]);
+      others.setConnection(2, "user-123", undefined, {
+        canWrite: false,
+        canComment: false,
+      });
+      others.setConnection(3, "user-567", undefined, {
+        canWrite: true,
+        canComment: true,
+      });
 
       others.setOther(2, { x: 2, y: 2 });
       others.setOther(3, { x: 3, y: 3 });
@@ -102,7 +117,10 @@ describe('Read-only "others" ref cache', () => {
 
     test("setting others removes explicitly-undefined keys", () => {
       const others = new ManagedOthers<P, M>();
-      others.setConnection(2, "user-123", undefined, ["room:write"]);
+      others.setConnection(2, "user-123", undefined, {
+        canWrite: true,
+        canComment: true,
+      });
       others.setOther(2, { x: 2, y: 2, z: undefined });
       //                                  ^^^^^^^^^ 🔑
 
@@ -121,7 +139,10 @@ describe('Read-only "others" ref cache', () => {
 
     test("patching others ignores patches for unknown users", () => {
       const others = new ManagedOthers<P, M>();
-      others.setConnection(2, "user-123", undefined, ["room:write"]);
+      others.setConnection(2, "user-123", undefined, {
+        canWrite: true,
+        canComment: true,
+      });
       others.patchOther(2, { y: 1, z: 2 }); // .setOther() not called yet for actor 2
 
       expect(others.get()).toStrictEqual([]);
@@ -129,7 +150,10 @@ describe('Read-only "others" ref cache', () => {
 
     test("patching others", () => {
       const others = new ManagedOthers<P, M>();
-      others.setConnection(2, "user-123", undefined, ["room:write"]);
+      others.setConnection(2, "user-123", undefined, {
+        canWrite: true,
+        canComment: true,
+      });
       others.setOther(2, { x: 2, y: 2 });
       expect(others.get()).toStrictEqual([
         {
@@ -169,7 +193,10 @@ describe('Read-only "others" ref cache', () => {
 
     test("removing connections", () => {
       const others = new ManagedOthers<P, M>();
-      others.setConnection(2, "user-123", undefined, ["room:write"]);
+      others.setConnection(2, "user-123", undefined, {
+        canWrite: true,
+        canComment: true,
+      });
       others.setOther(2, { x: 2, y: 2 });
 
       expect(others.getUser(2)).toStrictEqual({
@@ -195,7 +222,10 @@ describe('Read-only "others" ref cache', () => {
   describe("caching", () => {
     test("caches immutable results (others)", () => {
       const others = new ManagedOthers<P, M>();
-      others.setConnection(2, "user-123", undefined, ["room:write"]);
+      others.setConnection(2, "user-123", undefined, {
+        canWrite: true,
+        canComment: true,
+      });
       others.setOther(2, { x: 2, y: 2 });
 
       const others1 = others.get();
@@ -224,7 +254,10 @@ describe('Read-only "others" ref cache', () => {
 
     test("getUser() returns stable cache results", () => {
       const others = new ManagedOthers<P, M>();
-      others.setConnection(2, "user-123", undefined, ["room:write"]);
+      others.setConnection(2, "user-123", undefined, {
+        canWrite: true,
+        canComment: true,
+      });
       others.setOther(2, { x: 2, y: 2 });
 
       expect(others.getUser(2)).toBe(others.getUser(2));

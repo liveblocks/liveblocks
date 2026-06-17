@@ -55,8 +55,8 @@ start building your own security logic.
 
         // Use a naming pattern to allow access to rooms with wildcards
         // Giving the user read access on their org, and write access on their group
-        session.allow(`${user.organization}:*`, session.READ_ACCESS);
-        session.allow(`${user.organization}:${user.group}:*`, session.FULL_ACCESS);
+        session.allow(`${user.organization}:*`, ["*:read"]);
+        session.allow(`${user.organization}:${user.group}:*`, ["*:write"]);
 
         // Authorize the user and return the result
         const { status, body } = await session.authorize();

@@ -130,7 +130,6 @@ from .remove_json_patch_operation import RemoveJsonPatchOperation
 from .replace_json_patch_operation import ReplaceJsonPatchOperation
 from .room import Room
 from .room_accesses import RoomAccesses
-from .room_accesses_additional_property_item import RoomAccessesAdditionalPropertyItem
 from .room_metadata import RoomMetadata
 from .room_permission_item import RoomPermissionItem
 from .room_subscription_settings import RoomSubscriptionSettings
@@ -159,14 +158,8 @@ from .update_room_id_request_body import UpdateRoomIdRequestBody
 from .update_room_organization_id_request_body import UpdateRoomOrganizationIdRequestBody
 from .update_room_request_body import UpdateRoomRequestBody
 from .update_room_request_body_groups_accesses import UpdateRoomRequestBodyGroupsAccesses
-from .update_room_request_body_groups_accesses_additional_property_type_0_item import (
-    UpdateRoomRequestBodyGroupsAccessesAdditionalPropertyType0Item,
-)
 from .update_room_request_body_metadata import UpdateRoomRequestBodyMetadata
 from .update_room_request_body_users_accesses import UpdateRoomRequestBodyUsersAccesses
-from .update_room_request_body_users_accesses_additional_property_type_0_item import (
-    UpdateRoomRequestBodyUsersAccessesAdditionalPropertyType0Item,
-)
 from .update_room_subscription_settings_request_body import UpdateRoomSubscriptionSettingsRequestBody
 from .update_room_subscription_settings_request_body_text_mentions import (
     UpdateRoomSubscriptionSettingsRequestBodyTextMentions,
@@ -306,9 +299,9 @@ __all__ = (
     "RemoveGroupMembersRequestBody",
     "RemoveJsonPatchOperation",
     "ReplaceJsonPatchOperation",
+    "RollProjectSecretApiKeyRequestBodyNewKeyExpirationIn",
     "Room",
     "RoomAccesses",
-    "RoomAccessesAdditionalPropertyItem",
     "RoomMetadata",
     "RoomPermissionItem",
     "RoomSubscriptionSettings",
@@ -337,10 +330,8 @@ __all__ = (
     "UpdateRoomOrganizationIdRequestBody",
     "UpdateRoomRequestBody",
     "UpdateRoomRequestBodyGroupsAccesses",
-    "UpdateRoomRequestBodyGroupsAccessesAdditionalPropertyType0Item",
     "UpdateRoomRequestBodyMetadata",
     "UpdateRoomRequestBodyUsersAccesses",
-    "UpdateRoomRequestBodyUsersAccessesAdditionalPropertyType0Item",
     "UpdateRoomSubscriptionSettingsRequestBody",
     "UpdateRoomSubscriptionSettingsRequestBodyTextMentions",
     "UpdateRoomSubscriptionSettingsRequestBodyThreads",

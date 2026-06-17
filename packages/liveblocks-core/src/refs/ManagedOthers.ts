@@ -2,13 +2,17 @@ import { freeze } from "../lib/freeze";
 import type { JsonObject } from "../lib/Json";
 import { DerivedSignal, merge, MutableSignal } from "../lib/signals";
 import { compact, compactObject } from "../lib/utils";
-import { canComment, canWriteStorage } from "../protocol/AuthToken";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { User } from "../types/User";
 
+type ConnectionAccess = {
+  readonly canWrite: boolean;
+  readonly canComment: boolean;
+};
+
 type Connection<U extends BaseUserMeta> = {
   readonly connectionId: number;
-  readonly scopes: string[];
+  readonly access: ConnectionAccess;
   readonly id: U["id"];
   readonly info: U["info"];
 };
@@ -17,15 +21,15 @@ function makeUser<P extends JsonObject, U extends BaseUserMeta>(
   conn: Connection<U>,
   presence: P
 ): User<P, U> {
-  const { connectionId, id, info } = conn;
-  const canWrite = canWriteStorage(conn.scopes);
+  const { connectionId, id, info, access } = conn;
+  const { canWrite, canComment } = access;
   return freeze(
     compactObject({
       connectionId,
       id,
       info,
       canWrite,
-      canComment: canComment(conn.scopes),
+      canComment,
       isReadOnly: !canWrite, // Deprecated, kept for backward-compatibility
       presence,
     })
@@ -118,7 +122,7 @@ export class ManagedOthers<P extends JsonObject, U extends BaseUserMeta> {
     connectionId: number,
     metaUserId: U["id"],
     metaUserInfo: U["info"],
-    scopes: string[]
+    access: ConnectionAccess
   ): void {
     this.#internal.mutate((state) => {
       state.connections.set(
@@ -127,7 +131,7 @@ export class ManagedOthers<P extends JsonObject, U extends BaseUserMeta> {
           connectionId,
           id: metaUserId,
           info: metaUserInfo,
-          scopes,
+          access,
         })
       );
       if (!state.presences.has(connectionId)) {

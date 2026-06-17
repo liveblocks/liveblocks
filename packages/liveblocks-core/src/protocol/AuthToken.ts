@@ -3,35 +3,9 @@ import type { Json } from "../lib/Json";
 import { b64decode, tryParseJson } from "../lib/utils";
 import type { IUserInfo } from "./BaseUserMeta";
 
-export enum Permission {
-  Read = "room:read",
-  Write = "room:write",
-  PresenceWrite = "room:presence:write",
-  CommentsWrite = "comments:write",
-  CommentsRead = "comments:read",
-  FeedsWrite = "feeds:write",
-}
-
-export type LiveblocksPermissions = Record<string, Permission[]>;
-
 export enum TokenKind {
   ACCESS_TOKEN = "acc",
   ID_TOKEN = "id",
-}
-
-/**
- * Infers from the given scopes whether the user can write the document (e.g.
- * Storage and/or YDoc).
- */
-export function canWriteStorage(scopes: readonly string[]): boolean {
-  return scopes.includes(Permission.Write);
-}
-
-export function canComment(scopes: readonly string[]): boolean {
-  return (
-    scopes.includes(Permission.CommentsWrite) ||
-    scopes.includes(Permission.Write)
-  );
 }
 
 type JwtMeta = {
@@ -46,7 +20,7 @@ export type AccessToken = {
   k: TokenKind.ACCESS_TOKEN;
   pid: string; // project id
   uid: string; // user id
-  perms: LiveblocksPermissions; // permissions
+  perms: Record<string, string[]>; // permissions
   ui?: IUserInfo; // user info
 } & JwtMeta;
 
