@@ -131,32 +131,21 @@
   z-index: 50;
 }
 
-/* The cell content rendered by our React renderer. The comment marker/anchor
-   are positioned against the <td> (see below) so they hug its real top-right
-   corner, past the cell's inner padding — so `.cell` itself must not clip or
-   establish the positioning context. */
-.cell {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  height: 100%;
-  gap: 8px;
-}
-
-.cell-value {
-  flex: 1 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+/* Cell content (value + formatting + presence borders) is painted imperatively
+   into each <td> by the Handsontable function renderer (see Table.tsx). */
+.handsontable td {
+  /* Positioning context for the comment marker pseudo-element. */
+  position: relative;
+  vertical-align: middle;
   /* Align digits in columns of numbers. */
   font-variant-numeric: tabular-nums;
 }
 
 /* Classic "this cell has a comment" marker: a small filled triangle hugging
-   the cell's top-right corner. It's also the anchor for the thread popover, and
-   clicking it (re)opens the thread. Positioned against the <td>. */
-.cell-comment-marker {
+   the cell's top-right corner. The renderer toggles `.has-comment` on the <td>
+   when a thread exists for that cell. */
+.handsontable td.has-comment::after {
+  content: "";
   position: absolute;
   top: 0;
   right: 0;
@@ -164,23 +153,6 @@
   height: 9px;
   background: var(--lb-accent, #4444ff);
   clip-path: polygon(0 0, 100% 0, 100% 100%);
-  cursor: pointer;
-  z-index: 2;
-}
-
-/* Minimal, invisible anchor for the composer on a cell that has no thread. */
-.cell-comment-anchor {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 1px;
-  height: 1px;
   pointer-events: none;
-}
-
-.handsontable td {
-  /* Positioning context for the top-right comment marker/anchor, so they sit
-     flush against the cell's real corner (past Handsontable's td padding). */
-  position: relative;
-  vertical-align: middle;
+  z-index: 2;
 }

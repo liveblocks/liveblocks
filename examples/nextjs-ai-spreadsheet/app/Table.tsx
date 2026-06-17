@@ -6,6 +6,7 @@ import { registerAllModules } from "handsontable/registry";
 import type { CellChange, ChangeSource } from "handsontable/common";
 import { shallow } from "@liveblocks/client";
 import {
+  useOthers,
   useStorage,
   useThreads,
   useUpdateMyPresence,
@@ -14,14 +15,19 @@ import {
   cellKey,
   DEFAULT_COL_WIDTH,
   DEFAULT_ROW_HEIGHT,
+  type CellFormat,
 } from "@/liveblocks.config";
 import { colIndexToLetters } from "@/lib/a1";
+import { formatDisplayValue } from "@/lib/format";
 import { useSpreadsheetActions } from "./useSpreadsheetActions";
 import { useSetSelection } from "./SelectionContext";
 import { OrderProvider } from "./OrderContext";
-import { Cell } from "./Cell";
+import { CommentOverlay } from "./CommentOverlay";
 
 registerAllModules();
+
+type CellSelector = { name: string; color: string };
+type HotInstance = NonNullable<HotTableRef["hotInstance"]>;
 
 // Removes `moved` (array of indices) from `ids`, then re-inserts them at
 // `finalIndex` — mirrors Handsontable's manual move so we can apply it to the
@@ -62,14 +68,6 @@ export function Table() {
   const setSelection = useSetSelection();
   const updateMyPresence = useUpdateMyPresence();
 
-  // Repaint the grid whenever the set of comment threads changes, so the
-  // comment marker appears immediately on any cell — including never-edited
-  // (empty) cells that Handsontable would otherwise not repaint on its own.
-  const { threads } = useThreads();
-  useEffect(() => {
-    hotRef.current?.hotInstance?.render();
-  }, [threads]);
-
   // Stable id order (re-used by the cell renderer and every grid handler).
   const rowIds = useStorage((root) => [...root.rowIds], shallow);
   const colIds = useStorage((root) => [...root.colIds], shallow);
@@ -87,6 +85,47 @@ export function Table() {
     return out;
   }, shallow);
 
+  // Per-cell formatting, presence selections, and which cells have a thread —
+  // these are NOT part of the Handsontable `data` array, so the function
+  // renderer reads them from refs and we trigger a repaint when they change.
+  const cellsFormat = useStorage((root) => {
+    const out: Record<string, CellFormat> = {};
+    for (const [key, cell] of Object.entries(root.cells)) {
+      if (cell.format) {
+        out[key] = cell.format;
+      }
+    }
+    return out;
+  }, shallow);
+
+  const presenceByCell = useOthers((others) => {
+    const out: Record<string, CellSelector[]> = {};
+    for (const other of others) {
+      const sc = other.presence.selectedCell;
+      if (!sc?.rowId || !sc?.colId) {
+        continue;
+      }
+      const key = cellKey(sc.rowId, sc.colId);
+      (out[key] ??= []).push({
+        name: other.info?.name ?? "Someone",
+        color: other.info?.color ?? "#888888",
+      });
+    }
+    return out;
+  }, shallow);
+
+  const { threads } = useThreads();
+  const threadKeys = useMemo(() => {
+    const set = new Set<string>();
+    for (const thread of threads) {
+      const { rowId, colId } = thread.metadata;
+      if (rowId && colId) {
+        set.add(cellKey(rowId, colId));
+      }
+    }
+    return set;
+  }, [threads]);
+
   const colWidths = useStorage(
     (root) =>
       [...root.colIds].map((id) => root.colWidths[id] ?? DEFAULT_COL_WIDTH),
@@ -103,13 +142,20 @@ export function Table() {
     [rowIds, colIds, values]
   );
 
-  // Refs so the (stable) Handsontable callbacks always read the latest order.
+  // Refs so the (stable) Handsontable callbacks and function renderer always
+  // read the latest order / data without being re-created.
   const rowIdsRef = useRef(rowIds);
   rowIdsRef.current = rowIds;
   const colIdsRef = useRef(colIds);
   colIdsRef.current = colIds;
   const valuesRef = useRef(values);
   valuesRef.current = values;
+  const cellsFormatRef = useRef(cellsFormat);
+  cellsFormatRef.current = cellsFormat;
+  const presenceByCellRef = useRef(presenceByCell);
+  presenceByCellRef.current = presenceByCell;
+  const threadKeysRef = useRef(threadKeys);
+  threadKeysRef.current = threadKeys;
   const lastSelKey = useRef<string>("");
 
   // We cancel Handsontable's own sort (see `beforeColumnSort`), so the
@@ -121,6 +167,95 @@ export function Table() {
   );
 
   const order = useMemo(() => ({ rowIds, colIds }), [rowIds, colIds]);
+
+  // Plain Handsontable function renderer: paints value + formatting + presence
+  // borders + comment marker directly onto the (recycled) <td>, synchronously
+  // on every Handsontable render. Every style is set or reset on every call, so
+  // a recycled/repainted cell never keeps a previous cell's content or styles.
+  const renderCell = useCallback(
+    (
+      _instance: HotInstance,
+      td: HTMLTableCellElement,
+      row: number,
+      col: number,
+      _prop: string | number,
+      value: unknown
+    ) => {
+      // Reset everything this renderer may set (idempotent on recycled tds).
+      td.style.background = "";
+      td.style.boxShadow = "";
+      td.style.fontWeight = "";
+      td.style.fontStyle = "";
+      td.style.textDecoration = "";
+      td.style.color = "";
+      td.style.textAlign = "";
+      td.classList.remove("has-comment");
+      td.removeAttribute("title");
+
+      const rowId = rowIdsRef.current[row];
+      const colId = colIdsRef.current[col];
+      const raw = value == null ? "" : String(value);
+
+      // Transient frame (order not resolved yet): still show the raw value.
+      if (!rowId || !colId) {
+        td.textContent = raw;
+        return;
+      }
+
+      const key = cellKey(rowId, colId);
+      const format = cellsFormatRef.current[key];
+
+      td.textContent = formatDisplayValue(raw, format?.numberFormat);
+
+      if (format) {
+        if (format.bold) {
+          td.style.fontWeight = "600";
+        }
+        if (format.italic) {
+          td.style.fontStyle = "italic";
+        }
+        const decorations: string[] = [];
+        if (format.underline) {
+          decorations.push("underline");
+        }
+        if (format.strike) {
+          decorations.push("line-through");
+        }
+        if (decorations.length) {
+          td.style.textDecoration = decorations.join(" ");
+        }
+        if (format.color) {
+          td.style.color = format.color;
+        }
+        if (format.align) {
+          td.style.textAlign = format.align;
+        }
+        if (format.background) {
+          td.style.background = format.background;
+        }
+      }
+
+      const selectors = presenceByCellRef.current[key];
+      if (selectors && selectors.length) {
+        td.style.boxShadow = selectors
+          .map((s, i) => `inset 0 0 0 ${2 + i * 2}px ${s.color}`)
+          .join(", ");
+        td.title = selectors.map((s) => s.name).join(", ");
+      }
+
+      if (threadKeysRef.current.has(key)) {
+        td.classList.add("has-comment");
+      }
+    },
+    []
+  );
+
+  // Repaint the grid whenever formatting, presence, or the set of comment
+  // threads change. (Value/order changes flow through the `data` prop, which
+  // already triggers a Handsontable re-render.)
+  useEffect(() => {
+    hotRef.current?.hotInstance?.render();
+  }, [cellsFormat, presenceByCell, threadKeys]);
 
   const colHeaders = useCallback(
     (index: number) => colIndexToLetters(index),
@@ -284,7 +419,7 @@ export function Table() {
         ref={hotRef}
         className="ht-theme-main w-full h-full"
         data={data}
-        renderer={Cell}
+        hotRenderer={renderCell}
         colHeaders={colHeaders}
         rowHeaders={rowHeaders}
         colWidths={colWidths}
@@ -315,6 +450,7 @@ export function Table() {
         stretchH="none"
         rowHeaderWidth={48}
       />
+      <CommentOverlay hotRef={hotRef} />
     </OrderProvider>
   );
 }

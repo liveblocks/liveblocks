@@ -1,10 +1,6 @@
 import { Liveblocks } from "@liveblocks/node";
 import { NextRequest, NextResponse } from "next/server";
-import {
-  AI_USER_AVATAR,
-  AI_USER_ID,
-  AI_USER_NAME,
-} from "@/database";
+import { AI_USER_AVATAR, AI_USER_ID, AI_USER_NAME } from "@/database";
 import {
   addComment,
   clearRange,
@@ -229,26 +225,32 @@ async function streamReply(
     insertRow: tool({
       description: "Insert an empty row at a 1-based row number.",
       inputSchema: z.object({ rowNumber: z.number().int().min(1) }),
-      execute: ({ rowNumber }) =>
-        insertRow(liveblocks, roomId, rowNumber - 1),
+      execute: ({ rowNumber }) => insertRow(liveblocks, roomId, rowNumber - 1),
     }),
     deleteRow: tool({
       description: "Delete the row at a 1-based row number.",
       inputSchema: z.object({ rowNumber: z.number().int().min(1) }),
-      execute: ({ rowNumber }) =>
-        deleteRow(liveblocks, roomId, rowNumber - 1),
+      execute: ({ rowNumber }) => deleteRow(liveblocks, roomId, rowNumber - 1),
     }),
     insertColumn: tool({
       description: "Insert an empty column at a column letter.",
       inputSchema: z.object({ column: z.string() }),
       execute: ({ column }) =>
-        insertColumn(liveblocks, roomId, Math.max(0, lettersToColIndex(column))),
+        insertColumn(
+          liveblocks,
+          roomId,
+          Math.max(0, lettersToColIndex(column))
+        ),
     }),
     deleteColumn: tool({
       description: "Delete the column at a column letter.",
       inputSchema: z.object({ column: z.string() }),
       execute: ({ column }) =>
-        deleteColumn(liveblocks, roomId, Math.max(0, lettersToColIndex(column))),
+        deleteColumn(
+          liveblocks,
+          roomId,
+          Math.max(0, lettersToColIndex(column))
+        ),
     }),
     addComment: tool({
       description: "Leave a comment thread anchored to a cell.",

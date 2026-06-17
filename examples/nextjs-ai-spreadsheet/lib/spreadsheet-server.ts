@@ -10,11 +10,7 @@ import {
   AI_USER_ID,
   AI_USER_NAME,
 } from "@/database";
-import {
-  cellKey,
-  type CellData,
-  type CellFormat,
-} from "@/liveblocks.config";
+import { cellKey, type CellData, type CellFormat } from "@/liveblocks.config";
 import { isFormatEmpty, mergeFormat } from "@/lib/format";
 import {
   colIndexToLetters,
@@ -155,12 +151,16 @@ export async function showAiEditing(
   // Short TTL: presence is refreshed before each edit and is never explicitly
   // cleared, so the AI's selection lingers while it works and fades on its own
   // a few seconds after the last edit.
-  await liveblocks.setPresence(roomId, {
-    userId: AI_USER_ID,
-    userInfo: AI_USER_INFO,
-    data: { selectedCell: cell, promptingFeedId: null },
-    ttl: 3,
-  });
+  try {
+    await liveblocks.setPresence(roomId, {
+      userId: AI_USER_ID,
+      userInfo: AI_USER_INFO,
+      data: { selectedCell: cell, promptingFeedId: null },
+      ttl: 3,
+    });
+  } catch (error) {
+    throw error;
+  }
 }
 
 // Resolve the stable ids of an A1 cell from a fresh storage read, for presence.
@@ -230,7 +230,19 @@ export async function setRangeValues(
       if (!rowId || !colId) {
         continue;
       }
-      await showAiEditing(liveblocks, roomId, { rowId, colId });
+      // A failed/rate-limited presence update must not abort the range fill.
+      try {
+        await showAiEditing(liveblocks, roomId, { rowId, colId });
+        // TEMP debug — remove
+        console.log("[ai-presence] set", { rowId, colId });
+      } catch (error) {
+        // TEMP debug — remove
+        console.error("[ai-presence] setPresence failed", {
+          rowId,
+          colId,
+          error,
+        });
+      }
       await liveblocks.mutateStorage(roomId, ({ root }) => {
         writeValue(root.get("cells"), rowId, colId, cols[c]);
       });
@@ -253,7 +265,11 @@ export async function clearRange(
   // Show the AI's presence on the range being cleared. A clear can span a large
   // range cheaply (just two corners), so we pin to the start cell rather than
   // stepping cell-by-cell, to avoid a round-trip per cell.
-  const ids = await idsForA1(liveblocks, roomId, toA1(range.start.row, range.start.col));
+  const ids = await idsForA1(
+    liveblocks,
+    roomId,
+    toA1(range.start.row, range.start.col)
+  );
   if (ids) {
     await showAiEditing(liveblocks, roomId, ids);
   }

@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { nanoid } from "nanoid";
+import { useStickToBottomContext } from "use-stick-to-bottom";
 import {
   ClientSideSuspense,
   useCreateFeed,
@@ -162,6 +163,20 @@ export function Chat({ roomId }: { roomId: string }) {
   );
 }
 
+// Exposes the StickToBottom context's `scrollToBottom` to `ChatWindow` (which
+// renders `<Conversation>` and so sits outside the context itself).
+function ScrollToBottomBridge({
+  register,
+}: {
+  register: (scrollToBottom: () => void) => void;
+}) {
+  const { scrollToBottom } = useStickToBottomContext();
+  useEffect(() => {
+    register(scrollToBottom);
+  }, [register, scrollToBottom]);
+  return null;
+}
+
 function ChatWindow({
   roomId,
   feedId,
@@ -205,6 +220,16 @@ function ChatWindow({
   const inFlight = useRef(false);
   const sorted = [...messages].sort((a, b) => a.createdAt - b.createdAt);
 
+  // `use-stick-to-bottom` only auto-follows when the view is already pinned to
+  // the bottom. When the user sends (or regenerates), force a scroll to the
+  // bottom so the new message + streaming reply are visible even if they had
+  // scrolled up. The `scrollToBottom` fn lives in the StickToBottom context, so
+  // a small bridge component inside `<Conversation>` registers it here.
+  const scrollToBottomRef = useRef<(() => void) | null>(null);
+  const registerScrollToBottom = useCallback((fn: () => void) => {
+    scrollToBottomRef.current = fn;
+  }, []);
+
   const postReply = useCallback(
     async (history: { role: "user" | "assistant"; content: string }[]) => {
       await fetch("/api/ai-chat", {
@@ -234,6 +259,9 @@ function ChatWindow({
           name: self.info.name,
           avatar: self.info.avatar,
         });
+        // Re-pin to the bottom now that a new message is in; the streaming
+        // reply then follows automatically.
+        scrollToBottomRef.current?.();
 
         const history = [
           ...sorted.map((message) => ({
@@ -276,6 +304,7 @@ function ChatWindow({
           content: message.data.content,
         }));
         await deleteFeedMessage(feedId, messageId);
+        scrollToBottomRef.current?.();
         await postReply(history);
       } catch {
         // Best-effort in this demo; errors are non-fatal to the UI.
@@ -303,6 +332,7 @@ function ChatWindow({
   return (
     <>
       <Conversation>
+        <ScrollToBottomBridge register={registerScrollToBottom} />
         <ConversationContent>
           {sorted.length === 0 ? (
             <ConversationEmptyState>
