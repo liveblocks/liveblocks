@@ -5,10 +5,7 @@ import { HotTable, type HotTableRef } from "@handsontable/react-wrapper";
 import { registerAllModules } from "handsontable/registry";
 import type { CellChange, ChangeSource } from "handsontable/common";
 import { shallow } from "@liveblocks/client";
-import {
-  useStorage,
-  useUpdateMyPresence,
-} from "@liveblocks/react/suspense";
+import { useStorage, useUpdateMyPresence } from "@liveblocks/react/suspense";
 import {
   cellKey,
   DEFAULT_COL_WIDTH,
@@ -79,11 +76,13 @@ export function Table() {
   }, shallow);
 
   const colWidths = useStorage(
-    (root) => [...root.colIds].map((id) => root.colWidths[id] ?? DEFAULT_COL_WIDTH),
+    (root) =>
+      [...root.colIds].map((id) => root.colWidths[id] ?? DEFAULT_COL_WIDTH),
     shallow
   );
   const rowHeights = useStorage(
-    (root) => [...root.rowIds].map((id) => root.rowHeights[id] ?? DEFAULT_ROW_HEIGHT),
+    (root) =>
+      [...root.rowIds].map((id) => root.rowHeights[id] ?? DEFAULT_ROW_HEIGHT),
     shallow
   );
 
@@ -100,9 +99,20 @@ export function Table() {
   const valuesRef = useRef(values);
   valuesRef.current = values;
 
+  // We cancel Handsontable's own sort (see `beforeColumnSort`), so the
+  // columnSorting plugin's per-column state never advances and the `sortOrder`
+  // it hands us is always "asc". Track the direction ourselves to toggle
+  // asc → desc on repeated clicks of the same column header.
+  const sortRef = useRef<{ colId: string; sortOrder: "asc" | "desc" } | null>(
+    null
+  );
+
   const order = useMemo(() => ({ rowIds, colIds }), [rowIds, colIds]);
 
-  const colHeaders = useCallback((index: number) => colIndexToLetters(index), []);
+  const colHeaders = useCallback(
+    (index: number) => colIndexToLetters(index),
+    []
+  );
   const rowHeaders = useCallback((index: number) => String(index + 1), []);
 
   const afterChange = useCallback(
@@ -221,20 +231,26 @@ export function Table() {
       destination: { column: number; sortOrder?: "asc" | "desc" }[]
     ) => {
       const config = destination?.[0];
-      if (!config || !config.sortOrder) {
+      if (!config) {
         return false;
       }
       const colId = colIdsRef.current[config.column];
       if (!colId) {
         return false;
       }
+      const prev = sortRef.current;
+      const sortOrder: "asc" | "desc" =
+        prev && prev.colId === colId && prev.sortOrder === "asc"
+          ? "desc"
+          : "asc";
+      sortRef.current = { colId, sortOrder };
       const sorted = [...rowIdsRef.current].sort((a, b) =>
         compareValues(
           valuesRef.current[cellKey(a, colId)] ?? "",
           valuesRef.current[cellKey(b, colId)] ?? ""
         )
       );
-      if (config.sortOrder === "desc") {
+      if (sortOrder === "desc") {
         sorted.reverse();
       }
       actions.setRowOrder(sorted);
@@ -247,7 +263,7 @@ export function Table() {
     <OrderProvider order={order}>
       <HotTable
         ref={hotRef}
-        className="ht-theme-main"
+        className="ht-theme-main w-full h-full"
         data={data}
         renderer={Cell}
         colHeaders={colHeaders}
