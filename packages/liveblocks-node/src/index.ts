@@ -1,4 +1,4 @@
-import { detectDupes } from "@liveblocks/core";
+import { detectDupes, type RoomPermissions } from "@liveblocks/core";
 
 import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 
@@ -26,9 +26,7 @@ export type {
   MutateStorageOptions,
   Page,
   PaginationOptions,
-  RoomAccesses,
   RoomData,
-  RoomPermission,
   RoomsQueryCriteria,
   RoomUser,
   SetPresenceOptions,
@@ -72,6 +70,7 @@ export {
   isThreadNotificationEvent,
   WebhookHandler,
 } from "./webhooks";
+export type { RoomAccesses, RoomPermissions } from "@liveblocks/core";
 export type {
   CommentBody,
   CommentBodyBlockElement,
@@ -110,3 +109,8 @@ export {
   LiveObject,
   stringifyCommentBody,
 } from "@liveblocks/core";
+
+/**
+ * @deprecated Use `RoomPermissions` instead.
+ */
+export type RoomPermission = RoomPermissions;

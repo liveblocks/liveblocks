@@ -35,7 +35,7 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
   // Use a naming pattern to allow access to rooms with a wildcard
   liveblocksSession.allow(
     `liveblocks:examples:*`,
-    liveblocksSession.FULL_ACCESS
+    ["*:write"]
   );
 
   const { status, body } = await liveblocksSession.authorize();

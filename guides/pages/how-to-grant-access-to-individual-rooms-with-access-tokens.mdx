@@ -9,7 +9,7 @@ meta:
 
 If you’re looking to build an application with permissions at organization,
 group, and user levels, we recommend using
-[ID tokens](/docs/authentication/id-token) instead. Access tokens have
+[ID tokens](/docs/authentication#id-token) instead. Access tokens have
 [limitations when granting nested permissions](#limitations).
 
 </Banner>
@@ -21,7 +21,7 @@ organization.
 
 ```ts
 // ✅ Grants access to every `acme` organization room
-session.allow(`acme:*`, session.FULL_ACCESS);
+session.allow(`acme:*`, ["*:write"]);
 ```
 
 However, it may not always be possible to grant access to every room with a
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
   const { room } = request.body;
 
   if (room && __shouldUserHaveAccess__(user, room)) {
-    session.allow(room, session.FULL_ACCESS);
+    session.allow(room, ["*:write"]);
   }
 
   // Authorize the user and return the result

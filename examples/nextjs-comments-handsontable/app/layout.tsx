@@ -1,6 +1,7 @@
 import "./globals.css";
 import { Providers } from "./Providers";
 import { Suspense } from "react";
+import { HelpButton } from "../components/HelpButton";
 
 export const metadata = {
   title: "Liveblocks",
@@ -32,6 +33,7 @@ export default function RootLayout({
         <Suspense>
           <Providers>{children}</Providers>
         </Suspense>
+        <HelpButton />
       </body>
     </html>
   );

@@ -15,14 +15,13 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { nanoid } from "@liveblocks/core";
+import { mergeRoomPermissionScopes, nanoid, Permission } from "@liveblocks/core";
 import type { CreateTicketOptions } from "@liveblocks/server";
 import { ProtocolVersion } from "@liveblocks/server";
 
 import * as Rooms from "./db/rooms";
 import type { LiteAccessToken, LiteIdToken, LiteToken } from "./lib/jwt-lite";
 import { verifyJwtLite } from "./lib/jwt-lite";
-import { Permission } from "./lib/permissions";
 
 function resolvePermissions_acc(
   token: LiteAccessToken,
@@ -54,28 +53,22 @@ function resolvePermissions_id(
   const room = Rooms.getRoom(roomId);
   if (!room) return [];
 
-  const scopes = new Set<Permission>(room.defaultAccesses);
+  const groupsAccesses = (token.gids ?? [])
+    .filter((gid) => gid in room.groupsAccesses)
+    .map((gid) => room.groupsAccesses[gid]);
 
-  if (token.gids) {
-    for (const gid of token.gids) {
-      for (const p of room.groupsAccesses[gid] ?? []) {
-        scopes.add(p);
-      }
-    }
-  }
-
-  for (const p of room.usersAccesses[token.uid] ?? []) {
-    scopes.add(p);
-  }
-
-  return Array.from(scopes);
+  return mergeRoomPermissionScopes({
+    defaultAccesses: room.defaultAccesses,
+    groupsAccesses,
+    userAccesses: room.usersAccesses[token.uid] ?? [],
+  });
 }
 
 /**
  * Resolves permissions for a token against a room.
  * - Access tokens: match roomId against the token's explicit perms map.
- * - ID tokens: look up the room in the DB and collect the union of
- *   defaultAccesses, groupsAccesses, and usersAccesses.
+ * - ID tokens: look up the room in the DB and merge defaultAccesses,
+ *   groupsAccesses, and usersAccesses using the same semantics as production.
  */
 function resolvePermissions(token: LiteToken, roomId: string): Permission[] {
   return token.k === "acc"

@@ -6,9 +6,7 @@ from typing import Any, Self, cast
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-from ..models.update_room_request_body_groups_accesses_additional_property_type_0_item import (
-    UpdateRoomRequestBodyGroupsAccessesAdditionalPropertyType0Item,
-)
+from ..models.room_permission_item import RoomPermissionItem
 
 
 @_attrs_define
@@ -18,9 +16,7 @@ class UpdateRoomRequestBodyGroupsAccesses:
 
     """
 
-    additional_properties: dict[str, list[UpdateRoomRequestBodyGroupsAccessesAdditionalPropertyType0Item] | None] = (
-        _attrs_field(init=False, factory=dict)
-    )
+    additional_properties: dict[str, list[RoomPermissionItem] | None] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
 
@@ -45,9 +41,7 @@ class UpdateRoomRequestBodyGroupsAccesses:
         additional_properties = {}
         for prop_name, prop_dict in d.items():
 
-            def _parse_additional_property(
-                data: object,
-            ) -> list[UpdateRoomRequestBodyGroupsAccessesAdditionalPropertyType0Item] | None:
+            def _parse_additional_property(data: object) -> list[RoomPermissionItem] | None:
                 if data is None:
                     return data
                 try:
@@ -56,18 +50,14 @@ class UpdateRoomRequestBodyGroupsAccesses:
                     additional_property_type_0 = []
                     _additional_property_type_0 = data
                     for additional_property_type_0_item_data in _additional_property_type_0:
-                        additional_property_type_0_item = (
-                            UpdateRoomRequestBodyGroupsAccessesAdditionalPropertyType0Item(
-                                additional_property_type_0_item_data
-                            )
-                        )
+                        additional_property_type_0_item = RoomPermissionItem(additional_property_type_0_item_data)
 
                         additional_property_type_0.append(additional_property_type_0_item)
 
                     return additional_property_type_0
                 except (TypeError, ValueError, AttributeError, KeyError):
                     pass
-                return cast(list[UpdateRoomRequestBodyGroupsAccessesAdditionalPropertyType0Item] | None, data)
+                return cast(list[RoomPermissionItem] | None, data)
 
             additional_property = _parse_additional_property(prop_dict)
 
@@ -80,12 +70,10 @@ class UpdateRoomRequestBodyGroupsAccesses:
     def additional_keys(self) -> list[str]:
         return list(self.additional_properties.keys())
 
-    def __getitem__(self, key: str) -> list[UpdateRoomRequestBodyGroupsAccessesAdditionalPropertyType0Item] | None:
+    def __getitem__(self, key: str) -> list[RoomPermissionItem] | None:
         return self.additional_properties[key]
 
-    def __setitem__(
-        self, key: str, value: list[UpdateRoomRequestBodyGroupsAccessesAdditionalPropertyType0Item] | None
-    ) -> None:
+    def __setitem__(self, key: str, value: list[RoomPermissionItem] | None) -> None:
         self.additional_properties[key] = value
 
     def __delitem__(self, key: str) -> None:

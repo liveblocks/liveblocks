@@ -12,8 +12,8 @@ import type {
 import { createManagedPool, OpSource } from "./crdts/AbstractCrdt";
 import {
   cloneLson,
+  diffNodeMap,
   dumpPool,
-  getTreesDiffOperations,
   isLiveList,
   isLiveNode,
   isLiveText,
@@ -61,12 +61,16 @@ import {
   partition,
   tryParseJson,
 } from "./lib/utils";
+import type { PermissionMatrix, RoomPermissions } from "./permissions";
+import {
+  hasPermissionAccess,
+  normalizeRoomPermissions,
+  permissionMatrixFromScopes,
+} from "./permissions";
 import type {
   ContextualPromptContext,
   ContextualPromptResponse,
 } from "./protocol/Ai";
-import type { Permission } from "./protocol/AuthToken";
-import { canComment, canWriteStorage } from "./protocol/AuthToken";
 import type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
 import type {
   AddFeedClientMsg,
@@ -122,11 +126,7 @@ import type {
   YDocUpdateServerMsg,
 } from "./protocol/ServerMsg";
 import { ServerMsgCode } from "./protocol/ServerMsg";
-import type {
-  NodeMap,
-  NodeStream,
-  SerializedCrdt,
-} from "./protocol/StorageNode";
+import type { NodeMap, NodeStream } from "./protocol/StorageNode";
 import { compactNodesToNodeStream, CrdtType } from "./protocol/StorageNode";
 import type {
   SubscriptionData,
@@ -789,10 +789,16 @@ export type Room<
 
   /**
    * Get the room's storage synchronously.
-   * The storage's root is a {@link LiveObject}.
+   * The storage's root is a LiveObject.
    *
    * @example
-   * const root = room.getStorageSnapshot();
+   * const root = room.getStorageOrNull();
+   */
+  getStorageOrNull(): LiveObject<S> | null;
+
+  /**
+   * @deprecated Renamed to `Room.getStorageOrNull`. This alias will be
+   * removed in the future.
    */
   getStorageSnapshot(): LiveObject<S> | null;
 
@@ -938,7 +944,7 @@ export type Room<
     subscriptions: SubscriptionData[];
     requestedAt: Date;
     nextCursor: string | null;
-    permissionHints: Record<string, Permission[]>;
+    permissionHints: Record<string, RoomPermissions>;
   }>;
 
   /**
@@ -963,7 +969,7 @@ export type Room<
       deleted: SubscriptionDeleteInfo[];
     };
     requestedAt: Date;
-    permissionHints: Record<string, Permission[]>;
+    permissionHints: Record<string, RoomPermissions>;
   }>;
 
   /**
@@ -1303,6 +1309,18 @@ export type PrivateRoomApi = {
   >;
 };
 
+function connectionAccessFromScopes(scopes: string[]): {
+  canWrite: boolean;
+  canComment: boolean;
+} {
+  const roomPermissions = normalizeRoomPermissions(scopes);
+  const matrix = permissionMatrixFromScopes(roomPermissions);
+  return {
+    canWrite: hasPermissionAccess(matrix, "storage", "write"),
+    canComment: hasPermissionAccess(matrix, "comments", "write"),
+  };
+}
+
 function makeIdFactory(connectionId: number): IdFactory {
   let count = 0;
   return () => `${connectionId}:${count++}`;
@@ -1330,7 +1348,7 @@ export type StaticSessionInfo = {
 export type DynamicSessionInfo = {
   readonly actor: number;
   readonly nonce: string;
-  readonly scopes: string[];
+  readonly permissionMatrix: PermissionMatrix;
   readonly meta: JsonObject;
 };
 
@@ -1464,13 +1482,6 @@ export type RoomConfig<TM extends BaseMetadata, CM extends BaseMetadata> = {
   throttleDelay: number;
   lostConnectionTimeout: number;
   backgroundKeepAliveTimeout?: number;
-
-  /**
-   * @deprecated All rooms will be migrated to the v2 storage engine in the
-   * future, which has native support for streaming. After that migration, this
-   * flag will no longer have any effect and will be removed in a future version.
-   */
-  unstable_streamData?: boolean;
 
   polyfills?: Polyfills;
 
@@ -1749,7 +1760,7 @@ export function createRoom<
     // If a storage fetch has ever been initiated, we assume the client is
     // interested in storage, so we will refresh it after a reconnection.
     if (_getStorage$ !== null) {
-      refreshStorage({ flush: false });
+      refreshStorage();
     }
     flushNowOrSoon();
   }
@@ -1826,9 +1837,12 @@ export function createRoom<
   }
 
   function isStorageWritable(): boolean {
-    const scopes = context.dynamicSessionInfoSig.get()?.scopes;
+    const permissionMatrix =
+      context.dynamicSessionInfoSig.get()?.permissionMatrix;
     // If we aren't connected yet, assume we can write
-    return scopes !== undefined ? canWriteStorage(scopes) : true;
+    return permissionMatrix !== undefined
+      ? hasPermissionAccess(permissionMatrix, "storage", "write")
+      : true;
   }
 
   const eventHub = {
@@ -1910,14 +1924,22 @@ export function createRoom<
       if (staticSession === null || dynamicSession === null) {
         return null;
       } else {
-        const canWrite = canWriteStorage(dynamicSession.scopes);
+        const canWrite = hasPermissionAccess(
+          dynamicSession.permissionMatrix,
+          "storage",
+          "write"
+        );
         return {
           connectionId: dynamicSession.actor,
           id: staticSession.userId,
           info: staticSession.userInfo,
           presence: myPresence,
           canWrite,
-          canComment: canComment(dynamicSession.scopes),
+          canComment: hasPermissionAccess(
+            dynamicSession.permissionMatrix,
+            "comments",
+            "write"
+          ),
         };
       }
     }
@@ -1948,19 +1970,7 @@ export function createRoom<
         currentItems.set(id, crdt._serialize());
       }
 
-      // XXX_vincent Smell, needs a deeper refactor soon! A reconnect
-      // snapshot is a stream of *nodes* (the full authoritative state), but
-      // here we fabricate a diff of *ops* and replay it through the live
-      // op-apply path. That path carries live-only optimistic semantics
-      // ("temporary position until the backend sends a fix" shifts,
-      // pending-conflict resolution) that are nonsensical when the stream we
-      // are applying already IS the fix. (The LiveList push tail-bump is
-      // fine, though: it skips every op whose position the snapshot may
-      // already own, so replaying the diff cannot mispredict.) The proper
-      // fix is a node-stream reconcile that updates the tree in place,
-      // unified with the `_fromItems` path used on initial load, so a node
-      // stream never enters the op path at all.
-      const ops = getTreesDiffOperations(currentItems, nodes);
+      const ops = diffNodeMap(currentItems, nodes);
       const result = applyRemoteOps(ops);
 
       // LiveText nodes are not covered by the op diff above (their op path
@@ -2391,7 +2401,9 @@ export function createRoom<
     context.dynamicSessionInfoSig.set({
       actor: message.actor,
       nonce: message.nonce,
-      scopes: message.scopes,
+      permissionMatrix: permissionMatrixFromScopes(
+        normalizeRoomPermissions(message.scopes)
+      ),
       meta: message.meta,
     });
     context.idFactory = makeIdFactory(message.actor);
@@ -2416,7 +2428,7 @@ export function createRoom<
         connectionId,
         user.id,
         user.info,
-        user.scopes
+        connectionAccessFromScopes(user.scopes)
       );
     }
 
@@ -2443,7 +2455,7 @@ export function createRoom<
       message.actor,
       message.id,
       message.info,
-      message.scopes
+      connectionAccessFromScopes(message.scopes)
     );
     // Send current presence to new user
     // TODO: Consider storing it on the backend
@@ -3120,38 +3132,21 @@ export function createRoom<
     eventHub.storageDidLoad.notify();
   }
 
-  async function streamStorage() {
-    // TODO: Handle potential race conditions where the room get disconnected while the request is pending
-    if (!managedSocket.authValue) return;
-    const nodes = new Map<string, SerializedCrdt>(
-      await httpClient.streamStorage({ roomId })
-    );
-    processInitialStorage(nodes);
-  }
-
-  function refreshStorage(options: { flush: boolean }) {
+  function refreshStorage() {
     const messages = context.buffer.messages;
-    if (config.unstable_streamData) {
-      // instead of sending a fetch message over WS, stream over HTTP
-      void streamStorage();
-    } else if (
-      !messages.some((msg) => msg.type === ClientMsgCode.FETCH_STORAGE)
-    ) {
+    if (!messages.some((msg) => msg.type === ClientMsgCode.FETCH_STORAGE)) {
       // Only add the fetch message to the outgoing message queue if it isn't
       // already there
       messages.push({ type: ClientMsgCode.FETCH_STORAGE });
       nodeMapBuffer.take(); // Reset any partial state from previous fetch
       stopwatch?.start();
     }
-
-    if (options.flush) {
-      flushNowOrSoon();
-    }
   }
 
   function startLoadingStorage(): Promise<void> {
     if (_getStorage$ === null) {
-      refreshStorage({ flush: true });
+      refreshStorage();
+      flushNowOrSoon();
       _getStorage$ = new Promise((resolve) => {
         _resolveStoragePromise = resolve;
       });
@@ -3168,7 +3163,7 @@ export function createRoom<
    * Once Storage is loaded, will return a stable reference to the storage
    * root.
    */
-  function getStorageSnapshot(): LiveObject<S> | null {
+  function getStorageOrNull(): LiveObject<S> | null {
     const root = context.root;
     if (root !== undefined) {
       // Done loading
@@ -3614,7 +3609,7 @@ export function createRoom<
   }
 
   function isStorageReady() {
-    return getStorageSnapshot() !== null;
+    return getStorageOrNull() !== null;
   }
 
   async function waitUntilStorageReady(): Promise<void> {
@@ -3977,7 +3972,9 @@ export function createRoom<
 
       _dump: () => {
         const n = context.pool.nodes.size;
-        return `Room "${roomId}" (${n} node${n === 1 ? "" : "s"}):\n${dumpPool(context.pool)}`;
+        return `Room "${roomId}" (${n} node${n === 1 ? "" : "s"}):\n${dumpPool(
+          context.pool
+        )}`;
       },
       destroy: () => {
         pendingFeedsRequests.forEach((request) =>
@@ -4031,7 +4028,8 @@ export function createRoom<
       updateFeedMessage,
       deleteFeedMessage,
       getStorage,
-      getStorageSnapshot,
+      getStorageOrNull,
+      getStorageSnapshot: getStorageOrNull, // Deprecated alias, will be removed in the future
       getStorageStatus,
 
       isPresenceReady,
@@ -4254,7 +4252,12 @@ export function makeAuthDelegateForRoom(
   authManager: AuthManager
 ): () => Promise<AuthValue> {
   return async () => {
-    return authManager.getAuthValue({ requestedScope: "room:read", roomId });
+    // Websocket connect needs base room access. Presence itself is not configurable.
+    return authManager.getAuthValue({
+      roomId,
+      resource: "room",
+      access: "read",
+    });
   };
 }
 

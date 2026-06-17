@@ -282,21 +282,18 @@ export function isJsonEq(a: Json | undefined, b: Json | undefined): boolean {
  *  - UPDATE_OBJECT for "root" (data changed: a: 1 → 99)
  *  - CREATE_OBJECT for "node2" (added)
  */
-export function getTreesDiffOperations(
-  currentItems: NodeMap,
-  newItems: NodeMap
-): Op[] {
+export function diffNodeMap(prev: NodeMap, next: NodeMap): Op[] {
   const ops: Op[] = [];
 
-  currentItems.forEach((_, id) => {
-    if (!newItems.get(id)) {
+  prev.forEach((_, id) => {
+    if (!next.get(id)) {
       // Delete crdt
       ops.push({ type: OpCode.DELETE_CRDT, id });
     }
   });
 
-  newItems.forEach((crdt, id) => {
-    const currentCrdt = currentItems.get(id);
+  next.forEach((crdt, id) => {
+    const currentCrdt = prev.get(id);
     if (currentCrdt) {
       if (crdt.type === CrdtType.OBJECT) {
         if (currentCrdt.type !== CrdtType.OBJECT) {

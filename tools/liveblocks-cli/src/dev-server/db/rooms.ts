@@ -16,15 +16,13 @@
  */
 
 import type { JsonObject } from "@liveblocks/core";
-import { nanoid, WebsocketCloseCodes } from "@liveblocks/core";
+import { nanoid, Permission, WebsocketCloseCodes } from "@liveblocks/core";
 import type { Millis } from "@liveblocks/server";
 import { DefaultMap, Room } from "@liveblocks/server";
 import { Database } from "bun:sqlite";
 import { mkdirSync, mkdtempSync, rmSync } from "fs";
 import { tmpdir } from "os";
 import { dirname, join, resolve } from "path";
-
-import type { Permission } from "~/dev-server/lib/permissions";
 
 import { BunSQLiteDriver } from "./BunSQLiteDriver";
 
@@ -196,7 +194,7 @@ function createDbRoom(
   const internalId = nanoid();
   const now = new Date().toISOString();
   const organizationId = opts?.organizationId ?? DEFAULT_ORGANIZATION_ID;
-  const defaultAccesses = opts?.defaultAccesses ?? ["room:write"];
+  const defaultAccesses = opts?.defaultAccesses ?? [Permission.RoomWrite];
   const metadata = opts?.metadata ?? {};
 
   db.run(

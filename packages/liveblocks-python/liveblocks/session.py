@@ -11,19 +11,45 @@ if TYPE_CHECKING:
     from liveblocks.models.authorize_user_response import AuthorizeUserResponse
 
 Permission = Literal[
+    "*:read",
+    "*:write",
     "room:write",
     "room:read",
     "room:presence:write",
-    "comments:write",
+    "storage:read",
+    "storage:write",
+    "storage:none",
     "comments:read",
+    "comments:write",
+    "comments:none",
+    "feeds:read",
+    "feeds:write",
+    "feeds:none",
 ]
 
 ALL_PERMISSIONS: frozenset[str] = frozenset(
-    ["room:write", "room:read", "room:presence:write", "comments:write", "comments:read"]
+    [
+        "*:read",
+        "*:write",
+        "room:write",
+        "room:read",
+        "room:presence:write",
+        "storage:read",
+        "storage:write",
+        "storage:none",
+        "comments:read",
+        "comments:write",
+        "comments:none",
+        "feeds:read",
+        "feeds:write",
+        "feeds:none",
+    ]
 )
 
-READ_ACCESS: tuple[Permission, ...] = ("room:read", "room:presence:write", "comments:read")
-FULL_ACCESS: tuple[Permission, ...] = ("room:write", "comments:write")
+# Deprecated: use ``["*:read"]`` instead.
+READ_ACCESS: tuple[Permission, ...] = ("*:read",)
+# Deprecated: use ``["*:write"]`` instead.
+FULL_ACCESS: tuple[Permission, ...] = ("*:write",)
 
 _MAX_PERMS_PER_SET = 10
 _ROOM_PATTERN_RE = re.compile(r"^([*]|[^*]{1,128}[*]?)$")
@@ -32,7 +58,9 @@ _ROOM_PATTERN_RE = re.compile(r"^([*]|[^*]{1,128}[*]?)$")
 class _BaseSession:
     """Shared permission-building logic for sync and async sessions."""
 
+    # Deprecated: use ``["*:write"]`` instead.
     FULL_ACCESS = FULL_ACCESS
+    # Deprecated: use ``["*:read"]`` instead.
     READ_ACCESS = READ_ACCESS
 
     def __init__(
@@ -137,7 +165,7 @@ class Session(_BaseSession):
     Usage::
 
         session = client.prepare_session("user-123")
-        session.allow("my-room", session.FULL_ACCESS)
+        session.allow("my-room", ["*:write"])
         result = session.authorize()
     """
 
@@ -166,7 +194,7 @@ class AsyncSession(_BaseSession):
     Usage::
 
         session = client.prepare_session("user-123")
-        session.allow("my-room", session.FULL_ACCESS)
+        session.allow("my-room", ["*:write"])
         result = await session.authorize()
     """
 

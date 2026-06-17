@@ -720,6 +720,16 @@ export class BunSQLiteDriver implements IStorageDriver {
       "CREATE INDEX IF NOT EXISTS idx_feed_messages_feed_created ON feed_messages(feed_id, created_at DESC, message_id DESC)"
     );
 
+    // Refresh query-planner statistics on every boot. The mask combines:
+    //   0x10000 — consider every table, not just ones used this session
+    //   0x00002 — run ANALYZE where it would help
+    //   0x00010 — cap ANALYZE via a temporary analysis_limit, so a large table
+    //             can't turn startup into a slow full-index scan
+    // Together: "analyze on every boot" without "scan the world on every boot",
+    // and it also covers the CREATE INDEX statements above.
+    // See https://www.sqlite.org/pragma.html#pragma_optimize
+    db.run(`PRAGMA optimize=${0x10000 | 0x00002 | 0x00010}`);
+
     this.db = db;
   }
 

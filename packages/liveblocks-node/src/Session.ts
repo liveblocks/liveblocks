@@ -4,88 +4,67 @@ import type {
   ReadonlyJson,
   URLSafeString,
 } from "@liveblocks/core";
-import { url } from "@liveblocks/core";
+import { normalizeRoomPermissions, Permission, url } from "@liveblocks/core";
 
 import type { AuthResponse } from "./client";
 import { assertNonEmpty, normalizeStatusCode } from "./utils";
-
-// As defined in the source of truth in ApiScope in
-// https://github.com/liveblocks/liveblocks-cloudflare/blob/main/src/security.ts
-const ALL_PERMISSIONS = Object.freeze([
-  "room:write",
-  "room:read",
-  "room:presence:write",
-  "comments:write",
-  "comments:read",
-  "feeds:write",
-] as const);
-
-export type Permission = (typeof ALL_PERMISSIONS)[number];
-
-function isPermission(value: string): value is Permission {
-  return (ALL_PERMISSIONS as readonly unknown[]).includes(value);
-}
 
 const MAX_PERMS_PER_SET = 10;
 
 /**
  * Assign this to a room (or wildcard pattern) if you want to grant the user
- * read permissions to the storage and comments data for this room. (Note that
- * the user will still have permissions to update their own presence.)
+ * read permissions to the room. (Note that the user will still have permissions
+ * to update their own presence.)
  */
-const READ_ACCESS = Object.freeze([
-  "room:read",
-  "room:presence:write", // TODO: Remove once backend no longer requires this
-  "comments:read", // TODO: Remove — implied by room:read
-] as const);
+const READ_ACCESS = Object.freeze([Permission.Read] as const);
 
 /**
  * Assign this to a room (or wildcard pattern) if you want to grant the user
- * permissions to read and write to the room's storage and comments.
+ * permissions to read and write to the room.
  */
-const FULL_ACCESS = Object.freeze(["room:write"] as const);
+const FULL_ACCESS = Object.freeze([Permission.Write] as const);
 
 const roomPatternRegex = /^([*]|[^*]{1,128}[*]?)$/;
 
 type PostFn = (path: URLSafeString, json: ReadonlyJson) => Promise<Response>;
 
 /**
- * Class to help you construct the exact permission set to grant a user, used
- * when making `.authorizeUser()` calls.
+ * Class to help you construct the exact permission set to grant a user.
  *
  * Usage:
  *
  *    const session = liveblocks.prepareSession();
- *    session.allow(roomId, permissions)  // or...
+ *    session.allow(roomId, permissions)
  *
- * For the `permissions` argument, you can pass a list of specific permissions,
- * or use one of our presets:
+ * For the `permissions` argument, pass a list of permission scopes.
  *
- *    session.allow('my-room', session.FULL_ACCESS)  // Read + write access to room storage and comments
- *    session.allow('my-room', session.READ_ACCESS)  // Read-only access to room storage and comments
+ *    session.allow('my-room', ['*:write'])   // Read + write access
+ *    session.allow('my-room', ['*:read'])    // Read-only access
+ *    session.allow('my-room', [
+ *      '*:write',                            // Read + write access by default
+ *      'comments:read'                       // But read-only access to comments
+ *      'feeds:none'                          // And no access to feeds
+ *    ])
  *
  * Rooms can be specified with a prefix match, if the name ends in an asterisk.
  * In that case, access is granted to *all* rooms that start with that prefix:
  *
  *    // Read + write access to *all* rooms that start with "abc:"
- *    session.allow('abc:*', session.FULL_ACCESS)
+ *    session.allow('abc:*', ['*:write'])
  *
  * You can define at most 10 room IDs (or patterns) in a single token,
  * otherwise the token would become too large and unwieldy.
  *
- * All permissions granted are additive. You cannot "remove" permissions once
- * you grant them. For example:
- *
- *    session
- *      .allow('abc:*',   session.FULL_ACCESS)
- *      .allow('abc:123', session.READ_ACCESS)
- *
- * Here, room `abc:123` would have full access. The second .allow() call only
- * _adds_ read permissions, but that has no effect since full access
- * permissions were already added to the set.
  */
 export class Session {
+  /**
+   * @deprecated Use `["*:write"]` instead.
+   */
   public readonly FULL_ACCESS = FULL_ACCESS;
+
+  /**
+   * @deprecated Use `["*:read"]` instead.
+   */
   public readonly READ_ACCESS = READ_ACCESS;
 
   #postFn: PostFn;
@@ -147,11 +126,10 @@ export class Session {
       throw new Error("Permission list cannot be empty");
     }
 
+    const permissions = normalizeRoomPermissions(newPerms);
+
     const existingPerms = this.#getOrCreate(roomIdOrPattern);
-    for (const perm of newPerms) {
-      if (!isPermission(perm as string)) {
-        throw new Error(`Not a valid permission: ${perm}`);
-      }
+    for (const perm of permissions) {
       existingPerms.add(perm);
     }
     return this; // To allow chaining multiple allow calls

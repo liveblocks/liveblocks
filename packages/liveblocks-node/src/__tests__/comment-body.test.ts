@@ -518,7 +518,9 @@ describe("markdownToCommentBody", () => {
 
     test("only trims trailing dot or hyphen when followed by whitespace or end", () => {
       expect(
-        markdownToCommentBody("Use @stacy.-next and @chris. now @email@example.com.")
+        markdownToCommentBody(
+          "Use @stacy.-next and @chris. now @email@example.com."
+        )
       ).toEqual({
         version: 1,
         content: [
@@ -761,7 +763,9 @@ describe("markdownToCommentBody", () => {
 
     test("preserves table alignment markers in the separator row", () => {
       expect(
-        markdownToCommentBody("| Name | Age | Score |\n| :--- | :---: | ---: |\n| Ada | 30 | 10 |")
+        markdownToCommentBody(
+          "| Name | Age | Score |\n| :--- | :---: | ---: |\n| Ada | 30 | 10 |"
+        )
       ).toEqual({
         version: 1,
         content: [

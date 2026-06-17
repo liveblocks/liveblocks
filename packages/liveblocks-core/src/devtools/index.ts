@@ -163,7 +163,7 @@ function partialSyncConnection(room: OpaqueRoom) {
 }
 
 function partialSyncStorage(room: OpaqueRoom) {
-  const root = room.getStorageSnapshot();
+  const root = room.getStorageOrNull();
   if (root) {
     sendToPanel({
       msg: "room::sync::partial",
@@ -197,7 +197,7 @@ function partialSyncOthers(room: OpaqueRoom) {
 }
 
 function fullSync(room: OpaqueRoom) {
-  const root = room.getStorageSnapshot();
+  const root = room.getStorageOrNull();
   const me = room[kInternal].getSelf_forDevTools();
   const others = room[kInternal].getOthers_forDevTools();
   // Because the room doesn't have access to the YJS doc, we must tell it to go get the full doc

@@ -146,6 +146,10 @@ body {
   .react-flow__controls-button {
     border-radius: 6px;
 
+    &.lb-help-control {
+      order: -1;
+    }
+
     &:disabled {
       opacity: 0.35;
       cursor: not-allowed;

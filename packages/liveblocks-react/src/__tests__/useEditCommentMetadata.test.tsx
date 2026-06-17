@@ -57,7 +57,7 @@ describe("useEditCommentMetadata", () => {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
             permissionHints: {
-              [roomId]: [Permission.Write],
+              [roomId]: [Permission.RoomWrite],
             },
           },
         });
@@ -138,7 +138,7 @@ describe("useEditCommentMetadata", () => {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
             permissionHints: {
-              [roomId]: [Permission.Write],
+              [roomId]: [Permission.RoomWrite],
             },
           },
         });

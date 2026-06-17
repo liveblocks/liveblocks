@@ -45,6 +45,8 @@ import type {
   PlainLsonObject,
   QueryMetadata,
   QueryParams,
+  RoomAccesses,
+  RoomPermissions,
   RoomSubscriptionSettings,
   StorageNode,
   StorageUpdate,
@@ -53,6 +55,7 @@ import type {
   ThreadData,
   ThreadDataPlain,
   ToJson,
+  UpdateRoomAccesses,
   URLSafeString,
   UserRoomSubscriptionSettings,
   UserSubscriptionData,
@@ -73,6 +76,9 @@ import {
   isPlainObject,
   LiveObject,
   makeAbortController,
+  normalizeRoomAccesses,
+  normalizeRoomPermissions,
+  normalizeUpdateRoomAccesses,
   objectToQuery,
   tryParseJson,
   url,
@@ -174,17 +180,6 @@ export type CreateCommentOptions<CM extends BaseMetadata> = {
   } & PartialUnless<CM, { metadata: CM }>;
 };
 
-export type RoomPermission =
-  | []
-  | ["room:write"]
-  | ["room:read", "room:presence:write"]
-  | ["room:read", "room:presence:write", "comments:write"];
-export type RoomAccesses = Record<
-  string,
-  | ["room:write"]
-  | ["room:read", "room:presence:write"]
-  | ["room:read", "room:presence:write", "comments:write"]
->;
 export type RoomMetadata = Record<string, string | string[]>;
 type QueryRoomMetadata = Record<string, string>;
 
@@ -194,7 +189,7 @@ export type RoomData = {
   createdAt: Date;
   lastConnectionAt?: Date;
   organizationId: string;
-  defaultAccesses: RoomPermission;
+  defaultAccesses: RoomPermissions;
   usersAccesses: RoomAccesses;
   groupsAccesses: RoomAccesses;
   metadata: RoomMetadata;
@@ -468,7 +463,7 @@ export type GetInboxNotificationsOptions =
   & PaginationOptions;
 
 export type CreateRoomOptions = {
-  defaultAccesses: RoomPermission;
+  defaultAccesses: RoomPermissions;
   groupsAccesses?: RoomAccesses;
   usersAccesses?: RoomAccesses;
   metadata?: RoomMetadata;
@@ -477,30 +472,41 @@ export type CreateRoomOptions = {
    */
   tenantId?: string;
   organizationId?: string;
-
-  /**
-   * @deprecated This flag no longer has any effect and will be removed in
-   * a future version. All rooms now use the v2 storage engine by default.
-   */
-  engine?: 1 | 2;
 };
 
 export type UpdateRoomOptions = {
-  defaultAccesses?: RoomPermission | null;
-  groupsAccesses?: Record<
-    string,
-    ["room:write"] | ["room:read", "room:presence:write"] | null
-  >;
-  usersAccesses?: Record<
-    string,
-    ["room:write"] | ["room:read", "room:presence:write"] | null
-  >;
+  defaultAccesses?: RoomPermissions | null;
+  groupsAccesses?: UpdateRoomAccesses;
+  usersAccesses?: UpdateRoomAccesses;
   metadata?: Record<string, string | string[] | null>;
 };
 
 export type UpsertRoomOptions = {
   update: UpdateRoomOptions;
   create?: CreateRoomOptions;
+};
+
+type NormalizedCreateRoomOptions = Omit<
+  CreateRoomOptions,
+  "defaultAccesses" | "groupsAccesses" | "usersAccesses"
+> & {
+  defaultAccesses: RoomPermissions;
+  groupsAccesses?: RoomAccesses;
+  usersAccesses?: RoomAccesses;
+};
+
+type NormalizedUpdateRoomOptions = Omit<
+  UpdateRoomOptions,
+  "defaultAccesses" | "groupsAccesses" | "usersAccesses"
+> & {
+  defaultAccesses?: RoomPermissions | null;
+  groupsAccesses?: UpdateRoomAccesses;
+  usersAccesses?: UpdateRoomAccesses;
+};
+
+type NormalizedUpsertRoomOptions = {
+  update: NormalizedUpdateRoomOptions;
+  create?: NormalizedCreateRoomOptions;
 };
 
 export type GetAiCopilotsOptions = PaginationOptions;
@@ -714,6 +720,31 @@ function inflateRoomData(room: RoomDataPlain): RoomData {
     ...room,
     createdAt,
     lastConnectionAt,
+  };
+}
+
+function normalizeCreateRoomOptions(
+  options: CreateRoomOptions
+): NormalizedCreateRoomOptions {
+  return {
+    ...options,
+    defaultAccesses: normalizeRoomPermissions(options.defaultAccesses),
+    groupsAccesses: normalizeRoomAccesses(options.groupsAccesses),
+    usersAccesses: normalizeRoomAccesses(options.usersAccesses),
+  };
+}
+
+function normalizeUpdateRoomOptions(
+  options: UpdateRoomOptions
+): NormalizedUpdateRoomOptions {
+  return {
+    ...options,
+    defaultAccesses:
+      options.defaultAccesses === undefined || options.defaultAccesses === null
+        ? options.defaultAccesses
+        : normalizeRoomPermissions(options.defaultAccesses),
+    groupsAccesses: normalizeUpdateRoomAccesses(options.groupsAccesses),
+    usersAccesses: normalizeUpdateRoomAccesses(options.usersAccesses),
   };
 }
 
@@ -1115,6 +1146,7 @@ export class Liveblocks {
     params: CreateRoomOptions,
     options?: RequestOptions & { idempotent?: boolean }
   ): Promise<RoomData> {
+    const normalizedParams = normalizeCreateRoomOptions(params);
     const {
       defaultAccesses,
       groupsAccesses,
@@ -1122,11 +1154,11 @@ export class Liveblocks {
       metadata,
       tenantId,
       organizationId,
-    } = params;
+    } = normalizedParams;
 
     const body: {
       id: string;
-      defaultAccesses: RoomPermission;
+      defaultAccesses: RoomPermissions;
       groupsAccesses?: RoomAccesses;
       usersAccesses?: RoomAccesses;
       metadata?: RoomMetadata;
@@ -1197,9 +1229,17 @@ export class Liveblocks {
     params: UpsertRoomOptions,
     options?: RequestOptions
   ): Promise<RoomData> {
+    const body: NormalizedUpsertRoomOptions = {
+      update: normalizeUpdateRoomOptions(params.update),
+      create:
+        params.create === undefined
+          ? undefined
+          : normalizeCreateRoomOptions(params.create),
+    };
+
     const res = await this.#post(
       url`/v2/rooms/${roomId}/upsert`,
-      params,
+      body,
       options
     );
     if (!res.ok) {
@@ -1246,7 +1286,8 @@ export class Liveblocks {
     params: UpdateRoomOptions,
     options?: RequestOptions
   ): Promise<RoomData> {
-    const { defaultAccesses, groupsAccesses, usersAccesses, metadata } = params;
+    const { defaultAccesses, groupsAccesses, usersAccesses, metadata } =
+      normalizeUpdateRoomOptions(params);
 
     const res = await this.#post(
       url`/v2/rooms/${roomId}`,
