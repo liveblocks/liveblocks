@@ -2653,7 +2653,8 @@ export function createRoom<
           }
 
           if (needsStorageResync) {
-            refreshStorage({ flush: true });
+            refreshStorage();
+            flushNowOrSoon();
           } else if (process.env.NODE_ENV !== "production") {
             throw new Error(
               `Storage mutations rejected by server: ${message.reason}`
