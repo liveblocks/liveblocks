@@ -1,4 +1,8 @@
-import type { DevTools, DevToolsMsg, Status as CoreStatus } from "@liveblocks/core";
+import type {
+  DevTools,
+  DevToolsMsg,
+  Status as CoreStatus,
+} from "@liveblocks/core";
 import { Base64 } from "js-base64";
 import type { ReactNode } from "react";
 import {
