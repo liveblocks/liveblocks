@@ -1,9 +1,9 @@
 import { useLiveblocksExtension as useTipTapLiveblocksExtension } from "@liveblocks/react-tiptap";
 import type { Mark } from "@tiptap/core";
 
-export type LiveblocksExtensionOptions = Parameters<
-  typeof useTipTapLiveblocksExtension
->[0];
+export type LiveblocksExtensionOptions = NonNullable<
+  Parameters<typeof useTipTapLiveblocksExtension>[0]
+>;
 
 export const useLiveblocksExtension = (
   options: LiveblocksExtensionOptions = {}

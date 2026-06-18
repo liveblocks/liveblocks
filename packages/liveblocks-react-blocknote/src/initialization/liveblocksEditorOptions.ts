@@ -10,6 +10,7 @@ import {
 } from "@blocknote/core";
 import type { Extension } from "@tiptap/core";
 
+import type { LiveblocksExtensionOptions } from "../BlockNoteLiveblocksExtension";
 import { withLiveblocksSchema } from "./schema";
 /**
  * Helper function to add Liveblocks support to BlockNoteEditorOptions
@@ -21,7 +22,7 @@ export const withLiveblocksEditorOptions = <
 >(
   liveblocksExtension: Extension<any, any>,
   blocknoteOptions: Partial<BlockNoteEditorOptions<B, I, S>> = {},
-  liveblocksOptions: Partial<{ mentions: boolean }> = {}
+  liveblocksOptions: LiveblocksExtensionOptions = {}
 ): Partial<BlockNoteEditorOptions<B, I, S>> => {
   const {
     schema: blocknoteSchema,
