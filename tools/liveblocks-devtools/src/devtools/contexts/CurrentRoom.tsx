@@ -26,7 +26,6 @@ export type YUpdate = {
   ds: DeleteSet;
   structs: (Y.Item | Y.GC | Skip)[];
 };
-
 type Room = {
   readonly roomId: string;
   status: Status | null;

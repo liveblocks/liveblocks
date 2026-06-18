@@ -11,11 +11,7 @@ export function EventTimeline({ className, ...props }: ComponentProps<"div">) {
   const currentStatus = useStatus();
   const [customEvents, clearCustomEvents] = useCustomEvents();
 
-  if (
-    currentStatus === "connected" ||
-    currentStatus === "open" || // Same as "connected", but only sent by old clients (prior to 1.1)
-    currentStatus === "reconnecting"
-  ) {
+  if (currentStatus === "connected" || currentStatus === "reconnecting") {
     if (customEvents.length > 0) {
       return (
         <div className={cx(className, "absolute inset-0")} {...props}>
