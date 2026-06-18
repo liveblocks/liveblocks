@@ -490,6 +490,7 @@ export interface LiveblocksHttpApi<
     cursor?: string;
     query?: {
       resolved?: boolean;
+      visibility?: ThreadVisibility;
       metadata?: Partial<QueryMetadata<TM>>;
     };
   }): Promise<{
@@ -1717,6 +1718,7 @@ export function createApiClient<
     cursor?: string;
     query?: {
       resolved?: boolean;
+      visibility?: ThreadVisibility;
       metadata?: Partial<QueryMetadata<TM>>;
     };
   }) {
