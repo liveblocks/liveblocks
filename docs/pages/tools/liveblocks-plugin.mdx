@@ -49,9 +49,14 @@ data in the Liveblocks project connected to this key.
 | [Claude Code](https://docs.anthropic.com/en/docs/claude-code) | Supported |
 | [OpenAI Codex](https://openai.com/codex)                      | Supported |
 | [Cursor](https://www.cursor.com/)                             | Supported |
+| [Grok Build](https://x.ai/news/grok-build-cli)                | Supported |
+| [GitHub Copilot](https://github.com/features/copilot)         | Supported |
 
 The plugin uses the open plugin format and is distributed from
 [`liveblocks/liveblocks-plugin`](https://github.com/liveblocks/liveblocks-plugin).
+The `plugins` CLI installs it automatically for Claude Code, Cursor, and OpenAI
+Codex. Grok Build and GitHub Copilot can use the plugin manifest, skills, MCP
+configuration, and instruction files from the repository.
 
 ## Fallback install
 
