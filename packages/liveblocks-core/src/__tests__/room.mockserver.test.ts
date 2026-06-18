@@ -17,7 +17,11 @@ import {
 } from "vitest";
 
 import { createApiClient } from "../api-client";
-import { type AuthValue, createAuthManager } from "../auth-manager";
+import {
+  type AuthRequest,
+  type AuthValue,
+  createAuthManager,
+} from "../auth-manager";
 import { StopRetrying } from "../connection";
 import { DEFAULT_BASE_URL } from "../constants";
 import { LiveList } from "../crdts/LiveList";
@@ -30,7 +34,7 @@ import * as console from "../lib/fancy-console";
 import type { Json, JsonObject } from "../lib/Json";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import { ClientMsgCode } from "../protocol/ClientMsg";
-import type { BaseMetadata } from "../protocol/Comments";
+import type { BaseMetadata, CommentBody } from "../protocol/Comments";
 import { OpCode } from "../protocol/Op";
 import { ServerMsgCode } from "../protocol/ServerMsg";
 import type { StorageNode } from "../protocol/StorageNode";
@@ -73,6 +77,53 @@ const THROTTLE_DELAY = 100;
 const mockedCreateSocketDelegate = (_authValue: AuthValue) => {
   return new WebSocket("");
 };
+
+const commentBody = {
+  version: 1,
+  content: [],
+} satisfies CommentBody;
+
+function createTestApiClient() {
+  const authRequests: AuthRequest[] = [];
+  const fetchPolyfill: typeof fetch = async () =>
+    Response.json({
+      data: [],
+      inboxNotifications: [],
+      subscriptions: [],
+      deletedThreads: [],
+      deletedInboxNotifications: [],
+      deletedSubscriptions: [],
+      meta: {
+        requestedAt: new Date(0).toISOString(),
+        nextCursor: null,
+        permissionHints: {},
+      },
+      type: "thread",
+      id: "th_123",
+      roomId: "room-id",
+      createdAt: new Date(0).toISOString(),
+      updatedAt: new Date(0).toISOString(),
+      comments: [],
+      metadata: {},
+      resolved: false,
+      visibility: "public",
+    });
+
+  return {
+    authRequests,
+    client: createApiClient<BaseMetadata, BaseMetadata>({
+      baseUrl: DEFAULT_BASE_URL,
+      fetchPolyfill,
+      authManager: {
+        reset() {},
+        async getAuthValue(request) {
+          authRequests.push(request);
+          return { type: "public", publicApiKey: "pk_test" };
+        },
+      },
+    }),
+  };
+}
 
 function createDefaultRoomConfig<
   TM extends BaseMetadata,
@@ -151,6 +202,60 @@ function createTestableRoom<
     errorEventSource: roomConfig.errorEventSource,
   };
 }
+
+describe("createApiClient", () => {
+  test("requests aggregate comments read auth when getting threads without visibility", async () => {
+    const { authRequests, client } = createTestApiClient();
+
+    await client.getThreads({ roomId: "room-id" });
+
+    expect(authRequests).toEqual([
+      { roomId: "room-id", resource: "comments", access: "read" },
+    ]);
+  });
+
+  test("requests visibility-specific comments read auth when getting threads with visibility", async () => {
+    const { authRequests, client } = createTestApiClient();
+
+    await client.getThreads({
+      roomId: "room-id",
+      query: { visibility: "private" },
+    });
+
+    expect(authRequests).toEqual([
+      { roomId: "room-id", resource: "comments:private", access: "read" },
+    ]);
+  });
+
+  test("requests public comments write auth when creating a thread without visibility", async () => {
+    const { authRequests, client } = createTestApiClient();
+
+    await client.createThread({
+      roomId: "room-id",
+      metadata: {},
+      body: commentBody,
+    });
+
+    expect(authRequests).toEqual([
+      { roomId: "room-id", resource: "comments:public", access: "write" },
+    ]);
+  });
+
+  test("requests visibility-specific comments write auth when creating a thread with visibility", async () => {
+    const { authRequests, client } = createTestApiClient();
+
+    await client.createThread({
+      roomId: "room-id",
+      visibility: "private",
+      metadata: {},
+      body: commentBody,
+    });
+
+    expect(authRequests).toEqual([
+      { roomId: "room-id", resource: "comments:private", access: "write" },
+    ]);
+  });
+});
 
 describe("room / auth", () => {
   let consoleErrorSpy: MockInstance;

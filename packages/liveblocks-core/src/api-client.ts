@@ -25,7 +25,7 @@ import { stringifyOrLog as stringify } from "./lib/stringify";
 import type { QueryParams, URLSafeString } from "./lib/url";
 import { url, urljoin } from "./lib/url";
 import { raise } from "./lib/utils";
-import type { RoomPermissions } from "./permissions";
+import type { RoomPermissions, RoomPermissionsResource } from "./permissions";
 import type {
   ContextualPromptContext,
   ContextualPromptResponse,
@@ -526,6 +526,20 @@ export interface LiveblocksHttpApi<
   getGroup(groupId: string): Promise<GroupData | undefined>;
 }
 
+function commentsResourceForVisibility(
+  visibility: ThreadVisibility | undefined
+): RoomPermissionsResource {
+  if (visibility === "private") {
+    return "comments:private";
+  }
+
+  if (visibility === "public") {
+    return "comments:public";
+  }
+
+  return "comments";
+}
+
 export function createApiClient<
   TM extends BaseMetadata,
   CM extends BaseMetadata,
@@ -629,7 +643,7 @@ export function createApiClient<
         url`/v2/c/rooms/${options.roomId}/threads`,
         await authManager.getAuthValue({
           roomId: options.roomId,
-          resource: "comments",
+          resource: commentsResourceForVisibility(options.query?.visibility),
           access: "read",
         }),
         {
@@ -730,7 +744,7 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/threads`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        resource: "comments",
+        resource: commentsResourceForVisibility(options.visibility ?? "public"),
         access: "write",
       }),
       {
