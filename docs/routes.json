@@ -509,11 +509,11 @@
         "path": "/tools/liveblocks-plugin"
       },
       {
-        "title": "Liveblocks MCP server",
+        "title": "MCP server",
         "path": "/tools/mcp-server"
       },
       {
-        "title": "Liveblocks skills",
+        "title": "Agent skills",
         "path": "/tools/agent-skills"
       }
     ]

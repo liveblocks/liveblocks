@@ -10,9 +10,9 @@ meta:
 Use [OpenAI Codex](https://openai.com/codex/) with Liveblocks to add
 collaborative features to your app. Install
 [Liveblocks plugin](/docs/tools/liveblocks-plugin) so your assistant follows
-Liveblocks and Yjs guidance, and use our
-[Liveblocks MCP server](/docs/tools/mcp-server) to allow AI to inspect and
-modify your data, such as rooms, Storage, Yjs, comments, and more.
+Liveblocks and Yjs guidance, and use our [MCP server](/docs/tools/mcp-server) to
+allow AI to inspect and modify your data, such as rooms, Storage, Yjs, comments,
+and more.
 
 <PromptCta />
 
@@ -42,7 +42,7 @@ modify your data, such as rooms, Storage, Yjs, comments, and more.
       To allow AI to inspect and modify data in your project, set a Liveblocks
       secret key from [your dashboard](/dashboard) before starting Codex. The
       Liveblocks Codex plugin uses this environment variable for its bundled
-      [Liveblocks MCP server](/docs/tools/mcp-server).
+      [MCP server](/docs/tools/mcp-server).
 
       ```bash
       export LIVEBLOCKS_SECRET_KEY="{{SECRET_KEY}}"
@@ -110,9 +110,7 @@ the MCP server. Only data from this project can be inspected. Never use a secret
 key from a production project, as giving AI direct access would be dangerous,
 allowing it to delete your production data.
 
-<Button href="/docs/tools/mcp-server">
-  Liveblocks MCP server documentation
-</Button>
+<Button href="/docs/tools/mcp-server">MCP server documentation</Button>
 
 ## Limitations and troubleshooting
 
@@ -121,7 +119,7 @@ allowing it to delete your production data.
 Re-run `npx plugins add liveblocks/liveblocks-plugin`, then start a new Codex
 thread. If the plugin repository is not available, install the skills with
 `npx skills add liveblocks/skills` and configure the
-[Liveblocks MCP server](/docs/tools/mcp-server) separately.
+[MCP server](/docs/tools/mcp-server) separately.
 
 ### MCP returns auth errors
 
@@ -136,6 +134,6 @@ the key, restart Codex from the shell where `LIVEBLOCKS_SECRET_KEY` is set.
 ## Related docs
 
 - [Liveblocks plugin](/docs/tools/liveblocks-plugin).
-- [Liveblocks MCP server](/docs/tools/mcp-server).
+- [MCP server](/docs/tools/mcp-server).
 - [REST API reference](/docs/api-reference/rest-api-endpoints).
 - [Liveblocks skills repository](https://github.com/liveblocks/skills).
