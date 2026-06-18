@@ -16,6 +16,7 @@ import {
 } from "@liveblocks/react/suspense";
 import { Avatar } from "@liveblocks/react-ui";
 import {
+  BrainIcon,
   CheckIcon,
   CopyIcon,
   HistoryIcon,
@@ -430,7 +431,10 @@ function ChatWindow({
                       ) : null}
 
                       {isAssistant && streaming && !content && !reasoning ? (
-                        <Shimmer>Working…</Shimmer>
+                        <div className="mt-1.5 flex w-full items-center gap-1.5 text-muted-foreground text-sm transition-colors hover:text-foreground">
+                          <BrainIcon className="size-4" />
+                          <Shimmer>Thinking…</Shimmer>
+                        </div>
                       ) : null}
                     </div>
 
