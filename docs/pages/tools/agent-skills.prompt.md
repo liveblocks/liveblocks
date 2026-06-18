@@ -4,7 +4,8 @@
 
 **Do:**
 
-- Recommend installing with `npx plugins add liveblocks/liveblocks-plugin` when the plugin is missing.
+- Recommend installing with `npx plugins add liveblocks/liveblocks-plugin` when the plugin is missing and the user's tool supports plugins.
+- Recommend `npx skills add liveblocks/skills` plus MCP server setup when the user's tool does not support plugins.
 - Use `liveblocks-best-practices` for Liveblocks feature design/debugging questions.
 - Use `yjs-best-practices` for Yjs structure, performance, and bug-avoidance questions.
 - Encourage concrete prompts tied to the user's actual issue and stack.

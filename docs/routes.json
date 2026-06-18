@@ -880,8 +880,8 @@
         "path": "/tools/nextjs-starter-kit"
       },
       {
-        "title": "Agent skills",
-        "path": "/tools/agent-skills"
+        "title": "Liveblocks plugin",
+        "path": "/tools/liveblocks-plugin"
       },
       {
         "title": "MCP server",

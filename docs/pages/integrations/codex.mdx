@@ -3,13 +3,13 @@ meta:
   title: "OpenAI Codex + Liveblocks"
   parentTitle: "Integrations"
   description:
-    "Use OpenAI Codex with Liveblocks agent skills and the MCP server to build
+    "Use OpenAI Codex with the Liveblocks plugin to build
     collaborative apps with guided best practices."
 ---
 
 Use [OpenAI Codex](https://openai.com/codex/) with Liveblocks to add
 collaborative features to your app. Install
-[agent skills](/docs/tools/agent-skills) so your assistant follows Liveblocks
+[Liveblocks plugin](/docs/tools/liveblocks-plugin) so your assistant follows Liveblocks
 and Yjs guidance, and use our [MCP server](/docs/tools/mcp-server) to allow AI
 to inspect and modify your data, such as rooms, Storage, Yjs, comments, and
 more.
@@ -23,7 +23,7 @@ more.
     <StepTitle>Install the Codex plugin</StepTitle>
     <StepContent>
       To help AI follow best practices in your app, add the Liveblocks Codex
-      plugin. It bundles [Liveblocks agent skills](/docs/tools/agent-skills)
+      plugin. It bundles Liveblocks agent skills
       and MCP server configuration.
 
       ```bash
@@ -93,7 +93,7 @@ various best practices for using Liveblocks and Yjs. We always recommend using
 these skills when building, debugging, or answering questions about Liveblocks
 and Yjs.
 
-<Button href="/docs/tools/agent-skills">Liveblocks plugin documentation</Button>
+<Button href="/docs/tools/liveblocks-plugin">Liveblocks plugin documentation</Button>
 
 ### MCP server
 
@@ -114,7 +114,10 @@ allowing it to delete your production data.
 
 ### Skills do not load
 
-Re-run `npx plugins add liveblocks/liveblocks-plugin`, then start a new Codex thread.
+Re-run `npx plugins add liveblocks/liveblocks-plugin`, then start a new Codex
+thread. If the plugin repository is not available, install the skills with
+`npx skills add liveblocks/skills` and configure the
+[Liveblocks MCP server](/docs/tools/mcp-server) separately.
 
 ### MCP returns auth errors
 
@@ -128,7 +131,7 @@ the key, restart Codex from the shell where `LIVEBLOCKS_SECRET_KEY` is set.
 
 ## Related docs
 
-- [Liveblocks plugin](/docs/tools/agent-skills).
+- [Liveblocks plugin](/docs/tools/liveblocks-plugin).
 - [MCP server](/docs/tools/mcp-server).
 - [REST API reference](/docs/api-reference/rest-api-endpoints).
 - [Liveblocks skills repository](https://github.com/liveblocks/skills).

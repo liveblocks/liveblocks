@@ -1,83 +1,27 @@
 ---
 meta:
-  title: "Liveblocks plugin"
+  title: "Agent skills"
   parentTitle: "Tools"
   description:
-    "Install the Liveblocks plugin in your AI coding tool to build Liveblocks
-    and Yjs apps more easily."
+    "Use Liveblocks agent skills in tools that do not support plugins."
 ---
 
-Create your Liveblocks applications more easily with the Liveblocks plugin,
-designed to help AI coding assistants follow best practices for Liveblocks and
-Yjs. The plugin bundles Liveblocks agent skills and MCP server configuration.
-
-<PromptCta />
-
-<Figure>
-  <video autoPlay loop muted playsInline height={521} width={768}>
-    <source
-      src="/assets/agent-skills/agent-skills-claude.mp4"
-      type="video/mp4"
-    />
-  </video>
-</Figure>
-
-## Install
-
-Install the Liveblocks plugin:
+Liveblocks agent skills are now included in the
+[Liveblocks plugin](/docs/tools/liveblocks-plugin), which is the recommended
+installation path for supported AI coding tools.
 
 ```bash
 npx plugins add liveblocks/liveblocks-plugin
 ```
 
-## Supported tools
+If your AI tool does not support plugins, install the skills separately and then
+configure the [Liveblocks MCP server](/docs/tools/mcp-server).
 
-| Tool | Status |
-|---|---|
-| [Claude Code](https://docs.anthropic.com/en/docs/claude-code) | Supported |
-| [OpenAI Codex](https://openai.com/codex) | Supported |
-| [Cursor](https://www.cursor.com/) | Supported |
-
-The plugin uses the open plugin format and is distributed from
-`liveblocks/liveblocks-plugin`, a generated repository built from the
-[`liveblocks/skills`](https://github.com/liveblocks/skills) source repository.
-
-## Skills
-
-### liveblocks-best-practices
-
-Best practices for using Liveblocks. Contains 40+ comprehensive references
-related to each feature of Liveblocks. Use it when building, debugging, or
-answering questions about Liveblocks.
-
-### yjs-best-practices
-
-Best practices for using Yjs. Contains info on fixing common issues, structuring
-your data efficiently, and avoiding bugs. Use it when building, debugging, or
-answering questions about Yjs.
-
-## Usage
-
-After installation, skills are automatically available in your AI tool. Your
-agent will use them when it judges they are relevant. For example, the following
-questions will trigger skills:
-
-```
-How do I handle unstable Wi-Fi connections with Liveblocks?
+```bash
+npx skills add liveblocks/skills
 ```
 
-```
-How do I pass custom headers to my auth endpoint?
-```
+## Related docs
 
-```
-Why is my Y.Map growing so large?
-```
-
-## Source code
-
-The source code is available in our
-[GitHub repository](https://github.com/liveblocks/skills).
-
-The `liveblocks/liveblocks-plugin` repository is generated from this source so
-OpenAI Codex users can install from a plugin-named repository.
+- [Liveblocks plugin](/docs/tools/liveblocks-plugin).
+- [MCP server](/docs/tools/mcp-server).
