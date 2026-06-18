@@ -1,9 +1,89 @@
-import type { ActivityData, InboxNotificationData } from "@liveblocks/core";
+import type {
+  ActivityData,
+  CommentAttachment,
+  InboxNotificationData,
+  ThreadVisibility,
+} from "@liveblocks/core";
 import type { InboxNotificationCustomKindProps } from "@liveblocks/react-ui";
-import { InboxNotification } from "@liveblocks/react-ui";
+import { Composer, InboxNotification } from "@liveblocks/react-ui";
 import { describe, expectTypeOf, test } from "vitest";
 
 // TODO: Create type tests for all components/props
+
+describe("Composer (no Liveblocks augmentation)", () => {
+  test("accepts props for creating threads", () => {
+    void (
+      <Composer
+        metadata={{ color: "purple", page: 1, pinned: true }}
+        commentMetadata={{ tag: "important", spam: false }}
+        visibility="private"
+        onComposerSubmit={(comment, event) => {
+          expectTypeOf(comment.body.version).toEqualTypeOf<1>();
+          expectTypeOf(comment.attachments).toEqualTypeOf<
+            CommentAttachment[]
+          >();
+          expectTypeOf(event.preventDefault).toBeFunction();
+        }}
+      />
+    );
+
+    void (
+      (
+        // @ts-expect-error - invalid thread visibility
+        <Composer visibility="secret" />
+      )
+    );
+    void (
+      (
+        // @ts-expect-error - visibility only applies when creating threads
+        <Composer threadId="th_123" visibility="private" />
+      )
+    );
+  });
+
+  test("accepts props for creating comments", () => {
+    void (
+      <Composer
+        threadId="th_123"
+        commentMetadata={{ tag: "important", spam: false }}
+      />
+    );
+
+    void (
+      (
+        // @ts-expect-error - thread metadata only applies when creating threads
+        <Composer threadId="th_123" metadata={{ color: "purple" }} />
+      )
+    );
+    void (
+      (
+        // @ts-expect-error - commentId requires threadId
+        <Composer commentId="cm_123" />
+      )
+    );
+  });
+
+  test("accepts props for editing comments", () => {
+    void (
+      <Composer
+        threadId="th_123"
+        commentId="cm_123"
+        commentMetadata={{ tag: "important", spam: null }}
+      />
+    );
+
+    void (
+      (
+        // @ts-expect-error - thread metadata only applies when creating threads
+        <Composer
+          threadId="th_123"
+          commentId="cm_123"
+          metadata={{ color: "purple" }}
+        />
+      )
+    );
+  });
+});
 
 describe("InboxNotification `kinds` (no Liveblocks augmentation)", () => {
   test("existing kinds have the expected props types", () => {

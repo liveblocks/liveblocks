@@ -8,6 +8,7 @@ import type {
   DTM,
   GroupMentionData,
   Patchable,
+  ThreadVisibility,
 } from "@liveblocks/core";
 import { assertNever, MENTION_CHARACTER } from "@liveblocks/core";
 import { useRoom } from "@liveblocks/react";
@@ -106,6 +107,11 @@ export type ComposerCreateThreadProps<
   metadata?: TM;
 
   /**
+   * The visibility of the thread to create.
+   */
+  visibility?: ThreadVisibility;
+
+  /**
    * The metadata of the comment to create.
    */
   commentMetadata?: CM;
@@ -120,6 +126,8 @@ export type ComposerCreateCommentProps<CM extends BaseMetadata> = {
   commentId?: never;
 
   metadata?: never;
+
+  visibility?: never;
 
   /**
    * The metadata of the comment to create.
@@ -139,6 +147,8 @@ export type ComposerEditCommentProps<CM extends BaseMetadata> = {
   commentId: string;
 
   metadata?: never;
+
+  visibility?: never;
 
   /**
    * The metadata of the comment to edit.
@@ -707,6 +717,7 @@ export const Composer = forwardRef(
       threadId,
       commentId,
       metadata,
+      visibility,
       commentMetadata,
       defaultValue,
       defaultAttachments,
@@ -838,6 +849,7 @@ export const Composer = forwardRef(
           createThread({
             body: comment.body,
             metadata,
+            visibility,
             commentMetadata: commentMetadata as CM | undefined,
             attachments: comment.attachments,
           });
@@ -850,6 +862,7 @@ export const Composer = forwardRef(
         editComment,
         commentMetadata,
         metadata,
+        visibility,
         onComposerSubmit,
         threadId,
       ]
