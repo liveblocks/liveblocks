@@ -7,9 +7,9 @@ meta:
     and Yjs apps more easily."
 ---
 
-Create your Liveblocks applications more easily with the Liveblocks plugin,
-designed to help AI coding assistants follow best practices for Liveblocks and
-Yjs. The plugin bundles Liveblocks agent skills and MCP server configuration.
+The Liveblocks plugin helps AI coding assistants follow Liveblocks and Yjs best
+practices. It also includes MCP server configuration so compatible tools can
+inspect and modify development project data.
 
 <PromptCta />
 
@@ -24,11 +24,23 @@ Yjs. The plugin bundles Liveblocks agent skills and MCP server configuration.
 
 ## Install
 
-Install the Liveblocks plugin:
+Install the Liveblocks plugin, then start a new session in your AI coding tool.
 
 ```bash
 npx plugins add liveblocks/liveblocks-plugin
 ```
+
+## Enable MCP tools
+
+The skills work after installation. To let your AI tool inspect and modify
+Liveblocks data, set a development project secret key before starting the tool:
+
+```bash
+export LIVEBLOCKS_SECRET_KEY="{{SECRET_KEY}}"
+```
+
+Do not use a production secret key. MCP tools can create, update, and delete
+data in the Liveblocks project connected to this key.
 
 ## Supported tools
 
