@@ -33,6 +33,7 @@ import {
   Undo2Icon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { HelpButton } from "@/components/HelpButton";
 import { Separator } from "@/components/ui/separator";
 import {
   Tooltip,
@@ -394,27 +395,29 @@ export function Toolbar({
         icon={<MessageSquarePlusIcon className="size-4" />}
       />
 
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className="ml-auto shrink-0"
-            onClick={onToggleChat}
-            aria-label={chatOpen ? "Hide AI chat" : "Show AI chat"}
-            aria-pressed={chatOpen}
-          >
-            {chatOpen ? (
-              <PanelRightCloseIcon className="size-4" />
-            ) : (
-              <PanelRightOpenIcon className="size-4" />
-            )}
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>
-          {chatOpen ? "Hide AI chat" : "Show AI chat"}
-        </TooltipContent>
-      </Tooltip>
+      <div className="ml-auto flex shrink-0 items-center gap-1">
+        <HelpButton />
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={onToggleChat}
+              aria-label={chatOpen ? "Hide AI chat" : "Show AI chat"}
+              aria-pressed={chatOpen}
+            >
+              {chatOpen ? (
+                <PanelRightCloseIcon className="size-4" />
+              ) : (
+                <PanelRightOpenIcon className="size-4" />
+              )}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            {chatOpen ? "Hide AI chat" : "Show AI chat"}
+          </TooltipContent>
+        </Tooltip>
+      </div>
     </div>
   );
 }

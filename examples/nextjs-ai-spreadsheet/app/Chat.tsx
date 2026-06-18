@@ -446,7 +446,7 @@ function ChatWindow({
         <ConversationScrollButton />
       </Conversation>
 
-      <div className="flex flex-col gap-3 p-3">
+      <div className="flex flex-col gap-2 p-2">
         {followUps && followUps.length > 0 ? (
           <Suggestions className="w-full flex-wrap">
             {followUps.map((prompt) => (
