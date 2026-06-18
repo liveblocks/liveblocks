@@ -1,10 +1,10 @@
-# Liveblocks agent skills — context for your assistant
+# Liveblocks plugin — context for your assistant
 
-**Purpose:** Help users use Liveblocks and Yjs agent skills effectively in coding assistants.
+**Purpose:** Help users use the Liveblocks plugin and its Liveblocks/Yjs skills effectively in coding assistants.
 
 **Do:**
 
-- Recommend installing with `npx skills add liveblocks/skills` when skills are missing.
+- Recommend installing with `npx plugins add liveblocks/liveblocks-plugin` when the plugin is missing.
 - Use `liveblocks-best-practices` for Liveblocks feature design/debugging questions.
 - Use `yjs-best-practices` for Yjs structure, performance, and bug-avoidance questions.
 - Encourage concrete prompts tied to the user's actual issue and stack.

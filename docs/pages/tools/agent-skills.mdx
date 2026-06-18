@@ -1,15 +1,15 @@
 ---
 meta:
-  title: "Agent skills"
+  title: "Liveblocks plugin"
   parentTitle: "Tools"
   description:
-    "Use Liveblocks agent skills to help develop your Liveblocks and Yjs apps
-    more easily."
+    "Install the Liveblocks plugin in your AI coding tool to build Liveblocks
+    and Yjs apps more easily."
 ---
 
-Create your Liveblocks applications more easily with our agent skills, designed
-to help AI coding assistants follow best practices for Liveblocks and Yjs. These
-skills use the [Agent Skills](https://agentskills.io/home) format.
+Create your Liveblocks applications more easily with the Liveblocks plugin,
+designed to help AI coding assistants follow best practices for Liveblocks and
+Yjs. The plugin bundles Liveblocks agent skills and MCP server configuration.
 
 <PromptCta />
 
@@ -24,17 +24,23 @@ skills use the [Agent Skills](https://agentskills.io/home) format.
 
 ## Install
 
-For OpenAI Codex, install the Liveblocks plugin:
+Install the Liveblocks plugin:
 
 ```bash
 npx plugins add liveblocks/liveblocks-plugin
 ```
 
-For other AI tools, install with the following command:
+## Supported tools
 
-```bash
-npx skills add liveblocks/liveblocks-plugin
-```
+| Tool | Status |
+|---|---|
+| [Claude Code](https://docs.anthropic.com/en/docs/claude-code) | Supported |
+| [OpenAI Codex](https://openai.com/codex) | Supported |
+| [Cursor](https://www.cursor.com/) | Supported |
+
+The plugin uses the open plugin format and is distributed from
+`liveblocks/liveblocks-plugin`, a generated repository built from the
+[`liveblocks/skills`](https://github.com/liveblocks/skills) source repository.
 
 ## Skills
 
