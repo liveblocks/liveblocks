@@ -14,12 +14,7 @@ import { useCellThread } from "./CellThreadContext";
 
 type Rect = { top: number; left: number; width: number; height: number };
 
-// The comment thread/composer is rendered as a React overlay anchored over the
-// open cell, rather than inside the Handsontable cell (which is now painted by
-// a plain function renderer). We measure the cell's <td> via
-// `hotInstance.getCell(...)` and keep a fixed-positioned anchor over it; the
-// Liveblocks floating popover (`updatePositionStrategy="always"`) then sticks to
-// that anchor as the grid scrolls.
+// Render a comment in a corner of a cell, without a popover
 export function CommentOverlay({
   hotRef,
 }: {

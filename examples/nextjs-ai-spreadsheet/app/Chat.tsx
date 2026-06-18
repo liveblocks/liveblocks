@@ -15,7 +15,12 @@ import {
   useUpdateMyPresence,
 } from "@liveblocks/react/suspense";
 import { Avatar } from "@liveblocks/react-ui";
-import { HistoryIcon, PlusIcon, RefreshCcwIcon, SparklesIcon } from "lucide-react";
+import {
+  HistoryIcon,
+  PlusIcon,
+  RefreshCcwIcon,
+  SparklesIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -69,8 +74,6 @@ import {
 } from "@/components/ai-elements/prompt-input";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 
-// Cheap, capable models, resolved through the Vercel AI Gateway in the server
-// route.
 const MODELS = [
   { id: "openai/gpt-5.4-mini", name: "GPT-5.4 mini" },
   { id: "google/gemini-3-flash", name: "Gemini 3 Flash" },
