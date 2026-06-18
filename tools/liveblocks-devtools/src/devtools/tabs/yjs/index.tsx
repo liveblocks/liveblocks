@@ -71,11 +71,7 @@ function YjsChangesList({ className, ...props }: ComponentProps<"div">) {
   const updates = useYUpdates();
   const tree = useMemo(() => createTreeFromYUpdates(updates), [updates]);
 
-  if (
-    currentStatus === "connected" ||
-    currentStatus === "open" || // Same as "connected", but only sent by old clients (prior to 1.1)
-    currentStatus === "reconnecting"
-  ) {
+  if (currentStatus === "connected" || currentStatus === "reconnecting") {
     if (updates.length > 0) {
       return (
         <div
@@ -146,11 +142,7 @@ function YjsDocument({
     []
   );
 
-  if (
-    currentStatus === "connected" ||
-    currentStatus === "open" || // Same as "connected", but only sent by old clients (prior to 1.1)
-    currentStatus === "reconnecting"
-  ) {
+  if (currentStatus === "connected" || currentStatus === "reconnecting") {
     if (filteredNode.length > 0) {
       return (
         <div className={cx(className, "absolute inset-0")} {...props}>
@@ -220,11 +212,7 @@ function YjsAwareness({ className, ...props }: ComponentProps<"div">) {
     [presence]
   );
 
-  if (
-    currentStatus === "connected" ||
-    currentStatus === "open" || // Same as "connected", but only sent by old clients (prior to 1.1)
-    currentStatus === "reconnecting"
-  ) {
+  if (currentStatus === "connected" || currentStatus === "reconnecting") {
     if (presence.length > 0 && hasAwareness) {
       return (
         <div

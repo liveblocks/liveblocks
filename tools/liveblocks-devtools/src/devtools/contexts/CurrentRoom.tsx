@@ -1,8 +1,4 @@
-import type {
-  DevTools,
-  DevToolsMsg,
-  Status as CoreStatus,
-} from "@liveblocks/core";
+import type { DevTools, DevToolsMsg, Status } from "@liveblocks/core";
 import { Base64 } from "js-base64";
 import type { ReactNode } from "react";
 import {
@@ -30,17 +26,6 @@ export type YUpdate = {
   ds: DeleteSet;
   structs: (Y.Item | Y.GC | Skip)[];
 };
-
-// Older Liveblocks clients used a broader set of connection status strings.
-// The devtools need to accept those messages without changing the core API.
-export type Status =
-  | CoreStatus
-  | "open"
-  | "authenticating"
-  | "unavailable"
-  | "closed"
-  | "failed";
-
 type Room = {
   readonly roomId: string;
   status: Status | null;
@@ -213,8 +198,8 @@ export function CurrentRoomProvider(props: Props) {
     (newRoomId: string | null): void =>
       _setCurrentRoomId((currentRoomId) =>
         currentRoomId === null ||
-          (!roomsById.has(currentRoomId) &&
-            (newRoomId === null || roomsById.has(newRoomId)))
+        (!roomsById.has(currentRoomId) &&
+          (newRoomId === null || roomsById.has(newRoomId)))
           ? newRoomId
           : currentRoomId
       ),
@@ -387,7 +372,7 @@ export function useSetCurrentRoomId(): (roomId: string) => void {
 }
 
 // Helper "no-op" subscription
-const nosub: SubscribeFn = () => () => { };
+const nosub: SubscribeFn = () => () => {};
 
 export function useRoomIds(): string[] {
   return useSyncExternalStore(onRoomCountChanged.subscribe, () => allRoomIds);
