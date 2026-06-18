@@ -663,7 +663,7 @@ print(result)
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
 | `room_id` | `str` | Yes | ID of the room |
-| `query` | `str \| Unset` | No | Query to filter threads. You can filter by `metadata` and `resolved`, for example, `metadata["status"]:"open" AND metadata["color"]:"red" AND resolved:true`. Learn more about [filtering threads with query language](https://liveblocks.io/docs/guides/how-to-filter-threads-using-query-language). |
+| `query` | `str \| Unset` | No | Query to filter threads. You can filter by `metadata`, `resolved`, and `visibility`, for example, `metadata["status"]:"open" AND metadata["color"]:"red" AND resolved:true AND visibility:"private"`. Learn more about [filtering threads with query language](https://liveblocks.io/docs/guides/how-to-filter-threads-using-query-language). |
 
 
 ---

@@ -1030,8 +1030,9 @@ class Liveblocks:
 
         Args:
             room_id (str): ID of the room Example: my-room-id.
-            query (str | Unset): Query to filter threads. You can filter by `metadata` and `resolved`,
-                for example, `metadata["status"]:"open" AND metadata["color"]:"red" AND resolved:true`.
+            query (str | Unset): Query to filter threads. You can filter by `metadata`, `resolved`, and
+                `visibility`, for example,
+                `metadata["status"]:"open" AND metadata["color"]:"red" AND resolved:true AND visibility:"private"`.
                 Learn more about [filtering threads with query
                 language](https://liveblocks.io/docs/guides/how-to-filter-threads-using-query-language).
                 Example: metadata["color"]:"blue".
@@ -4164,8 +4165,9 @@ class AsyncLiveblocks:
 
         Args:
             room_id (str): ID of the room Example: my-room-id.
-            query (str | Unset): Query to filter threads. You can filter by `metadata` and `resolved`,
-                for example, `metadata["status"]:"open" AND metadata["color"]:"red" AND resolved:true`.
+            query (str | Unset): Query to filter threads. You can filter by `metadata`, `resolved`, and
+                `visibility`, for example,
+                `metadata["status"]:"open" AND metadata["color"]:"red" AND resolved:true AND visibility:"private"`.
                 Learn more about [filtering threads with query
                 language](https://liveblocks.io/docs/guides/how-to-filter-threads-using-query-language).
                 Example: metadata["color"]:"blue".

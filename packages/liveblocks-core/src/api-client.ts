@@ -79,6 +79,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     cursor?: string;
     query?: {
       resolved?: boolean;
+      visibility?: ThreadVisibility;
       subscribed?: boolean;
       metadata?: Partial<QueryMetadata<TM>>;
     };
@@ -598,6 +599,7 @@ export function createApiClient<
     cursor?: string;
     query?: {
       resolved?: boolean;
+      visibility?: ThreadVisibility;
       subscribed?: boolean;
       metadata?: Partial<QueryMetadata<TM>>;
     };

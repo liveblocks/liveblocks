@@ -132,6 +132,11 @@ export type ThreadsQuery<TM extends BaseMetadata> = {
   resolved?: boolean;
 
   /**
+   * Whether to only return public or private threads. If not provided, all threads will be returned.
+   */
+  visibility?: ThreadVisibility;
+
+  /**
    * Whether to only return threads that the user is subscribed to or not. If not provided,
    * all threads will be returned.
    */

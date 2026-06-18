@@ -1201,9 +1201,9 @@ describe("client", () => {
       });
     });
 
-    test("should return a filtered list of threads when a query parameter is used for getThreads with a metadata object", async () => {
+    test("should return a filtered list of threads when a query parameter is used for getThreads with an object", async () => {
       const expectedQuery =
-        "metadata['status']:'open' metadata['priority']:3 metadata['organization']^'liveblocks:'";
+        "resolved:false visibility:'private' metadata['status']:'open' metadata['priority']:3 metadata['organization']^'liveblocks:'";
 
       server.use(
         http.get(
@@ -1229,6 +1229,8 @@ describe("client", () => {
                 startsWith: "liveblocks:",
               },
             },
+            resolved: false,
+            visibility: "private",
           },
         })
       ).resolves.toEqual({

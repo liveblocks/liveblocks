@@ -273,6 +273,21 @@ describe("Liveblocks client without Liveblocks augmentation", () => {
     expectTypeOf(thread.comments).toEqualTypeOf<CommentData[]>();
   });
 
+  test("should accept thread visibility in getThreads() query", async () => {
+    await client.getThreads({
+      roomId: "my-room",
+      query: { visibility: "private", resolved: false },
+    });
+
+    await client.getThreads({
+      roomId: "my-room",
+      query: {
+        // @ts-expect-error - invalid thread visibility
+        visibility: "secret",
+      },
+    });
+  });
+
   test("should return loosely typed thread metadata from getThread()", async () => {
     const thread = await client.getThread({
       roomId: "my-room",

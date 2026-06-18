@@ -778,6 +778,52 @@ describe("with Liveblocks augmentation", () => {
     }
   });
 
+  test("thread query visibility", () => {
+    {
+      classic.useThreads({
+        query: {
+          visibility: "private",
+          resolved: false,
+          metadata: { color: "red" },
+        },
+      });
+      classic.useUserThreads_experimental({
+        query: {
+          visibility: "public",
+          resolved: true,
+          metadata: { color: "blue" },
+        },
+      });
+      suspense.useThreads({
+        query: {
+          visibility: "private",
+          resolved: false,
+          metadata: { color: "red" },
+        },
+      });
+      suspense.useUserThreads_experimental({
+        query: {
+          visibility: "public",
+          resolved: true,
+          metadata: { color: "blue" },
+        },
+      });
+
+      classic.useThreads({
+        query: {
+          // @ts-expect-error - invalid thread visibility
+          visibility: "secret",
+        },
+      });
+      classic.useUserThreads_experimental({
+        query: {
+          // @ts-expect-error - invalid thread visibility
+          visibility: "secret",
+        },
+      });
+    }
+  });
+
   test("useCreateThread()", () => {
     {
       const createThread = classic.useCreateThread();

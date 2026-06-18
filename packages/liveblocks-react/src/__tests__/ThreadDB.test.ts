@@ -280,6 +280,7 @@ describe("ThreadDB", () => {
       roomId: "room1",
       createdAt: new Date("2024-10-09"),
       resolved: false,
+      visibility: "private",
       metadata: { color: "red", tag: "even" },
     });
     const th3 = dummyThreadData({
@@ -302,6 +303,7 @@ describe("ThreadDB", () => {
       roomId: "room1",
       createdAt: new Date("2024-10-12"),
       resolved: true,
+      visibility: "private",
       metadata: { color: "brown", tag: "odd" },
     });
 
@@ -335,6 +337,21 @@ describe("ThreadDB", () => {
       th1,
       th3,
       th5,
+    ]);
+
+    // Visibility checks
+    expect(db.findMany("room1", { visibility: "private" }, "asc")).toEqual([
+      th2,
+      th5,
+    ]);
+    expect(db.findMany("room2", { visibility: "private" }, "asc")).toEqual([]);
+    expect(db.findMany(undefined, { visibility: "private" }, "asc")).toEqual([
+      th2,
+      th5,
+    ]);
+    expect(db.findMany(undefined, { visibility: "public" }, "asc")).toEqual([
+      th1,
+      th3,
     ]);
 
     // Metadata checks
@@ -379,6 +396,14 @@ describe("ThreadDB", () => {
     // Combining metadata criteria
     {
       const query = { resolved: false, metadata: { color: "red" } };
+      expect(db.findMany("room1", query, "asc")).toEqual([th2]);
+      expect(db.findMany("room2", query, "asc")).toEqual([]);
+      expect(db.findMany(undefined, query, "asc")).toEqual([th2]);
+    }
+
+    // Combining visibility criteria
+    {
+      const query = { visibility: "private" as const, resolved: false };
       expect(db.findMany("room1", query, "asc")).toEqual([th2]);
       expect(db.findMany("room2", query, "asc")).toEqual([]);
       expect(db.findMany(undefined, query, "asc")).toEqual([th2]);
