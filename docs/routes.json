@@ -498,6 +498,27 @@
     ]
   },
   {
+    "title": "Build with AI",
+    "routes": [
+      {
+        "title": "Markdown access",
+        "path": "/tools/markdown-access"
+      },
+      {
+        "title": "Liveblocks plugin",
+        "path": "/tools/liveblocks-plugin"
+      },
+      {
+        "title": "Liveblocks MCP server",
+        "path": "/tools/mcp-server"
+      },
+      {
+        "title": "Liveblocks skills",
+        "path": "/tools/agent-skills"
+      }
+    ]
+  },
+  {
     "title": "Collaboration features",
     "routes": [
       {
@@ -878,14 +899,6 @@
       {
         "title": "Next.js Starter Kit",
         "path": "/tools/nextjs-starter-kit"
-      },
-      {
-        "title": "Liveblocks plugin",
-        "path": "/tools/liveblocks-plugin"
-      },
-      {
-        "title": "MCP server",
-        "path": "/tools/mcp-server"
       },
       {
         "title": "Frimousse",
