@@ -515,7 +515,14 @@ export function Table() {
         afterSelection={onSelection}
         afterSelectionEnd={onSelection}
         afterDeselect={onDeselect}
-        outsideClickDeselects={false}
+        // Keep the grid's selection when focus leaves the table (e.g. clicking a
+        // toolbar button), so the toolbar still acts on the selected cells. The
+        // exception is the Liveblocks comment popovers (`.lb-portal`): there we
+        // let the grid deselect so Handsontable releases focus — otherwise it
+        // steals focus back from the composer/thread and Radix closes it.
+        outsideClickDeselects={(target) =>
+          target instanceof HTMLElement && target.closest(".lb-portal") !== null
+        }
         afterColumnResize={afterColumnResize}
         afterRowResize={afterRowResize}
         beforeRowMove={beforeRowMove}

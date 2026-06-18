@@ -475,7 +475,7 @@ function ChatWindow({
           <PromptInputFooter>
             <PromptInputTools>
               <PromptInputSelect value={model} onValueChange={setModel}>
-                <PromptInputSelectTrigger>
+                <PromptInputSelectTrigger className="h-8! px-1.5!">
                   <PromptInputSelectValue />
                 </PromptInputSelectTrigger>
                 <PromptInputSelectContent>
@@ -490,7 +490,7 @@ function ChatWindow({
             <div className="flex items-center gap-1">
               {usedTokens > 0 ? (
                 <Context usedTokens={usedTokens} maxTokens={MAX_TOKENS}>
-                  <ContextTrigger />
+                  <ContextTrigger className="h-8 px-1.5!" />
                 </Context>
               ) : null}
               <PromptInputSubmit
