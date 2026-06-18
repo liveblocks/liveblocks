@@ -11,6 +11,7 @@ from dateutil.parser import isoparse
 if TYPE_CHECKING:
     from ..models.comment import Comment
     from ..models.thread_metadata import ThreadMetadata
+    from ..models.thread_visibility import ThreadVisibility
 
 
 @_attrs_define
@@ -33,6 +34,7 @@ class Thread:
             limit of 40 characters maximum. Value length has a limit of 4000 characters maximum for strings.
         resolved (bool):
         updated_at (datetime.datetime):
+        visibility (ThreadVisibility):
     """
 
     type_: Literal["thread"]
@@ -43,6 +45,7 @@ class Thread:
     metadata: ThreadMetadata
     resolved: bool
     updated_at: datetime.datetime
+    visibility: ThreadVisibility
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -65,6 +68,8 @@ class Thread:
 
         updated_at = self.updated_at.isoformat()
 
+        visibility = self.visibility.value
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -77,6 +82,7 @@ class Thread:
                 "metadata": metadata,
                 "resolved": resolved,
                 "updatedAt": updated_at,
+                "visibility": visibility,
             }
         )
 
@@ -86,6 +92,7 @@ class Thread:
     def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
         from ..models.comment import Comment
         from ..models.thread_metadata import ThreadMetadata
+        from ..models.thread_visibility import ThreadVisibility
 
         d = dict(src_dict)
         type_ = cast(Literal["thread"], d.pop("type"))
@@ -111,6 +118,8 @@ class Thread:
 
         updated_at = isoparse(d.pop("updatedAt"))
 
+        visibility = ThreadVisibility(d.pop("visibility"))
+
         thread = cls(
             type_=type_,
             id=id,
@@ -120,6 +129,7 @@ class Thread:
             metadata=metadata,
             resolved=resolved,
             updated_at=updated_at,
+            visibility=visibility,
         )
 
         thread.additional_properties = d

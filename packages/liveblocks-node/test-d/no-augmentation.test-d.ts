@@ -186,11 +186,13 @@ describe("Liveblocks client without Liveblocks augmentation", () => {
           body: { version: 1, content: [] },
         },
         metadata: { color: "red" },
+        visibility: "private",
       },
     });
 
     expectTypeOf(thread.type).toEqualTypeOf<"thread">();
     expectTypeOf(thread.id).toEqualTypeOf<string>();
+    expectTypeOf(thread.visibility).toEqualTypeOf<"public" | "private">();
     expectTypeOf(thread.metadata.color).toEqualTypeOf<
       string | number | boolean | undefined
     >();
@@ -198,6 +200,18 @@ describe("Liveblocks client without Liveblocks augmentation", () => {
       string | number | boolean | undefined
     >();
     expectTypeOf(thread.comments).toEqualTypeOf<CommentData[]>();
+
+    client.createThread({
+      roomId: "room-123",
+      data: {
+        comment: {
+          userId: "user-123",
+          body: { version: 1, content: [] },
+        },
+        // @ts-expect-error - invalid thread visibility
+        visibility: "secret",
+      },
+    });
   });
 
   test("should accept arbitrary metadata in editThreadMetadata()", async () => {

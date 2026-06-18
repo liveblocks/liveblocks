@@ -161,6 +161,7 @@ export type CreateThreadOptions<
 > = {
   roomId: string;
   data: {
+    visibility?: "public" | "private";
     comment: {
       userId: string;
       createdAt?: Date;

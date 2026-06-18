@@ -8110,6 +8110,10 @@
           "resolved": {
             "type": "boolean"
           },
+          "visibility": {
+            "type": "string",
+            "enum": ["public", "private"]
+          },
           "updatedAt": {
             "type": "string",
             "format": "date-time"
@@ -8123,7 +8127,8 @@
           "createdAt",
           "updatedAt",
           "metadata",
-          "resolved"
+          "resolved",
+          "visibility"
         ],
         "example": {
           "type": "thread",
@@ -8151,7 +8156,8 @@
           "metadata": {
             "color": "blue"
           },
-          "resolved": false
+          "resolved": false,
+          "visibility": "public"
         }
       },
       "Feed": {
@@ -8371,6 +8377,11 @@
           },
           "metadata": {
             "$ref": "#/components/schemas/ThreadMetadata"
+          },
+          "visibility": {
+            "type": "string",
+            "enum": ["public", "private"],
+            "default": "public"
           }
         },
         "required": ["comment"],
@@ -8390,7 +8401,8 @@
             },
             "metadata": {
               "color": "blue"
-            }
+            },
+            "visibility": "private"
           }
         ]
       },

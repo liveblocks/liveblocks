@@ -641,11 +641,13 @@ describe("without Liveblocks augmentation", () => {
           version: 1,
           content: [{ type: "paragraph", children: [{ text: "hi" }] }],
         },
+        visibility: "private",
       });
 
       expectTypeOf(thread1.type).toEqualTypeOf<"thread">();
       expectTypeOf(thread1.id).toEqualTypeOf<string>();
       expectTypeOf(thread1.roomId).toEqualTypeOf<string>();
+      expectTypeOf(thread1.visibility).toEqualTypeOf<"public" | "private">();
       expectTypeOf(thread1.comments[0]!.type).toEqualTypeOf<"comment">();
       expectTypeOf(thread1.comments[0]!.id).toEqualTypeOf<string>();
       expectTypeOf(thread1.comments[0]!.threadId).toEqualTypeOf<string>();
@@ -653,6 +655,15 @@ describe("without Liveblocks augmentation", () => {
       expectTypeOf(thread1.metadata.color).toEqualTypeOf<
         string | number | boolean | undefined
       >();
+
+      createThread({
+        body: {
+          version: 1,
+          content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+        },
+        // @ts-expect-error
+        visibility: "secret",
+      });
 
       const thread2 = createThread({
         body: {

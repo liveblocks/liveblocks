@@ -269,7 +269,7 @@ export type GroupAsyncSuccess = AsyncSuccess<GroupData | undefined, "group">;
 // prettier-ignore
 export type CreateThreadOptions<TM extends BaseMetadata, CM extends BaseMetadata > =
   Resolve<
-    { body: CommentBody, attachments?: CommentAttachment[]; }
+    { body: CommentBody, attachments?: CommentAttachment[]; visibility?: "public" | "private"; }
     & PartialUnless<TM, { metadata: TM }>
     & PartialUnless<CM, { commentMetadata: CM }>
   >;

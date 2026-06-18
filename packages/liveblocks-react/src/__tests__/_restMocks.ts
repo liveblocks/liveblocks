@@ -63,6 +63,7 @@ export function mockCreateThread<
     { roomId: string },
     {
       id: string;
+      visibility?: "public" | "private";
       metadata?: TM;
       comment: { id: string; body: CommentBody; metadata?: CM };
     },

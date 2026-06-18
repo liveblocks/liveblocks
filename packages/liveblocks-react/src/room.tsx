@@ -1934,6 +1934,7 @@ function useCreateRoomThread<TM extends BaseMetadata, CM extends BaseMetadata>(
       const metadata = options.metadata ?? ({} as TM);
       const commentMetadata = options.commentMetadata ?? ({} as CM);
       const attachments = options.attachments;
+      const visibility = options.visibility ?? "public";
 
       const threadId = createThreadId();
       const commentId = createCommentId();
@@ -1960,7 +1961,7 @@ function useCreateRoomThread<TM extends BaseMetadata, CM extends BaseMetadata>(
         metadata,
         comments: [newComment],
         resolved: false,
-        visibility: "public",
+        visibility,
       };
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
@@ -1978,6 +1979,7 @@ function useCreateRoomThread<TM extends BaseMetadata, CM extends BaseMetadata>(
           threadId,
           commentId,
           body,
+          visibility,
           metadata,
           commentMetadata,
           attachmentIds,
@@ -1996,6 +1998,7 @@ function useCreateRoomThread<TM extends BaseMetadata, CM extends BaseMetadata>(
                 threadId,
                 commentId,
                 body,
+                visibility,
                 metadata,
                 commentMetadata,
               },

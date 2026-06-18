@@ -36,6 +36,7 @@ type CommentsOrNotificationsErrorContext =
       threadId: string;
       commentId: string;
       body: CommentBody;
+      visibility: "public" | "private";
       metadata: BaseMetadata;
       commentMetadata: BaseMetadata;
     }

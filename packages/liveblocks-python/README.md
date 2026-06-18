@@ -690,13 +690,14 @@ A commentâ€™s body is an array of paragraphs, each containing child nodes. Hereâ
 
 **Example**
 ```python
-from liveblocks.models import CreateThreadRequestBody
+from liveblocks.models import CreateThreadRequestBody, ThreadVisibility
 
 result = client.create_thread(
     room_id="my-room-id",
     body=CreateThreadRequestBody(
         comment=...,
         # metadata=...,
+        # visibility=ThreadVisibility.PRIVATE,
     ),
 )
 print(result)

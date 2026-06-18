@@ -141,6 +141,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     roomId: string;
     threadId?: string;
     commentId?: string;
+    visibility?: "public" | "private";
     metadata: TM | undefined;
     commentMetadata: CM | undefined;
     body: CommentBody;
@@ -713,6 +714,7 @@ export function createApiClient<
     roomId: string;
     threadId?: string;
     commentId?: string;
+    visibility?: "public" | "private";
     metadata: TM | undefined;
     body: CommentBody;
     commentMetadata?: CM;
@@ -730,6 +732,7 @@ export function createApiClient<
       }),
       {
         id: threadId,
+        visibility: options.visibility,
         comment: {
           id: commentId,
           body: options.body,

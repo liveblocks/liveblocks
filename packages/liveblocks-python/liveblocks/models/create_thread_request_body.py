@@ -11,6 +11,7 @@ from ..types import UNSET, Unset
 if TYPE_CHECKING:
     from ..models.create_thread_request_body_comment import CreateThreadRequestBodyComment
     from ..models.thread_metadata import ThreadMetadata
+    from ..models.thread_visibility import ThreadVisibility
 
 
 @_attrs_define
@@ -20,10 +21,12 @@ class CreateThreadRequestBody:
         comment (CreateThreadRequestBodyComment):
         metadata (ThreadMetadata | Unset): Custom metadata attached to a thread. Supports maximum 50 entries. Key length
             has a limit of 40 characters maximum. Value length has a limit of 4000 characters maximum for strings.
+        visibility (ThreadVisibility | Unset):
     """
 
     comment: CreateThreadRequestBodyComment
     metadata: ThreadMetadata | Unset = UNSET
+    visibility: ThreadVisibility | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -32,6 +35,10 @@ class CreateThreadRequestBody:
         metadata: dict[str, Any] | Unset = UNSET
         if not isinstance(self.metadata, Unset):
             metadata = self.metadata.to_dict()
+
+        visibility: str | Unset = UNSET
+        if not isinstance(self.visibility, Unset):
+            visibility = self.visibility.value
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -42,6 +49,8 @@ class CreateThreadRequestBody:
         )
         if metadata is not UNSET:
             field_dict["metadata"] = metadata
+        if visibility is not UNSET:
+            field_dict["visibility"] = visibility
 
         return field_dict
 
@@ -49,6 +58,7 @@ class CreateThreadRequestBody:
     def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
         from ..models.create_thread_request_body_comment import CreateThreadRequestBodyComment
         from ..models.thread_metadata import ThreadMetadata
+        from ..models.thread_visibility import ThreadVisibility
 
         d = dict(src_dict)
         comment = CreateThreadRequestBodyComment.from_dict(d.pop("comment"))
@@ -60,9 +70,17 @@ class CreateThreadRequestBody:
         else:
             metadata = ThreadMetadata.from_dict(_metadata)
 
+        _visibility = d.pop("visibility", UNSET)
+        visibility: ThreadVisibility | Unset
+        if isinstance(_visibility, Unset):
+            visibility = UNSET
+        else:
+            visibility = ThreadVisibility(_visibility)
+
         create_thread_request_body = cls(
             comment=comment,
             metadata=metadata,
+            visibility=visibility,
         )
 
         create_thread_request_body.additional_properties = d

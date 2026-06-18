@@ -981,6 +981,7 @@ export type Room<
   createThread(options: {
     threadId?: string;
     commentId?: string;
+    visibility?: "public" | "private";
     metadata: TM | undefined;
     body: CommentBody;
     commentMetadata?: CM;
@@ -3540,6 +3541,7 @@ export function createRoom<
     roomId: string;
     threadId?: string;
     commentId?: string;
+    visibility?: "public" | "private";
     metadata: TM | undefined;
     commentMetadata: CM | undefined;
     body: CommentBody;
@@ -3549,6 +3551,7 @@ export function createRoom<
       roomId,
       threadId: options.threadId,
       commentId: options.commentId,
+      visibility: options.visibility,
       metadata: options.metadata,
       body: options.body,
       commentMetadata: options.commentMetadata,

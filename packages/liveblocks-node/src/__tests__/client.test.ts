@@ -943,6 +943,7 @@ describe("client", () => {
         metadata: {
           color: "blue",
         },
+        visibility: "private",
       };
 
       server.use(

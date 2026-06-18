@@ -266,15 +266,31 @@ describe("Liveblocks client with Liveblocks augmentation", () => {
           metadata: { priority: 1 },
         },
         metadata: { color: "red" },
+        visibility: "private",
       },
     });
 
     expectTypeOf(thread.type).toEqualTypeOf<"thread">();
     expectTypeOf(thread.id).toEqualTypeOf<string>();
+    expectTypeOf(thread.visibility).toEqualTypeOf<"public" | "private">();
     expectTypeOf(thread.metadata.color).toEqualTypeOf<"red" | "blue">();
     // @ts-expect-error - unknown ThreadMetadata field
     thread.metadata.nonexisting;
     expectTypeOf(thread.comments).toEqualTypeOf<CommentData[]>();
+
+    client.createThread({
+      roomId: "room-123",
+      data: {
+        comment: {
+          userId: "user-123",
+          body: { version: 1, content: [] },
+          metadata: { priority: 1 },
+        },
+        metadata: { color: "red" },
+        // @ts-expect-error - invalid thread visibility
+        visibility: "secret",
+      },
+    });
 
     const threadWithCommentMetadata = await client.createThread({
       roomId: "room-123",

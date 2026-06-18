@@ -802,11 +802,13 @@ describe("with Liveblocks augmentation", () => {
         },
         metadata: { color: "red" },
         commentMetadata: { priority: 1 },
+        visibility: "private",
       });
 
       expectTypeOf(thread.type).toEqualTypeOf<"thread">();
       expectTypeOf(thread.id).toEqualTypeOf<string>();
       expectTypeOf(thread.roomId).toEqualTypeOf<string>();
+      expectTypeOf(thread.visibility).toEqualTypeOf<"public" | "private">();
       expectTypeOf(thread.comments[0]!.type).toEqualTypeOf<"comment">();
       expectTypeOf(thread.comments[0]!.id).toEqualTypeOf<string>();
       expectTypeOf(thread.comments[0]!.threadId).toEqualTypeOf<string>();
@@ -814,6 +816,17 @@ describe("with Liveblocks augmentation", () => {
       expectTypeOf(thread.metadata.color).toEqualTypeOf<"red" | "blue">();
       // @ts-expect-error
       void thread.metadata.nonexisting;
+
+      createThread({
+        body: {
+          version: 1,
+          content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+        },
+        metadata: { color: "red" },
+        commentMetadata: { priority: 1 },
+        // @ts-expect-error
+        visibility: "secret",
+      });
     }
   });
 

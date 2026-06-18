@@ -144,6 +144,7 @@ from .subscription import Subscription
 from .test_json_patch_operation import TestJsonPatchOperation
 from .thread import Thread
 from .thread_metadata import ThreadMetadata
+from .thread_visibility import ThreadVisibility
 from .trigger_inbox_notification_request_body import TriggerInboxNotificationRequestBody
 from .trigger_inbox_notification_request_body_activity_data import TriggerInboxNotificationRequestBodyActivityData
 from .unsubscribe_from_thread_request_body import UnsubscribeFromThreadRequestBody
@@ -316,6 +317,7 @@ __all__ = (
     "TestJsonPatchOperation",
     "Thread",
     "ThreadMetadata",
+    "ThreadVisibility",
     "TriggerInboxNotificationRequestBody",
     "TriggerInboxNotificationRequestBodyActivityData",
     "UnsubscribeFromThreadRequestBody",
