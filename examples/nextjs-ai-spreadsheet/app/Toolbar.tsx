@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, type ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 import { shallow } from "@liveblocks/client";
 import {
   useCanRedo,
@@ -53,7 +53,7 @@ import {
   type CellFormat,
   type NumberFormat,
 } from "@/liveblocks.config";
-import { useSelectionValue, type Selection } from "./SelectionContext";
+import { useSelectionValue } from "./SelectionContext";
 import { useCellThread } from "./CellThreadContext";
 import {
   useSpreadsheetActions,
@@ -105,18 +105,10 @@ export function Toolbar({
   chatOpen: boolean;
   onToggleChat: () => void;
 }) {
-  // Interacting with the toolbar can momentarily pull focus out of
-  // Handsontable, which deselects the grid (`onDeselect` → `setSelection(null)`)
-  // before a button's `onClick` runs. Retain the last non-null selection so
-  // every toolbar action — including the comment composer and the (portaled)
-  // dropdown menus — still targets the active cell. The `ToolButton`s also
-  // prevent the focus-pull at the source via `onMouseDown`.
-  const liveSelection = useSelectionValue();
-  const lastSelection = useRef<Selection | null>(null);
-  if (liveSelection) {
-    lastSelection.current = liveSelection;
-  }
-  const selection = liveSelection ?? lastSelection.current;
+  // The grid keeps its selection when focus moves to the toolbar
+  // (`outsideClickDeselects={false}` on the <HotTable>), so toolbar actions can
+  // read the live selection directly.
+  const selection = useSelectionValue();
   const { setOpenCell } = useCellThread();
   const actions = useSpreadsheetActions();
   const undo = useUndo();
@@ -445,8 +437,6 @@ function ToolButton({
         <Button
           variant={active ? "secondary" : "ghost"}
           size="icon-sm"
-          // Keep Handsontable's selection: prevent the mousedown from moving
-          // focus out of the grid (which would deselect it before `onClick`).
           onMouseDown={(event) => event.preventDefault()}
           onClick={onClick}
           disabled={disabled}

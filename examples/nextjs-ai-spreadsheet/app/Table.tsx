@@ -515,6 +515,7 @@ export function Table() {
         afterSelection={onSelection}
         afterSelectionEnd={onSelection}
         afterDeselect={onDeselect}
+        outsideClickDeselects={false}
         afterColumnResize={afterColumnResize}
         afterRowResize={afterRowResize}
         beforeRowMove={beforeRowMove}

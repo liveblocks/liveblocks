@@ -198,6 +198,17 @@ function ChatWindow({
   const self = useSelf();
   const updateMyPresence = useUpdateMyPresence();
 
+  // On open, the panel mounts fresh and its content settles over a few frames.
+  // Keep scrolling instant during that window so it lands at the bottom without
+  // animating, then switch to smooth so streaming replies scroll nicely.
+  const [scrollBehavior, setScrollBehavior] = useState<"instant" | "smooth">(
+    "instant"
+  );
+  useEffect(() => {
+    const timeout = setTimeout(() => setScrollBehavior("smooth"), 150);
+    return () => clearTimeout(timeout);
+  }, []);
+
   const selfPrompting = self.presence.promptingFeedId === feedId;
   const othersPrompting = useOthers((others) =>
     others.some((other) => other.presence.promptingFeedId === feedId)
@@ -334,9 +345,9 @@ function ChatWindow({
 
   return (
     <>
-      {/* `initial="instant"` so opening the chat jumps straight to the latest
-          message instead of animating all the way down on mount. */}
-      <Conversation initial="instant">
+      {/* `scrollBehavior` is "instant" while the panel opens (so it jumps
+          straight to the latest message) then becomes "smooth" for streaming. */}
+      <Conversation initial={scrollBehavior} resize={scrollBehavior}>
         <ScrollToBottomBridge register={registerScrollToBottom} />
         <ConversationContent>
           {sorted.length === 0 ? (
@@ -459,7 +470,7 @@ function ChatWindow({
           onSubmit={(message: PromptInputMessage) => send(message.text)}
         >
           <PromptInputBody>
-            <PromptInputTextarea placeholder="Ask the AI to edit the sheet…" />
+            <PromptInputTextarea placeholder="Ask AI to edit the sheet…" />
           </PromptInputBody>
           <PromptInputFooter>
             <PromptInputTools>
