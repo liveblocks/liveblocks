@@ -69,7 +69,7 @@ export function Room({ children }: { children: ReactNode }) {
   return (
     <RoomProvider
       id={roomId}
-      initialPresence={{ selectedCell: null, promptingFeedId: null }}
+      initialPresence={{ selectedCells: null, promptingFeedId: null }}
       initialStorage={createInitialStorage}
     >
       <ClientSideSuspense fallback={<Loading />}>{children}</ClientSideSuspense>

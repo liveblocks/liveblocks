@@ -111,6 +111,12 @@ export function CommentOverlay({
             }
           }}
           onComposerSubmit={() => setOpenCell(metadata)}
+          onResolvedChange={(resolved) => {
+            // Resolving hides the thread, so close the overlay immediately.
+            if (resolved) {
+              setOpenCell(null);
+            }
+          }}
           style={{ zIndex: 50 }}
           autoFocus
         >

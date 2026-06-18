@@ -66,10 +66,12 @@ declare global {
 
     // Realtime presence, shared with everyone in the room.
     Presence: {
-      // The cell a user (or the AI, via server-side `setPresence`) is currently
-      // editing. Keyed by stable ids so the highlight follows the logical cell
-      // even when rows/columns are moved or sorted.
-      selectedCell: SelectedCell | null;
+      // The cells a user (or the AI, via server-side `setPresence`) is currently
+      // editing. Keyed by stable ids so the highlight follows the logical cells
+      // even when rows/columns are moved or sorted. Humans only ever publish a
+      // single (active) cell, but the AI publishes every cell of a multi-cell
+      // edit so the whole region is highlighted as one box while it works.
+      selectedCells: SelectedCell[] | null;
       // The feed (chat) the user is currently prompting the AI in, so the live
       // "AI is thinking…" status shows in the right chat for everyone.
       promptingFeedId: string | null;

@@ -21,6 +21,8 @@ import {
   ItalicIcon,
   MessageSquarePlusIcon,
   PaintBucketIcon,
+  PanelRightCloseIcon,
+  PanelRightOpenIcon,
   PercentIcon,
   PlusIcon,
   Redo2Icon,
@@ -75,7 +77,13 @@ const FILL_COLORS = [
   "#f3f4f6",
 ];
 
-export function Toolbar() {
+export function Toolbar({
+  chatOpen,
+  onToggleChat,
+}: {
+  chatOpen: boolean;
+  onToggleChat: () => void;
+}) {
   // Interacting with the toolbar can momentarily pull focus out of
   // Handsontable, which deselects the grid (`onDeselect` → `setSelection(null)`)
   // before a button's `onClick` runs. Retain the last non-null selection so
@@ -355,6 +363,28 @@ export function Toolbar() {
         onClick={() => selection && setOpenCell(selection.anchor)}
         icon={<MessageSquarePlusIcon className="size-4" />}
       />
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className="ml-auto shrink-0"
+            onClick={onToggleChat}
+            aria-label={chatOpen ? "Hide AI chat" : "Show AI chat"}
+            aria-pressed={chatOpen}
+          >
+            {chatOpen ? (
+              <PanelRightCloseIcon className="size-4" />
+            ) : (
+              <PanelRightOpenIcon className="size-4" />
+            )}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          {chatOpen ? "Hide AI chat" : "Show AI chat"}
+        </TooltipContent>
+      </Tooltip>
     </div>
   );
 }

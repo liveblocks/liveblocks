@@ -32,9 +32,14 @@ export function CellThreadProvider({ children }: { children: ReactNode }) {
   const selection = useSelectionValue();
 
   // Index the most recent thread per cell for O(1) lookups in each renderer.
+  // Resolved threads are hidden, so they drop out of the marker, the open logic,
+  // and the overlay.
   const byCell = useMemo(() => {
     const map = new Map<string, ThreadData>();
     for (const thread of threads) {
+      if (thread.resolved) {
+        continue;
+      }
       const { rowId, colId } = thread.metadata;
       if (rowId && colId) {
         map.set(cellKey(rowId, colId), thread);

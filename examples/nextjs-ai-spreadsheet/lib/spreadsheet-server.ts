@@ -10,7 +10,12 @@ import {
   AI_USER_ID,
   AI_USER_NAME,
 } from "@/database";
-import { cellKey, type CellData, type CellFormat } from "@/liveblocks.config";
+import {
+  cellKey,
+  type CellData,
+  type CellFormat,
+  type SelectedCell,
+} from "@/liveblocks.config";
 import { isFormatEmpty, mergeFormat } from "@/lib/format";
 import {
   colIndexToLetters,
@@ -143,24 +148,19 @@ function writeFormat(
 
 // --- Presence ----------------------------------------------------------------
 
-export async function showAiEditing(
+export function showAiEditing(
   liveblocks: LiveblocksClient,
   roomId: string,
-  cell: { rowId: string; colId: string } | null
-): Promise<void> {
-  // Short TTL: presence is refreshed before each edit and is never explicitly
-  // cleared, so the AI's selection lingers while it works and fades on its own
-  // a few seconds after the last edit.
-  try {
-    await liveblocks.setPresence(roomId, {
+  cells: SelectedCell[] | null
+): void {
+  void liveblocks
+    .setPresence(roomId, {
       userId: AI_USER_ID,
       userInfo: AI_USER_INFO,
-      data: { selectedCell: cell, promptingFeedId: null },
+      data: { selectedCells: cells, promptingFeedId: null },
       ttl: 3,
-    });
-  } catch (error) {
-    throw error;
-  }
+    })
+    .catch(() => {});
 }
 
 // Resolve the stable ids of an A1 cell from a fresh storage read, for presence.
@@ -168,7 +168,7 @@ async function idsForA1(
   liveblocks: LiveblocksClient,
   roomId: string,
   a1: string
-): Promise<{ rowId: string; colId: string } | null> {
+): Promise<SelectedCell | null> {
   const pos = parseA1(a1);
   if (!pos) {
     return null;
@@ -194,14 +194,11 @@ export async function setCellValue(
   if (!pos) {
     return `Invalid cell reference "${a1}".`;
   }
-  const ids = await idsForA1(liveblocks, roomId, a1);
-  if (ids) {
-    await showAiEditing(liveblocks, roomId, ids);
-  }
   await liveblocks.mutateStorage(roomId, ({ root }) => {
     const target = rowColIds(root, pos.row, pos.col);
     if (target) {
       writeValue(root.get("cells"), target.rowId, target.colId, value);
+      showAiEditing(liveblocks, roomId, [target]);
     }
   });
   return `Set ${a1.toUpperCase()} to "${value}".`;
@@ -217,37 +214,25 @@ export async function setRangeValues(
   if (!start) {
     return `Invalid start cell "${startA1}".`;
   }
-  // Resolve the stable ids once, then write one cell per step — moving the AI's
-  // presence to each cell just before writing it. Each `await` is paced by its
-  // own network round-trip, so the AI's selection border visibly travels across
-  // the range as it fills, instead of flashing on the start cell only.
-  const storage = await readStorage(liveblocks, roomId);
-  for (let r = 0; r < rows.length; r++) {
-    const cols = rows[r];
-    for (let c = 0; c < cols.length; c++) {
-      const rowId = storage.rowIds[start.row + r];
-      const colId = storage.colIds[start.col + c];
-      if (!rowId || !colId) {
-        continue;
+  // Write the whole range in a single mutation and highlight exactly the cells
+  // we wrote as one box, fired alongside the write. The box reads as one region
+  // being worked on (rather than a border hopping cell-to-cell) and lingers
+  // briefly after, via the presence TTL.
+  await liveblocks.mutateStorage(roomId, ({ root }) => {
+    const map = root.get("cells");
+    const cells: SelectedCell[] = [];
+    for (let r = 0; r < rows.length; r++) {
+      const cols = rows[r];
+      for (let c = 0; c < cols.length; c++) {
+        const target = rowColIds(root, start.row + r, start.col + c);
+        if (target) {
+          writeValue(map, target.rowId, target.colId, cols[c]);
+          cells.push(target);
+        }
       }
-      // A failed/rate-limited presence update must not abort the range fill.
-      try {
-        await showAiEditing(liveblocks, roomId, { rowId, colId });
-        // TEMP debug — remove
-        console.log("[ai-presence] set", { rowId, colId });
-      } catch (error) {
-        // TEMP debug — remove
-        console.error("[ai-presence] setPresence failed", {
-          rowId,
-          colId,
-          error,
-        });
-      }
-      await liveblocks.mutateStorage(roomId, ({ root }) => {
-        writeValue(root.get("cells"), rowId, colId, cols[c]);
-      });
     }
-  }
+    showAiEditing(liveblocks, roomId, cells);
+  });
   const rowCount = rows.length;
   const colCount = rows.reduce((max, row) => Math.max(max, row.length), 0);
   return `Filled ${rowCount}×${colCount} cells starting at ${startA1.toUpperCase()}.`;
@@ -262,27 +247,19 @@ export async function clearRange(
   if (!range) {
     return `Invalid range "${rangeA1}".`;
   }
-  // Show the AI's presence on the range being cleared. A clear can span a large
-  // range cheaply (just two corners), so we pin to the start cell rather than
-  // stepping cell-by-cell, to avoid a round-trip per cell.
-  const ids = await idsForA1(
-    liveblocks,
-    roomId,
-    toA1(range.start.row, range.start.col)
-  );
-  if (ids) {
-    await showAiEditing(liveblocks, roomId, ids);
-  }
   await liveblocks.mutateStorage(roomId, ({ root }) => {
-    const cells = root.get("cells");
+    const map = root.get("cells");
+    const cells: SelectedCell[] = [];
     for (let r = range.start.row; r <= range.end.row; r++) {
       for (let c = range.start.col; c <= range.end.col; c++) {
         const target = rowColIds(root, r, c);
         if (target) {
-          writeValue(cells, target.rowId, target.colId, "");
+          writeValue(map, target.rowId, target.colId, "");
+          cells.push(target);
         }
       }
     }
+    showAiEditing(liveblocks, roomId, cells);
   });
   return `Cleared ${rangeA1.toUpperCase()}.`;
 }
@@ -297,20 +274,19 @@ export async function formatCells(
   if (!range) {
     return `Invalid range "${rangeA1}".`;
   }
-  const ids = await idsForA1(liveblocks, roomId, rangeA1.split(":")[0]);
-  if (ids) {
-    await showAiEditing(liveblocks, roomId, ids);
-  }
   await liveblocks.mutateStorage(roomId, ({ root }) => {
-    const cells = root.get("cells");
+    const map = root.get("cells");
+    const cells: SelectedCell[] = [];
     for (let r = range.start.row; r <= range.end.row; r++) {
       for (let c = range.start.col; c <= range.end.col; c++) {
         const target = rowColIds(root, r, c);
         if (target) {
-          writeFormat(cells, target.rowId, target.colId, patch);
+          writeFormat(map, target.rowId, target.colId, patch);
+          cells.push(target);
         }
       }
     }
+    showAiEditing(liveblocks, roomId, cells);
   });
   return `Formatted ${rangeA1.toUpperCase()}.`;
 }
@@ -460,4 +436,35 @@ export async function addComment(
     },
   });
   return `Added a comment on ${a1.toUpperCase()}.`;
+}
+
+export async function deleteComment(
+  liveblocks: LiveblocksClient,
+  roomId: string,
+  a1: string
+): Promise<string> {
+  const ids = await idsForA1(liveblocks, roomId, a1);
+  if (!ids) {
+    return `Invalid cell reference "${a1}".`;
+  }
+
+  // Comment threads are anchored to a logical cell via their metadata, so we can
+  // find the thread(s) on this cell by querying that metadata, then delete them.
+  const { data: threads } = await liveblocks.getThreads({
+    roomId,
+    query: { metadata: { rowId: ids.rowId, colId: ids.colId } },
+  });
+  if (threads.length === 0) {
+    return `There is no comment on ${a1.toUpperCase()}.`;
+  }
+
+  showAiEditing(liveblocks, roomId, [ids]);
+  for (const thread of threads) {
+    await liveblocks.deleteThread({ roomId, threadId: thread.id });
+  }
+
+  const count = threads.length;
+  return `Deleted ${count} comment${
+    count === 1 ? "" : "s"
+  } on ${a1.toUpperCase()}.`;
 }

@@ -26,7 +26,18 @@ import { CommentOverlay } from "./CommentOverlay";
 
 registerAllModules();
 
-type CellSelector = { name: string; color: string };
+// A presence highlight on a single cell. `top`/`right`/`bottom`/`left` mark
+// which of the cell's edges sit on the *boundary* of that user's selected
+// region, so the renderer can draw one box around the whole region (a single
+// cell has all four edges, a range only has the outer ones).
+type CellSelector = {
+  name: string;
+  color: string;
+  top: boolean;
+  right: boolean;
+  bottom: boolean;
+  left: boolean;
+};
 type HotInstance = NonNullable<HotTableRef["hotInstance"]>;
 
 // Removes `moved` (array of indices) from `ids`, then re-inserts them at
@@ -98,26 +109,80 @@ export function Table() {
     return out;
   }, shallow);
 
-  const presenceByCell = useOthers((others) => {
-    const out: Record<string, CellSelector[]> = {};
+  // Each other user's selected region, as the set of cell keys they're editing.
+  // (Humans publish a single cell; the AI publishes every cell of a multi-cell
+  // edit.) We compute the per-cell box edges separately, below, where the row
+  // and column order is available.
+  const othersSelections = useOthers((others) => {
+    const out: { name: string; color: string; keys: string[] }[] = [];
     for (const other of others) {
-      const sc = other.presence.selectedCell;
-      if (!sc?.rowId || !sc?.colId) {
+      const cells = other.presence.selectedCells;
+      if (!cells || cells.length === 0) {
         continue;
       }
-      const key = cellKey(sc.rowId, sc.colId);
-      (out[key] ??= []).push({
-        name: other.info?.name ?? "Someone",
-        color: other.info?.color ?? "#888888",
-      });
+      const keys: string[] = [];
+      for (const cell of cells) {
+        if (cell?.rowId && cell?.colId) {
+          keys.push(cellKey(cell.rowId, cell.colId));
+        }
+      }
+      if (keys.length) {
+        out.push({
+          name: other.info?.name ?? "Someone",
+          color: other.info?.color ?? "#888888",
+          keys,
+        });
+      }
     }
     return out;
   }, shallow);
+
+  // Turn each user's set of cells into per-cell box edges: a cell's edge is part
+  // of the outline only when the neighbouring cell (in the current row/column
+  // order) isn't also in that same user's selection. A single cell keeps all
+  // four edges; a rectangular range only outlines its perimeter.
+  const presenceByCell = useMemo(() => {
+    const out: Record<string, CellSelector[]> = {};
+    const rowIndex = new Map(rowIds.map((id, i) => [id, i]));
+    const colIndex = new Map(colIds.map((id, i) => [id, i]));
+    for (const sel of othersSelections) {
+      const keySet = new Set(sel.keys);
+      const inSet = (r: number, c: number) => {
+        const rowId = rowIds[r];
+        const colId = colIds[c];
+        return (
+          rowId !== undefined &&
+          colId !== undefined &&
+          keySet.has(cellKey(rowId, colId))
+        );
+      };
+      for (const key of sel.keys) {
+        const [rowId, colId] = key.split(":");
+        const r = rowIndex.get(rowId);
+        const c = colIndex.get(colId);
+        if (r === undefined || c === undefined) {
+          continue;
+        }
+        (out[key] ??= []).push({
+          name: sel.name,
+          color: sel.color,
+          top: !inSet(r - 1, c),
+          bottom: !inSet(r + 1, c),
+          left: !inSet(r, c - 1),
+          right: !inSet(r, c + 1),
+        });
+      }
+    }
+    return out;
+  }, [othersSelections, rowIds, colIds]);
 
   const { threads } = useThreads();
   const threadKeys = useMemo(() => {
     const set = new Set<string>();
     for (const thread of threads) {
+      if (thread.resolved) {
+        continue;
+      }
       const { rowId, colId } = thread.metadata;
       if (rowId && colId) {
         set.add(cellKey(rowId, colId));
@@ -237,9 +302,29 @@ export function Table() {
 
       const selectors = presenceByCellRef.current[key];
       if (selectors && selectors.length) {
-        td.style.boxShadow = selectors
-          .map((s, i) => `inset 0 0 0 ${2 + i * 2}px ${s.color}`)
-          .join(", ");
+        // Draw only the boundary edges of each user's region, so a multi-cell
+        // selection reads as one box rather than a border around every cell.
+        // Stack multiple users concentrically (first listed sits on top).
+        const shadows: string[] = [];
+        for (let i = 0; i < selectors.length; i++) {
+          const s = selectors[i];
+          const w = 2 + i * 2;
+          if (s.top) {
+            shadows.push(`inset 0 ${w}px 0 0 ${s.color}`);
+          }
+          if (s.bottom) {
+            shadows.push(`inset 0 -${w}px 0 0 ${s.color}`);
+          }
+          if (s.left) {
+            shadows.push(`inset ${w}px 0 0 0 ${s.color}`);
+          }
+          if (s.right) {
+            shadows.push(`inset -${w}px 0 0 0 ${s.color}`);
+          }
+        }
+        if (shadows.length) {
+          td.style.boxShadow = shadows.join(", ");
+        }
         td.title = selectors.map((s) => s.name).join(", ");
       }
 
@@ -312,7 +397,9 @@ export function Table() {
         colIds: selectedColIds,
         anchor,
       });
-      updateMyPresence({ selectedCell: anchor });
+      // Humans only broadcast their single active cell, even when a range is
+      // selected — the multi-cell box is reserved for the AI's live edits.
+      updateMyPresence({ selectedCells: [anchor] });
     },
     [setSelection, updateMyPresence]
   );
@@ -320,7 +407,7 @@ export function Table() {
   const onDeselect = useCallback(() => {
     lastSelKey.current = "";
     setSelection(null);
-    updateMyPresence({ selectedCell: null });
+    updateMyPresence({ selectedCells: null });
   }, [setSelection, updateMyPresence]);
 
   const afterColumnResize = useCallback(

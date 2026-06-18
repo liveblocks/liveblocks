@@ -5,6 +5,7 @@ import {
   addComment,
   clearRange,
   deleteColumn,
+  deleteComment,
   deleteRow,
   formatCells,
   insertColumn,
@@ -155,7 +156,7 @@ async function streamReply(
   const { streamText, tool, stepCountIs } = await import("ai");
   const { z } = await import("zod");
 
-  await showAiEditing(liveblocks, roomId, null);
+  showAiEditing(liveblocks, roomId, null);
 
   const storage = await readStorage(liveblocks, roomId);
 
@@ -256,6 +257,13 @@ async function streamReply(
       description: "Leave a comment thread anchored to a cell.",
       inputSchema: z.object({ cell: z.string(), text: z.string() }),
       execute: ({ cell, text }) => addComment(liveblocks, roomId, cell, text),
+    }),
+    deleteComment: tool({
+      description: "Delete the comment thread(s) anchored to a cell.",
+      inputSchema: z.object({
+        cell: z.string().describe('A1 reference, e.g. "B2".'),
+      }),
+      execute: ({ cell }) => deleteComment(liveblocks, roomId, cell),
     }),
   };
 
