@@ -16,7 +16,6 @@ import {
 } from "@liveblocks/react/suspense";
 import { Avatar } from "@liveblocks/react-ui";
 import {
-  BrainIcon,
   CheckIcon,
   CopyIcon,
   HistoryIcon,
@@ -411,8 +410,8 @@ function ChatWindow({
                       <ChainOfThought>
                         <ChainOfThoughtHeader>
                           {tools.length === 1
-                            ? "Taking 1 action"
-                            : `Taking ${tools.length} actions`}
+                            ? "1 action taken"
+                            : `${tools.length} actions taken`}
                         </ChainOfThoughtHeader>
                         <ChainOfThoughtContent>
                           {tools.map((tool, index) => (
@@ -431,10 +430,7 @@ function ChatWindow({
                       ) : null}
 
                       {isAssistant && streaming && !content && !reasoning ? (
-                        <div className="mt-1.5 flex w-full items-center gap-1.5 text-muted-foreground text-sm transition-colors hover:text-foreground">
-                          <BrainIcon className="size-4" />
-                          <Shimmer>Thinking…</Shimmer>
-                        </div>
+                        <Shimmer>Working…</Shimmer>
                       ) : null}
                     </div>
 

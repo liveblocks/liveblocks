@@ -4,6 +4,7 @@ import { AI_USER_AVATAR, AI_USER_ID, AI_USER_NAME } from "@/database";
 import {
   addComment,
   clearRange,
+  commentsText,
   deleteColumn,
   deleteComment,
   deleteRow,
@@ -138,6 +139,11 @@ const SYSTEM_PROMPT = [
   "cells first — `setRangeValues` and `setCellValue` overwrite existing values.",
   "Keep your chat replies short (one or two sentences) and describe what you",
   "did. Reply in Markdown.",
+  "Use comments to highlight problems in the sheet: when you spot an error,",
+  "inconsistency, or something that needs the user's attention (e.g. a wrong",
+  "total, a typo, a suspicious value, or a missing entry), leave a short comment",
+  "on that cell with `addComment` explaining the issue, instead of silently",
+  "fixing it or only mentioning it in chat.",
 ].join(" ");
 
 // What the AI's tools can actually do — used to keep generated follow-up
@@ -172,6 +178,7 @@ async function streamReply(
   showAiEditing(liveblocks, roomId, null);
 
   const storage = await readStorage(liveblocks, roomId);
+  const comments = await commentsText(liveblocks, roomId, storage);
 
   const formatSchema = z
     .object({
@@ -272,17 +279,22 @@ async function streamReply(
       execute: ({ cell, text }) => addComment(liveblocks, roomId, cell, text),
     }),
     deleteComment: tool({
-      description: "Delete the comment thread(s) anchored to a cell.",
+      description:
+        "Delete the comment thread(s) anchored to one or more cells or ranges.",
       inputSchema: z.object({
-        cell: z.string().describe('A1 reference, e.g. "B2".'),
+        cells: z
+          .array(z.string())
+          .describe('A1 cells or ranges, e.g. ["B2", "A1:C5"].'),
       }),
-      execute: ({ cell }) => deleteComment(liveblocks, roomId, cell),
+      execute: ({ cells }) => deleteComment(liveblocks, roomId, cells),
     }),
   };
 
   const result = streamText({
     model: model ?? "openai/gpt-5.4-mini",
-    system: `${SYSTEM_PROMPT}\n\n${snapshotText(storage)}`,
+    system: `${SYSTEM_PROMPT}\n\n${snapshotText(storage)}${
+      comments ? `\n\n${comments}` : ""
+    }`,
     messages,
     tools,
     stopWhen: stepCountIs(16),

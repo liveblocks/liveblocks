@@ -2,6 +2,7 @@ import {
   LiveMap,
   LiveObject,
   Liveblocks as LiveblocksClient,
+  stringifyCommentBody,
   type CommentBody,
 } from "@liveblocks/node";
 import {
@@ -81,6 +82,46 @@ export function snapshotText(storage: StorageJson): string {
     return `${dimensions}\nThe spreadsheet is currently empty.`;
   }
   return `${dimensions}\nCurrent non-empty cells:\n${lines.join("\n")}`;
+}
+
+// A1-addressed list of the comment threads on the sheet, so the AI knows what
+// has been commented on and where. Resolved threads are omitted (they're hidden
+// in the UI). Returns "" when there are no comments.
+export async function commentsText(
+  liveblocks: LiveblocksClient,
+  roomId: string,
+  storage: StorageJson
+): Promise<string> {
+  const { data: threads } = await liveblocks.getThreads({ roomId });
+  const lines: string[] = [];
+
+  for (const thread of threads) {
+    if (thread.resolved) {
+      continue;
+    }
+    const { rowId, colId } = thread.metadata;
+    const row = storage.rowIds.indexOf(rowId);
+    const col = storage.colIds.indexOf(colId);
+    if (row === -1 || col === -1) {
+      continue;
+    }
+    const a1 = toA1(row, col);
+    for (const comment of thread.comments) {
+      if (!comment.body) {
+        continue; // deleted comment
+      }
+      const text = (await stringifyCommentBody(comment.body)).trim();
+      if (text) {
+        lines.push(`${a1}: ${text.replace(/\s+/g, " ")}`);
+      }
+    }
+  }
+
+  if (lines.length === 0) {
+    return "";
+  }
+  lines.sort();
+  return `Comments on cells:\n${lines.join("\n")}`;
 }
 
 // --- Id lookups (within a mutation) ------------------------------------------
@@ -428,6 +469,7 @@ export async function addComment(
     content: [{ type: "paragraph", children: [{ text }] }],
   };
 
+  showAiEditing(liveblocks, roomId, [ids]);
   await liveblocks.createThread({
     roomId,
     data: {
@@ -441,30 +483,55 @@ export async function addComment(
 export async function deleteComment(
   liveblocks: LiveblocksClient,
   roomId: string,
-  a1: string
+  refs: string[]
 ): Promise<string> {
-  const ids = await idsForA1(liveblocks, roomId, a1);
-  if (!ids) {
-    return `Invalid cell reference "${a1}".`;
+  if (!refs || refs.length === 0) {
+    return "No cells provided.";
   }
 
-  // Comment threads are anchored to a logical cell via their metadata, so we can
-  // find the thread(s) on this cell by querying that metadata, then delete them.
-  const { data: threads } = await liveblocks.getThreads({
-    roomId,
-    query: { metadata: { rowId: ids.rowId, colId: ids.colId } },
+  // Expand every cell/range into its stable cell ids (deduped).
+  const storage = await readStorage(liveblocks, roomId);
+  const targetKeys = new Set<string>();
+  const cells: SelectedCell[] = [];
+  for (const ref of refs) {
+    const range = parseA1Range(ref);
+    if (!range) {
+      return `Invalid cell or range "${ref}".`;
+    }
+    for (let r = range.start.row; r <= range.end.row; r++) {
+      for (let c = range.start.col; c <= range.end.col; c++) {
+        const rowId = storage.rowIds[r];
+        const colId = storage.colIds[c];
+        if (rowId && colId) {
+          const key = cellKey(rowId, colId);
+          if (!targetKeys.has(key)) {
+            targetKeys.add(key);
+            cells.push({ rowId, colId });
+          }
+        }
+      }
+    }
+  }
+  if (targetKeys.size === 0) {
+    return "No valid cells provided.";
+  }
+
+  // Comment threads are anchored to a logical cell via their metadata. Fetch the
+  // room's threads once and delete every one anchored to a targeted cell.
+  const { data: threads } = await liveblocks.getThreads({ roomId });
+  const targetThreads = threads.filter((thread) => {
+    const { rowId, colId } = thread.metadata;
+    return rowId && colId && targetKeys.has(cellKey(rowId, colId));
   });
-  if (threads.length === 0) {
-    return `There is no comment on ${a1.toUpperCase()}.`;
+  if (targetThreads.length === 0) {
+    return "There are no comments on the given cells.";
   }
 
-  showAiEditing(liveblocks, roomId, [ids]);
-  for (const thread of threads) {
+  showAiEditing(liveblocks, roomId, cells);
+  for (const thread of targetThreads) {
     await liveblocks.deleteThread({ roomId, threadId: thread.id });
   }
 
-  const count = threads.length;
-  return `Deleted ${count} comment${
-    count === 1 ? "" : "s"
-  } on ${a1.toUpperCase()}.`;
+  const count = targetThreads.length;
+  return `Deleted ${count} comment${count === 1 ? "" : "s"}.`;
 }
