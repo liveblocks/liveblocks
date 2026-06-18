@@ -7,6 +7,7 @@ import type {
   CommentBodyBlockElement,
   CommentData,
   PlainLson,
+  ThreadVisibility,
 } from "@liveblocks/core";
 
 //
@@ -272,7 +273,7 @@ describe("Liveblocks client with Liveblocks augmentation", () => {
 
     expectTypeOf(thread.type).toEqualTypeOf<"thread">();
     expectTypeOf(thread.id).toEqualTypeOf<string>();
-    expectTypeOf(thread.visibility).toEqualTypeOf<"public" | "private">();
+    expectTypeOf(thread.visibility).toEqualTypeOf<ThreadVisibility>();
     expectTypeOf(thread.metadata.color).toEqualTypeOf<"red" | "blue">();
     // @ts-expect-error - unknown ThreadMetadata field
     thread.metadata.nonexisting;

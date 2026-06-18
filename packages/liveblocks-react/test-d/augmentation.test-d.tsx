@@ -1,5 +1,5 @@
 import React from "react";
-import type { NotificationSettings } from "@liveblocks/core";
+import type { NotificationSettings, ThreadVisibility } from "@liveblocks/core";
 import { LiveList, LiveMap, LiveObject } from "@liveblocks/core";
 import * as classic from "@liveblocks/react";
 import * as suspense from "@liveblocks/react/suspense";
@@ -808,7 +808,7 @@ describe("with Liveblocks augmentation", () => {
       expectTypeOf(thread.type).toEqualTypeOf<"thread">();
       expectTypeOf(thread.id).toEqualTypeOf<string>();
       expectTypeOf(thread.roomId).toEqualTypeOf<string>();
-      expectTypeOf(thread.visibility).toEqualTypeOf<"public" | "private">();
+      expectTypeOf(thread.visibility).toEqualTypeOf<ThreadVisibility>();
       expectTypeOf(thread.comments[0]!.type).toEqualTypeOf<"comment">();
       expectTypeOf(thread.comments[0]!.id).toEqualTypeOf<string>();
       expectTypeOf(thread.comments[0]!.threadId).toEqualTypeOf<string>();

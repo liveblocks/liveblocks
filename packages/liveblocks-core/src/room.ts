@@ -89,6 +89,7 @@ import type {
   QueryMetadata,
   ThreadData,
   ThreadDeleteInfo,
+  ThreadVisibility,
 } from "./protocol/Comments";
 import type { Feed, FeedMessage } from "./protocol/Feeds";
 import type {
@@ -981,7 +982,7 @@ export type Room<
   createThread(options: {
     threadId?: string;
     commentId?: string;
-    visibility?: "public" | "private";
+    visibility?: ThreadVisibility;
     metadata: TM | undefined;
     body: CommentBody;
     commentMetadata?: CM;
@@ -3541,7 +3542,7 @@ export function createRoom<
     roomId: string;
     threadId?: string;
     commentId?: string;
-    visibility?: "public" | "private";
+    visibility?: ThreadVisibility;
     metadata: TM | undefined;
     commentMetadata: CM | undefined;
     body: CommentBody;

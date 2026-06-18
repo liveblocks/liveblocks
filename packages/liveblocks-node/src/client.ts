@@ -53,6 +53,7 @@ import type {
   SubscriptionDataPlain,
   ThreadData,
   ThreadDataPlain,
+  ThreadVisibility,
   ToJson,
   UpdateRoomAccesses,
   URLSafeString,
@@ -161,7 +162,7 @@ export type CreateThreadOptions<
 > = {
   roomId: string;
   data: {
-    visibility?: "public" | "private";
+    visibility?: ThreadVisibility;
     comment: {
       userId: string;
       createdAt?: Date;

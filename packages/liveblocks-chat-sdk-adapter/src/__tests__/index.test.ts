@@ -5,6 +5,7 @@ import type {
   CommentData,
   ResolveGroupsInfoArgs,
   ResolveUsersArgs,
+  ThreadVisibility,
 } from "@liveblocks/core";
 import type { ChatInstance, Root } from "chat";
 import { beforeEach, describe, expect, test, vi } from "vitest";
@@ -109,7 +110,7 @@ function createDummyThread(
     createdAt: Date;
     updatedAt: Date;
     resolved: boolean;
-    visibility: "public" | "private";
+    visibility: ThreadVisibility;
     metadata: Record<string, unknown>;
   }>
 ) {

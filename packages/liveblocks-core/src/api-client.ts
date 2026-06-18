@@ -45,6 +45,7 @@ import type {
   ThreadDataPlain,
   ThreadDeleteInfo,
   ThreadDeleteInfoPlain,
+  ThreadVisibility,
 } from "./protocol/Comments";
 import type { GroupData, GroupDataPlain } from "./protocol/Groups";
 import type {
@@ -141,7 +142,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     roomId: string;
     threadId?: string;
     commentId?: string;
-    visibility?: "public" | "private";
+    visibility?: ThreadVisibility;
     metadata: TM | undefined;
     commentMetadata: CM | undefined;
     body: CommentBody;
@@ -714,7 +715,7 @@ export function createApiClient<
     roomId: string;
     threadId?: string;
     commentId?: string;
-    visibility?: "public" | "private";
+    visibility?: ThreadVisibility;
     metadata: TM | undefined;
     body: CommentBody;
     commentMetadata?: CM;

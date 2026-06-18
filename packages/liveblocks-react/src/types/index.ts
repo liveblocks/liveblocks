@@ -50,6 +50,7 @@ import type {
   SearchCommentsResult,
   SyncStatus,
   ThreadData,
+  ThreadVisibility,
   ToJson,
   UrlMetadata,
   WithNavigation,
@@ -269,7 +270,7 @@ export type GroupAsyncSuccess = AsyncSuccess<GroupData | undefined, "group">;
 // prettier-ignore
 export type CreateThreadOptions<TM extends BaseMetadata, CM extends BaseMetadata > =
   Resolve<
-    { body: CommentBody, attachments?: CommentAttachment[]; visibility?: "public" | "private"; }
+    { body: CommentBody, attachments?: CommentAttachment[]; visibility?: ThreadVisibility; }
     & PartialUnless<TM, { metadata: TM }>
     & PartialUnless<CM, { commentMetadata: CM }>
   >;
