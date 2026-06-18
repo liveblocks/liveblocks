@@ -10,8 +10,8 @@ import {
   type PermissionMatrix,
   permissionMatrixFromScopes,
   permissionMatrixToScopes,
-  permissionScopesSpecifyResource,
   type PermissionResources,
+  permissionScopesSpecifyResource,
   resolveRoomPermissionMatrix,
   validatePermissionsSet,
 } from "../permissions";
@@ -850,9 +850,7 @@ describe("property tests", () => {
         const userMatrix = permissionMatrixFromScopes(inputs.userAccesses);
 
         for (const resource of LEAF_ROOM_PERMISSION_RESOURCES) {
-          if (
-            permissionScopesSpecifyResource(inputs.userAccesses, resource)
-          ) {
+          if (permissionScopesSpecifyResource(inputs.userAccesses, resource)) {
             expect(matrix[resource]).toBe(userMatrix[resource]);
           }
         }
