@@ -109,6 +109,7 @@ function createDummyThread(
     createdAt: Date;
     updatedAt: Date;
     resolved: boolean;
+    visibility: "public" | "private";
     metadata: Record<string, unknown>;
   }>
 ) {
@@ -121,6 +122,7 @@ function createDummyThread(
     comments,
     metadata: {},
     resolved: false,
+    visibility: "public",
     ...overrides,
   };
 }
@@ -2084,6 +2086,7 @@ describe("LiveblocksAdapter", () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         resolved: false,
+        visibility: "public",
       });
 
       const result = await adapter.postChannelMessage(
@@ -2116,6 +2119,7 @@ describe("LiveblocksAdapter", () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         resolved: false,
+        visibility: "public",
       });
 
       await expect(

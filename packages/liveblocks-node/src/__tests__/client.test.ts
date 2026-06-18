@@ -91,6 +91,7 @@ describe("client", () => {
     updatedAt: new Date("2022-07-13T14:32:50.697Z"),
     comments: [comment],
     resolved: false,
+    visibility: "public",
   };
 
   const reaction: CommentUserReaction = {

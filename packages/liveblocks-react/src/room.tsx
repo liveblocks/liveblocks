@@ -1960,6 +1960,7 @@ function useCreateRoomThread<TM extends BaseMetadata, CM extends BaseMetadata>(
         metadata,
         comments: [newComment],
         resolved: false,
+        visibility: "public",
       };
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);

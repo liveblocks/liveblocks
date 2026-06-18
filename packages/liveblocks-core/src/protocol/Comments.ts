@@ -187,6 +187,7 @@ export type ThreadData<
   comments: CommentData<CM>[];
   metadata: TM;
   resolved: boolean;
+  visibility: "public" | "private";
 };
 
 export interface ThreadDataWithDeleteInfo<
