@@ -24,6 +24,12 @@ export const Permission = {
   CommentsWrite: "comments:write",
   CommentsRead: "comments:read",
   CommentsNone: "comments:none",
+  CommentsPublicWrite: "comments:public:write",
+  CommentsPublicRead: "comments:public:read",
+  CommentsPublicNone: "comments:public:none",
+  CommentsPrivateWrite: "comments:private:write",
+  CommentsPrivateRead: "comments:private:read",
+  CommentsPrivateNone: "comments:private:none",
 
   /**
    * Feeds
@@ -50,6 +56,8 @@ export type PermissionMatrix = {
   room: AccessLevel;
   storage: AccessLevel;
   comments: AccessLevel;
+  "comments:public": AccessLevel;
+  "comments:private": AccessLevel;
   feeds: AccessLevel;
   personal: AccessLevel;
 };
@@ -64,9 +72,8 @@ const basePermissionScopes = new Set<string>([
 ]);
 
 type ResolvedPermissionScopes = {
-  hasDefaultPermission: boolean;
-  baseAccess: AccessLevel;
-  matrix: Partial<PermissionMatrix>;
+  baseAccess?: AccessLevel;
+  leafAccesses: Partial<Record<RoomPermissionsResource, AccessLevel>>;
 };
 
 export type RoomPatternPermissions = {
@@ -80,14 +87,9 @@ export type RoomAccesses = Record<string, RoomPermissions>;
 
 export type UpdateRoomAccesses = Record<string, RoomPermissions | null>;
 
-type RoomPermissionsResource = Exclude<
+export type RoomPermissionsResource = Exclude<
   PermissionResources,
   "room" | "personal"
->;
-
-type ResourcePermissionsMap = Record<
-  PermissionResources,
-  Partial<Record<AccessLevel, RoomPermissions>>
 >;
 
 const ACCESS_LEVEL_RANKS: Record<AccessLevel, number> = {
@@ -96,14 +98,60 @@ const ACCESS_LEVEL_RANKS: Record<AccessLevel, number> = {
   write: 2,
 };
 
-const PERMISSIONS_BY_RESOURCE: ResourcePermissionsMap = {
-  room: {
-    read: [Permission.Read, Permission.RoomRead],
-    write: [Permission.Write, Permission.RoomWrite],
-  },
-  personal: {
-    write: [],
-  },
+const BASE_PERMISSIONS_BY_ACCESS: Partial<
+  Record<AccessLevel, RoomPermissions>
+> = {
+  read: [Permission.Read, Permission.RoomRead],
+  write: [Permission.Write, Permission.RoomWrite],
+};
+
+const NO_PERMISSION_MATRIX: PermissionMatrix = {
+  room: "none",
+  storage: "none",
+  comments: "none",
+  "comments:public": "none",
+  "comments:private": "none",
+  feeds: "none",
+  personal: "none",
+};
+
+const BASE_PERMISSION_RESOURCE = "room" satisfies PermissionResources;
+
+type ResourcePermissionsByAccess = Partial<
+  Record<AccessLevel, RoomPermissions>
+>;
+
+const ROOM_PERMISSION_RESOURCES = Object.freeze([
+  "storage",
+  "comments",
+  "comments:public",
+  "comments:private",
+  "feeds",
+] as const satisfies readonly RoomPermissionsResource[]);
+
+const EMPTY_ROOM_PERMISSION_RESOURCES = Object.freeze(
+  [] as const satisfies readonly RoomPermissionsResource[]
+);
+
+const ROOM_PERMISSION_CHILD_RESOURCES: Partial<
+  Record<RoomPermissionsResource, readonly RoomPermissionsResource[]>
+> = {
+  comments: Object.freeze([
+    "comments:public",
+    "comments:private",
+  ] as const satisfies readonly RoomPermissionsResource[]),
+};
+
+export const LEAF_ROOM_PERMISSION_RESOURCES = Object.freeze(
+  ROOM_PERMISSION_RESOURCES.filter(
+    (resource) => childResourcesOf(resource).length === 0
+  )
+);
+
+const PERMISSIONS_BY_ROOM_RESOURCE: Record<
+  RoomPermissionsResource,
+  ResourcePermissionsByAccess
+> = {
   storage: {
     write: [Permission.StorageWrite],
     read: [Permission.StorageRead],
@@ -114,6 +162,16 @@ const PERMISSIONS_BY_RESOURCE: ResourcePermissionsMap = {
     read: [Permission.CommentsRead],
     none: [Permission.CommentsNone],
   },
+  "comments:public": {
+    write: [Permission.CommentsPublicWrite],
+    read: [Permission.CommentsPublicRead],
+    none: [Permission.CommentsPublicNone],
+  },
+  "comments:private": {
+    write: [Permission.CommentsPrivateWrite],
+    read: [Permission.CommentsPrivateRead],
+    none: [Permission.CommentsPrivateNone],
+  },
   feeds: {
     write: [Permission.FeedsWrite],
     read: [Permission.FeedsRead],
@@ -121,34 +179,27 @@ const PERMISSIONS_BY_RESOURCE: ResourcePermissionsMap = {
   },
 };
 
-const NO_PERMISSION_MATRIX: PermissionMatrix = {
-  room: "none",
-  storage: "none",
-  comments: "none",
-  feeds: "none",
-  personal: "none",
-};
-
-const BASE_PERMISSION_RESOURCE = "room" satisfies PermissionResources;
-
-const ROOM_PERMISSION_RESOURCES = [
-  "storage",
-  "comments",
-  "feeds",
-] as const satisfies RoomPermissionsResource[];
-
 const VALID_PERMISSIONS = new Set<string>(Object.values(Permission));
 
 function isPermission(permission: string): permission is Permission {
   return VALID_PERMISSIONS.has(permission);
 }
 
+function resolveBaseAccess(scopes: RoomPermissions): AccessLevel | undefined {
+  return resolveAccess(scopes, BASE_PERMISSIONS_BY_ACCESS);
+}
+
 function resolveResourceAccess(
   scopes: RoomPermissions,
   resource: RoomPermissionsResource
 ): AccessLevel | undefined {
-  const permissions: Partial<Record<AccessLevel, RoomPermissions>> =
-    PERMISSIONS_BY_RESOURCE[resource];
+  return resolveAccess(scopes, PERMISSIONS_BY_ROOM_RESOURCE[resource]);
+}
+
+function resolveAccess(
+  scopes: RoomPermissions,
+  permissions: Partial<Record<AccessLevel, RoomPermissions>>
+): AccessLevel | undefined {
   let resourceAccess: AccessLevel | undefined;
 
   for (const access of ACCESS_LEVELS) {
@@ -164,10 +215,90 @@ function resolveResourceAccess(
   return resourceAccess;
 }
 
+function leafResourcesOf(
+  resource: RoomPermissionsResource
+): readonly RoomPermissionsResource[] {
+  const childResources = childResourcesOf(resource);
+  if (childResources.length === 0) {
+    return [resource];
+  }
+
+  return childResources.flatMap(leafResourcesOf);
+}
+
+function childResourcesOf(
+  resource: RoomPermissionsResource
+): readonly RoomPermissionsResource[] {
+  return (
+    ROOM_PERMISSION_CHILD_RESOURCES[resource] ?? EMPTY_ROOM_PERMISSION_RESOURCES
+  );
+}
+
+function parentResourceOf(
+  resource: RoomPermissionsResource
+): RoomPermissionsResource | undefined {
+  for (const candidate of ROOM_PERMISSION_RESOURCES) {
+    if (childResourcesOf(candidate).includes(resource)) {
+      return candidate;
+    }
+  }
+
+  return undefined;
+}
+
+function strongestLeafAccess(
+  matrix: PermissionMatrix,
+  resource: RoomPermissionsResource
+): AccessLevel {
+  let strongest: AccessLevel = "none";
+
+  for (const leafResource of leafResourcesOf(resource)) {
+    strongest = strongestAccess(strongest, matrix[leafResource]);
+  }
+
+  return strongest;
+}
+
+export function permissionScopesSpecifyResource(
+  scopes: RoomPermissions,
+  resource: RoomPermissionsResource
+): boolean {
+  if (resolveResourceAccess(scopes, resource) !== undefined) {
+    return true;
+  }
+
+  let parentResource = parentResourceOf(resource);
+  while (parentResource !== undefined) {
+    if (resolveResourceAccess(scopes, parentResource) !== undefined) {
+      return true;
+    }
+
+    parentResource = parentResourceOf(parentResource);
+  }
+
+  return (
+    childResourcesOf(resource).some((childResource) =>
+      permissionScopesSpecifyResource(scopes, childResource)
+    )
+  );
+}
+
+function resolveLeafAccessFromSource(
+  source: ResolvedPermissionScopes,
+  resource: RoomPermissionsResource
+): AccessLevel {
+  const access = source.leafAccesses[resource];
+  if (access !== undefined) {
+    return access;
+  }
+
+  return source.baseAccess ?? "none";
+}
+
 function permissionMatrixFromResolvedScopes(
   resolved: ResolvedPermissionScopes
 ): PermissionMatrix {
-  if (!resolved.hasDefaultPermission) {
+  if (resolved.baseAccess === undefined) {
     return { ...NO_PERMISSION_MATRIX };
   }
 
@@ -177,8 +308,14 @@ function permissionMatrixFromResolvedScopes(
     personal: "write",
   };
 
+  for (const resource of LEAF_ROOM_PERMISSION_RESOURCES) {
+    matrix[resource] = resolveLeafAccessFromSource(resolved, resource);
+  }
+
   for (const resource of ROOM_PERMISSION_RESOURCES) {
-    matrix[resource] = resolved.matrix[resource] ?? resolved.baseAccess;
+    if (childResourcesOf(resource).length > 0) {
+      matrix[resource] = strongestLeafAccess(matrix, resource);
+    }
   }
 
   return matrix;
@@ -193,29 +330,19 @@ export function permissionMatrixFromScopes(
 function resolvePermissionScopes(
   scopes: RoomPermissions
 ): ResolvedPermissionScopes {
-  const hasDefaultPermission =
-    scopes.includes(Permission.Write) ||
-    scopes.includes(Permission.Read) ||
-    scopes.includes(Permission.RoomWrite) ||
-    scopes.includes(Permission.RoomRead);
-
-  const baseAccess: AccessLevel =
-    scopes.includes(Permission.Write) || scopes.includes(Permission.RoomWrite)
-      ? "write"
-      : scopes.includes(Permission.Read) || scopes.includes(Permission.RoomRead)
-        ? "read"
-        : "none";
-
-  const matrix: Partial<PermissionMatrix> = {};
+  const baseAccess = resolveBaseAccess(scopes);
+  const leafAccesses: ResolvedPermissionScopes["leafAccesses"] = {};
 
   for (const resource of ROOM_PERMISSION_RESOURCES) {
     const access = resolveResourceAccess(scopes, resource);
     if (access !== undefined) {
-      matrix[resource] = access;
+      for (const leafResource of leafResourcesOf(resource)) {
+        leafAccesses[leafResource] = access;
+      }
     }
   }
 
-  return { hasDefaultPermission, baseAccess, matrix };
+  return { baseAccess, leafAccesses };
 }
 
 export function hasPermissionAccess(
@@ -241,42 +368,43 @@ export function resolveRoomPermissionMatrix(
 
   let hasDefaultPermission = false;
   let baseAccess: AccessLevel = "none";
-  const explicitMatrix: Partial<PermissionMatrix> = {};
-  const explicitSpecificity: Partial<Record<PermissionResources, number>> = {};
+  const leafAccesses: ResolvedPermissionScopes["leafAccesses"] = {};
+  const leafSpecificity: Partial<Record<RoomPermissionsResource, number>> = {};
 
   for (const entry of matchedPermissions) {
     const resolved = resolvePermissionScopes(entry.scopes);
     const specificity = roomPatternSpecificity(entry.pattern);
 
-    if (resolved.hasDefaultPermission) {
+    if (resolved.baseAccess !== undefined) {
       hasDefaultPermission = true;
       // Base access is additive across all matching patterns (highest wins),
       // unlike resource-specific overrides which use most-specific-wins.
       baseAccess = strongestAccess(baseAccess, resolved.baseAccess);
     }
 
-    for (const resource of ROOM_PERMISSION_RESOURCES) {
-      const access = resolved.matrix[resource];
-      if (access !== undefined) {
-        const currentSpecificity = explicitSpecificity[resource] ?? -1;
+    for (const resource of LEAF_ROOM_PERMISSION_RESOURCES) {
+      if (resolved.leafAccesses[resource] === undefined) {
+        continue;
+      }
 
-        if (specificity > currentSpecificity) {
-          explicitMatrix[resource] = access;
-          explicitSpecificity[resource] = specificity;
-        } else if (specificity === currentSpecificity) {
-          explicitMatrix[resource] = strongestAccess(
-            explicitMatrix[resource] ?? "none",
-            access
-          );
-        }
+      const access = resolveLeafAccessFromSource(resolved, resource);
+      const currentSpecificity = leafSpecificity[resource] ?? -1;
+
+      if (specificity > currentSpecificity) {
+        leafAccesses[resource] = access;
+        leafSpecificity[resource] = specificity;
+      } else if (specificity === currentSpecificity) {
+        leafAccesses[resource] = strongestAccess(
+          leafAccesses[resource] ?? "none",
+          access
+        );
       }
     }
   }
 
   return permissionMatrixFromResolvedScopes({
-    hasDefaultPermission,
-    baseAccess,
-    matrix: explicitMatrix,
+    baseAccess: hasDefaultPermission ? baseAccess : undefined,
+    leafAccesses,
   });
 }
 
@@ -340,13 +468,98 @@ export function permissionMatrixToScopes(
   }
 
   for (const resource of ROOM_PERMISSION_RESOURCES) {
-    const access = matrix[resource];
-    if (access !== baseAccess) {
-      scopes.push(permissionForAccessLevel(resource, access));
+    if (parentResourceOf(resource) === undefined) {
+      pushResourcePermissions(scopes, matrix, resource, baseAccess);
     }
   }
 
   return scopes;
+}
+
+function pushResourcePermissions(
+  scopes: RoomPermissions,
+  matrix: PermissionMatrix,
+  resource: RoomPermissionsResource,
+  baseAccess: AccessLevel
+): void {
+  const childResources = childResourcesOf(resource);
+  if (childResources.length === 0) {
+    pushPermissionIfDifferent(scopes, resource, matrix[resource], baseAccess);
+    return;
+  }
+
+  const leafResources = leafResourcesOf(resource);
+  let sharedAccess: AccessLevel | undefined;
+  let allLeavesShareAccess = true;
+
+  for (const leafResource of leafResources) {
+    const access = matrix[leafResource];
+    sharedAccess ??= access;
+    if (access !== sharedAccess) {
+      allLeavesShareAccess = false;
+      break;
+    }
+  }
+
+  if (
+    sharedAccess !== undefined &&
+    sharedAccess !== baseAccess &&
+    allLeavesShareAccess
+  ) {
+    scopes.push(permissionForAccessLevel(resource, sharedAccess));
+    return;
+  }
+
+  for (const childResource of childResources) {
+    pushResourcePermissions(scopes, matrix, childResource, baseAccess);
+  }
+}
+
+function pushPermissionIfDifferent(
+  scopes: RoomPermissions,
+  resource: RoomPermissionsResource,
+  access: AccessLevel,
+  baseAccess: AccessLevel
+): void {
+  if (access !== baseAccess) {
+    scopes.push(permissionForAccessLevel(resource, access));
+  }
+}
+
+function copyLeafAccesses(
+  target: ResolvedPermissionScopes,
+  source: ResolvedPermissionScopes
+): void {
+  for (const resource of LEAF_ROOM_PERMISSION_RESOURCES) {
+    const sourceAccess = source.leafAccesses[resource];
+    if (sourceAccess === undefined) {
+      continue;
+    }
+
+    target.leafAccesses[resource] = sourceAccess;
+  }
+}
+
+function mergeLeafAccessesByHighestAccess(
+  target: ResolvedPermissionScopes,
+  source: ResolvedPermissionScopes
+): void {
+  for (const resource of LEAF_ROOM_PERMISSION_RESOURCES) {
+    const sourceAccess = source.leafAccesses[resource];
+    if (sourceAccess === undefined) {
+      continue;
+    }
+
+    target.leafAccesses[resource] = strongestAccess(
+      target.leafAccesses[resource] ?? "none",
+      sourceAccess
+    );
+  }
+}
+
+function permissionFeatureFromScope(scope: string): string {
+  const parts = scope.split(":");
+  return parts.slice(0, -1).join(":");
 }
 
 /**
@@ -374,23 +587,15 @@ export function mergeRoomPermissionScopes({
   ];
 
   const merged: ResolvedPermissionScopes = {
-    hasDefaultPermission: false,
-    baseAccess: "none",
-    matrix: {},
+    leafAccesses: {},
   };
 
   for (const source of sources) {
-    if (source.hasDefaultPermission) {
-      merged.hasDefaultPermission = true;
+    if (source.baseAccess !== undefined) {
       merged.baseAccess = source.baseAccess;
     }
 
-    for (const resource of ROOM_PERMISSION_RESOURCES) {
-      const access = source.matrix[resource];
-      if (access !== undefined) {
-        merged.matrix[resource] = access;
-      }
-    }
+    copyLeafAccesses(merged, source);
   }
 
   return permissionMatrixToScopes(permissionMatrixFromResolvedScopes(merged));
@@ -400,26 +605,18 @@ function mergeResolvedScopesByHighestAccess(
   sources: ResolvedPermissionScopes[]
 ): ResolvedPermissionScopes {
   const merged: ResolvedPermissionScopes = {
-    hasDefaultPermission: false,
-    baseAccess: "none",
-    matrix: {},
+    leafAccesses: {},
   };
 
   for (const source of sources) {
-    if (source.hasDefaultPermission) {
-      merged.hasDefaultPermission = true;
-      merged.baseAccess = strongestAccess(merged.baseAccess, source.baseAccess);
+    if (source.baseAccess !== undefined) {
+      merged.baseAccess = strongestAccess(
+        merged.baseAccess ?? "none",
+        source.baseAccess
+      );
     }
 
-    for (const resource of ROOM_PERMISSION_RESOURCES) {
-      const access = source.matrix[resource];
-      if (access !== undefined) {
-        merged.matrix[resource] = strongestAccess(
-          merged.matrix[resource] ?? "none",
-          access
-        );
-      }
-    }
+    mergeLeafAccessesByHighestAccess(merged, source);
   }
 
   return merged;
@@ -430,15 +627,20 @@ function permissionForAccessLevel(
   access: AccessLevel,
   field: string = resource
 ): Permission {
-  const levels: Partial<Record<AccessLevel, RoomPermissions>> =
-    PERMISSIONS_BY_RESOURCE[resource];
-  const permissions = levels[access];
-  if (permissions === undefined || permissions.length === 0) {
-    throw new Error(
-      `Invalid permission level for ${field}: ${JSON.stringify(access) ?? String(access)}`
-    );
+  const permissions =
+    resource === "room"
+      ? BASE_PERMISSIONS_BY_ACCESS[access]
+      : resource === "personal"
+        ? undefined
+        : PERMISSIONS_BY_ROOM_RESOURCE[resource][access];
+  const permission = permissions?.[0];
+  if (permission !== undefined) {
+    return permission;
   }
-  return permissions[0];
+
+  throw new Error(
+    `Invalid permission level for ${field}: ${JSON.stringify(access) ?? String(access)}`
+  );
 }
 
 function strongestAccess(left: AccessLevel, right: AccessLevel): AccessLevel {
@@ -493,7 +695,7 @@ export function validatePermissionsSet(
       continue;
     }
 
-    const feature = scope.slice(0, scope.indexOf(":"));
+    const feature = permissionFeatureFromScope(scope);
     if (seenFeatures.has(feature)) {
       return `Permissions can include at most one scope per feature, got multiple "${feature}" scopes`;
     }

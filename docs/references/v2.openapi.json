@@ -7197,6 +7197,12 @@
           "comments:read",
           "comments:write",
           "comments:none",
+          "comments:public:read",
+          "comments:public:write",
+          "comments:public:none",
+          "comments:private:read",
+          "comments:private:write",
+          "comments:private:none",
           "feeds:read",
           "feeds:write",
           "feeds:none"

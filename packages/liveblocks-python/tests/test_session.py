@@ -8,6 +8,8 @@ from liveblocks.client import AsyncLiveblocks, Liveblocks
 P1 = "*:read"
 P2 = "*:write"
 P3 = "comments:read"
+P4 = "comments:public:write"
+P5 = "comments:private:none"
 
 
 def make_session(
@@ -16,7 +18,9 @@ def make_session(
     organization_id: str | None = None,
 ):
     client = Liveblocks(secret=secret)
-    return client.prepare_session("user-123", user_info=user_info, organization_id=organization_id)
+    return client.prepare_session(
+        "user-123", user_info=user_info, organization_id=organization_id
+    )
 
 
 class TestConstructorValidation:
@@ -78,9 +82,22 @@ class TestPermissions:
             make_session().allow("foobar*", ["x", "y"])
 
     def test_permissions_are_additive(self):
-        assert (make_session().allow("foo", [P1]).allow("bar", [P2]).allow("foo", [P3])._serialize_permissions()) == {
+        assert (
+            make_session()
+            .allow("foo", [P1])
+            .allow("bar", [P2])
+            .allow("foo", [P3])
+            ._serialize_permissions()
+        ) == {
             "foo": [P1, P3],
             "bar": [P2],
+        }
+
+    def test_accepts_scoped_comments_permissions(self):
+        assert (
+            make_session().allow("foo", [P1, P4, P5])._serialize_permissions()
+        ) == {
+            "foo": [P1, P4, P5],
         }
 
     def test_permissions_are_deduped(self):
