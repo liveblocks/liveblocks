@@ -24,6 +24,7 @@ const PERMISSION_RESOURCES = [
   "comments",
   "comments:public",
   "comments:private",
+  "comments:personal",
   "feeds",
   "personal",
 ] as const satisfies readonly PermissionResources[];
@@ -47,6 +48,7 @@ const noneScope = fc.constantFrom(
   Permission.CommentsNone,
   Permission.CommentsPublicNone,
   Permission.CommentsPrivateNone,
+  Permission.CommentsPersonalNone,
   Permission.FeedsNone
 );
 
@@ -90,8 +92,16 @@ const mergeRoomPermissionInputs = fc.record({
 describe("normalizeRoomPermissions", () => {
   test("keeps known permission scopes", () => {
     expect(
-      normalizeRoomPermissions([Permission.Read, Permission.StorageWrite])
-    ).toEqual([Permission.Read, Permission.StorageWrite]);
+      normalizeRoomPermissions([
+        Permission.Read,
+        Permission.StorageWrite,
+        Permission.CommentsPersonalWrite,
+      ])
+    ).toEqual([
+      Permission.Read,
+      Permission.StorageWrite,
+      Permission.CommentsPersonalWrite,
+    ]);
   });
 
   test("throws for unknown permission scopes", () => {
@@ -119,6 +129,7 @@ describe("permissionMatrixFromScopes", () => {
       comments: "read",
       "comments:public": "read",
       "comments:private": "read",
+      "comments:personal": "read",
       feeds: "read",
       personal: "write",
     });
@@ -131,6 +142,7 @@ describe("permissionMatrixFromScopes", () => {
       comments: "write",
       "comments:public": "write",
       "comments:private": "write",
+      "comments:personal": "write",
       feeds: "write",
       personal: "write",
     });
@@ -195,20 +207,24 @@ describe("permissionMatrixFromScopes", () => {
     expect(matrix.comments).toBe("read");
     expect(matrix["comments:public"]).toBe("read");
     expect(matrix["comments:private"]).toBe("read");
+    expect(matrix["comments:personal"]).toBe("read");
   });
 
-  test("scoped comments permissions override public and private independently", () => {
+  test("scoped comments permissions override public, private, and personal independently", () => {
     const matrix = permissionMatrixFromScopes([
       Permission.Read,
       Permission.CommentsPublicWrite,
       Permission.CommentsPrivateNone,
+      Permission.CommentsPersonalRead,
     ]);
 
     expect(matrix.comments).toBe("write");
     expect(matrix["comments:public"]).toBe("write");
     expect(matrix["comments:private"]).toBe("none");
+    expect(matrix["comments:personal"]).toBe("read");
     expect(hasPermissionAccess(matrix, "comments:public", "write")).toBe(true);
     expect(hasPermissionAccess(matrix, "comments:private", "read")).toBe(false);
+    expect(hasPermissionAccess(matrix, "comments:personal", "read")).toBe(true);
   });
 
   test("feature permissions require a base permission", () => {
@@ -252,6 +268,21 @@ describe("permissionMatrixFromScopes", () => {
     ).toBe(true);
   });
 
+  test("allows personal comments permissions to override default comments access", () => {
+    expect(
+      permissionMatrixFromScopes([
+        Permission.Read,
+        Permission.CommentsPersonalRead,
+      ])["comments:personal"]
+    ).toBe("read");
+    expect(
+      permissionMatrixFromScopes([
+        Permission.Write,
+        Permission.CommentsPersonalNone,
+      ])["comments:personal"]
+    ).toBe("none");
+  });
+
   test("returns a fresh matrix for each resolution", () => {
     const first = permissionMatrixFromScopes([]);
     first.room = "write";
@@ -271,6 +302,7 @@ describe("permissionMatrixFromScopes", () => {
       comments: "write",
       "comments:public": "write",
       "comments:private": "write",
+      "comments:personal": "write",
       feeds: "write",
       personal: "write",
     });
@@ -300,6 +332,21 @@ describe("permissionMatrixFromScopes", () => {
     expect(matrix?.room).toBe("write");
     expect(matrix?.storage).toBe("write");
     expect(matrix?.comments).toBe("write");
+  });
+
+  test("lets exact personal comment permissions override wildcard defaults", () => {
+    const matrix = resolveRoomPermissionMatrix(
+      [
+        { pattern: "org1*", scopes: [Permission.Write] },
+        {
+          pattern: "org1.room1",
+          scopes: [Permission.Write, Permission.CommentsPersonalRead],
+        },
+      ],
+      "org1.room1"
+    );
+
+    expect(matrix?.["comments:personal"]).toBe("read");
   });
 
   test("lets exact room opt-outs override wildcard defaults without clearing other resources", () => {
@@ -348,6 +395,7 @@ describe("permission matrix helpers", () => {
         comments: "read",
         "comments:public": "read",
         "comments:private": "read",
+        "comments:personal": "read",
         feeds: "read",
         personal: "write",
       })
@@ -362,6 +410,7 @@ describe("permission matrix helpers", () => {
         comments: "write",
         "comments:public": "write",
         "comments:private": "none",
+        "comments:personal": "read",
         feeds: "read",
         personal: "write",
       })
@@ -370,6 +419,21 @@ describe("permission matrix helpers", () => {
       Permission.CommentsPublicWrite,
       Permission.CommentsPrivateNone,
     ]);
+  });
+
+  test("serializes personal comments permissions", () => {
+    expect(
+      permissionMatrixToScopes({
+        room: "read",
+        storage: "read",
+        comments: "read",
+        "comments:public": "read",
+        "comments:private": "read",
+        "comments:personal": "none",
+        feeds: "read",
+        personal: "write",
+      })
+    ).toEqual([Permission.Read, Permission.CommentsPersonalNone]);
   });
 });
 
@@ -402,6 +466,7 @@ describe("mergeRoomPermissionScopes", () => {
       comments: "read",
       "comments:public": "read",
       "comments:private": "read",
+      "comments:personal": "read",
       feeds: "read",
       personal: "write",
     });
@@ -446,6 +511,7 @@ describe("mergeRoomPermissionScopes", () => {
       comments: "read",
       "comments:public": "read",
       "comments:private": "read",
+      "comments:personal": "read",
       feeds: "read",
       personal: "write",
     });
@@ -476,6 +542,18 @@ describe("mergeRoomPermissionScopes", () => {
         })
       ).storage
     ).toBe("none");
+  });
+
+  test("explicit user personal comments access overrides lower layers", () => {
+    expect(
+      permissionMatrixFromScopes(
+        mergeRoomPermissionScopes({
+          defaultAccesses: [Permission.Write],
+          groupsAccesses: [[Permission.Write, Permission.CommentsPersonalNone]],
+          userAccesses: [Permission.Read, Permission.CommentsPersonalRead],
+        })
+      )["comments:personal"]
+    ).toBe("read");
   });
 
   test("explicit none on all sources grants no access", () => {
@@ -540,6 +618,12 @@ describe("validatePermissionsSet", () => {
     ).toBe(true);
   });
 
+  test("accepts personal comments permissions", () => {
+    expect(
+      validatePermissionsSet([Permission.Read, Permission.CommentsPersonalRead])
+    ).toBe(true);
+  });
+
   test("accepts the legacy presence scope as an extra room scope", () => {
     expect(
       validatePermissionsSet([
@@ -591,6 +675,18 @@ describe("validatePermissionsSet", () => {
       ])
     ).toBe(
       'Permissions can include at most one scope per feature, got multiple "comments:public" scopes'
+    );
+  });
+
+  test("rejects multiple scopes for the same personal comments feature", () => {
+    expect(
+      validatePermissionsSet([
+        Permission.Read,
+        Permission.CommentsPersonalRead,
+        Permission.CommentsPersonalWrite,
+      ])
+    ).toBe(
+      'Permissions can include at most one scope per feature, got multiple "comments:personal" scopes'
     );
   });
 });

@@ -30,6 +30,9 @@ export const Permission = {
   CommentsPrivateWrite: "comments:private:write",
   CommentsPrivateRead: "comments:private:read",
   CommentsPrivateNone: "comments:private:none",
+  CommentsPersonalWrite: "comments:personal:write",
+  CommentsPersonalRead: "comments:personal:read",
+  CommentsPersonalNone: "comments:personal:none",
 
   /**
    * Feeds
@@ -58,6 +61,7 @@ export type PermissionMatrix = {
   comments: AccessLevel;
   "comments:public": AccessLevel;
   "comments:private": AccessLevel;
+  "comments:personal": AccessLevel;
   feeds: AccessLevel;
   personal: AccessLevel;
 };
@@ -104,6 +108,7 @@ const NO_PERMISSION_MATRIX: PermissionMatrix = {
   comments: "none",
   "comments:public": "none",
   "comments:private": "none",
+  "comments:personal": "none",
   feeds: "none",
   personal: "none",
 };
@@ -126,6 +131,7 @@ const ROOM_PERMISSION_RESOURCES = Object.freeze([
   "comments",
   "comments:public",
   "comments:private",
+  "comments:personal",
   "feeds",
 ] as const satisfies readonly RoomPermissionsResource[]);
 
@@ -217,6 +223,11 @@ const PERMISSIONS_BY_ROOM_RESOURCE: Record<
     write: [Permission.CommentsPrivateWrite],
     read: [Permission.CommentsPrivateRead],
     none: [Permission.CommentsPrivateNone],
+  },
+  "comments:personal": {
+    write: [Permission.CommentsPersonalWrite],
+    read: [Permission.CommentsPersonalRead],
+    none: [Permission.CommentsPersonalNone],
   },
   feeds: {
     write: [Permission.FeedsWrite],

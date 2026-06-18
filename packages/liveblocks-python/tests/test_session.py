@@ -10,6 +10,7 @@ P2 = "*:write"
 P3 = "comments:read"
 P4 = "comments:public:write"
 P5 = "comments:private:none"
+P6 = "comments:personal:read"
 
 
 def make_session(
@@ -95,9 +96,11 @@ class TestPermissions:
 
     def test_accepts_scoped_comments_permissions(self):
         assert (
-            make_session().allow("foo", [P1, P4, P5])._serialize_permissions()
+            make_session()
+            .allow("foo", [P1, P4, P5, P6])
+            ._serialize_permissions()
         ) == {
-            "foo": [P1, P4, P5],
+            "foo": [P1, P4, P5, P6],
         }
 
     def test_permissions_are_deduped(self):

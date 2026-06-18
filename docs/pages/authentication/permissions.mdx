@@ -47,12 +47,14 @@ You can opt into or opt out of access to specific room resources:
   `comments:public:none`.
 - **Private threads** with `comments:private:read`, `comments:private:write`, or
   `comments:private:none`.
+- **Personal threads** with `comments:personal:read`, `comments:personal:write`,
+  or `comments:personal:none`.
 - **Feeds** with `feeds:read`, `feeds:write`, or `feeds:none`.
 
-The `comments:*` permissions apply to both public and private threads. Use
-`comments:public:*` or `comments:private:*` to override one visibility. For
-example, you can allow writing public threads while denying access to private
-threads.
+The `comments:*` permissions apply to public, private, and personal threads. Use
+`comments:public:*`, `comments:private:*`, or `comments:personal:*` to override
+one visibility. For example, you can allow writing public threads while denying
+access to private threads.
 
 Here’s an example giving write access to everything except read-only access to
 storage:
@@ -89,25 +91,28 @@ private threads:
 
 <Table columns={["22%", "18%", "auto"]}>
 
-| Permission               | Resource        | Description                                           |
-| ------------------------ | --------------- | ----------------------------------------------------- |
-| **`*:read`**             |                 | **Read access to everything.**                        |
-| **`*:write`**            |                 | **Write access to everything.**                       |
-| `storage:read`           | Storage         | Read access to storage (Liveblocks Storage and Yjs).  |
-| `storage:write`          | Storage         | Write access to storage (Liveblocks Storage and Yjs). |
-| `storage:none`           | Storage         | No access to storage (Liveblocks Storage and Yjs).    |
-| `comments:read`          | Comments        | Read access to public and private threads.            |
-| `comments:write`         | Comments        | Write access to public and private threads.           |
-| `comments:none`          | Comments        | No access to public and private threads.              |
-| `comments:public:read`   | Public threads  | Read access to public threads.                        |
-| `comments:public:write`  | Public threads  | Write access to public threads.                       |
-| `comments:public:none`   | Public threads  | No access to public threads.                          |
-| `comments:private:read`  | Private threads | Read access to private threads.                       |
-| `comments:private:write` | Private threads | Write access to private threads.                      |
-| `comments:private:none`  | Private threads | No access to private threads.                         |
-| `feeds:read`             | Feeds           | Read access to feeds.                                 |
-| `feeds:write`            | Feeds           | Write access to feeds.                                |
-| `feeds:none`             | Feeds           | No access to feeds.                                   |
+| Permission                | Resource         | Description                                            |
+| ------------------------- | ---------------- | ------------------------------------------------------ |
+| **`*:read`**              |                  | **Read access to everything.**                         |
+| **`*:write`**             |                  | **Write access to everything.**                        |
+| `storage:read`            | Storage          | Read access to storage (Liveblocks Storage and Yjs).   |
+| `storage:write`           | Storage          | Write access to storage (Liveblocks Storage and Yjs).  |
+| `storage:none`            | Storage          | No access to storage (Liveblocks Storage and Yjs).     |
+| `comments:read`           | Comments         | Read access to public, private, and personal threads.  |
+| `comments:write`          | Comments         | Write access to public, private, and personal threads. |
+| `comments:none`           | Comments         | No access to public, private, and personal threads.    |
+| `comments:public:read`    | Public threads   | Read access to public threads.                         |
+| `comments:public:write`   | Public threads   | Write access to public threads.                        |
+| `comments:public:none`    | Public threads   | No access to public threads.                           |
+| `comments:private:read`   | Private threads  | Read access to private threads.                        |
+| `comments:private:write`  | Private threads  | Write access to private threads.                       |
+| `comments:private:none`   | Private threads  | No access to private threads.                          |
+| `comments:personal:read`  | Personal threads | Read access to personal threads.                       |
+| `comments:personal:write` | Personal threads | Write access to personal threads.                      |
+| `comments:personal:none`  | Personal threads | No access to personal threads.                         |
+| `feeds:read`              | Feeds            | Read access to feeds.                                  |
+| `feeds:write`             | Feeds            | Write access to feeds.                                 |
+| `feeds:none`              | Feeds            | No access to feeds.                                    |
 
 </Table>
 
