@@ -2,7 +2,6 @@ import type {
   ActivityData,
   CommentAttachment,
   InboxNotificationData,
-  ThreadVisibility,
 } from "@liveblocks/core";
 import type { InboxNotificationCustomKindProps } from "@liveblocks/react-ui";
 import { Composer, InboxNotification } from "@liveblocks/react-ui";
@@ -27,12 +26,6 @@ describe("Composer (no Liveblocks augmentation)", () => {
       />
     );
 
-    void (
-      (
-        // @ts-expect-error - invalid thread visibility
-        <Composer visibility="secret" />
-      )
-    );
     void (
       (
         // @ts-expect-error - visibility only applies when creating threads

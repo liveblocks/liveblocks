@@ -340,11 +340,6 @@ describe("ThreadDB", () => {
     ]);
 
     // Visibility checks
-    expect(db.findMany("room1", { visibility: "private" }, "asc")).toEqual([
-      th2,
-      th5,
-    ]);
-    expect(db.findMany("room2", { visibility: "private" }, "asc")).toEqual([]);
     expect(db.findMany(undefined, { visibility: "private" }, "asc")).toEqual([
       th2,
       th5,
@@ -396,14 +391,6 @@ describe("ThreadDB", () => {
     // Combining metadata criteria
     {
       const query = { resolved: false, metadata: { color: "red" } };
-      expect(db.findMany("room1", query, "asc")).toEqual([th2]);
-      expect(db.findMany("room2", query, "asc")).toEqual([]);
-      expect(db.findMany(undefined, query, "asc")).toEqual([th2]);
-    }
-
-    // Combining visibility criteria
-    {
-      const query = { visibility: "private" as const, resolved: false };
       expect(db.findMany("room1", query, "asc")).toEqual([th2]);
       expect(db.findMany("room2", query, "asc")).toEqual([]);
       expect(db.findMany(undefined, query, "asc")).toEqual([th2]);

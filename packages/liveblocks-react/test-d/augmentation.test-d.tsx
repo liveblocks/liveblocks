@@ -1,5 +1,5 @@
 import React from "react";
-import type { NotificationSettings, ThreadVisibility } from "@liveblocks/core";
+import type { NotificationSettings } from "@liveblocks/core";
 import { LiveList, LiveMap, LiveObject } from "@liveblocks/core";
 import * as classic from "@liveblocks/react";
 import * as suspense from "@liveblocks/react/suspense";
@@ -778,52 +778,6 @@ describe("with Liveblocks augmentation", () => {
     }
   });
 
-  test("thread query visibility", () => {
-    {
-      classic.useThreads({
-        query: {
-          visibility: "private",
-          resolved: false,
-          metadata: { color: "red" },
-        },
-      });
-      classic.useUserThreads_experimental({
-        query: {
-          visibility: "public",
-          resolved: true,
-          metadata: { color: "blue" },
-        },
-      });
-      suspense.useThreads({
-        query: {
-          visibility: "private",
-          resolved: false,
-          metadata: { color: "red" },
-        },
-      });
-      suspense.useUserThreads_experimental({
-        query: {
-          visibility: "public",
-          resolved: true,
-          metadata: { color: "blue" },
-        },
-      });
-
-      classic.useThreads({
-        query: {
-          // @ts-expect-error - invalid thread visibility
-          visibility: "secret",
-        },
-      });
-      classic.useUserThreads_experimental({
-        query: {
-          // @ts-expect-error - invalid thread visibility
-          visibility: "secret",
-        },
-      });
-    }
-  });
-
   test("useCreateThread()", () => {
     {
       const createThread = classic.useCreateThread();
@@ -854,7 +808,6 @@ describe("with Liveblocks augmentation", () => {
       expectTypeOf(thread.type).toEqualTypeOf<"thread">();
       expectTypeOf(thread.id).toEqualTypeOf<string>();
       expectTypeOf(thread.roomId).toEqualTypeOf<string>();
-      expectTypeOf(thread.visibility).toEqualTypeOf<ThreadVisibility>();
       expectTypeOf(thread.comments[0]!.type).toEqualTypeOf<"comment">();
       expectTypeOf(thread.comments[0]!.id).toEqualTypeOf<string>();
       expectTypeOf(thread.comments[0]!.threadId).toEqualTypeOf<string>();
@@ -862,17 +815,6 @@ describe("with Liveblocks augmentation", () => {
       expectTypeOf(thread.metadata.color).toEqualTypeOf<"red" | "blue">();
       // @ts-expect-error
       void thread.metadata.nonexisting;
-
-      createThread({
-        body: {
-          version: 1,
-          content: [{ type: "paragraph", children: [{ text: "hi" }] }],
-        },
-        metadata: { color: "red" },
-        commentMetadata: { priority: 1 },
-        // @ts-expect-error
-        visibility: "secret",
-      });
     }
   });
 

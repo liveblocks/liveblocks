@@ -257,16 +257,17 @@ describe("useThreads", () => {
 
   test("should fetch threads for a given query", async () => {
     const roomId = nanoid();
-    const pinnedThread = dummyThreadData({
+    const privatePinnedThread = dummyThreadData({
       roomId,
+      visibility: "private",
       metadata: {
         pinned: true,
       },
     });
-    const unpinnedThread = dummyThreadData({
+    const publicPinnedThread = dummyThreadData({
       roomId,
       metadata: {
-        pinned: false,
+        pinned: true,
       },
     });
 
@@ -275,7 +276,10 @@ describe("useThreads", () => {
         const url = new URL(request.url);
         const query = url.searchParams.get("query");
         const pred = query ? makeThreadFilter(query) : () => true;
-        const filteredThreads = [pinnedThread, unpinnedThread].filter(pred);
+        const filteredThreads = [
+          privatePinnedThread,
+          publicPinnedThread,
+        ].filter(pred);
         const subscriptions = filteredThreads.map((thread) =>
           dummySubscriptionData({ subjectId: thread.id })
         );
@@ -302,7 +306,10 @@ describe("useThreads", () => {
     }>();
 
     const { result, unmount } = renderHook(
-      () => useThreads({ query: { metadata: { pinned: true } } }),
+      () =>
+        useThreads({
+          query: { visibility: "private", metadata: { pinned: true } },
+        }),
       {
         wrapper: ({ children }) => (
           <RoomProvider id={roomId}>{children}</RoomProvider>
@@ -315,7 +322,7 @@ describe("useThreads", () => {
     await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
-        threads: [pinnedThread],
+        threads: [privatePinnedThread],
         fetchMore: expect.any(Function),
         isFetchingMore: false,
         hasFetchedAll: true,

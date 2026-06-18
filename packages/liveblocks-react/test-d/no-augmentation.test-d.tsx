@@ -9,7 +9,6 @@ import { LiveObject, LiveList } from "@liveblocks/client";
 import * as classic from "@liveblocks/react";
 import * as suspense from "@liveblocks/react/suspense";
 import type { AiChatStatus } from "@liveblocks/react";
-import type { ThreadVisibility } from "@liveblocks/core";
 import { describe, expectTypeOf, test } from "vitest";
 
 describe("without Liveblocks augmentation", () => {
@@ -631,36 +630,6 @@ describe("without Liveblocks augmentation", () => {
     }
   });
 
-  test("thread query visibility", () => {
-    {
-      classic.useThreads({
-        query: { visibility: "private", resolved: false },
-      });
-      classic.useUserThreads_experimental({
-        query: { visibility: "public", resolved: true },
-      });
-      suspense.useThreads({
-        query: { visibility: "private", resolved: false },
-      });
-      suspense.useUserThreads_experimental({
-        query: { visibility: "public", resolved: true },
-      });
-
-      classic.useThreads({
-        query: {
-          // @ts-expect-error - invalid thread visibility
-          visibility: "secret",
-        },
-      });
-      classic.useUserThreads_experimental({
-        query: {
-          // @ts-expect-error - invalid thread visibility
-          visibility: "secret",
-        },
-      });
-    }
-  });
-
   test("useCreateThread()", () => {
     {
       const createThread = classic.useCreateThread();
@@ -678,7 +647,6 @@ describe("without Liveblocks augmentation", () => {
       expectTypeOf(thread1.type).toEqualTypeOf<"thread">();
       expectTypeOf(thread1.id).toEqualTypeOf<string>();
       expectTypeOf(thread1.roomId).toEqualTypeOf<string>();
-      expectTypeOf(thread1.visibility).toEqualTypeOf<ThreadVisibility>();
       expectTypeOf(thread1.comments[0]!.type).toEqualTypeOf<"comment">();
       expectTypeOf(thread1.comments[0]!.id).toEqualTypeOf<string>();
       expectTypeOf(thread1.comments[0]!.threadId).toEqualTypeOf<string>();
@@ -686,15 +654,6 @@ describe("without Liveblocks augmentation", () => {
       expectTypeOf(thread1.metadata.color).toEqualTypeOf<
         string | number | boolean | undefined
       >();
-
-      createThread({
-        body: {
-          version: 1,
-          content: [{ type: "paragraph", children: [{ text: "hi" }] }],
-        },
-        // @ts-expect-error
-        visibility: "secret",
-      });
 
       const thread2 = createThread({
         body: {

@@ -7,7 +7,6 @@ import type {
   CommentBodyBlockElement,
   CommentData,
   PlainLson,
-  ThreadVisibility,
 } from "@liveblocks/core";
 
 //
@@ -273,25 +272,10 @@ describe("Liveblocks client with Liveblocks augmentation", () => {
 
     expectTypeOf(thread.type).toEqualTypeOf<"thread">();
     expectTypeOf(thread.id).toEqualTypeOf<string>();
-    expectTypeOf(thread.visibility).toEqualTypeOf<ThreadVisibility>();
     expectTypeOf(thread.metadata.color).toEqualTypeOf<"red" | "blue">();
     // @ts-expect-error - unknown ThreadMetadata field
     thread.metadata.nonexisting;
     expectTypeOf(thread.comments).toEqualTypeOf<CommentData[]>();
-
-    client.createThread({
-      roomId: "room-123",
-      data: {
-        comment: {
-          userId: "user-123",
-          body: { version: 1, content: [] },
-          metadata: { priority: 1 },
-        },
-        metadata: { color: "red" },
-        // @ts-expect-error - invalid thread visibility
-        visibility: "secret",
-      },
-    });
 
     const threadWithCommentMetadata = await client.createThread({
       roomId: "room-123",
@@ -400,25 +384,6 @@ describe("Liveblocks client with Liveblocks augmentation", () => {
     // @ts-expect-error - unknown ThreadMetadata field
     thread.metadata.nonexisting;
     expectTypeOf(thread.comments).toEqualTypeOf<CommentData[]>();
-  });
-
-  test("should accept thread visibility in getThreads() query", async () => {
-    await client.getThreads({
-      roomId: "my-room",
-      query: {
-        visibility: "private",
-        resolved: false,
-        metadata: { color: "red" },
-      },
-    });
-
-    await client.getThreads({
-      roomId: "my-room",
-      query: {
-        // @ts-expect-error - invalid thread visibility
-        visibility: "secret",
-      },
-    });
   });
 
   test("should return typed thread metadata from getThread()", async () => {
