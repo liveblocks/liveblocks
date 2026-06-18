@@ -16,6 +16,8 @@ import {
 } from "@liveblocks/react/suspense";
 import { Avatar } from "@liveblocks/react-ui";
 import {
+  CheckIcon,
+  CopyIcon,
   HistoryIcon,
   PlusIcon,
   RefreshCcwIcon,
@@ -49,12 +51,11 @@ import {
   ReasoningTrigger,
 } from "@/components/ai-elements/reasoning";
 import {
-  Tool,
-  ToolContent,
-  ToolHeader,
-  ToolInput,
-  ToolOutput,
-} from "@/components/ai-elements/tool";
+  ChainOfThought,
+  ChainOfThoughtContent,
+  ChainOfThoughtHeader,
+  ChainOfThoughtStep,
+} from "@/components/ai-elements/chain-of-thought";
 import { Context, ContextTrigger } from "@/components/ai-elements/context";
 import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
 import { Loader } from "@/components/ai-elements/loader";
@@ -399,33 +400,29 @@ function ChatWindow({
                     </div>
 
                     {isAssistant && reasoning ? (
-                      <Reasoning
-                        isStreaming={!!streaming}
-                        defaultOpen={!!streaming}
-                      >
+                      <Reasoning isStreaming={!!streaming} defaultOpen={false}>
                         <ReasoningTrigger />
                         <ReasoningContent>{reasoning}</ReasoningContent>
                       </Reasoning>
                     ) : null}
 
-                    {isAssistant && tools && tools.length > 0
-                      ? tools.map((tool, index) => (
-                          <Tool key={index}>
-                            <ToolHeader
-                              type={`tool-${tool.name}`}
-                              state="output-available"
-                              title={tool.name}
+                    {isAssistant && tools && tools.length > 0 ? (
+                      <ChainOfThought>
+                        <ChainOfThoughtHeader>
+                          {tools.length === 1
+                            ? "Taking 1 action"
+                            : `Taking ${tools.length} actions`}
+                        </ChainOfThoughtHeader>
+                        <ChainOfThoughtContent>
+                          {tools.map((tool, index) => (
+                            <ChainOfThoughtStep
+                              key={index}
+                              label={tool.output || tool.name}
                             />
-                            <ToolContent>
-                              <ToolInput input={tool.input} />
-                              <ToolOutput
-                                output={tool.output}
-                                errorText={undefined}
-                              />
-                            </ToolContent>
-                          </Tool>
-                        ))
-                      : null}
+                          ))}
+                        </ChainOfThoughtContent>
+                      </ChainOfThought>
+                    ) : null}
 
                     <div className="min-h-lh">
                       {content ? (
@@ -439,6 +436,7 @@ function ChatWindow({
 
                     {isAssistant ? (
                       <MessageActions>
+                        <CopyMessageAction text={content} />
                         <MessageAction
                           tooltip="Regenerate"
                           onClick={() => regenerate(message.id)}
@@ -502,5 +500,34 @@ function ChatWindow({
         </PromptInput>
       </div>
     </>
+  );
+}
+
+// Copy the message's text to the clipboard, briefly showing a check icon.
+function CopyMessageAction({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const copy = useCallback(() => {
+    if (!text) {
+      return;
+    }
+    void navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  }, [text]);
+
+  return (
+    <MessageAction
+      tooltip={copied ? "Copied" : "Copy"}
+      onClick={copy}
+      disabled={!text}
+    >
+      {copied ? (
+        <CheckIcon className="size-4" />
+      ) : (
+        <CopyIcon className="size-4" />
+      )}
+    </MessageAction>
   );
 }
