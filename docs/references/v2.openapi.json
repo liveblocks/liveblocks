@@ -126,7 +126,7 @@
       },
       "post": {
         "summary": "Create room",
-        "description": "This endpoint creates a new room. `id` and `defaultAccesses` are required. When provided with a `?idempotent` query argument, will not return a 409 when the room already exists, but instead return the existing room as-is. Corresponds to [`liveblocks.createRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms), or to [`liveblocks.getOrCreateRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-or-create-rooms-roomId) when `?idempotent` is provided. \n- `defaultAccesses` could be `[]` or `[\"*:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"*:write\"]` for every records. `usersAccesses` can contain 1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.\n- `groupsAccesses` are optional fields.\n",
+        "description": "This endpoint creates a new room. `id` and `defaultAccesses` are required. When provided with a `?idempotent` query argument, will not return a 409 when the room already exists, but instead return the existing room as-is. Corresponds to [`liveblocks.createRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms), or to [`liveblocks.getOrCreateRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-or-create-rooms-roomId) when `?idempotent` is provided. \n- `defaultAccesses` is the default room permission list, for example `[]`, `[\"*:read\"]`, `[\"*:write\"]`, or a more granular permission list. \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` contains user-specific permission lists. It can contain 1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.\n- `groupsAccesses` contains group-specific permission lists and is optional.\n",
         "tags": ["Room"],
         "parameters": [
           {
@@ -1691,7 +1691,7 @@
           {
             "schema": {
               "type": "string",
-              "description": "Query to filter threads. You can filter by `metadata` and `resolved`, for example, `metadata[\"status\"]:\"open\" AND metadata[\"color\"]:\"red\" AND resolved:true`. Learn more about [filtering threads with query language](https://liveblocks.io/docs/guides/how-to-filter-threads-using-query-language).",
+              "description": "Query to filter threads. You can filter by `metadata`, `resolved`, and `visibility`, for example, `metadata[\"status\"]:\"open\" AND metadata[\"color\"]:\"red\" AND resolved:true AND visibility:\"private\"`. Learn more about [filtering threads with query language](https://liveblocks.io/docs/guides/how-to-filter-threads-using-query-language).",
               "example": "metadata[\"color\"]:\"blue\""
             },
             "in": "query",
