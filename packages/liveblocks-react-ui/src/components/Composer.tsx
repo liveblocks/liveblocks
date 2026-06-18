@@ -8,17 +8,20 @@ import type {
   DTM,
   GroupMentionData,
   Patchable,
+  ThreadData,
   ThreadVisibility,
 } from "@liveblocks/core";
 import { assertNever, MENTION_CHARACTER } from "@liveblocks/core";
-import { useRoom } from "@liveblocks/react";
+import { useClient, useRoom } from "@liveblocks/react";
 import {
+  getUmbrellaStoreForClient,
   useCreateRoomComment,
   useCreateRoomThread,
   useEditRoomComment,
   useHasPermissionAccess,
   useLayoutEffect,
   useResolveMentionSuggestions,
+  useSignal,
 } from "@liveblocks/react/_private";
 import type {
   ComponentPropsWithoutRef,
@@ -260,6 +263,22 @@ interface ComposerEditorContainerProps extends Pick<
   hasResolveMentionSuggestions: boolean;
   onEmojiPickerOpenChange: (isOpen: boolean) => void;
   onEditorClick: (event: MouseEvent<HTMLDivElement>) => void;
+}
+
+function useThreadVisibility(
+  threadId: string | undefined
+): ThreadData["visibility"] | undefined {
+  const client = useClient();
+  const store = getUmbrellaStoreForClient(client);
+
+  return useSignal(
+    store.outputs.threads,
+    useCallback(
+      (threads) =>
+        threadId !== undefined ? threads.get(threadId)?.visibility : undefined,
+      [threadId]
+    )
+  );
 }
 
 interface ComposerMentionProps extends ComposerEditorMentionProps {
@@ -765,7 +784,15 @@ export const Composer = forwardRef(
       controlledOnCollapsedChange
     );
 
-    const canComment = useHasPermissionAccess(roomId, "comments", "write");
+    const threadVisibility = useThreadVisibility(threadId);
+    const composerVisibility = threadId
+      ? threadVisibility
+      : (visibility ?? "public");
+    const canComment = useHasPermissionAccess(
+      roomId,
+      composerVisibility ? `comments:${composerVisibility}` : "comments",
+      "write"
+    );
 
     const setEmptyRef = useCallback((isEmpty: boolean) => {
       isEmptyRef.current = isEmpty;

@@ -1,10 +1,19 @@
 import type { CommentData, ThreadData } from "@liveblocks/core";
-import { describe, expect, test } from "vitest";
+import { getUmbrellaStoreForClient } from "@liveblocks/react/_private";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { Comment } from "../components/Comment";
 import { Composer } from "../components/Composer";
 import { Thread } from "../components/Thread";
+import { client } from "./_liveblocks.config";
 import { render } from "./_utils"; // Basically re-exports from @testing-library/react
+
+const useHasPermissionAccessMock = vi.hoisted(() => vi.fn(() => true));
+
+vi.mock("@liveblocks/react/_private", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@liveblocks/react/_private")>()),
+  useHasPermissionAccess: useHasPermissionAccessMock,
+}));
 
 const comment: CommentData = {
   type: "comment",
@@ -136,9 +145,59 @@ describe("Comment", () => {
 });
 
 describe("Composer", () => {
+  beforeEach(() => {
+    useHasPermissionAccessMock.mockClear();
+  });
+
   test("should render", () => {
     const { container } = render(<Composer />);
 
     expect(container).not.toBeEmptyDOMElement();
+  });
+
+  test("should check public comments write access by default when creating a thread", () => {
+    render(<Composer />);
+
+    expect(useHasPermissionAccessMock).toHaveBeenCalledWith(
+      "room",
+      "comments:public",
+      "write"
+    );
+  });
+
+  test("should check private comments write access when creating a private thread", () => {
+    render(<Composer visibility="private" />);
+
+    expect(useHasPermissionAccessMock).toHaveBeenCalledWith(
+      "room",
+      "comments:private",
+      "write"
+    );
+  });
+
+  test("should keep checking aggregate comments write access when replying to a thread", () => {
+    render(<Composer threadId="th_1" />);
+
+    expect(useHasPermissionAccessMock).toHaveBeenCalledWith(
+      "room",
+      "comments",
+      "write"
+    );
+  });
+
+  test("should check private comments write access when replying to a cached private thread", () => {
+    getUmbrellaStoreForClient(client).threads.upsert({
+      ...thread,
+      id: "th_private",
+      visibility: "private",
+    });
+
+    render(<Composer threadId="th_private" />);
+
+    expect(useHasPermissionAccessMock).toHaveBeenCalledWith(
+      "room",
+      "comments:private",
+      "write"
+    );
   });
 });
