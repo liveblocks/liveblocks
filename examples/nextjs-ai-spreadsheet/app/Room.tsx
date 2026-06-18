@@ -14,8 +14,21 @@ import {
 import { useExampleRoomId } from "@/hooks/use-example-room-id";
 import { Loading } from "./Loading";
 
-// Builds the starting grid: a sparse, seeded sample table at the top-left, with
-// the rest left empty. Rows and columns are addressed by stable ids.
+export function Room({ children }: { children: ReactNode }) {
+  const roomId = useExampleRoomId();
+
+  return (
+    <RoomProvider
+      id={roomId}
+      initialPresence={{ selectedCells: null, promptingFeedId: null }}
+      initialStorage={createInitialStorage}
+    >
+      <ClientSideSuspense fallback={<Loading />}>{children}</ClientSideSuspense>
+    </RoomProvider>
+  );
+}
+
+// Builds an initial example table
 function createInitialStorage() {
   const rowIds = Array.from({ length: DEFAULT_ROWS }, () => nanoid());
   const colIds = Array.from({ length: DEFAULT_COLS }, () => nanoid());
@@ -61,18 +74,4 @@ function createInitialStorage() {
     colWidths: new LiveMap<string, number>([[colIds[0], 180]]),
     rowHeights: new LiveMap<string, number>(),
   };
-}
-
-export function Room({ children }: { children: ReactNode }) {
-  const roomId = useExampleRoomId();
-
-  return (
-    <RoomProvider
-      id={roomId}
-      initialPresence={{ selectedCells: null, promptingFeedId: null }}
-      initialStorage={createInitialStorage}
-    >
-      <ClientSideSuspense fallback={<Loading />}>{children}</ClientSideSuspense>
-    </RoomProvider>
-  );
 }

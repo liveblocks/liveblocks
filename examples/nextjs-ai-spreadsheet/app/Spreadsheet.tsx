@@ -5,6 +5,7 @@ import { AvatarStack } from "@liveblocks/react-ui";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { HelpButton } from "@/components/HelpButton";
 import { useExampleRoomId } from "@/hooks/use-example-room-id";
+import { NotificationsPopover } from "./NotificationsPopover";
 import { SelectionProvider } from "./SelectionContext";
 import { CellThreadProvider } from "./CellThreadContext";
 import { Toolbar } from "./Toolbar";
@@ -29,6 +30,7 @@ export function Spreadsheet() {
               </div>
               <div className="flex items-center gap-3">
                 <AvatarStack size={28} max={5} />
+                <NotificationsPopover />
               </div>
             </header>
 

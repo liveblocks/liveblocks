@@ -334,7 +334,9 @@ function ChatWindow({
 
   return (
     <>
-      <Conversation>
+      {/* `initial="instant"` so opening the chat jumps straight to the latest
+          message instead of animating all the way down on mount. */}
+      <Conversation initial="instant">
         <ScrollToBottomBridge register={registerScrollToBottom} />
         <ConversationContent>
           {sorted.length === 0 ? (

@@ -47,7 +47,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { cellKey, type CellFormat, type NumberFormat } from "@/liveblocks.config";
+import {
+  cellKey,
+  type CellFormat,
+  type NumberFormat,
+} from "@/liveblocks.config";
 import { useSelectionValue, type Selection } from "./SelectionContext";
 import { useCellThread } from "./CellThreadContext";
 import {
@@ -64,6 +68,14 @@ const TEXT_COLORS = [
   "#3b82f6",
   "#8b5cf6",
   "#ec4899",
+  "#fee2e2",
+  "#ffedd5",
+  "#fef9c3",
+  "#dcfce7",
+  "#dbeafe",
+  "#ede9fe",
+  "#fce7f3",
+  "#f3f4f6",
 ];
 
 const FILL_COLORS = [
@@ -75,6 +87,14 @@ const FILL_COLORS = [
   "#ede9fe",
   "#fce7f3",
   "#f3f4f6",
+  "#171717",
+  "#ef4444",
+  "#f97316",
+  "#eab308",
+  "#22c55e",
+  "#3b82f6",
+  "#8b5cf6",
+  "#ec4899",
 ];
 
 export function Toolbar({
@@ -170,8 +190,12 @@ export function Toolbar({
     }
   };
 
-  const anchorRowIndex = selection ? rowIds.indexOf(selection.anchor.rowId) : -1;
-  const anchorColIndex = selection ? colIds.indexOf(selection.anchor.colId) : -1;
+  const anchorRowIndex = selection
+    ? rowIds.indexOf(selection.anchor.rowId)
+    : -1;
+  const anchorColIndex = selection
+    ? colIds.indexOf(selection.anchor.colId)
+    : -1;
 
   return (
     <div className="flex w-full items-center gap-1 overflow-x-auto border-b bg-card px-2 py-1.5">
@@ -301,7 +325,11 @@ export function Toolbar({
         <Tooltip>
           <TooltipTrigger asChild>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon-sm" aria-label="Rows and columns">
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Rows and columns"
+              >
                 <TableIcon className="size-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -334,7 +362,9 @@ export function Toolbar({
           <DropdownMenuLabel>Columns</DropdownMenuLabel>
           <DropdownMenuItem
             disabled={anchorColIndex < 0}
-            onClick={() => actions.insertColumn(anchorColIndex, actions.nanoid())}
+            onClick={() =>
+              actions.insertColumn(anchorColIndex, actions.nanoid())
+            }
           >
             <PlusIcon className="size-4" /> Insert column left
           </DropdownMenuItem>
