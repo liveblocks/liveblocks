@@ -3759,7 +3759,12 @@ function useSelfAccessFallback(
 
   const getSnapshot = useCallback(() => {
     const self = room?.id === roomId ? room.getSelf() : null;
-    if (resource === "comments" && requiredAccess === "write") {
+    const isCommentsResource =
+      resource === "comments" ||
+      resource === "comments:public" ||
+      resource === "comments:private";
+
+    if (isCommentsResource && requiredAccess === "write") {
       return self?.canComment ?? true;
     }
     if (resource === "storage" && requiredAccess === "write") {
