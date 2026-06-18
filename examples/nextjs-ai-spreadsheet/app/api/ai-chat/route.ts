@@ -55,12 +55,6 @@ const AUTHOR = {
   avatar: AI_USER_AVATAR,
 } as const;
 
-const FOLLOW_UPS = [
-  "Format the header row",
-  "Add a totals row",
-  "Sort by the first column",
-];
-
 export async function POST(request: NextRequest) {
   if (!process.env.LIVEBLOCKS_SECRET_KEY) {
     return new NextResponse("Missing LIVEBLOCKS_SECRET_KEY", { status: 403 });
@@ -146,6 +140,24 @@ const SYSTEM_PROMPT = [
   "did. Reply in Markdown.",
 ].join(" ");
 
+// What the AI's tools can actually do — used to keep generated follow-up
+// suggestions within the app's real capabilities (e.g. don't suggest borders or
+// formulas, which aren't supported).
+const CAPABILITIES = [
+  "The assistant can ONLY do the following to the spreadsheet:",
+  "- Set a single cell's value, or fill a rectangular range with values.",
+  "- Clear the values in a range.",
+  "- Format cells: bold, italic, underline, strikethrough, horizontal",
+  "  alignment (left/center/right), text color, fill (background) color, and",
+  "  number format (general, currency, or percent).",
+  "- Sort all rows by a column (ascending or descending).",
+  "- Insert or delete a row or a column.",
+  "- Add or delete a comment thread on a cell.",
+  "It CANNOT: add borders, write formulas/calculations, merge cells, create",
+  "charts, freeze rows/columns, add images, or change fonts/font sizes.",
+  "Only suggest actions from the supported list above.",
+].join("\n");
+
 async function streamReply(
   liveblocks: Liveblocks,
   roomId: string,
@@ -153,7 +165,8 @@ async function streamReply(
   model: string | undefined,
   update: UpdateFn
 ) {
-  const { streamText, tool, stepCountIs } = await import("ai");
+  const { streamText, generateText, Output, tool, stepCountIs } =
+    await import("ai");
   const { z } = await import("zod");
 
   showAiEditing(liveblocks, roomId, null);
@@ -329,11 +342,43 @@ async function streamReply(
   }
   const usage = await result.usage;
 
+  // Generate three contextual follow-up suggestions based on the updated sheet
+  let suggestions: string[] = [];
+  try {
+    const updatedStorage = await readStorage(liveblocks, roomId);
+    const { output } = await generateText({
+      model: model ?? "openai/gpt-5.4-mini",
+      output: Output.object({
+        schema: z.object({
+          suggestions: z
+            .array(z.string())
+            .length(3)
+            .describe("Three short next prompts the user might send."),
+        }),
+      }),
+      system:
+        "You suggest the user's likely next message in a spreadsheet AI chat. " +
+        "Return exactly 3 short, specific, actionable prompts (max ~6 words " +
+        "each) the user could tap next, as imperative phrases with no numbering. " +
+        "Every suggestion must be something the assistant can actually do.\n\n" +
+        CAPABILITIES,
+      prompt:
+        `Current spreadsheet:\n${snapshotText(updatedStorage)}\n\n` +
+        `The assistant just replied:\n${content || "(made edits to the sheet)"}\n\n` +
+        "Suggest 3 useful next prompts.",
+    });
+    if (output.suggestions?.length) {
+      suggestions = output.suggestions.slice(0, 3);
+    }
+  } catch {
+    // Keep the static fallback suggestions.
+  }
+
   await update({
     content,
     reasoning: reasoning || undefined,
     tools: toolsDisplay.length ? toolsDisplay : undefined,
-    suggestions: FOLLOW_UPS,
+    suggestions,
     usedTokens: usage.totalTokens ?? 0,
     maxTokens: MAX_TOKENS,
     streaming: false,
