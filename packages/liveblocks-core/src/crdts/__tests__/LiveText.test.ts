@@ -61,6 +61,42 @@ describe("LiveText", () => {
     });
   });
 
+  test("serializes to a DevTools tree node", () => {
+    const text = new LiveText(
+      [
+        ["Hello "],
+        ["world", { "lb-comment": "thread-1" }],
+      ],
+      3
+    );
+
+    expect(text.toTreeNode("document")).toEqual({
+      type: "LiveText",
+      id: expect.any(String),
+      key: "document",
+      payload: [
+        {
+          type: "Json",
+          id: expect.stringMatching(/:0$/),
+          key: "0",
+          payload: ["Hello "],
+        },
+        {
+          type: "Json",
+          id: expect.stringMatching(/:1$/),
+          key: "1",
+          payload: ["world", { "lb-comment": "thread-1" }],
+        },
+        {
+          type: "Json",
+          id: expect.stringMatching(/:version$/),
+          key: "version",
+          payload: 3,
+        },
+      ],
+    });
+  });
+
   test("transforms text operations over accepted operations", () => {
     expect(
       transformTextOperations(

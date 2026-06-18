@@ -909,19 +909,34 @@ export class LiveText extends AbstractCrdt {
   }
 
   /** @internal */
+  toTreeNode(key: string): DevTools.LiveTreeNode<"LiveText"> {
+    return super.toTreeNode(key) as DevTools.LiveTreeNode<"LiveText">;
+  }
+
+  /** @internal */
   _toTreeNode(key: string): DevTools.LsonTreeNode {
+    const nodeId = this._id ?? nanoid();
+    const payload: DevTools.LsonTreeNode[] = this.toJSON().map(
+      (segment, index) => ({
+        type: "Json",
+        id: `${nodeId}:${index}`,
+        key: String(index),
+        payload: segment,
+      })
+    );
+
+    payload.push({
+      type: "Json",
+      id: `${nodeId}:version`,
+      key: "version",
+      payload: this.version,
+    });
+
     return {
       type: "LiveText",
-      id: this._id ?? nanoid(),
+      id: nodeId,
       key,
-      payload: [
-        {
-          type: "Json",
-          id: `${this._id ?? nanoid()}:text`,
-          key: "text",
-          payload: this.toString(),
-        },
-      ],
+      payload,
     };
   }
 
