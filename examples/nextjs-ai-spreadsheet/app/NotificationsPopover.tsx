@@ -33,7 +33,7 @@ export function NotificationsPopover() {
           side="bottom"
           align="end"
           sideOffset={8}
-          className="w-[380px] overflow-hidden rounded-xl border bg-card text-card-foreground shadow-lg outline-none animate-in fade-in-0 zoom-in-95"
+          className="z-1000 w-[380px] overflow-hidden rounded-xl border bg-card text-card-foreground shadow-lg outline-none animate-in fade-in-0 zoom-in-95"
         >
           <Suspense
             fallback={
