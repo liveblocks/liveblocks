@@ -822,16 +822,6 @@
             "path": "/platform/account-management/delete-an-account"
           }
         ]
-      },
-      {
-        "title": "Limits",
-        "path": "/platform/limits",
-        "routes": [
-          {
-            "title": "Fair use guidelines",
-            "path": "/platform/limits/fair-use-guidelines"
-          }
-        ]
       }
     ]
   },
@@ -839,6 +829,10 @@
     "title": "Pricing",
     "defaultCollapsed": true,
     "routes": [
+      {
+        "title": "Overview",
+        "path": "/pricing/overview"
+      },
       {
         "title": "Plans",
         "path": "/pricing/plans",
@@ -860,6 +854,24 @@
             "path": "/pricing/plans/enterprise"
           }
         ]
+      },
+      {
+        "title": "Billing",
+        "path": "/pricing/billing"
+      },
+      {
+        "title": "Limits",
+        "path": "/platform/limits",
+        "routes": [
+          {
+            "title": "Fair use guidelines",
+            "path": "/platform/limits/fair-use-guidelines"
+          }
+        ]
+      },
+      {
+        "title": "Pricing FAQs",
+        "path": "/pricing/faqs"
       }
     ]
   },

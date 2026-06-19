@@ -5,11 +5,44 @@ meta:
   description: "Learn about the Liveblocks Enterprise plan."
 ---
 
-The Enterprise plan is tailored for organizations with advanced security,
-compliance, and scalability requirements. It includes everything in Team, plus
-multi-region hosting, a management API, SCIM/directory sync, advanced
-permissions, custom usage allocations, and higher-touch support options with
-SLAs and solution engineering.
+The Enterprise plan is for organizations with advanced security, compliance, and
+scalability requirements. It includes everything in Team, plus multi-region
+hosting, a management API, SCIM/directory sync, advanced permissions, custom
+usage allocations, and higher-touch support with SLAs.
+
+[Contact sales](/contact/sales) for pricing, custom credit allocations, and
+invoice billing.
+
+## Metered usage
+
+Metered usage is billed per unit, only for what you actually use. Enterprise
+plans include a custom monthly credit allowance negotiated for your workload.
+Usage above your credits is overage, billed at agreed per-unit rates.
+
+See [Team metered usage](/docs/pricing/plans/team#Metered-usage) for reference
+rates. Your contract may include volume discounts or custom allocations.
+
+## Other limits
+
+Enterprise limits are customized for your organization. See
+[Limits](/docs/platform/limits) for reference values and
+[contact sales](/contact/sales) to discuss your requirements.
+
+| Item                                                                                                                                                                                                                                         | Enterprise limit                                                                                                                                                 |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| <LimitLabel href="/docs/platform/limits#What-is-a-monthly-active-user" tooltip="The number of users who used Liveblocks features in a given month.">Monthly active users</LimitLabel>                                                        | <Limits.EnterpriseMaxMau />                                                                                                                                      |
+| <LimitLabel href="/docs/platform/limits#What-is-a-monthly-active-room" tooltip="The number of rooms used in a given month.">Monthly active rooms</LimitLabel>                                                                                | <Limits.EnterpriseComparePlansMonthlyActiveRoomsLabel />                                                                                                         |
+| <LimitLabel href="/docs/platform/projects" tooltip="Separate environments for organizing your Liveblocks integration.">Projects</LimitLabel>                                                                                                 | <LimitHint tooltip={<>Up to <Limits.EnterpriseMaxProjects /></>}><Limits.EnterpriseProjectsIncluded /> included</LimitHint>                                      |
+| <LimitLabel tooltip="Team members with Owner or Member role. They can configure projects, roll keys, and more.">Dashboard seats</LimitLabel>                                                                                                 | <LimitHint tooltip={<>Up to <Limits.EnterpriseMaxTeamMembersPerAccount /></>}><Limits.EnterpriseTeamMembersPerAccount /> included</LimitHint>                    |
+| <LimitLabel href="/docs/platform/limits#What's-a-simultaneous-connection-per-room" tooltip="Users connected to the same room at the same time.">Simultaneous connections per room</LimitLabel>                                               | <Limits.EnterpriseMaxConnectionsPerRoom />                                                                                                                       |
+| <LimitLabel href="/docs/platform/limits#What's-a-simultaneous-connection-per-project" tooltip="Users connected to rooms in the same project at the same time.">Simultaneous connections per project</LimitLabel>                             | <Limits.EnterpriseMaxConnectionsPerProject />                                                                                                                    |
+| <LimitLabel href="/docs/authentication" tooltip="Public key only recommended for prototyping.">Monthly anonymous connections</LimitLabel>                                                                                                    | <Limits.EnterpriseMaxAnonymousConnections />                                                                                                                     |
+| <LimitLabel tooltip="Maximum storage data allowed in a single room.">Realtime data stored per room</LimitLabel>                                                                                                                              | <Limits.EnterpriseMaxStorageSizePerRoom />                                                                                                                       |
+| <LimitLabel tooltip="Maximum size for a single file upload, such as a comment attachment.">Max file upload size</LimitLabel>                                                                                                                 | <LimitHint tooltip={<>Up to <Limits.EnterpriseMaxFileUploadSize /></>}><Limits.EnterpriseFileUploadSize /></LimitHint>                                           |
+| <LimitLabel href="/docs/platform/webhooks#StorageUpdatedEvent" tooltip="The frequency at which `yDocUpdated` (Yjs) and `storageUpdated` (Liveblocks Storage) events are sent to your webhook endpoint.">Webhook event frequency</LimitLabel> | <LimitHint tooltip={<>Down to <Limits.EnterpriseMaxStorageUpdatedWebhookEventThrottle /></>}><Limits.EnterpriseStorageUpdatedWebhookEventThrottle /></LimitHint> |
+| <LimitLabel tooltip="APIs, hooks, and pre-built components to access the previous versions of the realtime data stored in rooms.">Version history</LimitLabel>                                                                               | <Limits.EnterpriseVersionHistory />                                                                                                                              |
+| <LimitLabel tooltip="How long activity and audit events are retained.">Event log retention</LimitLabel>                                                                                                                                      | <LimitHint tooltip={<>Up to <Limits.EnterpriseMaxEventLogRetention /></>}><Limits.EnterpriseEventLogRetention /></LimitHint>                                     |
+| Environments                                                                                                                                                                                                                                 | <Limits.EnterpriseEnvironments />                                                                                                                                |
 
 ## Security and compliance
 
@@ -25,16 +58,18 @@ Built-in support for global security and data protection standards, including:
 
 ## Observability and reporting
 
-Gain actionable insights with enhanced observability & logging:
-
 - Extended event log retention
 - External observability integrations (soon)
 
 ## Administration and support
 
-The Enterprise plan allows for streamlined team collaboration and offers robust
-support with:
-
 - Role-Based Access Control (RBAC)
 - A dedicated solution engineer
 - SLAs, including response time
+
+## Billing cycle
+
+The Enterprise plan follows a monthly billing cycle that starts on the 1st of
+each month and ends on the last day of the month. Monthly credits renew at the
+beginning of each billing cycle and are applied to metered usage. Any usage not
+covered by credits appears on your invoice.
