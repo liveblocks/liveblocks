@@ -44,7 +44,7 @@ export function Spreadsheet() {
                 </span>
               </div>
               <div className="flex items-center gap-3">
-                <AvatarStack size={28} max={5} />
+                <AvatarStack size={28} max={5} variant="outline" />
                 <NotificationsPopover />
               </div>
             </header>
