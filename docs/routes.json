@@ -866,28 +866,6 @@
         ]
       },
       {
-        "title": "Pricing examples",
-        "path": "/pricing/examples",
-        "routes": [
-          {
-            "title": "Document editor",
-            "path": "/pricing/examples/document-editor"
-          },
-          {
-            "title": "Notification inbox",
-            "path": "/pricing/examples/notification-inbox"
-          },
-          {
-            "title": "Canvas",
-            "path": "/pricing/examples/canvas"
-          },
-          {
-            "title": "Comments",
-            "path": "/pricing/examples/comments"
-          }
-        ]
-      },
-      {
         "title": "Pricing FAQs",
         "path": "/pricing/faqs"
       }
