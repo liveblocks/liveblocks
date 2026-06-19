@@ -861,11 +861,11 @@
       },
       {
         "title": "Limits",
-        "path": "/platform/limits",
+        "path": "/pricing/limits",
         "routes": [
           {
             "title": "Fair use guidelines",
-            "path": "/platform/limits/fair-use-guidelines"
+            "path": "/pricing/limits/fair-use-guidelines"
           }
         ]
       },
