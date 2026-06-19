@@ -4,6 +4,7 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useRef,
   useState,
   type RefObject,
 } from "react";
@@ -23,6 +24,18 @@ export function CommentOverlay({
   const { rowIds, colIds } = useOrder();
   const { getThread, openCell, setOpenCell } = useCellThread();
   const [rect, setRect] = useState<Rect | null>(null);
+
+  // Stop popover closing when submitting a comment
+  const lastSubmitRef = useRef(0);
+  const closeAfterInteractOutside = useCallback(() => {
+    if (Date.now() - lastSubmitRef.current < 1000) {
+      return;
+    }
+    setOpenCell(null);
+  }, [setOpenCell]);
+  const onComposerSubmit = useCallback(() => {
+    lastSubmitRef.current = Date.now();
+  }, []);
 
   const visualRow = openCell ? rowIds.indexOf(openCell.rowId) : -1;
   const visualCol = openCell ? colIds.indexOf(openCell.colId) : -1;
@@ -102,10 +115,10 @@ export function CommentOverlay({
           open
           onOpenChange={(open) => {
             if (!open) {
-              setOpenCell(null);
+              closeAfterInteractOutside();
             }
           }}
-          onComposerSubmit={() => setOpenCell(metadata)}
+          onComposerSubmit={onComposerSubmit}
           onResolvedChange={(resolved) => {
             // Resolving hides the thread, so close the overlay immediately.
             if (resolved) {
@@ -122,8 +135,14 @@ export function CommentOverlay({
           className="ht-theme-main"
           metadata={metadata}
           open
-          onOpenChange={(open) => setOpenCell(open ? metadata : null)}
-          onComposerSubmit={() => setOpenCell(metadata)}
+          onOpenChange={(open) => {
+            if (open) {
+              setOpenCell(metadata);
+            } else {
+              closeAfterInteractOutside();
+            }
+          }}
+          onComposerSubmit={onComposerSubmit}
           style={{ zIndex: 50 }}
         >
           <div style={{ width: "100%", height: "100%" }} />
