@@ -24,7 +24,7 @@ const FEATURES: Feature[] = [
     icon: <SparklesIcon />,
     title: "An AI that edits cells",
     description:
-      "Ask the chat to fill, format, or restructure the grid. The AI writes to Storage from the server as it streams.",
+      "Ask the chat to fill, format, or restructure the grid. You can also tag AI with @Liveblocks AI inside a comment.",
   },
   {
     icon: <UsersIcon />,

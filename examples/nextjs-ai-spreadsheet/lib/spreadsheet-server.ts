@@ -1,7 +1,9 @@
 import {
+  getMentionsFromCommentBody,
   LiveMap,
   LiveObject,
   Liveblocks as LiveblocksClient,
+  markdownToCommentBody,
   stringifyCommentBody,
   type CommentBody,
 } from "@liveblocks/node";
@@ -534,4 +536,204 @@ export async function deleteComment(
 
   const count = targetThreads.length;
   return `Deleted ${count} comment${count === 1 ? "" : "s"}.`;
+}
+
+// --- AI tools ----------------------------------------------------------------
+
+// The full set of spreadsheet-editing tools, shared by the chat (`/api/ai-chat`)
+// and the AI comment replies, so both can do exactly the same things.
+export async function createSpreadsheetTools(
+  liveblocks: LiveblocksClient,
+  roomId: string
+) {
+  const { tool } = await import("ai");
+  const { z } = await import("zod");
+
+  const formatSchema = z
+    .object({
+      bold: z.boolean().optional(),
+      italic: z.boolean().optional(),
+      underline: z.boolean().optional(),
+      strike: z.boolean().optional(),
+      align: z.enum(["left", "center", "right"]).optional(),
+      color: z.string().optional(),
+      background: z.string().optional(),
+      numberFormat: z.enum(["general", "currency", "percent"]).optional(),
+    })
+    .describe("Formatting to apply. Colors are hex strings, e.g. #ef4444.");
+
+  return {
+    setCellValue: tool({
+      description: "Set the value of a single cell.",
+      inputSchema: z.object({
+        cell: z.string().describe('A1 reference, e.g. "B2".'),
+        value: z.string(),
+      }),
+      execute: ({ cell, value }) =>
+        setCellValue(liveblocks, roomId, cell, value),
+    }),
+    setRangeValues: tool({
+      description:
+        "Fill a rectangular range starting at a cell with a 2D array of values (row-major).",
+      inputSchema: z.object({
+        start: z.string().describe('Top-left A1 cell, e.g. "A1".'),
+        rows: z.array(z.array(z.string())),
+      }),
+      execute: ({ start, rows }) =>
+        setRangeValues(liveblocks, roomId, start, rows),
+    }),
+    clearRange: tool({
+      description: "Clear the values in a range.",
+      inputSchema: z.object({
+        range: z.string().describe('A1 range, e.g. "A1:C5".'),
+      }),
+      execute: ({ range }) => clearRange(liveblocks, roomId, range),
+    }),
+    formatCells: tool({
+      description: "Apply formatting (bold, color, alignment, …) to a range.",
+      inputSchema: z.object({
+        range: z.string().describe('A1 range, e.g. "A1:C1".'),
+        format: formatSchema,
+      }),
+      execute: ({ range, format }) => {
+        const patch = { ...format };
+        if (patch.numberFormat === "general") {
+          patch.numberFormat = undefined;
+        }
+        return formatCells(liveblocks, roomId, range, patch);
+      },
+    }),
+    sortByColumn: tool({
+      description: "Sort all rows by the values in a column.",
+      inputSchema: z.object({
+        column: z.string().describe('Column letter, e.g. "B".'),
+        direction: z.enum(["asc", "desc"]),
+      }),
+      execute: ({ column, direction }) =>
+        sortByColumn(liveblocks, roomId, column, direction),
+    }),
+    insertRow: tool({
+      description: "Insert an empty row at a 1-based row number.",
+      inputSchema: z.object({ rowNumber: z.number().int().min(1) }),
+      execute: ({ rowNumber }) => insertRow(liveblocks, roomId, rowNumber - 1),
+    }),
+    deleteRow: tool({
+      description: "Delete the row at a 1-based row number.",
+      inputSchema: z.object({ rowNumber: z.number().int().min(1) }),
+      execute: ({ rowNumber }) => deleteRow(liveblocks, roomId, rowNumber - 1),
+    }),
+    insertColumn: tool({
+      description: "Insert an empty column at a column letter.",
+      inputSchema: z.object({ column: z.string() }),
+      execute: ({ column }) =>
+        insertColumn(liveblocks, roomId, Math.max(0, lettersToColIndex(column))),
+    }),
+    deleteColumn: tool({
+      description: "Delete the column at a column letter.",
+      inputSchema: z.object({ column: z.string() }),
+      execute: ({ column }) =>
+        deleteColumn(liveblocks, roomId, Math.max(0, lettersToColIndex(column))),
+    }),
+    addComment: tool({
+      description: "Leave a comment thread anchored to a cell.",
+      inputSchema: z.object({ cell: z.string(), text: z.string() }),
+      execute: ({ cell, text }) => addComment(liveblocks, roomId, cell, text),
+    }),
+    deleteComment: tool({
+      description:
+        "Delete the comment thread(s) anchored to one or more cells or ranges.",
+      inputSchema: z.object({
+        cells: z
+          .array(z.string())
+          .describe('A1 cells or ranges, e.g. ["B2", "A1:C5"].'),
+      }),
+      execute: ({ cells }) => deleteComment(liveblocks, roomId, cells),
+    }),
+  };
+}
+
+// --- AI comment replies ------------------------------------------------------
+
+// When someone @mentions the AI in a cell's comment thread, generate a reply and
+// post it back into the same thread as the AI user. Kept deliberately simple: no
+// workflow, no streaming — just read the thread, generate one reply, and create
+// a comment. Triggered by the `commentCreated` webhook.
+export async function replyToComment(
+  liveblocks: LiveblocksClient,
+  roomId: string,
+  threadId: string,
+  commentId: string
+): Promise<void> {
+  const thread = await liveblocks.getThread({ roomId, threadId });
+  const trigger = thread.comments.find((c) => c.id === commentId);
+
+  // Ignore deleted comments and the AI's own comments (avoids reply loops).
+  if (!trigger?.body || trigger.userId === AI_USER_ID) {
+    return;
+  }
+
+  // Only reply when the AI is actually @mentioned in the new comment.
+  const mentioned = getMentionsFromCommentBody(trigger.body).some(
+    (mention) => mention.id === AI_USER_ID
+  );
+  if (!mentioned) {
+    return;
+  }
+
+  // Figure out which cell this thread is on, for context.
+  const storage = await readStorage(liveblocks, roomId);
+  const { rowId, colId } = thread.metadata;
+  const row = storage.rowIds.indexOf(rowId);
+  const col = storage.colIds.indexOf(colId);
+  const onCell = row !== -1 && col !== -1;
+  const a1 = onCell ? toA1(row, col) : "a cell";
+  const cellValue = storage.cells[cellKey(rowId, colId)]?.value || "(empty)";
+
+  // Turn the thread into a chat transcript.
+  const messages: { role: "user" | "assistant"; content: string }[] = [];
+  for (const comment of thread.comments) {
+    if (!comment.body) {
+      continue;
+    }
+    messages.push({
+      role: comment.userId === AI_USER_ID ? "assistant" : "user",
+      content: await stringifyCommentBody(comment.body),
+    });
+  }
+
+  // Show the AI working on the cell while it drafts the reply.
+  if (onCell) {
+    showAiEditing(liveblocks, roomId, [{ rowId, colId }]);
+  }
+
+  const { generateText, stepCountIs } = await import("ai");
+  const tools = await createSpreadsheetTools(liveblocks, roomId);
+  const { text } = await generateText({
+    model: "openai/gpt-5.4-mini",
+    system:
+      `You are ${AI_USER_NAME}, replying inside a comment thread on cell ${a1} ` +
+      `(current value: ${cellValue}) of a shared spreadsheet. Reply concisely ` +
+      `and helpfully. You may use light Markdown (bold, italics, links) but no ` +
+      `headings, lists, or tables. Do not prefix your reply with your name. ` +
+      `If the comment asks you to change the sheet, use your tools to make the ` +
+      `edits, then briefly confirm what you did in your reply.\n\n` +
+      snapshotText(storage),
+    messages,
+    tools,
+    stopWhen: stepCountIs(16),
+  });
+
+  const reply = text.trim();
+  if (!reply) {
+    return;
+  }
+
+  await liveblocks.createComment({
+    roomId,
+    threadId,
+    data: {
+      userId: AI_USER_ID,
+      body: markdownToCommentBody(reply),
+    },
+  });
 }

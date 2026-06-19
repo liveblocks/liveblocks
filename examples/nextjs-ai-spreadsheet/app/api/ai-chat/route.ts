@@ -2,23 +2,12 @@ import { Liveblocks } from "@liveblocks/node";
 import { NextRequest, NextResponse } from "next/server";
 import { AI_USER_AVATAR, AI_USER_ID, AI_USER_NAME } from "@/database";
 import {
-  addComment,
-  clearRange,
   commentsText,
-  deleteColumn,
-  deleteComment,
-  deleteRow,
-  formatCells,
-  insertColumn,
-  insertRow,
+  createSpreadsheetTools,
   readStorage,
-  setCellValue,
-  setRangeValues,
   showAiEditing,
   snapshotText,
-  sortByColumn,
 } from "@/lib/spreadsheet-server";
-import { lettersToColIndex } from "@/lib/a1";
 import type { JsonObject } from "@/liveblocks.config";
 
 /**
@@ -171,8 +160,7 @@ async function streamReply(
   model: string | undefined,
   update: UpdateFn
 ) {
-  const { streamText, generateText, Output, tool, stepCountIs } =
-    await import("ai");
+  const { streamText, generateText, Output, stepCountIs } = await import("ai");
   const { z } = await import("zod");
 
   showAiEditing(liveblocks, roomId, null);
@@ -180,115 +168,7 @@ async function streamReply(
   const storage = await readStorage(liveblocks, roomId);
   const comments = await commentsText(liveblocks, roomId, storage);
 
-  const formatSchema = z
-    .object({
-      bold: z.boolean().optional(),
-      italic: z.boolean().optional(),
-      underline: z.boolean().optional(),
-      strike: z.boolean().optional(),
-      align: z.enum(["left", "center", "right"]).optional(),
-      color: z.string().optional(),
-      background: z.string().optional(),
-      numberFormat: z.enum(["general", "currency", "percent"]).optional(),
-    })
-    .describe("Formatting to apply. Colors are hex strings, e.g. #ef4444.");
-
-  const tools = {
-    setCellValue: tool({
-      description: "Set the value of a single cell.",
-      inputSchema: z.object({
-        cell: z.string().describe('A1 reference, e.g. "B2".'),
-        value: z.string(),
-      }),
-      execute: ({ cell, value }) =>
-        setCellValue(liveblocks, roomId, cell, value),
-    }),
-    setRangeValues: tool({
-      description:
-        "Fill a rectangular range starting at a cell with a 2D array of values (row-major).",
-      inputSchema: z.object({
-        start: z.string().describe('Top-left A1 cell, e.g. "A1".'),
-        rows: z.array(z.array(z.string())),
-      }),
-      execute: ({ start, rows }) =>
-        setRangeValues(liveblocks, roomId, start, rows),
-    }),
-    clearRange: tool({
-      description: "Clear the values in a range.",
-      inputSchema: z.object({
-        range: z.string().describe('A1 range, e.g. "A1:C5".'),
-      }),
-      execute: ({ range }) => clearRange(liveblocks, roomId, range),
-    }),
-    formatCells: tool({
-      description: "Apply formatting (bold, color, alignment, …) to a range.",
-      inputSchema: z.object({
-        range: z.string().describe('A1 range, e.g. "A1:C1".'),
-        format: formatSchema,
-      }),
-      execute: ({ range, format }) => {
-        const patch = { ...format };
-        if (patch.numberFormat === "general") {
-          patch.numberFormat = undefined;
-        }
-        return formatCells(liveblocks, roomId, range, patch);
-      },
-    }),
-    sortByColumn: tool({
-      description: "Sort all rows by the values in a column.",
-      inputSchema: z.object({
-        column: z.string().describe('Column letter, e.g. "B".'),
-        direction: z.enum(["asc", "desc"]),
-      }),
-      execute: ({ column, direction }) =>
-        sortByColumn(liveblocks, roomId, column, direction),
-    }),
-    insertRow: tool({
-      description: "Insert an empty row at a 1-based row number.",
-      inputSchema: z.object({ rowNumber: z.number().int().min(1) }),
-      execute: ({ rowNumber }) => insertRow(liveblocks, roomId, rowNumber - 1),
-    }),
-    deleteRow: tool({
-      description: "Delete the row at a 1-based row number.",
-      inputSchema: z.object({ rowNumber: z.number().int().min(1) }),
-      execute: ({ rowNumber }) => deleteRow(liveblocks, roomId, rowNumber - 1),
-    }),
-    insertColumn: tool({
-      description: "Insert an empty column at a column letter.",
-      inputSchema: z.object({ column: z.string() }),
-      execute: ({ column }) =>
-        insertColumn(
-          liveblocks,
-          roomId,
-          Math.max(0, lettersToColIndex(column))
-        ),
-    }),
-    deleteColumn: tool({
-      description: "Delete the column at a column letter.",
-      inputSchema: z.object({ column: z.string() }),
-      execute: ({ column }) =>
-        deleteColumn(
-          liveblocks,
-          roomId,
-          Math.max(0, lettersToColIndex(column))
-        ),
-    }),
-    addComment: tool({
-      description: "Leave a comment thread anchored to a cell.",
-      inputSchema: z.object({ cell: z.string(), text: z.string() }),
-      execute: ({ cell, text }) => addComment(liveblocks, roomId, cell, text),
-    }),
-    deleteComment: tool({
-      description:
-        "Delete the comment thread(s) anchored to one or more cells or ranges.",
-      inputSchema: z.object({
-        cells: z
-          .array(z.string())
-          .describe('A1 cells or ranges, e.g. ["B2", "A1:C5"].'),
-      }),
-      execute: ({ cells }) => deleteComment(liveblocks, roomId, cells),
-    }),
-  };
+  const tools = await createSpreadsheetTools(liveblocks, roomId);
 
   const result = streamText({
     model: model ?? "openai/gpt-5.4-mini",
