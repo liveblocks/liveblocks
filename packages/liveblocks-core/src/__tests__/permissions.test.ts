@@ -227,6 +227,24 @@ describe("permissionMatrixFromScopes", () => {
     expect(hasPermissionAccess(matrix, "comments:personal", "read")).toBe(true);
   });
 
+  test("aggregate comments read is satisfied by visibility-scoped read access", () => {
+    const matrix = permissionMatrixFromScopes([
+      Permission.Read,
+      Permission.CommentsPublicRead,
+      Permission.CommentsPrivateNone,
+      Permission.CommentsPersonalNone,
+    ]);
+
+    expect(hasPermissionAccess(matrix, "comments", "read")).toBe(true);
+    expect(hasPermissionAccess(matrix, "comments:public", "read")).toBe(true);
+    expect(hasPermissionAccess(matrix, "comments:private", "read")).toBe(
+      false
+    );
+    expect(hasPermissionAccess(matrix, "comments:personal", "read")).toBe(
+      false
+    );
+  });
+
   test("feature permissions require a base permission", () => {
     expect(
       hasPermissionAccess(

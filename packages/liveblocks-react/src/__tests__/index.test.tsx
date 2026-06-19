@@ -3,6 +3,7 @@ import { ClientMsgCode, ServerMsgCode, wait } from "@liveblocks/core";
 import { render } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
+import type { ReactNode } from "react";
 import {
   afterAll,
   afterEach,
@@ -14,8 +15,10 @@ import {
   vi,
 } from "vitest";
 
+import { useHasPermissionAccess } from "../_private";
 import { createRoomContext, useRoom as useRoomGlobal } from "../room";
 import {
+  RoomProvider,
   useCanRedo,
   useCanUndo,
   useHistory,
@@ -303,6 +306,28 @@ describe("useOthers", () => {
     // are cleared out
     await wait(100);
     expect(result.current).toEqual([]);
+  });
+});
+
+describe("useHasPermissionAccess", () => {
+  test("optimistically allows writing to scoped comments resources before permission hints arrive", () => {
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <RoomProvider id="room" initialPresence={{ x: 0 }} autoConnect={false}>
+        {children}
+      </RoomProvider>
+    );
+
+    const publicAccess = renderHook(
+      () => useHasPermissionAccess("room", "comments:public", "write"),
+      { wrapper }
+    );
+    const privateAccess = renderHook(
+      () => useHasPermissionAccess("room", "comments:private", "write"),
+      { wrapper }
+    );
+
+    expect(publicAccess.result.current).toBe(true);
+    expect(privateAccess.result.current).toBe(true);
   });
 });
 

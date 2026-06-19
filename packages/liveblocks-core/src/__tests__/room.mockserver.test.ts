@@ -214,6 +214,19 @@ describe("createApiClient", () => {
     ]);
   });
 
+  test("requests aggregate comments read auth when getting thread delta updates", async () => {
+    const { authRequests, client } = createTestApiClient();
+
+    await client.getThreadsSince({
+      roomId: "room-id",
+      since: new Date(0),
+    });
+
+    expect(authRequests).toEqual([
+      { roomId: "room-id", resource: "comments", access: "read" },
+    ]);
+  });
+
   test("requests visibility-specific comments read auth when getting threads with visibility", async () => {
     const { authRequests, client } = createTestApiClient();
 
