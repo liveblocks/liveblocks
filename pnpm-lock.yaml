@@ -463,6 +463,43 @@ importers:
         specifier: ^4.1.4
         version: 4.1.4(@types/node@24.12.2)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@24.12.2)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
 
+  packages/liveblocks-codemirror:
+    dependencies:
+      '@liveblocks/client':
+        specifier: workspace:*
+        version: link:../liveblocks-client
+      '@liveblocks/core':
+        specifier: workspace:*
+        version: link:../liveblocks-core
+    devDependencies:
+      '@codemirror/state':
+        specifier: ^6.6.0
+        version: 6.6.0
+      '@codemirror/view':
+        specifier: ^6.43.1
+        version: 6.43.1
+      '@liveblocks/eslint-config':
+        specifier: workspace:*
+        version: link:../../shared/eslint-config
+      '@liveblocks/rollup-config':
+        specifier: workspace:*
+        version: link:../../shared/rollup-config
+      '@liveblocks/vitest-config':
+        specifier: workspace:*
+        version: link:../../shared/vitest-config
+      eslint:
+        specifier: ^9.39.4
+        version: 9.39.4(jiti@2.6.1)
+      rollup:
+        specifier: 3.28.1
+        version: 3.28.1
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.4
+        version: 4.1.4(@types/node@24.12.2)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@24.12.2)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
+
   packages/liveblocks-core:
     devDependencies:
       '@liveblocks/eslint-config':

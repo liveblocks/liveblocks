@@ -1,0 +1,79 @@
+{
+  "name": "@liveblocks/codemirror",
+  "version": "3.20.0",
+  "description": "CodeMirror collaboration plugins backed by Liveblocks.",
+  "license": "Apache-2.0",
+  "author": "Liveblocks Inc.",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "types": "./dist/index.d.cts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "module": "./dist/index.js",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist/**",
+    "README.md"
+  ],
+  "scripts": {
+    "dev": "rollup --config rollup.config.js --watch",
+    "build": "rollup --config rollup.config.js",
+    "format": "eslint --fix src/; prettier --write src/",
+    "lint": "eslint src/",
+    "lint:package": "publint --strict && attw --pack",
+    "start": "pnpm run dev",
+    "test": "vitest run",
+    "test:ci": "vitest run --coverage",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@liveblocks/client": "workspace:*",
+    "@liveblocks/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "@codemirror/state": "^6",
+    "@codemirror/view": "^6"
+  },
+  "devDependencies": {
+    "@codemirror/state": "^6.6.0",
+    "@codemirror/view": "^6.43.1",
+    "@liveblocks/eslint-config": "workspace:*",
+    "@liveblocks/rollup-config": "workspace:*",
+    "@liveblocks/vitest-config": "workspace:*",
+    "eslint": "^9.39.4",
+    "rollup": "3.28.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.4"
+  },
+  "sideEffects": false,
+  "bugs": {
+    "url": "https://github.com/liveblocks/liveblocks/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/liveblocks/liveblocks.git",
+    "directory": "packages/liveblocks-codemirror"
+  },
+  "homepage": "https://liveblocks.io",
+  "keywords": [
+    "codemirror",
+    "liveblocks",
+    "real-time",
+    "collaboration",
+    "collaborative",
+    "presence",
+    "crdts",
+    "synchronize",
+    "rooms",
+    "documents"
+  ]
+}
