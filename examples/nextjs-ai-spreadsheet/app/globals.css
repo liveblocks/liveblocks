@@ -128,7 +128,7 @@
 }
 
 .lb-portal {
-  z-index: 50;
+  z-index: 500;
 }
 
 /* Cell content (value + formatting + presence borders) is painted imperatively
