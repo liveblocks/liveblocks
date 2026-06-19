@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 import { HotTable, type HotTableRef } from "@handsontable/react-wrapper";
 import { registerAllModules } from "handsontable/registry";
 import type { CellChange, ChangeSource } from "handsontable/common";
+import { HyperFormula } from "hyperformula";
 import { shallow } from "@liveblocks/client";
 import {
   useOthers,
@@ -353,6 +354,7 @@ export function Table() {
       if (!changes || source === "loadData") {
         return;
       }
+      const instance = hotRef.current?.hotInstance;
       for (const [visualRow, prop, , newVal] of changes) {
         if (typeof prop !== "number") {
           continue;
@@ -362,10 +364,13 @@ export function Table() {
         if (!rowId || !colId) {
           continue;
         }
+        // With the Formulas plugin, `newVal` is the *computed* result. Persist
+        // the underlying source instead
+        const source = instance?.getSourceDataAtCell(visualRow, prop) ?? newVal;
         actions.setCellValue(
           rowId,
           colId,
-          newVal === null || newVal === undefined ? "" : String(newVal)
+          source === null || source === undefined ? "" : String(source)
         );
       }
     },
@@ -507,6 +512,7 @@ export function Table() {
         className="ht-theme-main w-full h-full"
         data={data}
         hotRenderer={renderCell}
+        formulas={{ engine: HyperFormula }}
         colHeaders={colHeaders}
         rowHeaders={rowHeaders}
         colWidths={colWidths}

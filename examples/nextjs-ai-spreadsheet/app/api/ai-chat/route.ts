@@ -126,6 +126,10 @@ const SYSTEM_PROMPT = [
   "changes, make them. Reference cells in A1 notation (e.g. B2, A1:C5).",
   "Prefer `setRangeValues` to fill tables in one call. You don't need to clear",
   "cells first — `setRangeValues` and `setCellValue` overwrite existing values.",
+  "You can write spreadsheet formulas as cell values (anything starting with",
+  "`=`, e.g. `=SUM(A1:A5)`, `=A2*B2`, `=AVERAGE(B:B)`); they're evaluated",
+  "automatically by HyperFormula. Prefer formulas over pre-computed numbers for",
+  "totals and other derived values, so they stay correct when inputs change.",
   "Keep your chat replies short (one or two sentences) and describe what you",
   "did. Reply in Markdown.",
   "Use comments to highlight problems in the sheet: when you spot an error,",
@@ -136,11 +140,12 @@ const SYSTEM_PROMPT = [
 ].join(" ");
 
 // What the AI's tools can actually do — used to keep generated follow-up
-// suggestions within the app's real capabilities (e.g. don't suggest borders or
-// formulas, which aren't supported).
 const CAPABILITIES = [
   "The assistant can ONLY do the following to the spreadsheet:",
   "- Set a single cell's value, or fill a rectangular range with values.",
+  "- Write spreadsheet formulas in cells, e.g. `=SUM(A1:A5)`, `=A1*B1`,",
+  '  `=AVERAGE(B2:B10)`, `=IF(A1>10,"high","low")`. They\'re evaluated',
+  "  automatically (HyperFormula, ~Excel-compatible functions).",
   "- Clear the values in a range.",
   "- Format cells: bold, italic, underline, strikethrough, horizontal",
   "  alignment (left/center/right), text color, fill (background) color, and",
@@ -148,8 +153,8 @@ const CAPABILITIES = [
   "- Sort all rows by a column (ascending or descending).",
   "- Insert or delete a row or a column.",
   "- Add or delete a comment thread on a cell.",
-  "It CANNOT: add borders, write formulas/calculations, merge cells, create",
-  "charts, freeze rows/columns, add images, or change fonts/font sizes.",
+  "It CANNOT: add borders, merge cells, create charts, freeze rows/columns,",
+  "add images, or change fonts/font sizes.",
   "Only suggest actions from the supported list above.",
 ].join("\n");
 
