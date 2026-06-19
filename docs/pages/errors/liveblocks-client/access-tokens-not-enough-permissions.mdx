@@ -29,7 +29,7 @@ In your auth endpoint, when the request's property `room` is undefined, you
 should create a token that grants access to multiple rooms. Example:
 
 ```
-session.allow("orga1*", session.FULL_ACCESS);
+session.allow("org1*", ["*:write"]);
 ```
 
 Learn more about

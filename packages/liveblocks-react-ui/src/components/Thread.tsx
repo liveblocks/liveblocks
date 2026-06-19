@@ -6,14 +6,13 @@ import {
   type DCM,
   type DTM,
   findLastIndex,
-  Permission,
   type ThreadData,
 } from "@liveblocks/core";
 import {
+  useHasPermissionAccess,
   useMarkRoomThreadAsRead,
   useMarkRoomThreadAsResolved,
   useMarkRoomThreadAsUnresolved,
-  useRoomPermissions,
   useRoomThreadSubscription,
 } from "@liveblocks/react/_private";
 import { Toggle as TogglePrimitive } from "radix-ui";
@@ -439,12 +438,11 @@ export const Thread = forwardRef(
       }
     }, [unreadIndex]);
 
-    const permissions = useRoomPermissions(thread.roomId);
-    const canComment =
-      permissions.size > 0
-        ? permissions.has(Permission.CommentsWrite) ||
-          permissions.has(Permission.Write)
-        : true;
+    const canComment = useHasPermissionAccess(
+      thread.roomId,
+      "comments",
+      "write"
+    );
 
     const stopPropagation = useCallback((event: SyntheticEvent) => {
       event.stopPropagation();

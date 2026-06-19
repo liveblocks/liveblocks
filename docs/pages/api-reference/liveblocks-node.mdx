@@ -49,7 +49,8 @@ const { body, status } = await liveblocks.identifyUser({
 ```
 
 <Banner>
-  Learn how to [get started with ID tokens](/docs/authentication).
+  Learn how to
+  [get started with ID tokens](/docs/authentication#id-token).
 </Banner>
 
 A number of options are also available, enabling you to set up permissions and
@@ -90,8 +91,8 @@ expired.
 ##### Granting ID token permissions
 
 You can pass additional options to `identifyUser`, enabling you to create
-complex [workspace permissions](/docs/authentication#permissions) and
-[room permissions](/docs/authentication#Room-permissions). For example, this
+complex [workspace permissions](/docs/authentication#id-token-workspace-permissions) and
+[room permissions](/docs/authentication#id-token-room-permissions). For example, this
 user can only see resources in the `acme-corp` workspace, and they’re part of a
 `marketing` rooms group within it.
 
@@ -113,7 +114,7 @@ const { body, status } = await liveblocks.identifyUser({
 ```
 
 <Banner>
-  Learn more about [ID token permissions](/docs/authentication#permissions).
+  Learn more about [ID token permissions](/docs/authentication#id-token-room-permissions).
 </Banner>
 
 ##### Text editor user data
@@ -183,10 +184,11 @@ console.log(currentUser.info.avatar);
 The purpose of this API is to help you implement your custom authentication back
 end (i.e. the _server_ part of the diagram). You use the
 `liveblocks.identifyUser()` API if you’d like to issue
-[ID tokens](/docs/authentication/id-token) from your back end. An ID token does
-not grant any permissions in the token directly. Instead, it only securely
-identifies your user, and then uses any permissions set via the [Permissions
-REST API][] to decide whether to allow the user on a room-by-room basis.
+[ID tokens](/docs/authentication#id-token-authenticating) from your back end. An
+ID token does not grant any permissions in the token directly. Instead, it only
+securely identifies your user, and then uses any permissions set via the
+[Permissions REST API][] to decide whether to allow the user on a room-by-room
+basis.
 
 Use this approach if you’d like Liveblocks to be the source of truth for your
 user’s permissions.
@@ -251,7 +253,7 @@ their avatar URL.
 
 Here’s a real-world example of ID tokens in a Next.js route handler/endpoint.
 You can find examples for other frameworks in our
-[authentication section](/docs/authentication/id-token).
+[authentication section](/docs/authentication#select-your-framework).
 
 ```ts file="Next.js"
 import { Liveblocks } from "@liveblocks/node";
@@ -355,14 +357,14 @@ const session = liveblocks.prepareSession(
 );
 
 // Giving access to an individual rooms
-session.allow("room-id-1", session.FULL_ACCESS);
+session.allow("room-id-1", ["*:write"]);
 
 // Giving read-only access to this room
-session.allow("room-id-2", session.READ_ACCESS);
+session.allow("room-id-2", ["*:read"]);
 
 // Giving access to multiple rooms with a wildcard
 // `design-room-1`, `design-room-2`, etc.
-session.allow("design-room:*", session.FULL_ACCESS);
+session.allow("design-room:*", ["*:write"]);
 ```
 
 <Banner>
@@ -518,10 +520,10 @@ To implement your back end, follow these steps:
     <StepTitle>Decide which permissions to allow this session</StepTitle>
     <StepContent>
       ```ts showLineNumbers={false}
-      session.allow("my-room-1", session.FULL_ACCESS);
-      session.allow("my-room-2", session.FULL_ACCESS);
-      session.allow("my-room-3", session.FULL_ACCESS);
-      session.allow("my-team:*", session.READ_ACCESS);
+      session.allow("my-room-1", ["*:write"]);
+      session.allow("my-room-2", ["*:write"]);
+      session.allow("my-room-3", ["*:write"]);
+      session.allow("my-team:*", ["*:read"]);
       ```
 
       <Banner title="Be diligent" type="warning">
@@ -585,7 +587,7 @@ export async function POST(request: Request) {
   // Implement your own security, and give the user access to the room
   const { room } = await request.json();
   if (room && __shouldUserHaveAccess__(user, room)) {
-    session.allow(room, session.FULL_ACCESS);
+    session.allow(room, ["*:write"]);
   }
 
   // Retrieve a token from the Liveblocks servers and pass it to the
@@ -766,15 +768,16 @@ rooms to delete.
 #### Liveblocks.createRoom [#post-rooms]
 
 Programmatically creates a new room from a room ID. The `defaultAccesses` option
-is required. Setting `defaultAccesses` to `["room:write"]` creates a public
-room, whereas setting it to `[]` will create a private room that needs
-[ID token permission to enter](/docs/authentication/id-token). This is a wrapper
-around the [Create Room API](/docs/api-reference/rest-api-endpoints#post-rooms)
-and returns the same response.
+is required. Setting `defaultAccesses` to `["*:write"]` creates a public room,
+whereas setting it to `[]` will create a private room that needs
+[ID token permission to enter](/docs/authentication#id-token-room-permissions).
+This is a wrapper around the
+[Create Room API](/docs/api-reference/rest-api-endpoints#post-rooms) and returns
+the same response.
 
 ```ts
 const room = await liveblocks.createRoom("my-room-id", {
-  defaultAccesses: ["room:write"],
+  defaultAccesses: ["*:write"],
 });
 
 // { type: "room", id: "my-room-id", metadata: {...}, ... }
@@ -786,18 +789,18 @@ and attach custom metadata.
 
 ```ts
 const room = await liveblocks.createRoom("my-room-id", {
-  // The default room permissions. `[]` for private, `["room:write"]` for public.
+  // The default room permissions. `[]` for private, `["*:write"]` for public.
   defaultAccesses: [],
 
   // Optional, the room's group ID permissions
   groupsAccesses: {
-    design: ["room:write"],
-    engineering: ["room:presence:write", "room:read"],
+    design: ["*:write"],
+    engineering: ["*:read"],
   },
 
   // Optional, the room's user ID permissions
   usersAccesses: {
-    "my-user-id": ["room:write"],
+    "my-user-id": ["*:write"],
   },
 
   // Optional, custom metadata to attach to the room
@@ -812,7 +815,8 @@ const room = await liveblocks.createRoom("my-room-id", {
 
 Group and user permissions are only used with
 [ID token authorization](/docs/api-reference/liveblocks-node#id-tokens), learn
-more about [managing permission with ID tokens](/docs/authentication/id-token).
+more about
+[managing permission with ID tokens](/docs/authentication#id-token-room-permissions).
 
 #### Liveblocks.getRoom [#get-rooms-roomId]
 
@@ -831,16 +835,16 @@ console.log(room);
 #### Liveblocks.getOrCreateRoom [#get-or-create-rooms-roomId]
 
 Get a room by its ID. If the room doesn’t exist, create it instead. The
-`defaultAccesses` option is required. Setting `defaultAccesses` to
-`["room:write"]` creates a public room, whereas setting it to `[]` will create a
-private room that needs
-[ID token permission to enter](/docs/authentication/id-token). Returns the same
-response as the
+`defaultAccesses` option is required. Setting `defaultAccesses` to `["*:write"]`
+creates a public room, whereas setting it to `[]` will create a private room
+that needs
+[ID token permission to enter](/docs/authentication#id-token-room-permissions).
+Returns the same response as the
 [Create Room API](/docs/api-reference/rest-api-endpoints#post-rooms).
 
 ```ts
 const room = await liveblocks.getOrCreateRoom("my-room-id", {
-  defaultAccesses: ["room:write"],
+  defaultAccesses: ["*:write"],
 });
 
 // { type: "room", id: "my-room-id", metadata: {...}, ... }
@@ -852,18 +856,18 @@ and attach custom metadata.
 
 ```ts
 const room = await liveblocks.getOrCreateRoom("my-room-id", {
-  // The default room permissions. `[]` for private, `["room:write"]` for public.
+  // The default room permissions. `[]` for private, `["*:write"]` for public.
   defaultAccesses: [],
 
   // Optional, the room's group ID permissions
   groupsAccesses: {
-    design: ["room:write"],
-    engineering: ["room:presence:write", "room:read"],
+    design: ["*:write"],
+    engineering: ["*:read"],
   },
 
   // Optional, the room's user ID permissions
   usersAccesses: {
-    "my-user-id": ["room:write"],
+    "my-user-id": ["*:write"],
   },
 
   // Optional, custom metadata to attach to the room
@@ -878,7 +882,8 @@ const room = await liveblocks.getOrCreateRoom("my-room-id", {
 
 Group and user permissions are only used with
 [ID token authorization](/docs/api-reference/liveblocks-node#id-tokens), learn
-more about [managing permission with ID tokens](/docs/authentication/id-token).
+more about
+[managing permission with ID tokens](/docs/authentication#id-token-room-permissions).
 
 #### Liveblocks.updateRoom [#post-rooms-roomId]
 
@@ -903,18 +908,18 @@ delete the property.
 
 ```ts
 const room = await liveblocks.updateRoom("my-room-id", {
-  // Optional, update the default room permissions. `[]` for private, `["room:write"]` for public.
+  // Optional, update the default room permissions. `[]` for private, `["*:write"]` for public.
   defaultAccesses: [],
 
   // Optional, update the room's group ID permissions
   groupsAccesses: {
-    design: ["room:write"],
-    engineering: ["room:presence:write", "room:read"],
+    design: ["*:write"],
+    engineering: ["*:read"],
   },
 
   // Optional, update the room's user ID permissions
   usersAccesses: {
-    "my-user-id": ["room:write"],
+    "my-user-id": ["*:write"],
   },
 
   // Optional, custom metadata to update on the room
@@ -926,16 +931,17 @@ const room = await liveblocks.updateRoom("my-room-id", {
 
 Group and user permissions are only used with
 [ID token authorization](/docs/api-reference/liveblocks-node#id-tokens), learn
-more about [managing permission with ID tokens](/docs/authentication/id-token).
+more about
+[managing permission with ID tokens](/docs/authentication#id-token-room-permissions).
 
 #### Liveblocks.upsertRoom [#upsert-rooms-roomId]
 
 Update a room’s properties by its ID. If the room doesn’t exist, create it
 instead. The `defaultAccesses` option is required. Setting `defaultAccesses` to
-`["room:write"]` creates a public room, whereas setting it to `[]` will create a
+`["*:write"]` creates a public room, whereas setting it to `[]` will create a
 private room that needs
-[ID token permission to enter](/docs/authentication/id-token). Returns the same
-response as the
+[ID token permission to enter](/docs/authentication#id-token-room-permissions).
+Returns the same response as the
 [Create Room API](/docs/api-reference/rest-api-endpoints#post-rooms).
 
 ```ts
@@ -946,7 +952,7 @@ const room = await liveblocks.upsertRoom("my-room-id", {
   },
   // These fields will only be set when the room will get created
   create: {
-    defaultAccesses: ["room:write"],
+    defaultAccesses: ["*:write"],
   },
 });
 
@@ -960,18 +966,18 @@ permissions and attach custom metadata.
 ```ts
 const room = await liveblocks.upsertRoom("my-room-id", {
   update: {
-    // The default room permissions. `[]` for private, `["room:write"]` for public.
+    // The default room permissions. `[]` for private, `["*:write"]` for public.
     defaultAccesses: [],
 
     // Optional, the room's group ID permissions
     groupsAccesses: {
-      design: ["room:write"],
-      engineering: ["room:presence:write", "room:read"],
+      design: ["*:write"],
+      engineering: ["*:read"],
     },
 
     // Optional, the room's user ID permissions
     usersAccesses: {
-      "my-user-id": ["room:write"],
+      "my-user-id": ["*:write"],
     },
 
     // Optional, custom metadata to attach to the room
@@ -984,7 +990,8 @@ const room = await liveblocks.upsertRoom("my-room-id", {
 
 Group and user permissions are only used with
 [ID token authorization](/docs/api-reference/liveblocks-node#id-tokens), learn
-more about [managing permission with ID tokens](/docs/authentication/id-token).
+more about
+[managing permission with ID tokens](/docs/authentication#id-token-room-permissions).
 
 #### Liveblocks.deleteRoom [#delete-rooms-roomId]
 
@@ -1438,7 +1445,7 @@ and returns the same response.
 ```ts
 // Create a new room
 const room = await liveblocks.createRoom("my-room-id", {
-  defaultAccesses: ["room:write"],
+  defaultAccesses: ["*:write"],
 });
 
 // Initialize Storage
@@ -1458,7 +1465,7 @@ import { toPlainLson, LiveList, LiveObject } from "@liveblocks/client";
 
 // Create a new room
 const room = await liveblocks.createRoom("my-room-id", {
-  defaultAccesses: ["room:write"],
+  defaultAccesses: ["*:write"],
 });
 
 // If this were your Storage type...
@@ -1487,7 +1494,7 @@ It’s also possible to create plain LSON manually, without the helper function.
 ```ts highlight="9-11,17-23"
 // Create a new room
 const room = await liveblocks.createRoom("my-room-id", {
-  defaultAccesses: ["room:write"],
+  defaultAccesses: ["*:write"],
 });
 
 // If this were your Storage type...
@@ -4160,4 +4167,4 @@ if (isCustomNotificationEvent(event)) {
 The check is made against the event type and event data kind.
 
 [`room.getothers`]: /docs/api-reference/liveblocks-client#Room.getOthers
-[Permissions REST API]: /docs/authentication/id-token
+[Permissions REST API]: /docs/authentication#id-token-room-permissions

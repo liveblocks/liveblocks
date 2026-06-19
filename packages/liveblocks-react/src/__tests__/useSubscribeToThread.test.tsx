@@ -53,7 +53,7 @@ describe("useSubscribeToThread", () => {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
             permissionHints: {
-              [roomId]: [Permission.Write],
+              [roomId]: [Permission.RoomWrite],
             },
           },
         });
@@ -134,7 +134,7 @@ describe("useSubscribeToThread", () => {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
             permissionHints: {
-              [roomId]: [Permission.Write],
+              [roomId]: [Permission.RoomWrite],
             },
           },
         });

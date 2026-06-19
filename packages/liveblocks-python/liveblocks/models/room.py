@@ -22,18 +22,17 @@ class Room:
     Example:
         {'type': 'room', 'id': 'my-room-id', 'lastConnectionAt': '2022-08-04T21:07:09.380Z', 'createdAt':
             '2022-07-13T14:32:50.697Z', 'organizationId': 'org_123456789', 'metadata': {'color': 'blue', 'type':
-            'whiteboard'}, 'defaultAccesses': ['room:write'], 'groupsAccesses': {'marketing': ['room:write']},
-            'usersAccesses': {'alice': ['room:write']}}
+            'whiteboard'}, 'defaultAccesses': ['*:write'], 'groupsAccesses': {'marketing': ['*:write']}, 'usersAccesses':
+            {'alice': ['*:write']}}
 
     Attributes:
         id (str):
         type_ (RoomType):
         organization_id (str): The organization ID associated with this room.
         created_at (datetime.datetime):
-        default_accesses (list[RoomPermissionItem]):  Example: ['room:read', 'room:presence:write'].
-        users_accesses (RoomAccesses):  Example: {'alice': ['room:write'], 'bob': ['room:read', 'room:presence:write']}.
-        groups_accesses (RoomAccesses):  Example: {'alice': ['room:write'], 'bob': ['room:read',
-            'room:presence:write']}.
+        default_accesses (list[RoomPermissionItem]):  Example: ['*:read'].
+        users_accesses (RoomAccesses):  Example: {'alice': ['*:write'], 'bob': ['*:read']}.
+        groups_accesses (RoomAccesses):  Example: {'alice': ['*:write'], 'bob': ['*:read']}.
         metadata (RoomMetadata):  Example: {'color': 'blue', 'type': 'whiteboard'}.
         last_connection_at (datetime.datetime | Unset):
     """

@@ -37,6 +37,8 @@ import type {
   MentionData,
   OpaqueClient,
   OpaqueRoom,
+  PermissionResources,
+  RequiredAccessLevel,
   RoomEventMessage,
   RoomSubscriptionSettings,
   SignalType,
@@ -52,6 +54,7 @@ import {
   DefaultMap,
   errorIf,
   getSubscriptionKey,
+  hasPermissionAccess,
   HttpError,
   kInternal,
   makePoller,
@@ -164,7 +167,7 @@ function makeMutationContext<
 
   return {
     get storage() {
-      const mutableRoot = room.getStorageSnapshot();
+      const mutableRoot = room.getStorageOrNull();
       if (mutableRoot === null) {
         throw new Error(needsStorage);
       }
@@ -473,7 +476,6 @@ function RoomProviderInner<
       initialPresence: props.initialPresence,
       initialStorage: props.initialStorage,
       autoConnect: props.autoConnect ?? typeof window !== "undefined",
-      engine: props.engine,
     },
     roomId
   ) as EnterOptions<P, S>;
@@ -1360,7 +1362,7 @@ function useMutableStorageRoot_withRoomContext<S extends LsonObject>(
     RoomContext
   );
   const subscribe = room.events.storageDidLoad.subscribeOnce;
-  const getSnapshot = room.getStorageSnapshot;
+  const getSnapshot = room.getStorageOrNull;
   const getServerSnapshot = alwaysNull;
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
@@ -3709,7 +3711,61 @@ function useAttachmentUrlSuspense(attachmentId: string) {
 function useRoomPermissions(roomId: string) {
   const client = useClient();
   const store = getRoomExtrasForClient(client).store;
-  return useSignal(store.permissionHints.getPermissionForRoomΣ(roomId));
+  return useSignal(store.permissionHints.getPermissionForRoomΣ(roomId))
+    ?.permissions;
+}
+
+/**
+ * @private For internal use only. Do not rely on this hook.
+ */
+function useHasPermissionAccess(
+  roomId: string,
+  resource: PermissionResources,
+  requiredAccess: RequiredAccessLevel
+): boolean {
+  const permissions = useRoomPermissions(roomId);
+  const fallback = useSelfAccessFallback(roomId, resource, requiredAccess);
+
+  return permissions !== undefined
+    ? hasPermissionAccess(permissions, resource, requiredAccess)
+    : fallback;
+}
+
+// Permission hints come from REST; until they exist, fall back to scopes from
+// the room connection (same optimistic defaults as isStorageWritable).
+function useSelfAccessFallback(
+  roomId: string,
+  resource: PermissionResources,
+  requiredAccess: RequiredAccessLevel
+): boolean {
+  const room = useRoom_withRoomContext(GlobalRoomContext, {
+    allowOutsideRoom: true,
+  });
+
+  const subscribe = useCallback(
+    (callback: () => void) => {
+      if (room === null || room.id !== roomId) {
+        return () => {};
+      }
+
+      return room.events.self.subscribe(callback);
+    },
+    [room, roomId]
+  );
+
+  const getSnapshot = useCallback(() => {
+    const self = room?.id === roomId ? room.getSelf() : null;
+    if (resource === "comments" && requiredAccess === "write") {
+      return self?.canComment ?? true;
+    }
+    if (resource === "storage" && requiredAccess === "write") {
+      return self?.canWrite ?? true;
+    }
+
+    return false;
+  }, [resource, requiredAccess, room, roomId]);
+
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
 /**
@@ -4949,6 +5005,7 @@ export {
   _useFeedMessagesSuspense as useFeedMessagesSuspense,
   _useFeeds as useFeeds,
   _useFeedsSuspense as useFeedsSuspense,
+  useHasPermissionAccess,
   useHistory,
   useHistoryVersionData,
   _useHistoryVersions as useHistoryVersions,

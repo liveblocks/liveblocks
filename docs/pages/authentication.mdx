@@ -45,16 +45,28 @@ prototyping and public applications.
 
 ---
 
-## How ID token authentication works
+Authentication and permissions solve two different problems:
 
-ID token authentication allows Liveblocks to handle permissions for you. This
-means that when you create or modify a room, you can set a user’s permissions on
-the room itself. This means the room acts as a source of truth. Later, when a
-user tries to enter a room, Liveblocks will automatically check if the user has
-permission, and deny them access if the permissions aren’t set.
+- **Authentication** confirms who the current user is (`userId`) and optionally
+  which workspace they belong to (`organizationId`).
+- **Permissions** define what an authenticated user can do with Liveblocks
+  resources such as rooms, comments, and feeds.
+  [Learn how permissions work](/docs/authentication/permissions).
 
-Permissions aren’t just for individual users, but can also be set for groups of
-users, or for the whole room at once.
+## Authenticate users with ID tokens [#id-token]
+
+For production applications, we recommend using your secret API key to
+authenticate users with **ID tokens**. Your public API key is only for
+prototyping and public applications.
+
+ID token authentication lets Liveblocks handle permissions for you. When you
+create or update a room, you set permissions on the room itself, making the room
+the source of truth. Later, when a user tries to enter the room, Liveblocks
+checks those permissions and denies access when the user isn’t allowed in.
+
+Permissions can be set for individual users, groups of users, or the whole room.
+For available permission formats and scopes, see the
+[permissions](/docs/authentication/permissions) page.
 
 <Figure>
   <Image
@@ -66,7 +78,7 @@ users, or for the whole room at once.
   />
 </Figure>
 
-<Banner title="You prefer to handle permissions yourself?">
+<Banner title="Prefer to handle permissions yourself?">
 
 If you don’t need fine-grained permissions, or if you’d prefer storing
 individual room permissions in your own system, you can use
@@ -74,12 +86,12 @@ individual room permissions in your own system, you can use
 
 </Banner>
 
-## Authenticating
+### Authenticating [#id-token-authenticating]
 
 Authenticating with ID tokens means creating a
-[JSON Web Token](https://en.wikipedia.org/wiki/JSON_Web_Token) (JWT) that’s used
-to verify the identity of the current user when connecting to a Liveblocks room.
-This token is created using
+[JSON Web Token](https://en.wikipedia.org/wiki/JSON_Web_Token) (JWT) that
+identifies the current user when they connect to a Liveblocks room. Create this
+token with
 [`liveblocks.identifyUser`](/docs/api-reference/liveblocks-node#id-tokens) or
 [`/identify-user`](/docs/api-reference/rest-api-endpoints#post-identify-user).
 
@@ -92,7 +104,7 @@ const { body, status } = await liveblocks.identifyUser({
 console.log(body);
 ```
 
-## Workspace permissions [#permissions]
+### Workspace permissions [#id-token-workspace-permissions]
 
 Using [organizations](/docs/authentication/organizations), you can create
 workspaces in your application, compartmentalizing all resources such as inbox
@@ -111,11 +123,10 @@ customers/organizations.
   />
 </Figure>
 
-### Set up workspace permissions
+#### Set up workspace permissions
 
-To set up workspace permissions, pass an `organizationId` when authenticating a
-user, ensuring that the user will only have access to resources within this
-workspace.
+To set up workspace permissions, pass an `organizationId` when authenticating
+the user. The user will only be able to access resources in that organization.
 
 ```ts
 const { body, status } = await liveblocks.identifyUser({
@@ -134,7 +145,7 @@ When creating a resource on the server, such as a room, pass the
 
 ```ts
 const room = await liveblocks.createRoom("my-room-id", {
-  defaultAccesses: ["room:write"],
+  defaultAccesses: ["*:write"],
   // +++
   organizationId: "my-organization-id",
   // +++
@@ -144,7 +155,7 @@ const room = await liveblocks.createRoom("my-room-id", {
 console.log(room);
 ```
 
-## Room permissions
+### Room permissions [#id-token-room-permissions]
 
 ID token authentication allows you to set different permission types on rooms,
 assigned at three different levels: default, groups, and users. The system is
@@ -170,44 +181,12 @@ const room = await liveblocks.createRoom("a32wQXid4A9", {
 
   // But Olivier can enter
   usersAccesses: {
-    "olivier@example.com": ["room:read"],
+    "olivier@example.com": ["*:read"],
   },
 });
 ```
 
-### Permission types [#permission-types]
-
-There are three permission values that you can set on rooms.
-
-<dl>
-  <dt>`["room:write"]`</dt>
-  <dd>
-    Full access. Enables people to view and edit the room, and create comments.
-    On the client,
-    [`canWrite`](/docs/api-reference/liveblocks-react#Checking-user-permissions)
-    is `true`.
-  </dd>
-  <dt>`["room:read", "room:presence:write", "comments:write"]`</dt>
-  <dd>
-    Read access with comment creation and presence. Enables people to create
-    comments and edit their presence, but only view the room&rsquo;s storage. On
-    the client,
-    [`canWrite`](/docs/api-reference/liveblocks-react#Checking-user-permissions)
-    is `false`.
-  </dd>
-  <dt>`["room:read", "room:presence:write"]`</dt>
-  <dd>
-    Read access with presence. Enables people to edit their presence, but only
-    view the room&rsquo;s storage. Users can view comments, but not interact
-    with them. On the client,
-    [`canWrite`](/docs/api-reference/liveblocks-react#Checking-user-permissions)
-    is `false`.
-  </dd>
-  <dt>`[]`</dt>
-  <dd>Private. No one can enter the room.</dd>
-</dl>
-
-### Permission levels [#permission-types]
+#### Permission levels [#id-token-permission-types]
 
 Permission types can be applied at three different levels, enabling complex
 entry systems.
@@ -222,9 +201,9 @@ entry systems.
 </dl>
 
 Each level further down will override access levels defined above, for example a
-room with private access will allow a user with `room:write` access to enter.
+room with private access will allow a user with `*:write` access to enter.
 
-### Default room permissions
+#### Default room permissions
 
 The `defaultAccesses` level is used to set the default permissions of the entire
 room.
@@ -247,21 +226,21 @@ access level to your room.
 "defaultAccesses": []
 
 // Public - everyone can edit and view the room
-"defaultAccesses": ["room:write"]
+"defaultAccesses": ["*:write"]
 
-// Read-only - everyone can view the room, but only presence can be edited
-"defaultAccesses": ["room:read", "room:presence:write"]
+// Read-only - everyone can view the room
+"defaultAccesses": ["*:read"]
 ```
 
-#### Setting room access
+##### Setting room access
 
-We can use the
+We can use
 [`liveblocks.createRoom`](/docs/api-reference/rest-api-endpoints#post-rooms) to
 create a new room with public access levels:
 
 ```ts highlight="2"
 const room = await liveblocks.createRoom("a32wQXid4A9", {
-  defaultAccesses: ["room:write"],
+  defaultAccesses: ["*:write"],
 });
 ```
 
@@ -275,10 +254,10 @@ const room = await liveblocks.updateRoom("a32wQXid4A9", {
 });
 ```
 
-### Groups permissions
+#### Groups permissions
 
 The `groupsAccesses` level is used to set the default permissions of any given
-group within room.
+group within a room.
 
 <Figure>
   <video autoPlay loop muted playsInline>
@@ -313,11 +292,11 @@ and an array of permissions as the value.
 ```ts
 // "engineering" group has access to view and edit
 "groupsAccesses": {
-  "engineering": ["room:write"],
+  "engineering": ["*:write"],
 }
 ```
 
-#### Modifying group access [#permissions-levels-groups-accesses-example]
+##### Modifying group access
 
 To allow an “engineering” group access to view a room, and modify their
 presence, we can use
@@ -327,7 +306,7 @@ with `engineering` as a `groupId`:
 ```ts highlight="3"
 const room = await liveblocks.updateRoom("a32wQXid4A9", {
   groupsAccesses: {
-    engineering: ["room:read", "room:presence:write"],
+    engineering: ["*:read"],
   },
 });
 ```
@@ -345,7 +324,7 @@ const room = await liveblocks.updateRoom("a32wQXid4A9", {
 });
 ```
 
-### User permissions
+#### User permissions
 
 The `usersAccesses` level is used to set permissions of any given user within a
 room.
@@ -378,16 +357,16 @@ export async function POST(request: Request) {
 ```
 
 Then, if you want the user with the `userId` id to make edits, set `userId` to
-`["room:write"]` within `usersAccesses` when creating or updating a room.
+`["*:write"]` within `usersAccesses` when creating or updating a room.
 
 ```ts
 // user with userId "ellen@acme.inc" has access to view and edit
 "usersAccesses": {
-  "ellen@acme.inc": ["room:write"]
+  "ellen@acme.inc": ["*:write"]
 }
 ```
 
-#### Checking user access [#permissions-levels-users-accesses-example]
+##### Checking user access
 
 To give them room permission, we can use
 [`liveblocks.updateRoom`](/docs/api-reference/liveblocks-node#post-rooms-roomId),
@@ -396,19 +375,19 @@ setting write access on their `userId`:
 ```ts highlight="3"
 const room = await liveblocks.updateRoom("a32wQXid4A9", {
   usersAccesses: {
-    "ellen@acme.inc": ["room:write"],
+    "ellen@acme.inc": ["*:write"],
   },
 });
 ```
 
 To check a user’s assigned permission types for this room, we can then use
-[`liveblocks.updateRoom`](/docs/api-reference/liveblocks-node#get-rooms-roomId)
-and check `usersAccesses`:
+[`liveblocks.getRoom`](/docs/api-reference/liveblocks-node#get-rooms-roomId) and
+check `usersAccesses`:
 
 ```ts
 const room = await liveblocks.getRoom("a32wQXid4A9");
 
-// { "ellen@acme.inc": ["room:write"] }
+// { "ellen@acme.inc": ["*:write"] }
 console.log(room.data.usersAccesses);
 ```
 

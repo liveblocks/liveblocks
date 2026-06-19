@@ -33,7 +33,7 @@ export async function POST() {
   // Use a naming pattern to allow access to rooms with a wildcard
   session.allow(
     `liveblocks:notifications-settings-examples:*`,
-    session.FULL_ACCESS
+    ["*:write"]
   );
 
   // Authorize the user and return the result
