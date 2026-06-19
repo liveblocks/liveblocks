@@ -1,6 +1,6 @@
 export const AI_USER_ID = "ai-assistant";
 export const AI_USER_NAME = "Liveblocks AI";
-export const AI_USER_COLOR = "#4444ff";
+export const AI_USER_COLOR = "#b282fa";
 export const AI_USER_AVATAR =
   "https://liveblocks.io/api/avatar?u=ai-assistant&agent=true";
 
