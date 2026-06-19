@@ -1733,6 +1733,8 @@
                           ],
                           "createdAt": "2019-08-24T14:15:22Z",
                           "metadata": {},
+                          "resolved": false,
+                          "visibility": "public",
                           "updatedAt": "2019-08-24T14:15:22Z"
                         }
                       ]
@@ -1799,9 +1801,12 @@
                         }
                       ],
                       "createdAt": "2022-07-13T14:32:50.697Z",
+                      "updatedAt": "2022-07-13T14:32:50.697Z",
                       "metadata": {
                         "color": "blue"
-                      }
+                      },
+                      "resolved": false,
+                      "visibility": "public"
                     }
                   }
                 }
@@ -1911,6 +1916,8 @@
                       ],
                       "createdAt": "2019-08-24T14:15:22Z",
                       "metadata": {},
+                      "resolved": false,
+                      "visibility": "public",
                       "updatedAt": "2019-08-24T14:15:22Z"
                     }
                   }
@@ -8079,7 +8086,8 @@
               "createdAt": "2022-07-13T14:32:50.697Z",
               "updatedAt": "2022-07-13T14:32:50.697Z",
               "metadata": {},
-              "resolved": false
+              "resolved": false,
+              "visibility": "public"
             }
           ]
         }
