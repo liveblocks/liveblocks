@@ -131,6 +131,9 @@ importers:
       '@liveblocks/client':
         specifier: workspace:*
         version: link:../../packages/liveblocks-client
+      '@liveblocks/codemirror':
+        specifier: workspace:*
+        version: link:../../packages/liveblocks-codemirror
       '@liveblocks/node':
         specifier: workspace:*
         version: link:../../packages/liveblocks-node

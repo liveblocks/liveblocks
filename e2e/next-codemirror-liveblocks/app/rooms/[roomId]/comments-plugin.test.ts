@@ -8,8 +8,10 @@ import {
   createSerializedRoot,
   prepareIsolatedStorageTest,
 } from "../../../../../packages/liveblocks-core/src/__tests__/_MockWebSocketServer.setup";
+import { createLiveblocksSyncPlugin } from "@liveblocks/codemirror";
 import {
   attachThreadToSelection,
+  createLiveblocksCommentFormatPreservationPlugin,
   createLiveblocksCommentsPlugin,
   getCommentPluginState,
   getCommentRangesFromData,
@@ -18,7 +20,17 @@ import {
   removeDeletedCommentThreadFormatting,
   setVisibleCommentThreads,
 } from "./comments-plugin";
-import { createLiveblocksSyncPlugin } from "./page";
+
+function createCommentAwareSyncExtensions(
+  room: Room,
+  root: LiveObject<{ document: LiveText }>
+) {
+  return [
+    createLiveblocksCommentFormatPreservationPlugin(room, root),
+    createLiveblocksSyncPlugin(room, root),
+    ...createLiveblocksCommentsPlugin(room, root),
+  ];
+}
 
 describe("createLiveblocksCommentsPlugin", () => {
   test("extracts and merges LiveText comment ranges", () => {
@@ -87,6 +99,56 @@ describe("createLiveblocksCommentsPlugin", () => {
     });
   });
 
+  test("local insert inside comment range preserves the thread id", async () => {
+    const initialDoc = "Hello";
+
+    const { room, root } = (await prepareIsolatedStorageTest(
+      [
+        createSerializedRoot(),
+        [
+          "0:1",
+          {
+            type: CrdtType.TEXT,
+            parentId: "root",
+            parentKey: "document",
+            data: [[initialDoc, { [LIVEBLOCKS_COMMENT_ATTR]: "th_1" }]],
+            version: 0,
+          },
+        ],
+      ],
+      0
+    )) as unknown as {
+      room: Room;
+      root: LiveObject<{ document: LiveText }>;
+    };
+
+    const parent = document.createElement("div");
+    document.body.appendChild(parent);
+
+    const view = new EditorView({
+      state: EditorState.create({
+        doc: initialDoc,
+        extensions: createCommentAwareSyncExtensions(room, root),
+      }),
+      parent,
+    });
+
+    onTestFinished(() => {
+      view.destroy();
+      parent.remove();
+    });
+
+    view.dispatch({
+      changes: { from: 2, insert: "y" },
+    });
+
+    await vi.waitFor(() => {
+      expect(root.get("document").toJSON()).toEqual([
+        ["Heyllo", { [LIVEBLOCKS_COMMENT_ATTR]: "th_1" }],
+      ]);
+    });
+  });
+
   test("remote format updates decorations without changing text", async () => {
     const initialDoc = "Hello, world";
     const { room, root, applyRemoteOperations } =
@@ -117,10 +179,7 @@ describe("createLiveblocksCommentsPlugin", () => {
     const view = new EditorView({
       state: EditorState.create({
         doc: initialDoc,
-        extensions: [
-          createLiveblocksSyncPlugin(room, root),
-          ...createLiveblocksCommentsPlugin(room, root),
-        ],
+        extensions: createCommentAwareSyncExtensions(room, root),
       }),
       parent,
     });
@@ -188,10 +247,7 @@ describe("createLiveblocksCommentsPlugin", () => {
     const view = new EditorView({
       state: EditorState.create({
         doc: initialDoc,
-        extensions: [
-          createLiveblocksSyncPlugin(room, root),
-          ...createLiveblocksCommentsPlugin(room, root),
-        ],
+        extensions: createCommentAwareSyncExtensions(room, root),
       }),
       parent,
     });

@@ -5,12 +5,14 @@ import {
   RangeSetBuilder,
   StateEffect,
   StateField,
+  Transaction,
 } from "@codemirror/state";
 import {
   Decoration,
   type DecorationSet,
   EditorView,
   ViewPlugin,
+  type ViewUpdate,
 } from "@codemirror/view";
 import { LiveObject, type Room } from "@liveblocks/client";
 import { LiveText, type LiveTextData } from "@liveblocks/core";
@@ -131,6 +133,82 @@ export const liveblocksCommentStateField =
     provide: (field) =>
       EditorView.decorations.from(field, (state) => state.decorations),
   });
+
+type PendingCommentFormat = {
+  index: number;
+  length: number;
+  threadId: string;
+};
+
+/**
+ * Preserves LiveText comment attributes when typing inside an existing comment
+ * range. Register immediately before `@liveblocks/codemirror`'s sync plugin.
+ */
+export function createLiveblocksCommentFormatPreservationPlugin(
+  room: Room,
+  root: LiveObject<{ document: LiveText }>
+): Extension {
+  return ViewPlugin.fromClass(
+    class {
+      private isDestroyed = false;
+
+      constructor(_view: EditorView) {}
+
+      update(update: ViewUpdate) {
+        if (
+          update.transactions.some((tr) => tr.annotation(Transaction.remote))
+        ) {
+          return;
+        }
+
+        if (!update.docChanged) return;
+
+        const text = root.get("document");
+        const pending: PendingCommentFormat[] = [];
+        let offset = 0;
+
+        update.changes.iterChanges((fromA, toA, _fromB, _toB, inserted) => {
+          const deleteLength = toA - fromA;
+          const insertText = inserted.toString();
+          const index = fromA + offset;
+
+          if (insertText.length > 0) {
+            const threadId = getThreadIdForEdit(text, index, deleteLength);
+            if (threadId !== null) {
+              pending.push({
+                index,
+                length: insertText.length,
+                threadId,
+              });
+            }
+          }
+
+          offset += insertText.length - deleteLength;
+        });
+
+        if (pending.length === 0) return;
+
+        queueMicrotask(() => {
+          if (this.isDestroyed) return;
+
+          const document = root.get("document");
+          room.batch(() => {
+            for (const { index, length, threadId } of pending) {
+              document.format(index, length, {
+                [LIVEBLOCKS_COMMENT_ATTR]: threadId,
+                [LIVEBLOCKS_COMMENT_ORPHAN_ATTR]: null,
+              });
+            }
+          });
+        });
+      }
+
+      destroy() {
+        this.isDestroyed = true;
+      }
+    }
+  );
+}
 
 export function createLiveblocksCommentsPlugin(
   room: Room,
