@@ -38,9 +38,15 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 - Deprecate `room.getStorageSnapshot()` in favor of `room.getStorageOrNull()`.
 
+## Examples
+
+- New example: [AI Spreadsheet](https://liveblocks.io/examples/ai-spreadsheet/nextjs-ai-spreadsheet).
+- New example: [Realtime AI Elements Chats](https://liveblocks.io/examples/ai-elements-realtime/nextjs-ai-elements-realtime).
+- Added “?” button to various examples, featuring a pop-up that explains how to use them.
+
 ## Contributors
 
-ofoucherot, nvie, marcbouchenoire
+ofoucherot, nvie, marcbouchenoire, ctnicholas
 
 # Week 24 (2026-06-12)
 
