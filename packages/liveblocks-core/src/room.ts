@@ -1915,7 +1915,9 @@ export function createRoom<
       throw new Error("Internal error: cannot load storage without items");
     }
 
-    if (context.root !== undefined) {
+    const isFirstLoad = context.root === undefined;
+
+    if (!isFirstLoad) {
       const currentItems: NodeMap = new Map();
       for (const [id, crdt] of context.pool.nodes) {
         currentItems.set(id, crdt._serialize());
@@ -1931,9 +1933,19 @@ export function createRoom<
       );
     }
 
-    const canWrite = self.get()?.canWrite ?? true;
+    // Populate missing top-level keys using `initialStorage` — only on the
+    // first load. Refreshes that hit the merge branch above already reconcile
+    // against authoritative server state, so re-running this here would
+    // overwrite real room data with `initialStorage` whenever a server-side
+    // reset (or an aborted local write that left local keys missing — see
+    // issue #3535: a >1MB `LiveObject.set` closes the socket with 1009 and the
+    // reconnect-driven refresh then ran this block and replaced the room with
+    // `initialStorage`) made a key briefly look missing in the local copy.
+    if (!isFirstLoad) {
+      return;
+    }
 
-    // Populate missing top-level keys using `initialStorage`
+    const canWrite = self.get()?.canWrite ?? true;
     const root = context.root;
     disableHistory(() => {
       for (const key in context.initialStorage) {

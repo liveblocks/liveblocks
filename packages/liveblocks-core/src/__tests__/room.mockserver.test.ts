@@ -56,6 +56,7 @@ import {
   createSerializedRoot,
   fakeSyncSource,
   FIRST_POSITION,
+  parseAsClientMsgs,
   prepareIsolatedStorageTest,
   prepareRoomWithStorage_loadWithDelay,
   prepareStorageTest,
@@ -1071,6 +1072,97 @@ describe("room", () => {
     room.connect();
     const storage = await room.getStorage();
     expect(storage.root.toJSON()).toEqual({ x: 0 });
+  });
+
+  /**
+   * Regression for https://github.com/liveblocks/liveblocks/issues/3535.
+   *
+   * A storage refresh that hits the merge branch of
+   * `createOrUpdateRootFromMessage` (everything but the very first load —
+   * reconnect after a 1009 "message too large" close, manual refresh, etc.)
+   * used to fall through into the `initialStorage` population loop. If a key
+   * looked momentarily missing in the local copy mid-merge, the loop would
+   * `root.set(key, initialStorage[key])` and clobber the authoritative server
+   * value with a default. The reporter saw this as a single >1MB
+   * `LiveObject.set` followed by the room being replaced with `initialStorage`
+   * on reconnect.
+   *
+   * `initialStorage` must only seed missing keys on the first load.
+   */
+  test("does not re-seed initialStorage on a refresh that finds the key missing (#3535)", async () => {
+    const initialStorage = { value: "default" };
+    const { room, wss } = createTestableRoom(
+      {},
+      undefined,
+      undefined,
+      undefined,
+      initialStorage
+    );
+
+    // The reporter's footgun: the local pool ends up with the `value` key
+    // missing post-merge (in their case because a >1MB `LiveObject.set` was
+    // rolled back on reconnect, leaving the slot momentarily empty). This
+    // test reproduces that "empty local state after merge" condition by
+    // having the reconnect-time server payload omit the `value` key — the
+    // merge then DELETEs it from the local copy, and the old behavior
+    // re-populated it from `initialStorage` and sent a tiny UPDATE_STORAGE
+    // op back that overwrote the real server document with `"default"`.
+    //
+    // After the fix, `initialStorage` only seeds on the *first* load, so the
+    // refresh leaves the key missing and the user can deal with it instead
+    // of silently losing data.
+
+    let connectionsSeen = 0;
+    const opsSentByClient: unknown[] = [];
+    wss.onConnection((conn) => {
+      connectionsSeen += 1;
+      const valueOnConnect = connectionsSeen === 1 ? "real" : undefined;
+      const rootData =
+        valueOnConnect !== undefined ? { value: valueOnConnect } : {};
+      conn.server.send(
+        serverMessage({
+          type: ServerMsgCode.STORAGE_CHUNK,
+          nodes: [["root", rootData]],
+        })
+      );
+      conn.server.send(
+        serverMessage({ type: ServerMsgCode.STORAGE_STREAM_END })
+      );
+    });
+    onTestFinished(
+      wss.onReceive.subscribe((data) => {
+        const msgs = parseAsClientMsgs(data);
+        for (const msg of msgs) {
+          if (msg.type === ClientMsgCode.UPDATE_STORAGE) {
+            opsSentByClient.push(...msg.ops);
+          }
+        }
+      })
+    );
+
+    room.connect();
+    const storage = await room.getStorage();
+    expect(storage.root.toJSON()).toEqual({ value: "real" });
+
+    // Simulate the 1009 "message too large" close that the reporter hit.
+    wss.last.close(
+      new CloseEvent("close", {
+        code: 1009,
+        wasClean: false,
+      })
+    );
+
+    await waitUntilStatus(room, "connected");
+    await vi.waitFor(() => expect(connectionsSeen).toBeGreaterThanOrEqual(2));
+    // Give the post-reconnect message loop a tick to flush any backfill the
+    // old code path would have queued.
+    await new Promise((r) => setTimeout(r, 50));
+
+    // The room data must not have been silently rewritten to the default,
+    // and no UPDATE_STORAGE op should have been emitted that sets `value`
+    // back to `"default"`.
+    expect(storage.root.toJSON()).toEqual({});
+    expect(opsSentByClient).toEqual([]);
   });
 
   test("undo redo with presence", async () => {
