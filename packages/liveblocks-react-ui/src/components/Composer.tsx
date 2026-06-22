@@ -8,20 +8,18 @@ import type {
   DTM,
   GroupMentionData,
   Patchable,
-  ThreadData,
+  PermissionResources,
   ThreadVisibility,
 } from "@liveblocks/core";
 import { assertNever, MENTION_CHARACTER } from "@liveblocks/core";
-import { useClient, useRoom } from "@liveblocks/react";
+import { useRoom } from "@liveblocks/react";
 import {
-  getUmbrellaStoreForClient,
   useCreateRoomComment,
   useCreateRoomThread,
   useEditRoomComment,
   useHasPermissionAccess,
   useLayoutEffect,
   useResolveMentionSuggestions,
-  useSignal,
 } from "@liveblocks/react/_private";
 import type {
   ComponentPropsWithoutRef,
@@ -265,20 +263,18 @@ interface ComposerEditorContainerProps extends Pick<
   onEditorClick: (event: MouseEvent<HTMLDivElement>) => void;
 }
 
-function useThreadVisibility(
-  threadId: string | undefined
-): ThreadData["visibility"] | undefined {
-  const client = useClient();
-  const store = getUmbrellaStoreForClient(client);
+function getComposerPermissionResource(
+  threadId: string | undefined,
+  visibility: ThreadVisibility | undefined
+): PermissionResources {
+  if (threadId !== undefined) {
+    return "comments";
+  }
 
-  return useSignal(
-    store.outputs.threads,
-    useCallback(
-      (threads) =>
-        threadId !== undefined ? threads.get(threadId)?.visibility : undefined,
-      [threadId]
-    )
-  );
+  const threadVisibility = visibility ?? "public";
+  return threadVisibility === "private"
+    ? "comments:private"
+    : "comments:public";
 }
 
 interface ComposerMentionProps extends ComposerEditorMentionProps {
@@ -784,13 +780,9 @@ export const Composer = forwardRef(
       controlledOnCollapsedChange
     );
 
-    const threadVisibility = useThreadVisibility(threadId);
-    const composerVisibility = threadId
-      ? threadVisibility
-      : (visibility ?? "public");
     const canComment = useHasPermissionAccess(
       roomId,
-      composerVisibility ? `comments:${composerVisibility}` : "comments",
+      getComposerPermissionResource(threadId, visibility),
       "write"
     );
 

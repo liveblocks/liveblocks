@@ -204,7 +204,7 @@ function createTestableRoom<
 }
 
 describe("createApiClient", () => {
-  test("requests aggregate comments read auth when getting threads without visibility", async () => {
+  test("requests broad comments read auth when getting threads without visibility", async () => {
     const { authRequests, client } = createTestApiClient();
 
     await client.getThreads({ roomId: "room-id" });
@@ -214,7 +214,7 @@ describe("createApiClient", () => {
     ]);
   });
 
-  test("requests aggregate comments read auth when getting thread delta updates", async () => {
+  test("requests broad comments read auth when getting thread delta updates", async () => {
     const { authRequests, client } = createTestApiClient();
 
     await client.getThreadsSince({

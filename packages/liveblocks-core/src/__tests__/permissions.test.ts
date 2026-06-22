@@ -218,30 +218,31 @@ describe("permissionMatrixFromScopes", () => {
       Permission.CommentsPersonalRead,
     ]);
 
-    expect(matrix.comments).toBe("write");
+    expect(matrix.comments).toBe("read");
     expect(matrix["comments:public"]).toBe("write");
     expect(matrix["comments:private"]).toBe("none");
     expect(matrix["comments:personal"]).toBe("read");
+    expect(hasPermissionAccess(matrix, "comments", "write")).toBe(false);
     expect(hasPermissionAccess(matrix, "comments:public", "write")).toBe(true);
     expect(hasPermissionAccess(matrix, "comments:private", "read")).toBe(false);
     expect(hasPermissionAccess(matrix, "comments:personal", "read")).toBe(true);
   });
 
-  test("aggregate comments read is satisfied by visibility-scoped read access", () => {
+  test("broad comments access is not influenced by scoped comments permissions", () => {
     const matrix = permissionMatrixFromScopes([
-      Permission.Read,
+      Permission.Write,
+      Permission.CommentsNone,
       Permission.CommentsPublicRead,
-      Permission.CommentsPrivateNone,
-      Permission.CommentsPersonalNone,
+      Permission.CommentsPrivateWrite,
+      Permission.CommentsPersonalWrite,
     ]);
 
-    expect(hasPermissionAccess(matrix, "comments", "read")).toBe(true);
+    expect(matrix.comments).toBe("none");
+    expect(hasPermissionAccess(matrix, "comments", "read")).toBe(false);
     expect(hasPermissionAccess(matrix, "comments:public", "read")).toBe(true);
-    expect(hasPermissionAccess(matrix, "comments:private", "read")).toBe(
-      false
-    );
-    expect(hasPermissionAccess(matrix, "comments:personal", "read")).toBe(
-      false
+    expect(hasPermissionAccess(matrix, "comments:private", "write")).toBe(true);
+    expect(hasPermissionAccess(matrix, "comments:personal", "write")).toBe(
+      true
     );
   });
 
@@ -434,8 +435,9 @@ describe("permission matrix helpers", () => {
       })
     ).toEqual([
       Permission.Read,
-      Permission.CommentsPublicWrite,
+      Permission.CommentsWrite,
       Permission.CommentsPrivateNone,
+      Permission.CommentsPersonalRead,
     ]);
   });
 

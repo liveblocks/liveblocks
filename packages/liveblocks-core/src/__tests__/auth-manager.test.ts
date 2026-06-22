@@ -284,6 +284,96 @@ describe("auth-manager - secret auth", () => {
     expect(requestCount).toBe(1);
   });
 
+  test("should not reuse scoped comments token for broad comments read requests", async () => {
+    let localRequestCount = 0;
+    const publicCommentsReadToken = makeAccessToken({
+      "org1*": [
+        Permission.Read,
+        Permission.CommentsNone,
+        Permission.CommentsPublicRead,
+      ],
+    });
+    const commentsReadToken = makeAccessToken({
+      "org1*": [Permission.Read, Permission.CommentsRead],
+    });
+
+    server.use(
+      http.post("/api/access-auth-public-comments-read", () => {
+        localRequestCount++;
+        return HttpResponse.json({
+          token:
+            localRequestCount === 1
+              ? publicCommentsReadToken
+              : commentsReadToken,
+        });
+      })
+    );
+
+    const authManager = createAuthManager({
+      authEndpoint: "/api/access-auth-public-comments-read",
+    });
+
+    const publicReadAuthValue = (await authManager.getAuthValue({
+      resource: "comments:public",
+      access: "read",
+      roomId: "org1.room1",
+    })) as { type: "secret"; token: ParsedAuthToken };
+    const broadReadAuthValue = (await authManager.getAuthValue({
+      resource: "comments",
+      access: "read",
+      roomId: "org1.room1",
+    })) as { type: "secret"; token: ParsedAuthToken };
+
+    expect(publicReadAuthValue.token.raw).toEqual(publicCommentsReadToken);
+    expect(broadReadAuthValue.token.raw).toEqual(commentsReadToken);
+    expect(localRequestCount).toBe(2);
+  });
+
+  test("should not reuse scoped comments token for broad comments write requests", async () => {
+    let localRequestCount = 0;
+    const publicCommentsWriteToken = makeAccessToken({
+      "org1*": [
+        Permission.Read,
+        Permission.CommentsNone,
+        Permission.CommentsPublicWrite,
+      ],
+    });
+    const commentsWriteToken = makeAccessToken({
+      "org1*": [Permission.Read, Permission.CommentsWrite],
+    });
+
+    server.use(
+      http.post("/api/access-auth-public-comments-write", () => {
+        localRequestCount++;
+        return HttpResponse.json({
+          token:
+            localRequestCount === 1
+              ? publicCommentsWriteToken
+              : commentsWriteToken,
+        });
+      })
+    );
+
+    const authManager = createAuthManager({
+      authEndpoint: "/api/access-auth-public-comments-write",
+    });
+
+    const publicWriteAuthValue = (await authManager.getAuthValue({
+      resource: "comments:public",
+      access: "write",
+      roomId: "org1.room1",
+    })) as { type: "secret"; token: ParsedAuthToken };
+    const broadWriteAuthValue = (await authManager.getAuthValue({
+      resource: "comments",
+      access: "write",
+      roomId: "org1.room1",
+    })) as { type: "secret"; token: ParsedAuthToken };
+
+    expect(publicWriteAuthValue.token.raw).toEqual(publicCommentsWriteToken);
+    expect(broadWriteAuthValue.token.raw).toEqual(commentsWriteToken);
+    expect(localRequestCount).toBe(2);
+  });
+
   test("should fetch a new token when cached comments read token cannot write", async () => {
     let localRequestCount = 0;
     const commentsReadToken = makeAccessToken({

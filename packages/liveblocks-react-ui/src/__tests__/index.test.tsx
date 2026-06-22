@@ -1,11 +1,9 @@
 import type { CommentData, ThreadData } from "@liveblocks/core";
-import { getUmbrellaStoreForClient } from "@liveblocks/react/_private";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { Comment } from "../components/Comment";
 import { Composer } from "../components/Composer";
 import { Thread } from "../components/Thread";
-import { client } from "./_liveblocks.config";
 import { render } from "./_utils"; // Basically re-exports from @testing-library/react
 
 const useHasPermissionAccessMock = vi.hoisted(() => vi.fn(() => true));
@@ -128,11 +126,35 @@ const thread: ThreadData = {
   visibility: "public",
 };
 
+beforeEach(() => {
+  useHasPermissionAccessMock.mockClear();
+});
+
 describe("Thread", () => {
   test("should render", () => {
     const { container } = render(<Thread thread={thread} />);
 
     expect(container).not.toBeEmptyDOMElement();
+  });
+
+  test("should check comments write access for threads", () => {
+    render(<Thread thread={thread} />);
+
+    expect(useHasPermissionAccessMock).toHaveBeenCalledWith(
+      "room",
+      "comments",
+      "write"
+    );
+  });
+
+  test("should keep checking comments write access for private threads", () => {
+    render(<Thread thread={{ ...thread, visibility: "private" }} />);
+
+    expect(useHasPermissionAccessMock).toHaveBeenCalledWith(
+      "room",
+      "comments",
+      "write"
+    );
   });
 });
 
@@ -142,13 +164,19 @@ describe("Comment", () => {
 
     expect(container).not.toBeEmptyDOMElement();
   });
+
+  test("should check comments write access for comments", () => {
+    render(<Comment comment={comment} />);
+
+    expect(useHasPermissionAccessMock).toHaveBeenCalledWith(
+      "room",
+      "comments",
+      "write"
+    );
+  });
 });
 
 describe("Composer", () => {
-  beforeEach(() => {
-    useHasPermissionAccessMock.mockClear();
-  });
-
   test("should render", () => {
     const { container } = render(<Composer />);
 
@@ -175,28 +203,12 @@ describe("Composer", () => {
     );
   });
 
-  test("should keep checking aggregate comments write access when replying to a thread", () => {
+  test("should check comments write access when replying to a thread", () => {
     render(<Composer threadId="th_1" />);
 
     expect(useHasPermissionAccessMock).toHaveBeenCalledWith(
       "room",
       "comments",
-      "write"
-    );
-  });
-
-  test("should check private comments write access when replying to a cached private thread", () => {
-    getUmbrellaStoreForClient(client).threads.upsert({
-      ...thread,
-      id: "th_private",
-      visibility: "private",
-    });
-
-    render(<Composer threadId="th_private" />);
-
-    expect(useHasPermissionAccessMock).toHaveBeenCalledWith(
-      "room",
-      "comments:private",
       "write"
     );
   });

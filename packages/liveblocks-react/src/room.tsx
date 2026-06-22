@@ -3762,7 +3762,8 @@ function useSelfAccessFallback(
     const isCommentsResource =
       resource === "comments" ||
       resource === "comments:public" ||
-      resource === "comments:private";
+      resource === "comments:private" ||
+      resource === "comments:personal";
 
     if (isCommentsResource && requiredAccess === "write") {
       return self?.canComment ?? true;

@@ -86,7 +86,7 @@ export type RoomPatternPermissions = {
 
 type ResolvedPermissionScopes = {
   baseAccess?: AccessLevel;
-  leafAccesses: Partial<Record<RoomPermissionsResource, AccessLevel>>;
+  resourceAccesses: Partial<Record<RoomPermissionsResource, AccessLevel>>;
 };
 
 const ACCESS_LEVEL_RANKS: Record<AccessLevel, number> = {
@@ -158,22 +158,6 @@ const CHILD_ROOM_PERMISSION_RESOURCES: ReadonlyMap<
         })
       )
     );
-  }
-
-  return result;
-})();
-
-const LEAF_ROOM_PERMISSION_RESOURCES_BY_PARENT: ReadonlyMap<
-  RoomPermissionsResource,
-  readonly RoomPermissionsResource[]
-> = (() => {
-  const result = new Map<
-    RoomPermissionsResource,
-    readonly RoomPermissionsResource[]
-  >();
-
-  for (const resource of ROOM_PERMISSION_RESOURCES) {
-    result.set(resource, Object.freeze(getLeafResources(resource)));
   }
 
   return result;
@@ -410,8 +394,9 @@ export function resolveRoomPermissionMatrix(
 
   let hasDefaultPermission = false;
   let baseAccess: AccessLevel = "none";
-  const leafAccesses: ResolvedPermissionScopes["leafAccesses"] = {};
-  const leafSpecificity: Partial<Record<RoomPermissionsResource, number>> = {};
+  const resourceAccesses: ResolvedPermissionScopes["resourceAccesses"] = {};
+  const resourceSpecificity: Partial<Record<RoomPermissionsResource, number>> =
+    {};
 
   for (const entry of matchedPermissions) {
     const resolved = resolvePermissionScopes(entry.scopes);
@@ -424,20 +409,20 @@ export function resolveRoomPermissionMatrix(
       baseAccess = strongestAccess(baseAccess, resolved.baseAccess);
     }
 
-    for (const resource of LEAF_ROOM_PERMISSION_RESOURCES) {
-      if (resolved.leafAccesses[resource] === undefined) {
+    for (const resource of ROOM_PERMISSION_RESOURCES) {
+      const access = resolveResourceOverrideFromSource(resolved, resource);
+      if (access === undefined) {
         continue;
       }
 
-      const access = resolveLeafAccessFromSource(resolved, resource);
-      const currentSpecificity = leafSpecificity[resource] ?? -1;
+      const currentSpecificity = resourceSpecificity[resource] ?? -1;
 
       if (specificity > currentSpecificity) {
-        leafAccesses[resource] = access;
-        leafSpecificity[resource] = specificity;
+        resourceAccesses[resource] = access;
+        resourceSpecificity[resource] = specificity;
       } else if (specificity === currentSpecificity) {
-        leafAccesses[resource] = strongestAccess(
-          leafAccesses[resource] ?? "none",
+        resourceAccesses[resource] = strongestAccess(
+          resourceAccesses[resource] ?? "none",
           access
         );
       }
@@ -446,7 +431,7 @@ export function resolveRoomPermissionMatrix(
 
   return permissionMatrixFromResolvedScopes({
     baseAccess: hasDefaultPermission ? baseAccess : undefined,
-    leafAccesses,
+    resourceAccesses,
   });
 }
 
@@ -475,7 +460,7 @@ export function mergeRoomPermissionScopes({
   ];
 
   const merged: ResolvedPermissionScopes = {
-    leafAccesses: {},
+    resourceAccesses: {},
   };
 
   for (const source of sources) {
@@ -483,13 +468,13 @@ export function mergeRoomPermissionScopes({
       merged.baseAccess = source.baseAccess;
     }
 
-    for (const resource of LEAF_ROOM_PERMISSION_RESOURCES) {
-      const sourceAccess = source.leafAccesses[resource];
+    for (const resource of ROOM_PERMISSION_RESOURCES) {
+      const sourceAccess = resolveResourceOverrideFromSource(source, resource);
       if (sourceAccess === undefined) {
         continue;
       }
 
-      merged.leafAccesses[resource] = sourceAccess;
+      merged.resourceAccesses[resource] = sourceAccess;
     }
   }
 
@@ -500,18 +485,16 @@ function resolvePermissionScopes(
   scopes: RoomPermissions
 ): ResolvedPermissionScopes {
   const baseAccess = resolveAccess(scopes, BASE_PERMISSIONS_BY_ACCESS);
-  const leafAccesses: ResolvedPermissionScopes["leafAccesses"] = {};
+  const resourceAccesses: ResolvedPermissionScopes["resourceAccesses"] = {};
 
   for (const resource of ROOM_PERMISSION_RESOURCES) {
     const access = resolveResourceAccess(scopes, resource);
     if (access !== undefined) {
-      for (const leafResource of leafResourcesOf(resource)) {
-        leafAccesses[leafResource] = access;
-      }
+      resourceAccesses[resource] = access;
     }
   }
 
-  return { baseAccess, leafAccesses };
+  return { baseAccess, resourceAccesses };
 }
 
 function resolveResourceAccess(
@@ -553,76 +536,60 @@ function permissionMatrixFromResolvedScopes(
     personal: "write",
   };
 
-  for (const resource of LEAF_ROOM_PERMISSION_RESOURCES) {
-    matrix[resource] = resolveLeafAccessFromSource(resolved, resource);
-  }
-
   for (const resource of ROOM_PERMISSION_RESOURCES) {
-    if (childResourcesOf(resource).length > 0) {
-      let strongest: AccessLevel = "none";
-
-      for (const leafResource of leafResourcesOf(resource)) {
-        strongest = strongestAccess(strongest, matrix[leafResource]);
-      }
-
-      matrix[resource] = strongest;
-    }
+    matrix[resource] = resolveResourceAccessFromSource(resolved, resource);
   }
 
   return matrix;
 }
 
-function resolveLeafAccessFromSource(
+function resolveResourceAccessFromSource(
   source: ResolvedPermissionScopes,
   resource: RoomPermissionsResource
 ): AccessLevel {
-  const access = source.leafAccesses[resource];
+  const access = source.resourceAccesses[resource];
   if (access !== undefined) {
     return access;
   }
 
+  const parentResource = parentResourceOf(resource);
+  if (parentResource !== undefined) {
+    return resolveResourceAccessFromSource(source, parentResource);
+  }
+
   return source.baseAccess ?? "none";
+}
+
+function resolveResourceOverrideFromSource(
+  source: ResolvedPermissionScopes,
+  resource: RoomPermissionsResource
+): AccessLevel | undefined {
+  const access = source.resourceAccesses[resource];
+  if (access !== undefined) {
+    return access;
+  }
+
+  const parentResource = parentResourceOf(resource);
+  if (parentResource !== undefined) {
+    return resolveResourceOverrideFromSource(source, parentResource);
+  }
+
+  return undefined;
 }
 
 function pushResourcePermissions(
   scopes: RoomPermissions,
   matrix: PermissionMatrix,
   resource: RoomPermissionsResource,
-  baseAccess: AccessLevel
+  inheritedAccess: AccessLevel
 ): void {
-  const childResources = childResourcesOf(resource);
-  if (childResources.length === 0) {
-    const access = matrix[resource];
-    if (access !== baseAccess) {
-      scopes.push(permissionForAccessLevel(resource, access));
-    }
-    return;
+  const access = matrix[resource];
+  if (access !== inheritedAccess) {
+    scopes.push(permissionForAccessLevel(resource, access));
   }
 
-  const leafResources = leafResourcesOf(resource);
-  let sharedAccess: AccessLevel | undefined;
-  let allLeavesShareAccess = true;
-
-  for (const leafResource of leafResources) {
-    const access = matrix[leafResource];
-    sharedAccess ??= access;
-    if (access !== sharedAccess) {
-      allLeavesShareAccess = false;
-      break;
-    }
-  }
-
-  if (
-    sharedAccess !== undefined &&
-    sharedAccess !== baseAccess &&
-    allLeavesShareAccess
-  ) {
-    scopes.push(permissionForAccessLevel(resource, sharedAccess));
-    return;
-  }
-
-  for (const childResource of childResources) {
-    pushResourcePermissions(scopes, matrix, childResource, baseAccess);
+  for (const childResource of childResourcesOf(resource)) {
+    pushResourcePermissions(scopes, matrix, childResource, access);
   }
 }
 
@@ -630,7 +597,7 @@ function mergeResolvedScopesByHighestAccess(
   sources: ResolvedPermissionScopes[]
 ): ResolvedPermissionScopes {
   const merged: ResolvedPermissionScopes = {
-    leafAccesses: {},
+    resourceAccesses: {},
   };
 
   for (const source of sources) {
@@ -641,14 +608,14 @@ function mergeResolvedScopesByHighestAccess(
       );
     }
 
-    for (const resource of LEAF_ROOM_PERMISSION_RESOURCES) {
-      const sourceAccess = source.leafAccesses[resource];
+    for (const resource of ROOM_PERMISSION_RESOURCES) {
+      const sourceAccess = resolveResourceOverrideFromSource(source, resource);
       if (sourceAccess === undefined) {
         continue;
       }
 
-      merged.leafAccesses[resource] = strongestAccess(
-        merged.leafAccesses[resource] ?? "none",
+      merged.resourceAccesses[resource] = strongestAccess(
+        merged.resourceAccesses[resource] ?? "none",
         sourceAccess
       );
     }
@@ -682,12 +649,6 @@ function strongestAccess(left: AccessLevel, right: AccessLevel): AccessLevel {
   return ACCESS_LEVEL_RANKS[right] > ACCESS_LEVEL_RANKS[left] ? right : left;
 }
 
-function leafResourcesOf(
-  resource: RoomPermissionsResource
-): readonly RoomPermissionsResource[] {
-  return LEAF_ROOM_PERMISSION_RESOURCES_BY_PARENT.get(resource) ?? [];
-}
-
 function childResourcesOf(
   resource: RoomPermissionsResource
 ): readonly RoomPermissionsResource[] {
@@ -698,15 +659,4 @@ function parentResourceOf(
   resource: RoomPermissionsResource
 ): RoomPermissionsResource | undefined {
   return PARENT_ROOM_PERMISSION_RESOURCES.get(resource);
-}
-
-function getLeafResources(
-  resource: RoomPermissionsResource
-): RoomPermissionsResource[] {
-  const childResources = childResourcesOf(resource);
-  if (childResources.length === 0) {
-    return [resource];
-  }
-
-  return childResources.flatMap(getLeafResources);
 }
