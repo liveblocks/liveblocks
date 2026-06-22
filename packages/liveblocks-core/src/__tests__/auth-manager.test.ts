@@ -284,7 +284,7 @@ describe("auth-manager - secret auth", () => {
     expect(requestCount).toBe(1);
   });
 
-  test("should not reuse scoped comments token for broad comments read requests", async () => {
+  test("should reuse scoped comments token for comments read requests", async () => {
     let localRequestCount = 0;
     const publicCommentsReadToken = makeAccessToken({
       "org1*": [
@@ -293,19 +293,11 @@ describe("auth-manager - secret auth", () => {
         Permission.CommentsPublicRead,
       ],
     });
-    const commentsReadToken = makeAccessToken({
-      "org1*": [Permission.Read, Permission.CommentsRead],
-    });
 
     server.use(
       http.post("/api/access-auth-public-comments-read", () => {
         localRequestCount++;
-        return HttpResponse.json({
-          token:
-            localRequestCount === 1
-              ? publicCommentsReadToken
-              : commentsReadToken,
-        });
+        return HttpResponse.json({ token: publicCommentsReadToken });
       })
     );
 
@@ -318,15 +310,15 @@ describe("auth-manager - secret auth", () => {
       access: "read",
       roomId: "org1.room1",
     })) as { type: "secret"; token: ParsedAuthToken };
-    const broadReadAuthValue = (await authManager.getAuthValue({
+    const commentsReadAuthValue = (await authManager.getAuthValue({
       resource: "comments",
       access: "read",
       roomId: "org1.room1",
     })) as { type: "secret"; token: ParsedAuthToken };
 
     expect(publicReadAuthValue.token.raw).toEqual(publicCommentsReadToken);
-    expect(broadReadAuthValue.token.raw).toEqual(commentsReadToken);
-    expect(localRequestCount).toBe(2);
+    expect(commentsReadAuthValue.token.raw).toEqual(publicCommentsReadToken);
+    expect(localRequestCount).toBe(1);
   });
 
   test("should reuse scoped comments token for matching one-of resource requests", async () => {
@@ -356,7 +348,7 @@ describe("auth-manager - secret auth", () => {
       roomId: "org1.room1",
     })) as { type: "secret"; token: ParsedAuthToken };
     const threadReadAuthValue = (await authManager.getAuthValue({
-      resources: ["comments:public", "comments:private"],
+      resources: ["comments:public", "comments:private", "comments:personal"],
       access: "read",
       roomId: "org1.room1",
     })) as { type: "secret"; token: ParsedAuthToken };
@@ -366,7 +358,46 @@ describe("auth-manager - secret auth", () => {
     expect(localRequestCount).toBe(1);
   });
 
-  test("should not reuse scoped comments token for broad comments write requests", async () => {
+  test("should reuse personal comments token for comments read requests", async () => {
+    let localRequestCount = 0;
+    const personalCommentsReadToken = makeAccessToken({
+      "org1*": [
+        Permission.Read,
+        Permission.CommentsNone,
+        Permission.CommentsPersonalRead,
+      ],
+    });
+
+    server.use(
+      http.post("/api/access-auth-personal-comments-read", () => {
+        localRequestCount++;
+        return HttpResponse.json({ token: personalCommentsReadToken });
+      })
+    );
+
+    const authManager = createAuthManager({
+      authEndpoint: "/api/access-auth-personal-comments-read",
+    });
+
+    const personalReadAuthValue = (await authManager.getAuthValue({
+      resource: "comments:personal",
+      access: "read",
+      roomId: "org1.room1",
+    })) as { type: "secret"; token: ParsedAuthToken };
+    const commentsReadAuthValue = (await authManager.getAuthValue({
+      resource: "comments",
+      access: "read",
+      roomId: "org1.room1",
+    })) as { type: "secret"; token: ParsedAuthToken };
+
+    expect(personalReadAuthValue.token.raw).toEqual(personalCommentsReadToken);
+    expect(commentsReadAuthValue.token.raw).toEqual(
+      personalCommentsReadToken
+    );
+    expect(localRequestCount).toBe(1);
+  });
+
+  test("should reuse scoped comments token for comments write requests", async () => {
     let localRequestCount = 0;
     const publicCommentsWriteToken = makeAccessToken({
       "org1*": [
@@ -375,19 +406,11 @@ describe("auth-manager - secret auth", () => {
         Permission.CommentsPublicWrite,
       ],
     });
-    const commentsWriteToken = makeAccessToken({
-      "org1*": [Permission.Read, Permission.CommentsWrite],
-    });
 
     server.use(
       http.post("/api/access-auth-public-comments-write", () => {
         localRequestCount++;
-        return HttpResponse.json({
-          token:
-            localRequestCount === 1
-              ? publicCommentsWriteToken
-              : commentsWriteToken,
-        });
+        return HttpResponse.json({ token: publicCommentsWriteToken });
       })
     );
 
@@ -400,15 +423,15 @@ describe("auth-manager - secret auth", () => {
       access: "write",
       roomId: "org1.room1",
     })) as { type: "secret"; token: ParsedAuthToken };
-    const broadWriteAuthValue = (await authManager.getAuthValue({
+    const commentsWriteAuthValue = (await authManager.getAuthValue({
       resource: "comments",
       access: "write",
       roomId: "org1.room1",
     })) as { type: "secret"; token: ParsedAuthToken };
 
     expect(publicWriteAuthValue.token.raw).toEqual(publicCommentsWriteToken);
-    expect(broadWriteAuthValue.token.raw).toEqual(commentsWriteToken);
-    expect(localRequestCount).toBe(2);
+    expect(commentsWriteAuthValue.token.raw).toEqual(publicCommentsWriteToken);
+    expect(localRequestCount).toBe(1);
   });
 
   test("should fetch a new token when cached comments read token cannot write", async () => {

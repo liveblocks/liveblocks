@@ -83,6 +83,18 @@ const commentBody = {
   content: [],
 } satisfies CommentBody;
 
+const commentsReadAuthRequest = {
+  roomId: "room-id",
+  resource: "comments",
+  access: "read",
+} satisfies AuthRequest;
+
+const commentsWriteAuthRequest = {
+  roomId: "room-id",
+  resource: "comments",
+  access: "write",
+} satisfies AuthRequest;
+
 function createTestApiClient() {
   const authRequests: AuthRequest[] = [];
   const thread = {
@@ -106,6 +118,10 @@ function createTestApiClient() {
 
     if (requestUrl.includes("/thread-with-notification/")) {
       return Response.json({ thread });
+    }
+
+    if (requestUrl.includes("/attachments/presigned-urls")) {
+      return Response.json({ urls: ["https://example.com/attachment"] });
     }
 
     return Response.json({
@@ -219,17 +235,15 @@ function createTestableRoom<
 }
 
 describe("createApiClient", () => {
-  test("requests broad comments read auth when getting threads without visibility", async () => {
+  test("requests comments read auth when getting threads without visibility", async () => {
     const { authRequests, client } = createTestApiClient();
 
     await client.getThreads({ roomId: "room-id" });
 
-    expect(authRequests).toEqual([
-      { roomId: "room-id", resource: "comments", access: "read" },
-    ]);
+    expect(authRequests).toEqual([commentsReadAuthRequest]);
   });
 
-  test("requests broad comments read auth when getting thread delta updates", async () => {
+  test("requests comments read auth when getting thread delta updates", async () => {
     const { authRequests, client } = createTestApiClient();
 
     await client.getThreadsSince({
@@ -237,9 +251,18 @@ describe("createApiClient", () => {
       since: new Date(0),
     });
 
-    expect(authRequests).toEqual([
-      { roomId: "room-id", resource: "comments", access: "read" },
-    ]);
+    expect(authRequests).toEqual([commentsReadAuthRequest]);
+  });
+
+  test("requests comments read auth when searching comments", async () => {
+    const { authRequests, client } = createTestApiClient();
+
+    await client.searchComments({
+      roomId: "room-id",
+      query: { text: "hello" },
+    });
+
+    expect(authRequests).toEqual([commentsReadAuthRequest]);
   });
 
   test("requests visibility-specific comments read auth when getting threads with visibility", async () => {
@@ -255,7 +278,7 @@ describe("createApiClient", () => {
     ]);
   });
 
-  test("requests public or private comments read auth when getting a thread", async () => {
+  test("requests comments read auth when getting a thread", async () => {
     const { authRequests, client } = createTestApiClient();
 
     await client.getThread({
@@ -263,13 +286,7 @@ describe("createApiClient", () => {
       threadId: "th_123",
     });
 
-    expect(authRequests).toEqual([
-      {
-        roomId: "room-id",
-        resources: ["comments:public", "comments:private"],
-        access: "read",
-      },
-    ]);
+    expect(authRequests).toEqual([commentsReadAuthRequest]);
   });
 
   test("requests public comments write auth when creating a thread without visibility", async () => {
@@ -301,6 +318,28 @@ describe("createApiClient", () => {
     expect(authRequests).toEqual([
       { roomId: "room-id", resource: "comments:private", access: "write" },
     ]);
+  });
+
+  test("requests comments write auth when changing an existing thread", async () => {
+    const { authRequests, client } = createTestApiClient();
+
+    await client.markThreadAsResolved({
+      roomId: "room-id",
+      threadId: "th_123",
+    });
+
+    expect(authRequests).toEqual([commentsWriteAuthRequest]);
+  });
+
+  test("requests comments read auth when getting attachment URLs", async () => {
+    const { authRequests, client } = createTestApiClient();
+
+    await client.getAttachmentUrl({
+      roomId: "room-id",
+      attachmentId: "att_123",
+    });
+
+    expect(authRequests).toEqual([commentsReadAuthRequest]);
   });
 });
 

@@ -27,6 +27,12 @@ export type AuthValue =
 
 type RoomAuthResource = Exclude<PermissionResources, "personal">;
 
+const COMMENT_VISIBILITY_AUTH_RESOURCES = Object.freeze([
+  "comments:public",
+  "comments:private",
+  "comments:personal",
+] as const satisfies readonly RoomAuthResource[]);
+
 export type AuthRequest = Relax<
   | {
       resource: RoomAuthResource;
@@ -300,6 +306,10 @@ function cachedTokenSatisfiesRequest(
 function getRoomAuthResources(request: AuthRequest): readonly RoomAuthResource[] {
   if (request.resources !== undefined) {
     return request.resources;
+  }
+
+  if (request.resource === "comments") {
+    return COMMENT_VISIBILITY_AUTH_RESOURCES;
   }
 
   if (request.resource !== undefined && request.resource !== "personal") {
