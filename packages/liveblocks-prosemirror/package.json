@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/prosemirror",
-  "version": "3.20.0",
+  "version": "3.21.0-exp5",
   "description": "ProseMirror collaboration plugins backed by Liveblocks.",
   "license": "Apache-2.0",
   "author": "Liveblocks Inc.",
