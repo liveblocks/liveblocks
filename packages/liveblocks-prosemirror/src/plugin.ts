@@ -1,5 +1,6 @@
 import type { LsonObject, StorageUpdate } from "@liveblocks/client";
 import { LiveMap, LiveObject } from "@liveblocks/client";
+import { kStorageUpdateSource } from "@liveblocks/core";
 import { Slice } from "prosemirror-model";
 import { Plugin, PluginKey } from "prosemirror-state";
 import type { EditorView } from "prosemirror-view";
@@ -167,14 +168,6 @@ export function createLiveblocksCollaborationPlugin(
       options.fallbackDocument
     );
     const serializedDocument = stringifyDocument(document);
-    const currentDocument: unknown = view.state.doc.toJSON();
-    if (
-      isProseMirrorJsonNode(currentDocument) &&
-      stringifyDocument(currentDocument) === serializedDocument
-    ) {
-      lastDocument = serializedDocument;
-      return;
-    }
 
     if (serializedDocument === lastDocument) {
       return;
@@ -254,10 +247,6 @@ export function createLiveblocksCollaborationPlugin(
           } finally {
             isApplyingLocalUpdate = false;
           }
-          const document: unknown = newState.doc.toJSON();
-          if (isProseMirrorJsonNode(document)) {
-            lastDocument = stringifyDocument(document);
-          }
         } else {
           const document: unknown = newState.doc.toJSON();
           if (!isProseMirrorJsonNode(document)) {
@@ -305,9 +294,24 @@ export function createLiveblocksCollaborationPlugin(
         );
         editorView.dispatch(tr);
 
-        unsubscribe = room.subscribe(storageRoot, applyStorageToEditor, {
-          isDeep: true,
-        });
+        unsubscribe = room.subscribe(
+          storageRoot,
+          (updates) => {
+            if (
+              updates.every((update) => {
+                const source = update[kStorageUpdateSource];
+                return source?.origin === "local" && source.via === "mutation";
+              })
+            ) {
+              return;
+            }
+
+            applyStorageToEditor(updates);
+          },
+          {
+            isDeep: true,
+          }
+        );
       });
 
       return {

@@ -1,5 +1,6 @@
 import type { LsonObject, StorageUpdate } from "@liveblocks/client";
 import { LiveList, LiveMap, LiveObject, LiveText } from "@liveblocks/client";
+import { kStorageUpdateSource } from "@liveblocks/core";
 import { Editor, Extension, Mark, Node } from "@tiptap/core";
 import Document from "@tiptap/extension-document";
 import Paragraph from "@tiptap/extension-paragraph";
@@ -660,19 +661,23 @@ describe("collaboration-liveblocks schema", () => {
     const text = getLiveblocksNodeText(textNode!);
     expect(text).toBeInstanceOf(LiveText);
 
-    notifyStorageUpdate([
-      {
-        type: "LiveText",
-        node: text!,
-        updates: [
-          {
-            type: "insert",
-            index: 5,
-            text: "!",
-          },
-        ],
-      },
-    ]);
+    const localUpdate: StorageUpdate = {
+      type: "LiveText",
+      node: text!,
+      updates: [
+        {
+          type: "insert",
+          index: 5,
+          text: "!",
+        },
+      ],
+    };
+    localUpdate[kStorageUpdateSource] = {
+      origin: "local",
+      via: "mutation",
+    };
+
+    notifyStorageUpdate([localUpdate]);
 
     expect(editor.getJSON()).toEqual({
       type: "doc",
