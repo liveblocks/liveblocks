@@ -329,6 +329,43 @@ describe("auth-manager - secret auth", () => {
     expect(localRequestCount).toBe(2);
   });
 
+  test("should reuse scoped comments token for matching one-of resource requests", async () => {
+    let localRequestCount = 0;
+    const publicCommentsReadToken = makeAccessToken({
+      "org1*": [
+        Permission.Read,
+        Permission.CommentsNone,
+        Permission.CommentsPublicRead,
+      ],
+    });
+
+    server.use(
+      http.post("/api/access-auth-public-comments-read", () => {
+        localRequestCount++;
+        return HttpResponse.json({ token: publicCommentsReadToken });
+      })
+    );
+
+    const authManager = createAuthManager({
+      authEndpoint: "/api/access-auth-public-comments-read",
+    });
+
+    const publicReadAuthValue = (await authManager.getAuthValue({
+      resource: "comments:public",
+      access: "read",
+      roomId: "org1.room1",
+    })) as { type: "secret"; token: ParsedAuthToken };
+    const threadReadAuthValue = (await authManager.getAuthValue({
+      resources: ["comments:public", "comments:private"],
+      access: "read",
+      roomId: "org1.room1",
+    })) as { type: "secret"; token: ParsedAuthToken };
+
+    expect(publicReadAuthValue.token.raw).toEqual(publicCommentsReadToken);
+    expect(threadReadAuthValue.token.raw).toEqual(publicCommentsReadToken);
+    expect(localRequestCount).toBe(1);
+  });
+
   test("should not reuse scoped comments token for broad comments write requests", async () => {
     let localRequestCount = 0;
     const publicCommentsWriteToken = makeAccessToken({

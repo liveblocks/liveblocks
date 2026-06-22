@@ -25,9 +25,16 @@ export type AuthValue =
   | { type: "secret"; token: ParsedAuthToken }
   | { type: "public"; publicApiKey: string };
 
+type RoomAuthResource = Exclude<PermissionResources, "personal">;
+
 export type AuthRequest = Relax<
   | {
-      resource: Exclude<PermissionResources, "personal">;
+      resource: RoomAuthResource;
+      roomId: string;
+      access: RequiredAccessLevel;
+    }
+  | {
+      resources: readonly RoomAuthResource[];
       roomId: string;
       access: RequiredAccessLevel;
     }
@@ -231,7 +238,12 @@ function getAuthRequestKey(request: AuthRequest): string | undefined {
     return undefined;
   }
 
-  return `${request.roomId}:${request.resource}:${request.access}`;
+  const resources = getRoomAuthResources(request);
+  if (resources.length === 0) {
+    return undefined;
+  }
+
+  return `${request.roomId}:${resources.join("|")}:${request.access}`;
 }
 
 function makeCachedToken(
@@ -279,8 +291,22 @@ function cachedTokenSatisfiesRequest(
 
   return (
     matrix !== undefined &&
-    hasPermissionAccess(matrix, request.resource, request.access)
+    getRoomAuthResources(request).some((resource) =>
+      hasPermissionAccess(matrix, resource, request.access)
+    )
   );
+}
+
+function getRoomAuthResources(request: AuthRequest): readonly RoomAuthResource[] {
+  if (request.resources !== undefined) {
+    return request.resources;
+  }
+
+  if (request.resource !== undefined && request.resource !== "personal") {
+    return [request.resource];
+  }
+
+  return [];
 }
 
 function prepareAuthentication(

@@ -780,7 +780,7 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/thread-with-notification/${options.threadId}`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        resource: "comments",
+        resources: ["comments:public", "comments:private"],
         access: "read",
       })
     );

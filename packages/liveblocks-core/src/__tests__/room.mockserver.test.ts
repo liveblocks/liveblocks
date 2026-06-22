@@ -85,8 +85,30 @@ const commentBody = {
 
 function createTestApiClient() {
   const authRequests: AuthRequest[] = [];
-  const fetchPolyfill: typeof fetch = async () =>
-    Response.json({
+  const thread = {
+    type: "thread",
+    id: "th_123",
+    roomId: "room-id",
+    createdAt: new Date(0).toISOString(),
+    updatedAt: new Date(0).toISOString(),
+    comments: [],
+    metadata: {},
+    resolved: false,
+    visibility: "public",
+  };
+  const fetchPolyfill: typeof fetch = async (input) => {
+    const requestUrl =
+      typeof input === "string"
+        ? input
+        : input instanceof URL
+          ? input.href
+          : input.url;
+
+    if (requestUrl.includes("/thread-with-notification/")) {
+      return Response.json({ thread });
+    }
+
+    return Response.json({
       data: [],
       inboxNotifications: [],
       subscriptions: [],
@@ -98,16 +120,9 @@ function createTestApiClient() {
         nextCursor: null,
         permissionHints: {},
       },
-      type: "thread",
-      id: "th_123",
-      roomId: "room-id",
-      createdAt: new Date(0).toISOString(),
-      updatedAt: new Date(0).toISOString(),
-      comments: [],
-      metadata: {},
-      resolved: false,
-      visibility: "public",
+      ...thread,
     });
+  };
 
   return {
     authRequests,
@@ -240,12 +255,30 @@ describe("createApiClient", () => {
     ]);
   });
 
+  test("requests public or private comments read auth when getting a thread", async () => {
+    const { authRequests, client } = createTestApiClient();
+
+    await client.getThread({
+      roomId: "room-id",
+      threadId: "th_123",
+    });
+
+    expect(authRequests).toEqual([
+      {
+        roomId: "room-id",
+        resources: ["comments:public", "comments:private"],
+        access: "read",
+      },
+    ]);
+  });
+
   test("requests public comments write auth when creating a thread without visibility", async () => {
     const { authRequests, client } = createTestApiClient();
 
     await client.createThread({
       roomId: "room-id",
       metadata: {},
+      commentMetadata: undefined,
       body: commentBody,
     });
 
@@ -261,6 +294,7 @@ describe("createApiClient", () => {
       roomId: "room-id",
       visibility: "private",
       metadata: {},
+      commentMetadata: undefined,
       body: commentBody,
     });
 
