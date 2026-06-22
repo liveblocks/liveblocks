@@ -66,6 +66,7 @@ const mentionPasteHandler = (): Plugin => {
 export type MentionExtensionOptions = {
   onCreateMention: (mention: TiptapMentionData) => void;
   onDeleteMention: (notificationId: string) => void;
+  mentionNodes: boolean;
 };
 /**
  *
@@ -135,11 +136,12 @@ export const MentionExtension = Extension.create<MentionExtensionOptions>({
     return {
       onCreateMention: () => {},
       onDeleteMention: () => {},
+      mentionNodes: true,
     };
   },
 
   addExtensions() {
-    return [MentionNode, GroupMentionNode];
+    return this.options.mentionNodes ? [MentionNode, GroupMentionNode] : [];
   },
 
   addProseMirrorPlugins() {

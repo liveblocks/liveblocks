@@ -268,7 +268,10 @@ export const useLiveblocksExtension = (
 
     onCreate() {
       editor.current = this.editor;
-      if (this.editor.options.content) {
+      if (
+        textEditorType !== TextEditorType.BlockNote &&
+        this.editor.options.content
+      ) {
         console.warn(
           "[Liveblocks] Initial content must be set in the useLiveblocksExtension hook option. Remove content from your editor options."
         );
@@ -469,6 +472,7 @@ export const useLiveblocksExtension = (
               createTextMention(mention.notificationId, mention);
             },
             onDeleteMention: deleteTextMention,
+            mentionNodes: options.mentionNodes ?? true,
           })
         );
       }

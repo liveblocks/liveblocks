@@ -5,14 +5,20 @@ export type LiveblocksExtensionOptions = NonNullable<
   Parameters<typeof useTipTapLiveblocksExtension>[0]
 >;
 
+type InternalLiveblocksExtensionOptions = LiveblocksExtensionOptions & {
+  mentionNodes: boolean;
+  textEditorType: "blocknote";
+};
+
 export const useLiveblocksExtension = (
   options: LiveblocksExtensionOptions = {}
 ) => {
-  const extension = useTipTapLiveblocksExtension({
+  const tiptapOptions: InternalLiveblocksExtensionOptions = {
     ...options,
-    // @ts-expect-error - Hidden config option
+    mentionNodes: false,
     textEditorType: "blocknote",
-  });
+  };
+  const extension = useTipTapLiveblocksExtension(tiptapOptions);
 
   extension.config.extendMarkSchema = (mark: Mark) => {
     if (mark.name === "liveblocksCommentMark") {

@@ -90,6 +90,13 @@ export type LiveblocksExtensionOptions = {
   field?: string;
   comments?: boolean; // | CommentsConfiguration
   mentions?: boolean; // | MentionsConfiguration
+  /**
+   * @internal
+   * Allows editor wrappers that add Liveblocks mention nodes through their own
+   * schema layer to reuse the mention plugins without registering duplicate
+   * TipTap node extensions.
+   */
+  mentionNodes?: boolean;
   ai?: boolean | AiConfiguration;
   offlineSupport_experimental?: boolean;
   threads_experimental?: ThreadData[];

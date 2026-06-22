@@ -47,6 +47,7 @@ describe("@liveblocks/react-blocknote", () => {
     expect(mocks.useTipTapLiveblocksExtension).toHaveBeenCalledWith({
       collaborationMode: "liveblocks",
       field: "document",
+      mentionNodes: false,
       textEditorType: "blocknote",
     });
 

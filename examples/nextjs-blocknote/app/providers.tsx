@@ -7,6 +7,7 @@ import { LiveblocksProvider } from "@liveblocks/react/suspense";
 export function Providers({ children }: { children: ReactNode }) {
   return (
     <LiveblocksProvider
+      baseUrl={process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL}
       authEndpoint="/api/liveblocks-auth"
       resolveUsers={async ({ userIds }) => {
         const searchParams = new URLSearchParams(
