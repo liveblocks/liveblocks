@@ -18,6 +18,7 @@ import {
 } from "./mapping";
 import {
   attributesToMarks,
+  getLiveblocksNodeContent,
   getLiveblocksNodeText,
   type LiveblocksProsemirrorNode,
   liveblocksProsemirrorNodeToJsonNodes,
@@ -40,7 +41,9 @@ function isJsonObject(value: unknown): value is JsonObject {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function isLiveblocksProsemirrorNode(value: unknown): value is LiveblocksProsemirrorNode {
+function isLiveblocksProsemirrorNode(
+  value: unknown
+): value is LiveblocksProsemirrorNode {
   return (
     value instanceof LiveObject &&
     typeof value.get("id") === "string" &&
@@ -96,6 +99,56 @@ function findNodeRangeForLiveText(
   );
 }
 
+function collectCoveredDescendants(
+  node: LiveblocksProsemirrorNode,
+  coveredNodes: Set<unknown>
+): void {
+  coveredNodes.add(node);
+
+  const text = getLiveblocksNodeText(node);
+  if (text !== undefined) {
+    coveredNodes.add(text);
+  }
+
+  const content = getLiveblocksNodeContent(node);
+  if (content === undefined) {
+    return;
+  }
+
+  coveredNodes.add(content);
+  for (let index = 0; index < content.length; index++) {
+    const child = content.get(index);
+    if (child !== undefined) {
+      collectCoveredDescendants(child, coveredNodes);
+    }
+  }
+}
+
+function getStructurallyCoveredNodes(
+  updates: readonly StorageUpdate[]
+): Set<unknown> {
+  const coveredNodes = new Set<unknown>();
+
+  for (const update of updates) {
+    if (update.type !== "LiveList") {
+      continue;
+    }
+
+    for (const change of update.updates) {
+      if (
+        (change.type === "insert" ||
+          change.type === "set" ||
+          change.type === "move") &&
+        isLiveblocksProsemirrorNode(change.item)
+      ) {
+        collectCoveredDescendants(change.item, coveredNodes);
+      }
+    }
+  }
+
+  return coveredNodes;
+}
+
 export function applyRemoteStorageUpdates(
   view: EditorView,
   liveRoot: LiveblocksProsemirrorNode,
@@ -106,8 +159,13 @@ export function applyRemoteStorageUpdates(
   }
 
   let tr = view.state.tr;
+  const structurallyCoveredNodes = getStructurallyCoveredNodes(updates);
 
   for (const update of updates) {
+    if (structurallyCoveredNodes.has(update.node)) {
+      continue;
+    }
+
     if (update.type === "LiveText") {
       if (!(update.node instanceof LiveText)) {
         return { type: "unsupported" };
@@ -278,7 +336,9 @@ export function applyRemoteStorageUpdates(
       tr = tr.setNodeMarkup(
         range.from,
         undefined,
-        attrUpdate.type === "delete" ? null : getLiveblocksNodeAttrs(update.node)
+        attrUpdate.type === "delete"
+          ? null
+          : getLiveblocksNodeAttrs(update.node)
       );
 
       continue;
@@ -301,4 +361,3 @@ export function applyRemoteLiveTextUpdates(
 
   return applyRemoteStorageUpdates(view, liveRoot, updates);
 }
-
