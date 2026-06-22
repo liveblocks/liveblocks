@@ -107,6 +107,7 @@ function createEditor(content: string) {
 }
 
 function createCollaborationTestRoom(root = new LiveObject<LsonObject>({})) {
+  let onStorageUpdate: ((updates: StorageUpdate[]) => void) | undefined;
   const room = {
     batch(callback: () => void) {
       callback();
@@ -124,10 +125,11 @@ function createCollaborationTestRoom(root = new LiveObject<LsonObject>({})) {
     },
     subscribe(
       _node: LiveObject<LsonObject>,
-      _callback: (updates: StorageUpdate[]) => void
+      callback: (updates: StorageUpdate[]) => void
     ) {
+      onStorageUpdate = callback;
       return () => {
-        // no-op
+        onStorageUpdate = undefined;
       };
     },
     updatePresence: () => {},
@@ -141,6 +143,9 @@ function createCollaborationTestRoom(root = new LiveObject<LsonObject>({})) {
   return {
     room,
     root,
+    notifyStorageUpdate(updates: StorageUpdate[]) {
+      onStorageUpdate?.(updates);
+    },
   };
 }
 
@@ -626,6 +631,58 @@ describe("collaboration-liveblocks schema", () => {
       documents instanceof LiveMap ? documents.get("body") : undefined;
     expect(storedDocument).toBeInstanceOf(LiveObject);
     expect(liveblocksNodeToJson(storedDocument!)).toEqual(editor.getJSON());
+
+    editor.destroy();
+  });
+
+  test("ignores storage echoes for local LiveText updates", async () => {
+    const { room, root, notifyStorageUpdate } = createCollaborationTestRoom();
+    const editor = new Editor({
+      extensions: [
+        Document,
+        Paragraph,
+        Text,
+        TestLiveblocksCollaboration.configure({ room }),
+      ],
+      content: "<p>Hello</p>",
+    });
+
+    await flushAsyncWork();
+
+    editor.commands.insertContentAt(6, "!");
+
+    const documents = root.get(LIVEBLOCKS_TIPTAP_DOCUMENTS_KEY);
+    const storedDocument =
+      documents instanceof LiveMap ? documents.get("default") : undefined;
+    expect(storedDocument).toBeInstanceOf(LiveObject);
+    const textNode = getFirstTextNode(storedDocument!);
+    expect(textNode).toBeDefined();
+    const text = getLiveblocksNodeText(textNode!);
+    expect(text).toBeInstanceOf(LiveText);
+
+    notifyStorageUpdate([
+      {
+        type: "LiveText",
+        node: text!,
+        updates: [
+          {
+            type: "insert",
+            index: 5,
+            text: "!",
+          },
+        ],
+      },
+    ]);
+
+    expect(editor.getJSON()).toEqual({
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: "Hello!" }],
+        },
+      ],
+    });
 
     editor.destroy();
   });

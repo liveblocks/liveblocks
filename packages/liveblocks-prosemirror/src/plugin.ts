@@ -167,6 +167,14 @@ export function createLiveblocksCollaborationPlugin(
       options.fallbackDocument
     );
     const serializedDocument = stringifyDocument(document);
+    const currentDocument: unknown = view.state.doc.toJSON();
+    if (
+      isProseMirrorJsonNode(currentDocument) &&
+      stringifyDocument(currentDocument) === serializedDocument
+    ) {
+      lastDocument = serializedDocument;
+      return;
+    }
 
     if (serializedDocument === lastDocument) {
       return;
@@ -245,6 +253,10 @@ export function createLiveblocksCollaborationPlugin(
             applyIncrementalOperations(classified.operations);
           } finally {
             isApplyingLocalUpdate = false;
+          }
+          const document: unknown = newState.doc.toJSON();
+          if (isProseMirrorJsonNode(document)) {
+            lastDocument = stringifyDocument(document);
           }
         } else {
           const document: unknown = newState.doc.toJSON();
