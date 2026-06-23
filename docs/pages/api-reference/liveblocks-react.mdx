@@ -1223,7 +1223,8 @@ useErrorListener((error) => {
 
     // Can happen if you use Comments or Notifications
     case "CREATE_THREAD_ERROR":
-      const { roomId, threadId, commentId, body, metadata } = error.context;
+      const { roomId, threadId, commentId, body, visibility, metadata } =
+        error.context;
       break;
 
     case "DELETE_THREAD_ERROR":
@@ -4326,7 +4327,8 @@ import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
   if (error.context.type === "CREATE_THREAD_ERROR") {
-    const { roomId, threadId, commentId, body, metadata } = error.context;
+    const { roomId, threadId, commentId, body, visibility, metadata } =
+      error.context;
     console.log(`Problem creating thread ${threadId}`);
   }
 });
