@@ -5,8 +5,12 @@
  *
  * For normal history/batch/storage tests, see room.devserver.test.ts.
  */
+import { http, HttpResponse } from "msw";
+import { setupServer } from "msw/node";
 import {
+  afterAll,
   afterEach,
+  beforeAll,
   beforeEach,
   describe,
   expect,
@@ -34,7 +38,11 @@ import * as console from "../lib/fancy-console";
 import type { Json, JsonObject } from "../lib/Json";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import { ClientMsgCode } from "../protocol/ClientMsg";
-import type { BaseMetadata, CommentBody } from "../protocol/Comments";
+import type {
+  BaseMetadata,
+  CommentBody,
+  ThreadDataPlain,
+} from "../protocol/Comments";
 import { OpCode } from "../protocol/Op";
 import { ServerMsgCode } from "../protocol/ServerMsg";
 import type { StorageNode } from "../protocol/StorageNode";
@@ -95,61 +103,81 @@ const commentsWriteAuthRequest = {
   access: "write",
 } satisfies AuthRequest;
 
+const testThread = {
+  type: "thread",
+  id: "th_123",
+  roomId: "room-id",
+  createdAt: new Date(0).toISOString(),
+  updatedAt: new Date(0).toISOString(),
+  comments: [],
+  metadata: {},
+  resolved: false,
+  visibility: "public",
+} satisfies ThreadDataPlain<BaseMetadata, BaseMetadata>;
+
+const emptyThreadsResponse = {
+  data: [],
+  inboxNotifications: [],
+  subscriptions: [],
+  deletedThreads: [],
+  deletedInboxNotifications: [],
+  deletedSubscriptions: [],
+  meta: {
+    requestedAt: new Date(0).toISOString(),
+    nextCursor: null,
+    permissionHints: {},
+  },
+};
+
+const apiClientServer = setupServer(
+  http.get(`${DEFAULT_BASE_URL}/v2/c/rooms/:roomId/threads`, () => {
+    return HttpResponse.json(emptyThreadsResponse);
+  }),
+  http.get(`${DEFAULT_BASE_URL}/v2/c/rooms/:roomId/threads/delta`, () => {
+    return HttpResponse.json(emptyThreadsResponse);
+  }),
+  http.get(
+    `${DEFAULT_BASE_URL}/v2/c/rooms/:roomId/threads/comments/search`,
+    () => {
+      return HttpResponse.json({ data: [] });
+    }
+  ),
+  http.get(
+    `${DEFAULT_BASE_URL}/v2/c/rooms/:roomId/thread-with-notification/:threadId`,
+    () => {
+      return HttpResponse.json({ thread: testThread });
+    }
+  ),
+  http.post(`${DEFAULT_BASE_URL}/v2/c/rooms/:roomId/threads`, () => {
+    return HttpResponse.json(testThread);
+  }),
+  http.post(
+    `${DEFAULT_BASE_URL}/v2/c/rooms/:roomId/threads/:threadId/mark-as-resolved`,
+    () => {
+      return HttpResponse.json({});
+    }
+  ),
+  http.post(
+    `${DEFAULT_BASE_URL}/v2/c/rooms/:roomId/attachments/presigned-urls`,
+    () => {
+      return HttpResponse.json({ urls: ["https://example.com/attachment"] });
+    }
+  )
+);
+
 function createTestApiClient() {
   const authRequests: AuthRequest[] = [];
-  const thread = {
-    type: "thread",
-    id: "th_123",
-    roomId: "room-id",
-    createdAt: new Date(0).toISOString(),
-    updatedAt: new Date(0).toISOString(),
-    comments: [],
-    metadata: {},
-    resolved: false,
-    visibility: "public",
-  };
-  const fetchPolyfill: typeof fetch = async (input) => {
-    const requestUrl =
-      typeof input === "string"
-        ? input
-        : input instanceof URL
-          ? input.href
-          : input.url;
-
-    if (requestUrl.includes("/thread-with-notification/")) {
-      return Response.json({ thread });
-    }
-
-    if (requestUrl.includes("/attachments/presigned-urls")) {
-      return Response.json({ urls: ["https://example.com/attachment"] });
-    }
-
-    return Response.json({
-      data: [],
-      inboxNotifications: [],
-      subscriptions: [],
-      deletedThreads: [],
-      deletedInboxNotifications: [],
-      deletedSubscriptions: [],
-      meta: {
-        requestedAt: new Date(0).toISOString(),
-        nextCursor: null,
-        permissionHints: {},
-      },
-      ...thread,
-    });
-  };
 
   return {
     authRequests,
     client: createApiClient<BaseMetadata, BaseMetadata>({
       baseUrl: DEFAULT_BASE_URL,
-      fetchPolyfill,
+      fetchPolyfill: globalThis.fetch?.bind(globalThis),
       authManager: {
         reset() {},
-        async getAuthValue(request) {
+        getAuthValue(request) {
           authRequests.push(request);
-          return { type: "public", publicApiKey: "pk_test" };
+          return Promise.resolve({ type: "public", publicApiKey: "pk_test" });
         },
       },
     }),
@@ -235,6 +263,10 @@ function createTestableRoom<
 }
 
 describe("createApiClient", () => {
+  beforeAll(() => apiClientServer.listen({ onUnhandledRequest: "error" }));
+  afterEach(() => apiClientServer.resetHandlers());
+  afterAll(() => apiClientServer.close());
+
   test("requests comments read auth when getting threads without visibility", async () => {
     const { authRequests, client } = createTestApiClient();
 
