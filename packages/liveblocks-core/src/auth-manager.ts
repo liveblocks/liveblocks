@@ -303,7 +303,9 @@ function cachedTokenSatisfiesRequest(
   );
 }
 
-function getRoomAuthResources(request: AuthRequest): readonly RoomAuthResource[] {
+function getRoomAuthResources(
+  request: AuthRequest
+): readonly RoomAuthResource[] {
   if (request.resources !== undefined) {
     return request.resources;
   }

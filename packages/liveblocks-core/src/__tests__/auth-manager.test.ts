@@ -391,9 +391,7 @@ describe("auth-manager - secret auth", () => {
     })) as { type: "secret"; token: ParsedAuthToken };
 
     expect(personalReadAuthValue.token.raw).toEqual(personalCommentsReadToken);
-    expect(commentsReadAuthValue.token.raw).toEqual(
-      personalCommentsReadToken
-    );
+    expect(commentsReadAuthValue.token.raw).toEqual(personalCommentsReadToken);
     expect(localRequestCount).toBe(1);
   });
 
