@@ -72,7 +72,7 @@ a thread. The first comment in a thread is displayed at the top.
 
 Here’s an example of a single comment inside a thread object.
 
-```ts highlight="9-25"
+```ts
 {
   type: "thread",
   id: "th_sf8s6sh...",
@@ -81,6 +81,7 @@ Here’s an example of a single comment inside a thread object.
   resolved: false,
   visibility: "public",
   comments: [
+    // +++
     {
       type: "comment",
       threadId: "th_sf8s6sh...",
@@ -98,6 +99,7 @@ Here’s an example of a single comment inside a thread object.
         // ...
       },
     },
+    // +++
 
     // Other comments in the thread
     // ...

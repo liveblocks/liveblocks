@@ -1896,9 +1896,7 @@ console.log(threads);
 
 It’s also possible to filter threads by visibility, resolved status, and their
 string, boolean, and number metadata using a query parameter. You can also pass
-`startsWith` to match the start of a string. Permissions are taken into account
-so querying private threads will return no threads if the current user does not
-have access to them.
+`startsWith` to match the start of a string.
 
 ```ts
 const { data: threads } = await liveblocks.getThreads({
@@ -2000,12 +1998,7 @@ You can also convert a Markdown string to a `CommentBody` with
 </Banner>
 
 This method has a number of options, allowing for custom metadata, thread
-visibility, and a creation date for the comment. Permissions are taken into
-account when threads are created and retrieved. A user without write access to
-private threads can’t create a private thread, and users without read access to
-private threads won’t receive private threads from
-[`liveblocks.getThreads`](#get-rooms-roomId-threads) or
-[`liveblocks.getThread`](#get-rooms-roomId-threads-threadId).
+visibility, and a creation date for the comment.
 
 ```ts
 const thread = await liveblocks.createThread({

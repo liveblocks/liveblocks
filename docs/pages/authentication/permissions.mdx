@@ -47,14 +47,19 @@ You can opt into or opt out of access to specific room resources:
   `comments:public:none`.
 - **Private threads** with `comments:private:read`, `comments:private:write`, or
   `comments:private:none`.
-- **Personal threads** with `comments:personal:read`, `comments:personal:write`,
-  or `comments:personal:none`.
+- **Personal thread access** with `comments:personal:read`,
+  `comments:personal:write`, or `comments:personal:none`.
 - **Feeds** with `feeds:read`, `feeds:write`, or `feeds:none`.
 
-The `comments:*` permissions apply to public, private, and personal threads. Use
-`comments:public:*`, `comments:private:*`, or `comments:personal:*` to override
-one visibility. For example, you can allow writing public threads while denying
-access to private threads.
+The `comments:*` permissions apply to public threads, private threads, and
+threads created by the current user. Use `comments:public:*` and
+`comments:private:*` to override one visibility.
+
+Personal thread permissions are based on who created the thread, not the
+thread’s `visibility` value. For example, `comments:personal:read` lets a user
+read threads they created, and `comments:personal:write` lets a user create
+threads because those threads are their own. This is useful when reviewers or
+external users should only create and see their own threads.
 
 Here’s an example giving write access to everything except read-only access to
 storage:
@@ -116,9 +121,9 @@ Learn how to set this up in
 | `comments:private:read`   | Private threads  | Read access to private threads.                        |
 | `comments:private:write`  | Private threads  | Write access to private threads.                       |
 | `comments:private:none`   | Private threads  | No access to private threads.                          |
-| `comments:personal:read`  | Personal threads | Read access to personal threads.                       |
-| `comments:personal:write` | Personal threads | Write access to personal threads.                      |
-| `comments:personal:none`  | Personal threads | No access to personal threads.                         |
+| `comments:personal:read`  | Personal threads | Read access to threads created by the current user.    |
+| `comments:personal:write` | Personal threads | Write access for threads created by the current user.  |
+| `comments:personal:none`  | Personal threads | No access to threads created by the current user.      |
 | `feeds:read`              | Feeds            | Read access to feeds.                                  |
 | `feeds:write`             | Feeds            | Write access to feeds.                                 |
 | `feeds:none`              | Feeds            | No access to feeds.                                    |
