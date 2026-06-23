@@ -12,7 +12,7 @@ import {
 } from "vitest";
 
 import { createApiClient } from "../api-client";
-import { createAuthManager, type AuthRequest } from "../auth-manager";
+import { type AuthRequest, createAuthManager } from "../auth-manager";
 import { DEFAULT_BASE_URL } from "../constants";
 import { Permission, type RoomPermissions } from "../permissions";
 import type { ParsedAuthToken } from "../protocol/AuthToken";

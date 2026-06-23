@@ -64,11 +64,11 @@ import type {
   ComposerSubmitComment,
 } from "../primitives/Composer/types";
 import { useComposerAttachmentsDropArea } from "../primitives/Composer/utils";
+import { commentsResourceForVisibility } from "../shared";
 import type { ComposerBodyMark } from "../types";
 import { cn } from "../utils/cn";
 import { useControllableState } from "../utils/use-controllable-state";
 import { useIsGroupMentionMember } from "../utils/use-group-mention";
-import { commentsResourceForVisibility } from "../shared";
 import { GroupAvatar, UserAvatar } from "./Avatar";
 import { FileAttachment } from "./internal/Attachment";
 import { Attribution } from "./internal/Attribution";
