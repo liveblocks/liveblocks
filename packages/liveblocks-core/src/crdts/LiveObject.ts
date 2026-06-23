@@ -59,7 +59,7 @@ export type LiveObjectUpdateDelta<O extends { [key: string]: unknown }> = {
 
 // One key platform limit is that a LiveObject cannot exceed 128 kB when
 // totalling the size of the keys and values.
-// See https://liveblocks.io/docs/platform/limits#Liveblocks-Storage-limits
+// See https://liveblocks.io/docs/pricing/limits#Other-limits
 const MAX_LIVE_OBJECT_SIZE = 128 * 1024;
 
 /**
@@ -728,7 +728,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
         const preciseSize = new TextEncoder().encode(jsonString).length;
         if (preciseSize > MAX_LIVE_OBJECT_SIZE) {
           throw new Error(
-            `LiveObject size exceeded limit: ${preciseSize} bytes > ${MAX_LIVE_OBJECT_SIZE} bytes. See https://liveblocks.io/docs/platform/limits#Liveblocks-Storage-limits`
+            `LiveObject size exceeded limit: ${preciseSize} bytes > ${MAX_LIVE_OBJECT_SIZE} bytes. See https://liveblocks.io/docs/pricing/limits#Other-limits`
           );
         }
       }

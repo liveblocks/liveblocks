@@ -1,0 +1,72 @@
+---
+meta:
+  title: "Pricing overview"
+  parentTitle: "Pricing"
+  description:
+    "How Liveblocks pricing works: plans, credits, metered usage, and billing."
+---
+
+Liveblocks is usage-based. You choose a plan, each plan includes a monthly
+credit allowance, and your credits are applied to what your app actually uses.
+You only pay more if your usage goes above your credits. For full plan details,
+see the [pricing page](/pricing/).
+
+## Plans
+
+There are four plans, so you can pick the one that fits where you are:
+
+- **Free:** for personal development, prototyping, and testing. No credit card
+  required.
+- **Pro:** for developers shipping collaborative features in production.
+- **Team:** for teams shipping collaborative features at scale, with added
+  security and support.
+- **Enterprise:** a custom plan for premium security and partnership needs.
+
+| Plan       | Monthly base                     | Included credits     |
+| ---------- | -------------------------------- | -------------------- |
+| Free       | $0                               | Free monthly credits |
+| Pro        | $30 ($25 billed annually)        | $30                  |
+| Team       | from $600 ($500 billed annually) | from $600            |
+| Enterprise | Custom                           | Custom               |
+
+See [Plans](/docs/pricing/plans) for full details on each plan.
+
+## How usage is metered
+
+Liveblocks charges for what your app uses, applied against your monthly credits
+first. The main metered units:
+
+| Unit                                                                    | Description                                           | Rate              |
+| ----------------------------------------------------------------------- | ----------------------------------------------------- | ----------------- |
+| [Realtime collaboration minutes](/docs/pricing/plans/pro#Metered-usage) | Active time people and agents spend together in rooms | $0.002 per minute |
+| [Comments created](/docs/pricing/plans/pro#Metered-usage)               | Each comment posted in your app                       | $0.01 per comment |
+| [Realtime data storage updates](/docs/pricing/plans/pro#Metered-usage)  | Each change written to stored data                    | $1 per 1M updates |
+| [Realtime data stored](/docs/pricing/plans/pro#Metered-usage)           | Total data kept in storage                            | $0.15 per GB      |
+| [Monthly custom notifications](/docs/pricing/plans/pro#Metered-usage)   | Notifications you trigger from your own code          | $0.01 per event   |
+| [File storage](/docs/pricing/plans/pro#Metered-usage)                   | Total files stored                                    | $0.15 per GB      |
+
+Rates shown here are indicative. See
+[Pro](/docs/pricing/plans/pro#Metered-usage) and
+[Team](/docs/pricing/plans/team#Metered-usage) for current per-unit prices.
+
+[Collaboration notifications](/docs/ready-made-features/notifications/concepts#Collaboration-notifications),
+like mentions and thread replies, are included free.
+
+## Credits
+
+Every plan includes a monthly credit allowance that covers your metered usage
+first. Credits reset at the start of each billing cycle and do not roll over.
+Higher Team tiers include more credit value than they cost, so you get more
+usage for the same base. Usage above your credits is overage, billed at the
+per-unit rates above.
+
+## Limits
+
+Each plan has limits that protect your account and your costs. See
+[Limits](/docs/pricing/limits) for the full list.
+
+## Billing
+
+You're billed monthly: your plan base plus any overage from the previous cycle.
+Pay annually to get two months free. See [Billing](/docs/pricing/billing) for
+details.
