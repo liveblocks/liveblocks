@@ -1487,10 +1487,10 @@
     },
     "/rooms/{roomId}/versions": {
       "get": {
-        "summary": "Get Yjs version history",
+        "summary": "Get Version History",
         "description": "This endpoint returns a list of version history snapshots for the room's Yjs document. The versions are returned sorted by creation date, from newest to oldest.",
         "tags": ["Yjs"],
-        "operationId": "get-yjs-versions",
+        "operationId": "get-version-history",
         "parameters": [
           {
             "name": "roomId",
@@ -1530,14 +1530,13 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GetYjsVersionsResponse"
+                  "$ref": "#/components/schemas/GetVersionHistoryResponse"
                 },
                 "examples": {
                   "example": {
                     "value": {
                       "data": [
                         {
-                          "type": "historyVersion",
                           "id": "vh_abc123",
                           "createdAt": "2024-10-15T10:30:00.000Z",
                           "authors": [
@@ -1547,8 +1546,7 @@
                             {
                               "id": "user-456"
                             }
-                          ],
-                          "kind": "yjs"
+                          ]
                         }
                       ],
                       "nextCursor": "eyJjcmVhdGVkQXQiOiIyMDI0LTEwLTE1VDEwOjMwOjAwLjAwMFoifQ=="
@@ -1568,9 +1566,57 @@
             "$ref": "#/components/responses/404"
           }
         }
+      },
+      "post": {
+        "summary": "Create version history snapshot",
+        "description": "This endpoint creates a new version history snapshot for the room. Currently only works for Yjs.",
+        "tags": ["Yjs"],
+        "operationId": "create-version-history-snapshot",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID of the room",
+              "example": "my-room-id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the created version ID.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateVersionHistorySnapshotResponse"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "data": {
+                        "id": "vh_abc123"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        }
       }
     },
-    "/rooms/{roomId}/version/{versionId}": {
+    "/rooms/{roomId}/versions/{versionId}/yjs": {
       "get": {
         "summary": "Get Yjs document version",
         "description": "This endpoint returns a specific version of the room's Yjs document encoded as a binary Yjs update.",
@@ -1606,56 +1652,6 @@
                 "schema": {
                   "type": "string",
                   "format": "binary"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403"
-          },
-          "404": {
-            "$ref": "#/components/responses/404"
-          }
-        }
-      }
-    },
-    "/rooms/{roomId}/version": {
-      "post": {
-        "summary": "Create Yjs version snapshot",
-        "description": "This endpoint creates a new version history snapshot for the room's Yjs document.",
-        "tags": ["Yjs"],
-        "operationId": "create-yjs-version",
-        "parameters": [
-          {
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "description": "ID of the room",
-              "example": "my-room-id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success. Returns the created version ID.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CreateYjsVersionResponse"
-                },
-                "examples": {
-                  "example": {
-                    "value": {
-                      "data": {
-                        "id": "vh_abc123"
-                      }
-                    }
-                  }
                 }
               }
             }
@@ -7915,17 +7911,13 @@
           }
         }
       },
-      "YjsVersion": {
-        "title": "YjsVersion",
+      "HistoryVersion": {
+        "title": "HistoryVersion",
         "type": "object",
         "properties": {
           "id": {
             "type": "string",
             "description": "Unique identifier for the version"
-          },
-          "type": {
-            "type": "string",
-            "const": "historyVersion"
           },
           "createdAt": {
             "type": "string",
@@ -7944,47 +7936,27 @@
               }
             },
             "description": "List of users who contributed to this version"
-          },
-          "kind": {
-            "type": "string",
-            "const": "yjs"
           }
         },
-        "required": ["id", "type", "createdAt", "kind"],
+        "required": ["id", "createdAt", "authors"],
         "example": {
           "id": "vh_abc123",
-          "type": "historyVersion",
           "createdAt": "2024-10-15T10:30:00.000Z",
-          "authors": [
-            {
-              "id": "user-123"
-            },
-            {
-              "id": "user-456"
-            }
-          ],
-          "kind": "yjs"
+          "authors": [{ "id": "user-123" }, { "id": "user-456" }]
         }
       },
-      "GetYjsVersionsResponse": {
-        "title": "GetYjsVersionsResponse",
+      "GetVersionHistoryResponse": {
+        "title": "GetVersionHistoryResponse",
         "type": "object",
         "properties": {
           "nextCursor": {
             "description": "Cursor for pagination to get the next page of results",
-            "oneOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "oneOf": [{ "type": "string" }, { "type": "null" }]
           },
           "data": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/YjsVersion"
+              "$ref": "#/components/schemas/HistoryVersion"
             }
           }
         },
@@ -7993,22 +7965,16 @@
         "example": {
           "data": [
             {
-              "type": "historyVersion",
               "id": "vh_abc123",
               "createdAt": "2024-10-15T10:30:00.000Z",
-              "authors": [
-                {
-                  "id": "user-123"
-                }
-              ],
-              "kind": "yjs"
+              "authors": [{ "id": "user-123" }]
             }
           ],
           "nextCursor": "eyJjcmVhdGVkQXQiOiIyMDI0LTEwLTE1VDEwOjMwOjAwLjAwMFoifQ=="
         }
       },
-      "CreateYjsVersionResponse": {
-        "title": "CreateYjsVersionResponse",
+      "CreateVersionHistorySnapshotResponse": {
+        "title": "CreateVersionHistorySnapshotResponse",
         "type": "object",
         "properties": {
           "data": {
