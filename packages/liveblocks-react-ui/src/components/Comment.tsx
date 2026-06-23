@@ -66,15 +66,18 @@ import type {
 } from "../primitives/Comment/types";
 import * as ComposerPrimitive from "../primitives/Composer";
 import { Timestamp } from "../primitives/Timestamp";
-import { useCurrentUserId } from "../shared";
+import {
+  getCommentsPermissionResource,
+  useCurrentUserId,
+  useThreadVisibility,
+} from "../shared";
 import type { CommentAttachmentArgs } from "../types";
 import { cn } from "../utils/cn";
 import { download } from "../utils/download";
 import { useIsGroupMentionMember } from "../utils/use-group-mention";
 import { useRefs } from "../utils/use-refs";
 import { UserAvatar } from "./Avatar";
-import type { ComposerProps } from "./Composer";
-import { Composer } from "./Composer";
+import { Composer, type ComposerProps } from "./Composer";
 import {
   FileAttachment,
   MediaAttachment,
@@ -733,10 +736,13 @@ export const Comment = Object.assign(
       const { mediaAttachments, fileAttachments } = useMemo(() => {
         return separateMediaAttachments(comment.attachments);
       }, [comment.attachments]);
+      const threadVisibility = useThreadVisibility();
 
       const canComment = useHasPermissionAccess(
         comment.roomId,
-        "comments",
+        threadVisibility !== undefined
+          ? getCommentsPermissionResource(threadVisibility)
+          : "comments",
         "write"
       );
 

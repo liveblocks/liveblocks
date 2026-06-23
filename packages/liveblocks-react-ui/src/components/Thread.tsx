@@ -46,6 +46,10 @@ import type {
   ThreadOverrides,
 } from "../overrides";
 import { useOverrides } from "../overrides";
+import {
+  getCommentsPermissionResource,
+  ThreadVisibilityContext,
+} from "../shared";
 import { cn } from "../utils/cn";
 import { useStableComponent } from "../utils/use-stable-component";
 import { useIntersectionCallback } from "../utils/use-visible";
@@ -438,9 +442,12 @@ export const Thread = forwardRef(
       }
     }, [unreadIndex]);
 
+    const commentsPermissionResource = getCommentsPermissionResource(
+      thread.visibility
+    );
     const canComment = useHasPermissionAccess(
       thread.roomId,
-      "comments",
+      commentsPermissionResource,
       "write"
     );
 
@@ -492,188 +499,192 @@ export const Thread = forwardRef(
     let currentCommentIndex = 0;
 
     return (
-      <TooltipProvider>
-        <div
-          className={cn(
-            "lb-root lb-thread",
-            showActions === "hover" && "lb-thread:show-actions-hover",
-            className
-          )}
-          data-resolved={thread.resolved ? "" : undefined}
-          data-unread={unreadIndex !== undefined ? "" : undefined}
-          dir={$.dir}
-          {...props}
-          ref={forwardedRef}
-        >
-          <div className="lb-thread-comments" role="feed">
-            {thread.comments.map((comment, index) => {
-              const isNonDeletedComment = showDeletedComments || comment.body;
-              const isFirstComment = index === firstCommentIndex;
-              const isUnread =
-                unreadIndex !== undefined && index >= unreadIndex;
-              const isHidden =
-                hiddenComments &&
-                index >= hiddenComments.firstIndex &&
-                index <= hiddenComments.lastIndex;
-              const isHiddenBecauseDeleted =
-                !showDeletedComments && !comment.body;
-              const isFirstHiddenComment =
-                isHidden && index === hiddenComments.firstIndex;
+      <ThreadVisibilityContext.Provider value={thread.visibility}>
+        <TooltipProvider>
+          <div
+            className={cn(
+              "lb-root lb-thread",
+              showActions === "hover" && "lb-thread:show-actions-hover",
+              className
+            )}
+            data-resolved={thread.resolved ? "" : undefined}
+            data-unread={unreadIndex !== undefined ? "" : undefined}
+            dir={$.dir}
+            {...props}
+            ref={forwardedRef}
+          >
+            <div className="lb-thread-comments" role="feed">
+              {thread.comments.map((comment, index) => {
+                const isNonDeletedComment = showDeletedComments || comment.body;
+                const isFirstComment = index === firstCommentIndex;
+                const isUnread =
+                  unreadIndex !== undefined && index >= unreadIndex;
+                const isHidden =
+                  hiddenComments &&
+                  index >= hiddenComments.firstIndex &&
+                  index <= hiddenComments.lastIndex;
+                const isHiddenBecauseDeleted =
+                  !showDeletedComments && !comment.body;
+                const isFirstHiddenComment =
+                  isHidden && index === hiddenComments.firstIndex;
 
-              if (isFirstHiddenComment) {
-                return (
-                  <div
-                    key={`${comment.id}:show-more`}
-                    className="lb-thread-show-more"
-                  >
-                    <Button
-                      variant="ghost"
-                      className="lb-thread-show-more-button"
-                      onClick={() => setShowAllComments(true)}
+                if (isFirstHiddenComment) {
+                  return (
+                    <div
+                      key={`${comment.id}:show-more`}
+                      className="lb-thread-show-more"
                     >
-                      {$.THREAD_SHOW_MORE_COMMENTS(hiddenComments.count)}
-                    </Button>
-                  </div>
-                );
-              }
-
-              if (isHidden || isHiddenBecauseDeleted) {
-                return null;
-              }
-
-              if (isNonDeletedComment) {
-                currentCommentIndex++;
-              }
-
-              const children = (
-                <Comment
-                  key={comment.id}
-                  tabIndex={0}
-                  aria-posinset={currentCommentIndex}
-                  aria-setsize={commentsCount}
-                  overrides={overrides}
-                  className="lb-thread-comment"
-                  data-unread={isUnread ? "" : undefined}
-                  comment={comment}
-                  indentContent={indentCommentContent}
-                  showDeleted={showDeletedComments}
-                  showActions={showActions}
-                  showReactions={showReactions}
-                  showAttachments={showAttachments}
-                  showComposerFormattingControls={
-                    showComposerFormattingControls
-                  }
-                  onCommentEdit={onCommentEdit}
-                  onCommentDelete={handleCommentDelete}
-                  onAuthorClick={onAuthorClick}
-                  onMentionClick={onMentionClick}
-                  onAttachmentClick={onAttachmentClick}
-                  components={components}
-                  actionsClassName={
-                    isFirstComment ? "lb-thread-actions" : undefined
-                  }
-                  actions={
-                    isFirstComment && showResolveAction ? (
-                      <Tooltip
-                        content={
-                          thread.resolved
-                            ? $.THREAD_UNRESOLVE
-                            : $.THREAD_RESOLVE
-                        }
+                      <Button
+                        variant="ghost"
+                        className="lb-thread-show-more-button"
+                        onClick={() => setShowAllComments(true)}
                       >
-                        <TogglePrimitive.Root
-                          pressed={thread.resolved}
-                          onPressedChange={handleResolvedChange}
-                          asChild
+                        {$.THREAD_SHOW_MORE_COMMENTS(hiddenComments.count)}
+                      </Button>
+                    </div>
+                  );
+                }
+
+                if (isHidden || isHiddenBecauseDeleted) {
+                  return null;
+                }
+
+                if (isNonDeletedComment) {
+                  currentCommentIndex++;
+                }
+
+                const children = (
+                  <Comment
+                    key={comment.id}
+                    tabIndex={0}
+                    aria-posinset={currentCommentIndex}
+                    aria-setsize={commentsCount}
+                    overrides={overrides}
+                    className="lb-thread-comment"
+                    data-unread={isUnread ? "" : undefined}
+                    comment={comment}
+                    indentContent={indentCommentContent}
+                    showDeleted={showDeletedComments}
+                    showActions={showActions}
+                    showReactions={showReactions}
+                    showAttachments={showAttachments}
+                    showComposerFormattingControls={
+                      showComposerFormattingControls
+                    }
+                    onCommentEdit={onCommentEdit}
+                    onCommentDelete={handleCommentDelete}
+                    onAuthorClick={onAuthorClick}
+                    onMentionClick={onMentionClick}
+                    onAttachmentClick={onAttachmentClick}
+                    components={components}
+                    actionsClassName={
+                      isFirstComment ? "lb-thread-actions" : undefined
+                    }
+                    actions={
+                      isFirstComment && showResolveAction ? (
+                        <Tooltip
+                          content={
+                            thread.resolved
+                              ? $.THREAD_UNRESOLVE
+                              : $.THREAD_RESOLVE
+                          }
                         >
-                          <Button
-                            className="lb-comment-action"
-                            onClick={stopPropagation}
-                            aria-label={
-                              thread.resolved
-                                ? $.THREAD_UNRESOLVE
-                                : $.THREAD_RESOLVE
-                            }
-                            icon={
-                              thread.resolved ? (
-                                <CheckCircleFillIcon />
-                              ) : (
-                                <CheckCircleIcon />
-                              )
-                            }
-                            disabled={!canComment}
-                          />
-                        </TogglePrimitive.Root>
-                      </Tooltip>
-                    ) : null
-                  }
-                  internalDropdownItems={
-                    isFirstComment && showSubscription ? (
-                      <DefaultComment.DropdownItem
-                        onSelect={handleSubscribeChange}
-                        icon={
-                          subscriptionStatus === "subscribed" ? (
-                            <BellCrossedIcon />
-                          ) : (
-                            <BellIcon />
-                          )
-                        }
-                      >
-                        {subscriptionStatus === "subscribed"
-                          ? $.THREAD_UNSUBSCRIBE
-                          : $.THREAD_SUBSCRIBE}
-                      </DefaultComment.DropdownItem>
-                    ) : undefined
-                  }
-                  dropdownItems={
-                    commentDropdownItems as CommentProps["dropdownItems"]
-                  }
-                />
-              );
+                          <TogglePrimitive.Root
+                            pressed={thread.resolved}
+                            onPressedChange={handleResolvedChange}
+                            asChild
+                          >
+                            <Button
+                              className="lb-comment-action"
+                              onClick={stopPropagation}
+                              aria-label={
+                                thread.resolved
+                                  ? $.THREAD_UNRESOLVE
+                                  : $.THREAD_RESOLVE
+                              }
+                              icon={
+                                thread.resolved ? (
+                                  <CheckCircleFillIcon />
+                                ) : (
+                                  <CheckCircleIcon />
+                                )
+                              }
+                              disabled={!canComment}
+                            />
+                          </TogglePrimitive.Root>
+                        </Tooltip>
+                      ) : null
+                    }
+                    internalDropdownItems={
+                      isFirstComment && showSubscription ? (
+                        <DefaultComment.DropdownItem
+                          onSelect={handleSubscribeChange}
+                          icon={
+                            subscriptionStatus === "subscribed" ? (
+                              <BellCrossedIcon />
+                            ) : (
+                              <BellIcon />
+                            )
+                          }
+                        >
+                          {subscriptionStatus === "subscribed"
+                            ? $.THREAD_UNSUBSCRIBE
+                            : $.THREAD_SUBSCRIBE}
+                        </DefaultComment.DropdownItem>
+                      ) : undefined
+                    }
+                    dropdownItems={
+                      commentDropdownItems as CommentProps["dropdownItems"]
+                    }
+                  />
+                );
 
-              return index === newIndicatorIndex &&
-                newIndicatorIndex !== firstCommentIndex &&
-                newIndicatorIndex <= lastCommentIndex ? (
-                <Fragment key={comment.id}>
-                  <div
-                    className="lb-thread-new-indicator"
-                    aria-label={$.THREAD_NEW_INDICATOR_DESCRIPTION}
-                  >
-                    <span className="lb-thread-new-indicator-label">
-                      <ArrowDownIcon className="lb-thread-new-indicator-label-icon" />
-                      {$.THREAD_NEW_INDICATOR}
-                    </span>
-                  </div>
-                  {children}
-                </Fragment>
-              ) : (
-                children
-              );
-            })}
+                return index === newIndicatorIndex &&
+                  newIndicatorIndex !== firstCommentIndex &&
+                  newIndicatorIndex <= lastCommentIndex ? (
+                  <Fragment key={comment.id}>
+                    <div
+                      className="lb-thread-new-indicator"
+                      aria-label={$.THREAD_NEW_INDICATOR_DESCRIPTION}
+                    >
+                      <span className="lb-thread-new-indicator-label">
+                        <ArrowDownIcon className="lb-thread-new-indicator-label-icon" />
+                        {$.THREAD_NEW_INDICATOR}
+                      </span>
+                    </div>
+                    {children}
+                  </Fragment>
+                ) : (
+                  children
+                );
+              })}
+            </div>
+            {unreadIndex !== undefined && (
+              <MarkThreadAsReadMarker thread={thread} />
+            )}
+            {showComposer && (
+              <Composer
+                className="lb-thread-composer"
+                threadId={thread.id}
+                defaultCollapsed={
+                  showComposer === "collapsed" ? true : undefined
+                }
+                showAttachments={showAttachments}
+                showFormattingControls={showComposerFormattingControls}
+                onComposerSubmit={onComposerSubmit}
+                blurOnSubmit={blurComposerOnSubmit}
+                overrides={{
+                  COMPOSER_PLACEHOLDER: $.THREAD_COMPOSER_PLACEHOLDER,
+                  COMPOSER_SEND: $.THREAD_COMPOSER_SEND,
+                  ...overrides,
+                }}
+                roomId={thread.roomId}
+                autoFocus={autoFocus}
+              />
+            )}
           </div>
-          {unreadIndex !== undefined && (
-            <MarkThreadAsReadMarker thread={thread} />
-          )}
-          {showComposer && (
-            <Composer
-              className="lb-thread-composer"
-              threadId={thread.id}
-              defaultCollapsed={showComposer === "collapsed" ? true : undefined}
-              showAttachments={showAttachments}
-              showFormattingControls={showComposerFormattingControls}
-              onComposerSubmit={onComposerSubmit}
-              blurOnSubmit={blurComposerOnSubmit}
-              overrides={{
-                COMPOSER_PLACEHOLDER: $.THREAD_COMPOSER_PLACEHOLDER,
-                COMPOSER_SEND: $.THREAD_COMPOSER_SEND,
-                ...overrides,
-              }}
-              roomId={thread.roomId}
-              autoFocus={autoFocus}
-            />
-          )}
-        </div>
-      </TooltipProvider>
+        </TooltipProvider>
+      </ThreadVisibilityContext.Provider>
     );
   }
 ) as <TM extends BaseMetadata = DTM, CM extends BaseMetadata = DCM>(
