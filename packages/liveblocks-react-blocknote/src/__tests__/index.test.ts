@@ -4,10 +4,18 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { LiveblocksExtensionOptions } from "..";
 import { useLiveblocksExtension } from "../BlockNoteLiveblocksExtension";
 import { withLiveblocksEditorOptions } from "../initialization/liveblocksEditorOptions";
+import { useCreateBlockNoteWithLiveblocks } from "../initialization/useCreateBlockNoteWithLiveblocks";
 
 const mocks = vi.hoisted(() => {
   return {
+    useCreateBlockNote: vi.fn(),
     useTipTapLiveblocksExtension: vi.fn(),
+  };
+});
+
+vi.mock("@blocknote/react", () => {
+  return {
+    useCreateBlockNote: mocks.useCreateBlockNote,
   };
 });
 
@@ -22,6 +30,7 @@ vi.mock("@liveblocks/react-tiptap", async (importOriginal) => {
 
 describe("@liveblocks/react-blocknote", () => {
   beforeEach(() => {
+    mocks.useCreateBlockNote.mockReset();
     mocks.useTipTapLiveblocksExtension.mockReset();
     mocks.useTipTapLiveblocksExtension.mockReturnValue({
       config: {},
@@ -88,6 +97,26 @@ describe("@liveblocks/react-blocknote", () => {
     );
 
     expect(options.disableExtensions).toEqual(["history", "slashMenu"]);
+  });
+
+  test("uses the caller-provided dependencies to create the BlockNote editor", () => {
+    const liveblocksExtension = Extension.create({
+      name: "liveblocksExtension",
+    });
+    mocks.useTipTapLiveblocksExtension.mockReturnValue(liveblocksExtension);
+
+    const deps = ["room-id"];
+
+    useCreateBlockNoteWithLiveblocks(
+      {},
+      {
+        collaborationMode: "liveblocks",
+      },
+      deps
+    );
+
+    expect(mocks.useCreateBlockNote).toHaveBeenCalledTimes(1);
+    expect(mocks.useCreateBlockNote.mock.calls[0]?.[1]).toBe(deps);
   });
 });
 

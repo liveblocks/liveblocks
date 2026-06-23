@@ -33,6 +33,6 @@ export const useCreateBlockNoteWithLiveblocks = <
       blocknoteOptions,
       liveblocksOptions
     ),
-    [liveblocksExtension, ...deps]
+    deps
   );
 };
