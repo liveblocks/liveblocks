@@ -1,9 +1,67 @@
 import type { ActivityData, InboxNotificationData } from "@liveblocks/core";
 import type { InboxNotificationCustomKindProps } from "@liveblocks/react-ui";
-import { InboxNotification } from "@liveblocks/react-ui";
+import { Composer, InboxNotification } from "@liveblocks/react-ui";
 import { describe, expectTypeOf, test } from "vitest";
 
 // TODO: Create type tests for all components/props
+
+describe("Composer (no Liveblocks augmentation)", () => {
+  test("accepts metadata props for each mode", () => {
+    void (
+      <Composer
+        metadata={{ color: "purple", page: 1, pinned: true }}
+        commentMetadata={{ tag: "important", spam: false }}
+        visibility="private"
+      />
+    );
+
+    void (
+      <Composer
+        threadId="th_123"
+        commentMetadata={{ tag: "important", spam: false }}
+      />
+    );
+
+    void (
+      <Composer
+        threadId="th_123"
+        commentId="cm_123"
+        commentMetadata={{ spam: null }}
+      />
+    );
+  });
+
+  test("keeps thread-only props out of reply and edit modes", () => {
+    void (
+      (
+        // @ts-expect-error - visibility only applies when creating threads
+        <Composer threadId="th_123" visibility="private" />
+      )
+    );
+    void (
+      (
+        // @ts-expect-error - thread metadata only applies when creating threads
+        <Composer threadId="th_123" metadata={{ color: "purple" }} />
+      )
+    );
+    void (
+      (
+        // @ts-expect-error - commentId requires threadId
+        <Composer commentId="cm_123" />
+      )
+    );
+    void (
+      (
+        // @ts-expect-error - thread metadata only applies when creating threads
+        <Composer
+          threadId="th_123"
+          commentId="cm_123"
+          metadata={{ color: "purple" }}
+        />
+      )
+    );
+  });
+});
 
 describe("InboxNotification `kinds` (no Liveblocks augmentation)", () => {
   test("existing kinds have the expected props types", () => {

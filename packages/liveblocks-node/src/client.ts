@@ -53,6 +53,7 @@ import type {
   SubscriptionDataPlain,
   ThreadData,
   ThreadDataPlain,
+  ThreadVisibility,
   ToJson,
   UpdateRoomAccesses,
   URLSafeString,
@@ -161,6 +162,7 @@ export type CreateThreadOptions<
 > = {
   roomId: string;
   data: {
+    visibility?: ThreadVisibility;
     comment: {
       userId: string;
       createdAt?: Date;
@@ -1648,7 +1650,7 @@ export class Liveblocks {
    * Gets all the threads in a room.
    *
    * @param params.roomId The room ID to get the threads from.
-   * @param params.query The query to filter threads by. It is based on our query language and can filter by metadata.
+   * @param params.query The query to filter threads by. It is based on our query language and can filter by visibility, metadata, and resolved status.
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns A list of threads.
    */
@@ -1661,7 +1663,7 @@ export class Liveblocks {
        * @example
        * ```
        * {
-       *   query: "metadata['organization']^'liveblocks:' AND metadata['status']:'open' AND metadata['pinned']:false AND metadata['priority']:3 AND resolved:true"
+       *   query: "metadata['organization']^'liveblocks:' AND metadata['status']:'open' AND metadata['pinned']:false AND metadata['priority']:3 AND resolved:true AND visibility:'private'"
        * }
        * ```
        * @example
@@ -1676,7 +1678,8 @@ export class Liveblocks {
        *         startsWith: "liveblocks:"
        *       }
        *     },
-       *     resolved: true
+       *     resolved: true,
+       *     visibility: "private"
        *   }
        * }
        * ```
@@ -1686,6 +1689,7 @@ export class Liveblocks {
         | {
             metadata?: Partial<QueryMetadata<TM>>;
             resolved?: boolean;
+            visibility?: ThreadVisibility;
           };
     },
     options?: RequestOptions
