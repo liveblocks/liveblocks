@@ -15,7 +15,9 @@ declare global {
     };
 
     Storage: {
-      document?: Json;
+      _tiptap_docs?: {
+        document?: Json;
+      };
     };
 
     UserMeta: {

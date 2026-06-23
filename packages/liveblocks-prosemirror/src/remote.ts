@@ -177,6 +177,17 @@ function isTextAlreadyApplied(
   );
 }
 
+function isLiveblocksNodeAlreadyApplied(
+  range: NonNullable<ReturnType<typeof findListRangeByLiveList>>
+): boolean {
+  const [jsonNode] = liveblocksProsemirrorNodeToJsonNodes(range.node);
+  if (jsonNode === undefined) {
+    return false;
+  }
+
+  return JSON.stringify(range.pmNode.toJSON()) === JSON.stringify(jsonNode);
+}
+
 export function applyRemoteStorageUpdates(
   view: EditorView,
   liveRoot: LiveblocksProsemirrorNode,
@@ -258,6 +269,10 @@ export function applyRemoteStorageUpdates(
         const range = findListRangeByLiveList(index, update.node);
         if (range === undefined) {
           return { type: "unsupported" };
+        }
+
+        if (isLiveblocksNodeAlreadyApplied(range)) {
+          continue;
         }
 
         if (change.type === "insert") {

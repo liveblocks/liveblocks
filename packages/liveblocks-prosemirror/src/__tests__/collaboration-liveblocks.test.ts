@@ -816,6 +816,37 @@ describe("collaboration-liveblocks schema", () => {
     editor.destroy();
   });
 
+  test("does not replay a LiveList insert already present from the storage snapshot", () => {
+    const editor = createEditor("<p>f</p>");
+    const storageNode = createLiveblocksProsemirrorNode(
+      getDocumentJson(editor.state.doc)
+    );
+    const textNode = getFirstTextNode(storageNode);
+    expect(textNode).toBeDefined();
+    const documentContent = getLiveblocksNodeContent(storageNode);
+    expect(documentContent).toBeDefined();
+    const paragraph = documentContent!.get(0);
+    expect(paragraph).toBeDefined();
+    const paragraphContent = getLiveblocksNodeContent(paragraph!);
+    expect(paragraphContent).toBeDefined();
+
+    const result = applyRemoteStorageUpdates(editor.view, storageNode, [
+      {
+        type: "LiveList",
+        node: paragraphContent!,
+        updates: [{ type: "insert", index: 0, item: textNode! }],
+      },
+    ]);
+
+    expect(result.type).toBe("applied");
+    if (result.type === "applied") {
+      editor.view.dispatch(result.tr);
+    }
+    expect(editor.getJSON()).toEqual(liveblocksNodeToJson(storageNode));
+
+    editor.destroy();
+  });
+
   test("applies remote LiveList delete updates to the editor document", () => {
     const editor = createEditor("<p>Hello</p><p>World</p>");
     const storageNode = createLiveblocksProsemirrorNode(

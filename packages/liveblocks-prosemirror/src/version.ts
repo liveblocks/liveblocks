@@ -1,4 +1,6 @@
+declare const __VERSION__: string;
+declare const ROLLUP_FORMAT: string;
+
 export const PKG_NAME = "@liveblocks/prosemirror";
-export const PKG_VERSION = "3.20.0";
-export const PKG_FORMAT =
-  process.env.NODE_ENV === "production" ? "production" : "development";
+export const PKG_VERSION = typeof __VERSION__ === "string" && __VERSION__;
+export const PKG_FORMAT = typeof ROLLUP_FORMAT === "string" && ROLLUP_FORMAT;
