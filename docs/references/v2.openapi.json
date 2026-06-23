@@ -126,7 +126,7 @@
       },
       "post": {
         "summary": "Create room",
-        "description": "This endpoint creates a new room. `id` and `defaultAccesses` are required. When provided with a `?idempotent` query argument, will not return a 409 when the room already exists, but instead return the existing room as-is. Corresponds to [`liveblocks.createRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms), or to [`liveblocks.getOrCreateRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-or-create-rooms-roomId) when `?idempotent` is provided. \n- `defaultAccesses` is the default room permission list, for example `[]`, `[\"*:read\"]`, `[\"*:write\"]`, or a more granular permission list. \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` contains user-specific permission lists. It can contain 1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.\n- `groupsAccesses` contains group-specific permission lists and is optional.\n",
+        "description": "This endpoint creates a new room. `id` and `defaultAccesses` are required. When provided with a `?idempotent` query argument, will not return a 409 when the room already exists, but instead return the existing room as-is. Corresponds to [`liveblocks.createRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms), or to [`liveblocks.getOrCreateRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-or-create-rooms-roomId) when `?idempotent` is provided. \n- `defaultAccesses` could be `[]` or `[\"*:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"*:write\"]` for every records. `usersAccesses` can contain 1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.\n- `groupsAccesses` are optional fields.\n",
         "tags": ["Room"],
         "parameters": [
           {
@@ -342,7 +342,7 @@
           }
         },
         "operationId": "update-room",
-        "description": "This endpoint updates specific properties of a room. Corresponds to [`liveblocks.updateRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomid). \n\nIt’s not necessary to provide the entire room’s information. \nSetting a property to `null` means to delete this property. For example, if you want to remove access to a specific user without losing other users: \n``{\n    \"usersAccesses\": {\n        \"john\": null\n    }\n}``\n`defaultAccesses`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.\n\n- `defaultAccesses` is the default room permission list, for example `[]`, `[\"*:read\"]`, `[\"*:write\"]`, or a more granular permission list.\n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` contains user-specific permission lists. It can contain 1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.\n- `groupsAccesses` contains group-specific permission lists and is optional.",
+        "description": "This endpoint updates specific properties of a room. Corresponds to [`liveblocks.updateRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomid). \n\nIt’s not necessary to provide the entire room’s information. \nSetting a property to `null` means to delete this property. For example, if you want to remove access to a specific user without losing other users: \n``{\n    \"usersAccesses\": {\n        \"john\": null\n    }\n}``\n`defaultAccesses`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.\n\n- `defaultAccesses` could be `[]` or `[\"*:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"*:write\"]` for every records. `usersAccesses` can contain 1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.\n- `groupsAccesses` could be `[]` or `[\"*:write\"]` for every records. `groupsAccesses` can contain 1000 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.",
         "requestBody": {
           "required": true,
           "content": {
@@ -575,7 +575,7 @@
           }
         },
         "operationId": "upsert-room",
-        "description": "This endpoint updates specific properties of a room. Corresponds to [`liveblocks.upsertRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#upsert-rooms-roomId). \n\nIt’s not necessary to provide the entire room’s information. \nSetting a property to `null` means to delete this property. For example, if you want to remove access to a specific user without losing other users: \n``{\n    \"usersAccesses\": {\n        \"john\": null\n    }\n}``\n`defaultAccesses`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.\n\n- `defaultAccesses` is the default room permission list, for example `[]`, `[\"*:read\"]`, `[\"*:write\"]`, or a more granular permission list.\n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` contains user-specific permission lists. It can contain 1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.\n- `groupsAccesses` contains group-specific permission lists and is optional.",
+        "description": "This endpoint updates specific properties of a room. Corresponds to [`liveblocks.upsertRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#upsert-rooms-roomId). \n\nIt’s not necessary to provide the entire room’s information. \nSetting a property to `null` means to delete this property. For example, if you want to remove access to a specific user without losing other users: \n``{\n    \"usersAccesses\": {\n        \"john\": null\n    }\n}``\n`defaultAccesses`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.\n\n- `defaultAccesses` could be `[]` or `[\"*:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"*:write\"]` for every records. `usersAccesses` can contain 1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.\n- `groupsAccesses` could be `[]` or `[\"*:write\"]` for every records. `groupsAccesses` can contain 1000 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.",
         "requestBody": {
           "required": true,
           "content": {
@@ -1691,7 +1691,7 @@
           {
             "schema": {
               "type": "string",
-              "description": "Query to filter threads. You can filter by `metadata`, `resolved`, and `visibility`, for example, `metadata[\"status\"]:\"open\" AND metadata[\"color\"]:\"red\" AND resolved:true AND visibility:\"private\"`. Learn more about [filtering threads with query language](https://liveblocks.io/docs/guides/how-to-filter-threads-using-query-language).",
+              "description": "Query to filter threads. You can filter by `metadata` and `resolved`, for example, `metadata[\"status\"]:\"open\" AND metadata[\"color\"]:\"red\" AND resolved:true`. Learn more about [filtering threads with query language](https://liveblocks.io/docs/guides/how-to-filter-threads-using-query-language).",
               "example": "metadata[\"color\"]:\"blue\""
             },
             "in": "query",
@@ -1733,8 +1733,6 @@
                           ],
                           "createdAt": "2019-08-24T14:15:22Z",
                           "metadata": {},
-                          "resolved": false,
-                          "visibility": "public",
                           "updatedAt": "2019-08-24T14:15:22Z"
                         }
                       ]
@@ -1801,12 +1799,9 @@
                         }
                       ],
                       "createdAt": "2022-07-13T14:32:50.697Z",
-                      "updatedAt": "2022-07-13T14:32:50.697Z",
                       "metadata": {
                         "color": "blue"
-                      },
-                      "resolved": false,
-                      "visibility": "public"
+                      }
                     }
                   }
                 }
@@ -1916,8 +1911,6 @@
                       ],
                       "createdAt": "2019-08-24T14:15:22Z",
                       "metadata": {},
-                      "resolved": false,
-                      "visibility": "public",
                       "updatedAt": "2019-08-24T14:15:22Z"
                     }
                   }
@@ -7204,15 +7197,6 @@
           "comments:read",
           "comments:write",
           "comments:none",
-          "comments:public:read",
-          "comments:public:write",
-          "comments:public:none",
-          "comments:private:read",
-          "comments:private:write",
-          "comments:private:none",
-          "comments:personal:read",
-          "comments:personal:write",
-          "comments:personal:none",
           "feeds:read",
           "feeds:write",
           "feeds:none"
@@ -8086,8 +8070,7 @@
               "createdAt": "2022-07-13T14:32:50.697Z",
               "updatedAt": "2022-07-13T14:32:50.697Z",
               "metadata": {},
-              "resolved": false,
-              "visibility": "public"
+              "resolved": false
             }
           ]
         }
@@ -8121,10 +8104,6 @@
           "resolved": {
             "type": "boolean"
           },
-          "visibility": {
-            "type": "string",
-            "enum": ["public", "private"]
-          },
           "updatedAt": {
             "type": "string",
             "format": "date-time"
@@ -8138,8 +8117,7 @@
           "createdAt",
           "updatedAt",
           "metadata",
-          "resolved",
-          "visibility"
+          "resolved"
         ],
         "example": {
           "type": "thread",
@@ -8167,8 +8145,7 @@
           "metadata": {
             "color": "blue"
           },
-          "resolved": false,
-          "visibility": "public"
+          "resolved": false
         }
       },
       "Feed": {
@@ -8388,11 +8365,6 @@
           },
           "metadata": {
             "$ref": "#/components/schemas/ThreadMetadata"
-          },
-          "visibility": {
-            "type": "string",
-            "enum": ["public", "private"],
-            "default": "public"
           }
         },
         "required": ["comment"],
@@ -8412,8 +8384,7 @@
             },
             "metadata": {
               "color": "blue"
-            },
-            "visibility": "private"
+            }
           }
         ]
       },
