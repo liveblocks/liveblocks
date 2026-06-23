@@ -146,11 +146,6 @@ describe("Thread", () => {
       "comments:public",
       "write"
     );
-    expect(useHasPermissionAccessMock).not.toHaveBeenCalledWith(
-      "room",
-      "comments",
-      "write"
-    );
   });
 
   test("should check private comments write access for private threads", () => {
@@ -159,11 +154,6 @@ describe("Thread", () => {
     expect(useHasPermissionAccessMock).toHaveBeenCalledWith(
       "room",
       "comments:private",
-      "write"
-    );
-    expect(useHasPermissionAccessMock).not.toHaveBeenCalledWith(
-      "room",
-      "comments",
       "write"
     );
   });
@@ -238,10 +228,24 @@ describe("Composer", () => {
     );
   });
 
-  test("should check scoped comments write access when replying to a thread in a visibility context", () => {
+  test("should ignore visibility context when replying to a thread", () => {
     render(
       <ThreadVisibilityContext.Provider value="public">
         <Composer threadId="th_1" />
+      </ThreadVisibilityContext.Provider>
+    );
+
+    expect(useHasPermissionAccessMock).toHaveBeenCalledWith(
+      "room",
+      "comments",
+      "write"
+    );
+  });
+
+  test("should ignore visibility context when creating a thread without a visibility prop", () => {
+    render(
+      <ThreadVisibilityContext.Provider value="private">
+        <Composer />
       </ThreadVisibilityContext.Provider>
     );
 
@@ -252,21 +256,7 @@ describe("Composer", () => {
     );
   });
 
-  test("should check scoped comments write access for composers in a visibility context", () => {
-    render(
-      <ThreadVisibilityContext.Provider value="private">
-        <Composer />
-      </ThreadVisibilityContext.Provider>
-    );
-
-    expect(useHasPermissionAccessMock).toHaveBeenCalledWith(
-      "room",
-      "comments:private",
-      "write"
-    );
-  });
-
-  test("should prefer an explicit thread visibility when creating a thread in a visibility context", () => {
+  test("should use the explicit visibility prop when creating a thread in a visibility context", () => {
     render(
       <ThreadVisibilityContext.Provider value="private">
         <Composer visibility="public" />

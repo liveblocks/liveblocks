@@ -65,7 +65,7 @@ import type {
   ComposerSubmitComment,
 } from "../primitives/Composer/types";
 import { useComposerAttachmentsDropArea } from "../primitives/Composer/utils";
-import { getCommentsPermissionResource, useThreadVisibility } from "../shared";
+import { getCommentsPermissionResource } from "../shared";
 import type { ComposerBodyMark } from "../types";
 import { cn } from "../utils/cn";
 import { useControllableState } from "../utils/use-controllable-state";
@@ -266,20 +266,17 @@ interface ComposerEditorContainerProps extends Pick<
 
 function getComposerPermissionResource(
   threadId: string | undefined,
-  visibility: ThreadVisibility | undefined,
-  threadVisibility: ThreadVisibility | undefined
+  visibility: ThreadVisibility | undefined
 ): PermissionResources {
   if (threadId !== undefined) {
-    return threadVisibility !== undefined
-      ? getCommentsPermissionResource(threadVisibility)
-      : "comments";
+    return "comments";
   }
 
   if (visibility !== undefined) {
     return getCommentsPermissionResource(visibility);
   }
 
-  return getCommentsPermissionResource(threadVisibility ?? "public");
+  return getCommentsPermissionResource("public");
 }
 
 interface ComposerMentionProps extends ComposerEditorMentionProps {
@@ -784,11 +781,10 @@ export const Composer = forwardRef(
       controlledCollapsed,
       controlledOnCollapsedChange
     );
-    const threadVisibility = useThreadVisibility();
 
     const canComment = useHasPermissionAccess(
       roomId,
-      getComposerPermissionResource(threadId, visibility, threadVisibility),
+      getComposerPermissionResource(threadId, visibility),
       "write"
     );
 
