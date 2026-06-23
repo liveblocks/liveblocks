@@ -766,6 +766,56 @@ describe("collaboration-liveblocks schema", () => {
     editor.destroy();
   });
 
+  test("does not double-apply nested LiveText updates after a remote node insert", () => {
+    const editor = createEditor("<p></p>");
+    const storageNode = createLiveblocksProsemirrorNode(
+      getDocumentJson(editor.state.doc)
+    );
+    const documentContent = getLiveblocksNodeContent(storageNode);
+    expect(documentContent).toBeDefined();
+    const paragraph = documentContent!.get(0);
+    expect(paragraph).toBeDefined();
+    const paragraphContent = getLiveblocksNodeContent(paragraph!);
+    expect(paragraphContent).toBeDefined();
+    const inserted = createLiveblocksProsemirrorNode({
+      type: "text",
+      text: "f",
+    });
+    const text = getLiveblocksNodeText(inserted);
+    expect(text).toBeDefined();
+
+    paragraphContent!.insert(inserted, 0);
+    const insertResult = applyRemoteStorageUpdates(editor.view, storageNode, [
+      {
+        type: "LiveList",
+        node: paragraphContent!,
+        updates: [{ type: "insert", index: 0, item: inserted }],
+      },
+    ]);
+
+    expect(insertResult.type).toBe("applied");
+    if (insertResult.type === "applied") {
+      editor.view.dispatch(insertResult.tr);
+    }
+
+    const textResult = applyRemoteStorageUpdates(editor.view, storageNode, [
+      {
+        type: "LiveText",
+        node: text!,
+        version: text!.version,
+        updates: [{ type: "insert", index: 0, text: "f" }],
+      },
+    ]);
+
+    expect(textResult.type).toBe("applied");
+    if (textResult.type === "applied") {
+      editor.view.dispatch(textResult.tr);
+    }
+    expect(editor.getJSON()).toEqual(liveblocksNodeToJson(storageNode));
+
+    editor.destroy();
+  });
+
   test("applies remote LiveList delete updates to the editor document", () => {
     const editor = createEditor("<p>Hello</p><p>World</p>");
     const storageNode = createLiveblocksProsemirrorNode(

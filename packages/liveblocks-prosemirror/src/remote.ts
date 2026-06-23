@@ -149,6 +149,34 @@ function getStructurallyCoveredNodes(
   return coveredNodes;
 }
 
+function getCurrentTextForLiveText(
+  doc: Transaction["doc"],
+  index: ReturnType<typeof buildLiveblocksTreeIndex>,
+  text: LiveText
+): string | undefined {
+  const range = findNodeRangeForLiveText(index, text);
+  if (range === undefined) {
+    return undefined;
+  }
+
+  return doc.textBetween(range.from, range.to);
+}
+
+function isTextAlreadyApplied(
+  doc: Transaction["doc"],
+  index: ReturnType<typeof buildLiveblocksTreeIndex>,
+  update: Extract<StorageUpdate, { type: "LiveText" }>
+): boolean {
+  if (update.updates.some((change) => change.type === "format")) {
+    return false;
+  }
+
+  return (
+    getCurrentTextForLiveText(doc, index, update.node) ===
+    update.node.toString()
+  );
+}
+
 export function applyRemoteStorageUpdates(
   view: EditorView,
   liveRoot: LiveblocksProsemirrorNode,
@@ -169,6 +197,11 @@ export function applyRemoteStorageUpdates(
     if (update.type === "LiveText") {
       if (!(update.node instanceof LiveText)) {
         return { type: "unsupported" };
+      }
+
+      const initialIndex = buildLiveblocksTreeIndex(tr.doc, liveRoot);
+      if (isTextAlreadyApplied(tr.doc, initialIndex, update)) {
+        continue;
       }
 
       for (const change of update.updates) {
