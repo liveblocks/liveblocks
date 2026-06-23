@@ -37,6 +37,7 @@ Here’s an example of a thread object.
   roomId: "my-room-id",
   createdAt: Date <Fri Dec 15 2023 14:15:22 GMT+0000 (Greenwich Mean Time)>,
   resolved: false,
+  visibility: "public",
   comments: [
     // A list of comments in the thread
     // ...
@@ -71,13 +72,14 @@ a thread. The first comment in a thread is displayed at the top.
 
 Here’s an example of a single comment inside a thread object.
 
-```ts highlight="8-24"
+```ts highlight="9-25"
 {
   type: "thread",
   id: "th_sf8s6sh...",
   roomId: "my-room-id",
   createdAt: Date <Fri Dec 15 2023 14:15:22 GMT+0000 (Greenwich Mean Time)>,
   resolved: false,
+  visibility: "public",
   comments: [
     {
       type: "comment",

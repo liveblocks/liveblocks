@@ -49,8 +49,7 @@ const { body, status } = await liveblocks.identifyUser({
 ```
 
 <Banner>
-  Learn how to
-  [get started with ID tokens](/docs/authentication#id-token).
+  Learn how to [get started with ID tokens](/docs/authentication#id-token).
 </Banner>
 
 A number of options are also available, enabling you to set up permissions and
@@ -91,10 +90,11 @@ expired.
 ##### Granting ID token permissions
 
 You can pass additional options to `identifyUser`, enabling you to create
-complex [workspace permissions](/docs/authentication#id-token-workspace-permissions) and
-[room permissions](/docs/authentication#id-token-room-permissions). For example, this
-user can only see resources in the `acme-corp` workspace, and they’re part of a
-`marketing` rooms group within it.
+complex
+[workspace permissions](/docs/authentication#id-token-workspace-permissions) and
+[room permissions](/docs/authentication#id-token-room-permissions). For example,
+this user can only see resources in the `acme-corp` workspace, and they’re part
+of a `marketing` rooms group within it.
 
 ```ts
 const { body, status } = await liveblocks.identifyUser({
@@ -114,7 +114,8 @@ const { body, status } = await liveblocks.identifyUser({
 ```
 
 <Banner>
-  Learn more about [ID token permissions](/docs/authentication#id-token-room-permissions).
+  Learn more about [ID token
+  permissions](/docs/authentication#id-token-room-permissions).
 </Banner>
 
 ##### Text editor user data
@@ -1893,9 +1894,11 @@ const { data: threads } = await liveblocks.getThreads({
 console.log(threads);
 ```
 
-It’s also possible to filter threads by their string, boolean, and number
-metadata using a query parameter. You can also pass `startsWith` to match the
-start of a string.
+It’s also possible to filter threads by visibility, resolved status, and their
+string, boolean, and number metadata using a query parameter. You can also pass
+`startsWith` to match the start of a string. Permissions are taken into account
+so querying private threads will return no threads if the current user does not
+have access to them.
 
 ```ts
 const { data: threads } = await liveblocks.getThreads({
@@ -1905,6 +1908,10 @@ const { data: threads } = await liveblocks.getThreads({
   query: {
     // Optional, filter based on resolved status
     resolved: false,
+
+    // Optional, filter based on visibility
+    visibility: "private",
+
     // Optional, filter for metadata values
     metadata: {
       status: "open",
@@ -1926,8 +1933,9 @@ instead of a `query` object.
 
 #### Liveblocks.createThread [#post-rooms-roomId-threads]
 
-Creates a new thread within a specific room, using room ID and thread data. This
-is a wrapper around the
+Creates a new thread within a specific room, using room ID and thread data.
+Threads are public by default, but can be created as private by passing
+`visibility: "private"`. This is a wrapper around the
 [Create Thread API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads)
 and returns the new thread.
 
@@ -1991,8 +1999,13 @@ You can also convert a Markdown string to a `CommentBody` with
 
 </Banner>
 
-This method has a number of options, allowing for custom metadata and a creation
-date for the comment.
+This method has a number of options, allowing for custom metadata, thread
+visibility, and a creation date for the comment. Permissions are taken into
+account when threads are created and retrieved. A user without write access to
+private threads can’t create a private thread, and users without read access to
+private threads won’t receive private threads from
+[`liveblocks.getThreads`](#get-rooms-roomId-threads) or
+[`liveblocks.getThread`](#get-rooms-roomId-threads-threadId).
 
 ```ts
 const thread = await liveblocks.createThread({
@@ -2005,6 +2018,9 @@ const thread = await liveblocks.createThread({
       page: 3,
       pinned: true,
     },
+
+    // Optional, defaults to "public"
+    visibility: "private",
 
     // Data for the first comment in the thread
     comment: {
