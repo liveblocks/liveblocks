@@ -8,10 +8,11 @@ from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 from dateutil.parser import isoparse
 
+from ..models.thread_visibility import ThreadVisibility
+
 if TYPE_CHECKING:
     from ..models.comment import Comment
     from ..models.thread_metadata import ThreadMetadata
-    from ..models.thread_visibility import ThreadVisibility
 
 
 @_attrs_define
@@ -22,7 +23,7 @@ class Thread:
             'th_abc123', 'roomId': 'my-room-id', 'id': 'cm_abc123', 'userId': 'alice', 'createdAt':
             '2022-07-13T14:32:50.697Z', 'body': {'version': 1, 'content': []}, 'metadata': {}, 'reactions': [],
             'attachments': []}], 'createdAt': '2022-07-13T14:32:50.697Z', 'updatedAt': '2022-07-13T14:32:50.697Z',
-            'metadata': {'color': 'blue'}, 'resolved': False}
+            'metadata': {'color': 'blue'}, 'resolved': False, 'visibility': 'public'}
 
     Attributes:
         type_ (Literal['thread']):
@@ -33,8 +34,8 @@ class Thread:
         metadata (ThreadMetadata): Custom metadata attached to a thread. Supports maximum 50 entries. Key length has a
             limit of 40 characters maximum. Value length has a limit of 4000 characters maximum for strings.
         resolved (bool):
-        updated_at (datetime.datetime):
         visibility (ThreadVisibility):
+        updated_at (datetime.datetime):
     """
 
     type_: Literal["thread"]
@@ -44,8 +45,8 @@ class Thread:
     created_at: datetime.datetime
     metadata: ThreadMetadata
     resolved: bool
-    updated_at: datetime.datetime
     visibility: ThreadVisibility
+    updated_at: datetime.datetime
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -66,9 +67,9 @@ class Thread:
 
         resolved = self.resolved
 
-        updated_at = self.updated_at.isoformat()
-
         visibility = self.visibility.value
+
+        updated_at = self.updated_at.isoformat()
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -81,8 +82,8 @@ class Thread:
                 "createdAt": created_at,
                 "metadata": metadata,
                 "resolved": resolved,
-                "updatedAt": updated_at,
                 "visibility": visibility,
+                "updatedAt": updated_at,
             }
         )
 
@@ -92,7 +93,6 @@ class Thread:
     def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
         from ..models.comment import Comment
         from ..models.thread_metadata import ThreadMetadata
-        from ..models.thread_visibility import ThreadVisibility
 
         d = dict(src_dict)
         type_ = cast(Literal["thread"], d.pop("type"))
@@ -116,9 +116,9 @@ class Thread:
 
         resolved = d.pop("resolved")
 
-        updated_at = isoparse(d.pop("updatedAt"))
-
         visibility = ThreadVisibility(d.pop("visibility"))
+
+        updated_at = isoparse(d.pop("updatedAt"))
 
         thread = cls(
             type_=type_,
@@ -128,8 +128,8 @@ class Thread:
             created_at=created_at,
             metadata=metadata,
             resolved=resolved,
-            updated_at=updated_at,
             visibility=visibility,
+            updated_at=updated_at,
         )
 
         thread.additional_properties = d

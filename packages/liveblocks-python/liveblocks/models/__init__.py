@@ -54,6 +54,7 @@ from .create_room_request_body import CreateRoomRequestBody
 from .create_room_request_body_engine import CreateRoomRequestBodyEngine
 from .create_thread_request_body import CreateThreadRequestBody
 from .create_thread_request_body_comment import CreateThreadRequestBodyComment
+from .create_thread_request_body_visibility import CreateThreadRequestBodyVisibility
 from .create_web_knowledge_source_request_body import CreateWebKnowledgeSourceRequestBody
 from .create_web_knowledge_source_request_body_type import CreateWebKnowledgeSourceRequestBodyType
 from .create_web_knowledge_source_response import CreateWebKnowledgeSourceResponse
@@ -226,6 +227,7 @@ __all__ = (
     "CreateRoomRequestBodyEngine",
     "CreateThreadRequestBody",
     "CreateThreadRequestBodyComment",
+    "CreateThreadRequestBodyVisibility",
     "CreateWebKnowledgeSourceRequestBody",
     "CreateWebKnowledgeSourceRequestBodyType",
     "CreateWebKnowledgeSourceResponse",
