@@ -27,20 +27,9 @@ export type AuthValue =
 
 type RoomAuthResource = Exclude<PermissionResources, "personal">;
 
-export const SCOPED_COMMENTS_AUTH_RESOURCES = Object.freeze([
-  "comments:public",
-  "comments:private",
-  "comments:personal",
-] as const satisfies readonly RoomAuthResource[]);
-
 export type AuthRequest = Relax<
   | {
       resource: RoomAuthResource;
-      roomId: string;
-      access: RequiredAccessLevel;
-    }
-  | {
-      resources: readonly RoomAuthResource[];
       roomId: string;
       access: RequiredAccessLevel;
     }
@@ -244,16 +233,7 @@ function getAuthRequestKey(request: AuthRequest): string | undefined {
     return undefined;
   }
 
-  const resources = getRoomAuthResources(request);
-  if (resources.length === 0) {
-    return undefined;
-  }
-
-  const mode =
-    request.resources === undefined && request.resource === "comments"
-      ? "all"
-      : "any";
-  return `${request.roomId}:${mode}:${resources.join("|")}:${request.access}`;
+  return `${request.roomId}:${request.resource}:${request.access}`;
 }
 
 function makeCachedToken(
@@ -303,37 +283,16 @@ function cachedTokenSatisfiesRequest(
     return false;
   }
 
-  const resources = getRoomAuthResources(request);
-  if (resources.length === 0) {
-    return false;
+  if (request.resource === "comments" && request.access === "read") {
+    return (
+      hasPermissionAccess(matrix, "comments", "read") ||
+      hasPermissionAccess(matrix, "comments:public", "read") ||
+      hasPermissionAccess(matrix, "comments:private", "read") ||
+      hasPermissionAccess(matrix, "comments:personal", "read")
+    );
   }
 
-  const resourceIsAccessible = (resource: RoomAuthResource) =>
-    hasPermissionAccess(matrix, resource, request.access);
-
-  if (request.resources === undefined && request.resource === "comments") {
-    return resources.every(resourceIsAccessible);
-  }
-
-  return resources.some(resourceIsAccessible);
-}
-
-function getRoomAuthResources(
-  request: AuthRequest
-): readonly RoomAuthResource[] {
-  if (request.resources !== undefined) {
-    return request.resources;
-  }
-
-  if (request.resource === "comments") {
-    return SCOPED_COMMENTS_AUTH_RESOURCES;
-  }
-
-  if (request.resource !== undefined && request.resource !== "personal") {
-    return [request.resource];
-  }
-
-  return [];
+  return hasPermissionAccess(matrix, request.resource, request.access);
 }
 
 function prepareAuthentication(

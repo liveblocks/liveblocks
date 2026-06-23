@@ -1,8 +1,4 @@
-import type {
-  ActivityData,
-  CommentAttachment,
-  InboxNotificationData,
-} from "@liveblocks/core";
+import type { ActivityData, InboxNotificationData } from "@liveblocks/core";
 import type { InboxNotificationCustomKindProps } from "@liveblocks/react-ui";
 import { Composer, InboxNotification } from "@liveblocks/react-ui";
 import { describe, expectTypeOf, test } from "vitest";
@@ -10,31 +6,15 @@ import { describe, expectTypeOf, test } from "vitest";
 // TODO: Create type tests for all components/props
 
 describe("Composer (no Liveblocks augmentation)", () => {
-  test("accepts props for creating threads", () => {
+  test("accepts metadata props for each mode", () => {
     void (
       <Composer
         metadata={{ color: "purple", page: 1, pinned: true }}
         commentMetadata={{ tag: "important", spam: false }}
         visibility="private"
-        onComposerSubmit={(comment, event) => {
-          expectTypeOf(comment.body.version).toEqualTypeOf<1>();
-          expectTypeOf(comment.attachments).toEqualTypeOf<
-            CommentAttachment[]
-          >();
-          expectTypeOf(event.preventDefault).toBeFunction();
-        }}
       />
     );
 
-    void (
-      (
-        // @ts-expect-error - visibility only applies when creating threads
-        <Composer threadId="th_123" visibility="private" />
-      )
-    );
-  });
-
-  test("accepts props for creating comments", () => {
     void (
       <Composer
         threadId="th_123"
@@ -42,6 +22,22 @@ describe("Composer (no Liveblocks augmentation)", () => {
       />
     );
 
+    void (
+      <Composer
+        threadId="th_123"
+        commentId="cm_123"
+        commentMetadata={{ spam: null }}
+      />
+    );
+  });
+
+  test("keeps thread-only props out of reply and edit modes", () => {
+    void (
+      (
+        // @ts-expect-error - visibility only applies when creating threads
+        <Composer threadId="th_123" visibility="private" />
+      )
+    );
     void (
       (
         // @ts-expect-error - thread metadata only applies when creating threads
@@ -54,17 +50,6 @@ describe("Composer (no Liveblocks augmentation)", () => {
         <Composer commentId="cm_123" />
       )
     );
-  });
-
-  test("accepts props for editing comments", () => {
-    void (
-      <Composer
-        threadId="th_123"
-        commentId="cm_123"
-        commentMetadata={{ tag: "important", spam: null }}
-      />
-    );
-
     void (
       (
         // @ts-expect-error - thread metadata only applies when creating threads

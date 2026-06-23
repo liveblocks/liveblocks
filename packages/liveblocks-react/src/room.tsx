@@ -225,6 +225,13 @@ function getRoomExtrasForClient<
   };
 }
 
+function getThreadVisibility<TM extends BaseMetadata, CM extends BaseMetadata>(
+  store: UmbrellaStore<TM, CM>,
+  threadId: string
+): ThreadData<TM, CM>["visibility"] | undefined {
+  return store.outputs.threads.get().getEvenIfDeleted(threadId)?.visibility;
+}
+
 function makeRoomExtrasForClient(client: OpaqueClient) {
   const store = getUmbrellaStoreForClient(client);
 
@@ -2045,18 +2052,24 @@ function useDeleteRoomThread(roomId: string): (threadId: string) => void {
         deletedAt: new Date(),
       });
 
-      client[kInternal].httpClient.deleteThread({ roomId, threadId }).then(
-        () => {
-          // Replace the optimistic update by the real thing
-          store.deleteThread(threadId, optimisticId);
-        },
-        (err: Error) =>
-          onMutationFailure(
-            optimisticId,
-            { type: "DELETE_THREAD_ERROR", roomId, threadId },
-            err
-          )
-      );
+      client[kInternal].httpClient
+        .deleteThread({
+          roomId,
+          threadId,
+          visibility: existing.visibility,
+        })
+        .then(
+          () => {
+            // Replace the optimistic update by the real thing
+            store.deleteThread(threadId, optimisticId);
+          },
+          (err: Error) =>
+            onMutationFailure(
+              optimisticId,
+              { type: "DELETE_THREAD_ERROR", roomId, threadId },
+              err
+            )
+        );
     },
     [client, roomId]
   );
@@ -2096,7 +2109,12 @@ function useEditRoomThreadMetadata<TM extends BaseMetadata>(roomId: string) {
       });
 
       client[kInternal].httpClient
-        .editThreadMetadata({ roomId, threadId, metadata })
+        .editThreadMetadata({
+          roomId,
+          threadId,
+          metadata,
+          visibility: getThreadVisibility(store, threadId),
+        })
         .then(
           (metadata) =>
             // Replace the optimistic update by the real thing
@@ -2156,7 +2174,13 @@ function useEditRoomCommentMetadata<CM extends BaseMetadata>(roomId: string) {
       });
 
       client[kInternal].httpClient
-        .editCommentMetadata({ roomId, threadId, commentId, metadata })
+        .editCommentMetadata({
+          roomId,
+          threadId,
+          commentId,
+          metadata,
+          visibility: getThreadVisibility(store, threadId),
+        })
         .then(
           (updatedMetadata) =>
             // Replace the optimistic update by the real thing
@@ -2251,6 +2275,7 @@ function useCreateRoomComment<CM extends BaseMetadata>(
           body,
           metadata,
           attachmentIds,
+          visibility: getThreadVisibility(store, threadId),
         })
         .then(
           (newComment) => {
@@ -2367,6 +2392,7 @@ function useEditRoomComment<CM extends BaseMetadata>(
           body,
           attachmentIds,
           metadata,
+          visibility: existing.visibility,
         })
         .then(
           (editedComment) => {
@@ -2434,7 +2460,12 @@ function useDeleteRoomComment(roomId: string) {
       });
 
       client[kInternal].httpClient
-        .deleteComment({ roomId, threadId, commentId })
+        .deleteComment({
+          roomId,
+          threadId,
+          commentId,
+          visibility: getThreadVisibility(store, threadId),
+        })
         .then(
           () => {
             // Replace the optimistic update by the real thing
@@ -2489,7 +2520,13 @@ function useAddRoomCommentReaction(roomId: string) {
       });
 
       client[kInternal].httpClient
-        .addReaction({ roomId, threadId, commentId, emoji })
+        .addReaction({
+          roomId,
+          threadId,
+          commentId,
+          emoji,
+          visibility: getThreadVisibility(store, threadId),
+        })
         .then(
           (addedReaction) => {
             // Replace the optimistic update by the real thing
@@ -2561,7 +2598,13 @@ function useRemoveRoomCommentReaction(roomId: string) {
       });
 
       client[kInternal].httpClient
-        .removeReaction({ roomId, threadId, commentId, emoji })
+        .removeReaction({
+          roomId,
+          threadId,
+          commentId,
+          emoji,
+          visibility: getThreadVisibility(store, threadId),
+        })
         .then(
           () => {
             // Replace the optimistic update by the real thing
@@ -2708,7 +2751,11 @@ function useMarkRoomThreadAsResolved(roomId: string) {
       });
 
       client[kInternal].httpClient
-        .markThreadAsResolved({ roomId, threadId })
+        .markThreadAsResolved({
+          roomId,
+          threadId,
+          visibility: getThreadVisibility(store, threadId),
+        })
         .then(
           () => {
             // Replace the optimistic update by the real thing
@@ -2768,7 +2815,11 @@ function useMarkRoomThreadAsUnresolved(roomId: string) {
       });
 
       client[kInternal].httpClient
-        .markThreadAsUnresolved({ roomId, threadId })
+        .markThreadAsUnresolved({
+          roomId,
+          threadId,
+          visibility: getThreadVisibility(store, threadId),
+        })
         .then(
           () => {
             // Replace the optimistic update by the real thing
@@ -3758,18 +3809,24 @@ function useSelfAccessFallback(
   );
 
   const getSnapshot = useCallback(() => {
-    const self = room?.id === roomId ? room.getSelf() : null;
     const isCommentsResource =
       resource === "comments" ||
       resource === "comments:public" ||
       resource === "comments:private" ||
       resource === "comments:personal";
 
-    if (isCommentsResource && requiredAccess === "write") {
-      return self?.canComment ?? true;
+    if (room?.id === roomId) {
+      const permissionMatrix = room[kInternal].getPermissionMatrix();
+      if (permissionMatrix !== undefined) {
+        return hasPermissionAccess(permissionMatrix, resource, requiredAccess);
+      }
     }
-    if (resource === "storage" && requiredAccess === "write") {
-      return self?.canWrite ?? true;
+
+    if (
+      requiredAccess === "write" &&
+      (isCommentsResource || resource === "storage")
+    ) {
+      return true;
     }
 
     return false;

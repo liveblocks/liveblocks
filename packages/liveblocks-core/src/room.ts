@@ -1246,6 +1246,8 @@ export type PrivateRoomApi = {
   // For reporting editor metadata
   reportTextEditor(editor: TextEditorType, rootKey: string): Promise<void>;
 
+  getPermissionMatrix(): PermissionMatrix | undefined;
+
   createTextMention(mentionId: string, mention: MentionData): Promise<void>;
   deleteTextMention(mentionId: string): Promise<void>;
   listTextVersions(): Promise<{
@@ -3772,6 +3774,8 @@ export function createRoom<
 
         // send metadata when using a text editor
         reportTextEditor,
+        getPermissionMatrix: () =>
+          context.dynamicSessionInfoSig.get()?.permissionMatrix,
         // create a text mention when using a text editor
         createTextMention,
         // delete a text mention when using a text editor

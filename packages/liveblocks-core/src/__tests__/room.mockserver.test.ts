@@ -5,12 +5,8 @@
  *
  * For normal history/batch/storage tests, see room.devserver.test.ts.
  */
-import { http, HttpResponse } from "msw";
-import { setupServer } from "msw/node";
 import {
-  afterAll,
   afterEach,
-  beforeAll,
   beforeEach,
   describe,
   expect,
@@ -21,12 +17,7 @@ import {
 } from "vitest";
 
 import { createApiClient } from "../api-client";
-import {
-  SCOPED_COMMENTS_AUTH_RESOURCES,
-  type AuthRequest,
-  type AuthValue,
-  createAuthManager,
-} from "../auth-manager";
+import { type AuthValue, createAuthManager } from "../auth-manager";
 import { StopRetrying } from "../connection";
 import { DEFAULT_BASE_URL } from "../constants";
 import { LiveList } from "../crdts/LiveList";
@@ -39,11 +30,7 @@ import * as console from "../lib/fancy-console";
 import type { Json, JsonObject } from "../lib/Json";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import { ClientMsgCode } from "../protocol/ClientMsg";
-import type {
-  BaseMetadata,
-  CommentBody,
-  ThreadDataPlain,
-} from "../protocol/Comments";
+import type { BaseMetadata } from "../protocol/Comments";
 import { OpCode } from "../protocol/Op";
 import { ServerMsgCode } from "../protocol/ServerMsg";
 import type { StorageNode } from "../protocol/StorageNode";
@@ -86,110 +73,6 @@ const THROTTLE_DELAY = 100;
 const mockedCreateSocketDelegate = (_authValue: AuthValue) => {
   return new WebSocket("");
 };
-
-const commentBody = {
-  version: 1,
-  content: [],
-} satisfies CommentBody;
-
-const commentsReadAuthRequest = {
-  roomId: "room-id",
-  resource: "comments",
-  access: "read",
-} satisfies AuthRequest;
-
-const threadCommentsReadAuthRequest = {
-  roomId: "room-id",
-  resources: SCOPED_COMMENTS_AUTH_RESOURCES,
-  access: "read",
-} satisfies AuthRequest;
-
-const threadCommentsWriteAuthRequest = {
-  roomId: "room-id",
-  resources: SCOPED_COMMENTS_AUTH_RESOURCES,
-  access: "write",
-} satisfies AuthRequest;
-
-const testThread = {
-  type: "thread",
-  id: "th_123",
-  roomId: "room-id",
-  createdAt: new Date(0).toISOString(),
-  updatedAt: new Date(0).toISOString(),
-  comments: [],
-  metadata: {},
-  resolved: false,
-  visibility: "public",
-} satisfies ThreadDataPlain<BaseMetadata, BaseMetadata>;
-
-const emptyThreadsResponse = {
-  data: [],
-  inboxNotifications: [],
-  subscriptions: [],
-  deletedThreads: [],
-  deletedInboxNotifications: [],
-  deletedSubscriptions: [],
-  meta: {
-    requestedAt: new Date(0).toISOString(),
-    nextCursor: null,
-    permissionHints: {},
-  },
-};
-
-const apiClientServer = setupServer(
-  http.get(`${DEFAULT_BASE_URL}/v2/c/rooms/:roomId/threads`, () => {
-    return HttpResponse.json(emptyThreadsResponse);
-  }),
-  http.get(`${DEFAULT_BASE_URL}/v2/c/rooms/:roomId/threads/delta`, () => {
-    return HttpResponse.json(emptyThreadsResponse);
-  }),
-  http.get(
-    `${DEFAULT_BASE_URL}/v2/c/rooms/:roomId/threads/comments/search`,
-    () => {
-      return HttpResponse.json({ data: [] });
-    }
-  ),
-  http.get(
-    `${DEFAULT_BASE_URL}/v2/c/rooms/:roomId/thread-with-notification/:threadId`,
-    () => {
-      return HttpResponse.json({ thread: testThread });
-    }
-  ),
-  http.post(`${DEFAULT_BASE_URL}/v2/c/rooms/:roomId/threads`, () => {
-    return HttpResponse.json(testThread);
-  }),
-  http.post(
-    `${DEFAULT_BASE_URL}/v2/c/rooms/:roomId/threads/:threadId/mark-as-resolved`,
-    () => {
-      return HttpResponse.json({});
-    }
-  ),
-  http.post(
-    `${DEFAULT_BASE_URL}/v2/c/rooms/:roomId/attachments/presigned-urls`,
-    () => {
-      return HttpResponse.json({ urls: ["https://example.com/attachment"] });
-    }
-  )
-);
-
-function createTestApiClient() {
-  const authRequests: AuthRequest[] = [];
-
-  return {
-    authRequests,
-    client: createApiClient<BaseMetadata, BaseMetadata>({
-      baseUrl: DEFAULT_BASE_URL,
-      fetchPolyfill: globalThis.fetch?.bind(globalThis),
-      authManager: {
-        reset() {},
-        getAuthValue(request) {
-          authRequests.push(request);
-          return Promise.resolve({ type: "public", publicApiKey: "pk_test" });
-        },
-      },
-    }),
-  };
-}
 
 function createDefaultRoomConfig<
   TM extends BaseMetadata,
@@ -268,119 +151,6 @@ function createTestableRoom<
     errorEventSource: roomConfig.errorEventSource,
   };
 }
-
-describe("createApiClient", () => {
-  beforeAll(() => apiClientServer.listen({ onUnhandledRequest: "error" }));
-  afterEach(() => apiClientServer.resetHandlers());
-  afterAll(() => apiClientServer.close());
-
-  test("requests comments read auth when getting threads without visibility", async () => {
-    const { authRequests, client } = createTestApiClient();
-
-    await client.getThreads({ roomId: "room-id" });
-
-    expect(authRequests).toEqual([commentsReadAuthRequest]);
-  });
-
-  test("requests comments read auth when getting thread delta updates", async () => {
-    const { authRequests, client } = createTestApiClient();
-
-    await client.getThreadsSince({
-      roomId: "room-id",
-      since: new Date(0),
-    });
-
-    expect(authRequests).toEqual([commentsReadAuthRequest]);
-  });
-
-  test("requests comments read auth when searching comments", async () => {
-    const { authRequests, client } = createTestApiClient();
-
-    await client.searchComments({
-      roomId: "room-id",
-      query: { text: "hello" },
-    });
-
-    expect(authRequests).toEqual([commentsReadAuthRequest]);
-  });
-
-  test("requests visibility-specific comments read auth when getting threads with visibility", async () => {
-    const { authRequests, client } = createTestApiClient();
-
-    await client.getThreads({
-      roomId: "room-id",
-      query: { visibility: "private" },
-    });
-
-    expect(authRequests).toEqual([
-      { roomId: "room-id", resource: "comments:private", access: "read" },
-    ]);
-  });
-
-  test("requests thread comments read auth when getting a thread", async () => {
-    const { authRequests, client } = createTestApiClient();
-
-    await client.getThread({
-      roomId: "room-id",
-      threadId: "th_123",
-    });
-
-    expect(authRequests).toEqual([threadCommentsReadAuthRequest]);
-  });
-
-  test("requests public comments write auth when creating a thread without visibility", async () => {
-    const { authRequests, client } = createTestApiClient();
-
-    await client.createThread({
-      roomId: "room-id",
-      metadata: {},
-      commentMetadata: undefined,
-      body: commentBody,
-    });
-
-    expect(authRequests).toEqual([
-      { roomId: "room-id", resource: "comments:public", access: "write" },
-    ]);
-  });
-
-  test("requests visibility-specific comments write auth when creating a thread with visibility", async () => {
-    const { authRequests, client } = createTestApiClient();
-
-    await client.createThread({
-      roomId: "room-id",
-      visibility: "private",
-      metadata: {},
-      commentMetadata: undefined,
-      body: commentBody,
-    });
-
-    expect(authRequests).toEqual([
-      { roomId: "room-id", resource: "comments:private", access: "write" },
-    ]);
-  });
-
-  test("requests thread comments write auth when changing an existing thread", async () => {
-    const { authRequests, client } = createTestApiClient();
-
-    await client.markThreadAsResolved({
-      roomId: "room-id",
-      threadId: "th_123",
-    });
-
-    expect(authRequests).toEqual([threadCommentsWriteAuthRequest]);
-  });
-
-  test("requests comments read auth when getting attachment URLs", async () => {
-    const { authRequests, client } = createTestApiClient();
-
-    await client.getAttachmentUrl({
-      roomId: "room-id",
-      attachmentId: "att_123",
-    });
-
-    expect(authRequests).toEqual([commentsReadAuthRequest]);
-  });
-});
 
 describe("room / auth", () => {
   let consoleErrorSpy: MockInstance;

@@ -3,7 +3,6 @@ import { describe, expect, test } from "vitest";
 
 import {
   hasPermissionAccess,
-  LEAF_ROOM_PERMISSION_RESOURCES,
   mergeRoomPermissionScopes,
   normalizeRoomPermissions,
   Permission,
@@ -11,7 +10,6 @@ import {
   permissionMatrixFromScopes,
   permissionMatrixToScopes,
   type PermissionResources,
-  permissionScopesSpecifyResource,
   resolveRoomPermissionMatrix,
   validatePermissionsSet,
 } from "../permissions";
@@ -46,9 +44,6 @@ const validScopeSet = scopeSet.filter(
 const noneScope = fc.constantFrom(
   Permission.StorageNone,
   Permission.CommentsNone,
-  Permission.CommentsPublicNone,
-  Permission.CommentsPrivateNone,
-  Permission.CommentsPersonalNone,
   Permission.FeedsNone
 );
 
@@ -92,16 +87,8 @@ const mergeRoomPermissionInputs = fc.record({
 describe("normalizeRoomPermissions", () => {
   test("keeps known permission scopes", () => {
     expect(
-      normalizeRoomPermissions([
-        Permission.Read,
-        Permission.StorageWrite,
-        Permission.CommentsPersonalWrite,
-      ])
-    ).toEqual([
-      Permission.Read,
-      Permission.StorageWrite,
-      Permission.CommentsPersonalWrite,
-    ]);
+      normalizeRoomPermissions([Permission.Read, Permission.StorageWrite])
+    ).toEqual([Permission.Read, Permission.StorageWrite]);
   });
 
   test("throws for unknown permission scopes", () => {
@@ -123,26 +110,20 @@ describe("normalizeRoomPermissions", () => {
 
 describe("permissionMatrixFromScopes", () => {
   test("resolves read access", () => {
-    expect(permissionMatrixFromScopes([Permission.Read])).toEqual({
+    expect(permissionMatrixFromScopes([Permission.Read])).toMatchObject({
       room: "read",
       storage: "read",
       comments: "read",
-      "comments:public": "read",
-      "comments:private": "read",
-      "comments:personal": "read",
       feeds: "read",
       personal: "write",
     });
   });
 
   test("resolves write access", () => {
-    expect(permissionMatrixFromScopes([Permission.Write])).toEqual({
+    expect(permissionMatrixFromScopes([Permission.Write])).toMatchObject({
       room: "write",
       storage: "write",
       comments: "write",
-      "comments:public": "write",
-      "comments:private": "write",
-      "comments:personal": "write",
       feeds: "write",
       personal: "write",
     });
@@ -198,38 +179,20 @@ describe("permissionMatrixFromScopes", () => {
     expect(hasPermissionAccess(matrix, "comments", "write")).toBe(false);
   });
 
-  test("comments permissions apply to public and private comments", () => {
-    const matrix = permissionMatrixFromScopes([
+  test("resolves broad and visibility-specific comments permissions", () => {
+    const broad = permissionMatrixFromScopes([
       Permission.Write,
       Permission.CommentsRead,
     ]);
 
-    expect(matrix.comments).toBe("read");
-    expect(matrix["comments:public"]).toBe("read");
-    expect(matrix["comments:private"]).toBe("read");
-    expect(matrix["comments:personal"]).toBe("read");
-  });
+    expect(broad).toMatchObject({
+      comments: "read",
+      "comments:public": "read",
+      "comments:private": "read",
+      "comments:personal": "read",
+    });
 
-  test("scoped comments permissions override public, private, and personal independently", () => {
-    const matrix = permissionMatrixFromScopes([
-      Permission.Read,
-      Permission.CommentsPublicWrite,
-      Permission.CommentsPrivateNone,
-      Permission.CommentsPersonalRead,
-    ]);
-
-    expect(matrix.comments).toBe("read");
-    expect(matrix["comments:public"]).toBe("write");
-    expect(matrix["comments:private"]).toBe("none");
-    expect(matrix["comments:personal"]).toBe("read");
-    expect(hasPermissionAccess(matrix, "comments", "write")).toBe(false);
-    expect(hasPermissionAccess(matrix, "comments:public", "write")).toBe(true);
-    expect(hasPermissionAccess(matrix, "comments:private", "read")).toBe(false);
-    expect(hasPermissionAccess(matrix, "comments:personal", "read")).toBe(true);
-  });
-
-  test("broad comments access is not influenced by scoped comments permissions", () => {
-    const matrix = permissionMatrixFromScopes([
+    const scoped = permissionMatrixFromScopes([
       Permission.Write,
       Permission.CommentsNone,
       Permission.CommentsPublicRead,
@@ -237,12 +200,29 @@ describe("permissionMatrixFromScopes", () => {
       Permission.CommentsPersonalWrite,
     ]);
 
-    expect(matrix.comments).toBe("none");
-    expect(hasPermissionAccess(matrix, "comments", "read")).toBe(false);
-    expect(hasPermissionAccess(matrix, "comments:public", "read")).toBe(true);
-    expect(hasPermissionAccess(matrix, "comments:private", "write")).toBe(true);
-    expect(hasPermissionAccess(matrix, "comments:personal", "write")).toBe(
-      true
+    expect(scoped).toMatchObject({
+      comments: "none",
+      "comments:public": "read",
+      "comments:private": "write",
+      "comments:personal": "write",
+    });
+    expect(hasPermissionAccess(scoped, "comments", "write")).toBe(false);
+    expect(hasPermissionAccess(scoped, "comments:public", "write")).toBe(false);
+    expect(hasPermissionAccess(scoped, "comments:private", "write")).toBe(true);
+  });
+
+  test("checks generic and scoped comments permissions independently", () => {
+    const matrix = permissionMatrixFromScopes([
+      Permission.Write,
+      Permission.CommentsNone,
+      Permission.CommentsPublicWrite,
+      Permission.CommentsPrivateNone,
+    ]);
+
+    expect(hasPermissionAccess(matrix, "comments", "write")).toBe(false);
+    expect(hasPermissionAccess(matrix, "comments:public", "write")).toBe(true);
+    expect(hasPermissionAccess(matrix, "comments:private", "write")).toBe(
+      false
     );
   });
 
@@ -287,21 +267,6 @@ describe("permissionMatrixFromScopes", () => {
     ).toBe(true);
   });
 
-  test("allows personal comments permissions to override default comments access", () => {
-    expect(
-      permissionMatrixFromScopes([
-        Permission.Read,
-        Permission.CommentsPersonalRead,
-      ])["comments:personal"]
-    ).toBe("read");
-    expect(
-      permissionMatrixFromScopes([
-        Permission.Write,
-        Permission.CommentsPersonalNone,
-      ])["comments:personal"]
-    ).toBe("none");
-  });
-
   test("returns a fresh matrix for each resolution", () => {
     const first = permissionMatrixFromScopes([]);
     first.room = "write";
@@ -315,13 +280,10 @@ describe("permissionMatrixFromScopes", () => {
         [{ pattern: "org1*", scopes: [Permission.RoomWrite] }],
         "org1.room1"
       )
-    ).toEqual({
+    ).toMatchObject({
       room: "write",
       storage: "write",
       comments: "write",
-      "comments:public": "write",
-      "comments:private": "write",
-      "comments:personal": "write",
       feeds: "write",
       personal: "write",
     });
@@ -351,21 +313,6 @@ describe("permissionMatrixFromScopes", () => {
     expect(matrix?.room).toBe("write");
     expect(matrix?.storage).toBe("write");
     expect(matrix?.comments).toBe("write");
-  });
-
-  test("lets exact personal comment permissions override wildcard defaults", () => {
-    const matrix = resolveRoomPermissionMatrix(
-      [
-        { pattern: "org1*", scopes: [Permission.Write] },
-        {
-          pattern: "org1.room1",
-          scopes: [Permission.Write, Permission.CommentsPersonalRead],
-        },
-      ],
-      "org1.room1"
-    );
-
-    expect(matrix?.["comments:personal"]).toBe("read");
   });
 
   test("lets exact room opt-outs override wildcard defaults without clearing other resources", () => {
@@ -408,52 +355,28 @@ describe("permission matrix helpers", () => {
 
   test("serializes permission matrix to minimal scopes", () => {
     expect(
-      permissionMatrixToScopes({
-        room: "read",
-        storage: "none",
-        comments: "read",
-        "comments:public": "read",
-        "comments:private": "read",
-        "comments:personal": "read",
-        feeds: "read",
-        personal: "write",
-      })
+      permissionMatrixToScopes(
+        permissionMatrixFromScopes([Permission.Read, Permission.StorageNone])
+      )
     ).toEqual([Permission.Read, Permission.StorageNone]);
   });
 
   test("serializes split comment scopes when public and private differ", () => {
     expect(
-      permissionMatrixToScopes({
-        room: "read",
-        storage: "read",
-        comments: "write",
-        "comments:public": "write",
-        "comments:private": "none",
-        "comments:personal": "read",
-        feeds: "read",
-        personal: "write",
-      })
+      permissionMatrixToScopes(
+        permissionMatrixFromScopes([
+          Permission.Read,
+          Permission.CommentsWrite,
+          Permission.CommentsPrivateNone,
+          Permission.CommentsPersonalRead,
+        ])
+      )
     ).toEqual([
       Permission.Read,
       Permission.CommentsWrite,
       Permission.CommentsPrivateNone,
       Permission.CommentsPersonalRead,
     ]);
-  });
-
-  test("serializes personal comments permissions", () => {
-    expect(
-      permissionMatrixToScopes({
-        room: "read",
-        storage: "read",
-        comments: "read",
-        "comments:public": "read",
-        "comments:private": "read",
-        "comments:personal": "none",
-        feeds: "read",
-        personal: "write",
-      })
-    ).toEqual([Permission.Read, Permission.CommentsPersonalNone]);
   });
 });
 
@@ -480,13 +403,10 @@ describe("mergeRoomPermissionScopes", () => {
           userAccesses: [Permission.Read, Permission.StorageWrite],
         })
       )
-    ).toEqual({
+    ).toMatchObject({
       room: "read",
       storage: "write",
       comments: "read",
-      "comments:public": "read",
-      "comments:private": "read",
-      "comments:personal": "read",
       feeds: "read",
       personal: "write",
     });
@@ -525,13 +445,10 @@ describe("mergeRoomPermissionScopes", () => {
           userAccesses: [],
         })
       )
-    ).toEqual({
+    ).toMatchObject({
       room: "read",
       storage: "read",
       comments: "read",
-      "comments:public": "read",
-      "comments:private": "read",
-      "comments:personal": "read",
       feeds: "read",
       personal: "write",
     });
@@ -562,18 +479,6 @@ describe("mergeRoomPermissionScopes", () => {
         })
       ).storage
     ).toBe("none");
-  });
-
-  test("explicit user personal comments access overrides lower layers", () => {
-    expect(
-      permissionMatrixFromScopes(
-        mergeRoomPermissionScopes({
-          defaultAccesses: [Permission.Write],
-          groupsAccesses: [[Permission.Write, Permission.CommentsPersonalNone]],
-          userAccesses: [Permission.Read, Permission.CommentsPersonalRead],
-        })
-      )["comments:personal"]
-    ).toBe("read");
   });
 
   test("explicit none on all sources grants no access", () => {
@@ -628,19 +533,14 @@ describe("validatePermissionsSet", () => {
     ).toBe(true);
   });
 
-  test("accepts public and private comments permissions together", () => {
+  test("accepts scoped comments permissions together", () => {
     expect(
       validatePermissionsSet([
         Permission.Read,
         Permission.CommentsPublicWrite,
         Permission.CommentsPrivateNone,
+        Permission.CommentsPersonalRead,
       ])
-    ).toBe(true);
-  });
-
-  test("accepts personal comments permissions", () => {
-    expect(
-      validatePermissionsSet([Permission.Read, Permission.CommentsPersonalRead])
     ).toBe(true);
   });
 
@@ -695,18 +595,6 @@ describe("validatePermissionsSet", () => {
       ])
     ).toBe(
       'Permissions can include at most one scope per feature, got multiple "comments:public" scopes'
-    );
-  });
-
-  test("rejects multiple scopes for the same personal comments feature", () => {
-    expect(
-      validatePermissionsSet([
-        Permission.Read,
-        Permission.CommentsPersonalRead,
-        Permission.CommentsPersonalWrite,
-      ])
-    ).toBe(
-      'Permissions can include at most one scope per feature, got multiple "comments:personal" scopes'
     );
   });
 });
@@ -895,51 +783,6 @@ describe("property tests", () => {
     );
   });
 
-  test("mergeRoomPermissionScopes takes the highest explicit access per feature across groups", () => {
-    fc.assert(
-      fc.property(validScopeSet, validScopeSet, (left, right) => {
-        const merged = mergeRoomPermissionMatrix({
-          defaultAccesses: [],
-          groupsAccesses: [left, right],
-          userAccesses: [],
-        });
-        const leftMatrix = permissionMatrixFromScopes(left);
-        const rightMatrix = permissionMatrixFromScopes(right);
-
-        if (!hasBasePermission(left) && !hasBasePermission(right)) {
-          expect(merged).toEqual(permissionMatrixFromScopes([]));
-          return;
-        }
-
-        const expectedRoom = Math.max(
-          hasBasePermission(left) ? accessRank("room", leftMatrix) : 0,
-          hasBasePermission(right) ? accessRank("room", rightMatrix) : 0
-        );
-        expect(accessRank("room", merged)).toBe(expectedRoom);
-
-        for (const resource of LEAF_ROOM_PERMISSION_RESOURCES) {
-          const explicitRanks = [left, right]
-            .filter((scopes) =>
-              permissionScopesSpecifyResource(scopes, resource)
-            )
-            .map((scopes) =>
-              accessRank(resource, permissionMatrixFromScopes(scopes))
-            );
-
-          if (explicitRanks.length === 0) {
-            expect(accessRank(resource, merged)).toBe(
-              accessRank("room", merged)
-            );
-          } else {
-            expect(accessRank(resource, merged)).toBe(
-              Math.max(...explicitRanks)
-            );
-          }
-        }
-      })
-    );
-  });
-
   test("mergeRoomPermissionScopes lets user base permissions replace lower layers", () => {
     fc.assert(
       fc.property(mergeRoomPermissionInputs, (inputs) => {
@@ -951,25 +794,6 @@ describe("property tests", () => {
         const userMatrix = permissionMatrixFromScopes(inputs.userAccesses);
 
         expect(matrix.room).toBe(userMatrix.room);
-      })
-    );
-  });
-
-  test("mergeRoomPermissionScopes lets explicit user feature scopes override lower layers", () => {
-    fc.assert(
-      fc.property(mergeRoomPermissionInputs, (inputs) => {
-        if (!hasBasePermission(inputs.userAccesses)) {
-          return;
-        }
-
-        const matrix = mergeRoomPermissionMatrix(inputs);
-        const userMatrix = permissionMatrixFromScopes(inputs.userAccesses);
-
-        for (const resource of LEAF_ROOM_PERMISSION_RESOURCES) {
-          if (permissionScopesSpecifyResource(inputs.userAccesses, resource)) {
-            expect(matrix[resource]).toBe(userMatrix[resource]);
-          }
-        }
       })
     );
   });

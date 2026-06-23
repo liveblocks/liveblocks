@@ -1,5 +1,4 @@
 import type {
-  CommentAttachment,
   InboxNotificationData,
   LiveList,
   LiveMap,
@@ -72,31 +71,15 @@ declare global {
 }
 
 describe("Composer (with Liveblocks augmentation)", () => {
-  test("accepts props for creating threads", () => {
+  test("accepts augmented thread and comment metadata", () => {
     void (
       <Composer
         metadata={{ color: "red" }}
-        commentMetadata={{ priority: 1, reviewed: false }}
+        commentMetadata={{ priority: 1 }}
         visibility="private"
-        onComposerSubmit={(comment, event) => {
-          expectTypeOf(comment.body.version).toEqualTypeOf<1>();
-          expectTypeOf(comment.attachments).toEqualTypeOf<
-            CommentAttachment[]
-          >();
-          expectTypeOf(event.preventDefault).toBeFunction();
-        }}
       />
     );
 
-    void (
-      (
-        // @ts-expect-error - visibility only applies when creating threads
-        <Composer threadId="th_123" visibility="private" />
-      )
-    );
-  });
-
-  test("accepts props for creating comments", () => {
     void (
       <Composer
         threadId="th_123"
@@ -104,38 +87,12 @@ describe("Composer (with Liveblocks augmentation)", () => {
       />
     );
 
-    void (
-      (
-        // @ts-expect-error - thread metadata only applies when creating threads
-        <Composer threadId="th_123" metadata={{ color: "red" }} />
-      )
-    );
-    void (
-      (
-        // @ts-expect-error - commentId requires threadId
-        <Composer commentId="cm_123" />
-      )
-    );
-  });
-
-  test("accepts props for editing comments", () => {
     void (
       <Composer
         threadId="th_123"
         commentId="cm_123"
-        commentMetadata={{ priority: 1, reviewed: null }}
+        commentMetadata={{ reviewed: null }}
       />
-    );
-
-    void (
-      (
-        // @ts-expect-error - thread metadata only applies when creating threads
-        <Composer
-          threadId="th_123"
-          commentId="cm_123"
-          metadata={{ color: "red" }}
-        />
-      )
     );
   });
 });

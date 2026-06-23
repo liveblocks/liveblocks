@@ -334,6 +334,46 @@ describe("useHasPermissionAccess", () => {
     expect(privateAccess.result.current).toBe(true);
     expect(personalAccess.result.current).toBe(true);
   });
+
+  test("uses scoped comment access from the connection before permission hints arrive", async () => {
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <RoomProvider id="room" initialPresence={{ x: 0 }}>
+        {children}
+      </RoomProvider>
+    );
+
+    const access = renderHook(
+      () => ({
+        comments: useHasPermissionAccess("room", "comments", "write"),
+        public: useHasPermissionAccess("room", "comments:public", "write"),
+        private: useHasPermissionAccess("room", "comments:private", "write"),
+      }),
+      { wrapper }
+    );
+
+    const sim = await websocketSimulator();
+    act(() =>
+      sim.simulateIncomingMessage({
+        type: ServerMsgCode.ROOM_STATE,
+        actor: 0,
+        nonce: "nonce-for-actor-0",
+        scopes: [
+          "room:write",
+          "comments:none",
+          "comments:public:write",
+          "comments:private:none",
+        ],
+        users: {},
+        meta: {},
+      })
+    );
+
+    expect(access.result.current).toEqual({
+      comments: false,
+      public: true,
+      private: false,
+    });
+  });
 });
 
 describe("useStorage", () => {

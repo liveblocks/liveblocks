@@ -64,14 +64,11 @@ import type {
   ComposerSubmitComment,
 } from "../primitives/Composer/types";
 import { useComposerAttachmentsDropArea } from "../primitives/Composer/utils";
-import {
-  getCommentsPermissionResource,
-  useThreadVisibility,
-} from "../shared";
 import type { ComposerBodyMark } from "../types";
 import { cn } from "../utils/cn";
 import { useControllableState } from "../utils/use-controllable-state";
 import { useIsGroupMentionMember } from "../utils/use-group-mention";
+import { commentsResourceForVisibility } from "../shared";
 import { GroupAvatar, UserAvatar } from "./Avatar";
 import { FileAttachment } from "./internal/Attachment";
 import { Attribution } from "./internal/Attribution";
@@ -131,7 +128,11 @@ export type ComposerCreateCommentProps<CM extends BaseMetadata> = {
 
   metadata?: never;
 
-  visibility?: never;
+  /**
+   * @internal
+   * The visibility of the parent thread.
+   */
+  visibility?: ThreadVisibility;
 
   /**
    * The metadata of the comment to create.
@@ -152,7 +153,11 @@ export type ComposerEditCommentProps<CM extends BaseMetadata> = {
 
   metadata?: never;
 
-  visibility?: never;
+  /**
+   * @internal
+   * The visibility of the parent thread.
+   */
+  visibility?: ThreadVisibility;
 
   /**
    * The metadata of the comment to edit.
@@ -768,21 +773,13 @@ export const Composer = forwardRef(
       controlledCollapsed,
       controlledOnCollapsedChange
     );
-    const threadVisibility = useThreadVisibility();
-    let commentsPermissionResource = getCommentsPermissionResource(
-      visibility ?? "public"
-    );
-
-    if (threadId !== undefined) {
-      commentsPermissionResource =
-        threadVisibility === undefined
-          ? "comments"
-          : getCommentsPermissionResource(threadVisibility);
-    }
-
+    const commentsResource =
+      threadId === undefined
+        ? commentsResourceForVisibility(visibility ?? "public")
+        : commentsResourceForVisibility(visibility);
     const canComment = useHasPermissionAccess(
       roomId,
-      commentsPermissionResource,
+      commentsResource,
       "write"
     );
 
