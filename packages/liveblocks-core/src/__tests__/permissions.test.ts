@@ -22,7 +22,6 @@ const PERMISSION_RESOURCES = [
   "comments",
   "comments:public",
   "comments:private",
-  "comments:personal",
   "feeds",
   "personal",
 ] as const satisfies readonly PermissionResources[];
@@ -189,7 +188,6 @@ describe("permissionMatrixFromScopes", () => {
       comments: "read",
       "comments:public": "read",
       "comments:private": "read",
-      "comments:personal": "read",
     });
 
     const scoped = permissionMatrixFromScopes([
@@ -197,14 +195,12 @@ describe("permissionMatrixFromScopes", () => {
       Permission.CommentsNone,
       Permission.CommentsPublicRead,
       Permission.CommentsPrivateWrite,
-      Permission.CommentsPersonalWrite,
     ]);
 
     expect(scoped).toMatchObject({
       comments: "none",
       "comments:public": "read",
       "comments:private": "write",
-      "comments:personal": "write",
     });
     expect(hasPermissionAccess(scoped, "comments", "write")).toBe(false);
     expect(hasPermissionAccess(scoped, "comments:public", "write")).toBe(false);
@@ -368,14 +364,12 @@ describe("permission matrix helpers", () => {
           Permission.Read,
           Permission.CommentsWrite,
           Permission.CommentsPrivateNone,
-          Permission.CommentsPersonalRead,
         ])
       )
     ).toEqual([
       Permission.Read,
       Permission.CommentsWrite,
       Permission.CommentsPrivateNone,
-      Permission.CommentsPersonalRead,
     ]);
   });
 });
@@ -539,7 +533,6 @@ describe("validatePermissionsSet", () => {
         Permission.Read,
         Permission.CommentsPublicWrite,
         Permission.CommentsPrivateNone,
-        Permission.CommentsPersonalRead,
       ])
     ).toBe(true);
   });

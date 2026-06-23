@@ -30,9 +30,6 @@ export const Permission = {
   CommentsPrivateWrite: "comments:private:write",
   CommentsPrivateRead: "comments:private:read",
   CommentsPrivateNone: "comments:private:none",
-  CommentsPersonalWrite: "comments:personal:write",
-  CommentsPersonalRead: "comments:personal:read",
-  CommentsPersonalNone: "comments:personal:none",
 
   /**
    * Feeds
@@ -61,7 +58,6 @@ export type PermissionMatrix = {
   comments: AccessLevel;
   "comments:public": AccessLevel;
   "comments:private": AccessLevel;
-  "comments:personal": AccessLevel;
   feeds: AccessLevel;
   personal: AccessLevel;
 };
@@ -126,11 +122,6 @@ const PERMISSIONS_BY_RESOURCE: ResourcePermissionsMap = {
     read: [Permission.CommentsPrivateRead],
     none: [Permission.CommentsPrivateNone],
   },
-  "comments:personal": {
-    write: [Permission.CommentsPersonalWrite],
-    read: [Permission.CommentsPersonalRead],
-    none: [Permission.CommentsPersonalNone],
-  },
   feeds: {
     write: [Permission.FeedsWrite],
     read: [Permission.FeedsRead],
@@ -144,7 +135,6 @@ const NO_PERMISSION_MATRIX: PermissionMatrix = {
   comments: "none",
   "comments:public": "none",
   "comments:private": "none",
-  "comments:personal": "none",
   feeds: "none",
   personal: "none",
 };
@@ -156,14 +146,12 @@ const ROOM_PERMISSION_RESOURCES = [
   "comments",
   "comments:public",
   "comments:private",
-  "comments:personal",
   "feeds",
 ] as const satisfies readonly RoomPermissionsResource[];
 
 const COMMENT_VISIBILITY_RESOURCES = [
   "comments:public",
   "comments:private",
-  "comments:personal",
 ] as const satisfies readonly RoomPermissionsResource[];
 
 const basePermissionScopes = new Set<string>([
@@ -235,7 +223,6 @@ function permissionMatrixFromExplicitPermissions(
     comments: commentsAccess,
     "comments:public": explicitMatrix["comments:public"] ?? commentsAccess,
     "comments:private": explicitMatrix["comments:private"] ?? commentsAccess,
-    "comments:personal": explicitMatrix["comments:personal"] ?? commentsAccess,
     feeds: explicitMatrix.feeds ?? baseAccess,
     personal: "write",
   };

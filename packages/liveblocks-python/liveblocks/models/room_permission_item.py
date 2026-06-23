@@ -3,9 +3,6 @@ from enum import StrEnum
 
 class RoomPermissionItem(StrEnum):
     COMMENTSNONE = "comments:none"
-    COMMENTSPERSONALNONE = "comments:personal:none"
-    COMMENTSPERSONALREAD = "comments:personal:read"
-    COMMENTSPERSONALWRITE = "comments:personal:write"
     COMMENTSPRIVATENONE = "comments:private:none"
     COMMENTSPRIVATEREAD = "comments:private:read"
     COMMENTSPRIVATEWRITE = "comments:private:write"

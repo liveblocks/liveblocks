@@ -36,15 +36,8 @@ Liveblocks checks permissions when threads are created and retrieved:
   threads.
 
 The broader `comments:read`, `comments:write`, and `comments:none` permissions
-apply to public threads, private threads, and threads created by the current
-user. Use `comments:public:*` and `comments:private:*` to override one
-visibility.
-
-Personal thread permissions are based on who created the thread, not the
-thread’s `visibility` value. For example, `comments:personal:read` lets a user
-read threads they created, and `comments:personal:write` lets a user create
-threads because those threads are their own. This is useful when reviewers or
-external users should only create and see their own threads.
+apply to both public and private threads. Use `comments:public:*` and
+`comments:private:*` to override one visibility.
 
 ## Set up permissions
 

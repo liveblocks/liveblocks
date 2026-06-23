@@ -3812,8 +3812,7 @@ function useSelfAccessFallback(
     const isCommentsResource =
       resource === "comments" ||
       resource === "comments:public" ||
-      resource === "comments:private" ||
-      resource === "comments:personal";
+      resource === "comments:private";
 
     if (room?.id === roomId) {
       const permissionMatrix = room[kInternal].getPermissionMatrix();

@@ -9,7 +9,7 @@
   created. Permissions can be used to decide which threads a user has access to,
   and threads can also be queried by their visibility to create filtered views.
 - Add scoped comments permissions such as `comments:public:write`,
-  `comments:private:none`, and `comments:personal:read`.
+  `comments:private:read`, and `comments:private:none`.
 
 ### `@liveblocks/client`
 
