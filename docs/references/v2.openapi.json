@@ -7210,9 +7210,6 @@
           "comments:private:read",
           "comments:private:write",
           "comments:private:none",
-          "comments:personal:read",
-          "comments:personal:write",
-          "comments:personal:none",
           "feeds:read",
           "feeds:write",
           "feeds:none"

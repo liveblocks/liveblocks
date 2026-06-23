@@ -287,8 +287,7 @@ function cachedTokenSatisfiesRequest(
     return (
       hasPermissionAccess(matrix, "comments", "read") ||
       hasPermissionAccess(matrix, "comments:public", "read") ||
-      hasPermissionAccess(matrix, "comments:private", "read") ||
-      hasPermissionAccess(matrix, "comments:personal", "read")
+      hasPermissionAccess(matrix, "comments:private", "read")
     );
   }
 

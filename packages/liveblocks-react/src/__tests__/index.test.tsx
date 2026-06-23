@@ -325,14 +325,9 @@ describe("useHasPermissionAccess", () => {
       () => useHasPermissionAccess("room", "comments:private", "write"),
       { wrapper }
     );
-    const personalAccess = renderHook(
-      () => useHasPermissionAccess("room", "comments:personal", "write"),
-      { wrapper }
-    );
 
     expect(publicAccess.result.current).toBe(true);
     expect(privateAccess.result.current).toBe(true);
-    expect(personalAccess.result.current).toBe(true);
   });
 
   test("uses scoped comment access from the connection before permission hints arrive", async () => {

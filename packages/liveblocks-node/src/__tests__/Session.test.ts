@@ -7,7 +7,6 @@ const P2 = "*:write";
 const P3 = "comments:read";
 const P4 = "comments:public:write";
 const P5 = "comments:private:none";
-const P6 = "comments:personal:read";
 
 function makeSession(options?: {
   secret?: string;
@@ -184,9 +183,9 @@ describe("authorization (new API)", () => {
 
   test("accepts scoped comments permissions", () => {
     expect(
-      makeSession().allow("foo", [P1, P4, P5, P6]).serializePermissions()
+      makeSession().allow("foo", [P1, P4, P5]).serializePermissions()
     ).toEqual({
-      foo: [P1, P4, P5, P6],
+      foo: [P1, P4, P5],
     });
   });
 
