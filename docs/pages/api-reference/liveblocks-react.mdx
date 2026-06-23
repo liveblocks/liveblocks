@@ -1223,8 +1223,7 @@ useErrorListener((error) => {
 
     // Can happen if you use Comments or Notifications
     case "CREATE_THREAD_ERROR":
-      const { roomId, threadId, commentId, body, visibility, metadata } =
-        error.context;
+      const { roomId, threadId, commentId, body, metadata } = error.context;
       break;
 
     case "DELETE_THREAD_ERROR":
@@ -4075,9 +4074,8 @@ function Component() {
     Optional configuration object.
   </PropertiesListItem>
   <PropertiesListItem name="option.query" type="ThreadsQuery">
-    Optional query to filter threads by visibility, resolved status, subscribed
-    status, and metadata values. [Learn
-    more](/docs/api-reference/liveblocks-react#useThreads-query).
+    Optional query to filter threads by resolved status and metadata values.
+    [Learn more](/docs/api-reference/liveblocks-react#useThreads-query).
   </PropertiesListItem>
   <PropertiesListItem name="option.scrollOnLoad" type="boolean">
     Whether to scroll to a comment if the URL's hash is set to a comment ID.
@@ -4118,13 +4116,11 @@ function Component() {
 #### Querying threads [#useThreads-query]
 
 It’s possible to return threads that match a certain query with the `query`
-option. You can filter threads based on their visibility, resolved status, if
-the user is subscribed to them, and metadata. Additionally, you can filter for
-metadata strings that begin with certain characters using `startsWith` and you
-can filter for metadata numbers using `gt`, `lt`, `gte`, and `lte`. Returned
-threads match the entire query. Permissions are taken into account so querying
-private threads will return no private threads if the current user does not have
-access to them.
+option. You can filter threads based on their resolved status, if the user is
+subscribed to them, and metadata. Additionally, you can filter for metadata
+strings that being with certain characters using `startsWith` and you can filter
+for metadata numbers using `gt`, `lt`, `gte`, and `lte`. Returned threads match
+the entire query.
 
 ```tsx
 // Returns threads that match the entire `query`, e.g. { color: "blue", pinned: true, ... }
@@ -4132,9 +4128,6 @@ const { threads } = useThreads({
   query: {
     // Filter for unresolved threads
     resolved: false,
-
-    // Filter for private threads
-    visibility: "private",
 
     // Filter for threads that the user is subscribed to
     subscribed: true,
@@ -4287,9 +4280,7 @@ const { threads } = useThreads({ scrollOnLoad: false });
 ### useCreateThread [@badge=RoomProvider]
 
 Returns a function that optimistically creates a thread with an initial comment,
-and optionally some thread metadata, comment metadata, and visibility. Threads
-are public by default. Permissions are taken into account so a user without
-write access to private threads can’t create a private one.
+and optionally some thread and comment metadata.
 
 ```tsx
 import { useCreateThread } from "@liveblocks/react/suspense";
@@ -4300,7 +4291,6 @@ const thread = createThread({
   attachments: [],
   metadata: {},
   commentMetadata: {},
-  visibility: "private",
 });
 ```
 
@@ -4310,8 +4300,7 @@ const thread = createThread({
     type="(options: CreateThreadOptions) => ThreadData"
   >
     A function that creates a thread with an initial comment, and optionally
-    thread metadata, comment metadata, and visibility. Returns the optimistic
-    thread object.
+    thread and comment metadata. Returns the optimistic thread object.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -4327,8 +4316,7 @@ import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
   if (error.context.type === "CREATE_THREAD_ERROR") {
-    const { roomId, threadId, commentId, body, visibility, metadata } =
-      error.context;
+    const { roomId, threadId, commentId, body, metadata } = error.context;
     console.log(`Problem creating thread ${threadId}`);
   }
 });
