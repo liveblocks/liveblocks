@@ -295,12 +295,23 @@ function cachedTokenSatisfiesRequest(
     request.roomId
   );
 
-  return (
-    matrix !== undefined &&
-    getRoomAuthResources(request).some((resource) =>
-      hasPermissionAccess(matrix, resource, request.access)
-    )
-  );
+  if (matrix === undefined) {
+    return false;
+  }
+
+  const resources = getRoomAuthResources(request);
+  if (resources.length === 0) {
+    return false;
+  }
+
+  const resourceIsAccessible = (resource: RoomAuthResource) =>
+    hasPermissionAccess(matrix, resource, request.access);
+
+  if (request.resource === "comments") {
+    return resources.every(resourceIsAccessible);
+  }
+
+  return resources.some(resourceIsAccessible);
 }
 
 function getRoomAuthResources(
