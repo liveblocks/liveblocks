@@ -22,6 +22,7 @@ import {
 
 import { createApiClient } from "../api-client";
 import {
+  SCOPED_COMMENTS_AUTH_RESOURCES,
   type AuthRequest,
   type AuthValue,
   createAuthManager,
@@ -97,9 +98,15 @@ const commentsReadAuthRequest = {
   access: "read",
 } satisfies AuthRequest;
 
-const commentsWriteAuthRequest = {
+const threadCommentsReadAuthRequest = {
   roomId: "room-id",
-  resource: "comments",
+  resources: SCOPED_COMMENTS_AUTH_RESOURCES,
+  access: "read",
+} satisfies AuthRequest;
+
+const threadCommentsWriteAuthRequest = {
+  roomId: "room-id",
+  resources: SCOPED_COMMENTS_AUTH_RESOURCES,
   access: "write",
 } satisfies AuthRequest;
 
@@ -310,7 +317,7 @@ describe("createApiClient", () => {
     ]);
   });
 
-  test("requests comments read auth when getting a thread", async () => {
+  test("requests thread comments read auth when getting a thread", async () => {
     const { authRequests, client } = createTestApiClient();
 
     await client.getThread({
@@ -318,7 +325,7 @@ describe("createApiClient", () => {
       threadId: "th_123",
     });
 
-    expect(authRequests).toEqual([commentsReadAuthRequest]);
+    expect(authRequests).toEqual([threadCommentsReadAuthRequest]);
   });
 
   test("requests public comments write auth when creating a thread without visibility", async () => {
@@ -352,7 +359,7 @@ describe("createApiClient", () => {
     ]);
   });
 
-  test("requests comments write auth when changing an existing thread", async () => {
+  test("requests thread comments write auth when changing an existing thread", async () => {
     const { authRequests, client } = createTestApiClient();
 
     await client.markThreadAsResolved({
@@ -360,7 +367,7 @@ describe("createApiClient", () => {
       threadId: "th_123",
     });
 
-    expect(authRequests).toEqual([commentsWriteAuthRequest]);
+    expect(authRequests).toEqual([threadCommentsWriteAuthRequest]);
   });
 
   test("requests comments read auth when getting attachment URLs", async () => {

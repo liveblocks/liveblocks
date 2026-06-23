@@ -5,13 +5,18 @@ import { Comment } from "../components/Comment";
 import { Composer } from "../components/Composer";
 import { Thread } from "../components/Thread";
 import { ThreadVisibilityContext } from "../shared";
-import { render } from "./_utils"; // Basically re-exports from @testing-library/react
+import { fireEvent, render, screen } from "./_utils"; // Basically re-exports from @testing-library/react
 
 const useHasPermissionAccessMock = vi.hoisted(() => vi.fn(() => true));
 
 vi.mock("@liveblocks/react/_private", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@liveblocks/react/_private")>()),
   useHasPermissionAccess: useHasPermissionAccessMock,
+}));
+
+vi.mock("../shared", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../shared")>()),
+  useCurrentUserId: () => "user",
 }));
 
 const comment: CommentData = {
@@ -189,6 +194,23 @@ describe("Comment", () => {
       "write"
     );
   });
+
+  test("should check scoped comments write access when editing a comment in a thread visibility context", () => {
+    render(
+      <ThreadVisibilityContext.Provider value="private">
+        <Comment comment={comment} />
+      </ThreadVisibilityContext.Provider>
+    );
+
+    fireEvent.pointerDown(screen.getByLabelText("More"));
+    fireEvent.click(screen.getByText("Edit comment"));
+
+    expect(useHasPermissionAccessMock).toHaveBeenLastCalledWith(
+      "room",
+      "comments:private",
+      "write"
+    );
+  });
 });
 
 describe("Composer", () => {
@@ -228,16 +250,16 @@ describe("Composer", () => {
     );
   });
 
-  test("should ignore visibility context when replying to a thread", () => {
+  test("should use visibility context when replying to a thread", () => {
     render(
-      <ThreadVisibilityContext.Provider value="public">
+      <ThreadVisibilityContext.Provider value="private">
         <Composer threadId="th_1" />
       </ThreadVisibilityContext.Provider>
     );
 
     expect(useHasPermissionAccessMock).toHaveBeenCalledWith(
       "room",
-      "comments",
+      "comments:private",
       "write"
     );
   });

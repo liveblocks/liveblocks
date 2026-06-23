@@ -1,4 +1,8 @@
-import type { AuthManager, AuthValue } from "./auth-manager";
+import {
+  SCOPED_COMMENTS_AUTH_RESOURCES,
+  type AuthManager,
+  type AuthValue,
+} from "./auth-manager";
 import {
   convertToCommentData,
   convertToCommentUserReaction,
@@ -769,7 +773,7 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        resource: "comments",
+        resources: SCOPED_COMMENTS_AUTH_RESOURCES,
         access: "write",
       })
     );
@@ -780,7 +784,7 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/thread-with-notification/${options.threadId}`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        resource: "comments",
+        resources: SCOPED_COMMENTS_AUTH_RESOURCES,
         access: "read",
       })
     );
@@ -823,7 +827,7 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/metadata`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        resource: "comments",
+        resources: SCOPED_COMMENTS_AUTH_RESOURCES,
         access: "write",
       }),
       options.metadata
@@ -840,7 +844,7 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments/${options.commentId}/metadata`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        resource: "comments",
+        resources: SCOPED_COMMENTS_AUTH_RESOURCES,
         access: "write",
       }),
       options.metadata
@@ -860,7 +864,7 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        resource: "comments",
+        resources: SCOPED_COMMENTS_AUTH_RESOURCES,
         access: "write",
       }),
       {
@@ -885,7 +889,7 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments/${options.commentId}`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        resource: "comments",
+        resources: SCOPED_COMMENTS_AUTH_RESOURCES,
         access: "write",
       }),
       {
@@ -907,7 +911,7 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments/${options.commentId}`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        resource: "comments",
+        resources: SCOPED_COMMENTS_AUTH_RESOURCES,
         access: "write",
       })
     );
@@ -923,7 +927,7 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments/${options.commentId}/reactions`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        resource: "comments",
+        resources: SCOPED_COMMENTS_AUTH_RESOURCES,
         access: "write",
       }),
       { emoji: options.emoji }
@@ -942,7 +946,7 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments/${options.commentId}/reactions/${options.emoji}`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        resource: "comments",
+        resources: SCOPED_COMMENTS_AUTH_RESOURCES,
         access: "write",
       })
     );
@@ -956,7 +960,7 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/mark-as-resolved`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        resource: "comments",
+        resources: SCOPED_COMMENTS_AUTH_RESOURCES,
         access: "write",
       })
     );
@@ -970,7 +974,7 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/mark-as-unresolved`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        resource: "comments",
+        resources: SCOPED_COMMENTS_AUTH_RESOURCES,
         access: "write",
       })
     );
@@ -984,7 +988,7 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/subscribe`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        resource: "comments",
+        resources: SCOPED_COMMENTS_AUTH_RESOURCES,
         access: "read",
       })
     );
@@ -1000,7 +1004,7 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/unsubscribe`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        resource: "comments",
+        resources: SCOPED_COMMENTS_AUTH_RESOURCES,
         access: "read",
       })
     );

@@ -27,7 +27,7 @@ export type AuthValue =
 
 type RoomAuthResource = Exclude<PermissionResources, "personal">;
 
-const COMMENT_VISIBILITY_AUTH_RESOURCES = Object.freeze([
+export const SCOPED_COMMENTS_AUTH_RESOURCES = Object.freeze([
   "comments:public",
   "comments:private",
   "comments:personal",
@@ -249,7 +249,11 @@ function getAuthRequestKey(request: AuthRequest): string | undefined {
     return undefined;
   }
 
-  return `${request.roomId}:${resources.join("|")}:${request.access}`;
+  const mode =
+    request.resources === undefined && request.resource === "comments"
+      ? "all"
+      : "any";
+  return `${request.roomId}:${mode}:${resources.join("|")}:${request.access}`;
 }
 
 function makeCachedToken(
@@ -307,7 +311,7 @@ function cachedTokenSatisfiesRequest(
   const resourceIsAccessible = (resource: RoomAuthResource) =>
     hasPermissionAccess(matrix, resource, request.access);
 
-  if (request.resource === "comments") {
+  if (request.resources === undefined && request.resource === "comments") {
     return resources.every(resourceIsAccessible);
   }
 
@@ -322,7 +326,7 @@ function getRoomAuthResources(
   }
 
   if (request.resource === "comments") {
-    return COMMENT_VISIBILITY_AUTH_RESOURCES;
+    return SCOPED_COMMENTS_AUTH_RESOURCES;
   }
 
   if (request.resource !== undefined && request.resource !== "personal") {

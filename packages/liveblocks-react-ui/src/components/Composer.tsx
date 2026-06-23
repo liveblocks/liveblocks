@@ -8,7 +8,6 @@ import type {
   DTM,
   GroupMentionData,
   Patchable,
-  PermissionResources,
   ThreadVisibility,
 } from "@liveblocks/core";
 import { assertNever, MENTION_CHARACTER } from "@liveblocks/core";
@@ -65,7 +64,10 @@ import type {
   ComposerSubmitComment,
 } from "../primitives/Composer/types";
 import { useComposerAttachmentsDropArea } from "../primitives/Composer/utils";
-import { getCommentsPermissionResource } from "../shared";
+import {
+  getCommentsPermissionResource,
+  useThreadVisibility,
+} from "../shared";
 import type { ComposerBodyMark } from "../types";
 import { cn } from "../utils/cn";
 import { useControllableState } from "../utils/use-controllable-state";
@@ -262,21 +264,6 @@ interface ComposerEditorContainerProps extends Pick<
   hasResolveMentionSuggestions: boolean;
   onEmojiPickerOpenChange: (isOpen: boolean) => void;
   onEditorClick: (event: MouseEvent<HTMLDivElement>) => void;
-}
-
-function getComposerPermissionResource(
-  threadId: string | undefined,
-  visibility: ThreadVisibility | undefined
-): PermissionResources {
-  if (threadId !== undefined) {
-    return "comments";
-  }
-
-  if (visibility !== undefined) {
-    return getCommentsPermissionResource(visibility);
-  }
-
-  return getCommentsPermissionResource("public");
 }
 
 interface ComposerMentionProps extends ComposerEditorMentionProps {
@@ -781,10 +768,21 @@ export const Composer = forwardRef(
       controlledCollapsed,
       controlledOnCollapsedChange
     );
+    const threadVisibility = useThreadVisibility();
+    let commentsPermissionResource = getCommentsPermissionResource(
+      visibility ?? "public"
+    );
+
+    if (threadId !== undefined) {
+      commentsPermissionResource =
+        threadVisibility === undefined
+          ? "comments"
+          : getCommentsPermissionResource(threadVisibility);
+    }
 
     const canComment = useHasPermissionAccess(
       roomId,
-      getComposerPermissionResource(threadId, visibility),
+      commentsPermissionResource,
       "write"
     );
 
