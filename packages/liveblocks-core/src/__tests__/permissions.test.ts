@@ -363,12 +363,14 @@ describe("permission matrix helpers", () => {
         permissionMatrixFromScopes([
           Permission.Read,
           Permission.CommentsWrite,
+          Permission.CommentsPublicRead,
           Permission.CommentsPrivateNone,
         ])
       )
     ).toEqual([
       Permission.Read,
       Permission.CommentsWrite,
+      Permission.CommentsPublicRead,
       Permission.CommentsPrivateNone,
     ]);
   });

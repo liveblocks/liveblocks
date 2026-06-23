@@ -8,8 +8,8 @@
   property that is `"public"` by default but can be set to `"private"` when
   created. Permissions can be used to decide which threads a user has access to,
   and threads can also be queried by their visibility to create filtered views.
-- Add scoped comments permissions such as `comments:public:write`,
-  `comments:private:read`, and `comments:private:none`.
+- Add scoped comments permissions such as `comments:public:write` and
+  `comments:private:none`.
 
 ### `@liveblocks/client`
 
