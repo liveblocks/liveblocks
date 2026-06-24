@@ -34,9 +34,9 @@ if TYPE_CHECKING:
     from .models.create_group_request_body import CreateGroupRequestBody
     from .models.create_room_request_body import CreateRoomRequestBody
     from .models.create_thread_request_body import CreateThreadRequestBody
+    from .models.create_version_history_snapshot_response import CreateVersionHistorySnapshotResponse
     from .models.create_web_knowledge_source_request_body import CreateWebKnowledgeSourceRequestBody
     from .models.create_web_knowledge_source_response import CreateWebKnowledgeSourceResponse
-    from .models.create_yjs_version_response import CreateYjsVersionResponse
     from .models.edit_comment_metadata_request_body import EditCommentMetadataRequestBody
     from .models.edit_comment_request_body import EditCommentRequestBody
     from .models.edit_thread_metadata_request_body import EditThreadMetadataRequestBody
@@ -57,10 +57,10 @@ if TYPE_CHECKING:
     from .models.get_thread_subscriptions_response import GetThreadSubscriptionsResponse
     from .models.get_threads_response import GetThreadsResponse
     from .models.get_user_groups_response import GetUserGroupsResponse
+    from .models.get_version_history_response import GetVersionHistoryResponse
     from .models.get_web_knowledge_source_links_response import GetWebKnowledgeSourceLinksResponse
     from .models.get_yjs_document_response import GetYjsDocumentResponse
     from .models.get_yjs_document_type import GetYjsDocumentType
-    from .models.get_yjs_versions_response import GetYjsVersionsResponse
     from .models.group import Group
     from .models.identify_user_request_body import IdentifyUserRequestBody
     from .models.identify_user_response import IdentifyUserResponse
@@ -925,14 +925,14 @@ class Liveblocks:
             client=self._client,
         )
 
-    def get_yjs_versions(
+    def get_version_history(
         self,
         room_id: str,
         *,
         limit: int | Unset = 20,
         cursor: str | Unset = UNSET,
-    ) -> GetYjsVersionsResponse:
-        """Get Yjs version history
+    ) -> GetVersionHistoryResponse:
+        """Get Version History
 
          This endpoint returns a list of version history snapshots for the room's Yjs document. The versions
         are returned sorted by creation date, from newest to oldest.
@@ -949,15 +949,41 @@ class Liveblocks:
             httpx.TimeoutException: If the request takes longer than Client.timeout.
 
         Returns:
-            GetYjsVersionsResponse
+            GetVersionHistoryResponse
         """
 
-        from .api.yjs import get_yjs_versions
+        from .api.yjs import get_version_history
 
-        return get_yjs_versions._sync(
+        return get_version_history._sync(
             room_id=room_id,
             limit=limit,
             cursor=cursor,
+            client=self._client,
+        )
+
+    def create_version_history_snapshot(
+        self,
+        room_id: str,
+    ) -> CreateVersionHistorySnapshotResponse:
+        """Create version history snapshot
+
+         This endpoint creates a new version history snapshot for the room. Currently only works for Yjs.
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            CreateVersionHistorySnapshotResponse
+        """
+
+        from .api.yjs import create_version_history_snapshot
+
+        return create_version_history_snapshot._sync(
+            room_id=room_id,
             client=self._client,
         )
 
@@ -987,32 +1013,6 @@ class Liveblocks:
         return get_yjs_version._sync(
             room_id=room_id,
             version_id=version_id,
-            client=self._client,
-        )
-
-    def create_yjs_version(
-        self,
-        room_id: str,
-    ) -> CreateYjsVersionResponse:
-        """Create Yjs version snapshot
-
-         This endpoint creates a new version history snapshot for the room's Yjs document.
-
-        Args:
-            room_id (str): ID of the room Example: my-room-id.
-
-        Raises:
-            errors.LiveblocksError: If the server returns a response with non-2xx status code.
-            httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-        Returns:
-            CreateYjsVersionResponse
-        """
-
-        from .api.yjs import create_yjs_version
-
-        return create_yjs_version._sync(
-            room_id=room_id,
             client=self._client,
         )
 
@@ -4059,14 +4059,14 @@ class AsyncLiveblocks:
             client=self._client,
         )
 
-    async def get_yjs_versions(
+    async def get_version_history(
         self,
         room_id: str,
         *,
         limit: int | Unset = 20,
         cursor: str | Unset = UNSET,
-    ) -> GetYjsVersionsResponse:
-        """Get Yjs version history
+    ) -> GetVersionHistoryResponse:
+        """Get Version History
 
          This endpoint returns a list of version history snapshots for the room's Yjs document. The versions
         are returned sorted by creation date, from newest to oldest.
@@ -4083,15 +4083,41 @@ class AsyncLiveblocks:
             httpx.TimeoutException: If the request takes longer than Client.timeout.
 
         Returns:
-            GetYjsVersionsResponse
+            GetVersionHistoryResponse
         """
 
-        from .api.yjs import get_yjs_versions
+        from .api.yjs import get_version_history
 
-        return await get_yjs_versions._asyncio(
+        return await get_version_history._asyncio(
             room_id=room_id,
             limit=limit,
             cursor=cursor,
+            client=self._client,
+        )
+
+    async def create_version_history_snapshot(
+        self,
+        room_id: str,
+    ) -> CreateVersionHistorySnapshotResponse:
+        """Create version history snapshot
+
+         This endpoint creates a new version history snapshot for the room. Currently only works for Yjs.
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            CreateVersionHistorySnapshotResponse
+        """
+
+        from .api.yjs import create_version_history_snapshot
+
+        return await create_version_history_snapshot._asyncio(
+            room_id=room_id,
             client=self._client,
         )
 
@@ -4121,32 +4147,6 @@ class AsyncLiveblocks:
         return await get_yjs_version._asyncio(
             room_id=room_id,
             version_id=version_id,
-            client=self._client,
-        )
-
-    async def create_yjs_version(
-        self,
-        room_id: str,
-    ) -> CreateYjsVersionResponse:
-        """Create Yjs version snapshot
-
-         This endpoint creates a new version history snapshot for the room's Yjs document.
-
-        Args:
-            room_id (str): ID of the room Example: my-room-id.
-
-        Raises:
-            errors.LiveblocksError: If the server returns a response with non-2xx status code.
-            httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-        Returns:
-            CreateYjsVersionResponse
-        """
-
-        from .api.yjs import create_yjs_version
-
-        return await create_yjs_version._asyncio(
-            room_id=room_id,
             client=self._client,
         )
 

@@ -727,12 +727,12 @@ print(result)
 </PropertiesList>
 
 
-### get_yjs_versions
+### get_version_history
 
 This endpoint returns a list of version history snapshots for the room's Yjs document. The versions are returned sorted by creation date, from newest to oldest.
 
 ```python
-result = client.get_yjs_versions(
+result = client.get_version_history(
     room_id="my-room-id",
     # limit=20,
     # cursor="eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9",
@@ -763,6 +763,28 @@ print(result)
 </PropertiesList>
 
 
+### create_version_history_snapshot
+
+This endpoint creates a new version history snapshot for the room. Currently only works for Yjs.
+
+```python
+result = client.create_version_history_snapshot(
+    room_id="my-room-id",
+)
+print(result)
+```
+
+<PropertiesList title="Parameters">
+  <PropertiesListItem
+    name="room_id"
+    type="str"
+  >
+    ID of the room
+
+  </PropertiesListItem>
+</PropertiesList>
+
+
 ### get_yjs_version
 
 This endpoint returns a specific version of the room's Yjs document encoded as a binary Yjs update.
@@ -788,28 +810,6 @@ print(result)
     type="str"
   >
     ID of the version
-
-  </PropertiesListItem>
-</PropertiesList>
-
-
-### create_yjs_version
-
-This endpoint creates a new version history snapshot for the room's Yjs document.
-
-```python
-result = client.create_yjs_version(
-    room_id="my-room-id",
-)
-print(result)
-```
-
-<PropertiesList title="Parameters">
-  <PropertiesListItem
-    name="room_id"
-    type="str"
-  >
-    ID of the room
 
   </PropertiesListItem>
 </PropertiesList>

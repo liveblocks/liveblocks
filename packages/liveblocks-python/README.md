@@ -578,13 +578,13 @@ print(result)
 
 ---
 
-#### `get_yjs_versions`
+#### `get_version_history`
 
 This endpoint returns a list of version history snapshots for the room's Yjs document. The versions are returned sorted by creation date, from newest to oldest.
 
 **Example**
 ```python
-result = client.get_yjs_versions(
+result = client.get_version_history(
     room_id="my-room-id",
     # limit=20,
     # cursor="eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9",
@@ -598,6 +598,26 @@ print(result)
 | `room_id` | `str` | Yes | ID of the room |
 | `limit` | `int \| Unset` | No | A limit on the number of versions to be returned. The limit can range between 1 and 100, and defaults to 20. *(default: `20`)* |
 | `cursor` | `str \| Unset` | No | A cursor used for pagination. Get the value from the `nextCursor` response of the previous page. |
+
+
+---
+
+#### `create_version_history_snapshot`
+
+This endpoint creates a new version history snapshot for the room. Currently only works for Yjs.
+
+**Example**
+```python
+result = client.create_version_history_snapshot(
+    room_id="my-room-id",
+)
+print(result)
+```
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `room_id` | `str` | Yes | ID of the room |
 
 
 ---
@@ -620,26 +640,6 @@ print(result)
 |------|------|----------|-------------|
 | `room_id` | `str` | Yes | ID of the room |
 | `version_id` | `str` | Yes | ID of the version |
-
-
----
-
-#### `create_yjs_version`
-
-This endpoint creates a new version history snapshot for the room's Yjs document.
-
-**Example**
-```python
-result = client.create_yjs_version(
-    room_id="my-room-id",
-)
-print(result)
-```
-**Parameters:**
-
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
 
 
 ---
