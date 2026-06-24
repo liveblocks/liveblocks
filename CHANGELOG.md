@@ -2,7 +2,10 @@
 
 ## v3.21.0
 
-...
+### `@liveblocks/client`
+
+- **Breaking:** Remove `type` and `kind` fields from `HistoryVersion` type. The
+  backend no longer returns these.
 
 ## v3.20.0
 

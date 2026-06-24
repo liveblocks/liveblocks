@@ -364,15 +364,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
   }): Promise<void>;
 
   listTextVersions({ roomId }: { roomId: string }): Promise<{
-    versions: {
-      type: "historyVersion";
-      kind: "yjs";
-      id: string;
-      authors: {
-        id: string;
-      }[];
-      createdAt: Date;
-    }[];
+    versions: HistoryVersion[];
     requestedAt: Date;
   }>;
 
@@ -385,15 +377,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     since: Date;
     signal?: AbortSignal;
   }): Promise<{
-    versions: {
-      type: "historyVersion";
-      kind: "yjs";
-      id: string;
-      authors: {
-        id: string;
-      }[];
-      createdAt: Date;
-    }[];
+    versions: HistoryVersion[];
     requestedAt: Date;
   }>;
 

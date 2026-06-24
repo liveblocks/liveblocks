@@ -86,15 +86,9 @@ describe("useHistoryVersions", () => {
     const roomId = nanoid();
     const versions: HistoryVersion[] = [
       {
-        type: "historyVersion",
-        kind: "yjs",
+        id: "vh_version_1",
         createdAt: new Date(),
-        id: "version_1",
-        authors: [
-          {
-            id: "user-1",
-          },
-        ],
+        authors: [{ id: "user-1" }],
       },
     ];
 
@@ -137,15 +131,9 @@ describe("useHistoryVersions", () => {
     const roomId = nanoid();
     const versions: HistoryVersion[] = [
       {
-        type: "historyVersion",
-        kind: "yjs",
+        id: "vh_version_1",
         createdAt: new Date(),
-        id: "version_1",
-        authors: [
-          {
-            id: "user-1",
-          },
-        ],
+        authors: [{ id: "user-1" }],
       },
     ];
 
@@ -167,10 +155,8 @@ describe("useHistoryVersions", () => {
 
     umbrellaStore.historyVersions.update("room-1", [
       {
-        type: "historyVersion",
-        kind: "yjs",
+        id: "vh_version_1",
         createdAt: new Date(),
-        id: "version_1",
         authors: [{ id: "user-1" }],
       },
     ]);
@@ -288,15 +274,9 @@ describe("useHistoryVersions: suspense", () => {
     const roomId = nanoid();
     const versions: HistoryVersion[] = [
       {
-        type: "historyVersion",
-        kind: "yjs",
+        id: "vh_version_1",
         createdAt: new Date(),
-        id: "version_1",
-        authors: [
-          {
-            id: "user-1",
-          },
-        ],
+        authors: [{ id: "user-1" }],
       },
     ];
 
@@ -446,15 +426,9 @@ describe("useHistoryVersions: polling", () => {
     const roomId = nanoid();
     const versions: HistoryVersion[] = [
       {
-        type: "historyVersion",
-        kind: "yjs",
+        id: "vh_version_1",
         createdAt: new Date(),
-        id: "version_1",
-        authors: [
-          {
-            id: "user-1",
-          },
-        ],
+        authors: [{ id: "user-1" }],
       },
     ];
 
@@ -505,15 +479,9 @@ describe("useHistoryVersions: polling", () => {
     expect(getHistoryVersionsSinceCount).toBe(0);
 
     versions.push({
-      type: "historyVersion",
-      kind: "yjs",
+      id: "vh_version_2",
       createdAt: new Date(),
-      id: "version_2",
-      authors: [
-        {
-          id: "user-2",
-        },
-      ],
+      authors: [{ id: "user-2" }],
     });
 
     // Wait for the first polling to occur after the initial render
