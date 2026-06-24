@@ -518,5 +518,12 @@
     "topics": ["comments", "authentication"],
     "technologies": ["react", "nodejs"],
     "date": "2026-06-23"
+  },
+  {
+    "title": "How to add private commenting to your app",
+    "path": "/how-to-add-private-commenting-to-your-app",
+    "topics": ["comments", "authentication"],
+    "technologies": ["react", "nextjs"],
+    "date": "2026-06-24"
   }
 ]
