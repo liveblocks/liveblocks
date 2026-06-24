@@ -1335,7 +1335,7 @@ export function createApiClient<
     versionId: string;
   }) {
     return httpClient.rawGet(
-      url`/v2/c/rooms/${options.roomId}/y-version/${options.versionId}`,
+      url`/v2/c/rooms/${options.roomId}/versions/${options.versionId}/yjs`,
       await authManager.getAuthValue({
         roomId: options.roomId,
         resource: "storage",
@@ -1346,7 +1346,7 @@ export function createApiClient<
 
   async function createTextVersion(options: { roomId: string }) {
     await httpClient.rawPost(
-      url`/v2/c/rooms/${options.roomId}/version`,
+      url`/v2/c/rooms/${options.roomId}/versions`,
       await authManager.getAuthValue({
         roomId: options.roomId,
         resource: "storage",
