@@ -54,7 +54,8 @@ main {
 }
 
 .thread,
-.composer {
+.composer,
+.user-card {
   position: relative;
   border-radius: 0.75rem;
   overflow: hidden;
@@ -73,6 +74,59 @@ main {
   --lb-background: #fff8ea;
 
   background: var(--lb-background);
+}
+
+.user-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.875rem;
+}
+
+.user-card-profile {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 0.75rem;
+}
+
+.user-card-avatar {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--lb-avatar-radius);
+}
+
+.user-card-text {
+  min-width: 0;
+}
+
+.user-card-name {
+  overflow: hidden;
+  font-size: 0.8125rem;
+  color: var(--lb-foreground);
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-card-access {
+  color: var(--lb-foreground-moderate);
+  font-size: 0.8125rem;
+}
+
+.user-card-button {
+  flex: none;
+  margin-left: auto;
+  padding: 0.375rem 0.625rem;
+  border: 0;
+  border-radius: var(--lb-button-radius);
+  background: var(--lb-accent);
+  color: var(--lb-accent-foreground);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
 }
 
 .thread-visibility,
@@ -196,7 +250,8 @@ main {
   }
 
   .thread::after,
-  .composer::after {
+  .composer::after,
+  .user-card::after {
     content: "";
     position: absolute;
     width: 100%;

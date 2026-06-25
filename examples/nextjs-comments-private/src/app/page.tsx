@@ -1,17 +1,34 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { EyeOffIcon } from "lucide-react";
 import { Switch } from "radix-ui";
-import { RoomProvider, useThreads } from "@liveblocks/react/suspense";
+import {
+  RoomProvider,
+  useSelf,
+  useThreads,
+  useUser,
+} from "@liveblocks/react/suspense";
 import { Loading } from "../components/Loading";
 import { Composer, Thread } from "@liveblocks/react-ui";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { ErrorBoundary } from "react-error-boundary";
-import { getUserType, INTERNAL_USER_TYPE, type UserType } from "@/user";
+import {
+  EXTERNAL_USER_TYPE,
+  getUserType,
+  INTERNAL_USER_TYPE,
+  USER_SEARCH_PARAM,
+  type UserType,
+} from "@/user";
 
-function Example({ userType }: { userType: UserType }) {
+function Example({
+  userType,
+  onUserTypeChange,
+}: {
+  userType: UserType;
+  onUserTypeChange: (userType: UserType) => void;
+}) {
   const isInternalUser = userType === INTERNAL_USER_TYPE;
   const { threads } = useThreads();
   const [isPrivateThread, setPrivateThread] = useState(false);
@@ -20,6 +37,8 @@ function Example({ userType }: { userType: UserType }) {
   return (
     <>
       <main>
+        <UserCard userType={userType} onUserTypeChange={onUserTypeChange} />
+
         {threads.map((thread) => {
           return (
             <div
@@ -74,11 +93,60 @@ function Example({ userType }: { userType: UserType }) {
   );
 }
 
+function UserCard({
+  userType,
+  onUserTypeChange,
+}: {
+  userType: UserType;
+  onUserTypeChange: (userType: UserType) => void;
+}) {
+  const userId = useSelf((me) => me.id);
+  const { user } = useUser(userId);
+  const isInternalUser = userType === INTERNAL_USER_TYPE;
+
+  return (
+    <section className="lb-root user-card">
+      <div className="user-card-profile">
+        <img className="user-card-avatar" src={user.avatar} alt="" />
+        <div className="user-card-text">
+          <div className="user-card-name">{user.name}</div>
+          <div className="user-card-access">
+            {isInternalUser ? "Internal user" : "External user"}
+          </div>
+        </div>
+      </div>
+      <button
+        type="button"
+        className="user-card-button"
+        onClick={() =>
+          onUserTypeChange(
+            isInternalUser ? EXTERNAL_USER_TYPE : INTERNAL_USER_TYPE
+          )
+        }
+      >
+        {isInternalUser ? "Switch to external user" : "Switch to internal user"}
+      </button>
+    </section>
+  );
+}
+
 export default function Page() {
   const params = useSearchParams();
   const userType = getUserType(params);
   const roomId = useExampleRoomId(
     "liveblocks:examples:nextjs-comments-private"
+  );
+  const setUserType = useCallback(
+    (nextUserType: UserType) => {
+      if (nextUserType === userType) {
+        return;
+      }
+
+      const url = new URL(window.location.href);
+      url.searchParams.set(USER_SEARCH_PARAM, nextUserType);
+      window.location.assign(url.toString());
+    },
+    [userType]
   );
 
   return (
@@ -89,7 +157,7 @@ export default function Page() {
         }
       >
         <ClientSideSuspense fallback={<Loading />}>
-          <Example userType={userType} />
+          <Example userType={userType} onUserTypeChange={setUserType} />
         </ClientSideSuspense>
       </ErrorBoundary>
     </RoomProvider>
