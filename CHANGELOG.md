@@ -7,6 +7,11 @@
 - **Breaking:** Remove `type` and `kind` fields from `HistoryVersion` type. The
   backend no longer returns these.
 
+### `@liveblocks/react`
+
+- Add `useHistoryVersionYjsData()` hook to retrieve raw Yjs binary data for a
+  given version. Deprecate `useHistoryVersionData()` in its favor.
+
 ## v3.20.0
 
 ### All packages

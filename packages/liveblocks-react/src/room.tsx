@@ -102,9 +102,9 @@ import type {
   FeedMessagesAsyncSuccess,
   FeedsAsyncResult,
   FeedsAsyncSuccess,
-  HistoryVersionDataAsyncResult,
   HistoryVersionsAsyncResult,
   HistoryVersionsAsyncSuccess,
+  HistoryVersionYjsDataAsyncResult,
   MutationContext,
   OmitFirstArg,
   RoomContextBundle,
@@ -3091,11 +3091,11 @@ function useRoomSubscriptionSettingsSuspense(): [
 /**
  * @internal
  */
-function useHistoryVersionData_withRoomContext(
+function useHistoryVersionYjsData_withRoomContext(
   RoomContext: Context<OpaqueRoom | null>,
   versionId: string
-): HistoryVersionDataAsyncResult {
-  const [state, setState] = useState<HistoryVersionDataAsyncResult>({
+): HistoryVersionYjsDataAsyncResult {
+  const [state, setState] = useState<HistoryVersionYjsDataAsyncResult>({
     isLoading: true,
   });
   const room = useRoom_withRoomContext(RoomContext);
@@ -3128,15 +3128,29 @@ function useHistoryVersionData_withRoomContext(
 }
 
 /**
- * Returns the version data bianry for a given version
+ * @deprecated Use `useHistoryVersionYjsData(versionId)` instead.
+ *
+ * Returns the version data binary for a given version
  *
  * @example
  * const {data} = useHistoryVersionData(versionId);
  */
 function useHistoryVersionData(
   versionId: string
-): HistoryVersionDataAsyncResult {
-  return useHistoryVersionData_withRoomContext(GlobalRoomContext, versionId);
+): HistoryVersionYjsDataAsyncResult {
+  return useHistoryVersionYjsData_withRoomContext(GlobalRoomContext, versionId);
+}
+
+/**
+ * Returns the Yjs data for a given version of the room.
+ *
+ * @example
+ * const { data, isLoading, error } = useHistoryVersionYjsData(versionId);
+ */
+function useHistoryVersionYjsData(
+  versionId: string
+): HistoryVersionYjsDataAsyncResult {
+  return useHistoryVersionYjsData_withRoomContext(GlobalRoomContext, versionId);
 }
 
 /**
@@ -4059,10 +4073,10 @@ export function createRoomContext<
     return useHistoryVersionsSuspense_withRoomContext(BoundRoomContext);
   }
 
-  function useHistoryVersionData_withBoundRoomContext(
-    ...args: Parameters<typeof useHistoryVersionData>
+  function useHistoryVersionYjsData_withBoundRoomContext(
+    ...args: Parameters<typeof useHistoryVersionYjsData>
   ) {
-    return useHistoryVersionData_withRoomContext(BoundRoomContext, ...args);
+    return useHistoryVersionYjsData_withRoomContext(BoundRoomContext, ...args);
   }
 
   function useRoomSubscriptionSettings_withBoundRoomContext() {
@@ -4233,7 +4247,9 @@ export function createRoomContext<
     // prettier-ignore
     useHistoryVersions: useHistoryVersions_withBoundRoomContext as TRoomBundle["useHistoryVersions"],
     // prettier-ignore
-    useHistoryVersionData: useHistoryVersionData_withBoundRoomContext as TRoomBundle["useHistoryVersionData"],
+    useHistoryVersionData: useHistoryVersionYjsData_withBoundRoomContext as TRoomBundle["useHistoryVersionData"],
+    // prettier-ignore
+    useHistoryVersionYjsData: useHistoryVersionYjsData_withBoundRoomContext as TRoomBundle["useHistoryVersionYjsData"],
 
     // prettier-ignore
     useRoomSubscriptionSettings: useRoomSubscriptionSettings_withBoundRoomContext as TRoomBundle["useRoomSubscriptionSettings"],
@@ -5010,6 +5026,7 @@ export {
   useHistoryVersionData,
   _useHistoryVersions as useHistoryVersions,
   _useHistoryVersionsSuspense as useHistoryVersionsSuspense,
+  useHistoryVersionYjsData,
   _useIsInsideRoom as useIsInsideRoom,
   useLostConnectionListener,
   useMarkRoomThreadAsRead,
