@@ -283,14 +283,6 @@ function cachedTokenSatisfiesRequest(
     return false;
   }
 
-  if (request.resource === "comments" && request.access === "read") {
-    return (
-      hasPermissionAccess(matrix, "comments", "read") ||
-      hasPermissionAccess(matrix, "comments:public", "read") ||
-      hasPermissionAccess(matrix, "comments:private", "read")
-    );
-  }
-
   return hasPermissionAccess(matrix, request.resource, request.access);
 }
 

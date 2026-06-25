@@ -14,6 +14,11 @@ const PUBLIC_COMMENTS_WRITE_PRIVATE_NONE_PERMISSIONS: readonly string[] = [
   "comments:write",
   "comments:private:none",
 ];
+const BASE_WRITE_PERMISSIONS: readonly string[] = ["*:write"];
+const BROAD_COMMENTS_WRITE_PERMISSIONS: readonly string[] = [
+  "*:read",
+  "comments:write",
+];
 
 test.describe("Thread visibility", () => {
   let pages: Page[] = [];
@@ -130,6 +135,76 @@ test.describe("Thread visibility", () => {
         visibility: "private",
         x: 640,
       });
+    }
+  );
+
+  test(
+    "inherits base and broad comments permissions for thread visibility",
+    async ({}, testInfo) => {
+      const run = [
+        Date.now().toString(36),
+        testInfo.workerIndex,
+        testInfo.retry,
+        Math.random().toString(16).slice(2, 8),
+      ].join("-");
+      const roomPrefix = `${genRoomId(testInfo)}:${run}`;
+
+      const cases = [
+        {
+          id: "base-write-public",
+          user: 1,
+          visibility: "public",
+          permissions: BASE_WRITE_PERMISSIONS,
+          x: 0,
+        },
+        {
+          id: "base-write-private",
+          user: 1,
+          visibility: "private",
+          permissions: BASE_WRITE_PERMISSIONS,
+          x: 640,
+        },
+        {
+          id: "comments-write-public",
+          user: 2,
+          visibility: "public",
+          permissions: BROAD_COMMENTS_WRITE_PERMISSIONS,
+          x: 0,
+        },
+        {
+          id: "comments-write-private",
+          user: 2,
+          visibility: "private",
+          permissions: BROAD_COMMENTS_WRITE_PERMISSIONS,
+          x: 640,
+        },
+      ] satisfies Array<{
+        id: string;
+        user: number;
+        visibility: "public" | "private";
+        permissions: readonly string[];
+        x: number;
+      }>;
+
+      for (const testCase of cases) {
+        const room = `${roomPrefix}:${testCase.id}`;
+
+        await createThreadWithExplicitPermissions({
+          room,
+          run,
+          user: testCase.user,
+          visibility: testCase.visibility,
+          permissions: testCase.permissions,
+          x: testCase.x,
+        });
+        await verifyPersistedVisibility({
+          room,
+          run,
+          user: testCase.user,
+          visibility: testCase.visibility,
+          x: testCase.x,
+        });
+      }
     }
   );
 

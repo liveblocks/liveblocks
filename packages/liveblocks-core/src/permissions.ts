@@ -241,8 +241,19 @@ export function hasPermissionAccess(
   resource: PermissionResources,
   requiredAccess: RequiredAccessLevel
 ): boolean {
+  const requiredRank = ACCESS_LEVEL_RANKS[requiredAccess];
+
+  if (resource === "comments") {
+    const commentsRank = Math.max(
+      ACCESS_LEVEL_RANKS[matrix.comments ?? "none"],
+      ACCESS_LEVEL_RANKS[matrix["comments:public"] ?? "none"],
+      ACCESS_LEVEL_RANKS[matrix["comments:private"] ?? "none"]
+    );
+    return commentsRank >= requiredRank;
+  }
+
   const access = matrix[resource] ?? "none";
-  return ACCESS_LEVEL_RANKS[access] >= ACCESS_LEVEL_RANKS[requiredAccess];
+  return ACCESS_LEVEL_RANKS[access] >= requiredRank;
 }
 
 export function resolveRoomPermissionMatrix(

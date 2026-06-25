@@ -330,7 +330,7 @@ describe("useHasPermissionAccess", () => {
     expect(privateAccess.result.current).toBe(true);
   });
 
-  test("uses scoped comment access from the connection before permission hints arrive", async () => {
+  test("uses aggregate and scoped comment access from the connection before permission hints arrive", async () => {
     const wrapper = ({ children }: { children: ReactNode }) => (
       <RoomProvider id="room" initialPresence={{ x: 0 }}>
         {children}
@@ -364,7 +364,7 @@ describe("useHasPermissionAccess", () => {
     );
 
     expect(access.result.current).toEqual({
-      comments: false,
+      comments: true,
       public: true,
       private: false,
     });
