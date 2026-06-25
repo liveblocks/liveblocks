@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test";
+import type { Page, TestInfo } from "@playwright/test";
 import { expect, test } from "@playwright/test";
 
 import { genRoomId, preparePage, waitForJson } from "../utils";
@@ -41,7 +41,7 @@ test.describe("Thread visibility", () => {
         testInfo.retry,
         Math.random().toString(16).slice(2, 8),
       ].join("-");
-      const room = `${genRoomId(testInfo)}:${run}`;
+      const room = getRoomId(testInfo, run, "all");
 
       const publicPage = await openPage({
         room,
@@ -104,17 +104,18 @@ test.describe("Thread visibility", () => {
         testInfo.retry,
         Math.random().toString(16).slice(2, 8),
       ].join("-");
-      const roomPrefix = `${genRoomId(testInfo)}:${run}`;
+      const publicRoom = getRoomId(testInfo, run, "public");
+      const privateRoom = getRoomId(testInfo, run, "private");
 
       await createThreadWithVisibilityPermissions({
-        room: `${roomPrefix}:public`,
+        room: publicRoom,
         run,
         user: 1,
         visibility: "public",
         x: 0,
       });
       await verifyPersistedVisibility({
-        room: `${roomPrefix}:public`,
+        room: publicRoom,
         run,
         user: 1,
         visibility: "public",
@@ -122,14 +123,14 @@ test.describe("Thread visibility", () => {
       });
 
       await createThreadWithVisibilityPermissions({
-        room: `${roomPrefix}:private`,
+        room: privateRoom,
         run,
         user: 2,
         visibility: "private",
         x: 640,
       });
       await verifyPersistedVisibility({
-        room: `${roomPrefix}:private`,
+        room: privateRoom,
         run,
         user: 2,
         visibility: "private",
@@ -147,8 +148,6 @@ test.describe("Thread visibility", () => {
         testInfo.retry,
         Math.random().toString(16).slice(2, 8),
       ].join("-");
-      const roomPrefix = `${genRoomId(testInfo)}:${run}`;
-
       const cases = [
         {
           id: "base-write-public",
@@ -187,7 +186,7 @@ test.describe("Thread visibility", () => {
       }>;
 
       for (const testCase of cases) {
-        const room = `${roomPrefix}:${testCase.id}`;
+        const room = getRoomId(testInfo, run, testCase.id);
 
         await createThreadWithExplicitPermissions({
           room,
@@ -217,7 +216,7 @@ test.describe("Thread visibility", () => {
         testInfo.retry,
         Math.random().toString(16).slice(2, 8),
       ].join("-");
-      const room = `${genRoomId(testInfo)}:${run}`;
+      const room = getRoomId(testInfo, run, "mismatch");
 
       const page = await openPage({
         room,
@@ -261,10 +260,11 @@ test.describe("Thread visibility", () => {
         testInfo.retry,
         Math.random().toString(16).slice(2, 8),
       ].join("-");
-      const roomPrefix = `${genRoomId(testInfo)}:${run}`;
+      const publicRoom = getRoomId(testInfo, run, "public");
+      const privateRoom = getRoomId(testInfo, run, "private");
 
       await createThreadWithExplicitPermissions({
-        room: `${roomPrefix}:public`,
+        room: publicRoom,
         run,
         user: 1,
         visibility: "public",
@@ -272,7 +272,7 @@ test.describe("Thread visibility", () => {
         x: 0,
       });
       await verifyPersistedVisibility({
-        room: `${roomPrefix}:public`,
+        room: publicRoom,
         run,
         user: 1,
         visibility: "public",
@@ -280,7 +280,7 @@ test.describe("Thread visibility", () => {
       });
 
       const page = await openPage({
-        room: `${roomPrefix}:private`,
+        room: privateRoom,
         run,
         user: 1,
         visibility: "private",
@@ -299,7 +299,7 @@ test.describe("Thread visibility", () => {
       await page.close();
 
       const verifierPage = await openPage({
-        room: `${roomPrefix}:private`,
+        room: privateRoom,
         run,
         user: 1,
         visibility: "all",
@@ -441,6 +441,10 @@ test.describe("Thread visibility", () => {
     await page.close();
   }
 });
+
+function getRoomId(testInfo: TestInfo, run: string, suffix: string) {
+  return genRoomId(testInfo, `:${run}:${suffix}`);
+}
 
 function getPageUrl({
   room,

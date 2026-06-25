@@ -10,6 +10,8 @@ export type IDSelector = `#${string}`;
 
 const WIDTH = 640;
 const HEIGHT = 800;
+const DEFAULT_ROOM_ID_MAX_LENGTH = 100;
+const ABSOLUTE_ROOM_ID_MAX_LENGTH = 128;
 
 function getTestFilename(fullPath: string): string {
   const parts = fullPath.split("/");
@@ -25,7 +27,7 @@ function getTestFilename(fullPath: string): string {
  * filename and the full test name. Additionally, will prepend the Git SHA if
  * available (e.g. when running in CI).
  */
-export function genRoomId(testInfo: TestInfo) {
+export function genRoomId(testInfo: TestInfo, suffix = "") {
   const prefix = process.env.NEXT_PUBLIC_GITHUB_SHA
     ? process.env.NEXT_PUBLIC_GITHUB_SHA.slice(0, 2)
     : null;
@@ -38,16 +40,25 @@ export function genRoomId(testInfo: TestInfo) {
     .replace(/^-+/, "")
     .replace(/-+$/, "");
   let roomId = `e2e:${title}`;
-  if (roomId.length > 100) {
+  const maxLength =
+    suffix.length === 0
+      ? DEFAULT_ROOM_ID_MAX_LENGTH
+      : ABSOLUTE_ROOM_ID_MAX_LENGTH;
+  const maxBaseLength = maxLength - suffix.length;
+  if (maxBaseLength < 8) {
+    throw new Error(`Room ID suffix is too long: ${suffix.length}`);
+  }
+
+  if (roomId.length > maxBaseLength) {
     // Room IDs cannot be longer than 128 chars. If this happens, take a short
     // hash from the full room ID, then cut it off and attach the hash. This
     // way, test names can still be arbitrarily long, human-readable (at least
     // the first part of it), and yet still stable for reuse, so we don't have
     // an ever-growing set of rooms when running against DEV or PROD.
     const hash = hash7(roomId);
-    roomId = roomId.slice(0, 100 - hash.length) + hash;
+    roomId = roomId.slice(0, maxBaseLength - hash.length) + hash;
   }
-  return roomId;
+  return `${roomId}${suffix}`;
 }
 
 /**
