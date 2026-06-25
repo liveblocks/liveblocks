@@ -1,6 +1,13 @@
-const USER_INFO: Liveblocks["UserMeta"][] = [
+import { EXTERNAL_USER_TYPE, INTERNAL_USER_TYPE, type UserType } from "@/user";
+
+type ExampleUser = Liveblocks["UserMeta"] & {
+  type: UserType;
+};
+
+const USER_INFO: ExampleUser[] = [
   {
     id: "charlie.layne@example.com",
+    type: INTERNAL_USER_TYPE,
     info: {
       name: "Charlie Layne",
       color: "#D583F0",
@@ -9,6 +16,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
   },
   {
     id: "mislav.abha@example.com",
+    type: INTERNAL_USER_TYPE,
     info: {
       name: "Mislav Abha",
       color: "#F08385",
@@ -17,6 +25,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
   },
   {
     id: "tatum.paolo@example.com",
+    type: INTERNAL_USER_TYPE,
     info: {
       name: "Tatum Paolo",
       color: "#F0D885",
@@ -25,6 +34,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
   },
   {
     id: "anjali.wanda@example.com",
+    type: INTERNAL_USER_TYPE,
     info: {
       name: "Anjali Wanda",
       color: "#85EED6",
@@ -33,6 +43,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
   },
   {
     id: "jody.hekla@example.com",
+    type: EXTERNAL_USER_TYPE,
     info: {
       name: "Jody Hekla",
       color: "#85BBF0",
@@ -41,6 +52,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
   },
   {
     id: "emil.joyce@example.com",
+    type: EXTERNAL_USER_TYPE,
     info: {
       name: "Emil Joyce",
       color: "#8594F0",
@@ -49,6 +61,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
   },
   {
     id: "jory.quispe@example.com",
+    type: EXTERNAL_USER_TYPE,
     info: {
       name: "Jory Quispe",
       color: "#85DBF0",
@@ -57,6 +70,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
   },
   {
     id: "quinn.elton@example.com",
+    type: EXTERNAL_USER_TYPE,
     info: {
       name: "Quinn Elton",
       color: "#87EE85",
@@ -65,9 +79,9 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
   },
 ];
 
-export function getRandomUser() {
-  const realUsers = USER_INFO.filter(({ id }) => id !== "__AI_AGENT");
-  return realUsers[Math.floor(Math.random() * realUsers.length)];
+export function getRandomUser(type: UserType) {
+  const users = USER_INFO.filter((user) => user.type === type);
+  return users[Math.floor(Math.random() * users.length)];
 }
 
 export function getUser(id: string) {

@@ -2,7 +2,15 @@
 
 import { LiveblocksProvider } from "@liveblocks/react";
 import { PropsWithChildren, Suspense } from "react";
-import { getUserType, USER_SEARCH_PARAM } from "@/user";
+import { getRandomUser, getUser } from "@/database";
+import {
+  getUserType,
+  USER_ID_SEARCH_PARAM,
+  USER_SEARCH_PARAM,
+  type UserType,
+} from "@/user";
+
+const USER_ID_STORAGE_KEY = "liveblocks:examples:nextjs-comments-private:user";
 
 async function authEndpoint(room?: string) {
   const searchParams = new URLSearchParams();
@@ -10,6 +18,7 @@ async function authEndpoint(room?: string) {
   if (typeof window !== "undefined") {
     const userType = getUserType(new URLSearchParams(window.location.search));
     searchParams.set(USER_SEARCH_PARAM, userType);
+    searchParams.set(USER_ID_SEARCH_PARAM, getCurrentUserId(userType));
   }
 
   const queryString = searchParams.toString();
@@ -29,6 +38,20 @@ async function authEndpoint(room?: string) {
   }
 
   return await response.json();
+}
+
+function getCurrentUserId(userType: UserType) {
+  const storageKey = `${USER_ID_STORAGE_KEY}:${userType}`;
+  const storedUserId = window.localStorage.getItem(storageKey);
+  const storedUser = storedUserId ? getUser(storedUserId) : null;
+
+  if (storedUser?.type === userType) {
+    return storedUser.id;
+  }
+
+  const user = getRandomUser(userType);
+  window.localStorage.setItem(storageKey, user.id);
+  return user.id;
 }
 
 export function Providers({ children }: PropsWithChildren) {

@@ -1,4 +1,5 @@
-export const USER_SEARCH_PARAM = "user";
+export const USER_SEARCH_PARAM = "userType";
+export const USER_ID_SEARCH_PARAM = "userId";
 
 export const INTERNAL_USER_TYPE = "internal";
 export const EXTERNAL_USER_TYPE = "external";
