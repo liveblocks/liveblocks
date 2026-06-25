@@ -65,28 +65,29 @@ function Example({
             collapsed={false}
             visibility={isComposerPrivate ? "private" : undefined}
           />
-          <div className="composer-visibility">
-            <Switch.Root
-              id="composer-visibility-switch"
-              className="switch composer-visibility-switch"
-              checked={isComposerPrivate}
-              disabled={!isInternalUser}
-              onCheckedChange={setPrivateThread}
-            >
-              <Switch.Thumb className="switch-thumb" />
-            </Switch.Root>
-            <label
-              className="composer-visibility-label"
-              htmlFor="composer-visibility-switch"
-            >
-              <span className="composer-visibility-label-title">
-                Mark as private
+          {isInternalUser ? (
+            <div className="composer-visibility">
+              <Switch.Root
+                id="composer-visibility-switch"
+                className="switch composer-visibility-switch"
+                checked={isComposerPrivate}
+                onCheckedChange={setPrivateThread}
+              >
+                <Switch.Thumb className="switch-thumb" />
+              </Switch.Root>
+              <label
+                className="composer-visibility-label"
+                htmlFor="composer-visibility-switch"
+              >
+                <span className="composer-visibility-label-title">
+                  Mark as private
+                </span>
+              </label>
+              <span className="composer-visibility-description">
+                It won't be visible to external users
               </span>
-            </label>
-            <span className="composer-visibility-description">
-              It won't be visible to external users
-            </span>
-          </div>
+            </div>
+          ) : null}
         </div>
       </main>
     </>
