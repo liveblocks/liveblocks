@@ -1,4 +1,4 @@
-import type { HistoryVersion } from "@liveblocks/core";
+import type { HistoryVersion } from "@liveblocks/client";
 import { nanoid } from "@liveblocks/core";
 import { fireEvent, renderHook, screen } from "@testing-library/react";
 import type { HttpResponseResolver } from "msw";

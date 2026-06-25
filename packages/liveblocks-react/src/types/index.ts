@@ -1466,14 +1466,6 @@ export type RoomContextBundle<
              */
             useHistoryVersions(): HistoryVersionsAsyncSuccess;
 
-            // /**
-            //  * Returns the data of a specific version of the current room's history.
-            //  *
-            //  * @example
-            //  * const { data } = useHistoryVersionData(version.id);
-            //  */
-            // useHistoryVersionData(versionId: string): HistoryVersionDataState;
-
             /**
              * Returns the user's subscription settings for the current room
              * and a function to update them.
