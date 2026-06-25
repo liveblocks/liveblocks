@@ -58,7 +58,6 @@ export function Providers({ children }: PropsWithChildren) {
   return (
     <LiveblocksProvider
       authEndpoint={authEndpoint}
-      baseUrl={process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL}
       // Get users' info from their ID
       resolveUsers={async ({ userIds }) => {
         const searchParams = new URLSearchParams(
