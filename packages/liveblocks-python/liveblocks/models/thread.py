@@ -8,6 +8,8 @@ from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 from dateutil.parser import isoparse
 
+from ..models.thread_visibility import ThreadVisibility
+
 if TYPE_CHECKING:
     from ..models.comment import Comment
     from ..models.thread_metadata import ThreadMetadata
@@ -21,7 +23,7 @@ class Thread:
             'th_abc123', 'roomId': 'my-room-id', 'id': 'cm_abc123', 'userId': 'alice', 'createdAt':
             '2022-07-13T14:32:50.697Z', 'body': {'version': 1, 'content': []}, 'metadata': {}, 'reactions': [],
             'attachments': []}], 'createdAt': '2022-07-13T14:32:50.697Z', 'updatedAt': '2022-07-13T14:32:50.697Z',
-            'metadata': {'color': 'blue'}, 'resolved': False}
+            'metadata': {'color': 'blue'}, 'resolved': False, 'visibility': 'public'}
 
     Attributes:
         type_ (Literal['thread']):
@@ -32,6 +34,7 @@ class Thread:
         metadata (ThreadMetadata): Custom metadata attached to a thread. Supports maximum 50 entries. Key length has a
             limit of 40 characters maximum. Value length has a limit of 4000 characters maximum for strings.
         resolved (bool):
+        visibility (ThreadVisibility):
         updated_at (datetime.datetime):
     """
 
@@ -42,6 +45,7 @@ class Thread:
     created_at: datetime.datetime
     metadata: ThreadMetadata
     resolved: bool
+    visibility: ThreadVisibility
     updated_at: datetime.datetime
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -63,6 +67,8 @@ class Thread:
 
         resolved = self.resolved
 
+        visibility = self.visibility.value
+
         updated_at = self.updated_at.isoformat()
 
         field_dict: dict[str, Any] = {}
@@ -76,6 +82,7 @@ class Thread:
                 "createdAt": created_at,
                 "metadata": metadata,
                 "resolved": resolved,
+                "visibility": visibility,
                 "updatedAt": updated_at,
             }
         )
@@ -109,6 +116,8 @@ class Thread:
 
         resolved = d.pop("resolved")
 
+        visibility = ThreadVisibility(d.pop("visibility"))
+
         updated_at = isoparse(d.pop("updatedAt"))
 
         thread = cls(
@@ -119,6 +128,7 @@ class Thread:
             created_at=created_at,
             metadata=metadata,
             resolved=resolved,
+            visibility=visibility,
             updated_at=updated_at,
         )
 

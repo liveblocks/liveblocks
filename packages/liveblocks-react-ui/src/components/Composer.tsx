@@ -8,6 +8,7 @@ import type {
   DTM,
   GroupMentionData,
   Patchable,
+  ThreadVisibility,
 } from "@liveblocks/core";
 import { assertNever, MENTION_CHARACTER } from "@liveblocks/core";
 import { useRoom } from "@liveblocks/react";
@@ -63,6 +64,7 @@ import type {
   ComposerSubmitComment,
 } from "../primitives/Composer/types";
 import { useComposerAttachmentsDropArea } from "../primitives/Composer/utils";
+import { commentsResourceForVisibility } from "../shared";
 import type { ComposerBodyMark } from "../types";
 import { cn } from "../utils/cn";
 import { useControllableState } from "../utils/use-controllable-state";
@@ -106,6 +108,11 @@ export type ComposerCreateThreadProps<
   metadata?: TM;
 
   /**
+   * The visibility of the thread to create.
+   */
+  visibility?: ThreadVisibility;
+
+  /**
    * The metadata of the comment to create.
    */
   commentMetadata?: CM;
@@ -120,6 +127,12 @@ export type ComposerCreateCommentProps<CM extends BaseMetadata> = {
   commentId?: never;
 
   metadata?: never;
+
+  /**
+   * @internal
+   * The visibility of the parent thread.
+   */
+  visibility?: ThreadVisibility;
 
   /**
    * The metadata of the comment to create.
@@ -139,6 +152,12 @@ export type ComposerEditCommentProps<CM extends BaseMetadata> = {
   commentId: string;
 
   metadata?: never;
+
+  /**
+   * @internal
+   * The visibility of the parent thread.
+   */
+  visibility?: ThreadVisibility;
 
   /**
    * The metadata of the comment to edit.
@@ -707,6 +726,7 @@ export const Composer = forwardRef(
       threadId,
       commentId,
       metadata,
+      visibility,
       commentMetadata,
       defaultValue,
       defaultAttachments,
@@ -757,7 +777,15 @@ export const Composer = forwardRef(
     const shouldCollapseWhenEmpty =
       controlledCollapsed !== undefined || defaultCollapsed === true;
 
-    const canComment = useHasPermissionAccess(roomId, "comments", "write");
+    const commentsResource =
+      threadId === undefined
+        ? commentsResourceForVisibility(visibility ?? "public")
+        : commentsResourceForVisibility(visibility);
+    const canComment = useHasPermissionAccess(
+      roomId,
+      commentsResource,
+      "write"
+    );
 
     const setEmptyRef = useCallback((isEmpty: boolean) => {
       isEmptyRef.current = isEmpty;
@@ -846,6 +874,7 @@ export const Composer = forwardRef(
           createThread({
             body: comment.body,
             metadata,
+            visibility,
             commentMetadata: commentMetadata as CM | undefined,
             attachments: comment.attachments,
           });
@@ -858,6 +887,7 @@ export const Composer = forwardRef(
         editComment,
         commentMetadata,
         metadata,
+        visibility,
         onComposerSubmit,
         threadId,
       ]

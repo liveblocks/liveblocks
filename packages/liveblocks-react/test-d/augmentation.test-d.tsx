@@ -802,6 +802,7 @@ describe("with Liveblocks augmentation", () => {
         },
         metadata: { color: "red" },
         commentMetadata: { priority: 1 },
+        visibility: "private",
       });
 
       expectTypeOf(thread.type).toEqualTypeOf<"thread">();

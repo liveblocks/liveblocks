@@ -303,6 +303,7 @@ export const makeThread = ({
     roomId: ROOM_ID_TEST,
     metadata: {},
     resolved: false,
+    visibility: "public",
     createdAt: at,
     updatedAt: at,
     comments,

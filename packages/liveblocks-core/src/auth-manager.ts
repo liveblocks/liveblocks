@@ -25,9 +25,11 @@ export type AuthValue =
   | { type: "secret"; token: ParsedAuthToken }
   | { type: "public"; publicApiKey: string };
 
+type RoomAuthResource = Exclude<PermissionResources, "personal">;
+
 export type AuthRequest = Relax<
   | {
-      resource: Exclude<PermissionResources, "personal">;
+      resource: RoomAuthResource;
       roomId: string;
       access: RequiredAccessLevel;
     }
@@ -277,10 +279,11 @@ function cachedTokenSatisfiesRequest(
     request.roomId
   );
 
-  return (
-    matrix !== undefined &&
-    hasPermissionAccess(matrix, request.resource, request.access)
-  );
+  if (matrix === undefined) {
+    return false;
+  }
+
+  return hasPermissionAccess(matrix, request.resource, request.access);
 }
 
 function prepareAuthentication(

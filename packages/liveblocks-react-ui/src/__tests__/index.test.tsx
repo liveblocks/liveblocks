@@ -116,6 +116,7 @@ const thread: ThreadData = {
   comments: [comment, editedComment, deletedComment],
   metadata: {},
   resolved: false,
+  visibility: "public",
 };
 
 describe("Thread", () => {
