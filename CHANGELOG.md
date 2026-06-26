@@ -1,5 +1,7 @@
 ## vNEXT (not yet released)
 
+## v3.20.1
+
 ### `@liveblocks/client`
 
 - Fix a bug where sending a too large WebSocket message could sometimes
