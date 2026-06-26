@@ -20,7 +20,13 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 26 (2026-06-26)
 
+## Dashboard
+
+- Added support for manual and automatic re-ingestion of (web) knowledge sources at specified interval.
+- Streamlined display of knowledge sources and linking/unlinking of knowledge sources and copilots.
+
 ## Contributors
+@nimeshnayaju @pierrelevaillant
 
 # Week 25 (2026-06-19)
 
