@@ -20,63 +20,73 @@ export async function Issue({ issueId }: { issueId: string }) {
   const roomId = getRoomId(issueId);
 
   // Get storage contents of room (e.g. issue properties) to render placeholder on load
-  const storagePromise = liveblocks.getStorageDocument(roomId, "json");
+  async function fetchStorage() {
+    "use cache";
+    const storagePromise = liveblocks.getStorageDocument(roomId, "json");
+    return storagePromise;
+  }
 
   // Get content and convert it to markdown for displaying a placeholder
-  const contentHtmlPromise = withLexicalDocument(
-    {
-      roomId,
-      client: liveblocks,
-      nodes: [...ISSUE_LEXICAL_NODES],
-    },
-    async (doc) => {
-      let markdown = "";
+  async function fetchContentHtml() {
+    "use cache";
+    const contentHtmlPromise = withLexicalDocument(
+      {
+        roomId,
+        client: liveblocks,
+        nodes: [...ISSUE_LEXICAL_NODES],
+      },
+      async (doc) => {
+        let markdown = "";
 
-      doc.getEditorState().read(() => {
-        // Get markdown version of Lexical state
-        markdown = $convertToMarkdownString(TRANSFORMERS, undefined, true)
-          // Make new lines display correctly
-          .replace(/\n{2,}/g, (match) => "<p><br></p>".repeat(match.length - 1))
-          .replace(/\n(?!$)/g, "\n\n")
-          .replace(/(\n+)$/g, (match) => "<p><br></p>".repeat(match.length));
-      });
+        doc.getEditorState().read(() => {
+          // Get markdown version of Lexical state
+          markdown = $convertToMarkdownString(TRANSFORMERS, undefined, true)
+            // Make new lines display correctly
+            .replace(/\n{2,}/g, (match) =>
+              "<p><br></p>".repeat(match.length - 1)
+            )
+            .replace(/\n(?!$)/g, "\n\n")
+            .replace(/(\n+)$/g, (match) => "<p><br></p>".repeat(match.length));
+        });
 
-      const rawHtml = await marked(markdown);
+        const rawHtml = await marked(markdown);
 
-      return sanitizeHtml(rawHtml, {
-        allowedTags: [
-          "p",
-          "br",
-          "strong",
-          "em",
-          "s",
-          "code",
-          "pre",
-          "blockquote",
-          "ul",
-          "ol",
-          "li",
-          "h1",
-          "h2",
-          "h3",
-          "h4",
-          "h5",
-          "h6",
-          "a",
-        ],
-        allowedAttributes: {
-          a: ["href", "name", "target", "rel"],
-        },
-        allowedSchemes: ["http", "https", "mailto"],
-      });
-    }
-  );
+        return sanitizeHtml(rawHtml, {
+          allowedTags: [
+            "p",
+            "br",
+            "strong",
+            "em",
+            "s",
+            "code",
+            "pre",
+            "blockquote",
+            "ul",
+            "ol",
+            "li",
+            "h1",
+            "h2",
+            "h3",
+            "h4",
+            "h5",
+            "h6",
+            "a",
+          ],
+          allowedAttributes: {
+            a: ["href", "name", "target", "rel"],
+          },
+          allowedSchemes: ["http", "https", "mailto"],
+        });
+      }
+    );
+    return contentHtmlPromise;
+  }
 
   let error;
   let results;
 
   try {
-    results = await Promise.all([storagePromise, contentHtmlPromise]);
+    results = await Promise.all([fetchStorage(), fetchContentHtml()]);
   } catch (err) {
     console.log(err);
     error = err;

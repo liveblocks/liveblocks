@@ -20,6 +20,7 @@ export default function PageIssue() {
 }
 
 async function IssuesListLoader() {
+  "use cache";
   const rooms = (await liveblocks.getRooms()).data as RoomWithMetadata[];
   return <IssuesList initialRooms={rooms} />;
 }
