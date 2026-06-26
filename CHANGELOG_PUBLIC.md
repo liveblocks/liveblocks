@@ -20,13 +20,20 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 26 (2026-06-26)
 
+## v3.20.1
+
+### `@liveblocks/client`
+
+- Fix a bug where sending a too large WebSocket message could sometimes overwrite a room's top-level storage key with `initialStorage`, causing data loss. (Thanks @watemerald for reporting!)
+
 ## Dashboard
 
 - Added support for manual and automatic re-ingestion of (web) knowledge sources at specified interval.
 - Streamlined display of knowledge sources and linking/unlinking of knowledge sources and copilots.
 
 ## Contributors
-@nimeshnayaju @pierrelevaillant
+
+nimeshnayaju, pierrelevaillant, nvie
 
 # Week 25 (2026-06-19)
 
