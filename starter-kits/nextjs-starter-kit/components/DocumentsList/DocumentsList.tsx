@@ -14,6 +14,7 @@ import { usePaginatedDocumentsSWR } from "@/lib/hooks";
 import { Button } from "@/primitives/Button";
 import { Container } from "@/primitives/Container";
 import { Select } from "@/primitives/Select";
+import { Skeleton } from "@/primitives/Skeleton";
 import { Spinner } from "@/primitives/Spinner";
 import { DocumentType } from "@/types";
 import { capitalize } from "@/utils";
@@ -27,7 +28,7 @@ interface Props extends ComponentProps<"div"> {
 }
 
 export function DocumentsList({ filter = "all", className, ...props }: Props) {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [documentType, setDocumentType] = useState<DocumentType | "all">("all");
 
   // Return `getDocuments` params for the current filters
@@ -65,6 +66,12 @@ export function DocumentsList({ filter = "all", className, ...props }: Props) {
   });
 
   const documentsPages = data ?? [];
+
+  if (status === "loading") {
+    return (
+      <DocumentsListSkeleton filter={filter} className={className} {...props} />
+    );
+  }
 
   if (!session) {
     return (
@@ -156,6 +163,34 @@ export function DocumentsList({ filter = "all", className, ...props }: Props) {
             <DocumentRowSkeleton className={styles.row} />
           </>
         )}
+      </div>
+    </Container>
+  );
+}
+
+export function DocumentsListSkeleton({
+  filter = "all",
+  className,
+  ...props
+}: Props) {
+  return (
+    <Container
+      size="small"
+      className={clsx(className, styles.documents)}
+      {...props}
+    >
+      <div className={styles.header}>
+        <h1 className={styles.headerTitle}>{capitalize(filter)}</h1>
+        <div className={styles.headerActions}>
+          <Skeleton style={{ width: 112, height: 36 }} />
+          <Skeleton style={{ width: 140, height: 36 }} />
+        </div>
+      </div>
+
+      <div className={styles.container}>
+        <DocumentRowSkeleton className={styles.row} />
+        <DocumentRowSkeleton className={styles.row} />
+        <DocumentRowSkeleton className={styles.row} />
       </div>
     </Container>
   );

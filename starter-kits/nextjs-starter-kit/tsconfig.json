@@ -1,10 +1,7 @@
 {
   "compilerOptions": {
     "target": "esnext",
-    "lib": [
-      "dom",
-      "esnext"
-    ],
+    "lib": ["dom", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -12,18 +9,14 @@
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
     "incremental": true,
     "paths": {
-      "react": [
-        "./node_modules/@types/react"
-      ],
-      "@/*": [
-        "./*"
-      ]
+      "react": ["./node_modules/@types/react"],
+      "@/*": ["./*"]
     },
     "plugins": [
       {
@@ -37,7 +30,5 @@
     "**/*.tsx",
     ".next/dev/types/**/*.ts"
   ],
-  "exclude": [
-    "node_modules"
-  ]
+  "exclude": ["node_modules"]
 }

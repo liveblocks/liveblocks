@@ -1,9 +1,17 @@
 import { redirect } from "next/navigation";
-import { ReactNode } from "react";
+import { ReactNode, Suspense } from "react";
 import { auth } from "@/auth";
-import { DashboardLayout } from "@/layouts/Dashboard";
+import { DashboardLayout, DashboardLayoutSkeleton } from "@/layouts/Dashboard";
 
-export default async function Dashboard({ children }: { children: ReactNode }) {
+export default function Dashboard({ children }: { children: ReactNode }) {
+  return (
+    <Suspense fallback={<DashboardLayoutSkeleton />}>
+      <AuthenticatedDashboard>{children}</AuthenticatedDashboard>
+    </Suspense>
+  );
+}
+
+async function AuthenticatedDashboard({ children }: { children: ReactNode }) {
   const session = await auth();
 
   // If not logged in, go to marketing page

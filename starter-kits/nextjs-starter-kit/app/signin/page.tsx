@@ -5,6 +5,8 @@ import { DemoLogin } from "./DemoLogin";
 import { NextAuthLogin } from "./NextAuthLogin";
 import styles from "./signin.module.css";
 
+export const instant = false;
+
 export default async function SignInPage() {
   const session = await auth();
 

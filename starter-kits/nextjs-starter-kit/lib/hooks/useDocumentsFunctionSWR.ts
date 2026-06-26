@@ -12,7 +12,7 @@ import useSWR, { SWRConfiguration } from "swr";
  * @param swrOptions - SWR configuration
  */
 export function useDocumentsFunctionSWR<T extends (...args: any) => any>(
-  documentActionAndArgs: [T | null, Parameters<T> | Parameters<T>[0]],
+  documentActionAndArgs: [T, Parameters<T> | Parameters<T>[0]] | null,
   swrOptions: SWRConfiguration = {}
 ) {
   const fetcher = async ([func, ...args]: [T, Parameters<T>[]]) => {
@@ -27,7 +27,7 @@ export function useDocumentsFunctionSWR<T extends (...args: any) => any>(
   };
 
   return useSWR<Awaited<ReturnType<T>>["data"]>(
-    [...documentActionAndArgs],
+    documentActionAndArgs,
     fetcher,
     swrOptions
   );

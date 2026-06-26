@@ -18,12 +18,14 @@ export const DocumentRowGroup = memo(
 
     // If documents ids passed, get live users in rooms, refresh every 10s
     const { data: liveUsers = [] } = useDocumentsFunctionSWR(
-      [
-        documentIds?.length ? getLiveUsers : null,
-        {
-          documentIds,
-        },
-      ],
+      documentIds.length
+        ? [
+            getLiveUsers,
+            {
+              documentIds,
+            },
+          ]
+        : null,
       { refreshInterval: 10000 }
     );
 

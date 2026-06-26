@@ -13,6 +13,7 @@ import {
 import { EarthIcon, FileIcon, LockIcon } from "@/icons";
 import { useCurrentOrganization } from "@/lib/hooks";
 import { LinkButton } from "@/primitives/Button";
+import { Skeleton } from "@/primitives/Skeleton";
 import { normalizeTrailingSlash } from "@/utils";
 import styles from "./DashboardSidebar.module.css";
 
@@ -53,7 +54,7 @@ function SidebarLink({
 const ICON_SIZE = 18;
 
 export function DashboardSidebar({ className, ...props }: Props) {
-  const { currentOrganization } = useCurrentOrganization();
+  const { currentOrganization, isLoading } = useCurrentOrganization();
   return (
     <div className={clsx(className, styles.sidebar)} {...props}>
       <nav className={styles.navigation}>
@@ -77,7 +78,16 @@ export function DashboardSidebar({ className, ...props }: Props) {
               </SidebarLink>
             </li>
             <li>
-              {currentOrganization ? (
+              {isLoading ? (
+                <SidebarLink
+                  href={DASHBOARD_ORGANIZATION_URL}
+                  icon={
+                    <Skeleton style={{ width: ICON_SIZE, height: ICON_SIZE }} />
+                  }
+                >
+                  <Skeleton style={{ width: 96 }} />
+                </SidebarLink>
+              ) : currentOrganization ? (
                 <SidebarLink
                   href={DASHBOARD_ORGANIZATION_URL}
                   icon={
@@ -108,6 +118,32 @@ export function DashboardSidebar({ className, ...props }: Props) {
               >
                 Public
               </SidebarLink>
+            </li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+  );
+}
+
+export function DashboardSidebarSkeleton({ className, ...props }: Props) {
+  return (
+    <div className={clsx(className, styles.sidebar)} {...props}>
+      <nav className={styles.navigation}>
+        <div className={styles.category}>
+          <Skeleton style={{ width: 88, height: 36 }} />
+        </div>
+        <div className={styles.category}>
+          <span className={styles.categoryTitle}>Filter</span>
+          <ul className={styles.list}>
+            <li>
+              <Skeleton style={{ width: 116, height: 36 }} />
+            </li>
+            <li>
+              <Skeleton style={{ width: 148, height: 36 }} />
+            </li>
+            <li>
+              <Skeleton style={{ width: 112, height: 36 }} />
             </li>
           </ul>
         </div>

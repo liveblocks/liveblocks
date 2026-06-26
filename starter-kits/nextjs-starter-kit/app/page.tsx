@@ -9,6 +9,8 @@ import { Button, LinkButton } from "@/primitives/Button";
 import { Container } from "@/primitives/Container";
 import styles from "./page.module.css";
 
+export const instant = false;
+
 interface FeatureProps extends Omit<ComponentProps<"div">, "title"> {
   description: ReactNode;
   title: ReactNode;

@@ -38,7 +38,9 @@ export function Header({
   return (
     <header className={clsx(className, styles.header)} {...props}>
       <div className={styles.logo}>
-        {status === "authenticated" ? (
+        {status === "loading" ? (
+          <Skeleton style={{ width: 120, height: 36 }} />
+        ) : status === "authenticated" ? (
           <OrganizationPopover />
         ) : (
           <Button
@@ -84,7 +86,9 @@ export function Header({
             </ClientSideSuspense>
           ) : null}
         </ClientSideSuspense>
-        {status === "authenticated" ? (
+        {status === "loading" ? (
+          <Skeleton style={{ width: 36, height: 36 }} />
+        ) : status === "authenticated" ? (
           <InboxPopover align="end" sideOffset={4} />
         ) : null}
       </div>

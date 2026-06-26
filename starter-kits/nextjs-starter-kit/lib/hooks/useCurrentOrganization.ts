@@ -4,7 +4,7 @@ import { getUserOrganizations } from "@/lib/actions";
 import { useDocumentsFunctionSWR } from "@/lib/hooks";
 
 export function useCurrentOrganization() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
 
   // Get a list of organizations for the current user
   const {
@@ -12,9 +12,12 @@ export function useCurrentOrganization() {
     mutate,
     error,
     isLoading,
-  } = useDocumentsFunctionSWR([getUserOrganizations, []], {
-    refreshInterval: 0,
-  });
+  } = useDocumentsFunctionSWR(
+    status === "authenticated" ? [getUserOrganizations, []] : null,
+    {
+      refreshInterval: 0,
+    }
+  );
 
   const currentOrganization = useMemo(() => {
     if (!session || !organizations || organizations.length === 0) {
@@ -31,5 +34,10 @@ export function useCurrentOrganization() {
     return organizations[0];
   }, [organizations, session]);
 
-  return { currentOrganization, isLoading, error, mutate };
+  return {
+    currentOrganization,
+    isLoading: status === "loading" || isLoading,
+    error,
+    mutate,
+  };
 }
