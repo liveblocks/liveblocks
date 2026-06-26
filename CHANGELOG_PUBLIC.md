@@ -24,7 +24,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ### `@liveblocks/client`
 
-- Fix a bug where sending a too large WebSocket message could sometimes overwrite a room's top-level storage key with `initialStorage`, causing data loss. (Thanks @watemerald for reporting!)
+- Fix a bug where sending a too large WebSocket message could sometimes overwrite a room's top-level storage key with `initialStorage`, causing data loss. Thanks for reporting [@watemerald](https://github.com/watemerald)!
 
 ## Dashboard
 
