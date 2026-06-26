@@ -1,5 +1,10 @@
 ## vNEXT (not yet released)
 
+### `@liveblocks/react-ui`
+
+- Prevent `Composer` from collapsing after focusing and blurring unless it was
+  explicitly meant to support a collapsed state.
+
 ## v3.21.0
 
 ...
