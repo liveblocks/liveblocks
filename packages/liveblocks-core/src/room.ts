@@ -2151,7 +2151,8 @@ export function createRoom<
         if (
           op.type === OpCode.CREATE_LIST ||
           op.type === OpCode.CREATE_MAP ||
-          op.type === OpCode.CREATE_OBJECT
+          op.type === OpCode.CREATE_OBJECT ||
+          op.type === OpCode.CREATE_FILE
         ) {
           createdNodeIds.add(op.id);
         }
@@ -2203,6 +2204,7 @@ export function createRoom<
       case OpCode.CREATE_OBJECT:
       case OpCode.CREATE_LIST:
       case OpCode.CREATE_MAP:
+      case OpCode.CREATE_FILE:
       case OpCode.CREATE_REGISTER: {
         if (op.parentId === undefined) {
           return { modified: false };

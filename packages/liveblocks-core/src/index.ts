@@ -77,6 +77,7 @@ export type {
 } from "./crdts/AbstractCrdt";
 export { createManagedPool } from "./crdts/AbstractCrdt";
 export { cloneLson, isLiveNode } from "./crdts/liveblocks-helpers";
+export { LiveFile } from "./crdts/LiveFile";
 export { LiveList } from "./crdts/LiveList";
 export { LiveMap } from "./crdts/LiveMap";
 export { LiveObject } from "./crdts/LiveObject";
@@ -300,6 +301,7 @@ export {
 } from "./protocol/NotificationSettings";
 export type {
   ClientWireOp,
+  CreateFileOp,
   CreateListOp,
   CreateMapOp,
   CreateObjectOp,
@@ -346,6 +348,7 @@ export type {
 export { FeedRequestErrorCode, ServerMsgCode } from "./protocol/ServerMsg";
 export type {
   ChildStorageNode,
+  CompactFileNode,
   CompactChildNode,
   CompactListNode,
   CompactMapNode,
@@ -353,7 +356,9 @@ export type {
   CompactObjectNode,
   CompactRegisterNode,
   CompactRootNode,
+  FileStorageNode,
   ListStorageNode,
+  LiveFileData,
   MapStorageNode,
   NodeMap,
   NodeStream,
@@ -362,6 +367,7 @@ export type {
   RootStorageNode,
   SerializedChild,
   SerializedCrdt,
+  SerializedFile,
   SerializedList,
   SerializedMap,
   SerializedObject,
@@ -372,6 +378,7 @@ export type {
 export {
   compactNodesToNodeStream,
   CrdtType,
+  isFileStorageNode,
   isListStorageNode,
   isMapStorageNode,
   isObjectStorageNode,
@@ -446,6 +453,7 @@ export type { Patchable } from "./types/Patchable";
 export type {
   PlainLson,
   PlainLsonFields,
+  PlainLsonFile,
   PlainLsonList,
   PlainLsonMap,
   PlainLsonObject,

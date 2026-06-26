@@ -7,6 +7,7 @@ import { OpCode } from "../protocol/Op";
 import type { NodeMap, StorageNode } from "../protocol/StorageNode";
 import {
   CrdtType,
+  isFileStorageNode,
   isListStorageNode,
   isMapStorageNode,
   isObjectStorageNode,
@@ -14,6 +15,7 @@ import {
 } from "../protocol/StorageNode";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
 import type { ManagedPool } from "./AbstractCrdt";
+import { LiveFile } from "./LiveFile";
 import { LiveList, type LiveListUpdates } from "./LiveList";
 import { LiveMap, type LiveMapUpdates } from "./LiveMap";
 import { LiveObject, type LiveObjectUpdates } from "./LiveObject";
@@ -27,6 +29,8 @@ export function creationOpToLiveNode(op: CreateOp): LiveNode {
 
 export function creationOpToLson(op: CreateOp): Lson {
   switch (op.type) {
+    case OpCode.CREATE_FILE:
+      return new LiveFile(op.data);
     case OpCode.CREATE_REGISTER:
       return op.data;
     case OpCode.CREATE_OBJECT:
@@ -63,6 +67,8 @@ export function deserialize(
     return LiveMap._deserialize(node, parentToChildren, pool);
   } else if (isRegisterStorageNode(node)) {
     return LiveRegister._deserialize(node, parentToChildren, pool);
+  } else if (isFileStorageNode(node)) {
+    return LiveFile._deserialize(node, parentToChildren, pool);
   } else {
     throw new Error("Unexpected CRDT type");
   }
@@ -81,13 +87,20 @@ export function deserializeToLson(
     return LiveMap._deserialize(node, parentToChildren, pool);
   } else if (isRegisterStorageNode(node)) {
     return node[1].data;
+  } else if (isFileStorageNode(node)) {
+    return LiveFile._deserialize(node, parentToChildren, pool);
   } else {
     throw new Error("Unexpected CRDT type");
   }
 }
 
 export function isLiveStructure(value: unknown): value is LiveStructure {
-  return isLiveList(value) || isLiveMap(value) || isLiveObject(value);
+  return (
+    isLiveList(value) ||
+    isLiveMap(value) ||
+    isLiveObject(value) ||
+    isLiveFile(value)
+  );
 }
 
 export function isLiveNode(value: unknown): value is LiveNode {
@@ -104,6 +117,10 @@ export function isLiveMap(value: unknown): value is LiveMap<string, Lson> {
 
 export function isLiveObject(value: unknown): value is LiveObject<LsonObject> {
   return value instanceof LiveObject;
+}
+
+export function isLiveFile(value: unknown): value is LiveFile {
+  return value instanceof LiveFile;
 }
 
 export function isLiveRegister(value: unknown): value is LiveRegister<Json> {
@@ -124,7 +141,8 @@ export function liveNodeToLson(obj: LiveNode): Lson {
   } else if (
     obj instanceof LiveList ||
     obj instanceof LiveMap ||
-    obj instanceof LiveObject
+    obj instanceof LiveObject ||
+    obj instanceof LiveFile
   ) {
     return obj;
   } else {
@@ -136,7 +154,8 @@ export function lsonToLiveNode(value: Lson): LiveNode {
   if (
     value instanceof LiveObject ||
     value instanceof LiveMap ||
-    value instanceof LiveList
+    value instanceof LiveList ||
+    value instanceof LiveFile
   ) {
     return value;
   } else {
@@ -172,6 +191,8 @@ export function dumpPool(pool: ManagedPool): string {
       value = "<LiveList>";
     } else if (node instanceof LiveMap) {
       value = "<LiveMap>";
+    } else if (node instanceof LiveFile) {
+      value = stringify(node.data);
     } else {
       value = "<LiveObject>";
     }
@@ -322,6 +343,15 @@ export function diffNodeMap(prev: NodeMap, next: NodeMap): Op[] {
         case CrdtType.REGISTER:
           ops.push({
             type: OpCode.CREATE_REGISTER,
+            id,
+            parentId: crdt.parentId,
+            parentKey: crdt.parentKey,
+            data: crdt.data,
+          });
+          break;
+        case CrdtType.FILE:
+          ops.push({
+            type: OpCode.CREATE_FILE,
             id,
             parentId: crdt.parentId,
             parentKey: crdt.parentKey,
