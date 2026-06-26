@@ -41,13 +41,34 @@ export async function Issue({ issueId }: { issueId: string }) {
           .replace(/(\n+)$/g, (match) => "<p><br></p>".repeat(match.length));
       });
 
-      // Remove all HTML tags but "p" and "br"
-      markdown = sanitizeHtml(markdown, {
-        allowedTags: ["p", "br"],
-        disallowedTagsMode: "escape",
-      });
+      const rawHtml = await marked(markdown);
 
-      return marked(markdown);
+      return sanitizeHtml(rawHtml, {
+        allowedTags: [
+          "p",
+          "br",
+          "strong",
+          "em",
+          "s",
+          "code",
+          "pre",
+          "blockquote",
+          "ul",
+          "ol",
+          "li",
+          "h1",
+          "h2",
+          "h3",
+          "h4",
+          "h5",
+          "h6",
+          "a",
+        ],
+        allowedAttributes: {
+          a: ["href", "name", "target", "rel"],
+        },
+        allowedSchemes: ["http", "https", "mailto"],
+      });
     }
   );
 

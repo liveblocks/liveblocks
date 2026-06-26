@@ -105,7 +105,7 @@ export function Comments() {
       <ClientSideSuspense
         fallback={
           <>
-            <div className="bg-gray-100/80 animate-pulse h-[130px] rounded-lg my-6" />
+            <CommentsFallback />
           </>
         }
       >
@@ -113,6 +113,12 @@ export function Comments() {
         <Composer className="border border-neutral-200 !my-4 rounded-lg overflow-hidden shadow-sm bg-white" />
       </ClientSideSuspense>
     </>
+  );
+}
+
+export function CommentsFallback() {
+  return (
+    <div className="bg-gray-100/80 animate-pulse h-[130px] rounded-lg my-6" />
   );
 }
 

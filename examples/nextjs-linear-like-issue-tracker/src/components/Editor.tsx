@@ -77,13 +77,13 @@ export function Editor({
           <div className="relative">
             <LiveblocksPlugin>
               {!ready ? (
-                <div className="select-none cursor-wait editor-styles">
+                <div className="select-none cursor-wait editor-styles min-h-[24px]">
                   {contentFallback}
                 </div>
               ) : (
                 <RichTextPlugin
                   contentEditable={
-                    <ContentEditable className="outline-none editor-styles" />
+                    <ContentEditable className="outline-none editor-styles min-h-[24px]" />
                   }
                   placeholder={
                     <div className="absolute top-0 left-0 pointer-events-none text-neutral-500 whitespace-nowrap">
