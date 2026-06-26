@@ -1,4 +1,5 @@
-import { getBearerTokenFromAuthValue, type RoomHttpApi } from "./api-client";
+import type { RoomHttpApi } from "./api-client";
+import { getBearerTokenFromAuthValue } from "./api-client";
 import type { AuthManager, AuthValue } from "./auth-manager";
 import { injectBrandBadge } from "./brand";
 import type { InternalSyncStatus } from "./client";
@@ -117,7 +118,11 @@ import type {
   YDocUpdateServerMsg,
 } from "./protocol/ServerMsg";
 import { ServerMsgCode } from "./protocol/ServerMsg";
-import type { NodeMap, NodeStream } from "./protocol/StorageNode";
+import type {
+  NodeMap,
+  NodeStream,
+  SerializedRootObject,
+} from "./protocol/StorageNode";
 import { compactNodesToNodeStream } from "./protocol/StorageNode";
 import type {
   SubscriptionData,
@@ -1530,6 +1535,25 @@ function makeNodeMapBuffer() {
   };
 }
 
+function topLevelKeysOf(nodes: NodeMap): Set<string> {
+  const keys = new Set<string>();
+
+  // The root's primitive (non-Live) keys are stored inline in its `data`.
+  const root = nodes.get("root") as SerializedRootObject | undefined;
+  for (const key in root?.data) {
+    keys.add(key);
+  }
+
+  // Live children of the root are separate nodes pointing back at it.
+  for (const node of nodes.values()) {
+    if (node.parentId === "root") {
+      keys.add(node.parentKey);
+    }
+  }
+
+  return keys;
+}
+
 /**
  * @internal
  * Initializes a new Room, and returns its public API.
@@ -1933,11 +1957,12 @@ export function createRoom<
 
     const canWrite = self.get()?.canWrite ?? true;
 
-    // Populate missing top-level keys using `initialStorage`
+    // Populate only top-level keys that storage doesn't have yet, using `initialStorage`
+    const serverTopLevelKeys = topLevelKeysOf(nodes);
     const root = context.root;
     disableHistory(() => {
       for (const key in context.initialStorage) {
-        if (root.get(key) === undefined) {
+        if (!serverTopLevelKeys.has(key)) {
           if (canWrite) {
             root.set(key, cloneLson(context.initialStorage[key]));
           } else {

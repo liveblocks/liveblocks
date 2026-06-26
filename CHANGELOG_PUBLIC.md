@@ -18,6 +18,52 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 25 (2026-06-19)
+
+## v3.20.0
+
+### All packages
+
+- Add support for new resource-specific permissions. You can now start from a
+  `*:read` or `*:write` base, then grant or deny access per resource (storage,
+  comments, feeds) using new permission strings like `storage:none` or
+  `comments:read`.
+
+### `@liveblocks/node`
+
+- Deprecate `session.FULL_ACCESS` and `session.READ_ACCESS` in favor of
+  `["*:write"]` and `["*:read"]` respectively.
+
+### `@liveblocks/client`
+
+- Deprecate `room.getStorageSnapshot()` in favor of `room.getStorageOrNull()`.
+
+## Examples
+
+- New example: [AI Spreadsheet](https://liveblocks.io/examples/ai-spreadsheet/nextjs-ai-spreadsheet).
+- New example: [Realtime AI Elements Chats](https://liveblocks.io/examples/ai-elements-realtime/nextjs-ai-elements-realtime).
+- Added “?” button to various examples, featuring a pop-up that explains how to use them.
+
+## Contributors
+
+ofoucherot, nvie, marcbouchenoire, ctnicholas
+
+# Week 24 (2026-06-12)
+
+## v3.19.5
+
+### `@liveblocks/client`
+
+- Fix a `LiveList` divergence after reconnects: a pending `push` could under specific timing conditions during a reconnect still cause a divergence between clients, despite the fix from 3.19.4.
+
+## Liveblocks dev server (v1.6.1)
+
+- Fix a `LiveList` divergence after reconnects: when a client re-sends a pending `push` op whose node the server had already stored (the original ack got lost in the disconnect)
+
+## Contributors
+
+nvie
+
 # Week 23 (2026-06-05)
 
 ## v3.19.4
@@ -49,9 +95,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ## Liveblocks dev server (v1.6.0)
 
-- Update internal storage format of dev server. Note that your local dev rooms
-  are not automatically migrated and will appear as empty rooms after the
-  upgrade.
+- Update internal storage format of dev server. Note that your local dev rooms are not automatically migrated and will appear as empty rooms after the upgrade.
 
 ## Contributors
 
