@@ -19,10 +19,41 @@ For full per-metric rates and worked examples, see our
 
 ## What counts as a realtime collaboration minute?
 
-Realtime collaboration minutes count when multiple users are active in a room.
-Two users in a room for 5 minutes is 10 collaboration minutes, billed at $0.002
-each. You can see exactly what's being counted on your
-[dashboard usage page](/dashboard/usage).
+Realtime collaboration minutes measure time when two or more people or agents
+are in the same room together. Each connected user-minute counts. Two users in a
+room for 5 minutes is 10 collaboration minutes, billed at $0.002 each.
+
+Solo sessions cost $0. If only one person or agent is in a room, it is not
+billed.
+
+### What counts as connected?
+
+A user counts as connected when they have an open connection to a room—for
+example, after joining with
+[`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider) or
+[`enterRoom`](/docs/api-reference/liveblocks-client#Client.enterRoom). Each
+browser tab is one connection.
+
+### When does billing pause?
+
+If no one is using the room (no presence updates, cursor movement, or other
+activity), the room becomes inactive after 10 seconds. Collaboration minutes
+stop accumulating until someone interacts again.
+
+### Do background tabs count?
+
+By default, Liveblocks keeps connections open in background tabs, so those users
+still count as connected. To disconnect inactive background tabs automatically,
+set
+[`backgroundKeepAliveTimeout`](/docs/api-reference/liveblocks-client#createClientBackgroundKeepAliveTimeout)
+on your client.
+
+### Where can I see collaboration minutes?
+
+Your [dashboard usage page](/dashboard/usage) shows collaboration minutes at the
+workspace level. Each project overview page shows collaboration minutes over
+time for that project. Per-user and per-room breakdowns are not available in the
+dashboard today.
 
 ## Which Liveblocks plan should I choose?
 
