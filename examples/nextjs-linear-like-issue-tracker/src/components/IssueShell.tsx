@@ -3,6 +3,7 @@ import { IssuePropertiesFallback } from "@/components/IssueProperties";
 import { IssueLabelsFallback } from "@/components/IssueLabels";
 import { SyncCompleteIcon } from "@/icons/SyncCompleteIcon";
 import { ImmutableStorage } from "@/liveblocks.config";
+import { CommentsFallback } from "./Comments";
 
 export const EMPTY_STORAGE: ImmutableStorage = {
   meta: { title: "" },
@@ -27,16 +28,16 @@ export function IssueShell() {
               <div className="px-12">
                 <div className="my-6">
                   <div className="w-full text-2xl font-bold my-6 h-[32px] flex items-center justify-start">
-                    <div className="bg-neutral-200/50 rounded-md h-[28px] w-[200px]" />
+                    <div className="bg-gray-100/80 animate-pulse rounded-lg h-[28px] w-[200px]" />
                   </div>
                 </div>
                 <div className="my-6">
-                  {Array.from({ length: 2 }).map((_, index) => (
+                  {Array.from({ length: 1 }).map((_, index) => (
                     <div
                       key={index}
                       className="w-full text-2xl font-bold my-[12.8px] h-[72px] flex items-center justify-start"
                     >
-                      <div className="bg-neutral-200/50 rounded-md h-[68px] w-full" />
+                      <div className="bg-gray-100/80 animate-pulse rounded-lg h-[68px] w-full" />
                     </div>
                   ))}
                 </div>
@@ -47,6 +48,7 @@ export function IssueShell() {
                 </div>
                 <div className="border-t my-6" />
                 <div className="my-6 font-medium">Comments</div>
+                <CommentsFallback />
               </div>
             </div>
           </div>
