@@ -28,6 +28,7 @@ import { kInternal } from "../internal";
 import { makeEventSource } from "../lib/EventSource";
 import * as console from "../lib/fancy-console";
 import type { Json, JsonObject } from "../lib/Json";
+import { isJsonArray, isJsonObject } from "../lib/Json";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import { ClientMsgCode } from "../protocol/ClientMsg";
 import type { BaseMetadata } from "../protocol/Comments";
@@ -52,6 +53,7 @@ import {
 } from "./_MockWebSocketServer.behaviors";
 import {
   createSerializedList,
+  createSerializedObject,
   createSerializedRegister,
   createSerializedRoot,
   fakeSyncSource,
@@ -1745,6 +1747,71 @@ describe("room", () => {
       expectStorage({
         items2: ["B"],
       });
+    });
+
+    // Regression test for https://github.com/liveblocks/liveblocks/issues/3535
+    test("initialStorage must not overwrite an existing key whose pending write never gets acked", async () => {
+      const { root, room, wss, expectStorage } =
+        await prepareIsolatedStorageTest<{
+          doc: LiveObject<{ title: string }>;
+        }>(
+          // A room that already has data under the top-level key `doc`.
+          [
+            createSerializedRoot(),
+            createSerializedObject(
+              "0:0",
+              { title: "DO NOT LOSE ME" },
+              "root",
+              "doc"
+            ),
+          ],
+          1,
+          // initialStorage defines `doc` too -- but as an empty default. The footgun.
+          { doc: new LiveObject({ title: "" }) }
+        );
+
+      // The client loads the real server data, not the empty default.
+      expectStorage({ doc: { title: "DO NOT LOSE ME" } });
+
+      // Drop the connection, then replace `doc` while offline. The op can never
+      // be acked -- in the wild this is a write too large for the WS frame,
+      // tripping a 1009 -- so it stays pending across the reconnect.
+      wss.last.close(
+        new CloseEvent("close", {
+          code: WebsocketCloseCodes.CLOSE_ABNORMAL,
+          wasClean: false,
+        })
+      );
+      root.set("doc", new LiveObject({ title: "rewritten" }));
+
+      // The reconnect refetches storage; the server (which never got the write)
+      // resends the original `doc`.
+      await waitUntilStorageUpdate(room);
+
+      // On reconnect, conflict resolution keeps our pending write and suppresses
+      // the server's `doc`, so the local root briefly reads `doc` as missing. The
+      // backfill must NOT mistake that for an unset key and write the empty
+      // default: that op is exactly what overwrites the real server document.
+      const sentOps = wss.receivedMessages
+        .flat()
+        .flatMap((msg) =>
+          isJsonObject(msg) &&
+          msg.type === ClientMsgCode.UPDATE_STORAGE &&
+          msg.ops !== undefined &&
+          isJsonArray(msg.ops)
+            ? msg.ops
+            : []
+        );
+      const wroteEmptyDefaultDoc = sentOps.some(
+        (op) =>
+          isJsonObject(op) &&
+          op.type === OpCode.CREATE_OBJECT &&
+          op.parentKey === "doc" &&
+          op.data !== undefined &&
+          isJsonObject(op.data) &&
+          op.data.title === ""
+      );
+      expect(wroteEmptyDefaultDoc).toBe(false);
     });
 
     test("disconnect and reconnect should keep user current presence", async () => {
