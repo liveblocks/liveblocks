@@ -2409,6 +2409,100 @@ describe("room", () => {
         ],
       ]);
     });
+
+    test("does not write initial storage into a non-empty room", async () => {
+      const initialStorage = { foo: 1234 };
+      const { room, wss } = createTestableRoom<
+        Record<string, never>,
+        { foo?: number; bar?: number },
+        never,
+        never,
+        never,
+        never
+      >({}, undefined, undefined, { throttleDelay: -1 }, initialStorage);
+
+      wss.onConnection((conn) => {
+        conn.server.send(
+          serverMessage({
+            type: ServerMsgCode.STORAGE_CHUNK,
+            nodes: [["root", { bar: 1 }]],
+          })
+        );
+        conn.server.send(
+          serverMessage({ type: ServerMsgCode.STORAGE_STREAM_END })
+        );
+      });
+
+      room.connect();
+      const storage = await room.getStorage();
+
+      expect(storage.root.toJSON()).toEqual({ bar: 1 });
+      expect(
+        wss.receivedMessages.flatMap((messages) =>
+          Array.isArray(messages) ? messages : [messages]
+        )
+      ).not.toContainEqual(
+        expect.objectContaining({ type: ClientMsgCode.UPDATE_STORAGE })
+      );
+    });
+
+    test("does not write initial storage on reconnect after storage has loaded", async () => {
+      const initialStorage = { foo: 1234 };
+      const { room, wss } = createTestableRoom<
+        Record<string, never>,
+        { foo?: number; bar?: number },
+        never,
+        never,
+        never,
+        never
+      >({}, undefined, undefined, { throttleDelay: -1 }, initialStorage);
+
+      wss.onConnection((conn) => {
+        conn.server.send(
+          serverMessage({
+            type: ServerMsgCode.STORAGE_CHUNK,
+            nodes: [["root", { bar: 1 }]],
+          })
+        );
+        conn.server.send(
+          serverMessage({ type: ServerMsgCode.STORAGE_STREAM_END })
+        );
+      });
+
+      room.connect();
+      const storage = await room.getStorage();
+      expect(storage.root.toJSON()).toEqual({ bar: 1 });
+
+      wss.onConnection((conn) => {
+        conn.server.send(
+          serverMessage({
+            type: ServerMsgCode.STORAGE_CHUNK,
+            nodes: [["root", {}]],
+          })
+        );
+        conn.server.send(
+          serverMessage({ type: ServerMsgCode.STORAGE_STREAM_END })
+        );
+      });
+
+      wss.last.close(
+        new CloseEvent("close", {
+          code: WebsocketCloseCodes.CLOSE_ABNORMAL,
+          wasClean: false,
+        })
+      );
+
+      await waitUntilStorageUpdate(room);
+
+      expect(storage.root.toJSON()).toEqual({});
+      expect(
+        wss.receivedMessages.flatMap((messages) =>
+          Array.isArray(messages) ? messages : [messages]
+        )
+      ).not.toContainEqual(
+        expect.objectContaining({ type: ClientMsgCode.UPDATE_STORAGE })
+      );
+    });
   });
 
   describe("room load promises", () => {

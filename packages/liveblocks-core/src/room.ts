@@ -118,7 +118,7 @@ import type {
 } from "./protocol/ServerMsg";
 import { ServerMsgCode } from "./protocol/ServerMsg";
 import type { NodeMap, NodeStream } from "./protocol/StorageNode";
-import { compactNodesToNodeStream } from "./protocol/StorageNode";
+import { compactNodesToNodeStream, CrdtType } from "./protocol/StorageNode";
 import type {
   SubscriptionData,
   SubscriptionDeleteInfo,
@@ -1361,6 +1361,7 @@ type RoomState<
 
   pool: ManagedPool;
   root: LiveObject<S> | undefined;
+  hasLoadedStorage: boolean;
 
   undoStack: Stackframe<P>[][];
   redoStack: Stackframe<P>[][];
@@ -1530,6 +1531,16 @@ function makeNodeMapBuffer() {
   };
 }
 
+function isEmptyStorageSnapshot(nodes: NodeMap): boolean {
+  const root = nodes.get("root");
+  return (
+    nodes.size === 1 &&
+    root !== undefined &&
+    root.type === CrdtType.OBJECT &&
+    Object.keys(root.data).length === 0
+  );
+}
+
 /**
  * @internal
  * Initializes a new Room, and returns its public API.
@@ -1624,6 +1635,7 @@ export function createRoom<
       unacknowledgedOps,
     }),
     root: undefined,
+    hasLoadedStorage: false,
 
     undoStack: [],
     redoStack: [],
@@ -1910,7 +1922,10 @@ export function createRoom<
     me !== null ? userToTreeNode("Me", me) : null
   );
 
-  function createOrUpdateRootFromMessage(nodes: NodeMap) {
+  function createOrUpdateRootFromMessage(
+    nodes: NodeMap,
+    shouldPopulateInitialStorage: boolean
+  ) {
     if (nodes.size === 0) {
       throw new Error("Internal error: cannot load storage without items");
     }
@@ -1931,23 +1946,23 @@ export function createRoom<
       );
     }
 
-    const canWrite = self.get()?.canWrite ?? true;
-
-    // Populate missing top-level keys using `initialStorage`
-    const root = context.root;
-    disableHistory(() => {
-      for (const key in context.initialStorage) {
-        if (root.get(key) === undefined) {
-          if (canWrite) {
-            root.set(key, cloneLson(context.initialStorage[key]));
-          } else {
-            console.warn(
-              `Attempted to populate missing storage key '${key}', but current user has no write access`
-            );
+    if (shouldPopulateInitialStorage) {
+      const canWrite = self.get()?.canWrite ?? true;
+      const root = context.root;
+      disableHistory(() => {
+        for (const key in context.initialStorage) {
+          if (root.get(key) === undefined) {
+            if (canWrite) {
+              root.set(key, cloneLson(context.initialStorage[key]));
+            } else {
+              console.warn(
+                `Attempted to populate missing storage key '${key}', but current user has no write access`
+              );
+            }
           }
         }
-      }
-    });
+      });
+    }
   }
 
   function _addToRealUndoStack(frames: Stackframe<P>[]) {
@@ -2990,7 +3005,10 @@ export function createRoom<
 
   function processInitialStorage(nodes: NodeMap) {
     const unacknowledgedOps = [...context.unacknowledgedOps.values()];
-    createOrUpdateRootFromMessage(nodes);
+    const shouldPopulateInitialStorage =
+      !context.hasLoadedStorage && isEmptyStorageSnapshot(nodes);
+    createOrUpdateRootFromMessage(nodes, shouldPopulateInitialStorage);
+    context.hasLoadedStorage = true;
     applyAndSendOfflineOps(unacknowledgedOps);
     _resolveStoragePromise?.();
     notifyStorageStatus();
