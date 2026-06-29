@@ -23,7 +23,7 @@
 This example shows how to add private commenting to your app with
 [Liveblocks](https://liveblocks.io) and [Next.js](https://nextjs.org/).
 
-<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/comments.png" width="536" alt="Private Comments" />
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/comments-private.png" width="536" alt="Private Commenting" />
 
 ## Getting started
 
