@@ -1,7 +1,7 @@
 import type { LiveNode } from "../crdts/Lson";
 import { nn } from "../lib/assert";
-import { nanoid } from "../lib/nanoid";
 import type { ReadonlyJsonObject } from "../lib/Json";
+import { nanoid } from "../lib/nanoid";
 import type { CreateFileOp, CreateOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
 import type {

@@ -350,8 +350,8 @@ export type {
 export { FeedRequestErrorCode, ServerMsgCode } from "./protocol/ServerMsg";
 export type {
   ChildStorageNode,
-  CompactFileNode,
   CompactChildNode,
+  CompactFileNode,
   CompactListNode,
   CompactMapNode,
   CompactNode,
