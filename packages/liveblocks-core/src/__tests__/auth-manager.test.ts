@@ -361,7 +361,7 @@ describe("auth-manager - secret auth", () => {
     expect(localRequestCount).toBe(1);
   });
 
-  test("should not reuse scoped comments write token for generic comments write requests", async () => {
+  test("should reuse scoped comments write token for generic comments write requests", async () => {
     let localRequestCount = 0;
     const publicCommentsWriteToken = makeAccessToken({
       "org1*": [
@@ -370,19 +370,11 @@ describe("auth-manager - secret auth", () => {
         Permission.CommentsPublicWrite,
       ],
     });
-    const commentsWriteToken = makeAccessToken({
-      "org1*": [Permission.Read, Permission.CommentsWrite],
-    });
 
     server.use(
       http.post("/api/access-auth-public-then-comments-write", () => {
         localRequestCount++;
-        return HttpResponse.json({
-          token:
-            localRequestCount === 1
-              ? publicCommentsWriteToken
-              : commentsWriteToken,
-        });
+        return HttpResponse.json({ token: publicCommentsWriteToken });
       })
     );
 
@@ -402,8 +394,8 @@ describe("auth-manager - secret auth", () => {
     })) as { type: "secret"; token: ParsedAuthToken };
 
     expect(publicWriteAuthValue.token.raw).toEqual(publicCommentsWriteToken);
-    expect(commentsWriteAuthValue.token.raw).toEqual(commentsWriteToken);
-    expect(localRequestCount).toBe(2);
+    expect(commentsWriteAuthValue.token.raw).toEqual(publicCommentsWriteToken);
+    expect(localRequestCount).toBe(1);
   });
 
   test("should not reuse public comments token for private comments requests", async () => {

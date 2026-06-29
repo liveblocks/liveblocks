@@ -128,6 +128,21 @@ describe("permissionMatrixFromScopes", () => {
     });
   });
 
+  test("inherits base and broad comments access to scoped comments permissions", () => {
+    expect(permissionMatrixFromScopes([Permission.Write])).toMatchObject({
+      comments: "write",
+      "comments:public": "write",
+      "comments:private": "write",
+    });
+    expect(
+      permissionMatrixFromScopes([Permission.Read, Permission.CommentsWrite])
+    ).toMatchObject({
+      comments: "write",
+      "comments:public": "write",
+      "comments:private": "write",
+    });
+  });
+
   test("resolves room read and write as aliases", () => {
     expect(permissionMatrixFromScopes([Permission.RoomRead])).toEqual(
       permissionMatrixFromScopes([Permission.Read])
@@ -202,12 +217,12 @@ describe("permissionMatrixFromScopes", () => {
       "comments:public": "read",
       "comments:private": "write",
     });
-    expect(hasPermissionAccess(scoped, "comments", "write")).toBe(false);
+    expect(hasPermissionAccess(scoped, "comments", "write")).toBe(true);
     expect(hasPermissionAccess(scoped, "comments:public", "write")).toBe(false);
     expect(hasPermissionAccess(scoped, "comments:private", "write")).toBe(true);
   });
 
-  test("checks generic and scoped comments permissions independently", () => {
+  test("treats generic comments checks as aggregate comments access", () => {
     const matrix = permissionMatrixFromScopes([
       Permission.Write,
       Permission.CommentsNone,
@@ -215,7 +230,7 @@ describe("permissionMatrixFromScopes", () => {
       Permission.CommentsPrivateNone,
     ]);
 
-    expect(hasPermissionAccess(matrix, "comments", "write")).toBe(false);
+    expect(hasPermissionAccess(matrix, "comments", "write")).toBe(true);
     expect(hasPermissionAccess(matrix, "comments:public", "write")).toBe(true);
     expect(hasPermissionAccess(matrix, "comments:private", "write")).toBe(
       false
@@ -686,6 +701,22 @@ describe("property tests", () => {
         const matrix = permissionMatrixFromScopes(scopes);
 
         for (const resource of PERMISSION_RESOURCES) {
+          if (resource === "comments") {
+            const commentsAccessRank = Math.max(
+              accessRank("comments", matrix),
+              accessRank("comments:public", matrix),
+              accessRank("comments:private", matrix)
+            );
+
+            expect(hasPermissionAccess(matrix, resource, "read")).toBe(
+              commentsAccessRank >= ACCESS_LEVEL_RANKS.read
+            );
+            expect(hasPermissionAccess(matrix, resource, "write")).toBe(
+              commentsAccessRank >= ACCESS_LEVEL_RANKS.write
+            );
+            continue;
+          }
+
           expect(hasPermissionAccess(matrix, resource, "read")).toBe(
             accessRank(resource, matrix) >= ACCESS_LEVEL_RANKS.read
           );

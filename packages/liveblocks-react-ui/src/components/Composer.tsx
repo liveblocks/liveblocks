@@ -773,6 +773,10 @@ export const Composer = forwardRef(
       controlledCollapsed,
       controlledOnCollapsedChange
     );
+    // Only auto-collapse composers that are explicitly meant to support a collapsed state.
+    const shouldCollapseWhenEmpty =
+      controlledCollapsed !== undefined || defaultCollapsed === true;
+
     const commentsResource =
       threadId === undefined
         ? commentsResourceForVisibility(visibility ?? "public")
@@ -818,11 +822,16 @@ export const Composer = forwardRef(
           event.relatedTarget ?? document.activeElement
         );
 
-        if (isOutside && isEmptyRef.current && !isEmojiPickerOpenRef.current) {
+        if (
+          shouldCollapseWhenEmpty &&
+          isOutside &&
+          isEmptyRef.current &&
+          !isEmojiPickerOpenRef.current
+        ) {
           onCollapsedChange?.(true);
         }
       },
-      [onBlur, onCollapsedChange]
+      [onBlur, onCollapsedChange, shouldCollapseWhenEmpty]
     );
 
     const handleEditorClick = useCallback(

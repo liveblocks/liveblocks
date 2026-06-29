@@ -7,7 +7,6 @@ import type {
   RoomSubscriptionSettings,
   StorageNode,
   ThreadData,
-  ThreadVisibility,
 } from "@liveblocks/core";
 import { createNotificationSettings, LiveList } from "@liveblocks/core";
 import { http, HttpResponse } from "msw";
@@ -932,7 +931,6 @@ describe("client", () => {
 
   describe("create thread", () => {
     test("should return the created thread when createThread receives a successful response", async () => {
-      const visibility: ThreadVisibility = "private";
       const threadData = {
         comment: {
           userId: "user1",
@@ -945,7 +943,7 @@ describe("client", () => {
         metadata: {
           color: "blue",
         },
-        visibility,
+        visibility: "private",
       };
 
       server.use(

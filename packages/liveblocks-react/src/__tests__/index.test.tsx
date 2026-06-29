@@ -1,4 +1,4 @@
-import { createClient, LiveList, LiveObject, shallow } from "@liveblocks/client";
+import { createClient, shallow } from "@liveblocks/client";
 import { ClientMsgCode, ServerMsgCode, wait } from "@liveblocks/core";
 import { render } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
@@ -32,15 +32,6 @@ import {
 } from "./_liveblocks.config";
 import MockWebSocket, { websocketSimulator } from "./_MockWebSocket";
 import { act, renderHook } from "./_utils"; // Basically re-exports from @testing-library/react
-
-function makeInitialStorage() {
-  return {
-    obj: new LiveObject({
-      a: 0,
-      nested: new LiveList<string>([]),
-    }),
-  };
-}
 
 // Access token with perms: { "*": ["room:write"] } - missing last char so we can append counter
 const exampleToken =
@@ -321,12 +312,7 @@ describe("useOthers", () => {
 describe("useHasPermissionAccess", () => {
   test("optimistically allows writing to scoped comments resources before permission hints arrive", () => {
     const wrapper = ({ children }: { children: ReactNode }) => (
-      <RoomProvider
-        id="room"
-        initialPresence={{ x: 0 }}
-        initialStorage={makeInitialStorage}
-        autoConnect={false}
-      >
+      <RoomProvider id="room" initialPresence={{ x: 0 }} autoConnect={false}>
         {children}
       </RoomProvider>
     );
@@ -344,13 +330,9 @@ describe("useHasPermissionAccess", () => {
     expect(privateAccess.result.current).toBe(true);
   });
 
-  test("uses scoped comment access from the connection before permission hints arrive", async () => {
+  test("uses aggregate and scoped comment access from the connection before permission hints arrive", async () => {
     const wrapper = ({ children }: { children: ReactNode }) => (
-      <RoomProvider
-        id="room"
-        initialPresence={{ x: 0 }}
-        initialStorage={makeInitialStorage}
-      >
+      <RoomProvider id="room" initialPresence={{ x: 0 }}>
         {children}
       </RoomProvider>
     );
@@ -382,7 +364,7 @@ describe("useHasPermissionAccess", () => {
     );
 
     expect(access.result.current).toEqual({
-      comments: false,
+      comments: true,
       public: true,
       private: false,
     });
