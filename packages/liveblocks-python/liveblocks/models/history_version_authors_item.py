@@ -10,7 +10,7 @@ from ..types import UNSET, Unset
 
 
 @_attrs_define
-class YjsVersionAuthorsItem:
+class HistoryVersionAuthorsItem:
     """
     Attributes:
         id (str | Unset): User ID of the author
@@ -35,12 +35,12 @@ class YjsVersionAuthorsItem:
         d = dict(src_dict)
         id = d.pop("id", UNSET)
 
-        yjs_version_authors_item = cls(
+        history_version_authors_item = cls(
             id=id,
         )
 
-        yjs_version_authors_item.additional_properties = d
-        return yjs_version_authors_item
+        history_version_authors_item.additional_properties = d
+        return history_version_authors_item
 
     @property
     def additional_keys(self) -> list[str]:

@@ -4,7 +4,7 @@ from urllib.parse import quote
 import httpx
 
 from ... import errors
-from ...models.create_yjs_version_response import CreateYjsVersionResponse
+from ...models.create_version_history_snapshot_response import CreateVersionHistorySnapshotResponse
 
 
 def _get_kwargs(
@@ -13,7 +13,7 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "post",
-        "url": "/v2/rooms/{room_id}/version".format(
+        "url": "/v2/rooms/{room_id}/versions".format(
             room_id=quote(str(room_id), safe=""),
         ),
     }
@@ -21,9 +21,9 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, response: httpx.Response) -> CreateYjsVersionResponse:
+def _parse_response(*, response: httpx.Response) -> CreateVersionHistorySnapshotResponse:
     if response.status_code == 200:
-        response_200 = CreateYjsVersionResponse.from_dict(response.json())
+        response_200 = CreateVersionHistorySnapshotResponse.from_dict(response.json())
 
         return response_200
 
@@ -34,7 +34,7 @@ def _sync(
     room_id: str,
     *,
     client: httpx.Client,
-) -> CreateYjsVersionResponse:
+) -> CreateVersionHistorySnapshotResponse:
     kwargs = _get_kwargs(
         room_id=room_id,
     )
@@ -49,7 +49,7 @@ async def _asyncio(
     room_id: str,
     *,
     client: httpx.AsyncClient,
-) -> CreateYjsVersionResponse:
+) -> CreateVersionHistorySnapshotResponse:
     kwargs = _get_kwargs(
         room_id=room_id,
     )
