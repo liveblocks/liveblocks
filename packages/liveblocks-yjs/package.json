@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/yjs",
-  "version": "3.20.0",
+  "version": "3.21.0-rc1",
   "description": "Integrate your existing or new Yjs documents with Liveblocks.",
   "license": "Apache-2.0",
   "author": "Liveblocks Inc.",
