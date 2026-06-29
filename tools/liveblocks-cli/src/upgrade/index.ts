@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+import { cmpSemver } from "@liveblocks/server";
 import { execFileSync } from "child_process";
 import { existsSync, readFileSync } from "fs";
 import { resolve } from "path";
@@ -34,21 +35,6 @@ function findLiveblocksDependencies(
   return Object.keys(dependencies ?? {}).filter((dep) =>
     dep.startsWith("@liveblocks/")
   );
-}
-
-export function cmpSemver(a: string, b: string): number {
-  const [coreA, preA] = a.split("-", 2);
-  const [coreB, preB] = b.split("-", 2);
-  const partsA = coreA.split(".").map(Number);
-  const partsB = coreB.split(".").map(Number);
-  for (let i = 0; i < 3; i++) {
-    if (partsA[i] !== partsB[i]) return partsA[i] - partsB[i];
-  }
-  // No prerelease > any prerelease (3.14.0 > 3.14.0-rc1)
-  if (!preA && preB) return 1;
-  if (preA && !preB) return -1;
-  if (preA && preB) return preA < preB ? -1 : preA > preB ? 1 : 0;
-  return 0;
 }
 
 /**
