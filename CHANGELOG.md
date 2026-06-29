@@ -29,6 +29,16 @@
 ### `@liveblocks/react-ui`
 
 - Add a `visibility` prop to `Composer`.
+- Prevent `Composer` from collapsing after focusing and blurring unless it was
+  explicitly meant to support a collapsed state.
+
+## v3.20.1
+
+### `@liveblocks/client`
+
+- Fix a bug where sending a too large WebSocket message could sometimes
+  overwrite a room's top-level storage key with `initialStorage`, causing data
+  loss. (Thanks @watemerald for reporting!)
 
 ## v3.20.0
 

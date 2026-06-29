@@ -4,7 +4,7 @@ import { describe, expect, test } from "vitest";
 import { Comment } from "../components/Comment";
 import { Composer } from "../components/Composer";
 import { Thread } from "../components/Thread";
-import { render } from "./_utils"; // Basically re-exports from @testing-library/react
+import { fireEvent, render, screen } from "./_utils"; // Basically re-exports from @testing-library/react
 
 const comment: CommentData = {
   type: "comment",
@@ -140,5 +140,32 @@ describe("Composer", () => {
     const { container } = render(<Composer />);
 
     expect(container).not.toBeEmptyDOMElement();
+  });
+
+  test("should stay expanded after blurring when initially expanded", () => {
+    render(<Composer />);
+
+    fireEvent.focus(screen.getByLabelText("Composer editor"));
+    fireEvent.blur(screen.getByLabelText("Composer editor"), {
+      relatedTarget: document.body,
+    });
+
+    expect(screen.getByRole("button", { name: "Send" })).toBeInTheDocument();
+  });
+
+  test("should collapse after blurring when initially collapsed", () => {
+    render(<Composer defaultCollapsed />);
+
+    expect(screen.queryByRole("button", { name: "Send" })).toBeNull();
+
+    fireEvent.focus(screen.getByLabelText("Composer editor"));
+
+    expect(screen.getByRole("button", { name: "Send" })).toBeInTheDocument();
+
+    fireEvent.blur(screen.getByLabelText("Composer editor"), {
+      relatedTarget: document.body,
+    });
+
+    expect(screen.queryByRole("button", { name: "Send" })).toBeNull();
   });
 });
