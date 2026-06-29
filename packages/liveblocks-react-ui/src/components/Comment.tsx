@@ -10,6 +10,7 @@ import {
   type GroupMentionData,
   MENTION_CHARACTER,
   type MentionData,
+  type ThreadVisibility,
 } from "@liveblocks/core";
 import {
   useAddRoomCommentReaction,
@@ -66,15 +67,14 @@ import type {
 } from "../primitives/Comment/types";
 import * as ComposerPrimitive from "../primitives/Composer";
 import { Timestamp } from "../primitives/Timestamp";
-import { useCurrentUserId } from "../shared";
+import { commentsResourceForVisibility, useCurrentUserId } from "../shared";
 import type { CommentAttachmentArgs } from "../types";
 import { cn } from "../utils/cn";
 import { download } from "../utils/download";
 import { useIsGroupMentionMember } from "../utils/use-group-mention";
 import { useRefs } from "../utils/use-refs";
 import { UserAvatar } from "./Avatar";
-import type { ComposerProps } from "./Composer";
-import { Composer } from "./Composer";
+import { Composer, type ComposerProps } from "./Composer";
 import {
   FileAttachment,
   MediaAttachment,
@@ -99,6 +99,11 @@ export interface CommentProps<CM extends BaseMetadata = DCM> extends Omit<
    * The comment to display.
    */
   comment: CommentData<CM>;
+
+  /**
+   * The visibility of the thread containing the comment.
+   */
+  visibility?: ThreadVisibility;
 
   /**
    * The comment's avatar.
@@ -689,6 +694,7 @@ export const Comment = Object.assign(
     (
       {
         comment,
+        visibility,
         indentContent = true,
         showDeleted,
         showActions = "hover",
@@ -736,7 +742,7 @@ export const Comment = Object.assign(
 
       const canComment = useHasPermissionAccess(
         comment.roomId,
-        "comments",
+        commentsResourceForVisibility(visibility),
         "write"
       );
 
@@ -886,6 +892,9 @@ export const Comment = Object.assign(
         content = (
           <Composer
             className="lb-comment-composer"
+            threadId={comment.threadId}
+            commentId={comment.id}
+            visibility={visibility}
             onComposerSubmit={handleEditSubmit}
             defaultValue={comment.body}
             defaultAttachments={comment.attachments}

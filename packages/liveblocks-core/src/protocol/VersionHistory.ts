@@ -1,9 +1,5 @@
 export type HistoryVersion = {
-  type: "historyVersion";
-  kind: "yjs";
+  id: `vh_${string}`;
   createdAt: Date;
-  id: string;
-  authors: {
-    id: string;
-  }[];
+  authors: { id: string }[];
 };

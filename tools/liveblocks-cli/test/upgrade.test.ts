@@ -17,39 +17,7 @@
 
 import { describe, expect, test } from "bun:test";
 
-import { cmpSemver, highestVersion } from "~/upgrade/index";
-
-describe("compareSemver", () => {
-  test("compares major versions", () => {
-    expect(cmpSemver("2.0.0", "3.0.0")).toBeLessThan(0);
-    expect(cmpSemver("3.0.0", "2.0.0")).toBeGreaterThan(0);
-  });
-
-  test("compares minor versions", () => {
-    expect(cmpSemver("3.13.0", "3.14.0")).toBeLessThan(0);
-    expect(cmpSemver("3.14.0", "3.13.0")).toBeGreaterThan(0);
-  });
-
-  test("compares patch versions", () => {
-    expect(cmpSemver("3.14.0", "3.14.1")).toBeLessThan(0);
-    expect(cmpSemver("3.14.1", "3.14.0")).toBeGreaterThan(0);
-  });
-
-  test("equal versions", () => {
-    expect(cmpSemver("3.14.0", "3.14.0")).toBe(0);
-  });
-
-  test("release > prerelease", () => {
-    expect(cmpSemver("3.14.0", "3.14.0-rc1")).toBeGreaterThan(0);
-    expect(cmpSemver("3.14.0-rc1", "3.14.0")).toBeLessThan(0);
-  });
-
-  test("compares prerelease strings", () => {
-    expect(cmpSemver("3.14.0-rc1", "3.14.0-rc2")).toBeLessThan(0);
-    expect(cmpSemver("3.14.0-rc2", "3.14.0-rc1")).toBeGreaterThan(0);
-    expect(cmpSemver("3.14.0-rc1", "3.14.0-rc1")).toBe(0);
-  });
-});
+import { highestVersion } from "~/upgrade/index";
 
 describe("pickHighestVersion", () => {
   // Simulates: npm view @liveblocks/core@latest version --json

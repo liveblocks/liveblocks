@@ -16,6 +16,7 @@ export function createThread(
     comments = [],
     metadata = {},
     resolved = false,
+    visibility = "public",
   } = overrides;
 
   const createdAt = overrides.createdAt ?? new Date();
@@ -30,6 +31,7 @@ export function createThread(
     comments,
     metadata,
     resolved,
+    visibility,
   };
 }
 

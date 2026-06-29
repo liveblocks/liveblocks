@@ -44,6 +44,7 @@ function matchesThreadsQuery<TM extends BaseMetadata, CM extends BaseMetadata>(
 
   return (
     (q.resolved === undefined || thread.resolved === q.resolved) &&
+    (q.visibility === undefined || thread.visibility === q.visibility) &&
     (q.subscribed === undefined ||
       (q.subscribed === true && subscription !== undefined) ||
       (q.subscribed === false && subscription === undefined))

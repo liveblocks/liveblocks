@@ -239,13 +239,14 @@ class Liveblocks:
         reference/liveblocks-node#post-rooms), or to
         [`liveblocks.getOrCreateRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-or-
         create-rooms-roomId) when `?idempotent` is provided.
-        - `defaultAccesses` could be `[]` or `[\"*:write\"]` (private or public).
+        - `defaultAccesses` is the default room permission list, for example `[]`, `[\"*:read\"]`,
+        `[\"*:write\"]`, or a more granular permission list.
         - `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries.
         Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum.
         `metadata` is optional field.
-        - `usersAccesses` could be `[]` or `[\"*:write\"]` for every records. `usersAccesses` can contain
-        1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
-        - `groupsAccesses` are optional fields.
+        - `usersAccesses` contains user-specific permission lists. It can contain 1000 ids maximum. Id
+        length has a limit of 256 characters. `usersAccesses` is optional field.
+        - `groupsAccesses` contains group-specific permission lists and is optional.
 
         Args:
             idempotent (bool | Unset): When provided, will not return a 409 when the room already
@@ -321,14 +322,14 @@ class Liveblocks:
         }``
         `defaultAccesses`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.
 
-        - `defaultAccesses` could be `[]` or `[\"*:write\"]` (private or public).
+        - `defaultAccesses` is the default room permission list, for example `[]`, `[\"*:read\"]`,
+        `[\"*:write\"]`, or a more granular permission list.
         - `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries.
         Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum.
         `metadata` is optional field.
-        - `usersAccesses` could be `[]` or `[\"*:write\"]` for every records. `usersAccesses` can contain
-        1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
-        - `groupsAccesses` could be `[]` or `[\"*:write\"]` for every records. `groupsAccesses` can contain
-        1000 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.
+        - `usersAccesses` contains user-specific permission lists. It can contain 1000 ids maximum. Id
+        length has a limit of 256 characters. `usersAccesses` is optional field.
+        - `groupsAccesses` contains group-specific permission lists and is optional.
 
         Args:
             room_id (str): ID of the room Example: my-room-id.
@@ -433,14 +434,14 @@ class Liveblocks:
         }``
         `defaultAccesses`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.
 
-        - `defaultAccesses` could be `[]` or `[\"*:write\"]` (private or public).
+        - `defaultAccesses` is the default room permission list, for example `[]`, `[\"*:read\"]`,
+        `[\"*:write\"]`, or a more granular permission list.
         - `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries.
         Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum.
         `metadata` is optional field.
-        - `usersAccesses` could be `[]` or `[\"*:write\"]` for every records. `usersAccesses` can contain
-        1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
-        - `groupsAccesses` could be `[]` or `[\"*:write\"]` for every records. `groupsAccesses` can contain
-        1000 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.
+        - `usersAccesses` contains user-specific permission lists. It can contain 1000 ids maximum. Id
+        length has a limit of 256 characters. `usersAccesses` is optional field.
+        - `groupsAccesses` contains group-specific permission lists and is optional.
 
         Args:
             room_id (str): ID of the room Example: my-room-id.
@@ -1030,9 +1031,9 @@ class Liveblocks:
 
         Args:
             room_id (str): ID of the room Example: my-room-id.
-            query (str | Unset): Query to filter threads. You can filter by `metadata` and `resolved`,
-                for example, `metadata["status"]:"open" AND metadata["color"]:"red" AND resolved:true`.
-                Learn more about [filtering threads with query
+            query (str | Unset): Query to filter threads. You can filter by `metadata`, `resolved`,
+                and `visibility`, for example, `metadata["status"]:"open" AND metadata["color"]:"red" AND
+                resolved:true AND visibility:"private"`. Learn more about [filtering threads with query
                 language](https://liveblocks.io/docs/guides/how-to-filter-threads-using-query-language).
                 Example: metadata["color"]:"blue".
 
@@ -3373,13 +3374,14 @@ class AsyncLiveblocks:
         reference/liveblocks-node#post-rooms), or to
         [`liveblocks.getOrCreateRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-or-
         create-rooms-roomId) when `?idempotent` is provided.
-        - `defaultAccesses` could be `[]` or `[\"*:write\"]` (private or public).
+        - `defaultAccesses` is the default room permission list, for example `[]`, `[\"*:read\"]`,
+        `[\"*:write\"]`, or a more granular permission list.
         - `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries.
         Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum.
         `metadata` is optional field.
-        - `usersAccesses` could be `[]` or `[\"*:write\"]` for every records. `usersAccesses` can contain
-        1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
-        - `groupsAccesses` are optional fields.
+        - `usersAccesses` contains user-specific permission lists. It can contain 1000 ids maximum. Id
+        length has a limit of 256 characters. `usersAccesses` is optional field.
+        - `groupsAccesses` contains group-specific permission lists and is optional.
 
         Args:
             idempotent (bool | Unset): When provided, will not return a 409 when the room already
@@ -3455,14 +3457,14 @@ class AsyncLiveblocks:
         }``
         `defaultAccesses`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.
 
-        - `defaultAccesses` could be `[]` or `[\"*:write\"]` (private or public).
+        - `defaultAccesses` is the default room permission list, for example `[]`, `[\"*:read\"]`,
+        `[\"*:write\"]`, or a more granular permission list.
         - `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries.
         Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum.
         `metadata` is optional field.
-        - `usersAccesses` could be `[]` or `[\"*:write\"]` for every records. `usersAccesses` can contain
-        1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
-        - `groupsAccesses` could be `[]` or `[\"*:write\"]` for every records. `groupsAccesses` can contain
-        1000 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.
+        - `usersAccesses` contains user-specific permission lists. It can contain 1000 ids maximum. Id
+        length has a limit of 256 characters. `usersAccesses` is optional field.
+        - `groupsAccesses` contains group-specific permission lists and is optional.
 
         Args:
             room_id (str): ID of the room Example: my-room-id.
@@ -3567,14 +3569,14 @@ class AsyncLiveblocks:
         }``
         `defaultAccesses`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.
 
-        - `defaultAccesses` could be `[]` or `[\"*:write\"]` (private or public).
+        - `defaultAccesses` is the default room permission list, for example `[]`, `[\"*:read\"]`,
+        `[\"*:write\"]`, or a more granular permission list.
         - `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries.
         Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum.
         `metadata` is optional field.
-        - `usersAccesses` could be `[]` or `[\"*:write\"]` for every records. `usersAccesses` can contain
-        1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
-        - `groupsAccesses` could be `[]` or `[\"*:write\"]` for every records. `groupsAccesses` can contain
-        1000 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.
+        - `usersAccesses` contains user-specific permission lists. It can contain 1000 ids maximum. Id
+        length has a limit of 256 characters. `usersAccesses` is optional field.
+        - `groupsAccesses` contains group-specific permission lists and is optional.
 
         Args:
             room_id (str): ID of the room Example: my-room-id.
@@ -4164,9 +4166,9 @@ class AsyncLiveblocks:
 
         Args:
             room_id (str): ID of the room Example: my-room-id.
-            query (str | Unset): Query to filter threads. You can filter by `metadata` and `resolved`,
-                for example, `metadata["status"]:"open" AND metadata["color"]:"red" AND resolved:true`.
-                Learn more about [filtering threads with query
+            query (str | Unset): Query to filter threads. You can filter by `metadata`, `resolved`,
+                and `visibility`, for example, `metadata["status"]:"open" AND metadata["color"]:"red" AND
+                resolved:true AND visibility:"private"`. Learn more about [filtering threads with query
                 language](https://liveblocks.io/docs/guides/how-to-filter-threads-using-query-language).
                 Example: metadata["color"]:"blue".
 

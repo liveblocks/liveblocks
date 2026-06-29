@@ -266,6 +266,7 @@ describe("Liveblocks client with Liveblocks augmentation", () => {
           metadata: { priority: 1 },
         },
         metadata: { color: "red" },
+        visibility: "private",
       },
     });
 

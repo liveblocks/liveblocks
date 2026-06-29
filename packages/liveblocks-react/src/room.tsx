@@ -102,9 +102,9 @@ import type {
   FeedMessagesAsyncSuccess,
   FeedsAsyncResult,
   FeedsAsyncSuccess,
-  HistoryVersionDataAsyncResult,
   HistoryVersionsAsyncResult,
   HistoryVersionsAsyncSuccess,
+  HistoryVersionYjsDataAsyncResult,
   MutationContext,
   OmitFirstArg,
   RoomContextBundle,
@@ -223,6 +223,13 @@ function getRoomExtrasForClient<
   return extras as unknown as Omit<typeof extras, "store"> & {
     store: UmbrellaStore<TM, CM>;
   };
+}
+
+function getThreadVisibility<TM extends BaseMetadata, CM extends BaseMetadata>(
+  store: UmbrellaStore<TM, CM>,
+  threadId: string
+): ThreadData<TM, CM>["visibility"] | undefined {
+  return store.outputs.threads.get().getEvenIfDeleted(threadId)?.visibility;
 }
 
 function makeRoomExtrasForClient(client: OpaqueClient) {
@@ -1934,6 +1941,7 @@ function useCreateRoomThread<TM extends BaseMetadata, CM extends BaseMetadata>(
       const metadata = options.metadata ?? ({} as TM);
       const commentMetadata = options.commentMetadata ?? ({} as CM);
       const attachments = options.attachments;
+      const visibility = options.visibility ?? "public";
 
       const threadId = createThreadId();
       const commentId = createCommentId();
@@ -1960,6 +1968,7 @@ function useCreateRoomThread<TM extends BaseMetadata, CM extends BaseMetadata>(
         metadata,
         comments: [newComment],
         resolved: false,
+        visibility,
       };
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
@@ -1977,6 +1986,7 @@ function useCreateRoomThread<TM extends BaseMetadata, CM extends BaseMetadata>(
           threadId,
           commentId,
           body,
+          visibility,
           metadata,
           commentMetadata,
           attachmentIds,
@@ -1995,6 +2005,7 @@ function useCreateRoomThread<TM extends BaseMetadata, CM extends BaseMetadata>(
                 threadId,
                 commentId,
                 body,
+                visibility,
                 metadata,
                 commentMetadata,
               },
@@ -2041,18 +2052,24 @@ function useDeleteRoomThread(roomId: string): (threadId: string) => void {
         deletedAt: new Date(),
       });
 
-      client[kInternal].httpClient.deleteThread({ roomId, threadId }).then(
-        () => {
-          // Replace the optimistic update by the real thing
-          store.deleteThread(threadId, optimisticId);
-        },
-        (err: Error) =>
-          onMutationFailure(
-            optimisticId,
-            { type: "DELETE_THREAD_ERROR", roomId, threadId },
-            err
-          )
-      );
+      client[kInternal].httpClient
+        .deleteThread({
+          roomId,
+          threadId,
+          visibility: existing.visibility,
+        })
+        .then(
+          () => {
+            // Replace the optimistic update by the real thing
+            store.deleteThread(threadId, optimisticId);
+          },
+          (err: Error) =>
+            onMutationFailure(
+              optimisticId,
+              { type: "DELETE_THREAD_ERROR", roomId, threadId },
+              err
+            )
+        );
     },
     [client, roomId]
   );
@@ -2092,7 +2109,12 @@ function useEditRoomThreadMetadata<TM extends BaseMetadata>(roomId: string) {
       });
 
       client[kInternal].httpClient
-        .editThreadMetadata({ roomId, threadId, metadata })
+        .editThreadMetadata({
+          roomId,
+          threadId,
+          metadata,
+          visibility: getThreadVisibility(store, threadId),
+        })
         .then(
           (metadata) =>
             // Replace the optimistic update by the real thing
@@ -2152,7 +2174,13 @@ function useEditRoomCommentMetadata<CM extends BaseMetadata>(roomId: string) {
       });
 
       client[kInternal].httpClient
-        .editCommentMetadata({ roomId, threadId, commentId, metadata })
+        .editCommentMetadata({
+          roomId,
+          threadId,
+          commentId,
+          metadata,
+          visibility: getThreadVisibility(store, threadId),
+        })
         .then(
           (updatedMetadata) =>
             // Replace the optimistic update by the real thing
@@ -2247,6 +2275,7 @@ function useCreateRoomComment<CM extends BaseMetadata>(
           body,
           metadata,
           attachmentIds,
+          visibility: getThreadVisibility(store, threadId),
         })
         .then(
           (newComment) => {
@@ -2363,6 +2392,7 @@ function useEditRoomComment<CM extends BaseMetadata>(
           body,
           attachmentIds,
           metadata,
+          visibility: existing.visibility,
         })
         .then(
           (editedComment) => {
@@ -2430,7 +2460,12 @@ function useDeleteRoomComment(roomId: string) {
       });
 
       client[kInternal].httpClient
-        .deleteComment({ roomId, threadId, commentId })
+        .deleteComment({
+          roomId,
+          threadId,
+          commentId,
+          visibility: getThreadVisibility(store, threadId),
+        })
         .then(
           () => {
             // Replace the optimistic update by the real thing
@@ -2485,7 +2520,13 @@ function useAddRoomCommentReaction(roomId: string) {
       });
 
       client[kInternal].httpClient
-        .addReaction({ roomId, threadId, commentId, emoji })
+        .addReaction({
+          roomId,
+          threadId,
+          commentId,
+          emoji,
+          visibility: getThreadVisibility(store, threadId),
+        })
         .then(
           (addedReaction) => {
             // Replace the optimistic update by the real thing
@@ -2557,7 +2598,13 @@ function useRemoveRoomCommentReaction(roomId: string) {
       });
 
       client[kInternal].httpClient
-        .removeReaction({ roomId, threadId, commentId, emoji })
+        .removeReaction({
+          roomId,
+          threadId,
+          commentId,
+          emoji,
+          visibility: getThreadVisibility(store, threadId),
+        })
         .then(
           () => {
             // Replace the optimistic update by the real thing
@@ -2704,7 +2751,11 @@ function useMarkRoomThreadAsResolved(roomId: string) {
       });
 
       client[kInternal].httpClient
-        .markThreadAsResolved({ roomId, threadId })
+        .markThreadAsResolved({
+          roomId,
+          threadId,
+          visibility: getThreadVisibility(store, threadId),
+        })
         .then(
           () => {
             // Replace the optimistic update by the real thing
@@ -2764,7 +2815,11 @@ function useMarkRoomThreadAsUnresolved(roomId: string) {
       });
 
       client[kInternal].httpClient
-        .markThreadAsUnresolved({ roomId, threadId })
+        .markThreadAsUnresolved({
+          roomId,
+          threadId,
+          visibility: getThreadVisibility(store, threadId),
+        })
         .then(
           () => {
             // Replace the optimistic update by the real thing
@@ -3091,11 +3146,11 @@ function useRoomSubscriptionSettingsSuspense(): [
 /**
  * @internal
  */
-function useHistoryVersionData_withRoomContext(
+function useHistoryVersionYjsData_withRoomContext(
   RoomContext: Context<OpaqueRoom | null>,
   versionId: string
-): HistoryVersionDataAsyncResult {
-  const [state, setState] = useState<HistoryVersionDataAsyncResult>({
+): HistoryVersionYjsDataAsyncResult {
+  const [state, setState] = useState<HistoryVersionYjsDataAsyncResult>({
     isLoading: true,
   });
   const room = useRoom_withRoomContext(RoomContext);
@@ -3103,7 +3158,7 @@ function useHistoryVersionData_withRoomContext(
     setState({ isLoading: true });
     const load = async () => {
       try {
-        const response = await room[kInternal].getTextVersion(versionId);
+        const response = await room[kInternal].getYjsHistoryVersion(versionId);
         const buffer = await response.arrayBuffer();
         const data = new Uint8Array(buffer);
         setState({
@@ -3128,15 +3183,29 @@ function useHistoryVersionData_withRoomContext(
 }
 
 /**
- * Returns the version data bianry for a given version
+ * @deprecated Use `useHistoryVersionYjsData(versionId)` instead.
+ *
+ * Returns the version data binary for a given version
  *
  * @example
  * const {data} = useHistoryVersionData(versionId);
  */
 function useHistoryVersionData(
   versionId: string
-): HistoryVersionDataAsyncResult {
-  return useHistoryVersionData_withRoomContext(GlobalRoomContext, versionId);
+): HistoryVersionYjsDataAsyncResult {
+  return useHistoryVersionYjsData_withRoomContext(GlobalRoomContext, versionId);
+}
+
+/**
+ * Returns the Yjs data for a given version of the room.
+ *
+ * @example
+ * const { data, isLoading, error } = useHistoryVersionYjsData(versionId);
+ */
+function useHistoryVersionYjsData(
+  versionId: string
+): HistoryVersionYjsDataAsyncResult {
+  return useHistoryVersionYjsData_withRoomContext(GlobalRoomContext, versionId);
 }
 
 /**
@@ -3754,12 +3823,23 @@ function useSelfAccessFallback(
   );
 
   const getSnapshot = useCallback(() => {
-    const self = room?.id === roomId ? room.getSelf() : null;
-    if (resource === "comments" && requiredAccess === "write") {
-      return self?.canComment ?? true;
+    const isCommentsResource =
+      resource === "comments" ||
+      resource === "comments:public" ||
+      resource === "comments:private";
+
+    if (room?.id === roomId) {
+      const permissionMatrix = room[kInternal].getPermissionMatrix();
+      if (permissionMatrix !== undefined) {
+        return hasPermissionAccess(permissionMatrix, resource, requiredAccess);
+      }
     }
-    if (resource === "storage" && requiredAccess === "write") {
-      return self?.canWrite ?? true;
+
+    if (
+      requiredAccess === "write" &&
+      (isCommentsResource || resource === "storage")
+    ) {
+      return true;
     }
 
     return false;
@@ -4059,10 +4139,10 @@ export function createRoomContext<
     return useHistoryVersionsSuspense_withRoomContext(BoundRoomContext);
   }
 
-  function useHistoryVersionData_withBoundRoomContext(
-    ...args: Parameters<typeof useHistoryVersionData>
+  function useHistoryVersionYjsData_withBoundRoomContext(
+    ...args: Parameters<typeof useHistoryVersionYjsData>
   ) {
-    return useHistoryVersionData_withRoomContext(BoundRoomContext, ...args);
+    return useHistoryVersionYjsData_withRoomContext(BoundRoomContext, ...args);
   }
 
   function useRoomSubscriptionSettings_withBoundRoomContext() {
@@ -4233,7 +4313,9 @@ export function createRoomContext<
     // prettier-ignore
     useHistoryVersions: useHistoryVersions_withBoundRoomContext as TRoomBundle["useHistoryVersions"],
     // prettier-ignore
-    useHistoryVersionData: useHistoryVersionData_withBoundRoomContext as TRoomBundle["useHistoryVersionData"],
+    useHistoryVersionData: useHistoryVersionYjsData_withBoundRoomContext as TRoomBundle["useHistoryVersionData"],
+    // prettier-ignore
+    useHistoryVersionYjsData: useHistoryVersionYjsData_withBoundRoomContext as TRoomBundle["useHistoryVersionYjsData"],
 
     // prettier-ignore
     useRoomSubscriptionSettings: useRoomSubscriptionSettings_withBoundRoomContext as TRoomBundle["useRoomSubscriptionSettings"],
@@ -5010,6 +5092,7 @@ export {
   useHistoryVersionData,
   _useHistoryVersions as useHistoryVersions,
   _useHistoryVersionsSuspense as useHistoryVersionsSuspense,
+  useHistoryVersionYjsData,
   _useIsInsideRoom as useIsInsideRoom,
   useLostConnectionListener,
   useMarkRoomThreadAsRead,
