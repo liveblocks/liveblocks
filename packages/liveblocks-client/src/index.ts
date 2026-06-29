@@ -76,14 +76,17 @@ export type {
   ThreadData,
   ToJson,
   UploadAttachmentOptions,
+  UploadFileOptions,
   User,
 } from "@liveblocks/core";
 export {
   createClient,
+  createStorageFileId,
   defineAiTool,
   FeedRequestErrorCode,
   getMentionsFromCommentBody,
   isNotificationChannelEnabled,
+  LiveFile,
   LiveblocksError,
   LiveList,
   LiveMap,

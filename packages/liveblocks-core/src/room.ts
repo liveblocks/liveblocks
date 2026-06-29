@@ -16,6 +16,7 @@ import {
   isSameNodeOrChildOf,
   mergeStorageUpdates,
 } from "./crdts/liveblocks-helpers";
+import { LiveFile } from "./crdts/LiveFile";
 import { LiveObject } from "./crdts/LiveObject";
 import type { LiveStructure, LsonObject } from "./crdts/Lson";
 import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
@@ -546,6 +547,10 @@ export type GetThreadsSinceOptions = {
 };
 
 export type UploadAttachmentOptions = {
+  signal?: AbortSignal;
+};
+
+export type UploadFileOptions = {
   signal?: AbortSignal;
 };
 
@@ -1164,6 +1169,8 @@ export type Room<
    * await room.getAttachmentUrl("at_xxx");
    */
   getAttachmentUrl(attachmentId: string): Promise<string>;
+
+  uploadFile(file: File, options?: UploadFileOptions): Promise<LiveFile>;
 
   /**
    * Gets the user's subscription settings for the current room.
@@ -3736,6 +3743,19 @@ export function createRoom<
     return httpClient.getAttachmentUrl({ roomId, attachmentId });
   }
 
+  async function uploadFile(
+    file: File,
+    options: UploadFileOptions = {}
+  ): Promise<LiveFile> {
+    const data = await httpClient.uploadFile({
+      roomId,
+      file,
+      signal: options.signal,
+    });
+
+    return new LiveFile(data);
+  }
+
   function getSubscriptionSettings(
     options?: GetSubscriptionSettingsOptions
   ): Promise<RoomSubscriptionSettings> {
@@ -3933,6 +3953,7 @@ export function createRoom<
       prepareAttachment,
       uploadAttachment,
       getAttachmentUrl,
+      uploadFile,
 
       // Notifications
       getNotificationSettings: getSubscriptionSettings,

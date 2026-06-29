@@ -127,6 +127,7 @@ export {
   createCommentAttachmentId,
   createCommentId,
   createInboxNotificationId,
+  createStorageFileId,
   createThreadId,
 } from "./lib/createIds";
 export { DefaultMap } from "./lib/DefaultMap";
@@ -410,7 +411,11 @@ export type {
   StorageStatus,
   SyncSource,
 } from "./room";
-export type { GetThreadsOptions, UploadAttachmentOptions } from "./room";
+export type {
+  GetThreadsOptions,
+  UploadAttachmentOptions,
+  UploadFileOptions,
+} from "./room";
 export type {
   AiAssistantContentPart,
   AiAssistantMessage,
