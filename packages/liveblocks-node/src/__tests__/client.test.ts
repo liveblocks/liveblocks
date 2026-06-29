@@ -1322,6 +1322,70 @@ describe("client", () => {
     });
   });
 
+  describe("get storage file", () => {
+    const storageFile = {
+      id: "file_abc123",
+      name: "document.pdf",
+      mimeType: "application/pdf",
+      size: 12345,
+      url: "https://example.com/presigned-url",
+      expiresAt: "2024-01-01T00:00:00.000Z",
+    };
+
+    test("should return the storage file when getStorageFile receives a successful response", async () => {
+      server.use(
+        http.get(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/storage-files/:fileId`,
+          () => {
+            return HttpResponse.json(storageFile, { status: 200 });
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(
+        client.getStorageFile({
+          roomId: "room1",
+          fileId: "file_abc123",
+        })
+      ).resolves.toEqual(storageFile);
+    });
+
+    test("should throw a LiveblocksError when getStorageFile receives an error response", async () => {
+      const error = {
+        error: "STORAGE_FILE_NOT_FOUND",
+        message: "Storage file not found",
+      };
+
+      server.use(
+        http.get(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/storage-files/:fileId`,
+          () => {
+            return HttpResponse.json(error, { status: 404 });
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      try {
+        await client.getStorageFile({
+          roomId: "room1",
+          fileId: "file_abc123",
+        });
+        expect(true).toBe(false);
+      } catch (err) {
+        expect(err instanceof LiveblocksError).toBe(true);
+        if (err instanceof LiveblocksError) {
+          expect(err.status).toBe(404);
+          expect(err.message).toBe("Storage file not found");
+          expect(err.name).toBe("LiveblocksError");
+        }
+      }
+    });
+  });
+
   describe("mark thread as resolved", () => {
     test("should return the specified thread when markThreadAsResolved receives a successful response", async () => {
       server.use(

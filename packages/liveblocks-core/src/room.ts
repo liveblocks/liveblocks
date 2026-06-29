@@ -120,6 +120,7 @@ import type {
 } from "./protocol/ServerMsg";
 import { ServerMsgCode } from "./protocol/ServerMsg";
 import type {
+  LiveFileData,
   NodeMap,
   NodeStream,
   SerializedRootObject,
@@ -553,6 +554,12 @@ export type UploadAttachmentOptions = {
 export type UploadFileOptions = {
   signal?: AbortSignal;
 };
+
+type LiveFileReference = LiveFile | LiveFileData | string;
+
+function getLiveFileId(file: LiveFileReference): string {
+  return typeof file === "string" ? file : file.id;
+}
 
 type ListTextVersionsSinceOptions = {
   since: Date;
@@ -1172,6 +1179,8 @@ export type Room<
 
   uploadFile(file: File, options?: UploadFileOptions): Promise<LiveFile>;
 
+  getFileUrl(file: LiveFile | LiveFileData | string): Promise<string>;
+
   /**
    * Gets the user's subscription settings for the current room.
    *
@@ -1287,6 +1296,7 @@ export type PrivateRoomApi = {
   };
 
   attachmentUrlsStore: BatchStore<string, string>;
+  fileUrlsStore: BatchStore<string, string>;
 };
 
 function connectionAccessFromScopes(scopes: string[]): {
@@ -3756,6 +3766,10 @@ export function createRoom<
     return new LiveFile(data);
   }
 
+  function getFileUrl(file: LiveFileReference) {
+    return httpClient.getFileUrl({ roomId, fileId: getLiveFileId(file) });
+  }
+
   function getSubscriptionSettings(
     options?: GetSubscriptionSettingsOptions
   ): Promise<RoomSubscriptionSettings> {
@@ -3843,6 +3857,7 @@ export function createRoom<
         },
 
         attachmentUrlsStore: httpClient.getOrCreateAttachmentUrlsStore(roomId),
+        fileUrlsStore: httpClient.getOrCreateFileUrlsStore(roomId),
       },
 
       id: roomId,
@@ -3954,6 +3969,7 @@ export function createRoom<
       uploadAttachment,
       getAttachmentUrl,
       uploadFile,
+      getFileUrl,
 
       // Notifications
       getNotificationSettings: getSubscriptionSettings,

@@ -328,6 +328,9 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
 
   getOrCreateAttachmentUrlsStore(roomId: string): BatchStore<string, string>;
 
+  // Storage files
+  getFileUrl(options: { roomId: string; fileId: string }): Promise<string>;
+
   uploadFile({
     roomId,
     file,
@@ -337,6 +340,8 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     file: File;
     signal?: AbortSignal;
   }): Promise<LiveFileData>;
+
+  getOrCreateFileUrlsStore(roomId: string): BatchStore<string, string>;
 
   // Text editor
   createTextMention({
@@ -1355,6 +1360,46 @@ export function createApiClient<
     return batch.get(options.attachmentId);
   }
 
+  const fileUrlsBatchStoresByRoom = new DefaultMap<
+    string,
+    BatchStore<string, string>
+  >((roomId) => {
+    const batch = new Batch<string, string>(
+      async (batchedFileIds) => {
+        const fileIds = batchedFileIds.flat();
+        const { urls } = await httpClient.post<{
+          urls: (string | null)[];
+        }>(
+          url`/v2/c/rooms/${roomId}/storage-files/presigned-urls`,
+          await authManager.getAuthValue({
+            roomId,
+            resource: "storage",
+            access: "read",
+          }),
+          { fileIds }
+        );
+
+        return urls.map(
+          (url) =>
+            url ?? new Error("There was an error while getting this file's URL")
+        );
+      },
+      { delay: 50 }
+    );
+    return createBatchStore(batch);
+  });
+
+  function getOrCreateFileUrlsStore(
+    roomId: string
+  ): BatchStore<string, string> {
+    return fileUrlsBatchStoresByRoom.getOrCreate(roomId);
+  }
+
+  function getFileUrl(options: { roomId: string; fileId: string }) {
+    const batch = getOrCreateFileUrlsStore(options.roomId).batch;
+    return batch.get(options.fileId);
+  }
+
   /* -------------------------------------------------------------------------------------------------
    * Notifications (Room level)
    * -----------------------------------------------------------------------------------------------*/
@@ -1995,7 +2040,9 @@ export function createApiClient<
     uploadAttachment,
     getOrCreateAttachmentUrlsStore,
     // Room storage files
+    getFileUrl,
     uploadFile,
+    getOrCreateFileUrlsStore,
     // Room storage
     streamStorage,
     // Notifications

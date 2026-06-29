@@ -47,6 +47,7 @@ export type {
   JsonScalar,
   LiveblocksErrorContext,
   LiveListUpdate,
+  LiveFileData,
   LiveMapUpdate,
   LiveObjectUpdate,
   LiveStructure,

@@ -34,6 +34,7 @@ import type {
   Json,
   JsonObject,
   KDAD,
+  LiveFileData,
   NotificationSettings,
   NotificationSettingsPlain,
   Op,
@@ -151,6 +152,11 @@ export type AttachmentWithUrl = {
   mimeType: string;
   name: string;
   size: number;
+  url: string;
+  expiresAt: string;
+};
+
+export type StorageFileWithUrl = LiveFileData & {
   url: string;
   expiresAt: string;
 };
@@ -1950,6 +1956,23 @@ export class Liveblocks {
       throw await LiveblocksError.from(res);
     }
     return (await res.json()) as AttachmentWithUrl;
+  }
+
+  public async getStorageFile(
+    params: { roomId: string; fileId: string },
+    options?: RequestOptions
+  ): Promise<StorageFileWithUrl> {
+    const { roomId, fileId } = params;
+
+    const res = await this.#get(
+      url`/v2/rooms/${roomId}/storage-files/${fileId}`,
+      undefined,
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+    return await res.json();
   }
 
   /**

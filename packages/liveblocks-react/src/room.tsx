@@ -9,6 +9,8 @@ import type {
   History,
   Json,
   JsonObject,
+  LiveFile,
+  LiveFileData,
   LiveObject,
   LostConnectionEvent,
   LsonObject,
@@ -102,6 +104,8 @@ import type {
   FeedMessagesAsyncSuccess,
   FeedsAsyncResult,
   FeedsAsyncSuccess,
+  FileUrlAsyncResult,
+  FileUrlAsyncSuccess,
   HistoryVersionDataAsyncResult,
   HistoryVersionsAsyncResult,
   HistoryVersionsAsyncSuccess,
@@ -3603,6 +3607,31 @@ function selectorFor_useAttachmentUrl(
   };
 }
 
+type LiveFileReference = LiveFile | LiveFileData | string;
+
+function getLiveFileId(file: LiveFileReference): string {
+  return typeof file === "string" ? file : file.id;
+}
+
+function selectorFor_useFileUrl(
+  state: AsyncResult<string | undefined> | undefined
+): FileUrlAsyncResult {
+  if (state === undefined || state?.isLoading) {
+    return state ?? { isLoading: true };
+  }
+
+  if (state.error) {
+    return state;
+  }
+
+  assert(state.data !== undefined, "Unexpected missing file URL");
+
+  return {
+    isLoading: false,
+    url: state.data,
+  };
+}
+
 /**
  * @internal
  */
@@ -3649,6 +3678,46 @@ function useRoomAttachmentUrl(
     getAttachmentUrlState,
     getAttachmentUrlState,
     selectorFor_useAttachmentUrl,
+    shallow
+  );
+}
+
+function useFileUrl_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>,
+  file: LiveFileReference
+): FileUrlAsyncResult {
+  const room = useRoom_withRoomContext(RoomContext);
+  return useRoomFileUrl(file, room.id);
+}
+
+function useFileUrl(
+  file: LiveFile | LiveFileData | string
+): FileUrlAsyncResult {
+  return useFileUrl_withRoomContext(GlobalRoomContext, file);
+}
+
+function useRoomFileUrl(
+  file: LiveFileReference,
+  roomId: string
+): FileUrlAsyncResult {
+  const fileId = getLiveFileId(file);
+  const client = useClient();
+  const store = client[kInternal].httpClient.getOrCreateFileUrlsStore(roomId);
+
+  const getFileUrlState = useCallback(
+    () => store.getItemState(fileId),
+    [store, fileId]
+  );
+
+  useEffect(() => {
+    void store.enqueue(fileId);
+  }, [store, fileId]);
+
+  return useSyncExternalStoreWithSelector(
+    store.subscribe,
+    getFileUrlState,
+    getFileUrlState,
+    selectorFor_useFileUrl,
     shallow
   );
 }
@@ -3703,6 +3772,47 @@ function useAttachmentUrlSuspense(attachmentId: string) {
     GlobalRoomContext,
     attachmentId
   );
+}
+
+function useFileUrlSuspense_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>,
+  file: LiveFileReference
+): FileUrlAsyncSuccess {
+  const fileId = getLiveFileId(file);
+  const room = useRoom_withRoomContext(RoomContext);
+  const { fileUrlsStore } = room[kInternal];
+
+  const getFileUrlState = useCallback(
+    () => fileUrlsStore.getItemState(fileId),
+    [fileUrlsStore, fileId]
+  );
+  const fileUrlState = getFileUrlState();
+
+  if (!fileUrlState || fileUrlState.isLoading) {
+    throw fileUrlsStore.enqueue(fileId);
+  }
+
+  if (fileUrlState.error) {
+    throw fileUrlState.error;
+  }
+
+  const state = useSyncExternalStore(
+    fileUrlsStore.subscribe,
+    getFileUrlState,
+    getFileUrlState
+  );
+  assert(state !== undefined, "Unexpected missing state");
+  assert(!state.isLoading, "Unexpected loading state");
+  assert(!state.error, "Unexpected error state");
+  return {
+    isLoading: false,
+    url: state.data,
+    error: undefined,
+  };
+}
+
+function useFileUrlSuspense(file: LiveFile | LiveFileData | string) {
+  return useFileUrlSuspense_withRoomContext(GlobalRoomContext, file);
 }
 
 /**
@@ -4039,10 +4149,22 @@ export function createRoomContext<
     return useAttachmentUrl_withRoomContext(BoundRoomContext, ...args);
   }
 
+  function useFileUrl_withBoundRoomContext(
+    ...args: Parameters<typeof useFileUrl>
+  ) {
+    return useFileUrl_withRoomContext(BoundRoomContext, ...args);
+  }
+
   function useAttachmentUrlSuspense_withBoundRoomContext(
     ...args: Parameters<typeof useAttachmentUrlSuspense>
   ) {
     return useAttachmentUrlSuspense_withRoomContext(BoundRoomContext, ...args);
+  }
+
+  function useFileUrlSuspense_withBoundRoomContext(
+    ...args: Parameters<typeof useFileUrlSuspense>
+  ) {
+    return useFileUrlSuspense_withRoomContext(BoundRoomContext, ...args);
   }
 
   function useSearchComments_withBoundRoomContext(
@@ -4228,6 +4350,8 @@ export function createRoomContext<
     // prettier-ignore
     useAttachmentUrl: useAttachmentUrl_withBoundRoomContext as TRoomBundle["useAttachmentUrl"],
     // prettier-ignore
+    useFileUrl: useFileUrl_withBoundRoomContext as TRoomBundle["useFileUrl"],
+    // prettier-ignore
     useSearchComments: useSearchComments_withBoundRoomContext as TRoomBundle["useSearchComments"],
 
     // prettier-ignore
@@ -4343,6 +4467,8 @@ export function createRoomContext<
       useThreadSubscription: useThreadSubscription_withBoundRoomContext as TRoomBundle["suspense"]["useThreadSubscription"],
       // prettier-ignore
       useAttachmentUrl: useAttachmentUrlSuspense_withBoundRoomContext as TRoomBundle["suspense"]["useAttachmentUrl"],
+      // prettier-ignore
+      useFileUrl: useFileUrlSuspense_withBoundRoomContext as TRoomBundle["suspense"]["useFileUrl"],
 
       // prettier-ignore
       useHistoryVersions: useHistoryVersionsSuspense_withBoundRoomContext as TRoomBundle["suspense"]["useHistoryVersions"],
@@ -4977,6 +5103,8 @@ export {
   useAddRoomCommentReaction,
   useAttachmentUrl,
   useAttachmentUrlSuspense,
+  useFileUrl,
+  useFileUrlSuspense,
   _useBroadcastEvent as useBroadcastEvent,
   useCanRedo,
   useCanUndo,
@@ -5037,6 +5165,7 @@ export {
   useResolveMentionSuggestions,
   _useRoom as useRoom,
   useRoomAttachmentUrl,
+  useRoomFileUrl,
   useRoomPermissions,
   _useRoomSubscriptionSettings as useRoomSubscriptionSettings,
   _useRoomSubscriptionSettingsSuspense as useRoomSubscriptionSettingsSuspense,

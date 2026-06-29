@@ -4,6 +4,8 @@ import type {
   History,
   Json,
   JsonObject,
+  LiveFile,
+  LiveFileData,
   LiveObject,
   LostConnectionEvent,
   LsonObject,
@@ -262,6 +264,8 @@ export type GroupInfoAsyncSuccess = AsyncSuccess<DGI, "info">;
 
 export type AttachmentUrlAsyncResult = AsyncResult<string, "url">;
 export type AttachmentUrlAsyncSuccess = AsyncSuccess<string, "url">;
+export type FileUrlAsyncResult = AsyncResult<string, "url">;
+export type FileUrlAsyncSuccess = AsyncSuccess<string, "url">;
 
 export type GroupAsyncResult = AsyncResult<GroupData | undefined, "group">;
 export type GroupAsyncSuccess = AsyncSuccess<GroupData | undefined, "group">;
@@ -1329,6 +1333,8 @@ export type RoomContextBundle<
        */
       useAttachmentUrl(attachmentId: string): AttachmentUrlAsyncResult;
 
+      useFileUrl(file: LiveFile | LiveFileData | string): FileUrlAsyncResult;
+
       /**
        * (Private beta)  Returns a history of versions of the current room.
        *
@@ -1493,6 +1499,10 @@ export type RoomContextBundle<
              * const { url } = useAttachmentUrl("at_xxx");
              */
             useAttachmentUrl(attachmentId: string): AttachmentUrlAsyncSuccess;
+
+            useFileUrl(
+              file: LiveFile | LiveFileData | string
+            ): FileUrlAsyncSuccess;
           }
       >;
     }
