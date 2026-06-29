@@ -90,6 +90,7 @@ import type {
   QueryMetadata,
   ThreadData,
   ThreadDeleteInfo,
+  ThreadVisibility,
 } from "./protocol/Comments";
 import type { Feed, FeedMessage } from "./protocol/Feeds";
 import type {
@@ -535,6 +536,7 @@ export type GetThreadsOptions<TM extends BaseMetadata> = {
   cursor?: string;
   query?: {
     resolved?: boolean;
+    visibility?: ThreadVisibility;
     subscribed?: boolean;
     metadata?: Partial<QueryMetadata<TM>>;
   };
@@ -986,6 +988,7 @@ export type Room<
   createThread(options: {
     threadId?: string;
     commentId?: string;
+    visibility?: ThreadVisibility;
     metadata: TM | undefined;
     body: CommentBody;
     commentMetadata?: CM;
@@ -1247,6 +1250,8 @@ export type PrivateRoomApi = {
 
   // For reporting editor metadata
   reportTextEditor(editor: TextEditorType, rootKey: string): Promise<void>;
+
+  getPermissionMatrix(): PermissionMatrix | undefined;
 
   createTextMention(mentionId: string, mention: MentionData): Promise<void>;
   deleteTextMention(mentionId: string): Promise<void>;
@@ -3565,6 +3570,7 @@ export function createRoom<
     roomId: string;
     threadId?: string;
     commentId?: string;
+    visibility?: ThreadVisibility;
     metadata: TM | undefined;
     commentMetadata: CM | undefined;
     body: CommentBody;
@@ -3574,6 +3580,7 @@ export function createRoom<
       roomId,
       threadId: options.threadId,
       commentId: options.commentId,
+      visibility: options.visibility,
       metadata: options.metadata,
       body: options.body,
       commentMetadata: options.commentMetadata,
@@ -3792,6 +3799,8 @@ export function createRoom<
 
         // send metadata when using a text editor
         reportTextEditor,
+        getPermissionMatrix: () =>
+          context.dynamicSessionInfoSig.get()?.permissionMatrix,
         // create a text mention when using a text editor
         createTextMention,
         // delete a text mention when using a text editor

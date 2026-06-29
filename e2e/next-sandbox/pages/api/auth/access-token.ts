@@ -1,4 +1,4 @@
-import { nn } from "@liveblocks/core";
+import { nn, type Permission as PermissionToken } from "@liveblocks/core";
 import { Liveblocks } from "@liveblocks/node";
 import type { NextApiRequest, NextApiResponse } from "next";
 
@@ -16,6 +16,22 @@ const liveblocks = new Liveblocks({
     "Please specify NEXT_PUBLIC_LIVEBLOCKS_BASE_URL env var"
   ),
 });
+
+type QueryValue = string | string[] | undefined;
+
+function getQueryValues(value: QueryValue) {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  return Array.isArray(value) ? value : [value];
+}
+
+function getPermissions(value: QueryValue) {
+  const scopes = getQueryValues(value);
+
+  return scopes as PermissionToken[] | undefined;
+}
 
 export default async function accessTokenAuth(
   req: NextApiRequest,
@@ -35,7 +51,9 @@ export default async function accessTokenAuth(
       },
     }
   );
-  session.allow("e2e*", session.FULL_ACCESS);
+
+  const permissions = getPermissions(req.query.permissions);
+  session.allow("e2e*", permissions ?? session.FULL_ACCESS);
   const response = await session.authorize();
   res.status(response.status).end(response.body);
 }

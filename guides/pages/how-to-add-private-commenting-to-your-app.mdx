@@ -1,0 +1,195 @@
+---
+meta:
+  title: "How to add private commenting to your app"
+  description:
+    "Learn how to add private comments for admins and team members, alongside
+    your normal public comments."
+---
+
+Some apps have comments that only certain people should see—internal notes,
+moderation discussions, or team-only annotations. With Liveblocks Comments you
+can add these alongside your normal public comments, for example with a separate
+“Leave note” button next to the regular comment button.
+
+<Banner>
+
+Private threads are only available on Team and Enterprise plans.
+
+</Banner>
+
+## What we’re building
+
+This guide shows how to give two different thread permissions to two different
+groups of users, **admins** and **regular users**. Admins will be able to view
+both public and private threads, whereas regular users will only be able to view
+public threads.
+
+<Banner title="Looking for a full reference?">
+
+This guide focuses on building a private commenting UI. For the complete
+visibility and permissions reference, see
+[How to use public and private threads](/docs/guides/how-to-use-public-and-private-threads)
+and [Permissions](/docs/authentication/permissions).
+
+</Banner>
+
+## How private threads work
+
+A thread’s _visibility_ is set when it’s created, and every comment inside it
+shares the same visibility. Thread visibility is public by default, but a
+private thread can be created by passing the `visibility="private"` option.
+Liveblocks then only delivers private threads to users who have permission to
+read them.
+
+There are three pieces to building this:
+
+1. [Authenticate users](/docs/authentication), and give admins and regular users
+   different room permissions.
+2. Create private threads with
+   [`Composer`](/docs/api-reference/liveblocks-react-ui#Creating-private-threads)
+   or [`useCreateThread`](/docs/api-reference/liveblocks-react#useCreateThread).
+3. Render threads differently depending on their `visibility` property.
+
+## Authenticate users
+
+Before we get started, we need to decide on
+[permissions](/docs/authentication/permissions) for each group. Admin users will
+have full access to all threads, whereas regular users will only be able to see
+public threads.
+
+<Table columns={["14%", "42%", "auto"]}>
+
+| Group       | Permissions                            | Description                            |
+| ----------- | -------------------------------------- | -------------------------------------- |
+| `"admin"`   | `["*:write"]`                          | Full access, including all threads.    |
+| `"regular"` | `["*:write", "comments:private:none"]` | Full access, but hide private threads. |
+
+</Table>
+
+When creating a room, you can set these permissions for each group under
+`groupAccesses`.
+
+```ts
+const room = await liveblocks.createRoom("my-room-id", {
+  groupAccesses: {
+    // +++
+    admin: ["*:write"],
+    regular: ["*:write", "comments:private:none"],
+    //+++
+  },
+});
+```
+
+To assign users to these groups, use `groupIds` in
+[identifyUser](/docs/api-reference/liveblocks-node#id-tokens), inside your
+authentication endpoint.
+
+```ts
+// `marc` is an admin user
+const { body, status } = await liveblocks.identifyUser({
+  userId: "marc",
+  // +++
+  groupIds: ["admin"],
+  // +++
+});
+
+// `olivier` is a regular user
+const { body, status } = await liveblocks.identifyUser({
+  userId: "olivier",
+  // +++
+  groupIds: ["regular"],
+  // +++
+});
+```
+
+Permissions and authentication are now set up!
+
+<Banner title="Using ID tokens">
+
+Liveblocks recommends [ID token authentication](/docs/authentication) by
+default, which we’ve used in these code snippets. If you’re using
+[access tokens](/docs/authentication/access-token), you must set permissions in
+[`prepareSession`](/docs/api-reference/liveblocks-node#access-tokens) instead of
+on the room.
+
+</Banner>
+
+## Create a private thread
+
+To create a private thread, pass the `visibility="private"` option to the
+[`Composer`](/docs/api-reference/liveblocks-react-ui#Composer). In your app, you
+may wish to hide this behind a button that only admins can see.
+
+```tsx
+import { Composer } from "@liveblocks/react-ui";
+
+function PrivateCommentComposer() {
+  return (
+    // +++
+    <Composer visibility="private" />
+    // +++
+  );
+}
+```
+
+For more complex use cases, you can use the
+[`useCreateThread`](/docs/api-reference/liveblocks-react#useCreateThread) hook
+to create a private thread.
+
+## Render threads in your app
+
+To render threads in your app, use
+[`useThreads`](/docs/api-reference/liveblocks-react#useThreads) as usual, and
+each will only see the threads they are allowed to read. Check for the
+`visibility` property to render different UI for public and private threads.
+
+```tsx title="Public threads only"
+import { Thread } from "@liveblocks/react-ui";
+import { useThreads } from "@liveblocks/react/suspense";
+
+function ThreadList() {
+  // +++
+  const { threads } = useThreads();
+  // +++
+
+  return (
+    <>
+      {threads.map((thread) => (
+        <div key={thread.id}>
+          // +++
+          {thread.visibility === "private" && (
+            <div>Private, only your team can see this</div>
+          )}
+          // +++
+          <Thread thread={thread} />
+        </div>
+      ))}
+    </>
+  );
+}
+```
+
+### Filtering private threads
+
+If you’d like for admin users to _only_ see public or private threads, you can
+use the `query` option to filter threads by visibility.
+
+```tsx title="Public threads only"
+const { threads } = useThreads({
+  query: {
+    // +++
+    visibility: "private",
+    // +++
+  },
+});
+```
+
+## Next steps
+
+You now have public and private comments living side by side in the same room.
+Here’s where to learn more:
+
+- [How to use public and private threads](/docs/guides/how-to-use-public-and-private-threads)
+- [Permissions](/docs/authentication/permissions)
+- [Comments API reference](/docs/api-reference/liveblocks-react#Comments)
+- [Comments component reference](/docs/api-reference/liveblocks-react-ui#Comments)

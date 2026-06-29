@@ -641,6 +641,7 @@ describe("without Liveblocks augmentation", () => {
           version: 1,
           content: [{ type: "paragraph", children: [{ text: "hi" }] }],
         },
+        visibility: "private",
       });
 
       expectTypeOf(thread1.type).toEqualTypeOf<"thread">();

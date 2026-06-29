@@ -131,6 +131,7 @@ const parser = new QueryParser({
   fields: {
     resolved: "boolean",
     subscribed: "boolean",
+    visibility: "string",
   },
   indexableFields: {
     metadata: "mixed",
