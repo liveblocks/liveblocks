@@ -687,8 +687,8 @@ zen.route(
   zen.route("GET /v2/rooms/<roomId>/prewarm", () => NOT_IMPLEMENTED());
   zen.route("POST /v2/rooms/<roomId>/broadcast_event", () => NOT_IMPLEMENTED());
   zen.route("GET /v2/rooms/<roomId>/versions", () => NOT_IMPLEMENTED());
-  zen.route("GET /v2/rooms/<roomId>/version/<version>", () => NOT_IMPLEMENTED());
-  zen.route("POST /v2/rooms/<roomId>/version", () => NOT_IMPLEMENTED());
+  zen.route("GET /v2/rooms/<roomId>/versions/<versionId>/yjs", () => NOT_IMPLEMENTED());
+  zen.route("POST /v2/rooms/<roomId>/versions", () => NOT_IMPLEMENTED());
   zen.route("POST /v2/rooms/<roomId>/threads", () => NOT_IMPLEMENTED());
   zen.route("GET /v2/rooms/<roomId>/threads/<threadId>", () => NOT_IMPLEMENTED());
   zen.route("POST /v2/rooms/<roomId>/threads/<threadId>/mark-as-resolved", () => NOT_IMPLEMENTED());

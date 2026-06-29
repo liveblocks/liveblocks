@@ -186,6 +186,7 @@ describe("Liveblocks client without Liveblocks augmentation", () => {
           body: { version: 1, content: [] },
         },
         metadata: { color: "red" },
+        visibility: "private",
       },
     });
 

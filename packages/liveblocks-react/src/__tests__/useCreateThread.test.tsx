@@ -38,6 +38,7 @@ describe("useCreateThread", () => {
   test("should create a thread optimistically and override with thread coming from server", async () => {
     const roomId = nanoid();
     const fakeCreatedAt = addMinutes(new Date(), 5);
+    const visibility = "private";
 
     server.use(
       mockGetThreads(() => {
@@ -56,6 +57,7 @@ describe("useCreateThread", () => {
       }),
       mockCreateThread(async ({ request }) => {
         const json = await request.json();
+        expect(json.visibility).toBe(visibility);
 
         const comment = dummyCommentData({
           roomId,
@@ -70,6 +72,7 @@ describe("useCreateThread", () => {
           id: json.id,
           comments: [comment],
           createdAt: fakeCreatedAt,
+          visibility: json.visibility,
         });
 
         return HttpResponse.json(thread);
@@ -112,10 +115,12 @@ describe("useCreateThread", () => {
           version: 1,
           content: [{ type: "paragraph", children: [{ text: "Hello" }] }],
         },
+        visibility,
       });
     });
 
     expect(result.current.threadData.threads?.[0]).toEqual(thread);
+    expect(thread.visibility).toBe(visibility);
 
     // We're using the createdDate overriden by the server to ensure the optimistic update have been properly deleted
     await vi.waitFor(() =>

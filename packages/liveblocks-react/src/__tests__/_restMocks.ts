@@ -11,6 +11,7 @@ import type {
   SubscriptionData,
   ThreadData,
   ThreadDataWithDeleteInfo,
+  ThreadVisibility,
 } from "@liveblocks/core";
 import type { HttpResponseResolver } from "msw";
 import { http } from "msw";
@@ -63,6 +64,7 @@ export function mockCreateThread<
     { roomId: string },
     {
       id: string;
+      visibility?: ThreadVisibility;
       metadata?: TM;
       comment: { id: string; body: CommentBody; metadata?: CM };
     },

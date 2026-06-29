@@ -15,7 +15,11 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { mergeRoomPermissionScopes, nanoid, Permission } from "@liveblocks/core";
+import {
+  mergeRoomPermissionScopes,
+  nanoid,
+  Permission,
+} from "@liveblocks/core";
 import type { CreateTicketOptions } from "@liveblocks/server";
 import { ProtocolVersion } from "@liveblocks/server";
 

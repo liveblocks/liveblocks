@@ -37,6 +37,7 @@ Here’s an example of a thread object.
   roomId: "my-room-id",
   createdAt: Date <Fri Dec 15 2023 14:15:22 GMT+0000 (Greenwich Mean Time)>,
   resolved: false,
+  visibility: "public",
   comments: [
     // A list of comments in the thread
     // ...
@@ -71,14 +72,16 @@ a thread. The first comment in a thread is displayed at the top.
 
 Here’s an example of a single comment inside a thread object.
 
-```ts highlight="8-24"
+```ts
 {
   type: "thread",
   id: "th_sf8s6sh...",
   roomId: "my-room-id",
   createdAt: Date <Fri Dec 15 2023 14:15:22 GMT+0000 (Greenwich Mean Time)>,
   resolved: false,
+  visibility: "public",
   comments: [
+    // +++
     {
       type: "comment",
       threadId: "th_sf8s6sh...",
@@ -96,6 +99,7 @@ Here’s an example of a single comment inside a thread object.
         // ...
       },
     },
+    // +++
 
     // Other comments in the thread
     // ...
@@ -142,3 +146,25 @@ hidden completely.
 </Figure>
 
 A thread is only deleted after all its comments have been deleted.
+
+### Private comments
+
+Each thread has a `visibility` that is either `"public"` or `"private"`, and
+threads are public by default. Public and private threads work in the same way,
+but when authenticating users, you can select whether the user should have
+access to public or private threads.
+
+Using the visibility option allows you to
+[add private commenting to your app](/docs/guides/how-to-add-private-commenting-to-your-app),
+enabling different two different tiers of commenting permissions in one room.
+This is particularly useful for creating internal or team-only discussions,
+whilst still allowing public comments for other users.
+
+For a summary of the APIs, read
+[how to use public and private threads](/docs/guides/how-to-use-public-and-private-threads).
+
+<Banner>
+
+Private threads are only available on Team and Enterprise plans.
+
+</Banner>

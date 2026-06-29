@@ -5,6 +5,7 @@ import type {
   CommentData,
   ResolveGroupsInfoArgs,
   ResolveUsersArgs,
+  ThreadVisibility,
 } from "@liveblocks/core";
 import type { ChatInstance, Root } from "chat";
 import { beforeEach, describe, expect, test, vi } from "vitest";
@@ -109,6 +110,7 @@ function createDummyThread(
     createdAt: Date;
     updatedAt: Date;
     resolved: boolean;
+    visibility: ThreadVisibility;
     metadata: Record<string, unknown>;
   }>
 ) {
@@ -121,6 +123,7 @@ function createDummyThread(
     comments,
     metadata: {},
     resolved: false,
+    visibility: "public",
     ...overrides,
   };
 }
@@ -2084,6 +2087,7 @@ describe("LiveblocksAdapter", () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         resolved: false,
+        visibility: "public",
       });
 
       const result = await adapter.postChannelMessage(
@@ -2116,6 +2120,7 @@ describe("LiveblocksAdapter", () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         resolved: false,
+        visibility: "public",
       });
 
       await expect(

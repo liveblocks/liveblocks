@@ -53,6 +53,7 @@ export * from "~/lib/tryCatch";
 // YYY Maybe isolate these simple/common datastructures into a separate NPM package?
 export * from "~/lib/DefaultMap";
 export * from "~/lib/NestedMap";
+export * from "~/lib/semver";
 export { quote } from "~/lib/text";
 export * from "~/lib/UniqueMap";
 

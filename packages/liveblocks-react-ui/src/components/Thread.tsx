@@ -46,6 +46,7 @@ import type {
   ThreadOverrides,
 } from "../overrides";
 import { useOverrides } from "../overrides";
+import { commentsResourceForVisibility } from "../shared";
 import { cn } from "../utils/cn";
 import { useStableComponent } from "../utils/use-stable-component";
 import { useIntersectionCallback } from "../utils/use-visible";
@@ -440,7 +441,7 @@ export const Thread = forwardRef(
 
     const canComment = useHasPermissionAccess(
       thread.roomId,
-      "comments",
+      commentsResourceForVisibility(thread.visibility),
       "write"
     );
 
@@ -555,6 +556,7 @@ export const Thread = forwardRef(
                   className="lb-thread-comment"
                   data-unread={isUnread ? "" : undefined}
                   comment={comment}
+                  visibility={thread.visibility}
                   indentContent={indentCommentContent}
                   showDeleted={showDeletedComments}
                   showActions={showActions}
@@ -658,6 +660,7 @@ export const Thread = forwardRef(
             <Composer
               className="lb-thread-composer"
               threadId={thread.id}
+              visibility={thread.visibility}
               defaultCollapsed={showComposer === "collapsed" ? true : undefined}
               showAttachments={showAttachments}
               showFormattingControls={showComposerFormattingControls}
