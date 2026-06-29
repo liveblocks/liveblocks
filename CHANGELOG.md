@@ -44,8 +44,6 @@
   overwrite a room's top-level storage key with `initialStorage`, causing data
   loss. (Thanks @watemerald for reporting!)
 
-> > > > > > > origin/main
-
 ## v3.20.0
 
 ### All packages
