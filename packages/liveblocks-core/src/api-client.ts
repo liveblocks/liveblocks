@@ -356,7 +356,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     mentionId: string;
   }): Promise<void>;
 
-  getTextVersion({
+  getYjsHistoryVersion({
     roomId,
     versionId,
   }: {
@@ -364,7 +364,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     versionId: string;
   }): Promise<Response>;
 
-  createTextVersion({ roomId }: { roomId: string }): Promise<void>;
+  createVersionHistorySnapshot({ roomId }: { roomId: string }): Promise<void>;
 
   reportTextEditor({
     roomId,
@@ -376,20 +376,12 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     rootKey: string;
   }): Promise<void>;
 
-  listTextVersions({ roomId }: { roomId: string }): Promise<{
-    versions: {
-      type: "historyVersion";
-      kind: "yjs";
-      id: string;
-      authors: {
-        id: string;
-      }[];
-      createdAt: Date;
-    }[];
+  listHistoryVersions({ roomId }: { roomId: string }): Promise<{
+    versions: HistoryVersion[];
     requestedAt: Date;
   }>;
 
-  listTextVersionsSince({
+  listHistoryVersionsSince({
     roomId,
     since,
     signal,
@@ -398,15 +390,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     since: Date;
     signal?: AbortSignal;
   }): Promise<{
-    versions: {
-      type: "historyVersion";
-      kind: "yjs";
-      id: string;
-      authors: {
-        id: string;
-      }[];
-      createdAt: Date;
-    }[];
+    versions: HistoryVersion[];
     requestedAt: Date;
   }>;
 
@@ -1390,12 +1374,12 @@ export function createApiClient<
     );
   }
 
-  async function getTextVersion(options: {
+  async function getYjsHistoryVersion(options: {
     roomId: string;
     versionId: string;
   }) {
     return httpClient.rawGet(
-      url`/v2/c/rooms/${options.roomId}/y-version/${options.versionId}`,
+      url`/v2/c/rooms/${options.roomId}/versions/${options.versionId}/yjs`,
       await authManager.getAuthValue({
         roomId: options.roomId,
         resource: "storage",
@@ -1404,9 +1388,9 @@ export function createApiClient<
     );
   }
 
-  async function createTextVersion(options: { roomId: string }) {
+  async function createVersionHistorySnapshot(options: { roomId: string }) {
     await httpClient.rawPost(
-      url`/v2/c/rooms/${options.roomId}/version`,
+      url`/v2/c/rooms/${options.roomId}/versions`,
       await authManager.getAuthValue({
         roomId: options.roomId,
         resource: "storage",
@@ -1470,7 +1454,7 @@ export function createApiClient<
     return result.content[0].text;
   }
 
-  async function listTextVersions(options: { roomId: string }) {
+  async function listHistoryVersions(options: { roomId: string }) {
     const result = await httpClient.get<{
       versions: DateToString<HistoryVersion>[];
       meta: {
@@ -1496,7 +1480,7 @@ export function createApiClient<
     };
   }
 
-  async function listTextVersionsSince(options: {
+  async function listHistoryVersionsSince(options: {
     roomId: string;
     since: Date;
     signal?: AbortSignal;
@@ -1904,11 +1888,11 @@ export function createApiClient<
     // Room text editor
     createTextMention,
     deleteTextMention,
-    getTextVersion,
-    createTextVersion,
+    getYjsHistoryVersion,
+    createVersionHistorySnapshot,
     reportTextEditor,
-    listTextVersions,
-    listTextVersionsSince,
+    listHistoryVersions,
+    listHistoryVersionsSince,
     // Room attachments
     getAttachmentUrl,
     uploadAttachment,

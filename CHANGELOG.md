@@ -13,6 +13,8 @@
 
 ### `@liveblocks/client`
 
+- **Breaking:** Remove `type` and `kind` fields from `HistoryVersion` type. The
+  backend no longer returns these.
 - Add `visibility` to `createThread`.
 - Support querying by `visibility` in `getThreads`.
 
@@ -20,6 +22,8 @@
 
 - Add `visibility` to `useCreateThread`.
 - Support querying by `visibility` in `useThreads`.
+- Add `useHistoryVersionYjsData()` hook to retrieve raw Yjs binary data for a
+  given version. Deprecate `useHistoryVersionData()` in its favor.
 
 ### `@liveblocks/node`
 

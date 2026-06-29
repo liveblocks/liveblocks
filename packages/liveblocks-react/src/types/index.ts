@@ -358,7 +358,7 @@ export type NotificationSettingsAsyncSuccess = AsyncSuccess<NotificationSettings
 export type RoomSubscriptionSettingsAsyncSuccess = AsyncSuccess<RoomSubscriptionSettings, "settings">; // prettier-ignore
 export type RoomSubscriptionSettingsAsyncResult = AsyncResult<RoomSubscriptionSettings, "settings">; // prettier-ignore
 
-export type HistoryVersionDataAsyncResult = AsyncResult<Uint8Array>;
+export type HistoryVersionYjsDataAsyncResult = AsyncResult<Uint8Array>;
 
 export type HistoryVersionsAsyncSuccess = AsyncSuccess<HistoryVersion[], "versions">; // prettier-ignore
 export type HistoryVersionsAsyncResult = AsyncResult<HistoryVersion[], "versions">; // prettier-ignore
@@ -1344,12 +1344,22 @@ export type RoomContextBundle<
       useHistoryVersions(): HistoryVersionsAsyncResult;
 
       /**
+       * Returns the Yjs data for a given version of the room.
+       *
+       * @example
+       * const { data, error, isLoading } = useHistoryVersionYjsData(version.id);
+       */
+      useHistoryVersionYjsData(id: string): HistoryVersionYjsDataAsyncResult;
+
+      /**
+       * @deprecated Use `useHistoryVersionYjsData(id)` instead.
+       *
        * (Private beta) Returns the data of a specific version of the current room.
        *
        * @example
        * const { data, error, isLoading } = useHistoryVersionData(version.id);
        */
-      useHistoryVersionData(id: string): HistoryVersionDataAsyncResult;
+      useHistoryVersionData(id: string): HistoryVersionYjsDataAsyncResult;
 
       suspense: Resolve<
         RoomContextBundleCommon<P, S, U, E, TM, CM, FM, FMD> &
@@ -1471,14 +1481,6 @@ export type RoomContextBundle<
              * const { versions } = useHistoryVersions();
              */
             useHistoryVersions(): HistoryVersionsAsyncSuccess;
-
-            // /**
-            //  * Returns the data of a specific version of the current room's history.
-            //  *
-            //  * @example
-            //  * const { data } = useHistoryVersionData(version.id);
-            //  */
-            // useHistoryVersionData(versionId: string): HistoryVersionDataState;
 
             /**
              * Returns the user's subscription settings for the current room
