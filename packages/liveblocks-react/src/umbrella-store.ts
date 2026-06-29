@@ -1672,7 +1672,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
             throw new Error(`Room '${roomId}' is not available on client`);
           }
 
-          const result = await room[kInternal].listTextVersions();
+          const result = await room[kInternal].listHistoryVersions();
           this.historyVersions.update(roomId, result.versions);
 
           const lastRequestedAt =
@@ -2427,7 +2427,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
       `Room with id ${roomId} is not available on client`
     );
 
-    const updates = await room[kInternal].listTextVersionsSince({
+    const updates = await room[kInternal].listHistoryVersionsSince({
       since: lastRequestedAt,
       signal,
     });

@@ -1,6 +1,10 @@
 import { assertNever } from "../lib/assert";
 import type { Relax } from "../lib/Relax";
-import type { BaseMetadata, CommentBody } from "../protocol/Comments";
+import type {
+  BaseMetadata,
+  CommentBody,
+  ThreadVisibility,
+} from "../protocol/Comments";
 import type { Patchable } from "./Patchable";
 
 // All possible error originating from using Presence, Storage, or Yjs
@@ -36,6 +40,7 @@ type CommentsOrNotificationsErrorContext =
       threadId: string;
       commentId: string;
       body: CommentBody;
+      visibility: ThreadVisibility;
       metadata: BaseMetadata;
       commentMetadata: BaseMetadata;
     }

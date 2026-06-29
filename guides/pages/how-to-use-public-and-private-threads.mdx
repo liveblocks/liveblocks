@@ -1,0 +1,304 @@
+---
+meta:
+  title: "How to use public and private threads"
+  description:
+    "Learn how to create public and private threads, configure permissions, and
+    show filtered comment views."
+---
+
+Public and private threads let you separate the threads users can see in the
+same Liveblocks room.
+
+Visibility is set on a thread and all comments inside that thread use the same
+visibility. Set visibility when the thread is created; existing threads keep
+their current visibility.
+
+<Banner>
+
+Private threads are only available on Team and Enterprise plans.
+
+</Banner>
+
+## How it works
+
+Comment threads are public by default. To create a private thread, set
+`visibility: "private"` when the thread is created.
+
+```tsx
+import { Composer } from "@liveblocks/react-ui";
+
+function PrivateComposer() {
+  return <Composer visibility="private" />;
+}
+```
+
+Liveblocks checks permissions when threads are created and retrieved:
+
+- Users need `comments:public:read` or broader read access to receive public
+  threads.
+- Users need `comments:private:read` or broader read access to receive private
+  threads.
+- Users need `comments:private:write` or broader write access to create private
+  threads.
+
+The broader `comments:read`, `comments:write`, and `comments:none` permissions
+apply to both public and private threads. Use `comments:public:*` and
+`comments:private:*` to override one visibility.
+
+## Set up permissions
+
+Start by deciding which users can read or write private threads. For example,
+you might allow all users to write public threads, but only reviewers to read
+and write private threads.
+
+Every room permission list needs a base permission such as `*:read` or
+`*:write`. Then add granular comments permissions to override access for public
+or private threads.
+
+```ts
+const regularUserPermissions = [
+  "*:read",
+  "comments:public:write",
+  "comments:private:none",
+];
+
+const reviewerPermissions = [
+  "*:read",
+  "comments:public:write",
+  "comments:private:write",
+];
+```
+
+### With ID tokens
+
+With [ID token authentication](/docs/authentication#id-token-room-permissions),
+set permissions on the room using `defaultAccesses`, `groupsAccesses`, or
+`usersAccesses`.
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+await liveblocks.createRoom("my-room-id", {
+  // Everyone can read the room and create public threads
+  defaultAccesses: ["*:read", "comments:public:write", "comments:private:none"],
+
+  // Reviewers can also read and create private threads
+  groupsAccesses: {
+    reviewers: ["*:read", "comments:public:write", "comments:private:write"],
+  },
+});
+```
+
+If the room already exists, use
+[`liveblocks.updateRoom`](/docs/api-reference/liveblocks-node#post-rooms-roomId)
+with the same permission fields.
+
+### With access tokens
+
+With
+[access token authentication](/docs/authentication/access-token#room-permissions),
+grant the same permission lists when you prepare the user's session.
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+const session = liveblocks.prepareSession("marie@example.com");
+
+session.allow("my-room-id", [
+  "*:read",
+  "comments:public:write",
+  "comments:private:none",
+]);
+
+const { body, status } = await session.authorize();
+```
+
+Grant private comments access only for users that should see private threads.
+
+```ts
+session.allow("my-room-id", [
+  "*:read",
+  "comments:public:write",
+  "comments:private:write",
+]);
+```
+
+## Create private threads
+
+The default [`Composer`][] creates public threads unless you pass
+`visibility="private"`.
+
+```tsx
+import { Composer } from "@liveblocks/react-ui";
+
+function Comments() {
+  return (
+    <>
+      <Composer />
+      <Composer visibility="private" />
+    </>
+  );
+}
+```
+
+The private composer is disabled when the current user does not have write
+access to private threads.
+
+### With mutation hooks
+
+If you're building a custom composer, pass `visibility: "private"` to
+[`useCreateThread`][].
+
+```tsx
+import { type CommentBody } from "@liveblocks/client";
+import { useCreateThread } from "@liveblocks/react/suspense";
+
+function CreatePrivateThreadButton({ body }: { body: CommentBody }) {
+  const createThread = useCreateThread();
+
+  return (
+    <button
+      onClick={() => {
+        createThread({
+          body,
+          visibility: "private",
+        });
+      }}
+    >
+      Create private thread
+    </button>
+  );
+}
+```
+
+### From your server
+
+To create private threads from your back end, pass `visibility: "private"` to
+[`liveblocks.createThread`][].
+
+```ts
+await liveblocks.createThread({
+  roomId: "my-room-id",
+  data: {
+    visibility: "private",
+    comment: {
+      userId: "marie@example.com",
+      body: {
+        version: 1,
+        content: [{ type: "paragraph", children: [{ text: "Internal note" }] }],
+      },
+    },
+  },
+});
+```
+
+## Show threads in your app
+
+Use [`useThreads`][] as usual. Users only receive threads they have permission
+to read.
+
+```tsx
+import { Thread } from "@liveblocks/react-ui";
+import { useThreads } from "@liveblocks/react/suspense";
+
+function ThreadList() {
+  const { threads } = useThreads();
+
+  return (
+    <>
+      {threads.map((thread) => (
+        <Thread key={thread.id} thread={thread} />
+      ))}
+    </>
+  );
+}
+```
+
+A user without private comments access won't receive private threads from
+client-side APIs such as [`useThreads`][] or [`room.getThreads`][].
+
+## Filter public and private views
+
+Filtering is optional. Use it when you want separate UI views for public and
+private discussions.
+
+```tsx
+const { threads: publicThreads } = useThreads({
+  query: {
+    visibility: "public",
+  },
+});
+
+const { threads: privateThreads } = useThreads({
+  query: {
+    visibility: "private",
+  },
+});
+```
+
+You can combine visibility with the other thread query options.
+
+```tsx
+const { threads } = useThreads({
+  query: {
+    visibility: "private",
+    resolved: false,
+    metadata: {
+      status: "open",
+    },
+  },
+});
+```
+
+On the server, use the same query object with [`liveblocks.getThreads`][].
+
+```ts
+const { data: threads } = await liveblocks.getThreads({
+  roomId: "my-room-id",
+  query: {
+    visibility: "private",
+    metadata: {
+      status: "open",
+    },
+  },
+});
+```
+
+The REST API also supports visibility in the
+[thread query language](/docs/guides/how-to-filter-threads-using-query-language).
+
+```js
+visibility:'private' AND metadata['status']:'open'
+```
+
+## Troubleshooting
+
+If a user can't see private threads, check that their room permission list
+includes `comments:private:read`, `comments:private:write`, or a broader
+permission such as `comments:read` or `*:read`, with no more specific
+`comments:private:none` override.
+
+If a user can't create private threads, check that their room permission list
+includes `comments:private:write`, `comments:write`, or `*:write`, with no more
+specific `comments:private:none` or `comments:private:read` override.
+
+If `useThreads({ query: { visibility: "private" } })` returns an empty list for
+one user but not another, the first user probably does not have read access to
+private threads.
+
+[`Composer`]: /docs/api-reference/liveblocks-react-ui#Composer
+[`liveblocks.createThread`]:
+  /docs/api-reference/liveblocks-node#post-rooms-roomId-threads
+[`liveblocks.getThreads`]:
+  /docs/api-reference/liveblocks-node#get-rooms-roomId-threads
+[`room.getThreads`]: /docs/api-reference/liveblocks-client#Room.getThreads
+[`useCreateThread`]: /docs/api-reference/liveblocks-react#useCreateThread
+[`useThreads`]: /docs/api-reference/liveblocks-react#useThreads

@@ -126,7 +126,7 @@
       },
       "post": {
         "summary": "Create room",
-        "description": "This endpoint creates a new room. `id` and `defaultAccesses` are required. When provided with a `?idempotent` query argument, will not return a 409 when the room already exists, but instead return the existing room as-is. Corresponds to [`liveblocks.createRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms), or to [`liveblocks.getOrCreateRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-or-create-rooms-roomId) when `?idempotent` is provided. \n- `defaultAccesses` could be `[]` or `[\"*:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"*:write\"]` for every records. `usersAccesses` can contain 1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.\n- `groupsAccesses` are optional fields.\n",
+        "description": "This endpoint creates a new room. `id` and `defaultAccesses` are required. When provided with a `?idempotent` query argument, will not return a 409 when the room already exists, but instead return the existing room as-is. Corresponds to [`liveblocks.createRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms), or to [`liveblocks.getOrCreateRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-or-create-rooms-roomId) when `?idempotent` is provided. \n- `defaultAccesses` is the default room permission list, for example `[]`, `[\"*:read\"]`, `[\"*:write\"]`, or a more granular permission list. \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` contains user-specific permission lists. It can contain 1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.\n- `groupsAccesses` contains group-specific permission lists and is optional.\n",
         "tags": ["Room"],
         "parameters": [
           {
@@ -342,7 +342,7 @@
           }
         },
         "operationId": "update-room",
-        "description": "This endpoint updates specific properties of a room. Corresponds to [`liveblocks.updateRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomid). \n\nIt’s not necessary to provide the entire room’s information. \nSetting a property to `null` means to delete this property. For example, if you want to remove access to a specific user without losing other users: \n``{\n    \"usersAccesses\": {\n        \"john\": null\n    }\n}``\n`defaultAccesses`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.\n\n- `defaultAccesses` could be `[]` or `[\"*:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"*:write\"]` for every records. `usersAccesses` can contain 1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.\n- `groupsAccesses` could be `[]` or `[\"*:write\"]` for every records. `groupsAccesses` can contain 1000 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.",
+        "description": "This endpoint updates specific properties of a room. Corresponds to [`liveblocks.updateRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomid). \n\nIt’s not necessary to provide the entire room’s information. \nSetting a property to `null` means to delete this property. For example, if you want to remove access to a specific user without losing other users: \n``{\n    \"usersAccesses\": {\n        \"john\": null\n    }\n}``\n`defaultAccesses`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.\n\n- `defaultAccesses` is the default room permission list, for example `[]`, `[\"*:read\"]`, `[\"*:write\"]`, or a more granular permission list.\n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` contains user-specific permission lists. It can contain 1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.\n- `groupsAccesses` contains group-specific permission lists and is optional.",
         "requestBody": {
           "required": true,
           "content": {
@@ -575,7 +575,7 @@
           }
         },
         "operationId": "upsert-room",
-        "description": "This endpoint updates specific properties of a room. Corresponds to [`liveblocks.upsertRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#upsert-rooms-roomId). \n\nIt’s not necessary to provide the entire room’s information. \nSetting a property to `null` means to delete this property. For example, if you want to remove access to a specific user without losing other users: \n``{\n    \"usersAccesses\": {\n        \"john\": null\n    }\n}``\n`defaultAccesses`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.\n\n- `defaultAccesses` could be `[]` or `[\"*:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"*:write\"]` for every records. `usersAccesses` can contain 1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.\n- `groupsAccesses` could be `[]` or `[\"*:write\"]` for every records. `groupsAccesses` can contain 1000 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.",
+        "description": "This endpoint updates specific properties of a room. Corresponds to [`liveblocks.upsertRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#upsert-rooms-roomId). \n\nIt’s not necessary to provide the entire room’s information. \nSetting a property to `null` means to delete this property. For example, if you want to remove access to a specific user without losing other users: \n``{\n    \"usersAccesses\": {\n        \"john\": null\n    }\n}``\n`defaultAccesses`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.\n\n- `defaultAccesses` is the default room permission list, for example `[]`, `[\"*:read\"]`, `[\"*:write\"]`, or a more granular permission list.\n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` contains user-specific permission lists. It can contain 1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.\n- `groupsAccesses` contains group-specific permission lists and is optional.",
         "requestBody": {
           "required": true,
           "content": {
@@ -1487,10 +1487,10 @@
     },
     "/rooms/{roomId}/versions": {
       "get": {
-        "summary": "Get Yjs version history",
+        "summary": "Get Version History",
         "description": "This endpoint returns a list of version history snapshots for the room's Yjs document. The versions are returned sorted by creation date, from newest to oldest.",
         "tags": ["Yjs"],
-        "operationId": "get-yjs-versions",
+        "operationId": "get-version-history",
         "parameters": [
           {
             "name": "roomId",
@@ -1530,14 +1530,13 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GetYjsVersionsResponse"
+                  "$ref": "#/components/schemas/GetVersionHistoryResponse"
                 },
                 "examples": {
                   "example": {
                     "value": {
                       "data": [
                         {
-                          "type": "historyVersion",
                           "id": "vh_abc123",
                           "createdAt": "2024-10-15T10:30:00.000Z",
                           "authors": [
@@ -1547,8 +1546,7 @@
                             {
                               "id": "user-456"
                             }
-                          ],
-                          "kind": "yjs"
+                          ]
                         }
                       ],
                       "nextCursor": "eyJjcmVhdGVkQXQiOiIyMDI0LTEwLTE1VDEwOjMwOjAwLjAwMFoifQ=="
@@ -1568,9 +1566,57 @@
             "$ref": "#/components/responses/404"
           }
         }
+      },
+      "post": {
+        "summary": "Create version history snapshot",
+        "description": "This endpoint creates a new version history snapshot for the room. Currently only works for Yjs.",
+        "tags": ["Yjs"],
+        "operationId": "create-version-history-snapshot",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID of the room",
+              "example": "my-room-id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the created version ID.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateVersionHistorySnapshotResponse"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "data": {
+                        "id": "vh_abc123"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        }
       }
     },
-    "/rooms/{roomId}/version/{versionId}": {
+    "/rooms/{roomId}/versions/{versionId}/yjs": {
       "get": {
         "summary": "Get Yjs document version",
         "description": "This endpoint returns a specific version of the room's Yjs document encoded as a binary Yjs update.",
@@ -1622,56 +1668,6 @@
         }
       }
     },
-    "/rooms/{roomId}/version": {
-      "post": {
-        "summary": "Create Yjs version snapshot",
-        "description": "This endpoint creates a new version history snapshot for the room's Yjs document.",
-        "tags": ["Yjs"],
-        "operationId": "create-yjs-version",
-        "parameters": [
-          {
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "description": "ID of the room",
-              "example": "my-room-id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success. Returns the created version ID.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CreateYjsVersionResponse"
-                },
-                "examples": {
-                  "example": {
-                    "value": {
-                      "data": {
-                        "id": "vh_abc123"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403"
-          },
-          "404": {
-            "$ref": "#/components/responses/404"
-          }
-        }
-      }
-    },
     "/rooms/{roomId}/threads": {
       "get": {
         "summary": "Get room threads",
@@ -1691,7 +1687,7 @@
           {
             "schema": {
               "type": "string",
-              "description": "Query to filter threads. You can filter by `metadata` and `resolved`, for example, `metadata[\"status\"]:\"open\" AND metadata[\"color\"]:\"red\" AND resolved:true`. Learn more about [filtering threads with query language](https://liveblocks.io/docs/guides/how-to-filter-threads-using-query-language).",
+              "description": "Query to filter threads. You can filter by `metadata`, `resolved`, and `visibility`, for example, `metadata[\"status\"]:\"open\" AND metadata[\"color\"]:\"red\" AND resolved:true AND visibility:\"private\"`. Learn more about [filtering threads with query language](https://liveblocks.io/docs/guides/how-to-filter-threads-using-query-language).",
               "example": "metadata[\"color\"]:\"blue\""
             },
             "in": "query",
@@ -1733,6 +1729,8 @@
                           ],
                           "createdAt": "2019-08-24T14:15:22Z",
                           "metadata": {},
+                          "resolved": false,
+                          "visibility": "public",
                           "updatedAt": "2019-08-24T14:15:22Z"
                         }
                       ]
@@ -1799,9 +1797,12 @@
                         }
                       ],
                       "createdAt": "2022-07-13T14:32:50.697Z",
+                      "updatedAt": "2022-07-13T14:32:50.697Z",
                       "metadata": {
                         "color": "blue"
-                      }
+                      },
+                      "resolved": false,
+                      "visibility": "public"
                     }
                   }
                 }
@@ -1911,6 +1912,8 @@
                       ],
                       "createdAt": "2019-08-24T14:15:22Z",
                       "metadata": {},
+                      "resolved": false,
+                      "visibility": "public",
                       "updatedAt": "2019-08-24T14:15:22Z"
                     }
                   }
@@ -7197,6 +7200,12 @@
           "comments:read",
           "comments:write",
           "comments:none",
+          "comments:public:read",
+          "comments:public:write",
+          "comments:public:none",
+          "comments:private:read",
+          "comments:private:write",
+          "comments:private:none",
           "feeds:read",
           "feeds:write",
           "feeds:none"
@@ -7915,17 +7924,13 @@
           }
         }
       },
-      "YjsVersion": {
-        "title": "YjsVersion",
+      "HistoryVersion": {
+        "title": "HistoryVersion",
         "type": "object",
         "properties": {
           "id": {
             "type": "string",
             "description": "Unique identifier for the version"
-          },
-          "type": {
-            "type": "string",
-            "const": "historyVersion"
           },
           "createdAt": {
             "type": "string",
@@ -7944,47 +7949,27 @@
               }
             },
             "description": "List of users who contributed to this version"
-          },
-          "kind": {
-            "type": "string",
-            "const": "yjs"
           }
         },
-        "required": ["id", "type", "createdAt", "kind"],
+        "required": ["id", "createdAt", "authors"],
         "example": {
           "id": "vh_abc123",
-          "type": "historyVersion",
           "createdAt": "2024-10-15T10:30:00.000Z",
-          "authors": [
-            {
-              "id": "user-123"
-            },
-            {
-              "id": "user-456"
-            }
-          ],
-          "kind": "yjs"
+          "authors": [{ "id": "user-123" }, { "id": "user-456" }]
         }
       },
-      "GetYjsVersionsResponse": {
-        "title": "GetYjsVersionsResponse",
+      "GetVersionHistoryResponse": {
+        "title": "GetVersionHistoryResponse",
         "type": "object",
         "properties": {
           "nextCursor": {
             "description": "Cursor for pagination to get the next page of results",
-            "oneOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "oneOf": [{ "type": "string" }, { "type": "null" }]
           },
           "data": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/YjsVersion"
+              "$ref": "#/components/schemas/HistoryVersion"
             }
           }
         },
@@ -7993,22 +7978,16 @@
         "example": {
           "data": [
             {
-              "type": "historyVersion",
               "id": "vh_abc123",
               "createdAt": "2024-10-15T10:30:00.000Z",
-              "authors": [
-                {
-                  "id": "user-123"
-                }
-              ],
-              "kind": "yjs"
+              "authors": [{ "id": "user-123" }]
             }
           ],
           "nextCursor": "eyJjcmVhdGVkQXQiOiIyMDI0LTEwLTE1VDEwOjMwOjAwLjAwMFoifQ=="
         }
       },
-      "CreateYjsVersionResponse": {
-        "title": "CreateYjsVersionResponse",
+      "CreateVersionHistorySnapshotResponse": {
+        "title": "CreateVersionHistorySnapshotResponse",
         "type": "object",
         "properties": {
           "data": {
@@ -8070,7 +8049,8 @@
               "createdAt": "2022-07-13T14:32:50.697Z",
               "updatedAt": "2022-07-13T14:32:50.697Z",
               "metadata": {},
-              "resolved": false
+              "resolved": false,
+              "visibility": "public"
             }
           ]
         }
@@ -8104,6 +8084,10 @@
           "resolved": {
             "type": "boolean"
           },
+          "visibility": {
+            "type": "string",
+            "enum": ["public", "private"]
+          },
           "updatedAt": {
             "type": "string",
             "format": "date-time"
@@ -8117,7 +8101,8 @@
           "createdAt",
           "updatedAt",
           "metadata",
-          "resolved"
+          "resolved",
+          "visibility"
         ],
         "example": {
           "type": "thread",
@@ -8145,7 +8130,8 @@
           "metadata": {
             "color": "blue"
           },
-          "resolved": false
+          "resolved": false,
+          "visibility": "public"
         }
       },
       "Feed": {
@@ -8365,6 +8351,11 @@
           },
           "metadata": {
             "$ref": "#/components/schemas/ThreadMetadata"
+          },
+          "visibility": {
+            "type": "string",
+            "enum": ["public", "private"],
+            "default": "public"
           }
         },
         "required": ["comment"],
@@ -8384,7 +8375,8 @@
             },
             "metadata": {
               "color": "blue"
-            }
+            },
+            "visibility": "private"
           }
         ]
       },
