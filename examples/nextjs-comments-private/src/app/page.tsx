@@ -61,10 +61,7 @@ function Example({
           className="lb-root composer"
           data-visibility={isComposerPrivate ? "private" : undefined}
         >
-          <Composer
-            collapsed={false}
-            visibility={isComposerPrivate ? "private" : undefined}
-          />
+          <Composer visibility={isComposerPrivate ? "private" : undefined} />
           {isInternalUser ? (
             <div className="composer-visibility">
               <Switch.Root
