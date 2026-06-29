@@ -1464,6 +1464,31 @@ declare global {
 }
 ```
 
+##### Creating private threads
+
+Threads are public by default. If you’d like the composer to create private
+threads, you can add a `visibility` prop.
+
+```tsx
+import { Composer } from "@liveblocks/react-ui";
+
+// Creates a new private thread
+function Component() {
+  return <Composer visibility="private" />;
+}
+```
+
+Permissions are taken into account when threads are created and retrieved. A
+user without write access to private threads can’t create a private thread, and
+users without read access to private threads won’t receive private threads from
+[`useThreads`](/docs/api-reference/liveblocks-react#useThreads).
+
+<Banner>
+
+Private threads are only available on Team and Enterprise plans.
+
+</Banner>
+
 ##### Replying to a thread
 
 If you provide a `threadId`, then submitting the composer will add a new reply
@@ -1561,6 +1586,14 @@ Learn more about mutation hooks under
   </PropertiesListItem>
   <PropertiesListItem name="metadata" type="ThreadMetadata">
     The metadata of the thread to create.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="visibility"
+    type='"public" | "private"'
+    defaultValue='"public"'
+  >
+    Whether to create a public or private thread. Only applies when creating a
+    new thread, and requires write access to the selected visibility.
   </PropertiesListItem>
   <PropertiesListItem
     name="commentMetadata"
