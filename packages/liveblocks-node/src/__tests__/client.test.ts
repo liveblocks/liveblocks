@@ -1328,7 +1328,7 @@ describe("client", () => {
 
   describe("get storage file", () => {
     const storageFile = {
-      id: "file_abc123",
+      id: "fl_abc123",
       name: "document.pdf",
       mimeType: "application/pdf",
       size: 12345,
@@ -1351,7 +1351,7 @@ describe("client", () => {
       await expect(
         client.getStorageFile({
           roomId: "room1",
-          fileId: "file_abc123",
+          fileId: "fl_abc123",
         })
       ).resolves.toEqual(storageFile);
     });
@@ -1376,7 +1376,7 @@ describe("client", () => {
       try {
         await client.getStorageFile({
           roomId: "room1",
-          fileId: "file_abc123",
+          fileId: "fl_abc123",
         });
         expect(true).toBe(false);
       } catch (err) {

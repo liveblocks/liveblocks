@@ -3,7 +3,7 @@ import { nanoid } from "./nanoid";
 const THREAD_ID_PREFIX = "th";
 const COMMENT_ID_PREFIX = "cm";
 const COMMENT_ATTACHMENT_ID_PREFIX = "at";
-const STORAGE_FILE_ID_PREFIX = "file";
+const STORAGE_FILE_ID_PREFIX = "fl";
 const INBOX_NOTIFICATION_ID_PREFIX = "in";
 
 function createOptimisticId(prefix: string): string {
