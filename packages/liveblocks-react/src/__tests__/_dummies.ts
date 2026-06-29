@@ -30,6 +30,7 @@ export function dummyThreadData({
     roomId,
     metadata: {},
     resolved: false,
+    visibility: "public",
     ...overrides,
     comments: overrides.comments
       ? overrides.comments.map((comment) => ({ ...comment, threadId }))

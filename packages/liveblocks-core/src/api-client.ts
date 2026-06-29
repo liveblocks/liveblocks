@@ -25,7 +25,7 @@ import { stringifyOrLog as stringify } from "./lib/stringify";
 import type { QueryParams, URLSafeString } from "./lib/url";
 import { url, urljoin } from "./lib/url";
 import { raise } from "./lib/utils";
-import type { RoomPermissions } from "./permissions";
+import type { RoomPermissions, RoomPermissionsResource } from "./permissions";
 import type {
   ContextualPromptContext,
   ContextualPromptResponse,
@@ -45,6 +45,7 @@ import type {
   ThreadDataPlain,
   ThreadDeleteInfo,
   ThreadDeleteInfoPlain,
+  ThreadVisibility,
 } from "./protocol/Comments";
 import type { GroupData, GroupDataPlain } from "./protocol/Groups";
 import type {
@@ -78,6 +79,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     cursor?: string;
     query?: {
       resolved?: boolean;
+      visibility?: ThreadVisibility;
       subscribed?: boolean;
       metadata?: Partial<QueryMetadata<TM>>;
     };
@@ -141,6 +143,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     roomId: string;
     threadId?: string;
     commentId?: string;
+    visibility?: ThreadVisibility;
     metadata: TM | undefined;
     commentMetadata: CM | undefined;
     body: CommentBody;
@@ -159,6 +162,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
   }: {
     roomId: string;
     threadId: string;
+    visibility?: ThreadVisibility;
   }): Promise<void>;
 
   editThreadMetadata({
@@ -169,6 +173,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     roomId: string;
     metadata: Patchable<TM>;
     threadId: string;
+    visibility?: ThreadVisibility;
   }): Promise<TM>;
 
   editCommentMetadata({
@@ -181,6 +186,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     threadId: string;
     commentId: string;
     metadata: Patchable<CM>;
+    visibility?: ThreadVisibility;
   }): Promise<CM>;
 
   createComment({
@@ -197,6 +203,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     body: CommentBody;
     metadata?: CM;
     attachmentIds?: string[];
+    visibility?: ThreadVisibility;
   }): Promise<CommentData<CM>>;
 
   editComment({
@@ -213,6 +220,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     body: CommentBody;
     attachmentIds?: string[];
     metadata?: Patchable<CM>;
+    visibility?: ThreadVisibility;
   }): Promise<CommentData<CM>>;
 
   deleteComment({
@@ -223,6 +231,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     roomId: string;
     threadId: string;
     commentId: string;
+    visibility?: ThreadVisibility;
   }): Promise<void>;
 
   addReaction({
@@ -235,6 +244,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     threadId: string;
     commentId: string;
     emoji: string;
+    visibility?: ThreadVisibility;
   }): Promise<CommentUserReaction>;
 
   removeReaction({
@@ -247,6 +257,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     threadId: string;
     commentId: string;
     emoji: string;
+    visibility?: ThreadVisibility;
   }): Promise<void>;
 
   markThreadAsResolved({
@@ -255,6 +266,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
   }: {
     roomId: string;
     threadId: string;
+    visibility?: ThreadVisibility;
   }): Promise<void>;
 
   markThreadAsUnresolved({
@@ -263,6 +275,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
   }: {
     roomId: string;
     threadId: string;
+    visibility?: ThreadVisibility;
   }): Promise<void>;
 
   subscribeToThread({
@@ -471,6 +484,7 @@ export interface LiveblocksHttpApi<
     cursor?: string;
     query?: {
       resolved?: boolean;
+      visibility?: ThreadVisibility;
       metadata?: Partial<QueryMetadata<TM>>;
     };
   }): Promise<{
@@ -505,6 +519,20 @@ export interface LiveblocksHttpApi<
   groupsStore: BatchStore<GroupData | undefined, string>;
 
   getGroup(groupId: string): Promise<GroupData | undefined>;
+}
+
+function commentsResourceForVisibility(
+  visibility: ThreadVisibility | undefined
+): RoomPermissionsResource {
+  if (visibility === "private") {
+    return "comments:private";
+  }
+
+  if (visibility === "public") {
+    return "comments:public";
+  }
+
+  return "comments";
 }
 
 export function createApiClient<
@@ -580,6 +608,7 @@ export function createApiClient<
     cursor?: string;
     query?: {
       resolved?: boolean;
+      visibility?: ThreadVisibility;
       subscribed?: boolean;
       metadata?: Partial<QueryMetadata<TM>>;
     };
@@ -609,7 +638,7 @@ export function createApiClient<
         url`/v2/c/rooms/${options.roomId}/threads`,
         await authManager.getAuthValue({
           roomId: options.roomId,
-          resource: "comments",
+          resource: commentsResourceForVisibility(options.query?.visibility),
           access: "read",
         }),
         {
@@ -697,6 +726,7 @@ export function createApiClient<
     roomId: string;
     threadId?: string;
     commentId?: string;
+    visibility?: ThreadVisibility;
     metadata: TM | undefined;
     body: CommentBody;
     commentMetadata?: CM;
@@ -709,11 +739,12 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/threads`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        resource: "comments",
+        resource: commentsResourceForVisibility(options.visibility ?? "public"),
         access: "write",
       }),
       {
         id: threadId,
+        visibility: options.visibility,
         comment: {
           id: commentId,
           body: options.body,
@@ -727,12 +758,16 @@ export function createApiClient<
     return convertToThreadData<TM, CM>(thread);
   }
 
-  async function deleteThread(options: { roomId: string; threadId: string }) {
+  async function deleteThread(options: {
+    roomId: string;
+    threadId: string;
+    visibility?: ThreadVisibility;
+  }) {
     await httpClient.delete(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        resource: "comments",
+        resource: commentsResourceForVisibility(options.visibility),
         access: "write",
       })
     );
@@ -781,12 +816,13 @@ export function createApiClient<
     roomId: string;
     metadata: Patchable<TM>;
     threadId: string;
+    visibility?: ThreadVisibility;
   }) {
     return await httpClient.post<TM>(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/metadata`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        resource: "comments",
+        resource: commentsResourceForVisibility(options.visibility),
         access: "write",
       }),
       options.metadata
@@ -798,12 +834,13 @@ export function createApiClient<
     threadId: string;
     commentId: string;
     metadata: Patchable<CM>;
+    visibility?: ThreadVisibility;
   }) {
     return await httpClient.post<CM>(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments/${options.commentId}/metadata`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        resource: "comments",
+        resource: commentsResourceForVisibility(options.visibility),
         access: "write",
       }),
       options.metadata
@@ -817,13 +854,14 @@ export function createApiClient<
     body: CommentBody;
     metadata?: CM;
     attachmentIds?: string[];
+    visibility?: ThreadVisibility;
   }) {
     const commentId = options.commentId ?? createCommentId();
     const comment = await httpClient.post<CommentDataPlain<CM>>(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        resource: "comments",
+        resource: commentsResourceForVisibility(options.visibility),
         access: "write",
       }),
       {
@@ -843,12 +881,13 @@ export function createApiClient<
     body: CommentBody;
     attachmentIds?: string[];
     metadata?: Patchable<CM>;
+    visibility?: ThreadVisibility;
   }) {
     const comment = await httpClient.post<CommentDataPlain<CM>>(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments/${options.commentId}`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        resource: "comments",
+        resource: commentsResourceForVisibility(options.visibility),
         access: "write",
       }),
       {
@@ -865,12 +904,13 @@ export function createApiClient<
     roomId: string;
     threadId: string;
     commentId: string;
+    visibility?: ThreadVisibility;
   }) {
     await httpClient.delete(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments/${options.commentId}`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        resource: "comments",
+        resource: commentsResourceForVisibility(options.visibility),
         access: "write",
       })
     );
@@ -881,12 +921,13 @@ export function createApiClient<
     threadId: string;
     commentId: string;
     emoji: string;
+    visibility?: ThreadVisibility;
   }) {
     const reaction = await httpClient.post<CommentUserReactionPlain>(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments/${options.commentId}/reactions`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        resource: "comments",
+        resource: commentsResourceForVisibility(options.visibility),
         access: "write",
       }),
       { emoji: options.emoji }
@@ -900,12 +941,13 @@ export function createApiClient<
     threadId: string;
     commentId: string;
     emoji: string;
+    visibility?: ThreadVisibility;
   }) {
     await httpClient.delete<CommentDataPlain<CM>>(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments/${options.commentId}/reactions/${options.emoji}`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        resource: "comments",
+        resource: commentsResourceForVisibility(options.visibility),
         access: "write",
       })
     );
@@ -914,12 +956,13 @@ export function createApiClient<
   async function markThreadAsResolved(options: {
     roomId: string;
     threadId: string;
+    visibility?: ThreadVisibility;
   }) {
     await httpClient.post(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/mark-as-resolved`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        resource: "comments",
+        resource: commentsResourceForVisibility(options.visibility),
         access: "write",
       })
     );
@@ -928,12 +971,13 @@ export function createApiClient<
   async function markThreadAsUnresolved(options: {
     roomId: string;
     threadId: string;
+    visibility?: ThreadVisibility;
   }) {
     await httpClient.post(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/mark-as-unresolved`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        resource: "comments",
+        resource: commentsResourceForVisibility(options.visibility),
         access: "write",
       })
     );
@@ -1681,6 +1725,7 @@ export function createApiClient<
     cursor?: string;
     query?: {
       resolved?: boolean;
+      visibility?: ThreadVisibility;
       metadata?: Partial<QueryMetadata<TM>>;
     };
   }) {

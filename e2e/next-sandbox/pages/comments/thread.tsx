@@ -39,6 +39,7 @@ function Sandbox() {
       createdAt: date,
       updatedAt: date,
       resolved: false,
+      visibility: "public",
       metadata: {},
       comments: [
         {

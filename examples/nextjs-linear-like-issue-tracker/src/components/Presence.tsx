@@ -8,14 +8,14 @@ import {
 
 export function Presence() {
   return (
-    <ClientSideSuspense
-      fallback={
-        <div className="w-7 h-7 bg-neutral-100 animate-pulse rounded-full" />
-      }
-    >
+    <ClientSideSuspense fallback={<PresenceFallback />}>
       <Avatars />
     </ClientSideSuspense>
   );
+}
+
+export function PresenceFallback() {
+  return <div className="w-7 h-7 bg-neutral-100 animate-pulse rounded-full" />;
 }
 
 function Avatars() {

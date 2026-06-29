@@ -6,6 +6,7 @@ import {
   useState,
   ReactNode,
   useLayoutEffect,
+  Suspense,
 } from "react";
 import { usePathname } from "next/navigation";
 
@@ -27,14 +28,6 @@ export function useInbox() {
 
 export function InboxProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
-  const pathname = usePathname();
-
-  useLayoutEffect(() => {
-    // Reset when changing to dashboard
-    if (pathname === "/") {
-      localStorage.setItem("inboxOpen", "false");
-    }
-  }, [pathname]);
 
   useLayoutEffect(() => {
     setIsOpen(localStorage.getItem("inboxOpen") === "true");
@@ -55,9 +48,25 @@ export function InboxProvider({ children }: { children: ReactNode }) {
     <InboxContext.Provider
       value={{ isOpen, toggleInbox, openInbox: () => setIsOpen(true) }}
     >
+      <Suspense fallback={null}>
+        <ResetInboxOnDashboard />
+      </Suspense>
       {children}
     </InboxContext.Provider>
   );
+}
+
+// Reset when changing to dashboard
+function ResetInboxOnDashboard() {
+  const pathname = usePathname();
+
+  useLayoutEffect(() => {
+    if (pathname === "/") {
+      localStorage.setItem("inboxOpen", "false");
+    }
+  }, [pathname]);
+
+  return null;
 }
 
 export function DisplayWhenInboxOpen({ children }: { children: ReactNode }) {

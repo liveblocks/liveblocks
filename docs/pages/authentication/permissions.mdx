@@ -6,14 +6,67 @@ meta:
 ---
 
 Permissions define what an authenticated user can do with Liveblocks resources
-such as rooms, comments, and feeds.
+such as rooms, comments, and feeds. When using
+[ID token authentication](/docs/authentication), permissions are set on rooms.
+With [access tokens](/docs/authentication/access-token), you permissions are
+granted when a user authenticates.
 
-With [ID tokens](/docs/authentication#id-token), permissions live on the room
-and Liveblocks checks them when a user connects. With
-[access tokens](/docs/authentication/access-token), you grant permissions when
-you prepare a session.
+<Table columns={["28%", "18%", "auto"]}>
 
-## Permission format [#permission-format]
+| Permission               | Resource        | Description                                           |
+| ------------------------ | --------------- | ----------------------------------------------------- |
+| **`*:read`**             |                 | **Read access to everything.**                        |
+| **`*:write`**            |                 | **Write access to everything.**                       |
+| `storage:read`           | Storage         | Read access to storage (Liveblocks Storage and Yjs).  |
+| `storage:write`          | Storage         | Write access to storage (Liveblocks Storage and Yjs). |
+| `storage:none`           | Storage         | No access to storage (Liveblocks Storage and Yjs).    |
+| `comments:read`          | Comments        | Read access to public and private threads.            |
+| `comments:write`         | Comments        | Write access to public and private threads.           |
+| `comments:none`          | Comments        | No access to public and private threads.              |
+| `comments:public:read`   | Public threads  | Read access to public threads.                        |
+| `comments:public:write`  | Public threads  | Write access to public threads.                       |
+| `comments:public:none`   | Public threads  | No access to public threads.                          |
+| `comments:private:read`  | Private threads | Read access to private threads.                       |
+| `comments:private:write` | Private threads | Write access to private threads.                      |
+| `comments:private:none`  | Private threads | No access to private threads.                         |
+| `feeds:read`             | Feeds           | Read access to feeds.                                 |
+| `feeds:write`            | Feeds           | Write access to feeds.                                |
+| `feeds:none`             | Feeds           | No access to feeds.                                   |
+
+</Table>
+
+## Example usage
+
+Permissions are set as an array of strings, in any order, and setting an empty
+array means no access. You can use these permissions with Liveblocks APIs, for
+example when creating a room.
+
+```ts
+const room = await liveblocks.createRoom("my-room-id", {
+  // By default, nobody has access to the room
+  // +++
+  defaultAccesses: [],
+  // +++
+
+  // `groupIds: ["viewer"]` users are read-only, but can leave comments
+  groupsAccesses: {
+    // +++
+    viewer: ["*:read", "comments:write"],
+    // +++
+  },
+
+  // `userId: "marc"` has full write access
+  usersAccesses: {
+    // +++
+    "marc@example.com": ["*:write"],
+    // +++
+  },
+});
+```
+
+Note that `groupIds` and `userId` are set when authenticating a user.
+
+## More information [#permission-format]
 
 A user’s access to a room is defined by a list of permissions.
 
@@ -43,7 +96,14 @@ You can opt into or opt out of access to specific room resources:
 
 - **Storage** with `storage:read`, `storage:write`, or `storage:none`.
 - **Comments** with `comments:read`, `comments:write`, or `comments:none`.
+- **Public threads** with `comments:public:read`, `comments:public:write`, or
+  `comments:public:none`.
+- **Private threads** with `comments:private:read`, `comments:private:write`, or
+  `comments:private:none`.
 - **Feeds** with `feeds:read`, `feeds:write`, or `feeds:none`.
+
+The `comments:*` permissions apply to public and private threads. Use
+`comments:public:*` and `comments:private:*` to override one visibility.
 
 Here’s an example giving write access to everything except read-only access to
 storage:
@@ -66,25 +126,31 @@ comments and no access to feeds:
 ];
 ```
 
-### List of all permissions
+Here’s an example giving write access to public threads, but no access to
+private threads:
 
-<Table columns={["22%", "18%", "auto"]}>
+```ts
+[
+  "*:write",
+  "comments:private:none", // Remove access to private threads
+];
+```
 
-| Permission       | Resource | Description                                           |
-| ---------------- | -------- | ----------------------------------------------------- |
-| **`*:read`**     |          | **Read access to everything.**                        |
-| **`*:write`**    |          | **Write access to everything.**                       |
-| `storage:read`   | Storage  | Read access to storage (Liveblocks Storage and Yjs).  |
-| `storage:write`  | Storage  | Write access to storage (Liveblocks Storage and Yjs). |
-| `storage:none`   | Storage  | No access to storage (Liveblocks Storage and Yjs).    |
-| `comments:read`  | Comments | Read access to comments.                              |
-| `comments:write` | Comments | Write access to comments.                             |
-| `comments:none`  | Comments | No access to comments.                                |
-| `feeds:read`     | Feeds    | Read access to feeds.                                 |
-| `feeds:write`    | Feeds    | Write access to feeds.                                |
-| `feeds:none`     | Feeds    | No access to feeds.                                   |
+### Public and private threads [#public-private-threads]
 
-</Table>
+By default, threads are visible to all users that have permission to read the
+room, but they can be marked as private by passing `visibility: "private"` when
+the thread is created. Users then need private comments permissions to create or
+read private threads. For more information, read
+[how to add private commenting to your app](/docs/guides/how-to-add-private-commenting-to-your-app),
+or find a summary of the APIs under
+[public and private threads](/docs/guides/how-to-use-public-and-private-threads).
+
+<Banner>
+
+Private threads are only available on Team and Enterprise plans.
+
+</Banner>
 
 ## Where to use permissions [#where-to-use-permissions]
 

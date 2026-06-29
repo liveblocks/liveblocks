@@ -50,6 +50,7 @@ import type {
   SearchCommentsResult,
   SyncStatus,
   ThreadData,
+  ThreadVisibility,
   ToJson,
   UrlMetadata,
   WithNavigation,
@@ -129,6 +130,11 @@ export type ThreadsQuery<TM extends BaseMetadata> = {
    * all threads will be returned.
    */
   resolved?: boolean;
+
+  /**
+   * Whether to only return public or private threads. If not provided, all threads will be returned.
+   */
+  visibility?: ThreadVisibility;
 
   /**
    * Whether to only return threads that the user is subscribed to or not. If not provided,
@@ -269,7 +275,7 @@ export type GroupAsyncSuccess = AsyncSuccess<GroupData | undefined, "group">;
 // prettier-ignore
 export type CreateThreadOptions<TM extends BaseMetadata, CM extends BaseMetadata > =
   Resolve<
-    { body: CommentBody, attachments?: CommentAttachment[]; }
+    { body: CommentBody, attachments?: CommentAttachment[]; visibility?: ThreadVisibility; }
     & PartialUnless<TM, { metadata: TM }>
     & PartialUnless<CM, { commentMetadata: CM }>
   >;

@@ -5,7 +5,7 @@ import type {
   LiveObject,
 } from "@liveblocks/core";
 import type { InboxNotificationCustomKindProps } from "@liveblocks/react-ui";
-import { InboxNotification } from "@liveblocks/react-ui";
+import { Composer, InboxNotification } from "@liveblocks/react-ui";
 import { describe, expectTypeOf, test } from "vitest";
 
 // TODO: Create type tests for all components/props
@@ -40,6 +40,11 @@ declare global {
       color: "red" | "blue";
     };
 
+    CommentMetadata: {
+      priority: number;
+      reviewed?: boolean;
+    };
+
     RoomInfo: {
       name: string;
       url?: string;
@@ -64,6 +69,33 @@ declare global {
     };
   }
 }
+
+describe("Composer (with Liveblocks augmentation)", () => {
+  test("accepts augmented thread and comment metadata", () => {
+    void (
+      <Composer
+        metadata={{ color: "red" }}
+        commentMetadata={{ priority: 1 }}
+        visibility="private"
+      />
+    );
+
+    void (
+      <Composer
+        threadId="th_123"
+        commentMetadata={{ priority: 1, reviewed: false }}
+      />
+    );
+
+    void (
+      <Composer
+        threadId="th_123"
+        commentId="cm_123"
+        commentMetadata={{ reviewed: null }}
+      />
+    );
+  });
+});
 
 describe("InboxNotification `kinds` (with Liveblocks augmentation)", () => {
   test("existing kinds have the expected props types", () => {

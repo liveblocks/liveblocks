@@ -25,40 +25,50 @@ export function IssueProperties({
 
   return (
     <ClientSideSuspense
-      fallback={
-        <div className="text-sm flex flex-col gap-3 justify-start items-start font-medium pt-1 -mb-1 pointer-events-none">
-          <div className="block bg-transparent border-0 h-7 w-32 px-2 rounded-md transition-colors whitespace-nowrap">
-            {
-              PROGRESS_STATES.find(
-                (p) => p.id === storageFallback.properties.progress
-              )?.jsx
-            }
-          </div>
-          <div className="block bg-transparent border-0 h-7 w-32 px-2 rounded-md transition-colors whitespace-nowrap">
-            {
-              PRIORITY_STATES.find(
-                (p) => p.id === storageFallback.properties.priority
-              )?.jsx
-            }
-          </div>
-          <div className="block bg-transparent border-0 pl-2 pb-2 rounded-md transition-colors whitespace-nowrap">
-            {storageFallback.properties.assignedTo === "none" ? (
-              <span className="text-neutral-600">Not assigned</span>
-            ) : (
-              <AvatarAndName
-                user={
-                  assigneeUsers.find(
-                    (p) => p.id === storageFallback.properties.assignedTo
-                  ) || null
-                }
-              />
-            )}
-          </div>
-        </div>
-      }
+      fallback={<IssuePropertiesFallback storageFallback={storageFallback} />}
     >
       <Properties assigneeUsers={assigneeUsers} />
     </ClientSideSuspense>
+  );
+}
+
+export function IssuePropertiesFallback({
+  storageFallback,
+}: {
+  storageFallback: ImmutableStorage;
+}) {
+  const assigneeUsers = getUsers().filter((u) => u.id !== AI_USER_INFO.id);
+
+  return (
+    <div className="text-sm flex flex-col gap-3 justify-start items-start font-medium pt-1 -mb-1 pointer-events-none">
+      <div className="block bg-transparent border-0 h-7 w-32 px-2 rounded-md transition-colors whitespace-nowrap">
+        {
+          PROGRESS_STATES.find(
+            (p) => p.id === storageFallback.properties.progress
+          )?.jsx
+        }
+      </div>
+      <div className="block bg-transparent border-0 h-7 w-32 px-2 rounded-md transition-colors whitespace-nowrap">
+        {
+          PRIORITY_STATES.find(
+            (p) => p.id === storageFallback.properties.priority
+          )?.jsx
+        }
+      </div>
+      <div className="block bg-transparent border-0 pl-2 pb-2 rounded-md transition-colors whitespace-nowrap">
+        {storageFallback.properties.assignedTo === "none" ? (
+          <span className="text-neutral-600">Not assigned</span>
+        ) : (
+          <AvatarAndName
+            user={
+              assigneeUsers.find(
+                (p) => p.id === storageFallback.properties.assignedTo
+              ) || null
+            }
+          />
+        )}
+      </div>
+    </div>
   );
 }
 

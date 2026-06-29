@@ -1,4 +1,5 @@
-import { getBearerTokenFromAuthValue, type RoomHttpApi } from "./api-client";
+import type { RoomHttpApi } from "./api-client";
+import { getBearerTokenFromAuthValue } from "./api-client";
 import type { AuthManager, AuthValue } from "./auth-manager";
 import { injectBrandBadge } from "./brand";
 import type { InternalSyncStatus } from "./client";
@@ -89,6 +90,7 @@ import type {
   QueryMetadata,
   ThreadData,
   ThreadDeleteInfo,
+  ThreadVisibility,
 } from "./protocol/Comments";
 import type { Feed, FeedMessage } from "./protocol/Feeds";
 import type {
@@ -117,7 +119,11 @@ import type {
   YDocUpdateServerMsg,
 } from "./protocol/ServerMsg";
 import { ServerMsgCode } from "./protocol/ServerMsg";
-import type { NodeMap, NodeStream } from "./protocol/StorageNode";
+import type {
+  NodeMap,
+  NodeStream,
+  SerializedRootObject,
+} from "./protocol/StorageNode";
 import { compactNodesToNodeStream } from "./protocol/StorageNode";
 import type {
   SubscriptionData,
@@ -530,6 +536,7 @@ export type GetThreadsOptions<TM extends BaseMetadata> = {
   cursor?: string;
   query?: {
     resolved?: boolean;
+    visibility?: ThreadVisibility;
     subscribed?: boolean;
     metadata?: Partial<QueryMetadata<TM>>;
   };
@@ -981,6 +988,7 @@ export type Room<
   createThread(options: {
     threadId?: string;
     commentId?: string;
+    visibility?: ThreadVisibility;
     metadata: TM | undefined;
     body: CommentBody;
     commentMetadata?: CM;
@@ -1242,6 +1250,8 @@ export type PrivateRoomApi = {
 
   // For reporting editor metadata
   reportTextEditor(editor: TextEditorType, rootKey: string): Promise<void>;
+
+  getPermissionMatrix(): PermissionMatrix | undefined;
 
   createTextMention(mentionId: string, mention: MentionData): Promise<void>;
   deleteTextMention(mentionId: string): Promise<void>;
@@ -1530,6 +1540,25 @@ function makeNodeMapBuffer() {
       return result;
     },
   };
+}
+
+function topLevelKeysOf(nodes: NodeMap): Set<string> {
+  const keys = new Set<string>();
+
+  // The root's primitive (non-Live) keys are stored inline in its `data`.
+  const root = nodes.get("root") as SerializedRootObject | undefined;
+  for (const key in root?.data) {
+    keys.add(key);
+  }
+
+  // Live children of the root are separate nodes pointing back at it.
+  for (const node of nodes.values()) {
+    if (node.parentId === "root") {
+      keys.add(node.parentKey);
+    }
+  }
+
+  return keys;
 }
 
 /**
@@ -1935,11 +1964,12 @@ export function createRoom<
 
     const canWrite = self.get()?.canWrite ?? true;
 
-    // Populate missing top-level keys using `initialStorage`
+    // Populate only top-level keys that storage doesn't have yet, using `initialStorage`
+    const serverTopLevelKeys = topLevelKeysOf(nodes);
     const root = context.root;
     disableHistory(() => {
       for (const key in context.initialStorage) {
-        if (root.get(key) === undefined) {
+        if (!serverTopLevelKeys.has(key)) {
           if (canWrite) {
             root.set(key, cloneLson(context.initialStorage[key]));
           } else {
@@ -3542,6 +3572,7 @@ export function createRoom<
     roomId: string;
     threadId?: string;
     commentId?: string;
+    visibility?: ThreadVisibility;
     metadata: TM | undefined;
     commentMetadata: CM | undefined;
     body: CommentBody;
@@ -3551,6 +3582,7 @@ export function createRoom<
       roomId,
       threadId: options.threadId,
       commentId: options.commentId,
+      visibility: options.visibility,
       metadata: options.metadata,
       body: options.body,
       commentMetadata: options.commentMetadata,
@@ -3769,6 +3801,8 @@ export function createRoom<
 
         // send metadata when using a text editor
         reportTextEditor,
+        getPermissionMatrix: () =>
+          context.dynamicSessionInfoSig.get()?.permissionMatrix,
         // create a text mention when using a text editor
         createTextMention,
         // delete a text mention when using a text editor
