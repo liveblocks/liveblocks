@@ -1969,7 +1969,7 @@ export class Liveblocks {
     const { roomId, fileId } = params;
 
     const res = await this.#get(
-      url`/v2/rooms/${roomId}/storage-files/${fileId}`,
+      url`/v2/rooms/${roomId}/storage/files/${fileId}`,
       undefined,
       options
     );

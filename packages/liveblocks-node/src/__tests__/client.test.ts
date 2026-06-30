@@ -1339,7 +1339,7 @@ describe("client", () => {
     test("should return the storage file when getStorageFile receives a successful response", async () => {
       server.use(
         http.get(
-          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/storage-files/:fileId`,
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/storage/files/:fileId`,
           () => {
             return HttpResponse.json(storageFile, { status: 200 });
           }
@@ -1364,7 +1364,7 @@ describe("client", () => {
 
       server.use(
         http.get(
-          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/storage-files/:fileId`,
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/storage/files/:fileId`,
           () => {
             return HttpResponse.json(error, { status: 404 });
           }

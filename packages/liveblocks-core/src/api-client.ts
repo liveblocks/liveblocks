@@ -1289,7 +1289,7 @@ export function createApiClient<
       abortErrorMessage: `Upload of file ${fileId} was aborted.`,
       uploadSingle: async () =>
         httpClient.putBlob<LiveFileData>(
-          url`/v2/c/rooms/${roomId}/storage-files/${fileId}/upload/${encodeURIComponent(file.name)}`,
+          url`/v2/c/rooms/${roomId}/storage/files/${fileId}/upload/${encodeURIComponent(file.name)}`,
           await authManager.getAuthValue({
             roomId,
             resource: "storage",
@@ -1301,7 +1301,7 @@ export function createApiClient<
         ),
       createMultipartUpload: async () =>
         httpClient.post<{ uploadId: string }>(
-          url`/v2/c/rooms/${roomId}/storage-files/${fileId}/multipart/${encodeURIComponent(file.name)}`,
+          url`/v2/c/rooms/${roomId}/storage/files/${fileId}/multipart/${encodeURIComponent(file.name)}`,
           await authManager.getAuthValue({
             roomId,
             resource: "storage",
@@ -1313,7 +1313,7 @@ export function createApiClient<
         ),
       uploadMultipartPart: async (uploadId, partNumber, part) =>
         httpClient.putBlob<UploadedRoomFilePart>(
-          url`/v2/c/rooms/${roomId}/storage-files/${fileId}/multipart/${uploadId}/${String(partNumber)}`,
+          url`/v2/c/rooms/${roomId}/storage/files/${fileId}/multipart/${uploadId}/${String(partNumber)}`,
           await authManager.getAuthValue({
             roomId,
             resource: "storage",
@@ -1325,7 +1325,7 @@ export function createApiClient<
         ),
       completeMultipartUpload: async (uploadId, parts) =>
         httpClient.post<LiveFileData>(
-          url`/v2/c/rooms/${roomId}/storage-files/${fileId}/multipart/${uploadId}/complete`,
+          url`/v2/c/rooms/${roomId}/storage/files/${fileId}/multipart/${uploadId}/complete`,
           await authManager.getAuthValue({
             roomId,
             resource: "storage",
@@ -1336,7 +1336,7 @@ export function createApiClient<
         ),
       abortMultipartUpload: async (uploadId) => {
         await httpClient.rawDelete(
-          url`/v2/c/rooms/${roomId}/storage-files/${fileId}/multipart/${uploadId}`,
+          url`/v2/c/rooms/${roomId}/storage/files/${fileId}/multipart/${uploadId}`,
           await authManager.getAuthValue({
             roomId,
             resource: "storage",
@@ -1398,7 +1398,7 @@ export function createApiClient<
         const { urls } = await httpClient.post<{
           urls: (string | null)[];
         }>(
-          url`/v2/c/rooms/${roomId}/storage-files/presigned-urls`,
+          url`/v2/c/rooms/${roomId}/storage/files/presigned-urls`,
           await authManager.getAuthValue({
             roomId,
             resource: "storage",
