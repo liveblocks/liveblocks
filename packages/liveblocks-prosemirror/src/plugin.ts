@@ -229,6 +229,20 @@ export function createLiveblocksCollaborationPlugin(
       const currentRoot = root;
 
       const documentRoot = getDocumentRoot(currentRoot, options.field);
+
+      // Idempotency guard: if the incoming document already matches what we
+      // last synced to storage, there is nothing to do. This naturally handles
+      // editors (e.g. BlockNote) that invoke appendTransaction more than once
+      // per user edit with the same transaction set
+      const incomingDocument: unknown = newState.doc.toJSON();
+      if (!isProseMirrorJsonNode(incomingDocument)) {
+        return null;
+      }
+      const serializedIncoming = stringifyDocument(incomingDocument);
+      if (serializedIncoming === lastDocument) {
+        return null;
+      }
+
       const classified =
         documentRoot !== undefined
           ? classifyTransaction(
@@ -239,29 +253,19 @@ export function createLiveblocksCollaborationPlugin(
             )
           : { type: "unsupported" as const };
 
-      room.batch(() => {
-        if (classified.type === "incremental") {
-          isApplyingLocalUpdate = true;
-          try {
+      isApplyingLocalUpdate = true;
+      try {
+        room.batch(() => {
+          if (classified.type === "incremental") {
             applyIncrementalOperations(classified.operations);
-          } finally {
-            isApplyingLocalUpdate = false;
+          } else {
+            setDocumentRoot(currentRoot, options.field, incomingDocument);
           }
-        } else {
-          const document: unknown = newState.doc.toJSON();
-          if (!isProseMirrorJsonNode(document)) {
-            return;
-          }
-
-          const serializedDocument = stringifyDocument(document);
-          if (serializedDocument === lastDocument) {
-            return;
-          }
-
-          lastDocument = serializedDocument;
-          setDocumentRoot(currentRoot, options.field, document);
-        }
-      });
+        });
+        lastDocument = serializedIncoming;
+      } finally {
+        isApplyingLocalUpdate = false;
+      }
 
       return null;
     },
