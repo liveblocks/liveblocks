@@ -107,6 +107,8 @@ export {
   LiveList,
   LiveMap,
   LiveObject,
+  LiveFile,
+  type LiveFileData,
   stringifyCommentBody,
 } from "@liveblocks/core";
 
