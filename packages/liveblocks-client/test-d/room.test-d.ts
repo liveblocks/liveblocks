@@ -1,5 +1,5 @@
-import type { BaseMetadata } from "@liveblocks/client";
-import { createClient } from "@liveblocks/client";
+import type { BaseMetadata, LiveFileData } from "@liveblocks/client";
+import { createClient, LiveFile } from "@liveblocks/client";
 import type {
   BaseUserMeta,
   Json,
@@ -34,6 +34,24 @@ describe("Room", () => {
 
       expectTypeOf(room.id).toEqualTypeOf<string>();
       expectTypeOf(leave()).toEqualTypeOf<void>();
+    });
+  });
+
+  describe("uploadFile", () => {
+    test("should return data that can be used to create a LiveFile", () => {
+      const client = createClient<U>({ publicApiKey: "pk_whatever" });
+      const { room } = client.enterRoom<P, S, E, TM, CM>("my-room", {
+        initialPresence: {},
+      });
+
+      type UploadFileReturn = ReturnType<typeof room.uploadFile>;
+      type UploadedFileReference = Awaited<UploadFileReturn>;
+
+      expectTypeOf<UploadFileReturn>().toEqualTypeOf<Promise<LiveFileData>>();
+      expectTypeOf<UploadedFileReference>().toEqualTypeOf<LiveFileData>();
+      expectTypeOf<
+        ConstructorParameters<typeof LiveFile>[0]
+      >().toEqualTypeOf<UploadedFileReference>();
     });
   });
 

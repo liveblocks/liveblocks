@@ -8,7 +8,11 @@ import type {
   StorageNode,
   ThreadData,
 } from "@liveblocks/core";
-import { createNotificationSettings, LiveList } from "@liveblocks/core";
+import {
+  createNotificationSettings,
+  LiveFile,
+  LiveList,
+} from "@liveblocks/core";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { afterAll, afterEach, beforeAll, describe, expect, test } from "vitest";
@@ -1326,7 +1330,7 @@ describe("client", () => {
     });
   });
 
-  describe("get storage file", () => {
+  describe("get file URL", () => {
     const storageFile = {
       id: "fl_abc123",
       name: "document.pdf",
@@ -1336,11 +1340,17 @@ describe("client", () => {
       expiresAt: "2024-01-01T00:00:00.000Z",
     };
 
-    test("should return the storage file when getStorageFile receives a successful response", async () => {
+    test.each([
+      ["file ID", storageFile.id],
+      ["file data", storageFile],
+      ["LiveFile", new LiveFile(storageFile)],
+    ])("should return the file URL when given a %s", async (_, file) => {
       server.use(
         http.get(
           `${DEFAULT_BASE_URL}/v2/rooms/:roomId/storage/files/:fileId`,
-          () => {
+          ({ params }) => {
+            expect(params.roomId).toBe("room1");
+            expect(params.fileId).toBe(storageFile.id);
             return HttpResponse.json(storageFile, { status: 200 });
           }
         )
@@ -1349,14 +1359,14 @@ describe("client", () => {
       const client = new Liveblocks({ secret: "sk_xxx" });
 
       await expect(
-        client.getStorageFile({
+        client.getFileUrl({
           roomId: "room1",
-          fileId: "fl_abc123",
+          file,
         })
-      ).resolves.toEqual(storageFile);
+      ).resolves.toBe(storageFile.url);
     });
 
-    test("should throw a LiveblocksError when getStorageFile receives an error response", async () => {
+    test("should throw a LiveblocksError when getFileUrl receives an error response", async () => {
       const error = {
         error: "STORAGE_FILE_NOT_FOUND",
         message: "Storage file not found",
@@ -1374,9 +1384,9 @@ describe("client", () => {
       const client = new Liveblocks({ secret: "sk_xxx" });
 
       try {
-        await client.getStorageFile({
+        await client.getFileUrl({
           roomId: "room1",
-          fileId: "fl_abc123",
+          file: "fl_abc123",
         });
         expect(true).toBe(false);
       } catch (err) {
@@ -1384,6 +1394,229 @@ describe("client", () => {
         if (err instanceof LiveblocksError) {
           expect(err.status).toBe(404);
           expect(err.message).toBe("Storage file not found");
+          expect(err.name).toBe("LiveblocksError");
+        }
+      }
+    });
+  });
+
+  describe("upload storage file", () => {
+    test("should upload a storage file through single upload", async () => {
+      const file = new File(["hello"], "file1.txt", { type: "text/plain" });
+
+      server.use(
+        http.put(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/storage/files/:fileId/upload/:name`,
+          async ({ request, params }) => {
+            const fileId = String(params.fileId);
+            const url = new URL(request.url);
+
+            expect(params.roomId).toBe("room1");
+            expect(fileId).toMatch(/^fl_/);
+            expect(params.name).toBe("file1.txt");
+            expect(url.searchParams.get("fileSize")).toBe("5");
+            expect(await request.text()).toBe("hello");
+
+            return HttpResponse.json(
+              {
+                id: fileId,
+                name: "file1.txt",
+                size: 5,
+                mimeType: "text/plain",
+              },
+              { status: 200 }
+            );
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(
+        client.uploadFile({
+          roomId: "room1",
+          file,
+        })
+      ).resolves.toEqual({
+        id: expect.stringMatching(/^fl_/),
+        name: "file1.txt",
+        size: 5,
+        mimeType: "text/plain",
+      });
+    });
+
+    test("should upload a storage file through multipart upload", async () => {
+      const file = new File([new Uint8Array(5 * 1024 * 1024 + 1)], "file.bin");
+      const uploadedPartNumbers: number[] = [];
+
+      server.use(
+        http.post(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/storage/files/:fileId/multipart/:name`,
+          ({ request, params }) => {
+            const url = new URL(request.url);
+
+            expect(params.roomId).toBe("room1");
+            expect(String(params.fileId)).toMatch(/^fl_/);
+            expect(params.name).toBe("file.bin");
+            expect(url.searchParams.get("fileSize")).toBe("5242881");
+
+            return HttpResponse.json(
+              {
+                uploadId: "upload_abc123",
+              },
+              { status: 200 }
+            );
+          }
+        ),
+        http.put(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/storage/files/:fileId/multipart/:uploadId/:partNumber`,
+          async ({ request, params }) => {
+            const partNumber = Number(params.partNumber);
+            const body = await request.arrayBuffer();
+
+            expect(params.roomId).toBe("room1");
+            expect(String(params.fileId)).toMatch(/^fl_/);
+            expect(params.uploadId).toBe("upload_abc123");
+            expect(body.byteLength).toBe(
+              partNumber === 1 ? 5 * 1024 * 1024 : 1
+            );
+
+            uploadedPartNumbers.push(partNumber);
+
+            return HttpResponse.json(
+              {
+                partNumber,
+                etag: `etag-${partNumber}`,
+              },
+              { status: 200 }
+            );
+          }
+        ),
+        http.post(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/storage/files/:fileId/multipart/:uploadId/complete`,
+          async ({ request, params }) => {
+            expect(params.roomId).toBe("room1");
+            expect(String(params.fileId)).toMatch(/^fl_/);
+            expect(params.uploadId).toBe("upload_abc123");
+            expect(await request.json()).toEqual({
+              parts: [
+                { partNumber: 1, etag: "etag-1" },
+                { partNumber: 2, etag: "etag-2" },
+              ],
+            });
+
+            return HttpResponse.json(
+              {
+                id: String(params.fileId),
+                name: "file.bin",
+                size: 5 * 1024 * 1024 + 1,
+                mimeType: "application/octet-stream",
+              },
+              { status: 200 }
+            );
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(
+        client.uploadFile({
+          roomId: "room1",
+          file,
+        })
+      ).resolves.toEqual({
+        id: expect.stringMatching(/^fl_/),
+        name: "file.bin",
+        size: 5 * 1024 * 1024 + 1,
+        mimeType: "application/octet-stream",
+      });
+      expect(uploadedPartNumbers.sort()).toEqual([1, 2]);
+    });
+
+    test("should abort multipart uploads when upload is aborted", async () => {
+      const file = new File([new Uint8Array(5 * 1024 * 1024 + 1)], "file.bin");
+      const abortController = new AbortController();
+      let multipartUploadAborted = false;
+
+      server.use(
+        http.post(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/storage/files/:fileId/multipart/:name`,
+          () => {
+            return HttpResponse.json(
+              {
+                uploadId: "upload_abc123",
+              },
+              { status: 200 }
+            );
+          }
+        ),
+        http.put(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/storage/files/:fileId/multipart/:uploadId/:partNumber`,
+          () => {
+            abortController.abort();
+            return HttpResponse.json(
+              {
+                partNumber: 1,
+                etag: "etag-1",
+              },
+              { status: 200 }
+            );
+          }
+        ),
+        http.delete(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/storage/files/:fileId/multipart/:uploadId`,
+          ({ params }) => {
+            expect(params.uploadId).toBe("upload_abc123");
+            multipartUploadAborted = true;
+            return new HttpResponse(null, { status: 204 });
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(
+        client.uploadFile(
+          {
+            roomId: "room1",
+            file,
+          },
+          { signal: abortController.signal }
+        )
+      ).rejects.toMatchObject({ name: "AbortError" });
+      expect(multipartUploadAborted).toBe(true);
+    });
+
+    test("should throw a LiveblocksError when uploadFile receives an error response", async () => {
+      server.use(
+        http.put(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/storage/files/:fileId/upload/:name`,
+          () => {
+            return HttpResponse.json(
+              {
+                error: "PAYLOAD_TOO_LARGE",
+                message: "Payload too large",
+              },
+              { status: 413 }
+            );
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      try {
+        await client.uploadFile({
+          roomId: "room1",
+          file: new File(["hello"], "file1.txt"),
+        });
+        expect(true).toBe(false);
+      } catch (err) {
+        expect(err instanceof LiveblocksError).toBe(true);
+        if (err instanceof LiveblocksError) {
+          expect(err.status).toBe(413);
+          expect(err.message).toBe("Payload too large");
           expect(err.name).toBe("LiveblocksError");
         }
       }

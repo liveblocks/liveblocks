@@ -1180,7 +1180,7 @@ export type Room<
    */
   getAttachmentUrl(attachmentId: string): Promise<string>;
 
-  uploadFile(file: File, options?: UploadFileOptions): Promise<LiveFile>;
+  uploadFile(file: File, options?: UploadFileOptions): Promise<LiveFileData>;
 
   getFileUrl(file: LiveFile | LiveFileData | string): Promise<string>;
 
@@ -3764,17 +3764,15 @@ export function createRoom<
     return httpClient.getAttachmentUrl({ roomId, attachmentId });
   }
 
-  async function uploadFile(
+  function uploadFile(
     file: File,
     options: UploadFileOptions = {}
-  ): Promise<LiveFile> {
-    const data = await httpClient.uploadFile({
+  ): Promise<LiveFileData> {
+    return httpClient.uploadFile({
       roomId,
       file,
       signal: options.signal,
     });
-
-    return new LiveFile(data);
   }
 
   function getFileUrl(file: LiveFileReference) {
