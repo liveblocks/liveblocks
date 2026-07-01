@@ -14,6 +14,12 @@
     },
 
     {
+      "label": "next-lexical-liveblocks e2e tracks newer Lexical for incremental sync experiments",
+      "packages": ["@liveblocks/next-lexical-liveblocks"],
+      "isIgnored": true
+    },
+
+    {
       "label": "Peer dependencies are intentionally wider ranges",
       "dependencyTypes": ["peer"],
       "preferVersion": "highestSemver"

@@ -220,7 +220,7 @@ function Editor({ roomId }: { roomId: string }) {
 
 function useRoot(room: Room) {
   const subscribe = room.events.storageDidLoad.subscribeOnce;
-  const getSnapshot = room.getStorageSnapshot;
+  const getSnapshot = room.getStorageOrNull;
   const getServerSnapshot = useCallback(() => {
     return null;
   }, []);

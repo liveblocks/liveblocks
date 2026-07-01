@@ -17,6 +17,7 @@ packages:
   - "e2e/next-tiptap-liveblocks"
   - "e2e/node-sandbox"
   - "e2e/next-codemirror-liveblocks"
+  - "e2e/next-lexical-liveblocks"
 
 allowBuilds:
   "@parcel/watcher": true
