@@ -10,6 +10,7 @@ import {
   convertToThreadData,
   convertToThreadDeleteInfo,
 } from "./convert-plain-data";
+import type { LiveFileData } from "./crdts/LiveFile";
 import { assertNever } from "./lib/assert";
 import { autoRetry, HttpError } from "./lib/autoRetry";
 import type { BatchStore } from "./lib/batch";
@@ -64,7 +65,7 @@ import type {
   PartialNotificationSettings,
 } from "./protocol/NotificationSettings";
 import type { RoomSubscriptionSettings } from "./protocol/RoomSubscriptionSettings";
-import type { LiveFileData, StorageNode } from "./protocol/StorageNode";
+import type { StorageNode } from "./protocol/StorageNode";
 import type {
   SubscriptionData,
   SubscriptionDataPlain,

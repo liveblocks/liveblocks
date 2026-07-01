@@ -16,7 +16,12 @@ import {
   isSameNodeOrChildOf,
   mergeStorageUpdates,
 } from "./crdts/liveblocks-helpers";
-import { LiveFile } from "./crdts/LiveFile";
+import {
+  getLiveFileId,
+  type LiveFile,
+  type LiveFileData,
+  type LiveFileReference,
+} from "./crdts/LiveFile";
 import { LiveObject } from "./crdts/LiveObject";
 import type { LiveStructure, LsonObject } from "./crdts/Lson";
 import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
@@ -121,7 +126,6 @@ import type {
 } from "./protocol/ServerMsg";
 import { ServerMsgCode } from "./protocol/ServerMsg";
 import type {
-  LiveFileData,
   NodeMap,
   NodeStream,
   SerializedRootObject,
@@ -556,12 +560,6 @@ export type UploadAttachmentOptions = {
 export type UploadFileOptions = {
   signal?: AbortSignal;
 };
-
-type LiveFileReference = LiveFile | LiveFileData | string;
-
-function getLiveFileId(file: LiveFileReference): string {
-  return typeof file === "string" ? file : file.id;
-}
 
 type ListTextVersionsSinceOptions = {
   since: Date;
@@ -1180,9 +1178,25 @@ export type Room<
    */
   getAttachmentUrl(attachmentId: string): Promise<string>;
 
+  /**
+   * Uploads a file for a `LiveFile`.
+   *
+   * @example
+   * const fileReference = await room.uploadFile(file);
+   * const liveFile = new LiveFile(fileReference);
+   */
   uploadFile(file: File, options?: UploadFileOptions): Promise<LiveFileData>;
 
-  getFileUrl(file: LiveFile | LiveFileData | string): Promise<string>;
+  /**
+   * Returns a presigned URL for a `LiveFile`.
+   *
+   * @example
+   * await getFileUrl("fl_xxx");
+   *
+   * @example
+   * await getFileUrl(liveFile);
+   */
+  getFileUrl(file: LiveFileReference): Promise<string>;
 
   /**
    * Gets the user's subscription settings for the current room.

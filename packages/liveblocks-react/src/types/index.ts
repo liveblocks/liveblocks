@@ -40,6 +40,7 @@ import type {
   HistoryVersion,
   InboxNotificationData,
   LiveblocksError,
+  LiveFileReference,
   MessageId,
   NotificationSettings,
   PartialNotificationSettings,
@@ -1339,7 +1340,16 @@ export type RoomContextBundle<
        */
       useAttachmentUrl(attachmentId: string): AttachmentUrlAsyncResult;
 
-      useFileUrl(file: LiveFile | LiveFileData | string): FileUrlAsyncResult;
+      /**
+       * Returns a presigned URL for a `LiveFile`.
+       *
+       * @example
+       * const { url, error, isLoading } = useFileUrl("fl_xxx");
+       *
+       * @example
+       * const { url, error, isLoading } = useFileUrl(liveFile);
+       */
+      useFileUrl(file: LiveFileReference): FileUrlAsyncResult;
 
       /**
        * (Private beta)  Returns a history of versions of the current room.
@@ -1508,9 +1518,16 @@ export type RoomContextBundle<
              */
             useAttachmentUrl(attachmentId: string): AttachmentUrlAsyncSuccess;
 
-            useFileUrl(
-              file: LiveFile | LiveFileData | string
-            ): FileUrlAsyncSuccess;
+            /**
+             * Returns a presigned URL for a `LiveFile`.
+             *
+             * @example
+             * const { url } = useFileUrl("fl_xxx");
+             *
+             * @example
+             * const { url } = useFileUrl(liveFile);
+             */
+            useFileUrl(file: LiveFileReference): FileUrlAsyncSuccess;
           }
       >;
     }

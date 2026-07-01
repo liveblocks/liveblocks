@@ -34,8 +34,8 @@ import type {
   Json,
   JsonObject,
   KDAD,
-  LiveFile,
   LiveFileData,
+  LiveFileReference,
   NotificationSettings,
   NotificationSettingsPlain,
   Op,
@@ -78,6 +78,7 @@ import {
   createManagedPool,
   createNotificationSettings,
   createStorageFileId,
+  getLiveFileId,
   isPlainObject,
   LiveObject,
   makeAbortController,
@@ -165,12 +166,6 @@ export type StorageFileWithUrl = LiveFileData & {
   url: string;
   expiresAt: string;
 };
-
-type LiveFileReference = LiveFile | LiveFileData | string;
-
-function getLiveFileId(file: LiveFileReference): string {
-  return typeof file === "string" ? file : file.id;
-}
 
 const STORAGE_FILE_PART_SIZE = 5 * 1024 * 1024; // 5 MB
 const STORAGE_FILE_RETRY_ATTEMPTS = 10;

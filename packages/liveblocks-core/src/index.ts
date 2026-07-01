@@ -77,7 +77,12 @@ export type {
 } from "./crdts/AbstractCrdt";
 export { createManagedPool } from "./crdts/AbstractCrdt";
 export { cloneLson, isLiveNode } from "./crdts/liveblocks-helpers";
-export { LiveFile } from "./crdts/LiveFile";
+export {
+  getLiveFileId,
+  LiveFile,
+  type LiveFileData,
+  type LiveFileReference,
+} from "./crdts/LiveFile";
 export { LiveList } from "./crdts/LiveList";
 export { LiveMap } from "./crdts/LiveMap";
 export { LiveObject } from "./crdts/LiveObject";
@@ -360,7 +365,6 @@ export type {
   CompactRootNode,
   FileStorageNode,
   ListStorageNode,
-  LiveFileData,
   MapStorageNode,
   NodeMap,
   NodeStream,

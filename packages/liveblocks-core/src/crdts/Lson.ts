@@ -1,10 +1,9 @@
-import type { LiveFile } from "../crdts/LiveFile";
+import type { LiveFile, LiveFileData } from "../crdts/LiveFile";
 import type { LiveList } from "../crdts/LiveList";
 import type { LiveMap } from "../crdts/LiveMap";
 import type { LiveObject } from "../crdts/LiveObject";
 import type { LiveRegister } from "../crdts/LiveRegister";
 import type { Json, ReadonlyJson, ReadonlyJsonObject } from "../lib/Json";
-import type { LiveFileData } from "../protocol/StorageNode";
 
 export type LiveStructure =
   | LiveObject<LsonObject>

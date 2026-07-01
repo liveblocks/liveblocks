@@ -35,6 +35,7 @@ import type {
   EnterOptions,
   FeedsEventServerMsg,
   IYjsProvider,
+  LiveFileReference,
   LiveblocksErrorContext,
   MentionData,
   OpaqueClient,
@@ -55,6 +56,7 @@ import {
   createThreadId,
   DefaultMap,
   errorIf,
+  getLiveFileId,
   getSubscriptionKey,
   hasPermissionAccess,
   HttpError,
@@ -3676,12 +3678,6 @@ function selectorFor_useAttachmentUrl(
   };
 }
 
-type LiveFileReference = LiveFile | LiveFileData | string;
-
-function getLiveFileId(file: LiveFileReference): string {
-  return typeof file === "string" ? file : file.id;
-}
-
 function selectorFor_useFileUrl(
   state: AsyncResult<string | undefined> | undefined
 ): FileUrlAsyncResult {
@@ -3759,12 +3755,22 @@ function useFileUrl_withRoomContext(
   return useRoomFileUrl(file, room.id);
 }
 
-function useFileUrl(
-  file: LiveFile | LiveFileData | string
-): FileUrlAsyncResult {
+/**
+ * Returns a presigned URL for a `LiveFile`.
+ *
+ * @example
+ * const { url, error, isLoading } = useFileUrl("fl_xxx");
+ *
+ * @example
+ * const { url, error, isLoading } = useFileUrl(liveFile);
+ */
+function useFileUrl(file: LiveFileReference): FileUrlAsyncResult {
   return useFileUrl_withRoomContext(GlobalRoomContext, file);
 }
 
+/**
+ * @private For internal use only. Do not rely on this hook. Use `useFileUrl` instead.
+ */
 function useRoomFileUrl(
   file: LiveFileReference,
   roomId: string
@@ -3880,7 +3886,16 @@ function useFileUrlSuspense_withRoomContext(
   };
 }
 
-function useFileUrlSuspense(file: LiveFile | LiveFileData | string) {
+/**
+ * Returns a presigned URL for a `LiveFile`.
+ *
+ * @example
+ * const { url } = useFileUrl("fl_xxx");
+ *
+ * @example
+ * const { url } = useFileUrl(liveFile);
+ */
+function useFileUrlSuspense(file: LiveFileReference) {
   return useFileUrlSuspense_withRoomContext(GlobalRoomContext, file);
 }
 

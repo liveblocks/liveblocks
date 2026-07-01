@@ -82,7 +82,6 @@ export type {
 } from "@liveblocks/core";
 export {
   createClient,
-  createStorageFileId,
   defineAiTool,
   FeedRequestErrorCode,
   getMentionsFromCommentBody,

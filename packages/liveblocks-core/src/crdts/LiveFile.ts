@@ -4,16 +4,25 @@ import type { ReadonlyJsonObject } from "../lib/Json";
 import { nanoid } from "../lib/nanoid";
 import type { CreateFileOp, CreateOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
-import type {
-  FileStorageNode,
-  LiveFileData,
-  SerializedFile,
-} from "../protocol/StorageNode";
+import type { FileStorageNode, SerializedFile } from "../protocol/StorageNode";
 import { CrdtType } from "../protocol/StorageNode";
 import type * as DevTools from "../types/DevToolsTreeNode";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { AbstractCrdt } from "./AbstractCrdt";
+
+export type LiveFileData = {
+  readonly id: string;
+  readonly name: string;
+  readonly size: number;
+  readonly mimeType: string;
+};
+
+export type LiveFileReference = LiveFile | LiveFileData | string;
+
+export function getLiveFileId(file: LiveFileReference): string {
+  return typeof file === "string" ? file : file.id;
+}
 
 /**
  * A LiveFile is an immutable Storage leaf that references file bytes stored
@@ -91,12 +100,12 @@ export class LiveFile extends AbstractCrdt {
 
   /** @internal */
   _attachChild(_op: CreateOp): ApplyResult {
-    throw new Error("Method not implemented.");
+    throw new Error("A LiveFile node cannot have children");
   }
 
   /** @internal */
   _detachChild(_crdt: LiveNode): ApplyResult {
-    throw new Error("Method not implemented.");
+    throw new Error("A LiveFile node cannot have children");
   }
 
   /** @internal */

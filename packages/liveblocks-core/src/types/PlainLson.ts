@@ -40,8 +40,8 @@
  *
  */
 
+import type { LiveFileData } from "../crdts/LiveFile";
 import type { Json } from "../lib/Json";
-import type { LiveFileData } from "../protocol/StorageNode";
 
 export type PlainLsonFields = Record<string, PlainLson>;
 

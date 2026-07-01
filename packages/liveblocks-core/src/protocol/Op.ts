@@ -1,6 +1,6 @@
+import type { LiveFileData } from "../crdts/LiveFile";
 import type { Json, JsonObject } from "../lib/Json";
 import type { DistributiveOmit } from "../lib/utils";
-import type { LiveFileData } from "./StorageNode";
 
 export type OpCode = (typeof OpCode)[keyof typeof OpCode];
 export const OpCode = Object.freeze({
@@ -13,7 +13,7 @@ export const OpCode = Object.freeze({
   DELETE_OBJECT_KEY: 6,
   CREATE_MAP: 7,
   CREATE_REGISTER: 8,
-  // 9 and 10 are reserved for the parallel LiveText work.
+  // TODO: 9 and 10 are used by LiveText, wait until it's merged.
   CREATE_FILE: 11,
 });
 

@@ -1,3 +1,4 @@
+import type { LiveFileData } from "../crdts/LiveFile";
 import type { Json, JsonObject } from "../lib/Json";
 
 export type IdTuple<T> = [id: string, value: T];
@@ -8,7 +9,7 @@ export const CrdtType = Object.freeze({
   LIST: 1,
   MAP: 2,
   REGISTER: 3,
-  // 4 is reserved for the parallel LiveText work.
+  // TODO: 4 is used by LiveText, wait until it's merged.
   FILE: 5,
 });
 
@@ -28,13 +29,6 @@ export type SerializedChild =
   | SerializedMap
   | SerializedRegister
   | SerializedFile;
-
-export type LiveFileData = {
-  readonly id: string;
-  readonly name: string;
-  readonly size: number;
-  readonly mimeType: string;
-};
 
 export type SerializedRootObject = {
   readonly type: CrdtType.OBJECT;
