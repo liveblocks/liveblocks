@@ -53,7 +53,7 @@
     "radix-ui": "^1.4.0"
   },
   "peerDependencies": {
-    "@lexical/react": "0.35.0",
+    "@lexical/react": "0.44.0",
     "@lexical/rich-text": "0.35.0",
     "@lexical/selection": "0.35.0",
     "@lexical/utils": "0.35.0",
@@ -74,7 +74,7 @@
     }
   },
   "devDependencies": {
-    "@lexical/react": "0.35.0",
+    "@lexical/react": "0.44.0",
     "@lexical/rich-text": "0.35.0",
     "@lexical/selection": "0.35.0",
     "@lexical/utils": "0.35.0",
