@@ -1,4 +1,5 @@
 import type { PlainLson } from "../types/PlainLson";
+import { LiveFile } from "./LiveFile";
 import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
@@ -28,6 +29,11 @@ export function toPlainLson(lson: Lson): PlainLson {
     return {
       liveblocksType: "LiveList",
       data: [...lson].map((item) => toPlainLson(item)),
+    };
+  } else if (lson instanceof LiveFile) {
+    return {
+      liveblocksType: "LiveFile",
+      data: lson.data,
     };
   } else {
     return lson;

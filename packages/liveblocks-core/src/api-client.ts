@@ -10,12 +10,17 @@ import {
   convertToThreadData,
   convertToThreadDeleteInfo,
 } from "./convert-plain-data";
+import type { LiveFileData } from "./crdts/LiveFile";
 import { assertNever } from "./lib/assert";
 import { autoRetry, HttpError } from "./lib/autoRetry";
 import type { BatchStore } from "./lib/batch";
 import { Batch, createBatchStore } from "./lib/batch";
 import { chunk } from "./lib/chunk";
-import { createCommentId, createThreadId } from "./lib/createIds";
+import {
+  createCommentId,
+  createStorageFileId,
+  createThreadId,
+} from "./lib/createIds";
 import type { DateToString } from "./lib/DateToString";
 import { DefaultMap } from "./lib/DefaultMap";
 import * as console from "./lib/fancy-console";
@@ -337,6 +342,21 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
 
   getOrCreateAttachmentUrlsStore(roomId: string): BatchStore<string, string>;
 
+  // Storage files
+  getFileUrl(options: { roomId: string; fileId: string }): Promise<string>;
+
+  uploadFile({
+    roomId,
+    file,
+    signal,
+  }: {
+    roomId: string;
+    file: File;
+    signal?: AbortSignal;
+  }): Promise<LiveFileData>;
+
+  getOrCreateFileUrlsStore(roomId: string): BatchStore<string, string>;
+
   // Text editor
   createTextMention({
     roomId,
@@ -519,6 +539,173 @@ export interface LiveblocksHttpApi<
   groupsStore: BatchStore<GroupData | undefined, string>;
 
   getGroup(groupId: string): Promise<GroupData | undefined>;
+}
+
+const ROOM_FILE_PART_SIZE = 5 * 1024 * 1024; // 5 MB
+const ROOM_FILE_RETRY_ATTEMPTS = 10;
+const ROOM_FILE_RETRY_DELAYS = [
+  2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000,
+];
+
+type RoomFilePart = {
+  partNumber: number;
+  part: Blob;
+};
+
+type UploadedRoomFilePart = {
+  partNumber: number;
+  etag: string;
+};
+
+type MultipartUpload = {
+  uploadId: string;
+};
+
+type UploadRoomFileOptions<TResult> = {
+  file: File;
+  signal?: AbortSignal;
+  abortErrorMessage: string;
+  uploadSingle: () => Promise<TResult>;
+  createMultipartUpload: () => Promise<MultipartUpload>;
+  uploadMultipartPart: (
+    uploadId: string,
+    partNumber: number,
+    part: Blob
+  ) => Promise<UploadedRoomFilePart>;
+  completeMultipartUpload: (
+    uploadId: string,
+    parts: UploadedRoomFilePart[]
+  ) => Promise<TResult>;
+  abortMultipartUpload: (uploadId: string) => Promise<void>;
+};
+
+async function uploadRoomFile<TResult>({
+  file,
+  signal,
+  abortErrorMessage,
+  uploadSingle,
+  createMultipartUpload,
+  uploadMultipartPart,
+  completeMultipartUpload,
+  abortMultipartUpload,
+}: UploadRoomFileOptions<TResult>): Promise<TResult> {
+  const abortError = createAbortError(abortErrorMessage);
+
+  if (signal?.aborted) {
+    throw abortError;
+  }
+
+  const handleRetryError = (err: Error) => {
+    if (signal?.aborted) {
+      throw abortError;
+    }
+
+    if (err instanceof HttpError && err.status === 413) {
+      throw err;
+    }
+
+    return false;
+  };
+
+  if (file.size <= ROOM_FILE_PART_SIZE) {
+    return autoRetry(
+      uploadSingle,
+      ROOM_FILE_RETRY_ATTEMPTS,
+      ROOM_FILE_RETRY_DELAYS,
+      handleRetryError
+    );
+  }
+
+  let uploadId: string | undefined;
+  const uploadedParts: UploadedRoomFilePart[] = [];
+  const multipartUpload = await autoRetry(
+    createMultipartUpload,
+    ROOM_FILE_RETRY_ATTEMPTS,
+    ROOM_FILE_RETRY_DELAYS,
+    handleRetryError
+  );
+
+  try {
+    uploadId = multipartUpload.uploadId;
+
+    if (signal?.aborted) {
+      throw abortError;
+    }
+
+    const batches = chunk(splitFileIntoParts(file), 5);
+
+    for (const parts of batches) {
+      const uploadedPartsPromises: Promise<UploadedRoomFilePart>[] = [];
+
+      for (const { part, partNumber } of parts) {
+        uploadedPartsPromises.push(
+          autoRetry(
+            () =>
+              uploadMultipartPart(multipartUpload.uploadId, partNumber, part),
+            ROOM_FILE_RETRY_ATTEMPTS,
+            ROOM_FILE_RETRY_DELAYS,
+            handleRetryError
+          )
+        );
+      }
+
+      uploadedParts.push(...(await Promise.all(uploadedPartsPromises)));
+    }
+
+    if (signal?.aborted) {
+      throw abortError;
+    }
+
+    return completeMultipartUpload(
+      uploadId,
+      uploadedParts.sort((a, b) => a.partNumber - b.partNumber)
+    );
+  } catch (error) {
+    if (uploadId && isAbortOrTimeoutError(error)) {
+      try {
+        await abortMultipartUpload(uploadId);
+      } catch {
+        // Ignore the error, we are probably offline.
+      }
+    }
+
+    throw error;
+  }
+}
+
+function splitFileIntoParts(file: File): RoomFilePart[] {
+  const parts: RoomFilePart[] = [];
+  let start = 0;
+
+  while (start < file.size) {
+    const end = Math.min(start + ROOM_FILE_PART_SIZE, file.size);
+
+    parts.push({
+      partNumber: parts.length + 1,
+      part: file.slice(start, end),
+    });
+
+    start = end;
+  }
+
+  return parts;
+}
+
+function isAbortOrTimeoutError(error: unknown): boolean {
+  return (
+    error instanceof Error &&
+    (error.name === "AbortError" || error.name === "TimeoutError")
+  );
+}
+
+function createAbortError(message: string): Error {
+  if (typeof DOMException === "function") {
+    return new DOMException(message, "AbortError");
+  }
+
+  const error = new Error(message);
+  error.name = "AbortError";
+  return error;
 }
 
 function commentsResourceForVisibility(
@@ -1022,198 +1209,143 @@ export function createApiClient<
     signal?: AbortSignal;
   }): Promise<CommentAttachment> {
     const roomId = options.roomId;
-    const abortSignal = options.signal;
     const attachment = options.attachment;
 
-    const abortError = abortSignal
-      ? new DOMException(
-          `Upload of attachment ${options.attachment.id} was aborted.`,
-          "AbortError"
-        )
-      : undefined;
-
-    if (abortSignal?.aborted) {
-      throw abortError;
-    }
-
-    const handleRetryError = (err: Error) => {
-      if (abortSignal?.aborted) {
-        throw abortError;
-      }
-
-      if (err instanceof HttpError && err.status === 413) {
-        throw err;
-      }
-
-      return false;
-    };
-
-    const ATTACHMENT_PART_SIZE = 5 * 1024 * 1024; // 5 MB
-    const RETRY_ATTEMPTS = 10;
-    const RETRY_DELAYS = [
-      2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000,
-    ];
-
-    function splitFileIntoParts(file: File) {
-      const parts: { partNumber: number; part: Blob }[] = [];
-
-      let start = 0;
-
-      while (start < file.size) {
-        const end = Math.min(start + ATTACHMENT_PART_SIZE, file.size);
-
-        parts.push({
-          partNumber: parts.length + 1,
-          part: file.slice(start, end),
-        });
-
-        start = end;
-      }
-
-      return parts;
-    }
-
-    if (attachment.size <= ATTACHMENT_PART_SIZE) {
-      // If the file is small enough, upload it in a single request
-      return autoRetry(
-        async () =>
-          httpClient.putBlob<CommentAttachment>(
-            url`/v2/c/rooms/${roomId}/attachments/${attachment.id}/upload/${encodeURIComponent(attachment.name)}`,
-            await authManager.getAuthValue({
-              roomId,
-              resource: "comments",
-              access: "write",
-            }),
-            attachment.file,
-            { fileSize: attachment.size },
-            { signal: abortSignal }
-          ),
-        RETRY_ATTEMPTS,
-        RETRY_DELAYS,
-        handleRetryError
-      );
-    } else {
-      // Otherwise, upload it in multiple parts
-      let uploadId: string | undefined;
-      const uploadedParts: {
-        etag: string;
-        partNumber: number;
-      }[] = [];
-
-      // Create a multi-part upload
-      const createMultiPartUpload = await autoRetry(
-        async () =>
-          httpClient.post<{
-            uploadId: string;
-            key: string;
-          }>(
-            url`/v2/c/rooms/${roomId}/attachments/${attachment.id}/multipart/${encodeURIComponent(attachment.name)}`,
-            await authManager.getAuthValue({
-              roomId,
-              resource: "comments",
-              access: "write",
-            }),
-            undefined,
-            { signal: abortSignal },
-            { fileSize: attachment.size }
-          ),
-        RETRY_ATTEMPTS,
-        RETRY_DELAYS,
-        handleRetryError
-      );
-
-      try {
-        uploadId = createMultiPartUpload.uploadId;
-
-        const parts = splitFileIntoParts(attachment.file);
-
-        // Check if the upload was aborted
-        if (abortSignal?.aborted) {
-          throw abortError;
-        }
-
-        const batches = chunk(parts, 5);
-
-        // Batches are uploaded one after the other
-        for (const parts of batches) {
-          const uploadedPartsPromises: Promise<{
-            partNumber: number;
-            etag: string;
-          }>[] = [];
-
-          for (const { part, partNumber } of parts) {
-            uploadedPartsPromises.push(
-              autoRetry(
-                async () =>
-                  httpClient.putBlob<{
-                    partNumber: number;
-                    etag: string;
-                  }>(
-                    url`/v2/c/rooms/${roomId}/attachments/${attachment.id}/multipart/${createMultiPartUpload.uploadId}/${String(partNumber)}`,
-                    await authManager.getAuthValue({
-                      roomId,
-                      resource: "comments",
-                      access: "write",
-                    }),
-                    part,
-                    undefined,
-                    { signal: abortSignal }
-                  ),
-                RETRY_ATTEMPTS,
-                RETRY_DELAYS,
-                handleRetryError
-              )
-            );
-          }
-
-          // Parts are uploaded in parallel
-          uploadedParts.push(...(await Promise.all(uploadedPartsPromises)));
-        }
-
-        // Check if the upload was aborted
-        if (abortSignal?.aborted) {
-          throw abortError;
-        }
-
-        const sortedUploadedParts = uploadedParts.sort(
-          (a, b) => a.partNumber - b.partNumber
-        );
-
-        return httpClient.post<CommentAttachment>(
+    return uploadRoomFile({
+      file: attachment.file,
+      signal: options.signal,
+      abortErrorMessage: `Upload of attachment ${attachment.id} was aborted.`,
+      uploadSingle: async () =>
+        httpClient.putBlob<CommentAttachment>(
+          url`/v2/c/rooms/${roomId}/attachments/${attachment.id}/upload/${encodeURIComponent(attachment.name)}`,
+          await authManager.getAuthValue({
+            roomId,
+            resource: "comments",
+            access: "write",
+          }),
+          attachment.file,
+          { fileSize: attachment.size },
+          { signal: options.signal }
+        ),
+      createMultipartUpload: async () =>
+        httpClient.post<{ uploadId: string }>(
+          url`/v2/c/rooms/${roomId}/attachments/${attachment.id}/multipart/${encodeURIComponent(attachment.name)}`,
+          await authManager.getAuthValue({
+            roomId,
+            resource: "comments",
+            access: "write",
+          }),
+          undefined,
+          { signal: options.signal },
+          { fileSize: attachment.size }
+        ),
+      uploadMultipartPart: async (uploadId, partNumber, part) =>
+        httpClient.putBlob<UploadedRoomFilePart>(
+          url`/v2/c/rooms/${roomId}/attachments/${attachment.id}/multipart/${uploadId}/${String(partNumber)}`,
+          await authManager.getAuthValue({
+            roomId,
+            resource: "comments",
+            access: "write",
+          }),
+          part,
+          undefined,
+          { signal: options.signal }
+        ),
+      completeMultipartUpload: async (uploadId, parts) =>
+        httpClient.post<CommentAttachment>(
           url`/v2/c/rooms/${roomId}/attachments/${attachment.id}/multipart/${uploadId}/complete`,
           await authManager.getAuthValue({
             roomId,
             resource: "comments",
             access: "write",
           }),
-          { parts: sortedUploadedParts },
-          { signal: abortSignal }
+          { parts },
+          { signal: options.signal }
+        ),
+      abortMultipartUpload: async (uploadId) => {
+        await httpClient.rawDelete(
+          url`/v2/c/rooms/${roomId}/attachments/${attachment.id}/multipart/${uploadId}`,
+          await authManager.getAuthValue({
+            roomId,
+            resource: "comments",
+            access: "write",
+          })
         );
-      } catch (error) {
-        if (
-          uploadId &&
-          (error as Error)?.name &&
-          ((error as Error).name === "AbortError" ||
-            (error as Error).name === "TimeoutError")
-        ) {
-          try {
-            // Abort the multi-part upload if it was created
-            await httpClient.rawDelete(
-              url`/v2/c/rooms/${roomId}/attachments/${attachment.id}/multipart/${uploadId}`,
-              await authManager.getAuthValue({
-                roomId,
-                resource: "comments",
-                access: "write",
-              })
-            );
-          } catch {
-            // Ignore the error, we are probably offline
-          }
-        }
+      },
+    });
+  }
 
-        throw error;
-      }
-    }
+  async function uploadFile(options: {
+    roomId: string;
+    file: File;
+    signal?: AbortSignal;
+  }): Promise<LiveFileData> {
+    const roomId = options.roomId;
+    const file = options.file;
+    const fileId = createStorageFileId();
+
+    return uploadRoomFile({
+      file,
+      signal: options.signal,
+      abortErrorMessage: `Upload of file ${fileId} was aborted.`,
+      uploadSingle: async () =>
+        httpClient.putBlob<LiveFileData>(
+          url`/v2/c/rooms/${roomId}/storage/files/${fileId}/upload/${encodeURIComponent(file.name)}`,
+          await authManager.getAuthValue({
+            roomId,
+            resource: "storage",
+            access: "write",
+          }),
+          file,
+          { fileSize: file.size },
+          { signal: options.signal }
+        ),
+      createMultipartUpload: async () =>
+        httpClient.post<{ uploadId: string }>(
+          url`/v2/c/rooms/${roomId}/storage/files/${fileId}/multipart/${encodeURIComponent(file.name)}`,
+          await authManager.getAuthValue({
+            roomId,
+            resource: "storage",
+            access: "write",
+          }),
+          undefined,
+          { signal: options.signal },
+          { fileSize: file.size }
+        ),
+      uploadMultipartPart: async (uploadId, partNumber, part) =>
+        httpClient.putBlob<UploadedRoomFilePart>(
+          url`/v2/c/rooms/${roomId}/storage/files/${fileId}/multipart/${uploadId}/${String(partNumber)}`,
+          await authManager.getAuthValue({
+            roomId,
+            resource: "storage",
+            access: "write",
+          }),
+          part,
+          undefined,
+          { signal: options.signal }
+        ),
+      completeMultipartUpload: async (uploadId, parts) =>
+        httpClient.post<LiveFileData>(
+          url`/v2/c/rooms/${roomId}/storage/files/${fileId}/multipart/${uploadId}/complete`,
+          await authManager.getAuthValue({
+            roomId,
+            resource: "storage",
+            access: "write",
+          }),
+          { parts },
+          { signal: options.signal }
+        ),
+      abortMultipartUpload: async (uploadId) => {
+        await httpClient.rawDelete(
+          url`/v2/c/rooms/${roomId}/storage/files/${fileId}/multipart/${uploadId}`,
+          await authManager.getAuthValue({
+            roomId,
+            resource: "storage",
+            access: "write",
+          })
+        );
+      },
+    });
   }
 
   const attachmentUrlsBatchStoresByRoom = new DefaultMap<
@@ -1255,6 +1387,46 @@ export function createApiClient<
   function getAttachmentUrl(options: { roomId: string; attachmentId: string }) {
     const batch = getOrCreateAttachmentUrlsStore(options.roomId).batch;
     return batch.get(options.attachmentId);
+  }
+
+  const fileUrlsBatchStoresByRoom = new DefaultMap<
+    string,
+    BatchStore<string, string>
+  >((roomId) => {
+    const batch = new Batch<string, string>(
+      async (batchedFileIds) => {
+        const fileIds = batchedFileIds.flat();
+        const { urls } = await httpClient.post<{
+          urls: (string | null)[];
+        }>(
+          url`/v2/c/rooms/${roomId}/storage/files/presigned-urls`,
+          await authManager.getAuthValue({
+            roomId,
+            resource: "storage",
+            access: "read",
+          }),
+          { fileIds }
+        );
+
+        return urls.map(
+          (url) =>
+            url ?? new Error("There was an error while getting this file's URL")
+        );
+      },
+      { delay: 50 }
+    );
+    return createBatchStore(batch);
+  });
+
+  function getOrCreateFileUrlsStore(
+    roomId: string
+  ): BatchStore<string, string> {
+    return fileUrlsBatchStoresByRoom.getOrCreate(roomId);
+  }
+
+  function getFileUrl(options: { roomId: string; fileId: string }) {
+    const batch = getOrCreateFileUrlsStore(options.roomId).batch;
+    return batch.get(options.fileId);
   }
 
   /* -------------------------------------------------------------------------------------------------
@@ -1897,6 +2069,10 @@ export function createApiClient<
     getAttachmentUrl,
     uploadAttachment,
     getOrCreateAttachmentUrlsStore,
+    // Room storage files
+    getFileUrl,
+    uploadFile,
+    getOrCreateFileUrlsStore,
     // Room storage
     streamStorage,
     // Notifications

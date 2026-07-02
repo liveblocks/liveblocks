@@ -1,3 +1,4 @@
+import type { LiveFileData } from "../crdts/LiveFile";
 import type { Json, JsonObject } from "../lib/Json";
 import type { DistributiveOmit } from "../lib/utils";
 
@@ -12,6 +13,8 @@ export const OpCode = Object.freeze({
   DELETE_OBJECT_KEY: 6,
   CREATE_MAP: 7,
   CREATE_REGISTER: 8,
+  // TODO: 9 and 10 are used by LiveText, wait until it's merged.
+  CREATE_FILE: 11,
 });
 
 export namespace OpCode {
@@ -24,6 +27,7 @@ export namespace OpCode {
   export type DELETE_OBJECT_KEY = typeof OpCode.DELETE_OBJECT_KEY;
   export type CREATE_MAP = typeof OpCode.CREATE_MAP;
   export type CREATE_REGISTER = typeof OpCode.CREATE_REGISTER;
+  export type CREATE_FILE = typeof OpCode.CREATE_FILE;
 }
 
 /**
@@ -41,7 +45,8 @@ export type CreateOp =
   | CreateObjectOp
   | CreateRegisterOp
   | CreateMapOp
-  | CreateListOp;
+  | CreateListOp
+  | CreateFileOp;
 
 export type UpdateObjectOp = {
   readonly opId?: string;
@@ -92,6 +97,17 @@ export type CreateRegisterOp = {
   readonly deletedId?: string;
 };
 
+export type CreateFileOp = {
+  readonly opId?: string;
+  readonly id: string;
+  readonly type: OpCode.CREATE_FILE;
+  readonly parentId: string;
+  readonly parentKey: string;
+  readonly data: LiveFileData;
+  readonly intent?: "set" | "push";
+  readonly deletedId?: string;
+};
+
 export type DeleteCrdtOp = {
   readonly opId?: string;
   readonly id: string;
@@ -119,6 +135,7 @@ export function isCreateOp<O extends Op>(op: O): op is O & CreateOp {
   return (
     op.type === OpCode.CREATE_OBJECT ||
     op.type === OpCode.CREATE_REGISTER ||
+    op.type === OpCode.CREATE_FILE ||
     op.type === OpCode.CREATE_MAP ||
     op.type === OpCode.CREATE_LIST
   );

@@ -4,6 +4,8 @@ import type {
   History,
   Json,
   JsonObject,
+  LiveFile,
+  LiveFileData,
   LiveObject,
   LostConnectionEvent,
   LsonObject,
@@ -38,6 +40,7 @@ import type {
   HistoryVersion,
   InboxNotificationData,
   LiveblocksError,
+  LiveFileReference,
   MessageId,
   NotificationSettings,
   PartialNotificationSettings,
@@ -268,6 +271,8 @@ export type GroupInfoAsyncSuccess = AsyncSuccess<DGI, "info">;
 
 export type AttachmentUrlAsyncResult = AsyncResult<string, "url">;
 export type AttachmentUrlAsyncSuccess = AsyncSuccess<string, "url">;
+export type FileUrlAsyncResult = AsyncResult<string, "url">;
+export type FileUrlAsyncSuccess = AsyncSuccess<string, "url">;
 
 export type GroupAsyncResult = AsyncResult<GroupData | undefined, "group">;
 export type GroupAsyncSuccess = AsyncSuccess<GroupData | undefined, "group">;
@@ -1336,6 +1341,17 @@ export type RoomContextBundle<
       useAttachmentUrl(attachmentId: string): AttachmentUrlAsyncResult;
 
       /**
+       * Returns a presigned URL for a `LiveFile`.
+       *
+       * @example
+       * const { url, error, isLoading } = useFileUrl("fl_xxx");
+       *
+       * @example
+       * const { url, error, isLoading } = useFileUrl(liveFile);
+       */
+      useFileUrl(file: LiveFileReference): FileUrlAsyncResult;
+
+      /**
        * (Private beta)  Returns a history of versions of the current room.
        *
        * @example
@@ -1501,6 +1517,17 @@ export type RoomContextBundle<
              * const { url } = useAttachmentUrl("at_xxx");
              */
             useAttachmentUrl(attachmentId: string): AttachmentUrlAsyncSuccess;
+
+            /**
+             * Returns a presigned URL for a `LiveFile`.
+             *
+             * @example
+             * const { url } = useFileUrl("fl_xxx");
+             *
+             * @example
+             * const { url } = useFileUrl(liveFile);
+             */
+            useFileUrl(file: LiveFileReference): FileUrlAsyncSuccess;
           }
       >;
     }

@@ -1,3 +1,4 @@
+import type { LiveFileData } from "../crdts/LiveFile";
 import type { Json, JsonObject } from "../lib/Json";
 
 export type IdTuple<T> = [id: string, value: T];
@@ -8,6 +9,8 @@ export const CrdtType = Object.freeze({
   LIST: 1,
   MAP: 2,
   REGISTER: 3,
+  // TODO: 4 is used by LiveText, wait until it's merged.
+  FILE: 5,
 });
 
 export namespace CrdtType {
@@ -15,6 +18,7 @@ export namespace CrdtType {
   export type LIST = typeof CrdtType.LIST;
   export type MAP = typeof CrdtType.MAP;
   export type REGISTER = typeof CrdtType.REGISTER;
+  export type FILE = typeof CrdtType.FILE;
 }
 
 export type SerializedCrdt = SerializedRootObject | SerializedChild;
@@ -23,7 +27,8 @@ export type SerializedChild =
   | SerializedObject
   | SerializedList
   | SerializedMap
-  | SerializedRegister;
+  | SerializedRegister
+  | SerializedFile;
 
 export type SerializedRootObject = {
   readonly type: CrdtType.OBJECT;
@@ -60,19 +65,28 @@ export type SerializedRegister = {
   readonly data: Json;
 };
 
+export type SerializedFile = {
+  readonly type: CrdtType.FILE;
+  readonly parentId: string;
+  readonly parentKey: string;
+  readonly data: LiveFileData;
+};
+
 export type StorageNode = RootStorageNode | ChildStorageNode;
 
 export type ChildStorageNode =
   | ObjectStorageNode
   | ListStorageNode
   | MapStorageNode
-  | RegisterStorageNode;
+  | RegisterStorageNode
+  | FileStorageNode;
 
 export type RootStorageNode = [id: "root", value: SerializedRootObject];
 export type ObjectStorageNode = [id: string, value: SerializedObject];
 export type ListStorageNode = [id: string, value: SerializedList];
 export type MapStorageNode = [id: string, value: SerializedMap];
 export type RegisterStorageNode = [id: string, value: SerializedRegister];
+export type FileStorageNode = [id: string, value: SerializedFile];
 
 export type NodeMap = Map<string, SerializedCrdt>;
 export type NodeStream = Iterable<StorageNode>;
@@ -101,13 +115,18 @@ export function isRegisterStorageNode(
   return node[1].type === CrdtType.REGISTER;
 }
 
+export function isFileStorageNode(node: StorageNode): node is FileStorageNode {
+  return node[1].type === CrdtType.FILE;
+}
+
 export type CompactNode = CompactRootNode | CompactChildNode;
 
 export type CompactChildNode =
   | CompactObjectNode
   | CompactListNode
   | CompactMapNode
-  | CompactRegisterNode;
+  | CompactRegisterNode
+  | CompactFileNode;
 
 export type CompactRootNode = readonly [id: "root", data: JsonObject];
 
@@ -141,6 +160,14 @@ export type CompactRegisterNode = readonly [
   data: Json,
 ];
 
+export type CompactFileNode = readonly [
+  id: string,
+  type: CrdtType.FILE,
+  parentId: string,
+  parentKey: string,
+  data: LiveFileData,
+];
+
 function isCompactRootNode(node: CompactNode): node is CompactRootNode {
   return node[0] === "root";
 }
@@ -171,6 +198,10 @@ export function* compactNodesToNodeStream(
       case CrdtType.REGISTER:
         // prettier-ignore
         yield [cnode[0], {type: CrdtType.REGISTER, parentId: cnode[2], parentKey: cnode[3], data: cnode[4], }];
+        break;
+      case CrdtType.FILE:
+        // prettier-ignore
+        yield [cnode[0], {type: CrdtType.FILE, parentId: cnode[2], parentKey: cnode[3], data: cnode[4], }];
         break;
       default:
       // Ignore
@@ -204,6 +235,10 @@ export function* nodeStreamToCompactNodes(
       const id = node[0];
       const crdt = node[1];
       yield [id, CrdtType.REGISTER, crdt.parentId, crdt.parentKey, crdt.data];
+    } else if (isFileStorageNode(node)) {
+      const id = node[0];
+      const crdt = node[1];
+      yield [id, CrdtType.FILE, crdt.parentId, crdt.parentKey, crdt.data];
     } else {
       // Ignore
     }

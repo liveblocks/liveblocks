@@ -40,6 +40,7 @@
  *
  */
 
+import type { LiveFileData } from "../crdts/LiveFile";
 import type { Json } from "../lib/Json";
 
 export type PlainLsonFields = Record<string, PlainLson>;
@@ -59,10 +60,16 @@ export type PlainLsonList = {
   data: PlainLson[];
 };
 
+export type PlainLsonFile = {
+  liveblocksType: "LiveFile";
+  data: LiveFileData;
+};
+
 export type PlainLson =
   | PlainLsonObject
   | PlainLsonMap
   | PlainLsonList
+  | PlainLsonFile
 
   // Any "normal" Json value, as long as it's not an object with
   // a `liveblocksType` field :)
