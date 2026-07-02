@@ -780,7 +780,7 @@
         }
       }
     },
-    "/rooms/{roomId}/active_users": {
+    "/rooms/{roomId}/active-users": {
       "get": {
         "summary": "Get active users",
         "tags": ["Room"],
@@ -907,7 +907,7 @@
         }
       }
     },
-    "/rooms/{roomId}/broadcast_event": {
+    "/rooms/{roomId}/broadcast-event": {
       "post": {
         "summary": "Broadcast event to a room",
         "description": "This endpoint enables the broadcast of an event to a room without having to connect to it via the `client` from `@liveblocks/client`. It takes any valid JSON as a request body. The `connectionId` passed to event listeners is `-1` when using this API. Corresponds to [`liveblocks.broadcastEvent`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-broadcast-event).",
