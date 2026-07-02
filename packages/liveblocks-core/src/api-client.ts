@@ -356,6 +356,14 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     mentionId: string;
   }): Promise<void>;
 
+  getStorageHistoryVersion({
+    roomId,
+    versionId,
+  }: {
+    roomId: string;
+    versionId: string;
+  }): Promise<Response>;
+
   getYjsHistoryVersion({
     roomId,
     versionId,
@@ -1374,6 +1382,20 @@ export function createApiClient<
     );
   }
 
+  async function getStorageHistoryVersion(options: {
+    roomId: string;
+    versionId: string;
+  }) {
+    return httpClient.rawGet(
+      url`/v2/c/rooms/${options.roomId}/versions/${options.versionId}/storage`,
+      await authManager.getAuthValue({
+        roomId: options.roomId,
+        resource: "storage",
+        access: "read",
+      })
+    );
+  }
+
   async function getYjsHistoryVersion(options: {
     roomId: string;
     versionId: string;
@@ -1888,6 +1910,7 @@ export function createApiClient<
     // Room text editor
     createTextMention,
     deleteTextMention,
+    getStorageHistoryVersion,
     getYjsHistoryVersion,
     createVersionHistorySnapshot,
     reportTextEditor,

@@ -1266,6 +1266,7 @@ export type PrivateRoomApi = {
     requestedAt: Date;
   }>;
 
+  getStorageHistoryVersion(versionId: string): Promise<Response>;
   getYjsHistoryVersion(versionId: string): Promise<Response>;
   createVersionHistorySnapshot(): Promise<void>;
 
@@ -1869,6 +1870,10 @@ export function createRoom<
       since: options.since,
       signal: options.signal,
     });
+  }
+
+  async function getStorageHistoryVersion(versionId: string) {
+    return httpClient.getStorageHistoryVersion({ roomId, versionId });
   }
 
   async function getYjsHistoryVersion(versionId: string) {
@@ -3812,6 +3817,7 @@ export function createRoom<
         // List versions of the document since the specified date
         listHistoryVersionsSince,
         // get a specific version
+        getStorageHistoryVersion,
         getYjsHistoryVersion,
         // create a version
         createVersionHistorySnapshot,

@@ -75,6 +75,7 @@ export {
   useUpdateMyPresence,
   useUpdateRoomSubscriptionSettings,
   useHistoryVersionData,
+  useHistoryVersionStorageData,
   useHistoryVersionYjsData,
 } from "./room";
 

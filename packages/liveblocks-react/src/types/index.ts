@@ -43,6 +43,7 @@ import type {
   PartialNotificationSettings,
   PartialUnless,
   Patchable,
+  PlainLsonObject,
   QueryMetadata,
   Relax,
   Resolve,
@@ -357,6 +358,8 @@ export type NotificationSettingsAsyncSuccess = AsyncSuccess<NotificationSettings
 
 export type RoomSubscriptionSettingsAsyncSuccess = AsyncSuccess<RoomSubscriptionSettings, "settings">; // prettier-ignore
 export type RoomSubscriptionSettingsAsyncResult = AsyncResult<RoomSubscriptionSettings, "settings">; // prettier-ignore
+
+export type HistoryVersionStorageDataAsyncResult = AsyncResult<PlainLsonObject>;
 
 export type HistoryVersionYjsDataAsyncResult = AsyncResult<Uint8Array>;
 
@@ -1342,6 +1345,16 @@ export type RoomContextBundle<
        * const { versions, error, isLoading } = useHistoryVersions();
        */
       useHistoryVersions(): HistoryVersionsAsyncResult;
+
+      /**
+       * Returns the Storage data for a given version of the room.
+       *
+       * @example
+       * const { data, error, isLoading } = useHistoryVersionStorageData(version.id);
+       */
+      useHistoryVersionStorageData(
+        id: string
+      ): HistoryVersionStorageDataAsyncResult;
 
       /**
        * Returns the Yjs data for a given version of the room.

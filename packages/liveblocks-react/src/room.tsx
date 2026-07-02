@@ -38,6 +38,7 @@ import type {
   OpaqueClient,
   OpaqueRoom,
   PermissionResources,
+  PlainLsonObject,
   RequiredAccessLevel,
   RoomEventMessage,
   RoomSubscriptionSettings,
@@ -104,6 +105,7 @@ import type {
   FeedsAsyncSuccess,
   HistoryVersionsAsyncResult,
   HistoryVersionsAsyncSuccess,
+  HistoryVersionStorageDataAsyncResult,
   HistoryVersionYjsDataAsyncResult,
   MutationContext,
   OmitFirstArg,
@@ -3146,6 +3148,61 @@ function useRoomSubscriptionSettingsSuspense(): [
 /**
  * @internal
  */
+function useHistoryVersionStorageData_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>,
+  versionId: string
+): HistoryVersionStorageDataAsyncResult {
+  const [state, setState] = useState<HistoryVersionStorageDataAsyncResult>({
+    isLoading: true,
+  });
+  const room = useRoom_withRoomContext(RoomContext);
+  useEffect(() => {
+    setState({ isLoading: true });
+    const load = async () => {
+      try {
+        const response =
+          await room[kInternal].getStorageHistoryVersion(versionId);
+        // The Storage version endpoint returns the snapshot as PlainLson JSON.
+        const data = (await response.json()) as PlainLsonObject;
+        setState({
+          isLoading: false,
+          data,
+        });
+      } catch (error) {
+        setState({
+          isLoading: false,
+          error:
+            error instanceof Error
+              ? error
+              : new Error(
+                  "An unknown error occurred while loading this version"
+                ),
+        });
+      }
+    };
+    void load();
+  }, [room, versionId]);
+  return state;
+}
+
+/**
+ * Returns the Storage data for a given version of the room.
+ *
+ * @example
+ * const { data, isLoading, error } = useHistoryVersionStorageData(versionId);
+ */
+function useHistoryVersionStorageData(
+  versionId: string
+): HistoryVersionStorageDataAsyncResult {
+  return useHistoryVersionStorageData_withRoomContext(
+    GlobalRoomContext,
+    versionId
+  );
+}
+
+/**
+ * @internal
+ */
 function useHistoryVersionYjsData_withRoomContext(
   RoomContext: Context<OpaqueRoom | null>,
   versionId: string
@@ -4139,6 +4196,15 @@ export function createRoomContext<
     return useHistoryVersionsSuspense_withRoomContext(BoundRoomContext);
   }
 
+  function useHistoryVersionStorageData_withBoundRoomContext(
+    ...args: Parameters<typeof useHistoryVersionStorageData>
+  ) {
+    return useHistoryVersionStorageData_withRoomContext(
+      BoundRoomContext,
+      ...args
+    );
+  }
+
   function useHistoryVersionYjsData_withBoundRoomContext(
     ...args: Parameters<typeof useHistoryVersionYjsData>
   ) {
@@ -4315,6 +4381,7 @@ export function createRoomContext<
     // prettier-ignore
     useHistoryVersionData: useHistoryVersionYjsData_withBoundRoomContext as TRoomBundle["useHistoryVersionData"],
     // prettier-ignore
+    useHistoryVersionStorageData: useHistoryVersionStorageData_withBoundRoomContext as TRoomBundle["useHistoryVersionStorageData"],
     useHistoryVersionYjsData: useHistoryVersionYjsData_withBoundRoomContext as TRoomBundle["useHistoryVersionYjsData"],
 
     // prettier-ignore
@@ -5092,6 +5159,7 @@ export {
   useHistoryVersionData,
   _useHistoryVersions as useHistoryVersions,
   _useHistoryVersionsSuspense as useHistoryVersionsSuspense,
+  useHistoryVersionStorageData,
   useHistoryVersionYjsData,
   _useIsInsideRoom as useIsInsideRoom,
   useLostConnectionListener,
