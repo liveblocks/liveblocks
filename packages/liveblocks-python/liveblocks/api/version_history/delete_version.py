@@ -8,23 +8,17 @@ from ... import errors
 
 def _get_kwargs(
     room_id: str,
-    *,
-    body: Any,
+    version_id: str,
 ) -> dict[str, Any]:
-    headers: dict[str, Any] = {}
 
     _kwargs: dict[str, Any] = {
-        "method": "post",
-        "url": "/v2/rooms/{room_id}/broadcast-event".format(
+        "method": "delete",
+        "url": "/v2/rooms/{room_id}/versions/{version_id}".format(
             room_id=quote(str(room_id), safe=""),
+            version_id=quote(str(version_id), safe=""),
         ),
     }
 
-    _kwargs["json"] = body
-
-    headers["Content-Type"] = "application/json"
-
-    _kwargs["headers"] = headers
     return _kwargs
 
 
@@ -37,13 +31,13 @@ def _parse_response(*, response: httpx.Response) -> None:
 
 def _sync(
     room_id: str,
+    version_id: str,
     *,
     client: httpx.Client,
-    body: Any,
 ) -> None:
     kwargs = _get_kwargs(
         room_id=room_id,
-        body=body,
+        version_id=version_id,
     )
 
     response = client.request(
@@ -54,13 +48,13 @@ def _sync(
 
 async def _asyncio(
     room_id: str,
+    version_id: str,
     *,
     client: httpx.AsyncClient,
-    body: Any,
 ) -> None:
     kwargs = _get_kwargs(
         room_id=room_id,
-        body=body,
+        version_id=version_id,
     )
 
     response = await client.request(
