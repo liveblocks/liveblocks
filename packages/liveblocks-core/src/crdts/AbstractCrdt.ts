@@ -26,7 +26,6 @@ export type ApplyResult =
  * to live nodes before and after they are inter-connected.
  */
 export interface ManagedPool {
-  readonly roomId: string;
   readonly nodes: ReadonlyMap<string, LiveNode>;
   readonly generateId: () => string;
   readonly generateOpId: () => string;
@@ -101,7 +100,6 @@ export type CreateManagedPoolOptions = {
  * @private Private API, never use this API directly.
  */
 export function createManagedPool(
-  roomId: string,
   options: CreateManagedPoolOptions
 ): ManagedPool {
   const {
@@ -116,7 +114,6 @@ export function createManagedPool(
   const nodes = new Map<string, LiveNode>();
 
   return {
-    roomId,
     nodes,
 
     getNode: (id: string) => nodes.get(id),
@@ -290,10 +287,6 @@ export abstract class AbstractCrdt {
   /** @internal */
   protected get _pool(): ManagedPool | undefined {
     return this.#pool;
-  }
-
-  get roomId(): string | null {
-    return this.#pool ? this.#pool.roomId : null;
   }
 
   /** @internal */

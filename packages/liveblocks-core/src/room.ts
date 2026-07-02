@@ -1654,7 +1654,7 @@ export function createRoom<
     yjsProviderDidChange: makeEventSource(),
 
     // Storage
-    pool: createManagedPool(roomId, {
+    pool: createManagedPool({
       getCurrentConnectionId,
       onDispatch,
       isStorageWritable,
@@ -1869,7 +1869,9 @@ export function createRoom<
     return httpClient.listHistoryVersions({ roomId });
   }
 
-  async function listHistoryVersionsSince(options: ListTextVersionsSinceOptions) {
+  async function listHistoryVersionsSince(
+    options: ListTextVersionsSinceOptions
+  ) {
     return httpClient.listHistoryVersionsSince({
       roomId,
       since: options.since,

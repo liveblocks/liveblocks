@@ -4,11 +4,7 @@ import { stringifyOrLog as stringify } from "../lib/stringify";
 import { deepClone, entries } from "../lib/utils";
 import type { CreateOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
-import type {
-  NodeMap,
-  NodeStream,
-  StorageNode,
-} from "../protocol/StorageNode";
+import type { NodeMap, NodeStream, StorageNode } from "../protocol/StorageNode";
 import {
   CrdtType,
   isListStorageNode,
@@ -72,7 +68,7 @@ export function liveObjectFromNodeStream(
   // through getCurrentConnectionId -- so we make that the choke point that
   // refuses mutation outright, rather than silently generating bogus `0:n` ids
   // that could collide with a live document's.
-  const pool = createManagedPool("history-version", {
+  const pool = createManagedPool({
     getCurrentConnectionId: () => {
       throw new Error(
         "Cannot mutate a historic storage version: it is a read-only snapshot"

@@ -3044,7 +3044,7 @@ export class Liveblocks {
       const { actor, nodes } = resp;
 
       // Create a new pool
-      const pool = createManagedPool(roomId, {
+      const pool = createManagedPool({
         getCurrentConnectionId: () => actor,
         onDispatch: (
           ops: ClientWireOp[],
