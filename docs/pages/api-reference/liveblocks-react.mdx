@@ -6499,6 +6499,27 @@ const { data, error, isLoading } = useHistoryVersionYjsData(versionId);
   </PropertiesListItem>
 </PropertiesList>
 
+### useDeleteHistoryVersion [@badge=RoomProvider]
+
+Returns a function that permanently deletes a version from the room's history.
+
+```tsx
+import { useDeleteHistoryVersion } from "@liveblocks/react";
+
+const deleteHistoryVersion = useDeleteHistoryVersion();
+
+// Later, delete a version by its id
+await deleteHistoryVersion(versionId);
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="deleteHistoryVersion" type="(versionId: string) => Promise<void>">
+    A function that deletes the version with the given id. The `versionId` is
+    obtained from the `id` field of a `HistoryVersion` returned by
+    [`useHistoryVersions`][].
+  </PropertiesListItem>
+</PropertiesList>
+
 ## Miscellaneous
 
 ### useUser [@badge=Both]
