@@ -10,11 +10,11 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@liveblocks/client": "^3.18.4",
-    "@liveblocks/node": "^3.18.4",
-    "@liveblocks/react": "^3.18.4",
-    "@liveblocks/react-flow": "^3.18.4",
-    "@liveblocks/react-ui": "^3.18.4",
+    "@liveblocks/client": "^3.21.0",
+    "@liveblocks/node": "^3.21.0",
+    "@liveblocks/react": "^3.21.0",
+    "@liveblocks/react-flow": "^3.21.0",
+    "@liveblocks/react-ui": "^3.21.0",
     "@xyflow/react": "^12.10.1",
     "next": "^16.1.6",
     "react": "^18.3.1",
