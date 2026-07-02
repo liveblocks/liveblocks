@@ -1266,8 +1266,8 @@ export type PrivateRoomApi = {
     requestedAt: Date;
   }>;
 
-  getStorageHistoryVersion(versionId: string): Promise<Response>;
-  getYjsHistoryVersion(versionId: string): Promise<Response>;
+  fetchStorageHistoryVersion(versionId: string): Promise<Response>;
+  fetchYjsHistoryVersion(versionId: string): Promise<Response>;
   createVersionHistorySnapshot(): Promise<void>;
 
   executeContextualPrompt(options: {
@@ -1872,12 +1872,12 @@ export function createRoom<
     });
   }
 
-  async function getStorageHistoryVersion(versionId: string) {
-    return httpClient.getStorageHistoryVersion({ roomId, versionId });
+  async function fetchStorageHistoryVersion(versionId: string) {
+    return httpClient.fetchStorageHistoryVersion({ roomId, versionId });
   }
 
-  async function getYjsHistoryVersion(versionId: string) {
-    return httpClient.getYjsHistoryVersion({ roomId, versionId });
+  async function fetchYjsHistoryVersion(versionId: string) {
+    return httpClient.fetchYjsHistoryVersion({ roomId, versionId });
   }
 
   async function createVersionHistorySnapshot() {
@@ -3817,8 +3817,8 @@ export function createRoom<
         // List versions of the document since the specified date
         listHistoryVersionsSince,
         // get a specific version
-        getStorageHistoryVersion,
-        getYjsHistoryVersion,
+        fetchStorageHistoryVersion,
+        fetchYjsHistoryVersion,
         // create a version
         createVersionHistorySnapshot,
         // execute a contextual prompt

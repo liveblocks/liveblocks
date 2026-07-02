@@ -3161,7 +3161,7 @@ function useHistoryVersionStorageData_withRoomContext(
     const load = async () => {
       try {
         const response =
-          await room[kInternal].getStorageHistoryVersion(versionId);
+          await room[kInternal].fetchStorageHistoryVersion(versionId);
         // The Storage version endpoint returns the snapshot as PlainLson JSON.
         const data = (await response.json()) as PlainLsonObject;
         setState({
@@ -3215,7 +3215,7 @@ function useHistoryVersionYjsData_withRoomContext(
     setState({ isLoading: true });
     const load = async () => {
       try {
-        const response = await room[kInternal].getYjsHistoryVersion(versionId);
+        const response = await room[kInternal].fetchYjsHistoryVersion(versionId);
         const buffer = await response.arrayBuffer();
         const data = new Uint8Array(buffer);
         setState({
