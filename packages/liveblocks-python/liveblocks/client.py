@@ -1018,6 +1018,35 @@ class Liveblocks:
             client=self._client,
         )
 
+    def delete_version(
+        self,
+        room_id: str,
+        version_id: str,
+    ) -> None:
+        """Delete a version
+
+         This endpoint permanently deletes a version from the room's history.
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            version_id (str): ID of the version Example: vh_abc123.
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
+        from .api.version_history import delete_version
+
+        return delete_version._sync(
+            room_id=room_id,
+            version_id=version_id,
+            client=self._client,
+        )
+
     def get_threads(
         self,
         room_id: str,
@@ -4149,6 +4178,35 @@ class AsyncLiveblocks:
         from .api.version_history import get_yjs_version
 
         return await get_yjs_version._asyncio(
+            room_id=room_id,
+            version_id=version_id,
+            client=self._client,
+        )
+
+    async def delete_version(
+        self,
+        room_id: str,
+        version_id: str,
+    ) -> None:
+        """Delete a version
+
+         This endpoint permanently deletes a version from the room's history.
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            version_id (str): ID of the version Example: vh_abc123.
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
+        from .api.version_history import delete_version
+
+        return await delete_version._asyncio(
             room_id=room_id,
             version_id=version_id,
             client=self._client,

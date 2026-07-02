@@ -817,6 +817,35 @@ print(result)
 </PropertiesList>
 
 
+### delete_version
+
+This endpoint permanently deletes a version from the room's history.
+
+```python
+client.delete_version(
+    room_id="my-room-id",
+    version_id="vh_abc123",
+)
+```
+
+<PropertiesList title="Parameters">
+  <PropertiesListItem
+    name="room_id"
+    type="str"
+  >
+    ID of the room
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="version_id"
+    type="str"
+  >
+    ID of the version
+
+  </PropertiesListItem>
+</PropertiesList>
+
+
 ## Comments
 
 ### get_threads

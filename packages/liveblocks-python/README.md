@@ -646,6 +646,27 @@ print(result)
 
 ---
 
+#### `delete_version`
+
+This endpoint permanently deletes a version from the room's history.
+
+**Example**
+```python
+client.delete_version(
+    room_id="my-room-id",
+    version_id="vh_abc123",
+)
+```
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `room_id` | `str` | Yes | ID of the room |
+| `version_id` | `str` | Yes | ID of the version |
+
+
+---
+
 ### Comments
 
 #### `get_threads`
