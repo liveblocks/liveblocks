@@ -3,16 +3,16 @@ meta:
   title: "OpenAI Codex + Liveblocks"
   parentTitle: "Integrations"
   description:
-    "Use OpenAI Codex with Liveblocks agent skills and the MCP server to build
-    collaborative apps with guided best practices."
+    "Use OpenAI Codex with the Liveblocks plugin to build collaborative apps
+    with guided best practices."
 ---
 
 Use [OpenAI Codex](https://openai.com/codex/) with Liveblocks to add
 collaborative features to your app. Install
-[agent skills](/docs/tools/agent-skills) so your assistant follows Liveblocks
-and Yjs guidance, and use our [MCP server](/docs/tools/mcp-server) to allow AI
-to inspect and modify your data, such as rooms, Storage, Yjs, comments, and
-more.
+[Liveblocks plugin](/docs/tools/liveblocks-plugin) so your assistant follows
+Liveblocks and Yjs guidance, and use our [MCP server](/docs/tools/mcp-server) to
+allow AI to inspect and modify your data, such as rooms, Storage, Yjs, comments,
+and more.
 
 <PromptCta />
 
@@ -20,36 +20,33 @@ more.
 
 <Steps>
   <Step>
-    <StepTitle>Install agent skills</StepTitle>
+    <StepTitle>Install the Codex plugin</StepTitle>
     <StepContent>
-      To help AI follow best practices in your app, add [Liveblocks agent skills](/docs/tools/agent-skills)
-      to your system. Make sure to select Codex in the CLI. Global installation is easiest.
+      To help AI follow best practices in your app, add the Liveblocks Codex
+      plugin. It bundles Liveblocks agent skills
+      and MCP server configuration.
 
       ```bash
-      npx skills add liveblocks/skills
+      npx plugins add liveblocks/liveblocks-plugin
       ```
+
+      Start a new Codex thread after installation so the plugin is available.
 
     </StepContent>
 
   </Step>
 
   <Step>
-    <StepTitle>Install MCP server</StepTitle>
+    <StepTitle>Configure MCP server access</StepTitle>
     <StepContent>
-      To allow AI to inspect and modify data in your project, first ensure the Codex CLI is installed:
-      
-      ```bash
-      npm i -g @openai/codex
-      ```
-
-      Next, install the
-      [Liveblocks MCP server](/docs/tools/mcp-server), inserting your secret key
-      from [your dashboard](/dashboard):
+      To allow AI to inspect and modify data in your project, set a Liveblocks
+      secret key from [your dashboard](/dashboard) before starting Codex. The
+      Liveblocks Codex plugin uses this environment variable for its bundled
+      [MCP server](/docs/tools/mcp-server).
 
       ```bash
-      codex mcp add liveblocks \
-        --env LIVEBLOCKS_SECRET_KEY="{{SECRET_KEY}}" \
-        -- npx -y github:liveblocks/liveblocks-mcp-server
+      export LIVEBLOCKS_SECRET_KEY="{{SECRET_KEY}}"
+      codex
       ```
 
       <Banner type="warning" title="Only for development">
@@ -96,7 +93,9 @@ various best practices for using Liveblocks and Yjs. We always recommend using
 these skills when building, debugging, or answering questions about Liveblocks
 and Yjs.
 
-<Button href="/docs/tools/agent-skills">Agent skills documentation</Button>
+<Button href="/docs/tools/liveblocks-plugin">
+  Liveblocks plugin documentation
+</Button>
 
 ### MCP server
 
@@ -117,21 +116,24 @@ allowing it to delete your production data.
 
 ### Skills do not load
 
-Re-run `npx skills add liveblocks/skills` from the repo root. Ensure Codex can
-see the generated plugin files.
+Re-run `npx plugins add liveblocks/liveblocks-plugin`, then start a new Codex
+thread. If the plugin repository is not available, install the skills with
+`npx skills add liveblocks/skills` and configure the
+[MCP server](/docs/tools/mcp-server) separately.
 
 ### MCP returns auth errors
 
 Use a secret key from the same [Liveblocks project](/dashboard) as your app.
-Confirm `LIVEBLOCKS_SECRET_KEY` in the MCP config matches that project.
+Confirm `LIVEBLOCKS_SECRET_KEY` is exported in the shell before starting Codex.
 
 ### MCP returns incorrect data
 
-Check that you’re using the correct secret key for your current project. Try
-uninstalling and reinstalling with the correct key.
+Check that you’re using the secret key for your current project. If you change
+the key, restart Codex from the shell where `LIVEBLOCKS_SECRET_KEY` is set.
 
 ## Related docs
 
-- [Agent skills](/docs/tools/agent-skills).
+- [Liveblocks plugin](/docs/tools/liveblocks-plugin).
 - [MCP server](/docs/tools/mcp-server).
 - [REST API reference](/docs/api-reference/rest-api-endpoints).
+- [Liveblocks skills repository](https://github.com/liveblocks/skills).
