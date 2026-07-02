@@ -6436,6 +6436,39 @@ const { versions, error, isLoading } = useHistoryVersions();
   </PropertiesListItem>
 </PropertiesList>
 
+### useHistoryVersionStorageData [@badge=RoomProvider]
+
+Returns the Storage data for a given version of the room, reconstructed as a
+read-only [`LiveObject`][]. Because a historical version may not match your
+room's current `Storage` type, its shape is typed as the more permissive
+`LsonObject`.
+
+```tsx
+import { useHistoryVersionStorageData } from "@liveblocks/react";
+
+const { data, error, isLoading } = useHistoryVersionStorageData(versionId);
+```
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="versionId" type="string">
+    The ID of the version to retrieve. Obtained from the `id` field of a
+    `HistoryVersion` returned by [`useHistoryVersions`][].
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="data" type="LiveObject | undefined">
+    The Storage data for the version as a read-only `LiveObject`, or `undefined`
+    while loading.
+  </PropertiesListItem>
+  <PropertiesListItem name="isLoading" type="boolean">
+    Whether the version data is currently being loaded.
+  </PropertiesListItem>
+  <PropertiesListItem name="error" type="Error | undefined">
+    Any error that occurred while loading the version data.
+  </PropertiesListItem>
+</PropertiesList>
+
 ### useHistoryVersionYjsData [@badge=RoomProvider]
 
 Returns the raw Yjs binary data for a given version of the room, for use with
@@ -6463,6 +6496,27 @@ const { data, error, isLoading } = useHistoryVersionYjsData(versionId);
   </PropertiesListItem>
   <PropertiesListItem name="error" type="Error | undefined">
     Any error that occurred while loading the version data.
+  </PropertiesListItem>
+</PropertiesList>
+
+### useDeleteHistoryVersion [@badge=RoomProvider]
+
+Returns a function that permanently deletes a version from the room's history.
+
+```tsx
+import { useDeleteHistoryVersion } from "@liveblocks/react";
+
+const deleteHistoryVersion = useDeleteHistoryVersion();
+
+// Later, delete a version by its id
+await deleteHistoryVersion(versionId);
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="deleteHistoryVersion" type="(versionId: string) => Promise<void>">
+    A function that deletes the version with the given id. The `versionId` is
+    obtained from the `id` field of a `HistoryVersion` returned by
+    [`useHistoryVersions`][].
   </PropertiesListItem>
 </PropertiesList>
 

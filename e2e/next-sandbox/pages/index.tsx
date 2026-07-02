@@ -44,6 +44,17 @@ export default function Home() {
         </li>
 
         <li>
+          <div>Version history</div>
+          <ul>
+            <li>
+              <Link href="/version-history/storage?room=e2e-version-history-storage&user=1">
+                Storage
+              </Link>
+            </li>
+          </ul>
+        </li>
+
+        <li>
           <Link href="/offline?room=e2e-offline">Offline</Link>
         </li>
         <li>

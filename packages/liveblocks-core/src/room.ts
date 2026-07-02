@@ -14,6 +14,7 @@ import {
   isLiveList,
   isLiveNode,
   isSameNodeOrChildOf,
+  liveObjectFromNodeStream,
   mergeStorageUpdates,
 } from "./crdts/liveblocks-helpers";
 import { LiveObject } from "./crdts/LiveObject";
@@ -1266,8 +1267,14 @@ export type PrivateRoomApi = {
     requestedAt: Date;
   }>;
 
-  getYjsHistoryVersion(versionId: string): Promise<Response>;
+  fetchStorageHistoryVersion(versionId: string): Promise<Response>;
+  fetchYjsHistoryVersion(versionId: string): Promise<Response>;
+  // Reconstructs a detached, read-only LiveObject tree from a storage version's
+  // node stream (typed as LsonObject -- a historic snapshot may not match the
+  // room's current Storage schema).
+  liveObjectFromNodeStream(nodes: NodeStream): LiveObject<LsonObject>;
   createVersionHistorySnapshot(): Promise<void>;
+  deleteHistoryVersion(versionId: string): Promise<void>;
 
   executeContextualPrompt(options: {
     prompt: string;
@@ -1648,7 +1655,7 @@ export function createRoom<
     yjsProviderDidChange: makeEventSource(),
 
     // Storage
-    pool: createManagedPool(roomId, {
+    pool: createManagedPool({
       getCurrentConnectionId,
       onDispatch,
       isStorageWritable,
@@ -1863,7 +1870,9 @@ export function createRoom<
     return httpClient.listHistoryVersions({ roomId });
   }
 
-  async function listHistoryVersionsSince(options: ListTextVersionsSinceOptions) {
+  async function listHistoryVersionsSince(
+    options: ListTextVersionsSinceOptions
+  ) {
     return httpClient.listHistoryVersionsSince({
       roomId,
       since: options.since,
@@ -1871,12 +1880,20 @@ export function createRoom<
     });
   }
 
-  async function getYjsHistoryVersion(versionId: string) {
-    return httpClient.getYjsHistoryVersion({ roomId, versionId });
+  async function fetchStorageHistoryVersion(versionId: string) {
+    return httpClient.fetchStorageHistoryVersion({ roomId, versionId });
+  }
+
+  async function fetchYjsHistoryVersion(versionId: string) {
+    return httpClient.fetchYjsHistoryVersion({ roomId, versionId });
   }
 
   async function createVersionHistorySnapshot() {
     return httpClient.createVersionHistorySnapshot({ roomId });
+  }
+
+  async function deleteHistoryVersion(versionId: string) {
+    return httpClient.deleteHistoryVersion({ roomId, versionId });
   }
 
   async function executeContextualPrompt(options: {
@@ -3812,9 +3829,14 @@ export function createRoom<
         // List versions of the document since the specified date
         listHistoryVersionsSince,
         // get a specific version
-        getYjsHistoryVersion,
+        fetchStorageHistoryVersion,
+        fetchYjsHistoryVersion,
+        // reconstruct a storage version's nodes into a read-only LiveObject tree
+        liveObjectFromNodeStream,
         // create a version
         createVersionHistorySnapshot,
+        // delete a version
+        deleteHistoryVersion,
         // execute a contextual prompt
         executeContextualPrompt,
 
