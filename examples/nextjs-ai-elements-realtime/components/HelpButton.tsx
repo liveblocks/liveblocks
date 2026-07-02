@@ -6,7 +6,7 @@ import { Button } from "./ui/button";
 
 const EXAMPLE_NAME = "Realtime AI chat with AI Elements";
 const EXAMPLE_URL =
-  "https://liveblocks.io/examples/nextjs-ai-elements-realtime";
+  "https://liveblocks.io/examples/ai-elements-realtime/nextjs-ai-elements-realtime";
 
 type Feature = {
   icon: ReactNode;

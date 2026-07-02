@@ -5,7 +5,8 @@ import { createPortal } from "react-dom";
 import { Button } from "./ui/button";
 
 const EXAMPLE_NAME = "Realtime AI spreadsheet";
-const EXAMPLE_URL = "https://liveblocks.io/examples/nextjs-ai-spreadsheet";
+const EXAMPLE_URL =
+  "https://liveblocks.io/examples/ai-spreadsheet/nextjs-ai-spreadsheet";
 
 type Feature = {
   icon: ReactNode;

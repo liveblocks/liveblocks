@@ -1,5 +1,5 @@
 import type { HistoryVersion } from "@liveblocks/core";
-import { useHistoryVersionData } from "@liveblocks/react";
+import { useHistoryVersionYjsData } from "@liveblocks/react";
 import { useOverrides } from "@liveblocks/react-ui";
 import {
   Button,
@@ -39,7 +39,7 @@ export const HistoryVersionPreview = forwardRef<
     forwardedRef
   ) => {
     const $ = useOverrides();
-    const { isLoading, data, error } = useHistoryVersionData(version.id);
+    const { isLoading, data, error } = useHistoryVersionYjsData(version.id);
 
     const previewEditor = useEditor({
       // ignore extensions, only get marks/nodes

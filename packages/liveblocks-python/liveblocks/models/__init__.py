@@ -55,11 +55,11 @@ from .create_room_request_body_engine import CreateRoomRequestBodyEngine
 from .create_thread_request_body import CreateThreadRequestBody
 from .create_thread_request_body_comment import CreateThreadRequestBodyComment
 from .create_thread_request_body_visibility import CreateThreadRequestBodyVisibility
+from .create_version_history_snapshot_response import CreateVersionHistorySnapshotResponse
+from .create_version_history_snapshot_response_data import CreateVersionHistorySnapshotResponseData
 from .create_web_knowledge_source_request_body import CreateWebKnowledgeSourceRequestBody
 from .create_web_knowledge_source_request_body_type import CreateWebKnowledgeSourceRequestBodyType
 from .create_web_knowledge_source_response import CreateWebKnowledgeSourceResponse
-from .create_yjs_version_response import CreateYjsVersionResponse
-from .create_yjs_version_response_data import CreateYjsVersionResponseData
 from .edit_comment_metadata_request_body import EditCommentMetadataRequestBody
 from .edit_comment_metadata_request_body_metadata import EditCommentMetadataRequestBodyMetadata
 from .edit_comment_request_body import EditCommentRequestBody
@@ -86,10 +86,10 @@ from .get_thread_inbox_notifications_response_data_item import GetThreadInboxNot
 from .get_thread_subscriptions_response import GetThreadSubscriptionsResponse
 from .get_threads_response import GetThreadsResponse
 from .get_user_groups_response import GetUserGroupsResponse
+from .get_version_history_response import GetVersionHistoryResponse
 from .get_web_knowledge_source_links_response import GetWebKnowledgeSourceLinksResponse
 from .get_yjs_document_response import GetYjsDocumentResponse
 from .get_yjs_document_type import GetYjsDocumentType
-from .get_yjs_versions_response import GetYjsVersionsResponse
 from .google_model import GoogleModel
 from .google_provider_options import GoogleProviderOptions
 from .google_provider_options_google import GoogleProviderOptionsGoogle
@@ -97,6 +97,8 @@ from .google_provider_options_google_thinking_config import GoogleProviderOption
 from .group import Group
 from .group_member import GroupMember
 from .group_scopes import GroupScopes
+from .history_version import HistoryVersion
+from .history_version_authors_item import HistoryVersionAuthorsItem
 from .identify_user_request_body import IdentifyUserRequestBody
 from .identify_user_request_body_user_info import IdentifyUserRequestBodyUserInfo
 from .identify_user_response import IdentifyUserResponse
@@ -175,8 +177,6 @@ from .user_room_subscription_settings_threads import UserRoomSubscriptionSetting
 from .user_subscription import UserSubscription
 from .web_knowledge_source_link import WebKnowledgeSourceLink
 from .web_knowledge_source_link_status import WebKnowledgeSourceLinkStatus
-from .yjs_version import YjsVersion
-from .yjs_version_authors_item import YjsVersionAuthorsItem
 
 __all__ = (
     "ActiveUsersResponse",
@@ -228,11 +228,11 @@ __all__ = (
     "CreateThreadRequestBody",
     "CreateThreadRequestBodyComment",
     "CreateThreadRequestBodyVisibility",
+    "CreateVersionHistorySnapshotResponse",
+    "CreateVersionHistorySnapshotResponseData",
     "CreateWebKnowledgeSourceRequestBody",
     "CreateWebKnowledgeSourceRequestBodyType",
     "CreateWebKnowledgeSourceResponse",
-    "CreateYjsVersionResponse",
-    "CreateYjsVersionResponseData",
     "EditCommentMetadataRequestBody",
     "EditCommentMetadataRequestBodyMetadata",
     "EditCommentRequestBody",
@@ -259,10 +259,10 @@ __all__ = (
     "GetThreadsResponse",
     "GetThreadSubscriptionsResponse",
     "GetUserGroupsResponse",
+    "GetVersionHistoryResponse",
     "GetWebKnowledgeSourceLinksResponse",
     "GetYjsDocumentResponse",
     "GetYjsDocumentType",
-    "GetYjsVersionsResponse",
     "GoogleModel",
     "GoogleProviderOptions",
     "GoogleProviderOptionsGoogle",
@@ -270,6 +270,8 @@ __all__ = (
     "Group",
     "GroupMember",
     "GroupScopes",
+    "HistoryVersion",
+    "HistoryVersionAuthorsItem",
     "IdentifyUserRequestBody",
     "IdentifyUserRequestBodyUserInfo",
     "IdentifyUserResponse",
@@ -347,6 +349,4 @@ __all__ = (
     "UserSubscription",
     "WebKnowledgeSourceLink",
     "WebKnowledgeSourceLinkStatus",
-    "YjsVersion",
-    "YjsVersionAuthorsItem",
 )

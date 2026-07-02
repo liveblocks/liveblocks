@@ -6,20 +6,20 @@ from typing import TYPE_CHECKING, Any, Self
 from attrs import define as _attrs_define
 
 if TYPE_CHECKING:
-    from ..models.create_yjs_version_response_data import CreateYjsVersionResponseData
+    from ..models.create_version_history_snapshot_response_data import CreateVersionHistorySnapshotResponseData
 
 
 @_attrs_define
-class CreateYjsVersionResponse:
+class CreateVersionHistorySnapshotResponse:
     """
     Example:
         {'data': {'id': 'vh_abc123'}}
 
     Attributes:
-        data (CreateYjsVersionResponseData):
+        data (CreateVersionHistorySnapshotResponseData):
     """
 
-    data: CreateYjsVersionResponseData
+    data: CreateVersionHistorySnapshotResponseData
 
     def to_dict(self) -> dict[str, Any]:
         data = self.data.to_dict()
@@ -36,13 +36,13 @@ class CreateYjsVersionResponse:
 
     @classmethod
     def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
-        from ..models.create_yjs_version_response_data import CreateYjsVersionResponseData
+        from ..models.create_version_history_snapshot_response_data import CreateVersionHistorySnapshotResponseData
 
         d = dict(src_dict)
-        data = CreateYjsVersionResponseData.from_dict(d.pop("data"))
+        data = CreateVersionHistorySnapshotResponseData.from_dict(d.pop("data"))
 
-        create_yjs_version_response = cls(
+        create_version_history_snapshot_response = cls(
             data=data,
         )
 
-        return create_yjs_version_response
+        return create_version_history_snapshot_response

@@ -70,6 +70,7 @@ const CLASSIC_ONLY = [
   "createLiveblocksContext",
   "createRoomContext",
   "useHistoryVersionData",
+  "useHistoryVersionYjsData",
   "useSearchComments",
 ];
 const SUSPENSE_ONLY = [];

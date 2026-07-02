@@ -7,7 +7,7 @@ from attrs import define as _attrs_define
 
 
 @_attrs_define
-class CreateYjsVersionResponseData:
+class CreateVersionHistorySnapshotResponseData:
     """
     Attributes:
         id (str): Unique identifier for the created version
@@ -33,8 +33,8 @@ class CreateYjsVersionResponseData:
         d = dict(src_dict)
         id = d.pop("id")
 
-        create_yjs_version_response_data = cls(
+        create_version_history_snapshot_response_data = cls(
             id=id,
         )
 
-        return create_yjs_version_response_data
+        return create_version_history_snapshot_response_data

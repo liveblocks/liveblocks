@@ -6436,6 +6436,36 @@ const { versions, error, isLoading } = useHistoryVersions();
   </PropertiesListItem>
 </PropertiesList>
 
+### useHistoryVersionYjsData [@badge=RoomProvider]
+
+Returns the raw Yjs binary data for a given version of the room, for use with
+Yjs-based editors (e.g. TipTap, Lexical, BlockNote).
+
+```tsx
+import { useHistoryVersionYjsData } from "@liveblocks/react";
+
+const { data, error, isLoading } = useHistoryVersionYjsData(versionId);
+```
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="versionId" type="string">
+    The ID of the version to retrieve. Obtained from the `id` field of a
+    `HistoryVersion` returned by [`useHistoryVersions`][].
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="data" type="Uint8Array | undefined">
+    The raw Yjs binary data for the version, or `undefined` while loading.
+  </PropertiesListItem>
+  <PropertiesListItem name="isLoading" type="boolean">
+    Whether the version data is currently being loaded.
+  </PropertiesListItem>
+  <PropertiesListItem name="error" type="Error | undefined">
+    Any error that occurred while loading the version data.
+  </PropertiesListItem>
+</PropertiesList>
+
 ## Miscellaneous
 
 ### useUser [@badge=Both]
