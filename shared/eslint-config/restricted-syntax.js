@@ -20,4 +20,10 @@ export default [
       "ImportDeclaration[source.value='vitest'] ImportSpecifier[imported.name='it']",
     message: "Import 'test' instead of 'it' from vitest.",
   },
+  {
+    selector:
+      "TaggedTemplateExpression[tag.name='url'] CallExpression[callee.name='encodeURIComponent']",
+    message:
+      "`url` template holes are already encoded. Pass the value directly instead of calling `encodeURIComponent()`.",
+  },
 ];
