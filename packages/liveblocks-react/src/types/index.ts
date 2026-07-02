@@ -1375,6 +1375,16 @@ export type RoomContextBundle<
        */
       useHistoryVersionData(id: string): HistoryVersionYjsDataAsyncResult;
 
+      /**
+       * Returns a function that permanently deletes a version from the room's
+       * history.
+       *
+       * @example
+       * const deleteHistoryVersion = useDeleteHistoryVersion();
+       * deleteHistoryVersion(version.id);
+       */
+      useDeleteHistoryVersion(): (versionId: string) => Promise<void>;
+
       suspense: Resolve<
         RoomContextBundleCommon<P, S, U, E, TM, CM, FM, FMD> &
           SharedContextBundle<U>["suspense"] & {

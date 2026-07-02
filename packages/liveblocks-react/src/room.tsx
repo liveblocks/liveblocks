@@ -3309,6 +3309,30 @@ function useHistoryVersions_withRoomContext(
 }
 
 /**
+ * @internal
+ */
+function useDeleteHistoryVersion_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+): (versionId: string) => Promise<void> {
+  const room = useRoom_withRoomContext(RoomContext);
+  return useCallback(
+    (versionId: string) => room[kInternal].deleteHistoryVersion(versionId),
+    [room]
+  );
+}
+
+/**
+ * Returns a function that permanently deletes a version from the room's history.
+ *
+ * @example
+ * const deleteHistoryVersion = useDeleteHistoryVersion();
+ * deleteHistoryVersion(versionId);
+ */
+function useDeleteHistoryVersion(): (versionId: string) => Promise<void> {
+  return useDeleteHistoryVersion_withRoomContext(GlobalRoomContext);
+}
+
+/**
  * (Private beta) Returns a history of versions of the current room.
  *
  * @example
@@ -4217,6 +4241,10 @@ export function createRoomContext<
     return useHistoryVersionYjsData_withRoomContext(BoundRoomContext, ...args);
   }
 
+  function useDeleteHistoryVersion_withBoundRoomContext() {
+    return useDeleteHistoryVersion_withRoomContext(BoundRoomContext);
+  }
+
   function useRoomSubscriptionSettings_withBoundRoomContext() {
     return useRoomSubscriptionSettings_withRoomContext(BoundRoomContext);
   }
@@ -4390,6 +4418,8 @@ export function createRoomContext<
     useHistoryVersionStorageData: useHistoryVersionStorageData_withBoundRoomContext as TRoomBundle["useHistoryVersionStorageData"],
     useHistoryVersionYjsData:
       useHistoryVersionYjsData_withBoundRoomContext as TRoomBundle["useHistoryVersionYjsData"],
+    // prettier-ignore
+    useDeleteHistoryVersion: useDeleteHistoryVersion_withBoundRoomContext as TRoomBundle["useDeleteHistoryVersion"],
 
     // prettier-ignore
     useRoomSubscriptionSettings: useRoomSubscriptionSettings_withBoundRoomContext as TRoomBundle["useRoomSubscriptionSettings"],
@@ -5146,6 +5176,7 @@ export {
   useDeleteComment,
   useDeleteFeed,
   useDeleteFeedMessage,
+  useDeleteHistoryVersion,
   useDeleteRoomComment,
   useDeleteRoomThread,
   useDeleteTextMention,

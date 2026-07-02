@@ -6,6 +6,8 @@
 
 - Add `useHistoryVersionStorageData()` hook to retrieve the Storage data of a
   given version as a read-only `LiveObject`.
+- Add `useDeleteHistoryVersion()` hook to permanently delete a version from the
+  room's history.
 
 ## v3.21.0
 

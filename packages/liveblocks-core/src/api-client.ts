@@ -374,6 +374,14 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
 
   createVersionHistorySnapshot({ roomId }: { roomId: string }): Promise<void>;
 
+  deleteHistoryVersion({
+    roomId,
+    versionId,
+  }: {
+    roomId: string;
+    versionId: string;
+  }): Promise<void>;
+
   reportTextEditor({
     roomId,
     type,
@@ -1421,6 +1429,20 @@ export function createApiClient<
     );
   }
 
+  async function deleteHistoryVersion(options: {
+    roomId: string;
+    versionId: string;
+  }) {
+    await httpClient.delete(
+      url`/v2/c/rooms/${options.roomId}/versions/${options.versionId}`,
+      await authManager.getAuthValue({
+        roomId: options.roomId,
+        resource: "storage",
+        access: "write",
+      })
+    );
+  }
+
   async function reportTextEditor(options: {
     roomId: string;
     type: TextEditorType;
@@ -1913,6 +1935,7 @@ export function createApiClient<
     fetchStorageHistoryVersion,
     fetchYjsHistoryVersion,
     createVersionHistorySnapshot,
+    deleteHistoryVersion,
     reportTextEditor,
     listHistoryVersions,
     listHistoryVersionsSince,

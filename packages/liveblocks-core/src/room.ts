@@ -1274,6 +1274,7 @@ export type PrivateRoomApi = {
   // room's current Storage schema).
   liveObjectFromNodeStream(nodes: NodeStream): LiveObject<LsonObject>;
   createVersionHistorySnapshot(): Promise<void>;
+  deleteHistoryVersion(versionId: string): Promise<void>;
 
   executeContextualPrompt(options: {
     prompt: string;
@@ -1889,6 +1890,10 @@ export function createRoom<
 
   async function createVersionHistorySnapshot() {
     return httpClient.createVersionHistorySnapshot({ roomId });
+  }
+
+  async function deleteHistoryVersion(versionId: string) {
+    return httpClient.deleteHistoryVersion({ roomId, versionId });
   }
 
   async function executeContextualPrompt(options: {
@@ -3830,6 +3835,8 @@ export function createRoom<
         liveObjectFromNodeStream,
         // create a version
         createVersionHistorySnapshot,
+        // delete a version
+        deleteHistoryVersion,
         // execute a contextual prompt
         executeContextualPrompt,
 

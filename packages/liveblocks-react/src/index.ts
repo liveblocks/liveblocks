@@ -77,6 +77,7 @@ export {
   useHistoryVersionData,
   useHistoryVersionStorageData,
   useHistoryVersionYjsData,
+  useDeleteHistoryVersion,
 } from "./room";
 
 // Export the classic (non-Suspense) versions of our hooks
