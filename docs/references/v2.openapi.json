@@ -1488,8 +1488,8 @@
     "/rooms/{roomId}/versions": {
       "get": {
         "summary": "Get Version History",
-        "description": "This endpoint returns a list of version history snapshots for the room's Yjs document. The versions are returned sorted by creation date, from newest to oldest.",
-        "tags": ["Yjs"],
+        "description": "This endpoint returns a list of version history snapshots for the room. The versions are returned sorted by creation date, from newest to oldest.",
+        "tags": ["Version History"],
         "operationId": "get-version-history",
         "parameters": [
           {
@@ -1569,8 +1569,8 @@
       },
       "post": {
         "summary": "Create version history snapshot",
-        "description": "This endpoint creates a new version history snapshot for the room. Currently only works for Yjs.",
-        "tags": ["Yjs"],
+        "description": "This endpoint creates a new version history snapshot of the room, capturing both its Storage and Yjs documents.",
+        "tags": ["Version History"],
         "operationId": "create-version-history-snapshot",
         "parameters": [
           {
@@ -1620,7 +1620,7 @@
       "get": {
         "summary": "Get Yjs document version",
         "description": "This endpoint returns a specific version of the room's Yjs document encoded as a binary Yjs update.",
-        "tags": ["Yjs"],
+        "tags": ["Version History"],
         "operationId": "get-yjs-version",
         "parameters": [
           {
@@ -12011,6 +12011,9 @@
     },
     {
       "name": "Yjs"
+    },
+    {
+      "name": "Version History"
     },
     {
       "name": "Comments"
