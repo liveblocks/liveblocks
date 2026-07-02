@@ -23,6 +23,7 @@ const client = createLiveblocksClient({
 // and a reconstructed historic version render the exact same shape.
 const {
   RoomProvider,
+  useDeleteHistoryVersion,
   useHistoryVersionStorageData,
   useHistoryVersions,
   useMutation,
@@ -51,6 +52,7 @@ function Sandbox() {
   const me = useSelf();
   const room = useRoom();
   const { versions, error: versionsError } = useHistoryVersions();
+  const deleteHistoryVersion = useDeleteHistoryVersion();
   const [selectedVersionId, setSelectedVersionId] = useState<string | null>(
     null
   );
@@ -175,7 +177,18 @@ function Sandbox() {
                   <span className="authors">
                     {v.authors.map((a) => a.id).join(", ") || "(none)"}
                   </span>
-                </small>
+                </small>{" "}
+                <button
+                  id={`delete-version-${v.id}`}
+                  onClick={() => {
+                    void deleteHistoryVersion(v.id);
+                    if (v.id === selectedVersionId) {
+                      setSelectedVersionId(null);
+                    }
+                  }}
+                >
+                  Delete
+                </button>
               </li>
             ))}
           </ul>
