@@ -727,9 +727,11 @@ print(result)
 </PropertiesList>
 
 
+## Version_history
+
 ### get_version_history
 
-This endpoint returns a list of version history snapshots for the room's Yjs document. The versions are returned sorted by creation date, from newest to oldest.
+This endpoint returns a list of version history snapshots for the room. The versions are returned sorted by creation date, from newest to oldest.
 
 ```python
 result = client.get_version_history(
@@ -765,7 +767,7 @@ print(result)
 
 ### create_version_history_snapshot
 
-This endpoint creates a new version history snapshot for the room. Currently only works for Yjs.
+This endpoint creates a new version history snapshot of the room, capturing both its Storage and Yjs documents.
 
 ```python
 result = client.create_version_history_snapshot(

@@ -935,8 +935,8 @@ class Liveblocks:
     ) -> GetVersionHistoryResponse:
         """Get Version History
 
-         This endpoint returns a list of version history snapshots for the room's Yjs document. The versions
-        are returned sorted by creation date, from newest to oldest.
+         This endpoint returns a list of version history snapshots for the room. The versions are returned
+        sorted by creation date, from newest to oldest.
 
         Args:
             room_id (str): ID of the room Example: my-room-id.
@@ -953,7 +953,7 @@ class Liveblocks:
             GetVersionHistoryResponse
         """
 
-        from .api.yjs import get_version_history
+        from .api.version_history import get_version_history
 
         return get_version_history._sync(
             room_id=room_id,
@@ -968,7 +968,8 @@ class Liveblocks:
     ) -> CreateVersionHistorySnapshotResponse:
         """Create version history snapshot
 
-         This endpoint creates a new version history snapshot for the room. Currently only works for Yjs.
+         This endpoint creates a new version history snapshot of the room, capturing both its Storage and Yjs
+        documents.
 
         Args:
             room_id (str): ID of the room Example: my-room-id.
@@ -981,7 +982,7 @@ class Liveblocks:
             CreateVersionHistorySnapshotResponse
         """
 
-        from .api.yjs import create_version_history_snapshot
+        from .api.version_history import create_version_history_snapshot
 
         return create_version_history_snapshot._sync(
             room_id=room_id,
@@ -1009,7 +1010,7 @@ class Liveblocks:
             File
         """
 
-        from .api.yjs import get_yjs_version
+        from .api.version_history import get_yjs_version
 
         return get_yjs_version._sync(
             room_id=room_id,
@@ -4070,8 +4071,8 @@ class AsyncLiveblocks:
     ) -> GetVersionHistoryResponse:
         """Get Version History
 
-         This endpoint returns a list of version history snapshots for the room's Yjs document. The versions
-        are returned sorted by creation date, from newest to oldest.
+         This endpoint returns a list of version history snapshots for the room. The versions are returned
+        sorted by creation date, from newest to oldest.
 
         Args:
             room_id (str): ID of the room Example: my-room-id.
@@ -4088,7 +4089,7 @@ class AsyncLiveblocks:
             GetVersionHistoryResponse
         """
 
-        from .api.yjs import get_version_history
+        from .api.version_history import get_version_history
 
         return await get_version_history._asyncio(
             room_id=room_id,
@@ -4103,7 +4104,8 @@ class AsyncLiveblocks:
     ) -> CreateVersionHistorySnapshotResponse:
         """Create version history snapshot
 
-         This endpoint creates a new version history snapshot for the room. Currently only works for Yjs.
+         This endpoint creates a new version history snapshot of the room, capturing both its Storage and Yjs
+        documents.
 
         Args:
             room_id (str): ID of the room Example: my-room-id.
@@ -4116,7 +4118,7 @@ class AsyncLiveblocks:
             CreateVersionHistorySnapshotResponse
         """
 
-        from .api.yjs import create_version_history_snapshot
+        from .api.version_history import create_version_history_snapshot
 
         return await create_version_history_snapshot._asyncio(
             room_id=room_id,
@@ -4144,7 +4146,7 @@ class AsyncLiveblocks:
             File
         """
 
-        from .api.yjs import get_yjs_version
+        from .api.version_history import get_yjs_version
 
         return await get_yjs_version._asyncio(
             room_id=room_id,
