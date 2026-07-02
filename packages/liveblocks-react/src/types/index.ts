@@ -43,7 +43,6 @@ import type {
   PartialNotificationSettings,
   PartialUnless,
   Patchable,
-  PlainLsonObject,
   QueryMetadata,
   Relax,
   Resolve,
@@ -359,7 +358,9 @@ export type NotificationSettingsAsyncSuccess = AsyncSuccess<NotificationSettings
 export type RoomSubscriptionSettingsAsyncSuccess = AsyncSuccess<RoomSubscriptionSettings, "settings">; // prettier-ignore
 export type RoomSubscriptionSettingsAsyncResult = AsyncResult<RoomSubscriptionSettings, "settings">; // prettier-ignore
 
-export type HistoryVersionStorageDataAsyncResult = AsyncResult<PlainLsonObject>;
+export type HistoryVersionStorageDataAsyncResult = AsyncResult<
+  LiveObject<LsonObject>
+>;
 
 export type HistoryVersionYjsDataAsyncResult = AsyncResult<Uint8Array>;
 

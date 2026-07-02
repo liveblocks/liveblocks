@@ -4,7 +4,11 @@ import { stringifyOrLog as stringify } from "../lib/stringify";
 import { deepClone, entries } from "../lib/utils";
 import type { CreateOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
-import type { NodeMap, StorageNode } from "../protocol/StorageNode";
+import type {
+  NodeMap,
+  NodeStream,
+  StorageNode,
+} from "../protocol/StorageNode";
 import {
   CrdtType,
   isListStorageNode,
@@ -14,6 +18,7 @@ import {
 } from "../protocol/StorageNode";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
 import type { ManagedPool } from "./AbstractCrdt";
+import { createManagedPool } from "./AbstractCrdt";
 import { LiveList, type LiveListUpdates } from "./LiveList";
 import { LiveMap, type LiveMapUpdates } from "./LiveMap";
 import { LiveObject, type LiveObjectUpdates } from "./LiveObject";
@@ -48,6 +53,33 @@ export function isSameNodeOrChildOf(node: LiveNode, parent: LiveNode): boolean {
     return isSameNodeOrChildOf(node.parent.node, parent);
   }
   return false;
+}
+
+/**
+ * Reconstructs a detached, read-only `LiveObject` tree from a stream of storage
+ * nodes (as produced by a storage version snapshot). The tree isn't attached to
+ * any room -- it's meant for reading/diffing a historical snapshot, not live
+ * editing.
+ *
+ * Typed as `LsonObject` (not the room's current `Storage` schema) on purpose: a
+ * historical version can have any shape, not necessarily today's expected one.
+ */
+export function liveObjectFromNodeStream(
+  nodes: NodeStream
+): LiveObject<LsonObject> {
+  // A historic version is a read-only snapshot. Reconstruction only ever
+  // deserializes existing node ids, but any *mutation* mints a fresh id/opId
+  // through getCurrentConnectionId -- so we make that the choke point that
+  // refuses mutation outright, rather than silently generating bogus `0:n` ids
+  // that could collide with a live document's.
+  const pool = createManagedPool("history-version", {
+    getCurrentConnectionId: () => {
+      throw new Error(
+        "Cannot mutate a historic storage version: it is a read-only snapshot"
+      );
+    },
+  });
+  return LiveObject._fromItems(nodes, pool);
 }
 
 export function deserialize(

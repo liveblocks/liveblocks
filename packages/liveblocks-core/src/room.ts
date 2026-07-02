@@ -14,6 +14,7 @@ import {
   isLiveList,
   isLiveNode,
   isSameNodeOrChildOf,
+  liveObjectFromNodeStream,
   mergeStorageUpdates,
 } from "./crdts/liveblocks-helpers";
 import { LiveObject } from "./crdts/LiveObject";
@@ -1268,6 +1269,10 @@ export type PrivateRoomApi = {
 
   fetchStorageHistoryVersion(versionId: string): Promise<Response>;
   fetchYjsHistoryVersion(versionId: string): Promise<Response>;
+  // Reconstructs a detached, read-only LiveObject tree from a storage version's
+  // node stream (typed as LsonObject -- a historic snapshot may not match the
+  // room's current Storage schema).
+  liveObjectFromNodeStream(nodes: NodeStream): LiveObject<LsonObject>;
   createVersionHistorySnapshot(): Promise<void>;
 
   executeContextualPrompt(options: {
@@ -3819,6 +3824,8 @@ export function createRoom<
         // get a specific version
         fetchStorageHistoryVersion,
         fetchYjsHistoryVersion,
+        // reconstruct a storage version's nodes into a read-only LiveObject tree
+        liveObjectFromNodeStream,
         // create a version
         createVersionHistorySnapshot,
         // execute a contextual prompt

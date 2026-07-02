@@ -38,11 +38,11 @@ import type {
   OpaqueClient,
   OpaqueRoom,
   PermissionResources,
-  PlainLsonObject,
   RequiredAccessLevel,
   RoomEventMessage,
   RoomSubscriptionSettings,
   SignalType,
+  StorageNode,
   TextEditorType,
   ToJson,
   UnsubscribeCallback,
@@ -3162,12 +3162,17 @@ function useHistoryVersionStorageData_withRoomContext(
       try {
         const response =
           await room[kInternal].fetchStorageHistoryVersion(versionId);
-        // The Storage version endpoint returns the snapshot as PlainLson JSON.
-        const data = (await response.json()) as PlainLsonObject;
-        setState({
-          isLoading: false,
-          data,
-        });
+
+        // The endpoint returns the snapshot as an NDJSON node stream. Decode it
+        // and rebuild a (detached, read-only) LiveObject tree -- typed as
+        // `LsonObject` because a historical version may not match the current
+        // Storage schema.
+        const nodes = (await response.text())
+          .split("\n")
+          .filter((line) => line.length > 0)
+          .map((line) => JSON.parse(line) as StorageNode);
+        const data = room[kInternal].liveObjectFromNodeStream(nodes);
+        setState({ isLoading: false, data });
       } catch (error) {
         setState({
           isLoading: false,
@@ -3215,7 +3220,8 @@ function useHistoryVersionYjsData_withRoomContext(
     setState({ isLoading: true });
     const load = async () => {
       try {
-        const response = await room[kInternal].fetchYjsHistoryVersion(versionId);
+        const response =
+          await room[kInternal].fetchYjsHistoryVersion(versionId);
         const buffer = await response.arrayBuffer();
         const data = new Uint8Array(buffer);
         setState({
@@ -4382,7 +4388,8 @@ export function createRoomContext<
     useHistoryVersionData: useHistoryVersionYjsData_withBoundRoomContext as TRoomBundle["useHistoryVersionData"],
     // prettier-ignore
     useHistoryVersionStorageData: useHistoryVersionStorageData_withBoundRoomContext as TRoomBundle["useHistoryVersionStorageData"],
-    useHistoryVersionYjsData: useHistoryVersionYjsData_withBoundRoomContext as TRoomBundle["useHistoryVersionYjsData"],
+    useHistoryVersionYjsData:
+      useHistoryVersionYjsData_withBoundRoomContext as TRoomBundle["useHistoryVersionYjsData"],
 
     // prettier-ignore
     useRoomSubscriptionSettings: useRoomSubscriptionSettings_withBoundRoomContext as TRoomBundle["useRoomSubscriptionSettings"],
