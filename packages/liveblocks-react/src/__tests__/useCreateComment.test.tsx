@@ -21,7 +21,14 @@ import {
   dummyThreadInboxNotificationData,
 } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
-import { mockCreateComment, mockGetThreads } from "./_restMocks";
+import {
+  mockCompleteMultipartAttachmentUpload,
+  mockCreateComment,
+  mockCreateMultipartAttachmentUpload,
+  mockGetThreads,
+  mockUploadAttachment,
+  mockUploadMultipartAttachmentPart,
+} from "./_restMocks";
 import { createContextsForTest } from "./_utils";
 
 const server = setupServer();
@@ -38,6 +45,10 @@ afterEach(() => {
 });
 
 afterAll(() => server.close());
+
+function createAttachmentFile(name: string, size: number) {
+  return new File([new Uint8Array(size)], name, { type: "image/png" });
+}
 
 describe("useCreateComment", () => {
   test("should create a comment optimistically and override with thread coming from server", async () => {
@@ -357,6 +368,118 @@ describe("useCreateComment", () => {
       expect(serverComment?.createdAt).toEqual(fakeCreatedAt);
       expect(serverComment?.metadata).toEqual(metadata);
     });
+
+    unmount();
+  });
+});
+
+describe("useRoom attachments", () => {
+  test.each([
+    {
+      name: "my file.png",
+      encodedPath: "my%20file.png",
+    },
+    {
+      name: "literal%20name.png",
+      encodedPath: "literal%2520name.png",
+    },
+  ])(
+    "should upload $name without double-encoding the attachment path segment",
+    async ({ name, encodedPath }) => {
+      const roomId = "room 1";
+      const requests: Request[] = [];
+
+      const {
+        room: { RoomProvider, useRoom },
+      } = createContextsForTest();
+
+      const { result, unmount } = renderHook(() => useRoom(), {
+        wrapper: ({ children }) => (
+          <RoomProvider id={roomId}>{children}</RoomProvider>
+        ),
+      });
+
+      const attachment = result.current.prepareAttachment(
+        createAttachmentFile(name, 5)
+      );
+
+      server.use(
+        mockUploadAttachment(({ request }) => {
+          requests.push(request);
+
+          return HttpResponse.json({
+            type: "attachment",
+            id: attachment.id,
+            name,
+            mimeType: "image/png",
+            size: 5,
+          });
+        })
+      );
+
+      await act(async () => {
+        await result.current.uploadAttachment(attachment);
+      });
+
+      const request = requests[0];
+      expect(
+        request?.url.endsWith(
+          `/v2/c/rooms/room%201/attachments/${attachment.id}/upload/${encodedPath}?fileSize=5`
+        )
+      ).toBeTruthy();
+
+      unmount();
+    }
+  );
+
+  test("should upload multipart attachments without double-encoding the attachment path segment", async () => {
+    const roomId = "room 1";
+    const requests: Request[] = [];
+
+    const {
+      room: { RoomProvider, useRoom },
+    } = createContextsForTest();
+
+    const { result, unmount } = renderHook(() => useRoom(), {
+      wrapper: ({ children }) => (
+        <RoomProvider id={roomId}>{children}</RoomProvider>
+      ),
+    });
+
+    const attachment = result.current.prepareAttachment(
+      createAttachmentFile("my file.png", 5 * 1024 * 1024 + 1)
+    );
+
+    server.use(
+      mockCreateMultipartAttachmentUpload(({ request }) => {
+        requests.push(request);
+        return HttpResponse.json({ uploadId: "upload_123", key: "unused" });
+      }),
+      mockUploadMultipartAttachmentPart(({ params }) => {
+        const partNumber = Number(params.partNumber);
+        return HttpResponse.json({ partNumber, etag: `etag_${partNumber}` });
+      }),
+      mockCompleteMultipartAttachmentUpload(() =>
+        HttpResponse.json({
+          type: "attachment",
+          id: attachment.id,
+          name: "my file.png",
+          mimeType: "image/png",
+          size: 5 * 1024 * 1024 + 1,
+        })
+      )
+    );
+
+    await act(async () => {
+      await result.current.uploadAttachment(attachment);
+    });
+
+    const createMultipartRequest = requests[0];
+    expect(
+      createMultipartRequest?.url.endsWith(
+        `/v2/c/rooms/room%201/attachments/${attachment.id}/multipart/my%20file.png?fileSize=5242881`
+      )
+    ).toBeTruthy();
 
     unmount();
   });

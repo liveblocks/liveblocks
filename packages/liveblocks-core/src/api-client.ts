@@ -1078,7 +1078,7 @@ export function createApiClient<
       return autoRetry(
         async () =>
           httpClient.putBlob<CommentAttachment>(
-            url`/v2/c/rooms/${roomId}/attachments/${attachment.id}/upload/${encodeURIComponent(attachment.name)}`,
+            url`/v2/c/rooms/${roomId}/attachments/${attachment.id}/upload/${attachment.name}`,
             await authManager.getAuthValue({
               roomId,
               resource: "comments",
@@ -1107,7 +1107,7 @@ export function createApiClient<
             uploadId: string;
             key: string;
           }>(
-            url`/v2/c/rooms/${roomId}/attachments/${attachment.id}/multipart/${encodeURIComponent(attachment.name)}`,
+            url`/v2/c/rooms/${roomId}/attachments/${attachment.id}/multipart/${attachment.name}`,
             await authManager.getAuthValue({
               roomId,
               resource: "comments",
