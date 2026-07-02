@@ -2,10 +2,14 @@ import { describe, expect, it, vi } from "vitest";
 import {
   LiveblocksCollaborationManager,
   $convertLiveElementNodeToLexicalNode,
+  createStorageNodeFromLexicalNode,
 } from "./manager";
 import {
+  $createLineBreakNode,
+  $createParagraphNode,
   $createTextNode,
   $getRoot,
+  $isElementNode,
   $isLineBreakNode,
   $isParagraphNode,
   $isTextNode,
@@ -17,7 +21,7 @@ import {
   type LexicalNode,
 } from "lexical";
 import { $dfs } from "@lexical/utils";
-import { HeadingNode, QuoteNode } from "@lexical/rich-text";
+import { HeadingNode, QuoteNode, $createHeadingNode, $isHeadingNode } from "@lexical/rich-text";
 import {
   LiveChildNode,
   LiveElementNode,
@@ -336,6 +340,144 @@ describe("LiveblocksCollaborationManager", () => {
     });
   });
 
+  describe("createStorageNodeFromLexicalNode", () => {
+    it("materializes a TextNode[] into a LiveText child", () => {
+      const editor = createLexicalEditor({
+        namespace: "test",
+        nodes: [ParagraphNode, TextNode, HeadingNode, QuoteNode],
+      });
+
+      editor.update(() => {
+        const storage = createStorageNodeFromLexicalNode([
+          $createTextNode("Hello"),
+        ]);
+
+        expect(storage.get("kind")).toBe("text");
+        expect(storage.get("type")).toBe("text");
+        expect((storage as LiveTextNode).get("content").toJSON()).toEqual([
+          ["Hello"],
+        ]);
+      });
+    });
+
+    it("coalesces formatted sibling TextNodes into LiveText segments", () => {
+      const editor = createLexicalEditor({
+        namespace: "test",
+        nodes: [ParagraphNode, TextNode, HeadingNode, QuoteNode],
+      });
+
+      editor.update(() => {
+        const bold = $createTextNode("Hello ");
+        bold.toggleFormat("bold");
+        const plain = $createTextNode("world");
+
+        const storage = createStorageNodeFromLexicalNode([bold, plain]);
+
+        expect((storage as LiveTextNode).get("content").toJSON()).toEqual([
+          ["Hello ", { bold: true }],
+          ["world"],
+        ]);
+      });
+    });
+
+    it("materializes an empty TextNode[] into an empty LiveText child", () => {
+      const editor = createLexicalEditor({
+        namespace: "test",
+        nodes: [ParagraphNode, TextNode, HeadingNode, QuoteNode],
+      });
+
+      editor.update(() => {
+        const storage = createStorageNodeFromLexicalNode([]);
+
+        expect(storage.get("kind")).toBe("text");
+        expect((storage as LiveTextNode).get("content").toJSON()).toEqual([]);
+      });
+    });
+
+    it("materializes a line break", () => {
+      const editor = createLexicalEditor({
+        namespace: "test",
+        nodes: [ParagraphNode, TextNode, HeadingNode, QuoteNode],
+      });
+
+      editor.update(() => {
+        const storage = createStorageNodeFromLexicalNode(
+          $createLineBreakNode()
+        );
+
+        expect(storage.get("kind")).toBe("linebreak");
+        expect(storage.get("type")).toBe("linebreak");
+      });
+    });
+
+    it("materializes an element with nested text children", () => {
+      const editor = createLexicalEditor({
+        namespace: "test",
+        nodes: [ParagraphNode, TextNode, HeadingNode, QuoteNode],
+      });
+
+      editor.update(() => {
+        const paragraph = new ParagraphNode();
+        paragraph.append($createTextNode("Hi"));
+
+        const storage = createStorageNodeFromLexicalNode(paragraph);
+
+        expect(storage.get("kind")).toBe("element");
+        expect(storage.get("type")).toBe("paragraph");
+
+        const children = (storage as LiveElementNode).get("children");
+        expect(children.length).toBe(1);
+        expect(children.get(0)!.get("kind")).toBe("text");
+        expect(
+          (children.get(0) as LiveTextNode).get("content").toJSON()
+        ).toEqual([["Hi"]]);
+      });
+    });
+
+    it("materializes an element with text, line break, and text children", () => {
+      const editor = createLexicalEditor({
+        namespace: "test",
+        nodes: [ParagraphNode, TextNode, HeadingNode, QuoteNode],
+      });
+
+      editor.update(() => {
+        const paragraph = new ParagraphNode();
+        paragraph.append(
+          $createTextNode("before"),
+          $createLineBreakNode(),
+          $createTextNode("after")
+        );
+
+        const storage = createStorageNodeFromLexicalNode(paragraph);
+        const children = (storage as LiveElementNode).get("children");
+
+        expect(children.length).toBe(3);
+        expect(children.get(0)!.get("kind")).toBe("text");
+        expect(
+          (children.get(0) as LiveTextNode).get("content").toJSON()
+        ).toEqual([["before"]]);
+        expect(children.get(1)!.get("kind")).toBe("linebreak");
+        expect(children.get(2)!.get("kind")).toBe("text");
+        expect(
+          (children.get(2) as LiveTextNode).get("content").toJSON()
+        ).toEqual([["after"]]);
+      });
+    });
+
+    it("throws for unsupported lexical node types", () => {
+      const editor = createLexicalEditor({
+        namespace: "test",
+        nodes: [ParagraphNode, TextNode, HeadingNode, QuoteNode],
+      });
+
+      editor.update(() => {
+        expect(() =>
+          createStorageNodeFromLexicalNode($createTextNode("alone"))
+        ).toThrow(/Unsupported lexical node type/);
+      });
+    });
+  });
+
   describe("$applyLocalUpdates", () => {
     it("syncs a local text edit to storage", () => {
       const document: LiveRootNode = new LiveObject({
@@ -370,11 +512,14 @@ describe("LiveblocksCollaborationManager", () => {
         normalizedNodeKeys = new Set(update.normalizedNodes);
       });
 
-      editor.update(() => {
-        (
-          $dfs().find(({ node }) => $isTextNode(node))!.node as TextNode
-        ).setTextContent("Hi world!");
-      }, { discrete: true });
+      editor.update(
+        () => {
+          (
+            $dfs().find(({ node }) => $isTextNode(node))!.node as TextNode
+          ).setTextContent("Hi world!");
+        },
+        { discrete: true }
+      );
       unregister();
 
       editor.read(() => {
@@ -426,11 +571,14 @@ describe("LiveblocksCollaborationManager", () => {
         normalizedNodeKeys = new Set(update.normalizedNodes);
       });
 
-      editor.update(() => {
-        (
-          $dfs().find(({ node }) => $isTextNode(node))!.node as TextNode
-        ).setFormat(1);
-      }, { discrete: true });
+      editor.update(
+        () => {
+          (
+            $dfs().find(({ node }) => $isTextNode(node))!.node as TextNode
+          ).setFormat(1);
+        },
+        { discrete: true }
+      );
       unregister();
 
       editor.read(() => {
@@ -484,11 +632,14 @@ describe("LiveblocksCollaborationManager", () => {
         normalizedNodeKeys = new Set(update.normalizedNodes);
       });
 
-      editor.update(() => {
-        (
-          $dfs().find(({ node }) => $isTextNode(node))?.node as TextNode
-        ).setTextContent("");
-      }, { discrete: true });
+      editor.update(
+        () => {
+          (
+            $dfs().find(({ node }) => $isTextNode(node))?.node as TextNode
+          ).setTextContent("");
+        },
+        { discrete: true }
+      );
       unregister();
 
       editor.read(() => {
@@ -588,11 +739,14 @@ describe("LiveblocksCollaborationManager", () => {
         normalizedNodeKeys = new Set(update.normalizedNodes);
       });
 
-      editor.update(() => {
-        (
-          $dfs().find(({ node }) => $isTextNode(node))!.node as TextNode
-        ).setTextContent("Hello world!");
-      }, { discrete: true });
+      editor.update(
+        () => {
+          (
+            $dfs().find(({ node }) => $isTextNode(node))!.node as TextNode
+          ).setTextContent("Hello world!");
+        },
+        { discrete: true }
+      );
       unregister();
 
       editor.read(() => {
@@ -664,13 +818,17 @@ describe("LiveblocksCollaborationManager", () => {
         normalizedNodeKeys = new Set(update.normalizedNodes);
       });
 
-      editor.update(() => {
-        const paragraph = $dfs().find(({ node }) => $isParagraphNode(node))!
-          .node as ParagraphNode;
-        (
-          $dfs(paragraph).find(({ node }) => $isTextNode(node))!.node as TextNode
-        ).setTextContent("Hi");
-      }, { discrete: true });
+      editor.update(
+        () => {
+          const paragraph = $dfs().find(({ node }) => $isParagraphNode(node))!
+            .node as ParagraphNode;
+          (
+            $dfs(paragraph).find(({ node }) => $isTextNode(node))!
+              .node as TextNode
+          ).setTextContent("Hi");
+        },
+        { discrete: true }
+      );
       unregister();
 
       editor.read(() => {
@@ -688,6 +846,1597 @@ describe("LiveblocksCollaborationManager", () => {
 
       expect(textChildren[0]!.get("content").toJSON()).toEqual([["Hi"]]);
       expect(textChildren[1]!.get("content").toJSON()).toEqual([[" world"]]);
+    });
+
+    describe("deletions", () => {
+      it("syncs deleting a root-level paragraph", () => {
+        const document: LiveRootNode = new LiveObject({
+          kind: "root",
+          type: "root",
+          version: 1,
+          children: new LiveList([
+            new LiveObject({
+              kind: "element",
+              type: "paragraph",
+              version: 1,
+              children: new LiveList([
+                new LiveObject({
+                  kind: "text",
+                  type: "text",
+                  version: 1,
+                  content: new LiveText("A"),
+                }),
+              ]),
+            }),
+            new LiveObject({
+              kind: "element",
+              type: "paragraph",
+              version: 1,
+              children: new LiveList([
+                new LiveObject({
+                  kind: "text",
+                  type: "text",
+                  version: 1,
+                  content: new LiveText("B"),
+                }),
+              ]),
+            }),
+          ]),
+        });
+        const { editor, manager } = createEditor(document);
+        const list = document.get("children");
+
+        let dirtyElementKeys = new Set<string>();
+        let dirtyLeafKeys = new Set<string>();
+        let normalizedNodeKeys = new Set<string>();
+
+        const unregister = editor.registerUpdateListener((update) => {
+          dirtyElementKeys = new Set(update.dirtyElements.keys());
+          dirtyLeafKeys = new Set(update.dirtyLeaves);
+          normalizedNodeKeys = new Set(update.normalizedNodes);
+        });
+
+        editor.update(
+          () => {
+            $getRoot().getLastChild()?.remove();
+          },
+          { discrete: true }
+        );
+        unregister();
+
+        editor.read(() => {
+          manager.$applyLocalUpdates({
+            dirtyElements: dirtyElementKeys,
+            dirtyLeaves: dirtyLeafKeys,
+            normalizedNodes: normalizedNodeKeys,
+          });
+        });
+
+        expect(list.length).toBe(1);
+        expect(
+          (
+            list.get(0)!.get("children").get(0)! as LiveTextNode
+          ).get("content").toJSON()
+        ).toEqual([["A"]]);
+      });
+
+      it("syncs deleting the first root-level paragraph", () => {
+        const document: LiveRootNode = new LiveObject({
+          kind: "root",
+          type: "root",
+          version: 1,
+          children: new LiveList([
+            new LiveObject({
+              kind: "element",
+              type: "paragraph",
+              version: 1,
+              children: new LiveList([
+                new LiveObject({
+                  kind: "text",
+                  type: "text",
+                  version: 1,
+                  content: new LiveText("Remove"),
+                }),
+              ]),
+            }),
+            new LiveObject({
+              kind: "element",
+              type: "paragraph",
+              version: 1,
+              children: new LiveList([
+                new LiveObject({
+                  kind: "text",
+                  type: "text",
+                  version: 1,
+                  content: new LiveText("Keep"),
+                }),
+              ]),
+            }),
+          ]),
+        });
+        const { editor, manager } = createEditor(document);
+        const list = document.get("children");
+
+        let dirtyElementKeys = new Set<string>();
+        let dirtyLeafKeys = new Set<string>();
+        let normalizedNodeKeys = new Set<string>();
+
+        const unregister = editor.registerUpdateListener((update) => {
+          dirtyElementKeys = new Set(update.dirtyElements.keys());
+          dirtyLeafKeys = new Set(update.dirtyLeaves);
+          normalizedNodeKeys = new Set(update.normalizedNodes);
+        });
+
+        editor.update(
+          () => {
+            $getRoot().getFirstChild()?.remove();
+          },
+          { discrete: true }
+        );
+        unregister();
+
+        editor.read(() => {
+          manager.$applyLocalUpdates({
+            dirtyElements: dirtyElementKeys,
+            dirtyLeaves: dirtyLeafKeys,
+            normalizedNodes: normalizedNodeKeys,
+          });
+        });
+
+        expect(list.length).toBe(1);
+        expect(
+          (
+            list.get(0)!.get("children").get(0)! as LiveTextNode
+          ).get("content").toJSON()
+        ).toEqual([["Keep"]]);
+      });
+
+      it("syncs deleting a line break from a paragraph", () => {
+        const document: LiveRootNode = new LiveObject({
+          kind: "root",
+          type: "root",
+          version: 1,
+          children: new LiveList([
+            new LiveObject({
+              kind: "element",
+              type: "paragraph",
+              version: 1,
+              children: new LiveList([
+                new LiveObject({
+                  kind: "text",
+                  type: "text",
+                  version: 1,
+                  content: new LiveText("Hi"),
+                }),
+                new LiveObject({
+                  kind: "linebreak",
+                  type: "linebreak",
+                  version: 1,
+                }),
+                new LiveObject({
+                  kind: "text",
+                  type: "text",
+                  version: 1,
+                  content: new LiveText("there"),
+                }),
+              ]),
+            }),
+          ]),
+        });
+        const { editor, manager } = createEditor(document);
+        const paragraph = document.get("children").get(0)!;
+        const children = paragraph.get("children");
+
+        let dirtyElementKeys = new Set<string>();
+        let dirtyLeafKeys = new Set<string>();
+        let normalizedNodeKeys = new Set<string>();
+
+        const unregister = editor.registerUpdateListener((update) => {
+          dirtyElementKeys = new Set(update.dirtyElements.keys());
+          dirtyLeafKeys = new Set(update.dirtyLeaves);
+          normalizedNodeKeys = new Set(update.normalizedNodes);
+        });
+
+        editor.update(
+          () => {
+            const paragraphNode = $getRoot().getFirstChild();
+            if (!$isElementNode(paragraphNode)) {
+              return;
+            }
+            paragraphNode.getChildAtIndex(1)?.remove();
+          },
+          { discrete: true }
+        );
+        unregister();
+
+        editor.read(() => {
+          manager.$applyLocalUpdates({
+            dirtyElements: dirtyElementKeys,
+            dirtyLeaves: dirtyLeafKeys,
+            normalizedNodes: normalizedNodeKeys,
+          });
+        });
+
+        expect(children.length).toBe(1);
+        expect(children.get(0)!.get("kind")).toBe("text");
+        expect(
+          (children.get(0)! as LiveTextNode).get("content").toJSON()
+        ).toEqual([["Hithere"]]);
+      });
+
+      it("syncs deleting a nested paragraph inside a quote", () => {
+        const document: LiveRootNode = new LiveObject({
+          kind: "root",
+          type: "root",
+          version: 1,
+          children: new LiveList([
+            new LiveObject({
+              kind: "element",
+              type: "quote",
+              version: 1,
+              children: new LiveList([
+                new LiveObject({
+                  kind: "element",
+                  type: "paragraph",
+                  version: 1,
+                  children: new LiveList([
+                    new LiveObject({
+                      kind: "text",
+                      type: "text",
+                      version: 1,
+                      content: new LiveText("Remove"),
+                    }),
+                  ]),
+                }),
+                new LiveObject({
+                  kind: "element",
+                  type: "paragraph",
+                  version: 1,
+                  children: new LiveList([
+                    new LiveObject({
+                      kind: "text",
+                      type: "text",
+                      version: 1,
+                      content: new LiveText("Keep"),
+                    }),
+                  ]),
+                }),
+              ]),
+            }),
+          ]),
+        });
+        const { editor, manager } = createEditor(document);
+        const nestedList = document.get("children").get(0)!.get("children");
+
+        let dirtyElementKeys = new Set<string>();
+        let dirtyLeafKeys = new Set<string>();
+        let normalizedNodeKeys = new Set<string>();
+
+        const unregister = editor.registerUpdateListener((update) => {
+          dirtyElementKeys = new Set(update.dirtyElements.keys());
+          dirtyLeafKeys = new Set(update.dirtyLeaves);
+          normalizedNodeKeys = new Set(update.normalizedNodes);
+        });
+
+        editor.update(
+          () => {
+            const quote = $getRoot().getFirstChild();
+            if (!$isElementNode(quote)) {
+              return;
+            }
+            quote.getFirstChild()?.remove();
+          },
+          { discrete: true }
+        );
+        unregister();
+
+        editor.read(() => {
+          manager.$applyLocalUpdates({
+            dirtyElements: dirtyElementKeys,
+            dirtyLeaves: dirtyLeafKeys,
+            normalizedNodes: normalizedNodeKeys,
+          });
+        });
+
+        expect(nestedList.length).toBe(1);
+        expect(
+          (
+            (nestedList.get(0)! as LiveElementNode)
+              .get("children")
+              .get(0)! as LiveTextNode
+          ).get("content").toJSON()
+        ).toEqual([["Keep"]]);
+      });
+
+      it("removes orphaned storage bindings when deleting a paragraph", () => {
+        const document: LiveRootNode = new LiveObject({
+          kind: "root",
+          type: "root",
+          version: 1,
+          children: new LiveList([
+            new LiveObject({
+              kind: "element",
+              type: "paragraph",
+              version: 1,
+              children: new LiveList([
+                new LiveObject({
+                  kind: "text",
+                  type: "text",
+                  version: 1,
+                  content: new LiveText("A"),
+                }),
+              ]),
+            }),
+            new LiveObject({
+              kind: "element",
+              type: "paragraph",
+              version: 1,
+              children: new LiveList([
+                new LiveObject({
+                  kind: "text",
+                  type: "text",
+                  version: 1,
+                  content: new LiveText("B"),
+                }),
+              ]),
+            }),
+          ]),
+        });
+        const { editor, manager } = createEditor(document);
+        const deletedParagraph = document.get("children").get(1)!;
+        const deletedText = deletedParagraph.get("children").get(0)!;
+
+        let dirtyElementKeys = new Set<string>();
+        let dirtyLeafKeys = new Set<string>();
+        let normalizedNodeKeys = new Set<string>();
+
+        const unregister = editor.registerUpdateListener((update) => {
+          dirtyElementKeys = new Set(update.dirtyElements.keys());
+          dirtyLeafKeys = new Set(update.dirtyLeaves);
+          normalizedNodeKeys = new Set(update.normalizedNodes);
+        });
+
+        editor.update(
+          () => {
+            $getRoot().getLastChild()?.remove();
+          },
+          { discrete: true }
+        );
+        unregister();
+
+        editor.read(() => {
+          manager.$applyLocalUpdates({
+            dirtyElements: dirtyElementKeys,
+            dirtyLeaves: dirtyLeafKeys,
+            normalizedNodes: normalizedNodeKeys,
+          });
+
+          expect(manager.binding.forward.get(deletedParagraph)).toBeUndefined();
+          expect(manager.binding.forward.get(deletedText)).toBeUndefined();
+        });
+      });
+    });
+
+    describe("replacements", () => {
+      it("rebinds the same storage paragraph when Lexical replaces it at the same index", () => {
+        const document: LiveRootNode = new LiveObject({
+          kind: "root",
+          type: "root",
+          version: 1,
+          children: new LiveList([
+            new LiveObject({
+              kind: "element",
+              type: "paragraph",
+              version: 1,
+              children: new LiveList([
+                new LiveObject({
+                  kind: "text",
+                  type: "text",
+                  version: 1,
+                  content: new LiveText("Before"),
+                }),
+              ]),
+            }),
+          ]),
+        });
+        const { editor, manager } = createEditor(document);
+        const list = document.get("children");
+        const paragraph_liveblocks = list.get(0)!;
+        const text_liveblocks = paragraph_liveblocks.get("children").get(0)!;
+
+        let dirtyElementKeys = new Set<string>();
+        let dirtyLeafKeys = new Set<string>();
+        let normalizedNodeKeys = new Set<string>();
+
+        const unregister = editor.registerUpdateListener((update) => {
+          dirtyElementKeys = new Set(update.dirtyElements.keys());
+          dirtyLeafKeys = new Set(update.dirtyLeaves);
+          normalizedNodeKeys = new Set(update.normalizedNodes);
+        });
+
+        editor.update(
+          () => {
+            const oldParagraph = $getRoot().getFirstChild();
+            if (oldParagraph == null) return;
+            const nextParagraph = $createParagraphNode();
+            nextParagraph.append($createTextNode("After"));
+            oldParagraph.replace(nextParagraph);
+          },
+          { discrete: true }
+        );
+        unregister();
+
+        editor.read(() => {
+          manager.$applyLocalUpdates({
+            dirtyElements: dirtyElementKeys,
+            dirtyLeaves: dirtyLeafKeys,
+            normalizedNodes: normalizedNodeKeys,
+          });
+        });
+
+        expect(list.length).toBe(1);
+        expect(list.get(0)).toBe(paragraph_liveblocks);
+        expect(paragraph_liveblocks.get("children").get(0)).toBe(
+          text_liveblocks
+        );
+        expect(
+          (text_liveblocks as LiveTextNode).get("content").toJSON()
+        ).toEqual([["After"]]);
+      });
+
+      it("rebinds the same LiveText when Lexical replaces the text node at the same slot", () => {
+        const document: LiveRootNode = new LiveObject({
+          kind: "root",
+          type: "root",
+          version: 1,
+          children: new LiveList([
+            new LiveObject({
+              kind: "element",
+              type: "paragraph",
+              version: 1,
+              children: new LiveList([
+                new LiveObject({
+                  kind: "text",
+                  type: "text",
+                  version: 1,
+                  content: new LiveText("Before"),
+                }),
+              ]),
+            }),
+          ]),
+        });
+        const { editor, manager } = createEditor(document);
+        const paragraph_liveblocks = document.get("children").get(0)!;
+        const text_liveblocks = paragraph_liveblocks.get("children").get(0)!;
+
+        let dirtyElementKeys = new Set<string>();
+        let dirtyLeafKeys = new Set<string>();
+        let normalizedNodeKeys = new Set<string>();
+
+        const unregister = editor.registerUpdateListener((update) => {
+          dirtyElementKeys = new Set(update.dirtyElements.keys());
+          dirtyLeafKeys = new Set(update.dirtyLeaves);
+          normalizedNodeKeys = new Set(update.normalizedNodes);
+        });
+
+        editor.update(
+          () => {
+            const paragraph = $getRoot().getFirstChild();
+            if (!$isElementNode(paragraph)) {
+              return;
+            }
+            const oldText = paragraph.getFirstChild();
+            if (oldText == null) return;
+            const nextText = $createTextNode("After");
+            nextText.toggleUnmergeable();
+            oldText.replace(nextText);
+          },
+          { discrete: true }
+        );
+        unregister();
+
+        editor.read(() => {
+          manager.$applyLocalUpdates({
+            dirtyElements: dirtyElementKeys,
+            dirtyLeaves: dirtyLeafKeys,
+            normalizedNodes: normalizedNodeKeys,
+          });
+
+          const paragraph = $getRoot().getFirstChild();
+          if (!$isElementNode(paragraph)) {
+            throw new Error("Expected element node");
+          }
+          const textNodes = paragraph
+            .getChildren()
+            .filter($isTextNode)
+            .map((node: TextNode) => node.getLatest());
+
+          expect(paragraph_liveblocks.get("children").length).toBe(1);
+          expect(paragraph_liveblocks.get("children").get(0)).toBe(
+            text_liveblocks
+          );
+          expect(
+            (text_liveblocks as LiveTextNode).get("content").toJSON()
+          ).toEqual([["After"]]);
+          expect(manager.binding.forward.get(text_liveblocks)).toEqual(
+            textNodes
+          );
+          expect(manager.binding.reverse.get(textNodes[0]!.getKey())).toBe(
+            text_liveblocks
+          );
+        });
+      });
+
+      it("rebinds the same line break storage node when Lexical replaces it at the same slot", () => {
+        const document: LiveRootNode = new LiveObject({
+          kind: "root",
+          type: "root",
+          version: 1,
+          children: new LiveList([
+            new LiveObject({
+              kind: "element",
+              type: "paragraph",
+              version: 1,
+              children: new LiveList([
+                new LiveObject({
+                  kind: "text",
+                  type: "text",
+                  version: 1,
+                  content: new LiveText("Hi"),
+                }),
+                new LiveObject({
+                  kind: "linebreak",
+                  type: "linebreak",
+                  version: 1,
+                }),
+              ]),
+            }),
+          ]),
+        });
+        const { editor, manager } = createEditor(document);
+        const paragraph_liveblocks = document.get("children").get(0)!;
+        const lineBreak_liveblocks = paragraph_liveblocks
+          .get("children")
+          .get(1)!;
+
+        let dirtyElementKeys = new Set<string>();
+        let dirtyLeafKeys = new Set<string>();
+        let normalizedNodeKeys = new Set<string>();
+
+        const unregister = editor.registerUpdateListener((update) => {
+          dirtyElementKeys = new Set(update.dirtyElements.keys());
+          dirtyLeafKeys = new Set(update.dirtyLeaves);
+          normalizedNodeKeys = new Set(update.normalizedNodes);
+        });
+
+        editor.update(
+          () => {
+            const paragraph = $getRoot().getFirstChild();
+            if (!$isElementNode(paragraph)) {
+              return;
+            }
+            const oldBreak = paragraph.getChildAtIndex(1);
+            if (oldBreak == null) return;
+            const nextBreak = $createLineBreakNode();
+            oldBreak.replace(nextBreak);
+          },
+          { discrete: true }
+        );
+        unregister();
+
+        editor.read(() => {
+          manager.$applyLocalUpdates({
+            dirtyElements: dirtyElementKeys,
+            dirtyLeaves: dirtyLeafKeys,
+            normalizedNodes: normalizedNodeKeys,
+          });
+
+          const paragraph = $getRoot().getFirstChild();
+          if (!$isElementNode(paragraph)) {
+            throw new Error("Expected element node");
+          }
+          const lineBreak = paragraph.getChildAtIndex(1);
+
+          expect(paragraph_liveblocks.get("children").length).toBe(2);
+          expect(paragraph_liveblocks.get("children").get(1)).toBe(
+            lineBreak_liveblocks
+          );
+          expect($isLineBreakNode(lineBreak)).toBe(true);
+          expect(manager.binding.forward.get(lineBreak_liveblocks)).toBe(
+            lineBreak
+          );
+          expect(manager.binding.reverse.get(lineBreak!.getKey())).toBe(
+            lineBreak_liveblocks
+          );
+        });
+      });
+
+      it("deletes storage instead of rebinding when the replacement occupant is a different kind", () => {
+        const document: LiveRootNode = new LiveObject({
+          kind: "root",
+          type: "root",
+          version: 1,
+          children: new LiveList([
+            new LiveObject({
+              kind: "element",
+              type: "paragraph",
+              version: 1,
+              children: new LiveList([
+                new LiveObject({
+                  kind: "text",
+                  type: "text",
+                  version: 1,
+                  content: new LiveText("Before"),
+                }),
+              ]),
+            }),
+          ]),
+        });
+        const { editor, manager } = createEditor(document);
+        const paragraph_liveblocks = document.get("children").get(0)!;
+        const text_liveblocks = paragraph_liveblocks.get("children").get(0)!;
+
+        let dirtyElementKeys = new Set<string>();
+        let dirtyLeafKeys = new Set<string>();
+        let normalizedNodeKeys = new Set<string>();
+
+        const unregister = editor.registerUpdateListener((update) => {
+          dirtyElementKeys = new Set(update.dirtyElements.keys());
+          dirtyLeafKeys = new Set(update.dirtyLeaves);
+          normalizedNodeKeys = new Set(update.normalizedNodes);
+        });
+
+        editor.update(
+          () => {
+            const paragraph = $getRoot().getFirstChild();
+            if (!$isElementNode(paragraph)) {
+              return;
+            }
+            const oldText = paragraph.getFirstChild();
+            if (oldText == null) return;
+            const lineBreak = $createLineBreakNode();
+            oldText.replace(lineBreak);
+          },
+          { discrete: true }
+        );
+        unregister();
+
+        editor.read(() => {
+          manager.$applyLocalUpdates({
+            dirtyElements: dirtyElementKeys,
+            dirtyLeaves: dirtyLeafKeys,
+            normalizedNodes: normalizedNodeKeys,
+          });
+
+          expect(paragraph_liveblocks.get("children").length).toBe(1);
+          expect(paragraph_liveblocks.get("children").get(0)!.get("kind")).toBe(
+            "linebreak"
+          );
+          expect(manager.binding.forward.get(text_liveblocks)).toBeUndefined();
+        });
+      });
+    });
+
+    describe("reordering", () => {
+      it("syncs moving a paragraph to the front of the root list", () => {
+        const document: LiveRootNode = new LiveObject({
+          kind: "root",
+          type: "root",
+          version: 1,
+          children: new LiveList([
+            new LiveObject({
+              kind: "element",
+              type: "paragraph",
+              version: 1,
+              children: new LiveList([
+                new LiveObject({
+                  kind: "text",
+                  type: "text",
+                  version: 1,
+                  content: new LiveText("A"),
+                }),
+              ]),
+            }),
+            new LiveObject({
+              kind: "element",
+              type: "paragraph",
+              version: 1,
+              children: new LiveList([
+                new LiveObject({
+                  kind: "text",
+                  type: "text",
+                  version: 1,
+                  content: new LiveText("B"),
+                }),
+              ]),
+            }),
+            new LiveObject({
+              kind: "element",
+              type: "paragraph",
+              version: 1,
+              children: new LiveList([
+                new LiveObject({
+                  kind: "text",
+                  type: "text",
+                  version: 1,
+                  content: new LiveText("C"),
+                }),
+              ]),
+            }),
+          ]),
+        });
+        const { editor, manager } = createEditor(document);
+        const list = document.get("children");
+        const moved = list.get(2)!;
+
+        let dirtyElementKeys = new Set<string>();
+        let dirtyLeafKeys = new Set<string>();
+        let normalizedNodeKeys = new Set<string>();
+
+        const unregister = editor.registerUpdateListener((update) => {
+          dirtyElementKeys = new Set(update.dirtyElements.keys());
+          dirtyLeafKeys = new Set(update.dirtyLeaves);
+          normalizedNodeKeys = new Set(update.normalizedNodes);
+        });
+
+        editor.update(
+          () => {
+            const root = $getRoot();
+            const third = root.getLastChild();
+            const first = root.getFirstChild();
+            if (third == null || first == null) {
+              return;
+            }
+            third.remove();
+            first.insertBefore(third);
+          },
+          { discrete: true }
+        );
+        unregister();
+
+        editor.read(() => {
+          manager.$applyLocalUpdates({
+            dirtyElements: dirtyElementKeys,
+            dirtyLeaves: dirtyLeafKeys,
+            normalizedNodes: normalizedNodeKeys,
+          });
+        });
+
+        expect(list.indexOf(moved as never)).toBe(0);
+        expect(
+          editor.read(() =>
+            $dfs($getRoot())
+              .map(({ node }) =>
+                $isTextNode(node) ? node.getTextContent() : ""
+              )
+              .join("")
+          )
+        ).toBe("CAB");
+      });
+
+      it("syncs swapping two paragraphs in the root list", () => {
+        const document: LiveRootNode = new LiveObject({
+          kind: "root",
+          type: "root",
+          version: 1,
+          children: new LiveList([
+            new LiveObject({
+              kind: "element",
+              type: "paragraph",
+              version: 1,
+              children: new LiveList([
+                new LiveObject({
+                  kind: "text",
+                  type: "text",
+                  version: 1,
+                  content: new LiveText("A"),
+                }),
+              ]),
+            }),
+            new LiveObject({
+              kind: "element",
+              type: "paragraph",
+              version: 1,
+              children: new LiveList([
+                new LiveObject({
+                  kind: "text",
+                  type: "text",
+                  version: 1,
+                  content: new LiveText("B"),
+                }),
+              ]),
+            }),
+            new LiveObject({
+              kind: "element",
+              type: "paragraph",
+              version: 1,
+              children: new LiveList([
+                new LiveObject({
+                  kind: "text",
+                  type: "text",
+                  version: 1,
+                  content: new LiveText("C"),
+                }),
+              ]),
+            }),
+          ]),
+        });
+        const { editor, manager } = createEditor(document);
+        const list = document.get("children");
+        const paragraphB = list.get(1)!;
+
+        let dirtyElementKeys = new Set<string>();
+        let dirtyLeafKeys = new Set<string>();
+        let normalizedNodeKeys = new Set<string>();
+
+        const unregister = editor.registerUpdateListener((update) => {
+          dirtyElementKeys = new Set(update.dirtyElements.keys());
+          dirtyLeafKeys = new Set(update.dirtyLeaves);
+          normalizedNodeKeys = new Set(update.normalizedNodes);
+        });
+
+        editor.update(
+          () => {
+            const root = $getRoot();
+            const first = root.getFirstChild();
+            const second = root.getChildAtIndex(1);
+            if (first == null || second == null) {
+              return;
+            }
+            second.remove();
+            first.insertBefore(second);
+          },
+          { discrete: true }
+        );
+        unregister();
+
+        editor.read(() => {
+          manager.$applyLocalUpdates({
+            dirtyElements: dirtyElementKeys,
+            dirtyLeaves: dirtyLeafKeys,
+            normalizedNodes: normalizedNodeKeys,
+          });
+        });
+
+        expect(list.indexOf(paragraphB as never)).toBe(0);
+        expect(
+          editor.read(() =>
+            $dfs($getRoot())
+              .map(({ node }) =>
+                $isTextNode(node) ? node.getTextContent() : ""
+              )
+              .join("")
+          )
+        ).toBe("BAC");
+      });
+
+      it("preserves storage object identity when reordering", () => {
+        const document: LiveRootNode = new LiveObject({
+          kind: "root",
+          type: "root",
+          version: 1,
+          children: new LiveList([
+            new LiveObject({
+              kind: "element",
+              type: "paragraph",
+              version: 1,
+              children: new LiveList([
+                new LiveObject({
+                  kind: "text",
+                  type: "text",
+                  version: 1,
+                  content: new LiveText("A"),
+                }),
+              ]),
+            }),
+            new LiveObject({
+              kind: "element",
+              type: "paragraph",
+              version: 1,
+              children: new LiveList([
+                new LiveObject({
+                  kind: "text",
+                  type: "text",
+                  version: 1,
+                  content: new LiveText("B"),
+                }),
+              ]),
+            }),
+            new LiveObject({
+              kind: "element",
+              type: "paragraph",
+              version: 1,
+              children: new LiveList([
+                new LiveObject({
+                  kind: "text",
+                  type: "text",
+                  version: 1,
+                  content: new LiveText("C"),
+                }),
+              ]),
+            }),
+          ]),
+        });
+        const { editor, manager } = createEditor(document);
+        const list = document.get("children");
+        const first = list.get(0)!;
+        const second = list.get(1)!;
+        const third = list.get(2)!;
+
+        let dirtyElementKeys = new Set<string>();
+        let dirtyLeafKeys = new Set<string>();
+        let normalizedNodeKeys = new Set<string>();
+
+        const unregister = editor.registerUpdateListener((update) => {
+          dirtyElementKeys = new Set(update.dirtyElements.keys());
+          dirtyLeafKeys = new Set(update.dirtyLeaves);
+          normalizedNodeKeys = new Set(update.normalizedNodes);
+        });
+
+        editor.update(
+          () => {
+            const root = $getRoot();
+            const last = root.getLastChild();
+            const head = root.getFirstChild();
+            if (last == null || head == null) {
+              return;
+            }
+            last.remove();
+            head.insertBefore(last);
+          },
+          { discrete: true }
+        );
+        unregister();
+
+        editor.read(() => {
+          manager.$applyLocalUpdates({
+            dirtyElements: dirtyElementKeys,
+            dirtyLeaves: dirtyLeafKeys,
+            normalizedNodes: normalizedNodeKeys,
+          });
+        });
+
+        expect(list.get(0)).toBe(third);
+        expect(list.get(1)).toBe(first);
+        expect(list.get(2)).toBe(second);
+      });
+
+      it("does not mutate LiveText when only reordering root paragraphs", () => {
+        const document: LiveRootNode = new LiveObject({
+          kind: "root",
+          type: "root",
+          version: 1,
+          children: new LiveList([
+            new LiveObject({
+              kind: "element",
+              type: "paragraph",
+              version: 1,
+              children: new LiveList([
+                new LiveObject({
+                  kind: "text",
+                  type: "text",
+                  version: 1,
+                  content: new LiveText("A"),
+                }),
+              ]),
+            }),
+            new LiveObject({
+              kind: "element",
+              type: "paragraph",
+              version: 1,
+              children: new LiveList([
+                new LiveObject({
+                  kind: "text",
+                  type: "text",
+                  version: 1,
+                  content: new LiveText("B"),
+                }),
+              ]),
+            }),
+            new LiveObject({
+              kind: "element",
+              type: "paragraph",
+              version: 1,
+              children: new LiveList([
+                new LiveObject({
+                  kind: "text",
+                  type: "text",
+                  version: 1,
+                  content: new LiveText("C"),
+                }),
+              ]),
+            }),
+          ]),
+        });
+        const { editor, manager } = createEditor(document);
+        const liveTextSpies = document
+          .get("children")
+          .map((paragraph) =>
+            vi.spyOn(
+              (paragraph.get("children").get(0)! as LiveTextNode).get(
+                "content"
+              ),
+              "insert"
+            )
+          );
+
+        let dirtyElementKeys = new Set<string>();
+        let dirtyLeafKeys = new Set<string>();
+        let normalizedNodeKeys = new Set<string>();
+
+        const unregister = editor.registerUpdateListener((update) => {
+          dirtyElementKeys = new Set(update.dirtyElements.keys());
+          dirtyLeafKeys = new Set(update.dirtyLeaves);
+          normalizedNodeKeys = new Set(update.normalizedNodes);
+        });
+
+        editor.update(
+          () => {
+            const root = $getRoot();
+            const last = root.getLastChild();
+            const head = root.getFirstChild();
+            if (last == null || head == null) {
+              return;
+            }
+            last.remove();
+            head.insertBefore(last);
+          },
+          { discrete: true }
+        );
+        unregister();
+
+        editor.read(() => {
+          manager.$applyLocalUpdates({
+            dirtyElements: dirtyElementKeys,
+            dirtyLeaves: dirtyLeafKeys,
+            normalizedNodes: normalizedNodeKeys,
+          });
+        });
+
+        for (const spy of liveTextSpies) {
+          expect(spy).not.toHaveBeenCalled();
+        }
+        vi.restoreAllMocks();
+      });
+
+      it("syncs reordering nested paragraphs inside a quote", () => {
+        const document: LiveRootNode = new LiveObject({
+          kind: "root",
+          type: "root",
+          version: 1,
+          children: new LiveList([
+            new LiveObject({
+              kind: "element",
+              type: "quote",
+              version: 1,
+              children: new LiveList([
+                new LiveObject({
+                  kind: "element",
+                  type: "paragraph",
+                  version: 1,
+                  children: new LiveList([
+                    new LiveObject({
+                      kind: "text",
+                      type: "text",
+                      version: 1,
+                      content: new LiveText("A"),
+                    }),
+                  ]),
+                }),
+                new LiveObject({
+                  kind: "element",
+                  type: "paragraph",
+                  version: 1,
+                  children: new LiveList([
+                    new LiveObject({
+                      kind: "text",
+                      type: "text",
+                      version: 1,
+                      content: new LiveText("B"),
+                    }),
+                  ]),
+                }),
+              ]),
+            }),
+          ]),
+        });
+        const { editor, manager } = createEditor(document);
+        const quote = document.get("children").get(0)!;
+        const nestedList = quote.get("children");
+        const paragraphB = nestedList.get(1)!;
+
+        let dirtyElementKeys = new Set<string>();
+        let dirtyLeafKeys = new Set<string>();
+        let normalizedNodeKeys = new Set<string>();
+
+        const unregister = editor.registerUpdateListener((update) => {
+          dirtyElementKeys = new Set(update.dirtyElements.keys());
+          dirtyLeafKeys = new Set(update.dirtyLeaves);
+          normalizedNodeKeys = new Set(update.normalizedNodes);
+        });
+
+        editor.update(
+          () => {
+            const quoteNode = $getRoot().getFirstChild() as QuoteNode;
+            const first = quoteNode?.getFirstChild();
+            const second = quoteNode?.getChildAtIndex(1);
+            if (first == null || second == null) {
+              return;
+            }
+            second.remove();
+            first.insertBefore(second);
+          },
+          { discrete: true }
+        );
+        unregister();
+
+        editor.read(() => {
+          manager.$applyLocalUpdates({
+            dirtyElements: dirtyElementKeys,
+            dirtyLeaves: dirtyLeafKeys,
+            normalizedNodes: normalizedNodeKeys,
+          });
+        });
+
+        expect(nestedList.indexOf(paragraphB as never)).toBe(0);
+        expect(
+          editor.read(() =>
+            $dfs($getRoot())
+              .map(({ node }) =>
+                $isTextNode(node) ? node.getTextContent() : ""
+              )
+              .join("")
+          )
+        ).toBe("BA");
+      });
+
+      it("preserves paragraph bindings after a root-level reorder", () => {
+        const document: LiveRootNode = new LiveObject({
+          kind: "root",
+          type: "root",
+          version: 1,
+          children: new LiveList([
+            new LiveObject({
+              kind: "element",
+              type: "paragraph",
+              version: 1,
+              children: new LiveList([
+                new LiveObject({
+                  kind: "text",
+                  type: "text",
+                  version: 1,
+                  content: new LiveText("A"),
+                }),
+              ]),
+            }),
+            new LiveObject({
+              kind: "element",
+              type: "paragraph",
+              version: 1,
+              children: new LiveList([
+                new LiveObject({
+                  kind: "text",
+                  type: "text",
+                  version: 1,
+                  content: new LiveText("B"),
+                }),
+              ]),
+            }),
+            new LiveObject({
+              kind: "element",
+              type: "paragraph",
+              version: 1,
+              children: new LiveList([
+                new LiveObject({
+                  kind: "text",
+                  type: "text",
+                  version: 1,
+                  content: new LiveText("C"),
+                }),
+              ]),
+            }),
+          ]),
+        });
+        const { editor, manager } = createEditor(document);
+        const list = document.get("children");
+
+        let dirtyElementKeys = new Set<string>();
+        let dirtyLeafKeys = new Set<string>();
+        let normalizedNodeKeys = new Set<string>();
+
+        const unregister = editor.registerUpdateListener((update) => {
+          dirtyElementKeys = new Set(update.dirtyElements.keys());
+          dirtyLeafKeys = new Set(update.dirtyLeaves);
+          normalizedNodeKeys = new Set(update.normalizedNodes);
+        });
+
+        editor.update(
+          () => {
+            const root = $getRoot();
+            const last = root.getLastChild();
+            const head = root.getFirstChild();
+            if (last == null || head == null) {
+              return;
+            }
+            last.remove();
+            head.insertBefore(last);
+          },
+          { discrete: true }
+        );
+        unregister();
+
+        editor.read(() => {
+          manager.$applyLocalUpdates({
+            dirtyElements: dirtyElementKeys,
+            dirtyLeaves: dirtyLeafKeys,
+            normalizedNodes: normalizedNodeKeys,
+          });
+
+          const paragraphs = $getRoot().getChildren();
+          expect(paragraphs).toHaveLength(3);
+
+          for (let i = 0; i < paragraphs.length; i++) {
+            const paragraph_lexical = paragraphs[i]!;
+            const paragraph_liveblocks = list.get(i)!;
+
+            expect(manager.binding.forward.get(paragraph_liveblocks)).toBe(
+              paragraph_lexical
+            );
+            expect(
+              manager.binding.reverse.get(paragraph_lexical.getKey())
+            ).toBe(paragraph_liveblocks);
+          }
+        });
+      });
+    });
+
+    describe("pruning", () => {
+      it("prunes an unbound trailing paragraph from the root list", () => {
+        const document: LiveRootNode = new LiveObject({
+          kind: "root",
+          type: "root",
+          version: 1,
+          children: new LiveList([
+            new LiveObject({
+              kind: "element",
+              type: "paragraph",
+              version: 1,
+              children: new LiveList([
+                new LiveObject({
+                  kind: "text",
+                  type: "text",
+                  version: 1,
+                  content: new LiveText("A"),
+                }),
+              ]),
+            }),
+            new LiveObject({
+              kind: "element",
+              type: "paragraph",
+              version: 1,
+              children: new LiveList([
+                new LiveObject({
+                  kind: "text",
+                  type: "text",
+                  version: 1,
+                  content: new LiveText("B"),
+                }),
+              ]),
+            }),
+          ]),
+        });
+        const { editor, manager } = createEditor(document);
+        const list = document.get("children");
+
+        list.insert(
+          new LiveObject({
+            kind: "element",
+            type: "paragraph",
+            version: 1,
+            children: new LiveList([
+              new LiveObject({
+                kind: "text",
+                type: "text",
+                version: 1,
+                content: new LiveText("Stale"),
+              }),
+            ]),
+          }),
+          2
+        );
+        expect(list.length).toBe(3);
+
+        let dirtyElementKeys = new Set<string>();
+        let dirtyLeafKeys = new Set<string>();
+        let normalizedNodeKeys = new Set<string>();
+
+        const unregister = editor.registerUpdateListener((update) => {
+          dirtyElementKeys = new Set(update.dirtyElements.keys());
+          dirtyLeafKeys = new Set(update.dirtyLeaves);
+          normalizedNodeKeys = new Set(update.normalizedNodes);
+        });
+
+        editor.update(
+          () => {
+            const paragraphs = $getRoot().getChildren() as ParagraphNode[];
+            (paragraphs[0]!.getFirstChild() as TextNode).setTextContent("A!");
+            (paragraphs[1]!.getFirstChild() as TextNode).setTextContent("B!");
+          },
+          { discrete: true }
+        );
+        unregister();
+
+        editor.read(() => {
+          manager.$applyLocalUpdates({
+            dirtyElements: dirtyElementKeys,
+            dirtyLeaves: dirtyLeafKeys,
+            normalizedNodes: normalizedNodeKeys,
+          });
+        });
+
+        expect(list.length).toBe(2);
+        expect(
+          editor.read(() =>
+            $dfs($getRoot())
+              .map(({ node }) =>
+                $isTextNode(node) ? node.getTextContent() : ""
+              )
+              .join("")
+          )
+        ).toBe("A!B!");
+      });
+
+      it("prunes an unbound trailing text child from a paragraph list", () => {
+        const document: LiveRootNode = new LiveObject({
+          kind: "root",
+          type: "root",
+          version: 1,
+          children: new LiveList([
+            new LiveObject({
+              kind: "element",
+              type: "paragraph",
+              version: 1,
+              children: new LiveList([
+                new LiveObject({
+                  kind: "text",
+                  type: "text",
+                  version: 1,
+                  content: new LiveText("Hello"),
+                }),
+              ]),
+            }),
+          ]),
+        });
+        const { editor, manager } = createEditor(document);
+        const paragraphList = document.get("children").get(0)!.get("children");
+
+        paragraphList.insert(
+          new LiveObject({
+            kind: "text",
+            type: "text",
+            version: 1,
+            content: new LiveText(" stale"),
+          }),
+          1
+        );
+        expect(paragraphList.length).toBe(2);
+
+        let dirtyElementKeys = new Set<string>();
+        let dirtyLeafKeys = new Set<string>();
+        let normalizedNodeKeys = new Set<string>();
+
+        const unregister = editor.registerUpdateListener((update) => {
+          dirtyElementKeys = new Set(update.dirtyElements.keys());
+          dirtyLeafKeys = new Set(update.dirtyLeaves);
+          normalizedNodeKeys = new Set(update.normalizedNodes);
+        });
+
+        editor.update(
+          () => {
+            (
+              $dfs().find(({ node }) => $isTextNode(node))!.node as TextNode
+            ).setTextContent("Hello!");
+          },
+          { discrete: true }
+        );
+        unregister();
+
+        editor.read(() => {
+          manager.$applyLocalUpdates({
+            dirtyElements: dirtyElementKeys,
+            dirtyLeaves: dirtyLeafKeys,
+            normalizedNodes: normalizedNodeKeys,
+          });
+        });
+
+        expect(paragraphList.length).toBe(1);
+        expect(
+          (paragraphList.get(0)! as LiveTextNode).get("content").toJSON()
+        ).toEqual([["Hello!"]]);
+      });
+
+      it("prunes multiple trailing unbound storage children in one reconcile", () => {
+        const document: LiveRootNode = new LiveObject({
+          kind: "root",
+          type: "root",
+          version: 1,
+          children: new LiveList([
+            new LiveObject({
+              kind: "element",
+              type: "paragraph",
+              version: 1,
+              children: new LiveList([
+                new LiveObject({
+                  kind: "text",
+                  type: "text",
+                  version: 1,
+                  content: new LiveText("Only"),
+                }),
+              ]),
+            }),
+          ]),
+        });
+        const { editor, manager } = createEditor(document);
+        const paragraphList = document.get("children").get(0)!.get("children");
+
+        paragraphList.insert(
+          new LiveObject({
+            kind: "text",
+            type: "text",
+            version: 1,
+            content: new LiveText(" stale 1"),
+          }),
+          1
+        );
+        paragraphList.insert(
+          new LiveObject({
+            kind: "text",
+            type: "text",
+            version: 1,
+            content: new LiveText(" stale 2"),
+          }),
+          2
+        );
+        expect(paragraphList.length).toBe(3);
+
+        let dirtyElementKeys = new Set<string>();
+        let dirtyLeafKeys = new Set<string>();
+        let normalizedNodeKeys = new Set<string>();
+
+        const unregister = editor.registerUpdateListener((update) => {
+          dirtyElementKeys = new Set(update.dirtyElements.keys());
+          dirtyLeafKeys = new Set(update.dirtyLeaves);
+          normalizedNodeKeys = new Set(update.normalizedNodes);
+        });
+
+        editor.update(
+          () => {
+            (
+              $dfs().find(({ node }) => $isTextNode(node))!.node as TextNode
+            ).setTextContent("Only!");
+          },
+          { discrete: true }
+        );
+        unregister();
+
+        editor.read(() => {
+          manager.$applyLocalUpdates({
+            dirtyElements: dirtyElementKeys,
+            dirtyLeaves: dirtyLeafKeys,
+            normalizedNodes: normalizedNodeKeys,
+          });
+        });
+
+        expect(paragraphList.length).toBe(1);
+        expect(
+          (paragraphList.get(0)! as LiveTextNode).get("content").toJSON()
+        ).toEqual([["Only!"]]);
+      });
+    });
+
+    describe("element props", () => {
+      it("syncs heading tag prop changes to storage", () => {
+        const heading = new LiveObject({
+          kind: "element",
+          type: "heading",
+          version: 1,
+          props: { tag: "h1" },
+          children: new LiveList<LiveTextNode>([
+            new LiveObject({
+              kind: "text",
+              type: "text",
+              version: 1,
+              content: new LiveText("Title"),
+            }),
+          ]),
+        }) as LiveElementNode;
+        const document: LiveRootNode = new LiveObject({
+          kind: "root",
+          type: "root",
+          version: 1,
+          children: new LiveList<LiveElementNode>([heading]),
+        });
+        const { editor, manager } = createEditor(document);
+
+        let dirtyElementKeys = new Set<string>();
+        let dirtyLeafKeys = new Set<string>();
+        let normalizedNodeKeys = new Set<string>();
+
+        const unregister = editor.registerUpdateListener((update) => {
+          dirtyElementKeys = new Set(update.dirtyElements.keys());
+          dirtyLeafKeys = new Set(update.dirtyLeaves);
+          normalizedNodeKeys = new Set(update.normalizedNodes);
+        });
+
+        editor.update(
+          () => {
+            const oldHeading = $getRoot().getFirstChild();
+            if (!$isHeadingNode(oldHeading)) {
+              throw new Error("Expected HeadingNode");
+            }
+            const nextHeading = $createHeadingNode("h2");
+            nextHeading.append(
+              ...oldHeading.getChildren().map((child) => child.getLatest())
+            );
+            oldHeading.replace(nextHeading);
+          },
+          { discrete: true }
+        );
+        unregister();
+
+        editor.read(() => {
+          manager.$applyLocalUpdates({
+            dirtyElements: dirtyElementKeys,
+            dirtyLeaves: dirtyLeafKeys,
+            normalizedNodes: normalizedNodeKeys,
+          });
+        });
+
+        expect(heading.get("props")).toEqual({ tag: "h2" });
+      });
+
+      it("syncs props when dematerializing a new heading in the editor", () => {
+        const document: LiveRootNode = new LiveObject({
+          kind: "root",
+          type: "root",
+          version: 1,
+          children: new LiveList([]),
+        });
+        const { editor, manager } = createEditor(document);
+        const list = document.get("children");
+
+        let dirtyElementKeys = new Set<string>();
+        let dirtyLeafKeys = new Set<string>();
+        let normalizedNodeKeys = new Set<string>();
+
+        const unregister = editor.registerUpdateListener((update) => {
+          dirtyElementKeys = new Set(update.dirtyElements.keys());
+          dirtyLeafKeys = new Set(update.dirtyLeaves);
+          normalizedNodeKeys = new Set(update.normalizedNodes);
+        });
+
+        editor.update(
+          () => {
+            const heading = $createHeadingNode("h1");
+            heading.append($createTextNode("New title"));
+            $getRoot().append(heading);
+          },
+          { discrete: true }
+        );
+        unregister();
+
+        editor.read(() => {
+          manager.$applyLocalUpdates({
+            dirtyElements: dirtyElementKeys,
+            dirtyLeaves: dirtyLeafKeys,
+            normalizedNodes: normalizedNodeKeys,
+          });
+        });
+
+        expect(list.length).toBe(1);
+        expect(list.get(0)!.get("type")).toBe("heading");
+        expect(list.get(0)!.get("props")).toEqual({ tag: "h1" });
+      });
     });
   });
 

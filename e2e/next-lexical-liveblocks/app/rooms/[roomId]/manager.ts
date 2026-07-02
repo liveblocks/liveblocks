@@ -1,6 +1,6 @@
 "use client";
 
-import { LiveList, LiveObject } from "@liveblocks/client";
+import { LiveList, LiveObject, LiveText } from "@liveblocks/client";
 import {
   ElementNode,
   LexicalNode,
@@ -9,13 +9,13 @@ import {
   $isElementNode,
   $isTextNode,
   $getNodeByKey,
-  type EditorState,
   $isRootNode,
   $getRoot,
   TEXT_TYPE_TO_FORMAT,
   $getEditor,
   $createLineBreakNode,
   $isLineBreakNode,
+  NODE_STATE_KEY,
 } from "lexical";
 import type {
   LiveRootNode,
@@ -106,12 +106,24 @@ export class LiveblocksCollaborationManager {
       // Branch B: If the node associated with the key is normalized (it was removed/merged), the node still has a binding (it existed before normalization), but it is going away.
       // We add its storage parent so deletions/replacements can be applied to it.
       else if (normalizedNodes.has(key)) {
-        const parent_liveblocks = this.findParent_liveblocks(
-          node_liveblocks as LiveChildNode
-        );
-        if (parent_liveblocks === null) continue;
+        let host: LiveObject<LiveRootShape | LiveElementShape> | null =
+          this.findParent_liveblocks(node_liveblocks as LiveChildNode);
+        if (host === null) continue;
 
-        hosts.add(parent_liveblocks);
+        while (host.get("kind") !== "root") {
+          const node_lexical = this.#binding.forward.get(host);
+          if (
+            node_lexical !== undefined &&
+            !this.isOrphan(node_lexical, normalizedNodes)
+          ) {
+            break;
+          }
+          const parent: LiveObject<LiveRootShape | LiveElementShape> | null =
+            this.findParent_liveblocks(host as LiveChildNode);
+          if (parent === null) break;
+          host = parent;
+        }
+        hosts.add(host);
       }
       // Branch C: If the node is a bound element, we add it if it is attached, otherwise we add its parent.
       else if (node_liveblocks.get("kind") === "element") {
@@ -119,8 +131,7 @@ export class LiveblocksCollaborationManager {
 
         if (
           node_lexical !== undefined &&
-          !(node_lexical instanceof Array) &&
-          $getNodeByKey(node_lexical.getKey())?.isAttached()
+          !this.isOrphan(node_lexical, normalizedNodes)
         ) {
           hosts.add(
             node_liveblocks as LiveObject<LiveRootShape | LiveElementShape>
@@ -140,11 +151,25 @@ export class LiveblocksCollaborationManager {
       }
       // Branch E: If the node is a bound leaf node (text/linebreak), we add its storage parent so deletions/replacements can be applied to it.
       else {
-        const parent_liveblocks = this.findParent_liveblocks(
-          node_liveblocks as LiveChildNode
-        );
-        if (parent_liveblocks === null) continue;
-        hosts.add(parent_liveblocks);
+        let host: LiveObject<LiveRootShape | LiveElementShape> | null =
+          this.findParent_liveblocks(node_liveblocks as LiveChildNode);
+        if (host === null) continue;
+
+        while (host.get("kind") !== "root") {
+          const node_lexical = this.#binding.forward.get(host);
+          if (
+            node_lexical !== undefined &&
+            !(node_lexical instanceof Array) &&
+            !this.isOrphan(node_lexical, normalizedNodes)
+          ) {
+            break;
+          }
+          const parent: LiveObject<LiveRootShape | LiveElementShape> | null =
+            this.findParent_liveblocks(host as LiveChildNode);
+          if (parent === null) break;
+          host = parent;
+        }
+        hosts.add(host);
       }
     }
 
@@ -177,18 +202,32 @@ export class LiveblocksCollaborationManager {
       }
     }
 
-    // for (const key of new Set([...dirtyElements, ...dirtyLeaves])) {
-    //   const node_liveblocks = this.binding.reverse.get(key);
-    //   if (node_liveblocks === undefined) continue;
+    for (const key of dirtyElements) {
+      const node_liveblocks = this.#binding.reverse.get(key) as
+        | LiveObject<LiveElementShape>
+        | undefined;
+      if (node_liveblocks === undefined) {
+        continue;
+      }
 
-    //   const node_lexical = $getNodeByKey(key);
-    //   if (node_lexical === null) continue;
-    //   if (!$isElementNode(node_lexical)) continue;
+      const node_lexical = $getNodeByKey(key);
+      if (node_lexical === null || !$isElementNode(node_lexical)) {
+        continue;
+      }
 
-    //   const props_liveblocks = (
-    //     node_liveblocks as LiveObject<LiveElementShape>
-    //   ).get("props");
-    // }
+      const props_lexical = $getLexicalNodeProps(node_lexical);
+      const props_liveblocks = node_liveblocks.get("props");
+
+      if (isEqual(props_lexical, props_liveblocks)) {
+        continue;
+      }
+
+      if (props_lexical === undefined) {
+        node_liveblocks.delete("props");
+      } else {
+        node_liveblocks.set("props", props_lexical);
+      }
+    }
 
     for (const host_liveblocks of hosts) {
       this.$reconcileLiveObject(host_liveblocks, {
@@ -210,6 +249,23 @@ export class LiveblocksCollaborationManager {
     const host_liveblocks = node;
     const host_lexical = this.$getLexicalElementForStorageHost(host_liveblocks);
     const children_lexical = this.$normalizeLexicalChildren(host_lexical);
+
+    if (host_liveblocks !== this.root) {
+      const props_lexical = $getLexicalNodeProps(host_lexical);
+      const props_liveblocks = (
+        host_liveblocks as LiveObject<LiveElementShape>
+      ).get("props");
+      if (!isEqual(props_lexical, props_liveblocks)) {
+        if (props_lexical === undefined) {
+          (host_liveblocks as LiveObject<LiveElementShape>).delete("props");
+        } else {
+          (host_liveblocks as LiveObject<LiveElementShape>).set(
+            "props",
+            props_lexical
+          );
+        }
+      }
+    }
 
     const children_liveblocks = host_liveblocks.get(
       "children"
@@ -242,6 +298,8 @@ export class LiveblocksCollaborationManager {
         let isSameType: boolean = false;
         if (!(occupant instanceof Array)) {
           if (kind === "element" && $isElementNode(occupant)) {
+            isSameType = true;
+          } else if (kind === "linebreak" && $isLineBreakNode(occupant)) {
             isSameType = true;
           } else if (kind === "text" && occupant instanceof Array) {
             isSameType = true;
@@ -282,9 +340,8 @@ export class LiveblocksCollaborationManager {
           } else {
             this.#binding.reverse.set(occupant.getKey(), child_liveblocks);
           }
+          continue;
         }
-
-        continue;
       }
 
       // Skip deletion of a text node if it is the only child in the list and is empty.
@@ -356,6 +413,114 @@ export class LiveblocksCollaborationManager {
           continue;
         }
       }
+    }
+
+    // 3. Insertions (unbound normalized Lexical nodes)
+    for (let i = 0; i < children_lexical.length; i++) {
+      const child_lexical = children_lexical[i];
+      if (this.hasBinding(child_lexical)) continue;
+
+      const child_liveblocks = createStorageNodeFromLexicalNode(child_lexical);
+      children_liveblocks.insert(child_liveblocks, i);
+
+      if (child_lexical instanceof Array) {
+        this.createBinding(child_liveblocks as LiveTextNode, child_lexical);
+      } else if ($isElementNode(child_lexical)) {
+        this.createBinding(child_liveblocks as LiveElementNode, child_lexical);
+      } else {
+        this.#binding.forward.set(child_liveblocks, child_lexical);
+        this.#binding.reverse.set(child_lexical.getKey(), child_liveblocks);
+      }
+    }
+
+    // 4. Moves (reorder bound storage children to match Lexical order)
+    for (let i = 0; i < children_lexical.length; i++) {
+      const child_lexical = children_lexical[i];
+
+      // Get the bound storage node for the Lexical nodes.
+      let child_liveblocks: LiveChildNode | undefined;
+      if (child_lexical instanceof Array) {
+        child_liveblocks = this.#binding.reverse.get(
+          child_lexical[0].getKey()
+        ) as LiveTextNode | undefined;
+      } else {
+        child_liveblocks = this.#binding.reverse.get(child_lexical.getKey()) as
+          | LiveChildNode
+          | undefined;
+      }
+      if (child_liveblocks === undefined) continue;
+      const currentIndex = children_liveblocks.indexOf(
+        child_liveblocks as LiveChildNode
+      );
+      if (currentIndex === -1 || currentIndex === i) continue;
+      children_liveblocks.move(currentIndex, i);
+    }
+
+    // 5. Prune trailing storage children Lexical no longer has slots for
+    while (children_liveblocks.length > children_lexical.length) {
+      let removed = false;
+
+      for (
+        let i = children_liveblocks.length - 1;
+        i >= children_lexical.length;
+        i--
+      ) {
+        const child_liveblocks = children_liveblocks.get(i);
+        if (child_liveblocks === undefined) continue;
+
+        const child_lexical = this.#binding.forward.get(
+          child_liveblocks as LiveStorageNode
+        );
+        if (
+          child_lexical !== undefined &&
+          !this.isOrphan(child_lexical, normalizedNodes)
+        ) {
+          continue;
+        }
+
+        this.removeBindings(child_liveblocks);
+        children_liveblocks.delete(i);
+        removed = true;
+      }
+
+      if (!removed) break;
+    }
+
+    this.$synchronizeChildrenProps(host_lexical);
+  }
+
+  private $synchronizeChildrenProps(node: ElementNode): void {
+    for (const child_lexical of this.$normalizeLexicalChildren(node)) {
+      if (child_lexical instanceof Array) {
+        continue;
+      }
+      if (!$isElementNode(child_lexical)) {
+        continue;
+      }
+
+      const child_liveblocks = this.#binding.reverse.get(
+        child_lexical.getKey()
+      ) as LiveObject<LiveElementShape> | undefined;
+      if (child_liveblocks === undefined) {
+        continue;
+      }
+
+      const props_lexical = $getLexicalNodeProps(child_lexical);
+      const props_liveblocks = (
+        child_liveblocks as LiveObject<LiveElementShape>
+      ).get("props");
+      if (!isEqual(props_lexical, props_liveblocks)) {
+        if (props_lexical === undefined) {
+          (child_liveblocks as LiveObject<LiveElementShape>).delete("props");
+        } else {
+          (child_liveblocks as LiveObject<LiveElementShape>).set(
+            "props",
+            props_lexical
+          );
+        }
+      }
+
+      this.$synchronizeChildrenProps(child_lexical);
     }
   }
 
@@ -487,17 +652,18 @@ export class LiveblocksCollaborationManager {
   }
 
   /**
+   * @internal
    * Recursively build binding between a storage element and its matching Lexical node.
    */
-  private createBinding(
+  public createBinding(
     node_liveblocks: LiveTextNode,
     node_lexical: readonly TextNode[]
   ): void;
-  private createBinding(
+  public createBinding(
     node_liveblocks: LiveElementNode,
     node_lexical: ElementNode
   ): void;
-  private createBinding(
+  public createBinding(
     node_liveblocks: LiveTextNode | LiveElementNode,
     node_lexical: readonly TextNode[] | ElementNode
   ) {
@@ -556,6 +722,18 @@ export class LiveblocksCollaborationManager {
     }
   }
 
+  /**
+   * Whether a bound Lexical mirror no longer represents live editor content.
+   *
+   * A node is orphaned when Lexical has removed or replaced it — either explicitly
+   * via normalization (merge/delete) or because the bound instance is detached
+   * from the document tree. For coalesced text slots, every span in the group
+   * must be gone before the slot counts as orphaned.
+   *
+   * @param node - A single Lexical node or coalesced text slot from the binding.
+   * @param normalizedNodes - Lexical keys removed during this update's normalization pass.
+   * @returns `true` when the mirror should be treated as stale storage-side.
+   */
   private isOrphan(
     node: readonly TextNode[] | LexicalNode,
     normalizedNodes: ReadonlySet<NodeKey>
@@ -669,13 +847,13 @@ export class LiveblocksCollaborationManager {
     if (node.get("kind") === "root") {
       const root_lexical = this.#binding.forward.get(this.root);
       if (
-        root_lexical !== undefined &&
-        !(root_lexical instanceof Array) &&
-        $isElementNode(root_lexical)
+        root_lexical === undefined ||
+        root_lexical instanceof Array ||
+        !$isRootNode(root_lexical)
       ) {
-        return root_lexical;
+        throw new Error("Document root is not bound to a Lexical element.");
       }
-      throw new Error("Document root is not bound to a Lexical element.");
+      return root_lexical;
     }
 
     // Path 2: element host with a live forward binding.
@@ -846,8 +1024,8 @@ export class LiveblocksCollaborationManager {
 }
 
 function isEqual(
-  a: Record<string, unknown>,
-  b: Record<string, unknown>
+  a: JsonObject | undefined,
+  b: JsonObject | undefined
 ): boolean {
   if (a === b) return true;
   if (a === undefined || b === undefined) return false;
@@ -1110,6 +1288,124 @@ function getSegmentAttributesAtOffset(
 }
 
 /**
+ * Materializes a Liveblocks storage child from Lexical content (Lexical → Live).
+ *
+ * Dispatches by input shape:
+ *   - `TextNode[]`  → one `LiveTextNode` (coalesced segments)
+ *   - linebreak     → `LiveLineBreakNode`
+ *   - element       → recurse into raw Lexical children (consecutive TextNodes coalesce)
+ *
+ * @example Coalesced text — two Lexical spans, one LiveText child
+ *
+ * Lexical (normalized slot):              Storage (return value):
+ *   [TextNode "Hello " (bold),              text
+ *    TextNode "world"]                       └── LiveText segments:
+ *                                              ["Hello ", {bold}]
+ *                                              ["world"]
+ *
+ * @example New paragraph insert at root
+ *
+ * Lexical:                                 Storage:
+ *   Paragraph p2 (unbound)                  element (paragraph)
+ *    └── TextNode "Hi"                       └── text → [["Hi"]]
+ *
+ * @example Paragraph with line break
+ *
+ * Lexical:                                 Storage:
+ *   Paragraph                                element (paragraph)
+ *    ├── TextNode "Hi"                         ├── text → [["Hi"]]
+ *    └── LineBreak                             └── linebreak
+ *
+ * @example Nested element
+ *
+ * Lexical:                                 Storage:
+ *   Quote                                    element (quote)
+ *    └── Paragraph                             └── element (paragraph)
+ *         └── TextNode "Hi"                         └── text → [["Hi"]]
+ *
+ * @param node - A normalized text slot (`TextNode[]`) or a single Lexical node.
+ * @returns A new storage child ready to insert into a parent `children` LiveList.
+ * @throws {Error} When the Lexical node type is not supported for materialization.
+ */
+export function createStorageNodeFromLexicalNode(
+  node: LexicalNode | readonly TextNode[]
+): LiveChildNode {
+  if (node instanceof Array) {
+    const node_liveblocks = new LiveObject({
+      kind: "text",
+      type: "text",
+      version: 1,
+      content: new LiveText(),
+    }) as LiveTextNode;
+
+    const text = node_liveblocks.get("content");
+    const segments = createSegmentsFromTextNodes(
+      node.map((n) => n.getLatest())
+    );
+    let offset = 0;
+    for (const segment of segments) {
+      const [str, attributes] = segment;
+      if (str.length === 0) continue;
+      text.insert(
+        offset,
+        str,
+        attributes !== undefined ? attributes : undefined
+      );
+      offset += str.length;
+    }
+
+    return node_liveblocks;
+  }
+
+  if ($isLineBreakNode(node)) {
+    return new LiveObject({
+      kind: "linebreak",
+      type: "linebreak",
+      version: 1,
+    }) as LiveLineBreakNode;
+  }
+
+  if ($isElementNode(node)) {
+    const children_liveblocks: LiveChildNode[] = [];
+    const children_lexical = node.getChildren();
+
+    for (let i = 0; i < children_lexical.length; i++) {
+      const child = children_lexical[i]!;
+      if ($isTextNode(child)) {
+        const textNodes: TextNode[] = [];
+        for (
+          let textNode = child;
+          i < children_lexical.length && $isTextNode(textNode);
+          textNode = children_lexical[++i] as TextNode
+        ) {
+          textNodes.push(textNode.getLatest() as TextNode);
+        }
+        i--;
+        children_liveblocks.push(createStorageNodeFromLexicalNode(textNodes));
+      } else {
+        children_liveblocks.push(
+          createStorageNodeFromLexicalNode(child.getLatest())
+        );
+      }
+    }
+
+    const props = $getLexicalNodeProps(node);
+
+    return new LiveObject({
+      kind: "element",
+      type: node.getType(),
+      version: 1,
+      children: new LiveList(children_liveblocks),
+      ...(props !== undefined ? { props } : {}),
+    }) as LiveElementNode;
+  }
+
+  throw new Error(
+    `Unsupported lexical node type "${node.getType()}" for storage materialization.`
+  );
+}
+
+/**
  * Builds a Lexical element from a storage element node, recursing into its LiveList children
  * (bootstrap: Live → Lexical). Used when loading the document on first connect.
  *
@@ -1247,4 +1543,50 @@ function $convertLiveTextNodeToLexicalNode(node: LiveTextNode): TextNode[] {
     }
     return nodes;
   }
+}
+
+const OMIT_FROM_LEXICAL_NODE_PROPS = new Set([
+  "type",
+  "version",
+  "children",
+  "direction",
+  "format",
+  "indent",
+  "textFormat",
+  "textStyle",
+]);
+
+/**
+ * Read Lexical element state that maps to storage `props`, using each node's
+ * `exportJSON()` contract rather than enumerating internal instance fields.
+ */
+export function $getLexicalNodeProps(
+  node: LexicalNode
+): JsonObject | undefined {
+  const latest = node.getLatest();
+  if (!$isElementNode(latest)) {
+    return undefined;
+  }
+
+  const json = latest.exportJSON() as Record<string, unknown>;
+  const props: Record<string, unknown> = {};
+
+  for (const [key, value] of Object.entries(json)) {
+    if (OMIT_FROM_LEXICAL_NODE_PROPS.has(key)) {
+      continue;
+    }
+    if (key === NODE_STATE_KEY) {
+      if (value !== undefined && value !== null && typeof value === "object") {
+        for (const [stateKey, stateValue] of Object.entries(
+          value as Record<string, unknown>
+        )) {
+          props[stateKey] = stateValue;
+        }
+      }
+      continue;
+    }
+    props[key] = value;
+  }
+
+  return Object.keys(props).length > 0 ? (props as JsonObject) : undefined;
 }
