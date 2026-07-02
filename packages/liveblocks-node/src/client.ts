@@ -1360,7 +1360,7 @@ export class Liveblocks {
     options?: RequestOptions
   ): Promise<{ data: RoomUser<U>[] }> {
     const res = await this.#get(
-      url`/v2/rooms/${roomId}/active_users`,
+      url`/v2/rooms/${roomId}/active-users`,
       undefined,
       options
     );
@@ -1384,7 +1384,7 @@ export class Liveblocks {
     options?: RequestOptions
   ): Promise<void> {
     const res = await this.#post(
-      url`/v2/rooms/${roomId}/broadcast_event`,
+      url`/v2/rooms/${roomId}/broadcast-event`,
       message,
       options
     );

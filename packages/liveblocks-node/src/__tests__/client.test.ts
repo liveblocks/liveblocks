@@ -113,7 +113,7 @@ describe("client", () => {
     http.get(`${DEFAULT_BASE_URL}/v2/rooms/:roomId`, () => {
       return HttpResponse.json(room, { status: 200 });
     }),
-    http.get(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/active_users`, () => {
+    http.get(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/active-users`, () => {
       return HttpResponse.json({
         data: activeUsers,
       });
