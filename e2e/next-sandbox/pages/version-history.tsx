@@ -1,5 +1,5 @@
 import type { LsonObject } from "@liveblocks/client";
-import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
+import { LiveList, LiveObject } from "@liveblocks/client";
 import { kInternal } from "@liveblocks/core";
 import { createRoomContext } from "@liveblocks/react";
 import { LiveblocksYjsProvider } from "@liveblocks/yjs";
@@ -30,6 +30,7 @@ const {
   useHistoryVersionYjsData,
   useHistoryVersions,
   useMutation,
+  useRestoreToStorageVersion,
   useRoom,
   useSelf,
   useStorage,
@@ -144,28 +145,6 @@ function Sandbox() {
   const createSnapshot = () => {
     void room[kInternal].createVersionHistorySnapshot();
   };
-
-  // Restore Storage: overwrite the live root with a historic version's contents.
-  // (A simple clear-and-clone; a real SDK API would diff and emit minimal ops.)
-  const restoreStorage = useMutation(
-    ({ storage }, historic: LiveObject<LsonObject>) => {
-      for (const key of [...storage.keys()]) {
-        storage.delete(key);
-      }
-      for (const key of historic.keys()) {
-        const value = historic.get(key);
-        storage.set(
-          key,
-          value instanceof LiveObject ||
-            value instanceof LiveList ||
-            value instanceof LiveMap
-            ? value.clone()
-            : value
-        );
-      }
-    },
-    []
-  );
 
   // Restore Yjs: replace the live text with the historic version's text.
   const restoreYjs = (text: string) => {
@@ -327,8 +306,8 @@ function Sandbox() {
             <VersionView
               key={selectedVersionId}
               versionId={selectedVersionId}
-              onRestoreStorage={restoreStorage}
               onRestoreYjs={restoreYjs}
+              onError={showToast}
             />
           ) : (
             <div>Select a version to see its document.</div>
@@ -341,16 +320,17 @@ function Sandbox() {
 
 function VersionView({
   versionId,
-  onRestoreStorage,
   onRestoreYjs,
+  onError,
 }: {
   versionId: string;
-  onRestoreStorage: (historic: LiveObject<LsonObject>) => void;
   onRestoreYjs: (text: string) => void;
+  onError: (message: string) => void;
 }) {
   const storage = useHistoryVersionStorageData(versionId);
   const yjs = useHistoryVersionYjsData(versionId);
   const yjsText = useMemo(() => yjsUpdateToText(yjs.data), [yjs.data]);
+  const restoreStorage = useRestoreToStorageVersion(versionId);
 
   return (
     <>
@@ -368,12 +348,11 @@ function VersionView({
       </pre>
       <Button
         id="restore-storage"
-        enabled={storage.data !== undefined}
-        onClick={() => {
-          if (storage.data !== undefined) {
-            onRestoreStorage(storage.data);
-          }
-        }}
+        onClick={() =>
+          void restoreStorage().catch((err: unknown) =>
+            onError(err instanceof Error ? err.message : String(err))
+          )
+        }
       >
         Restore Storage
       </Button>
