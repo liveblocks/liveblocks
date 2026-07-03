@@ -1,13 +1,13 @@
 import { Liveblocks } from "@liveblocks/node";
 import { NextRequest, NextResponse } from "next/server";
-import { getRandomUser } from "@/app/database";
+import { getRandomUser, getUser } from "@/app/database";
 
 /**
  * Authenticating your Liveblocks application
  * https://liveblocks.io/docs/authentication
  */
 
-export async function POST(_request: NextRequest) {
+export async function POST(request: NextRequest) {
   if (!process.env.LIVEBLOCKS_SECRET_KEY) {
     return new NextResponse("Missing LIVEBLOCKS_SECRET_KEY", { status: 403 });
   }
@@ -16,9 +16,15 @@ export async function POST(_request: NextRequest) {
     secret: process.env.LIVEBLOCKS_SECRET_KEY,
   });
 
-  // Pick a random example user so each connection has a name and avatar that
-  // resolve through `resolveUsers` (used by AvatarStack and presence UI).
-  const user = getRandomUser();
+  const { userId } = (await request.json().catch(() => ({}))) as {
+    userId?: string;
+  };
+
+  const user = userId ? getUser(userId) : getRandomUser();
+
+  if (!user) {
+    return new NextResponse("User not found", { status: 403 });
+  }
 
   const session = liveblocks.prepareSession(`${user.id}`, {
     userInfo: user.info,
