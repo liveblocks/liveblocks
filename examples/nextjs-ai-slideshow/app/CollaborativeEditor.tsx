@@ -31,6 +31,34 @@ const editorTheme = EditorView.theme({
     borderRight: "1px solid rgba(15, 23, 42, 0.06)",
     color: "#94a3b8",
   },
+  // y-codemirror.next's default remote caret is an inline span with 1px left
+  // and right borders offset by -1px margins, containing U+2060 word-joiner
+  // characters. That box participates in text layout: the borders/margins
+  // are prone to rounding, and in fonts where U+2060 isn't zero-width the
+  // span gains real width — both shift the characters after the caret to the
+  // right. Force the span to occupy zero width no matter the font metrics,
+  // and paint the caret bar with an absolutely-positioned pseudo-element
+  // instead (the widget sets the user's color as inline `background-color`,
+  // which the pseudo-element inherits).
+  ".cm-ySelectionCaret": {
+    display: "inline-block",
+    width: "0",
+    border: "none",
+    margin: "0",
+    padding: "0",
+    verticalAlign: "text-bottom",
+  },
+  // Hovering the bar still reveals the name label: pseudo-elements hit-test
+  // as part of their originating element.
+  ".cm-ySelectionCaret::after": {
+    content: '""',
+    position: "absolute",
+    top: "0",
+    bottom: "0",
+    left: "-1px",
+    width: "2px",
+    backgroundColor: "inherit",
+  },
 });
 
 export function CollaborativeEditor() {
