@@ -2,11 +2,13 @@ import type { LsonObject } from "@liveblocks/client";
 import { LiveList, LiveObject } from "@liveblocks/client";
 import { kInternal } from "@liveblocks/core";
 import { createRoomContext } from "@liveblocks/react";
-import { useState } from "react";
+import { LiveblocksYjsProvider } from "@liveblocks/yjs";
+import { useEffect, useMemo, useState } from "react";
+import * as Y from "yjs";
 
-import { getRoomFromUrl, getUserFromUrl, randomInt } from "../../utils";
-import Button from "../../utils/Button";
-import { createLiveblocksClient } from "../../utils/createClient";
+import { getRoomFromUrl, getUserFromUrl, randomInt } from "../utils";
+import Button from "../utils/Button";
+import { createLiveblocksClient } from "../utils/createClient";
 
 const client = createLiveblocksClient({
   // Attribute edits to the ?user= in the URL, so version authors differ per tab.
@@ -25,6 +27,7 @@ const {
   RoomProvider,
   useDeleteHistoryVersion,
   useHistoryVersionStorageData,
+  useHistoryVersionYjsData,
   useHistoryVersions,
   useMutation,
   useRoom,
@@ -37,6 +40,16 @@ const {
 // interesting version-to-version diffs.
 const KEYS = ["a", "b", "c", "d", "e"];
 const randomKey = () => KEYS[randomInt(KEYS.length)];
+
+// Decodes a Yjs version's update bytes into the plain text of its "text" field.
+function yjsUpdateToText(update: Uint8Array | undefined): string {
+  if (update === undefined) {
+    return "";
+  }
+  const doc = new Y.Doc();
+  Y.applyUpdate(doc, update);
+  return doc.getText("text").toString();
+}
 
 export default function Home() {
   const roomId = getRoomFromUrl();
@@ -56,6 +69,29 @@ function Sandbox() {
   const [selectedVersionId, setSelectedVersionId] = useState<string | null>(
     null
   );
+  const [toast, setToast] = useState<string | null>(null);
+
+  const showToast = (message: string) => {
+    setToast(message);
+    setTimeout(() => setToast(null), 4000);
+  };
+
+  // A Yjs document living on the same room, so a version snapshot captures both
+  // the Storage and the Yjs surfaces (the cross-facet part of the feature).
+  const ydoc = useMemo(() => new Y.Doc(), []);
+  const [yjsText, setYjsText] = useState("");
+  const [yjsInput, setYjsInput] = useState("");
+
+  useEffect(() => {
+    const provider = new LiveblocksYjsProvider(room, ydoc);
+    const handler = () => setYjsText(ydoc.getText("text").toString());
+    ydoc.on("update", handler);
+    handler();
+    return () => {
+      ydoc.off("update", handler);
+      provider.destroy();
+    };
+  }, [room, ydoc]);
 
   const setNumber = useMutation(({ storage }) => {
     storage.set(randomKey(), randomInt(100));
@@ -84,11 +120,26 @@ function Sandbox() {
     storage.delete(key);
   }, []);
 
-  const clear = useMutation(({ storage }) => {
+  const clearStorage = useMutation(({ storage }) => {
     for (const key of [...storage.keys()]) {
       storage.delete(key);
     }
   }, []);
+
+  const setYjs = () => {
+    const text = ydoc.getText("text");
+    text.delete(0, text.length);
+    text.insert(0, yjsInput);
+  };
+
+  // Clears both surfaces, so the next snapshot captures an empty document.
+  const clearAll = () => {
+    clearStorage();
+
+    // Clear Yjs
+    const text = ydoc.getText("text");
+    text.delete(0, text.length);
+  };
 
   const createSnapshot = () => {
     void room[kInternal].createVersionHistorySnapshot();
@@ -104,14 +155,35 @@ function Sandbox() {
 
   return (
     <div>
+      {toast ? (
+        <div
+          id="toast"
+          onClick={() => setToast(null)}
+          style={{
+            position: "fixed",
+            bottom: 16,
+            right: 16,
+            background: "#b00020",
+            color: "white",
+            padding: "10px 14px",
+            borderRadius: 6,
+            maxWidth: 360,
+            cursor: "pointer",
+            zIndex: 1000,
+          }}
+        >
+          {toast}
+        </div>
+      ) : null}
       <h3>
-        <a href="/">Home</a> › Version history › Storage
+        <a href="/">Home</a> › Version history
       </h3>
 
       <p>
-        You are <strong id="me">{me.id ?? "(anonymous)"}</strong>. Open this page
-        in several tabs with different <code>?user=</code> values, edit from
-        each, then snapshot to see multiple authors on a version.
+        You are <strong id="me">{me.id ?? "(anonymous)"}</strong>. Open this
+        page in several tabs with different <code>?user=</code> values, edit
+        from each, then snapshot to see multiple authors on a version. A
+        snapshot captures both the Storage and Yjs surfaces.
       </p>
 
       <div style={{ display: "flex", flexWrap: "wrap", margin: "8px 0" }}>
@@ -139,7 +211,11 @@ function Sandbox() {
         >
           Delete key
         </Button>
-        <Button id="clear" enabled={keys.length > 0} onClick={() => clear()}>
+        <Button
+          id="clear"
+          enabled={keys.length > 0 || yjsText.length > 0}
+          onClick={clearAll}
+        >
           Clear
         </Button>
         <Button id="create-version" onClick={createSnapshot}>
@@ -147,11 +223,29 @@ function Sandbox() {
         </Button>
       </div>
 
+      <div style={{ display: "flex", gap: 8, margin: "8px 0" }}>
+        <input
+          id="yjs-input"
+          value={yjsInput}
+          onChange={(e) => setYjsInput(e.target.value)}
+          placeholder="Yjs document text"
+          style={{ padding: 4 }}
+        />
+        <Button id="set-yjs" onClick={setYjs}>
+          Set Yjs text
+        </Button>
+      </div>
+
       <div style={{ display: "flex", gap: 24, alignItems: "flex-start" }}>
         <section style={{ flex: 1 }}>
           <h4>Live document</h4>
+          <h5>Storage</h5>
           <pre id="live-doc" style={preStyle}>
             {JSON.stringify(doc, null, 2)}
+          </pre>
+          <h5>Yjs</h5>
+          <pre id="live-yjs" style={preStyle}>
+            {yjsText || "(empty)"}
           </pre>
         </section>
 
@@ -170,10 +264,10 @@ function Sandbox() {
                     fontWeight: v.id === selectedVersionId ? "bold" : "normal",
                   }}
                 >
-                  {v.createdAt.toLocaleTimeString()}
+                  <code>{v.id}</code>
                 </button>{" "}
                 <small>
-                  authors:{" "}
+                  {v.createdAt.toLocaleTimeString()} · authors:{" "}
                   <span className="authors">
                     {v.authors.map((a) => a.id).join(", ") || "(none)"}
                   </span>
@@ -181,7 +275,11 @@ function Sandbox() {
                 <button
                   id={`delete-version-${v.id}`}
                   onClick={() => {
-                    void deleteHistoryVersion(v.id);
+                    deleteHistoryVersion(v.id).catch((err: unknown) =>
+                      showToast(
+                        err instanceof Error ? err.message : String(err)
+                      )
+                    );
                     if (v.id === selectedVersionId) {
                       setSelectedVersionId(null);
                     }
@@ -197,7 +295,7 @@ function Sandbox() {
         <section style={{ flex: 1 }}>
           <h4>Selected version</h4>
           {selectedVersionId ? (
-            <VersionStorage
+            <VersionView
               key={selectedVersionId}
               versionId={selectedVersionId}
             />
@@ -210,24 +308,34 @@ function Sandbox() {
   );
 }
 
-function VersionStorage({ versionId }: { versionId: string }) {
-  const { data, isLoading, error } = useHistoryVersionStorageData(versionId);
-  if (isLoading) {
-    return <div>Loading version…</div>;
-  }
-  if (error) {
-    return <div style={{ color: "red" }}>{error.message}</div>;
-  }
-  if (!data) {
-    return <div>(empty document)</div>;
-  }
-  // `data` is a read-only LiveObject reconstructed from the snapshot. toJSON()
-  // returns the complete historic document as plain JSON -- the same shape the
-  // live document renders on the left.
+function VersionView({ versionId }: { versionId: string }) {
+  const storage = useHistoryVersionStorageData(versionId);
+  const yjs = useHistoryVersionYjsData(versionId);
+  const yjsText = useMemo(() => yjsUpdateToText(yjs.data), [yjs.data]);
+
   return (
-    <pre id="version-doc" style={preStyle}>
-      {JSON.stringify(data.toJSON(), null, 2)}
-    </pre>
+    <>
+      <h5>Storage</h5>
+      <pre id="version-doc" style={preStyle}>
+        {storage.isLoading
+          ? "Loading…"
+          : storage.error
+            ? storage.error.message
+            : // `data` is a read-only LiveObject; toJSON() gives the full
+              // historic document, same shape as the live document on the left.
+              storage.data
+              ? JSON.stringify(storage.data.toJSON(), null, 2)
+              : "(empty document)"}
+      </pre>
+      <h5>Yjs</h5>
+      <pre id="version-yjs" style={preStyle}>
+        {yjs.isLoading
+          ? "Loading…"
+          : yjs.error
+            ? yjs.error.message
+            : yjsText || "(empty)"}
+      </pre>
+    </>
   );
 }
 

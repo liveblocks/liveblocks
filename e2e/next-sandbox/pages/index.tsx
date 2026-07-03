@@ -44,14 +44,9 @@ export default function Home() {
         </li>
 
         <li>
-          <div>Version history</div>
-          <ul>
-            <li>
-              <Link href="/version-history/storage?room=e2e-version-history-storage&user=1">
-                Storage
-              </Link>
-            </li>
-          </ul>
+          <Link href="/version-history?room=e2e-version-history&user=1">
+            Version history
+          </Link>
         </li>
 
         <li>
