@@ -105,7 +105,7 @@ function SlideshowApp({ roomId }: { roomId: string }) {
       const dataUrl = await toPng(element, {
         width: SLIDE_WIDTH,
         height: SLIDE_HEIGHT,
-        pixelRatio: 2,
+        pixelRatio: 10,
         cacheBust: true,
         style: {
           width: `${SLIDE_WIDTH}px`,
@@ -164,8 +164,17 @@ function SlideshowApp({ roomId }: { roomId: string }) {
                 Comment
               </Button>
             ) : null}
-            <Button variant="outline" size="sm" onClick={exportPptx} disabled={exporting}>
-              {exporting ? <Loader2Icon className="size-4 animate-spin" /> : <DownloadIcon className="size-4" />}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={exportPptx}
+              disabled={exporting}
+            >
+              {exporting ? (
+                <Loader2Icon className="size-4 animate-spin" />
+              ) : (
+                <DownloadIcon className="size-4" />
+              )}
               Download .pptx
             </Button>
             <AvatarStack size={28} />
@@ -173,7 +182,10 @@ function SlideshowApp({ roomId }: { roomId: string }) {
         </header>
 
         <div className="relative min-h-0 flex-1">
-          <div className="absolute inset-0" style={{ display: panel === "slide" ? "block" : "none" }}>
+          <div
+            className="absolute inset-0"
+            style={{ display: panel === "slide" ? "block" : "none" }}
+          >
             <SlidePreview
               iframeRef={iframeRef}
               placingComment={placingComment}
@@ -183,7 +195,10 @@ function SlideshowApp({ roomId }: { roomId: string }) {
               onResolveProposal={resolvePreviewedProposal}
             />
           </div>
-          <div className="absolute inset-0" style={{ display: panel === "code" ? "block" : "none" }}>
+          <div
+            className="absolute inset-0"
+            style={{ display: panel === "code" ? "block" : "none" }}
+          >
             <CollaborativeEditor />
           </div>
         </div>
