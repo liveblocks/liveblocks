@@ -20,7 +20,17 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 27 (2026-07-03)
 
+## Examples
+
+- Update [Linear-like Issue Tracker](https://liveblocks.io/examples/linear-like-issue-tracker/nextjs-linear-like-issue-tracker)_to use latest Next.js caching features.
+
+## Website
+
+- New blog post: [What's new in Liveblocks: June 2026](https://liveblocks.io/blog/whats-new-in-liveblocks-june-2026).
+
 ## Contributors
+
+ctnicholas
 
 # Week 26 (2026-06-26)
 
