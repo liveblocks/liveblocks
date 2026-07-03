@@ -14,6 +14,7 @@ import {
   isLiveList,
   isLiveNode,
   isSameNodeOrChildOf,
+  liveObjectFromNodeStream,
   mergeStorageUpdates,
 } from "./crdts/liveblocks-helpers";
 import { LiveObject } from "./crdts/LiveObject";
@@ -122,6 +123,7 @@ import { ServerMsgCode } from "./protocol/ServerMsg";
 import type {
   NodeMap,
   NodeStream,
+  SerializedCrdt,
   SerializedRootObject,
 } from "./protocol/StorageNode";
 import { compactNodesToNodeStream } from "./protocol/StorageNode";
@@ -1266,8 +1268,15 @@ export type PrivateRoomApi = {
     requestedAt: Date;
   }>;
 
-  getYjsHistoryVersion(versionId: string): Promise<Response>;
+  fetchStorageHistoryVersion(versionId: string): Promise<Response>;
+  fetchYjsHistoryVersion(versionId: string): Promise<Response>;
+  // Reconstructs a detached, read-only LiveObject tree from a storage version's
+  // node stream (typed as LsonObject -- a historic snapshot may not match the
+  // room's current Storage schema).
+  liveObjectFromNodeStream(nodes: NodeStream): LiveObject<LsonObject>;
+  reconcileStorageWithNodes(nodes: NodeStream): void;
   createVersionHistorySnapshot(): Promise<void>;
+  deleteHistoryVersion(versionId: string): Promise<void>;
 
   executeContextualPrompt(options: {
     prompt: string;
@@ -1648,7 +1657,7 @@ export function createRoom<
     yjsProviderDidChange: makeEventSource(),
 
     // Storage
-    pool: createManagedPool(roomId, {
+    pool: createManagedPool({
       getCurrentConnectionId,
       onDispatch,
       isStorageWritable,
@@ -1873,12 +1882,20 @@ export function createRoom<
     });
   }
 
-  async function getYjsHistoryVersion(versionId: string) {
-    return httpClient.getYjsHistoryVersion({ roomId, versionId });
+  async function fetchStorageHistoryVersion(versionId: string) {
+    return httpClient.fetchStorageHistoryVersion({ roomId, versionId });
+  }
+
+  async function fetchYjsHistoryVersion(versionId: string) {
+    return httpClient.fetchYjsHistoryVersion({ roomId, versionId });
   }
 
   async function createVersionHistorySnapshot() {
     return httpClient.createVersionHistorySnapshot({ roomId });
+  }
+
+  async function deleteHistoryVersion(versionId: string) {
+    return httpClient.deleteHistoryVersion({ roomId, versionId });
   }
 
   async function executeContextualPrompt(options: {
@@ -1943,19 +1960,24 @@ export function createRoom<
     me !== null ? userToTreeNode("Me", me) : null
   );
 
+  // Serializes the current live Storage into a NodeMap and diffs it against
+  // `target`, returning the ops that make the live tree match `target`. Shared
+  // by storage load (applied remotely) and restore (applied locally).
+  function diffCurrentStorageAgainst(target: NodeMap): Op[] {
+    const current: NodeMap = new Map();
+    for (const [id, crdt] of context.pool.nodes) {
+      current.set(id, crdt._serialize());
+    }
+    return diffNodeMap(current, target);
+  }
+
   function createOrUpdateRootFromMessage(nodes: NodeMap) {
     if (nodes.size === 0) {
       throw new Error("Internal error: cannot load storage without items");
     }
 
     if (context.root !== undefined) {
-      const currentItems: NodeMap = new Map();
-      for (const [id, crdt] of context.pool.nodes) {
-        currentItems.set(id, crdt._serialize());
-      }
-
-      const ops = diffNodeMap(currentItems, nodes);
-      const result = applyRemoteOps(ops);
+      const result = applyRemoteOps(diffCurrentStorageAgainst(nodes));
       notify(result.updates);
     } else {
       context.root = LiveObject._fromItems<S>(
@@ -1982,6 +2004,43 @@ export function createRoom<
         }
       }
     });
+  }
+
+  /**
+   * Reconciles the live Storage so it matches the given target nodes (e.g. a
+   * historic version snapshot): diffs them against the current state and applies
+   * the minimal set of ops.
+   *
+   * Unlike loading storage (`createOrUpdateRootFromMessage`, which applies
+   * *remotely* -- silent server state), this is a deliberate local action, so
+   * the diff is committed as a single undoable batch that is broadcast to other
+   * clients and sent to the server. Mirrors the commit sequence of undo()/redo().
+   */
+  function reconcileStorageWithNodes(nodes: NodeStream): void {
+    if (context.root === undefined) {
+      throw new Error("Cannot reconcile storage before it is loaded");
+    }
+
+    const ops = diffCurrentStorageAgainst(
+      new Map<string, SerializedCrdt>(nodes)
+    );
+    if (ops.length === 0) {
+      return; // Already identical -- nothing to do.
+    }
+
+    // A restore is a fresh local edit: its reverse goes on the undo stack and
+    // the redo stack is cleared.
+    const result = applyLocalOps(ops);
+    if (result.reverse.length > 0) {
+      addToUndoStack(result.reverse);
+    }
+    context.redoStack.length = 0;
+    for (const op of result.opsToEmit) {
+      context.buffer.storageOperations.push(op);
+    }
+    notify(result.updates);
+    onHistoryChange();
+    flushNowOrSoon();
   }
 
   function _addToRealUndoStack(frames: Stackframe<P>[]) {
@@ -3819,9 +3878,16 @@ export function createRoom<
         // List versions of the document since the specified date
         listHistoryVersionsSince,
         // get a specific version
-        getYjsHistoryVersion,
+        fetchStorageHistoryVersion,
+        fetchYjsHistoryVersion,
+        // reconstruct a storage version's nodes into a read-only LiveObject tree
+        liveObjectFromNodeStream,
+        // restore live storage to match a version's nodes
+        reconcileStorageWithNodes,
         // create a version
         createVersionHistorySnapshot,
+        // delete a version
+        deleteHistoryVersion,
         // execute a contextual prompt
         executeContextualPrompt,
 
