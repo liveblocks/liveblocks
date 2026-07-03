@@ -7,14 +7,19 @@
 This release adds version history support for Storage: a version now snapshots
 both the room's Storage and Yjs documents (previously Yjs only).
 
-- Creating a version now also snapshots Storage, not just Yjs.
-- `useHistoryVersions()` lists the room's versions (each has a `vh_xxx` id).
+- Creating a version now also snapshots Storage, not just Yjs, see
+  [docs](https://liveblocks.io/docs/api-reference/rest-api-endpoints#create-version-history-snapshot).
+- `useHistoryVersions()` lists the room's versions. Each has a `vh_xxx` id, see
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-react#useHistoryVersions).
 - `useHistoryVersionStorageData("vh_xxx")` returns that version's Storage as a
-  read-only `LiveObject` so you can visualize or diff it manually.
+  read-only `LiveObject` so you can visualize or diff it manually, see
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-react#useHistoryVersionStorageData).
 - `useRestoreToStorageVersion("vh_xxx")` restores the room's Storage to that
-  version, as a single undoable change.
+  version, as a single undoable change, see
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-react#useRestoreToStorageVersion).
 - `useDeleteHistoryVersion()` returns `deleteHistoryVersion("vh_xxx")` to
-  permanently delete a version.
+  permanently delete a version, see
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-react#useDeleteHistoryVersion).
 
 ## v3.21.0
 
