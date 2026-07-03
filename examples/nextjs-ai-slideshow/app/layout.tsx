@@ -2,7 +2,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { ReactNode, Suspense } from "react";
-import { Providers } from "./Providers";
+import { Providers } from "./providers";
 
 export const metadata: Metadata = {
   title: "AI Slideshow - Liveblocks",

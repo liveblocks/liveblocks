@@ -89,7 +89,7 @@ import {
 } from "@/components/ai-elements/prompt-input";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Shimmer } from "@/components/ai-elements/shimmer";
-import { HelpButton } from "@/components/HelpButton";
+import { HelpButton } from "@/components/help-button";
 import { resolveProposal, type SlideProposal } from "./proposal-actions";
 import { useSlideHtml } from "./use-slide-html";
 

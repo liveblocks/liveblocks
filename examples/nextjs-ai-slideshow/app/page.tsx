@@ -7,11 +7,11 @@ import { useCallback, useRef, useState } from "react";
 import { Loader } from "@/components/ai-elements/loader";
 import { Button } from "@/components/ui/button";
 import { useExampleRoomId } from "@/hooks/use-example-room-id";
-import { Chat } from "./Chat";
-import { CollaborativeEditor } from "./CollaborativeEditor";
+import { Chat } from "./chat";
+import { CollaborativeEditor } from "./collaborative-editor";
 import { resolveProposal, type SlideProposal } from "./proposal-actions";
 import { SLIDE_HEIGHT, SLIDE_WIDTH } from "./slide-html";
-import { SlidePreview } from "./SlidePreview";
+import { SlidePreview } from "./slide-preview";
 
 type Panel = "slide" | "code";
 

@@ -7,7 +7,7 @@
   </a>
 </p>
 
-# AI Slideshow
+# AI Slideshow Generator
 
 <p>
   <a href="https://liveblocks.io/examples/ai-slideshow/nextjs-ai-slideshow">
@@ -24,21 +24,10 @@ This example shows how to build a multiplayer AI slideshow builder with
 [Liveblocks Feeds](https://liveblocks.io/docs/collaboration-features/ai-collaboration),
 [Yjs](https://yjs.dev/), [CodeMirror](https://codemirror.net/),
 [Liveblocks Comments](https://liveblocks.io/docs/products/comments), and
-[Next.js](https://nextjs.org/).
-
-The flow is:
-
-1. Chat with an AI slide designer in a shared Liveblocks feed.
-2. The AI proposes a complete, self-contained HTML document for one 1280x720 slide.
-3. Proposals open automatically in the Slide tab so you can preview them before
-   accepting or rejecting — resolving a proposal is shared with the whole room.
-4. Applying the proposal writes a minimal diff into a shared Yjs `Text` document.
-5. Everyone can edit the HTML in CodeMirror, preview the slide, and place comment pins.
-6. The current slide can be exported to a `.pptx` file.
-
-When `AI_GATEWAY_API_KEY` is missing, the app uses a built-in mock assistant that
-still streams a reply and creates slide proposals so the full proposal flow can be
-tried locally.
+[Next.js](https://nextjs.org/). Chat with AI to generate slides with HTML, and
+it’ll create previews of new slides that you can apply. Alternatively,edit the
+HTML directly in the collaborative editor. You can also leave comments on
+slides.
 
 ## Getting started
 
@@ -66,10 +55,8 @@ Alternatively, you can set up your project manually:
   [dashboard](https://liveblocks.io/dashboard/apikeys)
 - Create an `.env.local` file and add your **secret** key as the
   `LIVEBLOCKS_SECRET_KEY` environment variable
-- _(Optional)_ Add an `AI_GATEWAY_API_KEY` from the
-  [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) to get real model
-  responses. Without it, the example uses a built-in mock slide designer so it
-  still runs end to end.
+- Add an `AI_GATEWAY_API_KEY` from the
+  [Vercel AI Gateway](https://vercel.com/docs/ai-gateway).
 - Run `npm run dev` and go to [http://localhost:3000](http://localhost:3000)
 
 To see realtime sync, open the page in two browser tabs. Edits to the HTML,
@@ -104,7 +91,7 @@ you to deploy to Vercel.
 After forking
 [this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-ai-slideshow)
 on CodeSandbox, create the `LIVEBLOCKS_SECRET_KEY` environment variable as a
-[secret](https://codesandbox.io/docs/secrets). Add `AI_GATEWAY_API_KEY` only if
-you want real model responses instead of the mock slide designer.
+[secret](https://codesandbox.io/docs/secrets). Add `AI_GATEWAY_API_KEY` if you
+want real model responses instead of the mock slide designer.
 
 </details>
