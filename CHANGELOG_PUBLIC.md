@@ -56,6 +56,11 @@ list and feel free to give them credit at the end of a line, e.g.:
 - Prevent `Composer` from collapsing after focusing and blurring unless it was
   explicitly meant to support a collapsed state.
 
+## Documentation
+
+- New guide: [How to add private commenting to your app](https://liveblocks.io/docs/guides/how-to-add-private-commenting-to-your-app).
+- New guide: [How to use public and private threads](https://liveblocks.io/docs/guides/how-to-use-public-and-private-threads).
+
 ## Examples
 
 - Update [Linear-like Issue Tracker](https://liveblocks.io/examples/linear-like-issue-tracker/nextjs-linear-like-issue-tracker)_to use latest Next.js caching features.
