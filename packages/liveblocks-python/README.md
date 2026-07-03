@@ -578,9 +578,11 @@ print(result)
 
 ---
 
+### Version_history
+
 #### `get_version_history`
 
-This endpoint returns a list of version history snapshots for the room's Yjs document. The versions are returned sorted by creation date, from newest to oldest.
+This endpoint returns a list of version history snapshots for the room. The versions are returned sorted by creation date, from newest to oldest.
 
 **Example**
 ```python
@@ -604,7 +606,7 @@ print(result)
 
 #### `create_version_history_snapshot`
 
-This endpoint creates a new version history snapshot for the room. Currently only works for Yjs.
+This endpoint creates a new version history snapshot of the room, capturing both its Storage and Yjs documents.
 
 **Example**
 ```python
@@ -633,6 +635,27 @@ result = client.get_yjs_version(
     version_id="vh_abc123",
 )
 print(result)
+```
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `room_id` | `str` | Yes | ID of the room |
+| `version_id` | `str` | Yes | ID of the version |
+
+
+---
+
+#### `delete_version`
+
+This endpoint permanently deletes a version from the room's history.
+
+**Example**
+```python
+client.delete_version(
+    room_id="my-room-id",
+    version_id="vh_abc123",
+)
 ```
 **Parameters:**
 
