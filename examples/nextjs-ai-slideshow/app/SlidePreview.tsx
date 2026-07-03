@@ -24,6 +24,8 @@ type Coords = { x: number; y: number };
 
 type Size = { width: number; height: number };
 
+const PREVIEW_INSET = 12;
+
 function clampPercentage(value: number) {
   return Math.min(100, Math.max(0, value));
 }
@@ -92,7 +94,11 @@ export function SlidePreview({
   const { ref: wrapperRef, size: wrapperSize } = useElementSize();
   const [placedCoords, setPlacedCoords] = useState<Coords | null>(null);
 
-  const scale = Math.min(wrapperSize.width / SLIDE_WIDTH, wrapperSize.height / SLIDE_HEIGHT);
+  // Leave room around the slide so the shadow and proposal ring are visible
+  // even when the slide would otherwise fit exactly edge-to-edge.
+  const availableWidth = Math.max(1, wrapperSize.width - PREVIEW_INSET * 2);
+  const availableHeight = Math.max(1, wrapperSize.height - PREVIEW_INSET * 2);
+  const scale = Math.min(availableWidth / SLIDE_WIDTH, availableHeight / SLIDE_HEIGHT);
   const safeScale = Number.isFinite(scale) && scale > 0 ? scale : 1;
 
   const sensors = useSensors(
