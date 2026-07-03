@@ -65,13 +65,14 @@ export async function POST(request: NextRequest) {
     secret: process.env.LIVEBLOCKS_SECRET_KEY,
   });
 
-  const { roomId, feedId, messages, model, currentSlideHtml } = (await request.json()) as {
-    roomId: string;
-    feedId: string;
-    messages: ChatMessage[];
-    model?: string;
-    currentSlideHtml?: string;
-  };
+  const { roomId, feedId, messages, model, currentSlideHtml } =
+    (await request.json()) as {
+      roomId: string;
+      feedId: string;
+      messages: ChatMessage[];
+      model?: string;
+      currentSlideHtml?: string;
+    };
 
   // Only allow writing into this example's rooms.
   if (!roomId?.startsWith(ROOM_ID_PREFIX) || !feedId) {
@@ -80,7 +81,11 @@ export async function POST(request: NextRequest) {
 
   // Make sure the feed exists (idempotent safety net).
   try {
-    await liveblocks.createFeed({ roomId, feedId, metadata: { title: "AI slideshow" } });
+    await liveblocks.createFeed({
+      roomId,
+      feedId,
+      metadata: { title: "AI slideshow" },
+    });
   } catch {
     // Feed already exists, ignore.
   }
@@ -105,14 +110,20 @@ export async function POST(request: NextRequest) {
 
   try {
     if (process.env.AI_GATEWAY_API_KEY) {
-      await streamRealReply(messages, currentSlideHtml ?? STARTER_SLIDE_HTML, model, update);
+      await streamRealReply(
+        messages,
+        currentSlideHtml ?? STARTER_SLIDE_HTML,
+        model,
+        update
+      );
     } else {
       await streamMockReply(messages, update);
     }
   } catch (error) {
     const reason = error instanceof Error ? error.message : "Unknown error";
     await update({
-      content: created.data.content || `Sorry, something went wrong.\n\n\`${reason}\``,
+      content:
+        created.data.content || `Sorry, something went wrong.\n\n\`${reason}\``,
       streaming: false,
     }).catch(() => {});
   }
@@ -197,7 +208,8 @@ async function streamRealReply(
 
 async function streamMockReply(messages: ChatMessage[], update: UpdateFn) {
   const lastUserMessage =
-    [...messages].reverse().find((message) => message.role === "user")?.content ?? "your request";
+    [...messages].reverse().find((message) => message.role === "user")
+      ?.content ?? "your request";
 
   const slide = MOCK_SLIDES[Math.floor(Date.now() / 1000) % MOCK_SLIDES.length];
   const contentText = [

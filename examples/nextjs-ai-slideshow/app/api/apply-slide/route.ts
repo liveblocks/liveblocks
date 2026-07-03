@@ -46,20 +46,30 @@ export async function POST(request: NextRequest) {
   const roomId = typeof body.roomId === "string" ? body.roomId : "";
   const feedId = typeof body.feedId === "string" ? body.feedId : "";
   const messageId = typeof body.messageId === "string" ? body.messageId : "";
-  const action = body.action === "apply" || body.action === "reject" ? body.action : undefined;
+  const action =
+    body.action === "apply" || body.action === "reject"
+      ? body.action
+      : undefined;
   const html = typeof body.html === "string" ? body.html : undefined;
 
   if (!roomId.startsWith(ROOM_ID_PREFIX) || !feedId || !messageId || !action) {
-    return new NextResponse("Invalid room, feed, message, or action", { status: 400 });
+    return new NextResponse("Invalid room, feed, message, or action", {
+      status: 400,
+    });
   }
 
   if (action === "apply" && !html) {
     return new NextResponse("Missing slide HTML", { status: 400 });
   }
 
-  const liveblocks = new Liveblocks({ secret: process.env.LIVEBLOCKS_SECRET_KEY });
+  const liveblocks = new Liveblocks({
+    secret: process.env.LIVEBLOCKS_SECRET_KEY,
+  });
 
-  const messages = await liveblocks.getFeedMessages<FeedMessageData>({ roomId, feedId });
+  const messages = await liveblocks.getFeedMessages<FeedMessageData>({
+    roomId,
+    feedId,
+  });
   const message = messages.data.find((item) => item.id === messageId);
   if (!message) {
     return new NextResponse("Feed message not found", { status: 404 });
@@ -82,7 +92,11 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ ok: true });
 }
 
-async function applyHtmlToYjsDocument(liveblocks: Liveblocks, roomId: string, nextHtml: string) {
+async function applyHtmlToYjsDocument(
+  liveblocks: Liveblocks,
+  roomId: string,
+  nextHtml: string
+) {
   const binaryUpdate = await liveblocks.getYjsDocumentAsBinaryUpdate(roomId);
   const ydoc = new Y.Doc();
   Y.applyUpdate(ydoc, new Uint8Array(binaryUpdate));
