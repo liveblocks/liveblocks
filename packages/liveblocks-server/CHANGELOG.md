@@ -1,5 +1,9 @@
 ## vNEXT (not yet released)
 
+## v1.6.2
+
+- Fix route parity
+
 ## v1.6.1
 
 - Fix a `LiveList` divergence after reconnects: when a client re-sends a pending
