@@ -102,12 +102,10 @@ function SlideshowApp({ roomId }: { roomId: string }) {
         import("pptxgenjs"),
       ]);
 
-      // 3x the 1280x720 design resolution = 3840x2160, so the slide stays
-      // crisp when presented full-screen on 4K/retina displays.
       const dataUrl = await toPng(element, {
         width: SLIDE_WIDTH,
         height: SLIDE_HEIGHT,
-        pixelRatio: 3,
+        pixelRatio: 2,
         cacheBust: true,
         style: {
           width: `${SLIDE_WIDTH}px`,
