@@ -73,6 +73,7 @@ const CLASSIC_ONLY = [
   "useHistoryVersionData",
   "useHistoryVersionStorageData",
   "useHistoryVersionYjsData",
+  "useRestoreToStorageVersion",
   "useSearchComments",
 ];
 const SUSPENSE_ONLY = [];

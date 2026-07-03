@@ -1385,6 +1385,16 @@ export type RoomContextBundle<
        */
       useDeleteHistoryVersion(): (versionId: string) => Promise<void>;
 
+      /**
+       * Returns a function that restores the room's Storage to the given
+       * historic version, applied as a single undoable change.
+       *
+       * @example
+       * const restore = useRestoreToStorageVersion(version.id);
+       * await restore();
+       */
+      useRestoreToStorageVersion(versionId: string): () => Promise<void>;
+
       suspense: Resolve<
         RoomContextBundleCommon<P, S, U, E, TM, CM, FM, FMD> &
           SharedContextBundle<U>["suspense"] & {

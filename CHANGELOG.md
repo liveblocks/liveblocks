@@ -8,6 +8,8 @@
   given version as a read-only `LiveObject`.
 - Add `useDeleteHistoryVersion()` hook to permanently delete a version from the
   room's history.
+- Add `useRestoreToStorageVersion()` hook to restore the room's Storage to a
+  historic version, applied as a single undoable change.
 
 ## v3.21.0
 

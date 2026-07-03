@@ -3145,6 +3145,16 @@ function useRoomSubscriptionSettingsSuspense(): [
   return useRoomSubscriptionSettingsSuspense_withRoomContext(GlobalRoomContext);
 }
 
+// A Storage version endpoint returns its snapshot as an NDJSON stream of
+// StorageNode tuples (one JSON per line). Decodes it into the node array the
+// SDK reconstructs/diffs against.
+function parseStorageVersionNodes(ndjson: string): StorageNode[] {
+  return ndjson
+    .split("\n")
+    .filter((line) => line.length > 0)
+    .map((line) => JSON.parse(line) as StorageNode);
+}
+
 /**
  * @internal
  */
@@ -3167,10 +3177,7 @@ function useHistoryVersionStorageData_withRoomContext(
         // and rebuild a (detached, read-only) LiveObject tree -- typed as
         // `LsonObject` because a historical version may not match the current
         // Storage schema.
-        const nodes = (await response.text())
-          .split("\n")
-          .filter((line) => line.length > 0)
-          .map((line) => JSON.parse(line) as StorageNode);
+        const nodes = parseStorageVersionNodes(await response.text());
         const data = room[kInternal].liveObjectFromNodeStream(nodes);
         setState({ isLoading: false, data });
       } catch (error) {
@@ -3330,6 +3337,37 @@ function useDeleteHistoryVersion_withRoomContext(
  */
 function useDeleteHistoryVersion(): (versionId: string) => Promise<void> {
   return useDeleteHistoryVersion_withRoomContext(GlobalRoomContext);
+}
+
+/**
+ * @internal
+ */
+function useRestoreToStorageVersion_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>,
+  versionId: string
+): () => Promise<void> {
+  const room = useRoom_withRoomContext(RoomContext);
+  return useCallback(async () => {
+    const response =
+      await room[kInternal].fetchStorageHistoryVersion(versionId);
+    const nodes = parseStorageVersionNodes(await response.text());
+    room[kInternal].reconcileStorageWithNodes(nodes);
+  }, [room, versionId]);
+}
+
+/**
+ * Returns a function that restores the room's Storage to the given historic
+ * version, applied as a single undoable change (broadcast to other clients).
+ *
+ * @example
+ * const restore = useRestoreToStorageVersion(versionId);
+ * await restore();
+ */
+function useRestoreToStorageVersion(versionId: string): () => Promise<void> {
+  return useRestoreToStorageVersion_withRoomContext(
+    GlobalRoomContext,
+    versionId
+  );
 }
 
 /**
@@ -4245,6 +4283,12 @@ export function createRoomContext<
     return useDeleteHistoryVersion_withRoomContext(BoundRoomContext);
   }
 
+  function useRestoreToStorageVersion_withBoundRoomContext(
+    ...args: Parameters<typeof useRestoreToStorageVersion>
+  ) {
+    return useRestoreToStorageVersion_withRoomContext(BoundRoomContext, ...args);
+  }
+
   function useRoomSubscriptionSettings_withBoundRoomContext() {
     return useRoomSubscriptionSettings_withRoomContext(BoundRoomContext);
   }
@@ -4420,6 +4464,8 @@ export function createRoomContext<
       useHistoryVersionYjsData_withBoundRoomContext as TRoomBundle["useHistoryVersionYjsData"],
     // prettier-ignore
     useDeleteHistoryVersion: useDeleteHistoryVersion_withBoundRoomContext as TRoomBundle["useDeleteHistoryVersion"],
+    // prettier-ignore
+    useRestoreToStorageVersion: useRestoreToStorageVersion_withBoundRoomContext as TRoomBundle["useRestoreToStorageVersion"],
 
     // prettier-ignore
     useRoomSubscriptionSettings: useRoomSubscriptionSettings_withBoundRoomContext as TRoomBundle["useRoomSubscriptionSettings"],
@@ -5224,6 +5270,7 @@ export {
   useRemoveRoomCommentReaction,
   useReportTextEditor,
   useResolveMentionSuggestions,
+  useRestoreToStorageVersion,
   _useRoom as useRoom,
   useRoomAttachmentUrl,
   useRoomPermissions,
