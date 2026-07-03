@@ -3,7 +3,7 @@ import { LiveList, LiveObject } from "@liveblocks/client";
 import { kInternal } from "@liveblocks/core";
 import { createRoomContext } from "@liveblocks/react";
 import { LiveblocksYjsProvider } from "@liveblocks/yjs";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as Y from "yjs";
 
 import { getRoomFromUrl, getUserFromUrl, randomInt } from "../utils";
@@ -25,15 +25,19 @@ const client = createLiveblocksClient({
 // and a reconstructed historic version render the exact same shape.
 const {
   RoomProvider,
+  useCanRedo,
+  useCanUndo,
   useDeleteHistoryVersion,
   useHistoryVersionStorageData,
   useHistoryVersionYjsData,
   useHistoryVersions,
   useMutation,
+  useRedo,
   useRestoreToStorageVersion,
   useRoom,
   useSelf,
   useStorage,
+  useUndo,
 } = createRoomContext<never, LsonObject>(client);
 
 // A small, fixed key pool so repeated edits overwrite existing keys -- letting
@@ -65,6 +69,10 @@ function Sandbox() {
   const doc = useStorage((root) => root);
   const me = useSelf();
   const room = useRoom();
+  const undo = useUndo();
+  const redo = useRedo();
+  const canUndo = useCanUndo();
+  const canRedo = useCanRedo();
   const { versions, error: versionsError } = useHistoryVersions();
   const deleteHistoryVersion = useDeleteHistoryVersion();
   const [selectedVersionId, setSelectedVersionId] = useState<string | null>(
@@ -82,14 +90,30 @@ function Sandbox() {
   const ydoc = useMemo(() => new Y.Doc(), []);
   const [yjsText, setYjsText] = useState("");
   const [yjsInput, setYjsInput] = useState("");
+  const [yjsCanUndo, setYjsCanUndo] = useState(false);
+  const [yjsCanRedo, setYjsCanRedo] = useState(false);
+  const yjsUndoManager = useRef<Y.UndoManager | null>(null);
 
   useEffect(() => {
     const provider = new LiveblocksYjsProvider(room, ydoc);
-    const handler = () => setYjsText(ydoc.getText("text").toString());
+    const ytext = ydoc.getText("text");
+    // Yjs has its own history (separate from the room's Storage undo/redo). It
+    // tracks only local edits, not the remote changes the provider applies.
+    const undoManager = new Y.UndoManager(ytext);
+    yjsUndoManager.current = undoManager;
+    const handler = () => {
+      const text = ytext.toString();
+      setYjsText(text);
+      setYjsInput(text); // keep the editable box in sync with the document
+      setYjsCanUndo(undoManager.undoStack.length > 0);
+      setYjsCanRedo(undoManager.redoStack.length > 0);
+    };
     ydoc.on("update", handler);
     handler();
     return () => {
       ydoc.off("update", handler);
+      undoManager.destroy();
+      yjsUndoManager.current = null;
       provider.destroy();
     };
   }, [room, ydoc]);
@@ -133,11 +157,7 @@ function Sandbox() {
     text.insert(0, yjsInput);
   };
 
-  // Clears both surfaces, so the next snapshot captures an empty document.
-  const clearAll = () => {
-    clearStorage();
-
-    // Clear Yjs
+  const clearYjs = () => {
     const text = ydoc.getText("text");
     text.delete(0, text.length);
   };
@@ -195,64 +215,95 @@ function Sandbox() {
       </p>
 
       <div style={{ display: "flex", flexWrap: "wrap", margin: "8px 0" }}>
-        <Button id="set-number" onClick={() => setNumber()}>
-          Set number
-        </Button>
-        <Button id="add-object" onClick={() => addObject()}>
-          Add nested object
-        </Button>
-        <Button id="add-list" onClick={() => addList()}>
-          Add list
-        </Button>
-        <Button
-          id="push-to-list"
-          enabled={hasList}
-          onClick={() => pushToList(randomInt(100))}
-        >
-          Push to a list
-        </Button>
-        <Button
-          id="delete"
-          enabled={keys.length > 0}
-          onClick={() => deleteKey(keyToDelete)}
-          subtitle={keyToDelete ? `key ${keyToDelete}` : null}
-        >
-          Delete key
-        </Button>
-        <Button
-          id="clear"
-          enabled={keys.length > 0 || yjsText.length > 0}
-          onClick={clearAll}
-        >
-          Clear
-        </Button>
         <Button id="create-version" onClick={createSnapshot}>
           📸 Create version snapshot
-        </Button>
-      </div>
-
-      <div style={{ display: "flex", gap: 8, margin: "8px 0" }}>
-        <input
-          id="yjs-input"
-          value={yjsInput}
-          onChange={(e) => setYjsInput(e.target.value)}
-          placeholder="Yjs document text"
-          style={{ padding: 4 }}
-        />
-        <Button id="set-yjs" onClick={setYjs}>
-          Set Yjs text
         </Button>
       </div>
 
       <div style={{ display: "flex", gap: 24, alignItems: "flex-start" }}>
         <section style={{ flex: 1 }}>
           <h4>Live document</h4>
+
           <h5>Storage</h5>
+          <div style={{ display: "flex", flexWrap: "wrap", margin: "4px 0" }}>
+            <Button id="set-number" onClick={() => setNumber()}>
+              Set number
+            </Button>
+            <Button id="add-object" onClick={() => addObject()}>
+              Add nested object
+            </Button>
+            <Button id="add-list" onClick={() => addList()}>
+              Add list
+            </Button>
+            <Button
+              id="push-to-list"
+              enabled={hasList}
+              onClick={() => pushToList(randomInt(100))}
+            >
+              Push to a list
+            </Button>
+            <Button
+              id="delete"
+              enabled={keys.length > 0}
+              onClick={() => deleteKey(keyToDelete)}
+              subtitle={keyToDelete ? `key ${keyToDelete}` : null}
+            >
+              Delete key
+            </Button>
+            <Button
+              id="clear-storage"
+              enabled={keys.length > 0}
+              onClick={() => clearStorage()}
+            >
+              Clear
+            </Button>
+            <Button id="undo" enabled={canUndo} onClick={undo}>
+              Undo
+            </Button>
+            <Button id="redo" enabled={canRedo} onClick={redo}>
+              Redo
+            </Button>
+          </div>
           <pre id="live-doc" style={preStyle}>
             {JSON.stringify(doc, null, 2)}
           </pre>
+
           <h5>Yjs</h5>
-          <pre id="live-yjs" style={preStyle}>
+          <div style={{ display: "flex", gap: 8, margin: "4px 0" }}>
+            <textarea
+              id="yjs-input"
+              value={yjsInput}
+              onChange={(e) => setYjsInput(e.target.value)}
+              placeholder="Yjs document text"
+              rows={3}
+              style={{ padding: 4, resize: "vertical", minWidth: 200 }}
+            />
+            <Button id="set-yjs" onClick={setYjs}>
+              Set Yjs text
+            </Button>
+            <Button
+              id="clear-yjs"
+              enabled={yjsText.length > 0}
+              onClick={clearYjs}
+            >
+              Clear
+            </Button>
+            <Button
+              id="undo-yjs"
+              enabled={yjsCanUndo}
+              onClick={() => yjsUndoManager.current?.undo()}
+            >
+              Undo
+            </Button>
+            <Button
+              id="redo-yjs"
+              enabled={yjsCanRedo}
+              onClick={() => yjsUndoManager.current?.redo()}
+            >
+              Redo
+            </Button>
+          </div>
+          <pre id="live-yjs" style={yjsPreStyle}>
             {yjsText || "(empty)"}
           </pre>
         </section>
@@ -358,7 +409,7 @@ function VersionView({
       </Button>
 
       <h5>Yjs</h5>
-      <pre id="version-yjs" style={preStyle}>
+      <pre id="version-yjs" style={yjsPreStyle}>
         {yjs.isLoading
           ? "Loading…"
           : yjs.error
@@ -381,4 +432,11 @@ const preStyle = {
   padding: 8,
   borderRadius: 4,
   overflow: "auto",
+} as const;
+
+// Yjs text is prose, so wrap it instead of scrolling horizontally.
+const yjsPreStyle = {
+  ...preStyle,
+  whiteSpace: "pre-wrap",
+  wordBreak: "break-word",
 } as const;
