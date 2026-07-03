@@ -152,6 +152,7 @@ function SlideshowApp({ roomId }: { roomId: string }) {
           </div>
 
           <div className="flex items-center gap-2">
+            <AvatarStack size={28} />
             {panel === "slide" ? (
               <Button
                 variant={placingComment ? "secondary" : "outline"}
@@ -177,7 +178,6 @@ function SlideshowApp({ roomId }: { roomId: string }) {
               )}
               Download .pptx
             </Button>
-            <AvatarStack size={28} />
           </div>
         </header>
 
