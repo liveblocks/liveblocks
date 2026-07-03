@@ -1402,7 +1402,8 @@ describe("client", () => {
 
   describe("upload storage file", () => {
     test("should upload a storage file through single upload", async () => {
-      const file = new File(["hello"], "file1.txt", { type: "text/plain" });
+      const fileName = "file 100%.txt";
+      const file = new File(["hello"], fileName, { type: "text/plain" });
 
       server.use(
         http.put(
@@ -1413,14 +1414,14 @@ describe("client", () => {
 
             expect(params.roomId).toBe("room1");
             expect(fileId).toMatch(/^fl_/);
-            expect(params.name).toBe("file1.txt");
+            expect(params.name).toBe(fileName);
             expect(url.searchParams.get("fileSize")).toBe("5");
             expect(await request.text()).toBe("hello");
 
             return HttpResponse.json(
               {
                 id: fileId,
-                name: "file1.txt",
+                name: fileName,
                 size: 5,
                 mimeType: "text/plain",
               },
@@ -1439,14 +1440,15 @@ describe("client", () => {
         })
       ).resolves.toEqual({
         id: expect.stringMatching(/^fl_/),
-        name: "file1.txt",
+        name: fileName,
         size: 5,
         mimeType: "text/plain",
       });
     });
 
     test("should upload a storage file through multipart upload", async () => {
-      const file = new File([new Uint8Array(5 * 1024 * 1024 + 1)], "file.bin");
+      const fileName = "file 100%.bin";
+      const file = new File([new Uint8Array(5 * 1024 * 1024 + 1)], fileName);
       const uploadedPartNumbers: number[] = [];
 
       server.use(
@@ -1457,7 +1459,7 @@ describe("client", () => {
 
             expect(params.roomId).toBe("room1");
             expect(String(params.fileId)).toMatch(/^fl_/);
-            expect(params.name).toBe("file.bin");
+            expect(params.name).toBe(fileName);
             expect(url.searchParams.get("fileSize")).toBe("5242881");
 
             return HttpResponse.json(
@@ -1508,7 +1510,7 @@ describe("client", () => {
             return HttpResponse.json(
               {
                 id: String(params.fileId),
-                name: "file.bin",
+                name: fileName,
                 size: 5 * 1024 * 1024 + 1,
                 mimeType: "application/octet-stream",
               },
@@ -1527,7 +1529,7 @@ describe("client", () => {
         })
       ).resolves.toEqual({
         id: expect.stringMatching(/^fl_/),
-        name: "file.bin",
+        name: fileName,
         size: 5 * 1024 * 1024 + 1,
         mimeType: "application/octet-stream",
       });

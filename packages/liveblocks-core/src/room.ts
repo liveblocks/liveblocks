@@ -16,12 +16,8 @@ import {
   isSameNodeOrChildOf,
   mergeStorageUpdates,
 } from "./crdts/liveblocks-helpers";
-import {
-  getLiveFileId,
-  type LiveFile,
-  type LiveFileData,
-  type LiveFileReference,
-} from "./crdts/LiveFile";
+import { getLiveFileId } from "./crdts/LiveFile";
+import type { LiveFileData, LiveFileReference } from "./crdts/LiveFile";
 import { LiveObject } from "./crdts/LiveObject";
 import type { LiveStructure, LsonObject } from "./crdts/Lson";
 import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";

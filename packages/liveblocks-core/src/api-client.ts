@@ -1290,7 +1290,7 @@ export function createApiClient<
       abortErrorMessage: `Upload of file ${fileId} was aborted.`,
       uploadSingle: async () =>
         httpClient.putBlob<LiveFileData>(
-          url`/v2/c/rooms/${roomId}/storage/files/${fileId}/upload/${encodeURIComponent(file.name)}`,
+          url`/v2/c/rooms/${roomId}/storage/files/${fileId}/upload/${file.name}`,
           await authManager.getAuthValue({
             roomId,
             resource: "storage",
@@ -1302,7 +1302,7 @@ export function createApiClient<
         ),
       createMultipartUpload: async () =>
         httpClient.post<{ uploadId: string }>(
-          url`/v2/c/rooms/${roomId}/storage/files/${fileId}/multipart/${encodeURIComponent(file.name)}`,
+          url`/v2/c/rooms/${roomId}/storage/files/${fileId}/multipart/${file.name}`,
           await authManager.getAuthValue({
             roomId,
             resource: "storage",

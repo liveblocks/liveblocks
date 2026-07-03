@@ -2178,7 +2178,7 @@ export class Liveblocks {
       abortErrorMessage: `Upload of file ${fileId} was aborted.`,
       uploadSingle: async () => {
         const res = await this.#putBlob(
-          url`/v2/rooms/${roomId}/storage/files/${fileId}/upload/${encodeURIComponent(file.name)}`,
+          url`/v2/rooms/${roomId}/storage/files/${fileId}/upload/${file.name}`,
           file,
           { fileSize: file.size },
           options
@@ -2187,7 +2187,7 @@ export class Liveblocks {
       },
       createMultipartUpload: async () => {
         const res = await this.#post(
-          url`/v2/rooms/${roomId}/storage/files/${fileId}/multipart/${encodeURIComponent(file.name)}`,
+          url`/v2/rooms/${roomId}/storage/files/${fileId}/multipart/${file.name}`,
           undefined,
           options,
           { fileSize: file.size }
