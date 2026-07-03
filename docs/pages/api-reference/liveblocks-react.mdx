@@ -6420,8 +6420,8 @@ updateSettings({
 
 ### useHistoryVersions [@badge=RoomProvider]
 
-Returns the versions of the room. See
-[Version History Components](/docs/api-reference/liveblocks-react-ui#Version-history-components)
+Returns the versions of the room, both Storage and Yjs. See
+[Version History Components](/docs/api-reference/liveblocks-react-ui#Version-History)
 for more information on how to display versions.
 
 ```tsx
@@ -6543,7 +6543,10 @@ await deleteHistoryVersion(versionId);
 ```
 
 <PropertiesList title="Returns">
-  <PropertiesListItem name="deleteHistoryVersion" type="(versionId: string) => Promise<void>">
+  <PropertiesListItem
+    name="deleteHistoryVersion"
+    type="(versionId: string) => Promise<void>"
+  >
     A function that deletes the version with the given id. The `versionId` is
     obtained from the `id` field of a `HistoryVersion` returned by
     [`useHistoryVersions`][].
@@ -7200,6 +7203,7 @@ And the following timeline:
 [`useothersconnectionids`]:
   /docs/api-reference/liveblocks-react#useOthersConnectionIds
 [`useother`]: /docs/api-reference/liveblocks-react#useOther
+[`usehistoryversions`]: /docs/api-reference/liveblocks-react#useHistoryVersions
 [`uselostconnectionlistener`]:
   /docs/api-reference/liveblocks-react#useLostConnectionListener
 [`clientsidesuspense`]: /docs/api-reference/liveblocks-react#ClientSideSuspsnse

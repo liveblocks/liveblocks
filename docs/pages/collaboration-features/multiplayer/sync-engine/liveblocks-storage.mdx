@@ -148,6 +148,56 @@ function MultiplayerCanvas() {
 We also provide [`useRedo`](/docs/api-reference/liveblocks-react#useRedo) and
 [`useCanRedo`](/docs/api-reference/liveblocks-react#useCanRedo) to handle redo.
 
+### Version history
+
+Create version snapshots of your Storage document, and let users browse,
+preview, and restore them.
+[`useHistoryVersions`](/docs/api-reference/liveblocks-react#useHistoryVersions)
+lists a room’s versions, and
+[`useRestoreToStorageVersion`](/docs/api-reference/liveblocks-react#useRestoreToStorageVersion)
+restores Storage to a version, applied as a single undoable change.
+
+```tsx
+import {
+  useHistoryVersions,
+  useRestoreToStorageVersion,
+} from "@liveblocks/react";
+
+function VersionHistory() {
+  // +++
+  const { versions } = useHistoryVersions();
+  // +++
+
+  return (
+    <div>
+      // +++
+      {versions.map((version) => (
+        <div key={version.id}>
+          <time>{version.createdAt}</time>
+          <RestoreButton versionId={version.id} />
+        </div>
+      ))}
+      // +++
+    </div>
+  );
+}
+
+function RestoreButton({ versionId }) {
+  // +++
+  const restoreToStorageVersion = useRestoreToStorageVersion(versionId);
+  // +++
+
+  return (
+    <button onClick={() => restoreToStorageVersion()}>Restore version</button>
+  );
+}
+```
+
+You can also preview a version’s data with
+[`useHistoryVersionStorageData`](/docs/api-reference/liveblocks-react#useHistoryVersionStorageData).
+Learn how to set this up in our
+[version history guide](/docs/guides/how-to-add-version-history-to-your-app).
+
 ## Broadcast
 
 Broadcast realtime events to other clients, helpful for triggering live actions
