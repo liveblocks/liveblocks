@@ -69,7 +69,9 @@ const ALLOW_NO_FACTORY = [
 const CLASSIC_ONLY = [
   "createLiveblocksContext",
   "createRoomContext",
+  "useDeleteHistoryVersion",
   "useHistoryVersionData",
+  "useHistoryVersionStorageData",
   "useHistoryVersionYjsData",
   "useSearchComments",
 ];
