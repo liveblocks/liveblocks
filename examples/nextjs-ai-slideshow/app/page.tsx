@@ -6,6 +6,7 @@ import { DownloadIcon, Loader2Icon, MessageSquarePlusIcon } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import { Loader } from "@/components/ai-elements/loader";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useExampleRoomId } from "@/hooks/use-example-room-id";
 import { Chat } from "./chat";
 import { CollaborativeEditor } from "./collaborative-editor";
@@ -129,27 +130,22 @@ function SlideshowApp({ roomId }: { roomId: string }) {
     <div className="flex h-dvh w-full gap-2.5 overflow-hidden bg-neutral-50 p-2.5">
       <main className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-lg bg-white shadow ring-1 ring-neutral-950/5">
         <header className="flex items-center justify-between border-b border-neutral-950/5 px-2.5 py-2">
-          <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              className="rounded px-2 py-1 text-sm font-medium text-neutral-600 transition-colors hover:bg-neutral-100 data-[selected]:bg-neutral-100 data-[selected]:text-neutral-900"
-              data-selected={panel === "slide" || undefined}
-              onClick={() => setPanel("slide")}
-            >
-              Slide
-            </button>
-            <button
-              type="button"
-              className="rounded px-2 py-1 text-sm font-medium text-neutral-600 transition-colors hover:bg-neutral-100 data-[selected]:bg-neutral-100 data-[selected]:text-neutral-900"
-              data-selected={panel === "code" || undefined}
-              onClick={() => {
+          <Tabs
+            value={panel}
+            onValueChange={(value) => {
+              if (value === "code") {
                 setPlacingComment(false);
                 setPanel("code");
-              }}
-            >
-              Code
-            </button>
-          </div>
+              } else {
+                setPanel("slide");
+              }
+            }}
+          >
+            <TabsList>
+              <TabsTrigger value="slide">Preview</TabsTrigger>
+              <TabsTrigger value="code">Code</TabsTrigger>
+            </TabsList>
+          </Tabs>
 
           <div className="flex items-center gap-2">
             <AvatarStack size={28} />
