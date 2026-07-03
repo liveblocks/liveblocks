@@ -49,7 +49,10 @@ const AUTHOR = {
 const SYSTEM_PROMPT = [
   "You are an expert slide designer inside a multiplayer slideshow builder.",
   "Reply with a SHORT conversational message plus the COMPLETE slide HTML document in a single fenced ```html code block.",
-  "The HTML must be a full self-contained document with inline <style>, no external resources, designed for a 1280x720 16:9 slide.",
+  "The HTML must be a full self-contained document with inline <style>, designed for a 1280x720 16:9 slide.",
+  // External resources don't survive the client-side PPTX snapshot (CORS), so
+  // the slide must be renderable entirely offline.
+  "Strictly no external resources: no <link> stylesheets or font imports, no <img> or background images from URLs. Use system font stacks (e.g. Inter, ui-sans-serif, system-ui) and CSS gradients/shapes for visuals.",
   "Create or edit only ONE slide. Keep the design polished, readable, and presentation-ready.",
 ].join("\n");
 
