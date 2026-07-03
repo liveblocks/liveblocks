@@ -1863,7 +1863,9 @@ export function createRoom<
     return httpClient.listHistoryVersions({ roomId });
   }
 
-  async function listHistoryVersionsSince(options: ListTextVersionsSinceOptions) {
+  async function listHistoryVersionsSince(
+    options: ListTextVersionsSinceOptions
+  ) {
     return httpClient.listHistoryVersionsSince({
       roomId,
       since: options.since,
@@ -2222,6 +2224,11 @@ export function createRoom<
 
         return parentNode._attachChild(op, source);
       }
+
+      // Unknown op codes can be received when older and newer clients are
+      // both present in a same room. Older clients simply ignore them.
+      default:
+        return { modified: false };
     }
   }
 
