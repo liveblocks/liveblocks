@@ -21,6 +21,8 @@ import {
   $createLineBreakNode,
   $isLineBreakNode,
   NODE_STATE_KEY,
+  type LexicalUpdateJSON,
+  type SerializedElementNode,
 } from "lexical";
 import type {
   LiveRootNode,
@@ -963,6 +965,47 @@ export class LiveblocksCollaborationManager {
               insertAt += slotAtI instanceof Array ? slotAtI.length : 1;
             }
             host_lexical.splice(insertAt, 0, nodes);
+          }
+        }
+      } else if (update.type === "LiveObject") {
+        const storageNode = update.node;
+        const kind = storageNode.get("kind");
+        if (
+          kind !== "root" &&
+          kind !== "element" &&
+          kind !== "text" &&
+          kind !== "linebreak" &&
+          kind !== "decorator"
+        ) {
+          continue;
+        }
+
+        const node_lexical = this.#binding.forward.get(
+          storageNode as LiveStorageNode
+        );
+        if (node_lexical === undefined || node_lexical instanceof Array) {
+          continue;
+        }
+
+        const props_liveblocks = (
+          storageNode as LiveObject<LiveElementShape>
+        ).get("props");
+        if (isEqual($getLexicalNodeProps(node_lexical), props_liveblocks)) {
+          continue;
+        }
+
+        for (const [key, delta] of Object.entries(update.updates)) {
+          if (delta === undefined || key !== "props") {
+            continue;
+          }
+
+          if (delta.type === "delete") {
+            $setLexicalNodeProps(node_lexical, undefined);
+          } else {
+            $setLexicalNodeProps(
+              node_lexical,
+              (storageNode as LiveObject<{ props?: JsonObject }>).get("props")
+            );
           }
         }
       }
@@ -1995,6 +2038,12 @@ export function $convertLiveElementNodeToLexicalNode(
   }
 
   node_lexical.append(...children);
+
+  const props = node.get("props");
+  if (props !== undefined) {
+    $setLexicalNodeProps(node_lexical, props);
+  }
+
   return node_lexical.getLatest();
 }
 
@@ -2134,4 +2183,79 @@ export function $getLexicalNodeProps(
   }
 
   return Object.keys(props).length > 0 ? (props as JsonObject) : undefined;
+}
+
+/**
+ * Apply storage `props` onto a Lexical element — inverse of `$getLexicalNodeProps`.
+ *
+ * Uses each node's `updateFromJSON()` so custom node fields (e.g. heading `tag`)
+ * are applied the same way Lexical does for copy/paste and persistence.
+ *
+ * Layout fields (`direction`, `format`, `indent`, …) are preserved from the
+ * current node; they are omitted from storage props by `$getLexicalNodeProps`.
+ */
+export function $setLexicalNodeProps(
+  node: LexicalNode,
+  props: JsonObject | undefined
+): void {
+  const latest = node.getLatest();
+  if (!$isElementNode(latest)) {
+    return;
+  }
+
+  const exported = latest.exportJSON() as Record<string, unknown>;
+
+  if (props === undefined) {
+    const payload: Record<string, unknown> = {};
+    for (const key of OMIT_FROM_LEXICAL_NODE_PROPS) {
+      if (key in exported) {
+        payload[key] = exported[key];
+      }
+    }
+    if (latest.getType() === "heading") {
+      payload.tag = "h1";
+    }
+    if (Object.keys(payload).length > 0) {
+      latest
+        .getWritable()
+        .updateFromJSON(
+          payload as LexicalUpdateJSON<SerializedElementNode>
+        );
+    }
+    return;
+  }
+
+  const payload: Record<string, unknown> = {};
+
+  // Keep element layout fields out of storage props from being reset by a partial update.
+  for (const key of OMIT_FROM_LEXICAL_NODE_PROPS) {
+    if (key in exported) {
+      payload[key] = exported[key];
+    }
+  }
+
+  const nodeState = exported[NODE_STATE_KEY];
+  const flatStateKeys = new Set<string>();
+  if (nodeState !== undefined && typeof nodeState === "object") {
+    for (const stateKey of Object.keys(nodeState as Record<string, unknown>)) {
+      flatStateKeys.add(stateKey);
+    }
+  }
+
+  const statePayload: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(props)) {
+    if (flatStateKeys.has(key)) {
+      statePayload[key] = value;
+    } else {
+      payload[key] = value;
+    }
+  }
+
+  if (Object.keys(statePayload).length > 0) {
+    payload[NODE_STATE_KEY] = statePayload;
+  }
+
+  latest
+    .getWritable()
+    .updateFromJSON(payload as LexicalUpdateJSON<SerializedElementNode>);
 }

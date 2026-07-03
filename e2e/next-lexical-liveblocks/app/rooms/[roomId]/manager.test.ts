@@ -102,6 +102,39 @@ describe("LiveblocksCollaborationManager", () => {
     });
   });
 
+  it("materializes element props from storage on bootstrap", () => {
+    const heading = new LiveObject({
+      kind: "element",
+      type: "heading",
+      version: 1,
+      props: { tag: "h2" },
+      children: new LiveList<LiveTextNode>([
+        new LiveObject({
+          kind: "text",
+          type: "text",
+          version: 1,
+          content: new LiveText("Title"),
+        }),
+      ]),
+    }) as LiveElementNode;
+    const document: LiveRootNode = new LiveObject({
+      kind: "root",
+      type: "root",
+      version: 1,
+      children: new LiveList<LiveElementNode>([heading]),
+    });
+
+    const { editor } = createEditor(document);
+
+    editor.read(() => {
+      const heading_lexical = $getRoot().getFirstChild();
+      if (!$isHeadingNode(heading_lexical)) {
+        throw new Error("Expected HeadingNode");
+      }
+      expect(heading_lexical.getTag()).toBe("h2");
+    });
+  });
+
   describe("$normalizeLexicalChildren", () => {
     it("coalesces sibling TextNodes bound to the same LiveText child", () => {
       const document: LiveRootNode = new LiveObject({
@@ -3470,6 +3503,82 @@ describe("LiveblocksCollaborationManager", () => {
         expect($getRoot().getChildren()).toHaveLength(2);
       });
     });
+    });
+
+    describe("LiveObject", () => {
+      it("applies remote LiveObject props updates on headings", async () => {
+        const { room, root } = (await prepareIsolatedStorageTest(
+          [createSerializedRoot()],
+          0
+        )) as unknown as {
+          room: Room;
+          root: LiveObject<{ document?: LiveRootNode }>;
+        };
+
+        const heading = new LiveObject({
+          kind: "element",
+          type: "heading",
+          version: 1,
+          props: { tag: "h1" },
+          children: new LiveList<LiveTextNode>([
+            new LiveObject({
+              kind: "text",
+              type: "text",
+              version: 1,
+              content: new LiveText("Title"),
+            }),
+          ]),
+        }) as LiveElementNode;
+
+        room.batch(() => {
+          root.set(
+            "document",
+            new LiveObject({
+              kind: "root",
+              type: "root",
+              version: 1,
+              children: new LiveList<LiveElementNode>([heading]),
+            })
+          );
+        });
+
+        const document = root.get("document") as LiveRootNode;
+        const { editor, manager } = createEditor(document);
+
+        const updates: StorageUpdate[] = [];
+        const unregister = room.events.storageBatch.subscribe((batch) => {
+          for (const update of batch) {
+            if (update.type === "LiveObject") {
+              updates.push(update);
+            }
+          }
+        });
+
+        room.batch(() => {
+          heading.set("props", { tag: "h2" });
+        });
+        unregister();
+
+        editor.update(
+          () => {
+            manager.$applyRemoteUpdates(
+              updates.map((update) => ({
+                ...update,
+                [kStorageUpdateSource]: { origin: "remote" },
+              }))
+            );
+          },
+          { discrete: true }
+        );
+
+        editor.read(() => {
+          const heading_lexical = $getRoot().getFirstChild();
+          if (!$isHeadingNode(heading_lexical)) {
+            throw new Error("Expected HeadingNode");
+          }
+          expect(heading_lexical.getTag()).toBe("h2");
+        });
+      });
     });
 
     it("ignores empty remote update batches", () => {
