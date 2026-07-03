@@ -10,8 +10,16 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { useEditThreadMetadata, useSelf, useThreads } from "@liveblocks/react/suspense";
-import { CommentPin, FloatingComposer, FloatingThread } from "@liveblocks/react-ui";
+import {
+  useEditThreadMetadata,
+  useSelf,
+  useThreads,
+} from "@liveblocks/react/suspense";
+import {
+  CommentPin,
+  FloatingComposer,
+  FloatingThread,
+} from "@liveblocks/react-ui";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { MouseEvent, ReactNode, RefObject } from "react";
 import { EyeIcon, Loader2Icon } from "lucide-react";
@@ -24,7 +32,7 @@ type Coords = { x: number; y: number };
 
 type Size = { width: number; height: number };
 
-const PREVIEW_INSET = 12;
+const PREVIEW_INSET = 16;
 
 function clampPercentage(value: number) {
   return Math.min(100, Math.max(0, value));
@@ -32,7 +40,10 @@ function clampPercentage(value: number) {
 
 function useElementSize() {
   const [node, setNode] = useState<HTMLDivElement | null>(null);
-  const [size, setSize] = useState<Size>({ width: SLIDE_WIDTH, height: SLIDE_HEIGHT });
+  const [size, setSize] = useState<Size>({
+    width: SLIDE_WIDTH,
+    height: SLIDE_HEIGHT,
+  });
 
   useEffect(() => {
     if (!node) {
@@ -98,7 +109,10 @@ export function SlidePreview({
   // even when the slide would otherwise fit exactly edge-to-edge.
   const availableWidth = Math.max(1, wrapperSize.width - PREVIEW_INSET * 2);
   const availableHeight = Math.max(1, wrapperSize.height - PREVIEW_INSET * 2);
-  const scale = Math.min(availableWidth / SLIDE_WIDTH, availableHeight / SLIDE_HEIGHT);
+  const scale = Math.min(
+    availableWidth / SLIDE_WIDTH,
+    availableHeight / SLIDE_HEIGHT
+  );
   const safeScale = Number.isFinite(scale) && scale > 0 ? scale : 1;
 
   const sensors = useSensors(
@@ -122,8 +136,12 @@ export function SlidePreview({
         return;
       }
 
-      const nextX = clampPercentage(thread.metadata.x + (delta.x / (SLIDE_WIDTH * safeScale)) * 100);
-      const nextY = clampPercentage(thread.metadata.y + (delta.y / (SLIDE_HEIGHT * safeScale)) * 100);
+      const nextX = clampPercentage(
+        thread.metadata.x + (delta.x / (SLIDE_WIDTH * safeScale)) * 100
+      );
+      const nextY = clampPercentage(
+        thread.metadata.y + (delta.y / (SLIDE_HEIGHT * safeScale)) * 100
+      );
 
       editThreadMetadata({
         threadId: thread.id,
@@ -138,7 +156,10 @@ export function SlidePreview({
   );
 
   return (
-    <div ref={wrapperRef} className="relative h-full w-full overflow-hidden bg-neutral-50">
+    <div
+      ref={wrapperRef}
+      className="relative h-full w-full overflow-hidden bg-neutral-50"
+    >
       {proposal ? (
         <div className="absolute left-1/2 top-3 z-40 flex -translate-x-1/2 items-center gap-3 rounded-full border border-rose-200 bg-white py-1.5 pl-4 pr-1.5 shadow-md">
           <span className="flex items-center gap-1.5 whitespace-nowrap text-sm font-medium text-neutral-700">
@@ -172,7 +193,7 @@ export function SlidePreview({
         </div>
       ) : null}
       <div
-        className={`absolute left-1/2 top-1/2 overflow-visible rounded-md bg-white shadow-2xl ${
+        className={`absolute left-1/2 top-1/2 overflow-visible bg-white shadow-2xl ${
           proposal ? "ring-2 ring-rose-400" : "ring-1 ring-neutral-950/10"
         }`}
         style={{
@@ -196,7 +217,12 @@ export function SlidePreview({
           <div className="absolute inset-0 isolate">
             <DndContext onDragEnd={handleDragEnd} sensors={sensors}>
               {threads.map((thread) => (
-                <DraggableSlideThread key={thread.id} thread={thread} maxZIndex={maxZIndex} scale={safeScale} />
+                <DraggableSlideThread
+                  key={thread.id}
+                  thread={thread}
+                  maxZIndex={maxZIndex}
+                  scale={safeScale}
+                />
               ))}
             </DndContext>
           </div>
@@ -227,7 +253,11 @@ export function SlidePreview({
         ) : null}
 
         {!proposal && placedCoords ? (
-          <ThreadComposer coords={placedCoords} scale={safeScale} onSubmit={resetPlacement} />
+          <ThreadComposer
+            coords={placedCoords}
+            scale={safeScale}
+            onSubmit={resetPlacement}
+          />
         ) : null}
       </div>
     </div>
@@ -247,9 +277,11 @@ function DraggableSlideThread({
     return Date.now() - new Date(thread.createdAt).getTime() <= 100;
   }, [thread.createdAt]);
   const [isOpen, setIsOpen] = useState(defaultOpen);
-  const { attributes, isDragging, listeners, setNodeRef, transform } = useDraggable({ id: thread.id });
+  const { attributes, isDragging, listeners, setNodeRef, transform } =
+    useDraggable({ id: thread.id });
 
-  const currentZIndex = isOpen || isDragging ? maxZIndex + 1 : thread.metadata.zIndex;
+  const currentZIndex =
+    isOpen || isDragging ? maxZIndex + 1 : thread.metadata.zIndex;
   const dragX = transform ? transform.x / scale : 0;
   const dragY = transform ? transform.y / scale : 0;
 
@@ -273,7 +305,12 @@ function DraggableSlideThread({
         }}
       >
         <UnscaledPin scale={scale}>
-          <CommentPin userId={thread.comments[0]?.userId} corner="top-left" {...listeners} {...attributes} />
+          <CommentPin
+            userId={thread.comments[0]?.userId}
+            corner="top-left"
+            {...listeners}
+            {...attributes}
+          />
         </UnscaledPin>
       </div>
     </FloatingThread>
@@ -318,9 +355,17 @@ function ThreadComposer({
 // The slide container is scaled with `transform: scale()`, which would shrink
 // or enlarge pins along with the slide. Pins should stay a constant on-screen
 // size, so this wrapper applies the inverse scale.
-function UnscaledPin({ scale, children }: { scale: number; children: ReactNode }) {
+function UnscaledPin({
+  scale,
+  children,
+}: {
+  scale: number;
+  children: ReactNode;
+}) {
   return (
-    <div style={{ transform: `scale(${1 / scale})`, transformOrigin: "top left" }}>
+    <div
+      style={{ transform: `scale(${1 / scale})`, transformOrigin: "top left" }}
+    >
       {children}
     </div>
   );
