@@ -4,12 +4,17 @@
 
 ### `@liveblocks/react`
 
-- Add `useHistoryVersionStorageData()` hook to retrieve the Storage data of a
-  given version as a read-only `LiveObject`.
-- Add `useDeleteHistoryVersion()` hook to permanently delete a version from the
-  room's history.
-- Add `useRestoreToStorageVersion()` hook to restore the room's Storage to a
-  historic version, applied as a single undoable change.
+This release adds version history support for Storage: a version now snapshots
+both the room's Storage and Yjs documents (previously Yjs only).
+
+- Creating a version now also snapshots Storage, not just Yjs.
+- `useHistoryVersions()` lists the room's versions (each has a `vh_xxx` id).
+- `useHistoryVersionStorageData("vh_xxx")` returns that version's Storage as a
+  read-only `LiveObject` so you can visualize or diff it manually.
+- `useRestoreToStorageVersion("vh_xxx")` restores the room's Storage to that
+  version, as a single undoable change.
+- `useDeleteHistoryVersion()` returns `deleteHistoryVersion("vh_xxx")` to
+  permanently delete a version.
 
 ## v3.21.0
 
