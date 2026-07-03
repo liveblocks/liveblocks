@@ -1,6 +1,11 @@
 "use client";
 
-import { LiveList, LiveObject, LiveText } from "@liveblocks/client";
+import {
+  LiveList,
+  LiveObject,
+  LiveText,
+  StorageUpdate,
+} from "@liveblocks/client";
 import {
   ElementNode,
   LexicalNode,
@@ -27,7 +32,11 @@ import type {
   LiveElementShape,
   LiveLineBreakNode,
 } from "../../../liveblocks.config";
-import { JsonObject, TextAttributes } from "@liveblocks/core";
+import {
+  JsonObject,
+  kStorageUpdateSource,
+  TextAttributes,
+} from "@liveblocks/core";
 
 export class LiveblocksCollaborationManager {
   #binding: {
@@ -234,6 +243,28 @@ export class LiveblocksCollaborationManager {
         dirtyNodes,
         normalizedNodes,
       });
+    }
+
+    // Unbind Lexical nodes that have been normalized (deleted or replaced by Lexical).
+    // This removes their mapping from both #binding.reverse (Lexical key → Liveblocks node)
+    // and #binding.forward (Liveblocks node → Lexical node.
+    for (const key of normalizedNodes) {
+      const node_liveblocks = this.#binding.reverse.get(key);
+      if (node_liveblocks === undefined) {
+        continue;
+      }
+
+      this.#binding.reverse.delete(key);
+      const node_lexical = this.#binding.forward.get(node_liveblocks);
+
+      if (node_lexical instanceof Array) {
+        this.#binding.forward.delete(node_liveblocks);
+        continue;
+      }
+
+      if (node_lexical?.getKey() === key) {
+        this.#binding.forward.delete(node_liveblocks);
+      }
     }
   }
 
@@ -487,6 +518,455 @@ export class LiveblocksCollaborationManager {
     }
 
     this.$synchronizeChildrenProps(host_lexical);
+  }
+
+  public $applyRemoteUpdates(updates: readonly StorageUpdate[]) {
+    updates = updates.filter(
+      (update) => update[kStorageUpdateSource]?.origin === "remote"
+    );
+
+    for (const update of updates) {
+      if (update.type === "LiveText") {
+        if (update.updates.length === 0) continue;
+
+        const node_liveblocks = find_liveblocksNode(
+          this.root,
+          (node) =>
+            node.get("kind") === "text" &&
+            (node as LiveTextNode).get("content") === update.node
+        ) as LiveTextNode | null;
+        if (node_liveblocks === null) continue;
+
+        const bound = this.#binding.forward.get(node_liveblocks);
+        if (bound === undefined || !(bound instanceof Array)) {
+          continue;
+        }
+
+        let nodes_lexical = bound.map((node) => node.getLatest());
+        if (
+          nodes_lexical.length === 0 ||
+          nodes_lexical.some((node) => !node.isAttached())
+        ) {
+          continue;
+        }
+
+        if (areTextNodesEqual(node_liveblocks, nodes_lexical)) {
+          continue;
+        }
+
+        for (const change of update.updates) {
+          if (change.type === "insert") {
+            const location = getTextNodeAndOffsetAtCharacterIndex(
+              nodes_lexical,
+              change.index
+            );
+            if (location === null) {
+              continue;
+            }
+
+            const node = location.node;
+            const content = node.getTextContent();
+            node.setTextContent(
+              content.slice(0, location.offset) +
+                change.text +
+                content.slice(location.offset)
+            );
+
+            if (
+              change.attributes !== undefined &&
+              Object.keys(change.attributes).length > 0
+            ) {
+              let format = 0;
+              for (const [key, value] of Object.entries(change.attributes)) {
+                if (value && key in TEXT_TYPE_TO_FORMAT) {
+                  format |=
+                    TEXT_TYPE_TO_FORMAT[
+                      key as keyof typeof TEXT_TYPE_TO_FORMAT
+                    ];
+                }
+              }
+              if (node.getFormat() !== format) {
+                node.setFormat(format);
+              }
+            }
+          } else if (change.type === "delete") {
+            const start = getTextNodeAndOffsetAtCharacterIndex(
+              nodes_lexical,
+              change.index
+            );
+            const end = getTextNodeAndOffsetAtCharacterIndex(
+              nodes_lexical,
+              change.index + change.length
+            );
+            if (start === null || end === null) {
+              continue;
+            }
+
+            if (start.node === end.node) {
+              const content = start.node.getTextContent();
+              start.node.setTextContent(
+                content.slice(0, start.offset) + content.slice(end.offset)
+              );
+            } else {
+              const startContent = start.node.getTextContent();
+              start.node.setTextContent(startContent.slice(0, start.offset));
+
+              for (let i = start.index + 1; i < end.index; i++) {
+                nodes_lexical[i].setTextContent("");
+              }
+
+              const endContent = end.node.getTextContent();
+              end.node.setTextContent(endContent.slice(end.offset));
+            }
+          } else if (change.type === "format") {
+            // Segment reconcile reads full storage state below.
+          }
+
+          nodes_lexical = (
+            this.#binding.forward.get(node_liveblocks) as readonly TextNode[]
+          ).map((node) => node.getLatest());
+
+          if (areTextNodesEqual(node_liveblocks, nodes_lexical)) {
+            continue;
+          }
+
+          const segments = node_liveblocks.get("content").toJSON();
+          const numOfSegments_target =
+            segments.length === 0 ? 1 : segments.length;
+
+          if (nodes_lexical.length !== numOfSegments_target) {
+            // Segment count changed — rebuild all spans from storage.
+            const parent = nodes_lexical[0]?.getParent();
+            if (parent === null || !$isElementNode(parent)) {
+              continue;
+            }
+
+            let insertAt = parent.getChildrenSize();
+            for (let i = parent.getChildrenSize() - 1; i >= 0; i--) {
+              const child = parent.getChildAtIndex(i);
+              if (!$isTextNode(child)) {
+                continue;
+              }
+              if (
+                this.#binding.reverse.get(child.getKey()) === node_liveblocks
+              ) {
+                insertAt = i;
+                child.remove();
+              }
+            }
+
+            const nextNodes =
+              $convertLiveTextNodeToLexicalNode(node_liveblocks);
+            parent.splice(insertAt, 0, nextNodes);
+            this.createBinding(node_liveblocks, nextNodes);
+            nodes_lexical = nextNodes.map((node) => node.getLatest());
+            continue;
+          }
+          // Same span count — patch each nodes_lexical[i] from segments[i].
+          else if (segments.length === 0) {
+            if (nodes_lexical[0].getTextContent() !== "") {
+              nodes_lexical[0].setTextContent("");
+            }
+            if (nodes_lexical[0].getFormat() !== 0) {
+              nodes_lexical[0].setFormat(0);
+            }
+          } else {
+            for (let i = 0; i < segments.length; i++) {
+              const segment = segments[i];
+              const node = nodes_lexical[i];
+              if (node.getTextContent() !== segment[0]) {
+                node.setTextContent(segment[0]);
+              }
+
+              let format = 0;
+              if (segment.length > 1) {
+                for (const [key, value] of Object.entries(segment[1]!)) {
+                  if (value && key in TEXT_TYPE_TO_FORMAT) {
+                    format |=
+                      TEXT_TYPE_TO_FORMAT[
+                        key as keyof typeof TEXT_TYPE_TO_FORMAT
+                      ];
+                  }
+                }
+              }
+              if (node.getFormat() !== format) {
+                node.setFormat(format);
+              }
+            }
+          }
+
+          this.createBinding(
+            node_liveblocks,
+            nodes_lexical.map((node) => node.getLatest())
+          );
+        }
+      } else if (update.type === "LiveList") {
+        if (update.updates.length === 0) {
+          continue;
+        }
+
+        const host_liveblocks = find_liveblocksNode(this.root, (node) => {
+          if (node.get("kind") !== "root" && node.get("kind") !== "element") {
+            return false;
+          }
+          return (
+            (node as LiveObject<LiveRootShape | LiveElementShape>).get(
+              "children"
+            ) === update.node
+          );
+        }) as LiveObject<LiveRootShape | LiveElementShape> | null;
+
+        if (host_liveblocks === null) {
+          continue;
+        }
+
+        let _host_lexical = this.#binding.forward.get(
+          host_liveblocks.get("kind") === "root" ? this.root : host_liveblocks
+        );
+        if (
+          _host_lexical === undefined ||
+          _host_lexical instanceof Array ||
+          !$isElementNode(_host_lexical)
+        ) {
+          continue;
+        }
+        const host_lexical: ElementNode = _host_lexical.getLatest();
+
+        for (const change of update.updates) {
+          if (change.type === "insert") {
+            if (!(change.item instanceof LiveObject)) {
+              continue;
+            }
+            const child = change.item as LiveChildNode;
+            if (this.#binding.forward.get(child) !== undefined) {
+              continue;
+            }
+
+            if (
+              update.node.get(change.index) === child &&
+              change.index >=
+                this.$normalizeLexicalChildren(host_lexical).length
+            ) {
+              const slots = this.$normalizeLexicalChildren(host_lexical);
+              const slot = slots[change.index];
+              if (slot !== undefined) {
+                if (slot instanceof Array) {
+                  for (const node of slot) {
+                    const storage = this.#binding.reverse.get(node.getKey());
+                    if (storage !== undefined) {
+                      this.removeBindings(storage);
+                    }
+                  }
+                } else {
+                  const storage = this.#binding.reverse.get(slot.getKey());
+                  if (storage !== undefined) {
+                    this.removeBindings(storage);
+                  }
+                }
+              }
+              let deleteAt = 0;
+              for (let i = 0; i < change.index && i < slots.length; i++) {
+                const slotAtI = slots[i];
+                deleteAt += slotAtI instanceof Array ? slotAtI.length : 1;
+              }
+              const deleteSize =
+                slot === undefined
+                  ? 0
+                  : slot instanceof Array
+                    ? slot.length
+                    : 1;
+              host_lexical.splice(deleteAt, deleteSize, []);
+            }
+
+            const existing = this.#binding.forward.get(child);
+            if (existing !== undefined) {
+              this.removeBindings(child);
+            }
+
+            const kind = child.get("kind");
+            let nodes_lexical: LexicalNode[];
+            if (kind === "text") {
+              nodes_lexical = $convertLiveTextNodeToLexicalNode(
+                child as LiveTextNode
+              );
+            } else if (kind === "linebreak") {
+              nodes_lexical = [$createLineBreakNode()];
+            } else if (kind === "element") {
+              nodes_lexical = [
+                $convertLiveElementNodeToLexicalNode(child as LiveElementNode),
+              ];
+            } else {
+              continue;
+            }
+
+            const insertSlots = this.$normalizeLexicalChildren(host_lexical);
+            let insertAt = 0;
+            for (let i = 0; i < change.index && i < insertSlots.length; i++) {
+              const slotAtI = insertSlots[i];
+              insertAt += slotAtI instanceof Array ? slotAtI.length : 1;
+            }
+            host_lexical.splice(insertAt, 0, nodes_lexical);
+
+            if (kind === "text") {
+              this.createBinding(
+                child as LiveTextNode,
+                nodes_lexical as TextNode[]
+              );
+            } else if (kind === "element") {
+              this.createBinding(
+                child as LiveElementNode,
+                nodes_lexical[0] as ElementNode
+              );
+            } else {
+              this.#binding.forward.set(child, nodes_lexical[0]);
+              this.#binding.reverse.set(nodes_lexical[0].getKey(), child);
+            }
+          } else if (change.type === "set") {
+            if (!(change.item instanceof LiveObject)) {
+              continue;
+            }
+            const child = change.item as LiveChildNode;
+            if (this.#binding.forward.get(child) !== undefined) {
+              continue;
+            }
+
+            const slots = this.$normalizeLexicalChildren(host_lexical);
+            const slot = slots[change.index];
+            if (slot !== undefined) {
+              if (slot instanceof Array) {
+                for (const node of slot) {
+                  const storage = this.#binding.reverse.get(node.getKey());
+                  if (storage !== undefined) {
+                    this.removeBindings(storage);
+                  }
+                }
+              } else {
+                const storage = this.#binding.reverse.get(slot.getKey());
+                if (storage !== undefined) {
+                  this.removeBindings(storage);
+                }
+              }
+            }
+            let deleteAt = 0;
+            for (let i = 0; i < change.index && i < slots.length; i++) {
+              const slotAtI = slots[i];
+              deleteAt += slotAtI instanceof Array ? slotAtI.length : 1;
+            }
+            const deleteSize =
+              slot === undefined ? 0 : slot instanceof Array ? slot.length : 1;
+            host_lexical.splice(deleteAt, deleteSize, []);
+
+            const existing = this.#binding.forward.get(child);
+            if (existing !== undefined) {
+              this.removeBindings(child);
+            }
+
+            const kind = child.get("kind");
+            let nodes_lexical: LexicalNode[];
+            if (kind === "text") {
+              nodes_lexical = $convertLiveTextNodeToLexicalNode(
+                child as LiveTextNode
+              );
+            } else if (kind === "linebreak") {
+              nodes_lexical = [$createLineBreakNode()];
+            } else if (kind === "element") {
+              nodes_lexical = [
+                $convertLiveElementNodeToLexicalNode(child as LiveElementNode),
+              ];
+            } else {
+              continue;
+            }
+
+            const insertSlots = this.$normalizeLexicalChildren(host_lexical);
+            let insertAt = 0;
+            for (let i = 0; i < change.index && i < insertSlots.length; i++) {
+              const slotAtI = insertSlots[i];
+              insertAt += slotAtI instanceof Array ? slotAtI.length : 1;
+            }
+            host_lexical.splice(insertAt, 0, nodes_lexical);
+
+            if (kind === "text") {
+              this.createBinding(
+                child as LiveTextNode,
+                nodes_lexical as TextNode[]
+              );
+            } else if (kind === "element") {
+              this.createBinding(
+                child as LiveElementNode,
+                nodes_lexical[0] as ElementNode
+              );
+            } else {
+              this.#binding.forward.set(child, nodes_lexical[0]);
+              this.#binding.reverse.set(nodes_lexical[0].getKey(), child);
+            }
+          } else if (change.type === "delete") {
+            if (!(change.deletedItem instanceof LiveObject)) {
+              continue;
+            }
+
+            const child = change.deletedItem as LiveChildNode;
+            const mapped = this.#binding.forward.get(child);
+            if (mapped !== undefined && !(mapped instanceof Array)) {
+              this.removeBindings(child);
+              mapped.remove();
+              continue;
+            }
+
+            if (mapped !== undefined) {
+              this.removeBindings(child);
+            }
+
+            const slots = this.$normalizeLexicalChildren(host_lexical);
+            let deleteAt = 0;
+            for (let i = 0; i < change.index && i < slots.length; i++) {
+              const slotAtI = slots[i];
+              deleteAt += slotAtI instanceof Array ? slotAtI.length : 1;
+            }
+            const slot = slots[change.index];
+            const deleteSize =
+              slot === undefined
+                ? 0
+                : slot instanceof Array
+                  ? slot.length
+                  : 1;
+            host_lexical.splice(deleteAt, deleteSize, []);
+          } else if (change.type === "move") {
+            if (!(change.item instanceof LiveObject)) {
+              continue;
+            }
+            const child = change.item as LiveChildNode;
+            const mapped = this.#binding.forward.get(child);
+            if (mapped === undefined) {
+              continue;
+            }
+
+            const slots = this.$normalizeLexicalChildren(host_lexical);
+            let prevStart = 0;
+            for (let i = 0; i < change.previousIndex && i < slots.length; i++) {
+              const slotAtI = slots[i];
+              prevStart += slotAtI instanceof Array ? slotAtI.length : 1;
+            }
+            const prevSlot = slots[change.previousIndex];
+            const prevSize =
+              prevSlot === undefined
+                ? 0
+                : prevSlot instanceof Array
+                  ? prevSlot.length
+                  : 1;
+            host_lexical.splice(prevStart, prevSize, []);
+
+            const nodes = mapped instanceof Array ? [...mapped] : [mapped];
+            const slotsAfter = this.$normalizeLexicalChildren(host_lexical);
+            let insertAt = 0;
+            for (let i = 0; i < change.index && i < slotsAfter.length; i++) {
+              const slotAtI = slotsAfter[i];
+              insertAt += slotAtI instanceof Array ? slotAtI.length : 1;
+            }
+            host_lexical.splice(insertAt, 0, nodes);
+          }
+        }
+      }
+    }
   }
 
   private $synchronizeChildrenProps(node: ElementNode): void {
@@ -1038,6 +1518,45 @@ function isEqual(
   return true;
 }
 
+function getTextNodeAndOffsetAtCharacterIndex(
+  nodes: readonly TextNode[],
+  index: number
+): {
+  node: TextNode;
+  index: number;
+  offset: number;
+} | null {
+  if (index < 0) {
+    return null;
+  }
+
+  let offset = 0;
+  for (let textNodeIndex = 0; textNodeIndex < nodes.length; textNodeIndex++) {
+    const textNode = nodes[textNodeIndex];
+    const length = textNode.getTextContent().length;
+    if (index <= offset + length) {
+      return {
+        node: textNode,
+        index: textNodeIndex,
+        offset: index - offset,
+      };
+    }
+    offset += length;
+  }
+
+  if (nodes.length > 0 && index === offset) {
+    const lastIndex = nodes.length - 1;
+    const lastNode = nodes[lastIndex];
+    return {
+      node: lastNode,
+      index: lastIndex,
+      offset: lastNode.getTextContent().length,
+    };
+  }
+
+  return null;
+}
+
 /**
  * Compares a coalesced LiveText node against one or more sibling Lexical TextNodes.
  *
@@ -1543,6 +2062,32 @@ function $convertLiveTextNodeToLexicalNode(node: LiveTextNode): TextNode[] {
     }
     return nodes;
   }
+}
+
+export function find_liveblocksNode(
+  node: LiveStorageNode,
+  predicate: (node: LiveStorageNode) => boolean
+): LiveStorageNode | null {
+  if (predicate(node)) {
+    return node;
+  }
+
+  const kind = node.get("kind");
+  if (kind === "root" || kind === "element") {
+    for (const child of (
+      node as LiveObject<{
+        kind: "root" | "element";
+        children: LiveList<LiveChildNode>;
+      }>
+    ).get("children")) {
+      const found = find_liveblocksNode(child, predicate);
+      if (found !== null) {
+        return found;
+      }
+    }
+  }
+
+  return null;
 }
 
 const OMIT_FROM_LEXICAL_NODE_PROPS = new Set([

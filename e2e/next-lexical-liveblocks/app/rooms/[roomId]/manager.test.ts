@@ -3,6 +3,7 @@ import {
   LiveblocksCollaborationManager,
   $convertLiveElementNodeToLexicalNode,
   createStorageNodeFromLexicalNode,
+  find_liveblocksNode,
 } from "./manager";
 import {
   $createLineBreakNode,
@@ -21,7 +22,12 @@ import {
   type LexicalNode,
 } from "lexical";
 import { $dfs } from "@lexical/utils";
-import { HeadingNode, QuoteNode, $createHeadingNode, $isHeadingNode } from "@lexical/rich-text";
+import {
+  HeadingNode,
+  QuoteNode,
+  $createHeadingNode,
+  $isHeadingNode,
+} from "@lexical/rich-text";
 import {
   LiveChildNode,
   LiveElementNode,
@@ -29,7 +35,12 @@ import {
   LiveStorageNode,
   LiveTextNode,
 } from "../../../liveblocks.config";
-import { LiveList, LiveObject, LiveText } from "@liveblocks/client";
+import { LiveList, LiveObject, LiveText, type Room } from "@liveblocks/client";
+import { kStorageUpdateSource, type StorageUpdate } from "@liveblocks/core";
+import {
+  createSerializedRoot,
+  prepareIsolatedStorageTest,
+} from "../../../../../packages/liveblocks-core/src/__tests__/_MockWebSocketServer.setup";
 
 describe("LiveblocksCollaborationManager", () => {
   it("binds root, paragraph, and text", () => {
@@ -914,9 +925,9 @@ describe("LiveblocksCollaborationManager", () => {
 
         expect(list.length).toBe(1);
         expect(
-          (
-            list.get(0)!.get("children").get(0)! as LiveTextNode
-          ).get("content").toJSON()
+          (list.get(0)!.get("children").get(0)! as LiveTextNode)
+            .get("content")
+            .toJSON()
         ).toEqual([["A"]]);
       });
 
@@ -985,9 +996,9 @@ describe("LiveblocksCollaborationManager", () => {
 
         expect(list.length).toBe(1);
         expect(
-          (
-            list.get(0)!.get("children").get(0)! as LiveTextNode
-          ).get("content").toJSON()
+          (list.get(0)!.get("children").get(0)! as LiveTextNode)
+            .get("content")
+            .toJSON()
         ).toEqual([["Keep"]]);
       });
 
@@ -1144,7 +1155,9 @@ describe("LiveblocksCollaborationManager", () => {
             (nestedList.get(0)! as LiveElementNode)
               .get("children")
               .get(0)! as LiveTextNode
-          ).get("content").toJSON()
+          )
+            .get("content")
+            .toJSON()
         ).toEqual([["Keep"]]);
       });
 
@@ -2436,6 +2449,1063 @@ describe("LiveblocksCollaborationManager", () => {
         expect(list.length).toBe(1);
         expect(list.get(0)!.get("type")).toBe("heading");
         expect(list.get(0)!.get("props")).toEqual({ tag: "h1" });
+      });
+    });
+
+    it("syncs a transient insert followed by backspace without leaving stale bindings", () => {
+      const document: LiveRootNode = new LiveObject({
+        kind: "root",
+        type: "root",
+        version: 1,
+        children: new LiveList([
+          new LiveObject({
+            kind: "element",
+            type: "paragraph",
+            version: 1,
+            children: new LiveList([
+              new LiveObject({
+                kind: "text",
+                type: "text",
+                version: 1,
+                content: new LiveText("Hello world !"),
+              }),
+            ]),
+          }),
+        ]),
+      });
+      const { editor, manager } = createEditor(document);
+      const text_liveblocks = document
+        .get("children")
+        .get(0)!
+        .get("children")
+        .get(0)! as LiveTextNode;
+
+      let dirtyElementKeys = new Set<string>();
+      let dirtyLeafKeys = new Set<string>();
+      let normalizedNodeKeys = new Set<string>();
+
+      const unregister = editor.registerUpdateListener((update) => {
+        dirtyElementKeys = new Set(update.dirtyElements.keys());
+        dirtyLeafKeys = new Set(update.dirtyLeaves);
+        normalizedNodeKeys = new Set(update.normalizedNodes);
+      });
+
+      editor.update(
+        () => {
+          const textNode = (
+            $getRoot().getFirstChild() as ParagraphNode
+          ).getFirstChild() as TextNode;
+          if (textNode == null) {
+            return;
+          }
+          textNode.insertBefore($createTextNode("H"));
+        },
+        { discrete: true }
+      );
+      unregister();
+
+      editor.read(() => {
+        manager.$applyLocalUpdates({
+          dirtyElements: dirtyElementKeys,
+          dirtyLeaves: dirtyLeafKeys,
+          normalizedNodes: normalizedNodeKeys,
+        });
+      });
+
+      let dirtyElementKeys2 = new Set<string>();
+      let dirtyLeafKeys2 = new Set<string>();
+      let normalizedNodeKeys2 = new Set<string>();
+
+      const unregister2 = editor.registerUpdateListener((update) => {
+        dirtyElementKeys2 = new Set(update.dirtyElements.keys());
+        dirtyLeafKeys2 = new Set(update.dirtyLeaves);
+        normalizedNodeKeys2 = new Set(update.normalizedNodes);
+      });
+
+      editor.update(
+        () => {
+          const paragraph = $getRoot().getFirstChild() as ParagraphNode;
+          for (const child of paragraph?.getChildren() ?? []) {
+            if (child.getTextContent() === "H") {
+              child.remove();
+            }
+          }
+        },
+        { discrete: true }
+      );
+      unregister2();
+
+      editor.read(() => {
+        manager.$applyLocalUpdates({
+          dirtyElements: dirtyElementKeys2,
+          dirtyLeaves: dirtyLeafKeys2,
+          normalizedNodes: normalizedNodeKeys2,
+        });
+
+        for (const key of normalizedNodeKeys2) {
+          expect(manager.binding.reverse.has(key)).toBe(false);
+        }
+      });
+
+      expect(text_liveblocks.get("content").toJSON()).toEqual([
+        ["Hello world !"],
+      ]);
+    });
+  });
+
+  describe("$applyRemoteUpdates", () => {
+    describe("LiveText", () => {
+    it("applies remote LiveText insert updates", async () => {
+      const { room, root } = (await prepareIsolatedStorageTest(
+        [createSerializedRoot()],
+        0
+      )) as unknown as {
+        room: Room;
+        root: LiveObject<{ document?: LiveRootNode }>;
+      };
+      room.batch(() => {
+        root.set(
+          "document",
+          new LiveObject({
+            kind: "root",
+            type: "root",
+            version: 1,
+            children: new LiveList<LiveElementNode>([
+              new LiveObject({
+                kind: "element",
+                type: "paragraph",
+                version: 1,
+                children: new LiveList<LiveTextNode>([
+                  new LiveObject({
+                    kind: "text",
+                    type: "text",
+                    version: 1,
+                    content: new LiveText("Hello world"),
+                  }),
+                ]),
+              }),
+            ]),
+          })
+        );
+      });
+
+      const document = root.get("document") as LiveRootNode;
+      const { editor, manager } = createEditor(document);
+      const text_liveblocks = find_liveblocksNode(
+        document,
+        (node) => node.get("kind") === "text"
+      ) as LiveTextNode;
+      const liveText = text_liveblocks.get("content");
+
+      const updates: StorageUpdate[] = [];
+      const unregister = room.events.storageBatch.subscribe((batch) => {
+        for (const update of batch) {
+          if (update.type === "LiveText") {
+            updates.push(update);
+          }
+        }
+      });
+
+      room.batch(() => {
+        liveText.insert(5, "!");
+      });
+      unregister();
+
+      editor.update(
+        () => {
+          manager.$applyRemoteUpdates(
+            updates.map((update) => ({
+              ...update,
+              [kStorageUpdateSource]: { origin: "remote" },
+            }))
+          );
+        },
+        { discrete: true }
+      );
+
+      editor.read(() => {
+        const text_lexical = $dfs().find(({ node }) => $isTextNode(node))!
+          .node as TextNode;
+        expect(text_lexical.getTextContent()).toBe("Hello! world");
+      });
+    });
+
+    it("applies remote LiveText delete updates", async () => {
+      const { room, root } = (await prepareIsolatedStorageTest(
+        [createSerializedRoot()],
+        0
+      )) as unknown as {
+        room: Room;
+        root: LiveObject<{ document?: LiveRootNode }>;
+      };
+      room.batch(() => {
+        root.set(
+          "document",
+          new LiveObject({
+            kind: "root",
+            type: "root",
+            version: 1,
+            children: new LiveList<LiveElementNode>([
+              new LiveObject({
+                kind: "element",
+                type: "paragraph",
+                version: 1,
+                children: new LiveList<LiveTextNode>([
+                  new LiveObject({
+                    kind: "text",
+                    type: "text",
+                    version: 1,
+                    content: new LiveText("Hello world"),
+                  }),
+                ]),
+              }),
+            ]),
+          })
+        );
+      });
+
+      const document = root.get("document") as LiveRootNode;
+      const { editor, manager } = createEditor(document);
+      const text_liveblocks = find_liveblocksNode(
+        document,
+        (node) => node.get("kind") === "text"
+      ) as LiveTextNode;
+      const text = text_liveblocks.get("content");
+
+      const updates: StorageUpdate[] = [];
+      const unregister = room.events.storageBatch.subscribe((batch) => {
+        for (const update of batch) {
+          if (update.type === "LiveText") {
+            updates.push(update);
+          }
+        }
+      });
+
+      room.batch(() => {
+        text.delete(5, 6);
+      });
+      unregister();
+
+      editor.update(
+        () => {
+          manager.$applyRemoteUpdates(
+            updates.map((update) => ({
+              ...update,
+              [kStorageUpdateSource]: { origin: "remote" },
+            }))
+          );
+        },
+        { discrete: true }
+      );
+
+      editor.read(() => {
+        const text_lexical = $dfs().find(({ node }) => $isTextNode(node))!
+          .node as TextNode;
+        expect(text_lexical.getTextContent()).toBe("Hello");
+      });
+    });
+
+    it("applies remote LiveText format updates that split segments", async () => {
+      const { room, root } = (await prepareIsolatedStorageTest(
+        [createSerializedRoot()],
+        0
+      )) as unknown as {
+        room: Room;
+        root: LiveObject<{ document?: LiveRootNode }>;
+      };
+      room.batch(() => {
+        root.set(
+          "document",
+          new LiveObject({
+            kind: "root",
+            type: "root",
+            version: 1,
+            children: new LiveList<LiveElementNode>([
+              new LiveObject({
+                kind: "element",
+                type: "paragraph",
+                version: 1,
+                children: new LiveList<LiveTextNode>([
+                  new LiveObject({
+                    kind: "text",
+                    type: "text",
+                    version: 1,
+                    content: new LiveText("Hello world"),
+                  }),
+                ]),
+              }),
+            ]),
+          })
+        );
+      });
+
+      const document = root.get("document") as LiveRootNode;
+      const { editor, manager } = createEditor(document);
+      const text_liveblocks = find_liveblocksNode(
+        document,
+        (node) => node.get("kind") === "text"
+      ) as LiveTextNode;
+      const text = text_liveblocks.get("content");
+
+      const updates: StorageUpdate[] = [];
+      const unregister = room.events.storageBatch.subscribe((batch) => {
+        for (const update of batch) {
+          if (update.type === "LiveText") {
+            updates.push(update);
+          }
+        }
+      });
+
+      room.batch(() => {
+        text.format(0, 5, { bold: true });
+      });
+      unregister();
+
+      editor.update(
+        () => {
+          manager.$applyRemoteUpdates(
+            updates.map((update) => ({
+              ...update,
+              [kStorageUpdateSource]: { origin: "remote" },
+            }))
+          );
+        },
+        { discrete: true }
+      );
+
+      editor.read(() => {
+        const paragraph = $dfs().find(({ node }) => $isParagraphNode(node))!
+          .node as ParagraphNode;
+        const textNodes = $dfs(paragraph)
+          .map(({ node }) => node)
+          .filter($isTextNode) as TextNode[];
+
+        expect(textNodes).toHaveLength(2);
+        expect(textNodes[0].getTextContent()).toBe("Hello");
+        expect(textNodes[0].getFormat() & 1).not.toBe(0);
+        expect(textNodes[1].getTextContent()).toBe(" world");
+      });
+    });
+
+    it("applies multiple remote LiveText changes in one update", async () => {
+      const { room, root } = (await prepareIsolatedStorageTest(
+        [createSerializedRoot()],
+        0
+      )) as unknown as {
+        room: Room;
+        root: LiveObject<{ document?: LiveRootNode }>;
+      };
+      room.batch(() => {
+        root.set(
+          "document",
+          new LiveObject({
+            kind: "root",
+            type: "root",
+            version: 1,
+            children: new LiveList<LiveElementNode>([
+              new LiveObject({
+                kind: "element",
+                type: "paragraph",
+                version: 1,
+                children: new LiveList<LiveTextNode>([
+                  new LiveObject({
+                    kind: "text",
+                    type: "text",
+                    version: 1,
+                    content: new LiveText("Hello world"),
+                  }),
+                ]),
+              }),
+            ]),
+          })
+        );
+      });
+
+      const document = root.get("document") as LiveRootNode;
+      const { editor, manager } = createEditor(document);
+      const text_liveblocks = find_liveblocksNode(
+        document,
+        (node) => node.get("kind") === "text"
+      ) as LiveTextNode;
+      const text = text_liveblocks.get("content");
+
+      const updates: StorageUpdate[] = [];
+      const unregister = room.events.storageBatch.subscribe((batch) => {
+        for (const update of batch) {
+          if (update.type === "LiveText") {
+            updates.push(update);
+          }
+        }
+      });
+
+      room.batch(() => {
+        text.delete(5, 6);
+        text.insert(5, "!");
+      });
+      unregister();
+
+      editor.update(
+        () => {
+          manager.$applyRemoteUpdates(
+            updates.map((update) => ({
+              ...update,
+              [kStorageUpdateSource]: { origin: "remote" },
+            }))
+          );
+        },
+        { discrete: true }
+      );
+
+      editor.read(() => {
+        const text_lexical = $dfs().find(({ node }) => $isTextNode(node))!
+          .node as TextNode;
+        expect(text_lexical.getTextContent()).toBe("Hello!");
+      });
+    });
+
+    it("skips idempotent remote LiveText updates", async () => {
+      const { room, root } = (await prepareIsolatedStorageTest(
+        [createSerializedRoot()],
+        0
+      )) as unknown as {
+        room: Room;
+        root: LiveObject<{ document?: LiveRootNode }>;
+      };
+      room.batch(() => {
+        root.set(
+          "document",
+          new LiveObject({
+            kind: "root",
+            type: "root",
+            version: 1,
+            children: new LiveList<LiveElementNode>([
+              new LiveObject({
+                kind: "element",
+                type: "paragraph",
+                version: 1,
+                children: new LiveList<LiveTextNode>([
+                  new LiveObject({
+                    kind: "text",
+                    type: "text",
+                    version: 1,
+                    content: new LiveText("Stable"),
+                  }),
+                ]),
+              }),
+            ]),
+          })
+        );
+      });
+
+      const document = root.get("document") as LiveRootNode;
+      const { editor, manager } = createEditor(document);
+      const text_liveblocks = find_liveblocksNode(
+        document,
+        (node) => node.get("kind") === "text"
+      ) as LiveTextNode;
+      const text = text_liveblocks.get("content");
+
+      const storageUpdates: StorageUpdate[] = [];
+      const unregister = room.events.storageBatch.subscribe((updates) => {
+        for (const update of updates) {
+          if (update.type === "LiveText") {
+            storageUpdates.push(update);
+          }
+        }
+      });
+
+      room.batch(() => {
+        text.insert(6, "!");
+      });
+      unregister();
+
+      const remoteUpdates = storageUpdates.map((update) => ({
+        ...update,
+        [kStorageUpdateSource]: { origin: "remote" as const },
+      }));
+
+      editor.update(
+        () => {
+          manager.$applyRemoteUpdates(remoteUpdates);
+        },
+        { discrete: true }
+      );
+
+      editor.update(
+        () => {
+          manager.$applyRemoteUpdates(remoteUpdates);
+        },
+        { discrete: true }
+      );
+
+      editor.read(() => {
+        const text_lexical = $dfs().find(({ node }) => $isTextNode(node))!
+          .node as TextNode;
+        expect(text_lexical.getTextContent()).toBe("Stable!");
+      });
+    });
+
+    it("ignores local-origin LiveText updates", async () => {
+      const { room, root } = (await prepareIsolatedStorageTest(
+        [createSerializedRoot()],
+        0
+      )) as unknown as {
+        room: Room;
+        root: LiveObject<{ document?: LiveRootNode }>;
+      };
+      room.batch(() => {
+        root.set(
+          "document",
+          new LiveObject({
+            kind: "root",
+            type: "root",
+            version: 1,
+            children: new LiveList<LiveElementNode>([
+              new LiveObject({
+                kind: "element",
+                type: "paragraph",
+                version: 1,
+                children: new LiveList<LiveTextNode>([
+                  new LiveObject({
+                    kind: "text",
+                    type: "text",
+                    version: 1,
+                    content: new LiveText("Hello world"),
+                  }),
+                ]),
+              }),
+            ]),
+          })
+        );
+      });
+
+      const document = root.get("document") as LiveRootNode;
+      const { editor, manager } = createEditor(document);
+      const text_liveblocks = find_liveblocksNode(
+        document,
+        (node) => node.get("kind") === "text"
+      ) as LiveTextNode;
+      const text = text_liveblocks.get("content");
+
+      const storageUpdates: StorageUpdate[] = [];
+      const unregister = room.events.storageBatch.subscribe((updates) => {
+        for (const update of updates) {
+          if (update.type === "LiveText") {
+            storageUpdates.push(update);
+          }
+        }
+      });
+
+      room.batch(() => {
+        text.insert(5, "!");
+      });
+      unregister();
+
+      editor.update(
+        () => {
+          manager.$applyRemoteUpdates(storageUpdates);
+        },
+        { discrete: true }
+      );
+
+      editor.read(() => {
+        const text_lexical = $dfs().find(({ node }) => $isTextNode(node))!
+          .node as TextNode;
+        expect(text_lexical.getTextContent()).toBe("Hello world");
+      });
+    });
+    });
+
+    describe("LiveList", () => {
+    it("applies remote LiveList insert updates", async () => {
+      const { room, root } = (await prepareIsolatedStorageTest(
+        [createSerializedRoot()],
+        0
+      )) as unknown as {
+        room: Room;
+        root: LiveObject<{ document?: LiveRootNode }>;
+      };
+      room.batch(() => {
+        root.set(
+          "document",
+          new LiveObject({
+            kind: "root",
+            type: "root",
+            version: 1,
+            children: new LiveList<LiveElementNode>([
+              new LiveObject({
+                kind: "element",
+                type: "paragraph",
+                version: 1,
+                children: new LiveList<LiveTextNode>([
+                  new LiveObject({
+                    kind: "text",
+                    type: "text",
+                    version: 1,
+                    content: new LiveText("A"),
+                  }),
+                ]),
+              }),
+            ]),
+          })
+        );
+      });
+
+      const document = root.get("document") as LiveRootNode;
+      const { editor, manager } = createEditor(document);
+      const list = document.get("children");
+      const paragraph = new LiveObject({
+        kind: "element",
+        type: "paragraph",
+        version: 1,
+        children: new LiveList<LiveTextNode>([
+          new LiveObject({
+            kind: "text",
+            type: "text",
+            version: 1,
+            content: new LiveText("B"),
+          }),
+        ]),
+      }) as LiveElementNode;
+
+      const updates: StorageUpdate[] = [];
+      const unregister = room.events.storageBatch.subscribe((batch) => {
+        for (const update of batch) {
+          if (update.type === "LiveList") {
+            updates.push(update);
+          }
+        }
+      });
+
+      room.batch(() => {
+        list.insert(paragraph, 1);
+      });
+      unregister();
+
+      editor.update(
+        () => {
+          manager.$applyRemoteUpdates(
+            updates.map((update) => ({
+              ...update,
+              [kStorageUpdateSource]: { origin: "remote" },
+            }))
+          );
+        },
+        { discrete: true }
+      );
+
+      editor.read(() => {
+        const text = $dfs()
+          .filter(({ node }) => $isTextNode(node))
+          .map(({ node }) => (node as TextNode).getTextContent())
+          .join("");
+        expect(text).toBe("AB");
+        expect($getRoot().getChildren()).toHaveLength(2);
+      });
+    });
+
+    it("applies remote LiveList delete updates", async () => {
+      const { room, root } = (await prepareIsolatedStorageTest(
+        [createSerializedRoot()],
+        0
+      )) as unknown as {
+        room: Room;
+        root: LiveObject<{ document?: LiveRootNode }>;
+      };
+      room.batch(() => {
+        root.set(
+          "document",
+          new LiveObject({
+            kind: "root",
+            type: "root",
+            version: 1,
+            children: new LiveList<LiveElementNode>([
+              new LiveObject({
+                kind: "element",
+                type: "paragraph",
+                version: 1,
+                children: new LiveList<LiveTextNode>([
+                  new LiveObject({
+                    kind: "text",
+                    type: "text",
+                    version: 1,
+                    content: new LiveText("A"),
+                  }),
+                ]),
+              }),
+              new LiveObject({
+                kind: "element",
+                type: "paragraph",
+                version: 1,
+                children: new LiveList<LiveTextNode>([
+                  new LiveObject({
+                    kind: "text",
+                    type: "text",
+                    version: 1,
+                    content: new LiveText("B"),
+                  }),
+                ]),
+              }),
+            ]),
+          })
+        );
+      });
+
+      const document = root.get("document") as LiveRootNode;
+      const { editor, manager } = createEditor(document);
+      const list = document.get("children");
+
+      const updates: StorageUpdate[] = [];
+      const unregister = room.events.storageBatch.subscribe((batch) => {
+        for (const update of batch) {
+          if (update.type === "LiveList") {
+            updates.push(update);
+          }
+        }
+      });
+
+      room.batch(() => {
+        list.delete(1);
+      });
+      unregister();
+
+      editor.update(
+        () => {
+          manager.$applyRemoteUpdates(
+            updates.map((update) => ({
+              ...update,
+              [kStorageUpdateSource]: { origin: "remote" },
+            }))
+          );
+        },
+        { discrete: true }
+      );
+
+      editor.read(() => {
+        const text = $dfs()
+          .filter(({ node }) => $isTextNode(node))
+          .map(({ node }) => (node as TextNode).getTextContent())
+          .join("");
+        expect(text).toBe("A");
+        expect($getRoot().getChildren()).toHaveLength(1);
+      });
+    });
+
+    it("applies remote LiveList move updates", async () => {
+      const { room, root } = (await prepareIsolatedStorageTest(
+        [createSerializedRoot()],
+        0
+      )) as unknown as {
+        room: Room;
+        root: LiveObject<{ document?: LiveRootNode }>;
+      };
+      room.batch(() => {
+        root.set(
+          "document",
+          new LiveObject({
+            kind: "root",
+            type: "root",
+            version: 1,
+            children: new LiveList<LiveElementNode>([
+              new LiveObject({
+                kind: "element",
+                type: "paragraph",
+                version: 1,
+                children: new LiveList<LiveTextNode>([
+                  new LiveObject({
+                    kind: "text",
+                    type: "text",
+                    version: 1,
+                    content: new LiveText("A"),
+                  }),
+                ]),
+              }),
+              new LiveObject({
+                kind: "element",
+                type: "paragraph",
+                version: 1,
+                children: new LiveList<LiveTextNode>([
+                  new LiveObject({
+                    kind: "text",
+                    type: "text",
+                    version: 1,
+                    content: new LiveText("B"),
+                  }),
+                ]),
+              }),
+              new LiveObject({
+                kind: "element",
+                type: "paragraph",
+                version: 1,
+                children: new LiveList<LiveTextNode>([
+                  new LiveObject({
+                    kind: "text",
+                    type: "text",
+                    version: 1,
+                    content: new LiveText("C"),
+                  }),
+                ]),
+              }),
+            ]),
+          })
+        );
+      });
+
+      const document = root.get("document") as LiveRootNode;
+      const { editor, manager } = createEditor(document);
+      const list = document.get("children");
+
+      const updates: StorageUpdate[] = [];
+      const unregister = room.events.storageBatch.subscribe((batch) => {
+        for (const update of batch) {
+          if (update.type === "LiveList") {
+            updates.push(update);
+          }
+        }
+      });
+
+      room.batch(() => {
+        list.move(0, 2);
+      });
+      unregister();
+
+      editor.update(
+        () => {
+          manager.$applyRemoteUpdates(
+            updates.map((update) => ({
+              ...update,
+              [kStorageUpdateSource]: { origin: "remote" },
+            }))
+          );
+        },
+        { discrete: true }
+      );
+
+      editor.read(() => {
+        const text = $dfs()
+          .filter(({ node }) => $isTextNode(node))
+          .map(({ node }) => (node as TextNode).getTextContent())
+          .join("");
+        expect(text).toBe("BCA");
+      });
+    });
+
+    it("applies remote LiveList set updates", async () => {
+      const { room, root } = (await prepareIsolatedStorageTest(
+        [createSerializedRoot()],
+        0
+      )) as unknown as {
+        room: Room;
+        root: LiveObject<{ document?: LiveRootNode }>;
+      };
+      room.batch(() => {
+        root.set(
+          "document",
+          new LiveObject({
+            kind: "root",
+            type: "root",
+            version: 1,
+            children: new LiveList<LiveElementNode>([
+              new LiveObject({
+                kind: "element",
+                type: "paragraph",
+                version: 1,
+                children: new LiveList<LiveTextNode>([
+                  new LiveObject({
+                    kind: "text",
+                    type: "text",
+                    version: 1,
+                    content: new LiveText("Before"),
+                  }),
+                ]),
+              }),
+            ]),
+          })
+        );
+      });
+
+      const document = root.get("document") as LiveRootNode;
+      const { editor, manager } = createEditor(document);
+      const list = document.get("children");
+      const replacement = new LiveObject({
+        kind: "element",
+        type: "paragraph",
+        version: 1,
+        children: new LiveList<LiveTextNode>([
+          new LiveObject({
+            kind: "text",
+            type: "text",
+            version: 1,
+            content: new LiveText("After"),
+          }),
+        ]),
+      }) as LiveElementNode;
+
+      const updates: StorageUpdate[] = [];
+      const unregister = room.events.storageBatch.subscribe((batch) => {
+        for (const update of batch) {
+          if (update.type === "LiveList") {
+            updates.push(update);
+          }
+        }
+      });
+
+      room.batch(() => {
+        list.set(0, replacement);
+      });
+      unregister();
+
+      editor.update(
+        () => {
+          manager.$applyRemoteUpdates(
+            updates.map((update) => ({
+              ...update,
+              [kStorageUpdateSource]: { origin: "remote" },
+            }))
+          );
+        },
+        { discrete: true }
+      );
+
+      editor.read(() => {
+        const text = $dfs()
+          .filter(({ node }) => $isTextNode(node))
+          .map(({ node }) => (node as TextNode).getTextContent())
+          .join("");
+        expect(text).toBe("After");
+        expect($getRoot().getChildren()).toHaveLength(1);
+      });
+    });
+
+    it("skips idempotent remote LiveList insert updates", async () => {
+      const { room, root } = (await prepareIsolatedStorageTest(
+        [createSerializedRoot()],
+        0
+      )) as unknown as {
+        room: Room;
+        root: LiveObject<{ document?: LiveRootNode }>;
+      };
+      room.batch(() => {
+        root.set(
+          "document",
+          new LiveObject({
+            kind: "root",
+            type: "root",
+            version: 1,
+            children: new LiveList<LiveElementNode>([
+              new LiveObject({
+                kind: "element",
+                type: "paragraph",
+                version: 1,
+                children: new LiveList<LiveTextNode>([
+                  new LiveObject({
+                    kind: "text",
+                    type: "text",
+                    version: 1,
+                    content: new LiveText("A"),
+                  }),
+                ]),
+              }),
+            ]),
+          })
+        );
+      });
+
+      const document = root.get("document") as LiveRootNode;
+      const { editor, manager } = createEditor(document);
+      const list = document.get("children");
+      const paragraph = new LiveObject({
+        kind: "element",
+        type: "paragraph",
+        version: 1,
+        children: new LiveList<LiveTextNode>([
+          new LiveObject({
+            kind: "text",
+            type: "text",
+            version: 1,
+            content: new LiveText("B"),
+          }),
+        ]),
+      }) as LiveElementNode;
+
+      const updates: StorageUpdate[] = [];
+      const unregister = room.events.storageBatch.subscribe((batch) => {
+        for (const update of batch) {
+          if (update.type === "LiveList") {
+            updates.push(update);
+          }
+        }
+      });
+
+      room.batch(() => {
+        list.insert(paragraph, 1);
+      });
+      unregister();
+
+      const remoteUpdates = updates.map((update) => ({
+        ...update,
+        [kStorageUpdateSource]: { origin: "remote" as const },
+      }));
+
+      editor.update(
+        () => {
+          manager.$applyRemoteUpdates(remoteUpdates);
+        },
+        { discrete: true }
+      );
+
+      editor.update(
+        () => {
+          manager.$applyRemoteUpdates(remoteUpdates);
+        },
+        { discrete: true }
+      );
+
+      editor.read(() => {
+        const text = $dfs()
+          .filter(({ node }) => $isTextNode(node))
+          .map(({ node }) => (node as TextNode).getTextContent())
+          .join("");
+        expect(text).toBe("AB");
+        expect($getRoot().getChildren()).toHaveLength(2);
+      });
+    });
+    });
+
+    it("ignores empty remote update batches", () => {
+      const document: LiveRootNode = new LiveObject({
+        kind: "root",
+        type: "root",
+        version: 1,
+        children: new LiveList<LiveElementNode>([
+          new LiveObject({
+            kind: "element",
+            type: "paragraph",
+            version: 1,
+            children: new LiveList<LiveTextNode>([
+              new LiveObject({
+                kind: "text",
+                type: "text",
+                version: 1,
+                content: new LiveText("Stable"),
+              }),
+            ]),
+          }),
+        ]),
+      });
+      const { editor, manager } = createEditor(document);
+
+      editor.update(
+        () => {
+          manager.$applyRemoteUpdates([]);
+        },
+        { discrete: true }
+      );
+
+      editor.read(() => {
+        const text_lexical = $dfs().find(({ node }) => $isTextNode(node))!
+          .node as TextNode;
+        expect(text_lexical.getTextContent()).toBe("Stable");
       });
     });
   });
@@ -4565,30 +5635,4 @@ function createEditor(document: LiveRootNode): {
   });
 
   return { editor, manager };
-}
-
-function find_liveblocksNode(
-  node: LiveStorageNode,
-  predicate: (node: LiveStorageNode) => boolean
-): LiveStorageNode | null {
-  if (predicate(node)) {
-    return node;
-  }
-
-  const kind = node.get("kind");
-  if (kind === "root" || kind === "element") {
-    for (const child of (
-      node as LiveObject<{
-        kind: "root" | "element";
-        children: LiveList<LiveChildNode>;
-      }>
-    ).get("children")) {
-      const found = find_liveblocksNode(child, predicate);
-      if (found !== null) {
-        return found;
-      }
-    }
-  }
-
-  return null;
 }

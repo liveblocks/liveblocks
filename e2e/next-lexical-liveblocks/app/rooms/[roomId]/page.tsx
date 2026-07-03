@@ -16,6 +16,8 @@ import type {
   LiveRootNode,
   LiveTextNode,
 } from "../../../liveblocks.config";
+import { $getRoot, COLLABORATION_TAG, ElementNode } from "lexical";
+
 import {
   Composer,
   ContentEditable,
@@ -23,7 +25,10 @@ import {
   useComposer,
 } from "./composer";
 import { DevToolsPlugin } from "./devtools/devtools";
-import { LiveblocksCollaborationManager } from "./manager";
+import {
+  $convertLiveElementNodeToLexicalNode,
+  LiveblocksCollaborationManager,
+} from "./manager";
 
 export default function RoomPage({
   params,
@@ -69,7 +74,8 @@ export default function RoomPage({
 }
 
 function Editor() {
-  const root = useRoot(useRoom());
+  const room = useRoom();
+  const root = useRoot(room);
   if (root === null) {
     return <div>Loading…</div>;
   }
@@ -114,32 +120,106 @@ function Editor() {
         <ContentEditable className="outline-none flex-1" />
         <RichTextPlugin />
         <DevToolsPlugin />
-        <LiveblocksCollaborationPlugin root={root.get("document")} />
+        <LiveblocksCollaborationPlugin
+          room={room}
+          root={root.get("document")}
+        />
       </div>
     </Composer>
   );
 }
 
-function LiveblocksCollaborationPlugin({ root }: { root: LiveRootNode }) {
+function LiveblocksCollaborationPlugin({
+  room,
+  root,
+}: {
+  room: Room;
+  root: LiveRootNode;
+}) {
   const editor = useComposer();
 
   const _manager = useRef<LiveblocksCollaborationManager | null>(null);
   if (_manager.current === null) {
-    const manager = new LiveblocksCollaborationManager(root);
-    editor.read(() => manager.$updateBinding());
-    _manager.current = manager;
+    _manager.current = new LiveblocksCollaborationManager(root);
   }
   const manager = _manager.current;
 
   useEffect(() => {
-    return editor.registerUpdateListener((update) => {
-      manager.$applyLocalUpdates({
-        dirtyElements: new Set(update.dirtyElements.keys()),
-        dirtyLeaves: update.dirtyLeaves,
-        normalizedNodes: update.normalizedNodes,
-      });
-    });
-  }, [editor]);
+    editor.setEditable(false);
+    try {
+      editor.update(
+        () => {
+          $getRoot().clear();
+          const children: ElementNode[] = [];
+          for (const child of root.get("children")) {
+            children.push($convertLiveElementNodeToLexicalNode(child));
+          }
+          $getRoot().append(...children);
+          manager.$updateBinding();
+        },
+        {
+          discrete: true,
+          skipTransforms: true,
+          tag: COLLABORATION_TAG,
+        }
+      );
+    } catch (error) {
+      console.error("Failed to bootstrap editor from storage:", error);
+    } finally {
+      editor.setEditable(true);
+    }
+  }, [editor, manager, root]);
+
+  useEffect(() => {
+    return editor.registerUpdateListener(
+      ({ tags, dirtyElements, dirtyLeaves, normalizedNodes }) => {
+        if (tags.has(COLLABORATION_TAG) || manager.binding.reverse.size === 0) {
+          return;
+        }
+
+        try {
+          editor.read(() => {
+            room.batch(() => {
+              manager.$applyLocalUpdates({
+                dirtyElements: new Set(dirtyElements.keys()),
+                dirtyLeaves,
+                normalizedNodes,
+              });
+            });
+          });
+        } catch (error) {
+          console.error("Failed to apply local changes to storage:", error);
+        }
+      }
+    );
+  }, [editor, room, manager]);
+
+  useEffect(() => {
+    return room.subscribe(
+      root,
+      (updates) => {
+        if (manager.binding.reverse.size === 0) {
+          return;
+        }
+
+        try {
+          editor.update(
+            () => {
+              manager.$applyRemoteUpdates(updates);
+            },
+            {
+              discrete: true,
+              skipTransforms: true,
+              tag: COLLABORATION_TAG,
+            }
+          );
+        } catch (error) {
+          console.error("Failed to apply remote storage updates:", error);
+        }
+      },
+      { isDeep: true }
+    );
+  }, [editor, room, manager, root]);
 
   return null;
 }
