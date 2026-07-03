@@ -155,6 +155,9 @@ async function streamRealReply(
     await update({
       content: stripHtmlFencesForChat(rawContent),
       reasoning: reasoning || undefined,
+      // Stream the partial HTML too, so the proposal card shows up (in a
+      // loading state) as soon as the model starts writing the fenced block.
+      proposedHtml: extractStreamingHtml(rawContent),
       streaming: true,
     });
   };
@@ -210,6 +213,17 @@ async function streamMockReply(messages: ChatMessage[], update: UpdateFn) {
     await sleep(45);
   }
 
+  // Stream the slide HTML into the proposal card, like a real model would.
+  for (let i = 1; i <= 20; i++) {
+    await update({
+      content,
+      proposedHtml: slide.slice(0, Math.ceil((slide.length * i) / 20)),
+      maxTokens: MAX_TOKENS,
+      streaming: true,
+    });
+    await sleep(90);
+  }
+
   await update({
     content,
     proposedHtml: slide,
@@ -235,6 +249,20 @@ function extractHtmlProposal(text: string) {
     content: stripHtmlFencesForChat(text),
     html,
   };
+}
+
+/**
+ * The HTML generated so far: the content of the last ```html fence, whether
+ * or not it has been closed yet. Undefined until the fence starts.
+ */
+function extractStreamingHtml(text: string): string | undefined {
+  const start = text.lastIndexOf("```html");
+  if (start === -1) {
+    return undefined;
+  }
+  const body = text.slice(start + "```html".length);
+  const end = body.indexOf("```");
+  return (end === -1 ? body : body.slice(0, end)).trim() || undefined;
 }
 
 function stripHtmlFencesForChat(text: string) {

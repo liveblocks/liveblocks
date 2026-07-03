@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useExampleRoomId } from "@/hooks/use-example-room-id";
 import { Chat } from "./Chat";
 import { CollaborativeEditor } from "./CollaborativeEditor";
+import { resolveProposal, type SlideProposal } from "./proposal-actions";
 import { SLIDE_HEIGHT, SLIDE_WIDTH } from "./slide-html";
 import { SlidePreview } from "./SlidePreview";
 
@@ -45,6 +46,38 @@ function SlideshowApp({ roomId }: { roomId: string }) {
   const [placingComment, setPlacingComment] = useState(false);
   const [exporting, setExporting] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // The proposal currently shown in the Slide tab instead of the shared
+  // document. Local to this user; accept/reject resolves it for everyone.
+  const [previewedProposal, setPreviewedProposal] =
+    useState<SlideProposal | null>(null);
+  const [resolvingProposal, setResolvingProposal] = useState<
+    "apply" | "reject" | null
+  >(null);
+
+  const previewProposal = useCallback((proposal: SlideProposal | null) => {
+    setPreviewedProposal(proposal);
+    if (proposal) {
+      setPlacingComment(false);
+      setPanel("slide");
+    }
+  }, []);
+
+  const resolvePreviewedProposal = useCallback(
+    async (action: "apply" | "reject") => {
+      if (!previewedProposal || resolvingProposal) {
+        return;
+      }
+      setResolvingProposal(action);
+      try {
+        await resolveProposal(roomId, previewedProposal, action);
+        setPreviewedProposal(null);
+      } finally {
+        setResolvingProposal(null);
+      }
+    },
+    [previewedProposal, resolvingProposal, roomId]
+  );
 
   const exportPptx = useCallback(async () => {
     if (exporting) {
@@ -126,6 +159,8 @@ function SlideshowApp({ roomId }: { roomId: string }) {
                 variant={placingComment ? "secondary" : "outline"}
                 size="sm"
                 onClick={() => setPlacingComment((value) => !value)}
+                // Pins belong to the shared slide, not to an unapplied proposal.
+                disabled={previewedProposal !== null}
               >
                 <MessageSquarePlusIcon className="size-4" />
                 Comment
@@ -145,6 +180,9 @@ function SlideshowApp({ roomId }: { roomId: string }) {
               iframeRef={iframeRef}
               placingComment={placingComment}
               onPlacingDone={() => setPlacingComment(false)}
+              proposal={previewedProposal}
+              resolvingProposal={resolvingProposal}
+              onResolveProposal={resolvePreviewedProposal}
             />
           </div>
           <div className="absolute inset-0" style={{ display: panel === "code" ? "block" : "none" }}>
@@ -154,7 +192,11 @@ function SlideshowApp({ roomId }: { roomId: string }) {
       </main>
 
       <aside className="flex w-[380px] shrink-0 overflow-hidden rounded-lg bg-white shadow ring-1 ring-neutral-950/5">
-        <Chat roomId={roomId} />
+        <Chat
+          roomId={roomId}
+          previewedProposal={previewedProposal}
+          onPreviewProposal={previewProposal}
+        />
       </aside>
     </div>
   );

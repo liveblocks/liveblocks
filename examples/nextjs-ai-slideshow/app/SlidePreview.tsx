@@ -14,6 +14,9 @@ import { useEditThreadMetadata, useSelf, useThreads } from "@liveblocks/react/su
 import { CommentPin, FloatingComposer, FloatingThread } from "@liveblocks/react-ui";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { MouseEvent, ReactNode, RefObject } from "react";
+import { EyeIcon, Loader2Icon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import type { SlideProposal } from "./proposal-actions";
 import { SLIDE_HEIGHT, SLIDE_WIDTH } from "./slide-html";
 import { useSlideHtml } from "./use-slide-html";
 
@@ -67,12 +70,22 @@ export function SlidePreview({
   iframeRef,
   placingComment,
   onPlacingDone,
+  proposal,
+  resolvingProposal,
+  onResolveProposal,
 }: {
   iframeRef: RefObject<HTMLIFrameElement | null>;
   placingComment: boolean;
   onPlacingDone: () => void;
+  proposal: SlideProposal | null;
+  resolvingProposal: "apply" | "reject" | null;
+  onResolveProposal: (action: "apply" | "reject") => void;
 }) {
-  const html = useSlideHtml();
+  const documentHtml = useSlideHtml();
+  // While previewing a proposal, the slide shows the proposed HTML instead of
+  // the shared document, and comment pins are hidden (they belong to the
+  // shared slide, not to an unapplied proposal).
+  const html = proposal ? proposal.html : documentHtml;
   const { threads } = useThreads();
   const editThreadMetadata = useEditThreadMetadata();
   const maxZIndex = useMaxZIndex(threads);
@@ -120,8 +133,42 @@ export function SlidePreview({
 
   return (
     <div ref={wrapperRef} className="relative h-full w-full overflow-hidden bg-neutral-50">
+      {proposal ? (
+        <div className="absolute left-1/2 top-3 z-40 flex -translate-x-1/2 items-center gap-3 rounded-full border border-rose-200 bg-white py-1.5 pl-4 pr-1.5 shadow-md">
+          <span className="flex items-center gap-1.5 whitespace-nowrap text-sm font-medium text-neutral-700">
+            <EyeIcon className="size-4 text-rose-600" />
+            Previewing proposed slide
+          </span>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onResolveProposal("reject")}
+              disabled={resolvingProposal !== null}
+            >
+              {resolvingProposal === "reject" ? (
+                <Loader2Icon className="size-4 animate-spin" />
+              ) : null}
+              Reject
+            </Button>
+            <Button
+              size="sm"
+              className="bg-rose-600 text-white hover:bg-rose-700"
+              onClick={() => onResolveProposal("apply")}
+              disabled={resolvingProposal !== null}
+            >
+              {resolvingProposal === "apply" ? (
+                <Loader2Icon className="size-4 animate-spin" />
+              ) : null}
+              Accept
+            </Button>
+          </div>
+        </div>
+      ) : null}
       <div
-        className="absolute left-1/2 top-1/2 overflow-visible rounded-md bg-white shadow-2xl ring-1 ring-neutral-950/10"
+        className={`absolute left-1/2 top-1/2 overflow-visible rounded-md bg-white shadow-2xl ${
+          proposal ? "ring-2 ring-rose-400" : "ring-1 ring-neutral-950/10"
+        }`}
         style={{
           width: SLIDE_WIDTH,
           height: SLIDE_HEIGHT,
@@ -139,15 +186,17 @@ export function SlidePreview({
           className="absolute inset-0 h-full w-full border-0 bg-white pointer-events-none"
         />
 
-        <div className="absolute inset-0 isolate">
-          <DndContext onDragEnd={handleDragEnd} sensors={sensors}>
-            {threads.map((thread) => (
-              <DraggableSlideThread key={thread.id} thread={thread} maxZIndex={maxZIndex} scale={safeScale} />
-            ))}
-          </DndContext>
-        </div>
+        {proposal ? null : (
+          <div className="absolute inset-0 isolate">
+            <DndContext onDragEnd={handleDragEnd} sensors={sensors}>
+              {threads.map((thread) => (
+                <DraggableSlideThread key={thread.id} thread={thread} maxZIndex={maxZIndex} scale={safeScale} />
+              ))}
+            </DndContext>
+          </div>
+        )}
 
-        {placingComment || placedCoords ? (
+        {!proposal && (placingComment || placedCoords) ? (
           <button
             type="button"
             aria-label="Cancel comment placement"
@@ -160,7 +209,7 @@ export function SlidePreview({
           />
         ) : null}
 
-        {placingComment ? (
+        {!proposal && placingComment ? (
           <PlacementOverlay
             scale={safeScale}
             onPlace={(coords) => {
@@ -171,7 +220,7 @@ export function SlidePreview({
           />
         ) : null}
 
-        {placedCoords ? (
+        {!proposal && placedCoords ? (
           <ThreadComposer coords={placedCoords} scale={safeScale} onSubmit={resetPlacement} />
         ) : null}
       </div>

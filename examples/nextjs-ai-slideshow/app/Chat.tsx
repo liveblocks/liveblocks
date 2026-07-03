@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { nanoid } from "nanoid";
 import {
   ClientSideSuspense,
@@ -16,6 +16,7 @@ import {
 import { Avatar } from "@liveblocks/react-ui";
 import {
   CopyIcon,
+  EyeIcon,
   HistoryIcon,
   PlusIcon,
   RefreshCcwIcon,
@@ -89,6 +90,7 @@ import {
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { HelpButton } from "@/components/HelpButton";
+import { resolveProposal, type SlideProposal } from "./proposal-actions";
 import { useSlideHtml } from "./use-slide-html";
 
 // Each chat is a feed in the room. Everyone connected reads and writes to the
@@ -110,7 +112,15 @@ const STARTER_PROMPTS = [
   "Add a clear product story in three beats",
 ];
 
-export function Chat({ roomId }: { roomId: string }) {
+export function Chat({
+  roomId,
+  previewedProposal,
+  onPreviewProposal,
+}: {
+  roomId: string;
+  previewedProposal: SlideProposal | null;
+  onPreviewProposal: (proposal: SlideProposal | null) => void;
+}) {
   const { feeds } = useFeeds();
 
   // Chat history: every feed in the room, newest first.
@@ -194,6 +204,8 @@ export function Chat({ roomId }: { roomId: string }) {
             feedId={feedId}
             model={model}
             setModel={setModel}
+            previewedProposal={previewedProposal}
+            onPreviewProposal={onPreviewProposal}
           />
         </ClientSideSuspense>
       </div>
@@ -206,11 +218,15 @@ function ChatWindow({
   feedId,
   model,
   setModel,
+  previewedProposal,
+  onPreviewProposal,
 }: {
   roomId: string;
   feedId: string;
   model: string;
   setModel: (model: string) => void;
+  previewedProposal: SlideProposal | null;
+  onPreviewProposal: (proposal: SlideProposal | null) => void;
 }) {
   const { messages } = useFeedMessages(feedId);
   const createFeed = useCreateFeed();
@@ -249,6 +265,47 @@ function ChatWindow({
   const inFlight = useRef(false);
 
   const sorted = [...messages].sort((a, b) => a.createdAt - b.createdAt);
+
+  // Automatically open new pending proposals in the Slide tab, once per
+  // message. Guarded by a ref so users who dismissed the preview aren't
+  // pulled back into it on unrelated re-renders.
+  const autoPreviewedIds = useRef(new Set<string>());
+  useEffect(() => {
+    const latestProposal = [...sorted]
+      .reverse()
+      .find(
+        (message) =>
+          message.data.role === "assistant" &&
+          message.data.proposedHtml &&
+          !message.data.streaming
+      );
+    if (
+      latestProposal?.data.proposedHtml &&
+      latestProposal.data.proposalStatus === "pending" &&
+      !autoPreviewedIds.current.has(latestProposal.id)
+    ) {
+      autoPreviewedIds.current.add(latestProposal.id);
+      onPreviewProposal({
+        feedId,
+        messageId: latestProposal.id,
+        html: latestProposal.data.proposedHtml,
+      });
+    }
+  }, [sorted, feedId, onPreviewProposal]);
+
+  // Close the preview when the previewed proposal gets resolved (possibly by
+  // someone else in the room) or its message is deleted.
+  useEffect(() => {
+    if (!previewedProposal || previewedProposal.feedId !== feedId) {
+      return;
+    }
+    const message = sorted.find(
+      (item) => item.id === previewedProposal.messageId
+    );
+    if (!message || message.data.proposalStatus !== "pending") {
+      onPreviewProposal(null);
+    }
+  }, [sorted, feedId, previewedProposal, onPreviewProposal]);
 
   const postReply = useCallback(
     async (history: { role: "user" | "assistant"; content: string }[]) => {
@@ -501,6 +558,12 @@ function ChatWindow({
                         messageId={message.id}
                         html={proposedHtml}
                         status={proposalStatus}
+                        generating={!!streaming}
+                        previewing={
+                          previewedProposal?.messageId === message.id &&
+                          previewedProposal?.feedId === feedId
+                        }
+                        onPreview={onPreviewProposal}
                       />
                     ) : null}
 
@@ -590,14 +653,29 @@ function ProposalCard({
   messageId,
   html,
   status = "pending",
+  generating,
+  previewing,
+  onPreview,
 }: {
   roomId: string;
   feedId: string;
   messageId: string;
   html: string;
   status?: "pending" | "applied" | "rejected";
+  generating: boolean;
+  previewing: boolean;
+  onPreview: (proposal: SlideProposal) => void;
 }) {
   const [submitting, setSubmitting] = useState<"apply" | "reject" | null>(null);
+
+  // While the HTML streams in, keep the code preview scrolled to the bottom
+  // so the newest output stays visible.
+  const preRef = useRef<HTMLPreElement>(null);
+  useEffect(() => {
+    if (generating && preRef.current) {
+      preRef.current.scrollTop = preRef.current.scrollHeight;
+    }
+  }, [generating, html]);
 
   const updateProposal = useCallback(
     async (action: "apply" | "reject") => {
@@ -607,17 +685,7 @@ function ProposalCard({
 
       setSubmitting(action);
       try {
-        await fetch("/api/apply-slide", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action,
-            roomId,
-            feedId,
-            messageId,
-            html: action === "apply" ? html : undefined,
-          }),
-        });
+        await resolveProposal(roomId, { feedId, messageId, html }, action);
       } finally {
         setSubmitting(null);
       }
@@ -629,17 +697,32 @@ function ProposalCard({
     <div className="mt-3 overflow-hidden rounded-lg border border-neutral-950/10 bg-white shadow-sm">
       <div className="flex items-center justify-between border-b border-neutral-950/5 px-3 py-2">
         <span className="text-xs font-semibold uppercase tracking-wide text-rose-600">Slide proposal</span>
-        {status !== "pending" ? (
+        {generating ? (
+          <Shimmer className="text-xs font-medium">Generating…</Shimmer>
+        ) : status !== "pending" ? (
           <span className="text-xs font-medium text-neutral-500">
             {status === "applied" ? "Applied to slide" : "Rejected"}
           </span>
         ) : null}
       </div>
-      <pre className="max-h-48 overflow-auto bg-neutral-50 p-3 font-mono text-[11px] leading-relaxed text-neutral-700">
+      <pre
+        ref={preRef}
+        className="max-h-48 overflow-auto bg-neutral-50 p-3 font-mono text-[11px] leading-relaxed text-neutral-700"
+      >
         <code>{html}</code>
       </pre>
-      {status === "pending" ? (
+      {!generating && status === "pending" ? (
         <div className="flex items-center justify-end gap-2 border-t border-neutral-950/5 p-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="mr-auto"
+            onClick={() => onPreview({ feedId, messageId, html })}
+            disabled={previewing}
+          >
+            <EyeIcon className="size-4" />
+            {previewing ? "Previewing" : "Preview"}
+          </Button>
           <Button
             variant="ghost"
             size="sm"

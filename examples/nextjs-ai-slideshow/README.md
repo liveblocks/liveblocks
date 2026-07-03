@@ -30,9 +30,11 @@ The flow is:
 
 1. Chat with an AI slide designer in a shared Liveblocks feed.
 2. The AI proposes a complete, self-contained HTML document for one 1280x720 slide.
-3. Applying the proposal writes a minimal diff into a shared Yjs `Text` document.
-4. Everyone can edit the HTML in CodeMirror, preview the slide, and place comment pins.
-5. The current slide can be exported to a `.pptx` file.
+3. Proposals open automatically in the Slide tab so you can preview them before
+   accepting or rejecting — resolving a proposal is shared with the whole room.
+4. Applying the proposal writes a minimal diff into a shared Yjs `Text` document.
+5. Everyone can edit the HTML in CodeMirror, preview the slide, and place comment pins.
+6. The current slide can be exported to a `.pptx` file.
 
 When `AI_GATEWAY_API_KEY` is missing, the app uses a built-in mock assistant that
 still streams a reply and creates slide proposals so the full proposal flow can be
