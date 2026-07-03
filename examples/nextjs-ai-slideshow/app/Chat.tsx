@@ -183,10 +183,8 @@ export function Chat({
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
-            <HelpButton />
           </div>
-
-          <span className="text-xs font-medium text-neutral-500">AI slide designer</span>
+          <HelpButton />
         </header>
 
         {/* The chat is suspense-wrapped on its own so switching chats only
@@ -646,7 +644,6 @@ function ChatWindow({
   );
 }
 
-
 function ProposalCard({
   roomId,
   feedId,
@@ -696,7 +693,9 @@ function ProposalCard({
   return (
     <div className="mt-3 overflow-hidden rounded-lg border border-neutral-950/10 bg-white shadow-sm">
       <div className="flex items-center justify-between border-b border-neutral-950/5 px-3 py-2">
-        <span className="text-xs font-semibold uppercase tracking-wide text-rose-600">Slide proposal</span>
+        <span className="text-xs font-semibold uppercase tracking-wide text-rose-600">
+          Slide proposal
+        </span>
         {generating ? (
           <Shimmer className="text-xs font-medium">Generating…</Shimmer>
         ) : status !== "pending" ? (
