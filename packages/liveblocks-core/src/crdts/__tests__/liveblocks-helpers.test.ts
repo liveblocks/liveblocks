@@ -444,6 +444,42 @@ describe("diffNodeMap", () => {
       "Internal error. Cannot serialize storage root into an operation"
     );
   });
+
+  test("emits parent creates before child creates even when target nodes are unordered", () => {
+    const currentItems: NodeMap = new Map([
+      ["root", { type: CrdtType.OBJECT, data: {} }],
+    ]);
+
+    // A node stream (e.g. iter_all) is unordered: here the register child comes
+    // *before* its parent list. The diff must still emit the CREATE_LIST before
+    // the CREATE_REGISTER, otherwise applying the ops drops the child (its
+    // parent isn't in the pool yet).
+    const newItems: NodeMap = new Map();
+    newItems.set("root", { type: CrdtType.OBJECT, data: {} });
+    newItems.set("0:2", {
+      type: CrdtType.REGISTER,
+      parentId: "0:1",
+      parentKey: FIRST_POSITION,
+      data: "A",
+    });
+    newItems.set("0:1", {
+      type: CrdtType.LIST,
+      parentId: "root",
+      parentKey: "items",
+    });
+
+    const ops = diffNodeMap(currentItems, newItems);
+    const listIdx = ops.findIndex(
+      (op) => op.type === OpCode.CREATE_LIST && op.id === "0:1"
+    );
+    const regIdx = ops.findIndex(
+      (op) => op.type === OpCode.CREATE_REGISTER && op.id === "0:2"
+    );
+
+    expect(listIdx).toBeGreaterThanOrEqual(0);
+    expect(regIdx).toBeGreaterThanOrEqual(0);
+    expect(listIdx).toBeLessThan(regIdx);
+  });
 });
 
 describe("toPlainLson", () => {

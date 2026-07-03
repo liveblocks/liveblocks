@@ -4,7 +4,12 @@ import { stringifyOrLog as stringify } from "../lib/stringify";
 import { deepClone, entries } from "../lib/utils";
 import type { CreateOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
-import type { NodeMap, NodeStream, StorageNode } from "../protocol/StorageNode";
+import type {
+  NodeMap,
+  NodeStream,
+  SerializedCrdt,
+  StorageNode,
+} from "../protocol/StorageNode";
 import {
   CrdtType,
   isListStorageNode,
@@ -300,6 +305,69 @@ export function diffNodeMap(prev: NodeMap, next: NodeMap): Op[] {
     }
   });
 
+  // Emits a CREATE op for a new node, but only after its parent's CREATE when
+  // the parent is itself new. The `next` map is unordered (it comes from an
+  // unordered node stream), so it may list children before parents -- and
+  // applying a CREATE whose parent isn't in the pool yet silently drops it.
+  const emitted = new Set<string>();
+  function emitCreate(id: string, crdt: SerializedCrdt): void {
+    if (emitted.has(id)) {
+      return;
+    }
+    emitted.add(id);
+
+    // Create the parent first, when it's also a new node.
+    const parentId = crdt.parentId;
+    if (parentId !== undefined && !prev.has(parentId)) {
+      const parentCrdt = next.get(parentId);
+      if (parentCrdt !== undefined) {
+        emitCreate(parentId, parentCrdt);
+      }
+    }
+
+    switch (crdt.type) {
+      case CrdtType.REGISTER:
+        ops.push({
+          type: OpCode.CREATE_REGISTER,
+          id,
+          parentId: crdt.parentId,
+          parentKey: crdt.parentKey,
+          data: crdt.data,
+        });
+        break;
+      case CrdtType.LIST:
+        ops.push({
+          type: OpCode.CREATE_LIST,
+          id,
+          parentId: crdt.parentId,
+          parentKey: crdt.parentKey,
+        });
+        break;
+      case CrdtType.OBJECT:
+        if (crdt.parentId === undefined || crdt.parentKey === undefined) {
+          throw new Error(
+            "Internal error. Cannot serialize storage root into an operation"
+          );
+        }
+        ops.push({
+          type: OpCode.CREATE_OBJECT,
+          id,
+          parentId: crdt.parentId,
+          parentKey: crdt.parentKey,
+          data: crdt.data,
+        });
+        break;
+      case CrdtType.MAP:
+        ops.push({
+          type: OpCode.CREATE_MAP,
+          id,
+          parentId: crdt.parentId,
+          parentKey: crdt.parentKey,
+        });
+        break;
+    }
+  }
+
   next.forEach((crdt, id) => {
     const currentCrdt = prev.get(id);
     if (currentCrdt) {
@@ -345,48 +413,7 @@ export function diffNodeMap(prev: NodeMap, next: NodeMap): Op[] {
         });
       }
     } else {
-      // new Crdt
-      switch (crdt.type) {
-        case CrdtType.REGISTER:
-          ops.push({
-            type: OpCode.CREATE_REGISTER,
-            id,
-            parentId: crdt.parentId,
-            parentKey: crdt.parentKey,
-            data: crdt.data,
-          });
-          break;
-        case CrdtType.LIST:
-          ops.push({
-            type: OpCode.CREATE_LIST,
-            id,
-            parentId: crdt.parentId,
-            parentKey: crdt.parentKey,
-          });
-          break;
-        case CrdtType.OBJECT:
-          if (crdt.parentId === undefined || crdt.parentKey === undefined) {
-            throw new Error(
-              "Internal error. Cannot serialize storage root into an operation"
-            );
-          }
-          ops.push({
-            type: OpCode.CREATE_OBJECT,
-            id,
-            parentId: crdt.parentId,
-            parentKey: crdt.parentKey,
-            data: crdt.data,
-          });
-          break;
-        case CrdtType.MAP:
-          ops.push({
-            type: OpCode.CREATE_MAP,
-            id,
-            parentId: crdt.parentId,
-            parentKey: crdt.parentKey,
-          });
-          break;
-      }
+      emitCreate(id, crdt);
     }
   });
 
