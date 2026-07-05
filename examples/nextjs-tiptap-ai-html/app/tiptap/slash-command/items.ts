@@ -1,5 +1,6 @@
 import { Editor } from "@tiptap/react";
 import { Range } from "@tiptap/core";
+import { NodeSelection } from "@tiptap/pm/state";
 
 export type SlashCommandItem = {
   title: string;
@@ -73,20 +74,28 @@ const ITEMS: SlashCommandItem[] = [
       // empty paragraph), so locate the inserted node instead of assuming
       // `range.from`, then select it to focus its prompt input locally.
       const { doc, selection } = editor.state;
-      const scanFrom = Math.max(0, selection.from - 2);
-      const scanTo = Math.min(doc.content.size, selection.to + 2);
-      let nodePos: number | null = null;
 
-      doc.nodesBetween(scanFrom, scanTo, (node, pos) => {
-        if (node.type.name === "htmlComponent") {
-          nodePos = pos;
-          return false;
+      if (
+        selection instanceof NodeSelection &&
+        selection.node.type.name === "htmlComponent"
+      ) {
+        return;
+      }
+
+      // The node sits directly before the resulting cursor position (atom
+      // nodes have a size of 1), so prefer that exact spot; if the paragraph
+      // was split instead, the node is one position further back.
+      for (const pos of [selection.from - 1, selection.from - 2]) {
+        if (pos < 0) {
+          continue;
         }
-        return true;
-      });
 
-      if (nodePos !== null) {
-        editor.commands.setNodeSelection(nodePos);
+        const node = doc.nodeAt(pos);
+
+        if (node?.type.name === "htmlComponent") {
+          editor.commands.setNodeSelection(pos);
+          return;
+        }
       }
     },
   },
