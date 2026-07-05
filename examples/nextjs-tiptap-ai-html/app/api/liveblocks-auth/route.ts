@@ -7,14 +7,14 @@ import { getRandomUser } from "../database";
  * https://liveblocks.io/docs/authentication
  */
 
-const liveblocks = new Liveblocks({
-  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
-});
-
 export async function POST(request: NextRequest) {
-  if (!process.env.LIVEBLOCKS_SECRET_KEY) {
+  const secret = process.env.LIVEBLOCKS_SECRET_KEY;
+
+  if (!secret) {
     return new NextResponse("Missing LIVEBLOCKS_SECRET_KEY", { status: 403 });
   }
+
+  const liveblocks = new Liveblocks({ secret });
 
   // Get the current user's unique id and info from your database
   const user = getRandomUser();
