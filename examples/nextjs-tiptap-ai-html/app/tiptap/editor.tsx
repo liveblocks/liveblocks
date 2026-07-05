@@ -68,8 +68,8 @@ export default function TiptapEditor() {
               Tiptap AI HTML editor
             </h1>
             <p className="text-muted-foreground">
-              Type <kbd className="rounded border border-border px-1">/</kbd>{" "}
-              to insert headings, quotes, code blocks, or an AI-generated HTML
+              Type <kbd className="rounded border border-border px-1">/</kbd> to
+              insert headings, quotes, code blocks, or an AI-generated HTML
               component.
             </p>
           </div>

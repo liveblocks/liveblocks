@@ -50,7 +50,7 @@ const ITEMS: SlashCommandItem[] = [
   {
     title: "Quote",
     description: "Capture a quotation",
-    icon: "\"",
+    icon: '"',
     keywords: ["blockquote", "quote"],
     command: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).toggleBlockquote().run();

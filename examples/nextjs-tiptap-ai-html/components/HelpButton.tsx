@@ -244,9 +244,7 @@ export function HelpButton() {
                       <span style={styles.iconWrap}>{feature.icon}</span>
                       <div>
                         <h3 style={styles.featureTitle}>{feature.title}</h3>
-                        <p style={styles.featureDesc}>
-                          {feature.description}
-                        </p>
+                        <p style={styles.featureDesc}>{feature.description}</p>
                       </div>
                     </li>
                   ))}

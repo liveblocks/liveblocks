@@ -41,14 +41,22 @@ export default function VersionsDialog({ editor }: { editor: Editor | null }) {
           <Dialog.Description className="sr-only">
             Previous versions of this document
           </Dialog.Description>
-          {editor && <Versions onVersionRestore={onVersionRestore} editor={editor} />}
+          {editor && (
+            <Versions onVersionRestore={onVersionRestore} editor={editor} />
+          )}
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
   );
 }
 
-function Versions({ onVersionRestore, editor }: { onVersionRestore: () => void, editor: Editor }) {
+function Versions({
+  onVersionRestore,
+  editor,
+}: {
+  onVersionRestore: () => void;
+  editor: Editor;
+}) {
   const [selectedVersionId, setSelectedVersionId] = useState<string>();
   const { versions, isLoading } = useHistoryVersions();
   const selectedVersion = useMemo(
@@ -56,7 +64,9 @@ function Versions({ onVersionRestore, editor }: { onVersionRestore: () => void, 
     [selectedVersionId, versions]
   );
 
-  return isLoading ? <Loading /> : versions?.length === 0 ? (
+  return isLoading ? (
+    <Loading />
+  ) : versions?.length === 0 ? (
     <div className="flex h-full items-center justify-center p-6 text-muted-foreground">
       No versions yet
     </div>
@@ -65,7 +75,11 @@ function Versions({ onVersionRestore, editor }: { onVersionRestore: () => void, 
       <div className="flex-1 h-full min-w-0">
         {selectedVersion ? (
           <HistoryVersionPreview
-            className="w-full h-full" onVersionRestore={onVersionRestore} version={selectedVersion} editor={editor} />
+            className="w-full h-full"
+            onVersionRestore={onVersionRestore}
+            version={selectedVersion}
+            editor={editor}
+          />
         ) : (
           <div className="flex h-full items-center justify-center p-6 text-muted-foreground">
             No version selected
