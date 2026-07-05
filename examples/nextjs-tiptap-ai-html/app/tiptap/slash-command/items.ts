@@ -59,14 +59,15 @@ const ITEMS: SlashCommandItem[] = [
   {
     title: "HTML component",
     description: "Generate an interactive HTML box with AI",
-    icon: "</>",
+    icon: "AI",
     keywords: ["ai", "html", "component", "interactive"],
     command: ({ editor, range }) => {
       editor
         .chain()
         .focus()
         .deleteRange(range)
-        .insertContent([{ type: "htmlComponent" }, { type: "paragraph" }])
+        .insertContent({ type: "htmlComponent" })
+        .setNodeSelection(range.from)
         .run();
     },
   },

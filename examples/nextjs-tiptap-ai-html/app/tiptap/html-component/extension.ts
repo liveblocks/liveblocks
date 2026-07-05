@@ -11,8 +11,6 @@ export const HtmlComponent = Node.create({
 
   selectable: true,
 
-  draggable: true,
-
   addAttributes() {
     return {
       prompt: {

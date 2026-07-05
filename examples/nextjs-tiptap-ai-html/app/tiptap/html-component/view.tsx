@@ -2,7 +2,10 @@ import { NodeViewProps, NodeViewWrapper } from "@tiptap/react";
 import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from "react";
 
 export function HtmlComponentView({
+  editor,
+  getPos,
   node,
+  selected,
   updateAttributes,
   deleteNode,
 }: NodeViewProps) {
@@ -19,13 +22,15 @@ export function HtmlComponentView({
   const isEditing = isGenerating || !html || previewHtml !== null;
 
   useEffect(() => {
-    if (!html) {
+    if (!html && selected && editor.isFocused) {
       inputRef.current?.focus();
     }
-  }, [html]);
+  }, [editor.isFocused, html, selected]);
 
   useEffect(() => {
-    setInputPrompt(prompt);
+    if (document.activeElement !== inputRef.current) {
+      setInputPrompt(prompt);
+    }
   }, [prompt]);
 
   useEffect(() => {
@@ -84,6 +89,10 @@ export function HtmlComponentView({
 
       const finalHtml = stripMarkdownFences(nextHtml);
 
+      if (!canUpdateNode(getPos)) {
+        return;
+      }
+
       updateAttributes({
         prompt: trimmedPrompt,
         html: finalHtml,
@@ -112,11 +121,19 @@ export function HtmlComponentView({
     event.stopPropagation();
 
     if (event.key === "Escape") {
-      if (html) {
-        setPreviewHtml(null);
-      } else {
-        deleteNode();
-      }
+      cancelEditing();
+    }
+  }
+
+  function cancelEditing() {
+    abortControllerRef.current?.abort();
+    setIsGenerating(false);
+    setError(null);
+    setPreviewHtml(null);
+    setInputPrompt(prompt);
+
+    if (!html) {
+      deleteNode();
     }
   }
 
@@ -148,6 +165,13 @@ export function HtmlComponentView({
             >
               {isGenerating ? "Generating..." : "Generate"}
             </button>
+            <button
+              type="button"
+              className="rounded-md border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground"
+              onClick={cancelEditing}
+            >
+              {isGenerating ? "Stop" : "Cancel"}
+            </button>
           </form>
 
           {error ? (
@@ -169,7 +193,7 @@ export function HtmlComponentView({
               type="button"
               className="rounded-md border border-border bg-background px-2 py-1 text-xs font-medium shadow-sm"
               onClick={() => {
-                setPreviewHtml("");
+                setPreviewHtml(html);
                 setInputPrompt(prompt);
               }}
             >
@@ -203,7 +227,7 @@ function HtmlPreview({ html, label }: { html: string; label: string }) {
       className="mt-3 h-[360px] w-full rounded-xl border border-border bg-white"
       title={label}
       sandbox="allow-scripts"
-      srcDoc={html}
+      srcDoc={withPreviewCsp(html)}
     />
   );
 }
@@ -217,6 +241,26 @@ function stripMarkdownFences(html: string) {
     .replace(/^\s*```(?:html)?\s*/i, "")
     .replace(/\s*```\s*$/i, "")
     .trim();
+}
+
+function canUpdateNode(getPos: NodeViewProps["getPos"]) {
+  try {
+    return typeof getPos() === "number";
+  } catch {
+    return false;
+  }
+}
+
+function withPreviewCsp(html: string) {
+  const csp =
+    "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; font-src data:;";
+  const meta = `<meta http-equiv="Content-Security-Policy" content="${csp}">`;
+
+  if (/<head(?:\s[^>]*)?>/i.test(html)) {
+    return html.replace(/<head(\s[^>]*)?>/i, `<head$1>${meta}`);
+  }
+
+  return `<!doctype html><html><head>${meta}</head><body>${html}</body></html>`;
 }
 
 function SparklesIcon() {
