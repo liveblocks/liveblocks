@@ -67,8 +67,27 @@ const ITEMS: SlashCommandItem[] = [
         .focus()
         .deleteRange(range)
         .insertContent({ type: "htmlComponent" })
-        .setNodeSelection(range.from)
         .run();
+
+      // `insertContent` may shift the insert position (e.g. when replacing an
+      // empty paragraph), so locate the inserted node instead of assuming
+      // `range.from`, then select it to focus its prompt input locally.
+      const { doc, selection } = editor.state;
+      const scanFrom = Math.max(0, selection.from - 2);
+      const scanTo = Math.min(doc.content.size, selection.to + 2);
+      let nodePos: number | null = null;
+
+      doc.nodesBetween(scanFrom, scanTo, (node, pos) => {
+        if (node.type.name === "htmlComponent") {
+          nodePos = pos;
+          return false;
+        }
+        return true;
+      });
+
+      if (nodePos !== null) {
+        editor.commands.setNodeSelection(nodePos);
+      }
     },
   },
 ];
