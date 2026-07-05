@@ -1,0 +1,41 @@
+{
+  "name": "@liveblocks-examples/nextjs-tiptap-ai-html",
+  "description": "This example shows how to build a collaborative text editor with AI-generated interactive HTML blocks using Liveblocks, Tiptap, and Next.js.",
+  "license": "Apache-2.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@ai-sdk/openai": "^3.0.20",
+    "@floating-ui/dom": "^1.7.6",
+    "@liveblocks/client": "^3.21.0",
+    "@liveblocks/node": "^3.21.0",
+    "@liveblocks/react": "^3.21.0",
+    "@liveblocks/react-tiptap": "^3.21.0",
+    "@liveblocks/react-ui": "^3.21.0",
+    "@liveblocks/yjs": "^3.21.0",
+    "@tiptap/extensions": "^3.4.6",
+    "@tiptap/pm": "^3.4.6",
+    "@tiptap/react": "^3.4.6",
+    "@tiptap/starter-kit": "^3.4.6",
+    "@tiptap/suggestion": "^3.4.6",
+    "@types/node": "^18.11.19",
+    "@types/react": "^18.0.38",
+    "@types/react-dom": "^18.0.11",
+    "ai": "^6.0.54",
+    "next": "^16.1.6",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "typescript": "^5.2.2",
+    "zod": "^3.24.4"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.23",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.19"
+  }
+}

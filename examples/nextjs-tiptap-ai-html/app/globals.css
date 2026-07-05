@@ -1,0 +1,125 @@
+@import "@liveblocks/react-ui/styles.css";
+@import "@liveblocks/react-ui/styles/dark/media-query.css";
+
+@import "@liveblocks/react-tiptap/styles.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 0 0% 100%;
+  --foreground: 240 10% 3.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 240 10% 3.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 10% 3.9%;
+  --primary: 240 5.9% 10%;
+  --primary-foreground: 0 0% 98%;
+  --secondary: 240 4.8% 95.9%;
+  --secondary-foreground: 240 5.9% 10%;
+  --muted: 240 4.8% 95.9%;
+  --muted-foreground: 240 3.8% 46.1%;
+  --accent: 240 4.8% 95.9%;
+  --accent-foreground: 240 5.9% 10%;
+  --destructive: 0 72.22% 50.59%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 240 5.9% 90%;
+  --input: 240 5.9% 90%;
+  --ring: 240 5% 64.9%;
+  --radius: 0.5rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 5.9% 10%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 85.7% 97.3%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 240 4.9% 83.9%;
+  }
+}
+
+.lb-portal {
+  @apply z-30;
+}
+
+.tiptap {
+  @apply min-h-[520px] outline-none;
+}
+
+.tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  @apply pointer-events-none float-left h-0 text-foreground/40;
+}
+
+.tiptap h1 {
+  @apply mt-8 mb-3 text-4xl font-bold leading-tight tracking-tight;
+}
+
+.tiptap h2 {
+  @apply mt-7 mb-3 text-3xl font-semibold leading-tight tracking-tight;
+}
+
+.tiptap h3 {
+  @apply mt-6 mb-2 text-2xl font-semibold leading-snug;
+}
+
+.tiptap p {
+  @apply my-3 leading-7;
+}
+
+.tiptap ul,
+.tiptap ol {
+  @apply my-4 pl-7;
+}
+
+.tiptap ul {
+  @apply list-disc;
+}
+
+.tiptap ol {
+  @apply list-decimal;
+}
+
+.tiptap li {
+  @apply my-1 pl-1 leading-7;
+}
+
+.tiptap blockquote {
+  @apply my-5 border-l-4 border-foreground/20 pl-4 italic text-foreground/70;
+}
+
+.tiptap pre {
+  @apply my-5 overflow-x-auto rounded-lg bg-foreground p-4 text-background;
+}
+
+.tiptap code {
+  @apply rounded bg-muted px-1 py-0.5 text-sm;
+}
+
+.tiptap pre code {
+  @apply bg-transparent p-0 text-sm;
+}
+
+.tiptap hr {
+  @apply my-8 border-0 border-t border-border;
+}
+
+.tiptap .ProseMirror-selectednode {
+  outline: none;
+}
