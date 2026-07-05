@@ -31,8 +31,8 @@ Set up this project manually:
 - Install all dependencies with `npm install`
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
 - Copy your **secret** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
-- Create an OpenAI API key from the [OpenAI platform](https://platform.openai.com/api-keys)
-- Create an `.env.local` file and add your keys as the `LIVEBLOCKS_SECRET_KEY` and `OPENAI_API_KEY` environment variables
+- Create an API key from the [Vercel AI Gateway](https://vercel.com/docs/ai-gateway)
+- Create an `.env.local` file and add your keys as the `LIVEBLOCKS_SECRET_KEY` and `AI_GATEWAY_API_KEY` environment variables
 - Run `npm run dev` and go to [http://localhost:3000](http://localhost:3000)
 
 <!-- TODO: use this getting started guide after example merged to website
@@ -58,8 +58,8 @@ Alternatively, you can set up your project manually:
 - Install all dependencies with `npm install`
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
 - Copy your **secret** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
-- Create an OpenAI API key from the [OpenAI platform](https://platform.openai.com/api-keys)
-- Create an `.env.local` file and add your keys as the `LIVEBLOCKS_SECRET_KEY` and `OPENAI_API_KEY` environment variables
+- Create an API key from the [Vercel AI Gateway](https://vercel.com/docs/ai-gateway)
+- Create an `.env.local` file and add your keys as the `LIVEBLOCKS_SECRET_KEY` and `AI_GATEWAY_API_KEY` environment variables
 - Run `npm run dev` and go to [http://localhost:3000](http://localhost:3000)
 
 </details>
@@ -86,7 +86,7 @@ This will download the example and ask permission to open your browser, enabling
 
 <p></p>
 
-After forking [this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-tiptap-ai-html) on CodeSandbox, create the `LIVEBLOCKS_SECRET_KEY` and `OPENAI_API_KEY` environment variables as [secrets](https://codesandbox.io/docs/secrets).
+After forking [this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-tiptap-ai-html) on CodeSandbox, create the `LIVEBLOCKS_SECRET_KEY` and `AI_GATEWAY_API_KEY` environment variables as [secrets](https://codesandbox.io/docs/secrets).
 
 </details>
 

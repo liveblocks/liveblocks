@@ -10,7 +10,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@ai-sdk/openai": "^4.0.7",
     "@liveblocks/client": "^3.21.0",
     "@liveblocks/node": "^3.21.0",
     "@liveblocks/react": "^3.21.0",

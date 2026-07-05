@@ -1,4 +1,5 @@
-import { openai } from "@ai-sdk/openai";
 import { LanguageModel } from "ai";
 
-export const aiModel: LanguageModel = openai("gpt-5.2-codex");
+// Plain `provider/model` ids are resolved through the Vercel AI Gateway,
+// authenticated with the `AI_GATEWAY_API_KEY` environment variable.
+export const aiModel: LanguageModel = "openai/gpt-5.2-codex";

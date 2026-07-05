@@ -10,8 +10,8 @@ Do not include markdown fences, explanations, comments, external scripts, extern
 The component will run in a sandboxed iframe inside a collaborative text editor, so keep it compact, accessible, and responsive.`;
 
 export async function POST(request: Request) {
-  if (!process.env.OPENAI_API_KEY) {
-    return new Response("Missing OPENAI_API_KEY", { status: 403 });
+  if (!process.env.AI_GATEWAY_API_KEY) {
+    return new Response("Missing AI_GATEWAY_API_KEY", { status: 403 });
   }
 
   const body: unknown = await request.json().catch(() => null);
