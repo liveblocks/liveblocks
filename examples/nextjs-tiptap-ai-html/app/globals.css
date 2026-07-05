@@ -93,12 +93,12 @@ h5 {
   position: absolute;
   user-select: none;
   pointer-events: none;
-  color: theme("colors.foreground" / 40%);
+  color: hsl(var(--foreground) / 0.4);
 }
 
 blockquote {
   box-sizing: border-box;
-  border-left: 0.25rem solid theme("colors.foreground" / 25%);
+  border-left: 0.25rem solid hsl(var(--foreground) / 0.25);
   padding-left: 1rem;
 }
 
