@@ -1832,6 +1832,26 @@ more about using binary updates.
 
 ### Version History
 
+#### Liveblocks.getVersionHistory [#get-version-history]
+
+Returns a room’s version history snapshots, sorted by creation date from newest
+to oldest. Throws an error if the room isn’t found. This is a wrapper around the
+[Get Version History API](/docs/api-reference/rest-api-endpoints#get-version-history)
+and returns the same response.
+
+```ts
+const { data: versions, nextCursor } = await liveblocks.getVersionHistory(
+  "my-room-id",
+  {
+    // Optional, defaults to 20
+    limit: 20,
+
+    // Optional, used for pagination
+    cursor: "eyJjcmVhdGVkQXQi...",
+  }
+);
+```
+
 #### Liveblocks.deleteVersion [#delete-version]
 
 Permanently deletes a version from a room’s history. Throws an error if the room

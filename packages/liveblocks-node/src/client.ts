@@ -453,6 +453,19 @@ export type Page<T> = {
   data: T[];
 };
 
+export type HistoryVersion = {
+  id: string;
+  createdAt: Date;
+  authors: { id: string }[];
+};
+
+type HistoryVersionPlain = DateToString<HistoryVersion>;
+
+export type GetVersionHistoryOptions = {
+  limit?: number;
+  cursor?: string;
+};
+
 // prettier-ignore
 export type GetRoomsOptions =
   & RoomsQueryCriteria
@@ -774,6 +787,13 @@ function inflateWebKnowledgeSourceLink(
     ...link,
     createdAt: new Date(link.createdAt),
     lastIndexedAt: new Date(link.lastIndexedAt),
+  };
+}
+
+function inflateHistoryVersion(version: HistoryVersionPlain): HistoryVersion {
+  return {
+    ...version,
+    createdAt: new Date(version.createdAt),
   };
 }
 
@@ -1640,6 +1660,35 @@ export class Liveblocks {
       throw await LiveblocksError.from(res);
     }
     return res.arrayBuffer();
+  }
+
+  /**
+   * Returns the version history snapshots for the room, sorted by creation date from newest to oldest.
+   * @param roomId The ID of the room to get the version history from.
+   * @param params.limit (optional) The number of versions to return. The limit can range between 1 and 100, and defaults to 20.
+   * @param params.cursor (optional) A cursor used for pagination. Get the value from the `nextCursor` response of the previous page.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns A list of version history snapshots and the next page cursor.
+   */
+  public async getVersionHistory(
+    roomId: string,
+    params: GetVersionHistoryOptions = {},
+    options?: RequestOptions
+  ): Promise<Page<HistoryVersion>> {
+    const res = await this.#get(
+      url`/v2/rooms/${roomId}/versions`,
+      { limit: params.limit, cursor: params.cursor },
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+
+    const page = (await res.json()) as Page<HistoryVersionPlain>;
+    return {
+      nextCursor: page.nextCursor,
+      data: page.data.map(inflateHistoryVersion),
+    };
   }
 
   /**

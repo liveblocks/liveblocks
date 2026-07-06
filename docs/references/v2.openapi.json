@@ -1488,7 +1488,7 @@
     "/rooms/{roomId}/versions": {
       "get": {
         "summary": "Get Version History",
-        "description": "This endpoint returns a list of version history snapshots for the room. The versions are returned sorted by creation date, from newest to oldest.",
+        "description": "This endpoint returns a list of version history snapshots for the room. The versions are returned sorted by creation date, from newest to oldest. Corresponds to [`liveblocks.getVersionHistory`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-version-history).",
         "tags": ["Version History"],
         "operationId": "get-version-history",
         "parameters": [
