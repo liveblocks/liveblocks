@@ -150,3 +150,7 @@
 .cm-editor .cm-ySelectionCaretDot {
   display: none;
 }
+
+.ͼ1 .cm-yLineSelection {
+  margin-left: 0;
+}
