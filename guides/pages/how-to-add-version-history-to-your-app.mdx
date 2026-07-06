@@ -44,35 +44,35 @@ page you can toggle the switch.
   />
 </Figure>
 
-You can also create versions manually, using the
-[Create version history snapshot](/docs/api-reference/rest-api-endpoints#create-version-history-snapshot)
-REST API. A manual snapshot is useful for creating a version at a meaningful
-moment, for example when a user clicks a _Save version_ button.
-
-{/* TODO add Node.js code when supported */}
+You can also create versions manually from your backend with
+[`Liveblocks.createVersionHistorySnapshot`](/docs/api-reference/liveblocks-node#create-version-history-snapshot).
+A manual snapshot is useful for creating a version at a meaningful moment, for
+example when a user clicks a _Save version_ button.
 
 ```ts file="app/api/create-version/route.ts"
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
 export async function POST() {
-  // Create a version snapshot of the room
   // +++
-  const response = await fetch(
-    "https://api.liveblocks.io/v2/rooms/my-room-id/versions",
-    {
-      method: "POST",
-      headers: { Authorization: "Bearer {{SECRET_KEY}}" },
-    }
-  );
+  const snapshot = await liveblocks.createVersionHistorySnapshot("my-room-id");
   // +++
 
   // { data: { id: "vh_..." } }
-  const version = await response.json();
-
-  return Response.json(version);
+  return Response.json(snapshot);
 }
 ```
 
+If you are not using `@liveblocks/node`, you can use the
+[Create version history snapshot](/docs/api-reference/rest-api-endpoints#create-version-history-snapshot)
+REST API directly.
+
 Each snapshot captures the Storage and Yjs documents together, so the same
-version can be used for both. However, previewing
+version can be used for both. However, previewing and restoring versions works
+differently for Storage and Yjs, as described below.
 
 ## Version history for Storage [#Version-history-for-Storage]
 
@@ -121,7 +121,9 @@ function VersionsList({ onSelectVersion }) {
 }
 ```
 
-You can also list versions from the server with the
+You can also list versions from the server with
+[`Liveblocks.getVersionHistory`](/docs/api-reference/liveblocks-node#get-version-history)
+or the
 [Get version history](/docs/api-reference/rest-api-endpoints#get-version-history)
 REST API.
 
@@ -434,7 +436,9 @@ function YjsVersionPreview({ versionId }: { versionId: string }) {
 To restore a version in a custom Yjs setup, apply the historic content to your
 live `Y.Doc` as a regular edit, for example by replacing the current text with
 the version’s text. You can also fetch a version’s binary update from the server
-with the
+with
+[`Liveblocks.getYjsVersion`](/docs/api-reference/liveblocks-node#get-yjs-version)
+or the
 [Get Yjs document version](/docs/api-reference/rest-api-endpoints#get-yjs-version)
 REST API.
 
@@ -459,9 +463,10 @@ function DeleteVersionButton({ versionId }: { versionId: string }) {
 }
 ```
 
-Versions can also be deleted from the server with the
-[Delete a version](/docs/api-reference/rest-api-endpoints#delete-version) REST
-API.
+Versions can also be deleted from the server with
+[`Liveblocks.deleteVersion`](/docs/api-reference/liveblocks-node#delete-version)
+or the [Delete a version](/docs/api-reference/rest-api-endpoints#delete-version)
+REST API.
 
 ## Retention
 
