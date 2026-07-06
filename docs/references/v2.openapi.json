@@ -1488,7 +1488,7 @@
     "/rooms/{roomId}/versions": {
       "get": {
         "summary": "Get Version History",
-        "description": "This endpoint returns a list of version history snapshots for the room. The versions are returned sorted by creation date, from newest to oldest.",
+        "description": "This endpoint returns a list of version history snapshots for the room. The versions are returned sorted by creation date, from newest to oldest. Corresponds to [`liveblocks.getVersionHistory`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-version-history).",
         "tags": ["Version History"],
         "operationId": "get-version-history",
         "parameters": [
@@ -1569,7 +1569,7 @@
       },
       "post": {
         "summary": "Create version history snapshot",
-        "description": "This endpoint creates a new version history snapshot of the room, capturing both its Storage and Yjs documents.",
+        "description": "This endpoint creates a new version history snapshot of the room, capturing both its Storage and Yjs documents. Corresponds to [`liveblocks.createVersionHistorySnapshot`](https://liveblocks.io/docs/api-reference/liveblocks-node#create-version-history-snapshot).",
         "tags": ["Version History"],
         "operationId": "create-version-history-snapshot",
         "parameters": [
@@ -1619,7 +1619,7 @@
     "/rooms/{roomId}/versions/{versionId}/yjs": {
       "get": {
         "summary": "Get Yjs document version",
-        "description": "This endpoint returns a specific version of the room's Yjs document encoded as a binary Yjs update.",
+        "description": "This endpoint returns a specific version of the room's Yjs document encoded as a binary Yjs update. Corresponds to [`liveblocks.getYjsVersion`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-yjs-version).",
         "tags": ["Version History"],
         "operationId": "get-yjs-version",
         "parameters": [
@@ -1671,7 +1671,7 @@
     "/rooms/{roomId}/versions/{versionId}": {
       "delete": {
         "summary": "Delete a version",
-        "description": "This endpoint permanently deletes a version from the room's history.",
+        "description": "This endpoint permanently deletes a version from the room's history. Corresponds to [`liveblocks.deleteVersion`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-version).",
         "tags": ["Version History"],
         "operationId": "delete-version",
         "parameters": [

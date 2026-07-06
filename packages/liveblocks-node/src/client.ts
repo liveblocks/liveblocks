@@ -453,6 +453,25 @@ export type Page<T> = {
   data: T[];
 };
 
+export type HistoryVersion = {
+  id: string;
+  createdAt: Date;
+  authors: { id: string }[];
+};
+
+type HistoryVersionPlain = DateToString<HistoryVersion>;
+
+export type GetVersionHistoryOptions = {
+  limit?: number;
+  cursor?: string;
+};
+
+export type CreateVersionHistorySnapshotResponse = {
+  data: {
+    id: string;
+  };
+};
+
 // prettier-ignore
 export type GetRoomsOptions =
   & RoomsQueryCriteria
@@ -774,6 +793,13 @@ function inflateWebKnowledgeSourceLink(
     ...link,
     createdAt: new Date(link.createdAt),
     lastIndexedAt: new Date(link.lastIndexedAt),
+  };
+}
+
+function inflateHistoryVersion(version: HistoryVersionPlain): HistoryVersion {
+  return {
+    ...version,
+    createdAt: new Date(version.createdAt),
   };
 }
 
@@ -1640,6 +1666,104 @@ export class Liveblocks {
       throw await LiveblocksError.from(res);
     }
     return res.arrayBuffer();
+  }
+
+  /**
+   * Returns the version history snapshots for the room, sorted by creation date from newest to oldest.
+   * @param roomId The ID of the room to get the version history from.
+   * @param params.limit (optional) The number of versions to return. The limit can range between 1 and 100, and defaults to 20.
+   * @param params.cursor (optional) A cursor used for pagination. Get the value from the `nextCursor` response of the previous page.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns A list of version history snapshots and the next page cursor.
+   */
+  public async getVersionHistory(
+    roomId: string,
+    params: GetVersionHistoryOptions = {},
+    options?: RequestOptions
+  ): Promise<Page<HistoryVersion>> {
+    const res = await this.#get(
+      url`/v2/rooms/${roomId}/versions`,
+      { limit: params.limit, cursor: params.cursor },
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+
+    const page = (await res.json()) as Page<HistoryVersionPlain>;
+    return {
+      nextCursor: page.nextCursor,
+      data: page.data.map(inflateHistoryVersion),
+    };
+  }
+
+  /**
+   * Creates a new version history snapshot of the room, capturing both its Storage and Yjs documents.
+   * @param roomId The ID of the room to create a version history snapshot for.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns The created version ID.
+   */
+  public async createVersionHistorySnapshot(
+    roomId: string,
+    options?: RequestOptions
+  ): Promise<CreateVersionHistorySnapshotResponse> {
+    const res = await this.#post(
+      url`/v2/rooms/${roomId}/versions`,
+      {},
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+
+    return (await res.json()) as Promise<CreateVersionHistorySnapshotResponse>;
+  }
+
+  /**
+   * Returns a specific version of the room's Yjs document encoded as a binary Yjs update.
+   * @param params.roomId The room ID to get the Yjs document version from.
+   * @param params.versionId The ID of the version to get.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns The version's Yjs document encoded as a binary update.
+   */
+  public async getYjsVersion(
+    params: { roomId: string; versionId: string },
+    options?: RequestOptions
+  ): Promise<ArrayBuffer> {
+    const { roomId, versionId } = params;
+
+    const res = await this.#get(
+      url`/v2/rooms/${roomId}/versions/${versionId}/yjs`,
+      undefined,
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+
+    return res.arrayBuffer();
+  }
+
+  /**
+   * Permanently deletes a version from the room's history.
+   * @param params.roomId The room ID to delete the version in.
+   * @param params.versionId The ID of the version to delete.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  public async deleteVersion(
+    params: { roomId: string; versionId: string },
+    options?: RequestOptions
+  ): Promise<void> {
+    const { roomId, versionId } = params;
+
+    const res = await this.#delete(
+      url`/v2/rooms/${roomId}/versions/${versionId}`,
+      undefined,
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
   }
 
   /* -------------------------------------------------------------------------------------------------
