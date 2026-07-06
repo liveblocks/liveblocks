@@ -488,7 +488,7 @@ zen.route("GET /v2/rooms/<roomId>/ydoc-binary", ({ url, p }) => {
 /**
  * Get active users in a room
  */
-zen.route("GET /v2/rooms/<roomId>/active_users", ({ p }) => {
+zen.route("GET /v2/rooms/<roomId>/active-users", ({ p }) => {
   if (!Rooms.getRoom(p.roomId)) {
     throw ROOM_NOT_FOUND(p.roomId);
   }
@@ -503,6 +503,11 @@ zen.route("GET /v2/rooms/<roomId>/active_users", ({ p }) => {
 
   return json({ data });
 });
+
+zen.alias(
+  "GET /v2/rooms/<roomId>/active_users", // Keep supporting old/historic form
+  "GET /v2/rooms/<roomId>/active-users"
+);
 
 zen.route("DELETE /v2/rooms/<roomId>/feeds/<feedId>", ({ p }) => {
   if (!Rooms.getRoom(p.roomId)) {
@@ -685,9 +690,15 @@ zen.route(
   zen.route("POST /v2/rooms/<roomId>/update-room-id", () => NOT_IMPLEMENTED());
   zen.route("POST /v2/rooms/<roomId>/update-organization-id", () => NOT_IMPLEMENTED());
   zen.route("GET /v2/rooms/<roomId>/prewarm", () => NOT_IMPLEMENTED());
-  zen.route("POST /v2/rooms/<roomId>/broadcast_event", () => NOT_IMPLEMENTED());
+  zen.route("POST /v2/rooms/<roomId>/broadcast-event", () => NOT_IMPLEMENTED());
+  zen.alias(
+    "POST /v2/rooms/<roomId>/broadcast_event", // Keep supporting old/historic form
+    "POST /v2/rooms/<roomId>/broadcast-event",
+  );
   zen.route("GET /v2/rooms/<roomId>/versions", () => NOT_IMPLEMENTED());
+  // zen.route("GET /v2/rooms/<roomId>/versions/<versionId>/storage", /* deliberately private */);
   zen.route("GET /v2/rooms/<roomId>/versions/<versionId>/yjs", () => NOT_IMPLEMENTED());
+  zen.route("DELETE /v2/rooms/<roomId>/versions/<versionId>", () => NOT_IMPLEMENTED());
   zen.route("POST /v2/rooms/<roomId>/versions", () => NOT_IMPLEMENTED());
   zen.route("POST /v2/rooms/<roomId>/threads", () => NOT_IMPLEMENTED());
   zen.route("GET /v2/rooms/<roomId>/threads/<threadId>", () => NOT_IMPLEMENTED());

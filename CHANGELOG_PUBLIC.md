@@ -18,6 +18,61 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 27 (2026-07-03)
+
+## v3.21.0
+
+### All packages
+
+- Add support for public and private threads. Threads now have a `visibility`
+  property that is `"public"` by default but can be set to `"private"` when
+  created. Permissions can be used to decide which threads a user has access to,
+  and threads can also be queried by their visibility to create filtered views.
+- Add scoped comments permissions such as `comments:public:write` and
+  `comments:private:none`.
+
+### `@liveblocks/client`
+
+- **Breaking:** Remove `type` and `kind` fields from `HistoryVersion` type. The
+  backend no longer returns these.
+- Add `visibility` to `createThread`.
+- Support querying by `visibility` in `getThreads`.
+
+### `@liveblocks/react`
+
+- Add `visibility` to `useCreateThread`.
+- Support querying by `visibility` in `useThreads`.
+- Add `useHistoryVersionYjsData()` hook to retrieve raw Yjs binary data for a
+  given version. Deprecate `useHistoryVersionData()` in its favor.
+
+### `@liveblocks/node`
+
+- Add `visibility` to `createThread`.
+- Support querying by `visibility` in `getThreads`.
+
+### `@liveblocks/react-ui`
+
+- Add a `visibility` prop to `Composer`.
+- Prevent `Composer` from collapsing after focusing and blurring unless it was
+  explicitly meant to support a collapsed state.
+
+## Documentation
+
+- New guide: [How to add private commenting to your app](https://liveblocks.io/docs/guides/how-to-add-private-commenting-to-your-app).
+- New guide: [How to use public and private threads](https://liveblocks.io/docs/guides/how-to-use-public-and-private-threads).
+
+## Examples
+
+- Update [Linear-like Issue Tracker](https://liveblocks.io/examples/linear-like-issue-tracker/nextjs-linear-like-issue-tracker)_to use latest Next.js caching features.
+
+## Website
+
+- New blog post: [What's new in Liveblocks: June 2026](https://liveblocks.io/blog/whats-new-in-liveblocks-june-2026).
+
+## Contributors
+
+ctnicholas, ofoucherot, marcbouchenoire, nvie
+
 # Week 26 (2026-06-26)
 
 ## v3.20.1

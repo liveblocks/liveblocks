@@ -153,10 +153,18 @@ zen.route("POST /v2/c/rooms/<roomId>/text-metadata", () => {
   zen.route("GET /v2/c/rooms/<roomId>/storage", () => NOT_IMPLEMENTED());
   zen.route("GET /v2/c/rooms/<roomId>/versions", () => NOT_IMPLEMENTED());
   zen.route("GET /v2/c/rooms/<roomId>/versions/delta", () => NOT_IMPLEMENTED());
-  // zen.route("GET /v2/c/rooms/<roomId>/versions/<versionId>/storage", () => NOT_IMPLEMENTED());
+  zen.route("GET /v2/c/rooms/<roomId>/versions/<versionId>/storage", () => NOT_IMPLEMENTED());
   zen.route("GET /v2/c/rooms/<roomId>/versions/<versionId>/yjs", () => NOT_IMPLEMENTED());
-  zen.route("GET /v2/c/rooms/<roomId>/y-version/<versionId>", () => NOT_IMPLEMENTED());  // Deprecated, replaced by GET /v2/c/rooms/<roomId>/versions/<versionId>/yjs
-  zen.route("POST /v2/c/rooms/<roomId>/version", () => NOT_IMPLEMENTED());
+  zen.route("DELETE /v2/c/rooms/<roomId>/versions/<versionId>", () => NOT_IMPLEMENTED());
+  zen.alias(
+    "GET /v2/c/rooms/<roomId>/y-version/<versionId>",    // Deprecated
+    "GET /v2/c/rooms/<roomId>/versions/<versionId>/yjs", // Canonical new version
+  );
+  zen.route("POST /v2/c/rooms/<roomId>/versions", () => NOT_IMPLEMENTED());
+  zen.alias(
+    "POST /v2/c/rooms/<roomId>/version", // Deprecated
+    "POST /v2/c/rooms/<roomId>/versions", // Canonical new version
+  );
   zen.route("POST /v2/c/rooms/<roomId>/ai/contextual-prompt", () => NOT_IMPLEMENTED());
   zen.route("POST /v2/c/rooms/<roomId>/threads", () => NOT_IMPLEMENTED());
   zen.route("POST /v2/c/rooms/<roomId>/threads/search", () => NOT_IMPLEMENTED());
@@ -175,10 +183,16 @@ zen.route("POST /v2/c/rooms/<roomId>/text-metadata", () => {
   zen.route("DELETE /v2/c/rooms/<roomId>/threads/<threadId>/comments/<commentId>/reactions/<emoji>", () => NOT_IMPLEMENTED());
   zen.route("GET /v2/c/rooms/<roomId>/threads/comments/search", () => NOT_IMPLEMENTED());
   zen.route("GET /v2/c/rooms/<roomId>/threads/<threadId>/participants", () => NOT_IMPLEMENTED());
-  zen.route("GET /v2/c/rooms/<roomId>/notification-settings", () => NOT_IMPLEMENTED());
   zen.route("GET /v2/c/rooms/<roomId>/subscription-settings", () => NOT_IMPLEMENTED());
-  zen.route("POST /v2/c/rooms/<roomId>/notification-settings", () => NOT_IMPLEMENTED());
+  zen.alias(
+    "GET /v2/c/rooms/<roomId>/notification-settings", // Deprecated
+    "GET /v2/c/rooms/<roomId>/subscription-settings", // Canonical new version
+  );
   zen.route("POST /v2/c/rooms/<roomId>/subscription-settings", () => NOT_IMPLEMENTED());
+  zen.alias(
+    "POST /v2/c/rooms/<roomId>/notification-settings", // Deprecated
+    "POST /v2/c/rooms/<roomId>/subscription-settings", // Canonical new version
+  );
   zen.route("DELETE /v2/c/inbox-notifications", () => NOT_IMPLEMENTED());
   zen.route("POST /v2/c/inbox-notifications/read", () => NOT_IMPLEMENTED());
   zen.route("DELETE /v2/c/inbox-notifications/<inboxNotificationId>", () => NOT_IMPLEMENTED());
