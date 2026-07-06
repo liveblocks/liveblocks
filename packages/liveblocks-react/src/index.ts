@@ -75,7 +75,10 @@ export {
   useUpdateMyPresence,
   useUpdateRoomSubscriptionSettings,
   useHistoryVersionData,
+  useHistoryVersionStorageData,
   useHistoryVersionYjsData,
+  useDeleteHistoryVersion,
+  useRestoreToStorageVersion,
 } from "./room";
 
 // Export the classic (non-Suspense) versions of our hooks

@@ -582,7 +582,7 @@ print(result)
 
 #### `get_version_history`
 
-This endpoint returns a list of version history snapshots for the room. The versions are returned sorted by creation date, from newest to oldest.
+This endpoint returns a list of version history snapshots for the room. The versions are returned sorted by creation date, from newest to oldest. Corresponds to [`liveblocks.getVersionHistory`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-version-history).
 
 **Example**
 ```python
@@ -606,7 +606,7 @@ print(result)
 
 #### `create_version_history_snapshot`
 
-This endpoint creates a new version history snapshot of the room, capturing both its Storage and Yjs documents.
+This endpoint creates a new version history snapshot of the room, capturing both its Storage and Yjs documents. Corresponds to [`liveblocks.createVersionHistorySnapshot`](https://liveblocks.io/docs/api-reference/liveblocks-node#create-version-history-snapshot).
 
 **Example**
 ```python
@@ -626,7 +626,7 @@ print(result)
 
 #### `get_yjs_version`
 
-This endpoint returns a specific version of the room's Yjs document encoded as a binary Yjs update.
+This endpoint returns a specific version of the room's Yjs document encoded as a binary Yjs update. Corresponds to [`liveblocks.getYjsVersion`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-yjs-version).
 
 **Example**
 ```python
@@ -648,7 +648,7 @@ print(result)
 
 #### `delete_version`
 
-This endpoint permanently deletes a version from the room's history.
+This endpoint permanently deletes a version from the room's history. Corresponds to [`liveblocks.deleteVersion`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-version).
 
 **Example**
 ```python

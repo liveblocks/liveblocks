@@ -6418,10 +6418,14 @@ updateSettings({
 
 ## Version History
 
+Hooks for listing, previewing, restoring, and deleting versions of a room’s
+Storage and Yjs documents. Learn how to set this up in our
+[version history guide](/docs/guides/how-to-add-version-history-to-your-app).
+
 ### useHistoryVersions [@badge=RoomProvider]
 
-Returns the versions of the room. See
-[Version History Components](/docs/api-reference/liveblocks-react-ui#Version-history-components)
+Returns the versions of the room, both Storage and Yjs. See
+[Version History Components](/docs/api-reference/liveblocks-react-ui#Version-History)
 for more information on how to display versions.
 
 ```tsx
@@ -6433,6 +6437,39 @@ const { versions, error, isLoading } = useHistoryVersions();
 <PropertiesList title="Returns">
   <PropertiesListItem name="versions" type="HistoryVersion[]">
     An array of history versions for the room.
+  </PropertiesListItem>
+</PropertiesList>
+
+### useHistoryVersionStorageData [@badge=RoomProvider]
+
+Returns the Storage data for a given version of the room, reconstructed as a
+read-only [`LiveObject`][]. Because a historical version may not match your
+room's current `Storage` type, its shape is typed as the more permissive
+`LsonObject`.
+
+```tsx
+import { useHistoryVersionStorageData } from "@liveblocks/react";
+
+const { data, error, isLoading } = useHistoryVersionStorageData(versionId);
+```
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="versionId" type="string">
+    The ID of the version to retrieve. Obtained from the `id` field of a
+    `HistoryVersion` returned by [`useHistoryVersions`][].
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="data" type="LiveObject | undefined">
+    The Storage data for the version as a read-only `LiveObject`, or `undefined`
+    while loading.
+  </PropertiesListItem>
+  <PropertiesListItem name="isLoading" type="boolean">
+    Whether the version data is currently being loaded.
+  </PropertiesListItem>
+  <PropertiesListItem name="error" type="Error | undefined">
+    Any error that occurred while loading the version data.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -6463,6 +6500,60 @@ const { data, error, isLoading } = useHistoryVersionYjsData(versionId);
   </PropertiesListItem>
   <PropertiesListItem name="error" type="Error | undefined">
     Any error that occurred while loading the version data.
+  </PropertiesListItem>
+</PropertiesList>
+
+### useRestoreToStorageVersion [@badge=RoomProvider]
+
+Returns a function that restores the room's Storage to a given version, applied
+as a single undoable change. Only the Storage surface is affected; other
+surfaces (such as Yjs) are left untouched.
+
+```tsx
+import { useRestoreToStorageVersion } from "@liveblocks/react";
+
+const restoreToStorageVersion = useRestoreToStorageVersion(versionId);
+
+// Later, restore the room's Storage to this version
+await restoreToStorageVersion();
+```
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="versionId" type="string">
+    The ID of the version to restore to. Obtained from the `id` field of a
+    `HistoryVersion` returned by [`useHistoryVersions`][].
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="restoreToStorageVersion" type="() => Promise<void>">
+    A function that restores the room's Storage to the version. The change is
+    applied locally as a single undoable operation, then synced to the other
+    clients in the room.
+  </PropertiesListItem>
+</PropertiesList>
+
+### useDeleteHistoryVersion [@badge=RoomProvider]
+
+Returns a function that permanently deletes a version from the room's history.
+
+```tsx
+import { useDeleteHistoryVersion } from "@liveblocks/react";
+
+const deleteHistoryVersion = useDeleteHistoryVersion();
+
+// Later, delete a version by its id
+await deleteHistoryVersion(versionId);
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="deleteHistoryVersion"
+    type="(versionId: string) => Promise<void>"
+  >
+    A function that deletes the version with the given id. The `versionId` is
+    obtained from the `id` field of a `HistoryVersion` returned by
+    [`useHistoryVersions`][].
   </PropertiesListItem>
 </PropertiesList>
 
@@ -7116,6 +7207,7 @@ And the following timeline:
 [`useothersconnectionids`]:
   /docs/api-reference/liveblocks-react#useOthersConnectionIds
 [`useother`]: /docs/api-reference/liveblocks-react#useOther
+[`usehistoryversions`]: /docs/api-reference/liveblocks-react#useHistoryVersions
 [`uselostconnectionlistener`]:
   /docs/api-reference/liveblocks-react#useLostConnectionListener
 [`clientsidesuspense`]: /docs/api-reference/liveblocks-react#ClientSideSuspsnse

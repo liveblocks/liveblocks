@@ -1,0 +1,474 @@
+---
+meta:
+  title: "How to add version history to your app"
+  description:
+    "Learn how to create version snapshots of your Storage and Yjs documents,
+    and let users browse, preview, and restore them."
+---
+
+Version history lets users look back at previous versions of a document, and
+restore them when needed. In Liveblocks, a version is a snapshot of a room at a
+point in time—each snapshot captures both the room’s
+[Storage](/docs/api-reference/liveblocks-client#Storage) and its
+[Yjs](/docs/api-reference/liveblocks-yjs) document, and records when it was
+created and which users contributed to it. Because
+[Tiptap](/docs/api-reference/liveblocks-react-tiptap),
+[BlockNote](/docs/api-reference/liveblocks-react-blocknote), and
+[Lexical](/docs/api-reference/liveblocks-react-lexical) use Yjs documents, they
+also support version history out of the box.
+
+```ts
+type HistoryVersion = {
+  id: string;
+  createdAt: Date;
+  authors: { id: string }[];
+};
+```
+
+This guide shows you how to create versions, list them, and build version
+history for [Storage](#Version-history-for-Storage) and for
+[Yjs](#Version-history-for-Yjs).
+
+## Creating versions
+
+Versions can be created automatically by Liveblocks—enable this in the
+[dashboard](/dashboard) by navigating to a project, then “Settings”. On this
+page you can toggle the switch.
+
+<Figure>
+  <Image
+    src="/assets/tutorials/version-history/enable-version-history.png"
+    alt="Enable version history"
+    width={1957}
+    height={1171}
+  />
+</Figure>
+
+You can also create versions manually from your backend with
+[`Liveblocks.createVersionHistorySnapshot`](/docs/api-reference/liveblocks-node#create-version-history-snapshot).
+A manual snapshot is useful for creating a version at a meaningful moment, for
+example when a user clicks a _Save version_ button.
+
+```ts file="app/api/create-version/route.ts"
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+export async function POST() {
+  // +++
+  const snapshot = await liveblocks.createVersionHistorySnapshot("my-room-id");
+  // +++
+
+  // { data: { id: "vh_..." } }
+  return Response.json(snapshot);
+}
+```
+
+If you are not using `@liveblocks/node`, you can use the
+[Create version history snapshot](/docs/api-reference/rest-api-endpoints#create-version-history-snapshot)
+REST API directly.
+
+Each snapshot captures the Storage and Yjs documents together, so the same
+version can be used for both. However, previewing and restoring versions works
+differently for Storage and Yjs, as described below.
+
+## Version history for Storage [#Version-history-for-Storage]
+
+If your document is stored in
+[Storage](/docs/api-reference/liveblocks-client#Storage), you can list a room’s
+versions, preview any version’s data, and restore the room to it.
+
+### Listing Storage versions
+
+List a room’s versions with
+[`useHistoryVersions`](/docs/api-reference/liveblocks-react#useHistoryVersions),
+which returns them sorted from newest to oldest, and keeps them updated as new
+versions are created. For Storage, build the list UI yourself—each version has a
+creation date and its authors’ user IDs.
+
+```tsx
+import { useHistoryVersions } from "@liveblocks/react";
+
+function VersionsList({ onSelectVersion }) {
+  // +++
+  const { versions, isLoading, error } = useHistoryVersions();
+  // +++
+
+  if (isLoading) {
+    return <div>Loading versions…</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error.message}</div>;
+  }
+
+  return (
+    <ul>
+      // +++
+      {versions.map((version) => (
+        <li key={version.id}>
+          <button onClick={() => onSelectVersion(version.id)}>
+            {version.createdAt.toLocaleString()} —{" "}
+            {version.authors.map((author) => author.id).join(", ")}
+          </button>
+        </li>
+      ))}
+      // +++
+    </ul>
+  );
+}
+```
+
+You can also list versions from the server with
+[`Liveblocks.getVersionHistory`](/docs/api-reference/liveblocks-node#get-version-history)
+or the
+[Get version history](/docs/api-reference/rest-api-endpoints#get-version-history)
+REST API.
+
+### Previewing a Storage version
+
+[`useHistoryVersionStorageData`](/docs/api-reference/liveblocks-react#useHistoryVersionStorageData)
+returns the Storage data for a version, reconstructed as a read-only
+[`LiveObject`](/docs/api-reference/liveblocks-client#LiveObject). Because a
+historic version may not match your room’s current `Storage` type, its shape is
+typed as the more permissive `LsonObject`.
+
+```tsx
+import { useHistoryVersionStorageData } from "@liveblocks/react";
+
+function StorageVersionPreview({ versionId }: { versionId: string }) {
+  // +++
+  const { data, isLoading, error } = useHistoryVersionStorageData(versionId);
+  // +++
+
+  if (isLoading) {
+    return <div>Loading version…</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error.message}</div>;
+  }
+
+  // `data` is a read-only LiveObject holding the whole historic document
+  return (
+    // +++
+    <pre>{JSON.stringify(data.toJSON(), null, 2)}</pre>
+    // +++
+  );
+}
+```
+
+Rendering `data.toJSON()` is the simplest preview, but since you receive the
+full document tree, you can also pass it to the same components you use to
+render your live document, displaying a proper read-only preview.
+
+### Restoring a Storage version
+
+[`useRestoreToStorageVersion`](/docs/api-reference/liveblocks-react#useRestoreToStorageVersion)
+returns a function that restores the room’s Storage to a given version. The
+restore is applied as a single undoable change and synced to the other clients
+in the room—only Storage is affected, the room’s Yjs document is left untouched.
+
+```tsx
+import { useRestoreToStorageVersion } from "@liveblocks/react";
+
+function RestoreButton({ versionId }: { versionId: string }) {
+  // +++
+  const restoreToStorageVersion = useRestoreToStorageVersion(versionId);
+  // +++
+
+  return (
+    // +++
+    <button onClick={() => restoreToStorageVersion()}>
+      Restore this version
+    </button>
+    // +++
+  );
+}
+```
+
+Because the restore is a normal undoable change, users can revert it with
+[`useUndo`](/docs/api-reference/liveblocks-react#useUndo) if they change their
+minds.
+
+### Full Storage example
+
+Putting it together—a version history panel with a list of versions, a preview
+of the selected version, and a restore button.
+
+```tsx file="VersionHistory.tsx" isCollapsable isCollapsed
+import { useState } from "react";
+import {
+  useHistoryVersions,
+  useHistoryVersionStorageData,
+  useRestoreToStorageVersion,
+} from "@liveblocks/react";
+
+export function VersionHistory() {
+  const [selectedVersionId, setSelectedVersionId] = useState<string>();
+  const { versions, isLoading } = useHistoryVersions();
+
+  if (isLoading) {
+    return <div>Loading version history…</div>;
+  }
+
+  return (
+    <div style={{ display: "flex" }}>
+      <div style={{ flex: 1 }}>
+        {selectedVersionId ? (
+          <StorageVersionPreview
+            key={selectedVersionId}
+            versionId={selectedVersionId}
+          />
+        ) : (
+          <div>No version selected</div>
+        )}
+      </div>
+
+      <ul>
+        {versions?.map((version) => (
+          <li key={version.id}>
+            <button onClick={() => setSelectedVersionId(version.id)}>
+              {version.createdAt.toLocaleString()} —{" "}
+              {version.authors.map((author) => author.id).join(", ")}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function StorageVersionPreview({ versionId }: { versionId: string }) {
+  const { data, isLoading, error } = useHistoryVersionStorageData(versionId);
+  const restoreToStorageVersion = useRestoreToStorageVersion(versionId);
+
+  if (isLoading) {
+    return <div>Loading version…</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error.message}</div>;
+  }
+
+  return (
+    <>
+      <pre>{JSON.stringify(data.toJSON(), null, 2)}</pre>
+      <button onClick={() => restoreToStorageVersion()}>
+        Restore this version
+      </button>
+    </>
+  );
+}
+```
+
+## Version history for Yjs and text editors [#Version-history-for-Yjs]
+
+If your document is a [Yjs](/docs/api-reference/liveblocks-yjs) document, or if
+it uses our Tiptap, BlockNote, or Lexical plugins, you can preview and restore
+versions with ready-made components, or work with the raw version data directly.
+
+### Listing Yjs versions
+
+List a room’s versions with
+[`useHistoryVersions`](/docs/api-reference/liveblocks-react#useHistoryVersions),
+which returns them sorted from newest to oldest, and keeps them updated as new
+versions are created. Display them with the ready-made
+[`HistoryVersionSummaryList`](/docs/api-reference/liveblocks-react-ui#HistoryVersionSummaryList)
+and
+[`HistoryVersionSummary`](/docs/api-reference/liveblocks-react-ui#HistoryVersionSummary)
+components from
+[`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui). Each summary
+displays the version’s authors and creation date, along with a preview of the
+text in that version.
+
+```tsx
+import { useHistoryVersions } from "@liveblocks/react";
+// +++
+import {
+  HistoryVersionSummaryList,
+  HistoryVersionSummary,
+} from "@liveblocks/react-ui";
+// +++
+
+function VersionsList({ selectedVersionId, onSelectVersion }) {
+  // +++
+  const { versions, isLoading, error } = useHistoryVersions();
+  // +++
+
+  if (isLoading) {
+    return <div>Loading versions…</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error.message}</div>;
+  }
+
+  return (
+    // +++
+    <HistoryVersionSummaryList>
+      {versions.map((version) => (
+        <HistoryVersionSummary
+          key={version.id}
+          version={version}
+          selected={version.id === selectedVersionId}
+          onClick={() => onSelectVersion(version.id)}
+        />
+      ))}
+    </HistoryVersionSummaryList>
+    // +++
+  );
+}
+```
+
+### Text editors
+
+Each text editor package exports a `HistoryVersionPreview` component that
+renders a read-only preview of a version’s editor content, along with a button
+that restores it:
+[Tiptap](/docs/api-reference/liveblocks-react-tiptap#HistoryVersionPreview),
+[BlockNote](/docs/api-reference/liveblocks-react-blocknote#HistoryVersionPreview),
+and
+[Lexical](/docs/api-reference/liveblocks-react-lexical#HistoryVersionPreview).
+Combine it with the version list to build a full version history panel.
+
+This example uses Tiptap—change the import to match your editor.
+
+```tsx file="VersionHistory.tsx"
+import { useState, useMemo } from "react";
+import { useHistoryVersions } from "@liveblocks/react";
+import {
+  HistoryVersionSummaryList,
+  HistoryVersionSummary,
+} from "@liveblocks/react-ui";
+// +++
+import { HistoryVersionPreview } from "@liveblocks/react-tiptap";
+// +++
+
+export function VersionHistory({ onVersionRestore }) {
+  const [selectedVersionId, setSelectedVersionId] = useState<string>();
+  const { versions, isLoading } = useHistoryVersions();
+  const selectedVersion = useMemo(
+    () => versions?.find((version) => version.id === selectedVersionId),
+    [selectedVersionId, versions]
+  );
+
+  if (isLoading) {
+    return <div>Loading version history…</div>;
+  }
+
+  return (
+    <div style={{ display: "flex" }}>
+      <div style={{ flex: 1 }}>
+        {selectedVersion ? (
+          // +++
+          <HistoryVersionPreview
+            version={selectedVersion}
+            onVersionRestore={onVersionRestore}
+          />
+        ) : (
+          // +++
+          <div>No version selected</div>
+        )}
+      </div>
+
+      <HistoryVersionSummaryList>
+        {versions?.map((version) => (
+          <HistoryVersionSummary
+            key={version.id}
+            version={version}
+            selected={version.id === selectedVersionId}
+            onClick={() => setSelectedVersionId(version.id)}
+          />
+        ))}
+      </HistoryVersionSummaryList>
+    </div>
+  );
+}
+```
+
+`onVersionRestore` is called after the user clicks the restore button, which is
+a good place to close the version history panel.
+
+### Custom Yjs applications
+
+If you’re using Yjs without one of the editor packages, fetch a version’s raw
+data with
+[`useHistoryVersionYjsData`](/docs/api-reference/liveblocks-react#useHistoryVersionYjsData).
+It returns the version as a binary Yjs update, which you can apply to a fresh
+`Y.Doc` to read its contents.
+
+```tsx
+import { useMemo } from "react";
+import { useHistoryVersionYjsData } from "@liveblocks/react";
+import * as Y from "yjs";
+
+function YjsVersionPreview({ versionId }: { versionId: string }) {
+  // +++
+  const { data, isLoading, error } = useHistoryVersionYjsData(versionId);
+  // +++
+
+  const text = useMemo(() => {
+    if (!data) {
+      return "";
+    }
+
+    // Apply the version's binary update to an empty Y.Doc
+    const yDoc = new Y.Doc();
+    Y.applyUpdate(yDoc, data);
+    return yDoc.getText("text").toString();
+  }, [data]);
+
+  if (isLoading) {
+    return <div>Loading version…</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error.message}</div>;
+  }
+
+  return <pre>{text}</pre>;
+}
+```
+
+To restore a version in a custom Yjs setup, apply the historic content to your
+live `Y.Doc` as a regular edit, for example by replacing the current text with
+the version’s text. You can also fetch a version’s binary update from the server
+with
+[`Liveblocks.getYjsVersion`](/docs/api-reference/liveblocks-node#get-yjs-version)
+or the
+[Get Yjs document version](/docs/api-reference/rest-api-endpoints#get-yjs-version)
+REST API.
+
+## Deleting versions
+
+Permanently delete a version with
+[`useDeleteHistoryVersion`](/docs/api-reference/liveblocks-react#useDeleteHistoryVersion).
+
+```tsx
+import { useDeleteHistoryVersion } from "@liveblocks/react";
+
+function DeleteVersionButton({ versionId }: { versionId: string }) {
+  // +++
+  const deleteHistoryVersion = useDeleteHistoryVersion();
+  // +++
+
+  return (
+    <button onClick={() => deleteHistoryVersion(versionId)}>
+      Delete this version
+    </button>
+  );
+}
+```
+
+Versions can also be deleted from the server with
+[`Liveblocks.deleteVersion`](/docs/api-reference/liveblocks-node#delete-version)
+or the [Delete a version](/docs/api-reference/rest-api-endpoints#delete-version)
+REST API.
+
+## Retention
+
+How long versions are retained depends on your plan—see
+[usage limits](/docs/pricing/limits) for details.
