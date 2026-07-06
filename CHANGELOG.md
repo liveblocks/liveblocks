@@ -21,6 +21,11 @@ both the room's Storage and Yjs documents (previously Yjs only).
   permanently delete a version, see
   [docs](https://liveblocks.io/docs/api-reference/liveblocks-react#useDeleteHistoryVersion).
 
+### `@liveblocks/node` and Python SDK
+
+- Add methods for version history to list room versions, create a version
+  snapshot, and delete a version.
+
 ## v3.21.0
 
 ### All packages
