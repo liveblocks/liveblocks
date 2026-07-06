@@ -1868,6 +1868,21 @@ const { data } =
 console.log(data);
 ```
 
+#### Liveblocks.getYjsVersion [#get-yjs-version]
+
+Returns a specific version of a room’s Yjs document encoded as a binary Yjs
+update. Throws an error if the room or version isn’t found. This is a wrapper
+around the
+[Get Yjs Document Version API](/docs/api-reference/rest-api-endpoints#get-yjs-version)
+and returns the same response.
+
+```ts
+const binaryYjsUpdate = await liveblocks.getYjsVersion({
+  roomId: "my-room-id",
+  versionId: "vh_d75sF3...",
+});
+```
+
 #### Liveblocks.deleteVersion [#delete-version]
 
 Permanently deletes a version from a room’s history. Throws an error if the room

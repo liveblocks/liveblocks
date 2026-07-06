@@ -2188,6 +2188,64 @@ describe("client", () => {
     });
   });
 
+  describe("get yjs version", () => {
+    test("should return a version's Yjs document when getYjsVersion receives a successful response", async () => {
+      const update = new Uint8Array([21, 31]);
+      server.use(
+        http.get(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/versions/:versionId/yjs`,
+          () => {
+            return HttpResponse.arrayBuffer(update.buffer);
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(
+        client.getYjsVersion({
+          roomId: "room1",
+          versionId: "vh_abc123",
+        })
+      ).resolves.toEqual(update.buffer);
+    });
+
+    test("should throw a LiveblocksError when getYjsVersion receives an error response", async () => {
+      const error = {
+        error: "VERSION_NOT_FOUND",
+        message: "Version not found",
+      };
+
+      server.use(
+        http.get(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/versions/:versionId/yjs`,
+          () => {
+            return HttpResponse.json(error, { status: 404 });
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      // This should throw a LiveblocksError
+      try {
+        await client.getYjsVersion({
+          roomId: "room1",
+          versionId: "vh_abc123",
+        });
+        // If it doesn't throw, fail the test.
+        expect(true).toBe(false);
+      } catch (err) {
+        expect(err instanceof LiveblocksError).toBe(true);
+        if (err instanceof LiveblocksError) {
+          expect(err.status).toBe(404);
+          expect(err.message).toBe("Version not found");
+          expect(err.name).toBe("LiveblocksError");
+        }
+      }
+    });
+  });
+
   describe("delete version", () => {
     test("should delete a version when deleteVersion receives a successful response", async () => {
       server.use(

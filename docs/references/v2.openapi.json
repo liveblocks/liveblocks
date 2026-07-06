@@ -1619,7 +1619,7 @@
     "/rooms/{roomId}/versions/{versionId}/yjs": {
       "get": {
         "summary": "Get Yjs document version",
-        "description": "This endpoint returns a specific version of the room's Yjs document encoded as a binary Yjs update.",
+        "description": "This endpoint returns a specific version of the room's Yjs document encoded as a binary Yjs update. Corresponds to [`liveblocks.getYjsVersion`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-yjs-version).",
         "tags": ["Version History"],
         "operationId": "get-yjs-version",
         "parameters": [

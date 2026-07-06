@@ -1720,6 +1720,31 @@ export class Liveblocks {
   }
 
   /**
+   * Returns a specific version of the room's Yjs document encoded as a binary Yjs update.
+   * @param params.roomId The room ID to get the Yjs document version from.
+   * @param params.versionId The ID of the version to get.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns The version's Yjs document encoded as a binary update.
+   */
+  public async getYjsVersion(
+    params: { roomId: string; versionId: string },
+    options?: RequestOptions
+  ): Promise<ArrayBuffer> {
+    const { roomId, versionId } = params;
+
+    const res = await this.#get(
+      url`/v2/rooms/${roomId}/versions/${versionId}/yjs`,
+      undefined,
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+
+    return res.arrayBuffer();
+  }
+
+  /**
    * Permanently deletes a version from the room's history.
    * @param params.roomId The room ID to delete the version in.
    * @param params.versionId The ID of the version to delete.
