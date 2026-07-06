@@ -74,6 +74,7 @@ export {
 export type {
   CreateManagedPoolOptions,
   ManagedPool,
+  PrivateLiveNodeApi,
 } from "./crdts/AbstractCrdt";
 export { createManagedPool } from "./crdts/AbstractCrdt";
 export { cloneLson, isLiveNode } from "./crdts/liveblocks-helpers";

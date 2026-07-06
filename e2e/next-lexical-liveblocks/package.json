@@ -14,6 +14,7 @@
     "@lexical/dragon": "0.45.0",
     "@lexical/react": "0.45.0",
     "@lexical/rich-text": "0.45.0",
+    "@lexical/selection": "0.45.0",
     "@lexical/text": "0.45.0",
     "@lexical/utils": "0.45.0",
     "@liveblocks/client": "workspace:*",

@@ -201,6 +201,9 @@ importers:
       '@lexical/rich-text':
         specifier: 0.45.0
         version: 0.45.0
+      '@lexical/selection':
+        specifier: 0.45.0
+        version: 0.45.0
       '@lexical/text':
         specifier: 0.45.0
         version: 0.45.0

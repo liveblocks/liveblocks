@@ -10,8 +10,11 @@ import {
   ElementNode,
   LexicalNode,
   NodeKey,
+  Point,
   TextNode,
+  $getSelection,
   $isElementNode,
+  $isRangeSelection,
   $isTextNode,
   $getNodeByKey,
   $isRootNode,
@@ -25,6 +28,8 @@ import {
   type SerializedElementNode,
 } from "lexical";
 import type {
+  LiveLexicalPoint,
+  LiveLexicalSelection,
   LiveRootNode,
   LiveElementNode,
   LiveTextNode,
@@ -36,9 +41,22 @@ import type {
 } from "../../../liveblocks.config";
 import {
   JsonObject,
+  kInternal,
   kStorageUpdateSource,
   TextAttributes,
+  type PrivateLiveNodeApi,
 } from "@liveblocks/core";
+
+export type DecodedLexicalPoint = {
+  key: NodeKey;
+  offset: number;
+  type: LiveLexicalPoint["type"];
+};
+
+export type DecodedLexicalSelection = {
+  anchor: DecodedLexicalPoint;
+  focus: DecodedLexicalPoint;
+};
 
 export class LiveblocksCollaborationManager {
   #binding: {
@@ -89,6 +107,162 @@ export class LiveblocksCollaborationManager {
       );
       index++;
     }
+  }
+
+  /**
+   * Encode a Lexical selection endpoint as a storage-relative presence point.
+   */
+  public $encodePoint(point: Point): LiveLexicalPoint | null {
+    const node_liveblocks = this.#binding.reverse.get(point.key);
+    if (node_liveblocks === undefined) {
+      return null;
+    }
+
+    if (point.type === "text") {
+      return $encodeTextPoint(point, node_liveblocks);
+    }
+
+    if (point.type === "element") {
+      return $encodeElementPoint(point, node_liveblocks);
+    }
+
+    return null;
+  }
+
+  /**
+   * Encode the current range selection for Liveblocks presence.
+   * Returns `null` when there is no range selection or either endpoint cannot be encoded.
+   */
+  public $encodeSelection(): LiveLexicalSelection | null {
+    const selection = $getSelection();
+    if (!$isRangeSelection(selection)) {
+      return null;
+    }
+
+    const anchor = this.$encodePoint(selection.anchor);
+    const focus = this.$encodePoint(selection.focus);
+    if (anchor === null || focus === null) {
+      return null;
+    }
+
+    return { anchor, focus };
+  }
+
+  /**
+   * Decode a storage-relative presence point into Lexical coordinates.
+   * Must be called inside `editor.read()` or `editor.update()` while binding is populated.
+   *
+   * Returns `null` when the storage node is missing, unbound, or the point cannot
+   * be decoded yet (e.g. peer ahead on LiveText version).
+   */
+  public $decodePoint(point: LiveLexicalPoint): DecodedLexicalPoint | null {
+    const node_liveblocks = find_liveblocksNode(
+      this.root,
+      (candidate) =>
+        point.nodeId ===
+        (candidate as unknown as { [kInternal]: PrivateLiveNodeApi })[
+          kInternal
+        ].getId()
+    );
+    if (node_liveblocks === null) {
+      return null;
+    }
+
+    if (point.type === "text") {
+      if (node_liveblocks.get("kind") !== "text") {
+        return null;
+      }
+      return this.$decodeTextPoint(point, node_liveblocks as LiveTextNode);
+    }
+
+    if (point.type === "element") {
+      const kind = node_liveblocks.get("kind");
+      if (kind !== "element" && kind !== "root") {
+        return null;
+      }
+      return this.$decodeElementPoint(point, node_liveblocks);
+    }
+
+    return null;
+  }
+
+  public $decodeTextPoint(
+    point: LiveLexicalPoint,
+    node_liveblocks: LiveTextNode
+  ): DecodedLexicalPoint | null {
+    const liveText = node_liveblocks.get("content");
+    const flatOffset = liveText[kInternal].decodeIndex(
+      point.offset,
+      point.version
+    );
+    if (flatOffset === null) {
+      return null;
+    }
+
+    const coalesced = this.#binding.forward.get(node_liveblocks);
+    if (coalesced === undefined || !(coalesced instanceof Array)) {
+      return null;
+    }
+    if (coalesced.length === 0) {
+      return null;
+    }
+
+    let remaining = flatOffset;
+    for (const textNode of coalesced) {
+      const size = textNode.getTextContentSize();
+      if (remaining <= size) {
+        return {
+          key: textNode.getKey(),
+          offset: remaining,
+          type: "text",
+        };
+      }
+      remaining -= size;
+    }
+
+    const last = coalesced[coalesced.length - 1]!;
+    return {
+      key: last.getKey(),
+      offset: last.getTextContentSize(),
+      type: "text",
+    };
+  }
+
+  public $decodeElementPoint(
+    point: LiveLexicalPoint,
+    node_liveblocks: LiveStorageNode
+  ): DecodedLexicalPoint | null {
+    const mapped = this.#binding.forward.get(node_liveblocks);
+    if (mapped === undefined || mapped instanceof Array) {
+      return null;
+    }
+    if (!$isElementNode(mapped)) {
+      return null;
+    }
+
+    return {
+      key: mapped.getKey(),
+      offset: convertStorageOffsetToLexicalChildIndex(
+        mapped.getLatest(),
+        point.offset
+      ),
+      type: "element",
+    };
+  }
+
+  /**
+   * Decode a storage-relative presence selection into Lexical coordinates.
+   */
+  public $decodeSelection(
+    selection: LiveLexicalSelection
+  ): DecodedLexicalSelection | null {
+    const anchor = this.$decodePoint(selection.anchor);
+    const focus = this.$decodePoint(selection.focus);
+    if (anchor === null || focus === null) {
+      return null;
+    }
+
+    return { anchor, focus };
   }
 
   public $applyLocalUpdates(changeset: {
@@ -926,11 +1100,7 @@ export class LiveblocksCollaborationManager {
             }
             const slot = slots[change.index];
             const deleteSize =
-              slot === undefined
-                ? 0
-                : slot instanceof Array
-                  ? slot.length
-                  : 1;
+              slot === undefined ? 0 : slot instanceof Array ? slot.length : 1;
             host_lexical.splice(deleteAt, deleteSize, []);
           } else if (change.type === "move") {
             if (!(change.item instanceof LiveObject)) {
@@ -1849,6 +2019,129 @@ function getSegmentAttributesAtOffset(
   return undefined;
 }
 
+function $encodeTextPoint(
+  point: Point,
+  node_liveblocks: LiveStorageNode
+): LiveLexicalPoint | null {
+  if (node_liveblocks.get("kind") !== "text") {
+    return null;
+  }
+
+  const nodeId = (
+    node_liveblocks as unknown as { [kInternal]: PrivateLiveNodeApi }
+  )[kInternal].getId();
+  if (nodeId === undefined) {
+    return null;
+  }
+
+  const node_lexical = point.getNode();
+  if (!$isTextNode(node_lexical)) {
+    return null;
+  }
+
+  let flatOffset = point.offset;
+  let prevSibling = node_lexical.getPreviousSibling();
+  while ($isTextNode(prevSibling)) {
+    flatOffset += prevSibling.getTextContentSize();
+    prevSibling = prevSibling.getPreviousSibling();
+  }
+
+  const liveText = (node_liveblocks as LiveTextNode).get("content");
+  return {
+    nodeId,
+    type: "text",
+    offset: liveText[kInternal].encodeIndex(flatOffset),
+    version: liveText.version,
+  };
+}
+
+function $encodeElementPoint(
+  point: Point,
+  node_liveblocks: LiveStorageNode
+): LiveLexicalPoint | null {
+  const kind = node_liveblocks.get("kind");
+  if (kind !== "element" && kind !== "root") {
+    return null;
+  }
+
+  const nodeId = (
+    node_liveblocks as unknown as { [kInternal]: PrivateLiveNodeApi }
+  )[kInternal].getId();
+  if (nodeId === undefined) {
+    return null;
+  }
+
+  const node_lexical = point.getNode();
+  if (!$isElementNode(node_lexical)) {
+    return null;
+  }
+
+  return {
+    nodeId,
+    type: "element",
+    offset: convertLexicalChildIndexToStorage(node_lexical, point.offset),
+    version: 0,
+  };
+}
+
+/**
+ * Converts a Lexical element's child index to the corresponding Liveblocks storage offset,
+ * accounting for the fact that consecutive Lexical text nodes are coalesced into a single
+ * storage node. It skips over runs of text nodes so that multiple Lexical text children
+ * map to one storage index.
+ */
+function convertLexicalChildIndexToStorage(
+  element: ElementNode,
+  targetChildIndex: number
+): number {
+  const children = element.getChildren();
+  let index_liveblocks = 0;
+  let index_lexical = 0;
+
+  while (index_lexical < targetChildIndex) {
+    if (index_lexical >= children.length) {
+      return index_liveblocks;
+    }
+    index_lexical += 1;
+    if ($isTextNode(children[index_lexical - 1])) {
+      while (
+        index_lexical < children.length &&
+        $isTextNode(children[index_lexical])
+      ) {
+        index_lexical += 1;
+      }
+    }
+    index_liveblocks += 1;
+  }
+
+  return index_liveblocks;
+}
+
+/** Inverse of {@link convertLexicalChildIndexToStorage}. */
+function convertStorageOffsetToLexicalChildIndex(
+  element: ElementNode,
+  storageOffset: number
+): number {
+  const children = element.getChildren();
+  let remainingStorageOffset = storageOffset;
+  let lexicalOffset = 0;
+
+  while (remainingStorageOffset > 0 && lexicalOffset < children.length) {
+    lexicalOffset += 1;
+    if ($isTextNode(children[lexicalOffset - 1])) {
+      while (
+        lexicalOffset < children.length &&
+        $isTextNode(children[lexicalOffset])
+      ) {
+        lexicalOffset += 1;
+      }
+    }
+    remainingStorageOffset -= 1;
+  }
+
+  return lexicalOffset;
+}
+
 /**
  * Materializes a Liveblocks storage child from Lexical content (Lexical → Live).
  *
@@ -2218,9 +2511,7 @@ export function $setLexicalNodeProps(
     if (Object.keys(payload).length > 0) {
       latest
         .getWritable()
-        .updateFromJSON(
-          payload as LexicalUpdateJSON<SerializedElementNode>
-        );
+        .updateFromJSON(payload as LexicalUpdateJSON<SerializedElementNode>);
     }
     return;
   }

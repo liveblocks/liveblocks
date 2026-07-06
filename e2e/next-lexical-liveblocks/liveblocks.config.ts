@@ -58,9 +58,29 @@ export type LiveDecoratorNode = LiveObject<LiveDecoratorShape>;
 export type LiveRootNode = LiveObject<LiveRootShape>;
 export type LiveStorageNode = LiveObject<LiveStorageShape>;
 
+/** Storage-relative selection endpoint (not Lexical node keys). */
+export type LiveLexicalPointType = "text" | "element";
+
+export type LiveLexicalPoint = {
+  /** Stable LiveObject id for the bound storage node. */
+  nodeId: string;
+  type: LiveLexicalPointType;
+  /** Character offset within LiveText (text) or child index (element). */
+  offset: number;
+  /** LiveText.version at encode time; 0 for non-text points. */
+  version: number;
+};
+
+export type LiveLexicalSelection = {
+  anchor: LiveLexicalPoint;
+  focus: LiveLexicalPoint;
+};
+
 declare global {
   interface Liveblocks {
-    Presence: {};
+    Presence: {
+      selection: LiveLexicalSelection | null;
+    };
 
     Storage: {
       document: LiveRootNode;

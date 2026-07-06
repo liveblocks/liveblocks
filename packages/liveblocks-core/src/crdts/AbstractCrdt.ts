@@ -2,6 +2,7 @@ import { assertNever } from "../lib/assert";
 import type { ReadonlyJson } from "../lib/Json";
 import type { Pos } from "../lib/position";
 import { asPos } from "../lib/position";
+import { kInternal } from "../internal";
 import type {
   ClientWireCreateOp,
   ClientWireOp,
@@ -29,6 +30,18 @@ export type DispatchOptions = {
    * don't carry wire ops yet (which should).
    */
   clearRedoStack?: boolean;
+};
+
+/**
+ * Private methods on any Liveblocks CRDT node. As a user of Liveblocks, NEVER
+ * USE ANY OF THESE DIRECTLY, because bad things will probably happen if you do.
+ */
+export type PrivateLiveNodeApi = {
+  /**
+   * Returns the CRDT node id once attached to the room pool. Detached nodes
+   * that have not entered storage yet return `undefined`.
+   */
+  getId(): string | undefined;
 };
 
 /**
@@ -262,10 +275,21 @@ type ParentInfo =
 
 export abstract class AbstractCrdt {
   //                  ^^^^^^^^^^^^ TODO: Make this an interface
+  declare readonly [kInternal]: PrivateLiveNodeApi;
+
   #pool?: ManagedPool;
   #id?: string;
 
   #parent: ParentInfo = NoParent;
+
+  constructor() {
+    Object.defineProperty(this, kInternal, {
+      value: {
+        getId: (): string | undefined => this.#id,
+      },
+      enumerable: false,
+    });
+  }
 
   /** @internal */
   _getParentKeyOrThrow(): string {

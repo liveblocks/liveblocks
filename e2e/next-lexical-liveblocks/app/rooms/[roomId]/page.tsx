@@ -16,7 +16,8 @@ import type {
   LiveRootNode,
   LiveTextNode,
 } from "../../../liveblocks.config";
-import { $getRoot, COLLABORATION_TAG, ElementNode } from "lexical";
+import { kStorageUpdateSource } from "@liveblocks/core";
+import { $getRoot, $getSelection, $isRangeSelection, COLLABORATION_TAG, ElementNode } from "lexical";
 
 import {
   Composer,
@@ -29,6 +30,7 @@ import {
   $convertLiveElementNodeToLexicalNode,
   LiveblocksCollaborationManager,
 } from "./manager";
+import { RemoteCursorsPlugin } from "./remote-cursors";
 
 export default function RoomPage({
   params,
@@ -40,7 +42,7 @@ export default function RoomPage({
   return (
     <RoomProvider
       id={roomId}
-      initialPresence={{}}
+      initialPresence={{ selection: null }}
       initialStorage={{
         document: new LiveObject({
           kind: "root",
@@ -120,10 +122,7 @@ function Editor() {
         <ContentEditable className="outline-none flex-1" />
         <RichTextPlugin />
         <DevToolsPlugin />
-        <LiveblocksCollaborationPlugin
-          room={room}
-          root={root.get("document")}
-        />
+        <LiveblocksCollaborationPlugin room={room} root={root.get("document")} />
       </div>
     </Composer>
   );
@@ -137,12 +136,11 @@ function LiveblocksCollaborationPlugin({
   root: LiveRootNode;
 }) {
   const editor = useComposer();
-
-  const _manager = useRef<LiveblocksCollaborationManager | null>(null);
-  if (_manager.current === null) {
-    _manager.current = new LiveblocksCollaborationManager(root);
+  const managerRef = useRef<LiveblocksCollaborationManager | null>(null);
+  if (managerRef.current === null) {
+    managerRef.current = new LiveblocksCollaborationManager(root);
   }
-  const manager = _manager.current;
+  const manager = managerRef.current;
 
   useEffect(() => {
     editor.setEditable(false);
@@ -195,6 +193,28 @@ function LiveblocksCollaborationPlugin({
   }, [editor, room, manager]);
 
   useEffect(() => {
+    return editor.registerUpdateListener(({ tags }) => {
+      if (tags.has(COLLABORATION_TAG) || manager.binding.reverse.size === 0) {
+        return;
+      }
+
+      try {
+        editor.read(() => {
+          room.updatePresence({ selection: manager.$encodeSelection() });
+        });
+      } catch (error) {
+        console.error("Failed to publish selection presence:", error);
+      }
+    });
+  }, [editor, room, manager]);
+
+  useEffect(() => {
+    return () => {
+      room.updatePresence({ selection: null });
+    };
+  }, [room]);
+
+  useEffect(() => {
     return room.subscribe(
       root,
       (updates) => {
@@ -202,10 +222,45 @@ function LiveblocksCollaborationPlugin({
           return;
         }
 
+        if (
+          updates.every((update) => {
+            const source = update[kStorageUpdateSource];
+            return source?.origin === "local" && source.via === "mutation";
+          })
+        ) {
+          return;
+        }
+
         try {
           editor.update(
             () => {
               manager.$applyRemoteUpdates(updates);
+
+              const selection = $getSelection();
+              if (!$isRangeSelection(selection)) {
+                return;
+              }
+
+              const selection_presence = room.getPresence().selection;
+              if (selection_presence === null) {
+                return;
+              }
+
+              const decoded = manager.$decodeSelection(selection_presence);
+              if (decoded === null) {
+                return;
+              }
+
+              selection.anchor.set(
+                decoded.anchor.key,
+                decoded.anchor.offset,
+                decoded.anchor.type
+              );
+              selection.focus.set(
+                decoded.focus.key,
+                decoded.focus.offset,
+                decoded.focus.type
+              );
             },
             {
               discrete: true,
@@ -213,6 +268,10 @@ function LiveblocksCollaborationPlugin({
               tag: COLLABORATION_TAG,
             }
           );
+
+          editor.read(() => {
+            room.updatePresence({ selection: manager.$encodeSelection() });
+          });
         } catch (error) {
           console.error("Failed to apply remote storage updates:", error);
         }
@@ -221,7 +280,7 @@ function LiveblocksCollaborationPlugin({
     );
   }, [editor, room, manager, root]);
 
-  return null;
+  return <RemoteCursorsPlugin manager={manager} root={root} />;
 }
 
 function useRoot(room: Room) {

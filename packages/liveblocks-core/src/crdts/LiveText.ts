@@ -18,7 +18,7 @@ import type { SerializedText, TextStorageNode } from "../protocol/StorageNode";
 import { CrdtType } from "../protocol/StorageNode";
 import type * as DevTools from "../types/DevToolsTreeNode";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
-import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
+import type { ApplyResult, ManagedPool, PrivateLiveNodeApi } from "./AbstractCrdt";
 import { AbstractCrdt } from "./AbstractCrdt";
 import {
   applyDelete,
@@ -100,7 +100,7 @@ type AcceptedTextOperations = {
  * Private methods on a LiveText node. As a user of Liveblocks, NEVER USE ANY
  * OF THESE DIRECTLY, because bad things will probably happen if you do.
  */
-export type PrivateLiveTextApi = {
+export type PrivateLiveTextApi = PrivateLiveNodeApi & {
   /**
    * Encode a local-document index into server-confirmed coordinates suitable
    * for broadcasting to peers via presence or any other side channel. Pair
@@ -210,13 +210,10 @@ export class LiveText extends AbstractCrdt {
     this.#confirmed = [...this.#segments];
     this.#version = version;
 
-    Object.defineProperty(this, kInternal, {
-      value: {
-        encodeIndex: (localIndex: number) => this.#encodeIndex(localIndex),
-        decodeIndex: (index: number, fromVersion: number) =>
-          this.#decodeIndex(index, fromVersion),
-      },
-      enumerable: false,
+    Object.assign(this[kInternal], {
+      encodeIndex: (localIndex: number) => this.#encodeIndex(localIndex),
+      decodeIndex: (index: number, fromVersion: number) =>
+        this.#decodeIndex(index, fromVersion),
     });
   }
 

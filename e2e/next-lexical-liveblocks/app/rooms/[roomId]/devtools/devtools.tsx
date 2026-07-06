@@ -16,15 +16,31 @@ import {
 
 const EXTENSION_ID = "dmbopeepjkdlplkjcjbnfiikajiddhnd";
 
-export function DevToolsPlugin() {
-  if (typeof chrome === "undefined") return null;
+type ChromeApi = {
+  runtime: {
+    sendMessage: (extensionId: string, message: unknown) => Promise<unknown>;
+  };
+};
 
-  if (chrome.runtime === undefined) return null;
+function getChrome(): ChromeApi | null {
+  const chrome = (globalThis as typeof globalThis & { chrome?: ChromeApi })
+    .chrome;
+  if (chrome?.runtime === undefined) {
+    return null;
+  }
+  return chrome;
+}
+
+export function DevToolsPlugin() {
+  if (getChrome() === null) return null;
 
   return <DevToolsPluginImpl />;
 }
 
 function DevToolsPluginImpl() {
+  const chrome = getChrome();
+  if (chrome === null) return null;
+
   const editor = useComposer();
   const root = useRootElement(editor);
   const key = editor.getKey();
@@ -240,7 +256,7 @@ export function $serializeNode(node: ElementNode): SerializedElementNode;
 export function $serializeNode(node: TextNode): SerializedTextNode;
 export function $serializeNode(node: LexicalNode): SerializedLexicalNode;
 export function $serializeNode(node: LexicalNode): SerializedLexicalNode {
-  const meta = node.exportJSON();
+  const meta = node.exportJSON() as JsonObject;
 
   if ($isRootNode(node)) {
     const children = node.getChildren().map((child) => $serializeNode(child));
