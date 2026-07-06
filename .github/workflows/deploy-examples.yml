@@ -33,6 +33,9 @@ jobs:
           echo Triggering deployment for nextjs-ai-chats
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_s3I6El0fFejHHo1mKmdmZwszO1Ez/Rp1uaVialk; echo
 
+          echo Triggering deployment for nextjs-ai-slideshow
+          curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_1pLniGfuWMotpnSZaHHYo5PYparf/olqYWWMupe; echo
+
           echo Triggering deployment for nextjs-ai-popup
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_Dej5iVX3gTDoMyl4Zz7eQCeanbTL/ApOZUtheJg; echo
 
