@@ -10,7 +10,7 @@ import {
   convertToThreadData,
   convertToThreadDeleteInfo,
 } from "./convert-plain-data";
-import type { LiveFileData } from "./crdts/LiveFile";
+import { LiveFile, type LiveFileData } from "./crdts/LiveFile";
 import { assertNever } from "./lib/assert";
 import { autoRetry, HttpError } from "./lib/autoRetry";
 import type { BatchStore } from "./lib/batch";
@@ -353,7 +353,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     roomId: string;
     file: File;
     signal?: AbortSignal;
-  }): Promise<LiveFileData>;
+  }): Promise<LiveFile>;
 
   getOrCreateFileUrlsStore(roomId: string): BatchStore<string, string>;
 
@@ -1279,12 +1279,12 @@ export function createApiClient<
     roomId: string;
     file: File;
     signal?: AbortSignal;
-  }): Promise<LiveFileData> {
+  }): Promise<LiveFile> {
     const roomId = options.roomId;
     const file = options.file;
     const fileId = createStorageFileId();
 
-    return uploadRoomFile({
+    const fileData = await uploadRoomFile({
       file,
       signal: options.signal,
       abortErrorMessage: `Upload of file ${fileId} was aborted.`,
@@ -1346,6 +1346,8 @@ export function createApiClient<
         );
       },
     });
+
+    return new LiveFile(fileData);
   }
 
   const attachmentUrlsBatchStoresByRoom = new DefaultMap<

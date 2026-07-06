@@ -17,7 +17,7 @@ import {
   mergeStorageUpdates,
 } from "./crdts/liveblocks-helpers";
 import { getLiveFileId } from "./crdts/LiveFile";
-import type { LiveFileData, LiveFileReference } from "./crdts/LiveFile";
+import type { LiveFile, LiveFileReference } from "./crdts/LiveFile";
 import { LiveObject } from "./crdts/LiveObject";
 import type { LiveStructure, LsonObject } from "./crdts/Lson";
 import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
@@ -1178,10 +1178,9 @@ export type Room<
    * Uploads a file for a `LiveFile`.
    *
    * @example
-   * const fileReference = await room.uploadFile(file);
-   * const liveFile = new LiveFile(fileReference);
+   * const liveFile = await room.uploadFile(file);
    */
-  uploadFile(file: File, options?: UploadFileOptions): Promise<LiveFileData>;
+  uploadFile(file: File, options?: UploadFileOptions): Promise<LiveFile>;
 
   /**
    * Returns a presigned URL for a `LiveFile`.
@@ -3777,7 +3776,7 @@ export function createRoom<
   function uploadFile(
     file: File,
     options: UploadFileOptions = {}
-  ): Promise<LiveFileData> {
+  ): Promise<LiveFile> {
     return httpClient.uploadFile({
       roomId,
       file,

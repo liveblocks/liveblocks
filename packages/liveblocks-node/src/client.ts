@@ -66,6 +66,7 @@ import type {
 import {
   autoRetry,
   checkBounds,
+  chunk,
   ClientMsgCode,
   convertToCommentData,
   convertToCommentUserReaction,
@@ -74,12 +75,12 @@ import {
   convertToSubscriptionData,
   convertToThreadData,
   convertToUserSubscriptionData,
-  chunk,
   createManagedPool,
   createNotificationSettings,
   createStorageFileId,
   getLiveFileId,
   isPlainObject,
+  LiveFile,
   LiveObject,
   makeAbortController,
   normalizeRoomAccesses,
@@ -2168,11 +2169,11 @@ export class Liveblocks {
   public async uploadFile(
     params: { roomId: string; file: File },
     options?: RequestOptions
-  ): Promise<LiveFileData> {
+  ): Promise<LiveFile> {
     const { roomId, file } = params;
     const fileId = createStorageFileId();
 
-    return uploadStorageFile({
+    const fileData = await uploadStorageFile({
       file,
       signal: options?.signal,
       abortErrorMessage: `Upload of file ${fileId} was aborted.`,
@@ -2220,6 +2221,8 @@ export class Liveblocks {
         }
       },
     });
+
+    return new LiveFile(fileData);
   }
 
   public async getFileUrl(

@@ -1433,13 +1433,15 @@ describe("client", () => {
 
       const client = new Liveblocks({ secret: "sk_xxx" });
 
-      await expect(
-        client.uploadFile({
-          roomId: "room1",
-          file,
-        })
-      ).resolves.toEqual({
-        id: expect.stringMatching(/^fl_/),
+      const liveFile = await client.uploadFile({
+        roomId: "room1",
+        file,
+      });
+
+      expect(liveFile).toBeInstanceOf(LiveFile);
+      expect(liveFile.id).toMatch(/^fl_/);
+      expect(liveFile.data).toEqual({
+        id: liveFile.id,
         name: fileName,
         size: 5,
         mimeType: "text/plain",
@@ -1522,13 +1524,15 @@ describe("client", () => {
 
       const client = new Liveblocks({ secret: "sk_xxx" });
 
-      await expect(
-        client.uploadFile({
-          roomId: "room1",
-          file,
-        })
-      ).resolves.toEqual({
-        id: expect.stringMatching(/^fl_/),
+      const liveFile = await client.uploadFile({
+        roomId: "room1",
+        file,
+      });
+
+      expect(liveFile).toBeInstanceOf(LiveFile);
+      expect(liveFile.id).toMatch(/^fl_/);
+      expect(liveFile.data).toEqual({
+        id: liveFile.id,
         name: fileName,
         size: 5 * 1024 * 1024 + 1,
         mimeType: "application/octet-stream",

@@ -1,4 +1,4 @@
-import { Liveblocks } from "@liveblocks/node";
+import { Liveblocks, type LiveFile } from "@liveblocks/node";
 import { describe, expectTypeOf, test } from "vitest";
 import type {
   CommentReaction,
@@ -121,6 +121,15 @@ describe("Liveblocks client without Liveblocks augmentation", () => {
   test("should return ReadonlyJsonObject from getStorageDocument() with 'json' format", async () => {
     const root = await client.getStorageDocument("my-room", "json");
     expectTypeOf(root).toEqualTypeOf<ReadonlyJsonObject>();
+  });
+
+  test("should return a LiveFile from uploadFile()", async () => {
+    const liveFile = await client.uploadFile({
+      roomId: "my-room",
+      file: new File(["hello"], "hello.txt", { type: "text/plain" }),
+    });
+
+    expectTypeOf(liveFile).toEqualTypeOf<LiveFile>();
   });
 
   test("should return correct comment shape from getComment()", async () => {
