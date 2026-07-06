@@ -1671,7 +1671,7 @@
     "/rooms/{roomId}/versions/{versionId}": {
       "delete": {
         "summary": "Delete a version",
-        "description": "This endpoint permanently deletes a version from the room's history.",
+        "description": "This endpoint permanently deletes a version from the room's history. Corresponds to [`liveblocks.deleteVersion`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-version).",
         "tags": ["Version History"],
         "operationId": "delete-version",
         "parameters": [

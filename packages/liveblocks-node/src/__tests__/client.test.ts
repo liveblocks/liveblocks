@@ -2061,6 +2061,63 @@ describe("client", () => {
     });
   });
 
+  describe("delete version", () => {
+    test("should delete a version when deleteVersion receives a successful response", async () => {
+      server.use(
+        http.delete(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/versions/:versionId`,
+          () => {
+            return HttpResponse.text(null, { status: 204 });
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      const res = await client.deleteVersion({
+        roomId: "room1",
+        versionId: "vh_abc123",
+      });
+
+      expect(res).toBeUndefined();
+    });
+
+    test("should throw a LiveblocksError when deleteVersion receives an error response", async () => {
+      const error = {
+        error: "VERSION_NOT_FOUND",
+        message: "Version not found",
+      };
+
+      server.use(
+        http.delete(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/versions/:versionId`,
+          () => {
+            return HttpResponse.json(error, { status: 404 });
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      // This should throw a LiveblocksError
+      try {
+        await client.deleteVersion({
+          roomId: "room1",
+          versionId: "vh_abc123",
+        });
+        // If it doesn't throw, fail the test.
+        expect(true).toBe(false);
+      } catch (err) {
+        expect(err instanceof LiveblocksError).toBe(true);
+        if (err instanceof LiveblocksError) {
+          expect(err.status).toBe(404);
+          expect(err.message).toBe("Version not found");
+          expect(err.name).toBe("LiveblocksError");
+        }
+      }
+    });
+  });
+
   describe("get inbox notification", () => {
     test("should return the specified inbox notification when getInboxNotification receives a successful response", async () => {
       const userId = "user1";

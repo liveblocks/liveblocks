@@ -1830,6 +1830,22 @@ const binaryYjsUpdate = await liveblocks.getYjsDocumentAsBinaryUpdate(
 Read the [Yjs documentation](https://docs.yjs.dev/api/document-updates) to learn
 more about using binary updates.
 
+### Version History
+
+#### Liveblocks.deleteVersion [#delete-version]
+
+Permanently deletes a version from a room’s history. Throws an error if the room
+or version isn’t found. This is a wrapper around the
+[Delete Version API](/docs/api-reference/rest-api-endpoints#delete-version) and
+returns no response.
+
+```ts
+await liveblocks.deleteVersion({
+  roomId: "my-room-id",
+  versionId: "vh_d75sF3...",
+});
+```
+
 ### Attachments
 
 #### Liveblocks.getAttachment [#get-rooms-roomId-attachments-attachmentId]

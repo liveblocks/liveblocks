@@ -1642,6 +1642,28 @@ export class Liveblocks {
     return res.arrayBuffer();
   }
 
+  /**
+   * Permanently deletes a version from the room's history.
+   * @param params.roomId The room ID to delete the version in.
+   * @param params.versionId The ID of the version to delete.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  public async deleteVersion(
+    params: { roomId: string; versionId: string },
+    options?: RequestOptions
+  ): Promise<void> {
+    const { roomId, versionId } = params;
+
+    const res = await this.#delete(
+      url`/v2/rooms/${roomId}/versions/${versionId}`,
+      undefined,
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+  }
+
   /* -------------------------------------------------------------------------------------------------
    * Comments
    * -----------------------------------------------------------------------------------------------*/
