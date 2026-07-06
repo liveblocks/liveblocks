@@ -2135,6 +2135,59 @@ describe("client", () => {
     });
   });
 
+  describe("create version history snapshot", () => {
+    test("should create a version history snapshot when createVersionHistorySnapshot receives a successful response", async () => {
+      server.use(
+        http.post(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/versions`, () => {
+          return HttpResponse.json({
+            data: {
+              id: "vh_abc123",
+            },
+          });
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(
+        client.createVersionHistorySnapshot("room1")
+      ).resolves.toEqual({
+        data: {
+          id: "vh_abc123",
+        },
+      });
+    });
+
+    test("should throw a LiveblocksError when createVersionHistorySnapshot receives an error response", async () => {
+      const error = {
+        error: "ROOM_NOT_FOUND",
+        message: "Room not found",
+      };
+
+      server.use(
+        http.post(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/versions`, () => {
+          return HttpResponse.json(error, { status: 404 });
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      // This should throw a LiveblocksError
+      try {
+        await client.createVersionHistorySnapshot("room1");
+        // If it doesn't throw, fail the test.
+        expect(true).toBe(false);
+      } catch (err) {
+        expect(err instanceof LiveblocksError).toBe(true);
+        if (err instanceof LiveblocksError) {
+          expect(err.status).toBe(404);
+          expect(err.message).toBe("Room not found");
+          expect(err.name).toBe("LiveblocksError");
+        }
+      }
+    });
+  });
+
   describe("delete version", () => {
     test("should delete a version when deleteVersion receives a successful response", async () => {
       server.use(

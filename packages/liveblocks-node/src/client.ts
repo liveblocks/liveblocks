@@ -466,6 +466,12 @@ export type GetVersionHistoryOptions = {
   cursor?: string;
 };
 
+export type CreateVersionHistorySnapshotResponse = {
+  data: {
+    id: string;
+  };
+};
+
 // prettier-ignore
 export type GetRoomsOptions =
   & RoomsQueryCriteria
@@ -1689,6 +1695,28 @@ export class Liveblocks {
       nextCursor: page.nextCursor,
       data: page.data.map(inflateHistoryVersion),
     };
+  }
+
+  /**
+   * Creates a new version history snapshot of the room, capturing both its Storage and Yjs documents.
+   * @param roomId The ID of the room to create a version history snapshot for.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns The created version ID.
+   */
+  public async createVersionHistorySnapshot(
+    roomId: string,
+    options?: RequestOptions
+  ): Promise<CreateVersionHistorySnapshotResponse> {
+    const res = await this.#post(
+      url`/v2/rooms/${roomId}/versions`,
+      {},
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+
+    return (await res.json()) as Promise<CreateVersionHistorySnapshotResponse>;
   }
 
   /**

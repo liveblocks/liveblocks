@@ -1852,6 +1852,22 @@ const { data: versions, nextCursor } = await liveblocks.getVersionHistory(
 );
 ```
 
+#### Liveblocks.createVersionHistorySnapshot [#create-version-history-snapshot]
+
+Creates a new version history snapshot of a room, capturing both its Storage and
+Yjs documents. Throws an error if the room isn’t found. This is a wrapper around
+the
+[Create Version History Snapshot API](/docs/api-reference/rest-api-endpoints#create-version-history-snapshot)
+and returns the same response.
+
+```ts
+const { data } =
+  await liveblocks.createVersionHistorySnapshot("my-room-id");
+
+// { id: "vh_d75sF3..." }
+console.log(data);
+```
+
 #### Liveblocks.deleteVersion [#delete-version]
 
 Permanently deletes a version from a room’s history. Throws an error if the room
