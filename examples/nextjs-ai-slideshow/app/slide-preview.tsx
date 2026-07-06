@@ -172,6 +172,7 @@ export function SlidePreview({
               size="sm"
               onClick={() => onResolveProposal("reject")}
               disabled={resolvingProposal !== null}
+              className="rounded-full"
             >
               {resolvingProposal === "reject" ? (
                 <Loader2Icon className="size-4 animate-spin" />
@@ -180,7 +181,7 @@ export function SlidePreview({
             </Button>
             <Button
               size="sm"
-              className="bg-rose-600 text-white hover:bg-rose-700"
+              className="bg-rose-600 text-white hover:bg-rose-700 rounded-full"
               onClick={() => onResolveProposal("apply")}
               disabled={resolvingProposal !== null}
             >
