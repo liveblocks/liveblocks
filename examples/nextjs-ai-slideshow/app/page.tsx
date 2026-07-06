@@ -2,7 +2,12 @@
 
 import { ClientSideSuspense, RoomProvider } from "@liveblocks/react/suspense";
 import { AvatarStack } from "@liveblocks/react-ui";
-import { DownloadIcon, Loader2Icon, MessageSquarePlusIcon } from "lucide-react";
+import {
+  DownloadIcon,
+  EyeIcon,
+  Loader2Icon,
+  MessageSquarePlusIcon,
+} from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import { Loader } from "@/components/ai-elements/loader";
 import { Button } from "@/components/ui/button";
@@ -195,7 +200,15 @@ function SlideshowApp({ roomId }: { roomId: string }) {
             className="absolute inset-0"
             style={{ display: panel === "code" ? "block" : "none" }}
           >
-            <CollaborativeEditor />
+            {previewedProposal ? (
+              <ProposalCodePreview
+                proposal={previewedProposal}
+                resolvingProposal={resolvingProposal}
+                onResolveProposal={resolvePreviewedProposal}
+              />
+            ) : (
+              <CollaborativeEditor />
+            )}
           </div>
         </div>
       </main>
@@ -207,6 +220,56 @@ function SlideshowApp({ roomId }: { roomId: string }) {
           onPreviewProposal={previewProposal}
         />
       </aside>
+    </div>
+  );
+}
+
+function ProposalCodePreview({
+  proposal,
+  resolvingProposal,
+  onResolveProposal,
+}: {
+  proposal: SlideProposal;
+  resolvingProposal: "apply" | "reject" | null;
+  onResolveProposal: (action: "apply" | "reject") => void;
+}) {
+  return (
+    <div className="relative h-full min-h-0 bg-white">
+      <div className="absolute left-1/2 top-3 z-40 flex -translate-x-1/2 items-center gap-3 rounded-full border border-rose-200 bg-white py-1.5 pl-4 pr-1.5 shadow-md">
+        <span className="flex items-center gap-1.5 whitespace-nowrap text-sm font-medium text-neutral-700">
+          <EyeIcon className="size-4 text-rose-600" />
+          Previewing proposed code
+        </span>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onResolveProposal("reject")}
+            disabled={resolvingProposal !== null}
+            className="rounded-full"
+          >
+            {resolvingProposal === "reject" ? (
+              <Loader2Icon className="size-4 animate-spin" />
+            ) : null}
+            Reject
+          </Button>
+          <Button
+            size="sm"
+            className="rounded-full bg-rose-600 text-white hover:bg-rose-700"
+            onClick={() => onResolveProposal("apply")}
+            disabled={resolvingProposal !== null}
+          >
+            {resolvingProposal === "apply" ? (
+              <Loader2Icon className="size-4 animate-spin" />
+            ) : null}
+            Accept
+          </Button>
+        </div>
+      </div>
+
+      <pre className="h-full overflow-auto bg-white px-4 pb-4 pt-16 font-mono text-[13px] leading-5 text-neutral-900">
+        <code>{proposal.html}</code>
+      </pre>
     </div>
   );
 }
