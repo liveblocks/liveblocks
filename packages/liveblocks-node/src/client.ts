@@ -163,10 +163,12 @@ export type AttachmentWithUrl = {
   expiresAt: string;
 };
 
-export type StorageFileWithUrl = LiveFileData & {
+export type StorageFileUrl = {
   url: string;
   expiresAt: string;
 };
+
+export type StorageFileWithUrl = LiveFileData & StorageFileUrl;
 
 const STORAGE_FILE_PART_SIZE = 5 * 1024 * 1024; // 5 MB
 const STORAGE_FILE_RETRY_ATTEMPTS = 10;
@@ -2228,7 +2230,7 @@ export class Liveblocks {
   public async getFileUrl(
     params: { roomId: string; file: LiveFileReference },
     options?: RequestOptions
-  ): Promise<string> {
+  ): Promise<StorageFileUrl> {
     const { roomId, file } = params;
     const fileId = getLiveFileId(file);
 
@@ -2238,7 +2240,10 @@ export class Liveblocks {
       options
     );
     const storageFile = await this.#readJsonResponse<StorageFileWithUrl>(res);
-    return storageFile.url;
+    return {
+      url: storageFile.url,
+      expiresAt: storageFile.expiresAt,
+    };
   }
 
   /**

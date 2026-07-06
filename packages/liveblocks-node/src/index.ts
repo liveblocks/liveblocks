@@ -30,6 +30,7 @@ export type {
   RoomsQueryCriteria,
   RoomUser,
   SetPresenceOptions,
+  StorageFileUrl,
   ThreadParticipants,
   UpdateAiCopilotOptions,
   UpdateFeedMessageOptions,

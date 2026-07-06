@@ -1344,7 +1344,7 @@ describe("client", () => {
       ["file ID", storageFile.id],
       ["file data", storageFile],
       ["LiveFile", new LiveFile(storageFile)],
-    ])("should return the file URL when given a %s", async (_, file) => {
+    ])("should return the file URL data when given a %s", async (_, file) => {
       server.use(
         http.get(
           `${DEFAULT_BASE_URL}/v2/rooms/:roomId/storage/files/:fileId`,
@@ -1363,7 +1363,10 @@ describe("client", () => {
           roomId: "room1",
           file,
         })
-      ).resolves.toBe(storageFile.url);
+      ).resolves.toEqual({
+        url: storageFile.url,
+        expiresAt: storageFile.expiresAt,
+      });
     });
 
     test("should throw a LiveblocksError when getFileUrl receives an error response", async () => {
