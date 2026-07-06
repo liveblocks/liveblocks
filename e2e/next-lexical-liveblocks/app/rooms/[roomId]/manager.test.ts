@@ -3959,6 +3959,7 @@ describe("LiveblocksCollaborationManager", () => {
           {
             type: "LiveText",
             node: liveText,
+            version: liveText.version,
             updates: [{ type: "insert", index: 5, text: "!" }],
             [kStorageUpdateSource]: { origin: "remote" },
           },
@@ -4033,6 +4034,7 @@ describe("LiveblocksCollaborationManager", () => {
           {
             type: "LiveText",
             node: liveText,
+            version: liveText.version,
             updates: [{ type: "insert", index: 5, text: "!" }],
             [kStorageUpdateSource]: { origin: "remote" },
           },
@@ -4575,6 +4577,276 @@ describe("LiveblocksCollaborationManager", () => {
             .join("");
           expect(text).toBe("AB");
           expect($getRoot().getChildren()).toHaveLength(2);
+        });
+      });
+
+      it("skips nested LiveText updates covered by a list insert in the same batch", async () => {
+        const { room, root } = (await prepareIsolatedStorageTest(
+          [createSerializedRoot()],
+          0
+        )) as unknown as {
+          room: Room;
+          root: LiveObject<{ document?: LiveRootNode }>;
+        };
+        room.batch(() => {
+          root.set(
+            "document",
+            new LiveObject({
+              kind: "root",
+              type: "root",
+              version: 1,
+              children: new LiveList<LiveElementNode>([
+                new LiveObject({
+                  kind: "element",
+                  type: "paragraph",
+                  version: 1,
+                  children: new LiveList<LiveTextNode>([
+                    new LiveObject({
+                      kind: "text",
+                      type: "text",
+                      version: 1,
+                      content: new LiveText("A"),
+                    }),
+                  ]),
+                }),
+              ]),
+            })
+          );
+        });
+
+        const document = root.get("document") as LiveRootNode;
+        const { editor, manager } = createEditor(document);
+        const list = document.get("children");
+        const paragraph = new LiveObject({
+          kind: "element",
+          type: "paragraph",
+          version: 1,
+          children: new LiveList<LiveTextNode>([
+            new LiveObject({
+              kind: "text",
+              type: "text",
+              version: 1,
+              content: new LiveText("B"),
+            }),
+          ]),
+        }) as LiveElementNode;
+
+        list.insert(paragraph, 1);
+        const nestedLiveText = (
+          paragraph.get("children").get(0)! as LiveTextNode
+        ).get("content");
+        nestedLiveText.insert(1, "X");
+
+        editor.update(
+          () => {
+            manager.$applyRemoteUpdates([
+              {
+                type: "LiveList",
+                node: list,
+                updates: [{ type: "insert", index: 1, item: paragraph }],
+                [kStorageUpdateSource]: { origin: "remote" },
+              },
+              {
+                type: "LiveText",
+                node: nestedLiveText,
+                version: nestedLiveText.version,
+                updates: [{ type: "insert", index: 1, text: "X" }],
+                [kStorageUpdateSource]: { origin: "remote" },
+              },
+            ]);
+          },
+          { discrete: true }
+        );
+
+        editor.read(() => {
+          const text = $dfs()
+            .filter(({ node }) => $isTextNode(node))
+            .map(({ node }) => (node as TextNode).getTextContent())
+            .join("");
+          expect(text).toBe("ABX");
+          expect($getRoot().getChildren()).toHaveLength(2);
+        });
+      });
+
+      it("skips nested LiveText updates covered by a list insert regardless of batch order", async () => {
+        const { room, root } = (await prepareIsolatedStorageTest(
+          [createSerializedRoot()],
+          0
+        )) as unknown as {
+          room: Room;
+          root: LiveObject<{ document?: LiveRootNode }>;
+        };
+        room.batch(() => {
+          root.set(
+            "document",
+            new LiveObject({
+              kind: "root",
+              type: "root",
+              version: 1,
+              children: new LiveList<LiveElementNode>([
+                new LiveObject({
+                  kind: "element",
+                  type: "paragraph",
+                  version: 1,
+                  children: new LiveList<LiveTextNode>([
+                    new LiveObject({
+                      kind: "text",
+                      type: "text",
+                      version: 1,
+                      content: new LiveText("A"),
+                    }),
+                  ]),
+                }),
+              ]),
+            })
+          );
+        });
+
+        const document = root.get("document") as LiveRootNode;
+        const { editor, manager } = createEditor(document);
+        const list = document.get("children");
+        const paragraph = new LiveObject({
+          kind: "element",
+          type: "paragraph",
+          version: 1,
+          children: new LiveList<LiveTextNode>([
+            new LiveObject({
+              kind: "text",
+              type: "text",
+              version: 1,
+              content: new LiveText("B"),
+            }),
+          ]),
+        }) as LiveElementNode;
+
+        list.insert(paragraph, 1);
+        const nestedLiveText = (
+          paragraph.get("children").get(0)! as LiveTextNode
+        ).get("content");
+        nestedLiveText.insert(1, "X");
+
+        editor.update(
+          () => {
+            manager.$applyRemoteUpdates([
+              {
+                type: "LiveText",
+                node: nestedLiveText,
+                version: nestedLiveText.version,
+                updates: [{ type: "insert", index: 1, text: "X" }],
+                [kStorageUpdateSource]: { origin: "remote" },
+              },
+              {
+                type: "LiveList",
+                node: list,
+                updates: [{ type: "insert", index: 1, item: paragraph }],
+                [kStorageUpdateSource]: { origin: "remote" },
+              },
+            ]);
+          },
+          { discrete: true }
+        );
+
+        editor.read(() => {
+          const text = $dfs()
+            .filter(({ node }) => $isTextNode(node))
+            .map(({ node }) => (node as TextNode).getTextContent())
+            .join("");
+          expect(text).toBe("ABX");
+        });
+      });
+
+      it("still applies nested LiveText updates in the same batch as a list move", async () => {
+        const { room, root } = (await prepareIsolatedStorageTest(
+          [createSerializedRoot()],
+          0
+        )) as unknown as {
+          room: Room;
+          root: LiveObject<{ document?: LiveRootNode }>;
+        };
+        room.batch(() => {
+          root.set(
+            "document",
+            new LiveObject({
+              kind: "root",
+              type: "root",
+              version: 1,
+              children: new LiveList<LiveElementNode>([
+                new LiveObject({
+                  kind: "element",
+                  type: "paragraph",
+                  version: 1,
+                  children: new LiveList<LiveTextNode>([
+                    new LiveObject({
+                      kind: "text",
+                      type: "text",
+                      version: 1,
+                      content: new LiveText("AB"),
+                    }),
+                  ]),
+                }),
+                new LiveObject({
+                  kind: "element",
+                  type: "paragraph",
+                  version: 1,
+                  children: new LiveList<LiveTextNode>([
+                    new LiveObject({
+                      kind: "text",
+                      type: "text",
+                      version: 1,
+                      content: new LiveText("CD"),
+                    }),
+                  ]),
+                }),
+              ]),
+            })
+          );
+        });
+
+        const document = root.get("document") as LiveRootNode;
+        const { editor, manager } = createEditor(document);
+        const list = document.get("children");
+        const paragraph = list.get(0)!;
+        const nestedLiveText = (
+          paragraph.get("children").get(0)! as LiveTextNode
+        ).get("content");
+
+        list.move(0, 1);
+        nestedLiveText.insert(2, "!");
+
+        editor.update(
+          () => {
+            manager.$applyRemoteUpdates([
+              {
+                type: "LiveList",
+                node: list,
+                updates: [
+                  {
+                    type: "move",
+                    previousIndex: 0,
+                    index: 1,
+                    item: paragraph,
+                  },
+                ],
+                [kStorageUpdateSource]: { origin: "remote" },
+              },
+              {
+                type: "LiveText",
+                node: nestedLiveText,
+                version: nestedLiveText.version,
+                updates: [{ type: "insert", index: 2, text: "!" }],
+                [kStorageUpdateSource]: { origin: "remote" },
+              },
+            ]);
+          },
+          { discrete: true }
+        );
+
+        editor.read(() => {
+          const text = $dfs()
+            .filter(({ node }) => $isTextNode(node))
+            .map(({ node }) => (node as TextNode).getTextContent())
+            .join("");
+          expect(text).toBe("CDAB!");
         });
       });
     });

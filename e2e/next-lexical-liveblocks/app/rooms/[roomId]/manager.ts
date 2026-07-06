@@ -701,7 +701,58 @@ export class LiveblocksCollaborationManager {
       (update) => update[kStorageUpdateSource]?.origin === "remote"
     );
 
+    // List insert/set materializes the full `item` subtree from storage (see
+    // $convertLiveElementNodeToLexicalNode + createBinding). Skip descendant
+    // LiveText/LiveList/LiveObject updates in the same batch — not for move.
+    const visitedNodes = new Set<unknown>();
+
+    function visitNode(node: LiveStorageNode): void {
+      visitedNodes.add(node);
+
+      const kind = node.get("kind");
+      if (kind === "text") {
+        visitedNodes.add((node as LiveTextNode).get("content"));
+        return;
+      }
+
+      if (kind === "linebreak") {
+        return;
+      }
+
+      const children = (
+        node as LiveObject<{
+          kind: "root" | "element";
+          children: LiveList<LiveChildNode>;
+        }>
+      ).get("children");
+      visitedNodes.add(children);
+      for (const child of children) {
+        visitNode(child);
+      }
+    }
+
     for (const update of updates) {
+      if (update.type !== "LiveList") {
+        continue;
+      }
+
+      for (const change of update.updates) {
+        if (change.type !== "insert" && change.type !== "set") {
+          continue;
+        }
+        if (!(change.item instanceof LiveObject)) {
+          continue;
+        }
+
+        visitNode(change.item as LiveStorageNode);
+      }
+    }
+
+    for (const update of updates) {
+      if (visitedNodes.has(update.node)) {
+        continue;
+      }
+
       if (update.type === "LiveText") {
         if (update.updates.length === 0) continue;
 
