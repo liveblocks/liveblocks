@@ -28,7 +28,7 @@ declare global {
     };
 
     // The shape of every message stored in a feed. Assistant replies can include
-    // a complete slide HTML proposal that anyone in the room can apply or reject.
+    // complete slide HTML proposals that anyone in the room can apply or reject.
     FeedMessageData: {
       role: "user" | "assistant";
       content: string;
@@ -39,7 +39,9 @@ declare global {
       reasoning?: string;
       sources?: { title: string; url: string }[];
       suggestions?: string[];
-      proposedHtml?: string;
+      // Slide edits proposed by the assistant. `slideId` is an existing slide's id,
+      // or "new" to append a new slide to the deck.
+      proposals?: { slideId: string; html: string }[];
       proposalStatus?: "pending" | "applied" | "rejected";
       // Step-by-step plan, rendered with the AI Elements `ChainOfThought`.
       chainOfThought?: {

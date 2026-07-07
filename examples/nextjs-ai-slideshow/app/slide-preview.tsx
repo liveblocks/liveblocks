@@ -84,6 +84,8 @@ export function SlidePreview({
   placingComment,
   onPlacingDone,
   proposal,
+  proposalHtml,
+  isNewProposal = false,
   resolvingProposal,
   onResolveProposal,
 }: {
@@ -91,14 +93,15 @@ export function SlidePreview({
   placingComment: boolean;
   onPlacingDone: () => void;
   proposal: SlideProposal | null;
+  proposalHtml?: string;
+  isNewProposal?: boolean;
   resolvingProposal: "apply" | "reject" | null;
   onResolveProposal: (action: "apply" | "reject") => void;
 }) {
-  const documentHtml = useSlideHtml(slideId);
-  // While previewing a proposal, the slide shows the proposed HTML instead of
-  // the shared document, and comment pins are hidden (they belong to the
-  // shared slide, not to an unapplied proposal).
-  const html = proposal ? proposal.html : documentHtml;
+  const documentHtml = useSlideHtml(slideId, !isNewProposal);
+  // While previewing, pins stay hidden even on slides unaffected by the proposal
+  // set because accept/reject resolves the whole set.
+  const html = proposalHtml ?? documentHtml;
   const { threads } = useThreads();
   const slideThreads = useMemo(
     () => threads.filter((thread) => thread.metadata.slideId === slideId),

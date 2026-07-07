@@ -10,10 +10,12 @@ import {
   useFeedMessages,
   useFeeds,
   useOthers,
+  useRoom,
   useSelf,
   useUpdateMyPresence,
 } from "@liveblocks/react/suspense";
 import { Avatar } from "@liveblocks/react-ui";
+import { getYjsProviderForRoom } from "@liveblocks/yjs";
 import {
   CopyIcon,
   EyeIcon,
@@ -91,7 +93,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { HelpButton } from "@/components/help-button";
 import { resolveProposal, type SlideProposal } from "./proposal-actions";
-import { useSlideHtml } from "./slides";
+import { getSlideIds, getSlideText } from "./slide-doc";
 
 // Each chat is a feed in the room. Everyone connected reads and writes to the
 // selected feed, so messages (and the AI's replies) appear live for all users.
@@ -115,11 +117,13 @@ const STARTER_PROMPTS = [
 export function Chat({
   roomId,
   slideId,
+  slideIds,
   previewedProposal,
   onPreviewProposal,
 }: {
   roomId: string;
   slideId: string;
+  slideIds: string[];
   previewedProposal: SlideProposal | null;
   onPreviewProposal: (proposal: SlideProposal | null) => void;
 }) {
@@ -202,6 +206,7 @@ export function Chat({
             key={feedId}
             roomId={roomId}
             slideId={slideId}
+            slideIds={slideIds}
             feedId={feedId}
             model={model}
             setModel={setModel}
@@ -217,6 +222,7 @@ export function Chat({
 function ChatWindow({
   roomId,
   slideId,
+  slideIds,
   feedId,
   model,
   setModel,
@@ -225,19 +231,20 @@ function ChatWindow({
 }: {
   roomId: string;
   slideId: string;
+  slideIds: string[];
   feedId: string;
   model: string;
   setModel: (model: string) => void;
   previewedProposal: SlideProposal | null;
   onPreviewProposal: (proposal: SlideProposal | null) => void;
 }) {
+  const room = useRoom();
   const { messages } = useFeedMessages(feedId);
   const createFeed = useCreateFeed();
   const createFeedMessage = useCreateFeedMessage();
   const deleteFeedMessage = useDeleteFeedMessage();
   const self = useSelf();
   const updateMyPresence = useUpdateMyPresence();
-  const currentSlideHtml = useSlideHtml(slideId);
 
   // The AI "thinking" status is shared via presence (scoped to this chat), so
   // everyone viewing this chat sees it — not just whoever triggered the reply.
@@ -279,11 +286,13 @@ function ChatWindow({
       .find(
         (message) =>
           message.data.role === "assistant" &&
-          message.data.proposedHtml &&
+          message.data.proposals &&
+          message.data.proposals.length > 0 &&
           !message.data.streaming
       );
     if (
-      latestProposal?.data.proposedHtml &&
+      latestProposal?.data.proposals &&
+      latestProposal.data.proposals.length > 0 &&
       latestProposal.data.proposalStatus === "pending" &&
       !autoPreviewedIds.current.has(latestProposal.id)
     ) {
@@ -291,7 +300,7 @@ function ChatWindow({
       onPreviewProposal({
         feedId,
         messageId: latestProposal.id,
-        html: latestProposal.data.proposedHtml,
+        proposals: latestProposal.data.proposals,
       });
     }
   }, [sorted, feedId, onPreviewProposal]);
@@ -312,6 +321,13 @@ function ChatWindow({
 
   const postReply = useCallback(
     async (history: { role: "user" | "assistant"; content: string }[]) => {
+      const provider = getYjsProviderForRoom(room);
+      const ydoc = provider.getYDoc();
+      const slides = getSlideIds(ydoc).map((id) => ({
+        id,
+        html: getSlideText(ydoc, id).toString(),
+      }));
+
       await fetch("/api/ai-reply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -320,11 +336,12 @@ function ChatWindow({
           feedId,
           model,
           messages: history,
-          currentSlideHtml,
+          slides,
+          currentSlideId: slideId,
         }),
       });
     },
-    [roomId, feedId, model, currentSlideHtml]
+    [room, roomId, feedId, model, slideId]
   );
 
   const send = useCallback(
@@ -446,7 +463,7 @@ function ChatWindow({
                 streaming,
                 chainOfThought,
                 tool,
-                proposedHtml,
+                proposals,
                 proposalStatus,
               } = message.data;
               const isAssistant = role === "assistant";
@@ -554,12 +571,13 @@ function ChatWindow({
                       ) : null}
                     </div>
 
-                    {isAssistant && proposedHtml ? (
+                    {isAssistant && proposals && proposals.length > 0 ? (
                       <ProposalCard
                         roomId={roomId}
                         feedId={feedId}
                         messageId={message.id}
-                        html={proposedHtml}
+                        proposals={proposals}
+                        slideIds={slideIds}
                         status={proposalStatus}
                         generating={!!streaming}
                         previewing={
@@ -653,7 +671,8 @@ function ProposalCard({
   roomId,
   feedId,
   messageId,
-  html,
+  proposals,
+  slideIds,
   status = "pending",
   generating,
   previewing,
@@ -662,7 +681,8 @@ function ProposalCard({
   roomId: string;
   feedId: string;
   messageId: string;
-  html: string;
+  proposals: { slideId: string; html: string }[];
+  slideIds: string[];
   status?: "pending" | "applied" | "rejected";
   generating: boolean;
   previewing: boolean;
@@ -677,7 +697,7 @@ function ProposalCard({
     if (generating && preRef.current) {
       preRef.current.scrollTop = preRef.current.scrollHeight;
     }
-  }, [generating, html]);
+  }, [generating, proposals]);
 
   const updateProposal = useCallback(
     async (action: "apply" | "reject") => {
@@ -687,12 +707,12 @@ function ProposalCard({
 
       setSubmitting(action);
       try {
-        await resolveProposal(roomId, { feedId, messageId, html }, action);
+        await resolveProposal(roomId, { feedId, messageId, proposals }, action);
       } finally {
         setSubmitting(null);
       }
     },
-    [feedId, html, messageId, roomId, submitting]
+    [feedId, messageId, proposals, roomId, submitting]
   );
 
   return (
@@ -707,19 +727,40 @@ function ProposalCard({
           </span>
         ) : null}
       </div>
-      <pre
-        ref={preRef}
-        className="max-h-48 overflow-auto bg-neutral-50 p-3 font-mono text-[11px] leading-relaxed text-neutral-700"
-      >
-        <code>{html}</code>
-      </pre>
+      <div className="divide-y divide-neutral-950/5 bg-neutral-50">
+        {proposals.map((proposal, index) => {
+          const slideIndex = slideIds.indexOf(proposal.slideId);
+          const label =
+            proposal.slideId === "new"
+              ? "New slide"
+              : slideIndex === -1
+                ? "Deleted slide"
+                : `Slide ${slideIndex + 1}`;
+
+          return (
+            <section key={`${proposal.slideId}-${index}`}>
+              <div className="flex items-center gap-2 px-3 pt-3">
+                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                  {label}
+                </span>
+              </div>
+              <pre
+                ref={index === proposals.length - 1 ? preRef : undefined}
+                className="max-h-48 overflow-auto p-3 font-mono text-[11px] leading-relaxed text-neutral-700"
+              >
+                <code>{proposal.html}</code>
+              </pre>
+            </section>
+          );
+        })}
+      </div>
       {!generating && status === "pending" ? (
         <div className="flex items-center justify-end gap-2 border-t border-neutral-950/5 p-2">
           <Button
             variant="outline"
             size="sm"
             className="mr-auto"
-            onClick={() => onPreview({ feedId, messageId, html })}
+            onClick={() => onPreview({ feedId, messageId, proposals })}
             disabled={previewing}
           >
             <EyeIcon className="size-4" />
@@ -738,7 +779,11 @@ function ProposalCard({
             onClick={() => updateProposal("apply")}
             disabled={submitting !== null}
           >
-            {submitting === "apply" ? "Applying..." : "Apply to slide"}
+            {submitting === "apply"
+              ? "Applying..."
+              : proposals.length === 1
+                ? "Apply to slide"
+                : "Apply to slides"}
           </Button>
         </div>
       ) : null}

@@ -144,11 +144,16 @@ export function useSlides(): {
   return { slideIds, addSlide, deleteSlide, moveSlide };
 }
 
-export function useSlideHtml(slideId: string): string {
+export function useSlideHtml(slideId: string, enabled = true): string {
   const room = useRoom();
   const [html, setHtml] = useState(STARTER_SLIDE_HTML);
 
   useEffect(() => {
+    if (!enabled) {
+      setHtml(STARTER_SLIDE_HTML);
+      return;
+    }
+
     const provider = getYjsProviderForRoom(room);
     const ydoc = provider.getYDoc();
     const ytext = getSlideText(ydoc, slideId);
@@ -164,7 +169,7 @@ export function useSlideHtml(slideId: string): string {
     return () => {
       ytext.unobserve(updateHtml);
     };
-  }, [room, slideId]);
+  }, [enabled, room, slideId]);
 
   return html;
 }

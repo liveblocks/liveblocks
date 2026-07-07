@@ -1,7 +1,11 @@
 import diff from "fast-diff";
 import { Liveblocks } from "@liveblocks/node";
+import { nanoid } from "nanoid";
 import { NextRequest, NextResponse } from "next/server";
 import * as Y from "yjs";
+import { getSlideIds, getSlideText, SLIDES_ARRAY_KEY } from "@/app/slide-doc";
+
+type SlideProposal = { slideId: string; html: string };
 
 type FeedMessageData = {
   role: "user" | "assistant";
@@ -13,7 +17,7 @@ type FeedMessageData = {
   reasoning?: string;
   sources?: { title: string; url: string }[];
   suggestions?: string[];
-  proposedHtml?: string;
+  proposals?: SlideProposal[];
   proposalStatus?: "pending" | "applied" | "rejected";
   chainOfThought?: {
     label: string;
@@ -50,16 +54,11 @@ export async function POST(request: NextRequest) {
     body.action === "apply" || body.action === "reject"
       ? body.action
       : undefined;
-  const html = typeof body.html === "string" ? body.html : undefined;
 
   if (!roomId.startsWith(ROOM_ID_PREFIX) || !feedId || !messageId || !action) {
     return new NextResponse("Invalid room, feed, message, or action", {
       status: 400,
     });
-  }
-
-  if (action === "apply" && !html) {
-    return new NextResponse("Missing slide HTML", { status: 400 });
   }
 
   const liveblocks = new Liveblocks({
@@ -75,8 +74,13 @@ export async function POST(request: NextRequest) {
     return new NextResponse("Feed message not found", { status: 404 });
   }
 
-  if (action === "apply" && html) {
-    await applyHtmlToYjsDocument(liveblocks, roomId, html);
+  if (action === "apply") {
+    const proposals = message.data.proposals;
+    if (!proposals || proposals.length === 0) {
+      return new NextResponse("Slide proposals not found", { status: 404 });
+    }
+
+    await applyProposalsToYjsDocument(liveblocks, roomId, proposals);
   }
 
   await liveblocks.updateFeedMessage<FeedMessageData>({
@@ -92,41 +96,68 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ ok: true });
 }
 
-async function applyHtmlToYjsDocument(
+async function applyProposalsToYjsDocument(
   liveblocks: Liveblocks,
   roomId: string,
-  nextHtml: string
+  proposals: SlideProposal[]
 ) {
   const binaryUpdate = await liveblocks.getYjsDocumentAsBinaryUpdate(roomId);
   const ydoc = new Y.Doc();
   Y.applyUpdate(ydoc, new Uint8Array(binaryUpdate));
 
-  const ytext = ydoc.getText("codemirror");
-  const currentHtml = ytext.toString();
-  if (currentHtml === nextHtml) {
-    return;
-  }
-
   const stateVectorBefore = Y.encodeStateVector(ydoc);
-  const changes = diff(currentHtml, nextHtml);
+  const slides = ydoc.getArray<string>(SLIDES_ARRAY_KEY);
+  const slideIds = getSlideIds(ydoc);
 
   ydoc.transact(() => {
-    let index = 0;
-
-    for (const [operation, text] of changes) {
-      if (operation === 0) {
-        index += text.length;
-      } else if (operation === -1) {
-        ytext.delete(index, text.length);
-      } else if (operation === 1) {
-        ytext.insert(index, text);
-        index += text.length;
+    if (slideIds.length === 0) {
+      for (const proposal of proposals) {
+        appendSlide(ydoc, slides, proposal.html);
       }
+      return;
+    }
+
+    for (const proposal of proposals) {
+      if (proposal.slideId === "new") {
+        appendSlide(ydoc, slides, proposal.html);
+        continue;
+      }
+
+      if (!slideIds.includes(proposal.slideId)) {
+        continue;
+      }
+
+      applyHtmlDiff(getSlideText(ydoc, proposal.slideId), proposal.html);
     }
   });
 
   const incrementalUpdate = Y.encodeStateAsUpdate(ydoc, stateVectorBefore);
   await liveblocks.sendYjsBinaryUpdate(roomId, incrementalUpdate);
+}
+
+function appendSlide(ydoc: Y.Doc, slides: Y.Array<string>, html: string) {
+  const id = nanoid(8);
+  slides.push([id]);
+  getSlideText(ydoc, id).insert(0, html);
+}
+
+function applyHtmlDiff(ytext: Y.Text, nextHtml: string) {
+  const currentHtml = ytext.toString();
+  if (currentHtml === nextHtml) {
+    return;
+  }
+
+  let index = 0;
+  for (const [operation, text] of diff(currentHtml, nextHtml)) {
+    if (operation === 0) {
+      index += text.length;
+    } else if (operation === -1) {
+      ytext.delete(index, text.length);
+    } else if (operation === 1) {
+      ytext.insert(index, text);
+      index += text.length;
+    }
+  }
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

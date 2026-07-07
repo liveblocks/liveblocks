@@ -24,8 +24,16 @@ const THUMBNAIL_WIDTH = 144;
 const THUMBNAIL_HEIGHT = 81;
 const THUMBNAIL_SCALE = THUMBNAIL_WIDTH / SLIDE_WIDTH;
 
+type DisplaySlide = {
+  id: string;
+  proposalHtml?: string;
+  isNewProposal?: boolean;
+  hasProposal?: boolean;
+};
+
 export function SlideSidebar({
   slideIds,
+  displaySlides,
   selectedSlideId,
   onSelectSlide,
   onAddSlide,
@@ -33,6 +41,7 @@ export function SlideSidebar({
   onMoveSlide,
 }: {
   slideIds: string[];
+  displaySlides: DisplaySlide[];
   selectedSlideId: string;
   onSelectSlide: (id: string) => void;
   onAddSlide: () => void;
@@ -71,17 +80,30 @@ export function SlideSidebar({
           strategy={verticalListSortingStrategy}
         >
           <div className="min-h-0 flex-1 space-y-2 overflow-auto p-3">
-            {slideIds.map((id, index) => (
-              <SortableSlideThumbnail
-                key={id}
-                id={id}
-                index={index}
-                selected={id === selectedSlideId}
-                canDelete={slideIds.length > 1}
-                onSelect={() => onSelectSlide(id)}
-                onDelete={() => onDeleteSlide(id)}
-              />
-            ))}
+            {displaySlides.map((slide, index) =>
+              slide.isNewProposal ? (
+                <StaticSlideThumbnail
+                  key={slide.id}
+                  index={index}
+                  html={slide.proposalHtml ?? ""}
+                  selected={slide.id === selectedSlideId}
+                  hasProposal={!!slide.hasProposal}
+                  onSelect={() => onSelectSlide(slide.id)}
+                />
+              ) : (
+                <SortableSlideThumbnail
+                  key={slide.id}
+                  id={slide.id}
+                  index={index}
+                  htmlOverride={slide.proposalHtml}
+                  selected={slide.id === selectedSlideId}
+                  canDelete={slideIds.length > 1}
+                  hasProposal={!!slide.hasProposal}
+                  onSelect={() => onSelectSlide(slide.id)}
+                  onDelete={() => onDeleteSlide(slide.id)}
+                />
+              )
+            )}
           </div>
         </SortableContext>
       </DndContext>
@@ -104,19 +126,24 @@ export function SlideSidebar({
 function SortableSlideThumbnail({
   id,
   index,
+  htmlOverride,
   selected,
   canDelete,
+  hasProposal,
   onSelect,
   onDelete,
 }: {
   id: string;
   index: number;
+  htmlOverride?: string;
   selected: boolean;
   canDelete: boolean;
+  hasProposal: boolean;
   onSelect: () => void;
   onDelete: () => void;
 }) {
-  const html = useSlideHtml(id);
+  const sharedHtml = useSlideHtml(id);
+  const html = htmlOverride ?? sharedHtml;
   const {
     attributes,
     isDragging,
@@ -145,25 +172,11 @@ function SortableSlideThumbnail({
         {...attributes}
         {...listeners}
       >
-        <span
-          className="relative block overflow-hidden rounded-md bg-white ring-1 ring-neutral-950/10"
-          style={{ width: THUMBNAIL_WIDTH, height: THUMBNAIL_HEIGHT }}
-        >
-          <iframe
-            title={`Slide ${index + 1} thumbnail`}
-            width={SLIDE_WIDTH}
-            height={SLIDE_HEIGHT}
-            srcDoc={html}
-            sandbox="allow-same-origin"
-            className="pointer-events-none absolute left-0 top-0 border-0 bg-white"
-            style={{
-              width: SLIDE_WIDTH,
-              height: SLIDE_HEIGHT,
-              transform: `scale(${THUMBNAIL_SCALE})`,
-              transformOrigin: "top left",
-            }}
-          />
-        </span>
+        <ThumbnailFrame
+          title={`Slide ${index + 1} thumbnail`}
+          html={html}
+          hasProposal={hasProposal}
+        />
         <span className="mt-2 block text-xs font-medium text-neutral-700">
           Slide {index + 1}
         </span>
@@ -187,5 +200,79 @@ function SortableSlideThumbnail({
         <XIcon className="size-3" />
       </Button>
     </div>
+  );
+}
+
+function StaticSlideThumbnail({
+  index,
+  html,
+  selected,
+  hasProposal,
+  onSelect,
+}: {
+  index: number;
+  html: string;
+  selected: boolean;
+  hasProposal: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <div className="group relative">
+      <button
+        type="button"
+        className={cn(
+          "block w-full rounded-lg border border-neutral-950/10 bg-white p-2 text-left shadow-xs transition hover:border-neutral-950/20",
+          selected && "border-primary/30 ring-2 ring-primary/60"
+        )}
+        onClick={onSelect}
+      >
+        <ThumbnailFrame
+          title={`New slide proposal ${index + 1} thumbnail`}
+          html={html}
+          hasProposal={hasProposal}
+        />
+        <span className="mt-2 flex items-center justify-between text-xs font-medium text-neutral-700">
+          <span>Slide {index + 1}</span>
+          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
+            New
+          </span>
+        </span>
+      </button>
+    </div>
+  );
+}
+
+function ThumbnailFrame({
+  title,
+  html,
+  hasProposal,
+}: {
+  title: string;
+  html: string;
+  hasProposal: boolean;
+}) {
+  return (
+    <span
+      className="relative block overflow-hidden rounded-md bg-white ring-1 ring-neutral-950/10"
+      style={{ width: THUMBNAIL_WIDTH, height: THUMBNAIL_HEIGHT }}
+    >
+      <iframe
+        title={title}
+        width={SLIDE_WIDTH}
+        height={SLIDE_HEIGHT}
+        srcDoc={html}
+        sandbox="allow-same-origin"
+        className="pointer-events-none absolute left-0 top-0 border-0 bg-white"
+        style={{
+          width: SLIDE_WIDTH,
+          height: SLIDE_HEIGHT,
+          transform: `scale(${THUMBNAIL_SCALE})`,
+          transformOrigin: "top left",
+        }}
+      />
+      {hasProposal ? (
+        <span className="absolute right-1.5 top-1.5 size-2.5 rounded-full bg-primary shadow-sm ring-2 ring-white" />
+      ) : null}
+    </span>
   );
 }

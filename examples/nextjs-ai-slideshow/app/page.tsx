@@ -10,7 +10,7 @@ import {
   Loader2Icon,
   MessageSquarePlusIcon,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Loader } from "@/components/ai-elements/loader";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -25,6 +25,13 @@ import { SlideSidebar } from "./slide-sidebar";
 import { useSlides } from "./slides";
 
 type Panel = "slide" | "code";
+
+type DisplaySlide = {
+  id: string;
+  proposalHtml?: string;
+  isNewProposal?: boolean;
+  hasProposal?: boolean;
+};
 
 function waitForPaint() {
   return new Promise<void>((resolve) => {
@@ -78,9 +85,47 @@ function SlideshowApp({ roomId }: { roomId: string }) {
   const [exporting, setExporting] = useState(false);
   const [selectedSlideId, setSelectedSlideId] = useState<string | null>(null);
   const previousSelectedIndex = useRef(0);
+  // The proposal currently shown in the Slide tab instead of the shared
+  // document. Local to this user; accept/reject resolves it for everyone.
+  const [previewedProposal, setPreviewedProposal] =
+    useState<SlideProposal | null>(null);
+  const [resolvingProposal, setResolvingProposal] = useState<
+    "apply" | "reject" | null
+  >(null);
+
+  const displaySlides = useMemo<DisplaySlide[]>(() => {
+    const proposalHtmlBySlideId = new Map<string, string>();
+    const newProposalHtml: string[] = [];
+
+    for (const proposal of previewedProposal?.proposals ?? []) {
+      if (proposal.slideId === "new") {
+        newProposalHtml.push(proposal.html);
+      } else {
+        proposalHtmlBySlideId.set(proposal.slideId, proposal.html);
+      }
+    }
+
+    return [
+      ...slideIds.map((id) => ({
+        id,
+        proposalHtml: proposalHtmlBySlideId.get(id),
+        hasProposal: proposalHtmlBySlideId.has(id),
+      })),
+      ...newProposalHtml.map((proposalHtml, index) => ({
+        id: `proposal-new-${index}`,
+        proposalHtml,
+        isNewProposal: true,
+        hasProposal: true,
+      })),
+    ];
+  }, [previewedProposal, slideIds]);
+  const displaySlideIds = useMemo(
+    () => displaySlides.map((slide) => slide.id),
+    [displaySlides]
+  );
 
   const selectedIndex = selectedSlideId
-    ? slideIds.indexOf(selectedSlideId)
+    ? displaySlideIds.indexOf(selectedSlideId)
     : -1;
   const fallbackIndex =
     slideIds.length === 0
@@ -102,19 +147,14 @@ function SlideshowApp({ roomId }: { roomId: string }) {
         previousSelectedIndex.current = index;
         return;
       }
+      if (displaySlideIds.includes(selectedSlideId)) {
+        return;
+      }
     }
 
     const nextIndex = Math.min(previousSelectedIndex.current, slideIds.length - 1);
     setSelectedSlideId(slideIds[nextIndex]);
-  }, [slideIds, selectedSlideId]);
-
-  // The proposal currently shown in the Slide tab instead of the shared
-  // document. Local to this user; accept/reject resolves it for everyone.
-  const [previewedProposal, setPreviewedProposal] =
-    useState<SlideProposal | null>(null);
-  const [resolvingProposal, setResolvingProposal] = useState<
-    "apply" | "reject" | null
-  >(null);
+  }, [displaySlideIds, slideIds, selectedSlideId]);
 
   const previewProposal = useCallback((proposal: SlideProposal | null) => {
     setPreviewedProposal(proposal);
@@ -228,6 +268,10 @@ function SlideshowApp({ roomId }: { roomId: string }) {
     }
   }, [exporting, room]);
 
+  const selectedDisplaySlide = displaySlides.find((slide) => slide.id === slideId);
+  const selectedProposalHtml = selectedDisplaySlide?.proposalHtml;
+  const selectedSlideIsReal = slideId ? slideIds.includes(slideId) : false;
+
   if (!slideId) {
     return (
       <div className="flex h-dvh w-full items-center justify-center bg-neutral-50 text-muted-foreground">
@@ -240,6 +284,7 @@ function SlideshowApp({ roomId }: { roomId: string }) {
     <div className="flex h-dvh w-full gap-2.5 overflow-hidden bg-neutral-50 p-2.5">
       <SlideSidebar
         slideIds={slideIds}
+        displaySlides={displaySlides}
         selectedSlideId={slideId}
         onSelectSlide={selectSlide}
         onAddSlide={addAndSelectSlide}
@@ -306,6 +351,8 @@ function SlideshowApp({ roomId }: { roomId: string }) {
               placingComment={placingComment}
               onPlacingDone={() => setPlacingComment(false)}
               proposal={previewedProposal}
+              proposalHtml={selectedProposalHtml}
+              isNewProposal={!!selectedDisplaySlide?.isNewProposal}
               resolvingProposal={resolvingProposal}
               onResolveProposal={resolvePreviewedProposal}
             />
@@ -314,14 +361,18 @@ function SlideshowApp({ roomId }: { roomId: string }) {
             className="absolute inset-0"
             style={{ display: panel === "code" ? "block" : "none" }}
           >
-            {previewedProposal ? (
+            {previewedProposal && selectedProposalHtml !== undefined ? (
               <ProposalCodePreview
-                proposal={previewedProposal}
+                html={selectedProposalHtml}
                 resolvingProposal={resolvingProposal}
                 onResolveProposal={resolvePreviewedProposal}
               />
-            ) : (
+            ) : selectedSlideIsReal ? (
               <CollaborativeEditor key={slideId} slideId={slideId} />
+            ) : (
+              <div className="flex h-full items-center justify-center text-muted-foreground">
+                <Loader size={20} />
+              </div>
             )}
           </div>
         </div>
@@ -331,6 +382,7 @@ function SlideshowApp({ roomId }: { roomId: string }) {
         <Chat
           roomId={roomId}
           slideId={slideId}
+          slideIds={slideIds}
           previewedProposal={previewedProposal}
           onPreviewProposal={previewProposal}
         />
@@ -340,11 +392,11 @@ function SlideshowApp({ roomId }: { roomId: string }) {
 }
 
 function ProposalCodePreview({
-  proposal,
+  html,
   resolvingProposal,
   onResolveProposal,
 }: {
-  proposal: SlideProposal;
+  html: string;
   resolvingProposal: "apply" | "reject" | null;
   onResolveProposal: (action: "apply" | "reject") => void;
 }) {
@@ -383,7 +435,7 @@ function ProposalCodePreview({
       </div>
 
       <pre className="h-full overflow-auto bg-white px-4 pb-4 pt-16 font-mono text-[13px] leading-5 text-neutral-900">
-        <code>{proposal.html}</code>
+        <code>{html}</code>
       </pre>
     </div>
   );

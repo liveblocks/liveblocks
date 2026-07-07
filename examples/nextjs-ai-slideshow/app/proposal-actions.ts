@@ -4,7 +4,7 @@
 export type SlideProposal = {
   feedId: string;
   messageId: string;
-  html: string;
+  proposals: { slideId: string; html: string }[];
 };
 
 export async function resolveProposal(
@@ -20,7 +20,6 @@ export async function resolveProposal(
       roomId,
       feedId: proposal.feedId,
       messageId: proposal.messageId,
-      html: action === "apply" ? proposal.html : undefined,
     }),
   });
 }
