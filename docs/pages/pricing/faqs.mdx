@@ -8,20 +8,23 @@ meta:
 ## How does pricing work in Liveblocks?
 
 Each plan includes a monthly credit allowance you spend across all features.
-Credits reset at the start of each billing cycle and don't roll over. Pro is
-$30/month with $30 of credits, and Team plans range from $600 to $3,750/month
-with up to $5,000 of credits. Once you've used your credits, additional usage on
-Pro and Team is billed at metered rates. Free hits hard limits per feature
-instead.
+Credits reset at the start of each billing cycle and don't roll over. Pro
+includes <Limits.ProMonthlyCredits /> of credits, and Team plans start with
+
+<Limits.TeamAnnualCredits tier={600} /> of credits. Once you've used your
+credits, additional usage on Pro and Team is billed at metered rates. Free hits
+hard limits per feature instead.
 
 For full per-metric rates and worked examples, see our
-[pricing overview](/docs/pricing/overview).
+[plans](/docs/pricing/plans).
 
 ## What counts as a realtime collaboration minute?
 
 Realtime collaboration minutes measure time when two or more people or agents
 are in the same room together. Each connected user-minute counts. Two users in a
-room for 5 minutes is 10 collaboration minutes, billed at $0.002 each.
+room for 5 minutes is 10 collaboration minutes, billed at
+
+<Limits.RealtimeCollaborationMinutesPrice />.
 
 Solo sessions cost $0. If only one person or agent is in a room, it is not
 billed.
@@ -91,7 +94,8 @@ For a full plan-by-plan breakdown, see the [plans docs](/docs/pricing/plans).
 Yes. The Free plan is permanently free, no credit card required. You can build,
 test, and even ship commercial apps on Free as long as the Liveblocks watermark
 stays visible. To remove the watermark and unlock overage, upgrade to Pro at
-$30/month. [Get started for free](/auth/signup).
+
+<Limits.ProMonthlyPrice /> per month. [Get started for free](/auth/signup).
 
 ## Are there discounts for startups, nonprofits, or students?
 
@@ -112,7 +116,7 @@ broken down by metric, current credit consumption, and projected month-end
 spend. We also send automated email alerts as you approach your limits. For
 predictable spend, your monthly credits give you a fixed ceiling unless you
 allow overage, and annual Team plans lock in a fixed monthly cost while saving
-up to 38% versus monthly billing.
+two months compared with monthly billing.
 
 ## Can I pay by invoice instead of credit card?
 
@@ -125,9 +129,85 @@ Yes, on Enterprise. We currently support EU and US, with more coming.
 
 ## How secure and reliable is Liveblocks?
 
-We run on edge infrastructure with 99.99% uptime, monitored on our
+We run on edge infrastructure, monitored on our
 [status page](https://liveblocks.statuspage.io). We're SOC 2 and HIPAA
 compliant, and GDPR-compliant with a Data Processing Agreement (DPA) available
 on request. Enterprise plans support data residency in specific regions. For
 more, see our [security page](/security) and
 [data storage docs](/docs/platform/data-storage).
+
+## What is a monthly active room?
+
+Monthly active rooms represents the number of rooms that have been used within a
+given month. Rooms are identified by their `roomId`.
+
+Specifically, a room counts as active when any of these occur:
+
+- A user connects on the front-end.
+- A comment is added or modified.
+- A document is updated. Any of the following: Storage, Tiptap, BlockNote,
+  Lexical, Yjs.
+- An attachment is uploaded.
+
+If a room contains content from the previous month, it is not active until it is
+used in the current month. For example, if a text document is created in
+January, it is not active in February until a user connects to the document or
+updates its content.
+
+## What is a monthly active user?
+
+Monthly active users represents the number of users that have used any
+Liveblocks features within a given month. Users are identified by the `userId`
+property provided in your [authentication endpoint](/docs/authentication). This
+`userId` generally comes from your database or your authentication provider.
+
+One unique `userId` corresponds to one user, no matter how long they connect
+for. For example, a user that connects for 5 minutes on 2 different days is
+counted as 1 MAU, and a user that connects 8 hours a day for a month is also
+counted as 1 MAU. This applies so long as usage falls under our
+[Fair Use Policy](/docs/pricing/limits/fair-use-guidelines).
+
+## What's a connection?
+
+A connection occurs when a user opens a web page containing a Liveblocks room.
+Each tab counts as one connection, which means that a user with two open tabs
+has two connections. A room is joined when using
+[`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider) in React or
+[`enterRoom`](/docs/api-reference/liveblocks-client#Client.enterRoom) in
+JavaScript. Liveblocks connections are analogous to WebSocket connections,
+representing a realtime link to our server.
+
+## What's a room?
+
+A room is the virtual space where people collaborate. For most products, a room
+corresponds to a document.
+
+## What's a simultaneous connection per room?
+
+A simultaneous connection per room is when a user or multiple users are
+connected to the same Liveblocks room at the same time. Learn more about
+handling simultaneous room connection limits in our guide about
+[joining rooms at maximum capacity](/docs/guides/what-happens-when-a-user-joins-a-room-at-maximum-capacity).
+
+## What's a simultaneous connection per project?
+
+A simultaneous connection per project is when a user or multiple users are
+connected to the same project at the same time.
+
+## How is realtime data storage calculated?
+
+Realtime data storage is a cumulative calculation that represents all realtime
+data that is currently stored in your rooms. It does not reset monthly, and the
+total usage will continue to accrue over time as you add more content and data.
+You can monitor your usage at any time in the [dashboard](/dashboard).
+
+## What happens when limits are reached?
+
+Liveblocks returns a different error for each limit that a user might reach.
+That way, you can decide how to best handle those cases in your product.
+
+## Do you count monthly active rooms during testing?
+
+Yes, if test users connect to a room during automated testing, the room will be
+counted as a monthly active room. To prevent hitting limits during testing, you
+may want to provide a set of reusable `roomId`s.

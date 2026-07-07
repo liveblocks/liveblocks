@@ -830,10 +830,6 @@
     "defaultCollapsed": true,
     "routes": [
       {
-        "title": "Overview",
-        "path": "/pricing/overview"
-      },
-      {
         "title": "Plans",
         "path": "/pricing/plans",
         "routes": [
@@ -871,7 +867,8 @@
       },
       {
         "title": "Pricing FAQs",
-        "path": "/pricing/faqs"
+        "path": "/pricing/faqs",
+        "hidden": true
       }
     ]
   },
