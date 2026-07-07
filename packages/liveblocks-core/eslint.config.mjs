@@ -4,7 +4,7 @@ import commonRestrictedSyntax from "@liveblocks/eslint-config/restricted-syntax"
 import consoleMustBeFancy from "./rules/console-must-be-fancy.cjs";
 
 export default [
-  ...makeConfig(),
+  ...makeConfig(import.meta.dirname),
 
   {
     plugins: {
