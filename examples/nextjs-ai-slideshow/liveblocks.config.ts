@@ -24,6 +24,7 @@ declare global {
       x: number;
       y: number;
       zIndex: number;
+      slideId: string;
     };
 
     // The shape of every message stored in a feed. Assistant replies can include

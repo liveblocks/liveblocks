@@ -91,7 +91,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { HelpButton } from "@/components/help-button";
 import { resolveProposal, type SlideProposal } from "./proposal-actions";
-import { useSlideHtml } from "./use-slide-html";
+import { useSlideHtml } from "./slides";
 
 // Each chat is a feed in the room. Everyone connected reads and writes to the
 // selected feed, so messages (and the AI's replies) appear live for all users.
@@ -114,10 +114,12 @@ const STARTER_PROMPTS = [
 
 export function Chat({
   roomId,
+  slideId,
   previewedProposal,
   onPreviewProposal,
 }: {
   roomId: string;
+  slideId: string;
   previewedProposal: SlideProposal | null;
   onPreviewProposal: (proposal: SlideProposal | null) => void;
 }) {
@@ -199,6 +201,7 @@ export function Chat({
           <ChatWindow
             key={feedId}
             roomId={roomId}
+            slideId={slideId}
             feedId={feedId}
             model={model}
             setModel={setModel}
@@ -213,6 +216,7 @@ export function Chat({
 
 function ChatWindow({
   roomId,
+  slideId,
   feedId,
   model,
   setModel,
@@ -220,6 +224,7 @@ function ChatWindow({
   onPreviewProposal,
 }: {
   roomId: string;
+  slideId: string;
   feedId: string;
   model: string;
   setModel: (model: string) => void;
@@ -232,7 +237,7 @@ function ChatWindow({
   const deleteFeedMessage = useDeleteFeedMessage();
   const self = useSelf();
   const updateMyPresence = useUpdateMyPresence();
-  const currentSlideHtml = useSlideHtml();
+  const currentSlideHtml = useSlideHtml(slideId);
 
   // The AI "thinking" status is shared via presence (scoped to this chat), so
   // everyone viewing this chat sees it — not just whoever triggered the reply.
@@ -730,7 +735,6 @@ function ProposalCard({
           </Button>
           <Button
             size="sm"
-            className="bg-rose-600 text-white hover:bg-rose-700"
             onClick={() => updateProposal("apply")}
             disabled={submitting !== null}
           >

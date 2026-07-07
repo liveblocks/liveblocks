@@ -21,12 +21,12 @@ import {
   FloatingThread,
 } from "@liveblocks/react-ui";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { MouseEvent, ReactNode, RefObject } from "react";
+import type { MouseEvent, ReactNode } from "react";
 import { EyeIcon, Loader2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { SlideProposal } from "./proposal-actions";
 import { SLIDE_HEIGHT, SLIDE_WIDTH } from "./slide-html";
-import { useSlideHtml } from "./use-slide-html";
+import { useSlideHtml } from "./slides";
 
 type Coords = { x: number; y: number };
 
@@ -80,28 +80,32 @@ function useMaxZIndex(threads: readonly ThreadData[]) {
 }
 
 export function SlidePreview({
-  iframeRef,
+  slideId,
   placingComment,
   onPlacingDone,
   proposal,
   resolvingProposal,
   onResolveProposal,
 }: {
-  iframeRef: RefObject<HTMLIFrameElement | null>;
+  slideId: string;
   placingComment: boolean;
   onPlacingDone: () => void;
   proposal: SlideProposal | null;
   resolvingProposal: "apply" | "reject" | null;
   onResolveProposal: (action: "apply" | "reject") => void;
 }) {
-  const documentHtml = useSlideHtml();
+  const documentHtml = useSlideHtml(slideId);
   // While previewing a proposal, the slide shows the proposed HTML instead of
   // the shared document, and comment pins are hidden (they belong to the
   // shared slide, not to an unapplied proposal).
   const html = proposal ? proposal.html : documentHtml;
   const { threads } = useThreads();
+  const slideThreads = useMemo(
+    () => threads.filter((thread) => thread.metadata.slideId === slideId),
+    [slideId, threads]
+  );
   const editThreadMetadata = useEditThreadMetadata();
-  const maxZIndex = useMaxZIndex(threads);
+  const maxZIndex = useMaxZIndex(slideThreads);
   const { ref: wrapperRef, size: wrapperSize } = useElementSize();
   const [placedCoords, setPlacedCoords] = useState<Coords | null>(null);
 
@@ -131,7 +135,7 @@ export function SlidePreview({
 
   const handleDragEnd = useCallback(
     ({ active, delta }: DragEndEvent) => {
-      const thread = threads.find((item) => item.id === String(active.id));
+      const thread = slideThreads.find((item) => item.id === String(active.id));
       if (!thread) {
         return;
       }
@@ -149,10 +153,11 @@ export function SlidePreview({
           x: nextX,
           y: nextY,
           zIndex: maxZIndex + 1,
+          slideId,
         },
       });
     },
-    [editThreadMetadata, maxZIndex, safeScale, threads]
+    [editThreadMetadata, maxZIndex, safeScale, slideId, slideThreads]
   );
 
   return (
@@ -161,9 +166,9 @@ export function SlidePreview({
       className="relative h-full w-full overflow-hidden bg-neutral-50"
     >
       {proposal ? (
-        <div className="absolute left-1/2 top-3 z-40 flex -translate-x-1/2 items-center gap-3 rounded-full border border-rose-200 bg-white py-1.5 pl-4 pr-1.5 shadow-md">
+        <div className="absolute left-1/2 top-3 z-40 flex -translate-x-1/2 items-center gap-3 rounded-full border border-primary/30 bg-white py-1.5 pl-4 pr-1.5 shadow-md">
           <span className="flex items-center gap-1.5 whitespace-nowrap text-sm font-medium text-neutral-700">
-            <EyeIcon className="size-4 text-rose-600" />
+            <EyeIcon className="size-4 text-primary" />
             Previewing proposed slide
           </span>
           <div className="flex items-center gap-1">
@@ -181,7 +186,7 @@ export function SlidePreview({
             </Button>
             <Button
               size="sm"
-              className="bg-rose-600 text-white hover:bg-rose-700 rounded-full"
+              className="rounded-full"
               onClick={() => onResolveProposal("apply")}
               disabled={resolvingProposal !== null}
             >
@@ -195,7 +200,7 @@ export function SlidePreview({
       ) : null}
       <div
         className={`absolute left-1/2 top-1/2 overflow-visible bg-white shadow-2xl ${
-          proposal ? "ring-2 ring-rose-400" : "ring-1 ring-neutral-950/10"
+          proposal ? "ring-2 ring-primary/60" : "ring-1 ring-neutral-950/10"
         }`}
         style={{
           width: SLIDE_WIDTH,
@@ -205,7 +210,6 @@ export function SlidePreview({
         }}
       >
         <iframe
-          ref={iframeRef}
           title="Slide preview"
           width={SLIDE_WIDTH}
           height={SLIDE_HEIGHT}
@@ -217,7 +221,7 @@ export function SlidePreview({
         {proposal ? null : (
           <div className="absolute inset-0 isolate">
             <DndContext onDragEnd={handleDragEnd} sensors={sensors}>
-              {threads.map((thread) => (
+              {slideThreads.map((thread) => (
                 <DraggableSlideThread
                   key={thread.id}
                   thread={thread}
@@ -257,6 +261,8 @@ export function SlidePreview({
           <ThreadComposer
             coords={placedCoords}
             scale={safeScale}
+            slideId={slideId}
+            maxZIndex={maxZIndex}
             onSubmit={resetPlacement}
           />
         ) : null}
@@ -321,20 +327,27 @@ function DraggableSlideThread({
 function ThreadComposer({
   coords,
   scale,
+  slideId,
+  maxZIndex,
   onSubmit,
 }: {
   coords: Coords;
   scale: number;
+  slideId: string;
+  maxZIndex: number;
   onSubmit: () => void;
 }) {
   const creatorId = useSelf((me) => me.id);
-  const { threads } = useThreads();
-  const maxZIndex = useMaxZIndex(threads);
 
   return (
     <FloatingComposer
       defaultOpen={true}
-      metadata={{ x: coords.x, y: coords.y, zIndex: maxZIndex + 1 }}
+      metadata={{
+        x: coords.x,
+        y: coords.y,
+        zIndex: maxZIndex + 1,
+        slideId,
+      }}
       onComposerSubmit={onSubmit}
     >
       <div

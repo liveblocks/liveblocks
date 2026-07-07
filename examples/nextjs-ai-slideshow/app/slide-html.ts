@@ -25,8 +25,8 @@ export const STARTER_SLIDE_HTML = `<!doctype html>
         height: 720px;
         padding: 80px;
         background:
-          radial-gradient(circle at 18% 18%, rgba(244, 63, 94, 0.26), transparent 28%),
-          radial-gradient(circle at 82% 72%, rgba(251, 146, 60, 0.3), transparent 30%),
+          radial-gradient(circle at 18% 18%, rgba(253, 81, 8, 0.22), transparent 28%),
+          radial-gradient(circle at 82% 72%, rgba(255, 138, 76, 0.28), transparent 30%),
           linear-gradient(135deg, #fff7ed 0%, #fff1f2 52%, #ffffff 100%);
       }
       .card {
@@ -40,7 +40,7 @@ export const STARTER_SLIDE_HTML = `<!doctype html>
       }
       .eyebrow {
         margin: 0 0 20px;
-        color: #e11d48;
+        color: #fd5108;
         font-size: 22px;
         font-weight: 800;
         letter-spacing: 0.18em;
