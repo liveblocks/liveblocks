@@ -429,6 +429,10 @@
             "path": "/authentication/access-token"
           },
           {
+            "title": "Custom auth",
+            "path": "/authentication/custom-auth"
+          },
+          {
             "title": "Next.js",
             "path": "/authentication/id-token/nextjs",
             "hidden": true

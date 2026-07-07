@@ -3485,8 +3485,30 @@ const comment = await room.createComment({
 </PropertiesList>
 
 <PropertiesList title="Options">
-  <PropertiesListItem name="threadId" type="string" required>
-    The ID of the thread that the comment will be added to.
+  <PropertiesListItem name="authEndpoint" detailedType="string | async ((room?: string) => CustomAuthenticationResult)">
+    The URL of your back end’s [authentication endpoint](/docs/authentication)
+    as a string, or an async callback function that returns a Liveblocks token
+    result. Either `authEndpoint` or `publicApiKey` are required. Learn more
+    about [using a URL string](#createClientAuthEndpoint) and [using a
+    callback](#createClientCallback).
+  </PropertiesListItem>
+  <PropertiesListItem name="publicApiKey" type="string">
+    The public API key taken from your project’s
+    [dashboard](/dashboard/apikeys). Generally not recommended for production
+    use. Either `authEndpoint` or `publicApiKey` are required. [Learn
+    more](#createClientPublicKey).
+  </PropertiesListItem>
+  <PropertiesListItem name="auth" detailedType="AuthStrategy">
+    A [custom auth strategy](/docs/authentication/custom-auth) for
+    self-hosted Liveblocks deployments. Pass the result of
+    [`bearerAuthStrategy`](#bearerAuthStrategy), or implement the
+    [`AuthStrategy`](#AuthStrategy) interface directly. Cannot be combined
+    with `authEndpoint` or `publicApiKey`.
+  </PropertiesListItem>
+  <PropertiesListItem name="baseUrl" type="string">
+    The base URL of your Liveblocks server. Required when using a custom
+    [`auth`](#createClientAuth) strategy for self-hosting. When omitted,
+    requests are sent to Liveblocks Cloud.
   </PropertiesListItem>
   <PropertiesListItem name="body" type="CommentBody" required>
     The content of the comment, see [creating comment

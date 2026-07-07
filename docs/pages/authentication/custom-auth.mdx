@@ -1,0 +1,346 @@
+---
+meta:
+  title: "Custom auth strategies"
+  parentTitle: "Authentication"
+  description: "Use a custom auth strategy when self-hosting Liveblocks."
+---
+
+When you self-host Liveblocks, you can use a **custom auth strategy** instead of
+Liveblocks' built-in token formats. A custom auth strategy is responsible for
+minting an opaque bearer token for the current user, and optionally declaring
+which rooms and personal resources that token covers.
+
+<Banner title="When to use a custom auth strategy">
+
+Use a custom auth strategy when you're self-hosting Liveblocks and your
+backend already issues its own bearer tokens (for example, a session cookie,
+an API key, or an existing JWT). If you're connecting to Liveblocks Cloud,
+use [ID tokens](/docs/authentication) or [access tokens](/docs/authentication/access-token)
+instead.
+
+</Banner>
+
+## How it works
+
+By default, `createClient` authenticates against Liveblocks Cloud using an
+`authEndpoint` or `publicApiKey`. When you self-host, pass an `auth` option
+instead — a function that returns a bearer token for the current request:
+
+```ts
+import { bearerAuthStrategy, createClient } from "@liveblocks/client";
+
+const client = createClient({
+  // Point the client at your self-hosted Liveblocks server
+  baseUrl: "https://liveblocks.example.com",
+
+  // Mint tokens from your own auth system
+  auth: bearerAuthStrategy({
+    async getToken(request) {
+      // Call your backend to mint/return a bearer token. The request tells
+      // you which room and access level the user needs.
+      const res = await fetch("/api/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(request),
+      });
+      const data = await res.json();
+      return {
+        token: data.token,           // The opaque bearer token string
+        expiresIn: data.expiresIn,   // Seconds until expiry (optional)
+        userId: data.userId,         // Propagated to presence (optional)
+        userInfo: data.userInfo,      // Propagated to presence (optional)
+        rooms: [data.roomPattern],    // Which rooms the token covers (optional)
+        personal: true,              // Covers inbox/notifications (optional)
+      };
+    },
+  }),
+});
+```
+
+The `getToken` callback is invoked whenever the Liveblocks client needs a token
+that isn't already cached. The returned token is sent as a `Bearer`
+authorization header on REST requests, and as a `?tok=` query parameter on the
+WebSocket connection.
+
+## Configuring the client
+
+A custom auth strategy requires two options:
+
+<PropertiesList title="createClient options">
+  <PropertiesListItem name="baseUrl" type="string">
+    The base URL of your self-hosted Liveblocks server, for example
+    `https://liveblocks.example.com`.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="auth"
+    detailedType="AuthStrategy"
+  >
+    A custom authentication strategy. Pass the result of
+    [`bearerAuthStrategy`](#bearerauthstrategy) here, or implement the
+    [`AuthStrategy`](#authstrategy) interface directly.
+  </PropertiesListItem>
+</PropertiesList>
+
+You cannot combine `auth` with `publicApiKey` or `authEndpoint`. Pick one
+authentication method per client.
+
+## bearerAuthStrategy
+
+`bearerAuthStrategy` is a ready-made factory for the most common self-hosting
+pattern: your backend mints an opaque bearer token, and the strategy handles
+caching, expiry, and scope matching for you.
+
+```ts
+import { bearerAuthStrategy } from "@liveblocks/client";
+
+const auth = bearerAuthStrategy({
+  async getToken(request) {
+    // ...
+    return {
+      token: "...",
+      expiresIn: 3600,
+      userId: "user-123",
+      rooms: ["org-*"],
+      personal: true,
+    };
+  },
+});
+```
+
+<PropertiesList title="getToken options">
+  <PropertiesListItem name="request.resource" type='"room" | "storage" | "comments" | "comments:public" | "comments:private" | "feeds" | "personal"'>
+    Which Liveblocks resource the token is for. Use `personal` for inbox
+    notifications and notification settings; the other values cover room-scoped
+    resources.
+  </PropertiesListItem>
+  <PropertiesListItem name="request.roomId" type="string | undefined">
+    The room ID the request is for. Present for room-scoped resources; absent
+    for personal resources.
+  </PropertiesListItem>
+  <PropertiesListItem name="request.access" type='"read" | "write"'>
+    The access level required.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="getToken returns">
+  <PropertiesListItem name="token" type="string">
+    The opaque bearer token string sent to Liveblocks. Required.
+  </PropertiesListItem>
+  <PropertiesListItem name="expiresIn" type="number">
+    Seconds until the token expires. When omitted, the token is never cached
+    and `getToken` is re-invoked on every request.
+  </PropertiesListItem>
+  <PropertiesListItem name="userId" type="string">
+    The user's ID, propagated to room presence and AI sessions. When omitted,
+    the session is treated as anonymous.
+  </PropertiesListItem>
+  <PropertiesListItem name="userInfo" type="object">
+    Optional user info (for example `{ name, avatar }`) propagated to room
+    presence.
+  </PropertiesListItem>
+  <PropertiesListItem name="rooms" type="string[]">
+    Room patterns the token covers, for example `["org-*"]` or
+    `["design:9Hdu73"]`. Used by the strategy to reuse one token across
+    matching rooms. Supports a trailing `*` wildcard.
+  </PropertiesListItem>
+  <PropertiesListItem name="personal" type="boolean">
+    When `true`, the token also covers the user's personal resources (inbox
+    notifications, notification settings) without a refetch.
+  </PropertiesListItem>
+</PropertiesList>
+
+### Caching and scope matching
+
+The strategy caches tokens by expiry and scope. When the client needs a token
+for a request, the strategy checks each cached token:
+
+- If the token has expired, it's discarded.
+- If the request is for a personal resource, a cached token is reused only
+  when `personal: true` was returned.
+- If the request is for a room, a cached token is reused when one of its
+  `rooms` patterns matches the requested `roomId`.
+
+If no cached token matches, `getToken` is invoked again.
+
+```ts
+// A single getToken call can cover many rooms and personal resources
+const auth = bearerAuthStrategy({
+  async getToken() {
+    return {
+      token: await mintToken(),
+      expiresIn: 3600,
+      userId: "user-123",
+      // One token for every room in the "acme" organization
+      rooms: ["acme:*"],
+      // Plus inbox notifications and notification settings
+      personal: true,
+    };
+  },
+});
+```
+
+### Anonymous sessions
+
+Omit `userId` and `userInfo` to create an anonymous session, mirroring the
+behavior of `publicApiKey`:
+
+```ts
+const auth = bearerAuthStrategy({
+  async getToken() {
+    return {
+      token: await mintAnonymousToken(),
+      expiresIn: 3600,
+      rooms: ["public-*"],
+    };
+  },
+});
+```
+
+### Invalidating a token
+
+When a request returns `401` or `403`, the client automatically invalidates
+the cached token and re-authenticates on the next request. You don't need to
+handle this inside `getToken`.
+
+## AuthStrategy
+
+For advanced cases, implement the `AuthStrategy` interface directly instead of
+using `bearerAuthStrategy`. This gives you full control over caching,
+satisfiability, and invalidation.
+
+```ts
+import type { AuthStrategy } from "@liveblocks/client";
+
+const strategy: AuthStrategy = {
+  async authenticate(request) {
+    const token = await mintToken(request);
+    return {
+      ok: true,
+      credential: {
+        token: token.value,
+        expiresAt: token.expiresAt,   // Epoch seconds
+        identity: { userId: token.userId },
+        scope: { rooms: token.rooms, personal: true },
+      },
+    };
+  },
+
+  // Optional: reuse a cached credential for a new request
+  satisfies(credential, request) {
+    if (request.resource === "personal") {
+      return credential.scope?.personal === true;
+    }
+    return credential.scope?.rooms?.some((p) =>
+      p.endsWith("*")
+        ? request.roomId.startsWith(p.slice(0, -1))
+        : p === request.roomId
+    ) ?? false;
+  },
+
+  // Optional: called on 401/403, or when the client resets
+  invalidate(credential) {
+    // Drop any external caches keyed on credential.token
+  },
+
+  // Optional: called when the client is reset
+  reset() {},
+};
+```
+
+<PropertiesList title="AuthStrategy methods">
+  <PropertiesListItem name="authenticate" type="(request: AuthRequest) => Promise<AuthResult>">
+    Fetch a credential for the given request. Return `{ ok: true, credential }`
+    on success, or `{ ok: false, fatal, reason }` on failure. When `fatal` is
+    `true`, the client stops retrying; otherwise it retries with backoff.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="satisfies"
+    detailedType="(credential: AuthCredential, request: AuthRequest) => boolean"
+  >
+    Optional. Return `true` if a cached credential can serve a new request
+    without re-invoking `authenticate`. When omitted, the client uses exact-key
+    caching (same room, resource, and access).
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="invalidate"
+    detailedType="(credential: AuthCredential) => void"
+  >
+    Optional. Called when a request fails with `401`/`403`, or when the client
+    is reset. Use it to drop external caches.
+  </PropertiesListItem>
+  <PropertiesListItem name="reset" type="() => void">
+    Optional. Called when the client is reset (for example, on logout). Clear
+    any internal state.
+  </PropertiesListItem>
+</PropertiesList>
+
+## Using with React
+
+Pass the same options to `LiveblocksProvider`:
+
+```tsx
+import { bearerAuthStrategy } from "@liveblocks/client";
+import { LiveblocksProvider } from "@liveblocks/react/suspense";
+
+function App() {
+  return (
+    <LiveblocksProvider
+      baseUrl="https://liveblocks.example.com"
+      auth={bearerAuthStrategy({
+        async getToken(request) {
+          const res = await fetch("/api/session", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(request),
+          });
+          const data = await res.json();
+          return {
+            token: data.token,
+            expiresIn: data.expiresIn,
+            userId: data.userId,
+            userInfo: data.userInfo,
+            rooms: [data.roomPattern],
+            personal: true,
+          };
+        },
+      })}
+    >
+      {/* ... */}
+    </LiveblocksProvider>
+  );
+}
+```
+
+## Handling errors
+
+If `getToken` throws, or returns a result without a `token`, the error is
+surfaced as a non-fatal authentication failure and the client retries with
+backoff. To make a failure permanent (for example, when a user is banned),
+throw an error whose message makes the failure clear — the message is included
+in the thrown error.
+
+```ts
+const auth = bearerAuthStrategy({
+  async getToken(request) {
+    const res = await fetch("/api/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(request),
+    });
+
+    if (res.status === 403) {
+      // This user is permanently forbidden; throw to stop retries
+      throw new Error("User is not authorized");
+    }
+
+    const data = await res.json();
+    return {
+      token: data.token,
+      expiresIn: data.expiresIn,
+      userId: data.userId,
+      rooms: [data.roomPattern],
+      personal: true,
+    };
+  },
+});
+```
