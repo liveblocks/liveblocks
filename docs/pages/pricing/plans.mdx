@@ -15,11 +15,11 @@ aligns with how your app uses Liveblocks.
 
 Four plans scale from prototype to production: Free, Pro, Team, and Enterprise.
 
-|                      | Free                                            | Pro                                         | Team                                                                                                                                                                            | Enterprise                                                 |
-| -------------------- | ----------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| **Best for**         | Personal development, prototyping, and testing. | Developers shipping collaborative features. | Teams shipping collaborative features at scale.                                                                                                                                 | Organizations with premium security and partnership needs. |
-| **Monthly base**     | <Limits.FreeMonthlyPrice />                     | <Limits.ProMonthlyPrice /> per month        | <LimitHint tooltip={<>See <a href="/docs/pricing/billing#Team-plan-options">Team plan options</a>.</>}>from <Limits.TeamMonthlyPriceForTier tier={600} /> per month</LimitHint> | Custom                                                     |
-| **Included credits** | [Free monthly credits](#Free-monthly-credits)   | <Limits.ProMonthlyCredits />                | <a href="/docs/pricing/billing#Team-plan-options">from <Limits.TeamAnnualCredits tier={600} /></a>                                                                              | Custom                                                     |
+|                      | Free                                            | Pro                                         | Team                                                                                                               | Enterprise                                                 |
+| -------------------- | ----------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
+| **Best for**         | Personal development, prototyping, and testing. | Developers shipping collaborative features. | Teams shipping collaborative features at scale.                                                                    | Organizations with premium security and partnership needs. |
+| **Monthly base**     | $0                                              | <Limits.ProMonthlyPrice /> per month        | <a href="/docs/pricing/billing#Team-plan-options">from <Limits.TeamMonthlyPriceForTier tier={600} /> per month</a> | Custom                                                     |
+| **Included credits** | [Free monthly credits](#Free-monthly-credits)   | <Limits.ProMonthlyCredits />                | <a href="/docs/pricing/billing#Team-plan-options">from <Limits.TeamAnnualCredits tier={600} /></a>                 | Custom                                                     |
 
 Choose annual billing to get two months free:
 
@@ -35,8 +35,7 @@ of credits in your base plan, you'll be billed at the per-unit rates at the end
 of the month. Credits reset at the start of each billing cycle and do not roll
 over.
 
-The Team plan offers multiple
-[credit packages](/docs/pricing/billing#Team-plan-options) that include more
+The Team plan offers multiple [credit packages](#Credits) that include more
 credit value than they cost, effectively lowering your per credit rate.
 
 ## Metered usage
@@ -44,18 +43,18 @@ credit value than they cost, effectively lowering your per credit rate.
 Metered usage is billed per unit, only for what you actually use. Your monthly
 credits cover this first, so you only pay for anything above them.
 
-| Metric                                                                                                                                                                                               | Description                                                                               | Rate                                         |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | -------------------------------------------- |
-| <LimitLabel tooltip="Measured in cumulative seconds. Solo sessions cost $0.">Realtime collaboration minutes</LimitLabel>                                                                             | Cumulative time spent by two or more people or agents actively together in the same room. | <Limits.RealtimeCollaborationMinutesPrice /> |
-| <LimitLabel tooltip="Each change written to stored data, billed per million updates.">Realtime data storage updates</LimitLabel>                                                                     | Each change written to stored data.                                                       | <Limits.RealtimeDataStorageUpdatesPrice />   |
-| <LimitLabel tooltip="Total data kept in storage, billed per GB.">Realtime data stored</LimitLabel>                                                                                                   | Total data kept in storage.                                                               | <Limits.RealtimeDataStoredPrice />           |
-| <LimitLabel tooltip="Number of net new comments created.">Comments created</LimitLabel>                                                                                                              | Number of net new comments created.                                                       | <Limits.CommentsCreatedPrice />              |
-| <LimitLabel tooltip="Notifications automatically triggered from collaborative features like comment thread updates and @ mentions are free and unlimited.">Monthly custom notifications</LimitLabel> | Notifications you trigger from your own code.                                             | <Limits.CustomNotificationsPrice />          |
-| <LimitLabel tooltip="Total amount of files stored, such as comment attachments.">File storage</LimitLabel>                                                                                           | Total amount of files stored, such as comment attachments.                                | <Limits.FileStoragePrice />                  |
+<Table columns={["22%", "58%", "20%"]}>
 
-A user counts as connected when they have an open connection to a room. Metering
-pauses when a room is inactive for 10 seconds. For more detail, see
-[pricing FAQs](/docs/pricing/faqs#What-counts-as-a-realtime-collaboration-minute).
+| Metric                         | Description                                                                                                                                                                                                                                                                                                                                                                                                    | Rate                                         |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| Realtime collaboration minutes | <LimitLabel tooltip={<>Measured in cumulative seconds. Solo sessions cost $0. If only one person or agent is in a room, it is not billed.<br /><br />A user counts as connected when they have an open connection to a room.<br /><br />Metering pauses when a room is inactive for 10 seconds.</>}>Cumulative time spent by two or more people or agents are actively together in the same room.</LimitLabel> | <Limits.RealtimeCollaborationMinutesPrice /> |
+| Realtime data storage updates  | Each change written to stored data, billed per million updates.                                                                                                                                                                                                                                                                                                                                                | <Limits.RealtimeDataStorageUpdatesPrice />   |
+| Realtime data stored           | Total data kept in storage, billed per GB.                                                                                                                                                                                                                                                                                                                                                                     | <Limits.RealtimeDataStoredPrice />           |
+| Comments created               | Number of net new comments created.                                                                                                                                                                                                                                                                                                                                                                            | <Limits.CommentsCreatedPrice />              |
+| Monthly custom notifications   | <LimitLabel tooltip="Notifications automatically triggered from collaborative features like comment thread updates and @ mentions are free and unlimited.">Notifications you trigger from your own code.</LimitLabel>                                                                                                                                                                                          | <Limits.CustomNotificationsPrice />          |
+| File storage                   | Total amount of files stored, such as comment attachments.                                                                                                                                                                                                                                                                                                                                                     | <Limits.FileStoragePrice />                  |
+
+</Table>
 
 ## Free monthly credits
 
@@ -75,18 +74,18 @@ start of the next calendar month or you
 
 ## Plan inclusions
 
-|                                                                           | Free | Pro      | Team                                              | Enterprise                     |
-| ------------------------------------------------------------------------- | ---- | -------- | ------------------------------------------------- | ------------------------------ |
-| Remove "Powered by Liveblocks" badge                                      | —    | Included | Included                                          | Included                       |
-| Multi-region hosting                                                      | —    | —        | —                                                 | Included                       |
-| SOC 2 report                                                              | —    | —        | Included                                          | Included                       |
-| [SAML SSO](/docs/platform/account-management/saml)                        | —    | —        | Included                                          | Included                       |
-| [SCIM / directory sync](/docs/platform/account-management/directory-sync) | —    | —        | —                                                 | Included                       |
-| Private Slack channel                                                     | —    | —        | Included                                          | Included                       |
-| HIPAA BAA                                                                 | —    | —        | <Limits.HipaaBaaPricePerMonth /> per month add-on | Included                       |
-| [Management API](/docs/platform/management-api)                           | —    | —        | —                                                 | Included                       |
-| Role-based access control                                                 | —    | —        | Team level                                        | Included                       |
-| Uptime SLA                                                                | —    | —        | —                                                 | <Limits.EnterpriseUptimeSla /> |
+|                                                                           | Free | Pro      | Team                                              | Enterprise |
+| ------------------------------------------------------------------------- | ---- | -------- | ------------------------------------------------- | ---------- |
+| Remove "Powered by Liveblocks" badge                                      | —    | Included | Included                                          | Included   |
+| Multi-region hosting                                                      | —    | —        | —                                                 | Included   |
+| SOC 2 report                                                              | —    | —        | Included                                          | Included   |
+| [SAML SSO](/docs/platform/account-management/saml)                        | —    | —        | Included                                          | Included   |
+| [SCIM / directory sync](/docs/platform/account-management/directory-sync) | —    | —        | —                                                 | Included   |
+| Private Slack channel                                                     | —    | —        | Included                                          | Included   |
+| HIPAA BAA                                                                 | —    | —        | <Limits.HipaaBaaPricePerMonth /> per month add-on | Included   |
+| [Management API](/docs/platform/management-api)                           | —    | —        | —                                                 | Included   |
+| Role-based access control                                                 | —    | —        | Team level                                        | Included   |
+| Uptime SLA                                                                | —    | —        | —                                                 | 99.99%     |
 
 ## Powered by Liveblocks branding
 
