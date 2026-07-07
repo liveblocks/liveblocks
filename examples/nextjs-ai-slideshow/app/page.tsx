@@ -9,6 +9,7 @@ import {
   EyeIcon,
   Loader2Icon,
   MessageSquarePlusIcon,
+  PencilIcon,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Loader } from "@/components/ai-elements/loader";
@@ -82,6 +83,7 @@ function SlideshowApp({ roomId }: { roomId: string }) {
   const { slideIds, addSlide, deleteSlide, moveSlide } = useSlides();
   const [panel, setPanel] = useState<Panel>("slide");
   const [placingComment, setPlacingComment] = useState(false);
+  const [editingSlide, setEditingSlide] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [selectedSlideId, setSelectedSlideId] = useState<string | null>(null);
   const previousSelectedIndex = useRef(0);
@@ -160,9 +162,16 @@ function SlideshowApp({ roomId }: { roomId: string }) {
     setPreviewedProposal(proposal);
     if (proposal) {
       setPlacingComment(false);
+      setEditingSlide(false);
       setPanel("slide");
     }
   }, []);
+
+  useEffect(() => {
+    if (previewedProposal !== null) {
+      setEditingSlide(false);
+    }
+  }, [previewedProposal]);
 
   const resolvePreviewedProposal = useCallback(
     async (action: "apply" | "reject") => {
@@ -299,6 +308,7 @@ function SlideshowApp({ roomId }: { roomId: string }) {
             onValueChange={(value) => {
               if (value === "code") {
                 setPlacingComment(false);
+                setEditingSlide(false);
                 setPanel("code");
               } else {
                 setPanel("slide");
@@ -314,16 +324,43 @@ function SlideshowApp({ roomId }: { roomId: string }) {
           <div className="flex items-center gap-2">
             <AvatarStack size={28} />
             {panel === "slide" ? (
-              <Button
-                variant={placingComment ? "secondary" : "outline"}
-                size="sm"
-                onClick={() => setPlacingComment((value) => !value)}
-                // Pins belong to the shared slide, not to an unapplied proposal.
-                disabled={previewedProposal !== null}
-              >
-                <MessageSquarePlusIcon className="size-4" />
-                Comment
-              </Button>
+              <>
+                <Button
+                  variant={placingComment ? "secondary" : "outline"}
+                  size="sm"
+                  onClick={() =>
+                    setPlacingComment((value) => {
+                      const nextValue = !value;
+                      if (nextValue) {
+                        setEditingSlide(false);
+                      }
+                      return nextValue;
+                    })
+                  }
+                  // Pins belong to the shared slide, not to an unapplied proposal.
+                  disabled={previewedProposal !== null}
+                >
+                  <MessageSquarePlusIcon className="size-4" />
+                  Comment
+                </Button>
+                <Button
+                  variant={editingSlide ? "secondary" : "outline"}
+                  size="sm"
+                  onClick={() =>
+                    setEditingSlide((value) => {
+                      const nextValue = !value;
+                      if (nextValue) {
+                        setPlacingComment(false);
+                      }
+                      return nextValue;
+                    })
+                  }
+                  disabled={previewedProposal !== null}
+                >
+                  <PencilIcon className="size-4" />
+                  Edit
+                </Button>
+              </>
             ) : null}
             <Button
               variant="outline"
@@ -348,6 +385,7 @@ function SlideshowApp({ roomId }: { roomId: string }) {
           >
             <SlidePreview
               slideId={slideId}
+              editing={editingSlide}
               placingComment={placingComment}
               onPlacingDone={() => setPlacingComment(false)}
               proposal={previewedProposal}

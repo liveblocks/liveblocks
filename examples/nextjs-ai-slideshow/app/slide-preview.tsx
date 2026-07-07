@@ -20,13 +20,15 @@ import {
   FloatingComposer,
   FloatingThread,
 } from "@liveblocks/react-ui";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MouseEvent, ReactNode } from "react";
 import { EyeIcon, Loader2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import type { SlideProposal } from "./proposal-actions";
 import { SLIDE_HEIGHT, SLIDE_WIDTH } from "./slide-html";
 import { useSlideHtml } from "./slides";
+import { useVisualEditor } from "./visual-editor";
 
 type Coords = { x: number; y: number };
 
@@ -81,6 +83,7 @@ function useMaxZIndex(threads: readonly ThreadData[]) {
 
 export function SlidePreview({
   slideId,
+  editing,
   placingComment,
   onPlacingDone,
   proposal,
@@ -90,6 +93,7 @@ export function SlidePreview({
   onResolveProposal,
 }: {
   slideId: string;
+  editing: boolean;
   placingComment: boolean;
   onPlacingDone: () => void;
   proposal: SlideProposal | null;
@@ -102,6 +106,15 @@ export function SlidePreview({
   // While previewing, pins stay hidden even on slides unaffected by the proposal
   // set because accept/reject resolves the whole set.
   const html = proposalHtml ?? documentHtml;
+  const editingActive = editing && !proposal;
+  const [renderedHtml, setRenderedHtml] = useState(html);
+  const [iframe, setIframe] = useState<HTMLIFrameElement | null>(null);
+  const [visualGestureActive, setVisualGestureActive] = useState(false);
+  const [expectedVisualHtml, setExpectedVisualHtml] = useState<string | null>(
+    null
+  );
+  const latestHtmlRef = useRef(html);
+  const expectedBaseHtmlRef = useRef<string | null>(null);
   const { threads } = useThreads();
   const slideThreads = useMemo(
     () => threads.filter((thread) => thread.metadata.slideId === slideId),
@@ -111,6 +124,53 @@ export function SlidePreview({
   const maxZIndex = useMaxZIndex(slideThreads);
   const { ref: wrapperRef, size: wrapperSize } = useElementSize();
   const [placedCoords, setPlacedCoords] = useState<Coords | null>(null);
+
+  useEffect(() => {
+    latestHtmlRef.current = html;
+  }, [html]);
+
+  const handleVisualCommit = useCallback((expectedHtml: string) => {
+    expectedBaseHtmlRef.current = latestHtmlRef.current;
+    setExpectedVisualHtml(expectedHtml);
+  }, []);
+
+  useVisualEditor({
+    iframe,
+    slideId,
+    editing: editingActive,
+    onGestureActiveChange: setVisualGestureActive,
+    onCommit: handleVisualCommit,
+  });
+
+  useEffect(() => {
+    if (!editingActive) {
+      setRenderedHtml(html);
+      setExpectedVisualHtml(null);
+      expectedBaseHtmlRef.current = null;
+      return;
+    }
+
+    if (visualGestureActive) {
+      return;
+    }
+
+    if (expectedVisualHtml !== null && html === expectedVisualHtml) {
+      setExpectedVisualHtml(null);
+      expectedBaseHtmlRef.current = null;
+      return;
+    }
+
+    if (
+      expectedVisualHtml !== null &&
+      html === expectedBaseHtmlRef.current
+    ) {
+      return;
+    }
+
+    setRenderedHtml(html);
+    setExpectedVisualHtml(null);
+    expectedBaseHtmlRef.current = null;
+  }, [editingActive, expectedVisualHtml, html, visualGestureActive]);
 
   // Leave room around the slide so the shadow and proposal ring are visible
   // even when the slide would otherwise fit exactly edge-to-edge.
@@ -201,6 +261,13 @@ export function SlidePreview({
           </div>
         </div>
       ) : null}
+      {editingActive ? (
+        <div className="absolute left-1/2 top-3 z-40 flex -translate-x-1/2 items-center rounded-full border border-primary/30 bg-white px-4 py-1.5 shadow-md">
+          <span className="whitespace-nowrap text-sm font-medium text-neutral-700">
+            Drag elements to move them · Double-click text to edit
+          </span>
+        </div>
+      ) : null}
       <div
         className={`absolute left-1/2 top-1/2 overflow-visible bg-white shadow-2xl ${
           proposal ? "ring-2 ring-primary/60" : "ring-1 ring-neutral-950/10"
@@ -213,15 +280,19 @@ export function SlidePreview({
         }}
       >
         <iframe
+          ref={setIframe}
           title="Slide preview"
           width={SLIDE_WIDTH}
           height={SLIDE_HEIGHT}
-          srcDoc={html}
+          srcDoc={renderedHtml}
           sandbox="allow-same-origin"
-          className="absolute inset-0 h-full w-full border-0 bg-white pointer-events-none"
+          className={cn(
+            "absolute inset-0 h-full w-full border-0 bg-white",
+            editingActive ? "pointer-events-auto" : "pointer-events-none"
+          )}
         />
 
-        {proposal ? null : (
+        {proposal || editingActive ? null : (
           <div className="absolute inset-0 isolate">
             <DndContext onDragEnd={handleDragEnd} sensors={sensors}>
               {slideThreads.map((thread) => (
@@ -236,7 +307,7 @@ export function SlidePreview({
           </div>
         )}
 
-        {!proposal && (placingComment || placedCoords) ? (
+        {!proposal && !editingActive && (placingComment || placedCoords) ? (
           <button
             type="button"
             aria-label="Cancel comment placement"
@@ -249,7 +320,7 @@ export function SlidePreview({
           />
         ) : null}
 
-        {!proposal && placingComment ? (
+        {!proposal && !editingActive && placingComment ? (
           <PlacementOverlay
             scale={safeScale}
             onPlace={(coords) => {
@@ -260,7 +331,7 @@ export function SlidePreview({
           />
         ) : null}
 
-        {!proposal && placedCoords ? (
+        {!proposal && !editingActive && placedCoords ? (
           <ThreadComposer
             coords={placedCoords}
             scale={safeScale}
