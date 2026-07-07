@@ -1056,11 +1056,11 @@ export function createAi(config: AiConfig): Ai {
       if (tokenKey !== lastTokenKey) {
         lastTokenKey = tokenKey;
 
-        if (authValue.type === "secret") {
-          const token = authValue.token.parsed;
+        if (authValue.type === "credential") {
+          const identity = authValue.credential.identity;
           context.staticSessionInfoSig.set({
-            userId: token.uid,
-            userInfo: token.ui,
+            userId: identity?.userId,
+            userInfo: identity?.userInfo,
           });
         } else {
           context.staticSessionInfoSig.set({
@@ -1495,8 +1495,8 @@ export function makeCreateSocketDelegateForAi(
     url.protocol = url.protocol === "http:" ? "ws" : "wss";
     url.pathname = "/ai/v7";
     // TODO: don't allow public key to do this
-    if (authValue.type === "secret") {
-      url.searchParams.set("tok", authValue.token.raw);
+    if (authValue.type === "credential") {
+      url.searchParams.set("tok", authValue.credential.token);
     } else if (authValue.type === "public") {
       throw new Error("Public key not supported with AI Copilots");
     } else {

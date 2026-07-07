@@ -478,7 +478,7 @@ function strongestAccess(left: AccessLevel, right: AccessLevel): AccessLevel {
   return ACCESS_LEVEL_RANKS[right] > ACCESS_LEVEL_RANKS[left] ? right : left;
 }
 
-function roomPatternMatches(pattern: string, roomId: string): boolean {
+export function roomPatternMatches(pattern: string, roomId: string): boolean {
   if (pattern.includes("*")) {
     return roomId.startsWith(pattern.replace("*", ""));
   }
@@ -486,7 +486,7 @@ function roomPatternMatches(pattern: string, roomId: string): boolean {
   return pattern === roomId;
 }
 
-function roomPatternSpecificity(pattern: string): number {
+export function roomPatternSpecificity(pattern: string): number {
   return pattern.replace("*", "").length;
 }
 

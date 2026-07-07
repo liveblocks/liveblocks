@@ -6,6 +6,11 @@ detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
 export type {
   Awaitable,
+  AuthCredential,
+  AuthRequest,
+  AuthResult,
+  AuthScope,
+  AuthStrategy,
   BaseActivitiesData,
   BaseMetadata,
   BaseUserMeta,
@@ -79,6 +84,7 @@ export type {
   User,
 } from "@liveblocks/core";
 export {
+  bearerAuthStrategy,
   createClient,
   defineAiTool,
   FeedRequestErrorCode,

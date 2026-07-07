@@ -40,6 +40,7 @@ export default function Home() {
     <LiveblocksProvider
       {...options}
       publicApiKey={undefined}
+      auth={undefined}
       authEndpoint={async (room?: string) => {
         const response = await fetch(
           `/api/auth/access-token?echo=${count}`,

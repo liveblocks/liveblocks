@@ -2,6 +2,7 @@ import { type Ai, createAi, makeCreateSocketDelegateForAi } from "./ai";
 import type { LiveblocksHttpApi } from "./api-client";
 import { createApiClient } from "./api-client";
 import { createAuthManager } from "./auth-manager";
+import type { AuthStrategy } from "./auth-strategy";
 import { isIdle, StopRetrying } from "./connection";
 import { DEFAULT_BASE_URL } from "./constants";
 import { isLiveObject } from "./crdts/liveblocks-helpers";
@@ -585,7 +586,9 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
 
   /** @internal */
   __DANGEROUSLY_disableThrottling?: true; // for unit testing purposes only, never use this in production
-} & Relax<{ publicApiKey: string } | { authEndpoint: AuthEndpoint }>;
+} & Relax<
+  { publicApiKey: string } | { authEndpoint: AuthEndpoint } | { auth: AuthStrategy }
+>;
 
 function getBaseUrl(baseUrl?: string | undefined): string {
   if (
@@ -651,9 +654,22 @@ export function createClient<U extends BaseUserMeta = DU>(
 
   const currentUserId = new Signal<string | undefined>(undefined);
 
-  const authManager = createAuthManager(options, (token) => {
-    currentUserId.set(() => token.uid);
-  });
+  const baseAuthManager = createAuthManager(options);
+
+  // Wrap getAuthValue so the client-level currentUserId signal is updated from
+  // the credential's identity whenever a fresh credential is obtained (mirrors
+  // the legacy onAuthenticate callback, now read off credential.identity).
+  const authManager: typeof baseAuthManager = {
+    reset: () => baseAuthManager.reset(),
+    invalidate: (authValue) => baseAuthManager.invalidate(authValue),
+    getAuthValue: async (requestOptions) => {
+      const authValue = await baseAuthManager.getAuthValue(requestOptions);
+      if (authValue.type === "credential") {
+        currentUserId.set(() => authValue.credential.identity?.userId);
+      }
+      return authValue;
+    },
+  };
 
   const fetchPolyfill =
     clientOptions.polyfills?.fetch ||

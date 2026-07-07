@@ -13,9 +13,9 @@ import {
 
 import { createApiClient } from "../api-client";
 import { type AuthRequest, createAuthManager } from "../auth-manager";
+import type { AuthCredential } from "../auth-strategy";
 import { DEFAULT_BASE_URL } from "../constants";
 import { Permission, type RoomPermissions } from "../permissions";
-import type { ParsedAuthToken } from "../protocol/AuthToken";
 import type {
   BaseMetadata,
   CommentBody,
@@ -141,10 +141,10 @@ describe("auth-manager - secret auth", () => {
       resource: "room",
       access: "read",
       roomId: "org1.room1",
-    })) as { type: "secret"; token: ParsedAuthToken };
+    })) as { type: "credential"; credential: AuthCredential };
 
-    expect(authValue.type).toEqual("secret");
-    expect(authValue.token.raw).toEqual(accessToken);
+    expect(authValue.type).toEqual("credential");
+    expect(authValue.credential.token).toEqual(accessToken);
     expect(requestCount).toBe(1);
   });
 
@@ -166,8 +166,8 @@ describe("auth-manager - secret auth", () => {
       }),
     ]);
 
-    expect(results[0].type).toEqual("secret");
-    expect(results[1].type).toEqual("secret");
+    expect(results[0].type).toEqual("credential");
+    expect(results[1].type).toEqual("credential");
     expect(requestCount).toBe(1);
   });
 
@@ -208,13 +208,13 @@ describe("auth-manager - secret auth", () => {
       writeAuthValue$,
     ]);
 
-    expect(readAuthValue.type).toEqual("secret");
-    expect(writeAuthValue.type).toEqual("secret");
-    if (readAuthValue.type !== "secret" || writeAuthValue.type !== "secret") {
+    expect(readAuthValue.type).toEqual("credential");
+    expect(writeAuthValue.type).toEqual("credential");
+    if (readAuthValue.type !== "credential" || writeAuthValue.type !== "credential") {
       throw new Error("Expected secret auth values");
     }
-    expect(readAuthValue.token.raw).toEqual(commentsWriteToken);
-    expect(writeAuthValue.token.raw).toEqual(commentsWriteToken);
+    expect(readAuthValue.credential.token).toEqual(commentsWriteToken);
+    expect(writeAuthValue.credential.token).toEqual(commentsWriteToken);
     expect(localRequestCount).toBe(2);
   });
 
@@ -256,16 +256,16 @@ describe("auth-manager - secret auth", () => {
       presenceAuthValue$,
     ]);
 
-    expect(storageAuthValue.type).toEqual("secret");
-    expect(presenceAuthValue.type).toEqual("secret");
+    expect(storageAuthValue.type).toEqual("credential");
+    expect(presenceAuthValue.type).toEqual("credential");
     if (
-      storageAuthValue.type !== "secret" ||
-      presenceAuthValue.type !== "secret"
+      storageAuthValue.type !== "credential" ||
+      presenceAuthValue.type !== "credential"
     ) {
       throw new Error("Expected secret auth values");
     }
-    expect(storageAuthValue.token.raw).toEqual(storageReadToken);
-    expect(presenceAuthValue.token.raw).toEqual(roomReadToken);
+    expect(storageAuthValue.credential.token).toEqual(storageReadToken);
+    expect(presenceAuthValue.credential.token).toEqual(roomReadToken);
     expect(localRequestCount).toBe(2);
   });
 
@@ -278,16 +278,16 @@ describe("auth-manager - secret auth", () => {
       resource: "room",
       access: "read",
       roomId: "org1.room1",
-    })) as { type: "secret"; token: ParsedAuthToken };
+    })) as { type: "credential"; credential: AuthCredential };
 
     const authValueReq2 = (await authManager.getAuthValue({
       resource: "room",
       access: "read",
       roomId: "org1.room2",
-    })) as { type: "secret"; token: ParsedAuthToken };
+    })) as { type: "credential"; credential: AuthCredential };
 
-    expect(authValueReq1.token.raw).toEqual(accessToken);
-    expect(authValueReq2.token.raw).toEqual(accessToken);
+    expect(authValueReq1.credential.token).toEqual(accessToken);
+    expect(authValueReq2.credential.token).toEqual(accessToken);
     expect(requestCount).toBe(1);
   });
 
@@ -312,15 +312,15 @@ describe("auth-manager - secret auth", () => {
       resource: "comments",
       access: "read",
       roomId: "org1.room1",
-    })) as { type: "secret"; token: ParsedAuthToken };
+    })) as { type: "credential"; credential: AuthCredential };
     const publicReadAuthValue = (await authManager.getAuthValue({
       resource: "comments:public",
       access: "read",
       roomId: "org1.room1",
-    })) as { type: "secret"; token: ParsedAuthToken };
+    })) as { type: "credential"; credential: AuthCredential };
 
-    expect(commentsReadAuthValue.token.raw).toEqual(commentsReadToken);
-    expect(publicReadAuthValue.token.raw).toEqual(commentsReadToken);
+    expect(commentsReadAuthValue.credential.token).toEqual(commentsReadToken);
+    expect(publicReadAuthValue.credential.token).toEqual(commentsReadToken);
     expect(localRequestCount).toBe(1);
   });
 
@@ -349,15 +349,15 @@ describe("auth-manager - secret auth", () => {
       resource: "comments:public",
       access: "read",
       roomId: "org1.room1",
-    })) as { type: "secret"; token: ParsedAuthToken };
+    })) as { type: "credential"; credential: AuthCredential };
     const commentsReadAuthValue = (await authManager.getAuthValue({
       resource: "comments",
       access: "read",
       roomId: "org1.room1",
-    })) as { type: "secret"; token: ParsedAuthToken };
+    })) as { type: "credential"; credential: AuthCredential };
 
-    expect(publicReadAuthValue.token.raw).toEqual(publicCommentsReadToken);
-    expect(commentsReadAuthValue.token.raw).toEqual(publicCommentsReadToken);
+    expect(publicReadAuthValue.credential.token).toEqual(publicCommentsReadToken);
+    expect(commentsReadAuthValue.credential.token).toEqual(publicCommentsReadToken);
     expect(localRequestCount).toBe(1);
   });
 
@@ -386,15 +386,15 @@ describe("auth-manager - secret auth", () => {
       resource: "comments:public",
       access: "write",
       roomId: "org1.room1",
-    })) as { type: "secret"; token: ParsedAuthToken };
+    })) as { type: "credential"; credential: AuthCredential };
     const commentsWriteAuthValue = (await authManager.getAuthValue({
       resource: "comments",
       access: "write",
       roomId: "org1.room1",
-    })) as { type: "secret"; token: ParsedAuthToken };
+    })) as { type: "credential"; credential: AuthCredential };
 
-    expect(publicWriteAuthValue.token.raw).toEqual(publicCommentsWriteToken);
-    expect(commentsWriteAuthValue.token.raw).toEqual(publicCommentsWriteToken);
+    expect(publicWriteAuthValue.credential.token).toEqual(publicCommentsWriteToken);
+    expect(commentsWriteAuthValue.credential.token).toEqual(publicCommentsWriteToken);
     expect(localRequestCount).toBe(1);
   });
 
@@ -435,15 +435,15 @@ describe("auth-manager - secret auth", () => {
       resource: "comments:public",
       access: "read",
       roomId: "org1.room1",
-    })) as { type: "secret"; token: ParsedAuthToken };
+    })) as { type: "credential"; credential: AuthCredential };
     const privateReadAuthValue = (await authManager.getAuthValue({
       resource: "comments:private",
       access: "read",
       roomId: "org1.room1",
-    })) as { type: "secret"; token: ParsedAuthToken };
+    })) as { type: "credential"; credential: AuthCredential };
 
-    expect(publicReadAuthValue.token.raw).toEqual(publicCommentsReadToken);
-    expect(privateReadAuthValue.token.raw).toEqual(privateCommentsReadToken);
+    expect(publicReadAuthValue.credential.token).toEqual(publicCommentsReadToken);
+    expect(privateReadAuthValue.credential.token).toEqual(privateCommentsReadToken);
     expect(localRequestCount).toBe(2);
   });
 
@@ -498,6 +498,7 @@ describe("auth-manager - secret auth", () => {
         fetchPolyfill: globalThis.fetch?.bind(globalThis),
         authManager: {
           reset() {},
+          invalidate() {},
           getAuthValue(request) {
             authRequests.push(request);
             return Promise.resolve({
@@ -592,15 +593,15 @@ describe("auth-manager - secret auth", () => {
       resource: "comments",
       access: "read",
       roomId: "org1.room1",
-    })) as { type: "secret"; token: ParsedAuthToken };
+    })) as { type: "credential"; credential: AuthCredential };
     const writeAuthValue = (await authManager.getAuthValue({
       resource: "comments",
       access: "write",
       roomId: "org1.room1",
-    })) as { type: "secret"; token: ParsedAuthToken };
+    })) as { type: "credential"; credential: AuthCredential };
 
-    expect(readAuthValue.token.raw).toEqual(commentsReadToken);
-    expect(writeAuthValue.token.raw).toEqual(commentsWriteToken);
+    expect(readAuthValue.credential.token).toEqual(commentsReadToken);
+    expect(writeAuthValue.credential.token).toEqual(commentsWriteToken);
     expect(localRequestCount).toBe(2);
   });
 
@@ -630,15 +631,15 @@ describe("auth-manager - secret auth", () => {
       resource: "storage",
       access: "read",
       roomId: "org1.room1",
-    })) as { type: "secret"; token: ParsedAuthToken };
+    })) as { type: "credential"; credential: AuthCredential };
     const presenceAuthValue = (await authManager.getAuthValue({
       resource: "room",
       access: "read",
       roomId: "org1.room1",
-    })) as { type: "secret"; token: ParsedAuthToken };
+    })) as { type: "credential"; credential: AuthCredential };
 
-    expect(storageAuthValue.token.raw).toEqual(storageReadToken);
-    expect(presenceAuthValue.token.raw).toEqual(roomReadToken);
+    expect(storageAuthValue.credential.token).toEqual(storageReadToken);
+    expect(presenceAuthValue.credential.token).toEqual(roomReadToken);
     expect(localRequestCount).toBe(2);
   });
 
@@ -670,21 +671,21 @@ describe("auth-manager - secret auth", () => {
       resource: "room",
       access: "read",
       roomId: "org1.room1",
-    })) as { type: "secret"; token: ParsedAuthToken };
+    })) as { type: "credential"; credential: AuthCredential };
     const commentsAuthValue = (await authManager.getAuthValue({
       resource: "comments",
       access: "write",
       roomId: "org1.room1",
-    })) as { type: "secret"; token: ParsedAuthToken };
+    })) as { type: "credential"; credential: AuthCredential };
     const storageAuthValue = (await authManager.getAuthValue({
       resource: "storage",
       access: "read",
       roomId: "org1.room1",
-    })) as { type: "secret"; token: ParsedAuthToken };
+    })) as { type: "credential"; credential: AuthCredential };
 
-    expect(presenceAuthValue.token.raw).toEqual(storageOptOutToken);
-    expect(commentsAuthValue.token.raw).toEqual(storageOptOutToken);
-    expect(storageAuthValue.token.raw).toEqual(storageReadToken);
+    expect(presenceAuthValue.credential.token).toEqual(storageOptOutToken);
+    expect(commentsAuthValue.credential.token).toEqual(storageOptOutToken);
+    expect(storageAuthValue.credential.token).toEqual(storageReadToken);
     expect(localRequestCount).toBe(2);
   });
 
@@ -712,9 +713,9 @@ describe("auth-manager - secret auth", () => {
       resource: "storage",
       access: "write",
       roomId: "org1.room1",
-    })) as { type: "secret"; token: ParsedAuthToken };
+    })) as { type: "credential"; credential: AuthCredential };
 
-    expect(storageAuthValue.token.raw).toEqual(storageConflictToken);
+    expect(storageAuthValue.credential.token).toEqual(storageConflictToken);
     expect(localRequestCount).toBe(1);
   });
 
@@ -741,14 +742,14 @@ describe("auth-manager - secret auth", () => {
       resource: "room",
       access: "read",
       roomId: "org1.room1",
-    })) as { type: "secret"; token: ParsedAuthToken };
+    })) as { type: "credential"; credential: AuthCredential };
     const userAuthValue = (await authManager.getAuthValue({
       resource: "personal",
       access: "write",
-    })) as { type: "secret"; token: ParsedAuthToken };
+    })) as { type: "credential"; credential: AuthCredential };
 
-    expect(roomAuthValue.token.raw).toEqual(exactRoomToken);
-    expect(userAuthValue.token.raw).toEqual(exactRoomToken);
+    expect(roomAuthValue.credential.token).toEqual(exactRoomToken);
+    expect(userAuthValue.credential.token).toEqual(exactRoomToken);
     expect(localRequestCount).toBe(1);
   });
 
@@ -760,9 +761,9 @@ describe("auth-manager - secret auth", () => {
     const authValueReq1 = (await authManager.getAuthValue({
       resource: "personal",
       access: "write",
-    })) as { type: "secret"; token: ParsedAuthToken };
+    })) as { type: "credential"; credential: AuthCredential };
 
-    expect(authValueReq1.token.raw).toEqual(accessTokenWildcardCommentsRead);
+    expect(authValueReq1.credential.token).toEqual(accessTokenWildcardCommentsRead);
     expect(requestCount).toBe(1);
   });
 
@@ -774,15 +775,15 @@ describe("auth-manager - secret auth", () => {
     const authValueReq1 = (await authManager.getAuthValue({
       resource: "personal",
       access: "write",
-    })) as { type: "secret"; token: ParsedAuthToken };
+    })) as { type: "credential"; credential: AuthCredential };
 
     const authValueReq2 = (await authManager.getAuthValue({
       resource: "personal",
       access: "write",
-    })) as { type: "secret"; token: ParsedAuthToken };
+    })) as { type: "credential"; credential: AuthCredential };
 
-    expect(authValueReq1.token.raw).toEqual(accessToken);
-    expect(authValueReq2.token.raw).toEqual(accessToken);
+    expect(authValueReq1.credential.token).toEqual(accessToken);
+    expect(authValueReq2.credential.token).toEqual(accessToken);
     expect(requestCount).toBe(1);
   });
 
@@ -794,15 +795,15 @@ describe("auth-manager - secret auth", () => {
     const authValueReq1 = (await authManager.getAuthValue({
       resource: "personal",
       access: "write",
-    })) as { type: "secret"; token: ParsedAuthToken };
+    })) as { type: "credential"; credential: AuthCredential };
 
     const authValueReq2 = (await authManager.getAuthValue({
       resource: "personal",
       access: "write",
-    })) as { type: "secret"; token: ParsedAuthToken };
+    })) as { type: "credential"; credential: AuthCredential };
 
-    expect(authValueReq1.token.raw).toEqual(accessTokenWithNoPermission);
-    expect(authValueReq2.token.raw).toEqual(accessTokenWithNoPermission);
+    expect(authValueReq1.credential.token).toEqual(accessTokenWithNoPermission);
+    expect(authValueReq2.credential.token).toEqual(accessTokenWithNoPermission);
     expect(requestCount).toBe(1);
   });
 
@@ -815,16 +816,16 @@ describe("auth-manager - secret auth", () => {
       resource: "room",
       access: "read",
       roomId: "org1.room1",
-    })) as { type: "secret"; token: ParsedAuthToken };
+    })) as { type: "credential"; credential: AuthCredential };
 
     const authValueReq2 = (await authManager.getAuthValue({
       resource: "room",
       access: "read",
       roomId: "org1.room2",
-    })) as { type: "secret"; token: ParsedAuthToken };
+    })) as { type: "credential"; credential: AuthCredential };
 
-    expect(authValueReq1.token.raw).toEqual(accessToken);
-    expect(authValueReq2.token.raw).toEqual(accessToken);
+    expect(authValueReq1.credential.token).toEqual(accessToken);
+    expect(authValueReq2.credential.token).toEqual(accessToken);
     expect(requestCount).toBe(1);
 
     // Five hours later, this token should be expired and no longer be served
@@ -862,16 +863,16 @@ describe("auth-manager - secret auth", () => {
       resource: "room",
       access: "read",
       roomId: "room1",
-    })) as { type: "secret"; token: ParsedAuthToken };
+    })) as { type: "credential"; credential: AuthCredential };
 
     const authValueReq2 = (await authManager.getAuthValue({
       resource: "room",
       access: "read",
       roomId: "room2",
-    })) as { type: "secret"; token: ParsedAuthToken };
+    })) as { type: "credential"; credential: AuthCredential };
 
-    expect(authValueReq1.token.raw).toEqual(idToken);
-    expect(authValueReq2.token.raw).toEqual(idToken);
+    expect(authValueReq1.credential.token).toEqual(idToken);
+    expect(authValueReq2.credential.token).toEqual(idToken);
     expect(requestCount).toBe(1);
   });
 
@@ -884,16 +885,16 @@ describe("auth-manager - secret auth", () => {
       resource: "room",
       access: "read",
       roomId: "room1",
-    })) as { type: "secret"; token: ParsedAuthToken };
+    })) as { type: "credential"; credential: AuthCredential };
 
     const authValueReq2 = (await authManager.getAuthValue({
       resource: "room",
       access: "read",
       roomId: "room2",
-    })) as { type: "secret"; token: ParsedAuthToken };
+    })) as { type: "credential"; credential: AuthCredential };
 
-    expect(authValueReq1.token.raw).toEqual(idToken);
-    expect(authValueReq2.token.raw).toEqual(idToken);
+    expect(authValueReq1.credential.token).toEqual(idToken);
+    expect(authValueReq2.credential.token).toEqual(idToken);
     expect(requestCount).toBe(1);
 
     // Five hours later, this token should be expired and no longer be served

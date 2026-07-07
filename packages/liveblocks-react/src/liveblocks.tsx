@@ -1820,6 +1820,7 @@ export function LiveblocksProvider<U extends BaseUserMeta = DU>(
     preventUnsavedChanges: useInitial(o.preventUnsavedChanges),
     badgeLocation: useInitial(o.badgeLocation),
 
+    auth: useInitial(o.auth),
     authEndpoint: useInitialUnlessFunction(o.authEndpoint),
     resolveMentionSuggestions: useInitialUnlessFunction(
       o.resolveMentionSuggestions

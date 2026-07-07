@@ -11,7 +11,10 @@ import { kInternal } from "../internal";
 import { MockWebSocket } from "./_MockWebSocketServer";
 
 function createClientForTest(
-  options?: Omit<ClientOptions, "publicApiKey" | "authEndpoint" | "polyfills">
+  options?: Omit<
+    ClientOptions,
+    "publicApiKey" | "authEndpoint" | "auth" | "polyfills"
+  >
 ) {
   const client = createClient({
     publicApiKey: "pk_xxx",

@@ -563,7 +563,7 @@ export function createApiClient<
   authManager: AuthManager;
   fetchPolyfill: typeof fetch;
 }): LiveblocksHttpApi<TM, CM> {
-  const httpClient = new HttpClient(baseUrl, fetchPolyfill);
+  const httpClient = new HttpClient(baseUrl, fetchPolyfill, authManager);
 
   /* -------------------------------------------------------------------------------------------------
    * Threads (Room level)
@@ -1972,7 +1972,7 @@ export function getBearerTokenFromAuthValue(authValue: AuthValue): string {
   if (authValue.type === "public") {
     return authValue.publicApiKey;
   } else {
-    return authValue.token.raw;
+    return authValue.credential.token;
   }
 }
 
@@ -1988,10 +1988,16 @@ export function getBearerTokenFromAuthValue(authValue: AuthValue): string {
 class HttpClient {
   #baseUrl: string;
   #fetchPolyfill: typeof fetch;
+  #authManager: AuthManager;
 
-  constructor(baseUrl: string, fetchPolyfill: typeof fetch) {
+  constructor(
+    baseUrl: string,
+    fetchPolyfill: typeof fetch,
+    authManager: AuthManager
+  ) {
     this.#baseUrl = baseUrl;
     this.#fetchPolyfill = fetchPolyfill;
+    this.#authManager = authManager;
   }
 
   // ------------------------------------------------------------------
@@ -2075,6 +2081,12 @@ class HttpClient {
     const response = await this.#rawFetch(endpoint, authValue, options, params);
 
     if (!response.ok) {
+      // A 401/403 likely means the credential was revoked or is otherwise
+      // invalid. Invalidate the cached entry so the next attempt re-auths
+      // instead of reusing the same dead credential.
+      if (response.status === 401 || response.status === 403) {
+        this.#authManager.invalidate(authValue);
+      }
       throw await HttpError.fromResponse(response);
     }
 

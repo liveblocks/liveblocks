@@ -11,9 +11,11 @@
 import { vi } from "vitest";
 
 import type { AuthValue } from "../auth-manager";
+import type { AuthCredential } from "../auth-strategy";
 import type { Delegates } from "../connection";
 import { StopRetrying } from "../connection";
-import type { AuthToken, ParsedAuthToken } from "../protocol/AuthToken";
+import type { AuthToken } from "../protocol/AuthToken";
+import { TokenKind } from "../protocol/AuthToken";
 import { ServerMsgCode } from "../protocol/ServerMsg";
 import type { WebsocketCloseCodes } from "../types/IWebSocket";
 import type { MockWebSocket } from "./_MockWebSocketServer";
@@ -27,10 +29,16 @@ import {
 type AuthBehavior = () => AuthValue;
 type SocketBehavior = (wss: MockWebSocketServer) => MockWebSocket;
 
-function makeParsed(authToken: AuthToken): ParsedAuthToken {
+const FAKE_RAW_TOKEN = "<some fake JWT token>";
+
+function makeCredentialFromToken(authToken: AuthToken): AuthCredential {
   return {
-    raw: "<some fake JWT token>",
-    parsed: authToken,
+    token: FAKE_RAW_TOKEN,
+    identity: { userId: authToken.uid, userInfo: authToken.ui },
+    scope:
+      authToken.k === TokenKind.ID_TOKEN
+        ? { personal: true, rooms: ["*"] }
+        : { rooms: Object.keys(authToken.perms) },
   };
 }
 
@@ -108,15 +116,15 @@ export function ALWAYS_AUTH_WITH_PUBKEY(): AuthValue {
 
 export function ALWAYS_AUTH_WITH_ID_TOKEN(): AuthValue {
   return {
-    type: "secret",
-    token: makeParsed(makeIDToken()),
+    type: "credential",
+    credential: makeCredentialFromToken(makeIDToken()),
   };
 }
 
 export function ALWAYS_AUTH_WITH_ACCESS_TOKEN(): AuthValue {
   return {
-    type: "secret",
-    token: makeParsed(makeAccessToken()),
+    type: "credential",
+    credential: makeCredentialFromToken(makeAccessToken()),
   };
 }
 

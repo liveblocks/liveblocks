@@ -29,6 +29,15 @@ export type {
 } from "./ai";
 export { defineAiTool } from "./ai";
 export type {
+  AuthCredential,
+  AuthRequest,
+  AuthResult,
+  AuthScope,
+  AuthStrategy,
+} from "./auth-strategy";
+export type { BearerAuthStrategyOptions, BearerTokenResult } from "./auth-strategy-bearer";
+export { bearerAuthStrategy } from "./auth-strategy-bearer";
+export type {
   Client,
   ClientOptions,
   EnterOptions,
