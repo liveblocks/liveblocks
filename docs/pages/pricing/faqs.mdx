@@ -209,3 +209,18 @@ That way, you can decide how to best handle those cases in your product.
 Yes, if test users connect to a room during automated testing, the room will be
 counted as a monthly active room. To prevent hitting limits during testing, you
 may want to provide a set of reusable `roomId`s.
+
+## How do I remove the “Powered by Liveblocks” badge?
+
+By default, Liveblocks displays a “Powered by Liveblocks” badge in your
+application. You need a [paid plan](/docs/pricing/plans) to remove the badge. To
+remove it, follow these steps:
+
+1. In the Liveblocks dashboard, navigate to your
+   [team’s settings](/dashboard/settings).
+2. Under **General**, toggle the option to remove “Powered by Liveblocks”
+   branding.
+
+If you’d instead like to adjust the position of the badge, set the
+[`badgeLocation`](/docs/api-reference/liveblocks-react#Powered-by-Liveblocks-branding)
+property.
