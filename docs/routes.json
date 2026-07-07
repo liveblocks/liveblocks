@@ -867,8 +867,7 @@
       },
       {
         "title": "Pricing FAQs",
-        "path": "/pricing/faqs",
-        "hidden": true
+        "path": "/pricing/faqs"
       }
     ]
   },
