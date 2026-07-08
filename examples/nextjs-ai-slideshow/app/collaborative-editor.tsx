@@ -1,14 +1,25 @@
 "use client";
 
+import { redo, redoDepth, undo, undoDepth } from "@codemirror/commands";
 import { html } from "@codemirror/lang-html";
 import { EditorState } from "@codemirror/state";
 import { basicSetup, EditorView } from "codemirror";
 import { useRoom, useSelf } from "@liveblocks/react/suspense";
 import { getYjsProviderForRoom } from "@liveblocks/yjs";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { yCollab } from "y-codemirror.next";
 import * as Y from "yjs";
 import { getSlideText } from "./slide-doc";
+
+// The code editor's undo/redo state and actions, mirroring exactly what the
+// editor's own Mod-z/Mod-y keybindings do. Exposed so the header undo/redo
+// buttons can drive the editor history while the Code tab is open.
+export type EditorHistory = {
+  undo: () => void;
+  redo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
+};
 
 const editorTheme = EditorView.theme({
   "&": {
@@ -34,10 +45,21 @@ const editorTheme = EditorView.theme({
   },
 });
 
-export function CollaborativeEditor({ slideId }: { slideId: string }) {
+export function CollaborativeEditor({
+  slideId,
+  onHistoryChange,
+}: {
+  slideId: string;
+  onHistoryChange?: (history: EditorHistory | null) => void;
+}) {
   const room = useRoom();
   const userInfo = useSelf((me) => me.info);
   const [element, setElement] = useState<HTMLDivElement | null>(null);
+  const onHistoryChangeRef = useRef(onHistoryChange);
+
+  useEffect(() => {
+    onHistoryChangeRef.current = onHistoryChange;
+  }, [onHistoryChange]);
 
   const ref = useCallback((node: HTMLDivElement | null) => {
     setElement(node);
@@ -59,6 +81,21 @@ export function CollaborativeEditor({ slideId }: { slideId: string }) {
       colorLight: `${userInfo.color}80`,
     });
 
+    const notifyHistory = (view: EditorView) => {
+      onHistoryChangeRef.current?.({
+        undo: () => {
+          undo(view);
+          view.focus();
+        },
+        redo: () => {
+          redo(view);
+          view.focus();
+        },
+        canUndo: undoDepth(view.state) > 0,
+        canRedo: redoDepth(view.state) > 0,
+      });
+    };
+
     const state = EditorState.create({
       doc: ytext.toString(),
       extensions: [
@@ -67,6 +104,11 @@ export function CollaborativeEditor({ slideId }: { slideId: string }) {
         EditorView.lineWrapping,
         editorTheme,
         yCollab(ytext, provider.awareness, { undoManager }),
+        EditorView.updateListener.of((update) => {
+          if (update.docChanged) {
+            notifyHistory(update.view);
+          }
+        }),
       ],
     });
 
@@ -74,8 +116,10 @@ export function CollaborativeEditor({ slideId }: { slideId: string }) {
       state,
       parent: element,
     });
+    notifyHistory(view);
 
     return () => {
+      onHistoryChangeRef.current?.(null);
       undoManager.destroy();
       view.destroy();
     };

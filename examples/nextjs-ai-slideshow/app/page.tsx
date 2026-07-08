@@ -18,7 +18,10 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useExampleRoomId } from "@/hooks/use-example-room-id";
 import { Chat } from "./chat";
-import { CollaborativeEditor } from "./collaborative-editor";
+import {
+  CollaborativeEditor,
+  type EditorHistory,
+} from "./collaborative-editor";
 import { resolveProposal, type SlideProposal } from "./proposal-actions";
 import { getSlideIds, getSlideText } from "./slide-doc";
 import { SLIDE_HEIGHT, SLIDE_WIDTH, STARTER_SLIDE_HTML } from "./slide-html";
@@ -93,6 +96,7 @@ function SlideshowApp({ roomId }: { roomId: string }) {
   const { slideIds, addSlide, deleteSlide, moveSlide } = useSlides();
   const { undo, redo, canUndo, canRedo } = useSlideUndo();
   const [panel, setPanel] = useState<Panel>("slide");
+  const [codeHistory, setCodeHistory] = useState<EditorHistory | null>(null);
   const [placingComment, setPlacingComment] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [selectedSlideId, setSelectedSlideId] = useState<string | null>(null);
@@ -325,37 +329,43 @@ function SlideshowApp({ roomId }: { roomId: string }) {
 
           <div className="flex items-center gap-2">
             <AvatarStack size={28} />
+            {/* On the Preview tab these drive the visual-edit history; on the
+                Code tab they drive the editor's own history, like Mod-z. */}
+            <Button
+              variant="outline"
+              size="icon-sm"
+              onClick={panel === "code" ? codeHistory?.undo : undo}
+              disabled={
+                previewedProposal !== null ||
+                (panel === "code" ? !codeHistory?.canUndo : !canUndo)
+              }
+              aria-label="Undo"
+            >
+              <Undo2Icon className="size-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon-sm"
+              onClick={panel === "code" ? codeHistory?.redo : redo}
+              disabled={
+                previewedProposal !== null ||
+                (panel === "code" ? !codeHistory?.canRedo : !canRedo)
+              }
+              aria-label="Redo"
+            >
+              <Redo2Icon className="size-4" />
+            </Button>
             {panel === "slide" ? (
-              <>
-                <Button
-                  variant="outline"
-                  size="icon-sm"
-                  onClick={undo}
-                  disabled={!canUndo || previewedProposal !== null}
-                  aria-label="Undo"
-                >
-                  <Undo2Icon className="size-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon-sm"
-                  onClick={redo}
-                  disabled={!canRedo || previewedProposal !== null}
-                  aria-label="Redo"
-                >
-                  <Redo2Icon className="size-4" />
-                </Button>
-                <Button
-                  variant={placingComment ? "secondary" : "outline"}
-                  size="sm"
-                  onClick={() => setPlacingComment((value) => !value)}
-                  // Pins belong to the shared slide, not to an unapplied proposal.
-                  disabled={previewedProposal !== null}
-                >
-                  <MessageSquarePlusIcon className="size-4" />
-                  Comment
-                </Button>
-              </>
+              <Button
+                variant={placingComment ? "secondary" : "outline"}
+                size="sm"
+                onClick={() => setPlacingComment((value) => !value)}
+                // Pins belong to the shared slide, not to an unapplied proposal.
+                disabled={previewedProposal !== null}
+              >
+                <MessageSquarePlusIcon className="size-4" />
+                Comment
+              </Button>
             ) : null}
             <Button
               variant="outline"
@@ -400,7 +410,11 @@ function SlideshowApp({ roomId }: { roomId: string }) {
                 onResolveProposal={resolvePreviewedProposal}
               />
             ) : selectedSlideIsReal ? (
-              <CollaborativeEditor key={slideId} slideId={slideId} />
+              <CollaborativeEditor
+                key={slideId}
+                slideId={slideId}
+                onHistoryChange={setCodeHistory}
+              />
             ) : (
               <div className="flex h-full items-center justify-center text-muted-foreground">
                 <Loader size={20} />
