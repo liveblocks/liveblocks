@@ -146,21 +146,38 @@ export function useSlides(): {
 
 export function useSlideHtml(slideId: string, enabled = true): string {
   const room = useRoom();
-  const [html, setHtml] = useState(STARTER_SLIDE_HTML);
+
+  const readHtml = useCallback(() => {
+    if (!enabled) {
+      return STARTER_SLIDE_HTML;
+    }
+    const ydoc = getYjsProviderForRoom(room).getYDoc();
+    return getSlideText(ydoc, slideId).toString() || STARTER_SLIDE_HTML;
+  }, [enabled, room, slideId]);
+
+  const [state, setState] = useState(() => ({ slideId, html: readHtml() }));
+
+  // Recompute synchronously when the slide changes so consumers never render
+  // one frame of the previous slide's HTML (the iframe srcDoc is set once per
+  // slide, so a stale first value would stick). The fresh value must also be
+  // returned from THIS render: a render-phase setState only applies on the
+  // re-render, and this very render's value is what gets latched.
+  let html = state.html;
+  if (state.slideId !== slideId) {
+    html = readHtml();
+    setState({ slideId, html });
+  }
 
   useEffect(() => {
     if (!enabled) {
-      setHtml(STARTER_SLIDE_HTML);
       return;
     }
 
-    const provider = getYjsProviderForRoom(room);
-    const ydoc = provider.getYDoc();
+    const ydoc = getYjsProviderForRoom(room).getYDoc();
     const ytext = getSlideText(ydoc, slideId);
 
     const updateHtml = () => {
-      const value = ytext.toString();
-      setHtml(value || STARTER_SLIDE_HTML);
+      setState({ slideId, html: ytext.toString() || STARTER_SLIDE_HTML });
     };
 
     updateHtml();
