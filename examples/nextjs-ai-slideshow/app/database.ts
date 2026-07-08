@@ -45,19 +45,10 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
       avatar: "https://liveblocks.io/avatars/avatar-8.png",
     },
   },
-  {
-    id: AI_USER_ID,
-    info: {
-      name: AI_USER_NAME,
-      color: "#000000",
-      avatar: AI_USER_AVATAR,
-    },
-  },
 ];
 
 export function getRandomUser() {
-  const humans = USER_INFO.filter((user) => user.id !== AI_USER_ID);
-  return humans[Math.floor(Math.random() * humans.length)];
+  return USER_INFO[Math.floor(Math.random() * USER_INFO.length)];
 }
 
 export function getUser(id: string) {
