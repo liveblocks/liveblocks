@@ -210,7 +210,7 @@ function Canvas() {
   );
 
   const insertImageLayer = useMutation(
-    ({ storage, setMyPresence }, size: { width: number; height: number }) => {
+    ({ storage, setMyPresence }, bounds: XYWH) => {
       const liveLayers = storage.get("layers");
       if (liveLayers.size >= MAX_LAYERS) {
         return null;
@@ -220,7 +220,7 @@ function Canvas() {
       const layerId = nanoid();
       const layer = new LiveObject<ImageLayer>({
         type: LayerType.Image,
-        ...getCenteredImageBounds(camera, size),
+        ...bounds,
       });
       liveLayerIds.push(layerId);
       liveLayers.set(layerId, layer);
@@ -230,7 +230,7 @@ function Canvas() {
 
       return layerId;
     },
-    [camera]
+    []
   );
 
   const setImageLayerFile = useMutation(
@@ -246,7 +246,7 @@ function Canvas() {
   );
 
   const insertImageFile = useCallback(
-    async (file: File) => {
+    async (file: File, position?: Point) => {
       if (!file.type.startsWith("image/")) {
         return;
       }
@@ -256,7 +256,10 @@ function Canvas() {
         return;
       }
 
-      const layerId = insertImageLayer(size);
+      const bounds = position
+        ? getImageBoundsFromCenter(position, size)
+        : getCenteredImageBounds(camera, size);
+      const layerId = insertImageLayer(bounds);
       if (!layerId) {
         return;
       }
@@ -268,7 +271,36 @@ function Canvas() {
         console.error("Image upload failed", error);
       }
     },
-    [insertImageLayer, room, setImageLayerFile]
+    [camera, insertImageLayer, room, setImageLayerFile]
+  );
+
+  const onDragOver = useCallback((e: React.DragEvent) => {
+    if (hasDraggedFiles(e.dataTransfer)) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "copy";
+    }
+  }, []);
+
+  const onDrop = useCallback(
+    async (e: React.DragEvent) => {
+      const files = Array.from(e.dataTransfer.files).filter((file) =>
+        file.type.startsWith("image/")
+      );
+
+      if (hasDraggedFiles(e.dataTransfer)) {
+        e.preventDefault();
+      }
+
+      if (files.length === 0) {
+        return;
+      }
+
+      const point = pointerEventToCanvasPoint(e, camera);
+      for (const file of files) {
+        await insertImageFile(file, point);
+      }
+    },
+    [camera, insertImageFile]
   );
 
   /**
@@ -551,7 +583,11 @@ function Canvas() {
 
   return (
     <>
-      <div className={styles.canvas}>
+      <div
+        className={styles.canvas}
+        onDragOver={onDragOver}
+        onDrop={onDrop}
+      >
         <SelectionTools
           isAnimated={
             canvasState.mode !== CanvasMode.Translating &&
@@ -635,12 +671,29 @@ function getCenteredImageBounds(
   camera: Camera,
   size: { width: number; height: number }
 ): XYWH {
+  return getImageBoundsFromCenter(
+    {
+      x: Math.round(window.innerWidth / 2 - camera.x),
+      y: Math.round(window.innerHeight / 2 - camera.y),
+    },
+    size
+  );
+}
+
+function getImageBoundsFromCenter(
+  center: Point,
+  size: { width: number; height: number }
+): XYWH {
   return {
-    x: Math.round(window.innerWidth / 2 - camera.x - size.width / 2),
-    y: Math.round(window.innerHeight / 2 - camera.y - size.height / 2),
+    x: Math.round(center.x - size.width / 2),
+    y: Math.round(center.y - size.height / 2),
     width: size.width,
     height: size.height,
   };
+}
+
+function hasDraggedFiles(dataTransfer: DataTransfer) {
+  return Array.from(dataTransfer.types).includes("Files");
 }
 
 async function getImageSize(

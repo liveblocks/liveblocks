@@ -201,7 +201,7 @@ export function penPointsToPathLayer(
 }
 
 export function pointerEventToCanvasPoint(
-  e: React.PointerEvent,
+  e: Pick<React.PointerEvent, "clientX" | "clientY">,
   camera: Camera
 ): Point {
   return {
