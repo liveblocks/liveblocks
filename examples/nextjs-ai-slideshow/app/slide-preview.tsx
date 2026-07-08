@@ -228,7 +228,7 @@ export function SlidePreview({
       ref={wrapperRef}
       className="relative h-full w-full overflow-hidden bg-neutral-50"
     >
-      {proposal ? (
+      {proposal && proposalHtml !== undefined ? (
         <div className="absolute left-1/2 top-3 z-40 flex -translate-x-1/2 items-center gap-3 rounded-full border border-primary/30 bg-white py-1.5 pl-4 pr-1.5 shadow-md">
           <span className="flex items-center gap-1.5 whitespace-nowrap text-sm font-medium text-neutral-700">
             <EyeIcon className="size-4 text-primary" />
@@ -270,7 +270,9 @@ export function SlidePreview({
       ) : null}
       <div
         className={`absolute left-1/2 top-1/2 overflow-visible bg-white shadow-2xl ${
-          proposal ? "ring-2 ring-primary/60" : "ring-1 ring-neutral-950/10"
+          proposal && proposalHtml !== undefined
+            ? "ring-2 ring-primary/60"
+            : "ring-1 ring-neutral-950/10"
         }`}
         style={{
           width: SLIDE_WIDTH,

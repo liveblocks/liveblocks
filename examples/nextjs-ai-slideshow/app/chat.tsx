@@ -717,43 +717,44 @@ function ProposalCard({
 
   return (
     <div className="mt-3 overflow-hidden rounded-md border border-neutral-950/10 bg-white shadow-xs">
-      <div className="flex items-center justify-between border-b border-neutral-950/5 px-3 py-2">
-        <span className="text-xs font-medium text-neutral-700">Changes</span>
-        {generating ? (
-          <Shimmer className="text-xs font-medium">Generating…</Shimmer>
-        ) : status !== "pending" ? (
-          <span className="text-xs font-medium text-neutral-400">
-            {status === "applied" ? "Applied" : "Rejected"}
-          </span>
-        ) : null}
-      </div>
-      <div className="divide-y divide-neutral-950/5 bg-neutral-50">
-        {proposals.map((proposal, index) => {
-          const slideIndex = slideIds.indexOf(proposal.slideId);
-          const label =
-            proposal.slideId === "new"
-              ? "New slide"
-              : slideIndex === -1
-                ? "Deleted slide"
-                : `Slide ${slideIndex + 1}`;
+      {proposals.map((proposal, index) => {
+        const slideIndex = slideIds.indexOf(proposal.slideId);
+        const label =
+          proposal.slideId === "new"
+            ? "New slide"
+            : slideIndex === -1
+              ? "Deleted slide"
+              : `Slide ${slideIndex + 1}`;
 
-          return (
-            <section key={`${proposal.slideId}-${index}`}>
-              <div className="flex items-center gap-2 px-3 pt-3">
-                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
-                  {label}
-                </span>
-              </div>
-              <pre
-                ref={index === proposals.length - 1 ? preRef : undefined}
-                className="max-h-48 overflow-auto p-3 font-mono text-[11px] leading-relaxed text-neutral-700"
-              >
-                <code>{proposal.html}</code>
-              </pre>
-            </section>
-          );
-        })}
-      </div>
+        return (
+          <section key={`${proposal.slideId}-${index}`}>
+            <div
+              className={`flex items-center justify-between border-neutral-950/5 px-3 py-2 ${
+                index === 0 ? "border-b" : "border-y"
+              }`}
+            >
+              <span className="text-xs font-medium text-neutral-700">
+                {label}
+              </span>
+              {index === 0 ? (
+                generating ? (
+                  <Shimmer className="text-xs font-medium">Generating…</Shimmer>
+                ) : status !== "pending" ? (
+                  <span className="text-xs font-medium text-neutral-400">
+                    {status === "applied" ? "Applied" : "Rejected"}
+                  </span>
+                ) : null
+              ) : null}
+            </div>
+            <pre
+              ref={index === proposals.length - 1 ? preRef : undefined}
+              className="max-h-48 overflow-auto bg-neutral-50 p-3 font-mono text-[11px] leading-relaxed text-neutral-700"
+            >
+              <code>{proposal.html}</code>
+            </pre>
+          </section>
+        );
+      })}
       {!generating && status === "pending" ? (
         <div className="flex items-center justify-end gap-2 border-t border-neutral-950/5 p-2">
           <Button
