@@ -572,7 +572,7 @@ function RemoteSelections({
           }}
         >
           <div
-            className="absolute left-0 top-0 rounded-t-sm px-1.5 py-0.5 text-xs font-medium text-white"
+            className="absolute -left-1 -top-1 rounded-t-sm px-1.5 py-0.5 pb-0 text-xs font-medium text-white"
             style={{
               backgroundColor: rect.color,
               transform: `translateY(-100%) scale(${1 / scale})`,

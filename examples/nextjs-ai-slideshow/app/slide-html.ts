@@ -69,7 +69,7 @@ const CREATE_BODY = (slideContent: string) => `<!doctype html>
         margin: 0;
         font-size: 78px;
         line-height: 0.98;
-        letter-spacing: -0.02em;
+        letter-spacing: -0.01em;
         font-family: "Merriweather", Georgia, serif;
         font-weight: 600;
       }
