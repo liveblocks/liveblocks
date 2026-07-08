@@ -25,23 +25,21 @@ const FEATURES: Feature[] = [
     icon: <UsersIcon />,
     title: "Shared across users",
     description:
-      "Open this example in two tabs to see chat, Yjs code edits, and comment pins sync live.",
+      "Open this example in two tabs to see presence, chat, code edits, and comment pins sync live.",
   },
   {
     icon: <ZapIcon />,
-    title: "Yjs-powered code",
+    title: "Drag and drop elements",
     description:
-      "Applied proposals are written into the shared CodeMirror document with a minimal Yjs diff.",
+      "Drag and drop elements in the slide to move them around. Double-click on text to edit them.",
   },
   {
     icon: <CommentIcon />,
     title: "Comments and export",
-    description: (
-      <>
-        Place multiplayer comment pins on the slide preview, then export the
-        current slide as a PowerPoint file.
-      </>
-    ),
+    description: `
+      Place multiplayer comment pins on the slide preview, then export the
+      current slide as a PowerPoint file.
+    `,
   },
 ];
 
