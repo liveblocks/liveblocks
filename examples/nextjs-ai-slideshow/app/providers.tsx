@@ -23,6 +23,7 @@ function authWithRandomUser(endpoint: string) {
 export function Providers({ children }: PropsWithChildren) {
   return (
     <LiveblocksProvider
+      throttle={16}
       authEndpoint={authWithRandomUser("/api/liveblocks-auth")}
       // Resolve user info (name, avatar) from their id. Used by AvatarStack and
       // any other presence UI to show who's currently in the room.
@@ -34,6 +35,18 @@ export function Providers({ children }: PropsWithChildren) {
         if (!response.ok) {
           throw new Error("Problem resolving users");
         }
+        return await response.json();
+      }}
+      // Find a list of users that match the current search term.
+      resolveMentionSuggestions={async ({ text }) => {
+        const response = await fetch(
+          `/api/users/search?text=${encodeURIComponent(text)}`
+        );
+
+        if (!response.ok) {
+          throw new Error("Problem resolving mention suggestions");
+        }
+
         return await response.json();
       }}
     >

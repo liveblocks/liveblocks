@@ -12,7 +12,11 @@ import { stableStringify } from "../../lib/stringify";
 import { OpCode } from "../../protocol/Op";
 import type { NodeMap } from "../../protocol/StorageNode";
 import { CrdtType } from "../../protocol/StorageNode";
-import { diffNodeMap, isJsonEq } from "../liveblocks-helpers";
+import {
+  diffNodeMap,
+  isJsonEq,
+  liveObjectFromNodeStream,
+} from "../liveblocks-helpers";
 import { LiveList } from "../LiveList";
 import { LiveMap } from "../LiveMap";
 import { LiveObject } from "../LiveObject";
@@ -24,6 +28,64 @@ test("Common first positions", () => {
   expect.soft(THIRD_POSITION).toBe('!"');
   expect.soft(FOURTH_POSITION).toBe("!#");
   expect.soft(FIFTH_POSITION).toBe("!$");
+});
+
+describe("liveObjectFromNodeStream", () => {
+  test("reconstructs an empty document", () => {
+    const root = liveObjectFromNodeStream([
+      ["root", { type: CrdtType.OBJECT, data: {} }],
+    ]);
+    expect(root.toJSON()).toEqual({});
+  });
+
+  test("reconstructs scalar fields and nested objects", () => {
+    const root = liveObjectFromNodeStream([
+      ["root", { type: CrdtType.OBJECT, data: { a: 1 } }],
+      [
+        "0:1",
+        {
+          type: CrdtType.OBJECT,
+          parentId: "root",
+          parentKey: "nested",
+          data: { b: 2 },
+        },
+      ],
+    ]);
+    expect(root.toJSON()).toEqual({ a: 1, nested: { b: 2 } });
+  });
+
+  test("reconstructs lists (deserializing children must not mint fresh ids)", () => {
+    const root = liveObjectFromNodeStream([
+      ["root", { type: CrdtType.OBJECT, data: {} }],
+      ["0:1", { type: CrdtType.LIST, parentId: "root", parentKey: "items" }],
+      [
+        "0:2",
+        {
+          type: CrdtType.REGISTER,
+          parentId: "0:1",
+          parentKey: FIRST_POSITION,
+          data: "A",
+        },
+      ],
+      [
+        "0:3",
+        {
+          type: CrdtType.REGISTER,
+          parentId: "0:1",
+          parentKey: SECOND_POSITION,
+          data: "B",
+        },
+      ],
+    ]);
+    expect(root.toJSON()).toEqual({ items: ["A", "B"] });
+  });
+
+  test("refuses mutation -- it is a read-only snapshot", () => {
+    const root = liveObjectFromNodeStream([
+      ["root", { type: CrdtType.OBJECT, data: { a: 1 } }],
+    ]);
+    expect(() => root.set("b", 2)).toThrow("read-only snapshot");
+  });
 });
 
 describe("diffNodeMap", () => {
@@ -381,6 +443,42 @@ describe("diffNodeMap", () => {
     expect(() => diffNodeMap(currentItems, newItems)).toThrow(
       "Internal error. Cannot serialize storage root into an operation"
     );
+  });
+
+  test("emits parent creates before child creates even when target nodes are unordered", () => {
+    const currentItems: NodeMap = new Map([
+      ["root", { type: CrdtType.OBJECT, data: {} }],
+    ]);
+
+    // A node stream (e.g. iter_all) is unordered: here the register child comes
+    // *before* its parent list. The diff must still emit the CREATE_LIST before
+    // the CREATE_REGISTER, otherwise applying the ops drops the child (its
+    // parent isn't in the pool yet).
+    const newItems: NodeMap = new Map();
+    newItems.set("root", { type: CrdtType.OBJECT, data: {} });
+    newItems.set("0:2", {
+      type: CrdtType.REGISTER,
+      parentId: "0:1",
+      parentKey: FIRST_POSITION,
+      data: "A",
+    });
+    newItems.set("0:1", {
+      type: CrdtType.LIST,
+      parentId: "root",
+      parentKey: "items",
+    });
+
+    const ops = diffNodeMap(currentItems, newItems);
+    const listIdx = ops.findIndex(
+      (op) => op.type === OpCode.CREATE_LIST && op.id === "0:1"
+    );
+    const regIdx = ops.findIndex(
+      (op) => op.type === OpCode.CREATE_REGISTER && op.id === "0:2"
+    );
+
+    expect(listIdx).toBeGreaterThanOrEqual(0);
+    expect(regIdx).toBeGreaterThanOrEqual(0);
+    expect(listIdx).toBeLessThan(regIdx);
   });
 });
 

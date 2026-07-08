@@ -936,7 +936,9 @@ class Liveblocks:
         """Get Version History
 
          This endpoint returns a list of version history snapshots for the room. The versions are returned
-        sorted by creation date, from newest to oldest.
+        sorted by creation date, from newest to oldest. Corresponds to
+        [`liveblocks.getVersionHistory`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-
+        version-history).
 
         Args:
             room_id (str): ID of the room Example: my-room-id.
@@ -969,7 +971,9 @@ class Liveblocks:
         """Create version history snapshot
 
          This endpoint creates a new version history snapshot of the room, capturing both its Storage and Yjs
-        documents.
+        documents. Corresponds to
+        [`liveblocks.createVersionHistorySnapshot`](https://liveblocks.io/docs/api-reference/liveblocks-
+        node#create-version-history-snapshot).
 
         Args:
             room_id (str): ID of the room Example: my-room-id.
@@ -997,6 +1001,8 @@ class Liveblocks:
         """Get Yjs document version
 
          This endpoint returns a specific version of the room's Yjs document encoded as a binary Yjs update.
+        Corresponds to [`liveblocks.getYjsVersion`](https://liveblocks.io/docs/api-reference/liveblocks-
+        node#get-yjs-version).
 
         Args:
             room_id (str): ID of the room Example: my-room-id.
@@ -1025,7 +1031,9 @@ class Liveblocks:
     ) -> None:
         """Delete a version
 
-         This endpoint permanently deletes a version from the room's history.
+         This endpoint permanently deletes a version from the room's history. Corresponds to
+        [`liveblocks.deleteVersion`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-
+        version).
 
         Args:
             room_id (str): ID of the room Example: my-room-id.
@@ -4101,7 +4109,9 @@ class AsyncLiveblocks:
         """Get Version History
 
          This endpoint returns a list of version history snapshots for the room. The versions are returned
-        sorted by creation date, from newest to oldest.
+        sorted by creation date, from newest to oldest. Corresponds to
+        [`liveblocks.getVersionHistory`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-
+        version-history).
 
         Args:
             room_id (str): ID of the room Example: my-room-id.
@@ -4134,7 +4144,9 @@ class AsyncLiveblocks:
         """Create version history snapshot
 
          This endpoint creates a new version history snapshot of the room, capturing both its Storage and Yjs
-        documents.
+        documents. Corresponds to
+        [`liveblocks.createVersionHistorySnapshot`](https://liveblocks.io/docs/api-reference/liveblocks-
+        node#create-version-history-snapshot).
 
         Args:
             room_id (str): ID of the room Example: my-room-id.
@@ -4162,6 +4174,8 @@ class AsyncLiveblocks:
         """Get Yjs document version
 
          This endpoint returns a specific version of the room's Yjs document encoded as a binary Yjs update.
+        Corresponds to [`liveblocks.getYjsVersion`](https://liveblocks.io/docs/api-reference/liveblocks-
+        node#get-yjs-version).
 
         Args:
             room_id (str): ID of the room Example: my-room-id.
@@ -4190,7 +4204,9 @@ class AsyncLiveblocks:
     ) -> None:
         """Delete a version
 
-         This endpoint permanently deletes a version from the room's history.
+         This endpoint permanently deletes a version from the room's history. Corresponds to
+        [`liveblocks.deleteVersion`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-
+        version).
 
         Args:
             room_id (str): ID of the room Example: my-room-id.

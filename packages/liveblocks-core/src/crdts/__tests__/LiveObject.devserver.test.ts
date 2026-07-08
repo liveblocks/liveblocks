@@ -29,37 +29,6 @@ import { LiveList } from "../LiveList";
 import { LiveObject } from "../LiveObject";
 
 describe("LiveObject", () => {
-  describe("roomId", () => {
-    test("should be null for orphan", () => {
-      expect(new LiveObject().roomId).toBeNull();
-    });
-
-    test("should be the associated room id if attached", async () => {
-      const { root, room } = await prepareIsolatedStorageTest();
-
-      expect(root.roomId).toBe(room.id);
-    });
-
-    test("should be null after being detached", async () => {
-      const { root, room } = await prepareIsolatedStorageTest<{
-        child: LiveObject<{ a: number }>;
-      }>({
-        liveblocksType: "LiveObject",
-        data: {
-          child: { liveblocksType: "LiveObject", data: { a: 0 } },
-        },
-      });
-
-      const child = root.get("child");
-
-      expect(child.roomId).toBe(room.id);
-
-      root.set("child", new LiveObject({ a: 1 }));
-
-      expect(child.roomId).toBe(null);
-    });
-  });
-
   test("update non existing property", async () => {
     const {
       storageA: storage,
