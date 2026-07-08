@@ -122,6 +122,11 @@
   }
 }
 
+/* Align Liveblocks UI (comment composer, threads) with the app's primary color. */
+.lb-root {
+  --lb-accent: rgb(253 81 8);
+}
+
 .cm-editor {
   height: 100%;
 }
