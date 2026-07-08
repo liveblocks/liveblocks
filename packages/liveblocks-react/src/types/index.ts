@@ -4,8 +4,6 @@ import type {
   History,
   Json,
   JsonObject,
-  LiveFile,
-  LiveFileData,
   LiveObject,
   LostConnectionEvent,
   LsonObject,

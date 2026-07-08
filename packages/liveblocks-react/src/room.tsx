@@ -9,8 +9,6 @@ import type {
   History,
   Json,
   JsonObject,
-  LiveFile,
-  LiveFileData,
   LiveObject,
   LostConnectionEvent,
   LsonObject,
@@ -4423,7 +4421,10 @@ export function createRoomContext<
   function useRestoreToStorageVersion_withBoundRoomContext(
     ...args: Parameters<typeof useRestoreToStorageVersion>
   ) {
-    return useRestoreToStorageVersion_withRoomContext(BoundRoomContext, ...args);
+    return useRestoreToStorageVersion_withRoomContext(
+      BoundRoomContext,
+      ...args
+    );
   }
 
   function useRoomSubscriptionSettings_withBoundRoomContext() {
