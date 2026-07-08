@@ -47,10 +47,6 @@ import ToolsBar from "./components/ToolsBar";
 
 const MAX_LAYERS = 100;
 const MAX_IMAGE_SIZE = 320;
-const DEFAULT_IMAGE_SIZE = {
-  width: 320,
-  height: 240,
-};
 
 export default function Room() {
   const roomId = useExampleRoomId(
@@ -256,6 +252,10 @@ function Canvas() {
       }
 
       const size = await getImageSize(file);
+      if (!size) {
+        return;
+      }
+
       const layerId = insertImageLayer(size);
       if (!layerId) {
         return;
@@ -645,8 +645,12 @@ function getCenteredImageBounds(
 
 async function getImageSize(
   file: File
-): Promise<{ width: number; height: number }> {
+): Promise<{ width: number; height: number } | null> {
   const dimensions = await getImageDimensions(file);
+  if (!dimensions) {
+    return null;
+  }
+
   const scale = Math.min(
     1,
     MAX_IMAGE_SIZE / dimensions.width,
@@ -661,24 +665,31 @@ async function getImageSize(
 
 async function getImageDimensions(
   file: File
-): Promise<{ width: number; height: number }> {
+): Promise<{ width: number; height: number } | null> {
   const url = URL.createObjectURL(file);
 
   try {
-    return await new Promise<{ width: number; height: number }>((resolve) => {
-      const image = new Image();
+    return await new Promise<{ width: number; height: number } | null>(
+      (resolve) => {
+        const image = new Image();
 
-      image.onload = () => {
-        resolve({
-          width: image.naturalWidth || DEFAULT_IMAGE_SIZE.width,
-          height: image.naturalHeight || DEFAULT_IMAGE_SIZE.height,
-        });
-      };
-      image.onerror = () => {
-        resolve(DEFAULT_IMAGE_SIZE);
-      };
-      image.src = url;
-    });
+        image.onload = () => {
+          if (!image.naturalWidth || !image.naturalHeight) {
+            resolve(null);
+            return;
+          }
+
+          resolve({
+            width: image.naturalWidth,
+            height: image.naturalHeight,
+          });
+        };
+        image.onerror = () => {
+          resolve(null);
+        };
+        image.src = url;
+      }
+    );
   } finally {
     URL.revokeObjectURL(url);
   }
