@@ -74,13 +74,14 @@ export async function POST(request: NextRequest) {
     return new NextResponse("Feed message not found", { status: 404 });
   }
 
+  let newSlideIds: string[] = [];
   if (action === "apply") {
     const proposals = message.data.proposals;
     if (!proposals || proposals.length === 0) {
       return new NextResponse("Slide proposals not found", { status: 404 });
     }
 
-    await applyProposalsToYjsDocument(liveblocks, roomId, proposals);
+    newSlideIds = await applyProposalsToYjsDocument(liveblocks, roomId, proposals);
   }
 
   await liveblocks.updateFeedMessage<FeedMessageData>({
@@ -93,14 +94,14 @@ export async function POST(request: NextRequest) {
     },
   });
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, newSlideIds });
 }
 
 async function applyProposalsToYjsDocument(
   liveblocks: Liveblocks,
   roomId: string,
   proposals: SlideProposal[]
-) {
+): Promise<string[]> {
   const binaryUpdate = await liveblocks.getYjsDocumentAsBinaryUpdate(roomId);
   const ydoc = new Y.Doc();
   Y.applyUpdate(ydoc, new Uint8Array(binaryUpdate));
@@ -108,18 +109,19 @@ async function applyProposalsToYjsDocument(
   const stateVectorBefore = Y.encodeStateVector(ydoc);
   const slides = ydoc.getArray<string>(SLIDES_ARRAY_KEY);
   const slideIds = getSlideIds(ydoc);
+  const newSlideIds: string[] = [];
 
   ydoc.transact(() => {
     if (slideIds.length === 0) {
       for (const proposal of proposals) {
-        appendSlide(ydoc, slides, proposal.html);
+        newSlideIds.push(appendSlide(ydoc, slides, proposal.html));
       }
       return;
     }
 
     for (const proposal of proposals) {
       if (proposal.slideId === "new") {
-        appendSlide(ydoc, slides, proposal.html);
+        newSlideIds.push(appendSlide(ydoc, slides, proposal.html));
         continue;
       }
 
@@ -133,12 +135,19 @@ async function applyProposalsToYjsDocument(
 
   const incrementalUpdate = Y.encodeStateAsUpdate(ydoc, stateVectorBefore);
   await liveblocks.sendYjsBinaryUpdate(roomId, incrementalUpdate);
+
+  return newSlideIds;
 }
 
-function appendSlide(ydoc: Y.Doc, slides: Y.Array<string>, html: string) {
+function appendSlide(
+  ydoc: Y.Doc,
+  slides: Y.Array<string>,
+  html: string
+): string {
   const id = nanoid(8);
   slides.push([id]);
   getSlideText(ydoc, id).insert(0, html);
+  return id;
 }
 
 function applyHtmlDiff(ytext: Y.Text, nextHtml: string) {

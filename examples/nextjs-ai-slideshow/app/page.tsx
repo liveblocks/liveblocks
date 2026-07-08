@@ -223,6 +223,18 @@ function SlideshowApp({ roomId }: { roomId: string }) {
     }
   }, []);
 
+  // When applying a proposal creates new slides, switch this user to the last
+  // one. The server returns the created ids, but the Yjs update carrying them
+  // may arrive slightly later, so selection is deferred until the id shows up
+  // in the slide list.
+  const [pendingSlideId, setPendingSlideId] = useState<string | null>(null);
+  const handleProposalApplied = useCallback((newSlideIds: string[]) => {
+    const lastNewSlideId = newSlideIds.at(-1);
+    if (lastNewSlideId) {
+      setPendingSlideId(lastNewSlideId);
+    }
+  }, []);
+
   const resolvePreviewedProposal = useCallback(
     async (action: "apply" | "reject") => {
       if (!previewedProposal || resolvingProposal) {
@@ -230,13 +242,20 @@ function SlideshowApp({ roomId }: { roomId: string }) {
       }
       setResolvingProposal(action);
       try {
-        await resolveProposal(roomId, previewedProposal, action);
+        const { newSlideIds } = await resolveProposal(
+          roomId,
+          previewedProposal,
+          action
+        );
         setPreviewedProposal(null);
+        if (action === "apply") {
+          handleProposalApplied(newSlideIds);
+        }
       } finally {
         setResolvingProposal(null);
       }
     },
-    [previewedProposal, resolvingProposal, roomId]
+    [handleProposalApplied, previewedProposal, resolvingProposal, roomId]
   );
 
   const selectSlide = useCallback(
@@ -249,6 +268,13 @@ function SlideshowApp({ roomId }: { roomId: string }) {
     },
     [slideIds]
   );
+
+  useEffect(() => {
+    if (pendingSlideId && slideIds.includes(pendingSlideId)) {
+      selectSlide(pendingSlideId);
+      setPendingSlideId(null);
+    }
+  }, [pendingSlideId, selectSlide, slideIds]);
 
   const addAndSelectSlide = useCallback(() => {
     const id = addSlide();
@@ -481,6 +507,7 @@ function SlideshowApp({ roomId }: { roomId: string }) {
           slideIds={slideIds}
           previewedProposal={previewedProposal}
           onPreviewProposal={previewProposal}
+          onProposalApplied={handleProposalApplied}
         />
       </aside>
     </div>
