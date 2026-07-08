@@ -93,7 +93,26 @@ export type VisualEditorOptions = {
   onCursorMove: (coords: Coords | null) => void;
   onSelectionChange: (path: number[] | null) => void;
   stopCapturing: () => void;
+  onUndo: () => void;
+  onRedo: () => void;
 };
+
+// True for Mod-z / Mod-Shift-z / Mod-y. Returns the action or null.
+export function matchUndoRedoShortcut(
+  event: KeyboardEvent
+): "undo" | "redo" | null {
+  if (!event.metaKey && !event.ctrlKey) {
+    return null;
+  }
+  const key = event.key.toLowerCase();
+  if (key === "z") {
+    return event.shiftKey ? "redo" : "undo";
+  }
+  if (key === "y") {
+    return "redo";
+  }
+  return null;
+}
 
 export function useVisualEditor({
   iframe,
@@ -103,6 +122,8 @@ export function useVisualEditor({
   onCursorMove,
   onSelectionChange,
   stopCapturing,
+  onUndo,
+  onRedo,
 }: VisualEditorOptions) {
   const room = useRoom();
   const hoveredElementRef = useRef<Element | null>(null);
@@ -119,6 +140,8 @@ export function useVisualEditor({
     onCursorMove,
     onSelectionChange,
     stopCapturing,
+    onUndo,
+    onRedo,
   });
 
   useEffect(() => {
@@ -128,12 +151,16 @@ export function useVisualEditor({
       onCursorMove,
       onSelectionChange,
       stopCapturing,
+      onUndo,
+      onRedo,
     };
   }, [
     onCommit,
     onCursorMove,
     onGestureActiveChange,
+    onRedo,
     onSelectionChange,
+    onUndo,
     stopCapturing,
   ]);
 
@@ -207,12 +234,32 @@ export function useVisualEditor({
         clearHover();
       };
 
+      // Mod-z / Mod-y while focus is inside the slide iframe. Disabled during
+      // inline text editing, where the browser's native contentEditable undo
+      // should keep handling the keystrokes.
+      const handleKeyDown = (event: KeyboardEvent) => {
+        if (textEditRef.current) {
+          return;
+        }
+        const action = matchUndoRedoShortcut(event);
+        if (!action) {
+          return;
+        }
+        event.preventDefault();
+        if (action === "undo") {
+          callbacksRef.current.onUndo();
+        } else {
+          callbacksRef.current.onRedo();
+        }
+      };
+
       document.addEventListener("pointermove", handlePointerMove);
       document.addEventListener("pointerleave", handlePointerLeave);
       document.addEventListener("pointerdown", handlePointerDown);
       document.addEventListener("pointerup", handlePointerUp);
       document.addEventListener("pointercancel", handlePointerCancel);
       document.addEventListener("dblclick", handleDoubleClick);
+      document.addEventListener("keydown", handleKeyDown);
 
       documentCleanupRef.current = () => {
         cursorMove.cancel();
@@ -222,6 +269,7 @@ export function useVisualEditor({
         document.removeEventListener("pointerup", handlePointerUp);
         document.removeEventListener("pointercancel", handlePointerCancel);
         document.removeEventListener("dblclick", handleDoubleClick);
+        document.removeEventListener("keydown", handleKeyDown);
       };
     };
 

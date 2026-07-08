@@ -29,6 +29,7 @@ import { SlidePreview } from "./slide-preview";
 import { SlideSidebar } from "./slide-sidebar";
 import { useSlideUndo } from "./slide-undo";
 import { useSlides } from "./slides";
+import { matchUndoRedoShortcut } from "./visual-editor";
 
 type Panel = "slide" | "code";
 
@@ -108,6 +109,47 @@ function SlideshowApp({ roomId }: { roomId: string }) {
   const [resolvingProposal, setResolvingProposal] = useState<
     "apply" | "reject" | null
   >(null);
+
+  // Mod-z / Mod-y on the Preview tab, for keystrokes landing OUTSIDE the
+  // slide iframe (the visual editor handles the ones inside it). Skips text
+  // fields so the chat/comment composers keep their native undo. CodeMirror
+  // handles its own keymap on the Code tab.
+  const undoRef = useRef({ undo, redo, active: false });
+  undoRef.current = {
+    undo,
+    redo,
+    active: panel === "slide" && previewedProposal === null,
+  };
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!undoRef.current.active) {
+        return;
+      }
+      const target = event.target;
+      if (
+        target instanceof HTMLElement &&
+        (target.isContentEditable ||
+          target.closest("input, textarea, [contenteditable]"))
+      ) {
+        return;
+      }
+      const action = matchUndoRedoShortcut(event);
+      if (!action) {
+        return;
+      }
+      event.preventDefault();
+      if (action === "undo") {
+        undoRef.current.undo();
+      } else {
+        undoRef.current.redo();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
 
   const displaySlides = useMemo<DisplaySlide[]>(() => {
     const proposalHtmlBySlideId = new Map<string, string>();
