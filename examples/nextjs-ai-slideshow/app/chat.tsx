@@ -120,12 +120,14 @@ export function Chat({
   slideIds,
   previewedProposal,
   onPreviewProposal,
+  onProposalApplied,
 }: {
   roomId: string;
   slideId: string;
   slideIds: string[];
   previewedProposal: SlideProposal | null;
   onPreviewProposal: (proposal: SlideProposal | null) => void;
+  onProposalApplied: (newSlideIds: string[]) => void;
 }) {
   const { feeds } = useFeeds();
 
@@ -212,6 +214,7 @@ export function Chat({
             setModel={setModel}
             previewedProposal={previewedProposal}
             onPreviewProposal={onPreviewProposal}
+            onProposalApplied={onProposalApplied}
           />
         </ClientSideSuspense>
       </div>
@@ -228,6 +231,7 @@ function ChatWindow({
   setModel,
   previewedProposal,
   onPreviewProposal,
+  onProposalApplied,
 }: {
   roomId: string;
   slideId: string;
@@ -237,6 +241,7 @@ function ChatWindow({
   setModel: (model: string) => void;
   previewedProposal: SlideProposal | null;
   onPreviewProposal: (proposal: SlideProposal | null) => void;
+  onProposalApplied: (newSlideIds: string[]) => void;
 }) {
   const room = useRoom();
   const { messages } = useFeedMessages(feedId);
@@ -585,6 +590,7 @@ function ChatWindow({
                           previewedProposal?.feedId === feedId
                         }
                         onPreview={onPreviewProposal}
+                        onApplied={onProposalApplied}
                       />
                     ) : null}
 
@@ -677,6 +683,7 @@ function ProposalCard({
   generating,
   previewing,
   onPreview,
+  onApplied,
 }: {
   roomId: string;
   feedId: string;
@@ -687,6 +694,7 @@ function ProposalCard({
   generating: boolean;
   previewing: boolean;
   onPreview: (proposal: SlideProposal) => void;
+  onApplied: (newSlideIds: string[]) => void;
 }) {
   const [submitting, setSubmitting] = useState<"apply" | "reject" | null>(null);
 
@@ -707,12 +715,19 @@ function ProposalCard({
 
       setSubmitting(action);
       try {
-        await resolveProposal(roomId, { feedId, messageId, proposals }, action);
+        const { newSlideIds } = await resolveProposal(
+          roomId,
+          { feedId, messageId, proposals },
+          action
+        );
+        if (action === "apply") {
+          onApplied(newSlideIds);
+        }
       } finally {
         setSubmitting(null);
       }
     },
-    [feedId, messageId, proposals, roomId, submitting]
+    [feedId, messageId, onApplied, proposals, roomId, submitting]
   );
 
   return (
