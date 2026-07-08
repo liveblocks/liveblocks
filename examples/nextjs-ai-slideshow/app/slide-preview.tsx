@@ -356,10 +356,16 @@ export function SlidePreview({
 
         {!proposal ? (
           <>
-            <Cursors
-              className="pointer-events-none absolute inset-0 z-10"
-              components={cursorComponents}
-            />
+            {/* `Cursors` must not be positioned absolute itself: its own
+                `.lb-cursors` class sets `position: relative`, and it measures
+                its OWN size to scale the normalized cursor coordinates — so
+                it needs a full-size wrapper instead. */}
+            <div className="pointer-events-none absolute inset-0 z-10">
+              <Cursors
+                className="h-full w-full"
+                components={cursorComponents}
+              />
+            </div>
 
             <RemoteSelections
               iframe={iframe}
