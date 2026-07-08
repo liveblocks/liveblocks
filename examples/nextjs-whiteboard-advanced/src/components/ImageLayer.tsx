@@ -1,6 +1,7 @@
 import type { LiveFile, ToJson } from "@liveblocks/client";
 import { useFileUrl } from "@liveblocks/react";
 import type { ImageLayer as ImageLayerType } from "../types";
+import styles from "./ImageLayer.module.css";
 
 type Props = {
   id: string;
@@ -31,6 +32,7 @@ export function ImageLayer({
       }}
     >
       <rect
+        className={styles.image_loading_background}
         x={0}
         y={0}
         width={width}
