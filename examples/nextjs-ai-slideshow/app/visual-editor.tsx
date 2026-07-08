@@ -458,9 +458,16 @@ export function useVisualEditor({
         return;
       }
 
-      if (keyboardEvent.key === "Enter" && (keyboardEvent.metaKey || keyboardEvent.ctrlKey)) {
+      if (keyboardEvent.key === "Enter") {
         keyboardEvent.preventDefault();
-        finishTextEdit("commit");
+        if (keyboardEvent.metaKey || keyboardEvent.ctrlKey) {
+          finishTextEdit("commit");
+          return;
+        }
+        // The browser's default Enter behavior wraps lines in nested <div>s
+        // (breaking the element's markup); insert a plain <br> instead.
+        insertLineBreak(target);
+        streamCommit?.schedule();
       }
     };
 
@@ -743,6 +750,58 @@ function isInlineOnlyElement(element: Element): boolean {
   return true;
 }
 
+const ZERO_WIDTH_SPACE = "\u200B";
+
+function insertLineBreak(element: HTMLElement) {
+  const document = element.ownerDocument;
+  const selection = document.getSelection();
+  if (!selection || selection.rangeCount === 0) {
+    return;
+  }
+
+  const range = selection.getRangeAt(0);
+  if (!element.contains(range.startContainer)) {
+    return;
+  }
+  range.deleteContents();
+
+  const br = document.createElement("br");
+  range.insertNode(br);
+
+  // Anchor the caret in a zero-width-space text node AFTER the break:
+  // placing it directly between the <br> and a preceding text node makes the
+  // browser normalize it back into that text node, so typing would land
+  // before the break. The marker also keeps the new line rendered while
+  // empty. Zero-width spaces are stripped again at serialization time.
+  const marker = document.createTextNode(ZERO_WIDTH_SPACE);
+  br.after(marker);
+
+  range.setStart(marker, marker.length);
+  range.collapse(true);
+  selection.removeAllRanges();
+  selection.addRange(range);
+}
+
+function stripZeroWidthSpaces(root: Element) {
+  const walker = root.ownerDocument.createTreeWalker(
+    root,
+    NodeFilter.SHOW_TEXT
+  );
+  const emptied: Node[] = [];
+  while (walker.nextNode()) {
+    const node = walker.currentNode;
+    if (node.nodeValue?.includes(ZERO_WIDTH_SPACE)) {
+      node.nodeValue = node.nodeValue.replaceAll(ZERO_WIDTH_SPACE, "");
+      if (node.nodeValue === "") {
+        emptied.push(node);
+      }
+    }
+  }
+  for (const node of emptied) {
+    node.parentNode?.removeChild(node);
+  }
+}
+
 function selectElementContents(element: Element) {
   const document = element.ownerDocument;
   const selection = document.getSelection();
@@ -799,6 +858,7 @@ function serializeElement(element: Element): string {
   }
 
   stripEditorArtifacts(clone);
+  stripZeroWidthSpaces(clone);
   return clone.outerHTML;
 }
 
@@ -810,6 +870,7 @@ function serializeDocument(document: Document): string {
   }
 
   stripEditorArtifacts(clone);
+  stripZeroWidthSpaces(clone);
   return `<!doctype html>\n${clone.outerHTML}`;
 }
 
