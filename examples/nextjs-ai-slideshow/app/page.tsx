@@ -148,9 +148,7 @@ function SlideshowApp({ roomId }: { roomId: string }) {
       ? -1
       : Math.min(previousSelectedIndex.current, slideIds.length - 1);
   const slideId =
-    selectedIndex === -1
-      ? (slideIds[fallbackIndex] ?? null)
-      : selectedSlideId;
+    selectedIndex === -1 ? (slideIds[fallbackIndex] ?? null) : selectedSlideId;
 
   useEffect(() => {
     if (slideIds.length === 0) {
@@ -168,7 +166,10 @@ function SlideshowApp({ roomId }: { roomId: string }) {
       }
     }
 
-    const nextIndex = Math.min(previousSelectedIndex.current, slideIds.length - 1);
+    const nextIndex = Math.min(
+      previousSelectedIndex.current,
+      slideIds.length - 1
+    );
     setSelectedSlideId(slideIds[nextIndex]);
   }, [displaySlideIds, slideIds, selectedSlideId]);
 
@@ -284,7 +285,9 @@ function SlideshowApp({ roomId }: { roomId: string }) {
     }
   }, [exporting, room]);
 
-  const selectedDisplaySlide = displaySlides.find((slide) => slide.id === slideId);
+  const selectedDisplaySlide = displaySlides.find(
+    (slide) => slide.id === slideId
+  );
   const selectedProposalHtml = selectedDisplaySlide?.proposalHtml;
   const selectedSlideIsReal = slideId ? slideIds.includes(slideId) : false;
 
@@ -310,22 +313,48 @@ function SlideshowApp({ roomId }: { roomId: string }) {
 
       <main className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-lg bg-white shadow ring-1 ring-neutral-950/5">
         <header className="flex items-center justify-between border-b border-neutral-950/5 px-2.5 py-2">
-          <Tabs
-            value={panel}
-            onValueChange={(value) => {
-              if (value === "code") {
-                setPlacingComment(false);
-                setPanel("code");
-              } else {
-                setPanel("slide");
-              }
-            }}
-          >
-            <TabsList>
-              <TabsTrigger value="slide">Preview</TabsTrigger>
-              <TabsTrigger value="code">Code</TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <div className="flex items-center gap-2">
+            <Tabs
+              value={panel}
+              onValueChange={(value) => {
+                if (value === "code") {
+                  setPlacingComment(false);
+                  setPanel("code");
+                } else {
+                  setPanel("slide");
+                }
+              }}
+            >
+              <TabsList>
+                <TabsTrigger value="slide">Preview</TabsTrigger>
+                <TabsTrigger value="code">Code</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <div>
+              {panel === "slide" ? (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={undo}
+                    disabled={!canUndo || previewedProposal !== null}
+                    aria-label="Undo"
+                  >
+                    <Undo2Icon className="size-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={redo}
+                    disabled={!canRedo || previewedProposal !== null}
+                    aria-label="Redo"
+                  >
+                    <Redo2Icon className="size-4" />
+                  </Button>
+                </>
+              ) : null}
+            </div>
+          </div>
 
           <div className="flex items-center gap-2">
             <AvatarStack size={28} />
