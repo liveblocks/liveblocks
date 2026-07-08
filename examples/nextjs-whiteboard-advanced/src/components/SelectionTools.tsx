@@ -1,7 +1,8 @@
 import { memo } from "react";
+import type { LiveObject } from "@liveblocks/client";
 import ColorPicker from "./ColorPicker";
 import IconButton from "./IconButton";
-import { Camera, Color } from "../types";
+import { Camera, Color, FillableLayer, Layer, LayerType } from "../types";
 import styles from "./SelectionTools.module.css";
 import useDeleteLayers from "../hooks/useDeleteLayers";
 import useSelectionBounds from "../hooks/useSelectionBounds";
@@ -77,7 +78,10 @@ function SelectionTools({
       const liveLayers = storage.get("layers");
       setLastUsedColor(fill);
       selection.forEach((id) => {
-        liveLayers.get(id)?.set("fill", fill);
+        const layer = liveLayers.get(id);
+        if (layer && isFillableLiveLayer(layer)) {
+          layer.set("fill", fill);
+        }
       });
     },
     [selection, setLastUsedColor]
@@ -139,6 +143,12 @@ function SelectionTools({
       </div>
     </div>
   );
+}
+
+function isFillableLiveLayer(
+  layer: LiveObject<Layer>
+): layer is LiveObject<FillableLayer> {
+  return layer.get("type") !== LayerType.Image;
 }
 
 export default memo(SelectionTools);
