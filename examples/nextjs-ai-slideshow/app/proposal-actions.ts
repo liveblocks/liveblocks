@@ -4,15 +4,18 @@
 export type SlideProposal = {
   feedId: string;
   messageId: string;
-  html: string;
+  proposals: { slideId: string; html: string }[];
 };
 
+// Resolves to the ids of slides the apply created (empty when rejecting or
+// when the proposal only edited existing slides), so the caller can switch
+// the user to the newly created slide.
 export async function resolveProposal(
   roomId: string,
   proposal: SlideProposal,
   action: "apply" | "reject"
-) {
-  await fetch("/api/apply-slide", {
+): Promise<{ newSlideIds: string[] }> {
+  const response = await fetch("/api/apply-slide", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -20,7 +23,15 @@ export async function resolveProposal(
       roomId,
       feedId: proposal.feedId,
       messageId: proposal.messageId,
-      html: action === "apply" ? proposal.html : undefined,
     }),
   });
+
+  if (!response.ok) {
+    return { newSlideIds: [] };
+  }
+
+  const data = (await response.json().catch(() => null)) as {
+    newSlideIds?: string[];
+  } | null;
+  return { newSlideIds: data?.newSlideIds ?? [] };
 }
