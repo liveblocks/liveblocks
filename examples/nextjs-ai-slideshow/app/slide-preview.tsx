@@ -32,6 +32,7 @@ import { EyeIcon, Loader2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { getElementByPath } from "./html-source-map";
+import { patchIframeHtml } from "./iframe-html";
 import type { SlideProposal } from "./proposal-actions";
 import { SLIDE_HEIGHT, SLIDE_WIDTH } from "./slide-html";
 import { useSlideUndo } from "./slide-undo";
@@ -123,7 +124,7 @@ export function SlidePreview({
   const pendingHtmlRef = useRef<string | null>(null);
   const expectedBaseHtmlRef = useRef<string | null>(null);
   const updateMyPresence = useUpdateMyPresence();
-  const { stopCapturing } = useSlideUndo();
+  const { undo, redo, stopCapturing } = useSlideUndo();
   const { threads } = useThreads();
   const slideThreads = useMemo(
     () => threads.filter((thread) => thread.metadata.slideId === slideId),
@@ -177,6 +178,8 @@ export function SlidePreview({
     onCursorMove: handleCursorMove,
     onSelectionChange: handleSelectionChange,
     stopCapturing,
+    onUndo: undo,
+    onRedo: redo,
   });
 
   useEffect(() => {
@@ -434,41 +437,6 @@ type RemoteSelectionRect = {
   width: number;
   height: number;
 };
-
-function patchIframeHtml(iframe: HTMLIFrameElement | null, html: string) {
-  if (!iframe) {
-    return;
-  }
-
-  const document = iframe.contentDocument;
-  if (!document) {
-    iframe.srcdoc = html;
-    return;
-  }
-
-  const parsed = new DOMParser().parseFromString(html, "text/html");
-  const sourceElement = parsed.documentElement;
-  const targetElement = document.documentElement;
-  copyAttributes(targetElement, sourceElement);
-  targetElement.replaceChildren(
-    ...Array.from(sourceElement.childNodes).map((node) =>
-      document.importNode(node, true)
-    )
-  );
-  iframe.dispatchEvent(new Event("load"));
-}
-
-function copyAttributes(target: Element, source: Element) {
-  for (const attribute of Array.from(target.attributes)) {
-    if (!source.hasAttribute(attribute.name)) {
-      target.removeAttribute(attribute.name);
-    }
-  }
-
-  for (const attribute of Array.from(source.attributes)) {
-    target.setAttribute(attribute.name, attribute.value);
-  }
-}
 
 function SlideCursor({
   connectionId,

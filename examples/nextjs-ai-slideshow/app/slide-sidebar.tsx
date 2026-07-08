@@ -15,8 +15,10 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { PlusIcon, XIcon } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { patchIframeHtml } from "./iframe-html";
 import { SLIDE_HEIGHT, SLIDE_WIDTH } from "./slide-html";
 import { useSlideHtml } from "./slides";
 
@@ -251,16 +253,31 @@ function ThumbnailFrame({
   html: string;
   hasProposal: boolean;
 }) {
+  const [iframe, setIframe] = useState<HTMLIFrameElement | null>(null);
+  // srcDoc is latched to the first value; later updates are patched into the
+  // live document in place, so streaming edits don't reload (flash) the
+  // thumbnail on every change.
+  const initialHtmlRef = useRef(html);
+  const appliedHtmlRef = useRef(html);
+
+  useEffect(() => {
+    if (iframe && html !== appliedHtmlRef.current) {
+      patchIframeHtml(iframe, html);
+      appliedHtmlRef.current = html;
+    }
+  }, [html, iframe]);
+
   return (
     <span
       className="relative block overflow-hidden rounded-md bg-white ring-1 ring-neutral-950/10"
       style={{ width: THUMBNAIL_WIDTH, height: THUMBNAIL_HEIGHT }}
     >
       <iframe
+        ref={setIframe}
         title={title}
         width={SLIDE_WIDTH}
         height={SLIDE_HEIGHT}
-        srcDoc={html}
+        srcDoc={initialHtmlRef.current}
         sandbox="allow-same-origin"
         className="pointer-events-none absolute left-0 top-0 border-0 bg-white"
         style={{
