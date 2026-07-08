@@ -10,7 +10,7 @@ import {
   INITIAL_SLIDE_ID,
   SLIDES_ARRAY_KEY,
 } from "./slide-doc";
-import { STARTER_SLIDE_HTML } from "./slide-html";
+import { EMPTY_SLIDE_HTML, STARTER_SLIDE_HTML } from "./slide-html";
 
 export function useSlides(): {
   slideIds: string[];
@@ -70,7 +70,7 @@ export function useSlides(): {
       slides.push([id]);
       const ytext = getSlideText(ydoc, id);
       if (ytext.length === 0) {
-        ytext.insert(0, STARTER_SLIDE_HTML);
+        ytext.insert(0, EMPTY_SLIDE_HTML);
       }
     });
 

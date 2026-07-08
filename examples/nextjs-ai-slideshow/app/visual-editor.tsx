@@ -5,13 +5,21 @@ import { getYjsProviderForRoom } from "@liveblocks/yjs";
 import diff from "fast-diff";
 import { useEffect, useRef } from "react";
 import * as Y from "yjs";
-import { findElementSourceRange, getElementPath } from "./html-source-map";
+import {
+  findElementSourceRange,
+  getElementByPath,
+  getElementPath,
+} from "./html-source-map";
 import { getSlideText } from "./slide-doc";
+import { SLIDE_HEIGHT, SLIDE_WIDTH } from "./slide-html";
+import { VISUAL_EDIT_ORIGIN } from "./slide-undo";
 
 const HOVER_ATTR = "data-lb-hover";
 const SELECTED_ATTR = "data-lb-selected";
 const STYLE_ATTR = "data-lb-visual-editor-style";
 const DRAG_THRESHOLD = 3;
+const STREAM_COMMIT_INTERVAL = 100;
+const CURSOR_PRESENCE_INTERVAL = 50;
 
 const INLINE_TEXT_TAGS = new Set([
   "a",
@@ -44,7 +52,14 @@ type GestureContext = {
   endAnchor: RelativeAnchor | null;
   tagName: string;
   fallbackToWholeDocument: boolean;
-  initialOuterHtml: string;
+  lastCommittedOuterHtml: string;
+  dropped: boolean;
+};
+
+type ThrottledAction = {
+  schedule: () => void;
+  flush: () => void;
+  cancel: () => void;
 };
 
 type PointerGesture = {
@@ -56,6 +71,7 @@ type PointerGesture = {
   initialTransform: string;
   initialTranslate: Coords;
   dragStarted: boolean;
+  streamCommit: ThrottledAction | null;
 };
 
 type TextEditGesture = {
@@ -63,6 +79,7 @@ type TextEditGesture = {
   element: HTMLElement;
   originalInnerHtml: string;
   finishing: boolean;
+  streamCommit: ThrottledAction | null;
   removeListeners: () => void;
 };
 
@@ -71,17 +88,21 @@ type Coords = { x: number; y: number };
 export type VisualEditorOptions = {
   iframe: HTMLIFrameElement | null;
   slideId: string;
-  editing: boolean;
   onGestureActiveChange: (active: boolean) => void;
   onCommit: (expectedHtml: string) => void;
+  onCursorMove: (coords: Coords | null) => void;
+  onSelectionChange: (path: number[] | null) => void;
+  stopCapturing: () => void;
 };
 
 export function useVisualEditor({
   iframe,
   slideId,
-  editing,
   onGestureActiveChange,
   onCommit,
+  onCursorMove,
+  onSelectionChange,
+  stopCapturing,
 }: VisualEditorOptions) {
   const room = useRoom();
   const hoveredElementRef = useRef<Element | null>(null);
@@ -91,11 +112,30 @@ export function useVisualEditor({
   const textEditRef = useRef<TextEditGesture | null>(null);
   const documentCleanupRef = useRef<(() => void) | null>(null);
   const gestureActiveRef = useRef(false);
-  const callbacksRef = useRef({ onGestureActiveChange, onCommit });
+  const latestCursorCoordsRef = useRef<Coords | null>(null);
+  const callbacksRef = useRef({
+    onGestureActiveChange,
+    onCommit,
+    onCursorMove,
+    onSelectionChange,
+    stopCapturing,
+  });
 
   useEffect(() => {
-    callbacksRef.current = { onGestureActiveChange, onCommit };
-  }, [onGestureActiveChange, onCommit]);
+    callbacksRef.current = {
+      onGestureActiveChange,
+      onCommit,
+      onCursorMove,
+      onSelectionChange,
+      stopCapturing,
+    };
+  }, [
+    onCommit,
+    onCursorMove,
+    onGestureActiveChange,
+    onSelectionChange,
+    stopCapturing,
+  ]);
 
   useEffect(() => {
     selectedElementRef.current = null;
@@ -103,11 +143,18 @@ export function useVisualEditor({
     selectedPathRef.current = null;
     pointerGestureRef.current = null;
     finishTextEdit("cancel");
+    callbacksRef.current.onCursorMove(null);
     setGestureActive(false);
   }, [slideId]);
 
   useEffect(() => {
     if (!iframe) {
+      clearHover();
+      clearSelection();
+      pointerGestureRef.current = null;
+      finishTextEdit("cancel");
+      callbacksRef.current.onCursorMove(null);
+      setGestureActive(false);
       return;
     }
 
@@ -120,20 +167,19 @@ export function useVisualEditor({
         return;
       }
 
-      if (!editing) {
-        cleanupDocument(document);
-        clearHover();
-        clearSelection();
-        pointerGestureRef.current = null;
-        finishTextEdit("cancel");
-        setGestureActive(false);
-        return;
-      }
-
       injectEditorStyle(document);
       reapplySelection(document);
+      const cursorMove = createThrottledAction(CURSOR_PRESENCE_INTERVAL, () => {
+        const coords = latestCursorCoordsRef.current;
+        callbacksRef.current.onCursorMove(coords);
+      });
 
       const handlePointerMove = (event: PointerEvent) => {
+        latestCursorCoordsRef.current = {
+          x: clamp01(event.clientX / SLIDE_WIDTH),
+          y: clamp01(event.clientY / SLIDE_HEIGHT),
+        };
+        cursorMove.schedule();
         updateHoverFromEvent(document, event);
         updatePointerGesture(event);
       };
@@ -154,14 +200,24 @@ export function useVisualEditor({
         startTextEdit(document, event);
       };
 
+      const handlePointerLeave = () => {
+        latestCursorCoordsRef.current = null;
+        cursorMove.cancel();
+        callbacksRef.current.onCursorMove(null);
+        clearHover();
+      };
+
       document.addEventListener("pointermove", handlePointerMove);
+      document.addEventListener("pointerleave", handlePointerLeave);
       document.addEventListener("pointerdown", handlePointerDown);
       document.addEventListener("pointerup", handlePointerUp);
       document.addEventListener("pointercancel", handlePointerCancel);
       document.addEventListener("dblclick", handleDoubleClick);
 
       documentCleanupRef.current = () => {
+        cursorMove.cancel();
         document.removeEventListener("pointermove", handlePointerMove);
+        document.removeEventListener("pointerleave", handlePointerLeave);
         document.removeEventListener("pointerdown", handlePointerDown);
         document.removeEventListener("pointerup", handlePointerUp);
         document.removeEventListener("pointercancel", handlePointerCancel);
@@ -177,7 +233,7 @@ export function useVisualEditor({
       documentCleanupRef.current?.();
       documentCleanupRef.current = null;
     };
-  }, [editing, iframe, room, slideId]);
+  }, [iframe, room, slideId]);
 
   function setGestureActive(active: boolean) {
     if (gestureActiveRef.current === active) {
@@ -213,7 +269,8 @@ export function useVisualEditor({
         : null,
       tagName: element.tagName.toLowerCase(),
       fallbackToWholeDocument: !range,
-      initialOuterHtml: serializeElement(element),
+      lastCommittedOuterHtml: serializeElement(element),
+      dropped: false,
     };
   }
 
@@ -251,6 +308,11 @@ export function useVisualEditor({
       initialTransform,
       initialTranslate: parseTranslate(initialTransform),
       dragStarted: false,
+      streamCommit: context.fallbackToWholeDocument
+        ? null
+        : createThrottledAction(STREAM_COMMIT_INTERVAL, () => {
+            commitElementGesture(context, target);
+          }),
     };
     setGestureActive(true);
   }
@@ -268,7 +330,10 @@ export function useVisualEditor({
       return;
     }
 
-    gesture.dragStarted = true;
+    if (!gesture.dragStarted) {
+      gesture.dragStarted = true;
+      callbacksRef.current.stopCapturing();
+    }
     event.preventDefault();
 
     const nextX = gesture.initialTranslate.x + deltaX;
@@ -280,6 +345,7 @@ export function useVisualEditor({
         nextY
       );
     }
+    gesture.streamCommit?.schedule();
   }
 
   function finishPointerGesture(
@@ -299,10 +365,12 @@ export function useVisualEditor({
     }
 
     if (action === "cancel" && isHtmlElement(gesture.element)) {
+      gesture.streamCommit?.cancel();
       gesture.element.style.transform = gesture.initialTransform;
     }
 
     if (action === "commit" && gesture.dragStarted) {
+      gesture.streamCommit?.flush();
       commitElementGesture(gesture.context, gesture.element);
     }
 
@@ -324,6 +392,7 @@ export function useVisualEditor({
     event.stopPropagation();
     pointerGestureRef.current = null;
     selectElement(target);
+    callbacksRef.current.stopCapturing();
     setGestureActive(true);
 
     target.contentEditable = "true";
@@ -347,17 +416,30 @@ export function useVisualEditor({
       }
     };
 
+    const streamCommit = context.fallbackToWholeDocument
+      ? null
+      : createThrottledAction(STREAM_COMMIT_INTERVAL, () => {
+          commitElementGesture(context, target);
+        });
+
+    const handleInput = () => {
+      streamCommit?.schedule();
+    };
+
     target.addEventListener("blur", handleBlur);
     target.addEventListener("keydown", handleKeyDown);
+    target.addEventListener("input", handleInput);
 
     textEditRef.current = {
       context,
       element: target,
       originalInnerHtml: target.innerHTML,
       finishing: false,
+      streamCommit,
       removeListeners: () => {
         target.removeEventListener("blur", handleBlur);
         target.removeEventListener("keydown", handleKeyDown);
+        target.removeEventListener("input", handleInput);
       },
     };
   }
@@ -373,14 +455,17 @@ export function useVisualEditor({
     edit.removeListeners();
 
     if (action === "cancel") {
+      edit.streamCommit?.cancel();
       edit.element.innerHTML = edit.originalInnerHtml;
+    } else {
+      edit.streamCommit?.flush();
     }
 
     edit.element.removeAttribute("contenteditable");
 
-    if (action === "commit") {
+    if (action === "commit" || action === "cancel") {
       const nextOuterHtml = serializeElement(edit.element);
-      if (nextOuterHtml !== edit.context.initialOuterHtml) {
+      if (nextOuterHtml !== edit.context.lastCommittedOuterHtml) {
         commitElementGesture(edit.context, edit.element);
       }
     }
@@ -389,8 +474,12 @@ export function useVisualEditor({
   }
 
   function commitElementGesture(context: GestureContext, element: Element) {
+    if (context.dropped) {
+      return;
+    }
+
     const nextOuterHtml = serializeElement(element);
-    if (nextOuterHtml === context.initialOuterHtml) {
+    if (nextOuterHtml === context.lastCommittedOuterHtml) {
       return;
     }
 
@@ -419,12 +508,13 @@ export function useVisualEditor({
       end.type !== context.ytext ||
       end.index <= start.index
     ) {
+      context.dropped = true;
       return;
     }
 
     const currentHtml = context.ytext.toString();
     if (!startsWithTagName(currentHtml.slice(start.index, end.index), context.tagName)) {
-      commitWholeDocument(context, element.ownerDocument);
+      context.dropped = true;
       return;
     }
 
@@ -433,13 +523,25 @@ export function useVisualEditor({
       nextOuterHtml +
       currentHtml.slice(end.index);
     if (expectedHtml === currentHtml) {
+      context.lastCommittedOuterHtml = nextOuterHtml;
       return;
     }
 
     context.ydoc.transact(() => {
       context.ytext.delete(start.index, end.index - start.index);
       context.ytext.insert(start.index, nextOuterHtml);
-    });
+    }, VISUAL_EDIT_ORIGIN);
+    context.startAnchor = Y.createRelativePositionFromTypeIndex(
+      context.ytext,
+      start.index,
+      0
+    );
+    context.endAnchor = Y.createRelativePositionFromTypeIndex(
+      context.ytext,
+      start.index + nextOuterHtml.length,
+      -1
+    );
+    context.lastCommittedOuterHtml = nextOuterHtml;
     callbacksRef.current.onCommit(expectedHtml);
   }
 
@@ -452,7 +554,8 @@ export function useVisualEditor({
 
     context.ydoc.transact(() => {
       applyHtmlDiff(context.ytext, nextHtml);
-    });
+    }, VISUAL_EDIT_ORIGIN);
+    context.lastCommittedOuterHtml = serializeElement(document.documentElement);
     callbacksRef.current.onCommit(nextHtml);
   }
 
@@ -466,12 +569,19 @@ export function useVisualEditor({
     selectedElementRef.current.setAttribute(SELECTED_ATTR, "");
 
     const body = element.ownerDocument.body;
-    selectedPathRef.current = body ? getElementPath(element, body) : null;
+    const path = body ? getElementPath(element, body) : null;
+    if (!pathsEqual(selectedPathRef.current, path)) {
+      callbacksRef.current.onSelectionChange(path);
+    }
+    selectedPathRef.current = path;
   }
 
   function clearSelection() {
     selectedElementRef.current?.removeAttribute(SELECTED_ATTR);
     selectedElementRef.current = null;
+    if (selectedPathRef.current) {
+      callbacksRef.current.onSelectionChange(null);
+    }
     selectedPathRef.current = null;
   }
 
@@ -598,20 +708,6 @@ function selectElementContents(element: Element) {
   selection.addRange(range);
 }
 
-function getElementByPath(root: Element, path: number[]): Element | null {
-  let element: Element = root;
-
-  for (const index of path) {
-    const child = element.children.item(index);
-    if (!child) {
-      return null;
-    }
-    element = child;
-  }
-
-  return element === root ? null : element;
-}
-
 function parseTranslate(transform: string): Coords {
   const match = transform.match(
     /translate\(\s*(-?\d+(?:\.\d+)?)px(?:\s*,\s*|\s+)(-?\d+(?:\.\d+)?)px\s*\)/i
@@ -689,14 +785,6 @@ function stripEditorArtifacts(root: Element) {
   }
 }
 
-function cleanupDocument(document: Document) {
-  cleanupElement(document.documentElement);
-}
-
-function cleanupElement(root: Element) {
-  stripEditorArtifacts(root);
-}
-
 function removeEditorAttributes(element: Element) {
   element.removeAttribute(HOVER_ATTR);
   element.removeAttribute(SELECTED_ATTR);
@@ -723,4 +811,59 @@ function applyHtmlDiff(ytext: Y.Text, nextHtml: string) {
       index += text.length;
     }
   }
+}
+
+function createThrottledAction(delay: number, callback: () => void): ThrottledAction {
+  let timer: number | null = null;
+  let pending = false;
+
+  const run = () => {
+    timer = null;
+    if (!pending) {
+      return;
+    }
+
+    pending = false;
+    callback();
+  };
+
+  return {
+    schedule: () => {
+      pending = true;
+      if (timer !== null) {
+        return;
+      }
+      timer = window.setTimeout(run, delay);
+    },
+    flush: () => {
+      if (timer !== null) {
+        window.clearTimeout(timer);
+        timer = null;
+      }
+      run();
+    },
+    cancel: () => {
+      if (timer !== null) {
+        window.clearTimeout(timer);
+        timer = null;
+      }
+      pending = false;
+    },
+  };
+}
+
+function clamp01(value: number) {
+  return Math.min(1, Math.max(0, value));
+}
+
+function pathsEqual(left: number[] | null, right: number[] | null): boolean {
+  if (left === right) {
+    return true;
+  }
+
+  if (!left || !right || left.length !== right.length) {
+    return false;
+  }
+
+  return left.every((value, index) => value === right[index]);
 }

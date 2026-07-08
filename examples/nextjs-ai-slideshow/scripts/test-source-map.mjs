@@ -43,6 +43,23 @@ function syncUpdate(fromDoc, toDoc) {
   Y.applyUpdate(toDoc, Y.encodeStateAsUpdate(fromDoc, Y.encodeStateVector(toDoc)));
 }
 
+function replaceAndReanchor(ydoc, ytext, startAnchor, endAnchor, replacement) {
+  const range = resolveRange(ydoc, ytext, startAnchor, endAnchor);
+  ydoc.transact(() => {
+    ytext.delete(range.start, range.end - range.start);
+    ytext.insert(range.start, replacement);
+  });
+
+  return {
+    startAnchor: Y.createRelativePositionFromTypeIndex(ytext, range.start, 0),
+    endAnchor: Y.createRelativePositionFromTypeIndex(
+      ytext,
+      range.start + replacement.length,
+      -1
+    ),
+  };
+}
+
 try {
   const { findElementSourceRange } = await importSourceMapModule();
 
@@ -134,6 +151,82 @@ try {
   assert.ok(finalHtml.includes(remoteInsertion));
   assert.ok(finalHtml.includes(replacement));
   assert.ok(!finalHtml.includes(`<h1>Build slides together</h1>`));
+
+  const streamDocA = new Y.Doc();
+  const streamDocB = new Y.Doc();
+  const streamTextA = streamDocA.getText("slide:sample");
+  streamTextA.insert(0, html);
+  syncUpdate(streamDocA, streamDocB);
+  const streamTextB = streamDocB.getText("slide:sample");
+  const streamRange = findElementSourceRange(streamTextA.toString(), [1, 0]);
+  assert.ok(streamRange, "Expected streaming source range");
+  let streamStartAnchor = Y.createRelativePositionFromTypeIndex(
+    streamTextA,
+    streamRange.start,
+    0
+  );
+  let streamEndAnchor = Y.createRelativePositionFromTypeIndex(
+    streamTextA,
+    streamRange.end,
+    -1
+  );
+
+  const streamReplacement1 = `<section class="hero" style="transform: translate(10px, 5px);">
+        <h1>Build slides together</h1>
+        <p><strong>Multiplayer</strong> AI editing.</p>
+        <div class="actions"><button>Try it</button><a href="#">Learn more</a></div>
+      </section>`;
+  ({ startAnchor: streamStartAnchor, endAnchor: streamEndAnchor } =
+    replaceAndReanchor(
+      streamDocA,
+      streamTextA,
+      streamStartAnchor,
+      streamEndAnchor,
+      streamReplacement1
+    ));
+  syncUpdate(streamDocA, streamDocB);
+
+  const streamingRemoteInsertion = `\n    <aside data-remote="true">Remote edit during drag</aside>`;
+  streamTextB.insert(streamRange.start, streamingRemoteInsertion);
+  syncUpdate(streamDocB, streamDocA);
+
+  const streamReplacement2 = `<section class="hero" style="transform: translate(20px, 10px);">
+        <h1>Build slides visually</h1>
+        <p><strong>Multiplayer</strong> AI editing.</p>
+        <div class="actions"><button>Try it</button><a href="#">Learn more</a></div>
+      </section>`;
+  ({ startAnchor: streamStartAnchor, endAnchor: streamEndAnchor } =
+    replaceAndReanchor(
+      streamDocA,
+      streamTextA,
+      streamStartAnchor,
+      streamEndAnchor,
+      streamReplacement2
+    ));
+
+  const streamReplacement3 = `<section class="hero" style="transform: translate(30px, 15px);">
+        <h1>Build slides visually</h1>
+        <p><strong>Multiplayer</strong> AI editing.</p>
+        <div class="actions"><button>Try it</button><a href="#">Learn more</a></div>
+      </section>`;
+  ({ startAnchor: streamStartAnchor, endAnchor: streamEndAnchor } =
+    replaceAndReanchor(
+      streamDocA,
+      streamTextA,
+      streamStartAnchor,
+      streamEndAnchor,
+      streamReplacement3
+    ));
+
+  const streamingHtml = streamTextA.toString();
+  assert.ok(streamingHtml.includes(streamingRemoteInsertion));
+  assert.equal(
+    streamingHtml.split(streamReplacement3).length - 1,
+    1,
+    "Expected the final streamed element exactly once"
+  );
+  assert.ok(!streamingHtml.includes(streamReplacement1));
+  assert.ok(!streamingHtml.includes(streamReplacement2));
 
   const deleteDocA = new Y.Doc();
   const deleteDocB = new Y.Doc();

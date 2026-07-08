@@ -16,6 +16,9 @@ declare global {
     // "AI is thinking..." status shows in the right chat for everyone.
     Presence: {
       promptingFeedId: string | null;
+      cursor: { x: number; y: number } | null;
+      cursorSlideId: string | null;
+      selection: { slideId: string; path: number[] } | null;
     };
 
     // Comment pins are positioned as percentages of the 16:9 slide surface so

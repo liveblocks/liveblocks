@@ -1,6 +1,25 @@
 export const SLIDE_WIDTH = 1280;
 export const SLIDE_HEIGHT = 720;
 
+export const EMPTY_SLIDE_HTML = `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        width: 1280px;
+        height: 720px;
+        overflow: hidden;
+        background: #ffffff;
+        font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+      }
+    </style>
+  </head>
+  <body></body>
+</html>`;
+
 export const STARTER_SLIDE_HTML = `<!doctype html>
 <html>
   <head>

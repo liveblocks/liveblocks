@@ -12,11 +12,17 @@ import {
 } from "@dnd-kit/core";
 import {
   useEditThreadMetadata,
+  useOther,
+  useOthers,
   useSelf,
   useThreads,
+  useUpdateMyPresence,
 } from "@liveblocks/react/suspense";
 import {
   CommentPin,
+  Cursor,
+  Cursors,
+  type CursorsCursorProps,
   FloatingComposer,
   FloatingThread,
 } from "@liveblocks/react-ui";
@@ -25,8 +31,10 @@ import type { MouseEvent, ReactNode } from "react";
 import { EyeIcon, Loader2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { getElementByPath } from "./html-source-map";
 import type { SlideProposal } from "./proposal-actions";
 import { SLIDE_HEIGHT, SLIDE_WIDTH } from "./slide-html";
+import { useSlideUndo } from "./slide-undo";
 import { useSlideHtml } from "./slides";
 import { useVisualEditor } from "./visual-editor";
 
@@ -83,7 +91,6 @@ function useMaxZIndex(threads: readonly ThreadData[]) {
 
 export function SlidePreview({
   slideId,
-  editing,
   placingComment,
   onPlacingDone,
   proposal,
@@ -93,7 +100,6 @@ export function SlidePreview({
   onResolveProposal,
 }: {
   slideId: string;
-  editing: boolean;
   placingComment: boolean;
   onPlacingDone: () => void;
   proposal: SlideProposal | null;
@@ -106,15 +112,18 @@ export function SlidePreview({
   // While previewing, pins stay hidden even on slides unaffected by the proposal
   // set because accept/reject resolves the whole set.
   const html = proposalHtml ?? documentHtml;
-  const editingActive = editing && !proposal;
-  const [renderedHtml, setRenderedHtml] = useState(html);
   const [iframe, setIframe] = useState<HTMLIFrameElement | null>(null);
   const [visualGestureActive, setVisualGestureActive] = useState(false);
   const [expectedVisualHtml, setExpectedVisualHtml] = useState<string | null>(
     null
   );
+  const initialSrcDocRef = useRef({ slideId, html });
+  const appliedHtmlRef = useRef(html);
   const latestHtmlRef = useRef(html);
+  const pendingHtmlRef = useRef<string | null>(null);
   const expectedBaseHtmlRef = useRef<string | null>(null);
+  const updateMyPresence = useUpdateMyPresence();
+  const { stopCapturing } = useSlideUndo();
   const { threads } = useThreads();
   const slideThreads = useMemo(
     () => threads.filter((thread) => thread.metadata.slideId === slideId),
@@ -125,6 +134,13 @@ export function SlidePreview({
   const { ref: wrapperRef, size: wrapperSize } = useElementSize();
   const [placedCoords, setPlacedCoords] = useState<Coords | null>(null);
 
+  if (initialSrcDocRef.current.slideId !== slideId) {
+    initialSrcDocRef.current = { slideId, html };
+    appliedHtmlRef.current = html;
+    pendingHtmlRef.current = null;
+    expectedBaseHtmlRef.current = null;
+  }
+
   useEffect(() => {
     latestHtmlRef.current = html;
   }, [html]);
@@ -134,29 +150,69 @@ export function SlidePreview({
     setExpectedVisualHtml(expectedHtml);
   }, []);
 
+  const handleCursorMove = useCallback(
+    (cursor: Coords | null) => {
+      updateMyPresence({
+        cursor,
+        cursorSlideId: cursor ? slideId : null,
+      });
+    },
+    [slideId, updateMyPresence]
+  );
+
+  const handleSelectionChange = useCallback(
+    (path: number[] | null) => {
+      updateMyPresence({
+        selection: path ? { slideId, path } : null,
+      });
+    },
+    [slideId, updateMyPresence]
+  );
+
   useVisualEditor({
-    iframe,
+    iframe: proposal ? null : iframe,
     slideId,
-    editing: editingActive,
     onGestureActiveChange: setVisualGestureActive,
     onCommit: handleVisualCommit,
+    onCursorMove: handleCursorMove,
+    onSelectionChange: handleSelectionChange,
+    stopCapturing,
   });
 
   useEffect(() => {
-    if (!editingActive) {
-      setRenderedHtml(html);
-      setExpectedVisualHtml(null);
-      expectedBaseHtmlRef.current = null;
+    return () => {
+      updateMyPresence({
+        cursor: null,
+        cursorSlideId: null,
+        selection: null,
+      });
+    };
+  }, [slideId, updateMyPresence]);
+
+  useEffect(() => {
+    if (proposal) {
+      updateMyPresence({
+        cursor: null,
+        cursorSlideId: null,
+        selection: null,
+      });
+    }
+  }, [proposal, updateMyPresence]);
+
+  useEffect(() => {
+    if (!iframe || html === appliedHtmlRef.current) {
       return;
     }
 
     if (visualGestureActive) {
+      pendingHtmlRef.current = html;
       return;
     }
 
     if (expectedVisualHtml !== null && html === expectedVisualHtml) {
       setExpectedVisualHtml(null);
       expectedBaseHtmlRef.current = null;
+      appliedHtmlRef.current = html;
       return;
     }
 
@@ -167,10 +223,12 @@ export function SlidePreview({
       return;
     }
 
-    setRenderedHtml(html);
+    patchIframeHtml(iframe, html);
+    pendingHtmlRef.current = null;
+    appliedHtmlRef.current = html;
     setExpectedVisualHtml(null);
     expectedBaseHtmlRef.current = null;
-  }, [editingActive, expectedVisualHtml, html, visualGestureActive]);
+  }, [expectedVisualHtml, html, iframe, visualGestureActive]);
 
   // Leave room around the slide so the shadow and proposal ring are visible
   // even when the slide would otherwise fit exactly edge-to-edge.
@@ -181,6 +239,14 @@ export function SlidePreview({
     availableHeight / SLIDE_HEIGHT
   );
   const safeScale = Number.isFinite(scale) && scale > 0 ? scale : 1;
+  const cursorComponents = useMemo(
+    () => ({
+      Cursor: function SlideCursorComponent(props: CursorsCursorProps) {
+        return <SlideCursor {...props} slideId={slideId} scale={safeScale} />;
+      },
+    }),
+    [safeScale, slideId]
+  );
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -261,13 +327,6 @@ export function SlidePreview({
           </div>
         </div>
       ) : null}
-      {editingActive ? (
-        <div className="absolute left-1/2 top-3 z-40 flex -translate-x-1/2 items-center rounded-full border border-primary/30 bg-white px-4 py-1.5 shadow-md">
-          <span className="whitespace-nowrap text-sm font-medium text-neutral-700">
-            Drag elements to move them · Double-click text to edit
-          </span>
-        </div>
-      ) : null}
       <div
         className={`absolute left-1/2 top-1/2 overflow-visible bg-white shadow-2xl ${
           proposal && proposalHtml !== undefined
@@ -282,20 +341,36 @@ export function SlidePreview({
         }}
       >
         <iframe
+          key={slideId}
           ref={setIframe}
           title="Slide preview"
           width={SLIDE_WIDTH}
           height={SLIDE_HEIGHT}
-          srcDoc={renderedHtml}
+          srcDoc={initialSrcDocRef.current.html}
           sandbox="allow-same-origin"
           className={cn(
             "absolute inset-0 h-full w-full border-0 bg-white",
-            editingActive ? "pointer-events-auto" : "pointer-events-none"
+            proposal ? "pointer-events-none" : "pointer-events-auto"
           )}
         />
 
-        {proposal || editingActive ? null : (
-          <div className="absolute inset-0 isolate">
+        {!proposal ? (
+          <>
+            <Cursors
+              className="pointer-events-none absolute inset-0 z-10"
+              components={cursorComponents}
+            />
+
+            <RemoteSelections
+              iframe={iframe}
+              slideId={slideId}
+              scale={safeScale}
+            />
+          </>
+        ) : null}
+
+        {proposal ? null : (
+          <div className="pointer-events-none absolute inset-0 z-20 isolate">
             <DndContext onDragEnd={handleDragEnd} sensors={sensors}>
               {slideThreads.map((thread) => (
                 <DraggableSlideThread
@@ -309,7 +384,7 @@ export function SlidePreview({
           </div>
         )}
 
-        {!proposal && !editingActive && (placingComment || placedCoords) ? (
+        {!proposal && (placingComment || placedCoords) ? (
           <button
             type="button"
             aria-label="Cancel comment placement"
@@ -322,7 +397,7 @@ export function SlidePreview({
           />
         ) : null}
 
-        {!proposal && !editingActive && placingComment ? (
+        {!proposal && placingComment ? (
           <PlacementOverlay
             scale={safeScale}
             onPlace={(coords) => {
@@ -333,7 +408,7 @@ export function SlidePreview({
           />
         ) : null}
 
-        {!proposal && !editingActive && placedCoords ? (
+        {!proposal && placedCoords ? (
           <ThreadComposer
             coords={placedCoords}
             scale={safeScale}
@@ -343,6 +418,206 @@ export function SlidePreview({
           />
         ) : null}
       </div>
+    </div>
+  );
+}
+
+type CursorInfo = {
+  cursorSlideId: string | null;
+  name: string;
+  color: string;
+};
+
+type RemoteSelectionRect = {
+  connectionId: number;
+  name: string;
+  color: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+function patchIframeHtml(iframe: HTMLIFrameElement | null, html: string) {
+  if (!iframe) {
+    return;
+  }
+
+  const document = iframe.contentDocument;
+  if (!document) {
+    iframe.srcdoc = html;
+    return;
+  }
+
+  const parsed = new DOMParser().parseFromString(html, "text/html");
+  const sourceElement = parsed.documentElement;
+  const targetElement = document.documentElement;
+  copyAttributes(targetElement, sourceElement);
+  targetElement.replaceChildren(
+    ...Array.from(sourceElement.childNodes).map((node) =>
+      document.importNode(node, true)
+    )
+  );
+  iframe.dispatchEvent(new Event("load"));
+}
+
+function copyAttributes(target: Element, source: Element) {
+  for (const attribute of Array.from(target.attributes)) {
+    if (!source.hasAttribute(attribute.name)) {
+      target.removeAttribute(attribute.name);
+    }
+  }
+
+  for (const attribute of Array.from(source.attributes)) {
+    target.setAttribute(attribute.name, attribute.value);
+  }
+}
+
+function SlideCursor({
+  connectionId,
+  slideId,
+  scale,
+}: CursorsCursorProps & {
+  slideId: string;
+  scale: number;
+}) {
+  const info = useOther(
+    connectionId,
+    (other): CursorInfo => ({
+      cursorSlideId: other.presence.cursorSlideId,
+      name: other.info.name,
+      color: other.info.color,
+    }),
+    cursorInfoEqual
+  );
+
+  if (info.cursorSlideId !== slideId) {
+    return null;
+  }
+
+  return (
+    <div
+      style={{
+        transform: `scale(${1 / scale})`,
+        transformOrigin: "top left",
+      }}
+    >
+      <Cursor color={info.color} label={info.name} />
+    </div>
+  );
+}
+
+function cursorInfoEqual(left: CursorInfo, right: CursorInfo): boolean {
+  return (
+    left.cursorSlideId === right.cursorSlideId &&
+    left.name === right.name &&
+    left.color === right.color
+  );
+}
+
+function RemoteSelections({
+  iframe,
+  slideId,
+  scale,
+}: {
+  iframe: HTMLIFrameElement | null;
+  slideId: string;
+  scale: number;
+}) {
+  const others = useOthers();
+  const [rects, setRects] = useState<RemoteSelectionRect[]>([]);
+  const visibleSelections = useMemo(
+    () =>
+      others.filter((other) => other.presence.selection?.slideId === slideId),
+    [others, slideId]
+  );
+
+  const recomputeRects = useCallback(() => {
+    const document = iframe?.contentDocument;
+    const body = document?.body;
+    if (!document || !body || visibleSelections.length === 0) {
+      setRects([]);
+      return;
+    }
+
+    const nextRects: RemoteSelectionRect[] = [];
+    for (const other of visibleSelections) {
+      const selection = other.presence.selection;
+      if (!selection || selection.slideId !== slideId) {
+        continue;
+      }
+
+      const element = getElementByPath(body, selection.path);
+      if (!element) {
+        continue;
+      }
+
+      const rect = element.getBoundingClientRect();
+      nextRects.push({
+        connectionId: other.connectionId,
+        name: other.info.name,
+        color: other.info.color,
+        x: rect.left,
+        y: rect.top,
+        width: rect.width,
+        height: rect.height,
+      });
+    }
+    setRects(nextRects);
+  }, [iframe, slideId, visibleSelections]);
+
+  useEffect(() => {
+    recomputeRects();
+    if (!iframe) {
+      return;
+    }
+
+    iframe.addEventListener("load", recomputeRects);
+    return () => {
+      iframe.removeEventListener("load", recomputeRects);
+    };
+  }, [iframe, recomputeRects]);
+
+  useEffect(() => {
+    if (visibleSelections.length === 0) {
+      setRects([]);
+      return;
+    }
+
+    recomputeRects();
+    const interval = window.setInterval(recomputeRects, 250);
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [recomputeRects, visibleSelections.length]);
+
+  return (
+    <div className="pointer-events-none absolute inset-0 z-10">
+      {rects.map((rect) => (
+        <div
+          key={rect.connectionId}
+          className="absolute"
+          style={{
+            left: rect.x,
+            top: rect.y,
+            width: rect.width,
+            height: rect.height,
+            outline: `2px solid ${rect.color}`,
+            outlineOffset: 2,
+          }}
+        >
+          <div
+            className="absolute left-0 top-0 rounded-t-sm px-1.5 py-0.5 text-xs font-medium text-white"
+            style={{
+              backgroundColor: rect.color,
+              transform: `translateY(-100%) scale(${1 / scale})`,
+              transformOrigin: "bottom left",
+            }}
+          >
+            {rect.name}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -379,7 +654,7 @@ function DraggableSlideThread({
     >
       <div
         ref={setNodeRef}
-        className="absolute"
+        className="pointer-events-auto absolute"
         style={{
           left: `${thread.metadata.x}%`,
           top: `${thread.metadata.y}%`,

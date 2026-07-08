@@ -9,7 +9,8 @@ import {
   EyeIcon,
   Loader2Icon,
   MessageSquarePlusIcon,
-  PencilIcon,
+  Redo2Icon,
+  Undo2Icon,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Loader } from "@/components/ai-elements/loader";
@@ -23,6 +24,7 @@ import { getSlideIds, getSlideText } from "./slide-doc";
 import { SLIDE_HEIGHT, SLIDE_WIDTH, STARTER_SLIDE_HTML } from "./slide-html";
 import { SlidePreview } from "./slide-preview";
 import { SlideSidebar } from "./slide-sidebar";
+import { useSlideUndo } from "./slide-undo";
 import { useSlides } from "./slides";
 
 type Panel = "slide" | "code";
@@ -64,7 +66,15 @@ export default function Page() {
   const roomId = useExampleRoomId();
 
   return (
-    <RoomProvider id={roomId} initialPresence={{ promptingFeedId: null }}>
+    <RoomProvider
+      id={roomId}
+      initialPresence={{
+        promptingFeedId: null,
+        cursor: null,
+        cursorSlideId: null,
+        selection: null,
+      }}
+    >
       <ClientSideSuspense
         fallback={
           <div className="flex h-dvh items-center justify-center text-muted-foreground">
@@ -81,9 +91,9 @@ export default function Page() {
 function SlideshowApp({ roomId }: { roomId: string }) {
   const room = useRoom();
   const { slideIds, addSlide, deleteSlide, moveSlide } = useSlides();
+  const { undo, redo, canUndo, canRedo } = useSlideUndo();
   const [panel, setPanel] = useState<Panel>("slide");
   const [placingComment, setPlacingComment] = useState(false);
-  const [editingSlide, setEditingSlide] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [selectedSlideId, setSelectedSlideId] = useState<string | null>(null);
   const previousSelectedIndex = useRef(0);
@@ -162,16 +172,9 @@ function SlideshowApp({ roomId }: { roomId: string }) {
     setPreviewedProposal(proposal);
     if (proposal) {
       setPlacingComment(false);
-      setEditingSlide(false);
       setPanel("slide");
     }
   }, []);
-
-  useEffect(() => {
-    if (previewedProposal !== null) {
-      setEditingSlide(false);
-    }
-  }, [previewedProposal]);
 
   const resolvePreviewedProposal = useCallback(
     async (action: "apply" | "reject") => {
@@ -308,7 +311,6 @@ function SlideshowApp({ roomId }: { roomId: string }) {
             onValueChange={(value) => {
               if (value === "code") {
                 setPlacingComment(false);
-                setEditingSlide(false);
                 setPanel("code");
               } else {
                 setPanel("slide");
@@ -326,39 +328,32 @@ function SlideshowApp({ roomId }: { roomId: string }) {
             {panel === "slide" ? (
               <>
                 <Button
+                  variant="outline"
+                  size="icon-sm"
+                  onClick={undo}
+                  disabled={!canUndo || previewedProposal !== null}
+                  aria-label="Undo"
+                >
+                  <Undo2Icon className="size-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  onClick={redo}
+                  disabled={!canRedo || previewedProposal !== null}
+                  aria-label="Redo"
+                >
+                  <Redo2Icon className="size-4" />
+                </Button>
+                <Button
                   variant={placingComment ? "secondary" : "outline"}
                   size="sm"
-                  onClick={() =>
-                    setPlacingComment((value) => {
-                      const nextValue = !value;
-                      if (nextValue) {
-                        setEditingSlide(false);
-                      }
-                      return nextValue;
-                    })
-                  }
+                  onClick={() => setPlacingComment((value) => !value)}
                   // Pins belong to the shared slide, not to an unapplied proposal.
                   disabled={previewedProposal !== null}
                 >
                   <MessageSquarePlusIcon className="size-4" />
                   Comment
-                </Button>
-                <Button
-                  variant={editingSlide ? "secondary" : "outline"}
-                  size="sm"
-                  onClick={() =>
-                    setEditingSlide((value) => {
-                      const nextValue = !value;
-                      if (nextValue) {
-                        setPlacingComment(false);
-                      }
-                      return nextValue;
-                    })
-                  }
-                  disabled={previewedProposal !== null}
-                >
-                  <PencilIcon className="size-4" />
-                  Edit
                 </Button>
               </>
             ) : null}
@@ -385,7 +380,6 @@ function SlideshowApp({ roomId }: { roomId: string }) {
           >
             <SlidePreview
               slideId={slideId}
-              editing={editingSlide}
               placingComment={placingComment}
               onPlacingDone={() => setPlacingComment(false)}
               proposal={previewedProposal}

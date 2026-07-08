@@ -114,3 +114,17 @@ export function getElementPath(element: Element, root: Element): number[] | null
 
   return current === root ? path : null;
 }
+
+export function getElementByPath(root: Element, path: number[]): Element | null {
+  let element: Element = root;
+
+  for (const index of path) {
+    const child = element.children.item(index);
+    if (!child) {
+      return null;
+    }
+    element = child;
+  }
+
+  return element === root ? null : element;
+}
