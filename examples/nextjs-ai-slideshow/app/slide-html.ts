@@ -1,30 +1,30 @@
 export const SLIDE_WIDTH = 1280;
 export const SLIDE_HEIGHT = 720;
 
-export const EMPTY_SLIDE_HTML = `<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <style>
-      * { box-sizing: border-box; }
-      html, body {
-        margin: 0;
-        width: 1280px;
-        height: 720px;
-        overflow: hidden;
-        background: #ffffff;
-        font-family: Inter, ui-sans-serif, system-ui, sans-serif;
-      }
-    </style>
-  </head>
-  <body></body>
-</html>`;
+const STARTER_BODY = `
+  <section class="card">
+    <div class="eyebrow">Collaborative editing</div>
+    <h1>Move elements, edit code, chat to AI.</h1>
+    <p>Each user’s live presence is shown as they drag elements, edit code, and leave comments for others. Double-click on text to make changes.</p>
+  </section>
+`;
 
-export const STARTER_SLIDE_HTML = `<!doctype html>
+const EMPTY_BODY = `
+  <section class="card">
+    <div class="eyebrow">Collaborative editing</div>
+    <h1>Get started by chatting to AI</h1>
+    <p>It’ll generate initial designs for you, and you can take it from there. Or dive into the code if you’d prefer.</p>
+  </section>
+`;
+
+const CREATE_BODY = (slideContent: string) => `<!doctype html>
 <html>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=1280, initial-scale=1" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,opsz,wght@0,18..144,300..900;1,18..144,300..900&display=swap" rel="stylesheet">
     <style>
       * { box-sizing: border-box; }
       html, body {
@@ -32,7 +32,7 @@ export const STARTER_SLIDE_HTML = `<!doctype html>
         width: 1280px;
         height: 720px;
         overflow: hidden;
-        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-family: "Helvetica Neue", Helvetica, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         color: #111827;
         background: #fff7ed;
       }
@@ -58,7 +58,7 @@ export const STARTER_SLIDE_HTML = `<!doctype html>
         text-align: center;
       }
       .eyebrow {
-        margin: 0 0 20px;
+        margin: 0 0 30px;
         color: #fd5108;
         font-size: 22px;
         font-weight: 800;
@@ -67,26 +67,27 @@ export const STARTER_SLIDE_HTML = `<!doctype html>
       }
       h1 {
         margin: 0;
-        font-size: 82px;
+        font-size: 78px;
         line-height: 0.98;
-        letter-spacing: -0.06em;
+        letter-spacing: -0.02em;
+        font-family: "Merriweather", Georgia, serif;
+        font-weight: 600;
       }
       p {
         max-width: 680px;
         margin: 28px auto 0;
         color: #475569;
-        font-size: 30px;
+        font-size: 28px;
         line-height: 1.35;
       }
     </style>
   </head>
   <body>
     <main class="slide">
-      <section class="card">
-        <p class="eyebrow">Liveblocks AI Slideshow</p>
-        <h1>Design together, present faster.</h1>
-        <p>Prompt the AI, apply its slide HTML into a shared Yjs document, and leave multiplayer comments right on the preview.</p>
-      </section>
+      ${slideContent}
     </main>
   </body>
 </html>`;
+
+export const STARTER_SLIDE_HTML = CREATE_BODY(STARTER_BODY);
+export const EMPTY_SLIDE_HTML = CREATE_BODY(EMPTY_BODY);
