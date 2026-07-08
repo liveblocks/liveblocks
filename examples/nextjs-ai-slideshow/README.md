@@ -24,13 +24,10 @@ This example shows how to build a multiplayer AI slideshow builder with
 [Liveblocks Feeds](https://liveblocks.io/docs/collaboration-features/ai-collaboration),
 [Yjs](https://yjs.dev/), [CodeMirror](https://codemirror.net/),
 [Liveblocks Comments](https://liveblocks.io/docs/products/comments), and
-[Next.js](https://nextjs.org/). Build a multi-slide deck: chat with AI to
-generate or edit any slide (it sees the whole deck and can propose changes to
-several slides at once, or add new ones), preview proposals before applying
-them, and edit slides visually by dragging elements and double-clicking text —
-or edit the HTML directly in the collaborative code editor. Slides can be
-added, deleted, and reordered from the sidebar, and you can leave comment pins
-on each slide. Everything syncs live to everyone in the room.
+[Next.js](https://nextjs.org/). Chat with AI to generate and edit slides with
+HTML. You can drag-and-drop elements, edit the code, and leave comments for
+other users. As other users edit slides, you can see their presence in the
+preview and code editor.
 
 ## Getting started
 
