@@ -380,8 +380,8 @@ function SlideshowApp({ roomId }: { roomId: string }) {
       />
 
       <main className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-lg bg-white shadow ring-1 ring-neutral-950/5">
-        <header className="flex items-center justify-between border-b border-neutral-950/5 px-2.5 py-2">
-          <div className="flex items-center gap-2">
+        <header className="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-950/5 px-2.5 py-2">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
             <Tabs
               value={panel}
               onValueChange={(value) => {
@@ -398,7 +398,7 @@ function SlideshowApp({ roomId }: { roomId: string }) {
                 <TabsTrigger value="code">Code</TabsTrigger>
               </TabsList>
             </Tabs>
-            <div>
+            <div className="flex items-center">
               {/* On the Preview tab these drive the visual-edit history; on
                   the Code tab they drive the editor's own history, like
                   Mod-z. */}
@@ -429,7 +429,7 @@ function SlideshowApp({ roomId }: { roomId: string }) {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
             <AvatarStack size={28} />
             {panel === "slide" ? (
               <Button
