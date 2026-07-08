@@ -363,6 +363,10 @@ export type NotificationSettingsAsyncSuccess = AsyncSuccess<NotificationSettings
 export type RoomSubscriptionSettingsAsyncSuccess = AsyncSuccess<RoomSubscriptionSettings, "settings">; // prettier-ignore
 export type RoomSubscriptionSettingsAsyncResult = AsyncResult<RoomSubscriptionSettings, "settings">; // prettier-ignore
 
+export type HistoryVersionStorageDataAsyncResult = AsyncResult<
+  LiveObject<LsonObject>
+>;
+
 export type HistoryVersionYjsDataAsyncResult = AsyncResult<Uint8Array>;
 
 export type HistoryVersionsAsyncSuccess = AsyncSuccess<HistoryVersion[], "versions">; // prettier-ignore
@@ -1360,6 +1364,16 @@ export type RoomContextBundle<
       useHistoryVersions(): HistoryVersionsAsyncResult;
 
       /**
+       * Returns the Storage data for a given version of the room.
+       *
+       * @example
+       * const { data, error, isLoading } = useHistoryVersionStorageData(version.id);
+       */
+      useHistoryVersionStorageData(
+        id: string
+      ): HistoryVersionStorageDataAsyncResult;
+
+      /**
        * Returns the Yjs data for a given version of the room.
        *
        * @example
@@ -1376,6 +1390,26 @@ export type RoomContextBundle<
        * const { data, error, isLoading } = useHistoryVersionData(version.id);
        */
       useHistoryVersionData(id: string): HistoryVersionYjsDataAsyncResult;
+
+      /**
+       * Returns a function that permanently deletes a version from the room's
+       * history.
+       *
+       * @example
+       * const deleteHistoryVersion = useDeleteHistoryVersion();
+       * deleteHistoryVersion(version.id);
+       */
+      useDeleteHistoryVersion(): (versionId: string) => Promise<void>;
+
+      /**
+       * Returns a function that restores the room's Storage to the given
+       * historic version, applied as a single undoable change.
+       *
+       * @example
+       * const restore = useRestoreToStorageVersion(version.id);
+       * await restore();
+       */
+      useRestoreToStorageVersion(versionId: string): () => Promise<void>;
 
       suspense: Resolve<
         RoomContextBundleCommon<P, S, U, E, TM, CM, FM, FMD> &

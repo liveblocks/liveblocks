@@ -780,7 +780,7 @@
         }
       }
     },
-    "/rooms/{roomId}/active_users": {
+    "/rooms/{roomId}/active-users": {
       "get": {
         "summary": "Get active users",
         "tags": ["Room"],
@@ -907,7 +907,7 @@
         }
       }
     },
-    "/rooms/{roomId}/broadcast_event": {
+    "/rooms/{roomId}/broadcast-event": {
       "post": {
         "summary": "Broadcast event to a room",
         "description": "This endpoint enables the broadcast of an event to a room without having to connect to it via the `client` from `@liveblocks/client`. It takes any valid JSON as a request body. The `connectionId` passed to event listeners is `-1` when using this API. Corresponds to [`liveblocks.broadcastEvent`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-broadcast-event).",
@@ -1488,8 +1488,8 @@
     "/rooms/{roomId}/versions": {
       "get": {
         "summary": "Get Version History",
-        "description": "This endpoint returns a list of version history snapshots for the room's Yjs document. The versions are returned sorted by creation date, from newest to oldest.",
-        "tags": ["Yjs"],
+        "description": "This endpoint returns a list of version history snapshots for the room. The versions are returned sorted by creation date, from newest to oldest. Corresponds to [`liveblocks.getVersionHistory`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-version-history).",
+        "tags": ["Version History"],
         "operationId": "get-version-history",
         "parameters": [
           {
@@ -1569,8 +1569,8 @@
       },
       "post": {
         "summary": "Create version history snapshot",
-        "description": "This endpoint creates a new version history snapshot for the room. Currently only works for Yjs.",
-        "tags": ["Yjs"],
+        "description": "This endpoint creates a new version history snapshot of the room, capturing both its Storage and Yjs documents. Corresponds to [`liveblocks.createVersionHistorySnapshot`](https://liveblocks.io/docs/api-reference/liveblocks-node#create-version-history-snapshot).",
+        "tags": ["Version History"],
         "operationId": "create-version-history-snapshot",
         "parameters": [
           {
@@ -1619,8 +1619,8 @@
     "/rooms/{roomId}/versions/{versionId}/yjs": {
       "get": {
         "summary": "Get Yjs document version",
-        "description": "This endpoint returns a specific version of the room's Yjs document encoded as a binary Yjs update.",
-        "tags": ["Yjs"],
+        "description": "This endpoint returns a specific version of the room's Yjs document encoded as a binary Yjs update. Corresponds to [`liveblocks.getYjsVersion`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-yjs-version).",
+        "tags": ["Version History"],
         "operationId": "get-yjs-version",
         "parameters": [
           {
@@ -1655,6 +1655,50 @@
                 }
               }
             }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        }
+      }
+    },
+    "/rooms/{roomId}/versions/{versionId}": {
+      "delete": {
+        "summary": "Delete a version",
+        "description": "This endpoint permanently deletes a version from the room's history. Corresponds to [`liveblocks.deleteVersion`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-version).",
+        "tags": ["Version History"],
+        "operationId": "delete-version",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID of the room",
+              "example": "my-room-id"
+            }
+          },
+          {
+            "name": "versionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID of the version",
+              "example": "vh_abc123"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Success. The version was deleted."
           },
           "401": {
             "$ref": "#/components/responses/401"
@@ -12011,6 +12055,9 @@
     },
     {
       "name": "Yjs"
+    },
+    {
+      "name": "Version History"
     },
     {
       "name": "Comments"

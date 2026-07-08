@@ -525,5 +525,12 @@
     "topics": ["comments", "authentication"],
     "technologies": ["react", "nextjs"],
     "date": "2026-06-24"
+  },
+  {
+    "title": "How to add version history to your app",
+    "path": "/how-to-add-version-history-to-your-app",
+    "topics": ["state", "text-editors", "rest-api"],
+    "technologies": ["react", "storage", "yjs", "react-ui"],
+    "date": "2026-07-03"
   }
 ]

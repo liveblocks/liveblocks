@@ -376,7 +376,15 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     mentionId: string;
   }): Promise<void>;
 
-  getYjsHistoryVersion({
+  fetchStorageHistoryVersion({
+    roomId,
+    versionId,
+  }: {
+    roomId: string;
+    versionId: string;
+  }): Promise<Response>;
+
+  fetchYjsHistoryVersion({
     roomId,
     versionId,
   }: {
@@ -385,6 +393,14 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
   }): Promise<Response>;
 
   createVersionHistorySnapshot({ roomId }: { roomId: string }): Promise<void>;
+
+  deleteHistoryVersion({
+    roomId,
+    versionId,
+  }: {
+    roomId: string;
+    versionId: string;
+  }): Promise<void>;
 
   reportTextEditor({
     roomId,
@@ -1217,7 +1233,7 @@ export function createApiClient<
       abortErrorMessage: `Upload of attachment ${attachment.id} was aborted.`,
       uploadSingle: async () =>
         httpClient.putBlob<CommentAttachment>(
-          url`/v2/c/rooms/${roomId}/attachments/${attachment.id}/upload/${encodeURIComponent(attachment.name)}`,
+          url`/v2/c/rooms/${roomId}/attachments/${attachment.id}/upload/${attachment.name}`,
           await authManager.getAuthValue({
             roomId,
             resource: "comments",
@@ -1229,7 +1245,7 @@ export function createApiClient<
         ),
       createMultipartUpload: async () =>
         httpClient.post<{ uploadId: string }>(
-          url`/v2/c/rooms/${roomId}/attachments/${attachment.id}/multipart/${encodeURIComponent(attachment.name)}`,
+          url`/v2/c/rooms/${roomId}/attachments/${attachment.id}/multipart/${attachment.name}`,
           await authManager.getAuthValue({
             roomId,
             resource: "comments",
@@ -1548,7 +1564,21 @@ export function createApiClient<
     );
   }
 
-  async function getYjsHistoryVersion(options: {
+  async function fetchStorageHistoryVersion(options: {
+    roomId: string;
+    versionId: string;
+  }) {
+    return httpClient.rawGet(
+      url`/v2/c/rooms/${options.roomId}/versions/${options.versionId}/storage`,
+      await authManager.getAuthValue({
+        roomId: options.roomId,
+        resource: "storage",
+        access: "read",
+      })
+    );
+  }
+
+  async function fetchYjsHistoryVersion(options: {
     roomId: string;
     versionId: string;
   }) {
@@ -1565,6 +1595,20 @@ export function createApiClient<
   async function createVersionHistorySnapshot(options: { roomId: string }) {
     await httpClient.rawPost(
       url`/v2/c/rooms/${options.roomId}/versions`,
+      await authManager.getAuthValue({
+        roomId: options.roomId,
+        resource: "storage",
+        access: "write",
+      })
+    );
+  }
+
+  async function deleteHistoryVersion(options: {
+    roomId: string;
+    versionId: string;
+  }) {
+    await httpClient.delete(
+      url`/v2/c/rooms/${options.roomId}/versions/${options.versionId}`,
       await authManager.getAuthValue({
         roomId: options.roomId,
         resource: "storage",
@@ -2062,8 +2106,10 @@ export function createApiClient<
     // Room text editor
     createTextMention,
     deleteTextMention,
-    getYjsHistoryVersion,
+    fetchStorageHistoryVersion,
+    fetchYjsHistoryVersion,
     createVersionHistorySnapshot,
+    deleteHistoryVersion,
     reportTextEditor,
     listHistoryVersions,
     listHistoryVersionsSince,

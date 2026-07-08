@@ -1830,6 +1830,73 @@ const binaryYjsUpdate = await liveblocks.getYjsDocumentAsBinaryUpdate(
 Read the [Yjs documentation](https://docs.yjs.dev/api/document-updates) to learn
 more about using binary updates.
 
+### Version History
+
+#### Liveblocks.getVersionHistory [#get-version-history]
+
+Returns a room’s version history snapshots, sorted by creation date from newest
+to oldest. Throws an error if the room isn’t found. This is a wrapper around the
+[Get Version History API](/docs/api-reference/rest-api-endpoints#get-version-history)
+and returns the same response.
+
+```ts
+const { data: versions, nextCursor } = await liveblocks.getVersionHistory(
+  "my-room-id",
+  {
+    // Optional, defaults to 20
+    limit: 20,
+
+    // Optional, used for pagination
+    cursor: "eyJjcmVhdGVkQXQi...",
+  }
+);
+```
+
+#### Liveblocks.createVersionHistorySnapshot [#create-version-history-snapshot]
+
+Creates a new version history snapshot of a room, capturing both its Storage and
+Yjs documents. Throws an error if the room isn’t found. This is a wrapper around
+the
+[Create Version History Snapshot API](/docs/api-reference/rest-api-endpoints#create-version-history-snapshot)
+and returns the same response.
+
+```ts
+const { data } =
+  await liveblocks.createVersionHistorySnapshot("my-room-id");
+
+// { id: "vh_d75sF3..." }
+console.log(data);
+```
+
+#### Liveblocks.getYjsVersion [#get-yjs-version]
+
+Returns a specific version of a room’s Yjs document encoded as a binary Yjs
+update. Throws an error if the room or version isn’t found. This is a wrapper
+around the
+[Get Yjs Document Version API](/docs/api-reference/rest-api-endpoints#get-yjs-version)
+and returns the same response.
+
+```ts
+const binaryYjsUpdate = await liveblocks.getYjsVersion({
+  roomId: "my-room-id",
+  versionId: "vh_d75sF3...",
+});
+```
+
+#### Liveblocks.deleteVersion [#delete-version]
+
+Permanently deletes a version from a room’s history. Throws an error if the room
+or version isn’t found. This is a wrapper around the
+[Delete Version API](/docs/api-reference/rest-api-endpoints#delete-version) and
+returns no response.
+
+```ts
+await liveblocks.deleteVersion({
+  roomId: "my-room-id",
+  versionId: "vh_d75sF3...",
+});
+```
+
 ### Attachments
 
 #### Liveblocks.getAttachment [#get-rooms-roomId-attachments-attachmentId]

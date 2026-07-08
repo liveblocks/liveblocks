@@ -1075,6 +1075,25 @@ describe("room", () => {
     expect(storage.root.toJSON()).toEqual({ x: 0 });
   });
 
+  test("unknown storage ops should be ignored", async () => {
+    const { expectStorage, wss } = await prepareIsolatedStorageTest<{
+      x: number;
+    }>([createSerializedRoot({ x: 0 })], 1);
+
+    expect(() =>
+      wss.last.send(
+        new MessageEvent("message", {
+          data: JSON.stringify({
+            type: ServerMsgCode.UPDATE_STORAGE,
+            ops: [{ type: 999, id: "future-op-id" }],
+          }),
+        })
+      )
+    ).not.toThrow();
+
+    expectStorage({ x: 0 });
+  });
+
   test("undo redo with presence", async () => {
     const { room } = createTestableRoom({ x: -1 });
     room.connect();

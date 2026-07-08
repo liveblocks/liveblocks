@@ -4,7 +4,12 @@ import { stringifyOrLog as stringify } from "../lib/stringify";
 import { deepClone, entries } from "../lib/utils";
 import type { CreateOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
-import type { NodeMap, StorageNode } from "../protocol/StorageNode";
+import type {
+  NodeMap,
+  NodeStream,
+  SerializedCrdt,
+  StorageNode,
+} from "../protocol/StorageNode";
 import {
   CrdtType,
   isFileStorageNode,
@@ -14,7 +19,7 @@ import {
   isRegisterStorageNode,
 } from "../protocol/StorageNode";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
-import type { ManagedPool } from "./AbstractCrdt";
+import { createManagedPool, type ManagedPool } from "./AbstractCrdt";
 import { LiveFile } from "./LiveFile";
 import { LiveList, type LiveListUpdates } from "./LiveList";
 import { LiveMap, type LiveMapUpdates } from "./LiveMap";
@@ -52,6 +57,33 @@ export function isSameNodeOrChildOf(node: LiveNode, parent: LiveNode): boolean {
     return isSameNodeOrChildOf(node.parent.node, parent);
   }
   return false;
+}
+
+/**
+ * Reconstructs a detached, read-only `LiveObject` tree from a stream of storage
+ * nodes (as produced by a storage version snapshot). The tree isn't attached to
+ * any room -- it's meant for reading/diffing a historical snapshot, not live
+ * editing.
+ *
+ * Typed as `LsonObject` (not the room's current `Storage` schema) on purpose: a
+ * historical version can have any shape, not necessarily today's expected one.
+ */
+export function liveObjectFromNodeStream(
+  nodes: NodeStream
+): LiveObject<LsonObject> {
+  // A historic version is a read-only snapshot. Reconstruction only ever
+  // deserializes existing node ids, but any *mutation* mints a fresh id/opId
+  // through getCurrentConnectionId -- so we make that the choke point that
+  // refuses mutation outright, rather than silently generating bogus `0:n` ids
+  // that could collide with a live document's.
+  const pool = createManagedPool({
+    getCurrentConnectionId: () => {
+      throw new Error(
+        "Cannot mutate a historic storage version: it is a read-only snapshot"
+      );
+    },
+  });
+  return LiveObject._fromItems(nodes, pool);
 }
 
 export function deserialize(
@@ -293,6 +325,78 @@ export function diffNodeMap(prev: NodeMap, next: NodeMap): Op[] {
     }
   });
 
+  // Emits a CREATE op for a new node, but only after its parent's CREATE when
+  // the parent is itself new. The `next` map is unordered (it comes from an
+  // unordered node stream), so it may list children before parents -- and
+  // applying a CREATE whose parent isn't in the pool yet silently drops it.
+  const emitted = new Set<string>();
+  function emitCreate(id: string, crdt: SerializedCrdt): void {
+    if (emitted.has(id)) {
+      return;
+    }
+    emitted.add(id);
+
+    // Create the parent first, when it's also a new node.
+    const parentId = crdt.parentId;
+    if (parentId !== undefined && !prev.has(parentId)) {
+      const parentCrdt = next.get(parentId);
+      if (parentCrdt !== undefined) {
+        emitCreate(parentId, parentCrdt);
+      }
+    }
+
+    switch (crdt.type) {
+      case CrdtType.REGISTER:
+        ops.push({
+          type: OpCode.CREATE_REGISTER,
+          id,
+          parentId: crdt.parentId,
+          parentKey: crdt.parentKey,
+          data: crdt.data,
+        });
+        break;
+      case CrdtType.FILE:
+        ops.push({
+          type: OpCode.CREATE_FILE,
+          id,
+          parentId: crdt.parentId,
+          parentKey: crdt.parentKey,
+          data: crdt.data,
+        });
+        break;
+      case CrdtType.LIST:
+        ops.push({
+          type: OpCode.CREATE_LIST,
+          id,
+          parentId: crdt.parentId,
+          parentKey: crdt.parentKey,
+        });
+        break;
+      case CrdtType.OBJECT:
+        if (crdt.parentId === undefined || crdt.parentKey === undefined) {
+          throw new Error(
+            "Internal error. Cannot serialize storage root into an operation"
+          );
+        }
+        ops.push({
+          type: OpCode.CREATE_OBJECT,
+          id,
+          parentId: crdt.parentId,
+          parentKey: crdt.parentKey,
+          data: crdt.data,
+        });
+        break;
+      case CrdtType.MAP:
+        ops.push({
+          type: OpCode.CREATE_MAP,
+          id,
+          parentId: crdt.parentId,
+          parentKey: crdt.parentKey,
+        });
+        break;
+    }
+  }
+
   next.forEach((crdt, id) => {
     const currentCrdt = prev.get(id);
     if (currentCrdt) {
@@ -338,57 +442,7 @@ export function diffNodeMap(prev: NodeMap, next: NodeMap): Op[] {
         });
       }
     } else {
-      // new Crdt
-      switch (crdt.type) {
-        case CrdtType.REGISTER:
-          ops.push({
-            type: OpCode.CREATE_REGISTER,
-            id,
-            parentId: crdt.parentId,
-            parentKey: crdt.parentKey,
-            data: crdt.data,
-          });
-          break;
-        case CrdtType.FILE:
-          ops.push({
-            type: OpCode.CREATE_FILE,
-            id,
-            parentId: crdt.parentId,
-            parentKey: crdt.parentKey,
-            data: crdt.data,
-          });
-          break;
-        case CrdtType.LIST:
-          ops.push({
-            type: OpCode.CREATE_LIST,
-            id,
-            parentId: crdt.parentId,
-            parentKey: crdt.parentKey,
-          });
-          break;
-        case CrdtType.OBJECT:
-          if (crdt.parentId === undefined || crdt.parentKey === undefined) {
-            throw new Error(
-              "Internal error. Cannot serialize storage root into an operation"
-            );
-          }
-          ops.push({
-            type: OpCode.CREATE_OBJECT,
-            id,
-            parentId: crdt.parentId,
-            parentKey: crdt.parentKey,
-            data: crdt.data,
-          });
-          break;
-        case CrdtType.MAP:
-          ops.push({
-            type: OpCode.CREATE_MAP,
-            id,
-            parentId: crdt.parentId,
-            parentKey: crdt.parentKey,
-          });
-          break;
-      }
+      emitCreate(id, crdt);
     }
   });
 

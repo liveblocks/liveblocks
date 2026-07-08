@@ -1,6 +1,6 @@
 {
   "name": "liveblocks",
-  "version": "1.6.1",
+  "version": "1.6.2",
   "description": "Liveblocks command line interface",
   "type": "module",
   "bin": {
@@ -49,7 +49,7 @@
     "@liveblocks/core": "v3.21.0-private3",
     "@liveblocks/query-parser": "workspace:^",
     "@liveblocks/server": "workspace:^",
-    "@liveblocks/zenrouter": "^1.1.0",
+    "@liveblocks/zenrouter": "^1.2.0",
     "decoders": "^2.9.0",
     "js-base64": "^3.7.5",
     "yjs": "^13.6.10"

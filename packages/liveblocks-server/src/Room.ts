@@ -440,7 +440,10 @@ type RoomOptions<SM, CM extends JsonObject, C> = {
      * Therefore, only ever use this hook to implement a side effect (like
      * trigger a notification), don't read storage in this hook directly.
      */
-    postClientMsgStorageDidUpdate?: (ctx?: C) => void | Promise<void>;
+    postClientMsgStorageDidUpdate?: (
+      ctx?: C,
+      sess?: BrowserSession<SM, CM>
+    ) => void | Promise<void>;
     /**
      * Called when Yjs Storage for the room was updated.
      *
@@ -515,7 +518,10 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
     ) => void | Promise<void>;
 
     // Don't like these callback names yet. Think about how to better abstract it later.
-    postClientMsgStorageDidUpdate?: (ctx?: C) => void | Promise<void>;
+    postClientMsgStorageDidUpdate?: (
+      ctx?: C,
+      sess?: BrowserSession<SM, CM>
+    ) => void | Promise<void>;
     postClientMsgYdocDidUpdate?: (
       ctx?: C,
       sess?: BrowserSession<SM, CM>
@@ -1665,7 +1671,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
           // NOTE! These are being called after *every* handleOne() call
           // currently. Should we not just call these once at the end of
           // handleClientMsgs()?
-          const p$ = this.hooks.postClientMsgStorageDidUpdate?.(ctx);
+          const p$ = this.hooks.postClientMsgStorageDidUpdate?.(ctx, session);
           if (p$) defer(p$);
         }
         break;
