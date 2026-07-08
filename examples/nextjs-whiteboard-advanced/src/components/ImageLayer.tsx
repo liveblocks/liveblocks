@@ -67,7 +67,7 @@ function ImageFile({ file, width, height }: ImageFileProps) {
       y={0}
       width={width}
       height={height}
-      preserveAspectRatio="none"
+      preserveAspectRatio="xMidYMid slice"
     />
   );
 }
