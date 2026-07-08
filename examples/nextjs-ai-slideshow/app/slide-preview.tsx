@@ -26,7 +26,13 @@ import {
   FloatingComposer,
   FloatingThread,
 } from "@liveblocks/react-ui";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { MouseEvent, ReactNode } from "react";
 import { EyeIcon, Loader2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -534,7 +540,12 @@ function RemoteSelections({
         height: rect.height,
       });
     }
-    setRects(nextRects);
+
+    setRects((previousRects) =>
+      remoteSelectionRectsEqual(previousRects, nextRects)
+        ? previousRects
+        : nextRects
+    );
   }, [iframe, slideId, visibleSelections]);
 
   useEffect(() => {
@@ -555,10 +566,15 @@ function RemoteSelections({
       return;
     }
 
-    recomputeRects();
-    const interval = window.setInterval(recomputeRects, 250);
+    let frameId: number;
+    const update = () => {
+      recomputeRects();
+      frameId = window.requestAnimationFrame(update);
+    };
+
+    update();
     return () => {
-      window.clearInterval(interval);
+      window.cancelAnimationFrame(frameId);
     };
   }, [recomputeRects, visibleSelections.length]);
 
@@ -591,6 +607,29 @@ function RemoteSelections({
       ))}
     </div>
   );
+}
+
+function remoteSelectionRectsEqual(
+  left: RemoteSelectionRect[],
+  right: RemoteSelectionRect[]
+) {
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  return left.every((leftRect, index) => {
+    const rightRect = right[index];
+    return (
+      rightRect !== undefined &&
+      leftRect.connectionId === rightRect.connectionId &&
+      leftRect.name === rightRect.name &&
+      leftRect.color === rightRect.color &&
+      Math.abs(leftRect.x - rightRect.x) < 0.1 &&
+      Math.abs(leftRect.y - rightRect.y) < 0.1 &&
+      Math.abs(leftRect.width - rightRect.width) < 0.1 &&
+      Math.abs(leftRect.height - rightRect.height) < 0.1
+    );
+  });
 }
 
 function DraggableSlideThread({
