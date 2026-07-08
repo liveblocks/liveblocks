@@ -216,10 +216,7 @@ export function SlidePreview({
       return;
     }
 
-    if (
-      expectedVisualHtml !== null &&
-      html === expectedBaseHtmlRef.current
-    ) {
+    if (expectedVisualHtml !== null && html === expectedBaseHtmlRef.current) {
       return;
     }
 
@@ -295,7 +292,7 @@ export function SlidePreview({
       className="relative h-full w-full overflow-hidden bg-neutral-50"
     >
       {proposal && proposalHtml !== undefined ? (
-        <div className="absolute left-1/2 top-3 z-40 flex -translate-x-1/2 items-center gap-3 rounded-full border border-primary/30 bg-white py-1.5 pl-4 pr-1.5 shadow-md">
+        <div className="absolute left-1/2 top-3 z-40 flex -translate-x-1/2 items-center gap-3 rounded-full border border-primary/10 bg-white py-1.5 pl-4 pr-1.5 shadow-md">
           <span className="flex items-center gap-1.5 whitespace-nowrap text-sm font-medium text-neutral-700">
             <EyeIcon className="size-4 text-primary" />
             Previewing proposed slide
