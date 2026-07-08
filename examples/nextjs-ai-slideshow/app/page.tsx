@@ -331,59 +331,38 @@ function SlideshowApp({ roomId }: { roomId: string }) {
               </TabsList>
             </Tabs>
             <div>
-              {panel === "slide" ? (
-                <>
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={undo}
-                    disabled={!canUndo || previewedProposal !== null}
-                    aria-label="Undo"
-                  >
-                    <Undo2Icon className="size-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={redo}
-                    disabled={!canRedo || previewedProposal !== null}
-                    aria-label="Redo"
-                  >
-                    <Redo2Icon className="size-4" />
-                  </Button>
-                </>
-              ) : null}
+              {/* On the Preview tab these drive the visual-edit history; on
+                  the Code tab they drive the editor's own history, like
+                  Mod-z. */}
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={panel === "code" ? codeHistory?.undo : undo}
+                disabled={
+                  previewedProposal !== null ||
+                  (panel === "code" ? !codeHistory?.canUndo : !canUndo)
+                }
+                aria-label="Undo"
+              >
+                <Undo2Icon className="size-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={panel === "code" ? codeHistory?.redo : redo}
+                disabled={
+                  previewedProposal !== null ||
+                  (panel === "code" ? !codeHistory?.canRedo : !canRedo)
+                }
+                aria-label="Redo"
+              >
+                <Redo2Icon className="size-4" />
+              </Button>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
             <AvatarStack size={28} />
-            {/* On the Preview tab these drive the visual-edit history; on the
-                Code tab they drive the editor's own history, like Mod-z. */}
-            <Button
-              variant="outline"
-              size="icon-sm"
-              onClick={panel === "code" ? codeHistory?.undo : undo}
-              disabled={
-                previewedProposal !== null ||
-                (panel === "code" ? !codeHistory?.canUndo : !canUndo)
-              }
-              aria-label="Undo"
-            >
-              <Undo2Icon className="size-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon-sm"
-              onClick={panel === "code" ? codeHistory?.redo : redo}
-              disabled={
-                previewedProposal !== null ||
-                (panel === "code" ? !codeHistory?.canRedo : !canRedo)
-              }
-              aria-label="Redo"
-            >
-              <Redo2Icon className="size-4" />
-            </Button>
             {panel === "slide" ? (
               <Button
                 variant={placingComment ? "secondary" : "outline"}
