@@ -118,6 +118,13 @@ declare global {
       // spam: boolean;
     };
 
+    // Custom group info set with resolveGroupsInfo, for use in React
+    GroupInfo: {
+      // Example, groups with a name and a badge
+      // name: string;
+      // badge: string;
+    };
+
     // Custom room info set with resolveRoomsInfo, for use in React
     RoomInfo: {
       // Example, rooms with a title and url
