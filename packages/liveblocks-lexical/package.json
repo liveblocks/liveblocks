@@ -1,0 +1,142 @@
+{
+  "name": "@liveblocks/lexical",
+  "version": "3.20.0",
+  "description": "Lexical collaboration plugins backed by Liveblocks.",
+  "license": "Apache-2.0",
+  "author": "Liveblocks Inc.",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "types": "./dist/index.d.cts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "module": "./dist/index.js",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./react": {
+      "import": {
+        "types": "./dist/react/index.d.ts",
+        "default": "./dist/react/index.js"
+      },
+      "require": {
+        "types": "./dist/react/index.d.cts",
+        "module": "./dist/react/index.js",
+        "default": "./dist/react/index.cjs"
+      }
+    },
+    "./styles.css": {
+      "types": "./styles.css.d.cts",
+      "default": "./styles.css"
+    }
+  },
+  "files": [
+    "dist/**",
+    "react/**",
+    "**/*.css",
+    "**/*.css.d.cts",
+    "**/*.css.d.ts",
+    "**/*.css.map",
+    "README.md"
+  ],
+  "scripts": {
+    "dev": "rollup --config rollup.config.js --watch",
+    "build": "rollup --config rollup.config.js",
+    "format": "eslint --fix src/; stylelint --fix src/styles/; prettier --write src/",
+    "lint": "eslint src/; stylelint src/styles/",
+    "lint:package": "publint --strict && attw --pack",
+    "start": "pnpm run dev",
+    "test": "vitest run",
+    "test:ci": "vitest run --coverage",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@liveblocks/client": "workspace:*",
+    "@liveblocks/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "@lexical/react": "^0.45",
+    "@lexical/selection": "^0.45",
+    "@lexical/utils": "^0.45",
+    "@liveblocks/react": "workspace:*",
+    "@types/react": "^18 || ^19",
+    "@types/react-dom": "^18 || ^19",
+    "lexical": "^0.45",
+    "react": "^18 || ^19 || ^19.0.0-rc",
+    "react-dom": "^18 || ^19 || ^19.0.0-rc"
+  },
+  "peerDependenciesMeta": {
+    "@lexical/react": {
+      "optional": true
+    },
+    "@lexical/selection": {
+      "optional": true
+    },
+    "@lexical/utils": {
+      "optional": true
+    },
+    "@liveblocks/react": {
+      "optional": true
+    },
+    "@types/react": {
+      "optional": true
+    },
+    "@types/react-dom": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@lexical/react": "0.45.0",
+    "@lexical/rich-text": "0.45.0",
+    "@lexical/selection": "0.45.0",
+    "@lexical/utils": "0.45.0",
+    "@liveblocks/eslint-config": "workspace:*",
+    "@liveblocks/react": "workspace:*",
+    "@liveblocks/rollup-config": "workspace:*",
+    "@liveblocks/vitest-config": "workspace:*",
+    "eslint": "^9.39.4",
+    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "lexical": "0.45.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "rollup": "3.28.1",
+    "stylelint": "^15.10.2",
+    "stylelint-config-standard": "^34.0.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.4"
+  },
+  "sideEffects": false,
+  "bugs": {
+    "url": "https://github.com/liveblocks/liveblocks/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/liveblocks/liveblocks.git",
+    "directory": "packages/liveblocks-lexical"
+  },
+  "homepage": "https://liveblocks.io",
+  "keywords": [
+    "lexical",
+    "liveblocks",
+    "real-time",
+    "collaboration",
+    "collaborative",
+    "presence",
+    "crdts",
+    "synchronize",
+    "rooms",
+    "documents"
+  ]
+}

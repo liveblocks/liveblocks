@@ -14,8 +14,11 @@
     },
 
     {
-      "label": "next-lexical-liveblocks e2e tracks newer Lexical for incremental sync experiments",
-      "packages": ["@liveblocks/next-lexical-liveblocks"],
+      "label": "New Lexical package + e2e track 0.45; legacy react/node-lexical stay on 0.35",
+      "packages": [
+        "@liveblocks/lexical",
+        "@liveblocks/next-lexical-liveblocks"
+      ],
       "isIgnored": true
     },
 

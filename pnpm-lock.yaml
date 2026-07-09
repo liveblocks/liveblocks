@@ -670,6 +670,73 @@ importers:
         specifier: ^13.6.27
         version: 13.6.27
 
+  packages/liveblocks-lexical:
+    dependencies:
+      '@liveblocks/client':
+        specifier: workspace:*
+        version: link:../liveblocks-client
+      '@liveblocks/core':
+        specifier: workspace:*
+        version: link:../liveblocks-core
+    devDependencies:
+      '@lexical/react':
+        specifier: 0.45.0
+        version: 0.45.0(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(yjs@13.6.27)
+      '@lexical/rich-text':
+        specifier: 0.45.0
+        version: 0.45.0
+      '@lexical/selection':
+        specifier: 0.45.0
+        version: 0.45.0
+      '@lexical/utils':
+        specifier: 0.45.0
+        version: 0.45.0
+      '@liveblocks/eslint-config':
+        specifier: workspace:*
+        version: link:../../shared/eslint-config
+      '@liveblocks/react':
+        specifier: workspace:*
+        version: link:../liveblocks-react
+      '@liveblocks/rollup-config':
+        specifier: workspace:*
+        version: link:../../shared/rollup-config
+      '@liveblocks/vitest-config':
+        specifier: workspace:*
+        version: link:../../shared/vitest-config
+      eslint:
+        specifier: ^9.39.4
+        version: 9.39.4(jiti@2.6.1)
+      eslint-plugin-react:
+        specifier: ^7.33.2
+        version: 7.37.5(eslint@9.39.4(jiti@2.6.1))
+      eslint-plugin-react-hooks:
+        specifier: ^5.2.0
+        version: 5.2.0(eslint@9.39.4(jiti@2.6.1))
+      lexical:
+        specifier: 0.45.0
+        version: 0.45.0
+      react:
+        specifier: ^18.2.0
+        version: 18.2.0
+      react-dom:
+        specifier: ^18.2.0
+        version: 18.2.0(react@18.2.0)
+      rollup:
+        specifier: 3.28.1
+        version: 3.28.1
+      stylelint:
+        specifier: ^15.10.2
+        version: 15.10.3(typescript@5.9.3)
+      stylelint-config-standard:
+        specifier: ^34.0.0
+        version: 34.0.0(stylelint@15.10.3(typescript@5.9.3))
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.4
+        version: 4.1.4(@types/node@24.12.2)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@24.12.2)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
+
   packages/liveblocks-node:
     dependencies:
       '@liveblocks/core':
@@ -12010,6 +12077,17 @@ snapshots:
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
 
+  '@lexical/devtools-core@0.45.0(react-dom@18.2.0(react@18.2.0))(react@18.2.0)':
+    dependencies:
+      '@lexical/html': 0.45.0
+      '@lexical/link': 0.45.0
+      '@lexical/mark': 0.45.0
+      '@lexical/table': 0.45.0
+      '@lexical/utils': 0.45.0
+      lexical: 0.45.0
+      react: 18.2.0
+      react-dom: 18.2.0(react@18.2.0)
+
   '@lexical/devtools-core@0.45.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
       '@lexical/html': 0.45.0
@@ -12190,6 +12268,33 @@ snapshots:
       react-error-boundary: 3.1.4(react@18.2.0)
     transitivePeerDependencies:
       - yjs
+
+  '@lexical/react@0.45.0(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(yjs@13.6.27)':
+    dependencies:
+      '@floating-ui/react': 0.27.19(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+      '@lexical/devtools-core': 0.45.0(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+      '@lexical/dragon': 0.45.0
+      '@lexical/extension': 0.45.0
+      '@lexical/hashtag': 0.45.0
+      '@lexical/history': 0.45.0
+      '@lexical/internal': 0.45.0
+      '@lexical/link': 0.45.0
+      '@lexical/list': 0.45.0
+      '@lexical/mark': 0.45.0
+      '@lexical/markdown': 0.45.0
+      '@lexical/overflow': 0.45.0
+      '@lexical/plain-text': 0.45.0
+      '@lexical/rich-text': 0.45.0
+      '@lexical/table': 0.45.0
+      '@lexical/text': 0.45.0
+      '@lexical/utils': 0.45.0
+      '@lexical/yjs': 0.45.0(yjs@13.6.27)
+      lexical: 0.45.0
+      react: 18.2.0
+      react-dom: 18.2.0(react@18.2.0)
+      react-error-boundary: 6.1.2(react@18.2.0)
+    optionalDependencies:
+      yjs: 13.6.27
 
   '@lexical/react@0.45.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(yjs@13.6.27)':
     dependencies:
@@ -20428,6 +20533,10 @@ snapshots:
   react-error-boundary@4.1.2(react@18.2.0):
     dependencies:
       '@babel/runtime': 7.19.4
+      react: 18.2.0
+
+  react-error-boundary@6.1.2(react@18.2.0):
+    dependencies:
       react: 18.2.0
 
   react-error-boundary@6.1.2(react@19.2.3):
