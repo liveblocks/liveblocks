@@ -1053,11 +1053,37 @@ custom UI into threads, such as data visualizations, tables,
 [custom AI commenting components](/docs/get-started/nextjs-comments-ai), and
 more.
 
-Picture a thread that features a graph visualization instead of a comment. This
-comment will most likely by created on the server, using
+Picture a thread that features a graph visualization instead of a comment. To
+render it in the thread, you can create a comment and use its
+[comment metadata](/docs/ready-made-features/comments/metadata) to define its
+data. First, set up your metadata typing in your config file. We’ll define two
+types of comments, a normal comment and a graph comment, and pass both to
+`CommentMetadata`. Any data can go in here, but in this example, graphs are
+defined with `type: "graph"` and a `graphId`.
+
+```ts file="liveblocks.config.ts"
+type NormalComment = {};
+
+// +++
+type GraphComment = {
+  type: "graph";
+  graphId: string;
+};
+// +++
+
+declare global {
+  interface Liveblocks {
+    // +++
+    CommentMetadata: NormalComment | GraphComment;
+    // +++
+  }
+}
+```
+
+Next, create the comment. This comment will most likely by created on the
+server, using
 [`liveblocks.createComment`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments).
-Use [comment metadata](/docs/ready-made-features/comments/metadata) to define
-the data in the graph, or the source of the graph’s data.
+Set your graph’s metadata in the comment’s `metadata` option.
 
 ```ts
 const comment = await liveblocks.createComment({
@@ -1094,7 +1120,7 @@ import { Comment, Thread } from "@liveblocks/react-ui";
     Comment: ({ comment, ...props }) => {
       // Render your custom graph inside a comment UI
       // +++
-      if (comment.metadata.type === "graph") {
+      if (comment.metadata?.type === "graph") {
         return <Graph graphId={comment.metadata.graphId} />;
       }
       // +++
@@ -1119,7 +1145,7 @@ import { Comment, Thread } from "@liveblocks/react-ui";
     Comment: ({ comment, ...props }) => {
       // Render your custom graph component
       // +++
-      if (comment.metadata.type === "graph") {
+      if (comment.metadata?.type === "graph") {
         return (
           <Comment comment={comment} {...props}>
             <Graph graphId={comment.metadata.graphId} />
@@ -1595,7 +1621,19 @@ function Component({ threadId }) {
 ##### Adding comment metadata
 
 If you’d like to attach custom metadata to a reply, you can add a
-`commentMetadata` prop.
+`commentMetadata` prop. This prop is typed as `CommentMetadata`.
+
+```ts file="liveblocks.config.ts"
+declare global {
+  interface Liveblocks {
+    CommentMetadata: {
+      tag?: string;
+      spam: boolean;
+      slackMessageTs: string;
+    };
+  }
+}
+```
 
 ```tsx
 import { Composer } from "@liveblocks/react-ui";
@@ -2293,6 +2331,7 @@ function MyComposer() {
       body,
       attachments,
       metadata: {},
+      commentMetadata: {},
     });
     // +++
   }
@@ -3243,6 +3282,7 @@ function MyComposer() {
           body,
           attachments,
           metadata: {},
+          commentMetadata: {},
         });
       }}
     >
@@ -3290,6 +3330,7 @@ function MyComposer() {
           body,
           attachments,
           metadata: {},
+          commentMetadata: {},
         });
       }}
     >
