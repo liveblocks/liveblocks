@@ -5,17 +5,30 @@ meta:
   description: "How billing works on Liveblocks, from credits to your invoice."
 ---
 
-This page explains how credits, billing cycles, overage, and invoices work. For
-plan prices and metered rates, see [Pricing overview](/docs/pricing/overview).
+Understand how your bill is calculated: monthly credits, overage, annual
+billing, invoices, and tracking your usage. For plan prices and metered rates,
+see [Plans](/docs/pricing/plans).
 
 ## Credits
 
-Every paid plan includes a monthly credit allowance. Credits are applied
-automatically to your metered usage, like realtime collaboration minutes,
-comments, custom notifications, and storage. You only pay once you have used up
-your credits. Your plan base is what buys those credits, and on higher Team
-tiers the included credits are worth more than the base price, so you get more
-usage for the same spend.
+Every plan includes a monthly credit allowance that covers your metered usage
+first. Credits are denominated in US dollars. If your usage exceeds the amount
+of credits in your base plan, you'll be billed at the per-unit rates at the end
+of the month. Credits reset at the start of each billing cycle and do not roll
+over.
+
+The Team plan offers multiple credit packages that include more credit value
+than they cost, effectively lowering your per credit rate.
+
+### Team plan options
+
+| Monthly credits                          | Monthly price                                            | Annual price                                                             |
+| ---------------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------ |
+| <Limits.TeamAnnualCredits tier={600} />  | <Limits.TeamMonthlyPriceForTier tier={600} /> per month  | <Limits.TeamAnnualPricePerMonth tier={600} /> per month billed annually  |
+| <Limits.TeamAnnualCredits tier={900} />  | <Limits.TeamMonthlyPriceForTier tier={900} /> per month  | <Limits.TeamAnnualPricePerMonth tier={900} /> per month billed annually  |
+| <Limits.TeamAnnualCredits tier={1500} /> | <Limits.TeamMonthlyPriceForTier tier={1500} /> per month | <Limits.TeamAnnualPricePerMonth tier={1500} /> per month billed annually |
+| <Limits.TeamAnnualCredits tier={2250} /> | <Limits.TeamMonthlyPriceForTier tier={2250} /> per month | <Limits.TeamAnnualPricePerMonth tier={2250} /> per month billed annually |
+| <Limits.TeamAnnualCredits tier={3750} /> | <Limits.TeamMonthlyPriceForTier tier={3750} /> per month | <Limits.TeamAnnualPricePerMonth tier={3750} /> per month billed annually |
 
 ## Billing cycle
 
@@ -24,9 +37,16 @@ at the start of each cycle and do not roll over.
 
 ## Overage
 
-Usage above your monthly credits is overage. It is charged at the per-unit rates
-in each plan's [Metered usage](/docs/pricing/plans/pro#Metered-usage) table and
-added to your invoice. Your total is always your plan base plus any overage.
+Usage above your monthly credits is overage. If your usage exceeds the amount of
+credits in your base plan, you'll be billed at the
+[per-unit rates](/docs/pricing/plans#Metered-usage) at the end of the month.
+
+## Free plan usage
+
+Even though the Free plan has no cost, usage follows the same monthly cycle. If
+your account exceeds a limit, the affected feature pauses until limits reset at
+the start of the next calendar month or you
+[upgrade your account](/dashboard/billing) to a paid plan.
 
 ## Annual billing
 
@@ -36,11 +56,11 @@ reset each month.
 ## Invoices and payment
 
 Paid plans are billed by card. Invoicing is available on Enterprise.
-[Contact sales](/contact/sales) to set this up. You can view and download past
-invoices from your [dashboard billing settings](/dashboard).
+[Contact sales](/contact/sales) to discuss upgrading to an Enterprise plan.
 
-## Tracking your spend
+You can view and download past invoices from your [dashboard](/dashboard).
 
-See your usage and remaining credits at any time on your
-[dashboard usage page](/dashboard/usage), so there are no surprises on your
-invoice.
+## Tracking your usage
+
+Usage and remaining credits are accessible to all account Owners in the
+[Liveblocks dashboard](/dashboard/usage).
