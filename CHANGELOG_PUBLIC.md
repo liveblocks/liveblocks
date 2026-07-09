@@ -20,7 +20,18 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 28 (2026-07-10)
 
+## Examples
+
+- New example: [AI Slideshow Generator](https://liveblocks.io/examples/ai-slideshow/nextjs-ai-slideshow).
+
+## Documentation
+
+- New section on [rendering custom components](https://liveblocks.io/docs/api-reference/liveblocks-react-ui#Rendering-custom-components) inside threads.
+- Updated all pages in the pricing section to add clarity.
+
 ## Contributors
+
+ctnicholas, stacyschmitz
 
 # Week 27 (2026-07-03)
 
