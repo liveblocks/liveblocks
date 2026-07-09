@@ -1,11 +1,13 @@
 "use client";
 
 import "tldraw/tldraw.css";
-import { Tldraw, DefaultStylePanel, DefaultStylePanelContent } from "tldraw";
-import { useStorageStore } from "./useStorageStore";
-import { useSelf } from "@liveblocks/react/suspense";
+import { useMemo } from "react";
+import { DefaultStylePanel, Tldraw } from "tldraw";
 import { Avatars } from "@/components/Avatars";
 import { Badge } from "@/components/Badge";
+import { useRoom, useSelf } from "@liveblocks/react/suspense";
+import { createLiveblocksAssetStore } from "./liveblocksAssetStore";
+import { useStorageStore } from "./useStorageStore";
 
 /**
  * IMPORTANT: LICENSE REQUIRED
@@ -14,12 +16,15 @@ import { Badge } from "@/components/Badge";
  */
 
 export function StorageTldraw() {
+  const room = useRoom();
   // Getting authenticated user info. Doing this using selectors instead
   // of just `useSelf()` to prevent re-renders on Presence changes
   const id = useSelf((me) => me.id);
   const info = useSelf((me) => me.info);
+  const assets = useMemo(() => createLiveblocksAssetStore(room), [room]);
 
   const store = useStorageStore({
+    assets,
     user: { id, color: info.color, name: info.name },
   });
 

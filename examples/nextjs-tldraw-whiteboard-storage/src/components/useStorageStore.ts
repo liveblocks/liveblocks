@@ -18,11 +18,14 @@ import {
   TLStoreEventInfo,
   TLStoreWithStatus,
 } from "tldraw";
+import type { LiveblocksAssetStore } from "./liveblocksAssetStore";
 
 export function useStorageStore({
+  assets,
   shapeUtils = [],
   user,
 }: Partial<{
+  assets: LiveblocksAssetStore;
   hostUrl: string;
   version: number;
   shapeUtils: TLAnyShapeUtilConstructor[];
@@ -38,6 +41,7 @@ export function useStorageStore({
   // Set up tldraw store and status
   const [store] = useState(() => {
     const store = createTLStore({
+      assets,
       shapeUtils: [...defaultShapeUtils, ...shapeUtils],
     });
     return store;
