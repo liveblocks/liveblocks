@@ -1506,7 +1506,19 @@ function Component({ threadId }) {
 ##### Adding comment metadata
 
 If you’d like to attach custom metadata to a reply, you can add a
-`commentMetadata` prop.
+`commentMetadata` prop. This prop is typed as `CommentMetadata`.
+
+```ts file="liveblocks.config.ts"
+declare global {
+  interface Liveblocks {
+    CommentMetadata: {
+      tag?: string;
+      spam: boolean;
+      slackMessageTs: string;
+    };
+  }
+}
+```
 
 ```tsx
 import { Composer } from "@liveblocks/react-ui";
@@ -2204,6 +2216,7 @@ function MyComposer() {
       body,
       attachments,
       metadata: {},
+      commentMetadata: {},
     });
     // +++
   }
@@ -3154,6 +3167,7 @@ function MyComposer() {
           body,
           attachments,
           metadata: {},
+          commentMetadata: {},
         });
       }}
     >
@@ -3201,6 +3215,7 @@ function MyComposer() {
           body,
           attachments,
           metadata: {},
+          commentMetadata: {},
         });
       }}
     >
