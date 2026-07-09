@@ -10,10 +10,12 @@ import {
   useFeedMessages,
   useFeeds,
   useOthers,
+  useRoom,
   useSelf,
   useUpdateMyPresence,
 } from "@liveblocks/react/suspense";
 import { Avatar } from "@liveblocks/react-ui";
+import { getYjsProviderForRoom } from "@liveblocks/yjs";
 import {
   CopyIcon,
   EyeIcon,
@@ -91,7 +93,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { HelpButton } from "@/components/help-button";
 import { resolveProposal, type SlideProposal } from "./proposal-actions";
-import { useSlideHtml } from "./use-slide-html";
+import { getSlideIds, getSlideText } from "./slide-doc";
 
 // Each chat is a feed in the room. Everyone connected reads and writes to the
 // selected feed, so messages (and the AI's replies) appear live for all users.
@@ -114,12 +116,18 @@ const STARTER_PROMPTS = [
 
 export function Chat({
   roomId,
+  slideId,
+  slideIds,
   previewedProposal,
   onPreviewProposal,
+  onProposalApplied,
 }: {
   roomId: string;
+  slideId: string;
+  slideIds: string[];
   previewedProposal: SlideProposal | null;
   onPreviewProposal: (proposal: SlideProposal | null) => void;
+  onProposalApplied: (newSlideIds: string[]) => void;
 }) {
   const { feeds } = useFeeds();
 
@@ -199,11 +207,14 @@ export function Chat({
           <ChatWindow
             key={feedId}
             roomId={roomId}
+            slideId={slideId}
+            slideIds={slideIds}
             feedId={feedId}
             model={model}
             setModel={setModel}
             previewedProposal={previewedProposal}
             onPreviewProposal={onPreviewProposal}
+            onProposalApplied={onProposalApplied}
           />
         </ClientSideSuspense>
       </div>
@@ -213,26 +224,32 @@ export function Chat({
 
 function ChatWindow({
   roomId,
+  slideId,
+  slideIds,
   feedId,
   model,
   setModel,
   previewedProposal,
   onPreviewProposal,
+  onProposalApplied,
 }: {
   roomId: string;
+  slideId: string;
+  slideIds: string[];
   feedId: string;
   model: string;
   setModel: (model: string) => void;
   previewedProposal: SlideProposal | null;
   onPreviewProposal: (proposal: SlideProposal | null) => void;
+  onProposalApplied: (newSlideIds: string[]) => void;
 }) {
+  const room = useRoom();
   const { messages } = useFeedMessages(feedId);
   const createFeed = useCreateFeed();
   const createFeedMessage = useCreateFeedMessage();
   const deleteFeedMessage = useDeleteFeedMessage();
   const self = useSelf();
   const updateMyPresence = useUpdateMyPresence();
-  const currentSlideHtml = useSlideHtml();
 
   // The AI "thinking" status is shared via presence (scoped to this chat), so
   // everyone viewing this chat sees it — not just whoever triggered the reply.
@@ -274,11 +291,13 @@ function ChatWindow({
       .find(
         (message) =>
           message.data.role === "assistant" &&
-          message.data.proposedHtml &&
+          message.data.proposals &&
+          message.data.proposals.length > 0 &&
           !message.data.streaming
       );
     if (
-      latestProposal?.data.proposedHtml &&
+      latestProposal?.data.proposals &&
+      latestProposal.data.proposals.length > 0 &&
       latestProposal.data.proposalStatus === "pending" &&
       !autoPreviewedIds.current.has(latestProposal.id)
     ) {
@@ -286,7 +305,7 @@ function ChatWindow({
       onPreviewProposal({
         feedId,
         messageId: latestProposal.id,
-        html: latestProposal.data.proposedHtml,
+        proposals: latestProposal.data.proposals,
       });
     }
   }, [sorted, feedId, onPreviewProposal]);
@@ -307,6 +326,13 @@ function ChatWindow({
 
   const postReply = useCallback(
     async (history: { role: "user" | "assistant"; content: string }[]) => {
+      const provider = getYjsProviderForRoom(room);
+      const ydoc = provider.getYDoc();
+      const slides = getSlideIds(ydoc).map((id) => ({
+        id,
+        html: getSlideText(ydoc, id).toString(),
+      }));
+
       await fetch("/api/ai-reply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -315,11 +341,12 @@ function ChatWindow({
           feedId,
           model,
           messages: history,
-          currentSlideHtml,
+          slides,
+          currentSlideId: slideId,
         }),
       });
     },
-    [roomId, feedId, model, currentSlideHtml]
+    [room, roomId, feedId, model, slideId]
   );
 
   const send = useCallback(
@@ -441,7 +468,7 @@ function ChatWindow({
                 streaming,
                 chainOfThought,
                 tool,
-                proposedHtml,
+                proposals,
                 proposalStatus,
               } = message.data;
               const isAssistant = role === "assistant";
@@ -549,12 +576,13 @@ function ChatWindow({
                       ) : null}
                     </div>
 
-                    {isAssistant && proposedHtml ? (
+                    {isAssistant && proposals && proposals.length > 0 ? (
                       <ProposalCard
                         roomId={roomId}
                         feedId={feedId}
                         messageId={message.id}
-                        html={proposedHtml}
+                        proposals={proposals}
+                        slideIds={slideIds}
                         status={proposalStatus}
                         generating={!!streaming}
                         previewing={
@@ -562,6 +590,7 @@ function ChatWindow({
                           previewedProposal?.feedId === feedId
                         }
                         onPreview={onPreviewProposal}
+                        onApplied={onProposalApplied}
                       />
                     ) : null}
 
@@ -648,20 +677,24 @@ function ProposalCard({
   roomId,
   feedId,
   messageId,
-  html,
+  proposals,
+  slideIds,
   status = "pending",
   generating,
   previewing,
   onPreview,
+  onApplied,
 }: {
   roomId: string;
   feedId: string;
   messageId: string;
-  html: string;
+  proposals: { slideId: string; html: string }[];
+  slideIds: string[];
   status?: "pending" | "applied" | "rejected";
   generating: boolean;
   previewing: boolean;
   onPreview: (proposal: SlideProposal) => void;
+  onApplied: (newSlideIds: string[]) => void;
 }) {
   const [submitting, setSubmitting] = useState<"apply" | "reject" | null>(null);
 
@@ -672,7 +705,7 @@ function ProposalCard({
     if (generating && preRef.current) {
       preRef.current.scrollTop = preRef.current.scrollHeight;
     }
-  }, [generating, html]);
+  }, [generating, proposals]);
 
   const updateProposal = useCallback(
     async (action: "apply" | "reject") => {
@@ -682,39 +715,68 @@ function ProposalCard({
 
       setSubmitting(action);
       try {
-        await resolveProposal(roomId, { feedId, messageId, html }, action);
+        const { newSlideIds } = await resolveProposal(
+          roomId,
+          { feedId, messageId, proposals },
+          action
+        );
+        if (action === "apply") {
+          onApplied(newSlideIds);
+        }
       } finally {
         setSubmitting(null);
       }
     },
-    [feedId, html, messageId, roomId, submitting]
+    [feedId, messageId, onApplied, proposals, roomId, submitting]
   );
 
   return (
     <div className="mt-3 overflow-hidden rounded-md border border-neutral-950/10 bg-white shadow-xs">
-      <div className="flex items-center justify-between border-b border-neutral-950/5 px-3 py-2">
-        <span className="text-xs font-medium text-neutral-700">Changes</span>
-        {generating ? (
-          <Shimmer className="text-xs font-medium">Generating…</Shimmer>
-        ) : status !== "pending" ? (
-          <span className="text-xs font-medium text-neutral-400">
-            {status === "applied" ? "Applied" : "Rejected"}
-          </span>
-        ) : null}
-      </div>
-      <pre
-        ref={preRef}
-        className="max-h-48 overflow-auto bg-neutral-50 p-3 font-mono text-[11px] leading-relaxed text-neutral-700"
-      >
-        <code>{html}</code>
-      </pre>
+      {proposals.map((proposal, index) => {
+        const slideIndex = slideIds.indexOf(proposal.slideId);
+        const label =
+          proposal.slideId === "new"
+            ? "New slide"
+            : slideIndex === -1
+              ? "Deleted slide"
+              : `Slide ${slideIndex + 1}`;
+
+        return (
+          <section key={`${proposal.slideId}-${index}`}>
+            <div
+              className={`flex items-center justify-between border-neutral-950/5 px-3 py-2 ${
+                index === 0 ? "border-b" : "border-y"
+              }`}
+            >
+              <span className="text-xs font-medium text-neutral-700">
+                {label}
+              </span>
+              {index === 0 ? (
+                generating ? (
+                  <Shimmer className="text-xs font-medium">Generating…</Shimmer>
+                ) : status !== "pending" ? (
+                  <span className="text-xs font-medium text-neutral-400">
+                    {status === "applied" ? "Applied" : "Rejected"}
+                  </span>
+                ) : null
+              ) : null}
+            </div>
+            <pre
+              ref={index === proposals.length - 1 ? preRef : undefined}
+              className="max-h-48 overflow-auto bg-neutral-50 p-3 font-mono text-[11px] leading-relaxed text-neutral-700"
+            >
+              <code>{proposal.html}</code>
+            </pre>
+          </section>
+        );
+      })}
       {!generating && status === "pending" ? (
         <div className="flex items-center justify-end gap-2 border-t border-neutral-950/5 p-2">
           <Button
             variant="outline"
             size="sm"
             className="mr-auto"
-            onClick={() => onPreview({ feedId, messageId, html })}
+            onClick={() => onPreview({ feedId, messageId, proposals })}
             disabled={previewing}
           >
             <EyeIcon className="size-4" />
@@ -730,11 +792,14 @@ function ProposalCard({
           </Button>
           <Button
             size="sm"
-            className="bg-rose-600 text-white hover:bg-rose-700"
             onClick={() => updateProposal("apply")}
             disabled={submitting !== null}
           >
-            {submitting === "apply" ? "Applying..." : "Apply to slide"}
+            {submitting === "apply"
+              ? "Applying..."
+              : proposals.length === 1
+                ? "Apply to slide"
+                : "Apply to slides"}
           </Button>
         </div>
       ) : null}
