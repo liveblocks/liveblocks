@@ -27,7 +27,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 ## Documentation
 
 - New section on [rendering custom components](https://liveblocks.io/docs/api-reference/liveblocks-react-ui#Rendering-custom-components) inside threads.
-- Updated all pages in the pricing section to add clarity.
+- Updated all pages in the pricing section, increasing clarity.
 
 ## Contributors
 
