@@ -515,10 +515,10 @@ add_manual_env_vars_to_vercel() {
   ((${#manual_env_names[@]} == 0)) && return
 
   # Any non-Liveblocks variable in `.env.example` is added as an empty placeholder
-  # for preview deployments. Their values must be filled in manually on Vercel later.
+  # for preview and production deployments. Their values must be filled in manually on Vercel later.
   for manual_env_name in "${manual_env_names[@]}"; do
     vercel_request \
-      "Adding placeholder env var ${manual_env_name} to Vercel preview" \
+      "Adding placeholder env var ${manual_env_name} to Vercel" \
       "POST" \
       "$(vercel_url "/v10/projects/${vercel_project_id}/env")" \
       "$(jq -n \
@@ -527,7 +527,7 @@ add_manual_env_vars_to_vercel() {
           key: $key,
           value: "",
           type: "encrypted",
-          target: ["preview"]
+          target: ["preview", "production"]
         }')" \
       >/dev/null
   done
@@ -698,7 +698,7 @@ write_success_summary() {
     fi
     echo
     if ((${#manual_env_names[@]} > 0)); then
-      echo "Added to Vercel for preview as empty placeholders (fill in their values manually):"
+      echo "Added to Vercel for preview and production as empty placeholders (fill in their values manually):"
       echo
       for manual_env_name in "${manual_env_names[@]}"; do
         echo "- \`${manual_env_name}\`"

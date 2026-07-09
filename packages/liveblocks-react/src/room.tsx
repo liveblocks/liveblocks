@@ -42,6 +42,7 @@ import type {
   RoomEventMessage,
   RoomSubscriptionSettings,
   SignalType,
+  StorageNode,
   TextEditorType,
   ToJson,
   UnsubscribeCallback,
@@ -102,9 +103,10 @@ import type {
   FeedMessagesAsyncSuccess,
   FeedsAsyncResult,
   FeedsAsyncSuccess,
-  HistoryVersionDataAsyncResult,
   HistoryVersionsAsyncResult,
   HistoryVersionsAsyncSuccess,
+  HistoryVersionStorageDataAsyncResult,
+  HistoryVersionYjsDataAsyncResult,
   MutationContext,
   OmitFirstArg,
   RoomContextBundle,
@@ -223,6 +225,13 @@ function getRoomExtrasForClient<
   return extras as unknown as Omit<typeof extras, "store"> & {
     store: UmbrellaStore<TM, CM>;
   };
+}
+
+function getThreadVisibility<TM extends BaseMetadata, CM extends BaseMetadata>(
+  store: UmbrellaStore<TM, CM>,
+  threadId: string
+): ThreadData<TM, CM>["visibility"] | undefined {
+  return store.outputs.threads.get().getEvenIfDeleted(threadId)?.visibility;
 }
 
 function makeRoomExtrasForClient(client: OpaqueClient) {
@@ -1934,6 +1943,7 @@ function useCreateRoomThread<TM extends BaseMetadata, CM extends BaseMetadata>(
       const metadata = options.metadata ?? ({} as TM);
       const commentMetadata = options.commentMetadata ?? ({} as CM);
       const attachments = options.attachments;
+      const visibility = options.visibility ?? "public";
 
       const threadId = createThreadId();
       const commentId = createCommentId();
@@ -1960,6 +1970,7 @@ function useCreateRoomThread<TM extends BaseMetadata, CM extends BaseMetadata>(
         metadata,
         comments: [newComment],
         resolved: false,
+        visibility,
       };
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
@@ -1977,6 +1988,7 @@ function useCreateRoomThread<TM extends BaseMetadata, CM extends BaseMetadata>(
           threadId,
           commentId,
           body,
+          visibility,
           metadata,
           commentMetadata,
           attachmentIds,
@@ -1995,6 +2007,7 @@ function useCreateRoomThread<TM extends BaseMetadata, CM extends BaseMetadata>(
                 threadId,
                 commentId,
                 body,
+                visibility,
                 metadata,
                 commentMetadata,
               },
@@ -2041,18 +2054,24 @@ function useDeleteRoomThread(roomId: string): (threadId: string) => void {
         deletedAt: new Date(),
       });
 
-      client[kInternal].httpClient.deleteThread({ roomId, threadId }).then(
-        () => {
-          // Replace the optimistic update by the real thing
-          store.deleteThread(threadId, optimisticId);
-        },
-        (err: Error) =>
-          onMutationFailure(
-            optimisticId,
-            { type: "DELETE_THREAD_ERROR", roomId, threadId },
-            err
-          )
-      );
+      client[kInternal].httpClient
+        .deleteThread({
+          roomId,
+          threadId,
+          visibility: existing.visibility,
+        })
+        .then(
+          () => {
+            // Replace the optimistic update by the real thing
+            store.deleteThread(threadId, optimisticId);
+          },
+          (err: Error) =>
+            onMutationFailure(
+              optimisticId,
+              { type: "DELETE_THREAD_ERROR", roomId, threadId },
+              err
+            )
+        );
     },
     [client, roomId]
   );
@@ -2092,7 +2111,12 @@ function useEditRoomThreadMetadata<TM extends BaseMetadata>(roomId: string) {
       });
 
       client[kInternal].httpClient
-        .editThreadMetadata({ roomId, threadId, metadata })
+        .editThreadMetadata({
+          roomId,
+          threadId,
+          metadata,
+          visibility: getThreadVisibility(store, threadId),
+        })
         .then(
           (metadata) =>
             // Replace the optimistic update by the real thing
@@ -2152,7 +2176,13 @@ function useEditRoomCommentMetadata<CM extends BaseMetadata>(roomId: string) {
       });
 
       client[kInternal].httpClient
-        .editCommentMetadata({ roomId, threadId, commentId, metadata })
+        .editCommentMetadata({
+          roomId,
+          threadId,
+          commentId,
+          metadata,
+          visibility: getThreadVisibility(store, threadId),
+        })
         .then(
           (updatedMetadata) =>
             // Replace the optimistic update by the real thing
@@ -2247,6 +2277,7 @@ function useCreateRoomComment<CM extends BaseMetadata>(
           body,
           metadata,
           attachmentIds,
+          visibility: getThreadVisibility(store, threadId),
         })
         .then(
           (newComment) => {
@@ -2363,6 +2394,7 @@ function useEditRoomComment<CM extends BaseMetadata>(
           body,
           attachmentIds,
           metadata,
+          visibility: existing.visibility,
         })
         .then(
           (editedComment) => {
@@ -2430,7 +2462,12 @@ function useDeleteRoomComment(roomId: string) {
       });
 
       client[kInternal].httpClient
-        .deleteComment({ roomId, threadId, commentId })
+        .deleteComment({
+          roomId,
+          threadId,
+          commentId,
+          visibility: getThreadVisibility(store, threadId),
+        })
         .then(
           () => {
             // Replace the optimistic update by the real thing
@@ -2485,7 +2522,13 @@ function useAddRoomCommentReaction(roomId: string) {
       });
 
       client[kInternal].httpClient
-        .addReaction({ roomId, threadId, commentId, emoji })
+        .addReaction({
+          roomId,
+          threadId,
+          commentId,
+          emoji,
+          visibility: getThreadVisibility(store, threadId),
+        })
         .then(
           (addedReaction) => {
             // Replace the optimistic update by the real thing
@@ -2557,7 +2600,13 @@ function useRemoveRoomCommentReaction(roomId: string) {
       });
 
       client[kInternal].httpClient
-        .removeReaction({ roomId, threadId, commentId, emoji })
+        .removeReaction({
+          roomId,
+          threadId,
+          commentId,
+          emoji,
+          visibility: getThreadVisibility(store, threadId),
+        })
         .then(
           () => {
             // Replace the optimistic update by the real thing
@@ -2704,7 +2753,11 @@ function useMarkRoomThreadAsResolved(roomId: string) {
       });
 
       client[kInternal].httpClient
-        .markThreadAsResolved({ roomId, threadId })
+        .markThreadAsResolved({
+          roomId,
+          threadId,
+          visibility: getThreadVisibility(store, threadId),
+        })
         .then(
           () => {
             // Replace the optimistic update by the real thing
@@ -2764,7 +2817,11 @@ function useMarkRoomThreadAsUnresolved(roomId: string) {
       });
 
       client[kInternal].httpClient
-        .markThreadAsUnresolved({ roomId, threadId })
+        .markThreadAsUnresolved({
+          roomId,
+          threadId,
+          visibility: getThreadVisibility(store, threadId),
+        })
         .then(
           () => {
             // Replace the optimistic update by the real thing
@@ -3088,14 +3145,24 @@ function useRoomSubscriptionSettingsSuspense(): [
   return useRoomSubscriptionSettingsSuspense_withRoomContext(GlobalRoomContext);
 }
 
+// A Storage version endpoint returns its snapshot as an NDJSON stream of
+// StorageNode tuples (one JSON per line). Decodes it into the node array the
+// SDK reconstructs/diffs against.
+function parseStorageVersionNodes(ndjson: string): StorageNode[] {
+  return ndjson
+    .split("\n")
+    .filter((line) => line.length > 0)
+    .map((line) => JSON.parse(line) as StorageNode);
+}
+
 /**
  * @internal
  */
-function useHistoryVersionData_withRoomContext(
+function useHistoryVersionStorageData_withRoomContext(
   RoomContext: Context<OpaqueRoom | null>,
   versionId: string
-): HistoryVersionDataAsyncResult {
-  const [state, setState] = useState<HistoryVersionDataAsyncResult>({
+): HistoryVersionStorageDataAsyncResult {
+  const [state, setState] = useState<HistoryVersionStorageDataAsyncResult>({
     isLoading: true,
   });
   const room = useRoom_withRoomContext(RoomContext);
@@ -3103,7 +3170,65 @@ function useHistoryVersionData_withRoomContext(
     setState({ isLoading: true });
     const load = async () => {
       try {
-        const response = await room[kInternal].getTextVersion(versionId);
+        const response =
+          await room[kInternal].fetchStorageHistoryVersion(versionId);
+
+        // The endpoint returns the snapshot as an NDJSON node stream. Decode it
+        // and rebuild a (detached, read-only) LiveObject tree -- typed as
+        // `LsonObject` because a historical version may not match the current
+        // Storage schema.
+        const nodes = parseStorageVersionNodes(await response.text());
+        const data = room[kInternal].liveObjectFromNodeStream(nodes);
+        setState({ isLoading: false, data });
+      } catch (error) {
+        setState({
+          isLoading: false,
+          error:
+            error instanceof Error
+              ? error
+              : new Error(
+                  "An unknown error occurred while loading this version"
+                ),
+        });
+      }
+    };
+    void load();
+  }, [room, versionId]);
+  return state;
+}
+
+/**
+ * Returns the Storage data for a given version of the room.
+ *
+ * @example
+ * const { data, isLoading, error } = useHistoryVersionStorageData(versionId);
+ */
+function useHistoryVersionStorageData(
+  versionId: string
+): HistoryVersionStorageDataAsyncResult {
+  return useHistoryVersionStorageData_withRoomContext(
+    GlobalRoomContext,
+    versionId
+  );
+}
+
+/**
+ * @internal
+ */
+function useHistoryVersionYjsData_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>,
+  versionId: string
+): HistoryVersionYjsDataAsyncResult {
+  const [state, setState] = useState<HistoryVersionYjsDataAsyncResult>({
+    isLoading: true,
+  });
+  const room = useRoom_withRoomContext(RoomContext);
+  useEffect(() => {
+    setState({ isLoading: true });
+    const load = async () => {
+      try {
+        const response =
+          await room[kInternal].fetchYjsHistoryVersion(versionId);
         const buffer = await response.arrayBuffer();
         const data = new Uint8Array(buffer);
         setState({
@@ -3128,15 +3253,29 @@ function useHistoryVersionData_withRoomContext(
 }
 
 /**
- * Returns the version data bianry for a given version
+ * @deprecated Use `useHistoryVersionYjsData(versionId)` instead.
+ *
+ * Returns the version data binary for a given version
  *
  * @example
  * const {data} = useHistoryVersionData(versionId);
  */
 function useHistoryVersionData(
   versionId: string
-): HistoryVersionDataAsyncResult {
-  return useHistoryVersionData_withRoomContext(GlobalRoomContext, versionId);
+): HistoryVersionYjsDataAsyncResult {
+  return useHistoryVersionYjsData_withRoomContext(GlobalRoomContext, versionId);
+}
+
+/**
+ * Returns the Yjs data for a given version of the room.
+ *
+ * @example
+ * const { data, isLoading, error } = useHistoryVersionYjsData(versionId);
+ */
+function useHistoryVersionYjsData(
+  versionId: string
+): HistoryVersionYjsDataAsyncResult {
+  return useHistoryVersionYjsData_withRoomContext(GlobalRoomContext, versionId);
 }
 
 /**
@@ -3174,6 +3313,61 @@ function useHistoryVersions_withRoomContext(
   );
 
   return useSignal(store.outputs.versionsByRoomId.getOrCreate(room.id).signal);
+}
+
+/**
+ * @internal
+ */
+function useDeleteHistoryVersion_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+): (versionId: string) => Promise<void> {
+  const room = useRoom_withRoomContext(RoomContext);
+  return useCallback(
+    (versionId: string) => room[kInternal].deleteHistoryVersion(versionId),
+    [room]
+  );
+}
+
+/**
+ * Returns a function that permanently deletes a version from the room's history.
+ *
+ * @example
+ * const deleteHistoryVersion = useDeleteHistoryVersion();
+ * deleteHistoryVersion(versionId);
+ */
+function useDeleteHistoryVersion(): (versionId: string) => Promise<void> {
+  return useDeleteHistoryVersion_withRoomContext(GlobalRoomContext);
+}
+
+/**
+ * @internal
+ */
+function useRestoreToStorageVersion_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>,
+  versionId: string
+): () => Promise<void> {
+  const room = useRoom_withRoomContext(RoomContext);
+  return useCallback(async () => {
+    const response =
+      await room[kInternal].fetchStorageHistoryVersion(versionId);
+    const nodes = parseStorageVersionNodes(await response.text());
+    room[kInternal].reconcileStorageWithNodes(nodes);
+  }, [room, versionId]);
+}
+
+/**
+ * Returns a function that restores the room's Storage to the given historic
+ * version, applied as a single undoable change (broadcast to other clients).
+ *
+ * @example
+ * const restore = useRestoreToStorageVersion(versionId);
+ * await restore();
+ */
+function useRestoreToStorageVersion(versionId: string): () => Promise<void> {
+  return useRestoreToStorageVersion_withRoomContext(
+    GlobalRoomContext,
+    versionId
+  );
 }
 
 /**
@@ -3754,12 +3948,23 @@ function useSelfAccessFallback(
   );
 
   const getSnapshot = useCallback(() => {
-    const self = room?.id === roomId ? room.getSelf() : null;
-    if (resource === "comments" && requiredAccess === "write") {
-      return self?.canComment ?? true;
+    const isCommentsResource =
+      resource === "comments" ||
+      resource === "comments:public" ||
+      resource === "comments:private";
+
+    if (room?.id === roomId) {
+      const permissionMatrix = room[kInternal].getPermissionMatrix();
+      if (permissionMatrix !== undefined) {
+        return hasPermissionAccess(permissionMatrix, resource, requiredAccess);
+      }
     }
-    if (resource === "storage" && requiredAccess === "write") {
-      return self?.canWrite ?? true;
+
+    if (
+      requiredAccess === "write" &&
+      (isCommentsResource || resource === "storage")
+    ) {
+      return true;
     }
 
     return false;
@@ -4059,10 +4264,29 @@ export function createRoomContext<
     return useHistoryVersionsSuspense_withRoomContext(BoundRoomContext);
   }
 
-  function useHistoryVersionData_withBoundRoomContext(
-    ...args: Parameters<typeof useHistoryVersionData>
+  function useHistoryVersionStorageData_withBoundRoomContext(
+    ...args: Parameters<typeof useHistoryVersionStorageData>
   ) {
-    return useHistoryVersionData_withRoomContext(BoundRoomContext, ...args);
+    return useHistoryVersionStorageData_withRoomContext(
+      BoundRoomContext,
+      ...args
+    );
+  }
+
+  function useHistoryVersionYjsData_withBoundRoomContext(
+    ...args: Parameters<typeof useHistoryVersionYjsData>
+  ) {
+    return useHistoryVersionYjsData_withRoomContext(BoundRoomContext, ...args);
+  }
+
+  function useDeleteHistoryVersion_withBoundRoomContext() {
+    return useDeleteHistoryVersion_withRoomContext(BoundRoomContext);
+  }
+
+  function useRestoreToStorageVersion_withBoundRoomContext(
+    ...args: Parameters<typeof useRestoreToStorageVersion>
+  ) {
+    return useRestoreToStorageVersion_withRoomContext(BoundRoomContext, ...args);
   }
 
   function useRoomSubscriptionSettings_withBoundRoomContext() {
@@ -4233,7 +4457,15 @@ export function createRoomContext<
     // prettier-ignore
     useHistoryVersions: useHistoryVersions_withBoundRoomContext as TRoomBundle["useHistoryVersions"],
     // prettier-ignore
-    useHistoryVersionData: useHistoryVersionData_withBoundRoomContext as TRoomBundle["useHistoryVersionData"],
+    useHistoryVersionData: useHistoryVersionYjsData_withBoundRoomContext as TRoomBundle["useHistoryVersionData"],
+    // prettier-ignore
+    useHistoryVersionStorageData: useHistoryVersionStorageData_withBoundRoomContext as TRoomBundle["useHistoryVersionStorageData"],
+    useHistoryVersionYjsData:
+      useHistoryVersionYjsData_withBoundRoomContext as TRoomBundle["useHistoryVersionYjsData"],
+    // prettier-ignore
+    useDeleteHistoryVersion: useDeleteHistoryVersion_withBoundRoomContext as TRoomBundle["useDeleteHistoryVersion"],
+    // prettier-ignore
+    useRestoreToStorageVersion: useRestoreToStorageVersion_withBoundRoomContext as TRoomBundle["useRestoreToStorageVersion"],
 
     // prettier-ignore
     useRoomSubscriptionSettings: useRoomSubscriptionSettings_withBoundRoomContext as TRoomBundle["useRoomSubscriptionSettings"],
@@ -4990,6 +5222,7 @@ export {
   useDeleteComment,
   useDeleteFeed,
   useDeleteFeedMessage,
+  useDeleteHistoryVersion,
   useDeleteRoomComment,
   useDeleteRoomThread,
   useDeleteTextMention,
@@ -5010,6 +5243,8 @@ export {
   useHistoryVersionData,
   _useHistoryVersions as useHistoryVersions,
   _useHistoryVersionsSuspense as useHistoryVersionsSuspense,
+  useHistoryVersionStorageData,
+  useHistoryVersionYjsData,
   _useIsInsideRoom as useIsInsideRoom,
   useLostConnectionListener,
   useMarkRoomThreadAsRead,
@@ -5035,6 +5270,7 @@ export {
   useRemoveRoomCommentReaction,
   useReportTextEditor,
   useResolveMentionSuggestions,
+  useRestoreToStorageVersion,
   _useRoom as useRoom,
   useRoomAttachmentUrl,
   useRoomPermissions,

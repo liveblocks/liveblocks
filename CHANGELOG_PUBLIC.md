@@ -18,6 +18,124 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 27 (2026-07-03)
+
+## v3.21.0
+
+### All packages
+
+- Add support for public and private threads. Threads now have a `visibility`
+  property that is `"public"` by default but can be set to `"private"` when
+  created. Permissions can be used to decide which threads a user has access to,
+  and threads can also be queried by their visibility to create filtered views.
+- Add scoped comments permissions such as `comments:public:write` and
+  `comments:private:none`.
+
+### `@liveblocks/client`
+
+- **Breaking:** Remove `type` and `kind` fields from `HistoryVersion` type. The
+  backend no longer returns these.
+- Add `visibility` to `createThread`.
+- Support querying by `visibility` in `getThreads`.
+
+### `@liveblocks/react`
+
+- Add `visibility` to `useCreateThread`.
+- Support querying by `visibility` in `useThreads`.
+- Add `useHistoryVersionYjsData()` hook to retrieve raw Yjs binary data for a
+  given version. Deprecate `useHistoryVersionData()` in its favor.
+
+### `@liveblocks/node`
+
+- Add `visibility` to `createThread`.
+- Support querying by `visibility` in `getThreads`.
+
+### `@liveblocks/react-ui`
+
+- Add a `visibility` prop to `Composer`.
+- Prevent `Composer` from collapsing after focusing and blurring unless it was
+  explicitly meant to support a collapsed state.
+
+## Documentation
+
+- New guide: [How to add private commenting to your app](https://liveblocks.io/docs/guides/how-to-add-private-commenting-to-your-app).
+- New guide: [How to use public and private threads](https://liveblocks.io/docs/guides/how-to-use-public-and-private-threads).
+
+## Examples
+
+- Update [Linear-like Issue Tracker](https://liveblocks.io/examples/linear-like-issue-tracker/nextjs-linear-like-issue-tracker)_to use latest Next.js caching features.
+
+## Website
+
+- New blog post: [What's new in Liveblocks: June 2026](https://liveblocks.io/blog/whats-new-in-liveblocks-june-2026).
+
+## Contributors
+
+ctnicholas, ofoucherot, marcbouchenoire, nvie
+
+# Week 26 (2026-06-26)
+
+## v3.20.1
+
+### `@liveblocks/client`
+
+- Fix a bug where sending a too large WebSocket message could sometimes overwrite a room's top-level storage key with `initialStorage`, causing data loss. Thanks for reporting [@watemerald](https://github.com/watemerald)!
+
+## Dashboard
+
+- Added support for manual and automatic re-ingestion of (web) knowledge sources at specified interval.
+- Streamlined display of knowledge sources and linking/unlinking of knowledge sources and copilots.
+
+## Contributors
+
+nimeshnayaju, pierrelevaillant, nvie
+
+# Week 25 (2026-06-19)
+
+## v3.20.0
+
+### All packages
+
+- Add support for new resource-specific permissions. You can now start from a
+  `*:read` or `*:write` base, then grant or deny access per resource (storage,
+  comments, feeds) using new permission strings like `storage:none` or
+  `comments:read`.
+
+### `@liveblocks/node`
+
+- Deprecate `session.FULL_ACCESS` and `session.READ_ACCESS` in favor of
+  `["*:write"]` and `["*:read"]` respectively.
+
+### `@liveblocks/client`
+
+- Deprecate `room.getStorageSnapshot()` in favor of `room.getStorageOrNull()`.
+
+## Examples
+
+- New example: [AI Spreadsheet](https://liveblocks.io/examples/ai-spreadsheet/nextjs-ai-spreadsheet).
+- New example: [Realtime AI Elements Chats](https://liveblocks.io/examples/ai-elements-realtime/nextjs-ai-elements-realtime).
+- Added “?” button to various examples, featuring a pop-up that explains how to use them.
+
+## Contributors
+
+ofoucherot, nvie, marcbouchenoire, ctnicholas
+
+# Week 24 (2026-06-12)
+
+## v3.19.5
+
+### `@liveblocks/client`
+
+- Fix a `LiveList` divergence after reconnects: a pending `push` could under specific timing conditions during a reconnect still cause a divergence between clients, despite the fix from 3.19.4.
+
+## Liveblocks dev server (v1.6.1)
+
+- Fix a `LiveList` divergence after reconnects: when a client re-sends a pending `push` op whose node the server had already stored (the original ack got lost in the disconnect)
+
+## Contributors
+
+nvie
+
 # Week 23 (2026-06-05)
 
 ## v3.19.4
@@ -49,9 +167,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ## Liveblocks dev server (v1.6.0)
 
-- Update internal storage format of dev server. Note that your local dev rooms
-  are not automatically migrated and will appear as empty rooms after the
-  upgrade.
+- Update internal storage format of dev server. Note that your local dev rooms are not automatically migrated and will appear as empty rooms after the upgrade.
 
 ## Contributors
 

@@ -150,21 +150,22 @@ describe("useUserThreads", () => {
 
   test("should fetch user threads for given query on mount", async () => {
     const roomId = nanoid();
-    const pinnedThread = dummyThreadData({
+    const privatePinnedThread = dummyThreadData({
+      roomId,
+      visibility: "private",
+      metadata: {
+        pinned: true,
+      },
+    });
+    const publicPinnedThread = dummyThreadData({
       roomId,
       metadata: {
         pinned: true,
       },
     });
-    const unpinnedThread = dummyThreadData({
-      roomId,
-      metadata: {
-        pinned: false,
-      },
-    });
     const subscriptions = [
-      dummySubscriptionData({ subjectId: pinnedThread.id }),
-      dummySubscriptionData({ subjectId: unpinnedThread.id }),
+      dummySubscriptionData({ subjectId: privatePinnedThread.id }),
+      dummySubscriptionData({ subjectId: publicPinnedThread.id }),
     ];
 
     server.use(
@@ -173,7 +174,7 @@ describe("useUserThreads", () => {
         const query = url.searchParams.get("query");
         const pred = query ? makeThreadFilter(query) : () => true;
         return HttpResponse.json({
-          threads: [pinnedThread, unpinnedThread].filter(pred),
+          threads: [privatePinnedThread, publicPinnedThread].filter(pred),
           inboxNotifications: [],
           subscriptions,
           meta: {
@@ -193,7 +194,9 @@ describe("useUserThreads", () => {
 
     const { result, unmount } = renderHook(
       () =>
-        useUserThreads_experimental({ query: { metadata: { pinned: true } } }),
+        useUserThreads_experimental({
+          query: { visibility: "private", metadata: { pinned: true } },
+        }),
       {
         wrapper: ({ children }) => (
           <LiveblocksProvider>{children}</LiveblocksProvider>
@@ -208,7 +211,7 @@ describe("useUserThreads", () => {
     await vi.waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
-        threads: [pinnedThread],
+        threads: [privatePinnedThread],
         fetchMore: expect.any(Function),
         isFetchingMore: false,
         hasFetchedAll: true,

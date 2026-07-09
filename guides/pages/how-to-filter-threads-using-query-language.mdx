@@ -17,9 +17,9 @@ to have filtering that works the same as with
 
 ## Query language
 
-You can filter threads by their metadata, allowing you to select for certain
-properties, values, or even for string prefixes. Filters can be combined using
-`AND` logic.
+You can filter threads by their metadata, resolved status, or visibility,
+allowing you to select for certain properties, values, or even for string
+prefixes. Filters can be combined using `AND` logic.
 
 ```js
 // Resolved threads
@@ -39,6 +39,9 @@ metadata['pinned']:false
 
 // Threads without a `color` property
 metadata['color']:null
+
+// Private threads
+visibility:'private'
 
 // Combine queries with AND
 resolved:true AND metadata['priority']:3

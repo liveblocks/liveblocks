@@ -25,7 +25,7 @@ import { stringifyOrLog as stringify } from "./lib/stringify";
 import type { QueryParams, URLSafeString } from "./lib/url";
 import { url, urljoin } from "./lib/url";
 import { raise } from "./lib/utils";
-import type { RoomPermissions } from "./permissions";
+import type { RoomPermissions, RoomPermissionsResource } from "./permissions";
 import type {
   ContextualPromptContext,
   ContextualPromptResponse,
@@ -45,6 +45,7 @@ import type {
   ThreadDataPlain,
   ThreadDeleteInfo,
   ThreadDeleteInfoPlain,
+  ThreadVisibility,
 } from "./protocol/Comments";
 import type { GroupData, GroupDataPlain } from "./protocol/Groups";
 import type {
@@ -78,6 +79,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     cursor?: string;
     query?: {
       resolved?: boolean;
+      visibility?: ThreadVisibility;
       subscribed?: boolean;
       metadata?: Partial<QueryMetadata<TM>>;
     };
@@ -141,6 +143,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     roomId: string;
     threadId?: string;
     commentId?: string;
+    visibility?: ThreadVisibility;
     metadata: TM | undefined;
     commentMetadata: CM | undefined;
     body: CommentBody;
@@ -159,6 +162,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
   }: {
     roomId: string;
     threadId: string;
+    visibility?: ThreadVisibility;
   }): Promise<void>;
 
   editThreadMetadata({
@@ -169,6 +173,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     roomId: string;
     metadata: Patchable<TM>;
     threadId: string;
+    visibility?: ThreadVisibility;
   }): Promise<TM>;
 
   editCommentMetadata({
@@ -181,6 +186,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     threadId: string;
     commentId: string;
     metadata: Patchable<CM>;
+    visibility?: ThreadVisibility;
   }): Promise<CM>;
 
   createComment({
@@ -197,6 +203,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     body: CommentBody;
     metadata?: CM;
     attachmentIds?: string[];
+    visibility?: ThreadVisibility;
   }): Promise<CommentData<CM>>;
 
   editComment({
@@ -213,6 +220,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     body: CommentBody;
     attachmentIds?: string[];
     metadata?: Patchable<CM>;
+    visibility?: ThreadVisibility;
   }): Promise<CommentData<CM>>;
 
   deleteComment({
@@ -223,6 +231,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     roomId: string;
     threadId: string;
     commentId: string;
+    visibility?: ThreadVisibility;
   }): Promise<void>;
 
   addReaction({
@@ -235,6 +244,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     threadId: string;
     commentId: string;
     emoji: string;
+    visibility?: ThreadVisibility;
   }): Promise<CommentUserReaction>;
 
   removeReaction({
@@ -247,6 +257,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     threadId: string;
     commentId: string;
     emoji: string;
+    visibility?: ThreadVisibility;
   }): Promise<void>;
 
   markThreadAsResolved({
@@ -255,6 +266,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
   }: {
     roomId: string;
     threadId: string;
+    visibility?: ThreadVisibility;
   }): Promise<void>;
 
   markThreadAsUnresolved({
@@ -263,6 +275,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
   }: {
     roomId: string;
     threadId: string;
+    visibility?: ThreadVisibility;
   }): Promise<void>;
 
   subscribeToThread({
@@ -343,7 +356,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     mentionId: string;
   }): Promise<void>;
 
-  getTextVersion({
+  fetchStorageHistoryVersion({
     roomId,
     versionId,
   }: {
@@ -351,7 +364,23 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     versionId: string;
   }): Promise<Response>;
 
-  createTextVersion({ roomId }: { roomId: string }): Promise<void>;
+  fetchYjsHistoryVersion({
+    roomId,
+    versionId,
+  }: {
+    roomId: string;
+    versionId: string;
+  }): Promise<Response>;
+
+  createVersionHistorySnapshot({ roomId }: { roomId: string }): Promise<void>;
+
+  deleteHistoryVersion({
+    roomId,
+    versionId,
+  }: {
+    roomId: string;
+    versionId: string;
+  }): Promise<void>;
 
   reportTextEditor({
     roomId,
@@ -363,20 +392,12 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     rootKey: string;
   }): Promise<void>;
 
-  listTextVersions({ roomId }: { roomId: string }): Promise<{
-    versions: {
-      type: "historyVersion";
-      kind: "yjs";
-      id: string;
-      authors: {
-        id: string;
-      }[];
-      createdAt: Date;
-    }[];
+  listHistoryVersions({ roomId }: { roomId: string }): Promise<{
+    versions: HistoryVersion[];
     requestedAt: Date;
   }>;
 
-  listTextVersionsSince({
+  listHistoryVersionsSince({
     roomId,
     since,
     signal,
@@ -385,15 +406,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     since: Date;
     signal?: AbortSignal;
   }): Promise<{
-    versions: {
-      type: "historyVersion";
-      kind: "yjs";
-      id: string;
-      authors: {
-        id: string;
-      }[];
-      createdAt: Date;
-    }[];
+    versions: HistoryVersion[];
     requestedAt: Date;
   }>;
 
@@ -487,6 +500,7 @@ export interface LiveblocksHttpApi<
     cursor?: string;
     query?: {
       resolved?: boolean;
+      visibility?: ThreadVisibility;
       metadata?: Partial<QueryMetadata<TM>>;
     };
   }): Promise<{
@@ -521,6 +535,20 @@ export interface LiveblocksHttpApi<
   groupsStore: BatchStore<GroupData | undefined, string>;
 
   getGroup(groupId: string): Promise<GroupData | undefined>;
+}
+
+function commentsResourceForVisibility(
+  visibility: ThreadVisibility | undefined
+): RoomPermissionsResource {
+  if (visibility === "private") {
+    return "comments:private";
+  }
+
+  if (visibility === "public") {
+    return "comments:public";
+  }
+
+  return "comments";
 }
 
 export function createApiClient<
@@ -596,6 +624,7 @@ export function createApiClient<
     cursor?: string;
     query?: {
       resolved?: boolean;
+      visibility?: ThreadVisibility;
       subscribed?: boolean;
       metadata?: Partial<QueryMetadata<TM>>;
     };
@@ -625,7 +654,7 @@ export function createApiClient<
         url`/v2/c/rooms/${options.roomId}/threads`,
         await authManager.getAuthValue({
           roomId: options.roomId,
-          resource: "comments",
+          resource: commentsResourceForVisibility(options.query?.visibility),
           access: "read",
         }),
         {
@@ -713,6 +742,7 @@ export function createApiClient<
     roomId: string;
     threadId?: string;
     commentId?: string;
+    visibility?: ThreadVisibility;
     metadata: TM | undefined;
     body: CommentBody;
     commentMetadata?: CM;
@@ -725,11 +755,12 @@ export function createApiClient<
       url`/v2/c/rooms/${options.roomId}/threads`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        resource: "comments",
+        resource: commentsResourceForVisibility(options.visibility ?? "public"),
         access: "write",
       }),
       {
         id: threadId,
+        visibility: options.visibility,
         comment: {
           id: commentId,
           body: options.body,
@@ -743,12 +774,16 @@ export function createApiClient<
     return convertToThreadData<TM, CM>(thread);
   }
 
-  async function deleteThread(options: { roomId: string; threadId: string }) {
+  async function deleteThread(options: {
+    roomId: string;
+    threadId: string;
+    visibility?: ThreadVisibility;
+  }) {
     await httpClient.delete(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        resource: "comments",
+        resource: commentsResourceForVisibility(options.visibility),
         access: "write",
       })
     );
@@ -797,12 +832,13 @@ export function createApiClient<
     roomId: string;
     metadata: Patchable<TM>;
     threadId: string;
+    visibility?: ThreadVisibility;
   }) {
     return await httpClient.post<TM>(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/metadata`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        resource: "comments",
+        resource: commentsResourceForVisibility(options.visibility),
         access: "write",
       }),
       options.metadata
@@ -814,12 +850,13 @@ export function createApiClient<
     threadId: string;
     commentId: string;
     metadata: Patchable<CM>;
+    visibility?: ThreadVisibility;
   }) {
     return await httpClient.post<CM>(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments/${options.commentId}/metadata`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        resource: "comments",
+        resource: commentsResourceForVisibility(options.visibility),
         access: "write",
       }),
       options.metadata
@@ -833,13 +870,14 @@ export function createApiClient<
     body: CommentBody;
     metadata?: CM;
     attachmentIds?: string[];
+    visibility?: ThreadVisibility;
   }) {
     const commentId = options.commentId ?? createCommentId();
     const comment = await httpClient.post<CommentDataPlain<CM>>(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        resource: "comments",
+        resource: commentsResourceForVisibility(options.visibility),
         access: "write",
       }),
       {
@@ -859,12 +897,13 @@ export function createApiClient<
     body: CommentBody;
     attachmentIds?: string[];
     metadata?: Patchable<CM>;
+    visibility?: ThreadVisibility;
   }) {
     const comment = await httpClient.post<CommentDataPlain<CM>>(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments/${options.commentId}`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        resource: "comments",
+        resource: commentsResourceForVisibility(options.visibility),
         access: "write",
       }),
       {
@@ -881,12 +920,13 @@ export function createApiClient<
     roomId: string;
     threadId: string;
     commentId: string;
+    visibility?: ThreadVisibility;
   }) {
     await httpClient.delete(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments/${options.commentId}`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        resource: "comments",
+        resource: commentsResourceForVisibility(options.visibility),
         access: "write",
       })
     );
@@ -897,12 +937,13 @@ export function createApiClient<
     threadId: string;
     commentId: string;
     emoji: string;
+    visibility?: ThreadVisibility;
   }) {
     const reaction = await httpClient.post<CommentUserReactionPlain>(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments/${options.commentId}/reactions`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        resource: "comments",
+        resource: commentsResourceForVisibility(options.visibility),
         access: "write",
       }),
       { emoji: options.emoji }
@@ -916,12 +957,13 @@ export function createApiClient<
     threadId: string;
     commentId: string;
     emoji: string;
+    visibility?: ThreadVisibility;
   }) {
     await httpClient.delete<CommentDataPlain<CM>>(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments/${options.commentId}/reactions/${options.emoji}`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        resource: "comments",
+        resource: commentsResourceForVisibility(options.visibility),
         access: "write",
       })
     );
@@ -930,12 +972,13 @@ export function createApiClient<
   async function markThreadAsResolved(options: {
     roomId: string;
     threadId: string;
+    visibility?: ThreadVisibility;
   }) {
     await httpClient.post(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/mark-as-resolved`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        resource: "comments",
+        resource: commentsResourceForVisibility(options.visibility),
         access: "write",
       })
     );
@@ -944,12 +987,13 @@ export function createApiClient<
   async function markThreadAsUnresolved(options: {
     roomId: string;
     threadId: string;
+    visibility?: ThreadVisibility;
   }) {
     await httpClient.post(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/mark-as-unresolved`,
       await authManager.getAuthValue({
         roomId: options.roomId,
-        resource: "comments",
+        resource: commentsResourceForVisibility(options.visibility),
         access: "write",
       })
     );
@@ -1050,7 +1094,7 @@ export function createApiClient<
       return autoRetry(
         async () =>
           httpClient.putBlob<CommentAttachment>(
-            url`/v2/c/rooms/${roomId}/attachments/${attachment.id}/upload/${encodeURIComponent(attachment.name)}`,
+            url`/v2/c/rooms/${roomId}/attachments/${attachment.id}/upload/${attachment.name}`,
             await authManager.getAuthValue({
               roomId,
               resource: "comments",
@@ -1079,7 +1123,7 @@ export function createApiClient<
             uploadId: string;
             key: string;
           }>(
-            url`/v2/c/rooms/${roomId}/attachments/${attachment.id}/multipart/${encodeURIComponent(attachment.name)}`,
+            url`/v2/c/rooms/${roomId}/attachments/${attachment.id}/multipart/${attachment.name}`,
             await authManager.getAuthValue({
               roomId,
               resource: "comments",
@@ -1346,12 +1390,12 @@ export function createApiClient<
     );
   }
 
-  async function getTextVersion(options: {
+  async function fetchStorageHistoryVersion(options: {
     roomId: string;
     versionId: string;
   }) {
     return httpClient.rawGet(
-      url`/v2/c/rooms/${options.roomId}/y-version/${options.versionId}`,
+      url`/v2/c/rooms/${options.roomId}/versions/${options.versionId}/storage`,
       await authManager.getAuthValue({
         roomId: options.roomId,
         resource: "storage",
@@ -1360,9 +1404,37 @@ export function createApiClient<
     );
   }
 
-  async function createTextVersion(options: { roomId: string }) {
+  async function fetchYjsHistoryVersion(options: {
+    roomId: string;
+    versionId: string;
+  }) {
+    return httpClient.rawGet(
+      url`/v2/c/rooms/${options.roomId}/versions/${options.versionId}/yjs`,
+      await authManager.getAuthValue({
+        roomId: options.roomId,
+        resource: "storage",
+        access: "read",
+      })
+    );
+  }
+
+  async function createVersionHistorySnapshot(options: { roomId: string }) {
     await httpClient.rawPost(
-      url`/v2/c/rooms/${options.roomId}/version`,
+      url`/v2/c/rooms/${options.roomId}/versions`,
+      await authManager.getAuthValue({
+        roomId: options.roomId,
+        resource: "storage",
+        access: "write",
+      })
+    );
+  }
+
+  async function deleteHistoryVersion(options: {
+    roomId: string;
+    versionId: string;
+  }) {
+    await httpClient.delete(
+      url`/v2/c/rooms/${options.roomId}/versions/${options.versionId}`,
       await authManager.getAuthValue({
         roomId: options.roomId,
         resource: "storage",
@@ -1426,7 +1498,7 @@ export function createApiClient<
     return result.content[0].text;
   }
 
-  async function listTextVersions(options: { roomId: string }) {
+  async function listHistoryVersions(options: { roomId: string }) {
     const result = await httpClient.get<{
       versions: DateToString<HistoryVersion>[];
       meta: {
@@ -1452,7 +1524,7 @@ export function createApiClient<
     };
   }
 
-  async function listTextVersionsSince(options: {
+  async function listHistoryVersionsSince(options: {
     roomId: string;
     since: Date;
     signal?: AbortSignal;
@@ -1697,6 +1769,7 @@ export function createApiClient<
     cursor?: string;
     query?: {
       resolved?: boolean;
+      visibility?: ThreadVisibility;
       metadata?: Partial<QueryMetadata<TM>>;
     };
   }) {
@@ -1859,11 +1932,13 @@ export function createApiClient<
     // Room text editor
     createTextMention,
     deleteTextMention,
-    getTextVersion,
-    createTextVersion,
+    fetchStorageHistoryVersion,
+    fetchYjsHistoryVersion,
+    createVersionHistorySnapshot,
+    deleteHistoryVersion,
     reportTextEditor,
-    listTextVersions,
-    listTextVersionsSince,
+    listHistoryVersions,
+    listHistoryVersionsSince,
     // Room attachments
     getAttachmentUrl,
     uploadAttachment,

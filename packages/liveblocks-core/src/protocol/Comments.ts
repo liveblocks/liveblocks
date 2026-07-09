@@ -172,6 +172,8 @@ export type SearchCommentsResult = {
   content: string;
 };
 
+export type ThreadVisibility = "public" | "private";
+
 /**
  * Represents a thread of comments.
  */
@@ -187,6 +189,7 @@ export type ThreadData<
   comments: CommentData<CM>[];
   metadata: TM;
   resolved: boolean;
+  visibility: ThreadVisibility;
 };
 
 export interface ThreadDataWithDeleteInfo<

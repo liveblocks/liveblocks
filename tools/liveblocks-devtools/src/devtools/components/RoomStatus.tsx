@@ -12,18 +12,13 @@ export function RoomStatus({ className, ...props }: ComponentProps<"div">) {
   const statusContent = useMemo(() => {
     switch (currentStatus) {
       case "connected":
-      case "open": // Sent by old clients (prior to 1.1)
         return <Ping className="text-green-500 dark:text-green-400" />;
 
       case "connecting":
       case "reconnecting":
-      case "authenticating": // Sent by old clients (prior to 1.1)
-      case "unavailable": // Sent by old clients (prior to 1.1)
         return <Ping className="text-orange-500 dark:text-orange-400" />;
 
       case "disconnected":
-      case "closed": // Sent by old clients (prior to 1.1)
-      case "failed": // Sent by old clients (prior to 1.1)
         return (
           <Ping className="text-red-500 dark:text-red-400" animate={false} />
         );

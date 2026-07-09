@@ -511,5 +511,26 @@
     "topics": ["presence", "tutorials", "data-fetching"],
     "technologies": ["react-ui", "react"],
     "date": "2026-03-04"
+  },
+  {
+    "title": "How to use public and private threads",
+    "path": "/how-to-use-public-and-private-threads",
+    "topics": ["comments", "authentication"],
+    "technologies": ["react", "nodejs"],
+    "date": "2026-06-23"
+  },
+  {
+    "title": "How to add private commenting to your app",
+    "path": "/how-to-add-private-commenting-to-your-app",
+    "topics": ["comments", "authentication"],
+    "technologies": ["react", "nextjs"],
+    "date": "2026-06-24"
+  },
+  {
+    "title": "How to add version history to your app",
+    "path": "/how-to-add-version-history-to-your-app",
+    "topics": ["state", "text-editors", "rest-api"],
+    "technologies": ["react", "storage", "yjs", "react-ui"],
+    "date": "2026-07-03"
   }
 ]

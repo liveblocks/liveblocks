@@ -86,10 +86,10 @@ print(result)
 #### `create_room`
 
 This endpoint creates a new room. `id` and `defaultAccesses` are required. When provided with a `?idempotent` query argument, will not return a 409 when the room already exists, but instead return the existing room as-is. Corresponds to [`liveblocks.createRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms), or to [`liveblocks.getOrCreateRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-or-create-rooms-roomId) when `?idempotent` is provided. 
-- `defaultAccesses` could be `[]` or `["*:write"]` (private or public). 
+- `defaultAccesses` is the default room permission list, for example `[]`, `["*:read"]`, `["*:write"]`, or a more granular permission list. 
 - `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.
-- `usersAccesses` could be `[]` or `["*:write"]` for every records. `usersAccesses` can contain 1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
-- `groupsAccesses` are optional fields.
+- `usersAccesses` contains user-specific permission lists. It can contain 1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
+- `groupsAccesses` contains group-specific permission lists and is optional.
 
 
 **Example**
@@ -151,10 +151,10 @@ Setting a property to `null` means to delete this property. For example, if you 
 }``
 `defaultAccesses`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.
 
-- `defaultAccesses` could be `[]` or `["*:write"]` (private or public). 
+- `defaultAccesses` is the default room permission list, for example `[]`, `["*:read"]`, `["*:write"]`, or a more granular permission list.
 - `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.
-- `usersAccesses` could be `[]` or `["*:write"]` for every records. `usersAccesses` can contain 1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
-- `groupsAccesses` could be `[]` or `["*:write"]` for every records. `groupsAccesses` can contain 1000 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.
+- `usersAccesses` contains user-specific permission lists. It can contain 1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
+- `groupsAccesses` contains group-specific permission lists and is optional.
 
 **Example**
 ```python
@@ -231,10 +231,10 @@ Setting a property to `null` means to delete this property. For example, if you 
 }``
 `defaultAccesses`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.
 
-- `defaultAccesses` could be `[]` or `["*:write"]` (private or public). 
+- `defaultAccesses` is the default room permission list, for example `[]`, `["*:read"]`, `["*:write"]`, or a more granular permission list.
 - `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.
-- `usersAccesses` could be `[]` or `["*:write"]` for every records. `usersAccesses` can contain 1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
-- `groupsAccesses` could be `[]` or `["*:write"]` for every records. `groupsAccesses` can contain 1000 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.
+- `usersAccesses` contains user-specific permission lists. It can contain 1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
+- `groupsAccesses` contains group-specific permission lists and is optional.
 
 **Example**
 ```python
@@ -578,13 +578,15 @@ print(result)
 
 ---
 
-#### `get_yjs_versions`
+### Version_history
 
-This endpoint returns a list of version history snapshots for the room's Yjs document. The versions are returned sorted by creation date, from newest to oldest.
+#### `get_version_history`
+
+This endpoint returns a list of version history snapshots for the room. The versions are returned sorted by creation date, from newest to oldest. Corresponds to [`liveblocks.getVersionHistory`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-version-history).
 
 **Example**
 ```python
-result = client.get_yjs_versions(
+result = client.get_version_history(
     room_id="my-room-id",
     # limit=20,
     # cursor="eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9",
@@ -602,9 +604,29 @@ print(result)
 
 ---
 
+#### `create_version_history_snapshot`
+
+This endpoint creates a new version history snapshot of the room, capturing both its Storage and Yjs documents. Corresponds to [`liveblocks.createVersionHistorySnapshot`](https://liveblocks.io/docs/api-reference/liveblocks-node#create-version-history-snapshot).
+
+**Example**
+```python
+result = client.create_version_history_snapshot(
+    room_id="my-room-id",
+)
+print(result)
+```
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `room_id` | `str` | Yes | ID of the room |
+
+
+---
+
 #### `get_yjs_version`
 
-This endpoint returns a specific version of the room's Yjs document encoded as a binary Yjs update.
+This endpoint returns a specific version of the room's Yjs document encoded as a binary Yjs update. Corresponds to [`liveblocks.getYjsVersion`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-yjs-version).
 
 **Example**
 ```python
@@ -624,22 +646,23 @@ print(result)
 
 ---
 
-#### `create_yjs_version`
+#### `delete_version`
 
-This endpoint creates a new version history snapshot for the room's Yjs document.
+This endpoint permanently deletes a version from the room's history. Corresponds to [`liveblocks.deleteVersion`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-version).
 
 **Example**
 ```python
-result = client.create_yjs_version(
+client.delete_version(
     room_id="my-room-id",
+    version_id="vh_abc123",
 )
-print(result)
 ```
 **Parameters:**
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
 | `room_id` | `str` | Yes | ID of the room |
+| `version_id` | `str` | Yes | ID of the version |
 
 
 ---
@@ -663,7 +686,7 @@ print(result)
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
 | `room_id` | `str` | Yes | ID of the room |
-| `query` | `str \| Unset` | No | Query to filter threads. You can filter by `metadata` and `resolved`, for example, `metadata["status"]:"open" AND metadata["color"]:"red" AND resolved:true`. Learn more about [filtering threads with query language](https://liveblocks.io/docs/guides/how-to-filter-threads-using-query-language). |
+| `query` | `str \| Unset` | No | Query to filter threads. You can filter by `metadata`, `resolved`, and `visibility`, for example, `metadata["status"]:"open" AND metadata["color"]:"red" AND resolved:true AND visibility:"private"`. Learn more about [filtering threads with query language](https://liveblocks.io/docs/guides/how-to-filter-threads-using-query-language). |
 
 
 ---
@@ -697,6 +720,7 @@ result = client.create_thread(
     body=CreateThreadRequestBody(
         comment=...,
         # metadata=...,
+        # visibility=...,
     ),
 )
 print(result)

@@ -50,6 +50,7 @@ import type {
   SearchCommentsResult,
   SyncStatus,
   ThreadData,
+  ThreadVisibility,
   ToJson,
   UrlMetadata,
   WithNavigation,
@@ -129,6 +130,11 @@ export type ThreadsQuery<TM extends BaseMetadata> = {
    * all threads will be returned.
    */
   resolved?: boolean;
+
+  /**
+   * Whether to only return public or private threads. If not provided, all threads will be returned.
+   */
+  visibility?: ThreadVisibility;
 
   /**
    * Whether to only return threads that the user is subscribed to or not. If not provided,
@@ -269,7 +275,7 @@ export type GroupAsyncSuccess = AsyncSuccess<GroupData | undefined, "group">;
 // prettier-ignore
 export type CreateThreadOptions<TM extends BaseMetadata, CM extends BaseMetadata > =
   Resolve<
-    { body: CommentBody, attachments?: CommentAttachment[]; }
+    { body: CommentBody, attachments?: CommentAttachment[]; visibility?: ThreadVisibility; }
     & PartialUnless<TM, { metadata: TM }>
     & PartialUnless<CM, { commentMetadata: CM }>
   >;
@@ -352,7 +358,11 @@ export type NotificationSettingsAsyncSuccess = AsyncSuccess<NotificationSettings
 export type RoomSubscriptionSettingsAsyncSuccess = AsyncSuccess<RoomSubscriptionSettings, "settings">; // prettier-ignore
 export type RoomSubscriptionSettingsAsyncResult = AsyncResult<RoomSubscriptionSettings, "settings">; // prettier-ignore
 
-export type HistoryVersionDataAsyncResult = AsyncResult<Uint8Array>;
+export type HistoryVersionStorageDataAsyncResult = AsyncResult<
+  LiveObject<LsonObject>
+>;
+
+export type HistoryVersionYjsDataAsyncResult = AsyncResult<Uint8Array>;
 
 export type HistoryVersionsAsyncSuccess = AsyncSuccess<HistoryVersion[], "versions">; // prettier-ignore
 export type HistoryVersionsAsyncResult = AsyncResult<HistoryVersion[], "versions">; // prettier-ignore
@@ -1338,12 +1348,52 @@ export type RoomContextBundle<
       useHistoryVersions(): HistoryVersionsAsyncResult;
 
       /**
+       * Returns the Storage data for a given version of the room.
+       *
+       * @example
+       * const { data, error, isLoading } = useHistoryVersionStorageData(version.id);
+       */
+      useHistoryVersionStorageData(
+        id: string
+      ): HistoryVersionStorageDataAsyncResult;
+
+      /**
+       * Returns the Yjs data for a given version of the room.
+       *
+       * @example
+       * const { data, error, isLoading } = useHistoryVersionYjsData(version.id);
+       */
+      useHistoryVersionYjsData(id: string): HistoryVersionYjsDataAsyncResult;
+
+      /**
+       * @deprecated Use `useHistoryVersionYjsData(id)` instead.
+       *
        * (Private beta) Returns the data of a specific version of the current room.
        *
        * @example
        * const { data, error, isLoading } = useHistoryVersionData(version.id);
        */
-      useHistoryVersionData(id: string): HistoryVersionDataAsyncResult;
+      useHistoryVersionData(id: string): HistoryVersionYjsDataAsyncResult;
+
+      /**
+       * Returns a function that permanently deletes a version from the room's
+       * history.
+       *
+       * @example
+       * const deleteHistoryVersion = useDeleteHistoryVersion();
+       * deleteHistoryVersion(version.id);
+       */
+      useDeleteHistoryVersion(): (versionId: string) => Promise<void>;
+
+      /**
+       * Returns a function that restores the room's Storage to the given
+       * historic version, applied as a single undoable change.
+       *
+       * @example
+       * const restore = useRestoreToStorageVersion(version.id);
+       * await restore();
+       */
+      useRestoreToStorageVersion(versionId: string): () => Promise<void>;
 
       suspense: Resolve<
         RoomContextBundleCommon<P, S, U, E, TM, CM, FM, FMD> &
@@ -1465,14 +1515,6 @@ export type RoomContextBundle<
              * const { versions } = useHistoryVersions();
              */
             useHistoryVersions(): HistoryVersionsAsyncSuccess;
-
-            // /**
-            //  * Returns the data of a specific version of the current room's history.
-            //  *
-            //  * @example
-            //  * const { data } = useHistoryVersionData(version.id);
-            //  */
-            // useHistoryVersionData(versionId: string): HistoryVersionDataState;
 
             /**
              * Returns the user's subscription settings for the current room

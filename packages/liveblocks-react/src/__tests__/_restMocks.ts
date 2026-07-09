@@ -1,5 +1,6 @@
 import type {
   BaseMetadata,
+  CommentAttachment,
   CommentBody,
   CommentData,
   GroupData,
@@ -11,6 +12,7 @@ import type {
   SubscriptionData,
   ThreadData,
   ThreadDataWithDeleteInfo,
+  ThreadVisibility,
 } from "@liveblocks/core";
 import type { HttpResponseResolver } from "msw";
 import { http } from "msw";
@@ -63,6 +65,7 @@ export function mockCreateThread<
     { roomId: string },
     {
       id: string;
+      visibility?: ThreadVisibility;
       metadata?: TM;
       comment: { id: string; body: CommentBody; metadata?: CM };
     },
@@ -95,6 +98,63 @@ export function mockCreateComment<CM extends BaseMetadata>(
 ) {
   return http.post(
     `https://api.liveblocks.io/v2/c/rooms/:roomId/threads/${params.threadId}/comments`,
+    resolver
+  );
+}
+
+export function mockUploadAttachment(
+  resolver: HttpResponseResolver<
+    { roomId: string; attachmentId: string; name: string },
+    never,
+    CommentAttachment
+  >
+) {
+  return http.put(
+    "https://api.liveblocks.io/v2/c/rooms/:roomId/attachments/:attachmentId/upload/:name",
+    resolver
+  );
+}
+
+export function mockCreateMultipartAttachmentUpload(
+  resolver: HttpResponseResolver<
+    { roomId: string; attachmentId: string; name: string },
+    never,
+    { uploadId: string; key: string }
+  >
+) {
+  return http.post(
+    "https://api.liveblocks.io/v2/c/rooms/:roomId/attachments/:attachmentId/multipart/:name",
+    resolver
+  );
+}
+
+export function mockUploadMultipartAttachmentPart(
+  resolver: HttpResponseResolver<
+    {
+      roomId: string;
+      attachmentId: string;
+      uploadId: string;
+      partNumber: string;
+    },
+    never,
+    { partNumber: number; etag: string }
+  >
+) {
+  return http.put(
+    "https://api.liveblocks.io/v2/c/rooms/:roomId/attachments/:attachmentId/multipart/:uploadId/:partNumber",
+    resolver
+  );
+}
+
+export function mockCompleteMultipartAttachmentUpload(
+  resolver: HttpResponseResolver<
+    { roomId: string; attachmentId: string; uploadId: string },
+    { parts: { partNumber: number; etag: string }[] },
+    CommentAttachment
+  >
+) {
+  return http.post(
+    "https://api.liveblocks.io/v2/c/rooms/:roomId/attachments/:attachmentId/multipart/:uploadId/complete",
     resolver
   );
 }

@@ -282,6 +282,7 @@ export type {
   ThreadData,
   ThreadDataPlain,
   ThreadDataWithDeleteInfo,
+  ThreadVisibility,
 } from "./protocol/Comments";
 export type { ThreadDeleteInfo } from "./protocol/Comments";
 export type { Feed, FeedMessage } from "./protocol/Feeds";

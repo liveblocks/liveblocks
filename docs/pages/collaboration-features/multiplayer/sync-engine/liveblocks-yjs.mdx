@@ -79,6 +79,59 @@ function App() {
 }
 ```
 
+## Version history
+
+Create version snapshots of your Yjs document, and let users browse, preview,
+and restore them.
+[`useHistoryVersions`](/docs/api-reference/liveblocks-react#useHistoryVersions)
+lists a room’s versions, and
+[`useHistoryVersionYjsData`](/docs/api-reference/liveblocks-react#useHistoryVersionYjsData)
+returns a version as a binary Yjs update, which you can apply to a fresh `Y.Doc`
+to read its contents.
+
+```tsx
+import {
+  useHistoryVersions,
+  useHistoryVersionYjsData,
+} from "@liveblocks/react";
+import * as Y from "yjs";
+
+function VersionHistory() {
+  // +++
+  const { versions } = useHistoryVersions();
+  // +++
+
+  return (
+    <div>
+      // +++
+      {versions.map((version) => (
+        <div key={version.id}>
+          <time>{version.createdAt}</time>
+          <VersionPreview versionId={version.id} />
+        </div>
+      ))}
+      // +++
+    </div>
+}
+
+function VersionPreview({ versionId }) {
+  // +++
+  const { data } = useHistoryVersionYjsData(versionId);
+  // +++
+
+  // Apply the version's binary update to an empty Y.Doc
+  const yDoc = new Y.Doc();
+  Y.applyUpdate(yDoc, data);
+
+  // ...
+}
+```
+
+If you’re using our Tiptap, BlockNote, or Lexical plugins, ready-made
+[`HistoryVersionPreview`](/docs/api-reference/liveblocks-react-tiptap#HistoryVersionPreview)
+components preview and restore versions for you. Learn how to set this up in our
+[version history guide](/docs/guides/how-to-add-version-history-to-your-app).
+
 ## Text and code editor integrations
 
 Liveblocks Yjs integrates with popular text and code editors such as Slate,

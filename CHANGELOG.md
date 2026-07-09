@@ -1,5 +1,75 @@
 ## vNEXT (not yet released)
 
+## v3.22.0
+
+### `@liveblocks/react`
+
+This release adds version history support for Storage: a version now snapshots
+both the room's Storage and Yjs documents (previously Yjs only).
+
+- Creating a version now also snapshots Storage, not just Yjs, see
+  [docs](https://liveblocks.io/docs/api-reference/rest-api-endpoints#create-version-history-snapshot).
+- `useHistoryVersions()` lists the room's versions. Each has a `vh_xxx` id, see
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-react#useHistoryVersions).
+- `useHistoryVersionStorageData("vh_xxx")` returns that version's Storage as a
+  read-only `LiveObject` so you can visualize or diff it manually, see
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-react#useHistoryVersionStorageData).
+- `useRestoreToStorageVersion("vh_xxx")` restores the room's Storage to that
+  version, as a single undoable change, see
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-react#useRestoreToStorageVersion).
+- `useDeleteHistoryVersion()` returns `deleteHistoryVersion("vh_xxx")` to
+  permanently delete a version, see
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-react#useDeleteHistoryVersion).
+
+### `@liveblocks/node` and Python SDK
+
+- Add methods for version history to list room versions, create a version
+  snapshot, and delete a version.
+
+## v3.21.0
+
+### All packages
+
+- Add support for public and private threads. Threads now have a `visibility`
+  property that is `"public"` by default but can be set to `"private"` when
+  created. Permissions can be used to decide which threads a user has access to,
+  and threads can also be queried by their visibility to create filtered views.
+- Add scoped comments permissions such as `comments:public:write` and
+  `comments:private:none`.
+
+### `@liveblocks/client`
+
+- **Breaking:** Remove `type` and `kind` fields from `HistoryVersion` type. The
+  backend no longer returns these.
+- Add `visibility` to `createThread`.
+- Support querying by `visibility` in `getThreads`.
+
+### `@liveblocks/react`
+
+- Add `visibility` to `useCreateThread`.
+- Support querying by `visibility` in `useThreads`.
+- Add `useHistoryVersionYjsData()` hook to retrieve raw Yjs binary data for a
+  given version. Deprecate `useHistoryVersionData()` in its favor.
+
+### `@liveblocks/node`
+
+- Add `visibility` to `createThread`.
+- Support querying by `visibility` in `getThreads`.
+
+### `@liveblocks/react-ui`
+
+- Add a `visibility` prop to `Composer`.
+- Prevent `Composer` from collapsing after focusing and blurring unless it was
+  explicitly meant to support a collapsed state.
+
+## v3.20.1
+
+### `@liveblocks/client`
+
+- Fix a bug where sending a too large WebSocket message could sometimes
+  overwrite a room's top-level storage key with `initialStorage`, causing data
+  loss. (Thanks @watemerald for reporting!)
+
 ## v3.20.0
 
 ### All packages

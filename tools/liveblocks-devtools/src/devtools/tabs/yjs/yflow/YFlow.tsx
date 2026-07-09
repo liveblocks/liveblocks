@@ -210,9 +210,7 @@ export function YFlow({ className, ...props }: ComponentProps<"div">) {
 
   if (
     !isTransitionPending &&
-    (currentStatus === "connected" ||
-      currentStatus === "open" || // Same as "connected", but only sent by old clients (prior to 1.1)
-      currentStatus === "reconnecting")
+    (currentStatus === "connected" || currentStatus === "reconnecting")
   ) {
     if (edges.length > 0) {
       return (

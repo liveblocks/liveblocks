@@ -2919,6 +2919,11 @@ console.log(inboxNotifications);
   <PropertiesListItem name="resolved" type="boolean">
     Only return `resolved` or `unresolved` threads. [Learn more](#filtering-resolved-status).
   </PropertiesListItem>
+  <PropertiesListItem name="visibility" type='"public" | "private"'>
+    Only return `public` or `private` threads. Permissions are taken into account so users
+    without access to private threads won’t receive them. [Learn
+    more](#filtering-visibility).
+  </PropertiesListItem>
   <PropertiesListItem name="subscribed" type="boolean">
     Only return `subscribed` or `unsubscribed` threads. [Learn more](#filtering-subscribed-status).
   </PropertiesListItem>
@@ -2938,6 +2943,25 @@ const threads = await room.getThreads({
   query: {
     // +++
     resolved: false,
+    // +++
+  },
+});
+```
+
+#### Filtering visibility [#filtering-visibility]
+
+You can filter threads based on visibility by passing `"public"` or `"private"`
+to `query.visibility`.
+
+Permissions are taken into account, for example querying private threads returns
+no threads if the current user does not have access to private threads.
+
+```ts
+// Filtering for private threads
+const threads = await room.getThreads({
+  query: {
+    // +++
+    visibility: "private",
     // +++
   },
 });
@@ -3176,6 +3200,15 @@ const thread = await room.createThread({
     Custom metadata to be attached to the thread, see [defining thread
     metadata](#defining-thread-metadata).
   </PropertiesListItem>
+  <PropertiesListItem
+    name="visibility"
+    type='"public" | "private"'
+    defaultValue='"public"'
+  >
+    Whether to create a public or private thread. Permissions are taken into
+    account so a user without write access to private threads can’t create a
+    private thread.
+  </PropertiesListItem>
 </PropertiesList>
 
 #### Creating thread content [#creating-thread-content]
@@ -3249,6 +3282,31 @@ const metadata: Liveblocks["ThreadMetadata"] = {
 
 const thread = await room.createThread({ body, metadata });
 ```
+
+#### Creating private threads [#creating-private-threads]
+
+Threads are public by default. To create a private thread, pass
+`visibility: "private"`.
+
+```ts
+const thread = await room.createThread({
+  body,
+  // +++
+  visibility: "private",
+  // +++
+});
+```
+
+Permissions are taken into account when threads are created and retrieved. A
+user without write access to private threads can’t create a private thread, and
+users without read access to private threads won’t receive private threads from
+[`room.getThreads`](#Room.getThreads) or [`room.getThread`](#Room.getThread).
+
+<Banner>
+
+Private threads are only available on Team and Enterprise plans.
+
+</Banner>
 
 ### Room.deleteThread
 

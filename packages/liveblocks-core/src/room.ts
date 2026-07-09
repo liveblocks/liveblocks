@@ -1,4 +1,5 @@
-import { getBearerTokenFromAuthValue, type RoomHttpApi } from "./api-client";
+import type { RoomHttpApi } from "./api-client";
+import { getBearerTokenFromAuthValue } from "./api-client";
 import type { AuthManager, AuthValue } from "./auth-manager";
 import { injectBrandBadge } from "./brand";
 import type { InternalSyncStatus } from "./client";
@@ -18,6 +19,7 @@ import {
   isLiveNode,
   isLiveText,
   isSameNodeOrChildOf,
+  liveObjectFromNodeStream,
   mergeStorageUpdates,
 } from "./crdts/liveblocks-helpers";
 import { LiveObject } from "./crdts/LiveObject";
@@ -98,6 +100,7 @@ import type {
   QueryMetadata,
   ThreadData,
   ThreadDeleteInfo,
+  ThreadVisibility,
 } from "./protocol/Comments";
 import type { Feed, FeedMessage } from "./protocol/Feeds";
 import type {
@@ -126,7 +129,12 @@ import type {
   YDocUpdateServerMsg,
 } from "./protocol/ServerMsg";
 import { ServerMsgCode } from "./protocol/ServerMsg";
-import type { NodeMap, NodeStream } from "./protocol/StorageNode";
+import type {
+  NodeMap,
+  NodeStream,
+  SerializedCrdt,
+  SerializedRootObject,
+} from "./protocol/StorageNode";
 import { compactNodesToNodeStream, CrdtType } from "./protocol/StorageNode";
 import type {
   SubscriptionData,
@@ -547,6 +555,7 @@ export type GetThreadsOptions<TM extends BaseMetadata> = {
   cursor?: string;
   query?: {
     resolved?: boolean;
+    visibility?: ThreadVisibility;
     subscribed?: boolean;
     metadata?: Partial<QueryMetadata<TM>>;
   };
@@ -998,6 +1007,7 @@ export type Room<
   createThread(options: {
     threadId?: string;
     commentId?: string;
+    visibility?: ThreadVisibility;
     metadata: TM | undefined;
     body: CommentBody;
     commentMetadata?: CM;
@@ -1267,19 +1277,30 @@ export type PrivateRoomApi = {
   // For reporting editor metadata
   reportTextEditor(editor: TextEditorType, rootKey: string): Promise<void>;
 
+  getPermissionMatrix(): PermissionMatrix | undefined;
+
   createTextMention(mentionId: string, mention: MentionData): Promise<void>;
   deleteTextMention(mentionId: string): Promise<void>;
-  listTextVersions(): Promise<{
+
+  // Version History APIs
+  listHistoryVersions(): Promise<{
     versions: HistoryVersion[];
     requestedAt: Date;
   }>;
-  listTextVersionsSince(options: ListTextVersionsSinceOptions): Promise<{
+  listHistoryVersionsSince(options: ListTextVersionsSinceOptions): Promise<{
     versions: HistoryVersion[];
     requestedAt: Date;
   }>;
 
-  getTextVersion(versionId: string): Promise<Response>;
-  createTextVersion(): Promise<void>;
+  fetchStorageHistoryVersion(versionId: string): Promise<Response>;
+  fetchYjsHistoryVersion(versionId: string): Promise<Response>;
+  // Reconstructs a detached, read-only LiveObject tree from a storage version's
+  // node stream (typed as LsonObject -- a historic snapshot may not match the
+  // room's current Storage schema).
+  liveObjectFromNodeStream(nodes: NodeStream): LiveObject<LsonObject>;
+  reconcileStorageWithNodes(nodes: NodeStream): void;
+  createVersionHistorySnapshot(): Promise<void>;
+  deleteHistoryVersion(versionId: string): Promise<void>;
 
   executeContextualPrompt(options: {
     prompt: string;
@@ -1567,6 +1588,25 @@ function makeNodeMapBuffer() {
   };
 }
 
+function topLevelKeysOf(nodes: NodeMap): Set<string> {
+  const keys = new Set<string>();
+
+  // The root's primitive (non-Live) keys are stored inline in its `data`.
+  const root = nodes.get("root") as SerializedRootObject | undefined;
+  for (const key in root?.data) {
+    keys.add(key);
+  }
+
+  // Live children of the root are separate nodes pointing back at it.
+  for (const node of nodes.values()) {
+    if (node.parentId === "root") {
+      keys.add(node.parentKey);
+    }
+  }
+
+  return keys;
+}
+
 /**
  * @internal
  * Initializes a new Room, and returns its public API.
@@ -1654,7 +1694,7 @@ export function createRoom<
     yjsProviderDidChange: makeEventSource(),
 
     // Storage
-    pool: createManagedPool(roomId, {
+    pool: createManagedPool({
       getCurrentConnectionId,
       onDispatch,
       isStorageWritable,
@@ -1877,24 +1917,34 @@ export function createRoom<
     await httpClient.reportTextEditor({ roomId, type, rootKey });
   }
 
-  async function listTextVersions() {
-    return httpClient.listTextVersions({ roomId });
+  async function listHistoryVersions() {
+    return httpClient.listHistoryVersions({ roomId });
   }
 
-  async function listTextVersionsSince(options: ListTextVersionsSinceOptions) {
-    return httpClient.listTextVersionsSince({
+  async function listHistoryVersionsSince(
+    options: ListTextVersionsSinceOptions
+  ) {
+    return httpClient.listHistoryVersionsSince({
       roomId,
       since: options.since,
       signal: options.signal,
     });
   }
 
-  async function getTextVersion(versionId: string) {
-    return httpClient.getTextVersion({ roomId, versionId });
+  async function fetchStorageHistoryVersion(versionId: string) {
+    return httpClient.fetchStorageHistoryVersion({ roomId, versionId });
   }
 
-  async function createTextVersion() {
-    return httpClient.createTextVersion({ roomId });
+  async function fetchYjsHistoryVersion(versionId: string) {
+    return httpClient.fetchYjsHistoryVersion({ roomId, versionId });
+  }
+
+  async function createVersionHistorySnapshot() {
+    return httpClient.createVersionHistorySnapshot({ roomId });
+  }
+
+  async function deleteHistoryVersion(versionId: string) {
+    return httpClient.deleteHistoryVersion({ roomId, versionId });
   }
 
   async function executeContextualPrompt(options: {
@@ -1959,19 +2009,24 @@ export function createRoom<
     me !== null ? userToTreeNode("Me", me) : null
   );
 
+  // Serializes the current live Storage into a NodeMap and diffs it against
+  // `target`, returning the ops that make the live tree match `target`. Shared
+  // by storage load (applied remotely) and restore (applied locally).
+  function diffCurrentStorageAgainst(target: NodeMap): Op[] {
+    const current: NodeMap = new Map();
+    for (const [id, crdt] of context.pool.nodes) {
+      current.set(id, crdt._serialize());
+    }
+    return diffNodeMap(current, target);
+  }
+
   function createOrUpdateRootFromMessage(nodes: NodeMap) {
     if (nodes.size === 0) {
       throw new Error("Internal error: cannot load storage without items");
     }
 
     if (context.root !== undefined) {
-      const currentItems: NodeMap = new Map();
-      for (const [id, crdt] of context.pool.nodes) {
-        currentItems.set(id, crdt._serialize());
-      }
-
-      const ops = diffNodeMap(currentItems, nodes);
-      const result = applyRemoteOps(ops);
+      const result = applyRemoteOps(diffCurrentStorageAgainst(nodes));
 
       // LiveText nodes are not covered by the op diff above (their op path
       // carries pending-op transformation semantics that don't apply to
@@ -2006,11 +2061,12 @@ export function createRoom<
 
     const canWrite = self.get()?.canWrite ?? true;
 
-    // Populate missing top-level keys using `initialStorage`
+    // Populate only top-level keys that storage doesn't have yet, using `initialStorage`
+    const serverTopLevelKeys = topLevelKeysOf(nodes);
     const root = context.root;
     disableHistory(() => {
       for (const key in context.initialStorage) {
-        if (root.get(key) === undefined) {
+        if (!serverTopLevelKeys.has(key)) {
           if (canWrite) {
             root.set(key, cloneLson(context.initialStorage[key]));
           } else {
@@ -2033,6 +2089,43 @@ export function createRoom<
     const ids = context.redoStack.map((item) => item.id);
     context.redoStack.length = 0;
     notifyPrivateHistory({ action: "discard", ids });
+  }
+
+  /**
+   * Reconciles the live Storage so it matches the given target nodes (e.g. a
+   * historic version snapshot): diffs them against the current state and applies
+   * the minimal set of ops.
+   *
+   * Unlike loading storage (`createOrUpdateRootFromMessage`, which applies
+   * *remotely* -- silent server state), this is a deliberate local action, so
+   * the diff is committed as a single undoable batch that is broadcast to other
+   * clients and sent to the server. Mirrors the commit sequence of undo()/redo().
+   */
+  function reconcileStorageWithNodes(nodes: NodeStream): void {
+    if (context.root === undefined) {
+      throw new Error("Cannot reconcile storage before it is loaded");
+    }
+
+    const ops = diffCurrentStorageAgainst(
+      new Map<string, SerializedCrdt>(nodes)
+    );
+    if (ops.length === 0) {
+      return; // Already identical -- nothing to do.
+    }
+
+    // A restore is a fresh local edit: its reverse goes on the undo stack and
+    // the redo stack is cleared.
+    const result = applyLocalOps(ops);
+    if (result.reverse.length > 0) {
+      addToUndoStack(result.reverse);
+    }
+    context.redoStack.length = 0;
+    for (const op of result.opsToEmit) {
+      context.buffer.storageOperations.push(op);
+    }
+    notify(result.updates);
+    onHistoryChange();
+    flushNowOrSoon();
   }
 
   function _addToRealUndoStack(frames: Stackframe<P>[]) {
@@ -2299,6 +2392,11 @@ export function createRoom<
 
         return parentNode._attachChild(op, source);
       }
+
+      // Unknown op codes can be received when older and newer clients are
+      // both present in a same room. Older clients simply ignore them.
+      default:
+        return { modified: false };
     }
   }
 
@@ -3685,6 +3783,7 @@ export function createRoom<
     roomId: string;
     threadId?: string;
     commentId?: string;
+    visibility?: ThreadVisibility;
     metadata: TM | undefined;
     commentMetadata: CM | undefined;
     body: CommentBody;
@@ -3694,6 +3793,7 @@ export function createRoom<
       roomId,
       threadId: options.threadId,
       commentId: options.commentId,
+      visibility: options.visibility,
       metadata: options.metadata,
       body: options.body,
       commentMetadata: options.commentMetadata,
@@ -3929,18 +4029,27 @@ export function createRoom<
 
         // send metadata when using a text editor
         reportTextEditor,
+        getPermissionMatrix: () =>
+          context.dynamicSessionInfoSig.get()?.permissionMatrix,
         // create a text mention when using a text editor
         createTextMention,
         // delete a text mention when using a text editor
         deleteTextMention,
         // list versions of the document
-        listTextVersions,
+        listHistoryVersions,
         // List versions of the document since the specified date
-        listTextVersionsSince,
+        listHistoryVersionsSince,
         // get a specific version
-        getTextVersion,
+        fetchStorageHistoryVersion,
+        fetchYjsHistoryVersion,
+        // reconstruct a storage version's nodes into a read-only LiveObject tree
+        liveObjectFromNodeStream,
+        // restore live storage to match a version's nodes
+        reconcileStorageWithNodes,
         // create a version
-        createTextVersion,
+        createVersionHistorySnapshot,
+        // delete a version
+        deleteHistoryVersion,
         // execute a contextual prompt
         executeContextualPrompt,
 

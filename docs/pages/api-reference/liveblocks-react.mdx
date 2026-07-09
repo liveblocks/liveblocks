@@ -1223,7 +1223,8 @@ useErrorListener((error) => {
 
     // Can happen if you use Comments or Notifications
     case "CREATE_THREAD_ERROR":
-      const { roomId, threadId, commentId, body, metadata } = error.context;
+      const { roomId, threadId, commentId, body, visibility, metadata } =
+        error.context;
       break;
 
     case "DELETE_THREAD_ERROR":
@@ -4256,8 +4257,9 @@ function Component() {
     Optional configuration object.
   </PropertiesListItem>
   <PropertiesListItem name="option.query" type="ThreadsQuery">
-    Optional query to filter threads by resolved status and metadata values.
-    [Learn more](/docs/api-reference/liveblocks-react#useThreads-query).
+    Optional query to filter threads by visibility, resolved status, subscribed
+    status, and metadata values. [Learn
+    more](/docs/api-reference/liveblocks-react#useThreads-query).
   </PropertiesListItem>
   <PropertiesListItem name="option.scrollOnLoad" type="boolean">
     Whether to scroll to a comment if the URL's hash is set to a comment ID.
@@ -4298,11 +4300,13 @@ function Component() {
 #### Querying threads [#useThreads-query]
 
 It’s possible to return threads that match a certain query with the `query`
-option. You can filter threads based on their resolved status, if the user is
-subscribed to them, and metadata. Additionally, you can filter for metadata
-strings that being with certain characters using `startsWith` and you can filter
-for metadata numbers using `gt`, `lt`, `gte`, and `lte`. Returned threads match
-the entire query.
+option. You can filter threads based on their visibility, resolved status, if
+the user is subscribed to them, and metadata. Additionally, you can filter for
+metadata strings that begin with certain characters using `startsWith` and you
+can filter for metadata numbers using `gt`, `lt`, `gte`, and `lte`. Returned
+threads match the entire query. Permissions are taken into account so querying
+private threads will return no private threads if the current user does not have
+access to them.
 
 ```tsx
 // Returns threads that match the entire `query`, e.g. { color: "blue", pinned: true, ... }
@@ -4310,6 +4314,9 @@ const { threads } = useThreads({
   query: {
     // Filter for unresolved threads
     resolved: false,
+
+    // Filter for private threads
+    visibility: "private",
 
     // Filter for threads that the user is subscribed to
     subscribed: true,
@@ -4462,7 +4469,9 @@ const { threads } = useThreads({ scrollOnLoad: false });
 ### useCreateThread [@badge=RoomProvider]
 
 Returns a function that optimistically creates a thread with an initial comment,
-and optionally some thread and comment metadata.
+and optionally some thread metadata, comment metadata, and visibility. Threads
+are public by default. Permissions are taken into account so a user without
+write access to private threads can’t create a private one.
 
 ```tsx
 import { useCreateThread } from "@liveblocks/react/suspense";
@@ -4473,6 +4482,7 @@ const thread = createThread({
   attachments: [],
   metadata: {},
   commentMetadata: {},
+  visibility: "private",
 });
 ```
 
@@ -4482,7 +4492,8 @@ const thread = createThread({
     type="(options: CreateThreadOptions) => ThreadData"
   >
     A function that creates a thread with an initial comment, and optionally
-    thread and comment metadata. Returns the optimistic thread object.
+    thread metadata, comment metadata, and visibility. Returns the optimistic
+    thread object.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -4498,7 +4509,8 @@ import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
   if (error.context.type === "CREATE_THREAD_ERROR") {
-    const { roomId, threadId, commentId, body, metadata } = error.context;
+    const { roomId, threadId, commentId, body, visibility, metadata } =
+      error.context;
     console.log(`Problem creating thread ${threadId}`);
   }
 });
@@ -6588,10 +6600,14 @@ updateSettings({
 
 ## Version History
 
+Hooks for listing, previewing, restoring, and deleting versions of a room’s
+Storage and Yjs documents. Learn how to set this up in our
+[version history guide](/docs/guides/how-to-add-version-history-to-your-app).
+
 ### useHistoryVersions [@badge=RoomProvider]
 
-Returns the versions of the room. See
-[Version History Components](/docs/api-reference/liveblocks-react-ui#Version-history-components)
+Returns the versions of the room, both Storage and Yjs. See
+[Version History Components](/docs/api-reference/liveblocks-react-ui#Version-History)
 for more information on how to display versions.
 
 ```tsx
@@ -6603,6 +6619,123 @@ const { versions, error, isLoading } = useHistoryVersions();
 <PropertiesList title="Returns">
   <PropertiesListItem name="versions" type="HistoryVersion[]">
     An array of history versions for the room.
+  </PropertiesListItem>
+</PropertiesList>
+
+### useHistoryVersionStorageData [@badge=RoomProvider]
+
+Returns the Storage data for a given version of the room, reconstructed as a
+read-only [`LiveObject`][]. Because a historical version may not match your
+room's current `Storage` type, its shape is typed as the more permissive
+`LsonObject`.
+
+```tsx
+import { useHistoryVersionStorageData } from "@liveblocks/react";
+
+const { data, error, isLoading } = useHistoryVersionStorageData(versionId);
+```
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="versionId" type="string">
+    The ID of the version to retrieve. Obtained from the `id` field of a
+    `HistoryVersion` returned by [`useHistoryVersions`][].
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="data" type="LiveObject | undefined">
+    The Storage data for the version as a read-only `LiveObject`, or `undefined`
+    while loading.
+  </PropertiesListItem>
+  <PropertiesListItem name="isLoading" type="boolean">
+    Whether the version data is currently being loaded.
+  </PropertiesListItem>
+  <PropertiesListItem name="error" type="Error | undefined">
+    Any error that occurred while loading the version data.
+  </PropertiesListItem>
+</PropertiesList>
+
+### useHistoryVersionYjsData [@badge=RoomProvider]
+
+Returns the raw Yjs binary data for a given version of the room, for use with
+Yjs-based editors (e.g. TipTap, Lexical, BlockNote).
+
+```tsx
+import { useHistoryVersionYjsData } from "@liveblocks/react";
+
+const { data, error, isLoading } = useHistoryVersionYjsData(versionId);
+```
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="versionId" type="string">
+    The ID of the version to retrieve. Obtained from the `id` field of a
+    `HistoryVersion` returned by [`useHistoryVersions`][].
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="data" type="Uint8Array | undefined">
+    The raw Yjs binary data for the version, or `undefined` while loading.
+  </PropertiesListItem>
+  <PropertiesListItem name="isLoading" type="boolean">
+    Whether the version data is currently being loaded.
+  </PropertiesListItem>
+  <PropertiesListItem name="error" type="Error | undefined">
+    Any error that occurred while loading the version data.
+  </PropertiesListItem>
+</PropertiesList>
+
+### useRestoreToStorageVersion [@badge=RoomProvider]
+
+Returns a function that restores the room's Storage to a given version, applied
+as a single undoable change. Only the Storage surface is affected; other
+surfaces (such as Yjs) are left untouched.
+
+```tsx
+import { useRestoreToStorageVersion } from "@liveblocks/react";
+
+const restoreToStorageVersion = useRestoreToStorageVersion(versionId);
+
+// Later, restore the room's Storage to this version
+await restoreToStorageVersion();
+```
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="versionId" type="string">
+    The ID of the version to restore to. Obtained from the `id` field of a
+    `HistoryVersion` returned by [`useHistoryVersions`][].
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="restoreToStorageVersion" type="() => Promise<void>">
+    A function that restores the room's Storage to the version. The change is
+    applied locally as a single undoable operation, then synced to the other
+    clients in the room.
+  </PropertiesListItem>
+</PropertiesList>
+
+### useDeleteHistoryVersion [@badge=RoomProvider]
+
+Returns a function that permanently deletes a version from the room's history.
+
+```tsx
+import { useDeleteHistoryVersion } from "@liveblocks/react";
+
+const deleteHistoryVersion = useDeleteHistoryVersion();
+
+// Later, delete a version by its id
+await deleteHistoryVersion(versionId);
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="deleteHistoryVersion"
+    type="(versionId: string) => Promise<void>"
+  >
+    A function that deletes the version with the given id. The `versionId` is
+    obtained from the `id` field of a `HistoryVersion` returned by
+    [`useHistoryVersions`][].
   </PropertiesListItem>
 </PropertiesList>
 
@@ -7263,6 +7396,7 @@ And the following timeline:
 [`useothersconnectionids`]:
   /docs/api-reference/liveblocks-react#useOthersConnectionIds
 [`useother`]: /docs/api-reference/liveblocks-react#useOther
+[`usehistoryversions`]: /docs/api-reference/liveblocks-react#useHistoryVersions
 [`uselostconnectionlistener`]:
   /docs/api-reference/liveblocks-react#useLostConnectionListener
 [`clientsidesuspense`]: /docs/api-reference/liveblocks-react#ClientSideSuspsnse
