@@ -6,22 +6,27 @@ import tseslint from "typescript-eslint";
 /**
  * Creates the base ESLint flat config used by all packages in the monorepo.
  *
- * @param {string} tsconfigPath Path to the tsconfig.json (default: "./tsconfig.json")
- * @returns {import("eslint").Linter.Config[]}
+ * @param {string} tsconfigRootDir Path to the directory ESLint should use to resolve
+ *   `tsconfigPath`, pass `import.meta.dirname` from the package's
+ *   `eslint.config.mjs`.
+ * @param {string} tsconfigPath Path to the package's TypeScript config,
+ *   relative to `tsconfigRootDir`. Defaults to "./tsconfig.json".
+ * @returns {import("eslint").Linter.Config[]} The shared flat config entries.
  */
-export function makeConfig(tsconfigPath = "./tsconfig.json") {
+export function makeConfig(tsconfigRootDir, tsconfigPath = "./tsconfig.json") {
   return [
     js.configs.recommended,
     ...tseslint.configs.recommendedTypeChecked,
 
     {
       languageOptions: {
+        // Each project's individual/local tsconfig.json defines the behavior
+        // of the parser
         parserOptions: {
-          // Each project's individual/local tsconfig.json defines the behavior
-          // of the parser
           projectService: {
             defaultProject: tsconfigPath,
           },
+          tsconfigRootDir,
         },
       },
 
