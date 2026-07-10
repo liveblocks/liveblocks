@@ -93,28 +93,17 @@ export class LiveblocksCollaborationManager {
 
     editor.update(
       () => {
-        this.$hydrateFromStorage();
+        const root_lexical = $getRoot();
+        root_lexical.clear();
+        const children: ElementNode[] = [];
+        for (const child of this.root.get("children")) {
+          children.push($convertLiveElementNodeToLexicalNode(child));
+        }
+        root_lexical.append(...children);
         this.$updateBinding();
       },
       { tag: COLLABORATION_TAG }
     );
-  }
-
-  /**
-   * Replace the Lexical document with the current Storage tree.
-   *
-   * Storage is the source of truth on mount; this clears any empty default
-   * editor state and rebuilds Lexical nodes from `root`.
-   */
-  private $hydrateFromStorage(): void {
-    const root_lexical = $getRoot();
-    root_lexical.clear();
-
-    const children: ElementNode[] = [];
-    for (const child of this.root.get("children")) {
-      children.push($convertLiveElementNodeToLexicalNode(child));
-    }
-    root_lexical.append(...children);
   }
 
   get binding(): Readonly<{
@@ -219,6 +208,89 @@ export class LiveblocksCollaborationManager {
     point: Point,
     node_liveblocks: LiveStorageNode
   ): LiveLexicalPoint | null {
+    const local = this.$encodeLocalTextPoint(point, node_liveblocks);
+    if (local === null) {
+      return null;
+    }
+
+    const liveText = (node_liveblocks as LiveTextNode).get("content");
+    return {
+      ...local,
+      offset: liveText[kInternal].encodeIndex(local.offset),
+      version: liveText.version,
+    };
+  }
+
+  /**
+   * Encode a Lexical point in local document coordinates (no `encodeIndex`).
+   *
+   * For text points the offset is the flat LiveText character index across
+   * coalesced siblings. For element points this matches `$encodePoint`.
+   * Used by history restore when Lexical keys were recreated and presence
+   * `decodeIndex` would remap the left edge of a deleted range.
+   */
+  public $encodeLocalPoint(point: Point): LiveLexicalPoint | null {
+    const node_liveblocks = this.#binding.reverse.get(point.key);
+    if (node_liveblocks === undefined) {
+      return null;
+    }
+
+    if (point.type === "text") {
+      return this.$encodeLocalTextPoint(point, node_liveblocks);
+    }
+
+    if (point.type === "element") {
+      return this.$encodeElementPoint(point, node_liveblocks);
+    }
+
+    return null;
+  }
+
+  /**
+   * Decode a local-document point (flat LiveText offset / element child index)
+   * into Lexical coordinates. Unlike `$decodePoint`, text offsets skip
+   * `LiveText.decodeIndex` — they are already in local document space.
+   */
+  public $decodeLocalPoint(
+    point: LiveLexicalPoint
+  ): DecodedLexicalPoint | null {
+    const node_liveblocks = find_liveblocksNode(
+      this.root,
+      (candidate) =>
+        point.nodeId ===
+        (candidate as unknown as { [kInternal]: PrivateLiveNodeApi })[
+          kInternal
+        ].getId()
+    );
+    if (node_liveblocks === null) {
+      return null;
+    }
+
+    if (point.type === "text") {
+      if (node_liveblocks.get("kind") !== "text") {
+        return null;
+      }
+      return this.$decodeFlatTextOffset(
+        point.offset,
+        node_liveblocks as LiveTextNode
+      );
+    }
+
+    if (point.type === "element") {
+      const kind = node_liveblocks.get("kind");
+      if (kind !== "element" && kind !== "root") {
+        return null;
+      }
+      return this.$decodeElementPoint(point, node_liveblocks);
+    }
+
+    return null;
+  }
+
+  private $encodeLocalTextPoint(
+    point: Point,
+    node_liveblocks: LiveStorageNode
+  ): LiveLexicalPoint | null {
     if (node_liveblocks.get("kind") !== "text") {
       return null;
     }
@@ -246,12 +318,11 @@ export class LiveblocksCollaborationManager {
       prevSibling = prevSibling.getPreviousSibling();
     }
 
-    const liveText = (node_liveblocks as LiveTextNode).get("content");
     return {
       nodeId,
       type: "text",
-      offset: liveText[kInternal].encodeIndex(flatOffset),
-      version: liveText.version,
+      offset: flatOffset,
+      version: 0,
     };
   }
 
@@ -380,6 +451,17 @@ export class LiveblocksCollaborationManager {
       return null;
     }
 
+    return this.$decodeFlatTextOffset(flatOffset, node_liveblocks);
+  }
+
+  /**
+   * Place a flat LiveText character offset onto the coalesced TextNode[]
+   * bound to `node_liveblocks`. Does not call `decodeIndex`.
+   */
+  private $decodeFlatTextOffset(
+    flatOffset: number,
+    node_liveblocks: LiveTextNode
+  ): DecodedLexicalPoint | null {
     const coalesced = this.#binding.forward.get(node_liveblocks);
     if (coalesced === undefined || !(coalesced instanceof Array)) {
       return null;
