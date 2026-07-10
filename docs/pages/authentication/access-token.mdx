@@ -311,13 +311,26 @@ the naming pattern doesn’t apply. This isn’t ideal, and it also doesn’t sc
 as the token will need to be refreshed whenever access is granted to new rooms
 for this to work correctly.
 
+#### Revoking access
+
+Because permissions are baked into each access token when it’s created, removing
+a user’s access in your own system doesn’t invalidate tokens that were already
+issued—those remain valid until they expire. Tokens are short-lived and
+currently valid for one hour, so there can be a delay between revoking access in
+your system and the user losing access. With
+[ID tokens](/docs/authentication#id-token), permissions are checked on the room
+each time a user connects, so access changes apply on the next connection. Learn
+more about [token lifetime](/docs/authentication#token-lifetime).
+
 #### Building complex permissions
 
 For this reason,
 **[we recommend using ID tokens for complex permissions](/docs/authentication#id-token-room-permissions)**.
 ID token authentication allows you to attach permissions to each room when it’s
 created or modified, which means you don’t need to check permissions yourself,
-and no naming pattern is required.
+and no naming pattern is required. If you’re already using access tokens, read
+our
+[guide on migrating from access tokens to ID tokens](/docs/guides/how-to-migrate-from-access-tokens-to-id-tokens).
 
 ### Migrating your current rooms IDs
 
