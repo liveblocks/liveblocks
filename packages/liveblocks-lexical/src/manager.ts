@@ -1232,6 +1232,12 @@ export class LiveblocksCollaborationManager {
             ? null
             : attributes_target.style;
       }
+      if ((attributes_target.t ?? "text") !== (sliceAttrs.t ?? "text")) {
+        patch.t =
+          attributes_target.t === undefined || attributes_target.t === "text"
+            ? null
+            : attributes_target.t;
+      }
 
       const matches =
         slice.map((part) => part[0]).join("") === text &&
@@ -1243,7 +1249,8 @@ export class LiveblocksCollaborationManager {
         (attributes_target.mode ?? "normal") ===
           (sliceAttrs.mode ?? "normal") &&
         (attributes_target.detail ?? 0) === (sliceAttrs.detail ?? 0) &&
-        (attributes_target.style ?? "") === (sliceAttrs.style ?? "");
+        (attributes_target.style ?? "") === (sliceAttrs.style ?? "") &&
+        (attributes_target.t ?? "text") === (sliceAttrs.t ?? "text");
 
       if (!matches) {
         content.format(offset, text.length, patch);
@@ -1906,6 +1913,18 @@ export class LiveblocksCollaborationManager {
     if (segments_liveblocks.length !== refreshed.length) {
       this.$replaceLexicalTextSlot(refreshed, node_liveblocks);
       return;
+    }
+
+    for (let i = 0; i < refreshed.length; i++) {
+      const segment = segments_liveblocks[i];
+      const attributes =
+        segment.length > 1 ? (segment[1] as TextAttributes) : {};
+      const segmentType =
+        typeof attributes.t === "string" ? attributes.t : "text";
+      if (refreshed[i].getType() !== segmentType) {
+        this.$replaceLexicalTextSlot(refreshed, node_liveblocks);
+        return;
+      }
     }
 
     for (let i = 0; i < refreshed.length; i++) {
@@ -2625,13 +2644,6 @@ function $convertLiveElementNodeToLexicalNode(
  *   text → LiveText: [["hello"]]            [TextNode "hello"]
  */
 function $convertLiveTextNodeToLexicalNode(node: LiveTextNode): TextNode[] {
-  const info = $getEditor()._nodes.get("text");
-  if (info === undefined) {
-    throw new Error(
-      'Node of type "text" is not registered. Please ensure that the node has been registered with the editor.'
-    );
-  }
-
   const segments = node.get("content").toJSON();
   if (segments.length === 0) {
     return [];
@@ -2639,13 +2651,23 @@ function $convertLiveTextNodeToLexicalNode(node: LiveTextNode): TextNode[] {
 
   const nodes: TextNode[] = [];
   for (const segment of segments) {
+    const attributes = segment.length > 1 ? segment[1] : undefined;
+    const type =
+      attributes !== undefined && typeof attributes.t === "string"
+        ? attributes.t
+        : "text";
+    const info = $getEditor()._nodes.get(type);
+    if (info === undefined) {
+      throw new Error(
+        `Node of type "${type}" is not registered. Please ensure that the node has been registered with the editor.`
+      );
+    }
+
     const node = new info.klass();
     if (!$isTextNode(node)) {
-      throw new Error('Node of type "text" is not a TextNode.');
+      throw new Error(`Node of type "${type}" is not a TextNode.`);
     }
     node.setTextContent(segment[0]);
-
-    const attributes = segment.length > 1 ? segment[1] : undefined;
 
     let format = 0;
     if (attributes !== undefined) {
@@ -2958,6 +2980,10 @@ function createSegmentsFromTextNodes(
       }
       if (node.getStyle() !== "") {
         attributes.style = node.getStyle();
+      }
+      const type = node.getType();
+      if (type !== "text") {
+        attributes.t = type;
       }
       if (Object.keys(attributes).length === 0) {
         return [text] as const;

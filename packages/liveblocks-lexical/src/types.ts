@@ -33,7 +33,6 @@ export type LiveDecoratorShape = {
   type: string;
   version: number;
   props?: LiveMap<string, Json>;
-  slots?: LiveObject<Record<string, LiveChildNode>>;
 };
 
 export type LiveChildShape =

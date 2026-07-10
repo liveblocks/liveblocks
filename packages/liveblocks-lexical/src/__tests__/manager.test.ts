@@ -10,6 +10,7 @@ import {
 import type { Json, TextAttributes } from "@liveblocks/core";
 import { kInternal, kStorageUpdateSource } from "@liveblocks/core";
 import {
+  $applyNodeReplacement,
   $createParagraphNode,
   $createRangeSelection,
   $createTextNode,
@@ -22,9 +23,12 @@ import {
   COLLABORATION_TAG,
   HISTORIC_TAG,
   createEditor as createLexicalEditor,
+  type EditorConfig,
   type ElementNode,
   type LexicalEditor,
+  type NodeKey,
   ParagraphNode,
+  type SerializedTextNode,
   type TextModeType,
   TextNode,
 } from "lexical";
@@ -38,6 +42,7 @@ import {
   $getLexicalNodeProps,
   $setLexicalNodeProps,
   areTextNodesStructurallyEqual,
+  createStorageNodeFromLexicalNode,
   find_liveblocksNode,
   LiveblocksCollaborationManager,
 } from "../manager";
@@ -2137,6 +2142,151 @@ describe("LiveblocksCollaborationManager", () => {
       });
     });
 
+    test("persists TextNode subclass type as segment attribute t", () => {
+      const document = createParagraphDocument("entity");
+      const { editor, manager } = createEditor(document, [CustomTextNode]);
+
+      editor.update(() => {
+        const text = $dfs().find(({ node }) => $isTextNode(node))!
+          .node as TextNode;
+        text.replace($createCustomTextNode(text.getTextContent()));
+      });
+
+      editor.read(() => {
+        const text_lexical = $dfs().find(({ node }) => $isTextNode(node))!
+          .node as TextNode;
+        expect(text_lexical.getType()).toBe("custom-text");
+
+        const text_liveblocks = find_liveblocksNode(
+          document,
+          (node) => node.get("kind") === "text"
+        ) as LiveTextNode;
+
+        manager.$reconcileTextNodeFromLexical([text_lexical], text_liveblocks);
+
+        expect(text_liveblocks.get("content").toJSON()).toEqual([
+          ["entity", { t: "custom-text" }],
+        ]);
+        expect(
+          areTextNodesStructurallyEqual(text_liveblocks, [text_lexical])
+        ).toBe(true);
+      });
+    });
+
+    test("persists mixed plain and TextNode subclass siblings with t only on the subclass", () => {
+      const document = createParagraphDocument("Hello entity");
+      const { editor, manager } = createEditor(document, [CustomTextNode]);
+
+      editor.update(() => {
+        const paragraph = $dfs().find(({ node }) => $isParagraphNode(node))!
+          .node as ParagraphNode;
+        paragraph.clear();
+        paragraph.append(
+          $createTextNode("Hello "),
+          $createCustomTextNode("entity")
+        );
+      });
+
+      editor.read(() => {
+        const textNodes = $dfs()
+          .map(({ node }) => node)
+          .filter($isTextNode)
+          .map((node) => node.getLatest());
+        const text_liveblocks = find_liveblocksNode(
+          document,
+          (node) => node.get("kind") === "text"
+        ) as LiveTextNode;
+
+        manager.$reconcileTextNodeFromLexical(textNodes, text_liveblocks);
+
+        expect(text_liveblocks.get("content").toJSON()).toEqual([
+          ["Hello "],
+          ["entity", { t: "custom-text" }],
+        ]);
+        expect(
+          areTextNodesStructurallyEqual(text_liveblocks, textNodes)
+        ).toBe(true);
+      });
+    });
+
+    test("clears segment attribute t when a TextNode subclass becomes plain text", () => {
+      const document = new LiveObject({
+        kind: "root",
+        type: "root",
+        version: 1,
+        children: new LiveList<LiveElementNode>([
+          new LiveObject({
+            kind: "element",
+            type: "paragraph",
+            version: 1,
+            children: new LiveList([
+              createLiveTextNode([["entity", { t: "custom-text" }]]),
+            ]),
+          }),
+        ]),
+      }) as LiveRootNode;
+      const { editor, manager } = createEditor(document, [CustomTextNode]);
+
+      editor.update(() => {
+        const text = $dfs().find(({ node }) => $isTextNode(node))!
+          .node as TextNode;
+        expect(text.getType()).toBe("custom-text");
+        text.replace($createTextNode(text.getTextContent()));
+      });
+
+      editor.read(() => {
+        const text_lexical = $dfs().find(({ node }) => $isTextNode(node))!
+          .node as TextNode;
+        expect(text_lexical.getType()).toBe("text");
+
+        const text_liveblocks = find_liveblocksNode(
+          document,
+          (node) => node.get("kind") === "text"
+        ) as LiveTextNode;
+
+        manager.$reconcileTextNodeFromLexical([text_lexical], text_liveblocks);
+
+        expect(text_liveblocks.get("content").toJSON()).toEqual([["entity"]]);
+        expect(
+          areTextNodesStructurallyEqual(text_liveblocks, [text_lexical])
+        ).toBe(true);
+      });
+    });
+
+    test("persists TextNode subclass type together with inline format", () => {
+      const document = createParagraphDocument("entity");
+      const { editor, manager } = createEditor(document, [CustomTextNode]);
+
+      editor.update(() => {
+        const text = $dfs().find(({ node }) => $isTextNode(node))!
+          .node as TextNode;
+        const custom = $createCustomTextNode(text.getTextContent());
+        custom.toggleFormat("bold");
+        text.replace(custom);
+      });
+
+      editor.read(() => {
+        const text_lexical = $dfs().find(({ node }) => $isTextNode(node))!
+          .node as TextNode;
+        expect(text_lexical.getType()).toBe("custom-text");
+        expect(text_lexical.getFormat()).toBe(1);
+
+        const text_liveblocks = find_liveblocksNode(
+          document,
+          (node) => node.get("kind") === "text"
+        ) as LiveTextNode;
+
+        manager.$reconcileTextNodeFromLexical([text_lexical], text_liveblocks);
+
+        expect(text_liveblocks.get("content").toJSON()).toEqual([
+          ["entity", { bold: true, t: "custom-text" }],
+        ]);
+        expect(
+          areTextNodesStructurallyEqual(text_liveblocks, [text_lexical])
+        ).toBe(true);
+      });
+    });
+
     test("syncs coalesced sibling TextNodes into LiveText segments", () => {
       const document = createParagraphDocument("Hello world");
       const { editor, manager } = createEditor(document);
@@ -3893,6 +4043,124 @@ describe("LiveblocksCollaborationManager", () => {
         expect(paragraph.getChildrenSize()).toBe(1);
         expect(paragraph.getTextContent()).toBe("Again");
         expect(manager.binding.forward.get(text_liveblocks)).toHaveLength(1);
+      });
+    });
+
+    test("materializes TextNode subclass from segment attribute t", () => {
+      const document = new LiveObject({
+        kind: "root",
+        type: "root",
+        version: 1,
+        children: new LiveList<LiveElementNode>([
+          new LiveObject({
+            kind: "element",
+            type: "paragraph",
+            version: 1,
+            children: new LiveList([
+              createLiveTextNode([["entity", { t: "custom-text" }]]),
+            ]),
+          }),
+        ]),
+      }) as LiveRootNode;
+
+      const { editor } = createEditor(document, [CustomTextNode]);
+
+      editor.read(() => {
+        const text_lexical = $dfs().find(({ node }) => $isTextNode(node))!
+          .node as TextNode;
+        expect(text_lexical.getType()).toBe("custom-text");
+        expect(text_lexical.getTextContent()).toBe("entity");
+      });
+    });
+
+    test("materializes mixed plain and TextNode subclass siblings from LiveText", () => {
+      const document = new LiveObject({
+        kind: "root",
+        type: "root",
+        version: 1,
+        children: new LiveList<LiveElementNode>([
+          new LiveObject({
+            kind: "element",
+            type: "paragraph",
+            version: 1,
+            children: new LiveList([
+              createLiveTextNode([
+                ["Hello "],
+                ["entity", { t: "custom-text" }],
+              ]),
+            ]),
+          }),
+        ]),
+      }) as LiveRootNode;
+
+      const { editor } = createEditor(document, [CustomTextNode]);
+
+      editor.read(() => {
+        const textNodes = $dfs()
+          .map(({ node }) => node)
+          .filter($isTextNode) as TextNode[];
+        expect(textNodes).toHaveLength(2);
+        expect(textNodes[0].getType()).toBe("text");
+        expect(textNodes[0].getTextContent()).toBe("Hello ");
+        expect(textNodes[1].getType()).toBe("custom-text");
+        expect(textNodes[1].getTextContent()).toBe("entity");
+      });
+    });
+
+    test("materializes TextNode subclass with inline format from LiveText", () => {
+      const document = new LiveObject({
+        kind: "root",
+        type: "root",
+        version: 1,
+        children: new LiveList<LiveElementNode>([
+          new LiveObject({
+            kind: "element",
+            type: "paragraph",
+            version: 1,
+            children: new LiveList([
+              createLiveTextNode([
+                ["entity", { bold: true, t: "custom-text" }],
+              ]),
+            ]),
+          }),
+        ]),
+      }) as LiveRootNode;
+
+      const { editor } = createEditor(document, [CustomTextNode]);
+
+      editor.read(() => {
+        const text_lexical = $dfs().find(({ node }) => $isTextNode(node))!
+          .node as TextNode;
+        expect(text_lexical.getType()).toBe("custom-text");
+        expect(text_lexical.getTextContent()).toBe("entity");
+        expect(text_lexical.getFormat()).toBe(1);
+      });
+    });
+
+    test("replaces Lexical text when segment type diverges", () => {
+      const document = createParagraphDocument("entity");
+      const { editor, manager } = createEditor(document, [CustomTextNode]);
+
+      const text_liveblocks = find_liveblocksNode(
+        document,
+        (node) => node.get("kind") === "text"
+      ) as LiveTextNode;
+      text_liveblocks.get("content").format(0, 6, { t: "custom-text" });
+
+      editor.update(() => {
+        const text_lexical = $dfs().find(({ node }) => $isTextNode(node))!
+          .node as TextNode;
+        manager.$reconcileTextNodeFromLiveblocks(
+          [text_lexical],
+          text_liveblocks
+        );
+      });
+
+      editor.read(() => {
+        const text_lexical = $dfs().find(({ node }) => $isTextNode(node))!
+          .node as TextNode;
+        expect(text_lexical.getType()).toBe("custom-text");
+        expect(text_lexical.getTextContent()).toBe("entity");
       });
     });
   });
@@ -6010,8 +6278,115 @@ describe("LiveblocksCollaborationManager", () => {
         )
       ).toBe(false);
     });
+
+    test("returns true when TextNode subclass type matches segment attribute t", () => {
+      const customEditor = createLexicalEditor({
+        namespace: "areTextNodesStructurallyEqual-custom",
+        nodes: [ParagraphNode, TextNode, CustomTextNode],
+      });
+      let key = "";
+      customEditor.update(() => {
+        const paragraph = $createParagraphNode();
+        const node = $createCustomTextNode("entity");
+        paragraph.append(node);
+        $getRoot().clear();
+        $getRoot().append(paragraph);
+        key = node.getKey();
+      });
+
+      expect(
+        customEditor.read(() =>
+          areTextNodesStructurallyEqual(
+            createLiveTextNode([["entity", { t: "custom-text" }]]),
+            [$getNodeByKey(key) as TextNode]
+          )
+        )
+      ).toBe(true);
+    });
+
+    test("returns false when TextNode subclass type differs from segment attribute t", () => {
+      const customEditor = createLexicalEditor({
+        namespace: "areTextNodesStructurallyEqual-custom-mismatch",
+        nodes: [ParagraphNode, TextNode, CustomTextNode],
+      });
+      let key = "";
+      customEditor.update(() => {
+        const paragraph = $createParagraphNode();
+        const node = $createCustomTextNode("entity");
+        paragraph.append(node);
+        $getRoot().clear();
+        $getRoot().append(paragraph);
+        key = node.getKey();
+      });
+
+      expect(
+        customEditor.read(() =>
+          areTextNodesStructurallyEqual(createLiveTextNode([["entity"]]), [
+            $getNodeByKey(key) as TextNode,
+          ])
+        )
+      ).toBe(false);
+    });
+  });
+
+  describe("createStorageNodeFromLexicalNode", () => {
+    test("stores TextNode subclass type on LiveText segments", () => {
+      const editor = createLexicalEditor({
+        namespace: "createStorageNodeFromLexicalNode-custom",
+        nodes: [ParagraphNode, TextNode, CustomTextNode],
+      });
+      let key = "";
+      editor.update(() => {
+        const paragraph = $createParagraphNode();
+        const node = $createCustomTextNode("entity");
+        paragraph.append(node);
+        $getRoot().clear();
+        $getRoot().append(paragraph);
+        key = node.getKey();
+      });
+
+      expect(
+        editor.read(() =>
+          createStorageNodeFromLexicalNode([
+            $getNodeByKey(key) as TextNode,
+          ])
+            .get("content")
+            .toJSON()
+        )
+      ).toEqual([["entity", { t: "custom-text" }]]);
+    });
   });
 });
+
+/**
+ * Minimal TextNode subclass used to cover LiveText `attributes.t` round-trips
+ * for any registered text entity type (not only the built-in `"text"` node).
+ */
+class CustomTextNode extends TextNode {
+  static getType(): string {
+    return "custom-text";
+  }
+
+  static clone(node: CustomTextNode): CustomTextNode {
+    return new CustomTextNode(node.__text, node.__key);
+  }
+
+  constructor(text: string, key?: NodeKey) {
+    super(text, key);
+  }
+
+  createDOM(config: EditorConfig): HTMLElement {
+    return super.createDOM(config);
+  }
+
+  static importJSON(serializedNode: SerializedTextNode): CustomTextNode {
+    return $createCustomTextNode().updateFromJSON(serializedNode);
+  }
+}
+
+function $createCustomTextNode(text = ""): CustomTextNode {
+  return $applyNodeReplacement(new CustomTextNode(text));
+}
 
 function createParagraphDocument(text: string): LiveRootNode {
   return new LiveObject({
@@ -6036,13 +6411,16 @@ function createParagraphDocument(text: string): LiveRootNode {
   }) as LiveRootNode;
 }
 
-function createEditor(document: LiveRootNode): {
+function createEditor(
+  document: LiveRootNode,
+  extraNodes: Array<typeof TextNode> = []
+): {
   editor: LexicalEditor;
   manager: LiveblocksCollaborationManager;
 } {
   const editor = createLexicalEditor({
     namespace: "test",
-    nodes: [ParagraphNode, TextNode, HeadingNode, QuoteNode],
+    nodes: [ParagraphNode, TextNode, HeadingNode, QuoteNode, ...extraNodes],
   });
 
   const manager = new LiveblocksCollaborationManager(document, editor);
