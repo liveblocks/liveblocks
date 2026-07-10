@@ -8,7 +8,7 @@ export default function Page() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace(`/r/e2e-lexical-${nanoid()}`);
+    router.replace(`/rooms/e2e-lexical-${nanoid()}`);
   }, [router]);
 
   return <div>Creating room...</div>;

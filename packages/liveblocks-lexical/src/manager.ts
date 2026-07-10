@@ -25,6 +25,7 @@ import {
   $isRangeSelection,
   $isRootNode,
   $isTextNode,
+  COLLABORATION_TAG,
   type DecoratorNode,
   type ElementNode,
   type LexicalEditor,
@@ -90,7 +91,30 @@ export class LiveblocksCollaborationManager {
       reverse: new Map(),
     };
 
-    editor.update(() => this.$updateBinding());
+    editor.update(
+      () => {
+        this.$hydrateFromStorage();
+        this.$updateBinding();
+      },
+      { tag: COLLABORATION_TAG }
+    );
+  }
+
+  /**
+   * Replace the Lexical document with the current Storage tree.
+   *
+   * Storage is the source of truth on mount; this clears any empty default
+   * editor state and rebuilds Lexical nodes from `root`.
+   */
+  private $hydrateFromStorage(): void {
+    const root_lexical = $getRoot();
+    root_lexical.clear();
+
+    const children: ElementNode[] = [];
+    for (const child of this.root.get("children")) {
+      children.push($convertLiveElementNodeToLexicalNode(child));
+    }
+    root_lexical.append(...children);
   }
 
   get binding(): Readonly<{
@@ -2438,7 +2462,7 @@ export function createStorageNodeFromLexicalNode(
  *    ├── text → [["Hi"]]                      ├── TextNode "Hi"
  *    └── linebreak                             └── LineBreak
  */
-export function $convertLiveElementNodeToLexicalNode(
+function $convertLiveElementNodeToLexicalNode(
   node: LiveElementNode
 ): ElementNode {
   const editor = $getEditor();

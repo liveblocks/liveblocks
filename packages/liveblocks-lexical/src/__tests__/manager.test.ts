@@ -34,7 +34,6 @@ import {
   prepareIsolatedStorageTest,
 } from "../../../liveblocks-core/src/__tests__/_MockWebSocketServer.setup";
 import {
-  $convertLiveElementNodeToLexicalNode,
   $getLexicalNodeProps,
   $setLexicalNodeProps,
   areTextNodesStructurallyEqual,
@@ -5990,14 +5989,6 @@ function createEditor(document: LiveRootNode): {
   const editor = createLexicalEditor({
     namespace: "test",
     nodes: [ParagraphNode, TextNode, HeadingNode, QuoteNode],
-  });
-
-  editor.update(() => {
-    const children: ElementNode[] = [];
-    for (const child of document.get("children")) {
-      children.push($convertLiveElementNodeToLexicalNode(child));
-    }
-    $getRoot().append(...children);
   });
 
   const manager = new LiveblocksCollaborationManager(document, editor);

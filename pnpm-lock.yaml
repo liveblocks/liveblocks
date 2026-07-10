@@ -192,7 +192,13 @@ importers:
 
   e2e/next-lexical-liveblocks:
     dependencies:
+      '@lexical/code':
+        specifier: 0.45.0
+        version: 0.45.0
       '@lexical/dragon':
+        specifier: 0.45.0
+        version: 0.45.0
+      '@lexical/list':
         specifier: 0.45.0
         version: 0.45.0
       '@lexical/react':
@@ -216,6 +222,9 @@ importers:
       '@liveblocks/core':
         specifier: workspace:*
         version: link:../../packages/liveblocks-core
+      '@liveblocks/lexical':
+        specifier: workspace:*
+        version: link:../../packages/liveblocks-lexical
       '@liveblocks/node':
         specifier: workspace:*
         version: link:../../packages/liveblocks-node
@@ -681,7 +690,7 @@ importers:
     devDependencies:
       '@lexical/react':
         specifier: 0.45.0
-        version: 0.45.0(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(yjs@13.6.27)
+        version: 0.45.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(yjs@13.6.27)
       '@lexical/rich-text':
         specifier: 0.45.0
         version: 0.45.0
@@ -716,11 +725,11 @@ importers:
         specifier: 0.45.0
         version: 0.45.0
       react:
-        specifier: ^18.2.0
-        version: 18.2.0
+        specifier: ^19.2.3
+        version: 19.2.3
       react-dom:
-        specifier: ^18.2.0
-        version: 18.2.0(react@18.2.0)
+        specifier: ^19.2.3
+        version: 19.2.3(react@19.2.3)
       rollup:
         specifier: 3.28.1
         version: 3.28.1
@@ -2963,8 +2972,14 @@ packages:
   '@lexical/code-core@0.45.0':
     resolution: {integrity: sha512-zU3noYmfluSK38r0eBz3gHKzsgOksf9eHqoPIwXH6HovKCDo848HoW0i/hCRzRo9oPqydKikx0LIKUvWSaSNIw==}
 
+  '@lexical/code-prism@0.45.0':
+    resolution: {integrity: sha512-eevIcapWzWk4Kb2WE6mmMjTXjf+Mfn4pLXAJ92BkRO6gc5RPkYgpn7zsYTzSBWEM/GptKf7ta+XouLcnLXNOSQ==}
+
   '@lexical/code@0.35.0':
     resolution: {integrity: sha512-ox4DZwETQ9IA7+DS6PN8RJNwSAF7RMjL7YTVODIqFZ5tUFIf+5xoCHbz7Fll0Bvixlp12hVH90xnLwTLRGpkKw==}
+
+  '@lexical/code@0.45.0':
+    resolution: {integrity: sha512-vtD5IKbJvgIxhKIl96pWKqjlqialzg/WbWNUNbeoyuf9ht0/MQ6WFdEdCNnnXqx4rj7CTzafB3c0jup7h96b6A==}
 
   '@lexical/devtools-core@0.35.0':
     resolution: {integrity: sha512-C2wwtsMCR6ZTfO0TqpSM17RLJWyfHmifAfCTjFtOJu15p3M6NO/nHYK5Mt7YMQteuS89mOjB4ng8iwoLEZ6QpQ==}
@@ -12060,11 +12075,25 @@ snapshots:
       '@lexical/internal': 0.45.0
       lexical: 0.45.0
 
+  '@lexical/code-prism@0.45.0':
+    dependencies:
+      '@lexical/code-core': 0.45.0
+      '@lexical/extension': 0.45.0
+      lexical: 0.45.0
+      prismjs: 1.30.0
+
   '@lexical/code@0.35.0':
     dependencies:
       '@lexical/utils': 0.35.0
       lexical: 0.35.0
       prismjs: 1.30.0
+
+  '@lexical/code@0.45.0':
+    dependencies:
+      '@lexical/code-core': 0.45.0
+      '@lexical/code-prism': 0.45.0
+      '@lexical/extension': 0.45.0
+      lexical: 0.45.0
 
   '@lexical/devtools-core@0.35.0(react-dom@18.2.0(react@18.2.0))(react@18.2.0)':
     dependencies:
@@ -12074,17 +12103,6 @@ snapshots:
       '@lexical/table': 0.35.0
       '@lexical/utils': 0.35.0
       lexical: 0.35.0
-      react: 18.2.0
-      react-dom: 18.2.0(react@18.2.0)
-
-  '@lexical/devtools-core@0.45.0(react-dom@18.2.0(react@18.2.0))(react@18.2.0)':
-    dependencies:
-      '@lexical/html': 0.45.0
-      '@lexical/link': 0.45.0
-      '@lexical/mark': 0.45.0
-      '@lexical/table': 0.45.0
-      '@lexical/utils': 0.45.0
-      lexical: 0.45.0
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
 
@@ -12268,33 +12286,6 @@ snapshots:
       react-error-boundary: 3.1.4(react@18.2.0)
     transitivePeerDependencies:
       - yjs
-
-  '@lexical/react@0.45.0(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(yjs@13.6.27)':
-    dependencies:
-      '@floating-ui/react': 0.27.19(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
-      '@lexical/devtools-core': 0.45.0(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
-      '@lexical/dragon': 0.45.0
-      '@lexical/extension': 0.45.0
-      '@lexical/hashtag': 0.45.0
-      '@lexical/history': 0.45.0
-      '@lexical/internal': 0.45.0
-      '@lexical/link': 0.45.0
-      '@lexical/list': 0.45.0
-      '@lexical/mark': 0.45.0
-      '@lexical/markdown': 0.45.0
-      '@lexical/overflow': 0.45.0
-      '@lexical/plain-text': 0.45.0
-      '@lexical/rich-text': 0.45.0
-      '@lexical/table': 0.45.0
-      '@lexical/text': 0.45.0
-      '@lexical/utils': 0.45.0
-      '@lexical/yjs': 0.45.0(yjs@13.6.27)
-      lexical: 0.45.0
-      react: 18.2.0
-      react-dom: 18.2.0(react@18.2.0)
-      react-error-boundary: 6.1.2(react@18.2.0)
-    optionalDependencies:
-      yjs: 13.6.27
 
   '@lexical/react@0.45.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(yjs@13.6.27)':
     dependencies:
@@ -20533,10 +20524,6 @@ snapshots:
   react-error-boundary@4.1.2(react@18.2.0):
     dependencies:
       '@babel/runtime': 7.19.4
-      react: 18.2.0
-
-  react-error-boundary@6.1.2(react@18.2.0):
-    dependencies:
       react: 18.2.0
 
   react-error-boundary@6.1.2(react@19.2.3):

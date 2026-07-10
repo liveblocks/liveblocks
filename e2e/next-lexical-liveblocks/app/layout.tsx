@@ -1,3 +1,4 @@
+import "@liveblocks/lexical/styles.css";
 import "@liveblocks/react-ui/styles.css";
 import "./globals.css";
 

@@ -11,7 +11,9 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@lexical/code": "0.45.0",
     "@lexical/dragon": "0.45.0",
+    "@lexical/list": "0.45.0",
     "@lexical/react": "0.45.0",
     "@lexical/rich-text": "0.45.0",
     "@lexical/selection": "0.45.0",
@@ -19,6 +21,7 @@
     "@lexical/utils": "0.45.0",
     "@liveblocks/client": "workspace:*",
     "@liveblocks/core": "workspace:*",
+    "@liveblocks/lexical": "workspace:*",
     "@liveblocks/node": "workspace:*",
     "@liveblocks/react": "workspace:*",
     "@liveblocks/react-ui": "workspace:*",
