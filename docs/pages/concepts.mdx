@@ -112,6 +112,51 @@ Rooms typically map to artifacts people and AI agents can create inside your
 product, such as text documents, workflow diagrams, spreadsheets, whiteboards,
 forms, 3D files, video editors, design files, presentations, and more.
 
+### What should be a room? [#what-should-be-a-room]
+
+A good rule of thumb is that each shareable artifact in your product should be
+its own room. If two people open the same page and expect to see each other’s
+activity, they should be connected to the same room.
+
+| Your product                   | What a room maps to                     |
+| ------------------------------ | --------------------------------------- |
+| Canvas or whiteboard product   | Each canvas is a room                   |
+| Dashboard or analytics product | Each dashboard is a room                |
+| Text editor                    | Each document is a room                 |
+| Spreadsheet product            | Each spreadsheet is a room              |
+| Video or design review tool    | Each file under review is a room        |
+| Form builder                   | Each form is a room                     |
+| Project management tool        | Each project, board, or issue is a room |
+
+Rooms are inexpensive to create and connect to, so it’s normal for a product to
+have thousands or millions of rooms—one for every document your users have ever
+created. A room can be created explicitly from your back end with
+[`liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms), or
+automatically the first time a user enters it, for example with
+[`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider) in React.
+
+### Best practices [#room-best-practices]
+
+- **Create one room per artifact, not one per team or per app.** Smaller rooms
+  keep documents fast, make permissions easier to reason about, and mean users
+  only receive updates for the document they’re looking at.
+- **Reuse your existing document IDs as room IDs.** A room ID is any unique
+  string, so the simplest approach is to use the same ID your database already
+  uses for the document. Using a naming pattern such as
+  `organization-id:document-id` also makes it easier to
+  [grant access to groups of rooms](/docs/authentication/access-token#room-permissions).
+- **Rooms don’t need to be multiplayer from day one.** A room with a single user
+  inside behaves exactly like any other document—you can start every document as
+  a room, and collaboration features such as multiplayer editing, comments, and
+  notifications become available the moment a second person (or AI agent) joins.
+- **Set permissions on the room.** When using
+  [ID token authentication](/docs/authentication#id-token), the room is the
+  source of truth for who can enter it, at the default, group, and user levels.
+- **Know which features are room-based and which aren’t.** Presence, Storage,
+  Yjs documents, and comment threads all live inside a room. Inbox notifications
+  are project-based, so users receive them across all rooms they have access to,
+  without needing to be connected to those rooms.
+
 ## Primitives
 
 Primitives are the building blocks available inside rooms that make multiplayer
