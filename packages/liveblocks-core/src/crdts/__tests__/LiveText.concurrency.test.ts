@@ -323,4 +323,41 @@ describe("LiveText acknowledgement", () => {
     expect(text.toString()).toBe("AHello!");
     expect(text.version).toBe(2);
   });
+
+  test("batched queued LiveText edit clears the redo stack", async () => {
+    const { room, root } = await prepareIsolatedStorageTest<{
+      text: LiveText;
+    }>(initialNodes, 0);
+
+    const text = root.get("text");
+
+    // First insert sends UPDATE_TEXT (in-flight).
+    room.batch(() => {
+      text.insert(5, "!");
+    });
+    expect(text.toString()).toBe("Hello!");
+
+    room.history.undo();
+    expect(text.toString()).toBe("Hello");
+    expect(room.history.canRedo()).toBe(true);
+
+    room.history.pause();
+    // Second insert while the first UPDATE_TEXT is still in-flight queues
+    // with empty ops + clearRedoStack: true inside the batch.
+    room.batch(() => {
+      text.insert(5, "?");
+    });
+    expect(text.toString()).toBe("Hello?");
+    expect(room.history.canRedo()).toBe(false);
+
+    room.history.resume();
+    expect(room.history.canUndo()).toBe(true);
+
+    room.history.undo();
+    expect(text.toString()).toBe("Hello");
+
+    room.history.redo();
+    expect(text.toString()).toBe("Hello?");
+    expect(room.history.canRedo()).toBe(false);
+  });
 });

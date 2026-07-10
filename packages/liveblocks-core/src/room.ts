@@ -1446,6 +1446,10 @@ type RoomState<
     // history must wait until after the batch’s `reverseOps` are merged
     // otherwise those ops become a second undo step.
     scheduleHistoryResume: boolean;
+
+    // LiveText can dispatch with empty `ops` while UPDATE_TEXT is in-flight
+    // (queued edits) but still request redo clearing via DispatchOptions.
+    clearRedoStack?: boolean;
   } | null;
 
   // A registry of yet-unacknowledged Ops. These Ops have already been
@@ -1862,6 +1866,12 @@ export function createRoom<
         );
       }
       context.activeBatch.reverseOps.pushLeft(reverse);
+      // LiveText may dispatch with empty `ops` while an UPDATE_TEXT is
+      // in-flight (queued edits), but still pass `clearRedoStack: true`.
+      // Honor that here — the batch finally-block only sees ops.length.
+      if (options?.clearRedoStack) {
+        context.activeBatch.clearRedoStack = true;
+      }
     } else {
       if (reverse.length > 0) {
         addToUndoStack(reverse);
@@ -3598,9 +3608,10 @@ export function createRoom<
         commitPausedHistoryToUndoStack();
       }
 
-      if (currentBatch.ops.length > 0) {
-        // Only clear the redo stack if something has changed during a batch
-        // Clear the redo stack because batch is always called from a local operation
+      if (currentBatch.ops.length > 0 || currentBatch.clearRedoStack) {
+        // Clear redo when the batch mutated storage, or when a nested
+        // dispatch explicitly requested it (e.g. LiveText queued edits
+        // with empty `ops` but `clearRedoStack: true`).
         clearRedoStack();
       }
 
