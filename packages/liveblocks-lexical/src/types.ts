@@ -41,16 +41,20 @@ export type LiveChildShape =
   | LiveLineBreakShape
   | LiveDecoratorShape;
 
+/** Block-level root children: elements and non-inline decorators (e.g. HR). */
+export type LiveRootChildShape = LiveElementShape | LiveDecoratorShape;
+
 export type LiveRootShape = {
   kind: "root";
   type: "root";
   version: number;
-  children: LiveList<LiveElementNode>;
+  children: LiveList<LiveChildNode>;
 };
 
 export type LiveStorageShape = LiveRootShape | LiveChildShape;
 
 export type LiveChildNode = LiveObject<LiveChildShape>;
+export type LiveRootChildNode = LiveObject<LiveRootChildShape>;
 export type LiveTextNode = LiveObject<LiveTextShape>;
 export type LiveElementNode = LiveObject<LiveElementShape>;
 export type LiveLineBreakNode = LiveObject<LiveLineBreakShape>;

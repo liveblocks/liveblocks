@@ -131,20 +131,20 @@ export class LiveblocksCollaboration {
                     return;
                   }
 
-                  // Prefer Lexical snapshot when that node key is still bound —
-                  // storage decode of a surviving LiveText can collapse offsets
-                  // after delete/undo. When keys were recreated (common with
-                  // multi-segment formatted text), use local flat offsets so
-                  // we skip the remapping decodeIndex path. Presence storage
-                  // decode remains last-resort.
-                  const anchor = manager.binding.reverse.has(
-                    restore.lexical.anchor.key
+                  // Prefer Lexical snapshot when that key is still usable in
+                  // the active editor state — storage decode of a surviving
+                  // LiveText can collapse offsets after delete/undo. When keys
+                  // were recreated (common with multi-segment formatted text),
+                  // use local flat offsets so we skip the remapping decodeIndex
+                  // path. Presence storage decode remains last-resort.
+                  const anchor = manager.$isUsableLexicalSnapshot(
+                    restore.lexical.anchor
                   )
                     ? restore.lexical.anchor
                     : (manager.$decodeLocalPoint(restore.local.anchor) ??
                       manager.$decodePoint(restore.storage.anchor));
-                  const focus = manager.binding.reverse.has(
-                    restore.lexical.focus.key
+                  const focus = manager.$isUsableLexicalSnapshot(
+                    restore.lexical.focus
                   )
                     ? restore.lexical.focus
                     : (manager.$decodeLocalPoint(restore.local.focus) ??

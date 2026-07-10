@@ -198,7 +198,22 @@ importers:
       '@lexical/dragon':
         specifier: 0.45.0
         version: 0.45.0
+      '@lexical/extension':
+        specifier: 0.45.0
+        version: 0.45.0
+      '@lexical/hashtag':
+        specifier: 0.45.0
+        version: 0.45.0
+      '@lexical/link':
+        specifier: 0.45.0
+        version: 0.45.0
       '@lexical/list':
+        specifier: 0.45.0
+        version: 0.45.0
+      '@lexical/mark':
+        specifier: 0.45.0
+        version: 0.45.0
+      '@lexical/markdown':
         specifier: 0.45.0
         version: 0.45.0
       '@lexical/react':
@@ -208,6 +223,9 @@ importers:
         specifier: 0.45.0
         version: 0.45.0
       '@lexical/selection':
+        specifier: 0.45.0
+        version: 0.45.0
+      '@lexical/table':
         specifier: 0.45.0
         version: 0.45.0
       '@lexical/text':

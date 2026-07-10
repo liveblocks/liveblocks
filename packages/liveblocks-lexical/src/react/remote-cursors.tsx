@@ -60,33 +60,45 @@ export function RemoteCursorsPlugin({
     const containerRect = container.getBoundingClientRect();
     const nextOverlays: RemoteOverlay[] = [];
 
-    editor.read(() => {
-      for (const user of others) {
-        const selection = user.presence.selection as
-          | LiveLexicalSelection
-          | null
-          | undefined;
-        if (selection === null || selection === undefined) {
-          continue;
-        }
+    // Do not use `editor.read()` — in Lexical 0.45 it always force-commits
+    // pending updates. This plugin also refreshes from a Storage deep-
+    // subscribe, and `room.history.undo()` notifies that subscriber
+    // synchronously inside the UNDO_COMMAND update. Force-committing there
+    // freezes the in-flight selection and crashes later transforms
+    // (`_cachedNodes` is read-only). Read the committed state instead.
+    editor.getEditorState().read(
+      () => {
+        for (const user of others) {
+          const selection = user.presence.selection as
+            | LiveLexicalSelection
+            | null
+            | undefined;
+          if (selection === null || selection === undefined) {
+            continue;
+          }
 
-        const decoded = manager.$decodeSelection(selection);
-        if (decoded === null) {
-          continue;
-        }
+          const decoded = manager.$decodeSelection(selection);
+          if (decoded === null) {
+            continue;
+          }
 
-        const rects = $getRemoteOverlayRects(editor, decoded, containerRect);
-        if (rects === null) {
-          continue;
-        }
+          const rects = $getRemoteOverlayRects(editor, decoded, containerRect);
+          if (rects === null) {
+            continue;
+          }
 
-        nextOverlays.push({
-          connectionId: user.connectionId,
-          color: user.info?.color ?? "#888888",
-          selections: rects,
-        });
-      }
-    });
+          nextOverlays.push({
+            connectionId: user.connectionId,
+            color:
+              typeof user.info?.color === "string"
+                ? user.info.color
+                : "#888888",
+            selections: rects,
+          });
+        }
+      },
+      { editor }
+    );
 
     setOverlays(nextOverlays);
   }, [editor, manager, others]);

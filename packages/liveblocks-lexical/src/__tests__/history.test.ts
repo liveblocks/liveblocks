@@ -1,7 +1,14 @@
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
-import { LiveList, LiveObject, LiveText, type Room } from "@liveblocks/client";
+import {
+  LiveList,
+  LiveMap,
+  LiveObject,
+  LiveText,
+  type Room,
+} from "@liveblocks/client";
 import { kInternal, kStorageUpdateSource } from "@liveblocks/core";
 import {
+  $applyNodeReplacement,
   $createParagraphNode,
   $createRangeSelection,
   $createTextNode,
@@ -18,6 +25,8 @@ import {
   COLLABORATION_TAG,
   COMMAND_PRIORITY_CRITICAL,
   createEditor as createLexicalEditor,
+  DecoratorNode,
+  ElementNode,
   HISTORIC_TAG,
   HISTORY_MERGE_TAG,
   HISTORY_PUSH_TAG,
@@ -26,7 +35,15 @@ import {
   REDO_COMMAND,
   TextNode,
   UNDO_COMMAND,
+  type EditorConfig,
+  type Klass,
   type LexicalEditor,
+  type LexicalNode,
+  type LexicalUpdateJSON,
+  type NodeKey,
+  type SerializedElementNode,
+  type SerializedLexicalNode,
+  type Spread,
 } from "lexical";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
@@ -36,8 +53,16 @@ import {
 } from "../../../liveblocks-core/src/__tests__/_MockWebSocketServer.setup";
 import { LiveblocksCollaboration } from "../collaboration";
 import { LiveblocksHistory } from "../history";
-import { LiveblocksCollaborationManager } from "../manager";
-import type { LiveElementNode, LiveRootNode, LiveTextNode } from "../types";
+import {
+  $getLexicalNodeProps,
+  LiveblocksCollaborationManager,
+} from "../manager";
+import type {
+  LiveDecoratorNode,
+  LiveElementNode,
+  LiveRootNode,
+  LiveTextNode,
+} from "../types";
 
 describe("LiveblocksHistory", () => {
   afterEach(() => {
@@ -2016,7 +2041,7 @@ describe("LiveblocksHistory", () => {
       editor.update(() => {}, { discrete: true });
 
       const content = (
-        document.get("children").get(0)!.get("children").get(0)! as LiveTextNode
+        (document.get("children").get(0) as LiveElementNode).get("children").get(0)! as LiveTextNode
       ).get("content");
       expect(content.toString()).toBe("Ft");
 
@@ -2093,7 +2118,7 @@ describe("LiveblocksHistory", () => {
       editor.update(() => {}, { discrete: true });
 
       const content = (
-        document.get("children").get(0)!.get("children").get(0)! as LiveTextNode
+        (document.get("children").get(0) as LiveElementNode).get("children").get(0)! as LiveTextNode
       ).get("content");
 
       vi.advanceTimersByTime(1000);
@@ -2172,7 +2197,7 @@ describe("LiveblocksHistory", () => {
       );
 
       const content = (
-        document.get("children").get(0)!.get("children").get(0)! as LiveTextNode
+        (document.get("children").get(0) as LiveElementNode).get("children").get(0)! as LiveTextNode
       ).get("content");
       expect(content.toString()).toBe("Ft");
 
@@ -2394,7 +2419,7 @@ describe("LiveblocksHistory", () => {
         decodeAnchor: number | null;
       } | null = null;
       const firstContent = (
-        document.get("children").get(0)!.get("children").get(0)! as LiveTextNode
+        (document.get("children").get(0) as LiveElementNode).get("children").get(0)! as LiveTextNode
       ).get("content");
 
       const unsub = room[kInternal].history.subscribe((event) => {
@@ -2762,6 +2787,112 @@ describe("LiveblocksHistory", () => {
       collaboration.unregister();
     });
 
+    test("undo selection restore ignores stale reverse bindings for detached keys", async () => {
+      // Repro: binding.reverse.has(key) can stay true for a key that
+      // $getNodeByKey returns null for. Preferring that lexical snapshot
+      // used to throw PointType.set: node with key X is [not found].
+      const { room, document, content } = await createRoomWithFormattedText([
+        ["Hello "],
+        ["world", { bold: true }],
+      ]);
+      vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+
+      const { editor, collaboration, manager } =
+        createCollaborationFromDocument(room, document);
+
+      const liveText = (
+        document.get("children").get(0) as LiveElementNode
+      )
+        .get("children")
+        .get(0)! as LiveTextNode;
+
+      let staleAnchorKey: string | null = null;
+      let staleFocusKey: string | null = null;
+
+      editor.update(
+        () => {
+          const paragraph = $getRoot().getFirstChild() as ParagraphNode;
+          const plain = paragraph.getFirstChild();
+          const bold = paragraph.getLastChild();
+          if (
+            plain === null ||
+            !$isTextNode(plain) ||
+            bold === null ||
+            !$isTextNode(bold)
+          ) {
+            throw new Error("Expected plain + bold text nodes");
+          }
+          staleAnchorKey = plain.getKey();
+          staleFocusKey = bold.getKey();
+          const selection = $createRangeSelection();
+          selection.anchor.set(plain.getKey(), 3, "text");
+          selection.focus.set(bold.getKey(), bold.getTextContentSize(), "text");
+          $setSelection(selection);
+        },
+        { discrete: true }
+      );
+
+      editor.update(
+        () => {
+          const selection = $getSelection();
+          if (!$isRangeSelection(selection)) {
+            throw new Error("Expected range selection");
+          }
+          selection.removeText();
+        },
+        { discrete: true }
+      );
+
+      expect(content.toString()).toBe("Hel");
+      expect(staleAnchorKey).not.toBeNull();
+      expect(staleFocusKey).not.toBeNull();
+
+      // Detached keys that createBinding will not scrub (not in forward[]).
+      (
+        manager.binding.reverse as Map<string, typeof liveText>
+      ).set(staleAnchorKey!, liveText);
+      (
+        manager.binding.reverse as Map<string, typeof liveText>
+      ).set(staleFocusKey!, liveText);
+
+      vi.advanceTimersByTime(1000);
+
+      expect(() => {
+        editor.dispatchCommand(UNDO_COMMAND, undefined);
+      }).not.toThrow();
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(content.toString()).toBe("Hello world");
+      expect(
+        editor.read(() => {
+          const selection = $getSelection();
+          if (!$isRangeSelection(selection)) {
+            return null;
+          }
+          return {
+            text: $getRoot().getTextContent(),
+            anchor: {
+              offset: selection.anchor.offset,
+              type: selection.anchor.type,
+            },
+            focus: {
+              offset: selection.focus.offset,
+              type: selection.focus.type,
+            },
+            isCollapsed: selection.isCollapsed(),
+          };
+        })
+      ).toEqual({
+        text: "Hello world",
+        anchor: { offset: 3, type: "text" },
+        focus: { offset: 5, type: "text" },
+        isCollapsed: false,
+      });
+
+      collaboration.unregister();
+    });
+
     test("undo restores a range selection after deleting inside a bold span", async () => {
       // Uniform bold LiveText — same left-edge decode remap as plain text,
       // but the TextNode carries formatting. Select "orl" in "world", delete,
@@ -2943,7 +3074,571 @@ describe("LiveblocksHistory", () => {
       collaboration.unregister();
     });
   });
+
+  describe("decorator nodes", () => {
+    test("undo/redo insert and remove of a decorator child", async () => {
+      const { room, document } = await createRoomWithText("Hi");
+      vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+
+      const editor = createEditor("Hi", [CustomDecoratorNode]);
+      const collaboration = new LiveblocksCollaboration(editor, room, document);
+      editor.update(() => {}, { discrete: true });
+      collaboration.register();
+
+      const paragraph_liveblocks = document.get("children").get(0) as LiveElementNode;
+
+      editor.update(
+        () => {
+          const paragraph = $getRoot().getFirstChild() as ParagraphNode;
+          paragraph.append(
+            $createCustomDecoratorNode({
+              src: "https://example.com/a.png",
+              altText: "A",
+            })
+          );
+        },
+        { discrete: true }
+      );
+      vi.advanceTimersByTime(1000);
+
+      expect(paragraph_liveblocks.get("children").length).toBe(2);
+      expect(paragraph_liveblocks.get("children").get(1)!.get("kind")).toBe(
+        "decorator"
+      );
+
+      editor.dispatchCommand(UNDO_COMMAND, undefined);
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(paragraph_liveblocks.get("children").length).toBe(1);
+      expect(
+        editor.read(() =>
+          ($getRoot().getFirstChild() as ParagraphNode).getChildrenSize()
+        )
+      ).toBe(1);
+
+      editor.dispatchCommand(REDO_COMMAND, undefined);
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(paragraph_liveblocks.get("children").length).toBe(2);
+      expect(paragraph_liveblocks.get("children").get(1)!.get("kind")).toBe(
+        "decorator"
+      );
+      expect(
+        (paragraph_liveblocks.get("children").get(1)! as LiveDecoratorNode)
+          .get("props")
+          ?.toJSON()
+      ).toEqual({
+        src: "https://example.com/a.png",
+        altText: "A",
+      });
+
+      collaboration.unregister();
+    });
+
+    test("undo restores the caret from before a decorator insert", async () => {
+      const { room, document } = await createRoomWithText("Hi");
+      vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+
+      const editor = createEditor("Hi", [CustomDecoratorNode]);
+      const collaboration = new LiveblocksCollaboration(editor, room, document);
+      editor.update(() => {}, { discrete: true });
+      collaboration.register();
+
+      editor.update(
+        () => {
+          const text = (
+            $getRoot().getFirstChild() as ParagraphNode
+          ).getFirstChild();
+          if (text === null || !$isTextNode(text)) {
+            throw new Error("Expected text node");
+          }
+          const selection = $createRangeSelection();
+          selection.anchor.set(text.getKey(), 2, "text");
+          selection.focus.set(text.getKey(), 2, "text");
+          $setSelection(selection);
+        },
+        { discrete: true }
+      );
+
+      editor.update(
+        () => {
+          const paragraph = $getRoot().getFirstChild() as ParagraphNode;
+          paragraph.append(
+            $createCustomDecoratorNode({
+              src: "https://example.com/a.png",
+              altText: "A",
+            })
+          );
+        },
+        { discrete: true }
+      );
+      vi.advanceTimersByTime(1000);
+
+      expect((document.get("children").get(0) as LiveElementNode).get("children").length).toBe(2);
+
+      editor.dispatchCommand(UNDO_COMMAND, undefined);
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect((document.get("children").get(0) as LiveElementNode).get("children").length).toBe(1);
+      expect(
+        editor.read(() => {
+          const selection = $getSelection();
+          if (!$isRangeSelection(selection)) {
+            return null;
+          }
+          const text = (
+            $getRoot().getFirstChild() as ParagraphNode
+          ).getFirstChild();
+          return {
+            offset: selection.anchor.offset,
+            collapsed: selection.isCollapsed(),
+            type: selection.anchor.type,
+            onText: text !== null && selection.anchor.key === text.getKey(),
+          };
+        })
+      ).toEqual({
+        offset: 2,
+        collapsed: true,
+        type: "text",
+        onText: true,
+      });
+
+      collaboration.unregister();
+    });
+
+    test("undo/redo decorator prop changes", async () => {
+      const { room, root } = (await prepareIsolatedStorageTest(
+        [createSerializedRoot()],
+        0
+      )) as unknown as {
+        room: Room;
+        root: LiveObject<{ document?: LiveRootNode }>;
+      };
+
+      room.history.disable(() => {
+        root.set(
+          "document",
+          new LiveObject({
+            kind: "root",
+            type: "root",
+            version: 1,
+            children: new LiveList([
+              new LiveObject({
+                kind: "element",
+                type: "paragraph",
+                version: 1,
+                children: new LiveList([
+                  new LiveObject({
+                    kind: "decorator",
+                    type: "custom-decorator",
+                    version: 1,
+                    props: new LiveMap([
+                      ["src", "https://example.com/a.png"],
+                      ["altText", "A"],
+                    ]),
+                  }),
+                ]),
+              }),
+            ]),
+          })
+        );
+      });
+
+      const document = root.get("document") as LiveRootNode;
+      vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+
+      const editor = createEditor("", [CustomDecoratorNode]);
+      const collaboration = new LiveblocksCollaboration(editor, room, document);
+      editor.update(() => {}, { discrete: true });
+      collaboration.register();
+
+      const decorator_liveblocks = (document
+        .get("children")
+        .get(0) as LiveElementNode)
+        .get("children")
+        .get(0)! as LiveDecoratorNode;
+
+      editor.update(
+        () => {
+          const decorator = (
+            $getRoot().getFirstChild() as ParagraphNode
+          ).getFirstChild() as CustomDecoratorNode;
+          const writable = decorator.getWritable();
+          writable.__src = "https://example.com/b.png";
+          writable.__altText = "B";
+        },
+        { discrete: true }
+      );
+      vi.advanceTimersByTime(1000);
+
+      expect(decorator_liveblocks.get("props")?.toJSON()).toEqual({
+        src: "https://example.com/b.png",
+        altText: "B",
+      });
+
+      editor.dispatchCommand(UNDO_COMMAND, undefined);
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(decorator_liveblocks.get("props")?.toJSON()).toEqual({
+        src: "https://example.com/a.png",
+        altText: "A",
+      });
+      expect(
+        editor.read(() => {
+          const decorator = (
+            $getRoot().getFirstChild() as ParagraphNode
+          ).getFirstChild() as CustomDecoratorNode;
+          return $getLexicalNodeProps(decorator);
+        })
+      ).toEqual({
+        src: "https://example.com/a.png",
+        altText: "A",
+      });
+
+      collaboration.unregister();
+    });
+  });
+
+  describe("inline element undo with formatted text", () => {
+    test("undo mark next to bold does not duplicate trailing text in Lexical", async () => {
+      const { room, document } = await createRoomWithText("How are you?");
+      vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+
+      const editor = createEditor("How are you?", [InlineMarkNode]);
+      const collaboration = new LiveblocksCollaboration(editor, room, document);
+      editor.update(() => {}, { discrete: true });
+      collaboration.register();
+
+      // Bold "are" → multi-segment LiveText under one storage child.
+      editor.update(
+        () => {
+          const text = (
+            $getRoot().getFirstChild() as ParagraphNode
+          ).getFirstChild();
+          if (text === null || !$isTextNode(text)) {
+            throw new Error("Expected text node");
+          }
+          const selection = $createRangeSelection();
+          selection.anchor.set(text.getKey(), 4, "text");
+          selection.focus.set(text.getKey(), 7, "text");
+          $setSelection(selection);
+          selection.formatText("bold");
+        },
+        { discrete: true }
+      );
+      vi.advanceTimersByTime(1000);
+
+      // Mark plain suffix " you" next to the bold span (leaves trailing "?").
+      editor.update(
+        () => {
+          const paragraph = $getRoot().getFirstChild();
+          if (!$isParagraphNode(paragraph)) {
+            throw new Error("Expected paragraph");
+          }
+          const suffix = paragraph
+            .getChildren()
+            .find((child) => $isTextNode(child) && child.getTextContent() === " you?");
+          if (suffix === undefined || !$isTextNode(suffix)) {
+            throw new Error("Expected suffix text node");
+          }
+          const selection = $createRangeSelection();
+          selection.anchor.set(suffix.getKey(), 0, "text");
+          selection.focus.set(suffix.getKey(), 4, "text");
+          $setSelection(selection);
+          $wrapSelectionInInlineMark();
+        },
+        { discrete: true }
+      );
+      vi.advanceTimersByTime(1000);
+
+      const paragraph_liveblocks = document
+        .get("children")
+        .get(0) as LiveElementNode;
+      expect(paragraph_liveblocks.get("children").length).toBeGreaterThan(1);
+
+      editor.dispatchCommand(UNDO_COMMAND, undefined);
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(
+        paragraph_liveblocks.get("children").map((child) => ({
+          kind: child.get("kind"),
+          content:
+            child.get("kind") === "text"
+              ? (child as LiveTextNode).get("content").toJSON()
+              : undefined,
+        }))
+      ).toEqual([
+        {
+          kind: "text",
+          content: [
+            ["How "],
+            ["are", { bold: true }],
+            [" you?"],
+          ],
+        },
+      ]);
+
+      expect(
+        editor.read(() => {
+          const paragraph = $getRoot().getFirstChild();
+          if (!$isParagraphNode(paragraph)) {
+            throw new Error("Expected paragraph");
+          }
+          return {
+            text: paragraph.getTextContent(),
+            hasMark: paragraph
+              .getChildren()
+              .some((child) => $isInlineMarkNode(child)),
+          };
+        })
+      ).toEqual({
+        text: "How are you?",
+        hasMark: false,
+      });
+
+      collaboration.unregister();
+    });
+
+    test("undo mark wrapping the bold span restores formatted text", async () => {
+      const { room, document } = await createRoomWithText("How are you?");
+      vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+
+      const editor = createEditor("How are you?", [InlineMarkNode]);
+      const collaboration = new LiveblocksCollaboration(editor, room, document);
+      editor.update(() => {}, { discrete: true });
+      collaboration.register();
+
+      editor.update(
+        () => {
+          const text = (
+            $getRoot().getFirstChild() as ParagraphNode
+          ).getFirstChild();
+          if (text === null || !$isTextNode(text)) {
+            throw new Error("Expected text node");
+          }
+          const selection = $createRangeSelection();
+          selection.anchor.set(text.getKey(), 4, "text");
+          selection.focus.set(text.getKey(), 7, "text");
+          $setSelection(selection);
+          selection.formatText("bold");
+        },
+        { discrete: true }
+      );
+      vi.advanceTimersByTime(1000);
+
+      editor.update(
+        () => {
+          const paragraph = $getRoot().getFirstChild();
+          if (!$isParagraphNode(paragraph)) {
+            throw new Error("Expected paragraph");
+          }
+          const bold = paragraph
+            .getChildren()
+            .find((child) => $isTextNode(child) && child.hasFormat("bold"));
+          if (bold === undefined || !$isTextNode(bold)) {
+            throw new Error("Expected bold text node");
+          }
+          const selection = $createRangeSelection();
+          selection.anchor.set(bold.getKey(), 0, "text");
+          selection.focus.set(bold.getKey(), bold.getTextContentSize(), "text");
+          $setSelection(selection);
+          $wrapSelectionInInlineMark();
+        },
+        { discrete: true }
+      );
+      vi.advanceTimersByTime(1000);
+
+      editor.dispatchCommand(UNDO_COMMAND, undefined);
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(
+        editor.read(() => {
+          const paragraph = $getRoot().getFirstChild();
+          if (!$isParagraphNode(paragraph)) {
+            throw new Error("Expected paragraph");
+          }
+          return {
+            text: paragraph.getTextContent(),
+            hasMark: paragraph
+              .getChildren()
+              .some((child) => $isInlineMarkNode(child)),
+            spans: paragraph.getChildren().map((child) => ({
+              type: child.getType(),
+              text: child.getTextContent(),
+              bold: $isTextNode(child) ? child.hasFormat("bold") : false,
+            })),
+          };
+        })
+      ).toEqual({
+        text: "How are you?",
+        hasMark: false,
+        spans: [
+          { type: "text", text: "How ", bold: false },
+          { type: "text", text: "are", bold: true },
+          { type: "text", text: " you?", bold: false },
+        ],
+      });
+
+      collaboration.unregister();
+    });
+  });
 });
+
+type SerializedInlineMarkNode = Spread<
+  { type: "inline-mark"; ids: string[] },
+  SerializedElementNode
+>;
+
+/** Minimal MarkNode stand-in — inline element that splits paragraph children. */
+class InlineMarkNode extends ElementNode {
+  __ids: string[];
+
+  static getType(): string {
+    return "inline-mark";
+  }
+
+  static clone(node: InlineMarkNode): InlineMarkNode {
+    return new InlineMarkNode(node.__ids, node.__key);
+  }
+
+  constructor(ids: string[] = ["mark"], key?: NodeKey) {
+    super(key);
+    this.__ids = ids;
+  }
+
+  createDOM(_config: EditorConfig): HTMLElement {
+    return document.createElement("mark");
+  }
+
+  updateDOM(): boolean {
+    return false;
+  }
+
+  isInline(): true {
+    return true;
+  }
+
+  exportJSON(): SerializedInlineMarkNode {
+    return {
+      ...super.exportJSON(),
+      type: "inline-mark",
+      ids: this.__ids,
+    };
+  }
+
+  static importJSON(serialized: SerializedInlineMarkNode): InlineMarkNode {
+    return $createInlineMarkNode(serialized.ids);
+  }
+}
+
+function $createInlineMarkNode(ids: string[] = ["mark"]): InlineMarkNode {
+  return $applyNodeReplacement(new InlineMarkNode(ids));
+}
+
+function $isInlineMarkNode(
+  node: LexicalNode | null | undefined
+): node is InlineMarkNode {
+  return node instanceof InlineMarkNode;
+}
+
+function $wrapSelectionInInlineMark(): void {
+  const selection = $getSelection();
+  if (!$isRangeSelection(selection) || selection.isCollapsed()) {
+    throw new Error("Expected non-collapsed range selection");
+  }
+  const nodes = selection.extract();
+  if (nodes.length === 0) {
+    throw new Error("Expected extracted nodes");
+  }
+  const mark = $createInlineMarkNode();
+  nodes[0]!.insertBefore(mark);
+  for (const node of nodes) {
+    mark.append(node);
+  }
+}
+
+type SerializedCustomDecoratorNode = Spread<
+  {
+    src: string;
+    altText: string;
+  },
+  SerializedLexicalNode
+>;
+
+class CustomDecoratorNode extends DecoratorNode<null> {
+  __src: string;
+  __altText: string;
+
+  static getType(): string {
+    return "custom-decorator";
+  }
+
+  static clone(node: CustomDecoratorNode): CustomDecoratorNode {
+    return new CustomDecoratorNode(node.__src, node.__altText, node.__key);
+  }
+
+  static importJSON(
+    serializedNode: SerializedCustomDecoratorNode
+  ): CustomDecoratorNode {
+    return $createCustomDecoratorNode().updateFromJSON(serializedNode);
+  }
+
+  constructor(src = "", altText = "", key?: NodeKey) {
+    super(key);
+    this.__src = src;
+    this.__altText = altText;
+  }
+
+  exportJSON(): SerializedCustomDecoratorNode {
+    return {
+      ...super.exportJSON(),
+      src: this.__src,
+      altText: this.__altText,
+    };
+  }
+
+  updateFromJSON(
+    serializedNode: LexicalUpdateJSON<SerializedCustomDecoratorNode>
+  ): this {
+    const node = super.updateFromJSON(serializedNode);
+    const writable = node.getWritable();
+    if (serializedNode.src !== undefined) {
+      writable.__src = serializedNode.src;
+    }
+    if (serializedNode.altText !== undefined) {
+      writable.__altText = serializedNode.altText;
+    }
+    return writable;
+  }
+
+  createDOM(_config: EditorConfig): HTMLElement {
+    return document.createElement("span");
+  }
+
+  updateDOM(): false {
+    return false;
+  }
+
+  decorate(): null {
+    return null;
+  }
+}
+
+function $createCustomDecoratorNode({
+  src = "",
+  altText = "",
+}: {
+  src?: string;
+  altText?: string;
+} = {}): CustomDecoratorNode {
+  return $applyNodeReplacement(new CustomDecoratorNode(src, altText));
+}
 
 async function createTwoParagraphRoom() {
   const { room, root } = (await prepareIsolatedStorageTest(
@@ -3016,7 +3711,7 @@ function createCollaborationFromDocument(
     () => {
       for (const child of document.get("children")) {
         const paragraph = $createParagraphNode();
-        for (const grandchild of child.get("children")) {
+        for (const grandchild of (child as LiveElementNode).get("children")) {
           if (grandchild.get("kind") === "text") {
             paragraph.append(
               ...$createTextNodesFromLiveText(
@@ -3104,7 +3799,7 @@ async function createRoomWithFormattedText(
 
   const document = root.get("document") as LiveRootNode;
   const content = (
-    document.get("children").get(0)!.get("children").get(0)! as LiveTextNode
+    (document.get("children").get(0) as LiveElementNode).get("children").get(0)! as LiveTextNode
   ).get("content");
 
   return { room, document, content };
@@ -3148,16 +3843,19 @@ async function createRoomWithText(text: string = "Hello") {
 
   const document = root.get("document") as LiveRootNode;
   const content = (
-    document.get("children").get(0)!.get("children").get(0)! as LiveTextNode
+    (document.get("children").get(0) as LiveElementNode).get("children").get(0)! as LiveTextNode
   ).get("content");
 
   return { room, document, content };
 }
 
-function createEditor(text: string = "Hello"): LexicalEditor {
+function createEditor(
+  text: string = "Hello",
+  extraNodes: Array<Klass<LexicalNode>> = []
+): LexicalEditor {
   const editor = createLexicalEditor({
     namespace: "history-test",
-    nodes: [ParagraphNode, TextNode, HeadingNode, QuoteNode],
+    nodes: [ParagraphNode, TextNode, HeadingNode, QuoteNode, ...extraNodes],
   });
   editor.update(
     () => {

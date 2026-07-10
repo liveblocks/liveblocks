@@ -44,6 +44,7 @@ import {
 
 import type {
   LiveChildNode,
+  LiveDecoratorNode,
   LiveDecoratorShape,
   LiveElementNode,
   LiveElementShape,
@@ -51,6 +52,7 @@ import type {
   LiveLexicalSelection,
   LiveLineBreakNode,
   LiveLineBreakShape,
+  LiveRootChildNode,
   LiveRootNode,
   LiveRootShape,
   LiveStorageNode,
@@ -95,9 +97,24 @@ export class LiveblocksCollaborationManager {
       () => {
         const root_lexical = $getRoot();
         root_lexical.clear();
-        const children: ElementNode[] = [];
+        const children: Array<ElementNode | DecoratorNode<unknown>> = [];
         for (const child of this.root.get("children")) {
-          children.push($convertLiveElementNodeToLexicalNode(child));
+          const kind = child.get("kind");
+          if (kind === "decorator") {
+            children.push(
+              $convertLiveDecoratorNodeToLexicalNode(
+                child as LiveDecoratorNode
+              )
+            );
+          } else if (kind === "element") {
+            children.push(
+              $convertLiveElementNodeToLexicalNode(child as LiveElementNode)
+            );
+          } else {
+            throw new Error(
+              `Unsupported root child kind "${String(kind)}". Expected "element" or "decorator".`
+            );
+          }
         }
         root_lexical.append(...children);
         this.$updateBinding();
@@ -144,7 +161,15 @@ export class LiveblocksCollaborationManager {
 
     let index = 0;
     for (const child of this.root.get("children")) {
-      this.createBinding(child, root.getChildren()[index] as ElementNode);
+      const node_lexical = root.getChildren()[index];
+      if (child.get("kind") === "decorator") {
+        this.createBinding(
+          child as LiveDecoratorNode,
+          node_lexical as DecoratorNode<unknown>
+        );
+      } else {
+        this.createBinding(child as LiveElementNode, node_lexical as ElementNode);
+      }
       index++;
     }
   }
@@ -424,6 +449,23 @@ export class LiveblocksCollaborationManager {
     }
 
     return { anchor, focus };
+  }
+
+  /**
+   * True when a decoded Lexical snapshot point is still safe for `Point.set`:
+   * bound, present in the active editor state, attached, and matching type.
+   * `binding.reverse.has(key)` alone is not enough — reconcile can leave
+   * reverse entries for detached TextNodes.
+   */
+  public $isUsableLexicalSnapshot(point: DecodedLexicalPoint): boolean {
+    if (!this.#binding.reverse.has(point.key)) {
+      return false;
+    }
+    const node = $getNodeByKey(point.key);
+    if (node === null || !node.isAttached()) {
+      return false;
+    }
+    return point.type === "text" ? $isTextNode(node) : $isElementNode(node);
   }
 
   /**
@@ -865,7 +907,35 @@ export class LiveblocksCollaborationManager {
           continue;
         } else if ($isDecoratorNode(child_lexical)) {
           if (kind_liveblocks !== "decorator") break;
-          // TODO: Compare decorator nodes
+
+          const decorator_liveblocks = child_liveblocks as LiveDecoratorNode;
+          const decorator_lexical =
+            this.#binding.forward.get(decorator_liveblocks);
+
+          if (
+            $isLexicalNode(decorator_lexical) &&
+            $isDecoratorNode(decorator_lexical) &&
+            decorator_lexical === child_lexical
+          ) {
+            if (dirtyNodes.has(child_lexical.getKey())) {
+              this.$reconcileDecoratorNodeFromLexical(
+                child_lexical,
+                decorator_liveblocks
+              );
+            }
+            continue;
+          }
+
+          if (
+            areDecoratorNodesStructurallyEqual(
+              decorator_liveblocks,
+              child_lexical
+            )
+          ) {
+            this.createBinding(decorator_liveblocks, child_lexical);
+            continue;
+          }
+
           break;
         } else {
           break;
@@ -949,7 +1019,35 @@ export class LiveblocksCollaborationManager {
           continue;
         } else if ($isDecoratorNode(child_lexical)) {
           if (kind_liveblocks !== "decorator") break;
-          // TODO: Compare decorator nodes
+
+          const decorator_liveblocks = child_liveblocks as LiveDecoratorNode;
+          const decorator_lexical =
+            this.#binding.forward.get(decorator_liveblocks);
+
+          if (
+            $isLexicalNode(decorator_lexical) &&
+            $isDecoratorNode(decorator_lexical) &&
+            decorator_lexical === child_lexical
+          ) {
+            if (dirtyNodes.has(child_lexical.getKey())) {
+              this.$reconcileDecoratorNodeFromLexical(
+                child_lexical,
+                decorator_liveblocks
+              );
+            }
+            continue;
+          }
+
+          if (
+            areDecoratorNodesStructurallyEqual(
+              decorator_liveblocks,
+              child_lexical
+            )
+          ) {
+            this.createBinding(decorator_liveblocks, child_lexical);
+            continue;
+          }
+
           break;
         } else {
           break;
@@ -1061,6 +1159,22 @@ export class LiveblocksCollaborationManager {
           left++;
         }
         continue;
+      } else if (
+        // Decorators are leaves — no child-overlap scoring. Same-type on the
+        // left is enough; a right-only match reaches this branch on a later
+        // iteration after the left slot is replaced.
+        kind_liveblocks === "decorator" &&
+        $isLexicalNode(child_lexical_left) &&
+        $isDecoratorNode(child_lexical_left) &&
+        (child_liveblocks_left as LiveDecoratorNode).get("type") ===
+          child_lexical_left.getType()
+      ) {
+        this.$reconcileDecoratorNodeFromLexical(
+          child_lexical_left,
+          child_liveblocks_left as LiveDecoratorNode
+        );
+        left++;
+        continue;
       } else {
         this.removeBindings(child_liveblocks_left);
         children_liveblocks.delete(left);
@@ -1101,6 +1215,60 @@ export class LiveblocksCollaborationManager {
         const node_liveblocks = createStorageNodeFromLexicalNode(child_lexical);
         children_liveblocks.insert(node_liveblocks, i);
         this.createBinding(node_liveblocks, child_lexical);
+      }
+    }
+  }
+
+  /**
+   * Syncs a Lexical decorator onto its bound storage node (Lexical → Storage).
+   * Decorators have no children channel — only `type` + optional `props`.
+   */
+  public $reconcileDecoratorNodeFromLexical(
+    node_lexical: DecoratorNode<unknown>,
+    node_liveblocks: LiveDecoratorNode
+  ): void {
+    node_lexical = node_lexical.getLatest();
+    this.#binding.forward.set(node_liveblocks, node_lexical);
+    this.#binding.reverse.set(node_lexical.getKey(), node_liveblocks);
+
+    const type_lexical = node_lexical.getType();
+    if (node_liveblocks.get("type") !== type_lexical) {
+      node_liveblocks.set("type", type_lexical);
+    }
+
+    const props_lexical = $getLexicalNodeProps(node_lexical);
+    const props_liveblocks = node_liveblocks.get("props");
+    const props_liveblocks_json =
+      props_liveblocks !== undefined ? props_liveblocks.toJSON() : undefined;
+    if (
+      !isEqual(props_lexical, props_liveblocks_json as JsonObject | undefined)
+    ) {
+      if (props_lexical === undefined) {
+        node_liveblocks.delete("props");
+      } else if (!(props_liveblocks instanceof LiveMap)) {
+        node_liveblocks.set(
+          "props",
+          new LiveMap(
+            Object.entries(props_lexical).filter(
+              (entry): entry is [string, Json] => entry[1] !== undefined
+            )
+          )
+        );
+      } else {
+        const keys = new Set(Object.keys(props_lexical));
+        for (const key of props_liveblocks.keys()) {
+          if (!keys.has(key)) {
+            props_liveblocks.delete(key);
+          }
+        }
+        for (const [key, value] of Object.entries(props_lexical)) {
+          if (value === undefined) {
+            continue;
+          }
+          if (props_liveblocks.get(key) !== value) {
+            props_liveblocks.set(key, value);
+          }
+        }
       }
     }
   }
@@ -1404,8 +1572,13 @@ export class LiveblocksCollaborationManager {
       return;
     }
 
-    // Drop stale bindings before reconciling so a deleted storage child is
-    // never updated in place against a detached Lexical node.
+    // Snapshot Lexical nodes for deletes *before* dropping bindings. The
+    // LiveList in the update is already post-delete, so sibling/segment index
+    // math cannot recover the removed span — especially when a surviving
+    // neighbor is a multi-segment LiveText (bold/plain splits). Binding is
+    // the only reliable handle; clear it after we capture the nodes so a
+    // later LiveText update in the same batch cannot mutate a detached slot.
+    const deletedLexicalNodes = new Map<LiveStorageNode, LexicalNode[]>();
     for (const update of updates) {
       if (update.type !== "LiveList") {
         continue;
@@ -1416,7 +1589,12 @@ export class LiveblocksCollaborationManager {
           change.type === "delete" &&
           change.deletedItem instanceof LiveObject
         ) {
-          this.removeBindings(change.deletedItem as LiveStorageNode);
+          const child = change.deletedItem as LiveStorageNode;
+          const nodes = this.$getBoundLexicalNodes(child);
+          if (nodes.length > 0) {
+            deletedLexicalNodes.set(child, nodes);
+          }
+          this.removeBindings(child);
         }
       }
     }
@@ -1494,6 +1672,15 @@ export class LiveblocksCollaborationManager {
                 child_liveblocks as LiveElementNode,
                 node_lexical
               );
+            } else if (kind === "decorator") {
+              const node_lexical = $convertLiveDecoratorNodeToLexicalNode(
+                child_liveblocks as LiveDecoratorNode
+              );
+              parent.splice(index_lexical, 0, [node_lexical]);
+              this.createBinding(
+                child_liveblocks as LiveDecoratorNode,
+                node_lexical
+              );
             } else {
               console.warn(
                 `Unsupported remote insert of storage kind "${String(kind)}".`
@@ -1504,28 +1691,25 @@ export class LiveblocksCollaborationManager {
               continue;
             }
 
-            const child_liveblocks = change.deletedItem as LiveChildNode;
-            const children_liveblocks = parent_liveblocks.get("children");
-            let index_lexical = 0;
-            for (let i = 0; i < change.index; i++) {
-              const sibling = children_liveblocks.get(i);
-              if (sibling === undefined) {
-                break;
-              }
-
-              index_lexical +=
-                sibling.get("kind") === "text"
-                  ? (sibling as LiveTextNode).get("content").toJSON().length
-                  : 1;
+            const child_liveblocks = change.deletedItem as LiveStorageNode;
+            const nodes = (
+              deletedLexicalNodes.get(child_liveblocks) ?? []
+            ).filter((node) => node.isAttached());
+            if (nodes.length === 0) {
+              continue;
             }
 
-            const deleteCount =
-              child_liveblocks.get("kind") === "text"
-                ? (child_liveblocks as LiveTextNode).get("content").toJSON()
-                    .length
-                : 1;
+            nodes.sort(
+              (a, b) => a.getIndexWithinParent() - b.getIndexWithinParent()
+            );
+            const parent = nodes[0]!.getParent();
+            if (parent === null || !$isElementNode(parent)) {
+              continue;
+            }
 
-            parent_lexical.getLatest().splice(index_lexical, deleteCount, []);
+            parent
+              .getLatest()
+              .splice(nodes[0]!.getIndexWithinParent(), nodes.length, []);
           } else if (change.type === "move") {
             if (!(change.item instanceof LiveObject)) {
               continue;
@@ -1675,6 +1859,15 @@ export class LiveblocksCollaborationManager {
                 child_liveblocks as LiveElementNode,
                 node_lexical
               );
+            } else if (kind === "decorator") {
+              const node_lexical = $convertLiveDecoratorNodeToLexicalNode(
+                child_liveblocks as LiveDecoratorNode
+              );
+              parent.splice(index_lexical, deleteCount, [node_lexical]);
+              this.createBinding(
+                child_liveblocks as LiveDecoratorNode,
+                node_lexical
+              );
             } else {
               console.warn(
                 `Unsupported remote set of storage kind "${String(kind)}".`
@@ -1771,32 +1964,80 @@ export class LiveblocksCollaborationManager {
                 : undefined
             );
           }
+        } else if (kind === "decorator" && $isDecoratorNode(node_lexical)) {
+          let decorator_lexical = node_lexical.getLatest();
+          const type_liveblocks = (node_liveblocks as LiveDecoratorNode).get(
+            "type"
+          );
+
+          if (
+            "type" in keysChanged &&
+            decorator_lexical.getType() !== type_liveblocks
+          ) {
+            const info = $getEditor()._nodes.get(type_liveblocks);
+            if (info === undefined) {
+              console.warn(
+                `Unsupported remote type change to "${type_liveblocks}".`
+              );
+              continue;
+            }
+
+            const next_lexical = new info.klass();
+            if (!$isDecoratorNode(next_lexical)) {
+              console.warn(
+                `Remote type "${type_liveblocks}" is not a DecoratorNode.`
+              );
+              continue;
+            }
+
+            decorator_lexical.replace(next_lexical);
+            decorator_lexical = next_lexical.getLatest();
+            this.createBinding(
+              node_liveblocks as LiveDecoratorNode,
+              decorator_lexical
+            );
+          }
+
+          if ("type" in keysChanged || "props" in keysChanged) {
+            const props_liveblocks = (node_liveblocks as LiveDecoratorNode).get(
+              "props"
+            );
+            $setLexicalNodeProps(
+              decorator_lexical,
+              props_liveblocks !== undefined
+                ? (props_liveblocks.toJSON() as JsonObject)
+                : undefined
+            );
+          }
         }
         continue;
       }
 
       if (update.type === "LiveMap") {
-        // Granular props edits land on the element's props LiveMap, not the
-        // LiveObject itself (after the map has been attached).
-        const element_liveblocks = find_liveblocksNode(this.root, (node) => {
+        // Granular props edits land on the element's/decorator's props LiveMap,
+        // not the LiveObject itself (after the map has been attached).
+        const host_liveblocks = find_liveblocksNode(this.root, (node) => {
           if (
             node.get("kind") !== "element" &&
             node.get("kind") !== "decorator"
           ) {
             return false;
           }
-          return (node as LiveElementNode).get("props") === update.node;
-        }) as LiveElementNode | null;
-        if (element_liveblocks === null) {
+          return (node as LiveRootChildNode).get("props") === update.node;
+        }) as LiveRootChildNode | null;
+        if (host_liveblocks === null) {
           continue;
         }
 
-        const node_lexical = this.#binding.forward.get(element_liveblocks);
-        if (!$isLexicalNode(node_lexical) || !$isElementNode(node_lexical)) {
+        const node_lexical = this.#binding.forward.get(host_liveblocks);
+        if (
+          !$isLexicalNode(node_lexical) ||
+          (!$isElementNode(node_lexical) && !$isDecoratorNode(node_lexical))
+        ) {
           continue;
         }
 
-        const props_liveblocks = element_liveblocks.get("props");
+        const props_liveblocks = host_liveblocks.get("props");
         $setLexicalNodeProps(
           node_lexical.getLatest(),
           props_liveblocks !== undefined
@@ -2034,6 +2275,30 @@ export class LiveblocksCollaborationManager {
   }
 
   /**
+   * Lexical nodes currently bound to a storage child. Text children return the
+   * coalesced TextNode[] span; elements/decorators/linebreaks return one node.
+   */
+  private $getBoundLexicalNodes(node: LiveStorageNode): LexicalNode[] {
+    const bound = this.#binding.forward.get(node);
+    if (bound === undefined) {
+      return [];
+    }
+
+    if (bound instanceof Array) {
+      return bound.filter(
+        (child) =>
+          $getNodeByKey(child.getKey()) !== null && child.isAttached()
+      );
+    }
+
+    const latest = $getNodeByKey(bound.getKey());
+    if (latest === null || !latest.isAttached()) {
+      return [];
+    }
+    return [latest];
+  }
+
+  /**
    * @internal
    * Recursively build binding between a storage element and its matching Lexical node.
    */
@@ -2122,11 +2387,22 @@ export class LiveblocksCollaborationManager {
               index++;
               break;
             }
+            case "decorator": {
+              this.createBinding(
+                child as LiveDecoratorNode,
+                children_lexical[index] as DecoratorNode<unknown>
+              );
+              index++;
+              break;
+            }
             default:
               throw new Error(`Unsupported node of kind "${String(kind)}"`);
           }
         }
       } else if ($isLineBreakNode(node_lexical)) {
+        this.#binding.forward.set(node_liveblocks, node_lexical);
+        this.#binding.reverse.set(node_lexical.getKey(), node_liveblocks);
+      } else if ($isDecoratorNode(node_lexical)) {
         this.#binding.forward.set(node_liveblocks, node_lexical);
         this.#binding.reverse.set(node_lexical.getKey(), node_liveblocks);
       }
@@ -2376,6 +2652,7 @@ function isEqual(
  * Dispatches by input shape:
  *   - `TextNode[]`  → one `LiveTextNode` (coalesced segments)
  *   - linebreak     → `LiveLineBreakNode`
+ *   - decorator     → `LiveDecoratorNode` (`type` + optional `props`)
  *   - element       → recurse into raw Lexical children (consecutive TextNodes coalesce)
  *
  * @example Coalesced text — two Lexical spans, one LiveText child
@@ -2415,8 +2692,14 @@ export function createStorageNodeFromLexicalNode(
   node: readonly TextNode[]
 ): LiveTextNode;
 export function createStorageNodeFromLexicalNode(
-  node: ElementNode | LineBreakNode | DecoratorNode<unknown>
-): LiveObject<LiveElementShape | LiveLineBreakShape | LiveDecoratorShape>;
+  node: ElementNode
+): LiveElementNode;
+export function createStorageNodeFromLexicalNode(
+  node: LineBreakNode
+): LiveLineBreakNode;
+export function createStorageNodeFromLexicalNode(
+  node: DecoratorNode<unknown>
+): LiveDecoratorNode;
 export function createStorageNodeFromLexicalNode(
   node:
     | readonly TextNode[]
@@ -2426,7 +2709,7 @@ export function createStorageNodeFromLexicalNode(
 ): LiveChildNode;
 export function createStorageNodeFromLexicalNode(
   node: LexicalNode | readonly TextNode[]
-): LiveElementNode | LiveTextNode | LiveLineBreakNode | LiveChildNode {
+): LiveElementNode | LiveTextNode | LiveLineBreakNode | LiveDecoratorNode {
   if (node instanceof Array) {
     const node_liveblocks = new LiveObject<LiveTextShape>({
       kind: "text",
@@ -2477,6 +2760,10 @@ export function createStorageNodeFromLexicalNode(
         );
       } else if ($isLineBreakNode(child)) {
         children_liveblocks.push(createStorageNodeFromLexicalNode(child));
+      } else if ($isDecoratorNode(child)) {
+        children_liveblocks.push(
+          createStorageNodeFromLexicalNode(child.getLatest())
+        );
       } else {
         throw new Error(
           `Unsupported lexical node type "${child.getType()}" for storage materialization.`
@@ -2543,6 +2830,7 @@ export function createStorageNodeFromLexicalNode(
  *   - `text`     → spread `$convertLiveTextNodeToLexicalNode` (1 storage child → N TextNodes)
  *   - `linebreak`→ `$createLineBreakNode()`
  *   - `element`  → recurse
+ *   - `decorator`→ `$convertLiveDecoratorNodeToLexicalNode`
  *
  * The Lexical class is resolved from `node.get("type")` (e.g. `"paragraph"`, `"heading"`).
  *
@@ -2566,6 +2854,13 @@ export function createStorageNodeFromLexicalNode(
  *   element (paragraph)                     Paragraph
  *    ├── text → [["Hi"]]                      ├── TextNode "Hi"
  *    └── linebreak                             └── LineBreak
+ *
+ * @example Paragraph with decorator
+ *
+ * Storage:                                Lexical:
+ *   element (paragraph)                     Paragraph
+ *    ├── text → [["Hi"]]                      ├── TextNode "Hi"
+ *    └── decorator (image, props)              └── ImageNode
  */
 function $convertLiveElementNodeToLexicalNode(
   node: LiveElementNode
@@ -2604,12 +2899,46 @@ function $convertLiveElementNodeToLexicalNode(
           $convertLiveElementNodeToLexicalNode(child as LiveElementNode)
         );
         break;
+      case "decorator":
+        children.push(
+          $convertLiveDecoratorNodeToLexicalNode(child as LiveDecoratorNode)
+        );
+        break;
       default:
         throw new Error(`Unsupported live node kind "${String(kind)}"`);
     }
   }
 
   node_lexical.append(...children);
+
+  const props_liveblocks = node.get("props");
+  if (props_liveblocks !== undefined) {
+    $setLexicalNodeProps(node_lexical, props_liveblocks.toJSON() as JsonObject);
+  }
+
+  return node_lexical.getLatest();
+}
+
+/**
+ * Builds a Lexical decorator from a storage decorator node (bootstrap: Live → Lexical).
+ *
+ * Decorators have no children channel — only `type` + optional `props`.
+ */
+function $convertLiveDecoratorNodeToLexicalNode(
+  node: LiveDecoratorNode
+): DecoratorNode<unknown> {
+  const editor = $getEditor();
+  const type = node.get("type");
+  const info = editor._nodes.get(type);
+  if (info === undefined) {
+    throw new Error(
+      `Node of type "${type}" is not registered. Please ensure that the node has been registered with the editor.`
+    );
+  }
+  const node_lexical = new info.klass();
+  if (!$isDecoratorNode(node_lexical)) {
+    throw new Error(`Node of type "${type}" is not a DecoratorNode.`);
+  }
 
   const props_liveblocks = node.get("props");
   if (props_liveblocks !== undefined) {
@@ -2894,13 +3223,41 @@ function areElementNodesStructurallyEqual(
 
     if ($isDecoratorNode(child_lexical)) {
       if (kind_liveblocks !== "decorator") return false;
-      return false;
+      if (
+        !areDecoratorNodesStructurallyEqual(
+          child_liveblocks as LiveDecoratorNode,
+          child_lexical
+        )
+      ) {
+        return false;
+      }
+      lexicalIndex++;
+      continue;
     }
 
     return false;
   }
 
   return lexicalIndex === children_lexical.length;
+}
+
+function areDecoratorNodesStructurallyEqual(
+  decorator_liveblocks: LiveDecoratorNode,
+  decorator_lexical: DecoratorNode<unknown>
+): boolean {
+  decorator_lexical = decorator_lexical.getLatest();
+  if (decorator_liveblocks.get("type") !== decorator_lexical.getType()) {
+    return false;
+  }
+
+  const props_lexical = $getLexicalNodeProps(decorator_lexical);
+  const props_liveblocks = decorator_liveblocks.get("props");
+  const props_liveblocks_json =
+    props_liveblocks !== undefined ? props_liveblocks.toJSON() : undefined;
+  return isEqual(
+    props_lexical,
+    props_liveblocks_json as JsonObject | undefined
+  );
 }
 
 function getSegmentsInRange(
@@ -3015,14 +3372,14 @@ const OMIT_FROM_LEXICAL_NODE_PROPS = new Set([
 ]);
 
 /**
- * Read Lexical element state that maps to storage `props`, using each node's
- * `exportJSON()` contract rather than enumerating internal instance fields.
+ * Read Lexical element/decorator state that maps to storage `props`, using each
+ * node's `exportJSON()` contract rather than enumerating internal instance fields.
  */
 export function $getLexicalNodeProps(
   node: LexicalNode
 ): JsonObject | undefined {
   const latest = node.getLatest();
-  if (!$isElementNode(latest)) {
+  if (!$isElementNode(latest) && !$isDecoratorNode(latest)) {
     return undefined;
   }
 
@@ -3050,7 +3407,8 @@ export function $getLexicalNodeProps(
 }
 
 /**
- * Apply storage `props` onto a Lexical element — inverse of `$getLexicalNodeProps`.
+ * Apply storage `props` onto a Lexical element or decorator — inverse of
+ * `$getLexicalNodeProps`.
  *
  * Uses each node's `updateFromJSON()` so custom node fields are applied the
  * same way Lexical does for copy/paste and persistence. When `props` is
@@ -3064,7 +3422,7 @@ export function $setLexicalNodeProps(
   props: JsonObject | undefined
 ): void {
   const latest = node.getLatest();
-  if (!$isElementNode(latest)) {
+  if (!$isElementNode(latest) && !$isDecoratorNode(latest)) {
     return;
   }
 
@@ -3075,7 +3433,7 @@ export function $setLexicalNodeProps(
   const typeInfo = $getEditor()._nodes.get(latest.getType());
   if (typeInfo !== undefined) {
     const freshInstance = new typeInfo.klass();
-    if ($isElementNode(freshInstance)) {
+    if ($isElementNode(freshInstance) || $isDecoratorNode(freshInstance)) {
       const freshExported = freshInstance.exportJSON() as Record<
         string,
         unknown
@@ -3091,7 +3449,7 @@ export function $setLexicalNodeProps(
   if (effectiveProps === undefined) {
     if (typeInfo !== undefined) {
       const instance = new typeInfo.klass();
-      if ($isElementNode(instance)) {
+      if ($isElementNode(instance) || $isDecoratorNode(instance)) {
         effectiveProps = $getLexicalNodeProps(instance);
       }
     }

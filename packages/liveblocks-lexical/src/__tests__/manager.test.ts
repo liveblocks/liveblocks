@@ -21,14 +21,19 @@ import {
   $isTextNode,
   $setSelection,
   COLLABORATION_TAG,
+  DecoratorNode,
   HISTORIC_TAG,
   createEditor as createLexicalEditor,
   type EditorConfig,
   type ElementNode,
   type LexicalEditor,
+  type LexicalNode,
+  type LexicalUpdateJSON,
   type NodeKey,
   ParagraphNode,
+  type SerializedLexicalNode,
   type SerializedTextNode,
+  type Spread,
   type TextModeType,
   TextNode,
 } from "lexical";
@@ -47,6 +52,7 @@ import {
   LiveblocksCollaborationManager,
 } from "../manager";
 import type {
+  LiveDecoratorNode,
   LiveElementNode,
   LiveLineBreakNode,
   LiveRootNode,
@@ -394,7 +400,7 @@ describe("LiveblocksCollaborationManager", () => {
 
       const document = root.get("document") as LiveRootNode;
       const { editor, manager } = createEditor(document);
-      const paragraph_liveblocks = document.get("children").get(0)!;
+      const paragraph_liveblocks = document.get("children").get(0) as LiveElementNode;
       const second_liveblocks = (paragraph_liveblocks as LiveElementNode)
         .get("children")
         .get(1)! as LiveTextNode;
@@ -468,7 +474,7 @@ describe("LiveblocksCollaborationManager", () => {
 
       const document = root.get("document") as LiveRootNode;
       const { editor, manager } = createEditor(document);
-      const paragraph_liveblocks = document.get("children").get(0)!;
+      const paragraph_liveblocks = document.get("children").get(0) as LiveElementNode;
 
       editor.update(() => {
         const paragraph = $dfs().find(({ node }) => $isParagraphNode(node))!
@@ -544,7 +550,7 @@ describe("LiveblocksCollaborationManager", () => {
 
       const document = root.get("document") as LiveRootNode;
       const { editor, manager } = createEditor(document);
-      const paragraph_liveblocks = document.get("children").get(0)!;
+      const paragraph_liveblocks = document.get("children").get(0) as LiveElementNode;
 
       editor.update(() => {
         const paragraph = $dfs().find(({ node }) => $isParagraphNode(node))!
@@ -616,7 +622,7 @@ describe("LiveblocksCollaborationManager", () => {
 
       const document = root.get("document") as LiveRootNode;
       const { editor, manager } = createEditor(document);
-      const paragraph_liveblocks = document.get("children").get(0)!;
+      const paragraph_liveblocks = document.get("children").get(0) as LiveElementNode;
 
       editor.update(() => {
         const paragraph = $dfs().find(({ node }) => $isParagraphNode(node))!
@@ -1435,7 +1441,7 @@ describe("LiveblocksCollaborationManager", () => {
 
       const document = root.get("document") as LiveRootNode;
       const { editor, manager } = createEditor(document);
-      const paragraph_liveblocks = document.get("children").get(0)!;
+      const paragraph_liveblocks = document.get("children").get(0) as LiveElementNode;
 
       editor.read(() => {
         expect(
@@ -1922,7 +1928,7 @@ describe("LiveblocksCollaborationManager", () => {
 
       const document = root.get("document") as LiveRootNode;
       const { editor, manager } = createEditor(document);
-      const paragraph_liveblocks = document.get("children").get(0)!;
+      const paragraph_liveblocks = document.get("children").get(0) as LiveElementNode;
       const text_liveblocks = (paragraph_liveblocks as LiveElementNode)
         .get("children")
         .get(0)! as LiveTextNode;
@@ -1966,6 +1972,202 @@ describe("LiveblocksCollaborationManager", () => {
         expect(manager.$decodeSelection(encoded!)).toEqual({
           anchor: { key: textNode.getKey(), offset: 2, type: "text" },
           focus: { key: paragraph.getKey(), offset: 1, type: "element" },
+        });
+      });
+    });
+
+    test("encodes an element point before and after a decorator sibling", async () => {
+      // Lexical: [Text "Hi", Decorator, Text "!"]
+      // Storage: [text "Hi", decorator, text "!"]
+      const { room, root } = (await prepareIsolatedStorageTest(
+        [createSerializedRoot()],
+        0
+      )) as unknown as {
+        room: Room;
+        root: LiveObject<{ document?: LiveRootNode }>;
+      };
+
+      room.batch(() => {
+        root.set(
+          "document",
+          new LiveObject({
+            kind: "root",
+            type: "root",
+            version: 1,
+            children: new LiveList([
+              new LiveObject({
+                kind: "element",
+                type: "paragraph",
+                version: 1,
+                children: new LiveList([
+                  new LiveObject({
+                    kind: "text",
+                    type: "text",
+                    version: 1,
+                    content: new LiveText("Hi"),
+                  }),
+                  new LiveObject({
+                    kind: "decorator",
+                    type: "custom-decorator",
+                    version: 1,
+                    props: new LiveMap([
+                      ["src", "https://example.com/a.png"],
+                      ["altText", "A"],
+                    ]),
+                  }),
+                  new LiveObject({
+                    kind: "text",
+                    type: "text",
+                    version: 1,
+                    content: new LiveText("!"),
+                  }),
+                ]),
+              }),
+            ]),
+          })
+        );
+      });
+
+      const document = root.get("document") as LiveRootNode;
+      const { editor, manager } = createEditor(document, [CustomDecoratorNode]);
+      const paragraph_liveblocks = document.get("children").get(0) as LiveElementNode;
+
+      editor.update(() => {
+        const paragraph = $getRoot().getFirstChild() as ParagraphNode;
+        expect(paragraph.getChildrenSize()).toBe(3);
+        const selection = $createRangeSelection();
+        // Before the decorator (after "Hi").
+        selection.anchor.set(paragraph.getKey(), 1, "element");
+        selection.focus.set(paragraph.getKey(), 1, "element");
+        $setSelection(selection);
+      });
+
+      editor.read(() => {
+        expect(manager.$encodeSelection()).toEqual({
+          anchor: {
+            nodeId: paragraph_liveblocks[kInternal].getId(),
+            type: "element",
+            offset: 1,
+            version: 0,
+          },
+          focus: {
+            nodeId: paragraph_liveblocks[kInternal].getId(),
+            type: "element",
+            offset: 1,
+            version: 0,
+          },
+        });
+      });
+
+      editor.update(() => {
+        const paragraph = $getRoot().getFirstChild() as ParagraphNode;
+        const selection = $createRangeSelection();
+        // After the decorator (before "!").
+        selection.anchor.set(paragraph.getKey(), 2, "element");
+        selection.focus.set(paragraph.getKey(), 2, "element");
+        $setSelection(selection);
+      });
+
+      editor.read(() => {
+        expect(manager.$encodeSelection()).toEqual({
+          anchor: {
+            nodeId: paragraph_liveblocks[kInternal].getId(),
+            type: "element",
+            offset: 2,
+            version: 0,
+          },
+          focus: {
+            nodeId: paragraph_liveblocks[kInternal].getId(),
+            type: "element",
+            offset: 2,
+            version: 0,
+          },
+        });
+      });
+    });
+
+    test("round-trips a text caret beside a decorator sibling", async () => {
+      const { room, root } = (await prepareIsolatedStorageTest(
+        [createSerializedRoot()],
+        0
+      )) as unknown as {
+        room: Room;
+        root: LiveObject<{ document?: LiveRootNode }>;
+      };
+
+      room.batch(() => {
+        root.set(
+          "document",
+          new LiveObject({
+            kind: "root",
+            type: "root",
+            version: 1,
+            children: new LiveList([
+              new LiveObject({
+                kind: "element",
+                type: "paragraph",
+                version: 1,
+                children: new LiveList([
+                  new LiveObject({
+                    kind: "text",
+                    type: "text",
+                    version: 1,
+                    content: new LiveText("Hi"),
+                  }),
+                  new LiveObject({
+                    kind: "decorator",
+                    type: "custom-decorator",
+                    version: 1,
+                    props: new LiveMap([
+                      ["src", "https://example.com/a.png"],
+                      ["altText", "A"],
+                    ]),
+                  }),
+                ]),
+              }),
+            ]),
+          })
+        );
+      });
+
+      const document = root.get("document") as LiveRootNode;
+      const { editor, manager } = createEditor(document, [CustomDecoratorNode]);
+      const text_liveblocks = (document
+        .get("children")
+        .get(0) as LiveElementNode)
+        .get("children")
+        .get(0)! as LiveTextNode;
+
+      editor.update(() => {
+        const text = $dfs().find(({ node }) => $isTextNode(node))!
+          .node as TextNode;
+        const selection = $createRangeSelection();
+        selection.anchor.set(text.getKey(), 2, "text");
+        selection.focus.set(text.getKey(), 2, "text");
+        $setSelection(selection);
+      });
+
+      editor.read(() => {
+        const text = $dfs().find(({ node }) => $isTextNode(node))!
+          .node as TextNode;
+        const encoded = manager.$encodeSelection();
+        expect(encoded).toEqual({
+          anchor: {
+            nodeId: text_liveblocks[kInternal].getId(),
+            type: "text",
+            offset: 2,
+            version: text_liveblocks.get("content").version,
+          },
+          focus: {
+            nodeId: text_liveblocks[kInternal].getId(),
+            type: "text",
+            offset: 2,
+            version: text_liveblocks.get("content").version,
+          },
+        });
+        expect(manager.$decodeSelection(encoded!)).toEqual({
+          anchor: { key: text.getKey(), offset: 2, type: "text" },
+          focus: { key: text.getKey(), offset: 2, type: "text" },
         });
       });
     });
@@ -2501,7 +2703,7 @@ describe("LiveblocksCollaborationManager", () => {
     test("is a no-op when element children already match", () => {
       const document = createParagraphDocument("Hello world!");
       const { editor, manager } = createEditor(document);
-      const paragraph_liveblocks = document.get("children").get(0)!;
+      const paragraph_liveblocks = document.get("children").get(0) as LiveElementNode;
       const childrenBefore = paragraph_liveblocks.get("children").length;
 
       editor.read(() => {
@@ -2527,7 +2729,7 @@ describe("LiveblocksCollaborationManager", () => {
     test("syncs element type and props onto the storage node", () => {
       const document = createParagraphDocument("Title");
       const { editor, manager } = createEditor(document);
-      const paragraph_liveblocks = document.get("children").get(0)!;
+      const paragraph_liveblocks = document.get("children").get(0) as LiveElementNode;
 
       editor.update(
         () => {
@@ -2586,9 +2788,9 @@ describe("LiveblocksCollaborationManager", () => {
     test("syncs append typing to LiveText", () => {
       const document = createParagraphDocument("Hello");
       const { editor, manager } = createEditor(document);
-      const text_liveblocks = document
+      const text_liveblocks = (document
         .get("children")
-        .get(0)!
+        .get(0) as LiveElementNode)
         .get("children")
         .get(0)! as LiveTextNode;
 
@@ -2655,9 +2857,9 @@ describe("LiveblocksCollaborationManager", () => {
       expect(document.get("children").length).toBe(2);
       expect(
         (
-          document
+          (document
             .get("children")
-            .get(1)!
+            .get(1) as LiveElementNode)
             .get("children")
             .get(0)! as LiveTextNode
         )
@@ -2699,17 +2901,17 @@ describe("LiveblocksCollaborationManager", () => {
       const children = document.get("children");
       expect(children.length).toBe(3);
       expect(
-        (children.get(0)!.get("children").get(0) as LiveTextNode)
+        ((children.get(0)! as LiveElementNode).get("children").get(0) as LiveTextNode)
           .get("content")
           .toJSON()
       ).toEqual([["P1"]]);
       expect(
-        (children.get(1)!.get("children").get(0) as LiveTextNode)
+        ((children.get(1)! as LiveElementNode).get("children").get(0) as LiveTextNode)
           .get("content")
           .toJSON()
       ).toEqual([["P2"]]);
       expect(
-        (children.get(2)!.get("children").get(0) as LiveTextNode)
+        ((children.get(2)! as LiveElementNode).get("children").get(0) as LiveTextNode)
           .get("content")
           .toJSON()
       ).toEqual([["P3"]]);
@@ -2746,22 +2948,22 @@ describe("LiveblocksCollaborationManager", () => {
       const children = document.get("children");
       expect(children.length).toBe(4);
       expect(
-        (children.get(0)!.get("children").get(0) as LiveTextNode)
+        ((children.get(0)! as LiveElementNode).get("children").get(0) as LiveTextNode)
           .get("content")
           .toJSON()
       ).toEqual([["P1"]]);
       expect(
-        (children.get(1)!.get("children").get(0) as LiveTextNode)
+        ((children.get(1)! as LiveElementNode).get("children").get(0) as LiveTextNode)
           .get("content")
           .toJSON()
       ).toEqual([["P2"]]);
       expect(
-        (children.get(2)!.get("children").get(0) as LiveTextNode)
+        ((children.get(2)! as LiveElementNode).get("children").get(0) as LiveTextNode)
           .get("content")
           .toJSON()
       ).toEqual([["P3"]]);
       expect(
-        (children.get(3)!.get("children").get(0) as LiveTextNode)
+        ((children.get(3)! as LiveElementNode).get("children").get(0) as LiveTextNode)
           .get("content")
           .toJSON()
       ).toEqual([["P4"]]);
@@ -2819,22 +3021,22 @@ describe("LiveblocksCollaborationManager", () => {
       const children = document.get("children");
       expect(children.length).toBe(4);
       expect(
-        (children.get(0)!.get("children").get(0) as LiveTextNode)
+        ((children.get(0)! as LiveElementNode).get("children").get(0) as LiveTextNode)
           .get("content")
           .toJSON()
       ).toEqual([["P1"]]);
       expect(
-        (children.get(1)!.get("children").get(0) as LiveTextNode)
+        ((children.get(1)! as LiveElementNode).get("children").get(0) as LiveTextNode)
           .get("content")
           .toJSON()
       ).toEqual([["P2"]]);
       expect(
-        (children.get(2)!.get("children").get(0) as LiveTextNode)
+        ((children.get(2)! as LiveElementNode).get("children").get(0) as LiveTextNode)
           .get("content")
           .toJSON()
       ).toEqual([["P3"]]);
       expect(
-        (children.get(3)!.get("children").get(0) as LiveTextNode)
+        ((children.get(3)! as LiveElementNode).get("children").get(0) as LiveTextNode)
           .get("content")
           .toJSON()
       ).toEqual([["P4"]]);
@@ -2885,9 +3087,9 @@ describe("LiveblocksCollaborationManager", () => {
       expect(dirtyRoots.every(Boolean)).toBe(true);
       expect(
         (
-          document
+          (document
             .get("children")
-            .get(0)!
+            .get(0) as LiveElementNode)
             .get("children")
             .get(0)! as LiveTextNode
         )
@@ -2923,7 +3125,7 @@ describe("LiveblocksCollaborationManager", () => {
         );
       });
 
-      expect(document.get("children").get(1)!.get("children").length).toBe(0);
+      expect((document.get("children").get(1) as LiveElementNode).get("children").length).toBe(0);
 
       sync(() => {
         ($getRoot().getChildAtIndex(1) as ParagraphNode).append(
@@ -2931,12 +3133,12 @@ describe("LiveblocksCollaborationManager", () => {
         );
       });
 
-      expect(document.get("children").get(1)!.get("children").length).toBe(1);
+      expect((document.get("children").get(1) as LiveElementNode).get("children").length).toBe(1);
       expect(
         (
-          document
+          (document
             .get("children")
-            .get(1)!
+            .get(1) as LiveElementNode)
             .get("children")
             .get(0)! as LiveTextNode
         )
@@ -2973,7 +3175,7 @@ describe("LiveblocksCollaborationManager", () => {
         );
       });
 
-      expect(document.get("children").get(1)!.get("children").length).toBe(0);
+      expect((document.get("children").get(1) as LiveElementNode).get("children").length).toBe(0);
 
       sync(() => {
         const root = $getRoot();
@@ -2990,9 +3192,9 @@ describe("LiveblocksCollaborationManager", () => {
 
       const children = document.get("children");
       expect(children.length).toBe(1);
-      expect(children.get(0)!.get("children").length).toBe(1);
+      expect((children.get(0)! as LiveElementNode).get("children").length).toBe(1);
       expect(
-        (children.get(0)!.get("children").get(0) as LiveTextNode)
+        ((children.get(0)! as LiveElementNode).get("children").get(0) as LiveTextNode)
           .get("content")
           .toJSON()
       ).toEqual([["Recovered"]]);
@@ -3032,7 +3234,7 @@ describe("LiveblocksCollaborationManager", () => {
       });
 
       expect(document.get("children").length).toBe(1);
-      const paragraph = document.get("children").get(0)!;
+      const paragraph = document.get("children").get(0) as LiveElementNode;
       expect(paragraph.get("children").length).toBe(1);
       expect(paragraph.get("children").get(0)!.get("kind")).toBe("text");
       expect(
@@ -3050,9 +3252,9 @@ describe("LiveblocksCollaborationManager", () => {
 
       expect(
         (
-          document
+          (document
             .get("children")
-            .get(0)!
+            .get(0) as LiveElementNode)
             .get("children")
             .get(0)! as LiveTextNode
         )
@@ -3095,7 +3297,7 @@ describe("LiveblocksCollaborationManager", () => {
       });
 
       expect(document.get("children").length).toBe(1);
-      const paragraph = document.get("children").get(0)!;
+      const paragraph = document.get("children").get(0) as LiveElementNode;
       expect(paragraph.get("children").length).toBe(1);
       expect(paragraph.get("children").get(0)!.get("kind")).toBe("text");
       expect(
@@ -3112,9 +3314,9 @@ describe("LiveblocksCollaborationManager", () => {
 
       expect(
         (
-          document
+          (document
             .get("children")
-            .get(0)!
+            .get(0) as LiveElementNode)
             .get("children")
             .get(0)! as LiveTextNode
         )
@@ -3158,9 +3360,9 @@ describe("LiveblocksCollaborationManager", () => {
 
       expect(
         (
-          document
+          (document
             .get("children")
-            .get(0)!
+            .get(0) as LiveElementNode)
             .get("children")
             .get(0)! as LiveTextNode
         )
@@ -3205,9 +3407,9 @@ describe("LiveblocksCollaborationManager", () => {
       expect(document.get("children").length).toBe(1);
       expect(
         (
-          document
+          (document
             .get("children")
-            .get(0)!
+            .get(0) as LiveElementNode)
             .get("children")
             .get(0)! as LiveTextNode
         )
@@ -3266,9 +3468,9 @@ describe("LiveblocksCollaborationManager", () => {
       expect(document.get("children").length).toBe(1);
       expect(
         (
-          document
+          (document
             .get("children")
-            .get(0)!
+            .get(0) as LiveElementNode)
             .get("children")
             .get(0)! as LiveTextNode
         )
@@ -3327,9 +3529,9 @@ describe("LiveblocksCollaborationManager", () => {
       expect(document.get("children").length).toBe(3);
       expect(
         (
-          document
+          (document
             .get("children")
-            .get(0)!
+            .get(0) as LiveElementNode)
             .get("children")
             .get(0)! as LiveTextNode
         )
@@ -3338,9 +3540,9 @@ describe("LiveblocksCollaborationManager", () => {
       ).toEqual([["One"]]);
       expect(
         (
-          document
+          (document
             .get("children")
-            .get(1)!
+            .get(1) as LiveElementNode)
             .get("children")
             .get(0)! as LiveTextNode
         )
@@ -3349,9 +3551,9 @@ describe("LiveblocksCollaborationManager", () => {
       ).toEqual([["Two"]]);
       expect(
         (
-          document
+          (document
             .get("children")
-            .get(2)!
+            .get(2) as LiveElementNode)
             .get("children")
             .get(0)! as LiveTextNode
         )
@@ -3363,7 +3565,7 @@ describe("LiveblocksCollaborationManager", () => {
     test("replaces a root storage child when the Lexical node type changes", () => {
       const document = createParagraphDocument("Title");
       const { editor, manager } = createEditor(document);
-      const paragraph_liveblocks = document.get("children").get(0)!;
+      const paragraph_liveblocks = document.get("children").get(0) as LiveElementNode;
 
       const unregister = editor.registerUpdateListener(
         ({ dirtyElements, dirtyLeaves, normalizedNodes, editorState }) => {
@@ -3391,7 +3593,7 @@ describe("LiveblocksCollaborationManager", () => {
       editor.read(() => {
         const heading_lexical = $getRoot().getFirstChild() as ElementNode;
 
-        const rootChild = document.get("children").get(0)!;
+        const rootChild = document.get("children").get(0) as LiveElementNode;
         expect(rootChild).not.toBe(paragraph_liveblocks);
         expect(rootChild.get("type")).toBe("heading");
         expect(
@@ -3487,9 +3689,9 @@ describe("LiveblocksCollaborationManager", () => {
         expect(document.get("children").length).toBe(2);
         expect(
           (
-            document
+            (document
               .get("children")
-              .get(0)!
+              .get(0) as LiveElementNode)
               .get("children")
               .get(0)! as LiveTextNode
           )
@@ -3498,9 +3700,9 @@ describe("LiveblocksCollaborationManager", () => {
         ).toEqual([["A"]]);
         expect(
           (
-            document
+            (document
               .get("children")
-              .get(1)!
+              .get(1) as LiveElementNode)
               .get("children")
               .get(0)! as LiveTextNode
           )
@@ -3525,7 +3727,7 @@ describe("LiveblocksCollaborationManager", () => {
     test("rebinds structurally equal storage children after Lexical node recreation", () => {
       const document = createParagraphDocument("Hello");
       const { editor, manager } = createEditor(document);
-      const paragraph_liveblocks = document.get("children").get(0)!;
+      const paragraph_liveblocks = document.get("children").get(0) as LiveElementNode;
       const text_liveblocks = paragraph_liveblocks
         .get("children")
         .get(0)! as LiveTextNode;
@@ -3570,6 +3772,358 @@ describe("LiveblocksCollaborationManager", () => {
         expect(manager.binding.reverse.get(text_lexical.getKey())).toBe(
           text_liveblocks
         );
+      });
+    });
+
+    test("inserts a decorator child into storage", () => {
+      const document = createParagraphDocument("Hi");
+      const { editor, manager } = createEditor(document, [CustomDecoratorNode]);
+      const paragraph_liveblocks = document.get("children").get(0) as LiveElementNode;
+
+      const unregister = editor.registerUpdateListener(
+        ({ dirtyElements, dirtyLeaves, normalizedNodes, editorState }) => {
+          editorState.read(() => {
+            manager.$applyLocalUpdates({
+              dirtyElements: new Set(dirtyElements.keys()),
+              dirtyLeaves,
+              normalizedNodes,
+            });
+          });
+        }
+      );
+
+      editor.update(
+        () => {
+          const paragraph = $getRoot().getFirstChild() as ParagraphNode;
+          paragraph.append(
+            $createCustomDecoratorNode({
+              src: "https://example.com/a.png",
+              altText: "A",
+            })
+          );
+        },
+        { discrete: true }
+      );
+      unregister();
+
+      expect(paragraph_liveblocks.get("children").length).toBe(2);
+      const decorator_liveblocks = paragraph_liveblocks
+        .get("children")
+        .get(1)! as LiveDecoratorNode;
+      expect(decorator_liveblocks.get("kind")).toBe("decorator");
+      expect(decorator_liveblocks.get("type")).toBe("custom-decorator");
+      expect(decorator_liveblocks.get("props")?.toJSON()).toEqual({
+        src: "https://example.com/a.png",
+        altText: "A",
+      });
+
+      editor.read(() => {
+        const decorator = $dfs().find(({ node }) =>
+          $isCustomDecoratorNode(node)
+        )!.node as CustomDecoratorNode;
+        expect(manager.binding.forward.get(decorator_liveblocks)).toBe(
+          decorator
+        );
+        expect(manager.binding.reverse.get(decorator.getKey())).toBe(
+          decorator_liveblocks
+        );
+      });
+    });
+
+    test("deletes a decorator child from storage", () => {
+      const document = new LiveObject({
+        kind: "root",
+        type: "root",
+        version: 1,
+        children: new LiveList([
+          new LiveObject({
+            kind: "element",
+            type: "paragraph",
+            version: 1,
+            children: new LiveList([
+              new LiveObject({
+                kind: "text",
+                type: "text",
+                version: 1,
+                content: new LiveText("Hi"),
+              }),
+              new LiveObject({
+                kind: "decorator",
+                type: "custom-decorator",
+                version: 1,
+                props: new LiveMap([
+                  ["src", "https://example.com/a.png"],
+                  ["altText", "A"],
+                ]),
+              }),
+            ]),
+          }),
+        ]),
+      }) as LiveRootNode;
+      const { editor, manager } = createEditor(document, [CustomDecoratorNode]);
+      const paragraph_liveblocks = document.get("children").get(0) as LiveElementNode;
+
+      const unregister = editor.registerUpdateListener(
+        ({ dirtyElements, dirtyLeaves, normalizedNodes, editorState }) => {
+          editorState.read(() => {
+            manager.$applyLocalUpdates({
+              dirtyElements: new Set(dirtyElements.keys()),
+              dirtyLeaves,
+              normalizedNodes,
+            });
+          });
+        }
+      );
+
+      editor.update(
+        () => {
+          const decorator = $dfs().find(({ node }) =>
+            $isCustomDecoratorNode(node)
+          )!.node as CustomDecoratorNode;
+          decorator.remove();
+        },
+        { discrete: true }
+      );
+      unregister();
+
+      expect(paragraph_liveblocks.get("children").length).toBe(1);
+      expect(paragraph_liveblocks.get("children").get(0)!.get("kind")).toBe(
+        "text"
+      );
+    });
+
+    test("updates decorator props in place without recreating the LiveObject", () => {
+      const document = new LiveObject({
+        kind: "root",
+        type: "root",
+        version: 1,
+        children: new LiveList([
+          new LiveObject({
+            kind: "element",
+            type: "paragraph",
+            version: 1,
+            children: new LiveList([
+              new LiveObject({
+                kind: "decorator",
+                type: "custom-decorator",
+                version: 1,
+                props: new LiveMap([
+                  ["src", "https://example.com/a.png"],
+                  ["altText", "A"],
+                ]),
+              }),
+            ]),
+          }),
+        ]),
+      }) as LiveRootNode;
+      const { editor, manager } = createEditor(document, [CustomDecoratorNode]);
+      const paragraph_liveblocks = document.get("children").get(0) as LiveElementNode;
+      const decorator_liveblocks = paragraph_liveblocks
+        .get("children")
+        .get(0)! as LiveDecoratorNode;
+
+      const unregister = editor.registerUpdateListener(
+        ({ dirtyElements, dirtyLeaves, normalizedNodes, editorState }) => {
+          editorState.read(() => {
+            manager.$applyLocalUpdates({
+              dirtyElements: new Set(dirtyElements.keys()),
+              dirtyLeaves,
+              normalizedNodes,
+            });
+          });
+        }
+      );
+
+      editor.update(
+        () => {
+          const decorator = $dfs().find(({ node }) =>
+            $isCustomDecoratorNode(node)
+          )!.node as CustomDecoratorNode;
+          $setLexicalNodeProps(decorator, {
+            src: "https://example.com/b.png",
+            altText: "B",
+          });
+        },
+        { discrete: true }
+      );
+      unregister();
+
+      expect(paragraph_liveblocks.get("children").get(0)).toBe(
+        decorator_liveblocks
+      );
+      expect(decorator_liveblocks.get("props")?.toJSON()).toEqual({
+        src: "https://example.com/b.png",
+        altText: "B",
+      });
+
+      editor.read(() => {
+        const decorator = $dfs().find(({ node }) =>
+          $isCustomDecoratorNode(node)
+        )!.node as CustomDecoratorNode;
+        expect(manager.binding.forward.get(decorator_liveblocks)).toBe(
+          decorator
+        );
+      });
+    });
+
+    test("preserves decorator LiveObject when only the right middle slot matches by type", () => {
+      // Force a middle window where the left slots differ (linebreak vs text) and
+      // the right slots are same-type decorators with different instances/props
+      // (so suffix identity / structural equality cannot claim them).
+      const document = new LiveObject({
+        kind: "root",
+        type: "root",
+        version: 1,
+        children: new LiveList([
+          new LiveObject({
+            kind: "element",
+            type: "paragraph",
+            version: 1,
+            children: new LiveList([
+              new LiveObject({
+                kind: "linebreak",
+                type: "linebreak",
+                version: 1,
+              }),
+              new LiveObject({
+                kind: "decorator",
+                type: "custom-decorator",
+                version: 1,
+                props: new LiveMap([
+                  ["src", "https://example.com/a.png"],
+                  ["altText", "A"],
+                ]),
+              }),
+            ]),
+          }),
+        ]),
+      }) as LiveRootNode;
+      const { editor, manager } = createEditor(document, [CustomDecoratorNode]);
+      const paragraph_liveblocks = document.get("children").get(0) as LiveElementNode;
+      const decorator_liveblocks = paragraph_liveblocks
+        .get("children")
+        .get(1)! as LiveDecoratorNode;
+
+      const unregister = editor.registerUpdateListener(
+        ({ dirtyElements, dirtyLeaves, normalizedNodes, editorState }) => {
+          editorState.read(() => {
+            manager.$applyLocalUpdates({
+              dirtyElements: new Set(dirtyElements.keys()),
+              dirtyLeaves,
+              normalizedNodes,
+            });
+          });
+        }
+      );
+
+      editor.update(
+        () => {
+          const paragraph = $getRoot().getFirstChild() as ParagraphNode;
+          paragraph.clear();
+          paragraph.append(
+            $createTextNode("Hi"),
+            $createCustomDecoratorNode({
+              src: "https://example.com/b.png",
+              altText: "B",
+            })
+          );
+        },
+        { discrete: true }
+      );
+      unregister();
+
+      expect(paragraph_liveblocks.get("children").length).toBe(2);
+      expect(paragraph_liveblocks.get("children").get(0)!.get("kind")).toBe(
+        "text"
+      );
+      expect(
+        (paragraph_liveblocks.get("children").get(0)! as LiveTextNode)
+          .get("content")
+          .toJSON()
+      ).toEqual([["Hi"]]);
+      expect(paragraph_liveblocks.get("children").get(1)).toBe(
+        decorator_liveblocks
+      );
+      expect(decorator_liveblocks.get("props")?.toJSON()).toEqual({
+        src: "https://example.com/b.png",
+        altText: "B",
+      });
+    });
+
+    test("reconciles decorator ↔ linebreak swap to the expected storage order", () => {
+      const document = new LiveObject({
+        kind: "root",
+        type: "root",
+        version: 1,
+        children: new LiveList([
+          new LiveObject({
+            kind: "element",
+            type: "paragraph",
+            version: 1,
+            children: new LiveList([
+              new LiveObject({
+                kind: "decorator",
+                type: "custom-decorator",
+                version: 1,
+                props: new LiveMap([
+                  ["src", "https://example.com/a.png"],
+                  ["altText", "A"],
+                ]),
+              }),
+              new LiveObject({
+                kind: "linebreak",
+                type: "linebreak",
+                version: 1,
+              }),
+            ]),
+          }),
+        ]),
+      }) as LiveRootNode;
+      const { editor, manager } = createEditor(document, [CustomDecoratorNode]);
+      const paragraph_liveblocks = document.get("children").get(0) as LiveElementNode;
+
+      const unregister = editor.registerUpdateListener(
+        ({ dirtyElements, dirtyLeaves, normalizedNodes, editorState }) => {
+          editorState.read(() => {
+            manager.$applyLocalUpdates({
+              dirtyElements: new Set(dirtyElements.keys()),
+              dirtyLeaves,
+              normalizedNodes,
+            });
+          });
+        }
+      );
+
+      editor.update(
+        () => {
+          const paragraph = $getRoot().getFirstChild() as ParagraphNode;
+          const decorator = paragraph.getChildAtIndex(
+            0
+          ) as CustomDecoratorNode;
+          const linebreak = paragraph.getChildAtIndex(1)!;
+          decorator.remove();
+          linebreak.insertAfter(decorator);
+        },
+        { discrete: true }
+      );
+      unregister();
+
+      expect(paragraph_liveblocks.get("children").length).toBe(2);
+      expect(paragraph_liveblocks.get("children").get(0)!.get("kind")).toBe(
+        "linebreak"
+      );
+      expect(
+        paragraph_liveblocks.get("children").get(1)!.get("kind")
+      ).toBe("decorator");
+      expect(
+        (
+          paragraph_liveblocks.get("children").get(1)! as LiveDecoratorNode
+        )
+          .get("props")
+          ?.toJSON()
+      ).toEqual({
+        src: "https://example.com/a.png",
+        altText: "A",
       });
     });
   });
@@ -3664,7 +4218,7 @@ describe("LiveblocksCollaborationManager", () => {
       });
     });
 
-    test("returns undefined for non-element nodes", () => {
+    test("returns undefined for text nodes", () => {
       const document = createParagraphDocument("Hello");
       const { editor } = createEditor(document);
 
@@ -3673,6 +4227,55 @@ describe("LiveblocksCollaborationManager", () => {
           .node as TextNode;
 
         expect($getLexicalNodeProps(text)).toBeUndefined();
+      });
+    });
+
+    test("returns custom fields for decorator nodes", () => {
+      const document = createParagraphDocument("Hello");
+      const { editor } = createEditor(document, [CustomDecoratorNode]);
+
+      editor.update(() => {
+        const paragraph = $getRoot().getFirstChild() as ParagraphNode;
+        paragraph.append(
+          $createCustomDecoratorNode({
+            src: "https://example.com/a.png",
+            altText: "A",
+          })
+        );
+      });
+
+      editor.read(() => {
+        const decorator = $dfs().find(({ node }) =>
+          $isCustomDecoratorNode(node)
+        )!.node as CustomDecoratorNode;
+
+        expect($getLexicalNodeProps(decorator)).toEqual({
+          src: "https://example.com/a.png",
+          altText: "A",
+        });
+      });
+    });
+
+    test("includes default empty string fields rather than omitting them", () => {
+      const document = createParagraphDocument("Hello");
+      const { editor } = createEditor(document, [CustomDecoratorNode]);
+
+      editor.update(() => {
+        const paragraph = $getRoot().getFirstChild() as ParagraphNode;
+        paragraph.append($createCustomDecoratorNode());
+      });
+
+      editor.read(() => {
+        const decorator = $dfs().find(({ node }) =>
+          $isCustomDecoratorNode(node)
+        )!.node as CustomDecoratorNode;
+
+        // Empty strings are still exported — decorators with declared fields
+        // surface them the same way HeadingNode surfaces its default tag.
+        expect($getLexicalNodeProps(decorator)).toEqual({
+          src: "",
+          altText: "",
+        });
       });
     });
   });
@@ -3816,7 +4419,7 @@ describe("LiveblocksCollaborationManager", () => {
       });
     });
 
-    test("is a no-op for non-element nodes", () => {
+    test("is a no-op for text nodes", () => {
       const document = createParagraphDocument("Hello");
       const { editor } = createEditor(document);
 
@@ -3832,6 +4435,112 @@ describe("LiveblocksCollaborationManager", () => {
 
         expect(text.getTextContent()).toBe("Hello");
         expect($getLexicalNodeProps(text)).toBeUndefined();
+      });
+    });
+
+    test("applies storage props onto a decorator node", () => {
+      const document = createParagraphDocument("Hello");
+      const { editor } = createEditor(document, [CustomDecoratorNode]);
+
+      editor.update(() => {
+        const paragraph = $getRoot().getFirstChild() as ParagraphNode;
+        paragraph.append(
+          $createCustomDecoratorNode({
+            src: "https://example.com/a.png",
+            altText: "A",
+          })
+        );
+      });
+
+      editor.update(() => {
+        const decorator = $dfs().find(({ node }) =>
+          $isCustomDecoratorNode(node)
+        )!.node as CustomDecoratorNode;
+        $setLexicalNodeProps(decorator, {
+          src: "https://example.com/b.png",
+          altText: "B",
+        });
+      });
+
+      editor.read(() => {
+        const decorator = $dfs().find(({ node }) =>
+          $isCustomDecoratorNode(node)
+        )!.node as CustomDecoratorNode;
+
+        expect(decorator.getSrc()).toBe("https://example.com/b.png");
+        expect(decorator.getAltText()).toBe("B");
+        expect($getLexicalNodeProps(decorator)).toEqual({
+          src: "https://example.com/b.png",
+          altText: "B",
+        });
+      });
+    });
+
+    test("resets decorator props to type defaults when props is undefined", () => {
+      const document = createParagraphDocument("Hello");
+      const { editor } = createEditor(document, [CustomDecoratorNode]);
+
+      editor.update(() => {
+        const paragraph = $getRoot().getFirstChild() as ParagraphNode;
+        paragraph.append(
+          $createCustomDecoratorNode({
+            src: "https://example.com/a.png",
+            altText: "A",
+          })
+        );
+      });
+
+      editor.update(() => {
+        const decorator = $dfs().find(({ node }) =>
+          $isCustomDecoratorNode(node)
+        )!.node as CustomDecoratorNode;
+        $setLexicalNodeProps(decorator, undefined);
+      });
+
+      editor.read(() => {
+        const decorator = $dfs().find(({ node }) =>
+          $isCustomDecoratorNode(node)
+        )!.node as CustomDecoratorNode;
+
+        expect(decorator.getSrc()).toBe("");
+        expect(decorator.getAltText()).toBe("");
+        expect($getLexicalNodeProps(decorator)).toEqual({
+          src: "",
+          altText: "",
+        });
+      });
+    });
+
+    test("does not clear undeclared decorator props when given an empty props object", () => {
+      const document = createParagraphDocument("Hello");
+      const { editor } = createEditor(document, [CustomDecoratorNode]);
+
+      editor.update(() => {
+        const paragraph = $getRoot().getFirstChild() as ParagraphNode;
+        paragraph.append(
+          $createCustomDecoratorNode({
+            src: "https://example.com/a.png",
+            altText: "A",
+          })
+        );
+      });
+
+      editor.update(() => {
+        const decorator = $dfs().find(({ node }) =>
+          $isCustomDecoratorNode(node)
+        )!.node as CustomDecoratorNode;
+        $setLexicalNodeProps(decorator, {});
+      });
+
+      editor.read(() => {
+        const decorator = $dfs().find(({ node }) =>
+          $isCustomDecoratorNode(node)
+        )!.node as CustomDecoratorNode;
+
+        expect($getLexicalNodeProps(decorator)).toEqual({
+          src: "https://example.com/a.png",
+          altText: "A",
+        });
       });
     });
   });
@@ -3872,6 +4581,52 @@ describe("LiveblocksCollaborationManager", () => {
       });
     });
 
+    test("round-trips decorator props through get and set", () => {
+      const document = createParagraphDocument("Hello");
+      const { editor } = createEditor(document, [CustomDecoratorNode]);
+
+      editor.update(() => {
+        const paragraph = $getRoot().getFirstChild() as ParagraphNode;
+        paragraph.append(
+          $createCustomDecoratorNode({
+            src: "https://example.com/a.png",
+            altText: "A",
+          })
+        );
+      });
+
+      let props: ReturnType<typeof $getLexicalNodeProps>;
+
+      editor.read(() => {
+        const decorator = $dfs().find(({ node }) =>
+          $isCustomDecoratorNode(node)
+        )!.node as CustomDecoratorNode;
+        props = $getLexicalNodeProps(decorator);
+      });
+
+      editor.update(() => {
+        const paragraph = $getRoot().getFirstChild() as ParagraphNode;
+        const decorator = $createCustomDecoratorNode({
+          src: "https://example.com/other.png",
+          altText: "Other",
+        });
+        paragraph.clear();
+        paragraph.append(decorator);
+        $setLexicalNodeProps(decorator, props);
+      });
+
+      editor.read(() => {
+        const decorator = $dfs().find(({ node }) =>
+          $isCustomDecoratorNode(node)
+        )!.node as CustomDecoratorNode;
+
+        expect($getLexicalNodeProps(decorator)).toEqual({
+          src: "https://example.com/a.png",
+          altText: "A",
+        });
+      });
+    });
+
     test("matches storage props used by element structural equality", () => {
       const document = new LiveObject({
         kind: "root",
@@ -3898,7 +4653,7 @@ describe("LiveblocksCollaborationManager", () => {
 
       editor.read(() => {
         const heading = $getRoot().getFirstChild() as ElementNode;
-        const props_liveblocks = document.get("children").get(0)!.get("props");
+        const props_liveblocks = (document.get("children").get(0) as LiveElementNode).get("props");
 
         expect($getLexicalNodeProps(heading)).toEqual(
           props_liveblocks?.toJSON()
@@ -5086,10 +5841,10 @@ describe("LiveblocksCollaborationManager", () => {
       // Storage should reflect the empty document.
       const afterChildren = document.get("children");
       expect(afterChildren.length).toBe(1);
-      const afterParagraph = afterChildren.get(0)!;
-      expect(afterParagraph.get("children").length).toBe(1);
+      const afterParagraph = afterChildren.get(0) as LiveElementNode;
+      expect((afterParagraph as LiveElementNode).get("children").length).toBe(1);
       expect(
-        (afterParagraph.get("children").get(0)! as LiveTextNode)
+        ((afterParagraph as LiveElementNode).get("children").get(0)! as LiveTextNode)
           .get("content")
           .toJSON()
       ).toEqual([]);
@@ -5106,7 +5861,7 @@ describe("LiveblocksCollaborationManager", () => {
       // delete@0 for each item; then insert@0 for the replacement.
       const remaining = document.get("children").get(0)!;
       const wasReused = before.includes(remaining);
-      const text_liveblocks = remaining.get("children").get(0) as LiveTextNode;
+      const text_liveblocks = (remaining as LiveElementNode).get("children").get(0) as LiveTextNode;
 
       peer.editor.update(
         () => {
@@ -5229,7 +5984,7 @@ describe("LiveblocksCollaborationManager", () => {
       });
 
       const remaining = document.get("children").get(0)!;
-      const text_liveblocks = remaining.get("children").get(0) as LiveTextNode;
+      const text_liveblocks = (remaining as LiveElementNode).get("children").get(0) as LiveTextNode;
 
       peer.editor.update(
         () => {
@@ -6117,6 +6872,500 @@ describe("LiveblocksCollaborationManager", () => {
         expect($getLexicalNodeProps(heading)).toEqual({ tag: "h3" });
       });
     });
+
+    test("applies remote LiveList insert of a decorator child", () => {
+      const document = createParagraphDocument("Hi");
+      const { editor, manager } = createEditor(document, [CustomDecoratorNode]);
+
+      const paragraph_liveblocks = document
+        .get("children")
+        .get(0) as LiveElementNode;
+      const children_liveblocks = paragraph_liveblocks.get("children");
+      const decorator_liveblocks = new LiveObject({
+        kind: "decorator",
+        type: "custom-decorator",
+        version: 1,
+        props: new LiveMap([
+          ["src", "https://example.com/a.png"],
+          ["altText", "A"],
+        ]),
+      }) as LiveDecoratorNode;
+      children_liveblocks.insert(decorator_liveblocks, 1);
+
+      editor.update(
+        () => {
+          manager.$applyRemoteUpdates([
+            {
+              type: "LiveList",
+              node: children_liveblocks,
+              updates: [
+                {
+                  type: "insert",
+                  index: 1,
+                  item: decorator_liveblocks,
+                },
+              ],
+              [kStorageUpdateSource]: { origin: "remote" },
+            },
+          ]);
+        },
+        {
+          discrete: true,
+          skipTransforms: true,
+          tag: COLLABORATION_TAG,
+        }
+      );
+
+      editor.read(() => {
+        const paragraph = $getRoot().getFirstChild() as ParagraphNode;
+        expect(paragraph.getChildrenSize()).toBe(2);
+        const decorator = paragraph.getChildAtIndex(1) as CustomDecoratorNode;
+        expect($isCustomDecoratorNode(decorator)).toBe(true);
+        expect(decorator.getSrc()).toBe("https://example.com/a.png");
+        expect(decorator.getAltText()).toBe("A");
+        expect(manager.binding.forward.get(decorator_liveblocks)).toBe(
+          decorator
+        );
+        expect(manager.binding.reverse.get(decorator.getKey())).toBe(
+          decorator_liveblocks
+        );
+      });
+    });
+
+    test("applies remote LiveList delete of a decorator child", () => {
+      const document = new LiveObject({
+        kind: "root",
+        type: "root",
+        version: 1,
+        children: new LiveList([
+          new LiveObject({
+            kind: "element",
+            type: "paragraph",
+            version: 1,
+            children: new LiveList([
+              new LiveObject({
+                kind: "text",
+                type: "text",
+                version: 1,
+                content: new LiveText("Hi"),
+              }),
+              new LiveObject({
+                kind: "decorator",
+                type: "custom-decorator",
+                version: 1,
+                props: new LiveMap([
+                  ["src", "https://example.com/a.png"],
+                  ["altText", "A"],
+                ]),
+              }),
+            ]),
+          }),
+        ]),
+      }) as LiveRootNode;
+      const { editor, manager } = createEditor(document, [CustomDecoratorNode]);
+      const paragraph_liveblocks = document
+        .get("children")
+        .get(0) as LiveElementNode;
+      const children_liveblocks = paragraph_liveblocks.get("children");
+      const decorator_liveblocks = children_liveblocks.get(1)!;
+
+      children_liveblocks.delete(1);
+
+      editor.update(
+        () => {
+          manager.$applyRemoteUpdates([
+            {
+              type: "LiveList",
+              node: children_liveblocks,
+              updates: [
+                {
+                  type: "delete",
+                  index: 1,
+                  deletedItem: decorator_liveblocks,
+                },
+              ],
+              [kStorageUpdateSource]: { origin: "remote" },
+            },
+          ]);
+        },
+        {
+          discrete: true,
+          skipTransforms: true,
+          tag: COLLABORATION_TAG,
+        }
+      );
+
+      editor.read(() => {
+        const paragraph = $getRoot().getFirstChild() as ParagraphNode;
+        expect(paragraph.getChildrenSize()).toBe(1);
+        expect(paragraph.getFirstChild()?.getTextContent()).toBe("Hi");
+      });
+    });
+
+    test("ignores remote LiveList delete when Lexical parent is already empty", () => {
+      // Concurrent local delete (or decorator-only paragraph cleared) can leave
+      // Lexical empty while a remote/history delete for the same storage child
+      // still arrives — must not splice past oldSize.
+      const document = new LiveObject({
+        kind: "root",
+        type: "root",
+        version: 1,
+        children: new LiveList([
+          new LiveObject({
+            kind: "element",
+            type: "paragraph",
+            version: 1,
+            children: new LiveList([
+              new LiveObject({
+                kind: "decorator",
+                type: "custom-decorator",
+                version: 1,
+                props: new LiveMap([
+                  ["src", "https://example.com/a.png"],
+                  ["altText", "A"],
+                ]),
+              }),
+            ]),
+          }),
+        ]),
+      }) as LiveRootNode;
+      const { editor, manager } = createEditor(document, [CustomDecoratorNode]);
+      const paragraph_liveblocks = document
+        .get("children")
+        .get(0) as LiveElementNode;
+      const children_liveblocks = paragraph_liveblocks.get("children");
+      const decorator_liveblocks = children_liveblocks.get(0)!;
+
+      editor.update(
+        () => {
+          ($getRoot().getFirstChild() as ParagraphNode).clear();
+        },
+        { discrete: true, tag: COLLABORATION_TAG }
+      );
+
+      children_liveblocks.delete(0);
+
+      expect(() => {
+        editor.update(
+          () => {
+            manager.$applyRemoteUpdates([
+              {
+                type: "LiveList",
+                node: children_liveblocks,
+                updates: [
+                  {
+                    type: "delete",
+                    index: 0,
+                    deletedItem: decorator_liveblocks,
+                  },
+                ],
+                [kStorageUpdateSource]: { origin: "remote" },
+              },
+            ]);
+          },
+          {
+            discrete: true,
+            skipTransforms: true,
+            tag: COLLABORATION_TAG,
+          }
+        );
+      }).not.toThrow();
+
+      editor.read(() => {
+        expect(
+          ($getRoot().getFirstChild() as ParagraphNode).getChildrenSize()
+        ).toBe(0);
+      });
+    });
+
+    test("applies remote LiveObject props updates on a decorator", () => {
+      const document = new LiveObject({
+        kind: "root",
+        type: "root",
+        version: 1,
+        children: new LiveList([
+          new LiveObject({
+            kind: "element",
+            type: "paragraph",
+            version: 1,
+            children: new LiveList([
+              new LiveObject({
+                kind: "decorator",
+                type: "custom-decorator",
+                version: 1,
+                props: new LiveMap([
+                  ["src", "https://example.com/a.png"],
+                  ["altText", "A"],
+                ]),
+              }),
+            ]),
+          }),
+        ]),
+      }) as LiveRootNode;
+      const { editor, manager } = createEditor(document, [CustomDecoratorNode]);
+      const decorator_liveblocks = (document
+        .get("children")
+        .get(0) as LiveElementNode)
+        .get("children")
+        .get(0)! as LiveDecoratorNode;
+
+      decorator_liveblocks.set(
+        "props",
+        new LiveMap([
+          ["src", "https://example.com/b.png"],
+          ["altText", "B"],
+        ])
+      );
+
+      editor.update(
+        () => {
+          manager.$applyRemoteUpdates([
+            {
+              type: "LiveObject",
+              node: decorator_liveblocks,
+              updates: {
+                props: { type: "update" },
+              },
+              [kStorageUpdateSource]: { origin: "remote" },
+            },
+          ]);
+        },
+        {
+          discrete: true,
+          skipTransforms: true,
+          tag: COLLABORATION_TAG,
+        }
+      );
+
+      editor.read(() => {
+        const decorator = $dfs().find(({ node }) =>
+          $isCustomDecoratorNode(node)
+        )!.node as CustomDecoratorNode;
+        expect(decorator.getSrc()).toBe("https://example.com/b.png");
+        expect(decorator.getAltText()).toBe("B");
+        expect(manager.binding.forward.get(decorator_liveblocks)).toBe(
+          decorator
+        );
+      });
+    });
+
+    test("applies remote LiveMap prop updates on a decorator", () => {
+      const document = new LiveObject({
+        kind: "root",
+        type: "root",
+        version: 1,
+        children: new LiveList([
+          new LiveObject({
+            kind: "element",
+            type: "paragraph",
+            version: 1,
+            children: new LiveList([
+              new LiveObject({
+                kind: "decorator",
+                type: "custom-decorator",
+                version: 1,
+                props: new LiveMap([
+                  ["src", "https://example.com/a.png"],
+                  ["altText", "A"],
+                ]),
+              }),
+            ]),
+          }),
+        ]),
+      }) as LiveRootNode;
+      const { editor, manager } = createEditor(document, [CustomDecoratorNode]);
+      const decorator_liveblocks = (document
+        .get("children")
+        .get(0) as LiveElementNode)
+        .get("children")
+        .get(0)! as LiveDecoratorNode;
+      const props = decorator_liveblocks.get("props")!;
+
+      props.set("src", "https://example.com/c.png");
+      props.set("altText", "C");
+
+      editor.update(
+        () => {
+          manager.$applyRemoteUpdates([
+            {
+              type: "LiveMap",
+              node: props,
+              updates: {
+                src: { type: "update" },
+                altText: { type: "update" },
+              },
+              [kStorageUpdateSource]: { origin: "remote" },
+            },
+          ]);
+        },
+        {
+          discrete: true,
+          skipTransforms: true,
+          tag: COLLABORATION_TAG,
+        }
+      );
+
+      editor.read(() => {
+        const decorator = $dfs().find(({ node }) =>
+          $isCustomDecoratorNode(node)
+        )!.node as CustomDecoratorNode;
+        expect(decorator.getSrc()).toBe("https://example.com/c.png");
+        expect(decorator.getAltText()).toBe("C");
+      });
+    });
+
+    test("applies remote LiveList move of a decorator child", () => {
+      const document = new LiveObject({
+        kind: "root",
+        type: "root",
+        version: 1,
+        children: new LiveList([
+          new LiveObject({
+            kind: "element",
+            type: "paragraph",
+            version: 1,
+            children: new LiveList([
+              new LiveObject({
+                kind: "text",
+                type: "text",
+                version: 1,
+                content: new LiveText("Hi"),
+              }),
+              new LiveObject({
+                kind: "decorator",
+                type: "custom-decorator",
+                version: 1,
+                props: new LiveMap([
+                  ["src", "https://example.com/a.png"],
+                  ["altText", "A"],
+                ]),
+              }),
+            ]),
+          }),
+        ]),
+      }) as LiveRootNode;
+      const { editor, manager } = createEditor(document, [CustomDecoratorNode]);
+      const children_liveblocks = (document
+        .get("children")
+        .get(0) as LiveElementNode)
+        .get("children");
+      const decorator_liveblocks = children_liveblocks.get(1)!;
+
+      children_liveblocks.move(1, 0);
+
+      editor.update(
+        () => {
+          manager.$applyRemoteUpdates([
+            {
+              type: "LiveList",
+              node: children_liveblocks,
+              updates: [
+                {
+                  type: "move",
+                  previousIndex: 1,
+                  index: 0,
+                  item: decorator_liveblocks,
+                },
+              ],
+              [kStorageUpdateSource]: { origin: "remote" },
+            },
+          ]);
+        },
+        {
+          discrete: true,
+          skipTransforms: true,
+          tag: COLLABORATION_TAG,
+        }
+      );
+
+      editor.read(() => {
+        const paragraph = $getRoot().getFirstChild() as ParagraphNode;
+        expect(paragraph.getChildrenSize()).toBe(2);
+        expect($isCustomDecoratorNode(paragraph.getChildAtIndex(0))).toBe(
+          true
+        );
+        expect(paragraph.getChildAtIndex(1)?.getTextContent()).toBe("Hi");
+        expect(manager.binding.forward.get(decorator_liveblocks)).toBe(
+          paragraph.getChildAtIndex(0)
+        );
+      });
+    });
+
+    test("applies a peer decorator insert to a second editor", () => {
+      const document = createParagraphDocument("Hi");
+      const local = createEditor(document, [CustomDecoratorNode]);
+      const peer = createEditor(document, [CustomDecoratorNode]);
+
+      const children_liveblocks = (document
+        .get("children")
+        .get(0) as LiveElementNode)
+        .get("children");
+
+      const syncLocal = (fn: () => void) => {
+        const unregister = local.editor.registerUpdateListener(
+          ({ dirtyElements, dirtyLeaves, normalizedNodes, editorState }) => {
+            editorState.read(() => {
+              local.manager.$applyLocalUpdates({
+                dirtyElements: new Set(dirtyElements.keys()),
+                dirtyLeaves,
+                normalizedNodes,
+              });
+            });
+          }
+        );
+        local.editor.update(fn, { discrete: true });
+        unregister();
+      };
+
+      syncLocal(() => {
+        const paragraph = $getRoot().getFirstChild() as ParagraphNode;
+        paragraph.append(
+          $createCustomDecoratorNode({
+            src: "https://example.com/a.png",
+            altText: "A",
+          })
+        );
+      });
+
+      expect(children_liveblocks.length).toBe(2);
+      const decorator_liveblocks = children_liveblocks.get(1)!;
+      expect(decorator_liveblocks.get("kind")).toBe("decorator");
+
+      peer.editor.update(
+        () => {
+          peer.manager.$applyRemoteUpdates([
+            {
+              type: "LiveList",
+              node: children_liveblocks,
+              updates: [
+                {
+                  type: "insert",
+                  index: 1,
+                  item: decorator_liveblocks,
+                },
+              ],
+              [kStorageUpdateSource]: { origin: "remote" },
+            },
+          ]);
+        },
+        {
+          discrete: true,
+          skipTransforms: true,
+          tag: COLLABORATION_TAG,
+        }
+      );
+
+      peer.editor.read(() => {
+        const paragraph = $getRoot().getFirstChild() as ParagraphNode;
+        expect(paragraph.getChildrenSize()).toBe(2);
+        const decorator = paragraph.getChildAtIndex(1) as CustomDecoratorNode;
+        expect($isCustomDecoratorNode(decorator)).toBe(true);
+        expect(decorator.getSrc()).toBe("https://example.com/a.png");
+        expect(peer.manager.binding.forward.get(decorator_liveblocks)).toBe(
+          decorator
+        );
+      });
+    });
   });
 
   describe("areTextNodesStructurallyEqual", () => {
@@ -6355,6 +7604,252 @@ describe("LiveblocksCollaborationManager", () => {
         )
       ).toEqual([["entity", { t: "custom-text" }]]);
     });
+
+    test("materializes a decorator node with props", () => {
+      const editor = createLexicalEditor({
+        namespace: "createStorageNodeFromLexicalNode-decorator",
+        nodes: [ParagraphNode, TextNode, CustomDecoratorNode],
+      });
+      let key = "";
+      editor.update(() => {
+        const paragraph = $createParagraphNode();
+        const node = $createCustomDecoratorNode({
+          src: "https://example.com/a.png",
+          altText: "A",
+        });
+        paragraph.append(node);
+        $getRoot().clear();
+        $getRoot().append(paragraph);
+        key = node.getKey();
+      });
+
+      const storage = editor.read(() =>
+        createStorageNodeFromLexicalNode(
+          $getNodeByKey(key) as CustomDecoratorNode
+        )
+      );
+
+      expect(storage.get("kind")).toBe("decorator");
+      expect(storage.get("type")).toBe("custom-decorator");
+      expect(storage.get("props")?.toJSON()).toEqual({
+        src: "https://example.com/a.png",
+        altText: "A",
+      });
+    });
+
+    test("materializes decorator children inside an element", () => {
+      const editor = createLexicalEditor({
+        namespace: "createStorageNodeFromLexicalNode-decorator-child",
+        nodes: [ParagraphNode, TextNode, CustomDecoratorNode],
+      });
+      let key = "";
+      editor.update(() => {
+        const paragraph = $createParagraphNode();
+        paragraph.append(
+          $createTextNode("Hi"),
+          $createCustomDecoratorNode({
+            src: "https://example.com/a.png",
+            altText: "A",
+          })
+        );
+        $getRoot().clear();
+        $getRoot().append(paragraph);
+        key = paragraph.getKey();
+      });
+
+      const storage = editor.read(() =>
+        createStorageNodeFromLexicalNode(
+          $getNodeByKey(key) as ParagraphNode
+        )
+      );
+
+      expect(storage.get("kind")).toBe("element");
+      expect(storage.get("children").length).toBe(2);
+      expect(storage.get("children").get(0)!.get("kind")).toBe("text");
+      expect(
+        (storage.get("children").get(0)! as LiveTextNode)
+          .get("content")
+          .toJSON()
+      ).toEqual([["Hi"]]);
+
+      const decorator = storage.get("children").get(1)! as LiveDecoratorNode;
+      expect(decorator.get("kind")).toBe("decorator");
+      expect(decorator.get("type")).toBe("custom-decorator");
+      expect(decorator.get("props")?.toJSON()).toEqual({
+        src: "https://example.com/a.png",
+        altText: "A",
+      });
+    });
+  });
+
+  describe("decorator bootstrap and binding", () => {
+    test("bootstraps a decorator child from storage and binds it", () => {
+      const document = new LiveObject({
+        kind: "root",
+        type: "root",
+        version: 1,
+        children: new LiveList([
+          new LiveObject({
+            kind: "element",
+            type: "paragraph",
+            version: 1,
+            children: new LiveList([
+              new LiveObject({
+                kind: "text",
+                type: "text",
+                version: 1,
+                content: new LiveText("Hi"),
+              }),
+              new LiveObject({
+                kind: "decorator",
+                type: "custom-decorator",
+                version: 1,
+                props: new LiveMap([
+                  ["src", "https://example.com/a.png"],
+                  ["altText", "A"],
+                ]),
+              }),
+            ]),
+          }),
+        ]),
+      }) as LiveRootNode;
+
+      const { editor, manager } = createEditor(document, [CustomDecoratorNode]);
+      const paragraph_liveblocks = document.get("children").get(0) as LiveElementNode;
+      const text_liveblocks = paragraph_liveblocks
+        .get("children")
+        .get(0)! as LiveTextNode;
+      const decorator_liveblocks = paragraph_liveblocks.get("children").get(1)!;
+
+      editor.read(() => {
+        const paragraph = $getRoot().getFirstChild() as ParagraphNode;
+        expect(paragraph.getChildrenSize()).toBe(2);
+
+        const text = paragraph.getChildAtIndex(0) as TextNode;
+        expect($isTextNode(text)).toBe(true);
+        expect(text.getTextContent()).toBe("Hi");
+
+        const decorator = paragraph.getChildAtIndex(
+          1
+        ) as CustomDecoratorNode;
+        expect($isCustomDecoratorNode(decorator)).toBe(true);
+        expect(decorator.getSrc()).toBe("https://example.com/a.png");
+        expect(decorator.getAltText()).toBe("A");
+
+        expect(manager.binding.forward.get(paragraph_liveblocks)).toBe(
+          paragraph
+        );
+        expect(manager.binding.forward.get(text_liveblocks)).toEqual([text]);
+        expect(manager.binding.forward.get(decorator_liveblocks)).toBe(
+          decorator
+        );
+        expect(manager.binding.reverse.get(decorator.getKey())).toBe(
+          decorator_liveblocks
+        );
+      });
+    });
+
+    test("bootstraps a root-level decorator sibling (e.g. horizontal rule)", () => {
+      const document = new LiveObject({
+        kind: "root",
+        type: "root",
+        version: 1,
+        children: new LiveList([
+          new LiveObject({
+            kind: "element",
+            type: "paragraph",
+            version: 1,
+            children: new LiveList([
+              new LiveObject({
+                kind: "text",
+                type: "text",
+                version: 1,
+                content: new LiveText("Above"),
+              }),
+            ]),
+          }),
+          new LiveObject({
+            kind: "decorator",
+            type: "custom-decorator",
+            version: 1,
+            props: new LiveMap([
+              ["src", "https://example.com/hr.png"],
+              ["altText", "rule"],
+            ]),
+          }),
+          new LiveObject({
+            kind: "element",
+            type: "paragraph",
+            version: 1,
+            children: new LiveList([
+              new LiveObject({
+                kind: "text",
+                type: "text",
+                version: 1,
+                content: new LiveText("Below"),
+              }),
+            ]),
+          }),
+        ]),
+      }) as LiveRootNode;
+
+      const { editor, manager } = createEditor(document, [CustomDecoratorNode]);
+      const decorator_liveblocks = document.get("children").get(1)!;
+
+      editor.read(() => {
+        expect($getRoot().getChildrenSize()).toBe(3);
+        expect($getRoot().getChildAtIndex(0)?.getType()).toBe("paragraph");
+        const decorator = $getRoot().getChildAtIndex(1) as CustomDecoratorNode;
+        expect($isCustomDecoratorNode(decorator)).toBe(true);
+        expect(decorator.getSrc()).toBe("https://example.com/hr.png");
+        expect($getRoot().getChildAtIndex(2)?.getType()).toBe("paragraph");
+        expect(manager.binding.forward.get(decorator_liveblocks)).toBe(
+          decorator
+        );
+        expect(manager.binding.reverse.get(decorator.getKey())).toBe(
+          decorator_liveblocks
+        );
+      });
+    });
+
+    test("reports an error when bootstrapping an unregistered decorator type", () => {
+      const document = new LiveObject({
+        kind: "root",
+        type: "root",
+        version: 1,
+        children: new LiveList([
+          new LiveObject({
+            kind: "element",
+            type: "paragraph",
+            version: 1,
+            children: new LiveList([
+              new LiveObject({
+                kind: "decorator",
+                type: "custom-decorator",
+                version: 1,
+                props: new LiveMap([
+                  ["src", "https://example.com/a.png"],
+                  ["altText", "A"],
+                ]),
+              }),
+            ]),
+          }),
+        ]),
+      }) as LiveRootNode;
+
+      const onError = vi.fn();
+      const editor = createLexicalEditor({
+        namespace: "decorator-bootstrap-unregistered",
+        nodes: [ParagraphNode, TextNode, HeadingNode, QuoteNode],
+        onError,
+      });
+      new LiveblocksCollaborationManager(document, editor);
+
+      expect(onError).toHaveBeenCalled();
+      expect((onError.mock.calls[0]![0] as Error).message).toMatch(
+        /Node of type "custom-decorator" is not registered/
+      );
+    });
   });
 });
 
@@ -6388,6 +7883,104 @@ function $createCustomTextNode(text = ""): CustomTextNode {
   return $applyNodeReplacement(new CustomTextNode(text));
 }
 
+type SerializedCustomDecoratorNode = Spread<
+  {
+    src: string;
+    altText: string;
+  },
+  SerializedLexicalNode
+>;
+
+/**
+ * Minimal DecoratorNode used to cover storage `props` round-trips for
+ * decorator types (e.g. images) via `exportJSON` / `updateFromJSON`.
+ *
+ * Defaults are empty strings so `new CustomDecoratorNode()` works for the
+ * fresh-instance path inside `$setLexicalNodeProps`.
+ */
+class CustomDecoratorNode extends DecoratorNode<null> {
+  __src: string;
+  __altText: string;
+
+  static getType(): string {
+    return "custom-decorator";
+  }
+
+  static clone(node: CustomDecoratorNode): CustomDecoratorNode {
+    return new CustomDecoratorNode(node.__src, node.__altText, node.__key);
+  }
+
+  static importJSON(
+    serializedNode: SerializedCustomDecoratorNode
+  ): CustomDecoratorNode {
+    return $createCustomDecoratorNode().updateFromJSON(serializedNode);
+  }
+
+  constructor(src = "", altText = "", key?: NodeKey) {
+    super(key);
+    this.__src = src;
+    this.__altText = altText;
+  }
+
+  exportJSON(): SerializedCustomDecoratorNode {
+    return {
+      ...super.exportJSON(),
+      src: this.__src,
+      altText: this.__altText,
+    };
+  }
+
+  updateFromJSON(
+    serializedNode: LexicalUpdateJSON<SerializedCustomDecoratorNode>
+  ): this {
+    const node = super.updateFromJSON(serializedNode);
+    const writable = node.getWritable();
+    if (serializedNode.src !== undefined) {
+      writable.__src = serializedNode.src;
+    }
+    if (serializedNode.altText !== undefined) {
+      writable.__altText = serializedNode.altText;
+    }
+    return writable;
+  }
+
+  createDOM(_config: EditorConfig): HTMLElement {
+    return document.createElement("span");
+  }
+
+  updateDOM(): false {
+    return false;
+  }
+
+  decorate(): null {
+    return null;
+  }
+
+  getSrc(): string {
+    return this.__src;
+  }
+
+  getAltText(): string {
+    return this.__altText;
+  }
+}
+
+function $createCustomDecoratorNode({
+  src = "",
+  altText = "",
+}: {
+  src?: string;
+  altText?: string;
+} = {}): CustomDecoratorNode {
+  return $applyNodeReplacement(new CustomDecoratorNode(src, altText));
+}
+
+function $isCustomDecoratorNode(
+  node: LexicalNode | null | undefined
+): node is CustomDecoratorNode {
+  return node instanceof CustomDecoratorNode;
+}
+
 function createParagraphDocument(text: string): LiveRootNode {
   return new LiveObject({
     kind: "root",
@@ -6413,7 +8006,7 @@ function createParagraphDocument(text: string): LiveRootNode {
 
 function createEditor(
   document: LiveRootNode,
-  extraNodes: Array<typeof TextNode> = []
+  extraNodes: Array<typeof TextNode | typeof CustomDecoratorNode> = []
 ): {
   editor: LexicalEditor;
   manager: LiveblocksCollaborationManager;

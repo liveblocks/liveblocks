@@ -39,8 +39,8 @@ const HISTORY_CAPTURE_TIMEOUT_MS = 1000;
  * - `storage` — presence encoding (`encodeIndex` + LiveText.version). Survives
  *   Lexical node-key recreation, but after delete+undo `decodeIndex` can remap
  *   the left edge of a deleted range on a surviving LiveText.
- * - `lexical` — exact Lexical keys/offsets. Preferred when the TextNode key is
- *   still bound after historic reconcile.
+ * - `lexical` — exact Lexical keys/offsets. Preferred when
+ *   `$isUsableLexicalSnapshot` is true after historic reconcile.
  * - `local` — LiveText character offsets / element child indices *before*
  *   `encodeIndex`. Used when Lexical keys were recreated (common with
  *   multi-segment formatted text) so we can place the caret without going
