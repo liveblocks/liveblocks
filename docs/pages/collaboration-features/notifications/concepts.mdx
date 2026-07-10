@@ -186,12 +186,11 @@ use them differently. Learn more about notification channels in our
 [email notifications](/docs/ready-made-features/notifications/email-notifications)
 page.
 
-## Data flow
+## Notification flow [#notification-flow]
 
-An unread inbox notification will trigger a notification based on the project
-notification settings and the user notification settings. Liveblocks evaluates
-both the project-level configuration and user preferences to determine whether
-to send a channel notification.
+Every notification, whether it ends up in the in-app inbox, an email, or a Slack
+message, starts life as an inbox notification, and follows the same path to
+reach the user.
 
 <Figure>
   <Image
@@ -201,6 +200,32 @@ to send a channel notification.
     height={990}
   />
 </Figure>
+
+1. **An inbox notification is created or updated.** This happens automatically
+   when Liveblocks features are used—for example a mention in a comment or a
+   text editor—or manually, when your server calls
+   [`liveblocks.triggerInboxNotification`](/docs/api-reference/liveblocks-node#post-inbox-notifications-trigger)
+   for a custom notification.
+2. **The notification appears in the user’s in-app inbox** immediately, in
+   realtime, if you’ve built a notification tray with our
+   [default components](/docs/ready-made-features/notifications/default-components)
+   or [hooks](/docs/ready-made-features/notifications/hooks).
+3. **Liveblocks checks whether the notification is still unread** after the
+   webhook interval, which defaults to 30 minutes and can be customized in the
+   webhooks dashboard. Notifications the user has already read never trigger
+   channel notifications.
+4. **Settings are evaluated for each channel.** For each channel—`email`,
+   `slack`, `teams`, `webPush`—Liveblocks combines the project-level settings
+   from your dashboard with the user’s own
+   [notification settings](/docs/ready-made-features/notifications/email-notifications#Notification-settings)
+   to decide whether this notification kind should be delivered there.
+5. **A `"notification"` webhook event is sent to your endpoint** for each
+   channel that passes the check. Your endpoint then delivers the actual email,
+   Slack message, Teams message, or web push notification.
+
+This is why a single system powers every destination: you trigger one inbox
+notification, and the project settings, user settings, and your webhook endpoint
+together determine where it surfaces.
 
 ## Permissions
 
@@ -216,10 +241,9 @@ For greater control over notification permissions, we recommend utilizing
 
 ### ID token
 
-When using
-[ID token authentication](/docs/authentication#id-token),
-Liveblocks reads the permissions set on the room, and uses these to deliver
-notifications that the user is authorized to view.
+When using [ID token authentication](/docs/authentication#id-token), Liveblocks
+reads the permissions set on the room, and uses these to deliver notifications
+that the user is authorized to view.
 
 ## Email notifications
 
