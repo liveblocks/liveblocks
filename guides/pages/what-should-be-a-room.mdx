@@ -1,0 +1,108 @@
+---
+meta:
+  title: "What should be a room?"
+  description:
+    "Learn how to map your product to Liveblocks rooms, with examples and best
+    practices for room granularity, room IDs, and permissions."
+---
+
+A [room](/docs/concepts#Rooms) is the space where people and AI agents
+collaborate—everything room-based in Liveblocks, such as presence, realtime
+storage, and comment threads, happens inside one. Deciding what maps to a room
+is one of the first decisions you’ll make, and getting it right early makes
+everything that follows simpler.
+
+## Each artifact is a room
+
+A good rule of thumb is that each shareable artifact in your product should be
+its own room. If two people open the same page and expect to see each other’s
+activity, they should be connected to the same room.
+
+| Your product                   | What a room maps to                     |
+| ------------------------------ | --------------------------------------- |
+| Canvas or whiteboard product   | Each canvas is a room                   |
+| Dashboard or analytics product | Each dashboard is a room                |
+| Text editor                    | Each document is a room                 |
+| Spreadsheet product            | Each spreadsheet is a room              |
+| Video or design review tool    | Each file under review is a room        |
+| Form builder                   | Each form is a room                     |
+| Project management tool        | Each project, board, or issue is a room |
+
+Avoid creating one large room for your whole app, or one per team—smaller rooms
+keep documents fast, make permissions easier to reason about, and mean users
+only receive updates for the document they’re looking at. Rooms also have
+[limits](/docs/pricing/limits), such as storage size and simultaneous
+connections, that are designed around document-sized spaces.
+
+## Rooms are inexpensive
+
+Rooms cost nothing to create, so it’s normal for a product to have thousands or
+millions of them—one for every document your users have ever created. A room can
+be created explicitly from your back end with
+[`liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms), or
+automatically the first time a user enters it, for example with
+[`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider) in React.
+
+Users can also be connected to more than one room at a time—for example, a page
+that shows live previews of several documents can connect to each document’s
+room simultaneously.
+
+## Choosing room IDs
+
+A room ID is any unique string, so the simplest approach is to reuse the same ID
+your database already uses for the document.
+
+```tsx
+// The document ID from your database is the room ID
+<RoomProvider id={document.id}>{/* ... */}</RoomProvider>
+```
+
+Using a naming pattern such as `organization-id:document-id` also makes it
+easier to
+[grant access to groups of rooms](/docs/authentication/access-token#room-permissions)
+with wildcards. If your app already has rooms and you’d like to adopt a naming
+pattern, read
+[how to rename room IDs and successfully migrate users](/docs/guides/how-to-rename-room-ids-and-successfully-migrate-users).
+
+## Rooms don’t need to be multiplayer from day one
+
+A room with a single user inside behaves exactly like any other document—you can
+start every document as a room, and collaboration features such as multiplayer
+editing, comments, and notifications become available the moment a second person
+(or AI agent) joins. There’s no need to build a separate “collaboration mode”.
+
+## Set permissions on the room
+
+When using [ID token authentication](/docs/authentication#id-token), the room is
+the source of truth for who can enter it. Permissions can be set at three
+levels—default, groups, and users—which is enough to build invite dialogs,
+private documents, and organization-wide access.
+
+```ts
+const room = await liveblocks.createRoom("my-document-id", {
+  // Private by default
+  defaultAccesses: [],
+
+  // The "engineering" group can edit
+  groupsAccesses: {
+    engineering: ["*:write"],
+  },
+
+  // This user can view
+  usersAccesses: {
+    "olivier@example.com": ["*:read"],
+  },
+});
+```
+
+Learn more about [permissions](/docs/authentication/permissions).
+
+## Room-based vs project-based features
+
+Most Liveblocks features live inside a room: presence, realtime storage, Yjs
+documents, and comment threads are all room-based, and require users to be
+connected to the room. Inbox
+[notifications](/docs/ready-made-features/notifications) are the exception—
+they’re project-based, so users receive them across all rooms they have access
+to, without needing to be connected to those rooms. This is what makes a
+cross-document notification inbox possible.

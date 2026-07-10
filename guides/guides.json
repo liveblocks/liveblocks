@@ -1,5 +1,12 @@
 [
   {
+    "title": "What should be a room?",
+    "path": "/what-should-be-a-room",
+    "topics": ["rooms"],
+    "technologies": ["react", "nodejs"],
+    "date": "2026-07-10"
+  },
+  {
     "title": "How to migrate from access tokens to ID tokens",
     "path": "/how-to-migrate-from-access-tokens-to-id-tokens",
     "topics": ["authentication"],
