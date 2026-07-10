@@ -22,25 +22,26 @@ const THEME = {
     italic: "italic",
     underline: "underline",
     strikethrough: "line-through",
-    code: "font-mono bg-gray-100 dark:bg-gray-800 p-1 rounded text-sm",
+    code: "rounded bg-neutral-100 p-1 font-mono text-sm dark:bg-neutral-800",
   },
-  quote: "border-l-4 border-gray-300 dark:border-gray-700 pl-4 mb-4",
+  quote:
+    "mb-4 border-l-4 border-neutral-300 pl-4 dark:border-neutral-700",
   heading: {
-    h1: "text-4xl font-bold mb-4",
-    h2: "text-3xl font-bold mb-4",
-    h3: "text-2xl font-bold mb-4",
-    h4: "text-xl font-bold mb-4",
-    h5: "text-lg font-bold mb-4",
-    h6: "text-base font-bold mb-4",
+    h1: "mb-4 text-4xl font-bold",
+    h2: "mb-4 text-3xl font-bold",
+    h3: "mb-4 text-2xl font-bold",
+    h4: "mb-4 text-xl font-bold",
+    h5: "mb-4 text-lg font-bold",
+    h6: "mb-4 text-base font-bold",
   },
-  paragraph: "text-base mb-4",
-  link: "text-blue-500 underline pointer-events-none after:content-['↗'] after:cursor-pointer after:font-bold after:pointer-events-auto",
+  paragraph: "mb-4 text-base",
+  link: "pointer-events-none text-blue-500 underline after:pointer-events-auto after:cursor-pointer after:font-bold after:content-['↗']",
   list: {
-    ul: "list-disc mb-4",
-    ol: "list-decimal mb-4",
-    listitem: "ml-4 mb-1",
+    ul: "mb-4 list-disc",
+    ol: "mb-4 list-decimal",
+    listitem: "mb-1 ml-4",
   },
-  code: "block font-mono bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded text-sm mb-4",
+  code: "mb-4 block rounded bg-neutral-100 px-4 py-2 font-mono text-sm dark:bg-neutral-800",
 };
 
 export default function RoomPage({
@@ -78,7 +79,7 @@ export default function RoomPage({
       }}
     >
       <ClientSideSuspense fallback={null}>
-        <div className="flex h-dvh flex-col">
+        <div className="flex h-dvh flex-col bg-white text-neutral-950 dark:bg-neutral-950 dark:text-neutral-50">
           <Editor />
         </div>
       </ClientSideSuspense>
@@ -90,7 +91,11 @@ function Editor() {
   const room = useRoom();
   const root = useRoot(room);
   if (root === null) {
-    return <div>Loading…</div>;
+    return (
+      <div className="p-4 text-neutral-500 dark:text-neutral-400">
+        Loading…
+      </div>
+    );
   }
 
   const document = root.get("document");

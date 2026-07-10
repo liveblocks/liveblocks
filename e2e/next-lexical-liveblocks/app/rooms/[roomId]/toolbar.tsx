@@ -140,7 +140,7 @@ export function Toolbar() {
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5 p-4">
+    <div className="flex flex-wrap items-center gap-1.5 border-b border-neutral-200 p-4 dark:border-neutral-800">
       <ToolbarButton
         label="Paragraph"
         active={blockType === "paragraph"}
@@ -198,7 +198,7 @@ export function Toolbar() {
         <CodeIcon />
       </ToolbarButton>
 
-      <div className="mx-1 h-5 w-px bg-gray-200" />
+      <div className="mx-1 h-5 w-px bg-neutral-200 dark:bg-neutral-700" />
 
       <ToolbarButton
         label="Bold"
@@ -239,7 +239,7 @@ function ToolbarButton({
   return (
     <button
       type="button"
-      className="px-1 py-0.5 text-sm text-gray-500 hover:text-gray-900 data-active:font-semibold data-active:text-gray-900"
+      className="px-1 py-0.5 text-sm text-neutral-500 hover:text-neutral-900 data-active:font-semibold data-active:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-50 dark:data-active:text-neutral-50"
       aria-label={label}
       title={label}
       data-active={active || undefined}

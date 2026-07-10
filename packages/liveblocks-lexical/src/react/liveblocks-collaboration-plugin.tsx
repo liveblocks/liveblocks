@@ -1,9 +1,15 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import type { Room } from "@liveblocks/client";
 import { kStorageUpdateSource } from "@liveblocks/core";
-import { $getSelection, $isRangeSelection, COLLABORATION_TAG } from "lexical";
+import {
+  $getSelection,
+  $isRangeSelection,
+  COLLABORATION_TAG,
+  HISTORIC_TAG,
+} from "lexical";
 import { useEffect, useRef } from "react";
 
+import { registerLiveblocksHistory } from "../history";
 import { LiveblocksCollaborationManager } from "../manager";
 import type { LiveLexicalSelection, LiveRootNode } from "../types";
 import { RemoteCursorsPlugin } from "./remote-cursors";
@@ -17,8 +23,8 @@ export type LiveblocksCollaborationPluginProps = {
  * Liveblocks collaboration plugin for Lexical.
  *
  * Mount inside a `LexicalComposer` (from `@lexical/react`) after storage has
- * loaded. Wires bidirectional Lexical ↔ Storage sync, presence selection, and
- * remote cursors.
+ * loaded. Wires bidirectional Lexical ↔ Storage sync, presence selection,
+ * remote cursors, and Storage-backed undo/redo.
  *
  * Import `@liveblocks/lexical/styles.css` for collaboration cursor styles.
  */
@@ -34,10 +40,18 @@ export function LiveblocksCollaborationPlugin({
   }
   const manager = _manager.current;
 
+  // Storage-backed undo/redo + capture grouping. Register before Lexical →
+  // Storage so `pause()` is active when local mutations land.
+  useEffect(() => {
+    return registerLiveblocksHistory(editor, room);
+  }, [editor, room]);
+
+  // Local Lexical → Storage. Skip updates that already came from Storage
+  // (peer `COLLABORATION_TAG` or undo/redo `HISTORIC_TAG`).
   useEffect(() => {
     return editor.registerUpdateListener(
       ({ tags, dirtyElements, dirtyLeaves, normalizedNodes, editorState }) => {
-        if (tags.has(COLLABORATION_TAG)) return;
+        if (tags.has(COLLABORATION_TAG) || tags.has(HISTORIC_TAG)) return;
 
         if (manager.binding.reverse.size === 0) {
           return;
@@ -62,7 +76,11 @@ export function LiveblocksCollaborationPlugin({
 
   useEffect(() => {
     return editor.registerUpdateListener(({ tags }) => {
-      if (tags.has(COLLABORATION_TAG) || manager.binding.reverse.size === 0) {
+      if (
+        tags.has(COLLABORATION_TAG) ||
+        tags.has(HISTORIC_TAG) ||
+        manager.binding.reverse.size === 0
+      ) {
         return;
       }
 
@@ -98,6 +116,11 @@ export function LiveblocksCollaborationPlugin({
         ) {
           return;
         }
+
+        const isFromHistory = updates.some((update) => {
+          const source = update[kStorageUpdateSource];
+          return source?.origin === "local" && source.via === "history";
+        });
 
         try {
           editor.update(
@@ -137,8 +160,10 @@ export function LiveblocksCollaborationPlugin({
               );
             },
             {
+              // Do not pass `discrete: true`. Nested discrete updates throw
+              // inside Lexical command updates (undo/redo).
               skipTransforms: true,
-              tag: COLLABORATION_TAG,
+              tag: isFromHistory ? HISTORIC_TAG : COLLABORATION_TAG,
               onUpdate: () => {
                 editor.read(() => {
                   room.updatePresence({

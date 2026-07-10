@@ -20,6 +20,7 @@ import {
   $isTextNode,
   $setSelection,
   COLLABORATION_TAG,
+  HISTORIC_TAG,
   createEditor as createLexicalEditor,
   type ElementNode,
   type LexicalEditor,
@@ -3936,6 +3937,59 @@ describe("LiveblocksCollaborationManager", () => {
         const text_lexical = $dfs().find(({ node }) => $isTextNode(node))!
           .node as TextNode;
         expect(text_lexical.getTextContent()).toBe("Hello");
+      });
+    });
+
+    test("applies local history (undo/redo) LiveText updates to Lexical", () => {
+      const document = createParagraphDocument("Hello");
+      const { editor, manager } = createEditor(document);
+
+      const text_liveblocks = find_liveblocksNode(
+        document,
+        (node) => node.get("kind") === "text"
+      ) as LiveTextNode;
+      const content = text_liveblocks.get("content");
+      content.replace(0, 5, "Hello!");
+
+      editor.update(
+        () => {
+          manager.$applyRemoteUpdates([
+            {
+              type: "LiveText",
+              node: content,
+              version: content.version,
+              updates: [
+                {
+                  type: "delete",
+                  index: 5,
+                  length: 0,
+                  deletedText: "",
+                },
+                {
+                  type: "insert",
+                  index: 5,
+                  text: "!",
+                },
+              ],
+              [kStorageUpdateSource]: {
+                origin: "local",
+                via: "history",
+                action: "redo",
+              },
+            },
+          ]);
+        },
+        {
+          discrete: true,
+          skipTransforms: true,
+          tag: HISTORIC_TAG,
+        }
+      );
+
+      editor.read(() => {
+        const text_lexical = $dfs().find(({ node }) => $isTextNode(node))!
+          .node as TextNode;
+        expect(text_lexical.getTextContent()).toBe("Hello!");
       });
     });
 

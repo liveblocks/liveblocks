@@ -1,7 +1,4 @@
-import type {
-  LiveLexicalSelection,
-  LiveRootNode,
-} from "@liveblocks/lexical";
+import type { LiveLexicalSelection, LiveRootNode } from "@liveblocks/lexical";
 
 declare global {
   interface Liveblocks {
