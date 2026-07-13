@@ -3568,7 +3568,20 @@ const body: CommentBody = {
 #### Defining comment metadata [#defining-comment-metadata]
 
 Custom metadata can be attached to each comment. `string`, `number`, and
-`boolean` properties are allowed.
+`boolean` properties are allowed. First, type your data with `CommentMetadata`.
+
+```ts file="liveblocks.config.ts"
+declare global {
+  interface Liveblocks {
+    CommentMetadata: {
+      priority: number;
+      reviewed: boolean;
+    };
+  }
+}
+```
+
+Then use it in your code.
 
 ```ts
 const metadata: Liveblocks["CommentMetadata"] = {

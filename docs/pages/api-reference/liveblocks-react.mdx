@@ -2629,6 +2629,13 @@ type Storage = {
 //   quote: string;
 //   time: number;
 // };
+//
+// Optionally, when using Comments, CommentMetadata represents metadata on
+// each thread. Can only contain booleans, strings, and numbers.
+// export type CommentMetadata = {
+//   tag: string;
+//   spam: boolean;
+// };
 
 export const {
   RoomProvider,
@@ -2640,7 +2647,7 @@ export const {
 } = createRoomContext<
   Presence,
   Storage
-  /* UserMeta, RoomEvent, ThreadMetadata */
+  /* UserMeta, RoomEvent, ThreadMetadata, CommentMetadata */
 >(client);
 ```
 
@@ -6908,6 +6915,9 @@ declare global {
     // Custom metadata set on threads, for useThreads, useCreateThread, etc.
     ThreadMetadata: {};
 
+    // Custom metadata set on comments, for useCreateThread, useCreateComment, etc.
+    CommentMetadata: {};
+
     // Custom room info set with resolveRoomsInfo, for useRoomInfo
     RoomInfo: {};
 
@@ -6961,6 +6971,13 @@ declare global {
       // Example, attaching coordinates to a thread
       x: number;
       y: number;
+    };
+
+    // Custom metadata set on comments, for useCreateThread, useCreateComment, etc.
+    CommentMetadata: {
+      // Example, attaching a tag and a spam flag to a comment
+      tag: string;
+      spam: boolean;
     };
 
     // Custom room info set with resolveRoomsInfo, for useRoomInfo
@@ -7046,6 +7063,13 @@ type Storage = {
 //   quote: string;
 //   time: number;
 // };
+//
+// CommentMetadata represents metadata on each comment. Can only contain
+// booleans, strings, and numbers.
+// export type CommentMetadata = {
+//   tag: string;
+//   spam: boolean;
+// };
 
 export const {
   RoomProvider,
@@ -7057,7 +7081,7 @@ export const {
 } = createRoomContext<
   Presence,
   Storage
-  /* UserMeta, RoomEvent, ThreadMetadata */
+  /* UserMeta, RoomEvent, ThreadMetadata, CommentMetadata */
 >(client);
 ```
 

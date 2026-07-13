@@ -37,11 +37,34 @@ declare global {
       // y: number;
     };
 
+    // Custom metadata set on comments, for useCreateComment, useEditCommentMetadata, etc.
+    CommentMetadata: {
+      // Example, attaching coordinates to a comment
+      // tag: string;
+      // spam: boolean;
+    };
+
+    // Custom group info set with resolveGroupsInfo, for useGroupInfo
+    GroupInfo: {
+      // Example, groups with a name and a badge
+      // name: string;
+      // badge: string;
+    };
+
     // Custom room info set with resolveRoomsInfo, for useRoomInfo
     RoomInfo: {
       // Example, rooms with a title and url
       // title: string;
       // url: string;
+    };
+
+    // Custom activities data for custom notification kinds, for useInboxNotifications
+    ActivitiesData: {
+      // Example, a custom $alert kind
+      // $alert: {
+      //   title: string;
+      //   message: string;
+      // };
     };
   }
 }
@@ -88,11 +111,34 @@ declare global {
       // y: number;
     };
 
+    // Custom metadata set on comments, for use in React
+    CommentMetadata: {
+      // Example, attaching coordinates to a comment
+      // tag: string;
+      // spam: boolean;
+    };
+
+    // Custom group info set with resolveGroupsInfo, for use in React
+    GroupInfo: {
+      // Example, groups with a name and a badge
+      // name: string;
+      // badge: string;
+    };
+
     // Custom room info set with resolveRoomsInfo, for use in React
     RoomInfo: {
       // Example, rooms with a title and url
       // title: string;
       // url: string;
+    };
+
+    // Custom activities data for custom notification kinds, for use in React
+    ActivitiesData: {
+      // Example, a custom $alert kind
+      // $alert: {
+      //   title: string;
+      //   message: string;
+      // };
     };
   }
 }

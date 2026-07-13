@@ -5,102 +5,84 @@ meta:
   description: "Learn about the different plans available on Liveblocks."
 ---
 
-Liveblocks offers three plans: Free, Pro, and Enterprise. Each plan is designed
-to meet the needs of different types of developers, from personal projects to
-large enterprises.
+Liveblocks provides the realtime infrastructure to power collaborative
+experiences for human and agentic users.
 
-## Free
+Pricing is usage-based, metered on the infrastructure your app actually uses,
+like collaboration time, storage, comments, and notifications. Each plan
+includes a monthly credit allowance that your usage draws from, so your cost
+aligns with how your app uses Liveblocks.
 
-The Free plan is ideal for personal projects, prototyping, and testing. It
-includes access to Liveblocks’ collaboration infrastructure, ready-made features
-(Comments, Multiplayer, AI Agents, Notifications), and pre-built components,
-with free monthly credits included. When you exceed your free limits, users
-won’t be able to join rooms.
+Four plans scale from prototype to production: Free, Pro, Team, and Enterprise.
 
-[Learn more about the Free plan](/docs/pricing/plans/free)
+|                      | Free                                            | Pro                                         | Team                                                                                                               | Enterprise                                                 |
+| -------------------- | ----------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
+| **Best for**         | Personal development, prototyping, and testing. | Developers shipping collaborative features. | Teams shipping collaborative features at scale.                                                                    | Organizations with premium security and partnership needs. |
+| **Monthly base**     | $0                                              | <Limits.ProMonthlyPrice /> per month        | <a href="/docs/pricing/billing#Team-plan-options">from <Limits.TeamMonthlyPriceForTier tier={600} /> per month</a> | Custom                                                     |
+| **Included credits** | [Free monthly credits](#Free-monthly-credits)   | <Limits.ProMonthlyCredits />                | <a href="/docs/pricing/billing#Team-plan-options">from <Limits.TeamAnnualCredits tier={600} /></a>                 | Custom                                                     |
 
-## Pro
+Choose annual billing to get two months free:
 
-The Pro plan is designed for developers shipping collaborative experiences in
-production. It includes everything in Free, but enables you to remove the
-"Powered by Liveblocks" badge. Pro comes with <Limits.ProMonthlyCredits />
-monthly credits.
+- Pro: <Limits.ProAnnualPricePerMonth /> per month billed annually.
+- Team: starts at <Limits.TeamAnnualPricePerMonth tier={600} /> per month billed
+  annually.
 
-[Learn more about the Pro plan](/docs/pricing/plans/pro)
+## Credits
 
-## Team
+Every plan includes a monthly credit allowance that covers your metered usage
+first. Credits are denominated in US dollars. If your usage exceeds the amount
+of credits in your base plan, you'll be billed at the per-unit rates at the end
+of the month. Credits reset at the start of each billing cycle and do not roll
+over.
 
-The Team plan is designed for teams shipping collaborative experiences in
-production with the ability to scale. It includes everything in Pro, plus SAML
-Single Sign-on (SSO), SOC 2, and a private Slack channel.
+The Team plan offers multiple [credit packages](#Credits) that include more
+credit value than they cost, effectively lowering your per credit rate.
 
-Team comes with <Limits.TeamMonthlyCredits /> monthly credits, and volume
-discounts can be applied by purchasing more credits. You can also request a
-HIPAA Business Associate Agreement (BAA) as a paid add-on.
+## Metered usage
 
-[Learn more about the Team plan](/docs/pricing/plans/team)
+Metered usage is billed per unit, only for what you actually use. Your monthly
+credits cover this first, so you only pay for anything above them.
 
-### Add-ons
+<Table columns={["22%", "58%", "20%"]}>
 
-| Add-on                                                        | Price          |
-| ------------------------------------------------------------- | -------------- |
-| <LimitLabel tooltip="Billed annually.">HIPAA BAA</LimitLabel> | $350 per month |
+| Metric                         | Description                                                                                                                                                                                                                                                                                                                                                                                                    | Rate                                         |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| Realtime collaboration minutes | <LimitLabel tooltip={<>Measured in cumulative seconds. Solo sessions cost $0. If only one person or agent is in a room, it is not billed.<br /><br />A user counts as connected when they have an open connection to a room.<br /><br />Metering pauses when a room is inactive for 10 seconds.</>}>Cumulative time spent by two or more people or agents are actively together in the same room.</LimitLabel> | <Limits.RealtimeCollaborationMinutesPrice /> |
+| Realtime data storage updates  | Each change written to stored data, billed per million updates.                                                                                                                                                                                                                                                                                                                                                | <Limits.RealtimeDataStorageUpdatesPrice />   |
+| Realtime data stored           | Total data kept in storage, billed per GB.                                                                                                                                                                                                                                                                                                                                                                     | <Limits.RealtimeDataStoredPrice />           |
+| Comments created               | Number of net new comments created.                                                                                                                                                                                                                                                                                                                                                                            | <Limits.CommentsCreatedPrice />              |
+| Monthly custom notifications   | <LimitLabel tooltip="Notifications automatically triggered from collaborative features like comment thread updates and @ mentions are free and unlimited.">Notifications you trigger from your own code.</LimitLabel>                                                                                                                                                                                          | <Limits.CustomNotificationsPrice />          |
+| File storage                   | Total amount of files stored, such as comment attachments.                                                                                                                                                                                                                                                                                                                                                     | <Limits.FileStoragePrice />                  |
 
-## Enterprise
+</Table>
 
-The Enterprise plan is tailored for organizations with advanced security,
-compliance, and scalability requirements. It includes everything in Team, plus
-multi-region hosting, a management API, SCIM/directory sync, advanced
-permissions, custom usage allocations, and higher-touch support options such as
-SLAs and solution engineering.
+## Free monthly credits
 
-[Learn more about the Enterprise plan](/docs/pricing/plans/enterprise)
+The Free plan includes monthly usage allowances for each metered unit. If your
+account exceeds a limit, the affected feature pauses until limits reset at the
+start of the next calendar month or you
+[upgrade your account](/dashboard/billing) to a paid plan.
 
-## General billing information
+| Metric                                                                                                                                                           | Included amount                                     |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| <LimitLabel tooltip="When 2+ people or agents are in the same room, each user-minute counts. Solo sessions cost $0.">Realtime collaboration minutes</LimitLabel> | <Limits.FreeRealtimeCollaborationMinutesIncluded /> |
+| <LimitLabel tooltip="Each change written to stored data, billed per million updates.">Realtime data storage updates</LimitLabel>                                 | <Limits.FreeRealtimeDataStorageUpdatesIncluded />   |
+| <LimitLabel tooltip="Total data kept in storage, billed per GB.">Realtime data stored</LimitLabel>                                                               | <Limits.FreeRealtimeDataStoredIncluded />           |
+| <LimitLabel tooltip="Number of net new comments created.">Comments created</LimitLabel>                                                                          | <Limits.FreeCommentsCreatedIncluded />              |
+| <LimitLabel tooltip="Notifications you trigger from your own code.">Monthly custom notifications</LimitLabel>                                                    | <Limits.FreeCustomNotificationsCompareIncluded />   |
+| <LimitLabel tooltip="Total amount of files stored, such as comment attachments.">File storage</LimitLabel>                                                       | <Limits.FreeMaxFileStorage />                       |
 
-### Where do I understand my usage?
+## Plan inclusions
 
-You can monitor usage for your projects on the [usage page](/dashboard/usage) of
-your dashboard.
-
-### What happens when I reach 100% usage?
-
-All plans receive notifications by email when they are approaching and exceed
-their [usage limits](/docs/pricing/limits).
-
-Free plans will be paused when they exceed the included free tier usage.
-
-For Pro and Enterprise plans, when you reach 100% usage your projects are not
-automatically stopped. Rather, Liveblocks continues billing metered usage as
-your application grows. It’s important to be aware of
-[the usage page](/dashboard/usage) of your dashboard to see if you are
-approaching your limit.
-
-## Powered by Liveblocks branding
-
-By default, Liveblocks displays a "Powered by Liveblocks" badge in your
-application. You can adjust the position of the badge by setting the
-`badgeLocation` property on
-[`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider).
-
-```tsx title="Set badge location"
-// "top-right", "bottom-right", "bottom-left", "top-left"
-<LiveblocksProvider badgeLocation="bottom-right">
-  <App />
-</LiveblocksProvider>
-```
-
-If you wish to remove remove the badge entirely, you can do so by following
-these steps:
-
-1. In the Liveblocks dashboard, navigate to your
-   [team’s settings](/dashboard/settings).
-2. Under **General**, toggle on the remove "Powered by Liveblocks" branding
-   option.
-
-<Banner title='Removing the "Powered by Liveblocks" badge'>
-
-Removing the "Powered by Liveblocks" badge on your projects requires a
-[paid plan](/pricing/). See the [pricing page](/pricing/) for more information.
-
-</Banner>
+|                                                                           | Free | Pro      | Team                                              | Enterprise |
+| ------------------------------------------------------------------------- | ---- | -------- | ------------------------------------------------- | ---------- |
+| Remove "Powered by Liveblocks" badge                                      | —    | Included | Included                                          | Included   |
+| Multi-region hosting                                                      | —    | —        | —                                                 | Included   |
+| SOC 2 report                                                              | —    | —        | Included                                          | Included   |
+| [SAML SSO](/docs/platform/account-management/saml)                        | —    | —        | Included                                          | Included   |
+| [SCIM / directory sync](/docs/platform/account-management/directory-sync) | —    | —        | —                                                 | Included   |
+| Private Slack channel                                                     | —    | —        | Included                                          | Included   |
+| HIPAA BAA                                                                 | —    | —        | <Limits.HipaaBaaPricePerMonth /> per month add-on | Included   |
+| [Management API](/docs/platform/management-api)                           | —    | —        | —                                                 | Included   |
+| Role-based access control                                                 | —    | —        | Team level                                        | Included   |
+| Uptime SLA                                                                | —    | —        | —                                                 | 99.99%     |
