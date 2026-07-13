@@ -37,8 +37,8 @@ import {
   type Point,
   type RootNode,
   type SerializedElementNode,
+  type SerializedTextNode,
   TEXT_TYPE_TO_FORMAT,
-  type TextModeType,
   type TextNode,
 } from "lexical";
 
@@ -102,9 +102,7 @@ export class LiveblocksCollaborationManager {
           const kind = child.get("kind");
           if (kind === "decorator") {
             children.push(
-              $convertLiveDecoratorNodeToLexicalNode(
-                child as LiveDecoratorNode
-              )
+              $convertLiveDecoratorNodeToLexicalNode(child as LiveDecoratorNode)
             );
           } else if (kind === "element") {
             children.push(
@@ -119,7 +117,7 @@ export class LiveblocksCollaborationManager {
         root_lexical.append(...children);
         this.$updateBinding();
       },
-      { tag: COLLABORATION_TAG }
+      { tag: COLLABORATION_TAG, skipTransforms: true }
     );
   }
 
@@ -168,7 +166,10 @@ export class LiveblocksCollaborationManager {
           node_lexical as DecoratorNode<unknown>
         );
       } else {
-        this.createBinding(child as LiveElementNode, node_lexical as ElementNode);
+        this.createBinding(
+          child as LiveElementNode,
+          node_lexical as ElementNode
+        );
       }
       index++;
     }
@@ -1356,69 +1357,11 @@ export class LiveblocksCollaborationManager {
         rangeEnd: offset + text.length,
       });
 
-      const patch: JsonObject = {};
-      for (const key of Object.keys(TEXT_TYPE_TO_FORMAT)) {
-        const wanted = attributes_target[key] === true;
-        const uniform =
-          slice.length > 0 &&
-          slice.every((part) => {
-            const attrs = part.length > 1 ? part[1]! : {};
-            return attrs[key] === true;
-          });
-        const present = slice.some((part) => {
-          const attrs = part.length > 1 ? part[1]! : {};
-          return attrs[key] === true;
-        });
-
-        if (wanted ? !uniform : present) {
-          patch[key] = wanted ? true : null;
-        }
-      }
-
-      const sliceAttrs =
-        slice.length === 1 && slice[0].length > 1 ? slice[0][1]! : {};
-      if (
-        (attributes_target.mode ?? "normal") !== (sliceAttrs.mode ?? "normal")
-      ) {
-        patch.mode =
-          attributes_target.mode === undefined ||
-          attributes_target.mode === "normal"
-            ? null
-            : attributes_target.mode;
-      }
-      if ((attributes_target.detail ?? 0) !== (sliceAttrs.detail ?? 0)) {
-        patch.detail =
-          attributes_target.detail === undefined ||
-          attributes_target.detail === 0
-            ? null
-            : attributes_target.detail;
-      }
-      if ((attributes_target.style ?? "") !== (sliceAttrs.style ?? "")) {
-        patch.style =
-          attributes_target.style === undefined ||
-          attributes_target.style === ""
-            ? null
-            : attributes_target.style;
-      }
-      if ((attributes_target.t ?? "text") !== (sliceAttrs.t ?? "text")) {
-        patch.t =
-          attributes_target.t === undefined || attributes_target.t === "text"
-            ? null
-            : attributes_target.t;
-      }
-
+      const patch = createLiveTextAttributesPatch(attributes_target, slice);
       const matches =
         slice.map((part) => part[0]).join("") === text &&
         slice.length === 1 &&
-        Object.keys(TEXT_TYPE_TO_FORMAT).every((key) => {
-          const attrs = slice[0].length > 1 ? slice[0][1]! : {};
-          return (attrs[key] === true) === (attributes_target[key] === true);
-        }) &&
-        (attributes_target.mode ?? "normal") ===
-          (sliceAttrs.mode ?? "normal") &&
-        (attributes_target.detail ?? 0) === (sliceAttrs.detail ?? 0) &&
-        (attributes_target.style ?? "") === (sliceAttrs.style ?? "") &&
-        (attributes_target.t ?? "text") === (sliceAttrs.t ?? "text");
+        Object.keys(patch).length === 0;
 
       if (!matches) {
         content.format(offset, text.length, patch);
@@ -2161,7 +2104,9 @@ export class LiveblocksCollaborationManager {
       const attributes =
         segment.length > 1 ? (segment[1] as TextAttributes) : {};
       const segmentType =
-        typeof attributes.t === "string" ? attributes.t : "text";
+        typeof attributes.type === "string"
+          ? attributes.type
+          : (TEXT_ATTRIBUTE_DEFAULTS.type as string);
       if (refreshed[i].getType() !== segmentType) {
         this.$replaceLexicalTextSlot(refreshed, node_liveblocks);
         return;
@@ -2169,36 +2114,14 @@ export class LiveblocksCollaborationManager {
     }
 
     for (let i = 0; i < refreshed.length; i++) {
-      const node = refreshed[i].getWritable();
       const segment = segments_liveblocks[i];
       const attributes =
-        segment.length > 1 ? (segment[1] as TextAttributes) : {};
-
-      if (node.getTextContent() !== segment[0]) {
-        node.setTextContent(segment[0]);
-      }
-
-      let format = 0;
-      for (const [key, flag] of Object.entries(TEXT_TYPE_TO_FORMAT)) {
-        if (attributes[key] === true) {
-          format |= flag;
-        }
-      }
-      node.setFormat(format);
-
-      const mode =
-        attributes.mode !== undefined
-          ? (attributes.mode as TextModeType)
-          : "normal";
-      node.setMode(mode);
-
-      const detail =
-        attributes.detail !== undefined ? Number(attributes.detail) : 0;
-      node.setDetail(detail);
-
-      const style =
-        attributes.style !== undefined ? String(attributes.style) : "";
-      node.setStyle(style);
+        segment.length > 1 ? (segment[1] as TextAttributes) : undefined;
+      refreshed[i]
+        .getWritable()
+        .updateFromJSON(
+          createSerializedTextNodeFromLiveTextSegment(segment[0], attributes)
+        );
     }
 
     const rebound = refreshed
@@ -2286,8 +2209,7 @@ export class LiveblocksCollaborationManager {
 
     if (bound instanceof Array) {
       return bound.filter(
-        (child) =>
-          $getNodeByKey(child.getKey()) !== null && child.isAttached()
+        (child) => $getNodeByKey(child.getKey()) !== null && child.isAttached()
       );
     }
 
@@ -2982,9 +2904,9 @@ function $convertLiveTextNodeToLexicalNode(node: LiveTextNode): TextNode[] {
   for (const segment of segments) {
     const attributes = segment.length > 1 ? segment[1] : undefined;
     const type =
-      attributes !== undefined && typeof attributes.t === "string"
-        ? attributes.t
-        : "text";
+      attributes !== undefined && typeof attributes.type === "string"
+        ? attributes.type
+        : (TEXT_ATTRIBUTE_DEFAULTS.type as string);
     const info = $getEditor()._nodes.get(type);
     if (info === undefined) {
       throw new Error(
@@ -2996,18 +2918,14 @@ function $convertLiveTextNodeToLexicalNode(node: LiveTextNode): TextNode[] {
     if (!$isTextNode(node)) {
       throw new Error(`Node of type "${type}" is not a TextNode.`);
     }
-    node.setTextContent(segment[0]);
 
-    let format = 0;
-    if (attributes !== undefined) {
-      for (const [key, value] of Object.entries(attributes)) {
-        if (value && key in TEXT_TYPE_TO_FORMAT) {
-          format |= TEXT_TYPE_TO_FORMAT[key];
-        }
-      }
-    }
-    node.setFormat(format);
-    nodes.push(node.getLatest());
+    nodes.push(
+      node
+        .updateFromJSON(
+          createSerializedTextNodeFromLiveTextSegment(segment[0], attributes)
+        )
+        .getLatest()
+    );
   }
   return nodes;
 }
@@ -3043,7 +2961,8 @@ export function find_liveblocksNode(
  *
  * Lexical stores each formatted span as its own TextNode; storage holds sibling spans
  * as segments inside a single LiveText. This function checks that segment strings and
- * inline formats (bold, italic, etc.) match — not Lexical object identity.
+ * attributes (readable marks, mode/detail/style, subclass `type`, and other
+ * public exportJSON fields) match — not Lexical object identity.
  *
  * @example Returns `true` — two Lexical spans, one LiveText child
  *
@@ -3084,60 +3003,39 @@ export function areTextNodesStructurallyEqual(
   const nodes_lexical = text_lexical.map((node) => node.getLatest());
   const segments_liveblocks = text_liveblocks.get("content").toJSON();
 
+  // Empty LiveText ↔ no TextNodes. A lone empty TextNode "" is not the empty
+  // slot (createSegmentsFromTextNodes collapses it to []), so check this first.
   if (segments_liveblocks.length === 0) {
     return nodes_lexical.length === 0;
   }
-
-  if (segments_liveblocks.length !== nodes_lexical.length) {
+  if (nodes_lexical.length === 0) {
     return false;
   }
 
-  for (let i = 0; i < nodes_lexical.length; i++) {
-    const text_lexical = nodes_lexical[i];
-    const segment_liveblocks = segments_liveblocks[i];
-    const attributes =
-      segment_liveblocks.length > 1
-        ? (segment_liveblocks[1] as TextAttributes)
-        : {};
+  const segments_lexical = createSegmentsFromTextNodes(nodes_lexical);
 
-    if (segment_liveblocks[0] !== text_lexical.getTextContent()) {
+  if (segments_liveblocks.length !== segments_lexical.length) {
+    return false;
+  }
+
+  for (let i = 0; i < segments_lexical.length; i++) {
+    if (segments_liveblocks[i][0] !== segments_lexical[i][0]) {
       return false;
     }
 
-    const segmentType =
-      typeof attributes.t === "string" ? attributes.t : "text";
-    if (segmentType !== text_lexical.getType()) {
-      return false;
-    }
+    const attrs_liveblocks =
+      segments_liveblocks[i].length > 1
+        ? (segments_liveblocks[i][1] as TextAttributes)
+        : undefined;
+    const attrs_lexical =
+      segments_lexical[i].length > 1
+        ? (segments_lexical[i][1] as TextAttributes)
+        : undefined;
 
-    for (const [key, flag] of Object.entries(TEXT_TYPE_TO_FORMAT)) {
-      if (
-        (attributes[key] === true) !==
-        ((text_lexical.getFormat() & flag) !== 0)
-      ) {
-        return false;
-      }
+    if (attrs_liveblocks === attrs_lexical) {
+      continue;
     }
-
-    if (
-      attributes.mode !== undefined
-        ? attributes.mode !== text_lexical.getMode()
-        : text_lexical.getMode() !== "normal"
-    ) {
-      return false;
-    }
-    if (
-      attributes.detail !== undefined
-        ? attributes.detail !== text_lexical.getDetail()
-        : text_lexical.getDetail() !== 0
-    ) {
-      return false;
-    }
-    if (
-      attributes.style !== undefined
-        ? attributes.style !== text_lexical.getStyle()
-        : text_lexical.getStyle() !== ""
-    ) {
+    if (!isEqual(attrs_liveblocks, attrs_lexical)) {
       return false;
     }
   }
@@ -3317,31 +3215,180 @@ function getSegmentAttributesAtOffset(
   return undefined;
 }
 
+/**
+ * Defaults for TextNode exportJSON fields that we omit from LiveText when at
+ * their Lexical defaults (same shaping as `createSegmentsFromTextNodes`).
+ * Mark flags (`bold`, …) are absent-when-false, not listed here.
+ */
+const TEXT_ATTRIBUTE_DEFAULTS: Readonly<Record<string, Json>> = {
+  type: "text",
+  mode: "normal",
+  detail: 0,
+  style: "",
+};
+
+/**
+ * Build a `updateFromJSON` payload for one LiveText segment.
+ */
+function createSerializedTextNodeFromLiveTextSegment(
+  text: string,
+  attributes: TextAttributes | undefined
+): LexicalUpdateJSON<SerializedTextNode> {
+  const payload: Record<string, unknown> = {
+    type: TEXT_ATTRIBUTE_DEFAULTS.type,
+    mode: TEXT_ATTRIBUTE_DEFAULTS.mode,
+    detail: TEXT_ATTRIBUTE_DEFAULTS.detail,
+    style: TEXT_ATTRIBUTE_DEFAULTS.style,
+    text,
+    format: 0,
+  };
+
+  let format = 0;
+  if (attributes !== undefined) {
+    for (const [key, value] of Object.entries(attributes)) {
+      if (key in TEXT_TYPE_TO_FORMAT) {
+        if (value) {
+          format |= TEXT_TYPE_TO_FORMAT[key];
+        }
+        continue;
+      }
+      payload[key] = value;
+    }
+  }
+  payload.format = format;
+
+  return payload as LexicalUpdateJSON<SerializedTextNode>;
+}
+
+/**
+ * Build a LiveText `format()` patch that turns `current` segment attrs into
+ * `target` (from `createSegmentsFromTextNodes` / exportJSON shaping).
+ */
+function createLiveTextAttributesPatch(
+  target: TextAttributes,
+  slice: ReadonlyArray<[string] | [string, TextAttributes]>
+): JsonObject {
+  const patch: JsonObject = {};
+
+  for (const key of Object.keys(TEXT_TYPE_TO_FORMAT)) {
+    const wanted = target[key] === true;
+    const uniform =
+      slice.length > 0 &&
+      slice.every((part) => {
+        const attrs = part.length > 1 ? part[1]! : {};
+        return attrs[key] === true;
+      });
+    const present = slice.some((part) => {
+      const attrs = part.length > 1 ? part[1]! : {};
+      return attrs[key] === true;
+    });
+
+    if (wanted ? !uniform : present) {
+      patch[key] = wanted ? true : null;
+    }
+  }
+
+  const keys = new Set<string>(Object.keys(target));
+  for (const part of slice) {
+    if (part.length > 1) {
+      for (const key of Object.keys(part[1]!)) {
+        keys.add(key);
+      }
+    }
+  }
+
+  for (const key of keys) {
+    if (key in TEXT_TYPE_TO_FORMAT) {
+      continue;
+    }
+
+    const defaultValue = TEXT_ATTRIBUTE_DEFAULTS[key];
+    const wantedRaw = target[key];
+
+    if (defaultValue !== undefined) {
+      const wanted = wantedRaw ?? defaultValue;
+      const values = slice.map((part) => {
+        const attrs = part.length > 1 ? part[1]! : {};
+        return (attrs[key] ?? defaultValue) as Json;
+      });
+      const uniform =
+        slice.length > 0 && values.every((value) => value === values[0]);
+
+      if (wanted === defaultValue) {
+        if (values.some((value) => value !== defaultValue)) {
+          patch[key] = null;
+        }
+      } else if (!uniform || values[0] !== wanted) {
+        patch[key] = wantedRaw as Json;
+      }
+      continue;
+    }
+
+    const values = slice.map((part) => {
+      const attrs = part.length > 1 ? part[1]! : {};
+      return attrs[key];
+    });
+    const present = values.some((value) => value !== undefined);
+    const uniform =
+      slice.length > 0 && values.every((value) => value === values[0]);
+
+    if (wantedRaw === undefined) {
+      if (present) {
+        patch[key] = null;
+      }
+    } else if (!uniform || values[0] !== wantedRaw) {
+      patch[key] = wantedRaw;
+    }
+  }
+
+  return patch;
+}
+
 function createSegmentsFromTextNodes(
   nodes: readonly TextNode[]
 ): Array<[string] | [string, TextAttributes]> {
   let segments: Array<[string] | [string, TextAttributes]> = nodes.map(
     (node) => {
-      const text = node.getTextContent();
+      // Single source of truth: each TextNode's public JSON contract. We only
+      // reshape for LiveText (readable marks, omit defaults) — no parallel
+      // reads from getFormat() / getMode() / etc.
+      const json = node.exportJSON() as Record<string, unknown>;
+      const text =
+        typeof json.text === "string" ? json.text : node.getTextContent();
       const attributes: TextAttributes = {};
-      for (const [key, flag] of Object.entries(TEXT_TYPE_TO_FORMAT)) {
-        if (node.getFormat() & flag) {
-          attributes[key] = true;
+
+      for (const [key, value] of Object.entries(json)) {
+        if (key === "text" || key === "version" || key === NODE_STATE_KEY) {
+          continue;
         }
+        if (value === undefined || value === null) {
+          continue;
+        }
+
+        if (key === "format") {
+          const format = typeof value === "number" ? value : 0;
+          if (format === 0) {
+            continue;
+          }
+          for (const [name, flag] of Object.entries(TEXT_TYPE_TO_FORMAT)) {
+            if (format & flag) {
+              attributes[name] = true;
+            }
+          }
+          continue;
+        }
+
+        const defaultValue = TEXT_ATTRIBUTE_DEFAULTS[key];
+        if (defaultValue !== undefined) {
+          if (value !== defaultValue) {
+            attributes[key] = value as Json;
+          }
+          continue;
+        }
+
+        attributes[key] = value as Json;
       }
-      if (node.getMode() !== "normal") {
-        attributes.mode = node.getMode();
-      }
-      if (node.getDetail() !== 0) {
-        attributes.detail = node.getDetail();
-      }
-      if (node.getStyle() !== "") {
-        attributes.style = node.getStyle();
-      }
-      const type = node.getType();
-      if (type !== "text") {
-        attributes.t = type;
-      }
+
       if (Object.keys(attributes).length === 0) {
         return [text] as const;
       }
@@ -3503,45 +3550,4 @@ export function $setLexicalNodeProps(
   latest
     .getWritable()
     .updateFromJSON(payload as LexicalUpdateJSON<SerializedElementNode>);
-}
-
-const EXCLUDED_NODE_PROPERTIES = new Set([
-  "__key",
-  "__parent",
-  "__next",
-  "__prev",
-  "__state",
-  "__slotHost",
-  "__slots",
-]);
-
-const EXCLUDED_TEXT_NODE_PROPERTIES = new Set(["__text"]);
-const EXCLUDED_ROOT_NODE_PROPERTIES = new Set(["__cachedText"]);
-const EXCLUDED_ELEMENT_NODE_PROPERTIES = new Set([
-  "__first",
-  "__last",
-  "__size",
-]);
-
-export function $getLexicalNodeProperties(
-  node: LexicalNode
-): JsonObject | undefined {
-  const props: JsonObject = {};
-  for (const [property, value] of Object.entries(node)) {
-    if (EXCLUDED_NODE_PROPERTIES.has(property)) continue;
-    if (typeof value === "function") continue;
-
-    if ($isTextNode(node)) {
-      if (EXCLUDED_TEXT_NODE_PROPERTIES.has(property)) continue;
-      props[property] = value as Json;
-    } else if ($isRootNode(node)) {
-      if (EXCLUDED_ROOT_NODE_PROPERTIES.has(property)) continue;
-      props[property] = value as Json;
-    } else if ($isElementNode(node)) {
-      if (EXCLUDED_ELEMENT_NODE_PROPERTIES.has(property)) continue;
-      props[property] = value as Json;
-    }
-  }
-
-  return props;
 }

@@ -18,7 +18,6 @@ import {
 } from "@lexical/link";
 import { ListItemNode, ListNode } from "@lexical/list";
 import { MarkNode } from "@lexical/mark";
-import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
 import { AutoLinkPlugin } from "@lexical/react/LexicalAutoLinkPlugin";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
@@ -231,7 +230,6 @@ function Editor() {
         <MarkdownShortcutPlugin />
         <HorizontalRulePlugin />
         <CodeHighlightPlugin />
-        <AutoFocusPlugin />
         <LiveblocksCollaborationPlugin room={room} root={document} />
       </div>
     </LexicalComposer>

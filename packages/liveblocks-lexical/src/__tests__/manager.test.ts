@@ -400,7 +400,9 @@ describe("LiveblocksCollaborationManager", () => {
 
       const document = root.get("document") as LiveRootNode;
       const { editor, manager } = createEditor(document);
-      const paragraph_liveblocks = document.get("children").get(0) as LiveElementNode;
+      const paragraph_liveblocks = document
+        .get("children")
+        .get(0) as LiveElementNode;
       const second_liveblocks = (paragraph_liveblocks as LiveElementNode)
         .get("children")
         .get(1)! as LiveTextNode;
@@ -474,7 +476,9 @@ describe("LiveblocksCollaborationManager", () => {
 
       const document = root.get("document") as LiveRootNode;
       const { editor, manager } = createEditor(document);
-      const paragraph_liveblocks = document.get("children").get(0) as LiveElementNode;
+      const paragraph_liveblocks = document
+        .get("children")
+        .get(0) as LiveElementNode;
 
       editor.update(() => {
         const paragraph = $dfs().find(({ node }) => $isParagraphNode(node))!
@@ -550,7 +554,9 @@ describe("LiveblocksCollaborationManager", () => {
 
       const document = root.get("document") as LiveRootNode;
       const { editor, manager } = createEditor(document);
-      const paragraph_liveblocks = document.get("children").get(0) as LiveElementNode;
+      const paragraph_liveblocks = document
+        .get("children")
+        .get(0) as LiveElementNode;
 
       editor.update(() => {
         const paragraph = $dfs().find(({ node }) => $isParagraphNode(node))!
@@ -622,7 +628,9 @@ describe("LiveblocksCollaborationManager", () => {
 
       const document = root.get("document") as LiveRootNode;
       const { editor, manager } = createEditor(document);
-      const paragraph_liveblocks = document.get("children").get(0) as LiveElementNode;
+      const paragraph_liveblocks = document
+        .get("children")
+        .get(0) as LiveElementNode;
 
       editor.update(() => {
         const paragraph = $dfs().find(({ node }) => $isParagraphNode(node))!
@@ -1441,7 +1449,9 @@ describe("LiveblocksCollaborationManager", () => {
 
       const document = root.get("document") as LiveRootNode;
       const { editor, manager } = createEditor(document);
-      const paragraph_liveblocks = document.get("children").get(0) as LiveElementNode;
+      const paragraph_liveblocks = document
+        .get("children")
+        .get(0) as LiveElementNode;
 
       editor.read(() => {
         expect(
@@ -1928,7 +1938,9 @@ describe("LiveblocksCollaborationManager", () => {
 
       const document = root.get("document") as LiveRootNode;
       const { editor, manager } = createEditor(document);
-      const paragraph_liveblocks = document.get("children").get(0) as LiveElementNode;
+      const paragraph_liveblocks = document
+        .get("children")
+        .get(0) as LiveElementNode;
       const text_liveblocks = (paragraph_liveblocks as LiveElementNode)
         .get("children")
         .get(0)! as LiveTextNode;
@@ -2030,7 +2042,9 @@ describe("LiveblocksCollaborationManager", () => {
 
       const document = root.get("document") as LiveRootNode;
       const { editor, manager } = createEditor(document, [CustomDecoratorNode]);
-      const paragraph_liveblocks = document.get("children").get(0) as LiveElementNode;
+      const paragraph_liveblocks = document
+        .get("children")
+        .get(0) as LiveElementNode;
 
       editor.update(() => {
         const paragraph = $getRoot().getFirstChild() as ParagraphNode;
@@ -2132,9 +2146,9 @@ describe("LiveblocksCollaborationManager", () => {
 
       const document = root.get("document") as LiveRootNode;
       const { editor, manager } = createEditor(document, [CustomDecoratorNode]);
-      const text_liveblocks = (document
-        .get("children")
-        .get(0) as LiveElementNode)
+      const text_liveblocks = (
+        document.get("children").get(0) as LiveElementNode
+      )
         .get("children")
         .get(0)! as LiveTextNode;
 
@@ -2344,7 +2358,7 @@ describe("LiveblocksCollaborationManager", () => {
       });
     });
 
-    test("persists TextNode subclass type as segment attribute t", () => {
+    test("persists TextNode subclass type as segment attribute type", () => {
       const document = createParagraphDocument("entity");
       const { editor, manager } = createEditor(document, [CustomTextNode]);
 
@@ -2367,7 +2381,7 @@ describe("LiveblocksCollaborationManager", () => {
         manager.$reconcileTextNodeFromLexical([text_lexical], text_liveblocks);
 
         expect(text_liveblocks.get("content").toJSON()).toEqual([
-          ["entity", { t: "custom-text" }],
+          ["entity", { type: "custom-text" }],
         ]);
         expect(
           areTextNodesStructurallyEqual(text_liveblocks, [text_lexical])
@@ -2403,15 +2417,51 @@ describe("LiveblocksCollaborationManager", () => {
 
         expect(text_liveblocks.get("content").toJSON()).toEqual([
           ["Hello "],
-          ["entity", { t: "custom-text" }],
+          ["entity", { type: "custom-text" }],
         ]);
-        expect(
-          areTextNodesStructurallyEqual(text_liveblocks, textNodes)
-        ).toBe(true);
+        expect(areTextNodesStructurallyEqual(text_liveblocks, textNodes)).toBe(
+          true
+        );
       });
     });
 
-    test("clears segment attribute t when a TextNode subclass becomes plain text", () => {
+    test("persists mixed plain and subclass siblings with exportJSON field only on the subclass", () => {
+      const document = createParagraphDocument("Hello import");
+      const { editor, manager } = createEditor(document, [CustomTextNode]);
+
+      editor.update(() => {
+        const paragraph = $dfs().find(({ node }) => $isParagraphNode(node))!
+          .node as ParagraphNode;
+        paragraph.clear();
+        paragraph.append(
+          $createTextNode("Hello "),
+          $createCustomTextNode("import", "keyword")
+        );
+      });
+
+      editor.read(() => {
+        const textNodes = $dfs()
+          .map(({ node }) => node)
+          .filter($isTextNode)
+          .map((node) => node.getLatest());
+        const text_liveblocks = find_liveblocksNode(
+          document,
+          (node) => node.get("kind") === "text"
+        ) as LiveTextNode;
+
+        manager.$reconcileTextNodeFromLexical(textNodes, text_liveblocks);
+
+        expect(text_liveblocks.get("content").toJSON()).toEqual([
+          ["Hello "],
+          ["import", { type: "custom-text", highlightType: "keyword" }],
+        ]);
+        expect(areTextNodesStructurallyEqual(text_liveblocks, textNodes)).toBe(
+          true
+        );
+      });
+    });
+
+    test("clears segment attribute type when a TextNode subclass becomes plain text", () => {
       const document = new LiveObject({
         kind: "root",
         type: "root",
@@ -2422,7 +2472,7 @@ describe("LiveblocksCollaborationManager", () => {
             type: "paragraph",
             version: 1,
             children: new LiveList([
-              createLiveTextNode([["entity", { t: "custom-text" }]]),
+              createLiveTextNode([["entity", { type: "custom-text" }]]),
             ]),
           }),
         ]),
@@ -2455,6 +2505,49 @@ describe("LiveblocksCollaborationManager", () => {
       });
     });
 
+    test("clears type and exportJSON fields together when a subclass becomes plain text", () => {
+      const document = new LiveObject({
+        kind: "root",
+        type: "root",
+        version: 1,
+        children: new LiveList<LiveElementNode>([
+          new LiveObject({
+            kind: "element",
+            type: "paragraph",
+            version: 1,
+            children: new LiveList([
+              createLiveTextNode([
+                ["import", { type: "custom-text", highlightType: "keyword" }],
+              ]),
+            ]),
+          }),
+        ]),
+      }) as LiveRootNode;
+      const { editor, manager } = createEditor(document, [CustomTextNode]);
+
+      editor.update(() => {
+        const text = $dfs().find(({ node }) => $isTextNode(node))!
+          .node as TextNode;
+        text.replace($createTextNode(text.getTextContent()));
+      });
+
+      editor.read(() => {
+        const text_lexical = $dfs().find(({ node }) => $isTextNode(node))!
+          .node as TextNode;
+        const text_liveblocks = find_liveblocksNode(
+          document,
+          (node) => node.get("kind") === "text"
+        ) as LiveTextNode;
+
+        manager.$reconcileTextNodeFromLexical([text_lexical], text_liveblocks);
+
+        expect(text_liveblocks.get("content").toJSON()).toEqual([["import"]]);
+        expect(
+          areTextNodesStructurallyEqual(text_liveblocks, [text_lexical])
+        ).toBe(true);
+      });
+    });
+
     test("persists TextNode subclass type together with inline format", () => {
       const document = createParagraphDocument("entity");
       const { editor, manager } = createEditor(document, [CustomTextNode]);
@@ -2481,11 +2574,122 @@ describe("LiveblocksCollaborationManager", () => {
         manager.$reconcileTextNodeFromLexical([text_lexical], text_liveblocks);
 
         expect(text_liveblocks.get("content").toJSON()).toEqual([
-          ["entity", { bold: true, t: "custom-text" }],
+          ["entity", { bold: true, type: "custom-text" }],
         ]);
         expect(
           areTextNodesStructurallyEqual(text_liveblocks, [text_lexical])
         ).toBe(true);
+      });
+    });
+
+    test("persists TextNode subclass exportJSON field as a top-level segment attribute", () => {
+      const document = createParagraphDocument("import");
+      const { editor, manager } = createEditor(document, [CustomTextNode]);
+
+      editor.update(() => {
+        const text = $dfs().find(({ node }) => $isTextNode(node))!
+          .node as TextNode;
+        text.replace($createCustomTextNode(text.getTextContent(), "keyword"));
+      });
+
+      editor.read(() => {
+        const text_lexical = $dfs().find(({ node }) => $isTextNode(node))!
+          .node as CustomTextNode;
+        expect(text_lexical.getHighlightType()).toBe("keyword");
+
+        const text_liveblocks = find_liveblocksNode(
+          document,
+          (node) => node.get("kind") === "text"
+        ) as LiveTextNode;
+
+        manager.$reconcileTextNodeFromLexical([text_lexical], text_liveblocks);
+
+        expect(text_liveblocks.get("content").toJSON()).toEqual([
+          ["import", { type: "custom-text", highlightType: "keyword" }],
+        ]);
+        expect(
+          areTextNodesStructurallyEqual(text_liveblocks, [text_lexical])
+        ).toBe(true);
+      });
+    });
+
+    test("clears TextNode subclass exportJSON field when it becomes unset", () => {
+      const document = new LiveObject({
+        kind: "root",
+        type: "root",
+        version: 1,
+        children: new LiveList<LiveElementNode>([
+          new LiveObject({
+            kind: "element",
+            type: "paragraph",
+            version: 1,
+            children: new LiveList([
+              createLiveTextNode([
+                ["import", { type: "custom-text", highlightType: "keyword" }],
+              ]),
+            ]),
+          }),
+        ]),
+      }) as LiveRootNode;
+      const { editor, manager } = createEditor(document, [CustomTextNode]);
+
+      editor.update(() => {
+        const text = $dfs().find(({ node }) => $isTextNode(node))!
+          .node as CustomTextNode;
+        expect(text.getHighlightType()).toBe("keyword");
+        text.setHighlightType(undefined);
+      });
+
+      editor.read(() => {
+        const text_lexical = $dfs().find(({ node }) => $isTextNode(node))!
+          .node as CustomTextNode;
+        expect(text_lexical.getHighlightType()).toBeUndefined();
+
+        const text_liveblocks = find_liveblocksNode(
+          document,
+          (node) => node.get("kind") === "text"
+        ) as LiveTextNode;
+
+        manager.$reconcileTextNodeFromLexical([text_lexical], text_liveblocks);
+
+        expect(text_liveblocks.get("content").toJSON()).toEqual([
+          ["import", { type: "custom-text" }],
+        ]);
+        expect(
+          areTextNodesStructurallyEqual(text_liveblocks, [text_lexical])
+        ).toBe(true);
+      });
+    });
+
+    test("persists exportJSON field together with inline format and subclass type", () => {
+      const document = createParagraphDocument("import");
+      const { editor, manager } = createEditor(document, [CustomTextNode]);
+
+      editor.update(() => {
+        const text = $dfs().find(({ node }) => $isTextNode(node))!
+          .node as TextNode;
+        const custom = $createCustomTextNode(text.getTextContent(), "keyword");
+        custom.toggleFormat("bold");
+        text.replace(custom);
+      });
+
+      editor.read(() => {
+        const text_lexical = $dfs().find(({ node }) => $isTextNode(node))!
+          .node as CustomTextNode;
+
+        const text_liveblocks = find_liveblocksNode(
+          document,
+          (node) => node.get("kind") === "text"
+        ) as LiveTextNode;
+
+        manager.$reconcileTextNodeFromLexical([text_lexical], text_liveblocks);
+
+        expect(text_liveblocks.get("content").toJSON()).toEqual([
+          [
+            "import",
+            { bold: true, type: "custom-text", highlightType: "keyword" },
+          ],
+        ]);
       });
     });
 
@@ -2613,6 +2817,76 @@ describe("LiveblocksCollaborationManager", () => {
       });
     });
 
+    test("clears mode from LiveText when reset to the Lexical default", () => {
+      const document = new LiveObject({
+        kind: "root",
+        type: "root",
+        version: 1,
+        children: new LiveList<LiveElementNode>([
+          new LiveObject({
+            kind: "element",
+            type: "paragraph",
+            version: 1,
+            children: new LiveList([
+              createLiveTextNode([["Hello world!", { mode: "token" }]]),
+            ]),
+          }),
+        ]),
+      }) as LiveRootNode;
+      const { editor, manager } = createEditor(document);
+
+      editor.update(() => {
+        (
+          $dfs().find(({ node }) => $isTextNode(node))!.node as TextNode
+        ).setMode("normal");
+      });
+
+      editor.read(() => {
+        const text_lexical = $dfs().find(({ node }) => $isTextNode(node))!
+          .node as TextNode;
+        const text_liveblocks = find_liveblocksNode(
+          document,
+          (node) => node.get("kind") === "text"
+        ) as LiveTextNode;
+
+        manager.$reconcileTextNodeFromLexical(
+          [text_lexical.getLatest()],
+          text_liveblocks
+        );
+
+        expect(text_liveblocks.get("content").toJSON()).toEqual([
+          ["Hello world!"],
+        ]);
+      });
+    });
+
+    test("omits default TextNode exportJSON fields from LiveText segments", () => {
+      const document = createParagraphDocument("hello");
+      const { editor, manager } = createEditor(document);
+
+      editor.read(() => {
+        const text_lexical = $dfs().find(({ node }) => $isTextNode(node))!
+          .node as TextNode;
+        expect(text_lexical.exportJSON()).toMatchObject({
+          type: "text",
+          text: "hello",
+          format: 0,
+          detail: 0,
+          mode: "normal",
+          style: "",
+        });
+
+        const text_liveblocks = find_liveblocksNode(
+          document,
+          (node) => node.get("kind") === "text"
+        ) as LiveTextNode;
+
+        manager.$reconcileTextNodeFromLexical([text_lexical], text_liveblocks);
+
+        expect(text_liveblocks.get("content").toJSON()).toEqual([["hello"]]);
+      });
+    });
+
     test("synchronizes style when plain text already matches", () => {
       const document = createParagraphDocument("Hello world!");
       const { editor, manager } = createEditor(document);
@@ -2703,7 +2977,9 @@ describe("LiveblocksCollaborationManager", () => {
     test("is a no-op when element children already match", () => {
       const document = createParagraphDocument("Hello world!");
       const { editor, manager } = createEditor(document);
-      const paragraph_liveblocks = document.get("children").get(0) as LiveElementNode;
+      const paragraph_liveblocks = document
+        .get("children")
+        .get(0) as LiveElementNode;
       const childrenBefore = paragraph_liveblocks.get("children").length;
 
       editor.read(() => {
@@ -2729,7 +3005,9 @@ describe("LiveblocksCollaborationManager", () => {
     test("syncs element type and props onto the storage node", () => {
       const document = createParagraphDocument("Title");
       const { editor, manager } = createEditor(document);
-      const paragraph_liveblocks = document.get("children").get(0) as LiveElementNode;
+      const paragraph_liveblocks = document
+        .get("children")
+        .get(0) as LiveElementNode;
 
       editor.update(
         () => {
@@ -2788,9 +3066,9 @@ describe("LiveblocksCollaborationManager", () => {
     test("syncs append typing to LiveText", () => {
       const document = createParagraphDocument("Hello");
       const { editor, manager } = createEditor(document);
-      const text_liveblocks = (document
-        .get("children")
-        .get(0) as LiveElementNode)
+      const text_liveblocks = (
+        document.get("children").get(0) as LiveElementNode
+      )
         .get("children")
         .get(0)! as LiveTextNode;
 
@@ -2857,9 +3135,7 @@ describe("LiveblocksCollaborationManager", () => {
       expect(document.get("children").length).toBe(2);
       expect(
         (
-          (document
-            .get("children")
-            .get(1) as LiveElementNode)
+          (document.get("children").get(1) as LiveElementNode)
             .get("children")
             .get(0)! as LiveTextNode
         )
@@ -2901,17 +3177,29 @@ describe("LiveblocksCollaborationManager", () => {
       const children = document.get("children");
       expect(children.length).toBe(3);
       expect(
-        ((children.get(0)! as LiveElementNode).get("children").get(0) as LiveTextNode)
+        (
+          (children.get(0)! as LiveElementNode)
+            .get("children")
+            .get(0) as LiveTextNode
+        )
           .get("content")
           .toJSON()
       ).toEqual([["P1"]]);
       expect(
-        ((children.get(1)! as LiveElementNode).get("children").get(0) as LiveTextNode)
+        (
+          (children.get(1)! as LiveElementNode)
+            .get("children")
+            .get(0) as LiveTextNode
+        )
           .get("content")
           .toJSON()
       ).toEqual([["P2"]]);
       expect(
-        ((children.get(2)! as LiveElementNode).get("children").get(0) as LiveTextNode)
+        (
+          (children.get(2)! as LiveElementNode)
+            .get("children")
+            .get(0) as LiveTextNode
+        )
           .get("content")
           .toJSON()
       ).toEqual([["P3"]]);
@@ -2948,22 +3236,38 @@ describe("LiveblocksCollaborationManager", () => {
       const children = document.get("children");
       expect(children.length).toBe(4);
       expect(
-        ((children.get(0)! as LiveElementNode).get("children").get(0) as LiveTextNode)
+        (
+          (children.get(0)! as LiveElementNode)
+            .get("children")
+            .get(0) as LiveTextNode
+        )
           .get("content")
           .toJSON()
       ).toEqual([["P1"]]);
       expect(
-        ((children.get(1)! as LiveElementNode).get("children").get(0) as LiveTextNode)
+        (
+          (children.get(1)! as LiveElementNode)
+            .get("children")
+            .get(0) as LiveTextNode
+        )
           .get("content")
           .toJSON()
       ).toEqual([["P2"]]);
       expect(
-        ((children.get(2)! as LiveElementNode).get("children").get(0) as LiveTextNode)
+        (
+          (children.get(2)! as LiveElementNode)
+            .get("children")
+            .get(0) as LiveTextNode
+        )
           .get("content")
           .toJSON()
       ).toEqual([["P3"]]);
       expect(
-        ((children.get(3)! as LiveElementNode).get("children").get(0) as LiveTextNode)
+        (
+          (children.get(3)! as LiveElementNode)
+            .get("children")
+            .get(0) as LiveTextNode
+        )
           .get("content")
           .toJSON()
       ).toEqual([["P4"]]);
@@ -3021,22 +3325,38 @@ describe("LiveblocksCollaborationManager", () => {
       const children = document.get("children");
       expect(children.length).toBe(4);
       expect(
-        ((children.get(0)! as LiveElementNode).get("children").get(0) as LiveTextNode)
+        (
+          (children.get(0)! as LiveElementNode)
+            .get("children")
+            .get(0) as LiveTextNode
+        )
           .get("content")
           .toJSON()
       ).toEqual([["P1"]]);
       expect(
-        ((children.get(1)! as LiveElementNode).get("children").get(0) as LiveTextNode)
+        (
+          (children.get(1)! as LiveElementNode)
+            .get("children")
+            .get(0) as LiveTextNode
+        )
           .get("content")
           .toJSON()
       ).toEqual([["P2"]]);
       expect(
-        ((children.get(2)! as LiveElementNode).get("children").get(0) as LiveTextNode)
+        (
+          (children.get(2)! as LiveElementNode)
+            .get("children")
+            .get(0) as LiveTextNode
+        )
           .get("content")
           .toJSON()
       ).toEqual([["P3"]]);
       expect(
-        ((children.get(3)! as LiveElementNode).get("children").get(0) as LiveTextNode)
+        (
+          (children.get(3)! as LiveElementNode)
+            .get("children")
+            .get(0) as LiveTextNode
+        )
           .get("content")
           .toJSON()
       ).toEqual([["P4"]]);
@@ -3087,9 +3407,7 @@ describe("LiveblocksCollaborationManager", () => {
       expect(dirtyRoots.every(Boolean)).toBe(true);
       expect(
         (
-          (document
-            .get("children")
-            .get(0) as LiveElementNode)
+          (document.get("children").get(0) as LiveElementNode)
             .get("children")
             .get(0)! as LiveTextNode
         )
@@ -3125,7 +3443,10 @@ describe("LiveblocksCollaborationManager", () => {
         );
       });
 
-      expect((document.get("children").get(1) as LiveElementNode).get("children").length).toBe(0);
+      expect(
+        (document.get("children").get(1) as LiveElementNode).get("children")
+          .length
+      ).toBe(0);
 
       sync(() => {
         ($getRoot().getChildAtIndex(1) as ParagraphNode).append(
@@ -3133,12 +3454,13 @@ describe("LiveblocksCollaborationManager", () => {
         );
       });
 
-      expect((document.get("children").get(1) as LiveElementNode).get("children").length).toBe(1);
+      expect(
+        (document.get("children").get(1) as LiveElementNode).get("children")
+          .length
+      ).toBe(1);
       expect(
         (
-          (document
-            .get("children")
-            .get(1) as LiveElementNode)
+          (document.get("children").get(1) as LiveElementNode)
             .get("children")
             .get(0)! as LiveTextNode
         )
@@ -3175,7 +3497,10 @@ describe("LiveblocksCollaborationManager", () => {
         );
       });
 
-      expect((document.get("children").get(1) as LiveElementNode).get("children").length).toBe(0);
+      expect(
+        (document.get("children").get(1) as LiveElementNode).get("children")
+          .length
+      ).toBe(0);
 
       sync(() => {
         const root = $getRoot();
@@ -3192,9 +3517,15 @@ describe("LiveblocksCollaborationManager", () => {
 
       const children = document.get("children");
       expect(children.length).toBe(1);
-      expect((children.get(0)! as LiveElementNode).get("children").length).toBe(1);
+      expect((children.get(0)! as LiveElementNode).get("children").length).toBe(
+        1
+      );
       expect(
-        ((children.get(0)! as LiveElementNode).get("children").get(0) as LiveTextNode)
+        (
+          (children.get(0)! as LiveElementNode)
+            .get("children")
+            .get(0) as LiveTextNode
+        )
           .get("content")
           .toJSON()
       ).toEqual([["Recovered"]]);
@@ -3252,9 +3583,7 @@ describe("LiveblocksCollaborationManager", () => {
 
       expect(
         (
-          (document
-            .get("children")
-            .get(0) as LiveElementNode)
+          (document.get("children").get(0) as LiveElementNode)
             .get("children")
             .get(0)! as LiveTextNode
         )
@@ -3314,9 +3643,7 @@ describe("LiveblocksCollaborationManager", () => {
 
       expect(
         (
-          (document
-            .get("children")
-            .get(0) as LiveElementNode)
+          (document.get("children").get(0) as LiveElementNode)
             .get("children")
             .get(0)! as LiveTextNode
         )
@@ -3360,9 +3687,7 @@ describe("LiveblocksCollaborationManager", () => {
 
       expect(
         (
-          (document
-            .get("children")
-            .get(0) as LiveElementNode)
+          (document.get("children").get(0) as LiveElementNode)
             .get("children")
             .get(0)! as LiveTextNode
         )
@@ -3407,9 +3732,7 @@ describe("LiveblocksCollaborationManager", () => {
       expect(document.get("children").length).toBe(1);
       expect(
         (
-          (document
-            .get("children")
-            .get(0) as LiveElementNode)
+          (document.get("children").get(0) as LiveElementNode)
             .get("children")
             .get(0)! as LiveTextNode
         )
@@ -3468,9 +3791,7 @@ describe("LiveblocksCollaborationManager", () => {
       expect(document.get("children").length).toBe(1);
       expect(
         (
-          (document
-            .get("children")
-            .get(0) as LiveElementNode)
+          (document.get("children").get(0) as LiveElementNode)
             .get("children")
             .get(0)! as LiveTextNode
         )
@@ -3529,9 +3850,7 @@ describe("LiveblocksCollaborationManager", () => {
       expect(document.get("children").length).toBe(3);
       expect(
         (
-          (document
-            .get("children")
-            .get(0) as LiveElementNode)
+          (document.get("children").get(0) as LiveElementNode)
             .get("children")
             .get(0)! as LiveTextNode
         )
@@ -3540,9 +3859,7 @@ describe("LiveblocksCollaborationManager", () => {
       ).toEqual([["One"]]);
       expect(
         (
-          (document
-            .get("children")
-            .get(1) as LiveElementNode)
+          (document.get("children").get(1) as LiveElementNode)
             .get("children")
             .get(0)! as LiveTextNode
         )
@@ -3551,9 +3868,7 @@ describe("LiveblocksCollaborationManager", () => {
       ).toEqual([["Two"]]);
       expect(
         (
-          (document
-            .get("children")
-            .get(2) as LiveElementNode)
+          (document.get("children").get(2) as LiveElementNode)
             .get("children")
             .get(0)! as LiveTextNode
         )
@@ -3565,7 +3880,9 @@ describe("LiveblocksCollaborationManager", () => {
     test("replaces a root storage child when the Lexical node type changes", () => {
       const document = createParagraphDocument("Title");
       const { editor, manager } = createEditor(document);
-      const paragraph_liveblocks = document.get("children").get(0) as LiveElementNode;
+      const paragraph_liveblocks = document
+        .get("children")
+        .get(0) as LiveElementNode;
 
       const unregister = editor.registerUpdateListener(
         ({ dirtyElements, dirtyLeaves, normalizedNodes, editorState }) => {
@@ -3689,9 +4006,7 @@ describe("LiveblocksCollaborationManager", () => {
         expect(document.get("children").length).toBe(2);
         expect(
           (
-            (document
-              .get("children")
-              .get(0) as LiveElementNode)
+            (document.get("children").get(0) as LiveElementNode)
               .get("children")
               .get(0)! as LiveTextNode
           )
@@ -3700,9 +4015,7 @@ describe("LiveblocksCollaborationManager", () => {
         ).toEqual([["A"]]);
         expect(
           (
-            (document
-              .get("children")
-              .get(1) as LiveElementNode)
+            (document.get("children").get(1) as LiveElementNode)
               .get("children")
               .get(0)! as LiveTextNode
           )
@@ -3727,7 +4040,9 @@ describe("LiveblocksCollaborationManager", () => {
     test("rebinds structurally equal storage children after Lexical node recreation", () => {
       const document = createParagraphDocument("Hello");
       const { editor, manager } = createEditor(document);
-      const paragraph_liveblocks = document.get("children").get(0) as LiveElementNode;
+      const paragraph_liveblocks = document
+        .get("children")
+        .get(0) as LiveElementNode;
       const text_liveblocks = paragraph_liveblocks
         .get("children")
         .get(0)! as LiveTextNode;
@@ -3778,7 +4093,9 @@ describe("LiveblocksCollaborationManager", () => {
     test("inserts a decorator child into storage", () => {
       const document = createParagraphDocument("Hi");
       const { editor, manager } = createEditor(document, [CustomDecoratorNode]);
-      const paragraph_liveblocks = document.get("children").get(0) as LiveElementNode;
+      const paragraph_liveblocks = document
+        .get("children")
+        .get(0) as LiveElementNode;
 
       const unregister = editor.registerUpdateListener(
         ({ dirtyElements, dirtyLeaves, normalizedNodes, editorState }) => {
@@ -3861,7 +4178,9 @@ describe("LiveblocksCollaborationManager", () => {
         ]),
       }) as LiveRootNode;
       const { editor, manager } = createEditor(document, [CustomDecoratorNode]);
-      const paragraph_liveblocks = document.get("children").get(0) as LiveElementNode;
+      const paragraph_liveblocks = document
+        .get("children")
+        .get(0) as LiveElementNode;
 
       const unregister = editor.registerUpdateListener(
         ({ dirtyElements, dirtyLeaves, normalizedNodes, editorState }) => {
@@ -3917,7 +4236,9 @@ describe("LiveblocksCollaborationManager", () => {
         ]),
       }) as LiveRootNode;
       const { editor, manager } = createEditor(document, [CustomDecoratorNode]);
-      const paragraph_liveblocks = document.get("children").get(0) as LiveElementNode;
+      const paragraph_liveblocks = document
+        .get("children")
+        .get(0) as LiveElementNode;
       const decorator_liveblocks = paragraph_liveblocks
         .get("children")
         .get(0)! as LiveDecoratorNode;
@@ -3999,7 +4320,9 @@ describe("LiveblocksCollaborationManager", () => {
         ]),
       }) as LiveRootNode;
       const { editor, manager } = createEditor(document, [CustomDecoratorNode]);
-      const paragraph_liveblocks = document.get("children").get(0) as LiveElementNode;
+      const paragraph_liveblocks = document
+        .get("children")
+        .get(0) as LiveElementNode;
       const decorator_liveblocks = paragraph_liveblocks
         .get("children")
         .get(1)! as LiveDecoratorNode;
@@ -4080,7 +4403,9 @@ describe("LiveblocksCollaborationManager", () => {
         ]),
       }) as LiveRootNode;
       const { editor, manager } = createEditor(document, [CustomDecoratorNode]);
-      const paragraph_liveblocks = document.get("children").get(0) as LiveElementNode;
+      const paragraph_liveblocks = document
+        .get("children")
+        .get(0) as LiveElementNode;
 
       const unregister = editor.registerUpdateListener(
         ({ dirtyElements, dirtyLeaves, normalizedNodes, editorState }) => {
@@ -4097,9 +4422,7 @@ describe("LiveblocksCollaborationManager", () => {
       editor.update(
         () => {
           const paragraph = $getRoot().getFirstChild() as ParagraphNode;
-          const decorator = paragraph.getChildAtIndex(
-            0
-          ) as CustomDecoratorNode;
+          const decorator = paragraph.getChildAtIndex(0) as CustomDecoratorNode;
           const linebreak = paragraph.getChildAtIndex(1)!;
           decorator.remove();
           linebreak.insertAfter(decorator);
@@ -4112,13 +4435,11 @@ describe("LiveblocksCollaborationManager", () => {
       expect(paragraph_liveblocks.get("children").get(0)!.get("kind")).toBe(
         "linebreak"
       );
+      expect(paragraph_liveblocks.get("children").get(1)!.get("kind")).toBe(
+        "decorator"
+      );
       expect(
-        paragraph_liveblocks.get("children").get(1)!.get("kind")
-      ).toBe("decorator");
-      expect(
-        (
-          paragraph_liveblocks.get("children").get(1)! as LiveDecoratorNode
-        )
+        (paragraph_liveblocks.get("children").get(1)! as LiveDecoratorNode)
           .get("props")
           ?.toJSON()
       ).toEqual({
@@ -4653,7 +4974,9 @@ describe("LiveblocksCollaborationManager", () => {
 
       editor.read(() => {
         const heading = $getRoot().getFirstChild() as ElementNode;
-        const props_liveblocks = (document.get("children").get(0) as LiveElementNode).get("props");
+        const props_liveblocks = (
+          document.get("children").get(0) as LiveElementNode
+        ).get("props");
 
         expect($getLexicalNodeProps(heading)).toEqual(
           props_liveblocks?.toJSON()
@@ -4801,7 +5124,7 @@ describe("LiveblocksCollaborationManager", () => {
       });
     });
 
-    test("materializes TextNode subclass from segment attribute t", () => {
+    test("materializes TextNode subclass from segment attribute type", () => {
       const document = new LiveObject({
         kind: "root",
         type: "root",
@@ -4812,7 +5135,7 @@ describe("LiveblocksCollaborationManager", () => {
             type: "paragraph",
             version: 1,
             children: new LiveList([
-              createLiveTextNode([["entity", { t: "custom-text" }]]),
+              createLiveTextNode([["entity", { type: "custom-text" }]]),
             ]),
           }),
         ]),
@@ -4841,7 +5164,7 @@ describe("LiveblocksCollaborationManager", () => {
             children: new LiveList([
               createLiveTextNode([
                 ["Hello "],
-                ["entity", { t: "custom-text" }],
+                ["entity", { type: "custom-text" }],
               ]),
             ]),
           }),
@@ -4874,7 +5197,7 @@ describe("LiveblocksCollaborationManager", () => {
             version: 1,
             children: new LiveList([
               createLiveTextNode([
-                ["entity", { bold: true, t: "custom-text" }],
+                ["entity", { bold: true, type: "custom-text" }],
               ]),
             ]),
           }),
@@ -4892,6 +5215,177 @@ describe("LiveblocksCollaborationManager", () => {
       });
     });
 
+    test("materializes TextNode subclass exportJSON field from LiveText", () => {
+      const document = new LiveObject({
+        kind: "root",
+        type: "root",
+        version: 1,
+        children: new LiveList<LiveElementNode>([
+          new LiveObject({
+            kind: "element",
+            type: "paragraph",
+            version: 1,
+            children: new LiveList([
+              createLiveTextNode([
+                ["import", { type: "custom-text", highlightType: "keyword" }],
+              ]),
+            ]),
+          }),
+        ]),
+      }) as LiveRootNode;
+
+      const { editor } = createEditor(document, [CustomTextNode]);
+
+      editor.read(() => {
+        const text_lexical = $dfs().find(({ node }) => $isTextNode(node))!
+          .node as CustomTextNode;
+        expect(text_lexical.getType()).toBe("custom-text");
+        expect(text_lexical.getTextContent()).toBe("import");
+        expect(text_lexical.getHighlightType()).toBe("keyword");
+      });
+    });
+
+    test("bootstrap skips node transforms", () => {
+      const document = new LiveObject({
+        kind: "root",
+        type: "root",
+        version: 1,
+        children: new LiveList<LiveElementNode>([
+          new LiveObject({
+            kind: "element",
+            type: "paragraph",
+            version: 1,
+            children: new LiveList([
+              createLiveTextNode([
+                ["import", { type: "custom-text", highlightType: "keyword" }],
+              ]),
+            ]),
+          }),
+        ]),
+      }) as LiveRootNode;
+
+      let transformRuns = 0;
+      const editor = createLexicalEditor({
+        namespace: "bootstrap-skip-transforms",
+        nodes: [
+          ParagraphNode,
+          TextNode,
+          HeadingNode,
+          QuoteNode,
+          CustomTextNode,
+        ],
+      });
+      editor.registerNodeTransform(CustomTextNode, () => {
+        transformRuns++;
+      });
+
+      new LiveblocksCollaborationManager(document, editor);
+
+      expect(transformRuns).toBe(0);
+      editor.read(() => {
+        const text_lexical = $dfs().find(({ node }) => $isTextNode(node))!
+          .node as CustomTextNode;
+        // Attributes still apply via updateFromJSON without transforms.
+        expect(text_lexical.getHighlightType()).toBe("keyword");
+      });
+    });
+
+    test("applies exportJSON field updates from LiveText onto existing TextNodes", () => {
+      const document = new LiveObject({
+        kind: "root",
+        type: "root",
+        version: 1,
+        children: new LiveList<LiveElementNode>([
+          new LiveObject({
+            kind: "element",
+            type: "paragraph",
+            version: 1,
+            children: new LiveList([
+              createLiveTextNode([
+                ["import", { type: "custom-text", highlightType: "keyword" }],
+              ]),
+            ]),
+          }),
+        ]),
+      }) as LiveRootNode;
+
+      const { editor, manager } = createEditor(document, [CustomTextNode]);
+      const text_liveblocks = find_liveblocksNode(
+        document,
+        (node) => node.get("kind") === "text"
+      ) as LiveTextNode;
+
+      editor.update(
+        () => {
+          const text_lexical = $dfs().find(({ node }) => $isTextNode(node))!
+            .node as CustomTextNode;
+          expect(text_lexical.getHighlightType()).toBe("keyword");
+
+          text_liveblocks
+            .get("content")
+            .format(0, 6, { highlightType: "string" });
+          manager.$reconcileTextNodeFromLiveblocks(
+            [text_lexical],
+            text_liveblocks
+          );
+
+          expect(
+            (
+              $getNodeByKey(text_lexical.getKey()) as CustomTextNode
+            ).getHighlightType()
+          ).toBe("string");
+        },
+        { discrete: true, skipTransforms: true, tag: COLLABORATION_TAG }
+      );
+    });
+
+    test("clears exportJSON field on existing TextNodes when removed from LiveText", () => {
+      const document = new LiveObject({
+        kind: "root",
+        type: "root",
+        version: 1,
+        children: new LiveList<LiveElementNode>([
+          new LiveObject({
+            kind: "element",
+            type: "paragraph",
+            version: 1,
+            children: new LiveList([
+              createLiveTextNode([
+                ["import", { type: "custom-text", highlightType: "keyword" }],
+              ]),
+            ]),
+          }),
+        ]),
+      }) as LiveRootNode;
+
+      const { editor, manager } = createEditor(document, [CustomTextNode]);
+      const text_liveblocks = find_liveblocksNode(
+        document,
+        (node) => node.get("kind") === "text"
+      ) as LiveTextNode;
+
+      editor.update(
+        () => {
+          const text_lexical = $dfs().find(({ node }) => $isTextNode(node))!
+            .node as CustomTextNode;
+          expect(text_lexical.getHighlightType()).toBe("keyword");
+
+          text_liveblocks.get("content").format(0, 6, { highlightType: null });
+          manager.$reconcileTextNodeFromLiveblocks(
+            [text_lexical],
+            text_liveblocks
+          );
+
+          expect(
+            (
+              $getNodeByKey(text_lexical.getKey()) as CustomTextNode
+            ).getHighlightType()
+          ).toBeUndefined();
+        },
+        { discrete: true, skipTransforms: true, tag: COLLABORATION_TAG }
+      );
+    });
+
     test("replaces Lexical text when segment type diverges", () => {
       const document = createParagraphDocument("entity");
       const { editor, manager } = createEditor(document, [CustomTextNode]);
@@ -4900,7 +5394,7 @@ describe("LiveblocksCollaborationManager", () => {
         document,
         (node) => node.get("kind") === "text"
       ) as LiveTextNode;
-      text_liveblocks.get("content").format(0, 6, { t: "custom-text" });
+      text_liveblocks.get("content").format(0, 6, { type: "custom-text" });
 
       editor.update(() => {
         const text_lexical = $dfs().find(({ node }) => $isTextNode(node))!
@@ -5842,9 +6336,15 @@ describe("LiveblocksCollaborationManager", () => {
       const afterChildren = document.get("children");
       expect(afterChildren.length).toBe(1);
       const afterParagraph = afterChildren.get(0) as LiveElementNode;
-      expect((afterParagraph as LiveElementNode).get("children").length).toBe(1);
+      expect((afterParagraph as LiveElementNode).get("children").length).toBe(
+        1
+      );
       expect(
-        ((afterParagraph as LiveElementNode).get("children").get(0)! as LiveTextNode)
+        (
+          (afterParagraph as LiveElementNode)
+            .get("children")
+            .get(0)! as LiveTextNode
+        )
           .get("content")
           .toJSON()
       ).toEqual([]);
@@ -5861,7 +6361,9 @@ describe("LiveblocksCollaborationManager", () => {
       // delete@0 for each item; then insert@0 for the replacement.
       const remaining = document.get("children").get(0)!;
       const wasReused = before.includes(remaining);
-      const text_liveblocks = (remaining as LiveElementNode).get("children").get(0) as LiveTextNode;
+      const text_liveblocks = (remaining as LiveElementNode)
+        .get("children")
+        .get(0) as LiveTextNode;
 
       peer.editor.update(
         () => {
@@ -5984,7 +6486,9 @@ describe("LiveblocksCollaborationManager", () => {
       });
 
       const remaining = document.get("children").get(0)!;
-      const text_liveblocks = (remaining as LiveElementNode).get("children").get(0) as LiveTextNode;
+      const text_liveblocks = (remaining as LiveElementNode)
+        .get("children")
+        .get(0) as LiveTextNode;
 
       peer.editor.update(
         () => {
@@ -7103,9 +7607,9 @@ describe("LiveblocksCollaborationManager", () => {
         ]),
       }) as LiveRootNode;
       const { editor, manager } = createEditor(document, [CustomDecoratorNode]);
-      const decorator_liveblocks = (document
-        .get("children")
-        .get(0) as LiveElementNode)
+      const decorator_liveblocks = (
+        document.get("children").get(0) as LiveElementNode
+      )
         .get("children")
         .get(0)! as LiveDecoratorNode;
 
@@ -7174,9 +7678,9 @@ describe("LiveblocksCollaborationManager", () => {
         ]),
       }) as LiveRootNode;
       const { editor, manager } = createEditor(document, [CustomDecoratorNode]);
-      const decorator_liveblocks = (document
-        .get("children")
-        .get(0) as LiveElementNode)
+      const decorator_liveblocks = (
+        document.get("children").get(0) as LiveElementNode
+      )
         .get("children")
         .get(0)! as LiveDecoratorNode;
       const props = decorator_liveblocks.get("props")!;
@@ -7245,10 +7749,9 @@ describe("LiveblocksCollaborationManager", () => {
         ]),
       }) as LiveRootNode;
       const { editor, manager } = createEditor(document, [CustomDecoratorNode]);
-      const children_liveblocks = (document
-        .get("children")
-        .get(0) as LiveElementNode)
-        .get("children");
+      const children_liveblocks = (
+        document.get("children").get(0) as LiveElementNode
+      ).get("children");
       const decorator_liveblocks = children_liveblocks.get(1)!;
 
       children_liveblocks.move(1, 0);
@@ -7281,9 +7784,7 @@ describe("LiveblocksCollaborationManager", () => {
       editor.read(() => {
         const paragraph = $getRoot().getFirstChild() as ParagraphNode;
         expect(paragraph.getChildrenSize()).toBe(2);
-        expect($isCustomDecoratorNode(paragraph.getChildAtIndex(0))).toBe(
-          true
-        );
+        expect($isCustomDecoratorNode(paragraph.getChildAtIndex(0))).toBe(true);
         expect(paragraph.getChildAtIndex(1)?.getTextContent()).toBe("Hi");
         expect(manager.binding.forward.get(decorator_liveblocks)).toBe(
           paragraph.getChildAtIndex(0)
@@ -7296,10 +7797,9 @@ describe("LiveblocksCollaborationManager", () => {
       const local = createEditor(document, [CustomDecoratorNode]);
       const peer = createEditor(document, [CustomDecoratorNode]);
 
-      const children_liveblocks = (document
-        .get("children")
-        .get(0) as LiveElementNode)
-        .get("children");
+      const children_liveblocks = (
+        document.get("children").get(0) as LiveElementNode
+      ).get("children");
 
       const syncLocal = (fn: () => void) => {
         const unregister = local.editor.registerUpdateListener(
@@ -7365,6 +7865,127 @@ describe("LiveblocksCollaborationManager", () => {
           decorator
         );
       });
+    });
+
+    /**
+     * Typing into the middle of a segmented TextNode subclass (classic Lexical
+     * mention pattern). Lexical demotes the subclass to a plain TextNode
+     * locally; LiveText must clear leftover type/mode on the surrounding
+     * segments so peers rebuild the same plain text tree.
+     */
+    test("insert into segmented mention converges local and peer on plain text", () => {
+      const document = new LiveObject({
+        kind: "root",
+        type: "root",
+        version: 1,
+        children: new LiveList<LiveElementNode>([
+          new LiveObject({
+            kind: "element",
+            type: "paragraph",
+            version: 1,
+            children: new LiveList([
+              createLiveTextNode([
+                ["@alice", { type: "custom-text", mode: "segmented" }],
+              ]),
+            ]),
+          }),
+        ]),
+      }) as LiveRootNode;
+
+      const local = createEditor(document, [CustomTextNode]);
+      const peer = createEditor(document, [CustomTextNode]);
+
+      const text_liveblocks = (
+        document.get("children").get(0) as LiveElementNode
+      )
+        .get("children")
+        .get(0)! as LiveTextNode;
+
+      local.editor.read(() => {
+        const nodes = $dfs()
+          .map(({ node }) => node)
+          .filter($isTextNode) as TextNode[];
+        expect(nodes).toHaveLength(1);
+        expect(nodes[0]!.getType()).toBe("custom-text");
+        expect(nodes[0]!.getMode()).toBe("segmented");
+        expect(nodes[0]!.getTextContent()).toBe("@alice");
+      });
+      peer.editor.read(() => {
+        const nodes = $dfs()
+          .map(({ node }) => node)
+          .filter($isTextNode) as TextNode[];
+        expect(nodes).toHaveLength(1);
+        expect(nodes[0]!.getType()).toBe("custom-text");
+      });
+
+      const syncLocal = (fn: () => void) => {
+        const unregister = local.editor.registerUpdateListener(
+          ({ dirtyElements, dirtyLeaves, normalizedNodes, editorState }) => {
+            editorState.read(() => {
+              local.manager.$applyLocalUpdates({
+                dirtyElements: new Set(dirtyElements.keys()),
+                dirtyLeaves,
+                normalizedNodes,
+              });
+            });
+          }
+        );
+        local.editor.update(fn, { discrete: true });
+        unregister();
+      };
+
+      // User A: type 'n' after 'i' in "@alice" → "@alince"
+      syncLocal(() => {
+        const mention = $dfs().find(({ node }) => $isTextNode(node))!
+          .node as TextNode;
+        expect(mention.getType()).toBe("custom-text");
+        expect(mention.isSegmented()).toBe(true);
+        const selection = $createRangeSelection();
+        selection.anchor.set(mention.getKey(), 4, "text");
+        selection.focus.set(mention.getKey(), 4, "text");
+        $setSelection(selection);
+        selection.insertText("n");
+      });
+
+      // Format pass clears type/mode left behind by the string-diff insert.
+      expect(text_liveblocks.get("content").toJSON()).toEqual([["@alince"]]);
+
+      const readTextShape = (editor: LexicalEditor) =>
+        editor.read(() =>
+          $dfs()
+            .map(({ node }) => node)
+            .filter($isTextNode)
+            .map((node) => ({
+              type: node.getType(),
+              text: node.getTextContent(),
+              mode: node.getMode(),
+            }))
+        );
+
+      const localShape = readTextShape(local.editor);
+      expect(localShape.every((n) => n.type === "text")).toBe(true);
+      expect(localShape.map((n) => n.text).join("")).toBe("@alince");
+
+      peer.editor.update(
+        () => {
+          const bound = peer.manager.binding.forward.get(text_liveblocks);
+          expect(Array.isArray(bound)).toBe(true);
+          peer.manager.$reconcileTextNodeFromLiveblocks(
+            bound as TextNode[],
+            text_liveblocks
+          );
+        },
+        {
+          discrete: true,
+          skipTransforms: true,
+          tag: COLLABORATION_TAG,
+        }
+      );
+
+      const peerShape = readTextShape(peer.editor);
+      expect(peerShape.every((n) => n.type === "text")).toBe(true);
+      expect(peerShape.map((n) => n.text).join("")).toBe("@alince");
+      expect(localShape).toEqual(peerShape);
     });
   });
 
@@ -7528,7 +8149,7 @@ describe("LiveblocksCollaborationManager", () => {
       ).toBe(false);
     });
 
-    test("returns true when TextNode subclass type matches segment attribute t", () => {
+    test("returns true when TextNode subclass type matches segment attribute type", () => {
       const customEditor = createLexicalEditor({
         namespace: "areTextNodesStructurallyEqual-custom",
         nodes: [ParagraphNode, TextNode, CustomTextNode],
@@ -7546,14 +8167,68 @@ describe("LiveblocksCollaborationManager", () => {
       expect(
         customEditor.read(() =>
           areTextNodesStructurallyEqual(
-            createLiveTextNode([["entity", { t: "custom-text" }]]),
+            createLiveTextNode([["entity", { type: "custom-text" }]]),
             [$getNodeByKey(key) as TextNode]
           )
         )
       ).toBe(true);
     });
 
-    test("returns false when TextNode subclass type differs from segment attribute t", () => {
+    test("returns true when exportJSON field matches segment attribute", () => {
+      const customEditor = createLexicalEditor({
+        namespace: "areTextNodesStructurallyEqual-highlightType",
+        nodes: [ParagraphNode, TextNode, CustomTextNode],
+      });
+      let key = "";
+      customEditor.update(() => {
+        const paragraph = $createParagraphNode();
+        const node = $createCustomTextNode("import", "keyword");
+        paragraph.append(node);
+        $getRoot().clear();
+        $getRoot().append(paragraph);
+        key = node.getKey();
+      });
+
+      expect(
+        customEditor.read(() =>
+          areTextNodesStructurallyEqual(
+            createLiveTextNode([
+              ["import", { type: "custom-text", highlightType: "keyword" }],
+            ]),
+            [$getNodeByKey(key) as TextNode]
+          )
+        )
+      ).toBe(true);
+    });
+
+    test("returns false when exportJSON field differs from segment attribute", () => {
+      const customEditor = createLexicalEditor({
+        namespace: "areTextNodesStructurallyEqual-highlightType-mismatch",
+        nodes: [ParagraphNode, TextNode, CustomTextNode],
+      });
+      let key = "";
+      customEditor.update(() => {
+        const paragraph = $createParagraphNode();
+        const node = $createCustomTextNode("import", "string");
+        paragraph.append(node);
+        $getRoot().clear();
+        $getRoot().append(paragraph);
+        key = node.getKey();
+      });
+
+      expect(
+        customEditor.read(() =>
+          areTextNodesStructurallyEqual(
+            createLiveTextNode([
+              ["import", { type: "custom-text", highlightType: "keyword" }],
+            ]),
+            [$getNodeByKey(key) as TextNode]
+          )
+        )
+      ).toBe(false);
+    });
+
+    test("returns false when TextNode subclass type differs from segment attribute type", () => {
       const customEditor = createLexicalEditor({
         namespace: "areTextNodesStructurallyEqual-custom-mismatch",
         nodes: [ParagraphNode, TextNode, CustomTextNode],
@@ -7596,13 +8271,11 @@ describe("LiveblocksCollaborationManager", () => {
 
       expect(
         editor.read(() =>
-          createStorageNodeFromLexicalNode([
-            $getNodeByKey(key) as TextNode,
-          ])
+          createStorageNodeFromLexicalNode([$getNodeByKey(key) as TextNode])
             .get("content")
             .toJSON()
         )
-      ).toEqual([["entity", { t: "custom-text" }]]);
+      ).toEqual([["entity", { type: "custom-text" }]]);
     });
 
     test("materializes a decorator node with props", () => {
@@ -7658,9 +8331,7 @@ describe("LiveblocksCollaborationManager", () => {
       });
 
       const storage = editor.read(() =>
-        createStorageNodeFromLexicalNode(
-          $getNodeByKey(key) as ParagraphNode
-        )
+        createStorageNodeFromLexicalNode($getNodeByKey(key) as ParagraphNode)
       );
 
       expect(storage.get("kind")).toBe("element");
@@ -7715,7 +8386,9 @@ describe("LiveblocksCollaborationManager", () => {
       }) as LiveRootNode;
 
       const { editor, manager } = createEditor(document, [CustomDecoratorNode]);
-      const paragraph_liveblocks = document.get("children").get(0) as LiveElementNode;
+      const paragraph_liveblocks = document
+        .get("children")
+        .get(0) as LiveElementNode;
       const text_liveblocks = paragraph_liveblocks
         .get("children")
         .get(0)! as LiveTextNode;
@@ -7729,9 +8402,7 @@ describe("LiveblocksCollaborationManager", () => {
         expect($isTextNode(text)).toBe(true);
         expect(text.getTextContent()).toBe("Hi");
 
-        const decorator = paragraph.getChildAtIndex(
-          1
-        ) as CustomDecoratorNode;
+        const decorator = paragraph.getChildAtIndex(1) as CustomDecoratorNode;
         expect($isCustomDecoratorNode(decorator)).toBe(true);
         expect(decorator.getSrc()).toBe("https://example.com/a.png");
         expect(decorator.getAltText()).toBe("A");
@@ -7854,33 +8525,81 @@ describe("LiveblocksCollaborationManager", () => {
 });
 
 /**
- * Minimal TextNode subclass used to cover LiveText `attributes.t` round-trips
- * for any registered text entity type (not only the built-in `"text"` node).
+ * Minimal TextNode subclass used to cover LiveText `attributes.type` round-trips
+ * for any registered text entity type (not only the built-in `"text"` node),
+ * plus public exportJSON fields beyond marks (mirrors CodeHighlightNode's
+ * `highlightType`).
  */
+type SerializedCustomTextNode = Spread<
+  {
+    highlightType?: string | null;
+  },
+  SerializedTextNode
+>;
+
 class CustomTextNode extends TextNode {
+  __highlightType: string | null | undefined;
+
   static getType(): string {
     return "custom-text";
   }
 
   static clone(node: CustomTextNode): CustomTextNode {
-    return new CustomTextNode(node.__text, node.__key);
+    return new CustomTextNode(
+      node.__text,
+      node.__highlightType || undefined,
+      node.__key
+    );
   }
 
-  constructor(text: string, key?: NodeKey) {
+  constructor(
+    text: string,
+    highlightType?: string | null | undefined,
+    key?: NodeKey
+  ) {
     super(text, key);
+    this.__highlightType = highlightType;
+  }
+
+  getHighlightType(): string | null | undefined {
+    return this.getLatest().__highlightType;
+  }
+
+  setHighlightType(highlightType?: string | null | undefined): this {
+    const self = this.getWritable();
+    self.__highlightType = highlightType || undefined;
+    return self;
   }
 
   createDOM(config: EditorConfig): HTMLElement {
     return super.createDOM(config);
   }
 
-  static importJSON(serializedNode: SerializedTextNode): CustomTextNode {
+  static importJSON(serializedNode: SerializedCustomTextNode): CustomTextNode {
     return $createCustomTextNode().updateFromJSON(serializedNode);
+  }
+
+  updateFromJSON(
+    serializedNode: LexicalUpdateJSON<SerializedCustomTextNode>
+  ): this {
+    return super
+      .updateFromJSON(serializedNode)
+      .setHighlightType(serializedNode.highlightType);
+  }
+
+  exportJSON(): SerializedCustomTextNode {
+    return {
+      ...super.exportJSON(),
+      highlightType: this.getHighlightType(),
+    };
   }
 }
 
-function $createCustomTextNode(text = ""): CustomTextNode {
-  return $applyNodeReplacement(new CustomTextNode(text));
+function $createCustomTextNode(
+  text = "",
+  highlightType?: string | null | undefined
+): CustomTextNode {
+  return $applyNodeReplacement(new CustomTextNode(text, highlightType));
 }
 
 type SerializedCustomDecoratorNode = Spread<
