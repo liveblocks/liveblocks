@@ -1521,6 +1521,10 @@ export class LiveblocksCollaborationManager {
     // neighbor is a multi-segment LiveText (bold/plain splits). Binding is
     // the only reliable handle; clear it after we capture the nodes so a
     // later LiveText update in the same batch cannot mutate a detached slot.
+    //
+    // Net-zero history batches (`[insert, delete]` of the same child) create
+    // the binding only during the insert below — prefer live bindings at
+    // delete-apply time, and use this snapshot as the delete-only fallback.
     const deletedLexicalNodes = new Map<LiveStorageNode, LexicalNode[]>();
     for (const update of updates) {
       if (update.type !== "LiveList") {
@@ -1635,8 +1639,15 @@ export class LiveblocksCollaborationManager {
             }
 
             const child_liveblocks = change.deletedItem as LiveStorageNode;
+            // Prefer live binding: same-batch insert (e.g. history undo of
+            // insert-then-delete) may have just created it after the pre-pass
+            // cleared bindings. Fall back to the pre-pass snapshot for
+            // delete-only batches.
+            const liveNodes = this.$getBoundLexicalNodes(child_liveblocks);
             const nodes = (
-              deletedLexicalNodes.get(child_liveblocks) ?? []
+              liveNodes.length > 0
+                ? liveNodes
+                : (deletedLexicalNodes.get(child_liveblocks) ?? [])
             ).filter((node) => node.isAttached());
             if (nodes.length === 0) {
               continue;
@@ -1653,6 +1664,9 @@ export class LiveblocksCollaborationManager {
             parent
               .getLatest()
               .splice(nodes[0]!.getIndexWithinParent(), nodes.length, []);
+            if (liveNodes.length > 0) {
+              this.removeBindings(child_liveblocks);
+            }
           } else if (change.type === "move") {
             if (!(change.item instanceof LiveObject)) {
               continue;

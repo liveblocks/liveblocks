@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  CodeHighlightNode,
-  CodeNode,
-  registerCodeHighlighting,
-} from "@lexical/code";
+import { CodeHighlightNode, CodeNode } from "@lexical/code";
 import {
   $createHorizontalRuleNode,
   HorizontalRuleNode,
@@ -229,7 +225,6 @@ function Editor() {
         <HashtagPlugin />
         <MarkdownShortcutPlugin />
         <HorizontalRulePlugin />
-        <CodeHighlightPlugin />
         <LiveblocksCollaborationPlugin room={room} root={document} />
       </div>
     </LexicalComposer>
@@ -253,16 +248,6 @@ function HorizontalRulePlugin() {
       },
       COMMAND_PRIORITY_EDITOR
     );
-  }, [editor]);
-
-  return null;
-}
-
-function CodeHighlightPlugin() {
-  const [editor] = useLexicalComposerContext();
-
-  useEffect(() => {
-    return registerCodeHighlighting(editor);
   }, [editor]);
 
   return null;
