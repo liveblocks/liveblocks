@@ -17,6 +17,8 @@ export type LiveblocksProsemirrorRoom = {
     canUndo(): boolean;
     canRedo(): boolean;
     disable<T>(callback: () => T): T;
+    pause(): void;
+    resume(): void;
     undo(): void;
     redo(): void;
   };

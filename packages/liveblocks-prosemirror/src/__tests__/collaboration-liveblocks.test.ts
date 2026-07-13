@@ -7,7 +7,7 @@ import Paragraph from "@tiptap/extension-paragraph";
 import Text from "@tiptap/extension-text";
 import type { Node as ProseMirrorNode } from "prosemirror-model";
 import { Slice } from "prosemirror-model";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 
 import {
   createLiveblocksCollaborationCaretPlugin,
@@ -64,27 +64,35 @@ const TestLiveblocksCollaborationCaret = Extension.create({
   },
 });
 
-const TestLiveblocksCollaboration = Extension.create({
-  name: "collaboration",
-  addOptions() {
-    return {
-      room: undefined as LiveblocksProsemirrorRoom | undefined,
-      field: "default",
-      initialContent: undefined as ProseMirrorJsonNode | undefined,
-      fallbackDocument: createDefaultDocument,
-    };
-  },
-  addProseMirrorPlugins() {
-    return [
-      createLiveblocksCollaborationPlugin({
-        room: this.options.room,
-        field: this.options.field,
-        initialContent: this.options.initialContent,
-        fallbackDocument: this.options.fallbackDocument,
-      }),
-    ];
-  },
-});
+type TestLiveblocksCollaborationOptions = {
+  room?: LiveblocksProsemirrorRoom;
+  field: string;
+  initialContent?: ProseMirrorJsonNode;
+  fallbackDocument: () => ProseMirrorJsonNode;
+};
+
+const TestLiveblocksCollaboration =
+  Extension.create<TestLiveblocksCollaborationOptions>({
+    name: "collaboration",
+    addOptions() {
+      return {
+        room: undefined as LiveblocksProsemirrorRoom | undefined,
+        field: "default",
+        initialContent: undefined as ProseMirrorJsonNode | undefined,
+        fallbackDocument: createDefaultDocument,
+      };
+    },
+    addProseMirrorPlugins() {
+      return [
+        createLiveblocksCollaborationPlugin({
+          room: this.options.room,
+          field: this.options.field,
+          initialContent: this.options.initialContent,
+          fallbackDocument: this.options.fallbackDocument,
+        }),
+      ];
+    },
+  });
 
 const Bold = Mark.create({
   name: "bold",
@@ -116,11 +124,13 @@ function createCollaborationTestRoom(root = new LiveObject<LsonObject>({})) {
     getOthers() {
       return [];
     },
-    getStorage: async () => ({ root }),
+    getStorage: () => Promise.resolve({ root }),
     history: {
       canUndo: () => false,
       canRedo: () => false,
       disable: <T>(callback: () => T) => callback(),
+      pause: vi.fn(),
+      resume: vi.fn(),
       undo: () => {},
       redo: () => {},
     },
@@ -184,6 +194,8 @@ function createCaretTestRoom(initialPosition = 1) {
       canUndo: () => false,
       canRedo: () => false,
       disable: <T>(callback: () => T) => callback(),
+      pause: () => {},
+      resume: () => {},
       undo: () => {},
       redo: () => {},
     },
@@ -634,6 +646,59 @@ describe("collaboration-liveblocks schema", () => {
     expect(liveblocksNodeToJson(storedDocument!)).toEqual(editor.getJSON());
 
     editor.destroy();
+  });
+
+  test("groups typing into one Liveblocks history item until typing is idle", async () => {
+    vi.useFakeTimers();
+    const { room } = createCollaborationTestRoom();
+    const editor = new Editor({
+      extensions: [
+        Document,
+        Paragraph,
+        Text,
+        TestLiveblocksCollaboration.configure({ room }),
+      ],
+      content: "<p></p>",
+    });
+
+    await flushAsyncWork();
+
+    editor.commands.insertContentAt(1, "H");
+    vi.advanceTimersByTime(250);
+    editor.commands.insertContentAt(2, "i");
+
+    expect(room.history.pause).toHaveBeenCalledTimes(2);
+    expect(room.history.resume).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(499);
+    expect(room.history.resume).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(1);
+    expect(room.history.resume).toHaveBeenCalledTimes(1);
+
+    editor.destroy();
+    vi.useRealTimers();
+  });
+
+  test("commits an open history group when the editor is destroyed", async () => {
+    vi.useFakeTimers();
+    const { room } = createCollaborationTestRoom();
+    const editor = new Editor({
+      extensions: [
+        Document,
+        Paragraph,
+        Text,
+        TestLiveblocksCollaboration.configure({ room }),
+      ],
+      content: "<p></p>",
+    });
+
+    await flushAsyncWork();
+    editor.commands.insertContentAt(1, "H");
+    editor.destroy();
+
+    expect(room.history.resume).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
   });
 
   test("ignores storage echoes for local LiveText updates", async () => {

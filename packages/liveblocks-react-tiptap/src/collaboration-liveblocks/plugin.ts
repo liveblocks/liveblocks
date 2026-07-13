@@ -66,36 +66,40 @@ export const LiveblocksCollaboration = Extension.create<
         ({ dispatch, tr }) => {
           tr.setMeta("preventDispatch", true);
 
-          if (
-            this.options.room === undefined ||
-            !this.options.room.history.canUndo()
-          ) {
+          if (this.options.room === undefined) {
             return false;
           }
 
           if (dispatch) {
+            this.options.room.history.resume();
+            if (!this.options.room.history.canUndo()) {
+              return false;
+            }
             this.options.room.history.undo();
+            return true;
           }
 
-          return true;
+          return this.options.room.history.canUndo();
         },
       redo:
         () =>
         ({ dispatch, tr }) => {
           tr.setMeta("preventDispatch", true);
 
-          if (
-            this.options.room === undefined ||
-            !this.options.room.history.canRedo()
-          ) {
+          if (this.options.room === undefined) {
             return false;
           }
 
           if (dispatch) {
+            this.options.room.history.resume();
+            if (!this.options.room.history.canRedo()) {
+              return false;
+            }
             this.options.room.history.redo();
+            return true;
           }
 
-          return true;
+          return this.options.room.history.canRedo();
         },
     };
   },

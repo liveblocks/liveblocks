@@ -77,6 +77,8 @@ function createRoom() {
       canUndo: vi.fn(() => true),
       canRedo: vi.fn(() => true),
       disable: <T>(callback: () => T) => callback(),
+      pause: vi.fn(),
+      resume: vi.fn(),
       undo: vi.fn(),
       redo: vi.fn(),
     },
@@ -139,14 +141,14 @@ describe("Liveblocks ProseMirror Tiptap adapters", () => {
 
   test("keeps undo and redo wired to Liveblocks room history", () => {
     const room = createRoom();
-    const editor = createEditor([
-      LiveblocksCollaboration.configure({ room }),
-    ]);
+    const editor = createEditor([LiveblocksCollaboration.configure({ room })]);
 
     expect(editor.commands.undo()).toBe(true);
+    expect(room.history.resume).toHaveBeenCalledTimes(1);
     expect(room.history.undo).toHaveBeenCalledTimes(1);
 
     expect(editor.commands.redo()).toBe(true);
+    expect(room.history.resume).toHaveBeenCalledTimes(2);
     expect(room.history.redo).toHaveBeenCalledTimes(1);
 
     editor.destroy();

@@ -21,6 +21,9 @@ export const LIVEBLOCKS_COLLABORATION_PLUGIN_KEY = new PluginKey<{
 }>("liveblocks-collaboration");
 export const LIVEBLOCKS_TIPTAP_DOCUMENTS_KEY = "_tiptap_docs";
 
+/** Matches ProseMirror's default delay for grouping local edits. */
+const HISTORY_CAPTURE_TIMEOUT_MS = 500;
+
 export type LiveblocksCollaborationOptions = {
   room?: LiveblocksProsemirrorRoom;
   field: string;
@@ -148,6 +151,36 @@ export function createLiveblocksCollaborationPlugin(
   let isApplyingRemoteUpdate = false;
   let isApplyingLocalUpdate = false;
   let lastDocument = "";
+  let historyCaptureTimer: ReturnType<typeof setTimeout> | undefined;
+
+  const commitHistoryCapture = () => {
+    if (historyCaptureTimer === undefined) {
+      return;
+    }
+
+    clearTimeout(historyCaptureTimer);
+    historyCaptureTimer = undefined;
+    room.history.resume();
+  };
+
+  const scheduleHistoryCaptureCommit = () => {
+    if (historyCaptureTimer !== undefined) {
+      clearTimeout(historyCaptureTimer);
+    }
+
+    historyCaptureTimer = setTimeout(() => {
+      historyCaptureTimer = undefined;
+      room.history.resume();
+    }, HISTORY_CAPTURE_TIMEOUT_MS);
+  };
+
+  const abortHistoryCapture = () => {
+    if (historyCaptureTimer !== undefined) {
+      clearTimeout(historyCaptureTimer);
+      historyCaptureTimer = undefined;
+    }
+    room.history.resume();
+  };
 
   const applyStorageToEditor = (updates?: StorageUpdate[]) => {
     if (view === undefined || root === undefined) {
@@ -218,11 +251,17 @@ export function createLiveblocksCollaborationPlugin(
       if (
         root === undefined ||
         isApplyingRemoteUpdate ||
-        !transactions.some((transaction) => transaction.docChanged) ||
         transactions.some((transaction) =>
           Boolean(transaction.getMeta(LIVEBLOCKS_COLLABORATION_PLUGIN_KEY))
         )
       ) {
+        return null;
+      }
+
+      if (!transactions.some((transaction) => transaction.docChanged)) {
+        if (transactions.some((transaction) => transaction.selectionSet)) {
+          commitHistoryCapture();
+        }
         return null;
       }
 
@@ -255,13 +294,20 @@ export function createLiveblocksCollaborationPlugin(
 
       isApplyingLocalUpdate = true;
       try {
-        room.batch(() => {
-          if (classified.type === "incremental") {
-            applyIncrementalOperations(classified.operations);
-          } else {
-            setDocumentRoot(currentRoot, options.field, incomingDocument);
-          }
-        });
+        room.history.pause();
+        try {
+          room.batch(() => {
+            if (classified.type === "incremental") {
+              applyIncrementalOperations(classified.operations);
+            } else {
+              setDocumentRoot(currentRoot, options.field, incomingDocument);
+            }
+          });
+        } catch (error) {
+          abortHistoryCapture();
+          throw error;
+        }
+        scheduleHistoryCaptureCommit();
         lastDocument = serializedIncoming;
       } finally {
         isApplyingLocalUpdate = false;
@@ -324,6 +370,7 @@ export function createLiveblocksCollaborationPlugin(
         },
         destroy() {
           destroyed = true;
+          commitHistoryCapture();
           unsubscribe?.();
           unsubscribe = undefined;
           view = undefined;
