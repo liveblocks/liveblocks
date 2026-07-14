@@ -4,8 +4,10 @@ import type {
   LsonObject,
   StorageUpdate,
 } from "@liveblocks/client";
+import type { kInternal, PrivateRoomApi } from "@liveblocks/core";
 
 export type LiveblocksProsemirrorRoom = {
+  readonly [kInternal]?: Pick<PrivateRoomApi, "history">;
   batch(callback: () => void): void;
   getOthers(): readonly {
     connectionId: number;

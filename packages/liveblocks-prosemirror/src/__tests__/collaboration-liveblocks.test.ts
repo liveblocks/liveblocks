@@ -1,6 +1,6 @@
 import type { LsonObject, StorageUpdate } from "@liveblocks/client";
 import { LiveList, LiveMap, LiveObject, LiveText } from "@liveblocks/client";
-import { kStorageUpdateSource } from "@liveblocks/core";
+import { kInternal, kStorageUpdateSource, OpCode } from "@liveblocks/core";
 import { Editor, Extension, Mark, Node } from "@tiptap/core";
 import Document from "@tiptap/extension-document";
 import Paragraph from "@tiptap/extension-paragraph";
@@ -9,6 +9,10 @@ import type { Node as ProseMirrorNode } from "prosemirror-model";
 import { Slice } from "prosemirror-model";
 import { describe, expect, test, vi } from "vitest";
 
+import {
+  createSerializedRoot,
+  prepareIsolatedStorageTest,
+} from "../../../liveblocks-core/src/__tests__/_MockWebSocketServer.setup";
 import {
   createLiveblocksCollaborationCaretPlugin,
   LIVEBLOCKS_CARET_PLUGIN_KEY,
@@ -163,6 +167,23 @@ function createCollaborationTestRoom(root = new LiveObject<LsonObject>({})) {
 async function flushAsyncWork() {
   await Promise.resolve();
   await Promise.resolve();
+}
+
+async function createHistoryTestEditor(content: string) {
+  const { applyRemoteOperations, room, root } =
+    await prepareIsolatedStorageTest<LsonObject>([createSerializedRoot()]);
+  const editor = new Editor({
+    extensions: [
+      Document,
+      Paragraph,
+      Text,
+      TestLiveblocksCollaboration.configure({ room }),
+    ],
+    content,
+  });
+  await flushAsyncWork();
+
+  return { applyRemoteOperations, editor, room, root };
 }
 
 function createCaretTestRoom(initialPosition = 1) {
@@ -699,6 +720,115 @@ describe("collaboration-liveblocks schema", () => {
 
     expect(room.history.resume).toHaveBeenCalledTimes(1);
     vi.useRealTimers();
+  });
+
+  test("restores a collapsed cursor when undoing and redoing text", async () => {
+    const { editor, room } = await createHistoryTestEditor("<p>Hello</p>");
+
+    editor.commands.setTextSelection(6);
+    editor.commands.insertContent("!");
+    expect(editor.getText()).toBe("Hello!");
+    expect(editor.state.selection.anchor).toBe(7);
+
+    room.history.resume();
+    room.history.undo();
+    expect(editor.getText()).toBe("Hello");
+    expect(editor.state.selection.anchor).toBe(6);
+    expect(editor.state.selection.head).toBe(6);
+
+    room.history.redo();
+    expect(editor.getText()).toBe("Hello!");
+    expect(editor.state.selection.anchor).toBe(7);
+    expect(editor.state.selection.head).toBe(7);
+
+    editor.destroy();
+  });
+
+  test("restores a deleted range instead of mapping it to the range end", async () => {
+    const { editor, room } = await createHistoryTestEditor(
+      "<p>Hello, world</p>"
+    );
+
+    editor.commands.setTextSelection({ from: 1, to: 6 });
+    editor.commands.deleteRange({ from: 1, to: 6 });
+    expect(editor.getText()).toBe(", world");
+    expect(editor.state.selection.anchor).toBe(1);
+
+    room.history.resume();
+    room.history.undo();
+    expect(editor.getText()).toBe("Hello, world");
+    expect(editor.state.selection.anchor).toBe(1);
+    expect(editor.state.selection.head).toBe(6);
+
+    room.history.redo();
+    expect(editor.getText()).toBe(", world");
+    expect(editor.state.selection.anchor).toBe(1);
+    expect(editor.state.selection.head).toBe(1);
+
+    editor.destroy();
+  });
+
+  test("restores selection when undo rebuilds an emptied text block", async () => {
+    const { editor, room } = await createHistoryTestEditor("<p>Hello</p>");
+
+    editor.commands.setTextSelection({ from: 1, to: 6 });
+    editor.commands.deleteRange({ from: 1, to: 6 });
+    expect(editor.getText()).toBe("");
+
+    room.history.resume();
+    room.history.undo();
+    expect(editor.getText()).toBe("Hello");
+    expect(editor.state.selection.anchor).toBe(1);
+    expect(editor.state.selection.head).toBe(6);
+
+    room.history.redo();
+    expect(editor.getText()).toBe("");
+    expect(editor.state.selection.anchor).toBe(1);
+    expect(editor.state.selection.head).toBe(1);
+
+    editor.destroy();
+  });
+
+  test("rebases a stored cursor over a peer edit before undo", async () => {
+    const { applyRemoteOperations, editor, room, root } =
+      await createHistoryTestEditor("<p>Hello</p>");
+
+    editor.commands.setTextSelection(6);
+    editor.commands.insertContent("!");
+    expect(editor.getText()).toBe("Hello!");
+
+    const documents = root.get(LIVEBLOCKS_TIPTAP_DOCUMENTS_KEY);
+    expect(documents).toBeInstanceOf(LiveMap);
+    const documentRoot =
+      documents instanceof LiveMap ? documents.get("default") : undefined;
+    expect(documentRoot).toBeInstanceOf(LiveObject);
+    const textNode = documentRoot ? getFirstTextNode(documentRoot) : undefined;
+    const text = textNode ? getLiveblocksNodeText(textNode) : undefined;
+    const textId = text?.[kInternal].getId();
+    expect(text).toBeDefined();
+    expect(textId).toBeDefined();
+    if (text === undefined || textId === undefined) {
+      throw new Error("Expected an attached LiveText node");
+    }
+
+    applyRemoteOperations([
+      {
+        type: OpCode.UPDATE_TEXT,
+        id: textId,
+        baseVersion: text.version,
+        version: text.version + 1,
+        ops: [{ type: "insert", index: 0, text: "X" }],
+      },
+    ]);
+    expect(editor.getText()).toBe("XHello!");
+
+    room.history.resume();
+    room.history.undo();
+    expect(editor.getText()).toBe("XHello");
+    expect(editor.state.selection.anchor).toBe(7);
+    expect(editor.state.selection.head).toBe(7);
+
+    editor.destroy();
   });
 
   test("ignores storage echoes for local LiveText updates", async () => {

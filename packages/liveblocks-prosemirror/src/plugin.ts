@@ -1,10 +1,15 @@
 import type { LsonObject, StorageUpdate } from "@liveblocks/client";
 import { LiveMap, LiveObject } from "@liveblocks/client";
-import { kStorageUpdateSource } from "@liveblocks/core";
+import { kInternal, kStorageUpdateSource } from "@liveblocks/core";
 import { Slice } from "prosemirror-model";
 import { Plugin, PluginKey } from "prosemirror-state";
 import type { EditorView } from "prosemirror-view";
 
+import {
+  captureHistorySelection,
+  type HistorySelectionSnapshot,
+  restoreHistorySelection,
+} from "./history";
 import { applyRemoteStorageUpdates } from "./remote";
 import {
   createLiveblocksProsemirrorNode,
@@ -66,7 +71,12 @@ function getInitialDocument(
 function replaceEditorDocument(
   view: EditorView,
   document: ProseMirrorJsonNode,
-  fallbackDocument: (() => ProseMirrorJsonNode) | undefined
+  fallbackDocument: (() => ProseMirrorJsonNode) | undefined,
+  historyRestore?: {
+    action: "undo" | "redo";
+    root: LiveblocksProsemirrorNode;
+    snapshot: HistorySelectionSnapshot;
+  }
 ): void {
   let nextDocument;
   try {
@@ -89,11 +99,20 @@ function replaceEditorDocument(
     nextDocument = view.state.schema.nodeFromJSON(fallback);
   }
 
-  const tr = view.state.tr.replace(
+  let tr = view.state.tr.replace(
     0,
     view.state.doc.content.size,
     new Slice(nextDocument.content, 0, 0)
   );
+
+  if (historyRestore !== undefined) {
+    tr = restoreHistorySelection(
+      tr,
+      historyRestore.root,
+      historyRestore.snapshot,
+      historyRestore.action
+    );
+  }
 
   tr.setMeta(LIVEBLOCKS_COLLABORATION_PLUGIN_KEY, { isRemote: true }).setMeta(
     "addToHistory",
@@ -101,6 +120,19 @@ function replaceEditorDocument(
   );
 
   view.dispatch(tr);
+}
+
+function getHistoryAction(
+  updates: readonly StorageUpdate[] | undefined
+): "undo" | "redo" | undefined {
+  for (const update of updates ?? []) {
+    const source = update[kStorageUpdateSource];
+    if (source?.origin === "local" && source.via === "history") {
+      return source.action;
+    }
+  }
+
+  return undefined;
 }
 
 function getDocumentRoot(
@@ -147,11 +179,28 @@ export function createLiveblocksCollaborationPlugin(
   let view: EditorView | undefined;
   let root: LiveObject<LsonObject> | undefined;
   let unsubscribe: (() => void) | undefined;
+  let unsubscribeFromHistory: (() => void) | undefined;
   let destroyed = false;
   let isApplyingRemoteUpdate = false;
   let isApplyingLocalUpdate = false;
   let lastDocument = "";
   let historyCaptureTimer: ReturnType<typeof setTimeout> | undefined;
+  let captureBefore: HistorySelectionSnapshot | undefined;
+  let captureAfter: HistorySelectionSnapshot | undefined;
+  let pendingRestore:
+    | {
+        action: "undo" | "redo";
+        snapshot: HistorySelectionSnapshot;
+      }
+    | undefined;
+  const selectionsByHistoryId = new Map<
+    number,
+    {
+      before: HistorySelectionSnapshot;
+      after: HistorySelectionSnapshot;
+    }
+  >();
+  const privateHistory = room[kInternal]?.history;
 
   const commitHistoryCapture = () => {
     if (historyCaptureTimer === undefined) {
@@ -179,6 +228,8 @@ export function createLiveblocksCollaborationPlugin(
       clearTimeout(historyCaptureTimer);
       historyCaptureTimer = undefined;
     }
+    captureBefore = undefined;
+    captureAfter = undefined;
     room.history.resume();
   };
 
@@ -201,8 +252,29 @@ export function createLiveblocksCollaborationPlugin(
       options.fallbackDocument
     );
     const serializedDocument = stringifyDocument(document);
+    const historyAction = getHistoryAction(updates);
+    const historyRestore =
+      historyAction !== undefined && pendingRestore?.action === historyAction
+        ? pendingRestore
+        : undefined;
+    if (historyAction !== undefined) {
+      pendingRestore = undefined;
+    }
 
     if (serializedDocument === lastDocument) {
+      if (historyRestore !== undefined) {
+        const tr = restoreHistorySelection(
+          view.state.tr,
+          documentRoot,
+          historyRestore.snapshot,
+          historyRestore.action
+        )
+          .setMeta(LIVEBLOCKS_COLLABORATION_PLUGIN_KEY, { isRemote: true })
+          .setMeta("addToHistory", false);
+        if (!tr.selection.eq(view.state.selection)) {
+          view.dispatch(tr);
+        }
+      }
       return;
     }
 
@@ -212,8 +284,17 @@ export function createLiveblocksCollaborationPlugin(
         lastDocument = serializedDocument;
         isApplyingRemoteUpdate = true;
         try {
+          const tr =
+            historyRestore === undefined
+              ? result.tr
+              : restoreHistorySelection(
+                  result.tr,
+                  documentRoot,
+                  historyRestore.snapshot,
+                  historyRestore.action
+                );
           view.dispatch(
-            result.tr
+            tr
               .setMeta(LIVEBLOCKS_COLLABORATION_PLUGIN_KEY, { isRemote: true })
               .setMeta("addToHistory", false)
           );
@@ -227,7 +308,17 @@ export function createLiveblocksCollaborationPlugin(
     lastDocument = serializedDocument;
     isApplyingRemoteUpdate = true;
     try {
-      replaceEditorDocument(view, document, options.fallbackDocument);
+      replaceEditorDocument(
+        view,
+        document,
+        options.fallbackDocument,
+        historyRestore === undefined
+          ? undefined
+          : {
+              ...historyRestore,
+              root: documentRoot,
+            }
+      );
     } finally {
       isApplyingRemoteUpdate = false;
     }
@@ -282,6 +373,18 @@ export function createLiveblocksCollaborationPlugin(
         return null;
       }
 
+      if (
+        privateHistory !== undefined &&
+        captureBefore === undefined &&
+        documentRoot !== undefined
+      ) {
+        captureBefore = captureHistorySelection(
+          oldState.selection,
+          oldState.doc,
+          documentRoot
+        );
+      }
+
       const classified =
         documentRoot !== undefined
           ? classifyTransaction(
@@ -309,6 +412,15 @@ export function createLiveblocksCollaborationPlugin(
         }
         scheduleHistoryCaptureCommit();
         lastDocument = serializedIncoming;
+
+        const updatedDocumentRoot = getDocumentRoot(currentRoot, options.field);
+        if (updatedDocumentRoot !== undefined) {
+          captureAfter = captureHistorySelection(
+            newState.selection,
+            newState.doc,
+            updatedDocumentRoot
+          );
+        }
       } finally {
         isApplyingLocalUpdate = false;
       }
@@ -317,6 +429,34 @@ export function createLiveblocksCollaborationPlugin(
     },
     view(editorView) {
       view = editorView;
+
+      unsubscribeFromHistory = privateHistory?.subscribe((event) => {
+        if (event.action === "push") {
+          if (captureBefore !== undefined && captureAfter !== undefined) {
+            selectionsByHistoryId.set(event.id, {
+              before: captureBefore,
+              after: captureAfter,
+            });
+          }
+          captureBefore = undefined;
+          captureAfter = undefined;
+        } else if (event.action === "undo" || event.action === "redo") {
+          const selections = selectionsByHistoryId.get(event.id);
+          const snapshot =
+            event.action === "undo" ? selections?.before : selections?.after;
+          pendingRestore =
+            snapshot === undefined
+              ? undefined
+              : { action: event.action, snapshot };
+        } else if (event.action === "discard") {
+          for (const id of event.ids) {
+            selectionsByHistoryId.delete(id);
+          }
+        } else {
+          selectionsByHistoryId.clear();
+          pendingRestore = undefined;
+        }
+      });
 
       room.getStorage().then(({ root: storageRoot }) => {
         if (destroyed) {
@@ -372,9 +512,13 @@ export function createLiveblocksCollaborationPlugin(
           destroyed = true;
           commitHistoryCapture();
           unsubscribe?.();
+          unsubscribeFromHistory?.();
           unsubscribe = undefined;
+          unsubscribeFromHistory = undefined;
           view = undefined;
           root = undefined;
+          selectionsByHistoryId.clear();
+          pendingRestore = undefined;
         },
       };
     },
