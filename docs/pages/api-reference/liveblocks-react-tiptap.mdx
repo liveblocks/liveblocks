@@ -1991,9 +1991,17 @@ const liveblocks = useLiveblocksExtension({
   </PropertiesListItem>
   <PropertiesListItem name="options.field" type="string">
     The name of this text editor’s field. Allows you to use multiple editors on
-    one page, if each has a separate field value. In `collaborationMode:
-    "liveblocks"`, documents are stored in `root._tiptap_docs` and keyed by this
-    field. [Learn more](#Multiple-editors).
+    one page, if each has a separate field value. [Learn
+    more](#Multiple-editors).
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="options.collaborationMode"
+    defaultValue='"yjs"'
+    type='"yjs" | "liveblocks"'
+  >
+    The collaboration backend to use. `liveblocks` stores editor documents in
+    `root._tiptap_docs`, keyed by `field`. [Learn
+    more](#Liveblocks-collaboration-mode).
   </PropertiesListItem>
   <PropertiesListItem
     name="options.offlineSupport_experimental"
@@ -2103,17 +2111,41 @@ function TextEditor({ field }: { field: string }) {
 }
 ```
 
-When using `collaborationMode: "liveblocks"`, these editors are stored in
-`root._tiptap_docs`, keyed by their `field` values. That means you can list all
-known editors directly from storage.
+#### Liveblocks collaboration mode
+
+By default, Tiptap uses Yjs-backed collaboration. To opt into Liveblocks
+storage directly, pass `collaborationMode: "liveblocks"`.
 
 ```tsx
+import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
+
+function TextEditor() {
+  const liveblocks = useLiveblocksExtension({
+    collaborationMode: "liveblocks",
+    field: "document",
+  });
+
+  // ...
+}
+```
+
+In this mode, documents are stored in `root._tiptap_docs`, keyed by their
+`field` values. This means you can list all known editors directly from storage.
+
+```tsx
+import { useStorage, shallow } from "@liveblocks/react/suspense";
+
 function TextEditors() {
-  const fields = useStorage((root) => Object.keys(root._tiptap_docs ?? {}));
+  const fields = useStorage(
+    (root) => Object.keys(root._tiptap_docs ?? {}),
+    shallow
+  );
 
   return fields.map((field) => <TextEditor key={field} field={field} />);
 }
 ```
+
+`offlineSupport_experimental` and `ai` require the default Yjs mode.
 
 #### Offline support [@badge=experimental]
 
@@ -2268,8 +2300,9 @@ function TextEditor() {
 
 ### useIsEditorReady
 
-Used to check if the editor content has been loaded or not, helpful for
-displaying a loading skeleton.
+Used to check if the editor content has been loaded or not in the default Yjs
+mode, helpful for displaying a loading skeleton. In
+`collaborationMode: "liveblocks"`, this hook is usually not needed.
 
 ```ts
 import { useIsEditorReady } from "@liveblocks/react-tiptap";

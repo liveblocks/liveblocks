@@ -306,9 +306,30 @@ function TextEditor() {
 }
 ```
 
-When using `collaborationMode: "liveblocks"`, editor documents are grouped
-inside `root._tiptap_docs`, keyed by each editor’s `field`. This makes it easy
-to render editors dynamically from storage.
+Learn more about
+[using multiple editors](/docs/api-reference/liveblocks-react-tiptap#Multiple-editors).
+
+### Liveblocks collaboration mode
+
+Tiptap uses Yjs-backed collaboration by default. You can opt into
+Liveblocks-backed storage instead by passing `collaborationMode:
+"liveblocks"`.
+
+```tsx
+import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
+
+function TextEditor() {
+  const liveblocks = useLiveblocksExtension({
+    collaborationMode: "liveblocks",
+    field: "document",
+  });
+
+  // ...
+}
+```
+
+In this mode, documents are stored in `root._tiptap_docs`, keyed by `field`.
+This makes it easy to render editors dynamically from storage.
 
 ```tsx
 function Editors() {
@@ -318,8 +339,8 @@ function Editors() {
 }
 ```
 
-Learn more about
-[using multiple editors](/docs/api-reference/liveblocks-react-tiptap#Multiple-editors).
+`offlineSupport_experimental` and `ai` stay Yjs-only. Learn more about
+[Liveblocks collaboration mode](/docs/api-reference/liveblocks-react-tiptap#Liveblocks-collaboration-mode).
 
 ### Offline support
 

@@ -992,7 +992,20 @@ function TextEditor() {
 ```
 
 In this mode, documents are stored in `root._tiptap_docs`, keyed by their
-`field` values.
+`field` values. This means you can list all known editors directly from storage.
+
+```tsx
+import { useStorage, shallow } from "@liveblocks/react/suspense";
+
+function TextEditors() {
+  const fields = useStorage(
+    (root) => Object.keys(root._tiptap_docs ?? {}),
+    shallow
+  );
+
+  return fields.map((field) => <TextEditor key={field} field={field} />);
+}
+```
 
 `offlineSupport_experimental` and `ai` require the default Yjs mode.
 
@@ -1074,8 +1087,8 @@ function Threads({ editor }: { editor: BlockNoteEditor }) {
 ### useIsEditorReady
 
 Used to check if the editor content has been loaded or not in the default Yjs
-mode, helpful for displaying a loading skeleton. In `collaborationMode:
-"liveblocks"`, this hook is usually not needed.
+mode, helpful for displaying a loading skeleton. In
+`collaborationMode: "liveblocks"`, this hook is usually not needed.
 
 ```ts
 import { useIsEditorReady } from "@liveblocks/react-blocknote";
