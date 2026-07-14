@@ -16,6 +16,8 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "vite"
+        update-types: ["version-update:semver-major"]
     versioning-strategy: lockfile-only
 
   # Default behavior elsewhere
