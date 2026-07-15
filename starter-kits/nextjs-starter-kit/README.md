@@ -15,7 +15,7 @@ Kickstart start your collaborative Next.js app with this starter kit.
 ## Features
 
 - Documents dashboard with pagination, organizations, auto-revalidation.
-- Collaborative apps including a whiteboard, text documents, note editor, drawing canvas.
+- Collaborative apps including a whiteboard, text documents, note editor, drawing canvas, AI spreadsheet, AI flowchart, AI slideshow, AI app builder.
 - Realtime presence with avatars, cursors, carets.
 - Fully-featured share menu with users, organizations, public permissions.
 - Authentication compatible with GitHub, Google, Auth0, and more.
