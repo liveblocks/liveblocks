@@ -116,7 +116,7 @@ export class LiveFile extends AbstractCrdt {
   /** @internal */
   _toTreeNode(key: string): DevTools.LsonTreeNode {
     return {
-      type: "Json",
+      type: "LiveFile",
       id: this._id ?? nanoid(),
       key,
       payload: this.#data,

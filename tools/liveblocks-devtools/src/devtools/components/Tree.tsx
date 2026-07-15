@@ -53,6 +53,7 @@ import {
   CrossIcon,
   CustomEventIcon,
   EllipsisIcon,
+  FileIcon,
   MapIcon,
   NumberIcon,
   ObjectIcon,
@@ -231,6 +232,9 @@ function color(node: DevTools.TreeNode): string {
     case "LiveMap":
       return "text-blue-500 dark:text-blue-400";
 
+    case "LiveFile":
+      return "text-purple-500 dark:text-purple-400";
+
     case "User":
       return "text-teal-500 dark:text-teal-500";
 
@@ -257,6 +261,9 @@ function background(node: DevTools.TreeNode): string {
     case "LiveMap":
       return "tree-focus:bg-blue-500 dark:tree-focus:bg-blue-400";
 
+    case "LiveFile":
+      return "tree-focus:bg-purple-500 dark:tree-focus:bg-purple-400";
+
     case "User":
       return "tree-focus:bg-teal-500 dark:tree-focus:bg-teal-500";
 
@@ -279,6 +286,9 @@ function icon(node: DevTools.TreeNode): ReactNode {
 
     case "LiveMap":
       return <MapIcon />;
+
+    case "LiveFile":
+      return <FileIcon />;
 
     case "Json":
       if (Array.isArray(node.payload)) {
@@ -511,6 +521,9 @@ function summarize(node: DevTools.TreeNode): string {
       return `${node.payload.length} ${
         node.payload.length !== 1 ? "entries" : "entry"
       }`;
+
+    case "LiveFile":
+      return stringify(node.payload);
 
     case "User":
       return wrapObject(
@@ -1011,6 +1024,7 @@ function LsonNodeRenderer(props: NodeRendererProps<DevTools.LsonTreeNode>) {
     case "LiveMap":
     case "LiveList":
     case "LiveObject":
+    case "LiveFile":
       return <LiveNodeRenderer {...props} />;
 
     case "Json":
@@ -1642,6 +1656,7 @@ function storageChildAccessor(node: StorageTreeNode): StorageTreeNode[] | null {
     case "LiveObject":
       return node.payload;
 
+    case "LiveFile":
     case "Json":
       return null;
 
@@ -1724,32 +1739,33 @@ function collect(
   if (matchNode(node, pattern)) {
     directMatches.add(node.id);
     return true;
-  } else {
-    // Recursively scan child nodes
-    switch (node.type) {
-      case "Json":
-        // JSON nodes are leafs and have no children
-        return false;
+  }
 
-      case "LiveList":
-      case "LiveObject":
-      case "LiveMap": {
-        let isIndirectMatch = false;
-        for (const childNode of node.payload) {
-          if (collect(childNode, pattern, directMatches, indirectMatches)) {
-            isIndirectMatch = true;
-          }
+  // Recursively scan child nodes
+  switch (node.type) {
+    case "Json":
+    case "LiveFile":
+      // Leaf nodes have no children
+      return false;
+
+    case "LiveList":
+    case "LiveObject":
+    case "LiveMap": {
+      let isIndirectMatch = false;
+      for (const childNode of node.payload) {
+        if (collect(childNode, pattern, directMatches, indirectMatches)) {
+          isIndirectMatch = true;
         }
-        if (isIndirectMatch) {
-          indirectMatches.add(node.id);
-        }
-        return isIndirectMatch;
       }
-
-      default:
-        // e.g. future LiveXxx types
-        return false;
+      if (isIndirectMatch) {
+        indirectMatches.add(node.id);
+      }
+      return isIndirectMatch;
     }
+
+    default:
+      // e.g. future LiveXxx types
+      return false;
   }
 }
 
@@ -1797,13 +1813,24 @@ function pruneNode<TTreeNode extends DevTools.TreeNode>(
       return node;
     }
 
-    // _Change_ the node, by pruning non-matching children from it
-    return {
-      ...node,
-      payload: mapfilter(node.payload, (child) =>
-        pruneNode(child, directMatches, indirectMatches)
-      ),
-    };
+    switch (node.type) {
+      case "LiveList":
+      case "LiveObject":
+      case "LiveMap":
+        // _Change_ the node, by pruning non-matching children from it
+        return {
+          ...node,
+          payload: mapfilter(node.payload, (child) =>
+            pruneNode(child, directMatches, indirectMatches)
+          ),
+        };
+
+      case "LiveFile":
+        throw new Error("Leaf nodes cannot be indirect matches");
+
+      default:
+        throw new Error("Unexpected node type");
+    }
   } else {
     // No match in the entire subtree
     return null;
