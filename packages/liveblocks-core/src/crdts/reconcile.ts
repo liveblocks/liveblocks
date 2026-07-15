@@ -1,6 +1,7 @@
 import { isPlainObject } from "../lib/guards";
 import type { Json, JsonObject, ReadonlyJson } from "../lib/Json";
 import {
+  isLiveFile,
   isLiveList,
   isLiveMap,
   isLiveObject,
@@ -107,6 +108,8 @@ function reconcile(live: Lson, json: Json, config?: SyncMode): Lson {
     return reconcileLiveList(live, json, config);
   } else if (isLiveMap(live) && isPlainObject(json)) {
     return reconcileLiveMap(live, config);
+  } else if (isLiveFile(live)) {
+    return live;
   } else {
     // Type mismatch or scalar — create fresh
     return deepLiveify(json, config);

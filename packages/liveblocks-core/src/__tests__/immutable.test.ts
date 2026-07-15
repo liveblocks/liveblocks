@@ -2,6 +2,7 @@ import * as fc from "fast-check";
 import { describe, expect, test, vi } from "vitest";
 
 import { jsonObject, liveStructure } from "../crdts/__tests__/_arbitraries";
+import { LiveFile } from "../crdts/LiveFile";
 import { LiveList } from "../crdts/LiveList";
 import { LiveMap } from "../crdts/LiveMap";
 import { LiveObject } from "../crdts/LiveObject";
@@ -129,6 +130,15 @@ describe("toJSON", () => {
 });
 
 describe("reconcileLiveObject", () => {
+  function createLiveFile() {
+    return new LiveFile({
+      id: "fl_123456789012345678901",
+      name: "example.txt",
+      size: 7,
+      mimeType: "text/plain",
+    });
+  }
+
   test("updates a changed scalar value", () => {
     const liveObj = new LiveObject({ a: 1, b: 2 });
     liveObj.reconcile({ a: 1, b: 3 });
@@ -176,6 +186,39 @@ describe("reconcileLiveObject", () => {
     expect(liveObj.toJSON()).toEqual({ nested: { x: 1, y: 99 } });
     // Same LiveObject instance — reconciled in place, not replaced
     expect(liveObj.get("nested")).toBe(nestedBefore);
+  });
+
+  test("preserves a LiveFile when its serialized data is unchanged", () => {
+    const file = createLiveFile();
+    const liveObj = new LiveObject({ file });
+
+    liveObj.reconcile(structuredClone(liveObj.toJSON()));
+
+    expect(liveObj.get("file")).toBe(file);
+  });
+
+  test("preserves a LiveFile when the incoming JSON differs", () => {
+    const file = createLiveFile();
+    const liveObj = new LiveObject({ file });
+
+    liveObj.reconcile({
+      file: {
+        ...file.data,
+        name: "renamed.txt",
+      },
+    });
+
+    expect(liveObj.get("file")).toBe(file);
+    expect(liveObj.toJSON()).toEqual({ file: file.data });
+  });
+
+  test("deletes a LiveFile when its key is omitted", () => {
+    const file = createLiveFile();
+    const liveObj = new LiveObject<{ file?: LiveFile }>({ file });
+
+    liveObj.reconcile({});
+
+    expect(liveObj.get("file")).toBeUndefined();
   });
 
   test("replaces LiveObject with scalar when type changes", () => {
