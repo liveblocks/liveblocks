@@ -26,7 +26,7 @@ of limits.
 | <LimitLabel href="/docs/platform/webhooks#StorageUpdatedEvent" tooltip="The frequency at which `yDocUpdated` (Yjs) and `storageUpdated` (Liveblocks Storage) events are sent to your webhook endpoint.">Webhook event frequency</LimitLabel> | <Limits.FreeStorageUpdatedWebhookEventThrottle />  | <Limits.ProStorageUpdatedWebhookEventThrottle />  | <Limits.TeamStorageUpdatedWebhookEventThrottle />  | <LimitHint tooltip={<>Down to <Limits.EnterpriseMaxStorageUpdatedWebhookEventThrottle /></>}><Limits.EnterpriseStorageUpdatedWebhookEventThrottle /></LimitHint> |
 | <LimitLabel tooltip="APIs, hooks, and pre-built components to access the previous versions of the realtime data stored in rooms.">Version history</LimitLabel>                                                                               | <Limits.FreeVersionHistory />                      | <Limits.ProVersionHistory />                      | <Limits.TeamVersionHistory />                      | <Limits.EnterpriseVersionHistory />                                                                                                                              |
 | <LimitLabel tooltip="How long activity and audit events are retained.">Event log retention</LimitLabel>                                                                                                                                      | <Limits.FreeEventLogRetention />                   | <Limits.ProEventLogRetention />                   | <Limits.TeamEventLogRetention />                   | <LimitHint tooltip={<>Up to <Limits.EnterpriseMaxEventLogRetention /></>}><Limits.EnterpriseEventLogRetention /></LimitHint>                                     |
-| <LimitLabel tooltip="Maximum size for a single file upload, such as a comment attachment.">Max file upload size</LimitLabel>                                                                                                                 | <Limits.FreeMaxFileUploadSize />                   | <Limits.ProMaxFileUploadSize />                   | <Limits.TeamMaxFileUploadSize />                   | <LimitHint tooltip={<>Up to <Limits.EnterpriseMaxFileUploadSize /></>}><Limits.EnterpriseFileUploadSize /></LimitHint>                                           |
+| <LimitLabel tooltip="Maximum size for a single file upload, such as a LiveFile or comment attachment.">Max file upload size</LimitLabel>                                                                                                     | <Limits.FreeMaxFileUploadSize />                   | <Limits.ProMaxFileUploadSize />                   | <Limits.TeamMaxFileUploadSize />                   | <LimitHint tooltip={<>Up to <Limits.EnterpriseMaxFileUploadSize /></>}><Limits.EnterpriseFileUploadSize /></LimitHint>                                           |
 
 Metered usage like realtime collaboration minutes, comments, storage updates,
 data stored, custom notifications, and file storage is billed through monthly
@@ -46,12 +46,16 @@ credits.
 | <LimitLabel href="/docs/api-reference/liveblocks-client#LiveObject" tooltip="A realtime data structure that stores key-value pairs.">LiveObject</LimitLabel>      | 2 MB when totalling the size of the keys and values                                                                  |
 | <LimitLabel href="/docs/api-reference/liveblocks-client#LiveMap" tooltip="A realtime data structure that stores key-value pairs in a map.">LiveMap</LimitLabel>   | Unlimited, so long as each individual value does not exceed 2 MB                                                     |
 | <LimitLabel href="/docs/api-reference/liveblocks-client#LiveList" tooltip="A realtime data structure that stores an ordered list of items.">LiveList</LimitLabel> | Unlimited, so long as each individual value does not exceed 2 MB                                                     |
+| <LimitLabel href="/docs/api-reference/liveblocks-client#LiveFile" tooltip="An immutable Storage reference to an uploaded file.">LiveFile</LimitLabel>             | Limited by the max file upload size for your plan                                                                    |
 
 Note that when one realtime data structure is nested inside another, it does not
 count towards the limit. Only the JSON leaves of your data structure count
 towards the limit. For example, if a `LiveList` is nested inside a `LiveObject`,
 the `LiveList` and its contents do not count towards the `LiveObject`'s data
 limit.
+
+For large files such as images and videos, use `LiveFile` instead of storing
+binary data or base64 strings in realtime data structures.
 
 ## FAQs
 
