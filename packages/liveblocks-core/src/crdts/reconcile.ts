@@ -1,5 +1,6 @@
 import { isPlainObject } from "../lib/guards";
 import type { Json, JsonObject, ReadonlyJson } from "../lib/Json";
+import { shallow } from "../lib/shallow";
 import {
   isLiveFile,
   isLiveList,
@@ -108,7 +109,7 @@ function reconcile(live: Lson, json: Json, config?: SyncMode): Lson {
     return reconcileLiveList(live, json, config);
   } else if (isLiveMap(live) && isPlainObject(json)) {
     return reconcileLiveMap(live, config);
-  } else if (isLiveFile(live)) {
+  } else if (isLiveFile(live) && shallow(live.data, json)) {
     return live;
   } else {
     // Type mismatch or scalar — create fresh

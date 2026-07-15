@@ -197,7 +197,7 @@ describe("reconcileLiveObject", () => {
     expect(liveObj.get("file")).toBe(file);
   });
 
-  test("preserves a LiveFile when the incoming JSON differs", () => {
+  test("replaces a LiveFile when the incoming JSON differs", () => {
     const file = createLiveFile();
     const liveObj = new LiveObject({ file });
 
@@ -208,8 +208,23 @@ describe("reconcileLiveObject", () => {
       },
     });
 
-    expect(liveObj.get("file")).toBe(file);
-    expect(liveObj.toJSON()).toEqual({ file: file.data });
+    expect(liveObj.get("file")).toBeInstanceOf(LiveObject);
+    expect(liveObj.toJSON()).toEqual({
+      file: {
+        ...file.data,
+        name: "renamed.txt",
+      },
+    });
+  });
+
+  test("replaces a LiveFile with null", () => {
+    const file = createLiveFile();
+    const liveObj = new LiveObject<{ file: LiveFile | null }>({ file });
+
+    liveObj.reconcile({ file: null });
+
+    expect(liveObj.get("file")).toBeNull();
+    expect(liveObj.toJSON()).toEqual({ file: null });
   });
 
   test("deletes a LiveFile when its key is omitted", () => {
