@@ -32,9 +32,10 @@ import type {
   DU,
   EnterOptions,
   FeedsEventServerMsg,
+  FileUrlData,
   IYjsProvider,
-  LiveFileReference,
   LiveblocksErrorContext,
+  LiveFileReference,
   MentionData,
   OpaqueClient,
   OpaqueRoom,
@@ -3802,7 +3803,7 @@ function selectorFor_useAttachmentUrl(
 }
 
 function selectorFor_useFileUrl(
-  state: AsyncResult<string | undefined> | undefined
+  state: AsyncResult<FileUrlData | undefined> | undefined
 ): FileUrlAsyncResult {
   if (state === undefined || state?.isLoading) {
     return state ?? { isLoading: true };
@@ -3816,7 +3817,7 @@ function selectorFor_useFileUrl(
 
   return {
     isLoading: false,
-    url: state.data,
+    url: state.data.url,
   };
 }
 
@@ -3907,17 +3908,21 @@ function useRoomFileUrl(
     [store, fileId]
   );
 
-  useEffect(() => {
-    void store.enqueue(fileId);
-  }, [store, fileId]);
-
-  return useSyncExternalStoreWithSelector(
+  const result = useSyncExternalStoreWithSelector(
     store.subscribe,
     getFileUrlState,
     getFileUrlState,
     selectorFor_useFileUrl,
     shallow
   );
+
+  useEffect(() => {
+    if (result.isLoading) {
+      void store.enqueue(fileId);
+    }
+  }, [store, fileId, result.isLoading]);
+
+  return result;
 }
 
 /**
@@ -4004,7 +4009,7 @@ function useFileUrlSuspense_withRoomContext(
   assert(!state.error, "Unexpected error state");
   return {
     isLoading: false,
-    url: state.data,
+    url: state.data.url,
     error: undefined,
   };
 }

@@ -181,6 +181,32 @@ describe("Batch", () => {
 });
 
 describe("createBatchStore", () => {
+  test("should invalidate cached data when it expires", async () => {
+    vi.useFakeTimers();
+
+    try {
+      const callback = vi.fn((inputs: string[]) => inputs);
+      const batch = new Batch<string, string>(callback, { delay: SOME_TIME });
+      const store = createBatchStore<string, string>(batch, {
+        getCacheExpiry: () => Date.now() + SOME_TIME,
+      });
+
+      const enqueuePromise = store.enqueue("a");
+      await vi.advanceTimersByTimeAsync(SOME_TIME);
+      await enqueuePromise;
+
+      expect(store.getData("a")).toBe("a");
+
+      await vi.advanceTimersByTimeAsync(SOME_TIME - 1);
+      expect(store.getData("a")).toBe("a");
+
+      await vi.advanceTimersByTimeAsync(1);
+      expect(store.getData("a")).toBeUndefined();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   test("should set state to loading then result with `enqueue`", async () => {
     const callback = vi.fn((inputs: string[]) => inputs);
     const batch = new Batch<string, string>(callback, { delay: SOME_TIME });

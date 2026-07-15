@@ -1,4 +1,4 @@
-import type { RoomHttpApi } from "./api-client";
+import type { FileUrlData, RoomHttpApi } from "./api-client";
 import { getBearerTokenFromAuthValue } from "./api-client";
 import type { AuthManager, AuthValue } from "./auth-manager";
 import { injectBrandBadge } from "./brand";
@@ -17,8 +17,8 @@ import {
   liveObjectFromNodeStream,
   mergeStorageUpdates,
 } from "./crdts/liveblocks-helpers";
-import { getLiveFileId } from "./crdts/LiveFile";
 import type { LiveFile, LiveFileReference } from "./crdts/LiveFile";
+import { getLiveFileId } from "./crdts/LiveFile";
 import { LiveObject } from "./crdts/LiveObject";
 import type { LiveStructure, LsonObject } from "./crdts/Lson";
 import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
@@ -1321,7 +1321,7 @@ export type PrivateRoomApi = {
   };
 
   attachmentUrlsStore: BatchStore<string, string>;
-  fileUrlsStore: BatchStore<string, string>;
+  fileUrlsStore: BatchStore<FileUrlData, string>;
 };
 
 function connectionAccessFromScopes(scopes: string[]): {

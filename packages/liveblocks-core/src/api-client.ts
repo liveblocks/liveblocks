@@ -78,6 +78,11 @@ import type { TextEditorType } from "./types/Others";
 import type { Patchable } from "./types/Patchable";
 import { PKG_VERSION } from "./version";
 
+export type FileUrlData = {
+  readonly url: string;
+  readonly expiresAt: number;
+};
+
 export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
   getThreads(options: {
     roomId: string;
@@ -355,7 +360,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     signal?: AbortSignal;
   }): Promise<LiveFile>;
 
-  getOrCreateFileUrlsStore(roomId: string): BatchStore<string, string>;
+  getOrCreateFileUrlsStore(roomId: string): BatchStore<FileUrlData, string>;
 
   // Text editor
   createTextMention({
@@ -559,6 +564,7 @@ export interface LiveblocksHttpApi<
 
 const ROOM_FILE_PART_SIZE = 5 * 1024 * 1024; // 5 MB
 const ROOM_FILE_RETRY_ATTEMPTS = 10;
+const FILE_URL_EXPIRY_BUFFER = 30_000;
 const ROOM_FILE_RETRY_DELAYS = [
   2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000,
 ];
@@ -1409,13 +1415,14 @@ export function createApiClient<
 
   const fileUrlsBatchStoresByRoom = new DefaultMap<
     string,
-    BatchStore<string, string>
+    BatchStore<FileUrlData, string>
   >((roomId) => {
-    const batch = new Batch<string, string>(
+    const batch = new Batch<FileUrlData, string>(
       async (batchedFileIds) => {
         const fileIds = batchedFileIds.flat();
-        const { urls } = await httpClient.post<{
+        const { urls, expiresAt } = await httpClient.post<{
           urls: (string | null)[];
+          expiresAt: string;
         }>(
           url`/v2/c/rooms/${roomId}/storage/files/presigned-urls`,
           await authManager.getAuthValue({
@@ -1426,25 +1433,29 @@ export function createApiClient<
           { fileIds }
         );
 
-        return urls.map(
-          (url) =>
-            url ?? new Error("There was an error while getting this file's URL")
+        const expiresAtTimestamp = Date.parse(expiresAt);
+        return urls.map((url) =>
+          url === null
+            ? new Error("There was an error while getting this file's URL")
+            : { url, expiresAt: expiresAtTimestamp }
         );
       },
       { delay: 50 }
     );
-    return createBatchStore(batch);
+    return createBatchStore(batch, {
+      getCacheExpiry: ({ expiresAt }) => expiresAt - FILE_URL_EXPIRY_BUFFER,
+    });
   });
 
   function getOrCreateFileUrlsStore(
     roomId: string
-  ): BatchStore<string, string> {
+  ): BatchStore<FileUrlData, string> {
     return fileUrlsBatchStoresByRoom.getOrCreate(roomId);
   }
 
-  function getFileUrl(options: { roomId: string; fileId: string }) {
+  async function getFileUrl(options: { roomId: string; fileId: string }) {
     const batch = getOrCreateFileUrlsStore(options.roomId).batch;
-    return batch.get(options.fileId);
+    return (await batch.get(options.fileId)).url;
   }
 
   /* -------------------------------------------------------------------------------------------------
