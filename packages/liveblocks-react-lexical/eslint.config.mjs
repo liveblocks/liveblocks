@@ -4,7 +4,7 @@ import react from "eslint-plugin-react";
 import reactHooks from "eslint-plugin-react-hooks";
 
 export default [
-  ...makeConfig(),
+  ...makeConfig(import.meta.dirname),
 
   {
     plugins: {
