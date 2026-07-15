@@ -73,6 +73,7 @@ import type {
 import { Code } from "./Code";
 import { Dialog } from "./Dialog";
 import { Tooltip } from "./Tooltip";
+import { formatFileSize } from "../../lib/formatFileSize";
 
 /**
  * Node types that can be used in the Storage tree view.
@@ -491,31 +492,6 @@ function getYTreeNodeBackground(node: YTreeNode): string {
     case "Y.ContentString":
       return "tree-focus:bg-dark-800 dark:tree-focus:bg-dark-600";
   }
-}
-
-function formatFileSize(size: number): string {
-  if (size < 1024) {
-    return `${size} B`;
-  }
-
-  const kilobytes = size / 1024;
-  if (kilobytes < 1024) {
-    return `${formatFileSizeValue(kilobytes)} KB`;
-  }
-
-  const megabytes = kilobytes / 1024;
-  if (megabytes < 1024) {
-    return `${formatFileSizeValue(megabytes)} MB`;
-  }
-
-  const gigabytes = megabytes / 1024;
-  return `${formatFileSizeValue(gigabytes)} GB`;
-}
-
-function formatFileSizeValue(value: number): string {
-  return new Intl.NumberFormat(undefined, {
-    maximumFractionDigits: value < 10 ? 1 : 0,
-  }).format(value);
 }
 
 /**
