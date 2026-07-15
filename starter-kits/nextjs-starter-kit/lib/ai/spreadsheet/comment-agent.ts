@@ -1,4 +1,5 @@
 import { Liveblocks } from "@liveblocks/node";
+import { replyToComment } from "./spreadsheet-server";
 
 /**
  * Reply to a comment in a spreadsheet document when the AI assistant is
@@ -13,9 +14,5 @@ export async function replyToSpreadsheetComment(
   threadId: string,
   commentId: string
 ): Promise<void> {
-  // Implemented by the spreadsheet AI server tools.
-  void liveblocks;
-  void roomId;
-  void threadId;
-  void commentId;
+  await replyToComment(liveblocks, roomId, threadId, commentId);
 }

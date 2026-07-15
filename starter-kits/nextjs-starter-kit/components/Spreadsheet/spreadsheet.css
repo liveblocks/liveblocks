@@ -1,0 +1,22 @@
+.spreadsheet-editor .handsontable td {
+  position: relative;
+  vertical-align: middle;
+  font-variant-numeric: tabular-nums;
+}
+
+.spreadsheet-editor .handsontable td.has-comment::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 9px;
+  height: 9px;
+  background: var(--lb-accent, #4444ff);
+  clip-path: polygon(0 0, 100% 0, 100% 100%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.lb-portal {
+  z-index: 500;
+}
