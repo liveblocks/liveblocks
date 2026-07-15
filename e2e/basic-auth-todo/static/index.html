@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Liveblocks Basic Auth todo</title>
+    <link rel="stylesheet" href="/index.css" />
+  </head>
+  <body>
+    <main class="container">
+      <h1>Basic Auth todo</h1>
+
+      <form id="auth_form" class="card">
+        <p>
+          Sign in with <code>alice / alice</code> or <code>bob / bob</code>.
+        </p>
+        <label for="username">Username</label>
+        <input id="username" name="username" autocomplete="username" required />
+        <label for="password">Password</label>
+        <input
+          id="password"
+          name="password"
+          type="password"
+          autocomplete="current-password"
+          required
+        />
+        <button type="submit">Connect</button>
+        <p id="auth_error" class="error" role="alert"></p>
+      </form>
+
+      <section id="app" class="card" hidden>
+        <div class="meta">
+          <span id="who_is_here">0 other users online</span>
+          <span id="status" data-status="initial">initial</span>
+        </div>
+        <input
+          id="todo_input"
+          type="text"
+          placeholder="What needs to be done?"
+        />
+        <div id="someone_is_typing" class="someone_is_typing"></div>
+        <div id="todos_container"></div>
+      </section>
+    </main>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

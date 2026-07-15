@@ -59,6 +59,31 @@ importers:
         specifier: ^4.1.4
         version: 4.1.4(@types/node@24.12.2)(@vitest/coverage-istanbul@4.1.4)(esbuild@0.27.7)(happy-dom@20.9.0)(jiti@2.6.1)(less@4.2.1)(msw@2.10.4(@types/node@24.12.2)(typescript@5.9.3))(sass@1.99.0)(yaml@2.4.5)
 
+  e2e/basic-auth-todo:
+    dependencies:
+      '@liveblocks/client':
+        specifier: workspace:*
+        version: link:../../packages/liveblocks-client
+      '@liveblocks/server':
+        specifier: 1.6.2
+        version: 1.6.2(@types/json-schema@7.0.15)
+      ws:
+        specifier: ^8.17.1
+        version: 8.20.0
+    devDependencies:
+      '@types/node':
+        specifier: ^24.12.2
+        version: 24.12.2
+      '@types/ws':
+        specifier: ^8.5.10
+        version: 8.18.1
+      esbuild:
+        specifier: ^0.27.0
+        version: 0.27.7
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
   e2e/next-ai-kitchen-sink:
     dependencies:
       '@liveblocks/client':
@@ -2631,8 +2656,16 @@ packages:
   '@lezer/lr@1.3.12':
     resolution: {integrity: sha512-5nwY1JzCueUdRtlMBnlf1SUi69iGCq2ABq7WQFQMkn/kxPvoACAEnTp4P17CtXxYr7WCwtYPLL2AEvxKPuF1OQ==}
 
+  '@liveblocks/core@3.21.0-private3':
+    resolution: {integrity: sha512-KFVC27dLFG4qldU+DI77OmwMGvZdk7wDm65670cVaC+6nwAkqiDpr7Ory7efFu0MgIIuNzp+hRziIPKLoGJeRQ==}
+    peerDependencies:
+      '@types/json-schema': ^7
+
   '@liveblocks/query-parser@0.1.1':
     resolution: {integrity: sha512-zcCX8LyrkMHDulJFmKYXleyb6dpND4fIcvcPpNN6pec9k+O8CmwhGiiwR+oVAhyolypP0gSUJGgIixVXK4AGhQ==}
+
+  '@liveblocks/server@1.6.2':
+    resolution: {integrity: sha512-UIRY9FiskcGyU+14rJ3yAKBbiigv+iyd4I2anWpUo0Sj7g61weLueY1Mm75y4yw8NalOQpYr4APMBLnY2vlS9A==}
 
   '@lmdb/lmdb-darwin-arm64@2.5.2':
     resolution: {integrity: sha512-+F8ioQIUN68B4UFiIBYu0QQvgb9FmlKw2ctQMSBfW2QBrZIxz9vD9jCGqTCPqZBRbPHAS/vG1zSXnKqnS2ch/A==}
@@ -5799,6 +5832,9 @@ packages:
     resolution: {integrity: sha512-Z7tMw1ytTXt5jqMcOP+OQteU1VuNK9Y02uuJtKQ1Sv69jXQKKg5cibLwGJow8yzZP+eAc18EmLGPal0bp36rvQ==}
     engines: {node: '>=8'}
 
+  async-mutex@0.4.1:
+    resolution: {integrity: sha512-WfoBo4E/TbCX1G95XTjbWTE3X2XLG0m1Xbv2cwOtuPdyH9CZvnaA5nCt1ucjaKEgW2A5IF71hxrRhr83Je5xjA==}
+
   asynckit@0.4.0:
     resolution: {integrity: sha512-Oei9OH4tRh0YqU3GxhX79dM/mwVgvbZJaSNaRk+bshkj0S5cfHcgYakreBjrHwatXKbz+IoIdYLxrKim2MjW0Q==}
 
@@ -6329,6 +6365,9 @@ packages:
 
   decode-named-character-reference@1.3.0:
     resolution: {integrity: sha512-GtpQYB283KrPp6nRw50q3U9/VfOutZOe103qlN7BPP6Ad27xYnOIWv4lPzo8HCAL+mMZofJ9KEy30fq6MfaK6Q==}
+
+  decoders@2.9.3:
+    resolution: {integrity: sha512-Zewdy1D3bddIMlKLnzKsPWE/n0qJyDkdsQqF85CO8ZlKGF8UtkGOzuDpjBfMMbR0o//gkAyIMnLcRniVGZhFRA==}
 
   decompress-response@6.0.0:
     resolution: {integrity: sha512-aW35yZM6Bb/4oJlZncMH2LCoZtJXTRxES17vE3hoRiowU2kWHaJKFkSBDnDR+cm9J+9QhXmREyIfv0pji9ejCQ==}
@@ -7529,6 +7568,10 @@ packages:
 
   itertools@2.3.2:
     resolution: {integrity: sha512-urRg24zOOKt4qQHm3gzQLK5Mima/kMSP3DUfcVw05W3veUHxxqHPTEW08aKY9GIZm9CKvnULVqXdjZWNYalJHQ==}
+
+  itertools@2.7.1:
+    resolution: {integrity: sha512-xrbTDDdUfkJhM4EzYOwwzEf2ksPT5WLgQ5i2X9X5yUpcmXJPEjeAnpMl1tIrYDzuCD19/AEH+cbLunQHGn8v7w==}
+    engines: {node: '>=22'}
 
   jackspeak@3.4.3:
     resolution: {integrity: sha512-OGlZQpz2yfahA/Rd1Y8Cd9SIEsqvXkLVoSw/cgwhnhFMDbsQFeZYoJJ7bIZBS9BcamUW96asq/npPWugM+RQBw==}
@@ -11618,7 +11661,23 @@ snapshots:
     dependencies:
       '@lezer/common': 1.1.0
 
+  '@liveblocks/core@3.21.0-private3(@types/json-schema@7.0.15)':
+    dependencies:
+      '@types/json-schema': 7.0.15
+
   '@liveblocks/query-parser@0.1.1': {}
+
+  '@liveblocks/server@1.6.2(@types/json-schema@7.0.15)':
+    dependencies:
+      '@liveblocks/core': 3.21.0-private3(@types/json-schema@7.0.15)
+      async-mutex: 0.4.1
+      decoders: 2.9.3
+      itertools: 2.7.1
+      js-base64: 3.7.7
+      nanoid: 3.3.11
+      yjs: 13.6.27
+    transitivePeerDependencies:
+      - '@types/json-schema'
 
   '@lmdb/lmdb-darwin-arm64@2.5.2':
     optional: true
@@ -15983,6 +16042,10 @@ snapshots:
 
   astral-regex@2.0.0: {}
 
+  async-mutex@0.4.1:
+    dependencies:
+      tslib: 2.8.1
+
   asynckit@0.4.0: {}
 
   autoprefixer@10.4.19(postcss@8.5.10):
@@ -16507,6 +16570,8 @@ snapshots:
   decode-named-character-reference@1.3.0:
     dependencies:
       character-entities: 2.0.2
+
+  decoders@2.9.3: {}
 
   decompress-response@6.0.0:
     dependencies:
@@ -17943,6 +18008,8 @@ snapshots:
       set-function-name: 2.0.2
 
   itertools@2.3.2: {}
+
+  itertools@2.7.1: {}
 
   jackspeak@3.4.3:
     dependencies:

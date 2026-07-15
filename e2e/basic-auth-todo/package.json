@@ -1,0 +1,21 @@
+{
+  "name": "@liveblocks/basic-auth-todo",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "esbuild app.ts --bundle --outfile=static/app.js && tsc --noEmit",
+    "dev": "node --watch server.ts",
+    "start": "node server.ts"
+  },
+  "dependencies": {
+    "@liveblocks/client": "workspace:*",
+    "@liveblocks/server": "1.6.2",
+    "ws": "^8.17.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.12.2",
+    "@types/ws": "^8.5.10",
+    "esbuild": "^0.27.0",
+    "typescript": "^5.9.3"
+  }
+}

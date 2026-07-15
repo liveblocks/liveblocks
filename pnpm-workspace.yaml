@@ -11,6 +11,7 @@ packages:
   - "!packages/liveblocks-python-codegen"
   - "tools/*"
   - "!tools/liveblocks-cli"
+  - "e2e/basic-auth-todo"
   - "e2e/next-ai-kitchen-sink"
   - "e2e/next-react-flow-kitchen-sink"
   - "e2e/next-sandbox"

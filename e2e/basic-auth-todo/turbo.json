@@ -1,0 +1,27 @@
+{
+  "$schema": "https://turborepo.org/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "inputs": [
+        "app.ts",
+        "basic-auth-strategy.ts",
+        "server.ts",
+        "static/**",
+        "package.json",
+        "tsconfig.json"
+      ],
+      "outputs": ["static/app.js"]
+    },
+    "dev": {
+      "dependsOn": ["build", "^build"],
+      "cache": false,
+      "persistent": true
+    },
+    "start": {
+      "dependsOn": ["build", "^build"],
+      "cache": false,
+      "persistent": true
+    }
+  }
+}
