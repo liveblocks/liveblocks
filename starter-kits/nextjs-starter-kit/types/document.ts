@@ -42,7 +42,15 @@ export type DocumentPermissions = {
   type: DocumentPermissionType;
 };
 
-export type DocumentType = "text" | "whiteboard" | "canvas" | "note";
+export type DocumentType =
+  | "text"
+  | "whiteboard"
+  | "canvas"
+  | "note"
+  | "spreadsheet"
+  | "flowchart"
+  | "slideshow"
+  | "app";
 
 export type DocumentUser = User & {
   access: DocumentPermissionType;

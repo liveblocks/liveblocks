@@ -22,7 +22,7 @@ export function DocumentProviders({
     <RoomProvider
       id={roomId}
       initialPresence={createInitialPresence()}
-      initialStorage={createInitialStorage()}
+      initialStorage={createInitialStorage(initialDocument.type)}
     >
       <InitialDocumentProvider initialDocument={initialDocument}>
         {children}

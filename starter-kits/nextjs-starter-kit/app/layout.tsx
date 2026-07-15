@@ -10,6 +10,7 @@ import "@blocknote/mantine/style.css";
 import "../styles/globals.css";
 import "../styles/tiptap.css";
 import "../styles/blocknote.css";
+import "../styles/tailwind.css";
 
 const inter = Inter({ subsets: ["latin"] });
 

@@ -8,12 +8,38 @@ import { Session } from "next-auth";
 import { SessionProvider } from "next-auth/react";
 import { ReactNode } from "react";
 import { DOCUMENT_URL } from "@/constants";
+import { AI_USER_ID, aiUser } from "@/data/ai";
 import {
   authorizeLiveblocks,
+  getAiConfig,
   getLiveUsers,
   getSpecificDocuments,
 } from "@/lib/actions";
 import { getUsers } from "@/lib/database";
+import { Document } from "@/types";
+
+// Cached AI config and document lookups, used to decide whether the AI
+// assistant should be suggested in comment @mentions
+let aiConfig$: ReturnType<typeof getAiConfig> | null = null;
+const documentTypes = new Map<string, Promise<Document["type"] | null>>();
+
+function getCachedAiConfig() {
+  if (!aiConfig$) {
+    aiConfig$ = getAiConfig();
+  }
+  return aiConfig$;
+}
+
+function getCachedDocumentType(roomId: string) {
+  let documentType$ = documentTypes.get(roomId);
+  if (!documentType$) {
+    documentType$ = getSpecificDocuments({ documentIds: [roomId] }).then(
+      (documents) => documents[0]?.type ?? null
+    );
+    documentTypes.set(roomId, documentType$);
+  }
+  return documentType$;
+}
 
 export function Providers({
   children,
@@ -104,8 +130,28 @@ export function Providers({
               id: user.id,
             }));
 
+          // Suggest the AI assistant in spreadsheet/flowchart comments, so it
+          // can be @mentioned for an AI reply. Only when webhooks are set up
+          // (`LIVEBLOCKS_WEBHOOK_SECRET_KEY`), which power the replies.
+          const aiSuggestions: MentionData[] = [];
+          if (
+            aiUser.name.toLowerCase().includes(text.toLowerCase()) ||
+            AI_USER_ID.includes(text.toLowerCase())
+          ) {
+            const [{ commentAiEnabled }, documentType] = await Promise.all([
+              getCachedAiConfig(),
+              getCachedDocumentType(roomId),
+            ]);
+            if (
+              commentAiEnabled &&
+              (documentType === "spreadsheet" || documentType === "flowchart")
+            ) {
+              aiSuggestions.push({ kind: "user", id: AI_USER_ID });
+            }
+          }
+
           // Return combined suggestions
-          return [...globalSuggestions, ...userSuggestions];
+          return [...globalSuggestions, ...aiSuggestions, ...userSuggestions];
         }}
         // Resolve a room ID into room information for Notifications
         resolveRoomsInfo={async ({ roomIds }) => {
