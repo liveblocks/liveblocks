@@ -351,9 +351,114 @@ describe("diffNodeMap", () => {
 
     expect(ops).toEqual([
       {
-        type: OpCode.UPDATE_OBJECT,
+        type: OpCode.DELETE_CRDT,
         id: "0:2",
+      },
+      {
+        type: OpCode.CREATE_OBJECT,
+        id: "0:2",
+        parentId: "0:1",
+        parentKey: FIRST_POSITION,
         data: { a: 1 },
+      },
+    ]);
+  });
+
+  test("recreates a LiveFile when its metadata changes", () => {
+    const currentItems: NodeMap = new Map([
+      ["root", { type: CrdtType.OBJECT, data: {} }],
+      [
+        "si:1",
+        {
+          type: CrdtType.FILE,
+          parentId: "root",
+          parentKey: "file",
+          data: {
+            id: "fl_123456789012345678901",
+            name: "before.txt",
+            size: 6,
+            mimeType: "text/plain",
+          },
+        },
+      ],
+    ]);
+    const newItems: NodeMap = new Map([
+      ["root", { type: CrdtType.OBJECT, data: {} }],
+      [
+        "si:1",
+        {
+          type: CrdtType.FILE,
+          parentId: "root",
+          parentKey: "file",
+          data: {
+            id: "fl_abcdefghijklmnopqrstu",
+            name: "after.txt",
+            size: 5,
+            mimeType: "text/plain",
+          },
+        },
+      ],
+    ]);
+
+    expect(diffNodeMap(currentItems, newItems)).toEqual([
+      { type: OpCode.DELETE_CRDT, id: "si:1" },
+      {
+        type: OpCode.CREATE_FILE,
+        id: "si:1",
+        parentId: "root",
+        parentKey: "file",
+        data: {
+          id: "fl_abcdefghijklmnopqrstu",
+          name: "after.txt",
+          size: 5,
+          mimeType: "text/plain",
+        },
+      },
+    ]);
+  });
+
+  test("recreates descendants when a container type changes", () => {
+    const currentItems: NodeMap = new Map([
+      ["root", { type: CrdtType.OBJECT, data: {} }],
+      ["si:1", { type: CrdtType.LIST, parentId: "root", parentKey: "items" }],
+      [
+        "si:2",
+        {
+          type: CrdtType.REGISTER,
+          parentId: "si:1",
+          parentKey: FIRST_POSITION,
+          data: "value",
+        },
+      ],
+    ]);
+    const newItems: NodeMap = new Map([
+      ["root", { type: CrdtType.OBJECT, data: {} }],
+      [
+        "si:2",
+        {
+          type: CrdtType.REGISTER,
+          parentId: "si:1",
+          parentKey: "entry",
+          data: "value",
+        },
+      ],
+      ["si:1", { type: CrdtType.MAP, parentId: "root", parentKey: "items" }],
+    ]);
+
+    expect(diffNodeMap(currentItems, newItems)).toEqual([
+      { type: OpCode.DELETE_CRDT, id: "si:1" },
+      {
+        type: OpCode.CREATE_MAP,
+        id: "si:1",
+        parentId: "root",
+        parentKey: "items",
+      },
+      {
+        type: OpCode.CREATE_REGISTER,
+        id: "si:2",
+        parentId: "si:1",
+        parentKey: "entry",
+        data: "value",
       },
     ]);
   });
