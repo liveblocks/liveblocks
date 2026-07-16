@@ -19,6 +19,7 @@ export type BatchStore<O, I> = {
   setData: (entries: [I, O][]) => void;
   getItemState: (input: I) => AsyncResult<O> | undefined;
   getData: (input: I) => O | undefined;
+  waitUntilItemCacheExpires: (input: I) => Promise<void> | undefined;
   invalidate: (inputs?: I[]) => void;
 
   /**
@@ -296,12 +297,15 @@ export function createBatchStore<O, I>(
       //   });
       // }
 
+      // Schedule expiry before publishing the error so subscribers can inspect
+      // whether the cached error is temporary from inside their callback.
+      scheduleCacheExpiry(input, options?.getErrorCacheExpiry?.(error));
+
       // If there was an error (for various reasons), set the state to the error.
       update({
         key: cacheKey,
         state: { isLoading: false, error: error as Error },
       });
-      scheduleCacheExpiry(input, options?.getErrorCacheExpiry?.(error));
     }
   }
 
@@ -330,6 +334,23 @@ export function createBatchStore<O, I>(
     return cache.get(cacheKey)?.data;
   }
 
+  function waitUntilItemCacheExpires(input: I): Promise<void> | undefined {
+    const cacheKey = getCacheKey(input);
+    if (!cacheExpiryTimeouts.has(cacheKey)) {
+      return undefined;
+    }
+
+    const initialState = signal.get().get(cacheKey);
+    return new Promise((resolve) => {
+      const unsubscribe = signal.subscribe(() => {
+        if (signal.get().get(cacheKey) !== initialState) {
+          unsubscribe();
+          resolve();
+        }
+      });
+    });
+  }
+
   /** @internal - Only for testing */
   function _cacheKeys() {
     const cache = signal.get();
@@ -342,6 +363,7 @@ export function createBatchStore<O, I>(
     setData,
     getItemState,
     getData,
+    waitUntilItemCacheExpires,
     invalidate,
 
     batch,

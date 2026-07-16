@@ -3996,6 +3996,11 @@ function useFileUrlSuspense_withRoomContext(
   }
 
   if (fileUrlState.error) {
+    const cacheExpiry$ = fileUrlsStore.waitUntilItemCacheExpires(fileId);
+    if (cacheExpiry$ !== undefined) {
+      throw cacheExpiry$;
+    }
+
     throw fileUrlState.error;
   }
 
