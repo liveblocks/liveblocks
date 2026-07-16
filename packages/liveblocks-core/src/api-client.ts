@@ -592,6 +592,7 @@ type UploadRoomFileOptions<TResult> = {
   file: File;
   signal?: AbortSignal;
   abortErrorMessage: string;
+  retryMultipartCompletion: boolean;
   uploadSingle: () => Promise<TResult>;
   createMultipartUpload: () => Promise<MultipartUpload>;
   uploadMultipartPart: (
@@ -610,6 +611,7 @@ async function uploadRoomFile<TResult>({
   file,
   signal,
   abortErrorMessage,
+  retryMultipartCompletion,
   uploadSingle,
   createMultipartUpload,
   uploadMultipartPart,
@@ -645,12 +647,7 @@ async function uploadRoomFile<TResult>({
 
   let uploadId: string | undefined;
   const uploadedParts: UploadedRoomFilePart[] = [];
-  const multipartUpload = await autoRetry(
-    createMultipartUpload,
-    ROOM_FILE_RETRY_ATTEMPTS,
-    ROOM_FILE_RETRY_DELAYS,
-    handleRetryError
-  );
+  const multipartUpload = await createMultipartUpload();
 
   try {
     uploadId = multipartUpload.uploadId;
@@ -683,12 +680,19 @@ async function uploadRoomFile<TResult>({
       throw abortError;
     }
 
-    return completeMultipartUpload(
-      uploadId,
-      uploadedParts.sort((a, b) => a.partNumber - b.partNumber)
+    const sortedParts = uploadedParts.sort(
+      (a, b) => a.partNumber - b.partNumber
     );
+    return retryMultipartCompletion
+      ? autoRetry(
+          () => completeMultipartUpload(multipartUpload.uploadId, sortedParts),
+          ROOM_FILE_RETRY_ATTEMPTS,
+          ROOM_FILE_RETRY_DELAYS,
+          handleRetryError
+        )
+      : completeMultipartUpload(uploadId, sortedParts);
   } catch (error) {
-    if (uploadId && isAbortOrTimeoutError(error)) {
+    if (uploadId) {
       try {
         await abortMultipartUpload(uploadId);
       } catch {
@@ -716,13 +720,6 @@ function splitFileIntoParts(file: File): RoomFilePart[] {
   }
 
   return parts;
-}
-
-function isAbortOrTimeoutError(error: unknown): boolean {
-  return (
-    error instanceof Error &&
-    (error.name === "AbortError" || error.name === "TimeoutError")
-  );
 }
 
 function createAbortError(message: string): Error {
@@ -1242,6 +1239,7 @@ export function createApiClient<
       file: attachment.file,
       signal: options.signal,
       abortErrorMessage: `Upload of attachment ${attachment.id} was aborted.`,
+      retryMultipartCompletion: false,
       uploadSingle: async () =>
         httpClient.putBlob<CommentAttachment>(
           url`/v2/c/rooms/${roomId}/attachments/${attachment.id}/upload/${attachment.name}`,
@@ -1315,6 +1313,7 @@ export function createApiClient<
       file,
       signal: options.signal,
       abortErrorMessage: `Upload of file ${fileId} was aborted.`,
+      retryMultipartCompletion: true,
       uploadSingle: async () =>
         httpClient.putBlob<LiveFileData>(
           url`/v2/c/rooms/${roomId}/storage/files/${fileId}/upload/${file.name}`,

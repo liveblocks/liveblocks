@@ -1455,11 +1455,14 @@ describe("client", () => {
       const fileName = "file 100%.bin";
       const file = new File([new Uint8Array(5 * 1024 * 1024 + 1)], fileName);
       const uploadedPartNumbers: number[] = [];
+      let multipartCreationCount = 0;
+      let multipartCompletionCount = 0;
 
       server.use(
         http.post(
           `${DEFAULT_BASE_URL}/v2/rooms/:roomId/storage/files/:fileId/multipart/:name`,
           ({ request, params }) => {
+            multipartCreationCount++;
             const url = new URL(request.url);
 
             expect(params.roomId).toBe("room1");
@@ -1502,6 +1505,7 @@ describe("client", () => {
         http.post(
           `${DEFAULT_BASE_URL}/v2/rooms/:roomId/storage/files/:fileId/multipart/:uploadId/complete`,
           async ({ request, params }) => {
+            multipartCompletionCount++;
             expect(params.roomId).toBe("room1");
             expect(String(params.fileId)).toMatch(/^fl_/);
             expect(params.uploadId).toBe("upload_abc123");
@@ -1511,6 +1515,13 @@ describe("client", () => {
                 { partNumber: 2, etag: "etag-2" },
               ],
             });
+
+            if (multipartCompletionCount === 1) {
+              return HttpResponse.json(
+                { message: "Temporary error" },
+                { status: 500 }
+              );
+            }
 
             return HttpResponse.json(
               {
@@ -1541,6 +1552,8 @@ describe("client", () => {
         mimeType: "application/octet-stream",
       });
       expect(uploadedPartNumbers.sort()).toEqual([1, 2]);
+      expect(multipartCreationCount).toBe(1);
+      expect(multipartCompletionCount).toBe(2);
     });
 
     test("should abort multipart uploads when upload is aborted", async () => {
