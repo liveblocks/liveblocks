@@ -565,6 +565,7 @@ export interface LiveblocksHttpApi<
 const ROOM_FILE_PART_SIZE = 5 * 1024 * 1024; // 5 MB
 const ROOM_FILE_RETRY_ATTEMPTS = 10;
 const FILE_URL_EXPIRY_BUFFER = 30_000;
+const FILE_URL_ERROR_RETRY_DELAY = 1_000;
 const ROOM_FILE_RETRY_DELAYS = [
   2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000,
 ];
@@ -582,6 +583,8 @@ type UploadedRoomFilePart = {
 type MultipartUpload = {
   uploadId: string;
 };
+
+class FileUrlNotReadyError extends Error {}
 
 type UploadRoomFileOptions<TResult> = {
   file: File;
@@ -1436,7 +1439,9 @@ export function createApiClient<
         const expiresAtTimestamp = Date.parse(expiresAt);
         return urls.map((url) =>
           url === null
-            ? new Error("There was an error while getting this file's URL")
+            ? new FileUrlNotReadyError(
+                "There was an error while getting this file's URL"
+              )
             : { url, expiresAt: expiresAtTimestamp }
         );
       },
@@ -1444,6 +1449,10 @@ export function createApiClient<
     );
     return createBatchStore(batch, {
       getCacheExpiry: ({ expiresAt }) => expiresAt - FILE_URL_EXPIRY_BUFFER,
+      getErrorCacheExpiry: (error) =>
+        error instanceof FileUrlNotReadyError
+          ? Date.now() + FILE_URL_ERROR_RETRY_DELAY
+          : undefined,
     });
   });
 

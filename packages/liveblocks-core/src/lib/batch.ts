@@ -49,6 +49,9 @@ interface BatchOptions {
 type BatchStoreOptions<O> = {
   /** Returns the timestamp when an output should be invalidated. */
   getCacheExpiry?: (output: O) => number | undefined;
+
+  /** Returns the timestamp when an error should be invalidated. */
+  getErrorCacheExpiry?: (error: unknown) => number | undefined;
 };
 
 class BatchCall<O, I> {
@@ -216,11 +219,10 @@ export function createBatchStore<O, I>(
     }
   }
 
-  function scheduleCacheExpiry(input: I, output: O): void {
+  function scheduleCacheExpiry(input: I, expiresAt: number | undefined): void {
     const cacheKey = getCacheKey(input);
     clearCacheExpiry(cacheKey);
 
-    const expiresAt = options?.getCacheExpiry?.(output);
     if (expiresAt === undefined || !Number.isFinite(expiresAt)) {
       return;
     }
@@ -278,7 +280,7 @@ export function createBatchStore<O, I>(
 
       // Set the state to the result.
       update({ key: cacheKey, state: { isLoading: false, data: result } });
-      scheduleCacheExpiry(input, result);
+      scheduleCacheExpiry(input, options?.getCacheExpiry?.(result));
     } catch (error) {
       // // TODO: Differentiate whole batch errors from individual errors.
       // if (batch.error) {
@@ -299,6 +301,7 @@ export function createBatchStore<O, I>(
         key: cacheKey,
         state: { isLoading: false, error: error as Error },
       });
+      scheduleCacheExpiry(input, options?.getErrorCacheExpiry?.(error));
     }
   }
 
@@ -311,7 +314,7 @@ export function createBatchStore<O, I>(
     );
 
     for (const [input, output] of entries) {
-      scheduleCacheExpiry(input, output);
+      scheduleCacheExpiry(input, options?.getCacheExpiry?.(output));
     }
   }
 
