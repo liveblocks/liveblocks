@@ -981,7 +981,7 @@
             "schema": {
               "type": "string",
               "enum": ["plain-lson", "json"],
-              "description": "Use the `json` format to output a simplified JSON representation of the Storage tree. In that format, each LiveObject and LiveMap will be formatted as a simple JSON object, and each LiveList will be formatted as a simple JSON array. This is a lossy format because information about the original data structures is not retained, but it may be easier to work with.",
+              "description": "Use the `json` format to output a simplified JSON representation of the Storage tree. In that format, each LiveObject and LiveMap becomes a simple JSON object, each LiveList becomes a simple JSON array, and each LiveFile becomes its metadata object. This is a lossy format because information about the original data structures is not retained, but it may be easier to work with.",
               "example": "json"
             },
             "name": "format",
@@ -1017,6 +1017,15 @@
                           "data": {
                             "a": 1,
                             "b": 2
+                          }
+                        },
+                        "aLiveFile": {
+                          "liveblocksType": "LiveFile",
+                          "data": {
+                            "id": "fl_abc123456789012345678",
+                            "name": "photo.png",
+                            "size": 12345,
+                            "mimeType": "image/png"
                           }
                         }
                       }
@@ -1083,6 +1092,15 @@
                             "a": 1,
                             "b": 2
                           }
+                        },
+                        "aLiveFile": {
+                          "liveblocksType": "LiveFile",
+                          "data": {
+                            "id": "fl_abc123456789012345678",
+                            "name": "photo.png",
+                            "size": 12345,
+                            "mimeType": "image/png"
+                          }
                         }
                       }
                     }
@@ -1121,7 +1139,7 @@
             }
           }
         },
-        "description": "This endpoint initializes or reinitializes a room’s Storage. The room must already exist. Calling this endpoint will disconnect all users from the room if there are any, triggering a reconnect. Corresponds to [`liveblocks.initializeStorageDocument`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-storage).\n\nThe format of the request body is the same as what’s returned by the get Storage endpoint.\n\nFor each Liveblocks data structure that you want to create, you need a JSON element having two properties:\n- `\"liveblocksType\"` => `\"LiveObject\" | \"LiveList\" | \"LiveMap\"`\n- `\"data\"` => contains the nested data structures (children) and data.\n\nThe root’s type can only be LiveObject.\n\nA utility function, `toPlainLson` is included in `@liveblocks/client` from `1.0.9` to help convert `LiveObject`, `LiveList`, and `LiveMap` to the structure expected by the endpoint.",
+        "description": "This endpoint initializes or reinitializes a room’s Storage. The room must already exist. Calling this endpoint will disconnect all users from the room if there are any, triggering a reconnect. Corresponds to [`liveblocks.initializeStorageDocument`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-storage).\n\nThe format of the request body is the same as what’s returned by the get Storage endpoint.\n\nFor each Liveblocks data structure that you want to create, you need a JSON element having two properties:\n- `\"liveblocksType\"` => `\"LiveObject\" | \"LiveList\" | \"LiveMap\" | \"LiveFile\"`\n- `\"data\"` => contains the nested data structures (children) and data.\n\nThe root’s type can only be LiveObject.\n\nA utility function, `toPlainLson` is included in `@liveblocks/client` from `1.0.9` to help convert `LiveObject`, `LiveList`, `LiveMap`, and `LiveFile` to the structure expected by the endpoint.",
         "requestBody": {
           "required": true,
           "content": {
@@ -1160,6 +1178,15 @@
                         "data": {
                           "a": 1,
                           "b": 2
+                        }
+                      },
+                      "aLiveFile": {
+                        "liveblocksType": "LiveFile",
+                        "data": {
+                          "id": "fl_abc123456789012345678",
+                          "name": "photo.png",
+                          "size": 12345,
+                          "mimeType": "image/png"
                         }
                       }
                     }
@@ -1252,6 +1279,24 @@
                       "value": "newLayer"
                     }
                   ]
+                },
+                "addLiveFile": {
+                  "summary": "Add a LiveFile",
+                  "value": [
+                    {
+                      "op": "add",
+                      "path": "/photo",
+                      "value": {
+                        "liveblocksType": "LiveFile",
+                        "data": {
+                          "id": "fl_abc123456789012345678",
+                          "name": "photo.png",
+                          "size": 12345,
+                          "mimeType": "image/png"
+                        }
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -1297,6 +1342,452 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/rooms/{roomId}/storage/files/{fileId}": {
+      "get": {
+        "summary": "Get Storage file",
+        "description": "Returns an uploaded Storage file's metadata and a presigned download URL. The URL expires after one hour.",
+        "tags": ["Storage"],
+        "operationId": "get-storage-file",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "ID of the room",
+              "example": "my-room-id"
+            },
+            "name": "roomId",
+            "in": "path",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^fl_[A-Za-z0-9_-]{21}$",
+              "description": "ID of the Storage file",
+              "example": "fl_abc123456789012345678"
+            },
+            "name": "fileId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the file metadata and presigned download URL.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorageFileWithUrl"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        }
+      }
+    },
+    "/rooms/{roomId}/storage/files/{fileId}/upload/{name}": {
+      "put": {
+        "summary": "Upload Storage file",
+        "description": "Uploads a file's bytes to a room and returns the metadata needed to create a LiveFile. For large files, use the multipart upload operations instead. Repeating the request with the same file ID, name, and file size returns the existing upload.",
+        "tags": ["Storage"],
+        "operationId": "upload-storage-file",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "ID of the room",
+              "example": "my-room-id"
+            },
+            "name": "roomId",
+            "in": "path",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^fl_[A-Za-z0-9_-]{21}$",
+              "description": "ID for the Storage file",
+              "example": "fl_abc123456789012345678"
+            },
+            "name": "fileId",
+            "in": "path",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "Name of the file",
+              "example": "photo.png"
+            },
+            "name": "name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Expected file size in bytes.",
+              "example": 12345
+            },
+            "name": "fileSize",
+            "in": "query",
+            "required": false
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Returns the uploaded file metadata.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiveFileData"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "409": {
+            "description": "A file with this ID already exists with different metadata.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "The file exceeds the project's per-file upload limit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rooms/{roomId}/storage/files/{fileId}/multipart/{name}": {
+      "post": {
+        "summary": "Create Storage file multipart upload",
+        "description": "Starts a multipart upload for a Storage file.",
+        "tags": ["Storage"],
+        "operationId": "create-storage-file-multipart-upload",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "ID of the room",
+              "example": "my-room-id"
+            },
+            "name": "roomId",
+            "in": "path",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^fl_[A-Za-z0-9_-]{21}$",
+              "description": "ID for the Storage file",
+              "example": "fl_abc123456789012345678"
+            },
+            "name": "fileId",
+            "in": "path",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "Name of the file",
+              "example": "video.mp4"
+            },
+            "name": "name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Expected file size in bytes",
+              "example": 10485760
+            },
+            "name": "fileSize",
+            "in": "query",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns identifiers for the multipart upload.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorageFileMultipartUpload"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "409": {
+            "description": "A file with this ID already exists."
+          },
+          "413": {
+            "description": "The file exceeds the project's per-file upload limit."
+          }
+        }
+      }
+    },
+    "/rooms/{roomId}/storage/files/{fileId}/multipart/{uploadId}/{partNumber}": {
+      "put": {
+        "summary": "Upload Storage file multipart part",
+        "description": "Uploads one part of a Storage file multipart upload.",
+        "tags": ["Storage"],
+        "operationId": "upload-storage-file-multipart-part",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "ID of the room",
+              "example": "my-room-id"
+            },
+            "name": "roomId",
+            "in": "path",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^fl_[A-Za-z0-9_-]{21}$",
+              "description": "ID of the Storage file",
+              "example": "fl_abc123456789012345678"
+            },
+            "name": "fileId",
+            "in": "path",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "ID returned when the multipart upload was created"
+            },
+            "name": "uploadId",
+            "in": "path",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "One-based part number",
+              "example": 1
+            },
+            "name": "partNumber",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Returns the uploaded part's number and ETag.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorageFileMultipartPart"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        }
+      }
+    },
+    "/rooms/{roomId}/storage/files/{fileId}/multipart/{uploadId}/complete": {
+      "post": {
+        "summary": "Complete Storage file multipart upload",
+        "description": "Completes a multipart upload and returns the metadata needed to create a LiveFile.",
+        "tags": ["Storage"],
+        "operationId": "complete-storage-file-multipart-upload",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "ID of the room",
+              "example": "my-room-id"
+            },
+            "name": "roomId",
+            "in": "path",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^fl_[A-Za-z0-9_-]{21}$",
+              "description": "ID of the Storage file",
+              "example": "fl_abc123456789012345678"
+            },
+            "name": "fileId",
+            "in": "path",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "ID returned when the multipart upload was created"
+            },
+            "name": "uploadId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteStorageFileMultipartUploadRequestBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Returns the uploaded file metadata.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiveFileData"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "413": {
+            "description": "The completed file exceeds the project's per-file upload limit."
+          }
+        }
+      }
+    },
+    "/rooms/{roomId}/storage/files/{fileId}/multipart/{uploadId}": {
+      "delete": {
+        "summary": "Abort Storage file multipart upload",
+        "description": "Aborts a multipart upload and discards its uploaded parts.",
+        "tags": ["Storage"],
+        "operationId": "abort-storage-file-multipart-upload",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "ID of the room",
+              "example": "my-room-id"
+            },
+            "name": "roomId",
+            "in": "path",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^fl_[A-Za-z0-9_-]{21}$",
+              "description": "ID of the Storage file",
+              "example": "fl_abc123456789012345678"
+            },
+            "name": "fileId",
+            "in": "path",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "ID returned when the multipart upload was created"
+            },
+            "name": "uploadId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Success. The multipart upload was aborted."
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
           }
         }
       }
@@ -7647,6 +8138,139 @@
           "ttl": 60
         }
       },
+      "LiveFileData": {
+        "title": "LiveFileData",
+        "description": "Immutable reference to a file from Storage stored inside a LiveFile node.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^fl_[A-Za-z0-9_-]{21}$",
+            "description": "ID of the uploaded Storage file",
+            "example": "fl_abc123456789012345678"
+          },
+          "name": {
+            "type": "string",
+            "description": "Original file name",
+            "example": "photo.png"
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "File size in bytes",
+            "example": 12345
+          },
+          "mimeType": {
+            "type": "string",
+            "description": "File MIME type",
+            "example": "image/png"
+          }
+        },
+        "required": ["id", "name", "size", "mimeType"],
+        "additionalProperties": false
+      },
+      "LiveFile": {
+        "title": "LiveFile",
+        "description": "Plain LSON representation of an immutable LiveFile node.",
+        "type": "object",
+        "properties": {
+          "liveblocksType": {
+            "type": "string",
+            "const": "LiveFile"
+          },
+          "data": {
+            "$ref": "#/components/schemas/LiveFileData"
+          }
+        },
+        "required": ["liveblocksType", "data"],
+        "additionalProperties": false,
+        "example": {
+          "liveblocksType": "LiveFile",
+          "data": {
+            "id": "fl_abc123456789012345678",
+            "name": "photo.png",
+            "size": 12345,
+            "mimeType": "image/png"
+          }
+        }
+      },
+      "StorageFileWithUrl": {
+        "title": "StorageFileWithUrl",
+        "description": "Uploaded Storage file metadata with a temporary download URL.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^fl_[A-Za-z0-9_-]{21}$"
+          },
+          "name": {
+            "type": "string"
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "mimeType": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Presigned download URL"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Expiration time of the presigned URL"
+          }
+        },
+        "required": ["id", "name", "size", "mimeType", "url", "expiresAt"],
+        "additionalProperties": false
+      },
+      "StorageFileMultipartUpload": {
+        "title": "StorageFileMultipartUpload",
+        "type": "object",
+        "properties": {
+          "fileId": {
+            "type": "string",
+            "pattern": "^fl_[A-Za-z0-9_-]{21}$"
+          },
+          "uploadId": {
+            "type": "string"
+          }
+        },
+        "required": ["fileId", "uploadId"],
+        "additionalProperties": false
+      },
+      "StorageFileMultipartPart": {
+        "title": "StorageFileMultipartPart",
+        "type": "object",
+        "properties": {
+          "partNumber": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "etag": {
+            "type": "string"
+          }
+        },
+        "required": ["partNumber", "etag"],
+        "additionalProperties": false
+      },
+      "CompleteStorageFileMultipartUploadRequestBody": {
+        "title": "CompleteStorageFileMultipartUploadRequestBody",
+        "type": "object",
+        "properties": {
+          "parts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StorageFileMultipartPart"
+            }
+          }
+        },
+        "required": ["parts"],
+        "additionalProperties": false
+      },
       "GetStorageDocumentResponse": {
         "title": "GetStorageDocumentResponse",
         "type": "object",
@@ -7669,6 +8293,15 @@
               "data": {
                 "a": 1,
                 "b": 2
+              }
+            },
+            "aLiveFile": {
+              "liveblocksType": "LiveFile",
+              "data": {
+                "id": "fl_abc123456789012345678",
+                "name": "photo.png",
+                "size": 12345,
+                "mimeType": "image/png"
               }
             }
           }
@@ -7699,6 +8332,15 @@
             "aLiveList": {
               "liveblocksType": "LiveList",
               "data": ["a", "b"]
+            },
+            "aLiveFile": {
+              "liveblocksType": "LiveFile",
+              "data": {
+                "id": "fl_abc123456789012345678",
+                "name": "photo.png",
+                "size": 12345,
+                "mimeType": "image/png"
+              }
             }
           }
         }
