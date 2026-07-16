@@ -3769,6 +3769,49 @@ const myTodos = useStorage(
   </PropertiesListItem>
 </PropertiesList>
 
+### useFileUrl [@badge=RoomProvider]
+
+Returns a presigned URL for a
+[`LiveFile`](/docs/api-reference/liveblocks-client#LiveFile).
+[Suspense](/docs/api-reference/liveblocks-react#Suspense-hooks) and
+[regular](/docs/api-reference/liveblocks-react#Regular-hooks) versions of this
+hook are available.
+
+```tsx
+import { useFileUrl } from "@liveblocks/react";
+
+const { url, error, isLoading } = useFileUrl("fl_xxx");
+```
+
+You can also pass a `LiveFile` or its `LiveFileData` returned by `useStorage`.
+
+```tsx
+const { url, error, isLoading } = useFileUrl(file);
+```
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem
+    name="file"
+    type="LiveFile | LiveFileData | string"
+    required
+  >
+    The `LiveFile`, `LiveFileData`, or ID to get a URL for.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="url" type="string | undefined">
+    The presigned URL for the file, or `undefined` if not yet loaded (in the
+    non-Suspense version).
+  </PropertiesListItem>
+  <PropertiesListItem name="isLoading" type="boolean">
+    Whether the URL is currently being loaded.
+  </PropertiesListItem>
+  <PropertiesListItem name="error" type="Error | undefined">
+    Any error that occurred while loading the URL.
+  </PropertiesListItem>
+</PropertiesList>
+
 ### useHistory [@badge=RoomProvider]
 
 Returns the room’s history. See [`Room.history`][] for more information.
