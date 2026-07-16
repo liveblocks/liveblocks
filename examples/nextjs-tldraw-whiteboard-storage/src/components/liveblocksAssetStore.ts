@@ -45,6 +45,17 @@ export function createLiveblocksAssetStore(
 
       return asset.props.src;
     },
+    async remove(assetIds) {
+      const { root } = await room.getStorage();
+      const liveFiles = root.get("files");
+      if (!liveFiles) {
+        return;
+      }
+
+      for (const assetId of assetIds) {
+        liveFiles.delete(assetId);
+      }
+    },
   };
 }
 
