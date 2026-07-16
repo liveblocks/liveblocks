@@ -787,11 +787,9 @@ async function uploadStorageFile<TResult>({
       throw abortError;
     }
 
-    if (err instanceof LiveblocksError && err.status === 413) {
-      throw err;
-    }
-
-    return false;
+    return (
+      err instanceof LiveblocksError && err.status >= 400 && err.status < 500
+    );
   };
 
   if (file.size <= STORAGE_FILE_PART_SIZE) {

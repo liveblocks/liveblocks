@@ -1610,6 +1610,40 @@ describe("client", () => {
       expect(multipartUploadAborted).toBe(true);
     });
 
+    test("should not retry when uploadFile receives a 4xx response", async () => {
+      let uploadCount = 0;
+
+      server.use(
+        http.put(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/storage/files/:fileId/upload/:name`,
+          () => {
+            uploadCount++;
+            return HttpResponse.json(
+              {
+                error: "BAD_REQUEST",
+                message: "Bad request",
+              },
+              { status: 400 }
+            );
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(
+        client.uploadFile({
+          roomId: "room1",
+          file: new File(["hello"], "file1.txt"),
+        })
+      ).rejects.toMatchObject({
+        name: "LiveblocksError",
+        status: 400,
+        message: "Bad request",
+      });
+      expect(uploadCount).toBe(1);
+    });
+
     test("should throw a LiveblocksError when uploadFile receives an error response", async () => {
       server.use(
         http.put(

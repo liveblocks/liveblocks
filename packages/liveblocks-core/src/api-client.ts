@@ -629,11 +629,7 @@ async function uploadRoomFile<TResult>({
       throw abortError;
     }
 
-    if (err instanceof HttpError && err.status === 413) {
-      throw err;
-    }
-
-    return false;
+    return err instanceof HttpError && err.status >= 400 && err.status < 500;
   };
 
   if (file.size <= ROOM_FILE_PART_SIZE) {
