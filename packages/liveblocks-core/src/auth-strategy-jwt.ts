@@ -15,10 +15,10 @@ import {
 } from "./permissions";
 import type { CustomAuthenticationResult } from "./protocol/Authentication";
 import {
-  parseAuthToken,
-  TokenKind,
   type AuthToken,
+  parseAuthToken,
   type ParsedAuthToken,
+  TokenKind,
 } from "./protocol/AuthToken";
 
 const NON_RETRY_STATUS_CODES = [
@@ -71,7 +71,9 @@ type ParsedEntry = {
  * constructed by `createAuthManager` from the legacy `publicApiKey` /
  * `authEndpoint` options.
  */
-export function liveblocksJwtStrategy(options: JwtStrategyOptions): AuthStrategy {
+export function liveblocksJwtStrategy(
+  options: JwtStrategyOptions
+): AuthStrategy {
   const { authEndpoint, polyfills, onAuthenticate } = options;
 
   // Raw JWT strings we have already seen and cached. Returning the same raw
@@ -92,7 +94,9 @@ export function liveblocksJwtStrategy(options: JwtStrategyOptions): AuthStrategy
     parsedByRaw.delete(credential.token);
   }
 
-  function makePermissions(parsed: ParsedAuthToken): RoomPatternPermissions[] | undefined {
+  function makePermissions(
+    parsed: ParsedAuthToken
+  ): RoomPatternPermissions[] | undefined {
     if (parsed.parsed.k === TokenKind.ACCESS_TOKEN) {
       return Object.entries(parsed.parsed.perms).map(([pattern, scopes]) => ({
         pattern,
@@ -179,7 +183,11 @@ export function liveblocksJwtStrategy(options: JwtStrategyOptions): AuthStrategy
         // recognize and understand that retrying will have no effect
         return { ok: false, fatal: true, reason: `Unauthorized: ${reason}` };
       } else {
-        return { ok: false, fatal: false, reason: `Failed to authenticate: ${reason}` };
+        return {
+          ok: false,
+          fatal: false,
+          reason: `Failed to authenticate: ${reason}`,
+        };
       }
     }
 

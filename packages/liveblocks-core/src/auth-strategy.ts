@@ -1,8 +1,5 @@
 import type { Relax } from "./lib/Relax";
-import type {
-  PermissionResources,
-  RequiredAccessLevel,
-} from "./permissions";
+import type { PermissionResources, RequiredAccessLevel } from "./permissions";
 import type { IUserInfo } from "./protocol/BaseUserMeta";
 
 /**

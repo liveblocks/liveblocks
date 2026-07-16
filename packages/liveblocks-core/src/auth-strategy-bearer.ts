@@ -68,7 +68,11 @@ export function bearerAuthStrategy(
     try {
       result = await getToken(request);
     } catch (er) {
-      return { ok: false, fatal: false, reason: (er as Error).message } as const;
+      return {
+        ok: false,
+        fatal: false,
+        reason: (er as Error).message,
+      } as const;
     }
 
     if (typeof result.token !== "string") {
@@ -99,7 +103,10 @@ export function bearerAuthStrategy(
     return { ok: true, credential } as const;
   }
 
-  function satisfies(credential: AuthCredential, request: AuthRequest): boolean {
+  function satisfies(
+    credential: AuthCredential,
+    request: AuthRequest
+  ): boolean {
     const scope = credential.scope ?? {};
     if (request.resource === "personal") {
       return scope.personal === true;

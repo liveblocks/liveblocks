@@ -86,12 +86,18 @@ function resolveAuthMode(authOptions: AuthenticationOptions): AuthMode {
   if (typeof authEndpoint === "string") {
     return {
       type: "strategy",
-      strategy: liveblocksJwtStrategy({ authEndpoint, polyfills: authOptions.polyfills }),
+      strategy: liveblocksJwtStrategy({
+        authEndpoint,
+        polyfills: authOptions.polyfills,
+      }),
     };
   } else if (typeof authEndpoint === "function") {
     return {
       type: "strategy",
-      strategy: liveblocksJwtStrategy({ authEndpoint, polyfills: authOptions.polyfills }),
+      strategy: liveblocksJwtStrategy({
+        authEndpoint,
+        polyfills: authOptions.polyfills,
+      }),
     };
   } else if (authEndpoint !== undefined) {
     throw new Error(
@@ -166,9 +172,7 @@ export function createAuthManager(
     return undefined;
   }
 
-  async function getAuthValue(
-    requestOptions: AuthRequest
-  ): Promise<AuthValue> {
+  async function getAuthValue(requestOptions: AuthRequest): Promise<AuthValue> {
     if (mode.type === "public") {
       return { type: "public", publicApiKey: mode.publicApiKey };
     }
