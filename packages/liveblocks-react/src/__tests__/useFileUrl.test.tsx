@@ -332,7 +332,7 @@ describe("useFileUrl", () => {
     unmount();
   });
 
-  test("retries when the file URL is not ready yet", async () => {
+  test("retries errors while getting the file URL", async () => {
     let requestCount = 0;
     server.use(
       mockGetFileUrls(() => {
@@ -365,6 +365,37 @@ describe("useFileUrl", () => {
         url: FILE_URL,
       });
     expect(requestCount).toBe(2);
+
+    unmount();
+  });
+
+  test("stops retrying when the file URL remains unavailable", async () => {
+    let requestCount = 0;
+    server.use(
+      mockGetFileUrls(() => {
+        requestCount++;
+        return fileUrlsResponse([null]);
+      })
+    );
+
+    const {
+      room: { RoomProvider, useFileUrl },
+    } = createContextsForTest({ baseUrl: BASE_URL });
+
+    const { result, unmount } = renderHook(() => useFileUrl(FILE_ID), {
+      wrapper: ({ children }) => (
+        <RoomProvider id={ROOM_ID}>{children}</RoomProvider>
+      ),
+    });
+
+    await expect.poll(() => requestCount, { timeout: 3_500 }).toBe(3);
+    expect(result.current).toEqual({
+      isLoading: false,
+      error: expect.any(Error),
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 1_250));
+    expect(requestCount).toBe(3);
 
     unmount();
   });
@@ -487,7 +518,7 @@ describe("useFileUrlSuspense", () => {
     unmount();
   });
 
-  test("retries when the file URL is not ready yet", async () => {
+  test("retries errors while getting the file URL", async () => {
     let requestCount = 0;
     server.use(
       mockGetFileUrls(async ({ request }) => {
@@ -527,6 +558,42 @@ describe("useFileUrlSuspense", () => {
       });
     expect(screen.queryByText("Error")).not.toBeInTheDocument();
     expect(requestCount).toBe(2);
+
+    unmount();
+  });
+
+  test("triggers an error boundary when the file URL remains unavailable", async () => {
+    let requestCount = 0;
+    server.use(
+      mockGetFileUrls(() => {
+        requestCount++;
+        return fileUrlsResponse([null]);
+      })
+    );
+
+    const {
+      room: {
+        RoomProvider,
+        suspense: { useFileUrl },
+      },
+    } = createContextsForTest({ baseUrl: BASE_URL });
+
+    const { result, unmount } = renderHook(() => useFileUrl(FILE_ID), {
+      wrapper: ({ children }) => (
+        <RoomProvider id={ROOM_ID}>
+          <ErrorBoundary fallback={<div>Error</div>}>
+            <Suspense fallback={<div>Loading</div>}>{children}</Suspense>
+          </ErrorBoundary>
+        </RoomProvider>
+      ),
+    });
+
+    expect(result.current).toBeNull();
+    expect(await screen.findByText("Loading")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Error", undefined, { timeout: 3_500 })
+    ).toBeInTheDocument();
+    expect(requestCount).toBe(3);
 
     unmount();
   });
