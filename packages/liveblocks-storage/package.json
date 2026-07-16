@@ -1,0 +1,62 @@
+{
+  "name": "@liveblocks/storage",
+  "version": "0.0.0",
+  "description": "Liveblocks Storage CRDTs — collaborative data structures independent of Room networking.",
+  "license": "Apache-2.0",
+  "author": "Liveblocks Inc.",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "types": "./dist/index.d.cts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "module": "./dist/index.js",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist/**",
+    "README.md"
+  ],
+  "scripts": {
+    "dev": "tsup --watch",
+    "build": "tsup",
+    "format": "(eslint --fix src/ || true) && prettier --write src/",
+    "lint": "eslint src/",
+    "lint:package": "publint --strict && attw --pack",
+    "test": "vitest run",
+    "test:ci": "vitest run --coverage",
+    "test:watch": "vitest",
+    "test:types": "vitest run --config ./vitest.config.typecheck.ts"
+  },
+  "devDependencies": {
+    "@liveblocks/eslint-config": "workspace:*",
+    "@liveblocks/vitest-config": "workspace:*",
+    "eslint": "^9.39.4",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.4"
+  },
+  "sideEffects": false,
+  "bugs": {
+    "url": "https://github.com/liveblocks/liveblocks/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/liveblocks/liveblocks.git",
+    "directory": "packages/liveblocks-storage"
+  },
+  "homepage": "https://liveblocks.io",
+  "keywords": [
+    "liveblocks",
+    "storage",
+    "crdt",
+    "collaboration",
+    "multiplayer"
+  ]
+}

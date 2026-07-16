@@ -1,0 +1,1520 @@
+import { nn } from "../lib/assert";
+import { freeze } from "../lib/freeze";
+import { nanoid } from "../lib/nanoid";
+import type { Pos } from "../lib/position";
+import { asPos, makePosition } from "../lib/position";
+import { SortedList } from "../lib/SortedList";
+import type { ClientWireOp, CreateListOp, CreateOp, Op } from "../protocol/Op";
+import { OpCode } from "../protocol/Op";
+import type { ListStorageNode, SerializedList } from "../protocol/StorageNode";
+import { CrdtType } from "../protocol/StorageNode";
+import type * as DevTools from "../types/DevToolsTreeNode";
+import type { ParentToChildNodeMap } from "../types/NodeMap";
+import type { ApplyResult } from "./AbstractCrdt";
+import type { StorageDoc } from "../StorageDoc";
+import { AbstractCrdt, OpSource } from "./AbstractCrdt";
+import {
+  creationOpToLiveNode,
+  deserialize,
+  liveNodeToLson,
+  lsonToLiveNode,
+} from "./helpers";
+import { LiveRegister } from "./LiveRegister";
+import type { LiveNode, Lson, ToJson } from "./Lson";
+
+export type LiveListUpdateDelta =
+  | { type: "insert"; index: number; item: Lson }
+  | { type: "delete"; index: number; deletedItem: Lson }
+  | { type: "move"; index: number; previousIndex: number; item: Lson }
+  | { type: "set"; index: number; item: Lson };
+
+/**
+ * A LiveList notification that is sent in-client to any subscribers whenever
+ * one or more of the items inside the LiveList instance have changed.
+ */
+export type LiveListUpdates<TItem extends Lson> = {
+  type: "LiveList";
+  node: LiveList<TItem>;
+  updates: LiveListUpdateDelta[];
+};
+
+function childNodeLt(a: LiveNode, b: LiveNode): boolean {
+  return a._parentPos < b._parentPos;
+}
+
+/**
+ * The LiveList class represents an ordered collection of items that is synchronized across clients.
+ */
+export class LiveList<TItem extends Lson> extends AbstractCrdt {
+  #items: SortedList<LiveNode>;
+  #implicitlyDeletedItems: WeakSet<LiveNode>;
+
+  constructor(items: TItem[]) {
+    super();
+    this.#implicitlyDeletedItems = new WeakSet();
+
+    const nodes: LiveNode[] = [];
+    let lastPos: Pos | undefined;
+    for (const item of items) {
+      const pos = makePosition(lastPos);
+      const node = lsonToLiveNode(item);
+      node._setParentLink(this, pos);
+      nodes.push(node);
+      lastPos = pos;
+    }
+    this.#items = SortedList.fromAlreadySorted(nodes, childNodeLt);
+  }
+
+  /** @internal */
+  static _deserialize(
+    [id, _]: ListStorageNode,
+    parentToChildren: ParentToChildNodeMap,
+    doc: StorageDoc
+  ): LiveList<Lson> {
+    const list = new LiveList([]);
+    list._attach(id, doc);
+
+    const children = parentToChildren.get(id);
+    if (children === undefined) {
+      return list;
+    }
+
+    for (const node of children) {
+      const crdt = node[1];
+      const child = deserialize(node, parentToChildren, doc);
+
+      child._setParentLink(list, crdt.parentKey);
+      list.#insert(child);
+    }
+
+    return list;
+  }
+
+  /**
+   * @internal
+   * Serializes this list (and its children) into Create ops. Each child's
+   * create is tagged with the "set" intent (in the loop below) so that a list
+   * created and immediately mutated doesn't transiently re-show its initial
+   * items (flicker, https://github.com/liveblocks/liveblocks/pull/1177).
+   *
+   * This is quite unintuitive and should disappear as soon as we introduce an
+   * explicit LiveList.Set operation.
+   */
+  _toOps(parentId: string, parentKey: string): CreateOp[] {
+    if (this._id === undefined) {
+      throw new Error("Cannot serialize item is not attached");
+    }
+
+    const ops: CreateOp[] = [];
+    const op: CreateListOp = {
+      id: this._id,
+      type: OpCode.CREATE_LIST,
+      parentId,
+      parentKey,
+    };
+
+    ops.push(op);
+
+    for (const item of this.#items) {
+      const parentKey = item._getParentKeyOrThrow();
+      // Tag each child's create with "set" (no deletedId, since nothing
+      // specific is being replaced). This routes the ack through the set path
+      // so a list created and immediately mutated doesn't transiently re-show
+      // its initial items (to avoid flicker, see PR 1177).
+      const childOps = addIntentToRootOp(
+        item._toOps(this._id, parentKey),
+        "set"
+      );
+      for (const childOp of childOps) {
+        ops.push(childOp);
+      }
+    }
+
+    return ops;
+  }
+
+  /**
+   * Inserts a new child into the list in the correct location (binary search
+   * finds correct position efficiently). Returns the insertion index.
+   */
+  #insert(childNode: LiveNode): number {
+    const index = this.#items.add(childNode);
+    this.invalidate();
+    return index;
+  }
+
+  /**
+   * Updates an item's position and repositions it in the sorted list.
+   * Encapsulates the remove -> mutate -> add cycle needed when changing sort keys.
+   *
+   * IMPORTANT: Item must exist in this list. List count remains unchanged.
+   */
+  #updateItemPosition(item: LiveNode, newKey: string): void {
+    item._setParentLink(this, newKey);
+    this.#items.reposition(item);
+    this.invalidate();
+  }
+
+  /**
+   * Updates an item's position by index. Safer than #updateItemPosition when you have
+   * an index, as it ensures the item exists and is from this list.
+   */
+  #updateItemPositionAt(index: number, newKey: string): void {
+    const item = nn(this.#items.at(index));
+    this.#updateItemPosition(item, newKey);
+  }
+
+  /** @internal */
+  _indexOfPosition(position: string): number {
+    return this.#items.findIndex(
+      (item) => item._getParentKeyOrThrow() === position
+    );
+  }
+
+  /**
+   * The opId of this list's still-pending "set" op at the given position, or
+   * undefined if none. Derived from the document's pending ops (the single
+   * source of truth) rather than tracked in a per-instance map.
+   */
+  #unacknowledgedSetOpIdAt(position: string): string | undefined {
+    if (this._doc === undefined || this._id === undefined) {
+      return undefined;
+    }
+
+    let opId: string | undefined;
+    for (const op of this._doc.pending.getByParentIdAndKey(
+      this._id,
+      position
+    )) {
+      if (op.intent === "set") {
+        opId = op.opId;
+      }
+    }
+    return opId;
+  }
+
+  /** @internal */
+  _attach(id: string, doc: StorageDoc): void {
+    super._attach(id, doc);
+
+    for (const item of this.#items) {
+      item._attach(doc.generateId(), doc);
+    }
+  }
+
+  /** @internal */
+  _detach(): void {
+    super._detach();
+
+    for (const item of this.#items) {
+      item._detach();
+    }
+  }
+
+  #applySetRemote(op: CreateOp): ApplyResult {
+    if (this._doc === undefined) {
+      throw new Error("Can't attach child if document is not present");
+    }
+
+    const { id, parentKey: key } = op;
+    const child = creationOpToLiveNode(op);
+    child._attach(id, this._doc);
+    child._setParentLink(this, key);
+
+    const deletedId = op.deletedId;
+
+    const indexOfItemWithSamePosition = this._indexOfPosition(key);
+
+    // If there is already an item at this position
+    if (indexOfItemWithSamePosition !== -1) {
+      const itemWithSamePosition = nn(
+        this.#items.removeAt(indexOfItemWithSamePosition)
+      );
+
+      // No conflict, the item that is being replaced is the same that was deleted on the sender
+      if (itemWithSamePosition._id === deletedId) {
+        itemWithSamePosition._detach();
+
+        // Replace the existing item with the newly created item
+        this.#items.add(child);
+
+        return {
+          modified: makeUpdate(this, [
+            setDelta(indexOfItemWithSamePosition, child),
+          ]),
+          reverse: [],
+        };
+      } else {
+        // Item at position to be replaced is different from server, so we
+        // remember it in case we need to restore it later.
+        // This scenario can happen if an other item has been put at this position
+        // while getting the acknowledgement of the set (move, insert or set)
+        this.#implicitlyDeletedItems.add(itemWithSamePosition);
+
+        // Replace the existing item with the newly created item without sorting the list
+        this.#items.remove(itemWithSamePosition);
+        this.#items.add(child);
+
+        const delta: LiveListUpdateDelta[] = [
+          setDelta(indexOfItemWithSamePosition, child),
+        ];
+
+        // Even if we implicitly delete the item at the set position
+        // We still need to delete the item that was orginaly deleted by the set
+        const deleteDelta = this.#detachItemAssociatedToSetOperation(
+          op.deletedId
+        );
+
+        if (deleteDelta) {
+          delta.push(deleteDelta);
+        }
+
+        return {
+          modified: makeUpdate(this, delta),
+          reverse: [],
+        };
+      }
+    } else {
+      // Item at position to be replaced doesn't exist
+      const updates: LiveListUpdateDelta[] = [];
+      const deleteDelta = this.#detachItemAssociatedToSetOperation(
+        op.deletedId
+      );
+      if (deleteDelta) {
+        updates.push(deleteDelta);
+      }
+
+      this.#insert(child);
+
+      updates.push(insertDelta(this._indexOfPosition(key), child));
+
+      return {
+        reverse: [],
+        modified: makeUpdate(this, updates),
+      };
+    }
+  }
+
+  #applySetAck(op: CreateOp): ApplyResult {
+    if (this._doc === undefined) {
+      throw new Error("Can't attach child if document is not present");
+    }
+
+    const delta: LiveListUpdateDelta[] = [];
+
+    // Deleted item can be re-inserted by remote undo/redo
+    const deletedDelta = this.#detachItemAssociatedToSetOperation(op.deletedId);
+    if (deletedDelta) {
+      delta.push(deletedDelta);
+    }
+
+    // If a *different* set op is still pending at this position, our optimistic
+    // state is newer than this (now-stale) ack, so keep ours and ignore it.
+    // (Nothing to clear on a match: the room already removed op.opId from
+    // unacknowledgedOps before dispatching this ack, so this lookup returns
+    // undefined for the op being acked and only ever surfaces a *newer* pending
+    // set. This assumes acks for a single position arrive in dispatch order,
+    // which holds: one client sends them sequentially and the server preserves
+    // that order.)
+    const unacknowledgedOpId = this.#unacknowledgedSetOpIdAt(op.parentKey);
+    if (unacknowledgedOpId !== undefined && unacknowledgedOpId !== op.opId) {
+      return delta.length === 0
+        ? { modified: false }
+        : { modified: makeUpdate(this, delta), reverse: [] };
+    }
+
+    const indexOfItemWithSamePosition = this._indexOfPosition(op.parentKey);
+
+    const existingItem = this.#items.find((item) => item._id === op.id);
+
+    // If item already exists...
+    if (existingItem !== undefined) {
+      // ...and if it's at the right position
+      if (existingItem._parentKey === op.parentKey) {
+        // ... do nothing
+        return {
+          modified: delta.length > 0 ? makeUpdate(this, delta) : false,
+          reverse: [],
+        };
+      }
+
+      // Item exists but not at the right position (local move after set)
+      if (indexOfItemWithSamePosition !== -1) {
+        const itemAtPosition = nn(
+          this.#items.removeAt(indexOfItemWithSamePosition)
+        );
+        this.#implicitlyDeletedItems.add(itemAtPosition);
+        delta.push(deleteDelta(indexOfItemWithSamePosition, itemAtPosition));
+      }
+
+      const prevIndex = this.#items.findIndex((item) => item === existingItem);
+      this.#updateItemPosition(existingItem, op.parentKey);
+      const newIndex = this.#items.findIndex((item) => item === existingItem);
+      if (newIndex !== prevIndex) {
+        delta.push(moveDelta(prevIndex, newIndex, existingItem));
+      }
+
+      return {
+        modified: delta.length > 0 ? makeUpdate(this, delta) : false,
+        reverse: [],
+      };
+    } else {
+      // Item associated to the set ack does not exist either deleted localy or via remote undo/redo
+      const orphan = this._doc.getNode(op.id);
+      if (orphan && this.#implicitlyDeletedItems.has(orphan)) {
+        // Reattach orphan at the new position
+        orphan._setParentLink(this, op.parentKey);
+        // And delete it from the orphan cache
+        this.#implicitlyDeletedItems.delete(orphan);
+
+        const recreatedItemIndex = this.#insert(orphan);
+        return {
+          modified: makeUpdate(this, [
+            // If there is an item at this position, update is a set, else it's an insert
+            indexOfItemWithSamePosition === -1
+              ? insertDelta(recreatedItemIndex, orphan)
+              : setDelta(recreatedItemIndex, orphan),
+            ...delta,
+          ]),
+          reverse: [],
+        };
+      } else {
+        if (indexOfItemWithSamePosition !== -1) {
+          const displaced = nn(
+            this.#items.removeAt(indexOfItemWithSamePosition)
+          );
+          this.#implicitlyDeletedItems.add(displaced);
+        }
+
+        const { newItem, newIndex } = this.#createAttachItemAndSort(
+          op,
+          op.parentKey
+        );
+
+        return {
+          modified: makeUpdate(this, [
+            // If there is an item at this position, update is a set, else it's an insert
+            indexOfItemWithSamePosition === -1
+              ? insertDelta(newIndex, newItem)
+              : setDelta(newIndex, newItem),
+            ...delta,
+          ]),
+          reverse: [],
+        };
+      }
+    }
+  }
+
+  /**
+   * Returns the update delta of the deletion or null
+   */
+  #detachItemAssociatedToSetOperation(
+    deletedId?: string
+  ): LiveListUpdateDelta | null {
+    if (deletedId === undefined || this._doc === undefined) {
+      return null;
+    }
+
+    const deletedItem = this._doc.getNode(deletedId);
+    if (deletedItem === undefined) {
+      return null;
+    }
+
+    const result = this._detachChild(deletedItem);
+    if (result.modified === false) {
+      return null;
+    }
+
+    return result.modified.updates[0];
+  }
+
+  #applyRemoteInsert(op: CreateOp): ApplyResult {
+    if (this._doc === undefined) {
+      throw new Error("Can't attach child if document is not present");
+    }
+
+    const key = asPos(op.parentKey);
+
+    const existingItemIndex = this._indexOfPosition(key);
+
+    if (existingItemIndex !== -1) {
+      // If change is remote => assign a temporary position to existing child until we get the fix from the backend
+      this.#shiftItemPosition(existingItemIndex, key);
+    }
+
+    const { newItem, newIndex } = this.#createAttachItemAndSort(op, key);
+
+    // A new remote sibling just landed among our items, so our still-unacked
+    // pushes may need bumping back to the tail. This is the only place that
+    // bumps: a remote insert or push is the only op that drops a *new* sibling
+    // into the list. Remote sets/moves are computed by the other client against
+    // a view that excludes our still-unacked pushes, so they can't address a
+    // position inside our pending tail block.
+    //
+    // The bump is a purely-local anti-flicker prediction of where the server
+    // will place things. It's sound because #unackedPushNodes only yields ops
+    // the server has provably not processed yet (ops whose fate became
+    // unknown in a disconnect are excluded at that source).
+    const bumpDeltas = this.#bumpUnackedPushesAbove(key);
+
+    return {
+      modified: makeUpdate(this, [
+        insertDelta(newIndex, newItem),
+        ...bumpDeltas,
+      ]),
+      reverse: [],
+    };
+  }
+
+  /**
+   * This list's own still-pending pushed items (their `intent: "push"` Create
+   * op is still pending in the document's pending ops). Derived from the
+   * single source of truth, so an item drops out the instant its op is
+   * confirmed, with no per-instance membership to leak. Yielded in push order.
+   *
+   * Excludes ops that may already be stored remotely (they were in flight when
+   * a connection died, so their fate is unknown): the bump prediction assumes
+   * the remote has not processed the op yet, which is only guaranteed for ops
+   * sent on the current connection. For these excluded ops, the remote's
+   * (re-)ack states the authoritative position; predicting locally could
+   * produce a wrong position that no ack would correct.
+   *
+   * Restricted to items currently in `#items`: a pushed node whose op is still
+   * pending may have been pulled out of the list (e.g. implicitly deleted by a
+   * remote set, or removed by an undo) while still living in the doc, and such
+   * a node must not be repositioned.
+   */
+  *#unackedPushNodes(): Iterable<LiveNode> {
+    if (this._doc === undefined || this._id === undefined) {
+      return;
+    }
+
+    for (const op of this._doc.pending.getByParentId(this._id)) {
+      if (op.intent !== "push") {
+        continue;
+      }
+      if (this._doc.pending.isPossiblyStored(op.opId)) {
+        continue;
+      }
+      const node = this._doc.getNode(op.id);
+      if (node !== undefined && this.#items.includes(node)) {
+        yield node;
+      }
+    }
+  }
+
+  /**
+   * Optimistic no-flip for pushed items. When a remote op lands at or below my
+   * still-unacked pushed items, those items must end up *after* it: FIFO plus
+   * the room's serial processing guarantee the remote was processed first, so
+   * my unacked pushes belong behind it. Re-chain the whole unacked-push block,
+   * in push order, to sit after the highest confirmed sibling, so it keeps
+   * rendering as a contiguous tail instead of getting interleaved. Local-only;
+   * the real acks overwrite these keys with the (identical) server keys.
+   */
+  #bumpUnackedPushesAbove(remoteKey: Pos): LiveListUpdateDelta[] {
+    const pending = new Set(this.#unackedPushNodes());
+    if (pending.size === 0) {
+      return [];
+    }
+
+    // Only bump when the remote intruded into (at or below) the pending block.
+    // If it sorts entirely below, the block already renders above it.
+    let minPending: Pos | undefined;
+    for (const node of pending) {
+      const pos = node._parentPos;
+      if (minPending === undefined || pos < minPending) {
+        minPending = pos;
+      }
+    }
+    if (remoteKey < nn(minPending)) {
+      return [];
+    }
+
+    // Highest confirmed (non-pending) key. `#items` is sorted ascending, so the
+    // last non-pending item we see is the max.
+    let base: Pos | undefined;
+    for (const item of this.#items) {
+      if (!pending.has(item)) {
+        base = item._parentPos;
+      }
+    }
+
+    const deltas: LiveListUpdateDelta[] = [];
+    for (const node of pending) {
+      const previousIndex = this.#items.findIndex((item) => item === node);
+      base = makePosition(base);
+      this.#updateItemPosition(node, base);
+      const index = this.#items.findIndex((item) => item === node);
+      if (index !== previousIndex) {
+        deltas.push(moveDelta(previousIndex, index, node));
+      }
+    }
+    return deltas;
+  }
+
+  #applyInsertAck(op: CreateOp): ApplyResult {
+    const existingItem = this.#items.find((item) => item._id === op.id);
+    const key = asPos(op.parentKey);
+
+    const itemIndexAtPosition = this._indexOfPosition(key);
+
+    if (existingItem) {
+      if (existingItem._parentKey === key) {
+        // Normal case, no modification
+        return {
+          modified: false,
+        };
+      } else {
+        const oldPositionIndex = this.#items.findIndex(
+          (item) => item === existingItem
+        );
+        if (itemIndexAtPosition !== -1) {
+          this.#shiftItemPosition(itemIndexAtPosition, key);
+        }
+
+        this.#updateItemPosition(existingItem, key);
+
+        const newIndex = this._indexOfPosition(key);
+
+        if (newIndex === oldPositionIndex) {
+          return { modified: false };
+        }
+
+        return {
+          modified: makeUpdate(this, [
+            moveDelta(oldPositionIndex, newIndex, existingItem),
+          ]),
+          reverse: [],
+        };
+      }
+    } else {
+      const orphan = nn(this._doc).getNode(op.id);
+      if (orphan && this.#implicitlyDeletedItems.has(orphan)) {
+        // Implicit delete after set
+        orphan._setParentLink(this, key);
+        this.#implicitlyDeletedItems.delete(orphan);
+
+        this.#insert(orphan);
+
+        const newIndex = this._indexOfPosition(key);
+
+        return {
+          modified: makeUpdate(this, [insertDelta(newIndex, orphan)]),
+          reverse: [],
+        };
+      } else {
+        if (itemIndexAtPosition !== -1) {
+          this.#shiftItemPosition(itemIndexAtPosition, key);
+        }
+
+        const { newItem, newIndex } = this.#createAttachItemAndSort(op, key);
+
+        return {
+          modified: makeUpdate(this, [insertDelta(newIndex, newItem)]),
+          reverse: [],
+        };
+      }
+    }
+  }
+
+  #applyInsertUndoRedo(op: CreateOp): ApplyResult {
+    const { id, parentKey: key } = op;
+    const child = creationOpToLiveNode(op);
+
+    if (this._doc?.getNode(id) !== undefined) {
+      return { modified: false };
+    }
+
+    child._attach(id, nn(this._doc));
+    child._setParentLink(this, key);
+
+    const existingItemIndex = this._indexOfPosition(key);
+
+    let newKey = key;
+
+    if (existingItemIndex !== -1) {
+      const before = this.#items.at(existingItemIndex)?._parentPos;
+      const after = this.#items.at(existingItemIndex + 1)?._parentPos;
+
+      newKey = makePosition(before, after);
+      child._setParentLink(this, newKey);
+    }
+
+    this.#insert(child);
+
+    const newIndex = this._indexOfPosition(newKey);
+
+    return {
+      modified: makeUpdate(this, [insertDelta(newIndex, child)]),
+      reverse: [{ type: OpCode.DELETE_CRDT, id }],
+    };
+  }
+
+  #applySetUndoRedo(op: CreateOp): ApplyResult {
+    const { id, parentKey: key } = op;
+    const child = creationOpToLiveNode(op);
+
+    if (this._doc?.getNode(id) !== undefined) {
+      return { modified: false };
+    }
+
+    const indexOfItemWithSameKey = this._indexOfPosition(key);
+
+    child._attach(id, nn(this._doc));
+    child._setParentLink(this, key);
+
+    const newKey = key;
+
+    // If there is already an item at this position
+    if (indexOfItemWithSameKey !== -1) {
+      // TODO: Should we add this item to implictly deleted item?
+      const existingItem = this.#items.at(indexOfItemWithSameKey)!; // eslint-disable-line no-restricted-syntax
+      existingItem._detach();
+
+      this.#items.remove(existingItem);
+      this.#items.add(child);
+
+      const reverse = addIntentToRootOp(
+        existingItem._toOps(nn(this._id), key),
+        "set",
+        op.id
+      );
+
+      const delta = [setDelta(indexOfItemWithSameKey, child)];
+      const deletedDelta = this.#detachItemAssociatedToSetOperation(
+        op.deletedId
+      );
+      if (deletedDelta) {
+        delta.push(deletedDelta);
+      }
+
+      return {
+        modified: makeUpdate(this, delta),
+        reverse,
+      };
+    } else {
+      this.#insert(child);
+
+      // TODO: Use delta
+      this.#detachItemAssociatedToSetOperation(op.deletedId);
+
+      const newIndex = this._indexOfPosition(newKey);
+
+      return {
+        reverse: [{ type: OpCode.DELETE_CRDT, id }],
+        modified: makeUpdate(this, [insertDelta(newIndex, child)]),
+      };
+    }
+  }
+
+  /** @internal */
+  _attachChild(op: CreateOp, source: OpSource): ApplyResult {
+    if (this._doc === undefined) {
+      throw new Error("Can't attach child if document is not present");
+    }
+
+    let result: ApplyResult;
+
+    if (op.intent === "set") {
+      if (source === OpSource.THEIRS) {
+        result = this.#applySetRemote(op);
+      } else if (source === OpSource.OURS) {
+        result = this.#applySetAck(op);
+      } else {
+        result = this.#applySetUndoRedo(op);
+      }
+    } else {
+      if (source === OpSource.THEIRS) {
+        result = this.#applyRemoteInsert(op);
+      } else if (source === OpSource.OURS) {
+        result = this.#applyInsertAck(op);
+      } else {
+        result = this.#applyInsertUndoRedo(op);
+      }
+    }
+
+    if (result.modified !== false) {
+      this.invalidate();
+    }
+
+    return result;
+  }
+
+  /** @internal */
+  _detachChild(
+    child: LiveNode
+  ): { reverse: Op[]; modified: LiveListUpdates<TItem> } | { modified: false } {
+    if (child) {
+      const parentKey = nn(child._parentKey);
+      const reverse = child._toOps(nn(this._id), parentKey);
+
+      const indexToDelete = this.#items.findIndex((item) => item === child);
+
+      if (indexToDelete === -1) {
+        return {
+          modified: false,
+        };
+      }
+
+      const previousNode = this.#items.at(indexToDelete)!; // eslint-disable-line no-restricted-syntax
+      this.#items.remove(child);
+      this.invalidate();
+
+      child._detach();
+
+      return {
+        modified: makeUpdate(this, [deleteDelta(indexToDelete, previousNode)]),
+        reverse,
+      };
+    }
+
+    return { modified: false };
+  }
+
+  #applySetChildKeyRemote(newKey: Pos, child: LiveNode): ApplyResult {
+    if (this.#implicitlyDeletedItems.has(child)) {
+      this.#implicitlyDeletedItems.delete(child);
+
+      child._setParentLink(this, newKey);
+      const newIndex = this.#insert(child);
+
+      // TODO: Shift existing item?
+      return {
+        modified: makeUpdate(this, [insertDelta(newIndex, child)]),
+        reverse: [],
+      };
+    }
+
+    const previousKey = child._parentKey;
+
+    if (newKey === previousKey) {
+      return {
+        modified: false,
+      };
+    }
+
+    // TODO: should we look at orphan
+    const existingItemIndex = this._indexOfPosition(newKey);
+
+    // Normal case
+    if (existingItemIndex === -1) {
+      const previousIndex = this.#items.findIndex((item) => item === child);
+      this.#updateItemPosition(child, newKey);
+      const newIndex = this.#items.findIndex((item) => item === child);
+
+      if (newIndex === previousIndex) {
+        return {
+          modified: false,
+        };
+      }
+
+      return {
+        modified: makeUpdate(this, [moveDelta(previousIndex, newIndex, child)]),
+        reverse: [],
+      };
+    } else {
+      this.#updateItemPositionAt(
+        existingItemIndex,
+        makePosition(newKey, this.#items.at(existingItemIndex + 1)?._parentPos)
+      );
+
+      const previousIndex = this.#items.findIndex((item) => item === child);
+      this.#updateItemPosition(child, newKey);
+      const newIndex = this.#items.findIndex((item) => item === child);
+
+      if (newIndex === previousIndex) {
+        return {
+          modified: false,
+        };
+      }
+
+      return {
+        modified: makeUpdate(this, [moveDelta(previousIndex, newIndex, child)]),
+        reverse: [],
+      };
+    }
+  }
+
+  #applySetChildKeyAck(newKey: Pos, child: LiveNode): ApplyResult {
+    const previousKey = nn(child._parentKey);
+
+    if (this.#implicitlyDeletedItems.has(child)) {
+      const existingItemIndex = this._indexOfPosition(newKey);
+
+      this.#implicitlyDeletedItems.delete(child);
+
+      if (existingItemIndex !== -1) {
+        const existingItem = this.#items.at(existingItemIndex)!; // eslint-disable-line no-restricted-syntax
+        existingItem._setParentLink(
+          this,
+          makePosition(
+            newKey,
+            this.#items.at(existingItemIndex + 1)?._parentPos
+          )
+        );
+        this.#items.reposition(existingItem);
+      }
+
+      child._setParentLink(this, newKey);
+      const newIndex = this.#insert(child);
+      return {
+        modified: makeUpdate(this, [insertDelta(newIndex, child)]),
+        reverse: [],
+      };
+    } else {
+      if (newKey === previousKey) {
+        return {
+          modified: false,
+        };
+      }
+
+      // At this point, it means that the item has been moved before receiving the ack
+      // so we replace it at the right position
+
+      const previousIndex = this.#items.findIndex((item) => item === child);
+
+      const existingItemIndex = this._indexOfPosition(newKey);
+
+      if (existingItemIndex !== -1) {
+        this.#updateItemPositionAt(
+          existingItemIndex,
+          makePosition(
+            newKey,
+            this.#items.at(existingItemIndex + 1)?._parentPos
+          )
+        );
+      }
+
+      this.#updateItemPosition(child, newKey);
+
+      const newIndex = this.#items.findIndex((item) => item === child);
+
+      if (previousIndex === newIndex) {
+        // parentKey changed but final position in the list didn't
+        return {
+          modified: false,
+        };
+      } else {
+        return {
+          modified: makeUpdate(this, [
+            moveDelta(previousIndex, newIndex, child),
+          ]),
+          reverse: [],
+        };
+      }
+    }
+  }
+
+  #applySetChildKeyUndoRedo(newKey: Pos, child: LiveNode): ApplyResult {
+    const previousKey = nn(child._parentKey);
+
+    const previousIndex = this.#items.findIndex((item) => item === child);
+    const existingItemIndex = this._indexOfPosition(newKey);
+
+    // If position is occupied, find a free position for item being moved
+    let actualNewKey = newKey;
+    if (existingItemIndex !== -1) {
+      // Find a free position near the desired position
+      actualNewKey = makePosition(
+        newKey,
+        this.#items.at(existingItemIndex + 1)?._parentPos
+      );
+    }
+
+    this.#updateItemPosition(child, actualNewKey);
+
+    const newIndex = this.#items.findIndex((item) => item === child);
+
+    if (previousIndex === newIndex) {
+      return {
+        modified: false,
+      };
+    }
+
+    return {
+      modified: makeUpdate(this, [moveDelta(previousIndex, newIndex, child)]),
+      reverse: [
+        {
+          type: OpCode.SET_PARENT_KEY,
+          id: nn(child._id),
+          parentKey: previousKey,
+        },
+      ],
+    };
+  }
+
+  /** @internal */
+  _setChildKey(newKey: Pos, child: LiveNode, source: OpSource): ApplyResult {
+    if (source === OpSource.THEIRS) {
+      return this.#applySetChildKeyRemote(newKey, child);
+    } else if (source === OpSource.OURS) {
+      return this.#applySetChildKeyAck(newKey, child);
+    } else {
+      return this.#applySetChildKeyUndoRedo(newKey, child);
+    }
+  }
+
+  /** @internal */
+  _apply(op: Op, isLocal: boolean): ApplyResult {
+    return super._apply(op, isLocal);
+  }
+
+  /** @internal */
+  _serialize(): SerializedList {
+    if (this.parent.type !== "HasParent") {
+      throw new Error("Cannot serialize LiveList if parent is missing");
+    }
+
+    return {
+      type: CrdtType.LIST,
+      parentId: nn(this.parent.node._id, "Parent node expected to have ID"),
+      parentKey: this.parent.key,
+    };
+  }
+
+  /**
+   * Returns the number of elements.
+   */
+  get length(): number {
+    return this.#items.length;
+  }
+
+  /**
+   * Adds one element to the end of the LiveList.
+   * @param element The element to add to the end of the LiveList.
+   */
+  push(element: TItem): void {
+    return this.#injectAt(element, this.length, "push");
+  }
+
+  /**
+   * Inserts one element at a specified index.
+   * @param element The element to insert.
+   * @param index The index at which you want to insert the element.
+   */
+  insert(element: TItem, index: number): void {
+    return this.#injectAt(element, index, "insert");
+  }
+
+  /**
+   * Shared implementation of `insert` and `push`. A `"push"` intent leaves the
+   * client-computed position untouched (so optimistic rendering is unchanged),
+   * but tags the Op so the server appends it to the true end of the list
+   * instead of resolving its position against the client's stale view.
+   */
+  #injectAt(element: TItem, index: number, intent: "insert" | "push"): void {
+    this._doc?.assertWritable();
+    if (index < 0 || index > this.#items.length) {
+      throw new Error(
+        `Cannot insert list item at index "${index}". index should be between 0 and ${this.#items.length}`
+      );
+    }
+
+    const before = this.#items.at(index - 1)?._parentPos;
+    const after = this.#items.at(index)?._parentPos;
+
+    const position = makePosition(before, after);
+
+    const value = lsonToLiveNode(element);
+    value._setParentLink(this, position);
+
+    this.#insert(value);
+
+    if (this._doc && this._id) {
+      const id = this._doc.generateId();
+      value._attach(id, this._doc);
+
+      const ops = value._toOpsWithOpId(this._id, position, this._doc);
+      this._doc.emit(
+        intent === "push" ? addIntentToRootOp(ops, "push") : ops,
+        [{ type: OpCode.DELETE_CRDT, id }],
+        new Map<string, LiveListUpdates<TItem>>([
+          [this._id, makeUpdate(this, [insertDelta(index, value)])],
+        ])
+      );
+    }
+  }
+
+  /**
+   * Move one element from one index to another.
+   * @param index The index of the element to move
+   * @param targetIndex The index where the element should be after moving.
+   */
+  move(index: number, targetIndex: number): void {
+    this._doc?.assertWritable();
+    if (targetIndex < 0) {
+      throw new Error("targetIndex cannot be less than 0");
+    }
+
+    if (targetIndex >= this.#items.length) {
+      throw new Error(
+        "targetIndex cannot be greater or equal than the list length"
+      );
+    }
+
+    if (index < 0) {
+      throw new Error("index cannot be less than 0");
+    }
+
+    if (index >= this.#items.length) {
+      throw new Error("index cannot be greater or equal than the list length");
+    }
+
+    let beforePosition = null;
+    let afterPosition = null;
+
+    if (index < targetIndex) {
+      afterPosition =
+        targetIndex === this.#items.length - 1
+          ? undefined
+          : this.#items.at(targetIndex + 1)?._parentPos;
+      beforePosition = this.#items.at(targetIndex)!._parentPos; // eslint-disable-line no-restricted-syntax
+    } else {
+      afterPosition = this.#items.at(targetIndex)!._parentPos; // eslint-disable-line no-restricted-syntax
+      beforePosition =
+        targetIndex === 0
+          ? undefined
+          : this.#items.at(targetIndex - 1)?._parentPos;
+    }
+
+    const position = makePosition(beforePosition, afterPosition);
+
+    const item = this.#items.at(index)!; // eslint-disable-line no-restricted-syntax
+    const previousPosition = item._getParentKeyOrThrow();
+    this.#updateItemPositionAt(index, position);
+
+    if (this._doc && this._id) {
+      const storageUpdates = new Map<string, LiveListUpdates<TItem>>([
+        [this._id, makeUpdate(this, [moveDelta(index, targetIndex, item)])],
+      ]);
+
+      this._doc.emit(
+        [
+          {
+            type: OpCode.SET_PARENT_KEY,
+            id: nn(item._id),
+            opId: this._doc.generateOpId(),
+            parentKey: position,
+          },
+        ],
+        [
+          {
+            type: OpCode.SET_PARENT_KEY,
+            id: nn(item._id),
+            parentKey: previousPosition,
+          },
+        ],
+        storageUpdates
+      );
+    }
+  }
+
+  /**
+   * Deletes an element at the specified index
+   * @param index The index of the element to delete
+   */
+  delete(index: number): void {
+    this._doc?.assertWritable();
+    if (index < 0 || index >= this.#items.length) {
+      throw new Error(
+        `Cannot delete list item at index "${index}". index should be between 0 and ${
+          this.#items.length - 1
+        }`
+      );
+    }
+
+    const item = this.#items.at(index)!; // eslint-disable-line no-restricted-syntax
+    item._detach();
+    this.#items.remove(item);
+    this.invalidate();
+
+    if (this._doc) {
+      const childRecordId = item._id;
+      if (childRecordId) {
+        const storageUpdates = new Map<string, LiveListUpdates<TItem>>();
+        storageUpdates.set(
+          nn(this._id),
+          makeUpdate(this, [deleteDelta(index, item)])
+        );
+
+        this._doc.emit(
+          [
+            {
+              id: childRecordId,
+              opId: this._doc.generateOpId(),
+              type: OpCode.DELETE_CRDT,
+            },
+          ],
+          item._toOps(nn(this._id), item._getParentKeyOrThrow()),
+          storageUpdates
+        );
+      }
+    }
+  }
+
+  clear(): void {
+    this._doc?.assertWritable();
+    if (this._doc) {
+      const ops: ClientWireOp[] = [];
+      const reverseOps: Op[] = [];
+
+      const updateDelta: LiveListUpdateDelta[] = [];
+
+      for (const item of this.#items) {
+        item._detach();
+        const childId = item._id;
+        if (childId) {
+          ops.push({
+            type: OpCode.DELETE_CRDT,
+            id: childId,
+            opId: this._doc.generateOpId(),
+          });
+          reverseOps.push(
+            ...item._toOps(nn(this._id), item._getParentKeyOrThrow())
+          );
+
+          // Index is always 0 because updates are applied one after another
+          // when applied on an immutable state
+          updateDelta.push(deleteDelta(0, item));
+        }
+      }
+
+      this.#items.clear();
+      this.invalidate();
+
+      const storageUpdates = new Map<string, LiveListUpdates<TItem>>();
+      storageUpdates.set(nn(this._id), makeUpdate(this, updateDelta));
+
+      this._doc.emit(ops, reverseOps, storageUpdates);
+    } else {
+      for (const item of this.#items) {
+        item._detach();
+      }
+      this.#items.clear();
+      this.invalidate();
+    }
+  }
+
+  set(index: number, item: TItem): void {
+    this._doc?.assertWritable();
+    if (index < 0 || index >= this.#items.length) {
+      throw new Error(
+        `Cannot set list item at index "${index}". index should be between 0 and ${
+          this.#items.length - 1
+        }`
+      );
+    }
+
+    const existingItem = this.#items.at(index)!; // eslint-disable-line no-restricted-syntax
+    const position = existingItem._getParentKeyOrThrow();
+
+    const existingId = existingItem._id;
+    existingItem._detach();
+
+    const value = lsonToLiveNode(item);
+    value._setParentLink(this, position);
+    this.#items.remove(existingItem);
+    this.#items.add(value);
+    this.invalidate();
+
+    if (this._doc && this._id) {
+      const id = this._doc.generateId();
+      value._attach(id, this._doc);
+
+      const storageUpdates = new Map<string, LiveListUpdates<TItem>>();
+      storageUpdates.set(this._id, makeUpdate(this, [setDelta(index, value)]));
+
+      const ops = addIntentToRootOp(
+        value._toOpsWithOpId(this._id, position, this._doc),
+        "set",
+        existingId
+      );
+      const reverseOps = addIntentToRootOp(
+        existingItem._toOps(this._id, position),
+        "set",
+        id
+      );
+
+      this._doc.emit(ops, reverseOps, storageUpdates);
+    }
+  }
+
+  #unwrap(node: LiveNode): TItem {
+    return liveNodeToLson(node) as TItem;
+  }
+
+  /**
+   * Tests whether all elements pass the test implemented by the provided function.
+   * @param predicate Function to test for each element, taking two arguments (the element and its index).
+   * @returns true if the predicate function returns a truthy value for every element. Otherwise, false.
+   */
+  every(predicate: (value: TItem, index: number) => unknown): boolean {
+    return this.#items.rawArray.every((node, i) =>
+      predicate(this.#unwrap(node), i)
+    );
+  }
+
+  /**
+   * Creates an array with all elements that pass the test implemented by the provided function.
+   * @param predicate Function to test each element of the LiveList. Return a value that coerces to true to keep the element, or to false otherwise.
+   * @returns An array with the elements that pass the test.
+   */
+  filter(predicate: (value: TItem, index: number) => unknown): TItem[] {
+    const result: TItem[] = [];
+    this.#items.rawArray.forEach((node, i) => {
+      const item = this.#unwrap(node);
+      if (predicate(item, i)) result.push(item);
+    });
+    return result;
+  }
+
+  /**
+   * Returns the first element that satisfies the provided testing function.
+   * @param predicate Function to execute on each value.
+   * @returns The value of the first element in the LiveList that satisfies the provided testing function. Otherwise, undefined is returned.
+   */
+  find(predicate: (value: TItem, index: number) => unknown): TItem | undefined {
+    for (const [i, node] of this.#items.rawArray.entries()) {
+      const item = this.#unwrap(node);
+      if (predicate(item, i)) return item;
+    }
+    return undefined;
+  }
+
+  /**
+   * Returns the index of the first element in the LiveList that satisfies the provided testing function.
+   * @param predicate Function to execute on each value until the function returns true, indicating that the satisfying element was found.
+   * @returns The index of the first element in the LiveList that passes the test. Otherwise, -1.
+   */
+  findIndex(predicate: (value: TItem, index: number) => unknown): number {
+    return this.#items.rawArray.findIndex((node, i) =>
+      predicate(this.#unwrap(node), i)
+    );
+  }
+
+  /**
+   * Executes a provided function once for each element.
+   * @param callbackfn Function to execute on each element.
+   */
+  forEach(callbackfn: (value: TItem, index: number) => void): void {
+    this.#items.rawArray.forEach((node, i) =>
+      callbackfn(this.#unwrap(node), i)
+    );
+  }
+
+  /**
+   * Get the element at the specified index.
+   * @param index The index on the element to get.
+   * @returns The element at the specified index or undefined.
+   */
+  get(index: number): TItem | undefined {
+    const item = this.#items.at(index);
+    return item !== undefined ? this.#unwrap(item) : undefined;
+  }
+
+  /**
+   * Returns the first index at which a given element can be found in the LiveList, or -1 if it is not present.
+   * @param searchElement Element to locate.
+   * @param fromIndex The index to start the search at.
+   * @returns The first index of the element in the LiveList; -1 if not found.
+   */
+  indexOf(searchElement: TItem, fromIndex?: number): number {
+    return this.#items.rawArray.findIndex(
+      (node, i) => i >= (fromIndex ?? 0) && this.#unwrap(node) === searchElement
+    );
+  }
+
+  /**
+   * Returns the last index at which a given element can be found in the LiveList, or -1 if it is not present. The LiveList is searched backwards, starting at fromIndex.
+   * @param searchElement Element to locate.
+   * @param fromIndex The index at which to start searching backwards.
+   * @returns The last index of the element in the LiveList; -1 if not found.
+   */
+  lastIndexOf(searchElement: TItem, fromIndex?: number): number {
+    const arr = this.#items.rawArray;
+    for (let i = fromIndex ?? arr.length - 1; i >= 0; i--) {
+      if (this.#unwrap(arr[i]) === searchElement) return i;
+    }
+    return -1;
+  }
+
+  /**
+   * Creates an array populated with the results of calling a provided function on every element.
+   * @param callback Function that is called for every element.
+   * @returns An array with each element being the result of the callback function.
+   */
+  map<U>(callback: (value: TItem, index: number) => U): U[] {
+    return this.#items.rawArray.map((node, i) =>
+      callback(this.#unwrap(node), i)
+    );
+  }
+
+  /**
+   * Tests whether at least one element in the LiveList passes the test implemented by the provided function.
+   * @param predicate Function to test for each element.
+   * @returns true if the callback function returns a truthy value for at least one element. Otherwise, false.
+   */
+  some(predicate: (value: TItem, index: number) => unknown): boolean {
+    return this.#items.rawArray.some((node, i) =>
+      predicate(this.#unwrap(node), i)
+    );
+  }
+
+  *[Symbol.iterator](): IterableIterator<TItem> {
+    for (const node of this.#items) {
+      yield this.#unwrap(node);
+    }
+  }
+
+  #createAttachItemAndSort(
+    op: CreateOp,
+    key: string
+  ): {
+    newItem: LiveNode;
+    newIndex: number;
+  } {
+    const newItem = creationOpToLiveNode(op);
+
+    newItem._attach(op.id, nn(this._doc));
+    newItem._setParentLink(this, key);
+
+    this.#insert(newItem);
+
+    const newIndex = this._indexOfPosition(key);
+
+    return { newItem, newIndex };
+  }
+
+  #shiftItemPosition(index: number, key: Pos) {
+    const shiftedPosition = makePosition(
+      key,
+      this.#items.length > index + 1
+        ? this.#items.at(index + 1)?._parentPos
+        : undefined
+    );
+
+    this.#updateItemPositionAt(index, shiftedPosition);
+  }
+
+  /** @internal */
+  _toTreeNode(key: string): DevTools.LsonTreeNode {
+    const payload: DevTools.LsonTreeNode[] = [];
+    let index = 0;
+    for (const item of this.#items) {
+      payload.push(item.toTreeNode(index.toString()));
+      index++;
+    }
+    return {
+      type: "LiveList",
+      id: this._id ?? nanoid(),
+      key,
+      payload,
+    };
+  }
+
+  toJSON(): readonly ToJson<TItem>[] {
+    // Don't implement actual toJSON logic in here. Implement it in
+    // ._toJSON() instead. This helper merely exists to help TypeScript
+    // infer better return types.
+    return super.toJSON() as readonly ToJson<TItem>[];
+  }
+
+  /** @internal */
+  _toJSON(): readonly ToJson<TItem>[] {
+    const result = Array.from(this.#items, (node) => node.toJSON());
+    return freeze(result) as ToJson<TItem>[];
+  }
+
+  clone(): LiveList<TItem> {
+    return new LiveList(
+      Array.from(this.#items, (item) => item.clone() as TItem)
+    );
+  }
+}
+
+function makeUpdate<TItem extends Lson>(
+  liveList: LiveList<TItem>,
+  deltaUpdates: LiveListUpdateDelta[]
+): LiveListUpdates<TItem> {
+  return {
+    node: liveList,
+    type: "LiveList",
+    updates: deltaUpdates,
+  };
+}
+
+function setDelta(index: number, item: LiveNode): LiveListUpdateDelta {
+  return {
+    index,
+    type: "set",
+    item: item instanceof LiveRegister ? item.data : item,
+  };
+}
+
+function deleteDelta(
+  index: number,
+  deletedNode: LiveNode
+): LiveListUpdateDelta {
+  return {
+    type: "delete",
+    index,
+    deletedItem:
+      deletedNode instanceof LiveRegister ? deletedNode.data : deletedNode,
+  };
+}
+
+function insertDelta(index: number, item: LiveNode): LiveListUpdateDelta {
+  return {
+    index,
+    type: "insert",
+    item: item instanceof LiveRegister ? item.data : item,
+  };
+}
+
+function moveDelta(
+  previousIndex: number,
+  index: number,
+  item: LiveNode
+): LiveListUpdateDelta {
+  return {
+    type: "move",
+    index,
+    item: item instanceof LiveRegister ? item.data : item,
+    previousIndex,
+  };
+}
+
+/**
+ * Tags the root op of a serialized CreateOp sequence with an `intent` ("set" or
+ * "push") and an optional `deletedId`, telling the server how to resolve the
+ * new node's position in its parent list: replace an existing item ("set") or
+ * append to the true end ("push"). Only the root is tagged; see the note in the
+ * body for why.
+ *
+ * By default, no explicit intent means a regular insert.
+ */
+function addIntentToRootOp<T extends CreateOp>(ops: T[], intent: "push"): T[];
+function addIntentToRootOp<T extends CreateOp>(
+  ops: T[],
+  intent: "set",
+  deletedId?: string
+): T[];
+function addIntentToRootOp<T extends CreateOp>(
+  ops: T[],
+  intent: "set" | "push",
+  deletedId?: string
+): T[] {
+  return ops.map((op, index) => {
+    if (index === 0) {
+      // NOTE: Only the *first* Op is patched. `_toOps`/`_toOpsWithOpId` emit
+      // `ops[0]` for the value itself (whose parent is the list), followed by
+      // ops for that value's descendants (whose parent is the new node, not
+      // the list).
+      const firstOp = op;
+      return { ...firstOp, intent, deletedId };
+    } else {
+      return op;
+    }
+  });
+}

@@ -1,0 +1,37 @@
+{
+  "name": "@liveblocks/storage-demo",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -k -n server,web -c teal,magenta \"pnpm dev:server\" \"pnpm dev:web\"",
+    "dev:server": "tsx watch server/index.ts",
+    "dev:web": "vite --port 3010",
+    "build": "tsc -p tsconfig.json --noEmit && vite build",
+    "start": "tsx server/index.ts",
+    "install:deps": "pnpm install --ignore-workspace"
+  },
+  "dependencies": {
+    "@liveblocks/core": "file:../../../liveblocks-backend/shared/liveblocks-server/node_modules/@liveblocks/core",
+    "@liveblocks/server": "file:../../../liveblocks-backend/shared/liveblocks-server",
+    "@liveblocks/storage": "file:../../packages/liveblocks-storage",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "ws": "^8.17.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.12.2",
+    "@types/react": "^18.3.17",
+    "@types/react-dom": "^18.3.5",
+    "@types/ws": "^8.5.10",
+    "@vitejs/plugin-react": "^4.7.0",
+    "concurrently": "^9.2.1",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.3",
+    "vite": "^6.3.5"
+  },
+  "pnpm": {
+    "overrides": {
+      "@liveblocks/core": "file:../../../liveblocks-backend/shared/liveblocks-server/node_modules/@liveblocks/core"
+    }
+  }
+}
