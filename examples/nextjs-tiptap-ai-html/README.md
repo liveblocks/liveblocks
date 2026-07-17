@@ -20,7 +20,9 @@
 
 This example shows how to build a collaborative text editor with slash commands and AI-generated HTML components using [Liveblocks](https://liveblocks.io), [Tiptap](https://tiptap.dev/), the [Vercel AI SDK](https://ai-sdk.dev/), and [Next.js](https://nextjs.org/).
 
-As users edit the document, changes are automatically persisted and synced across clients. Type `/` inside the editor to insert common blocks such as headings, code blocks, and quotes. Choose **HTML component** to open an inline prompt box that streams AI-generated interactive HTML into a sandboxed preview inside the document.
+As users edit the document, changes are automatically persisted and synced across clients. Type `/` inside the editor to insert common blocks such as headings, code blocks, and quotes. Choose **HTML component** to open an inline prompt box: the AI-generated code streams into every connected client in realtime and renders in a sandboxed preview inside the document.
+
+Each HTML component stores its state in a [Liveblocks feed](https://liveblocks.io/docs/collaboration-features/ai-collaboration): every AI generation, manual code edit, and restore is appended as a feed message, giving each component a complete version history. Open the **Code** tab to edit the generated HTML by hand and save it as a new version, or the **History** tab to view and restore earlier versions.
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/text-editor.png" width="536" alt="Collaborative Text Editor" />
 

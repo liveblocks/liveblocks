@@ -31,7 +31,19 @@ const FEATURES: Feature[] = [
     icon: <SparklesIcon />,
     title: "AI-generated HTML",
     description:
-      "Describe an interactive component inline and stream the generated HTML into a sandboxed preview.",
+      "Describe an interactive component inline and watch the generated code stream in for everyone, rendered in a sandboxed preview.",
+  },
+  {
+    icon: <HistoryIcon />,
+    title: "Version history with Feeds",
+    description:
+      "Every generation, manual code edit, and restore is stored as a Liveblocks feed message, so each component keeps its full history.",
+  },
+  {
+    icon: <CodeIcon />,
+    title: "Editable code",
+    description:
+      "Open the Code tab to edit the generated HTML by hand and save it as a new version.",
   },
   {
     icon: <CommentIcon />,
@@ -344,6 +356,25 @@ function SlashIcon() {
   return (
     <FeatureIconBase>
       <path d="M11 21l2-18" />
+    </FeatureIconBase>
+  );
+}
+
+function HistoryIcon() {
+  return (
+    <FeatureIconBase>
+      <path d="M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8" />
+      <path d="M3 3v5h5" />
+      <path d="M12 7v5l4 2" />
+    </FeatureIconBase>
+  );
+}
+
+function CodeIcon() {
+  return (
+    <FeatureIconBase>
+      <path d="M16 18l6-6-6-6" />
+      <path d="M8 6l-6 6 6 6" />
     </FeatureIconBase>
   );
 }

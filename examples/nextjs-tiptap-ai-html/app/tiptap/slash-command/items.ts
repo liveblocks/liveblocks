@@ -63,11 +63,15 @@ const ITEMS: SlashCommandItem[] = [
     icon: "AI",
     keywords: ["ai", "html", "component", "interactive"],
     command: ({ editor, range }) => {
+      // Each component gets its own Liveblocks feed, which stores every
+      // generated version of its HTML.
+      const feedId = `html-component-${crypto.randomUUID()}`;
+
       editor
         .chain()
         .focus()
         .deleteRange(range)
-        .insertContent({ type: "htmlComponent" })
+        .insertContent({ type: "htmlComponent", attrs: { feedId } })
         .run();
 
       // `insertContent` may shift the insert position (e.g. when replacing an
