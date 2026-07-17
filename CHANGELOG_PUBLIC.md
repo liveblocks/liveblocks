@@ -18,6 +18,26 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 29 (2026-07-17)
+
+## Examples
+
+- Updated the [AI Slideshow Generator](https://liveblocks.io/examples/ai-slideshow/nextjs-ai-slideshow) example to support multiple slides, drag-and-drop, and double-click to edit text.
+
+## Documentation
+
+- Added links to examples at the top of relevant get started guides.
+- Added links to guides in overview pages.
+- Added more info on comments metadata throughout.
+
+## Website
+
+New blog post: [Comments: private threads and a natural home for AI](https://liveblocks.io/blog/comments-private-threads-and-a-natural-home-for-ai).
+
+## Contributors
+
+ctnicholas
+
 # Week 28 (2026-07-10)
 
 ## Examples
