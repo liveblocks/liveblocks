@@ -19,6 +19,10 @@ The component will run in a sandboxed iframe inside a collaborative text editor,
  * model streams, so all connected clients watch the code stream in
  * realtime, and the feed doubles as the component's version history.
  * https://liveblocks.io/docs/collaboration-features/ai-collaboration
+ *
+ * Note: this example uses anonymous auth, so the route accepts any
+ * roomId/feedId. In a real app, authenticate the request and check the
+ * user has write access to the room before writing to its feeds.
  */
 export async function POST(request: Request) {
   if (!process.env.AI_GATEWAY_API_KEY) {
@@ -34,6 +38,10 @@ export async function POST(request: Request) {
 
   if (!roomId || !feedId || !prompt) {
     return new Response("Missing roomId, feedId, or prompt", { status: 400 });
+  }
+
+  if (prompt.length > 2000) {
+    return new Response("Prompt is too long", { status: 400 });
   }
 
   const liveblocks = new Liveblocks({
@@ -69,8 +77,21 @@ export async function POST(request: Request) {
     let html = "";
     let lastFlush = 0;
 
-    for await (const chunk of result.textStream) {
-      html += chunk;
+    // Iterate the full stream: the AI SDK reports failures as `error`
+    // parts instead of throwing, so `textStream` alone would silently
+    // truncate failed generations.
+    for await (const part of result.fullStream) {
+      if (part.type === "error") {
+        throw part.error instanceof Error
+          ? part.error
+          : new Error(String(part.error));
+      }
+
+      if (part.type !== "text-delta") {
+        continue;
+      }
+
+      html += part.text;
 
       // Throttle feed updates while streaming
       const now = Date.now();

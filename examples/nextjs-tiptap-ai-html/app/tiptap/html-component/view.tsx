@@ -19,12 +19,23 @@ import { TabButton } from "./TabButton";
 type HtmlVersion = {
   id: string;
   createdAt: number;
+  updatedAt: number;
   data: HtmlVersionData;
 };
 
 type Tab = "preview" | "code" | "history";
 
-export function HtmlComponentView({ editor, node, selected }: NodeViewProps) {
+// A generation that hasn't been updated for this long is considered
+// stalled (the server updates the feed at least every ~100ms while the
+// model streams).
+const STALLED_GENERATION_MS = 30_000;
+
+export function HtmlComponentView({
+  editor,
+  node,
+  selected,
+  updateAttributes,
+}: NodeViewProps) {
   const feedId = typeof node.attrs.feedId === "string" ? node.attrs.feedId : "";
 
   return (
@@ -38,8 +49,19 @@ export function HtmlComponentView({ editor, node, selected }: NodeViewProps) {
           canAutoFocus={selected && editor.isFocused}
         />
       ) : (
-        <div className="p-6 text-sm text-muted-foreground">
-          This HTML component is missing its feed reference.
+        <div className="flex flex-wrap items-center gap-3 p-6 text-sm text-muted-foreground">
+          <span>This HTML component is missing its feed reference.</span>
+          <button
+            type="button"
+            className="rounded-md border border-border bg-background px-2.5 py-1 text-xs font-medium"
+            onClick={() =>
+              updateAttributes({
+                feedId: `html-component-${crypto.randomUUID()}`,
+              })
+            }
+          >
+            Reset component
+          </button>
         </div>
       )}
     </NodeViewWrapper>
@@ -56,8 +78,14 @@ function HtmlComponentCard({
   const room = useRoom();
   const createFeed = useCreateFeed();
   const createFeedMessage = useCreateFeedMessage();
-  const { messages, isLoading, fetchMore, hasFetchedAll, isFetchingMore } =
-    useFeedMessages(feedId);
+  const {
+    messages,
+    isLoading,
+    error: messagesError,
+    fetchMore,
+    hasFetchedAll,
+    isFetchingMore,
+  } = useFeedMessages(feedId);
 
   // Ensure the feed exists as soon as the component appears in the
   // document, so every client can subscribe to it. Creating an existing
@@ -77,13 +105,35 @@ function HtmlComponentCard({
         .map((message) => ({
           id: message.id,
           createdAt: message.createdAt,
+          updatedAt: message.updatedAt,
           data: message.data,
         })),
     [messages]
   );
 
   const latest = versions.length > 0 ? versions[versions.length - 1] : null;
-  const isGenerating = latest?.data.status === "generating";
+
+  // The server updates the generating message continuously; if it stops
+  // being updated (e.g. the serverless function timed out mid-stream),
+  // treat the generation as failed instead of locking the UI forever.
+  const [now, setNow] = useState(() => Date.now());
+  const isMarkedGenerating = latest?.data.status === "generating";
+
+  useEffect(() => {
+    if (!isMarkedGenerating) {
+      return;
+    }
+
+    setNow(Date.now());
+    const interval = setInterval(() => setNow(Date.now()), 5_000);
+    return () => clearInterval(interval);
+  }, [isMarkedGenerating]);
+
+  const isStalled =
+    isMarkedGenerating &&
+    latest !== null &&
+    now - latest.updatedAt > STALLED_GENERATION_MS;
+  const isGenerating = isMarkedGenerating && !isStalled;
 
   const [tab, setTab] = useState<Tab>("preview");
   // When set, an older version from the history is being viewed.
@@ -91,6 +141,7 @@ function HtmlComponentCard({
   // Local, unsaved edits to the code.
   const [draft, setDraft] = useState<string | null>(null);
   const [isPromptOpen, setIsPromptOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const viewed =
@@ -99,28 +150,31 @@ function HtmlComponentCard({
       : undefined) ?? latest;
 
   // While the AI streams, follow the live code; when it finishes, show
-  // the rendered result.
+  // the rendered result. Unsaved local edits are deliberately kept: a
+  // collaborator's generation must not wipe someone else's draft.
   const wasGenerating = useRef(false);
   useEffect(() => {
     if (isGenerating && !wasGenerating.current) {
-      setTab("code");
       setViewedVersionId(null);
-      setDraft(null);
       setIsPromptOpen(false);
+      if (draft === null) {
+        setTab("code");
+      }
     } else if (!isGenerating && wasGenerating.current) {
       setTab((current) => (current === "code" ? "preview" : current));
     }
     wasGenerating.current = isGenerating;
-  }, [isGenerating]);
+  }, [isGenerating, draft]);
 
   async function generate(prompt: string) {
     const trimmedPrompt = prompt.trim();
 
-    if (!trimmedPrompt || isGenerating) {
+    if (!trimmedPrompt || isGenerating || isSubmitting) {
       return;
     }
 
     setSubmitError(null);
+    setIsSubmitting(true);
 
     try {
       const response = await fetch("/api/generate-html", {
@@ -140,6 +194,8 @@ function HtmlComponentCard({
       setSubmitError(
         error instanceof Error ? error.message : "Failed to generate HTML"
       );
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -197,6 +253,14 @@ function HtmlComponentCard({
     );
   }
 
+  if (messagesError) {
+    return (
+      <div className="p-6 text-sm text-destructive">
+        Couldn’t load this component’s versions. Reload the page to try again.
+      </div>
+    );
+  }
+
   // No versions yet: show the create-with-AI prompt.
   if (!latest || !viewed) {
     return (
@@ -205,13 +269,16 @@ function HtmlComponentCard({
           autoFocus={canAutoFocus}
           initialValue=""
           placeholder="Describe an interactive HTML component..."
+          isSubmitting={isSubmitting}
           onSubmit={generate}
         />
         {submitError ? (
           <p className="mt-3 text-sm text-destructive">{submitError}</p>
         ) : null}
         <div className="mt-3 rounded-xl border border-dashed border-border bg-muted/30 p-6 text-center text-sm text-muted-foreground">
-          Press Enter to create an interactive HTML box with AI.
+          {isSubmitting
+            ? "Starting generation…"
+            : "Press Enter to create an interactive HTML box with AI."}
         </div>
       </div>
     );
@@ -244,7 +311,7 @@ function HtmlComponentCard({
             onClick={() => setTab("code")}
           />
           <TabButton
-            label={`History (${versions.length})`}
+            label={`History (${versions.length}${hasFetchedAll === false ? "+" : ""})`}
             active={tab === "history"}
             onClick={() => setTab("history")}
           />
@@ -266,6 +333,7 @@ function HtmlComponentCard({
             autoFocus
             initialValue={latest.data.prompt}
             placeholder="Describe what to generate next..."
+            isSubmitting={isSubmitting}
             onSubmit={generate}
             onCancel={() => setIsPromptOpen(false)}
           />
@@ -275,6 +343,12 @@ function HtmlComponentCard({
       {isGenerating ? (
         <p className="pb-3 text-sm text-muted-foreground">
           Generating… the code below streams in for everyone in the room.
+        </p>
+      ) : null}
+
+      {isStalled ? (
+        <p className="pb-3 text-sm text-destructive">
+          The last generation stalled and never finished. Try a new prompt.
         </p>
       ) : null}
 
@@ -323,10 +397,10 @@ function HtmlComponentCard({
       {tab === "code" ? (
         <CodeEditor
           code={draft ?? viewed.data.html}
-          streaming={isGenerating && !isViewingOldVersion}
+          streaming={isGenerating && !isViewingOldVersion && draft === null}
           readOnly={isGenerating}
           onChange={(code) => setDraft(code)}
-          onSave={draft !== null ? saveDraft : undefined}
+          onSave={draft !== null && !isGenerating ? saveDraft : undefined}
           onDiscard={draft !== null ? () => setDraft(null) : undefined}
         />
       ) : null}
@@ -355,12 +429,14 @@ function PromptForm({
   autoFocus,
   initialValue,
   placeholder,
+  isSubmitting,
   onSubmit,
   onCancel,
 }: {
   autoFocus: boolean;
   initialValue: string;
   placeholder: string;
+  isSubmitting: boolean;
   onSubmit: (prompt: string) => void;
   onCancel?: () => void;
 }) {
@@ -404,9 +480,9 @@ function PromptForm({
       <button
         type="submit"
         className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
-        disabled={!value.trim()}
+        disabled={!value.trim() || isSubmitting}
       >
-        Generate
+        {isSubmitting ? "Generating…" : "Generate"}
       </button>
       {onCancel ? (
         <button
@@ -458,20 +534,24 @@ function CodeEditor({
       />
       {onSave || onDiscard ? (
         <div className="mt-2 flex items-center gap-2">
-          <button
-            type="button"
-            className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground"
-            onClick={onSave}
-          >
-            Save as new version
-          </button>
-          <button
-            type="button"
-            className="rounded-md border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground"
-            onClick={onDiscard}
-          >
-            Discard changes
-          </button>
+          {onSave ? (
+            <button
+              type="button"
+              className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground"
+              onClick={onSave}
+            >
+              Save as new version
+            </button>
+          ) : null}
+          {onDiscard ? (
+            <button
+              type="button"
+              className="rounded-md border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground"
+              onClick={onDiscard}
+            >
+              Discard changes
+            </button>
+          ) : null}
         </div>
       ) : null}
     </div>
