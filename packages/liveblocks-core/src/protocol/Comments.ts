@@ -97,7 +97,41 @@ export type CommentDataPlain<CM extends BaseMetadata = DCM> = Omit<
   metadata: CM;
 } & Relax<{ body: CommentBody } | { deletedAt: string }>;
 
-export type CommentBodyBlockElement = CommentBodyParagraph;
+export type CommentBodyBulletedList = {
+  type: "bulleted-list";
+  children: CommentBodyListItem[];
+};
+
+export type CommentBodyNumberedList = {
+  type: "numbered-list";
+  children: CommentBodyListItem[];
+};
+
+export type CommentBodyTaskList = {
+  type: "task-list";
+  children: CommentBodyListItem[];
+};
+
+/** Root-level block or a nested list node inside another list block. */
+export type CommentBodyList =
+  | CommentBodyBulletedList
+  | CommentBodyNumberedList
+  | CommentBodyTaskList;
+
+/**
+ * Lists contain list items; each item must start with exactly one paragraph, then nested lists only.
+ */
+export type CommentBodyListItem = {
+  type: "list-item";
+  checked?: boolean;
+  children: [CommentBodyParagraph, ...CommentBodyList[]];
+};
+
+export type CommentBodyBlockElement =
+  | CommentBodyParagraph
+  | CommentBodyBulletedList
+  | CommentBodyNumberedList
+  | CommentBodyTaskList;
 
 export type CommentBodyInlineElement =
   | CommentBodyText
@@ -106,6 +140,7 @@ export type CommentBodyInlineElement =
 
 export type CommentBodyElement =
   | CommentBodyBlockElement
+  | CommentBodyListItem
   | CommentBodyInlineElement;
 
 export type CommentBodyParagraph = {
