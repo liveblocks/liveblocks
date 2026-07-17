@@ -67,6 +67,14 @@ export async function POST(request: Request) {
       data,
     });
 
+  // Touch the message periodically while waiting for the model's first
+  // token, so clients don't mistake a slow start for a stalled generation.
+  const keepalive = setInterval(() => {
+    update({ prompt, html: "", status: "generating", source: "ai" }).catch(
+      () => {}
+    );
+  }, 10_000);
+
   try {
     const result = streamText({
       model: aiModel,
@@ -91,6 +99,7 @@ export async function POST(request: Request) {
         continue;
       }
 
+      clearInterval(keepalive);
       html += part.text;
 
       // Throttle feed updates while streaming
@@ -127,6 +136,8 @@ export async function POST(request: Request) {
     }).catch(() => {});
 
     return new Response(reason, { status: 500 });
+  } finally {
+    clearInterval(keepalive);
   }
 }
 

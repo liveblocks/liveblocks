@@ -113,11 +113,18 @@ function HtmlComponentCard({
 
   const latest = versions.length > 0 ? versions[versions.length - 1] : null;
 
-  // The server updates the generating message continuously; if it stops
-  // being updated (e.g. the serverless function timed out mid-stream),
+  // The server updates the generating message continuously; if updates
+  // stop arriving (e.g. the serverless function timed out mid-stream),
   // treat the generation as failed instead of locking the UI forever.
+  // Staleness is measured from when this client last *observed* an
+  // update, so it is immune to client/server clock differences.
   const [now, setNow] = useState(() => Date.now());
   const isMarkedGenerating = latest?.data.status === "generating";
+  const lastObservedUpdateRef = useRef(Date.now());
+
+  useEffect(() => {
+    lastObservedUpdateRef.current = Date.now();
+  }, [latest?.id, latest?.updatedAt]);
 
   useEffect(() => {
     if (!isMarkedGenerating) {
@@ -131,8 +138,7 @@ function HtmlComponentCard({
 
   const isStalled =
     isMarkedGenerating &&
-    latest !== null &&
-    now - latest.updatedAt > STALLED_GENERATION_MS;
+    now - lastObservedUpdateRef.current > STALLED_GENERATION_MS;
   const isGenerating = isMarkedGenerating && !isStalled;
 
   const [tab, setTab] = useState<Tab>("preview");
@@ -160,7 +166,7 @@ function HtmlComponentCard({
       if (draft === null) {
         setTab("code");
       }
-    } else if (!isGenerating && wasGenerating.current) {
+    } else if (!isGenerating && wasGenerating.current && draft === null) {
       setTab((current) => (current === "code" ? "preview" : current));
     }
     wasGenerating.current = isGenerating;
@@ -608,6 +614,7 @@ function VersionHistory({
             <SourceBadge
               source={version.data.source}
               status={version.data.status}
+              isLatest={version.id === latestId}
             />
             <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
               {version.data.prompt}
@@ -641,13 +648,19 @@ function VersionHistory({
 function SourceBadge({
   source,
   status,
+  isLatest,
 }: {
   source: HtmlVersionData["source"];
   status: HtmlVersionData["status"];
+  isLatest: boolean;
 }) {
   const label =
     status === "generating"
-      ? "generating"
+      ? // Only the newest message can still be streaming; an older one
+        // stuck at "generating" never finished.
+        isLatest
+        ? "generating"
+        : "incomplete"
       : status === "error"
         ? "failed"
         : source === "edit"
