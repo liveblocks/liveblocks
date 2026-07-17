@@ -22,7 +22,10 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ## Examples
 
-- Updated the [AI Slideshow Generator](https://liveblocks.io/examples/ai-slideshow/nextjs-ai-slideshow) example to support multiple slides, drag-and-drop, and double-click to edit text.
+- Updated the
+  [AI Slideshow Generator](https://liveblocks.io/examples/ai-slideshow/nextjs-ai-slideshow)
+  example to support multiple slides, drag-and-drop, and double-click to edit
+  text.
 
 ## Documentation
 
@@ -32,21 +35,30 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ## Website
 
-New blog post: [Comments: private threads and a natural home for AI](https://liveblocks.io/blog/comments-private-threads-and-a-natural-home-for-ai).
+New blog post:
+[Comments: private threads and a natural home for AI](https://liveblocks.io/blog/comments-private-threads-and-a-natural-home-for-ai).
+
+## Dashboard
+
+- Added a button to download a room's Liveblocks Storage as JSON from the
+  dashboard's room detail view.
 
 ## Contributors
 
-ctnicholas
+ctnicholas, ofoucherot, pierrelevaillant
 
 # Week 28 (2026-07-10)
 
 ## Examples
 
-- New example: [AI Slideshow Generator](https://liveblocks.io/examples/ai-slideshow/nextjs-ai-slideshow).
+- New example:
+  [AI Slideshow Generator](https://liveblocks.io/examples/ai-slideshow/nextjs-ai-slideshow).
 
 ## Documentation
 
-- New section on [rendering custom components](https://liveblocks.io/docs/api-reference/liveblocks-react-ui#Rendering-custom-components) inside threads.
+- New section on
+  [rendering custom components](https://liveblocks.io/docs/api-reference/liveblocks-react-ui#Rendering-custom-components)
+  inside threads.
 - Updated all pages in the pricing section, increasing clarity.
 
 ## Contributors
@@ -93,16 +105,21 @@ ctnicholas, stacyschmitz
 
 ## Documentation
 
-- New guide: [How to add private commenting to your app](https://liveblocks.io/docs/guides/how-to-add-private-commenting-to-your-app).
-- New guide: [How to use public and private threads](https://liveblocks.io/docs/guides/how-to-use-public-and-private-threads).
+- New guide:
+  [How to add private commenting to your app](https://liveblocks.io/docs/guides/how-to-add-private-commenting-to-your-app).
+- New guide:
+  [How to use public and private threads](https://liveblocks.io/docs/guides/how-to-use-public-and-private-threads).
 
 ## Examples
 
-- Update [Linear-like Issue Tracker](https://liveblocks.io/examples/linear-like-issue-tracker/nextjs-linear-like-issue-tracker)_to use latest Next.js caching features.
+- Update
+  [Linear-like Issue Tracker](https://liveblocks.io/examples/linear-like-issue-tracker/nextjs-linear-like-issue-tracker)\_to
+  use latest Next.js caching features.
 
 ## Website
 
-- New blog post: [What's new in Liveblocks: June 2026](https://liveblocks.io/blog/whats-new-in-liveblocks-june-2026).
+- New blog post:
+  [What's new in Liveblocks: June 2026](https://liveblocks.io/blog/whats-new-in-liveblocks-june-2026).
 
 ## Contributors
 
@@ -114,12 +131,16 @@ ctnicholas, ofoucherot, marcbouchenoire, nvie
 
 ### `@liveblocks/client`
 
-- Fix a bug where sending a too large WebSocket message could sometimes overwrite a room's top-level storage key with `initialStorage`, causing data loss. Thanks for reporting [@watemerald](https://github.com/watemerald)!
+- Fix a bug where sending a too large WebSocket message could sometimes
+  overwrite a room's top-level storage key with `initialStorage`, causing data
+  loss. Thanks for reporting [@watemerald](https://github.com/watemerald)!
 
 ## Dashboard
 
-- Added support for manual and automatic re-ingestion of (web) knowledge sources at specified interval.
-- Streamlined display of knowledge sources and linking/unlinking of knowledge sources and copilots.
+- Added support for manual and automatic re-ingestion of (web) knowledge sources
+  at specified interval.
+- Streamlined display of knowledge sources and linking/unlinking of knowledge
+  sources and copilots.
 
 ## Contributors
 
@@ -147,9 +168,12 @@ nimeshnayaju, pierrelevaillant, nvie
 
 ## Examples
 
-- New example: [AI Spreadsheet](https://liveblocks.io/examples/ai-spreadsheet/nextjs-ai-spreadsheet).
-- New example: [Realtime AI Elements Chats](https://liveblocks.io/examples/ai-elements-realtime/nextjs-ai-elements-realtime).
-- Added “?” button to various examples, featuring a pop-up that explains how to use them.
+- New example:
+  [AI Spreadsheet](https://liveblocks.io/examples/ai-spreadsheet/nextjs-ai-spreadsheet).
+- New example:
+  [Realtime AI Elements Chats](https://liveblocks.io/examples/ai-elements-realtime/nextjs-ai-elements-realtime).
+- Added “?” button to various examples, featuring a pop-up that explains how to
+  use them.
 
 ## Contributors
 
@@ -161,11 +185,15 @@ ofoucherot, nvie, marcbouchenoire, ctnicholas
 
 ### `@liveblocks/client`
 
-- Fix a `LiveList` divergence after reconnects: a pending `push` could under specific timing conditions during a reconnect still cause a divergence between clients, despite the fix from 3.19.4.
+- Fix a `LiveList` divergence after reconnects: a pending `push` could under
+  specific timing conditions during a reconnect still cause a divergence between
+  clients, despite the fix from 3.19.4.
 
 ## Liveblocks dev server (v1.6.1)
 
-- Fix a `LiveList` divergence after reconnects: when a client re-sends a pending `push` op whose node the server had already stored (the original ack got lost in the disconnect)
+- Fix a `LiveList` divergence after reconnects: when a client re-sends a pending
+  `push` op whose node the server had already stored (the original ack got lost
+  in the disconnect)
 
 ## Contributors
 
@@ -177,32 +205,47 @@ nvie
 
 ### `@liveblocks/client`
 
-- Fix `LiveList.push()` so concurrent pushes from multiple clients no longer settle out of order.
-- Fix a bug where a `LiveObject` key deleted while a client was offline would reappear on reconnect, preventing the two clients from reconverging.
-- Fix a bug where reconnecting would emit too many update notifications for `LiveObject` keys whose values had not actually changed.
-- Fix a bug where deleting a nested live value from a `LiveObject` omitted the removed value (`deletedItem`) from the change notification.
+- Fix `LiveList.push()` so concurrent pushes from multiple clients no longer
+  settle out of order.
+- Fix a bug where a `LiveObject` key deleted while a client was offline would
+  reappear on reconnect, preventing the two clients from reconverging.
+- Fix a bug where reconnecting would emit too many update notifications for
+  `LiveObject` keys whose values had not actually changed.
+- Fix a bug where deleting a nested live value from a `LiveObject` omitted the
+  removed value (`deletedItem`) from the change notification.
 
 ## Examples
 
-- New example: [Collaborative SuperDoc editor](https://liveblocks.io/examples/collaborative-text-editor/nextjs-yjs-superdoc).
+- New example:
+  [Collaborative SuperDoc editor](https://liveblocks.io/examples/collaborative-text-editor/nextjs-yjs-superdoc).
 
 ## Documentation
 
-- New guide: [Get started with SuperDoc and Next.js](https://liveblocks.io/docs/get-started/yjs-superdoc-nextjs).
-- New guide: [Get started with SuperDoc and JavaScript](https://liveblocks.io/docs/get-started/yjs-superdoc-javascript).
-- New guide: [Get started with SuperDoc and React](https://liveblocks.io/docs/get-started/yjs-superdoc-react).
-- New guide: [Get started with SuperDoc and Svelte](https://liveblocks.io/docs/get-started/yjs-superdoc-svelte).
-- New guide: [Get started with SuperDoc and Vue.js](https://liveblocks.io/docs/get-started/yjs-superdoc-vuejs).
-- Updated get started guides for Liveblocks Storage, featuring more hook examples.
+- New guide:
+  [Get started with SuperDoc and Next.js](https://liveblocks.io/docs/get-started/yjs-superdoc-nextjs).
+- New guide:
+  [Get started with SuperDoc and JavaScript](https://liveblocks.io/docs/get-started/yjs-superdoc-javascript).
+- New guide:
+  [Get started with SuperDoc and React](https://liveblocks.io/docs/get-started/yjs-superdoc-react).
+- New guide:
+  [Get started with SuperDoc and Svelte](https://liveblocks.io/docs/get-started/yjs-superdoc-svelte).
+- New guide:
+  [Get started with SuperDoc and Vue.js](https://liveblocks.io/docs/get-started/yjs-superdoc-vuejs).
+- Updated get started guides for Liveblocks Storage, featuring more hook
+  examples.
 
 ## Website
 
-- New blog post: [How humans and AI will work together in the next generation of apps](https://liveblocks.io/blog/how-humans-and-ai-will-work-together-in-the-next-generation-of-apps).
-- New blog post: [What's new in Liveblocks: May 2026](https://liveblocks.io/blog/whats-new-in-liveblocks-may-2026).
+- New blog post:
+  [How humans and AI will work together in the next generation of apps](https://liveblocks.io/blog/how-humans-and-ai-will-work-together-in-the-next-generation-of-apps).
+- New blog post:
+  [What's new in Liveblocks: May 2026](https://liveblocks.io/blog/whats-new-in-liveblocks-may-2026).
 
 ## Liveblocks dev server (v1.6.0)
 
-- Update internal storage format of dev server. Note that your local dev rooms are not automatically migrated and will appear as empty rooms after the upgrade.
+- Update internal storage format of dev server. Note that your local dev rooms
+  are not automatically migrated and will appear as empty rooms after the
+  upgrade.
 
 ## Contributors
 
@@ -212,40 +255,69 @@ ctnicholas, nvie
 
 ## Documentation
 
-- New guide: [Get started with AI Presence](https://liveblocks.io/docs/get-started/nextjs-ai-presence).
-- New guide: [Get started with AI agents in React Flow](https://liveblocks.io/docs/get-started/nextjs-ai-react-flow).
-- New guide: [Get started with AI agent notifications](https://liveblocks.io/docs/get-started/nextjs-ai-notifications).
+- New guide:
+  [Get started with AI Presence](https://liveblocks.io/docs/get-started/nextjs-ai-presence).
+- New guide:
+  [Get started with AI agents in React Flow](https://liveblocks.io/docs/get-started/nextjs-ai-react-flow).
+- New guide:
+  [Get started with AI agent notifications](https://liveblocks.io/docs/get-started/nextjs-ai-notifications).
 - Updated Notifications get started guide to use secret key.
 
 ## Showcase
 
-- New item: [AI slideshow editor](https://liveblocks.io/showcase/ai-slideshow-editor).
-- New item: [AI replies in comment threads](https://liveblocks.io/showcase/ai-replies-in-comment-threads).
-- New item: [Multiplayer AI comment feeds](https://liveblocks.io/showcase/multiplayer-ai-comment-feeds).
-- New item: [AI generates slides with presence](https://liveblocks.io/showcase/ai-generates-slides-with-presence).
-- New item: [AI suggestions dropdown](https://liveblocks.io/showcase/ai-suggestions-dropdown).
-- New item: [Conflict-free multiplayer editing](https://liveblocks.io/showcase/conflict-free-multiplayer-editing).
-- New item: [AI comments bot with Chat SDK](https://liveblocks.io/showcase/ai-comments-bot-with-chat-sdk).
-- New item: [One AI bot for Slack and comments](https://liveblocks.io/showcase/one-ai-bot-for-slack-and-comments).
-- New item: [AI and humans editing together](https://liveblocks.io/showcase/ai-and-humans-editing-together).
-- New item: [Multiplayer sync for custom UIs](https://liveblocks.io/showcase/multiplayer-sync-for-custom-uis).
-- New item: [Agents work simultaneously](https://liveblocks.io/showcase/agents-work-simultaneously).
-- New item: [Multiplayer React Flow at 60fps](https://liveblocks.io/showcase/multiplayer-react-flow-at-60fps).
-- New item: [AI builds a flowchart with presence](https://liveblocks.io/showcase/ai-builds-a-flowchart-with-presence).
-- New item: [React Flow comment pins](https://liveblocks.io/showcase/react-flow-comment-pins).
-- New item: [Multiplayer undo in React Flow](https://liveblocks.io/showcase/multiplayer-undo-in-react-flow).
-- New item: [Handsontable realtime editing](https://liveblocks.io/showcase/handsontable-realtime-editing).
-- New item: [AI presence highlighting changes](https://liveblocks.io/showcase/ai-presence-highlighting-changes).
-- New item: [AI comments like Linear](https://liveblocks.io/showcase/ai-comments-like-linear).
-- New item: [Inline AI comments](https://liveblocks.io/showcase/inline-ai-comments).
-- New item: [Liveblocks n8n nodes](https://liveblocks.io/showcase/liveblocks-n8n-nodes).
-- New item: [Mention notifications inbox](https://liveblocks.io/showcase/mention-notifications-inbox).
-- New item: [AG Grid comment pins](https://liveblocks.io/showcase/ag-grid-comment-pins).
+- New item:
+  [AI slideshow editor](https://liveblocks.io/showcase/ai-slideshow-editor).
+- New item:
+  [AI replies in comment threads](https://liveblocks.io/showcase/ai-replies-in-comment-threads).
+- New item:
+  [Multiplayer AI comment feeds](https://liveblocks.io/showcase/multiplayer-ai-comment-feeds).
+- New item:
+  [AI generates slides with presence](https://liveblocks.io/showcase/ai-generates-slides-with-presence).
+- New item:
+  [AI suggestions dropdown](https://liveblocks.io/showcase/ai-suggestions-dropdown).
+- New item:
+  [Conflict-free multiplayer editing](https://liveblocks.io/showcase/conflict-free-multiplayer-editing).
+- New item:
+  [AI comments bot with Chat SDK](https://liveblocks.io/showcase/ai-comments-bot-with-chat-sdk).
+- New item:
+  [One AI bot for Slack and comments](https://liveblocks.io/showcase/one-ai-bot-for-slack-and-comments).
+- New item:
+  [AI and humans editing together](https://liveblocks.io/showcase/ai-and-humans-editing-together).
+- New item:
+  [Multiplayer sync for custom UIs](https://liveblocks.io/showcase/multiplayer-sync-for-custom-uis).
+- New item:
+  [Agents work simultaneously](https://liveblocks.io/showcase/agents-work-simultaneously).
+- New item:
+  [Multiplayer React Flow at 60fps](https://liveblocks.io/showcase/multiplayer-react-flow-at-60fps).
+- New item:
+  [AI builds a flowchart with presence](https://liveblocks.io/showcase/ai-builds-a-flowchart-with-presence).
+- New item:
+  [React Flow comment pins](https://liveblocks.io/showcase/react-flow-comment-pins).
+- New item:
+  [Multiplayer undo in React Flow](https://liveblocks.io/showcase/multiplayer-undo-in-react-flow).
+- New item:
+  [Handsontable realtime editing](https://liveblocks.io/showcase/handsontable-realtime-editing).
+- New item:
+  [AI presence highlighting changes](https://liveblocks.io/showcase/ai-presence-highlighting-changes).
+- New item:
+  [AI comments like Linear](https://liveblocks.io/showcase/ai-comments-like-linear).
+- New item:
+  [Inline AI comments](https://liveblocks.io/showcase/inline-ai-comments).
+- New item:
+  [Liveblocks n8n nodes](https://liveblocks.io/showcase/liveblocks-n8n-nodes).
+- New item:
+  [Mention notifications inbox](https://liveblocks.io/showcase/mention-notifications-inbox).
+- New item:
+  [AG Grid comment pins](https://liveblocks.io/showcase/ag-grid-comment-pins).
 
 ## Liveblocks dev server (v1.5.0)
 
-- Add `--random-port` (`-P`) flag to `liveblocks dev`: bind a random free port instead of an explicit port number. With `--cmd` (`-c`), the chosen port is exposed to the command via `LIVEBLOCKS_DEV_SERVER_PORT`. Ideal for CI (no port collisions ever).
-- Fix `LiveList.push()` so concurrent pushes from multiple clients no longer settle out of order.
+- Add `--random-port` (`-P`) flag to `liveblocks dev`: bind a random free port
+  instead of an explicit port number. With `--cmd` (`-c`), the chosen port is
+  exposed to the command via `LIVEBLOCKS_DEV_SERVER_PORT`. Ideal for CI (no port
+  collisions ever).
+- Fix `LiveList.push()` so concurrent pushes from multiple clients no longer
+  settle out of order.
 
 ## Contributors
 
@@ -255,7 +327,9 @@ ctnicholas, nvie
 
 ## v3.19.3
 
-- Fix unexpected disconnects that could happen while receiving large or long-running streaming responses from the server (e.g. when loading a large initial storage state).
+- Fix unexpected disconnects that could happen while receiving large or
+  long-running streaming responses from the server (e.g. when loading a large
+  initial storage state).
 
 ## v3.19.2
 
@@ -266,10 +340,18 @@ ctnicholas, nvie
 
 ## Examples
 
-- Added AI comments, buttons, and presence to [Linear-like Issue Tracker](https://liveblocks.io/examples/linear-like-issue-tracker/nextjs-linear-like-issue-tracker). It can read and edit issue content and properties.
-- Added AI comment pins to [Collaborative Flowchart AI](https://liveblocks.io/examples/collaborative-flowchart-ai/nextjs-react-flow-ai). It can read and edit flow state.
-- Added AI comments to [AI Dashboard Reports](https://liveblocks.io/examples/ai-dashboard-reports/nextjs-ai-dashboard-reports). It can answer questions on the app's data.
-- Added markdown AI replies to [AI Comments](https://liveblocks.io/examples/ai-comments/nextjs-comments-ai) and improved how the final comment is shown.
+- Added AI comments, buttons, and presence to
+  [Linear-like Issue Tracker](https://liveblocks.io/examples/linear-like-issue-tracker/nextjs-linear-like-issue-tracker).
+  It can read and edit issue content and properties.
+- Added AI comment pins to
+  [Collaborative Flowchart AI](https://liveblocks.io/examples/collaborative-flowchart-ai/nextjs-react-flow-ai).
+  It can read and edit flow state.
+- Added AI comments to
+  [AI Dashboard Reports](https://liveblocks.io/examples/ai-dashboard-reports/nextjs-ai-dashboard-reports).
+  It can answer questions on the app's data.
+- Added markdown AI replies to
+  [AI Comments](https://liveblocks.io/examples/ai-comments/nextjs-comments-ai)
+  and improved how the final comment is shown.
 
 ## Liveblocks backend
 
@@ -277,12 +359,15 @@ ctnicholas, nvie
 
 ## Documentation
 
-- All get started guides now have a "Copy prompt" button for use in Cursor, Claude Code, more.
-- New guide: [Get started with AI replies in Comments using Liveblocks and Next.js](https://liveblocks.io/docs/get-started/nextjs-comments-ai).
+- All get started guides now have a "Copy prompt" button for use in Cursor,
+  Claude Code, more.
+- New guide:
+  [Get started with AI replies in Comments using Liveblocks and Next.js](https://liveblocks.io/docs/get-started/nextjs-comments-ai).
 
 ## Website
 
-- New AI button and prompt on [liveblocks.io](https://liveblocks.io) homepage, allowing you to get started with one click.
+- New AI button and prompt on [liveblocks.io](https://liveblocks.io) homepage,
+  allowing you to get started with one click.
 
 ## Contributors
 
@@ -299,13 +384,16 @@ ctnicholas, nvie
 
 ## Infrastructure
 
-- We have fully completed the internal migration of all rooms to our new v2 realtime
-  data storage engine! [Learn about the benefits](https://liveblocks.io/docs/guides/about-the-new-storage-engine).
+- We have fully completed the internal migration of all rooms to our new v2
+  realtime data storage engine!
+  [Learn about the benefits](https://liveblocks.io/docs/guides/about-the-new-storage-engine).
 
 ## Documentation
 
-- New integrations section, featuring info on how to integrate Liveblocks into a number of new products.
-- Integrations pages include Bolt, Claude, Codex, Cursor, Lovable, Neon, PlanetScale, Reply, Supabase, v0.
+- New integrations section, featuring info on how to integrate Liveblocks into a
+  number of new products.
+- Integrations pages include Bolt, Claude, Codex, Cursor, Lovable, Neon,
+  PlanetScale, Reply, Supabase, v0.
 - Updated old guides and pages related to n8n, PlanetScale, Supabase.
 - New copy page dropdown for copying markdown into various AI tools.
 - Get started markdown homepage for AI.
@@ -313,7 +401,10 @@ ctnicholas, nvie
 
 ## Examples
 
-- Add AI features to [Linear-like Issue Tracker example](https://liveblocks.io/examples/linear-like-issue-tracker/nextjs-linear-like-issue-tracker). Tag AI in comments and it can edit the document, links, properties, and show AI presence as it makes changes.
+- Add AI features to
+  [Linear-like Issue Tracker example](https://liveblocks.io/examples/linear-like-issue-tracker/nextjs-linear-like-issue-tracker).
+  Tag AI in comments and it can edit the document, links, properties, and show
+  AI presence as it makes changes.
 
 ## Contributors
 
