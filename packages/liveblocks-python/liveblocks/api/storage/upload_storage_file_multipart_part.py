@@ -85,6 +85,9 @@ async def _asyncio(
         body=body,
     )
 
+    if isinstance(body, File):
+        kwargs["content"] = body._iter_bytes()
+
     response = await client.request(
         **kwargs,
     )

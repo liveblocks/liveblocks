@@ -12,6 +12,7 @@ from liveblocks.models.create_room_request_body import CreateRoomRequestBody
 from liveblocks.models.live_file import LiveFile
 from liveblocks.models.live_file_data import LiveFileData
 from liveblocks.models.room_permission_item import RoomPermissionItem
+from liveblocks.models.storage_file_multipart_part import StorageFileMultipartPart
 from liveblocks.types import File
 
 ROOM_JSON = {
@@ -200,6 +201,45 @@ class TestStorageFiles:
         assert route.calls.last.request.content == b"hello"
         assert route.calls.last.request.url.params["fileSize"] == "5"
         assert route.calls.last.request.headers["content-type"] == "application/octet-stream"
+
+    @pytest.mark.anyio
+    async def test_async_upload_storage_file(self, async_client, mock_api):
+        route = mock_api.put(f"/v2/rooms/my-room/storage/files/{STORAGE_FILE_ID}/upload/photo.png").mock(
+            return_value=httpx.Response(200, json=STORAGE_FILE_JSON)
+        )
+
+        result = await async_client.upload_storage_file(
+            "my-room",
+            STORAGE_FILE_ID,
+            "photo.png",
+            body=File(payload=BytesIO(b"hello")),
+            file_size=5,
+        )
+
+        assert result == LiveFileData(
+            id=STORAGE_FILE_ID,
+            name="photo.png",
+            size=5,
+            mime_type="image/png",
+        )
+        assert route.calls.last.request.content == b"hello"
+
+    @pytest.mark.anyio
+    async def test_async_upload_storage_file_multipart_part(self, async_client, mock_api):
+        route = mock_api.put(f"/v2/rooms/my-room/storage/files/{STORAGE_FILE_ID}/multipart/upload-1/1").mock(
+            return_value=httpx.Response(200, json={"partNumber": 1, "etag": "etag-1"})
+        )
+
+        result = await async_client.upload_storage_file_multipart_part(
+            "my-room",
+            STORAGE_FILE_ID,
+            "upload-1",
+            1,
+            body=File(payload=BytesIO(b"hello")),
+        )
+
+        assert result == StorageFileMultipartPart(part_number=1, etag="etag-1")
+        assert route.calls.last.request.content == b"hello"
 
     def test_get_storage_file(self, sync_client, mock_api):
         mock_api.get(f"/v2/rooms/my-room/storage/files/{STORAGE_FILE_ID}").mock(
