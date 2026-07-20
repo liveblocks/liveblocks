@@ -1557,7 +1557,7 @@ export function createApiClient<
   }
 
   async function streamStorage(options: { roomId: string }) {
-    const result = await httpClient.rawGet(
+    const result = await httpClient.get(
       url`/v2/c/rooms/${options.roomId}/storage`,
       await authManager.getAuthValue({
         roomId: options.roomId,
@@ -1565,7 +1565,7 @@ export function createApiClient<
         access: "read",
       })
     );
-    return (await result.json()) as StorageNode[];
+    return result as unknown as StorageNode[];
   }
 
   /* -------------------------------------------------------------------------------------------------
