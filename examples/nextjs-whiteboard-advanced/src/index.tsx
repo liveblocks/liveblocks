@@ -7,7 +7,7 @@ import {
   useOthersMapped,
   useCanUndo,
   useCanRedo,
-  useRoom,
+  useUploadFile,
 } from "@liveblocks/react/suspense";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
@@ -88,7 +88,7 @@ function Loading() {
 
 function Canvas() {
   const layerIds = useStorage((root) => root.layerIds);
-  const room = useRoom();
+  const uploadFile = useUploadFile();
 
   const pencilDraft = useSelf((me) => me.presence.pencilDraft);
   const [canvasState, setState] = useState<CanvasState>({
@@ -252,13 +252,13 @@ function Canvas() {
       }
 
       try {
-        const liveFile = await room.uploadFile(file);
+        const liveFile = await uploadFile(file);
         insertImageLayer(bounds, liveFile);
       } catch (error) {
         console.error("Image upload failed", error);
       }
     },
-    [camera, canInsertImageLayer, insertImageLayer, room]
+    [camera, canInsertImageLayer, insertImageLayer, uploadFile]
   );
 
   const onDragOver = useCallback((e: React.DragEvent) => {
