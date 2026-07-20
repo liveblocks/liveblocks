@@ -55,6 +55,11 @@ type BatchStoreOptions<O> = {
   getErrorCacheExpiry?: (error: unknown) => number | undefined;
 };
 
+type PendingEnqueue = {
+  id: symbol;
+  promise: Promise<void>;
+};
+
 class BatchCall<O, I> {
   readonly input: I;
   readonly resolve: Resolve<O>;
@@ -185,7 +190,7 @@ export function createBatchStore<O, I>(
 ): BatchStore<O, I> {
   const signal = new MutableSignal(new Map<string, AsyncResult<O>>());
   const cacheExpiryTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
-  const pendingEnqueues = new Map<string, Promise<void>>();
+  const pendingEnqueues = new Map<string, PendingEnqueue>();
 
   function getCacheKey(args: I): string {
     return stableStringify(args);
@@ -242,13 +247,16 @@ export function createBatchStore<O, I>(
   function invalidate(inputs?: I[]): void {
     if (Array.isArray(inputs)) {
       for (const input of inputs) {
-        clearCacheExpiry(getCacheKey(input));
+        const cacheKey = getCacheKey(input);
+        clearCacheExpiry(cacheKey);
+        pendingEnqueues.delete(cacheKey);
       }
     } else {
       for (const timeoutId of cacheExpiryTimeouts.values()) {
         clearTimeout(timeoutId);
       }
       cacheExpiryTimeouts.clear();
+      pendingEnqueues.clear();
     }
 
     signal.mutate((cache) => {
@@ -267,14 +275,23 @@ export function createBatchStore<O, I>(
   async function processEnqueue(
     input: I,
     cacheKey: string,
-    batchResult$: Promise<O>
+    batchResult$: Promise<O>,
+    pendingEnqueueId: symbol
   ): Promise<void> {
     try {
       const result = await batchResult$;
 
+      if (pendingEnqueues.get(cacheKey)?.id !== pendingEnqueueId) {
+        return;
+      }
+
       update({ key: cacheKey, state: { isLoading: false, data: result } });
       scheduleCacheExpiry(input, options?.getCacheExpiry?.(result));
     } catch (error) {
+      if (pendingEnqueues.get(cacheKey)?.id !== pendingEnqueueId) {
+        return;
+      }
+
       // // TODO: Differentiate whole batch errors from individual errors.
       // if (batch.error) {
       //   // If the whole batch errored, clear the state.
@@ -299,16 +316,18 @@ export function createBatchStore<O, I>(
         state: { isLoading: false, error: error as Error },
       });
     } finally {
-      pendingEnqueues.delete(cacheKey);
+      if (pendingEnqueues.get(cacheKey)?.id === pendingEnqueueId) {
+        pendingEnqueues.delete(cacheKey);
+      }
     }
   }
 
   function enqueue(input: I): Promise<void> {
     const cacheKey = getCacheKey(input);
 
-    const existingEnqueue$ = pendingEnqueues.get(cacheKey);
-    if (existingEnqueue$ !== undefined) {
-      return existingEnqueue$;
+    const existingEnqueue = pendingEnqueues.get(cacheKey);
+    if (existingEnqueue !== undefined) {
+      return existingEnqueue.promise;
     }
 
     // If this call already has a state, return early.
@@ -318,9 +337,18 @@ export function createBatchStore<O, I>(
     }
 
     const batchResult$ = batch.get(input);
-    const pendingEnqueue$ = processEnqueue(input, cacheKey, batchResult$);
+    const pendingEnqueueId = Symbol();
+    const pendingEnqueue$ = processEnqueue(
+      input,
+      cacheKey,
+      batchResult$,
+      pendingEnqueueId
+    );
 
-    pendingEnqueues.set(cacheKey, pendingEnqueue$);
+    pendingEnqueues.set(cacheKey, {
+      id: pendingEnqueueId,
+      promise: pendingEnqueue$,
+    });
     update({ key: cacheKey, state: { isLoading: true } });
     return pendingEnqueue$;
   }

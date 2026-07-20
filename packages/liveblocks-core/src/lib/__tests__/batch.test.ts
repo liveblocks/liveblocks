@@ -296,6 +296,41 @@ describe("createBatchStore", () => {
     unsubscribe();
   });
 
+  test("should ignore a pending result after invalidation", async () => {
+    const firstResult = Promise_withResolvers<string[]>();
+    const secondResult = Promise_withResolvers<string[]>();
+    const callback = vi
+      .fn()
+      .mockReturnValueOnce(firstResult.promise)
+      .mockReturnValueOnce(secondResult.promise);
+    const batch = new Batch<string, string>(callback, {
+      delay: SOME_TIME,
+      size: 1,
+    });
+    const store = createBatchStore<string, string>(batch);
+
+    const firstEnqueue$ = store.enqueue("a");
+    store.invalidate(["a"]);
+    const secondEnqueue$ = store.enqueue("a");
+
+    expect(secondEnqueue$).not.toBe(firstEnqueue$);
+    expect(callback).toHaveBeenCalledTimes(2);
+
+    firstResult.resolve(["stale"]);
+    await firstEnqueue$;
+
+    expect(store.getItemState("a")).toEqual({ isLoading: true });
+    expect(store.enqueue("a")).toBe(secondEnqueue$);
+
+    secondResult.resolve(["fresh"]);
+    await secondEnqueue$;
+
+    expect(store.getItemState("a")).toEqual({
+      isLoading: false,
+      data: "fresh",
+    });
+  });
+
   test("should not change the state with `enqueue` if the entry was already resolved", async () => {
     const callback = vi.fn((inputs: string[]) => inputs);
     const batch = new Batch<string, string>(callback, { delay: SOME_TIME });
