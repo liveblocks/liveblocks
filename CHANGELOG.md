@@ -1,5 +1,7 @@
 ## vNEXT (not yet released)
 
+## v3.23.0
+
 ## v3.22.0
 
 ### `@liveblocks/react`
