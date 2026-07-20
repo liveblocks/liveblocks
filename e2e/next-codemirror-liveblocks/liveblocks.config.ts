@@ -1,9 +1,10 @@
+import type { LiveblocksCodemirrorSelection } from "@liveblocks/codemirror";
 import type { LiveText } from "@liveblocks/core";
 
 declare global {
   interface Liveblocks {
     Presence: {
-      selection: { anchor: number; head: number; version: number } | null;
+      selection: LiveblocksCodemirrorSelection | null;
     };
 
     Storage: {

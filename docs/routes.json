@@ -182,6 +182,16 @@
             "hidden": true
           },
           {
+            "title": "CodeMirror",
+            "path": "/get-started/react-codemirror",
+            "hidden": true
+          },
+          {
+            "title": "CodeMirror",
+            "path": "/get-started/nextjs-codemirror",
+            "hidden": true
+          },
+          {
             "title": "BlockNote",
             "path": "/get-started/react-blocknote",
             "hidden": true
@@ -949,6 +959,10 @@
       {
         "title": "@liveblocks/react-flow",
         "path": "/api-reference/liveblocks-react-flow"
+      },
+      {
+        "title": "@liveblocks/codemirror",
+        "path": "/api-reference/liveblocks-codemirror"
       },
       {
         "title": "@liveblocks/react-tiptap",

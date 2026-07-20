@@ -14,8 +14,8 @@ import {
   ViewPlugin,
   ViewUpdate,
 } from "@codemirror/view";
-import type { LiveObject, LsonObject, Room } from "@liveblocks/client";
-import { kInternal, LiveText } from "@liveblocks/core";
+import type { LsonObject, Room } from "@liveblocks/client";
+import { kInternal, type LiveText } from "@liveblocks/core";
 
 import { clamp } from "./utils";
 
@@ -27,12 +27,14 @@ type RemoteSelection = {
   color?: string;
 };
 
+export type LiveblocksCodemirrorSelection = {
+  anchor: number;
+  head: number;
+  version: number;
+};
+
 type LiveblocksCodemirrorPresence = {
-  selection: {
-    anchor: number;
-    head: number;
-    version: number;
-  } | null;
+  selection: LiveblocksCodemirrorSelection | null;
 };
 
 type LiveblocksCodemirrorUserMeta = {
@@ -140,25 +142,24 @@ export function createLiveblocksPresencePlugin(
     LsonObject,
     LiveblocksCodemirrorUserMeta
   >,
-  root: LiveObject<{ document: LiveText }>
+  text: LiveText
 ): Extension[] {
   const upsertRemoteSelections = StateEffect.define<Array<RemoteSelection>>();
   const removeRemoteSelections = StateEffect.define<Set<number>>();
 
   const remoteSelectionsState = StateField.define<Array<RemoteSelection>>({
     create(state) {
-      const document = root.get("document");
       const selections: RemoteSelection[] = [];
 
       for (const user of room.getOthers()) {
         const presenceSelection = user.presence.selection;
         if (presenceSelection == null) continue;
 
-        const anchor = document[kInternal].decodeIndex(
+        const anchor = text[kInternal].decodeIndex(
           presenceSelection.anchor,
           presenceSelection.version
         );
-        const head = document[kInternal].decodeIndex(
+        const head = text[kInternal].decodeIndex(
           presenceSelection.head,
           presenceSelection.version
         );
@@ -331,22 +332,21 @@ export function createLiveblocksPresencePlugin(
 
         constructor(private view: EditorView) {
           this.unsubscribeFromStorageUpdates = room.subscribe(
-            root,
+            text,
             () => {
               if (this.pendingSelectionsByConnectionId.size === 0) {
                 return;
               }
-              const document = root.get("document");
               const rebasedSelection: Array<RemoteSelection> = [];
               for (const [
                 connectionId,
                 selection,
               ] of this.pendingSelectionsByConnectionId.entries()) {
-                const anchor = document[kInternal].decodeIndex(
+                const anchor = text[kInternal].decodeIndex(
                   selection.anchor,
                   selection.version
                 );
-                const head = document[kInternal].decodeIndex(
+                const head = text[kInternal].decodeIndex(
                   selection.head,
                   selection.version
                 );
@@ -377,8 +377,6 @@ export function createLiveblocksPresencePlugin(
               const connections = new Set<number>();
               const connectionIdsToRemove = new Set<number>();
 
-              const document = root.get("document");
-
               for (const user of others) {
                 connections.add(user.connectionId);
                 if (user.presence.selection === null) {
@@ -389,11 +387,11 @@ export function createLiveblocksPresencePlugin(
                   continue;
                 }
 
-                const anchor = document[kInternal].decodeIndex(
+                const anchor = text[kInternal].decodeIndex(
                   user.presence.selection.anchor,
                   user.presence.selection.version
                 );
-                const head = document[kInternal].decodeIndex(
+                const head = text[kInternal].decodeIndex(
                   user.presence.selection.head,
                   user.presence.selection.version
                 );
@@ -456,20 +454,17 @@ export function createLiveblocksPresencePlugin(
           ) {
             return;
           }
-          const document = root.get("document");
           const selection = this.view.state.selection.main;
-          const encodedAnchor = document[kInternal].encodeIndex(
-            selection.anchor
-          );
+          const encodedAnchor = text[kInternal].encodeIndex(selection.anchor);
           const encodedHead =
             selection.head === selection.anchor
               ? encodedAnchor
-              : document[kInternal].encodeIndex(selection.head);
+              : text[kInternal].encodeIndex(selection.head);
           room.updatePresence({
             selection: {
               anchor: encodedAnchor,
               head: encodedHead,
-              version: document.version,
+              version: text.version,
             },
           });
         }

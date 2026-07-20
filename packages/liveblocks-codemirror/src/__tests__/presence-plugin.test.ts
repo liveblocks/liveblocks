@@ -1,7 +1,8 @@
 import { EditorSelection, EditorState, Transaction } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
-import { LiveObject, Room } from "@liveblocks/client";
-import { CrdtType, kInternal, LiveText } from "@liveblocks/core";
+import type { LiveObject, Room } from "@liveblocks/client";
+import type { LiveText } from "@liveblocks/core";
+import { CrdtType, kInternal } from "@liveblocks/core";
 import { describe, expect, onTestFinished, test, vi } from "vitest";
 
 import {
@@ -9,15 +10,14 @@ import {
   prepareIsolatedStorageTest,
   prepareStorageTest,
 } from "../../../liveblocks-core/src/__tests__/_MockWebSocketServer.setup";
-import { createLiveblocksPresencePlugin } from "../presence-plugin";
+import {
+  createLiveblocksPresencePlugin,
+  type LiveblocksCodemirrorSelection,
+} from "../presence-plugin";
 import { createLiveblocksSyncPlugin } from "../sync-plugin";
 
 type Presence = {
-  selection: {
-    anchor: number;
-    head: number;
-    version: number;
-  } | null;
+  selection: LiveblocksCodemirrorSelection | null;
 };
 
 describe("createLiveblocksPresencePlugin", () => {
@@ -41,7 +41,7 @@ describe("createLiveblocksPresencePlugin", () => {
         ],
         0
       )) as unknown as {
-        room: Room;
+        room: Room<Presence>;
         root: LiveObject<{ document: LiveText }>;
       };
 
@@ -53,8 +53,8 @@ describe("createLiveblocksPresencePlugin", () => {
         state: EditorState.create({
           doc: initialDoc,
           extensions: [
-            createLiveblocksSyncPlugin(room, root),
-            ...createLiveblocksPresencePlugin(room, root),
+            createLiveblocksSyncPlugin(room, root.get("document")),
+            ...createLiveblocksPresencePlugin(room, root.get("document")),
           ],
         }),
         parent,
@@ -99,7 +99,7 @@ describe("createLiveblocksPresencePlugin", () => {
         ],
         0
       )) as unknown as {
-        room: Room;
+        room: Room<Presence>;
         root: LiveObject<{ document: LiveText }>;
       };
 
@@ -111,8 +111,8 @@ describe("createLiveblocksPresencePlugin", () => {
         state: EditorState.create({
           doc: initialDoc,
           extensions: [
-            createLiveblocksSyncPlugin(room, root),
-            ...createLiveblocksPresencePlugin(room, root),
+            createLiveblocksSyncPlugin(room, root.get("document")),
+            ...createLiveblocksPresencePlugin(room, root.get("document")),
           ],
         }),
         parent,
@@ -152,7 +152,7 @@ describe("createLiveblocksPresencePlugin", () => {
         ],
         0
       )) as unknown as {
-        room: Room;
+        room: Room<Presence>;
         root: LiveObject<{ document: LiveText }>;
       };
 
@@ -163,7 +163,10 @@ describe("createLiveblocksPresencePlugin", () => {
       const view = new EditorView({
         state: EditorState.create({
           doc: initialDoc,
-          extensions: createLiveblocksPresencePlugin(room, root),
+          extensions: createLiveblocksPresencePlugin(
+            room,
+            root.get("document")
+          ),
         }),
         parent,
       });
@@ -180,10 +183,7 @@ describe("createLiveblocksPresencePlugin", () => {
     test("displays existing remote cursors on mount", async () => {
       const initialDoc = "a\nb";
 
-      const { room, refRoom, storage, refStorage } = (await prepareStorageTest<
-        { document: LiveText },
-        Presence
-      >(
+      const { room, refRoom, storage, refStorage } = (await prepareStorageTest(
         [
           createSerializedRoot(),
           [
@@ -227,8 +227,14 @@ describe("createLiveblocksPresencePlugin", () => {
         state: EditorState.create({
           doc: initialDoc,
           extensions: [
-            createLiveblocksSyncPlugin(refRoom, refStorage.root),
-            ...createLiveblocksPresencePlugin(refRoom, refStorage.root),
+            createLiveblocksSyncPlugin(
+              refRoom,
+              refStorage.root.get("document")
+            ),
+            ...createLiveblocksPresencePlugin(
+              refRoom,
+              refStorage.root.get("document")
+            ),
           ],
         }),
         parent: parentB,
@@ -275,10 +281,7 @@ describe("createLiveblocksPresencePlugin", () => {
     test("remote presence renders carets in a layer, not inline widgets", async () => {
       const initialDoc = "a\nb";
 
-      const { room, refRoom, storage, refStorage } = (await prepareStorageTest<
-        { document: LiveText },
-        Presence
-      >(
+      const { room, refRoom, storage, refStorage } = (await prepareStorageTest(
         [
           createSerializedRoot(),
           [
@@ -309,8 +312,14 @@ describe("createLiveblocksPresencePlugin", () => {
         state: EditorState.create({
           doc: initialDoc,
           extensions: [
-            createLiveblocksSyncPlugin(refRoom, refStorage.root),
-            ...createLiveblocksPresencePlugin(refRoom, refStorage.root),
+            createLiveblocksSyncPlugin(
+              refRoom,
+              refStorage.root.get("document")
+            ),
+            ...createLiveblocksPresencePlugin(
+              refRoom,
+              refStorage.root.get("document")
+            ),
           ],
         }),
         parent: parentB,
@@ -372,10 +381,7 @@ describe("createLiveblocksPresencePlugin", () => {
     test("remote range selection renders in the selection layer", async () => {
       const initialDoc = "Hello, world";
 
-      const { room, refRoom, storage, refStorage } = (await prepareStorageTest<
-        { document: LiveText },
-        Presence
-      >(
+      const { room, refRoom, storage, refStorage } = (await prepareStorageTest(
         [
           createSerializedRoot(),
           [
@@ -406,8 +412,14 @@ describe("createLiveblocksPresencePlugin", () => {
         state: EditorState.create({
           doc: initialDoc,
           extensions: [
-            createLiveblocksSyncPlugin(refRoom, refStorage.root),
-            ...createLiveblocksPresencePlugin(refRoom, refStorage.root),
+            createLiveblocksSyncPlugin(
+              refRoom,
+              refStorage.root.get("document")
+            ),
+            ...createLiveblocksPresencePlugin(
+              refRoom,
+              refStorage.root.get("document")
+            ),
           ],
         }),
         parent: parentB,
@@ -470,10 +482,7 @@ describe("createLiveblocksPresencePlugin", () => {
     test("cleared remote presence removes layer carets", async () => {
       const initialDoc = "abc";
 
-      const { room, refRoom, storage, refStorage } = (await prepareStorageTest<
-        { document: LiveText },
-        Presence
-      >(
+      const { room, refRoom, storage, refStorage } = (await prepareStorageTest(
         [
           createSerializedRoot(),
           [
@@ -502,8 +511,14 @@ describe("createLiveblocksPresencePlugin", () => {
         state: EditorState.create({
           doc: initialDoc,
           extensions: [
-            createLiveblocksSyncPlugin(refRoom, refStorage.root),
-            ...createLiveblocksPresencePlugin(refRoom, refStorage.root),
+            createLiveblocksSyncPlugin(
+              refRoom,
+              refStorage.root.get("document")
+            ),
+            ...createLiveblocksPresencePlugin(
+              refRoom,
+              refStorage.root.get("document")
+            ),
           ],
         }),
         parent: parentB,
@@ -545,10 +560,7 @@ describe("createLiveblocksPresencePlugin", () => {
     test("undecodable presence is rebased after storage catches up", async () => {
       const initialDoc = "abc";
 
-      const { room, refRoom, storage, refStorage } = (await prepareStorageTest<
-        { document: LiveText },
-        Presence
-      >(
+      const { room, refRoom, storage, refStorage } = (await prepareStorageTest(
         [
           createSerializedRoot(),
           [
@@ -579,8 +591,11 @@ describe("createLiveblocksPresencePlugin", () => {
         state: EditorState.create({
           doc: initialDoc,
           extensions: [
-            createLiveblocksSyncPlugin(room, storage.root),
-            ...createLiveblocksPresencePlugin(room, storage.root),
+            createLiveblocksSyncPlugin(room, storage.root.get("document")),
+            ...createLiveblocksPresencePlugin(
+              room,
+              storage.root.get("document")
+            ),
           ],
         }),
         parent: parentA,
@@ -590,8 +605,14 @@ describe("createLiveblocksPresencePlugin", () => {
         state: EditorState.create({
           doc: initialDoc,
           extensions: [
-            createLiveblocksSyncPlugin(refRoom, refStorage.root),
-            ...createLiveblocksPresencePlugin(refRoom, refStorage.root),
+            createLiveblocksSyncPlugin(
+              refRoom,
+              refStorage.root.get("document")
+            ),
+            ...createLiveblocksPresencePlugin(
+              refRoom,
+              refStorage.root.get("document")
+            ),
           ],
         }),
         parent: parentB,
@@ -639,10 +660,7 @@ describe("createLiveblocksPresencePlugin", () => {
     test("deleting a newline adjacent to a remote caret succeeds", async () => {
       const initialDoc = "a\nb";
 
-      const { room, refRoom, storage, refStorage } = (await prepareStorageTest<
-        { document: LiveText },
-        Presence
-      >(
+      const { room, refRoom, storage, refStorage } = (await prepareStorageTest(
         [
           createSerializedRoot(),
           [
@@ -673,8 +691,11 @@ describe("createLiveblocksPresencePlugin", () => {
         state: EditorState.create({
           doc: initialDoc,
           extensions: [
-            createLiveblocksSyncPlugin(room, storage.root),
-            ...createLiveblocksPresencePlugin(room, storage.root),
+            createLiveblocksSyncPlugin(room, storage.root.get("document")),
+            ...createLiveblocksPresencePlugin(
+              room,
+              storage.root.get("document")
+            ),
           ],
         }),
         parent: parentA,
@@ -684,8 +705,14 @@ describe("createLiveblocksPresencePlugin", () => {
         state: EditorState.create({
           doc: initialDoc,
           extensions: [
-            createLiveblocksSyncPlugin(refRoom, refStorage.root),
-            ...createLiveblocksPresencePlugin(refRoom, refStorage.root),
+            createLiveblocksSyncPlugin(
+              refRoom,
+              refStorage.root.get("document")
+            ),
+            ...createLiveblocksPresencePlugin(
+              refRoom,
+              refStorage.root.get("document")
+            ),
           ],
         }),
         parent: parentB,

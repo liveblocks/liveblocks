@@ -3527,8 +3527,8 @@ whiteboard, or cells in a spreadsheet.
 
 ### Data structures
 
-Storage provides four different conflict-free data structures, which you can
-use to build your application. All structures are permanent and persist when all
+Storage provides four different conflict-free data structures, which you can use
+to build your application. All structures are permanent and persist when all
 users have left the room, unlike [Presence](/docs/ready-made-features/presence)
 which is temporary.
 
@@ -3548,9 +3548,9 @@ which is temporary.
   last modification received by the Liveblocks servers is the winner.
 
 - [`LiveText`][] - A collaborative rich-text document. Use this to store plain
-  text with optional inline formatting attributes (for example `{ bold: true }`).
-  Concurrent insertions, deletions, and formatting changes are merged
-  automatically using server-ordered operational transformation.
+  text with optional inline formatting attributes (for example
+  `{ bold: true }`). Concurrent insertions, deletions, and formatting changes
+  are merged automatically using server-ordered operational transformation.
 
 ### Typing Storage [#typing-storage]
 
@@ -3759,8 +3759,8 @@ function EditorToolbar() {
 array of text segments. Each segment is either a plain string or a
 `[text, attributes]` tuple.
 
-To get the plain text content without attributes, join the segment texts. This is
-equivalent to calling [`.toString()`][] on a `LiveText` instance—for example
+To get the plain text content without attributes, join the segment texts. This
+is equivalent to calling [`.toString()`][] on a `LiveText` instance—for example
 via `storage.get("document")` inside [`useMutation`][].
 
 ```tsx
@@ -3815,7 +3815,8 @@ function FormattedDocument() {
 For custom editor integrations, subscribe to granular `LiveText` changes with
 [`useRoom`][] and `room.subscribe` using the `isDeep` option. Each update
 includes the change type (`insert`, `delete`, or `format`), index, and affected
-text. Learn more about [listening for nested changes](/docs/api-reference/liveblocks-client#listening-for-nested-changes).
+text. Learn more about
+[listening for nested changes](/docs/api-reference/liveblocks-client#listening-for-nested-changes).
 
 ```tsx
 import { LiveText } from "@liveblocks/client";
@@ -3858,6 +3859,13 @@ function LiveTextSync({ document }: { document: LiveText }) {
   return null;
 }
 ```
+
+For CodeMirror, use
+[`@liveblocks/codemirror`](/docs/api-reference/liveblocks-codemirror) instead of
+building a custom sync layer. See
+[`createLiveblocksSyncPlugin`](/docs/api-reference/liveblocks-codemirror#createLiveblocksSyncPlugin)
+and
+[`createLiveblocksPresencePlugin`](/docs/api-reference/liveblocks-codemirror#createLiveblocksPresencePlugin).
 
 Learn more about the `LiveText` API in the
 [`@liveblocks/client` reference](/docs/api-reference/liveblocks-client#LiveText).

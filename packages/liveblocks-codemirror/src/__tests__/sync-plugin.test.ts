@@ -5,12 +5,12 @@ import {
   Transaction,
 } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
-import { LiveObject, Room } from "@liveblocks/client";
+import type { LiveObject, Room } from "@liveblocks/client";
+import type { LiveText } from "@liveblocks/core";
 import {
   CrdtType,
   kInternal,
   kStorageUpdateSource,
-  LiveText,
   OpCode,
 } from "@liveblocks/core";
 import { describe, expect, onTestFinished, test, vi } from "vitest";
@@ -54,7 +54,7 @@ describe("createLiveblocksSyncPlugin", () => {
       const view = new EditorView({
         state: EditorState.create({
           doc: initialDoc,
-          extensions: [createLiveblocksSyncPlugin(room, root)],
+          extensions: [createLiveblocksSyncPlugin(room, root.get("document"))],
         }),
         parent,
       });
@@ -106,7 +106,7 @@ describe("createLiveblocksSyncPlugin", () => {
       const view = new EditorView({
         state: EditorState.create({
           doc: initialDoc,
-          extensions: [createLiveblocksSyncPlugin(room, root)],
+          extensions: [createLiveblocksSyncPlugin(room, root.get("document"))],
         }),
         parent,
       });
@@ -153,7 +153,7 @@ describe("createLiveblocksSyncPlugin", () => {
       const view = new EditorView({
         state: EditorState.create({
           doc: initialDoc,
-          extensions: [createLiveblocksSyncPlugin(room, root)],
+          extensions: [createLiveblocksSyncPlugin(room, root.get("document"))],
         }),
         parent,
       });
@@ -220,7 +220,7 @@ describe("createLiveblocksSyncPlugin", () => {
       const view = new EditorView({
         state: EditorState.create({
           doc: initialDoc,
-          extensions: [createLiveblocksSyncPlugin(room, root)],
+          extensions: [createLiveblocksSyncPlugin(room, root.get("document"))],
         }),
         parent,
       });
@@ -287,7 +287,7 @@ describe("createLiveblocksSyncPlugin", () => {
       const view = new EditorView({
         state: EditorState.create({
           doc: initialDoc,
-          extensions: [createLiveblocksSyncPlugin(room, root)],
+          extensions: [createLiveblocksSyncPlugin(room, root.get("document"))],
         }),
         parent,
       });
@@ -357,7 +357,7 @@ describe("createLiveblocksSyncPlugin", () => {
       const view = new EditorView({
         state: EditorState.create({
           doc: initialDoc,
-          extensions: [createLiveblocksSyncPlugin(room, root)],
+          extensions: [createLiveblocksSyncPlugin(room, root.get("document"))],
         }),
         parent,
       });
@@ -431,7 +431,7 @@ describe("createLiveblocksSyncPlugin", () => {
       const view = new EditorView({
         state: EditorState.create({
           doc: initialDoc,
-          extensions: [createLiveblocksSyncPlugin(room, root)],
+          extensions: [createLiveblocksSyncPlugin(room, root.get("document"))],
         }),
         parent,
       });
@@ -494,7 +494,9 @@ describe("createLiveblocksSyncPlugin", () => {
       const viewA = new EditorView({
         state: EditorState.create({
           doc: initialDoc,
-          extensions: [createLiveblocksSyncPlugin(room, storage.root)],
+          extensions: [
+            createLiveblocksSyncPlugin(room, storage.root.get("document")),
+          ],
         }),
         parent: parentA,
       });
@@ -502,7 +504,12 @@ describe("createLiveblocksSyncPlugin", () => {
       const viewB = new EditorView({
         state: EditorState.create({
           doc: initialDoc,
-          extensions: [createLiveblocksSyncPlugin(refRoom, refStorage.root)],
+          extensions: [
+            createLiveblocksSyncPlugin(
+              refRoom,
+              refStorage.root.get("document")
+            ),
+          ],
         }),
         parent: parentB,
       });
@@ -573,7 +580,9 @@ describe("createLiveblocksSyncPlugin", () => {
       const viewA = new EditorView({
         state: EditorState.create({
           doc: initialDoc,
-          extensions: [createLiveblocksSyncPlugin(room, storage.root)],
+          extensions: [
+            createLiveblocksSyncPlugin(room, storage.root.get("document")),
+          ],
         }),
         parent: parentA,
       });
@@ -581,7 +590,12 @@ describe("createLiveblocksSyncPlugin", () => {
       const viewB = new EditorView({
         state: EditorState.create({
           doc: initialDoc,
-          extensions: [createLiveblocksSyncPlugin(refRoom, refStorage.root)],
+          extensions: [
+            createLiveblocksSyncPlugin(
+              refRoom,
+              refStorage.root.get("document")
+            ),
+          ],
         }),
         parent: parentB,
       });
@@ -659,7 +673,9 @@ describe("createLiveblocksSyncPlugin", () => {
         const view = new EditorView({
           state: EditorState.create({
             doc: initialDoc,
-            extensions: [createLiveblocksSyncPlugin(room, root)],
+            extensions: [
+              createLiveblocksSyncPlugin(room, root.get("document")),
+            ],
           }),
           parent,
         });
@@ -716,7 +732,9 @@ describe("createLiveblocksSyncPlugin", () => {
         const view = new EditorView({
           state: EditorState.create({
             doc: initialDoc,
-            extensions: [createLiveblocksSyncPlugin(room, root)],
+            extensions: [
+              createLiveblocksSyncPlugin(room, root.get("document")),
+            ],
           }),
           parent,
         });
@@ -781,7 +799,9 @@ describe("createLiveblocksSyncPlugin", () => {
         const view = new EditorView({
           state: EditorState.create({
             doc: initialDoc,
-            extensions: [createLiveblocksSyncPlugin(room, root)],
+            extensions: [
+              createLiveblocksSyncPlugin(room, root.get("document")),
+            ],
           }),
           parent,
         });
@@ -843,7 +863,9 @@ describe("createLiveblocksSyncPlugin", () => {
         const view = new EditorView({
           state: EditorState.create({
             doc: initialDoc,
-            extensions: [createLiveblocksSyncPlugin(room, root)],
+            extensions: [
+              createLiveblocksSyncPlugin(room, root.get("document")),
+            ],
           }),
           parent,
         });
@@ -910,7 +932,9 @@ describe("createLiveblocksSyncPlugin", () => {
         const view = new EditorView({
           state: EditorState.create({
             doc: initialDoc,
-            extensions: [createLiveblocksSyncPlugin(room, root)],
+            extensions: [
+              createLiveblocksSyncPlugin(room, root.get("document")),
+            ],
           }),
           parent,
         });
@@ -984,7 +1008,9 @@ describe("createLiveblocksSyncPlugin", () => {
         const view = new EditorView({
           state: EditorState.create({
             doc: initialDoc,
-            extensions: [createLiveblocksSyncPlugin(room, root)],
+            extensions: [
+              createLiveblocksSyncPlugin(room, root.get("document")),
+            ],
           }),
           parent,
         });
@@ -1052,7 +1078,9 @@ describe("createLiveblocksSyncPlugin", () => {
         const view = new EditorView({
           state: EditorState.create({
             doc: initialDoc,
-            extensions: [createLiveblocksSyncPlugin(room, root)],
+            extensions: [
+              createLiveblocksSyncPlugin(room, root.get("document")),
+            ],
           }),
           parent,
         });
@@ -1124,7 +1152,9 @@ describe("createLiveblocksSyncPlugin", () => {
         const view = new EditorView({
           state: EditorState.create({
             doc: initialDoc,
-            extensions: [createLiveblocksSyncPlugin(room, root)],
+            extensions: [
+              createLiveblocksSyncPlugin(room, root.get("document")),
+            ],
           }),
           parent,
         });
@@ -1193,7 +1223,9 @@ describe("createLiveblocksSyncPlugin", () => {
         const view = new EditorView({
           state: EditorState.create({
             doc: initialDoc,
-            extensions: [createLiveblocksSyncPlugin(room, root)],
+            extensions: [
+              createLiveblocksSyncPlugin(room, root.get("document")),
+            ],
           }),
           parent,
         });
@@ -1247,7 +1279,9 @@ describe("createLiveblocksSyncPlugin", () => {
         const view = new EditorView({
           state: EditorState.create({
             doc: initialDoc,
-            extensions: [createLiveblocksSyncPlugin(room, root)],
+            extensions: [
+              createLiveblocksSyncPlugin(room, root.get("document")),
+            ],
           }),
           parent,
         });
@@ -1306,7 +1340,9 @@ describe("createLiveblocksSyncPlugin", () => {
         const view = new EditorView({
           state: EditorState.create({
             doc: initialDoc,
-            extensions: [createLiveblocksSyncPlugin(room, root)],
+            extensions: [
+              createLiveblocksSyncPlugin(room, root.get("document")),
+            ],
           }),
           parent,
         });
@@ -1378,7 +1414,9 @@ describe("createLiveblocksSyncPlugin", () => {
         const view = new EditorView({
           state: EditorState.create({
             doc: initialDoc,
-            extensions: [createLiveblocksSyncPlugin(room, root)],
+            extensions: [
+              createLiveblocksSyncPlugin(room, root.get("document")),
+            ],
           }),
           parent,
         });
@@ -1448,7 +1486,9 @@ describe("createLiveblocksSyncPlugin", () => {
         const view = new EditorView({
           state: EditorState.create({
             doc: initialDoc,
-            extensions: [createLiveblocksSyncPlugin(room, root)],
+            extensions: [
+              createLiveblocksSyncPlugin(room, root.get("document")),
+            ],
           }),
           parent,
         });
@@ -1513,7 +1553,9 @@ describe("createLiveblocksSyncPlugin", () => {
         const view = new EditorView({
           state: EditorState.create({
             doc: initialDoc,
-            extensions: [createLiveblocksSyncPlugin(room, root)],
+            extensions: [
+              createLiveblocksSyncPlugin(room, root.get("document")),
+            ],
           }),
           parent,
         });
