@@ -18,17 +18,25 @@
         "module": "./dist/index.js",
         "default": "./dist/index.cjs"
       }
+    },
+    "./styles.css": {
+      "types": "./styles.css.d.cts",
+      "default": "./styles.css"
     }
   },
   "files": [
     "dist/**",
+    "**/*.css",
+    "**/*.css.d.cts",
+    "**/*.css.d.ts",
+    "**/*.css.map",
     "README.md"
   ],
   "scripts": {
     "dev": "rollup --config rollup.config.js --watch",
     "build": "rollup --config rollup.config.js",
-    "format": "eslint --fix src/; prettier --write src/",
-    "lint": "eslint src/",
+    "format": "eslint --fix src/; stylelint --fix src/styles/; prettier --write src/",
+    "lint": "eslint src/; stylelint src/styles/",
     "lint:package": "publint --strict && attw --pack",
     "start": "pnpm run dev",
     "test": "vitest run",
@@ -58,6 +66,8 @@
     "prosemirror-state": "^1.4.4",
     "prosemirror-view": "^1.41.6",
     "rollup": "3.28.1",
+    "stylelint": "^15.10.2",
+    "stylelint-config-standard": "^34.0.0",
     "typescript": "^5.9.3",
     "vitest": "^4.1.4"
   },

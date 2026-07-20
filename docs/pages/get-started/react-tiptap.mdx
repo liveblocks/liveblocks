@@ -118,6 +118,14 @@ package.
     from `@liveblocks/react-tiptap`. [`FloatingToolbar`](/docs/api-reference/liveblocks-react-tiptap#FloatingToolbar)
       adds a text selection toolbar.
 
+    By default, `useLiveblocksExtension` uses Yjs for collaboration. To store
+    text as [`LiveText`](/docs/api-reference/liveblocks-client#LiveText) backed
+    by Liveblocks Storage instead, pass
+    [`collaborationMode: "liveblocks"`](/docs/api-reference/liveblocks-react-tiptap#Liveblocks-collaboration-mode).
+    Follow the
+    [Storage-backed Tiptap React quickstart](/docs/get-started/react-tiptap-storage)
+    for the complete setup.
+
     ```tsx file="Editor.tsx"
     "use client";
 

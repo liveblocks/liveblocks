@@ -1,0 +1,489 @@
+---
+meta:
+  title: "@liveblocks/prosemirror"
+  parentTitle: "API Reference"
+  description: "API Reference for the @liveblocks/prosemirror package"
+alwaysShowAllNavigationLevels: false
+---
+
+`@liveblocks/prosemirror` provides [ProseMirror](https://prosemirror.net/)
+plugins that sync editor documents with Liveblocks Storage and display remote
+carets and selections. Text nodes are stored as
+[`LiveText`](/docs/api-reference/liveblocks-client#LiveText), preserving text
+formatting and concurrent edits.
+
+If you are using Tiptap, use
+[`@liveblocks/react-tiptap`](/docs/api-reference/liveblocks-react-tiptap) with
+[`collaborationMode: "liveblocks"`](/docs/api-reference/liveblocks-react-tiptap#Liveblocks-collaboration-mode)
+instead. It builds on this package and provides a Tiptap extension and React
+components.
+
+<Banner>
+
+This package is for client-side ProseMirror editors backed by Liveblocks
+Storage. For server-side editing of existing Tiptap and BlockNote documents, use
+[`@liveblocks/node-prosemirror`](/docs/api-reference/liveblocks-node-prosemirror).
+
+</Banner>
+
+## Setup
+
+Install Liveblocks and the ProseMirror packages used by your editor:
+
+```bash
+npm install @liveblocks/client @liveblocks/react @liveblocks/prosemirror prosemirror-model prosemirror-state prosemirror-view
+```
+
+Each Liveblocks package should use the same version.
+
+Add the collaboration plugin to sync the document and the caret plugin to show
+other users’ selections. The collaboration plugin creates its Storage document
+when it first loads, so `initialStorage` can remain empty.
+
+```tsx file="Editor.tsx"
+"use client";
+
+import { useEffect, useRef } from "react";
+import {
+  createLiveblocksCollaborationCaretPlugin,
+  createLiveblocksCollaborationPlugin,
+} from "@liveblocks/prosemirror";
+// +++
+import "@liveblocks/prosemirror/styles.css";
+// +++
+import { useRoom } from "@liveblocks/react/suspense";
+import { EditorState } from "prosemirror-state";
+import type { Schema } from "prosemirror-model";
+import { EditorView } from "prosemirror-view";
+
+const INITIAL_CONTENT = {
+  type: "doc",
+  content: [
+    {
+      type: "paragraph",
+      content: [{ type: "text", text: "Hello world" }],
+    },
+  ],
+};
+
+export function Editor({ schema }: { schema: Schema }) {
+  const room = useRoom();
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (containerRef.current === null) return;
+
+    const info = room.getSelf()?.info;
+    const user = {
+      name: typeof info?.name === "string" ? info.name : undefined,
+      color: typeof info?.color === "string" ? info.color : undefined,
+    };
+    const caretStorage = { users: [] };
+
+    const state = EditorState.create({
+      schema,
+      // +++
+      plugins: [
+        createLiveblocksCollaborationPlugin({
+          room,
+          field: "document",
+          initialContent: INITIAL_CONTENT,
+          fallbackDocument: () => INITIAL_CONTENT,
+        }),
+        createLiveblocksCollaborationCaretPlugin(
+          { room, field: "document", user },
+          caretStorage
+        ),
+      ],
+      // +++
+    });
+
+    const view = new EditorView(containerRef.current, { state });
+    return () => view.destroy();
+  }, [room, schema]);
+
+  return <div ref={containerRef} className="editor" />;
+}
+```
+
+The `field` value identifies the editor document. Documents are stored under
+`root._tiptap_docs`, keyed by `field`, so use a different value for each editor
+in the same room.
+
+Import the package stylesheet to display remote carets and selections:
+
+```ts
+import "@liveblocks/prosemirror/styles.css";
+```
+
+## createLiveblocksCollaborationPlugin [#createLiveblocksCollaborationPlugin]
+
+Creates a ProseMirror plugin that keeps an editor document in sync with
+Liveblocks Storage. Local transactions update the Storage document, while remote
+Storage changes are applied to the editor. Text leaves are represented by
+[`LiveText`](/docs/api-reference/liveblocks-client#LiveText).
+
+```ts
+import { createLiveblocksCollaborationPlugin } from "@liveblocks/prosemirror";
+
+const collaborationPlugin = createLiveblocksCollaborationPlugin({
+  room,
+  field: "document",
+  initialContent: {
+    type: "doc",
+    content: [{ type: "paragraph" }],
+  },
+});
+```
+
+The plugin groups local edits into the room’s undo and redo history. Connect
+your editor’s undo and redo controls to `room.history.undo()` and
+`room.history.redo()`.
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="plugin" type="Plugin">
+    A ProseMirror plugin to add when creating the editor state.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Options">
+  <PropertiesListItem name="room" type="LiveblocksProsemirrorRoom" required>
+    The Liveblocks room, retrieved with
+    [`useRoom`](/docs/api-reference/liveblocks-react#useRoom) or
+    [`client.enterRoom`](/docs/api-reference/liveblocks-client#Client.enterRoom).
+  </PropertiesListItem>
+  <PropertiesListItem name="field" type="string" required>
+    The name used to store this editor under `root._tiptap_docs`. Use a unique
+    field for each editor in a room.
+  </PropertiesListItem>
+  <PropertiesListItem name="initialContent" type="ProseMirrorJsonNode">
+    The initial ProseMirror JSON document. It is used only when the Storage
+    document does not exist. If omitted, the editor’s current document is used.
+  </PropertiesListItem>
+  <PropertiesListItem name="fallbackDocument" type="() => ProseMirrorJsonNode">
+    Returns a schema-valid document if stored content cannot be parsed or is
+    empty.
+  </PropertiesListItem>
+</PropertiesList>
+
+## createLiveblocksCollaborationCaretPlugin [#createLiveblocksCollaborationCaretPlugin]
+
+Creates a ProseMirror plugin that broadcasts the local selection through
+Presence and renders other users’ carets and selection highlights.
+
+```ts
+import {
+  createLiveblocksCollaborationCaretPlugin,
+  type CollaborationCaretStorage,
+} from "@liveblocks/prosemirror";
+
+const storage: CollaborationCaretStorage = { users: [] };
+const caretPlugin = createLiveblocksCollaborationCaretPlugin(
+  {
+    room,
+    field: "document",
+    user: { name: "Ada", color: "#D583F0" },
+  },
+  storage
+);
+```
+
+The plugin renders elements with the `.collaboration-carets__caret`,
+`.collaboration-carets__label`, and `.collaboration-carets__selection` class
+names. The user’s `color` is applied with inline styles.
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="plugin" type="Plugin">
+    A ProseMirror plugin to add when creating the editor state.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem
+    name="options.room"
+    type="LiveblocksProsemirrorRoom"
+    required
+  >
+    The same Liveblocks room passed to
+    [`createLiveblocksCollaborationPlugin`](#createLiveblocksCollaborationPlugin).
+  </PropertiesListItem>
+  <PropertiesListItem name="options.field" type="string" required>
+    The same document field passed to the collaboration plugin. Cursors from
+    other fields are ignored.
+  </PropertiesListItem>
+  <PropertiesListItem name="options.user" type="CursorUser" required>
+    The name and color displayed with this user’s remote caret.
+  </PropertiesListItem>
+  <PropertiesListItem name="storage" type="CollaborationCaretStorage" required>
+    A mutable object with a `users` array. The plugin updates the array with the
+    other users currently in the room.
+  </PropertiesListItem>
+</PropertiesList>
+
+### Caret utilities [#Caret-utilities]
+
+Use `presencePatch` when building a wrapper around the caret plugin or updating
+its user data outside the plugin. It creates the Presence update expected by
+other `@liveblocks/prosemirror` clients.
+
+```ts
+import { getCursorUser, presencePatch } from "@liveblocks/prosemirror";
+
+const user = getCursorUser(room.getSelf()?.info) ?? {};
+
+room.updatePresence(
+  presencePatch({
+    field: "document",
+    anchor: editorState.selection.anchor,
+    head: editorState.selection.head,
+    user,
+  })
+);
+```
+
+<PropertiesList title="Functions">
+  <PropertiesListItem name="presencePatch" type="(presence) => JsonObject">
+    Creates a Presence patch containing the document field, selection positions,
+    and optional cursor user.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="getCursorUser"
+    type="(value: unknown) => CursorUser | undefined"
+  >
+    Reads string `name` and `color` properties from an unknown value.
+  </PropertiesListItem>
+</PropertiesList>
+
+`LIVEBLOCKS_CARET_PRESENCE_KEY` contains the Presence key used by the caret
+plugin. In most applications, the plugin manages this Presence value directly.
+
+## Plugin state
+
+### LIVEBLOCKS_COLLABORATION_PLUGIN_KEY [#LIVEBLOCKS_COLLABORATION_PLUGIN_KEY]
+
+The key for reading the collaboration plugin state. `isReady` becomes `true`
+after Storage has loaded and the editor has received its initial document.
+
+```ts
+import { LIVEBLOCKS_COLLABORATION_PLUGIN_KEY } from "@liveblocks/prosemirror";
+
+const { isReady } = LIVEBLOCKS_COLLABORATION_PLUGIN_KEY.getState(
+  editorState
+) ?? { isReady: false };
+```
+
+<PropertiesList title="State">
+  <PropertiesListItem name="isReady" type="boolean" required>
+    Whether the initial Storage document has been loaded into the editor.
+  </PropertiesListItem>
+</PropertiesList>
+
+### LIVEBLOCKS_CARET_PLUGIN_KEY [#LIVEBLOCKS_CARET_PLUGIN_KEY]
+
+The key for reading the collaboration caret plugin state.
+
+```ts
+import { LIVEBLOCKS_CARET_PLUGIN_KEY } from "@liveblocks/prosemirror";
+
+const state = LIVEBLOCKS_CARET_PLUGIN_KEY.getState(editorState);
+const remoteCursors = state?.cursors ?? [];
+```
+
+<PropertiesList title="State">
+  <PropertiesListItem name="cursors" type="RemoteCursor[]" required>
+    The current remote cursor positions and user data.
+  </PropertiesListItem>
+  <PropertiesListItem name="decorations" type="DecorationSet" required>
+    The ProseMirror decorations rendered for remote carets and selections.
+  </PropertiesListItem>
+</PropertiesList>
+
+## Types
+
+### ProseMirrorJsonNode [#ProseMirrorJsonNode]
+
+The JSON representation accepted by the collaboration and conversion APIs.
+
+<PropertiesList title="Properties">
+  <PropertiesListItem name="type" type="string" required>
+    The ProseMirror node type.
+  </PropertiesListItem>
+  <PropertiesListItem name="attrs" type="JsonObject">
+    The node’s attributes.
+  </PropertiesListItem>
+  <PropertiesListItem name="content" type="ProseMirrorJsonNode[]">
+    The node’s children.
+  </PropertiesListItem>
+  <PropertiesListItem name="text" type="string">
+    The content of a text node.
+  </PropertiesListItem>
+  <PropertiesListItem name="marks" type="ProseMirrorJsonMark[]">
+    The marks applied to a text node. Marks are stored as `LiveText` attributes.
+  </PropertiesListItem>
+</PropertiesList>
+
+### CursorUser [#CursorUser]
+
+The user information shown with a remote caret.
+
+<PropertiesList title="Properties">
+  <PropertiesListItem name="name" type="string">
+    The user’s display name. Defaults to `"Anonymous"` when rendered.
+  </PropertiesListItem>
+  <PropertiesListItem name="color" type="string">
+    A CSS color for the user’s caret, label, and selection. Defaults to
+    `"#0f83ff"`.
+  </PropertiesListItem>
+</PropertiesList>
+
+### RemoteCursor [#RemoteCursor]
+
+The cursor data exposed by
+[`LIVEBLOCKS_CARET_PLUGIN_KEY`](#LIVEBLOCKS_CARET_PLUGIN_KEY).
+
+<PropertiesList title="Properties">
+  <PropertiesListItem name="anchor" type="number" required>
+    The current mapped selection anchor.
+  </PropertiesListItem>
+  <PropertiesListItem name="head" type="number" required>
+    The current mapped selection head.
+  </PropertiesListItem>
+  <PropertiesListItem name="connectionId" type="number" required>
+    The Liveblocks connection ID for the remote user.
+  </PropertiesListItem>
+  <PropertiesListItem name="rawAnchor" type="number" required>
+    The most recent anchor received through Presence.
+  </PropertiesListItem>
+  <PropertiesListItem name="rawHead" type="number" required>
+    The most recent head received through Presence.
+  </PropertiesListItem>
+  <PropertiesListItem name="user" type="CursorUser">
+    The remote user’s display information.
+  </PropertiesListItem>
+</PropertiesList>
+
+## Document conversion
+
+The collaboration plugin automatically converts between ProseMirror JSON and a
+Liveblocks Storage tree. Use these helpers only when you need to inspect or
+construct that Storage representation directly.
+
+### createLiveblocksProsemirrorNode [#createLiveblocksProsemirrorNode]
+
+Converts a ProseMirror JSON node into a
+[`LiveObject`](/docs/api-reference/liveblocks-client#LiveObject) tree. Child
+nodes are stored in [`LiveList`](/docs/api-reference/liveblocks-client#LiveList)
+instances and text leaves are stored in
+[`LiveText`](/docs/api-reference/liveblocks-client#LiveText).
+
+```ts
+import { createLiveblocksProsemirrorNode } from "@liveblocks/prosemirror";
+
+const document = createLiveblocksProsemirrorNode({
+  type: "doc",
+  content: [
+    {
+      type: "paragraph",
+      content: [{ type: "text", text: "Hello world" }],
+    },
+  ],
+});
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="node" type="LiveblocksProsemirrorNode">
+    The root of the converted Storage tree.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="node" type="ProseMirrorJsonNode" required>
+    The ProseMirror JSON node to convert.
+  </PropertiesListItem>
+</PropertiesList>
+
+### liveblocksProsemirrorNodeToJson [#liveblocksProsemirrorNodeToJson]
+
+Converts a `LiveblocksProsemirrorNode` Storage tree back to one ProseMirror JSON
+node.
+
+```ts
+import { liveblocksProsemirrorNodeToJson } from "@liveblocks/prosemirror";
+
+const json = liveblocksProsemirrorNodeToJson(document, () => ({
+  type: "doc",
+  content: [{ type: "paragraph" }],
+}));
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="node" type="ProseMirrorJsonNode">
+    The converted ProseMirror JSON node.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="node" type="LiveblocksProsemirrorNode" required>
+    The Storage node to convert.
+  </PropertiesListItem>
+  <PropertiesListItem name="fallbackDocument" type="() => ProseMirrorJsonNode">
+    Returns a document when the converted root document is empty.
+  </PropertiesListItem>
+</PropertiesList>
+
+### liveblocksProsemirrorNodeToJsonNodes [#liveblocksProsemirrorNodeToJsonNodes]
+
+Converts a `LiveblocksProsemirrorNode` to an array of ProseMirror JSON nodes.
+Formatted `LiveText` segments can produce multiple adjacent text nodes.
+
+```ts
+import { liveblocksProsemirrorNodeToJsonNodes } from "@liveblocks/prosemirror";
+
+const nodes = liveblocksProsemirrorNodeToJsonNodes(document);
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="nodes" type="ProseMirrorJsonNode[]">
+    The converted ProseMirror JSON nodes.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="node" type="LiveblocksProsemirrorNode" required>
+    The Storage node to convert.
+  </PropertiesListItem>
+</PropertiesList>
+
+### Storage node helpers [#Storage-node-helpers]
+
+Use these helpers to read values from a `LiveblocksProsemirrorNode`.
+
+```ts
+import {
+  getLiveblocksNodeContent,
+  getLiveblocksNodeId,
+  getLiveblocksNodeText,
+} from "@liveblocks/prosemirror";
+
+const id = getLiveblocksNodeId(node);
+const children = getLiveblocksNodeContent(node);
+const text = getLiveblocksNodeText(node);
+```
+
+<PropertiesList title="Functions">
+  <PropertiesListItem name="getLiveblocksNodeId" type="(node) => string">
+    Returns the stable ID assigned to the Storage node.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="getLiveblocksNodeContent"
+    type="(node) => LiveList<LiveblocksProsemirrorNode> | undefined"
+  >
+    Returns the child-node list for a non-text node.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="getLiveblocksNodeText"
+    type="(node) => LiveText | undefined"
+  >
+    Returns the `LiveText` content for a text node.
+  </PropertiesListItem>
+</PropertiesList>

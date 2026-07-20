@@ -2002,7 +2002,8 @@ const liveblocks = useLiveblocksExtension({
     type='"yjs" | "liveblocks"'
   >
     The collaboration backend to use. `liveblocks` stores editor documents in
-    `root._tiptap_docs`, keyed by `field`. [Learn
+    `root._tiptap_docs`, keyed by `field`, with text nodes backed by
+    [`LiveText`](/docs/api-reference/liveblocks-client#LiveText). [Learn
     more](#Liveblocks-collaboration-mode).
   </PropertiesListItem>
   <PropertiesListItem
@@ -2115,8 +2116,9 @@ function TextEditor({ field }: { field: string }) {
 
 #### Liveblocks collaboration mode
 
-By default, Tiptap uses Yjs-backed collaboration. To opt into Liveblocks storage
-directly, pass `collaborationMode: "liveblocks"`.
+By default, Tiptap uses Yjs-backed collaboration. To store text as
+[`LiveText`](/docs/api-reference/liveblocks-client#LiveText) backed by
+Liveblocks Storage instead, pass `collaborationMode: "liveblocks"`.
 
 Documents are stored under `root._tiptap_docs`, keyed by each editor’s
 [`field`](#Multiple-editors). Comments, mentions, cursors, and toolbars work the
