@@ -177,6 +177,16 @@
             "hidden": true
           },
           {
+            "title": "Tiptap Storage",
+            "path": "/get-started/react-tiptap-storage",
+            "hidden": true
+          },
+          {
+            "title": "Tiptap Storage",
+            "path": "/get-started/nextjs-tiptap-storage",
+            "hidden": true
+          },
+          {
             "title": "React Flow",
             "path": "/get-started/nextjs-react-flow",
             "hidden": true

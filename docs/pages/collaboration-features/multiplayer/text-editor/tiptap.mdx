@@ -322,6 +322,15 @@ function TextEditor() {
   const liveblocks = useLiveblocksExtension({
     collaborationMode: "liveblocks",
     field: "document",
+    initialContent: {
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: "Hello world" }],
+        },
+      ],
+    },
   });
 
   // ...
@@ -339,8 +348,12 @@ function Editors() {
 }
 ```
 
-`offlineSupport_experimental` and `ai` stay Yjs-only. Learn more about
-[Liveblocks collaboration mode](/docs/api-reference/liveblocks-react-tiptap#Liveblocks-collaboration-mode).
+`offlineSupport_experimental` and `ai` stay Yjs-only. Follow the
+[React](/docs/get-started/react-tiptap-storage) or
+[Next.js](/docs/get-started/nextjs-tiptap-storage) Storage get started guides, or
+read the full
+[Liveblocks collaboration mode](/docs/api-reference/liveblocks-react-tiptap#Liveblocks-collaboration-mode)
+API reference.
 
 ### Offline support
 

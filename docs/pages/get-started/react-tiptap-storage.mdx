@@ -1,0 +1,304 @@
+---
+meta:
+  title:
+    "Get started with a Tiptap text editor using Liveblocks Storage and React"
+  parentTitle: "Quickstart"
+  description:
+    "Learn how to sync a Tiptap text editor with Liveblocks Storage and React"
+---
+
+Liveblocks is a realtime collaboration infrastructure for building performant
+collaborative experiences. Follow the following steps to start adding
+collaboration to your React application using
+[`@liveblocks/react-tiptap`](/docs/api-reference/liveblocks-react-tiptap) with
+[`collaborationMode: "liveblocks"`](/docs/api-reference/liveblocks-react-tiptap#Liveblocks-collaboration-mode).
+
+<Banner>
+
+This guide uses Liveblocks Storage. For the default Yjs-backed setup (including
+experimental offline support and AI), see the
+[standard Tiptap React quickstart](/docs/get-started/react-tiptap).
+
+</Banner>
+
+## Quickstart
+
+<PromptCta />
+
+<Steps>
+  <Step>
+    <StepTitle>Install Liveblocks and Tiptap</StepTitle>
+    <StepContent>
+
+      Every Liveblocks package should use the same version.
+
+      ```bash trackEvent="install_liveblocks"
+      npm install @liveblocks/client @liveblocks/react @liveblocks/react-ui @liveblocks/react-tiptap @tiptap/react @tiptap/starter-kit
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Initialize the `liveblocks.config.ts` file</StepTitle>
+    <StepContent>
+
+      We can use this file later to [define types for our application](/docs/api-reference/liveblocks-react#Typing-your-data).
+
+      ```bash
+      npx create-liveblocks-app@latest --init --framework react
+      ```
+
+    </StepContent>
+
+  </Step>
+
+  <Step>
+    <StepTitle>Set up the Liveblocks client</StepTitle>
+    <StepContent>
+
+      Liveblocks uses the concept of rooms, separate virtual spaces where people
+      collaborate, and to create a realtime experience, multiple users must
+      be connected to the same room. Set up a Liveblocks client with [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider), and join a room with [`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider).
+
+      In Storage mode, documents are created under `root._tiptap_docs` when the
+      editor first connects, so you can leave `initialStorage` empty.
+
+      ```tsx file="App.tsx"
+      "use client";
+
+      import {
+        LiveblocksProvider,
+        RoomProvider,
+      } from "@liveblocks/react/suspense";
+      import { Editor } from "./Editor";
+
+      export default function App() {
+        return (
+          <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
+            <RoomProvider id="my-room">
+              {/* ... */}
+            </RoomProvider>
+          </LiveblocksProvider>
+        );
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Join a Liveblocks room</StepTitle>
+    <StepContent>
+
+      After setting up the room, you can add collaborative components inside it, using
+      [`ClientSideSuspense`](/docs/api-reference/liveblocks-react#ClientSideSuspense) to add loading spinners to your app.
+
+      ```tsx file="App.tsx"
+      "use client";
+
+      import {
+        LiveblocksProvider,
+        RoomProvider,
+        ClientSideSuspense,
+      } from "@liveblocks/react/suspense";
+      import { Editor } from "./Editor";
+
+      export default function App() {
+        return (
+          <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
+            <RoomProvider id="my-room">
+              <ClientSideSuspense fallback={<div>Loading…</div>}>
+                <Editor />
+              </ClientSideSuspense>
+            </RoomProvider>
+          </LiveblocksProvider>
+        );
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Set up the collaborative Tiptap editor</StepTitle>
+    <StepContent>
+
+      Create a Tiptap editor in `Editor.tsx`. Pass
+      [`collaborationMode: "liveblocks"`](/docs/api-reference/liveblocks-react-tiptap#Liveblocks-collaboration-mode)
+      to [`useLiveblocksExtension`](/docs/api-reference/liveblocks-react-tiptap#useLiveblocksExtension)
+      so the document syncs through Storage. Set a `field` name and optional
+      [`initialContent`](/docs/api-reference/liveblocks-react-tiptap#Setting-initial-content)
+      for the first visit.
+
+      ```tsx file="Editor.tsx"
+      "use client";
+
+      import {
+        FloatingComposer,
+        FloatingToolbar,
+        useLiveblocksExtension,
+      } from "@liveblocks/react-tiptap";
+      import { useEditor, EditorContent } from "@tiptap/react";
+      import StarterKit from "@tiptap/starter-kit";
+      import { Threads } from "./Threads";
+
+      const INITIAL_CONTENT = {
+        type: "doc",
+        content: [
+          {
+            type: "paragraph",
+            content: [{ type: "text", text: "Hello world" }],
+          },
+        ],
+      };
+
+      export function Editor() {
+        // +++
+        const liveblocks = useLiveblocksExtension({
+          collaborationMode: "liveblocks",
+          field: "document",
+          initialContent: INITIAL_CONTENT,
+        });
+        // +++
+
+        const editor = useEditor({
+          extensions: [
+            liveblocks,
+            StarterKit.configure({
+              // The Liveblocks extension comes with its own history handling
+              undoRedo: false,
+            }),
+          ],
+          immediatelyRender: false,
+        });
+
+        return (
+          <div>
+            <EditorContent editor={editor} className="editor" />
+            <Threads editor={editor} />
+            <FloatingToolbar editor={editor} />
+            <FloatingComposer editor={editor} className="floating-composer" />
+          </div>
+        );
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Render threads</StepTitle>
+    <StepContent>
+
+      Comments work the same as in Yjs mode. Create a `Threads.tsx` file that uses
+      [`FloatingThreads`](/docs/api-reference/liveblocks-react-tiptap#FloatingThreads)
+      and [`AnchoredThreads`](/docs/api-reference/liveblocks-react-tiptap#AnchoredThreads).
+
+      ```tsx file="Threads.tsx"
+      import { useThreads } from "@liveblocks/react/suspense";
+      import {
+        AnchoredThreads,
+        FloatingThreads,
+      } from "@liveblocks/react-tiptap";
+      import { Editor } from "@tiptap/react";
+
+      export function Threads({ editor }: { editor: Editor | null }) {
+        const { threads } = useThreads({ query: { resolved: false } });
+
+        return (
+          <>
+            <div className="anchored-threads">
+              <AnchoredThreads editor={editor} threads={threads} />
+            </div>
+            <FloatingThreads
+              editor={editor}
+              threads={threads}
+              className="floating-threads"
+            />
+          </>
+        );
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Style your editor</StepTitle>
+    <StepContent>
+
+      Import Liveblocks styles, and add basic editor CSS:
+
+      ```tsx file="main.tsx"
+      import "@liveblocks/react-ui/styles.css";
+      import "@liveblocks/react-tiptap/styles.css";
+      import "./globals.css";
+      ```
+
+      ```css file="globals.css" isCollapsed isCollapsable
+      .editor {
+        position: relative;
+        display: flex;
+        width: 100%;
+        height: 100%;
+      }
+
+      .tiptap {
+        padding: 2px 12px;
+        outline: none;
+        width: 100%;
+      }
+
+      .floating-threads {
+        display: none;
+      }
+
+      .anchored-threads {
+        display: block;
+        max-width: 300px;
+        width: 100%;
+        position: absolute;
+        right: 12px;
+      }
+
+      @media (max-width: 640px) {
+        .floating-threads {
+          display: block;
+        }
+
+        .anchored-threads {
+          display: none;
+        }
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step lastStep>
+    <StepTitle>Next: authenticate and add your users</StepTitle>
+    <StepContent>
+      Text Editor is set up and working now, but each user is anonymous—the next step is to
+      authenticate each user as they connect, and attach their name, color, and avatar, to their cursors and mentions.
+
+      <Button asChild className="not-markdown">
+        <a href="/docs/guides/how-to-add-users-to-liveblocks-text-editor">
+          Add your users to Text Editor
+        </a>
+      </Button>
+    </StepContent>
+
+  </Step>
+
+</Steps>
+
+## What to read next
+
+Congratulations! You now have set up a Storage-backed collaborative Tiptap
+editor inside your React application.
+
+- [Liveblocks collaboration mode](/docs/api-reference/liveblocks-react-tiptap#Liveblocks-collaboration-mode)
+- [@liveblocks/react-tiptap API Reference](/docs/api-reference/liveblocks-react-tiptap)
+- [Yjs-backed Tiptap React quickstart](/docs/get-started/react-tiptap)
+- [Tiptap website](https://tiptap.dev)
