@@ -29,7 +29,10 @@ import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
 import { $insertNodeToNearestRoot } from "@lexical/utils";
 import { LiveList, LiveObject, LiveText, type Room } from "@liveblocks/client";
-import { LiveblocksCollaborationPlugin } from "@liveblocks/lexical/react";
+import {
+  LiveblocksCollaborationPlugin,
+  RemoteCursorsPlugin,
+} from "@liveblocks/lexical";
 import { ClientSideSuspense, RoomProvider, useRoom } from "@liveblocks/react";
 import {
   $getSelection,
@@ -54,6 +57,144 @@ const AUTO_LINK_MATCHERS = [
   ),
   createLinkMatcherWithRegExp(EMAIL_REGEX, (text) => `mailto:${text}`),
 ];
+
+export default function RoomPage({
+  params,
+}: {
+  params: Promise<{ roomId: string }>;
+}) {
+  const { roomId } = use(params);
+
+  return (
+    <RoomProvider
+      id={roomId}
+      initialPresence={{ selection: null }}
+      initialStorage={{
+        document: new LiveObject({
+          kind: "root",
+          type: "root",
+          version: 1,
+          children: new LiveList([
+            new LiveObject({
+              kind: "element",
+              type: "paragraph",
+              version: 1,
+              children: new LiveList([
+                new LiveObject({
+                  kind: "text",
+                  type: "text",
+                  version: 1,
+                  content: new LiveText(),
+                }),
+              ]),
+            }),
+          ]),
+        }),
+      }}
+    >
+      <ClientSideSuspense fallback={<div>Connecting to room…</div>}>
+        <div className="flex h-dvh flex-col bg-white text-neutral-950 dark:bg-neutral-950 dark:text-neutral-50">
+          <Editor />
+        </div>
+      </ClientSideSuspense>
+    </RoomProvider>
+  );
+}
+
+function Editor() {
+  const room = useRoom();
+  const root = useRoot(room);
+  if (root === null) {
+    return (
+      <div className="p-4 text-neutral-500 dark:text-neutral-400">
+        Loading room data…
+      </div>
+    );
+  }
+
+  const document = root.get("document");
+
+  return (
+    <LexicalComposer
+      initialConfig={{
+        namespace: "Liveblocks",
+        nodes: [
+          HeadingNode,
+          QuoteNode,
+          ListNode,
+          ListItemNode,
+          CodeNode,
+          CodeHighlightNode,
+          LinkNode,
+          AutoLinkNode,
+          HorizontalRuleNode,
+          TableNode,
+          TableCellNode,
+          TableRowNode,
+          MarkNode,
+          HashtagNode,
+          ImageNode,
+          MentionNode,
+        ],
+        theme: THEME,
+        onError: (error) => {
+          console.error(error);
+        },
+      }}
+    >
+      <Toolbar />
+      <div className="relative flex flex-1 text-base mt-4">
+        <RichTextPlugin
+          contentEditable={
+            <ContentEditable className="flex-1 px-4 outline-none" />
+          }
+          ErrorBoundary={LexicalErrorBoundary}
+        />
+        <ListPlugin />
+        <LinkPlugin />
+        <AutoLinkPlugin matchers={AUTO_LINK_MATCHERS} />
+        <TablePlugin />
+        <HashtagPlugin />
+        <MarkdownShortcutPlugin />
+        <HorizontalRulePlugin />
+        <LiveblocksCollaborationPlugin root={document}>
+          <RemoteCursorsPlugin />
+        </LiveblocksCollaborationPlugin>
+      </div>
+    </LexicalComposer>
+  );
+}
+
+function HorizontalRulePlugin() {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    return editor.registerCommand(
+      INSERT_HORIZONTAL_RULE_COMMAND,
+      () => {
+        const selection = $getSelection();
+        if (!$isRangeSelection(selection)) {
+          return false;
+        }
+
+        $insertNodeToNearestRoot($createHorizontalRuleNode());
+        return true;
+      },
+      COMMAND_PRIORITY_EDITOR
+    );
+  }, [editor]);
+
+  return null;
+}
+
+function useRoot(room: Room) {
+  const subscribe = room.events.storageDidLoad.subscribeOnce;
+  const getSnapshot = room.getStorageOrNull;
+  const getServerSnapshot = useCallback(() => {
+    return null;
+  }, []);
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+}
 
 const THEME = {
   text: {
@@ -127,137 +268,3 @@ const THEME = {
     "rounded bg-blue-100 px-0.5 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
   image: "inline-block",
 };
-
-export default function RoomPage({
-  params,
-}: {
-  params: Promise<{ roomId: string }>;
-}) {
-  const { roomId } = use(params);
-
-  return (
-    <RoomProvider
-      id={roomId}
-      initialPresence={{ selection: null }}
-      initialStorage={{
-        document: new LiveObject({
-          kind: "root",
-          type: "root",
-          version: 1,
-          children: new LiveList([
-            new LiveObject({
-              kind: "element",
-              type: "paragraph",
-              version: 1,
-              children: new LiveList([
-                new LiveObject({
-                  kind: "text",
-                  type: "text",
-                  version: 1,
-                  content: new LiveText(),
-                }),
-              ]),
-            }),
-          ]),
-        }),
-      }}
-    >
-      <ClientSideSuspense fallback={null}>
-        <div className="flex h-dvh flex-col bg-white text-neutral-950 dark:bg-neutral-950 dark:text-neutral-50">
-          <Editor />
-        </div>
-      </ClientSideSuspense>
-    </RoomProvider>
-  );
-}
-
-function Editor() {
-  const room = useRoom();
-  const root = useRoot(room);
-  if (root === null) {
-    return (
-      <div className="p-4 text-neutral-500 dark:text-neutral-400">Loading…</div>
-    );
-  }
-
-  const document = root.get("document");
-
-  return (
-    <LexicalComposer
-      initialConfig={{
-        namespace: "Liveblocks",
-        nodes: [
-          HeadingNode,
-          QuoteNode,
-          ListNode,
-          ListItemNode,
-          CodeNode,
-          CodeHighlightNode,
-          LinkNode,
-          AutoLinkNode,
-          HorizontalRuleNode,
-          TableNode,
-          TableCellNode,
-          TableRowNode,
-          MarkNode,
-          HashtagNode,
-          ImageNode,
-          MentionNode,
-        ],
-        theme: THEME,
-        onError: (error) => {
-          console.error(error);
-        },
-      }}
-    >
-      <Toolbar />
-      <div className="relative flex flex-1 text-base mt-4">
-        <RichTextPlugin
-          contentEditable={
-            <ContentEditable className="flex-1 px-4 outline-none" />
-          }
-          ErrorBoundary={LexicalErrorBoundary}
-        />
-        <ListPlugin />
-        <LinkPlugin />
-        <AutoLinkPlugin matchers={AUTO_LINK_MATCHERS} />
-        <TablePlugin />
-        <HashtagPlugin />
-        <MarkdownShortcutPlugin />
-        <HorizontalRulePlugin />
-        <LiveblocksCollaborationPlugin room={room} root={document} />
-      </div>
-    </LexicalComposer>
-  );
-}
-
-function HorizontalRulePlugin() {
-  const [editor] = useLexicalComposerContext();
-
-  useEffect(() => {
-    return editor.registerCommand(
-      INSERT_HORIZONTAL_RULE_COMMAND,
-      () => {
-        const selection = $getSelection();
-        if (!$isRangeSelection(selection)) {
-          return false;
-        }
-
-        $insertNodeToNearestRoot($createHorizontalRuleNode());
-        return true;
-      },
-      COMMAND_PRIORITY_EDITOR
-    );
-  }, [editor]);
-
-  return null;
-}
-
-function useRoot(room: Room) {
-  const subscribe = room.events.storageDidLoad.subscribeOnce;
-  const getSnapshot = room.getStorageOrNull;
-  const getServerSnapshot = useCallback(() => {
-    return null;
-  }, []);
-  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-}

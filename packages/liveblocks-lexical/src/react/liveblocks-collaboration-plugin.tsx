@@ -1,21 +1,25 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import type { Room } from "@liveblocks/client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, createContext } from "react";
 
 import { LiveblocksCollaboration } from "../collaboration";
 import type { LiveRootNode } from "../types";
-import { RemoteCursorsPlugin } from "./remote-cursors";
+import { useRoom } from "@liveblocks/react";
 
 export type LiveblocksCollaborationPluginProps = {
-  room: Room;
   root: LiveRootNode;
+  children?: React.ReactNode;
 };
 
+export const LiveblocksCollaborationContext =
+  createContext<LiveblocksCollaboration | null>(null);
+
 export function LiveblocksCollaborationPlugin({
-  room,
   root,
+  children,
 }: LiveblocksCollaborationPluginProps) {
   const [editor] = useLexicalComposerContext();
+  const room = useRoom();
+
   const _collaboration = useRef<LiveblocksCollaboration | null>(null);
   if (_collaboration.current === null) {
     _collaboration.current = new LiveblocksCollaboration(editor, room, root);
@@ -30,10 +34,8 @@ export function LiveblocksCollaborationPlugin({
   }, [collaboration]);
 
   return (
-    <RemoteCursorsPlugin
-      manager={collaboration.manager}
-      root={root}
-      room={room}
-    />
+    <LiveblocksCollaborationContext.Provider value={collaboration}>
+      {children}
+    </LiveblocksCollaborationContext.Provider>
   );
 }

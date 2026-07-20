@@ -19,17 +19,6 @@
         "default": "./dist/index.cjs"
       }
     },
-    "./react": {
-      "import": {
-        "types": "./dist/react/index.d.ts",
-        "default": "./dist/react/index.js"
-      },
-      "require": {
-        "types": "./dist/react/index.d.cts",
-        "module": "./dist/react/index.js",
-        "default": "./dist/react/index.cjs"
-      }
-    },
     "./styles.css": {
       "types": "./styles.css.d.cts",
       "default": "./styles.css"
@@ -37,7 +26,6 @@
   },
   "files": [
     "dist/**",
-    "react/**",
     "**/*.css",
     "**/*.css.d.cts",
     "**/*.css.d.ts",
@@ -69,32 +57,6 @@
     "lexical": "^0.45",
     "react": "^18 || ^19 || ^19.0.0-rc",
     "react-dom": "^18 || ^19 || ^19.0.0-rc"
-  },
-  "peerDependenciesMeta": {
-    "@lexical/react": {
-      "optional": true
-    },
-    "@lexical/selection": {
-      "optional": true
-    },
-    "@lexical/utils": {
-      "optional": true
-    },
-    "@liveblocks/react": {
-      "optional": true
-    },
-    "@types/react": {
-      "optional": true
-    },
-    "@types/react-dom": {
-      "optional": true
-    },
-    "react": {
-      "optional": true
-    },
-    "react-dom": {
-      "optional": true
-    }
   },
   "devDependencies": {
     "@lexical/react": "0.45.0",

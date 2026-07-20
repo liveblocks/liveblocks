@@ -1,6 +1,5 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { createDOMRange, createRectsFromDOMRange } from "@lexical/selection";
-import type { Room } from "@liveblocks/client";
 import { useOthers } from "@liveblocks/react";
 import { useLayoutEffect } from "@liveblocks/react/_private";
 import {
@@ -9,13 +8,11 @@ import {
   type LexicalEditor,
   type LexicalNode,
 } from "lexical";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useContext } from "react";
 
-import type {
-  DecodedLexicalSelection,
-  LiveblocksCollaborationManager,
-} from "../manager";
-import type { LiveLexicalSelection, LiveRootNode } from "../types";
+import type { DecodedLexicalSelection } from "../manager";
+import type { LiveLexicalSelection } from "../types";
+import { LiveblocksCollaborationContext } from "./liveblocks-collaboration-plugin";
 
 type OverlayRect = {
   left: number;
@@ -32,15 +29,17 @@ type RemoteOverlay = {
   selections: OverlayRect[];
 };
 
-export function RemoteCursorsPlugin({
-  manager,
-  root,
-  room,
-}: {
-  manager: LiveblocksCollaborationManager;
-  root: LiveRootNode;
-  room: Room;
-}) {
+export function RemoteCursorsPlugin() {
+  const collaboration = useContext(LiveblocksCollaborationContext);
+  if (collaboration === null) {
+    throw new Error(
+      "'RemoteCursorsPlugin' must be used within a 'LiveblocksCollaborationPlugin'"
+    );
+  }
+  const manager = collaboration.manager;
+  const root = collaboration.root;
+  const room = collaboration.room;
+
   const [editor] = useLexicalComposerContext();
   const others = useOthers();
   const [overlays, setOverlays] = useState<RemoteOverlay[]>([]);

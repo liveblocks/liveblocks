@@ -212,6 +212,16 @@
             "hidden": true
           },
           {
+            "title": "Lexical Storage",
+            "path": "/get-started/react-lexical-storage",
+            "hidden": true
+          },
+          {
+            "title": "Lexical Storage",
+            "path": "/get-started/nextjs-lexical-storage",
+            "hidden": true
+          },
+          {
             "title": "Tldraw",
             "path": "/get-started/nextjs-tldraw",
             "hidden": true
@@ -979,6 +989,10 @@
       {
         "title": "@liveblocks/react-lexical",
         "path": "/api-reference/liveblocks-react-lexical"
+      },
+      {
+        "title": "@liveblocks/lexical",
+        "path": "/api-reference/liveblocks-lexical"
       },
       {
         "title": "@liveblocks/node-lexical",
