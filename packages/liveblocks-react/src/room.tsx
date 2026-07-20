@@ -9,6 +9,7 @@ import type {
   History,
   Json,
   JsonObject,
+  LiveFile,
   LiveObject,
   LostConnectionEvent,
   LsonObject,
@@ -16,6 +17,7 @@ import type {
   Room,
   Status,
   ThreadData,
+  UploadFileOptions,
   User,
 } from "@liveblocks/client";
 import { shallow } from "@liveblocks/client";
@@ -1501,6 +1503,34 @@ function useMutation<
     callback,
     deps
   );
+}
+
+/**
+ * @internal
+ */
+function useUploadFile_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+): (file: File, options?: UploadFileOptions) => Promise<LiveFile> {
+  const room = useRoom_withRoomContext(RoomContext);
+  return useCallback(
+    (file: File, options?: UploadFileOptions) => room.uploadFile(file, options),
+    [room]
+  );
+}
+
+/**
+ * Returns a function that uploads a file to the current room and resolves to
+ * a `LiveFile` that can be stored in Storage.
+ *
+ * @example
+ * const uploadFile = useUploadFile();
+ * const liveFile = await uploadFile(file);
+ */
+function useUploadFile(): (
+  file: File,
+  options?: UploadFileOptions
+) => Promise<LiveFile> {
+  return useUploadFile_withRoomContext(GlobalRoomContext);
 }
 
 /**
@@ -4298,6 +4328,10 @@ export function createRoomContext<
     );
   }
 
+  function useUploadFile_withBoundRoomContext() {
+    return useUploadFile_withRoomContext(BoundRoomContext);
+  }
+
   function useThreads_withBoundRoomContext(
     ...args: Parameters<typeof useThreads<TM, CM>>
   ) {
@@ -4533,6 +4567,8 @@ export function createRoomContext<
     useStorage: useStorage_withBoundRoomContext as TRoomBundle["useStorage"],
     // prettier-ignore
     useMutation: useMutation_withBoundRoomContext as TRoomBundle["useMutation"],
+    // prettier-ignore
+    useUploadFile: useUploadFile_withBoundRoomContext as TRoomBundle["useUploadFile"],
 
     // prettier-ignore
     useSelf: useSelf_withBoundRoomContext as TRoomBundle["useSelf"],
@@ -4659,6 +4695,8 @@ export function createRoomContext<
       useStorage: useStorageSuspense_withBoundRoomContext as TRoomBundle["suspense"]["useStorage"],
       // prettier-ignore
       useMutation: useMutation_withBoundRoomContext as TRoomBundle["suspense"]["useMutation"],
+      // prettier-ignore
+      useUploadFile: useUploadFile_withBoundRoomContext as TRoomBundle["suspense"]["useUploadFile"],
 
       // prettier-ignore
       useSelf: useSelfSuspense_withBoundRoomContext as TRoomBundle["suspense"]["useSelf"],
@@ -5451,5 +5489,6 @@ export {
   useUpdateFeedMetadata,
   _useUpdateMyPresence as useUpdateMyPresence,
   useUpdateRoomSubscriptionSettings,
+  useUploadFile,
   useYjsProvider,
 };

@@ -78,6 +78,7 @@ export {
   useStorageRoot,
   useThreadSubscription,
   useUndo,
+  useUploadFile,
   useUpdateFeedMetadata,
   useUpdateFeedMessage,
   useUpdateMyPresence,

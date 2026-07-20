@@ -3769,6 +3769,37 @@ const myTodos = useStorage(
   </PropertiesListItem>
 </PropertiesList>
 
+### useUploadFile [@badge=RoomProvider]
+
+Returns a function that uploads a file to the current room. The function
+resolves to a [`LiveFile`](/docs/api-reference/liveblocks-client#LiveFile) that
+can be stored in Storage.
+
+```tsx
+import { useMutation, useUploadFile } from "@liveblocks/react/suspense";
+
+const uploadFile = useUploadFile();
+
+const setFile = useMutation(async ({ storage }, file: File) => {
+  storage.set("file", await uploadFile(file));
+}, []);
+```
+
+The function accepts the same arguments and returns the same result as
+[`Room.uploadFile`](/docs/api-reference/liveblocks-client#Room.uploadFile).
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="uploadFile"
+    type="(file: File, options?: UploadFileOptions) => Promise<LiveFile>"
+  >
+    A function that uploads a file. Pass an `AbortSignal` as `options.signal` to
+    cancel the upload.
+  </PropertiesListItem>
+</PropertiesList>
+
 ### useFileUrl [@badge=RoomProvider]
 
 Returns a presigned URL for a

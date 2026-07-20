@@ -72,6 +72,7 @@ export {
   useStorageRoot,
   useThreadSubscription,
   useUndo,
+  useUploadFile,
   useUpdateMyPresence,
   useUpdateRoomSubscriptionSettings,
   useHistoryVersionData,
