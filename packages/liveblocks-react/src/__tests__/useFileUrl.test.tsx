@@ -105,6 +105,55 @@ function getFileUrl(fileId: string): string {
 }
 
 describe("useFileUrl", () => {
+  test("uses the client bound to its room context", async () => {
+    const outerBaseUrl = "https://outer.example.com";
+    const innerBaseUrl = "https://inner.example.com";
+    let outerRequestCount = 0;
+    let innerRequestCount = 0;
+
+    server.use(
+      http.post(
+        `${outerBaseUrl}/v2/c/rooms/:roomId/storage/files/presigned-urls`,
+        ({ params }) => {
+          outerRequestCount++;
+          expect(params.roomId).toBe("outer-room");
+          return fileUrlsResponse([FILE_URL]);
+        }
+      ),
+      http.post(
+        `${innerBaseUrl}/v2/c/rooms/:roomId/storage/files/presigned-urls`,
+        () => {
+          innerRequestCount++;
+          return fileUrlsResponse([OTHER_FILE_URL]);
+        }
+      )
+    );
+
+    const outer = createContextsForTest({ baseUrl: outerBaseUrl });
+    const inner = createContextsForTest({ baseUrl: innerBaseUrl });
+
+    const { result, unmount } = renderHook(
+      () => outer.room.useFileUrl(FILE_ID),
+      {
+        wrapper: ({ children }) => (
+          <outer.room.RoomProvider id="outer-room">
+            <inner.room.RoomProvider id="inner-room">
+              {children}
+            </inner.room.RoomProvider>
+          </outer.room.RoomProvider>
+        ),
+      }
+    );
+
+    await expect
+      .poll(() => result.current)
+      .toEqual({ isLoading: false, url: FILE_URL });
+    expect(outerRequestCount).toBe(1);
+    expect(innerRequestCount).toBe(0);
+
+    unmount();
+  });
+
   test("returns a loading state followed by the presigned URL", async () => {
     let requestCount = 0;
     server.use(

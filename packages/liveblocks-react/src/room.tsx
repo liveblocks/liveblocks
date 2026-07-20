@@ -3906,7 +3906,7 @@ function useFileUrl_withRoomContext(
   file: LiveFileReference
 ): FileUrlAsyncResult {
   const room = useRoom_withRoomContext(RoomContext);
-  return useRoomFileUrl(file, room.id);
+  return useFileUrl_WithStore(file, room[kInternal].fileUrlsStore);
 }
 
 /**
@@ -3929,9 +3929,16 @@ function useRoomFileUrl(
   file: LiveFileReference,
   roomId: string
 ): FileUrlAsyncResult {
-  const fileId = getLiveFileId(file);
   const client = useClient();
   const store = client[kInternal].httpClient.getOrCreateFileUrlsStore(roomId);
+  return useFileUrl_WithStore(file, store);
+}
+
+function useFileUrl_WithStore(
+  file: LiveFileReference,
+  store: OpaqueRoom[typeof kInternal]["fileUrlsStore"]
+): FileUrlAsyncResult {
+  const fileId = getLiveFileId(file);
 
   const getFileUrlState = useCallback(
     () => store.getItemState(fileId),
