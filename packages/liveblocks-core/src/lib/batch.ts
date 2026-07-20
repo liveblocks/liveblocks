@@ -185,6 +185,7 @@ export function createBatchStore<O, I>(
 ): BatchStore<O, I> {
   const signal = new MutableSignal(new Map<string, AsyncResult<O>>());
   const cacheExpiryTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
+  const pendingEnqueues = new Map<string, Promise<void>>();
 
   function getCacheKey(args: I): string {
     return stableStringify(args);
@@ -263,23 +264,14 @@ export function createBatchStore<O, I>(
     });
   }
 
-  async function enqueue(input: I): Promise<void> {
-    const cacheKey = getCacheKey(input);
-
-    // If this call already has a state, return early.
-    const cache = signal.get();
-    if (cache.has(cacheKey)) {
-      return;
-    }
-
+  async function processEnqueue(
+    input: I,
+    cacheKey: string,
+    batchResult$: Promise<O>
+  ): Promise<void> {
     try {
-      // Set the state to loading.
-      update({ key: cacheKey, state: { isLoading: true } });
+      const result = await batchResult$;
 
-      // Wait for the batch to process this call.
-      const result = await batch.get(input);
-
-      // Set the state to the result.
       update({ key: cacheKey, state: { isLoading: false, data: result } });
       scheduleCacheExpiry(input, options?.getCacheExpiry?.(result));
     } catch (error) {
@@ -306,7 +298,31 @@ export function createBatchStore<O, I>(
         key: cacheKey,
         state: { isLoading: false, error: error as Error },
       });
+    } finally {
+      pendingEnqueues.delete(cacheKey);
     }
+  }
+
+  function enqueue(input: I): Promise<void> {
+    const cacheKey = getCacheKey(input);
+
+    const existingEnqueue$ = pendingEnqueues.get(cacheKey);
+    if (existingEnqueue$ !== undefined) {
+      return existingEnqueue$;
+    }
+
+    // If this call already has a state, return early.
+    const cache = signal.get();
+    if (cache.has(cacheKey)) {
+      return Promise.resolve();
+    }
+
+    const batchResult$ = batch.get(input);
+    const pendingEnqueue$ = processEnqueue(input, cacheKey, batchResult$);
+
+    pendingEnqueues.set(cacheKey, pendingEnqueue$);
+    update({ key: cacheKey, state: { isLoading: true } });
+    return pendingEnqueue$;
   }
 
   function setData(entries: [I, O][]): void {

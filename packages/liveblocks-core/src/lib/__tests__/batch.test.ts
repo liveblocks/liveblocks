@@ -1,6 +1,7 @@
 import { describe, expect, test, vi } from "vitest";
 
 import { Batch, createBatchStore } from "../batch";
+import { Promise_withResolvers } from "../controlledPromise";
 import { wait } from "../utils";
 
 const SOME_TIME = 5;
@@ -269,9 +270,14 @@ describe("createBatchStore", () => {
     unsubscribe();
   });
 
-  test("should not re-enqueue duplicate calls with `enqueue`", async () => {
-    const callback = vi.fn((inputs: string[]) => inputs);
-    const batch = new Batch<string, string>(callback, { delay: SOME_TIME });
+  test("should return the pending promise for duplicate calls with `enqueue`", async () => {
+    const { promise: callbackResult$, resolve: resolveCallback } =
+      Promise_withResolvers<string[]>();
+    const callback = vi.fn(() => callbackResult$);
+    const batch = new Batch<string, string>(callback, {
+      delay: SOME_TIME,
+      size: 1,
+    });
     const store = createBatchStore<string, string>(batch);
     const listener = vi.fn();
     const unsubscribe = store.subscribe(listener);
@@ -279,9 +285,12 @@ describe("createBatchStore", () => {
     const promise1 = store.enqueue("a");
     const promise2 = store.enqueue("a");
 
+    expect(promise2).toBe(promise1);
+    resolveCallback(["a"]);
     await Promise.all([promise1, promise2]);
 
     expect(store.getData("a")).toBe("a");
+    expect(callback).toHaveBeenCalledTimes(1);
     expect(listener).toHaveBeenCalledTimes(2);
 
     unsubscribe();
