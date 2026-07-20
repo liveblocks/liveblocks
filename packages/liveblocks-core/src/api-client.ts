@@ -78,6 +78,11 @@ import type { TextEditorType } from "./types/Others";
 import type { Patchable } from "./types/Patchable";
 import { PKG_VERSION } from "./version";
 
+export type FileUrlData = {
+  readonly url: string;
+  readonly expiresAt: number;
+};
+
 export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
   getThreads(options: {
     roomId: string;
@@ -355,7 +360,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     signal?: AbortSignal;
   }): Promise<LiveFile>;
 
-  getOrCreateFileUrlsStore(roomId: string): BatchStore<string, string>;
+  getOrCreateFileUrlsStore(roomId: string): BatchStore<FileUrlData, string>;
 
   // Text editor
   createTextMention({
@@ -559,6 +564,10 @@ export interface LiveblocksHttpApi<
 
 const ROOM_FILE_PART_SIZE = 5 * 1024 * 1024; // 5 MB
 const ROOM_FILE_RETRY_ATTEMPTS = 10;
+const FILE_URL_EXPIRY_BUFFER = 30_000;
+const FILE_URL_ERROR_RETRY_DELAY = 1_000;
+const FILE_URL_ERROR_MAX_ATTEMPTS = 3;
+const FILE_URL_ERROR_ATTEMPTS_EXPIRY = 30_000;
 const ROOM_FILE_RETRY_DELAYS = [
   2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000,
 ];
@@ -577,10 +586,13 @@ type MultipartUpload = {
   uploadId: string;
 };
 
+class FileUrlRetryableError extends Error {}
+
 type UploadRoomFileOptions<TResult> = {
   file: File;
   signal?: AbortSignal;
   abortErrorMessage: string;
+  retryMultipartCompletion: boolean;
   uploadSingle: () => Promise<TResult>;
   createMultipartUpload: () => Promise<MultipartUpload>;
   uploadMultipartPart: (
@@ -599,6 +611,7 @@ async function uploadRoomFile<TResult>({
   file,
   signal,
   abortErrorMessage,
+  retryMultipartCompletion,
   uploadSingle,
   createMultipartUpload,
   uploadMultipartPart,
@@ -616,11 +629,7 @@ async function uploadRoomFile<TResult>({
       throw abortError;
     }
 
-    if (err instanceof HttpError && err.status === 413) {
-      throw err;
-    }
-
-    return false;
+    return err instanceof HttpError && err.status >= 400 && err.status < 500;
   };
 
   if (file.size <= ROOM_FILE_PART_SIZE) {
@@ -634,12 +643,7 @@ async function uploadRoomFile<TResult>({
 
   let uploadId: string | undefined;
   const uploadedParts: UploadedRoomFilePart[] = [];
-  const multipartUpload = await autoRetry(
-    createMultipartUpload,
-    ROOM_FILE_RETRY_ATTEMPTS,
-    ROOM_FILE_RETRY_DELAYS,
-    handleRetryError
-  );
+  const multipartUpload = await createMultipartUpload();
 
   try {
     uploadId = multipartUpload.uploadId;
@@ -672,12 +676,19 @@ async function uploadRoomFile<TResult>({
       throw abortError;
     }
 
-    return completeMultipartUpload(
-      uploadId,
-      uploadedParts.sort((a, b) => a.partNumber - b.partNumber)
+    const sortedParts = uploadedParts.sort(
+      (a, b) => a.partNumber - b.partNumber
     );
+    return retryMultipartCompletion
+      ? autoRetry(
+          () => completeMultipartUpload(multipartUpload.uploadId, sortedParts),
+          ROOM_FILE_RETRY_ATTEMPTS,
+          ROOM_FILE_RETRY_DELAYS,
+          handleRetryError
+        )
+      : completeMultipartUpload(uploadId, sortedParts);
   } catch (error) {
-    if (uploadId && isAbortOrTimeoutError(error)) {
+    if (uploadId) {
       try {
         await abortMultipartUpload(uploadId);
       } catch {
@@ -705,13 +716,6 @@ function splitFileIntoParts(file: File): RoomFilePart[] {
   }
 
   return parts;
-}
-
-function isAbortOrTimeoutError(error: unknown): boolean {
-  return (
-    error instanceof Error &&
-    (error.name === "AbortError" || error.name === "TimeoutError")
-  );
 }
 
 function createAbortError(message: string): Error {
@@ -1231,6 +1235,7 @@ export function createApiClient<
       file: attachment.file,
       signal: options.signal,
       abortErrorMessage: `Upload of attachment ${attachment.id} was aborted.`,
+      retryMultipartCompletion: false,
       uploadSingle: async () =>
         httpClient.putBlob<CommentAttachment>(
           url`/v2/c/rooms/${roomId}/attachments/${attachment.id}/upload/${attachment.name}`,
@@ -1304,6 +1309,7 @@ export function createApiClient<
       file,
       signal: options.signal,
       abortErrorMessage: `Upload of file ${fileId} was aborted.`,
+      retryMultipartCompletion: true,
       uploadSingle: async () =>
         httpClient.putBlob<LiveFileData>(
           url`/v2/c/rooms/${roomId}/storage/files/${fileId}/upload/${file.name}`,
@@ -1409,13 +1415,52 @@ export function createApiClient<
 
   const fileUrlsBatchStoresByRoom = new DefaultMap<
     string,
-    BatchStore<string, string>
+    BatchStore<FileUrlData, string>
   >((roomId) => {
-    const batch = new Batch<string, string>(
+    const errorAttempts = new Map<
+      string,
+      {
+        count: number;
+        cleanupTimeoutId: ReturnType<typeof setTimeout>;
+      }
+    >();
+
+    const clearErrorAttempts = (fileId: string): void => {
+      const attempts = errorAttempts.get(fileId);
+      if (attempts !== undefined) {
+        clearTimeout(attempts.cleanupTimeoutId);
+        errorAttempts.delete(fileId);
+      }
+    };
+
+    const shouldRetryFileUrlError = (fileId: string): boolean => {
+      const previousAttempts = errorAttempts.get(fileId);
+      if (previousAttempts !== undefined) {
+        clearTimeout(previousAttempts.cleanupTimeoutId);
+      }
+
+      const count = (previousAttempts?.count ?? 0) + 1;
+      if (count >= FILE_URL_ERROR_MAX_ATTEMPTS) {
+        errorAttempts.delete(fileId);
+        return false;
+      }
+
+      errorAttempts.set(fileId, {
+        count,
+        cleanupTimeoutId: setTimeout(
+          () => errorAttempts.delete(fileId),
+          FILE_URL_ERROR_ATTEMPTS_EXPIRY
+        ),
+      });
+      return true;
+    };
+
+    const batch = new Batch<FileUrlData, string>(
       async (batchedFileIds) => {
         const fileIds = batchedFileIds.flat();
-        const { urls } = await httpClient.post<{
+        const { urls, expiresAt } = await httpClient.post<{
           urls: (string | null)[];
+          expiresAt: string;
         }>(
           url`/v2/c/rooms/${roomId}/storage/files/presigned-urls`,
           await authManager.getAuthValue({
@@ -1426,25 +1471,43 @@ export function createApiClient<
           { fileIds }
         );
 
-        return urls.map(
-          (url) =>
-            url ?? new Error("There was an error while getting this file's URL")
-        );
+        const expiresAtTimestamp = Date.parse(expiresAt);
+        return urls.map((url, index) => {
+          const fileId = fileIds[index];
+          if (url !== null) {
+            clearErrorAttempts(fileId);
+            return { url, expiresAt: expiresAtTimestamp };
+          }
+
+          if (shouldRetryFileUrlError(fileId)) {
+            return new FileUrlRetryableError(
+              "There was an error while getting this file's URL"
+            );
+          }
+
+          return new Error("There was an error while getting this file's URL");
+        });
       },
       { delay: 50 }
     );
-    return createBatchStore(batch);
+    return createBatchStore(batch, {
+      getCacheExpiry: ({ expiresAt }) => expiresAt - FILE_URL_EXPIRY_BUFFER,
+      getErrorCacheExpiry: (error) =>
+        error instanceof FileUrlRetryableError
+          ? Date.now() + FILE_URL_ERROR_RETRY_DELAY
+          : undefined,
+    });
   });
 
   function getOrCreateFileUrlsStore(
     roomId: string
-  ): BatchStore<string, string> {
+  ): BatchStore<FileUrlData, string> {
     return fileUrlsBatchStoresByRoom.getOrCreate(roomId);
   }
 
-  function getFileUrl(options: { roomId: string; fileId: string }) {
+  async function getFileUrl(options: { roomId: string; fileId: string }) {
     const batch = getOrCreateFileUrlsStore(options.roomId).batch;
-    return batch.get(options.fileId);
+    return (await batch.get(options.fileId)).url;
   }
 
   /* -------------------------------------------------------------------------------------------------

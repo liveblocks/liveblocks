@@ -6,6 +6,7 @@ import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 
 import type { ClientOptions } from "../client";
 import { createClient } from "../client";
+import { kInternal } from "../internal";
 import * as console from "../lib/fancy-console";
 import { MockWebSocket } from "./_MockWebSocketServer";
 import { waitUntilStatus } from "./_waitUtils";
@@ -397,5 +398,52 @@ describe("when env atob does not exist (atob polyfill handling)", () => {
         },
       });
     }).not.toThrow();
+  });
+});
+
+describe("file URL cache", () => {
+  test("retries a file URL that was not available before its Storage op was acknowledged", async () => {
+    vi.useFakeTimers();
+
+    try {
+      const fileId = "fl_123456789012345678901";
+      const fileUrl = "https://example.com/file.txt";
+      let fileIsAvailable = false;
+      const fetch = vi.fn(() =>
+        Promise.resolve(
+          Response.json({
+            urls: [fileIsAvailable ? fileUrl : null],
+            expiresAt: new Date(Date.now() + 60_000).toISOString(),
+          })
+        )
+      );
+      const client = createClient({
+        publicApiKey: "pk_xxx",
+        baseUrl: "https://example.com",
+        polyfills: { fetch },
+      });
+      const store =
+        client[kInternal].httpClient.getOrCreateFileUrlsStore("room");
+
+      const firstLookup = store.enqueue(fileId);
+      await vi.advanceTimersByTimeAsync(50);
+      await firstLookup;
+      expect(store.getItemState(fileId)).toMatchObject({
+        isLoading: false,
+        error: expect.any(Error),
+      });
+
+      fileIsAvailable = true;
+      await vi.advanceTimersByTimeAsync(1_000);
+
+      const secondLookup = store.enqueue(fileId);
+      await vi.advanceTimersByTimeAsync(50);
+      await secondLookup;
+
+      expect(store.getData(fileId)?.url).toBe(fileUrl);
+      expect(fetch).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

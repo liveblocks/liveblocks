@@ -36,6 +36,7 @@ from .comment_body import CommentBody
 from .comment_body_content_item import CommentBodyContentItem
 from .comment_metadata import CommentMetadata
 from .comment_reaction import CommentReaction
+from .complete_storage_file_multipart_upload_request_body import CompleteStorageFileMultipartUploadRequestBody
 from .copy_json_patch_operation import CopyJsonPatchOperation
 from .create_ai_copilot_options_anthropic import CreateAiCopilotOptionsAnthropic
 from .create_ai_copilot_options_base import CreateAiCopilotOptionsBase
@@ -117,6 +118,8 @@ from .knowledge_source_file_source_file import KnowledgeSourceFileSourceFile
 from .knowledge_source_web_source import KnowledgeSourceWebSource
 from .knowledge_source_web_source_link import KnowledgeSourceWebSourceLink
 from .knowledge_source_web_source_link_type import KnowledgeSourceWebSourceLinkType
+from .live_file import LiveFile
+from .live_file_data import LiveFileData
 from .mark_thread_as_resolved_request_body import MarkThreadAsResolvedRequestBody
 from .mark_thread_as_unresolved_request_body import MarkThreadAsUnresolvedRequestBody
 from .move_json_patch_operation import MoveJsonPatchOperation
@@ -142,6 +145,9 @@ from .room_type import RoomType
 from .set_presence_request_body import SetPresenceRequestBody
 from .set_presence_request_body_data import SetPresenceRequestBodyData
 from .set_presence_request_body_user_info import SetPresenceRequestBodyUserInfo
+from .storage_file_multipart_part import StorageFileMultipartPart
+from .storage_file_multipart_upload import StorageFileMultipartUpload
+from .storage_file_with_url import StorageFileWithUrl
 from .subscribe_to_thread_request_body import SubscribeToThreadRequestBody
 from .subscription import Subscription
 from .test_json_patch_operation import TestJsonPatchOperation
@@ -209,6 +215,7 @@ __all__ = (
     "CommentBodyContentItem",
     "CommentMetadata",
     "CommentReaction",
+    "CompleteStorageFileMultipartUploadRequestBody",
     "CopyJsonPatchOperation",
     "CreateAiCopilotOptionsAnthropic",
     "CreateAiCopilotOptionsBase",
@@ -290,6 +297,8 @@ __all__ = (
     "KnowledgeSourceWebSource",
     "KnowledgeSourceWebSourceLink",
     "KnowledgeSourceWebSourceLinkType",
+    "LiveFile",
+    "LiveFileData",
     "MarkThreadAsResolvedRequestBody",
     "MarkThreadAsUnresolvedRequestBody",
     "MoveJsonPatchOperation",
@@ -316,6 +325,9 @@ __all__ = (
     "SetPresenceRequestBody",
     "SetPresenceRequestBodyData",
     "SetPresenceRequestBodyUserInfo",
+    "StorageFileMultipartPart",
+    "StorageFileMultipartUpload",
+    "StorageFileWithUrl",
     "SubscribeToThreadRequestBody",
     "Subscription",
     "TestJsonPatchOperation",

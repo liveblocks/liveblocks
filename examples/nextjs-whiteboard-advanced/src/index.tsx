@@ -7,7 +7,7 @@ import {
   useOthersMapped,
   useCanUndo,
   useCanRedo,
-  useRoom,
+  useUploadFile,
 } from "@liveblocks/react/suspense";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
@@ -88,7 +88,7 @@ function Loading() {
 
 function Canvas() {
   const layerIds = useStorage((root) => root.layerIds);
-  const room = useRoom();
+  const uploadFile = useUploadFile();
 
   const pencilDraft = useSelf((me) => me.presence.pencilDraft);
   const [canvasState, setState] = useState<CanvasState>({
@@ -209,38 +209,26 @@ function Canvas() {
     [lastUsedColor]
   );
 
-  const insertImageLayer = useMutation(
-    ({ storage, setMyPresence }, bounds: XYWH) => {
-      const liveLayers = storage.get("layers");
-      if (liveLayers.size >= MAX_LAYERS) {
-        return null;
-      }
+  const canInsertImageLayer = useMutation(
+    ({ storage }) => storage.get("layers").size < MAX_LAYERS,
+    []
+  );
 
+  const insertImageLayer = useMutation(
+    ({ storage, setMyPresence }, bounds: XYWH, file: LiveFile) => {
+      const liveLayers = storage.get("layers");
       const liveLayerIds = storage.get("layerIds");
       const layerId = nanoid();
       const layer = new LiveObject<ImageLayer>({
         type: LayerType.Image,
         ...bounds,
+        file,
       });
       liveLayerIds.push(layerId);
       liveLayers.set(layerId, layer);
 
       setMyPresence({ selection: [layerId] }, { addToHistory: true });
       setState({ mode: CanvasMode.None });
-
-      return layerId;
-    },
-    []
-  );
-
-  const setImageLayerFile = useMutation(
-    ({ storage }, layerId: string, file: LiveFile) => {
-      const layer = storage.get("layers").get(layerId);
-      if (!layer || !isImageLiveLayer(layer)) {
-        return;
-      }
-
-      layer.update({ file });
     },
     []
   );
@@ -259,19 +247,18 @@ function Canvas() {
       const bounds = position
         ? getImageBoundsFromCenter(position, size)
         : getCenteredImageBounds(camera, size);
-      const layerId = insertImageLayer(bounds);
-      if (!layerId) {
+      if (!canInsertImageLayer()) {
         return;
       }
 
       try {
-        const liveFile = await room.uploadFile(file);
-        setImageLayerFile(layerId, liveFile);
+        const liveFile = await uploadFile(file);
+        insertImageLayer(bounds, liveFile);
       } catch (error) {
         console.error("Image upload failed", error);
       }
     },
-    [camera, insertImageLayer, room, setImageLayerFile]
+    [camera, canInsertImageLayer, insertImageLayer, uploadFile]
   );
 
   const onDragOver = useCallback((e: React.DragEvent) => {
@@ -659,12 +646,6 @@ function Canvas() {
       />
     </>
   );
-}
-
-function isImageLiveLayer(
-  layer: LiveObject<Layer>
-): layer is LiveObject<ImageLayer> {
-  return layer.get("type") === LayerType.Image;
 }
 
 function getCenteredImageBounds(

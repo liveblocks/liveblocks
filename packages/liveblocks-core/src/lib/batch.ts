@@ -19,6 +19,7 @@ export type BatchStore<O, I> = {
   setData: (entries: [I, O][]) => void;
   getItemState: (input: I) => AsyncResult<O> | undefined;
   getData: (input: I) => O | undefined;
+  waitUntilItemCacheExpires: (input: I) => Promise<void> | undefined;
   invalidate: (inputs?: I[]) => void;
 
   /**
@@ -45,6 +46,14 @@ interface BatchOptions {
    */
   delay: number;
 }
+
+type BatchStoreOptions<O> = {
+  /** Returns the timestamp when an output should be invalidated. */
+  getCacheExpiry?: (output: O) => number | undefined;
+
+  /** Returns the timestamp when an error should be invalidated. */
+  getErrorCacheExpiry?: (error: unknown) => number | undefined;
+};
 
 class BatchCall<O, I> {
   readonly input: I;
@@ -170,8 +179,12 @@ export class Batch<O, I> {
  * Create a store around a Batch.
  * Each call will be cached and get its own state in addition to being batched.
  */
-export function createBatchStore<O, I>(batch: Batch<O, I>): BatchStore<O, I> {
+export function createBatchStore<O, I>(
+  batch: Batch<O, I>,
+  options?: BatchStoreOptions<O>
+): BatchStore<O, I> {
   const signal = new MutableSignal(new Map<string, AsyncResult<O>>());
+  const cacheExpiryTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
 
   function getCacheKey(args: I): string {
     return stableStringify(args);
@@ -199,7 +212,44 @@ export function createBatchStore<O, I>(batch: Batch<O, I>): BatchStore<O, I> {
     });
   }
 
+  function clearCacheExpiry(cacheKey: string): void {
+    const timeoutId = cacheExpiryTimeouts.get(cacheKey);
+    if (timeoutId !== undefined) {
+      clearTimeout(timeoutId);
+      cacheExpiryTimeouts.delete(cacheKey);
+    }
+  }
+
+  function scheduleCacheExpiry(input: I, expiresAt: number | undefined): void {
+    const cacheKey = getCacheKey(input);
+    clearCacheExpiry(cacheKey);
+
+    if (expiresAt === undefined || !Number.isFinite(expiresAt)) {
+      return;
+    }
+
+    const timeoutId = setTimeout(
+      () => {
+        cacheExpiryTimeouts.delete(cacheKey);
+        invalidate([input]);
+      },
+      Math.max(0, expiresAt - Date.now())
+    );
+    cacheExpiryTimeouts.set(cacheKey, timeoutId);
+  }
+
   function invalidate(inputs?: I[]): void {
+    if (Array.isArray(inputs)) {
+      for (const input of inputs) {
+        clearCacheExpiry(getCacheKey(input));
+      }
+    } else {
+      for (const timeoutId of cacheExpiryTimeouts.values()) {
+        clearTimeout(timeoutId);
+      }
+      cacheExpiryTimeouts.clear();
+    }
+
     signal.mutate((cache) => {
       if (Array.isArray(inputs)) {
         // Invalidate the specific calls.
@@ -231,6 +281,7 @@ export function createBatchStore<O, I>(batch: Batch<O, I>): BatchStore<O, I> {
 
       // Set the state to the result.
       update({ key: cacheKey, state: { isLoading: false, data: result } });
+      scheduleCacheExpiry(input, options?.getCacheExpiry?.(result));
     } catch (error) {
       // // TODO: Differentiate whole batch errors from individual errors.
       // if (batch.error) {
@@ -245,6 +296,10 @@ export function createBatchStore<O, I>(batch: Batch<O, I>): BatchStore<O, I> {
       //     error: error as Error,
       //   });
       // }
+
+      // Schedule expiry before publishing the error so subscribers can inspect
+      // whether the cached error is temporary from inside their callback.
+      scheduleCacheExpiry(input, options?.getErrorCacheExpiry?.(error));
 
       // If there was an error (for various reasons), set the state to the error.
       update({
@@ -261,6 +316,10 @@ export function createBatchStore<O, I>(batch: Batch<O, I>): BatchStore<O, I> {
         state: { isLoading: false, data: entry[1] },
       }))
     );
+
+    for (const [input, output] of entries) {
+      scheduleCacheExpiry(input, options?.getCacheExpiry?.(output));
+    }
   }
 
   function getItemState(input: I): AsyncResult<O> | undefined {
@@ -275,6 +334,23 @@ export function createBatchStore<O, I>(batch: Batch<O, I>): BatchStore<O, I> {
     return cache.get(cacheKey)?.data;
   }
 
+  function waitUntilItemCacheExpires(input: I): Promise<void> | undefined {
+    const cacheKey = getCacheKey(input);
+    if (!cacheExpiryTimeouts.has(cacheKey)) {
+      return undefined;
+    }
+
+    const initialState = signal.get().get(cacheKey);
+    return new Promise((resolve) => {
+      const unsubscribe = signal.subscribe(() => {
+        if (signal.get().get(cacheKey) !== initialState) {
+          unsubscribe();
+          resolve();
+        }
+      });
+    });
+  }
+
   /** @internal - Only for testing */
   function _cacheKeys() {
     const cache = signal.get();
@@ -287,6 +363,7 @@ export function createBatchStore<O, I>(batch: Batch<O, I>): BatchStore<O, I> {
     setData,
     getItemState,
     getData,
+    waitUntilItemCacheExpires,
     invalidate,
 
     batch,

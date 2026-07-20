@@ -19,7 +19,7 @@ import { makeConfig } from "@liveblocks/eslint-config";
 import licenseHeader from "eslint-plugin-license-header";
 
 export default [
-  ...makeConfig(),
+  ...makeConfig(import.meta.dirname),
 
   {
     plugins: {

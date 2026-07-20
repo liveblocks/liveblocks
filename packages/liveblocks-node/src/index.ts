@@ -108,11 +108,11 @@ export type {
 export {
   getMentionsFromCommentBody,
   isNotificationChannelEnabled,
+  LiveFile,
+  type LiveFileData,
   LiveList,
   LiveMap,
   LiveObject,
-  LiveFile,
-  type LiveFileData,
   stringifyCommentBody,
 } from "@liveblocks/core";
 

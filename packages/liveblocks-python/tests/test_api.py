@@ -1,11 +1,18 @@
 from __future__ import annotations
 
+import json
+from io import BytesIO
+
 import httpx
 import pytest
 
 from liveblocks.errors import LiveblocksError
+from liveblocks.models.add_json_patch_operation import AddJsonPatchOperation
 from liveblocks.models.create_room_request_body import CreateRoomRequestBody
+from liveblocks.models.live_file import LiveFile
+from liveblocks.models.live_file_data import LiveFileData
 from liveblocks.models.room_permission_item import RoomPermissionItem
+from liveblocks.types import File
 
 ROOM_JSON = {
     "id": "my-room",
@@ -16,6 +23,14 @@ ROOM_JSON = {
     "groupsAccesses": {},
     "metadata": {},
     "organizationId": "org_123456789",
+}
+
+STORAGE_FILE_ID = "fl_abc123456789012345678"
+STORAGE_FILE_JSON = {
+    "id": STORAGE_FILE_ID,
+    "name": "photo.png",
+    "size": 5,
+    "mimeType": "image/png",
 }
 
 
@@ -132,8 +147,6 @@ class TestCreateRoom:
         )
         sync_client.create_room(body=body)
 
-        import json
-
         sent = json.loads(route.calls.last.request.content)
         assert sent["id"] == "new-room"
         assert sent["defaultAccesses"] == ["room:write"]
@@ -157,6 +170,101 @@ class TestDeleteRoom:
         result = await async_client.delete_room("my-room")
 
         assert result is None
+
+
+# ---------------------------------------------------------------------------
+# Storage files
+# ---------------------------------------------------------------------------
+
+
+class TestStorageFiles:
+    def test_upload_storage_file(self, sync_client, mock_api):
+        route = mock_api.put(f"/v2/rooms/my-room/storage/files/{STORAGE_FILE_ID}/upload/photo.png").mock(
+            return_value=httpx.Response(200, json=STORAGE_FILE_JSON)
+        )
+
+        result = sync_client.upload_storage_file(
+            "my-room",
+            STORAGE_FILE_ID,
+            "photo.png",
+            body=File(payload=BytesIO(b"hello")),
+            file_size=5,
+        )
+
+        assert result == LiveFileData(
+            id=STORAGE_FILE_ID,
+            name="photo.png",
+            size=5,
+            mime_type="image/png",
+        )
+        assert route.calls.last.request.content == b"hello"
+        assert route.calls.last.request.url.params["fileSize"] == "5"
+        assert route.calls.last.request.headers["content-type"] == "application/octet-stream"
+
+    def test_get_storage_file(self, sync_client, mock_api):
+        mock_api.get(f"/v2/rooms/my-room/storage/files/{STORAGE_FILE_ID}").mock(
+            return_value=httpx.Response(
+                200,
+                json={
+                    **STORAGE_FILE_JSON,
+                    "url": "https://example.com/photo.png",
+                    "expiresAt": "2026-07-16T18:00:00Z",
+                },
+            )
+        )
+
+        result = sync_client.get_storage_file("my-room", STORAGE_FILE_ID)
+
+        assert result.id == STORAGE_FILE_ID
+        assert result.url == "https://example.com/photo.png"
+        assert result.expires_at.isoformat() == "2026-07-16T18:00:00+00:00"
+
+    def test_abort_storage_file_multipart_upload_accepts_204(self, sync_client, mock_api):
+        mock_api.delete(f"/v2/rooms/my-room/storage/files/{STORAGE_FILE_ID}/multipart/upload-1").mock(
+            return_value=httpx.Response(204)
+        )
+
+        result = sync_client.abort_storage_file_multipart_upload(
+            "my-room",
+            STORAGE_FILE_ID,
+            "upload-1",
+        )
+
+        assert result is None
+
+    def test_patch_storage_document_with_tagged_live_file(self, sync_client, mock_api):
+        route = mock_api.patch("/v2/rooms/my-room/storage/json-patch").mock(return_value=httpx.Response(200))
+        live_file = LiveFile(
+            liveblocks_type="LiveFile",
+            data=LiveFileData(
+                id=STORAGE_FILE_ID,
+                name="photo.png",
+                size=5,
+                mime_type="image/png",
+            ),
+        )
+
+        sync_client.patch_storage_document(
+            "my-room",
+            body=[
+                AddJsonPatchOperation(
+                    op="add",
+                    path="/assets/photo",
+                    value=live_file.to_dict(),
+                )
+            ],
+        )
+
+        assert json.loads(route.calls.last.request.content) == [
+            {
+                "op": "add",
+                "path": "/assets/photo",
+                "value": {
+                    "liveblocksType": "LiveFile",
+                    "data": STORAGE_FILE_JSON,
+                },
+            }
+        ]
 
 
 # ---------------------------------------------------------------------------

@@ -3563,7 +3563,20 @@ const body: CommentBody = {
 #### Defining comment metadata [#defining-comment-metadata]
 
 Custom metadata can be attached to each comment. `string`, `number`, and
-`boolean` properties are allowed.
+`boolean` properties are allowed. First, type your data with `CommentMetadata`.
+
+```ts file="liveblocks.config.ts"
+declare global {
+  interface Liveblocks {
+    CommentMetadata: {
+      priority: number;
+      reviewed: boolean;
+    };
+  }
+}
+```
+
+Then use it in your code.
 
 ```ts
 const metadata: Liveblocks["CommentMetadata"] = {
@@ -4623,6 +4636,67 @@ const { root } = await room.getStorage();
 </PropertiesList>
 
 <PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
+### Room.uploadFile
+
+Uploads a file to Liveblocks and returns a [`LiveFile`][] which can then be
+added to the room's Storage tree.
+
+```ts
+const liveFile = await room.uploadFile(file);
+
+const { root } = await room.getStorage();
+root.set("file", liveFile);
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="liveFile" type="LiveFile">
+    An immutable Storage reference to the uploaded file.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="file" type="File" required>
+    The file to upload.
+  </PropertiesListItem>
+  <PropertiesListItem name="options" type="UploadFileOptions">
+    A set of options.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Options">
+  <PropertiesListItem name="signal" type="AbortSignal">
+    An optional signal for cancelling the upload.
+  </PropertiesListItem>
+</PropertiesList>
+
+### Room.getFileUrl
+
+Returns a presigned URL for the file referenced by a [`LiveFile`][]. You can
+pass a `LiveFile`, its `LiveFileData`, or its ID.
+
+```ts
+const url = await room.getFileUrl(liveFile);
+
+// "https://..."
+console.log(url);
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="url" type="string">
+    A presigned URL for the file.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem
+    name="file"
+    type="LiveFile | LiveFileData | string"
+    required
+  >
+    The `LiveFile`, `LiveFileData`, or ID to get a URL for.
+  </PropertiesListItem>
+</PropertiesList>
 
 ## LiveObject
 
@@ -5838,6 +5912,56 @@ converts all nested Live structures.
 
 </Banner>
 
+## LiveFile
+
+The `LiveFile` class is an immutable Storage leaf that references file bytes
+stored outside the realtime Storage tree. Create one by uploading a file with
+[`Room.uploadFile`](#Room.uploadFile), then add it to a `LiveObject`, `LiveMap`,
+or `LiveList`.
+
+```ts
+const liveFile = await room.uploadFile(file);
+
+// { id: "fl_xxx", name: "photo.png", size: 12345, mimeType: "image/png" }
+console.log(liveFile.data);
+```
+
+<PropertiesList title="Properties">
+  <PropertiesListItem name="data" type="Readonly<LiveFileData>">
+    The immutable file metadata.
+  </PropertiesListItem>
+  <PropertiesListItem name="id" type="string">
+    The file ID, which starts with `"fl_"`.
+  </PropertiesListItem>
+  <PropertiesListItem name="name" type="string">
+    The name of the uploaded file.
+  </PropertiesListItem>
+  <PropertiesListItem name="size" type="number">
+    The size of the uploaded file in bytes.
+  </PropertiesListItem>
+  <PropertiesListItem name="mimeType" type="string">
+    The MIME type of the uploaded file.
+  </PropertiesListItem>
+</PropertiesList>
+
+### clone [#LiveFile.clone]
+
+Returns a copy of the `LiveFile` that references the same uploaded file and can
+be inserted elsewhere in the Storage tree.
+
+```ts
+root.set("original", liveFile);
+root.set("copy", liveFile.clone());
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="clonedFile" type="LiveFile">
+    The cloned `LiveFile`.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
 ## Resolvers
 
 ### invalidateUsers
@@ -6447,6 +6571,7 @@ const user = room.getSelf();
 [`client.getroom`]: /docs/api-reference/liveblocks-client#Client.getRoom
 [`createclient`]: /docs/api-reference/liveblocks-client#createClient
 [`fetch`]: https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API
+[`livefile`]: /docs/api-reference/liveblocks-client#LiveFile
 [`livelist`]: /docs/api-reference/liveblocks-client#LiveList
 [`livemap`]: /docs/api-reference/liveblocks-client#LiveMap
 [`liveobject`]: /docs/api-reference/liveblocks-client#LiveObject

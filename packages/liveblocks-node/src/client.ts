@@ -787,11 +787,9 @@ async function uploadStorageFile<TResult>({
       throw abortError;
     }
 
-    if (err instanceof LiveblocksError && err.status === 413) {
-      throw err;
-    }
-
-    return false;
+    return (
+      err instanceof LiveblocksError && err.status >= 400 && err.status < 500
+    );
   };
 
   if (file.size <= STORAGE_FILE_PART_SIZE) {
@@ -805,12 +803,7 @@ async function uploadStorageFile<TResult>({
 
   let uploadId: string | undefined;
   const uploadedParts: UploadedStorageFilePart[] = [];
-  const multipartUpload = await autoRetry(
-    createMultipartUpload,
-    STORAGE_FILE_RETRY_ATTEMPTS,
-    STORAGE_FILE_RETRY_DELAYS,
-    handleRetryError
-  );
+  const multipartUpload = await createMultipartUpload();
 
   try {
     uploadId = multipartUpload.uploadId;
@@ -843,12 +836,17 @@ async function uploadStorageFile<TResult>({
       throw abortError;
     }
 
-    return completeMultipartUpload(
-      multipartUpload.uploadId,
-      uploadedParts.sort((a, b) => a.partNumber - b.partNumber)
+    const sortedParts = uploadedParts.sort(
+      (a, b) => a.partNumber - b.partNumber
+    );
+    return autoRetry(
+      () => completeMultipartUpload(multipartUpload.uploadId, sortedParts),
+      STORAGE_FILE_RETRY_ATTEMPTS,
+      STORAGE_FILE_RETRY_DELAYS,
+      handleRetryError
     );
   } catch (err) {
-    if (uploadId && isAbortOrTimeoutError(err)) {
+    if (uploadId) {
       try {
         await abortMultipartUpload(uploadId);
       } catch {
@@ -876,13 +874,6 @@ function splitStorageFileIntoParts(file: File): StorageFilePart[] {
   }
 
   return parts;
-}
-
-function isAbortOrTimeoutError(err: unknown): boolean {
-  return (
-    err instanceof Error &&
-    (err.name === "AbortError" || err.name === "TimeoutError")
-  );
 }
 
 function createAbortError(message: string): Error {

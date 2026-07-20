@@ -1455,11 +1455,14 @@ describe("client", () => {
       const fileName = "file 100%.bin";
       const file = new File([new Uint8Array(5 * 1024 * 1024 + 1)], fileName);
       const uploadedPartNumbers: number[] = [];
+      let multipartCreationCount = 0;
+      let multipartCompletionCount = 0;
 
       server.use(
         http.post(
           `${DEFAULT_BASE_URL}/v2/rooms/:roomId/storage/files/:fileId/multipart/:name`,
           ({ request, params }) => {
+            multipartCreationCount++;
             const url = new URL(request.url);
 
             expect(params.roomId).toBe("room1");
@@ -1502,6 +1505,7 @@ describe("client", () => {
         http.post(
           `${DEFAULT_BASE_URL}/v2/rooms/:roomId/storage/files/:fileId/multipart/:uploadId/complete`,
           async ({ request, params }) => {
+            multipartCompletionCount++;
             expect(params.roomId).toBe("room1");
             expect(String(params.fileId)).toMatch(/^fl_/);
             expect(params.uploadId).toBe("upload_abc123");
@@ -1511,6 +1515,13 @@ describe("client", () => {
                 { partNumber: 2, etag: "etag-2" },
               ],
             });
+
+            if (multipartCompletionCount === 1) {
+              return HttpResponse.json(
+                { message: "Temporary error" },
+                { status: 500 }
+              );
+            }
 
             return HttpResponse.json(
               {
@@ -1541,6 +1552,8 @@ describe("client", () => {
         mimeType: "application/octet-stream",
       });
       expect(uploadedPartNumbers.sort()).toEqual([1, 2]);
+      expect(multipartCreationCount).toBe(1);
+      expect(multipartCompletionCount).toBe(2);
     });
 
     test("should abort multipart uploads when upload is aborted", async () => {
@@ -1595,6 +1608,40 @@ describe("client", () => {
         )
       ).rejects.toMatchObject({ name: "AbortError" });
       expect(multipartUploadAborted).toBe(true);
+    });
+
+    test("should not retry when uploadFile receives a 4xx response", async () => {
+      let uploadCount = 0;
+
+      server.use(
+        http.put(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/storage/files/:fileId/upload/:name`,
+          () => {
+            uploadCount++;
+            return HttpResponse.json(
+              {
+                error: "BAD_REQUEST",
+                message: "Bad request",
+              },
+              { status: 400 }
+            );
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(
+        client.uploadFile({
+          roomId: "room1",
+          file: new File(["hello"], "file1.txt"),
+        })
+      ).rejects.toMatchObject({
+        name: "LiveblocksError",
+        status: 400,
+        message: "Bad request",
+      });
+      expect(uploadCount).toBe(1);
     });
 
     test("should throw a LiveblocksError when uploadFile receives an error response", async () => {

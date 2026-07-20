@@ -181,6 +181,73 @@ describe("Batch", () => {
 });
 
 describe("createBatchStore", () => {
+  test("should invalidate cached data when it expires", async () => {
+    vi.useFakeTimers();
+
+    try {
+      const callback = vi.fn((inputs: string[]) => inputs);
+      const batch = new Batch<string, string>(callback, { delay: SOME_TIME });
+      const store = createBatchStore<string, string>(batch, {
+        getCacheExpiry: () => Date.now() + SOME_TIME,
+      });
+
+      const enqueuePromise = store.enqueue("a");
+      await vi.advanceTimersByTimeAsync(SOME_TIME);
+      await enqueuePromise;
+
+      expect(store.getData("a")).toBe("a");
+
+      await vi.advanceTimersByTimeAsync(SOME_TIME - 1);
+      expect(store.getData("a")).toBe("a");
+
+      await vi.advanceTimersByTimeAsync(1);
+      expect(store.getData("a")).toBeUndefined();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test("should resolve when a cached error expires", async () => {
+    vi.useFakeTimers();
+
+    try {
+      const batch = new Batch<string, string>(() => [ERROR], {
+        delay: SOME_TIME,
+      });
+      const store = createBatchStore<string, string>(batch, {
+        getErrorCacheExpiry: () => Date.now() + SOME_TIME,
+      });
+      let cacheExpiryFromSubscription$: Promise<void> | undefined;
+      const unsubscribe = store.subscribe(() => {
+        if (store.getItemState("a")?.error) {
+          cacheExpiryFromSubscription$ = store.waitUntilItemCacheExpires("a");
+        }
+      });
+
+      const enqueue$ = store.enqueue("a");
+      await vi.advanceTimersByTimeAsync(SOME_TIME);
+      await enqueue$;
+
+      expect(store.getItemState("a")).toEqual({
+        isLoading: false,
+        error: ERROR,
+      });
+
+      const cacheExpiry$ = store.waitUntilItemCacheExpires("a");
+      expect(cacheExpiry$).toBeDefined();
+      expect(cacheExpiryFromSubscription$).toBeDefined();
+
+      await vi.advanceTimersByTimeAsync(SOME_TIME);
+      await cacheExpiry$;
+      await cacheExpiryFromSubscription$;
+      unsubscribe();
+
+      expect(store.getItemState("a")).toBeUndefined();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   test("should set state to loading then result with `enqueue`", async () => {
     const callback = vi.fn((inputs: string[]) => inputs);
     const batch = new Batch<string, string>(callback, { delay: SOME_TIME });

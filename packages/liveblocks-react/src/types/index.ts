@@ -4,6 +4,7 @@ import type {
   History,
   Json,
   JsonObject,
+  LiveFile,
   LiveObject,
   LostConnectionEvent,
   LsonObject,
@@ -11,6 +12,7 @@ import type {
   Room,
   RoomSubscriptionSettings,
   Status,
+  UploadFileOptions,
   User,
 } from "@liveblocks/client";
 import type {
@@ -876,6 +878,19 @@ type RoomContextBundleCommon<
     callback: F,
     deps: readonly unknown[]
   ): OmitFirstArg<F>;
+
+  /**
+   * Returns a function that uploads a file to the current room and resolves to
+   * a `LiveFile` that can be stored in Storage.
+   *
+   * @example
+   * const uploadFile = useUploadFile();
+   * const liveFile = await uploadFile(file);
+   */
+  useUploadFile(): (
+    file: File,
+    options?: UploadFileOptions
+  ) => Promise<LiveFile>;
 
   /**
    * Returns an array with information about all the users currently connected

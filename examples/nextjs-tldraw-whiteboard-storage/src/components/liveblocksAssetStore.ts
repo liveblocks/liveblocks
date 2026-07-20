@@ -17,17 +17,17 @@ type LiveblocksFileStorageRoot = {
 };
 
 type LiveblocksFileRoom = {
-  uploadFile(file: File, options?: UploadFileOptions): Promise<LiveFile>;
   getFileUrl(file: LiveFile | string): Promise<string>;
   getStorage(): Promise<{ root: LiveblocksFileStorageRoot }>;
 };
 
 export function createLiveblocksAssetStore(
-  room: LiveblocksFileRoom
+  room: LiveblocksFileRoom,
+  uploadFile: (file: File, options?: UploadFileOptions) => Promise<LiveFile>
 ): LiveblocksAssetStore {
   return {
     async upload(asset, file, abortSignal) {
-      const liveFile = await room.uploadFile(file, { signal: abortSignal });
+      const liveFile = await uploadFile(file, { signal: abortSignal });
       const liveFiles = await getLiveFiles(room);
       liveFiles.set(asset.id, liveFile);
 
@@ -44,6 +44,17 @@ export function createLiveblocksAssetStore(
       }
 
       return asset.props.src;
+    },
+    async remove(assetIds) {
+      const { root } = await room.getStorage();
+      const liveFiles = root.get("files");
+      if (!liveFiles) {
+        return;
+      }
+
+      for (const assetId of assetIds) {
+        liveFiles.delete(assetId);
+      }
     },
   };
 }

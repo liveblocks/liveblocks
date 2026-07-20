@@ -1,7 +1,14 @@
 import { Liveblocks } from "@liveblocks/node";
 import { NextRequest, NextResponse } from "next/server";
 import { AI_USER_AVATAR, AI_USER_ID, AI_USER_NAME } from "@/app/database";
+import { INITIAL_SLIDE_ID } from "@/app/slide-doc";
 import { STARTER_SLIDE_HTML } from "@/app/slide-html";
+import {
+  extractHtmlProposal,
+  extractStreamingHtml,
+  stripHtmlFencesForChat,
+  type HtmlProposal,
+} from "./html-proposals";
 
 /**
  * Generates an assistant reply and streams it into the room's feed using
@@ -10,6 +17,7 @@ import { STARTER_SLIDE_HTML } from "@/app/slide-html";
  */
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
+type SlideContext = { id: string; html: string };
 type Source = { title: string; url: string };
 type ChainStep = {
   label: string;
@@ -30,7 +38,7 @@ type AssistantUpdate = {
   suggestions?: string[];
   chainOfThought?: ChainStep[];
   tool?: ToolCall;
-  proposedHtml?: string;
+  proposals?: HtmlProposal[];
   proposalStatus?: "pending" | "applied" | "rejected";
   usedTokens?: number;
   maxTokens?: number;
@@ -48,12 +56,17 @@ const AUTHOR = {
 
 const SYSTEM_PROMPT = [
   "You are an expert slide designer inside a multiplayer slideshow builder.",
-  "Reply with a SHORT conversational message plus the COMPLETE slide HTML document in a single fenced ```html code block.",
+  "Reply with a SHORT conversational message.",
   "The HTML must be a full self-contained document with inline <style>, designed for a 1280x720 16:9 slide.",
   // External resources don't survive the client-side PPTX snapshot (CORS), so
   // the slide must be renderable entirely offline.
   "Strictly no external resources: no <link> stylesheets or font imports, no <img> or background images from URLs. Use system font stacks (e.g. Inter, ui-sans-serif, system-ui) and CSS gradients/shapes for visuals.",
-  "Create or edit only ONE slide. Keep the design polished, readable, and presentation-ready.",
+  "Keep the design polished, readable, and presentation-ready.",
+  "You may edit any existing slides and/or add new slides.",
+  "For each existing slide you want to change, output the COMPLETE HTML document in a fenced code block whose info string is ```html id=<slideId>.",
+  "For each new slide you want to append, output the COMPLETE HTML document in a fenced code block whose info string is ```html new.",
+  "A plain ```html fenced block targets the slide currently viewed by the user.",
+  "Only output fenced HTML blocks for slides you want to change.",
 ].join("\n");
 
 export async function POST(request: NextRequest) {
@@ -65,14 +78,31 @@ export async function POST(request: NextRequest) {
     secret: process.env.LIVEBLOCKS_SECRET_KEY,
   });
 
-  const { roomId, feedId, messages, model, currentSlideHtml } =
-    (await request.json()) as {
-      roomId: string;
-      feedId: string;
-      messages: ChatMessage[];
-      model?: string;
-      currentSlideHtml?: string;
-    };
+  const body: unknown = await request.json();
+  if (!isRecord(body)) {
+    return new NextResponse("Invalid request", { status: 400 });
+  }
+
+  const roomId = typeof body.roomId === "string" ? body.roomId : "";
+  const feedId = typeof body.feedId === "string" ? body.feedId : "";
+  const model = typeof body.model === "string" ? body.model : undefined;
+  const messages = isChatMessages(body.messages) ? body.messages : [];
+  const slides = parseSlides(body.slides);
+  const currentSlideId =
+    typeof body.currentSlideId === "string" ? body.currentSlideId : undefined;
+
+  if (!slides) {
+    return new NextResponse("Invalid slides", { status: 400 });
+  }
+
+  const deckSlides =
+    slides.length > 0
+      ? slides
+      : [{ id: currentSlideId ?? INITIAL_SLIDE_ID, html: STARTER_SLIDE_HTML }];
+  const effectiveCurrentSlideId =
+    currentSlideId && deckSlides.some((slide) => slide.id === currentSlideId)
+      ? currentSlideId
+      : deckSlides[0].id;
 
   // Only allow writing into this example's rooms.
   if (!roomId?.startsWith(ROOM_ID_PREFIX) || !feedId) {
@@ -112,12 +142,13 @@ export async function POST(request: NextRequest) {
     if (process.env.AI_GATEWAY_API_KEY) {
       await streamRealReply(
         messages,
-        currentSlideHtml ?? STARTER_SLIDE_HTML,
+        deckSlides,
+        effectiveCurrentSlideId,
         model,
         update
       );
     } else {
-      await streamMockReply(messages, update);
+      await streamMockReply(messages, effectiveCurrentSlideId, update);
     }
   } catch (error) {
     const reason = error instanceof Error ? error.message : "Unknown error";
@@ -135,7 +166,8 @@ type UpdateFn = (data: AssistantUpdate) => Promise<unknown>;
 
 async function streamRealReply(
   messages: ChatMessage[],
-  currentSlideHtml: string,
+  slides: SlideContext[],
+  currentSlideId: string,
   model: string | undefined,
   update: UpdateFn
 ) {
@@ -144,7 +176,7 @@ async function streamRealReply(
 
   const result = streamText({
     model: model ?? "openai/gpt-5.4-mini",
-    system: `${SYSTEM_PROMPT}\n\nCurrent slide HTML:\n\`\`\`html\n${currentSlideHtml}\n\`\`\``,
+    system: `${SYSTEM_PROMPT}\n\nCurrent deck:\n${formatDeckContext(slides, currentSlideId)}`,
     messages,
     providerOptions: {
       openai: { reasoningEffort: "low", reasoningSummary: "auto" },
@@ -168,7 +200,7 @@ async function streamRealReply(
       reasoning: reasoning || undefined,
       // Stream the partial HTML too, so the proposal card shows up (in a
       // loading state) as soon as the model starts writing the fenced block.
-      proposedHtml: extractStreamingHtml(rawContent),
+      proposals: extractStreamingHtml(rawContent, currentSlideId),
       streaming: true,
     });
   };
@@ -192,21 +224,25 @@ async function streamRealReply(
     .map((source) => ({ title: source.title || source.url, url: source.url }));
 
   const usage = await result.usage;
-  const proposal = extractHtmlProposal(rawContent);
+  const proposal = extractHtmlProposal(rawContent, currentSlideId);
 
   await update({
     content: proposal.content || stripHtmlFencesForChat(rawContent),
     reasoning: reasoning || undefined,
     sources: sources.length > 0 ? sources : undefined,
-    proposedHtml: proposal.html,
-    proposalStatus: proposal.html ? "pending" : undefined,
+    proposals: proposal.proposals.length > 0 ? proposal.proposals : undefined,
+    proposalStatus: proposal.proposals.length > 0 ? "pending" : undefined,
     usedTokens: usage.totalTokens ?? 0,
     maxTokens: MAX_TOKENS,
     streaming: false,
   });
 }
 
-async function streamMockReply(messages: ChatMessage[], update: UpdateFn) {
+async function streamMockReply(
+  messages: ChatMessage[],
+  currentSlideId: string,
+  update: UpdateFn
+) {
   const lastUserMessage =
     [...messages].reverse().find((message) => message.role === "user")
       ?.content ?? "your request";
@@ -215,7 +251,7 @@ async function streamMockReply(messages: ChatMessage[], update: UpdateFn) {
   const contentText = [
     `I drafted a slide proposal for **"${lastUserMessage}"**.`,
     "",
-    "Review the HTML below, then apply it to the shared CodeMirror document when you are ready.",
+    "Review the HTML below, then apply it to the shared deck when you are ready.",
   ].join("\n");
 
   let content = "";
@@ -229,7 +265,12 @@ async function streamMockReply(messages: ChatMessage[], update: UpdateFn) {
   for (let i = 1; i <= 20; i++) {
     await update({
       content,
-      proposedHtml: slide.slice(0, Math.ceil((slide.length * i) / 20)),
+      proposals: [
+        {
+          slideId: currentSlideId,
+          html: slide.slice(0, Math.ceil((slide.length * i) / 20)),
+        },
+      ],
       maxTokens: MAX_TOKENS,
       streaming: true,
     });
@@ -238,7 +279,7 @@ async function streamMockReply(messages: ChatMessage[], update: UpdateFn) {
 
   await update({
     content,
-    proposedHtml: slide,
+    proposals: [{ slideId: currentSlideId, html: slide }],
     proposalStatus: "pending",
     usedTokens: Math.round(content.length / 4) + 280,
     suggestions: [
@@ -250,38 +291,57 @@ async function streamMockReply(messages: ChatMessage[], update: UpdateFn) {
   });
 }
 
-function extractHtmlProposal(text: string) {
-  let html: string | undefined;
-  const fencePattern = /```html\s*([\s\S]*?)```/gi;
-  for (const match of text.matchAll(fencePattern)) {
-    html = match[1]?.trim();
-  }
-
-  return {
-    content: stripHtmlFencesForChat(text),
-    html,
-  };
+function formatDeckContext(slides: SlideContext[], currentSlideId: string) {
+  return slides
+    .map((slide, index) => {
+      const current =
+        slide.id === currentSlideId ? ", currently viewed by the user" : "";
+      return [
+        `Slide ${index + 1} of ${slides.length} (id: ${slide.id})${current}`,
+        "```",
+        slide.html,
+        "```",
+      ].join("\n");
+    })
+    .join("\n\n");
 }
 
-/**
- * The HTML generated so far: the content of the last ```html fence, whether
- * or not it has been closed yet. Undefined until the fence starts.
- */
-function extractStreamingHtml(text: string): string | undefined {
-  const start = text.lastIndexOf("```html");
-  if (start === -1) {
+function parseSlides(value: unknown): SlideContext[] | undefined {
+  if (value === undefined) {
+    return [];
+  }
+  if (!Array.isArray(value)) {
     return undefined;
   }
-  const body = text.slice(start + "```html".length);
-  const end = body.indexOf("```");
-  return (end === -1 ? body : body.slice(0, end)).trim() || undefined;
+
+  const slides: SlideContext[] = [];
+  for (const item of value) {
+    if (!isRecord(item)) {
+      return undefined;
+    }
+    if (typeof item.id !== "string" || typeof item.html !== "string") {
+      return undefined;
+    }
+    slides.push({ id: item.id, html: item.html });
+  }
+
+  return slides;
 }
 
-function stripHtmlFencesForChat(text: string) {
-  return text
-    .replace(/```html\s*[\s\S]*?```/gi, "")
-    .replace(/```html\s*[\s\S]*$/i, "")
-    .trim();
+function isChatMessages(value: unknown): value is ChatMessage[] {
+  return (
+    Array.isArray(value) &&
+    value.every(
+      (item) =>
+        isRecord(item) &&
+        (item.role === "user" || item.role === "assistant") &&
+        typeof item.content === "string"
+    )
+  );
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
 }
 
 function chunkText(text: string): string[] {
