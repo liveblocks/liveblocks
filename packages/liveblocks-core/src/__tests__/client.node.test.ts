@@ -402,17 +402,15 @@ describe("when env atob does not exist (atob polyfill handling)", () => {
 });
 
 describe("file URL cache", () => {
-  test("retries a file URL that was not available before its Storage op was acknowledged", async () => {
+  test("does not retry an unavailable file URL", async () => {
     vi.useFakeTimers();
 
     try {
       const fileId = "fl_123456789012345678901";
-      const fileUrl = "https://example.com/file.txt";
-      let fileIsAvailable = false;
       const fetch = vi.fn(() =>
         Promise.resolve(
           Response.json({
-            urls: [fileIsAvailable ? fileUrl : null],
+            urls: [null],
             expiresAt: new Date(Date.now() + 60_000).toISOString(),
           })
         )
@@ -433,15 +431,15 @@ describe("file URL cache", () => {
         error: expect.any(Error),
       });
 
-      fileIsAvailable = true;
       await vi.advanceTimersByTimeAsync(1_000);
 
-      const secondLookup = store.enqueue(fileId);
-      await vi.advanceTimersByTimeAsync(50);
-      await secondLookup;
+      await store.enqueue(fileId);
 
-      expect(store.getData(fileId)?.url).toBe(fileUrl);
-      expect(fetch).toHaveBeenCalledTimes(2);
+      expect(store.getItemState(fileId)).toMatchObject({
+        isLoading: false,
+        error: expect.any(Error),
+      });
+      expect(fetch).toHaveBeenCalledTimes(1);
     } finally {
       vi.useRealTimers();
     }

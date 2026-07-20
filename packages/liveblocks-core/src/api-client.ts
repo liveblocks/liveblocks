@@ -565,9 +565,6 @@ export interface LiveblocksHttpApi<
 const ROOM_FILE_PART_SIZE = 5 * 1024 * 1024; // 5 MB
 const ROOM_FILE_RETRY_ATTEMPTS = 10;
 const FILE_URL_EXPIRY_BUFFER = 30_000;
-const FILE_URL_ERROR_RETRY_DELAY = 1_000;
-const FILE_URL_ERROR_MAX_ATTEMPTS = 3;
-const FILE_URL_ERROR_ATTEMPTS_EXPIRY = 30_000;
 const ROOM_FILE_RETRY_DELAYS = [
   2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000,
 ];
@@ -585,8 +582,6 @@ type UploadedRoomFilePart = {
 type MultipartUpload = {
   uploadId: string;
 };
-
-class FileUrlRetryableError extends Error {}
 
 type UploadRoomFileOptions<TResult> = {
   file: File;
@@ -1417,44 +1412,6 @@ export function createApiClient<
     string,
     BatchStore<FileUrlData, string>
   >((roomId) => {
-    const errorAttempts = new Map<
-      string,
-      {
-        count: number;
-        cleanupTimeoutId: ReturnType<typeof setTimeout>;
-      }
-    >();
-
-    const clearErrorAttempts = (fileId: string): void => {
-      const attempts = errorAttempts.get(fileId);
-      if (attempts !== undefined) {
-        clearTimeout(attempts.cleanupTimeoutId);
-        errorAttempts.delete(fileId);
-      }
-    };
-
-    const shouldRetryFileUrlError = (fileId: string): boolean => {
-      const previousAttempts = errorAttempts.get(fileId);
-      if (previousAttempts !== undefined) {
-        clearTimeout(previousAttempts.cleanupTimeoutId);
-      }
-
-      const count = (previousAttempts?.count ?? 0) + 1;
-      if (count >= FILE_URL_ERROR_MAX_ATTEMPTS) {
-        errorAttempts.delete(fileId);
-        return false;
-      }
-
-      errorAttempts.set(fileId, {
-        count,
-        cleanupTimeoutId: setTimeout(
-          () => errorAttempts.delete(fileId),
-          FILE_URL_ERROR_ATTEMPTS_EXPIRY
-        ),
-      });
-      return true;
-    };
-
     const batch = new Batch<FileUrlData, string>(
       async (batchedFileIds) => {
         const fileIds = batchedFileIds.flat();
@@ -1472,30 +1429,16 @@ export function createApiClient<
         );
 
         const expiresAtTimestamp = Date.parse(expiresAt);
-        return urls.map((url, index) => {
-          const fileId = fileIds[index];
-          if (url !== null) {
-            clearErrorAttempts(fileId);
-            return { url, expiresAt: expiresAtTimestamp };
-          }
-
-          if (shouldRetryFileUrlError(fileId)) {
-            return new FileUrlRetryableError(
-              "There was an error while getting this file's URL"
-            );
-          }
-
-          return new Error("There was an error while getting this file's URL");
-        });
+        return urls.map((url) =>
+          url !== null
+            ? { url, expiresAt: expiresAtTimestamp }
+            : new Error("There was an error while getting this file's URL")
+        );
       },
       { delay: 50 }
     );
     return createBatchStore(batch, {
       getCacheExpiry: ({ expiresAt }) => expiresAt - FILE_URL_EXPIRY_BUFFER,
-      getErrorCacheExpiry: (error) =>
-        error instanceof FileUrlRetryableError
-          ? Date.now() + FILE_URL_ERROR_RETRY_DELAY
-          : undefined,
     });
   });
 
