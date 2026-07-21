@@ -804,7 +804,12 @@ async function uploadStorageFile<TResult>({
 
   let uploadId: string | undefined;
   const uploadedParts: UploadedStorageFilePart[] = [];
-  const multipartUpload = await createMultipartUpload();
+  const multipartUpload = await autoRetry(
+    createMultipartUpload,
+    STORAGE_FILE_RETRY_ATTEMPTS,
+    STORAGE_FILE_RETRY_DELAYS,
+    handleRetryError
+  );
   const partUploadController = new AbortController();
   const partUploadSignal = partUploadController.signal;
   const abortPartUploads = (reason?: unknown) => {

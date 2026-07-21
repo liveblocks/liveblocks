@@ -15,7 +15,15 @@ import {
 } from "@liveblocks/core";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
-import { afterAll, afterEach, beforeAll, describe, expect, test } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vitest";
 
 import {
   type AiCopilot,
@@ -1554,6 +1562,64 @@ describe("client", () => {
       expect(uploadedPartNumbers.sort()).toEqual([1, 2]);
       expect(multipartCreationCount).toBe(1);
       expect(multipartCompletionCount).toBe(2);
+    });
+
+    test("should retry a transient multipart creation failure", async () => {
+      vi.useFakeTimers();
+
+      const fileName = "file.bin";
+      const fileSize = 5 * 1024 * 1024 + 1;
+      const file = new File([new Uint8Array(fileSize)], fileName);
+      let multipartCreationCount = 0;
+
+      server.use(
+        http.post(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/storage/files/:fileId/multipart/:name`,
+          () => {
+            multipartCreationCount++;
+
+            return multipartCreationCount === 1
+              ? HttpResponse.json(
+                  { message: "Temporary error" },
+                  { status: 500 }
+                )
+              : HttpResponse.json({ uploadId: "upload_abc123" });
+          }
+        ),
+        http.put(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/storage/files/:fileId/multipart/:uploadId/:partNumber`,
+          ({ params }) => {
+            const partNumber = Number(params.partNumber);
+            return HttpResponse.json({
+              partNumber,
+              etag: `etag-${partNumber}`,
+            });
+          }
+        ),
+        http.post(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/storage/files/:fileId/multipart/:uploadId/complete`,
+          ({ params }) =>
+            HttpResponse.json({
+              id: String(params.fileId),
+              name: fileName,
+              size: fileSize,
+              mimeType: "application/octet-stream",
+            })
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      try {
+        const upload$ = client.uploadFile({ roomId: "room1", file });
+        await vi.waitFor(() => expect(multipartCreationCount).toBe(1));
+        await vi.advanceTimersByTimeAsync(2_000);
+
+        await expect(upload$).resolves.toBeInstanceOf(LiveFile);
+        expect(multipartCreationCount).toBe(2);
+      } finally {
+        vi.useRealTimers();
+      }
     });
 
     test("should settle sibling part uploads before aborting a multipart upload", async () => {

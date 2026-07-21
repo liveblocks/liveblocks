@@ -644,7 +644,12 @@ async function uploadRoomFile<TResult>({
 
   let uploadId: string | undefined;
   const uploadedParts: UploadedRoomFilePart[] = [];
-  const multipartUpload = await createMultipartUpload();
+  const multipartUpload = await autoRetry(
+    createMultipartUpload,
+    ROOM_FILE_RETRY_ATTEMPTS,
+    ROOM_FILE_RETRY_DELAYS,
+    handleRetryError
+  );
   const partUploadController = new AbortController();
   const partUploadSignal = partUploadController.signal;
   const abortPartUploads = (reason?: unknown) => {

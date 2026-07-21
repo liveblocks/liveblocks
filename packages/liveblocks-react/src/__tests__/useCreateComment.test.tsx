@@ -484,6 +484,75 @@ describe("useRoom attachments", () => {
     unmount();
   });
 
+  test("should retry a transient multipart attachment creation failure", async () => {
+    vi.useFakeTimers();
+
+    let multipartCreationCount = 0;
+    const multipartCreationAttachmentIds: string[] = [];
+    const uploadedPartNumbers: number[] = [];
+    let multipartCompletionCount = 0;
+
+    const {
+      room: { RoomProvider, useRoom },
+    } = createContextsForTest();
+
+    const { result, unmount } = renderHook(() => useRoom(), {
+      wrapper: ({ children }) => (
+        <RoomProvider id="room" autoConnect={false}>
+          {children}
+        </RoomProvider>
+      ),
+    });
+
+    const attachment = result.current.prepareAttachment(
+      createAttachmentFile("file.png", 5 * 1024 * 1024 + 1)
+    );
+
+    server.use(
+      mockCreateMultipartAttachmentUpload(({ params }) => {
+        multipartCreationCount++;
+        multipartCreationAttachmentIds.push(String(params.attachmentId));
+        return multipartCreationCount === 1
+          ? new HttpResponse(null, { status: 500 })
+          : HttpResponse.json({ uploadId: "upload_123", key: "unused" });
+      }),
+      mockUploadMultipartAttachmentPart(({ params }) => {
+        const partNumber = Number(params.partNumber);
+        uploadedPartNumbers.push(partNumber);
+        return HttpResponse.json({ partNumber, etag: `etag_${partNumber}` });
+      }),
+      mockCompleteMultipartAttachmentUpload(({ params }) => {
+        multipartCompletionCount++;
+        expect(params.uploadId).toBe("upload_123");
+        return HttpResponse.json({
+          type: "attachment",
+          id: attachment.id,
+          name: "file.png",
+          mimeType: "image/png",
+          size: 5 * 1024 * 1024 + 1,
+        });
+      })
+    );
+
+    try {
+      const upload$ = result.current.uploadAttachment(attachment);
+      await vi.waitFor(() => expect(multipartCreationCount).toBe(1));
+      await vi.advanceTimersByTimeAsync(2_000);
+
+      await expect(upload$).resolves.toMatchObject({ id: attachment.id });
+      expect(multipartCreationCount).toBe(2);
+      expect(multipartCreationAttachmentIds).toEqual([
+        attachment.id,
+        attachment.id,
+      ]);
+      expect(uploadedPartNumbers.sort()).toEqual([1, 2]);
+      expect(multipartCompletionCount).toBe(1);
+    } finally {
+      unmount();
+      vi.useRealTimers();
+    }
+  });
+
   test("should settle sibling part uploads before aborting a multipart upload", async () => {
     const roomId = "room 1";
     let resolveSiblingUploadStarted: (() => void) | undefined;
