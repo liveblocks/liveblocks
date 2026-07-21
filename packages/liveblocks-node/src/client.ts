@@ -199,7 +199,8 @@ type UploadStorageFileOptions<TResult> = {
   uploadMultipartPart: (
     uploadId: string,
     partNumber: number,
-    part: Blob
+    part: Blob,
+    signal: AbortSignal
   ) => Promise<UploadedStorageFilePart>;
   completeMultipartUpload: (
     uploadId: string,
@@ -804,6 +805,17 @@ async function uploadStorageFile<TResult>({
   let uploadId: string | undefined;
   const uploadedParts: UploadedStorageFilePart[] = [];
   const multipartUpload = await createMultipartUpload();
+  const partUploadController = new AbortController();
+  const partUploadSignal = partUploadController.signal;
+  const abortPartUploads = (reason?: unknown) => {
+    partUploadController.abort(reason);
+  };
+  const handleExternalAbort = () => abortPartUploads();
+  if (signal?.aborted) {
+    handleExternalAbort();
+  } else {
+    signal?.addEventListener("abort", handleExternalAbort, { once: true });
+  }
 
   try {
     uploadId = multipartUpload.uploadId;
@@ -815,21 +827,49 @@ async function uploadStorageFile<TResult>({
     const batches = chunk(splitStorageFileIntoParts(file), 5);
 
     for (const parts of batches) {
-      const uploadedPartPromises: Promise<UploadedStorageFilePart>[] = [];
+      const firstPartUploadFailure: { value?: { error: unknown } } = {};
+      const partUploads$: Promise<UploadedStorageFilePart>[] = [];
 
       for (const { part, partNumber } of parts) {
-        uploadedPartPromises.push(
+        partUploads$.push(
           autoRetry(
             () =>
-              uploadMultipartPart(multipartUpload.uploadId, partNumber, part),
+              uploadMultipartPart(
+                multipartUpload.uploadId,
+                partNumber,
+                part,
+                partUploadSignal
+              ),
             STORAGE_FILE_RETRY_ATTEMPTS,
             STORAGE_FILE_RETRY_DELAYS,
-            handleRetryError
-          )
+            (error: unknown) => {
+              if (signal?.aborted) {
+                throw abortError;
+              }
+
+              return partUploadSignal.aborted || handleRetryError(error);
+            }
+          ).catch((error: unknown) => {
+            if (firstPartUploadFailure.value === undefined) {
+              firstPartUploadFailure.value = { error };
+              abortPartUploads(error);
+            }
+
+            throw error;
+          })
         );
       }
 
-      uploadedParts.push(...(await Promise.all(uploadedPartPromises)));
+      const settledPartUploads = await Promise.allSettled(partUploads$);
+      if (firstPartUploadFailure.value !== undefined) {
+        throw firstPartUploadFailure.value.error;
+      }
+
+      for (const settledPartUpload of settledPartUploads) {
+        if (settledPartUpload.status === "fulfilled") {
+          uploadedParts.push(settledPartUpload.value);
+        }
+      }
     }
 
     if (signal?.aborted) {
@@ -855,6 +895,8 @@ async function uploadStorageFile<TResult>({
     }
 
     throw err;
+  } finally {
+    signal?.removeEventListener("abort", handleExternalAbort);
   }
 }
 
@@ -2312,12 +2354,12 @@ export class Liveblocks {
         );
         return await this.#readJsonResponse<StorageFileMultipartUpload>(res);
       },
-      uploadMultipartPart: async (uploadId, partNumber, part) => {
+      uploadMultipartPart: async (uploadId, partNumber, part, signal) => {
         const res = await this.#putBlob(
           url`/v2/rooms/${roomId}/storage/files/${fileId}/multipart/${uploadId}/${String(partNumber)}`,
           part,
           undefined,
-          options
+          { signal }
         );
         return await this.#readJsonResponse<UploadedStorageFilePart>(res);
       },

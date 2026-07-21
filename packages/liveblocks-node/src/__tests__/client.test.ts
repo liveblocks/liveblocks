@@ -1556,6 +1556,78 @@ describe("client", () => {
       expect(multipartCompletionCount).toBe(2);
     });
 
+    test("should settle sibling part uploads before aborting a multipart upload", async () => {
+      const file = new File([new Uint8Array(5 * 1024 * 1024 + 1)], "file.bin");
+      let resolveSiblingUploadStarted: (() => void) | undefined;
+      const siblingUploadStarted$ = new Promise<void>((resolve) => {
+        resolveSiblingUploadStarted = resolve;
+      });
+      let releaseSiblingUpload: (() => void) | undefined;
+      let siblingUploadAborted = false;
+      let siblingUploadFinished = false;
+      let remoteAbortSawSettledSibling = false;
+
+      server.use(
+        http.post(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/storage/files/:fileId/multipart/:name`,
+          () => HttpResponse.json({ uploadId: "upload_abc123" })
+        ),
+        http.put(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/storage/files/:fileId/multipart/:uploadId/:partNumber`,
+          async ({ request, params }) => {
+            const partNumber = Number(params.partNumber);
+            if (partNumber === 1) {
+              await siblingUploadStarted$;
+              return HttpResponse.json(
+                { error: "BAD_REQUEST", message: "Bad request" },
+                { status: 400 }
+              );
+            }
+
+            resolveSiblingUploadStarted?.();
+            await new Promise<void>((resolve) => {
+              releaseSiblingUpload = resolve;
+
+              const handleAbort = () => {
+                siblingUploadAborted = true;
+                resolve();
+              };
+
+              if (request.signal.aborted) {
+                handleAbort();
+              } else {
+                request.signal.addEventListener("abort", handleAbort, {
+                  once: true,
+                });
+              }
+            });
+            siblingUploadFinished = true;
+
+            return HttpResponse.json({
+              partNumber,
+              etag: `etag-${partNumber}`,
+            });
+          }
+        ),
+        http.delete(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/storage/files/:fileId/multipart/:uploadId`,
+          () => {
+            remoteAbortSawSettledSibling = siblingUploadFinished;
+            releaseSiblingUpload?.();
+            return new HttpResponse(null, { status: 204 });
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(
+        client.uploadFile({ roomId: "room1", file })
+      ).rejects.toMatchObject({ status: 400 });
+      expect(siblingUploadAborted).toBe(true);
+      expect(remoteAbortSawSettledSibling).toBe(true);
+    });
+
     test("should abort multipart uploads when upload is aborted", async () => {
       const file = new File([new Uint8Array(5 * 1024 * 1024 + 1)], "file.bin");
       const abortController = new AbortController();

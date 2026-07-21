@@ -593,7 +593,8 @@ type UploadRoomFileOptions<TResult> = {
   uploadMultipartPart: (
     uploadId: string,
     partNumber: number,
-    part: Blob
+    part: Blob,
+    signal: AbortSignal
   ) => Promise<UploadedRoomFilePart>;
   completeMultipartUpload: (
     uploadId: string,
@@ -619,7 +620,7 @@ async function uploadRoomFile<TResult>({
     throw abortError;
   }
 
-  const handleRetryError = (err: Error) => {
+  const handleRetryError = (err: unknown) => {
     if (signal?.aborted) {
       throw abortError;
     }
@@ -639,6 +640,17 @@ async function uploadRoomFile<TResult>({
   let uploadId: string | undefined;
   const uploadedParts: UploadedRoomFilePart[] = [];
   const multipartUpload = await createMultipartUpload();
+  const partUploadController = new AbortController();
+  const partUploadSignal = partUploadController.signal;
+  const abortPartUploads = (reason?: unknown) => {
+    partUploadController.abort(reason);
+  };
+  const handleExternalAbort = () => abortPartUploads();
+  if (signal?.aborted) {
+    handleExternalAbort();
+  } else {
+    signal?.addEventListener("abort", handleExternalAbort, { once: true });
+  }
 
   try {
     uploadId = multipartUpload.uploadId;
@@ -650,21 +662,49 @@ async function uploadRoomFile<TResult>({
     const batches = chunk(splitFileIntoParts(file), 5);
 
     for (const parts of batches) {
-      const uploadedPartsPromises: Promise<UploadedRoomFilePart>[] = [];
+      const firstPartUploadFailure: { value?: { error: unknown } } = {};
+      const partUploads$: Promise<UploadedRoomFilePart>[] = [];
 
       for (const { part, partNumber } of parts) {
-        uploadedPartsPromises.push(
+        partUploads$.push(
           autoRetry(
             () =>
-              uploadMultipartPart(multipartUpload.uploadId, partNumber, part),
+              uploadMultipartPart(
+                multipartUpload.uploadId,
+                partNumber,
+                part,
+                partUploadSignal
+              ),
             ROOM_FILE_RETRY_ATTEMPTS,
             ROOM_FILE_RETRY_DELAYS,
-            handleRetryError
-          )
+            (error: unknown) => {
+              if (signal?.aborted) {
+                throw abortError;
+              }
+
+              return partUploadSignal.aborted || handleRetryError(error);
+            }
+          ).catch((error: unknown) => {
+            if (firstPartUploadFailure.value === undefined) {
+              firstPartUploadFailure.value = { error };
+              abortPartUploads(error);
+            }
+
+            throw error;
+          })
         );
       }
 
-      uploadedParts.push(...(await Promise.all(uploadedPartsPromises)));
+      const settledPartUploads = await Promise.allSettled(partUploads$);
+      if (firstPartUploadFailure.value !== undefined) {
+        throw firstPartUploadFailure.value.error;
+      }
+
+      for (const settledPartUpload of settledPartUploads) {
+        if (settledPartUpload.status === "fulfilled") {
+          uploadedParts.push(settledPartUpload.value);
+        }
+      }
     }
 
     if (signal?.aborted) {
@@ -692,6 +732,8 @@ async function uploadRoomFile<TResult>({
     }
 
     throw error;
+  } finally {
+    signal?.removeEventListener("abort", handleExternalAbort);
   }
 }
 
@@ -1255,7 +1297,7 @@ export function createApiClient<
           { signal: options.signal },
           { fileSize: attachment.size }
         ),
-      uploadMultipartPart: async (uploadId, partNumber, part) =>
+      uploadMultipartPart: async (uploadId, partNumber, part, signal) =>
         httpClient.putBlob<UploadedRoomFilePart>(
           url`/v2/c/rooms/${roomId}/attachments/${attachment.id}/multipart/${uploadId}/${String(partNumber)}`,
           await authManager.getAuthValue({
@@ -1265,7 +1307,7 @@ export function createApiClient<
           }),
           part,
           undefined,
-          { signal: options.signal }
+          { signal }
         ),
       completeMultipartUpload: async (uploadId, parts) =>
         httpClient.post<CommentAttachment>(
@@ -1329,7 +1371,7 @@ export function createApiClient<
           { signal: options.signal },
           { fileSize: file.size }
         ),
-      uploadMultipartPart: async (uploadId, partNumber, part) =>
+      uploadMultipartPart: async (uploadId, partNumber, part, signal) =>
         httpClient.putBlob<UploadedRoomFilePart>(
           url`/v2/c/rooms/${roomId}/storage/files/${fileId}/multipart/${uploadId}/${String(partNumber)}`,
           await authManager.getAuthValue({
@@ -1339,7 +1381,7 @@ export function createApiClient<
           }),
           part,
           undefined,
-          { signal: options.signal }
+          { signal }
         ),
       completeMultipartUpload: async (uploadId, parts) =>
         httpClient.post<LiveFileData>(
