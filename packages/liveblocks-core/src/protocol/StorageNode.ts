@@ -1,4 +1,3 @@
-import type { LiveFileData } from "../crdts/LiveFile";
 import type { Json, JsonObject } from "../lib/Json";
 
 export type IdTuple<T> = [id: string, value: T];
@@ -29,6 +28,13 @@ export type SerializedChild =
   | SerializedMap
   | SerializedRegister
   | SerializedFile;
+
+export type LiveFileData = {
+  readonly id: string;
+  readonly name: string;
+  readonly size: number;
+  readonly mimeType: string;
+};
 
 export type SerializedRootObject = {
   readonly type: CrdtType.OBJECT;

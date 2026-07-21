@@ -1,5 +1,5 @@
-import type { LiveFileData } from "../crdts/LiveFile";
 import type { Json, JsonObject } from "../lib/Json";
+import type { LiveFileData } from "../protocol/StorageNode";
 
 export type JsonTreeNode = {
   readonly type: "Json";

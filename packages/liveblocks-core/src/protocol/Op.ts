@@ -1,6 +1,6 @@
-import type { LiveFileData } from "../crdts/LiveFile";
 import type { Json, JsonObject } from "../lib/Json";
 import type { DistributiveOmit } from "../lib/utils";
+import type { LiveFileData } from "./StorageNode";
 
 export type OpCode = (typeof OpCode)[keyof typeof OpCode];
 export const OpCode = Object.freeze({
