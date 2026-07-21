@@ -40,6 +40,7 @@ import {
   getBuiltInSpriteSheet,
 } from "@pierre/trees";
 import type { FileTreeRowDecorationRenderer } from "@pierre/trees";
+import { cn } from "cnfast";
 import { DIFF } from "../diff";
 import type { DiffFile } from "../diff";
 
@@ -1080,8 +1081,8 @@ export function CodeReview() {
             ref={draftComposerRef}
             className="max-w-[620px] p-2 font-sans text-base"
           >
-            <div className="code-review-draft overflow-hidden rounded-lg border border-blue-500/30 bg-[var(--card)] shadow-[0_8px_24px_rgb(0_0_0_/_0.12)] dark:border-blue-400/30">
-              <div className="flex h-8 items-center gap-2 border-b border-[var(--color-border-opaque)] px-3 text-xs text-[var(--muted-foreground)]">
+            <div className="code-review-draft overflow-hidden rounded-lg border border-blue-500/30 bg-(--card) shadow-[0_8px_24px_rgb(0_0_0/0.12)] dark:border-blue-400/30">
+              <div className="flex h-8 items-center gap-2 border-b border-(--color-border-opaque) px-3 text-xs text-(--muted-foreground)">
                 <span className="truncate">
                   {getRangeLabel(metadata.range)}
                 </span>
@@ -1089,7 +1090,7 @@ export function CodeReview() {
                   type="button"
                   aria-label="Cancel comment"
                   title="Cancel comment"
-                  className="-mr-1 ml-auto inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded text-neutral-400 transition-colors hover:bg-[var(--muted)] hover:text-[var(--foreground)] focus-visible:outline-2 focus-visible:outline-blue-500"
+                  className="-mr-1 ml-auto inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded text-neutral-400 transition-colors hover:bg-(--muted) hover:text-(--foreground) focus-visible:outline-2 focus-visible:outline-blue-500"
                   onClick={(event) => {
                     event.stopPropagation();
                     setPendingComposer(null);
@@ -1116,7 +1117,7 @@ export function CodeReview() {
                   setPendingComposer(null);
                   setSelectedLines(null);
                 }}
-                className="rounded-none bg-[var(--card)]"
+                className="rounded-none bg-(--card)"
               />
             </div>
           </div>
@@ -1137,13 +1138,16 @@ export function CodeReview() {
             setSelectedLines({ id: item.id, range: metadata.range })
           }
         >
-          <div className="overflow-hidden rounded-lg border border-[var(--color-border-opaque)] bg-[var(--card)] dark:bg-neutral-800">
+          <div className="overflow-hidden rounded-lg border border-(--color-border-opaque) bg-(--card) dark:bg-neutral-800">
             {thread.resolved && (
               <button
                 type="button"
                 aria-expanded={isExpanded}
                 aria-controls={`thread-${thread.id}`}
-                className={`flex h-9 w-full cursor-pointer items-center gap-2 px-3 text-left text-xs text-neutral-500 transition-colors select-none hover:bg-[var(--muted)] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-blue-500 dark:text-neutral-400 ${isExpanded ? "border-b border-[var(--color-border-opaque)]" : ""}`}
+                className={cn(
+                  "flex h-9 w-full cursor-pointer items-center gap-2 px-3 text-left text-xs text-neutral-500 transition-colors select-none hover:bg-(--muted) focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-500 dark:text-neutral-400",
+                  isExpanded && "border-b border-(--color-border-opaque)"
+                )}
                 onClick={(e) => {
                   e.stopPropagation();
                   setExpandedResolvedThreadIds((prev) => {
@@ -1157,7 +1161,7 @@ export function CodeReview() {
                 <span className="inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
                   <IconCheck className="size-2.5" aria-hidden />
                 </span>
-                <span className="shrink-0 font-medium text-[var(--foreground)]">
+                <span className="shrink-0 font-medium text-(--foreground)">
                   Resolved
                 </span>
                 <span className="min-w-0 flex-1 truncate">
@@ -1168,7 +1172,10 @@ export function CodeReview() {
                 </span>
                 <IconChevronSm
                   aria-hidden
-                  className={`shrink-0 text-neutral-400 transition-transform duration-150 ${isExpanded ? "" : "-rotate-90"}`}
+                  className={cn(
+                    "shrink-0 text-neutral-400 transition-transform duration-150",
+                    !isExpanded && "-rotate-90"
+                  )}
                 />
               </button>
             )}
@@ -1180,7 +1187,7 @@ export function CodeReview() {
                 showSubscription={false}
                 showReactions={!thread.resolved}
                 maxVisibleComments={{ max: 3, show: "newest" }}
-                className="code-review-thread bg-[var(--card)]"
+                className="code-review-thread bg-(--card)"
               />
             )}
           </div>
@@ -1239,7 +1246,7 @@ export function CodeReview() {
             disabled={emptyDiff}
             aria-expanded={!item.collapsed}
             aria-label={`${item.collapsed ? "Expand" : "Collapse"} ${file.path}`}
-            className="flex h-full min-w-0 flex-1 cursor-pointer items-center gap-2 px-3 text-left select-none focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-blue-500 disabled:cursor-default"
+            className="flex h-full min-w-0 flex-1 cursor-pointer items-center gap-2 px-3 text-left select-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-500 disabled:cursor-default"
             onClick={() => toggleCollapsed(item)}
           >
             <svg
@@ -1247,7 +1254,11 @@ export function CodeReview() {
               width="16"
               height="16"
               aria-hidden
-              className={`shrink-0 text-neutral-400 transition-transform duration-150 dark:text-neutral-500 ${item.collapsed ? "-rotate-90" : ""} ${emptyDiff ? "opacity-40" : ""}`}
+              className={cn(
+                "shrink-0 text-neutral-400 transition-transform duration-150 dark:text-neutral-500",
+                item.collapsed && "-rotate-90",
+                emptyDiff && "opacity-40"
+              )}
             >
               <use href="#file-tree-icon-chevron" />
             </svg>
@@ -1306,7 +1317,7 @@ export function CodeReview() {
   return (
     <div
       ref={reviewShellRef}
-      className="code-review-shell relative grid h-dvh min-h-0 grid-cols-1 grid-rows-[48px_minmax(0,1fr)] overflow-hidden bg-[var(--background)] text-[var(--foreground)] [grid-template-areas:'header''viewer'] md:grid-cols-[300px_minmax(0,1fr)] md:[grid-template-areas:'header_header''tree_viewer']"
+      className="code-review-shell relative grid h-dvh min-h-0 grid-cols-1 grid-rows-[48px_minmax(0,1fr)] overflow-hidden bg-(--background) text-(--foreground) [grid-template-areas:'header''viewer'] md:grid-cols-[300px_minmax(0,1fr)] md:[grid-template-areas:'header_header''tree_viewer']"
     >
       <Header
         isSidebarOpen={isSidebarOpen}
@@ -1316,7 +1327,10 @@ export function CodeReview() {
 
       <div
         aria-hidden
-        className={`absolute inset-x-0 top-12 bottom-0 z-20 bg-black/25 backdrop-blur-[1px] transition-opacity md:hidden ${isSidebarOpen ? "opacity-100" : "pointer-events-none opacity-0"}`}
+        className={cn(
+          "absolute inset-x-0 top-12 bottom-0 z-20 bg-black/25 backdrop-blur-[1px] transition-opacity md:hidden",
+          isSidebarOpen ? "opacity-100" : "pointer-events-none opacity-0"
+        )}
         onClick={closeSidebar}
       />
 
@@ -1327,10 +1341,15 @@ export function CodeReview() {
         aria-modal={!isDesktopSidebar ? true : undefined}
         inert={!isDesktopSidebar && !isSidebarOpen}
         role={!isDesktopSidebar ? "dialog" : undefined}
-        className={`absolute inset-x-0 bottom-0 z-30 flex h-[min(72dvh,640px)] min-h-0 flex-col overflow-hidden rounded-t-xl border-t border-[var(--color-border-opaque)] bg-neutral-50 shadow-[0_-16px_40px_rgb(0_0_0_/_0.16)] transition-transform duration-200 [grid-area:tree] md:static md:h-auto md:translate-y-0 md:rounded-none md:border-t-0 md:border-r md:shadow-none dark:bg-neutral-900 ${isSidebarOpen ? "translate-y-0" : "pointer-events-none translate-y-full md:pointer-events-auto"}`}
+        className={cn(
+          "absolute inset-x-0 bottom-0 z-30 flex h-[min(72dvh,640px)] min-h-0 flex-col overflow-hidden rounded-t-xl border-t border-(--color-border-opaque) bg-neutral-50 shadow-[0_-16px_40px_rgb(0_0_0/0.16)] transition-transform duration-200 [grid-area:tree] md:static md:h-auto md:translate-y-0 md:rounded-none md:border-t-0 md:border-r md:shadow-none dark:bg-neutral-900",
+          isSidebarOpen
+            ? "translate-y-0"
+            : "pointer-events-none translate-y-full md:pointer-events-auto"
+        )}
         onKeyDown={handleSidebarKeyDown}
       >
-        <div className="flex h-[41px] shrink-0 items-stretch border-b border-[var(--color-border-opaque)] px-2">
+        <div className="flex h-[41px] shrink-0 items-stretch border-b border-(--color-border-opaque) px-2">
           <div
             className="mr-auto flex min-w-0 items-stretch gap-1 bg-transparent"
             role="group"
@@ -1369,7 +1388,7 @@ export function CodeReview() {
               aria-controls="file-filter-region"
               aria-expanded={isFileSearchOpen}
               title={isFileSearchOpen ? "Close search" : "Search files"}
-              className="my-auto inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-[var(--muted-foreground)] transition-colors hover:bg-[var(--muted)] hover:text-[var(--foreground)] focus-visible:outline-2 focus-visible:outline-blue-500"
+              className="my-auto inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-(--muted-foreground) transition-colors hover:bg-(--muted) hover:text-(--foreground) focus-visible:outline-2 focus-visible:outline-blue-500"
               onClick={() => {
                 setIsFileSearchOpen((isOpen) => {
                   if (isOpen) setFileSearchQuery("");
@@ -1384,7 +1403,7 @@ export function CodeReview() {
             ref={sidebarCloseButtonRef}
             type="button"
             aria-label="Close review navigation"
-            className="my-auto ml-1 inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-[var(--muted-foreground)] transition-colors hover:bg-[var(--muted)] hover:text-[var(--foreground)] focus-visible:outline-2 focus-visible:outline-blue-500 md:hidden"
+            className="my-auto ml-1 inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-(--muted-foreground) transition-colors hover:bg-(--muted) hover:text-(--foreground) focus-visible:outline-2 focus-visible:outline-blue-500 md:hidden"
             onClick={closeSidebar}
           >
             <IconX className="size-3.5" />
@@ -1396,9 +1415,9 @@ export function CodeReview() {
             {isFileSearchOpen && (
               <div
                 id="file-filter-region"
-                className="flex h-10 shrink-0 items-center gap-1.5 border-b border-[var(--color-border-opaque)] px-2"
+                className="flex h-10 shrink-0 items-center gap-1.5 border-b border-(--color-border-opaque) px-2"
               >
-                <IconSearch className="size-3.5 shrink-0 text-[var(--muted-foreground)]" />
+                <IconSearch className="size-3.5 shrink-0 text-(--muted-foreground)" />
                 <label htmlFor="file-filter" className="sr-only">
                   Filter changed files
                 </label>
@@ -1409,13 +1428,13 @@ export function CodeReview() {
                   value={fileSearchQuery}
                   onChange={(event) => setFileSearchQuery(event.target.value)}
                   placeholder="Filter changed files"
-                  className="h-7 min-w-0 flex-1 bg-transparent text-xs text-[var(--foreground)] outline-none placeholder:text-[var(--muted-foreground)]"
+                  className="h-7 min-w-0 flex-1 bg-transparent text-xs text-(--foreground) outline-none placeholder:text-(--muted-foreground)"
                 />
                 {fileSearchQuery && (
                   <button
                     type="button"
                     aria-label="Clear file search"
-                    className="inline-flex size-6 cursor-pointer items-center justify-center rounded text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)] focus-visible:outline-2 focus-visible:outline-blue-500"
+                    className="inline-flex size-6 cursor-pointer items-center justify-center rounded text-(--muted-foreground) hover:bg-(--muted) hover:text-(--foreground) focus-visible:outline-2 focus-visible:outline-blue-500"
                     onClick={() => setFileSearchQuery("")}
                   >
                     <IconX className="size-3" />
@@ -1436,15 +1455,15 @@ export function CodeReview() {
               </div>
             ) : (
               <div
-                className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 px-6 text-center text-sm text-[var(--muted-foreground)]"
+                className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 px-6 text-center text-sm text-(--muted-foreground)"
                 role="status"
               >
-                <p className="break-words">
+                <p className="wrap-break-word">
                   No files match <strong>“{fileSearchQuery}”</strong>.
                 </p>
                 <button
                   type="button"
-                  className="rounded-md border border-[var(--color-border-opaque)] bg-[var(--card)] px-2.5 py-1.5 text-xs font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--muted)] focus-visible:outline-2 focus-visible:outline-blue-500"
+                  className="rounded-md border border-(--color-border-opaque) bg-(--card) px-2.5 py-1.5 text-xs font-medium text-(--foreground) transition-colors hover:bg-(--muted) focus-visible:outline-2 focus-visible:outline-blue-500"
                   onClick={() => setFileSearchQuery("")}
                 >
                   Clear filter
@@ -1463,7 +1482,7 @@ export function CodeReview() {
 
       <main className="flex min-h-0 min-w-0 flex-col overflow-hidden [grid-area:viewer]">
         <CodeView
-          className="relative h-full min-h-0 min-w-0 flex-1 overflow-x-clip overflow-y-auto overscroll-contain border-b border-[var(--color-border)] [overflow-anchor:none] md:border-b-0 [&_diffs-container]:overflow-clip [&_diffs-container]:shadow-[0_-1px_0_var(--color-border-opaque),0_1px_0_var(--color-border-opaque)] [&_diffs-container]:[contain:layout_paint_style]"
+          className="relative h-full min-h-0 min-w-0 flex-1 overflow-x-clip overflow-y-auto overscroll-contain border-b border-(--color-border) [overflow-anchor:none] md:border-b-0 [&_diffs-container]:overflow-clip [&_diffs-container]:shadow-[0_-1px_0_var(--color-border-opaque),0_1px_0_var(--color-border-opaque)] [&_diffs-container]:contain-[layout_paint_style]"
           containerRef={codeViewContainerRef}
           ref={codeViewRef}
           items={items}
@@ -1491,16 +1510,16 @@ function Header({
   sidebarTriggerRef: React.RefObject<HTMLButtonElement>;
 }) {
   return (
-    <header className="z-40 flex h-12 min-w-0 items-center gap-3 border-b border-[var(--color-border-opaque)] bg-neutral-50 px-3 [contain:layout_paint] [grid-area:header] dark:bg-neutral-900">
+    <header className="z-40 flex h-12 min-w-0 items-center gap-3 border-b border-(--color-border-opaque) bg-neutral-50 px-3 contain-[layout_paint] [grid-area:header] dark:bg-neutral-900">
       <div className="flex min-w-0 flex-1 items-center gap-2.5">
         <span className="shrink-0 text-sm font-semibold tracking-[-0.02em]">
           Code review
         </span>
-        <span className="hidden h-4 w-px shrink-0 bg-[var(--color-border-opaque)] sm:block" />
+        <span className="hidden h-4 w-px shrink-0 bg-(--color-border-opaque) sm:block" />
         <h1 className="min-w-0 truncate text-sm font-medium" title={DIFF.title}>
           {DIFF.title}
         </h1>
-        <span className="hidden min-w-0 truncate text-xs text-[var(--muted-foreground)] lg:inline">
+        <span className="hidden min-w-0 truncate text-xs text-(--muted-foreground) lg:inline">
           <code>{DIFF.from}</code>
           <span className="px-1.5">→</span>
           <code>{DIFF.to}</code>
@@ -1515,7 +1534,7 @@ function Header({
           aria-controls="review-sidebar"
           aria-expanded={isSidebarOpen}
           title="Review navigation"
-          className="inline-flex size-8 cursor-pointer items-center justify-center rounded-md text-[var(--muted-foreground)] transition-colors hover:bg-[var(--muted)] hover:text-[var(--foreground)] focus-visible:outline-2 focus-visible:outline-blue-500 md:hidden"
+          className="inline-flex size-8 cursor-pointer items-center justify-center rounded-md text-(--muted-foreground) transition-colors hover:bg-(--muted) hover:text-(--foreground) focus-visible:outline-2 focus-visible:outline-blue-500 md:hidden"
           onClick={onOpenSidebar}
         >
           <IconSidebar className="size-4" />
@@ -1567,19 +1586,19 @@ function CommentsSidebar({
           scrollToThread={scrollToThread}
         />
       ) : resolvedThreads.length === 0 ? (
-        <p className="border-b border-[var(--color-border-opaque)] px-3 py-4 text-xs text-[var(--muted-foreground)]">
+        <p className="border-b border-(--color-border-opaque) px-3 py-4 text-xs text-(--muted-foreground)">
           No open conversations.
         </p>
       ) : null}
 
       {resolvedThreads.length > 0 && (
-        <details className="group border-b border-[var(--color-border-opaque)]">
-          <summary className="flex h-9 cursor-pointer list-none items-center gap-2 px-3 text-xs font-medium text-[var(--muted-foreground)] transition-colors select-none hover:bg-[var(--muted)] hover:text-[var(--foreground)] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-blue-500 [&::-webkit-details-marker]:hidden">
+        <details className="group border-b border-(--color-border-opaque)">
+          <summary className="flex h-9 cursor-pointer list-none items-center gap-2 px-3 text-xs font-medium text-(--muted-foreground) transition-colors select-none hover:bg-(--muted) hover:text-(--foreground) focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-500 [&::-webkit-details-marker]:hidden">
             <span className="inline-flex size-4 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
               <IconCheck className="size-2.5" />
             </span>
             <span>Resolved</span>
-            <span className="rounded-full bg-[var(--muted)] px-1.5 py-0.5 text-[10px] text-[var(--muted-foreground)] tabular-nums">
+            <span className="rounded-full bg-(--muted) px-1.5 py-0.5 text-[10px] text-(--muted-foreground) tabular-nums">
               {resolvedThreads.length}
             </span>
             <IconChevronSm className="ml-auto size-3 text-neutral-400 transition-transform group-open:rotate-180" />
@@ -1615,12 +1634,12 @@ function SidebarThreadGroups({
         return (
           <section
             key={file.path}
-            className="border-b border-[var(--color-border-opaque)] last:border-b-0"
+            className="border-[var(--color -border-opaque)] border-b last:border-b-0"
           >
             <button
               type="button"
               title={file.path}
-              className="block w-full truncate px-3 pt-2.5 pb-1.5 text-left text-[11px] font-medium text-[var(--muted-foreground)] transition hover:text-[var(--foreground)] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-blue-500"
+              className="block w-full truncate px-3 pt-2.5 pb-1.5 text-left text-[11px] font-medium text-(--muted-foreground) transition hover:text-(--foreground) focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-500"
               onClick={() => scrollToFile(file.path)}
             >
               {file.path}
@@ -1676,7 +1695,7 @@ function SidebarThreadRowContent({
   return (
     <button
       type="button"
-      className="grid w-full cursor-pointer grid-cols-[20px_minmax(0,1fr)] gap-2 px-3 py-2 text-left transition-colors hover:bg-[var(--muted)] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-blue-500"
+      className="grid w-full cursor-pointer grid-cols-[20px_minmax(0,1fr)] gap-2 px-3 py-2 text-left transition-colors hover:bg-(--muted) focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-500"
       onClick={onClick}
     >
       <Avatar
@@ -1687,21 +1706,26 @@ function SidebarThreadRowContent({
       />
       <span className="min-w-0">
         <span className="flex min-w-0 items-baseline gap-1.5 text-[11px]">
-          <span className="min-w-0 truncate font-medium text-[var(--foreground)]">
+          <span className="min-w-0 truncate font-medium text-(--foreground)">
             {name}
           </span>
           <span
-            className={`shrink-0 ${anchoredThread.side === "additions" ? "text-emerald-700 dark:text-emerald-400" : "text-rose-700 dark:text-rose-400"}`}
+            className={cn(
+              "shrink-0",
+              anchoredThread.side === "additions"
+                ? "text-emerald-700 dark:text-emerald-400"
+                : "text-rose-700 dark:text-rose-400"
+            )}
           >
             {getRangeLabel(anchoredThread.range)}
           </span>
           {commentCount > 1 && (
-            <span className="ml-auto shrink-0 text-[var(--muted-foreground)] tabular-nums">
+            <span className="ml-auto shrink-0 text-(--muted-foreground) tabular-nums">
               +{commentCount - 1}
             </span>
           )}
         </span>
-        <span className="mt-0.5 block truncate text-xs text-[var(--muted-foreground)]">
+        <span className="mt-0.5 block truncate text-xs text-(--muted-foreground)">
           {getCommentPreview(anchoredThread.thread)}
         </span>
       </span>

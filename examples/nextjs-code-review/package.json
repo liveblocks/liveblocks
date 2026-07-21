@@ -18,6 +18,7 @@
     "@pierre/icons": "^0.7.1",
     "@pierre/trees": "1.0.0-beta.5",
     "@tailwindcss/postcss": "^4.3.0",
+    "cnfast": "^0.0.8",
     "next": "^16.1.6",
     "postcss": "^8.5.14",
     "react": "^18.3.1",
