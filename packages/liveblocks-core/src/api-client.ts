@@ -565,9 +565,14 @@ export interface LiveblocksHttpApi<
 const ROOM_FILE_PART_SIZE = 5 * 1024 * 1024; // 5 MB
 const ROOM_FILE_RETRY_ATTEMPTS = 10;
 const FILE_URL_EXPIRY_BUFFER = 30_000;
+const FILE_URL_ERROR_CACHE_TTL = 1_000;
+const FILE_URL_ERROR_MAX_ATTEMPTS = 3;
+const FILE_URL_ERROR_ATTEMPTS_EXPIRY = 30_000;
 const ROOM_FILE_RETRY_DELAYS = [
   2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000,
 ];
+
+class FileUrlUnavailableError extends Error {}
 
 type RoomFilePart = {
   partNumber: number;
@@ -1454,11 +1459,52 @@ export function createApiClient<
     string,
     BatchStore<FileUrlData, string>
   >((roomId) => {
+    const pendingFileUrlAttempts = new Map<
+      string,
+      {
+        count: number;
+        cleanupTimeoutId: ReturnType<typeof setTimeout>;
+      }
+    >();
+
+    const clearPendingFileUrlAttempts = (fileId: string): void => {
+      const attempts = pendingFileUrlAttempts.get(fileId);
+      if (attempts !== undefined) {
+        clearTimeout(attempts.cleanupTimeoutId);
+        pendingFileUrlAttempts.delete(fileId);
+      }
+    };
+
+    const shouldRetryPendingFileUrl = (fileId: string): boolean => {
+      const previousAttempts = pendingFileUrlAttempts.get(fileId);
+      if (previousAttempts !== undefined) {
+        clearTimeout(previousAttempts.cleanupTimeoutId);
+      }
+
+      const count = (previousAttempts?.count ?? 0) + 1;
+      if (count >= FILE_URL_ERROR_MAX_ATTEMPTS) {
+        pendingFileUrlAttempts.delete(fileId);
+        return false;
+      }
+
+      pendingFileUrlAttempts.set(fileId, {
+        count,
+        cleanupTimeoutId: setTimeout(
+          () => pendingFileUrlAttempts.delete(fileId),
+          FILE_URL_ERROR_ATTEMPTS_EXPIRY
+        ),
+      });
+      return true;
+    };
+
     const batch = new Batch<FileUrlData, string>(
       async (batchedFileIds) => {
         const fileIds = batchedFileIds.flat();
         const { urls, expiresAt } = await httpClient.post<{
-          urls: (string | null)[];
+          // - `string`: this file ID is referenced in Storage and that is a presigned URL for it
+          // - `false`: this file ID isn't referenced in Storage yet
+          // - `null`: this file ID isn't valid
+          urls: (string | false | null)[];
           expiresAt: string;
         }>(
           url`/v2/c/rooms/${roomId}/storage/files/presigned-urls`,
@@ -1471,16 +1517,30 @@ export function createApiClient<
         );
 
         const expiresAtTimestamp = Date.parse(expiresAt);
-        return urls.map((url) =>
-          url !== null
+        return urls.map((url, index) => {
+          const fileId = fileIds[index];
+          if (url === false) {
+            return shouldRetryPendingFileUrl(fileId)
+              ? new FileUrlUnavailableError(
+                  "There was an error while getting this file's URL"
+                )
+              : new Error("There was an error while getting this file's URL");
+          }
+
+          clearPendingFileUrlAttempts(fileId);
+          return url !== null
             ? { url, expiresAt: expiresAtTimestamp }
-            : new Error("There was an error while getting this file's URL")
-        );
+            : new Error("There was an error while getting this file's URL");
+        });
       },
       { delay: 50 }
     );
     return createBatchStore(batch, {
       getCacheExpiry: ({ expiresAt }) => expiresAt - FILE_URL_EXPIRY_BUFFER,
+      getErrorCacheExpiry: (error) =>
+        error instanceof FileUrlUnavailableError
+          ? Date.now() + FILE_URL_ERROR_CACHE_TTL
+          : undefined,
     });
   });
 
