@@ -1070,7 +1070,7 @@ export class Liveblocks {
       throw await LiveblocksError.from(res);
     }
 
-    return await res.json();
+    return (await res.json()) as TResult;
   }
 
   async #patch(
