@@ -9,8 +9,9 @@ import {
   useSyncExternalStore,
 } from "react";
 import type { CSSProperties } from "react";
-import { useThreads, useCreateThread } from "@liveblocks/react/suspense";
-import { AvatarStack, Composer, Thread } from "@liveblocks/react-ui";
+import { useUser } from "@liveblocks/react";
+import { useThreads } from "@liveblocks/react/suspense";
+import { Avatar, AvatarStack, Composer, Thread } from "@liveblocks/react-ui";
 import {
   parsePatchFiles,
   type AnnotationSide,
@@ -24,11 +25,18 @@ import {
   type SelectedLineRange,
 } from "@pierre/diffs";
 import { CodeView, type CodeViewHandle } from "@pierre/diffs/react";
-import { IconConvoFill, IconFileTree, IconPlus } from "@pierre/icons";
+import {
+  IconCheck,
+  IconChevronSm,
+  IconConvoFill,
+  IconFileTree,
+  IconSearch,
+  IconSidebar,
+  IconX,
+} from "@pierre/icons";
 import { FileTree, useFileTree } from "@pierre/trees/react";
 import {
   createFileTreeIconResolver,
-  getBuiltInFileIconColor,
   getBuiltInSpriteSheet,
 } from "@pierre/trees";
 import type { FileTreeRowDecorationRenderer } from "@pierre/trees";
@@ -66,7 +74,7 @@ interface PendingComposer {
   range: SelectedLineRange;
 }
 
-interface ResolvedThread {
+interface AnchoredThread {
   id: string;
   filePath: string;
   lineNumber: number;
@@ -88,9 +96,16 @@ interface ResolvedAnnotation {
   side: AnnotationSide;
 }
 
+interface PendingLineScroll {
+  itemId: string;
+  lineNumber: number;
+  side: AnnotationSide;
+}
+
 type ThreadData = ReturnType<typeof useThreads>["threads"][number];
 type ThreadMetadata = ThreadData["metadata"];
 type CustomProperties = Record<`--${string}`, string | number>;
+type SparseLines = Array<string | undefined>;
 type CodeViewInstance = NonNullable<
   ReturnType<CodeViewHandle<AnnotationMetadata>["getInstance"]>
 >;
@@ -105,6 +120,38 @@ function useMediaQuery(query: string): boolean {
     () => window.matchMedia(query).matches,
     () => false
   );
+}
+
+const FOCUSABLE_SELECTOR =
+  'button:not([disabled]), input:not([disabled]), select:not([disabled]), summary, textarea:not([disabled]), [href], [contenteditable="true"], [tabindex]:not([tabindex="-1"])';
+
+function getFocusableElements(root: HTMLElement | ShadowRoot): HTMLElement[] {
+  const focusableElements: HTMLElement[] = [];
+
+  for (const element of root.querySelectorAll<HTMLElement>("*")) {
+    if (
+      element.matches(FOCUSABLE_SELECTOR) &&
+      element.getClientRects().length > 0
+    ) {
+      focusableElements.push(element);
+    }
+    if (element.shadowRoot) {
+      focusableElements.push(...getFocusableElements(element.shadowRoot));
+    }
+  }
+
+  return focusableElements;
+}
+
+function getDeepActiveElement(): Element | null {
+  let activeElement = document.activeElement;
+  while (
+    activeElement instanceof HTMLElement &&
+    activeElement.shadowRoot?.activeElement
+  ) {
+    activeElement = activeElement.shadowRoot.activeElement;
+  }
+  return activeElement;
 }
 
 const CONTEXT_LINES = 3;
@@ -139,6 +186,9 @@ function treeSort(a: DiffFile, b: DiffFile): number {
 
 const SORTED_FILES = [...DIFF.changes].sort(treeSort);
 const FILE_PATHS = SORTED_FILES.map((f) => f.path);
+const FILE_BY_ITEM_ID = new Map(
+  SORTED_FILES.map((file) => [diffItemId(file.path), file])
+);
 const GIT_STATUS = SORTED_FILES.map((f) => ({
   path: f.path,
   status: f.status,
@@ -156,7 +206,7 @@ const DIFF_STATS = new Map(
   })
 );
 const LAYOUT_PADDING = 0;
-const CODE_VIEW_FILE_TREE_ITEM_HEIGHT = 30;
+const CODE_VIEW_FILE_TREE_ITEM_HEIGHT = 26;
 
 const CODE_VIEW_CUSTOM_CSS = `
 [data-diffs-header] {
@@ -181,9 +231,12 @@ const CODE_VIEW_CUSTOM_CSS = `
   transition: height 250ms ease;
   overflow: hidden;
 }
+`;
 
-[data-gutter-utility-slot] {
-  pointer-events: none;
+const FILE_TREE_CUSTOM_CSS = `
+[data-file-tree-virtualized-scroll="true"] {
+  box-sizing: border-box;
+  padding-block: 8px;
 }
 `;
 
@@ -215,13 +268,10 @@ function getCachedDiff(file: {
   // parsePatchFiles requires a full git diff header; patches from GitHub's API
   // only include hunk content starting with @@, so we prepend the header.
   const fullPatch = `diff --git a/${file.path} b/${file.path}\n--- a/${file.path}\n+++ b/${file.path}\n${file.patch}`;
-  const parsed = parsePatchFiles(fullPatch, cacheKey);
-  const diff =
-    parsed[0]?.files[0] ??
-    parsePatchFiles(
-      `diff --git a/${file.path} b/${file.path}\n--- a/${file.path}\n+++ b/${file.path}\n`,
-      cacheKey
-    )[0]!.files[0]!;
+  const diff = parsePatchFiles(fullPatch, cacheKey)[0]?.files[0];
+  if (!diff) {
+    throw new Error(`Could not parse the diff for ${file.path}`);
+  }
   diffCache.set(cacheKey, diff);
   return diff;
 }
@@ -235,8 +285,8 @@ function getCachedDiff(file: {
 function linesFromPatch(
   patch: string,
   side: "additions" | "deletions"
-): string[] {
-  const lines: string[] = [];
+): SparseLines {
+  const lines: SparseLines = [];
   let lineNum = 0;
 
   for (const raw of patch.split("\n")) {
@@ -269,7 +319,7 @@ function linesFromPatch(
 }
 
 function extractLineContext(
-  lines: string[],
+  lines: SparseLines,
   lineNumber: number
 ): {
   lineContent: string;
@@ -281,18 +331,18 @@ function extractLineContext(
     lineContent: lines[index] ?? "",
     contextBefore: lines
       .slice(Math.max(0, index - CONTEXT_LINES), index)
-      .filter(Boolean)
+      .filter((line): line is string => line !== undefined)
       .join("\n"),
     contextAfter: lines
       .slice(index + 1, Math.min(lines.length, index + 1 + CONTEXT_LINES))
-      .filter(Boolean)
+      .filter((line): line is string => line !== undefined)
       .join("\n"),
   };
 }
 
 function findBestAnnotationMatch(
   anchor: AnnotationAnchor,
-  lines: string[]
+  lines: SparseLines
 ): number | null {
   const contextBefore = anchor.contextBefore
     ? anchor.contextBefore.split("\n")
@@ -331,19 +381,21 @@ function findBestAnnotationMatch(
 
 function resolveAnnotation(
   anchor: AnnotationAnchor,
-  patch: string
+  patch: string,
+  preferredSide?: AnnotationSide
 ): ResolvedAnnotation | null {
-  const newLine = findBestAnnotationMatch(
-    anchor,
-    linesFromPatch(patch, "additions")
-  );
-  if (newLine !== null) return { lineNumber: newLine, side: "additions" };
+  const sides: AnnotationSide[] =
+    preferredSide === "deletions"
+      ? ["deletions", "additions"]
+      : ["additions", "deletions"];
 
-  const oldLine = findBestAnnotationMatch(
-    anchor,
-    linesFromPatch(patch, "deletions")
-  );
-  if (oldLine !== null) return { lineNumber: oldLine, side: "deletions" };
+  for (const side of sides) {
+    const lineNumber = findBestAnnotationMatch(
+      anchor,
+      linesFromPatch(patch, side)
+    );
+    if (lineNumber !== null) return { lineNumber, side };
+  }
 
   return null;
 }
@@ -357,12 +409,79 @@ function getRangeEndSide(range: SelectedLineRange): AnnotationSide | undefined {
 }
 
 function getRangeLabel(range: SelectedLineRange): string {
-  const startSide = range.side === "additions" ? "+" : "-";
-  const endSide = getRangeEndSide(range) === "additions" ? "+" : "-";
-  if (range.start === range.end && range.side === getRangeEndSide(range)) {
-    return `Line ${startSide}${range.start}`;
+  const endSide = getRangeEndSide(range);
+  if (range.side === endSide && range.side) {
+    const change = range.side === "additions" ? "Added" : "Deleted";
+    return range.start === range.end
+      ? `${change} line ${range.start}`
+      : `${change} lines ${range.start}–${range.end}`;
   }
-  return `Lines ${startSide}${range.start}-${endSide}${range.end}`;
+
+  const startPrefix = range.side === "additions" ? "+" : "-";
+  const endPrefix = endSide === "additions" ? "+" : "-";
+  return `Lines ${startPrefix}${range.start} to ${endPrefix}${range.end}`;
+}
+
+function normalizeSelectedLineRange(
+  range: SelectedLineRange,
+  getLinePosition: (
+    lineNumber: number,
+    side?: AnnotationSide
+  ) => { top: number } | undefined
+): SelectedLineRange {
+  const startSide = range.side;
+  const endSide = getRangeEndSide(range);
+  const startPosition = getLinePosition(range.start, startSide);
+  const endPosition = getLinePosition(range.end, endSide);
+
+  if (!startPosition || !endPosition) return range;
+
+  const startComesAfterEnd =
+    startPosition.top > endPosition.top ||
+    (startPosition.top === endPosition.top &&
+      startSide === "additions" &&
+      endSide === "deletions");
+  if (!startComesAfterEnd) return range;
+
+  const normalizedRange: SelectedLineRange = {
+    start: range.end,
+    end: range.start,
+  };
+  if (endSide) normalizedRange.side = endSide;
+  if (startSide && startSide !== endSide) {
+    normalizedRange.endSide = startSide;
+  }
+  return normalizedRange;
+}
+
+function getVisibleCommentCount(thread: ThreadData): number {
+  return thread.comments.reduce(
+    (count, comment) => count + (comment.deletedAt ? 0 : 1),
+    0
+  );
+}
+
+function getFirstVisibleComment(thread: ThreadData) {
+  return thread.comments.find((comment) => !comment.deletedAt);
+}
+
+function getCommentPreview(thread: ThreadData): string {
+  const body = getFirstVisibleComment(thread)?.body;
+  if (!body) return "Attachment";
+
+  const preview = body.content
+    .flatMap((paragraph) =>
+      paragraph.children.map((element) => {
+        if (element.type === "link") return element.text ?? element.url;
+        if (element.type === "mention") return `@${element.id}`;
+        return element.text;
+      })
+    )
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return preview || "Comment";
 }
 
 function getThreadRange(
@@ -380,12 +499,16 @@ function getThreadRange(
     ? metadata.rangeEndSide
     : side;
 
-  return {
+  const range: SelectedLineRange = {
     start: Math.max(1, storedStart + offset),
     end: Math.max(1, storedEnd + offset),
     side,
     endSide,
   };
+  if (range.side === range.endSide && range.start > range.end) {
+    return { ...range, start: range.end, end: range.start };
+  }
+  return range;
 }
 
 function getInitialVisibleRowCount(): number {
@@ -400,38 +523,32 @@ function getInitialVisibleRowCount(): number {
 
 export function CodeReview() {
   const { threads } = useThreads();
-  const createThread = useCreateThread();
   const [pendingComposer, setPendingComposer] =
     useState<PendingComposer | null>(null);
+  const [pendingLineScroll, setPendingLineScroll] =
+    useState<PendingLineScroll | null>(null);
   const [selectedLines, setSelectedLines] =
     useState<CodeViewLineSelection | null>(null);
   const [collapsedItems, setCollapsedItems] = useState(() => new Set<string>());
   const [expandedResolvedThreadIds, setExpandedResolvedThreadIds] = useState(
     () => new Set<string>()
   );
-  const previouslyResolvedIdsRef = useRef(new Set<string>());
-  useEffect(() => {
-    const prevResolved = previouslyResolvedIdsRef.current;
-    const nowResolved = new Set(
-      threads.filter((t) => t.resolved).map((t) => t.id)
-    );
-    previouslyResolvedIdsRef.current = nowResolved;
-    const newlyResolved = threads
-      .filter((t) => t.resolved && !prevResolved.has(t.id))
-      .map((t) => t.id);
-    if (newlyResolved.length === 0) return;
-    setExpandedResolvedThreadIds((prev) => {
-      const next = new Set(prev);
-      for (const id of newlyResolved) next.delete(id);
-      return next;
-    });
-  }, [threads]);
   const [fileSearchQuery, setFileSearchQuery] = useState("");
+  const [isFileSearchOpen, setIsFileSearchOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeSidebarTab, setActiveSidebarTab] = useState<SidebarTab>("files");
-  const isWideLayout = useMediaQuery("(min-width: 768px)");
+  const useSplitDiff = useMediaQuery("(min-width: 1200px)");
+  const isDesktopSidebar = useMediaQuery("(min-width: 768px)");
   const [initialVisibleRowCount] = useState(getInitialVisibleRowCount);
 
+  const reviewShellRef = useRef<HTMLDivElement>(null);
   const codeViewRef = useRef<CodeViewHandle<AnnotationMetadata>>(null);
+  const codeViewContainerRef = useRef<HTMLDivElement>(null);
+  const draftComposerRef = useRef<HTMLDivElement>(null);
+  const fileSearchInputRef = useRef<HTMLInputElement>(null);
+  const focusPendingComposerRef = useRef(false);
+  const sidebarCloseButtonRef = useRef<HTMLButtonElement>(null);
+  const sidebarTriggerRef = useRef<HTMLButtonElement>(null);
   const nextComposerKeyRef = useRef(0);
   const programmaticScrollRef = useRef(false);
   const programmaticScrollTimerRef = useRef<ReturnType<
@@ -442,12 +559,11 @@ export function CodeReview() {
     () => SORTED_FILES.map((file) => getCachedDiff(file)),
     []
   );
-
   const filteredFilePaths = useMemo(
     () =>
       fileSearchQuery
-        ? FILE_PATHS.filter((p) =>
-            p.toLowerCase().includes(fileSearchQuery.toLowerCase())
+        ? FILE_PATHS.filter((path) =>
+            path.toLowerCase().includes(fileSearchQuery.toLowerCase())
           )
         : FILE_PATHS,
     [fileSearchQuery]
@@ -460,6 +576,61 @@ export function CodeReview() {
     container.style.display = "none";
     container.innerHTML = FILE_TREE_SPRITE_SHEET;
     document.body.insertAdjacentElement("afterbegin", container);
+  }, []);
+
+  useEffect(() => {
+    if (activeSidebarTab !== "files") return;
+
+    const reviewShell = reviewShellRef.current;
+    const fileTree = reviewShell?.querySelector<HTMLElement>(
+      "file-tree-container"
+    );
+    if (!reviewShell || !fileTree) return;
+
+    // Trees defines its built-in palette inside a shadow root, so expose the
+    // resolved file icon colors to the sibling CodeView sticky headers.
+    const fileTreeStyles = getComputedStyle(fileTree);
+    for (let index = 0; index < fileTreeStyles.length; index++) {
+      const propertyName = fileTreeStyles.item(index);
+      if (!propertyName.startsWith("--trees-file-icon-color")) continue;
+      reviewShell.style.setProperty(
+        propertyName,
+        fileTreeStyles.getPropertyValue(propertyName)
+      );
+    }
+  }, [activeSidebarTab]);
+
+  useEffect(() => {
+    const container = codeViewContainerRef.current;
+    if (!container) return;
+
+    const observedRoots = new WeakSet<Node>();
+    const observers: MutationObserver[] = [];
+
+    function scanRoot(root: HTMLElement | ShadowRoot): void {
+      for (const button of root.querySelectorAll<HTMLButtonElement>(
+        "button[data-utility-button]"
+      )) {
+        button.setAttribute("aria-label", "Add comment");
+        button.setAttribute("title", "Add comment");
+      }
+
+      for (const element of root.querySelectorAll<HTMLElement>("*")) {
+        if (element.shadowRoot) observeRoot(element.shadowRoot);
+      }
+    }
+
+    function observeRoot(root: HTMLElement | ShadowRoot): void {
+      if (observedRoots.has(root)) return;
+      observedRoots.add(root);
+      const observer = new MutationObserver(() => scanRoot(root));
+      observer.observe(root, { childList: true, subtree: true });
+      observers.push(observer);
+      scanRoot(root);
+    }
+
+    observeRoot(container);
+    return () => observers.forEach((observer) => observer.disconnect());
   }, []);
 
   const threadsByFile = useMemo(() => {
@@ -477,14 +648,17 @@ export function CodeReview() {
     return map;
   }, [threads]);
 
+  const threadsById = useMemo(
+    () => new Map(threads.map((thread) => [thread.id, thread])),
+    [threads]
+  );
+
   const commentCountByFile = useMemo(() => {
     const map = new Map<string, number>();
     for (const [path, fileThreads] of threadsByFile) {
       let count = 0;
       for (const thread of fileThreads) {
-        for (const comment of thread.comments) {
-          if (!comment.deletedAt) count++;
-        }
+        count += getVisibleCommentCount(thread);
       }
       if (count > 0) map.set(path, count);
     }
@@ -500,7 +674,7 @@ export function CodeReview() {
       const count = commentCountByFileRef.current.get(context.item.path) ?? 0;
       if (count === 0) return null;
       const label = `${count} comment${count !== 1 ? "s" : ""}`;
-      return { text: label, title: label };
+      return { text: String(count), title: label };
     },
     []
   );
@@ -514,28 +688,78 @@ export function CodeReview() {
     paths: FILE_PATHS,
     renderRowDecoration,
     stickyFolders: true,
+    unsafeCSS: FILE_TREE_CUSTOM_CSS,
   });
 
   useEffect(() => {
+    if (!isFileSearchOpen) return;
+    fileSearchInputRef.current?.focus();
+  }, [isFileSearchOpen]);
+
+  useEffect(() => {
     treeModel.resetPaths(filteredFilePaths);
-  }, [treeModel, filteredFilePaths]);
+  }, [filteredFilePaths, treeModel]);
+
+  useEffect(() => {
+    if (!isSidebarOpen || isDesktopSidebar) return;
+    sidebarCloseButtonRef.current?.focus();
+    return () => sidebarTriggerRef.current?.focus();
+  }, [isDesktopSidebar, isSidebarOpen]);
 
   useEffect(() => {
     treeModel.setGitStatus([...GIT_STATUS]);
   }, [treeModel, commentCountByFile]);
 
-  const resolvedThreads = useMemo((): ResolvedThread[] => {
-    const nextResolvedThreads: ResolvedThread[] = [];
+  const closeSidebar = useCallback(() => setIsSidebarOpen(false), []);
+
+  const handleSidebarKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLElement>) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeSidebar();
+        return;
+      }
+      if (event.key !== "Tab" || isDesktopSidebar) return;
+
+      const focusableElements = getFocusableElements(event.currentTarget);
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements.at(-1);
+      if (!firstElement || !lastElement) return;
+      const activeElement = getDeepActiveElement();
+
+      if (event.shiftKey && activeElement === firstElement) {
+        event.preventDefault();
+        lastElement.focus();
+      } else if (!event.shiftKey && activeElement === lastElement) {
+        event.preventDefault();
+        firstElement.focus();
+      }
+    },
+    [closeSidebar, isDesktopSidebar]
+  );
+
+  const anchoredThreads = useMemo((): AnchoredThread[] => {
+    const nextAnchoredThreads: AnchoredThread[] = [];
 
     for (const file of SORTED_FILES) {
       const fileThreads = threadsByFile.get(file.path) ?? [];
       for (const thread of fileThreads) {
-        const resolved = resolveAnnotation(thread.metadata, file.patch);
+        if (getVisibleCommentCount(thread) === 0) continue;
+        const preferredSide = isAnnotationSide(thread.metadata.rangeEndSide)
+          ? thread.metadata.rangeEndSide
+          : isAnnotationSide(thread.metadata.rangeSide)
+            ? thread.metadata.rangeSide
+            : undefined;
+        const resolved = resolveAnnotation(
+          thread.metadata,
+          file.patch,
+          preferredSide
+        );
         if (!resolved) continue;
         const range = getThreadRange(thread.metadata, resolved);
         const side = getRangeEndSide(range) ?? resolved.side;
         const lineNumber = range.end;
-        nextResolvedThreads.push({
+        nextAnchoredThreads.push({
           id: thread.id,
           filePath: file.path,
           itemId: diffItemId(file.path),
@@ -547,7 +771,7 @@ export function CodeReview() {
       }
     }
 
-    return nextResolvedThreads;
+    return nextAnchoredThreads;
   }, [threadsByFile]);
 
   const items = useMemo((): CodeViewDiffItem<AnnotationMetadata>[] => {
@@ -555,15 +779,15 @@ export function CodeReview() {
       const fileDiff = fileDiffs[index];
       const annotations: DiffLineAnnotation<AnnotationMetadata>[] = [];
 
-      for (const resolvedThread of resolvedThreads) {
-        if (resolvedThread.filePath !== file.path) continue;
+      for (const anchoredThread of anchoredThreads) {
+        if (anchoredThread.filePath !== file.path) continue;
         annotations.push({
-          lineNumber: resolvedThread.lineNumber,
-          side: resolvedThread.side,
+          lineNumber: anchoredThread.lineNumber,
+          side: anchoredThread.side,
           metadata: {
             type: "thread",
-            threadId: resolvedThread.id,
-            range: resolvedThread.range,
+            threadId: anchoredThread.id,
+            range: anchoredThread.range,
           },
         });
       }
@@ -608,60 +832,130 @@ export function CodeReview() {
         collapsed: isCollapsed,
       };
     });
-  }, [fileDiffs, resolvedThreads, pendingComposer, collapsedItems]);
+  }, [fileDiffs, anchoredThreads, pendingComposer, collapsedItems]);
 
-  const itemsRef = useRef(items);
-  itemsRef.current = items;
-  const selectedItemIdRef = useRef<string | null>(null);
+  const diffStyle: DiffStyle = useSplitDiff ? "split" : "unified";
 
-  const diffStyle: DiffStyle = isWideLayout ? "split" : "unified";
+  useEffect(() => {
+    if (!pendingLineScroll) return;
 
-  const scrollToFile = useCallback((path: string) => {
-    const itemId = diffItemId(path);
-    programmaticScrollRef.current = true;
-    if (programmaticScrollTimerRef.current) {
-      clearTimeout(programmaticScrollTimerRef.current);
-    }
-    let attempts = 0;
-    const tryScroll = () => {
-      const handle = codeViewRef.current;
-      const viewer = handle?.getInstance();
-      if (handle && viewer && viewer.getTopForItem(itemId) != null) {
-        handle.scrollTo({
-          type: "item",
-          id: itemId,
+    let scrollFrame = 0;
+    const renderFrame = requestAnimationFrame(() => {
+      scrollFrame = requestAnimationFrame(() => {
+        codeViewRef.current?.scrollTo({
+          type: "line",
+          id: pendingLineScroll.itemId,
+          lineNumber: pendingLineScroll.lineNumber,
+          side: pendingLineScroll.side,
+          align: "center",
           behavior: "smooth-auto",
-          offset: LAYOUT_PADDING,
         });
-        programmaticScrollTimerRef.current = setTimeout(() => {
-          programmaticScrollRef.current = false;
-        }, 600);
-        return;
-      }
-      if (attempts++ < 6) {
-        requestAnimationFrame(tryScroll);
-      } else {
-        programmaticScrollRef.current = false;
-      }
-    };
-    tryScroll();
-  }, []);
+        if (focusPendingComposerRef.current) {
+          focusPendingComposerRef.current = false;
+          draftComposerRef.current
+            ?.querySelector<HTMLElement>('[contenteditable="true"]')
+            ?.focus({ preventScroll: true });
+        }
+        setPendingLineScroll(null);
+      });
+    });
 
-  const scrollToThread = useCallback((thread: ResolvedThread) => {
-    setActiveSidebarTab("comments");
-    codeViewRef.current?.setSelectedLines({
-      id: thread.itemId,
-      range: thread.range,
+    return () => {
+      cancelAnimationFrame(renderFrame);
+      cancelAnimationFrame(scrollFrame);
+    };
+  }, [items, pendingLineScroll]);
+
+  const prepareForNavigation = useCallback(() => {
+    if (!pendingComposer) return true;
+    if (window.confirm("Discard your unfinished comment and navigate away?")) {
+      setPendingComposer(null);
+      setSelectedLines(null);
+      return true;
+    }
+
+    const itemId = diffItemId(pendingComposer.filePath);
+    closeSidebar();
+    setCollapsedItems((collapsed) => {
+      if (!collapsed.has(itemId)) return collapsed;
+      const next = new Set(collapsed);
+      next.delete(itemId);
+      return next;
     });
-    codeViewRef.current?.scrollTo({
-      type: "line",
-      id: thread.itemId,
-      lineNumber: thread.lineNumber,
-      side: thread.side,
-      align: "center",
-      behavior: "smooth-auto",
+    setSelectedLines({ id: itemId, range: pendingComposer.range });
+    focusPendingComposerRef.current = true;
+    setPendingLineScroll({
+      itemId,
+      lineNumber: pendingComposer.lineNumber,
+      side: pendingComposer.side,
     });
-  }, []);
+    return false;
+  }, [closeSidebar, pendingComposer]);
+
+  const scrollToFile = useCallback(
+    (path: string) => {
+      if (!prepareForNavigation()) return;
+      closeSidebar();
+      const itemId = diffItemId(path);
+      programmaticScrollRef.current = true;
+      if (programmaticScrollTimerRef.current) {
+        clearTimeout(programmaticScrollTimerRef.current);
+      }
+      let attempts = 0;
+      const tryScroll = () => {
+        const handle = codeViewRef.current;
+        const viewer = handle?.getInstance();
+        if (handle && viewer && viewer.getTopForItem(itemId) != null) {
+          handle.scrollTo({
+            type: "item",
+            id: itemId,
+            behavior: "smooth-auto",
+            offset: LAYOUT_PADDING,
+          });
+          programmaticScrollTimerRef.current = setTimeout(() => {
+            programmaticScrollRef.current = false;
+          }, 600);
+          return;
+        }
+        if (attempts++ < 6) {
+          requestAnimationFrame(tryScroll);
+        } else {
+          programmaticScrollRef.current = false;
+        }
+      };
+      tryScroll();
+    },
+    [closeSidebar, prepareForNavigation]
+  );
+
+  const scrollToThread = useCallback(
+    (thread: AnchoredThread) => {
+      if (!prepareForNavigation()) return;
+      closeSidebar();
+      setActiveSidebarTab("comments");
+      setCollapsedItems((collapsed) => {
+        if (!collapsed.has(thread.itemId)) return collapsed;
+        const next = new Set(collapsed);
+        next.delete(thread.itemId);
+        return next;
+      });
+      if (thread.thread.resolved) {
+        setExpandedResolvedThreadIds((expanded) => {
+          if (expanded.has(thread.id)) return expanded;
+          const next = new Set(expanded);
+          next.add(thread.id);
+          return next;
+        });
+      }
+      setSelectedLines({ id: thread.itemId, range: thread.range });
+      setPendingLineScroll({
+        itemId: thread.itemId,
+        lineNumber: thread.lineNumber,
+        side: thread.side,
+      });
+    },
+    [closeSidebar, prepareForNavigation]
+  );
 
   const handleTreeClick = useCallback(
     (event: React.MouseEvent<HTMLElement>) => {
@@ -700,9 +994,10 @@ export function CodeReview() {
 
   const createDraftComposer = useCallback(
     (range: SelectedLineRange, item: CodeViewDiffItem<AnnotationMetadata>) => {
+      if (pendingComposer) return;
       const side = getRangeEndSide(range);
       if (!side) return;
-      const file = SORTED_FILES.find((f) => diffItemId(f.path) === item.id);
+      const file = FILE_BY_ITEM_ID.get(item.id);
       if (!file) return;
       const lines = linesFromPatch(file.patch, side);
       const { lineContent, contextBefore, contextAfter } = extractLineContext(
@@ -710,6 +1005,12 @@ export function CodeReview() {
         range.end
       );
       const key = `draft-${nextComposerKeyRef.current++}`;
+      setCollapsedItems((collapsed) => {
+        if (!collapsed.has(item.id)) return collapsed;
+        const next = new Set(collapsed);
+        next.delete(item.id);
+        return next;
+      });
       setSelectedLines({ id: item.id, range });
       setPendingComposer({
         key,
@@ -722,15 +1023,15 @@ export function CodeReview() {
         range,
       });
     },
-    []
+    [pendingComposer]
   );
 
   const options = useMemo(
     (): CodeViewOptions<AnnotationMetadata> => ({
       diffIndicators: "bars",
       diffStyle,
-      enableGutterUtility: true,
-      enableLineSelection: true,
+      enableGutterUtility: !pendingComposer,
+      enableLineSelection: !pendingComposer,
       hunkSeparators: "line-info-basic",
       itemMetrics: { diffHeaderHeight: 40 },
       layout: {
@@ -743,19 +1044,24 @@ export function CodeReview() {
       stickyHeaders: true,
       themeType: "system",
       unsafeCSS: CODE_VIEW_CUSTOM_CSS,
-      onLineSelectionEnd(range) {
-        if (range == null) {
-          setSelectedLines(null);
-          return;
-        }
-        const item = itemsRef.current.find(
-          (i) => i.id === selectedItemIdRef.current
+      onGutterUtilityClick(range, context) {
+        if (context.type !== "diff") return;
+        const normalizedRange = normalizeSelectedLineRange(
+          range,
+          context.instance.getLinePosition.bind(context.instance)
         );
-        if (item?.type !== "diff") return;
-        createDraftComposer(range, item);
+        createDraftComposer(normalizedRange, context.item);
+      },
+      onLineSelectionEnd(range, context) {
+        if (!range || pendingComposer || context.type !== "diff") return;
+        const normalizedRange = normalizeSelectedLineRange(
+          range,
+          context.instance.getLinePosition.bind(context.instance)
+        );
+        setSelectedLines({ id: context.item.id, range: normalizedRange });
       },
     }),
-    [createDraftComposer, diffStyle]
+    [createDraftComposer, diffStyle, pendingComposer]
   );
 
   const renderAnnotation = useCallback(
@@ -771,64 +1077,73 @@ export function CodeReview() {
       if (metadata.type === "composer") {
         return (
           <div
-            className="max-w-[600px] p-2 font-sans text-base"
-            onBlur={(event) => {
-              if (event.currentTarget.contains(event.relatedTarget as Node))
-                return;
-              const editor = event.currentTarget.querySelector(
-                "[contenteditable='true']"
-              );
-              if (!editor?.textContent?.trim()) {
-                setPendingComposer(null);
-                setSelectedLines(null);
-              }
-            }}
+            ref={draftComposerRef}
+            className="max-w-[620px] p-2 font-sans text-base"
           >
-            <Composer
-              autoFocus
-              onComposerSubmit={({ body }, event) => {
-                event.preventDefault();
-                createThread({
-                  body,
-                  metadata: {
-                    filePath: metadata.filePath,
-                    lineContent: metadata.lineContent,
-                    contextBefore: metadata.contextBefore,
-                    contextAfter: metadata.contextAfter,
-                    lineNumber: metadata.lineNumber,
-                    rangeStartLineNumber: metadata.range.start,
-                    rangeEndLineNumber: metadata.range.end,
-                    rangeSide: metadata.range.side,
-                    rangeEndSide: metadata.range.endSide,
-                  },
-                });
-                setPendingComposer(null);
-                setSelectedLines(null);
-              }}
-              className="rounded-xl bg-[var(--card)] shadow-sm dark:bg-neutral-800 overflow-hidden"
-            />
+            <div className="code-review-draft overflow-hidden rounded-lg border border-blue-500/30 bg-[var(--card)] shadow-[0_8px_24px_rgb(0_0_0_/_0.12)] dark:border-blue-400/30">
+              <div className="flex h-8 items-center gap-2 border-b border-[var(--color-border-opaque)] px-3 text-xs text-[var(--muted-foreground)]">
+                <span className="truncate">
+                  {getRangeLabel(metadata.range)}
+                </span>
+                <button
+                  type="button"
+                  aria-label="Cancel comment"
+                  title="Cancel comment"
+                  className="-mr-1 ml-auto inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded text-neutral-400 transition-colors hover:bg-[var(--muted)] hover:text-[var(--foreground)] focus-visible:outline-2 focus-visible:outline-blue-500"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setPendingComposer(null);
+                    setSelectedLines(null);
+                  }}
+                >
+                  <IconX className="size-3.5" />
+                </button>
+              </div>
+              <Composer
+                autoFocus
+                metadata={{
+                  filePath: metadata.filePath,
+                  lineContent: metadata.lineContent,
+                  contextBefore: metadata.contextBefore,
+                  contextAfter: metadata.contextAfter,
+                  lineNumber: metadata.lineNumber,
+                  rangeStartLineNumber: metadata.range.start,
+                  rangeEndLineNumber: metadata.range.end,
+                  rangeSide: metadata.range.side,
+                  rangeEndSide: metadata.range.endSide,
+                }}
+                onComposerSubmit={() => {
+                  setPendingComposer(null);
+                  setSelectedLines(null);
+                }}
+                className="rounded-none bg-[var(--card)]"
+              />
+            </div>
           </div>
         );
       }
 
-      const thread = threads.find((t) => t.id === metadata.threadId);
+      const thread = threadsById.get(metadata.threadId);
       if (!thread) return null;
 
       const isExpanded =
         !thread.resolved || expandedResolvedThreadIds.has(thread.id);
+      const commentCount = getVisibleCommentCount(thread);
 
       return (
         <div
-          className="max-w-[600px] p-2 font-sans text-base"
+          className="max-w-[620px] p-2 font-sans text-base"
           onClick={() =>
             setSelectedLines({ id: item.id, range: metadata.range })
           }
         >
-          <div className="overflow-hidden rounded-xl bg-[var(--card)] border border-[var(--color-border-opaque)] dark:bg-neutral-800">
+          <div className="overflow-hidden rounded-lg border border-[var(--color-border-opaque)] bg-[var(--card)] dark:bg-neutral-800">
             {thread.resolved && (
               <button
                 type="button"
-                className={`flex h-10 w-full select-none items-center gap-2 px-3 text-left text-xs text-neutral-500 dark:text-neutral-400${isExpanded ? " border-b border-[var(--color-border-opaque)] cursor-pointer" : ""}`}
+                aria-expanded={isExpanded}
+                aria-controls={`thread-${thread.id}`}
+                className={`flex h-9 w-full cursor-pointer items-center gap-2 px-3 text-left text-xs text-neutral-500 transition-colors select-none hover:bg-[var(--muted)] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-blue-500 dark:text-neutral-400 ${isExpanded ? "border-b border-[var(--color-border-opaque)]" : ""}`}
                 onClick={(e) => {
                   e.stopPropagation();
                   setExpandedResolvedThreadIds((prev) => {
@@ -839,41 +1154,40 @@ export function CodeReview() {
                   });
                 }}
               >
-                <svg
-                  viewBox="0 0 16 16"
-                  width="12"
-                  height="12"
-                  fill="currentColor"
-                  aria-hidden
-                  className="shrink-0 text-neutral-400 dark:text-neutral-500"
-                >
-                  <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z" />
-                </svg>
-                <span className="flex-1">
-                  This conversation was marked as resolved
+                <span className="inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+                  <IconCheck className="size-2.5" aria-hidden />
                 </span>
-                <svg
-                  viewBox="0 0 16 16"
-                  width="16"
-                  height="16"
+                <span className="shrink-0 font-medium text-[var(--foreground)]">
+                  Resolved
+                </span>
+                <span className="min-w-0 flex-1 truncate">
+                  {getCommentPreview(thread)}
+                </span>
+                <span className="shrink-0 tabular-nums">
+                  {commentCount} comment{commentCount !== 1 ? "s" : ""}
+                </span>
+                <IconChevronSm
                   aria-hidden
-                  className={`shrink-0 text-neutral-400 transition-transform duration-150 dark:text-neutral-500${isExpanded ? "" : " -rotate-90"}`}
-                >
-                  <use href="#file-tree-icon-chevron" />
-                </svg>
+                  className={`shrink-0 text-neutral-400 transition-transform duration-150 ${isExpanded ? "" : "-rotate-90"}`}
+                />
               </button>
             )}
             {isExpanded && (
               <Thread
+                id={`thread-${thread.id}`}
                 thread={thread}
-                className="bg-[var(--card)] dark:bg-neutral-800"
+                showComposer={thread.resolved ? false : "collapsed"}
+                showSubscription={false}
+                showReactions={!thread.resolved}
+                maxVisibleComments={{ max: 3, show: "newest" }}
+                className="code-review-thread bg-[var(--card)]"
               />
             )}
           </div>
         </div>
       );
     },
-    [threads, createThread, expandedResolvedThreadIds]
+    [threadsById, expandedResolvedThreadIds]
   );
 
   const toggleCollapsed = useCallback(
@@ -901,7 +1215,7 @@ export function CodeReview() {
   const renderCustomHeader = useCallback(
     (item: CodeViewItem<AnnotationMetadata>) => {
       if (item.type !== "diff") return null;
-      const file = SORTED_FILES.find((f) => diffItemId(f.path) === item.id);
+      const file = FILE_BY_ITEM_ID.get(item.id);
       if (!file) return null;
       const emptyDiff =
         item.fileDiff.splitLineCount === 0 &&
@@ -913,129 +1227,234 @@ export function CodeReview() {
         lastSlash === -1 ? file.path : file.path.slice(lastSlash + 1);
       const dirPath = lastSlash === -1 ? "" : file.path.slice(0, lastSlash + 1);
       const fileIcon = resolveFileIcon("file-tree-icon-file", file.path);
-      const fileIconColor = getBuiltInFileIconColor(fileIcon.token ?? "");
+      const fileIconColor =
+        fileIcon.token != null
+          ? `var(--trees-file-icon-color-${fileIcon.token}, var(--trees-file-icon-color))`
+          : undefined;
 
       return (
-        <div
-          className={`flex h-10 min-w-0 flex-1 cursor-pointer select-none items-center gap-2 px-3${emptyDiff ? " pointer-events-none" : ""}`}
-          role="button"
-          aria-label={item.collapsed ? "Expand diff" : "Collapse diff"}
-          onClick={() => toggleCollapsed(item)}
-        >
-          <svg
-            viewBox="0 0 16 16"
-            width="16"
-            height="16"
-            aria-hidden
-            className={`shrink-0 text-neutral-400 transition-transform duration-150 dark:text-neutral-500${item.collapsed ? " -rotate-90" : ""}${emptyDiff ? " opacity-40" : ""}`}
+        <div className="flex h-10 min-w-0 flex-1 items-center">
+          <button
+            type="button"
+            disabled={emptyDiff}
+            aria-expanded={!item.collapsed}
+            aria-label={`${item.collapsed ? "Expand" : "Collapse"} ${file.path}`}
+            className="flex h-full min-w-0 flex-1 cursor-pointer items-center gap-2 px-3 text-left select-none focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-blue-500 disabled:cursor-default"
+            onClick={() => toggleCollapsed(item)}
           >
-            <use href="#file-tree-icon-chevron" />
-          </svg>
-          <svg
-            viewBox={`0 0 ${fileIcon.width ?? 16} ${fileIcon.height ?? 16}`}
-            width="16"
-            height="16"
-            aria-hidden
-            style={{ color: fileIconColor, flexShrink: 0 }}
-          >
-            <use href={`#${fileIcon.name}`} />
-          </svg>
-          <div className="flex min-w-0 flex-1 items-baseline gap-1.5">
-            <span className="shrink-0 font-medium text-neutral-800 dark:text-neutral-200">
-              {fileName}
-            </span>
-            {dirPath && (
-              <span className="min-w-0 truncate text-neutral-400 dark:text-neutral-500">
-                {dirPath}
+            <svg
+              viewBox="0 0 16 16"
+              width="16"
+              height="16"
+              aria-hidden
+              className={`shrink-0 text-neutral-400 transition-transform duration-150 dark:text-neutral-500 ${item.collapsed ? "-rotate-90" : ""} ${emptyDiff ? "opacity-40" : ""}`}
+            >
+              <use href="#file-tree-icon-chevron" />
+            </svg>
+            <svg
+              viewBox={`0 0 ${fileIcon.width ?? 16} ${fileIcon.height ?? 16}`}
+              width="16"
+              height="16"
+              aria-hidden
+              style={{ color: fileIconColor, flexShrink: 0 }}
+            >
+              <use href={`#${fileIcon.name}`} />
+            </svg>
+            <div className="flex min-w-0 flex-1 items-baseline gap-1.5">
+              <span className="shrink-0 font-medium text-neutral-800 dark:text-neutral-200">
+                {fileName}
               </span>
-            )}
-          </div>
-          <div className="flex shrink-0 items-center gap-3 text-xs tabular-nums">
-            {(stats.added > 0 || stats.removed > 0) && (
-              <span className="flex gap-1.5">
-                {stats.added > 0 && (
-                  <span className="text-emerald-600 dark:text-emerald-400">
-                    +{stats.added}
-                  </span>
-                )}
-                {stats.removed > 0 && (
-                  <span className="text-rose-600 dark:text-rose-400">
-                    -{stats.removed}
-                  </span>
-                )}
-              </span>
-            )}
-            {commentCount > 0 && (
-              <span className="text-neutral-400 dark:text-neutral-500">
-                {commentCount} comment{commentCount !== 1 ? "s" : ""}
-              </span>
-            )}
-          </div>
+              {dirPath && (
+                <span className="min-w-0 truncate text-neutral-400 dark:text-neutral-500">
+                  {dirPath}
+                </span>
+              )}
+            </div>
+            <div className="flex shrink-0 items-center gap-3 text-xs tabular-nums">
+              {(stats.added > 0 || stats.removed > 0) && (
+                <span className="flex gap-1.5">
+                  {stats.added > 0 && (
+                    <span className="text-emerald-600 dark:text-emerald-400">
+                      +{stats.added}
+                    </span>
+                  )}
+                  {stats.removed > 0 && (
+                    <span className="text-rose-600 dark:text-rose-400">
+                      -{stats.removed}
+                    </span>
+                  )}
+                </span>
+              )}
+              {commentCount > 0 && (
+                <span className="text-neutral-400 dark:text-neutral-500">
+                  {commentCount} comment{commentCount !== 1 ? "s" : ""}
+                </span>
+              )}
+            </div>
+          </button>
         </div>
       );
     },
     [commentCountByFile, toggleCollapsed]
   );
 
-  return (
-    <div className="code-review-shell grid h-screen min-h-0 grid-cols-1 grid-rows-[auto_minmax(0,1fr)] overflow-hidden bg-[var(--background)] text-[var(--foreground)] [grid-template-areas:'header''viewer'] md:grid-cols-[320px_minmax(0,1fr)] md:[grid-template-areas:'header_header''tree_viewer']">
-      <Header />
+  const visibleCommentCount = anchoredThreads.reduce(
+    (count, thread) => count + getVisibleCommentCount(thread.thread),
+    0
+  );
 
-      <aside className="contain-strict z-30 flex min-h-0 flex-col border-r border-[var(--color-border-opaque)] bg-neutral-50 pt-3 [grid-area:tree] dark:bg-neutral-900">
-        <div className="flex items-center gap-3 px-4 pt-5 pb-2 md:px-3 md:pt-0.5 md:pb-0">
+  return (
+    <div
+      ref={reviewShellRef}
+      className="code-review-shell relative grid h-dvh min-h-0 grid-cols-1 grid-rows-[48px_minmax(0,1fr)] overflow-hidden bg-[var(--background)] text-[var(--foreground)] [grid-template-areas:'header''viewer'] md:grid-cols-[300px_minmax(0,1fr)] md:[grid-template-areas:'header_header''tree_viewer']"
+    >
+      <Header
+        isSidebarOpen={isSidebarOpen}
+        onOpenSidebar={() => setIsSidebarOpen(true)}
+        sidebarTriggerRef={sidebarTriggerRef}
+      />
+
+      <div
+        aria-hidden
+        className={`absolute inset-x-0 top-12 bottom-0 z-20 bg-black/25 backdrop-blur-[1px] transition-opacity md:hidden ${isSidebarOpen ? "opacity-100" : "pointer-events-none opacity-0"}`}
+        onClick={closeSidebar}
+      />
+
+      <aside
+        id="review-sidebar"
+        aria-label="Review navigation"
+        aria-hidden={!isDesktopSidebar && !isSidebarOpen}
+        aria-modal={!isDesktopSidebar ? true : undefined}
+        inert={!isDesktopSidebar && !isSidebarOpen}
+        role={!isDesktopSidebar ? "dialog" : undefined}
+        className={`absolute inset-x-0 bottom-0 z-30 flex h-[min(72dvh,640px)] min-h-0 flex-col overflow-hidden rounded-t-xl border-t border-[var(--color-border-opaque)] bg-neutral-50 shadow-[0_-16px_40px_rgb(0_0_0_/_0.16)] transition-transform duration-200 [grid-area:tree] md:static md:h-auto md:translate-y-0 md:rounded-none md:border-t-0 md:border-r md:shadow-none dark:bg-neutral-900 ${isSidebarOpen ? "translate-y-0" : "pointer-events-none translate-y-full md:pointer-events-auto"}`}
+        onKeyDown={handleSidebarKeyDown}
+      >
+        <div className="flex h-[41px] shrink-0 items-stretch border-b border-[var(--color-border-opaque)] px-2">
           <div
-            className="mr-auto flex min-w-0 gap-3 bg-transparent md:gap-2"
-            role="tablist"
-            aria-label="Sidebar sections"
+            className="mr-auto flex min-w-0 items-stretch gap-1 bg-transparent"
+            role="group"
+            aria-label="Sidebar view"
           >
             <button
               type="button"
-              role="tab"
-              aria-selected={activeSidebarTab === "files"}
+              aria-pressed={activeSidebarTab === "files"}
               className="code-review-tab-button"
               onClick={() => setActiveSidebarTab("files")}
             >
-              <IconFileTree className="size-4 md:size-3" />
-              <span className="sr-only">Files</span>
+              <IconFileTree className="size-3.5" />
+              <span>Files</span>
             </button>
             <button
               type="button"
-              role="tab"
-              aria-selected={activeSidebarTab === "comments"}
+              aria-pressed={activeSidebarTab === "comments"}
               className="code-review-tab-button"
               onClick={() => setActiveSidebarTab("comments")}
             >
-              <IconConvoFill className="size-4 md:size-3" />
-              <span className="sr-only">Comments</span>
+              <IconConvoFill className="size-3.5" />
+              <span>Comments</span>
+              {visibleCommentCount > 0 && (
+                <span className="code-review-tab-count">
+                  {visibleCommentCount}
+                </span>
+              )}
             </button>
           </div>
+          {activeSidebarTab === "files" && (
+            <button
+              type="button"
+              aria-label={
+                isFileSearchOpen ? "Close file search" : "Search files"
+              }
+              aria-controls="file-filter-region"
+              aria-expanded={isFileSearchOpen}
+              title={isFileSearchOpen ? "Close search" : "Search files"}
+              className="my-auto inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-[var(--muted-foreground)] transition-colors hover:bg-[var(--muted)] hover:text-[var(--foreground)] focus-visible:outline-2 focus-visible:outline-blue-500"
+              onClick={() => {
+                setIsFileSearchOpen((isOpen) => {
+                  if (isOpen) setFileSearchQuery("");
+                  return !isOpen;
+                });
+              }}
+            >
+              <IconSearch className="size-3.5" />
+            </button>
+          )}
+          <button
+            ref={sidebarCloseButtonRef}
+            type="button"
+            aria-label="Close review navigation"
+            className="my-auto ml-1 inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-[var(--muted-foreground)] transition-colors hover:bg-[var(--muted)] hover:text-[var(--foreground)] focus-visible:outline-2 focus-visible:outline-blue-500 md:hidden"
+            onClick={closeSidebar}
+          >
+            <IconX className="size-3.5" />
+          </button>
         </div>
 
         {activeSidebarTab === "files" ? (
           <>
-            <div className="border-b border-[var(--color-border-opaque)] px-3 py-3">
-              <input
-                type="text"
-                value={fileSearchQuery}
-                onChange={(e) => setFileSearchQuery(e.target.value)}
-                placeholder="Filter files"
-                className="h-8 w-full rounded-md border border-transparent bg-white px-2 text-xs text-[var(--foreground)] outline-none ring-1 ring-black/5 transition placeholder:text-[var(--muted-foreground)] focus:border-neutral-300 dark:bg-neutral-800 dark:ring-white/10 dark:focus:border-neutral-700"
-              />
-            </div>
-            <div
-              className="min-h-0 flex-1 overflow-hidden"
-              onClick={handleTreeClick}
-            >
-              <FileTree
-                model={treeModel}
-                className="cv-mini-scrollbar h-full min-h-0 overflow-auto overscroll-contain md:ml-3"
-                style={FILE_TREE_STYLES}
-              />
-            </div>
+            {isFileSearchOpen && (
+              <div
+                id="file-filter-region"
+                className="flex h-10 shrink-0 items-center gap-1.5 border-b border-[var(--color-border-opaque)] px-2"
+              >
+                <IconSearch className="size-3.5 shrink-0 text-[var(--muted-foreground)]" />
+                <label htmlFor="file-filter" className="sr-only">
+                  Filter changed files
+                </label>
+                <input
+                  ref={fileSearchInputRef}
+                  id="file-filter"
+                  type="search"
+                  value={fileSearchQuery}
+                  onChange={(event) => setFileSearchQuery(event.target.value)}
+                  placeholder="Filter changed files"
+                  className="h-7 min-w-0 flex-1 bg-transparent text-xs text-[var(--foreground)] outline-none placeholder:text-[var(--muted-foreground)]"
+                />
+                {fileSearchQuery && (
+                  <button
+                    type="button"
+                    aria-label="Clear file search"
+                    className="inline-flex size-6 cursor-pointer items-center justify-center rounded text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)] focus-visible:outline-2 focus-visible:outline-blue-500"
+                    onClick={() => setFileSearchQuery("")}
+                  >
+                    <IconX className="size-3" />
+                  </button>
+                )}
+              </div>
+            )}
+            {filteredFilePaths.length > 0 ? (
+              <div
+                className="min-h-0 flex-1 overflow-hidden"
+                onClick={handleTreeClick}
+              >
+                <FileTree
+                  model={treeModel}
+                  className="cv-mini-scrollbar h-full min-h-0 overflow-auto overscroll-contain"
+                  style={FILE_TREE_STYLES}
+                />
+              </div>
+            ) : (
+              <div
+                className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 px-6 text-center text-sm text-[var(--muted-foreground)]"
+                role="status"
+              >
+                <p className="break-words">
+                  No files match <strong>“{fileSearchQuery}”</strong>.
+                </p>
+                <button
+                  type="button"
+                  className="rounded-md border border-[var(--color-border-opaque)] bg-[var(--card)] px-2.5 py-1.5 text-xs font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--muted)] focus-visible:outline-2 focus-visible:outline-blue-500"
+                  onClick={() => setFileSearchQuery("")}
+                >
+                  Clear filter
+                </button>
+              </div>
+            )}
           </>
         ) : (
           <CommentsSidebar
-            resolvedThreads={resolvedThreads}
+            anchoredThreads={anchoredThreads}
             scrollToFile={scrollToFile}
             scrollToThread={scrollToThread}
           />
@@ -1044,15 +1463,14 @@ export function CodeReview() {
 
       <main className="flex min-h-0 min-w-0 flex-col overflow-hidden [grid-area:viewer]">
         <CodeView
-          className="relative h-full min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-clip overscroll-contain border-b border-[var(--color-border)] [overflow-anchor:none] md:border-b-0 [&_diffs-container]:overflow-clip [&_diffs-container]:[contain:layout_paint_style] [&_diffs-container]:shadow-[0_-1px_0_var(--color-border-opaque),0_1px_0_var(--color-border-opaque)]"
+          className="relative h-full min-h-0 min-w-0 flex-1 overflow-x-clip overflow-y-auto overscroll-contain border-b border-[var(--color-border)] [overflow-anchor:none] md:border-b-0 [&_diffs-container]:overflow-clip [&_diffs-container]:shadow-[0_-1px_0_var(--color-border-opaque),0_1px_0_var(--color-border-opaque)] [&_diffs-container]:[contain:layout_paint_style]"
+          containerRef={codeViewContainerRef}
           ref={codeViewRef}
           items={items}
           options={options}
           selectedLines={selectedLines}
-          onSelectedLinesChange={(value) => {
-            setSelectedLines(value);
-            selectedItemIdRef.current = value?.id ?? null;
-            if (value === null) setPendingComposer(null);
+          onSelectedLinesChange={(selection) => {
+            if (!pendingComposer) setSelectedLines(selection);
           }}
           onScroll={handleScroll}
           renderAnnotation={renderAnnotation}
@@ -1063,47 +1481,67 @@ export function CodeReview() {
   );
 }
 
-function Header() {
+function Header({
+  isSidebarOpen,
+  onOpenSidebar,
+  sidebarTriggerRef,
+}: {
+  isSidebarOpen: boolean;
+  onOpenSidebar: () => void;
+  sidebarTriggerRef: React.RefObject<HTMLButtonElement>;
+}) {
   return (
-    <header className="z-10 flex flex-wrap items-center gap-2.5 border-b border-[var(--color-border-opaque)] bg-[var(--background)] px-4 pt-3 pb-2 [contain:layout_paint] [grid-area:header] md:flex-nowrap md:bg-neutral-50 md:px-3 md:py-1.5 md:dark:bg-neutral-900">
-      <div className="mr-auto min-w-0">
-        <div className="flex min-w-0 items-center gap-2">
-          <span className="rounded-md border border-[var(--color-border-opaque)] bg-white px-2 py-1 text-xs font-semibold dark:bg-neutral-800">
-            Liveblocks
-          </span>
-          <h1 className="truncate text-sm font-semibold md:text-base">
-            {DIFF.title}
-          </h1>
-          <span className="rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-            Open
-          </span>
-        </div>
-        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-[var(--muted-foreground)]">
-          <code className="rounded bg-[var(--muted)] px-1.5 py-0.5 text-[var(--foreground)]">
-            {DIFF.from}
-          </code>
-          <span>into</span>
-          <code className="rounded bg-[var(--muted)] px-1.5 py-0.5 text-[var(--foreground)]">
-            {DIFF.to}
-          </code>
-          <span>{DIFF.changes.length} files</span>
-        </div>
+    <header className="z-40 flex h-12 min-w-0 items-center gap-3 border-b border-[var(--color-border-opaque)] bg-neutral-50 px-3 [contain:layout_paint] [grid-area:header] dark:bg-neutral-900">
+      <div className="flex min-w-0 flex-1 items-center gap-2.5">
+        <span className="shrink-0 text-sm font-semibold tracking-[-0.02em]">
+          Code review
+        </span>
+        <span className="hidden h-4 w-px shrink-0 bg-[var(--color-border-opaque)] sm:block" />
+        <h1 className="min-w-0 truncate text-sm font-medium" title={DIFF.title}>
+          {DIFF.title}
+        </h1>
+        <span className="hidden min-w-0 truncate text-xs text-[var(--muted-foreground)] lg:inline">
+          <code>{DIFF.from}</code>
+          <span className="px-1.5">→</span>
+          <code>{DIFF.to}</code>
+        </span>
       </div>
-      <AvatarStack />
+      <div className="flex shrink-0 items-center gap-2">
+        <AvatarStack max={4} size={22} />
+        <button
+          ref={sidebarTriggerRef}
+          type="button"
+          aria-label="Open review navigation"
+          aria-controls="review-sidebar"
+          aria-expanded={isSidebarOpen}
+          title="Review navigation"
+          className="inline-flex size-8 cursor-pointer items-center justify-center rounded-md text-[var(--muted-foreground)] transition-colors hover:bg-[var(--muted)] hover:text-[var(--foreground)] focus-visible:outline-2 focus-visible:outline-blue-500 md:hidden"
+          onClick={onOpenSidebar}
+        >
+          <IconSidebar className="size-4" />
+        </button>
+      </div>
     </header>
   );
 }
 
 function CommentsSidebar({
-  resolvedThreads,
+  anchoredThreads,
   scrollToFile,
   scrollToThread,
 }: {
-  resolvedThreads: ResolvedThread[];
+  anchoredThreads: AnchoredThread[];
   scrollToFile: (path: string) => void;
-  scrollToThread: (thread: ResolvedThread) => void;
+  scrollToThread: (thread: AnchoredThread) => void;
 }) {
-  if (resolvedThreads.length === 0) {
+  const activeThreads = anchoredThreads.filter(
+    (thread) => !thread.thread.resolved
+  );
+  const resolvedThreads = anchoredThreads.filter(
+    (thread) => thread.thread.resolved
+  );
+
+  if (anchoredThreads.length === 0) {
     return (
       <div className="flex h-full min-h-0 flex-col items-center justify-center gap-2 px-7 text-center text-sm text-neutral-500 dark:text-neutral-400">
         <IconConvoFill size={24} className="mb-2" />
@@ -1111,12 +1549,9 @@ function CommentsSidebar({
           <strong className="font-medium text-neutral-800 dark:text-neutral-200">
             No comments yet
           </strong>
-          <p>
-            Hover over a line and click the{" "}
-            <span className="inline-flex size-5 items-center justify-center rounded bg-[rgb(0,159,255)] align-top text-white dark:text-black">
-              <IconPlus />
-            </span>{" "}
-            button to add code comments.
+          <p className="mt-1 text-xs leading-5">
+            Hover a line number and click the blue plus. Drag line numbers first
+            to comment on a range.
           </p>
         </div>
       </div>
@@ -1124,52 +1559,152 @@ function CommentsSidebar({
   }
 
   return (
-    <div className="cv-mini-scrollbar h-full min-h-0 overflow-auto overscroll-contain pl-3 pr-[max(0px,calc(12px-var(--cv-mini-gutter-vertical)))] pb-3">
+    <div className="cv-mini-scrollbar h-full min-h-0 overflow-auto overscroll-contain pb-3">
+      {activeThreads.length > 0 ? (
+        <SidebarThreadGroups
+          anchoredThreads={activeThreads}
+          scrollToFile={scrollToFile}
+          scrollToThread={scrollToThread}
+        />
+      ) : resolvedThreads.length === 0 ? (
+        <p className="border-b border-[var(--color-border-opaque)] px-3 py-4 text-xs text-[var(--muted-foreground)]">
+          No open conversations.
+        </p>
+      ) : null}
+
+      {resolvedThreads.length > 0 && (
+        <details className="group border-b border-[var(--color-border-opaque)]">
+          <summary className="flex h-9 cursor-pointer list-none items-center gap-2 px-3 text-xs font-medium text-[var(--muted-foreground)] transition-colors select-none hover:bg-[var(--muted)] hover:text-[var(--foreground)] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-blue-500 [&::-webkit-details-marker]:hidden">
+            <span className="inline-flex size-4 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+              <IconCheck className="size-2.5" />
+            </span>
+            <span>Resolved</span>
+            <span className="rounded-full bg-[var(--muted)] px-1.5 py-0.5 text-[10px] text-[var(--muted-foreground)] tabular-nums">
+              {resolvedThreads.length}
+            </span>
+            <IconChevronSm className="ml-auto size-3 text-neutral-400 transition-transform group-open:rotate-180" />
+          </summary>
+          <SidebarThreadGroups
+            anchoredThreads={resolvedThreads}
+            scrollToFile={scrollToFile}
+            scrollToThread={scrollToThread}
+          />
+        </details>
+      )}
+    </div>
+  );
+}
+
+function SidebarThreadGroups({
+  anchoredThreads,
+  scrollToFile,
+  scrollToThread,
+}: {
+  anchoredThreads: AnchoredThread[];
+  scrollToFile: (path: string) => void;
+  scrollToThread: (thread: AnchoredThread) => void;
+}) {
+  return (
+    <>
       {SORTED_FILES.map((file) => {
-        const fileThreads = resolvedThreads.filter(
+        const fileThreads = anchoredThreads.filter(
           (thread) => thread.filePath === file.path
         );
         if (fileThreads.length === 0) return null;
 
         return (
-          <section key={file.path}>
+          <section
+            key={file.path}
+            className="border-b border-[var(--color-border-opaque)] last:border-b-0"
+          >
             <button
               type="button"
-              className="p-3 pb-2 text-left text-sm font-medium break-all text-[var(--muted-foreground)] transition hover:text-[var(--foreground)]"
+              title={file.path}
+              className="block w-full truncate px-3 pt-2.5 pb-1.5 text-left text-[11px] font-medium text-[var(--muted-foreground)] transition hover:text-[var(--foreground)] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-blue-500"
               onClick={() => scrollToFile(file.path)}
             >
               {file.path}
             </button>
-            <div className="overflow-hidden rounded-lg border border-[rgb(0_0_0_/_0.1)] dark:border-[rgb(255_255_255_/_0.15)]">
+            <div>
               {fileThreads.map((thread) => (
-                <button
+                <SidebarThreadRow
                   key={thread.id}
-                  type="button"
-                  className="block w-full cursor-pointer border-b border-[rgb(0_0_0_/_0.1)] bg-[var(--card)] p-3 text-left text-sm transition-colors last:border-b-0 hover:bg-[var(--muted)] dark:border-[rgb(255_255_255_/_0.15)] dark:bg-neutral-800 dark:hover:bg-neutral-900"
+                  anchoredThread={thread}
                   onClick={() => scrollToThread(thread)}
-                >
-                  <span className="text-[var(--muted-foreground)]">
-                    Thread on{" "}
-                    <span
-                      className={
-                        thread.side === "additions"
-                          ? "font-medium text-emerald-700 dark:text-emerald-400"
-                          : "font-medium text-rose-700 dark:text-rose-400"
-                      }
-                    >
-                      {getRangeLabel(thread.range)}
-                    </span>
-                  </span>
-                  <p className="mt-0.5 text-[var(--foreground)]">
-                    {thread.thread.comments.length} comment
-                    {thread.thread.comments.length !== 1 ? "s" : ""}
-                  </p>
-                </button>
+                />
               ))}
             </div>
           </section>
         );
       })}
-    </div>
+    </>
+  );
+}
+
+function SidebarThreadRow({
+  anchoredThread,
+  onClick,
+}: {
+  anchoredThread: AnchoredThread;
+  onClick: () => void;
+}) {
+  const comment = getFirstVisibleComment(anchoredThread.thread);
+  if (!comment) return null;
+
+  return (
+    <SidebarThreadRowContent
+      anchoredThread={anchoredThread}
+      userId={comment.userId}
+      onClick={onClick}
+    />
+  );
+}
+
+function SidebarThreadRowContent({
+  anchoredThread,
+  userId,
+  onClick,
+}: {
+  anchoredThread: AnchoredThread;
+  userId: string;
+  onClick: () => void;
+}) {
+  const { user } = useUser(userId);
+  const name = user?.name ?? userId;
+  const commentCount = getVisibleCommentCount(anchoredThread.thread);
+
+  return (
+    <button
+      type="button"
+      className="grid w-full cursor-pointer grid-cols-[20px_minmax(0,1fr)] gap-2 px-3 py-2 text-left transition-colors hover:bg-[var(--muted)] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-blue-500"
+      onClick={onClick}
+    >
+      <Avatar
+        aria-hidden
+        src={user?.avatar}
+        name={name}
+        className="size-5 shrink-0"
+      />
+      <span className="min-w-0">
+        <span className="flex min-w-0 items-baseline gap-1.5 text-[11px]">
+          <span className="min-w-0 truncate font-medium text-[var(--foreground)]">
+            {name}
+          </span>
+          <span
+            className={`shrink-0 ${anchoredThread.side === "additions" ? "text-emerald-700 dark:text-emerald-400" : "text-rose-700 dark:text-rose-400"}`}
+          >
+            {getRangeLabel(anchoredThread.range)}
+          </span>
+          {commentCount > 1 && (
+            <span className="ml-auto shrink-0 text-[var(--muted-foreground)] tabular-nums">
+              +{commentCount - 1}
+            </span>
+          )}
+        </span>
+        <span className="mt-0.5 block truncate text-xs text-[var(--muted-foreground)]">
+          {getCommentPreview(anchoredThread.thread)}
+        </span>
+      </span>
+    </button>
   );
 }

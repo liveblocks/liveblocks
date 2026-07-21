@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks-examples/nextjs-code-review",
-  "description": "This example shows how to build a GitHub-like code review experience with Liveblocks and Next.js.",
+  "description": "This example shows how to build a GitHub-like code review experience with Liveblocks, Diffs, Trees, and Next.js.",
   "license": "Apache-2.0",
   "private": true,
   "scripts": {
@@ -14,9 +14,9 @@
     "@liveblocks/node": "^3.18.4",
     "@liveblocks/react": "^3.18.4",
     "@liveblocks/react-ui": "^3.18.4",
-    "@pierre/diffs": "1.2.0-beta.6",
-    "@pierre/icons": "^0.5.0",
-    "@pierre/trees": "1.0.0-beta.3",
+    "@pierre/diffs": "1.3.0-beta.9",
+    "@pierre/icons": "^0.7.1",
+    "@pierre/trees": "1.0.0-beta.5",
     "@tailwindcss/postcss": "^4.3.0",
     "next": "^16.1.6",
     "postcss": "^8.5.14",
