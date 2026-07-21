@@ -43,6 +43,7 @@ import type { FileTreeRowDecorationRenderer } from "@pierre/trees";
 import { cn } from "cnfast";
 import { DIFF } from "../diff";
 import type { DiffFile } from "../diff";
+import { pluralize } from "../utils/pluralize";
 
 type DiffStyle = "split" | "unified";
 type SidebarTab = "files" | "comments";
@@ -674,7 +675,7 @@ export function CodeReview() {
       if (context.item.kind !== "file") return null;
       const count = commentCountByFileRef.current.get(context.item.path) ?? 0;
       if (count === 0) return null;
-      const label = `${count} comment${count !== 1 ? "s" : ""}`;
+      const label = `${count} ${pluralize(count, "comment")}`;
       return { text: String(count), title: label };
     },
     []
@@ -1168,7 +1169,7 @@ export function CodeReview() {
                   {getCommentPreview(thread)}
                 </span>
                 <span className="shrink-0 tabular-nums">
-                  {commentCount} comment{commentCount !== 1 ? "s" : ""}
+                  {commentCount} {pluralize(commentCount, "comment")}
                 </span>
                 <IconChevronSm
                   aria-hidden
@@ -1298,7 +1299,7 @@ export function CodeReview() {
               )}
               {commentCount > 0 && (
                 <span className="text-neutral-400 dark:text-neutral-500">
-                  {commentCount} comment{commentCount !== 1 ? "s" : ""}
+                  {commentCount} {pluralize(commentCount, "comment")}
                 </span>
               )}
             </div>
