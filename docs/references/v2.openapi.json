@@ -3532,6 +3532,424 @@
         }
       }
     },
+    "/rooms/{roomId}/attachments/{attachmentId}/upload/{name}": {
+      "put": {
+        "summary": "Upload attachment",
+        "description": "Uploads a file's bytes and returns a draft comment attachment. Pass the returned attachment ID in the comment's attachment IDs when creating or editing a comment. For large files, use the multipart upload operations instead.",
+        "tags": ["Comments"],
+        "operationId": "upload-attachment",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID of the room",
+              "example": "my-room-id"
+            }
+          },
+          {
+            "name": "attachmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^at_[A-Za-z0-9_-]{21}$",
+              "description": "ID for the attachment",
+              "example": "at_abc123456789012345678"
+            }
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Name of the file",
+              "example": "screenshot.png"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID of the user uploading the attachment",
+              "example": "alice"
+            }
+          },
+          {
+            "name": "fileSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Expected file size in bytes",
+              "example": 12345
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Returns the uploaded draft attachment.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentAttachment"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "409": {
+            "description": "An attachment with this ID already exists."
+          },
+          "413": {
+            "description": "The attachment exceeds the project's per-file upload limit."
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        }
+      }
+    },
+    "/rooms/{roomId}/attachments/{attachmentId}/multipart/{name}": {
+      "post": {
+        "summary": "Create attachment multipart upload",
+        "description": "Starts a multipart upload for a draft comment attachment.",
+        "tags": ["Comments"],
+        "operationId": "create-attachment-multipart-upload",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID of the room",
+              "example": "my-room-id"
+            }
+          },
+          {
+            "name": "attachmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^at_[A-Za-z0-9_-]{21}$",
+              "description": "ID for the attachment",
+              "example": "at_abc123456789012345678"
+            }
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Name of the file",
+              "example": "recording.mp4"
+            }
+          },
+          {
+            "name": "fileSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Expected file size in bytes",
+              "example": 10485760
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns identifiers for the multipart upload.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttachmentMultipartUpload"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "409": {
+            "description": "An attachment with this ID already exists."
+          },
+          "413": {
+            "description": "The attachment exceeds the project's per-file upload limit."
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        }
+      }
+    },
+    "/rooms/{roomId}/attachments/{attachmentId}/multipart/{uploadId}/{partNumber}": {
+      "put": {
+        "summary": "Upload attachment multipart part",
+        "description": "Uploads one part of an attachment multipart upload.",
+        "tags": ["Comments"],
+        "operationId": "upload-attachment-multipart-part",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID of the room",
+              "example": "my-room-id"
+            }
+          },
+          {
+            "name": "attachmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^at_[A-Za-z0-9_-]{21}$",
+              "description": "ID of the attachment",
+              "example": "at_abc123456789012345678"
+            }
+          },
+          {
+            "name": "uploadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID returned when the multipart upload was created"
+            }
+          },
+          {
+            "name": "partNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "One-based part number",
+              "example": 1
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Returns the uploaded part's number and ETag.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttachmentMultipartPart"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "409": {
+            "description": "The multipart upload belongs to a different project or room."
+          }
+        }
+      }
+    },
+    "/rooms/{roomId}/attachments/{attachmentId}/multipart/{uploadId}/complete": {
+      "post": {
+        "summary": "Complete attachment multipart upload",
+        "description": "Completes a multipart upload and returns a draft comment attachment. Pass the returned attachment ID in the comment's attachment IDs when creating or editing a comment.",
+        "tags": ["Comments"],
+        "operationId": "complete-attachment-multipart-upload",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID of the room",
+              "example": "my-room-id"
+            }
+          },
+          {
+            "name": "attachmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^at_[A-Za-z0-9_-]{21}$",
+              "description": "ID of the attachment",
+              "example": "at_abc123456789012345678"
+            }
+          },
+          {
+            "name": "uploadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID returned when the multipart upload was created"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID of the user uploading the attachment",
+              "example": "alice"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteAttachmentMultipartUploadRequestBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Returns the uploaded draft attachment.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentAttachment"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "409": {
+            "description": "The multipart upload belongs to a different project or room."
+          },
+          "413": {
+            "description": "The completed attachment exceeds the project's per-file upload limit."
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        }
+      }
+    },
+    "/rooms/{roomId}/attachments/{attachmentId}/multipart/{uploadId}": {
+      "delete": {
+        "summary": "Abort attachment multipart upload",
+        "description": "Aborts a multipart upload and discards its uploaded parts.",
+        "tags": ["Comments"],
+        "operationId": "abort-attachment-multipart-upload",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID of the room",
+              "example": "my-room-id"
+            }
+          },
+          {
+            "name": "attachmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^at_[A-Za-z0-9_-]{21}$",
+              "description": "ID of the attachment",
+              "example": "at_abc123456789012345678"
+            }
+          },
+          {
+            "name": "uploadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID returned when the multipart upload was created"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Success. The multipart upload was aborted."
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "409": {
+            "description": "The multipart upload belongs to a different project or room."
+          }
+        }
+      }
+    },
     "/rooms/{roomId}/threads/{threadId}/comments/{commentId}/metadata": {
       "post": {
         "summary": "Edit comment metadata",
@@ -9558,6 +9976,50 @@
           "name": "screenshot.png",
           "size": 12345
         }
+      },
+      "AttachmentMultipartUpload": {
+        "type": "object",
+        "title": "AttachmentMultipartUpload",
+        "properties": {
+          "attachmentId": {
+            "type": "string",
+            "pattern": "^at_[A-Za-z0-9_-]{21}$"
+          },
+          "uploadId": {
+            "type": "string"
+          }
+        },
+        "required": ["attachmentId", "uploadId"],
+        "additionalProperties": false
+      },
+      "AttachmentMultipartPart": {
+        "type": "object",
+        "title": "AttachmentMultipartPart",
+        "properties": {
+          "partNumber": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "etag": {
+            "type": "string"
+          }
+        },
+        "required": ["partNumber", "etag"],
+        "additionalProperties": false
+      },
+      "CompleteAttachmentMultipartUploadRequestBody": {
+        "type": "object",
+        "title": "CompleteAttachmentMultipartUploadRequestBody",
+        "properties": {
+          "parts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttachmentMultipartPart"
+            }
+          }
+        },
+        "required": ["parts"],
+        "additionalProperties": false
       },
       "AttachmentWithUrl": {
         "type": "object",
