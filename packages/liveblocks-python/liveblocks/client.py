@@ -16,12 +16,16 @@ if TYPE_CHECKING:
     from .models.ai_copilot_google import AiCopilotGoogle
     from .models.ai_copilot_open_ai import AiCopilotOpenAi
     from .models.ai_copilot_open_ai_compatible import AiCopilotOpenAiCompatible
+    from .models.attachment_multipart_part import AttachmentMultipartPart
+    from .models.attachment_multipart_upload import AttachmentMultipartUpload
     from .models.attachment_with_url import AttachmentWithUrl
     from .models.authorize_user_request_body import AuthorizeUserRequestBody
     from .models.authorize_user_response import AuthorizeUserResponse
     from .models.comment import Comment
+    from .models.comment_attachment import CommentAttachment
     from .models.comment_metadata import CommentMetadata
     from .models.comment_reaction import CommentReaction
+    from .models.complete_attachment_multipart_upload_request_body import CompleteAttachmentMultipartUploadRequestBody
     from .models.complete_storage_file_multipart_upload_request_body import (
         CompleteStorageFileMultipartUploadRequestBody,
     )
@@ -1915,6 +1919,197 @@ class Liveblocks:
         return get_attachment._sync(
             room_id=room_id,
             attachment_id=attachment_id,
+            client=self._client,
+        )
+
+    def upload_attachment(
+        self,
+        room_id: str,
+        attachment_id: str,
+        name: str,
+        *,
+        body: File,
+        user_id: str,
+        file_size: int | Unset = UNSET,
+    ) -> CommentAttachment:
+        """Upload attachment
+
+         Uploads a file's bytes and returns a draft comment attachment. Pass the returned attachment ID in
+        the comment's attachment IDs when creating or editing a comment. For large files, use the multipart
+        upload operations instead.
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            attachment_id (str): ID for the attachment Example: at_abc123456789012345678.
+            name (str): Name of the file Example: screenshot.png.
+            user_id (str): ID of the user uploading the attachment Example: alice.
+            file_size (int | Unset): Expected file size in bytes Example: 12345.
+            body (File):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            CommentAttachment
+        """
+
+        from .api.comments import upload_attachment
+
+        return upload_attachment._sync(
+            room_id=room_id,
+            attachment_id=attachment_id,
+            name=name,
+            body=body,
+            user_id=user_id,
+            file_size=file_size,
+            client=self._client,
+        )
+
+    def create_attachment_multipart_upload(
+        self,
+        room_id: str,
+        attachment_id: str,
+        name: str,
+        *,
+        file_size: int | Unset = UNSET,
+    ) -> AttachmentMultipartUpload:
+        """Create attachment multipart upload
+
+         Starts a multipart upload for a draft comment attachment.
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            attachment_id (str): ID for the attachment Example: at_abc123456789012345678.
+            name (str): Name of the file Example: recording.mp4.
+            file_size (int | Unset): Expected file size in bytes Example: 10485760.
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            AttachmentMultipartUpload
+        """
+
+        from .api.comments import create_attachment_multipart_upload
+
+        return create_attachment_multipart_upload._sync(
+            room_id=room_id,
+            attachment_id=attachment_id,
+            name=name,
+            file_size=file_size,
+            client=self._client,
+        )
+
+    def upload_attachment_multipart_part(
+        self,
+        room_id: str,
+        attachment_id: str,
+        upload_id: str,
+        part_number: int,
+        *,
+        body: File,
+    ) -> AttachmentMultipartPart:
+        """Upload attachment multipart part
+
+         Uploads one part of an attachment multipart upload.
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            attachment_id (str): ID of the attachment Example: at_abc123456789012345678.
+            upload_id (str): ID returned when the multipart upload was created
+            part_number (int): One-based part number Example: 1.
+            body (File):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            AttachmentMultipartPart
+        """
+
+        from .api.comments import upload_attachment_multipart_part
+
+        return upload_attachment_multipart_part._sync(
+            room_id=room_id,
+            attachment_id=attachment_id,
+            upload_id=upload_id,
+            part_number=part_number,
+            body=body,
+            client=self._client,
+        )
+
+    def complete_attachment_multipart_upload(
+        self,
+        room_id: str,
+        attachment_id: str,
+        upload_id: str,
+        *,
+        body: CompleteAttachmentMultipartUploadRequestBody,
+        user_id: str,
+    ) -> CommentAttachment:
+        """Complete attachment multipart upload
+
+         Completes a multipart upload and returns a draft comment attachment. Pass the returned attachment ID
+        in the comment's attachment IDs when creating or editing a comment.
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            attachment_id (str): ID of the attachment Example: at_abc123456789012345678.
+            upload_id (str): ID returned when the multipart upload was created
+            user_id (str): ID of the user uploading the attachment Example: alice.
+            body (CompleteAttachmentMultipartUploadRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            CommentAttachment
+        """
+
+        from .api.comments import complete_attachment_multipart_upload
+
+        return complete_attachment_multipart_upload._sync(
+            room_id=room_id,
+            attachment_id=attachment_id,
+            upload_id=upload_id,
+            body=body,
+            user_id=user_id,
+            client=self._client,
+        )
+
+    def abort_attachment_multipart_upload(
+        self,
+        room_id: str,
+        attachment_id: str,
+        upload_id: str,
+    ) -> None:
+        """Abort attachment multipart upload
+
+         Aborts a multipart upload and discards its uploaded parts.
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            attachment_id (str): ID of the attachment Example: at_abc123456789012345678.
+            upload_id (str): ID returned when the multipart upload was created
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
+        from .api.comments import abort_attachment_multipart_upload
+
+        return abort_attachment_multipart_upload._sync(
+            room_id=room_id,
+            attachment_id=attachment_id,
+            upload_id=upload_id,
             client=self._client,
         )
 
@@ -5302,6 +5497,197 @@ class AsyncLiveblocks:
         return await get_attachment._asyncio(
             room_id=room_id,
             attachment_id=attachment_id,
+            client=self._client,
+        )
+
+    async def upload_attachment(
+        self,
+        room_id: str,
+        attachment_id: str,
+        name: str,
+        *,
+        body: File,
+        user_id: str,
+        file_size: int | Unset = UNSET,
+    ) -> CommentAttachment:
+        """Upload attachment
+
+         Uploads a file's bytes and returns a draft comment attachment. Pass the returned attachment ID in
+        the comment's attachment IDs when creating or editing a comment. For large files, use the multipart
+        upload operations instead.
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            attachment_id (str): ID for the attachment Example: at_abc123456789012345678.
+            name (str): Name of the file Example: screenshot.png.
+            user_id (str): ID of the user uploading the attachment Example: alice.
+            file_size (int | Unset): Expected file size in bytes Example: 12345.
+            body (File):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            CommentAttachment
+        """
+
+        from .api.comments import upload_attachment
+
+        return await upload_attachment._asyncio(
+            room_id=room_id,
+            attachment_id=attachment_id,
+            name=name,
+            body=body,
+            user_id=user_id,
+            file_size=file_size,
+            client=self._client,
+        )
+
+    async def create_attachment_multipart_upload(
+        self,
+        room_id: str,
+        attachment_id: str,
+        name: str,
+        *,
+        file_size: int | Unset = UNSET,
+    ) -> AttachmentMultipartUpload:
+        """Create attachment multipart upload
+
+         Starts a multipart upload for a draft comment attachment.
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            attachment_id (str): ID for the attachment Example: at_abc123456789012345678.
+            name (str): Name of the file Example: recording.mp4.
+            file_size (int | Unset): Expected file size in bytes Example: 10485760.
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            AttachmentMultipartUpload
+        """
+
+        from .api.comments import create_attachment_multipart_upload
+
+        return await create_attachment_multipart_upload._asyncio(
+            room_id=room_id,
+            attachment_id=attachment_id,
+            name=name,
+            file_size=file_size,
+            client=self._client,
+        )
+
+    async def upload_attachment_multipart_part(
+        self,
+        room_id: str,
+        attachment_id: str,
+        upload_id: str,
+        part_number: int,
+        *,
+        body: File,
+    ) -> AttachmentMultipartPart:
+        """Upload attachment multipart part
+
+         Uploads one part of an attachment multipart upload.
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            attachment_id (str): ID of the attachment Example: at_abc123456789012345678.
+            upload_id (str): ID returned when the multipart upload was created
+            part_number (int): One-based part number Example: 1.
+            body (File):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            AttachmentMultipartPart
+        """
+
+        from .api.comments import upload_attachment_multipart_part
+
+        return await upload_attachment_multipart_part._asyncio(
+            room_id=room_id,
+            attachment_id=attachment_id,
+            upload_id=upload_id,
+            part_number=part_number,
+            body=body,
+            client=self._client,
+        )
+
+    async def complete_attachment_multipart_upload(
+        self,
+        room_id: str,
+        attachment_id: str,
+        upload_id: str,
+        *,
+        body: CompleteAttachmentMultipartUploadRequestBody,
+        user_id: str,
+    ) -> CommentAttachment:
+        """Complete attachment multipart upload
+
+         Completes a multipart upload and returns a draft comment attachment. Pass the returned attachment ID
+        in the comment's attachment IDs when creating or editing a comment.
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            attachment_id (str): ID of the attachment Example: at_abc123456789012345678.
+            upload_id (str): ID returned when the multipart upload was created
+            user_id (str): ID of the user uploading the attachment Example: alice.
+            body (CompleteAttachmentMultipartUploadRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            CommentAttachment
+        """
+
+        from .api.comments import complete_attachment_multipart_upload
+
+        return await complete_attachment_multipart_upload._asyncio(
+            room_id=room_id,
+            attachment_id=attachment_id,
+            upload_id=upload_id,
+            body=body,
+            user_id=user_id,
+            client=self._client,
+        )
+
+    async def abort_attachment_multipart_upload(
+        self,
+        room_id: str,
+        attachment_id: str,
+        upload_id: str,
+    ) -> None:
+        """Abort attachment multipart upload
+
+         Aborts a multipart upload and discards its uploaded parts.
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            attachment_id (str): ID of the attachment Example: at_abc123456789012345678.
+            upload_id (str): ID returned when the multipart upload was created
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
+        from .api.comments import abort_attachment_multipart_upload
+
+        return await abort_attachment_multipart_upload._asyncio(
+            room_id=room_id,
+            attachment_id=attachment_id,
+            upload_id=upload_id,
             client=self._client,
         )
 
