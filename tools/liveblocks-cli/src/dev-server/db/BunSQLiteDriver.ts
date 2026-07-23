@@ -21,6 +21,7 @@ import type {
   IUserInfo,
   Json,
   JsonObject,
+  LiveFileData,
   NodeStream,
   PlainLsonObject,
   Relax,
@@ -76,7 +77,7 @@ type NodeRow =
     }
   | {
       id: string;
-      type: CrdtType.OBJECT | CrdtType.REGISTER;
+      type: CrdtType.OBJECT | CrdtType.REGISTER | CrdtType.FILE;
       parent_id: string;
       parent_key: string;
       jdata: jstring;
@@ -99,6 +100,14 @@ function rowToSerializedCrdt(row: NodeRow): SerializedCrdt {
 
     case CrdtType.REGISTER:
       return { type, parentId, parentKey, data: parseJson(jdata) };
+
+    case CrdtType.FILE:
+      return {
+        type,
+        parentId,
+        parentKey,
+        data: parseJson<LiveFileData>(jdata),
+      };
 
     case CrdtType.LIST:
     case CrdtType.MAP:
@@ -199,7 +208,7 @@ function sanitize_illegalNodes(db: Database): void {
          WHERE
            (c.type = ${CrdtType.REGISTER} AND p.type = ${CrdtType.OBJECT})
            OR
-           p.type = ${CrdtType.REGISTER}`
+           p.type IN (${CrdtType.REGISTER}, ${CrdtType.FILE})`
     )
     .all();
 
@@ -348,7 +357,9 @@ function upsert_node(db: Database, id: string, node: SerializedCrdt): void {
   const parentId = id === "root" ? null : (node.parentId ?? null);
   const parentKey = id === "root" ? null : (node.parentKey ?? null);
   const jdata =
-    node.type === CrdtType.OBJECT || node.type === CrdtType.REGISTER
+    node.type === CrdtType.OBJECT ||
+    node.type === CrdtType.REGISTER ||
+    node.type === CrdtType.FILE
       ? JSON.stringify(node.data)
       : null;
 
@@ -424,6 +435,10 @@ function set_child(
 
   if (node.type === CrdtType.REGISTER && parentNode.type === CrdtType.OBJECT) {
     throw new Error("Cannot add register under object");
+  }
+
+  if (parentNode.type === CrdtType.FILE) {
+    throw new Error("Cannot add child under file");
   }
 
   const conflictingSiblingId = get_child_at(db, node.parentId, node.parentKey);
@@ -549,11 +564,11 @@ export class BunSQLiteDriver implements IStorageDriver {
       `CREATE TABLE IF NOT EXISTS nodes (
          id          TEXT NOT NULL PRIMARY KEY,
 
-         type        INTEGER NOT NULL CHECK (type >= 0 AND type <= 3),
-                  -- ^^^^^^^ 0=LiveObject, 1=LiveList, 2=LiveMap, 3=Register
+         type        INTEGER NOT NULL CHECK (type >= 0 AND type <= 5),
+                  -- ^^^^^^^ 0=LiveObject, 1=LiveList, 2=LiveMap, 3=Register, 4=LiveText, 5=LiveFile
          parent_id   TEXT,  -- NULL only for root
          parent_key  TEXT,  -- NULL only for root
-         jdata       TEXT,  -- JSON data for LiveObject and Register; NULL for LiveList/LiveMap
+         jdata       TEXT,  -- JSON data for LiveObject, Register, LiveText, and LiveFile; NULL for LiveList/LiveMap
 
          UNIQUE (parent_id, parent_key),
 
@@ -563,6 +578,14 @@ export class BunSQLiteDriver implements IStorageDriver {
          -- Only 'root' is allowed to have no parent!
          CHECK (id != 'root' OR (parent_id IS NULL AND parent_key IS NULL)),
          CHECK (id = 'root' OR (parent_id IS NOT NULL AND parent_key IS NOT NULL)),
+
+         -- Types must have the correct/expected jdata
+         CHECK (type != 0 OR jdata IS NOT NULL),  -- LiveObject must have jdata
+         CHECK (type != 1 OR jdata IS NULL),      -- LiveList must NOT have jdata
+         CHECK (type != 2 OR jdata IS NULL),      -- LiveMap must NOT have jdata
+         CHECK (type != 3 OR jdata IS NOT NULL),  -- Register must have jdata (even "null" is stored as JSON string)
+         CHECK (type != 4 OR jdata IS NOT NULL),  -- LiveText must have jdata
+         CHECK (type != 5 OR jdata IS NOT NULL),  -- LiveFile must have jdata
 
          -- Foreign key: parent_id must reference an existing node
          FOREIGN KEY (parent_id) REFERENCES nodes (id) ON DELETE RESTRICT
@@ -774,7 +797,9 @@ export class BunSQLiteDriver implements IStorageDriver {
         const parentId = id === "root" ? null : (node.parentId ?? null);
         const parentKey = id === "root" ? null : (node.parentKey ?? null);
         const jdata =
-          node.type === CrdtType.OBJECT || node.type === CrdtType.REGISTER
+          node.type === CrdtType.OBJECT ||
+          node.type === CrdtType.REGISTER ||
+          node.type === CrdtType.FILE
             ? JSON.stringify(node.data)
             : null;
         insertStm.run(id, node.type, parentId, parentKey, jdata);

@@ -46,7 +46,7 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@liveblocks/core": "v3.21.0-private3",
+    "@liveblocks/core": "3.23.0-file1",
     "@liveblocks/query-parser": "workspace:^",
     "@liveblocks/server": "workspace:^",
     "@liveblocks/zenrouter": "^1.2.0",

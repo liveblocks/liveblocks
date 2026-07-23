@@ -88,9 +88,11 @@ function buildReverseLookup(nodes: NodeMap) {
       }
     }
 
-    if (node.type !== CrdtType.REGISTER) {
+    const isLeafNode =
+      node.type === CrdtType.REGISTER || node.type === CrdtType.FILE;
+    if (!isLeafNode) {
       queue.push(...revNodes.valuesAt(nodeId));
-    } else {
+    } else if (node.type === CrdtType.REGISTER) {
       const parent = nodes.get(node.parentId);
       if (parent?.type === CrdtType.OBJECT) {
         continue;
@@ -635,6 +637,10 @@ export class InMemoryDriver implements IStorageDriver {
         parentNode.type === CrdtType.OBJECT
       ) {
         throw new Error("Cannot add register under object");
+      }
+
+      if (parentNode.type === CrdtType.FILE) {
+        throw new Error("Cannot add child under file");
       }
 
       const conflictingSiblingId = revNodes.get(node.parentId, node.parentKey);
