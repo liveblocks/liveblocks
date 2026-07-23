@@ -2,6 +2,24 @@
 
 ## v3.23.0
 
+This release introduces `LiveFile`: a new data structure to store files such as
+images and videos in a room's Storage tree.
+
+### `@liveblocks/client`
+
+- Add `room.uploadFile()` to upload a file and return a `LiveFile`.
+- Add `room.getFileUrl()` to get access to a `LiveFile`.
+
+### `@liveblocks/react`
+
+- Add `useUploadFile()` to upload a file and return a `LiveFile`.
+- Add `useFileUrl()` to get access to a `LiveFile`.
+
+### `@liveblocks/node`
+
+- Add `uploadFile()` to upload a file and return a `LiveFile`.
+- Add `getFileUrl()` to get access to a `LiveFile`.
+
 ## v3.22.0
 
 ### `@liveblocks/react`

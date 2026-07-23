@@ -414,7 +414,7 @@ print(result)
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
 | `room_id` | `str` | Yes | ID of the room |
-| `format_` | `GetStorageDocumentFormat \| Unset` | No | Use the `json` format to output a simplified JSON representation of the Storage tree. In that format, each LiveObject and LiveMap will be formatted as a simple JSON object, and each LiveList will be formatted as a simple JSON array. This is a lossy format because information about the original data structures is not retained, but it may be easier to work with. |
+| `format_` | `GetStorageDocumentFormat \| Unset` | No | Use the `json` format to output a simplified JSON representation of the Storage tree. In that format, each LiveObject and LiveMap becomes a simple JSON object, each LiveList becomes a simple JSON array, and each LiveFile becomes its metadata object. This is a lossy format because information about the original data structures is not retained, but it may be easier to work with. |
 
 
 ---
@@ -426,12 +426,12 @@ This endpoint initializes or reinitializes a room’s Storage. The room must alr
 The format of the request body is the same as what’s returned by the get Storage endpoint.
 
 For each Liveblocks data structure that you want to create, you need a JSON element having two properties:
-- `"liveblocksType"` => `"LiveObject" | "LiveList" | "LiveMap"`
+- `"liveblocksType"` => `"LiveObject" | "LiveList" | "LiveMap" | "LiveFile"`
 - `"data"` => contains the nested data structures (children) and data.
 
 The root’s type can only be LiveObject.
 
-A utility function, `toPlainLson` is included in `@liveblocks/client` from `1.0.9` to help convert `LiveObject`, `LiveList`, and `LiveMap` to the structure expected by the endpoint.
+A utility function, `toPlainLson` is included in `@liveblocks/client` from `1.0.9` to help convert `LiveObject`, `LiveList`, `LiveMap`, and `LiveFile` to the structure expected by the endpoint.
 
 **Example**
 ```python
@@ -499,6 +499,163 @@ client.patch_storage_document(
 |------|------|----------|-------------|
 | `room_id` | `str` | Yes | ID of the room |
 | `body` | `list[AddJsonPatchOperation \| CopyJsonPatchOperation \| MoveJsonPatchOperation \| RemoveJsonPatchOperation \| ReplaceJsonPatchOperation \| TestJsonPatchOperation]` | Yes | Request body (application/json) |
+
+
+---
+
+#### `get_storage_file`
+
+Returns an uploaded Storage file's metadata and a presigned download URL. The URL expires after one hour.
+
+**Example**
+```python
+result = client.get_storage_file(
+    room_id="my-room-id",
+    file_id="fl_abc123456789012345678",
+)
+print(result)
+```
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `room_id` | `str` | Yes | ID of the room |
+| `file_id` | `str` | Yes | ID of the Storage file |
+
+
+---
+
+#### `upload_storage_file`
+
+Uploads a file's bytes to a room and returns the metadata needed to create a LiveFile. For large files, use the multipart upload operations instead. Repeating the request with the same file ID, name, and file size returns the existing upload.
+
+**Example**
+```python
+result = client.upload_storage_file(
+    room_id="my-room-id",
+    file_id="fl_abc123456789012345678",
+    name="photo.png",
+    body=...,
+    # file_size=12345,
+)
+print(result)
+```
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `room_id` | `str` | Yes | ID of the room |
+| `file_id` | `str` | Yes | ID for the Storage file |
+| `name` | `str` | Yes | Name of the file |
+| `file_size` | `int \| Unset` | No | Expected file size in bytes. |
+| `body` | `File` | Yes | Request body (application/octet-stream) |
+
+
+---
+
+#### `create_storage_file_multipart_upload`
+
+Starts a multipart upload for a Storage file.
+
+**Example**
+```python
+result = client.create_storage_file_multipart_upload(
+    room_id="my-room-id",
+    file_id="fl_abc123456789012345678",
+    name="video.mp4",
+    # file_size=10485760,
+)
+print(result)
+```
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `room_id` | `str` | Yes | ID of the room |
+| `file_id` | `str` | Yes | ID for the Storage file |
+| `name` | `str` | Yes | Name of the file |
+| `file_size` | `int \| Unset` | No | Expected file size in bytes |
+
+
+---
+
+#### `upload_storage_file_multipart_part`
+
+Uploads one part of a Storage file multipart upload.
+
+**Example**
+```python
+result = client.upload_storage_file_multipart_part(
+    room_id="my-room-id",
+    file_id="fl_abc123456789012345678",
+    upload_id="...",
+    part_number=1,
+    body=...,
+)
+print(result)
+```
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `room_id` | `str` | Yes | ID of the room |
+| `file_id` | `str` | Yes | ID of the Storage file |
+| `upload_id` | `str` | Yes | ID returned when the multipart upload was created |
+| `part_number` | `int` | Yes | One-based part number |
+| `body` | `File` | Yes | Request body (application/octet-stream) |
+
+
+---
+
+#### `complete_storage_file_multipart_upload`
+
+Completes a multipart upload and returns the metadata needed to create a LiveFile.
+
+**Example**
+```python
+from liveblocks.models import CompleteStorageFileMultipartUploadRequestBody
+
+result = client.complete_storage_file_multipart_upload(
+    room_id="my-room-id",
+    file_id="fl_abc123456789012345678",
+    upload_id="...",
+    body=CompleteStorageFileMultipartUploadRequestBody(
+        parts=[],
+    ),
+)
+print(result)
+```
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `room_id` | `str` | Yes | ID of the room |
+| `file_id` | `str` | Yes | ID of the Storage file |
+| `upload_id` | `str` | Yes | ID returned when the multipart upload was created |
+| `body` | `CompleteStorageFileMultipartUploadRequestBody` | Yes | Request body (application/json) |
+
+
+---
+
+#### `abort_storage_file_multipart_upload`
+
+Aborts a multipart upload and discards its uploaded parts.
+
+**Example**
+```python
+client.abort_storage_file_multipart_upload(
+    room_id="my-room-id",
+    file_id="fl_abc123456789012345678",
+    upload_id="...",
+)
+```
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `room_id` | `str` | Yes | ID of the room |
+| `file_id` | `str` | Yes | ID of the Storage file |
+| `upload_id` | `str` | Yes | ID returned when the multipart upload was created |
 
 
 ---

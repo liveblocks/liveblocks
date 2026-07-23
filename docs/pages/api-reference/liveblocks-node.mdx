@@ -1643,6 +1643,58 @@ and returns no response.
 await liveblocks.deleteStorageDocument("my-room-id");
 ```
 
+#### Liveblocks.uploadFile [#upload-file]
+
+Uploads a file to a room and returns a
+[`LiveFile`](/docs/api-reference/liveblocks-client#LiveFile) which can then be
+added to the room's Storage tree.
+
+```ts
+const liveFile = await liveblocks.uploadFile({
+  roomId: "my-room-id",
+  file,
+});
+```
+
+Pass an `AbortSignal` in the optional second argument to cancel the upload.
+
+```ts
+const liveFile = await liveblocks.uploadFile(
+  {
+    roomId: "my-room-id",
+    file,
+  },
+  { signal }
+);
+```
+
+#### Liveblocks.getFileUrl [#get-file-url]
+
+Returns a presigned URL and its expiration time for a
+[`LiveFile`](/docs/api-reference/liveblocks-client#LiveFile). You can pass a
+`LiveFile`, its `LiveFileData`, or its ID. Throws an error if the room or file
+isn't found.
+
+```ts
+const { url, expiresAt } = await liveblocks.getFileUrl({
+  roomId: "my-room-id",
+  file: liveFile,
+});
+```
+
+Returns a `StorageFileUrl` object with the following properties:
+
+<PropertiesList>
+  <PropertiesListItem name="url" type="string">
+    A presigned URL for the file.
+  </PropertiesListItem>
+  <PropertiesListItem name="expiresAt" type="string">
+    The expiration time of the presigned URL.
+  </PropertiesListItem>
+</PropertiesList>
+
+Pass an `AbortSignal` in the optional second argument to cancel the request.
+
 ### Yjs
 
 #### Liveblocks.getYjsDocument [#get-rooms-roomId-ydoc]
@@ -1861,8 +1913,7 @@ the
 and returns the same response.
 
 ```ts
-const { data } =
-  await liveblocks.createVersionHistorySnapshot("my-room-id");
+const { data } = await liveblocks.createVersionHistorySnapshot("my-room-id");
 
 // { id: "vh_d75sF3..." }
 console.log(data);

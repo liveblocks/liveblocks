@@ -508,7 +508,7 @@ print(result)
     name="format_"
     type="GetStorageDocumentFormat | Unset"
   >
-    Use the `json` format to output a simplified JSON representation of the Storage tree. In that format, each LiveObject and LiveMap will be formatted as a simple JSON object, and each LiveList will be formatted as a simple JSON array. This is a lossy format because information about the original data structures is not retained, but it may be easier to work with.
+    Use the `json` format to output a simplified JSON representation of the Storage tree. In that format, each LiveObject and LiveMap becomes a simple JSON object, each LiveList becomes a simple JSON array, and each LiveFile becomes its metadata object. This is a lossy format because information about the original data structures is not retained, but it may be easier to work with.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -520,12 +520,12 @@ This endpoint initializes or reinitializes a room’s Storage. The room must alr
 The format of the request body is the same as what’s returned by the get Storage endpoint.
 
 For each Liveblocks data structure that you want to create, you need a JSON element having two properties:
-- `"liveblocksType"` => `"LiveObject" | "LiveList" | "LiveMap"`
+- `"liveblocksType"` => `"LiveObject" | "LiveList" | "LiveMap" | "LiveFile"`
 - `"data"` => contains the nested data structures (children) and data.
 
 The root’s type can only be LiveObject.
 
-A utility function, `toPlainLson` is included in `@liveblocks/client` from `1.0.9` to help convert `LiveObject`, `LiveList`, and `LiveMap` to the structure expected by the endpoint.
+A utility function, `toPlainLson` is included in `@liveblocks/client` from `1.0.9` to help convert `LiveObject`, `LiveList`, `LiveMap`, and `LiveFile` to the structure expected by the endpoint.
 
 ```python
 from liveblocks.models import InitializeStorageDocumentBody
@@ -610,6 +610,275 @@ client.patch_storage_document(
     type="list[AddJsonPatchOperation | CopyJsonPatchOperation | MoveJsonPatchOperation | RemoveJsonPatchOperation | ReplaceJsonPatchOperation | TestJsonPatchOperation]"
   >
     Request body (application/json).
+
+  </PropertiesListItem>
+</PropertiesList>
+
+
+### get_storage_file
+
+Returns an uploaded Storage file's metadata and a presigned download URL. The URL expires after one hour.
+
+```python
+result = client.get_storage_file(
+    room_id="my-room-id",
+    file_id="fl_abc123456789012345678",
+)
+print(result)
+```
+
+<PropertiesList title="Parameters">
+  <PropertiesListItem
+    name="room_id"
+    type="str"
+  >
+    ID of the room
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="file_id"
+    type="str"
+  >
+    ID of the Storage file
+
+  </PropertiesListItem>
+</PropertiesList>
+
+
+### upload_storage_file
+
+Uploads a file's bytes to a room and returns the metadata needed to create a LiveFile. For large files, use the multipart upload operations instead. Repeating the request with the same file ID, name, and file size returns the existing upload.
+
+```python
+result = client.upload_storage_file(
+    room_id="my-room-id",
+    file_id="fl_abc123456789012345678",
+    name="photo.png",
+    body=...,
+    # file_size=12345,
+)
+print(result)
+```
+
+<PropertiesList title="Parameters">
+  <PropertiesListItem
+    name="room_id"
+    type="str"
+  >
+    ID of the room
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="file_id"
+    type="str"
+  >
+    ID for the Storage file
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="name"
+    type="str"
+  >
+    Name of the file
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="file_size"
+    type="int | Unset"
+  >
+    Expected file size in bytes.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="body"
+    type="File"
+  >
+    Request body (application/octet-stream).
+
+  </PropertiesListItem>
+</PropertiesList>
+
+
+### create_storage_file_multipart_upload
+
+Starts a multipart upload for a Storage file.
+
+```python
+result = client.create_storage_file_multipart_upload(
+    room_id="my-room-id",
+    file_id="fl_abc123456789012345678",
+    name="video.mp4",
+    # file_size=10485760,
+)
+print(result)
+```
+
+<PropertiesList title="Parameters">
+  <PropertiesListItem
+    name="room_id"
+    type="str"
+  >
+    ID of the room
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="file_id"
+    type="str"
+  >
+    ID for the Storage file
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="name"
+    type="str"
+  >
+    Name of the file
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="file_size"
+    type="int | Unset"
+  >
+    Expected file size in bytes
+  </PropertiesListItem>
+</PropertiesList>
+
+
+### upload_storage_file_multipart_part
+
+Uploads one part of a Storage file multipart upload.
+
+```python
+result = client.upload_storage_file_multipart_part(
+    room_id="my-room-id",
+    file_id="fl_abc123456789012345678",
+    upload_id="...",
+    part_number=1,
+    body=...,
+)
+print(result)
+```
+
+<PropertiesList title="Parameters">
+  <PropertiesListItem
+    name="room_id"
+    type="str"
+  >
+    ID of the room
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="file_id"
+    type="str"
+  >
+    ID of the Storage file
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="upload_id"
+    type="str"
+  >
+    ID returned when the multipart upload was created
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="part_number"
+    type="int"
+  >
+    One-based part number
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="body"
+    type="File"
+  >
+    Request body (application/octet-stream).
+
+  </PropertiesListItem>
+</PropertiesList>
+
+
+### complete_storage_file_multipart_upload
+
+Completes a multipart upload and returns the metadata needed to create a LiveFile.
+
+```python
+from liveblocks.models import CompleteStorageFileMultipartUploadRequestBody
+
+result = client.complete_storage_file_multipart_upload(
+    room_id="my-room-id",
+    file_id="fl_abc123456789012345678",
+    upload_id="...",
+    body=CompleteStorageFileMultipartUploadRequestBody(
+        parts=[],
+    ),
+)
+print(result)
+```
+
+<PropertiesList title="Parameters">
+  <PropertiesListItem
+    name="room_id"
+    type="str"
+  >
+    ID of the room
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="file_id"
+    type="str"
+  >
+    ID of the Storage file
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="upload_id"
+    type="str"
+  >
+    ID returned when the multipart upload was created
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="body"
+    type="CompleteStorageFileMultipartUploadRequestBody"
+  >
+    Request body (application/json).
+
+  </PropertiesListItem>
+</PropertiesList>
+
+
+### abort_storage_file_multipart_upload
+
+Aborts a multipart upload and discards its uploaded parts.
+
+```python
+client.abort_storage_file_multipart_upload(
+    room_id="my-room-id",
+    file_id="fl_abc123456789012345678",
+    upload_id="...",
+)
+```
+
+<PropertiesList title="Parameters">
+  <PropertiesListItem
+    name="room_id"
+    type="str"
+  >
+    ID of the room
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="file_id"
+    type="str"
+  >
+    ID of the Storage file
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="upload_id"
+    type="str"
+  >
+    ID returned when the multipart upload was created
 
   </PropertiesListItem>
 </PropertiesList>

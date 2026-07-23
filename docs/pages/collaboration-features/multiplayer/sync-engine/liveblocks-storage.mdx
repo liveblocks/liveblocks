@@ -9,7 +9,8 @@ meta:
 
 Liveblocks Storage is a realtime sync engine designed for multiplayer creative
 tools such as Figma, Pitch, and Spline. `LiveList`, `LiveMap`, and `LiveObject`
-conflict-free data types can be used to build all sorts of multiplayer tools.
+conflict-free data types can be used to build all sorts of multiplayer tools,
+while `LiveFile` stores references to large files such as images and videos.
 Liveblocks permanently stores Storage data in each
 [room](/docs/concepts/how-liveblocks-works#Rooms), handling scaling and
 maintenance for you.
@@ -101,6 +102,14 @@ the same time. Additionally, they can be
 and are
 [automatically typed](/docs/api-reference/liveblocks-react#typing-storage)
 throughout your app.
+
+### Store large files
+
+Storage is optimized for collaborative data that multiple users modify at the
+same time. Binary data such as images and videos should not be stored directly
+in `LiveObject`, `LiveList`, or `LiveMap`. Use
+[`LiveFile`](/docs/api-reference/liveblocks-client#LiveFile) instead to upload
+the file separately and keep its reference in your Storage tree.
 
 ### Manage document history
 

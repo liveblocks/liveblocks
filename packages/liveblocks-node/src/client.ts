@@ -34,6 +34,8 @@ import type {
   Json,
   JsonObject,
   KDAD,
+  LiveFileData,
+  LiveFileReference,
   NotificationSettings,
   NotificationSettingsPlain,
   Op,
@@ -62,7 +64,9 @@ import type {
   UserSubscriptionDataPlain,
 } from "@liveblocks/core";
 import {
+  autoRetry,
   checkBounds,
+  chunk,
   ClientMsgCode,
   convertToCommentData,
   convertToCommentUserReaction,
@@ -73,7 +77,10 @@ import {
   convertToUserSubscriptionData,
   createManagedPool,
   createNotificationSettings,
+  createStorageFileId,
+  getLiveFileId,
   isPlainObject,
+  LiveFile,
   LiveObject,
   makeAbortController,
   normalizeRoomAccesses,
@@ -154,6 +161,52 @@ export type AttachmentWithUrl = {
   size: number;
   url: string;
   expiresAt: string;
+};
+
+export type StorageFileUrl = {
+  url: string;
+  expiresAt: string;
+};
+
+export type StorageFileWithUrl = LiveFileData & StorageFileUrl;
+
+const STORAGE_FILE_PART_SIZE = 5 * 1024 * 1024; // 5 MB
+const STORAGE_FILE_RETRY_ATTEMPTS = 10;
+const STORAGE_FILE_RETRY_DELAYS = [
+  2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000,
+];
+
+type StorageFilePart = {
+  partNumber: number;
+  part: Blob;
+};
+
+type UploadedStorageFilePart = {
+  partNumber: number;
+  etag: string;
+};
+
+type StorageFileMultipartUpload = {
+  uploadId: string;
+};
+
+type UploadStorageFileOptions<TResult> = {
+  file: File;
+  signal?: AbortSignal;
+  abortErrorMessage: string;
+  uploadSingle: () => Promise<TResult>;
+  createMultipartUpload: () => Promise<StorageFileMultipartUpload>;
+  uploadMultipartPart: (
+    uploadId: string,
+    partNumber: number,
+    part: Blob,
+    signal: AbortSignal
+  ) => Promise<UploadedStorageFilePart>;
+  completeMultipartUpload: (
+    uploadId: string,
+    parts: UploadedStorageFilePart[]
+  ) => Promise<TResult>;
+  abortMultipartUpload: (uploadId: string) => Promise<void>;
 };
 
 export type CreateThreadOptions<
@@ -714,6 +767,172 @@ export type RequestOptions = {
   signal?: AbortSignal;
 };
 
+async function uploadStorageFile<TResult>({
+  file,
+  signal,
+  abortErrorMessage,
+  uploadSingle,
+  createMultipartUpload,
+  uploadMultipartPart,
+  completeMultipartUpload,
+  abortMultipartUpload,
+}: UploadStorageFileOptions<TResult>): Promise<TResult> {
+  const abortError = createAbortError(abortErrorMessage);
+
+  if (signal?.aborted) {
+    throw abortError;
+  }
+
+  const handleRetryError = (err: unknown) => {
+    if (signal?.aborted) {
+      throw abortError;
+    }
+
+    return (
+      err instanceof LiveblocksError && err.status >= 400 && err.status < 500
+    );
+  };
+
+  if (file.size <= STORAGE_FILE_PART_SIZE) {
+    return autoRetry(
+      uploadSingle,
+      STORAGE_FILE_RETRY_ATTEMPTS,
+      STORAGE_FILE_RETRY_DELAYS,
+      handleRetryError
+    );
+  }
+
+  let uploadId: string | undefined;
+  const uploadedParts: UploadedStorageFilePart[] = [];
+  const multipartUpload = await autoRetry(
+    createMultipartUpload,
+    STORAGE_FILE_RETRY_ATTEMPTS,
+    STORAGE_FILE_RETRY_DELAYS,
+    handleRetryError
+  );
+  const partUploadController = new AbortController();
+  const partUploadSignal = partUploadController.signal;
+  const abortPartUploads = (reason?: unknown) => {
+    partUploadController.abort(reason);
+  };
+  const handleExternalAbort = () => abortPartUploads();
+  if (signal?.aborted) {
+    handleExternalAbort();
+  } else {
+    signal?.addEventListener("abort", handleExternalAbort, { once: true });
+  }
+
+  try {
+    uploadId = multipartUpload.uploadId;
+
+    if (signal?.aborted) {
+      throw abortError;
+    }
+
+    const batches = chunk(splitStorageFileIntoParts(file), 5);
+
+    for (const parts of batches) {
+      const firstPartUploadFailure: { value?: { error: unknown } } = {};
+      const partUploads$: Promise<UploadedStorageFilePart>[] = [];
+
+      for (const { part, partNumber } of parts) {
+        partUploads$.push(
+          autoRetry(
+            () =>
+              uploadMultipartPart(
+                multipartUpload.uploadId,
+                partNumber,
+                part,
+                partUploadSignal
+              ),
+            STORAGE_FILE_RETRY_ATTEMPTS,
+            STORAGE_FILE_RETRY_DELAYS,
+            (error: unknown) => {
+              if (signal?.aborted) {
+                throw abortError;
+              }
+
+              return partUploadSignal.aborted || handleRetryError(error);
+            }
+          ).catch((error: unknown) => {
+            if (firstPartUploadFailure.value === undefined) {
+              firstPartUploadFailure.value = { error };
+              abortPartUploads(error);
+            }
+
+            throw error;
+          })
+        );
+      }
+
+      const settledPartUploads = await Promise.allSettled(partUploads$);
+      if (firstPartUploadFailure.value !== undefined) {
+        throw firstPartUploadFailure.value.error;
+      }
+
+      for (const settledPartUpload of settledPartUploads) {
+        if (settledPartUpload.status === "fulfilled") {
+          uploadedParts.push(settledPartUpload.value);
+        }
+      }
+    }
+
+    if (signal?.aborted) {
+      throw abortError;
+    }
+
+    const sortedParts = uploadedParts.sort(
+      (a, b) => a.partNumber - b.partNumber
+    );
+    return autoRetry(
+      () => completeMultipartUpload(multipartUpload.uploadId, sortedParts),
+      STORAGE_FILE_RETRY_ATTEMPTS,
+      STORAGE_FILE_RETRY_DELAYS,
+      handleRetryError
+    );
+  } catch (err) {
+    if (uploadId) {
+      try {
+        await abortMultipartUpload(uploadId);
+      } catch {
+        // Ignore cleanup errors. The original upload error is more useful.
+      }
+    }
+
+    throw err;
+  } finally {
+    signal?.removeEventListener("abort", handleExternalAbort);
+  }
+}
+
+function splitStorageFileIntoParts(file: File): StorageFilePart[] {
+  const parts: StorageFilePart[] = [];
+  let start = 0;
+
+  while (start < file.size) {
+    const end = Math.min(start + STORAGE_FILE_PART_SIZE, file.size);
+
+    parts.push({
+      partNumber: parts.length + 1,
+      part: file.slice(start, end),
+    });
+
+    start = end;
+  }
+
+  return parts;
+}
+
+function createAbortError(message: string): Error {
+  if (typeof DOMException === "function") {
+    return new DOMException(message, "AbortError");
+  }
+
+  const err = new Error(message);
+  err.name = "AbortError";
+  return err;
+}
+
 export type SetPresenceOptions = {
   userId: string;
   data: JsonObject;
@@ -826,10 +1045,11 @@ export class Liveblocks {
 
   async #post(
     path: URLSafeString,
-    json: Json,
-    options?: RequestOptions
+    json: Json | undefined,
+    options?: RequestOptions,
+    params?: QueryParams
   ): Promise<Response> {
-    const url = urljoin(this.#baseUrl, path);
+    const url = urljoin(this.#baseUrl, path, params);
     const headers = {
       Authorization: `Bearer ${this.#secret}`,
       "Content-Type": "application/json",
@@ -843,6 +1063,14 @@ export class Liveblocks {
     });
     xwarn(res, "POST", path);
     return res;
+  }
+
+  async #readJsonResponse<TResult>(res: Response): Promise<TResult> {
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+
+    return (await res.json()) as TResult;
   }
 
   async #patch(
@@ -882,6 +1110,28 @@ export class Liveblocks {
       method: "PUT",
       headers,
       body: body as Uint8Array<ArrayBuffer>,
+      signal: options?.signal,
+    });
+    xwarn(res, "PUT", path);
+    return res;
+  }
+
+  async #putBlob(
+    path: URLSafeString,
+    body: Blob,
+    params?: QueryParams,
+    options?: RequestOptions
+  ): Promise<Response> {
+    const url = urljoin(this.#baseUrl, path, params);
+    const headers = {
+      Authorization: `Bearer ${this.#secret}`,
+      "Content-Type": "application/octet-stream",
+    };
+    const fetch = await fetchPolyfill();
+    const res = await fetch(url, {
+      method: "PUT",
+      headers,
+      body,
       signal: options?.signal,
     });
     xwarn(res, "PUT", path);
@@ -2078,6 +2328,84 @@ export class Liveblocks {
       throw await LiveblocksError.from(res);
     }
     return (await res.json()) as AttachmentWithUrl;
+  }
+
+  public async uploadFile(
+    params: { roomId: string; file: File },
+    options?: RequestOptions
+  ): Promise<LiveFile> {
+    const { roomId, file } = params;
+    const fileId = createStorageFileId();
+
+    const fileData = await uploadStorageFile({
+      file,
+      signal: options?.signal,
+      abortErrorMessage: `Upload of file ${fileId} was aborted.`,
+      uploadSingle: async () => {
+        const res = await this.#putBlob(
+          url`/v2/rooms/${roomId}/storage/files/${fileId}/upload/${file.name}`,
+          file,
+          { fileSize: file.size },
+          options
+        );
+        return await this.#readJsonResponse<LiveFileData>(res);
+      },
+      createMultipartUpload: async () => {
+        const res = await this.#post(
+          url`/v2/rooms/${roomId}/storage/files/${fileId}/multipart/${file.name}`,
+          undefined,
+          options,
+          { fileSize: file.size }
+        );
+        return await this.#readJsonResponse<StorageFileMultipartUpload>(res);
+      },
+      uploadMultipartPart: async (uploadId, partNumber, part, signal) => {
+        const res = await this.#putBlob(
+          url`/v2/rooms/${roomId}/storage/files/${fileId}/multipart/${uploadId}/${String(partNumber)}`,
+          part,
+          undefined,
+          { signal }
+        );
+        return await this.#readJsonResponse<UploadedStorageFilePart>(res);
+      },
+      completeMultipartUpload: async (uploadId, parts) => {
+        const res = await this.#post(
+          url`/v2/rooms/${roomId}/storage/files/${fileId}/multipart/${uploadId}/complete`,
+          { parts },
+          options
+        );
+        return await this.#readJsonResponse<LiveFileData>(res);
+      },
+      abortMultipartUpload: async (uploadId) => {
+        const res = await this.#delete(
+          url`/v2/rooms/${roomId}/storage/files/${fileId}/multipart/${uploadId}`
+        );
+        if (!res.ok) {
+          throw await LiveblocksError.from(res);
+        }
+      },
+    });
+
+    return new LiveFile(fileData);
+  }
+
+  public async getFileUrl(
+    params: { roomId: string; file: LiveFileReference },
+    options?: RequestOptions
+  ): Promise<StorageFileUrl> {
+    const { roomId, file } = params;
+    const fileId = getLiveFileId(file);
+
+    const res = await this.#get(
+      url`/v2/rooms/${roomId}/storage/files/${fileId}`,
+      undefined,
+      options
+    );
+    const storageFile = await this.#readJsonResponse<StorageFileWithUrl>(res);
+    return {
+      url: storageFile.url,
+      expiresAt: storageFile.expiresAt,
+    };
   }
 
   /**
