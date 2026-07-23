@@ -1,4 +1,4 @@
-import { LiveMap, LiveObject, LiveText } from "@liveblocks/client";
+import { LiveMap, LiveObject } from "@liveblocks/client";
 import type { LsonObject } from "@liveblocks/client";
 import type { Liveblocks } from "@liveblocks/node";
 import {
@@ -7,12 +7,10 @@ import {
   getLiveblocksNodeText,
   liveblocksProsemirrorNodeToJson,
   type LiveblocksProsemirrorNode,
-  type ProseMirrorJsonMark,
   type ProseMirrorJsonNode,
 } from "@liveblocks/prosemirror";
 import { generateJSON } from "@tiptap/html";
 import StarterKit from "@tiptap/starter-kit";
-import fastDiff from "fast-diff";
 import { marked } from "marked";
 import { DOCUMENT_FIELD, INITIAL_DOCUMENT } from "@/app/initial-document";
 
@@ -26,9 +24,6 @@ import { DOCUMENT_FIELD, INITIAL_DOCUMENT } from "@/app/initial-document";
 // Storage-mode Tiptap documents live under `root._tiptap_docs`, keyed by the
 // editor's `field` option.
 const TIPTAP_DOCUMENTS_KEY = "_tiptap_docs";
-
-// Marks (bold, italic, …) are stored as this attribute on `LiveText` segments.
-const TEXT_MARKS_ATTRIBUTE = "__liveblocks_tiptap_marks";
 
 // The schema used to convert the AI's Markdown into ProseMirror JSON. Must
 // accept the same nodes as the client editor.
@@ -285,39 +280,13 @@ function clamp(value: number, min: number, max: number): number {
  * Character-level diffing
  * ---------------------------------------------------------------------- */
 
-function marksToAttributes(marks: ProseMirrorJsonMark[] | undefined) {
-  if (!marks || marks.length === 0) {
-    return undefined;
-  }
-  return {
-    [TEXT_MARKS_ATTRIBUTE]: marks.map((mark) => ({
-      type: mark.type,
-      ...(mark.attrs !== undefined ? { attrs: mark.attrs } : {}),
-    })),
-  };
-}
-
-/** Finds the marks at a character position of the new block's inline content. */
-function marksAtPosition(
-  inline: ProseMirrorJsonNode[],
-  position: number
-): ProseMirrorJsonMark[] | undefined {
-  let offset = 0;
-  for (const node of inline) {
-    const length = node.text?.length ?? 0;
-    if (position < offset + length) {
-      return node.marks;
-    }
-    offset += length;
-  }
-  return inline.at(-1)?.marks;
-}
-
 /**
- * Rewrites a block's text as minimal character-level `LiveText` edits, when
- * both the current block and the replacement are simple text blocks. Returns
- * false when the shape doesn't allow it (the caller replaces the node
- * instead).
+ * Rewrites a block's text as one character-level `LiveText.replace` covering
+ * only the changed span (common prefix and suffix are left untouched), when
+ * both the current block and the replacement are simple plain-text blocks.
+ * Because the text edit is positional, concurrent user edits in the same
+ * block merge instead of being overwritten. Returns false when the shape
+ * doesn't allow it (the caller replaces the whole node instead).
  */
 function applyTextDiff(
   node: LiveblocksProsemirrorNode | undefined,
@@ -338,31 +307,40 @@ function applyTextDiff(
     return false;
   }
 
+  // Only diff plain text: replacements that introduce marks (bold, links, …)
+  // fall back to replacing the node, which preserves them exactly.
   const inline = newBlock.content ?? [];
-  if (!inline.every((child) => child.type === "text")) {
+  if (
+    !inline.every(
+      (child) => child.type === "text" && (child.marks ?? []).length === 0
+    )
+  ) {
     return false;
   }
 
   const oldText = liveText.toString();
   const newText = inline.map((child) => child.text ?? "").join("");
 
-  let oldIndex = 0;
-  let newIndex = 0;
-  for (const [kind, text] of fastDiff(oldText, newText)) {
-    if (kind === fastDiff.EQUAL) {
-      oldIndex += text.length;
-      newIndex += text.length;
-    } else if (kind === fastDiff.DELETE) {
-      liveText.delete(oldIndex, text.length);
-    } else {
-      liveText.insert(
-        oldIndex,
-        text,
-        marksToAttributes(marksAtPosition(inline, newIndex))
-      );
-      oldIndex += text.length;
-      newIndex += text.length;
+  if (oldText !== newText) {
+    let prefix = 0;
+    const maxPrefix = Math.min(oldText.length, newText.length);
+    while (prefix < maxPrefix && oldText[prefix] === newText[prefix]) {
+      prefix++;
     }
+    let suffix = 0;
+    while (
+      suffix < maxPrefix - prefix &&
+      oldText[oldText.length - 1 - suffix] ===
+        newText[newText.length - 1 - suffix]
+    ) {
+      suffix++;
+    }
+
+    liveText.replace(
+      prefix,
+      oldText.length - prefix - suffix,
+      newText.slice(prefix, newText.length - suffix)
+    );
   }
 
   // Keep block attributes (e.g. heading level) in sync.

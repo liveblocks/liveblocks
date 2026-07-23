@@ -127,10 +127,17 @@ export async function POST(request: NextRequest) {
 
   // Snapshot the room right before the first document edit of this reply, so
   // the whole edit can be reverted from the chat or the version history.
+  let snapshotFailed = false;
   const ensureSnapshot = async () => {
-    if (revertVersionId === undefined) {
-      const snapshot = await liveblocks.createVersionHistorySnapshot(roomId);
-      revertVersionId = snapshot.data.id;
+    if (revertVersionId === undefined && !snapshotFailed) {
+      try {
+        const snapshot = await liveblocks.createVersionHistorySnapshot(roomId);
+        revertVersionId = snapshot.data.id;
+      } catch {
+        // Version history may not be available (e.g. on the local Liveblocks
+        // dev server). Edits still work, they just can't be reverted.
+        snapshotFailed = true;
+      }
     }
   };
 

@@ -47,7 +47,7 @@ export function VersionHistorySidebar({
   onSelectVersion: (versionId: string) => void;
   onClose: () => void;
 }) {
-  const { versions, isLoading } = useHistoryVersions();
+  const { versions, isLoading, error } = useHistoryVersions();
 
   const sorted = useMemo(
     () =>
@@ -82,6 +82,13 @@ export function VersionHistorySidebar({
         {isLoading ? (
           <div className="flex h-full items-center justify-center text-muted-foreground">
             <Loader size={20} />
+          </div>
+        ) : error ? (
+          <div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center text-muted-foreground">
+            <HistoryIcon className="size-6" />
+            <p className="text-sm">
+              Version history isn’t available on this server.
+            </p>
           </div>
         ) : sorted.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center text-muted-foreground">
