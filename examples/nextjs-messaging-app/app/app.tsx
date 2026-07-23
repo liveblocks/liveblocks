@@ -111,7 +111,13 @@ export function App() {
   const initialStorage = useMemo(() => createInitialStorage(), [roomId]);
 
   return (
-    <LiveblocksProvider key={userId} authEndpoint={authEndpoint}>
+    <LiveblocksProvider
+      key={userId}
+      authEndpoint={authEndpoint}
+      // Used when testing against a self-hosted Liveblocks dev server.
+      // You can ignore this when running the example yourself.
+      baseUrl={process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL}
+    >
       <RoomProvider
         key={roomId}
         id={roomId}

@@ -18,6 +18,7 @@ export async function POST(request: NextRequest) {
 
   const liveblocks = new Liveblocks({
     secret: process.env.LIVEBLOCKS_SECRET_KEY,
+    baseUrl: process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL,
   });
 
   const { userId } = (await request.json().catch(() => ({}))) as {

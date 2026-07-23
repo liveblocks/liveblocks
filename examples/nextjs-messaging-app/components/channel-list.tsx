@@ -163,8 +163,8 @@ export function ChannelList({
   const channelIds = channels.map((channel) => channel.id);
 
   return (
-    <div className="flex h-[calc(100%-2rem)] flex-col px-2 pb-2">
-      <div className="min-h-0 flex-1 overflow-y-auto">
+    <div className="px-2 pb-2">
+      <div>
         <DndContext
           collisionDetection={closestCenter}
           sensors={sensors}
@@ -228,7 +228,7 @@ export function ChannelList({
       <button
         type="button"
         onClick={() => setCreating(true)}
-        className="mt-2 flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-[var(--sidebar-text-muted)] transition hover:bg-[var(--sidebar-bg-hover)] hover:text-[var(--sidebar-text)]"
+        className="mt-1 flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-[var(--sidebar-text-muted)] transition hover:bg-[var(--sidebar-bg-hover)] hover:text-[var(--sidebar-text)]"
       >
         <PlusIcon className="size-4" aria-hidden />
         Add channel

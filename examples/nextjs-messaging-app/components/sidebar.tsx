@@ -34,7 +34,7 @@ export function Sidebar({
         />
       </header>
 
-      <div className="min-h-0 flex-1 overflow-hidden">
+      <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="flex items-center justify-between px-4 pb-1 pt-4">
           <div className="text-xs font-semibold uppercase tracking-wide text-[var(--sidebar-text-muted)]">
             Channels

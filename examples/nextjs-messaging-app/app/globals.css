@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Apply hover styles on any pointer device (Tailwind v4 gates them behind
+   `@media (hover: hover)` by default, hiding hover-revealed controls on
+   touch/virtual pointers). */
+@custom-variant hover (&:hover);
+
 :root {
   --sidebar-bg: #3f0e40;
   --sidebar-bg-hover: rgba(255, 255, 255, 0.08);
