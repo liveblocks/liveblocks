@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+:root {
+  --sidebar-bg: #3f0e40;
+  --sidebar-bg-hover: rgba(255, 255, 255, 0.08);
+  --sidebar-bg-active: rgba(255, 255, 255, 0.16);
+  --sidebar-border: rgba(255, 255, 255, 0.1);
+  --sidebar-text: rgba(255, 255, 255, 0.92);
+  --sidebar-text-muted: rgba(255, 255, 255, 0.65);
+  --chat-bg: #ffffff;
+}
+
+@layer base {
+  html,
+  body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    @apply antialiased;
+    background: var(--chat-bg);
+    color: #1a1d21;
+  }
+}
