@@ -178,6 +178,9 @@ export function createLiveblocksCollaborationPlugin(
 
   let view: EditorView | undefined;
   let root: LiveObject<LsonObject> | undefined;
+  let unsubscribe: (() => void) | undefined;
+  let unsubscribeFromHistory: (() => void) | undefined;
+  let destroyed = false;
   let isApplyingRemoteUpdate = false;
   let isApplyingLocalUpdate = false;
   let lastDocument = "";
@@ -427,14 +430,7 @@ export function createLiveblocksCollaborationPlugin(
     view(editorView) {
       view = editorView;
 
-      // Lifecycle state must be scoped per view instance: ProseMirror can
-      // destroy and recreate plugin views (e.g. when Tiptap reconfigures the
-      // editor state), and a stale flag from a destroyed instance must not
-      // leak into the next one.
-      let destroyed = false;
-      let unsubscribe: (() => void) | undefined;
-
-      const unsubscribeFromHistory = privateHistory?.subscribe((event) => {
+      unsubscribeFromHistory = privateHistory?.subscribe((event) => {
         if (event.action === "push") {
           if (captureBefore !== undefined && captureAfter !== undefined) {
             selectionsByHistoryId.set(event.id, {
@@ -518,6 +514,7 @@ export function createLiveblocksCollaborationPlugin(
           unsubscribe?.();
           unsubscribeFromHistory?.();
           unsubscribe = undefined;
+          unsubscribeFromHistory = undefined;
           view = undefined;
           root = undefined;
           selectionsByHistoryId.clear();
