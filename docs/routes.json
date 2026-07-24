@@ -563,6 +563,10 @@
             "path": "/collaboration-features/comments/metadata"
           },
           {
+            "title": "Attachments and reactions",
+            "path": "/collaboration-features/comments/attachments-and-reactions"
+          },
+          {
             "title": "Primitives",
             "path": "/collaboration-features/comments/primitives"
           },

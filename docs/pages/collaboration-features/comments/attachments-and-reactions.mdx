@@ -1,0 +1,161 @@
+---
+meta:
+  title: "Attachments and reactions"
+  parentTitle: "Comments"
+  description: "Add files and emoji reactions to comments"
+---
+
+Comments supports file attachments and emoji reactions out-of-the-box. Both are
+enabled by default in the
+[default components](/docs/collaboration-features/comments/default-components),
+and both can be turned off with a single prop, or rebuilt from scratch with
+[primitives](/docs/collaboration-features/comments/primitives) and hooks.
+
+## Attachments
+
+Users can attach files to their comments, for example screenshots, documents, or
+videos. Files are uploaded to Liveblocks file storage, and image and video
+attachments display an inline preview, while other file types show the file’s
+name and size.
+
+In the default [`Composer`][] component, users can add attachments with the
+attach button, by dragging and dropping files, or by pasting them. No setup is
+required—attachments work by default.
+
+### Enabling attachments in custom behavior [#enabling-attachments]
+
+If you’ve added
+[custom behavior](/docs/api-reference/liveblocks-react-ui#Custom-behavior) to
+your composer with `onComposerSubmit` and mutation hooks such as
+[`useCreateThread`](/docs/api-reference/liveblocks-react#useCreateThread),
+[`useCreateComment`](/docs/api-reference/liveblocks-react#useCreateComment), or
+[`useEditComment`](/docs/api-reference/liveblocks-react#useEditComment), make
+sure to pass the `attachments` array through to your mutation, otherwise
+attachments will be silently dropped.
+
+```tsx
+const createThread = useCreateThread();
+
+// +++
+<Composer
+  onComposerSubmit={({ body, attachments }, event) => {
+    event.preventDefault();
+    createThread({ body, attachments, metadata: {} });
+  }}
+/>;
+// +++
+```
+
+### Disabling attachments [#disabling-attachments]
+
+To turn off attachments, set the `showAttachments` prop to `false` on each of
+the following components: [`Composer`][], [`Comment`][], [`Thread`][], and
+[`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification).
+
+```tsx
+<Composer showAttachments={false} />
+<Comment showAttachments={false} comment={comment} />
+<Thread showAttachments={false} thread={thread} />
+<InboxNotification showAttachments={false} inboxNotification={inboxNotification} />
+```
+
+### Attachment limits [#attachment-limits]
+
+- Each comment can contain up to **10 attachments**.
+- Any file type can be attached.
+- The maximum size of a single file depends on your plan—see
+  [limits](/docs/pricing/limits) for the values on each plan.
+
+If a user tries to attach a file that’s too large, the default components
+display an error message, which can be customized with the
+`ATTACHMENT_TOO_LARGE`
+[override](/docs/api-reference/liveblocks-react-ui#Overrides).
+
+### Downloading attachments [#downloading-attachments]
+
+Attachments are stored privately, and are accessed through short-lived presigned
+URLs. In React, use
+[`useAttachmentUrl`](/docs/api-reference/liveblocks-react#useAttachmentUrl) to
+get a URL for displaying or downloading an attachment. On the server, use
+[`liveblocks.getAttachment`](/docs/api-reference/liveblocks-node#get-rooms-roomId-attachments-attachmentId),
+which is helpful when including attachments in emails or syncing them elsewhere.
+
+### Attachments in custom components [#custom-attachments]
+
+If you’re building a fully custom composer with primitives, use
+[`Composer.AttachFiles`](/docs/api-reference/liveblocks-react-ui#primitives-Composer.AttachFiles)
+to render an attach button and
+[`Composer.AttachmentsDropArea`](/docs/api-reference/liveblocks-react-ui#primitives-Composer.AttachmentsDropArea)
+to create a drop area for files. Learn more under
+[handle attachments](/docs/api-reference/liveblocks-react-ui#Handle-attachments),
+and use the
+[`FileSize`](/docs/api-reference/liveblocks-react-ui#primitives-FileSize)
+primitive to display file sizes.
+
+## Emoji reactions
+
+Users can react to any comment with emojis. The default [`Comment`][] and
+[`Thread`][] components render a reaction button which opens an emoji picker,
+and display each comment’s reactions with counts. Like attachments, reactions
+are enabled by default and require no setup.
+
+<Figure>
+  <Image
+    src="/assets/comments/thread.png"
+    alt="Thread with comments"
+    width={768}
+    height={446}
+  />
+</Figure>
+
+### Disabling reactions [#disabling-reactions]
+
+To turn off reactions, set the `showReactions` prop to `false` on [`Thread`][],
+[`Comment`][], and
+[`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification).
+
+```tsx
+<Thread showReactions={false} thread={thread} />
+<Comment showReactions={false} comment={comment} />
+<InboxNotification showReactions={false} inboxNotification={inboxNotification} />
+```
+
+### Custom reactions [#custom-reactions]
+
+If you’re building custom components, add and remove reactions with the
+[`useAddReaction`](/docs/api-reference/liveblocks-react#useAddReaction) and
+[`useRemoveReaction`](/docs/api-reference/liveblocks-react#useRemoveReaction)
+hooks. Each comment exposes its reactions on `comment.reactions`.
+
+```tsx
+import { CommentData } from "@liveblocks/client";
+import { useAddReaction } from "@liveblocks/react/suspense";
+
+function CustomReactionButton({ comment }: { comment: CommentData }) {
+  const addReaction = useAddReaction();
+
+  return (
+    <button
+      onClick={() =>
+        addReaction({
+          threadId: comment.threadId,
+          commentId: comment.id,
+          emoji: "⭐",
+        })
+      }
+    >
+      ⭐
+    </button>
+  );
+}
+```
+
+To render an emoji picker in your custom components, we recommend
+[Frimousse](https://frimousse.liveblocks.io), the lightweight emoji picker used
+by our default components. Learn more under
+[emoji picker](/docs/api-reference/liveblocks-react-ui#emoji-picker) and
+[emoji reactions](/docs/api-reference/liveblocks-react-ui#emoji-reactions).
+
+[`Composer`]: /docs/api-reference/liveblocks-react-ui#Composer
+[`Comment`]: /docs/api-reference/liveblocks-react-ui#Comment
+[`Thread`]: /docs/api-reference/liveblocks-react-ui#Thread
