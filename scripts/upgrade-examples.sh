@@ -15,17 +15,20 @@ err () {
 }
 
 usage () {
-    err "usage: upgrade-examples.sh [<version>]"
+    err "usage: upgrade-examples.sh [-s] [<version>]"
     err
     err "Upgrades all the example projects by bumping the Liveblocks dependencies"
     err "to the given version. If not provided, uses the latest version."
     err
     err "Options:"
+    err "-s    Skip installing dependencies"
     err "-h    Show this help"
 }
 
-while getopts h flag; do
+upgrade_options=
+while getopts sh flag; do
     case "$flag" in
+        s) upgrade_options="--skip-install" ; ;;
         *) usage; exit 2;;
     esac
 done
@@ -33,4 +36,4 @@ shift $(($OPTIND - 1))
 
 VERSION="${1:-latest}"
 
-scripts/for-all-examples.sh -c "pnpm dlx liveblocks@latest upgrade $VERSION" -f
+scripts/for-all-examples.sh -p -c "pnpm dlx liveblocks@latest upgrade $upgrade_options $VERSION" -f
