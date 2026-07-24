@@ -29,6 +29,8 @@ HTML. You can drag-and-drop elements, edit the code, and leave comments for
 other users. As other users edit slides, you can see their presence in the
 preview and code editor.
 
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/ai-slideshow.png" width="536" alt="AI Slideshow Generator" />
+
 ## Getting started
 
 Run the following command to try this example locally:
