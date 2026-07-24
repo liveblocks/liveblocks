@@ -49,6 +49,11 @@ images and videos in a room's Storage tree.
   URLs, and handle multipart uploads.
 - Add methods to upload comment attachments, including multipart uploads.
 
+## Examples
+
+- Updated the
+  [Collaborative Whiteboard](https://liveblocks.io/examples/collaborative-whiteboard-advanced/nextjs-whiteboard-advanced) and [tldraw Whiteboard](https://liveblocks.io/examples/tldraw-whiteboard/nextjs-tldraw-whiteboard-storage) examples to support images using `LiveFile` in Liveblocks Storage.
+
 ## Contributors
 
 ofoucherot, marcbouchenoire
