@@ -17,7 +17,7 @@ import { useRestoreToStorageVersion } from "@liveblocks/react";
 import { Avatar } from "@liveblocks/react-ui";
 import {
   CopyIcon,
-  HistoryIcon,
+  MessagesSquareIcon,
   PlusIcon,
   RefreshCcwIcon,
   SparklesIcon,
@@ -134,12 +134,12 @@ export function Chat({ roomId }: { roomId: string }) {
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon-sm" aria-label="Chat history">
-                  <HistoryIcon className="size-4" />
+                <Button variant="ghost" size="icon-sm" aria-label="All chats">
+                  <MessagesSquareIcon className="size-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-64">
-                <DropdownMenuLabel>Chat history</DropdownMenuLabel>
+                <DropdownMenuLabel>All chats</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {chats.length === 0 ? (
                   <DropdownMenuItem disabled>No chats yet</DropdownMenuItem>
