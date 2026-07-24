@@ -70,6 +70,11 @@ workspace. They depend on the latest _published_ version of Liveblocks packages,
 not on the local source. You cannot test examples against local changes. They
 need to be updated separately when a new version is published.
 
+When creating a new example, follow the instructions in
+`.agents/skills/create-example/SKILL.md` (scaffolding, gallery conventions like
+`exampleId`/`examplePreview`/`database.ts`/help button, providers setup, AI
+patterns, styling, and testing).
+
 # Documentation
 
 All documentation lives in the `docs/` directory, as Markdown files.
@@ -94,6 +99,14 @@ changes to them directly here — prefer editing the source in the backend repo.
 - `tools/liveblocks-cli`
 
 # Cursor Cloud specific instructions
+
+## Testing policy
+
+Do not create screen recordings or screenshots, and do not do browser-driven
+manual testing. Keep verification light to save tokens: typecheck, run the
+relevant dev server, and check behavior at the terminal level (curl, small
+scripts, logs). Report anything that can only be verified against the
+production backend instead of building workarounds.
 
 ## When you do NOT need to build/run anything
 
