@@ -1,6 +1,7 @@
 export * from "./authorizeLiveblocks";
 export * from "./createDocument";
 export * from "./deleteDocument";
+export * from "./getAiConfig";
 export * from "./getCurrentOrganization";
 export * from "./getDocument";
 export * from "./getDocuments";

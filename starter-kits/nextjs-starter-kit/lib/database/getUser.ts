@@ -1,3 +1,4 @@
+import { AI_USER_ID, aiUser } from "@/data/ai";
 import { colors } from "@/data/colors";
 import { users } from "@/data/users";
 
@@ -9,6 +10,12 @@ import { users } from "@/data/users";
  * @param userId - The user's id
  */
 export async function getUser(userId: string) {
+  // The AI assistant is resolvable so its avatar/name show in AI chats,
+  // presence, and comment replies. It is not part of the user database.
+  if (userId === AI_USER_ID) {
+    return aiUser;
+  }
+
   const user = users.find((user) => user.id === userId);
 
   if (!user) {

@@ -1,0 +1,33 @@
+.cm-editor {
+  height: 100%;
+}
+
+.cm-editor .cm-ySelectionInfo {
+  position: absolute;
+  top: -1.6em;
+  left: -1px;
+  padding: 2px 6px;
+  opacity: 1;
+  color: #fff;
+  border: 0;
+  border-radius: 6px;
+  border-bottom-left-radius: 0;
+  line-height: normal;
+  white-space: nowrap;
+  font-size: 12px;
+  font-family: var(--font-sans);
+  font-style: normal;
+  font-weight: 600;
+  pointer-events: none;
+  user-select: none;
+  z-index: 1000;
+}
+
+.cm-editor .cm-ySelectionCaretDot {
+  display: none;
+}
+
+/* y-codemirror's generated selector keeps line selections aligned with gutters. */
+.ͼ1 .cm-yLineSelection {
+  margin-left: 0;
+}

@@ -1,0 +1,140 @@
+.app-builder {
+  --accent: #e11d48;
+  --inner-app-width: 36rem;
+}
+
+.app-builder .monaco-editor .generated-line-highlight {
+  background-color: #fff1f2 !important;
+  animation: app-builder-pulse-highlight 1s ease-in-out infinite;
+}
+
+.app-builder .monaco-editor .generated-character-highlight {
+  background-color: #fda4af !important;
+  color: white !important;
+  animation: app-builder-blink-cursor 1s step-end infinite;
+}
+
+@keyframes app-builder-pulse-highlight {
+  0%,
+  100% {
+    background-color: #ffe4e6;
+  }
+
+  50% {
+    background-color: #fecdd3;
+  }
+}
+
+@keyframes app-builder-blink-cursor {
+  0%,
+  50% {
+    background-color: black;
+  }
+
+  51%,
+  100% {
+    background-color: transparent;
+  }
+}
+
+.app-builder .lb-root {
+  font-size: 14px;
+  --lb-accent: var(--accent);
+  --lb-radius: 0.125rem;
+  --lb-spacing: 0.6rem;
+  --lb-ai-chat-container-width: var(--inner-app-width);
+}
+
+.app-builder .lb-ai-chat {
+  position: relative;
+  --lb-background: #fafafa;
+  --lb-foreground: #171717;
+}
+
+.app-builder .lb-ai-chat-composer {
+  --lb-radius: 4px;
+  box-shadow:
+    0 1px 2px 0 rgb(0 0 0 / 0.05),
+    0 0 0 1px #e5e5e5;
+}
+
+.app-builder .lb-ai-chat-footer {
+  padding: 0 0.625rem 0.625rem;
+}
+
+.app-builder .sp-navigator {
+  margin-bottom: -1px;
+}
+
+.app-builder .monaco-scrollable-element > .scrollbar > .slider {
+  background: #e5e5e5 !important;
+}
+
+.app-builder .lb-ai-chat h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.app-builder .lb-ai-chat h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.app-builder .lb-ai-chat h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.app-builder .lb-ai-chat h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.app-builder .lb-ai-chat h5 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.app-builder .lb-ai-chat blockquote {
+  box-sizing: border-box;
+  border-left: 0.25rem solid rgb(209 213 219);
+  padding-left: 1rem;
+}
+
+.app-builder .lb-ai-chat ul {
+  display: block;
+  list-style-type: disc;
+  margin-block-start: 1rem;
+  margin-block-end: 1rem;
+  margin-inline-start: 0;
+  margin-inline-end: 0;
+  padding-inline-start: 40px;
+}
+
+.app-builder .lb-ai-chat ol {
+  display: block;
+  list-style-type: decimal;
+  margin-block-start: 1rem;
+  margin-block-end: 1rem;
+  margin-inline-start: 0;
+  margin-inline-end: 0;
+  padding-inline-start: 40px;
+}
+
+.app-builder .lb-ai-chat li {
+  display: list-item;
+}
+
+.app-builder .lb-ai-chat li::marker {
+  font-variant-numeric: tabular-nums;
+  text-transform: none;
+  text-indent: 0 !important;
+  text-align: start !important;
+  text-align-last: start !important;
+}
