@@ -1,0 +1,54 @@
+.composer-editor {
+  min-height: 44px;
+  max-height: 180px;
+  overflow-y: auto;
+  padding: 0.75rem 1rem;
+  outline: none;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.composer-editor p {
+  margin: 0;
+}
+
+.composer-editor p.is-editor-empty:first-child::before {
+  color: #9ca3af;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.composer-editor .mention {
+  border-radius: 9999px;
+  background: #eef2ff;
+  color: #4338ca;
+  font-weight: 500;
+  padding: 0 0.25rem;
+}
+
+.composer-editor pre {
+  margin: 0.25rem 0;
+  border-radius: 0.5rem;
+  background: #111827;
+  color: #f9fafb;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.875rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.composer-editor code {
+  border-radius: 0.25rem;
+  background: #f3f4f6;
+  color: #be123c;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.9em;
+  padding: 0.1rem 0.25rem;
+}
+
+.composer-editor pre code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+}
