@@ -148,6 +148,11 @@ complete, then used in two PRs. IMPORTANT: always pause after creating the
 images — link both Figma nodes to the human and wait for approval (they
 usually make final edits by hand). Only export and open PRs once approved.
 
+The images are made with the official Figma MCP server. If it isn't
+available in your environment, let the user know they can set it up if they
+want help with the images — this step is optional (you can skip it and they
+can make the images themselves), but doing it via the MCP is preferred.
+
 ### 1. Gallery thumbnail (Figma)
 
 - File: [Examples thumbnails](https://www.figma.com/design/Qcr7GAO1zTm6lAdYrFsMRx/Examples-thumbnails),
