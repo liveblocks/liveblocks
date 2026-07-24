@@ -1,0 +1,149 @@
+---
+name: create-example
+description:
+  Create a new Liveblocks example app for the gallery under examples/. Use when
+  asked to build a new example, demo, or showcase app, or when restructuring an
+  existing example. Covers scaffolding, gallery conventions (exampleId,
+  examplePreview, database.ts, HelpButton), providers configuration, AI
+  patterns, styling, local testing against the dev server, and READMEs.
+---
+
+# Creating a Liveblocks example
+
+## Ground rules
+
+- Examples live in `examples/` and are NOT part of the pnpm workspace. They
+  depend on the latest _published_ Liveblocks packages, use plain `npm`
+  (commit `package-lock.json`), and cannot be tested against local package
+  source. Run `nvm use 24.14.1` before `npm install`.
+- Start by copying the closest existing example and adapting it. Good bases:
+  - `nextjs-ai-slideshow` — AI chat + document layout, Tailwind v4 + shadcn
+    UI kit, AI Elements components, `database.ts`, help button.
+  - `nextjs-ai-elements-realtime` — multiplayer AI chat on Feeds with
+    streamed replies written server-side via `@liveblocks/node`.
+  - `nextjs-comments-notifications` — gallery param helpers
+    (`example.ts` / `example.client.ts`).
+  - `nextjs-comments-ai` — AI replies to comments (webhook + workflow).
+- Verify features against the _published_ package (e.g. check typings on
+  unpkg), not the local monorepo source — they can differ. When an example
+  relies on an experimental release (e.g. `3.23.0-exp2`), pin `@liveblocks/*`
+  to that exact version; use caret ranges (`^3.21.0`) for stable releases.
+  Every `@liveblocks/*` package must use the same version.
+
+## Required boilerplate (gallery conventions)
+
+Every example needs these, copied and adapted from an existing example:
+
+- **Room id**: `liveblocks:examples:<example-name>` (append `:<subid>` for
+  multi-room examples). The auth route allows
+  `session.allow("liveblocks:examples:*", ["*:write"])`.
+- **Gallery URL params** (used when the example is embedded on liveblocks.io;
+  harmless locally):
+  - `exampleId` — isolates a gallery session: append `-${exampleId}` to the
+    room id (and to user ids where user identity must be isolated).
+  - `examplePreview` — a number identifying the preview pane; use it to pick
+    a distinct demo user per pane: `users[examplePreview % users.length]`.
+  - Use the `useExampleRoomId` hook pattern (or `example.ts` +
+    `example.client.ts` from `nextjs-comments-notifications` when you also
+    need `examplePreview`), with the standard "used when deploying an example
+    on liveblocks.io, ignore locally" comment.
+- **`app/database.ts`** (as in `nextjs-ai-slideshow`): a hardcoded mock user
+  database typed as `Liveblocks["UserMeta"][]`, avatars from
+  `https://liveblocks.io/avatars/avatar-N.png`, `getUser`/`getUsers`/
+  `getRandomUser` helpers. For AI examples add `AI_USER_ID = "ai-assistant"`
+  with the `https://liveblocks.io/api/avatar?u=ai-assistant&agent=true`
+  avatar.
+- **Auth**: `/api/liveblocks-auth` route using the secret key. The client
+  picks a demo user (random, or via `examplePreview`) and POSTs
+  `{ room, userId }` to the route via an `authEndpoint` function — there is
+  no `exampleUser` param; user identity always flows through this `userId`.
+- **Providers** (see `nextjs-ai-slideshow/app/providers.tsx`):
+  - `throttle={16}`
+  - `authEndpoint` as described above
+  - `resolveUsers` → `/api/users?userIds=...`
+  - `resolveMentionSuggestions` → `/api/users/search?text=...`
+  - both API routes backed by `database.ts`
+- **Help button** (as in `nextjs-ai-slideshow/components/help-button.tsx`): a
+  small `?` button opening a dialog with the example name (linking to its
+  gallery page `https://liveblocks.io/examples/<slug>/<example-name>`) and
+  3-4 short feature descriptions explaining what the example does and how to
+  try the multiplayer behavior (e.g. "open in two tabs").
+- **`liveblocks.config.ts`**: declare all types globally (`UserMeta`,
+  `Presence`, `Storage`, `FeedMessageData`, …) with brief comments.
+- **`.env.example`**: `LIVEBLOCKS_SECRET_KEY` (with dashboard link) plus any
+  optional keys (e.g. `AI_GATEWAY_API_KEY`) documented with their fallback
+  behavior.
+- **`README.md`**: copy the house template — Liveblocks header SVGs, badges,
+  one-paragraph description with docs links,
+  `npx create-liveblocks-app@latest --example <name> --api-key`, collapsed
+  "Manual setup" / "Deploy on Vercel" / "CodeSandbox" sections.
+- **`vercel.json`**, **`next.config.ts`** (with the monorepo-root turbopack
+  setting), **`package.json`** `name` (`@liveblocks-examples/<name>`) and
+  `description` — copy from the base example.
+
+## Styling
+
+- Tailwind v4 (`@tailwindcss/postcss`) + shadcn-style components. Style after
+  `nextjs-ai-slideshow` unless told otherwise: `h-dvh` shell on
+  `bg-neutral-50`, rounded white panels (`rounded-lg bg-white shadow ring-1
+  ring-neutral-950/5`), a fixed-width (~380px) right panel for chat-style
+  UIs, `lucide-react` icons, `AvatarStack` in the header.
+- Tailwind v4 gates `hover:` behind `@media (hover: hover)`; if hover-only
+  controls must also work with touch/synthetic pointers, add
+  `@custom-variant hover (&:hover);` in `globals.css`.
+- Tailwind preflight resets typography — rich-text editors need explicit CSS
+  for headings, lists, quotes, and code in `globals.css`.
+
+## AI examples
+
+- Always ship a keyless mock fallback: without `AI_GATEWAY_API_KEY`, stream a
+  canned reply through the same code path (e.g. `updateFeedMessage` loop) and
+  still perform any real side effects (document edits, reactions) so the
+  whole loop works with only a Liveblocks key.
+- Stream AI replies server-side with `@liveblocks/node`
+  (`createFeedMessage` + repeated `updateFeedMessage`); clients see them live
+  via `useFeedMessages`. Throttle updates (~100ms) while streaming.
+- Give models Markdown interfaces (in prompts and tool inputs), not raw
+  ProseMirror/JSON. Convert server-side (`marked` + `generateJSON` from
+  `@tiptap/html`, or `markdownToCommentBody` from `@liveblocks/node`).
+- When the AI edits shared state, prefer targeted, merge-friendly writes over
+  whole-document replaces (e.g. `mutateStorage` with ops scoped to the blocks
+  being changed) so concurrent human edits survive.
+- For examples with comments, add AI comment replies like
+  `nextjs-comments-ai`: a `commentCreated` webhook
+  (`LIVEBLOCKS_WEBHOOK_SECRET_KEY`) starts a Workflow SDK workflow that
+  replies only when the AI user is @-mentioned — it leaves a 👀 reaction,
+  shows AI presence, creates a placeholder comment plus a feed, and streams
+  the reply into the feed.
+
+## Local testing (keep it light)
+
+- Do NOT create screen recordings or screenshots, and skip browser-driven
+  manual testing. Verify with `npx tsc --noEmit`, a running dev server, and
+  terminal-level checks (curl against API routes, small scripts). Deep
+  end-to-end testing is not expected for examples.
+- To run against the local dev server (`pnpm dlx liveblocks dev --port
+  1153`), put in `.env.local`: `LIVEBLOCKS_SECRET_KEY=sk_localdev` and, if
+  the example supports it, `LIVEBLOCKS_BASE_URL` /
+  `NEXT_PUBLIC_LIVEBLOCKS_BASE_URL` set to `http://localhost:1153`. Passing
+  `baseUrl` through `LiveblocksProvider` and `new Liveblocks({...})` from
+  these env vars is acceptable in committed code (with a comment) — it's
+  inert in production.
+- Known dev-server limitations (don't mistake these for app bugs):
+  - REST feed endpoints and client thread endpoints are stubs — server-side
+    `createFeedMessage`/`updateFeedMessage` no-op and comments don't
+    persist. Websocket-driven client features work.
+  - Version history endpoints are unimplemented.
+  - Rooms must exist before `mutateStorage` (404 otherwise).
+  - Storage is in-memory: everything resets on dev-server restart.
+  - Newer experimental storage types may be rejected by its decoders
+    (silently, as 4xx on `send-message`) — check the dev-server log.
+  - Features that only exist on the production backend need a cloud key to
+    verify; say so in your report instead of building elaborate workarounds.
+
+## Publishing notes
+
+- Gallery registration happens outside this repo; the example folder +
+  house-format README is all that's needed here.
+- Examples are downloaded verbatim by `create-liveblocks-app` — don't commit
+  scratch scripts, `.env.local`, or test artifacts into the example folder.
