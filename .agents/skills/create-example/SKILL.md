@@ -141,9 +141,80 @@ Every example needs these, copied and adapted from an existing example:
   - Features that only exist on the production backend need a cloud key to
     verify; say so in your report instead of building elaborate workarounds.
 
+## Thumbnails, social cards, and publishing PRs
+
+Every example needs two Figma images, created after the example code is
+complete, then used in two PRs. IMPORTANT: always pause after creating the
+images — link both Figma nodes to the human and wait for approval (they
+usually make final edits by hand). Only export and open PRs once approved.
+
+### 1. Gallery thumbnail (Figma)
+
+- File: [Examples thumbnails](https://www.figma.com/design/Qcr7GAO1zTm6lAdYrFsMRx/Examples-thumbnails),
+  page "🆗  Version 3.0" (node `801:8644`).
+- Layout: one master component per example (1072×714, named by the example
+  slug, no `nextjs-` prefix), plus "Website thumbnails" and "Github
+  thumbnails" columns holding plain instances of the masters.
+- Workflow: clone the newest master (bottom of the masters column), rename it
+  to the new slug, place it one row below (row spacing 825), rework the
+  content to depict the new example, then `createInstance()` twice and place
+  the instances in the two instance columns at the same row offset.
+- Match the style vocabulary, don't invent: placeholder pills are black at
+  10% opacity with cornerRadius 16 (toolbar icons 4); panels are no-fill with
+  a 1px black-8% stroke, radius 8; the purple accent is `rgb(144, 99, 246)`;
+  the white app card and drop shadow come free with the clone. Placeholder
+  paragraph lines should wrap naturally (full lines first, short line last).
+
+### 2. Social card (Figma)
+
+- File: [Social Images Thumbnails](https://www.figma.com/design/rslApB7BFH57mPfa2k6xUV/Social-Images-Thumbnails)
+  (page node `1343:2040`).
+- Cards are 1200×630 frames named `examples/<slug>` in a column at x=9100,
+  row spacing 730. Clone the newest one, rename, place below.
+- The big title is a `heading` TEXT component property on the
+  `templates/examples` instance; small mock UI text is regular text nodes.
+
+### Figma font gotcha
+
+The brand font (Suisse Intl) is licensed and unavailable in the Figma MCP
+plugin environment: `loadFontAsync` fails, so `characters` edits and
+`setProperties` on text properties throw. Workaround: create replacement
+text nodes in Inter Medium, copying fontSize / lineHeight / letterSpacing /
+fills / position from the original, then remove the original (or hide it and
+overlay, for text inside instances, e.g. the social card title). Tell the
+human which nodes are Inter so they can flip the family back to Suisse Intl.
+
+### 3. After approval: example README image (liveblocks/liveblocks)
+
+- Export the thumbnail component at 1x (1072×714) as PNG and commit it to
+  `.github/assets/examples/<slug>.png` on the example PR branch.
+- Embed it in the example README below the badges block:
+
+  ```html
+  <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/<slug>.png" width="536" alt="<Example title>" />
+  ```
+
+### 4. After approval: website PR (liveblocks/liveblocks.io)
+
+Model it on [liveblocks.io#3307](https://github.com/liveblocks/liveblocks.io/pull/3307)
+— three files, one short PR body linking the example PR:
+
+- `public/images/examples/thumbnails/<slug>.jpg` — thumbnail export,
+  1072×714 JPG.
+- `public/images/social-images/examples/<slug>.png` — social card export,
+  1200×630 PNG.
+- `src/constants/examples.ts` — add an `EXAMPLES_INDEX` entry next to
+  similar examples: title, slug, `categories` / `products` /
+  `useCaseTechnologies` / `documentStorage` enums, `featured`, `image` and
+  `socialImage` set to the two paths above, and a `technologies` array with
+  the example `directory`, `previewUrl`
+  (`https://<directory>.liveblocks.app`), preview options, `defaultFile`,
+  `environmentVariables` (secret key) and extras like `AI_GATEWAY_API_KEY`
+  in `additionalEnvironmentVariables`.
+
 ## Publishing notes
 
-- Gallery registration happens outside this repo; the example folder +
-  house-format README is all that's needed here.
+- Gallery registration happens in the liveblocks.io repo (see above); the
+  example folder + house-format README is all that's needed in this repo.
 - Examples are downloaded verbatim by `create-liveblocks-app` — don't commit
   scratch scripts, `.env.local`, or test artifacts into the example folder.
