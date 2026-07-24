@@ -14,6 +14,15 @@
     },
 
     {
+      "label": "New Lexical package + e2e track 0.45; legacy react/node-lexical stay on 0.35",
+      "packages": [
+        "@liveblocks/lexical",
+        "@liveblocks/next-lexical-liveblocks"
+      ],
+      "isIgnored": true
+    },
+
+    {
       "label": "Peer dependencies are intentionally wider ranges",
       "dependencyTypes": ["peer"],
       "preferVersion": "highestSemver"

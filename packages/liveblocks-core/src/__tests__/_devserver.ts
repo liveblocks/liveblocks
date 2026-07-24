@@ -207,9 +207,7 @@ export async function prepareStorageTest<S extends LsonObject>(
 
   async function assertUndoRedo() {
     const before = deepCloneWithoutOpId(
-      clientA.room[kInternal].undoStack[
-        clientA.room[kInternal].undoStack.length - 1
-      ]
+      clientA.room[kInternal].undoStack.at(-1)!.frames
     );
 
     // Undo the whole stack
@@ -225,9 +223,7 @@ export async function prepareStorageTest<S extends LsonObject>(
     }
 
     const after = deepCloneWithoutOpId(
-      clientA.room[kInternal].undoStack[
-        clientA.room[kInternal].undoStack.length - 1
-      ]
+      clientA.room[kInternal].undoStack.at(-1)!.frames
     );
 
     // It should be identical before/after

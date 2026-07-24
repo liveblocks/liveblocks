@@ -13,7 +13,8 @@ export const OpCode = Object.freeze({
   DELETE_OBJECT_KEY: 6,
   CREATE_MAP: 7,
   CREATE_REGISTER: 8,
-  // TODO: 9 and 10 are used by LiveText, wait until it's merged.
+  CREATE_TEXT: 9,
+  UPDATE_TEXT: 10,
   CREATE_FILE: 11,
 });
 
@@ -27,8 +28,52 @@ export namespace OpCode {
   export type DELETE_OBJECT_KEY = typeof OpCode.DELETE_OBJECT_KEY;
   export type CREATE_MAP = typeof OpCode.CREATE_MAP;
   export type CREATE_REGISTER = typeof OpCode.CREATE_REGISTER;
+  export type CREATE_TEXT = typeof OpCode.CREATE_TEXT;
+  export type UPDATE_TEXT = typeof OpCode.UPDATE_TEXT;
   export type CREATE_FILE = typeof OpCode.CREATE_FILE;
 }
+
+export type TextAttributes = JsonObject;
+
+/**
+ * A single segment in a {@link LiveTextData} document.
+ *
+ * @example
+ * ["Hello world"]
+ * ["Hello ", { bold: true }]
+ */
+export type LiveTextSegment =
+  | [text: string]
+  | [text: string, attributes: TextAttributes];
+
+/**
+ * Serialized form of a {@link LiveText} document: an ordered list of text
+ * segments with optional inline attributes.
+ *
+ * @example
+ * [["Hello world"]]
+ * [["Hello ", { bold: true }], ["world"]]
+ */
+export type LiveTextData = LiveTextSegment[];
+
+export type TextOperation =
+  | {
+      type: "insert";
+      index: number;
+      text: string;
+      attributes?: TextAttributes;
+    }
+  | {
+      type: "delete";
+      index: number;
+      length: number;
+    }
+  | {
+      type: "format";
+      index: number;
+      length: number;
+      attributes: JsonObject;
+    };
 
 /**
  * These operations are the payload for {@link UpdateStorageServerMsg} messages
@@ -37,6 +82,7 @@ export namespace OpCode {
 export type Op =
   | CreateOp
   | UpdateObjectOp
+  | UpdateTextOp
   | DeleteCrdtOp
   | SetParentKeyOp // Only for lists!
   | DeleteObjectKeyOp;
@@ -46,6 +92,7 @@ export type CreateOp =
   | CreateRegisterOp
   | CreateMapOp
   | CreateListOp
+  | CreateTextOp
   | CreateFileOp;
 
 export type UpdateObjectOp = {
@@ -97,6 +144,18 @@ export type CreateRegisterOp = {
   readonly deletedId?: string;
 };
 
+export type CreateTextOp = {
+  readonly opId?: string;
+  readonly id: string;
+  readonly type: OpCode.CREATE_TEXT;
+  readonly parentId: string;
+  readonly parentKey: string;
+  readonly data: LiveTextData;
+  readonly version: number;
+  readonly intent?: "set" | "push";
+  readonly deletedId?: string;
+};
+
 export type CreateFileOp = {
   readonly opId?: string;
   readonly id: string;
@@ -106,6 +165,16 @@ export type CreateFileOp = {
   readonly data: LiveFileData;
   readonly intent?: "set" | "push";
   readonly deletedId?: string;
+};
+
+export type UpdateTextOp = {
+  readonly opId?: string;
+  readonly id: string;
+  readonly type: OpCode.UPDATE_TEXT;
+  readonly baseVersion: number;
+  readonly version?: number;
+  readonly ops: TextOperation[];
+  readonly metadata?: JsonObject;
 };
 
 export type DeleteCrdtOp = {
@@ -137,7 +206,8 @@ export function isCreateOp<O extends Op>(op: O): op is O & CreateOp {
     op.type === OpCode.CREATE_REGISTER ||
     op.type === OpCode.CREATE_FILE ||
     op.type === OpCode.CREATE_MAP ||
-    op.type === OpCode.CREATE_LIST
+    op.type === OpCode.CREATE_LIST ||
+    op.type === OpCode.CREATE_TEXT
   );
 }
 

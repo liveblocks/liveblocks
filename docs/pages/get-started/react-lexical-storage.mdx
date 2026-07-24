@@ -1,0 +1,297 @@
+---
+meta:
+  title:
+    "Get started with a Lexical text editor using Liveblocks Storage and React"
+  parentTitle: "Quickstart"
+  description:
+    "Learn how to sync a Lexical text editor with Liveblocks Storage and React"
+---
+
+Liveblocks is a realtime collaboration infrastructure for building performant
+collaborative experiences. Follow the following steps to start adding
+collaboration to your React application using the APIs from the
+[`@liveblocks/lexical`](/docs/api-reference/liveblocks-lexical) package.
+
+<Banner>
+
+This guide uses Liveblocks Storage. For Comments, mentions, and the full Text
+Editor product, see the
+[`@liveblocks/react-lexical` quickstart](/docs/get-started/react-lexical)
+instead.
+
+</Banner>
+
+## Quickstart
+
+<PromptCta />
+
+<Steps>
+  <Step>
+    <StepTitle>Install Liveblocks and Lexical</StepTitle>
+    <StepContent>
+
+      Every Liveblocks package should use the same version.
+
+      ```bash trackEvent="install_liveblocks"
+      npm install @liveblocks/client @liveblocks/react @liveblocks/lexical lexical @lexical/react @lexical/selection @lexical/utils
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Initialize the `liveblocks.config.ts` file</StepTitle>
+    <StepContent>
+
+      We can use this file later to [define types for our application](/docs/api-reference/liveblocks-react#Typing-your-data).
+
+      ```bash
+      npx create-liveblocks-app@latest --init --framework react
+      ```
+
+      Add types for your Lexical document and presence:
+
+      ```ts file="liveblocks.config.ts"
+      import type { LiveLexicalSelection, LiveRootNode } from "@liveblocks/lexical";
+
+      declare global {
+        interface Liveblocks {
+          Presence: {
+            selection: LiveLexicalSelection | null;
+          };
+          Storage: {
+            document: LiveRootNode;
+          };
+          UserMeta: {
+            id?: string;
+            info?: {
+              name?: string;
+              color?: string;
+            };
+          };
+        }
+      }
+
+      export {};
+      ```
+
+    </StepContent>
+
+  </Step>
+
+  <Step>
+    <StepTitle>Set up the Liveblocks client</StepTitle>
+    <StepContent>
+
+      Liveblocks uses the concept of rooms, separate virtual spaces where people
+      collaborate, and to create a realtime experience, multiple users must
+      be connected to the same room. Set up a Liveblocks client with [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider), and join a room with [`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider).
+
+      Store your editor document as a Storage tree and set an initial presence shape for cursors.
+
+      ```tsx file="App.tsx"
+      "use client";
+
+      import { LiveList, LiveObject, LiveText } from "@liveblocks/client";
+      import {
+        LiveblocksProvider,
+        RoomProvider,
+      } from "@liveblocks/react/suspense";
+      import { Editor } from "./Editor";
+
+      export default function App() {
+        return (
+          <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
+            <RoomProvider
+              id="my-room"
+              // +++
+              initialPresence={{ selection: null }}
+              initialStorage={{
+                document: new LiveObject({
+                  kind: "root",
+                  type: "root",
+                  version: 1,
+                  children: new LiveList([
+                    new LiveObject({
+                      kind: "element",
+                      type: "paragraph",
+                      version: 1,
+                      children: new LiveList([
+                        new LiveObject({
+                          kind: "text",
+                          type: "text",
+                          version: 1,
+                          content: new LiveText(),
+                        }),
+                      ]),
+                    }),
+                  ]),
+                }),
+              }}
+              // +++
+            >
+              {/* ... */}
+            </RoomProvider>
+          </LiveblocksProvider>
+        );
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Join a Liveblocks room</StepTitle>
+    <StepContent>
+
+      After setting up the room, you can add collaborative components inside it, using
+      [`ClientSideSuspense`](/docs/api-reference/liveblocks-react#ClientSideSuspense) to add loading spinners to your app.
+
+      ```tsx file="App.tsx"
+      "use client";
+
+      import { LiveList, LiveObject, LiveText } from "@liveblocks/client";
+      import {
+        LiveblocksProvider,
+        RoomProvider,
+        ClientSideSuspense,
+      } from "@liveblocks/react/suspense";
+      import { Editor } from "./Editor";
+
+      export default function App() {
+        return (
+          <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
+            <RoomProvider
+              id="my-room"
+              initialPresence={{ selection: null }}
+              initialStorage={{
+                document: new LiveObject({
+                  kind: "root",
+                  type: "root",
+                  version: 1,
+                  children: new LiveList([
+                    new LiveObject({
+                      kind: "element",
+                      type: "paragraph",
+                      version: 1,
+                      children: new LiveList([
+                        new LiveObject({
+                          kind: "text",
+                          type: "text",
+                          version: 1,
+                          content: new LiveText(),
+                        }),
+                      ]),
+                    }),
+                  ]),
+                }),
+              }}
+            >
+              <ClientSideSuspense fallback={<div>Loading…</div>}>
+                <Editor />
+              </ClientSideSuspense>
+            </RoomProvider>
+          </LiveblocksProvider>
+        );
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Set up the collaborative Lexical editor</StepTitle>
+    <StepContent>
+
+      Now that Liveblocks is set up, create a Lexical editor in `Editor.tsx`.
+      Use [`LiveblocksCollaborationPlugin`](/docs/api-reference/liveblocks-lexical#LiveblocksCollaborationPlugin)
+      to sync the document with Storage, and
+      [`RemoteCursorsPlugin`](/docs/api-reference/liveblocks-lexical#RemoteCursorsPlugin)
+      to show remote carets and selections.
+
+      ```tsx file="Editor.tsx"
+      "use client";
+
+      import { useCallback, useSyncExternalStore } from "react";
+      import { LexicalComposer } from "@lexical/react/LexicalComposer";
+      import { ContentEditable } from "@lexical/react/LexicalContentEditable";
+      import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
+      import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
+      import {
+        LiveblocksCollaborationPlugin,
+        RemoteCursorsPlugin,
+      } from "@liveblocks/lexical";
+      import type { Room } from "@liveblocks/client";
+      import { useRoom } from "@liveblocks/react/suspense";
+      import "@liveblocks/lexical/styles.css";
+
+      export function Editor() {
+        const room = useRoom();
+        const root = useRoot(room);
+
+        if (root === null) {
+          return <div>Loading…</div>;
+        }
+
+        const document = root.get("document");
+
+        return (
+          <LexicalComposer
+            initialConfig={{
+              namespace: "Liveblocks",
+              onError: (error) => console.error(error),
+            }}
+          >
+            <div className="relative">
+              <RichTextPlugin
+                contentEditable={<ContentEditable className="outline-none" />}
+                ErrorBoundary={LexicalErrorBoundary}
+              />
+              // +++
+              <LiveblocksCollaborationPlugin root={document}>
+                <RemoteCursorsPlugin />
+              </LiveblocksCollaborationPlugin>
+              // +++
+            </div>
+          </LexicalComposer>
+        );
+      }
+
+      function useRoot(room: Room) {
+        const subscribe = room.events.storageDidLoad.subscribeOnce;
+        const getSnapshot = room.getStorageOrNull;
+        const getServerSnapshot = useCallback(() => null, []);
+        return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step lastStep>
+    <StepTitle>Next: authenticate and add your users</StepTitle>
+    <StepContent>
+      Your editor is set up and working now, but each user is anonymous—the next step is to
+      authenticate each user as they connect, and attach their name and color to remote carets.
+
+      <Button asChild className="not-markdown">
+        <a href="/docs/guides/how-to-add-users-to-liveblocks-presence-components">
+          Set up authentication and add user information
+        </a>
+      </Button>
+    </StepContent>
+
+  </Step>
+
+</Steps>
+
+## What to read next
+
+Congratulations! You now have set up the foundation for your collaborative
+Lexical editor inside your React application.
+
+- [@liveblocks/lexical API Reference](/docs/api-reference/liveblocks-lexical)
+- [Lexical website](https://lexical.dev)
+
+For Comments, mentions, and default Text Editor components, see
+[`@liveblocks/react-lexical`](/docs/api-reference/liveblocks-react-lexical).

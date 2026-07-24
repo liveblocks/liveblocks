@@ -24,6 +24,7 @@ import type {
   SerializedCrdt,
   SerializedRootObject,
   StorageNode,
+  TextOperation,
 } from "@liveblocks/core";
 
 import type { YDocId } from "~/decoders/y-types";
@@ -62,6 +63,14 @@ export type ListFeedsResult = {
 export type ListFeedMessagesResult = {
   messages: FeedMessage[];
   nextCursor?: string; // Cursor for next page, undefined if no more pages
+};
+
+export type LiveTextHistoryEntry = {
+  nodeId: string;
+  version: number;
+  baseVersion: number;
+  opId: string;
+  ops: TextOperation[];
 };
 
 /**
@@ -266,6 +275,42 @@ export interface IStorageDriver {
    * @internal Test-only API
    */
   raw_iter_nodes(): Iterable<[string, SerializedCrdt]>;
+
+  // ---------------------------------------------------------------------------
+  // LiveText history APIs
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Return authoritative LiveText operations accepted after the given version,
+   * sorted by ascending version.
+   */
+  get_live_text_history_since(
+    nodeId: string,
+    version: number
+  ): LiveTextHistoryEntry[];
+
+  /**
+   * Return the authoritative history entry for an opId, if it was already
+   * accepted for this LiveText node.
+   */
+  get_live_text_history_by_op_id(
+    nodeId: string,
+    opId: string
+  ): LiveTextHistoryEntry | undefined;
+
+  /**
+   * Append the authoritative, already-rebased operations for an accepted
+   * LiveText update.
+   */
+  append_live_text_history(entry: LiveTextHistoryEntry): void;
+
+  /**
+   * Drop retained history older than minVersionToKeep for this LiveText node.
+   */
+  purge_live_text_history_before(
+    nodeId: string,
+    minVersionToKeep: number
+  ): void;
 
   // ---------------------------------------------------------------------------
   // Metadata APIs (key-value store, isolated from nodes)

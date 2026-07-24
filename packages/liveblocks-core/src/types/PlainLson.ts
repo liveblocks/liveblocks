@@ -41,6 +41,7 @@
  */
 
 import type { Json } from "../lib/Json";
+import type { LiveTextData } from "../protocol/Op";
 import type { LiveFileData } from "../protocol/StorageNode";
 
 export type PlainLsonFields = Record<string, PlainLson>;
@@ -60,6 +61,12 @@ export type PlainLsonList = {
   data: PlainLson[];
 };
 
+export type PlainLsonText = {
+  liveblocksType: "LiveText";
+  data: LiveTextData;
+  version?: number;
+};
+
 export type PlainLsonFile = {
   liveblocksType: "LiveFile";
   data: LiveFileData;
@@ -69,6 +76,7 @@ export type PlainLson =
   | PlainLsonObject
   | PlainLsonMap
   | PlainLsonList
+  | PlainLsonText
   | PlainLsonFile
 
   // Any "normal" Json value, as long as it's not an object with

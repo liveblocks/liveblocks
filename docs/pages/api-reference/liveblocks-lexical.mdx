@@ -1,0 +1,326 @@
+---
+meta:
+  title: "@liveblocks/lexical"
+  parentTitle: "API Reference"
+  description: "API Reference for the @liveblocks/lexical package"
+alwaysShowAllNavigationLevels: false
+---
+
+`@liveblocks/lexical` provides React plugins that sync a [Lexical](https://lexical.dev/)
+editor with a Storage document tree and display remote carets and selections.
+Read our [React](/docs/get-started/react-lexical-storage) or
+[Next.js](/docs/get-started/nextjs-lexical-storage) get started guides to learn
+more.
+
+<Banner>
+
+This package uses Liveblocks Storage. For Comments, mentions, and the full Text
+Editor product, use
+[`@liveblocks/react-lexical`](/docs/api-reference/liveblocks-react-lexical)
+instead.
+
+</Banner>
+
+## Setup
+
+Install Liveblocks, Lexical, and this package:
+
+```bash
+npm install @liveblocks/client @liveblocks/react @liveblocks/lexical lexical @lexical/react @lexical/selection @lexical/utils
+```
+
+Each Liveblocks package should use the same version.
+
+Create a room with a root Storage document and an initial presence shape for
+selection cursors. The document is a
+[`LiveObject`](/docs/api-reference/liveblocks-client#LiveObject) tree whose text
+leaves use [`LiveText`](/docs/api-reference/liveblocks-client#LiveText):
+
+```ts file="liveblocks.config.ts"
+import type { LiveLexicalSelection, LiveRootNode } from "@liveblocks/lexical";
+
+declare global {
+  interface Liveblocks {
+    Presence: {
+      selection: LiveLexicalSelection | null;
+    };
+    Storage: {
+      document: LiveRootNode;
+    };
+    UserMeta: {
+      id?: string;
+      info?: {
+        name?: string;
+        color?: string;
+      };
+    };
+  }
+}
+
+export {};
+```
+
+```tsx file="App.tsx"
+"use client";
+
+import { LiveList, LiveObject, LiveText } from "@liveblocks/client";
+import {
+  ClientSideSuspense,
+  LiveblocksProvider,
+  RoomProvider,
+} from "@liveblocks/react/suspense";
+import { Editor } from "./Editor";
+
+export default function App() {
+  return (
+    <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
+      <RoomProvider
+        id="my-room"
+        // +++
+        initialPresence={{ selection: null }}
+        initialStorage={{
+          document: new LiveObject({
+            kind: "root",
+            type: "root",
+            version: 1,
+            children: new LiveList([
+              new LiveObject({
+                kind: "element",
+                type: "paragraph",
+                version: 1,
+                children: new LiveList([
+                  new LiveObject({
+                    kind: "text",
+                    type: "text",
+                    version: 1,
+                    content: new LiveText(),
+                  }),
+                ]),
+              }),
+            ]),
+          }),
+        }}
+        // +++
+      >
+        <ClientSideSuspense fallback={<div>Loading…</div>}>
+          <Editor />
+        </ClientSideSuspense>
+      </RoomProvider>
+    </LiveblocksProvider>
+  );
+}
+```
+
+Wait for Storage to load, then nest
+[`LiveblocksCollaborationPlugin`](#LiveblocksCollaborationPlugin) inside
+[`LexicalComposer`](https://lexical.dev/docs/react/plugins). Optionally add
+[`RemoteCursorsPlugin`](#RemoteCursorsPlugin) as a child to show remote carets:
+
+```tsx file="Editor.tsx"
+"use client";
+
+import { useCallback, useSyncExternalStore } from "react";
+import { LexicalComposer } from "@lexical/react/LexicalComposer";
+import { ContentEditable } from "@lexical/react/LexicalContentEditable";
+import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
+import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
+import {
+  LiveblocksCollaborationPlugin,
+  RemoteCursorsPlugin,
+} from "@liveblocks/lexical";
+import type { Room } from "@liveblocks/client";
+import { useRoom } from "@liveblocks/react/suspense";
+import "@liveblocks/lexical/styles.css";
+
+export function Editor() {
+  const room = useRoom();
+  const root = useRoot(room);
+
+  if (root === null) {
+    return <div>Loading…</div>;
+  }
+
+  const document = root.get("document");
+
+  return (
+    <LexicalComposer
+      initialConfig={{
+        namespace: "Liveblocks",
+        onError: (error) => console.error(error),
+      }}
+    >
+      <div className="relative">
+        <RichTextPlugin
+          contentEditable={<ContentEditable className="outline-none" />}
+          ErrorBoundary={LexicalErrorBoundary}
+        />
+        // +++
+        <LiveblocksCollaborationPlugin root={document}>
+          <RemoteCursorsPlugin />
+        </LiveblocksCollaborationPlugin>
+        // +++
+      </div>
+    </LexicalComposer>
+  );
+}
+
+function useRoot(room: Room) {
+  const subscribe = room.events.storageDidLoad.subscribeOnce;
+  const getSnapshot = room.getStorageOrNull;
+  const getServerSnapshot = useCallback(() => null, []);
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+}
+```
+
+Import the package stylesheet so remote carets and selections are visible:
+
+```tsx
+import "@liveblocks/lexical/styles.css";
+```
+
+## LiveblocksCollaborationPlugin
+
+Syncs the Lexical editor with a Storage
+[`LiveRootNode`](#LiveRootNode). Local edits are written to Storage. Remote edits
+are applied to the editor. Undo and redo use the room’s history.
+
+Must be nested inside [`LexicalComposer`](https://lexical.dev/docs/react/plugins)
+and a Liveblocks [`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider).
+Pass the Storage root document as `root`.
+
+```tsx
+import { LiveblocksCollaborationPlugin } from "@liveblocks/lexical";
+
+<LiveblocksCollaborationPlugin root={document}>
+  <RemoteCursorsPlugin />
+</LiveblocksCollaborationPlugin>
+```
+
+<PropertiesList title="Props">
+  <PropertiesListItem name="root" type="LiveRootNode" required>
+    The Storage root document for the editor. Typically
+    `root.get("document")` after Storage has loaded.
+  </PropertiesListItem>
+  <PropertiesListItem name="children" type="ReactNode">
+    Optional children. Place [`RemoteCursorsPlugin`](#RemoteCursorsPlugin) here
+    to render remote carets and selections.
+  </PropertiesListItem>
+</PropertiesList>
+
+## RemoteCursorsPlugin
+
+Renders remote carets and selection highlights for other users in the room.
+Must be a child of
+[`LiveblocksCollaborationPlugin`](#LiveblocksCollaborationPlugin).
+
+Caret colors come from each user’s
+[`user.info.color`](/docs/api-reference/liveblocks-client#Room.getSelf). Set
+user info when authenticating or joining a room.
+
+```tsx
+import {
+  LiveblocksCollaborationPlugin,
+  RemoteCursorsPlugin,
+} from "@liveblocks/lexical";
+
+<LiveblocksCollaborationPlugin root={document}>
+  // +++
+  <RemoteCursorsPlugin />
+  // +++
+</LiveblocksCollaborationPlugin>
+```
+
+Import `@liveblocks/lexical/styles.css` for the default cursor styles. The
+plugin uses `--lb-lexical-cursor-color` and the class names
+`.lb-lexical-cursor-caret` and `.lb-lexical-cursor-selection`.
+
+## LiveRootNode [#LiveRootNode]
+
+The Storage type for the collaborative document root. It is a
+[`LiveObject`](/docs/api-reference/liveblocks-client#LiveObject) with
+`kind: "root"`, a `children` [`LiveList`](/docs/api-reference/liveblocks-client#LiveList),
+and nested element, text, linebreak, and decorator nodes. Text leaves store
+content in [`LiveText`](/docs/api-reference/liveblocks-client#LiveText).
+
+```ts
+import type { LiveRootNode } from "@liveblocks/lexical";
+import { LiveList, LiveObject, LiveText } from "@liveblocks/client";
+
+const document: LiveRootNode = new LiveObject({
+  kind: "root",
+  type: "root",
+  version: 1,
+  children: new LiveList([
+    new LiveObject({
+      kind: "element",
+      type: "paragraph",
+      version: 1,
+      children: new LiveList([
+        new LiveObject({
+          kind: "text",
+          type: "text",
+          version: 1,
+          content: new LiveText(),
+        }),
+      ]),
+    }),
+  ]),
+});
+```
+
+## LiveLexicalSelection [#LiveLexicalSelection]
+
+The presence selection shape used by this package. Positions are Storage-
+relative (stable LiveObject ids and offsets), not Lexical node keys, so remote
+carets stay stable across concurrent edits.
+
+```ts
+import type { LiveLexicalSelection } from "@liveblocks/lexical";
+
+type Presence = {
+  selection: LiveLexicalSelection | null;
+};
+```
+
+<PropertiesList title="Properties">
+  <PropertiesListItem name="anchor" type="LiveLexicalPoint" required>
+    Selection anchor point in Storage coordinates.
+  </PropertiesListItem>
+  <PropertiesListItem name="focus" type="LiveLexicalPoint" required>
+    Selection focus point in Storage coordinates.
+  </PropertiesListItem>
+</PropertiesList>
+
+## Typing [#Typing]
+
+Type your room’s presence, Storage, and user metadata in
+[`liveblocks.config.ts`](/docs/api-reference/liveblocks-react#Typing-your-data).
+Use [`LiveLexicalSelection`](#LiveLexicalSelection) for the presence
+`selection` field and [`LiveRootNode`](#LiveRootNode) for Storage.
+
+```ts file="liveblocks.config.ts"
+import type { LiveLexicalSelection, LiveRootNode } from "@liveblocks/lexical";
+
+declare global {
+  interface Liveblocks {
+    Presence: {
+      selection: LiveLexicalSelection | null;
+    };
+    Storage: {
+      document: LiveRootNode;
+    };
+    UserMeta: {
+      id?: string;
+      info?: {
+        name?: string;
+        color?: string;
+      };
+    };
+  }
+}
+
+export {};
+```
+
+When joining a room, set `initialPresence` to `{ selection: null }` and
+`initialStorage` to a root document tree as shown in [Setup](#Setup).

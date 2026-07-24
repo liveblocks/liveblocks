@@ -20,6 +20,7 @@ import {
 import { LiveList } from "../LiveList";
 import { LiveMap } from "../LiveMap";
 import { LiveObject } from "../LiveObject";
+import { LiveText } from "../LiveText";
 import { toPlainLson } from "../utils";
 
 test("Common first positions", () => {
@@ -318,6 +319,51 @@ describe("diffNodeMap", () => {
     ]);
   });
 
+  test("liveText create and update", () => {
+    const currentItems: NodeMap = new Map([
+      ["root", { type: CrdtType.OBJECT, data: {} }],
+    ]);
+
+    const newItems: NodeMap = new Map([
+      ["root", { type: CrdtType.OBJECT, data: {} }],
+      [
+        "0:1",
+        {
+          type: CrdtType.TEXT,
+          parentId: "root",
+          parentKey: "text",
+          data: [["Hello"]],
+          version: 0,
+        },
+      ],
+    ]);
+
+    expect(getTreesDiffOperations(currentItems, newItems)).toEqual([
+      {
+        type: OpCode.CREATE_TEXT,
+        id: "0:1",
+        parentId: "root",
+        parentKey: "text",
+        data: [["Hello"]],
+        version: 0,
+      },
+    ]);
+
+    const updatedItems: NodeMap = new Map(newItems);
+    updatedItems.set("0:1", {
+      type: CrdtType.TEXT,
+      parentId: "root",
+      parentKey: "text",
+      data: [["Hello!"]],
+      version: 1,
+    });
+
+    // Content changes of existing LiveText nodes are deliberately NOT part
+    // of the op diff: snapshots are reconciled via LiveText._resyncText
+    // (driven by the room), not via UPDATE_TEXT ops.
+    expect(getTreesDiffOperations(newItems, updatedItems)).toEqual([]);
+  });
+
   test("liveObject replacing a non-object node of the same id", () => {
     const currentItems: NodeMap = new Map([
       ["root", { type: CrdtType.OBJECT, data: {} }],
@@ -603,6 +649,7 @@ describe("toPlainLson", () => {
         ["broccoli", "delicious"],
         ["spinach", "also tasty"],
       ]),
+      text: new LiveText("Hello"),
     });
 
     // What the Plain Lson should look like if the util works
@@ -616,6 +663,11 @@ describe("toPlainLson", () => {
         vegetables: {
           liveblocksType: "LiveMap",
           data: { broccoli: "delicious", spinach: "also tasty" },
+        },
+        text: {
+          liveblocksType: "LiveText",
+          data: [["Hello"]],
+          version: 0,
         },
       },
     };

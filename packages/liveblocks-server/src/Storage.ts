@@ -17,11 +17,13 @@
 
 import type { SerializedChild, SerializedCrdt } from "@liveblocks/core";
 import {
+  applyLiveTextOperations,
   asPos,
   assertNever,
   CrdtType,
   makePosition,
   OpCode,
+  transformTextOperations,
 } from "@liveblocks/core";
 
 import type { IStorageDriver } from "~/interfaces";
@@ -34,21 +36,27 @@ import type {
   HasOpId,
   SetParentKeyOp,
   UpdateObjectOp,
+  UpdateTextOp,
 } from "~/protocol";
 import type { Pos } from "~/types";
 
+const LIVE_TEXT_HISTORY_LIMIT = 1000;
+const LIVE_TEXT_HISTORY_TOO_OLD_REASON =
+  "LiveText operation is older than retained history";
+
 /**
- * The three possible outcomes of applying a client op. They differ along
+ * The possible outcomes of applying a client op. They differ along
  * when the op (first) changed storage state, who hears about it, and what
  * gets sent back to the originating client:
  *
- * |             | state change | fan out to others | reply to sender  |
- * |-------------|--------------|-------------------|------------------|
- * | OpAccepted  | now          | yes               | ack echo (+ fix) |
- * | OpRectified | in the past  | no                | ack echo + fix   |
- * | OpIgnored   | never        | no                | bare (H)Ack      |
+ * |            | state change | fan out to others | reply to sender  |
+ * |------------|--------------|-------------------|------------------|
+ * | OpAccepted | now          | yes               | ack echo (+ fix) |
+ * | OpRectified| in the past  | no                | ack echo (+ fix) |
+ * | OpIgnored  | never        | no                | bare (H)Ack      |
+ * | OpRejected | never        | no                | rejection        |
  */
-type ApplyOpResult = OpAccepted | OpIgnored | OpRectified;
+type ApplyOpResult = OpAccepted | OpIgnored | OpRectified | OpRejected;
 
 export type OpAccepted = {
   action: "accepted";
@@ -64,20 +72,22 @@ export type OpIgnored = {
 export type OpRectified = {
   action: "rectified";
   /**
-   * Echo of the client's op, with the stored, authoritative parentKey. Sent
-   * back to the originating client as the acknowledgement, instead of the
-   * bare (H)Ack. Used for re-sent CREATE ops whose node the server already
-   * stored: the echo carries the authoritative position, so the client can
-   * correct any optimistic local position it may have predicted while the op
-   * was pending. Never fanned out to others: they already received the op
-   * when it was originally accepted.
+   * Echo of the client's op with authoritative server fields. Sent back to the
+   * originating client as the acknowledgement, instead of the bare (H)Ack.
+   * Never fanned out to others: they already received the op when it was
+   * originally accepted.
    */
-  ackOp: CreateOp & HasOpId;
+  ackOp: ClientWireOp;
   /**
-   * A corrective op to send back to the originating client, stating that
-   * same authoritative position (see ackOp).
+   * Optional corrective op to send back to the originating client.
    */
-  fix: FixOp;
+  fix?: FixOp;
+};
+
+export type OpRejected = {
+  action: "rejected";
+  opIds: string[];
+  reason: string;
 };
 
 function accept(op: ClientWireOp, fix?: FixOp): OpAccepted {
@@ -88,12 +98,12 @@ function ignore(ignoredOp: ClientWireOp): OpIgnored {
   return { action: "ignored", ignoredOpId: ignoredOp.opId };
 }
 
-function rectify(op: CreateOp & HasOpId, parentKey: string): OpRectified {
-  return {
-    action: "rectified",
-    ackOp: { ...op, parentKey },
-    fix: { type: OpCode.SET_PARENT_KEY, id: op.id, parentKey },
-  };
+function reject(op: ClientWireOp, reason: string): OpRejected {
+  return { action: "rejected", opIds: [op.opId], reason };
+}
+
+function rectify(ackOp: ClientWireOp, fix?: FixOp): OpRectified {
+  return { action: "rectified", ackOp, fix };
 }
 
 function nodeFromCreateChildOp(op: CreateOp): SerializedChild {
@@ -126,6 +136,15 @@ function nodeFromCreateChildOp(op: CreateOp): SerializedChild {
         parentId: op.parentId,
         parentKey: op.parentKey,
         data: op.data,
+      };
+
+    case OpCode.CREATE_TEXT:
+      return {
+        type: CrdtType.TEXT,
+        parentId: op.parentId,
+        parentKey: op.parentKey,
+        data: op.data,
+        version: op.version,
       };
 
     case OpCode.CREATE_FILE:
@@ -184,11 +203,15 @@ export class Storage {
       case OpCode.CREATE_MAP:
       case OpCode.CREATE_REGISTER:
       case OpCode.CREATE_OBJECT:
+      case OpCode.CREATE_TEXT:
       case OpCode.CREATE_FILE:
         return this.applyCreateOp(op);
 
       case OpCode.UPDATE_OBJECT:
         return this.applyUpdateObjectOp(op);
+
+      case OpCode.UPDATE_TEXT:
+        return this.applyUpdateTextOp(op);
 
       case OpCode.SET_PARENT_KEY:
         return this.applySetParentKeyOp(op);
@@ -227,7 +250,14 @@ export class Storage {
           stored?.parentId !== undefined &&
           this.driver.get_node(stored.parentId)?.type === CrdtType.LIST
         ) {
-          return rectify(op, stored.parentKey);
+          return rectify(
+            { ...op, parentKey: stored.parentKey },
+            {
+              type: OpCode.SET_PARENT_KEY,
+              id: op.id,
+              parentKey: stored.parentKey,
+            }
+          );
         }
       }
       return ignore(op);
@@ -264,6 +294,7 @@ export class Storage {
         return this.createChildAsListItem(op, node);
 
       case CrdtType.REGISTER:
+      case CrdtType.TEXT:
       case CrdtType.FILE:
         // It's illegal for leaf nodes to have children
         return ignore(op);
@@ -366,6 +397,80 @@ export class Storage {
   private applyUpdateObjectOp(op: UpdateObjectOp & HasOpId): ApplyOpResult {
     this.driver.set_object_data(op.id, op.data, true);
     return accept(op);
+  }
+
+  private applyUpdateTextOp(op: UpdateTextOp & HasOpId): ApplyOpResult {
+    const node = this.driver.get_node(op.id);
+    if (node?.type !== CrdtType.TEXT) {
+      return ignore(op);
+    }
+
+    const duplicate = this.driver.get_live_text_history_by_op_id(
+      op.id,
+      op.opId
+    );
+    if (duplicate !== undefined) {
+      return rectify({
+        ...op,
+        baseVersion: duplicate.baseVersion,
+        version: duplicate.version,
+        ops: [...duplicate.ops],
+      });
+    }
+
+    if (op.ops.length === 0) {
+      // Empty updates are pure acknowledgement vehicles (e.g. an undo whose
+      // content was queued behind another in-flight op on the client). Ack
+      // without applying or bumping the version.
+      return ignore(op);
+    }
+
+    if (op.baseVersion > node.version) {
+      return reject(op, "LiveText operation base version is ahead of storage");
+    }
+
+    const history =
+      op.baseVersion < node.version
+        ? this.driver.get_live_text_history_since(op.id, op.baseVersion)
+        : [];
+    if (
+      op.baseVersion < node.version &&
+      history.length !== node.version - op.baseVersion
+    ) {
+      return reject(op, LIVE_TEXT_HISTORY_TOO_OLD_REASON);
+    }
+
+    const acceptedOps = history.flatMap((entry) => entry.ops);
+    const ops =
+      acceptedOps.length > 0
+        ? transformTextOperations(op.ops, acceptedOps, "after")
+        : op.ops;
+    const version = node.version + 1;
+    const data = applyLiveTextOperations(node.data, ops);
+    this.driver.set_child(
+      op.id,
+      {
+        ...node,
+        data,
+        version,
+      },
+      true
+    );
+    this.driver.append_live_text_history({
+      nodeId: op.id,
+      baseVersion: node.version,
+      version,
+      opId: op.opId,
+      ops: [...ops],
+    });
+    // Keep the retained history bounded as the document evolves (the
+    // constructor-time purge only covers room (re)loads).
+    this.driver.purge_live_text_history_before(
+      op.id,
+      Math.max(0, version - LIVE_TEXT_HISTORY_LIMIT + 1)
+    );
+
+    return accept({ ...op, baseVersion: node.version, version, ops: [...ops] });
   }
 
   private applyDeleteCrdtOp(op: DeleteCrdtOp & HasOpId): ApplyOpResult {

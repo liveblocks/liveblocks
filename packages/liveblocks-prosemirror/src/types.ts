@@ -1,0 +1,38 @@
+import type {
+  JsonObject,
+  LiveObject,
+  LsonObject,
+  StorageUpdate,
+} from "@liveblocks/client";
+import type { kInternal, PrivateRoomApi } from "@liveblocks/core";
+
+export type LiveblocksProsemirrorRoom = {
+  readonly [kInternal]?: Pick<PrivateRoomApi, "history">;
+  batch(callback: () => void): void;
+  getOthers(): readonly {
+    connectionId: number;
+    info?: JsonObject;
+    presence: JsonObject;
+  }[];
+  getStorage(): Promise<{ root: LiveObject<LsonObject> }>;
+  history: {
+    canUndo(): boolean;
+    canRedo(): boolean;
+    disable<T>(callback: () => T): T;
+    pause(): void;
+    resume(): void;
+    undo(): void;
+    redo(): void;
+  };
+  subscribe(
+    node: LiveObject<LsonObject>,
+    callback: (updates: StorageUpdate[]) => void,
+    options: { isDeep: true }
+  ): () => void;
+  updatePresence(patch: JsonObject): void;
+  events: {
+    others: {
+      subscribe(callback: () => void): () => void;
+    };
+  };
+};

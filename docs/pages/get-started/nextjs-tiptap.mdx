@@ -125,6 +125,14 @@ See the finished result in the [Collaborative Text Editor](/examples/collaborati
     from `@liveblocks/react-tiptap`. [`FloatingToolbar`](/docs/api-reference/liveblocks-react-tiptap#FloatingToolbar)
     adds a text selection toolbar.
 
+    By default, `useLiveblocksExtension` uses Yjs for collaboration. To store
+    text as [`LiveText`](/docs/api-reference/liveblocks-client#LiveText) backed
+    by Liveblocks Storage instead, pass
+    [`collaborationMode: "liveblocks"`](/docs/api-reference/liveblocks-react-tiptap#Liveblocks-collaboration-mode).
+    Follow the
+    [Storage-backed Tiptap Next.js quickstart](/docs/get-started/nextjs-tiptap-storage)
+    for the complete setup.
+
     ```tsx file="app/Editor.tsx"
     "use client";
 
@@ -292,6 +300,7 @@ Congratulations! You now have set up the foundation for your collaborative
 Tiptap text editor inside your React application.
 
 - [@liveblocks/react-tiptap API Reference](/docs/api-reference/liveblocks-react-tiptap)
+- [Storage-backed Tiptap Next.js quickstart](/docs/get-started/nextjs-tiptap-storage)
 - [Tiptap guides](/docs/guides?technologies=tiptap)
 - [Tiptap website](https://tiptap.dev)
 

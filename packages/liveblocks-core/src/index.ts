@@ -75,6 +75,7 @@ export {
 export type {
   CreateManagedPoolOptions,
   ManagedPool,
+  PrivateLiveNodeApi,
 } from "./crdts/AbstractCrdt";
 export { createManagedPool } from "./crdts/AbstractCrdt";
 export { cloneLson, isLiveNode } from "./crdts/liveblocks-helpers";
@@ -88,6 +89,21 @@ export { LiveList } from "./crdts/LiveList";
 export { LiveMap } from "./crdts/LiveMap";
 export { LiveObject } from "./crdts/LiveObject";
 export type {
+  LiveTextAttributes,
+  LiveTextAttributesPatch,
+  LiveTextChange,
+  LiveTextData,
+  LiveTextOperation,
+  LiveTextSegment,
+  LiveTextUpdates,
+  PrivateLiveTextApi,
+} from "./crdts/LiveText";
+export { LiveText } from "./crdts/LiveText";
+export {
+  applyLiveTextOperations,
+  transformTextOperations,
+} from "./crdts/liveTextOps";
+export type {
   LiveNode,
   LiveStructure,
   Lson,
@@ -99,7 +115,9 @@ export type {
   LiveListUpdate,
   LiveMapUpdate,
   LiveObjectUpdate,
+  LiveTextUpdate,
   StorageUpdate,
+  StorageUpdateSource,
 } from "./crdts/StorageUpdates";
 export { toPlainLson } from "./crdts/utils";
 export type {
@@ -117,7 +135,7 @@ export type {
   KDAD,
 } from "./globals/augmentation";
 export type { SyncConfig, SyncMode } from "./immutable";
-export { kInternal } from "./internal";
+export { kInternal, kStorageUpdateSource } from "./internal";
 export { makeAbortController } from "./lib/abortController";
 export { assert, assertNever, nn } from "./lib/assert";
 export type {
@@ -315,6 +333,7 @@ export type {
   CreateObjectOp,
   CreateOp,
   CreateRegisterOp,
+  CreateTextOp,
   DeleteCrdtOp,
   DeleteObjectKeyOp,
   HasOpId,
@@ -322,7 +341,10 @@ export type {
   Op,
   ServerWireOp,
   SetParentKeyOp,
+  TextAttributes,
+  TextOperation,
   UpdateObjectOp,
+  UpdateTextOp,
 } from "./protocol/Op";
 export { OpCode } from "./protocol/Op";
 export type {
@@ -364,6 +386,7 @@ export type {
   CompactObjectNode,
   CompactRegisterNode,
   CompactRootNode,
+  CompactTextNode,
   FileStorageNode,
   ListStorageNode,
   MapStorageNode,
@@ -380,7 +403,9 @@ export type {
   SerializedObject,
   SerializedRegister,
   SerializedRootObject,
+  SerializedText,
   StorageNode,
+  TextStorageNode,
 } from "./protocol/StorageNode";
 export {
   compactNodesToNodeStream,
@@ -391,6 +416,7 @@ export {
   isObjectStorageNode,
   isRegisterStorageNode,
   isRootStorageNode,
+  isTextStorageNode,
   nodeStreamToCompactNodes,
 } from "./protocol/StorageNode";
 export type {
@@ -468,6 +494,7 @@ export type {
   PlainLsonList,
   PlainLsonMap,
   PlainLsonObject,
+  PlainLsonText,
 } from "./types/PlainLson";
 export type { User } from "./types/User";
 export { detectDupes };

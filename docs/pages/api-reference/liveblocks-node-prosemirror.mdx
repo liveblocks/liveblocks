@@ -9,7 +9,12 @@ alwaysShowAllNavigationLevels: false
 `@liveblocks/node-prosemirror` provides a Node.js package to export and modify
 [ProseMirror](https://prosemirror.net/). Because Tiptap uses ProseMirror under
 the hood, this package can be used to modify
-[Tiptap](/docs/api-reference/liveblocks-react-tiptap) documents as well.
+[Tiptap](/docs/api-reference/liveblocks-react-tiptap) documents as well. For a
+client-side ProseMirror editor backed by `LiveText` in Storage, use
+[`@liveblocks/prosemirror`](/docs/api-reference/liveblocks-prosemirror). For a
+client-side Tiptap editor using the same Storage-backed collaboration, use
+[`@liveblocks/react-tiptap`](/docs/api-reference/liveblocks-react-tiptap) with
+[`collaborationMode: "liveblocks"`](/docs/api-reference/liveblocks-react-tiptap#Liveblocks-collaboration-mode).
 
 ## withProsemirrorDocument
 

@@ -4,6 +4,7 @@ import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
+export type { LiveblocksExtensionOptions } from "./BlockNoteLiveblocksExtension";
 export { useLiveblocksExtension } from "./BlockNoteLiveblocksExtension";
 export { AnchoredThreads } from "./comments/AnchoredThreads";
 export { FloatingComposer } from "./comments/FloatingComposer";

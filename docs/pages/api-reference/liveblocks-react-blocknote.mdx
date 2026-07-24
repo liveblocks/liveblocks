@@ -841,7 +841,10 @@ const editor = useCreateBlockNoteWithLiveblocks(
     Options to apply to BlockNote. [Learn
     more](https://www.blocknotejs.org/docs/editor-basics/setup#usecreateblocknote-hook).
   </PropertiesListItem>
-  <PropertiesListItem name="liveblocksOptions" type="object">
+  <PropertiesListItem
+    name="liveblocksOptions"
+    type="LiveblocksExtensionOptions"
+  >
     Options to apply to Liveblocks.
   </PropertiesListItem>
   <PropertiesListItem name="liveblocksOptions.initialContent" type="Content">
@@ -852,6 +855,15 @@ const editor = useCreateBlockNoteWithLiveblocks(
     The name of this text editor’s field. Allows you to use multiple editors on
     one page, if each has a separate field value. [Learn
     more](#Multiple-editors).
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="liveblocksOptions.collaborationMode"
+    defaultValue='"yjs"'
+    type='"yjs" | "liveblocks"'
+  >
+    The collaboration backend to use. `liveblocks` stores editor documents in
+    `root._tiptap_docs`, keyed by `field`. [Learn
+    more](#Liveblocks-collaboration-mode).
   </PropertiesListItem>
   <PropertiesListItem
     name="liveblocksOptions.offlineSupport_experimental"
@@ -958,6 +970,45 @@ function TextEditor({ field }: { field: string }) {
 }
 ```
 
+#### Liveblocks collaboration mode
+
+By default, BlockNote uses Yjs-backed collaboration. To opt into Liveblocks
+storage directly, pass `collaborationMode: "liveblocks"`.
+
+```tsx
+import { useCreateBlockNoteWithLiveblocks } from "@liveblocks/react-blocknote";
+
+function TextEditor() {
+  const editor = useCreateBlockNoteWithLiveblocks(
+    {},
+    {
+      collaborationMode: "liveblocks",
+      field: "document",
+    }
+  );
+
+  // ...
+}
+```
+
+In this mode, documents are stored in `root._tiptap_docs`, keyed by their
+`field` values. This means you can list all known editors directly from storage.
+
+```tsx
+import { useStorage, shallow } from "@liveblocks/react/suspense";
+
+function TextEditors() {
+  const fields = useStorage(
+    (root) => Object.keys(root._tiptap_docs ?? {}),
+    shallow
+  );
+
+  return fields.map((field) => <TextEditor key={field} field={field} />);
+}
+```
+
+`offlineSupport_experimental` and `ai` require the default Yjs mode.
+
 #### Offline support [@badge=experimental]
 
 It’s possible to enable offline support in your editor with an experimental
@@ -1035,8 +1086,9 @@ function Threads({ editor }: { editor: BlockNoteEditor }) {
 
 ### useIsEditorReady
 
-Used to check if the editor content has been loaded or not, helpful for
-displaying a loading skeleton.
+Used to check if the editor content has been loaded or not in the default Yjs
+mode, helpful for displaying a loading skeleton. In
+`collaborationMode: "liveblocks"`, this hook is usually not needed.
 
 ```ts
 import { useIsEditorReady } from "@liveblocks/react-blocknote";

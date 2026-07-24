@@ -622,12 +622,20 @@
 .collaboration-carets__caret,
 .collaboration-cursor__caret {
   position: relative;
-  margin-inline-start: -1px;
-  margin-inline-end: -1px;
-  border-inline-start: 1px solid #0d0d0d;
-  border-inline-end: 1px solid #0d0d0d;
   word-break: normal;
   pointer-events: none;
+}
+
+.collaboration-carets__caret::after,
+.collaboration-cursor__caret::after {
+  content: "";
+  position: absolute;
+  inset-inline-start: -1px;
+  inset-block-start: -0.15em;
+  block-size: 1.3em;
+  border-inline-start-width: 2px;
+  border-inline-start-style: solid;
+  border-inline-start-color: inherit;
 }
 
 /* Render the username above the caret */

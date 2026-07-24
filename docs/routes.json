@@ -177,8 +177,28 @@
             "hidden": true
           },
           {
+            "title": "Tiptap Storage",
+            "path": "/get-started/react-tiptap-storage",
+            "hidden": true
+          },
+          {
+            "title": "Tiptap Storage",
+            "path": "/get-started/nextjs-tiptap-storage",
+            "hidden": true
+          },
+          {
             "title": "React Flow",
             "path": "/get-started/nextjs-react-flow",
+            "hidden": true
+          },
+          {
+            "title": "CodeMirror",
+            "path": "/get-started/react-codemirror",
+            "hidden": true
+          },
+          {
+            "title": "CodeMirror",
+            "path": "/get-started/nextjs-codemirror",
             "hidden": true
           },
           {
@@ -199,6 +219,16 @@
           {
             "title": "Lexical",
             "path": "/get-started/nextjs-lexical",
+            "hidden": true
+          },
+          {
+            "title": "Lexical Storage",
+            "path": "/get-started/react-lexical-storage",
+            "hidden": true
+          },
+          {
+            "title": "Lexical Storage",
+            "path": "/get-started/nextjs-lexical-storage",
             "hidden": true
           },
           {
@@ -951,6 +981,14 @@
         "path": "/api-reference/liveblocks-react-flow"
       },
       {
+        "title": "@liveblocks/codemirror",
+        "path": "/api-reference/liveblocks-codemirror"
+      },
+      {
+        "title": "@liveblocks/prosemirror",
+        "path": "/api-reference/liveblocks-prosemirror"
+      },
+      {
         "title": "@liveblocks/react-tiptap",
         "path": "/api-reference/liveblocks-react-tiptap"
       },
@@ -965,6 +1003,10 @@
       {
         "title": "@liveblocks/react-lexical",
         "path": "/api-reference/liveblocks-react-lexical"
+      },
+      {
+        "title": "@liveblocks/lexical",
+        "path": "/api-reference/liveblocks-lexical"
       },
       {
         "title": "@liveblocks/node-lexical",

@@ -10,7 +10,9 @@ alwaysShowAllNavigationLevels: false
 plugin that adds collaboration to any [Tiptap](https://tiptap.dev/) text editor.
 It also adds realtime cursors, document persistence on the cloud, comments, and
 mentions. Read our [get started guides](/docs/get-started/text-editor/tiptap) to
-learn more. Use
+learn more. For Storage-backed collaboration, see
+[Liveblocks collaboration mode](#Liveblocks-collaboration-mode) or the
+[Storage get started](/docs/get-started/react-tiptap-storage) guide. Use
 [`@liveblocks/node-prosemirror`](/docs/api-reference/liveblocks-node-prosemirror)
 for server-side editing.
 
@@ -1995,6 +1997,16 @@ const liveblocks = useLiveblocksExtension({
     more](#Multiple-editors).
   </PropertiesListItem>
   <PropertiesListItem
+    name="options.collaborationMode"
+    defaultValue='"yjs"'
+    type='"yjs" | "liveblocks"'
+  >
+    The collaboration backend to use. `liveblocks` stores editor documents in
+    `root._tiptap_docs`, keyed by `field`, with text nodes backed by
+    [`LiveText`](/docs/api-reference/liveblocks-client#LiveText). [Learn
+    more](#Liveblocks-collaboration-mode).
+  </PropertiesListItem>
+  <PropertiesListItem
     name="options.offlineSupport_experimental"
     defaultValue="false"
     type="boolean"
@@ -2101,6 +2113,97 @@ function TextEditor({ field }: { field: string }) {
   );
 }
 ```
+
+#### Liveblocks collaboration mode
+
+By default, Tiptap uses Yjs-backed collaboration. To store text as
+[`LiveText`](/docs/api-reference/liveblocks-client#LiveText) backed by
+Liveblocks Storage instead, pass `collaborationMode: "liveblocks"`.
+
+Documents are stored under `root._tiptap_docs`, keyed by each editor’s
+[`field`](#Multiple-editors). Comments, mentions, cursors, and toolbars work the
+same as in Yjs mode. Read our [React](/docs/get-started/react-tiptap-storage) or
+[Next.js](/docs/get-started/nextjs-tiptap-storage) Storage get started guides
+for a full setup.
+
+```tsx
+"use client";
+
+import {
+  FloatingComposer,
+  FloatingToolbar,
+  useLiveblocksExtension,
+} from "@liveblocks/react-tiptap";
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+
+const INITIAL_CONTENT = {
+  type: "doc",
+  content: [
+    {
+      type: "paragraph",
+      content: [{ type: "text", text: "Hello world" }],
+    },
+  ],
+};
+
+function TextEditor() {
+  // +++
+  const liveblocks = useLiveblocksExtension({
+    collaborationMode: "liveblocks",
+    field: "document",
+    initialContent: INITIAL_CONTENT,
+  });
+  // +++
+
+  const editor = useEditor({
+    extensions: [
+      liveblocks,
+      StarterKit.configure({
+        // The Liveblocks extension comes with its own history handling
+        undoRedo: false,
+      }),
+    ],
+    immediatelyRender: false,
+  });
+
+  return (
+    <div>
+      <EditorContent editor={editor} />
+      <FloatingComposer editor={editor} />
+      <FloatingToolbar editor={editor} />
+    </div>
+  );
+}
+```
+
+Use [`initialContent`](#Setting-initial-content) for the first-load document
+when the Storage field is empty.
+
+You can list editors from Storage by reading `_tiptap_docs` keys:
+
+```tsx
+import { useStorage, shallow } from "@liveblocks/react/suspense";
+
+function TextEditors() {
+  const fields = useStorage(
+    (root) => Object.keys(root._tiptap_docs ?? {}),
+    shallow
+  );
+
+  return fields.map((field) => <TextEditor key={field} field={field} />);
+}
+```
+
+<Banner>
+
+[`offlineSupport_experimental`](#Offline-support) and [`ai`](#AiToolbar) require
+the default Yjs collaboration mode (`collaborationMode: "yjs"`).
+
+</Banner>
+
+In Storage mode, [`useIsEditorReady`](#useIsEditorReady) is usually not
+needed—the editor syncs as soon as Storage has loaded.
 
 #### Offline support [@badge=experimental]
 
@@ -2255,8 +2358,9 @@ function TextEditor() {
 
 ### useIsEditorReady
 
-Used to check if the editor content has been loaded or not, helpful for
-displaying a loading skeleton.
+Used to check if the editor content has been loaded or not in the default Yjs
+mode, helpful for displaying a loading skeleton. In
+`collaborationMode: "liveblocks"`, this hook is usually not needed.
 
 ```ts
 import { useIsEditorReady } from "@liveblocks/react-tiptap";

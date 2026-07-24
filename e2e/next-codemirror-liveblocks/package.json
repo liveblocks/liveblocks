@@ -1,0 +1,40 @@
+{
+  "name": "@liveblocks/next-codemirror-liveblocks",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 3009",
+    "build": "next build",
+    "start": "next start --port 3009",
+    "lint": "next lint",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@codemirror/lang-javascript": "^6.2.5",
+    "@codemirror/state": "^6.6.0",
+    "@codemirror/view": "^6.43.1",
+    "@liveblocks/client": "workspace:*",
+    "@liveblocks/codemirror": "workspace:*",
+    "@liveblocks/node": "workspace:*",
+    "@liveblocks/react": "workspace:*",
+    "@liveblocks/react-ui": "workspace:*",
+    "next": "16.1.4",
+    "react": "19.2.3",
+    "react-dom": "19.2.3"
+  },
+  "devDependencies": {
+    "@liveblocks/core": "workspace:*",
+    "@liveblocks/vitest-config": "workspace:*",
+    "@eslint/eslintrc": "^3.3.3",
+    "@tailwindcss/postcss": "^4.2.2",
+    "@types/node": "^24.12.2",
+    "@types/react": "^18.3.17",
+    "@types/react-dom": "^18.3.5",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "16.1.4",
+    "tailwindcss": "^4.3.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.4"
+  }
+}

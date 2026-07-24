@@ -17,6 +17,7 @@ import {
   isMapStorageNode,
   isObjectStorageNode,
   isRegisterStorageNode,
+  isTextStorageNode,
 } from "../protocol/StorageNode";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
 import { createManagedPool, type ManagedPool } from "./AbstractCrdt";
@@ -25,7 +26,9 @@ import { LiveList, type LiveListUpdates } from "./LiveList";
 import { LiveMap, type LiveMapUpdates } from "./LiveMap";
 import { LiveObject, type LiveObjectUpdates } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
+import { LiveText, type LiveTextUpdates } from "./LiveText";
 import type { LiveNode, LiveStructure, Lson, LsonObject } from "./Lson";
+import { kStorageUpdateSource } from "../internal";
 import type { StorageUpdate } from "./StorageUpdates";
 
 export function creationOpToLiveNode(op: CreateOp): LiveNode {
@@ -44,6 +47,8 @@ export function creationOpToLson(op: CreateOp): Lson {
       return new LiveMap();
     case OpCode.CREATE_LIST:
       return new LiveList([]);
+    case OpCode.CREATE_TEXT:
+      return new LiveText(op.data, op.version);
     default:
       return assertNever(op, "Unknown creation Op");
   }
@@ -99,6 +104,8 @@ export function deserialize(
     return LiveMap._deserialize(node, parentToChildren, pool);
   } else if (isRegisterStorageNode(node)) {
     return LiveRegister._deserialize(node, parentToChildren, pool);
+  } else if (isTextStorageNode(node)) {
+    return LiveText._deserialize(node, parentToChildren, pool);
   } else if (isFileStorageNode(node)) {
     return LiveFile._deserialize(node, parentToChildren, pool);
   } else {
@@ -119,6 +126,8 @@ export function deserializeToLson(
     return LiveMap._deserialize(node, parentToChildren, pool);
   } else if (isRegisterStorageNode(node)) {
     return node[1].data;
+  } else if (isTextStorageNode(node)) {
+    return LiveText._deserialize(node, parentToChildren, pool);
   } else if (isFileStorageNode(node)) {
     return LiveFile._deserialize(node, parentToChildren, pool);
   } else {
@@ -131,6 +140,7 @@ export function isLiveStructure(value: unknown): value is LiveStructure {
     isLiveList(value) ||
     isLiveMap(value) ||
     isLiveObject(value) ||
+    isLiveText(value) ||
     isLiveFile(value)
   );
 }
@@ -149,6 +159,10 @@ export function isLiveMap(value: unknown): value is LiveMap<string, Lson> {
 
 export function isLiveObject(value: unknown): value is LiveObject<LsonObject> {
   return value instanceof LiveObject;
+}
+
+export function isLiveText(value: unknown): value is LiveText {
+  return value instanceof LiveText;
 }
 
 export function isLiveFile(value: unknown): value is LiveFile {
@@ -174,6 +188,7 @@ export function liveNodeToLson(obj: LiveNode): Lson {
     obj instanceof LiveList ||
     obj instanceof LiveMap ||
     obj instanceof LiveObject ||
+    obj instanceof LiveText ||
     obj instanceof LiveFile
   ) {
     return obj;
@@ -187,6 +202,7 @@ export function lsonToLiveNode(value: Lson): LiveNode {
     value instanceof LiveObject ||
     value instanceof LiveMap ||
     value instanceof LiveList ||
+    value instanceof LiveText ||
     value instanceof LiveFile
   ) {
     return value;
@@ -438,6 +454,16 @@ export function diffNodeMap(prev: NodeMap, next: NodeMap): Op[] {
           parentKey: crdt.parentKey,
         });
         break;
+      case CrdtType.TEXT:
+        ops.push({
+          type: OpCode.CREATE_TEXT,
+          id,
+          parentId: crdt.parentId,
+          parentKey: crdt.parentKey,
+          data: crdt.data,
+          version: crdt.version,
+        });
+        break;
     }
   }
 
@@ -473,6 +499,11 @@ export function diffNodeMap(prev: NodeMap, next: NodeMap): Op[] {
           }
         }
       }
+      // NOTE: CrdtType.TEXT nodes that exist on both sides are deliberately
+      // NOT diffed into UPDATE_TEXT ops here. The UPDATE_TEXT op path
+      // carries pending-op transformation semantics that don't apply to
+      // authoritative snapshots; LiveText nodes are reconciled against the
+      // snapshot directly (see LiveText._resyncText, called from the room).
       if (crdt.parentKey !== currentCrdt.parentKey) {
         ops.push({
           type: OpCode.SET_PARENT_KEY,
@@ -481,6 +512,7 @@ export function diffNodeMap(prev: NodeMap, next: NodeMap): Op[] {
         });
       }
     } else {
+      // new Crdt
       emitCreate(id, crdt);
     }
   });
@@ -527,6 +559,16 @@ function mergeListStorageUpdates<T extends Lson>(
   };
 }
 
+function mergeTextStorageUpdates(
+  first: LiveTextUpdates,
+  second: LiveTextUpdates
+): LiveTextUpdates {
+  return {
+    ...second,
+    updates: first.updates.concat(second.updates),
+  };
+}
+
 export function mergeStorageUpdates(
   first: StorageUpdate | undefined,
   second: StorageUpdate
@@ -535,15 +577,34 @@ export function mergeStorageUpdates(
     return second;
   }
 
+  let merged: StorageUpdate;
   if (first.type === "LiveObject" && second.type === "LiveObject") {
-    return mergeObjectStorageUpdates(first, second);
+    merged = mergeObjectStorageUpdates(first, second);
   } else if (first.type === "LiveMap" && second.type === "LiveMap") {
-    return mergeMapStorageUpdates(first, second);
+    merged = mergeMapStorageUpdates(first, second);
   } else if (first.type === "LiveList" && second.type === "LiveList") {
-    return mergeListStorageUpdates(first, second);
+    merged = mergeListStorageUpdates(first, second);
+  } else if (first.type === "LiveText" && second.type === "LiveText") {
+    merged = mergeTextStorageUpdates(first, second);
   } else {
     /* Mismatching merge types. Throw an error here? */
+    merged = second;
   }
 
-  return second;
+  const sa = first[kStorageUpdateSource];
+  const sb = second[kStorageUpdateSource];
+  if (sa !== undefined || sb !== undefined) {
+    if (sa?.origin === "remote" || sb?.origin === "remote") {
+      merged[kStorageUpdateSource] = { origin: "remote" };
+    } else if (sa?.via === "history" || sb?.via === "history") {
+      const historySource =
+        sb?.via === "history" ? sb : sa?.via === "history" ? sa : undefined;
+      if (historySource?.via === "history") {
+        merged[kStorageUpdateSource] = historySource;
+      }
+    } else {
+      merged[kStorageUpdateSource] = { origin: "local", via: "mutation" };
+    }
+  }
+  return merged;
 }

@@ -76,6 +76,11 @@ export class UnacknowledgedOps implements ReadonlyUnacknowledgedOps {
     return this.#byOpId.size;
   }
 
+  /** The still-unacknowledged op with the given opId, if any. */
+  get(opId: string): ClientWireOp | undefined {
+    return this.#byOpId.get(opId);
+  }
+
   /**
    * Mark the given Op as still unacknowledged.
    */

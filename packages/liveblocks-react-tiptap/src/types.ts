@@ -86,9 +86,17 @@ export interface AiConfiguration {
 }
 
 export type LiveblocksExtensionOptions = {
+  collaborationMode?: "yjs" | "liveblocks";
   field?: string;
   comments?: boolean; // | CommentsConfiguration
   mentions?: boolean; // | MentionsConfiguration
+  /**
+   * @internal
+   * Allows editor wrappers that add Liveblocks mention nodes through their own
+   * schema layer to reuse the mention plugins without registering duplicate
+   * TipTap node extensions.
+   */
+  mentionNodes?: boolean;
   ai?: boolean | AiConfiguration;
   offlineSupport_experimental?: boolean;
   threads_experimental?: ThreadData[];
@@ -104,12 +112,18 @@ export type LiveblocksExtensionOptions = {
   textEditorType?: TextEditorType;
 };
 
-export type LiveblocksExtensionStorage = {
-  unsubs: (() => void)[];
-  doc: Doc;
-  provider: LiveblocksYjsProvider;
-  permanentUserData?: PermanentUserData;
-};
+export type LiveblocksExtensionStorage =
+  | {
+      mode: "yjs";
+      unsubs: (() => void)[];
+      doc: Doc;
+      provider: LiveblocksYjsProvider;
+      permanentUserData?: PermanentUserData;
+    }
+  | {
+      mode: "liveblocks";
+      unsubs: (() => void)[];
+    };
 
 export type CommentsExtensionStorage = {
   pendingComment: boolean;
