@@ -18,11 +18,21 @@ import {
   TLStoreEventInfo,
   TLStoreWithStatus,
 } from "tldraw";
+import type { LiveblocksAssetStore } from "./liveblocksAssetStore";
+import {
+  createLiveblocksRecord,
+  getLiveblocksJsonObject,
+  getTldrawRecord,
+  isLiveblocksRecord,
+  reconcileLiveblocksRecord,
+} from "./liveblocksTldrawStorage";
 
 export function useStorageStore({
+  assets,
   shapeUtils = [],
   user,
 }: Partial<{
+  assets: LiveblocksAssetStore;
   hostUrl: string;
   version: number;
   shapeUtils: TLAnyShapeUtilConstructor[];
@@ -38,6 +48,7 @@ export function useStorageStore({
   // Set up tldraw store and status
   const [store] = useState(() => {
     const store = createTLStore({
+      assets,
       shapeUtils: [...defaultShapeUtils, ...shapeUtils],
     });
     return store;
@@ -55,23 +66,50 @@ export function useStorageStore({
       // Get Liveblocks Storage values
       const { root } = await room.getStorage();
       const liveRecords = root.get("records");
+      const defaultRecords = [
+        DocumentRecordType.create({
+          id: "document:document" as TLDocument["id"],
+        }),
+        PageRecordType.create({
+          id: "page:page" as TLPageId,
+          name: "Page 1",
+          index: "a1" as IndexKey,
+        }),
+      ];
+
+      room.batch(() => {
+        for (const [id, liveRecord] of liveRecords.entries()) {
+          if (isLiveblocksRecord(liveRecord)) {
+            continue;
+          }
+
+          const record = getTldrawRecord(liveRecord);
+          if (record) {
+            liveRecords.set(id, createLiveblocksRecord(record));
+          }
+        }
+
+        defaultRecords.forEach((record) => {
+          if (!liveRecords.has(record.id)) {
+            liveRecords.set(record.id, createLiveblocksRecord(record));
+          }
+        });
+      });
+
+      function getRecordsFromStorage() {
+        const records: TLRecord[] = [];
+        for (const liveRecord of liveRecords.values()) {
+          const record = getTldrawRecord(liveRecord);
+          if (record) {
+            records.push(record);
+          }
+        }
+        return records;
+      }
 
       // Initialize tldraw with records from Storage
       store.clear();
-      store.put(
-        [
-          DocumentRecordType.create({
-            id: "document:document" as TLDocument["id"],
-          }),
-          PageRecordType.create({
-            id: "page:page" as TLPageId,
-            name: "Page 1",
-            index: "a1" as IndexKey,
-          }),
-          ...[...liveRecords.values()],
-        ],
-        "initialize"
-      );
+      store.put(getRecordsFromStorage(), "initialize");
 
       // Sync tldraw changes with Storage
       unsubs.push(
@@ -79,11 +117,16 @@ export function useStorageStore({
           ({ changes }: TLStoreEventInfo) => {
             room.batch(() => {
               Object.values(changes.added).forEach((record) => {
-                liveRecords.set(record.id, record);
+                liveRecords.set(record.id, createLiveblocksRecord(record));
               });
 
               Object.values(changes.updated).forEach(([_, record]) => {
-                liveRecords.set(record.id, record);
+                const liveRecord = liveRecords.get(record.id);
+                if (liveRecord && isLiveblocksRecord(liveRecord)) {
+                  reconcileLiveblocksRecord(liveRecord, record);
+                } else {
+                  liveRecords.set(record.id, createLiveblocksRecord(record));
+                }
               });
 
               Object.values(changes.removed).forEach((record) => {
@@ -99,11 +142,15 @@ export function useStorageStore({
       function syncStoreWithPresence({ changes }: TLStoreEventInfo) {
         room.batch(() => {
           Object.values(changes.added).forEach((record) => {
-            room.updatePresence({ [record.id]: record });
+            room.updatePresence({
+              [record.id]: getLiveblocksJsonObject(record),
+            });
           });
 
           Object.values(changes.updated).forEach(([_, record]) => {
-            room.updatePresence({ [record.id]: record });
+            room.updatePresence({
+              [record.id]: getLiveblocksJsonObject(record),
+            });
           });
 
           Object.values(changes.removed).forEach((record) => {
@@ -130,34 +177,17 @@ export function useStorageStore({
       unsubs.push(
         room.subscribe(
           liveRecords,
-          (storageChanges) => {
-            const toRemove: TLRecord["id"][] = [];
-            const toPut: TLRecord[] = [];
-
-            for (const update of storageChanges) {
-              if (update.type !== "LiveMap") {
-                return;
-              }
-
-              for (const [id, { type }] of Object.entries(update.updates)) {
-                switch (type) {
-                  // Object deleted from Liveblocks, remove from tldraw
-                  case "delete": {
-                    toRemove.push(id as TLRecord["id"]);
-                    break;
-                  }
-
-                  // Object updated on Liveblocks, update tldraw
-                  case "update": {
-                    const curr = update.node.get(id);
-                    if (curr) {
-                      toPut.push(curr as any as TLRecord);
-                    }
-                    break;
-                  }
-                }
-              }
-            }
+          () => {
+            const toPut = getRecordsFromStorage();
+            const recordIds = new Set(toPut.map((record) => record.id));
+            const toRemove = store
+              .allRecords()
+              .filter(
+                (record) =>
+                  store.scopedTypes.document.has(record.typeName) &&
+                  !recordIds.has(record.id)
+              )
+              .map((record) => record.id);
 
             // Update tldraw with changes
             store.mergeRemoteChanges(() => {
@@ -199,14 +229,20 @@ export function useStorageStore({
       )(store);
 
       // Update presence with tldraw values
+      const presenceRecord = presenceDerivation.get();
       room.updatePresence({
-        presence: presenceDerivation.get() ?? null,
+        presence: presenceRecord
+          ? getLiveblocksJsonObject(presenceRecord)
+          : null,
       });
 
       // Update Liveblocks when tldraw presence changes
       unsubs.push(
         react("when presence changes", () => {
-          const presence = presenceDerivation.get() ?? null;
+          const presenceRecord = presenceDerivation.get();
+          const presence = presenceRecord
+            ? getLiveblocksJsonObject(presenceRecord)
+            : null;
           requestAnimationFrame(() => {
             room.updatePresence({ presence });
           });
@@ -246,8 +282,9 @@ export function useStorageStore({
             case "enter":
             case "update": {
               const presence = event?.user?.presence;
-              if (presence?.presence) {
-                toPut.push(event.user.presence.presence);
+              const record = getTldrawRecord(presence?.presence);
+              if (record?.typeName === "instance_presence") {
+                toPut.push(record);
               }
             }
           }

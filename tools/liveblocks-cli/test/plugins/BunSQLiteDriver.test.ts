@@ -40,7 +40,9 @@ function initBunSQLite(dbPath: string, rawNodes: NodeMap): void {
     const parentId = id === "root" ? null : (node.parentId ?? null);
     const parentKey = id === "root" ? null : (node.parentKey ?? null);
     const jdata =
-      node.type === CrdtType.OBJECT || node.type === CrdtType.REGISTER
+      node.type === CrdtType.OBJECT ||
+      node.type === CrdtType.REGISTER ||
+      node.type === CrdtType.FILE
         ? JSON.stringify(node.data)
         : null;
 

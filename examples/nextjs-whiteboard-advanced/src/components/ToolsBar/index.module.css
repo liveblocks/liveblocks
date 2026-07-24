@@ -31,3 +31,7 @@
   background-color: rgba(0, 0, 0, 0.1);
   align-self: stretch;
 }
+
+.file_input {
+  display: none;
+}

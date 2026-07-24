@@ -2629,6 +2629,13 @@ type Storage = {
 //   quote: string;
 //   time: number;
 // };
+//
+// Optionally, when using Comments, CommentMetadata represents metadata on
+// each thread. Can only contain booleans, strings, and numbers.
+// export type CommentMetadata = {
+//   tag: string;
+//   spam: boolean;
+// };
 
 export const {
   RoomProvider,
@@ -2640,7 +2647,7 @@ export const {
 } = createRoomContext<
   Presence,
   Storage
-  /* UserMeta, RoomEvent, ThreadMetadata */
+  /* UserMeta, RoomEvent, ThreadMetadata, CommentMetadata */
 >(client);
 ```
 
@@ -3520,10 +3527,10 @@ whiteboard, or cells in a spreadsheet.
 
 ### Data structures
 
-Storage provides three different conflict-free data structures, which you can
-use to build your application. All structures are permanent and persist when all
-users have left the room, unlike [Presence](/docs/ready-made-features/presence)
-which is temporary.
+Storage provides four data structures which you can use to build your
+application. All structures are permanent and persist when all users have left
+the room, unlike [Presence](/docs/ready-made-features/presence) which is
+temporary.
 
 - [`LiveObject`][] - Similar to JavaScript object. Use this for storing records
   with fixed key names and where the values don’t necessarily have the same
@@ -3539,6 +3546,11 @@ which is temporary.
   all have the same structure. For example, to store an index of `Person` values
   by their name. If multiple users update the same property simultaneously, the
   last modification received by the Liveblocks servers is the winner.
+
+- [`LiveFile`](/docs/api-reference/liveblocks-client#LiveFile) - An immutable
+  reference to a file uploaded to Liveblocks. Use this for large files such as
+  images and videos. All file types are supported. Learn more about
+  [file size limits](/docs/pricing/limits).
 
 ### Typing Storage [#typing-storage]
 
@@ -3623,8 +3635,9 @@ function App() {
 
 ### Nesting data structures
 
-All Storage data structures can be nested, allowing you to create complex trees
-of conflict-free data.
+All Storage data structures can be nested, allowing you to create complex trees.
+`LiveObject`, `LiveList`, and `LiveMap` contain collaborative data, while
+`LiveFile` is an immutable leaf.
 
 ```ts
 import { LiveObject, LiveList, LiveMap } from "@liveblocks/client";
@@ -3754,6 +3767,80 @@ const myTodos = useStorage(
   <PropertiesListItem name="data" type="T | null">
     The selected data from storage. Returns `null` while storage is still
     loading (in non-Suspense version).
+  </PropertiesListItem>
+</PropertiesList>
+
+### useUploadFile [@badge=RoomProvider]
+
+Returns a function that uploads a file to the current room. The function
+resolves to a [`LiveFile`](/docs/api-reference/liveblocks-client#LiveFile) that
+can be stored in Storage.
+
+```tsx
+import { useMutation, useUploadFile } from "@liveblocks/react/suspense";
+
+const uploadFile = useUploadFile();
+
+const setFile = useMutation(async ({ storage }, file: File) => {
+  storage.set("file", await uploadFile(file));
+}, []);
+```
+
+The function accepts the same arguments and returns the same result as
+[`Room.uploadFile`](/docs/api-reference/liveblocks-client#Room.uploadFile).
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="uploadFile"
+    type="(file: File, options?: UploadFileOptions) => Promise<LiveFile>"
+  >
+    A function that uploads a file. Pass an `AbortSignal` as `options.signal` to
+    cancel the upload.
+  </PropertiesListItem>
+</PropertiesList>
+
+### useFileUrl [@badge=RoomProvider]
+
+Returns a presigned URL for a
+[`LiveFile`](/docs/api-reference/liveblocks-client#LiveFile).
+[Suspense](/docs/api-reference/liveblocks-react#Suspense-hooks) and
+[regular](/docs/api-reference/liveblocks-react#Regular-hooks) versions of this
+hook are available.
+
+```tsx
+import { useFileUrl } from "@liveblocks/react";
+
+const { url, error, isLoading } = useFileUrl("fl_xxx");
+```
+
+You can also pass a `LiveFile` or its `LiveFileData` returned by `useStorage`.
+
+```tsx
+const { url, error, isLoading } = useFileUrl(file);
+```
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem
+    name="file"
+    type="LiveFile | LiveFileData | string"
+    required
+  >
+    The `LiveFile`, `LiveFileData`, or ID to get a URL for.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="url" type="string | undefined">
+    The presigned URL for the file, or `undefined` if not yet loaded (in the
+    non-Suspense version).
+  </PropertiesListItem>
+  <PropertiesListItem name="isLoading" type="boolean">
+    Whether the URL is currently being loaded.
+  </PropertiesListItem>
+  <PropertiesListItem name="error" type="Error | undefined">
+    Any error that occurred while loading the URL.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -6726,6 +6813,9 @@ declare global {
     // Custom metadata set on threads, for useThreads, useCreateThread, etc.
     ThreadMetadata: {};
 
+    // Custom metadata set on comments, for useCreateThread, useCreateComment, etc.
+    CommentMetadata: {};
+
     // Custom room info set with resolveRoomsInfo, for useRoomInfo
     RoomInfo: {};
 
@@ -6779,6 +6869,13 @@ declare global {
       // Example, attaching coordinates to a thread
       x: number;
       y: number;
+    };
+
+    // Custom metadata set on comments, for useCreateThread, useCreateComment, etc.
+    CommentMetadata: {
+      // Example, attaching a tag and a spam flag to a comment
+      tag: string;
+      spam: boolean;
     };
 
     // Custom room info set with resolveRoomsInfo, for useRoomInfo
@@ -6864,6 +6961,13 @@ type Storage = {
 //   quote: string;
 //   time: number;
 // };
+//
+// CommentMetadata represents metadata on each comment. Can only contain
+// booleans, strings, and numbers.
+// export type CommentMetadata = {
+//   tag: string;
+//   spam: boolean;
+// };
 
 export const {
   RoomProvider,
@@ -6875,7 +6979,7 @@ export const {
 } = createRoomContext<
   Presence,
   Storage
-  /* UserMeta, RoomEvent, ThreadMetadata */
+  /* UserMeta, RoomEvent, ThreadMetadata, CommentMetadata */
 >(client);
 ```
 

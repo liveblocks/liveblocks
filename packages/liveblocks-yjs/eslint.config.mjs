@@ -2,7 +2,7 @@ import { makeConfig } from "@liveblocks/eslint-config";
 import commonRestrictedSyntax from "@liveblocks/eslint-config/restricted-syntax";
 
 export default [
-  ...makeConfig(),
+  ...makeConfig(import.meta.dirname),
 
   {
     rules: {

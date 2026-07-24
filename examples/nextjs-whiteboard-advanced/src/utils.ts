@@ -1,3 +1,4 @@
+import type { ToJson } from "@liveblocks/client";
 import {
   Color,
   Side,
@@ -75,6 +76,7 @@ export function isHittingLayer(layer: Layer, point: Point) {
       return isHittingEllipse(layer, point);
     // TODO: Implement path hit testing instead of using Rectangle hit box
     case LayerType.Path:
+    case LayerType.Image:
     case LayerType.Rectangle:
       return isHittingRectangle(layer, point);
     default:
@@ -109,7 +111,7 @@ export function isHittingEllipse(layer: EllipseLayer, point: Point) {
  */
 export function findIntersectingLayersWithRectangle(
   layerIds: readonly string[],
-  layers: Record<string, Layer>,
+  layers: Record<string, ToJson<Layer>>,
   a: Point,
   b: Point
 ) {
@@ -199,7 +201,7 @@ export function penPointsToPathLayer(
 }
 
 export function pointerEventToCanvasPoint(
-  e: React.PointerEvent,
+  e: Pick<React.PointerEvent, "clientX" | "clientY">,
   camera: Camera
 ): Point {
   return {

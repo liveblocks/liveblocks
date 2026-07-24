@@ -6,46 +6,59 @@ meta:
     "A list of all the limits and limitations that apply on Liveblocks."
 ---
 
-## General limits
+Understand the limits that apply to your account: plan limits, overage, and
+technical limits.
 
-There are four plans: Free, Pro, Team, and Enterprise. Each plan has its own set
-of limits.
+## Plan limits
 
-| Limit                                                                                                                                                                                                                                        | Free                                               | Pro                                               | Team                                               | Enterprise                                                                                                                                                       |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- | ------------------------------------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| <LimitLabel href="#What-is-a-monthly-active-room" tooltip="The number of rooms used in a given month.">Monthly active rooms</LimitLabel>                                                                                                     | <Limits.FreeComparePlansMonthlyActiveRoomsLabel /> | <Limits.ProComparePlansMonthlyActiveRoomsLabel /> | <Limits.TeamComparePlansMonthlyActiveRoomsLabel /> | <Limits.EnterpriseComparePlansMonthlyActiveRoomsLabel />                                                                                                         |
-| <LimitLabel href="#What-is-a-monthly-active-user" tooltip="The number of users who used Liveblocks features in a given month.">Monthly active users</LimitLabel>                                                                             | <Limits.FreeMaxMau />                              | <Limits.ProMaxMau />                              | <Limits.TeamMaxMau />                              | <Limits.EnterpriseMaxMau />                                                                                                                                      |
-| <LimitLabel href="/docs/platform/projects" tooltip="Separate environments for organizing your Liveblocks integration.">Projects</LimitLabel>                                                                                                 | <Limits.FreeProjectsIncluded /> included           | <Limits.ProProjectsIncluded /> included           | <Limits.TeamProjectsIncluded /> included           | <LimitHint tooltip={<>Up to <Limits.EnterpriseMaxProjects /></>}><Limits.EnterpriseProjectsIncluded /> included</LimitHint>                                      |
-| <LimitLabel href="/docs/platform/account-management/manage-team-members" tooltip="Dashboard members with Owner or Member role. They can configure projects, roll keys, and more.">Team members</LimitLabel>                                  | <Limits.FreeTeamMembersPerAccount /> included      | <Limits.ProTeamMembersPerAccount /> included      | <Limits.TeamTeamMembersPerAccount /> included      | <LimitHint tooltip={<>Up to <Limits.EnterpriseMaxTeamMembersPerAccount /></>}><Limits.EnterpriseTeamMembersPerAccount /> included</LimitHint>                    |
-| <LimitLabel href="#What's-a-simultaneous-connection-per-room" tooltip="Users connected to the same room at the same time.">Simultaneous connections per room</LimitLabel>                                                                    | <Limits.FreeMaxConnectionsPerRoom />               | <Limits.ProMaxConnectionsPerRoom />               | <Limits.TeamMaxConnectionsPerRoom />               | <Limits.EnterpriseMaxConnectionsPerRoom />                                                                                                                       |
-| <LimitLabel href="#What's-a-simultaneous-connection-per-project" tooltip="Users connected to rooms in the same project at the same time.">Simultaneous connections per project</LimitLabel>                                                  | <Limits.FreeMaxConnectionsPerProject />            | <Limits.ProMaxConnectionsPerProject />            | <Limits.TeamMaxConnectionsPerProject />            | <Limits.EnterpriseMaxConnectionsPerProject />                                                                                                                    |
-| <LimitLabel href="/docs/authentication" tooltip="Public key only recommended for prototyping.">Monthly anonymous connections</LimitLabel>                                                                                                    | <Limits.FreeMaxAnonymousConnections />             | <Limits.ProMaxAnonymousConnections />             | <Limits.TeamMaxAnonymousConnections />             | <Limits.EnterpriseMaxAnonymousConnections />                                                                                                                     |
-| <LimitLabel tooltip="Maximum storage data allowed in a single room.">Realtime data stored per room</LimitLabel>                                                                                                                              | <Limits.FreeMaxStorageSizePerRoom />               | <Limits.ProMaxStorageSizePerRoom />               | <Limits.TeamMaxStorageSizePerRoom />               | <Limits.EnterpriseMaxStorageSizePerRoom />                                                                                                                       |
-| <LimitLabel tooltip="Total comments stored across all rooms.">Comments stored</LimitLabel>                                                                                                                                                   | <Limits.FreeMaxComments />                         | <Limits.ProMaxComments />                         | <Limits.TeamMaxComments />                         | <Limits.EnterpriseMaxComments />                                                                                                                                 |
-| <LimitLabel tooltip="Notifications automatically triggered from collaborative features like comment thread updates and @ mentions.">Monthly collaboration notifications</LimitLabel>                                                         | <Limits.FreeMaxCollaborationNotifications />       | <Limits.ProMaxCollaborationNotifications />       | <Limits.TeamMaxCollaborationNotifications />       | <Limits.EnterpriseMaxCollaborationNotifications />                                                                                                               |
-| <LimitLabel href="/docs/platform/webhooks#StorageUpdatedEvent" tooltip="The frequency at which `yDocUpdated` (Yjs) and `storageUpdated` (Liveblocks Storage) events are sent to your webhook endpoint.">Webhook event frequency</LimitLabel> | <Limits.FreeStorageUpdatedWebhookEventThrottle />  | <Limits.ProStorageUpdatedWebhookEventThrottle />  | <Limits.TeamStorageUpdatedWebhookEventThrottle />  | <LimitHint tooltip={<>Down to <Limits.EnterpriseMaxStorageUpdatedWebhookEventThrottle /></>}><Limits.EnterpriseStorageUpdatedWebhookEventThrottle /></LimitHint> |
-| <LimitLabel tooltip="APIs, hooks, and pre-built components to access the previous versions of the realtime data stored in rooms.">Version history</LimitLabel>                                                                               | <Limits.FreeVersionHistory />                      | <Limits.ProVersionHistory />                      | <Limits.TeamVersionHistory />                      | <Limits.EnterpriseVersionHistory />                                                                                                                              |
-| <LimitLabel tooltip="How long activity and audit events are retained.">Event log retention</LimitLabel>                                                                                                                                      | <Limits.FreeEventLogRetention />                   | <Limits.ProEventLogRetention />                   | <Limits.TeamEventLogRetention />                   | <LimitHint tooltip={<>Up to <Limits.EnterpriseMaxEventLogRetention /></>}><Limits.EnterpriseEventLogRetention /></LimitHint>                                     |
-| <LimitLabel tooltip="Maximum size for a single file upload, such as a comment attachment.">Max file upload size</LimitLabel>                                                                                                                 | <Limits.FreeMaxFileUploadSize />                   | <Limits.ProMaxFileUploadSize />                   | <Limits.TeamMaxFileUploadSize />                   | <LimitHint tooltip={<>Up to <Limits.EnterpriseMaxFileUploadSize /></>}><Limits.EnterpriseFileUploadSize /></LimitHint>                                           |
+Each plan has limits that protect your account and your costs.
 
-Metered usage like realtime collaboration minutes, comments, storage updates,
-data stored, custom notifications, and file storage is billed through monthly
-credits. See each [plan page](/docs/pricing/plans) for rates and included
-credits.
+| Metric                                                                                                                                                                                                                                                                                                          | Free                                               | Pro                                               | Team                                               | Enterprise                                                                                                                                                       |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- | ------------------------------------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| <LimitLabel tooltip={<>The number of users who used Liveblocks features in a given month. <a href="/docs/pricing/faqs#What-is-a-monthly-active-user" className="font-medium text-product-brand">Learn more.</a></>}>Monthly active users</LimitLabel>                                                           | <Limits.FreeMaxMau />                              | <Limits.ProMaxMau />                              | <Limits.TeamMaxMau />                              | <Limits.EnterpriseMaxMau />                                                                                                                                      |
+| <LimitLabel tooltip={<>The number of rooms used in a given month. <a href="/docs/pricing/faqs#What-is-a-monthly-active-room" className="font-medium text-product-brand">Learn more.</a></>}>Monthly active rooms</LimitLabel>                                                                                   | <Limits.FreeComparePlansMonthlyActiveRoomsLabel /> | <Limits.ProComparePlansMonthlyActiveRoomsLabel /> | <Limits.TeamComparePlansMonthlyActiveRoomsLabel /> | <Limits.EnterpriseComparePlansMonthlyActiveRoomsLabel />                                                                                                         |
+| <LimitLabel tooltip={<>Users connected to the same room at the same time. <a href="/docs/pricing/faqs#What's-a-simultaneous-connection-per-room" className="font-medium text-product-brand">Learn more.</a></>}>Simultaneous connections per room</LimitLabel>                                                  | <Limits.FreeMaxConnectionsPerRoom />               | <Limits.ProMaxConnectionsPerRoom />               | <Limits.TeamMaxConnectionsPerRoom />               | <Limits.EnterpriseMaxConnectionsPerRoom />                                                                                                                       |
+| <LimitLabel tooltip={<>Users connected to rooms in the same project at the same time. <a href="/docs/pricing/faqs#What's-a-simultaneous-connection-per-project" className="font-medium text-product-brand">Learn more.</a></>}>Simultaneous connections per project</LimitLabel>                                | <Limits.FreeMaxConnectionsPerProject />            | <Limits.ProMaxConnectionsPerProject />            | <Limits.TeamMaxConnectionsPerProject />            | <Limits.EnterpriseMaxConnectionsPerProject />                                                                                                                    |
+| <LimitLabel tooltip={<>Separate environments for organizing your Liveblocks integration. <a href="/docs/platform/projects" className="font-medium text-product-brand">Learn more.</a></>}>Projects</LimitLabel>                                                                                                 | <Limits.FreeProjectsIncluded />                    | <Limits.ProProjectsIncluded />                    | <Limits.TeamProjectsIncluded />                    | <LimitHint tooltip={<>Up to <Limits.EnterpriseMaxProjects /></>}><Limits.EnterpriseProjectsIncluded /></LimitHint>                                               |
+| <LimitLabel tooltip={<>Dashboard members with Owner or Member role. They can configure projects, roll keys, and more. <a href="/docs/platform/account-management/manage-team-members" className="font-medium text-product-brand">Learn more.</a></>}>Dashboard seats</LimitLabel>                               | <Limits.FreeTeamMembersPerAccount />               | <Limits.ProTeamMembersPerAccount />               | <Limits.TeamTeamMembersPerAccount />               | <LimitHint tooltip={<>Up to <Limits.EnterpriseMaxTeamMembersPerAccount /></>}><Limits.EnterpriseTeamMembersPerAccount /></LimitHint>                             |
+| <LimitLabel tooltip="Maximum storage data allowed in a single room.">Realtime data stored per room</LimitLabel>                                                                                                                                                                                                 | <Limits.FreeMaxStorageSizePerRoom />               | <Limits.ProMaxStorageSizePerRoom />               | <Limits.TeamMaxStorageSizePerRoom />               | <Limits.EnterpriseMaxStorageSizePerRoom />                                                                                                                       |
+| <LimitLabel tooltip="Total comments stored across all rooms.">Comments stored</LimitLabel>                                                                                                                                                                                                                      | <Limits.FreeMaxComments />                         | <Limits.ProMaxComments />                         | <Limits.TeamMaxComments />                         | <Limits.EnterpriseMaxComments />                                                                                                                                 |
+| <LimitLabel tooltip="Notifications automatically triggered from collaborative features like comment thread updates and @ mentions.">Monthly collaboration notifications</LimitLabel>                                                                                                                            | <Limits.FreeMaxCollaborationNotifications />       | <Limits.ProMaxCollaborationNotifications />       | <Limits.TeamMaxCollaborationNotifications />       | <Limits.EnterpriseMaxCollaborationNotifications />                                                                                                               |
+| <LimitLabel tooltip="Notifications you trigger from your own code.">Monthly custom notifications</LimitLabel>                                                                                                                                                                                                   | <Limits.FreeCustomNotificationsCompareIncluded />  | Included in credits                               | Included in credits                                | Custom                                                                                                                                                           |
+| <LimitLabel tooltip={<>Public key only recommended for prototyping. <a href="/docs/authentication" className="font-medium text-product-brand">Learn more.</a></>}>Monthly anonymous connections</LimitLabel>                                                                                                    | <Limits.FreeMaxAnonymousConnections />             | <Limits.ProMaxAnonymousConnections />             | <Limits.TeamMaxAnonymousConnections />             | <Limits.EnterpriseMaxAnonymousConnections />                                                                                                                     |
+| <LimitLabel tooltip="Average number of simultaneous connections per monthly active user.">Average connections per user</LimitLabel>                                                                                                                                                                             | —                                                  | 200                                               | 200                                                | Custom                                                                                                                                                           |
+| <LimitLabel tooltip="Total hours rooms stay active across your project each month.">Active room hours per month</LimitLabel>                                                                                                                                                                                    | —                                                  | <Limits.ProActiveRoomHoursPerMonth />             | <Limits.TeamActiveRoomHoursPerMonth />             | Custom                                                                                                                                                           |
+| <LimitLabel tooltip="Maximum size for a single file upload, such as a LiveFile or comment attachment.">Max file upload size</LimitLabel>                                                                                                                                                                        | <Limits.FreeMaxFileUploadSize />                   | <Limits.ProMaxFileUploadSize />                   | <Limits.TeamMaxFileUploadSize />                   | <LimitHint tooltip={<>Up to <Limits.EnterpriseMaxFileUploadSize /></>}><Limits.EnterpriseFileUploadSize /></LimitHint>                                           |
+| <LimitLabel tooltip={<>The frequency at which `yDocUpdated` (Yjs) and `storageUpdated` (Liveblocks Storage) events are sent to your webhook endpoint. <a href="/docs/platform/webhooks#StorageUpdatedEvent" className="font-medium text-product-brand">Learn more.</a></>}>Webhook event frequency</LimitLabel> | <Limits.FreeStorageUpdatedWebhookEventThrottle />  | <Limits.ProStorageUpdatedWebhookEventThrottle />  | <Limits.TeamStorageUpdatedWebhookEventThrottle />  | <LimitHint tooltip={<>Down to <Limits.EnterpriseMaxStorageUpdatedWebhookEventThrottle /></>}><Limits.EnterpriseStorageUpdatedWebhookEventThrottle /></LimitHint> |
+| <LimitLabel tooltip="APIs, hooks, and pre-built components to access the previous versions of the realtime data stored in rooms.">Version history</LimitLabel>                                                                                                                                                  | <Limits.FreeVersionHistory />                      | <Limits.ProVersionHistory />                      | <Limits.TeamVersionHistory />                      | <Limits.EnterpriseVersionHistory />                                                                                                                              |
+| <LimitLabel tooltip="How long activity and audit events are retained.">Event log retention</LimitLabel>                                                                                                                                                                                                         | <Limits.FreeEventLogRetention />                   | <Limits.ProEventLogRetention />                   | <Limits.TeamEventLogRetention />                   | <LimitHint tooltip={<>Up to <Limits.EnterpriseMaxEventLogRetention /></>}><Limits.EnterpriseEventLogRetention /></LimitHint>                                     |
+| <LimitLabel tooltip="Environments available in each project">Project environments\*</LimitLabel>                                                                                                                                                                                                                | <Limits.FreeEnvironments />                        | <Limits.ProEnvironments />                        | <Limits.TeamEnvironments />                        | <Limits.EnterpriseEnvironments />                                                                                                                                |
 
-## Other limits
+### What happens when you reach a limit
 
-| Item                                                                                                                                                              | Limit                                                                                                                |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| <LimitLabel href="#What's-a-room" tooltip="The unique identifier for a room.">roomId</LimitLabel>                                                                 | 128 characters                                                                                                       |
-| <LimitLabel tooltip="The unique identifier for a user. Each `userId` must represent a single user.">userId</LimitLabel>                                           | 128 characters                                                                                                       |
-| <LimitLabel tooltip="User information sent from the authentication endpoint.">userInfo</LimitLabel>                                                               | 1024 characters once serialized to JSON                                                                              |
-| <LimitLabel tooltip="Messages sent via the broadcast API for real-time communication between clients.">Broadcast event message</LimitLabel>                       | <LimitHint tooltip="Limited to 1 MB for client versions below 3.14. Upgrade to get higher limits.">32 MB</LimitHint> |
-| <LimitLabel tooltip="Custom metadata attached to a thread.">Thread metadata</LimitLabel>                                                                          | 50 properties, key length 40 characters, value length 4000 characters                                                |
-| <LimitLabel tooltip="Custom metadata attached to a comment.">Comment metadata</LimitLabel>                                                                        | 50 properties, key length 40 characters, value length 4000 characters                                                |
-| <LimitLabel href="/docs/api-reference/liveblocks-client#LiveObject" tooltip="A realtime data structure that stores key-value pairs.">LiveObject</LimitLabel>      | 2 MB when totalling the size of the keys and values                                                                  |
-| <LimitLabel href="/docs/api-reference/liveblocks-client#LiveMap" tooltip="A realtime data structure that stores key-value pairs in a map.">LiveMap</LimitLabel>   | Unlimited, so long as each individual value does not exceed 2 MB                                                     |
-| <LimitLabel href="/docs/api-reference/liveblocks-client#LiveList" tooltip="A realtime data structure that stores an ordered list of items.">LiveList</LimitLabel> | Unlimited, so long as each individual value does not exceed 2 MB                                                     |
+On Free, limits are hard caps. Liveblocks emails your account owners and shows a
+dashboard banner as you approach one, then pauses that activity until it resets
+at the start of the next month. Upgrade to [Pro](/dashboard/billing?plan=pro) or
+[Team](/dashboard/billing?plan=team) to lift the cap.
+
+On Pro and Team, there are no hard caps for metered usage. Usage above your
+monthly credits keeps running and is billed as overage, with alerts along the
+way so nothing is interrupted.
+
+## Technical limits
+
+| Item                                                                                                                                                                                                                                 | Limit                                                                                                                |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| <LimitLabel tooltip={<>The unique identifier for a room. <a href="/docs/pricing/faqs#What's-a-room" className="font-medium text-product-brand">Learn more.</a></>}>roomId</LimitLabel>                                               | 128 characters                                                                                                       |
+| <LimitLabel tooltip="The unique identifier for a user. Each `userId` must represent a single user.">userId</LimitLabel>                                                                                                              | 128 characters                                                                                                       |
+| <LimitLabel tooltip="User information sent from the authentication endpoint.">userInfo</LimitLabel>                                                                                                                                  | 1024 characters once serialized to JSON                                                                              |
+| <LimitLabel tooltip="Messages sent via the broadcast API for real-time communication between clients.">Broadcast event message</LimitLabel>                                                                                          | <LimitHint tooltip="Limited to 1 MB for client versions below 3.14. Upgrade to get higher limits.">32 MB</LimitHint> |
+| <LimitLabel tooltip="Custom metadata attached to a thread.">Thread metadata</LimitLabel>                                                                                                                                             | 50 properties, key length 40 characters, value length 4000 characters                                                |
+| <LimitLabel tooltip="Custom metadata attached to a comment.">Comment metadata</LimitLabel>                                                                                                                                           | 50 properties, key length 40 characters, value length 4000 characters                                                |
+| <LimitLabel tooltip={<>A realtime data structure that stores key-value pairs. <a href="/docs/api-reference/liveblocks-client#LiveObject" className="font-medium text-product-brand">Learn more.</a></>}>LiveObject</LimitLabel>      | 2 MB when totaling the size of the keys and values                                                                   |
+| <LimitLabel tooltip={<>A realtime data structure that stores key-value pairs in a map. <a href="/docs/api-reference/liveblocks-client#LiveMap" className="font-medium text-product-brand">Learn more.</a></>}>LiveMap</LimitLabel>   | Unlimited, so long as each individual value does not exceed 2 MB                                                     |
+| <LimitLabel tooltip={<>A realtime data structure that stores an ordered list of items. <a href="/docs/api-reference/liveblocks-client#LiveList" className="font-medium text-product-brand">Learn more.</a></>}>LiveList</LimitLabel> | Unlimited, so long as each individual value does not exceed 2 MB                                                     |
+| <LimitLabel tooltip={<>An immutable Storage reference to an uploaded file. <a href="/docs/api-reference/liveblocks-client#LiveFile" className="font-medium text-product-brand">Learn more.</a></>}>LiveFile</LimitLabel>             | Limited by the max file upload size for your plan                                                                    |
 
 Note that when one realtime data structure is nested inside another, it does not
 count towards the limit. Only the JSON leaves of your data structure count
@@ -53,80 +66,5 @@ towards the limit. For example, if a `LiveList` is nested inside a `LiveObject`,
 the `LiveList` and its contents do not count towards the `LiveObject`'s data
 limit.
 
-## FAQs
-
-### What is a monthly active room?
-
-Monthly active rooms represents the number of rooms that have been used within a
-given month. Rooms are identified by their `roomId`.
-
-Specifically, a room counts as active when any of these occur:
-
-- A user connects on the front-end.
-- A comment is added or modified.
-- A document is updated. Any of the following: Storage, Tiptap, BlockNote,
-  Lexical, Yjs.
-- An attachment is uploaded.
-
-If a room contains content from the previous month, it is not active until it is
-used in the current month. For example, if a text document is created in
-January, it is not active in February until a user connects to the document or
-updates its content.
-
-### What is a monthly active user?
-
-Monthly active users represents the number of users that have used any
-Liveblocks features within a given month. Users are identified by the `userId`
-property provided in your [authentication endpoint](/docs/authentication). This
-`userId` generally comes from your database or your authentication provider.
-
-One unique `userId` corresponds to one user, no matter how long they connect
-for. For example, a user that connects for 5 minutes on 2 different days is
-counted as 1 MAU, and a user that connects 8 hours a day for a month is also
-counted as 1 MAU. This applies so long as usage falls under our
-[Fair Use Policy](/docs/pricing/limits/fair-use-guidelines).
-
-### What's a connection?
-
-A connection occurs when a user opens a web page containing a Liveblocks room.
-Each tab counts as one connection, which means that a user with two open tabs
-has two connections. A room is joined when using
-[`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider) in React or
-[`enterRoom`](/docs/api-reference/liveblocks-client#Client.enterRoom) in
-JavaScript. Liveblocks connections are analogous to WebSocket connections,
-representing a realtime link to our server.
-
-### What's a room?
-
-A room is the virtual space where people collaborate. For most products, a room
-corresponds to a document.
-
-### What's a simultaneous connection per room?
-
-A simultaneous connection per room is when a user or multiple users are
-connected to the same Liveblocks room at the same time. Learn more about
-handling simultaneous room connection limits in our guide about
-[joining rooms at maximum capacity](/docs/guides/what-happens-when-a-user-joins-a-room-at-maximum-capacity).
-
-### What's a simultaneous connection per project?
-
-A simultaneous connection per project is when a user or multiple users are
-connected to the same project at the same time.
-
-### How is realtime data storage calculated?
-
-Realtime data storage is a cumulative calculation that represents all realtime
-data that is currently stored in your rooms. It does not reset monthly, and the
-total usage will continue to accrue over time as you add more content and data.
-You can monitor your usage at any time in the [dashboard](/dashboard).
-
-### What happens when limits are reached?
-
-Liveblocks returns a different error for each limit that a user might reach.
-That way, you can decide how to best handle those cases in your product.
-
-### Do you count monthly active rooms during testing?
-
-Yes, if test users connect to a room during automated testing, the room will be
-counted as a monthly active room. To prevent hitting limits during testing, you
-may want to provide a set of reusable `roomId`s.
+For large files such as images and videos, use `LiveFile` instead of storing
+binary data or base64 strings in realtime data structures.

@@ -17,7 +17,7 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
-    "@liveblocks/client": "^3.21.0",
-    "@liveblocks/node": "^3.21.0"
+    "@liveblocks/client": "^3.23.0",
+    "@liveblocks/node": "^3.23.0"
   }
 }

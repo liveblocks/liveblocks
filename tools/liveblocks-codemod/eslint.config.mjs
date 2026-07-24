@@ -1,7 +1,7 @@
 import { makeConfig } from "@liveblocks/eslint-config";
 
 export default [
-  ...makeConfig(),
+  ...makeConfig(import.meta.dirname),
 
   {
     ignores: ["**/__tests__/**", "**/__testfixtures__/**"],

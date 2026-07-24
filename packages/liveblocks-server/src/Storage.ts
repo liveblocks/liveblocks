@@ -128,6 +128,14 @@ function nodeFromCreateChildOp(op: CreateOp): SerializedChild {
         data: op.data,
       };
 
+    case OpCode.CREATE_FILE:
+      return {
+        type: CrdtType.FILE,
+        parentId: op.parentId,
+        parentKey: op.parentKey,
+        data: op.data,
+      };
+
     // istanbul ignore next
     default:
       return assertNever(op, "Unknown op code");
@@ -176,6 +184,7 @@ export class Storage {
       case OpCode.CREATE_MAP:
       case OpCode.CREATE_REGISTER:
       case OpCode.CREATE_OBJECT:
+      case OpCode.CREATE_FILE:
         return this.applyCreateOp(op);
 
       case OpCode.UPDATE_OBJECT:
@@ -255,7 +264,8 @@ export class Storage {
         return this.createChildAsListItem(op, node);
 
       case CrdtType.REGISTER:
-        // It's illegal for registers to have children
+      case CrdtType.FILE:
+        // It's illegal for leaf nodes to have children
         return ignore(op);
 
       // istanbul ignore next

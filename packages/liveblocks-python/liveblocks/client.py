@@ -16,12 +16,19 @@ if TYPE_CHECKING:
     from .models.ai_copilot_google import AiCopilotGoogle
     from .models.ai_copilot_open_ai import AiCopilotOpenAi
     from .models.ai_copilot_open_ai_compatible import AiCopilotOpenAiCompatible
+    from .models.attachment_multipart_part import AttachmentMultipartPart
+    from .models.attachment_multipart_upload import AttachmentMultipartUpload
     from .models.attachment_with_url import AttachmentWithUrl
     from .models.authorize_user_request_body import AuthorizeUserRequestBody
     from .models.authorize_user_response import AuthorizeUserResponse
     from .models.comment import Comment
+    from .models.comment_attachment import CommentAttachment
     from .models.comment_metadata import CommentMetadata
     from .models.comment_reaction import CommentReaction
+    from .models.complete_attachment_multipart_upload_request_body import CompleteAttachmentMultipartUploadRequestBody
+    from .models.complete_storage_file_multipart_upload_request_body import (
+        CompleteStorageFileMultipartUploadRequestBody,
+    )
     from .models.copy_json_patch_operation import CopyJsonPatchOperation
     from .models.create_ai_copilot_options_anthropic import CreateAiCopilotOptionsAnthropic
     from .models.create_ai_copilot_options_google import CreateAiCopilotOptionsGoogle
@@ -70,6 +77,7 @@ if TYPE_CHECKING:
     from .models.initialize_storage_document_response import InitializeStorageDocumentResponse
     from .models.knowledge_source_file_source import KnowledgeSourceFileSource
     from .models.knowledge_source_web_source import KnowledgeSourceWebSource
+    from .models.live_file_data import LiveFileData
     from .models.mark_thread_as_resolved_request_body import MarkThreadAsResolvedRequestBody
     from .models.mark_thread_as_unresolved_request_body import MarkThreadAsUnresolvedRequestBody
     from .models.move_json_patch_operation import MoveJsonPatchOperation
@@ -81,6 +89,9 @@ if TYPE_CHECKING:
     from .models.room import Room
     from .models.room_subscription_settings import RoomSubscriptionSettings
     from .models.set_presence_request_body import SetPresenceRequestBody
+    from .models.storage_file_multipart_part import StorageFileMultipartPart
+    from .models.storage_file_multipart_upload import StorageFileMultipartUpload
+    from .models.storage_file_with_url import StorageFileWithUrl
     from .models.subscribe_to_thread_request_body import SubscribeToThreadRequestBody
     from .models.subscription import Subscription
     from .models.test_json_patch_operation import TestJsonPatchOperation
@@ -661,10 +672,10 @@ class Liveblocks:
         Args:
             room_id (str): ID of the room Example: my-room-id.
             format_ (GetStorageDocumentFormat | Unset): Use the `json` format to output a simplified
-                JSON representation of the Storage tree. In that format, each LiveObject and LiveMap will
-                be formatted as a simple JSON object, and each LiveList will be formatted as a simple JSON
-                array. This is a lossy format because information about the original data structures is
-                not retained, but it may be easier to work with. Example: json.
+                JSON representation of the Storage tree. In that format, each LiveObject and LiveMap
+                becomes a simple JSON object, each LiveList becomes a simple JSON array, and each LiveFile
+                becomes its metadata object. This is a lossy format because information about the original
+                data structures is not retained, but it may be easier to work with. Example: json.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -699,13 +710,13 @@ class Liveblocks:
 
         For each Liveblocks data structure that you want to create, you need a JSON element having two
         properties:
-        - `\"liveblocksType\"` => `\"LiveObject\" | \"LiveList\" | \"LiveMap\"`
+        - `\"liveblocksType\"` => `\"LiveObject\" | \"LiveList\" | \"LiveMap\" | \"LiveFile\"`
         - `\"data\"` => contains the nested data structures (children) and data.
 
         The root’s type can only be LiveObject.
 
         A utility function, `toPlainLson` is included in `@liveblocks/client` from `1.0.9` to help convert
-        `LiveObject`, `LiveList`, and `LiveMap` to the structure expected by the endpoint.
+        `LiveObject`, `LiveList`, `LiveMap`, and `LiveFile` to the structure expected by the endpoint.
 
         Args:
             room_id (str): ID of the room Example: my-room-id.
@@ -805,6 +816,220 @@ class Liveblocks:
         return patch_storage_document._sync(
             room_id=room_id,
             body=body,
+            client=self._client,
+        )
+
+    def get_storage_file(
+        self,
+        room_id: str,
+        file_id: str,
+    ) -> StorageFileWithUrl:
+        """Get Storage file
+
+         Returns an uploaded Storage file's metadata and a presigned download URL. The URL expires after one
+        hour.
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            file_id (str): ID of the Storage file Example: fl_abc123456789012345678.
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            StorageFileWithUrl
+        """
+
+        from .api.storage import get_storage_file
+
+        return get_storage_file._sync(
+            room_id=room_id,
+            file_id=file_id,
+            client=self._client,
+        )
+
+    def upload_storage_file(
+        self,
+        room_id: str,
+        file_id: str,
+        name: str,
+        *,
+        body: File,
+        file_size: int | Unset = UNSET,
+    ) -> LiveFileData:
+        """Upload Storage file
+
+         Uploads a file's bytes to a room and returns the metadata needed to create a LiveFile. For large
+        files, use the multipart upload operations instead. Repeating the request with the same file ID,
+        name, and file size returns the existing upload.
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            file_id (str): ID for the Storage file Example: fl_abc123456789012345678.
+            name (str): Name of the file Example: photo.png.
+            file_size (int | Unset): Expected file size in bytes. Example: 12345.
+            body (File):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            LiveFileData
+        """
+
+        from .api.storage import upload_storage_file
+
+        return upload_storage_file._sync(
+            room_id=room_id,
+            file_id=file_id,
+            name=name,
+            body=body,
+            file_size=file_size,
+            client=self._client,
+        )
+
+    def create_storage_file_multipart_upload(
+        self,
+        room_id: str,
+        file_id: str,
+        name: str,
+        *,
+        file_size: int | Unset = UNSET,
+    ) -> StorageFileMultipartUpload:
+        """Create Storage file multipart upload
+
+         Starts a multipart upload for a Storage file.
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            file_id (str): ID for the Storage file Example: fl_abc123456789012345678.
+            name (str): Name of the file Example: video.mp4.
+            file_size (int | Unset): Expected file size in bytes Example: 10485760.
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            StorageFileMultipartUpload
+        """
+
+        from .api.storage import create_storage_file_multipart_upload
+
+        return create_storage_file_multipart_upload._sync(
+            room_id=room_id,
+            file_id=file_id,
+            name=name,
+            file_size=file_size,
+            client=self._client,
+        )
+
+    def upload_storage_file_multipart_part(
+        self,
+        room_id: str,
+        file_id: str,
+        upload_id: str,
+        part_number: int,
+        *,
+        body: File,
+    ) -> StorageFileMultipartPart:
+        """Upload Storage file multipart part
+
+         Uploads one part of a Storage file multipart upload.
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            file_id (str): ID of the Storage file Example: fl_abc123456789012345678.
+            upload_id (str): ID returned when the multipart upload was created
+            part_number (int): One-based part number Example: 1.
+            body (File):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            StorageFileMultipartPart
+        """
+
+        from .api.storage import upload_storage_file_multipart_part
+
+        return upload_storage_file_multipart_part._sync(
+            room_id=room_id,
+            file_id=file_id,
+            upload_id=upload_id,
+            part_number=part_number,
+            body=body,
+            client=self._client,
+        )
+
+    def complete_storage_file_multipart_upload(
+        self,
+        room_id: str,
+        file_id: str,
+        upload_id: str,
+        *,
+        body: CompleteStorageFileMultipartUploadRequestBody,
+    ) -> LiveFileData:
+        """Complete Storage file multipart upload
+
+         Completes a multipart upload and returns the metadata needed to create a LiveFile.
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            file_id (str): ID of the Storage file Example: fl_abc123456789012345678.
+            upload_id (str): ID returned when the multipart upload was created
+            body (CompleteStorageFileMultipartUploadRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            LiveFileData
+        """
+
+        from .api.storage import complete_storage_file_multipart_upload
+
+        return complete_storage_file_multipart_upload._sync(
+            room_id=room_id,
+            file_id=file_id,
+            upload_id=upload_id,
+            body=body,
+            client=self._client,
+        )
+
+    def abort_storage_file_multipart_upload(
+        self,
+        room_id: str,
+        file_id: str,
+        upload_id: str,
+    ) -> None:
+        """Abort Storage file multipart upload
+
+         Aborts a multipart upload and discards its uploaded parts.
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            file_id (str): ID of the Storage file Example: fl_abc123456789012345678.
+            upload_id (str): ID returned when the multipart upload was created
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
+        from .api.storage import abort_storage_file_multipart_upload
+
+        return abort_storage_file_multipart_upload._sync(
+            room_id=room_id,
+            file_id=file_id,
+            upload_id=upload_id,
             client=self._client,
         )
 
@@ -1694,6 +1919,197 @@ class Liveblocks:
         return get_attachment._sync(
             room_id=room_id,
             attachment_id=attachment_id,
+            client=self._client,
+        )
+
+    def upload_attachment(
+        self,
+        room_id: str,
+        attachment_id: str,
+        name: str,
+        *,
+        body: File,
+        user_id: str,
+        file_size: int | Unset = UNSET,
+    ) -> CommentAttachment:
+        """Upload attachment
+
+         Uploads a file's bytes and returns a draft comment attachment. Pass the returned attachment ID in
+        the comment's attachment IDs when creating or editing a comment. For large files, use the multipart
+        upload operations instead.
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            attachment_id (str): ID for the attachment Example: at_abc123456789012345678.
+            name (str): Name of the file Example: screenshot.png.
+            user_id (str): ID of the user uploading the attachment Example: alice.
+            file_size (int | Unset): Expected file size in bytes Example: 12345.
+            body (File):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            CommentAttachment
+        """
+
+        from .api.comments import upload_attachment
+
+        return upload_attachment._sync(
+            room_id=room_id,
+            attachment_id=attachment_id,
+            name=name,
+            body=body,
+            user_id=user_id,
+            file_size=file_size,
+            client=self._client,
+        )
+
+    def create_attachment_multipart_upload(
+        self,
+        room_id: str,
+        attachment_id: str,
+        name: str,
+        *,
+        file_size: int | Unset = UNSET,
+    ) -> AttachmentMultipartUpload:
+        """Create attachment multipart upload
+
+         Starts a multipart upload for a draft comment attachment.
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            attachment_id (str): ID for the attachment Example: at_abc123456789012345678.
+            name (str): Name of the file Example: recording.mp4.
+            file_size (int | Unset): Expected file size in bytes Example: 10485760.
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            AttachmentMultipartUpload
+        """
+
+        from .api.comments import create_attachment_multipart_upload
+
+        return create_attachment_multipart_upload._sync(
+            room_id=room_id,
+            attachment_id=attachment_id,
+            name=name,
+            file_size=file_size,
+            client=self._client,
+        )
+
+    def upload_attachment_multipart_part(
+        self,
+        room_id: str,
+        attachment_id: str,
+        upload_id: str,
+        part_number: int,
+        *,
+        body: File,
+    ) -> AttachmentMultipartPart:
+        """Upload attachment multipart part
+
+         Uploads one part of an attachment multipart upload.
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            attachment_id (str): ID of the attachment Example: at_abc123456789012345678.
+            upload_id (str): ID returned when the multipart upload was created
+            part_number (int): One-based part number Example: 1.
+            body (File):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            AttachmentMultipartPart
+        """
+
+        from .api.comments import upload_attachment_multipart_part
+
+        return upload_attachment_multipart_part._sync(
+            room_id=room_id,
+            attachment_id=attachment_id,
+            upload_id=upload_id,
+            part_number=part_number,
+            body=body,
+            client=self._client,
+        )
+
+    def complete_attachment_multipart_upload(
+        self,
+        room_id: str,
+        attachment_id: str,
+        upload_id: str,
+        *,
+        body: CompleteAttachmentMultipartUploadRequestBody,
+        user_id: str,
+    ) -> CommentAttachment:
+        """Complete attachment multipart upload
+
+         Completes a multipart upload and returns a draft comment attachment. Pass the returned attachment ID
+        in the comment's attachment IDs when creating or editing a comment.
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            attachment_id (str): ID of the attachment Example: at_abc123456789012345678.
+            upload_id (str): ID returned when the multipart upload was created
+            user_id (str): ID of the user uploading the attachment Example: alice.
+            body (CompleteAttachmentMultipartUploadRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            CommentAttachment
+        """
+
+        from .api.comments import complete_attachment_multipart_upload
+
+        return complete_attachment_multipart_upload._sync(
+            room_id=room_id,
+            attachment_id=attachment_id,
+            upload_id=upload_id,
+            body=body,
+            user_id=user_id,
+            client=self._client,
+        )
+
+    def abort_attachment_multipart_upload(
+        self,
+        room_id: str,
+        attachment_id: str,
+        upload_id: str,
+    ) -> None:
+        """Abort attachment multipart upload
+
+         Aborts a multipart upload and discards its uploaded parts.
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            attachment_id (str): ID of the attachment Example: at_abc123456789012345678.
+            upload_id (str): ID returned when the multipart upload was created
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
+        from .api.comments import abort_attachment_multipart_upload
+
+        return abort_attachment_multipart_upload._sync(
+            room_id=room_id,
+            attachment_id=attachment_id,
+            upload_id=upload_id,
             client=self._client,
         )
 
@@ -3834,10 +4250,10 @@ class AsyncLiveblocks:
         Args:
             room_id (str): ID of the room Example: my-room-id.
             format_ (GetStorageDocumentFormat | Unset): Use the `json` format to output a simplified
-                JSON representation of the Storage tree. In that format, each LiveObject and LiveMap will
-                be formatted as a simple JSON object, and each LiveList will be formatted as a simple JSON
-                array. This is a lossy format because information about the original data structures is
-                not retained, but it may be easier to work with. Example: json.
+                JSON representation of the Storage tree. In that format, each LiveObject and LiveMap
+                becomes a simple JSON object, each LiveList becomes a simple JSON array, and each LiveFile
+                becomes its metadata object. This is a lossy format because information about the original
+                data structures is not retained, but it may be easier to work with. Example: json.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -3872,13 +4288,13 @@ class AsyncLiveblocks:
 
         For each Liveblocks data structure that you want to create, you need a JSON element having two
         properties:
-        - `\"liveblocksType\"` => `\"LiveObject\" | \"LiveList\" | \"LiveMap\"`
+        - `\"liveblocksType\"` => `\"LiveObject\" | \"LiveList\" | \"LiveMap\" | \"LiveFile\"`
         - `\"data\"` => contains the nested data structures (children) and data.
 
         The root’s type can only be LiveObject.
 
         A utility function, `toPlainLson` is included in `@liveblocks/client` from `1.0.9` to help convert
-        `LiveObject`, `LiveList`, and `LiveMap` to the structure expected by the endpoint.
+        `LiveObject`, `LiveList`, `LiveMap`, and `LiveFile` to the structure expected by the endpoint.
 
         Args:
             room_id (str): ID of the room Example: my-room-id.
@@ -3978,6 +4394,220 @@ class AsyncLiveblocks:
         return await patch_storage_document._asyncio(
             room_id=room_id,
             body=body,
+            client=self._client,
+        )
+
+    async def get_storage_file(
+        self,
+        room_id: str,
+        file_id: str,
+    ) -> StorageFileWithUrl:
+        """Get Storage file
+
+         Returns an uploaded Storage file's metadata and a presigned download URL. The URL expires after one
+        hour.
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            file_id (str): ID of the Storage file Example: fl_abc123456789012345678.
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            StorageFileWithUrl
+        """
+
+        from .api.storage import get_storage_file
+
+        return await get_storage_file._asyncio(
+            room_id=room_id,
+            file_id=file_id,
+            client=self._client,
+        )
+
+    async def upload_storage_file(
+        self,
+        room_id: str,
+        file_id: str,
+        name: str,
+        *,
+        body: File,
+        file_size: int | Unset = UNSET,
+    ) -> LiveFileData:
+        """Upload Storage file
+
+         Uploads a file's bytes to a room and returns the metadata needed to create a LiveFile. For large
+        files, use the multipart upload operations instead. Repeating the request with the same file ID,
+        name, and file size returns the existing upload.
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            file_id (str): ID for the Storage file Example: fl_abc123456789012345678.
+            name (str): Name of the file Example: photo.png.
+            file_size (int | Unset): Expected file size in bytes. Example: 12345.
+            body (File):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            LiveFileData
+        """
+
+        from .api.storage import upload_storage_file
+
+        return await upload_storage_file._asyncio(
+            room_id=room_id,
+            file_id=file_id,
+            name=name,
+            body=body,
+            file_size=file_size,
+            client=self._client,
+        )
+
+    async def create_storage_file_multipart_upload(
+        self,
+        room_id: str,
+        file_id: str,
+        name: str,
+        *,
+        file_size: int | Unset = UNSET,
+    ) -> StorageFileMultipartUpload:
+        """Create Storage file multipart upload
+
+         Starts a multipart upload for a Storage file.
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            file_id (str): ID for the Storage file Example: fl_abc123456789012345678.
+            name (str): Name of the file Example: video.mp4.
+            file_size (int | Unset): Expected file size in bytes Example: 10485760.
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            StorageFileMultipartUpload
+        """
+
+        from .api.storage import create_storage_file_multipart_upload
+
+        return await create_storage_file_multipart_upload._asyncio(
+            room_id=room_id,
+            file_id=file_id,
+            name=name,
+            file_size=file_size,
+            client=self._client,
+        )
+
+    async def upload_storage_file_multipart_part(
+        self,
+        room_id: str,
+        file_id: str,
+        upload_id: str,
+        part_number: int,
+        *,
+        body: File,
+    ) -> StorageFileMultipartPart:
+        """Upload Storage file multipart part
+
+         Uploads one part of a Storage file multipart upload.
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            file_id (str): ID of the Storage file Example: fl_abc123456789012345678.
+            upload_id (str): ID returned when the multipart upload was created
+            part_number (int): One-based part number Example: 1.
+            body (File):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            StorageFileMultipartPart
+        """
+
+        from .api.storage import upload_storage_file_multipart_part
+
+        return await upload_storage_file_multipart_part._asyncio(
+            room_id=room_id,
+            file_id=file_id,
+            upload_id=upload_id,
+            part_number=part_number,
+            body=body,
+            client=self._client,
+        )
+
+    async def complete_storage_file_multipart_upload(
+        self,
+        room_id: str,
+        file_id: str,
+        upload_id: str,
+        *,
+        body: CompleteStorageFileMultipartUploadRequestBody,
+    ) -> LiveFileData:
+        """Complete Storage file multipart upload
+
+         Completes a multipart upload and returns the metadata needed to create a LiveFile.
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            file_id (str): ID of the Storage file Example: fl_abc123456789012345678.
+            upload_id (str): ID returned when the multipart upload was created
+            body (CompleteStorageFileMultipartUploadRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            LiveFileData
+        """
+
+        from .api.storage import complete_storage_file_multipart_upload
+
+        return await complete_storage_file_multipart_upload._asyncio(
+            room_id=room_id,
+            file_id=file_id,
+            upload_id=upload_id,
+            body=body,
+            client=self._client,
+        )
+
+    async def abort_storage_file_multipart_upload(
+        self,
+        room_id: str,
+        file_id: str,
+        upload_id: str,
+    ) -> None:
+        """Abort Storage file multipart upload
+
+         Aborts a multipart upload and discards its uploaded parts.
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            file_id (str): ID of the Storage file Example: fl_abc123456789012345678.
+            upload_id (str): ID returned when the multipart upload was created
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
+        from .api.storage import abort_storage_file_multipart_upload
+
+        return await abort_storage_file_multipart_upload._asyncio(
+            room_id=room_id,
+            file_id=file_id,
+            upload_id=upload_id,
             client=self._client,
         )
 
@@ -4867,6 +5497,197 @@ class AsyncLiveblocks:
         return await get_attachment._asyncio(
             room_id=room_id,
             attachment_id=attachment_id,
+            client=self._client,
+        )
+
+    async def upload_attachment(
+        self,
+        room_id: str,
+        attachment_id: str,
+        name: str,
+        *,
+        body: File,
+        user_id: str,
+        file_size: int | Unset = UNSET,
+    ) -> CommentAttachment:
+        """Upload attachment
+
+         Uploads a file's bytes and returns a draft comment attachment. Pass the returned attachment ID in
+        the comment's attachment IDs when creating or editing a comment. For large files, use the multipart
+        upload operations instead.
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            attachment_id (str): ID for the attachment Example: at_abc123456789012345678.
+            name (str): Name of the file Example: screenshot.png.
+            user_id (str): ID of the user uploading the attachment Example: alice.
+            file_size (int | Unset): Expected file size in bytes Example: 12345.
+            body (File):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            CommentAttachment
+        """
+
+        from .api.comments import upload_attachment
+
+        return await upload_attachment._asyncio(
+            room_id=room_id,
+            attachment_id=attachment_id,
+            name=name,
+            body=body,
+            user_id=user_id,
+            file_size=file_size,
+            client=self._client,
+        )
+
+    async def create_attachment_multipart_upload(
+        self,
+        room_id: str,
+        attachment_id: str,
+        name: str,
+        *,
+        file_size: int | Unset = UNSET,
+    ) -> AttachmentMultipartUpload:
+        """Create attachment multipart upload
+
+         Starts a multipart upload for a draft comment attachment.
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            attachment_id (str): ID for the attachment Example: at_abc123456789012345678.
+            name (str): Name of the file Example: recording.mp4.
+            file_size (int | Unset): Expected file size in bytes Example: 10485760.
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            AttachmentMultipartUpload
+        """
+
+        from .api.comments import create_attachment_multipart_upload
+
+        return await create_attachment_multipart_upload._asyncio(
+            room_id=room_id,
+            attachment_id=attachment_id,
+            name=name,
+            file_size=file_size,
+            client=self._client,
+        )
+
+    async def upload_attachment_multipart_part(
+        self,
+        room_id: str,
+        attachment_id: str,
+        upload_id: str,
+        part_number: int,
+        *,
+        body: File,
+    ) -> AttachmentMultipartPart:
+        """Upload attachment multipart part
+
+         Uploads one part of an attachment multipart upload.
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            attachment_id (str): ID of the attachment Example: at_abc123456789012345678.
+            upload_id (str): ID returned when the multipart upload was created
+            part_number (int): One-based part number Example: 1.
+            body (File):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            AttachmentMultipartPart
+        """
+
+        from .api.comments import upload_attachment_multipart_part
+
+        return await upload_attachment_multipart_part._asyncio(
+            room_id=room_id,
+            attachment_id=attachment_id,
+            upload_id=upload_id,
+            part_number=part_number,
+            body=body,
+            client=self._client,
+        )
+
+    async def complete_attachment_multipart_upload(
+        self,
+        room_id: str,
+        attachment_id: str,
+        upload_id: str,
+        *,
+        body: CompleteAttachmentMultipartUploadRequestBody,
+        user_id: str,
+    ) -> CommentAttachment:
+        """Complete attachment multipart upload
+
+         Completes a multipart upload and returns a draft comment attachment. Pass the returned attachment ID
+        in the comment's attachment IDs when creating or editing a comment.
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            attachment_id (str): ID of the attachment Example: at_abc123456789012345678.
+            upload_id (str): ID returned when the multipart upload was created
+            user_id (str): ID of the user uploading the attachment Example: alice.
+            body (CompleteAttachmentMultipartUploadRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            CommentAttachment
+        """
+
+        from .api.comments import complete_attachment_multipart_upload
+
+        return await complete_attachment_multipart_upload._asyncio(
+            room_id=room_id,
+            attachment_id=attachment_id,
+            upload_id=upload_id,
+            body=body,
+            user_id=user_id,
+            client=self._client,
+        )
+
+    async def abort_attachment_multipart_upload(
+        self,
+        room_id: str,
+        attachment_id: str,
+        upload_id: str,
+    ) -> None:
+        """Abort attachment multipart upload
+
+         Aborts a multipart upload and discards its uploaded parts.
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            attachment_id (str): ID of the attachment Example: at_abc123456789012345678.
+            upload_id (str): ID returned when the multipart upload was created
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
+        from .api.comments import abort_attachment_multipart_upload
+
+        return await abort_attachment_multipart_upload._asyncio(
+            room_id=room_id,
+            attachment_id=attachment_id,
+            upload_id=upload_id,
             client=self._client,
         )
 

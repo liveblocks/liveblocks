@@ -1,6 +1,7 @@
 """Contains some shared types for properties"""
 
-from collections.abc import Mapping
+import asyncio
+from collections.abc import AsyncIterator, Mapping
 from typing import IO, BinaryIO, Literal
 
 from attrs import define
@@ -34,6 +35,10 @@ class File:
     def to_tuple(self) -> FileTypes:
         """Return a tuple representation that httpx will accept for multipart/form-data"""
         return self.file_name, self.payload, self.mime_type
+
+    async def _iter_bytes(self, chunk_size: int = 64 * 1024) -> AsyncIterator[bytes]:
+        while chunk := await asyncio.to_thread(self.payload.read, chunk_size):
+            yield chunk
 
 
 __all__ = ["UNSET", "File", "FileTypes", "Unset"]
