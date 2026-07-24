@@ -42,6 +42,8 @@ restore any of them, and each AI reply in the chat has a "Revert" action for
 the edit it made. The editor also includes a toolbar, a floating toolbar,
 drag-handle block reordering, and comment threads.
 
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/tiptap-ai-chat.png" width="536" alt="Tiptap AI Chat" />
+
 ## Getting started
 
 Run the following command to try this example locally:
