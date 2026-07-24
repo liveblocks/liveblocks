@@ -15,7 +15,7 @@ description:
 - Examples live in `examples/` and are NOT part of the pnpm workspace. They
   depend on the latest _published_ Liveblocks packages, use plain `npm`
   (commit `package-lock.json`), and cannot be tested against local package
-  source. Run `nvm use 24.14.1` before `npm install`.
+  source.
 - Start by copying the closest existing example and adapting it. Good bases:
   - `nextjs-ai-slideshow` — AI chat + document layout, Tailwind v4 + shadcn
     UI kit, AI Elements components, `database.ts`, help button.
