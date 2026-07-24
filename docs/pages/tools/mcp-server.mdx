@@ -1,15 +1,22 @@
 ---
 meta:
   title: "MCP server"
-  parentTitle: "Tools"
+  parentTitle: "Build with AI"
   description:
     "Learn to use the official MCP server for Liveblocks, helpful for inspecting
     and modifying your project with AI in Cursor, VS Code, Claude Desktop, and
     more."
 ---
 
-The Liveblocks MCP server allows you to inspect and modify your project with AI
-in compatible apps such as Cursor, Claude, Codex, and more.
+The Liveblocks MCP server lets AI tools inspect and modify data in a Liveblocks
+project.
+
+Use the [Liveblocks plugin](/docs/tools/liveblocks-plugin) when your coding
+agent supports plugins. Use this page when you want to configure the MCP server
+manually or connect a tool that does not support plugins.
+
+Use [Agent skills](/docs/tools/agent-skills) separately only when you also want
+Liveblocks and Yjs coding guidance in a tool that does not support plugins.
 
 <PromptCta />
 
@@ -21,38 +28,74 @@ in compatible apps such as Cursor, Claude, Codex, and more.
 
 ## Features
 
-Our MCP server features 39 different tools, enabling most features from our
-[REST API](/docs/api-reference/rest-api-endpoints). You can use it to:
+The MCP server exposes 39 tools for common Liveblocks operations. You can use it
+to:
 
-- Create and modify rooms, threads, comments, notifications, more.
+- Create and modify rooms, threads, comments, and notifications.
 - Read realtime Storage and Yjs values.
 - Broadcast custom events to connected clients.
 - Mark threads and notifications as read/unread.
 
-AI will often string tool calls together—for example, if you ask it to fetch a
-room that doesn’t exist, it will ask if you’d like to create the room first, and
-then fetch it after.
+The tools map to Liveblocks project data and many
+[REST API](/docs/api-reference/rest-api-endpoints) operations.
+
+## Supported clients
+
+The Liveblocks MCP server is a local stdio server. It works in clients that can
+run a local MCP command and pass environment variables:
+
+- Cursor
+- Claude Code
+- Claude Desktop
+- Codex
+- VS Code with GitHub Copilot
+
+Hosted MCP connectors such as ChatGPT connectors require a remote MCP URL. The
+Liveblocks MCP server does not provide a hosted remote endpoint today.
 
 ## Setup
 
-To install, you need to use your secret key from the correct project in
-[your dashboard](/dashboard). Below are instructions for [Cursor](#Cursor),
-[Claude Code](#Claude-Code), [Claude Desktop](#Claude-Desktop), and
-[Codex](#Codex).
+To install, use a secret key from the correct project in
+[your dashboard](/dashboard). Choose the setup instructions for your tool:
+[Cursor](#Cursor), [Claude Code](#Claude-Code),
+[Claude Desktop](#Claude-Desktop), [Codex](#Codex), or [VS Code](#VS-Code).
 
 <Banner type="warning" title="Only for development">
 
-Don’t insert a secret key from your production application, as AI will have
-direct access to modify it.
+Do not use a production secret key. The MCP server can modify data in the
+connected Liveblocks project.
 
 </Banner>
+
+### Install with add-mcp
+
+Use [`add-mcp`](https://www.npmjs.com/package/add-mcp) to install the Liveblocks
+MCP server for detected coding agents:
+
+```bash
+npx add-mcp --yes -n liveblocks \
+  --env 'LIVEBLOCKS_SECRET_KEY=${env:LIVEBLOCKS_SECRET_KEY}' \
+  github:liveblocks/liveblocks-mcp-server
+```
+
+Add `--agent cursor`, `--agent codex`, or `--agent vscode` to install for one
+tool.
 
 ### Cursor
 
 To set up [Cursor](https://cursor.sh/):
 
-1. Go to File → Cursor Settings → MCP → Add new server.
-2. Add the following:
+<Button asChild>
+  <a href="https://cursor.com/en/install-mcp?name=liveblocks&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsImdpdGh1YjpsaXZlYmxvY2tzL2xpdmVibG9ja3MtbWNwLXNlcnZlciJdLCJlbnYiOnsiTElWRUJMT0NLU19TRUNSRVRfS0VZIjoiJHtlbnY6TElWRUJMT0NLU19TRUNSRVRfS0VZfSJ9fQ%3D%3D">
+    <DocsCursorAiIcon className="mr-1.5 size-3.5 fill-current" />
+    Add to Cursor
+  </a>
+</Button>
+
+The button opens Cursor with the Liveblocks MCP configuration. It expects
+`LIVEBLOCKS_SECRET_KEY` to be set in the environment that starts Cursor.
+
+You can also add the configuration manually:
 
 ```json
 {
@@ -61,12 +104,15 @@ To set up [Cursor](https://cursor.sh/):
       "command": "npx",
       "args": ["-y", "github:liveblocks/liveblocks-mcp-server"],
       "env": {
-        "LIVEBLOCKS_SECRET_KEY": "{{SECRET_KEY}}"
+        "LIVEBLOCKS_SECRET_KEY": "${env:LIVEBLOCKS_SECRET_KEY}"
       }
     }
   }
 }
 ```
+
+`${env:LIVEBLOCKS_SECRET_KEY}` tells Cursor to read the key from the environment
+instead of storing the secret directly in the config file.
 
 ### Claude Code
 
@@ -117,7 +163,68 @@ codex mcp add liveblocks \
   -- npx -y github:liveblocks/liveblocks-mcp-server
 ```
 
+### VS Code
+
+To set up [VS Code](https://code.visualstudio.com/) with GitHub Copilot:
+
+<Button asChild>
+  <a href="vscode:mcp/install?%7B%22name%22%3A%22liveblocks%22%2C%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22github%3Aliveblocks%2Fliveblocks-mcp-server%22%5D%2C%22env%22%3A%7B%22LIVEBLOCKS_SECRET_KEY%22%3A%22%24%7Benv%3ALIVEBLOCKS_SECRET_KEY%7D%22%7D%7D">
+    Add to VS Code
+  </a>
+</Button>
+
+The button opens VS Code with the Liveblocks MCP configuration. It expects
+`LIVEBLOCKS_SECRET_KEY` to be set in the environment that starts VS Code.
+
+You can also add it from the terminal:
+
+```bash
+code --add-mcp '{"name":"liveblocks","command":"npx","args":["-y","github:liveblocks/liveblocks-mcp-server"],"env":{"LIVEBLOCKS_SECRET_KEY":"${env:LIVEBLOCKS_SECRET_KEY}"}}'
+```
+
+## Verify setup
+
+After setup, restart your AI tool and ask:
+
+```
+List my Liveblocks rooms.
+```
+
+If the key is valid, your agent should be able to inspect rooms in the connected
+development project.
+
 ## Source code
 
 The source code is available in our
 [GitHub repository](https://github.com/liveblocks/liveblocks-mcp-server).
+
+## Related docs
+
+- [Liveblocks plugin](/docs/tools/liveblocks-plugin).
+- [Agent skills](/docs/tools/agent-skills).
+
+## Troubleshooting
+
+### MCP returns auth errors
+
+Check that `LIVEBLOCKS_SECRET_KEY` uses a secret key from the correct Liveblocks
+project. If you changed the key, restart your AI tool from the shell or app
+environment where the key is set.
+
+### MCP returns unexpected data
+
+Check that the secret key belongs to the intended development project. The MCP
+server can only inspect and modify data in the project connected to that key.
+
+## Security best practices
+
+MCP servers run with the credentials you give them. Treat the Liveblocks MCP
+server like a trusted development integration.
+
+- Use a development project secret key, not a production key.
+- Use the smallest-scope project that still lets your agent complete the task.
+- Review MCP tool calls before approving changes that create, update, or delete
+  data.
+- Keep MCP configuration files out of commits when they contain real secrets.
+- Revoke and rotate the secret key if it was shared with the wrong tool or
+  committed by mistake.

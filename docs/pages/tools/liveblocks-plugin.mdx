@@ -1,0 +1,159 @@
+---
+meta:
+  title: "Liveblocks plugin"
+  parentTitle: "Build with AI"
+  description:
+    "Install the Liveblocks plugin in your AI coding tool to build Liveblocks
+    and Yjs apps more easily."
+---
+
+The Liveblocks plugin adds Liveblocks and Yjs guidance to AI coding agents. It
+also includes MCP server configuration for tools that can inspect and modify
+development project data.
+
+Use the plugin first if your AI coding tool supports plugins. Use the
+[MCP server](/docs/tools/mcp-server) directly if you only need data access. Use
+[Agent skills](/docs/tools/agent-skills) only when plugins are not supported.
+
+<PromptCta />
+
+<Figure>
+  <video autoPlay loop muted playsInline height={521} width={768}>
+    <source
+      src="/assets/agent-skills/agent-skills-claude.mp4"
+      type="video/mp4"
+    />
+  </video>
+</Figure>
+
+## Install the plugin
+
+Use the plugin when your coding agent supports plugins. Install it, then start a
+new session in your AI coding tool.
+
+```bash
+npx plugins add liveblocks/liveblocks-plugin
+```
+
+## Verify installation
+
+Start a new session in your AI coding tool and ask:
+
+```
+Use Liveblocks best practices to review my auth setup.
+```
+
+If the plugin is loaded, your agent should use Liveblocks-specific guidance
+instead of generic realtime or Yjs advice.
+
+## Enable project access
+
+The skills work after installation. To also let your AI tool inspect and modify
+Liveblocks data, set a development project secret key before starting the tool:
+
+```bash
+export LIVEBLOCKS_SECRET_KEY="{{SECRET_KEY}}"
+```
+
+<Banner type="warning" title="Do not use a production secret key">
+
+MCP tools can create, update, and delete data in the Liveblocks project
+connected to the key.
+
+</Banner>
+
+If you only want to configure MCP tools, or your AI tool does not support
+plugins, use the [MCP server](/docs/tools/mcp-server) directly.
+
+To verify MCP access, ask your agent:
+
+```
+List my Liveblocks rooms.
+```
+
+If the key is valid, your agent should be able to inspect rooms in the connected
+development project.
+
+## Supported tools
+
+| Tool                                                          | Support                |
+| ------------------------------------------------------------- | ---------------------- |
+| [Claude Code](https://docs.anthropic.com/en/docs/claude-code) | Installed by `plugins` |
+| [OpenAI Codex](https://openai.com/codex)                      | Installed by `plugins` |
+| [Cursor](https://www.cursor.com/)                             | Installed by `plugins` |
+| [Grok Build](https://x.ai/news/grok-build-cli)                | Uses repository files  |
+| [GitHub Copilot](https://github.com/features/copilot)         | Uses repository files  |
+
+The plugin uses the open plugin format and is distributed from
+[`liveblocks/liveblocks-plugin`](https://github.com/liveblocks/liveblocks-plugin).
+The `plugins` CLI installs the plugin automatically for Claude Code, Cursor, and
+OpenAI Codex. Grok Build and GitHub Copilot can use the plugin manifest, skills,
+MCP configuration, and instruction files from the repository.
+
+## Install only the skills
+
+If your AI tool does not support plugins, or you only want the standalone
+skills, install them from the source repository:
+
+```bash
+npx skills add liveblocks/skills
+```
+
+Then configure the [MCP server](/docs/tools/mcp-server) separately.
+
+## Included skills
+
+### liveblocks-best-practices
+
+Guidance for Liveblocks rooms, auth, presence, Storage, comments, notifications,
+text editors, React patterns, and more. Use it when building, debugging, or
+answering questions about Liveblocks.
+
+### yjs-best-practices
+
+Guidance for Yjs data modeling, updates, providers, performance, subdocuments,
+and common debugging issues. Use it when building, debugging, or answering
+questions about Yjs.
+
+## Example prompts
+
+After installation, skills are automatically available in your AI tool. Your
+agent will use them when it judges they are relevant. For example, the following
+questions will trigger skills:
+
+```
+How do I handle unstable Wi-Fi connections with Liveblocks?
+```
+
+```
+How do I pass custom headers to my auth endpoint?
+```
+
+```
+Why is my Y.Map growing so large?
+```
+
+## Troubleshooting
+
+### Plugin is not loaded
+
+Start a new session in your AI coding tool after installation. If it still is
+not available, run the install command again:
+
+```bash
+npx plugins add liveblocks/liveblocks-plugin
+```
+
+### MCP returns auth errors
+
+Check that `LIVEBLOCKS_SECRET_KEY` is set in the shell or app environment that
+starts your AI tool, then restart the tool. Use a secret key from a development
+project.
+
+## Source code
+
+The plugin package is available in
+[`liveblocks/liveblocks-plugin`](https://github.com/liveblocks/liveblocks-plugin).
+
+Standalone skills are available in
+[`liveblocks/skills`](https://github.com/liveblocks/skills).
