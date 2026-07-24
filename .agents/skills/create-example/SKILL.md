@@ -212,6 +212,19 @@ Model it on [liveblocks.io#3307](https://github.com/liveblocks/liveblocks.io/pul
   `environmentVariables` (secret key) and extras like `AI_GATEWAY_API_KEY`
   in `additionalEnvironmentVariables`.
 
+### 5. When everything is done: tell the human their next steps
+
+Once the example, images, and both PRs are complete, finish by telling the
+human what they need to do to deploy (these are manual steps for them, not
+for the agent):
+
+1. Merge the example PR (liveblocks/liveblocks).
+2. Merge `main` into the `examples` branch.
+3. Run the [Set up Vercel example](https://github.com/liveblocks/liveblocks/actions/workflows/setup-vercel-example.yml)
+   workflow with the example's folder name (e.g. `nextjs-tiptap-ai-chat`) —
+   this creates the `https://<folder-name>.liveblocks.app` deployment that
+   the website PR's `previewUrl` points at.
+
 ## Publishing notes
 
 - Gallery registration happens in the liveblocks.io repo (see above); the
