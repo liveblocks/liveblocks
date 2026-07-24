@@ -23,6 +23,12 @@ images and videos in a room's Storage tree.
   `attachmentIds` params in `createThread()`, `createComment()`, and
   `editComment()`.
 
+### Python SDK
+
+- Add methods to upload Storage files for `LiveFile`, retrieve their download
+  URLs, and handle multipart uploads.
+- Add methods to upload comment attachments, including multipart uploads.
+
 ## v3.22.0
 
 ### `@liveblocks/react`
