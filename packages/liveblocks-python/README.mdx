@@ -1837,6 +1837,259 @@ print(result)
 </PropertiesList>
 
 
+### upload_attachment
+
+Uploads a file's bytes and returns a draft comment attachment. Pass the returned attachment ID in the comment's attachment IDs when creating or editing a comment. For large files, use the multipart upload operations instead.
+
+```python
+result = client.upload_attachment(
+    room_id="my-room-id",
+    attachment_id="at_abc123456789012345678",
+    name="screenshot.png",
+    user_id="alice",
+    body=...,
+    # file_size=12345,
+)
+print(result)
+```
+
+<PropertiesList title="Parameters">
+  <PropertiesListItem
+    name="room_id"
+    type="str"
+  >
+    ID of the room
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="attachment_id"
+    type="str"
+  >
+    ID for the attachment
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="name"
+    type="str"
+  >
+    Name of the file
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="user_id"
+    type="str"
+  >
+    ID of the user uploading the attachment
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="file_size"
+    type="int | Unset"
+  >
+    Expected file size in bytes
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="body"
+    type="File"
+  >
+    Request body (application/octet-stream).
+
+  </PropertiesListItem>
+</PropertiesList>
+
+
+### create_attachment_multipart_upload
+
+Starts a multipart upload for a draft comment attachment.
+
+```python
+result = client.create_attachment_multipart_upload(
+    room_id="my-room-id",
+    attachment_id="at_abc123456789012345678",
+    name="recording.mp4",
+    # file_size=10485760,
+)
+print(result)
+```
+
+<PropertiesList title="Parameters">
+  <PropertiesListItem
+    name="room_id"
+    type="str"
+  >
+    ID of the room
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="attachment_id"
+    type="str"
+  >
+    ID for the attachment
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="name"
+    type="str"
+  >
+    Name of the file
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="file_size"
+    type="int | Unset"
+  >
+    Expected file size in bytes
+  </PropertiesListItem>
+</PropertiesList>
+
+
+### upload_attachment_multipart_part
+
+Uploads one part of an attachment multipart upload.
+
+```python
+result = client.upload_attachment_multipart_part(
+    room_id="my-room-id",
+    attachment_id="at_abc123456789012345678",
+    upload_id="...",
+    part_number=1,
+    body=...,
+)
+print(result)
+```
+
+<PropertiesList title="Parameters">
+  <PropertiesListItem
+    name="room_id"
+    type="str"
+  >
+    ID of the room
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="attachment_id"
+    type="str"
+  >
+    ID of the attachment
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="upload_id"
+    type="str"
+  >
+    ID returned when the multipart upload was created
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="part_number"
+    type="int"
+  >
+    One-based part number
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="body"
+    type="File"
+  >
+    Request body (application/octet-stream).
+
+  </PropertiesListItem>
+</PropertiesList>
+
+
+### complete_attachment_multipart_upload
+
+Completes a multipart upload and returns a draft comment attachment. Pass the returned attachment ID in the comment's attachment IDs when creating or editing a comment.
+
+```python
+from liveblocks.models import CompleteAttachmentMultipartUploadRequestBody
+
+result = client.complete_attachment_multipart_upload(
+    room_id="my-room-id",
+    attachment_id="at_abc123456789012345678",
+    upload_id="...",
+    user_id="alice",
+    body=CompleteAttachmentMultipartUploadRequestBody(
+        parts=[],
+    ),
+)
+print(result)
+```
+
+<PropertiesList title="Parameters">
+  <PropertiesListItem
+    name="room_id"
+    type="str"
+  >
+    ID of the room
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="attachment_id"
+    type="str"
+  >
+    ID of the attachment
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="upload_id"
+    type="str"
+  >
+    ID returned when the multipart upload was created
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="user_id"
+    type="str"
+  >
+    ID of the user uploading the attachment
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="body"
+    type="CompleteAttachmentMultipartUploadRequestBody"
+  >
+    Request body (application/json).
+
+  </PropertiesListItem>
+</PropertiesList>
+
+
+### abort_attachment_multipart_upload
+
+Aborts a multipart upload and discards its uploaded parts.
+
+```python
+client.abort_attachment_multipart_upload(
+    room_id="my-room-id",
+    attachment_id="at_abc123456789012345678",
+    upload_id="...",
+)
+```
+
+<PropertiesList title="Parameters">
+  <PropertiesListItem
+    name="room_id"
+    type="str"
+  >
+    ID of the room
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="attachment_id"
+    type="str"
+  >
+    ID of the attachment
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="upload_id"
+    type="str"
+  >
+    ID returned when the multipart upload was created
+
+  </PropertiesListItem>
+</PropertiesList>
+
+
 ### edit_comment_metadata
 
 This endpoint edits the metadata of a comment. The metadata is a JSON object that can be used to store any information you want about the comment, in `string`, `number`, or `boolean` form. Set a property to `null` to remove it. Corresponds to [`liveblocks.editCommentMetadata`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-metadata).

@@ -24,6 +24,8 @@ from .anthropic_provider_options_anthropic_anthropic_thinking_enabled import (
 from .anthropic_provider_options_anthropic_anthropic_web_search import (
     AnthropicProviderOptionsAnthropicAnthropicWebSearch,
 )
+from .attachment_multipart_part import AttachmentMultipartPart
+from .attachment_multipart_upload import AttachmentMultipartUpload
 from .attachment_with_url import AttachmentWithUrl
 from .authorization import Authorization
 from .authorize_user_request_body import AuthorizeUserRequestBody
@@ -36,6 +38,7 @@ from .comment_body import CommentBody
 from .comment_body_content_item import CommentBodyContentItem
 from .comment_metadata import CommentMetadata
 from .comment_reaction import CommentReaction
+from .complete_attachment_multipart_upload_request_body import CompleteAttachmentMultipartUploadRequestBody
 from .complete_storage_file_multipart_upload_request_body import CompleteStorageFileMultipartUploadRequestBody
 from .copy_json_patch_operation import CopyJsonPatchOperation
 from .create_ai_copilot_options_anthropic import CreateAiCopilotOptionsAnthropic
@@ -203,6 +206,8 @@ __all__ = (
     "AnthropicProviderOptionsAnthropicAnthropicThinkingDisabled",
     "AnthropicProviderOptionsAnthropicAnthropicThinkingEnabled",
     "AnthropicProviderOptionsAnthropicAnthropicWebSearch",
+    "AttachmentMultipartPart",
+    "AttachmentMultipartUpload",
     "AttachmentWithUrl",
     "Authorization",
     "AuthorizeUserRequestBody",
@@ -215,6 +220,7 @@ __all__ = (
     "CommentBodyContentItem",
     "CommentMetadata",
     "CommentReaction",
+    "CompleteAttachmentMultipartUploadRequestBody",
     "CompleteStorageFileMultipartUploadRequestBody",
     "CopyJsonPatchOperation",
     "CreateAiCopilotOptionsAnthropic",

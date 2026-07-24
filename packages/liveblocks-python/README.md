@@ -1327,6 +1327,145 @@ print(result)
 
 ---
 
+#### `upload_attachment`
+
+Uploads a file's bytes and returns a draft comment attachment. Pass the returned attachment ID in the comment's attachment IDs when creating or editing a comment. For large files, use the multipart upload operations instead.
+
+**Example**
+```python
+result = client.upload_attachment(
+    room_id="my-room-id",
+    attachment_id="at_abc123456789012345678",
+    name="screenshot.png",
+    user_id="alice",
+    body=...,
+    # file_size=12345,
+)
+print(result)
+```
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `room_id` | `str` | Yes | ID of the room |
+| `attachment_id` | `str` | Yes | ID for the attachment |
+| `name` | `str` | Yes | Name of the file |
+| `user_id` | `str` | Yes | ID of the user uploading the attachment |
+| `file_size` | `int \| Unset` | No | Expected file size in bytes |
+| `body` | `File` | Yes | Request body (application/octet-stream) |
+
+
+---
+
+#### `create_attachment_multipart_upload`
+
+Starts a multipart upload for a draft comment attachment.
+
+**Example**
+```python
+result = client.create_attachment_multipart_upload(
+    room_id="my-room-id",
+    attachment_id="at_abc123456789012345678",
+    name="recording.mp4",
+    # file_size=10485760,
+)
+print(result)
+```
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `room_id` | `str` | Yes | ID of the room |
+| `attachment_id` | `str` | Yes | ID for the attachment |
+| `name` | `str` | Yes | Name of the file |
+| `file_size` | `int \| Unset` | No | Expected file size in bytes |
+
+
+---
+
+#### `upload_attachment_multipart_part`
+
+Uploads one part of an attachment multipart upload.
+
+**Example**
+```python
+result = client.upload_attachment_multipart_part(
+    room_id="my-room-id",
+    attachment_id="at_abc123456789012345678",
+    upload_id="...",
+    part_number=1,
+    body=...,
+)
+print(result)
+```
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `room_id` | `str` | Yes | ID of the room |
+| `attachment_id` | `str` | Yes | ID of the attachment |
+| `upload_id` | `str` | Yes | ID returned when the multipart upload was created |
+| `part_number` | `int` | Yes | One-based part number |
+| `body` | `File` | Yes | Request body (application/octet-stream) |
+
+
+---
+
+#### `complete_attachment_multipart_upload`
+
+Completes a multipart upload and returns a draft comment attachment. Pass the returned attachment ID in the comment's attachment IDs when creating or editing a comment.
+
+**Example**
+```python
+from liveblocks.models import CompleteAttachmentMultipartUploadRequestBody
+
+result = client.complete_attachment_multipart_upload(
+    room_id="my-room-id",
+    attachment_id="at_abc123456789012345678",
+    upload_id="...",
+    user_id="alice",
+    body=CompleteAttachmentMultipartUploadRequestBody(
+        parts=[],
+    ),
+)
+print(result)
+```
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `room_id` | `str` | Yes | ID of the room |
+| `attachment_id` | `str` | Yes | ID of the attachment |
+| `upload_id` | `str` | Yes | ID returned when the multipart upload was created |
+| `user_id` | `str` | Yes | ID of the user uploading the attachment |
+| `body` | `CompleteAttachmentMultipartUploadRequestBody` | Yes | Request body (application/json) |
+
+
+---
+
+#### `abort_attachment_multipart_upload`
+
+Aborts a multipart upload and discards its uploaded parts.
+
+**Example**
+```python
+client.abort_attachment_multipart_upload(
+    room_id="my-room-id",
+    attachment_id="at_abc123456789012345678",
+    upload_id="...",
+)
+```
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `room_id` | `str` | Yes | ID of the room |
+| `attachment_id` | `str` | Yes | ID of the attachment |
+| `upload_id` | `str` | Yes | ID returned when the multipart upload was created |
+
+
+---
+
 #### `edit_comment_metadata`
 
 This endpoint edits the metadata of a comment. The metadata is a JSON object that can be used to store any information you want about the comment, in `string`, `number`, or `boolean` form. Set a property to `null` to remove it. Corresponds to [`liveblocks.editCommentMetadata`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-metadata).

@@ -19,6 +19,9 @@ images and videos in a room's Storage tree.
 
 - Add `uploadFile()` to upload a file and return a `LiveFile`.
 - Add `getFileUrl()` to get access to a `LiveFile`.
+- Add `uploadAttachment()` to upload comment attachments, combined with
+  `attachmentIds` params in `createThread()`, `createComment()`, and
+  `editComment()`.
 
 ## v3.22.0
 

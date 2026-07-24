@@ -76,6 +76,7 @@ export {
 } from "./webhooks";
 export type { RoomAccesses, RoomPermissions } from "@liveblocks/core";
 export type {
+  CommentAttachment,
   CommentBody,
   CommentBodyBlockElement,
   CommentBodyElement,

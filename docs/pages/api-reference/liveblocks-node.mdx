@@ -1950,6 +1950,50 @@ await liveblocks.deleteVersion({
 
 ### Attachments
 
+#### Liveblocks.uploadAttachment [#upload-attachment]
+
+Uploads a file to a room and returns a `CommentAttachment` which can be added to
+a comment. The `userId` must match the comment's user ID.
+
+```ts
+const attachment = await liveblocks.uploadAttachment({
+  roomId: "my-room-id",
+  userId: "pierre@example.com",
+  file,
+});
+
+const comment = await liveblocks.createComment({
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
+  data: {
+    userId: "pierre@example.com",
+    body,
+    // +++
+    attachmentIds: [attachment.id],
+    // +++
+  },
+});
+```
+
+You can also pass uploaded attachment IDs to `data.comment.attachmentIds` in
+[`createThread`](#post-rooms-roomId-threads), or to `data.attachmentIds` in
+[`editComment`](#post-rooms-roomId-threads-threadId-comments-commentId). When
+editing, pass the ID of every attachment that should remain on the comment; pass
+an empty array to remove them all. A comment can have up to 10 attachments.
+
+Pass an `AbortSignal` in the optional second argument to cancel the upload.
+
+```ts
+const attachment = await liveblocks.uploadAttachment(
+  {
+    roomId: "my-room-id",
+    userId: "pierre@example.com",
+    file,
+  },
+  { signal }
+);
+```
+
 #### Liveblocks.getAttachment [#get-rooms-roomId-attachments-attachmentId]
 
 Returns an attachment's metadata and a presigned download URL. Throws an error
@@ -2146,6 +2190,9 @@ const thread = await liveblocks.createThread({
         tag: "important",
         spam: false,
       },
+
+      // Optional, IDs of uploaded comment attachments
+      attachmentIds: [attachment.id],
 
       // The comment's body, uses the `CommentBody` type
       body: {
@@ -2573,6 +2620,9 @@ const comment = await liveblocks.createComment({
       tag: "important",
       reviewed: false,
     },
+
+    // Optional, IDs of uploaded comment attachments
+    attachmentIds: [attachment.id],
   },
 });
 ```
@@ -2611,7 +2661,6 @@ const editedComment = await liveblocks.editComment({
   commentId: "cm_agH76a...",
 
   data: {
-    userId: "alicia@example.com",
     body: {
       version: 1,
       content: [
@@ -2627,6 +2676,9 @@ const editedComment = await liveblocks.editComment({
       tag: "important",
       spam: false,
     },
+
+    // Optional, IDs of every attachment that should remain on the comment
+    attachmentIds: [attachment.id],
   },
 });
 
