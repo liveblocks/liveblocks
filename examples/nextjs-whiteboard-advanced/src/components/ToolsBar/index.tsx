@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useRef } from "react";
 import PencilButton from "./PencilButton";
 import RectangleButton from "./RectangleButton";
 import EllipseButton from "./EllipseButton";
+import ImageButton from "./ImageButton";
 import UndoButton from "./UndoButton";
 import RedoButton from "./RedoButton";
 import SelectionButton from "./SelectionButton";
@@ -15,6 +16,7 @@ type Props = {
   redo: () => void;
   canUndo: boolean;
   canRedo: boolean;
+  onInsertImage: (file: File) => void;
 };
 
 export default function ToolsBar({
@@ -24,7 +26,10 @@ export default function ToolsBar({
   redo,
   canUndo,
   canRedo,
+  onInsertImage,
 }: Props) {
+  const imageInputRef = useRef<HTMLInputElement>(null);
+
   return (
     <div className={styles.tools_panel_container}>
       <div className={styles.tools_panel}>
@@ -66,6 +71,25 @@ export default function ToolsBar({
                 layerType: LayerType.Ellipse,
               })
             }
+          />
+          <ImageButton
+            onClick={() => {
+              setCanvasState({ mode: CanvasMode.None });
+              imageInputRef.current?.click();
+            }}
+          />
+          <input
+            ref={imageInputRef}
+            className={styles.file_input}
+            type="file"
+            accept="image/*"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (file) {
+                onInsertImage(file);
+              }
+              event.target.value = "";
+            }}
           />
         </div>
         <div className={styles.seperator}></div>

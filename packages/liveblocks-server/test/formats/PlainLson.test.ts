@@ -69,6 +69,34 @@ describe("Serialization of nodes (to PlainLson format)", () => {
     );
   });
 
+  test("LiveFile", () => {
+    const file = {
+      id: "fl_123",
+      name: "brief.pdf",
+      size: 42,
+      mimeType: "application/pdf",
+    };
+    // prettier-ignore
+    const nodes: StorageNode[] = [
+      ["root", { data: {}, type: CrdtType.OBJECT }],
+      ["si:1", { data: file, parentId: "root", parentKey: "file", type: CrdtType.FILE }],
+    ];
+
+    const plainLson = snapshotToPlainLson(makeSnapshot(nodes));
+    expect(plainLson).toEqual({
+      liveblocksType: "LiveObject",
+      data: {
+        file: {
+          liveblocksType: "LiveFile",
+          data: file,
+        },
+      },
+    });
+
+    const convertedNodes = plainLsonToNodeMap(plainLson);
+    expect(convertedNodes).toEqual(new Map<string, SerializedCrdt>(nodes));
+  });
+
   test("With root node", () => {
     // prettier-ignore
     const nodes: StorageNode[] = [

@@ -22,6 +22,7 @@ import type {
   Json,
   JsonObject,
   LiveTextData,
+  LiveFileData,
   NodeStream,
   PlainLsonObject,
   Relax,
@@ -87,7 +88,7 @@ type NodeRow =
     }
   | {
       id: string;
-      type: CrdtType.OBJECT | CrdtType.REGISTER;
+      type: CrdtType.OBJECT | CrdtType.REGISTER | CrdtType.FILE;
       parent_id: string;
       parent_key: string;
       jdata: jstring;
@@ -148,6 +149,14 @@ function rowToSerializedCrdt(row: NodeRow): SerializedCrdt {
         parentKey,
         data: parseJson<LiveTextData>(jdata),
         version: row.version,
+      };
+
+    case CrdtType.FILE:
+      return {
+        type,
+        parentId,
+        parentKey,
+        data: parseJson<LiveFileData>(jdata),
       };
 
     case CrdtType.LIST:
@@ -249,7 +258,7 @@ function sanitize_illegalNodes(db: Database): void {
          WHERE
            (c.type = ${CrdtType.REGISTER} AND p.type = ${CrdtType.OBJECT})
            OR
-           p.type IN (${CrdtType.REGISTER}, ${CrdtType.TEXT})`
+           p.type IN (${CrdtType.REGISTER}, ${CrdtType.TEXT}, ${CrdtType.FILE})`
     )
     .all();
 
@@ -404,7 +413,8 @@ function upsert_node(db: Database, id: string, node: SerializedCrdt): void {
   const jdata =
     node.type === CrdtType.OBJECT ||
     node.type === CrdtType.REGISTER ||
-    node.type === CrdtType.TEXT
+    node.type === CrdtType.TEXT ||
+    node.type === CrdtType.FILE
       ? JSON.stringify(node.data)
       : null;
   const version = node.type === CrdtType.TEXT ? node.version : null;
@@ -481,6 +491,10 @@ function set_child(
 
   if (node.type === CrdtType.REGISTER && parentNode.type === CrdtType.OBJECT) {
     throw new Error("Cannot add register under object");
+  }
+
+  if (parentNode.type === CrdtType.FILE) {
+    throw new Error("Cannot add child under file");
   }
 
   const conflictingSiblingId = get_child_at(db, node.parentId, node.parentKey);
@@ -606,11 +620,11 @@ export class BunSQLiteDriver implements IStorageDriver {
       `CREATE TABLE IF NOT EXISTS nodes (
          id          TEXT NOT NULL PRIMARY KEY,
 
-         type        INTEGER NOT NULL CHECK (type >= 0 AND type <= 4),
-                  -- ^^^^^^^ 0=LiveObject, 1=LiveList, 2=LiveMap, 3=Register, 4=LiveText
+         type        INTEGER NOT NULL CHECK (type >= 0 AND type <= 5),
+                  -- ^^^^^^^ 0=LiveObject, 1=LiveList, 2=LiveMap, 3=Register, 4=LiveText, 5=LiveFile
          parent_id   TEXT,  -- NULL only for root
          parent_key  TEXT,  -- NULL only for root
-         jdata       TEXT,  -- JSON data for LiveObject, Register, and LiveText; NULL for LiveList/LiveMap
+         jdata       TEXT,  -- JSON data for LiveObject, Register, LiveText, and LiveFile; NULL for LiveList/LiveMap
          version     INTEGER,  -- LiveText version; NULL for all other types
 
          UNIQUE (parent_id, parent_key),
@@ -628,6 +642,7 @@ export class BunSQLiteDriver implements IStorageDriver {
          CHECK (type != 2 OR jdata IS NULL),      -- LiveMap must NOT have jdata
          CHECK (type != 3 OR jdata IS NOT NULL),  -- Register must have jdata (even "null" is stored as JSON string)
          CHECK (type != 4 OR jdata IS NOT NULL),  -- LiveText must have jdata
+         CHECK (type != 5 OR jdata IS NOT NULL),  -- LiveFile must have jdata
 
          -- Only LiveText carries a version
          CHECK (type = 4 OR version IS NULL),     -- non-LiveText must NOT have a version
@@ -922,7 +937,8 @@ export class BunSQLiteDriver implements IStorageDriver {
         const jdata =
           node.type === CrdtType.OBJECT ||
           node.type === CrdtType.REGISTER ||
-          node.type === CrdtType.TEXT
+          node.type === CrdtType.TEXT ||
+          node.type === CrdtType.FILE
             ? JSON.stringify(node.data)
             : null;
         const version = node.type === CrdtType.TEXT ? node.version : null;

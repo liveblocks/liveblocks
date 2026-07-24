@@ -1,5 +1,6 @@
 import type { Json, JsonObject } from "../lib/Json";
 import type { DistributiveOmit } from "../lib/utils";
+import type { LiveFileData } from "./StorageNode";
 
 export type OpCode = (typeof OpCode)[keyof typeof OpCode];
 export const OpCode = Object.freeze({
@@ -14,6 +15,7 @@ export const OpCode = Object.freeze({
   CREATE_REGISTER: 8,
   CREATE_TEXT: 9,
   UPDATE_TEXT: 10,
+  CREATE_FILE: 11,
 });
 
 export namespace OpCode {
@@ -28,6 +30,7 @@ export namespace OpCode {
   export type CREATE_REGISTER = typeof OpCode.CREATE_REGISTER;
   export type CREATE_TEXT = typeof OpCode.CREATE_TEXT;
   export type UPDATE_TEXT = typeof OpCode.UPDATE_TEXT;
+  export type CREATE_FILE = typeof OpCode.CREATE_FILE;
 }
 
 export type TextAttributes = JsonObject;
@@ -89,7 +92,8 @@ export type CreateOp =
   | CreateRegisterOp
   | CreateMapOp
   | CreateListOp
-  | CreateTextOp;
+  | CreateTextOp
+  | CreateFileOp;
 
 export type UpdateObjectOp = {
   readonly opId?: string;
@@ -152,6 +156,17 @@ export type CreateTextOp = {
   readonly deletedId?: string;
 };
 
+export type CreateFileOp = {
+  readonly opId?: string;
+  readonly id: string;
+  readonly type: OpCode.CREATE_FILE;
+  readonly parentId: string;
+  readonly parentKey: string;
+  readonly data: LiveFileData;
+  readonly intent?: "set" | "push";
+  readonly deletedId?: string;
+};
+
 export type UpdateTextOp = {
   readonly opId?: string;
   readonly id: string;
@@ -189,6 +204,7 @@ export function isCreateOp<O extends Op>(op: O): op is O & CreateOp {
   return (
     op.type === OpCode.CREATE_OBJECT ||
     op.type === OpCode.CREATE_REGISTER ||
+    op.type === OpCode.CREATE_FILE ||
     op.type === OpCode.CREATE_MAP ||
     op.type === OpCode.CREATE_LIST ||
     op.type === OpCode.CREATE_TEXT

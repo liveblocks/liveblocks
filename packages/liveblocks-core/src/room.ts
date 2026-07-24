@@ -1,4 +1,4 @@
-import type { RoomHttpApi } from "./api-client";
+import type { FileUrlData, RoomHttpApi } from "./api-client";
 import { getBearerTokenFromAuthValue } from "./api-client";
 import type { AuthManager, AuthValue } from "./auth-manager";
 import { injectBrandBadge } from "./brand";
@@ -22,6 +22,8 @@ import {
   liveObjectFromNodeStream,
   mergeStorageUpdates,
 } from "./crdts/liveblocks-helpers";
+import type { LiveFile, LiveFileReference } from "./crdts/LiveFile";
+import { getLiveFileId } from "./crdts/LiveFile";
 import { LiveObject } from "./crdts/LiveObject";
 import type { LiveStructure, LsonObject } from "./crdts/Lson";
 import type {
@@ -567,6 +569,10 @@ export type GetThreadsSinceOptions = {
 };
 
 export type UploadAttachmentOptions = {
+  signal?: AbortSignal;
+};
+
+export type UploadFileOptions = {
   signal?: AbortSignal;
 };
 
@@ -1188,6 +1194,25 @@ export type Room<
   getAttachmentUrl(attachmentId: string): Promise<string>;
 
   /**
+   * Uploads a file for a `LiveFile`.
+   *
+   * @example
+   * const liveFile = await room.uploadFile(file);
+   */
+  uploadFile(file: File, options?: UploadFileOptions): Promise<LiveFile>;
+
+  /**
+   * Returns a presigned URL for a `LiveFile`.
+   *
+   * @example
+   * await getFileUrl("fl_xxx");
+   *
+   * @example
+   * await getFileUrl(liveFile);
+   */
+  getFileUrl(file: LiveFileReference): Promise<string>;
+
+  /**
    * Gets the user's subscription settings for the current room.
    *
    * @example
@@ -1320,7 +1345,7 @@ export type PrivateRoomApi = {
   };
 
   attachmentUrlsStore: BatchStore<string, string>;
-
+  fileUrlsStore: BatchStore<FileUrlData, string>;
   readonly history: Observable<
     | { action: "push"; id: number }
     | { action: "undo"; id: number }
@@ -2336,7 +2361,8 @@ export function createRoom<
           op.type === OpCode.CREATE_LIST ||
           op.type === OpCode.CREATE_MAP ||
           op.type === OpCode.CREATE_OBJECT ||
-          op.type === OpCode.CREATE_TEXT
+          op.type === OpCode.CREATE_TEXT ||
+          op.type === OpCode.CREATE_FILE
         ) {
           createdNodeIds.add(op.id);
         }
@@ -2390,6 +2416,7 @@ export function createRoom<
       case OpCode.CREATE_LIST:
       case OpCode.CREATE_MAP:
       case OpCode.CREATE_TEXT:
+      case OpCode.CREATE_FILE:
       case OpCode.CREATE_REGISTER: {
         if (op.parentId === undefined) {
           return { modified: false };
@@ -3965,6 +3992,21 @@ export function createRoom<
     return httpClient.getAttachmentUrl({ roomId, attachmentId });
   }
 
+  function uploadFile(
+    file: File,
+    options: UploadFileOptions = {}
+  ): Promise<LiveFile> {
+    return httpClient.uploadFile({
+      roomId,
+      file,
+      signal: options.signal,
+    });
+  }
+
+  function getFileUrl(file: LiveFileReference) {
+    return httpClient.getFileUrl({ roomId, fileId: getLiveFileId(file) });
+  }
+
   function getSubscriptionSettings(
     options?: GetSubscriptionSettingsOptions
   ): Promise<RoomSubscriptionSettings> {
@@ -4078,6 +4120,7 @@ export function createRoom<
         },
 
         attachmentUrlsStore: httpClient.getOrCreateAttachmentUrlsStore(roomId),
+        fileUrlsStore: httpClient.getOrCreateFileUrlsStore(roomId),
       },
 
       id: roomId,
@@ -4188,6 +4231,8 @@ export function createRoom<
       prepareAttachment,
       uploadAttachment,
       getAttachmentUrl,
+      uploadFile,
+      getFileUrl,
 
       // Notifications
       getNotificationSettings: getSubscriptionSettings,

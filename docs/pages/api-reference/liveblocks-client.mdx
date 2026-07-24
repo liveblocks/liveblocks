@@ -4528,10 +4528,10 @@ whiteboard, or cells in a spreadsheet.
 
 ### Data structures
 
-Storage provides four different conflict-free data structures, which you can
-use to build your application. All structures are permanent and persist when all
-users have left the room, unlike [Presence](/docs/ready-made-features/presence)
-which is temporary.
+Storage provides five different data structures, which you can use to build your
+application. All structures are permanent and persist when all users have left
+the room, unlike [Presence](/docs/ready-made-features/presence) which is
+temporary.
 
 - [`LiveObject`][] - Similar to JavaScript object. Use this for storing records
   with fixed key names and where the values don’t necessarily have the same
@@ -4549,9 +4549,13 @@ which is temporary.
   last modification received by the Liveblocks servers is the winner.
 
 - [`LiveText`][] - A collaborative rich-text document. Use this to store plain
-  text with optional inline formatting attributes (for example `{ bold: true }`).
-  Concurrent insertions, deletions, and formatting changes are merged
-  automatically using server-ordered operational transformation.
+  text with optional inline formatting attributes (for example
+  `{ bold: true }`). Concurrent insertions, deletions, and formatting changes
+  are merged automatically using server-ordered operational transformation.
+
+- [`LiveFile`][] - An immutable reference to a file uploaded to Liveblocks. Use
+  this for large files such as images and videos. All file types are supported.
+  Learn more about [file size limits](/docs/pricing/limits).
 
 ### Typing Storage [#typing-storage]
 
@@ -4584,8 +4588,9 @@ const unsubscribe = room.subscribe(animals, (updatedAnimals) => {
 
 ### Nesting data structures
 
-All Storage data structures can be nested, allowing you to create complex trees
-of conflict-free data.
+All Storage data structures can be nested, allowing you to create complex trees.
+`LiveObject`, `LiveList`, and `LiveMap` contain collaborative data, while
+`LiveFile` is an immutable leaf.
 
 ```ts file="liveblocks.config.ts"
 import { LiveObject, LiveList, LiveMap } from "@liveblocks/client";
@@ -4641,6 +4646,67 @@ const { root } = await room.getStorage();
 </PropertiesList>
 
 <PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
+### Room.uploadFile
+
+Uploads a file to Liveblocks and returns a [`LiveFile`][] which can then be
+added to the room's Storage tree.
+
+```ts
+const liveFile = await room.uploadFile(file);
+
+const { root } = await room.getStorage();
+root.set("file", liveFile);
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="liveFile" type="LiveFile">
+    An immutable Storage reference to the uploaded file.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="file" type="File" required>
+    The file to upload.
+  </PropertiesListItem>
+  <PropertiesListItem name="options" type="UploadFileOptions">
+    A set of options.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Options">
+  <PropertiesListItem name="signal" type="AbortSignal">
+    An optional signal for cancelling the upload.
+  </PropertiesListItem>
+</PropertiesList>
+
+### Room.getFileUrl
+
+Returns a presigned URL for the file referenced by a [`LiveFile`][]. You can
+pass a `LiveFile`, its `LiveFileData`, or its ID.
+
+```ts
+const url = await room.getFileUrl(liveFile);
+
+// "https://..."
+console.log(url);
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="url" type="string">
+    A presigned URL for the file.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem
+    name="file"
+    type="LiveFile | LiveFileData | string"
+    required
+  >
+    The `LiveFile`, `LiveFileData`, or ID to get a URL for.
+  </PropertiesListItem>
+</PropertiesList>
 
 ## LiveObject
 
@@ -5883,10 +5949,7 @@ import type { LiveTextData } from "@liveblocks/client";
 const plain: LiveTextData = [["Hello world"]];
 
 // Text with inline formatting
-const formatted: LiveTextData = [
-  ["Hello ", { bold: true }],
-  ["world"],
-];
+const formatted: LiveTextData = [["Hello ", { bold: true }], ["world"]];
 ```
 
 Attributes are JSON objects. Set an attribute to `null` to remove it from a
@@ -5919,10 +5982,7 @@ const text = new LiveText([["Hello ", { bold: true }], ["world"]]);
 </PropertiesList>
 
 <PropertiesList title="Arguments">
-  <PropertiesListItem
-    name="textOrData"
-    type="string | LiveTextData"
-  >
+  <PropertiesListItem name="textOrData" type="string | LiveTextData">
     Initial plain text, or an array of text segments with optional attributes.
     Defaults to an empty document.
   </PropertiesListItem>
@@ -6032,11 +6092,7 @@ text.format(0, 5, { bold: null });
   <PropertiesListItem name="length" type="number" required>
     The number of characters to format.
   </PropertiesListItem>
-  <PropertiesListItem
-    name="attributes"
-    type="LiveTextAttributesPatch"
-    required
-  >
+  <PropertiesListItem name="attributes" type="LiveTextAttributesPatch" required>
     Attributes to apply. Use `null` as a value to remove an attribute from the
     range.
   </PropertiesListItem>
@@ -6074,7 +6130,10 @@ const text = new LiveText([["Hello ", { bold: true }], ["world"]]);
 text.toString();
 
 // Equivalent when working with LiveTextData:
-text.toJSON().map(([segmentText]) => segmentText).join("");
+text
+  .toJSON()
+  .map(([segmentText]) => segmentText)
+  .join("");
 ```
 
 <PropertiesList title="Returns">
@@ -6189,6 +6248,56 @@ To build a collaborative [CodeMirror](https://codemirror.net) editor, use
 [`collaborationMode: "liveblocks"`](/docs/api-reference/liveblocks-react-tiptap#Liveblocks-collaboration-mode).
 To build a collaborative [Lexical](https://lexical.dev) editor with Storage, use
 [`@liveblocks/lexical`](/docs/api-reference/liveblocks-lexical).
+
+## LiveFile
+
+The `LiveFile` class is an immutable Storage leaf that references file bytes
+stored outside the realtime Storage tree. Create one by uploading a file with
+[`Room.uploadFile`](#Room.uploadFile), then add it to a `LiveObject`, `LiveMap`,
+or `LiveList`.
+
+```ts
+const liveFile = await room.uploadFile(file);
+
+// { id: "fl_xxx", name: "photo.png", size: 12345, mimeType: "image/png" }
+console.log(liveFile.data);
+```
+
+<PropertiesList title="Properties">
+  <PropertiesListItem name="data" type="Readonly<LiveFileData>">
+    The immutable file metadata.
+  </PropertiesListItem>
+  <PropertiesListItem name="id" type="string">
+    The file ID, which starts with `"fl_"`.
+  </PropertiesListItem>
+  <PropertiesListItem name="name" type="string">
+    The name of the uploaded file.
+  </PropertiesListItem>
+  <PropertiesListItem name="size" type="number">
+    The size of the uploaded file in bytes.
+  </PropertiesListItem>
+  <PropertiesListItem name="mimeType" type="string">
+    The MIME type of the uploaded file.
+  </PropertiesListItem>
+</PropertiesList>
+
+### clone [#LiveFile.clone]
+
+Returns a copy of the `LiveFile` that references the same uploaded file and can
+be inserted elsewhere in the Storage tree.
+
+```ts
+root.set("original", liveFile);
+root.set("copy", liveFile.clone());
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="clonedFile" type="LiveFile">
+    The cloned `LiveFile`.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 ## Resolvers
 
@@ -6799,6 +6908,7 @@ const user = room.getSelf();
 [`client.getroom`]: /docs/api-reference/liveblocks-client#Client.getRoom
 [`createclient`]: /docs/api-reference/liveblocks-client#createClient
 [`fetch`]: https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API
+[`livefile`]: /docs/api-reference/liveblocks-client#LiveFile
 [`livelist`]: /docs/api-reference/liveblocks-client#LiveList
 [`livemap`]: /docs/api-reference/liveblocks-client#LiveMap
 [`liveobject`]: /docs/api-reference/liveblocks-client#LiveObject

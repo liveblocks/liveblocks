@@ -46,6 +46,7 @@ export type {
   JsonObject,
   JsonScalar,
   LiveblocksErrorContext,
+  LiveFileData,
   LiveListUpdate,
   LiveMapUpdate,
   LiveObjectUpdate,
@@ -84,6 +85,7 @@ export type {
   ThreadData,
   ToJson,
   UploadAttachmentOptions,
+  UploadFileOptions,
   User,
 } from "@liveblocks/core";
 export {
@@ -93,6 +95,7 @@ export {
   getMentionsFromCommentBody,
   isNotificationChannelEnabled,
   LiveblocksError,
+  LiveFile,
   LiveList,
   LiveMap,
   LiveObject,

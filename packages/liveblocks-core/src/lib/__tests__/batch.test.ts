@@ -1,6 +1,7 @@
 import { describe, expect, test, vi } from "vitest";
 
 import { Batch, createBatchStore } from "../batch";
+import { Promise_withResolvers } from "../controlledPromise";
 import { wait } from "../utils";
 
 const SOME_TIME = 5;
@@ -181,6 +182,73 @@ describe("Batch", () => {
 });
 
 describe("createBatchStore", () => {
+  test("should invalidate cached data when it expires", async () => {
+    vi.useFakeTimers();
+
+    try {
+      const callback = vi.fn((inputs: string[]) => inputs);
+      const batch = new Batch<string, string>(callback, { delay: SOME_TIME });
+      const store = createBatchStore<string, string>(batch, {
+        getCacheExpiry: () => Date.now() + SOME_TIME,
+      });
+
+      const enqueuePromise = store.enqueue("a");
+      await vi.advanceTimersByTimeAsync(SOME_TIME);
+      await enqueuePromise;
+
+      expect(store.getData("a")).toBe("a");
+
+      await vi.advanceTimersByTimeAsync(SOME_TIME - 1);
+      expect(store.getData("a")).toBe("a");
+
+      await vi.advanceTimersByTimeAsync(1);
+      expect(store.getData("a")).toBeUndefined();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test("should resolve when a cached error expires", async () => {
+    vi.useFakeTimers();
+
+    try {
+      const batch = new Batch<string, string>(() => [ERROR], {
+        delay: SOME_TIME,
+      });
+      const store = createBatchStore<string, string>(batch, {
+        getErrorCacheExpiry: () => Date.now() + SOME_TIME,
+      });
+      let cacheExpiryFromSubscription$: Promise<void> | undefined;
+      const unsubscribe = store.subscribe(() => {
+        if (store.getItemState("a")?.error) {
+          cacheExpiryFromSubscription$ = store.waitUntilItemCacheExpires("a");
+        }
+      });
+
+      const enqueue$ = store.enqueue("a");
+      await vi.advanceTimersByTimeAsync(SOME_TIME);
+      await enqueue$;
+
+      expect(store.getItemState("a")).toEqual({
+        isLoading: false,
+        error: ERROR,
+      });
+
+      const cacheExpiry$ = store.waitUntilItemCacheExpires("a");
+      expect(cacheExpiry$).toBeDefined();
+      expect(cacheExpiryFromSubscription$).toBeDefined();
+
+      await vi.advanceTimersByTimeAsync(SOME_TIME);
+      await cacheExpiry$;
+      await cacheExpiryFromSubscription$;
+      unsubscribe();
+
+      expect(store.getItemState("a")).toBeUndefined();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   test("should set state to loading then result with `enqueue`", async () => {
     const callback = vi.fn((inputs: string[]) => inputs);
     const batch = new Batch<string, string>(callback, { delay: SOME_TIME });
@@ -202,9 +270,14 @@ describe("createBatchStore", () => {
     unsubscribe();
   });
 
-  test("should not re-enqueue duplicate calls with `enqueue`", async () => {
-    const callback = vi.fn((inputs: string[]) => inputs);
-    const batch = new Batch<string, string>(callback, { delay: SOME_TIME });
+  test("should return the pending promise for duplicate calls with `enqueue`", async () => {
+    const { promise: callbackResult$, resolve: resolveCallback } =
+      Promise_withResolvers<string[]>();
+    const callback = vi.fn(() => callbackResult$);
+    const batch = new Batch<string, string>(callback, {
+      delay: SOME_TIME,
+      size: 1,
+    });
     const store = createBatchStore<string, string>(batch);
     const listener = vi.fn();
     const unsubscribe = store.subscribe(listener);
@@ -212,12 +285,50 @@ describe("createBatchStore", () => {
     const promise1 = store.enqueue("a");
     const promise2 = store.enqueue("a");
 
+    expect(promise2).toBe(promise1);
+    resolveCallback(["a"]);
     await Promise.all([promise1, promise2]);
 
     expect(store.getData("a")).toBe("a");
+    expect(callback).toHaveBeenCalledTimes(1);
     expect(listener).toHaveBeenCalledTimes(2);
 
     unsubscribe();
+  });
+
+  test("should ignore a pending result after invalidation", async () => {
+    const firstResult = Promise_withResolvers<string[]>();
+    const secondResult = Promise_withResolvers<string[]>();
+    const callback = vi
+      .fn()
+      .mockReturnValueOnce(firstResult.promise)
+      .mockReturnValueOnce(secondResult.promise);
+    const batch = new Batch<string, string>(callback, {
+      delay: SOME_TIME,
+      size: 1,
+    });
+    const store = createBatchStore<string, string>(batch);
+
+    const firstEnqueue$ = store.enqueue("a");
+    store.invalidate(["a"]);
+    const secondEnqueue$ = store.enqueue("a");
+
+    expect(secondEnqueue$).not.toBe(firstEnqueue$);
+    expect(callback).toHaveBeenCalledTimes(2);
+
+    firstResult.resolve(["stale"]);
+    await firstEnqueue$;
+
+    expect(store.getItemState("a")).toEqual({ isLoading: true });
+    expect(store.enqueue("a")).toBe(secondEnqueue$);
+
+    secondResult.resolve(["fresh"]);
+    await secondEnqueue$;
+
+    expect(store.getItemState("a")).toEqual({
+      isLoading: false,
+      data: "fresh",
+    });
   });
 
   test("should not change the state with `enqueue` if the entry was already resolved", async () => {

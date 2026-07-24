@@ -54,6 +54,7 @@ import {
   CrossIcon,
   CustomEventIcon,
   EllipsisIcon,
+  FileIcon,
   MapIcon,
   NumberIcon,
   ObjectIcon,
@@ -73,6 +74,7 @@ import type {
 import { Code } from "./Code";
 import { Dialog } from "./Dialog";
 import { Tooltip } from "./Tooltip";
+import { formatFileSize } from "../../lib/formatFileSize";
 
 /**
  * Node types that can be used in the Storage tree view.
@@ -228,7 +230,7 @@ interface RowLabelProps extends Omit<ComponentProps<"span">, "children"> {
 }
 
 interface JsonValueDialogProps extends ComponentProps<"div"> {
-  node: NodeApi<DevTools.JsonTreeNode>;
+  data: DevTools.LsonTreeNode;
 }
 
 interface BreadcrumbsProps extends ComponentProps<"div"> {
@@ -253,6 +255,9 @@ function color(node: DevTools.TreeNode): string {
 
     case "LiveText":
       return "text-green-500 dark:text-green-500";
+
+    case "LiveFile":
+      return "text-pink-500 dark:text-pink-400";
 
     case "User":
       return "text-teal-500 dark:text-teal-500";
@@ -283,6 +288,9 @@ function background(node: DevTools.TreeNode): string {
     case "LiveText":
       return "tree-focus:bg-green-500 dark:tree-focus:bg-green-500";
 
+    case "LiveFile":
+      return "tree-focus:bg-pink-500 dark:tree-focus:bg-pink-400";
+
     case "User":
       return "tree-focus:bg-teal-500 dark:tree-focus:bg-teal-500";
 
@@ -308,6 +316,9 @@ function icon(node: DevTools.TreeNode): ReactNode {
 
     case "LiveText":
       return <TextIcon />;
+
+    case "LiveFile":
+      return <FileIcon />;
 
     case "Json":
       if (Array.isArray(node.payload)) {
@@ -567,6 +578,13 @@ function summarize(node: DevTools.TreeNode): string {
         )
         .join("");
       return stringify(text);
+    }
+
+    case "LiveFile": {
+      const payload = node.payload;
+      return Array.isArray(payload)
+        ? ""
+        : `${payload.name} (${formatFileSize(payload.size)})`;
     }
 
     case "User":
@@ -1045,7 +1063,38 @@ function LiveNodeRenderer({
   node,
   style,
 }: NodeRendererProps<DevTools.LsonTreeNode>) {
+  const [isValueDialogOpen, setValueDialogOpen] = useState(false);
+  const liveFileNode = node.data.type === "LiveFile" ? node.data : null;
+  const isActionable = liveFileNode !== null && node.isSelected && !node.isOpen;
   const toggle = useToggleNode(node);
+  const handleValueDialogOpen = useCallback(
+    (event: MouseEvent | KeyboardEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      setValueDialogOpen(true);
+    },
+    []
+  );
+
+  useEffect(() => {
+    if (!isActionable) {
+      return;
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Enter") {
+        handleValueDialogOpen(event);
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isActionable, handleValueDialogOpen]);
+
   return (
     <Row node={node} style={style} onClick={toggle}>
       <RowInfo>
@@ -1061,7 +1110,34 @@ function LiveNodeRenderer({
           {node.data.type}
         </Badge>
       </RowInfo>
-      {!node.isOpen && <RowPreview>{summarize(node.data)}</RowPreview>}
+      {!node.isOpen && (
+        <>
+          <RowPreview>{summarize(node.data)}</RowPreview>
+          {liveFileNode !== null && (
+            <div className="ml-auto flex-none">
+              <Dialog
+                content={
+                  isValueDialogOpen ? (
+                    <JsonValueDialog data={liveFileNode} />
+                  ) : null
+                }
+                open={isValueDialogOpen}
+                onOpenChange={setValueDialogOpen}
+              >
+                <Tooltip content="Show value" sideOffset={8}>
+                  <button
+                    onClick={handleValueDialogOpen}
+                    aria-label="Show value"
+                    className="text-light-500 dark:text-dark-500 hover:text-light-700 dark:hover:text-dark-700 tree-focus:group-[[data-selected]]:text-light-0/60 tree-focus:group-[[data-selected]]:hover:text-light-0/80 hidden h-full items-center justify-center group-hover:flex group-focus:flex group-[[data-selected]]:flex"
+                  >
+                    <EyeIcon />
+                  </button>
+                </Tooltip>
+              </Dialog>
+            </div>
+          )}
+        </>
+      )}
     </Row>
   );
 }
@@ -1072,6 +1148,7 @@ function LsonNodeRenderer(props: NodeRendererProps<DevTools.LsonTreeNode>) {
     case "LiveList":
     case "LiveObject":
     case "LiveText":
+    case "LiveFile":
       return <LiveNodeRenderer {...props} />;
 
     case "Json":
@@ -1187,16 +1264,14 @@ function YUpdateDeleteSetNodeRenderer({
   );
 }
 
-function JsonValueDialog({ node }: JsonValueDialogProps) {
+function JsonValueDialog({ data }: JsonValueDialogProps) {
   return (
     <div className="grid h-[calc(100vh-2*theme(spacing.8))] max-h-[480px] grid-cols-[1fr] grid-rows-[auto_minmax(0,1fr)]">
       <div className="border-light-300 dark:border-dark-300 flex h-9 items-center justify-between border-b px-2.5">
         <div className="child:select-none flex min-w-0 select-none items-center">
-          <div className={cx(color(node.data), "mr-2 flex-none")}>
-            {icon(node.data)}
-          </div>
+          <div className={cx(color(data), "mr-2 flex-none")}>{icon(data)}</div>
           <span className="text-dark-600 dark:text-light-600 truncate font-mono text-[95%]">
-            {node.data.key}
+            {data.key}
           </span>
         </div>
         <RadixDialog.Close
@@ -1219,7 +1294,7 @@ function JsonValueDialog({ node }: JsonValueDialogProps) {
           </svg>
         </RadixDialog.Close>
       </div>
-      <Code code={JSON.stringify(node.data.payload, null, 2)} language="json" />
+      <Code code={JSON.stringify(data.payload, null, 2)} language="json" />
     </div>
   );
 }
@@ -1271,7 +1346,7 @@ function JsonNodeRenderer({
           <div className="ml-auto flex-none">
             <Dialog
               content={
-                isValueDialogOpen ? <JsonValueDialog node={node} /> : null
+                isValueDialogOpen ? <JsonValueDialog data={node.data} /> : null
               }
               open={isValueDialogOpen}
               onOpenChange={setValueDialogOpen}
@@ -1709,6 +1784,9 @@ function storageChildAccessor(node: StorageTreeNode): StorageTreeNode[] | null {
       return children.length > 0 ? children : null;
     }
 
+    case "LiveFile":
+      return null;
+
     default:
       // e.g. future LiveXxx types
       return null;
@@ -1788,32 +1866,33 @@ function collect(
   if (matchNode(node, pattern)) {
     directMatches.add(node.id);
     return true;
-  } else {
-    // Recursively scan child nodes
-    switch (node.type) {
-      case "Json":
-        // JSON nodes are leafs and have no children
-        return false;
+  }
 
-      case "LiveList":
-      case "LiveObject":
-      case "LiveMap": {
-        let isIndirectMatch = false;
-        for (const childNode of node.payload) {
-          if (collect(childNode, pattern, directMatches, indirectMatches)) {
-            isIndirectMatch = true;
-          }
+  // Recursively scan child nodes
+  switch (node.type) {
+    case "Json":
+    case "LiveFile":
+      // Leaf nodes have no children
+      return false;
+
+    case "LiveList":
+    case "LiveObject":
+    case "LiveMap": {
+      let isIndirectMatch = false;
+      for (const childNode of node.payload) {
+        if (collect(childNode, pattern, directMatches, indirectMatches)) {
+          isIndirectMatch = true;
         }
-        if (isIndirectMatch) {
-          indirectMatches.add(node.id);
-        }
-        return isIndirectMatch;
       }
-
-      default:
-        // e.g. future LiveXxx types
-        return false;
+      if (isIndirectMatch) {
+        indirectMatches.add(node.id);
+      }
+      return isIndirectMatch;
     }
+
+    default:
+      // e.g. future LiveXxx types
+      return false;
   }
 }
 
@@ -1861,13 +1940,24 @@ function pruneNode<TTreeNode extends DevTools.TreeNode>(
       return node;
     }
 
-    // _Change_ the node, by pruning non-matching children from it
-    return {
-      ...node,
-      payload: mapfilter(node.payload, (child) =>
-        pruneNode(child, directMatches, indirectMatches)
-      ),
-    };
+    switch (node.type) {
+      case "LiveList":
+      case "LiveObject":
+      case "LiveMap":
+        // _Change_ the node, by pruning non-matching children from it
+        return {
+          ...node,
+          payload: mapfilter(node.payload, (child) =>
+            pruneNode(child, directMatches, indirectMatches)
+          ),
+        };
+
+      case "LiveFile":
+        throw new Error("Leaf nodes cannot be indirect matches");
+
+      default:
+        throw new Error("Unexpected node type");
+    }
   } else {
     // No match in the entire subtree
     return null;

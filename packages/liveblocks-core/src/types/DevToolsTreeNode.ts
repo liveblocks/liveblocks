@@ -1,4 +1,5 @@
 import type { Json, JsonObject } from "../lib/Json";
+import type { LiveFileData } from "../protocol/StorageNode";
 
 export type JsonTreeNode = {
   readonly type: "Json";
@@ -14,7 +15,14 @@ export type LiveTreeNode<TName extends `Live${string}` = `Live${string}`> = {
   readonly payload: LsonTreeNode[];
 };
 
-export type LsonTreeNode = LiveTreeNode | JsonTreeNode;
+export type LiveFileTreeNode = {
+  readonly type: "LiveFile";
+  readonly id: string;
+  readonly key: string;
+  readonly payload: LiveFileData;
+};
+
+export type LsonTreeNode = LiveTreeNode | LiveFileTreeNode | JsonTreeNode;
 
 export type UserTreeNode = {
   readonly type: "User";

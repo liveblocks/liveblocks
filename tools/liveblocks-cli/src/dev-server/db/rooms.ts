@@ -54,9 +54,9 @@ export type ClientMeta = JsonObject;
 // Module state
 // ---------------------------------------------------------------------------
 
-// Bumped to v2 when the per-room node storage moved to a normalized SQLite
-// schema. Old v1 data is left untouched on disk.
-const DEFAULT_BASE_PATH = ".liveblocks/v2";
+// Bumped to v3 when the per-room node storage schema added new CRDT node
+// types. Old v1/v2 data is left untouched on disk.
+const DEFAULT_BASE_PATH = ".liveblocks/v3";
 let basePath = DEFAULT_BASE_PATH;
 let isEphemeral = false;
 let _initializedDb: Database | null = null;

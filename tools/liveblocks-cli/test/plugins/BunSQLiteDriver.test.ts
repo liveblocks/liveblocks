@@ -42,7 +42,8 @@ function initBunSQLite(dbPath: string, rawNodes: NodeMap): void {
     const jdata =
       node.type === CrdtType.OBJECT ||
       node.type === CrdtType.REGISTER ||
-      node.type === CrdtType.TEXT
+      node.type === CrdtType.TEXT ||
+      node.type === CrdtType.FILE
         ? JSON.stringify(node.data)
         : null;
     const version = node.type === CrdtType.TEXT ? node.version : null;

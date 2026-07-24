@@ -37,6 +37,7 @@ export type { RoomStateServerMsg, ServerMsg } from "@liveblocks/core";
 // All Op types
 export type {
   ClientWireOp,
+  CreateFileOp,
   CreateListOp,
   CreateMapOp,
   CreateObjectOp,

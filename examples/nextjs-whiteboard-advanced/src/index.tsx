@@ -7,9 +7,11 @@ import {
   useOthersMapped,
   useCanUndo,
   useCanRedo,
+  useUploadFile,
 } from "@liveblocks/react/suspense";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
+import type { LiveFile } from "@liveblocks/client";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Color,
@@ -21,6 +23,7 @@ import {
   Side,
   XYWH,
   Point,
+  ImageLayer,
 } from "./types";
 import styles from "./index.module.css";
 import {
@@ -43,6 +46,7 @@ import Path from "./components/Path";
 import ToolsBar from "./components/ToolsBar";
 
 const MAX_LAYERS = 100;
+const MAX_IMAGE_SIZE = 320;
 
 export default function Room() {
   const roomId = useExampleRoomId(
@@ -84,6 +88,7 @@ function Loading() {
 
 function Canvas() {
   const layerIds = useStorage((root) => root.layerIds);
+  const uploadFile = useUploadFile();
 
   const pencilDraft = useSelf((me) => me.presence.pencilDraft);
   const [canvasState, setState] = useState<CanvasState>({
@@ -202,6 +207,87 @@ function Canvas() {
       setState({ mode: CanvasMode.None });
     },
     [lastUsedColor]
+  );
+
+  const canInsertImageLayer = useMutation(
+    ({ storage }) => storage.get("layers").size < MAX_LAYERS,
+    []
+  );
+
+  const insertImageLayer = useMutation(
+    ({ storage, setMyPresence }, bounds: XYWH, file: LiveFile) => {
+      const liveLayers = storage.get("layers");
+      const liveLayerIds = storage.get("layerIds");
+      const layerId = nanoid();
+      const layer = new LiveObject<ImageLayer>({
+        type: LayerType.Image,
+        ...bounds,
+        file,
+      });
+      liveLayerIds.push(layerId);
+      liveLayers.set(layerId, layer);
+
+      setMyPresence({ selection: [layerId] }, { addToHistory: true });
+      setState({ mode: CanvasMode.None });
+    },
+    []
+  );
+
+  const insertImageFile = useCallback(
+    async (file: File, position?: Point) => {
+      if (!file.type.startsWith("image/")) {
+        return;
+      }
+
+      const size = await getImageSize(file);
+      if (!size) {
+        return;
+      }
+
+      const bounds = position
+        ? getImageBoundsFromCenter(position, size)
+        : getCenteredImageBounds(camera, size);
+      if (!canInsertImageLayer()) {
+        return;
+      }
+
+      try {
+        const liveFile = await uploadFile(file);
+        insertImageLayer(bounds, liveFile);
+      } catch (error) {
+        console.error("Image upload failed", error);
+      }
+    },
+    [camera, canInsertImageLayer, insertImageLayer, uploadFile]
+  );
+
+  const onDragOver = useCallback((e: React.DragEvent) => {
+    if (hasDraggedFiles(e.dataTransfer)) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "copy";
+    }
+  }, []);
+
+  const onDrop = useCallback(
+    async (e: React.DragEvent) => {
+      const files = Array.from(e.dataTransfer.files).filter((file) =>
+        file.type.startsWith("image/")
+      );
+
+      if (hasDraggedFiles(e.dataTransfer)) {
+        e.preventDefault();
+      }
+
+      if (files.length === 0) {
+        return;
+      }
+
+      const point = pointerEventToCanvasPoint(e, camera);
+      for (const file of files) {
+        await insertImageFile(file, point);
+      }
+    },
+    [camera, insertImageFile]
   );
 
   /**
@@ -484,7 +570,11 @@ function Canvas() {
 
   return (
     <>
-      <div className={styles.canvas}>
+      <div
+        className={styles.canvas}
+        onDragOver={onDragOver}
+        onDrop={onDrop}
+      >
         <SelectionTools
           isAnimated={
             canvasState.mode !== CanvasMode.Translating &&
@@ -552,9 +642,91 @@ function Canvas() {
         redo={history.redo}
         canUndo={canUndo}
         canRedo={canRedo}
+        onInsertImage={insertImageFile}
       />
     </>
   );
+}
+
+function getCenteredImageBounds(
+  camera: Camera,
+  size: { width: number; height: number }
+): XYWH {
+  return getImageBoundsFromCenter(
+    {
+      x: Math.round(window.innerWidth / 2 - camera.x),
+      y: Math.round(window.innerHeight / 2 - camera.y),
+    },
+    size
+  );
+}
+
+function getImageBoundsFromCenter(
+  center: Point,
+  size: { width: number; height: number }
+): XYWH {
+  return {
+    x: Math.round(center.x - size.width / 2),
+    y: Math.round(center.y - size.height / 2),
+    width: size.width,
+    height: size.height,
+  };
+}
+
+function hasDraggedFiles(dataTransfer: DataTransfer) {
+  return Array.from(dataTransfer.types).includes("Files");
+}
+
+async function getImageSize(
+  file: File
+): Promise<{ width: number; height: number } | null> {
+  const dimensions = await getImageDimensions(file);
+  if (!dimensions) {
+    return null;
+  }
+
+  const scale = Math.min(
+    1,
+    MAX_IMAGE_SIZE / dimensions.width,
+    MAX_IMAGE_SIZE / dimensions.height
+  );
+
+  return {
+    width: Math.max(1, Math.round(dimensions.width * scale)),
+    height: Math.max(1, Math.round(dimensions.height * scale)),
+  };
+}
+
+async function getImageDimensions(
+  file: File
+): Promise<{ width: number; height: number } | null> {
+  const url = URL.createObjectURL(file);
+
+  try {
+    return await new Promise<{ width: number; height: number } | null>(
+      (resolve) => {
+        const image = new Image();
+
+        image.onload = () => {
+          if (!image.naturalWidth || !image.naturalHeight) {
+            resolve(null);
+            return;
+          }
+
+          resolve({
+            width: image.naturalWidth,
+            height: image.naturalHeight,
+          });
+        };
+        image.onerror = () => {
+          resolve(null);
+        };
+        image.src = url;
+      }
+    );
+  } finally {
+    URL.revokeObjectURL(url);
+  }
 }
 
 /**

@@ -41,7 +41,8 @@ Storage is a tree of Liveblocks types:
 [LiveObject](/docs/api-reference/liveblocks-client#LiveObject),
 [LiveList](/docs/api-reference/liveblocks-client#LiveList), and
 [LiveMap](/docs/api-reference/liveblocks-client#LiveMap). It can also contain
-[LiveText](/docs/api-reference/liveblocks-client#LiveText) nodes. When building
+[LiveText](/docs/api-reference/liveblocks-client#LiveText) and
+[LiveFile](/docs/api-reference/liveblocks-client#LiveFile) nodes. When building
 your patch:
 
 - **Be as specific as possible** with your target path.
@@ -52,9 +53,13 @@ your patch:
   or array as the `value` for an `add` or `replace` operation, it is
   automatically converted into LiveObjects and LiveLists on the server.
 - **LiveText values:** Patch LiveText using its Plain LSON shape:
-  `{ "liveblocksType": "LiveText", "data": LiveTextData }`. You can patch
-  fields under `data`, for example `/text/data/0/0`. LiveText versioning is an
-  internal detail and is not part of this API.
+  `{ "liveblocksType": "LiveText", "data": LiveTextData }`. You can patch fields
+  under `data`, for example `/text/data/0/0`. LiveText versioning is an internal
+  detail and is not part of this API.
+- **LiveFile values:** Create or replace a LiveFile by passing its Plain LSON
+  shape as the whole operation value:
+  `{ "liveblocksType": "LiveFile", "data": LiveFileData }`. Use the
+  `LiveFileData` returned by a Storage file upload.
 
 ## Operations and examples
 
@@ -164,6 +169,29 @@ Use `test` for optimistic checks against the current text data.
 [
   { "op": "test", "path": "/text/data", "value": [["Original"]] },
   { "op": "replace", "path": "/text/data/0/0", "value": "Updated" }
+]
+```
+
+## LiveFile example
+
+After uploading a Storage file, use the returned metadata to create an immutable
+LiveFile node.
+
+```json
+[
+  {
+    "op": "add",
+    "path": "/assets/photo",
+    "value": {
+      "liveblocksType": "LiveFile",
+      "data": {
+        "id": "fl_abc123456789012345678",
+        "name": "photo.png",
+        "size": 12345,
+        "mimeType": "image/png"
+      }
+    }
+  }
 ]
 ```
 

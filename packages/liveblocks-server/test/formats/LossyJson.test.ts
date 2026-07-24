@@ -47,6 +47,25 @@ describe("Serialization of nodes (to LossyJson format)", () => {
     expect(json).toEqual({});
   });
 
+  test("LiveFile", () => {
+    const file = {
+      id: "fl_123",
+      name: "brief.pdf",
+      size: 42,
+      mimeType: "application/pdf",
+    };
+    // prettier-ignore
+    const snapshot = makeSnapshot([
+      ["root", { data: {}, type: CrdtType.OBJECT }],
+      ["si:1", { data: file, parentId: "root", parentKey: "file", type: CrdtType.FILE }],
+    ]);
+
+    const json = snapshotToLossyJson(snapshot);
+    expect(json).toEqual({
+      file,
+    });
+  });
+
   test("With root node", () => {
     // prettier-ignore
     const snapshot = makeSnapshot([

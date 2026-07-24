@@ -20,6 +20,7 @@ import type {
   ObjectStorageNode,
   PlainLson,
   PlainLsonFields,
+  PlainLsonFile,
   PlainLsonList,
   PlainLsonMap,
   PlainLsonObject,
@@ -44,7 +45,7 @@ function generateId(state: { clock: number }) {
 
 function isSpecialPlainLsonValue(
   value: PlainLson
-): value is PlainLsonObject | PlainLsonMap | PlainLsonList {
+): value is PlainLsonObject | PlainLsonMap | PlainLsonList | PlainLsonFile {
   return isJsonObject(value) && value.liveblocksType !== undefined;
 }
 
@@ -70,6 +71,18 @@ function* iterJson(
 
       case "LiveMap":
         yield* iterMap(key, data.data, parent, state);
+        return;
+
+      case "LiveFile":
+        yield [
+          generateId(state),
+          {
+            type: CrdtType.FILE,
+            data: data.data,
+            parentId: parent[0],
+            parentKey: key,
+          },
+        ];
         return;
 
       // istanbul ignore next
@@ -231,6 +244,8 @@ function buildNode(snapshot: IReadableSnapshot, id: string): PlainLson {
     return buildList(snapshot, id);
   } else if (node.type === CrdtType.MAP) {
     return buildMap(snapshot, id);
+  } else if (node.type === CrdtType.FILE) {
+    return { liveblocksType: "LiveFile", data: node.data };
   } else {
     // TEMPORARY: `?? null` is only here to project legacy KV rooms that
     // contain data-less registers (under a LiveMap, representing `null`
@@ -308,6 +323,10 @@ function* emit(snapshot: IReadableSnapshot, id: string): StringGen {
     // TEMPORARY: see buildNode — remove `?? null` once all rooms are
     // migrated to SQLite.
     yield JSON.stringify(node.data ?? null);
+  } else if (node.type === CrdtType.FILE) {
+    yield '{"liveblocksType":"LiveFile","data":';
+    yield JSON.stringify(node.data);
+    yield "}";
   }
 }
 

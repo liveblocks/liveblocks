@@ -70,6 +70,7 @@ class ApplyOpCommand implements fc.Command<Model, RealStorage> {
       case OpCode.CREATE_LIST:
       case OpCode.CREATE_MAP:
       case OpCode.CREATE_REGISTER:
+      case OpCode.CREATE_FILE:
         return model.availableParentNodeIds.has(this.op.parentId);
 
       case OpCode.DELETE_CRDT:
@@ -104,7 +105,8 @@ class ApplyOpCommand implements fc.Command<Model, RealStorage> {
         break;
 
       case OpCode.CREATE_REGISTER:
-        // Don't register the register as a potential parent ID
+      case OpCode.CREATE_FILE:
+        // Don't register leaf nodes as potential parent IDs
         break;
 
       case OpCode.CREATE_LIST:
@@ -152,6 +154,8 @@ class ApplyOpCommand implements fc.Command<Model, RealStorage> {
           return "CreateMapOp";
         case OpCode.CREATE_REGISTER:
           return "CreateRegisterOp";
+        case OpCode.CREATE_FILE:
+          return "CreateFileOp";
         case OpCode.SET_PARENT_KEY:
           return "SetParentKeyOp";
         case OpCode.UPDATE_OBJECT:

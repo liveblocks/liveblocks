@@ -21,10 +21,15 @@ types. Each type is similar to a JavaScript counterpart:
 - [`LiveObject`][] - JavaScript Object
 - [`LiveList`][] - JavaScript Array
 - [`LiveMap`][] - JavaScript Map
+- [`LiveFile`][] - An immutable reference to an uploaded file
 
-These data types can be combined and nested, to create a realtime data structure
-that automatically updates when multiple users modify data at the same time,
-whilst handling any conflicts along the way.
+These data types can be combined and nested. `LiveObject`, `LiveList`, and
+`LiveMap` create a realtime data structure that automatically updates when
+multiple users modify data at the same time, whilst handling any conflicts along
+the way.
+
+Use `LiveFile` for large files such as images and videos instead of storing
+binary data directly in the other Storage types.
 
 ### Defining storage
 
@@ -106,6 +111,7 @@ storage.
 [`liveobject`]: /docs/api-reference/liveblocks-client#LiveObject
 [`livelist`]: /docs/api-reference/liveblocks-client#LiveList
 [`livemap`]: /docs/api-reference/liveblocks-client#LiveMap
+[`livefile`]: /docs/api-reference/liveblocks-client#LiveFile
 [`usestorage`]: /docs/api-reference/liveblocks-react#useStorage
 [liveblocks.config.ts]: #/liveblocks.config.ts
 [app.tsx]: #/App.tsx

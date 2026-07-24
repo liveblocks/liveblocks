@@ -38,14 +38,17 @@
 import type {
   Awaitable,
   ChildStorageNode,
+  FileStorageNode,
   Json,
   JsonObject,
   ListStorageNode,
+  LiveFileData,
   MapStorageNode,
   NodeMap,
   NodeStream,
   ObjectStorageNode,
   PlainLson,
+  PlainLsonFile,
   PlainLsonList,
   PlainLsonMap,
   PlainLsonObject,
@@ -79,6 +82,7 @@ import { Logger as LoggerImpl, LogLevel, LogTarget } from "~/lib/Logger";
 import { quote } from "~/lib/text";
 import type {
   ClientWireOp,
+  CreateFileOp,
   CreateListOp,
   CreateMapOp,
   CreateObjectOp,
@@ -208,6 +212,7 @@ export function selfCheck(storage: Storage): void {
 
         assert(driver.get_node(parentId) !== undefined, `Node ${quote(id)} points to ${quote(parentId)}, but no such node exists`); // prettier-ignore
         assert(driver.get_node(parentId)?.type !== CrdtType.REGISTER, `Node ${quote(parentId)} has children (e.g. ${quote(id)}), but is a register node`); // prettier-ignore
+        assert(driver.get_node(parentId)?.type !== CrdtType.FILE, `Node ${quote(parentId)} has children (e.g. ${quote(id)}), but is a file node`); // prettier-ignore
 
         assert(node.type !== CrdtType.REGISTER || driver.get_node(parentId)?.type !== CrdtType.OBJECT, `Node ${quote(id)} is a REGISTER with value ${JSON.stringify((node as SerializedRegister).data)}, but appears as a child under OBJECT node ${quote(parentId)}. Would have expected OBJECT to have this value as a static data attribute under key ${quote(parentKey)}.`); // prettier-ignore
 
@@ -271,17 +276,18 @@ type InfiniteStream<T> = Omit<IterableIterator<T>, "next"> & {
   next(): { value: T; done?: false };
 };
 
-// Check if a PlainLson value is a container (LiveObject/LiveList/LiveMap)
+// Check if a PlainLson value is a container (LiveObject/LiveList/LiveMap/LiveFile)
 function isPlainLsonContainer(
   value: PlainLson
-): value is PlainLsonObject | PlainLsonList | PlainLsonMap {
+): value is PlainLsonObject | PlainLsonList | PlainLsonMap | PlainLsonFile {
   return (
     typeof value === "object" &&
     value !== null &&
     "liveblocksType" in value &&
     (value.liveblocksType === "LiveObject" ||
       value.liveblocksType === "LiveList" ||
-      value.liveblocksType === "LiveMap")
+      value.liveblocksType === "LiveMap" ||
+      value.liveblocksType === "LiveFile")
   );
 }
 
@@ -350,6 +356,16 @@ function plainLsonTreeToNodeMap(
       for (const [key, child] of Object.entries(plainLson.data)) {
         recurse(child, id, key);
       }
+    } else if (plainLson.liveblocksType === "LiveFile") {
+      result.push([
+        id,
+        {
+          type: CrdtType.FILE,
+          parentId,
+          parentKey,
+          data: plainLson.data,
+        },
+      ]);
     }
   }
 
@@ -415,6 +431,15 @@ export function register(
   return [id, { type: CrdtType.REGISTER, parentId, parentKey, data }];
 }
 
+export function file(
+  id: string,
+  parentId: string,
+  parentKey: string,
+  data: LiveFileData
+): FileStorageNode {
+  return [id, { type: CrdtType.FILE, parentId, parentKey, data }];
+}
+
 export function updateObjectOp(
   id: string,
   data: Partial<JsonObject>,
@@ -476,6 +501,27 @@ export function createRegisterOp(
     opId,
     id,
     type: OpCode.CREATE_REGISTER,
+    parentId,
+    parentKey,
+    data,
+    intent,
+    deletedId,
+  };
+}
+
+export function createFileOp(
+  id: string,
+  parentId: string,
+  parentKey: string,
+  data: LiveFileData,
+  intent?: "set" | "push",
+  deletedId?: string,
+  opId = nanoid()
+): CreateFileOp & HasOpId {
+  return {
+    opId,
+    id,
+    type: OpCode.CREATE_FILE,
     parentId,
     parentKey,
     data,
@@ -594,6 +640,14 @@ export function generateArbitraries() {
           )
       ),
 
+    liveFileData: (): fc.Arbitrary<LiveFileData> =>
+      fc.record({
+        id: fc.stringMatching(/^fl_[0-9A-Za-z_-]{21}$/),
+        name: fc.string({ minLength: 1 }),
+        size: fc.nat(),
+        mimeType: fc.string({ minLength: 1 }),
+      }),
+
     rootNodeTuple: () =>
       fc.tuple<["root", SerializedRootObject]>(
         fc.constant("root"),
@@ -642,6 +696,12 @@ export function generateArbitraries() {
             type: fc.constant(CrdtType.REGISTER),
             data: arb.json(),
             parentId: nonObjectParentId,
+            parentKey: arb.key(),
+          }),
+          fc.record<SerializedChild>({
+            type: fc.constant(CrdtType.FILE),
+            data: arb.liveFileData(),
+            parentId,
             parentKey: arb.key(),
           })
         )
@@ -807,13 +867,15 @@ export function generateArbitraries() {
         PlainLsonObject: PlainLsonObject;
         PlainLsonList: PlainLsonList;
         PlainLsonMap: PlainLsonMap;
+        PlainLsonFile: PlainLsonFile;
         Json: Json;
       }>((tie) => ({
         PlainLson: fc.oneof(
           { arbitrary: tie("Json"),            weight: 1, depthIdentifier, maxDepth, depthSize }, // prettier-ignore
           { arbitrary: tie("PlainLsonObject"), weight: 2, depthIdentifier, maxDepth, depthSize }, // prettier-ignore
           { arbitrary: tie("PlainLsonMap"),    weight: 1, depthIdentifier, maxDepth, depthSize }, // prettier-ignore
-          { arbitrary: tie("PlainLsonList"),   weight: 1, depthIdentifier, maxDepth, depthSize } // prettier-ignore
+          { arbitrary: tie("PlainLsonList"),   weight: 1, depthIdentifier, maxDepth, depthSize }, // prettier-ignore
+          { arbitrary: tie("PlainLsonFile"),   weight: 1, depthIdentifier, maxDepth, depthSize } // prettier-ignore
         ),
         PlainLsonObject: fc.record({
           liveblocksType: fc.constant("LiveObject" as const),
@@ -826,6 +888,10 @@ export function generateArbitraries() {
         PlainLsonList: fc.record({
           liveblocksType: fc.constant("LiveList" as const),
           data: fc.array(tie("PlainLson"), { maxLength: options?.maxLength ?? 5 }), // prettier-ignore
+        }),
+        PlainLsonFile: fc.record({
+          liveblocksType: fc.constant("LiveFile" as const),
+          data: arb.liveFileData(),
         }),
         Json: arb.json(),
       })).PlainLsonObject;
@@ -911,6 +977,27 @@ export function generateArbitraries() {
           fc.option(arb.key(), { freq: 10, nil: undefined }),
       }),
 
+    createFileOp: (options?: {
+      id?: fc.Arbitrary<string>;
+      parentId?: fc.Arbitrary<string>;
+      parentKey?: fc.Arbitrary<string>;
+      data?: fc.Arbitrary<LiveFileData>;
+      intent?: fc.Arbitrary<"set" | undefined>;
+      deletedId?: fc.Arbitrary<string | undefined>;
+    }) =>
+      fc.record<CreateFileOp & HasOpId>({
+        type: fc.constant(OpCode.CREATE_FILE),
+        opId: arb.opId(),
+        id: options?.id ?? arb.key(),
+        parentId: options?.parentId ?? arb.key(),
+        parentKey: options?.parentKey ?? arb.parentKey(),
+        data: options?.data ?? arb.liveFileData(),
+        intent: options?.intent ?? arb.intent(),
+        deletedId:
+          options?.deletedId ??
+          fc.option(arb.key(), { freq: 10, nil: undefined }),
+      }),
+
     createOp: (options?: {
       id?: fc.Arbitrary<string>;
       parentId?: fc.Arbitrary<string>;
@@ -922,7 +1009,8 @@ export function generateArbitraries() {
         arb.createListOp(options),
         arb.createMapOp(options),
         arb.createObjectOp(options),
-        arb.createRegisterOp(options)
+        arb.createRegisterOp(options),
+        arb.createFileOp(options)
       ),
 
     deleteCrdtOpArb: () =>
@@ -1317,6 +1405,32 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
             }),
           /cannot add register under object/i
         );
+      }));
+
+    test("set_child: throws if adding a child under a file", () =>
+      runTest((driver) => {
+        resetToDefaultNodes(driver);
+
+        const [, fileNode] = file("0:file", "root", "file", {
+          id: "fl_123456789012345678901",
+          name: "file.txt",
+          size: 5,
+          mimeType: "text/plain",
+        });
+
+        driver.set_child("0:file", fileNode);
+
+        expectToThrow(
+          () =>
+            driver.set_child("0:child", {
+              type: CrdtType.LIST,
+              parentId: "0:file",
+              parentKey: "child",
+            }),
+          /cannot add child under file/i
+        );
+
+        expect(driver.get_node("0:child")).toBe(undefined);
       }));
 
     test("get_child_at: returns child id after set", () =>

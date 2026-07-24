@@ -19,15 +19,19 @@ import { OpCode } from "@liveblocks/core";
 import type { Decoder } from "decoders";
 import {
   constant,
+  number,
   object,
   oneOf,
   optional,
+  sized,
+  startsWith,
   string,
   taggedUnion,
 } from "decoders";
 
 import type {
   ClientWireOp,
+  CreateFileOp,
   CreateListOp,
   CreateMapOp,
   CreateObjectOp,
@@ -43,6 +47,11 @@ import { jsonObjectYolo, jsonYolo } from "./jsonYolo";
 type HasOpId = { opId: string };
 
 const intent = oneOf(["set", "push"] as const);
+const storageFileId = sized(startsWith("fl_"), { size: 24 });
+const fileSize = number.refine(
+  (value) => Number.isSafeInteger(value) && value >= 0,
+  "Must be a valid file size"
+);
 
 const updateObjectOp: Decoder<UpdateObjectOp & HasOpId> = object({
   type: constant(OpCode.UPDATE_OBJECT),
@@ -93,6 +102,22 @@ const createRegisterOp: Decoder<CreateRegisterOp & HasOpId> = object({
   deletedId: optional(string),
 });
 
+const createFileOp: Decoder<CreateFileOp & HasOpId> = object({
+  type: constant(OpCode.CREATE_FILE),
+  opId: string,
+  id: string,
+  parentId: string,
+  parentKey: string,
+  data: object({
+    id: storageFileId,
+    name: string,
+    size: fileSize,
+    mimeType: string,
+  }),
+  intent: optional(intent),
+  deletedId: optional(string),
+});
+
 const deleteCrdtOp: Decoder<DeleteCrdtOp & HasOpId> = object({
   type: constant(OpCode.DELETE_CRDT),
   opId: string,
@@ -119,6 +144,7 @@ export const op: Decoder<ClientWireOp> = taggedUnion("type", {
   [OpCode.CREATE_LIST]: createListOp,
   [OpCode.CREATE_MAP]: createMapOp,
   [OpCode.CREATE_REGISTER]: createRegisterOp,
+  [OpCode.CREATE_FILE]: createFileOp,
   [OpCode.DELETE_CRDT]: deleteCrdtOp,
   [OpCode.SET_PARENT_KEY]: setParentKeyOp,
   [OpCode.DELETE_OBJECT_KEY]: deleteObjectKeyOp,

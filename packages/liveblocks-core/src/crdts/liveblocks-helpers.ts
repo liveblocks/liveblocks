@@ -12,6 +12,7 @@ import type {
 } from "../protocol/StorageNode";
 import {
   CrdtType,
+  isFileStorageNode,
   isListStorageNode,
   isMapStorageNode,
   isObjectStorageNode,
@@ -19,8 +20,8 @@ import {
   isTextStorageNode,
 } from "../protocol/StorageNode";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
-import type { ManagedPool } from "./AbstractCrdt";
-import { createManagedPool } from "./AbstractCrdt";
+import { createManagedPool, type ManagedPool } from "./AbstractCrdt";
+import { LiveFile } from "./LiveFile";
 import { LiveList, type LiveListUpdates } from "./LiveList";
 import { LiveMap, type LiveMapUpdates } from "./LiveMap";
 import { LiveObject, type LiveObjectUpdates } from "./LiveObject";
@@ -36,6 +37,8 @@ export function creationOpToLiveNode(op: CreateOp): LiveNode {
 
 export function creationOpToLson(op: CreateOp): Lson {
   switch (op.type) {
+    case OpCode.CREATE_FILE:
+      return new LiveFile(op.data);
     case OpCode.CREATE_REGISTER:
       return op.data;
     case OpCode.CREATE_OBJECT:
@@ -103,6 +106,8 @@ export function deserialize(
     return LiveRegister._deserialize(node, parentToChildren, pool);
   } else if (isTextStorageNode(node)) {
     return LiveText._deserialize(node, parentToChildren, pool);
+  } else if (isFileStorageNode(node)) {
+    return LiveFile._deserialize(node, parentToChildren, pool);
   } else {
     throw new Error("Unexpected CRDT type");
   }
@@ -123,6 +128,8 @@ export function deserializeToLson(
     return node[1].data;
   } else if (isTextStorageNode(node)) {
     return LiveText._deserialize(node, parentToChildren, pool);
+  } else if (isFileStorageNode(node)) {
+    return LiveFile._deserialize(node, parentToChildren, pool);
   } else {
     throw new Error("Unexpected CRDT type");
   }
@@ -133,7 +140,8 @@ export function isLiveStructure(value: unknown): value is LiveStructure {
     isLiveList(value) ||
     isLiveMap(value) ||
     isLiveObject(value) ||
-    isLiveText(value)
+    isLiveText(value) ||
+    isLiveFile(value)
   );
 }
 
@@ -157,6 +165,10 @@ export function isLiveText(value: unknown): value is LiveText {
   return value instanceof LiveText;
 }
 
+export function isLiveFile(value: unknown): value is LiveFile {
+  return value instanceof LiveFile;
+}
+
 export function isLiveRegister(value: unknown): value is LiveRegister<Json> {
   return value instanceof LiveRegister;
 }
@@ -176,7 +188,8 @@ export function liveNodeToLson(obj: LiveNode): Lson {
     obj instanceof LiveList ||
     obj instanceof LiveMap ||
     obj instanceof LiveObject ||
-    obj instanceof LiveText
+    obj instanceof LiveText ||
+    obj instanceof LiveFile
   ) {
     return obj;
   } else {
@@ -189,7 +202,8 @@ export function lsonToLiveNode(value: Lson): LiveNode {
     value instanceof LiveObject ||
     value instanceof LiveMap ||
     value instanceof LiveList ||
-    value instanceof LiveText
+    value instanceof LiveText ||
+    value instanceof LiveFile
   ) {
     return value;
   } else {
@@ -225,6 +239,8 @@ export function dumpPool(pool: ManagedPool): string {
       value = "<LiveList>";
     } else if (node instanceof LiveMap) {
       value = "<LiveMap>";
+    } else if (node instanceof LiveFile) {
+      value = stringify(node.data);
     } else {
       value = "<LiveObject>";
     }
@@ -318,8 +334,49 @@ export function isJsonEq(a: Json | undefined, b: Json | undefined): boolean {
 export function diffNodeMap(prev: NodeMap, next: NodeMap): Op[] {
   const ops: Op[] = [];
 
-  prev.forEach((_, id) => {
-    if (!next.get(id)) {
+  const idsToRecreate = new Set<string>();
+  next.forEach((nextCrdt, id) => {
+    const currentCrdt = prev.get(id);
+    if (currentCrdt === undefined) {
+      return;
+    }
+
+    if (
+      currentCrdt.type !== nextCrdt.type ||
+      (currentCrdt.type === CrdtType.FILE &&
+        nextCrdt.type === CrdtType.FILE &&
+        (currentCrdt.data.id !== nextCrdt.data.id ||
+          currentCrdt.data.name !== nextCrdt.data.name ||
+          currentCrdt.data.size !== nextCrdt.data.size ||
+          currentCrdt.data.mimeType !== nextCrdt.data.mimeType))
+    ) {
+      idsToRecreate.add(id);
+    }
+  });
+
+  // Deleting a container also deletes its descendants. Recreate descendants
+  // from either tree so moved nodes and unchanged children are restored too.
+  let foundDescendant = true;
+  while (foundDescendant) {
+    foundDescendant = false;
+    for (const nodes of [prev, next]) {
+      nodes.forEach((crdt, id) => {
+        if (
+          !idsToRecreate.has(id) &&
+          crdt.parentId !== undefined &&
+          idsToRecreate.has(crdt.parentId)
+        ) {
+          idsToRecreate.add(id);
+          foundDescendant = true;
+        }
+      });
+    }
+  }
+
+  prev.forEach((crdt, id) => {
+    const parentWillBeRecreated =
+      crdt.parentId !== undefined && idsToRecreate.has(crdt.parentId);
+    if ((!next.has(id) || idsToRecreate.has(id)) && !parentWillBeRecreated) {
       // Delete crdt
       ops.push({ type: OpCode.DELETE_CRDT, id });
     }
@@ -336,9 +393,12 @@ export function diffNodeMap(prev: NodeMap, next: NodeMap): Op[] {
     }
     emitted.add(id);
 
-    // Create the parent first, when it's also a new node.
+    // Create the parent first, when it's new or being recreated.
     const parentId = crdt.parentId;
-    if (parentId !== undefined && !prev.has(parentId)) {
+    if (
+      parentId !== undefined &&
+      (!prev.has(parentId) || idsToRecreate.has(parentId))
+    ) {
       const parentCrdt = next.get(parentId);
       if (parentCrdt !== undefined) {
         emitCreate(parentId, parentCrdt);
@@ -349,6 +409,15 @@ export function diffNodeMap(prev: NodeMap, next: NodeMap): Op[] {
       case CrdtType.REGISTER:
         ops.push({
           type: OpCode.CREATE_REGISTER,
+          id,
+          parentId: crdt.parentId,
+          parentKey: crdt.parentKey,
+          data: crdt.data,
+        });
+        break;
+      case CrdtType.FILE:
+        ops.push({
+          type: OpCode.CREATE_FILE,
           id,
           parentId: crdt.parentId,
           parentKey: crdt.parentKey,
@@ -400,38 +469,33 @@ export function diffNodeMap(prev: NodeMap, next: NodeMap): Op[] {
 
   next.forEach((crdt, id) => {
     const currentCrdt = prev.get(id);
-    if (currentCrdt) {
-      if (crdt.type === CrdtType.OBJECT) {
-        if (currentCrdt.type !== CrdtType.OBJECT) {
-          // Node changed into an object; send its full data.
-          ops.push({ type: OpCode.UPDATE_OBJECT, id, data: crdt.data });
-        } else {
-          // Emit an UPDATE_OBJECT carrying only the keys that were added or
-          // whose value changed. Sending the full data would re-notify keys
-          // that did not actually change.
-          const changed = new Map<string, Json>();
-          for (const key of Object.keys(crdt.data)) {
-            const value = crdt.data[key];
-            if (
-              value !== undefined &&
-              !isJsonEq(value, currentCrdt.data[key])
-            ) {
-              changed.set(key, value);
-            }
+    if (currentCrdt && !idsToRecreate.has(id)) {
+      if (
+        crdt.type === CrdtType.OBJECT &&
+        currentCrdt.type === CrdtType.OBJECT
+      ) {
+        // Emit an UPDATE_OBJECT carrying only the keys that were added or
+        // whose value changed. Sending the full data would re-notify keys
+        // that did not actually change.
+        const changed = new Map<string, Json>();
+        for (const key of Object.keys(crdt.data)) {
+          const value = crdt.data[key];
+          if (value !== undefined && !isJsonEq(value, currentCrdt.data[key])) {
+            changed.set(key, value);
           }
-          if (changed.size > 0) {
-            ops.push({
-              type: OpCode.UPDATE_OBJECT,
-              id,
-              data: Object.fromEntries(changed),
-            });
-          }
-          // Keys present locally but absent from the snapshot must be deleted
-          // explicitly, otherwise they linger and the two clients diverge.
-          for (const key of Object.keys(currentCrdt.data)) {
-            if (!(key in crdt.data)) {
-              ops.push({ type: OpCode.DELETE_OBJECT_KEY, id, key });
-            }
+        }
+        if (changed.size > 0) {
+          ops.push({
+            type: OpCode.UPDATE_OBJECT,
+            id,
+            data: Object.fromEntries(changed),
+          });
+        }
+        // Keys present locally but absent from the snapshot must be deleted
+        // explicitly, otherwise they linger and the two clients diverge.
+        for (const key of Object.keys(currentCrdt.data)) {
+          if (!(key in crdt.data)) {
+            ops.push({ type: OpCode.DELETE_OBJECT_KEY, id, key });
           }
         }
       }
