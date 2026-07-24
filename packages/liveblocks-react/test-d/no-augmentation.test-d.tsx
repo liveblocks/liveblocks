@@ -1,9 +1,11 @@
 import React from "react";
 import type {
   BaseMetadata,
-  NotificationSettings,
   Json,
+  LiveFile,
   Lson,
+  NotificationSettings,
+  UploadFileOptions,
 } from "@liveblocks/client";
 import { LiveObject, LiveList } from "@liveblocks/client";
 import * as classic from "@liveblocks/react";
@@ -536,6 +538,18 @@ describe("without Liveblocks augmentation", () => {
         }, [])
       ).toEqualTypeOf<(a: number, b: boolean) => "hi">();
     }
+  });
+
+  test("useUploadFile()", () => {
+    expectTypeOf(classic.useUploadFile()).toEqualTypeOf<
+      (file: File, options?: UploadFileOptions) => Promise<LiveFile>
+    >();
+  });
+
+  test("useUploadFile() (suspense)", () => {
+    expectTypeOf(suspense.useUploadFile()).toEqualTypeOf<
+      (file: File, options?: UploadFileOptions) => Promise<LiveFile>
+    >();
   });
 
   test("useBroadcastEvent()", () => {

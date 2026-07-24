@@ -24,6 +24,7 @@ export {
   useReportTextEditor,
   useResolveMentionSuggestions,
   useRoomAttachmentUrl,
+  useRoomFileUrl,
   useRoomPermissions,
   useRoomThreadSubscription,
   useSuspendUntilPresenceReady,

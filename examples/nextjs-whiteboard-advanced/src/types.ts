@@ -1,3 +1,5 @@
+import type { LiveFile } from "@liveblocks/client";
+
 export type Color = {
   r: number;
   g: number;
@@ -8,6 +10,7 @@ export enum LayerType {
   Rectangle,
   Ellipse,
   Path,
+  Image,
 }
 
 export type Camera = {
@@ -15,7 +18,9 @@ export type Camera = {
   y: number;
 };
 
-export type Layer = RectangleLayer | EllipseLayer | PathLayer;
+export type Layer = FillableLayer | ImageLayer;
+
+export type FillableLayer = RectangleLayer | EllipseLayer | PathLayer;
 
 export type RectangleLayer = {
   type: LayerType.Rectangle;
@@ -45,6 +50,15 @@ export type PathLayer = {
   width: number;
   fill: Color;
   points: number[][];
+};
+
+export type ImageLayer = {
+  type: LayerType.Image;
+  x: number;
+  y: number;
+  height: number;
+  width: number;
+  file?: LiveFile;
 };
 
 export type Point = {

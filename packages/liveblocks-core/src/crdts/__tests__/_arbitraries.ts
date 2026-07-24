@@ -1,6 +1,7 @@
 import * as fc from "fast-check";
 
 import type { Json, JsonObject } from "../../lib/Json";
+import { LiveFile } from "../LiveFile";
 import { LiveList } from "../LiveList";
 import { LiveMap } from "../LiveMap";
 import { LiveObject } from "../LiveObject";
@@ -21,14 +22,35 @@ interface LsonArbitraryOptions {
   withLiveMap?: boolean;
 }
 
+const FILE_ID_ALPHABET =
+  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-";
+const storageFileId = fc
+  .array(fc.integer({ min: 0, max: FILE_ID_ALPHABET.length - 1 }), {
+    minLength: 21,
+    maxLength: 21,
+  })
+  .map(
+    (indices) =>
+      `fl_${indices.map((index) => FILE_ID_ALPHABET.charAt(index)).join("")}`
+  );
+
 function makeLsonArbitraries(options?: LsonArbitraryOptions) {
   const withLiveMap = options?.withLiveMap ?? true;
 
   return fc.letrec((tie) => ({
+    liveFile: fc
+      .record({
+        id: storageFileId,
+        name: fc.string(),
+        size: fc.nat({ max: Number.MAX_SAFE_INTEGER }),
+        mimeType: fc.string(),
+      })
+      .map((data) => new LiveFile(data)),
     lson: fc.oneof(json, tie("liveStructure")).map((x) => x as Lson),
     liveStructure: fc
       .oneof(
         ...[
+          tie("liveFile"),
           tie("liveList"),
           tie("liveObject"),
           ...(withLiveMap ? [tie("liveMap")] : []),
@@ -47,7 +69,7 @@ function makeLsonArbitraries(options?: LsonArbitraryOptions) {
   }));
 }
 
-export const { liveList, liveMap, liveObject, liveStructure, lson } =
+export const { liveFile, liveList, liveMap, liveObject, liveStructure, lson } =
   makeLsonArbitraries();
 
 export const { liveStructure: liveStructureWithoutMap } = makeLsonArbitraries({
