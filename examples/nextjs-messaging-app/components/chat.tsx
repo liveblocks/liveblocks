@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { useCreateFeed, useRoom } from "@liveblocks/react/suspense";
 import type { Channel } from "@/lib/workspaces";
 import { Composer } from "@/components/composer";
+import { HelpButton } from "@/components/help-button";
 import { MessageList } from "@/components/message-list";
 import { PresenceAvatars } from "@/components/presence-avatars";
 import { TypingIndicator } from "@/components/typing-indicator";
@@ -41,7 +42,10 @@ export function Chat({ channel }: { channel: Channel }) {
             #{channel.name}
           </h2>
         </div>
-        <PresenceAvatars />
+        <div className="ml-auto flex items-center gap-2">
+          <PresenceAvatars />
+          <HelpButton />
+        </div>
       </header>
 
       <MessageList channelId={channel.id} channelName={channel.name} />

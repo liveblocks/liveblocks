@@ -46,7 +46,7 @@ export function PresenceAvatars() {
   const overflow = users.length - visible.length;
 
   return (
-    <div className="ml-auto flex items-center">
+    <div className="flex items-center">
       <div className="flex items-center">
         {visible.map((user, index) => (
           <img

@@ -1,6 +1,6 @@
 import { Liveblocks } from "@liveblocks/node";
 import { NextRequest, NextResponse } from "next/server";
-import { AI_USER_ID, getUser, getUsers } from "@/app/database";
+import { AI_USER_ID, getRandomUser, getUser } from "@/app/database";
 
 /**
  * Authenticating your Liveblocks application
@@ -26,8 +26,10 @@ export async function POST(request: NextRequest) {
   };
 
   // The AI teammate never logs in; it only posts through `@liveblocks/node`.
+  // The app always sends a userId, so the random fallback is only for
+  // requests coming from outside the app.
   const user =
-    userId && userId !== AI_USER_ID ? getUser(userId) : getUsers()[0];
+    userId && userId !== AI_USER_ID ? getUser(userId) : getRandomUser();
 
   if (!user) {
     return new NextResponse("User not found", { status: 403 });

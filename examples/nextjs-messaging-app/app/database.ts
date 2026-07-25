@@ -59,6 +59,10 @@ export const AI_USER: Liveblocks["UserMeta"] = {
   },
 };
 
+export function getRandomUser() {
+  return USER_INFO[Math.floor(Math.random() * USER_INFO.length)];
+}
+
 export function getUser(id: string) {
   if (id === AI_USER_ID) {
     return AI_USER;
