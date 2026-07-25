@@ -135,6 +135,13 @@ async def _asyncio(
         {{ kwargs(endpoint, include_client=False) }}
     )
 
+{% for body in endpoint.bodies %}
+{% if body.body_type == "content" %}
+    if isinstance(body, File):
+        kwargs["content"] = body._iter_bytes()
+{% endif %}
+{% endfor %}
+
     response = await client.request(
         **kwargs,
     )

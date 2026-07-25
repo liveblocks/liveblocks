@@ -13,7 +13,8 @@ class GetStorageDocumentResponse:
     Example:
         {'liveblocksType': 'LiveObject', 'data': {'aLiveObject': {'liveblocksType': 'LiveObject', 'data': {'a': 1}},
             'aLiveList': {'liveblocksType': 'LiveList', 'data': ['a', 'b']}, 'aLiveMap': {'liveblocksType': 'LiveMap',
-            'data': {'a': 1, 'b': 2}}}}
+            'data': {'a': 1, 'b': 2}}, 'aLiveFile': {'liveblocksType': 'LiveFile', 'data': {'id':
+            'fl_abc123456789012345678', 'name': 'photo.png', 'size': 12345, 'mimeType': 'image/png'}}}}
 
     """
 

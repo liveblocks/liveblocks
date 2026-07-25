@@ -9,6 +9,7 @@ import type {
   BaseUserMeta,
   ClientMsg,
   ClientWireOp,
+  CommentAttachment,
   CommentBody,
   CommentData,
   CommentDataPlain,
@@ -34,6 +35,8 @@ import type {
   Json,
   JsonObject,
   KDAD,
+  LiveFileData,
+  LiveFileReference,
   NotificationSettings,
   NotificationSettingsPlain,
   Op,
@@ -62,7 +65,9 @@ import type {
   UserSubscriptionDataPlain,
 } from "@liveblocks/core";
 import {
+  autoRetry,
   checkBounds,
+  chunk,
   ClientMsgCode,
   convertToCommentData,
   convertToCommentUserReaction,
@@ -71,9 +76,13 @@ import {
   convertToSubscriptionData,
   convertToThreadData,
   convertToUserSubscriptionData,
+  createCommentAttachmentId,
   createManagedPool,
   createNotificationSettings,
+  createStorageFileId,
+  getLiveFileId,
   isPlainObject,
+  LiveFile,
   LiveObject,
   makeAbortController,
   normalizeRoomAccesses,
@@ -156,6 +165,53 @@ export type AttachmentWithUrl = {
   expiresAt: string;
 };
 
+export type StorageFileUrl = {
+  url: string;
+  expiresAt: string;
+};
+
+export type StorageFileWithUrl = LiveFileData & StorageFileUrl;
+
+const ROOM_FILE_PART_SIZE = 5 * 1024 * 1024; // 5 MB
+const ROOM_FILE_RETRY_ATTEMPTS = 10;
+const ROOM_FILE_RETRY_DELAYS = [
+  2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000,
+];
+
+type RoomFilePart = {
+  partNumber: number;
+  part: Blob;
+};
+
+type UploadedRoomFilePart = {
+  partNumber: number;
+  etag: string;
+};
+
+type RoomFileMultipartUpload = {
+  uploadId: string;
+};
+
+type UploadRoomFileOptions<TResult> = {
+  file: File;
+  signal?: AbortSignal;
+  abortErrorMessage: string;
+  retryMultipartCompletion: boolean;
+  uploadSingle: () => Promise<TResult>;
+  createMultipartUpload: () => Promise<RoomFileMultipartUpload>;
+  uploadMultipartPart: (
+    uploadId: string,
+    partNumber: number,
+    part: Blob,
+    signal: AbortSignal
+  ) => Promise<UploadedRoomFilePart>;
+  completeMultipartUpload: (
+    uploadId: string,
+    parts: UploadedRoomFilePart[]
+  ) => Promise<TResult>;
+  abortMultipartUpload: (uploadId: string) => Promise<void>;
+};
+
 export type CreateThreadOptions<
   TM extends BaseMetadata,
   CM extends BaseMetadata,
@@ -167,6 +223,7 @@ export type CreateThreadOptions<
       userId: string;
       createdAt?: Date;
       body: CommentBody;
+      attachmentIds?: string[];
     } & PartialUnless<CM, { metadata: CM }>; // Comment metadata (data.comment.metadata)
   } & PartialUnless<TM, { metadata: TM }>; // Thread metadata (data.metadata)
 };
@@ -178,6 +235,7 @@ export type CreateCommentOptions<CM extends BaseMetadata> = {
     userId: string;
     createdAt?: Date;
     body: CommentBody;
+    attachmentIds?: string[];
   } & PartialUnless<CM, { metadata: CM }>;
 };
 
@@ -714,6 +772,175 @@ export type RequestOptions = {
   signal?: AbortSignal;
 };
 
+async function uploadRoomFile<TResult>({
+  file,
+  signal,
+  abortErrorMessage,
+  retryMultipartCompletion,
+  uploadSingle,
+  createMultipartUpload,
+  uploadMultipartPart,
+  completeMultipartUpload,
+  abortMultipartUpload,
+}: UploadRoomFileOptions<TResult>): Promise<TResult> {
+  const abortError = createAbortError(abortErrorMessage);
+
+  if (signal?.aborted) {
+    throw abortError;
+  }
+
+  const handleRetryError = (err: unknown) => {
+    if (signal?.aborted) {
+      throw abortError;
+    }
+
+    return (
+      err instanceof LiveblocksError && err.status >= 400 && err.status < 500
+    );
+  };
+
+  if (file.size <= ROOM_FILE_PART_SIZE) {
+    return autoRetry(
+      uploadSingle,
+      ROOM_FILE_RETRY_ATTEMPTS,
+      ROOM_FILE_RETRY_DELAYS,
+      handleRetryError
+    );
+  }
+
+  let uploadId: string | undefined;
+  const uploadedParts: UploadedRoomFilePart[] = [];
+  const multipartUpload = await autoRetry(
+    createMultipartUpload,
+    ROOM_FILE_RETRY_ATTEMPTS,
+    ROOM_FILE_RETRY_DELAYS,
+    handleRetryError
+  );
+  const partUploadController = new AbortController();
+  const partUploadSignal = partUploadController.signal;
+  const abortPartUploads = (reason?: unknown) => {
+    partUploadController.abort(reason);
+  };
+  const handleExternalAbort = () => abortPartUploads();
+  if (signal?.aborted) {
+    handleExternalAbort();
+  } else {
+    signal?.addEventListener("abort", handleExternalAbort, { once: true });
+  }
+
+  try {
+    uploadId = multipartUpload.uploadId;
+
+    if (signal?.aborted) {
+      throw abortError;
+    }
+
+    const batches = chunk(splitRoomFileIntoParts(file), 5);
+
+    for (const parts of batches) {
+      const firstPartUploadFailure: { value?: { error: unknown } } = {};
+      const partUploads$: Promise<UploadedRoomFilePart>[] = [];
+
+      for (const { part, partNumber } of parts) {
+        partUploads$.push(
+          autoRetry(
+            () =>
+              uploadMultipartPart(
+                multipartUpload.uploadId,
+                partNumber,
+                part,
+                partUploadSignal
+              ),
+            ROOM_FILE_RETRY_ATTEMPTS,
+            ROOM_FILE_RETRY_DELAYS,
+            (error: unknown) => {
+              if (signal?.aborted) {
+                throw abortError;
+              }
+
+              return partUploadSignal.aborted || handleRetryError(error);
+            }
+          ).catch((error: unknown) => {
+            if (firstPartUploadFailure.value === undefined) {
+              firstPartUploadFailure.value = { error };
+              abortPartUploads(error);
+            }
+
+            throw error;
+          })
+        );
+      }
+
+      const settledPartUploads = await Promise.allSettled(partUploads$);
+      if (firstPartUploadFailure.value !== undefined) {
+        throw firstPartUploadFailure.value.error;
+      }
+
+      for (const settledPartUpload of settledPartUploads) {
+        if (settledPartUpload.status === "fulfilled") {
+          uploadedParts.push(settledPartUpload.value);
+        }
+      }
+    }
+
+    if (signal?.aborted) {
+      throw abortError;
+    }
+
+    const sortedParts = uploadedParts.sort(
+      (a, b) => a.partNumber - b.partNumber
+    );
+    return retryMultipartCompletion
+      ? autoRetry(
+          () => completeMultipartUpload(multipartUpload.uploadId, sortedParts),
+          ROOM_FILE_RETRY_ATTEMPTS,
+          ROOM_FILE_RETRY_DELAYS,
+          handleRetryError
+        )
+      : completeMultipartUpload(uploadId, sortedParts);
+  } catch (err) {
+    if (uploadId) {
+      try {
+        await abortMultipartUpload(uploadId);
+      } catch {
+        // Ignore cleanup errors. The original upload error is more useful.
+      }
+    }
+
+    throw err;
+  } finally {
+    signal?.removeEventListener("abort", handleExternalAbort);
+  }
+}
+
+function splitRoomFileIntoParts(file: File): RoomFilePart[] {
+  const parts: RoomFilePart[] = [];
+  let start = 0;
+
+  while (start < file.size) {
+    const end = Math.min(start + ROOM_FILE_PART_SIZE, file.size);
+
+    parts.push({
+      partNumber: parts.length + 1,
+      part: file.slice(start, end),
+    });
+
+    start = end;
+  }
+
+  return parts;
+}
+
+function createAbortError(message: string): Error {
+  if (typeof DOMException === "function") {
+    return new DOMException(message, "AbortError");
+  }
+
+  const err = new Error(message);
+  err.name = "AbortError";
+  return err;
+}
+
 export type SetPresenceOptions = {
   userId: string;
   data: JsonObject;
@@ -826,10 +1053,11 @@ export class Liveblocks {
 
   async #post(
     path: URLSafeString,
-    json: Json,
-    options?: RequestOptions
+    json: Json | undefined,
+    options?: RequestOptions,
+    params?: QueryParams
   ): Promise<Response> {
-    const url = urljoin(this.#baseUrl, path);
+    const url = urljoin(this.#baseUrl, path, params);
     const headers = {
       Authorization: `Bearer ${this.#secret}`,
       "Content-Type": "application/json",
@@ -843,6 +1071,14 @@ export class Liveblocks {
     });
     xwarn(res, "POST", path);
     return res;
+  }
+
+  async #readJsonResponse<TResult>(res: Response): Promise<TResult> {
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+
+    return (await res.json()) as TResult;
   }
 
   async #patch(
@@ -882,6 +1118,28 @@ export class Liveblocks {
       method: "PUT",
       headers,
       body: body as Uint8Array<ArrayBuffer>,
+      signal: options?.signal,
+    });
+    xwarn(res, "PUT", path);
+    return res;
+  }
+
+  async #putBlob(
+    path: URLSafeString,
+    body: Blob,
+    params?: QueryParams,
+    options?: RequestOptions
+  ): Promise<Response> {
+    const url = urljoin(this.#baseUrl, path, params);
+    const headers = {
+      Authorization: `Bearer ${this.#secret}`,
+      "Content-Type": "application/octet-stream",
+    };
+    const fetch = await fetchPolyfill();
+    const res = await fetch(url, {
+      method: "PUT",
+      headers,
+      body,
       signal: options?.signal,
     });
     xwarn(res, "PUT", path);
@@ -1966,6 +2224,7 @@ export class Liveblocks {
    * @param params.data.userId The user ID of the user who is set to create the comment.
    * @param params.data.createdAt (optional) The date the comment is set to be created.
    * @param params.data.body The body of the comment.
+   * @param params.data.attachmentIds (optional) The attachment IDs to add to the comment.
    * @param params.data.metadata (optional) The metadata for the comment.
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The created comment.
@@ -1996,6 +2255,7 @@ export class Liveblocks {
    * @param params.threadId The thread ID to edit the comment in.
    * @param params.commentId The comment ID to edit.
    * @param params.data.body The body of the comment.
+   * @param params.data.attachmentIds (optional) The IDs of every attachment that should remain on the comment.
    * @param params.data.metadata (optional) The metadata for the comment. Value must be a string, boolean or number. Use null to delete a key.
    * @param params.data.editedAt (optional) The date the comment was edited.
    * @param options.signal (optional) An abort signal to cancel the request.
@@ -2008,6 +2268,7 @@ export class Liveblocks {
       commentId: string;
       data: {
         body: CommentBody;
+        attachmentIds?: string[];
         metadata?: Patchable<CM>;
         editedAt?: Date;
       };
@@ -2021,6 +2282,7 @@ export class Liveblocks {
       {
         body: data.body,
         editedAt: data.editedAt?.toISOString(),
+        attachmentIds: data.attachmentIds,
         metadata: data.metadata,
       },
       options
@@ -2081,6 +2343,153 @@ export class Liveblocks {
   }
 
   /**
+   * Uploads an attachment that can be added to a comment.
+   *
+   * @param params.roomId The room ID to upload the attachment to.
+   * @param params.userId The user ID of the user uploading the attachment.
+   * @param params.file The file to upload.
+   * @param options.signal (optional) An abort signal to cancel the upload.
+   * @returns The uploaded attachment.
+   */
+  public async uploadAttachment(
+    params: { roomId: string; userId: string; file: File },
+    options?: RequestOptions
+  ): Promise<CommentAttachment> {
+    const { roomId, userId, file } = params;
+    const attachmentId = createCommentAttachmentId();
+
+    return await uploadRoomFile({
+      file,
+      signal: options?.signal,
+      abortErrorMessage: `Upload of attachment ${attachmentId} was aborted.`,
+      retryMultipartCompletion: false,
+      uploadSingle: async () => {
+        const res = await this.#putBlob(
+          url`/v2/rooms/${roomId}/attachments/${attachmentId}/upload/${file.name}`,
+          file,
+          { fileSize: file.size, userId },
+          options
+        );
+        return await this.#readJsonResponse<CommentAttachment>(res);
+      },
+      createMultipartUpload: async () => {
+        const res = await this.#post(
+          url`/v2/rooms/${roomId}/attachments/${attachmentId}/multipart/${file.name}`,
+          undefined,
+          options,
+          { fileSize: file.size }
+        );
+        return await this.#readJsonResponse<RoomFileMultipartUpload>(res);
+      },
+      uploadMultipartPart: async (uploadId, partNumber, part, signal) => {
+        const res = await this.#putBlob(
+          url`/v2/rooms/${roomId}/attachments/${attachmentId}/multipart/${uploadId}/${String(partNumber)}`,
+          part,
+          undefined,
+          { signal }
+        );
+        return await this.#readJsonResponse<UploadedRoomFilePart>(res);
+      },
+      completeMultipartUpload: async (uploadId, parts) => {
+        const res = await this.#post(
+          url`/v2/rooms/${roomId}/attachments/${attachmentId}/multipart/${uploadId}/complete`,
+          { parts },
+          options,
+          { userId }
+        );
+        return await this.#readJsonResponse<CommentAttachment>(res);
+      },
+      abortMultipartUpload: async (uploadId) => {
+        const res = await this.#delete(
+          url`/v2/rooms/${roomId}/attachments/${attachmentId}/multipart/${uploadId}`
+        );
+        if (!res.ok) {
+          throw await LiveblocksError.from(res);
+        }
+      },
+    });
+  }
+
+  public async uploadFile(
+    params: { roomId: string; file: File },
+    options?: RequestOptions
+  ): Promise<LiveFile> {
+    const { roomId, file } = params;
+    const fileId = createStorageFileId();
+
+    const fileData = await uploadRoomFile({
+      file,
+      signal: options?.signal,
+      abortErrorMessage: `Upload of file ${fileId} was aborted.`,
+      retryMultipartCompletion: true,
+      uploadSingle: async () => {
+        const res = await this.#putBlob(
+          url`/v2/rooms/${roomId}/storage/files/${fileId}/upload/${file.name}`,
+          file,
+          { fileSize: file.size },
+          options
+        );
+        return await this.#readJsonResponse<LiveFileData>(res);
+      },
+      createMultipartUpload: async () => {
+        const res = await this.#post(
+          url`/v2/rooms/${roomId}/storage/files/${fileId}/multipart/${file.name}`,
+          undefined,
+          options,
+          { fileSize: file.size }
+        );
+        return await this.#readJsonResponse<RoomFileMultipartUpload>(res);
+      },
+      uploadMultipartPart: async (uploadId, partNumber, part, signal) => {
+        const res = await this.#putBlob(
+          url`/v2/rooms/${roomId}/storage/files/${fileId}/multipart/${uploadId}/${String(partNumber)}`,
+          part,
+          undefined,
+          { signal }
+        );
+        return await this.#readJsonResponse<UploadedRoomFilePart>(res);
+      },
+      completeMultipartUpload: async (uploadId, parts) => {
+        const res = await this.#post(
+          url`/v2/rooms/${roomId}/storage/files/${fileId}/multipart/${uploadId}/complete`,
+          { parts },
+          options
+        );
+        return await this.#readJsonResponse<LiveFileData>(res);
+      },
+      abortMultipartUpload: async (uploadId) => {
+        const res = await this.#delete(
+          url`/v2/rooms/${roomId}/storage/files/${fileId}/multipart/${uploadId}`
+        );
+        if (!res.ok) {
+          throw await LiveblocksError.from(res);
+        }
+      },
+    });
+
+    return new LiveFile(fileData);
+  }
+
+  public async getFileUrl(
+    params: { roomId: string; file: LiveFileReference },
+    options?: RequestOptions
+  ): Promise<StorageFileUrl> {
+    const { roomId, file } = params;
+    const fileId = getLiveFileId(file);
+
+    const res = await this.#get(
+      url`/v2/rooms/${roomId}/storage/files/${fileId}`,
+      undefined,
+      options
+    );
+    const storageFile = await this.#readJsonResponse<StorageFileWithUrl>(res);
+    return {
+      url: storageFile.url,
+      expiresAt: storageFile.expiresAt,
+    };
+  }
+
+  /**
    * Creates a new thread. The thread will be created with the specified comment as its first comment.
    * If the thread already exists, a `LiveblocksError` will be thrown with status code 409.
    * @param params.roomId The room ID to create the thread in.
@@ -2088,6 +2497,7 @@ export class Liveblocks {
    * @param params.thread.comment.userId The user ID of the user who created the comment.
    * @param params.thread.comment.createdAt (optional) The date the comment was created.
    * @param params.thread.comment.body The body of the comment.
+   * @param params.thread.comment.attachmentIds (optional) The attachment IDs to add to the comment.
    * @param params.thread.comment.metadata (optional) The metadata for the comment.
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The created thread. The thread will be created with the specified comment as its first comment.

@@ -94,15 +94,17 @@ if jq -e '.dependencies.next // .devDependencies.next' package.json > /dev/null 
     done
 fi
 
-# Step 5c: Pin every dep the example declares to the exact version the example
-# wants, using pnpm.overrides in the root package.json. Without this, our
+# Step 5c: Pin every runtime dependency the example declares to the exact version
+# the example wants, using pnpm.overrides in the root package.json. Without this, our
 # packages' devDeps (e.g. react ^18.2.0, @lexical/react 0.35.0 with different
 # peer combos) resolve to different virtual pnpm copies than the example,
 # producing duplicate React / @lexical/react contexts at runtime.
+# Do not override the example's devDependencies: doing so would force its
+# compiler, type definitions, and build tooling onto the entire monorepo.
 # The "link-locally-do-not-commit" key is a sentinel. CI scans every PR for it and
 # refuses to merge anything that contains it, and the pre-push hook installed
 # in step 7 refuses to push commits that contain it. Do NOT remove.
-overrides_json="$(jq -c '[{"link-locally-do-not-commit": "0.0.0"}, (.dependencies // {}), (.devDependencies // {})] | add | to_entries | map(select(.key | startswith("@liveblocks/") | not)) | from_entries' package.json)"
+overrides_json="$(jq -c '[{"link-locally-do-not-commit": "0.0.0"}, (.dependencies // {})] | add | to_entries | map(select(.key | startswith("@liveblocks/") | not)) | from_entries' package.json)"
 jq --argjson overrides "$overrides_json" '.pnpm = (.pnpm // {}) | .pnpm.overrides = $overrides' ../../package.json | sponge ../../package.json
 
 ( cd ../../ && pnpm install --ignore-scripts --config.confirmModulesPurge=false )

@@ -1,11 +1,12 @@
 import { memo } from "react";
+import type { LiveObject } from "@liveblocks/client";
 import ColorPicker from "./ColorPicker";
 import IconButton from "./IconButton";
-import { Camera, Color } from "../types";
+import { Camera, Color, FillableLayer, Layer, LayerType } from "../types";
 import styles from "./SelectionTools.module.css";
 import useDeleteLayers from "../hooks/useDeleteLayers";
 import useSelectionBounds from "../hooks/useSelectionBounds";
-import { useSelf, useMutation } from "@liveblocks/react/suspense";
+import { useSelf, useMutation, useStorage } from "@liveblocks/react/suspense";
 
 type SelectionToolsProps = {
   isAnimated: boolean;
@@ -19,6 +20,12 @@ function SelectionTools({
   setLastUsedColor,
 }: SelectionToolsProps) {
   const selection = useSelf((me) => me.presence.selection);
+  const hasFillableSelection = useStorage((root) =>
+    selection.some((id) => {
+      const layer = root.layers[id];
+      return layer !== undefined && isFillableLayerType(layer.type);
+    })
+  );
 
   /**
    * Move all the selected layers to the front
@@ -75,10 +82,19 @@ function SelectionTools({
   const setFill = useMutation(
     ({ storage }, fill: Color) => {
       const liveLayers = storage.get("layers");
-      setLastUsedColor(fill);
+      let didUpdateFill = false;
+
       selection.forEach((id) => {
-        liveLayers.get(id)?.set("fill", fill);
+        const layer = liveLayers.get(id);
+        if (layer && isFillableLiveLayer(layer)) {
+          layer.set("fill", fill);
+          didUpdateFill = true;
+        }
       });
+
+      if (didUpdateFill) {
+        setLastUsedColor(fill);
+      }
     },
     [selection, setLastUsedColor]
   );
@@ -99,7 +115,7 @@ function SelectionTools({
         transform: `translate(calc(${x}px - 50%), calc(${y - 16}px - 100%))`,
       }}
     >
-      <ColorPicker onChange={setFill} />
+      <ColorPicker disabled={!hasFillableSelection} onChange={setFill} />
 
       <div>
         <IconButton onClick={moveToFront}>
@@ -139,6 +155,16 @@ function SelectionTools({
       </div>
     </div>
   );
+}
+
+function isFillableLiveLayer(
+  layer: LiveObject<Layer>
+): layer is LiveObject<FillableLayer> {
+  return isFillableLayerType(layer.get("type"));
+}
+
+function isFillableLayerType(type: LayerType): type is FillableLayer["type"] {
+  return type !== LayerType.Image;
 }
 
 export default memo(SelectionTools);

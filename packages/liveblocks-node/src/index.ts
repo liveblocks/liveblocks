@@ -33,6 +33,7 @@ export type {
   RoomsQueryCriteria,
   RoomUser,
   SetPresenceOptions,
+  StorageFileUrl,
   ThreadParticipants,
   UpdateAiCopilotOptions,
   UpdateFeedMessageOptions,
@@ -75,6 +76,7 @@ export {
 } from "./webhooks";
 export type { RoomAccesses, RoomPermissions } from "@liveblocks/core";
 export type {
+  CommentAttachment,
   CommentBody,
   CommentBodyBlockElement,
   CommentBodyElement,
@@ -107,6 +109,8 @@ export type {
 export {
   getMentionsFromCommentBody,
   isNotificationChannelEnabled,
+  LiveFile,
+  type LiveFileData,
   LiveList,
   LiveMap,
   LiveObject,

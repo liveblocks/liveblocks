@@ -30,6 +30,7 @@ const ALLOW_DIFFERENT_JSDOCS = [
   "useAttachmentUrl",
   "useHistoryVersions",
   "useUrlMetadata",
+  "useFileUrl",
 ];
 
 // These exports may exist at the top-level without a factory equivalent

@@ -8,6 +8,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 
 const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+  baseUrl: process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL!,
 });
 
 export default async function auth(req: NextApiRequest, res: NextApiResponse) {

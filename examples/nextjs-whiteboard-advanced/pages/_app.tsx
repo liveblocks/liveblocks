@@ -7,7 +7,11 @@ import { LiveblocksProvider } from "@liveblocks/react";
 function App({ Component, pageProps }: AppProps) {
   return (
     <React.StrictMode>
-      <LiveblocksProvider throttle={16} authEndpoint="/api/liveblocks-auth">
+      <LiveblocksProvider
+        throttle={16}
+        authEndpoint="/api/liveblocks-auth"
+        baseUrl={process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL}
+      >
         <Head>
           <title>Liveblocks</title>
           <meta name="robots" content="noindex" />

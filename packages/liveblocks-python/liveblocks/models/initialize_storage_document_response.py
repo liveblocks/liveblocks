@@ -17,7 +17,8 @@ class InitializeStorageDocumentResponse:
     """
     Example:
         {'liveblocksType': 'LiveObject', 'data': {'aLiveObject': {'liveblocksType': 'LiveObject', 'data': {'a': 1}},
-            'aLiveList': {'liveblocksType': 'LiveList', 'data': ['a', 'b']}}}
+            'aLiveList': {'liveblocksType': 'LiveList', 'data': ['a', 'b']}, 'aLiveFile': {'liveblocksType': 'LiveFile',
+            'data': {'id': 'fl_abc123456789012345678', 'name': 'photo.png', 'size': 12345, 'mimeType': 'image/png'}}}}
 
     Attributes:
         liveblocks_type (Literal['LiveObject'] | Unset):

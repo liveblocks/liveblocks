@@ -95,6 +95,25 @@ export function StringIcon(props: ComponentProps<"svg">) {
   );
 }
 
+export function FileIcon(props: ComponentProps<"svg">) {
+  return (
+    <svg
+      width="16"
+      height="16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M12.5 0A3.5 3.5 0 0 1 16 3.5v9a3.5 3.5 0 0 1-3.5 3.5h-9A3.5 3.5 0 0 1 0 12.5v-9A3.5 3.5 0 0 1 3.5 0zm-7 2.75A1.75 1.75 0 0 0 3.75 4.5v7c0 .966.784 1.75 1.75 1.75h5a1.75 1.75 0 0 0 1.75-1.75v-5a.75.75 0 0 0-.22-.53l-3-3a.75.75 0 0 0-.383-.205L8.5 2.75zm2.25 1.5V6.5c0 .414.336.75.75.75h2.25v4.25a.25.25 0 0 1-.25.25h-5a.25.25 0 0 1-.25-.25v-7a.25.25 0 0 1 .25-.25z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
 export function BooleanOnIcon(props: ComponentProps<"svg">) {
   return (
     <svg

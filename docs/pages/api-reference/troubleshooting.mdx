@@ -139,11 +139,13 @@ TS2344: Type 'MyInterface' does not satisfy the constraint 'Lson'.
     Index signature for type 'string' is missing in type 'MyInterface'.
 ```
 
-Liveblocks data structures (like `LiveObject`, `LiveMap`, and `LiveList`)
-require that their payloads are always JSON-serializable to be able to send them
-over WebSocket connections reliably and without surprises. Starting with 0.16,
-we’re enforcing this with `Lson` type constraint. (LSON is a Liveblocks-specific
-extension of JSON that also allows nesting more Live data structures.)
+Liveblocks data structures like `LiveObject`, `LiveMap`, and `LiveList` require
+that their payloads are always JSON-serializable to be able to send them over
+WebSocket connections reliably and without surprises. `LiveFile` is the
+exception: it stores immutable file metadata in the Storage tree while the file
+bytes are uploaded separately. Starting with 0.16, we’re enforcing valid values
+with the `Lson` type constraint. (LSON is a Liveblocks-specific extension of
+JSON that also allows nesting more Live data structures.)
 
 If you encounter this error above, TypeScript is trying to tell you that the
 data type you are using in one of your Live structures is not (guaranteed to be)

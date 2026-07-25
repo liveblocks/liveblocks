@@ -1,8 +1,9 @@
+import type { ToJson } from "@liveblocks/client";
 import { useStorage, useSelf } from "@liveblocks/react/suspense";
 import { Layer, XYWH } from "../types";
 import { shallow } from "@liveblocks/react";
 
-function boundingBox(layers: Layer[]): XYWH | null {
+function boundingBox(layers: ToJson<Layer>[]): XYWH | null {
   const first = layers[0];
   if (!first) {
     return null;

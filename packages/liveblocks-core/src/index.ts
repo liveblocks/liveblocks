@@ -28,6 +28,7 @@ export type {
   WithNavigation,
 } from "./ai";
 export { defineAiTool } from "./ai";
+export type { FileUrlData } from "./api-client";
 export type {
   Client,
   ClientOptions,
@@ -77,6 +78,12 @@ export type {
 } from "./crdts/AbstractCrdt";
 export { createManagedPool } from "./crdts/AbstractCrdt";
 export { cloneLson, isLiveNode } from "./crdts/liveblocks-helpers";
+export {
+  getLiveFileId,
+  LiveFile,
+  type LiveFileData,
+  type LiveFileReference,
+} from "./crdts/LiveFile";
 export { LiveList } from "./crdts/LiveList";
 export { LiveMap } from "./crdts/LiveMap";
 export { LiveObject } from "./crdts/LiveObject";
@@ -126,6 +133,7 @@ export {
   createCommentAttachmentId,
   createCommentId,
   createInboxNotificationId,
+  createStorageFileId,
   createThreadId,
 } from "./lib/createIds";
 export { DefaultMap } from "./lib/DefaultMap";
@@ -301,6 +309,7 @@ export {
 } from "./protocol/NotificationSettings";
 export type {
   ClientWireOp,
+  CreateFileOp,
   CreateListOp,
   CreateMapOp,
   CreateObjectOp,
@@ -348,12 +357,14 @@ export { FeedRequestErrorCode, ServerMsgCode } from "./protocol/ServerMsg";
 export type {
   ChildStorageNode,
   CompactChildNode,
+  CompactFileNode,
   CompactListNode,
   CompactMapNode,
   CompactNode,
   CompactObjectNode,
   CompactRegisterNode,
   CompactRootNode,
+  FileStorageNode,
   ListStorageNode,
   MapStorageNode,
   NodeMap,
@@ -363,6 +374,7 @@ export type {
   RootStorageNode,
   SerializedChild,
   SerializedCrdt,
+  SerializedFile,
   SerializedList,
   SerializedMap,
   SerializedObject,
@@ -373,6 +385,7 @@ export type {
 export {
   compactNodesToNodeStream,
   CrdtType,
+  isFileStorageNode,
   isListStorageNode,
   isMapStorageNode,
   isObjectStorageNode,
@@ -404,7 +417,11 @@ export type {
   StorageStatus,
   SyncSource,
 } from "./room";
-export type { GetThreadsOptions, UploadAttachmentOptions } from "./room";
+export type {
+  GetThreadsOptions,
+  UploadAttachmentOptions,
+  UploadFileOptions,
+} from "./room";
 export type {
   AiAssistantContentPart,
   AiAssistantMessage,
@@ -447,6 +464,7 @@ export type { Patchable } from "./types/Patchable";
 export type {
   PlainLson,
   PlainLsonFields,
+  PlainLsonFile,
   PlainLsonList,
   PlainLsonMap,
   PlainLsonObject,

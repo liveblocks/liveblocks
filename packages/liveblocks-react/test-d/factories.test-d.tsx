@@ -1,8 +1,10 @@
 import React from "react";
 import type {
-  NotificationSettings,
   Json,
+  LiveFile,
+  NotificationSettings,
   Room,
+  UploadFileOptions,
   User,
 } from "@liveblocks/client";
 import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
@@ -723,6 +725,18 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
         }, [])
       ).toEqualTypeOf<(a: number, b: boolean) => "hi">();
     }
+  });
+
+  test("useUploadFile()", () => {
+    expectTypeOf(ctx.useUploadFile()).toEqualTypeOf<
+      (file: File, options?: UploadFileOptions) => Promise<LiveFile>
+    >();
+  });
+
+  test("useUploadFile() (suspense)", () => {
+    expectTypeOf(ctx.suspense.useUploadFile()).toEqualTypeOf<
+      (file: File, options?: UploadFileOptions) => Promise<LiveFile>
+    >();
   });
 
   test("useUser()", () => {

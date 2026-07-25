@@ -1,6 +1,7 @@
 import { useStorage } from "@liveblocks/react/suspense";
 import React, { memo } from "react";
 import Ellipse from "./Ellipse";
+import { ImageLayer } from "./ImageLayer";
 import Path from "./Path";
 import Rectangle from "./Rectangle";
 import { CanvasMode, LayerType } from "../types";
@@ -48,6 +49,15 @@ const LayerComponent = memo(
       case LayerType.Rectangle:
         return (
           <Rectangle
+            id={id}
+            layer={layer}
+            onPointerDown={onLayerPointerDown}
+            selectionColor={selectionColor}
+          />
+        );
+      case LayerType.Image:
+        return (
+          <ImageLayer
             id={id}
             layer={layer}
             onPointerDown={onLayerPointerDown}

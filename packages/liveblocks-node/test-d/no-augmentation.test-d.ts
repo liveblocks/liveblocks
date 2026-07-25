@@ -1,4 +1,8 @@
-import { Liveblocks } from "@liveblocks/node";
+import {
+  type CommentAttachment,
+  Liveblocks,
+  type LiveFile,
+} from "@liveblocks/node";
 import { describe, expectTypeOf, test } from "vitest";
 import type {
   CommentReaction,
@@ -123,6 +127,25 @@ describe("Liveblocks client without Liveblocks augmentation", () => {
     expectTypeOf(root).toEqualTypeOf<ReadonlyJsonObject>();
   });
 
+  test("should return a LiveFile from uploadFile()", async () => {
+    const liveFile = await client.uploadFile({
+      roomId: "my-room",
+      file: new File(["hello"], "hello.txt", { type: "text/plain" }),
+    });
+
+    expectTypeOf(liveFile).toEqualTypeOf<LiveFile>();
+  });
+
+  test("should return a CommentAttachment from uploadAttachment()", async () => {
+    const attachment = await client.uploadAttachment({
+      roomId: "my-room",
+      userId: "user-123",
+      file: new File(["hello"], "hello.txt", { type: "text/plain" }),
+    });
+
+    expectTypeOf(attachment).toEqualTypeOf<CommentAttachment>();
+  });
+
   test("should return correct comment shape from getComment()", async () => {
     const comment = await client.getComment({
       roomId: "my-room",
@@ -163,6 +186,7 @@ describe("Liveblocks client without Liveblocks augmentation", () => {
         comment: {
           userId: "user-123",
           body: { version: 1, content: [] },
+          attachmentIds: ["at_xxx"],
         },
       },
     });
@@ -306,6 +330,7 @@ describe("Liveblocks client without Liveblocks augmentation", () => {
       data: {
         userId,
         body: { version: 1, content: [] },
+        attachmentIds: ["at_xxx"],
       },
     });
 
@@ -315,6 +340,16 @@ describe("Liveblocks client without Liveblocks augmentation", () => {
     expectTypeOf(comment.metadata.foo).toEqualTypeOf<
       string | number | boolean | undefined
     >();
+
+    await client.editComment({
+      roomId,
+      threadId,
+      commentId: comment.id,
+      data: {
+        body: { version: 1, content: [] },
+        attachmentIds: comment.attachments.map((attachment) => attachment.id),
+      },
+    });
 
     const commentWithMetadata = await client.createComment({
       roomId,

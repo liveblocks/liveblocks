@@ -1,3 +1,4 @@
+import type { LiveFile, LiveFileData } from "../crdts/LiveFile";
 import type { LiveList } from "../crdts/LiveList";
 import type { LiveMap } from "../crdts/LiveMap";
 import type { LiveObject } from "../crdts/LiveObject";
@@ -7,7 +8,8 @@ import type { Json, ReadonlyJson, ReadonlyJsonObject } from "../lib/Json";
 export type LiveStructure =
   | LiveObject<LsonObject>
   | LiveList<Lson>
-  | LiveMap<string, Lson>;
+  | LiveMap<string, Lson>
+  | LiveFile;
 
 /**
  * Think of Lson as a sibling of the Json data tree, except that the nested
@@ -69,6 +71,10 @@ export type ToJson<L extends Lson | LsonObject> =
   L extends LiveMap<infer KS extends string, infer V extends Lson> ?
     Lson extends V ? ReadonlyJsonObject :
     { readonly [K in KS]: ToJson<V> } :
+
+  // A LiveFile serializes to its immutable metadata
+  L extends LiveFile ?
+    LiveFileData :
 
   // Any LsonObject recursively becomes a JsonObject
   // Short-circuit generic string-keyed objects to ReadonlyJsonObject to avoid

@@ -9,6 +9,7 @@ import type {
   History,
   Json,
   JsonObject,
+  LiveFile,
   LiveObject,
   LostConnectionEvent,
   LsonObject,
@@ -16,6 +17,7 @@ import type {
   Room,
   Status,
   ThreadData,
+  UploadFileOptions,
   User,
 } from "@liveblocks/client";
 import { shallow } from "@liveblocks/client";
@@ -32,8 +34,10 @@ import type {
   DU,
   EnterOptions,
   FeedsEventServerMsg,
+  FileUrlData,
   IYjsProvider,
   LiveblocksErrorContext,
+  LiveFileReference,
   MentionData,
   OpaqueClient,
   OpaqueRoom,
@@ -54,6 +58,7 @@ import {
   createThreadId,
   DefaultMap,
   errorIf,
+  getLiveFileId,
   getSubscriptionKey,
   hasPermissionAccess,
   HttpError,
@@ -103,6 +108,8 @@ import type {
   FeedMessagesAsyncSuccess,
   FeedsAsyncResult,
   FeedsAsyncSuccess,
+  FileUrlAsyncResult,
+  FileUrlAsyncSuccess,
   HistoryVersionsAsyncResult,
   HistoryVersionsAsyncSuccess,
   HistoryVersionStorageDataAsyncResult,
@@ -1496,6 +1503,34 @@ function useMutation<
     callback,
     deps
   );
+}
+
+/**
+ * @internal
+ */
+function useUploadFile_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+): (file: File, options?: UploadFileOptions) => Promise<LiveFile> {
+  const room = useRoom_withRoomContext(RoomContext);
+  return useCallback(
+    (file: File, options?: UploadFileOptions) => room.uploadFile(file, options),
+    [room]
+  );
+}
+
+/**
+ * Returns a function that uploads a file to the current room and resolves to
+ * a `LiveFile` that can be stored in Storage.
+ *
+ * @example
+ * const uploadFile = useUploadFile();
+ * const liveFile = await uploadFile(file);
+ */
+function useUploadFile(): (
+  file: File,
+  options?: UploadFileOptions
+) => Promise<LiveFile> {
+  return useUploadFile_withRoomContext(GlobalRoomContext);
 }
 
 /**
@@ -3797,6 +3832,25 @@ function selectorFor_useAttachmentUrl(
   };
 }
 
+function selectorFor_useFileUrl(
+  state: AsyncResult<FileUrlData | undefined> | undefined
+): FileUrlAsyncResult {
+  if (state === undefined || state?.isLoading) {
+    return state ?? { isLoading: true };
+  }
+
+  if (state.error) {
+    return state;
+  }
+
+  assert(state.data !== undefined, "Unexpected missing file URL");
+
+  return {
+    isLoading: false,
+    url: state.data.url,
+  };
+}
+
 /**
  * @internal
  */
@@ -3845,6 +3899,67 @@ function useRoomAttachmentUrl(
     selectorFor_useAttachmentUrl,
     shallow
   );
+}
+
+function useFileUrl_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>,
+  file: LiveFileReference
+): FileUrlAsyncResult {
+  const room = useRoom_withRoomContext(RoomContext);
+  return useFileUrl_WithStore(file, room[kInternal].fileUrlsStore);
+}
+
+/**
+ * Returns a presigned URL for a `LiveFile`.
+ *
+ * @example
+ * const { url, error, isLoading } = useFileUrl("fl_xxx");
+ *
+ * @example
+ * const { url, error, isLoading } = useFileUrl(liveFile);
+ */
+function useFileUrl(file: LiveFileReference): FileUrlAsyncResult {
+  return useFileUrl_withRoomContext(GlobalRoomContext, file);
+}
+
+/**
+ * @private For internal use only. Do not rely on this hook. Use `useFileUrl` instead.
+ */
+function useRoomFileUrl(
+  file: LiveFileReference,
+  roomId: string
+): FileUrlAsyncResult {
+  const client = useClient();
+  const store = client[kInternal].httpClient.getOrCreateFileUrlsStore(roomId);
+  return useFileUrl_WithStore(file, store);
+}
+
+function useFileUrl_WithStore(
+  file: LiveFileReference,
+  store: OpaqueRoom[typeof kInternal]["fileUrlsStore"]
+): FileUrlAsyncResult {
+  const fileId = getLiveFileId(file);
+
+  const getFileUrlState = useCallback(
+    () => store.getItemState(fileId),
+    [store, fileId]
+  );
+
+  const result = useSyncExternalStoreWithSelector(
+    store.subscribe,
+    getFileUrlState,
+    getFileUrlState,
+    selectorFor_useFileUrl,
+    shallow
+  );
+
+  useEffect(() => {
+    if (result.isLoading) {
+      void store.enqueue(fileId);
+    }
+  }, [store, fileId, result.isLoading]);
+
+  return result;
 }
 
 /**
@@ -3897,6 +4012,61 @@ function useAttachmentUrlSuspense(attachmentId: string) {
     GlobalRoomContext,
     attachmentId
   );
+}
+
+function useFileUrlSuspense_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>,
+  file: LiveFileReference
+): FileUrlAsyncSuccess {
+  const fileId = getLiveFileId(file);
+  const room = useRoom_withRoomContext(RoomContext);
+  const { fileUrlsStore } = room[kInternal];
+
+  const getFileUrlState = useCallback(
+    () => fileUrlsStore.getItemState(fileId),
+    [fileUrlsStore, fileId]
+  );
+  const fileUrlState = getFileUrlState();
+
+  if (!fileUrlState || fileUrlState.isLoading) {
+    throw fileUrlsStore.enqueue(fileId);
+  }
+
+  if (fileUrlState.error) {
+    const cacheExpiry$ = fileUrlsStore.waitUntilItemCacheExpires(fileId);
+    if (cacheExpiry$ !== undefined) {
+      throw cacheExpiry$;
+    }
+
+    throw fileUrlState.error;
+  }
+
+  const state = useSyncExternalStore(
+    fileUrlsStore.subscribe,
+    getFileUrlState,
+    getFileUrlState
+  );
+  assert(state !== undefined, "Unexpected missing state");
+  assert(!state.isLoading, "Unexpected loading state");
+  assert(!state.error, "Unexpected error state");
+  return {
+    isLoading: false,
+    url: state.data.url,
+    error: undefined,
+  };
+}
+
+/**
+ * Returns a presigned URL for a `LiveFile`.
+ *
+ * @example
+ * const { url } = useFileUrl("fl_xxx");
+ *
+ * @example
+ * const { url } = useFileUrl(liveFile);
+ */
+function useFileUrlSuspense(file: LiveFileReference) {
+  return useFileUrlSuspense_withRoomContext(GlobalRoomContext, file);
 }
 
 /**
@@ -4165,6 +4335,10 @@ export function createRoomContext<
     );
   }
 
+  function useUploadFile_withBoundRoomContext() {
+    return useUploadFile_withRoomContext(BoundRoomContext);
+  }
+
   function useThreads_withBoundRoomContext(
     ...args: Parameters<typeof useThreads<TM, CM>>
   ) {
@@ -4244,10 +4418,22 @@ export function createRoomContext<
     return useAttachmentUrl_withRoomContext(BoundRoomContext, ...args);
   }
 
+  function useFileUrl_withBoundRoomContext(
+    ...args: Parameters<typeof useFileUrl>
+  ) {
+    return useFileUrl_withRoomContext(BoundRoomContext, ...args);
+  }
+
   function useAttachmentUrlSuspense_withBoundRoomContext(
     ...args: Parameters<typeof useAttachmentUrlSuspense>
   ) {
     return useAttachmentUrlSuspense_withRoomContext(BoundRoomContext, ...args);
+  }
+
+  function useFileUrlSuspense_withBoundRoomContext(
+    ...args: Parameters<typeof useFileUrlSuspense>
+  ) {
+    return useFileUrlSuspense_withRoomContext(BoundRoomContext, ...args);
   }
 
   function useSearchComments_withBoundRoomContext(
@@ -4286,7 +4472,10 @@ export function createRoomContext<
   function useRestoreToStorageVersion_withBoundRoomContext(
     ...args: Parameters<typeof useRestoreToStorageVersion>
   ) {
-    return useRestoreToStorageVersion_withRoomContext(BoundRoomContext, ...args);
+    return useRestoreToStorageVersion_withRoomContext(
+      BoundRoomContext,
+      ...args
+    );
   }
 
   function useRoomSubscriptionSettings_withBoundRoomContext() {
@@ -4385,6 +4574,8 @@ export function createRoomContext<
     useStorage: useStorage_withBoundRoomContext as TRoomBundle["useStorage"],
     // prettier-ignore
     useMutation: useMutation_withBoundRoomContext as TRoomBundle["useMutation"],
+    // prettier-ignore
+    useUploadFile: useUploadFile_withBoundRoomContext as TRoomBundle["useUploadFile"],
 
     // prettier-ignore
     useSelf: useSelf_withBoundRoomContext as TRoomBundle["useSelf"],
@@ -4452,6 +4643,8 @@ export function createRoomContext<
     // prettier-ignore
     useAttachmentUrl: useAttachmentUrl_withBoundRoomContext as TRoomBundle["useAttachmentUrl"],
     // prettier-ignore
+    useFileUrl: useFileUrl_withBoundRoomContext as TRoomBundle["useFileUrl"],
+    // prettier-ignore
     useSearchComments: useSearchComments_withBoundRoomContext as TRoomBundle["useSearchComments"],
 
     // prettier-ignore
@@ -4509,6 +4702,8 @@ export function createRoomContext<
       useStorage: useStorageSuspense_withBoundRoomContext as TRoomBundle["suspense"]["useStorage"],
       // prettier-ignore
       useMutation: useMutation_withBoundRoomContext as TRoomBundle["suspense"]["useMutation"],
+      // prettier-ignore
+      useUploadFile: useUploadFile_withBoundRoomContext as TRoomBundle["suspense"]["useUploadFile"],
 
       // prettier-ignore
       useSelf: useSelfSuspense_withBoundRoomContext as TRoomBundle["suspense"]["useSelf"],
@@ -4575,6 +4770,8 @@ export function createRoomContext<
       useThreadSubscription: useThreadSubscription_withBoundRoomContext as TRoomBundle["suspense"]["useThreadSubscription"],
       // prettier-ignore
       useAttachmentUrl: useAttachmentUrlSuspense_withBoundRoomContext as TRoomBundle["suspense"]["useAttachmentUrl"],
+      // prettier-ignore
+      useFileUrl: useFileUrlSuspense_withBoundRoomContext as TRoomBundle["suspense"]["useFileUrl"],
 
       // prettier-ignore
       useHistoryVersions: useHistoryVersionsSuspense_withBoundRoomContext as TRoomBundle["suspense"]["useHistoryVersions"],
@@ -5238,6 +5435,8 @@ export {
   _useFeedMessagesSuspense as useFeedMessagesSuspense,
   _useFeeds as useFeeds,
   _useFeedsSuspense as useFeedsSuspense,
+  useFileUrl,
+  useFileUrlSuspense,
   useHasPermissionAccess,
   useHistory,
   useHistoryVersionData,
@@ -5273,6 +5472,7 @@ export {
   useRestoreToStorageVersion,
   _useRoom as useRoom,
   useRoomAttachmentUrl,
+  useRoomFileUrl,
   useRoomPermissions,
   _useRoomSubscriptionSettings as useRoomSubscriptionSettings,
   _useRoomSubscriptionSettingsSuspense as useRoomSubscriptionSettingsSuspense,
@@ -5296,5 +5496,6 @@ export {
   useUpdateFeedMetadata,
   _useUpdateMyPresence as useUpdateMyPresence,
   useUpdateRoomSubscriptionSettings,
+  useUploadFile,
   useYjsProvider,
 };

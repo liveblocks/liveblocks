@@ -72,6 +72,7 @@ export {
   useStorageRoot,
   useThreadSubscription,
   useUndo,
+  useUploadFile,
   useUpdateMyPresence,
   useUpdateRoomSubscriptionSettings,
   useHistoryVersionData,
@@ -101,6 +102,7 @@ export {
   useUpdateFeedMessage,
   useSearchComments,
   useAttachmentUrl,
+  useFileUrl,
   useHistoryVersions,
   useRoomSubscriptionSettings,
 } from "./room";

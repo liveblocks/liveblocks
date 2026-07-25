@@ -40,8 +40,9 @@ Never expose your secret key in client-side code.
 Storage is a tree of Liveblocks types:
 [LiveObject](/docs/api-reference/liveblocks-client#LiveObject),
 [LiveList](/docs/api-reference/liveblocks-client#LiveList), and
-[LiveMap](/docs/api-reference/liveblocks-client#LiveMap). When building your
-patch:
+[LiveMap](/docs/api-reference/liveblocks-client#LiveMap). It can also contain
+[LiveFile](/docs/api-reference/liveblocks-client#LiveFile) nodes. When building
+your patch:
 
 - **Be as specific as possible** with your target path.
 - **Every parent** in the chain of path segments must be a LiveObject, LiveList,
@@ -50,6 +51,10 @@ patch:
 - **Nested values in `add` and `replace`:** If you pass a complex nested object
   or array as the `value` for an `add` or `replace` operation, it is
   automatically converted into LiveObjects and LiveLists on the server.
+- **LiveFile values:** Create or replace a LiveFile by passing its Plain LSON
+  shape as the whole operation value:
+  `{ "liveblocksType": "LiveFile", "data": LiveFileData }`. Use the
+  `LiveFileData` returned by a Storage file upload.
 
 ## Operations and examples
 
@@ -126,6 +131,29 @@ fails and no changes are applied. Use `test` to guard against concurrent updates
 [
   { "op": "test", "path": "/version", "value": 1 },
   { "op": "replace", "path": "/version", "value": 2 }
+]
+```
+
+## LiveFile example
+
+After uploading a Storage file, use the returned metadata to create an immutable
+LiveFile node.
+
+```json
+[
+  {
+    "op": "add",
+    "path": "/assets/photo",
+    "value": {
+      "liveblocksType": "LiveFile",
+      "data": {
+        "id": "fl_abc123456789012345678",
+        "name": "photo.png",
+        "size": 12345,
+        "mimeType": "image/png"
+      }
+    }
+  }
 ]
 ```
 
