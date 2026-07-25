@@ -17,6 +17,8 @@
   <img src="https://img.shields.io/badge/next.js-message?style=flat&logo=next.js&color=07f&logoColor=fff" alt="Next.js" />
 </p>
 
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/messaging-app.png" width="536" alt="Messaging App" />
+
 This example shows how to build a Slack-like messaging app with
 [Liveblocks Feeds](https://liveblocks.io/docs/collaboration-features/ai-collaboration),
 [Storage](https://liveblocks.io/docs/api-reference/liveblocks-react#Storage),
