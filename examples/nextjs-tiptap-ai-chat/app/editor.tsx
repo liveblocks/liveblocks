@@ -39,11 +39,11 @@ export function DocumentEditor() {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="border-b border-neutral-950/5 px-2 py-1">
-        <Toolbar editor={editor} className="!bg-transparent" />
+        <Toolbar editor={editor} className="bg-transparent!" />
       </div>
 
       <div className="relative min-h-0 flex-1 overflow-y-auto">
-        <div className="relative mx-auto max-w-[720px] px-12 py-10">
+        <div className="relative px-12 py-10">
           {editor ? (
             <DragHandle editor={editor}>
               <div className="drag-handle">

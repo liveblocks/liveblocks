@@ -76,7 +76,7 @@ import {
 } from "@/components/ai-elements/prompt-input";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Shimmer } from "@/components/ai-elements/shimmer";
-import { HelpButton } from "@/components/HelpButton";
+import { HelpButton } from "@/components/help-button";
 
 // Each chat is a feed in the room. Everyone connected reads and writes to the
 // selected feed, so messages (and the AI's replies) appear live for all users.
@@ -119,8 +119,7 @@ export function Chat({ roomId }: { roomId: string }) {
       <div className="flex h-full min-h-0 w-full flex-col">
         <header className="flex items-center justify-between border-b px-3 py-2.5">
           <div className="flex min-w-0 items-center gap-2">
-            <SparklesIcon className="size-4 shrink-0 text-muted-foreground" />
-            <h2 className="truncate text-sm font-medium">AI chat</h2>
+            <h2 className="truncate text-sm font-medium">Chat to AI</h2>
           </div>
           <div className="flex items-center gap-1">
             <Button

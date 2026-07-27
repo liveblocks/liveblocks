@@ -2,7 +2,7 @@ import "@liveblocks/react-ui/styles.css";
 import "@liveblocks/react-tiptap/styles.css";
 import "./globals.css";
 import { ReactNode, Suspense } from "react";
-import { Providers } from "./Providers";
+import { Providers } from "./providers";
 
 export const metadata = {
   title: "Liveblocks",

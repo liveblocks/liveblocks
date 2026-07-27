@@ -16,7 +16,7 @@ import {
   type ProseMirrorJsonNode,
 } from "@liveblocks/prosemirror";
 import { EditorContent, useEditor } from "@tiptap/react";
-import { HistoryIcon, Loader2Icon, XIcon } from "lucide-react";
+import { HistoryIcon, Loader2Icon, SparklesIcon, XIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Loader } from "@/components/ai-elements/loader";
 import { Button } from "@/components/ui/button";
@@ -66,8 +66,10 @@ export function VersionHistorySidebar({
 
   return (
     <div className="flex h-full flex-col">
-      <header className="flex items-center justify-between border-b px-5 py-3">
-        <h2 className="text-sm font-medium">Version history</h2>
+      <header className="flex items-center justify-between border-b px-3 py-2.5">
+        <div className="flex min-w-0 items-center gap-2">
+          <h2 className="truncate text-sm font-medium">Restore a version</h2>
+        </div>
         <Button
           variant="ghost"
           size="icon-sm"
