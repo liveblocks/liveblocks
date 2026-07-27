@@ -9,12 +9,12 @@
     "start": "next start"
   },
   "dependencies": {
-    "@liveblocks/client": "3.23.0-exp2",
-    "@liveblocks/node": "3.23.0-exp2",
-    "@liveblocks/prosemirror": "3.23.0-exp2",
-    "@liveblocks/react": "3.23.0-exp2",
-    "@liveblocks/react-tiptap": "3.23.0-exp2",
-    "@liveblocks/react-ui": "3.23.0-exp2",
+    "@liveblocks/client": "3.23.0-exp4",
+    "@liveblocks/node": "3.23.0-exp4",
+    "@liveblocks/prosemirror": "3.23.0-exp4",
+    "@liveblocks/react": "3.23.0-exp4",
+    "@liveblocks/react-tiptap": "3.23.0-exp4",
+    "@liveblocks/react-ui": "3.23.0-exp4",
     "@radix-ui/react-use-controllable-state": "^1.2.3",
     "@tiptap/core": "^3.28.0",
     "@tiptap/extension-drag-handle": "^3.28.0",

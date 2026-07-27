@@ -14,7 +14,7 @@ export async function POST(_request: NextRequest) {
 
   const liveblocks = new Liveblocks({
     secret: process.env.LIVEBLOCKS_SECRET_KEY,
-    baseUrl: process.env.LIVEBLOCKS_BASE_URL,
+    baseUrl: process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL,
   });
 
   // Pick a random example user so each connection has a name and avatar that
@@ -26,7 +26,7 @@ export async function POST(_request: NextRequest) {
   });
 
   // Use a naming pattern to allow access to rooms with a wildcard
-  session.allow(`liveblocks:examples:*`, session.FULL_ACCESS);
+  session.allow(`liveblocks:examples:*`, ["*:write"]);
 
   const { status, body } = await session.authorize();
   return new NextResponse(body, { status });
