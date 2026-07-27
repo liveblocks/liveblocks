@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
 
   const liveblocks = new Liveblocks({
     secret: process.env.LIVEBLOCKS_SECRET_KEY,
-    baseUrl: process.env.LIVEBLOCKS_BASE_URL,
+    baseUrl: process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL,
   });
 
   const { roomId, feedId, messages, model } = (await request.json()) as {
@@ -158,7 +158,14 @@ export async function POST(request: NextRequest) {
 
   try {
     if (process.env.AI_GATEWAY_API_KEY) {
-      await streamRealReply(liveblocks, roomId, messages, model, update, runOperation);
+      await streamRealReply(
+        liveblocks,
+        roomId,
+        messages,
+        model,
+        update,
+        runOperation
+      );
     } else {
       await streamMockReply(messages, update, runOperation);
     }
@@ -208,11 +215,15 @@ async function streamRealReply(
         markdown: z.string(),
       }),
       execute: ({ index, markdown }) =>
-        runOperation("insertBlocks", { index, markdown }, {
-          type: "insert",
-          index,
-          markdown,
-        }),
+        runOperation(
+          "insertBlocks",
+          { index, markdown },
+          {
+            type: "insert",
+            index,
+            markdown,
+          }
+        ),
     }),
     replaceBlocks: tool({
       description:
@@ -223,12 +234,16 @@ async function streamRealReply(
         markdown: z.string(),
       }),
       execute: ({ fromIndex, toIndex, markdown }) =>
-        runOperation("replaceBlocks", { fromIndex, toIndex, markdown }, {
-          type: "replace",
-          fromIndex,
-          toIndex,
-          markdown,
-        }),
+        runOperation(
+          "replaceBlocks",
+          { fromIndex, toIndex, markdown },
+          {
+            type: "replace",
+            fromIndex,
+            toIndex,
+            markdown,
+          }
+        ),
     }),
     deleteBlocks: tool({
       description:
@@ -238,11 +253,15 @@ async function streamRealReply(
         toIndex: z.number().int().min(0),
       }),
       execute: ({ fromIndex, toIndex }) =>
-        runOperation("deleteBlocks", { fromIndex, toIndex }, {
-          type: "delete",
-          fromIndex,
-          toIndex,
-        }),
+        runOperation(
+          "deleteBlocks",
+          { fromIndex, toIndex },
+          {
+            type: "delete",
+            fromIndex,
+            toIndex,
+          }
+        ),
     }),
   };
 
