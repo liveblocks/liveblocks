@@ -2,10 +2,7 @@
 
 import { getUser } from "@/app/database";
 import { Markdown } from "@/lib/markdown";
-import {
-  useDeleteFeedMessage,
-  useSelf,
-} from "@liveblocks/react/suspense";
+import { useDeleteFeedMessage, useSelf } from "@liveblocks/react/suspense";
 import clsx from "clsx";
 import { LoaderCircle, Trash2 } from "lucide-react";
 
@@ -43,8 +40,8 @@ export function Message({
   return (
     <div
       className={clsx(
-        "group relative px-4 py-0.5 hover:bg-neutral-50",
-        !showHeader && "pl-[4.25rem]"
+        "group relative px-5 py-0.5 hover:bg-neutral-50",
+        !showHeader && "pl-[4rem]"
       )}
     >
       {showHeader ? (
@@ -114,7 +111,7 @@ function MessageBody({ message }: { message: FeedMessage }) {
 
 export function DayDivider({ label }: { label: string }) {
   return (
-    <div className="relative px-4 py-4">
+    <div className="relative px-5 py-4">
       <div className="absolute inset-x-4 top-1/2 border-t border-neutral-200" />
       <div className="relative mx-auto w-fit rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs font-medium text-neutral-600">
         {label}
@@ -145,8 +142,7 @@ export function formatDayLabel(timestamp: number) {
     weekday: "long",
     month: "long",
     day: "numeric",
-    year:
-      date.getFullYear() === today.getFullYear() ? undefined : "numeric",
+    year: date.getFullYear() === today.getFullYear() ? undefined : "numeric",
   }).format(date);
 }
 
@@ -161,7 +157,9 @@ export type MessageListItem =
       key: string;
     };
 
-export function buildMessageListItems(messages: FeedMessage[]): MessageListItem[] {
+export function buildMessageListItems(
+  messages: FeedMessage[]
+): MessageListItem[] {
   const sorted = [...messages].sort((a, b) => a.createdAt - b.createdAt);
   const items: MessageListItem[] = [];
   let lastDay: string | null = null;

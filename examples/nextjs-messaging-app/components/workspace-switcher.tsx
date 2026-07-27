@@ -58,7 +58,7 @@ export function WorkspaceSwitcher({
         <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-white/15 text-sm font-bold">
           {activeWorkspace.name.slice(0, 1)}
         </span>
-        <span className="min-w-0 flex-1 truncate text-[15px] font-bold">
+        <span className="min-w-0 flex-1 truncate text-sm font-bold">
           {activeWorkspace.name}
         </span>
         <ChevronsUpDownIcon

@@ -93,9 +93,7 @@ function nextInlineToken(
     };
   }
 
-  const nextSpecial = slice.search(
-    /`|\*\*|~~|\*|_|https?:\/\/|www\.|\[|<@/
-  );
+  const nextSpecial = slice.search(/`|\*\*|~~|\*|_|https?:\/\/|www\.|\[|<@/);
   const end = nextSpecial === -1 ? slice.length : nextSpecial;
   if (end === 0) {
     return {
@@ -132,9 +130,7 @@ function parseInline(text: string, keyPrefix: string) {
         );
         break;
       case "italic":
-        nodes.push(
-          <em key={key}>{parseInline(parsed.token.value, key)}</em>
-        );
+        nodes.push(<em key={key}>{parseInline(parsed.token.value, key)}</em>);
         break;
       case "strike":
         nodes.push(
@@ -186,7 +182,7 @@ function parseInline(text: string, keyPrefix: string) {
           <span
             key={key}
             className={clsx(
-              "mx-0.5 inline-flex items-center rounded-full bg-indigo-50 px-1.5 py-0.5 text-[0.9em] font-medium text-indigo-700"
+              "inline-flex items-center rounded bg-indigo-50 px-1 py-0.5 text-indigo-700 leading-tight"
             )}
           >
             @{label}
@@ -204,8 +200,7 @@ function parseInline(text: string, keyPrefix: string) {
 
 function parseBlocks(content: string) {
   const blocks: Array<
-    | { type: "paragraph"; text: string }
-    | { type: "code"; text: string }
+    { type: "paragraph"; text: string } | { type: "code"; text: string }
   > = [];
 
   let remaining = content;
@@ -252,7 +247,7 @@ export function Markdown({ content }: { content: string }) {
   const blocks = parseBlocks(content);
 
   return (
-    <div className="space-y-2 text-[15px] leading-relaxed text-neutral-800">
+    <div className="space-y-2 text-sm leading-relaxed text-neutral-800">
       {blocks.map((block, index) => {
         if (block.type === "code") {
           return (

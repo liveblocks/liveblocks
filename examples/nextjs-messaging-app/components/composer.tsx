@@ -1,10 +1,7 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useRef,
-} from "react";
+import { useCallback, useEffect, useRef } from "react";
+import clsx from "clsx";
 import Mention from "@tiptap/extension-mention";
 import { Extension } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
@@ -25,6 +22,7 @@ import {
   type MentionItem,
   type MentionSuggestionsRef,
 } from "@/components/mention-suggestions";
+import { useTypingLabel } from "@/components/typing-indicator";
 import "./composer.css";
 
 function createPlaceholderExtension(placeholder: string) {
@@ -109,6 +107,7 @@ export function Composer({
   roomId: string;
 }) {
   const self = useSelf();
+  const typingLabel = useTypingLabel(channel.id);
   const createFeedMessage = useCreateFeedMessage();
   const updateMyPresence = useUpdateMyPresence();
   const { messages } = useFeedMessages(channel.id);
@@ -195,7 +194,7 @@ export function Composer({
     ],
     editorProps: {
       attributes: {
-        class: "composer-editor",
+        class: "composer-editor text-sm",
       },
       handleKeyDown: (_view, event) => {
         if (mentionPopupOpenRef.current) {
@@ -287,13 +286,18 @@ export function Composer({
   }, [channel.id, editor]);
 
   return (
-    <div className="shrink-0 border-t border-neutral-200 bg-white px-4 py-3">
-      <div className="rounded-xl border border-neutral-300 bg-white shadow-sm focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-100">
+    <div className="shrink-0 bg-white px-5 pb-1">
+      <div className="rounded-lg border border-neutral-300 bg-white focus-within:border-neutral-400 focus-within:ring-2 focus-within:ring-neutral-100/80 transition-all">
         <EditorContent editor={editor} />
       </div>
-      <p className="mt-2 text-xs text-neutral-500">
-        Enter to send · Shift+Enter for a new line · @mention teammates or the
-        AI
+      <p
+        className={clsx(
+          "mt-1.5 truncate text-[11px] text-neutral-500",
+          typingLabel && "italic"
+        )}
+        aria-live="polite"
+      >
+        {typingLabel ?? <>&nbsp;</>}
       </p>
     </div>
   );

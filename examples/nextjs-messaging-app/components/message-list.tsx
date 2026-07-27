@@ -73,7 +73,7 @@ export function MessageList({
 
 function ChannelIntro({ channelName }: { channelName: string }) {
   return (
-    <div className="px-4 pb-6 pt-8">
+    <div className="px-5 pb-6 pt-8">
       <div className="mb-2 flex size-12 items-center justify-center rounded-xl bg-[var(--sidebar-bg)] text-2xl font-bold text-white">
         #
       </div>

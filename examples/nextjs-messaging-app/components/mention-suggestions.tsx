@@ -1,12 +1,10 @@
 "use client";
 
-import {
-  forwardRef,
-  useEffect,
-  useImperativeHandle,
-  useState,
-} from "react";
-import type { SuggestionKeyDownProps, SuggestionProps } from "@tiptap/suggestion";
+import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
+import type {
+  SuggestionKeyDownProps,
+  SuggestionProps,
+} from "@tiptap/suggestion";
 import clsx from "clsx";
 
 export type MentionItem = {
@@ -62,22 +60,22 @@ export const MentionSuggestions = forwardRef<
 
   if (items.length === 0) {
     return (
-      <div className="w-64 rounded-lg border border-neutral-200 bg-white p-3 text-sm text-neutral-500 shadow-lg">
+      <div className="w-64 rounded border border-neutral-200 bg-white p-3 text-sm text-neutral-500 shadow-lg">
         No matches
       </div>
     );
   }
 
   return (
-    <div className="max-h-64 w-72 overflow-y-auto rounded-lg border border-neutral-200 bg-white py-1 shadow-lg">
+    <div className="max-h-64 w-72 overflow-y-auto rounded border border-neutral-200 bg-white py-1 shadow-lg">
       {items.map((item, index) => (
         <button
           key={item.id}
           type="button"
           className={clsx(
-            "flex w-full items-center gap-2 px-3 py-2 text-left text-sm",
+            "flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm",
             index === selectedIndex
-              ? "bg-indigo-50 text-indigo-900"
+              ? "bg-indigo-500 text-white"
               : "text-neutral-800 hover:bg-neutral-50"
           )}
           onMouseEnter={() => setSelectedIndex(index)}
@@ -89,9 +87,9 @@ export const MentionSuggestions = forwardRef<
           <img
             src={item.avatar}
             alt=""
-            className="size-7 rounded-full bg-neutral-200 object-cover"
+            className="size-5 rounded bg-neutral-200 object-cover"
           />
-          <span className="truncate font-medium">{item.label}</span>
+          <span className="truncate font-semibold">{item.label}</span>
         </button>
       ))}
     </div>

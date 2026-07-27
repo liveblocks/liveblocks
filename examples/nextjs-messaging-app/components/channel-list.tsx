@@ -319,7 +319,7 @@ function SortableChannelItem({
           <button
             type="button"
             onClick={onSelect}
-            className="min-w-0 flex-1 truncate py-2 pr-1 text-left text-[15px]"
+            className="min-w-0 flex-1 truncate py-2 pr-1 text-left text-sm"
           >
             <span className="opacity-70">#</span>
             {channel.name}

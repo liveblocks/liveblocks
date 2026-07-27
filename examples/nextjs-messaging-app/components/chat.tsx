@@ -7,7 +7,6 @@ import { Composer } from "@/components/composer";
 import { HelpButton } from "@/components/help-button";
 import { MessageList } from "@/components/message-list";
 import { PresenceAvatars } from "@/components/presence-avatars";
-import { TypingIndicator } from "@/components/typing-indicator";
 
 export function Chat({ channel }: { channel: Channel }) {
   const createFeed = useCreateFeed();
@@ -49,7 +48,6 @@ export function Chat({ channel }: { channel: Channel }) {
       </header>
 
       <MessageList channelId={channel.id} channelName={channel.name} />
-      <TypingIndicator channelId={channel.id} />
       <Composer channel={channel} roomId={room.id} />
     </div>
   );
