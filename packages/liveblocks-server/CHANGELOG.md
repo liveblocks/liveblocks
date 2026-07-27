@@ -1,5 +1,10 @@
 ## vNEXT (not yet released)
 
+## v1.7.0
+
+- Add `--skip-install` (`-s`) flag to `liveblocks upgrade` to update
+  `package.json` and the lockfile without installing dependencies.
+
 ## v1.6.2
 
 - Fix route parity
