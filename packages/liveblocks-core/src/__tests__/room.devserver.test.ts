@@ -9,17 +9,14 @@ import { describe, expect, onTestFinished, test, vi } from "vitest";
 
 import { LiveList } from "../crdts/LiveList";
 import { LiveObject } from "../crdts/LiveObject";
-import { LiveText } from "../crdts/LiveText";
+import type { LiveText } from "../crdts/LiveText";
 import type {
   StorageUpdate,
   StorageUpdateSource,
 } from "../crdts/StorageUpdates";
-import { kInternal, kStorageUpdateSource } from "../internal";
+import { kStorageUpdateSource } from "../internal";
 import { nn } from "../lib/assert";
-import {
-  prepareIsolatedStorageTest,
-  prepareStorageTest,
-} from "./_devserver";
+import { prepareIsolatedStorageTest, prepareStorageTest } from "./_devserver";
 import type { JsonStorageUpdate } from "./_updatesUtils";
 import {
   listUpdate,

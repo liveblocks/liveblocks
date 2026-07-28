@@ -1,3 +1,4 @@
+import { kStorageUpdateSource } from "../internal";
 import { assertNever, nn } from "../lib/assert";
 import type { Json } from "../lib/Json";
 import { stringifyOrLog as stringify } from "../lib/stringify";
@@ -28,7 +29,6 @@ import { LiveObject, type LiveObjectUpdates } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
 import { LiveText, type LiveTextUpdates } from "./LiveText";
 import type { LiveNode, LiveStructure, Lson, LsonObject } from "./Lson";
-import { kStorageUpdateSource } from "../internal";
 import type { StorageUpdate } from "./StorageUpdates";
 
 export function creationOpToLiveNode(op: CreateOp): LiveNode {

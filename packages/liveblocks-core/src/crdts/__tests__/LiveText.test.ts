@@ -63,10 +63,7 @@ describe("LiveText", () => {
 
   test("serializes to a DevTools tree node", () => {
     const text = new LiveText(
-      [
-        ["Hello "],
-        ["world", { "lb-comment": "thread-1" }],
-      ],
+      [["Hello "], ["world", { "lb-comment": "thread-1" }]],
       3
     );
 

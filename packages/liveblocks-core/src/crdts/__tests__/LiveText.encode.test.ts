@@ -2,8 +2,8 @@ import { describe, expect, test } from "vitest";
 
 import { kInternal } from "../../internal";
 import { nn } from "../../lib/assert";
-import { OpCode } from "../../protocol/Op";
 import type { UpdateTextOp } from "../../protocol/Op";
+import { OpCode } from "../../protocol/Op";
 import { createManagedPool } from "../AbstractCrdt";
 import { LiveText } from "../LiveText";
 

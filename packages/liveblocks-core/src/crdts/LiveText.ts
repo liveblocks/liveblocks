@@ -18,7 +18,11 @@ import type { SerializedText, TextStorageNode } from "../protocol/StorageNode";
 import { CrdtType } from "../protocol/StorageNode";
 import type * as DevTools from "../types/DevToolsTreeNode";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
-import type { ApplyResult, ManagedPool, PrivateLiveNodeApi } from "./AbstractCrdt";
+import type {
+  ApplyResult,
+  ManagedPool,
+  PrivateLiveNodeApi,
+} from "./AbstractCrdt";
 import { AbstractCrdt } from "./AbstractCrdt";
 import {
   applyDelete,

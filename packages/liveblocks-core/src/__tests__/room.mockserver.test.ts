@@ -40,7 +40,7 @@ import { OpCode } from "../protocol/Op";
 import { ServerMsgCode } from "../protocol/ServerMsg";
 import type { StorageNode } from "../protocol/StorageNode";
 import { CrdtType, nodeStreamToCompactNodes } from "../protocol/StorageNode";
-import type { RoomConfig, RoomDelegates, PrivateHistoryEvent } from "../room";
+import type { PrivateHistoryEvent, RoomConfig, RoomDelegates } from "../room";
 import { createRoom } from "../room";
 import { WebsocketCloseCodes } from "../types/IWebSocket";
 import type { LiveblocksError } from "../types/LiveblocksError";
