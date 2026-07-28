@@ -111,7 +111,7 @@ describe("LiveText acknowledgement", () => {
   test("undo of an acknowledged insert emits current-version operations", () => {
     let insertOpId = "";
     let undoOps: UpdateTextOp[] = [];
-    const pool = createManagedPool("room", {
+    const pool = createManagedPool({
       getCurrentConnectionId: () => 0,
       onDispatch: (ops, reverse) => {
         insertOpId = ops[0]?.opId ?? insertOpId;
@@ -153,7 +153,7 @@ describe("LiveText acknowledgement", () => {
 
   test("acknowledgement preserves state after concurrent remote edits", () => {
     let acknowledgedOpId = "";
-    const pool = createManagedPool("room", {
+    const pool = createManagedPool({
       getCurrentConnectionId: () => 0,
       onDispatch: (ops) => {
         acknowledgedOpId = ops[0]?.opId ?? "";
@@ -202,7 +202,7 @@ describe("LiveText acknowledgement", () => {
   test("acknowledgement applies server-rebased operations", () => {
     let acknowledgedOpId = "";
     let undoOps: UpdateTextOp[] = [];
-    const pool = createManagedPool("room", {
+    const pool = createManagedPool({
       getCurrentConnectionId: () => 0,
       onDispatch: (ops, reverse) => {
         acknowledgedOpId = ops[0]?.opId ?? "";
@@ -261,7 +261,7 @@ describe("LiveText acknowledgement", () => {
 
   test("queues local edits behind the in-flight op and flushes them on ack", () => {
     const dispatched: UpdateTextOp[] = [];
-    const pool = createManagedPool("room", {
+    const pool = createManagedPool({
       getCurrentConnectionId: () => 0,
       onDispatch: (ops) => {
         for (const op of ops) {

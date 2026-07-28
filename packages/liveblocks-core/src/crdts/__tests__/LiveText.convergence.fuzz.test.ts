@@ -351,7 +351,7 @@ class SimClient {
   constructor(id: number, data: LiveTextData, version: number) {
     this.id = id;
     this.text = new LiveText(data, version);
-    const pool = createManagedPool("room", {
+    const pool = createManagedPool({
       getCurrentConnectionId: () => id,
       onDispatch: (ops, reverse) => {
         for (const op of ops) {

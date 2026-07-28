@@ -16,7 +16,7 @@ function attachedLiveText(initial: string): {
   dispatched: UpdateTextOp[];
 } {
   const dispatched: UpdateTextOp[] = [];
-  const pool = createManagedPool("room", {
+  const pool = createManagedPool({
     getCurrentConnectionId: () => 0,
     onDispatch: (ops) => {
       for (const op of ops) {
