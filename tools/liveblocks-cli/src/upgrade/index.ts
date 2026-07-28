@@ -90,8 +90,23 @@ function detectPackageManager(): "yarn" | "pnpm" | "bun" | "npm" {
   return "npm";
 }
 
+export function getSkipInstallArgs(
+  packageManager: "yarn" | "pnpm" | "bun" | "npm"
+): string[] {
+  switch (packageManager) {
+    case "yarn":
+      return ["--mode=update-lockfile"];
+    case "npm":
+      return ["--package-lock-only"];
+    case "pnpm":
+    case "bun":
+      return ["--lockfile-only"];
+  }
+}
+
 type Options = {
   help: boolean;
+  "skip-install": boolean;
 };
 
 const upgrade: SubCommand = {
@@ -100,7 +115,10 @@ const upgrade: SubCommand = {
   run(argv) {
     const { options, args } = parseArgs<Options>(
       argv,
-      { help: { type: "boolean", short: "h", default: false } },
+      {
+        help: { type: "boolean", short: "h", default: false },
+        "skip-install": { type: "boolean", short: "s", default: false },
+      },
       { allowPositionals: true }
     );
 
@@ -113,7 +131,8 @@ const upgrade: SubCommand = {
       console.log('  version      Target version or tag (default: "latest")');
       console.log();
       console.log("Options:");
-      console.log("  --help, -h   Show this help message");
+      console.log("  --skip-install, -s   Update package.json and the lockfile without installing packages"); // prettier-ignore
+      console.log("  --help, -h           Show this help message");
       return;
     }
 
@@ -154,6 +173,9 @@ const upgrade: SubCommand = {
 
     // Detect package manager
     const pm = detectPackageManager();
+    const skipInstallArgs = options["skip-install"]
+      ? getSkipInstallArgs(pm)
+      : [];
     let installCmd: string;
     let uninstallCmd: string;
 
@@ -175,16 +197,24 @@ const upgrade: SubCommand = {
 
     // Uninstall renamed packages first
     if (depsToUninstall.length > 0) {
-      execFileSync(pm, [uninstallCmd, ...depsToUninstall], {
-        stdio: "inherit",
-      });
+      execFileSync(
+        pm,
+        [uninstallCmd, ...skipInstallArgs, ...depsToUninstall],
+        {
+          stdio: "inherit",
+        }
+      );
     }
 
     // Install/upgrade packages
     if (depsToUpgrade.length > 0) {
       execFileSync(
         pm,
-        [installCmd, ...depsToUpgrade.map((dep) => `${dep}@${version}`)],
+        [
+          installCmd,
+          ...skipInstallArgs,
+          ...depsToUpgrade.map((dep) => `${dep}@${version}`),
+        ],
         { stdio: "inherit" }
       );
     }
