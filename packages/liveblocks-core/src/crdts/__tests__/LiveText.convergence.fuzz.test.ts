@@ -238,6 +238,31 @@ describe("transformTextOperations TP1 property", () => {
     expect(path1).toEqual(path2);
     expect(path1).toEqual([["ab", { bold: true }], ["cdef"]]);
   });
+
+  test("regression: attribute names off Object.prototype are not treated as conflicts", () => {
+    // "toString" is an inherited key on any plain object, so a naive `key in
+    // over.attributes` check sees a conflict with an op that never set it.
+    const a: TextOperation[] = [
+      { type: "format", index: 0, length: 1, attributes: {} },
+    ];
+    const b: TextOperation[] = [
+      { type: "format", index: 0, length: 1, attributes: { toString: false } },
+    ];
+
+    const [a1, b1] = transformTextOperationsX(a, b, "after");
+
+    const path1 = applyLiveTextOperations(
+      applyLiveTextOperations([["a"]], a),
+      b1
+    );
+    const path2 = applyLiveTextOperations(
+      applyLiveTextOperations([["a"]], b),
+      a1
+    );
+
+    expect(path1).toEqual(path2);
+    expect(path1).toEqual([["a", { toString: false }]]);
+  });
 });
 
 // -----------------------------------------------------------------------------
