@@ -24,7 +24,7 @@ import {
   objectUpdate,
   serializeUpdateToJson,
 } from "../../__tests__/_updatesUtils";
-import { kInternal } from "../../internal";
+import { kInternal, kStorageUpdateSource } from "../../internal";
 import { LiveList } from "../LiveList";
 import { LiveObject } from "../LiveObject";
 
@@ -767,6 +767,7 @@ describe("LiveObject", () => {
           type: "LiveObject",
           node: root.get("child"),
           updates: { a: { type: "update" } },
+          [kStorageUpdateSource]: { origin: "local", via: "mutation" },
         },
       ]);
       expect(callback).toHaveBeenCalledWith([
@@ -774,6 +775,7 @@ describe("LiveObject", () => {
           type: "LiveObject",
           node: root.get("child").get("subchild"),
           updates: { b: { type: "update" } },
+          [kStorageUpdateSource]: { origin: "local", via: "mutation" },
         },
       ]);
     });
@@ -821,6 +823,7 @@ describe("LiveObject", () => {
           type: "LiveObject",
           node: rootA.get("child"),
           updates: { a: { type: "update" } },
+          [kStorageUpdateSource]: { origin: "local", via: "mutation" },
         },
       ]);
       expect(callback).toHaveBeenCalledWith([
@@ -828,6 +831,7 @@ describe("LiveObject", () => {
           type: "LiveObject",
           node: rootA.get("child").get("subchild"),
           updates: { b: { type: "update" } },
+          [kStorageUpdateSource]: { origin: "remote" },
         },
       ]);
     });
@@ -908,6 +912,7 @@ describe("LiveObject", () => {
           type: "LiveObject",
           node: rootA.get("child"),
           updates: { a: { type: "delete", deletedItem: -1 } },
+          [kStorageUpdateSource]: { origin: "remote" },
         },
       ]);
       expect(callback).toHaveBeenNthCalledWith(2, [
@@ -915,6 +920,7 @@ describe("LiveObject", () => {
           type: "LiveObject",
           node: rootA.get("child"),
           updates: { b: { type: "delete", deletedItem: -2 } },
+          [kStorageUpdateSource]: { origin: "local", via: "mutation" },
         },
       ]);
     });
@@ -1042,7 +1048,16 @@ describe("LiveObject", () => {
       expectStorage({ a: 0 });
 
       expect(callback).toHaveBeenCalledWith([
-        { type: "LiveObject", node: root, updates: { a: { type: "update" } } },
+        {
+          type: "LiveObject",
+          node: root,
+          updates: { a: { type: "update" } },
+          [kStorageUpdateSource]: {
+            origin: "local",
+            via: "history",
+            action: "undo",
+          },
+        },
       ]);
     });
   });

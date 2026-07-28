@@ -11,7 +11,7 @@ import {
   prepareStorageTest,
   replaceStorageAndReconnectDevServer,
 } from "../../__tests__/_devserver";
-import { kInternal } from "../../internal";
+import { kInternal, kStorageUpdateSource } from "../../internal";
 import { LiveList } from "../LiveList";
 import { LiveMap } from "../LiveMap";
 import { LiveObject } from "../LiveObject";
@@ -637,6 +637,7 @@ describe("LiveMap", () => {
           type: "LiveObject",
           node: mapElement,
           updates: { a: { type: "update" } },
+          [kStorageUpdateSource]: { origin: "local", via: "mutation" },
         },
       ]);
     });

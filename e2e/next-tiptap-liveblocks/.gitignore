@@ -1,3 +1,4 @@
 .next/
 .turbo/
+next-env.d.ts
 node_modules/

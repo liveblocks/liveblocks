@@ -1,8 +1,8 @@
+import { kInternal } from "../internal";
 import { assertNever } from "../lib/assert";
 import type { ReadonlyJson } from "../lib/Json";
 import type { Pos } from "../lib/position";
 import { asPos } from "../lib/position";
-import { kInternal } from "../internal";
 import type {
   ClientWireCreateOp,
   ClientWireOp,

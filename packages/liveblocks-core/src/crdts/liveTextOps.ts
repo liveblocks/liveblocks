@@ -271,8 +271,12 @@ export function formatReverseOperations(
     const end = offset + segment.text.length;
     if (offset >= index && end <= index + length) {
       const attributes: Record<string, Json | null> = {};
+      const current = segment.attributes ?? {};
       for (const key of Object.keys(patch)) {
-        attributes[key] = segment.attributes?.[key] ?? null;
+        // Own keys only: attribute names can collide with Object.prototype
+        // members like "toString"
+        const value = Object.hasOwn(current, key) ? current[key] : undefined;
+        attributes[key] = value ?? null;
       }
       result.push({
         type: "format",
@@ -519,8 +523,8 @@ function transformFormat(
       return [{ ...op }];
     }
 
-    const hasConflict = Object.keys(op.attributes).some(
-      (key) => key in over.attributes
+    const hasConflict = Object.keys(op.attributes).some((key) =>
+      Object.hasOwn(over.attributes, key)
     );
     if (!hasConflict) {
       return [{ ...op }];
@@ -528,7 +532,7 @@ function transformFormat(
 
     const reduced: JsonObject = {};
     for (const [key, value] of Object.entries(op.attributes)) {
-      if (!(key in over.attributes)) {
+      if (!Object.hasOwn(over.attributes, key)) {
         reduced[key] = value;
       }
     }

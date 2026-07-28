@@ -1,6 +1,7 @@
 import { describe, expect, test, vi } from "vitest";
 
 import { prepareStorageTest } from "../../__tests__/_devserver";
+import { kStorageUpdateSource } from "../../internal";
 import type { LiveList } from "../LiveList";
 import type { LiveMap } from "../LiveMap";
 import type { LiveObject } from "../LiveObject";
@@ -31,6 +32,7 @@ describe("Storage", () => {
           type: "LiveObject",
           node: storage.root,
           updates: { a: { type: "update" } },
+          [kStorageUpdateSource]: { origin: "local", via: "mutation" },
         },
       ]);
     });
@@ -61,6 +63,7 @@ describe("Storage", () => {
           type: "LiveObject",
           node: storageA.root,
           updates: { a: { type: "update" } },
+          [kStorageUpdateSource]: { origin: "remote" },
         },
       ]);
     });
@@ -95,6 +98,7 @@ describe("Storage", () => {
           type: "LiveObject",
           node: storageA.root,
           updates: { a: { type: "update" }, b: { type: "update" } },
+          [kStorageUpdateSource]: { origin: "remote" },
         },
       ]);
     });
@@ -136,6 +140,7 @@ describe("Storage", () => {
           type: "LiveObject",
           node: storage.root,
           updates: { a: { type: "update" }, b: { type: "update" } },
+          [kStorageUpdateSource]: { origin: "local", via: "mutation" },
         },
       ]);
 
@@ -171,11 +176,13 @@ describe("Storage", () => {
           type: "LiveObject",
           node: storage.root,
           updates: { a: { type: "update" } },
+          [kStorageUpdateSource]: { origin: "local", via: "mutation" },
         },
         {
           type: "LiveObject",
           node: root.get("child"),
           updates: { b: { type: "update" } },
+          [kStorageUpdateSource]: { origin: "local", via: "mutation" },
         },
       ]);
     });
@@ -215,21 +222,25 @@ describe("Storage", () => {
           type: "LiveObject",
           node: storage.root,
           updates: { a: { type: "update" } },
+          [kStorageUpdateSource]: { origin: "local", via: "mutation" },
         },
         {
           type: "LiveObject",
           node: root.get("childObj"),
           updates: { b: { type: "update" } },
+          [kStorageUpdateSource]: { origin: "local", via: "mutation" },
         },
         {
           type: "LiveList",
           node: root.get("childList"),
           updates: [{ index: 0, item: "item1", type: "insert" }],
+          [kStorageUpdateSource]: { origin: "local", via: "mutation" },
         },
         {
           type: "LiveMap",
           node: root.get("childMap"),
           updates: { el1: { type: "update" } },
+          [kStorageUpdateSource]: { origin: "local", via: "mutation" },
         },
       ]);
     });

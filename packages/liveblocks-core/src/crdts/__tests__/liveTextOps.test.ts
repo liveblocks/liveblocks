@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 
+import type { LiveTextData } from "../../protocol/Op";
 import {
   applyLiveTextOperations,
   attributesEqual,
@@ -15,6 +16,35 @@ describe("liveTextOps", () => {
   test("attributesEqual is order-independent", () => {
     expect(attributesEqual({ a: 1, b: 2 }, { b: 2, a: 1 })).toBe(true);
     expect(attributesEqual({ a: 1 }, { a: 2 })).toBe(false);
+  });
+
+  test("inverting a format clears attribute names inherited from Object.prototype", () => {
+    // Attribute names are arbitrary strings, so they can collide with members
+    // every plain object inherits from Object.prototype ("toString",
+    // "constructor", "valueOf", ...). Undoing a format on a key the segment
+    // never had must restore "no such attribute" (null) -- the inherited
+    // member is not an attribute value.
+    //
+    // The segment carries an unrelated attribute here so its attribute bag
+    // exists: that is what makes the inherited "toString" reachable.
+    const doc: LiveTextData = [["a", { bold: true }]];
+    const ops = [
+      {
+        type: "format" as const,
+        index: 0,
+        length: 1,
+        attributes: { toString: false },
+      },
+    ];
+
+    const reverse = invertTextOperations(dataToSegments(doc), ops);
+
+    expect(reverse).toEqual([
+      { type: "format", index: 0, length: 1, attributes: { toString: null } },
+    ]);
+    expect(
+      applyLiveTextOperations(applyLiveTextOperations(doc, ops), reverse)
+    ).toEqual(doc);
   });
 
   test("normalizeSegments merges adjacent segments with equivalent attributes", () => {

@@ -95,15 +95,15 @@ describe("mergeStorageUpdates source propagation", () => {
   });
 
   test("untagged + untagged -> merged stays untagged", () => {
-    const merged = mergeStorageUpdates(
-      liveObjectUpdate(),
-      liveObjectUpdate()
-    );
+    const merged = mergeStorageUpdates(liveObjectUpdate(), liveObjectUpdate());
     expect(merged[kStorageUpdateSource]).toBeUndefined();
   });
 
   test("undefined first preserves second source", () => {
-    const merged = mergeStorageUpdates(undefined, liveTextUpdate({ origin: "remote" }));
+    const merged = mergeStorageUpdates(
+      undefined,
+      liveTextUpdate({ origin: "remote" })
+    );
     expect(merged[kStorageUpdateSource]).toEqual({ origin: "remote" });
   });
 });

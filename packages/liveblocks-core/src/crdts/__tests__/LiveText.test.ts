@@ -63,10 +63,7 @@ describe("LiveText", () => {
 
   test("serializes to a DevTools tree node", () => {
     const text = new LiveText(
-      [
-        ["Hello "],
-        ["world", { "lb-comment": "thread-1" }],
-      ],
+      [["Hello "], ["world", { "lb-comment": "thread-1" }]],
       3
     );
 
@@ -141,5 +138,66 @@ describe("LiveText", () => {
       ["0:1", CrdtType.TEXT, "root", "text", [["Hello"]], 2],
     ]);
     expect(Array.from(compactNodesToNodeStream(compact))).toEqual(nodes);
+  });
+
+  describe("multi-byte characters", () => {
+    // U+1F600, stored as a surrogate pair: one code point, two code units
+    const GRINNING = "😀";
+    // "e" followed by U+0301 (combining acute accent): one grapheme, two code
+    // points
+    const COMBINED_E = "é";
+
+    test("indices count UTF-16 code units, like String.prototype", () => {
+      const text = new LiveText(`${GRINNING}${COMBINED_E}`);
+
+      expect(text.length).toBe(4);
+      expect([...text.toString()]).toHaveLength(3); // code points
+    });
+
+    test("an insertion index inside a surrogate pair moves to the boundary", () => {
+      const text = new LiveText(GRINNING);
+
+      // Index 1 sits between the surrogates; it snaps back to the start of
+      // the character rather than splitting it.
+      text.insert(1, "X");
+
+      expect(text.toString()).toBe(`X${GRINNING}`);
+      expect(text.length).toBe(3);
+    });
+
+    test("deleting part of a surrogate pair deletes the whole character", () => {
+      const text = new LiveText(`a${GRINNING}b`);
+
+      text.delete(1, 1);
+
+      expect(text.toString()).toBe("ab");
+    });
+
+    test("deleting from the middle of a character covers it entirely", () => {
+      const text = new LiveText(`a${GRINNING}b`);
+
+      // Starts between the surrogates and ends before "b"
+      text.delete(2, 1);
+
+      expect(text.toString()).toBe("ab");
+    });
+
+    test("formatting part of a surrogate pair formats the whole character", () => {
+      const text = new LiveText(GRINNING);
+
+      text.format(0, 1, { bold: true });
+
+      expect(text.toJSON()).toEqual([[GRINNING, { bold: true }]]);
+    });
+
+    test("a combining mark is still separable from the letter it modifies", () => {
+      // The guarantee covers code points, not grapheme clusters: "é" here is
+      // two code points, and the accent can be edited on its own.
+      const text = new LiveText(COMBINED_E);
+
+      text.delete(0, 1);
+
+      expect(text.toString()).toBe("́");
+    });
   });
 });
