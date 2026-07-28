@@ -31,8 +31,8 @@
     "lint": "eslint src/",
     "lint:package": "publint --strict && attw --pack",
     "typecheck": "tsc --noEmit",
-    "test": "pnpm dlx liveblocks dev -P -c 'vitest run'",
-    "test:ci": "pnpm dlx liveblocks dev -P -c 'vitest run --coverage'",
+    "test": "pnpm dlx liveblocks@pre dev -P -c 'vitest run'",
+    "test:ci": "pnpm dlx liveblocks@pre dev -P -c 'vitest run --coverage'",
     "test:watch": "vitest"
   },
   "dependencies": {
