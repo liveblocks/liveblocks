@@ -12,6 +12,7 @@ import { GripVerticalIcon } from "lucide-react";
 import { getBaseExtensions } from "./editor-extensions";
 import { DOCUMENT_FIELD, INITIAL_DOCUMENT } from "./initial-document";
 import { Threads } from "./threads";
+import { ClientSideSuspense } from "@liveblocks/react";
 
 /**
  * The collaborative Tiptap editor. With `collaborationMode: "liveblocks"`,
@@ -44,19 +45,22 @@ export function DocumentEditor() {
 
       <div className="relative min-h-0 flex-1 overflow-y-auto">
         <div className="relative px-12 py-10">
-          {editor ? (
+          {/* TODO: Bring this back once the plugin bug is solved */}
+          {/* {editor ? (
             <DragHandle editor={editor}>
               <div className="drag-handle">
                 <GripVerticalIcon className="size-4" />
               </div>
             </DragHandle>
-          ) : null}
+          ) : null} */}
           <EditorContent editor={editor} />
         </div>
 
-        <Threads editor={editor} />
-        <FloatingToolbar editor={editor} />
-        <FloatingComposer editor={editor} className="w-[350px]" />
+        <ClientSideSuspense fallback={null}>
+          <Threads editor={editor} />
+          <FloatingToolbar editor={editor} />
+          <FloatingComposer editor={editor} className="w-88" />
+        </ClientSideSuspense>
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 export const AI_USER_ID = "ai-assistant";
 export const AI_USER_NAME = "Liveblocks AI";
+export const AI_USER_COLOR = "#000000";
 export const AI_USER_AVATAR =
   "https://liveblocks.io/api/avatar?u=ai-assistant&agent=true";
 
@@ -49,7 +50,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     id: AI_USER_ID,
     info: {
       name: AI_USER_NAME,
-      color: "#000000",
+      color: AI_USER_COLOR,
       avatar: AI_USER_AVATAR,
     },
   },

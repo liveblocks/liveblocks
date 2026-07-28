@@ -20,7 +20,10 @@ import { HistoryIcon, Loader2Icon, SparklesIcon, XIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Loader } from "@/components/ai-elements/loader";
 import { Button } from "@/components/ui/button";
-import { getBaseExtensions } from "./editor-extensions";
+import {
+  getBaseExtensions,
+  liveblocksSchemaExtensions,
+} from "./editor-extensions";
 import { DOCUMENT_FIELD } from "./initial-document";
 
 /**
@@ -201,7 +204,10 @@ function PreviewEditor({ document }: { document: ProseMirrorJsonNode }) {
   const editor = useEditor({
     editable: false,
     content: document,
-    extensions: getBaseExtensions({ editable: false }),
+    extensions: [
+      ...getBaseExtensions({ editable: false }),
+      ...liveblocksSchemaExtensions,
+    ],
     immediatelyRender: false,
   });
 

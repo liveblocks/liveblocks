@@ -1,6 +1,6 @@
 "use client";
 
-import { AnchoredThreads, FloatingThreads } from "@liveblocks/react-tiptap";
+import { FloatingThreads } from "@liveblocks/react-tiptap";
 import { useThreads } from "@liveblocks/react/suspense";
 import type { Editor } from "@tiptap/react";
 
@@ -12,15 +12,6 @@ export function Threads({ editor }: { editor: Editor | null }) {
   const { threads } = useThreads({ query: { resolved: false } });
 
   return (
-    <>
-      <div className="absolute right-3 top-0 hidden w-[280px] xl:block">
-        <AnchoredThreads editor={editor} threads={threads} />
-      </div>
-      <FloatingThreads
-        editor={editor}
-        threads={threads}
-        className="block w-[350px] xl:hidden"
-      />
-    </>
+    <FloatingThreads editor={editor} threads={threads} className="block w-88" />
   );
 }

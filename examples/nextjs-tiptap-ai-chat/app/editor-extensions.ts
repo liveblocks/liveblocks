@@ -1,3 +1,5 @@
+import { GroupMentionNode, MentionNode } from "@liveblocks/react-tiptap";
+import { Mark } from "@tiptap/core";
 import Highlight from "@tiptap/extension-highlight";
 import TextAlign from "@tiptap/extension-text-align";
 import Typography from "@tiptap/extension-typography";
@@ -27,3 +29,24 @@ export function getBaseExtensions({ editable }: { editable: boolean }) {
       : []),
   ];
 }
+
+export const liveblocksSchemaExtensions = [
+  MentionNode,
+  GroupMentionNode,
+  /* TODO: Import this properly when its available in the package */
+  Mark.create({
+    name: "liveblocksCommentMark",
+    excludes: "",
+    inclusive: false,
+    keepOnSplit: true,
+    addAttributes() {
+      return {
+        threadId: { default: null },
+        orphan: { default: false },
+      };
+    },
+    renderHTML() {
+      return ["span", 0];
+    },
+  }),
+];

@@ -1,11 +1,13 @@
 import { Liveblocks } from "@liveblocks/node";
 import { NextRequest, NextResponse } from "next/server";
 import { AI_USER_AVATAR, AI_USER_ID, AI_USER_NAME } from "@/app/database";
+import { DOCUMENT_FIELD } from "@/app/initial-document";
 import {
   applyDocumentOperation,
   readDocument,
   type DocumentOperation,
 } from "./document";
+import { createEditorPresence } from "./presence";
 
 /**
  * Generates an assistant reply and streams it into the room's feed using
@@ -141,17 +143,23 @@ export async function POST(request: NextRequest) {
     }
   };
 
+  // Shows the AI's caret in everyone's editor, over the blocks it just edited.
+  const presence = createEditorPresence(liveblocks, roomId, DOCUMENT_FIELD);
+
   const runOperation = async (
     name: string,
     input: Record<string, string | number>,
     operation: DocumentOperation
   ) => {
     await ensureSnapshot();
-    const { summary, document } = await applyDocumentOperation(
+    const { summary, document, selection } = await applyDocumentOperation(
       liveblocks,
       roomId,
       operation
     );
+    if (selection !== undefined) {
+      await presence.show(selection);
+    }
     edits.push({ name, input, output: summary });
     return `${summary}\n\nThe document is now:\n\n${document}`;
   };
@@ -178,6 +186,12 @@ export async function POST(request: NextRequest) {
         created.data.content || `Sorry, something went wrong.\n\n\`${reason}\``,
       streaming: false,
     }).catch(() => {});
+  }
+
+  // Remove the AI's caret now that the reply is finished (it would otherwise
+  // linger until the presence TTL expires).
+  if (edits.length > 0) {
+    await presence.clear();
   }
 
   return NextResponse.json({ ok: true });
