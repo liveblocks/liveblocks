@@ -4,6 +4,7 @@ import { describe, expect, test } from "vitest";
 import type { JsonObject } from "../../lib/Json";
 import type {
   LiveTextData,
+  LiveTextSegment,
   TextOperation,
   UpdateTextOp,
 } from "../../protocol/Op";
@@ -25,12 +26,32 @@ import {
 
 const ALPHABET = "abcdefgh";
 
-const textArb = fc
+/** Short runs of text: the bread and butter of character-level editing. */
+const shortTextArb = fc
   .array(fc.integer({ min: 0, max: ALPHABET.length - 1 }), {
     minLength: 1,
     maxLength: 4,
   })
   .map((indexes) => indexes.map((i) => ALPHABET[i]).join(""));
+
+/**
+ * Bulk text, built by repeating a short run, so that generating (and
+ * shrinking) multi-kilobyte documents stays cheap.
+ */
+function bulkTextArb(
+  minRepeats: number,
+  maxRepeats: number
+): fc.Arbitrary<string> {
+  return fc
+    .tuple(shortTextArb, fc.integer({ min: minRepeats, max: maxRepeats }))
+    .map(([chunk, repeats]) => chunk.repeat(repeats));
+}
+
+/** Tens of characters. */
+const mediumTextArb = bulkTextArb(2, 20);
+
+/** Hundreds to a few thousand characters. */
+const largeTextArb = bulkTextArb(200, 1000);
 
 const keyArb = fc.oneof(
   { withCrossShrink: true },
@@ -50,46 +71,114 @@ const jsonScalarArb = fc.oneof(
 
 const attributesArb = fc.dictionary(keyArb, jsonScalarArb);
 
+/**
+ * Positions and spans are generated as fractions of the document instead of
+ * absolute character counts, so one seed means "a quarter of the way in"
+ * whether the document holds 10 characters or 10 kilobytes. Keeping the seeds
+ * independent of the document also keeps shrinking effective.
+ */
+const fractionArb = fc.double({ min: 0, max: 1, noNaN: true });
+
+type PosSeed =
+  | { kind: "fraction"; of: number }
+  | { kind: "index"; index: number };
+
+type SpanSeed =
+  | { kind: "chars"; n: number }
+  | { kind: "fraction"; of: number }
+  | { kind: "toEnd" };
+
+/**
+ * Generated seeds always use fractions. The `index` and `chars` variants exist
+ * so hand-written scenarios below can name an exact spot in a known document.
+ */
+const atIndex = (index: number): PosSeed => ({ kind: "index", index });
+const spanChars = (n: number): SpanSeed => ({ kind: "chars", n });
+
+const posSeedArb: fc.Arbitrary<PosSeed> = fc.record({
+  kind: fc.constant("fraction" as const),
+  of: fractionArb,
+});
+
+const spanSeedArb: fc.Arbitrary<SpanSeed> = fc.oneof(
+  {
+    weight: 6,
+    arbitrary: fc.record({
+      kind: fc.constant("chars" as const),
+      n: fc.integer({ min: 1, max: 8 }),
+    }),
+  },
+  {
+    weight: 3,
+    arbitrary: fc.record({
+      kind: fc.constant("fraction" as const),
+      of: fractionArb,
+    }),
+  },
+  { weight: 1, arbitrary: fc.record({ kind: fc.constant("toEnd" as const) }) }
+);
+
 /** Seeds that get concretized against the current document length. */
 type EditSeed =
-  | { type: "insert"; at: number; text: string; attrs: boolean }
-  | { type: "delete"; at: number; len: number }
-  | { type: "format"; at: number; len: number; attrs: JsonObject };
+  | { type: "insert"; at: PosSeed; text: string; attrs: JsonObject | undefined }
+  | { type: "delete"; at: PosSeed; span: SpanSeed }
+  | { type: "format"; at: PosSeed; span: SpanSeed; attrs: JsonObject };
 
-const editSeedArb: fc.Arbitrary<EditSeed> = fc.oneof(
-  fc.record({
-    type: fc.constant("insert" as const),
-    at: fc.nat(1000),
-    text: textArb,
-    attrs: fc.boolean(),
-  }),
-  fc.record({
-    type: fc.constant("delete" as const),
-    at: fc.nat(1000),
-    len: fc.integer({ min: 1, max: 100 }),
-  }),
-  fc.record({
-    type: fc.constant("format" as const),
-    at: fc.nat(1000),
-    len: fc.integer({ min: 1, max: 100 }),
-    attrs: attributesArb,
-  })
-);
+function editSeedArbOf(textArb: fc.Arbitrary<string>): fc.Arbitrary<EditSeed> {
+  return fc.oneof(
+    fc.record({
+      type: fc.constant("insert" as const),
+      at: posSeedArb,
+      text: textArb,
+      attrs: fc.option(attributesArb, { nil: undefined }),
+    }),
+    fc.record({
+      type: fc.constant("delete" as const),
+      at: posSeedArb,
+      span: spanSeedArb,
+    }),
+    fc.record({
+      type: fc.constant("format" as const),
+      at: posSeedArb,
+      span: spanSeedArb,
+      attrs: attributesArb,
+    })
+  );
+}
+
+/** Resolves a position seed onto an index in [0, max]. */
+function indexAt(pos: PosSeed, max: number): number {
+  return pos.kind === "index"
+    ? Math.min(pos.index, max)
+    : Math.min(max, Math.floor(pos.of * (max + 1)));
+}
+
+/** Resolves a span seed against the characters left after the index. */
+function spanLength(span: SpanSeed, remaining: number): number {
+  switch (span.kind) {
+    case "chars":
+      return Math.min(span.n, remaining);
+    case "fraction":
+      return Math.min(remaining, Math.max(1, Math.ceil(span.of * remaining)));
+    case "toEnd":
+      return remaining;
+  }
+}
 
 function concretize(seed: EditSeed, length: number): TextOperation | undefined {
   if (seed.type === "insert") {
     return {
       type: "insert",
-      index: seed.at % (length + 1),
+      index: indexAt(seed.at, length),
       text: seed.text,
-      ...(seed.attrs ? { attributes: { bold: true } } : {}),
+      ...(seed.attrs !== undefined ? { attributes: seed.attrs } : {}),
     };
   }
   if (length === 0) {
     return undefined;
   }
-  const index = seed.at % length;
-  const len = Math.min(seed.len, length - index);
+  const index = indexAt(seed.at, length - 1);
+  const len = spanLength(seed.span, length - index);
   if (len <= 0) {
     return undefined;
   }
@@ -121,19 +210,62 @@ function concretizeSequence(
   return ops;
 }
 
-const docArb: fc.Arbitrary<LiveTextData> = fc
-  .array(
-    fc.record({
-      text: textArb,
-      attrs: fc.option(attributesArb, { nil: undefined }),
-    }),
-    { minLength: 0, maxLength: 3 }
-  )
-  .map((segments) =>
-    segments.map(({ text, attrs }) =>
-      attrs === undefined ? [text] : ([text, attrs] as const)
+function docArbOf(
+  textArb: fc.Arbitrary<string>,
+  minSegments: number,
+  maxSegments: number
+): fc.Arbitrary<LiveTextData> {
+  return fc
+    .array(
+      fc.record({
+        text: textArb,
+        attrs: fc.option(attributesArb, { nil: undefined }),
+      }),
+      { minLength: minSegments, maxLength: maxSegments }
     )
-  ) as fc.Arbitrary<LiveTextData>;
+    .map((segments) =>
+      segments.map(
+        ({ text, attrs }): LiveTextSegment =>
+          attrs === undefined ? [text] : [text, attrs]
+      )
+    );
+}
+
+const smallDocArb = docArbOf(shortTextArb, 0, 3); // a dozen characters
+const mediumDocArb = docArbOf(mediumTextArb, 1, 20); // up to ~1.5 KB
+const largeDocArb = docArbOf(largeTextArb, 1, 4); // multiple KBs
+
+/**
+ * The everyday mix. Small documents dominate: they are fast to run and shrink
+ * to failures a human can read.
+ */
+const docArb = fc.oneof(
+  { weight: 8, arbitrary: smallDocArb },
+  { weight: 3, arbitrary: mediumDocArb }
+);
+
+/** The heavyweight mix, for the properties that run few but large rounds. */
+const bulkDocArb = fc.oneof(
+  { weight: 1, arbitrary: mediumDocArb },
+  { weight: 3, arbitrary: largeDocArb }
+);
+
+/** Edits sized for {@link docArb}: mostly typing, the occasional paste. */
+const editSeedArb = editSeedArbOf(
+  fc.oneof(
+    { weight: 9, arbitrary: shortTextArb },
+    { weight: 1, arbitrary: mediumTextArb }
+  )
+);
+
+/** Edits sized for {@link bulkDocArb}, including multi-KB pastes. */
+const bulkEditSeedArb = editSeedArbOf(
+  fc.oneof(
+    { weight: 6, arbitrary: shortTextArb },
+    { weight: 3, arbitrary: mediumTextArb },
+    { weight: 1, arbitrary: largeTextArb }
+  )
+);
 
 // -----------------------------------------------------------------------------
 // TP1: transform correctness for concurrent op sequences
@@ -170,6 +302,37 @@ describe("transformTextOperations TP1 property", () => {
         }
       ),
       { numRuns: 2000 }
+    );
+  });
+
+  test("TP1 holds on multi-kilobyte documents", () => {
+    fc.assert(
+      fc.property(
+        bulkDocArb,
+        fc.array(bulkEditSeedArb, { minLength: 1, maxLength: 6 }),
+        fc.array(bulkEditSeedArb, { minLength: 1, maxLength: 6 }),
+        fc.constantFrom("before" as const, "after" as const),
+
+        (doc, seedsA, seedsB, order) => {
+          const length = textLength(dataToSegments(doc));
+          const a = concretizeSequence(seedsA, length);
+          const b = concretizeSequence(seedsB, length);
+
+          const [a1, b1] = transformTextOperationsX(a, b, order);
+
+          const path1 = applyLiveTextOperations(
+            applyLiveTextOperations(doc, a),
+            b1
+          );
+          const path2 = applyLiveTextOperations(
+            applyLiveTextOperations(doc, b),
+            a1
+          );
+
+          expect(path1).toEqual(path2);
+        }
+      ),
+      { numRuns: 300 }
     );
   });
 
@@ -350,7 +513,10 @@ type SimEvent =
   | { kind: "toServer"; client: number }
   | { kind: "toClient"; client: number };
 
-function simEventArb(numClients: number): fc.Arbitrary<SimEvent> {
+function simEventArb(
+  numClients: number,
+  seedArb: fc.Arbitrary<EditSeed> = editSeedArb
+): fc.Arbitrary<SimEvent> {
   const client = fc.nat(numClients - 1);
   return fc.oneof(
     {
@@ -358,7 +524,7 @@ function simEventArb(numClients: number): fc.Arbitrary<SimEvent> {
       arbitrary: fc.record({
         kind: fc.constant("edit" as const),
         client,
-        seed: editSeedArb,
+        seed: seedArb,
       }),
     },
     {
@@ -551,17 +717,42 @@ describe("LiveText multi-client convergence (fuzz)", () => {
     );
   });
 
+  test("all clients converge on multi-kilobyte documents", () => {
+    fc.assert(
+      fc.property(
+        bulkDocArb,
+        fc.array(simEventArb(3, bulkEditSeedArb), {
+          minLength: 1,
+          maxLength: 30,
+        }),
+        (doc, events) => {
+          const { server, clients } = runSimulation(doc, events, 3);
+
+          const serverText = dataToSegments(server.data)
+            .map((s) => s.text)
+            .join("");
+
+          for (const client of clients) {
+            expect(client.text.toString()).toBe(serverText);
+            expect(client.text.version).toBe(server.version);
+          }
+        }
+      ),
+      { numRuns: 150 }
+    );
+  });
+
   test("regression: same-index concurrent inserts converge", () => {
     const events: SimEvent[] = [
       {
         kind: "edit",
         client: 0,
-        seed: { type: "insert", at: 0, text: "aa", attrs: false },
+        seed: { type: "insert", at: atIndex(0), text: "aa", attrs: undefined },
       },
       {
         kind: "edit",
         client: 1,
-        seed: { type: "insert", at: 0, text: "bb", attrs: false },
+        seed: { type: "insert", at: atIndex(0), text: "bb", attrs: undefined },
       },
       // Client 0's op reaches the server first
       { kind: "toServer", client: 0 },
@@ -582,12 +773,16 @@ describe("LiveText multi-client convergence (fuzz)", () => {
   test("regression: delete spanning a concurrent insert keeps the insert", () => {
     const events: SimEvent[] = [
       // Client 0 deletes "bcde" out of "abcdef"
-      { kind: "edit", client: 0, seed: { type: "delete", at: 1, len: 4 } },
+      {
+        kind: "edit",
+        client: 0,
+        seed: { type: "delete", at: atIndex(1), span: spanChars(4) },
+      },
       // Client 1 types "ZZ" in the middle of that range
       {
         kind: "edit",
         client: 1,
-        seed: { type: "insert", at: 3, text: "zz", attrs: false },
+        seed: { type: "insert", at: atIndex(3), text: "zz", attrs: undefined },
       },
       { kind: "toServer", client: 1 },
       { kind: "toServer", client: 0 },
@@ -611,9 +806,13 @@ describe("LiveText multi-client convergence (fuzz)", () => {
       {
         kind: "edit",
         client: 0,
-        seed: { type: "insert", at: 1, text: "x", attrs: false },
+        seed: { type: "insert", at: atIndex(1), text: "x", attrs: undefined },
       },
-      { kind: "edit", client: 0, seed: { type: "delete", at: 2, len: 1 } },
+      {
+        kind: "edit",
+        client: 0,
+        seed: { type: "delete", at: atIndex(2), span: spanChars(1) },
+      },
     ];
 
     const { server, clients } = runSimulation([["AB"]], events, 1);
