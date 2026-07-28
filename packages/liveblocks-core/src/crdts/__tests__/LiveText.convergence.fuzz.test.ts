@@ -24,7 +24,20 @@ import {
 // Arbitraries
 // -----------------------------------------------------------------------------
 
-const ALPHABET = "abcdefgh";
+/**
+ * Includes characters wider than one UTF-16 code unit, so that generated
+ * indices regularly land inside a character rather than between two.
+ */
+const ALPHABET = [
+  "a",
+  "b",
+  "c",
+  "d",
+  "e",
+  "f",
+  "😀", // surrogate pair: two code units
+  "é", // "e" + combining acute accent: two code points
+];
 
 /** Short runs of text: the bread and butter of character-level editing. */
 const shortTextArb = fc
