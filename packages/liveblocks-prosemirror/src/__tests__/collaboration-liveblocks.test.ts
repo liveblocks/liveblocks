@@ -7,6 +7,7 @@ import Paragraph from "@tiptap/extension-paragraph";
 import Text from "@tiptap/extension-text";
 import type { Node as ProseMirrorNode } from "prosemirror-model";
 import { Slice } from "prosemirror-model";
+import { Plugin, PluginKey } from "prosemirror-state";
 import { describe, expect, test, vi } from "vitest";
 
 import {
@@ -665,6 +666,50 @@ describe("collaboration-liveblocks schema", () => {
       documents instanceof LiveMap ? documents.get("body") : undefined;
     expect(storedDocument).toBeInstanceOf(LiveObject);
     expect(liveblocksNodeToJson(storedDocument!)).toEqual(editor.getJSON());
+
+    editor.destroy();
+  });
+
+  test("rebinds storage after the editor plugins are reconfigured", async () => {
+    const storedDocument = createLiveblocksProsemirrorNode({
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: "Stored" }],
+        },
+      ],
+    });
+    const root = new LiveObject<LsonObject>({
+      [LIVEBLOCKS_TIPTAP_DOCUMENTS_KEY]: new LiveMap([
+        ["default", storedDocument],
+      ]),
+    });
+    const { room } = createCollaborationTestRoom(root);
+    const editor = new Editor({
+      extensions: [
+        Document,
+        Paragraph,
+        Text,
+        TestLiveblocksCollaboration.configure({ room }),
+      ],
+      content: "<p></p>",
+    });
+
+    editor.registerPlugin(
+      new Plugin({ key: new PluginKey("reconfigure-collaboration-test") })
+    );
+    await flushAsyncWork();
+
+    expect(editor.getText()).toBe("Stored");
+
+    editor.commands.setContent("<p>Updated</p>");
+
+    const documents = root.get(LIVEBLOCKS_TIPTAP_DOCUMENTS_KEY);
+    const updatedDocument =
+      documents instanceof LiveMap ? documents.get("default") : undefined;
+    expect(updatedDocument).toBeInstanceOf(LiveObject);
+    expect(liveblocksNodeToJson(updatedDocument!)).toEqual(editor.getJSON());
 
     editor.destroy();
   });

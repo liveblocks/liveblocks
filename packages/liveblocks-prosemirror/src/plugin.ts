@@ -180,7 +180,6 @@ export function createLiveblocksCollaborationPlugin(
   let root: LiveObject<LsonObject> | undefined;
   let unsubscribe: (() => void) | undefined;
   let unsubscribeFromHistory: (() => void) | undefined;
-  let destroyed = false;
   let isApplyingRemoteUpdate = false;
   let isApplyingLocalUpdate = false;
   let lastDocument = "";
@@ -429,6 +428,7 @@ export function createLiveblocksCollaborationPlugin(
     },
     view(editorView) {
       view = editorView;
+      let destroyed = false;
 
       unsubscribeFromHistory = privateHistory?.subscribe((event) => {
         if (event.action === "push") {
