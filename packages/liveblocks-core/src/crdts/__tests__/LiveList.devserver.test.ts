@@ -17,7 +17,7 @@ import {
   listUpdateInsert,
   listUpdateMove,
 } from "../../__tests__/_updatesUtils";
-import { kInternal } from "../../internal";
+import { kInternal, kStorageUpdateSource } from "../../internal";
 import { LiveList } from "../LiveList";
 import { LiveMap } from "../LiveMap";
 import { LiveObject } from "../LiveObject";
@@ -807,6 +807,7 @@ describe("LiveList", () => {
             { index: 1, item: "b", type: "insert" },
             { index: 2, item: "c", type: "insert" },
           ],
+          [kStorageUpdateSource]: { origin: "local", via: "mutation" },
         },
       ]);
     });

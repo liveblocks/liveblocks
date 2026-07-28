@@ -24,7 +24,7 @@ import {
   waitUntilStatus,
   waitUntilStorageUpdate,
 } from "../../__tests__/_waitUtils";
-import { kInternal } from "../../internal";
+import { kInternal, kStorageUpdateSource } from "../../internal";
 import type { ServerWireOp } from "../../protocol/Op";
 import { OpCode } from "../../protocol/Op";
 import { ServerMsgCode } from "../../protocol/ServerMsg";
@@ -598,6 +598,7 @@ describe("LiveList edge cases", () => {
           type: "LiveList",
           node: listItems,
           updates: [{ index: 1, item: "b", type: "insert" }],
+          [kStorageUpdateSource]: { origin: "remote" },
         },
       ]);
       expect(rootDeepCallback).toHaveBeenCalledWith([
@@ -605,6 +606,7 @@ describe("LiveList edge cases", () => {
           type: "LiveList",
           node: listItems,
           updates: [{ index: 2, item: "c", type: "insert" }],
+          [kStorageUpdateSource]: { origin: "local", via: "mutation" },
         },
       ]);
       expect(listCallback).toHaveBeenCalledTimes(2);
@@ -673,6 +675,7 @@ describe("LiveList edge cases", () => {
           type: "LiveList",
           node: listItems,
           updates: [{ index: 0, previousIndex: 1, item: "b", type: "move" }],
+          [kStorageUpdateSource]: { origin: "remote" },
         },
       ]);
 
@@ -733,6 +736,7 @@ describe("LiveList edge cases", () => {
           type: "LiveList",
           node: listItems,
           updates: [{ index: 1, type: "delete", deletedItem: "b" }],
+          [kStorageUpdateSource]: { origin: "remote" },
         },
       ]);
 
@@ -845,6 +849,7 @@ describe("LiveList edge cases", () => {
             node: items,
             type: "LiveList",
             updates: [{ type: "set", index: 0, item: "B" }],
+            [kStorageUpdateSource]: { origin: "remote" },
           },
         ]);
       });
@@ -925,6 +930,7 @@ describe("LiveList edge cases", () => {
             node: items,
             type: "LiveList",
             updates: [{ type: "insert", index: 0, item: "B" }],
+            [kStorageUpdateSource]: { origin: "remote" },
           },
         ]);
       });
@@ -971,6 +977,7 @@ describe("LiveList edge cases", () => {
             node: items,
             type: "LiveList",
             updates: [{ type: "insert", index: 0, item: "1" }],
+            [kStorageUpdateSource]: { origin: "remote" },
           },
         ]);
       });
