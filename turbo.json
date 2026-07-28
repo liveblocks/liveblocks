@@ -37,6 +37,13 @@
       // whenever. It also has no filesystem outputs.
       "outputs": []
     },
+    "typecheck": {
+      // Type-checks everything in the package, including unit tests, which the
+      // `build` (tsup) and `test:types` scripts do not cover.
+      "dependsOn": ["^build"],
+      "inputs": ["src/**", "e2e/**", "test-d/**", "tsconfig.json"],
+      "outputs": []
+    },
     "lint": {
       // A package's `lint` script has no dependencies and can be run whenever.
       // It also has no filesystem outputs.
