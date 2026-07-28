@@ -174,7 +174,6 @@ export type UpdateTextOp = {
   readonly baseVersion: number;
   readonly version?: number;
   readonly ops: TextOperation[];
-  readonly metadata?: JsonObject;
 };
 
 export type DeleteCrdtOp = {
