@@ -338,7 +338,7 @@ describe("diffNodeMap", () => {
       ],
     ]);
 
-    expect(getTreesDiffOperations(currentItems, newItems)).toEqual([
+    expect(diffNodeMap(currentItems, newItems)).toEqual([
       {
         type: OpCode.CREATE_TEXT,
         id: "0:1",
@@ -361,7 +361,7 @@ describe("diffNodeMap", () => {
     // Content changes of existing LiveText nodes are deliberately NOT part
     // of the op diff: snapshots are reconciled via LiveText._resyncText
     // (driven by the room), not via UPDATE_TEXT ops.
-    expect(getTreesDiffOperations(newItems, updatedItems)).toEqual([]);
+    expect(diffNodeMap(newItems, updatedItems)).toEqual([]);
   });
 
   test("liveObject replacing a non-object node of the same id", () => {
