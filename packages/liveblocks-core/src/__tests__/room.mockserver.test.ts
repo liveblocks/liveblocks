@@ -23,6 +23,7 @@ import { DEFAULT_BASE_URL } from "../constants";
 import { LiveList } from "../crdts/LiveList";
 import { LiveMap } from "../crdts/LiveMap";
 import { LiveObject } from "../crdts/LiveObject";
+import type { LiveText } from "../crdts/LiveText";
 import type { LsonObject } from "../crdts/Lson";
 import type {
   StorageUpdate,
@@ -2498,6 +2499,70 @@ describe("room", () => {
           },
         ],
       ]);
+    });
+  });
+
+  describe("version history restore", () => {
+    test("restores an existing LiveText through a forward UPDATE_TEXT op", async () => {
+      const { root, room, wss } = await prepareIsolatedStorageTest<{
+        text: LiveText;
+      }>(
+        [
+          createSerializedRoot(),
+          [
+            "text",
+            {
+              type: CrdtType.TEXT,
+              parentId: "root",
+              parentKey: "text",
+              data: [["Current"]],
+              version: 7,
+            },
+          ],
+        ],
+        1
+      );
+
+      room[kInternal].reconcileStorageWithNodes([
+        createSerializedRoot(),
+        [
+          "text",
+          {
+            type: CrdtType.TEXT,
+            parentId: "root",
+            parentKey: "text",
+            data: [["Historic", { bold: true }]],
+            version: 2,
+          },
+        ],
+      ]);
+
+      expect(root.get("text").toJSON()).toEqual([["Historic", { bold: true }]]);
+      expect(wss.receivedMessages.at(-1)).toEqual([
+        {
+          type: ClientMsgCode.UPDATE_STORAGE,
+          ops: [
+            {
+              type: OpCode.UPDATE_TEXT,
+              id: "text",
+              opId: "1:0",
+              baseVersion: 7,
+              ops: [
+                { type: "delete", index: 0, length: 7 },
+                {
+                  type: "insert",
+                  index: 0,
+                  text: "Historic",
+                  attributes: { bold: true },
+                },
+              ],
+            },
+          ],
+        },
+      ]);
+
+      room.history.undo();
+      expect(root.get("text").toString()).toBe("Current");
     });
   });
 

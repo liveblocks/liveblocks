@@ -2047,12 +2047,15 @@ export function createRoom<
   // Serializes the current live Storage into a NodeMap and diffs it against
   // `target`, returning the ops that make the live tree match `target`. Shared
   // by storage load (applied remotely) and restore (applied locally).
-  function diffCurrentStorageAgainst(target: NodeMap): Op[] {
+  function diffCurrentStorageAgainst(
+    target: NodeMap,
+    options?: { includeLiveTextUpdates?: boolean }
+  ): Op[] {
     const current: NodeMap = new Map();
     for (const [id, crdt] of context.pool.nodes) {
       current.set(id, crdt._serialize());
     }
-    return diffNodeMap(current, target);
+    return diffNodeMap(current, target, options);
   }
 
   function createOrUpdateRootFromMessage(nodes: NodeMap) {
@@ -2142,7 +2145,8 @@ export function createRoom<
     }
 
     const ops = diffCurrentStorageAgainst(
-      new Map<string, SerializedCrdt>(nodes)
+      new Map<string, SerializedCrdt>(nodes),
+      { includeLiveTextUpdates: true }
     );
     if (ops.length === 0) {
       return; // Already identical -- nothing to do.

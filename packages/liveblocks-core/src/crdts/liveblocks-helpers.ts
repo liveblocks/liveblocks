@@ -3,7 +3,7 @@ import { assertNever, nn } from "../lib/assert";
 import type { Json } from "../lib/Json";
 import { stringifyOrLog as stringify } from "../lib/stringify";
 import { deepClone, entries } from "../lib/utils";
-import type { CreateOp, Op } from "../protocol/Op";
+import type { CreateOp, LiveTextData, Op, TextOperation } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
 import type {
   NodeMap,
@@ -331,7 +331,47 @@ export function isJsonEq(a: Json | undefined, b: Json | undefined): boolean {
  *  - UPDATE_OBJECT for "root" (data changed: a: 1 → 99)
  *  - CREATE_OBJECT for "node2" (added)
  */
-export function diffNodeMap(prev: NodeMap, next: NodeMap): Op[] {
+export type DiffNodeMapOptions = {
+  /**
+   * Whether existing LiveText nodes should be reconciled through UPDATE_TEXT
+   * operations. Authoritative storage loads leave this disabled and resync the
+   * nodes directly; user-initiated restores enable it so the change advances
+   * the current LiveText timeline.
+   */
+  includeLiveTextUpdates?: boolean;
+};
+
+function liveTextDataToReplaceOps(
+  before: LiveTextData,
+  after: LiveTextData
+): TextOperation[] {
+  const ops: TextOperation[] = [];
+  const beforeLength = before.reduce(
+    (length, [text]) => length + text.length,
+    0
+  );
+
+  if (beforeLength > 0) {
+    ops.push({ type: "delete", index: 0, length: beforeLength });
+  }
+
+  let index = 0;
+  for (const [text, attributes] of after) {
+    if (text.length === 0) {
+      continue;
+    }
+    ops.push({ type: "insert", index, text, attributes });
+    index += text.length;
+  }
+
+  return ops;
+}
+
+export function diffNodeMap(
+  prev: NodeMap,
+  next: NodeMap,
+  options?: DiffNodeMapOptions
+): Op[] {
   const ops: Op[] = [];
 
   const idsToRecreate = new Set<string>();
@@ -504,6 +544,22 @@ export function diffNodeMap(prev: NodeMap, next: NodeMap): Op[] {
       // carries pending-op transformation semantics that don't apply to
       // authoritative snapshots; LiveText nodes are reconciled against the
       // snapshot directly (see LiveText._resyncText, called from the room).
+      if (
+        options?.includeLiveTextUpdates === true &&
+        crdt.type === CrdtType.TEXT &&
+        currentCrdt.type === CrdtType.TEXT &&
+        !isJsonEq(crdt.data, currentCrdt.data)
+      ) {
+        ops.push({
+          type: OpCode.UPDATE_TEXT,
+          id,
+          // A restore is a new edit in the current timeline. The version from
+          // the historic snapshot describes its old timeline and must not move
+          // this node's current version backwards.
+          baseVersion: currentCrdt.version,
+          ops: liveTextDataToReplaceOps(currentCrdt.data, crdt.data),
+        });
+      }
       if (crdt.parentKey !== currentCrdt.parentKey) {
         ops.push({
           type: OpCode.SET_PARENT_KEY,

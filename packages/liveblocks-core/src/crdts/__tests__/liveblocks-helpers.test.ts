@@ -362,6 +362,26 @@ describe("diffNodeMap", () => {
     // of the op diff: snapshots are reconciled via LiveText._resyncText
     // (driven by the room), not via UPDATE_TEXT ops.
     expect(diffNodeMap(newItems, updatedItems)).toEqual([]);
+
+    // A user-initiated restore is different from an authoritative snapshot
+    // load: it is a new edit in the current timeline. Use the current node's
+    // version as the base and treat the target's older version as content-only
+    // snapshot metadata.
+    expect(
+      diffNodeMap(updatedItems, newItems, {
+        includeLiveTextUpdates: true,
+      })
+    ).toEqual([
+      {
+        type: OpCode.UPDATE_TEXT,
+        id: "0:1",
+        baseVersion: 1,
+        ops: [
+          { type: "delete", index: 0, length: 6 },
+          { type: "insert", index: 0, text: "Hello", attributes: undefined },
+        ],
+      },
+    ]);
   });
 
   test("liveObject replacing a non-object node of the same id", () => {
