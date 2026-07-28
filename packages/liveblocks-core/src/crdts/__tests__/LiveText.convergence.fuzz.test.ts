@@ -32,13 +32,23 @@ const textArb = fc
   })
   .map((indexes) => indexes.map((i) => ALPHABET[i]).join(""));
 
-const attributesArb: fc.Arbitrary<JsonObject> = fc.oneof(
-  fc.constant<JsonObject>({ bold: true }),
-  fc.constant<JsonObject>({ bold: null }),
-  fc.constant<JsonObject>({ italic: 1 }),
-  fc.constant<JsonObject>({ bold: true, italic: null }),
-  fc.constant<JsonObject>({ color: "red" })
+const keyArb = fc.oneof(
+  { withCrossShrink: true },
+  fc.constant("bold"),
+  fc.constant("italic"),
+  fc.constant("color"),
+  fc.string()
 );
+
+const jsonScalarArb = fc.oneof(
+  { withCrossShrink: true },
+  fc.boolean(),
+  fc.nat(),
+  fc.string(),
+  fc.constant(null)
+);
+
+const attributesArb = fc.dictionary(keyArb, jsonScalarArb);
 
 /** Seeds that get concretized against the current document length. */
 type EditSeed =
@@ -56,12 +66,12 @@ const editSeedArb: fc.Arbitrary<EditSeed> = fc.oneof(
   fc.record({
     type: fc.constant("delete" as const),
     at: fc.nat(1000),
-    len: fc.integer({ min: 1, max: 4 }),
+    len: fc.integer({ min: 1, max: 100 }),
   }),
   fc.record({
     type: fc.constant("format" as const),
     at: fc.nat(1000),
-    len: fc.integer({ min: 1, max: 4 }),
+    len: fc.integer({ min: 1, max: 100 }),
     attrs: attributesArb,
   })
 );
@@ -137,6 +147,7 @@ describe("transformTextOperations TP1 property", () => {
         fc.array(editSeedArb, { minLength: 1, maxLength: 3 }),
         fc.array(editSeedArb, { minLength: 1, maxLength: 3 }),
         fc.constantFrom("before" as const, "after" as const),
+
         (doc, seedsA, seedsB, order) => {
           const length = textLength(dataToSegments(doc));
           const a = concretizeSequence(seedsA, length);
