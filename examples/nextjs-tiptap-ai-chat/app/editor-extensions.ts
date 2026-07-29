@@ -15,7 +15,6 @@ export function getBaseExtensions({ editable }: { editable: boolean }) {
     StarterKit.configure({
       // The Liveblocks extension comes with its own history handling.
       undoRedo: false,
-      link: { openOnClick: false },
     }),
     Typography,
     Highlight,

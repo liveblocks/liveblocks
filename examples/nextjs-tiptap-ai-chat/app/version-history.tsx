@@ -172,8 +172,7 @@ export function VersionHistoryPreview({
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex items-center justify-between gap-2 border-b border-neutral-950/5 px-4 py-2">
         <span className="text-sm text-muted-foreground">
-          Previewing a previous version — the live document is unchanged until
-          you restore.
+          Previewing a previous version
         </span>
         <Button size="sm" onClick={restore} disabled={restoring || !data}>
           {restoring ? <Loader2Icon className="size-4 animate-spin" /> : null}
@@ -191,7 +190,7 @@ export function VersionHistoryPreview({
             <Loader size={20} />
           </div>
         ) : (
-          <div className="mx-auto max-w-[720px] px-12 py-10">
+          <div className="mx-auto max-w-180 px-12 py-10">
             <PreviewEditor key={versionId} document={document} />
           </div>
         )}

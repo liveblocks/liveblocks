@@ -4,6 +4,14 @@ export const AI_USER_COLOR = "#000000";
 export const AI_USER_AVATAR =
   "https://liveblocks.io/api/avatar?u=ai-assistant&agent=true";
 
+export function createAgentEditUserId() {
+  return `${AI_USER_ID}:${crypto.randomUUID()}`;
+}
+
+export function isAiUserId(id: string) {
+  return id === AI_USER_ID || id.startsWith(`${AI_USER_ID}:`);
+}
+
 // A mock database with example users
 const USER_INFO: Liveblocks["UserMeta"][] = [
   {
@@ -62,6 +70,9 @@ export function getRandomUser() {
 }
 
 export function getUser(id: string) {
+  if (isAiUserId(id)) {
+    return USER_INFO.find((u) => u.id === AI_USER_ID);
+  }
   return USER_INFO.find((u) => u.id === id) || undefined;
 }
 

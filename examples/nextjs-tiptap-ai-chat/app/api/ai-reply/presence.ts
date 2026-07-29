@@ -2,8 +2,8 @@ import type { JsonObject, Liveblocks } from "@liveblocks/node";
 import {
   AI_USER_AVATAR,
   AI_USER_COLOR,
-  AI_USER_ID,
   AI_USER_NAME,
+  createAgentEditUserId,
 } from "@/app/database";
 import type { DocumentSelection } from "./document";
 
@@ -24,17 +24,20 @@ export type EditorPresence = {
 };
 
 /**
- * Creates the presence helpers for one room and document field
+ * Creates the presence helpers for one room and document field. Each edit gets
+ * its own presence id so concurrent edits don't overwrite each other's cursors.
  */
 export function createEditorPresence(
   liveblocks: Liveblocks,
   roomId: string,
   field: string
 ): EditorPresence {
-  const setPresence = (data: JsonObject, ttl: number) =>
+  const activeUserIds: string[] = [];
+
+  const setPresence = (userId: string, data: JsonObject, ttl: number) =>
     liveblocks
       .setPresence(roomId, {
-        userId: AI_USER_ID,
+        userId,
         data,
         userInfo: AI_USER_INFO,
         ttl,
@@ -42,8 +45,11 @@ export function createEditorPresence(
       .catch(() => {});
 
   return {
-    show: (selection) =>
-      setPresence(
+    show: (selection) => {
+      const userId = createAgentEditUserId();
+      activeUserIds.push(userId);
+      return setPresence(
+        userId,
         {
           liveblocksTiptap: {
             field,
@@ -53,7 +59,13 @@ export function createEditorPresence(
           },
         },
         CARET_TTL_SECONDS
-      ),
-    clear: () => setPresence({ liveblocksTiptap: null }, CLEAR_TTL_SECONDS),
+      );
+    },
+    clear: () =>
+      Promise.all(
+        activeUserIds.map((userId) =>
+          setPresence(userId, { liveblocksTiptap: null }, CLEAR_TTL_SECONDS)
+        )
+      ).then(() => {}),
   };
 }
