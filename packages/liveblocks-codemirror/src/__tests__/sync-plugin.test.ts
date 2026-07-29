@@ -1576,11 +1576,7 @@ describe("createLiveblocksSyncPlugin", () => {
                 continue;
               }
               const source = update.source;
-              if (
-                source?.origin !== "local" ||
-                source.via !== "history" ||
-                source.action !== "undo"
-              ) {
+              if (source?.origin !== "local" || source.via !== "undo") {
                 continue;
               }
 

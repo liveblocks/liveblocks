@@ -82,9 +82,12 @@ export function createLiveblocksSyncPlugin(
                 if (changes.empty) continue;
 
                 let selection: EditorSelection | undefined;
-                if (source?.origin === "local" && source.via === "history") {
+                if (
+                  source?.origin === "local" &&
+                  (source.via === "undo" || source.via === "redo")
+                ) {
                   const id =
-                    source.action === "undo"
+                    source.via === "undo"
                       ? room[kInternal].redoStack.at(-1)?.id
                       : room[kInternal].undoStack.at(-1)?.id;
                   const meta =
@@ -92,7 +95,7 @@ export function createLiveblocksSyncPlugin(
                       ? undefined
                       : this.selectionByHistoryId.get(id);
                   if (meta !== undefined) {
-                    if (source.action === "undo") {
+                    if (source.via === "undo") {
                       if (meta.before.anchor !== meta.before.head) {
                         selection = EditorSelection.single(
                           clamp(meta.before.anchor, {

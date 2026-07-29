@@ -110,7 +110,10 @@ export class LiveblocksCollaboration {
 
           const isFromHistory = updates.some((update) => {
             const source = update.source;
-            return source?.origin === "local" && source.via === "history";
+            return (
+              source?.origin === "local" &&
+              (source.via === "undo" || source.via === "redo")
+            );
           });
 
           try {

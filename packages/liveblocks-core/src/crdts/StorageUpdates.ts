@@ -11,10 +11,17 @@ export type LiveObjectUpdate = LiveObjectUpdates<LsonObject>;
 export type LiveListUpdate = LiveListUpdates<Lson>;
 export type LiveTextUpdate = LiveTextUpdates;
 
+/**
+ * Where a Storage update came from.
+ *
+ * Updates with `origin: "remote"` were made by another client (or by the
+ * server), and reached this client over the network. Updates with
+ * `origin: "local"` were made by this client, and `via` says how: a regular
+ * edit, or a replay from the undo/redo history.
+ */
 export type StorageUpdateSource =
   | { origin: "remote" }
-  | { origin: "local"; via: "edit" }
-  | { origin: "local"; via: "history"; action: "undo" | "redo" };
+  | { origin: "local"; via: "edit" | "undo" | "redo" };
 
 /**
  * The payload of notifications sent (in-client) when LiveStructures change.
@@ -23,7 +30,7 @@ export type StorageUpdateSource =
  *
  * Updates delivered through `room.subscribe` may carry
  * `source` to distinguish where a mutation came from.
- * Undo/redo replays use `via: "history"` with `action: "undo" | "redo"`.
+ * Undo/redo replays use `via: "undo"` or `via: "redo"`.
  */
 export type StorageUpdate = (
   | LiveMapUpdate

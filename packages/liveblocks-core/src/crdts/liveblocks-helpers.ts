@@ -651,14 +651,15 @@ export function mergeStorageUpdates(
   if (sa !== undefined || sb !== undefined) {
     if (sa?.origin === "remote" || sb?.origin === "remote") {
       merged.source = { origin: "remote" };
-    } else if (sa?.via === "history" || sb?.via === "history") {
-      const historySource =
-        sb?.via === "history" ? sb : sa?.via === "history" ? sa : undefined;
-      if (historySource?.via === "history") {
-        merged.source = historySource;
-      }
     } else {
-      merged.source = { origin: "local", via: "edit" };
+      // Undo/redo replays win over plain edits, most recent one first
+      const historySource =
+        sb !== undefined && sb.via !== "edit"
+          ? sb
+          : sa !== undefined && sa.via !== "edit"
+            ? sa
+            : undefined;
+      merged.source = historySource ?? { origin: "local", via: "edit" };
     }
   }
   return merged;

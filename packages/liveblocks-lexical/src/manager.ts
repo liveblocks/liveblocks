@@ -1501,13 +1501,14 @@ export class LiveblocksCollaborationManager {
 
   public $applyRemoteUpdates(updates: readonly StorageUpdate[]) {
     // Apply peer edits and local undo/redo replays. Skip our own live
-    // mutations — Lexical already reflects those. History updates use
-    // `origin: "local", via: "history"` (see StorageUpdateSource).
+    // mutations: Lexical already reflects those. History updates use
+    // `origin: "local", via: "undo" | "redo"` (see StorageUpdateSource).
     updates = updates.filter((update) => {
       const source = update.source;
       return (
         source?.origin === "remote" ||
-        (source?.origin === "local" && source.via === "history")
+        (source?.origin === "local" &&
+          (source.via === "undo" || source.via === "redo"))
       );
     });
     if (updates.length === 0) {

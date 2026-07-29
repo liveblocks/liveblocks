@@ -2898,7 +2898,7 @@ describe("room", () => {
       expect(sources).toEqual([{ origin: "remote" }]);
     });
 
-    test("undo and redo produce history-tagged storage updates with action", async () => {
+    test("undo and redo produce undo/redo-tagged storage updates", async () => {
       const { room, root } = await prepareIsolatedStorageTest<{ a: number }>(
         [createSerializedRoot({ a: 0 })],
         0,
@@ -2918,16 +2918,12 @@ describe("room", () => {
       sources.length = 0;
       room.history.undo();
 
-      expect(sources).toEqual([
-        { origin: "local", via: "history", action: "undo" },
-      ]);
+      expect(sources).toEqual([{ origin: "local", via: "undo" }]);
 
       sources.length = 0;
       room.history.redo();
 
-      expect(sources).toEqual([
-        { origin: "local", via: "history", action: "redo" },
-      ]);
+      expect(sources).toEqual([{ origin: "local", via: "redo" }]);
     });
   });
 

@@ -127,8 +127,11 @@ function getHistoryAction(
 ): "undo" | "redo" | undefined {
   for (const update of updates ?? []) {
     const source = update.source;
-    if (source?.origin === "local" && source.via === "history") {
-      return source.action;
+    if (
+      source?.origin === "local" &&
+      (source.via === "undo" || source.via === "redo")
+    ) {
+      return source.via;
     }
   }
 

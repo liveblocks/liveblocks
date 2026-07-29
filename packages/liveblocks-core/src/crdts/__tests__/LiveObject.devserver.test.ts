@@ -1054,8 +1054,7 @@ describe("LiveObject", () => {
           updates: { a: { type: "update" } },
           source: {
             origin: "local",
-            via: "history",
-            action: "undo",
+            via: "undo",
           },
         },
       ]);

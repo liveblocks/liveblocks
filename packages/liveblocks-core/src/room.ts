@@ -3553,8 +3553,7 @@ export function createRoom<
     context.pausedHistory = null;
     const result = applyLocalOps(item.frames, {
       origin: "local",
-      via: "history",
-      action: "undo",
+      via: "undo",
     });
 
     context.redoStack.push({ id: item.id, frames: result.reverse });
@@ -3581,8 +3580,7 @@ export function createRoom<
     context.pausedHistory = null;
     const result = applyLocalOps(item.frames, {
       origin: "local",
-      via: "history",
-      action: "redo",
+      via: "redo",
     });
 
     context.undoStack.push({ id: item.id, frames: result.reverse });

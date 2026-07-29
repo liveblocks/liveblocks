@@ -5490,8 +5490,7 @@ describe("LiveblocksCollaborationManager", () => {
               ],
               source: {
                 origin: "local",
-                via: "history",
-                action: "redo",
+                via: "redo",
               },
             },
           ]);

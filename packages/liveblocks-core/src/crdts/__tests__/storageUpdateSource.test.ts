@@ -58,27 +58,44 @@ describe("mergeStorageUpdates source propagation", () => {
     expect(merged.source).toEqual({ origin: "remote" });
   });
 
-  test("mixed local mutation and history -> merged is history", () => {
+  test("mixed remote and local -> merged is remote", () => {
+    const merged = mergeStorageUpdates(
+      liveObjectUpdate({ origin: "remote" }),
+      liveObjectUpdate({ origin: "local", via: "edit" })
+    );
+    expect(merged.source).toEqual({ origin: "remote" });
+  });
+
+  test("mixed local edit and undo -> merged is undo", () => {
     const merged = mergeStorageUpdates(
       liveObjectUpdate({ origin: "local", via: "edit" }),
-      liveObjectUpdate({ origin: "local", via: "history", action: "undo" })
+      liveObjectUpdate({ origin: "local", via: "undo" })
     );
     expect(merged.source).toEqual({
       origin: "local",
-      via: "history",
-      action: "undo",
+      via: "undo",
     });
   });
 
-  test("mixed history undo and redo -> merged keeps second action", () => {
+  test("mixed undo and local edit -> merged is undo", () => {
     const merged = mergeStorageUpdates(
-      liveObjectUpdate({ origin: "local", via: "history", action: "undo" }),
-      liveObjectUpdate({ origin: "local", via: "history", action: "redo" })
+      liveObjectUpdate({ origin: "local", via: "undo" }),
+      liveObjectUpdate({ origin: "local", via: "edit" })
     );
     expect(merged.source).toEqual({
       origin: "local",
-      via: "history",
-      action: "redo",
+      via: "undo",
+    });
+  });
+
+  test("mixed undo and redo -> merged keeps second one", () => {
+    const merged = mergeStorageUpdates(
+      liveObjectUpdate({ origin: "local", via: "undo" }),
+      liveObjectUpdate({ origin: "local", via: "redo" })
+    );
+    expect(merged.source).toEqual({
+      origin: "local",
+      via: "redo",
     });
   });
 

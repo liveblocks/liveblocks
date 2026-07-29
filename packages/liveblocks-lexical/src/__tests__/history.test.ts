@@ -157,7 +157,7 @@ describe("LiveblocksHistory", () => {
         }
       );
 
-      // Storage → Lexical, including local via:"history" (undo/redo).
+      // Storage → Lexical, including local via:"undo"/via:"redo".
       const unsubscribeStorage = room.subscribe(
         document,
         (updates) => {
@@ -172,7 +172,10 @@ describe("LiveblocksHistory", () => {
 
           const isFromHistory = updates.some((update) => {
             const source = update.source;
-            return source?.origin === "local" && source.via === "history";
+            return (
+              source?.origin === "local" &&
+              (source.via === "undo" || source.via === "redo")
+            );
           });
 
           editor.update(
@@ -585,7 +588,10 @@ describe("LiveblocksHistory", () => {
 
           const isFromHistory = updates.some((update) => {
             const source = update.source;
-            return source?.origin === "local" && source.via === "history";
+            return (
+              source?.origin === "local" &&
+              (source.via === "undo" || source.via === "redo")
+            );
           });
 
           editor.update(
@@ -701,7 +707,10 @@ describe("LiveblocksHistory", () => {
 
           const isFromHistory = updates.some((update) => {
             const source = update.source;
-            return source?.origin === "local" && source.via === "history";
+            return (
+              source?.origin === "local" &&
+              (source.via === "undo" || source.via === "redo")
+            );
           });
 
           editor.update(
