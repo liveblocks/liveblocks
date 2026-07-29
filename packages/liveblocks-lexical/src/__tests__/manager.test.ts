@@ -5445,7 +5445,7 @@ describe("LiveblocksCollaborationManager", () => {
                 text: "Changed",
               },
             ],
-            source: { origin: "local", via: "mutation" },
+            source: { origin: "local", via: "edit" },
           },
         ]);
       });
@@ -5591,7 +5591,7 @@ describe("LiveblocksCollaborationManager", () => {
                 item: paragraph_liveblocks,
               },
             ],
-            source: { origin: "local", via: "mutation" },
+            source: { origin: "local", via: "edit" },
           },
         ]);
       });
@@ -5781,7 +5781,7 @@ describe("LiveblocksCollaborationManager", () => {
                 deletedItem: deletedParagraph,
               },
             ],
-            source: { origin: "local", via: "mutation" },
+            source: { origin: "local", via: "edit" },
           },
         ]);
       });
@@ -6785,7 +6785,7 @@ describe("LiveblocksCollaborationManager", () => {
                 item: movedParagraph,
               },
             ],
-            source: { origin: "local", via: "mutation" },
+            source: { origin: "local", via: "edit" },
           },
         ]);
       });
@@ -7025,7 +7025,7 @@ describe("LiveblocksCollaborationManager", () => {
                 item: newParagraph,
               },
             ],
-            source: { origin: "local", via: "mutation" },
+            source: { origin: "local", via: "edit" },
           },
         ]);
       });
@@ -7266,7 +7266,7 @@ describe("LiveblocksCollaborationManager", () => {
               type: { type: "update" },
               props: { type: "update" },
             },
-            source: { origin: "local", via: "mutation" },
+            source: { origin: "local", via: "edit" },
           },
         ]);
       });

@@ -637,7 +637,7 @@ describe("LiveMap", () => {
           type: "LiveObject",
           node: mapElement,
           updates: { a: { type: "update" } },
-          source: { origin: "local", via: "mutation" },
+          source: { origin: "local", via: "edit" },
         },
       ]);
     });

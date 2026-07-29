@@ -102,7 +102,7 @@ export class LiveblocksCollaboration {
           if (
             updates.every((update) => {
               const source = update.source;
-              return source?.origin === "local" && source.via === "mutation";
+              return source?.origin === "local" && source.via === "edit";
             })
           ) {
             return;

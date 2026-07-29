@@ -767,7 +767,7 @@ describe("LiveObject", () => {
           type: "LiveObject",
           node: root.get("child"),
           updates: { a: { type: "update" } },
-          source: { origin: "local", via: "mutation" },
+          source: { origin: "local", via: "edit" },
         },
       ]);
       expect(callback).toHaveBeenCalledWith([
@@ -775,7 +775,7 @@ describe("LiveObject", () => {
           type: "LiveObject",
           node: root.get("child").get("subchild"),
           updates: { b: { type: "update" } },
-          source: { origin: "local", via: "mutation" },
+          source: { origin: "local", via: "edit" },
         },
       ]);
     });
@@ -823,7 +823,7 @@ describe("LiveObject", () => {
           type: "LiveObject",
           node: rootA.get("child"),
           updates: { a: { type: "update" } },
-          source: { origin: "local", via: "mutation" },
+          source: { origin: "local", via: "edit" },
         },
       ]);
       expect(callback).toHaveBeenCalledWith([
@@ -920,7 +920,7 @@ describe("LiveObject", () => {
           type: "LiveObject",
           node: rootA.get("child"),
           updates: { b: { type: "delete", deletedItem: -2 } },
-          source: { origin: "local", via: "mutation" },
+          source: { origin: "local", via: "edit" },
         },
       ]);
     });

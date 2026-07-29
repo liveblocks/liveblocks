@@ -164,7 +164,7 @@ describe("LiveblocksHistory", () => {
           if (
             updates.every((update) => {
               const source = update.source;
-              return source?.origin === "local" && source.via === "mutation";
+              return source?.origin === "local" && source.via === "edit";
             })
           ) {
             return;
@@ -577,7 +577,7 @@ describe("LiveblocksHistory", () => {
           if (
             updates.every((update) => {
               const source = update.source;
-              return source?.origin === "local" && source.via === "mutation";
+              return source?.origin === "local" && source.via === "edit";
             })
           ) {
             return;
@@ -693,7 +693,7 @@ describe("LiveblocksHistory", () => {
           if (
             updates.every((update) => {
               const source = update.source;
-              return source?.origin === "local" && source.via === "mutation";
+              return source?.origin === "local" && source.via === "edit";
             })
           ) {
             return;

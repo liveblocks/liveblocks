@@ -1874,7 +1874,7 @@ export function createRoom<
     options?: DispatchOptions
   ): void {
     for (const value of storageUpdates.values()) {
-      value.source = { origin: "local", via: "mutation" };
+      value.source = { origin: "local", via: "edit" };
     }
 
     if (context.activeBatch) {
@@ -2235,7 +2235,7 @@ export function createRoom<
     localStorageUpdateSource: Extract<
       StorageUpdateSource,
       { origin: "local" }
-    > = { origin: "local", via: "mutation" }
+    > = { origin: "local", via: "edit" }
   ): {
     opsToEmit: ClientWireOp[]; // Ops to send over the wire afterwards
     reverse: Stackframe<P>[]; // Reverse ops to add to the undo stack aftwards
@@ -2283,7 +2283,7 @@ export function createRoom<
     localStorageUpdateSource: Extract<
       StorageUpdateSource,
       { origin: "local" }
-    > = { origin: "local", via: "mutation" }
+    > = { origin: "local", via: "edit" }
   ): {
     reverse: Stackframe<P>[];
     updates: {

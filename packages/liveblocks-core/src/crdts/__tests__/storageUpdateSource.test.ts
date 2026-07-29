@@ -33,12 +33,12 @@ function liveTextUpdate(source?: StorageUpdateSource): StorageUpdate {
 describe("mergeStorageUpdates source propagation", () => {
   test("both local mutation -> merged is local mutation", () => {
     const merged = mergeStorageUpdates(
-      liveObjectUpdate({ origin: "local", via: "mutation" }),
-      liveObjectUpdate({ origin: "local", via: "mutation" })
+      liveObjectUpdate({ origin: "local", via: "edit" }),
+      liveObjectUpdate({ origin: "local", via: "edit" })
     );
     expect(merged.source).toEqual({
       origin: "local",
-      via: "mutation",
+      via: "edit",
     });
   });
 
@@ -52,7 +52,7 @@ describe("mergeStorageUpdates source propagation", () => {
 
   test("mixed local and remote -> merged is remote", () => {
     const merged = mergeStorageUpdates(
-      liveObjectUpdate({ origin: "local", via: "mutation" }),
+      liveObjectUpdate({ origin: "local", via: "edit" }),
       liveObjectUpdate({ origin: "remote" })
     );
     expect(merged.source).toEqual({ origin: "remote" });
@@ -60,7 +60,7 @@ describe("mergeStorageUpdates source propagation", () => {
 
   test("mixed local mutation and history -> merged is history", () => {
     const merged = mergeStorageUpdates(
-      liveObjectUpdate({ origin: "local", via: "mutation" }),
+      liveObjectUpdate({ origin: "local", via: "edit" }),
       liveObjectUpdate({ origin: "local", via: "history", action: "undo" })
     );
     expect(merged.source).toEqual({
@@ -85,11 +85,11 @@ describe("mergeStorageUpdates source propagation", () => {
   test("untagged + local mutation -> merged is local mutation", () => {
     const merged = mergeStorageUpdates(
       liveObjectUpdate(),
-      liveObjectUpdate({ origin: "local", via: "mutation" })
+      liveObjectUpdate({ origin: "local", via: "edit" })
     );
     expect(merged.source).toEqual({
       origin: "local",
-      via: "mutation",
+      via: "edit",
     });
   });
 

@@ -31,7 +31,7 @@ describe("Storage", () => {
           type: "LiveObject",
           node: storage.root,
           updates: { a: { type: "update" } },
-          source: { origin: "local", via: "mutation" },
+          source: { origin: "local", via: "edit" },
         },
       ]);
     });
@@ -139,7 +139,7 @@ describe("Storage", () => {
           type: "LiveObject",
           node: storage.root,
           updates: { a: { type: "update" }, b: { type: "update" } },
-          source: { origin: "local", via: "mutation" },
+          source: { origin: "local", via: "edit" },
         },
       ]);
 
@@ -175,13 +175,13 @@ describe("Storage", () => {
           type: "LiveObject",
           node: storage.root,
           updates: { a: { type: "update" } },
-          source: { origin: "local", via: "mutation" },
+          source: { origin: "local", via: "edit" },
         },
         {
           type: "LiveObject",
           node: root.get("child"),
           updates: { b: { type: "update" } },
-          source: { origin: "local", via: "mutation" },
+          source: { origin: "local", via: "edit" },
         },
       ]);
     });
@@ -221,25 +221,25 @@ describe("Storage", () => {
           type: "LiveObject",
           node: storage.root,
           updates: { a: { type: "update" } },
-          source: { origin: "local", via: "mutation" },
+          source: { origin: "local", via: "edit" },
         },
         {
           type: "LiveObject",
           node: root.get("childObj"),
           updates: { b: { type: "update" } },
-          source: { origin: "local", via: "mutation" },
+          source: { origin: "local", via: "edit" },
         },
         {
           type: "LiveList",
           node: root.get("childList"),
           updates: [{ index: 0, item: "item1", type: "insert" }],
-          source: { origin: "local", via: "mutation" },
+          source: { origin: "local", via: "edit" },
         },
         {
           type: "LiveMap",
           node: root.get("childMap"),
           updates: { el1: { type: "update" } },
-          source: { origin: "local", via: "mutation" },
+          source: { origin: "local", via: "edit" },
         },
       ]);
     });

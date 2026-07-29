@@ -658,7 +658,7 @@ export function mergeStorageUpdates(
         merged.source = historySource;
       }
     } else {
-      merged.source = { origin: "local", via: "mutation" };
+      merged.source = { origin: "local", via: "edit" };
     }
   }
   return merged;

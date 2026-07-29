@@ -46,7 +46,7 @@ export function createLiveblocksSyncPlugin(
                 }
 
                 const source = update.source;
-                if (source?.origin === "local" && source.via === "mutation") {
+                if (source?.origin === "local" && source.via === "edit") {
                   continue;
                 }
 

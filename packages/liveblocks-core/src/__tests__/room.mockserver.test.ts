@@ -2850,7 +2850,7 @@ describe("room", () => {
 
       root.set("a", 1);
 
-      expect(sources).toEqual([{ origin: "local", via: "mutation" }]);
+      expect(sources).toEqual([{ origin: "local", via: "edit" }]);
     });
 
     test("remote ops without opId are tagged remote", async () => {
@@ -2913,7 +2913,7 @@ describe("room", () => {
       );
 
       root.set("a", 1);
-      expect(sources).toEqual([{ origin: "local", via: "mutation" }]);
+      expect(sources).toEqual([{ origin: "local", via: "edit" }]);
 
       sources.length = 0;
       room.history.undo();

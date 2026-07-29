@@ -666,7 +666,7 @@ describe("room (dev server)", () => {
 
       root.set("a", 1);
 
-      expect(sources).toEqual([{ origin: "local", via: "mutation" }]);
+      expect(sources).toEqual([{ origin: "local", via: "edit" }]);
     });
 
     test("local LiveText mutations are tagged local on the envelope only", async () => {
@@ -703,7 +703,7 @@ describe("room (dev server)", () => {
 
       expect(updates).toEqual([
         {
-          source: { origin: "local", via: "mutation" },
+          source: { origin: "local", via: "edit" },
           changeHasSource: false,
         },
       ]);
@@ -771,7 +771,7 @@ describe("room (dev server)", () => {
       );
 
       root.set("a", 1);
-      expect(sources).toEqual([{ origin: "local", via: "mutation" }]);
+      expect(sources).toEqual([{ origin: "local", via: "edit" }]);
 
       sources.length = 0;
       room.history.undo();

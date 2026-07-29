@@ -606,7 +606,7 @@ describe("LiveList edge cases", () => {
           type: "LiveList",
           node: listItems,
           updates: [{ index: 2, item: "c", type: "insert" }],
-          source: { origin: "local", via: "mutation" },
+          source: { origin: "local", via: "edit" },
         },
       ]);
       expect(listCallback).toHaveBeenCalledTimes(2);

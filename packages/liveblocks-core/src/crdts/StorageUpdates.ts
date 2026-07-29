@@ -13,7 +13,7 @@ export type LiveTextUpdate = LiveTextUpdates;
 
 export type StorageUpdateSource =
   | { origin: "remote" }
-  | { origin: "local"; via: "mutation" }
+  | { origin: "local"; via: "edit" }
   | { origin: "local"; via: "history"; action: "undo" | "redo" };
 
 /**
