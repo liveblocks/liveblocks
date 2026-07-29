@@ -23,7 +23,7 @@ import type {
   ManagedPool,
   PrivateLiveNodeApi,
 } from "./AbstractCrdt";
-import { AbstractCrdt } from "./AbstractCrdt";
+import { AbstractCrdt, OpSource } from "./AbstractCrdt";
 import {
   applyDelete,
   applyFormat,
@@ -284,12 +284,12 @@ export class LiveText extends AbstractCrdt {
   }
 
   /** @internal */
-  _apply(op: Op, isLocal: boolean): ApplyResult {
+  _apply(op: Op, source: OpSource): ApplyResult {
     if (op.type !== OpCode.UPDATE_TEXT) {
-      return super._apply(op, isLocal);
+      return super._apply(op, source);
     }
 
-    if (isLocal) {
+    if (source === OpSource.LOCAL) {
       return this.#applyLocal(op);
     }
 

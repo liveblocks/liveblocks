@@ -12,7 +12,7 @@ import type {
 import { CrdtType } from "../protocol/StorageNode";
 import type * as DevTools from "../types/DevToolsTreeNode";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
-import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
+import type { ApplyResult, ManagedPool, OpSource } from "./AbstractCrdt";
 import { AbstractCrdt } from "./AbstractCrdt";
 
 /**
@@ -85,8 +85,8 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
   }
 
   /** @internal */
-  _apply(op: Op, isLocal: boolean): ApplyResult {
-    return super._apply(op, isLocal);
+  _apply(op: Op, source: OpSource): ApplyResult {
+    return super._apply(op, source);
   }
 
   /** @internal */

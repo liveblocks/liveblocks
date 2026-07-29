@@ -957,8 +957,8 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   }
 
   /** @internal */
-  _apply(op: Op, isLocal: boolean): ApplyResult {
-    return super._apply(op, isLocal);
+  _apply(op: Op, source: OpSource): ApplyResult {
+    return super._apply(op, source);
   }
 
   /** @internal */

@@ -352,14 +352,14 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   }
 
   /** @internal */
-  _apply(op: Op, isLocal: boolean): ApplyResult {
+  _apply(op: Op, source: OpSource): ApplyResult {
     if (op.type === OpCode.UPDATE_OBJECT) {
-      return this.#applyUpdate(op, isLocal);
+      return this.#applyUpdate(op, source);
     } else if (op.type === OpCode.DELETE_OBJECT_KEY) {
-      return this.#applyDeleteObjectKey(op, isLocal);
+      return this.#applyDeleteObjectKey(op, source);
     }
 
-    return super._apply(op, isLocal);
+    return super._apply(op, source);
   }
 
   /** @internal */
@@ -389,7 +389,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     }
   }
 
-  #applyUpdate(op: UpdateObjectOp, isLocal: boolean): ApplyResult {
+  #applyUpdate(op: UpdateObjectOp, source: OpSource): ApplyResult {
     let isModified = false;
     const id = nn(this._id);
     const reverse: Op[] = [];
@@ -420,7 +420,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
         continue;
       }
 
-      if (isLocal) {
+      if (source === OpSource.LOCAL) {
         // Track locally-generated opId to preserve optimistic update
         this.#unackedOpsByKey.set(key, nn(op.opId));
       } else if (this.#unackedOpsByKey.get(key) === undefined) {
@@ -464,7 +464,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       : { modified: false };
   }
 
-  #applyDeleteObjectKey(op: DeleteObjectKeyOp, isLocal: boolean): ApplyResult {
+  #applyDeleteObjectKey(op: DeleteObjectKeyOp, source: OpSource): ApplyResult {
     const key = op.key;
 
     // If property does not exist, exit without notifying
@@ -475,7 +475,10 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
 
     // If a local operation exists on the same key and we receive a remote
     // one prevent flickering by not applying delete op.
-    if (!isLocal && this.#unackedOpsByKey.get(key) !== undefined) {
+    if (
+      source !== OpSource.LOCAL &&
+      this.#unackedOpsByKey.get(key) !== undefined
+    ) {
       return { modified: false };
     }
 

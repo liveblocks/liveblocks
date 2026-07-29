@@ -355,7 +355,7 @@ export abstract class AbstractCrdt {
   }
 
   /** @internal */
-  _apply(op: Op, _isLocal: boolean): ApplyResult {
+  _apply(op: Op, _source: OpSource): ApplyResult {
     switch (op.type) {
       case OpCode.DELETE_CRDT: {
         if (this.parent.type === "HasParent") {

@@ -9,7 +9,7 @@ import type {
   UpdateTextOp,
 } from "../../protocol/Op";
 import { OpCode } from "../../protocol/Op";
-import { createManagedPool } from "../AbstractCrdt";
+import { createManagedPool, OpSource } from "../AbstractCrdt";
 import { LiveText } from "../LiveText";
 import {
   applyLiveTextOperations,
@@ -607,7 +607,7 @@ class SimClient {
     // Mimic room.applyLocalOps(): assign opIds, apply locally, send.
     for (const op of frame) {
       const wireOp = { ...op, opId: `${this.id}:u${this.#opClock++}` };
-      this.text._apply(wireOp, true);
+      this.text._apply(wireOp, OpSource.LOCAL);
       this.outbox.push(wireOp);
     }
   }
@@ -617,7 +617,11 @@ class SimClient {
     if (message === undefined) {
       return;
     }
-    this.text._apply(message, false);
+    // Acks carry our own opId; forwards from other clients don't.
+    this.text._apply(
+      message,
+      message.opId !== undefined ? OpSource.OURS : OpSource.THEIRS
+    );
   }
 }
 

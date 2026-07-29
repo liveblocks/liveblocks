@@ -9,7 +9,7 @@ import type { UpdateTextOp } from "../../protocol/Op";
 import { OpCode } from "../../protocol/Op";
 import type { StorageNode } from "../../protocol/StorageNode";
 import { CrdtType } from "../../protocol/StorageNode";
-import { createManagedPool } from "../AbstractCrdt";
+import { createManagedPool, OpSource } from "../AbstractCrdt";
 import { LiveText } from "../LiveText";
 import {
   applyTextOperationsToSegments,
@@ -133,7 +133,7 @@ describe("LiveText acknowledgement", () => {
         version: 1,
         ops: [{ type: "insert", index: 5, text: " world" }],
       },
-      false
+      OpSource.OURS
     );
 
     const undoOp = undoOps[0];
@@ -142,7 +142,7 @@ describe("LiveText acknowledgement", () => {
     }
 
     const outgoingUndoOp = { ...undoOp, opId: "undo" };
-    text._apply(outgoingUndoOp, true);
+    text._apply(outgoingUndoOp, OpSource.LOCAL);
 
     expect(outgoingUndoOp).toMatchObject({
       baseVersion: 1,
@@ -174,7 +174,7 @@ describe("LiveText acknowledgement", () => {
         version: 1,
         ops: [{ type: "insert", index: 0, text: "B" }],
       },
-      false
+      OpSource.THEIRS
     );
 
     // The remote insert was accepted first, so it wins the same-index tie.
@@ -191,7 +191,7 @@ describe("LiveText acknowledgement", () => {
         version: 2,
         ops: [{ type: "insert", index: 1, text: "A" }],
       },
-      false
+      OpSource.OURS
     );
 
     expect(text.toString()).toBe("BAHello");
@@ -224,7 +224,7 @@ describe("LiveText acknowledgement", () => {
         version: 1,
         ops: [{ type: "insert", index: 0, text: "A" }],
       },
-      false
+      OpSource.THEIRS
     );
 
     expect(text.toString()).toBe("Allo");
@@ -238,7 +238,7 @@ describe("LiveText acknowledgement", () => {
         version: 2,
         ops: [{ type: "delete", index: 1, length: 2 }],
       },
-      false
+      OpSource.OURS
     );
 
     expect(text.toString()).toBe("Allo");
@@ -250,7 +250,7 @@ describe("LiveText acknowledgement", () => {
     }
 
     const outgoingUndoOp = { ...undoOp, opId: "undo" };
-    text._apply(outgoingUndoOp, true);
+    text._apply(outgoingUndoOp, OpSource.LOCAL);
 
     expect(outgoingUndoOp).toMatchObject({
       baseVersion: 2,
@@ -295,7 +295,7 @@ describe("LiveText acknowledgement", () => {
         version: 1,
         ops: [{ type: "insert", index: 0, text: "A" }],
       },
-      false
+      OpSource.OURS
     );
 
     expect(text.toString()).toBe("AHello!");
@@ -317,7 +317,7 @@ describe("LiveText acknowledgement", () => {
         version: 2,
         ops: [{ type: "insert", index: 6, text: "!" }],
       },
-      false
+      OpSource.OURS
     );
 
     expect(text.toString()).toBe("AHello!");

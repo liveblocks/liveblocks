@@ -2398,7 +2398,7 @@ export function createRoom<
           return { modified: false };
         }
 
-        return node._apply(op, source === OpSource.LOCAL);
+        return node._apply(op, source);
       }
 
       case OpCode.SET_PARENT_KEY: {
