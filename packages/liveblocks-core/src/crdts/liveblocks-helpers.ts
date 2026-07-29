@@ -1,4 +1,3 @@
-import { kStorageUpdateSource } from "../internal";
 import { assertNever, nn } from "../lib/assert";
 import type { Json } from "../lib/Json";
 import { stringifyOrLog as stringify } from "../lib/stringify";
@@ -647,19 +646,19 @@ export function mergeStorageUpdates(
     merged = second;
   }
 
-  const sa = first[kStorageUpdateSource];
-  const sb = second[kStorageUpdateSource];
+  const sa = first.source;
+  const sb = second.source;
   if (sa !== undefined || sb !== undefined) {
     if (sa?.origin === "remote" || sb?.origin === "remote") {
-      merged[kStorageUpdateSource] = { origin: "remote" };
+      merged.source = { origin: "remote" };
     } else if (sa?.via === "history" || sb?.via === "history") {
       const historySource =
         sb?.via === "history" ? sb : sa?.via === "history" ? sa : undefined;
       if (historySource?.via === "history") {
-        merged[kStorageUpdateSource] = historySource;
+        merged.source = historySource;
       }
     } else {
-      merged[kStorageUpdateSource] = { origin: "local", via: "mutation" };
+      merged.source = { origin: "local", via: "mutation" };
     }
   }
   return merged;

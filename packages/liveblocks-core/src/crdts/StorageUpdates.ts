@@ -3,7 +3,6 @@ import type { LiveMapUpdates } from "../crdts/LiveMap";
 import type { LiveObjectUpdates } from "../crdts/LiveObject";
 import type { LiveTextUpdates } from "../crdts/LiveText";
 import type { Lson, LsonObject } from "../crdts/Lson";
-import type { kStorageUpdateSource } from "../internal";
 
 export type StorageCallback = (updates: StorageUpdate[]) => void;
 
@@ -23,7 +22,7 @@ export type StorageUpdateSource =
  * in-client.
  *
  * Updates delivered through `room.subscribe` may carry
- * `[kStorageUpdateSource]` to distinguish where a mutation came from.
+ * `source` to distinguish where a mutation came from.
  * Undo/redo replays use `via: "history"` with `action: "undo" | "redo"`.
  */
 export type StorageUpdate = (
@@ -32,5 +31,5 @@ export type StorageUpdate = (
   | LiveListUpdate
   | LiveTextUpdate
 ) & {
-  [kStorageUpdateSource]?: StorageUpdateSource;
+  source?: StorageUpdateSource;
 };

@@ -6,7 +6,7 @@ import {
   LiveText,
   type Room,
 } from "@liveblocks/client";
-import { kInternal, kStorageUpdateSource } from "@liveblocks/core";
+import { kInternal } from "@liveblocks/core";
 import {
   $applyNodeReplacement,
   $createParagraphNode,
@@ -163,7 +163,7 @@ describe("LiveblocksHistory", () => {
         (updates) => {
           if (
             updates.every((update) => {
-              const source = update[kStorageUpdateSource];
+              const source = update.source;
               return source?.origin === "local" && source.via === "mutation";
             })
           ) {
@@ -171,7 +171,7 @@ describe("LiveblocksHistory", () => {
           }
 
           const isFromHistory = updates.some((update) => {
-            const source = update[kStorageUpdateSource];
+            const source = update.source;
             return source?.origin === "local" && source.via === "history";
           });
 
@@ -576,7 +576,7 @@ describe("LiveblocksHistory", () => {
         (updates) => {
           if (
             updates.every((update) => {
-              const source = update[kStorageUpdateSource];
+              const source = update.source;
               return source?.origin === "local" && source.via === "mutation";
             })
           ) {
@@ -584,7 +584,7 @@ describe("LiveblocksHistory", () => {
           }
 
           const isFromHistory = updates.some((update) => {
-            const source = update[kStorageUpdateSource];
+            const source = update.source;
             return source?.origin === "local" && source.via === "history";
           });
 
@@ -692,7 +692,7 @@ describe("LiveblocksHistory", () => {
         (updates) => {
           if (
             updates.every((update) => {
-              const source = update[kStorageUpdateSource];
+              const source = update.source;
               return source?.origin === "local" && source.via === "mutation";
             })
           ) {
@@ -700,7 +700,7 @@ describe("LiveblocksHistory", () => {
           }
 
           const isFromHistory = updates.some((update) => {
-            const source = update[kStorageUpdateSource];
+            const source = update.source;
             return source?.origin === "local" && source.via === "history";
           });
 
@@ -2041,7 +2041,9 @@ describe("LiveblocksHistory", () => {
       editor.update(() => {}, { discrete: true });
 
       const content = (
-        (document.get("children").get(0) as LiveElementNode).get("children").get(0)! as LiveTextNode
+        (document.get("children").get(0) as LiveElementNode)
+          .get("children")
+          .get(0)! as LiveTextNode
       ).get("content");
       expect(content.toString()).toBe("Ft");
 
@@ -2118,7 +2120,9 @@ describe("LiveblocksHistory", () => {
       editor.update(() => {}, { discrete: true });
 
       const content = (
-        (document.get("children").get(0) as LiveElementNode).get("children").get(0)! as LiveTextNode
+        (document.get("children").get(0) as LiveElementNode)
+          .get("children")
+          .get(0)! as LiveTextNode
       ).get("content");
 
       vi.advanceTimersByTime(1000);
@@ -2197,7 +2201,9 @@ describe("LiveblocksHistory", () => {
       );
 
       const content = (
-        (document.get("children").get(0) as LiveElementNode).get("children").get(0)! as LiveTextNode
+        (document.get("children").get(0) as LiveElementNode)
+          .get("children")
+          .get(0)! as LiveTextNode
       ).get("content");
       expect(content.toString()).toBe("Ft");
 
@@ -2419,7 +2425,9 @@ describe("LiveblocksHistory", () => {
         decodeAnchor: number | null;
       } | null = null;
       const firstContent = (
-        (document.get("children").get(0) as LiveElementNode).get("children").get(0)! as LiveTextNode
+        (document.get("children").get(0) as LiveElementNode)
+          .get("children")
+          .get(0)! as LiveTextNode
       ).get("content");
 
       const unsub = room[kInternal].history.subscribe((event) => {
@@ -2800,9 +2808,7 @@ describe("LiveblocksHistory", () => {
       const { editor, collaboration, manager } =
         createCollaborationFromDocument(room, document);
 
-      const liveText = (
-        document.get("children").get(0) as LiveElementNode
-      )
+      const liveText = (document.get("children").get(0) as LiveElementNode)
         .get("children")
         .get(0)! as LiveTextNode;
 
@@ -2848,12 +2854,14 @@ describe("LiveblocksHistory", () => {
       expect(staleFocusKey).not.toBeNull();
 
       // Detached keys that createBinding will not scrub (not in forward[]).
-      (
-        manager.binding.reverse as Map<string, typeof liveText>
-      ).set(staleAnchorKey!, liveText);
-      (
-        manager.binding.reverse as Map<string, typeof liveText>
-      ).set(staleFocusKey!, liveText);
+      (manager.binding.reverse as Map<string, typeof liveText>).set(
+        staleAnchorKey!,
+        liveText
+      );
+      (manager.binding.reverse as Map<string, typeof liveText>).set(
+        staleFocusKey!,
+        liveText
+      );
 
       vi.advanceTimersByTime(1000);
 
@@ -3085,7 +3093,9 @@ describe("LiveblocksHistory", () => {
       editor.update(() => {}, { discrete: true });
       collaboration.register();
 
-      const paragraph_liveblocks = document.get("children").get(0) as LiveElementNode;
+      const paragraph_liveblocks = document
+        .get("children")
+        .get(0) as LiveElementNode;
 
       editor.update(
         () => {
@@ -3176,13 +3186,19 @@ describe("LiveblocksHistory", () => {
       );
       vi.advanceTimersByTime(1000);
 
-      expect((document.get("children").get(0) as LiveElementNode).get("children").length).toBe(2);
+      expect(
+        (document.get("children").get(0) as LiveElementNode).get("children")
+          .length
+      ).toBe(2);
 
       editor.dispatchCommand(UNDO_COMMAND, undefined);
       await Promise.resolve();
       await Promise.resolve();
 
-      expect((document.get("children").get(0) as LiveElementNode).get("children").length).toBe(1);
+      expect(
+        (document.get("children").get(0) as LiveElementNode).get("children")
+          .length
+      ).toBe(1);
       expect(
         editor.read(() => {
           const selection = $getSelection();
@@ -3255,9 +3271,9 @@ describe("LiveblocksHistory", () => {
       editor.update(() => {}, { discrete: true });
       collaboration.register();
 
-      const decorator_liveblocks = (document
-        .get("children")
-        .get(0) as LiveElementNode)
+      const decorator_liveblocks = (
+        document.get("children").get(0) as LiveElementNode
+      )
         .get("children")
         .get(0)! as LiveDecoratorNode;
 
@@ -3341,7 +3357,10 @@ describe("LiveblocksHistory", () => {
           }
           const suffix = paragraph
             .getChildren()
-            .find((child) => $isTextNode(child) && child.getTextContent() === " you?");
+            .find(
+              (child) =>
+                $isTextNode(child) && child.getTextContent() === " you?"
+            );
           if (suffix === undefined || !$isTextNode(suffix)) {
             throw new Error("Expected suffix text node");
           }
@@ -3375,11 +3394,7 @@ describe("LiveblocksHistory", () => {
       ).toEqual([
         {
           kind: "text",
-          content: [
-            ["How "],
-            ["are", { bold: true }],
-            [" you?"],
-          ],
+          content: [["How "], ["are", { bold: true }], [" you?"]],
         },
       ]);
 
@@ -3799,7 +3814,9 @@ async function createRoomWithFormattedText(
 
   const document = root.get("document") as LiveRootNode;
   const content = (
-    (document.get("children").get(0) as LiveElementNode).get("children").get(0)! as LiveTextNode
+    (document.get("children").get(0) as LiveElementNode)
+      .get("children")
+      .get(0)! as LiveTextNode
   ).get("content");
 
   return { room, document, content };
@@ -3843,7 +3860,9 @@ async function createRoomWithText(text: string = "Hello") {
 
   const document = root.get("document") as LiveRootNode;
   const content = (
-    (document.get("children").get(0) as LiveElementNode).get("children").get(0)! as LiveTextNode
+    (document.get("children").get(0) as LiveElementNode)
+      .get("children")
+      .get(0)! as LiveTextNode
   ).get("content");
 
   return { room, document, content };

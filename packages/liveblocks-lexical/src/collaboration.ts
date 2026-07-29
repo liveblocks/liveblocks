@@ -1,5 +1,4 @@
 import type { Room } from "@liveblocks/client";
-import { kStorageUpdateSource } from "@liveblocks/core";
 import { mergeRegister } from "@lexical/utils";
 import {
   $getSelection,
@@ -102,7 +101,7 @@ export class LiveblocksCollaboration {
 
           if (
             updates.every((update) => {
-              const source = update[kStorageUpdateSource];
+              const source = update.source;
               return source?.origin === "local" && source.via === "mutation";
             })
           ) {
@@ -110,7 +109,7 @@ export class LiveblocksCollaboration {
           }
 
           const isFromHistory = updates.some((update) => {
-            const source = update[kStorageUpdateSource];
+            const source = update.source;
             return source?.origin === "local" && source.via === "history";
           });
 

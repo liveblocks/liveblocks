@@ -7,12 +7,7 @@ import {
 import { EditorView } from "@codemirror/view";
 import type { LiveObject, Room } from "@liveblocks/client";
 import type { LiveText } from "@liveblocks/core";
-import {
-  CrdtType,
-  kInternal,
-  kStorageUpdateSource,
-  OpCode,
-} from "@liveblocks/core";
+import { CrdtType, kInternal, OpCode } from "@liveblocks/core";
 import { describe, expect, onTestFinished, test, vi } from "vitest";
 
 import {
@@ -1580,7 +1575,7 @@ describe("createLiveblocksSyncPlugin", () => {
               if (update.type !== "LiveText" || update.node !== liveText) {
                 continue;
               }
-              const source = update[kStorageUpdateSource];
+              const source = update.source;
               if (
                 source?.origin !== "local" ||
                 source.via !== "history" ||

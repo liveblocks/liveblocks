@@ -14,7 +14,6 @@ import type {
   StorageUpdate,
   StorageUpdateSource,
 } from "../crdts/StorageUpdates";
-import { kStorageUpdateSource } from "../internal";
 import { nn } from "../lib/assert";
 import { prepareIsolatedStorageTest, prepareStorageTest } from "./_devserver";
 import type { JsonStorageUpdate } from "./_updatesUtils";
@@ -649,7 +648,7 @@ describe("room (dev server)", () => {
 
   describe("storage update source", () => {
     function readSources(updates: StorageUpdate[]): StorageUpdateSource[] {
-      return updates.map((update) => update[kStorageUpdateSource]!);
+      return updates.map((update) => update.source!);
     }
 
     test("local LiveObject mutations are tagged local", async () => {
@@ -691,9 +690,9 @@ describe("room (dev server)", () => {
               continue;
             }
             updates.push({
-              source: update[kStorageUpdateSource]!,
+              source: update.source!,
               changeHasSource: update.updates.some(
-                (change) => kStorageUpdateSource in change
+                (change) => "source" in change
               ),
             });
           }

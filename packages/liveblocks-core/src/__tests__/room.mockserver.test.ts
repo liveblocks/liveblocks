@@ -29,7 +29,7 @@ import type {
   StorageUpdate,
   StorageUpdateSource,
 } from "../crdts/StorageUpdates";
-import { kInternal, kStorageUpdateSource } from "../internal";
+import { kInternal } from "../internal";
 import { makeEventSource } from "../lib/EventSource";
 import * as console from "../lib/fancy-console";
 import type { Json, JsonObject } from "../lib/Json";
@@ -2831,7 +2831,7 @@ describe("room", () => {
 
   describe("storage update source", () => {
     function readSources(updates: StorageUpdate[]): StorageUpdateSource[] {
-      return updates.map((update) => update[kStorageUpdateSource]!);
+      return updates.map((update) => update.source!);
     }
 
     test("local mutations are tagged local", async () => {

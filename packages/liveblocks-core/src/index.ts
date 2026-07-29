@@ -135,7 +135,7 @@ export type {
   KDAD,
 } from "./globals/augmentation";
 export type { SyncConfig, SyncMode } from "./immutable";
-export { kInternal, kStorageUpdateSource } from "./internal";
+export { kInternal } from "./internal";
 export { makeAbortController } from "./lib/abortController";
 export { assert, assertNever, nn } from "./lib/assert";
 export type {

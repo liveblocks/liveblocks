@@ -9,7 +9,6 @@ import {
 import {
   type JsonObject,
   kInternal,
-  kStorageUpdateSource,
   type PrivateLiveNodeApi,
   type TextAttributes,
 } from "@liveblocks/core";
@@ -1505,7 +1504,7 @@ export class LiveblocksCollaborationManager {
     // mutations — Lexical already reflects those. History updates use
     // `origin: "local", via: "history"` (see StorageUpdateSource).
     updates = updates.filter((update) => {
-      const source = update[kStorageUpdateSource];
+      const source = update.source;
       return (
         source?.origin === "remote" ||
         (source?.origin === "local" && source.via === "history")

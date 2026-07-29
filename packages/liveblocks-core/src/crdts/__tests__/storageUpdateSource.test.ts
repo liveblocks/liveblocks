@@ -1,6 +1,5 @@
 import { describe, expect, test } from "vitest";
 
-import { kStorageUpdateSource } from "../../internal";
 import { mergeStorageUpdates } from "../liveblocks-helpers";
 import { LiveObject } from "../LiveObject";
 import { LiveText } from "../LiveText";
@@ -13,7 +12,7 @@ function liveObjectUpdate(source?: StorageUpdateSource): StorageUpdate {
     updates: { a: { type: "update" } },
   };
   if (source !== undefined) {
-    update[kStorageUpdateSource] = source;
+    update.source = source;
   }
   return update;
 }
@@ -26,7 +25,7 @@ function liveTextUpdate(source?: StorageUpdateSource): StorageUpdate {
     updates: [{ type: "insert", index: 5, text: "!" }],
   };
   if (source !== undefined) {
-    update[kStorageUpdateSource] = source;
+    update.source = source;
   }
   return update;
 }
@@ -37,7 +36,7 @@ describe("mergeStorageUpdates source propagation", () => {
       liveObjectUpdate({ origin: "local", via: "mutation" }),
       liveObjectUpdate({ origin: "local", via: "mutation" })
     );
-    expect(merged[kStorageUpdateSource]).toEqual({
+    expect(merged.source).toEqual({
       origin: "local",
       via: "mutation",
     });
@@ -48,7 +47,7 @@ describe("mergeStorageUpdates source propagation", () => {
       liveTextUpdate({ origin: "remote" }),
       liveTextUpdate({ origin: "remote" })
     );
-    expect(merged[kStorageUpdateSource]).toEqual({ origin: "remote" });
+    expect(merged.source).toEqual({ origin: "remote" });
   });
 
   test("mixed local and remote -> merged is remote", () => {
@@ -56,7 +55,7 @@ describe("mergeStorageUpdates source propagation", () => {
       liveObjectUpdate({ origin: "local", via: "mutation" }),
       liveObjectUpdate({ origin: "remote" })
     );
-    expect(merged[kStorageUpdateSource]).toEqual({ origin: "remote" });
+    expect(merged.source).toEqual({ origin: "remote" });
   });
 
   test("mixed local mutation and history -> merged is history", () => {
@@ -64,7 +63,7 @@ describe("mergeStorageUpdates source propagation", () => {
       liveObjectUpdate({ origin: "local", via: "mutation" }),
       liveObjectUpdate({ origin: "local", via: "history", action: "undo" })
     );
-    expect(merged[kStorageUpdateSource]).toEqual({
+    expect(merged.source).toEqual({
       origin: "local",
       via: "history",
       action: "undo",
@@ -76,7 +75,7 @@ describe("mergeStorageUpdates source propagation", () => {
       liveObjectUpdate({ origin: "local", via: "history", action: "undo" }),
       liveObjectUpdate({ origin: "local", via: "history", action: "redo" })
     );
-    expect(merged[kStorageUpdateSource]).toEqual({
+    expect(merged.source).toEqual({
       origin: "local",
       via: "history",
       action: "redo",
@@ -88,7 +87,7 @@ describe("mergeStorageUpdates source propagation", () => {
       liveObjectUpdate(),
       liveObjectUpdate({ origin: "local", via: "mutation" })
     );
-    expect(merged[kStorageUpdateSource]).toEqual({
+    expect(merged.source).toEqual({
       origin: "local",
       via: "mutation",
     });
@@ -96,7 +95,7 @@ describe("mergeStorageUpdates source propagation", () => {
 
   test("untagged + untagged -> merged stays untagged", () => {
     const merged = mergeStorageUpdates(liveObjectUpdate(), liveObjectUpdate());
-    expect(merged[kStorageUpdateSource]).toBeUndefined();
+    expect(merged.source).toBeUndefined();
   });
 
   test("undefined first preserves second source", () => {
@@ -104,6 +103,6 @@ describe("mergeStorageUpdates source propagation", () => {
       undefined,
       liveTextUpdate({ origin: "remote" })
     );
-    expect(merged[kStorageUpdateSource]).toEqual({ origin: "remote" });
+    expect(merged.source).toEqual({ origin: "remote" });
   });
 });

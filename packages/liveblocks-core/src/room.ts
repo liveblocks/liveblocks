@@ -42,7 +42,7 @@ import type {
   DTM,
   DU,
 } from "./globals/augmentation";
-import { kInternal, kStorageUpdateSource } from "./internal";
+import { kInternal } from "./internal";
 import { assertNever, nn } from "./lib/assert";
 import type { BatchStore } from "./lib/batch";
 import { Promise_withResolvers } from "./lib/controlledPromise";
@@ -1874,7 +1874,7 @@ export function createRoom<
     options?: DispatchOptions
   ): void {
     for (const value of storageUpdates.values()) {
-      value[kStorageUpdateSource] = { origin: "local", via: "mutation" };
+      value.source = { origin: "local", via: "mutation" };
     }
 
     if (context.activeBatch) {
@@ -2340,7 +2340,7 @@ export function createRoom<
 
       const applyOpResult = applyOp(op, source);
       if (applyOpResult.modified) {
-        applyOpResult.modified[kStorageUpdateSource] =
+        applyOpResult.modified.source =
           source === OpSource.THEIRS
             ? { origin: "remote" }
             : localStorageUpdateSource;

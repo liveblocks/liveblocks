@@ -4,13 +4,10 @@ import {
   Transaction,
   type Extension,
 } from "@codemirror/state";
-import { EditorView, ViewPlugin, ViewUpdate, keymap } from "@codemirror/view";
-import type { Room } from "@liveblocks/client";
-import {
-  kInternal,
-  kStorageUpdateSource,
-  type LiveText,
-} from "@liveblocks/core";
+import type { EditorView, ViewUpdate } from "@codemirror/view";
+import { ViewPlugin, keymap } from "@codemirror/view";
+import { kInternal } from "@liveblocks/core";
+import type { LiveText, Room } from "@liveblocks/client";
 
 import { clamp } from "./utils";
 
@@ -48,7 +45,7 @@ export function createLiveblocksSyncPlugin(
                   continue;
                 }
 
-                const source = update[kStorageUpdateSource];
+                const source = update.source;
                 if (source?.origin === "local" && source.via === "mutation") {
                   continue;
                 }
