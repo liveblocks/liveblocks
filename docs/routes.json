@@ -459,6 +459,10 @@
             "path": "/products/sync/broadcast-events"
           },
           {
+            "title": "Feeds",
+            "path": "/products/sync/feeds"
+          },
+          {
             "title": "Authentication and permissions",
             "path": "/products/sync/authentication-and-permissions"
           },
@@ -469,36 +473,6 @@
           {
             "title": "Yjs",
             "path": "/products/sync/yjs"
-          }
-        ]
-      },
-      {
-        "title": "Feeds",
-        "path": "/products/feeds",
-        "routes": [
-          {
-            "title": "Overview",
-            "path": "/products/feeds/overview"
-          },
-          {
-            "title": "Chat interfaces",
-            "path": "/products/feeds/chat-interfaces"
-          },
-          {
-            "title": "Listing feeds",
-            "path": "/products/feeds/listing-feeds"
-          },
-          {
-            "title": "Pagination",
-            "path": "/products/feeds/pagination"
-          },
-          {
-            "title": "Integrating workflows",
-            "path": "/products/feeds/integrating-workflows"
-          },
-          {
-            "title": "Authentication and permissions",
-            "path": "/products/feeds/authentication-and-permissions"
           }
         ]
       },

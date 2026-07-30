@@ -6,9 +6,9 @@ Date: 2026-07-30
 
 Reorganize the Liveblocks documentation around Products, with Sync as the
 primary product. Separate short product landing pages from detailed product
-overviews, add focused Sync and Feeds documentation, add application-oriented
-Use cases, and preserve every moved URL in a redirect ledger for the
-`liveblocks.io` repository.
+overviews, add focused Sync documentation (including Feeds), add
+application-oriented Use cases, and preserve every moved URL in a redirect
+ledger for the `liveblocks.io` repository.
 
 ## Terminology
 
@@ -53,8 +53,8 @@ The primary sidebar order is:
 Default state changes:
 
 - Integrations: collapsed
-- Platform: open
-- Tools: open
+- Platform: collapsed
+- Tools: collapsed
 - API Reference: open
 - All other sections retain their current state
 
@@ -71,16 +71,10 @@ Products
 │   ├── Agentic editing
 │   ├── Version history
 │   ├── Broadcast events
+│   ├── Feeds
 │   ├── Authentication and permissions
 │   ├── Integrations
 │   └── Yjs
-├── Feeds
-│   ├── Overview
-│   ├── Chat interfaces
-│   ├── Listing feeds
-│   ├── Pagination
-│   ├── Integrating workflows
-│   └── Authentication and permissions
 ├── Comments
 │   ├── Overview
 │   ├── Concepts
@@ -328,72 +322,20 @@ page. Add a prominent banner:
 Keep Yjs setup, awareness, subdocuments, offline support, guides, API links, and
 examples.
 
-### Feeds landing
+### Sync Feeds
 
-Route: `/docs/products/feeds`
+Route: `/docs/products/sync/feeds`
 
-Short paragraph, get-started banner, and links to all Feeds pages. There is no
-approved Feeds video asset in this repository, so this change must not render a
-video or placeholder.
+Feeds is a Sync capability, not a separate product. One page covers realtime
+ordered message lists, custom message data and feed metadata, client and server
+creation, listing and filtering, pagination, chat and agent interfaces, workflow
+integration, and room permissions. Link to the Next.js Feeds get-started guide
+and React, Client, Node, REST, and Python API references.
 
-Future recording brief: a user sends a message, a workflow processes it, and
-messages stream back into two connected clients.
-
-### Feeds overview
-
-Route: `/docs/products/feeds/overview`
-
-Explain what Feeds are good for and summarize:
-
-- Realtime ordered message lists
-- Custom message data and feed metadata
-- Client and server creation
-- Listing and filtering feeds
-- Pagination
-- Realtime updates
-- Workflow integration
-- Chat and agent interfaces
-
-Link to the Next.js Feeds get-started guide and React, Client, Node, REST, and
-Python API references.
-
-### Feeds chat interfaces
-
-Route: `/docs/products/feeds/chat-interfaces`
-
-Summarize the architecture of a chat interface without becoming a tutorial. Use
-a compact `useFeedMessages` and `useCreateFeedMessage` example. Cover optimistic
-UI, loading older messages, message roles, IDs, and server-generated responses.
-
-### Feeds listing feeds
-
-Route: `/docs/products/feeds/listing-feeds`
-
-Use `useFeeds` to list feeds. Cover metadata, timestamp filters, sorting, empty
-states, and linking to a selected feed.
-
-### Feeds pagination
-
-Route: `/docs/products/feeds/pagination`
-
-Cover pagination for both `useFeeds` and `useFeedMessages`, including
-`fetchMore`, `hasFetchedAll`, `isFetchingMore`, and error states.
-
-### Feeds integrating workflows
-
-Route: `/docs/products/feeds/integrating-workflows`
-
-Show how back-end jobs, AI agents, n8n, and other workflow engines create feeds
-and append/update messages. Link Node, REST, Python, n8n, and agentic-workflow
-documentation.
-
-### Feeds authentication and permissions
-
-Route: `/docs/products/feeds/authentication-and-permissions`
-
-Explain that Feeds are room resources, how room access gates clients, when
-server APIs use a secret key, and how IDs and metadata should be validated. Link
-to canonical authentication and permissions docs.
+There is no approved Feeds video asset in this repository, so this change must
+not render a video or placeholder. Future recording brief: a user sends a
+message, a workflow processes it, and messages stream back into two connected
+clients.
 
 ### Comments and Notifications
 
@@ -511,8 +453,8 @@ but it is a release requirement for this change:
 1. Edit `docs/routes.json` first and use it as the canonical route manifest.
 2. Move existing feature files into `docs/pages/products` and
    `docs/pages/use-cases`.
-3. Create product landings, overviews, Sync pages, Feeds pages, and use-case
-   pages.
+3. Create product landings, overview and focused Sync pages (including Feeds),
+   and use-case pages.
 4. Update homepage cards, parent titles, and internal links.
 5. Audit `docs/pages`, `guides/pages`, and guide metadata for branded
    “Liveblocks Storage” prose:

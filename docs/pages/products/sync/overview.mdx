@@ -30,6 +30,8 @@ application, then return here for the underlying concepts.
 - **Multiplayer undo/redo**: Give each user a history that respects other
   people’s edits.
 - **Version history**: Preview and restore meaningful document snapshots.
+- **Feeds**: Persist realtime chat, activity, agent output, and workflow
+  messages in the same room as the collaborative document.
 - **Authentication and permissions**: Control who can read or edit each room.
 - **TypeScript-first data**: Type Storage, Presence, events, and user info.
 
@@ -51,6 +53,7 @@ Sync is useful when two or more actors can change the same artifact:
 - Documents, canvases, code editors, flowcharts, spreadsheets, and tables
 - AI agents working in the same document as humans
 - Multiple agents editing one shared source of truth
+- Chat, activity, and workflow messages that belong with a collaborative room
 - Live cursors, avatar stacks, selections, and typing indicators
 - Interfaces that must respond before a network round trip completes
 - State shared across a user’s devices or browser tabs
@@ -185,5 +188,7 @@ integrate webhooks without operating sync infrastructure yourself.
   [multiplayer undo/redo](/docs/products/sync/multiplayer-undo-redo).
 - Let an AI agent edit with
   [Agentic editing](/docs/products/sync/agentic-editing).
+- Add persistent chat, activity, or workflow messages with
+  [Feeds](/docs/products/sync/feeds).
 - Browse [Sync integrations](/docs/products/sync/integrations) and
   [use cases](/docs/use-cases/canvas).
