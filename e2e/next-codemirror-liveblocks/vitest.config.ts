@@ -8,8 +8,11 @@ const vitestSetup = path.resolve(
   "../../shared/vitest-config/setup.js"
 );
 
-// Force a single @liveblocks/core instance so kStorageUpdateSource (a Symbol)
-// matches between the mock-server test helpers (core/src) and app imports (@liveblocks/core).
+// The mock WebSocket server lives in @liveblocks/core's src/__tests__/, which
+// is neither exported nor built, so tests can only reach it by relative path.
+// That loads core from source, while the code under test imports the built
+// @liveblocks/core. Two copies means two kInternal Symbols and two sets of CRDT
+// classes, so alias both onto the source copy.
 const liveblocksCore = path.resolve(
   __dirname,
   "../../packages/liveblocks-core/src/index.ts"

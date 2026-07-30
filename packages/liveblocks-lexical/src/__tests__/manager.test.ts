@@ -8,7 +8,7 @@ import {
   type Room,
 } from "@liveblocks/client";
 import type { Json, TextAttributes } from "@liveblocks/core";
-import { kInternal, kStorageUpdateSource } from "@liveblocks/core";
+import { kInternal } from "@liveblocks/core";
 import {
   $applyNodeReplacement,
   $createParagraphNode,
@@ -5445,7 +5445,7 @@ describe("LiveblocksCollaborationManager", () => {
                 text: "Changed",
               },
             ],
-            [kStorageUpdateSource]: { origin: "local", via: "mutation" },
+            source: { origin: "local", via: "edit" },
           },
         ]);
       });
@@ -5488,10 +5488,9 @@ describe("LiveblocksCollaborationManager", () => {
                   text: "!",
                 },
               ],
-              [kStorageUpdateSource]: {
+              source: {
                 origin: "local",
-                via: "history",
-                action: "redo",
+                via: "redo",
               },
             },
           ]);
@@ -5541,7 +5540,7 @@ describe("LiveblocksCollaborationManager", () => {
                   text: "!",
                 },
               ],
-              [kStorageUpdateSource]: { origin: "remote" },
+              source: { origin: "remote" },
             },
           ]);
         },
@@ -5591,7 +5590,7 @@ describe("LiveblocksCollaborationManager", () => {
                 item: paragraph_liveblocks,
               },
             ],
-            [kStorageUpdateSource]: { origin: "local", via: "mutation" },
+            source: { origin: "local", via: "edit" },
           },
         ]);
       });
@@ -5634,7 +5633,7 @@ describe("LiveblocksCollaborationManager", () => {
                   item: paragraph_liveblocks,
                 },
               ],
-              [kStorageUpdateSource]: { origin: "remote" },
+              source: { origin: "remote" },
             },
           ]);
         },
@@ -5708,7 +5707,7 @@ describe("LiveblocksCollaborationManager", () => {
                   item: linebreak_liveblocks,
                 },
               ],
-              [kStorageUpdateSource]: { origin: "remote" },
+              source: { origin: "remote" },
             },
           ]);
         },
@@ -5781,7 +5780,7 @@ describe("LiveblocksCollaborationManager", () => {
                 deletedItem: deletedParagraph,
               },
             ],
-            [kStorageUpdateSource]: { origin: "local", via: "mutation" },
+            source: { origin: "local", via: "edit" },
           },
         ]);
       });
@@ -5817,7 +5816,7 @@ describe("LiveblocksCollaborationManager", () => {
                   deletedText: "Hello",
                 },
               ],
-              [kStorageUpdateSource]: { origin: "remote" },
+              source: { origin: "remote" },
             },
           ]);
         },
@@ -5855,7 +5854,7 @@ describe("LiveblocksCollaborationManager", () => {
                   text: "Recovered",
                 },
               ],
-              [kStorageUpdateSource]: { origin: "remote" },
+              source: { origin: "remote" },
             },
           ]);
         },
@@ -5897,7 +5896,7 @@ describe("LiveblocksCollaborationManager", () => {
                   deletedText: "Keep",
                 },
               ],
-              [kStorageUpdateSource]: { origin: "remote" },
+              source: { origin: "remote" },
             },
           ]);
         },
@@ -5935,7 +5934,7 @@ describe("LiveblocksCollaborationManager", () => {
                   item: linebreak_liveblocks,
                 },
               ],
-              [kStorageUpdateSource]: { origin: "remote" },
+              source: { origin: "remote" },
             },
           ]);
         },
@@ -5982,7 +5981,7 @@ describe("LiveblocksCollaborationManager", () => {
                   deletedText: "Keep",
                 },
               ],
-              [kStorageUpdateSource]: { origin: "remote" },
+              source: { origin: "remote" },
             },
           ]);
         },
@@ -6013,7 +6012,7 @@ describe("LiveblocksCollaborationManager", () => {
                   item: linebreak_liveblocks,
                 },
               ],
-              [kStorageUpdateSource]: { origin: "remote" },
+              source: { origin: "remote" },
             },
           ]);
         },
@@ -6045,7 +6044,7 @@ describe("LiveblocksCollaborationManager", () => {
                   deletedItem: empty_text,
                 },
               ],
-              [kStorageUpdateSource]: { origin: "remote" },
+              source: { origin: "remote" },
             },
           ]);
         },
@@ -6091,7 +6090,7 @@ describe("LiveblocksCollaborationManager", () => {
                   deletedText: "Keep",
                 },
               ],
-              [kStorageUpdateSource]: { origin: "remote" },
+              source: { origin: "remote" },
             },
           ]);
         },
@@ -6122,7 +6121,7 @@ describe("LiveblocksCollaborationManager", () => {
                   item: linebreak_liveblocks,
                 },
               ],
-              [kStorageUpdateSource]: { origin: "remote" },
+              source: { origin: "remote" },
             },
           ]);
         },
@@ -6156,7 +6155,7 @@ describe("LiveblocksCollaborationManager", () => {
                   text: "After",
                 },
               ],
-              [kStorageUpdateSource]: { origin: "remote" },
+              source: { origin: "remote" },
             },
           ]);
         },
@@ -6220,7 +6219,7 @@ describe("LiveblocksCollaborationManager", () => {
                 { type: "insert", index: 1, item: p2 },
                 { type: "insert", index: 2, item: p3 },
               ],
-              [kStorageUpdateSource]: { origin: "remote" },
+              source: { origin: "remote" },
             },
           ]);
         },
@@ -6376,7 +6375,7 @@ describe("LiveblocksCollaborationManager", () => {
                   { type: "delete", index: 1, deletedItem: before[1]! },
                   { type: "delete", index: 1, deletedItem: before[2]! },
                 ],
-                [kStorageUpdateSource]: { origin: "remote" },
+                source: { origin: "remote" },
               },
               {
                 type: "LiveText",
@@ -6390,7 +6389,7 @@ describe("LiveblocksCollaborationManager", () => {
                     deletedText: "Alpha",
                   },
                 ],
-                [kStorageUpdateSource]: { origin: "remote" },
+                source: { origin: "remote" },
               },
             ]);
           } else {
@@ -6404,7 +6403,7 @@ describe("LiveblocksCollaborationManager", () => {
                   { type: "delete", index: 0, deletedItem: before[2]! },
                   { type: "insert", index: 0, item: remaining },
                 ],
-                [kStorageUpdateSource]: { origin: "remote" },
+                source: { origin: "remote" },
               },
             ]);
           }
@@ -6497,7 +6496,7 @@ describe("LiveblocksCollaborationManager", () => {
               type: "LiveList",
               node: children_liveblocks,
               updates: [{ type: "delete", index: 1, deletedItem: before[1]! }],
-              [kStorageUpdateSource]: { origin: "remote" },
+              source: { origin: "remote" },
             },
             {
               type: "LiveText",
@@ -6511,7 +6510,7 @@ describe("LiveblocksCollaborationManager", () => {
                   deletedText: "Alpha",
                 },
               ],
-              [kStorageUpdateSource]: { origin: "remote" },
+              source: { origin: "remote" },
             },
           ]);
         },
@@ -6546,7 +6545,7 @@ describe("LiveblocksCollaborationManager", () => {
                   text: "KeepMe",
                 },
               ],
-              [kStorageUpdateSource]: { origin: "remote" },
+              source: { origin: "remote" },
             },
           ]);
         },
@@ -6612,7 +6611,7 @@ describe("LiveblocksCollaborationManager", () => {
                   deletedItem: deletedParagraph,
                 },
               ],
-              [kStorageUpdateSource]: { origin: "remote" },
+              source: { origin: "remote" },
             },
           ]);
         },
@@ -6683,7 +6682,7 @@ describe("LiveblocksCollaborationManager", () => {
                   item: linebreak_liveblocks,
                 },
               ],
-              [kStorageUpdateSource]: { origin: "remote" },
+              source: { origin: "remote" },
             },
           ]);
         },
@@ -6714,7 +6713,7 @@ describe("LiveblocksCollaborationManager", () => {
                   deletedItem: linebreak_liveblocks,
                 },
               ],
-              [kStorageUpdateSource]: { origin: "remote" },
+              source: { origin: "remote" },
             },
           ]);
         },
@@ -6785,7 +6784,7 @@ describe("LiveblocksCollaborationManager", () => {
                 item: movedParagraph,
               },
             ],
-            [kStorageUpdateSource]: { origin: "local", via: "mutation" },
+            source: { origin: "local", via: "edit" },
           },
         ]);
       });
@@ -6863,7 +6862,7 @@ describe("LiveblocksCollaborationManager", () => {
                   item: movedParagraph,
                 },
               ],
-              [kStorageUpdateSource]: { origin: "remote" },
+              source: { origin: "remote" },
             },
           ]);
         },
@@ -6936,7 +6935,7 @@ describe("LiveblocksCollaborationManager", () => {
                   item: linebreak_liveblocks,
                 },
               ],
-              [kStorageUpdateSource]: { origin: "remote" },
+              source: { origin: "remote" },
             },
           ]);
         },
@@ -6971,7 +6970,7 @@ describe("LiveblocksCollaborationManager", () => {
                   item: linebreak_liveblocks,
                 },
               ],
-              [kStorageUpdateSource]: { origin: "remote" },
+              source: { origin: "remote" },
             },
           ]);
         },
@@ -7025,7 +7024,7 @@ describe("LiveblocksCollaborationManager", () => {
                 item: newParagraph,
               },
             ],
-            [kStorageUpdateSource]: { origin: "local", via: "mutation" },
+            source: { origin: "local", via: "edit" },
           },
         ]);
       });
@@ -7103,7 +7102,7 @@ describe("LiveblocksCollaborationManager", () => {
                   item: newParagraph,
                 },
               ],
-              [kStorageUpdateSource]: { origin: "remote" },
+              source: { origin: "remote" },
             },
           ]);
         },
@@ -7180,7 +7179,7 @@ describe("LiveblocksCollaborationManager", () => {
                   item: linebreak_liveblocks,
                 },
               ],
-              [kStorageUpdateSource]: { origin: "remote" },
+              source: { origin: "remote" },
             },
           ]);
         },
@@ -7218,7 +7217,7 @@ describe("LiveblocksCollaborationManager", () => {
                   item: replacement,
                 },
               ],
-              [kStorageUpdateSource]: { origin: "remote" },
+              source: { origin: "remote" },
             },
           ]);
         },
@@ -7266,7 +7265,7 @@ describe("LiveblocksCollaborationManager", () => {
               type: { type: "update" },
               props: { type: "update" },
             },
-            [kStorageUpdateSource]: { origin: "local", via: "mutation" },
+            source: { origin: "local", via: "edit" },
           },
         ]);
       });
@@ -7296,7 +7295,7 @@ describe("LiveblocksCollaborationManager", () => {
                 type: { type: "update" },
                 props: { type: "update" },
               },
-              [kStorageUpdateSource]: { origin: "remote" },
+              source: { origin: "remote" },
             },
           ]);
         },
@@ -7337,7 +7336,7 @@ describe("LiveblocksCollaborationManager", () => {
                 type: { type: "update" },
                 props: { type: "update" },
               },
-              [kStorageUpdateSource]: { origin: "remote" },
+              source: { origin: "remote" },
             },
           ]);
         },
@@ -7359,7 +7358,7 @@ describe("LiveblocksCollaborationManager", () => {
               updates: {
                 tag: { type: "update" },
               },
-              [kStorageUpdateSource]: { origin: "remote" },
+              source: { origin: "remote" },
             },
           ]);
         },
@@ -7409,7 +7408,7 @@ describe("LiveblocksCollaborationManager", () => {
                   item: decorator_liveblocks,
                 },
               ],
-              [kStorageUpdateSource]: { origin: "remote" },
+              source: { origin: "remote" },
             },
           ]);
         },
@@ -7488,7 +7487,7 @@ describe("LiveblocksCollaborationManager", () => {
                   deletedItem: decorator_liveblocks,
                 },
               ],
-              [kStorageUpdateSource]: { origin: "remote" },
+              source: { origin: "remote" },
             },
           ]);
         },
@@ -7563,7 +7562,7 @@ describe("LiveblocksCollaborationManager", () => {
                     deletedItem: decorator_liveblocks,
                   },
                 ],
-                [kStorageUpdateSource]: { origin: "remote" },
+                source: { origin: "remote" },
               },
             ]);
           },
@@ -7630,7 +7629,7 @@ describe("LiveblocksCollaborationManager", () => {
               updates: {
                 props: { type: "update" },
               },
-              [kStorageUpdateSource]: { origin: "remote" },
+              source: { origin: "remote" },
             },
           ]);
         },
@@ -7698,7 +7697,7 @@ describe("LiveblocksCollaborationManager", () => {
                 src: { type: "update" },
                 altText: { type: "update" },
               },
-              [kStorageUpdateSource]: { origin: "remote" },
+              source: { origin: "remote" },
             },
           ]);
         },
@@ -7770,7 +7769,7 @@ describe("LiveblocksCollaborationManager", () => {
                   item: decorator_liveblocks,
                 },
               ],
-              [kStorageUpdateSource]: { origin: "remote" },
+              source: { origin: "remote" },
             },
           ]);
         },
@@ -7844,7 +7843,7 @@ describe("LiveblocksCollaborationManager", () => {
                   item: decorator_liveblocks,
                 },
               ],
-              [kStorageUpdateSource]: { origin: "remote" },
+              source: { origin: "remote" },
             },
           ]);
         },

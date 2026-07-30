@@ -10,7 +10,7 @@ import type {
   DispatchOptions,
   ManagedPool,
 } from "./crdts/AbstractCrdt";
-import { createManagedPool, OpSource } from "./crdts/AbstractCrdt";
+import { createManagedPool } from "./crdts/AbstractCrdt";
 import {
   cloneLson,
   diffNodeMap,
@@ -27,9 +27,18 @@ import { getLiveFileId } from "./crdts/LiveFile";
 import { LiveObject } from "./crdts/LiveObject";
 import type { LiveStructure, LsonObject } from "./crdts/Lson";
 import type {
+  OpSource,
   StorageCallback,
   StorageUpdate,
-  StorageUpdateSource,
+  UpdateSource,
+  Via,
+} from "./crdts/StorageUpdates";
+import {
+  LOCAL_EDIT,
+  LOCAL_REDO,
+  LOCAL_UNDO,
+  REMOTE,
+  toUpdateSource,
 } from "./crdts/StorageUpdates";
 import { UnacknowledgedOps } from "./crdts/UnacknowledgedOps";
 import type {
@@ -42,7 +51,7 @@ import type {
   DTM,
   DU,
 } from "./globals/augmentation";
-import { kInternal, kStorageUpdateSource } from "./internal";
+import { kInternal } from "./internal";
 import { assertNever, nn } from "./lib/assert";
 import type { BatchStore } from "./lib/batch";
 import { Promise_withResolvers } from "./lib/controlledPromise";
@@ -1873,10 +1882,6 @@ export function createRoom<
     storageUpdates: Map<string, StorageUpdate>,
     options?: DispatchOptions
   ): void {
-    for (const value of storageUpdates.values()) {
-      value[kStorageUpdateSource] = { origin: "local", via: "mutation" };
-    }
-
     if (context.activeBatch) {
       for (const op of ops) {
         context.activeBatch.ops.push(op);
@@ -2075,7 +2080,9 @@ export function createRoom<
         if (crdt.type === CrdtType.TEXT) {
           const node = context.pool.nodes.get(id);
           if (node !== undefined && isLiveText(node)) {
-            const update = node._resyncText(crdt.data, crdt.version);
+            // An authoritative snapshot from the server, so whatever it
+            // changes locally is a remote change as far as subscribers go.
+            const update = node._resyncText(crdt.data, crdt.version, REMOTE);
             if (update !== undefined) {
               result.updates.storageUpdates.set(
                 id,
@@ -2213,7 +2220,12 @@ export function createRoom<
     }
 
     if (storageUpdates !== undefined && storageUpdates.size > 0) {
-      const updates = Array.from(storageUpdates.values());
+      // This is the only place Storage updates reach subscribers, so it's
+      // where the internal `optimistic` flag gets dropped. See OpSource.
+      const updates = Array.from(storageUpdates.values(), (update) => ({
+        ...update,
+        source: toUpdateSource(update.source),
+      }));
       eventHub.storageBatch.notify(updates);
     }
     notifyStorageStatus();
@@ -2230,12 +2242,25 @@ export function createRoom<
     );
   }
 
+  /**
+   * How each still-unacknowledged op was made, for the ops where that isn't a
+   * plain edit. Lets an ack be reported with the same `via` as the change it
+   * confirms, instead of every ack looking like a fresh edit.
+   */
+  const viaByOpId = new Map<string, Via>();
+
+  function viaOfAckedOp(opId: string): Via {
+    const via = viaByOpId.get(opId);
+    if (via === undefined) {
+      return "edit";
+    }
+    viaByOpId.delete(opId);
+    return via;
+  }
+
   function applyLocalOps(
     frames: readonly Stackframe<P>[],
-    localStorageUpdateSource: Extract<
-      StorageUpdateSource,
-      { origin: "local" }
-    > = { origin: "local", via: "mutation" }
+    localSource: Extract<UpdateSource, { origin: "local" }> = LOCAL_EDIT
   ): {
     opsToEmit: ClientWireOp[]; // Ops to send over the wire afterwards
     reverse: Stackframe<P>[]; // Reverse ops to add to the undo stack aftwards
@@ -2319,11 +2344,20 @@ export function createRoom<
         : (op as ClientWireOp)
     );
 
+    // Remember how these ops came about, so that when the server acks them we
+    // can report the ack the same way. Only history replays are recorded; a
+    // plain edit is what an unrecorded opId means (see viaOfAckedOp).
+    if (localSource.via !== "edit") {
+      for (const op of opsWithOpIds) {
+        viaByOpId.set(op.opId, localSource.via);
+      }
+    }
+
     const { reverse, updates } = applyOps(
       pframes,
       opsWithOpIds,
       /* isLocal */ true,
-      localStorageUpdateSource
+      localSource
     );
     return { opsToEmit: opsWithOpIds, reverse, updates };
   }
@@ -2342,10 +2376,7 @@ export function createRoom<
     pframes: readonly PresenceStackframe<P>[],
     ops: readonly Op[],
     isLocal: boolean,
-    localStorageUpdateSource: Extract<
-      StorageUpdateSource,
-      { origin: "local" }
-    > = { origin: "local", via: "mutation" }
+    localSource: Extract<UpdateSource, { origin: "local" }> = LOCAL_EDIT
   ): {
     reverse: Stackframe<P>[];
     updates: {
@@ -2390,23 +2421,24 @@ export function createRoom<
       let source: OpSource;
 
       if (isLocal) {
-        source = OpSource.LOCAL;
+        source = { ...localSource, optimistic: true };
       } else if (op.opId !== undefined) {
         context.unacknowledgedOps.delete(op.opId);
-        source = OpSource.OURS;
+        // The server echoing back our own op. It describes a change this
+        // client made, now confirmed, so it keeps the `via` it was made with.
+        source = {
+          origin: "local",
+          via: viaOfAckedOp(op.opId),
+          optimistic: false,
+        };
       } else {
         // Remotely generated Ops (and fix Ops as a special case of that)
         // don't have opId anymore.
-        source = OpSource.THEIRS;
+        source = REMOTE;
       }
 
       const applyOpResult = applyOp(op, source);
       if (applyOpResult.modified) {
-        applyOpResult.modified[kStorageUpdateSource] =
-          source === OpSource.THEIRS
-            ? { origin: "remote" }
-            : localStorageUpdateSource;
-
         const nodeId = applyOpResult.modified.node._id;
 
         // If the modified node was created in the same batch, we don't want
@@ -2460,7 +2492,7 @@ export function createRoom<
           return { modified: false };
         }
 
-        return node._apply(op, source === OpSource.LOCAL);
+        return node._apply(op, source);
       }
 
       case OpCode.SET_PARENT_KEY: {
@@ -2840,6 +2872,7 @@ export function createRoom<
             context.unacknowledgedOps.delete(opId);
             context.buffer.storageOperations =
               context.buffer.storageOperations.filter((op) => op.opId !== opId);
+            viaByOpId.delete(opId);
 
             if (
               rejectedOp !== undefined &&
@@ -3613,11 +3646,7 @@ export function createRoom<
     }
 
     context.pausedHistory = null;
-    const result = applyLocalOps(item.frames, {
-      origin: "local",
-      via: "history",
-      action: "undo",
-    });
+    const result = applyLocalOps(item.frames, LOCAL_UNDO);
 
     context.redoStack.push({ id: item.id, frames: result.reverse });
     notifyPrivateHistory({ action: "undo", id: item.id });
@@ -3641,11 +3670,7 @@ export function createRoom<
     }
 
     context.pausedHistory = null;
-    const result = applyLocalOps(item.frames, {
-      origin: "local",
-      via: "history",
-      action: "redo",
-    });
+    const result = applyLocalOps(item.frames, LOCAL_REDO);
 
     context.undoStack.push({ id: item.id, frames: result.reverse });
     notifyPrivateHistory({ action: "redo", id: item.id });

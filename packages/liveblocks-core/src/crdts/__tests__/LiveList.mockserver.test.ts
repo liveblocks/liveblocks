@@ -24,7 +24,7 @@ import {
   waitUntilStatus,
   waitUntilStorageUpdate,
 } from "../../__tests__/_waitUtils";
-import { kInternal, kStorageUpdateSource } from "../../internal";
+import { kInternal } from "../../internal";
 import type { ServerWireOp } from "../../protocol/Op";
 import { OpCode } from "../../protocol/Op";
 import { ServerMsgCode } from "../../protocol/ServerMsg";
@@ -598,7 +598,7 @@ describe("LiveList edge cases", () => {
           type: "LiveList",
           node: listItems,
           updates: [{ index: 1, item: "b", type: "insert" }],
-          [kStorageUpdateSource]: { origin: "remote" },
+          source: { origin: "remote" },
         },
       ]);
       expect(rootDeepCallback).toHaveBeenCalledWith([
@@ -606,7 +606,7 @@ describe("LiveList edge cases", () => {
           type: "LiveList",
           node: listItems,
           updates: [{ index: 2, item: "c", type: "insert" }],
-          [kStorageUpdateSource]: { origin: "local", via: "mutation" },
+          source: { origin: "local", via: "edit" },
         },
       ]);
       expect(listCallback).toHaveBeenCalledTimes(2);
@@ -675,7 +675,7 @@ describe("LiveList edge cases", () => {
           type: "LiveList",
           node: listItems,
           updates: [{ index: 0, previousIndex: 1, item: "b", type: "move" }],
-          [kStorageUpdateSource]: { origin: "remote" },
+          source: { origin: "remote" },
         },
       ]);
 
@@ -736,7 +736,7 @@ describe("LiveList edge cases", () => {
           type: "LiveList",
           node: listItems,
           updates: [{ index: 1, type: "delete", deletedItem: "b" }],
-          [kStorageUpdateSource]: { origin: "remote" },
+          source: { origin: "remote" },
         },
       ]);
 
@@ -761,13 +761,14 @@ describe("LiveList edge cases", () => {
       const items = root.get("items");
       const secondItem = items.get(1);
 
-      const applyResult = items._detachChild(secondItem!);
+      const applyResult = items._detachChild(secondItem!, { origin: "remote" });
 
       expect(applyResult).toEqual({
         modified: {
           type: "LiveList",
           node: items,
           updates: [{ index: 1, type: "delete", deletedItem: secondItem }],
+          source: { origin: "remote" },
         },
         reverse: [
           {
@@ -849,7 +850,7 @@ describe("LiveList edge cases", () => {
             node: items,
             type: "LiveList",
             updates: [{ type: "set", index: 0, item: "B" }],
-            [kStorageUpdateSource]: { origin: "remote" },
+            source: { origin: "remote" },
           },
         ]);
       });
@@ -930,7 +931,7 @@ describe("LiveList edge cases", () => {
             node: items,
             type: "LiveList",
             updates: [{ type: "insert", index: 0, item: "B" }],
-            [kStorageUpdateSource]: { origin: "remote" },
+            source: { origin: "remote" },
           },
         ]);
       });
@@ -977,7 +978,7 @@ describe("LiveList edge cases", () => {
             node: items,
             type: "LiveList",
             updates: [{ type: "insert", index: 0, item: "1" }],
-            [kStorageUpdateSource]: { origin: "remote" },
+            source: { origin: "remote" },
           },
         ]);
       });

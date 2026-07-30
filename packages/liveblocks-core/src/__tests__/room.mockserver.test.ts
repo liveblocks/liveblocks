@@ -25,11 +25,8 @@ import { LiveMap } from "../crdts/LiveMap";
 import { LiveObject } from "../crdts/LiveObject";
 import type { LiveText } from "../crdts/LiveText";
 import type { LsonObject } from "../crdts/Lson";
-import type {
-  StorageUpdate,
-  StorageUpdateSource,
-} from "../crdts/StorageUpdates";
-import { kInternal, kStorageUpdateSource } from "../internal";
+import type { StorageUpdate, UpdateSource } from "../crdts/StorageUpdates";
+import { kInternal } from "../internal";
 import { makeEventSource } from "../lib/EventSource";
 import * as console from "../lib/fancy-console";
 import type { Json, JsonObject } from "../lib/Json";
@@ -2830,8 +2827,8 @@ describe("room", () => {
   });
 
   describe("storage update source", () => {
-    function readSources(updates: StorageUpdate[]): StorageUpdateSource[] {
-      return updates.map((update) => update[kStorageUpdateSource]!);
+    function readSources(updates: StorageUpdate[]): UpdateSource[] {
+      return updates.map((update) => update.source);
     }
 
     test("local mutations are tagged local", async () => {
@@ -2841,7 +2838,7 @@ describe("room", () => {
         { a: 0 }
       );
 
-      const sources: StorageUpdateSource[] = [];
+      const sources: UpdateSource[] = [];
       onTestFinished(
         room.events.storageBatch.subscribe((updates) => {
           sources.push(...readSources(updates));
@@ -2850,7 +2847,7 @@ describe("room", () => {
 
       root.set("a", 1);
 
-      expect(sources).toEqual([{ origin: "local", via: "mutation" }]);
+      expect(sources).toEqual([{ origin: "local", via: "edit" }]);
     });
 
     test("remote ops without opId are tagged remote", async () => {
@@ -2861,7 +2858,7 @@ describe("room", () => {
           { a: 0 }
         );
 
-      const sources: StorageUpdateSource[] = [];
+      const sources: UpdateSource[] = [];
       onTestFinished(
         room.events.storageBatch.subscribe((updates) => {
           sources.push(...readSources(updates));
@@ -2886,7 +2883,7 @@ describe("room", () => {
         0
       );
 
-      const sources: StorageUpdateSource[] = [];
+      const sources: UpdateSource[] = [];
       onTestFinished(
         refRoom.events.storageBatch.subscribe((updates) => {
           sources.push(...readSources(updates));
@@ -2898,14 +2895,14 @@ describe("room", () => {
       expect(sources).toEqual([{ origin: "remote" }]);
     });
 
-    test("undo and redo produce history-tagged storage updates with action", async () => {
+    test("undo and redo produce undo/redo-tagged storage updates", async () => {
       const { room, root } = await prepareIsolatedStorageTest<{ a: number }>(
         [createSerializedRoot({ a: 0 })],
         0,
         { a: 0 }
       );
 
-      const sources: StorageUpdateSource[] = [];
+      const sources: UpdateSource[] = [];
       onTestFinished(
         room.events.storageBatch.subscribe((updates) => {
           sources.push(...readSources(updates));
@@ -2913,21 +2910,17 @@ describe("room", () => {
       );
 
       root.set("a", 1);
-      expect(sources).toEqual([{ origin: "local", via: "mutation" }]);
+      expect(sources).toEqual([{ origin: "local", via: "edit" }]);
 
       sources.length = 0;
       room.history.undo();
 
-      expect(sources).toEqual([
-        { origin: "local", via: "history", action: "undo" },
-      ]);
+      expect(sources).toEqual([{ origin: "local", via: "undo" }]);
 
       sources.length = 0;
       room.history.redo();
 
-      expect(sources).toEqual([
-        { origin: "local", via: "history", action: "redo" },
-      ]);
+      expect(sources).toEqual([{ origin: "local", via: "redo" }]);
     });
   });
 
