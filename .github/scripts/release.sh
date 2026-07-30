@@ -28,7 +28,7 @@ COMMIT_MESSAGE="Bump to "
 FORCE_FLAG=""
 WORKSPACES_UPDATE_FLAG=""
 UPDATE_CHANGELOG="false"
-while getopts V:p:m:fwch flag; do
+while getopts V:pm:fwch flag; do
     case "$flag" in
         V) VERSION=$OPTARG;;
         p) PUSH_COMMIT="true";;
