@@ -57,12 +57,10 @@ export type UpdateSource =
   | { origin: "remote" }
   | { origin: "local"; via: Via };
 
-export const LOCAL_EDIT = freeze({
-  origin: "local",
-  via: "edit",
-}) satisfies UpdateSource;
-
 export const REMOTE = freeze({ origin: "remote" }) satisfies UpdateSource;
+export const LOCAL_EDIT = freeze({ origin: "local", via: "edit" }) satisfies UpdateSource; // prettier-ignore
+export const LOCAL_UNDO = freeze({ origin: "local", via: "undo" }) satisfies UpdateSource; // prettier-ignore
+export const LOCAL_REDO = freeze({ origin: "local", via: "redo" }) satisfies UpdateSource; // prettier-ignore
 
 /** Narrows an {@link OpSource} down to what subscribers may see. */
 export function toUpdateSource(source: OpSource | UpdateSource): UpdateSource {

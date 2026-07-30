@@ -29,7 +29,7 @@ import { LiveRegister } from "./LiveRegister";
 import { LiveText, type LiveTextUpdates } from "./LiveText";
 import type { LiveNode, LiveStructure, Lson, LsonObject } from "./Lson";
 import type { StorageUpdate, UpdateSource } from "./StorageUpdates";
-import { LOCAL_EDIT } from "./StorageUpdates";
+import { LOCAL_EDIT, REMOTE } from "./StorageUpdates";
 
 export function creationOpToLiveNode(op: CreateOp): LiveNode {
   return lsonToLiveNode(creationOpToLson(op));
@@ -632,7 +632,7 @@ function mergeUpdateSources(
   // Any remote change in the mix makes the merged update remote: it no longer
   // describes a change this client made on its own.
   if (first.origin === "remote" || second.origin === "remote") {
-    return { origin: "remote" };
+    return REMOTE;
   }
 
   // Undo/redo replays are more specific than plain edits, so they win. When

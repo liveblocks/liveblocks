@@ -33,7 +33,13 @@ import type {
   UpdateSource,
   Via,
 } from "./crdts/StorageUpdates";
-import { toUpdateSource } from "./crdts/StorageUpdates";
+import {
+  LOCAL_EDIT,
+  LOCAL_REDO,
+  LOCAL_UNDO,
+  REMOTE,
+  toUpdateSource,
+} from "./crdts/StorageUpdates";
 import { UnacknowledgedOps } from "./crdts/UnacknowledgedOps";
 import type {
   DCM,
@@ -2076,9 +2082,7 @@ export function createRoom<
           if (node !== undefined && isLiveText(node)) {
             // An authoritative snapshot from the server, so whatever it
             // changes locally is a remote change as far as subscribers go.
-            const update = node._resyncText(crdt.data, crdt.version, {
-              origin: "remote",
-            });
+            const update = node._resyncText(crdt.data, crdt.version, REMOTE);
             if (update !== undefined) {
               result.updates.storageUpdates.set(
                 id,
@@ -2256,10 +2260,7 @@ export function createRoom<
 
   function applyLocalOps(
     frames: readonly Stackframe<P>[],
-    localSource: Extract<UpdateSource, { origin: "local" }> = {
-      origin: "local",
-      via: "edit",
-    }
+    localSource: Extract<UpdateSource, { origin: "local" }> = LOCAL_EDIT
   ): {
     opsToEmit: ClientWireOp[]; // Ops to send over the wire afterwards
     reverse: Stackframe<P>[]; // Reverse ops to add to the undo stack aftwards
@@ -2313,10 +2314,7 @@ export function createRoom<
     pframes: readonly PresenceStackframe<P>[],
     ops: readonly Op[],
     isLocal: boolean,
-    localSource: Extract<UpdateSource, { origin: "local" }> = {
-      origin: "local",
-      via: "edit",
-    }
+    localSource: Extract<UpdateSource, { origin: "local" }> = LOCAL_EDIT
   ): {
     reverse: Stackframe<P>[];
     updates: {
@@ -2374,7 +2372,7 @@ export function createRoom<
       } else {
         // Remotely generated Ops (and fix Ops as a special case of that)
         // don't have opId anymore.
-        source = { origin: "remote" };
+        source = REMOTE;
       }
 
       const applyOpResult = applyOp(op, source);
@@ -3586,10 +3584,7 @@ export function createRoom<
     }
 
     context.pausedHistory = null;
-    const result = applyLocalOps(item.frames, {
-      origin: "local",
-      via: "undo",
-    });
+    const result = applyLocalOps(item.frames, LOCAL_UNDO);
 
     context.redoStack.push({ id: item.id, frames: result.reverse });
     notifyPrivateHistory({ action: "undo", id: item.id });
@@ -3613,10 +3608,7 @@ export function createRoom<
     }
 
     context.pausedHistory = null;
-    const result = applyLocalOps(item.frames, {
-      origin: "local",
-      via: "redo",
-    });
+    const result = applyLocalOps(item.frames, LOCAL_REDO);
 
     context.undoStack.push({ id: item.id, frames: result.reverse });
     notifyPrivateHistory({ action: "redo", id: item.id });
