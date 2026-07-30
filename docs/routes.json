@@ -790,6 +790,10 @@
         "path": "/platform/management-api"
       },
       {
+        "title": "Troubleshooting",
+        "path": "/api-reference/troubleshooting"
+      },
+      {
         "title": "Account management",
         "path": "/platform/account-management",
         "routes": [
@@ -985,12 +989,17 @@
     ]
   },
   {
-    "title": "API Reference",
+    "title": false,
     "routes": [
       {
         "title": "Overview",
         "path": "/api-reference"
-      },
+      }
+    ]
+  },
+  {
+    "title": "Client",
+    "routes": [
       {
         "title": "@liveblocks/client",
         "path": "/api-reference/liveblocks-client"
@@ -1016,16 +1025,8 @@
         "path": "/api-reference/liveblocks-react-blocknote"
       },
       {
-        "title": "@liveblocks/node-prosemirror",
-        "path": "/api-reference/liveblocks-node-prosemirror"
-      },
-      {
         "title": "@liveblocks/react-lexical",
         "path": "/api-reference/liveblocks-react-lexical"
-      },
-      {
-        "title": "@liveblocks/node-lexical",
-        "path": "/api-reference/liveblocks-node-lexical"
       },
       {
         "title": "@liveblocks/redux",
@@ -1038,10 +1039,23 @@
       {
         "title": "@liveblocks/yjs",
         "path": "/api-reference/liveblocks-yjs"
-      },
+      }
+    ]
+  },
+  {
+    "title": "Server",
+    "routes": [
       {
         "title": "@liveblocks/node",
         "path": "/api-reference/liveblocks-node"
+      },
+      {
+        "title": "@liveblocks/node-prosemirror",
+        "path": "/api-reference/liveblocks-node-prosemirror"
+      },
+      {
+        "title": "@liveblocks/node-lexical",
+        "path": "/api-reference/liveblocks-node-lexical"
       },
       {
         "title": "@liveblocks/emails",
@@ -1058,10 +1072,6 @@
       {
         "title": "REST API",
         "href": "/api-reference/rest-api-endpoints"
-      },
-      {
-        "title": "Troubleshooting",
-        "path": "/api-reference/troubleshooting"
       }
     ]
   }
