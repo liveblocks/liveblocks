@@ -111,7 +111,7 @@ import type {
 } from "./protocol/InboxNotifications";
 import type { MentionData } from "./protocol/MentionData";
 import type { ClientWireOp, Op, ServerWireOp } from "./protocol/Op";
-import { isIgnoredOp, OpCode } from "./protocol/Op";
+import { isCreateOp, isIgnoredOp, OpCode } from "./protocol/Op";
 import type { RoomSubscriptionSettings } from "./protocol/RoomSubscriptionSettings";
 import type {
   CommentsEventServerMsg,
@@ -2250,8 +2250,70 @@ export function createRoom<
       (f): f is PresenceStackframe<P> => f.type === "presence"
     );
 
+    // Restoring a detached LiveText starts a new server-side text timeline.
+    // Reusing the old ID could let operations from the deleted timeline apply
+    // to this new lifetime without being rebased. Ops replayed after reconnect
+    // already have opIds and must keep their original IDs.
+    const restoredTextIds = new Map<string, string>();
+    for (const op of ops) {
+      if (
+        op.type === OpCode.CREATE_TEXT &&
+        op.opId === undefined &&
+        context.pool.nodes.get(op.id) === undefined &&
+        !restoredTextIds.has(op.id)
+      ) {
+        restoredTextIds.set(op.id, context.pool.generateId());
+      }
+    }
+
+    const remappedOps =
+      restoredTextIds.size === 0
+        ? ops
+        : ops.map((op): Op => {
+            if (op.opId !== undefined) {
+              return op;
+            }
+
+            const id = restoredTextIds.get(op.id);
+
+            if (isCreateOp(op)) {
+              const parentId = restoredTextIds.get(op.parentId);
+              const deletedId =
+                op.deletedId === undefined
+                  ? undefined
+                  : restoredTextIds.get(op.deletedId);
+
+              if (
+                id === undefined &&
+                parentId === undefined &&
+                deletedId === undefined
+              ) {
+                return op;
+              }
+
+              if (op.type === OpCode.CREATE_TEXT && id !== undefined) {
+                return {
+                  ...op,
+                  id,
+                  version: 0,
+                  ...(parentId === undefined ? {} : { parentId }),
+                  ...(deletedId === undefined ? {} : { deletedId }),
+                };
+              }
+
+              return {
+                ...op,
+                ...(id === undefined ? {} : { id }),
+                ...(parentId === undefined ? {} : { parentId }),
+                ...(deletedId === undefined ? {} : { deletedId }),
+              };
+            }
+
+            return id === undefined ? op : { ...op, id };
+          });
+
     // Ensure all local ops have opIds assigned before applying them
-    const opsWithOpIds = ops.map((op: Op) =>
+    const opsWithOpIds = remappedOps.map((op: Op) =>
       op.opId === undefined
         ? { ...op, opId: context.pool.generateOpId() }
         : (op as ClientWireOp)
