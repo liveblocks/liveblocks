@@ -34,6 +34,7 @@ import {
   getLiveblocksNodeText,
   liveblocksProsemirrorNodeToJson,
   type ProseMirrorJsonNode,
+  updateLiveblocksNodeAttrs,
 } from "../schema";
 import { applyIncrementalOperations, classifyTransaction } from "../steps";
 import type { LiveblocksProsemirrorRoom } from "../types";
@@ -109,6 +110,9 @@ const Panel = Node.create({
   name: "panel",
   group: "block",
   content: "inline*",
+  addAttributes: () => ({
+    tone: { default: null },
+  }),
   parseHTML: () => [{ tag: "section" }],
   renderHTML: () => ["section", 0],
 });
@@ -308,8 +312,28 @@ describe("collaboration-liveblocks schema", () => {
     };
 
     const storageNode = createLiveblocksProsemirrorNode(document);
+    const paragraph = getLiveblocksNodeContent(storageNode)?.get(0);
+    const attrs = paragraph?.get("attrs");
 
+    expect(attrs).toBeInstanceOf(LiveMap);
+    expect(attrs?.toJSON()).toEqual({ textAlign: "left" });
     expect(liveblocksNodeToJson(storageNode)).toEqual(document);
+    if (paragraph === undefined) {
+      return;
+    }
+
+    updateLiveblocksNodeAttrs(paragraph, {
+      textAlign: "center",
+      metadata: { color: "red" },
+    });
+
+    const updatedAttrs = paragraph.get("attrs");
+    expect(updatedAttrs).toBeInstanceOf(LiveMap);
+    expect(updatedAttrs).not.toBe(attrs);
+    expect(liveblocksNodeToJson(storageNode).content?.[0]?.attrs).toEqual({
+      textAlign: "center",
+      metadata: { color: "red" },
+    });
   });
 
   test("applies plain text insertion to an existing LiveText node", () => {
@@ -957,6 +981,48 @@ describe("collaboration-liveblocks schema", () => {
     }
     expect(editor.getJSON()).toEqual(liveblocksNodeToJson(storageNode));
     expect(editor.state.selection.anchor).toBe(3);
+
+    editor.destroy();
+  });
+
+  test("applies remote attribute updates to a node", () => {
+    const editor = new Editor({
+      extensions: [Document, Paragraph, Text, Panel],
+      content: {
+        type: "doc",
+        content: [
+          {
+            type: "panel",
+            attrs: { tone: "info" },
+            content: [{ type: "text", text: "Notice" }],
+          },
+        ],
+      },
+    });
+    const storageNode = createLiveblocksProsemirrorNode(editor.getJSON());
+    const panelNode = getLiveblocksNodeContent(storageNode)?.get(0);
+    const attrs = panelNode?.get("attrs");
+    expect(attrs).toBeInstanceOf(LiveMap);
+    if (panelNode === undefined) {
+      return;
+    }
+
+    updateLiveblocksNodeAttrs(panelNode, { tone: "warning" });
+    expect(panelNode.get("attrs")).not.toBe(attrs);
+    const result = applyRemoteStorageUpdates(editor.view, storageNode, [
+      {
+        type: "LiveObject",
+        node: panelNode,
+        updates: { attrs: { type: "update" } },
+        source: { origin: "remote" },
+      },
+    ]);
+
+    expect(result.type).toBe("applied");
+    if (result.type === "applied") {
+      editor.view.dispatch(result.tr);
+    }
+    expect(editor.getJSON()).toEqual(liveblocksNodeToJson(storageNode));
 
     editor.destroy();
   });
