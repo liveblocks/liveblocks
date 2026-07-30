@@ -115,6 +115,7 @@ export type LiveblocksExtensionOptions = {
 export type LiveblocksExtensionStorage =
   | {
       mode: "yjs";
+      field: string;
       unsubs: (() => void)[];
       doc: Doc;
       provider: LiveblocksYjsProvider;
@@ -122,6 +123,7 @@ export type LiveblocksExtensionStorage =
     }
   | {
       mode: "liveblocks";
+      field: string;
       unsubs: (() => void)[];
     };
 

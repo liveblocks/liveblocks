@@ -138,7 +138,7 @@ function getHistoryAction(
   return undefined;
 }
 
-function getDocumentRoot(
+export function getLiveblocksProsemirrorDocument(
   root: LiveObject<LsonObject>,
   field: string
 ): LiveblocksProsemirrorNode | undefined {
@@ -240,7 +240,7 @@ export function createLiveblocksCollaborationPlugin(
       return;
     }
 
-    const documentRoot = getDocumentRoot(root, options.field);
+    const documentRoot = getLiveblocksProsemirrorDocument(root, options.field);
     if (documentRoot === undefined) {
       return;
     }
@@ -360,7 +360,10 @@ export function createLiveblocksCollaborationPlugin(
 
       const currentRoot = root;
 
-      const documentRoot = getDocumentRoot(currentRoot, options.field);
+      const documentRoot = getLiveblocksProsemirrorDocument(
+        currentRoot,
+        options.field
+      );
 
       // Idempotency guard: if the incoming document already matches what we
       // last synced to storage, there is nothing to do. This naturally handles
@@ -415,7 +418,10 @@ export function createLiveblocksCollaborationPlugin(
         scheduleHistoryCaptureCommit();
         lastDocument = serializedIncoming;
 
-        const updatedDocumentRoot = getDocumentRoot(currentRoot, options.field);
+        const updatedDocumentRoot = getLiveblocksProsemirrorDocument(
+          currentRoot,
+          options.field
+        );
         if (updatedDocumentRoot !== undefined) {
           captureAfter = captureHistorySelection(
             newState.selection,
@@ -468,7 +474,10 @@ export function createLiveblocksCollaborationPlugin(
 
         root = storageRoot;
 
-        if (getDocumentRoot(storageRoot, options.field) === undefined) {
+        if (
+          getLiveblocksProsemirrorDocument(storageRoot, options.field) ===
+          undefined
+        ) {
           const initialDocument = getInitialDocument(
             options.initialContent,
             options.fallbackDocument,

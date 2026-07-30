@@ -404,6 +404,7 @@ export const useLiveblocksExtension = (
       if (isLiveblocksStorageMode) {
         return {
           mode: "liveblocks",
+          field: options.field,
           unsubs: [],
         };
       }
@@ -415,6 +416,7 @@ export const useLiveblocksExtension = (
       });
       return {
         mode: "yjs",
+        field: options.field,
         doc: provider.getYDoc(),
         provider,
         permanentUserData: provider.permanentUserData,

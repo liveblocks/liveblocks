@@ -21,6 +21,7 @@ export {
 export type { LiveblocksCollaborationOptions } from "./plugin";
 export {
   createLiveblocksCollaborationPlugin,
+  getLiveblocksProsemirrorDocument,
   LIVEBLOCKS_COLLABORATION_PLUGIN_KEY,
 } from "./plugin";
 export type {

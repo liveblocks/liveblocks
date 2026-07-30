@@ -20,6 +20,7 @@ import {
 } from "../cursors";
 import {
   createLiveblocksCollaborationPlugin,
+  getLiveblocksProsemirrorDocument,
   LIVEBLOCKS_COLLABORATION_PLUGIN_KEY,
   LIVEBLOCKS_TIPTAP_DOCUMENTS_KEY,
 } from "../plugin";
@@ -285,6 +286,19 @@ function getFirstTextNode(
 }
 
 describe("collaboration-liveblocks schema", () => {
+  test("gets a ProseMirror document by field from the Storage root", () => {
+    const document = createLiveblocksProsemirrorNode({
+      type: "doc",
+      content: [{ type: "paragraph" }],
+    });
+    const root = new LiveObject({
+      [LIVEBLOCKS_TIPTAP_DOCUMENTS_KEY]: new LiveMap([["custom", document]]),
+    });
+
+    expect(getLiveblocksProsemirrorDocument(root, "custom")).toBe(document);
+    expect(getLiveblocksProsemirrorDocument(root, "other")).toBeUndefined();
+  });
+
   test("round-trips a ProseMirror document through Liveblocks storage nodes", () => {
     const document = {
       type: "doc",
