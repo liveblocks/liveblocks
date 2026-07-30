@@ -215,7 +215,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     }
   }
 
-  #applySetRemote(op: CreateOp): ApplyResult {
+  #applyRemoteSet(op: CreateOp): ApplyResult {
     if (this._pool === undefined) {
       throw new Error("Can't attach child if managed pool is not present");
     }
@@ -641,7 +641,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     }
   }
 
-  #applyInsertUndoRedo(op: CreateOp, source: UpdateSource): ApplyResult {
+  #applyLocalInsert(op: CreateOp, source: UpdateSource): ApplyResult {
     const { id, parentKey: key } = op;
     const child = creationOpToLiveNode(op);
 
@@ -674,7 +674,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     };
   }
 
-  #applySetUndoRedo(op: CreateOp, source: UpdateSource): ApplyResult {
+  #applyLocalSet(op: CreateOp, source: UpdateSource): ApplyResult {
     const { id, parentKey: key } = op;
     const child = creationOpToLiveNode(op);
 
@@ -743,11 +743,11 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
     if (op.intent === "set") {
       if (opSource.origin === "remote") {
-        result = this.#applySetRemote(op);
+        result = this.#applyRemoteSet(op);
       } else if (!opSource.optimistic) {
         result = this.#applySetAck(op, source);
       } else {
-        result = this.#applySetUndoRedo(op, source);
+        result = this.#applyLocalSet(op, source);
       }
     } else {
       if (opSource.origin === "remote") {
@@ -755,7 +755,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       } else if (!opSource.optimistic) {
         result = this.#applyInsertAck(op, source);
       } else {
-        result = this.#applyInsertUndoRedo(op, source);
+        result = this.#applyLocalInsert(op, source);
       }
     }
 
@@ -802,7 +802,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     return { modified: false };
   }
 
-  #applySetChildKeyRemote(newKey: Pos, child: LiveNode): ApplyResult {
+  #applyRemoteSetChildKey(newKey: Pos, child: LiveNode): ApplyResult {
     if (this.#implicitlyDeletedItems.has(child)) {
       this.#implicitlyDeletedItems.delete(child);
 
@@ -950,7 +950,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     }
   }
 
-  #applySetChildKeyUndoRedo(
+  #applyLocalSetChildKey(
     newKey: Pos,
     child: LiveNode,
     source: UpdateSource
@@ -1000,11 +1000,11 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   _setChildKey(newKey: Pos, child: LiveNode, opSource: OpSource): ApplyResult {
     const source = toUpdateSource(opSource);
     if (opSource.origin === "remote") {
-      return this.#applySetChildKeyRemote(newKey, child);
+      return this.#applyRemoteSetChildKey(newKey, child);
     } else if (!opSource.optimistic) {
       return this.#applySetChildKeyAck(newKey, child, source);
     } else {
-      return this.#applySetChildKeyUndoRedo(newKey, child, source);
+      return this.#applyLocalSetChildKey(newKey, child, source);
     }
   }
 
