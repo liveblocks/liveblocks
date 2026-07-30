@@ -29,7 +29,8 @@ import {
   applyFormat,
   applyInsert,
   applyTextOperationsToSegments,
-  clipRange,
+  clipIndexToCodePointBoundary,
+  clipRangeToCodePointBoundaries,
   dataToSegments,
   inverseMapTextIndexThroughOperations,
   invertTextOperations,
@@ -323,7 +324,7 @@ export class LiveText extends AbstractCrdt {
    * text.insert(0, "Say: ", { italic: true });
    */
   insert(index: number, text: string, attributes?: TextAttributes): void {
-    const clippedIndex = Math.max(0, Math.min(index, this.length));
+    const clippedIndex = clipIndexToCodePointBoundary(this.toString(), index);
     this.#dispatch([{ type: "insert", index: clippedIndex, text, attributes }]);
   }
 
@@ -335,7 +336,11 @@ export class LiveText extends AbstractCrdt {
    * text.delete(5, 6); // "Hello"
    */
   delete(index: number, length: number): void {
-    const clipped = clipRange(index, length, this.length);
+    const clipped = clipRangeToCodePointBoundaries(
+      this.toString(),
+      index,
+      length
+    );
     if (clipped.length === 0) {
       return;
     }
@@ -357,7 +362,11 @@ export class LiveText extends AbstractCrdt {
     text: string,
     attributes?: TextAttributes
   ): void {
-    const clipped = clipRange(index, length, this.length);
+    const clipped = clipRangeToCodePointBoundaries(
+      this.toString(),
+      index,
+      length
+    );
     const ops: TextOperation[] = [];
     if (clipped.length > 0) {
       ops.push({
@@ -458,7 +467,11 @@ export class LiveText extends AbstractCrdt {
     length: number,
     attributes: LiveTextAttributesPatch
   ): void {
-    const clipped = clipRange(index, length, this.length);
+    const clipped = clipRangeToCodePointBoundaries(
+      this.toString(),
+      index,
+      length
+    );
     if (clipped.length === 0) {
       return;
     }

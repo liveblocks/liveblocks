@@ -182,6 +182,14 @@ describe("LiveText", () => {
       expect(text.toString()).toBe("ab");
     });
 
+    test("replacing part of a surrogate pair replaces the whole character", () => {
+      const text = new LiveText(`a${GRINNING}b`);
+
+      text.replace(2, 1, "X");
+
+      expect(text.toString()).toBe("aXb");
+    });
+
     test("formatting part of a surrogate pair formats the whole character", () => {
       const text = new LiveText(GRINNING);
 

@@ -120,6 +120,64 @@ export function clipRange(
   return { index: clippedIndex, length: clippedEnd - clippedIndex };
 }
 
+// Some characters (like emojis) are represented by surrogate pairs
+// The first part of the pair is always between 0xD800-0xDBFF
+// The second part is always between 0xDC00 and 0XDFFF
+function isInSurrogatePair(text: string, index: number): boolean {
+  const previous = text.charCodeAt(index - 1);
+  const next = text.charCodeAt(index);
+
+  return (
+    previous >= 0xd800 && previous <= 0xdbff && next >= 0xdc00 && next <= 0xdfff
+  );
+}
+
+/**
+ * Clips an index to the text and, if it falls inside a UTF-16 surrogate pair,
+ * moves it to the start of that code point.
+ */
+export function clipIndexToCodePointBoundary(
+  text: string,
+  index: number
+): number {
+  const clippedIndex = Math.max(0, Math.min(index, text.length));
+  return isInSurrogatePair(text, clippedIndex)
+    ? clippedIndex - 1
+    : clippedIndex;
+}
+
+/**
+ * Clips a range to the text and expands its boundaries when necessary so it
+ * never covers only part of a UTF-16 surrogate pair.
+ */
+export function clipRangeToCodePointBoundaries(
+  text: string,
+  index: number,
+  length: number
+): { index: number; length: number } {
+  const clipped = clipRange(index, length, text.length);
+
+  if (clipped.length === 0) {
+    return {
+      index: clipIndexToCodePointBoundary(text, clipped.index),
+      length: 0,
+    };
+  }
+
+  const clippedEnd = clipped.index + clipped.length;
+  const normalizedIndex = isInSurrogatePair(text, clipped.index)
+    ? clipped.index - 1
+    : clipped.index;
+  const normalizedEnd = isInSurrogatePair(text, clippedEnd)
+    ? clippedEnd + 1
+    : clippedEnd;
+
+  return {
+    index: normalizedIndex,
+    length: normalizedEnd - normalizedIndex,
+  };
+}
+
 export function applyInsert(
   segments: readonly TextSegment[],
   index: number,
