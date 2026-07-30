@@ -5,7 +5,8 @@
       {
         "title": "Home",
         "path": "/",
-        "file": "/index.mdx"
+        "file": "/index.mdx",
+        "hidden": true
       },
       {
         "title": "Get started",
@@ -993,7 +994,8 @@
     "routes": [
       {
         "title": "Overview",
-        "path": "/api-reference"
+        "path": "/api-reference",
+        "hidden": true
       }
     ]
   },
