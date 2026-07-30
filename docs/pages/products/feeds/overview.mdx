@@ -1,0 +1,117 @@
+---
+meta:
+  title: "Overview"
+  parentTitle: "Feeds"
+  description:
+    "Learn what Liveblocks Feeds does and how to use realtime message streams in
+    collaborative applications."
+---
+
+Feeds are ordered, persistent message streams that update in realtime. Each feed
+belongs to a Liveblocks room and can contain any JSON-compatible message data,
+so the same API can represent chat messages, agent progress, workflow events, or
+activity.
+
+<Banner title="Get started with Feeds" type="info">
+
+Build a working Next.js app with the
+[Feeds get-started guide](/docs/get-started/nextjs-feeds).
+
+</Banner>
+
+## What to build with Feeds [#what-to-build]
+
+- Human and AI chat interfaces
+- Agent output and intermediate progress
+- Activity streams and audit-style timelines
+- Multi-agent orchestration
+- Background workflow status
+- Structured messages between servers and connected clients
+
+## Features [#features]
+
+- **Realtime updates**: New feeds and messages appear for connected clients
+  without polling.
+- **Persistent messages**: Clients can reconnect and load earlier messages.
+- **Structured data**: Define the JSON shape that fits each workflow.
+- **Pagination**: Load long feed lists and message histories incrementally.
+- **Metadata filtering**: Find feeds by application-specific metadata.
+- **Client and server APIs**: Create and read feeds from React, JavaScript,
+  Node.js, REST, or workflow integrations.
+- **Room permissions**: Give users read-only or write access to feeds.
+
+## Create and render a feed [#create-and-render]
+
+Create feeds and messages from the client when the current user starts the
+conversation.
+
+```tsx title="Feed.tsx"
+import {
+  useCreateFeed,
+  useCreateFeedMessage,
+  useFeedMessages,
+} from "@liveblocks/react/suspense";
+
+function Feed() {
+  const { messages } = useFeedMessages("assistant");
+  const createFeed = useCreateFeed();
+  const createMessage = useCreateFeedMessage();
+
+  return (
+    <div>
+      <button
+        onClick={() => {
+          createFeed("assistant", { metadata: { kind: "chat" } });
+          createMessage("assistant", {
+            role: "user",
+            content: "Summarize this document",
+          });
+        }}
+      >
+        Start
+      </button>
+      {messages.map((message) => (
+        <p key={message.id}>{message.data.content}</p>
+      ))}
+    </div>
+  );
+}
+```
+
+For server-started workflows, use
+[`Liveblocks.createFeed`](/docs/api-reference/liveblocks-node#post-rooms-roomId-feed)
+and
+[`Liveblocks.createFeedMessage`](/docs/api-reference/liveblocks-node#post-rooms-roomId-feeds-feedId-messages).
+
+## Model feed data [#model-feed-data]
+
+Keep message data small and specific to the interface. A chat might store `role`
+and `content`; a workflow might store `step`, `status`, and a reference to the
+affected entity.
+
+```ts
+declare global {
+  interface Liveblocks {
+    FeedMetadata: {
+      kind: "chat" | "workflow";
+      title?: string;
+    };
+    FeedMessageData: {
+      role: "user" | "assistant" | "system";
+      content: string;
+    };
+  }
+}
+```
+
+See the [React Feeds API](/docs/api-reference/liveblocks-react#Feeds) for the
+current global augmentation names and complete hook signatures.
+
+## Next steps [#next-steps]
+
+- Design a [chat interface](/docs/products/feeds/chat-interfaces).
+- [List and filter feeds](/docs/products/feeds/listing-feeds).
+- Add [pagination](/docs/products/feeds/pagination).
+- [Connect a server or agent workflow](/docs/products/feeds/integrating-workflows).
+- Configure
+  [authentication and permissions](/docs/products/feeds/authentication-and-permissions).

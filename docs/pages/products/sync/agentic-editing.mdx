@@ -1,0 +1,109 @@
+---
+meta:
+  title: "Agentic editing"
+  parentTitle: "Sync"
+  description:
+    "Let servers and AI agents safely read and edit collaborative documents."
+---
+
+Agentic editing lets an AI agent or server process modify the same Sync document
+as the people in your application. Clients receive those changes in realtime, so
+an agent can work visibly alongside humans instead of returning one final
+response.
+
+<Banner title="Build the complete workflow" type="info">
+
+Read
+[Enabling agentic workflows with Liveblocks](/docs/guides/enabling-agentic-workflows-with-liveblocks)
+for Presence, Storage, webhooks, and multi-step examples.
+
+</Banner>
+
+## Choose an editing API [#choose-an-editing-api]
+
+Use
+[`Liveblocks.mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage)
+from Node.js when the server uses `@liveblocks/node`.
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+});
+
+await liveblocks.mutateStorage("my-room-id", ({ root }) => {
+  root.get("tasks").push({
+    id: crypto.randomUUID(),
+    title: "Review the agent’s proposal",
+  });
+});
+```
+
+Use the
+[`Storage` JSON Patch endpoint](/docs/api-reference/rest-api-endpoints#patch-rooms-roomId-storage-json-patch)
+from other languages or systems that already produce JSON Patch operations.
+
+```http
+PATCH /v2/rooms/my-room-id/storage/json-patch
+Content-Type: application/json
+
+[
+  { "op": "replace", "path": "/status", "value": "review" }
+]
+```
+
+For large or frequent updates, prefer the native Node mutation API so the server
+does not need to reconstruct and patch the complete JSON document.
+
+## Create a version before a substantial edit [#create-a-version-first]
+
+Create a manual version immediately before an agent applies a broad or
+destructive change. Users can then inspect the previous state or restore it.
+
+```ts
+await liveblocks.createVersionHistorySnapshot("my-room-id");
+
+await liveblocks.mutateStorage("my-room-id", ({ root }) => {
+  applyValidatedAgentChanges(root);
+});
+```
+
+Read [Version history](/docs/products/sync/version-history) for automatic
+versions, previews, and restoration.
+
+## Show the agent working [#show-agent-presence]
+
+Use ephemeral Presence to show that an agent is active, where it is focused, and
+what it is doing.
+
+```ts
+await liveblocks.setPresence("my-room-id", {
+  userId: "agent-123",
+  data: { status: "editing", focusedId: "task-42" },
+  userInfo: { name: "Planning agent", color: "#7c3aed" },
+  ttl: 30,
+});
+```
+
+Refresh the Presence while work continues and let its time-to-live expire when
+the process stops unexpectedly. Persist the agent’s actual output in Storage.
+
+## Validate agent changes [#validate-agent-changes]
+
+- Authenticate the human who requested the work.
+- Check that they can write to the room.
+- Validate IDs, paths, and generated values against the document schema.
+- Limit the number and size of operations.
+- Create a version before broad changes.
+- Record application-specific audit information outside the collaborative
+  document when required.
+
+Never expose a Liveblocks secret key to the browser. Run server mutations in a
+trusted backend or workflow.
+
+## Trigger follow-up work [#trigger-follow-up-work]
+
+Use [`storageUpdated`](/docs/platform/webhooks#StorageUpdatedEvent) webhooks to
+index the new document, notify another service, or begin a subsequent workflow.
+Make webhook handlers idempotent because delivery can be retried.

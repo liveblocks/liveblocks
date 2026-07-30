@@ -182,7 +182,7 @@ collaboration to your Next.js and Tldraw app using hooks from
     <StepContent>
 
       Create the `useStorageStore` hook to synchronize Tldraw state with
-      Liveblocks Storage, and your whiteboard should be synchronized.
+      Storage, and your whiteboard should be synchronized.
 
       ```tsx file="app/useStorageStore.ts" isCollapsable isCollapsed
       import { useEffect, useState } from "react";
@@ -239,7 +239,7 @@ collaboration to your Next.js and Tldraw app using hooks from
           // State is already initialized to "loading", no need to set it again
 
           async function setup() {
-            // Get Liveblocks Storage values
+            // Get Storage values
             const { root } = await room.getStorage();
             const liveRecords = root.get("records");
 
@@ -501,7 +501,7 @@ collaborative experiences for your React application.
 - [@liveblocks/react API Reference](/docs/api-reference/liveblocks-react)
 - [Next.js and React guides](/docs/guides?technologies=nextjs%2Creact)
 - [How to use Liveblocks Presence with React](/docs/guides/how-to-use-liveblocks-presence-with-react)
-- [How to use Liveblocks Storage with React](/docs/guides/how-to-use-liveblocks-storage-with-react)
+- [How to use Storage with React](/docs/guides/how-to-use-liveblocks-storage-with-react)
 
 ---
 

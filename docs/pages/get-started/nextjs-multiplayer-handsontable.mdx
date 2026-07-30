@@ -17,7 +17,9 @@ application using the hooks from
 
 <Banner title="Live example">
 
-See the finished result in the [Multiplayer Handsontable](/examples/multiplayer-handsontable/nextjs-multiplayer-handsontable) example.
+See the finished result in the
+[Multiplayer Handsontable](/examples/multiplayer-handsontable/nextjs-multiplayer-handsontable)
+example.
 
 </Banner>
 
@@ -171,7 +173,7 @@ See the finished result in the [Multiplayer Handsontable](/examples/multiplayer-
 
       Now that Liveblocks is set up, integrate Handsontable in the `Table.tsx` file.
       [`useStorage`](/docs/api-reference/liveblocks-react#useStorage)
-      reads the grid data from Liveblocks Storage, and
+      reads the grid data from Storage, and
       [`useMutation`](/docs/api-reference/liveblocks-react#useMutation)
       writes cell changes back. We also use presence to highlight which cell
       each user has selected.
@@ -198,7 +200,7 @@ See the finished result in the [Multiplayer Handsontable](/examples/multiplayer-
       export function Table() {
         const hotRef = useRef<HotTableRef>(null);
 
-        // Get the realtime grid contents from Liveblocks Storage
+        // Get the realtime grid contents from Storage
         const data = useStorage(
           (root) =>
             root.grid.map((row) =>
@@ -338,7 +340,7 @@ multiplayer Handsontable spreadsheet for your Next.js application.
 
 - [@liveblocks/react API Reference](/docs/api-reference/liveblocks-react)
 - [Next.js and React guides](/docs/guides?technologies=nextjs%2Creact)
-- [How to use Liveblocks Storage with React](/docs/guides/how-to-use-liveblocks-storage-with-react)
+- [How to use Storage with React](/docs/guides/how-to-use-liveblocks-storage-with-react)
 
 ---
 

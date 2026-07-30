@@ -1,0 +1,54 @@
+---
+meta:
+  title: "Spreadsheet"
+  parentTitle: "Use cases"
+  description:
+    "Build collaborative spreadsheets with synchronized cells, selections,
+    undo/redo, and comments."
+---
+
+A collaborative spreadsheet combines a persistent grid with temporary cell
+selections. Store cell values in Sync, keep each user’s active cell in Presence,
+and add Comments for discussions attached to rows or cells.
+
+<Banner title="Build with Handsontable" type="info">
+
+Follow the
+[multiplayer Handsontable guide](/docs/get-started/nextjs-multiplayer-handsontable)
+for a complete spreadsheet implementation.
+
+</Banner>
+
+## APIs you need [#apis]
+
+- [`LiveList`](/docs/api-reference/liveblocks-client#LiveList) or
+  [`LiveMap`](/docs/api-reference/liveblocks-client#LiveMap) for cell data
+- [`useStorage`](/docs/api-reference/liveblocks-react#useStorage) and
+  [`useMutation`](/docs/api-reference/liveblocks-react#useMutation) for cell
+  reads and writes
+- [`useUpdateMyPresence`](/docs/api-reference/liveblocks-react#useUpdateMyPresence)
+  for active-cell state
+- [Multiplayer undo/redo](/docs/products/sync/multiplayer-undo-redo)
+- [Comments](/docs/products/comments) for cell discussions
+
+```tsx
+const grid = useStorage((root) => root.grid);
+
+const setCell = useMutation(
+  ({ storage }, row: number, column: number, value: string) => {
+    storage.get("grid").get(row)?.set(column, value);
+  },
+  []
+);
+```
+
+For sparse or very large tables, use IDs and maps rather than allocating every
+empty cell. Batch multi-cell edits so paste and fill operations create one
+history entry.
+
+## Examples and next steps [#examples]
+
+- [Multiplayer Handsontable example](https://liveblocks.io/examples/multiplayer-handsontable/nextjs-multiplayer-handsontable)
+- [Handsontable Comments guide](/docs/get-started/nextjs-comments-handsontable)
+- [Conflict resolution](/docs/products/sync/conflict-resolution)
+- [Version history](/docs/products/sync/version-history)

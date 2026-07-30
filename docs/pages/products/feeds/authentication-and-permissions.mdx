@@ -1,0 +1,44 @@
+---
+meta:
+  title: "Authentication and permissions"
+  parentTitle: "Feeds"
+  description: "Control who can read and write feeds in each room."
+---
+
+Feeds uses the same room authentication flow as other Liveblocks products. Your
+authentication endpoint identifies the user and grants room-level permissions.
+
+<Banner title="Set permissions on the server">
+
+Use an [access token](/docs/authentication/access-token) in production so your
+server decides which rooms and products each user can access.
+
+</Banner>
+
+## Feed permission scopes [#feed-permission-scopes]
+
+Use one of these scopes for each room:
+
+| Scope         | Access                                                |
+| ------------- | ----------------------------------------------------- |
+| `feeds:read`  | Read feeds and feed messages                          |
+| `feeds:write` | Read and create, update, or delete feeds and messages |
+| `feeds:none`  | No access to Feeds                                    |
+
+```ts title="app/api/liveblocks-auth/route.ts"
+const session = liveblocks.prepareSession(user.id);
+
+session.allow(`project:${projectId}:*`, ["*:read", "feeds:write"]);
+
+const { body, status } = await session.authorize();
+
+return new Response(body, { status });
+```
+
+Choose `feeds:read` for viewers and `feeds:write` for users who can send
+messages or manage feeds. Server-side calls authenticated with a secret key are
+not limited by an end user’s access token, so validate application permissions
+before acting on their behalf.
+
+Read [Permissions](/docs/authentication/permissions) for the complete scope
+model and [Authentication](/docs/authentication) for framework-specific setup.

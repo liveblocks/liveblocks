@@ -1,0 +1,124 @@
+---
+meta:
+  title: "Presence"
+  parentTitle: "Sync"
+  description:
+    "Share temporary user and agent state such as cursors, selections, and
+    active tools."
+---
+
+Presence is temporary state associated with each connected user or agent in a
+room. It updates in realtime and disappears when that connection ends.
+
+Use Presence for cursors, selections, typing indicators, active tools,
+playheads, and other signals that do not belong in the persisted document.
+
+<Banner title="Get started with Presence" type="info">
+
+Follow the [Next.js Presence quickstart](/docs/get-started/nextjs-presence),
+then return here for modeling and API guidance.
+
+</Banner>
+
+## Define Presence [#define-presence]
+
+Declare your Presence type in `liveblocks.config.ts`.
+
+```ts file="liveblocks.config.ts"
+declare global {
+  interface Liveblocks {
+    Presence: {
+      cursor: { x: number; y: number } | null;
+      selectedId: string | null;
+    };
+  }
+}
+
+export {};
+```
+
+Set an initial value when the user enters a room.
+
+```tsx
+<RoomProvider id="my-room" initialPresence={{ cursor: null, selectedId: null }}>
+  {children}
+</RoomProvider>
+```
+
+## Update your Presence [#update-your-presence]
+
+Use
+[`useUpdateMyPresence`](/docs/api-reference/liveblocks-react#useUpdateMyPresence)
+to merge temporary values into the current user’s Presence.
+
+```tsx
+import { useUpdateMyPresence } from "@liveblocks/react/suspense";
+
+function Canvas() {
+  const updateMyPresence = useUpdateMyPresence();
+
+  return (
+    <div
+      onPointerMove={(event) =>
+        updateMyPresence({
+          cursor: { x: event.clientX, y: event.clientY },
+        })
+      }
+      onPointerLeave={() => updateMyPresence({ cursor: null })}
+    />
+  );
+}
+```
+
+## Read collaborators [#read-collaborators]
+
+[`useOthers`](/docs/api-reference/liveblocks-react#useOthers) returns the other
+connected users. [`useSelf`](/docs/api-reference/liveblocks-react#useSelf)
+returns the current connection.
+
+```tsx
+import { useOthers } from "@liveblocks/react/suspense";
+
+function Cursors() {
+  const others = useOthers();
+
+  return others.map(({ connectionId, presence, info }) =>
+    presence.cursor ? (
+      <Cursor key={connectionId} name={info.name} position={presence.cursor} />
+    ) : null
+  );
+}
+```
+
+User info such as a name, avatar, and color comes from
+[authentication](/docs/authentication). Keep user identity in `info`, not in
+Presence.
+
+## Humans and agents [#humans-and-agents]
+
+Agents can appear alongside humans through
+[`Liveblocks.setPresence`](/docs/api-reference/liveblocks-node#post-rooms-roomId-presence).
+Use a short time-to-live and refresh it while work continues.
+
+```ts
+await liveblocks.setPresence("my-room-id", {
+  userId: "agent-123",
+  data: { status: "editing", cursor: { x: 100, y: 200 } },
+  userInfo: { name: "Research agent", color: "#7c3aed" },
+  ttl: 30,
+});
+```
+
+## Presence or Storage? [#presence-or-storage]
+
+| Put it in Presence | Put it in Storage                |
+| ------------------ | -------------------------------- |
+| Cursor position    | Shapes and nodes                 |
+| Current selection  | Document title                   |
+| Active tool        | Table data                       |
+| Typing indicator   | Saved editor content             |
+| Agent activity     | Agent output that should persist |
+
+Presence is intentionally ephemeral. Use
+[Storage data types](/docs/products/sync/data-types) when state must survive a
+disconnect.

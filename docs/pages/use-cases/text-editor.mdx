@@ -1,0 +1,82 @@
+---
+meta:
+  title: "Text editor"
+  parentTitle: "Use cases"
+  description:
+    "Build collaborative text editors with LiveText, comments, mentions, and
+    version history."
+---
+
+Use LiveText for new collaborative text editors. It is the text data type inside
+Sync and can power different editor integrations while remaining available
+through the same Storage APIs as the rest of your document.
+
+<Banner title="Start with an editor integration" type="info">
+
+Choose a supported editor from
+[Sync integrations](/docs/products/sync/integrations). For existing Yjs-based
+editors, see [when to keep using Yjs](/docs/products/sync/yjs).
+
+</Banner>
+
+## APIs you need [#apis]
+
+- [`LiveText`](/docs/api-reference/liveblocks-client#LiveText) for collaborative
+  text
+- [`useStorage`](/docs/api-reference/liveblocks-react#useStorage) for related
+  document state
+- [Comments](/docs/products/comments) for inline discussions
+- [Notifications](/docs/products/notifications) for mentions and replies
+- [Version history](/docs/products/sync/version-history) for preview and restore
+- [Agentic editing](/docs/products/sync/agentic-editing) for server and AI edits
+
+```ts
+import { LiveText } from "@liveblocks/client";
+
+const body = new LiveText("Start writing…");
+body.insert(body.length, " together");
+body.format(0, 5, { bold: true });
+```
+
+## Choose an editor [#choose-an-editor]
+
+Use the LiveText integration for the editor your application already uses. The
+integration handles translating editor operations to LiveText updates,
+multiplayer selections, and undo/redo. Add ready-made Comments components when
+users need inline annotations.
+
+Yjs remains appropriate for an existing editor built around a `Y.Doc`, a
+dependency that only provides a Yjs binding, or an ecosystem feature not
+available through LiveText. New Liveblocks text editors should start with
+LiveText.
+
+## Users and mentions [#Users-and-mentions]
+
+Resolve user names, avatars, and mention suggestions through `resolveUsers` and
+`resolveMentionSuggestions` on `LiveblocksProvider`. Comments and supported
+editor integrations use the same user IDs and notification settings.
+
+## Multiple editors [#Multiple-editors]
+
+Give each editor a stable document key within the room, or use one room per
+document. Choose the boundary that matches permissions and version history:
+room-level operations apply to every shared value in that room.
+
+## Notifications [#Notifications]
+
+Text mentions can create inbox notifications automatically. Add the
+[Notifications product](/docs/products/notifications) for an in-app inbox and
+configure
+[email notifications](/docs/products/notifications/email-notifications) when
+users should receive unread mentions outside the application.
+
+## Guides and examples [#guides-and-examples]
+
+- [Tiptap get-started guide](/docs/get-started/nextjs-tiptap)
+- [BlockNote get-started guide](/docs/get-started/nextjs-blocknote)
+- [Lexical get-started guide](/docs/get-started/nextjs-lexical)
+- [Advanced collaborative text editor example](https://liveblocks.io/examples/collaborative-text-editor-advanced/nextjs-tiptap-advanced)
+- [Text editor Comments example](https://liveblocks.io/examples/text-editor-comments/nextjs-comments-tiptap)
+
+The get-started guides describe the current package-specific setup. Use this
+page to choose the product capabilities around the editor.

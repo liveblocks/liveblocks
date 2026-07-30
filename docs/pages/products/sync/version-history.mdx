@@ -1,0 +1,102 @@
+---
+meta:
+  title: "Version history"
+  parentTitle: "Sync"
+  description:
+    "Create, preview, and restore meaningful versions of Storage and Yjs
+    documents."
+---
+
+Version history records room snapshots so users can inspect earlier document
+states and restore them. A version can contain both the room’s Storage and Yjs
+documents.
+
+<Banner title="Follow the complete guide" type="info">
+
+Read
+[How to add version history to your app](/docs/guides/how-to-add-version-history-to-your-app)
+for complete Storage and Yjs examples.
+
+</Banner>
+
+## When to create versions [#when-to-create-versions]
+
+Versions are useful:
+
+- Before an AI agent makes a broad change
+- When a user publishes, submits, or saves a milestone
+- At automatic intervals while a document is active
+- Before importing or migrating external data
+
+Enable automatic versions in the Liveblocks dashboard or create a meaningful
+snapshot from your backend.
+
+```ts
+const snapshot = await liveblocks.createVersionHistorySnapshot("my-room-id");
+```
+
+See
+[`Liveblocks.createVersionHistorySnapshot`](/docs/api-reference/liveblocks-node#create-version-history-snapshot)
+for the server API.
+
+## List versions [#list-versions]
+
+[`useHistoryVersions`](/docs/api-reference/liveblocks-react#useHistoryVersions)
+returns the versions for the current room.
+
+```tsx
+import { useHistoryVersions } from "@liveblocks/react";
+
+function VersionList() {
+  const { versions, isLoading, error } = useHistoryVersions();
+
+  if (isLoading) return <div>Loading versions…</div>;
+  if (error) return <div>Could not load versions.</div>;
+
+  return versions.map((version) => (
+    <time key={version.id}>{version.createdAt.toLocaleString()}</time>
+  ));
+}
+```
+
+## Preview a version [#preview-a-version]
+
+Use
+[`useHistoryVersionStorageData`](/docs/api-reference/liveblocks-react#useHistoryVersionStorageData)
+to retrieve a read-only Storage tree for a version.
+
+```tsx
+const { data, isLoading } = useHistoryVersionStorageData(selectedVersionId);
+
+if (isLoading) return <div>Loading preview…</div>;
+
+return <pre>{JSON.stringify(data.toJSON(), null, 2)}</pre>;
+```
+
+Use
+[`useHistoryVersionYjsData`](/docs/api-reference/liveblocks-react#useHistoryVersionYjsData)
+when previewing a Yjs document.
+
+## Restore Storage [#restore-storage]
+
+[`useRestoreToStorageVersion`](/docs/api-reference/liveblocks-react#useRestoreToStorageVersion)
+restores Storage as one synchronized, undoable change.
+
+```tsx
+function RestoreButton({ versionId }: { versionId: string }) {
+  const restore = useRestoreToStorageVersion(versionId);
+
+  return <button onClick={() => restore()}>Restore this version</button>;
+}
+```
+
+Because the restoration is added to multiplayer history, a user can undo it if
+they change their mind.
+
+## Delete versions [#delete-versions]
+
+Use
+[`useDeleteHistoryVersion`](/docs/api-reference/liveblocks-react#useDeleteHistoryVersion)
+when users are allowed to remove a snapshot. Confirm the action and handle
+loading and error states because deletion cannot be undone through document
+history.

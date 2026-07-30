@@ -1,0 +1,79 @@
+---
+meta:
+  title: "AI Collaboration"
+  parentTitle: "Use cases"
+  description:
+    "Build applications where people and AI agents communicate, edit shared
+    documents, and work together in realtime."
+---
+
+Liveblocks lets AI agents participate in the same collaborative application as
+people. Use Sync for shared document edits, Feeds for durable messages and
+progress, Presence for temporary activity, Comments for contextual responses,
+and Notifications for updates outside the open room.
+
+<Banner title="Choose an AI starting point" type="info">
+
+Build an embedded assistant with [AI Copilots](/docs/products/ai-copilots), or
+follow the [AI Presence](/docs/get-started/nextjs-ai-presence) and
+[AI Comments](/docs/get-started/nextjs-comments-ai) guides for custom workflows.
+
+</Banner>
+
+## APIs you need [#apis]
+
+- [Agentic editing](/docs/products/sync/agentic-editing) to modify shared
+  Storage from a server or agent
+- [`Liveblocks.createFeedMessage`](/docs/api-reference/liveblocks-node#post-rooms-roomId-feeds-feedId-messages)
+  for durable agent output
+- [`Liveblocks.setPresence`](/docs/api-reference/liveblocks-node#post-rooms-roomId-presence)
+  for temporary agent status
+- [Comments](/docs/products/comments) for AI responses attached to content
+- [Notifications](/docs/products/notifications) for completed work and mentions
+
+```ts
+await liveblocks.createFeedMessage({
+  roomId: "my-room",
+  feedId: "assistant",
+  data: {
+    role: "assistant",
+    content: "I updated the launch plan.",
+  },
+});
+```
+
+## Let agents edit shared documents [#edit-shared-documents]
+
+Read the current Storage state from your server, create a version before a
+high-impact change, and apply the smallest update that represents the agent’s
+decision. The change synchronizes to connected clients like any other Sync
+mutation.
+
+Use [Version history](/docs/products/sync/version-history) to provide a preview
+and restore path. Read [Agentic editing](/docs/products/sync/agentic-editing)
+for the JSON Patch, mutation, and versioning APIs.
+
+## Communicate progress [#communicate-progress]
+
+Use a Feed when users should be able to reconnect and read the output later. Use
+Presence for temporary state such as `thinking`, `searching`, or `editing` that
+should expire if the agent stops reporting it.
+
+```ts
+await liveblocks.setPresence("my-room", {
+  userId: "agent-123",
+  data: { status: "editing" },
+  userInfo: { name: "Planning agent" },
+  ttl: 30,
+});
+```
+
+Read [Integrating workflows](/docs/products/feeds/integrating-workflows) to
+connect custom workers, AI SDKs, or n8n.
+
+## Examples and guides [#examples]
+
+- [Agentic workflows guide](/docs/guides/enabling-agentic-workflows-with-liveblocks)
+- [AI Comments example](https://liveblocks.io/examples/ai-comments)
+- [AI React Flow get-started guide](/docs/get-started/nextjs-ai-react-flow)
+- [Liveblocks n8n integration](/docs/integrations/n8n-nodes)

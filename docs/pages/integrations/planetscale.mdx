@@ -21,7 +21,7 @@ Liveblocks [webhooks](/docs/platform/webhooks) trigger when certain events
 happen, such as when a collaborative document updates. Liveblocks can trigger an
 endpoint in your back end, and from here, you can fetch the latest data and
 write it to PlanetScale. Here’s an example of how it works with
-[Liveblocks Storage](/docs/collaboration-features/multiplayer/sync-engine/liveblocks-storage).
+[Storage](/docs/products/sync/data-types).
 
 ```mermaid
 sequenceDiagram
@@ -47,7 +47,7 @@ Various types of Liveblocks data can be synched to PlanetScale with webhooks.
 | ------------------------ | ------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
 | Rooms                    | Created rooms and metadata.     | [`roomUpdated`](/docs/platform/webhooks#RoomUpdatedEvent)       | [`getRoom`](/docs/api-reference/liveblocks-node#get-rooms-roomId)                    |
 | Active users             | Currently connected users.      | [`userEntered`](/docs/platform/webhooks#UserEnteredEvent)       | [`getActiveUsers`](/docs/api-reference/liveblocks-node#get-active-users)             |
-| Liveblocks Storage       | Custom realtime document state. | [`storageUpdated`](/docs/platform/webhooks#StorageUpdatedEvent) | [`getStorageDocument`](/docs/api-reference/liveblocks-node#get-rooms-roomId-storage) |
+| Storage                  | Custom realtime document state. | [`storageUpdated`](/docs/platform/webhooks#StorageUpdatedEvent) | [`getStorageDocument`](/docs/api-reference/liveblocks-node#get-rooms-roomId-storage) |
 | React Flow               | Flowchart state.                | [`storageUpdated`](/docs/platform/webhooks#StorageUpdatedEvent) | [`mutateFlow`](/docs/api-reference/liveblocks-react-flow#mutateFlow)                 |
 | Yjs                      | `Y.Doc` document state.         | [`ydocUpdated`](/docs/platform/webhooks#YDocUpdatedEvent)       | [`getYjsDocument`](/docs/api-reference/liveblocks-node#get-rooms-roomId-ydoc)        |
 | Tiptap/BlockNote/Lexical | Text editor state.              | [`ydocUpdated`](/docs/platform/webhooks#YDocUpdatedEvent)       | [`getYjsDocument`](/docs/api-reference/liveblocks-node#get-rooms-roomId-ydoc)        |
@@ -63,9 +63,9 @@ Various types of Liveblocks data can be synched to PlanetScale with webhooks.
 
 ## Setup
 
-Quickstart for synching Liveblocks data to PlanetScale. In this example, we
-sync Liveblocks Storage data to PlanetScale, but you can use the same pattern
-with other APIs and webhooks to sync other types of data.
+Quickstart for synching Liveblocks data to PlanetScale. In this example, we sync
+Storage data to PlanetScale, but you can use the same pattern with other APIs
+and webhooks to sync other types of data.
 
 <Banner title="Step-by-step guide">
   We have a [full step-by-step guide available
@@ -167,7 +167,7 @@ with other APIs and webhooks to sync other types of data.
   </Step>
 
   <Step>
-    <StepTitle>Sync Storage to PlanetScale</StepTitle>
+    <StepTitle>Storage to PlanetScale</StepTitle>
     <StepContent>
     Set up your Liveblocks and PlanetScale clients, before fetching the Storage document data with
      [`getStorageDocument`](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-storage) and
@@ -272,7 +272,7 @@ the webhook can be retried.
 
 ## Related docs
 
-- [Synchronize Liveblocks Storage document data to PlanetScale MySQL](/docs/guides/how-to-synchronize-your-liveblocks-storage-document-data-to-a-planetscale-mysql-database).
+- [Synchronize Storage document data to PlanetScale MySQL](/docs/guides/how-to-synchronize-your-liveblocks-storage-document-data-to-a-planetscale-mysql-database).
 - [Synchronize Liveblocks Yjs document data to PlanetScale MySQL](/docs/guides/how-to-synchronize-your-liveblocks-yjs-document-data-to-a-planetscale-mysql-database).
 - API references for, [webhooks](/docs/platform/webhooks),
   [Node.js](/docs/api-reference/liveblocks-node),

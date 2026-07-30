@@ -38,7 +38,7 @@ authentication, backend, or data model.
 | Rooms         | Spaces in your product where collaboration happens, such as documents                                      |
 | Primitives    | The building blocks that makes multiplayer possible at scale: Presence, Broadcast, Storage, Feeds, Threads |
 | Users         | People and AI agents doing work together                                                                   |
-| Features      | Collaboration features like Multiplayer, Comments, Notifications, AI Collaboration and AI Copilots         |
+| Products      | Sync, Feeds, Comments, Notifications, and AI Copilots                                                      |
 | Platform      | The realtime backend, admin dashboard, and SDKs that make collaboration possible at scale                  |
 
 <Figure>
@@ -137,33 +137,49 @@ possible at scale: Presence, Broadcast, Storage, Feeds, Threads.
   />
 </ListGrid>
 
-## Collaboration features
+## Products
 
-With Liveblocks, you can build all sorts of collaboration features. Most of
-these features come with pre-built components, hooks, and APIs that handle the
-complexity of realtime collaboration, allowing you to focus on building your
+Liveblocks products provide pre-built components, hooks, and APIs that handle
+the complexity of realtime collaboration, allowing you to focus on building your
 product’s unique experience.
 
 <ListGrid columns={2}>
-  <DocsCardFeature
-    feature="comments"
-    href="/docs/collaboration-features/comments"
+  <DocsCard
+    type="technology"
+    title="Sync"
+    href="/docs/products/sync"
+    description="Synchronize persistent collaborative state"
+    visual={<DocsStorageIcon className="fill-product-icon-brand h-auto w-6" />}
   />
-  <DocsCardFeature
-    feature="multiplayer"
-    href="/docs/collaboration-features/multiplayer"
+  <DocsCard
+    type="technology"
+    title="Feeds"
+    href="/docs/products/feeds"
+    description="Create realtime message streams"
+    visual={
+      <DocsJavascriptIcon className="fill-product-icon-brand h-auto w-6" />
+    }
   />
-  <DocsCardFeature
-    feature="notifications"
-    href="/docs/collaboration-features/notifications"
+  <DocsCard
+    type="technology"
+    title="Comments"
+    href="/docs/products/comments"
+    description="Add contextual discussions"
+    visual={<DocsMentionIcon className="fill-product-icon-brand h-auto w-6" />}
   />
-  <DocsCardFeature
-    feature="ai-collaboration"
-    href="/docs/collaboration-features/ai-collaboration"
+  <DocsCard
+    type="technology"
+    title="Notifications"
+    href="/docs/products/notifications"
+    description="Deliver collaboration activity"
+    visual={<DocsEmailIcon className="fill-product-icon-brand h-auto w-6" />}
   />
-  <DocsCardFeature
-    feature="ai-copilots"
-    href="/docs/collaboration-features/ai-copilots"
+  <DocsCard
+    type="technology"
+    title="AI Copilots"
+    href="/docs/products/ai-copilots"
+    description="Embed AI assistants"
+    visual={<DocsRobotIcon className="fill-product-icon-brand h-auto w-6" />}
   />
 </ListGrid>
 
@@ -199,7 +215,7 @@ behavior.
 - Works with any LLM (OpenAI, Anthropic, Gemini, or custom).
 - Supports RAG knowledge from PDFs, images, websites, and text.
 - Fully compatible with the
-  [`<AiChat />`](/docs/ready-made-features/ai-agents/liveblocks-ai-copilots/default-components#AiChat)
+  [`<AiChat />`](/docs/products/ai-copilots/default-components#AiChat)
   component.
 - Acts on behalf of a user to take actions inside your app.
 - Accessed through chat (not via @ mentions).

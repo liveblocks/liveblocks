@@ -1,0 +1,55 @@
+---
+meta:
+  title: "Table"
+  parentTitle: "Use cases"
+  description:
+    "Add realtime comments, presence, and shared data to application tables."
+---
+
+Collaborative tables can synchronize the underlying records, attach comments to
+rows or cells, or do both. Choose Sync when users edit shared table data and
+Comments when the data already lives in your database but needs discussion.
+
+<Banner title="Choose a table guide" type="info">
+
+Start with [Comments on a React table](/docs/get-started/nextjs-comments-table),
+[AG Grid](/docs/get-started/nextjs-comments-ag-grid), or
+[Handsontable](/docs/get-started/nextjs-comments-handsontable).
+
+</Banner>
+
+## APIs you need [#apis]
+
+- [`LiveMap`](/docs/api-reference/liveblocks-client#LiveMap) for synchronized
+  records keyed by stable IDs
+- [`useStorage`](/docs/api-reference/liveblocks-react#useStorage) and
+  [`useMutation`](/docs/api-reference/liveblocks-react#useMutation) for shared
+  values
+- [`useThreads`](/docs/api-reference/liveblocks-react#useThreads) for comments
+  filtered by row or cell metadata
+- [`FloatingThread`](/docs/api-reference/liveblocks-react-ui#FloatingThread) and
+  [`FloatingComposer`](/docs/api-reference/liveblocks-react-ui#FloatingComposer)
+  for contextual comment UI
+
+```ts file="liveblocks.config.ts"
+declare global {
+  interface Liveblocks {
+    ThreadMetadata: {
+      rowId: string;
+      columnId?: string;
+    };
+  }
+}
+```
+
+Use stable record and column IDs in thread metadata so comments remain attached
+after sorting or filtering. If the canonical records live in your database, keep
+them there and broadcast invalidation events when other clients should
+revalidate.
+
+## Next steps [#next-steps]
+
+- Configure [Comments metadata](/docs/products/comments/metadata).
+- Use [Broadcast events](/docs/products/sync/broadcast-events) with SWR or
+  another data-fetching library.
+- Add [Notifications](/docs/products/notifications) for replies and mentions.

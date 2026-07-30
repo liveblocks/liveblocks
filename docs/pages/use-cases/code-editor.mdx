@@ -1,0 +1,56 @@
+---
+meta:
+  title: "Code editor"
+  parentTitle: "Use cases"
+  description:
+    "Build collaborative CodeMirror and Monaco editors with Liveblocks and Yjs."
+---
+
+Collaborative code editors need character-level synchronization, shared
+awareness, and editor-specific selection handling. Use the Liveblocks Yjs
+provider with CodeMirror or Monaco, then add Comments or Notifications around
+the editing experience.
+
+<Banner title="Choose an editor guide" type="info">
+
+Start with [CodeMirror and React](/docs/get-started/yjs-codemirror-react) or
+[Monaco and React](/docs/get-started/yjs-monaco-react). Guides are also
+available for JavaScript, Svelte, and Vue.
+
+</Banner>
+
+## APIs you need [#apis]
+
+- [`getYjsProviderForRoom`](/docs/api-reference/liveblocks-yjs#getYjsProviderForRoom)
+  to connect a `Y.Doc` to the current room
+- A Yjs binding for CodeMirror or Monaco
+- Yjs Awareness for cursors and selections
+- [Comments](/docs/products/comments) for review discussions
+- [Notifications](/docs/products/notifications) for mentions and updates
+
+```tsx
+const room = useRoom();
+const provider = getYjsProviderForRoom(room);
+const yText = provider.getYDoc().getText("code");
+
+const extensions = [
+  yCollab(yText, provider.awareness, {
+    undoManager: new Y.UndoManager(yText),
+  }),
+];
+```
+
+Use one room per collaborative file or choose a stable naming convention for
+multiple text values in one room. Keep language-server or build output outside
+the shared document unless collaborators need to edit it.
+
+## Next steps [#next-steps]
+
+- Read the [Yjs product page](/docs/products/sync/yjs).
+- Add a
+  [server-side Yjs integration](/docs/guides/how-to-use-your-ydoc-on-the-server)
+  when back-end code must inspect or modify the document.
+- Explore the
+  [collaborative code editor example](https://liveblocks.io/examples/collaborative-code-editor).
+- Use [Presence](/docs/products/sync/presence) for status outside the editor’s
+  awareness model.

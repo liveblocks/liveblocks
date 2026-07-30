@@ -1,0 +1,83 @@
+---
+meta:
+  title: "Sync"
+  parentTitle: "Products"
+  description:
+    "Build realtime collaborative applications with synchronized Storage,
+    Presence, history, and conflict resolution."
+---
+
+Liveblocks Sync keeps collaborative application state synchronized and persisted
+for every human, agent, and device in a room. Use it for canvases, editors,
+flowcharts, spreadsheets, tables, and any interface where multiple actors can
+change the same data.
+
+<Figure>
+  <video width={1600} height={900} autoPlay loop muted playsInline>
+    <source
+      src="/assets/tutorials/whiteboard/tutorial-whiteboard.mp4"
+      type="video/mp4"
+    />
+  </video>
+</Figure>
+
+<Banner title="Start building with Sync" type="info">
+
+Follow a [get-started guide](/docs/get-started) to connect your app to a
+Liveblocks room, then use the pages below to add the capabilities you need.
+
+</Banner>
+
+<ListGrid columns={2}>
+  <DocsCard
+    type="technology"
+    title="Overview"
+    href="/docs/products/sync/overview"
+    description="What Sync does and when to use it"
+    visual={<DocsIdeaIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Data types"
+    href="/docs/products/sync/data-types"
+    description="Model collaborative state with Storage"
+    visual={<DocsStorageIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Presence"
+    href="/docs/products/sync/presence"
+    description="Show humans and agents working live"
+    visual={
+      <DocsJavascriptIcon className="fill-product-icon-brand h-auto w-6" />
+    }
+  />
+  <DocsCard
+    type="technology"
+    title="Agentic editing"
+    href="/docs/products/sync/agentic-editing"
+    description="Let servers and AI agents edit documents"
+    visual={<DocsApiIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Version history"
+    href="/docs/products/sync/version-history"
+    description="Preview and restore earlier document versions"
+    visual={<DocsBookIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Integrations"
+    href="/docs/products/sync/integrations"
+    description="Connect Sync to editors, diagrams, and state"
+    visual={<DocsBooksIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Yjs"
+    href="/docs/products/sync/yjs"
+    description="Use Liveblocks with the Yjs ecosystem"
+    visual={<DocsYjsIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+</ListGrid>

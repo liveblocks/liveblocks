@@ -3,7 +3,7 @@
     "title": false,
     "routes": [
       {
-        "title": "Overview",
+        "title": "Home",
         "path": "/",
         "file": "/index.mdx"
       },
@@ -498,208 +498,230 @@
     ]
   },
   {
-    "title": "Collaboration features",
+    "title": "Products",
     "routes": [
       {
-        "title": "Multiplayer",
-        "path": "/collaboration-features/multiplayer",
+        "title": "Sync",
+        "path": "/products/sync",
         "routes": [
           {
-            "title": "Text editor",
-            "path": "/collaboration-features/multiplayer/text-editor",
-            "routes": [
-              {
-                "title": "Tiptap",
-                "path": "/collaboration-features/multiplayer/text-editor/tiptap"
-              },
-              {
-                "title": "BlockNote",
-                "path": "/collaboration-features/multiplayer/text-editor/blocknote"
-              },
-              {
-                "title": "Lexical",
-                "path": "/collaboration-features/multiplayer/text-editor/lexical"
-              }
-            ]
+            "title": "Overview",
+            "path": "/products/sync/overview"
           },
           {
-            "title": "Sync engine",
-            "path": "/collaboration-features/multiplayer/sync-engine",
-            "routes": [
-              {
-                "title": "Yjs",
-                "path": "/collaboration-features/multiplayer/sync-engine/liveblocks-yjs"
-              },
-              {
-                "title": "Storage",
-                "path": "/collaboration-features/multiplayer/sync-engine/liveblocks-storage"
-              }
-            ]
+            "title": "Data types",
+            "path": "/products/sync/data-types"
+          },
+          {
+            "title": "Conflict resolution",
+            "path": "/products/sync/conflict-resolution"
+          },
+          {
+            "title": "Multiplayer undo/redo",
+            "path": "/products/sync/multiplayer-undo-redo"
+          },
+          {
+            "title": "Presence",
+            "path": "/products/sync/presence"
+          },
+          {
+            "title": "Agentic editing",
+            "path": "/products/sync/agentic-editing"
+          },
+          {
+            "title": "Version history",
+            "path": "/products/sync/version-history"
+          },
+          {
+            "title": "Broadcast events",
+            "path": "/products/sync/broadcast-events"
+          },
+          {
+            "title": "Authentication and permissions",
+            "path": "/products/sync/authentication-and-permissions"
+          },
+          {
+            "title": "Integrations",
+            "path": "/products/sync/integrations"
+          },
+          {
+            "title": "Yjs",
+            "path": "/products/sync/yjs"
+          }
+        ]
+      },
+      {
+        "title": "Feeds",
+        "path": "/products/feeds",
+        "routes": [
+          {
+            "title": "Overview",
+            "path": "/products/feeds/overview"
+          },
+          {
+            "title": "Chat interfaces",
+            "path": "/products/feeds/chat-interfaces"
+          },
+          {
+            "title": "Listing feeds",
+            "path": "/products/feeds/listing-feeds"
+          },
+          {
+            "title": "Pagination",
+            "path": "/products/feeds/pagination"
+          },
+          {
+            "title": "Integrating workflows",
+            "path": "/products/feeds/integrating-workflows"
+          },
+          {
+            "title": "Authentication and permissions",
+            "path": "/products/feeds/authentication-and-permissions"
           }
         ]
       },
       {
         "title": "Comments",
-        "path": "/collaboration-features/comments",
+        "path": "/products/comments",
         "routes": [
           {
+            "title": "Overview",
+            "path": "/products/comments/overview"
+          },
+          {
             "title": "Concepts",
-            "path": "/collaboration-features/comments/concepts"
+            "path": "/products/comments/concepts"
           },
           {
             "title": "Users and mentions",
-            "path": "/collaboration-features/comments/users-and-mentions"
+            "path": "/products/comments/users-and-mentions"
           },
           {
             "title": "Default components",
-            "path": "/collaboration-features/comments/default-components"
+            "path": "/products/comments/default-components"
           },
           {
             "title": "Hooks",
-            "path": "/collaboration-features/comments/hooks"
+            "path": "/products/comments/hooks"
           },
           {
             "title": "Metadata",
-            "path": "/collaboration-features/comments/metadata"
+            "path": "/products/comments/metadata"
           },
           {
             "title": "Primitives",
-            "path": "/collaboration-features/comments/primitives"
+            "path": "/products/comments/primitives"
           },
           {
             "title": "Styling and customization",
-            "path": "/collaboration-features/comments/styling-and-customization"
+            "path": "/products/comments/styling-and-customization"
           },
           {
             "title": "Email notifications",
-            "path": "/collaboration-features/comments/email-notifications"
+            "path": "/products/comments/email-notifications"
           }
         ]
       },
       {
         "title": "Notifications",
-        "path": "/collaboration-features/notifications",
+        "path": "/products/notifications",
         "routes": [
           {
+            "title": "Overview",
+            "path": "/products/notifications/overview"
+          },
+          {
             "title": "Concepts",
-            "path": "/collaboration-features/notifications/concepts"
+            "path": "/products/notifications/concepts"
           },
           {
             "title": "Default components",
-            "path": "/collaboration-features/notifications/default-components"
+            "path": "/products/notifications/default-components"
           },
           {
             "title": "Hooks",
-            "path": "/collaboration-features/notifications/hooks"
+            "path": "/products/notifications/hooks"
           },
           {
             "title": "Styling and customization",
-            "path": "/collaboration-features/notifications/styling-and-customization"
+            "path": "/products/notifications/styling-and-customization"
           },
           {
             "title": "Email notifications",
-            "path": "/collaboration-features/notifications/email-notifications"
+            "path": "/products/notifications/email-notifications"
           }
         ]
       },
       {
-        "title": "AI Collaboration",
-        "path": "/collaboration-features/ai-collaboration"
-      },
-      {
         "title": "AI Copilots",
-        "path": "/collaboration-features/ai-copilots",
+        "path": "/products/ai-copilots",
         "routes": [
           {
             "title": "Features",
-            "path": "/collaboration-features/ai-copilots/features"
+            "path": "/products/ai-copilots/features"
           },
           {
             "title": "Copilots",
-            "path": "/collaboration-features/ai-copilots/copilots"
+            "path": "/products/ai-copilots/copilots"
           },
           {
             "title": "Default components",
-            "path": "/collaboration-features/ai-copilots/default-components"
+            "path": "/products/ai-copilots/default-components"
           },
           {
             "title": "Hooks",
-            "path": "/collaboration-features/ai-copilots/hooks"
+            "path": "/products/ai-copilots/hooks"
           },
           {
             "title": "Knowledge",
-            "path": "/collaboration-features/ai-copilots/knowledge"
+            "path": "/products/ai-copilots/knowledge"
           },
           {
             "title": "Tools",
-            "path": "/collaboration-features/ai-copilots/tools"
+            "path": "/products/ai-copilots/tools"
           },
           {
             "title": "Styling and customization",
-            "path": "/collaboration-features/ai-copilots/styling-and-customization"
+            "path": "/products/ai-copilots/styling-and-customization"
           },
           {
             "title": "Troubleshooting",
-            "path": "/collaboration-features/ai-copilots/troubleshooting"
+            "path": "/products/ai-copilots/troubleshooting"
           }
         ]
       }
     ]
   },
   {
-    "title": "Integrations",
+    "title": "Use cases",
     "routes": [
       {
-        "title": "Overview",
-        "path": "/integrations"
+        "title": "Canvas",
+        "path": "/use-cases/canvas"
       },
       {
-        "title": "Bolt",
-        "path": "/integrations/bolt"
+        "title": "Code editor",
+        "path": "/use-cases/code-editor"
       },
       {
-        "title": "Claude Code",
-        "path": "/integrations/claude-code"
+        "title": "Text editor",
+        "path": "/use-cases/text-editor"
       },
       {
-        "title": "Claude Desktop",
-        "path": "/integrations/claude-desktop"
+        "title": "Flowchart",
+        "path": "/use-cases/flowchart"
       },
       {
-        "title": "Codex",
-        "path": "/integrations/codex"
+        "title": "AI Collaboration",
+        "path": "/use-cases/ai-collaboration"
       },
       {
-        "title": "Cursor",
-        "path": "/integrations/cursor"
+        "title": "Spreadsheet",
+        "path": "/use-cases/spreadsheet"
       },
       {
-        "title": "Lovable",
-        "path": "/integrations/lovable"
-      },
-      {
-        "title": "n8n",
-        "path": "/integrations/n8n-nodes"
-      },
-      {
-        "title": "Neon",
-        "path": "/integrations/neon"
-      },
-      {
-        "title": "PlanetScale",
-        "path": "/integrations/planetscale"
-      },
-      {
-        "title": "Replit",
-        "path": "/integrations/replit"
-      },
-      {
-        "title": "Supabase",
-        "path": "/integrations/supabase"
-      },
-      {
-        "title": "v0",
-        "path": "/integrations/v0"
+        "title": "Table",
+        "path": "/use-cases/table"
       }
     ]
   },
@@ -763,7 +785,6 @@
   },
   {
     "title": "Platform",
-    "defaultCollapsed": true,
     "routes": [
       {
         "title": "Data storage",
@@ -873,7 +894,6 @@
   },
   {
     "title": "Tools",
-    "defaultCollapsed": true,
     "routes": [
       {
         "title": "Dev server",
@@ -906,6 +926,64 @@
     ]
   },
   {
+    "title": "Integrations",
+    "defaultCollapsed": true,
+    "routes": [
+      {
+        "title": "Overview",
+        "path": "/integrations"
+      },
+      {
+        "title": "Bolt",
+        "path": "/integrations/bolt"
+      },
+      {
+        "title": "Claude Code",
+        "path": "/integrations/claude-code"
+      },
+      {
+        "title": "Claude Desktop",
+        "path": "/integrations/claude-desktop"
+      },
+      {
+        "title": "Codex",
+        "path": "/integrations/codex"
+      },
+      {
+        "title": "Cursor",
+        "path": "/integrations/cursor"
+      },
+      {
+        "title": "Lovable",
+        "path": "/integrations/lovable"
+      },
+      {
+        "title": "n8n",
+        "path": "/integrations/n8n-nodes"
+      },
+      {
+        "title": "Neon",
+        "path": "/integrations/neon"
+      },
+      {
+        "title": "PlanetScale",
+        "path": "/integrations/planetscale"
+      },
+      {
+        "title": "Replit",
+        "path": "/integrations/replit"
+      },
+      {
+        "title": "Supabase",
+        "path": "/integrations/supabase"
+      },
+      {
+        "title": "v0",
+        "path": "/integrations/v0"
+      }
+    ]
+  },
+  {
     "title": "Upgrading",
     "sort": "descending",
     "defaultCollapsed": true,
@@ -932,7 +1010,6 @@
   },
   {
     "title": "API Reference",
-    "defaultCollapsed": true,
     "routes": [
       {
         "title": "@liveblocks/client",

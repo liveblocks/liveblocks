@@ -121,9 +121,9 @@ const { body, status } = await liveblocks.identifyUser({
 ##### Text editor user data
 
 When using
-[text editor integrations](/docs/ready-made-features/multiplayer#Text-editor-integrations),
-user data is inserted into their live cursor within the editor, showing their
-name and color. This data originates from the `userInfo` property.
+[text editor integrations](/docs/products/sync/integrations#text-editors), user
+data is inserted into their live cursor within the editor, showing their name
+and color. This data originates from the `userInfo` property.
 
 ```ts
 const { body, status } = await liveblocks.identifyUser(
@@ -401,10 +401,9 @@ const session = liveblocks.prepareSession(
 ##### Text editor user data
 
 When using
-[text editor integrations](/docs/ready-made-features/multiplayer#Text-editor-integrations),
-user data is inserted into their live cursor within the editor, showing their
-name and color. This data originates from the `userInfo` property of the
-session.
+[text editor integrations](/docs/products/sync/integrations#text-editors), user
+data is inserted into their live cursor within the editor, showing their name
+and color. This data originates from the `userInfo` property of the session.
 
 ```ts
 const session = liveblocks.prepareSession(
@@ -3247,7 +3246,7 @@ enabled, triggering an inbox notification activity for a specific `subjectId`,
 will update the existing inbox notification instead of creating a new one.
 
 To use this, you must first
-[enable batching in the dashboard](/docs/ready-made-features/notifications/concepts#Notification-batching).
+[enable batching in the dashboard](/docs/products/notifications/concepts#Notification-batching).
 Next, trigger a notification with the same `subjectId` as an existing
 notification, and the result will be added to the `activityData` array.
 

@@ -162,7 +162,7 @@ export default function App() {
 ## Create a canvas [#basic-canvas]
 
 Whiteboard shapes will be stored even after all users disconnect, so we will use
-Liveblocks storage to persist them.
+Storage to persist them.
 
 Add a `shapes` property to your store, and configure the enhancer to sync and
 persist them with Liveblocks.
@@ -170,7 +170,7 @@ persist them with Liveblocks.
 To achieve that, we are going to use the enhancer option
 [`storageMapping: { shapes: true }`](/docs/api-reference/liveblocks-redux#middleware-option-storage-mapping).
 It means that the part of the state named `shapes` should be automatically
-synced with Liveblocks Storage.
+synced with Storage.
 
 ```js file="src/store.js" highlight="10,28"
 import { createClient } from "@liveblocks/client";

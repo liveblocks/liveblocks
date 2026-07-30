@@ -1,0 +1,88 @@
+---
+meta:
+  title: "Authentication and permissions"
+  parentTitle: "Sync"
+  description:
+    "Authenticate users and control who can read or edit a Sync room."
+---
+
+Authentication identifies the user entering a room. Permissions determine
+whether that user can read or edit the room’s Storage, Yjs document, and other
+resources.
+
+<Banner title="Use the canonical setup guides" type="info">
+
+Follow [Authentication](/docs/authentication) to issue ID tokens, then configure
+the room access described in [Permissions](/docs/authentication/permissions).
+
+</Banner>
+
+## Prototype with a public key [#public-key]
+
+A public API key is suitable for prototypes and intentionally public
+applications.
+
+```tsx
+<LiveblocksProvider publicApiKey="pk_...">
+  <RoomProvider id="public-room">{children}</RoomProvider>
+</LiveblocksProvider>
+```
+
+Anyone with the key can connect to rooms available to the project. Do not use a
+public key as the permission boundary for private production data.
+
+## Authenticate production users [#authenticate-users]
+
+For production applications, set an authentication endpoint. The endpoint uses
+your secret key on the server to identify the current user.
+
+```tsx
+<LiveblocksProvider authEndpoint="/api/liveblocks-auth">
+  <RoomProvider id="private-room">{children}</RoomProvider>
+</LiveblocksProvider>
+```
+
+Use [`Liveblocks.identifyUser`](/docs/api-reference/liveblocks-node#id-tokens)
+inside the endpoint to issue an ID token.
+
+## Set room access [#room-access]
+
+Room permissions can apply to everyone, a group, or an individual user.
+
+```ts
+await liveblocks.createRoom("project:123", {
+  defaultAccesses: [],
+  groupsAccesses: {
+    "project:123:editors": ["*:write"],
+    "project:123:viewers": ["*:read"],
+  },
+});
+```
+
+Use stable room IDs and group IDs derived from your application’s authorization
+model. A user’s application session is still the source of truth for which
+groups they belong to.
+
+## Storage permission scopes [#storage-permissions]
+
+The underlying permission strings remain named after the Storage API:
+
+| Scope           | Access                        |
+| --------------- | ----------------------------- |
+| `storage:write` | Read and edit Storage and Yjs |
+| `storage:read`  | Read Storage and Yjs          |
+| `storage:none`  | No access to Storage or Yjs   |
+
+These are public API identifiers and are not renamed to Sync. See the
+[permission scopes table](/docs/authentication/permissions) for how they combine
+with Comments and room access.
+
+## Server-side editing [#server-side-editing]
+
+Server SDKs use a secret key and do not inherit the current browser user’s room
+permissions. Validate the requesting user in your own backend before calling
+[`Liveblocks.mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage)
+or another server API.
+
+Read [Agentic editing](/docs/products/sync/agentic-editing) for additional
+validation and versioning guidance.

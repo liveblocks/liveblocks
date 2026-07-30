@@ -20,7 +20,7 @@ Liveblocks [webhooks](/docs/platform/webhooks) trigger when certain events
 happen, such as when a collaborative document updates. Liveblocks can trigger an
 endpoint in your back end, and from here, you can fetch the latest data and
 write it to Neon. Here’s an example of how it works with
-[Liveblocks Storage](/docs/collaboration-features/multiplayer/sync-engine/liveblocks-storage).
+[Storage](/docs/products/sync/data-types).
 
 ```mermaid
 sequenceDiagram
@@ -46,7 +46,7 @@ Various types of Liveblocks data can be synched to Neon with webhooks.
 | ------------------------ | ------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
 | Rooms                    | Created rooms and metadata.     | [`roomUpdated`](/docs/platform/webhooks#RoomUpdatedEvent)       | [`getRoom`](/docs/api-reference/liveblocks-node#get-rooms-roomId)                    |
 | Active users             | Currently connected users.      | [`userEntered`](/docs/platform/webhooks#UserEnteredEvent)       | [`getActiveUsers`](/docs/api-reference/liveblocks-node#get-active-users)             |
-| Liveblocks Storage       | Custom realtime document state. | [`storageUpdated`](/docs/platform/webhooks#StorageUpdatedEvent) | [`getStorageDocument`](/docs/api-reference/liveblocks-node#get-rooms-roomId-storage) |
+| Storage                  | Custom realtime document state. | [`storageUpdated`](/docs/platform/webhooks#StorageUpdatedEvent) | [`getStorageDocument`](/docs/api-reference/liveblocks-node#get-rooms-roomId-storage) |
 | React Flow               | Flowchart state.                | [`storageUpdated`](/docs/platform/webhooks#StorageUpdatedEvent) | [`mutateFlow`](/docs/api-reference/liveblocks-react-flow#mutateFlow)                 |
 | Yjs                      | `Y.Doc` document state.         | [`ydocUpdated`](/docs/platform/webhooks#YDocUpdatedEvent)       | [`getYjsDocument`](/docs/api-reference/liveblocks-node#get-rooms-roomId-ydoc)        |
 | Tiptap/BlockNote/Lexical | Text editor state.              | [`ydocUpdated`](/docs/platform/webhooks#YDocUpdatedEvent)       | [`getYjsDocument`](/docs/api-reference/liveblocks-node#get-rooms-roomId-ydoc)        |
@@ -62,9 +62,9 @@ Various types of Liveblocks data can be synched to Neon with webhooks.
 
 ## Setup
 
-Quickstart for synching Liveblocks data to Neon. In this example, we sync
-Liveblocks Storage data to Neon, but you can use the same pattern with other
-APIs and webhooks to sync other types of data.
+Quickstart for synching Liveblocks data to Neon. In this example, we sync Sync
+Storage data to Neon, but you can use the same pattern with other APIs and
+webhooks to sync other types of data.
 
 <Steps>
   <Step>
@@ -158,7 +158,7 @@ APIs and webhooks to sync other types of data.
   </Step>
 
   <Step>
-    <StepTitle>Sync Storage to Neon</StepTitle>
+    <StepTitle>Storage to Neon</StepTitle>
     <StepContent>
     Set up your Liveblocks and Neon clients, before fetching the Storage document data with
      [`getStorageDocument`](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-storage) and

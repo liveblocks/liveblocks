@@ -1,0 +1,76 @@
+---
+meta:
+  title: "Integrating workflows"
+  parentTitle: "Feeds"
+  description:
+    "Connect Feeds to AI agents, back-end jobs, and workflow automation."
+---
+
+Create and update feeds from your server when work starts outside the browser.
+This pattern works with custom workers, AI SDKs, orchestration frameworks, and
+automation tools such as n8n.
+
+<Banner title="Keep secret keys on the server">
+
+The Node.js and REST APIs use your project’s secret key. Never expose it in
+client-side code.
+
+</Banner>
+
+## Write workflow output [#write-workflow-output]
+
+Create one feed for the workflow, then append structured progress and result
+messages.
+
+```ts title="run-workflow.ts"
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+});
+
+await liveblocks.createFeed({
+  roomId: "my-room",
+  feedId: "workflow-42",
+  metadata: { kind: "workflow", title: "Generate launch plan" },
+});
+
+await liveblocks.createFeedMessage({
+  roomId: "my-room",
+  feedId: "workflow-42",
+  data: { type: "status", status: "running" },
+});
+```
+
+Use
+[`Liveblocks.createFeedMessage`](/docs/api-reference/liveblocks-node#post-rooms-roomId-feeds-feedId-messages)
+again for intermediate steps and the final result. Connected clients subscribed
+with [`useFeedMessages`](/docs/api-reference/liveblocks-react#useFeedMessages)
+update automatically.
+
+## Connect workflow triggers [#connect-workflow-triggers]
+
+A workflow can begin from:
+
+- A feed message created by a user
+- A [Liveblocks webhook](/docs/platform/webhooks)
+- A mention in a [comment](/docs/products/comments/users-and-mentions)
+- A scheduled job or external system
+- A custom action in your application
+
+Use deterministic feed and message IDs if the trigger can be delivered more than
+once.
+
+## Show what the agent is doing [#show-agent-activity]
+
+Use Feeds for durable output and [Presence](/docs/products/sync/presence) for
+temporary activity such as “searching”, “editing”, or an agent cursor. Use
+[Sync](/docs/products/sync/agentic-editing) when the workflow needs to edit the
+shared document itself.
+
+## Workflow integrations [#workflow-integrations]
+
+The [Liveblocks n8n integration](/docs/integrations/n8n-nodes) exposes
+Liveblocks API operations as workflow nodes. Other orchestration systems can
+call the [Node.js API](/docs/api-reference/liveblocks-node#Feeds) or
+[REST API](/docs/api-reference/rest-api-endpoints#Feeds) directly.

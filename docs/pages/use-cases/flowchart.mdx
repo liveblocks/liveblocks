@@ -1,0 +1,56 @@
+---
+meta:
+  title: "Flowchart"
+  parentTitle: "Use cases"
+  description:
+    "Build collaborative flowcharts with React Flow and Liveblocks Sync."
+---
+
+Use `@liveblocks/react-flow` to synchronize React Flow nodes and edges. Add
+Presence for cursors and selections, multiplayer history for undo/redo, and
+Comments for review.
+
+<Banner title="Build a collaborative flowchart" type="info">
+
+Follow the
+[React Flow and Next.js get-started guide](/docs/get-started/nextjs-react-flow)
+for a complete working setup.
+
+</Banner>
+
+## APIs you need [#apis]
+
+- [`useLiveblocksFlow`](/docs/api-reference/liveblocks-react-flow#useLiveblocksFlow)
+  for synchronized nodes, edges, and change handlers
+- [Presence](/docs/products/sync/presence) for cursors and active selections
+- [Multiplayer undo/redo](/docs/products/sync/multiplayer-undo-redo)
+- [Comments](/docs/products/comments) for discussions attached to nodes
+
+```tsx
+const { nodes, edges, onNodesChange, onEdgesChange, onConnect } =
+  useLiveblocksFlow({
+    suspense: true,
+    nodes: { initial: [] },
+    edges: { initial: [] },
+  });
+
+return (
+  <ReactFlow
+    nodes={nodes}
+    edges={edges}
+    onNodesChange={onNodesChange}
+    onEdgesChange={onEdgesChange}
+    onConnect={onConnect}
+  />
+);
+```
+
+Store domain data on nodes and edges, and keep transient pointer movement in
+Presence. Use the [Sync data types](/docs/products/sync/data-types) directly
+when building on another diagramming library.
+
+## Examples [#examples]
+
+- [Collaborative flowchart example](https://liveblocks.io/examples/collaborative-flowchart/nextjs-react-flow)
+- [Collaborative flowchart builder example](https://liveblocks.io/examples/collaborative-flowchart-builder/nextjs-flowchart-builder)
+- [AI React Flow get-started guide](/docs/get-started/nextjs-ai-react-flow)
