@@ -6293,7 +6293,8 @@ Notification settings is currently in beta.
 </Banner>
 
 Returns the user’s notification settings in the current project, in other words
-which [notification webhook events](/docs/platform/webhooks#NotificationEvent)
+which
+[notification webhook events](/docs/api-reference/webhook-events#NotificationEvent)
 will be sent for the current user. Notification settings are project-based,
 which means that `settings` and `updateSettings` are for the current user’s
 settings in every room. Useful for creating a
@@ -6436,7 +6437,8 @@ Notification settings is currently in beta.
 </Banner>
 
 Returns a function that updates user’s notification settings, which affects
-which [notification webhook events](/docs/platform/webhooks#NotificationEvent)
+which
+[notification webhook events](/docs/api-reference/webhook-events#NotificationEvent)
 will be sent for the current user. Notification settings are project-based,
 which means that `updateSettings` modifies the current user’s settings in every
 room. Each notification `kind` must first be enabled on your project’s

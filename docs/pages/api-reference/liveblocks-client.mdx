@@ -4405,7 +4405,8 @@ await room.updateSubscriptionSettings({
 ### Client.getNotificationSettings [@badge=Beta]
 
 Returns the user’s notification settings in the current project, in other words
-which [notification webhook events](/docs/platform/webhooks#NotificationEvent)
+which
+[notification webhook events](/docs/api-reference/webhook-events#NotificationEvent)
 will be sent for the current user. Notification settings are project-based,
 which means that this returns the current user’s settings for every room.
 
@@ -4438,11 +4439,11 @@ console.log(settings);
 ### Client.updateNotificationSettings [@badge=Beta]
 
 Updates the current user’s notification settings, which affects which
-[notification webhook events](/docs/platform/webhooks#NotificationEvent) will be
-sent for the current user. Notification settings are project-based, which means
-that this modifies the current user’s settings in every room. Each notification
-`kind` must first be enabled on your project’s notification dashboard page
-before settings can be used.
+[notification webhook events](/docs/api-reference/webhook-events#NotificationEvent)
+will be sent for the current user. Notification settings are project-based,
+which means that this modifies the current user’s settings in every room. Each
+notification `kind` must first be enabled on your project’s notification
+dashboard page before settings can be used.
 
 ```ts
 const settings = await client.updateNotificationSettings({

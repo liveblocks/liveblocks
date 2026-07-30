@@ -42,12 +42,13 @@ Learn more about Notifications for Comments in the
 
 ## Sending email notifications with webhooks
 
-Using [Liveblocks webhooks](/docs/platform/webhooks#Liveblocks-events) you can
-listen to a range of events such as comments being deleted, or comment reactions
-being added. On [your dashboard](https://liveblocks.io/dashboard) you can create
-a webhook for a project, and select which events you’d like to listen to. You
-only need to select the `"notification"` webhook event for our recommended
-solution.
+Using
+[Liveblocks webhooks](/docs/api-reference/webhook-events#Liveblocks-events) you
+can listen to a range of events such as comments being deleted, or comment
+reactions being added. On [your dashboard](https://liveblocks.io/dashboard) you
+can create a webhook for a project, and select which events you’d like to listen
+to. You only need to select the `"notification"` webhook event for our
+recommended solution.
 
 <Figure>
   <video width={1512} height={982} autoPlay loop muted playsInline>
@@ -381,16 +382,16 @@ this feature, please feel free to reach out to us.
 There are more webhook events than just the `NotificationEvent` event used
 above—a number related to Comments are available to use.
 
-- [`CommentCreatedEvent`](/docs/platform/webhooks#CommentCreatedEvent)
-- [`CommentEditedEvent`](/docs/platform/webhooks#CommentEditedEvent)
-- [`CommentDeletedEvent`](/docs/platform/webhooks#CommentDeletedEvent)
-- [`CommentReactionAddedEvent`](/docs/platform/webhooks#CommentReactionAddedEvent)
-- [`CommentReactionRemovedEvent`](/docs/platform/webhooks#CommentReactionRemovedEvent)
-- [`CommentMetadataUpdatedEvent`](/docs/platform/webhooks#CommentMetadataUpdatedEvent)
-- [`ThreadCreatedEvent`](/docs/platform/webhooks#ThreadCreatedEvent)
-- [`ThreadMetadataUpdatedEvent`](/docs/platform/webhooks#ThreadMetadataUpdatedEvent)
-- [`ThreadMarkedAsResolvedEvent`](/docs/platform/webhooks#ThreadMarkedAsResolvedEvent)
-- [`ThreadMarkedAsUnresolvedEvent`](/docs/platform/webhooks#ThreadMarkedAsUnresolvedEvent)
+- [`CommentCreatedEvent`](/docs/api-reference/webhook-events#CommentCreatedEvent)
+- [`CommentEditedEvent`](/docs/api-reference/webhook-events#CommentEditedEvent)
+- [`CommentDeletedEvent`](/docs/api-reference/webhook-events#CommentDeletedEvent)
+- [`CommentReactionAddedEvent`](/docs/api-reference/webhook-events#CommentReactionAddedEvent)
+- [`CommentReactionRemovedEvent`](/docs/api-reference/webhook-events#CommentReactionRemovedEvent)
+- [`CommentMetadataUpdatedEvent`](/docs/api-reference/webhook-events#CommentMetadataUpdatedEvent)
+- [`ThreadCreatedEvent`](/docs/api-reference/webhook-events#ThreadCreatedEvent)
+- [`ThreadMetadataUpdatedEvent`](/docs/api-reference/webhook-events#ThreadMetadataUpdatedEvent)
+- [`ThreadMarkedAsResolvedEvent`](/docs/api-reference/webhook-events#ThreadMarkedAsResolvedEvent)
+- [`ThreadMarkedAsUnresolvedEvent`](/docs/api-reference/webhook-events#ThreadMarkedAsUnresolvedEvent)
 
 There are also more events, for example you can trigger events when users enter
 or leave rooms. We recommend reading our guide on

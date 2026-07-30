@@ -104,6 +104,7 @@ trusted backend or workflow.
 
 ## Trigger follow-up work [#trigger-follow-up-work]
 
-Use [`storageUpdated`](/docs/platform/webhooks#StorageUpdatedEvent) webhooks to
-index the new document, notify another service, or begin a subsequent workflow.
-Make webhook handlers idempotent because delivery can be retried.
+Use [`storageUpdated`](/docs/api-reference/webhook-events#StorageUpdatedEvent)
+webhooks to index the new document, notify another service, or begin a
+subsequent workflow. Make webhook handlers idempotent because delivery can be
+retried.

@@ -3326,7 +3326,8 @@ await liveblocks.deleteAllInboxNotifications({
 #### Liveblocks.getNotificationSettings [#get-users-userId-notification-settings] [@badge=Beta]
 
 Returns a user’s notification settings in the current project, in other words
-which [notification webhook events](/docs/platform/webhooks#NotificationEvent)
+which
+[notification webhook events](/docs/api-reference/webhook-events#NotificationEvent)
 will be sent for the user. Notification settings are project-based, which means
 that this returns the user’s settings for every room. This a wrapper around the
 [Get Notification Settings API](/docs/api-reference/rest-api-endpoints#get-users-userId-notification-settings).
@@ -3356,11 +3357,11 @@ console.log(settings);
 #### Liveblocks.updateNotificationSettings [#post-users-userId-notification-settings] [@badge=Beta]
 
 Updates a user’s notification settings, which affects which
-[notification webhook events](/docs/platform/webhooks#NotificationEvent) will be
-sent for the user. Notification settings are project-based, which means that
-this modifies the user’s settings in every room. Each notification `kind` must
-first be enabled on your project’s notification dashboard page before settings
-can be used. This a wrapper around the
+[notification webhook events](/docs/api-reference/webhook-events#NotificationEvent)
+will be sent for the user. Notification settings are project-based, which means
+that this modifies the user’s settings in every room. Each notification `kind`
+must first be enabled on your project’s notification dashboard page before
+settings can be used. This a wrapper around the
 [Update Notification Settings API](/docs/api-reference/rest-api-endpoints#post-users-userId-notification-settings).
 
 ```ts
@@ -4274,8 +4275,8 @@ export function POST(request) {
 ### isThreadNotificationEvent [#isThreadNotificationEvent]
 
 Type guard to check if a received webhook event is a
-[`ThreadNotificationEvent`](/docs/platform/webhooks#Thread-notification) send
-from Comments. Particularly helpful when creating
+[`ThreadNotificationEvent`](/docs/api-reference/webhook-events#Thread-notification)
+send from Comments. Particularly helpful when creating
 [thread notification emails](/docs/api-reference/liveblocks-emails#thread-notification-emails)
 with webhooks.
 
@@ -4299,7 +4300,7 @@ The check is made against the event type and event data kind.
 ### isTextMentionNotificationEvent [#isTextMentionNotificationEvent]
 
 Type guard to check if a received webhook event is a
-[`TextMentionNotificationEvent`](/docs/platform/webhooks#TextMention-notification)
+[`TextMentionNotificationEvent`](/docs/api-reference/webhook-events#TextMention-notification)
 sent from Text Editor. Particularly helpful for identifying text mentions when
 sending email notifications.
 
@@ -4321,8 +4322,8 @@ if (isTextMentionNotificationEvent(event)) {
 ### isCustomNotificationEvent [#isCustomNotificationEvent]
 
 Type guard to check if a received webhook event is a
-[`CustomNotificationEvent`](/docs/platform/webhooks#Custom-notification) sent
-from
+[`CustomNotificationEvent`](/docs/api-reference/webhook-events#Custom-notification)
+sent from
 [`triggerInboxNotification`](/docs/api-reference/liveblocks-node#post-inbox-notifications-trigger).
 Particularly helpful for identifying custom notifications when sending email
 notifications.

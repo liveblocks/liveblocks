@@ -38,11 +38,11 @@ When you upgrade to 2.2, the default
 [`Thread`](/docs/api-reference/liveblocks-react-ui#Thread) component will update
 the thread’s first-class citizen property instead of the metadata. When a thread
 is marked as resolved or unresolved, we will send the events
-[`threadMarkedAsResolved`](/docs/platform/webhooks#ThreadMarkedAsResolvedEvent)
+[`threadMarkedAsResolved`](/docs/api-reference/webhook-events#ThreadMarkedAsResolvedEvent)
 and
-[`threadMarkedAsUnresolved`](/docs/platform/webhooks#ThreadMarkedAsUnresolvedEvent)
+[`threadMarkedAsUnresolved`](/docs/api-reference/webhook-events#ThreadMarkedAsUnresolvedEvent)
 instead of
-[`threadMetadataUpdated`](/docs/platform/webhooks#ThreadMarkedAsUnresolvedEvent).
+[`threadMetadataUpdated`](/docs/api-reference/webhook-events#ThreadMarkedAsUnresolvedEvent).
 
 Before upgrading to 2.2, you should update your webhook endpoint to process
 those new events accordingly.

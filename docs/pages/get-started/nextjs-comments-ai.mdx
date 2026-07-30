@@ -155,7 +155,7 @@ See the finished result in the
 
       Create an API route to receive Liveblocks webhooks. We’ll verify the
       request, only respond to
-      [`commentCreated`](/docs/platform/webhooks#CommentCreatedEvent) events,
+      [`commentCreated`](/docs/api-reference/webhook-events#CommentCreatedEvent) events,
       and ignore comments that weren’t written by a human, otherwise the AI
       would reply to its own messages.
 
@@ -321,7 +321,7 @@ export async function handleAiCommentReply(data: {
           [testing webhooks locally](/docs/guides/how-to-test-webhooks-on-localhost).
       2. In the [dashboard](/dashboard), create a webhook endpoint that
           points to `/api/liveblocks-webhook` and enables the
-          [`commentCreated`](/docs/platform/webhooks#CommentCreatedEvent)
+          [`commentCreated`](/docs/api-reference/webhook-events#CommentCreatedEvent)
           event.
       3. Copy your **webhook secret** (`whsec_...`) and add it to
           `.env.local` as `LIVEBLOCKS_WEBHOOK_SECRET_KEY`.

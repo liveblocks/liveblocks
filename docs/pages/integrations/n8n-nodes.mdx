@@ -47,7 +47,8 @@ example when a comment is created.
 3. Copy the trigger's webhook URL.
 4. In the [Liveblocks dashboard](/dashboard), create a webhook endpoint with
    that URL.
-5. Subscribe to [`commentCreated`](/docs/platform/webhooks#CommentCreatedEvent),
+5. Subscribe to
+   [`commentCreated`](/docs/api-reference/webhook-events#CommentCreatedEvent),
    then run the n8n workflow.
 
 When a user creates a comment, Liveblocks sends a webhook to n8n and the
@@ -91,17 +92,19 @@ n8n. Configure the webhook URL from the trigger in your
 type** or leave the filter empty to receive all supported types.
 
 Supported event filters include
-[`commentCreated`](/docs/platform/webhooks#CommentCreatedEvent),
-[`commentDeleted`](/docs/platform/webhooks#CommentDeletedEvent),
-[`commentEdited`](/docs/platform/webhooks#CommentEditedEvent), `notification`,
-[`storageUpdated`](/docs/platform/webhooks#StorageUpdatedEvent),
-[`threadCreated`](/docs/platform/webhooks#ThreadCreatedEvent),
-[`threadDeleted`](/docs/platform/webhooks#ThreadDeletedEvent),
-[`threadMetadataUpdated`](/docs/platform/webhooks#ThreadMetadataUpdatedEvent),
-[`userEntered`](/docs/platform/webhooks#UserEnteredEvent),
-[`userLeft`](/docs/platform/webhooks#UserLeftEvent), and
-[`ydocUpdated`](/docs/platform/webhooks#YDocUpdatedEvent). The trigger verifies
-the request using your **webhook secret** before running the workflow.
+[`commentCreated`](/docs/api-reference/webhook-events#CommentCreatedEvent),
+[`commentDeleted`](/docs/api-reference/webhook-events#CommentDeletedEvent),
+[`commentEdited`](/docs/api-reference/webhook-events#CommentEditedEvent),
+`notification`,
+[`storageUpdated`](/docs/api-reference/webhook-events#StorageUpdatedEvent),
+[`threadCreated`](/docs/api-reference/webhook-events#ThreadCreatedEvent),
+[`threadDeleted`](/docs/api-reference/webhook-events#ThreadDeletedEvent),
+[`threadMetadataUpdated`](/docs/api-reference/webhook-events#ThreadMetadataUpdatedEvent),
+[`userEntered`](/docs/api-reference/webhook-events#UserEnteredEvent),
+[`userLeft`](/docs/api-reference/webhook-events#UserLeftEvent), and
+[`ydocUpdated`](/docs/api-reference/webhook-events#YDocUpdatedEvent). The
+trigger verifies the request using your **webhook secret** before running the
+workflow.
 
 ## Credentials
 

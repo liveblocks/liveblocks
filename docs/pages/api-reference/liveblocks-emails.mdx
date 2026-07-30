@@ -166,7 +166,7 @@ replies mentions the user. A single comment with the latest mention is returned.
 ### prepareThreadNotificationEmailAsReact [#prepare-thread-notification-email-as-react]
 
 Takes a
-[thread notification webhook event](/docs/platform/webhooks#Thread-notification)
+[thread notification webhook event](/docs/api-reference/webhook-events#Thread-notification)
 and returns unread comment body(s) related to the notification, as React nodes.
 It can return one of three formats, an `unreadMention` type containing one
 comment, an `unreadReplies` type returning multiple comments, or `null` if there
@@ -382,7 +382,7 @@ export async function POST(request: Request) {
   </PropertiesListItem>
   <PropertiesListItem name="event" type="ThreadNotificationEvent" required>
     An object passed from a webhook event, specifically the
-    [`ThreadNotificationEvent`](/docs/platform/webhooks#Thread-notification).
+    [`ThreadNotificationEvent`](/docs/api-reference/webhook-events#Thread-notification).
     [Learn more about setting this up](#Setup).
   </PropertiesListItem>
   <PropertiesListItem name="options" type="object">
@@ -558,7 +558,7 @@ console.log(emailData.comment.body);
 ### prepareThreadNotificationEmailAsHtml [#prepare-thread-notification-email-as-html]
 
 Takes a
-[thread notification webhook event](/docs/platform/webhooks#Thread-notification)
+[thread notification webhook event](/docs/api-reference/webhook-events#Thread-notification)
 and returns unread comment body(s) related to the notification, as an HTML-safe
 string. It can return one of three formats, an `unreadMention` type containing
 one comment, an `unreadReplies` type returning multiple comments, or `null` if
@@ -782,7 +782,7 @@ export async function POST(request: Request) {
   </PropertiesListItem>
   <PropertiesListItem name="event" type="ThreadNotificationEvent" required>
     An object passed from a webhook event, specifically the
-    [`ThreadNotificationEvent`](/docs/platform/webhooks#Thread-notification).
+    [`ThreadNotificationEvent`](/docs/api-reference/webhook-events#Thread-notification).
     [Learn more about setting this up](#Setup).
   </PropertiesListItem>
   <PropertiesListItem name="options" type="object">
@@ -1004,7 +1004,7 @@ should monitor package updates for this upcoming feature.
 ### prepareTextMentionNotificationEmailAsReact [#prepare-text-mention-notification-email-as-react]
 
 Takes a
-[text mention notification webhook event](/docs/platform/webhooks#TextMention-notification)
+[text mention notification webhook event](/docs/api-reference/webhook-events#TextMention-notification)
 and returns an unread text mention with its surrounding text as React nodes. It
 can also return `null` if the text mention does not exist anymore or has been
 already been read. You can also
@@ -1151,7 +1151,7 @@ export async function POST(request: Request) {
   </PropertiesListItem>
   <PropertiesListItem name="event" type="TextMentionNotificationEvent" required>
     An object passed from a webhook event, specifically the
-    [`TextMentionNotificationEvent`](/docs/platform/webhooks#TextMention-notification).
+    [`TextMentionNotificationEvent`](/docs/api-reference/webhook-events#TextMention-notification).
     [Learn more about setting this up](#Setup).
   </PropertiesListItem>
   <PropertiesListItem name="options" type="object">
@@ -1312,7 +1312,7 @@ console.log(emailData.mention.content);
 ### prepareTextMentionNotificationEmailAsHtml [#prepare-text-mention-notification-email-as-html]
 
 Takes a
-[text mention notification webhook event](/docs/platform/webhooks#TextMention-notification)
+[text mention notification webhook event](/docs/api-reference/webhook-events#TextMention-notification)
 and returns an unread text mention with its surrounding text as an HTML string.
 It can also return `null` if the text mention does not exist anymore or has been
 already been read. You can also
@@ -1459,7 +1459,7 @@ export async function POST(request: Request) {
   </PropertiesListItem>
   <PropertiesListItem name="event" type="TextMentionNotificationEvent" required>
     An object passed from a webhook event, specifically the
-    [`TextMentionNotificationEvent`](/docs/platform/webhooks#TextMention-notification).
+    [`TextMentionNotificationEvent`](/docs/api-reference/webhook-events#TextMention-notification).
     [Learn more about setting this up](#Setup).
   </PropertiesListItem>
   <PropertiesListItem name="options" type="object">
