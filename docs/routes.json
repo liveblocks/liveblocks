@@ -988,6 +988,10 @@
     "title": "API Reference",
     "routes": [
       {
+        "title": "Overview",
+        "path": "/api-reference"
+      },
+      {
         "title": "@liveblocks/client",
         "path": "/api-reference/liveblocks-client"
       },
