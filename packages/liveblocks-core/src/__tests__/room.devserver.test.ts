@@ -10,11 +10,7 @@ import { describe, expect, onTestFinished, test, vi } from "vitest";
 import { LiveList } from "../crdts/LiveList";
 import { LiveObject } from "../crdts/LiveObject";
 import type { LiveText } from "../crdts/LiveText";
-import type {
-  StorageUpdate,
-  StorageUpdateSource,
-} from "../crdts/StorageUpdates";
-import { kStorageUpdateSource } from "../internal";
+import type { StorageUpdate, UpdateSource } from "../crdts/StorageUpdates";
 import { nn } from "../lib/assert";
 import { prepareIsolatedStorageTest, prepareStorageTest } from "./_devserver";
 import type { JsonStorageUpdate } from "./_updatesUtils";
@@ -648,8 +644,8 @@ describe("room (dev server)", () => {
   });
 
   describe("storage update source", () => {
-    function readSources(updates: StorageUpdate[]): StorageUpdateSource[] {
-      return updates.map((update) => update[kStorageUpdateSource]!);
+    function readSources(updates: StorageUpdate[]): UpdateSource[] {
+      return updates.map((update) => update.source);
     }
 
     test("local LiveObject mutations are tagged local", async () => {
@@ -658,7 +654,7 @@ describe("room (dev server)", () => {
         data: { a: 0 },
       });
 
-      const sources: StorageUpdateSource[] = [];
+      const sources: UpdateSource[] = [];
       onTestFinished(
         room.events.storageBatch.subscribe((updates) => {
           sources.push(...readSources(updates));
@@ -667,7 +663,7 @@ describe("room (dev server)", () => {
 
       root.set("a", 1);
 
-      expect(sources).toEqual([{ origin: "local", via: "mutation" }]);
+      expect(sources).toEqual([{ origin: "local", via: "edit" }]);
     });
 
     test("local LiveText mutations are tagged local on the envelope only", async () => {
@@ -681,7 +677,7 @@ describe("room (dev server)", () => {
       });
 
       const updates: Array<{
-        source: StorageUpdateSource;
+        source: UpdateSource;
         changeHasSource: boolean;
       }> = [];
       onTestFinished(
@@ -691,9 +687,9 @@ describe("room (dev server)", () => {
               continue;
             }
             updates.push({
-              source: update[kStorageUpdateSource]!,
+              source: update.source,
               changeHasSource: update.updates.some(
-                (change) => kStorageUpdateSource in change
+                (change) => "source" in change
               ),
             });
           }
@@ -704,7 +700,7 @@ describe("room (dev server)", () => {
 
       expect(updates).toEqual([
         {
-          source: { origin: "local", via: "mutation" },
+          source: { origin: "local", via: "edit" },
           changeHasSource: false,
         },
       ]);
@@ -716,7 +712,7 @@ describe("room (dev server)", () => {
         data: { a: 0 },
       });
 
-      const sources: StorageUpdateSource[] = [];
+      const sources: UpdateSource[] = [];
       onTestFinished(
         roomB.events.storageBatch.subscribe((updates) => {
           sources.push(...readSources(updates));
@@ -742,7 +738,7 @@ describe("room (dev server)", () => {
         },
       });
 
-      const sources: StorageUpdateSource[] = [];
+      const sources: UpdateSource[] = [];
       onTestFinished(
         roomB.events.storageBatch.subscribe((updates) => {
           sources.push(...readSources(updates));
@@ -758,13 +754,13 @@ describe("room (dev server)", () => {
       expect(sources).toEqual([{ origin: "remote" }]);
     });
 
-    test("undo produces history-tagged storage updates", async () => {
+    test("undo produces undo-tagged storage updates", async () => {
       const { room, root } = await prepareIsolatedStorageTest<{ a: number }>({
         liveblocksType: "LiveObject",
         data: { a: 0 },
       });
 
-      const sources: StorageUpdateSource[] = [];
+      const sources: UpdateSource[] = [];
       onTestFinished(
         room.events.storageBatch.subscribe((updates) => {
           sources.push(...readSources(updates));
@@ -772,14 +768,47 @@ describe("room (dev server)", () => {
       );
 
       root.set("a", 1);
-      expect(sources).toEqual([{ origin: "local", via: "mutation" }]);
+      expect(sources).toEqual([{ origin: "local", via: "edit" }]);
 
       sources.length = 0;
       room.history.undo();
 
-      expect(sources).toEqual([
-        { origin: "local", via: "history", action: "undo" },
-      ]);
+      expect(sources).toEqual([{ origin: "local", via: "undo" }]);
+    });
+
+    test("the internal optimistic flag never reaches subscribers", async () => {
+      const { storageA, roomA, storageB, roomB } = await prepareStorageTest<{
+        a: number;
+      }>({
+        liveblocksType: "LiveObject",
+        data: { a: 0 },
+      });
+
+      const sources: UpdateSource[] = [];
+      onTestFinished(
+        roomA.events.storageBatch.subscribe((updates) => {
+          sources.push(...readSources(updates));
+        })
+      );
+      onTestFinished(
+        roomB.events.storageBatch.subscribe((updates) => {
+          sources.push(...readSources(updates));
+        })
+      );
+
+      // A local mutation is optimistic internally; its ack is not; an undo
+      // replays an unacknowledged op; and B sees all of it as remote.
+      storageA.root.set("a", 1);
+      roomA.history.undo();
+      storageB.root.set("a", 9);
+
+      await vi.waitFor(() => {
+        expect(sources.length).toBeGreaterThan(3);
+      });
+
+      for (const source of sources) {
+        expect(source).not.toHaveProperty("optimistic");
+      }
     });
   });
 });

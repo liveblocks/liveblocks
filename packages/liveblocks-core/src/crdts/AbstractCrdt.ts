@@ -13,7 +13,8 @@ import { OpCode } from "../protocol/Op";
 import type { SerializedCrdt } from "../protocol/StorageNode";
 import type * as DevTools from "../types/DevToolsTreeNode";
 import type { LiveNode, Lson } from "./Lson";
-import type { StorageUpdate } from "./StorageUpdates";
+import type { OpSource, StorageUpdate, UpdateSource } from "./StorageUpdates";
+import { toUpdateSource } from "./StorageUpdates";
 import type { ReadonlyUnacknowledgedOps } from "./UnacknowledgedOps";
 import { UnacknowledgedOps } from "./UnacknowledgedOps";
 
@@ -168,36 +169,6 @@ export function createManagedPool(
 
     unacknowledgedOps,
   };
-}
-
-/**
- * When applying an op to a CRDT, we need to know where it came from to apply
- * it correctly.
- */
-export enum OpSource {
-  /**
-   * Optimistic update applied locally (from an undo, redo, or reconnect). Not
-   * yet acknowledged by the server. Will be sent to server and needs to be
-   * tracked for conflict resolution.
-   */
-  LOCAL,
-
-  /**
-   * Op received from server, originated from another client. Apply it, unless
-   * there's a pending local op for the same key (local ops take precedence
-   * until acknowledged).
-   *
-   * Note that a "fix Op" sent by the server in response to a local mutation
-   * that caused a conflict will also be classified as a THEIRS-like mutation.
-   * (As if another client resolved the conflict.)
-   */
-  THEIRS,
-
-  /**
-   * Op received from server, originated from THIS client. Server echoed it
-   * back to confirm.
-   */
-  OURS,
 }
 
 // TODO Temporary helper to help convert from AbstractCrdt -> LiveNode, only
@@ -355,11 +326,14 @@ export abstract class AbstractCrdt {
   }
 
   /** @internal */
-  _apply(op: Op, _isLocal: boolean): ApplyResult {
+  _apply(op: Op, source: OpSource): ApplyResult {
     switch (op.type) {
       case OpCode.DELETE_CRDT: {
         if (this.parent.type === "HasParent") {
-          return this.parent.node._detachChild(crdtAsLiveNode(this));
+          return this.parent.node._detachChild(
+            crdtAsLiveNode(this),
+            toUpdateSource(source)
+          );
         }
 
         return { modified: false };
@@ -437,7 +411,7 @@ export abstract class AbstractCrdt {
   }
 
   /** @internal */
-  abstract _detachChild(crdt: LiveNode): ApplyResult;
+  abstract _detachChild(crdt: LiveNode, source: UpdateSource): ApplyResult;
 
   /**
    * Serializes this CRDT and all its children into a list of creation ops

@@ -138,13 +138,14 @@ describe("LiveObject edge cases", () => {
       const obj = root.get("obj");
       const secondItem = obj.get("b");
 
-      const applyResult = obj._detachChild(secondItem);
+      const applyResult = obj._detachChild(secondItem, { origin: "remote" });
 
       expect(applyResult).toEqual({
         modified: {
           node: obj,
           type: "LiveObject",
           updates: { b: { type: "delete", deletedItem: secondItem } },
+          source: { origin: "remote" },
         },
         reverse: [
           {

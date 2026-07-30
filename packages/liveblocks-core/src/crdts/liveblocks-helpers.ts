@@ -1,4 +1,3 @@
-import { kStorageUpdateSource } from "../internal";
 import { assertNever, nn } from "../lib/assert";
 import type { Json } from "../lib/Json";
 import { stringifyOrLog as stringify } from "../lib/stringify";
@@ -29,7 +28,8 @@ import { LiveObject, type LiveObjectUpdates } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
 import { LiveText, type LiveTextUpdates } from "./LiveText";
 import type { LiveNode, LiveStructure, Lson, LsonObject } from "./Lson";
-import type { StorageUpdate } from "./StorageUpdates";
+import type { StorageUpdate, UpdateSource } from "./StorageUpdates";
+import { LOCAL_EDIT, REMOTE } from "./StorageUpdates";
 
 export function creationOpToLiveNode(op: CreateOp): LiveNode {
   return lsonToLiveNode(creationOpToLson(op));
@@ -625,6 +625,23 @@ function mergeTextStorageUpdates(
   };
 }
 
+function mergeUpdateSources(
+  first: UpdateSource,
+  second: UpdateSource
+): UpdateSource {
+  // Any remote change in the mix makes the merged update remote: it no longer
+  // describes a change this client made on its own.
+  if (first.origin === "remote" || second.origin === "remote") {
+    return REMOTE;
+  }
+
+  // Undo/redo replays are more specific than plain edits, so they win. When
+  // both are replays, the later one describes the merged update best.
+  if (second.via !== "edit") return second;
+  if (first.via !== "edit") return first;
+  return LOCAL_EDIT;
+}
+
 export function mergeStorageUpdates(
   first: StorageUpdate | undefined,
   second: StorageUpdate
@@ -633,34 +650,18 @@ export function mergeStorageUpdates(
     return second;
   }
 
-  let merged: StorageUpdate;
+  const source = mergeUpdateSources(first.source, second.source);
+
   if (first.type === "LiveObject" && second.type === "LiveObject") {
-    merged = mergeObjectStorageUpdates(first, second);
+    return { ...mergeObjectStorageUpdates(first, second), source };
   } else if (first.type === "LiveMap" && second.type === "LiveMap") {
-    merged = mergeMapStorageUpdates(first, second);
+    return { ...mergeMapStorageUpdates(first, second), source };
   } else if (first.type === "LiveList" && second.type === "LiveList") {
-    merged = mergeListStorageUpdates(first, second);
+    return { ...mergeListStorageUpdates(first, second), source };
   } else if (first.type === "LiveText" && second.type === "LiveText") {
-    merged = mergeTextStorageUpdates(first, second);
+    return { ...mergeTextStorageUpdates(first, second), source };
   } else {
     /* Mismatching merge types. Throw an error here? */
-    merged = second;
+    return { ...second, source };
   }
-
-  const sa = first[kStorageUpdateSource];
-  const sb = second[kStorageUpdateSource];
-  if (sa !== undefined || sb !== undefined) {
-    if (sa?.origin === "remote" || sb?.origin === "remote") {
-      merged[kStorageUpdateSource] = { origin: "remote" };
-    } else if (sa?.via === "history" || sb?.via === "history") {
-      const historySource =
-        sb?.via === "history" ? sb : sa?.via === "history" ? sa : undefined;
-      if (historySource?.via === "history") {
-        merged[kStorageUpdateSource] = historySource;
-      }
-    } else {
-      merged[kStorageUpdateSource] = { origin: "local", via: "mutation" };
-    }
-  }
-  return merged;
 }

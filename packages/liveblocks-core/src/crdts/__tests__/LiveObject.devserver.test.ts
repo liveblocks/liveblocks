@@ -24,7 +24,7 @@ import {
   objectUpdate,
   serializeUpdateToJson,
 } from "../../__tests__/_updatesUtils";
-import { kInternal, kStorageUpdateSource } from "../../internal";
+import { kInternal } from "../../internal";
 import { LiveList } from "../LiveList";
 import { LiveObject } from "../LiveObject";
 
@@ -767,7 +767,7 @@ describe("LiveObject", () => {
           type: "LiveObject",
           node: root.get("child"),
           updates: { a: { type: "update" } },
-          [kStorageUpdateSource]: { origin: "local", via: "mutation" },
+          source: { origin: "local", via: "edit" },
         },
       ]);
       expect(callback).toHaveBeenCalledWith([
@@ -775,7 +775,7 @@ describe("LiveObject", () => {
           type: "LiveObject",
           node: root.get("child").get("subchild"),
           updates: { b: { type: "update" } },
-          [kStorageUpdateSource]: { origin: "local", via: "mutation" },
+          source: { origin: "local", via: "edit" },
         },
       ]);
     });
@@ -823,7 +823,7 @@ describe("LiveObject", () => {
           type: "LiveObject",
           node: rootA.get("child"),
           updates: { a: { type: "update" } },
-          [kStorageUpdateSource]: { origin: "local", via: "mutation" },
+          source: { origin: "local", via: "edit" },
         },
       ]);
       expect(callback).toHaveBeenCalledWith([
@@ -831,7 +831,7 @@ describe("LiveObject", () => {
           type: "LiveObject",
           node: rootA.get("child").get("subchild"),
           updates: { b: { type: "update" } },
-          [kStorageUpdateSource]: { origin: "remote" },
+          source: { origin: "remote" },
         },
       ]);
     });
@@ -912,7 +912,7 @@ describe("LiveObject", () => {
           type: "LiveObject",
           node: rootA.get("child"),
           updates: { a: { type: "delete", deletedItem: -1 } },
-          [kStorageUpdateSource]: { origin: "remote" },
+          source: { origin: "remote" },
         },
       ]);
       expect(callback).toHaveBeenNthCalledWith(2, [
@@ -920,7 +920,7 @@ describe("LiveObject", () => {
           type: "LiveObject",
           node: rootA.get("child"),
           updates: { b: { type: "delete", deletedItem: -2 } },
-          [kStorageUpdateSource]: { origin: "local", via: "mutation" },
+          source: { origin: "local", via: "edit" },
         },
       ]);
     });
@@ -1052,10 +1052,9 @@ describe("LiveObject", () => {
           type: "LiveObject",
           node: root,
           updates: { a: { type: "update" } },
-          [kStorageUpdateSource]: {
+          source: {
             origin: "local",
-            via: "history",
-            action: "undo",
+            via: "undo",
           },
         },
       ]);

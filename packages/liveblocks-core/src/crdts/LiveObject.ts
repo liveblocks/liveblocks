@@ -27,7 +27,7 @@ import type * as DevTools from "../types/DevToolsTreeNode";
 import type { KnownKeys } from "../types/KnownKeys";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
-import { AbstractCrdt, OpSource } from "./AbstractCrdt";
+import { AbstractCrdt } from "./AbstractCrdt";
 import {
   creationOpToLson,
   deserializeToLson,
@@ -37,6 +37,8 @@ import {
 } from "./liveblocks-helpers";
 import type { SyncConfig } from "./reconcile";
 import { reconcileLiveObject } from "./reconcile";
+import type { OpSource, UpdateSource } from "./StorageUpdates";
+import { LOCAL_EDIT, toUpdateSource } from "./StorageUpdates";
 import type { UpdateDelta } from "./UpdateDelta";
 
 /**
@@ -70,6 +72,7 @@ export type LiveObjectUpdates<TData extends LsonObject> = {
   type: "LiveObject";
   node: LiveObject<TData>;
   updates: LiveObjectUpdateDelta<TData>;
+  source: UpdateSource;
 };
 
 /**
@@ -258,7 +261,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       return { modified: false };
     }
 
-    if (source === OpSource.LOCAL) {
+    if (source.origin === "local" && source.optimistic) {
       // Track locally-generated opId to preserve optimistic update
       this.#unackedOpsByKey.set(key, nn(opId));
     } else if (this.#unackedOpsByKey.get(key) === undefined) {
@@ -305,12 +308,13 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
         node: this,
         type: "LiveObject",
         updates: { [key]: { type: "update" } },
+        source: toUpdateSource(source),
       },
     };
   }
 
   /** @internal */
-  _detachChild(child: LiveNode): ApplyResult {
+  _detachChild(child: LiveNode, source: UpdateSource): ApplyResult {
     if (child) {
       const id = nn(this._id);
       const parentKey = nn(child._parentKey);
@@ -332,6 +336,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
         updates: {
           [parentKey]: { type: "delete", deletedItem },
         } as { [K in keyof O]: UpdateDelta },
+        source,
       };
 
       return { modified: storageUpdate, reverse };
@@ -352,14 +357,14 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   }
 
   /** @internal */
-  _apply(op: Op, isLocal: boolean): ApplyResult {
+  _apply(op: Op, source: OpSource): ApplyResult {
     if (op.type === OpCode.UPDATE_OBJECT) {
-      return this.#applyUpdate(op, isLocal);
+      return this.#applyUpdate(op, source);
     } else if (op.type === OpCode.DELETE_OBJECT_KEY) {
-      return this.#applyDeleteObjectKey(op, isLocal);
+      return this.#applyDeleteObjectKey(op, source);
     }
 
-    return super._apply(op, isLocal);
+    return super._apply(op, source);
   }
 
   /** @internal */
@@ -389,7 +394,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     }
   }
 
-  #applyUpdate(op: UpdateObjectOp, isLocal: boolean): ApplyResult {
+  #applyUpdate(op: UpdateObjectOp, source: OpSource): ApplyResult {
     let isModified = false;
     const id = nn(this._id);
     const reverse: Op[] = [];
@@ -420,7 +425,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
         continue;
       }
 
-      if (isLocal) {
+      if (source.origin === "local" && source.optimistic) {
         // Track locally-generated opId to preserve optimistic update
         this.#unackedOpsByKey.set(key, nn(op.opId));
       } else if (this.#unackedOpsByKey.get(key) === undefined) {
@@ -458,13 +463,14 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
             node: this,
             type: "LiveObject",
             updates: updateDelta,
+            source: toUpdateSource(source),
           },
           reverse,
         }
       : { modified: false };
   }
 
-  #applyDeleteObjectKey(op: DeleteObjectKeyOp, isLocal: boolean): ApplyResult {
+  #applyDeleteObjectKey(op: DeleteObjectKeyOp, source: OpSource): ApplyResult {
     const key = op.key;
 
     // If property does not exist, exit without notifying
@@ -475,7 +481,10 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
 
     // If a local operation exists on the same key and we receive a remote
     // one prevent flickering by not applying delete op.
-    if (!isLocal && this.#unackedOpsByKey.get(key) !== undefined) {
+    if (
+      !(source.origin === "local" && source.optimistic) &&
+      this.#unackedOpsByKey.get(key) !== undefined
+    ) {
       return { modified: false };
     }
 
@@ -504,6 +513,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
         updates: {
           [op.key]: { type: "delete", deletedItem: oldValue satisfies Lson },
         },
+        source: toUpdateSource(source),
       },
       reverse,
     };
@@ -565,6 +575,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
           ...existing?.updates,
           [key]: { type: "update" } satisfies UpdateDelta,
         } as { [K in keyof O]: UpdateDelta },
+        source: LOCAL_EDIT,
       });
 
       this._pool.dispatch(ops, reverse, storageUpdates);
@@ -619,6 +630,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
               deletedItem: oldValue,
             } satisfies UpdateDelta,
           } as { [K in keyof O]: UpdateDelta },
+          source: LOCAL_EDIT,
         });
         return [[], [], storageUpdates];
       }
@@ -677,6 +689,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       } as {
         [K in keyof O]: UpdateDelta;
       },
+      source: LOCAL_EDIT,
     });
 
     return [ops, reverse, storageUpdates];
@@ -854,6 +867,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       node: this,
       type: "LiveObject",
       updates: updateDelta,
+      source: LOCAL_EDIT,
     });
     this._pool.dispatch(ops, reverseOps, storageUpdates);
   }

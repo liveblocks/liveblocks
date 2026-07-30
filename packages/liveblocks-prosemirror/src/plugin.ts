@@ -1,6 +1,6 @@
 import type { LsonObject, StorageUpdate } from "@liveblocks/client";
 import { LiveMap, LiveObject } from "@liveblocks/client";
-import { kInternal, kStorageUpdateSource } from "@liveblocks/core";
+import { kInternal } from "@liveblocks/core";
 import { Slice } from "prosemirror-model";
 import { Plugin, PluginKey } from "prosemirror-state";
 import type { EditorView } from "prosemirror-view";
@@ -126,9 +126,12 @@ function getHistoryAction(
   updates: readonly StorageUpdate[] | undefined
 ): "undo" | "redo" | undefined {
   for (const update of updates ?? []) {
-    const source = update[kStorageUpdateSource];
-    if (source?.origin === "local" && source.via === "history") {
-      return source.action;
+    const source = update.source;
+    if (
+      source.origin === "local" &&
+      (source.via === "undo" || source.via === "redo")
+    ) {
+      return source.via;
     }
   }
 
@@ -489,8 +492,8 @@ export function createLiveblocksCollaborationPlugin(
           (updates) => {
             if (
               updates.every((update) => {
-                const source = update[kStorageUpdateSource];
-                return source?.origin === "local" && source.via === "mutation";
+                const source = update.source;
+                return source.origin === "local" && source.via === "edit";
               })
             ) {
               return;

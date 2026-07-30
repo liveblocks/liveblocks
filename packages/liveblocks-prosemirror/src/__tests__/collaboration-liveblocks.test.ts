@@ -1,6 +1,6 @@
 import type { LsonObject, StorageUpdate } from "@liveblocks/client";
 import { LiveList, LiveMap, LiveObject, LiveText } from "@liveblocks/client";
-import { kInternal, kStorageUpdateSource, OpCode } from "@liveblocks/core";
+import { kInternal, OpCode } from "@liveblocks/core";
 import { Editor, Extension, Mark, Node } from "@tiptap/core";
 import Document from "@tiptap/extension-document";
 import Paragraph from "@tiptap/extension-paragraph";
@@ -911,10 +911,7 @@ describe("collaboration-liveblocks schema", () => {
           text: "!",
         },
       ],
-    };
-    localUpdate[kStorageUpdateSource] = {
-      origin: "local",
-      via: "mutation",
+      source: { origin: "local", via: "edit" },
     };
 
     notifyStorageUpdate([localUpdate]);

@@ -8,8 +8,11 @@ const vitestSetup = path.resolve(
   "../../shared/vitest-config/setup.js"
 );
 
-// Force one copy of the Liveblocks internals so Symbols and CRDT classes match
-// the source-level mock server used by the history integration tests.
+// The mock WebSocket server lives in @liveblocks/core's src/__tests__/, which
+// is neither exported nor built, so tests can only reach it by relative path.
+// That loads core from source, while the code under test imports the built
+// @liveblocks/core. Two copies means two kInternal Symbols and two sets of CRDT
+// classes, so alias both onto the source copy.
 const liveblocksCore = path.resolve(
   __dirname,
   "../liveblocks-core/src/index.ts"
