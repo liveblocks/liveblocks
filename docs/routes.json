@@ -785,6 +785,7 @@
   },
   {
     "title": "Platform",
+    "defaultCollapsed": true,
     "routes": [
       {
         "title": "Data storage",
@@ -894,6 +895,7 @@
   },
   {
     "title": "Tools",
+    "defaultCollapsed": true,
     "routes": [
       {
         "title": "Dev server",
