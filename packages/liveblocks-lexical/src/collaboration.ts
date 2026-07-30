@@ -102,7 +102,7 @@ export class LiveblocksCollaboration {
           if (
             updates.every((update) => {
               const source = update.source;
-              return source?.origin === "local" && source.via === "edit";
+              return source.origin === "local" && source.via === "edit";
             })
           ) {
             return;
@@ -111,7 +111,7 @@ export class LiveblocksCollaboration {
           const isFromHistory = updates.some((update) => {
             const source = update.source;
             return (
-              source?.origin === "local" &&
+              source.origin === "local" &&
               (source.via === "undo" || source.via === "redo")
             );
           });

@@ -25,10 +25,7 @@ import { LiveMap } from "../crdts/LiveMap";
 import { LiveObject } from "../crdts/LiveObject";
 import type { LiveText } from "../crdts/LiveText";
 import type { LsonObject } from "../crdts/Lson";
-import type {
-  StorageUpdate,
-  StorageUpdateSource,
-} from "../crdts/StorageUpdates";
+import type { StorageUpdate, UpdateSource } from "../crdts/StorageUpdates";
 import { kInternal } from "../internal";
 import { makeEventSource } from "../lib/EventSource";
 import * as console from "../lib/fancy-console";
@@ -2830,8 +2827,8 @@ describe("room", () => {
   });
 
   describe("storage update source", () => {
-    function readSources(updates: StorageUpdate[]): StorageUpdateSource[] {
-      return updates.map((update) => update.source!);
+    function readSources(updates: StorageUpdate[]): UpdateSource[] {
+      return updates.map((update) => update.source);
     }
 
     test("local mutations are tagged local", async () => {
@@ -2841,7 +2838,7 @@ describe("room", () => {
         { a: 0 }
       );
 
-      const sources: StorageUpdateSource[] = [];
+      const sources: UpdateSource[] = [];
       onTestFinished(
         room.events.storageBatch.subscribe((updates) => {
           sources.push(...readSources(updates));
@@ -2861,7 +2858,7 @@ describe("room", () => {
           { a: 0 }
         );
 
-      const sources: StorageUpdateSource[] = [];
+      const sources: UpdateSource[] = [];
       onTestFinished(
         room.events.storageBatch.subscribe((updates) => {
           sources.push(...readSources(updates));
@@ -2886,7 +2883,7 @@ describe("room", () => {
         0
       );
 
-      const sources: StorageUpdateSource[] = [];
+      const sources: UpdateSource[] = [];
       onTestFinished(
         refRoom.events.storageBatch.subscribe((updates) => {
           sources.push(...readSources(updates));
@@ -2905,7 +2902,7 @@ describe("room", () => {
         { a: 0 }
       );
 
-      const sources: StorageUpdateSource[] = [];
+      const sources: UpdateSource[] = [];
       onTestFinished(
         room.events.storageBatch.subscribe((updates) => {
           sources.push(...readSources(updates));

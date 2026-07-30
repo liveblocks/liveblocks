@@ -128,7 +128,7 @@ function getHistoryAction(
   for (const update of updates ?? []) {
     const source = update.source;
     if (
-      source?.origin === "local" &&
+      source.origin === "local" &&
       (source.via === "undo" || source.via === "redo")
     ) {
       return source.via;
@@ -493,7 +493,7 @@ export function createLiveblocksCollaborationPlugin(
             if (
               updates.every((update) => {
                 const source = update.source;
-                return source?.origin === "local" && source.via === "edit";
+                return source.origin === "local" && source.via === "edit";
               })
             ) {
               return;

@@ -3,31 +3,26 @@ import { describe, expect, test } from "vitest";
 import { mergeStorageUpdates } from "../liveblocks-helpers";
 import { LiveObject } from "../LiveObject";
 import { LiveText } from "../LiveText";
-import type { StorageUpdate, StorageUpdateSource } from "../StorageUpdates";
+import type { StorageUpdate, UpdateSource } from "../StorageUpdates";
+import { toUpdateSource } from "../StorageUpdates";
 
-function liveObjectUpdate(source?: StorageUpdateSource): StorageUpdate {
-  const update: StorageUpdate = {
+function liveObjectUpdate(source: UpdateSource): StorageUpdate {
+  return {
     type: "LiveObject",
     node: new LiveObject({ a: 1 }),
     updates: { a: { type: "update" } },
+    source,
   };
-  if (source !== undefined) {
-    update.source = source;
-  }
-  return update;
 }
 
-function liveTextUpdate(source?: StorageUpdateSource): StorageUpdate {
-  const update: StorageUpdate = {
+function liveTextUpdate(source: UpdateSource): StorageUpdate {
+  return {
     type: "LiveText",
     node: new LiveText("hello"),
     version: 1,
     updates: [{ type: "insert", index: 5, text: "!" }],
+    source,
   };
-  if (source !== undefined) {
-    update.source = source;
-  }
-  return update;
 }
 
 describe("mergeStorageUpdates source propagation", () => {
@@ -99,27 +94,28 @@ describe("mergeStorageUpdates source propagation", () => {
     });
   });
 
-  test("untagged + local mutation -> merged is local mutation", () => {
-    const merged = mergeStorageUpdates(
-      liveObjectUpdate(),
-      liveObjectUpdate({ origin: "local", via: "edit" })
-    );
-    expect(merged.source).toEqual({
-      origin: "local",
-      via: "edit",
-    });
-  });
-
-  test("untagged + untagged -> merged stays untagged", () => {
-    const merged = mergeStorageUpdates(liveObjectUpdate(), liveObjectUpdate());
-    expect(merged.source).toBeUndefined();
-  });
-
   test("undefined first preserves second source", () => {
     const merged = mergeStorageUpdates(
       undefined,
       liveTextUpdate({ origin: "remote" })
     );
     expect(merged.source).toEqual({ origin: "remote" });
+  });
+});
+
+describe("toUpdateSource", () => {
+  test("drops the internal optimistic flag from local sources", () => {
+    for (const via of ["edit", "undo", "redo"] as const) {
+      for (const optimistic of [true, false]) {
+        expect(toUpdateSource({ origin: "local", via, optimistic })).toEqual({
+          origin: "local",
+          via,
+        });
+      }
+    }
+  });
+
+  test("leaves remote sources alone", () => {
+    expect(toUpdateSource({ origin: "remote" })).toEqual({ origin: "remote" });
   });
 });

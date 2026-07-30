@@ -761,13 +761,14 @@ describe("LiveList edge cases", () => {
       const items = root.get("items");
       const secondItem = items.get(1);
 
-      const applyResult = items._detachChild(secondItem!);
+      const applyResult = items._detachChild(secondItem!, { origin: "remote" });
 
       expect(applyResult).toEqual({
         modified: {
           type: "LiveList",
           node: items,
           updates: [{ index: 1, type: "delete", deletedItem: secondItem }],
+          source: { origin: "remote" },
         },
         reverse: [
           {

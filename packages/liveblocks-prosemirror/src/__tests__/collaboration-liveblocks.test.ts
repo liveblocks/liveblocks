@@ -911,10 +911,7 @@ describe("collaboration-liveblocks schema", () => {
           text: "!",
         },
       ],
-    };
-    localUpdate.source = {
-      origin: "local",
-      via: "edit",
+      source: { origin: "local", via: "edit" },
     };
 
     notifyStorageUpdate([localUpdate]);

@@ -117,7 +117,7 @@ export type {
   LiveObjectUpdate,
   LiveTextUpdate,
   StorageUpdate,
-  StorageUpdateSource,
+  UpdateSource,
 } from "./crdts/StorageUpdates";
 export { toPlainLson } from "./crdts/utils";
 export type {

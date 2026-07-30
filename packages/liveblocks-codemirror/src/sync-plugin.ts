@@ -46,7 +46,7 @@ export function createLiveblocksSyncPlugin(
                 }
 
                 const source = update.source;
-                if (source?.origin === "local" && source.via === "edit") {
+                if (source.origin === "local" && source.via === "edit") {
                   continue;
                 }
 
@@ -83,7 +83,7 @@ export function createLiveblocksSyncPlugin(
 
                 let selection: EditorSelection | undefined;
                 if (
-                  source?.origin === "local" &&
+                  source.origin === "local" &&
                   (source.via === "undo" || source.via === "redo")
                 ) {
                   const id =

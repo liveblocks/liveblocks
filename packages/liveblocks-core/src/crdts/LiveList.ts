@@ -11,7 +11,7 @@ import { CrdtType } from "../protocol/StorageNode";
 import type * as DevTools from "../types/DevToolsTreeNode";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
-import { AbstractCrdt, OpSource } from "./AbstractCrdt";
+import { AbstractCrdt } from "./AbstractCrdt";
 import {
   creationOpToLiveNode,
   deserialize,
@@ -20,6 +20,8 @@ import {
 } from "./liveblocks-helpers";
 import { LiveRegister } from "./LiveRegister";
 import type { LiveNode, Lson, ToJson } from "./Lson";
+import type { OpSource, UpdateSource } from "./StorageUpdates";
+import { LOCAL_EDIT, REMOTE, toUpdateSource } from "./StorageUpdates";
 
 export type LiveListUpdateDelta =
   | { type: "insert"; index: number; item: Lson }
@@ -35,6 +37,7 @@ export type LiveListUpdates<TItem extends Lson> = {
   type: "LiveList";
   node: LiveList<TItem>;
   updates: LiveListUpdateDelta[];
+  source: UpdateSource;
 };
 
 function childNodeLt(a: LiveNode, b: LiveNode): boolean {
@@ -240,9 +243,11 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         this.#items.add(child);
 
         return {
-          modified: makeUpdate(this, [
-            setDelta(indexOfItemWithSamePosition, child),
-          ]),
+          modified: makeUpdate(
+            this,
+            [setDelta(indexOfItemWithSamePosition, child)],
+            REMOTE
+          ),
           reverse: [],
         };
       } else {
@@ -263,7 +268,8 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         // Even if we implicitly delete the item at the set position
         // We still need to delete the item that was orginaly deleted by the set
         const deleteDelta = this.#detachItemAssociatedToSetOperation(
-          op.deletedId
+          op.deletedId,
+          REMOTE
         );
 
         if (deleteDelta) {
@@ -271,7 +277,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         }
 
         return {
-          modified: makeUpdate(this, delta),
+          modified: makeUpdate(this, delta, REMOTE),
           reverse: [],
         };
       }
@@ -279,7 +285,8 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       // Item at position to be replaced doesn't exist
       const updates: LiveListUpdateDelta[] = [];
       const deleteDelta = this.#detachItemAssociatedToSetOperation(
-        op.deletedId
+        op.deletedId,
+        REMOTE
       );
       if (deleteDelta) {
         updates.push(deleteDelta);
@@ -291,12 +298,12 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
       return {
         reverse: [],
-        modified: makeUpdate(this, updates),
+        modified: makeUpdate(this, updates, REMOTE),
       };
     }
   }
 
-  #applySetAck(op: CreateOp): ApplyResult {
+  #applySetAck(op: CreateOp, source: UpdateSource): ApplyResult {
     if (this._pool === undefined) {
       throw new Error("Can't attach child if managed pool is not present");
     }
@@ -304,7 +311,10 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     const delta: LiveListUpdateDelta[] = [];
 
     // Deleted item can be re-inserted by remote undo/redo
-    const deletedDelta = this.#detachItemAssociatedToSetOperation(op.deletedId);
+    const deletedDelta = this.#detachItemAssociatedToSetOperation(
+      op.deletedId,
+      source
+    );
     if (deletedDelta) {
       delta.push(deletedDelta);
     }
@@ -321,7 +331,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     if (unacknowledgedOpId !== undefined && unacknowledgedOpId !== op.opId) {
       return delta.length === 0
         ? { modified: false }
-        : { modified: makeUpdate(this, delta), reverse: [] };
+        : { modified: makeUpdate(this, delta, source), reverse: [] };
     }
 
     const indexOfItemWithSamePosition = this._indexOfPosition(op.parentKey);
@@ -334,7 +344,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       if (existingItem._parentKey === op.parentKey) {
         // ... do nothing
         return {
-          modified: delta.length > 0 ? makeUpdate(this, delta) : false,
+          modified: delta.length > 0 ? makeUpdate(this, delta, source) : false,
           reverse: [],
         };
       }
@@ -356,7 +366,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       }
 
       return {
-        modified: delta.length > 0 ? makeUpdate(this, delta) : false,
+        modified: delta.length > 0 ? makeUpdate(this, delta, source) : false,
         reverse: [],
       };
     } else {
@@ -370,13 +380,17 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
         const recreatedItemIndex = this.#insert(orphan);
         return {
-          modified: makeUpdate(this, [
-            // If there is an item at this position, update is a set, else it's an insert
-            indexOfItemWithSamePosition === -1
-              ? insertDelta(recreatedItemIndex, orphan)
-              : setDelta(recreatedItemIndex, orphan),
-            ...delta,
-          ]),
+          modified: makeUpdate(
+            this,
+            [
+              // If there is an item at this position, update is a set, else it's an insert
+              indexOfItemWithSamePosition === -1
+                ? insertDelta(recreatedItemIndex, orphan)
+                : setDelta(recreatedItemIndex, orphan),
+              ...delta,
+            ],
+            source
+          ),
           reverse: [],
         };
       } else {
@@ -393,13 +407,17 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         );
 
         return {
-          modified: makeUpdate(this, [
-            // If there is an item at this position, update is a set, else it's an insert
-            indexOfItemWithSamePosition === -1
-              ? insertDelta(newIndex, newItem)
-              : setDelta(newIndex, newItem),
-            ...delta,
-          ]),
+          modified: makeUpdate(
+            this,
+            [
+              // If there is an item at this position, update is a set, else it's an insert
+              indexOfItemWithSamePosition === -1
+                ? insertDelta(newIndex, newItem)
+                : setDelta(newIndex, newItem),
+              ...delta,
+            ],
+            source
+          ),
           reverse: [],
         };
       }
@@ -410,7 +428,8 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * Returns the update delta of the deletion or null
    */
   #detachItemAssociatedToSetOperation(
-    deletedId?: string
+    deletedId: string | undefined,
+    source: UpdateSource
   ): LiveListUpdateDelta | null {
     if (deletedId === undefined || this._pool === undefined) {
       return null;
@@ -421,7 +440,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       return null;
     }
 
-    const result = this._detachChild(deletedItem);
+    const result = this._detachChild(deletedItem, source);
     if (result.modified === false) {
       return null;
     }
@@ -459,10 +478,11 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     const bumpDeltas = this.#bumpUnackedPushesAbove(key);
 
     return {
-      modified: makeUpdate(this, [
-        insertDelta(newIndex, newItem),
-        ...bumpDeltas,
-      ]),
+      modified: makeUpdate(
+        this,
+        [insertDelta(newIndex, newItem), ...bumpDeltas],
+        REMOTE
+      ),
       reverse: [],
     };
   }
@@ -554,7 +574,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     return deltas;
   }
 
-  #applyInsertAck(op: CreateOp): ApplyResult {
+  #applyInsertAck(op: CreateOp, source: UpdateSource): ApplyResult {
     const existingItem = this.#items.find((item) => item._id === op.id);
     const key = asPos(op.parentKey);
 
@@ -583,9 +603,11 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         }
 
         return {
-          modified: makeUpdate(this, [
-            moveDelta(oldPositionIndex, newIndex, existingItem),
-          ]),
+          modified: makeUpdate(
+            this,
+            [moveDelta(oldPositionIndex, newIndex, existingItem)],
+            source
+          ),
           reverse: [],
         };
       }
@@ -601,7 +623,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         const newIndex = this._indexOfPosition(key);
 
         return {
-          modified: makeUpdate(this, [insertDelta(newIndex, orphan)]),
+          modified: makeUpdate(this, [insertDelta(newIndex, orphan)], source),
           reverse: [],
         };
       } else {
@@ -612,14 +634,14 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         const { newItem, newIndex } = this.#createAttachItemAndSort(op, key);
 
         return {
-          modified: makeUpdate(this, [insertDelta(newIndex, newItem)]),
+          modified: makeUpdate(this, [insertDelta(newIndex, newItem)], source),
           reverse: [],
         };
       }
     }
   }
 
-  #applyInsertUndoRedo(op: CreateOp): ApplyResult {
+  #applyInsertUndoRedo(op: CreateOp, source: UpdateSource): ApplyResult {
     const { id, parentKey: key } = op;
     const child = creationOpToLiveNode(op);
 
@@ -647,12 +669,12 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     const newIndex = this._indexOfPosition(newKey);
 
     return {
-      modified: makeUpdate(this, [insertDelta(newIndex, child)]),
+      modified: makeUpdate(this, [insertDelta(newIndex, child)], source),
       reverse: [{ type: OpCode.DELETE_CRDT, id }],
     };
   }
 
-  #applySetUndoRedo(op: CreateOp): ApplyResult {
+  #applySetUndoRedo(op: CreateOp, source: UpdateSource): ApplyResult {
     const { id, parentKey: key } = op;
     const child = creationOpToLiveNode(op);
 
@@ -684,33 +706,35 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
       const delta = [setDelta(indexOfItemWithSameKey, child)];
       const deletedDelta = this.#detachItemAssociatedToSetOperation(
-        op.deletedId
+        op.deletedId,
+        source
       );
       if (deletedDelta) {
         delta.push(deletedDelta);
       }
 
       return {
-        modified: makeUpdate(this, delta),
+        modified: makeUpdate(this, delta, source),
         reverse,
       };
     } else {
       this.#insert(child);
 
       // TODO: Use delta
-      this.#detachItemAssociatedToSetOperation(op.deletedId);
+      this.#detachItemAssociatedToSetOperation(op.deletedId, source);
 
       const newIndex = this._indexOfPosition(newKey);
 
       return {
         reverse: [{ type: OpCode.DELETE_CRDT, id }],
-        modified: makeUpdate(this, [insertDelta(newIndex, child)]),
+        modified: makeUpdate(this, [insertDelta(newIndex, child)], source),
       };
     }
   }
 
   /** @internal */
-  _attachChild(op: CreateOp, source: OpSource): ApplyResult {
+  _attachChild(op: CreateOp, opSource: OpSource): ApplyResult {
+    const source = toUpdateSource(opSource);
     if (this._pool === undefined) {
       throw new Error("Can't attach child if managed pool is not present");
     }
@@ -718,20 +742,20 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     let result: ApplyResult;
 
     if (op.intent === "set") {
-      if (source === OpSource.THEIRS) {
+      if (opSource.origin === "remote") {
         result = this.#applySetRemote(op);
-      } else if (source === OpSource.OURS) {
-        result = this.#applySetAck(op);
+      } else if (!opSource.optimistic) {
+        result = this.#applySetAck(op, source);
       } else {
-        result = this.#applySetUndoRedo(op);
+        result = this.#applySetUndoRedo(op, source);
       }
     } else {
-      if (source === OpSource.THEIRS) {
+      if (opSource.origin === "remote") {
         result = this.#applyRemoteInsert(op);
-      } else if (source === OpSource.OURS) {
-        result = this.#applyInsertAck(op);
+      } else if (!opSource.optimistic) {
+        result = this.#applyInsertAck(op, source);
       } else {
-        result = this.#applyInsertUndoRedo(op);
+        result = this.#applyInsertUndoRedo(op, source);
       }
     }
 
@@ -744,7 +768,8 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
   /** @internal */
   _detachChild(
-    child: LiveNode
+    child: LiveNode,
+    source: UpdateSource
   ): { reverse: Op[]; modified: LiveListUpdates<TItem> } | { modified: false } {
     if (child) {
       const parentKey = nn(child._parentKey);
@@ -765,7 +790,11 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       child._detach();
 
       return {
-        modified: makeUpdate(this, [deleteDelta(indexToDelete, previousNode)]),
+        modified: makeUpdate(
+          this,
+          [deleteDelta(indexToDelete, previousNode)],
+          source
+        ),
         reverse,
       };
     }
@@ -782,7 +811,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
       // TODO: Shift existing item?
       return {
-        modified: makeUpdate(this, [insertDelta(newIndex, child)]),
+        modified: makeUpdate(this, [insertDelta(newIndex, child)], REMOTE),
         reverse: [],
       };
     }
@@ -811,7 +840,11 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       }
 
       return {
-        modified: makeUpdate(this, [moveDelta(previousIndex, newIndex, child)]),
+        modified: makeUpdate(
+          this,
+          [moveDelta(previousIndex, newIndex, child)],
+          REMOTE
+        ),
         reverse: [],
       };
     } else {
@@ -831,13 +864,21 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       }
 
       return {
-        modified: makeUpdate(this, [moveDelta(previousIndex, newIndex, child)]),
+        modified: makeUpdate(
+          this,
+          [moveDelta(previousIndex, newIndex, child)],
+          REMOTE
+        ),
         reverse: [],
       };
     }
   }
 
-  #applySetChildKeyAck(newKey: Pos, child: LiveNode): ApplyResult {
+  #applySetChildKeyAck(
+    newKey: Pos,
+    child: LiveNode,
+    source: UpdateSource
+  ): ApplyResult {
     const previousKey = nn(child._parentKey);
 
     if (this.#implicitlyDeletedItems.has(child)) {
@@ -860,7 +901,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       child._setParentLink(this, newKey);
       const newIndex = this.#insert(child);
       return {
-        modified: makeUpdate(this, [insertDelta(newIndex, child)]),
+        modified: makeUpdate(this, [insertDelta(newIndex, child)], source),
         reverse: [],
       };
     } else {
@@ -898,16 +939,22 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         };
       } else {
         return {
-          modified: makeUpdate(this, [
-            moveDelta(previousIndex, newIndex, child),
-          ]),
+          modified: makeUpdate(
+            this,
+            [moveDelta(previousIndex, newIndex, child)],
+            source
+          ),
           reverse: [],
         };
       }
     }
   }
 
-  #applySetChildKeyUndoRedo(newKey: Pos, child: LiveNode): ApplyResult {
+  #applySetChildKeyUndoRedo(
+    newKey: Pos,
+    child: LiveNode,
+    source: UpdateSource
+  ): ApplyResult {
     const previousKey = nn(child._parentKey);
 
     const previousIndex = this.#items.findIndex((item) => item === child);
@@ -934,7 +981,11 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     }
 
     return {
-      modified: makeUpdate(this, [moveDelta(previousIndex, newIndex, child)]),
+      modified: makeUpdate(
+        this,
+        [moveDelta(previousIndex, newIndex, child)],
+        source
+      ),
       reverse: [
         {
           type: OpCode.SET_PARENT_KEY,
@@ -946,13 +997,14 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   }
 
   /** @internal */
-  _setChildKey(newKey: Pos, child: LiveNode, source: OpSource): ApplyResult {
-    if (source === OpSource.THEIRS) {
+  _setChildKey(newKey: Pos, child: LiveNode, opSource: OpSource): ApplyResult {
+    const source = toUpdateSource(opSource);
+    if (opSource.origin === "remote") {
       return this.#applySetChildKeyRemote(newKey, child);
-    } else if (source === OpSource.OURS) {
-      return this.#applySetChildKeyAck(newKey, child);
+    } else if (!opSource.optimistic) {
+      return this.#applySetChildKeyAck(newKey, child, source);
     } else {
-      return this.#applySetChildKeyUndoRedo(newKey, child);
+      return this.#applySetChildKeyUndoRedo(newKey, child, source);
     }
   }
 
@@ -1031,7 +1083,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         intent === "push" ? addIntentToRootOp(ops, "push") : ops,
         [{ type: OpCode.DELETE_CRDT, id }],
         new Map<string, LiveListUpdates<TItem>>([
-          [this._id, makeUpdate(this, [insertDelta(index, value)])],
+          [this._id, makeUpdate(this, [insertDelta(index, value)], LOCAL_EDIT)],
         ])
       );
     }
@@ -1087,7 +1139,10 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
     if (this._pool && this._id) {
       const storageUpdates = new Map<string, LiveListUpdates<TItem>>([
-        [this._id, makeUpdate(this, [moveDelta(index, targetIndex, item)])],
+        [
+          this._id,
+          makeUpdate(this, [moveDelta(index, targetIndex, item)], LOCAL_EDIT),
+        ],
       ]);
 
       this._pool.dispatch(
@@ -1136,7 +1191,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         const storageUpdates = new Map<string, LiveListUpdates<TItem>>();
         storageUpdates.set(
           nn(this._id),
-          makeUpdate(this, [deleteDelta(index, item)])
+          makeUpdate(this, [deleteDelta(index, item)], LOCAL_EDIT)
         );
 
         this._pool.dispatch(
@@ -1185,7 +1240,10 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       this.invalidate();
 
       const storageUpdates = new Map<string, LiveListUpdates<TItem>>();
-      storageUpdates.set(nn(this._id), makeUpdate(this, updateDelta));
+      storageUpdates.set(
+        nn(this._id),
+        makeUpdate(this, updateDelta, LOCAL_EDIT)
+      );
 
       this._pool.dispatch(ops, reverseOps, storageUpdates);
     } else {
@@ -1224,7 +1282,10 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       value._attach(id, this._pool);
 
       const storageUpdates = new Map<string, LiveListUpdates<TItem>>();
-      storageUpdates.set(this._id, makeUpdate(this, [setDelta(index, value)]));
+      storageUpdates.set(
+        this._id,
+        makeUpdate(this, [setDelta(index, value)], LOCAL_EDIT)
+      );
 
       const ops = addIntentToRootOp(
         value._toOpsWithOpId(this._id, position, this._pool),
@@ -1436,12 +1497,14 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
 function makeUpdate<TItem extends Lson>(
   liveList: LiveList<TItem>,
-  deltaUpdates: LiveListUpdateDelta[]
+  deltaUpdates: LiveListUpdateDelta[],
+  source: UpdateSource
 ): LiveListUpdates<TItem> {
   return {
     node: liveList,
     type: "LiveList",
     updates: deltaUpdates,
+    source,
   };
 }
 

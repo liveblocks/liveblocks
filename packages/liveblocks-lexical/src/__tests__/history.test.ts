@@ -164,7 +164,7 @@ describe("LiveblocksHistory", () => {
           if (
             updates.every((update) => {
               const source = update.source;
-              return source?.origin === "local" && source.via === "edit";
+              return source.origin === "local" && source.via === "edit";
             })
           ) {
             return;
@@ -173,7 +173,7 @@ describe("LiveblocksHistory", () => {
           const isFromHistory = updates.some((update) => {
             const source = update.source;
             return (
-              source?.origin === "local" &&
+              source.origin === "local" &&
               (source.via === "undo" || source.via === "redo")
             );
           });
@@ -580,7 +580,7 @@ describe("LiveblocksHistory", () => {
           if (
             updates.every((update) => {
               const source = update.source;
-              return source?.origin === "local" && source.via === "edit";
+              return source.origin === "local" && source.via === "edit";
             })
           ) {
             return;
@@ -589,7 +589,7 @@ describe("LiveblocksHistory", () => {
           const isFromHistory = updates.some((update) => {
             const source = update.source;
             return (
-              source?.origin === "local" &&
+              source.origin === "local" &&
               (source.via === "undo" || source.via === "redo")
             );
           });
@@ -699,7 +699,7 @@ describe("LiveblocksHistory", () => {
           if (
             updates.every((update) => {
               const source = update.source;
-              return source?.origin === "local" && source.via === "edit";
+              return source.origin === "local" && source.via === "edit";
             })
           ) {
             return;
@@ -708,7 +708,7 @@ describe("LiveblocksHistory", () => {
           const isFromHistory = updates.some((update) => {
             const source = update.source;
             return (
-              source?.origin === "local" &&
+              source.origin === "local" &&
               (source.via === "undo" || source.via === "redo")
             );
           });

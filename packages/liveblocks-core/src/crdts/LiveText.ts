@@ -23,7 +23,7 @@ import type {
   ManagedPool,
   PrivateLiveNodeApi,
 } from "./AbstractCrdt";
-import { AbstractCrdt, OpSource } from "./AbstractCrdt";
+import { AbstractCrdt } from "./AbstractCrdt";
 import {
   applyDelete,
   applyFormat,
@@ -42,7 +42,8 @@ import {
   transformTextOperationsX,
 } from "./liveTextOps";
 import type { LiveNode } from "./Lson";
-import type { StorageUpdate } from "./StorageUpdates";
+import type { OpSource, StorageUpdate, UpdateSource } from "./StorageUpdates";
+import { LOCAL_EDIT, toUpdateSource } from "./StorageUpdates";
 
 export type LiveTextAttributes = TextAttributes;
 export type LiveTextAttributesPatch = JsonObject;
@@ -81,6 +82,7 @@ export type LiveTextUpdates = {
   node: LiveText;
   version: number;
   updates: LiveTextChange[];
+  source: UpdateSource;
 };
 
 /**
@@ -289,12 +291,12 @@ export class LiveText extends AbstractCrdt {
       return super._apply(op, source);
     }
 
-    if (source === OpSource.LOCAL) {
-      return this.#applyLocal(op);
+    if (source.origin === "local" && source.optimistic) {
+      return this.#applyLocal(op, toUpdateSource(source));
     }
 
     if (op.opId !== undefined && op.opId === this.#inFlightOpId) {
-      return this.#applyAck(op);
+      return this.#applyAck(op, toUpdateSource(source));
     }
 
     if (
@@ -306,7 +308,7 @@ export class LiveText extends AbstractCrdt {
       return { modified: false };
     }
 
-    return this.#applyRemote(op);
+    return this.#applyRemote(op, toUpdateSource(source));
   }
 
   /**
@@ -497,6 +499,7 @@ export class LiveText extends AbstractCrdt {
           node: this,
           version: this.#version,
           updates: changes,
+          source: LOCAL_EDIT,
         },
       ],
     ]);
@@ -532,7 +535,7 @@ export class LiveText extends AbstractCrdt {
    * A local replay of an existing wire op: an undo/redo frame, or an
    * unacknowledged op re-sent after a reconnect.
    */
-  #applyLocal(op: UpdateTextOp): ApplyResult {
+  #applyLocal(op: UpdateTextOp, source: UpdateSource): ApplyResult {
     const mutableOp = op as { baseVersion: number; ops: TextOperation[] };
 
     // Re-sent offline op (reconnect): its content is already applied
@@ -587,12 +590,13 @@ export class LiveText extends AbstractCrdt {
         node: this,
         version: this.#version,
         updates: changes,
+        source,
       },
     };
   }
 
   /** Server acknowledgement of our in-flight op. */
-  #applyAck(op: UpdateTextOp): ApplyResult {
+  #applyAck(op: UpdateTextOp, source: UpdateSource): ApplyResult {
     const ackedVersion =
       op.version ?? Math.max(this.#version, op.baseVersion + 1);
     const predicted = this.#inFlightOps;
@@ -623,6 +627,7 @@ export class LiveText extends AbstractCrdt {
             node: this,
             version: ackedVersion,
             updates: rebuilt.changes,
+            source,
           },
         };
       }
@@ -635,7 +640,7 @@ export class LiveText extends AbstractCrdt {
   }
 
   /** An accepted op from another client (or a server-fabricated fix op). */
-  #applyRemote(op: UpdateTextOp): ApplyResult {
+  #applyRemote(op: UpdateTextOp, source: UpdateSource): ApplyResult {
     const version = op.version ?? this.#version + 1;
 
     // Advance the confirmed state with the authoritative ops as-is.
@@ -674,6 +679,7 @@ export class LiveText extends AbstractCrdt {
         node: this,
         version: this.#version,
         updates: changes,
+        source,
       },
     };
   }
@@ -776,7 +782,8 @@ export class LiveText extends AbstractCrdt {
    */
   _resyncText(
     data: LiveTextData,
-    version: number
+    version: number,
+    source: UpdateSource
   ): LiveTextUpdates | undefined {
     this.#confirmed = dataToSegments(data);
     this.#version = version;
@@ -794,6 +801,7 @@ export class LiveText extends AbstractCrdt {
       node: this,
       version: this.#version,
       updates: rebuilt.changes,
+      source,
     };
   }
 
