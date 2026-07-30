@@ -86,7 +86,7 @@ jobs:
           VERSION: ${{steps.version.outputs.value}}
 
         run:
-          ./.github/scripts/release.sh -V "$VERSION" -w
+          ./.github/scripts/release.sh -V "$VERSION" -w -c
           "packages/liveblocks-core" "packages/liveblocks-client"
           "packages/liveblocks-node" "packages/liveblocks-chat-sdk-adapter"
           "packages/liveblocks-react"
