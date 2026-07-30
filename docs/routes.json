@@ -1072,12 +1072,12 @@
         "path": "/api-reference/liveblocks-python"
       },
       {
-        "title": "Webhook events",
-        "path": "/api-reference/webhook-events"
-      },
-      {
         "title": "REST API",
         "href": "/api-reference/rest-api-endpoints"
+      },
+      {
+        "title": "Webhook events",
+        "path": "/api-reference/webhook-events"
       }
     ]
   }
