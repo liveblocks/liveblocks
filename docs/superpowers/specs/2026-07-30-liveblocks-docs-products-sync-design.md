@@ -372,15 +372,15 @@ Every use-case page contains:
 
 Specific focus:
 
-- **Canvas**: Sync Storage, Presence, undo/redo, Comments
+- **Canvas**: Sync, Presence, undo/redo, Comments
 - **Code editor**: LiveText or Yjs, Presence, Comments, CodeMirror/Monaco
 - **Text editor**: LiveText preferred, Tiptap/BlockNote/Lexical/ProseMirror,
   Comments, Notifications, AI Copilots; the old editor feature pages consolidate
   here
-- **Flowchart**: `@liveblocks/react-flow`, Sync Storage, Presence, Comments, AI
+- **Flowchart**: `@liveblocks/react-flow`, Sync, Presence, Comments, AI
 - **AI Collaboration**: Feeds, Sync agentic editing, Presence, Comments,
   Notifications, AI Copilots
-- **Spreadsheet**: Sync Storage, Presence, undo/redo, Comments, AI
+- **Spreadsheet**: Sync, Presence, undo/redo, Comments, AI
 - **Table**: Comments, Notifications, optional Presence and Sync
 
 ## Redirect ledger
