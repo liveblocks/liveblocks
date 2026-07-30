@@ -7,17 +7,10 @@ import { OpCode } from "../../protocol/Op";
 import { createManagedPool } from "../AbstractCrdt";
 import { LiveText } from "../LiveText";
 
-const THEIRS = { origin: "remote" } as const;
-const OURS = {
-  origin: "local",
-  via: "edit",
-  optimistic: false,
-} as const;
-
 /**
  * Helper: build a LiveText attached to a pool that captures the wire ops it
  * dispatches, so tests can fabricate matching acks via
- * `_apply(_, OURS)`.
+ * `_apply(_, { origin: "local", via: "edit", optimistic: false })`.
  */
 function attachedLiveText(initial: string): {
   text: LiveText;
@@ -114,7 +107,11 @@ describe("LiveText[kInternal].encodeIndex", () => {
   test("does not change the reported version on the LiveText node", () => {
     const { text, dispatched } = attachedLiveText("Hello");
     text.insert(5, "!");
-    text._apply(ackOp(dispatched, 1), OURS);
+    text._apply(ackOp(dispatched, 1), {
+      origin: "local",
+      via: "edit",
+      optimistic: false,
+    });
 
     expect(text.version).toBe(1);
     expect(text[kInternal].encodeIndex(6)).toBe(6);
@@ -147,7 +144,7 @@ describe("LiveText[kInternal].decodeIndex", () => {
         version: 1,
         ops: [{ type: "insert", index: 5, text: "!" }],
       },
-      THEIRS
+      { origin: "remote" }
     );
     text._apply(
       {
@@ -157,7 +154,7 @@ describe("LiveText[kInternal].decodeIndex", () => {
         version: 2,
         ops: [{ type: "insert", index: 6, text: "?" }],
       },
-      THEIRS
+      { origin: "remote" }
     );
     expect(text.version).toBe(2);
     // fromVersion = 5 is in the future → null (covered by the ahead branch).
@@ -183,7 +180,7 @@ describe("LiveText[kInternal].decodeIndex", () => {
         version: 1,
         ops: [{ type: "insert", index: 0, text: "Z" }],
       },
-      THEIRS
+      { origin: "remote" }
     );
     // A peer broadcast at version 0 with index 3 ("Hel|lo"). After our
     // accepted insert of "Z" at 0, the same logical position is at offset 4
@@ -201,7 +198,7 @@ describe("LiveText[kInternal].decodeIndex", () => {
         version: 1,
         ops: [{ type: "insert", index: 0, text: "Z" }],
       },
-      THEIRS
+      { origin: "remote" }
     );
     expect(text.toString()).toBe("ZHello");
 
@@ -218,7 +215,11 @@ describe("LiveText[kInternal].decodeIndex", () => {
     // Acknowledge the in-flight Q insert and verify decoding behaviour is
     // stable across the ack (Q moved from in-flight into #confirmed; the
     // queued ! becomes the next in-flight).
-    text._apply(ackOp(dispatched, 2), OURS);
+    text._apply(ackOp(dispatched, 2), {
+      origin: "local",
+      via: "edit",
+      optimistic: false,
+    });
     expect(text.version).toBe(2);
     // Now: cross-version (versions 1 and 2): version 1 has insert Z at 0 → 3
     // becomes 4. Version 2 records the local Q ack as empty ops (own ack), so
@@ -229,7 +230,11 @@ describe("LiveText[kInternal].decodeIndex", () => {
   test("own acks are recorded as empty ops and do not shift decoded positions", () => {
     const { text, dispatched } = attachedLiveText("Hello");
     text.insert(0, "A");
-    text._apply(ackOp(dispatched, 1), OURS);
+    text._apply(ackOp(dispatched, 1), {
+      origin: "local",
+      via: "edit",
+      optimistic: false,
+    });
 
     expect(text.version).toBe(1);
     // A peer at version 0 broadcasts index 3 ("Hel|lo"). On our side, the
@@ -333,7 +338,7 @@ describe("LiveText encode/decode pair", () => {
         version: 1,
         ops: [{ type: "insert", index: 0, text: "1" }],
       },
-      THEIRS
+      { origin: "remote" }
     );
     expect(receiver.toString()).toBe("1ABCDE9");
     // The server delivers the receiver's own ack in server-rebased form:
@@ -348,7 +353,7 @@ describe("LiveText encode/decode pair", () => {
         version: 2,
         ops: [{ type: "insert", index: 6, text: "9" }],
       },
-      OURS
+      { origin: "local", via: "edit", optimistic: false }
     );
     expect(receiver.toString()).toBe("1ABCDE9");
     expect(receiver.version).toBe(2);
@@ -363,7 +368,11 @@ describe("LiveText encode/decode pair", () => {
     expect(decodedAfterSync).toBe(4);
 
     // Sender acks their own op and applies the receiver's accepted op.
-    sender._apply(ackOp(senderDispatched, 1), OURS);
+    sender._apply(ackOp(senderDispatched, 1), {
+      origin: "local",
+      via: "edit",
+      optimistic: false,
+    });
     sender._apply(
       {
         type: OpCode.UPDATE_TEXT,
@@ -372,7 +381,7 @@ describe("LiveText encode/decode pair", () => {
         version: 2,
         ops: [{ type: "insert", index: 6, text: "9" }],
       },
-      THEIRS
+      { origin: "remote" }
     );
     expect(sender.toString()).toBe("1ABCDE9");
     expect(sender.version).toBe(2);
@@ -407,7 +416,7 @@ describe("LiveText encode/decode pair", () => {
         version: 1,
         ops: [{ type: "insert", index: 0, text: "Z" }],
       },
-      THEIRS
+      { origin: "remote" }
     );
     expect(text.version).toBe(1);
     expect(text[kInternal].decodeIndex(3, 1)).toBe(3);

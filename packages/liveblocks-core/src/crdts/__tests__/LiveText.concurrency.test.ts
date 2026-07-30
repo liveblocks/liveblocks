@@ -16,18 +16,6 @@ import {
   transformTextOperations,
 } from "../liveTextOps";
 
-const THEIRS = { origin: "remote" } as const;
-const OURS = {
-  origin: "local",
-  via: "edit",
-  optimistic: false,
-} as const;
-const LOCAL = {
-  origin: "local",
-  via: "edit",
-  optimistic: true,
-} as const;
-
 const initialNodes: StorageNode[] = [
   createSerializedRoot(),
   [
@@ -145,7 +133,7 @@ describe("LiveText acknowledgement", () => {
         version: 1,
         ops: [{ type: "insert", index: 5, text: " world" }],
       },
-      OURS
+      { origin: "local", via: "edit", optimistic: false }
     );
 
     const undoOp = undoOps[0];
@@ -154,7 +142,11 @@ describe("LiveText acknowledgement", () => {
     }
 
     const outgoingUndoOp = { ...undoOp, opId: "undo" };
-    text._apply(outgoingUndoOp, LOCAL);
+    text._apply(outgoingUndoOp, {
+      origin: "local",
+      via: "edit",
+      optimistic: true,
+    });
 
     expect(outgoingUndoOp).toMatchObject({
       baseVersion: 1,
@@ -186,7 +178,7 @@ describe("LiveText acknowledgement", () => {
         version: 1,
         ops: [{ type: "insert", index: 0, text: "B" }],
       },
-      THEIRS
+      { origin: "remote" }
     );
 
     // The remote insert was accepted first, so it wins the same-index tie.
@@ -203,7 +195,7 @@ describe("LiveText acknowledgement", () => {
         version: 2,
         ops: [{ type: "insert", index: 1, text: "A" }],
       },
-      OURS
+      { origin: "local", via: "edit", optimistic: false }
     );
 
     expect(text.toString()).toBe("BAHello");
@@ -236,7 +228,7 @@ describe("LiveText acknowledgement", () => {
         version: 1,
         ops: [{ type: "insert", index: 0, text: "A" }],
       },
-      THEIRS
+      { origin: "remote" }
     );
 
     expect(text.toString()).toBe("Allo");
@@ -250,7 +242,7 @@ describe("LiveText acknowledgement", () => {
         version: 2,
         ops: [{ type: "delete", index: 1, length: 2 }],
       },
-      OURS
+      { origin: "local", via: "edit", optimistic: false }
     );
 
     expect(text.toString()).toBe("Allo");
@@ -262,7 +254,11 @@ describe("LiveText acknowledgement", () => {
     }
 
     const outgoingUndoOp = { ...undoOp, opId: "undo" };
-    text._apply(outgoingUndoOp, LOCAL);
+    text._apply(outgoingUndoOp, {
+      origin: "local",
+      via: "edit",
+      optimistic: true,
+    });
 
     expect(outgoingUndoOp).toMatchObject({
       baseVersion: 2,
@@ -307,7 +303,7 @@ describe("LiveText acknowledgement", () => {
         version: 1,
         ops: [{ type: "insert", index: 0, text: "A" }],
       },
-      OURS
+      { origin: "local", via: "edit", optimistic: false }
     );
 
     expect(text.toString()).toBe("AHello!");
@@ -329,7 +325,7 @@ describe("LiveText acknowledgement", () => {
         version: 2,
         ops: [{ type: "insert", index: 6, text: "!" }],
       },
-      OURS
+      { origin: "local", via: "edit", optimistic: false }
     );
 
     expect(text.toString()).toBe("AHello!");
