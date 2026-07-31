@@ -3,51 +3,171 @@ meta:
   title: "Notifications"
   parentTitle: "Products"
   description:
-    "Add realtime inbox notifications, unread state, email, and custom delivery
-    workflows."
+    "Embed a customizable notification experience into your product to enable
+    people to collaborate."
 ---
 
-Liveblocks Notifications helps users catch up on collaboration activity with a
-persistent inbox, unread state, subscription settings, and delivery through
-in-app, email, webhook, or custom channels.
+Embed a notification experience into your product, enabling collaboration
+between your users. Liveblocks Notifications is fully customizable, allowing you
+to create a range of notification experiences that look and feel like your
+product. Easily send notifications, create inbox notification trays, and trigger
+emails with aggregated notifications. Any custom notification can be sent, but
+other parts of Liveblocks, such as [Comments](/docs/products/comments) and
+[text editors](/docs/use-cases/text-editor), can also automatically trigger
+collaboration notifications where appropriate.
 
-<Banner title="Start building with Notifications" type="info">
-
-Follow an
-[in-app Notifications guide](/docs/get-started/nextjs-notifications-in-app),
-then add other delivery channels when needed.
-
-</Banner>
+## Overview
 
 <ListGrid columns={2}>
   <DocsCard
     type="technology"
-    title="Overview"
-    href="/docs/products/notifications/overview"
-    description="What Notifications provides and when to use it"
-    visual={<DocsIdeaIcon className="fill-product-icon-brand h-auto w-6" />}
-  />
-  <DocsCard
-    type="technology"
     title="Concepts"
     href="/docs/products/notifications/concepts"
-    description="Inbox notifications, activities, and settings"
-    visual={<DocsBookIcon className="fill-product-icon-brand h-auto w-6" />}
+    description="Learn about inbox notifications"
+    visual={<DocsIdeaIcon className="fill-product-icon-brand h-auto w-6" />}
   />
   <DocsCard
     type="technology"
     title="Default components"
     href="/docs/products/notifications/default-components"
-    description="Ready-made inbox and notification UI"
+    description="Ready-to-use customizable components"
     visual={
       <DocsDefaultComponentsIcon className="fill-product-icon-brand h-auto w-6" />
     }
   />
   <DocsCard
     type="technology"
+    title="Hooks"
+    href="/docs/products/notifications/hooks"
+    description="Retrieve notifications & set settings"
+    visual={<DocsHooksIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Styling and customization"
+    href="/docs/products/notifications/styling-and-customization"
+    description="CSS variables, dark mode, localization"
+    visual={<DocsStylingIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
     title="Email notifications"
     href="/docs/products/notifications/email-notifications"
-    description="Render and deliver notification emails"
+    description="Send notifications with webhooks"
     visual={<DocsEmailIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+</ListGrid>
+
+## Notifications guides
+
+<ListGrid columns={2}>
+  <DocsCard
+    type="technology"
+    title="Notifications guides"
+    href="/docs/guides?topics=notifications"
+    description="All how-to guides for Notifications"
+    visual={<DocsBooksIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Add a settings panel"
+    href="/docs/guides/how-to-create-a-notification-settings-panel"
+    description="Let users manage notifications"
+    visual={<DocsBookIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Migrate to Notifications"
+    href="/docs/guides/migrating-to-liveblocks-notifications"
+    description="Move from another system"
+    visual={<DocsBookIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Customize room names"
+    href="/docs/guides/how-to-customize-room-names-in-inbox-notifications"
+    description="Set readable inbox room names"
+    visual={<DocsBookIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+</ListGrid>
+
+## Notifications API Reference
+
+<ListGrid columns={2}>
+  <DocsCard
+    type="technology"
+    title="React"
+    href="/docs/api-reference/liveblocks-react#Notifications"
+    description="@liveblocks/react"
+    visual={<DocsReactIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="React UI"
+    href="/docs/api-reference/liveblocks-react-ui#Notifications"
+    description="@liveblocks/react-ui"
+    visual={<DocsReactIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="JavaScript"
+    href="/docs/api-reference/liveblocks-client#Notifications"
+    description="@liveblocks/client"
+    visual={<DocsJavascriptIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Node.js"
+    href="/docs/api-reference/liveblocks-node#Notifications"
+    description="@liveblocks/node"
+    visual={<DocsNodejsIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="REST API"
+    href="/docs/api-reference/rest-api-endpoints#Notifications"
+    description="HTTP endpoints"
+    visual={<DocsApiIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+</ListGrid>
+
+## Examples using Notifications
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "Comments notifications",
+      slug: "comments-notifications",
+      image: "/images/examples/thumbnails/comments-notifications.png",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Custom notifications",
+      slug: "notifications-custom",
+      image: "/images/examples/thumbnails/custom-notifications.png",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Comments emails",
+      slug: "comments-emails",
+      image: "/images/examples/thumbnails/comments-email.png",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Text editor emails",
+      slug: "collaborative-text-editor-emails",
+      image: "/images/examples/thumbnails/text-editor-email.png",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
   />
 </ListGrid>
