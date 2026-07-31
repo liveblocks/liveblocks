@@ -1,9 +1,9 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { useEffect, useRef, createContext } from "react";
+import { useRoom } from "@liveblocks/react";
+import { createContext, useEffect, useRef } from "react";
 
 import { LiveblocksCollaboration } from "../collaboration";
 import type { LiveRootNode } from "../types";
-import { useRoom } from "@liveblocks/react";
 
 export type LiveblocksCollaborationPluginProps = {
   root: LiveRootNode;

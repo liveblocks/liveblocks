@@ -1,13 +1,13 @@
 import {
   ChangeSet,
   EditorSelection,
-  Transaction,
   type Extension,
+  Transaction,
 } from "@codemirror/state";
 import type { EditorView, ViewUpdate } from "@codemirror/view";
-import { ViewPlugin, keymap } from "@codemirror/view";
-import { kInternal } from "@liveblocks/core";
+import { keymap, ViewPlugin } from "@codemirror/view";
 import type { LiveText, Room } from "@liveblocks/client";
+import { kInternal } from "@liveblocks/core";
 
 import { clamp } from "./utils";
 
@@ -140,7 +140,7 @@ export function createLiveblocksSyncPlugin(
                 }
 
                 this.view.dispatch({
-                  changes: changes,
+                  changes,
                   annotations: [
                     Transaction.addToHistory.of(false),
                     Transaction.remote.of(true),

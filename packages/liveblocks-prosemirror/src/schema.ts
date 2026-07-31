@@ -2,6 +2,7 @@ import {
   type Json,
   type JsonObject,
   LiveList,
+  LiveMap,
   LiveObject,
   LiveText,
   type LiveTextAttributes,
@@ -27,12 +28,33 @@ export type ProseMirrorJsonMark = {
 type LiveblocksProsemirrorNodeData = {
   id: string;
   type: string;
-  attrs?: JsonObject;
+  attrs?: LiveMap<string, Json>;
   content?: LiveList<LiveblocksProsemirrorNode>;
   text?: LiveText;
 };
 
-export type LiveblocksProsemirrorNode = LiveObject<LiveblocksProsemirrorNodeData>;
+export type LiveblocksProsemirrorNode =
+  LiveObject<LiveblocksProsemirrorNodeData>;
+
+function serializeLiveblocksNodeAttrs(
+  attrs: LiveMap<string, Json>
+): JsonObject {
+  const serialized: JsonObject = {};
+  for (const [key, value] of attrs) {
+    serialized[key] = value;
+  }
+  return serialized;
+}
+
+function createLiveblocksNodeAttrs(attrs: JsonObject): LiveMap<string, Json> {
+  const entries: [string, Json][] = [];
+  for (const [key, value] of Object.entries(attrs)) {
+    if (value !== undefined) {
+      entries.push([key, value]);
+    }
+  }
+  return new LiveMap(entries);
+}
 
 function isJsonObject(value: Json | undefined): value is JsonObject {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -106,9 +128,13 @@ export function createLiveblocksProsemirrorNode(
   return new LiveObject({
     id: nanoid(),
     type: node.type,
-    ...(node.attrs !== undefined ? { attrs: node.attrs } : {}),
+    ...(node.attrs !== undefined
+      ? { attrs: createLiveblocksNodeAttrs(node.attrs) }
+      : {}),
     content: new LiveList(
-      (node.content ?? []).map((child) => createLiveblocksProsemirrorNode(child))
+      (node.content ?? []).map((child) =>
+        createLiveblocksProsemirrorNode(child)
+      )
     ),
   });
 }
@@ -135,6 +161,13 @@ export function getLiveblocksNodeText(
   return text instanceof LiveText ? text : undefined;
 }
 
+export function getLiveblocksNodeAttrs(
+  node: LiveblocksProsemirrorNode
+): JsonObject | undefined {
+  const attrs = node.get("attrs");
+  return attrs === undefined ? undefined : serializeLiveblocksNodeAttrs(attrs);
+}
+
 export function updateLiveblocksNodeAttrs(
   node: LiveblocksProsemirrorNode,
   attrs: JsonObject | undefined
@@ -142,7 +175,7 @@ export function updateLiveblocksNodeAttrs(
   if (attrs === undefined) {
     node.delete("attrs");
   } else {
-    node.set("attrs", attrs);
+    node.set("attrs", createLiveblocksNodeAttrs(attrs));
   }
 }
 
@@ -177,9 +210,10 @@ export function liveblocksProsemirrorNodeToJsonNodes(
   }
 
   const content = node.get("content");
+  const attrs = getLiveblocksNodeAttrs(node);
   const jsonNode: ProseMirrorJsonNode = {
     type,
-    ...(node.get("attrs") !== undefined ? { attrs: node.get("attrs") } : {}),
+    ...(attrs !== undefined ? { attrs } : {}),
   };
 
   if (content instanceof LiveList && content.length > 0) {

@@ -46,7 +46,9 @@ export type CollaborationCaretOptions = {
 };
 
 export const LIVEBLOCKS_CARET_PLUGIN_KEY =
-  new PluginKey<CollaborationCaretPluginState>("liveblocks-collaboration-caret");
+  new PluginKey<CollaborationCaretPluginState>(
+    "liveblocks-collaboration-caret"
+  );
 
 function isCursorPresence(value: unknown): value is CursorPresence {
   return (
@@ -67,7 +69,9 @@ export function getCursorUser(value: unknown): CursorUser | undefined {
   const name = typeof user.name === "string" ? user.name : undefined;
   const color = typeof user.color === "string" ? user.color : undefined;
 
-  return name !== undefined || color !== undefined ? { name, color } : undefined;
+  return name !== undefined || color !== undefined
+    ? { name, color }
+    : undefined;
 }
 
 export function presencePatch(presence: CursorPresence): JsonObject {
@@ -104,7 +108,10 @@ function clampPosition(position: number, doc: ProseMirrorNode): number {
   return Math.max(0, Math.min(position, doc.content.size));
 }
 
-function normalizeCaretPosition(position: number, doc: ProseMirrorNode): number {
+function normalizeCaretPosition(
+  position: number,
+  doc: ProseMirrorNode
+): number {
   const clampedPosition = clampPosition(position, doc);
   const $position = doc.resolve(clampedPosition);
 
@@ -196,7 +203,9 @@ export function createLiveblocksCollaborationCaretPlugin(
 ): Plugin {
   const room = options.room;
   if (room === undefined) {
-    throw new Error("[Liveblocks] The Liveblocks caret plugin requires a room.");
+    throw new Error(
+      "[Liveblocks] The Liveblocks caret plugin requires a room."
+    );
   }
 
   let view: EditorView | undefined;
@@ -220,7 +229,8 @@ export function createLiveblocksCollaborationCaretPlugin(
     }
 
     storage.users = room.getOthers().map((other) => {
-      const rawPresence: unknown = other.presence[LIVEBLOCKS_CARET_PRESENCE_KEY];
+      const rawPresence: unknown =
+        other.presence[LIVEBLOCKS_CARET_PRESENCE_KEY];
       const cursorPresence = isCursorPresence(rawPresence)
         ? rawPresence
         : undefined;
@@ -311,7 +321,6 @@ export function createLiveblocksCollaborationCaretPlugin(
           if (!nextView.state.selection.eq(prevState.selection)) {
             updatePresence(nextView);
           }
-
         },
         destroy() {
           unsubscribe?.();

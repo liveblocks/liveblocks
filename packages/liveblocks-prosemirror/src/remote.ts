@@ -1,6 +1,5 @@
 import {
   type Json,
-  type JsonObject,
   LiveObject,
   LiveText,
   type StorageUpdate,
@@ -18,6 +17,7 @@ import {
 } from "./mapping";
 import {
   attributesToMarks,
+  getLiveblocksNodeAttrs,
   getLiveblocksNodeContent,
   getLiveblocksNodeText,
   type LiveblocksProsemirrorNode,
@@ -37,10 +37,6 @@ function getMarkType(schema: Schema, type: string): MarkType | undefined {
   return schema.marks[type];
 }
 
-function isJsonObject(value: unknown): value is JsonObject {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
 function isLiveblocksProsemirrorNode(
   value: unknown
 ): value is LiveblocksProsemirrorNode {
@@ -49,13 +45,6 @@ function isLiveblocksProsemirrorNode(
     typeof value.get("id") === "string" &&
     typeof value.get("type") === "string"
   );
-}
-
-function getLiveblocksNodeAttrs(
-  node: LiveblocksProsemirrorNode
-): JsonObject | undefined {
-  const attrs = node.get("attrs");
-  return isJsonObject(attrs) ? attrs : undefined;
 }
 
 function createSliceFromLiveblocksNode(

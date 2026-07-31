@@ -1,11 +1,11 @@
 import {
   EditorSelection,
+  type Extension,
   StateEffect,
   StateField,
   Transaction,
-  type Extension,
 } from "@codemirror/state";
-import {
+import type {
   Direction,
   EditorView,
   layer,
