@@ -3,10 +3,9 @@
     "title": false,
     "routes": [
       {
-        "title": "Home",
+        "title": "Introduction",
         "path": "/",
-        "file": "/index.mdx",
-        "hidden": true
+        "file": "/index.mdx"
       },
       {
         "title": "Get started",
@@ -993,9 +992,8 @@
     "title": false,
     "routes": [
       {
-        "title": "Overview",
-        "path": "/api-reference",
-        "hidden": true
+        "title": "Introduction",
+        "path": "/api-reference"
       }
     ]
   },
