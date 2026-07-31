@@ -21,11 +21,11 @@ import {
   $isTextNode,
   $setSelection,
   COLLABORATION_TAG,
-  DecoratorNode,
-  HISTORIC_TAG,
   createEditor as createLexicalEditor,
+  DecoratorNode,
   type EditorConfig,
   type ElementNode,
+  HISTORIC_TAG,
   type LexicalEditor,
   type LexicalNode,
   type LexicalUpdateJSON,
@@ -8551,11 +8551,7 @@ class CustomTextNode extends TextNode {
     );
   }
 
-  constructor(
-    text: string,
-    highlightType?: string | null | undefined,
-    key?: NodeKey
-  ) {
+  constructor(text: string, highlightType?: string | null, key?: NodeKey) {
     super(text, key);
     this.__highlightType = highlightType;
   }
@@ -8564,7 +8560,7 @@ class CustomTextNode extends TextNode {
     return this.getLatest().__highlightType;
   }
 
-  setHighlightType(highlightType?: string | null | undefined): this {
+  setHighlightType(highlightType?: string | null): this {
     const self = this.getWritable();
     self.__highlightType = highlightType || undefined;
     return self;
@@ -8596,7 +8592,7 @@ class CustomTextNode extends TextNode {
 
 function $createCustomTextNode(
   text = "",
-  highlightType?: string | null | undefined
+  highlightType?: string | null
 ): CustomTextNode {
   return $applyNodeReplacement(new CustomTextNode(text, highlightType));
 }

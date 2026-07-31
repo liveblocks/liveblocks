@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/codemirror",
-  "version": "3.20.0",
+  "version": "3.23.0",
   "description": "CodeMirror collaboration plugins backed by Liveblocks.",
   "license": "Apache-2.0",
   "author": "Liveblocks Inc.",
@@ -25,8 +25,8 @@
     "README.md"
   ],
   "scripts": {
-    "dev": "rollup --config rollup.config.js --watch",
-    "build": "rollup --config rollup.config.js",
+    "dev": "tsup --watch",
+    "build": "tsup",
     "format": "eslint --fix src/; prettier --write src/",
     "lint": "eslint src/",
     "lint:package": "publint --strict && attw --pack",
@@ -48,10 +48,8 @@
     "@codemirror/state": "^6.6.0",
     "@codemirror/view": "^6.43.1",
     "@liveblocks/eslint-config": "workspace:*",
-    "@liveblocks/rollup-config": "workspace:*",
     "@liveblocks/vitest-config": "workspace:*",
     "eslint": "^9.39.4",
-    "rollup": "3.28.1",
     "typescript": "^5.9.3",
     "vitest": "^4.1.4"
   },

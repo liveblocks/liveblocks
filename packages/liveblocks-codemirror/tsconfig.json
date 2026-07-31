@@ -5,5 +5,5 @@
     "lib": ["dom", "es2022"],
     "noUncheckedIndexedAccess": false
   },
-  "include": ["src", "rollup.config.js"]
+  "include": ["src"]
 }

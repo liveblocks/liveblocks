@@ -48,8 +48,9 @@ function getLiveblocksYjsProvider(
   editor: Editor
 ): LiveblocksYjsProvider | undefined {
   // Tiptap extension storage is exposed as untyped extension data here.
-  const storage = editor.extensionStorage
-    .liveblocksExtension as LiveblocksExtensionStorage | undefined;
+  const storage = editor.extensionStorage.liveblocksExtension as
+    | LiveblocksExtensionStorage
+    | undefined;
 
   return storage?.mode === "yjs" ? storage.provider : undefined;
 }

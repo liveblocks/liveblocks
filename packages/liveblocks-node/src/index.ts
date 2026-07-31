@@ -114,6 +114,7 @@ export {
   LiveList,
   LiveMap,
   LiveObject,
+  LiveText,
   stringifyCommentBody,
 } from "@liveblocks/core";
 

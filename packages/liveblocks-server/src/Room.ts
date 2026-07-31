@@ -1636,14 +1636,11 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
 
               case "rectified":
                 // The op was already applied earlier; re-acknowledge it with
-                // its stored, authoritative fields and optional correction.
-                return r.fix !== undefined ? [r.ackOp, r.fix] : [r.ackOp];
+                // its stored, authoritative position.
+                return [r.ackOp, r.fix];
 
               case "accepted":
                 return r.fix !== undefined ? [r.fix] : [];
-
-              case "rejected":
-                return [];
 
               // istanbul ignore next
               default:
@@ -1667,14 +1664,6 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
           replyImmediately({
             type: ServerMsgCode.UPDATE_STORAGE,
             ops: opsToSendBack,
-          });
-        }
-
-        for (const rejected of result.filter((r) => r.action === "rejected")) {
-          replyImmediately({
-            type: ServerMsgCode.REJECT_STORAGE_OP,
-            opIds: rejected.opIds,
-            reason: rejected.reason,
           });
         }
 

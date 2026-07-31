@@ -8,6 +8,7 @@
 import { describe, expect, onTestFinished, test, vi } from "vitest";
 
 import { LiveList } from "../crdts/LiveList";
+import type { LiveMap } from "../crdts/LiveMap";
 import { LiveObject } from "../crdts/LiveObject";
 import type { LiveText } from "../crdts/LiveText";
 import type { StorageUpdate, UpdateSource } from "../crdts/StorageUpdates";
@@ -754,7 +755,64 @@ describe("room (dev server)", () => {
       expect(sources).toEqual([{ origin: "remote" }]);
     });
 
-    test("undo produces undo-tagged storage updates", async () => {
+    test("local LiveList and LiveMap mutations are tagged local", async () => {
+      const { room, root } = await prepareIsolatedStorageTest<{
+        items: LiveList<string>;
+        map: LiveMap<string, string>;
+      }>({
+        liveblocksType: "LiveObject",
+        data: {
+          items: { liveblocksType: "LiveList", data: ["a"] },
+          map: { liveblocksType: "LiveMap", data: { k: "old" } },
+        },
+      });
+
+      const sources: UpdateSource[] = [];
+      onTestFinished(
+        room.events.storageBatch.subscribe((updates) => {
+          sources.push(...readSources(updates));
+        })
+      );
+
+      root.get("items").insert("b", 1);
+      root.get("map").set("k", "new");
+
+      expect(sources).toEqual([
+        { origin: "local", via: "edit" },
+        { origin: "local", via: "edit" },
+      ]);
+    });
+
+    test("remote LiveList and LiveMap mutations are tagged remote on the receiving client", async () => {
+      const { storageA, roomB } = await prepareStorageTest<{
+        items: LiveList<string>;
+        map: LiveMap<string, string>;
+      }>({
+        liveblocksType: "LiveObject",
+        data: {
+          items: { liveblocksType: "LiveList", data: ["a"] },
+          map: { liveblocksType: "LiveMap", data: { k: "old" } },
+        },
+      });
+
+      const sources: UpdateSource[] = [];
+      onTestFinished(
+        roomB.events.storageBatch.subscribe((updates) => {
+          sources.push(...readSources(updates));
+        })
+      );
+
+      storageA.root.get("items").insert("b", 1);
+      storageA.root.get("map").set("k", "new");
+
+      await vi.waitFor(() => {
+        expect(sources.length).toBe(2);
+      });
+
+      expect(sources).toEqual([{ origin: "remote" }, { origin: "remote" }]);
+    });
+
+    test("undo and redo produce undo/redo-tagged storage updates", async () => {
       const { room, root } = await prepareIsolatedStorageTest<{ a: number }>({
         liveblocksType: "LiveObject",
         data: { a: 0 },
@@ -774,6 +832,11 @@ describe("room (dev server)", () => {
       room.history.undo();
 
       expect(sources).toEqual([{ origin: "local", via: "undo" }]);
+
+      sources.length = 0;
+      room.history.redo();
+
+      expect(sources).toEqual([{ origin: "local", via: "redo" }]);
     });
 
     test("the internal optimistic flag never reaches subscribers", async () => {
