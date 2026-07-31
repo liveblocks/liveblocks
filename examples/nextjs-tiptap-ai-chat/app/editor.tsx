@@ -45,14 +45,13 @@ export function DocumentEditor() {
 
       <div className="relative min-h-0 flex-1 overflow-y-auto">
         <div className="relative px-12 py-10">
-          {/* TODO: Bring this back once the plugin bug is solved */}
-          {/* {editor ? (
+          {editor ? (
             <DragHandle editor={editor}>
               <div className="drag-handle">
                 <GripVerticalIcon className="size-4" />
               </div>
             </DragHandle>
-          ) : null} */}
+          ) : null}
           <EditorContent editor={editor} />
         </div>
 
