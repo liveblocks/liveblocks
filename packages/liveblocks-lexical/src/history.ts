@@ -1,6 +1,6 @@
+import { mergeRegister } from "@lexical/utils";
 import type { Room } from "@liveblocks/client";
 import { kInternal } from "@liveblocks/core";
-import { mergeRegister } from "@lexical/utils";
 import {
   $getSelection,
   $isRangeSelection,

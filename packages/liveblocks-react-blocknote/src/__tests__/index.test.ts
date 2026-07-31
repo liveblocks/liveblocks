@@ -20,7 +20,8 @@ vi.mock("@blocknote/react", () => {
 });
 
 vi.mock("@liveblocks/react-tiptap", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@liveblocks/react-tiptap")>();
+  const actual =
+    await importOriginal<typeof import("@liveblocks/react-tiptap")>();
 
   return {
     ...actual,

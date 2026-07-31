@@ -1656,14 +1656,14 @@ export class LiveblocksCollaborationManager {
             nodes.sort(
               (a, b) => a.getIndexWithinParent() - b.getIndexWithinParent()
             );
-            const parent = nodes[0]!.getParent();
+            const parent = nodes[0].getParent();
             if (parent === null || !$isElementNode(parent)) {
               continue;
             }
 
             parent
               .getLatest()
-              .splice(nodes[0]!.getIndexWithinParent(), nodes.length, []);
+              .splice(nodes[0].getIndexWithinParent(), nodes.length, []);
             if (liveNodes.length > 0) {
               this.removeBindings(child_liveblocks);
             }
@@ -2417,7 +2417,7 @@ export class LiveblocksCollaborationManager {
       }
 
       for (const child of candidate.get("children")) {
-        if ((child as LiveChildNode).get("kind") === "element") {
+        if (child.get("kind") === "element") {
           parentsToSearch.push(child as LiveElementNode);
         }
       }
@@ -2463,7 +2463,7 @@ export class LiveblocksCollaborationManager {
     parent: LiveObject<LiveRootShape | LiveElementShape>,
     target: LiveChildNode
   ): LiveObject<LiveRootShape | LiveElementShape> | null {
-    const children = parent.get("children") as LiveList<LiveChildNode>;
+    const children = parent.get("children");
     if (children.indexOf(target as never) !== -1) {
       return parent;
     }
@@ -3323,7 +3323,7 @@ function createLiveTextAttributesPatch(
       const wanted = wantedRaw ?? defaultValue;
       const values = slice.map((part) => {
         const attrs = part.length > 1 ? part[1]! : {};
-        return (attrs[key] ?? defaultValue) as Json;
+        return attrs[key] ?? defaultValue;
       });
       const uniform =
         slice.length > 0 && values.every((value) => value === values[0]);

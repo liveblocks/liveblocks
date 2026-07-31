@@ -8,7 +8,7 @@ import {
   type LexicalEditor,
   type LexicalNode,
 } from "lexical";
-import { useCallback, useEffect, useState, useContext } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 
 import type { DecodedLexicalSelection } from "../manager";
 import type { LiveLexicalSelection } from "../types";

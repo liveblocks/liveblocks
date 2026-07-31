@@ -36,7 +36,9 @@ type LiveblocksProsemirrorNodeData = {
 export type LiveblocksProsemirrorNode =
   LiveObject<LiveblocksProsemirrorNodeData>;
 
-function serializeLiveblocksNodeAttrs(attrs: LiveMap<string, Json>): JsonObject {
+function serializeLiveblocksNodeAttrs(
+  attrs: LiveMap<string, Json>
+): JsonObject {
   const serialized: JsonObject = {};
   for (const [key, value] of attrs) {
     serialized[key] = value;
@@ -44,9 +46,7 @@ function serializeLiveblocksNodeAttrs(attrs: LiveMap<string, Json>): JsonObject 
   return serialized;
 }
 
-function createLiveblocksNodeAttrs(
-  attrs: JsonObject
-): LiveMap<string, Json> {
+function createLiveblocksNodeAttrs(attrs: JsonObject): LiveMap<string, Json> {
   const entries: [string, Json][] = [];
   for (const [key, value] of Object.entries(attrs)) {
     if (value !== undefined) {

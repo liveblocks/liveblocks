@@ -1,5 +1,5 @@
-import type { Room } from "@liveblocks/client";
 import { mergeRegister } from "@lexical/utils";
+import type { Room } from "@liveblocks/client";
 import {
   $getSelection,
   $isRangeSelection,
