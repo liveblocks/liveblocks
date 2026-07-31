@@ -551,6 +551,7 @@
       {
         "title": "AI Copilots",
         "path": "/products/ai-copilots",
+        "hidden": true,
         "routes": [
           {
             "title": "Features",
