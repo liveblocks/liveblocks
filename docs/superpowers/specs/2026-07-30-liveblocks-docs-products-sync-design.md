@@ -109,7 +109,8 @@ Use cases
 ├── Flowchart
 ├── Slideshow
 ├── AI Collaboration
-└── Table
+├── Table
+└── Custom app
 ```
 
 Use-case pages explain the minimum useful Liveblocks stack, show short snippets,
@@ -382,6 +383,7 @@ Specific focus:
 - **AI Collaboration**: Feeds, Sync agentic editing, Presence, Comments,
   Notifications, AI Copilots
 - **Table**: Comments, Notifications, optional Presence and Sync
+- **Custom app**: Compose Sync, Presence, Comments, Notifications, and Feeds
 
 ## Redirect ledger
 

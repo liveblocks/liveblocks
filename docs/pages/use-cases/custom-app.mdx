@@ -1,0 +1,140 @@
+---
+meta:
+  title: "Custom app"
+  parentTitle: "Use cases"
+  description:
+    "Build a custom collaborative application by combining Liveblocks Sync,
+    Presence, Comments, Notifications, and Feeds."
+---
+
+Build a custom app when no editor or framework integration matches your
+interface. Start with Sync for shared application state and Presence for live
+user activity, then add Comments, Notifications, or Feeds for the workflows your
+product needs.
+
+## Get started [#get-started]
+
+Choose the quickstart that matches your application.
+
+<ListGrid columns={2}>
+  <DocsCard
+    type="technology"
+    title="Next.js"
+    href="/docs/get-started/nextjs"
+    description="Build a custom multiplayer Next.js app"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="React"
+    href="/docs/get-started/react"
+    description="Build a custom multiplayer React app"
+    visual={<DocsReactIcon />}
+  />
+</ListGrid>
+
+## Build shared application state [#shared-state]
+
+Wrap the collaborative part of your app in
+[`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider)
+and [`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider). Read
+shared state with
+[`useStorage`](/docs/api-reference/liveblocks-react#useStorage) and change it
+with [`useMutation`](/docs/api-reference/liveblocks-react#useMutation).
+
+```tsx
+import { LiveObject } from "@liveblocks/client";
+import { useMutation, useStorage } from "@liveblocks/react/suspense";
+
+const items = useStorage((root) => root.items);
+
+const addItem = useMutation(({ storage }, title: string) => {
+  storage
+    .get("items")
+    .set(crypto.randomUUID(), new LiveObject({ title, complete: false }));
+}, []);
+```
+
+Choose a [`LiveObject`](/docs/api-reference/liveblocks-client#LiveObject),
+[`LiveList`](/docs/api-reference/liveblocks-client#LiveList), or
+[`LiveMap`](/docs/api-reference/liveblocks-client#LiveMap) based on how users
+edit the data concurrently. Read [Data types](/docs/products/sync/data-types)
+and [Conflict resolution](/docs/products/sync/conflict-resolution) before
+settling on the document shape.
+
+## Add live user awareness [#presence]
+
+Use [Presence](/docs/products/sync/presence) for temporary state such as the
+selected item, active tool, cursor, or typing status. Publish changes with
+[`useUpdateMyPresence`](/docs/api-reference/liveblocks-react#useUpdateMyPresence)
+and render collaborators with
+[`useOthers`](/docs/api-reference/liveblocks-react#useOthers).
+
+```tsx
+const others = useOthers();
+const updateMyPresence = useUpdateMyPresence();
+
+function selectItem(itemId: string) {
+  updateMyPresence({ selectedItemId: itemId });
+}
+```
+
+Keep persisted application data in Storage and connection-specific UI state in
+Presence.
+
+## Add collaboration workflows [#workflows]
+
+- Use [Comments](/docs/products/comments) for contextual discussions attached to
+  records, regions, or application objects.
+- Use [Notifications](/docs/products/notifications) for mentions, replies, and
+  custom activity users should receive outside the open room.
+- Use [Feeds](/docs/products/sync/feeds) for durable chat, activity, and agent
+  progress.
+- Use [Broadcast events](/docs/products/sync/broadcast-events) for temporary
+  signals or to tell clients to revalidate external data.
+
+Add only the products your workflow requires. Each product can be introduced
+without changing the existing Sync document.
+
+## Connect servers and AI agents [#server-and-ai]
+
+Use [`@liveblocks/node`](/docs/api-reference/liveblocks-node) for trusted server
+operations, room management, and webhooks. Servers and AI agents can modify the
+same document through [Agentic editing](/docs/products/sync/agentic-editing),
+while connected clients receive the changes in realtime.
+
+Create a [version](/docs/products/sync/version-history) before broad agent edits
+and use server-side Presence to show temporary agent activity.
+
+## Examples [#examples]
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "Linear-like Issue Tracker",
+      slug: "linear-like-issue-tracker/nextjs-linear-like-issue-tracker",
+      image: "/images/examples/thumbnails/linear-like-issue-tracker.jpg",
+      advanced: true,
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Collaborative To-do List",
+      slug: "collaborative-todo-list/nextjs-todo-list",
+      image: "/images/examples/thumbnails/collaborative-todo-list.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Live Cursors",
+      slug: "live-cursors/nextjs-live-cursors",
+      image: "/images/examples/thumbnails/live-cursors.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+</ListGrid>

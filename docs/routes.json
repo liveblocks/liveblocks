@@ -624,6 +624,10 @@
       {
         "title": "Table",
         "path": "/use-cases/table"
+      },
+      {
+        "title": "Custom app",
+        "path": "/use-cases/custom-app"
       }
     ]
   },
