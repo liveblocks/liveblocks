@@ -202,6 +202,11 @@
             "hidden": true
           },
           {
+            "title": "Custom canvas",
+            "path": "/get-started/nextjs-canvas-custom",
+            "hidden": true
+          },
+          {
             "title": "Tldraw",
             "path": "/get-started/nextjs-tldraw",
             "hidden": true

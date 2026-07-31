@@ -1,0 +1,830 @@
+---
+meta:
+  title:
+    "Get started with a custom collaborative canvas using Liveblocks and Next.js"
+  parentTitle: "Quickstart"
+  description:
+    "Learn how to build a custom collaborative canvas with draggable boxes,
+    multiplayer undo/redo, and Presence using Liveblocks and Next.js."
+---
+
+This guide shows you how to build a custom collaborative canvas in a Next.js
+`/app` directory application. You will synchronize draggable boxes with
+[Storage](/docs/products/sync/data-types), add multiplayer undo/redo, then show
+live cursors and selections with [Presence](/docs/products/sync/presence).
+
+<Banner title="Using a canvas library?">
+
+Follow the [Tldraw quickstart](/docs/get-started/nextjs-tldraw) if you want a
+complete canvas renderer and editing toolkit instead of building the
+interactions yourself.
+
+</Banner>
+
+## Quickstart
+
+<PromptCta />
+
+<Steps>
+  <Step>
+    <StepTitle>Install and initialize Liveblocks</StepTitle>
+    <StepContent>
+
+      Install [`@liveblocks/client`](/docs/api-reference/liveblocks-client) and
+      [`@liveblocks/react`](/docs/api-reference/liveblocks-react). Every
+      Liveblocks package should use the same version.
+
+      ```bash trackEvent="install_liveblocks"
+      npm install @liveblocks/client @liveblocks/react
+      ```
+
+      Initialize `liveblocks.config.ts`, which will hold your application's
+      collaborative types.
+
+      ```bash
+      npx create-liveblocks-app@latest --init --framework react
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Define the canvas Storage types</StepTitle>
+    <StepContent>
+
+      Each box has a position and fill color. Store the boxes in a
+      [`LiveMap`](/docs/api-reference/liveblocks-client#LiveMap), keyed by
+      stable IDs, and make each box a
+      [`LiveObject`](/docs/api-reference/liveblocks-client#LiveObject) so its
+      properties can be updated independently.
+
+      ```ts file="liveblocks.config.ts"
+      import type { LiveMap, LiveObject } from "@liveblocks/client";
+
+      // +++
+      export type Shape = {
+        x: number;
+        y: number;
+        fill: string;
+      };
+      // +++
+
+      declare global {
+        interface Liveblocks {
+          // +++
+          Storage: {
+            shapes: LiveMap<string, LiveObject<Shape>>;
+          };
+          // +++
+        }
+      }
+
+      export {};
+      ```
+
+      Use Storage for canvas data that must persist. Cursor and selection state
+      will be added to Presence in the final step.
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Create a Liveblocks room</StepTitle>
+    <StepContent>
+
+      Liveblocks rooms are collaborative spaces where users work on the same
+      data. Set up a
+      [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider),
+      join a room with
+      [`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider), and
+      provide the initial boxes for a new room.
+
+      ```tsx file="app/Room.tsx"
+      "use client";
+
+      import { LiveMap, LiveObject } from "@liveblocks/client";
+      import {
+        ClientSideSuspense,
+        LiveblocksProvider,
+        RoomProvider,
+      } from "@liveblocks/react/suspense";
+      import { type ReactNode, useMemo } from "react";
+      import type { Shape } from "../liveblocks.config";
+
+      export function Room({ children }: { children: ReactNode }) {
+        const initialStorage = useMemo(
+          () => ({
+            shapes: new LiveMap<string, LiveObject<Shape>>([
+              [
+                "shape-1",
+                new LiveObject({ x: 100, y: 120, fill: "#f59e0b" }),
+              ],
+              [
+                "shape-2",
+                new LiveObject({ x: 280, y: 200, fill: "#8b5cf6" }),
+              ],
+            ]),
+          }),
+          []
+        );
+
+        return (
+          <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
+            <RoomProvider
+              id="my-canvas-room"
+              initialStorage={initialStorage}
+            >
+              <ClientSideSuspense fallback={<div>Loading…</div>}>
+                {children}
+              </ClientSideSuspense>
+            </RoomProvider>
+          </LiveblocksProvider>
+        );
+      }
+      ```
+
+      This guide uses a fixed room ID so everyone opening the page joins the
+      same canvas. In a real application, derive a stable room ID from the
+      document or project being opened.
+
+      Wrap your canvas page in the room.
+
+      ```tsx file="app/page.tsx"
+      import { Canvas } from "./Canvas";
+      import { Room } from "./Room";
+
+      export default function Page() {
+        return (
+          <Room>
+            <Canvas />
+          </Room>
+        );
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Render and select boxes</StepTitle>
+    <StepContent>
+
+      Read an immutable snapshot of the shared boxes with
+      [`useStorage`](/docs/api-reference/liveblocks-react#useStorage). Keep the
+      current selection in local React state for now. The effect clears the
+      selection if another user deletes that box.
+
+      ```tsx file="app/Canvas.tsx"
+      "use client";
+
+      import { useStorage } from "@liveblocks/react/suspense";
+      import { useEffect, useState } from "react";
+
+      const BOX_SIZE = 100;
+
+      export function Canvas() {
+        const shapes = useStorage((root) => root.shapes);
+        const [selectedShapeId, setSelectedShapeId] = useState<string | null>(
+          null
+        );
+
+        useEffect(() => {
+          if (selectedShapeId && shapes[selectedShapeId] === undefined) {
+            setSelectedShapeId(null);
+          }
+        }, [selectedShapeId, shapes]);
+
+        return (
+          <div
+            aria-label="Collaborative canvas"
+            onPointerDown={(event) => {
+              if (event.target === event.currentTarget) {
+                setSelectedShapeId(null);
+              }
+            }}
+            style={{
+              position: "relative",
+              minHeight: 560,
+              overflow: "hidden",
+              background: "#f8fafc",
+              border: "1px solid #e2e8f0",
+              borderRadius: 12,
+            }}
+          >
+            {Object.entries(shapes).map(([id, shape]) => (
+              <button
+                key={id}
+                type="button"
+                aria-label={`Select box ${id}`}
+                aria-pressed={selectedShapeId === id}
+                onPointerDown={(event) => {
+                  event.stopPropagation();
+                  setSelectedShapeId(id);
+                }}
+                style={{
+                  position: "absolute",
+                  left: shape.x,
+                  top: shape.y,
+                  width: BOX_SIZE,
+                  height: BOX_SIZE,
+                  border:
+                    selectedShapeId === id
+                      ? "3px solid #2563eb"
+                      : "3px solid transparent",
+                  borderRadius: 12,
+                  background: shape.fill,
+                  cursor: "grab",
+                  touchAction: "none",
+                }}
+              />
+            ))}
+          </div>
+        );
+      }
+      ```
+
+      Open the page in two browser tabs. Both tabs render the same two boxes
+      from the room's Storage document.
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Add and delete boxes</StepTitle>
+    <StepContent>
+
+      Use [`useMutation`](/docs/api-reference/liveblocks-react#useMutation) to
+      modify the mutable Storage structures. Add these imports and mutations
+      inside `Canvas`.
+
+      ```tsx title="Add the imports and Storage mutations" file="app/Canvas.tsx"
+      // +++
+      import { LiveObject } from "@liveblocks/client";
+      import { useMutation, useStorage } from "@liveblocks/react/suspense";
+      // +++
+
+      const COLORS = ["#f59e0b", "#8b5cf6", "#10b981", "#ec4899"];
+
+      export function Canvas() {
+        // ...
+
+        // +++
+        const addShape = useMutation(({ storage }) => {
+          const id = crypto.randomUUID();
+          const fill =
+            COLORS[Math.floor(Math.random() * COLORS.length)] ?? "#f59e0b";
+
+          storage.get("shapes").set(
+            id,
+            new LiveObject({
+              x: 80 + Math.round(Math.random() * 240),
+              y: 100 + Math.round(Math.random() * 240),
+              fill,
+            })
+          );
+
+          return id;
+        }, []);
+
+        const deleteShape = useMutation(({ storage }, id: string) => {
+          storage.get("shapes").delete(id);
+        }, []);
+        // +++
+      }
+      ```
+
+      Add a toolbar before the canvas. A newly created box becomes the local
+      selection, and deleting a box clears that selection.
+
+      ```tsx title="Add the toolbar around the canvas" file="app/Canvas.tsx"
+      return (
+        <>
+          {/* +++ */}
+          <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+            <button
+              type="button"
+              onClick={() => setSelectedShapeId(addShape())}
+            >
+              Add box
+            </button>
+            <button
+              type="button"
+              disabled={!selectedShapeId}
+              onClick={() => {
+                if (!selectedShapeId) return;
+                deleteShape(selectedShapeId);
+                setSelectedShapeId(null);
+              }}
+            >
+              Delete
+            </button>
+          </div>
+          {/* +++ */}
+
+          <div aria-label="Collaborative canvas" /* ... */>
+            {/* Existing boxes */}
+          </div>
+        </>
+      );
+      ```
+
+      Storage mutations are synchronized to every connected user and added to
+      the current user's multiplayer history.
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Drag boxes</StepTitle>
+    <StepContent>
+
+      Capture the pointer when a drag begins, remember the pointer's offset
+      inside the box, and update Storage on every pointer movement. The
+      mutation safely does nothing if another user deletes the box mid-drag.
+
+      ```tsx title="Add the drag state and handlers" file="app/Canvas.tsx"
+      // +++
+      import type { Shape } from "../liveblocks.config";
+      import {
+        type PointerEvent,
+        useEffect,
+        useRef,
+        useState,
+      } from "react";
+      // +++
+
+      type Drag = {
+        pointerId: number;
+        shapeId: string;
+        offsetX: number;
+        offsetY: number;
+      };
+
+      export function Canvas() {
+        // ...
+
+        // +++
+        const canvasRef = useRef<HTMLDivElement>(null);
+        const dragRef = useRef<Drag | null>(null);
+
+        const moveShape = useMutation(
+          ({ storage }, id: string, x: number, y: number) => {
+            storage.get("shapes").get(id)?.update({ x, y });
+          },
+          []
+        );
+
+        function startDrag(
+          event: PointerEvent<HTMLButtonElement>,
+          id: string,
+          shape: Readonly<Shape>
+        ) {
+          if (event.button !== 0 || dragRef.current) return;
+
+          const bounds = canvasRef.current?.getBoundingClientRect();
+          if (!bounds) return;
+
+          event.stopPropagation();
+          event.currentTarget.setPointerCapture(event.pointerId);
+          dragRef.current = {
+            pointerId: event.pointerId,
+            shapeId: id,
+            offsetX: event.clientX - bounds.left - shape.x,
+            offsetY: event.clientY - bounds.top - shape.y,
+          };
+          setSelectedShapeId(id);
+        }
+
+        function moveDrag(event: PointerEvent<HTMLDivElement>) {
+          const drag = dragRef.current;
+          if (!drag || drag.pointerId !== event.pointerId) return;
+
+          const bounds = event.currentTarget.getBoundingClientRect();
+          moveShape(
+            drag.shapeId,
+            event.clientX - bounds.left - drag.offsetX,
+            event.clientY - bounds.top - drag.offsetY
+          );
+        }
+
+        function endDrag(event: PointerEvent<HTMLDivElement>) {
+          if (dragRef.current?.pointerId === event.pointerId) {
+            dragRef.current = null;
+          }
+        }
+        // +++
+      }
+      ```
+
+      Connect the handlers to the canvas and each box. Pointer capture keeps
+      sending events while the pointer moves outside the selected box.
+
+      ```tsx title="Connect the pointer handlers" file="app/Canvas.tsx"
+      <div
+        // +++
+        ref={canvasRef}
+        onPointerMove={moveDrag}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+        onLostPointerCapture={endDrag}
+        // +++
+        aria-label="Collaborative canvas"
+        // ...
+      >
+        {Object.entries(shapes).map(([id, shape]) => (
+          <button
+            key={id}
+            type="button"
+            // +++
+            onPointerDown={(event) => startDrag(event, id, shape)}
+            // +++
+            // ...
+          />
+        ))}
+      </div>
+      ```
+
+      Each pointer move updates the box's `x` and `y` properties, so other
+      connected users see the complete drag rather than only its final
+      position.
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Add multiplayer undo and redo</StepTitle>
+    <StepContent>
+
+      Add history controls with
+      [`useUndo`](/docs/api-reference/liveblocks-react#useUndo),
+      [`useRedo`](/docs/api-reference/liveblocks-react#useRedo),
+      [`useCanUndo`](/docs/api-reference/liveblocks-react#useCanUndo), and
+      [`useCanRedo`](/docs/api-reference/liveblocks-react#useCanRedo).
+
+      ```tsx title="Add undo and redo to the toolbar" file="app/Canvas.tsx"
+      import {
+        // +++
+        useCanRedo,
+        useCanUndo,
+        useHistory,
+        useRedo,
+        useUndo,
+        // +++
+        useMutation,
+        useStorage,
+      } from "@liveblocks/react/suspense";
+      // +++
+      import {
+        type PointerEvent,
+        useCallback,
+        useEffect,
+        useRef,
+        useState,
+      } from "react";
+      // +++
+
+      export function Canvas() {
+        // ...
+
+        // +++
+        const undo = useUndo();
+        const redo = useRedo();
+        const canUndo = useCanUndo();
+        const canRedo = useCanRedo();
+        const { pause, resume } = useHistory();
+        // +++
+
+        return (
+          <>
+            <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+              <button type="button" onClick={() => setSelectedShapeId(addShape())}>
+                Add box
+              </button>
+              <button type="button" /* Delete handler */>Delete</button>
+              {/* +++ */}
+              <button type="button" disabled={!canUndo} onClick={undo}>
+                Undo
+              </button>
+              <button type="button" disabled={!canRedo} onClick={redo}>
+                Redo
+              </button>
+              {/* +++ */}
+            </div>
+            {/* Canvas */}
+          </>
+        );
+      }
+      ```
+
+      A drag generates many Storage mutations. Use
+      [`useHistory`](/docs/api-reference/liveblocks-react#useHistory) to pause
+      history after pointer capture and resume it when the gesture ends, making
+      the complete drag one undo step. Route every termination event through
+      the same idempotent function, and use it during cleanup so history cannot
+      remain paused if the component unmounts mid-drag.
+
+      ```tsx title="Group each drag into one history entry" file="app/Canvas.tsx"
+      // Replace the existing startDrag and endDrag functions.
+
+      const endDrag = useCallback(
+        (pointerId?: number) => {
+          const drag = dragRef.current;
+          if (!drag || (pointerId !== undefined && drag.pointerId !== pointerId)) {
+            return;
+          }
+
+          // Clear first so overlapping end events cannot resume twice.
+          dragRef.current = null;
+          resume();
+        },
+        [resume]
+      );
+
+      useEffect(() => () => endDrag(), [endDrag]);
+
+      function startDrag(
+        event: PointerEvent<HTMLButtonElement>,
+        id: string,
+        shape: Readonly<Shape>
+      ) {
+        if (event.button !== 0 || dragRef.current) return;
+
+        const bounds = canvasRef.current?.getBoundingClientRect();
+        if (!bounds) return;
+
+        event.stopPropagation();
+        event.currentTarget.setPointerCapture(event.pointerId);
+        dragRef.current = {
+          pointerId: event.pointerId,
+          shapeId: id,
+          offsetX: event.clientX - bounds.left - shape.x,
+          offsetY: event.clientY - bounds.top - shape.y,
+        };
+        pause();
+        setSelectedShapeId(id);
+      }
+
+      function finishDrag(event: PointerEvent<HTMLDivElement>) {
+        endDrag(event.pointerId);
+      }
+      ```
+
+      Replace the three end-event handlers on the canvas with `finishDrag`.
+
+      ```tsx file="app/Canvas.tsx"
+      <div
+        ref={canvasRef}
+        onPointerMove={moveDrag}
+        // +++
+        onPointerUp={finishDrag}
+        onPointerCancel={finishDrag}
+        onLostPointerCapture={finishDrag}
+        // +++
+        // ...
+      />
+      ```
+
+      Each user's history contains their own changes. Undoing your drag does
+      not reverse a change made by another collaborator.
+
+    </StepContent>
+
+  </Step>
+  <Step lastStep>
+    <StepTitle>Add live cursors and selections with Presence</StepTitle>
+    <StepContent>
+
+      Finish the canvas by moving the current selection from local React state
+      into Presence and adding cursor coordinates. Presence is temporary,
+      per-connection state, so it is not saved in the canvas document.
+
+      First, add the Presence type to `liveblocks.config.ts`.
+
+      ```ts title="Add the Presence type" file="liveblocks.config.ts"
+      declare global {
+        interface Liveblocks {
+          // +++
+          Presence: {
+            cursor: { x: number; y: number } | null;
+            selectedShapeId: string | null;
+          };
+          // +++
+
+          Storage: {
+            shapes: LiveMap<string, LiveObject<Shape>>;
+          };
+        }
+      }
+      ```
+
+      Set the initial Presence values when entering the room.
+
+      ```tsx title="Set the initial Presence" file="app/Room.tsx"
+      <RoomProvider
+        id="my-canvas-room"
+        // +++
+        initialPresence={{ cursor: null, selectedShapeId: null }}
+        // +++
+        initialStorage={initialStorage}
+      >
+        {/* ... */}
+      </RoomProvider>
+      ```
+
+      In `Canvas`, remove the `selectedShapeId` `useState` call and the now
+      unused `useState` import. Read your own selection with
+      [`useSelf`](/docs/api-reference/liveblocks-react#useSelf), update it with
+      [`useUpdateMyPresence`](/docs/api-reference/liveblocks-react#useUpdateMyPresence),
+      and read collaborators with
+      [`useOthers`](/docs/api-reference/liveblocks-react#useOthers).
+
+      ```tsx title="Use Presence as the selection source" file="app/Canvas.tsx"
+      import {
+        // ...
+        // +++
+        useOthers,
+        useSelf,
+        useUpdateMyPresence,
+        // +++
+      } from "@liveblocks/react/suspense";
+
+      export function Canvas() {
+        const shapes = useStorage((root) => root.shapes);
+        // +++
+        const selectedShapeId = useSelf(
+          (me) => me.presence.selectedShapeId
+        );
+        const others = useOthers();
+        const updateMyPresence = useUpdateMyPresence();
+        // +++
+
+        useEffect(() => {
+          if (selectedShapeId && shapes[selectedShapeId] === undefined) {
+            // +++
+            updateMyPresence({ selectedShapeId: null });
+            // +++
+          }
+        }, [selectedShapeId, shapes, updateMyPresence]);
+
+        function selectShape(id: string | null) {
+          updateMyPresence({ selectedShapeId: id });
+        }
+      }
+      ```
+
+      Replace every local selection update with `selectShape`. This keeps add,
+      delete, drag, and canvas-background selections visible to other users.
+
+      ```tsx title="Replace the local selection handlers" file="app/Canvas.tsx"
+      function addSelectedShape() {
+        selectShape(addShape());
+      }
+
+      function deleteSelectedShape() {
+        if (!selectedShapeId) return;
+        deleteShape(selectedShapeId);
+        selectShape(null);
+      }
+
+      function startDrag(
+        event: PointerEvent<HTMLButtonElement>,
+        id: string,
+        shape: Readonly<Shape>
+      ) {
+        // Existing pointer capture and drag setup...
+        // +++
+        selectShape(id);
+        // +++
+      }
+
+      return (
+        <>
+          <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+            <button type="button" onClick={addSelectedShape}>
+              Add box
+            </button>
+            <button
+              type="button"
+              disabled={!selectedShapeId}
+              onClick={deleteSelectedShape}
+            >
+              Delete
+            </button>
+            {/* Undo and redo buttons */}
+          </div>
+
+          <div
+            ref={canvasRef}
+            // +++
+            onPointerDown={(event) => {
+              if (event.target === event.currentTarget) selectShape(null);
+            }}
+            // +++
+            // ...
+          />
+        </>
+      );
+      ```
+
+      Publish canvas-relative cursor coordinates while preserving the existing
+      drag handler. Clear the cursor when it leaves the canvas.
+
+      ```tsx title="Publish the cursor position" file="app/Canvas.tsx"
+      function handleCanvasPointerMove(event: PointerEvent<HTMLDivElement>) {
+        const bounds = event.currentTarget.getBoundingClientRect();
+        updateMyPresence({
+          cursor: {
+            x: event.clientX - bounds.left,
+            y: event.clientY - bounds.top,
+          },
+        });
+        moveDrag(event);
+      }
+
+      return (
+        <div
+          ref={canvasRef}
+          // +++
+          onPointerMove={handleCanvasPointerMove}
+          onPointerLeave={() => updateMyPresence({ cursor: null })}
+          // +++
+          // ...
+        />
+      );
+      ```
+
+      Finally, show when another user has selected a box and render their
+      cursor. Keep the current user's selection blue and use purple for other
+      users.
+
+      ```tsx title="Render other users" file="app/Canvas.tsx"
+      {Object.entries(shapes).map(([id, shape]) => {
+        // +++
+        const selectedByOther = others.some(
+          (other) => other.presence.selectedShapeId === id
+        );
+        // +++
+
+        return (
+          <button
+            key={id}
+            type="button"
+            onPointerDown={(event) => startDrag(event, id, shape)}
+            style={{
+              // ...
+              border:
+                selectedShapeId === id
+                  ? "3px solid #2563eb"
+                  : selectedByOther
+                    ? "3px solid #7c3aed"
+                    : "3px solid transparent",
+            }}
+          />
+        );
+      })}
+
+      {/* +++ */}
+      {others.map(({ connectionId, presence }) =>
+        presence.cursor ? (
+          <div
+            key={connectionId}
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              left: presence.cursor.x,
+              top: presence.cursor.y,
+              color: "#7c3aed",
+              fontSize: 12,
+              fontWeight: 600,
+              pointerEvents: "none",
+              transform: "translate(6px, 6px)",
+            }}
+          >
+            ● User {connectionId}
+          </div>
+        ) : null
+      )}
+      {/* +++ */}
+      ```
+
+      Open the canvas in two tabs. Boxes now move continuously in both tabs,
+      each drag is one undo step, and each tab shows the other user's cursor and
+      selection.
+
+    </StepContent>
+
+  </Step>
+</Steps>
+
+## What to read next
+
+You now have the foundation of a custom multiplayer canvas built with React and
+Liveblocks.
+
+- [Canvas use case](/docs/use-cases/canvas)
+- [Storage data types](/docs/products/sync/data-types)
+- [Multiplayer undo/redo](/docs/products/sync/multiplayer-undo-redo)
+- [Presence](/docs/products/sync/presence)
+- [Authentication and permissions](/docs/authentication)
+- [Collaborative Whiteboard example](/examples/collaborative-whiteboard/nextjs-whiteboard)
+- [Advanced Collaborative Whiteboard example](/examples/collaborative-whiteboard-advanced/nextjs-whiteboard-advanced)
