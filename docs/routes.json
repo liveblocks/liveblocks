@@ -3,7 +3,7 @@
     "title": false,
     "routes": [
       {
-        "title": "Introduction",
+        "title": "Overview",
         "path": "/",
         "file": "/index.mdx"
       },
@@ -992,7 +992,7 @@
     "title": false,
     "routes": [
       {
-        "title": "Introduction",
+        "title": "Overview",
         "path": "/api-reference"
       }
     ]
