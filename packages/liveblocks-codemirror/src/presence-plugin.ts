@@ -5,14 +5,14 @@ import {
   StateField,
   Transaction,
 } from "@codemirror/state";
-import type {
+import {
   Direction,
-  EditorView,
+  type EditorView,
   layer,
   type LayerMarker,
   RectangleMarker,
   ViewPlugin,
-  ViewUpdate,
+  type ViewUpdate,
 } from "@codemirror/view";
 import type { LsonObject, Room } from "@liveblocks/client";
 import { kInternal, type LiveText } from "@liveblocks/core";
@@ -153,7 +153,9 @@ export function createLiveblocksPresencePlugin(
 
       for (const user of room.getOthers()) {
         const presenceSelection = user.presence.selection;
-        if (presenceSelection == null) continue;
+        if (presenceSelection === null || presenceSelection === undefined) {
+          continue;
+        }
 
         const anchor = text[kInternal].decodeIndex(
           presenceSelection.anchor,
