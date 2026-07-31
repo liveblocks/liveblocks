@@ -754,7 +754,7 @@ describe("room (dev server)", () => {
       expect(sources).toEqual([{ origin: "remote" }]);
     });
 
-    test("undo produces undo-tagged storage updates", async () => {
+    test("undo and redo produce undo/redo-tagged storage updates", async () => {
       const { room, root } = await prepareIsolatedStorageTest<{ a: number }>({
         liveblocksType: "LiveObject",
         data: { a: 0 },
@@ -774,6 +774,11 @@ describe("room (dev server)", () => {
       room.history.undo();
 
       expect(sources).toEqual([{ origin: "local", via: "undo" }]);
+
+      sources.length = 0;
+      room.history.redo();
+
+      expect(sources).toEqual([{ origin: "local", via: "redo" }]);
     });
 
     test("the internal optimistic flag never reaches subscribers", async () => {
