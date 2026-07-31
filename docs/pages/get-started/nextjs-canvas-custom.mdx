@@ -109,7 +109,6 @@ interactions yourself.
         RoomProvider,
       } from "@liveblocks/react/suspense";
       import type { ReactNode } from "react";
-      import type { Shape } from "../liveblocks.config";
 
       export function Room({ children }: { children: ReactNode }) {
         return (
@@ -117,7 +116,7 @@ interactions yourself.
             <RoomProvider
               id="my-canvas-room"
               initialStorage={{
-                shapes: new LiveMap<string, LiveObject<Shape>>([
+                shapes: new LiveMap([
                   [
                     "shape-1",
                     new LiveObject({ x: 100, y: 120, fill: "#f59e0b" }),
