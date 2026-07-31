@@ -613,10 +613,6 @@
         "path": "/use-cases/ai-collaboration"
       },
       {
-        "title": "Spreadsheet",
-        "path": "/use-cases/spreadsheet"
-      },
-      {
         "title": "Table",
         "path": "/use-cases/table"
       }

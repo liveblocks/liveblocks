@@ -3,28 +3,56 @@ meta:
   title: "Table"
   parentTitle: "Use cases"
   description:
-    "Add realtime comments, presence, and shared data to application tables."
+    "Build collaborative tables, data grids, and spreadsheets with shared data,
+    presence, comments, and history."
 ---
 
-Collaborative tables can synchronize the underlying records, attach comments to
-rows or cells, or do both. Choose Sync when users edit shared table data and
-Comments when the data already lives in your database but needs discussion.
+Tables, data grids, and spreadsheets can synchronize records and cells, show
+live selections, and attach comments to rows or cells. Choose Sync when users
+edit shared data and Comments when the data already lives in your database but
+needs discussion.
 
-<Banner title="Choose a table guide" type="info">
+<Banner title="Choose a table or spreadsheet guide" type="info">
 
-Start with [Comments on a React table](/docs/get-started/nextjs-comments-table),
-[AG Grid](/docs/get-started/nextjs-comments-ag-grid), or
-[Handsontable](/docs/get-started/nextjs-comments-handsontable).
+Start with the
+[multiplayer Handsontable guide](/docs/get-started/nextjs-multiplayer-handsontable),
+[Comments on a React table](/docs/get-started/nextjs-comments-table),
+[AG Grid](/docs/get-started/nextjs-comments-ag-grid), or the
+[Handsontable Comments guide](/docs/get-started/nextjs-comments-handsontable).
 
 </Banner>
 
-## APIs you need [#apis]
+## Synchronize records and cells [#sync]
 
-- [`LiveMap`](/docs/api-reference/liveblocks-client#LiveMap) for synchronized
-  records keyed by stable IDs
+- [`LiveMap`](/docs/api-reference/liveblocks-client#LiveMap) for records or
+  sparse cells keyed by stable IDs
+- [`LiveList`](/docs/api-reference/liveblocks-client#LiveList) for dense,
+  ordered rows
 - [`useStorage`](/docs/api-reference/liveblocks-react#useStorage) and
   [`useMutation`](/docs/api-reference/liveblocks-react#useMutation) for shared
   values
+- [`useUpdateMyPresence`](/docs/api-reference/liveblocks-react#useUpdateMyPresence)
+  for temporary selections and active-cell state
+- [Multiplayer undo/redo](/docs/products/sync/multiplayer-undo-redo) for shared
+  edit history
+
+```tsx
+const grid = useStorage((root) => root.grid);
+
+const setCell = useMutation(
+  ({ storage }, row: number, column: number, value: string) => {
+    storage.get("grid").get(row)?.set(column, value);
+  },
+  []
+);
+```
+
+For sparse or very large tables, use stable IDs and maps rather than allocating
+every empty cell. Batch multi-cell edits so paste and fill operations create one
+history entry.
+
+## Add contextual comments [#comments]
+
 - [`useThreads`](/docs/api-reference/liveblocks-react#useThreads) for comments
   filtered by row or cell metadata
 - [`FloatingThread`](/docs/api-reference/liveblocks-react-ui#FloatingThread) and
@@ -43,13 +71,21 @@ declare global {
 ```
 
 Use stable record and column IDs in thread metadata so comments remain attached
-after sorting or filtering. If the canonical records live in your database, keep
-them there and broadcast invalidation events when other clients should
-revalidate.
+after sorting or filtering.
 
-## Next steps [#next-steps]
+## Keep server data canonical [#server-data]
 
+If the canonical records live in your database, keep them there and use
+[Broadcast events](/docs/products/sync/broadcast-events) to tell other clients
+when to revalidate with SWR or another data-fetching library.
+
+## Examples and next steps [#examples]
+
+- [Multiplayer Handsontable example](https://liveblocks.io/examples/multiplayer-handsontable/nextjs-multiplayer-handsontable)
+- [Handsontable Comments guide](/docs/get-started/nextjs-comments-handsontable)
 - Configure [Comments metadata](/docs/products/comments/metadata).
-- Use [Broadcast events](/docs/products/sync/broadcast-events) with SWR or
-  another data-fetching library.
+- Learn how Sync handles
+  [conflict resolution](/docs/products/sync/conflict-resolution).
+- Add [version history](/docs/products/sync/version-history) for named restore
+  points.
 - Add [Notifications](/docs/products/notifications) for replies and mentions.
