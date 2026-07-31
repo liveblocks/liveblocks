@@ -21,17 +21,19 @@ show live cursors, use version history, and add multiplayer undo/redo.
 
 ## Features [#features]
 
-- **Realtime collaboration**: Canvas state is permanent and updates in realtime
-  for connected users.
-- **Presence**: Show live cursors, avatar stacks, realtime selections, and agent
-  activity.
-- **Agentic editing**: Create AI agents that can modify the canvas from the
-  back-end.
-- **Version history**: Save, preview, and restore canvas state from snapshots.
-- **Multiplayer undo/redo**: Each user can independently undo and redo their own
-  changes.
-- **Comments**: Add draggable commenting threads to the canvas.
-- **Permissions**: Control which users can read and edit the canvas.
+- [**Realtime collaboration**](#realtime-collaboration): Canvas state is
+  permanent and updates in realtime for connected users.
+- [**Presence**](#presence): Show live cursors, avatar stacks, realtime
+  selections, and agent activity.
+- [**Agentic editing**](#agentic-editing): Create AI agents that can modify the
+  canvas from the back-end.
+- [**Version history**](#version-history): Save, preview, and restore canvas
+  state from snapshots.
+- [**Multiplayer undo/redo**](#multiplayer-undo-redo): Each user can
+  independently undo and redo their own changes.
+- [**Comments**](#comments): Add draggable commenting threads to the canvas.
+- [**Permissions**](#permissions): Control which users can read and edit the
+  canvas.
 
 ## Get started [#get-started]
 
@@ -61,7 +63,9 @@ Choose a starting point based on how you want to render your canvas.
   />
 </ListGrid>
 
-## Realtime collaboration [#realtime-collaboration]
+## How to implement each feature [#implementation]
+
+### Realtime collaboration [#realtime-collaboration]
 
 Store canvas objects in a
 [`LiveMap`](/docs/api-reference/liveblocks-client#LiveMap), keyed by stable IDs,
@@ -96,7 +100,7 @@ Read [Data types](/docs/products/sync/data-types) to choose the canvas document
 shape and [Conflict resolution](/docs/products/sync/conflict-resolution) to
 understand how concurrent changes are merged.
 
-## Presence [#presence]
+### Presence [#presence]
 
 Keep cursors, selections, active tools, and agent activity in
 [Presence](/docs/products/sync/presence), because this state is temporary and
@@ -131,7 +135,7 @@ function CanvasPresence() {
 }
 ```
 
-## Agentic editing [#agentic-editing]
+### Agentic editing [#agentic-editing]
 
 AI agents and other trusted server processes can edit the same canvas with
 [`Liveblocks.mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage).
@@ -151,7 +155,7 @@ await liveblocks.mutateStorage("canvas-room", ({ root }) => {
 Read [Agentic editing](/docs/products/sync/agentic-editing) for validation,
 server Presence, JSON Patch, and multi-step agent workflows.
 
-## Version history [#version-history]
+### Version history [#version-history]
 
 Create a version when a user publishes the canvas, before importing data, or
 before an AI agent makes a substantial edit. Use
@@ -178,7 +182,7 @@ be created from a backend with
 Read [Version history](/docs/products/sync/version-history) for the complete
 preview and restore flow.
 
-## Multiplayer undo/redo [#multiplayer-undo-redo]
+### Multiplayer undo/redo [#multiplayer-undo-redo]
 
 Use [`useHistory`](/docs/api-reference/liveblocks-react#useHistory) to give each
 user an independent undo and redo stack. Pause history at the start of a drag
@@ -208,7 +212,7 @@ unavailable controls. Read
 [Multiplayer undo/redo](/docs/products/sync/multiplayer-undo-redo) for keyboard
 shortcuts and the non-React client API.
 
-## Comments [#comments]
+### Comments [#comments]
 
 Attach [Comments](/docs/products/comments) to canvas coordinates or object IDs
 with thread metadata. A
@@ -237,7 +241,7 @@ Follow the
 [draggable canvas Comments quickstart](/docs/get-started/nextjs-comments-canvas)
 for placement mode, z-index management, and draggable thread components.
 
-## Permissions [#permissions]
+### Permissions [#permissions]
 
 Create a room for each canvas and set its access from your backend with
 [`Liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms). Give
