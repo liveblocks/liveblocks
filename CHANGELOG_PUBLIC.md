@@ -103,6 +103,32 @@ ctnicholas, ofoucherot, pierrelevaillant
 
 # Week 28 (2026-07-10)
 
+## v3.22.0
+
+### `@liveblocks/react`
+
+This release adds version history support for Storage: a version now snapshots
+both the room's Storage and Yjs documents (previously Yjs only).
+
+- Creating a version now also snapshots Storage, not just Yjs, see
+  [docs](https://liveblocks.io/docs/api-reference/rest-api-endpoints#create-version-history-snapshot).
+- `useHistoryVersions()` lists the room's versions. Each has a `vh_xxx` id, see
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-react#useHistoryVersions).
+- `useHistoryVersionStorageData("vh_xxx")` returns that version's Storage as a
+  read-only `LiveObject` so you can visualize or diff it manually, see
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-react#useHistoryVersionStorageData).
+- `useRestoreToStorageVersion("vh_xxx")` restores the room's Storage to that
+  version, as a single undoable change, see
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-react#useRestoreToStorageVersion).
+- `useDeleteHistoryVersion()` returns `deleteHistoryVersion("vh_xxx")` to
+  permanently delete a version, see
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-react#useDeleteHistoryVersion).
+
+### `@liveblocks/node` and Python SDK
+
+- Add methods for version history to list room versions, create a version
+  snapshot, and delete a version.
+
 ## Examples
 
 - New example:
@@ -117,7 +143,7 @@ ctnicholas, ofoucherot, pierrelevaillant
 
 ## Contributors
 
-ctnicholas, stacyschmitz
+nvie, marcbouchenoire, ctnicholas, stacyschmitz
 
 # Week 27 (2026-07-03)
 
