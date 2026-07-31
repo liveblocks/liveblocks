@@ -23,11 +23,11 @@ showTitle: false
   ]}
 />
 
-<GetStartedPromptCta className="-mb-8 mt-8 md:mt-12 rounded-2xl" />
-
 <DocsHomepageGrid />
 
 ## Products
+
+Discover each Liveblocks product and how to use it.
 
 <ListGrid columns={2}>
   <DocsCard
@@ -55,40 +55,42 @@ showTitle: false
 
 ## Use cases
 
+Explore different use cases for Liveblocks, and where to start with each.
+
 <ListGrid columns={2}>
   <DocsCard
     type="technology"
     title="Canvas"
     href="/docs/use-cases/canvas"
-    description="Whiteboards, design tools, and spatial interfaces"
+    description="Whiteboards, design tools, spatial interfaces"
     visual={<DocsCanvasIcon className="h-auto w-6" />}
   />
   <DocsCard
     type="technology"
     title="Code editor"
     href="/docs/use-cases/code-editor"
-    description="Collaborative CodeMirror and Monaco editors"
+    description="Code editing with CodeMirror and Monaco"
     visual={<DocsCodeEditorIcon className="h-auto w-6" />}
   />
   <DocsCard
     type="technology"
     title="Text editor"
     href="/docs/use-cases/text-editor"
-    description="Collaborative rich text with LiveText"
+    description="Rich-text editing with Tiptap, Lexical, more"
     visual={<DocsTextEditorIcon className="h-auto w-6" />}
   />
   <DocsCard
     type="technology"
     title="Flowchart"
     href="/docs/use-cases/flowchart"
-    description="Synchronized nodes, edges, and selections"
+    description="Workflows, diagrams, process maps"
     visual={<DocsFlowchartIcon className="h-auto w-6" />}
   />
   <DocsCard
     type="technology"
     title="AI Collaboration"
     href="/docs/use-cases/ai-collaboration"
-    description="People and agents working in the same application"
+    description="Humans and agents working together"
     visual={<DocsAiCollaborationIcon className="h-auto w-6" />}
   />
   <DocsCard
@@ -102,12 +104,80 @@ showTitle: false
     type="technology"
     title="Table"
     href="/docs/use-cases/table"
-    description="Comments and shared data for application tables"
+    description="Spreadsheets, tables, grids, databases"
     visual={<DocsTableIcon className="h-auto w-6" />}
   />
 </ListGrid>
 
+## Examples
+
+Browse and download live code examples from our [example gallery](/examples).
+
+{/* TODO, add more relevant examples */}
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "AI Popup Chat",
+      slug: "ai-popup/nextjs-ai-popup",
+      image: "/images/examples/thumbnails/ai-popup.jpg",
+    }}
+    technologies={["nextjs", "react"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "AI Chats",
+      slug: "ai-chats/nextjs-ai-chats",
+      image: "/images/examples/thumbnails/ai-chats.jpg",
+    }}
+    technologies={["nextjs", "react"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Advanced Collaborative Text Editor",
+      slug: "collaborative-text-editor-advanced/nextjs-tiptap-advanced",
+      image: "/images/examples/thumbnails/text-editor-advanced.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Comments Notifications",
+      slug: "comments-notifications",
+      image: "/images/examples/thumbnails/comments-notifications.png",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Live Cursors",
+      slug: "live-cursors",
+      image: "/images/examples/thumbnails/live-cursors.jpg",
+    }}
+    technologies={["nextjs", "vuejs", "sveltekit", "solidjs", "javascript"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Collaborative Whiteboard",
+      slug: "collaborative-whiteboard-advanced",
+      image:
+        "/images/examples/thumbnails/collaborative-whiteboard-advanced.jpg",
+      advanced: true,
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+</ListGrid>
+
 ## API Reference
+
+Read detailed [API references](/docs/api-reference) for Liveblocks packages,
+REST API, and webhook events.
 
 <ListGrid columns={2} defaultVisibleItems={6}>
   <DocsCard
@@ -230,66 +300,12 @@ showTitle: false
     description="HTTP endpoints"
     visual={<DocsApiIcon className="fill-product-icon-brand h-auto w-6" />}
   />
-</ListGrid>
-
-## Examples
-
-<ListGrid columns={2}>
-  <ExampleCard
-    example={{
-      title: "AI Popup Chat",
-      slug: "ai-popup/nextjs-ai-popup",
-      image: "/images/examples/thumbnails/ai-popup.jpg",
-    }}
-    technologies={["nextjs", "react"]}
-    openInNewWindow
-  />
-  <ExampleCard
-    example={{
-      title: "AI Chats",
-      slug: "ai-chats/nextjs-ai-chats",
-      image: "/images/examples/thumbnails/ai-chats.jpg",
-    }}
-    technologies={["nextjs", "react"]}
-    openInNewWindow
-  />
-  <ExampleCard
-    example={{
-      title: "Advanced Collaborative Text Editor",
-      slug: "collaborative-text-editor-advanced/nextjs-tiptap-advanced",
-      image: "/images/examples/thumbnails/text-editor-advanced.jpg",
-    }}
-    technologies={["nextjs"]}
-    openInNewWindow
-  />
-  <ExampleCard
-    example={{
-      title: "Comments Notifications",
-      slug: "comments-notifications",
-      image: "/images/examples/thumbnails/comments-notifications.png",
-    }}
-    technologies={["nextjs"]}
-    openInNewWindow
-  />
-  <ExampleCard
-    example={{
-      title: "Live Cursors",
-      slug: "live-cursors",
-      image: "/images/examples/thumbnails/live-cursors.jpg",
-    }}
-    technologies={["nextjs", "vuejs", "sveltekit", "solidjs", "javascript"]}
-    openInNewWindow
-  />
-  <ExampleCard
-    example={{
-      title: "Collaborative Whiteboard",
-      slug: "collaborative-whiteboard-advanced",
-      image:
-        "/images/examples/thumbnails/collaborative-whiteboard-advanced.jpg",
-      advanced: true,
-    }}
-    technologies={["nextjs"]}
-    openInNewWindow
+  <DocsCard
+    type="technology"
+    title="Webhook events"
+    href="/docs/api-reference/webhook-events"
+    description="HTTP webhook event types"
+    visual={<DocsApiIcon className="fill-product-icon-brand h-auto w-6" />}
   />
 </ListGrid>
 
