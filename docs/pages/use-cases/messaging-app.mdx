@@ -1,0 +1,202 @@
+---
+meta:
+  title: "Messaging app"
+  parentTitle: "Use cases"
+  description:
+    "Build chat, support, community, and AI messaging interfaces with durable
+    messages, realtime updates, pagination, and live activity."
+---
+
+Build a messaging app with [Feeds](/docs/products/sync/feeds) for ordered,
+persistent messages. Add [Presence](/docs/products/sync/presence) for temporary
+activity such as online state and typing indicators, then use Notifications to
+bring users back when they are no longer in the room.
+
+Feeds provides the realtime data layer. Your application controls the message
+schema, composer, channel list, and visual design.
+
+## Get started [#get-started]
+
+Start with Feeds for a custom messaging interface, or use AI Copilots when you
+want a ready-made AI chat.
+
+<ListGrid columns={2}>
+  <DocsCard
+    type="technology"
+    title="Next.js Feeds"
+    href="/docs/get-started/nextjs-feeds"
+    description="Build a persistent realtime message feed"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Next.js AI chat"
+    href="/docs/get-started/nextjs-ai-chat"
+    description="Build a ready-made AI messaging interface"
+    visual={<DocsNextjsIcon />}
+  />
+</ListGrid>
+
+## Model conversations and channels [#conversations-and-channels]
+
+Use one Feed for each conversation, channel, support ticket, or direct-message
+thread. Store small values you need to filter on, such as a channel type or
+title, in Feed metadata.
+
+[`useFeeds`](/docs/api-reference/liveblocks-react#useFeeds) lists Feeds in the
+current room and updates when conversations are created, changed, or deleted.
+
+```tsx
+import { useFeeds } from "@liveblocks/react/suspense";
+
+export function ChannelList() {
+  const { feeds } = useFeeds({
+    metadata: { kind: "channel" },
+    limit: 20,
+  });
+
+  return feeds.map((feed) => (
+    <a key={feed.feedId} href={`/messages/${feed.feedId}`}>
+      {feed.metadata.title}
+    </a>
+  ));
+}
+```
+
+Use separate rooms when conversations require different permissions or should
+not share Presence. Use multiple Feeds in one room when they share the same
+participants and authorization boundary.
+
+## Send and receive messages [#messages]
+
+Read a conversation with
+[`useFeedMessages`](/docs/api-reference/liveblocks-react#useFeedMessages) and
+send structured JSON data with
+[`useCreateFeedMessage`](/docs/api-reference/liveblocks-react#useCreateFeedMessage).
+New messages appear for every connected client without polling.
+
+```tsx
+import {
+  useCreateFeedMessage,
+  useFeedMessages,
+} from "@liveblocks/react/suspense";
+
+export function Messages({ feedId }: { feedId: string }) {
+  const { messages } = useFeedMessages(feedId);
+  const createMessage = useCreateFeedMessage();
+
+  return (
+    <>
+      {messages.map((message) => (
+        <Message key={message.id} data={message.data} />
+      ))}
+      <Composer
+        onSend={(content) => createMessage(feedId, { type: "text", content })}
+      />
+    </>
+  );
+}
+```
+
+Define a discriminated message schema for text, system events, attachments, or
+agent output so each message type has a predictable renderer.
+
+## Load message history [#message-history]
+
+Long conversations should load in pages. `useFeedMessages` returns `fetchMore`,
+`hasFetchedAll`, `isFetchingMore`, and `fetchMoreError` for loading earlier
+messages without replacing the messages already rendered.
+
+Show pagination errors beside the load-more control so users can retry without
+losing the current conversation. Read
+[Paginate feeds and messages](/docs/products/sync/feeds#pagination) for the full
+pattern.
+
+## Show online and typing state [#live-activity]
+
+Typing state changes frequently and does not need to persist, so keep it in
+Presence rather than in the Feed. Include the active Feed ID when a room can
+contain several conversations.
+
+```tsx
+import { useUpdateMyPresence } from "@liveblocks/react/suspense";
+
+export function MessageComposer({ feedId }: { feedId: string }) {
+  const updateMyPresence = useUpdateMyPresence();
+
+  return (
+    <textarea
+      onFocus={() => updateMyPresence({ activeFeedId: feedId })}
+      onChange={() => updateMyPresence({ typingIn: feedId })}
+      onBlur={() => updateMyPresence({ typingIn: null })}
+    />
+  );
+}
+```
+
+Clear typing state after a short period of inactivity as well as on blur. Use
+[`useOthersMapped`](/docs/api-reference/liveblocks-react#useOthersMapped) to
+subscribe only to the activity fields your composer renders.
+
+## Connect servers, AI, and notifications [#servers-and-ai]
+
+Back ends and AI agents can append messages with
+[`Liveblocks.createFeedMessage`](/docs/api-reference/liveblocks-node#post-rooms-roomId-feeds-feedId-messages).
+Use this for support automations, AI responses, imported messages, and workflow
+status.
+
+```ts
+await liveblocks.createFeedMessage({
+  roomId: "support-room",
+  feedId: "ticket-123",
+  data: { type: "assistant", content: "I found three related requests." },
+});
+```
+
+Use [Notifications](/docs/products/notifications) for mentions or important
+messages users should receive outside the open room. Use
+[Broadcast events](/docs/products/sync/broadcast-events) for transient reactions
+and signals that should not appear in message history.
+
+## Authentication and permissions [#permissions]
+
+Authenticate every participant and use `feeds:read` for users who can only view
+messages or `feeds:write` for users who can send and manage them. Keep private
+conversations in rooms whose permissions include only the intended participants.
+
+Validate application permissions before a trusted server posts on behalf of a
+user. Read
+[Authentication and permissions](/docs/products/sync/feeds#authentication-and-permissions)
+for the available Feed scopes.
+
+## Examples [#examples]
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "Realtime AI Elements Chats",
+      slug: "ai-elements-realtime/nextjs-ai-elements-realtime",
+      image: "/images/examples/thumbnails/ai-chats.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "AI Chats",
+      slug: "ai-chats/nextjs-ai-chats",
+      image: "/images/examples/thumbnails/ai-chats.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Live Cursors Chat",
+      slug: "live-cursors-chat/nextjs-live-cursors-chat",
+      image: "/images/examples/thumbnails/live-cursors-chat.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+</ListGrid>

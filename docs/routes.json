@@ -632,6 +632,10 @@
       {
         "title": "Presence",
         "path": "/use-cases/presence"
+      },
+      {
+        "title": "Messaging app",
+        "path": "/use-cases/messaging-app"
       }
     ]
   },
