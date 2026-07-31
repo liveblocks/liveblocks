@@ -788,7 +788,9 @@ class Liveblocks:
 
         **Paths and data types:** Be as specific as possible with your target path. Every parent in the
         chain of path segments must be a LiveObject, LiveList, or LiveMap. Complex nested objects passed in
-        `add` or `replace` operations are automatically converted to LiveObjects and LiveLists.
+        `add` or `replace` operations are automatically converted to LiveObjects and LiveLists. LiveText
+        nodes can be patched through their Plain LSON shape, for example `/text/data/0/0`; LiveText
+        versioning is internal and is not part of this API.
 
         **Performance:** For large Storage documents, applying a patch can be expensive because the full
         state is reconstructed on the server to apply the operations. Very large documents may not be
@@ -4366,7 +4368,9 @@ class AsyncLiveblocks:
 
         **Paths and data types:** Be as specific as possible with your target path. Every parent in the
         chain of path segments must be a LiveObject, LiveList, or LiveMap. Complex nested objects passed in
-        `add` or `replace` operations are automatically converted to LiveObjects and LiveLists.
+        `add` or `replace` operations are automatically converted to LiveObjects and LiveLists. LiveText
+        nodes can be patched through their Plain LSON shape, for example `/text/data/0/0`; LiveText
+        versioning is internal and is not part of this API.
 
         **Performance:** For large Storage documents, applying a patch can be expensive because the full
         state is reconstructed on the server to apply the operations. Very large documents may not be
