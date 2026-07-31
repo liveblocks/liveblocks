@@ -1,0 +1,156 @@
+---
+meta:
+  title: "Presence"
+  parentTitle: "Use cases"
+  description:
+    "Show who is online and what people or AI agents are doing with cursors,
+    avatars, selections, and live status."
+---
+
+Presence makes collaboration visible. Use it to show who is in a room, where
+they are pointing, what they have selected, and whether a person or AI agent is
+active.
+
+Presence is temporary and connection-specific. Keep document content in
+[Storage](/docs/products/sync/data-types), and use Presence for information that
+can disappear when a user leaves the room.
+
+## Get started [#get-started]
+
+Start with the Next.js quickstart for ready-made cursors and avatars, or use the
+React guide to build custom Presence interfaces.
+
+<ListGrid columns={2}>
+  <DocsCard
+    type="technology"
+    title="Next.js Presence"
+    href="/docs/get-started/nextjs-presence"
+    description="Add live cursors and an avatar stack"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Presence with React"
+    href="/docs/guides/how-to-use-liveblocks-presence-with-react"
+    description="Build a custom Presence interface"
+    visual={<DocsReactIcon />}
+  />
+</ListGrid>
+
+## Show cursors and active users [#cursors-and-avatars]
+
+Use the ready-made [`Cursors`](/docs/api-reference/liveblocks-react-ui#Cursors)
+and [`AvatarStack`](/docs/api-reference/liveblocks-react-ui#AvatarStack)
+components to make a room multiplayer with minimal setup. `Cursors` publishes
+the current pointer position and renders everyone else, while `AvatarStack`
+shows the users currently connected.
+
+```tsx
+import { AvatarStack, Cursors } from "@liveblocks/react-ui";
+
+export function CollaborativeArea() {
+  return (
+    <div>
+      <AvatarStack max={5} />
+      <Cursors className="relative h-full w-full">
+        <YourApp />
+      </Cursors>
+    </div>
+  );
+}
+```
+
+Use the lower-level React hooks when your interface needs custom cursor
+rendering or coordinates relative to a specific surface.
+
+## Share selections and live activity [#selections-and-activity]
+
+Presence can contain any temporary JSON data your interface needs, including a
+selected object, active tool, current slide, typing indicator, or agent status.
+Publish local changes with
+[`useUpdateMyPresence`](/docs/api-reference/liveblocks-react#useUpdateMyPresence)
+and subscribe to the specific values you render with
+[`useOthersMapped`](/docs/api-reference/liveblocks-react#useOthersMapped).
+
+```tsx
+import {
+  shallow,
+  useOthersMapped,
+  useUpdateMyPresence,
+} from "@liveblocks/react/suspense";
+
+export function CollaborativeList() {
+  const selections = useOthersMapped(
+    (other) => ({
+      selectedId: other.presence.selectedId,
+      color: other.info.color,
+    }),
+    shallow
+  );
+  const updateMyPresence = useUpdateMyPresence();
+
+  return (
+    <ItemList
+      selections={selections}
+      onSelect={(selectedId) => updateMyPresence({ selectedId })}
+    />
+  );
+}
+```
+
+For frequently changing values such as cursors, subscribe only to the Presence
+fields the component needs. This avoids rerendering unrelated parts of the
+interface.
+
+## Identify collaborators [#user-information]
+
+Keep names, avatars, and colors in user information rather than Presence. User
+information comes from your [authentication endpoint](/docs/authentication) and
+remains consistent across a user’s connections, while Presence describes what
+each connection is doing right now.
+
+Use
+[`resolveUsers`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers)
+when Liveblocks components need to display user profiles from your database.
+
+## Show people and AI agents together [#people-and-agents]
+
+Servers and AI agents can publish Presence with
+[`Liveblocks.setPresence`](/docs/api-reference/liveblocks-node#post-rooms-roomId-presence).
+Use it for temporary states such as `thinking`, `editing`, or `waiting`, and set
+a short time-to-live so stale agents disappear automatically.
+
+Read [Sync Presence](/docs/products/sync/presence) for setup, data modeling,
+server Presence, and guidance on choosing between Presence and Storage.
+
+## Examples [#examples]
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "Live Cursors",
+      slug: "live-cursors/nextjs-live-cursors",
+      image: "/images/examples/thumbnails/live-cursors.jpg",
+    }}
+    technologies={["nextjs", "vuejs", "sveltekit", "solidjs", "javascript"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Live Avatar Stack",
+      slug: "live-avatar-stack/nextjs-live-avatars",
+      image: "/images/examples/thumbnails/live-avatar-stack.jpg",
+    }}
+    technologies={["nextjs", "nuxtjs", "vuejs", "sveltekit", "solidjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Live Form Selection",
+      slug: "live-form-selection/nextjs-live-form-selection",
+      image: "/images/examples/thumbnails/live-form-selection.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+</ListGrid>

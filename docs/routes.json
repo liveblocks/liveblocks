@@ -628,6 +628,10 @@
       {
         "title": "Custom app",
         "path": "/use-cases/custom-app"
+      },
+      {
+        "title": "Presence",
+        "path": "/use-cases/presence"
       }
     ]
   },
