@@ -619,60 +619,94 @@
     ]
   },
   {
-    "title": "Errors",
-    "hidden": true,
+    "title": "Tools",
+    "defaultCollapsed": true,
     "routes": [
       {
-        "title": "atob polyfill is missing",
-        "path": "/errors/liveblocks-client/atob-polyfill"
+        "title": "Dev server",
+        "path": "/tools/dev-server"
       },
       {
-        "title": "RoomProvider id property is required",
-        "path": "/errors/liveblocks-react/RoomProvider-id-property-is-required"
+        "title": "DevTools extension",
+        "path": "/tools/devtools"
       },
       {
-        "title": "Cross-linked Liveblocks versions are found in your project",
-        "path": "/errors/cross-linked"
+        "title": "Next.js Starter Kit",
+        "path": "/tools/nextjs-starter-kit"
       },
       {
-        "title": "Multiple copies of Liveblocks are being loaded in your project",
-        "path": "/errors/dupes"
+        "title": "Agent skills",
+        "path": "/tools/agent-skills"
       },
       {
-        "title": "Access token doesn't grant enough permissions",
-        "path": "/errors/liveblocks-client/access-tokens-not-enough-permissions"
+        "title": "MCP server",
+        "path": "/tools/mcp-server"
       },
       {
-        "title": "The type you provided for 'Presence' is not a valid JSON object",
-        "path": "/errors/Presence"
+        "title": "Frimousse",
+        "href": "https://frimousse.liveblocks.io"
       },
       {
-        "title": "The type you provided for 'Storage' is not a valid LSON value",
-        "path": "/errors/Storage"
+        "title": "Zen Router",
+        "href": "https://zenrouter.liveblocks.io"
+      }
+    ]
+  },
+  {
+    "title": "Integrations",
+    "defaultCollapsed": true,
+    "routes": [
+      {
+        "title": "Overview",
+        "path": "/integrations"
       },
       {
-        "title": "The type you provided for 'UserMeta' does not match its requirements",
-        "path": "/errors/UserMeta"
+        "title": "Bolt",
+        "path": "/integrations/bolt"
       },
       {
-        "title": "The type you provided for 'RoomEvent' is not a valid JSON value",
-        "path": "/errors/RoomEvent"
+        "title": "Claude Code",
+        "path": "/integrations/claude-code"
       },
       {
-        "title": "The type you provided for 'ThreadMetadata' does not match its requirements",
-        "path": "/errors/ThreadMetadata"
+        "title": "Claude Desktop",
+        "path": "/integrations/claude-desktop"
       },
       {
-        "title": "The type you provided for 'RoomInfo' does not match its requirements",
-        "path": "/errors/RoomInfo"
+        "title": "Codex",
+        "path": "/integrations/codex"
       },
       {
-        "title": "At least one of the custom notification kinds you provided for 'ActivitiesData' does not match its requirements",
-        "path": "/errors/ActivitiesData"
+        "title": "Cursor",
+        "path": "/integrations/cursor"
       },
       {
-        "title": "In order to use this channel, please set up your project first",
-        "path": "/errors/enable-a-notification-channel"
+        "title": "Lovable",
+        "path": "/integrations/lovable"
+      },
+      {
+        "title": "n8n",
+        "path": "/integrations/n8n-nodes"
+      },
+      {
+        "title": "Neon",
+        "path": "/integrations/neon"
+      },
+      {
+        "title": "PlanetScale",
+        "path": "/integrations/planetscale"
+      },
+      {
+        "title": "Replit",
+        "path": "/integrations/replit"
+      },
+      {
+        "title": "Supabase",
+        "path": "/integrations/supabase"
+      },
+      {
+        "title": "v0",
+        "path": "/integrations/v0"
       }
     ]
   },
@@ -869,94 +903,60 @@
     ]
   },
   {
-    "title": "Tools",
-    "defaultCollapsed": true,
+    "title": "Errors",
+    "hidden": true,
     "routes": [
       {
-        "title": "Dev server",
-        "path": "/tools/dev-server"
+        "title": "atob polyfill is missing",
+        "path": "/errors/liveblocks-client/atob-polyfill"
       },
       {
-        "title": "DevTools extension",
-        "path": "/tools/devtools"
+        "title": "RoomProvider id property is required",
+        "path": "/errors/liveblocks-react/RoomProvider-id-property-is-required"
       },
       {
-        "title": "Next.js Starter Kit",
-        "path": "/tools/nextjs-starter-kit"
+        "title": "Cross-linked Liveblocks versions are found in your project",
+        "path": "/errors/cross-linked"
       },
       {
-        "title": "Agent skills",
-        "path": "/tools/agent-skills"
+        "title": "Multiple copies of Liveblocks are being loaded in your project",
+        "path": "/errors/dupes"
       },
       {
-        "title": "MCP server",
-        "path": "/tools/mcp-server"
+        "title": "Access token doesn't grant enough permissions",
+        "path": "/errors/liveblocks-client/access-tokens-not-enough-permissions"
       },
       {
-        "title": "Frimousse",
-        "href": "https://frimousse.liveblocks.io"
+        "title": "The type you provided for 'Presence' is not a valid JSON object",
+        "path": "/errors/Presence"
       },
       {
-        "title": "Zen Router",
-        "href": "https://zenrouter.liveblocks.io"
-      }
-    ]
-  },
-  {
-    "title": "Integrations",
-    "defaultCollapsed": true,
-    "routes": [
-      {
-        "title": "Overview",
-        "path": "/integrations"
+        "title": "The type you provided for 'Storage' is not a valid LSON value",
+        "path": "/errors/Storage"
       },
       {
-        "title": "Bolt",
-        "path": "/integrations/bolt"
+        "title": "The type you provided for 'UserMeta' does not match its requirements",
+        "path": "/errors/UserMeta"
       },
       {
-        "title": "Claude Code",
-        "path": "/integrations/claude-code"
+        "title": "The type you provided for 'RoomEvent' is not a valid JSON value",
+        "path": "/errors/RoomEvent"
       },
       {
-        "title": "Claude Desktop",
-        "path": "/integrations/claude-desktop"
+        "title": "The type you provided for 'ThreadMetadata' does not match its requirements",
+        "path": "/errors/ThreadMetadata"
       },
       {
-        "title": "Codex",
-        "path": "/integrations/codex"
+        "title": "The type you provided for 'RoomInfo' does not match its requirements",
+        "path": "/errors/RoomInfo"
       },
       {
-        "title": "Cursor",
-        "path": "/integrations/cursor"
+        "title": "At least one of the custom notification kinds you provided for 'ActivitiesData' does not match its requirements",
+        "path": "/errors/ActivitiesData"
       },
       {
-        "title": "Lovable",
-        "path": "/integrations/lovable"
-      },
-      {
-        "title": "n8n",
-        "path": "/integrations/n8n-nodes"
-      },
-      {
-        "title": "Neon",
-        "path": "/integrations/neon"
-      },
-      {
-        "title": "PlanetScale",
-        "path": "/integrations/planetscale"
-      },
-      {
-        "title": "Replit",
-        "path": "/integrations/replit"
-      },
-      {
-        "title": "Supabase",
-        "path": "/integrations/supabase"
-      },
-      {
-        "title": "v0",
-        "path": "/integrations/v0"
+        "title": "In order to use this channel, please set up your project first",
+        "path": "/errors/enable-a-notification-channel"
       }
     ]
   },
@@ -965,24 +965,78 @@
     "sort": "descending",
     "defaultCollapsed": true,
     "routes": [
-      { "title": "Upgrading to 0.17", "path": "/upgrading/0.17" },
-      { "title": "Upgrading to 0.18", "path": "/upgrading/0.18" },
-      { "title": "Upgrading to 0.19", "path": "/upgrading/0.19" },
-      { "title": "Upgrading to 1.0", "path": "/upgrading/1.0" },
-      { "title": "Upgrading to 1.2", "path": "/upgrading/1.2" },
-      { "title": "Upgrading to 1.5", "path": "/upgrading/1.5" },
-      { "title": "Upgrading to 1.9", "path": "/upgrading/1.9" },
-      { "title": "Upgrading to 1.10", "path": "/upgrading/1.10" },
-      { "title": "Upgrading to 2.0", "path": "/upgrading/2.0" },
-      { "title": "Upgrading to 2.2", "path": "/upgrading/2.2" },
-      { "title": "Upgrading to 2.8", "path": "/upgrading/2.8" },
-      { "title": "Upgrading to 2.9", "path": "/upgrading/2.9" },
-      { "title": "Upgrading to 2.15", "path": "/upgrading/2.15" },
-      { "title": "Upgrading to 2.16", "path": "/upgrading/2.16" },
-      { "title": "Upgrading to 2.24", "path": "/upgrading/2.24" },
-      { "title": "Upgrading to 3.0", "path": "/upgrading/3.0" },
-      { "title": "Upgrading to 3.10", "path": "/upgrading/3.10" },
-      { "title": "Upgrading to 3.18", "path": "/upgrading/3.18" }
+      {
+        "title": "Upgrading to 0.17",
+        "path": "/upgrading/0.17"
+      },
+      {
+        "title": "Upgrading to 0.18",
+        "path": "/upgrading/0.18"
+      },
+      {
+        "title": "Upgrading to 0.19",
+        "path": "/upgrading/0.19"
+      },
+      {
+        "title": "Upgrading to 1.0",
+        "path": "/upgrading/1.0"
+      },
+      {
+        "title": "Upgrading to 1.2",
+        "path": "/upgrading/1.2"
+      },
+      {
+        "title": "Upgrading to 1.5",
+        "path": "/upgrading/1.5"
+      },
+      {
+        "title": "Upgrading to 1.9",
+        "path": "/upgrading/1.9"
+      },
+      {
+        "title": "Upgrading to 1.10",
+        "path": "/upgrading/1.10"
+      },
+      {
+        "title": "Upgrading to 2.0",
+        "path": "/upgrading/2.0"
+      },
+      {
+        "title": "Upgrading to 2.2",
+        "path": "/upgrading/2.2"
+      },
+      {
+        "title": "Upgrading to 2.8",
+        "path": "/upgrading/2.8"
+      },
+      {
+        "title": "Upgrading to 2.9",
+        "path": "/upgrading/2.9"
+      },
+      {
+        "title": "Upgrading to 2.15",
+        "path": "/upgrading/2.15"
+      },
+      {
+        "title": "Upgrading to 2.16",
+        "path": "/upgrading/2.16"
+      },
+      {
+        "title": "Upgrading to 2.24",
+        "path": "/upgrading/2.24"
+      },
+      {
+        "title": "Upgrading to 3.0",
+        "path": "/upgrading/3.0"
+      },
+      {
+        "title": "Upgrading to 3.10",
+        "path": "/upgrading/3.10"
+      },
+      {
+        "title": "Upgrading to 3.18",
+        "path": "/upgrading/3.18"
+      }
     ]
   },
   {
