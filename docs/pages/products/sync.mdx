@@ -20,38 +20,97 @@ Depending on what you’re building, use LiveText or Yjs for text editors, or
 build directly with `@liveblocks/client`, `@liveblocks/react`,
 `@liveblocks/zustand`, or `@liveblocks/redux`.
 
-## Text editor integrations
+## Overview
 
 <ListGrid columns={2}>
   <DocsCard
     type="technology"
-    title="Text editors"
-    href="/docs/use-cases/text-editor"
-    description="Build collaborative editors with LiveText"
-    visual={<DocsTiptapIcon className="fill-product-icon-brand h-auto w-6" />}
+    title="Overview"
+    href="/docs/products/sync/overview"
+    description="Learn what Sync does and when to use it"
+    visual={<DocsIdeaIcon className="fill-product-icon-brand h-auto w-6" />}
   />
   <DocsCard
     type="technology"
-    title="Flowcharts"
-    href="/docs/use-cases/flowchart"
-    description="Build collaborative node-based interfaces"
-    visual={<DocsReactIcon />}
-  />
-</ListGrid>
-
-## Sync integrations
-
-<ListGrid columns={2}>
-  <DocsCard
-    type="technology"
-    title="LiveText"
-    href="/docs/products/sync/data-types#livetext"
-    description="Build new collaborative text editors"
+    title="Data types"
+    href="/docs/products/sync/data-types"
+    description="Model collaborative state with Storage"
     visual={<DocsStorageIcon className="fill-product-icon-brand h-auto w-6" />}
   />
   <DocsCard
     type="technology"
-    title="Liveblocks Yjs"
+    title="Conflict resolution"
+    href="/docs/products/sync/conflict-resolution"
+    description="Understand how concurrent changes are merged"
+    visual={<DocsStorageIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Multiplayer undo/redo"
+    href="/docs/products/sync/multiplayer-undo-redo"
+    description="Give each user an independent edit history"
+    visual={
+      <DocsJavascriptIcon className="fill-product-icon-brand h-auto w-6" />
+    }
+  />
+  <DocsCard
+    type="technology"
+    title="Presence"
+    href="/docs/products/sync/presence"
+    description="Show users, cursors, selections, and activity"
+    visual={
+      <DocsJavascriptIcon className="fill-product-icon-brand h-auto w-6" />
+    }
+  />
+  <DocsCard
+    type="technology"
+    title="Agentic editing"
+    href="/docs/products/sync/agentic-editing"
+    description="Let servers and AI agents edit shared data"
+    visual={<DocsApiIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Version history"
+    href="/docs/products/sync/version-history"
+    description="Preview and restore earlier document versions"
+    visual={<DocsBookIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Broadcast events"
+    href="/docs/products/sync/broadcast-events"
+    description="Send ephemeral events to connected clients"
+    visual={
+      <DocsJavascriptIcon className="fill-product-icon-brand h-auto w-6" />
+    }
+  />
+  <DocsCard
+    type="technology"
+    title="Feeds"
+    href="/docs/products/sync/feeds"
+    description="Build persistent chat, activity, and workflow streams"
+    visual={
+      <DocsJavascriptIcon className="fill-product-icon-brand h-auto w-6" />
+    }
+  />
+  <DocsCard
+    type="technology"
+    title="Authentication and permissions"
+    href="/docs/products/sync/authentication-and-permissions"
+    description="Control who can read or edit each room"
+    visual={<DocsBookIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Integrations"
+    href="/docs/products/sync/integrations"
+    description="Connect editors, diagrams, and state libraries"
+    visual={<DocsBooksIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Yjs"
     href="/docs/products/sync/yjs"
     description="Use the Yjs ecosystem with Liveblocks"
     visual={<DocsYjsIcon className="fill-product-icon-brand h-auto w-6" />}
