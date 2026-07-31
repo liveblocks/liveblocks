@@ -108,31 +108,26 @@ interactions yourself.
         LiveblocksProvider,
         RoomProvider,
       } from "@liveblocks/react/suspense";
-      import { type ReactNode, useMemo } from "react";
+      import type { ReactNode } from "react";
       import type { Shape } from "../liveblocks.config";
 
       export function Room({ children }: { children: ReactNode }) {
-        const initialStorage = useMemo(
-          () => ({
-            shapes: new LiveMap<string, LiveObject<Shape>>([
-              [
-                "shape-1",
-                new LiveObject({ x: 100, y: 120, fill: "#f59e0b" }),
-              ],
-              [
-                "shape-2",
-                new LiveObject({ x: 280, y: 200, fill: "#8b5cf6" }),
-              ],
-            ]),
-          }),
-          []
-        );
-
         return (
           <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
             <RoomProvider
               id="my-canvas-room"
-              initialStorage={initialStorage}
+              initialStorage={{
+                shapes: new LiveMap<string, LiveObject<Shape>>([
+                  [
+                    "shape-1",
+                    new LiveObject({ x: 100, y: 120, fill: "#f59e0b" }),
+                  ],
+                  [
+                    "shape-2",
+                    new LiveObject({ x: 280, y: 200, fill: "#8b5cf6" }),
+                  ],
+                ]),
+              }}
             >
               <ClientSideSuspense fallback={<div>Loading…</div>}>
                 {children}
