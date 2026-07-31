@@ -1,0 +1,110 @@
+---
+meta:
+  title: "Slideshow"
+  parentTitle: "Use cases"
+  description:
+    "Build collaborative presentations with synchronized slides, live cursors,
+    comments, and AI editing."
+---
+
+Collaborative slide editors combine an ordered deck, rich slide content, and
+temporary presentation state. Use Sync for slide order and content, Presence for
+the active slide and live selections, Comments for feedback, and Feeds for AI
+proposals and progress.
+
+<Banner title="Explore a complete slideshow" type="info">
+
+Open the
+[AI Slideshow Generator example](/examples/ai-slideshow/nextjs-ai-slideshow) to
+see multiplayer editing, live cursors, Comments, Feeds, and AI-generated slides
+working together.
+
+</Banner>
+
+## Synchronize the deck [#synchronize-the-deck]
+
+Use a [`LiveList`](/docs/api-reference/liveblocks-client#LiveList) for the
+shared slide order and a
+[`LiveMap`](/docs/api-reference/liveblocks-client#LiveMap) of
+[`LiveObject`](/docs/api-reference/liveblocks-client#LiveObject) values for
+slides addressed by stable IDs. This allows one user to reorder the deck while
+another edits an individual slide. Read the deck with
+[`useStorage`](/docs/api-reference/liveblocks-react#useStorage) and update it
+with [`useMutation`](/docs/api-reference/liveblocks-react#useMutation).
+
+```tsx
+import { LiveObject } from "@liveblocks/client";
+import { useMutation, useStorage } from "@liveblocks/react/suspense";
+
+const slideOrder = useStorage((root) => root.slideOrder);
+
+const addSlide = useMutation(({ storage }) => {
+  const id = crypto.randomUUID();
+  storage
+    .get("slides")
+    .set(id, new LiveObject({ title: "Untitled", body: "" }));
+  storage.get("slideOrder").push(id);
+}, []);
+```
+
+Use [LiveText](/docs/products/sync/data-types#livetext) when users concurrently
+edit text inside a slide. Use [Liveblocks Yjs](/docs/products/sync/yjs) when an
+existing editor or slide renderer already stores its document in Yjs.
+
+## Keep collaborators in context [#presence]
+
+Use [Presence](/docs/products/sync/presence) for the active slide ID, cursor
+position, selected element, and current editing mode. Presence is temporary, so
+changing slides does not modify the saved deck or add an entry to document
+history. Publish state with
+[`useUpdateMyPresence`](/docs/api-reference/liveblocks-react#useUpdateMyPresence)
+and read collaborators with
+[`useOthers`](/docs/api-reference/liveblocks-react#useOthers).
+
+```tsx
+const updateMyPresence = useUpdateMyPresence();
+const others = useOthers();
+
+function openSlide(slideId: string) {
+  updateMyPresence({ activeSlideId: slideId });
+}
+```
+
+Render `others` in an avatar stack, on-slide cursors, or the slide sidebar to
+show where each collaborator is working.
+
+## Review and restore changes [#review]
+
+Attach [Comments](/docs/products/comments) to a slide or a point within the 16:9
+slide surface. Store a stable `slideId` and percentage-based coordinates in
+thread metadata so comment pins remain attached when the presentation is
+resized.
+
+Use [Multiplayer undo/redo](/docs/products/sync/multiplayer-undo-redo) for
+individual editing gestures and
+[Version history](/docs/products/sync/version-history) for deck-wide restore
+points.
+
+## Add AI editing [#ai-editing]
+
+An AI agent can read the current deck, propose new or edited slides in a
+[Feed](/docs/products/sync/feeds), and apply accepted changes to the same Sync
+document as connected users. Create a version before a broad edit and show the
+agent's temporary activity with Presence. Read
+[Agentic editing](/docs/products/sync/agentic-editing) for server-side mutation
+and versioning patterns.
+
+## Example [#example]
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "AI Slideshow Generator",
+      slug: "ai-slideshow/nextjs-ai-slideshow",
+      image: "/images/examples/thumbnails/ai-slideshow.jpg",
+      advanced: true,
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+</ListGrid>

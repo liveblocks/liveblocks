@@ -614,6 +614,10 @@
         "path": "/use-cases/flowchart"
       },
       {
+        "title": "Slideshow",
+        "path": "/use-cases/slideshow"
+      },
+      {
         "title": "AI Collaboration",
         "path": "/use-cases/ai-collaboration"
       },

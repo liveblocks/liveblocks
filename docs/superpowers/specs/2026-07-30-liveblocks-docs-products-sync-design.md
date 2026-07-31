@@ -107,8 +107,8 @@ Use cases
 ├── Code editor
 ├── Text editor
 ├── Flowchart
+├── Slideshow
 ├── AI Collaboration
-├── Spreadsheet
 └── Table
 ```
 
@@ -378,9 +378,9 @@ Specific focus:
   Comments, Notifications, AI Copilots; the old editor feature pages consolidate
   here
 - **Flowchart**: `@liveblocks/react-flow`, Sync, Presence, Comments, AI
+- **Slideshow**: Sync, Presence, Comments, Feeds, version history, AI
 - **AI Collaboration**: Feeds, Sync agentic editing, Presence, Comments,
   Notifications, AI Copilots
-- **Spreadsheet**: Sync, Presence, undo/redo, Comments, AI
 - **Table**: Comments, Notifications, optional Presence and Sync
 
 ## Redirect ledger
