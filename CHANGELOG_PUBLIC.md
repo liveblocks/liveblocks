@@ -20,7 +20,17 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 31 (2026-07-31)
 
+## Website
+
+- New blog post: [LiveFile: upload and share files in collaborative apps](https://liveblocks.io/blog/livefile-upload-and-share-files-on-collaborative-apps).
+
+## Examples
+
+- Added a skill that can create examples, including images and code.
+
 ## Contributors
+
+ctnicholas
 
 # Week 30 (2026-07-24)
 
