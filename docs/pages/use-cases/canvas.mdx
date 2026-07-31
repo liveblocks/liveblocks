@@ -23,13 +23,13 @@ show live cursors, use version history, and add multiplayer undo/redo.
 
 - **Realtime collaboration**: Canvas state is permanent and updates in realtime
   for connected users.
+- **Presence**: Show live cursors, avatar stacks, realtime selections, and agent
+  activity.
+- **Agentic editing**: Create AI agents that can modify the canvas from the
+  back-end.
 - **Version history**: Save, preview, and restore canvas state from snapshots.
 - **Multiplayer undo/redo**: Each user can independently undo and redo their own
   changes.
-- **Agentic editing**: Create AI agents that can modify the canvas from the
-  back-end.
-- **Presence**: Show live cursors, avatar stacks, realtime selections, and agent
-  activity.
 - **Comments**: Add draggable commenting threads to the canvas.
 - **Permissions**: Control which users can read and edit the canvas.
 
@@ -61,61 +61,204 @@ Choose a starting point based on how you want to render your canvas.
   />
 </ListGrid>
 
-## What Liveblocks adds to a canvas [#features]
+## Realtime collaboration [#realtime-collaboration]
 
-### Synchronize shapes and layers [#synchronize-shapes]
-
-Store shapes in a [`LiveMap`](/docs/api-reference/liveblocks-client#LiveMap),
-keyed by stable IDs, so users can create, move, and delete different objects
-concurrently. Model each shape as a
-[`LiveObject`](/docs/api-reference/liveblocks-client#LiveObject), and use a
-[`LiveList`](/docs/api-reference/liveblocks-client#LiveList) when the order of
-layers is also shared.
+Store canvas objects in a
+[`LiveMap`](/docs/api-reference/liveblocks-client#LiveMap), keyed by stable IDs,
+and model each object with a
+[`LiveObject`](/docs/api-reference/liveblocks-client#LiveObject). Keep shared
+layer order in a [`LiveList`](/docs/api-reference/liveblocks-client#LiveList).
+Read only the data a component renders with
+[`useStorage`](/docs/api-reference/liveblocks-react#useStorage), then update it
+inside [`useMutation`](/docs/api-reference/liveblocks-react#useMutation).
+Mutations are applied optimistically and synchronized through Sync, including
+every position update while a shape is dragged.
 
 ```tsx
-const shapes = useStorage((root) => root.shapes);
+import { useMutation, useStorage } from "@liveblocks/react/suspense";
 
-const moveShape = useMutation(
-  ({ storage }, id: string, x: number, y: number) => {
-    storage.get("shapes").get(id)?.update({ x, y });
-  },
-  []
-);
+function Shape({ id }: { id: string }) {
+  const shape = useStorage((root) => root.shapes.get(id));
+  const moveShape = useMutation(
+    ({ storage }, x: number, y: number) => {
+      storage.get("shapes").get(id)?.update({ x, y });
+    },
+    [id]
+  );
+
+  if (!shape) return null;
+
+  return <CanvasShape {...shape} onMove={moveShape} />;
+}
 ```
 
-Storage mutations are applied optimistically and synchronized through Sync. Read
-[Data types](/docs/products/sync/data-types) and
-[Conflict resolution](/docs/products/sync/conflict-resolution) when designing
-the canvas document.
+Read [Data types](/docs/products/sync/data-types) to choose the canvas document
+shape and [Conflict resolution](/docs/products/sync/conflict-resolution) to
+understand how concurrent changes are merged.
 
-### Show cursors and selections [#presence]
+## Presence [#presence]
 
-Use [Presence](/docs/products/sync/presence) for cursor coordinates, selected
-shape IDs, active tools, and other temporary signals. Presence updates reach
-other users in realtime and disappear when a connection ends, so they do not
-become part of the saved canvas.
+Keep cursors, selections, active tools, and agent activity in
+[Presence](/docs/products/sync/presence), because this state is temporary and
+should disappear when a connection ends. Publish the current user’s state with
+[`useUpdateMyPresence`](/docs/api-reference/liveblocks-react#useUpdateMyPresence)
+and subscribe to only the fields you render with
+[`useOthersMapped`](/docs/api-reference/liveblocks-react#useOthersMapped).
 
-### Add multiplayer undo and redo [#undo-redo]
+```tsx
+import {
+  shallow,
+  useOthersMapped,
+  useUpdateMyPresence,
+} from "@liveblocks/react/suspense";
 
-Liveblocks keeps a history for each user, allowing them to undo their own
-changes without reversing work from other collaborators. Pause history when a
-drag starts and resume it when the drag ends, so every pointer movement is
-synchronized while the complete gesture remains one undo step. Read
-[Multiplayer undo/redo](/docs/products/sync/multiplayer-undo-redo) for the React
-and client APIs.
+function CanvasPresence() {
+  const others = useOthersMapped(
+    (other) => ({
+      cursor: other.presence.cursor,
+      selectedShapeId: other.presence.selectedShapeId,
+    }),
+    shallow
+  );
+  const updateMyPresence = useUpdateMyPresence();
 
-### Discuss objects in context [#comments]
+  return (
+    <PresenceLayer
+      others={others}
+      onPointerMove={(cursor) => updateMyPresence({ cursor })}
+    />
+  );
+}
+```
 
-Use [Comments](/docs/products/comments) to attach threads to coordinates,
-shapes, or regions. Store a canvas position or object ID in thread metadata,
-then render each thread at its corresponding point or object.
+## Agentic editing [#agentic-editing]
 
-### Save and automate changes [#versions-and-agents]
+AI agents and other trusted server processes can edit the same canvas with
+[`Liveblocks.mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage).
+The mutation uses the same Storage data types as the client, and connected users
+receive the result in realtime. Run agent mutations on your backend, validate
+the generated values, and create a version before applying a broad change.
 
-[Version history](/docs/products/sync/version-history) creates restore points
-for the whole canvas. Servers and AI agents can use
-[Agentic editing](/docs/products/sync/agentic-editing) to modify the same
-Storage document as connected users, with their changes appearing in realtime.
+```ts
+await liveblocks.mutateStorage("canvas-room", ({ root }) => {
+  root.get("shapes").get(shapeId)?.update({
+    x: suggestedPosition.x,
+    y: suggestedPosition.y,
+  });
+});
+```
+
+Read [Agentic editing](/docs/products/sync/agentic-editing) for validation,
+server Presence, JSON Patch, and multi-step agent workflows.
+
+## Version history [#version-history]
+
+Create a version when a user publishes the canvas, before importing data, or
+before an AI agent makes a substantial edit. Use
+[`useHistoryVersions`](/docs/api-reference/liveblocks-react#useHistoryVersions)
+to list versions,
+[`useHistoryVersionStorageData`](/docs/api-reference/liveblocks-react#useHistoryVersionStorageData)
+to render a read-only preview, and
+[`useRestoreToStorageVersion`](/docs/api-reference/liveblocks-react#useRestoreToStorageVersion)
+to restore the complete canvas Storage state as one synchronized change.
+
+```tsx
+import { useRestoreToStorageVersion } from "@liveblocks/react";
+
+function RestoreCanvas({ versionId }: { versionId: string }) {
+  const restore = useRestoreToStorageVersion(versionId);
+
+  return <button onClick={() => restore()}>Restore this canvas version</button>;
+}
+```
+
+Automatic versions can be enabled in the dashboard, and meaningful snapshots can
+be created from a backend with
+[`Liveblocks.createVersionHistorySnapshot`](/docs/api-reference/liveblocks-node#create-version-history-snapshot).
+Read [Version history](/docs/products/sync/version-history) for the complete
+preview and restore flow.
+
+## Multiplayer undo/redo [#multiplayer-undo-redo]
+
+Use [`useHistory`](/docs/api-reference/liveblocks-react#useHistory) to give each
+user an independent undo and redo stack. Pause history at the start of a drag
+and resume it at the end: every position still synchronizes, but the complete
+gesture becomes one undo step without reversing another user’s work.
+
+```tsx
+import { useHistory } from "@liveblocks/react/suspense";
+
+function CanvasHistory() {
+  const { undo, redo, pause, resume } = useHistory();
+
+  return (
+    <Canvas
+      onUndo={undo}
+      onRedo={redo}
+      onDragStart={pause}
+      onDragEnd={resume}
+    />
+  );
+}
+```
+
+Use [`useCanUndo`](/docs/api-reference/liveblocks-react#useCanUndo) and
+[`useCanRedo`](/docs/api-reference/liveblocks-react#useCanRedo) to disable
+unavailable controls. Read
+[Multiplayer undo/redo](/docs/products/sync/multiplayer-undo-redo) for keyboard
+shortcuts and the non-React client API.
+
+## Comments [#comments]
+
+Attach [Comments](/docs/products/comments) to canvas coordinates or object IDs
+with thread metadata. A
+[`FloatingComposer`](/docs/api-reference/liveblocks-react-ui#FloatingComposer)
+can create a thread at the selected point, while
+[`useThreads`](/docs/api-reference/liveblocks-react#useThreads) renders existing
+threads and
+[`useEditThreadMetadata`](/docs/api-reference/liveblocks-react#useEditThreadMetadata)
+saves a new position after a thread is dragged.
+
+```tsx
+import { CommentPin, FloatingComposer } from "@liveblocks/react-ui";
+
+function CommentAtPoint({ x, y }: { x: number; y: number }) {
+  return (
+    <FloatingComposer metadata={{ x, y }}>
+      <CommentPin
+        style={{ position: "absolute", transform: `translate(${x}px, ${y}px)` }}
+      />
+    </FloatingComposer>
+  );
+}
+```
+
+Follow the
+[draggable canvas Comments quickstart](/docs/get-started/nextjs-comments-canvas)
+for placement mode, z-index management, and draggable thread components.
+
+## Permissions [#permissions]
+
+Create a room for each canvas and set its access from your backend with
+[`Liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms). Give
+editors `*:write`, viewers `*:read`, and keep `defaultAccesses` empty for a
+private canvas. These room permissions control the canvas Storage, Presence,
+Comments, and other resources available to each authenticated user.
+
+```ts
+await liveblocks.createRoom(`canvas:${canvasId}`, {
+  defaultAccesses: [],
+  groupsAccesses: {
+    [editorsGroupId]: ["*:write"],
+    [viewersGroupId]: ["*:read"],
+  },
+});
+```
+
+Issue ID tokens from an [authentication endpoint](/docs/authentication) and read
+[Permissions](/docs/authentication/permissions) for user, group, and room access
+patterns. Trusted server APIs use a secret key, so validate the requesting user
+in your own backend before editing on their behalf.
 
 ## Examples [#examples]
 
