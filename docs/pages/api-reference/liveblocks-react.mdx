@@ -3821,7 +3821,9 @@ function FormattedDocument() {
 For custom editor integrations, subscribe to granular `LiveText` changes with
 [`useRoom`][] and `room.subscribe` using the `isDeep` option. Each update
 includes the change type (`insert`, `delete`, or `format`), index, and affected
-text. Learn more about
+text, as well as a
+[`source`](/docs/api-reference/liveblocks-client#update-source) saying whether
+the change was made by this client or by another one. Learn more about
 [listening for nested changes](/docs/api-reference/liveblocks-client#listening-for-nested-changes).
 
 ```tsx

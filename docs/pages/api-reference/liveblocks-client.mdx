@@ -1762,7 +1762,7 @@ const unsubscribeSteven = room.subscribe(steven, (updatedSteven) => {
 It’s also possible to subscribe to a Storage item and all of its children by
 passing an optional `isDeep` option in the third argument. In this case, the
 callback will be passed a list of updates instead of just the new Storage item.
-Each such update is a `{ type, node, updates }` object.
+Each such update is a `{ type, node, updates, source }` object.
 
 ```ts
 const { root } = await room.getStorage();
@@ -1775,6 +1775,7 @@ const unsubscribe = room.subscribe(
         type, // "LiveObject", "LiveList", "LiveMap", or "LiveText"
         node,
         updates,
+        source, // Where the change came from, see below
       } = update;
       switch (type) {
         case "LiveObject": {
@@ -1803,6 +1804,46 @@ const unsubscribe = room.subscribe(
   { isDeep: true }
 );
 ```
+
+#### Checking where a change came from [#update-source]
+
+Every update carries a `source` field, telling you where the change came from.
+Use it to tell changes made by this client apart from changes made by others,
+for example when syncing Storage into an editor that already applied the local
+change itself.
+
+```ts
+const unsubscribe = room.subscribe(
+  root,
+  (storageUpdates) => {
+    for (const update of storageUpdates) {
+      const { source } = update;
+      if (source.origin === "remote") {
+        // Changed by another client, and received over the network
+      } else if (source.via === "edit") {
+        // Changed by this client, as a regular edit
+      } else {
+        // Changed by this client, replayed from history ("undo" or "redo")
+      }
+    }
+  },
+  { isDeep: true }
+);
+```
+
+<PropertiesList title="Properties">
+  <PropertiesListItem name="source.origin" type='"local" | "remote"'>
+    `"local"` if the change was made by this client, `"remote"` if it was made
+    by another client and reached this client over the network.
+  </PropertiesListItem>
+  <PropertiesListItem name="source.via" type='"edit" | "undo" | "redo"'>
+    Only present when `origin` is `"local"`. How the change was made: a regular
+    edit, or a replay from the [undo/redo history](#Room.history).
+  </PropertiesListItem>
+</PropertiesList>
+
+When a single notification merges local and remote changes to the same node, the
+merged update is reported as `{ origin: "remote" }`.
 
 #### Using async functions
 
@@ -6235,6 +6276,9 @@ const unsubscribe = room.subscribe(
   { isDeep: true }
 );
 ```
+
+Each update also carries a [`source`](#update-source), saying whether the change
+was made by this client or by another one.
 
 `LiveText` edits support [undo and redo](#Room.history) when made through a
 connected room.
