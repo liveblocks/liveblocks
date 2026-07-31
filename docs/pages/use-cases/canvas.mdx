@@ -7,11 +7,11 @@ meta:
     cursors, undo/redo, and comments."
 ---
 
-Collaborative canvases combine persistent objects with temporary user state. Use
-Storage in Sync for shapes and layers, Presence for cursors and selections,
-multiplayer history for undo/redo, and Comments for annotations.
+Create a collaborative canvas, whiteboard, or design tool with Liveblocks. Start
+with a ready-made canvas, or create something custom. Add draggable objects,
+show live cursors, use version history, and add multiplayer undo/redo.
 
-<Figure caption={<></>}>
+<Figure caption={<>A Tldraw whiteboard</>}>
   <MuxVideo
     playbackId="fdaBSuIjHvQ9014ntFFXWKZaBVoR2EcIRC00d34HsBKdI"
     alt="Example of a collaborative canvas"
@@ -19,31 +19,45 @@ multiplayer history for undo/redo, and Comments for annotations.
   />
 </Figure>
 
+## Features [#features]
+
+- **Realtime collaboration**: Canvas state is permanent and updates in realtime
+  for connected users.
+- **Version history**: Save, preview, and restore canvas state from snapshots.
+- **Multiplayer undo/redo**: Each user can independently undo and redo their own
+  changes.
+- **Agentic editing**: Create AI agents that can modify the canvas from the
+  back-end.
+- **Presence**: Show live cursors, avatar stacks, realtime selections, and agent
+  activity.
+- **Comments**: Add draggable commenting threads to the canvas.
+- **Permissions**: Control which users can read and edit the canvas.
+
 ## Get started [#get-started]
 
 Choose a starting point based on how you want to render your canvas.
 
-<ListGrid columns={3}>
+<ListGrid columns={1} defaultVisibleItems={3}>
   <DocsCard
     type="technology"
-    title="Custom canvas"
-    href="/docs/get-started/nextjs-canvas-custom"
-    description="Build draggable shapes with React and Sync"
-    visual={<DocsCanvasIcon className="h-auto w-6" />}
-  />
-  <DocsCard
-    type="technology"
-    title="Tldraw"
+    title="Get started with Tldraw"
     href="/docs/get-started/nextjs-tldraw"
-    description="Add collaboration to a Tldraw whiteboard"
+    description="Add a fully-featured multiplayer whiteboard"
     visual={<DocsNextjsIcon />}
   />
   <DocsCard
     type="technology"
-    title="Canvas comments"
+    title="Get started with a custom canvas"
+    href="/docs/get-started/nextjs-canvas-custom"
+    description="Create custom draggable shapes and layers"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with draggable comments"
     href="/docs/get-started/nextjs-comments-canvas"
-    description="Place comment threads on a canvas"
-    visual={<DocsMentionIcon className="fill-product-icon-brand h-auto w-6" />}
+    description="Add draggable comment threads with x/y coordinates"
+    visual={<DocsNextjsIcon />}
   />
 </ListGrid>
 
