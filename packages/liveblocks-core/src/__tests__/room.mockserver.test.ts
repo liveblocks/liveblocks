@@ -55,6 +55,7 @@ import {
 } from "./_MockWebSocketServer.behaviors";
 import {
   createSerializedList,
+  createSerializedMap,
   createSerializedObject,
   createSerializedRegister,
   createSerializedRoot,
@@ -2921,6 +2922,61 @@ describe("room", () => {
       room.history.redo();
 
       expect(sources).toEqual([{ origin: "local", via: "redo" }]);
+    });
+
+    test("an acknowledgement keeps the via of the change it confirms", async () => {
+      const { room, root, applyRemoteOperations } =
+        await prepareIsolatedStorageTest<{ map: LiveMap<string, string> }>(
+          [
+            createSerializedRoot(),
+            createSerializedMap("0:1", "root", "map"),
+            createSerializedRegister("0:2", "0:1", "k", "old"),
+          ],
+          1
+        );
+
+      const sources: UpdateSource[] = [];
+      onTestFinished(
+        room.events.storageBatch.subscribe((updates) => {
+          sources.push(...readSources(updates));
+        })
+      );
+
+      root.get("map").set("k", "new");
+      room.history.undo(); // Restores "old" under a fresh opId
+
+      // Another client overwrites the same key before our undo is acked, which
+      // clears the pending-set bookkeeping for that key...
+      applyRemoteOperations([
+        {
+          type: OpCode.CREATE_REGISTER,
+          id: "2:0",
+          parentId: "0:1",
+          parentKey: "k",
+          data: "remote",
+        },
+      ]);
+
+      // ...so when the server acks the undo (by echoing it back verbatim), it
+      // lands as a real change instead of a no-op
+      applyRemoteOperations([
+        {
+          type: OpCode.CREATE_REGISTER,
+          id: "0:2",
+          parentId: "0:1",
+          parentKey: "k",
+          data: "old",
+          opId: "1:1",
+        },
+      ]);
+
+      expect(root.get("map").get("k")).toBe("old");
+      expect(sources).toEqual([
+        { origin: "local", via: "edit" },
+        { origin: "local", via: "undo" },
+        { origin: "remote" },
+        { origin: "local", via: "undo" }, // The ack, not a fresh "edit"
+      ]);
     });
   });
 
