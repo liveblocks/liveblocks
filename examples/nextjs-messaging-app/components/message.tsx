@@ -280,7 +280,7 @@ function ReactionChips({
             "rounded-full border px-1.75 text-normal gap-1 flex items-center",
             group.selfReacted
               ? "border-indigo-500/60 bg-indigo-50 text-indigo-700 font-medium"
-              : "border-transparent bg-neutral-200/50 hover:border-neutral-200 hover:bg-white text-neutral-600"
+              : "border-transparent bg-neutral-200/50 hover:border-neutral-200 hover:bg-white text-neutral-700"
           )}
         >
           {group.emoji}{" "}
