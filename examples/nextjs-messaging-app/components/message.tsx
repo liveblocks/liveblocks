@@ -277,7 +277,7 @@ function ReactionChips({
             })
             .join(", ")}
           className={clsx(
-            "rounded-full border px-1.75 text-normal gap-1 flex items-center",
+            "rounded-full border px-1.75 text-normal gap-1 flex items-center h-6.5",
             group.selfReacted
               ? "border-brand-500/60 bg-brand-50 text-brand-700 font-medium"
               : "border-transparent bg-neutral-200/50 hover:border-neutral-200 hover:bg-white text-neutral-700"
@@ -290,10 +290,10 @@ function ReactionChips({
       <EmojiPickerPopover onSelect={onToggle}>
         <button
           type="button"
-          className="rounded-full border border-neutral-200 bg-white px-2 py-0.5 text-neutral-500 hover:border-neutral-300 hover:text-neutral-700"
+          className="rounded-full border px-1.75 text-normal gap-1 flex items-center h-6.5 border-transparent bg-neutral-200/50 hover:border-neutral-200 hover:bg-white text-neutral-700"
           aria-label="Add reaction"
         >
-          <SmilePlus className="size-3.5" />
+          <SmilePlus className="size-4" />
         </button>
       </EmojiPickerPopover>
     </div>
