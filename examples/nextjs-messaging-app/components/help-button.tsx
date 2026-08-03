@@ -49,7 +49,7 @@ const styles: Record<string, CSSProperties> = {
     height: 28,
     background: "transparent",
     border: "none",
-    borderRadius: 6,
+    borderRadius: 99999,
     color: "#737373",
     cursor: "pointer",
   },
@@ -228,8 +228,8 @@ export function HelpButton() {
 function HelpIcon() {
   return (
     <svg
-      width={16}
-      height={16}
+      width={20}
+      height={20}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
