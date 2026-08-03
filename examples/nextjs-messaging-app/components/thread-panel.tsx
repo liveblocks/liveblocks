@@ -13,6 +13,7 @@ import {
 } from "@liveblocks/react/suspense";
 import { XIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef } from "react";
+import { AI_USER_ID } from "@/app/database";
 import { Composer } from "@/components/composer";
 import {
   buildMessageListItems,
@@ -150,6 +151,9 @@ function ThreadConversation({
   const updateFeedMetadata = useUpdateFeedMetadata();
   const containerRef = useRef<HTMLDivElement>(null);
   const stickToBottomRef = useRef(true);
+  const rootMentionsAi = parentMessage.data.content.includes(
+    `<@${AI_USER_ID}>`
+  );
   const sortedReplies = useMemo(
     () => [...replies].sort((a, b) => a.createdAt - b.createdAt),
     [replies]
@@ -338,6 +342,7 @@ function ThreadConversation({
         placeholder="Reply…"
         history={history}
         onSend={handleSend}
+        forceAiReply={rootMentionsAi}
       />
     </>
   );

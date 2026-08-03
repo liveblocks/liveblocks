@@ -34,6 +34,8 @@ declare global {
       // True while an AI reply is still being streamed in via
       // `updateFeedMessage`. Cleared on the final update.
       streaming?: boolean;
+      // Each entry records who reacted and when.
+      reactions?: { emoji: string; userId: string; createdAt: number }[];
     };
 
     // Custom metadata attached to a feed

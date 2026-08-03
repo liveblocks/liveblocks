@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import clsx from "clsx";
 import Mention from "@tiptap/extension-mention";
 import { Extension } from "@tiptap/core";
@@ -14,6 +14,7 @@ import {
   useSelf,
   useUpdateMyPresence,
 } from "@liveblocks/react/suspense";
+import { SendHorizontal } from "lucide-react";
 import { AI_USER, AI_USER_ID, getUsers } from "@/app/database";
 import type { Channel } from "@/lib/workspaces";
 import { isMessageEmpty, serializeMarkdown } from "@/lib/serialize-markdown";
@@ -105,16 +106,19 @@ export function Composer({
   placeholder,
   history,
   onSend,
+  forceAiReply = false,
 }: {
   feedId: string;
   roomId: string;
   placeholder: string;
   history: { userId: string; content: string }[];
   onSend: (content: string) => Promise<void>;
+  forceAiReply?: boolean;
 }) {
   const self = useSelf();
   const typingLabel = useTypingLabel(feedId);
   const updateMyPresence = useUpdateMyPresence();
+  const [isEmpty, setIsEmpty] = useState(true);
   const inFlightRef = useRef(false);
   const sendMessageRef = useRef<() => Promise<void>>(async () => {});
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -212,7 +216,8 @@ export function Composer({
         return false;
       },
     },
-    onUpdate: () => {
+    onUpdate: ({ editor: updatedEditor }) => {
+      setIsEmpty(isMessageEmpty(updatedEditor.getJSON()));
       updateMyPresence({ typingIn: feedId });
       scheduleTypingClear();
     },
@@ -236,8 +241,9 @@ export function Composer({
       await onSend(content);
 
       editor.commands.clearContent(true);
+      setIsEmpty(true);
 
-      if (content.includes(`<@${AI_USER_ID}>`)) {
+      if (forceAiReply || content.includes(`<@${AI_USER_ID}>`)) {
         const aiHistory = [
           ...history.slice(-24),
           { userId: self.id, content },
@@ -262,6 +268,7 @@ export function Composer({
     clearTyping,
     editor,
     feedId,
+    forceAiReply,
     history,
     onSend,
     roomId,
@@ -282,8 +289,22 @@ export function Composer({
 
   return (
     <div className="shrink-0 bg-white px-5 pb-1">
-      <div className="rounded-lg border border-neutral-300 bg-white focus-within:border-neutral-400 focus-within:ring-2 focus-within:ring-neutral-100/80 transition-all">
+      <div className="relative rounded-lg border border-neutral-300 bg-white transition-all focus-within:border-neutral-400 focus-within:ring-2 focus-within:ring-neutral-100/80">
         <EditorContent editor={editor} />
+        <button
+          type="button"
+          onClick={() => void sendMessage()}
+          disabled={isEmpty}
+          className={clsx(
+            "absolute bottom-1.5 right-1.5 rounded-md p-1.5 transition",
+            isEmpty
+              ? "cursor-not-allowed bg-neutral-100 text-neutral-400"
+              : "bg-indigo-600 text-white hover:bg-indigo-700"
+          )}
+          aria-label="Send message"
+        >
+          <SendHorizontal className="size-4" />
+        </button>
       </div>
       <p
         className={clsx(

@@ -1,15 +1,29 @@
 "use client";
 
 import { getUser } from "@/app/database";
+import { EmojiPickerPopover } from "@/components/emoji-picker-popover";
 import { Markdown } from "@/lib/markdown";
 import type { ThreadFeed } from "@/lib/threads";
 import {
   useDeleteFeed,
   useDeleteFeedMessage,
   useSelf,
+  useUpdateFeedMessage,
 } from "@liveblocks/react/suspense";
 import clsx from "clsx";
-import { LoaderCircle, MessageSquareText, Trash2 } from "lucide-react";
+import {
+  LoaderCircle,
+  MessageSquareText,
+  SmilePlus,
+  Trash2,
+} from "lucide-react";
+import { useState } from "react";
+
+export type MessageReaction = {
+  emoji: string;
+  userId: string;
+  createdAt: number;
+};
 
 export type FeedMessage = {
   id: string;
@@ -18,6 +32,7 @@ export type FeedMessage = {
     userId: string;
     content: string;
     streaming?: boolean;
+    reactions?: MessageReaction[];
   };
 };
 
@@ -48,6 +63,8 @@ export function Message({
   const self = useSelf();
   const deleteFeed = useDeleteFeed();
   const deleteFeedMessage = useDeleteFeedMessage();
+  const updateFeedMessage = useUpdateFeedMessage();
+  const [pickerOpen, setPickerOpen] = useState(false);
   const user = getUser(message.data.userId);
   const isOwn = self.id === message.data.userId;
   const showDelete =
@@ -56,6 +73,35 @@ export function Message({
     threadFeed?.metadata.replyCount ?? "0",
     10
   );
+  const reactionGroups = groupReactions(
+    message.data.reactions ?? [],
+    self.id
+  );
+
+  const toggleReaction = async (emoji: string) => {
+    const reactions = message.data.reactions ?? [];
+    const hasReacted = reactions.some(
+      (reaction) => reaction.emoji === emoji && reaction.userId === self.id
+    );
+    const nextReactions = hasReacted
+      ? reactions.filter(
+          (reaction) =>
+            reaction.emoji !== emoji || reaction.userId !== self.id
+        )
+      : [
+          ...reactions,
+          {
+            emoji,
+            userId: self.id,
+            createdAt: Date.now(),
+          },
+        ];
+
+    await updateFeedMessage(feedId, message.id, {
+      ...message.data,
+      reactions: nextReactions,
+    });
+  };
 
   const handleDelete = async () => {
     if (onDelete) {
@@ -106,6 +152,14 @@ export function Message({
         <MessageBody message={message} />
       )}
 
+      {!message.data.streaming && reactionGroups.length > 0 ? (
+        <ReactionChips
+          groups={reactionGroups}
+          indented={showHeader}
+          onToggle={toggleReaction}
+        />
+      ) : null}
+
       {variant === "channel" &&
       threadFeed &&
       replyCount > 0 &&
@@ -118,8 +172,29 @@ export function Message({
         />
       ) : null}
 
-      {variant === "channel" || showDelete ? (
-        <div className="absolute right-3 top-1 flex items-center rounded-md border border-neutral-200 bg-white opacity-0 shadow-sm transition-opacity group-hover:opacity-100">
+      {!message.data.streaming ||
+      (variant === "channel" && onOpenThread) ||
+      showDelete ? (
+        <div
+          className={clsx(
+            "absolute right-3 top-1 flex items-center rounded-md border border-neutral-200 bg-white opacity-0 shadow-sm transition-opacity group-hover:opacity-100",
+            pickerOpen && "opacity-100"
+          )}
+        >
+          {!message.data.streaming ? (
+            <EmojiPickerPopover
+              onSelect={toggleReaction}
+              onOpenChange={setPickerOpen}
+            >
+              <button
+                type="button"
+                className="p-1 text-neutral-500 hover:text-indigo-600"
+                aria-label="Add reaction"
+              >
+                <SmilePlus className="size-4" />
+              </button>
+            </EmojiPickerPopover>
+          ) : null}
           {variant === "channel" && onOpenThread ? (
             <button
               type="button"
@@ -142,6 +217,92 @@ export function Message({
           ) : null}
         </div>
       ) : null}
+    </div>
+  );
+}
+
+type ReactionGroup = {
+  emoji: string;
+  reactions: MessageReaction[];
+  selfReacted: boolean;
+};
+
+function groupReactions(
+  reactions: MessageReaction[],
+  selfId: string
+): ReactionGroup[] {
+  const groups: ReactionGroup[] = [];
+  const groupsByEmoji = new Map<string, ReactionGroup>();
+
+  for (const reaction of reactions) {
+    const existing = groupsByEmoji.get(reaction.emoji);
+    if (existing) {
+      existing.reactions.push(reaction);
+      if (reaction.userId === selfId) {
+        existing.selfReacted = true;
+      }
+      continue;
+    }
+
+    const group = {
+      emoji: reaction.emoji,
+      reactions: [reaction],
+      selfReacted: reaction.userId === selfId,
+    };
+    groupsByEmoji.set(reaction.emoji, group);
+    groups.push(group);
+  }
+
+  return groups;
+}
+
+function ReactionChips({
+  groups,
+  indented,
+  onToggle,
+}: {
+  groups: ReactionGroup[];
+  indented: boolean;
+  onToggle: (emoji: string) => void;
+}) {
+  return (
+    <div
+      className={clsx(
+        "mt-1 flex flex-wrap items-center gap-1",
+        indented && "ml-12"
+      )}
+    >
+      {groups.map((group) => (
+        <button
+          key={group.emoji}
+          type="button"
+          onClick={() => onToggle(group.emoji)}
+          title={group.reactions
+            .map((reaction) => {
+              const name =
+                getUser(reaction.userId)?.info.name ?? reaction.userId;
+              return `${name} (${formatTime(reaction.createdAt)})`;
+            })
+            .join(", ")}
+          className={clsx(
+            "rounded-full border px-2 py-0.5 text-xs",
+            group.selfReacted
+              ? "border-indigo-300 bg-indigo-50 text-indigo-700"
+              : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300"
+          )}
+        >
+          {group.emoji} {group.reactions.length}
+        </button>
+      ))}
+      <EmojiPickerPopover onSelect={onToggle}>
+        <button
+          type="button"
+          className="rounded-full border border-neutral-200 bg-white px-2 py-0.5 text-neutral-500 hover:border-neutral-300 hover:text-neutral-700"
+          aria-label="Add reaction"
+        >
+          <SmilePlus className="size-3.5" />
+        </button>
+      </EmojiPickerPopover>
     </div>
   );
 }
