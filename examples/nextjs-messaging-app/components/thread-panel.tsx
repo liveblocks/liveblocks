@@ -58,10 +58,9 @@ export function ThreadPanel({
 
   return (
     <aside className="fixed inset-y-0 right-0 z-20 flex w-full max-w-[420px] flex-col bg-white shadow-xl md:static md:z-auto md:w-[380px] md:shrink-0 md:border-l md:border-neutral-200 md:shadow-none">
-      <header className="flex shrink-0 items-center gap-3 border-b border-neutral-200 px-4 py-3">
+      <header className="flex shrink-0 items-center gap-3 px-4 pt-3">
         <div className="min-w-0">
           <h2 className="font-bold text-neutral-900">Thread</h2>
-          <p className="truncate text-xs text-neutral-500">#{channelName}</p>
         </div>
         <button
           type="button"
@@ -225,10 +224,7 @@ function ThreadConversation({
         Number.isNaN(parsedReplyCount) ? 0 : parsedReplyCount
       );
       const participantIds = [
-        ...new Set([
-          ...(threadFeed?.metadata.participantIds ?? []),
-          self.id,
-        ]),
+        ...new Set([...(threadFeed?.metadata.participantIds ?? []), self.id]),
       ];
 
       await updateFeedMetadata(threadFeedId, {

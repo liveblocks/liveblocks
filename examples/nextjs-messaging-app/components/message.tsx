@@ -50,8 +50,7 @@ export function Message({
   const deleteFeedMessage = useDeleteFeedMessage();
   const user = getUser(message.data.userId);
   const isOwn = self.id === message.data.userId;
-  const showDelete =
-    isOwn && (variant === "channel" || onDelete !== undefined);
+  const showDelete = isOwn && (variant === "channel" || onDelete !== undefined);
   const replyCount = Number.parseInt(
     threadFeed?.metadata.replyCount ?? "0",
     10
@@ -77,7 +76,7 @@ export function Message({
     <div
       className={clsx(
         "group relative px-5 py-0.5 hover:bg-neutral-50",
-        !showHeader && "pl-[4rem]"
+        !showHeader && "pl-[68px]"
       )}
     >
       {showHeader ? (
@@ -106,10 +105,7 @@ export function Message({
         <MessageBody message={message} />
       )}
 
-      {variant === "channel" &&
-      threadFeed &&
-      replyCount > 0 &&
-      onOpenThread ? (
+      {variant === "channel" && threadFeed && replyCount > 0 && onOpenThread ? (
         <ThreadPill
           threadFeed={threadFeed}
           replyCount={replyCount}
@@ -119,7 +115,7 @@ export function Message({
       ) : null}
 
       {variant === "channel" || showDelete ? (
-        <div className="absolute right-3 top-1 flex items-center rounded-md border border-neutral-200 bg-white opacity-0 shadow-sm transition-opacity group-hover:opacity-100">
+        <div className="p-0.5 absolute right-3 top-1 flex items-center gap-0.5 rounded-md border border-neutral-200 bg-white opacity-0 shadow-sm transition-opacity group-hover:opacity-100">
           {variant === "channel" && onOpenThread ? (
             <button
               type="button"
@@ -167,21 +163,20 @@ function ThreadPill({
       type="button"
       onClick={onOpenThread}
       className={clsx(
-        "mt-1 flex w-fit items-center gap-2 rounded-md border border-transparent px-1.5 py-1 text-xs transition hover:border-neutral-200 hover:bg-white",
-        indented && "ml-12"
+        "cursor-pointer flex w-fit items-center gap-2 rounded-md border border-transparent pl-0.75 pr-1.5 py-0.75 text-xs transition hover:border-neutral-200 hover:bg-white",
+        indented && "ml-10.5"
       )}
     >
       {participants.length > 0 ? (
-        <span className="flex items-center">
-          {participants.map((participant, index) => (
+        <span className="flex items-center gap-0.5">
+          {participants.map((participant) => (
             <img
               key={participant.id}
               src={participant.info.avatar}
               alt={participant.info.name}
               title={participant.info.name}
               className={clsx(
-                "size-5 rounded-full border border-white bg-neutral-200 object-cover",
-                index > 0 && "-ml-1.5"
+                "size-6.5 rounded border border-white bg-neutral-200 object-cover"
               )}
             />
           ))}
