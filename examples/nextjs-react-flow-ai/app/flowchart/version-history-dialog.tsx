@@ -212,7 +212,9 @@ function StorageVersionPreview({
     <div className="lb-root lb-history-version-preview flowchart-version-preview">
       <div className="lb-history-version-preview-content flowchart-version-preview-content">
         {isLoading ? (
-          <div className="flowchart-version-preview-status">Loading version…</div>
+          <div className="flowchart-version-preview-status">
+            Loading version…
+          </div>
         ) : error ? (
           <div className="flowchart-version-preview-status">
             Failed to load version
@@ -239,7 +241,10 @@ function StorageVersionPreview({
                 },
               }}
             >
-              <FitViewOnLoad nodeCount={nodes.length} edgeCount={edges.length} />
+              <FitViewOnLoad
+                nodeCount={nodes.length}
+                edgeCount={edges.length}
+              />
               <Background />
             </ReactFlow>
           </ReactFlowProvider>
@@ -263,7 +268,9 @@ function StorageVersionPreview({
             onClick={() => {
               void handleRestore();
             }}
-            disabled={isRestoring || isDeleting || isLoading || !!error || !data}
+            disabled={
+              isRestoring || isDeleting || isLoading || !!error || !data
+            }
           >
             {isRestoring ? "Restoring…" : "Restore"}
           </button>
@@ -273,11 +280,7 @@ function StorageVersionPreview({
   );
 }
 
-function Versions({
-  onVersionRestore,
-}: {
-  onVersionRestore: () => void;
-}) {
+function Versions({ onVersionRestore }: { onVersionRestore: () => void }) {
   const [selectedVersionId, setSelectedVersionId] = useState<string>();
   const { versions, isLoading } = useHistoryVersions();
 
