@@ -254,16 +254,6 @@ function StorageVersionPreview({
         <div className="lb-history-version-preview-actions">
           <button
             type="button"
-            className="flowchart-version-preview-button flowchart-version-preview-button-danger"
-            onClick={() => {
-              void handleDelete();
-            }}
-            disabled={isDeleting || isRestoring || isLoading || !!error}
-          >
-            {isDeleting ? "Deleting…" : "Delete"}
-          </button>
-          <button
-            type="button"
             className="flowchart-version-preview-button flowchart-version-preview-button-primary"
             onClick={() => {
               void handleRestore();
@@ -273,6 +263,16 @@ function StorageVersionPreview({
             }
           >
             {isRestoring ? "Restoring…" : "Restore"}
+          </button>
+          <button
+            type="button"
+            className="flowchart-version-preview-button flowchart-version-preview-button-danger"
+            onClick={() => {
+              void handleDelete();
+            }}
+            disabled={isDeleting || isRestoring || isLoading || !!error}
+          >
+            {isDeleting ? "Deleting…" : "Delete"}
           </button>
         </div>
       </div>
