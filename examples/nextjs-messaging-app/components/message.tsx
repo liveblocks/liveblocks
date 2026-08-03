@@ -72,10 +72,7 @@ export function Message({
     threadFeed?.metadata.replyCount ?? "0",
     10
   );
-  const reactionGroups = groupReactions(
-    message.data.reactions ?? [],
-    self.id
-  );
+  const reactionGroups = groupReactions(message.data.reactions ?? [], self.id);
 
   const toggleReaction = async (emoji: string) => {
     const reactions = message.data.reactions ?? [];
@@ -84,8 +81,7 @@ export function Message({
     );
     const nextReactions = hasReacted
       ? reactions.filter(
-          (reaction) =>
-            reaction.emoji !== emoji || reaction.userId !== self.id
+          (reaction) => reaction.emoji !== emoji || reaction.userId !== self.id
         )
       : [
           ...reactions,
@@ -281,13 +277,14 @@ function ReactionChips({
             })
             .join(", ")}
           className={clsx(
-            "rounded-full border px-2 py-0.5 text-xs",
+            "rounded-full border px-1.75 text-normal gap-1 flex items-center",
             group.selfReacted
-              ? "border-indigo-300 bg-indigo-50 text-indigo-700"
-              : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300"
+              ? "border-indigo-500/60 bg-indigo-50 text-indigo-700 font-medium"
+              : "border-transparent bg-neutral-200/50 hover:border-neutral-200 hover:bg-white text-neutral-600"
           )}
         >
-          {group.emoji} {group.reactions.length}
+          {group.emoji}{" "}
+          <span className="text-xs tabular-nums">{group.reactions.length}</span>
         </button>
       ))}
       <EmojiPickerPopover onSelect={onToggle}>
