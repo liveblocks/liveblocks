@@ -1650,6 +1650,11 @@ logic for restoring. To render a list of versions, see
 Learn how to set this up in our
 [version history guide](/docs/guides/how-to-add-version-history-to-your-app).
 
+A version can have no authors when it contains only server-side changes. In that
+case, `HistoryVersionPreview` displays “Unattributed edits”. You can customize
+this text with
+[`HISTORY_VERSION_PREVIEW_AUTHORS_LIST`](/docs/api-reference/liveblocks-react-ui#Overrides-History-version-preview).
+
 #### Usage [#HistoryVersionPreview-usage]
 
 ```tsx

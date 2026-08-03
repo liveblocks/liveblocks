@@ -4261,6 +4261,11 @@ up in our
 
 Displays a version summary which includes the author and date.
 
+A version can have no authors when it contains only server-side changes. In that
+case, `HistoryVersionSummary` displays “Unattributed”. You can customize this
+text with
+[`HISTORY_VERSION_SUMMARY_AUTHORS_LIST`](/docs/api-reference/liveblocks-react-ui#Overrides-History-version-summary).
+
 ```tsx
 <HistoryVersionSummary
   onClick={() => {
