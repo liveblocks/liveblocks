@@ -101,6 +101,7 @@ export type {
 export { LiveText } from "./crdts/LiveText";
 export {
   applyLiveTextOperations,
+  normalizeLiveTextOperations,
   transformTextOperations,
 } from "./crdts/liveTextOps";
 export type {

@@ -8,6 +8,7 @@ import {
   inverseMapTextIndexThroughOperations,
   invertTextOperations,
   mapTextIndexThroughOperations,
+  normalizeLiveTextOperations,
   normalizeSegments,
   transformTextOperations,
 } from "../liveTextOps";
@@ -66,6 +67,76 @@ describe("liveTextOps", () => {
     );
 
     expect(data).toEqual([["Hello", { bold: true }], ["!"]]);
+  });
+
+  test("normalizes operation boundaries around surrogate pairs", () => {
+    const data: LiveTextData = [["a😀b"]];
+
+    expect(
+      normalizeLiveTextOperations(data, [
+        { type: "insert", index: 2, text: "X" },
+      ])
+    ).toEqual([{ type: "insert", index: 1, text: "X" }]);
+
+    expect(
+      normalizeLiveTextOperations(data, [
+        { type: "delete", index: 2, length: 1 },
+      ])
+    ).toEqual([{ type: "delete", index: 1, length: 2 }]);
+
+    expect(
+      normalizeLiveTextOperations(data, [
+        { type: "delete", index: 0, length: 2 },
+      ])
+    ).toEqual([{ type: "delete", index: 0, length: 3 }]);
+
+    expect(
+      normalizeLiveTextOperations(data, [
+        { type: "delete", index: 2, length: 0 },
+      ])
+    ).toEqual([{ type: "delete", index: 1, length: 0 }]);
+
+    expect(
+      normalizeLiveTextOperations(data, [
+        {
+          type: "format",
+          index: 2,
+          length: 1,
+          attributes: { bold: true },
+        },
+      ])
+    ).toEqual([
+      {
+        type: "format",
+        index: 1,
+        length: 2,
+        attributes: { bold: true },
+      },
+    ]);
+  });
+
+  test("normalizes each operation against the preceding operations", () => {
+    expect(
+      normalizeLiveTextOperations(
+        [["ab"]],
+        [
+          { type: "insert", index: 1, text: "😀" },
+          { type: "insert", index: 2, text: "X" },
+        ]
+      )
+    ).toEqual([
+      { type: "insert", index: 1, text: "😀" },
+      { type: "insert", index: 1, text: "X" },
+    ]);
+  });
+
+  test("detects surrogate pairs across segment boundaries", () => {
+    expect(
+      normalizeLiveTextOperations(
+        [["a\ud83d"], ["\ude00b", { bold: true }]],
+        [{ type: "insert", index: 2, text: "X" }]
+      )
+    ).toEqual([{ type: "insert", index: 1, text: "X" }]);
   });
 
   test("invertTextOperations preserves attributes for deleted segments", () => {

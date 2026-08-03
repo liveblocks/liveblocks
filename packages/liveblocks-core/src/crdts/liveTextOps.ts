@@ -734,6 +734,49 @@ export function applyLiveTextOperations(
   );
 }
 
+/**
+ * Canonicalizes operations against the document state they are applied to so
+ * no operation boundary can split a UTF-16 surrogate pair.
+ *
+ * Operations are normalized sequentially because each one can change the
+ * document seen by the operations that follow it.
+ */
+export function normalizeLiveTextOperations(
+  data: LiveTextData,
+  operations: readonly TextOperation[]
+): TextOperation[] {
+  let shadow = dataToSegments(data);
+  const normalized: TextOperation[] = [];
+
+  for (const operation of operations) {
+    const text = shadow.map((segment) => segment.text).join("");
+    let normalizedOperation: TextOperation;
+
+    if (operation.type === "insert") {
+      normalizedOperation = {
+        ...operation,
+        index: clipIndexToCodePointBoundary(text, operation.index),
+      };
+    } else {
+      const range = clipRangeToCodePointBoundaries(
+        text,
+        operation.index,
+        operation.length
+      );
+      normalizedOperation = {
+        ...operation,
+        index: range.index,
+        length: range.length,
+      };
+    }
+
+    normalized.push(normalizedOperation);
+    shadow = applyTextOperationsToSegments(shadow, [normalizedOperation]);
+  }
+
+  return normalized;
+}
+
 export function invertTextOperations(
   segments: readonly TextSegment[],
   ops: readonly TextOperation[]
