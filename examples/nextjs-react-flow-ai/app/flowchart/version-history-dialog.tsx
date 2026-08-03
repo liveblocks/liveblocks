@@ -16,7 +16,9 @@ import {
   Background,
   BaseEdge,
   EdgeLabelRenderer,
+  Handle,
   MarkerType,
+  Position,
   ReactFlow,
   ReactFlowProvider,
   getSmoothStepPath,
@@ -27,6 +29,7 @@ import {
   type NodeTypes,
 } from "@xyflow/react";
 import {
+  Fragment,
   memo,
   useCallback,
   useEffect,
@@ -37,9 +40,12 @@ import {
 import {
   FLOWCHART_EDGE_TYPE,
   FLOWCHART_STORAGE_KEY,
+  blockSourceHandleId,
+  blockTargetHandleId,
   getBlockColor,
   getBlockShape,
   type BlockColor,
+  type BlockHandleSide,
   type FlowchartEdge,
   type FlowchartNode,
 } from "./shared";
@@ -50,17 +56,45 @@ function getBlockStyle(color: BlockColor | undefined): CSSProperties {
   } as CSSProperties;
 }
 
+const HANDLE_POSITIONS = [
+  [Position.Top, "top"],
+  [Position.Right, "right"],
+  [Position.Bottom, "bottom"],
+  [Position.Left, "left"],
+] as const satisfies ReadonlyArray<readonly [Position, BlockHandleSide]>;
+
 const PreviewBlockNode = memo(({ data }: NodeProps<FlowchartNode>) => {
   return (
-    <div
-      className="flowchart-block"
-      style={getBlockStyle(data.color)}
-      data-shape={getBlockShape(data.shape)}
-    >
-      <div className="flowchart-block-label flowchart-version-preview-label">
-        {data.label || "Add text"}
+    <>
+      <div
+        className="flowchart-block"
+        style={getBlockStyle(data.color)}
+        data-shape={getBlockShape(data.shape)}
+      >
+        <div className="flowchart-block-label flowchart-version-preview-label">
+          {data.label || "Add text"}
+        </div>
       </div>
-    </div>
+
+      {HANDLE_POSITIONS.map(([position, side]) => (
+        <Fragment key={side}>
+          <Handle
+            type="target"
+            position={position}
+            id={blockTargetHandleId(side)}
+            className="flowchart-handle"
+            isConnectable={false}
+          />
+          <Handle
+            type="source"
+            position={position}
+            id={blockSourceHandleId(side)}
+            className="flowchart-handle"
+            isConnectable={false}
+          />
+        </Fragment>
+      ))}
+    </>
   );
 });
 
