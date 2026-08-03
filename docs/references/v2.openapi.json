@@ -5651,7 +5651,7 @@
         "tags": ["Notifications"],
         "deprecated": true,
         "x-badge": "Deprecated",
-        "description": "**Deprecated.** Renamed to [`/subscription-settings`](get-room-subscription-settings). Read more in our [migration guide](https://liveblocks.io/docs/platform/upgrading/2.24).\n\nThis endpoint returns a user’s subscription settings for a specific room. Corresponds to [`liveblocks.getRoomNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-users-userId-notification-settings).",
+        "description": "**Deprecated.** Renamed to [`/subscription-settings`](#get-room-subscription-settings). Read more in our [migration guide](https://liveblocks.io/docs/upgrading/2.24).\n\nThis endpoint returns a user’s subscription settings for a specific room. Corresponds to [`liveblocks.getRoomNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-users-userId-notification-settings).",
         "parameters": [
           {
             "schema": {
@@ -5702,7 +5702,7 @@
         "tags": ["Notifications"],
         "deprecated": true,
         "x-badge": "Deprecated",
-        "description": "**Deprecated.** Renamed to [`/subscription-settings`](update-room-subscription-settings). Read more in our [migration guide](https://liveblocks.io/docs/platform/upgrading/2.24).\n\nThis endpoint updates a user’s notification settings for a specific room. Corresponds to [`liveblocks.updateRoomNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-users-userId-notification-settings).",
+        "description": "**Deprecated.** Renamed to [`/subscription-settings`](#update-room-subscription-settings). Read more in our [migration guide](https://liveblocks.io/docs/upgrading/2.24).\n\nThis endpoint updates a user’s notification settings for a specific room. Corresponds to [`liveblocks.updateRoomNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-users-userId-notification-settings).",
         "parameters": [
           {
             "schema": {
@@ -5766,7 +5766,7 @@
         "tags": ["Notifications"],
         "deprecated": true,
         "x-badge": "Deprecated",
-        "description": "**Deprecated.** Renamed to [`/subscription-settings`](delete-room-subscription-settings). Read more in our [migration guide](https://liveblocks.io/docs/platform/upgrading/2.24).\n\nThis endpoint deletes a user’s notification settings for a specific room. Corresponds to [`liveblocks.deleteRoomNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-rooms-roomId-users-userId-notification-settings).",
+        "description": "**Deprecated.** Renamed to [`/subscription-settings`](#delete-room-subscription-settings). Read more in our [migration guide](https://liveblocks.io/docs/upgrading/2.24).\n\nThis endpoint deletes a user’s notification settings for a specific room. Corresponds to [`liveblocks.deleteRoomNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-rooms-roomId-users-userId-notification-settings).",
         "parameters": [
           {
             "schema": {

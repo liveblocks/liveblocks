@@ -13,7 +13,7 @@
     "@liveblocks/node": "^3.23.0",
     "@liveblocks/react": "^3.23.0",
     "framer-motion": "^10.16.16",
-    "next": "^16.1.6",
+    "next": "^16.2.12",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
