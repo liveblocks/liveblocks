@@ -1476,7 +1476,7 @@ ctnicholas, mmavko
 - Updated other information on the
   [users and mentions](https://liveblocks.io/docs/ready-made-features/comments/users-and-mentions)
   page.
-- Updated [Tenants](https://liveblocks.io/docs/authentication/tenants) page with
+- Updated [Organizations](https://liveblocks.io/docs/authentication/organizations) page with
   new information.
 - Add information on
   [AI web search](https://liveblocks.io/docs/ready-made-features/ai-copilots/knowledge#Web-search)
@@ -1742,7 +1742,7 @@ jrowny, ctnicholas
 This release introduces group mentions (e.g. `@engineering`) across all packages
 and first-class support for tenants. Learn more about
 [group mentions](https://liveblocks.io/docs/ready-made-features/comments/users-and-mentions)
-and [tenants](http://liveblocks.io/docs/authentication/tenants) in the docs.
+and [tenants](https://liveblocks.io/docs/authentication/organizations) in the docs.
 
 ### `@liveblocks/client`
 
