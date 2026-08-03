@@ -1,21 +1,27 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
-import { useFeedMessages } from "@liveblocks/react/suspense";
+import { useFeedMessages, useFeeds } from "@liveblocks/react/suspense";
 import {
   buildMessageListItems,
   DayDivider,
   Message,
 } from "@/components/message";
+import type { ThreadFeed } from "@/lib/threads";
 
 export function MessageList({
   channelId,
   channelName,
+  onOpenThread,
 }: {
   channelId: string;
   channelName: string;
+  onOpenThread: (messageId: string) => void;
 }) {
   const { messages, hasFetchedAll } = useFeedMessages(channelId);
+  const { feeds } = useFeeds({
+    metadata: { type: "thread", channelId },
+  });
   const containerRef = useRef<HTMLDivElement>(null);
   const stickToBottomRef = useRef(true);
 
@@ -23,6 +29,16 @@ export function MessageList({
     () => buildMessageListItems(messages ?? []),
     [messages]
   );
+  const threadsByParentMessageId = useMemo(() => {
+    const threads = new Map<string, ThreadFeed>();
+    for (const feed of feeds) {
+      const parentMessageId = feed.metadata.parentMessageId;
+      if (parentMessageId) {
+        threads.set(parentMessageId, feed);
+      }
+    }
+    return threads;
+  }, [feeds]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -63,6 +79,8 @@ export function MessageList({
               message={item.message}
               feedId={channelId}
               showHeader={item.showHeader}
+              threadFeed={threadsByParentMessageId.get(item.message.id)}
+              onOpenThread={() => onOpenThread(item.message.id)}
             />
           )
         )}

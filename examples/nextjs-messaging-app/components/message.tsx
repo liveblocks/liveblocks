@@ -2,9 +2,14 @@
 
 import { getUser } from "@/app/database";
 import { Markdown } from "@/lib/markdown";
-import { useDeleteFeedMessage, useSelf } from "@liveblocks/react/suspense";
+import type { ThreadFeed } from "@/lib/threads";
+import {
+  useDeleteFeed,
+  useDeleteFeedMessage,
+  useSelf,
+} from "@liveblocks/react/suspense";
 import clsx from "clsx";
-import { LoaderCircle, Trash2 } from "lucide-react";
+import { LoaderCircle, MessageSquareText, Trash2 } from "lucide-react";
 
 export type FeedMessage = {
   id: string;
@@ -16,7 +21,7 @@ export type FeedMessage = {
   };
 };
 
-function formatTime(timestamp: number) {
+export function formatTime(timestamp: number) {
   return new Intl.DateTimeFormat(undefined, {
     hour: "numeric",
     minute: "2-digit",
@@ -27,15 +32,46 @@ export function Message({
   message,
   feedId,
   showHeader,
+  threadFeed,
+  onOpenThread,
+  variant = "channel",
+  onDelete,
 }: {
   message: FeedMessage;
   feedId: string;
   showHeader: boolean;
+  threadFeed?: ThreadFeed;
+  onOpenThread?: () => void;
+  variant?: "channel" | "thread";
+  onDelete?: () => void | Promise<void>;
 }) {
   const self = useSelf();
+  const deleteFeed = useDeleteFeed();
   const deleteFeedMessage = useDeleteFeedMessage();
   const user = getUser(message.data.userId);
   const isOwn = self.id === message.data.userId;
+  const showDelete =
+    isOwn && (variant === "channel" || onDelete !== undefined);
+  const replyCount = Number.parseInt(
+    threadFeed?.metadata.replyCount ?? "0",
+    10
+  );
+
+  const handleDelete = async () => {
+    if (onDelete) {
+      await onDelete();
+      return;
+    }
+
+    await deleteFeedMessage(feedId, message.id);
+    if (threadFeed) {
+      try {
+        await deleteFeed(threadFeed.feedId);
+      } catch {
+        // The thread feed may already have been deleted.
+      }
+    }
+  };
 
   return (
     <div
@@ -70,17 +106,94 @@ export function Message({
         <MessageBody message={message} />
       )}
 
-      {isOwn ? (
-        <button
-          type="button"
-          onClick={() => deleteFeedMessage(feedId, message.id)}
-          className="absolute right-3 top-1 rounded-md border border-neutral-200 bg-white p-1 text-neutral-500 opacity-0 shadow-sm transition-opacity group-hover:opacity-100 hover:text-red-600"
-          aria-label="Delete message"
-        >
-          <Trash2 className="size-4" />
-        </button>
+      {variant === "channel" &&
+      threadFeed &&
+      replyCount > 0 &&
+      onOpenThread ? (
+        <ThreadPill
+          threadFeed={threadFeed}
+          replyCount={replyCount}
+          indented={showHeader}
+          onOpenThread={onOpenThread}
+        />
+      ) : null}
+
+      {variant === "channel" || showDelete ? (
+        <div className="absolute right-3 top-1 flex items-center rounded-md border border-neutral-200 bg-white opacity-0 shadow-sm transition-opacity group-hover:opacity-100">
+          {variant === "channel" && onOpenThread ? (
+            <button
+              type="button"
+              onClick={onOpenThread}
+              className="p-1 text-neutral-500 hover:text-indigo-600"
+              aria-label="Reply in thread"
+            >
+              <MessageSquareText className="size-4" />
+            </button>
+          ) : null}
+          {showDelete ? (
+            <button
+              type="button"
+              onClick={() => void handleDelete()}
+              className="p-1 text-neutral-500 hover:text-red-600"
+              aria-label="Delete message"
+            >
+              <Trash2 className="size-4" />
+            </button>
+          ) : null}
+        </div>
       ) : null}
     </div>
+  );
+}
+
+function ThreadPill({
+  threadFeed,
+  replyCount,
+  indented,
+  onOpenThread,
+}: {
+  threadFeed: ThreadFeed;
+  replyCount: number;
+  indented: boolean;
+  onOpenThread: () => void;
+}) {
+  const participants = (threadFeed.metadata.participantIds ?? [])
+    .map((userId) => getUser(userId))
+    .filter((user) => user !== undefined)
+    .slice(0, 5);
+
+  return (
+    <button
+      type="button"
+      onClick={onOpenThread}
+      className={clsx(
+        "mt-1 flex w-fit items-center gap-2 rounded-md border border-transparent px-1.5 py-1 text-xs transition hover:border-neutral-200 hover:bg-white",
+        indented && "ml-12"
+      )}
+    >
+      {participants.length > 0 ? (
+        <span className="flex items-center">
+          {participants.map((participant, index) => (
+            <img
+              key={participant.id}
+              src={participant.info.avatar}
+              alt={participant.info.name}
+              title={participant.info.name}
+              className={clsx(
+                "size-5 rounded-full border border-white bg-neutral-200 object-cover",
+                index > 0 && "-ml-1.5"
+              )}
+            />
+          ))}
+        </span>
+      ) : null}
+      <span className="font-semibold text-indigo-600">
+        {replyCount} {replyCount === 1 ? "reply" : "replies"}
+      </span>
+      <span className="text-neutral-500">
+        Last reply at {formatTime(threadFeed.updatedAt)}
+      </span>
+    </button>
   );
 }
 
@@ -158,8 +271,10 @@ export type MessageListItem =
     };
 
 export function buildMessageListItems(
-  messages: FeedMessage[]
+  messages: FeedMessage[],
+  options: { dayDividers?: boolean } = {}
 ): MessageListItem[] {
+  const { dayDividers = true } = options;
   const sorted = [...messages].sort((a, b) => a.createdAt - b.createdAt);
   const items: MessageListItem[] = [];
   let lastDay: string | null = null;
@@ -167,7 +282,7 @@ export function buildMessageListItems(
 
   for (const message of sorted) {
     const dayLabel = formatDayLabel(message.createdAt);
-    if (dayLabel !== lastDay) {
+    if (dayDividers && dayLabel !== lastDay) {
       items.push({
         type: "divider",
         label: dayLabel,

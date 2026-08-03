@@ -1,5 +1,6 @@
 "use client";
 
+import { ClientSideSuspense } from "@liveblocks/react/suspense";
 import { ChannelList } from "@/components/channel-list";
 import { UserMenu } from "@/components/user-menu";
 import { WorkspaceSwitcher } from "@/components/workspace-switcher";
@@ -41,10 +42,12 @@ export function Sidebar({
           </div>
         </div>
 
-        <ChannelList
-          activeChannelId={activeChannelId}
-          onSelectChannel={onSelectChannel}
-        />
+        <ClientSideSuspense fallback={null}>
+          <ChannelList
+            activeChannelId={activeChannelId}
+            onSelectChannel={onSelectChannel}
+          />
+        </ClientSideSuspense>
       </div>
 
       <footer

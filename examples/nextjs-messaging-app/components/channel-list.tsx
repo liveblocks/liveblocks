@@ -17,6 +17,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { LiveObject } from "@liveblocks/client";
 import {
   useDeleteFeed,
+  useFeeds,
   useMutation,
   useStorage,
 } from "@liveblocks/react/suspense";
@@ -39,6 +40,9 @@ export function ChannelList({
   onSelectChannel: (channelId: string) => void;
 }) {
   const channels = useStorage((root) => root.channels);
+  const { feeds: threadFeeds } = useFeeds({
+    metadata: { type: "thread" },
+  });
   const deleteFeed = useDeleteFeed();
   const [creating, setCreating] = useState(false);
   const [newChannelName, setNewChannelName] = useState("");
@@ -137,6 +141,18 @@ export function ChannelList({
   };
 
   const handleDelete = async (channelId: string) => {
+    for (const threadFeed of threadFeeds) {
+      if (threadFeed.metadata.channelId !== channelId) {
+        continue;
+      }
+
+      try {
+        await deleteFeed(threadFeed.feedId);
+      } catch {
+        // Another participant may already have deleted this thread.
+      }
+    }
+
     try {
       await deleteFeed(channelId);
     } catch {
