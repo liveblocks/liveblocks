@@ -180,7 +180,7 @@ export function Message({
             >
               <button
                 type="button"
-                className="p-1 text-neutral-500 hover:text-indigo-600"
+                className="p-1 text-neutral-500 hover:text-brand-600"
                 aria-label="Add reaction"
               >
                 <SmilePlus className="size-4" />
@@ -191,7 +191,7 @@ export function Message({
             <button
               type="button"
               onClick={onOpenThread}
-              className="p-1 text-neutral-500 hover:text-indigo-600"
+              className="p-1 text-neutral-500 hover:text-brand-600"
               aria-label="Reply in thread"
             >
               <MessageSquareText className="size-4" />
@@ -279,7 +279,7 @@ function ReactionChips({
           className={clsx(
             "rounded-full border px-1.75 text-normal gap-1 flex items-center",
             group.selfReacted
-              ? "border-indigo-500/60 bg-indigo-50 text-indigo-700 font-medium"
+              ? "border-brand-500/60 bg-brand-50 text-brand-700 font-medium"
               : "border-transparent bg-neutral-200/50 hover:border-neutral-200 hover:bg-white text-neutral-700"
           )}
         >
@@ -340,7 +340,7 @@ function ThreadPill({
           ))}
         </span>
       ) : null}
-      <span className="font-semibold text-indigo-600">
+      <span className="font-semibold text-brand-600">
         {replyCount} {replyCount === 1 ? "reply" : "replies"}
       </span>
       <span className="text-neutral-500">
@@ -367,7 +367,7 @@ function MessageBody({ message }: { message: FeedMessage }) {
       <Markdown content={content} />
       {streaming ? (
         <span className="mt-1 inline-flex items-center gap-1 text-xs text-neutral-500">
-          <span className="size-1.5 animate-pulse rounded-full bg-indigo-400" />
+          <span className="size-1.5 animate-pulse rounded-full bg-brand-400" />
           Streaming
         </span>
       ) : null}

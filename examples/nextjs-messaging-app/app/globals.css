@@ -13,6 +13,34 @@
   --sidebar-text: rgba(255, 255, 255, 0.92);
   --sidebar-text-muted: rgba(255, 255, 255, 0.65);
   --chat-bg: #ffffff;
+  --brand: #4f46e5;
+}
+
+/* Derived brand scale — must live on the same element that sets --brand */
+.workspace-theme {
+  --brand-50: color-mix(in srgb, var(--brand) 10%, white);
+  --brand-100: color-mix(in srgb, var(--brand) 18%, white);
+  --brand-200: color-mix(in srgb, var(--brand) 30%, white);
+  --brand-300: color-mix(in srgb, var(--brand) 45%, white);
+  --brand-400: color-mix(in srgb, var(--brand) 65%, white);
+  --brand-500: var(--brand);
+  --brand-600: color-mix(in srgb, var(--brand) 90%, black);
+  --brand-700: color-mix(in srgb, var(--brand) 75%, black);
+  --brand-800: color-mix(in srgb, var(--brand) 55%, black);
+  --brand-900: color-mix(in srgb, var(--brand) 35%, black);
+}
+
+@theme inline {
+  --color-brand-50: var(--brand-50);
+  --color-brand-100: var(--brand-100);
+  --color-brand-200: var(--brand-200);
+  --color-brand-300: var(--brand-300);
+  --color-brand-400: var(--brand-400);
+  --color-brand-500: var(--brand-500);
+  --color-brand-600: var(--brand-600);
+  --color-brand-700: var(--brand-700);
+  --color-brand-800: var(--brand-800);
+  --color-brand-900: var(--brand-900);
 }
 
 @layer base {

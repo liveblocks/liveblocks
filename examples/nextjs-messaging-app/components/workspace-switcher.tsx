@@ -92,7 +92,10 @@ export function WorkspaceSwitcher({
                   selected && "bg-neutral-50"
                 )}
               >
-                <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-[var(--sidebar-bg)] text-xs font-bold text-white">
+                <span
+                  className="flex size-7 shrink-0 items-center justify-center rounded-md text-xs font-bold text-white"
+                  style={{ backgroundColor: workspace.theme.sidebar }}
+                >
                   {workspace.name.slice(0, 1)}
                 </span>
                 <span className="min-w-0 flex-1 truncate font-medium">

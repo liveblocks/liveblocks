@@ -92,7 +92,7 @@ export const MentionSuggestions = forwardRef<
             className={clsx(
               "flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm",
               index === selectedIndex
-                ? "bg-indigo-500 text-white"
+                ? "bg-brand-500 text-white"
                 : "text-neutral-800 hover:bg-neutral-50"
             )}
             onMouseEnter={() => setSelectedIndex(index)}
@@ -114,7 +114,7 @@ export const MentionSuggestions = forwardRef<
                     "shrink-0 rounded-full px-1.5 py-0.5 mt-px text-[10px] font-semibold uppercase tracking-wide",
                     index === selectedIndex
                       ? "bg-white/20 text-white"
-                      : "bg-indigo-100 text-indigo-600"
+                      : "bg-brand-100 text-brand-600"
                   )}
                 >
                   Agent

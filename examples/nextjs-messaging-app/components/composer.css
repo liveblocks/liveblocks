@@ -23,8 +23,8 @@
 
 .composer-editor .mention {
   border-radius: 9999px;
-  background: #eef2ff;
-  color: #4338ca;
+  background: var(--brand-50);
+  color: var(--brand-700);
   font-weight: 500;
   padding: 0 0.25rem;
 }
@@ -41,8 +41,8 @@
 
 .composer-editor code {
   border-radius: 0.25rem;
-  background: #f3f4f6;
-  color: #be123c;
+  background: var(--brand-50);
+  color: var(--brand-700);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.9em;
   padding: 0.1rem 0.25rem;

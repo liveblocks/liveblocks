@@ -143,7 +143,7 @@ function parseInline(text: string, keyPrefix: string) {
         nodes.push(
           <code
             key={key}
-            className="rounded bg-neutral-100 px-1 py-0.5 font-mono text-[0.9em] text-rose-700"
+            className="rounded bg-brand-50 px-1 py-0.5 font-mono text-[0.9em] text-brand-700"
           >
             {parsed.token.value}
           </code>
@@ -182,7 +182,7 @@ function parseInline(text: string, keyPrefix: string) {
           <span
             key={key}
             className={clsx(
-              "inline-flex items-center rounded bg-indigo-50 px-1 py-0.5 text-indigo-700 leading-tight"
+              "inline-flex items-center rounded bg-brand-50 px-1 py-0.5 text-brand-700 leading-tight"
             )}
           >
             @{label}

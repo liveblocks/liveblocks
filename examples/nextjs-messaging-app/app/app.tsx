@@ -14,7 +14,13 @@ import { getUser, getUsers } from "@/app/database";
 import { Chat } from "@/components/chat";
 import { Sidebar } from "@/components/sidebar";
 import { useExamplePreviewIndex, useExampleRoomId } from "@/lib/example.client";
-import { DEFAULT_CHANNELS, WORKSPACES, type Channel } from "@/lib/workspaces";
+import {
+  DEFAULT_CHANNELS,
+  getWorkspace,
+  getWorkspaceThemeStyle,
+  WORKSPACES,
+  type Channel,
+} from "@/lib/workspaces";
 
 const STORAGE_USER_KEY = "liveblocks-messaging-app:user";
 const STORAGE_WORKSPACE_KEY = "liveblocks-messaging-app:workspace";
@@ -191,8 +197,13 @@ function MessagingShell({
     }
   }, [activeChannelId, channels]);
 
+  const workspace = getWorkspace(workspaceId);
+
   return (
-    <div className="flex h-dvh w-full overflow-hidden">
+    <div
+      className="workspace-theme flex h-dvh w-full overflow-hidden"
+      style={getWorkspaceThemeStyle(workspace)}
+    >
       <Sidebar
         workspaceId={workspaceId}
         userId={userId}
