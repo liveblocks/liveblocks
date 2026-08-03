@@ -6,18 +6,15 @@
 @custom-variant hover (&:hover);
 
 :root {
-  --sidebar-bg: #3f0e40;
-  --sidebar-bg-hover: rgba(255, 255, 255, 0.08);
-  --sidebar-bg-active: rgba(255, 255, 255, 0.16);
-  --sidebar-border: rgba(255, 255, 255, 0.1);
-  --sidebar-text: rgba(255, 255, 255, 0.92);
-  --sidebar-text-muted: rgba(255, 255, 255, 0.65);
+  --sidebar: #3f0e40;
+  --sidebar-hover: rgb(255 255 255 / 0.08);
+  --sidebar-active: rgb(255 255 255 / 0.16);
+  --sidebar-border: rgb(255 255 255 / 0.1);
+  --sidebar-foreground: rgb(255 255 255 / 0.92);
+  --sidebar-muted: rgb(255 255 255 / 0.65);
+
   --chat-bg: #ffffff;
   --brand: #4f46e5;
-}
-
-/* Derived brand scale — must live on the same element that sets --brand */
-.workspace-theme {
   --brand-50: color-mix(in srgb, var(--brand) 10%, white);
   --brand-100: color-mix(in srgb, var(--brand) 18%, white);
   --brand-200: color-mix(in srgb, var(--brand) 30%, white);
@@ -31,6 +28,13 @@
 }
 
 @theme inline {
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-hover: var(--sidebar-hover);
+  --color-sidebar-active: var(--sidebar-active);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-muted: var(--sidebar-muted);
+
   --color-brand-50: var(--brand-50);
   --color-brand-100: var(--brand-100);
   --color-brand-200: var(--brand-200);

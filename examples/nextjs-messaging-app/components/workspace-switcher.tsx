@@ -51,18 +51,18 @@ export function WorkspaceSwitcher({
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition hover:bg-[var(--sidebar-bg-hover)]"
+        className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition hover:bg-sidebar-hover"
         aria-expanded={open}
         aria-haspopup="listbox"
       >
-        <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-white/15 text-sm font-bold">
+        <span className="flex size-7 shrink-0 items-center justify-center rounded-sm bg-white/15 text-sm font-bold">
           {activeWorkspace.name.slice(0, 1)}
         </span>
         <span className="min-w-0 flex-1 truncate text-sm font-bold">
           {activeWorkspace.name}
         </span>
         <ChevronsUpDownIcon
-          className="size-4 shrink-0 text-[var(--sidebar-text-muted)]"
+          className="size-4 shrink-0 text-sidebar-muted"
           aria-hidden
         />
       </button>
@@ -70,7 +70,7 @@ export function WorkspaceSwitcher({
       {open ? (
         <div
           role="listbox"
-          className="absolute left-0 right-0 top-[calc(100%+4px)] z-50 overflow-hidden rounded-lg border border-black/10 bg-white text-neutral-900 shadow-xl"
+          className="absolute left-0 right-0 top-[calc(100%+4px)] z-50 overflow-hidden rounded-md border border-black/10 bg-white text-neutral-900 shadow-xl"
         >
           <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
             Switch workspace
@@ -93,7 +93,7 @@ export function WorkspaceSwitcher({
                 )}
               >
                 <span
-                  className="flex size-7 shrink-0 items-center justify-center rounded-md text-xs font-bold text-white"
+                  className="flex size-7 shrink-0 items-center justify-center rounded-sm text-xs font-bold text-white"
                   style={{ backgroundColor: workspace.theme.sidebar }}
                 >
                   {workspace.name.slice(0, 1)}
@@ -102,7 +102,7 @@ export function WorkspaceSwitcher({
                   {workspace.name}
                 </span>
                 {selected ? (
-                  <CheckIcon className="size-4 shrink-0 text-[var(--sidebar-bg)]" />
+                  <CheckIcon className="size-4 shrink-0 text-sidebar" />
                 ) : null}
               </button>
             );

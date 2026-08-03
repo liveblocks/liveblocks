@@ -17,7 +17,6 @@ import { useExamplePreviewIndex, useExampleRoomId } from "@/lib/example.client";
 import {
   DEFAULT_CHANNELS,
   getWorkspace,
-  getWorkspaceThemeStyle,
   WORKSPACES,
   type Channel,
 } from "@/lib/workspaces";
@@ -199,11 +198,18 @@ function MessagingShell({
 
   const workspace = getWorkspace(workspaceId);
 
+  useEffect(() => {
+    const root = document.documentElement;
+    root.style.setProperty("--sidebar", workspace.theme.sidebar);
+    root.style.setProperty("--brand", workspace.theme.brand);
+    return () => {
+      root.style.removeProperty("--sidebar");
+      root.style.removeProperty("--brand");
+    };
+  }, [workspace.theme.brand, workspace.theme.sidebar]);
+
   return (
-    <div
-      className="workspace-theme flex h-dvh w-full overflow-hidden"
-      style={getWorkspaceThemeStyle(workspace)}
-    >
+    <div className="flex h-dvh w-full overflow-hidden">
       <Sidebar
         workspaceId={workspaceId}
         userId={userId}
@@ -213,16 +219,18 @@ function MessagingShell({
         onWorkspaceChange={onWorkspaceChange}
       />
 
-      <main className="flex min-w-0 flex-1 flex-col bg-white">
-        <ClientSideSuspense fallback={null}>
-          {activeChannel ? (
-            <Chat key={activeChannel.id} channel={activeChannel} />
-          ) : (
-            <div className="flex h-full items-center justify-center text-sm text-neutral-500">
-              Create a channel to start messaging
-            </div>
-          )}
-        </ClientSideSuspense>
+      <main className="flex min-w-0 flex-1 flex-col bg-sidebar p-1 pl-0">
+        <div className="flex min-w-0 flex-1 flex-col bg-white rounded-sm overflow-hidden">
+          <ClientSideSuspense fallback={null}>
+            {activeChannel ? (
+              <Chat key={activeChannel.id} channel={activeChannel} />
+            ) : (
+              <div className="flex h-full items-center justify-center text-sm text-neutral-500">
+                Create a channel to start messaging
+              </div>
+            )}
+          </ClientSideSuspense>
+        </div>
       </main>
     </div>
   );

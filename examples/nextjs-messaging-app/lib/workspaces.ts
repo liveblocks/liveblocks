@@ -1,5 +1,3 @@
-import type { CSSProperties } from "react";
-
 export type WorkspaceTheme = {
   sidebar: string;
   brand: string;
@@ -43,12 +41,4 @@ export function getWorkspace(workspaceId: string): Workspace {
     WORKSPACES.find((workspace) => workspace.id === workspaceId) ??
     WORKSPACES[0]
   );
-}
-
-/** CSS custom properties for the active workspace theme. */
-export function getWorkspaceThemeStyle(workspace: Workspace): CSSProperties {
-  return {
-    ["--sidebar-bg" as string]: workspace.theme.sidebar,
-    ["--brand" as string]: workspace.theme.brand,
-  };
 }

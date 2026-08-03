@@ -21,14 +21,8 @@ export function Sidebar({
   onWorkspaceChange: (workspaceId: string) => void;
 }) {
   return (
-    <aside
-      className="flex w-[260px] shrink-0 flex-col text-[var(--sidebar-text)]"
-      style={{ backgroundColor: "var(--sidebar-bg)" }}
-    >
-      <header
-        className="flex h-12 shrink-0 items-center border-b px-3"
-        style={{ borderColor: "var(--sidebar-border)" }}
-      >
+    <aside className="flex w-[260px] shrink-0 flex-col bg-sidebar text-sidebar-foreground">
+      <header className="flex h-12 shrink-0 items-center border-b border-sidebar-border px-2">
         <WorkspaceSwitcher
           workspaceId={workspaceId}
           onWorkspaceChange={onWorkspaceChange}
@@ -37,7 +31,7 @@ export function Sidebar({
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="flex items-center justify-between px-4 pb-1 pt-4">
-          <div className="text-xs font-semibold uppercase tracking-wide text-[var(--sidebar-text-muted)]">
+          <div className="text-xs font-semibold uppercase tracking-wide text-sidebar-muted">
             Channels
           </div>
         </div>
@@ -50,10 +44,7 @@ export function Sidebar({
         </ClientSideSuspense>
       </div>
 
-      <footer
-        className="shrink-0 border-t p-2"
-        style={{ borderColor: "var(--sidebar-border)" }}
-      >
+      <footer className="shrink-0 border-t border-sidebar-border p-2">
         <UserMenu userId={userId} onUserChange={onUserChange} />
       </footer>
     </aside>

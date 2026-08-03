@@ -250,7 +250,7 @@ export function ChannelList({
       <button
         type="button"
         onClick={() => setCreating(true)}
-        className="mt-1 flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-[var(--sidebar-text-muted)] transition hover:bg-[var(--sidebar-bg-hover)] hover:text-[var(--sidebar-text)]"
+        className="h-9 mt-0.5 flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-sidebar-muted transition hover:bg-sidebar-hover hover:text-sidebar-foreground"
       >
         <PlusIcon className="size-4" aria-hidden />
         Add channel
@@ -303,10 +303,10 @@ function SortableChannelItem({
     >
       <div
         className={clsx(
-          "flex items-center gap-0.5 rounded-md pr-1 transition",
+          "flex items-center gap-0.5 rounded-sm pr-1 transition",
           active
-            ? "bg-[var(--sidebar-bg-active)] text-white"
-            : "text-[var(--sidebar-text-muted)] hover:bg-[var(--sidebar-bg-hover)] hover:text-[var(--sidebar-text)]"
+            ? "bg-sidebar-active text-white"
+            : "text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-foreground"
         )}
       >
         <button

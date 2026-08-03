@@ -42,7 +42,7 @@ export function Chat({ channel }: { channel: Channel }) {
   }, [channel.id, channel.name, createFeed]);
 
   return (
-    <div className="flex h-full min-h-0 bg-white">
+    <div className="flex h-full min-h-0">
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex shrink-0 items-center gap-3 border-b border-neutral-200 px-4 py-3">
           <div className="min-w-0">

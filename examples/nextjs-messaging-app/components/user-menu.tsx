@@ -50,7 +50,7 @@ export function UserMenu({
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left transition hover:bg-[var(--sidebar-bg-hover)]"
+        className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left transition hover:bg-sidebar-hover"
         aria-expanded={open}
         aria-haspopup="listbox"
       >
@@ -63,7 +63,7 @@ export function UserMenu({
           {currentUser.info.name}
         </span>
         <ChevronDownIcon
-          className="size-4 shrink-0 text-[var(--sidebar-text-muted)]"
+          className="size-4 shrink-0 text-sidebar-muted"
           aria-hidden
         />
       </button>
@@ -102,7 +102,7 @@ export function UserMenu({
                   {user.info.name}
                 </span>
                 {selected ? (
-                  <CheckIcon className="size-4 shrink-0 text-[var(--sidebar-bg)]" />
+                  <CheckIcon className="size-4 shrink-0 text-sidebar" />
                 ) : null}
               </button>
             );

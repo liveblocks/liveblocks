@@ -295,7 +295,7 @@ export function Composer({
 
   return (
     <div className="shrink-0 bg-white px-5 pb-1">
-      <div className="relative rounded-lg border border-neutral-300 bg-white transition-all focus-within:border-neutral-400 focus-within:ring-2 focus-within:ring-neutral-100/80">
+      <div className="relative rounded-md border border-neutral-300 bg-white transition-all focus-within:border-neutral-400 focus-within:ring-2 focus-within:ring-neutral-100/80">
         <EditorContent editor={editor} />
         <button
           type="button"
