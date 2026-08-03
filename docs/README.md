@@ -85,9 +85,9 @@ shouldn't appear in the navigation.
 
 ```json
 {
-  "title": "API v1 Endpoints",
+  "title": "Notifications / Webhooks",
   "hidden": true,
-  "path": "/api-reference/rest-api-endpoints-v1"
+  "path": "/get-started/nextjs-notifications-webhooks"
 }
 ```
 
