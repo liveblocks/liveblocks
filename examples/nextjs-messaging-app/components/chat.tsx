@@ -66,7 +66,11 @@ export function Chat({ channel }: { channel: Channel }) {
           />
         </ClientSideSuspense>
         <ClientSideSuspense fallback={null}>
-          <ChannelComposer channel={channel} roomId={room.id} />
+          <ChannelComposer
+            channel={channel}
+            roomId={room.id}
+            onOpenThread={setOpenThreadMessageId}
+          />
         </ClientSideSuspense>
       </div>
 

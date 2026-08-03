@@ -9,14 +9,17 @@ import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import { EditorContent, ReactRenderer, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import {
+  useCreateFeed,
   useCreateFeedMessage,
   useFeedMessages,
   useSelf,
   useUpdateMyPresence,
 } from "@liveblocks/react/suspense";
 import { SendHorizontal } from "lucide-react";
+import { nanoid } from "nanoid";
 import { AI_USER, AI_USER_ID, getUsers } from "@/app/database";
 import type { Channel } from "@/lib/workspaces";
+import { getThreadFeedId } from "@/lib/threads";
 import { isMessageEmpty, serializeMarkdown } from "@/lib/serialize-markdown";
 import {
   MentionSuggestions,
@@ -107,6 +110,7 @@ export function Composer({
   history,
   onSend,
   forceAiReply = false,
+  enableAiReply = true,
 }: {
   feedId: string;
   roomId: string;
@@ -114,6 +118,7 @@ export function Composer({
   history: { userId: string; content: string }[];
   onSend: (content: string) => Promise<void>;
   forceAiReply?: boolean;
+  enableAiReply?: boolean;
 }) {
   const self = useSelf();
   const typingLabel = useTypingLabel(feedId);
@@ -243,11 +248,11 @@ export function Composer({
       editor.commands.clearContent(true);
       setIsEmpty(true);
 
-      if (forceAiReply || content.includes(`<@${AI_USER_ID}>`)) {
-        const aiHistory = [
-          ...history.slice(-24),
-          { userId: self.id, content },
-        ];
+      if (
+        enableAiReply &&
+        (forceAiReply || content.includes(`<@${AI_USER_ID}>`))
+      ) {
+        const aiHistory = [...history.slice(-24), { userId: self.id, content }];
 
         void fetch("/api/ai-reply", {
           method: "POST",
@@ -267,6 +272,7 @@ export function Composer({
   }, [
     clearTyping,
     editor,
+    enableAiReply,
     feedId,
     forceAiReply,
     history,
@@ -322,11 +328,14 @@ export function Composer({
 export function ChannelComposer({
   channel,
   roomId,
+  onOpenThread,
 }: {
   channel: Channel;
   roomId: string;
+  onOpenThread?: (parentMessageId: string) => void;
 }) {
   const self = useSelf();
+  const createFeed = useCreateFeed();
   const createFeedMessage = useCreateFeedMessage();
   const { messages } = useFeedMessages(channel.id);
   const history = useMemo(
@@ -340,12 +349,60 @@ export function ChannelComposer({
     [messages]
   );
   const handleSend = useCallback(
-    (content: string) =>
-      createFeedMessage(channel.id, {
-        userId: self.id,
-        content,
-      }),
-    [channel.id, createFeedMessage, self.id]
+    async (content: string) => {
+      const messageId = nanoid();
+      await createFeedMessage(
+        channel.id,
+        {
+          userId: self.id,
+          content,
+        },
+        { id: messageId }
+      );
+
+      // @AI in a channel opens a thread and replies there, not in the feed.
+      if (!content.includes(`<@${AI_USER_ID}>`)) {
+        return;
+      }
+
+      const threadFeedId = getThreadFeedId(messageId);
+      try {
+        await createFeed(threadFeedId, {
+          metadata: {
+            type: "thread",
+            channelId: channel.id,
+            parentMessageId: messageId,
+            replyCount: "0",
+            participantIds: [],
+          },
+        });
+      } catch {
+        // Another participant may have created the thread first.
+      }
+
+      onOpenThread?.(messageId);
+
+      const aiHistory = [...history.slice(-24), { userId: self.id, content }];
+
+      void fetch("/api/ai-reply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          roomId,
+          feedId: threadFeedId,
+          messages: aiHistory,
+        }),
+      });
+    },
+    [
+      channel.id,
+      createFeed,
+      createFeedMessage,
+      history,
+      onOpenThread,
+      roomId,
+      self.id,
+    ]
   );
 
   return (
@@ -355,6 +412,7 @@ export function ChannelComposer({
       placeholder={`Message #${channel.name}`}
       history={history}
       onSend={handleSend}
+      enableAiReply={false}
     />
   );
 }

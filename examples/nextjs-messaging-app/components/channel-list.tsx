@@ -46,9 +46,7 @@ export function ChannelList({
   const deleteFeed = useDeleteFeed();
   const [creating, setCreating] = useState(false);
   const [newChannelName, setNewChannelName] = useState("");
-  const [editingChannelId, setEditingChannelId] = useState<string | null>(
-    null
-  );
+  const [editingChannelId, setEditingChannelId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
 
   const createChannel = useMutation(({ storage }, name: string) => {
@@ -57,12 +55,15 @@ export function ChannelList({
       return;
     }
 
+    const channelId = nanoid();
     storage.get("channels").push(
       new LiveObject({
-        id: nanoid(),
+        id: channelId,
         name: trimmed,
       })
     );
+
+    return channelId;
   }, []);
 
   const renameChannel = useMutation(
@@ -116,9 +117,14 @@ export function ChannelList({
       return;
     }
 
-    createChannel(trimmed);
+    const channelId = createChannel(trimmed);
+    if (!channelId) {
+      return;
+    }
+
     setNewChannelName("");
     setCreating(false);
+    onSelectChannel(channelId);
   };
 
   const startRename = (channel: Channel) => {
