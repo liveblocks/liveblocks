@@ -42,14 +42,18 @@ export const HistoryVersionSummary = forwardRef<
         className="lb-date lb-history-version-summary-date"
       />
       <span className="lb-history-version-summary-authors">
-        <List
-          values={version.authors.map((author) => (
-            <User key={author.id} userId={author.id} replaceSelf />
-          ))}
-          formatRemaining={$.LIST_REMAINING_USERS}
-          truncate={AUTHORS_TRUNCATE}
-          locale={$.locale}
-        />
+        {$.HISTORY_VERSION_SUMMARY_AUTHORS_LIST(
+          version.authors.length > 0 ? (
+            <List
+              values={version.authors.map((author) => (
+                <User key={author.id} userId={author.id} replaceSelf />
+              ))}
+              formatRemaining={$.LIST_REMAINING_USERS}
+              truncate={AUTHORS_TRUNCATE}
+              locale={$.locale}
+            />
+          ) : undefined
+        )}
       </span>
     </button>
   );

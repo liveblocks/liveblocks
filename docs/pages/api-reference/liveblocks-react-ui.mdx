@@ -4723,19 +4723,28 @@ and
 | `INBOX_NOTIFICATION_THREAD_MENTION`       | Thread mention text | `"X mentioned you in Y"` |
 | `INBOX_NOTIFICATION_TEXT_MENTION`         | Text mention text   | `"X mentioned you in Y"` |
 
+##### History version summary [#Overrides-History-version-summary]
+
+History version summary overrides can be set on
+[`LiveblocksUiConfig`](/docs/api-reference/liveblocks-react-ui#LiveblocksUiConfig).
+The authors list is `undefined` when the version has no authors.
+
+| Name                                   | Description       | Default value             |
+| -------------------------------------- | ----------------- | ------------------------- |
+| `HISTORY_VERSION_SUMMARY_AUTHORS_LIST` | Authors list text | `"X"` or `"Unattributed"` |
+
 ##### History version preview [#Overrides-History-version-preview]
 
-History version preview overrides can be set on both
-[`HistoryVersionSummary`](/docs/api-reference/liveblocks-react-ui#HistoryVersionSummary)
-and
+History version preview overrides can be set on
 [`LiveblocksUiConfig`](/docs/api-reference/liveblocks-react-ui#LiveblocksUiConfig).
+The authors list is `undefined` when the version has no authors.
 
-| Name                                   | Description          | Default value           |
-| -------------------------------------- | -------------------- | ----------------------- |
-| `HISTORY_VERSION_PREVIEW_AUTHORS_LIST` | Authors list text    | `"Edits from X"`        |
-| `HISTORY_VERSION_PREVIEW_RESTORE`      | Restore button label | `"Restore"`             |
-| `HISTORY_VERSION_PREVIEW_EMPTY`        | Empty state text     | `"No content."`         |
-| `HISTORY_VERSION_PREVIEW_ERROR`        | Error message        | `"There was an error…"` |
+| Name                                   | Description          | Default value                              |
+| -------------------------------------- | -------------------- | ------------------------------------------ |
+| `HISTORY_VERSION_PREVIEW_AUTHORS_LIST` | Authors list text    | `"Edits from X"` or `"Unattributed edits"` |
+| `HISTORY_VERSION_PREVIEW_RESTORE`      | Restore button label | `"Restore"`                                |
+| `HISTORY_VERSION_PREVIEW_EMPTY`        | Empty state text     | `"No content."`                            |
+| `HISTORY_VERSION_PREVIEW_ERROR`        | Error message        | `"There was an error…"`                    |
 
 ##### AI composer [#Overrides-AI-composer]
 
