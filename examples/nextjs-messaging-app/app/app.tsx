@@ -14,11 +14,7 @@ import { getUser, getUsers } from "@/app/database";
 import { Chat } from "@/components/chat";
 import { Sidebar } from "@/components/sidebar";
 import { useExamplePreviewIndex, useExampleRoomId } from "@/lib/example.client";
-import {
-  DEFAULT_CHANNELS,
-  WORKSPACES,
-  type Channel,
-} from "@/lib/workspaces";
+import { DEFAULT_CHANNELS, WORKSPACES, type Channel } from "@/lib/workspaces";
 
 const STORAGE_USER_KEY = "liveblocks-messaging-app:user";
 const STORAGE_WORKSPACE_KEY = "liveblocks-messaging-app:workspace";
@@ -53,9 +49,7 @@ function getInitialWorkspaceId() {
 function createInitialStorage() {
   return {
     channels: new LiveList(
-      DEFAULT_CHANNELS.map(
-        (name) => new LiveObject({ id: nanoid(), name })
-      )
+      DEFAULT_CHANNELS.map((name) => new LiveObject({ id: nanoid(), name }))
     ),
   };
 }
@@ -209,13 +203,15 @@ function MessagingShell({
       />
 
       <main className="flex min-w-0 flex-1 flex-col bg-white">
-        {activeChannel ? (
-          <Chat key={activeChannel.id} channel={activeChannel} />
-        ) : (
-          <div className="flex h-full items-center justify-center text-sm text-neutral-500">
-            Create a channel to start messaging
-          </div>
-        )}
+        <ClientSideSuspense fallback={null}>
+          {activeChannel ? (
+            <Chat key={activeChannel.id} channel={activeChannel} />
+          ) : (
+            <div className="flex h-full items-center justify-center text-sm text-neutral-500">
+              Create a channel to start messaging
+            </div>
+          )}
+        </ClientSideSuspense>
       </main>
     </div>
   );

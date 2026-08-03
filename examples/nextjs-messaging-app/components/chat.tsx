@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useCreateFeed, useRoom } from "@liveblocks/react/suspense";
+import {
+  useCreateFeed,
+  useRoom,
+  ClientSideSuspense,
+} from "@liveblocks/react/suspense";
 import type { Channel } from "@/lib/workspaces";
 import { Composer } from "@/components/composer";
 import { HelpButton } from "@/components/help-button";
@@ -42,13 +46,19 @@ export function Chat({ channel }: { channel: Channel }) {
           </h2>
         </div>
         <div className="ml-auto flex items-center gap-2">
-          <PresenceAvatars />
+          <ClientSideSuspense fallback={null}>
+            <PresenceAvatars />
+          </ClientSideSuspense>
           <HelpButton />
         </div>
       </header>
 
-      <MessageList channelId={channel.id} channelName={channel.name} />
-      <Composer channel={channel} roomId={room.id} />
+      <ClientSideSuspense fallback={null}>
+        <MessageList channelId={channel.id} channelName={channel.name} />
+      </ClientSideSuspense>
+      <ClientSideSuspense fallback={null}>
+        <Composer channel={channel} roomId={room.id} />
+      </ClientSideSuspense>
     </div>
   );
 }
