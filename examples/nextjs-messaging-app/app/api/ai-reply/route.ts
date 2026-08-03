@@ -6,6 +6,7 @@ import {
   getUser,
   getUsers,
 } from "@/app/database";
+import { THREAD_FEED_PREFIX } from "@/lib/threads";
 
 type FeedMessage = { userId: string; content: string };
 type ChatMessage = { role: "user" | "assistant"; content: string };
@@ -46,14 +47,18 @@ export async function POST(request: NextRequest) {
     return new NextResponse("Invalid room or feed", { status: 400 });
   }
 
-  try {
-    await liveblocks.createFeed({
-      roomId,
-      feedId,
-      metadata: { name: feedId },
-    });
-  } catch {
-    // Feed already exists.
+  const isThreadFeed = feedId.startsWith(THREAD_FEED_PREFIX);
+
+  if (!isThreadFeed) {
+    try {
+      await liveblocks.createFeed({
+        roomId,
+        feedId,
+        metadata: { name: feedId, type: "channel" },
+      });
+    } catch {
+      // Feed already exists.
+    }
   }
 
   const created = await liveblocks.createFeedMessage({
@@ -66,6 +71,39 @@ export async function POST(request: NextRequest) {
     },
   });
   const messageId = created.id;
+
+  if (isThreadFeed) {
+    try {
+      const feed = await liveblocks.getFeed({ roomId, feedId });
+      const metadata = getFeedMetadata(feed.metadata);
+      const parsedReplyCount = Number.parseInt(
+        typeof metadata.replyCount === "string"
+          ? metadata.replyCount
+          : "0",
+        10
+      );
+      const replyCount = Number.isNaN(parsedReplyCount)
+        ? 0
+        : parsedReplyCount;
+      const existingParticipantIds = Array.isArray(metadata.participantIds)
+        ? metadata.participantIds
+        : [];
+
+      await liveblocks.updateFeed({
+        roomId,
+        feedId,
+        metadata: {
+          ...metadata,
+          replyCount: String(replyCount + 1),
+          participantIds: [
+            ...new Set([...existingParticipantIds, AI_USER_ID]),
+          ],
+        },
+      });
+    } catch {
+      // Thread metadata is best-effort.
+    }
+  }
 
   const update = (data: { content: string; streaming: boolean }) =>
     liveblocks.updateFeedMessage({
@@ -192,6 +230,24 @@ function isFeedMessages(value: unknown): value is FeedMessage[] {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
+}
+
+function getFeedMetadata(value: unknown): Record<string, string | string[]> {
+  if (!isRecord(value)) {
+    return {};
+  }
+
+  const metadata: Record<string, string | string[]> = {};
+  for (const [key, item] of Object.entries(value)) {
+    if (typeof item === "string" || isStringArray(item)) {
+      metadata[key] = item;
+    }
+  }
+  return metadata;
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === "string");
 }
 
 function chunkText(text: string) {

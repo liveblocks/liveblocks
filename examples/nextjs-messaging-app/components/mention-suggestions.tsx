@@ -106,21 +106,22 @@ export const MentionSuggestions = forwardRef<
               alt=""
               className="size-5 rounded bg-neutral-200 object-cover"
             />
-            <span className="min-w-0 flex-1 truncate font-semibold">
+            <span className="min-w-0 flex-1 truncate font-semibold gap-2 flex items-center">
               {item.label}
+              {isAgent ? (
+                <span
+                  className={clsx(
+                    "shrink-0 rounded-full px-1.5 py-0.5 mt-px text-[10px] font-semibold uppercase tracking-wide",
+                    index === selectedIndex
+                      ? "bg-white/20 text-white"
+                      : "bg-indigo-100 text-indigo-600"
+                  )}
+                >
+                  Agent
+                </span>
+              ) : null}
             </span>
-            {isAgent ? (
-              <span
-                className={clsx(
-                  "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-                  index === selectedIndex
-                    ? "bg-white/20 text-white"
-                    : "bg-indigo-100 text-indigo-600"
-                )}
-              >
-                Agent
-              </span>
-            ) : null}
+
             {isOnline ? (
               <>
                 <span

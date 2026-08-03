@@ -13,8 +13,8 @@ declare global {
     };
 
     // Realtime presence, shared with everyone in the room. Holds the id of
-    // the channel the user is currently typing in, so "X is typing..."
-    // shows up for everyone viewing that channel.
+    // the feed the user is currently typing in, so "X is typing..."
+    // shows up for everyone viewing that channel or thread.
     Presence: {
       typingIn: string | null;
     };
@@ -34,11 +34,18 @@ declare global {
       // True while an AI reply is still being streamed in via
       // `updateFeedMessage`. Cleared on the final update.
       streaming?: boolean;
+      // Each entry records who reacted and when.
+      reactions?: { emoji: string; userId: string; createdAt: number }[];
     };
 
     // Custom metadata attached to a feed
     FeedMetadata: {
       name?: string;
+      type?: "channel" | "thread";
+      channelId?: string;
+      parentMessageId?: string;
+      replyCount?: string;
+      participantIds?: string[];
     };
   }
 }

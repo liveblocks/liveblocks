@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import clsx from "clsx";
 import Mention from "@tiptap/extension-mention";
 import { Extension } from "@tiptap/core";
@@ -14,6 +14,7 @@ import {
   useSelf,
   useUpdateMyPresence,
 } from "@liveblocks/react/suspense";
+import { SendHorizontal } from "lucide-react";
 import { AI_USER, AI_USER_ID, getUsers } from "@/app/database";
 import type { Channel } from "@/lib/workspaces";
 import { isMessageEmpty, serializeMarkdown } from "@/lib/serialize-markdown";
@@ -100,17 +101,24 @@ function filterMentionItems(query: string) {
 }
 
 export function Composer({
-  channel,
+  feedId,
   roomId,
+  placeholder,
+  history,
+  onSend,
+  forceAiReply = false,
 }: {
-  channel: Channel;
+  feedId: string;
   roomId: string;
+  placeholder: string;
+  history: { userId: string; content: string }[];
+  onSend: (content: string) => Promise<void>;
+  forceAiReply?: boolean;
 }) {
   const self = useSelf();
-  const typingLabel = useTypingLabel(channel.id);
-  const createFeedMessage = useCreateFeedMessage();
+  const typingLabel = useTypingLabel(feedId);
   const updateMyPresence = useUpdateMyPresence();
-  const { messages } = useFeedMessages(channel.id);
+  const [isEmpty, setIsEmpty] = useState(true);
   const inFlightRef = useRef(false);
   const sendMessageRef = useRef<() => Promise<void>>(async () => {});
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -148,7 +156,7 @@ export function Composer({
         blockquote: false,
         horizontalRule: false,
       }),
-      createPlaceholderExtension(`Message #${channel.name}`),
+      createPlaceholderExtension(placeholder),
       Mention.configure({
         HTMLAttributes: {
           class: "mention",
@@ -208,8 +216,9 @@ export function Composer({
         return false;
       },
     },
-    onUpdate: () => {
-      updateMyPresence({ typingIn: channel.id });
+    onUpdate: ({ editor: updatedEditor }) => {
+      setIsEmpty(isMessageEmpty(updatedEditor.getJSON()));
+      updateMyPresence({ typingIn: feedId });
       scheduleTypingClear();
     },
   });
@@ -229,22 +238,14 @@ export function Composer({
     clearTyping();
 
     try {
-      await createFeedMessage(channel.id, {
-        userId: self.id,
-        content,
-      });
+      await onSend(content);
 
       editor.commands.clearContent(true);
+      setIsEmpty(true);
 
-      if (content.includes(`<@${AI_USER_ID}>`)) {
-        const sorted = [...(messages ?? [])].sort(
-          (a, b) => a.createdAt - b.createdAt
-        );
-        const history = [
-          ...sorted.slice(-24).map((message) => ({
-            userId: message.data.userId,
-            content: message.data.content,
-          })),
+      if (forceAiReply || content.includes(`<@${AI_USER_ID}>`)) {
+        const aiHistory = [
+          ...history.slice(-24),
           { userId: self.id, content },
         ];
 
@@ -253,8 +254,8 @@ export function Composer({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             roomId,
-            feedId: channel.id,
-            messages: history,
+            feedId,
+            messages: aiHistory,
           }),
         });
       }
@@ -264,11 +265,12 @@ export function Composer({
       inFlightRef.current = false;
     }
   }, [
-    channel.id,
     clearTyping,
-    createFeedMessage,
     editor,
-    messages,
+    feedId,
+    forceAiReply,
+    history,
+    onSend,
     roomId,
     self.id,
   ]);
@@ -279,16 +281,30 @@ export function Composer({
     return () => {
       clearTyping();
     };
-  }, [clearTyping]);
+  }, [clearTyping, feedId]);
 
   useEffect(() => {
     editor?.commands.focus("end");
-  }, [channel.id, editor]);
+  }, [feedId, editor]);
 
   return (
     <div className="shrink-0 bg-white px-5 pb-1">
-      <div className="rounded-lg border border-neutral-300 bg-white focus-within:border-neutral-400 focus-within:ring-2 focus-within:ring-neutral-100/80 transition-all">
+      <div className="relative rounded-lg border border-neutral-300 bg-white transition-all focus-within:border-neutral-400 focus-within:ring-2 focus-within:ring-neutral-100/80">
         <EditorContent editor={editor} />
+        <button
+          type="button"
+          onClick={() => void sendMessage()}
+          disabled={isEmpty}
+          className={clsx(
+            "absolute bottom-1.5 right-1.5 rounded-md p-1.5 transition",
+            isEmpty
+              ? "cursor-not-allowed bg-neutral-100 text-neutral-400"
+              : "bg-indigo-600 text-white hover:bg-indigo-700"
+          )}
+          aria-label="Send message"
+        >
+          <SendHorizontal className="size-4" />
+        </button>
       </div>
       <p
         className={clsx(
@@ -300,5 +316,45 @@ export function Composer({
         {typingLabel ?? <>&nbsp;</>}
       </p>
     </div>
+  );
+}
+
+export function ChannelComposer({
+  channel,
+  roomId,
+}: {
+  channel: Channel;
+  roomId: string;
+}) {
+  const self = useSelf();
+  const createFeedMessage = useCreateFeedMessage();
+  const { messages } = useFeedMessages(channel.id);
+  const history = useMemo(
+    () =>
+      [...(messages ?? [])]
+        .sort((a, b) => a.createdAt - b.createdAt)
+        .map((message) => ({
+          userId: message.data.userId,
+          content: message.data.content,
+        })),
+    [messages]
+  );
+  const handleSend = useCallback(
+    (content: string) =>
+      createFeedMessage(channel.id, {
+        userId: self.id,
+        content,
+      }),
+    [channel.id, createFeedMessage, self.id]
+  );
+
+  return (
+    <Composer
+      feedId={channel.id}
+      roomId={roomId}
+      placeholder={`Message #${channel.name}`}
+      history={history}
+      onSend={handleSend}
+    />
   );
 }
