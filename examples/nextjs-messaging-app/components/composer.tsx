@@ -382,15 +382,13 @@ export function ChannelComposer({
 
       onOpenThread?.(messageId);
 
-      const aiHistory = [...history.slice(-24), { userId: self.id, content }];
-
       void fetch("/api/ai-reply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           roomId,
           feedId: threadFeedId,
-          messages: aiHistory,
+          messages: [{ userId: self.id, content }],
         }),
       });
     },
@@ -398,7 +396,6 @@ export function ChannelComposer({
       channel.id,
       createFeed,
       createFeedMessage,
-      history,
       onOpenThread,
       roomId,
       self.id,
