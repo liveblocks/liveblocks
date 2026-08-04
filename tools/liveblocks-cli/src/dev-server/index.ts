@@ -38,6 +38,7 @@ import {
 } from "~/lib/term-colors";
 
 import { authorizeWebSocket } from "./auth";
+import { setBlobStoreBaseUrl } from "./blobs/store";
 import type { ClientMeta, RoomMeta, SessionMeta } from "./db/rooms";
 import * as Rooms from "./db/rooms";
 import {
@@ -387,6 +388,10 @@ const dev: SubCommand = {
         },
       });
       listenPort = newServer.port!;
+
+      // Signed download URLs have to point back at the port we actually bound,
+      // which isn't known until now (--random-port picks it at bind time).
+      setBlobStoreBaseUrl(`http://${newServer.hostname}:${newServer.port}`);
       return newServer;
     }
 

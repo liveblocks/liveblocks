@@ -162,6 +162,7 @@ export class InMemoryDriver implements IStorageDriver {
   private _leasedSessions: Map<string, LeasedSession>;
   private _feeds: Map<string, Feed>;
   private _feedMessages: Map<string, FeedMessage>; // Key: `${feedId}:${messageId}`
+  private _livefileUploads: Map<string, number>; // Key: fileId, value: size
 
   constructor(options?: {
     initialActor?: number;
@@ -173,6 +174,7 @@ export class InMemoryDriver implements IStorageDriver {
     this._leasedSessions = new Map();
     this._feeds = new Map();
     this._feedMessages = new Map();
+    this._livefileUploads = new Map();
 
     this._nextActor = options?.initialActor ?? -1;
 
@@ -197,8 +199,29 @@ export class InMemoryDriver implements IStorageDriver {
 
     this._nodes.clear();
     for (const [id, node] of plainLsonToNodeStream(doc)) {
-      this._nodes.set(id, node);
+      this._nodes.set(id, this._withUploadedSize(node));
     }
+  }
+
+  put_livefile_upload(fileId: string, size: number): void {
+    this._livefileUploads.set(fileId, size);
+  }
+
+  get_livefile_upload_size(fileId: string): number | undefined {
+    return this._livefileUploads.get(fileId);
+  }
+
+  /**
+   * A FILE node's size comes from its upload receipt, never from whatever the
+   * client claimed. Nodes of any other type pass through untouched, as do
+   * files with no receipt — refusing those is the Room layer's job.
+   */
+  private _withUploadedSize<N extends SerializedCrdt>(node: N): N {
+    if (node.type !== CrdtType.FILE) return node;
+    const size = this._livefileUploads.get(node.data.id);
+    return size === undefined
+      ? node
+      : { ...node, data: { ...node.data, size } };
   }
 
   get_meta(key: string) {
@@ -553,7 +576,7 @@ export class InMemoryDriver implements IStorageDriver {
   }
 
   set_child(id: string, node: SerializedChild, allowOverwrite?: boolean): void {
-    this.loadedApi.set_child(id, node, allowOverwrite);
+    this.loadedApi.set_child(id, this._withUploadedSize(node), allowOverwrite);
   }
 
   move_sibling(id: string, newPos: Pos): void {

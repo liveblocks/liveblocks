@@ -15,7 +15,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { nanoid } from "@liveblocks/core";
+import { nanoid, Permission } from "@liveblocks/core";
+
+import { createJwtLite } from "~/dev-server/lib/jwt-lite";
 
 // TODO Reinstate URL-unsafe characters (`/`, `+`, `?`) like the production
 // helpers in our real production app. Doing so requires the dev-server test
@@ -23,4 +25,15 @@ import { nanoid } from "@liveblocks/core";
 // dev-server router to correctly decode the result.
 export function makeExternalRoomId(): string {
   return `room-${nanoid()}`;
+}
+
+/** A `Bearer <token>` value granting write access to one room. */
+export function makeAccessToken(roomId: string): string {
+  const token = createJwtLite({
+    k: "acc",
+    pid: "localdev",
+    uid: `user-${nanoid()}`,
+    perms: { [roomId]: [Permission.RoomWrite] },
+  });
+  return `Bearer ${token}`;
 }

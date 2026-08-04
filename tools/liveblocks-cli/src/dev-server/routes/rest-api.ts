@@ -26,6 +26,8 @@ import { QueryParser } from "@liveblocks/query-parser";
 import type { Guid, YDocId } from "@liveblocks/server";
 import {
   ConsoleTarget,
+  hasUploadedLivefiles,
+  hasUploadedLivefilesInPlainLson,
   jsonObjectYolo,
   Logger,
   ROOT_YDOC_ID,
@@ -34,13 +36,15 @@ import {
   snapshotToPlainLson_eager,
   transientClientMsgDecoder,
 } from "@liveblocks/server";
-import { json, ndjsonStream, ZenRouter } from "@liveblocks/zenrouter";
+import { abort, json, ndjsonStream, ZenRouter } from "@liveblocks/zenrouter";
 import {
   array,
   constant,
   either,
   enum_,
   nullable,
+  number,
+  numeric,
   object,
   optional,
   record,
@@ -53,6 +57,17 @@ import * as Y from "yjs";
 import type { DbRoom, RoomFilters } from "~/dev-server/db/rooms";
 import * as Rooms from "~/dev-server/db/rooms";
 import { authorizeSecretKey } from "~/dev-server/lib/auth";
+import { storageFileId, uploadId } from "~/dev-server/lib/decoders";
+import {
+  abortStorageFileMultipartUpload,
+  completeStorageFileMultipartUpload,
+  createStorageFileMultipartUpload,
+  getStorageFileWithSignedUrl,
+  recordLivefileUpload,
+  requireInternalRoomId,
+  uploadStorageFile,
+  uploadStorageFileMultipartPart,
+} from "~/dev-server/lib/storage-files";
 import { yDocToJson } from "~/dev-server/lib/ydoc";
 import { DUMMY, NOT_IMPLEMENTED } from "~/dev-server/responses";
 
@@ -71,7 +86,24 @@ const roomMetadata = record(
 
 export const zen = new ZenRouter({
   authorize: ({ req }) => authorizeSecretKey(req),
+  params: {
+    fileId: storageFileId,
+    partNumber: numeric,
+    uploadId,
+  },
 });
+
+/** The client's advisory `?fileSize=`, used only for pre-flight limit checks. */
+function optionalFileSize(url: URL): number | undefined {
+  const raw = url.searchParams.get("fileSize");
+  if (raw === null) return undefined;
+
+  const size = Number(raw);
+  if (!Number.isSafeInteger(size) || size < 0) {
+    abort(400);
+  }
+  return size;
+}
 
 function ROOM_NOT_FOUND(roomId: string): Response {
   return json(
@@ -333,6 +365,16 @@ zen.route(
           status: 409,
           headers: { "Content-Type": "application/json" },
         }
+      );
+    }
+
+    if (!hasUploadedLivefilesInPlainLson(room.driver, body)) {
+      return json(
+        {
+          error: "UNPROCESSABLE_ENTITY",
+          message: "Storage file has not been uploaded",
+        },
+        422
       );
     }
 
@@ -663,6 +705,18 @@ zen.route(
 
     const room = Rooms.getRoomInstance(p.roomId);
 
+    // Backend sessions deliberately skip the isClientMsgAllowed hook, so the
+    // upload-before-reference rule has to be enforced here explicitly.
+    if (!hasUploadedLivefiles(room.driver, body.messages)) {
+      return json(
+        {
+          error: "UNPROCESSABLE_ENTITY",
+          message: "Storage file has not been uploaded",
+        },
+        422
+      );
+    }
+
     const [session, capturedServerMsgs] =
       room.createBackendSession_experimental();
 
@@ -674,6 +728,112 @@ zen.route(
     });
   }
 );
+
+/**
+ * ------------------------------------------------------------
+ * LIVEFILE (Storage files)
+ * ------------------------------------------------------------
+ *
+ * Uploads are proxied: the request body streams straight into the blob store,
+ * and only downloads are handed out as signed URLs. Every successful upload is
+ * followed by recording a receipt, which is what makes the file referenceable
+ * from Storage at all.
+ */
+
+zen.route(
+  "PUT /v2/rooms/<roomId>/storage/files/<fileId>/upload/<name>",
+  async ({ req, url, p }) => {
+    const internalRoomId = requireInternalRoomId(p.roomId);
+    if (!req.body) {
+      abort(400);
+    }
+
+    const file = await uploadStorageFile(
+      internalRoomId,
+      p.fileId,
+      p.name,
+      req.body,
+      optionalFileSize(url)
+    );
+    recordLivefileUpload(p.roomId, file);
+    return file;
+  }
+);
+
+zen.route(
+  "POST /v2/rooms/<roomId>/storage/files/<fileId>/multipart/<name>",
+  async ({ url, p }) => {
+    const internalRoomId = requireInternalRoomId(p.roomId);
+    return await createStorageFileMultipartUpload(
+      internalRoomId,
+      p.fileId,
+      p.name,
+      optionalFileSize(url)
+    );
+  }
+);
+
+zen.route(
+  "PUT /v2/rooms/<roomId>/storage/files/<fileId>/multipart/<uploadId>/<partNumber>",
+  async ({ req, p }) => {
+    const internalRoomId = requireInternalRoomId(p.roomId);
+    if (!req.body) {
+      abort(400);
+    }
+
+    return await uploadStorageFileMultipartPart(
+      internalRoomId,
+      p.fileId,
+      p.uploadId,
+      p.partNumber,
+      req.body
+    );
+  }
+);
+
+zen.route(
+  "POST /v2/rooms/<roomId>/storage/files/<fileId>/multipart/<uploadId>/complete",
+
+  object({ parts: array(object({ partNumber: number, etag: string })) }),
+
+  async ({ p, body }) => {
+    const internalRoomId = requireInternalRoomId(p.roomId);
+    const file = await completeStorageFileMultipartUpload(
+      internalRoomId,
+      p.fileId,
+      p.uploadId,
+      body.parts
+    );
+    recordLivefileUpload(p.roomId, file);
+    return file;
+  }
+);
+
+zen.route(
+  "DELETE /v2/rooms/<roomId>/storage/files/<fileId>/multipart/<uploadId>",
+  async ({ p }) => {
+    const internalRoomId = requireInternalRoomId(p.roomId);
+    await abortStorageFileMultipartUpload(internalRoomId, p.fileId, p.uploadId);
+    return new Response(null, { status: 200 });
+  }
+);
+
+zen.route("GET /v2/rooms/<roomId>/storage/files/<fileId>", async ({ p }) => {
+  const internalRoomId = requireInternalRoomId(p.roomId);
+  const file = await getStorageFileWithSignedUrl(internalRoomId, p.fileId);
+
+  if (!file) {
+    return json(
+      {
+        error: "STORAGE_FILE_NOT_FOUND",
+        message: "Storage file not found",
+        suggestion: "Please verify the file ID and room ID are correct",
+      },
+      404
+    );
+  }
+  return file;
+});
 
 /**
  * ------------------------------------------------------------
@@ -724,12 +884,6 @@ zen.route(
   zen.route("POST /v2/rooms/<roomId>/attachments/<attachmentId>/multipart/<uploadId>/complete", () => NOT_IMPLEMENTED());
   zen.route("DELETE /v2/rooms/<roomId>/attachments/<attachmentId>/multipart/<uploadId>", () => NOT_IMPLEMENTED());
   zen.route("GET /v2/rooms/<roomId>/attachments/<attachmentId>", () => NOT_IMPLEMENTED());
-  zen.route("PUT /v2/rooms/<roomId>/storage/files/<fileId>/upload/<name>", () => NOT_IMPLEMENTED());
-  zen.route("POST /v2/rooms/<roomId>/storage/files/<fileId>/multipart/<name>", () => NOT_IMPLEMENTED());
-  zen.route("PUT /v2/rooms/<roomId>/storage/files/<fileId>/multipart/<uploadId>/<partNumber>", () => NOT_IMPLEMENTED());
-  zen.route("POST /v2/rooms/<roomId>/storage/files/<fileId>/multipart/<uploadId>/complete", () => NOT_IMPLEMENTED());
-  zen.route("DELETE /v2/rooms/<roomId>/storage/files/<fileId>/multipart/<uploadId>", () => NOT_IMPLEMENTED());
-  zen.route("GET /v2/rooms/<roomId>/storage/files/<fileId>", () => NOT_IMPLEMENTED());
   zen.route("GET /v2/rooms/<roomId>/users/<userId>/notification-settings", () => NOT_IMPLEMENTED());
   zen.route("GET /v2/rooms/<roomId>/users/<userId>/subscription-settings", () => NOT_IMPLEMENTED());
   zen.route("POST /v2/rooms/<roomId>/users/<userId>/notification-settings", () => NOT_IMPLEMENTED());

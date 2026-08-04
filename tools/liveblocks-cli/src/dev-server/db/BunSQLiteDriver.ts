@@ -601,6 +601,16 @@ export class BunSQLiteDriver implements IStorageDriver {
        )`
     );
 
+    // Create a table recording which LiveFile blobs have been uploaded, and
+    // how large they are. This is the only trustworthy source for a FILE
+    // node's size — see put_livefile_upload().
+    db.run(
+      `CREATE TABLE IF NOT EXISTS livefile_uploads (
+        file_id  TEXT NOT NULL PRIMARY KEY,
+        size     INTEGER NOT NULL CHECK (size >= 0)
+      ) STRICT`
+    );
+
     // Create a table to read/write BINARY values
     db.run(
       `CREATE TABLE IF NOT EXISTS ydocs (
@@ -710,7 +720,37 @@ export class BunSQLiteDriver implements IStorageDriver {
   }
 
   set_child(id: string, node: SerializedChild, allowOverwrite?: boolean): void {
-    this.loadedApi.set_child(id, node, allowOverwrite);
+    this.loadedApi.set_child(id, this._withUploadedSize(node), allowOverwrite);
+  }
+
+  put_livefile_upload(fileId: string, size: number): void {
+    this.db.run(
+      `INSERT INTO livefile_uploads (file_id, size) VALUES (?, ?)
+       ON CONFLICT (file_id) DO UPDATE SET size = excluded.size`,
+      [fileId, size]
+    );
+  }
+
+  get_livefile_upload_size(fileId: string): number | undefined {
+    return this.db
+      .query<
+        { size: number },
+        [string]
+      >("SELECT size FROM livefile_uploads WHERE file_id = ?")
+      .get(fileId)?.size;
+  }
+
+  /**
+   * A FILE node's size comes from its upload receipt, never from whatever the
+   * client claimed. Nodes of any other type pass through untouched, as do
+   * files with no receipt — refusing those is the Room layer's job.
+   */
+  private _withUploadedSize<N extends SerializedCrdt>(node: N): N {
+    if (node.type !== CrdtType.FILE) return node;
+    const size = this.get_livefile_upload_size(node.data.id);
+    return size === undefined
+      ? node
+      : { ...node, data: { ...node.data, size } };
   }
 
   move_sibling(id: string, newPos: Pos): void {
@@ -793,7 +833,8 @@ export class BunSQLiteDriver implements IStorageDriver {
       // doesn't transiently violate the self-referencing parent_id FK.
       this.db.run("PRAGMA defer_foreign_keys = ON");
       this.db.run("DELETE FROM nodes");
-      for (const [id, node] of plainLsonToNodeStream(doc)) {
+      for (const [id, rawNode] of plainLsonToNodeStream(doc)) {
+        const node = this._withUploadedSize(rawNode);
         const parentId = id === "root" ? null : (node.parentId ?? null);
         const parentKey = id === "root" ? null : (node.parentKey ?? null);
         const jdata =
