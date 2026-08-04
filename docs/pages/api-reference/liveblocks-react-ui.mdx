@@ -4261,6 +4261,11 @@ up in our
 
 Displays a version summary which includes the author and date.
 
+A version can have no authors when it contains only server-side changes. In that
+case, `HistoryVersionSummary` displays “Unattributed”. You can customize this
+text with
+[`HISTORY_VERSION_SUMMARY_AUTHORS_LIST`](/docs/api-reference/liveblocks-react-ui#Overrides-History-version-summary).
+
 ```tsx
 <HistoryVersionSummary
   onClick={() => {
@@ -4271,7 +4276,7 @@ Displays a version summary which includes the author and date.
 />
 ```
 
-##### Props [#HistoryVersionSummary-props]
+#### Props [#HistoryVersionSummary-props]
 
 <PropertiesList>
   <PropertiesListItem name="onClick" type="() => void">
@@ -4285,7 +4290,7 @@ Displays a version summary which includes the author and date.
   </PropertiesListItem>
 </PropertiesList>
 
-#### HistoryVersionSummaryList
+### HistoryVersionSummaryList
 
 Displays a list of version summaries for a document’s history including authors
 and dates.
@@ -4305,7 +4310,7 @@ and dates.
 </HistoryVersionSummaryList>
 ```
 
-##### Props [#HistoryVersionSummaryList-props]
+#### Props [#HistoryVersionSummaryList-props]
 
 <PropertiesList>
   <PropertiesListItem name="children" type="ReactNode">
@@ -4723,19 +4728,28 @@ and
 | `INBOX_NOTIFICATION_THREAD_MENTION`       | Thread mention text | `"X mentioned you in Y"` |
 | `INBOX_NOTIFICATION_TEXT_MENTION`         | Text mention text   | `"X mentioned you in Y"` |
 
+##### History version summary [#Overrides-History-version-summary]
+
+History version summary overrides can be set on
+[`LiveblocksUiConfig`](/docs/api-reference/liveblocks-react-ui#LiveblocksUiConfig).
+The authors list is `undefined` when the version has no authors.
+
+| Name                                   | Description       | Default value             |
+| -------------------------------------- | ----------------- | ------------------------- |
+| `HISTORY_VERSION_SUMMARY_AUTHORS_LIST` | Authors list text | `"X"` or `"Unattributed"` |
+
 ##### History version preview [#Overrides-History-version-preview]
 
-History version preview overrides can be set on both
-[`HistoryVersionSummary`](/docs/api-reference/liveblocks-react-ui#HistoryVersionSummary)
-and
+History version preview overrides can be set on
 [`LiveblocksUiConfig`](/docs/api-reference/liveblocks-react-ui#LiveblocksUiConfig).
+The authors list is `undefined` when the version has no authors.
 
-| Name                                   | Description          | Default value           |
-| -------------------------------------- | -------------------- | ----------------------- |
-| `HISTORY_VERSION_PREVIEW_AUTHORS_LIST` | Authors list text    | `"Edits from X"`        |
-| `HISTORY_VERSION_PREVIEW_RESTORE`      | Restore button label | `"Restore"`             |
-| `HISTORY_VERSION_PREVIEW_EMPTY`        | Empty state text     | `"No content."`         |
-| `HISTORY_VERSION_PREVIEW_ERROR`        | Error message        | `"There was an error…"` |
+| Name                                   | Description          | Default value                              |
+| -------------------------------------- | -------------------- | ------------------------------------------ |
+| `HISTORY_VERSION_PREVIEW_AUTHORS_LIST` | Authors list text    | `"Edits from X"` or `"Unattributed edits"` |
+| `HISTORY_VERSION_PREVIEW_RESTORE`      | Restore button label | `"Restore"`                                |
+| `HISTORY_VERSION_PREVIEW_EMPTY`        | Empty state text     | `"No content."`                            |
+| `HISTORY_VERSION_PREVIEW_ERROR`        | Error message        | `"There was an error…"`                    |
 
 ##### AI composer [#Overrides-AI-composer]
 

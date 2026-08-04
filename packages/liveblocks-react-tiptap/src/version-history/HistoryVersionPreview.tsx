@@ -91,14 +91,16 @@ export const HistoryVersionPreview = forwardRef<
         <div className="lb-history-version-preview-footer">
           <span className="lb-history-version-preview-authors">
             {$.HISTORY_VERSION_PREVIEW_AUTHORS_LIST(
-              <List
-                values={version.authors.map((author) => (
-                  <User key={author.id} userId={author.id} replaceSelf />
-                ))}
-                formatRemaining={$.LIST_REMAINING_USERS}
-                truncate={AUTHORS_TRUNCATE}
-                locale={$.locale}
-              />
+              version.authors.length > 0 ? (
+                <List
+                  values={version.authors.map((author) => (
+                    <User key={author.id} userId={author.id} replaceSelf />
+                  ))}
+                  formatRemaining={$.LIST_REMAINING_USERS}
+                  truncate={AUTHORS_TRUNCATE}
+                  locale={$.locale}
+                />
+              ) : undefined
             )}
           </span>
           <div className="lb-history-version-preview-actions">

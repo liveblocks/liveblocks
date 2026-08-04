@@ -1,5 +1,13 @@
 ## vNEXT (not yet released)
 
+## v3.23.1
+
+### `@liveblocks/react-ui`
+
+- Improve version history components for versions without authors, which can
+  occur with server-only changes. Add `HISTORY_VERSION_SUMMARY_AUTHORS_LIST` and
+  update `HISTORY_VERSION_PREVIEW_AUTHORS_LIST` overrides to reflect this.
+
 ## v3.23.0
 
 This release introduces `LiveFile`: a new data structure to store files such as
@@ -768,7 +776,8 @@ metadata to individual comments in the same way as thread metadata.
 This release introduces group mentions (e.g. `@engineering`) across all packages
 and first-class support for tenants. Learn more about
 [group mentions](https://liveblocks.io/docs/ready-made-features/comments/users-and-mentions)
-and [tenants](https://liveblocks.io/docs/authentication/organizations) in the docs.
+and [tenants](https://liveblocks.io/docs/authentication/organizations) in the
+docs.
 
 ### `@liveblocks/client`
 
