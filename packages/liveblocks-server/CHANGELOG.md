@@ -1,5 +1,9 @@
 ## vNEXT (not yet released)
 
+## v1.8.0
+
+- Add full support for LiveFile
+
 ## v1.7.0
 
 - Add `--skip-install` (`-s`) flag to `liveblocks upgrade` to update
