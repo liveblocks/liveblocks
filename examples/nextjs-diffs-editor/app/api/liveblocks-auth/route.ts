@@ -17,8 +17,8 @@ export async function POST(request: NextRequest) {
     baseUrl: process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL,
   });
 
-  const body: unknown = await request.json().catch(() => null);
-  const userId = getStringProperty(body, "userId");
+  const requestBody: unknown = await request.json().catch(() => null);
+  const userId = getStringProperty(requestBody, "userId");
 
   // Get the current user's unique id and info from your database
   const user = userId ? getUser(userId) : getRandomUser();
