@@ -15,6 +15,13 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+export type {
+  BlobBody,
+  BlobMeta,
+  BlobMetaInput,
+  IBlobStore,
+  UploadedPart,
+} from "./IBlobStore";
 export type { IServerWebSocket } from "./IServerWebSocket";
 export type {
   IReadableSnapshot,

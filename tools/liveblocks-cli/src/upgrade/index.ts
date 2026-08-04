@@ -197,13 +197,9 @@ const upgrade: SubCommand = {
 
     // Uninstall renamed packages first
     if (depsToUninstall.length > 0) {
-      execFileSync(
-        pm,
-        [uninstallCmd, ...skipInstallArgs, ...depsToUninstall],
-        {
-          stdio: "inherit",
-        }
-      );
+      execFileSync(pm, [uninstallCmd, ...skipInstallArgs, ...depsToUninstall], {
+        stdio: "inherit",
+      });
     }
 
     // Install/upgrade packages

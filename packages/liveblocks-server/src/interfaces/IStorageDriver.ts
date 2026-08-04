@@ -268,6 +268,27 @@ export interface IStorageDriver {
   raw_iter_nodes(): Iterable<[string, SerializedCrdt]>;
 
   // ---------------------------------------------------------------------------
+  // LiveFile upload receipt APIs
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Record that the bytes for `fileId` have been uploaded, and how many there
+   * are.
+   *
+   * A receipt is what makes a LiveFile referenceable: the Room layer refuses
+   * CREATE_FILE ops for files with no receipt, and implementations MUST use the
+   * recorded size in place of the client-supplied one whenever a FILE node is
+   * written.
+   */
+  put_livefile_upload(fileId: string, size: number): void;
+
+  /**
+   * Return the recorded size for `fileId`, or undefined if no upload has been
+   * recorded.
+   */
+  get_livefile_upload_size(fileId: string): number | undefined;
+
+  // ---------------------------------------------------------------------------
   // Metadata APIs (key-value store, isolated from nodes)
   // ---------------------------------------------------------------------------
 
