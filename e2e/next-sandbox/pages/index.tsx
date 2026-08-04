@@ -38,6 +38,9 @@ export default function Home() {
               </Link>
             </li>
             <li>
+              <Link href="/storage/file?room=e2e-storage-file">LiveFile</Link>
+            </li>
+            <li>
               <Link href="/storage/stress/e2e-stress-test">Stress Test</Link>
             </li>
           </ul>
