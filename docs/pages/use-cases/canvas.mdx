@@ -4,12 +4,13 @@ meta:
   parentTitle: "Use cases"
   description:
     "Build collaborative canvases and whiteboards with synchronized shapes,
-    cursors, undo/redo, and comments."
+    cursors, files, undo/redo, and comments."
 ---
 
 Create a collaborative canvas, whiteboard, or design tool with Liveblocks. Start
 with a ready-made canvas, or create something custom. Add draggable objects,
-show live cursors, use version history, and add multiplayer undo/redo.
+show live cursors, upload images, use version history, and add multiplayer
+undo/redo.
 
 <Figure caption={<>A Tldraw whiteboard</>}>
   <MuxVideo
@@ -31,6 +32,8 @@ show live cursors, use version history, and add multiplayer undo/redo.
   state from snapshots.
 - [**Multiplayer undo/redo**](#multiplayer-undo-redo): Each user can
   independently undo and redo their own changes.
+- [**File uploads**](#file-uploads): Upload images and other assets with
+  `LiveFile`, then add them to the shared canvas.
 - [**Comments**](#comments): Add draggable commenting threads to the canvas.
 - [**Permissions**](#permissions): Control which users can read and edit the
   canvas.
@@ -69,6 +72,13 @@ This is an overview of how each feature can be implemented. Note that if there�
 already an integration or ready-made component, this feature may work out of the
 box.
 
+Store persistent objects, layer order, and
+[`LiveFile`](/docs/api-reference/liveblocks-client#LiveFile) references in Sync.
+Keep temporary cursors, selections, and active tools in
+[Presence](/docs/products/sync/presence), and use
+[Comments](/docs/products/comments) for discussions attached to canvas
+coordinates or objects.
+
 ### Realtime collaboration [#realtime-collaboration]
 
 Store canvas objects in a
@@ -102,7 +112,12 @@ function Shape({ id }: { id: string }) {
 
 Read [Data types](/docs/products/sync/data-types) to choose the canvas document
 shape and [Conflict resolution](/docs/products/sync/conflict-resolution) to
-understand how concurrent changes are merged.
+understand how concurrent changes are merged. Canvas interactions can update
+many times per second, so select only the Storage data each component renders.
+For smoother remote motion, set the
+[`throttle`](/docs/api-reference/liveblocks-react#LiveblocksProviderThrottle) on
+`LiveblocksProvider` to `16`. Lower values send updates more frequently, making
+focused selectors especially important.
 
 ### Presence [#presence]
 
@@ -111,7 +126,11 @@ Keep cursors, selections, active tools, and agent activity in
 should disappear when a connection ends. Publish the current user’s state with
 [`useUpdateMyPresence`](/docs/api-reference/liveblocks-react#useUpdateMyPresence)
 and subscribe to only the fields you render with
-[`useOthersMapped`](/docs/api-reference/liveblocks-react#useOthersMapped).
+[`useOthersMapped`](/docs/api-reference/liveblocks-react#useOthersMapped). Store
+cursor positions in canvas coordinates so they remain attached to the same point
+as users pan and zoom. Convert screen coordinates to canvas coordinates before
+updating Presence, then apply the current viewport transform when rendering
+other users’ cursors.
 
 ```tsx
 import {
@@ -216,6 +235,58 @@ unavailable controls. Read
 [Multiplayer undo/redo](/docs/products/sync/multiplayer-undo-redo) for keyboard
 shortcuts and the non-React client API.
 
+### File uploads [#file-uploads]
+
+Upload images, videos, and other binary assets with
+[`useUploadFile`](/docs/api-reference/liveblocks-react#useUploadFile). It
+uploads the file to the current room and returns an immutable
+[`LiveFile`](/docs/api-reference/liveblocks-client#LiveFile) reference. Store
+that reference on a canvas object so it synchronizes with the rest of the
+canvas, then resolve it to a temporary URL with
+[`useFileUrl`](/docs/api-reference/liveblocks-react#useFileUrl) when rendering.
+
+```tsx
+import { LiveObject, type LiveFileData } from "@liveblocks/client";
+import {
+  useFileUrl,
+  useMutation,
+  useUploadFile,
+} from "@liveblocks/react/suspense";
+
+function UploadImageButton() {
+  const uploadFile = useUploadFile();
+  const insertImage = useMutation(
+    async ({ storage }, id: string, file: File) => {
+      const liveFile = await uploadFile(file);
+
+      storage.get("shapes").set(
+        id,
+        new LiveObject({
+          type: "image",
+          x: 0,
+          y: 0,
+          file: liveFile,
+        })
+      );
+    },
+    [uploadFile]
+  );
+
+  return <FilePicker onSelect={(id, file) => insertImage(id, file)} />;
+}
+
+function CanvasImage({ file }: { file: LiveFileData }) {
+  const { url } = useFileUrl(file);
+
+  return url ? <img src={url} alt={file.name} /> : null;
+}
+```
+
+Do not put binary data directly in `LiveObject`, `LiveMap`, or `LiveList`. Read
+about [LiveFile](/docs/products/sync/data-types#livefile) and check the
+[file upload limits](/docs/pricing/limits). The Advanced Collaborative
+Whiteboard example below implements image uploads with this pattern.
+
 ### Comments [#comments]
 
 Attach [Comments](/docs/products/comments) to canvas coordinates or object IDs
@@ -225,7 +296,10 @@ can create a thread at the selected point, while
 [`useThreads`](/docs/api-reference/liveblocks-react#useThreads) renders existing
 threads and
 [`useEditThreadMetadata`](/docs/api-reference/liveblocks-react#useEditThreadMetadata)
-saves a new position after a thread is dragged.
+saves a new position after a thread is dragged. Store thread positions in canvas
+coordinates, then apply the same viewport transform used by shapes and cursors
+when rendering them. This keeps threads attached to the correct location while
+the canvas is panned or zoomed.
 
 ```tsx
 import { CommentPin, FloatingComposer } from "@liveblocks/react-ui";
@@ -267,6 +341,19 @@ Issue ID tokens from an [authentication endpoint](/docs/authentication) and read
 [Permissions](/docs/authentication/permissions) for user, group, and room access
 patterns. Trusted server APIs use a secret key, so validate the requesting user
 in your own backend before editing on their behalf.
+
+## Production considerations [#production-considerations]
+
+Use
+[`useLostConnectionListener`](/docs/api-reference/liveblocks-react#useLostConnectionListener)
+to tell users when the canvas is taking longer than expected to reconnect. Sync
+continues to apply local changes optimistically while reconnecting and catches
+the client up when the connection returns.
+
+Enable
+[`preventUnsavedChanges`](/docs/api-reference/liveblocks-react#prevent-users-losing-unsaved-changes)
+on `LiveblocksProvider` to warn users who close the page before their latest
+canvas changes have synchronized.
 
 ## Examples [#examples]
 
