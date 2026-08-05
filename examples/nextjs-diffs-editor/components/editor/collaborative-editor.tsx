@@ -14,6 +14,7 @@ import {
 import { RemoteCarets } from "./remote-carets";
 
 const fileOptions: FileOptions<undefined> = {
+  disableFileHeader: true,
   theme: { dark: "pierre-dark", light: "pierre-light" },
 };
 
@@ -98,7 +99,12 @@ export function CollaborativeEditor({ path, text }: CollaborativeEditorProps) {
           }}
           className="h-full overflow-auto bg-white"
         >
-          <File file={file} options={fileOptions} edit editorOptions={editorOptions} />
+          <File
+            file={file}
+            options={fileOptions}
+            edit
+            editorOptions={editorOptions}
+          />
         </div>
         <RemoteCarets
           container={container}

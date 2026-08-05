@@ -29,12 +29,7 @@ export function CodeWorkspace() {
   return (
     <div className="flex h-dvh flex-col bg-neutral-50 text-neutral-900">
       <header className="flex h-12 shrink-0 items-center gap-3 border-b border-neutral-200 bg-white px-4">
-        <span className="text-sm font-semibold">acme-ui</span>
-        <span className="text-xs text-neutral-400">
-          Collaborative code editor
-        </span>
         <div className="ml-auto flex items-center gap-3">
-          <HistoryControls />
           <Avatars />
           <HelpButton />
         </div>
@@ -53,7 +48,11 @@ export function CodeWorkspace() {
           <FileHeader path={activePath} />
           <div className="min-h-0 flex-1">
             {text !== undefined ? (
-              <CollaborativeEditor key={activePath} path={activePath} text={text} />
+              <CollaborativeEditor
+                key={activePath}
+                path={activePath}
+                text={text}
+              />
             ) : null}
           </div>
         </main>
@@ -86,7 +85,7 @@ function FileHeader({ path }: { path: string }) {
   );
 
   return (
-    <div className="flex h-9 shrink-0 items-center gap-2 border-b border-neutral-200 bg-white px-4">
+    <div className="flex h-9 shrink-0 items-center justify-between gap-2 border-b border-neutral-200 bg-white px-4">
       <span className="font-mono text-xs text-neutral-600">{path}</span>
       <div className="flex items-center gap-1">
         {editingHere.map((other) => (
@@ -98,6 +97,7 @@ function FileHeader({ path }: { path: string }) {
           />
         ))}
       </div>
+      <HistoryControls />
     </div>
   );
 }

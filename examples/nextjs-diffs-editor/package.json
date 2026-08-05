@@ -14,6 +14,7 @@
     "@liveblocks/node": "3.23.1-exp3",
     "@liveblocks/react": "3.23.1-exp3",
     "@pierre/diffs": "^1.3.2",
+    "@pierre/theme": "2.0.0",
     "@pierre/trees": "1.0.0-beta.6",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
