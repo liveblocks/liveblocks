@@ -60,81 +60,45 @@ export function useStorageStore({
 
   useEffect(() => {
     const unsubs: (() => void)[] = [];
-    let isCancelled = false;
     setStoreWithStatus({ status: "loading" });
 
     async function setup() {
       // Get Liveblocks Storage values
       const { root } = await room.getStorage();
+      const liveRecords = root.get("records");
+      const defaultRecords = [
+        DocumentRecordType.create({
+          id: "document:document" as TLDocument["id"],
+        }),
+        PageRecordType.create({
+          id: "page:page" as TLPageId,
+          name: "Page 1",
+          index: "a1" as IndexKey,
+        }),
+      ];
 
-      // The effect was cleaned up while Storage was loading
-      if (isCancelled) {
-        return;
-      }
-
-      // The `records` map isn't a stable object: when several people open a
-      // brand new room at the same time, they each create one to populate the
-      // room's `initialStorage`, and only one of those maps wins. Never hold
-      // onto the map, always read the current one and initialize it the first
-      // time it's seen, otherwise reads and writes end up on a map that is no
-      // longer part of Storage, and the whiteboard silently stops syncing.
-      let knownLiveRecords: Liveblocks["Storage"]["records"] | null = null;
-
-      function getLiveRecords() {
-        const liveRecords = root.get("records");
-
-        if (liveRecords !== knownLiveRecords) {
-          knownLiveRecords = liveRecords;
-          initializeLiveRecords(liveRecords);
-        }
-
-        return liveRecords;
-      }
-
-      function initializeLiveRecords(
-        liveRecords: Liveblocks["Storage"]["records"]
-      ) {
-        room.batch(() => {
-          for (const [id, liveRecord] of liveRecords.entries()) {
-            if (isLiveblocksRecord(liveRecord)) {
-              continue;
-            }
-
-            const record = getTldrawRecord(liveRecord);
-            if (record) {
-              liveRecords.set(id, createLiveblocksRecord(record));
-            }
+      room.batch(() => {
+        for (const [id, liveRecord] of liveRecords.entries()) {
+          if (isLiveblocksRecord(liveRecord)) {
+            continue;
           }
 
-          // The records tldraw needs to start up, plus everything already drawn
-          // locally, so that nothing is lost if this map replaced another one
-          const records: TLRecord[] = [
-            DocumentRecordType.create({
-              id: "document:document" as TLDocument["id"],
-            }),
-            PageRecordType.create({
-              id: "page:page" as TLPageId,
-              name: "Page 1",
-              index: "a1" as IndexKey,
-            }),
-            ...store
-              .allRecords()
-              .filter((record) =>
-                store.scopedTypes.document.has(record.typeName)
-              ),
-          ];
+          const record = getTldrawRecord(liveRecord);
+          if (record) {
+            liveRecords.set(id, createLiveblocksRecord(record));
+          }
+        }
 
-          records.forEach((record) => {
-            if (!liveRecords.has(record.id)) {
-              liveRecords.set(record.id, createLiveblocksRecord(record));
-            }
-          });
+        defaultRecords.forEach((record) => {
+          if (!liveRecords.has(record.id)) {
+            liveRecords.set(record.id, createLiveblocksRecord(record));
+          }
         });
-      }
+      });
 
       function getRecordsFromStorage() {
         const records: TLRecord[] = [];
-        for (const liveRecord of getLiveRecords().values()) {
+        for (const liveRecord of liveRecords.values()) {
           const record = getTldrawRecord(liveRecord);
           if (record) {
             records.push(record);
@@ -151,8 +115,6 @@ export function useStorageStore({
       unsubs.push(
         store.listen(
           ({ changes }: TLStoreEventInfo) => {
-            const liveRecords = getLiveRecords();
-
             room.batch(() => {
               Object.values(changes.added).forEach((record) => {
                 liveRecords.set(record.id, createLiveblocksRecord(record));
@@ -176,11 +138,45 @@ export function useStorageStore({
         )
       );
 
-      // Update tldraw when Storage changes. Subscribing to the root, and not to
-      // the `records` map, keeps working if that map is ever replaced
+      // Sync tldraw changes with Presence
+      function syncStoreWithPresence({ changes }: TLStoreEventInfo) {
+        room.batch(() => {
+          Object.values(changes.added).forEach((record) => {
+            room.updatePresence({
+              [record.id]: getLiveblocksJsonObject(record),
+            });
+          });
+
+          Object.values(changes.updated).forEach(([_, record]) => {
+            room.updatePresence({
+              [record.id]: getLiveblocksJsonObject(record),
+            });
+          });
+
+          Object.values(changes.removed).forEach((record) => {
+            room.updatePresence({ [record.id]: null });
+          });
+        });
+      }
+
+      unsubs.push(
+        store.listen(syncStoreWithPresence, {
+          source: "user",
+          scope: "session",
+        })
+      );
+
+      unsubs.push(
+        store.listen(syncStoreWithPresence, {
+          source: "user",
+          scope: "presence",
+        })
+      );
+
+      // Update tldraw when Storage changes
       unsubs.push(
         room.subscribe(
-          root,
+          liveRecords,
           () => {
             const toPut = getRecordsFromStorage();
             const recordIds = new Set(toPut.map((record) => record.id));
@@ -315,7 +311,6 @@ export function useStorageStore({
     setup();
 
     return () => {
-      isCancelled = true;
       unsubs.forEach((fn) => fn());
       unsubs.length = 0;
     };

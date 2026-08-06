@@ -1,5 +1,5 @@
 import { useRoom } from "@liveblocks/react/suspense";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   DocumentRecordType,
   IndexKey,
@@ -35,9 +35,11 @@ export function useStorageStore(shapeUtils: TLAnyShapeUtilConstructor[] = []) {
     status: "loading",
   });
 
+  // Use a ref to ensure it works in callbacks after strict mode double render
+  const liveRecordsRef = useRef<Liveblocks["Storage"]["records"] | null>(null);
+
   useEffect(() => {
     const unsubs: (() => void)[] = [];
-    let isCancelled = false;
     setStoreWithStatus({ status: "loading" });
 
     async function setup() {
@@ -57,77 +59,36 @@ export function useStorageStore(shapeUtils: TLAnyShapeUtilConstructor[] = []) {
 
       // Get Liveblocks Storage values
       const { root } = await room.getStorage();
-
-      // The effect was cleaned up while Storage was loading
-      if (isCancelled) {
-        return;
-      }
-
-      const defaultRecords: TLRecord[] = [
-        DocumentRecordType.create({
-          id: "document:document" as TLDocument["id"],
-        }),
-        PageRecordType.create({
-          id: "page:page" as TLPageId,
-          name: "Page 1",
-          index: "a1" as IndexKey,
-        }),
-      ];
-
-      // The `records` map isn't a stable object: when several people open a
-      // brand new room at the same time, they each create one to populate the
-      // room's `initialStorage`, and only one of those maps wins. Never hold
-      // onto the map, always read the current one and initialize it the first
-      // time it's seen, otherwise reads and writes end up on a map that is no
-      // longer part of Storage, and the canvas silently stops syncing.
-      let knownLiveRecords: Liveblocks["Storage"]["records"] | null = null;
-
-      function getLiveRecords() {
-        const liveRecords = root.get("records");
-
-        if (liveRecords !== knownLiveRecords) {
-          knownLiveRecords = liveRecords;
-
-          if (canWrite) {
-            room.batch(() => {
-              // The records tldraw needs to start up, plus everything already
-              // drawn locally, so that nothing is lost if this map replaced
-              // another one
-              const records = [
-                ...defaultRecords,
-                ...store
-                  .allRecords()
-                  .filter((record) =>
-                    store.scopedTypes.document.has(record.typeName)
-                  ),
-              ];
-
-              records.forEach((record) => {
-                if (!liveRecords.has(record.id)) {
-                  liveRecords.set(record.id, record);
-                }
-              });
-            });
-          }
-        }
-
-        return liveRecords;
-      }
-
-      function getRecordsFromStorage(): TLRecord[] {
-        return [...getLiveRecords().values()];
-      }
+      const liveRecords = root.get("records");
+      liveRecordsRef.current = liveRecords;
 
       // Initialize tldraw with records from Storage
       store.clear();
-      store.put([...defaultRecords, ...getRecordsFromStorage()], "initialize");
+      store.put(
+        [
+          DocumentRecordType.create({
+            id: "document:document" as TLDocument["id"],
+          }),
+          PageRecordType.create({
+            id: "page:page" as TLPageId,
+            name: "Page 1",
+            index: "a1" as IndexKey,
+          }),
+          ...[...liveRecords.values()],
+        ],
+        "initialize"
+      );
 
       // Sync tldraw changes with Storage
       if (canWrite) {
         unsubs.push(
           store.listen(
             ({ changes }: TLStoreEventInfo) => {
-              const liveRecords = getLiveRecords();
+              const liveRecords = liveRecordsRef.current;
+
+              if (!liveRecords) {
+                return;
+              }
 
               room.batch(() => {
                 Object.values(changes.added).forEach((record) => {
@@ -148,22 +109,69 @@ export function useStorageStore(shapeUtils: TLAnyShapeUtilConstructor[] = []) {
         );
       }
 
-      // Update tldraw when Storage changes. Subscribing to the root, and not to
-      // the `records` map, keeps working if that map is ever replaced
+      // Sync tldraw changes with Presence
+      function syncStoreWithPresence({ changes }: TLStoreEventInfo) {
+        room.batch(() => {
+          Object.values(changes.added).forEach((record) => {
+            room.updatePresence({ [record.id]: record });
+          });
+
+          Object.values(changes.updated).forEach(([_, record]) => {
+            room.updatePresence({ [record.id]: record });
+          });
+
+          Object.values(changes.removed).forEach((record) => {
+            room.updatePresence({ [record.id]: null });
+          });
+        });
+      }
+
+      unsubs.push(
+        store.listen(syncStoreWithPresence, {
+          source: "user",
+          scope: "session",
+        })
+      );
+
+      unsubs.push(
+        store.listen(syncStoreWithPresence, {
+          source: "user",
+          scope: "presence",
+        })
+      );
+
+      // Update tldraw when Storage changes
       unsubs.push(
         room.subscribe(
-          root,
-          () => {
-            const toPut = getRecordsFromStorage();
-            const recordIds = new Set(toPut.map((record) => record.id));
-            const toRemove = store
-              .allRecords()
-              .filter(
-                (record) =>
-                  store.scopedTypes.document.has(record.typeName) &&
-                  !recordIds.has(record.id)
-              )
-              .map((record) => record.id);
+          liveRecords,
+          (storageChanges) => {
+            const toRemove: TLRecord["id"][] = [];
+            const toPut: TLRecord[] = [];
+
+            for (const update of storageChanges) {
+              if (update.type !== "LiveMap") {
+                return;
+              }
+
+              for (const [id, { type }] of Object.entries(update.updates)) {
+                switch (type) {
+                  // Object deleted from Liveblocks, remove from tldraw
+                  case "delete": {
+                    toRemove.push(id as TLRecord["id"]);
+                    break;
+                  }
+
+                  // Object updated on Liveblocks, update tldraw
+                  case "update": {
+                    const curr = update.node.get(id);
+                    if (curr) {
+                      toPut.push(curr as any as TLRecord);
+                    }
+                    break;
+                  }
+                }
+              }
+            }
 
             // Update tldraw with changes
             store.mergeRemoteChanges(() => {
@@ -280,7 +288,6 @@ export function useStorageStore(shapeUtils: TLAnyShapeUtilConstructor[] = []) {
     setup();
 
     return () => {
-      isCancelled = true;
       unsubs.forEach((fn) => fn());
       unsubs.length = 0;
     };
