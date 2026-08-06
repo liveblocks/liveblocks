@@ -7,118 +7,398 @@ meta:
     active tools."
 ---
 
-Presence is temporary state associated with each connected user or agent in a
-room. It updates in realtime and disappears when that connection ends.
+Presence is temporary state associated with each connected user in a room,
+updating in realtime and disappearing when the connection ends. Use presence for
+creating live avatars, realtime cursors, multiplayer selections, typing
+indicators, and other temporary UI elements that do not belong in the persisted
+document. You can also set presence on the server, enabling AI agent presence in
+your app.
 
-Use Presence for cursors, selections, typing indicators, active tools,
-playheads, and other signals that do not belong in the persisted document.
+[TODO: Video of avatars, cursors, agent selection, typing indicator]
 
-<Banner title="Get started with Presence" type="info">
-
-Follow the [Next.js Presence quickstart](/docs/get-started/nextjs-presence),
-then return here for modeling and API guidance.
-
+<Banner title="Learn with our interactive tutorial">
+  Our [interactive tutorial](/docs/tutorial/react/getting-started) walks you
+  through the basics of presence, including setting up live cursors.
 </Banner>
 
-## Define Presence [#define-presence]
+## Ready-made components
 
-Declare your Presence type in `liveblocks.config.ts`.
+If you’d like to get started quickly, Liveblocks provides basic ready-made
+components for presence,
+[`Cursors`](/docs/api-reference/liveblocks-react-ui#Cursors) and
+[`AvatarStack`](/docs/api-reference/liveblocks-react-ui#AvatarStack), which
+correspondingly display realtime cursors and avatars.
+
+```tsx
+import { AvatarStack, Cursors } from "@liveblocks/react-ui";
+
+function App() {
+  return (
+    <div>
+      // +++
+      <Cursors />
+      <AvatarStack />
+      // +++
+    </div>
+  );
+}
+```
+
+Follow the [presence quickstart guide](/docs/get-started/nextjs-presence) to set
+them up.
+
+## Custom presence
+
+Using Liveblocks React hooks, you can build any sort of realtime UI presence
+into your app. Presence is represented by a JSON object, and is updated in
+realtime for every connected user. Before you get started, decide on the shape
+of your presence object, and set it in your config file.
+
+For example, live cursors will use `x` and `y` coordiantes, whereas a typing
+indicator will use a boolean value. Set this in your config file.
+
+```ts file="liveblocks.config.ts"
+declare global {
+  interface Liveblocks {
+    // +++
+    Presence: {
+      cursor: { x: number; y: number } | null;
+    };
+    // +++
+  }
+}
+```
+
+Next, set an initial value for your presence in
+[`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider). In this
+snippet, `null` represents a cursor that is offscreen.
+
+```tsx
+import { RoomProvider } from "@liveblocks/react/suspense";
+
+function App() {
+  return (
+    // +++
+    <RoomProvider initialPresence={{ cursor: null }}>
+      {/* // +++ */}
+      {/* ... */}
+    </RoomProvider>
+  );
+}
+```
+
+### Set up user info
+
+When using presence, its often useful to pass in user info from your
+authentication system, such as a name, avatar, and color, to be displayed in the
+UI. This is helpful if you’re rendering UI such as a user avatar or name tag,
+static information that won’t update in realtime.
+
+To do this, first, set your types in `liveblocks.config.ts`. For example, if
+each user has the properties we just described.
 
 ```ts file="liveblocks.config.ts"
 declare global {
   interface Liveblocks {
     Presence: {
       cursor: { x: number; y: number } | null;
-      selectedId: string | null;
     };
+
+    // +++
+    UserInfo: {
+      name: string;
+      color: string;
+      avatar: string;
+    };
+    // +++
   }
 }
-
-export {};
 ```
 
-Set an initial value when the user enters a room.
+Next, when [authenticating](/docs/authentication) Liveblocks, pass corresponding
+user info from your auth system to `userInfo` inside your authentication
+endpoint. Any string, number, or boolean property can be passed in.
 
-```tsx
-<RoomProvider id="my-room" initialPresence={{ cursor: null, selectedId: null }}>
-  {children}
-</RoomProvider>
+```ts
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+});
+
+export async function POST(request: Request) {
+  const user = __getServerSession__();
+
+  const { status, body } = await liveblocks.identifyUser(
+    { userId: user.id },
+    {
+      userInfo: {
+        // +++
+        name: user.name,
+        color: user.color,
+        avatar: user.avatar,
+        // +++
+      },
+    }
+  );
+
+  return new Response(body, { status });
+}
 ```
 
-## Update your Presence [#update-your-presence]
+### Setting user presence
 
-Use
 [`useUpdateMyPresence`](/docs/api-reference/liveblocks-react#useUpdateMyPresence)
-to merge temporary values into the current user’s Presence.
+allows you to update the current user’s presence. Use this, for example, to set
+a user’s cursor position on the page, or set a typing indicator.
 
 ```tsx
 import { useUpdateMyPresence } from "@liveblocks/react/suspense";
 
-function Canvas() {
+function CursorOverlay() {
+  // +++
   const updateMyPresence = useUpdateMyPresence();
+  // +++
 
   return (
     <div
-      onPointerMove={(event) =>
-        updateMyPresence({
-          cursor: { x: event.clientX, y: event.clientY },
-        })
+      style={{ width: "100vw", height: "100vh" }}
+      onPointerMove={
+        (event) =>
+          // +++
+          updateMyPresence({ cursor: { x: event.clientX, y: event.clientY } })
+        // +++
       }
-      onPointerLeave={() => updateMyPresence({ cursor: null })}
+      onPointerLeave={
+        // +++
+        () => updateMyPresence({ cursor: null })
+        // +++
+      }
     />
   );
 }
 ```
 
-## Read collaborators [#read-collaborators]
+### Using others presence
 
-[`useOthers`](/docs/api-reference/liveblocks-react#useOthers) returns the other
-connected users. [`useSelf`](/docs/api-reference/liveblocks-react#useSelf)
-returns the current connection.
+[`useOthers`](/docs/api-reference/liveblocks-react#useOthers) returns a list of
+every connected users in the room. For example, you can render each user’s
+cursor using their `presence.cursor` values, passing in their
+[user info](#Set-up-user-info) from before to show their name and color.
 
 ```tsx
 import { useOthers } from "@liveblocks/react/suspense";
+import { Cursor } from "@liveblocks/react-ui";
 
 function Cursors() {
+  // +++
   const others = useOthers();
+  // +++
 
-  return others.map(({ connectionId, presence, info }) =>
-    presence.cursor ? (
-      <Cursor key={connectionId} name={info.name} position={presence.cursor} />
-    ) : null
+  return (
+    <div style={{ position: "relative", width: "100vw", height: "100vh" }}>
+      // +++
+      {others.map(({ connectionId, presence, info }) =>
+        // +++
+        presence.cursor ? (
+          <Cursor
+            key={connectionId}
+            // +++
+            label={info.name}
+            color={info.color}
+            // +++
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              // +++
+              transform: `translate(${presence.cursor.x}px, ${presence.cursor.y}px)`,
+              // +++
+            }}
+          />
+        ) : null
+      )}{" "}
+    </div>
   );
 }
 ```
 
-User info such as a name, avatar, and color comes from
-[authentication](/docs/authentication). Keep user identity in `info`, not in
-Presence.
+### Avatar stack
 
-## Humans and agents [#humans-and-agents]
+After adding [user info](#Set-up-user-info), you can render a live avatar stack
+wuth [`useOthers`](/docs/api-reference/liveblocks-react#useOthers) and your
+`info.avatar` property.
 
-Agents can appear alongside humans through
-[`Liveblocks.setPresence`](/docs/api-reference/liveblocks-node#post-rooms-roomId-presence).
-Use a short time-to-live and refresh it while work continues.
+```tsx
+import { useOthers } from "@liveblocks/react/suspense";
+
+function AvatarStack() {
+  // +++
+  const others = useOthers();
+  // +++
+
+  return (
+    <div style={{ display: "flex", marginLeft: 4 }}>
+      // +++
+      {others.map(({ connectionId, presence, info }) => (
+        <img
+          key={connectionId}
+          src={info.avatar}
+          alt={info.name}
+          style={{ width: 20, height: 20, borderRadius: "50%", marginLeft: -4 }}
+        />
+      ))}
+      // +++
+    </div>
+  );
+}
+```
+
+### Typing indicator
+
+To create a typing indicator, use
+[`useUpdateMyPresence`](/docs/api-reference/liveblocks-react#useUpdateMyPresence)
+to set `typing` to `true` on input, then clear it with a timeout after the user
+stops typing.
+
+```tsx file="liveblocks.config.ts"
+declare global {
+  interface Liveblocks {
+    // +++
+    Presence: {
+      typing: boolean;
+    };
+    // +++
+  }
+}
+```
+
+```tsx
+import { useRef } from "react";
+import { useUpdateMyPresence } from "@liveblocks/react/suspense";
+
+function TypingIndicator() {
+  // +++
+  const updateMyPresence = useUpdateMyPresence();
+  const timeoutId = useRef<number>();
+  // +++
+
+  return (
+    <input
+      type="text"
+      onInput={() => {
+        // +++
+        updateMyPresence({ typing: true });
+        window.clearTimeout(timeoutId.current);
+
+        timeoutId.current = window.setTimeout(() => {
+          updateMyPresence({ typing: false });
+        }, 1000);
+        // +++
+      }}
+    />
+  );
+}
+```
+
+### Selection indicator
+
+To create a selection indicator, use
+[`useUpdateMyPresence`](/docs/api-reference/liveblocks-react#useUpdateMyPresence)
+to set `selection` on an item, then add an outline when the item is selected. In
+this example, multiple textareas are rendered, and when one is selected by a
+user, an outline appears around it.
+
+```tsx file="liveblocks.config.ts"
+declare global {
+  interface Liveblocks {
+    // +++
+    Presence: {
+      selection: string | null;
+    };
+    // +++
+  }
+}
+```
+
+```tsx
+import { useUpdateMyPresence } from "@liveblocks/react/suspense";
+
+function Textarea({ id }: { id: string }) {
+  // +++
+  const updateMyPresence = useUpdateMyPresence();
+  const useOthers = useOthers();
+  const isSelected = others.find(({ presence }) => presence.selection === id);
+  // +++
+
+  return (
+    // +++
+    <textarea
+      id={id}
+      onSelect={() => updateMyPresence({ selection: id })}
+      onBlur={() => updateMyPresence({ selection: null })}
+      style={{
+        outline: isSelected ? "2px solid #7c3aed" : "none",
+      }}
+    />
+    // +++
+  );
+}
+
+function Textareas() {
+  return (
+    <div>
+      <Textarea id="textarea-1" />
+      <Textarea id="textarea-2" />
+    </div>
+  );
+}
+```
+
+## Agent presence
+
+As well as on the client, you can set presence on the server, especially helful
+for enabling AI agent presence in your app. The
+[`Liveblocks.setPresence`](/docs/api-reference/liveblocks-node#post-rooms-roomId-presence)
+mtehod is used for this, and after it’s called,
+[`useOthers`](/docs/api-reference/liveblocks-react#useOthers) will return the
+agent in the list of connected users. `data` and `userInfo` correspond to
+`Presence` and `UserInfo` in your types.
+
+```ts file="liveblocks.config.ts"
+declare global {
+  interface Liveblocks {
+    // +++
+    Presence: {
+      cursor: { x: number; y: number } | null;
+    };
+    UserInfo: {
+      name: string;
+      color: string;
+      avatar: string;
+    };
+    // +++
+  }
+}
+```
 
 ```ts
 await liveblocks.setPresence("my-room-id", {
   userId: "agent-123",
-  data: { status: "editing", cursor: { x: 100, y: 200 } },
-  userInfo: { name: "Research agent", color: "#7c3aed" },
+  // +++
+  data: {
+    cursor: { x: 100, y: 200 },
+  },
+  userInfo: {
+    name: "Research agent",
+    color: "#7c3aed",
+    avatar: "https://example.com/ai-agent.png",
+  },
+  // +++
   ttl: 30,
 });
 ```
 
-## Presence or Storage? [#presence-or-storage]
-
-| Put it in Presence | Put it in Storage                |
-| ------------------ | -------------------------------- |
-| Cursor position    | Shapes and nodes                 |
-| Current selection  | Document title                   |
-| Active tool        | Table data                       |
-| Typing indicator   | Saved editor content             |
-| Agent activity     | Agent output that should persist |
-
-Presence is intentionally ephemeral. Use
-[Storage data types](/docs/products/sync/data-types) when state must survive a
-disconnect.
+Presence expires after the time-to-live (TTL) period, in seconds, and is removed
+from the list of connected users. To remove agent presence, call it with
+`ttl: 2`, the minimum value, and it will be removed shortly after.
