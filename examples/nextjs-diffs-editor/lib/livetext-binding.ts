@@ -231,8 +231,13 @@ export function bindEditorToLiveText({
   }
 
   // Fires whenever the caret moves inside the editable surface (the editor
-  // tracks selections through the native Selection API).
+  // tracks selections through the native Selection API). The surface lives
+  // in a shadow root, where `selectionchange` support varies by browser, so
+  // composed events on the container double as fallback triggers.
   document.addEventListener("selectionchange", handleSelectionChange);
+  container.addEventListener("keyup", handleSelectionChange);
+  container.addEventListener("pointerup", handleSelectionChange);
+  container.addEventListener("focusin", handleSelectionChange);
 
   // ---- Others' carets → onRemoteSelections --------------------------------
 
@@ -315,6 +320,9 @@ export function bindEditorToLiveText({
       resumeHistoryNow();
       container.removeEventListener("keydown", handleKeyDown, true);
       document.removeEventListener("selectionchange", handleSelectionChange);
+      container.removeEventListener("keyup", handleSelectionChange);
+      container.removeEventListener("pointerup", handleSelectionChange);
+      container.removeEventListener("focusin", handleSelectionChange);
       unsubscribeFromStorage();
       unsubscribeFromOthers();
       room.updatePresence({ selection: null });

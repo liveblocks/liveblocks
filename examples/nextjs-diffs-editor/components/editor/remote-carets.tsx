@@ -45,12 +45,41 @@ export function RemoteCarets({
     }
 
     let frame = 0;
+    let observedRoot: ShadowRoot | null = null;
+    let shadowObserver: MutationObserver | null = null;
+
+    const schedule = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(compute);
+    };
+
     const compute = () => {
-      const content = container.querySelector("[data-content]");
-      if (content === null) {
+      // The file surface renders inside an open shadow root on the
+      // <diffs-container> custom element, so the line rows can't be reached
+      // with a regular querySelector from the outside.
+      const host = container.querySelector("diffs-container");
+      const root = host?.shadowRoot ?? null;
+      const content = root?.querySelector("[data-content]") ?? null;
+      if (root === null || content === null) {
         setCarets([]);
         setHighlights([]);
         return;
+      }
+
+      if (observedRoot !== root) {
+        // First time the shadow root is available (or it was replaced):
+        // scroll events and DOM mutations inside a shadow tree don't cross
+        // its boundary, so listen and observe on the shadow root itself.
+        shadowObserver?.disconnect();
+        observedRoot?.removeEventListener("scroll", schedule, true);
+        observedRoot = root;
+        shadowObserver = new MutationObserver(schedule);
+        shadowObserver.observe(root, {
+          childList: true,
+          subtree: true,
+          characterData: true,
+        });
+        root.addEventListener("scroll", schedule, true);
       }
 
       const docText = getDocumentText();
@@ -99,16 +128,13 @@ export function RemoteCarets({
       setHighlights(nextHighlights);
     };
 
-    const schedule = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(compute);
-    };
-
     schedule();
-    // Capture phase: the code area scrolls in a nested scroller.
+    // The outer wrapper scrolls vertically; the code area scrolls inside the
+    // shadow root (handled above once the shadow root is resolved).
     container.addEventListener("scroll", schedule, true);
     window.addEventListener("resize", schedule);
-    // Re-measure once the surface re-renders after (remote) edits.
+    // Catches the <diffs-container> host being mounted after the first
+    // render, and re-measures after light-DOM re-renders.
     const observer = new MutationObserver(schedule);
     observer.observe(container, {
       childList: true,
@@ -121,17 +147,21 @@ export function RemoteCarets({
       container.removeEventListener("scroll", schedule, true);
       window.removeEventListener("resize", schedule);
       observer.disconnect();
+      shadowObserver?.disconnect();
+      observedRoot?.removeEventListener("scroll", schedule, true);
     };
   }, [container, selections, getDocumentText]);
 
   return (
     <div
       aria-hidden="true"
+      data-remote-carets=""
       className="pointer-events-none absolute inset-0 overflow-hidden"
     >
       {highlights.map((highlight) => (
         <div
           key={highlight.key}
+          data-remote-selection=""
           className="absolute rounded-xs opacity-25"
           style={{
             left: highlight.left,
@@ -145,6 +175,7 @@ export function RemoteCarets({
       {carets.map((caret) => (
         <div
           key={caret.key}
+          data-remote-caret=""
           className="absolute w-0.5"
           style={{
             left: caret.left,
