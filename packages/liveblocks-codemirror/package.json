@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/codemirror",
-  "version": "3.23.0",
+  "version": "3.23.2-exp1",
   "description": "CodeMirror collaboration plugins backed by Liveblocks.",
   "license": "Apache-2.0",
   "author": "Liveblocks Inc.",
