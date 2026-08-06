@@ -112,7 +112,7 @@ interactions yourself.
 
       export function Room({ children }: { children: ReactNode }) {
         return (
-          <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
+          <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"} throttle={16}>
             <RoomProvider
               id="my-canvas-room"
               initialStorage={{

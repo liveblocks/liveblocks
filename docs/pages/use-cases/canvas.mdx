@@ -32,8 +32,8 @@ undo/redo.
   state from snapshots.
 - [**Multiplayer undo/redo**](#multiplayer-undo-redo): Each user can
   independently undo and redo their own changes.
-- [**File uploads**](#file-uploads): Upload images and other assets with
-  `LiveFile`, then add them to the shared canvas.
+- [**File uploads**](#file-uploads): Upload images and other assets to the
+  shared canvas.
 - [**Comments**](#comments): Add draggable commenting threads to the canvas.
 - [**Permissions**](#permissions): Control which users can read and edit the
   canvas.
@@ -42,7 +42,7 @@ undo/redo.
 
 Choose a starting point for your canvas.
 
-<ListGrid columns={1} defaultVisibleItems={3}>
+<ListGrid columns={2} defaultVisibleItems={4}>
   <DocsCard
     type="technology"
     title="Get started with Tldraw"
@@ -59,18 +59,30 @@ Choose a starting point for your canvas.
   />
   <DocsCard
     type="technology"
-    title="Get started with draggable comments"
+    title="Get started with presence"
+    href="/docs/get-started/nextjs-presence"
+    description="Add realtime presence and cursors"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with comments"
     href="/docs/get-started/nextjs-comments-canvas"
-    description="Add draggable comment threads with x/y coordinates"
+    description="Add draggable comment threads"
     visual={<DocsNextjsIcon />}
   />
 </ListGrid>
 
 ## Implementation [#implementation]
 
-This is an overview of how each feature can be implemented. Note that if there’s
-already an integration or ready-made component, this feature may work out of the
-box.
+This is an overview of how each feature can be implemented.
+
+<Banner>
+
+If you’re using a ready-made integration, some of these features may work out of
+the box.
+
+</Banner>
 
 Store persistent objects, layer order, and
 [`LiveFile`](/docs/api-reference/liveblocks-client#LiveFile) references in Sync.
@@ -81,107 +93,218 @@ coordinates or objects.
 
 ### Realtime collaboration [#realtime-collaboration]
 
-Store canvas objects in a
+Using [Sync](/docs/products/sync/overview), you can add realtime collaboration
+to your canvas. One way to build this is to store canvas objects in a
 [`LiveMap`](/docs/api-reference/liveblocks-client#LiveMap), keyed by stable IDs,
-and model each object with a
-[`LiveObject`](/docs/api-reference/liveblocks-client#LiveObject). Keep shared
-layer order in a [`LiveList`](/docs/api-reference/liveblocks-client#LiveList).
-Read only the data a component renders with
-[`useStorage`](/docs/api-reference/liveblocks-react#useStorage), then update it
-inside [`useMutation`](/docs/api-reference/liveblocks-react#useMutation).
-Mutations are applied optimistically and synchronized through Sync, including
-every position update while a shape is dragged.
+and create each shape in the canvas as a
+[`LiveObject`](/docs/api-reference/liveblocks-client#LiveObject). With
+[`useStorage`](/docs/api-reference/liveblocks-react#useStorage) you can render
+each shape on your canvas.
 
 ```tsx
-import { useMutation, useStorage } from "@liveblocks/react/suspense";
+import { useStorage } from "@liveblocks/react/suspense";
 
-function Shape({ id }: { id: string }) {
-  const shape = useStorage((root) => root.shapes.get(id));
-  const moveShape = useMutation(
-    ({ storage }, x: number, y: number) => {
-      storage.get("shapes").get(id)?.update({ x, y });
-    },
-    [id]
+function Canvas() {
+  // +++
+  const shapes = useStorage((root) => root.shapes);
+  // +++
+
+  return (
+    <div style={{ position: "relative" }}>
+      // +++
+      {Object.toEntries(shapes).map(([id, shape]) => (
+        // +++
+        <div
+          key={id}
+          style={{
+            position: "absolute",
+            left: 0,
+            top: 0,
+            // +++
+            transform: `translate(${shape.x}px, ${shape.y}px)`,
+            backgroundColor: shape.color,
+            // +++
+          }}
+        />
+      ))}
+    </div>
   );
-
-  if (!shape) return null;
-
-  return <CanvasShape {...shape} onMove={moveShape} />;
 }
 ```
 
-Read [Data types](/docs/products/sync/data-types) to choose the canvas document
-shape and [Conflict resolution](/docs/products/sync/conflict-resolution) to
-understand how concurrent changes are merged. Canvas interactions can update
-many times per second, so select only the Storage data each component renders.
-For smoother remote motion, set the
+To update shapes, add mutations with
+[`useMutation`](/docs/api-reference/liveblocks-react#useMutation), for example
+for adding, moving, and deleting shapes. Mutations are applied optimistically
+and synchronized through Sync, including every position update while a shape is
+dragged.
+
+```tsx
+import { useMutation } from "@liveblocks/react/suspense";
+import { LiveObject } from "@liveblocks/client";
+
+// +++
+const addShape = useMutation(({ storage }) => {
+  // +++
+  const newShape = new LiveObject({
+    x: 10,
+    y: 50,
+    color: "blue",
+  });
+
+  const shapes = storage.get("shapes");
+  shapes.set("shape-2", newShape);
+}, []);
+
+// +++
+const moveShape = useMutation(
+  // +++
+  ({ storage }, id: string, x: number, y: number) => {
+    const shapes = storage.get("shapes");
+    shapes.get(id)?.update({ x, y });
+  },
+  [id]
+);
+
+// +++
+const deleteShape = useMutation(
+  // +++
+  ({ storage }, id: string) => {
+    const shapes = storage.get("shapes");
+    shapes.delete(id);
+  },
+  [id]
+);
+```
+
+For smoother motion, set the
 [`throttle`](/docs/api-reference/liveblocks-react#LiveblocksProviderThrottle) on
-`LiveblocksProvider` to `16`. Lower values send updates more frequently, making
-focused selectors especially important.
+`LiveblocksProvider` to `16`, making your canvas run at 60 frames per second.
+
+```tsx
+import { LiveblocksProvider } from "@liveblocks/react";
+
+function App() {
+  <LiveblocksProvider
+    authEndpoint="/api/liveblocks-auth"
+    // +++
+    throttle={16}
+    // +++
+  >
+    <Canvas />
+  </LiveblocksProvider>;
+}
+```
+
+Learn more about setting up a canvas in the
+[custom canvas quickstart guide](/docs/get-started/nextjs-canvas-custom).
 
 ### Presence [#presence]
 
-Keep cursors, selections, active tools, and agent activity in
-[Presence](/docs/products/sync/presence), because this state is temporary and
-should disappear when a connection ends. Publish the current user’s state with
-[`useUpdateMyPresence`](/docs/api-reference/liveblocks-react#useUpdateMyPresence)
-and subscribe to only the fields you render with
-[`useOthersMapped`](/docs/api-reference/liveblocks-react#useOthersMapped). Store
-cursor positions in canvas coordinates so they remain attached to the same point
-as users pan and zoom. Convert screen coordinates to canvas coordinates before
-updating Presence, then apply the current viewport transform when rendering
-other users’ cursors.
+Using [Presence](/docs/products/sync/presence), you can show live cursors,
+avatar stacks, realtime selections, and agent activity on your canvas. To get
+started, import our ready-made
+[`AvatarStack`](/docs/api-reference/liveblocks-react-ui#AvatarStack) component.
 
 ```tsx
-import {
-  shallow,
-  useOthersMapped,
-  useUpdateMyPresence,
-} from "@liveblocks/react/suspense";
+import { AvatarStack } from "@liveblocks/react-ui";
 
 function CanvasPresence() {
-  const others = useOthersMapped(
-    (other) => ({
-      cursor: other.presence.cursor,
-      selectedShapeId: other.presence.selectedShapeId,
-    }),
-    shallow
-  );
+  return <AvatarStack />;
+}
+```
+
+To create live cursors, add
+[`useOthers`](/docs/api-reference/liveblocks-react#useOthers) and
+[`useUpdateMyPresence`](/docs/api-reference/liveblocks-react#useUpdateMyPresence)
+get and set user cursor positions on the canvas. Make sure to use a coordinate
+system that works with your canvas, for example screen coordinates.
+
+```tsx
+import { useOthers, useUpdateMyPresence } from "@liveblocks/react/suspense";
+import { Cursor } from "@liveblocks/react-ui";
+
+function CanvasPresence() {
+  // +++
+  const others = useOthers();
   const updateMyPresence = useUpdateMyPresence();
+  // +++
 
   return (
-    <PresenceLayer
-      others={others}
-      onPointerMove={(cursor) => updateMyPresence({ cursor })}
-    />
+    <div
+      style={{ position: "absolute", inset: 0 }}
+      onPointerMove={
+        // +++
+        (e) => updateMyPresence({ cursor: { x: e.clientX, y: e.clientY } })
+        // +++
+      }
+      onPointerLeave={
+        // +++
+        () => updateMyPresence({ cursor: null })
+        // +++
+      }
+    >
+      // +++
+      {others.map(({ connectionId, info, presence }) => (
+        // +++
+        <Cursor
+          key={connectionId}
+          label={info.name}
+          color={info.color}
+          style={{
+            position: "absolute",
+            left: 0,
+            top: 0,
+            // +++
+            transform: `translate(${presence.cursor.x}px, ${presence.cursor.y}px)`,
+            // +++
+          }}
+        />
+      ))}
+    </div>
   );
 }
 ```
 
+Learn more about setting up presence in the
+[presence quickstart guide](/docs/get-started/nextjs-presence).
+
 ### Agentic editing [#agentic-editing]
 
-AI agents and other trusted server processes can edit the same canvas with
-[`Liveblocks.mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage).
-The mutation uses the same Storage data types as the client, and connected users
-receive the result in realtime. Run agent mutations on your backend, validate
-the generated values, and create a version before applying a broad change.
+AI agents and other server processes can edit canvas with
+[`Liveblocks.mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage),
+and changes will be applied and synchronized in realtime. The mutation uses the
+same Storage data types as the client, and connected users receive the result in
+realtime. Run agent mutations on your backend, validate the generated values,
+and create a version before applying a broad change.
 
 ```ts
-await liveblocks.mutateStorage("canvas-room", ({ root }) => {
-  root.get("shapes").get(shapeId)?.update({
-    x: suggestedPosition.x,
-    y: suggestedPosition.y,
-  });
+import { Liveblocks } from "@liveblocks/node";
+import { LiveObject } from "@liveblocks/client";
+
+const liveblocks = new Liveblocks({
+  secret: process.env.LIVEBLOCKS_SECRET,
 });
+
+// +++
+await liveblocks.mutateStorage("my-room-id", ({ root }) => {
+  const newShape = new LiveObject({
+    x: 20,
+    y: 60,
+    color: "purple",
+  });
+
+  const shapes = root.get("shapes");
+  shapes.set("shape-2", newShape);
+});
+// +++
 ```
 
-Read [Agentic editing](/docs/products/sync/agentic-editing) for validation,
-server Presence, JSON Patch, and multi-step agent workflows.
+Read [Agentic editing](/docs/products/sync/agentic-editing) to learn more.
 
 ### Version history [#version-history]
 
-Create a version when a user publishes the canvas, before importing data, or
-before an AI agent makes a substantial edit. Use
+Create version snapshots, manually or automatically, list old versions, and
+restore to a specific version. Use
 [`useHistoryVersions`](/docs/api-reference/liveblocks-react#useHistoryVersions)
 to list versions,
 [`useHistoryVersionStorageData`](/docs/api-reference/liveblocks-react#useHistoryVersionStorageData)
@@ -190,170 +313,207 @@ to render a read-only preview, and
 to restore the complete canvas Storage state as one synchronized change.
 
 ```tsx
-import { useRestoreToStorageVersion } from "@liveblocks/react";
+import {
+  useHistoryVersions,
+  useRestoreToStorageVersion,
+} from "@liveblocks/react/suspense";
 
-function RestoreCanvas({ versionId }: { versionId: string }) {
-  const restore = useRestoreToStorageVersion(versionId);
+function CanvasHistoryVersions() {
+  // +++
+  const versions = useHistoryVersions();
+  const restore = useRestoreToStorageVersion();
+  // +++
 
-  return <button onClick={() => restore()}>Restore this canvas version</button>;
+  return (
+    <div>
+      // +++
+      {versions.map((version) => (
+        <div key={version.id} onClick={() => restore(version.id)}>
+          Snapshot created at{version.createdAt}
+        </div>
+      ))}
+      // +++
+    </div>
+  );
 }
 ```
 
-Automatic versions can be enabled in the dashboard, and meaningful snapshots can
-be created from a backend with
-[`Liveblocks.createVersionHistorySnapshot`](/docs/api-reference/liveblocks-node#create-version-history-snapshot).
+You can also manually create snapshots with
+[`Liveblocks.createVersionHistorySnapshot`](/docs/api-reference/liveblocks-node#create-version-history-snapshot),
+and use
+[ready-made components](/docs/api-reference/liveblocks-react-ui#VersionHistory)
+to render the list of snapshots and restore to a specific version. can be used
+to create a manual snapshot.
+
 Read [Version history](/docs/products/sync/version-history) for the complete
 preview and restore flow.
 
 ### Multiplayer undo/redo [#multiplayer-undo-redo]
 
-Use [`useHistory`](/docs/api-reference/liveblocks-react#useHistory) to give each
-user an independent undo and redo stack. Pause history at the start of a drag
-and resume it at the end: every position still synchronizes, but the complete
-gesture becomes one undo step without reversing another user’s work.
+Each user can independently undo and redo their own changes with
+[`useUndo`](/docs/api-reference/liveblocks-react#useUndo) and
+[`useRedo`](/docs/api-reference/liveblocks-react#useRedo). Additionally,
+[`useCanUndo`](/docs/api-reference/liveblocks-react#useCanUndo) and
+[`useCanRedo`](/docs/api-reference/liveblocks-react#useCanRedo) can be used to
+disable the undo and redo buttons when the user is at the beginning or end of
+the undo/redo stack.
 
 ```tsx
-import { useHistory } from "@liveblocks/react/suspense";
+import {
+  useUndo,
+  useRedo,
+  useCanUndo,
+  useCanRedo,
+} from "@liveblocks/react/suspense";
 
-function CanvasHistory() {
-  const { undo, redo, pause, resume } = useHistory();
+function CanvasUndoRedo() {
+  // +++
+  const undo = useUndo();
+  const redo = useRedo();
+  const canUndo = useCanUndo();
+  const canRedo = useCanRedo();
+  // +++
 
   return (
-    <Canvas
-      onUndo={undo}
-      onRedo={redo}
-      onDragStart={pause}
-      onDragEnd={resume}
-    />
+    <div>
+      // +++
+      <button onClick={undo} disabled={!canUndo}>
+        ↩️ Undo
+      </button>
+      <button onClick={redo} disabled={!canRedo}>
+        ↪️ Redo
+      </button>
+      // +++
+    </div>
   );
 }
 ```
 
-Use [`useCanUndo`](/docs/api-reference/liveblocks-react#useCanUndo) and
-[`useCanRedo`](/docs/api-reference/liveblocks-react#useCanRedo) to disable
-unavailable controls. Read
-[Multiplayer undo/redo](/docs/products/sync/multiplayer-undo-redo) for keyboard
-shortcuts and the non-React client API.
+History can also be paused, resumed, and disabled. Read
+[Multiplayer undo/redo](/docs/products/sync/multiplayer-undo-redo) to learn
+more.
 
 ### File uploads [#file-uploads]
 
-Upload images, videos, and other binary assets with
+You can upload images, videos, and other binary assets to the canvas with
 [`useUploadFile`](/docs/api-reference/liveblocks-react#useUploadFile). It
-uploads the file to the current room and returns an immutable
-[`LiveFile`](/docs/api-reference/liveblocks-client#LiveFile) reference. Store
-that reference on a canvas object so it synchronizes with the rest of the
-canvas, then resolve it to a temporary URL with
-[`useFileUrl`](/docs/api-reference/liveblocks-react#useFileUrl) when rendering.
+uploads the file to the current room and you can then attach this to your data
+tree.
 
 ```tsx
-import { LiveObject, type LiveFileData } from "@liveblocks/client";
-import {
-  useFileUrl,
-  useMutation,
-  useUploadFile,
-} from "@liveblocks/react/suspense";
+import { useMutation, useUploadFile } from "@liveblocks/react/suspense";
 
-function UploadImageButton() {
+function UploadFile() {
+  // +++
   const uploadFile = useUploadFile();
-  const insertImage = useMutation(
-    async ({ storage }, id: string, file: File) => {
-      const liveFile = await uploadFile(file);
+  // +++
 
-      storage.get("shapes").set(
-        id,
-        new LiveObject({
-          type: "image",
-          x: 0,
-          y: 0,
-          file: liveFile,
-        })
-      );
-    },
-    [uploadFile]
+  const addFileToStorage = useMutation(({ storage }, liveFile) => {
+    // +++
+    storage.set("myFile", liveFile);
+    // +++
+  }, []);
+
+  const handleFileChange = useCallback(async (file) => {
+    // +++
+    const liveFile = await uploadFile(file);
+    addFileToStorage(liveFile);
+    // +++
+  }, []);
+
+  return (
+    <label>
+      <input
+        type="file"
+        // +++
+        onChange={(e) => handleFileChange(e.currentTarget.files[0])}
+        // +++
+      />
+      ⬆️ Upload file
+    </label>
   );
-
-  return <FilePicker onSelect={(id, file) => insertImage(id, file)} />;
-}
-
-function CanvasImage({ file }: { file: LiveFileData }) {
-  const { url } = useFileUrl(file);
-
-  return url ? <img src={url} alt={file.name} /> : null;
 }
 ```
 
-Do not put binary data directly in `LiveObject`, `LiveMap`, or `LiveList`. Read
-about [LiveFile](/docs/products/sync/data-types#livefile) and check the
-[file upload limits](/docs/pricing/limits). The Advanced Collaborative
-Whiteboard example below implements image uploads with this pattern.
+Learn more under [File uploads](/docs/products/sync/data-types#LiveFile).
 
 ### Comments [#comments]
 
-Attach [Comments](/docs/products/comments) to canvas coordinates or object IDs
-with thread metadata. A
-[`FloatingComposer`](/docs/api-reference/liveblocks-react-ui#FloatingComposer)
-can create a thread at the selected point, while
-[`useThreads`](/docs/api-reference/liveblocks-react#useThreads) renders existing
-threads and
-[`useEditThreadMetadata`](/docs/api-reference/liveblocks-react#useEditThreadMetadata)
-saves a new position after a thread is dragged. Store thread positions in canvas
-coordinates, then apply the same viewport transform used by shapes and cursors
-when rendering them. This keeps threads attached to the correct location while
-the canvas is panned or zoomed.
+Add commenting to your canvas with our [Comments](/docs/products/comments)
+product by attaching x/y coordiantes to thread metadata.
+[`useThreads`](/docs/api-reference/liveblocks-react#useThreads) allows you to
+loop through existing threads and render them, while the
+[`FloatingThread`](/docs/api-reference/liveblocks-react-ui#FloatingThread) and
+[`CommentPin`](/docs/api-reference/liveblocks-react-ui#CommentPin) components
+render a thread at the given coordinates.
 
 ```tsx
-import { CommentPin, FloatingComposer } from "@liveblocks/react-ui";
+import { useThreads } from "@liveblocks/react/suspense";
+import { Thread } from "@liveblocks/react-ui";
 
-function CommentAtPoint({ x, y }: { x: number; y: number }) {
+function CanvasComments() {
+  // +++
+  const threads = useThreads();
+  // +++
+
   return (
-    <FloatingComposer metadata={{ x, y }}>
-      <CommentPin
-        style={{ position: "absolute", transform: `translate(${x}px, ${y}px)` }}
-      />
-    </FloatingComposer>
+    <div style={{ position: "relative" }}>
+      {threads.map((thread) => (
+        <FloatingThread
+          thread={thread}
+          open={isOpen}
+          onOpenChange={setIsOpen}
+          defaultOpen={defaultOpen}
+          side="right"
+          style={{ pointerEvents: isDragging ? "none" : "auto" }}
+        >
+          <div
+            ref={setNodeRef}
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              transform: `translate3d(${thread.metadata.x}px, ${thread.metadata.y}px, 0)`,
+            }}
+          >
+            <CommentPin userId={thread.comments[0]?.userId} corner="top-left" />
+          </div>
+        </FloatingThread>
+      ))}
+    </div>
   );
 }
 ```
 
 Follow the
 [draggable canvas Comments quickstart](/docs/get-started/nextjs-comments-canvas)
-for placement mode, z-index management, and draggable thread components.
+to learn how to set up placement mode, z-index management, and draggable thread
+components.
 
 ### Permissions [#permissions]
 
-Create a room for each canvas and set its access from your backend with
-[`Liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms). Give
-editors `*:write`, viewers `*:read`, and keep `defaultAccesses` empty for a
-private canvas. These room permissions control the canvas Storage, Presence,
-Comments, and other resources available to each authenticated user.
+Each canvas document is a room in your Liveblocks app, and permission groups can
+set access to the canvas. For example, your canvas may have an editor group and
+a viewer group. This can be set when modifying or creating a room, for example
+with [`Liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms).
 
 ```ts
 await liveblocks.createRoom(`canvas:${canvasId}`, {
+  // The public has no access
   defaultAccesses: [],
   groupsAccesses: {
-    [editorsGroupId]: ["*:write"],
-    [viewersGroupId]: ["*:read"],
+    // "viewers" group has read access
+    viewers: ["*:read"],
+  },
+  // "stacy" has write access
+  usersAccesses: {
+    stacy: ["*:write"],
   },
 });
 ```
 
-Issue ID tokens from an [authentication endpoint](/docs/authentication) and read
-[Permissions](/docs/authentication/permissions) for user, group, and room access
-patterns. Trusted server APIs use a secret key, so validate the requesting user
-in your own backend before editing on their behalf.
-
-## Production considerations [#production-considerations]
-
-Use
-[`useLostConnectionListener`](/docs/api-reference/liveblocks-react#useLostConnectionListener)
-to tell users when the canvas is taking longer than expected to reconnect. Sync
-continues to apply local changes optimistically while reconnecting and catches
-the client up when the connection returns.
-
-Enable
-[`preventUnsavedChanges`](/docs/api-reference/liveblocks-react#prevent-users-losing-unsaved-changes)
-on `LiveblocksProvider` to warn users who close the page before their latest
-canvas changes have synchronized.
+More complex controls can be set too, learn more under
+[Permissions](/docs/authentication/permissions).
 
 ## Examples [#examples]
 
