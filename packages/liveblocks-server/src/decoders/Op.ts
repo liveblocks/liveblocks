@@ -15,10 +15,13 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+import type { LiveTextData, LiveTextSegment } from "@liveblocks/core";
 import { OpCode } from "@liveblocks/core";
 import type { Decoder } from "decoders";
 import {
+  array,
   constant,
+  either,
   number,
   object,
   oneOf,
@@ -27,6 +30,7 @@ import {
   startsWith,
   string,
   taggedUnion,
+  tuple,
 } from "decoders";
 
 import type {
@@ -36,10 +40,12 @@ import type {
   CreateMapOp,
   CreateObjectOp,
   CreateRegisterOp,
+  CreateTextOp,
   DeleteCrdtOp,
   DeleteObjectKeyOp,
   SetParentKeyOp,
   UpdateObjectOp,
+  UpdateTextOp,
 } from "~/protocol";
 
 import { jsonObjectYolo, jsonYolo } from "./jsonYolo";
@@ -51,6 +57,12 @@ const storageFileId = sized(startsWith("fl_"), { size: 24 });
 const fileSize = number.refine(
   (value) => Number.isSafeInteger(value) && value >= 0,
   "Must be a valid file size"
+);
+
+const liveTextVersion = number.reject((value) =>
+  Number.isSafeInteger(value) && value >= 0
+    ? null
+    : "Must be a non-negative safe integer"
 );
 
 const updateObjectOp: Decoder<UpdateObjectOp & HasOpId> = object({
@@ -102,6 +114,45 @@ const createRegisterOp: Decoder<CreateRegisterOp & HasOpId> = object({
   deletedId: optional(string),
 });
 
+const liveTextSegment: Decoder<LiveTextSegment> = either(
+  tuple(string),
+  tuple(string, jsonObjectYolo)
+);
+
+const liveTextData: Decoder<LiveTextData> = array(liveTextSegment);
+
+const textOperation = taggedUnion("type", {
+  insert: object({
+    type: constant("insert"),
+    index: number,
+    text: string,
+    attributes: optional(jsonObjectYolo),
+  }),
+  delete: object({
+    type: constant("delete"),
+    index: number,
+    length: number,
+  }),
+  format: object({
+    type: constant("format"),
+    index: number,
+    length: number,
+    attributes: jsonObjectYolo,
+  }),
+});
+
+const createTextOp: Decoder<CreateTextOp & HasOpId> = object({
+  type: constant(OpCode.CREATE_TEXT),
+  opId: string,
+  id: string,
+  parentId: string,
+  parentKey: string,
+  data: liveTextData,
+  version: liveTextVersion,
+  intent: optional(intent),
+  deletedId: optional(string),
+});
+
 const createFileOp: Decoder<CreateFileOp & HasOpId> = object({
   type: constant(OpCode.CREATE_FILE),
   opId: string,
@@ -116,6 +167,15 @@ const createFileOp: Decoder<CreateFileOp & HasOpId> = object({
   }),
   intent: optional(intent),
   deletedId: optional(string),
+});
+
+const updateTextOp: Decoder<UpdateTextOp & HasOpId> = object({
+  type: constant(OpCode.UPDATE_TEXT),
+  opId: string,
+  id: string,
+  baseVersion: liveTextVersion,
+  version: optional(liveTextVersion),
+  ops: array(textOperation),
 });
 
 const deleteCrdtOp: Decoder<DeleteCrdtOp & HasOpId> = object({
@@ -144,6 +204,8 @@ export const op: Decoder<ClientWireOp> = taggedUnion("type", {
   [OpCode.CREATE_LIST]: createListOp,
   [OpCode.CREATE_MAP]: createMapOp,
   [OpCode.CREATE_REGISTER]: createRegisterOp,
+  [OpCode.CREATE_TEXT]: createTextOp,
+  [OpCode.UPDATE_TEXT]: updateTextOp,
   [OpCode.CREATE_FILE]: createFileOp,
   [OpCode.DELETE_CRDT]: deleteCrdtOp,
   [OpCode.SET_PARENT_KEY]: setParentKeyOp,

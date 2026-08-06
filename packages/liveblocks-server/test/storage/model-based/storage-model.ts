@@ -39,6 +39,7 @@ function wsApiVersion(): fc.Arbitrary<ProtocolVersion> {
 export class Model {
   availableParentNodeIds: Set<string>;
   availableObjectNodeIds: Set<string>;
+  availableTextNodeIds: Set<string>;
 
   constructor(nodeStream: NodeStream) {
     const nodeMap = new Map<string, SerializedCrdt>(nodeStream);
@@ -46,9 +47,13 @@ export class Model {
     const objIds = Array.from(nodeMap.entries())
       .filter(([_, node]) => node.type === CrdtType.OBJECT)
       .map(([id]) => id);
+    const textIds = Array.from(nodeMap.entries())
+      .filter(([_, node]) => node.type === CrdtType.TEXT)
+      .map(([id]) => id);
 
     this.availableParentNodeIds = new Set(allIds);
     this.availableObjectNodeIds = new Set(objIds);
+    this.availableTextNodeIds = new Set(textIds);
   }
 }
 
@@ -70,6 +75,7 @@ class ApplyOpCommand implements fc.Command<Model, RealStorage> {
       case OpCode.CREATE_LIST:
       case OpCode.CREATE_MAP:
       case OpCode.CREATE_REGISTER:
+      case OpCode.CREATE_TEXT:
       case OpCode.CREATE_FILE:
         return model.availableParentNodeIds.has(this.op.parentId);
 
@@ -80,6 +86,9 @@ class ApplyOpCommand implements fc.Command<Model, RealStorage> {
       case OpCode.UPDATE_OBJECT:
       case OpCode.DELETE_OBJECT_KEY:
         return model.availableObjectNodeIds.has(this.op.id);
+
+      case OpCode.UPDATE_TEXT:
+        return model.availableTextNodeIds.has(this.op.id);
 
       default:
         return assertNever(this.op, "Unhandled case");
@@ -105,6 +114,7 @@ class ApplyOpCommand implements fc.Command<Model, RealStorage> {
         break;
 
       case OpCode.CREATE_REGISTER:
+      case OpCode.CREATE_TEXT:
       case OpCode.CREATE_FILE:
         // Don't register leaf nodes as potential parent IDs
         break;
@@ -128,6 +138,7 @@ class ApplyOpCommand implements fc.Command<Model, RealStorage> {
       case OpCode.SET_PARENT_KEY:
       case OpCode.UPDATE_OBJECT:
       case OpCode.DELETE_OBJECT_KEY:
+      case OpCode.UPDATE_TEXT:
         break;
 
       default:
@@ -162,6 +173,11 @@ class ApplyOpCommand implements fc.Command<Model, RealStorage> {
           return "UpdateObjectOp";
         case OpCode.DELETE_OBJECT_KEY:
           return "DeleteObjectKeyOp";
+        case OpCode.CREATE_TEXT:
+          return "CreateTextOp";
+        case OpCode.UPDATE_TEXT:
+          return "UpdateTextOp";
+
         default:
           return assertNever(op, "Unhandled case");
       }

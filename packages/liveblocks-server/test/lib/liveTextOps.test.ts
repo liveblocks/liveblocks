@@ -15,21 +15,19 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-export type {
-  BlobBody,
-  BlobMeta,
-  BlobMetaInput,
-  IBlobStore,
-  UploadedPart,
-} from "./IBlobStore";
-export type { IServerWebSocket } from "./IServerWebSocket";
-export type {
-  IReadableSnapshot,
-  IStorageDriver,
-  ListFeedMessagesOptions,
-  ListFeedMessagesResult,
-  ListFeedsOptions,
-  ListFeedsResult,
-  LiveTextHistoryEntry,
-} from "./IStorageDriver";
-export type { LeasedSession } from "~/types";
+import { applyLiveTextOperations } from "@liveblocks/core";
+import { describe, expect, test } from "vitest";
+
+describe("liveTextOps", () => {
+  test("applyLiveTextOperations formats and inserts text", () => {
+    expect(
+      applyLiveTextOperations([["Hello"]], [
+        { type: "format", index: 0, length: 5, attributes: { bold: true } },
+        { type: "insert", index: 5, text: "!" },
+      ])
+    ).toEqual([
+      ["Hello", { bold: true }],
+      ["!"],
+    ]);
+  });
+});

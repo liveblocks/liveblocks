@@ -47,6 +47,7 @@ import type {
   ListFeedMessagesResult,
   ListFeedsOptions,
   ListFeedsResult,
+  LiveTextHistoryEntry,
 } from "~/interfaces";
 import { NestedMap } from "~/lib/NestedMap";
 import { quote } from "~/lib/text";
@@ -89,7 +90,9 @@ function buildReverseLookup(nodes: NodeMap) {
     }
 
     const isLeafNode =
-      node.type === CrdtType.REGISTER || node.type === CrdtType.FILE;
+      node.type === CrdtType.REGISTER ||
+      node.type === CrdtType.FILE ||
+      node.type === CrdtType.TEXT;
     if (!isLeafNode) {
       queue.push(...revNodes.valuesAt(nodeId));
     } else if (node.type === CrdtType.REGISTER) {
@@ -162,6 +165,7 @@ export class InMemoryDriver implements IStorageDriver {
   private _leasedSessions: Map<string, LeasedSession>;
   private _feeds: Map<string, Feed>;
   private _feedMessages: Map<string, FeedMessage>; // Key: `${feedId}:${messageId}`
+  private _liveTextHistory: Map<string, LiveTextHistoryEntry[]>;
   private _livefileUploads: Map<string, number>; // Key: fileId, value: size
 
   constructor(options?: {
@@ -174,6 +178,7 @@ export class InMemoryDriver implements IStorageDriver {
     this._leasedSessions = new Map();
     this._feeds = new Map();
     this._feedMessages = new Map();
+    this._liveTextHistory = new Map();
     this._livefileUploads = new Map();
 
     this._nextActor = options?.initialActor ?? -1;
@@ -198,8 +203,55 @@ export class InMemoryDriver implements IStorageDriver {
     this.reinitialize();
 
     this._nodes.clear();
+    this._liveTextHistory.clear();
     for (const [id, node] of plainLsonToNodeStream(doc)) {
       this._nodes.set(id, this._withUploadedSize(node));
+    }
+  }
+
+  get_live_text_history_since(
+    nodeId: string,
+    version: number
+  ): LiveTextHistoryEntry[] {
+    return (this._liveTextHistory.get(nodeId) ?? [])
+      .filter((entry) => entry.version > version)
+      .sort((left, right) => left.version - right.version)
+      .map((entry) => ({ ...entry, ops: [...entry.ops] }));
+  }
+
+  get_live_text_history_by_op_id(
+    nodeId: string,
+    opId: string
+  ): LiveTextHistoryEntry | undefined {
+    const entry = (this._liveTextHistory.get(nodeId) ?? []).find(
+      (item) => item.opId === opId
+    );
+    return entry === undefined ? undefined : { ...entry, ops: [...entry.ops] };
+  }
+
+  append_live_text_history(entry: LiveTextHistoryEntry): void {
+    const history = this._liveTextHistory.get(entry.nodeId) ?? [];
+    history.push({ ...entry, ops: [...entry.ops] });
+    history.sort((left, right) => left.version - right.version);
+    this._liveTextHistory.set(entry.nodeId, history);
+  }
+
+  purge_live_text_history_before(
+    nodeId: string,
+    minVersionToKeep: number
+  ): void {
+    const history = this._liveTextHistory.get(nodeId);
+    if (history === undefined) {
+      return;
+    }
+
+    const retained = history.filter(
+      (entry) => entry.version >= minVersionToKeep
+    );
+    if (retained.length === 0) {
+      this._liveTextHistory.delete(nodeId);
+    } else {
+      this._liveTextHistory.set(nodeId, retained);
     }
   }
 
@@ -607,6 +659,7 @@ export class InMemoryDriver implements IStorageDriver {
     // For the in-memory backend, this._nodes IS the "on-disk" storage,
     // so we operate on it directly (no separate cache needed).
     const nodes = this._nodes;
+    const liveTextHistory = this._liveTextHistory;
     if (!nodes.has("root")) {
       nodes.set("root", { type: CrdtType.OBJECT, data: {} });
     }
@@ -765,6 +818,7 @@ export class InMemoryDriver implements IStorageDriver {
         const currid = queue.pop()!;
         queue.push(...revNodes.valuesAt(currid));
         nodes.delete(currid);
+        liveTextHistory.delete(currid);
         revNodes.deleteAll(currid);
       }
     }
