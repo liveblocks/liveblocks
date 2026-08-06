@@ -10,6 +10,7 @@ import {
   TLInstancePresence,
   TLPageId,
   TLRecord,
+  TLStore,
   TLStoreEventInfo,
   TLStoreWithStatus,
   computed,
@@ -18,6 +19,31 @@ import {
   defaultShapeUtils,
   react,
 } from "tldraw";
+
+const skippedRecordIds = new Set<TLRecord["id"]>();
+
+/**
+ * Put records from Storage into tldraw, falling back to one record at a time if
+ * the batch is rejected. tldraw throws on a record it can't read, for instance
+ * one written by a client running a different version of tldraw, and one
+ * unreadable record would otherwise take the rest of the batch with it.
+ */
+function putRecords(store: TLStore, records: TLRecord[], phase?: "initialize") {
+  try {
+    store.put(records, phase);
+  } catch {
+    for (const record of records) {
+      try {
+        store.put([record], phase);
+      } catch (error) {
+        if (!skippedRecordIds.has(record.id)) {
+          skippedRecordIds.add(record.id);
+          console.warn(`Skipping record ${record.id} from Storage`, error);
+        }
+      }
+    }
+  }
+}
 
 export function useStorageStore(shapeUtils: TLAnyShapeUtilConstructor[] = []) {
   // Get Liveblocks room
@@ -64,7 +90,8 @@ export function useStorageStore(shapeUtils: TLAnyShapeUtilConstructor[] = []) {
 
       // Initialize tldraw with records from Storage
       store.clear();
-      store.put(
+      putRecords(
+        store,
         [
           DocumentRecordType.create({
             id: "document:document" as TLDocument["id"],
@@ -179,7 +206,7 @@ export function useStorageStore(shapeUtils: TLAnyShapeUtilConstructor[] = []) {
                 store.remove(toRemove);
               }
               if (toPut.length) {
-                store.put(toPut);
+                putRecords(store, toPut);
               }
             });
           },
@@ -272,7 +299,7 @@ export function useStorageStore(shapeUtils: TLAnyShapeUtilConstructor[] = []) {
               store.remove(toRemove);
             }
             if (toPut.length) {
-              store.put(toPut);
+              putRecords(store, toPut);
             }
           });
         })

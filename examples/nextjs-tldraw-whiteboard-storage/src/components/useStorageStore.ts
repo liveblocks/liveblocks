@@ -15,6 +15,7 @@ import {
   TLInstancePresence,
   TLPageId,
   TLRecord,
+  TLStore,
   TLStoreEventInfo,
   TLStoreWithStatus,
 } from "tldraw";
@@ -26,6 +27,32 @@ import {
   isLiveblocksRecord,
   reconcileLiveblocksRecord,
 } from "./liveblocksTldrawStorage";
+
+const skippedRecordIds = new Set<TLRecord["id"]>();
+
+/**
+ * Put records from Storage into tldraw, falling back to one record at a time if
+ * the batch is rejected. tldraw throws on a record it can't read, for instance
+ * one written by a client running a different version of tldraw, and this
+ * whiteboard reapplies every record on every change, so without this a single
+ * unreadable record would stop every later change from being applied too.
+ */
+function putRecords(store: TLStore, records: TLRecord[], phase?: "initialize") {
+  try {
+    store.put(records, phase);
+  } catch {
+    for (const record of records) {
+      try {
+        store.put([record], phase);
+      } catch (error) {
+        if (!skippedRecordIds.has(record.id)) {
+          skippedRecordIds.add(record.id);
+          console.warn(`Skipping record ${record.id} from Storage`, error);
+        }
+      }
+    }
+  }
+}
 
 export function useStorageStore({
   assets,
@@ -109,7 +136,7 @@ export function useStorageStore({
 
       // Initialize tldraw with records from Storage
       store.clear();
-      store.put(getRecordsFromStorage(), "initialize");
+      putRecords(store, getRecordsFromStorage(), "initialize");
 
       // Sync tldraw changes with Storage
       unsubs.push(
@@ -195,7 +222,7 @@ export function useStorageStore({
                 store.remove(toRemove);
               }
               if (toPut.length) {
-                store.put(toPut);
+                putRecords(store, toPut);
               }
             });
           },
@@ -295,7 +322,7 @@ export function useStorageStore({
               store.remove(toRemove);
             }
             if (toPut.length) {
-              store.put(toPut);
+              putRecords(store, toPut);
             }
           });
         })
