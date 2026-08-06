@@ -65,8 +65,19 @@ export function useYjsStore({
     setStoreWithStatus({ status: "loading" });
 
     const unsubs: (() => void)[] = [];
+    let hasSetUp = false;
 
-    function handleSync() {
+    function handleSync(isSynced?: boolean) {
+      // The provider emits `synced` every time the connection changes, with
+      // `false` when it drops. Set everything up only once: Yjs merges the
+      // document again by itself after reconnecting, whereas running this
+      // function twice would wipe tldraw's session records (camera, selection,
+      // other people's cursors…) and add a second set of listeners
+      if (isSynced === false || hasSetUp) {
+        return;
+      }
+      hasSetUp = true;
+
       // === DOCUMENT ==========================================================
 
       // Initialize tldraw with Yjs doc records, or if Yjs empty,
@@ -129,8 +140,10 @@ export function useYjsStore({
             // Object added or updated on Liveblocks
             case "add":
             case "update": {
-              const record = yStore.get(id)!;
-              toPut.push(record);
+              const record = yStore.get(id);
+              if (record) {
+                toPut.push(record);
+              }
               break;
             }
 
@@ -262,7 +275,7 @@ export function useYjsStore({
     }
 
     if (yProvider.synced) {
-      handleSync();
+      handleSync(true);
     } else {
       yProvider.on("synced", handleSync);
       unsubs.push(() => yProvider.off("synced", handleSync));
