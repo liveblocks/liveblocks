@@ -499,15 +499,16 @@ with [`Liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms).
 
 ```ts
 await liveblocks.createRoom(`canvas:${canvasId}`, {
-  // The public has no access
-  defaultAccesses: [],
+  defaultAccesses: [
+    // The public has no access
+  ],
   groupsAccesses: {
     // "viewers" group has read access
     viewers: ["*:read"],
   },
-  // "stacy" has write access
   usersAccesses: {
-    stacy: ["*:write"],
+    // "olivier" has write access
+    olivier: ["*:write"],
   },
 });
 ```
