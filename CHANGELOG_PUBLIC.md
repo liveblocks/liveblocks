@@ -22,11 +22,19 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ## Liveblocks dev server (v1.8.0)
 
-- Add full support for LiveFile
+- Add full support for LiveFile.
+
+## Examples
+
+- Add version history to advanced React Flow examples.
+
+## Website
+
+- New blog post: [What's new in Liveblocks: July 2026](https://liveblocks.io/blog/whats-new-in-liveblocks-july-2026).
 
 ## Contributors
 
-nvie
+nvie, ctnicholas
 
 # Week 31 (2026-07-31)
 
