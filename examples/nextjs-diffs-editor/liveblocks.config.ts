@@ -13,8 +13,8 @@ declare global {
       };
     };
 
-    // Realtime presence, shared with everyone in the room. Holds each user's
-    // carets/selections so they can be drawn live in everyone else's editor.
+    // Realtime presence, shared with everyone in the room. The `file` field
+    // tracks which document the user has open; `ranges` holds live carets.
     Presence: {
       selection: {
         // Path of the file the user is currently editing.

@@ -228,10 +228,7 @@ export function bindEditorToLiveText({
       };
     });
 
-    const selection =
-      ranges.length === 0
-        ? null
-        : { file: path, version: text.version, ranges };
+    const selection = { file: path, version: text.version, ranges };
     const serialized = JSON.stringify(selection);
     if (serialized === lastPublishedSelection) {
       return;

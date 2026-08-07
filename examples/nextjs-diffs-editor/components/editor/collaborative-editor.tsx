@@ -78,6 +78,13 @@ export function CollaborativeEditor({ path, text }: CollaborativeEditorProps) {
   );
 
   useEffect(() => {
+    // Show this file as open in the tree before the editor surface is focused.
+    room.updatePresence({
+      selection: { file: path, version: text.version, ranges: [] },
+    });
+  }, [room, path, text]);
+
+  useEffect(() => {
     return () => {
       bindingRef.current?.destroy();
       bindingRef.current = null;
