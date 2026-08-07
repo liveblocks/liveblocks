@@ -11,6 +11,7 @@ import { offsetToPosition, positionToOffset } from "./text-positions";
 export type RemoteSelection = {
   connectionId: number;
   name?: string;
+  avatar?: string;
   color?: string;
   ranges: { anchor: number; head: number }[];
 };
@@ -268,6 +269,7 @@ export function bindEditorToLiveText({
       result.push({
         connectionId: user.connectionId,
         name: user.info?.name,
+        avatar: user.info?.avatar,
         color: user.info?.color,
         ranges,
       });

@@ -13,6 +13,7 @@ type CaretView = {
   height: number;
   color: string;
   name?: string;
+  avatar?: string;
 };
 
 type HighlightView = Rect & { key: string; color: string };
@@ -104,13 +105,20 @@ export function RemoteCarets({
               // Only label the primary caret to avoid stacked name flags
               // when someone uses multiple cursors.
               name: index === 0 ? selection.name : undefined,
+              avatar: index === 0 ? selection.avatar : undefined,
             });
           }
 
           if (range.anchor !== range.head) {
             const from = Math.min(range.anchor, range.head);
             const to = Math.max(range.anchor, range.head);
-            for (const rect of selectionRects(content, docText, lines, from, to)) {
+            for (const rect of selectionRects(
+              content,
+              docText,
+              lines,
+              from,
+              to
+            )) {
               nextHighlights.push({
                 key: `${key}:${nextHighlights.length}`,
                 left: rect.left - base.left,
@@ -162,7 +170,7 @@ export function RemoteCarets({
         <div
           key={highlight.key}
           data-remote-selection=""
-          className="absolute rounded-xs opacity-25"
+          className="absolute rounded-xs opacity-40"
           style={{
             left: highlight.left,
             top: highlight.top,
@@ -176,7 +184,7 @@ export function RemoteCarets({
         <div
           key={caret.key}
           data-remote-caret=""
-          className="absolute w-0.5"
+          className="pointer-events-auto absolute w-0.5 after:absolute after:inset-0 after:-inset-x-1 group"
           style={{
             left: caret.left,
             top: caret.top,
@@ -186,9 +194,19 @@ export function RemoteCarets({
         >
           {caret.name !== undefined ? (
             <div
-              className="absolute -top-[1.35rem] left-0 whitespace-nowrap rounded-sm rounded-bl-none px-1.5 py-0.5 text-[0.65rem] font-medium text-white"
+              className="transition-opacity pointer-events-none opacity-0 group-hover:opacity-100 absolute -top-[19px] left-0 whitespace-nowrap rounded-sm rounded-bl-none px-1 py-px text-[0.7rem] font-medium text-white"
               style={{ backgroundColor: caret.color }}
             >
+              {caret.avatar !== undefined ? (
+                <img
+                  src={caret.avatar}
+                  alt={caret.name ?? ""}
+                  title={caret.name}
+                  className="absolute top-0 -left-6 rounded-full size-5"
+                  style={{ boxShadow: `0 0 0 1.5px ${caret.color}` }}
+                  draggable={false}
+                />
+              ) : null}
               {caret.name}
             </div>
           ) : null}
@@ -291,7 +309,12 @@ function selectionRects(
     if (startLocated === null || endLocated === null) {
       // Empty line inside the selection: show a thin marker at the row start.
       const rect = lineElement.getBoundingClientRect();
-      rects.push({ left: rect.left, top: rect.top, width: 4, height: rect.height });
+      rects.push({
+        left: rect.left,
+        top: rect.top,
+        width: 4,
+        height: rect.height,
+      });
       continue;
     }
 
