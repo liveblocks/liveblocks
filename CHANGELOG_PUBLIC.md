@@ -42,7 +42,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ## Contributors
 
-nvie, ctnicholas
+nvie, ctnicholas, marcbouchenoire
 
 # Week 31 (2026-07-31)
 
