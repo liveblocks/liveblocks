@@ -3776,14 +3776,28 @@ Returns a function that uploads a file to the current room. The function
 resolves to a [`LiveFile`](/docs/api-reference/liveblocks-client#LiveFile) that
 can be stored in Storage.
 
+Because [`useMutation`](/docs/api-reference/liveblocks-react#useMutation)
+doesn’t support async callbacks, await the upload outside of the mutation, then
+pass the resulting `LiveFile` into it.
+
 ```tsx
+import { useCallback } from "react";
 import { useMutation, useUploadFile } from "@liveblocks/react/suspense";
+import type { LiveFile } from "@liveblocks/client";
 
 const uploadFile = useUploadFile();
 
-const setFile = useMutation(async ({ storage }, file: File) => {
-  storage.set("file", await uploadFile(file));
+const setFile = useMutation(({ storage }, file: LiveFile) => {
+  storage.set("file", file);
 }, []);
+
+const handleFile = useCallback(
+  async (file: File) => {
+    const liveFile = await uploadFile(file);
+    setFile(liveFile);
+  },
+  [uploadFile, setFile]
+);
 ```
 
 The function accepts the same arguments and returns the same result as
