@@ -20,6 +20,14 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 32 (2026-08-07)
 
+## v3.23.1
+
+### `@liveblocks/react-ui`
+
+- Improve version history components for versions without authors, which can
+  occur with server-only changes. Add `HISTORY_VERSION_SUMMARY_AUTHORS_LIST` and
+  update `HISTORY_VERSION_PREVIEW_AUTHORS_LIST` overrides to reflect this.
+
 ## Liveblocks dev server (v1.8.0)
 
 - Add full support for LiveFile.
