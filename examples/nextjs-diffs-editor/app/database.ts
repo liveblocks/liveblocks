@@ -20,7 +20,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     id: "tatum.paolo@example.com",
     info: {
       name: "Tatum Paolo",
-      color: "#F0D885",
+      color: "#E0BE4A",
       avatar: "https://liveblocks.io/avatars/avatar-3.png",
     },
   },
@@ -28,7 +28,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     id: "anjali.wanda@example.com",
     info: {
       name: "Anjali Wanda",
-      color: "#85EED6",
+      color: "#52C4A4",
       avatar: "https://liveblocks.io/avatars/avatar-4.png",
     },
   },

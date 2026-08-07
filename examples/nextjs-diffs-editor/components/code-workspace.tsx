@@ -29,9 +29,12 @@ export function CodeWorkspace() {
   return (
     <div className="flex h-dvh flex-col bg-neutral-50 text-neutral-900">
       <header className="flex h-12 shrink-0 items-center gap-3 border-b border-neutral-200 bg-white px-4">
-        <div className="ml-auto flex items-center gap-3">
+        <div className="ml-auto flex justify-between w-full items-center gap-3">
+          <div className="flex items-center gap-3">
+            <HistoryControls />
+            <HelpButton />
+          </div>
           <Avatars />
-          <HelpButton />
         </div>
       </header>
 
@@ -45,7 +48,7 @@ export function CodeWorkspace() {
         </aside>
 
         <main className="flex min-w-0 flex-1 flex-col">
-          <FileHeader path={activePath} />
+          {/* <FileHeader path={activePath} /> */}
           <div className="min-h-0 flex-1">
             {text !== undefined ? (
               <CollaborativeEditor
@@ -77,26 +80,11 @@ function useStorageRoot() {
   );
 }
 
-/** Tab-like bar showing the open file and who else is editing it. */
+/** Tab-like bar showing the open file. */
 function FileHeader({ path }: { path: string }) {
-  const others = useOthers();
-  const editingHere = others.filter(
-    (other) => other.presence.selection?.file === path
-  );
-
   return (
     <div className="flex h-9 shrink-0 items-center justify-between gap-2 border-b border-neutral-200 bg-white px-4">
       <span className="font-mono text-xs text-neutral-600">{path}</span>
-      <div className="flex items-center gap-1">
-        {editingHere.map((other) => (
-          <span
-            key={other.connectionId}
-            title={`${other.info.name} is editing this file`}
-            className="size-2 rounded-full"
-            style={{ backgroundColor: other.info.color }}
-          />
-        ))}
-      </div>
       <HistoryControls />
     </div>
   );

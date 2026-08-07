@@ -1,6 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type Dispatch,
+  type RefObject,
+  type SetStateAction,
+} from "react";
 import type { RemoteSelection } from "@/lib/livetext-binding";
 import { offsetToPosition } from "@/lib/text-positions";
 
@@ -8,6 +16,7 @@ type Rect = { left: number; top: number; width: number; height: number };
 
 type CaretView = {
   key: string;
+  connectionId: number;
   left: number;
   top: number;
   height: number;
@@ -16,7 +25,17 @@ type CaretView = {
   avatar?: string;
 };
 
-type HighlightView = Rect & { key: string; color: string };
+type HighlightView = Rect & {
+  key: string;
+  connectionId: number;
+  color: string;
+};
+
+/** Extra pixels around remote selection hit targets. */
+const HOVER_PADDING = 3;
+
+/** Ignore sub-pixel layout jitter from syntax re-highlighting. */
+const POSITION_TOLERANCE = 2;
 
 type RemoteCaretsProps = {
   /** The scrollable element wrapping the rendered `<File>` surface. */
@@ -39,126 +58,121 @@ export function RemoteCarets({
 }: RemoteCaretsProps) {
   const [carets, setCarets] = useState<CaretView[]>([]);
   const [highlights, setHighlights] = useState<HighlightView[]>([]);
+  const [hoveredConnectionId, setHoveredConnectionId] = useState<number | null>(
+    null
+  );
+  const selectionsRef = useRef(selections);
+  selectionsRef.current = selections;
+  const getDocumentTextRef = useRef(getDocumentText);
+  getDocumentTextRef.current = getDocumentText;
+  const hitRegionsRef = useRef<{
+    carets: CaretView[];
+    highlights: HighlightView[];
+  }>({ carets: [], highlights: [] });
+  const lastPointerRef = useRef<{ x: number; y: number } | null>(null);
+  const measureFrameRef = useRef(0);
+
+  const scheduleMeasure = useCallback((targetContainer: HTMLElement) => {
+    cancelAnimationFrame(measureFrameRef.current);
+    measureFrameRef.current = requestAnimationFrame(() => {
+      applyMeasuredCarets(
+        targetContainer,
+        selectionsRef.current,
+        getDocumentTextRef.current(),
+        hitRegionsRef,
+        setCarets,
+        setHighlights,
+        lastPointerRef,
+        setHoveredConnectionId
+      );
+    });
+  }, []);
 
   useEffect(() => {
     if (container === null) {
       return;
     }
 
-    let frame = 0;
     let observedRoot: ShadowRoot | null = null;
-    let shadowObserver: MutationObserver | null = null;
-
-    const schedule = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(compute);
-    };
 
     const compute = () => {
-      // The file surface renders inside an open shadow root on the
-      // <diffs-container> custom element, so the line rows can't be reached
-      // with a regular querySelector from the outside.
+      scheduleMeasure(container);
+    };
+
+    const attachShadowScrollListener = () => {
       const host = container.querySelector("diffs-container");
       const root = host?.shadowRoot ?? null;
-      const content = root?.querySelector("[data-content]") ?? null;
-      if (root === null || content === null) {
-        setCarets([]);
-        setHighlights([]);
-        return;
+      if (root === null || observedRoot === root) {
+        return false;
       }
-
-      if (observedRoot !== root) {
-        // First time the shadow root is available (or it was replaced):
-        // scroll events and DOM mutations inside a shadow tree don't cross
-        // its boundary, so listen and observe on the shadow root itself.
-        shadowObserver?.disconnect();
-        observedRoot?.removeEventListener("scroll", schedule, true);
-        observedRoot = root;
-        shadowObserver = new MutationObserver(schedule);
-        shadowObserver.observe(root, {
-          childList: true,
-          subtree: true,
-          characterData: true,
-        });
-        root.addEventListener("scroll", schedule, true);
-      }
-
-      const docText = getDocumentText();
-      const lines = docText.split("\n");
-      const base = container.getBoundingClientRect();
-      const nextCarets: CaretView[] = [];
-      const nextHighlights: HighlightView[] = [];
-
-      for (const selection of selections) {
-        const color = selection.color ?? "#888888";
-        selection.ranges.forEach((range, index) => {
-          const key = `${selection.connectionId}:${index}`;
-
-          const caretRect = rectAtOffset(content, docText, range.head);
-          if (caretRect !== null) {
-            nextCarets.push({
-              key,
-              left: caretRect.left - base.left,
-              top: caretRect.top - base.top,
-              height: caretRect.height,
-              color,
-              // Only label the primary caret to avoid stacked name flags
-              // when someone uses multiple cursors.
-              name: index === 0 ? selection.name : undefined,
-              avatar: index === 0 ? selection.avatar : undefined,
-            });
-          }
-
-          if (range.anchor !== range.head) {
-            const from = Math.min(range.anchor, range.head);
-            const to = Math.max(range.anchor, range.head);
-            for (const rect of selectionRects(
-              content,
-              docText,
-              lines,
-              from,
-              to
-            )) {
-              nextHighlights.push({
-                key: `${key}:${nextHighlights.length}`,
-                left: rect.left - base.left,
-                top: rect.top - base.top,
-                width: rect.width,
-                height: rect.height,
-                color,
-              });
-            }
-          }
-        });
-      }
-
-      setCarets(nextCarets);
-      setHighlights(nextHighlights);
+      observedRoot?.removeEventListener("scroll", compute, true);
+      observedRoot = root;
+      root.addEventListener("scroll", compute, true);
+      return true;
     };
 
-    schedule();
-    // The outer wrapper scrolls vertically; the code area scrolls inside the
-    // shadow root (handled above once the shadow root is resolved).
-    container.addEventListener("scroll", schedule, true);
-    window.addEventListener("resize", schedule);
-    // Catches the <diffs-container> host being mounted after the first
-    // render, and re-measures after light-DOM re-renders.
-    const observer = new MutationObserver(schedule);
-    observer.observe(container, {
-      childList: true,
-      subtree: true,
-      characterData: true,
+    attachShadowScrollListener();
+    scheduleMeasure(container);
+
+    window.addEventListener("resize", compute);
+
+    // Only re-measure when the editor surface first mounts.
+    const mountObserver = new MutationObserver(() => {
+      if (attachShadowScrollListener()) {
+        scheduleMeasure(container);
+      }
     });
+    mountObserver.observe(container, { childList: true, subtree: true });
 
     return () => {
-      cancelAnimationFrame(frame);
-      container.removeEventListener("scroll", schedule, true);
-      window.removeEventListener("resize", schedule);
-      observer.disconnect();
-      shadowObserver?.disconnect();
-      observedRoot?.removeEventListener("scroll", schedule, true);
+      cancelAnimationFrame(measureFrameRef.current);
+      window.removeEventListener("resize", compute);
+      mountObserver.disconnect();
+      observedRoot?.removeEventListener("scroll", compute, true);
     };
-  }, [container, selections, getDocumentText]);
+  }, [container, scheduleMeasure]);
+
+  // Re-measure when remote selections change.
+  useEffect(() => {
+    if (container === null) {
+      return;
+    }
+    scheduleMeasure(container);
+  }, [container, selections, scheduleMeasure]);
+
+  // Hover labels are driven by hit-testing against measured regions so
+  // highlights and an extended caret strip stay click-through.
+  useEffect(() => {
+    if (container === null) {
+      return;
+    }
+
+    const handlePointerMove = (event: PointerEvent) => {
+      lastPointerRef.current = { x: event.clientX, y: event.clientY };
+      const base = getMeasureBase(container);
+      if (base === null) {
+        return;
+      }
+      const x = event.clientX - base.left;
+      const y = event.clientY - base.top;
+      const { carets, highlights } = hitRegionsRef.current;
+      const next = hitTestRemoteSelection(x, y, carets, highlights);
+      setHoveredConnectionId((current) => (current === next ? current : next));
+    };
+
+    const handlePointerLeave = () => {
+      lastPointerRef.current = null;
+      setHoveredConnectionId(null);
+    };
+
+    container.addEventListener("pointermove", handlePointerMove);
+    container.addEventListener("pointerleave", handlePointerLeave);
+
+    return () => {
+      container.removeEventListener("pointermove", handlePointerMove);
+      container.removeEventListener("pointerleave", handlePointerLeave);
+    };
+  }, [container]);
 
   return (
     <div
@@ -184,7 +198,7 @@ export function RemoteCarets({
         <div
           key={caret.key}
           data-remote-caret=""
-          className="pointer-events-auto absolute w-0.5 after:absolute after:inset-0 after:-inset-x-1 group"
+          className="absolute w-0.5"
           style={{
             left: caret.left,
             top: caret.top,
@@ -194,16 +208,19 @@ export function RemoteCarets({
         >
           {caret.name !== undefined ? (
             <div
-              className="transition-opacity pointer-events-none opacity-0 group-hover:opacity-100 absolute -top-[19px] left-0 whitespace-nowrap rounded-sm rounded-bl-none px-1 py-px text-[0.7rem] font-medium text-white"
-              style={{ backgroundColor: caret.color }}
+              className="transition-opacity duration-100 delay-300 pointer-events-none absolute -top-4.75 left-0 whitespace-nowrap rounded-sm rounded-bl-none px-1 py-px text-[0.75rem] font-medium text-white"
+              style={{
+                backgroundColor: caret.color,
+                opacity: hoveredConnectionId === caret.connectionId ? 1 : 0,
+              }}
             >
               {caret.avatar !== undefined ? (
                 <img
                   src={caret.avatar}
                   alt={caret.name ?? ""}
                   title={caret.name}
-                  className="absolute top-0 -left-6 rounded-full size-5"
-                  style={{ boxShadow: `0 0 0 1.5px ${caret.color}` }}
+                  className="absolute -top-px -left-6 size-5.25 rounded-full"
+                  // style={{ boxShadow: `0 0 0 1.5px ${caret.color}` }}
                   draggable={false}
                 />
               ) : null}
@@ -214,6 +231,206 @@ export function RemoteCarets({
       ))}
     </div>
   );
+}
+
+function getMeasureBase(container: HTMLElement): DOMRect | null {
+  const surface = container.querySelector("[data-editor-surface]") ?? container;
+  return surface.getBoundingClientRect();
+}
+
+function applyMeasuredCarets(
+  container: HTMLElement,
+  selections: RemoteSelection[],
+  docText: string,
+  hitRegionsRef: RefObject<{
+    carets: CaretView[];
+    highlights: HighlightView[];
+  }>,
+  setCarets: Dispatch<SetStateAction<CaretView[]>>,
+  setHighlights: Dispatch<SetStateAction<HighlightView[]>>,
+  lastPointerRef: RefObject<{ x: number; y: number } | null>,
+  setHoveredConnectionId: Dispatch<SetStateAction<number | null>>
+): void {
+  const host = container.querySelector("diffs-container");
+  const root = host?.shadowRoot ?? null;
+  const content = root?.querySelector("[data-content]") ?? null;
+  if (root === null || content === null) {
+    // Skip transient DOM states while the editor re-renders; clearing carets
+    // here caused a visible flash on every keystroke.
+    return;
+  }
+
+  const measured = measureRemoteCarets(container, content, selections, docText);
+  hitRegionsRef.current = measured;
+
+  setCarets((current) =>
+    caretsEqual(current, measured.carets) ? current : measured.carets
+  );
+  setHighlights((current) =>
+    highlightsEqual(current, measured.highlights)
+      ? current
+      : measured.highlights
+  );
+
+  const lastPointer = lastPointerRef.current;
+  if (lastPointer !== null) {
+    const base = getMeasureBase(container);
+    if (base !== null) {
+      const nextHovered = hitTestRemoteSelection(
+        lastPointer.x - base.left,
+        lastPointer.y - base.top,
+        measured.carets,
+        measured.highlights
+      );
+      setHoveredConnectionId((current) =>
+        current === nextHovered ? current : nextHovered
+      );
+    }
+  }
+}
+
+function measureRemoteCarets(
+  container: HTMLElement,
+  content: Element,
+  selections: RemoteSelection[],
+  docText: string
+): { carets: CaretView[]; highlights: HighlightView[] } {
+  const lines = docText.split("\n");
+  const base = getMeasureBase(container);
+  if (base === null) {
+    return { carets: [], highlights: [] };
+  }
+  const carets: CaretView[] = [];
+  const highlights: HighlightView[] = [];
+
+  for (const selection of selections) {
+    const color = selection.color ?? "#888888";
+    selection.ranges.forEach((range, index) => {
+      const key = `${selection.connectionId}:${index}`;
+
+      const caretRect = rectAtOffset(content, docText, range.head);
+      if (caretRect !== null) {
+        carets.push({
+          key,
+          connectionId: selection.connectionId,
+          left: roundPosition(caretRect.left - base.left),
+          top: roundPosition(caretRect.top - base.top),
+          height: roundPosition(caretRect.height),
+          color,
+          name: index === 0 ? selection.name : undefined,
+          avatar: index === 0 ? selection.avatar : undefined,
+        });
+      }
+
+      if (range.anchor !== range.head) {
+        const from = Math.min(range.anchor, range.head);
+        const to = Math.max(range.anchor, range.head);
+        for (const rect of selectionRects(content, docText, lines, from, to)) {
+          highlights.push({
+            key: `${key}:${highlights.length}`,
+            connectionId: selection.connectionId,
+            left: roundPosition(rect.left - base.left),
+            top: roundPosition(rect.top - base.top),
+            width: roundPosition(rect.width),
+            height: roundPosition(rect.height),
+            color,
+          });
+        }
+      }
+    });
+  }
+
+  return { carets, highlights };
+}
+
+function roundPosition(value: number): number {
+  return Math.round(value);
+}
+
+function nearlyEqual(a: number, b: number): boolean {
+  return Math.abs(a - b) <= POSITION_TOLERANCE;
+}
+
+function caretsEqual(current: CaretView[], next: CaretView[]): boolean {
+  if (current.length !== next.length) {
+    return false;
+  }
+  for (let index = 0; index < current.length; index += 1) {
+    const a = current[index];
+    const b = next[index];
+    if (
+      a.key !== b.key ||
+      !nearlyEqual(a.left, b.left) ||
+      !nearlyEqual(a.top, b.top) ||
+      !nearlyEqual(a.height, b.height) ||
+      a.color !== b.color ||
+      a.name !== b.name ||
+      a.avatar !== b.avatar
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function highlightsEqual(
+  current: HighlightView[],
+  next: HighlightView[]
+): boolean {
+  if (current.length !== next.length) {
+    return false;
+  }
+  for (let index = 0; index < current.length; index += 1) {
+    const a = current[index];
+    const b = next[index];
+    if (
+      a.key !== b.key ||
+      !nearlyEqual(a.left, b.left) ||
+      !nearlyEqual(a.top, b.top) ||
+      !nearlyEqual(a.width, b.width) ||
+      !nearlyEqual(a.height, b.height) ||
+      a.color !== b.color
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/** Returns the connection id when `(x, y)` hits a highlight or caret strip. */
+function hitTestRemoteSelection(
+  x: number,
+  y: number,
+  carets: CaretView[],
+  highlights: HighlightView[]
+): number | null {
+  for (const highlight of highlights) {
+    if (
+      x >= highlight.left &&
+      x <= highlight.left + highlight.width &&
+      y >= highlight.top - HOVER_PADDING &&
+      y <= highlight.top + highlight.height + HOVER_PADDING
+    ) {
+      return highlight.connectionId;
+    }
+  }
+
+  // Caret line is 2px (`w-0.5`); extend hit area by HOVER_PADDING each side.
+  const caretWidth = 2;
+  for (const caret of carets) {
+    const left = caret.left - HOVER_PADDING;
+    const right = caret.left + caretWidth + HOVER_PADDING;
+    if (
+      x >= left &&
+      x <= right &&
+      y >= caret.top &&
+      y <= caret.top + caret.height
+    ) {
+      return caret.connectionId;
+    }
+  }
+
+  return null;
 }
 
 /** Finds the text node (and offset within it) for a character on a line row. */

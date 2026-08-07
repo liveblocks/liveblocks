@@ -14,7 +14,7 @@ import {
 import { RemoteCarets } from "./remote-carets";
 
 const fileOptions: FileOptions<undefined> = {
-  disableFileHeader: true,
+  // disableFileHeader: true,
   theme: { dark: "pierre-dark", light: "pierre-light" },
 };
 
@@ -91,26 +91,26 @@ export function CollaborativeEditor({ path, text }: CollaborativeEditorProps) {
 
   return (
     <EditProvider createEditor={createEditor}>
-      <div className="relative h-full">
-        <div
-          ref={(element) => {
-            containerRef.current = element;
-            setContainer(element);
-          }}
-          className="h-full overflow-auto bg-white"
-        >
+      <div
+        ref={(element) => {
+          containerRef.current = element;
+          setContainer(element);
+        }}
+        className="h-full overflow-auto bg-white"
+      >
+        <div className="relative" data-editor-surface="">
           <File
             file={file}
             options={fileOptions}
             edit
             editorOptions={editorOptions}
           />
+          <RemoteCarets
+            container={container}
+            selections={remoteSelections}
+            getDocumentText={getDocumentText}
+          />
         </div>
-        <RemoteCarets
-          container={container}
-          selections={remoteSelections}
-          getDocumentText={getDocumentText}
-        />
       </div>
     </EditProvider>
   );

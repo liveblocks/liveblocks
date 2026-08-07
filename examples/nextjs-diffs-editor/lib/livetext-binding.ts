@@ -65,6 +65,7 @@ export function bindEditorToLiveText({
   let applyingRemote = false;
   let groupingTimer: ReturnType<typeof setTimeout> | null = null;
   let lastPublishedSelection: string | null = null;
+  let lastRemoteSelectionsSerialized: string | null = null;
 
   /**
    * Replaces the editor contents with the LiveText contents when they differ
@@ -137,7 +138,6 @@ export function bindEditorToLiveText({
     });
 
     publishSelection();
-    recomputeRemoteSelections();
   }
 
   // ---- Remote and undo/redo-replayed LiveText updates → editor -----------
@@ -185,6 +185,19 @@ export function bindEditorToLiveText({
         } finally {
           applyingRemote = false;
         }
+      }
+
+      // Remote caret offsets only need re-decoding after the document changes.
+      // Skip local echo updates when nobody else is in the room.
+      const hasLocalDocumentChange = updates.some(
+        (update) =>
+          update.type === "LiveText" &&
+          update.node === text &&
+          update.source.origin === "local"
+      );
+      if (hasLocalDocumentChange && room.getOthers().length === 0) {
+        publishSelection();
+        return;
       }
 
       // The document advanced: selections that couldn't be decoded before may
@@ -274,6 +287,12 @@ export function bindEditorToLiveText({
         ranges,
       });
     }
+
+    const serialized = JSON.stringify(result);
+    if (serialized === lastRemoteSelectionsSerialized) {
+      return;
+    }
+    lastRemoteSelectionsSerialized = serialized;
     onRemoteSelections(result);
   }
 
