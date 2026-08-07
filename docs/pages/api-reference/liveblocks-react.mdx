@@ -3777,8 +3777,9 @@ resolves to a [`LiveFile`](/docs/api-reference/liveblocks-client#LiveFile) that
 can be stored in Storage.
 
 Because [`useMutation`](/docs/api-reference/liveblocks-react#useMutation)
-doesn’t support async callbacks, await the upload outside of the mutation, then
-pass the resulting `LiveFile` into it.
+[doesn’t support async callbacks](/docs/api-reference/liveblocks-react#useMutation-async),
+await the upload outside of the mutation, then pass the resulting `LiveFile`
+into it.
 
 ```tsx
 import { useCallback } from "react";
@@ -4119,6 +4120,32 @@ return <button onClick={deleteSelectedShapes} />;
 
 Mutations are automatically batched, so when using `useMutation` there’s no need
 to use `useBatch`, or call `room.batch()` manually.
+
+#### Doesn’t work with async functions [#useMutation-async]
+
+Because mutations are batched with
+[`room.batch`](/docs/api-reference/liveblocks-client#Room.batch), which
+[cannot take an `async` function](/docs/api-reference/liveblocks-client#Doesn't-work-with-async-functions),
+the mutation function passed to `useMutation` cannot be `async` either.
+
+```tsx
+// ❌ Won’t work
+const updateFill = useMutation(async ({ storage }) => {
+  const fill = await fetchColor();
+  storage.get("shapes").get("circle1").set("fill", fill);
+}, []);
+
+// ✅ Will work
+const updateFill = useMutation(({ storage }, fill: string) => {
+  storage.get("shapes").get("circle1").set("fill", fill);
+}, []);
+
+// …with the async work happening outside of the mutation
+const handleClick = useCallback(async () => {
+  const fill = await fetchColor();
+  updateFill(fill);
+}, [updateFill]);
+```
 
 #### ESLint rule [#useMutation-lint-rule] [@keywords=["exhaustive-deps", "additionalHooks", "eslint-plugin-react-hooks"]]
 
