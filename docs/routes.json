@@ -626,8 +626,8 @@
         "path": "/use-cases/ai-collaboration"
       },
       {
-        "title": "Table",
-        "path": "/use-cases/table"
+        "title": "Spreadsheet",
+        "path": "/use-cases/spreadsheet"
       },
       {
         "title": "Custom app",
@@ -640,6 +640,14 @@
       {
         "title": "Chat",
         "path": "/use-cases/chat"
+      },
+      {
+        "title": "Inbox tray",
+        "path": "/use-cases/inbox-tray"
+      },
+      {
+        "title": "Comments panel",
+        "path": "/use-cases/comments-panel"
       }
     ]
   },

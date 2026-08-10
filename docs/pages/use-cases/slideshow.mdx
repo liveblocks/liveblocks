@@ -55,8 +55,7 @@ your users.
 
 ## Get started [#get-started]
 
-Choose the features you need for your slideshow. Each guide uses Next.js and can
-be combined with the others.
+Choose a starting point for your slideshow.
 
 <ListGrid columns={2} defaultVisibleItems={4}>
   <DocsCard
@@ -495,28 +494,30 @@ the same coordinate-based placement pattern on a draggable surface.
 
 ### Permissions [#permissions]
 
-Create one room for each slideshow and set its access from your backend with
-[`Liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms). Give
-editors `*:write`, viewers `*:read`, and keep `defaultAccesses` empty for a
-private deck. The same permissions protect its Sync data, Presence, Comments,
-files, and versions.
+Each presentation is contained inside a room in your Liveblocks app, and
+permission groups can set access to it. For example, your slideshow may have an
+editor group and a viewer group. This can be set when modifying or creating a
+room, for example with
+[`Liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms).
 
 ```ts
-// +++
-await liveblocks.createRoom(`slideshow:${slideshowId}`, {
-  defaultAccesses: [],
+await liveblocks.createRoom(`my-room-id`, {
+  defaultAccesses: [
+    // No access by default
+  ],
   groupsAccesses: {
-    [editorsGroupId]: ["*:write"],
-    [viewersGroupId]: ["*:read"],
+    // "viewers" group has read access
+    viewers: ["*:read"],
+  },
+  usersAccesses: {
+    // "olivier" has write access
+    olivier: ["*:write"],
   },
 });
-// +++
 ```
 
-Issue ID tokens from an [authentication endpoint](/docs/authentication) and read
-[Permissions](/docs/authentication/permissions) for user, group, and room access
-patterns. Validate presentation controls in your app separately so a viewer can
-follow the deck without taking over as presenter.
+More complex controls can be set too, learn more under
+[Permissions](/docs/authentication/permissions).
 
 ## Examples [#examples]
 

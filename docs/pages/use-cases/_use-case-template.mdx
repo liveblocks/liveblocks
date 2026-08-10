@@ -105,8 +105,7 @@ live collaborators, edit it from the server, and let AI work alongside users.
 
 ## Get started [#get-started]
 
-Choose the features you need. Each guide uses Next.js and can be combined with
-the others.
+Choose a starting point for your app.
 
 <ListGrid columns={2} defaultVisibleItems={4}>
   <DocsCard
@@ -328,27 +327,30 @@ thread rendering snippet.
 
 ### Permissions [#permissions]
 
-Explain the room boundary and the difference between viewers and editors. Show a
-compact room access or authentication snippet and link to
+Each {{use case}} is contained inside a room in your Liveblocks app, and
+permission groups can set access to the diagram. For example, your {{use case}}
+may have an editor group and a viewer group. This can be set when modifying or
+creating a room, for example with
+[`Liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms).
+
+```ts
+await liveblocks.createRoom(`my-room-id`, {
+  defaultAccesses: [
+    // No access by default
+  ],
+  groupsAccesses: {
+    // "viewers" group has read access
+    viewers: ["*:read"],
+  },
+  usersAccesses: {
+    // "olivier" has write access
+    olivier: ["*:write"],
+  },
+});
+```
+
+More complex controls can be set too, learn more under
 [Permissions](/docs/authentication/permissions).
-
-## Examples [#examples]
-
-Explore complete examples that combine the features described above.
-
-<ListGrid columns={2}>
-  <ExampleCard
-    example={{
-      title: "Example name",
-      slug: "example/nextjs-example",
-      image: "/images/examples/thumbnails/example.jpg",
-      advanced: true,
-    }}
-    technologies={["nextjs"]}
-    openInNewWindow
-  />
-</ListGrid>
-````
 
 ## Writing and snippet rules
 
@@ -412,3 +414,4 @@ Before finishing:
 - Run Prettier on every changed file.
 - Run `git diff --check` and review the diff. Docs-only edits do not require a
   typecheck or a local docs server unless the user asks for one.
+````
