@@ -535,12 +535,6 @@
                 "path": "/collaboration-features/multiplayer/sync-engine/liveblocks-storage"
               }
             ]
-          },
-          {
-            "title": "Yjs",
-            "hidden": true,
-            "path": "/collaboration-features/multiplayer/yjs",
-            "file": "/collaboration-features/multiplayer/sync-engine/liveblocks-yjs.mdx"
           }
         ]
       },
