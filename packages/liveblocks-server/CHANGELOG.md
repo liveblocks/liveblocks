@@ -1,5 +1,7 @@
 ## vNEXT (not yet released)
 
+## v1.9.0
+
 - Add `--persist` / `--no-persist` to `liveblocks dev`, making storage an
   explicit choice. `liveblocks dev --cmd` still defaults to using a throwaway
   directory (`--no-persist` is implied by default), but you can pass `--persist`
