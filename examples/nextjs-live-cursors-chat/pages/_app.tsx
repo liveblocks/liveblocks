@@ -8,6 +8,7 @@ function App({ Component, pageProps }: AppProps) {
     <LiveblocksProvider
       throttle={16}
       publicApiKey={process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY!}
+      baseUrl={process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL}
     >
       <Head>
         <title>Liveblocks</title>

@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:local": "npx liveblocks dev --cmd 'NEXT_PUBLIC_LIVEBLOCKS_BASE_URL=http://localhost:1153 LIVEBLOCKS_SECRET_KEY=sk_localdev next dev'",
     "build": "next build",
     "start": "next start"
   },
