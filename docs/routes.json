@@ -452,6 +452,10 @@
             "path": "/products/sync/presence"
           },
           {
+            "title": "Server-side editing",
+            "path": "/products/sync/server-side-editing"
+          },
+          {
             "title": "Agentic editing",
             "path": "/products/sync/agentic-editing"
           },
@@ -634,8 +638,8 @@
         "path": "/use-cases/presence"
       },
       {
-        "title": "Messaging app",
-        "path": "/use-cases/messaging-app"
+        "title": "Chat",
+        "path": "/use-cases/chat"
       }
     ]
   },

@@ -1,0 +1,190 @@
+---
+meta:
+  title: "Server-side editing"
+  parentTitle: "Sync"
+  description:
+    "Read and edit collaborative documents from trusted backend services."
+---
+
+Server-side editing lets a trusted backend update the same Sync document as
+connected users. Use it for imports, external integrations, scheduled jobs, data
+migrations, moderation, and other work that starts outside the browser.
+Connected clients receive the changes in realtime.
+
+<Banner title="Keep secret keys on the server" type="warning">
+
+Server APIs use your project’s secret key and can access rooms independently of
+a connected user. Never expose the key to the browser, and authorize each
+request in your own backend before editing a room.
+
+</Banner>
+
+## Edit Storage from Node.js [#edit-storage]
+
+Use
+[`Liveblocks.mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage)
+to read and modify Storage with the same conflict-free data types used by
+clients. This includes
+[`LiveObject`](/docs/products/sync/data-types#liveobject),
+[`LiveList`](/docs/products/sync/data-types#livelist),
+[`LiveMap`](/docs/products/sync/data-types#livemap), and
+[`LiveText`](/docs/products/sync/data-types#livetext).
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+});
+
+// +++
+await liveblocks.mutateStorage("project:123", ({ root }) => {
+  root.get("tasks").get("task-1")?.set("status", "complete");
+
+  const title = root.get("title");
+  title.insert(title.length, " — reviewed");
+});
+// +++
+```
+
+The callback receives the latest document and flushes its changes back to the
+room. Clients update as those changes are persisted. The callback can be
+asynchronous, but changes made before an `await` may synchronize before later
+work completes, so do not treat it as a database transaction.
+
+Type the global `Liveblocks.Storage` interface so the same document model is
+used in your React and Node code. Read
+[Typing Storage](/docs/api-reference/liveblocks-react#typing-storage) for the
+complete setup.
+
+## Edit Storage with REST [#edit-storage-with-rest]
+
+Use the
+[`Storage` JSON Patch endpoint](/docs/api-reference/rest-api-endpoints#patch-rooms-roomId-storage-json-patch)
+from other languages or services that already produce JSON Patch operations.
+
+```http
+PATCH /v2/rooms/project:123/storage/json-patch
+Content-Type: application/json
+
+// +++
+[
+  { "op": "replace", "path": "/status", "value": "published" },
+  { "op": "add", "path": "/reviewedAt", "value": "2026-08-10T10:00:00Z" }
+]
+// +++
+```
+
+JSON Patch is useful for targeted edits to the document’s JSON representation.
+Prefer `mutateStorage` for complex edits involving several conflict-free data
+types, or when working in Node.js.
+
+## Edit multiple rooms [#edit-multiple-rooms]
+
+Use
+[`Liveblocks.massMutateStorage`](/docs/api-reference/liveblocks-node#mass-mutate-storage)
+for a migration or maintenance task that applies the same change to many rooms.
+Filter the rooms as narrowly as possible; passing an empty filter selects every
+room in the project.
+
+```ts
+// +++
+await liveblocks.massMutateStorage(
+  { query: { roomId: { startsWith: "project:" } } },
+  ({ root }) => {
+    if (!root.get("schemaVersion")) {
+      root.set("schemaVersion", 2);
+    }
+  },
+  { concurrency: 5 }
+);
+// +++
+```
+
+Make migrations safe to retry, use stable IDs when inserting data, and test the
+room filter before running a broad mutation.
+
+## Use document-aware helpers [#document-helpers]
+
+Use the helper that understands your document format instead of editing its
+underlying representation directly.
+
+| Document                           | Server API                                                                                                                                  |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Storage and LiveText               | [`Liveblocks.mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage)                                                            |
+| React Flow                         | [`mutateFlow`](/docs/api-reference/liveblocks-react-flow#mutateFlow)                                                                        |
+| Lexical                            | [`withLexicalDocument`](/docs/api-reference/liveblocks-node-lexical)                                                                        |
+| Tiptap, BlockNote, and ProseMirror | [`withProsemirrorDocument`](/docs/api-reference/liveblocks-node-prosemirror)                                                                |
+| Other Yjs documents                | [`Liveblocks.sendYjsBinaryUpdate`](/docs/api-reference/liveblocks-node#put-rooms-roomId-ydoc) and [Liveblocks Yjs](/docs/products/sync/yjs) |
+
+For example, `mutateFlow` exposes React Flow nodes and edges instead of Storage
+primitives.
+
+```ts
+import { mutateFlow } from "@liveblocks/react-flow/node";
+
+// +++
+await mutateFlow({ client: liveblocks, roomId: "flowchart:123" }, (flow) => {
+  flow.updateNodeData("review", { label: "Approved" });
+  flow.addEdge({
+    id: "review-to-publish",
+    source: "review",
+    target: "publish",
+  });
+});
+// +++
+```
+
+Text editor helpers load the editor’s document model, apply a native
+transaction, and synchronize the result. This preserves the schema and shared
+types expected by connected editors.
+
+## Create a version before a large edit [#create-a-version]
+
+Create a manual version before an import, migration, or other substantial
+change. Users can then preview or restore the previous document.
+
+```ts
+// +++
+await liveblocks.createVersionHistorySnapshot("project:123");
+
+await liveblocks.mutateStorage("project:123", ({ root }) => {
+  applyValidatedImport(root);
+});
+// +++
+```
+
+Read [Version history](/docs/products/sync/version-history) for automatic
+versions, previews, and restoration.
+
+## Authorize and validate edits [#authorize-and-validate]
+
+A server SDK call does not inherit the room permissions of the user who caused
+the request. Before applying a change:
+
+- Authenticate the requesting user or service.
+- Check that it can edit the room in your application’s authorization model.
+- Validate room IDs, entity IDs, paths, and values against your document schema.
+- Limit the size and number of operations.
+- Make retryable jobs idempotent so they cannot insert the same data twice.
+- Handle [`LiveblocksError`](/docs/api-reference/liveblocks-node#error-handling)
+  and application errors separately.
+
+Read
+[Authentication and permissions](/docs/products/sync/authentication-and-permissions)
+for room access patterns.
+
+## Trigger follow-up work [#follow-up-work]
+
+Subscribe to
+[`storageUpdated`](/docs/api-reference/webhook-events#StorageUpdatedEvent) or
+[`yDocUpdated`](/docs/api-reference/webhook-events#YDocUpdatedEvent) webhooks
+when another service needs to index, export, or react to the updated document.
+Webhook deliveries can be retried, so make handlers idempotent.
+
+## Add AI editing [#ai-editing]
+
+AI editing uses the same server APIs, with additional workflow concerns such as
+showing agent Presence, validating generated changes, persisting proposals, and
+letting users review or restore the result. Read
+[Agentic editing](/docs/products/sync/agentic-editing) for those patterns.

@@ -1,16 +1,16 @@
 ---
 meta:
-  title: "Messaging app"
+  title: "Chat"
   parentTitle: "Use cases"
   description:
     "Build chat, support, community, and AI messaging interfaces with durable
     messages, realtime updates, pagination, and live activity."
 ---
 
-Build a messaging app with [Feeds](/docs/products/sync/feeds) for ordered,
-persistent messages. Add [Presence](/docs/products/sync/presence) for temporary
-activity such as online state and typing indicators, then use Notifications to
-bring users back when they are no longer in the room.
+Build chat with [Feeds](/docs/products/sync/feeds) for ordered, persistent
+messages. Add [Presence](/docs/products/sync/presence) for temporary activity
+such as online state and typing indicators, then use Notifications to bring
+users back when they are no longer in the room.
 
 Feeds provides the realtime data layer. Your application controls the message
 schema, composer, channel list, and visual design.
@@ -135,8 +135,8 @@ export function MessageComposer({ feedId }: { feedId: string }) {
 ```
 
 Clear typing state after a short period of inactivity as well as on blur. Use
-[`useOthersMapped`](/docs/api-reference/liveblocks-react#useOthersMapped) to
-subscribe only to the activity fields your composer renders.
+[`useOthers`](/docs/api-reference/liveblocks-react#useOthers) to read typing and
+active conversation state for connected users.
 
 ## Connect servers, AI, and notifications [#servers-and-ai]
 

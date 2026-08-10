@@ -69,38 +69,31 @@ Presence can contain any temporary JSON data your interface needs, including a
 selected object, active tool, current slide, typing indicator, or agent status.
 Publish local changes with
 [`useUpdateMyPresence`](/docs/api-reference/liveblocks-react#useUpdateMyPresence)
-and subscribe to the specific values you render with
-[`useOthersMapped`](/docs/api-reference/liveblocks-react#useOthersMapped).
+and read connected users with
+[`useOthers`](/docs/api-reference/liveblocks-react#useOthers).
 
 ```tsx
-import {
-  shallow,
-  useOthersMapped,
-  useUpdateMyPresence,
-} from "@liveblocks/react/suspense";
+import { useOthers, useUpdateMyPresence } from "@liveblocks/react/suspense";
 
 export function CollaborativeList() {
-  const selections = useOthersMapped(
-    (other) => ({
-      selectedId: other.presence.selectedId,
-      color: other.info.color,
-    }),
-    shallow
-  );
+  const others = useOthers();
   const updateMyPresence = useUpdateMyPresence();
 
   return (
     <ItemList
-      selections={selections}
+      selections={others.map(({ connectionId, info, presence }) => ({
+        connectionId,
+        selectedId: presence.selectedId,
+        color: info.color,
+      }))}
       onSelect={(selectedId) => updateMyPresence({ selectedId })}
     />
   );
 }
 ```
 
-For frequently changing values such as cursors, subscribe only to the Presence
-fields the component needs. This avoids rerendering unrelated parts of the
-interface.
+`useOthers` returns each collaborator’s connection ID, Presence, and user info,
+which you can map into the shape your interface needs.
 
 ## Identify collaborators [#user-information]
 

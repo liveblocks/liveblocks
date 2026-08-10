@@ -12,11 +12,23 @@ with a ready-made canvas, or create something custom. Add draggable objects,
 show live cursors, upload images, use version history, and add multiplayer
 undo/redo.
 
-<Figure caption={<>A Tldraw whiteboard</>}>
+<Figure
+  caption={
+    <>
+      Multiplayer editing in the{" "}
+      <a href="/examples/tldraw-whiteboard/nextjs-tldraw-whiteboard-storage">
+        Tldraw Whiteboard
+      </a>{" "}
+      example
+    </>
+  }
+>
   <MuxVideo
     playbackId="fdaBSuIjHvQ9014ntFFXWKZaBVoR2EcIRC00d34HsBKdI"
     alt="Example of a collaborative canvas"
     static={true}
+    height={520}
+    width={768}
   />
 </Figure>
 
@@ -26,8 +38,10 @@ undo/redo.
   permanent and updates in realtime for connected users.
 - [**Presence**](#presence): Show live cursors, avatar stacks, realtime
   selections, and agent activity.
-- [**Agentic editing**](#agentic-editing): Create AI agents that can modify the
-  canvas from the back-end.
+- [**Server-side editing**](#server-side-editing): Modify the canvas from a
+  trusted back end.
+- [**Agentic editing**](#agentic-editing): Generate and apply validated canvas
+  changes with AI.
 - [**Version history**](#version-history): Save, preview, and restore canvas
   state from snapshots.
 - [**Multiplayer undo/redo**](#multiplayer-undo-redo): Each user can
@@ -42,7 +56,7 @@ undo/redo.
 
 Choose a starting point for your canvas.
 
-<ListGrid columns={2} defaultVisibleItems={4}>
+<ListGrid columns={2} defaultVisibleItems={2}>
   <DocsCard
     type="technology"
     title="Get started with Tldraw"
@@ -75,16 +89,9 @@ Choose a starting point for your canvas.
 
 ## Implementation [#implementation]
 
-This is an overview of how each feature can be implemented.
-
-<Banner>
-
-If you’re using a ready-made integration, some of these features may work out of
-the box.
-
-</Banner>
-
-Store persistent objects, layer order, and
+This is an overview of how each feature can be implemented—though if you’re
+using a ready-made integration such as Tldraw, some of these features may work
+out of the box. Store persistent objects, layer order, and
 [`LiveFile`](/docs/api-reference/liveblocks-client#LiveFile) references in Sync.
 Keep temporary cursors, selections, and active tools in
 [Presence](/docs/products/sync/presence), and use
@@ -268,14 +275,13 @@ function CanvasPresence() {
 Learn more about setting up presence in the
 [presence quickstart guide](/docs/get-started/nextjs-presence).
 
-### Agentic editing [#agentic-editing]
+### Server-side editing [#server-side-editing]
 
-AI agents and other server processes can edit canvas with
+Trusted server processes can edit a canvas with
 [`Liveblocks.mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage),
 and changes will be applied and synchronized in realtime. The mutation uses the
 same Storage data types as the client, and connected users receive the result in
-realtime. Run agent mutations on your backend, validate the generated values,
-and create a version before applying a broad change.
+realtime.
 
 ```ts
 import { Liveblocks } from "@liveblocks/node";
@@ -299,7 +305,84 @@ await liveblocks.mutateStorage("my-room-id", ({ root }) => {
 // +++
 ```
 
-Read [Agentic editing](/docs/products/sync/agentic-editing) to learn more.
+Read [Server-side editing](/docs/products/sync/server-side-editing) for
+validation, versioning, bulk mutations, and other document formats.
+
+### Agentic editing [#agentic-editing]
+
+To allow AI agents to modify your canvas, generate your changes with AI then use
+[`mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage) to apply
+them. To show that AI is working in your app use
+[`setPresence`](/docs/api-reference/liveblocks-node#post-rooms-roomId-presence)
+to show it working—your agent will appear in [presence](#presence) alongside
+humans. Finally, remove the agent’s Presence to indicate that the agent is no
+longer working.
+
+```ts
+import { LiveObject } from "@liveblocks/client";
+import { Liveblocks } from "@liveblocks/node";
+import { generateText, Output } from "ai";
+import { z } from "zod";
+
+const liveblocks = new Liveblocks({
+  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+});
+
+const roomId = "canvas-room";
+const agent: Liveblocks["UserMeta"] = {
+  id: "ai-agent",
+  info: { name: "AI agent", color: "#7c3aed" },
+};
+
+// +++
+await liveblocks.setPresence(roomId, {
+  userId: agent.id,
+  userInfo: agent.info,
+  data: { status: "thinking", editingId: null },
+  ttl: 60,
+});
+// +++
+
+// +++
+const { output: shape } = await generateText({
+  model: "openai/gpt-5.6-sol",
+  output: Output.object({
+    schema: z.object({
+      x: z.number(),
+      y: z.number(),
+      color: z.string(),
+    }),
+  }),
+  prompt: `Create a purple rectangle for a collaborative canvas`,
+});
+// +++
+
+// +++
+await liveblocks.mutateStorage(roomId, ({ root }) => {
+  const newShape = new LiveObject({
+    x: shape.x,
+    y: shape.y,
+    color: shape.color,
+  });
+
+  const shapes = root.get("shapes");
+  shapes.set("shape-2", newShape);
+});
+// +++
+
+// +++
+await liveblocks.setPresence(roomId, {
+  userId: agent.id,
+  userInfo: agent.info,
+  data: { status: "idle", editingId: null },
+  ttl: 2,
+});
+// +++
+```
+
+Additionally, you can use [feeds](/docs/products/sync/feeds) to store AI
+workflow state, and to pass agent status updates to the UI. Learn more under
+[Agentic editing](/docs/products/sync/agentic-editing).
 
 ### Version history [#version-history]
 
@@ -343,10 +426,8 @@ You can also manually create snapshots with
 and use
 [ready-made components](/docs/api-reference/liveblocks-react-ui#VersionHistory)
 to render the list of snapshots and restore to a specific version. can be used
-to create a manual snapshot.
-
-Read [Version history](/docs/products/sync/version-history) for the complete
-preview and restore flow.
+to create a manual snapshot. Read
+[Version history](/docs/products/sync/version-history) to learn more.
 
 ### Multiplayer undo/redo [#multiplayer-undo-redo]
 
@@ -498,7 +579,7 @@ a viewer group. This can be set when modifying or creating a room, for example
 with [`Liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms).
 
 ```ts
-await liveblocks.createRoom(`canvas:${canvasId}`, {
+await liveblocks.createRoom(`my-room-id`, {
   defaultAccesses: [
     // No access by default
   ],
@@ -518,7 +599,7 @@ More complex controls can be set too, learn more under
 
 ## Examples [#examples]
 
-Explore complete implementations in our exmaple gallery.
+Explore complete implementations in our example gallery.
 
 <ListGrid columns={2}>
   <ExampleCard

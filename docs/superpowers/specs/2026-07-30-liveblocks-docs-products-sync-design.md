@@ -112,7 +112,7 @@ Use cases
 ├── Table
 ├── Custom app
 ├── Presence
-└── Messaging app
+└── Chat
 ```
 
 Use-case pages explain the minimum useful Liveblocks stack, show short snippets,
@@ -388,8 +388,8 @@ Specific focus:
 - **Custom app**: Compose Sync, Presence, Comments, Notifications, and Feeds
 - **Presence**: Cursors, avatars, selections, live activity, and human/agent
   awareness
-- **Messaging app**: Feeds, Presence, Notifications, pagination, server and AI
-  messages, and room permissions
+- **Chat**: Feeds, Presence, Notifications, pagination, server and AI messages,
+  and room permissions
 
 ## Redirect ledger
 
