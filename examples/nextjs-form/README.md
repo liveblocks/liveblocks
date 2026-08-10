@@ -62,9 +62,9 @@ You can optionally run this example locally using the
 - Install the example as detailed above
 - Run `npm run dev:local` and go to [http://localhost:3000](http://localhost:3000)
 
-This starts a fresh local server, configures the example with
-`http://localhost:1153` and `sk_localdev`, and runs Next.js. Storage is reset
-when the command exits.
+This starts a local server, configures the example with
+`http://localhost:1153` and `sk_localdev`, and runs Next.js. Its data is kept
+in `.liveblocks/` between runs.
 
 </details>
 

@@ -68,7 +68,7 @@ You can optionally run this example locally using the
 - Run `npm run dev:local` and go to
   [http://localhost:3000](http://localhost:3000)
 
-This starts a fresh local server and configures the example with
+This starts a local server and configures the example with
 `http://localhost:1153` and `pk_localdev`.
 
 </details>

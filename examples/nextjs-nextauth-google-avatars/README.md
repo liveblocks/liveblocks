@@ -37,5 +37,5 @@ After setting up the example, run:
 npm run dev:local
 ```
 
-This starts a fresh local server and configures the Liveblocks client with
+This starts a local server and configures the Liveblocks client with
 `http://localhost:1153` and `sk_localdev`.
