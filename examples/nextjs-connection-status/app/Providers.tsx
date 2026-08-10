@@ -7,6 +7,7 @@ export function Providers({ children }: PropsWithChildren) {
   return (
     <LiveblocksProvider
       publicApiKey={process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY as string}
+      baseUrl={process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL}
       throttle={16}
       // Try changing the lostConnectionTimeout value to increase
       // or reduct the time it takes to reconnect

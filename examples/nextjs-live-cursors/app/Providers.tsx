@@ -7,6 +7,7 @@ export function Providers({ children }: PropsWithChildren) {
   return (
     <LiveblocksProvider
       authEndpoint="/api/liveblocks-auth"
+      baseUrl={process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL}
       resolveUsers={async ({ userIds }) => {
         const searchParams = new URLSearchParams(
           userIds.map((userId) => ["userIds", userId])

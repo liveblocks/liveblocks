@@ -28,3 +28,14 @@ This example shows how to build a live avatar stack with [Liveblocks](https://li
 ## Getting started
 
 Clone this repository, and then follow [the tutorial](https://liveblocks.io/blog/how-to-add-google-authentication-to-your-nextjs-liveblocks-app-with-nextauthjs) to add Google authentication.
+
+### Run with the local dev server
+
+After setting up the example, run:
+
+```bash
+npm run dev:local
+```
+
+This starts a fresh local server and configures the Liveblocks client with
+`http://localhost:1153` and `sk_localdev`.
