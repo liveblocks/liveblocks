@@ -1,5 +1,17 @@
 ## vNEXT (not yet released)
 
+- Add `--persist` / `--no-persist` to `liveblocks dev`, making storage an
+  explicit choice. `liveblocks dev --cmd` still defaults to using a throwaway
+  directory (`--no-persist` is implied by default), but you can pass `--persist`
+  to keep data between runs, which is useful when `--cmd` runs your app rather
+  than your tests.
+- Running `liveblocks dev --cmd ...` will now set the following env variables in
+  the environment: `LIVEBLOCKS_BASE_URL`, `LIVEBLOCKS_PUBLIC_KEY`,
+  `LIVEBLOCKS_SECRET_KEY`, and any `NEXT_PUBLIC_`, `VITE_`, and `PUBLIC_`
+  prefixed variants for client-side code.
+- Remove `--ci` from `liveblocks dev`. It bundled a storage choice with a check
+  choice; use `--no-persist --no-check` instead.
+
 ## v1.8.0
 
 - Add full support for LiveFile
