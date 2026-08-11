@@ -2033,9 +2033,14 @@ const liveblocks = useLiveblocksExtension({
 
 #### Setting initial content
 
-Initial content for the editor can be set with `initialContent`. This content
-will only be used if the current editor has never been edited by any users, and
-is ignored otherwise.
+Initial content for the editor can be set with `initialContent`. It’s applied
+once, by whoever opens the editor first, and ignored from then on. If several
+users open a brand new editor at the same time, they each apply the same
+content, and it ends up in the document exactly once.
+
+Passing a different `initialContent` to different users of the same editor isn’t
+supported. Each distinct value is applied, so the document can end up containing
+all of them.
 
 ```tsx
 import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
@@ -2260,16 +2265,21 @@ function TextEditor() {
 
 ### useIsEditorReady
 
-Used to check if the editor content has been loaded or not, helpful for
-displaying a loading skeleton.
+Used to check if the editor content has been loaded or not, so you can wait for
+it before creating your editor.
 
 ```ts
 import { useIsEditorReady } from "@liveblocks/react-tiptap";
 
-const status = useIsEditorReady();
+const ready = useIsEditorReady();
 ```
 
-Here’s how it can be used in the context of your editor.
+Until the content has loaded, the document backing your editor is an empty
+replica of the real one. Call
+[`useEditor`](https://tiptap.dev/docs/editor/api/react) in a component that only
+renders once `ready` is `true`, so that no editor exists before then. Note that
+`useLiveblocksExtension` is called outside of that component, because it’s what
+starts loading the content.
 
 ```tsx
 // +++
@@ -2277,15 +2287,25 @@ import {
   useIsEditorReady,
   useLiveblocksExtension,
 } from "@liveblocks/react-tiptap";
-import { useEditor, EditorContent } from "@tiptap/react";
 // +++
+import type { Extension } from "@tiptap/core";
+import { useEditor, EditorContent } from "@tiptap/react";
 
 function TextEditor() {
   const liveblocks = useLiveblocksExtension();
   // +++
   const ready = useIsEditorReady();
-  // +++
 
+  if (!ready) {
+    return <div>Loading...</div>;
+  }
+
+  return <Editor liveblocks={liveblocks} />;
+  // +++
+}
+
+// +++
+function Editor({ liveblocks }: { liveblocks: Extension }) {
   const editor = useEditor({
     extensions: [
       liveblocks,
@@ -2293,13 +2313,52 @@ function TextEditor() {
     ],
   });
 
-  return (
-    <div>
-      // +++
-      {!ready ? <div>Loading...</div> : <EditorContent editor={editor} />}
-      // +++
-    </div>
-  );
+  return <EditorContent editor={editor} />;
+}
+// +++
+```
+
+<Banner title="Rendering an editor before it’s ready" type="warning">
+
+Creating the editor immediately and only hiding `<EditorContent>` binds it to
+the empty replica. Anything reading the editor during that window, such as
+autosaving, will read an empty document, and anything writing to it will merge
+into the content that arrives afterwards.
+
+</Banner>
+
+`ready` becomes `true` as soon as the first content source has answered, and
+never becomes `false` again. With
+[`offlineSupport_experimental`](#useLiveblocksExtension) enabled, that source
+can be the local copy stored in the browser, so editing is available before the
+server has responded.
+
+#### Reporting a stall
+
+`ready` staying `false` means no content source ever answered. You can report it
+after a delay of your choosing.
+
+```tsx
+function TextEditor() {
+  const liveblocks = useLiveblocksExtension();
+  const ready = useIsEditorReady();
+
+  // +++
+  useEffect(() => {
+    if (ready) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      // Report to your error tracking service
+      console.warn("[Liveblocks] Editor content still hasn’t loaded");
+    }, 10_000);
+
+    return () => clearTimeout(timeout);
+  }, [ready]);
+  // +++
+
+  // ...
 }
 ```
 

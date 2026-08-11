@@ -1,6 +1,7 @@
 import type {
   BaseUserMeta,
   IUserInfo,
+  IYjsProvider,
   JsonObject,
   User,
 } from "@liveblocks/core";
@@ -18,7 +19,7 @@ import { getYjsProviderForRoom } from "@liveblocks/yjs";
 import type { AnyExtension, Editor } from "@tiptap/core";
 import { Extension, getMarkType, Mark } from "@tiptap/core";
 import type { Mark as PMMark } from "@tiptap/pm/model";
-import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { AiExtension } from "./ai/AiExtension";
 import { Collaboration } from "./collaboration/collaboration";
@@ -88,6 +89,12 @@ const LiveblocksCollab = Collaboration.extend({
   },
 });
 
+export function hasAnyContentSourceAnswered(
+  yjsProvider: Pick<IYjsProvider, "getStatus" | "synced">
+): boolean {
+  return yjsProvider.getStatus() !== "loading" || yjsProvider.synced;
+}
+
 /**
  * Returns whether the editor has loaded the initial text contents from the
  * server and is ready to be used.
@@ -95,24 +102,28 @@ const LiveblocksCollab = Collaboration.extend({
  */
 export function useIsEditorReady(): boolean {
   const yjsProvider = useYjsProvider();
+  const [isReady, setIsReady] = useState(false);
 
-  const getSnapshot = useCallback(() => {
-    const status = yjsProvider?.getStatus();
-    return status === "synchronizing" || status === "synchronized";
+  useEffect(() => {
+    if (yjsProvider === undefined) return;
+
+    const checkIfReady = () => {
+      if (hasAnyContentSourceAnswered(yjsProvider)) {
+        setIsReady(true);
+      }
+    };
+
+    checkIfReady();
+    yjsProvider.on("status", checkIfReady);
+    yjsProvider.on("sync", checkIfReady);
+
+    return () => {
+      yjsProvider.off("status", checkIfReady);
+      yjsProvider.off("sync", checkIfReady);
+    };
   }, [yjsProvider]);
 
-  const subscribe = useCallback(
-    (callback: () => void) => {
-      if (yjsProvider === undefined) return () => {};
-      yjsProvider.on("status", callback);
-      return () => {
-        yjsProvider.off("status", callback);
-      };
-    },
-    [yjsProvider]
-  );
-
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  return isReady;
 }
 
 const YChangeMark = Mark.create({
@@ -176,6 +187,10 @@ export const useLiveblocksExtension = (
   );
   const editor = useRef<Editor | null>(null);
   const room = useRoom();
+  const provider = getYjsProviderForRoom(room, {
+    enablePermanentUserData: !!options.ai || options.enablePermanentUserData,
+    offlineSupport_experimental: options.offlineSupport_experimental,
+  });
 
   // TODO: we don't need these things if comments isn't turned on...
   // TODO: we don't have a reference to the editor here, need to figure this out
@@ -367,11 +382,6 @@ export const useLiveblocksExtension = (
       ];
     },
     addStorage() {
-      const provider = getYjsProviderForRoom(room, {
-        enablePermanentUserData:
-          !!options.ai || options.enablePermanentUserData,
-        offlineSupport_experimental: options.offlineSupport_experimental,
-      });
       return {
         doc: provider.getYDoc(),
         provider,

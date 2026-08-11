@@ -7,6 +7,15 @@
   content write was dropped after the "already seeded" flag was written. The
   content and the flag are now built in a detached Yjs document under a client
   ID derived from the content, and applied as a single update.
+- `useIsEditorReady` now also becomes `true` when the content is loaded from
+  local persistence with `offlineSupport_experimental`, instead of waiting for a
+  server round-trip, and never becomes `false` again once it has. It’s now
+  documented as a way to defer creating your editor, rather than just hiding it.
+
+### `@liveblocks/react-blocknote`
+
+- `useIsEditorReady` picks up the same change as in
+  [`@liveblocks/react-tiptap`](/docs/api-reference/liveblocks-react-tiptap).
 
 ## v3.23.1
 
