@@ -6874,9 +6874,18 @@
       "get": {
         "summary": "List projects",
         "x-badge": "Beta",
-        "description": "Returns a paginated list of projects. You can limit the number of projects returned per page and use the provided `nextCursor` for pagination. This endpoint requires the `read:all` scope.",
+        "description": "Returns a paginated list of projects. You can filter by exact, case-sensitive project name using the `query` parameter. Project names are not unique, so multiple projects can match. You can limit the number of projects returned per page and use the provided `nextCursor` for pagination. This endpoint requires the `read:all` scope.",
         "tags": ["Management"],
         "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "A query to filter projects by exact, case-sensitive name.",
+              "example": "name:\"Frimousse\""
+            },
+            "in": "query",
+            "name": "query"
+          },
           {
             "schema": {
               "type": "integer",

@@ -4,8 +4,8 @@ import { getRandomUser } from "@/database";
 
 // Authenticating your Liveblocks application
 // https://liveblocks.io/docs/authentication
-
 const liveblocks = new Liveblocks({
+  baseUrl: process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL,
   secret: process.env.LIVEBLOCKS_SECRET_KEY as string,
 });
 

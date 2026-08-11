@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+  baseUrl: process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL,
 });
 
 export async function POST(request: NextRequest) {

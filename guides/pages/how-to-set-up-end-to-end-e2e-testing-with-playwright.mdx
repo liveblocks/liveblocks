@@ -98,7 +98,7 @@ export default defineConfig({
       ? []
       : [
           {
-            command: `npx liveblocks dev --ephemeral --no-check --port ${LIVEBLOCKS_PORT}`,
+            command: `npx liveblocks dev --no-persist --no-check --port ${LIVEBLOCKS_PORT}`,
             port: LIVEBLOCKS_PORT,
             reuseExistingServer: true,
           },
@@ -120,6 +120,9 @@ export default defineConfig({
 
 A few things to note:
 
+- **`--no-persist`**—Starts the server in a throwaway directory, so tests never
+  touch the `.liveblocks/` folder you use for everyday development. Pair it with
+  `--no-check`, which skips the interactive project setup check on start.
 - **`reuseExistingServer`**—Locally, this lets you leave the servers running
   between test runs for faster iteration. In CI, a fresh server is started each
   time.
@@ -312,8 +315,9 @@ workflow built using this guide. You can use it as a starting point:
 
 ## Tips
 
-- **Unique room IDs per test**: The dev server persists storage to disk, so
-  using unique room IDs prevents state from leaking between tests.
+- **Unique room IDs per test**: Room state lives for as long as the dev server
+  does, so using unique room IDs prevents state from leaking between tests
+  within a run.
 - **Retries**: Collaborative tests involve WebSocket connections and async
   syncing. Adding a few retries in CI (`retries: 2` or more) helps absorb
   occasional timing-related flakiness.

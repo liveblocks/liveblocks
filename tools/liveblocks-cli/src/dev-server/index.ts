@@ -45,6 +45,7 @@ import {
   buildFixPrompt,
   checkLiveblocksSetup,
 } from "./lib/check-liveblocks-setup";
+import { childEnv } from "./lib/child-env";
 import { copyToClipboard } from "./lib/clipboard";
 import { isPortInUse } from "./lib/probe-port";
 import { warn } from "./lib/xwarn";
@@ -107,6 +108,12 @@ function parsePort(value: string | undefined): number | undefined {
   return Number.isInteger(n) && n > 0 && n <= 65535 ? n : undefined;
 }
 
+/**
+ * Diagnostics go to stderr: with --cmd, stdout belongs to the command being
+ * run, and callers pipe it.
+ */
+const stderr = (msg: string) => process.stderr.write(msg + "\n");
+
 function shellCmd(cmd: string): string[] {
   return process.platform === "win32"
     ? [process.env.COMSPEC || "cmd.exe", "/c", cmd]
@@ -128,7 +135,8 @@ type Options = {
   cmd?: string;
   help: boolean;
   "no-check": boolean;
-  ci: boolean;
+  persist: boolean;
+  "no-persist": boolean;
   verbose: boolean;
 };
 
@@ -145,7 +153,8 @@ const dev: SubCommand = {
         cmd: { type: "string", short: "c" },
         help: { type: "boolean", short: "h", default: false },
         "no-check": { type: "boolean", default: false },
-        ci: { type: "boolean", default: false },
+        persist: { type: "boolean", default: false },
+        "no-persist": { type: "boolean", default: false },
         verbose: { type: "boolean", short: "v", default: false },
       },
       { allowPositionals: true }
@@ -171,37 +180,56 @@ const dev: SubCommand = {
       console.log("Start the local Liveblocks dev server");
       console.log();
       console.log("Options:");
-      console.log(`  --port, -p      Port to listen on (default: ${DEFAULT_PORT})`); // prettier-ignore
-      console.log("  --random-port, -P  Bind a random free port instead of --port (no collisions,"); // prettier-ignore
-      console.log("                    ever). With --cmd, the chosen port is exposed to the command"); // prettier-ignore
-      console.log("                    via LIVEBLOCKS_DEV_SERVER_PORT. Ideal for CI."); // prettier-ignore
-      console.log("  --host          Host to bind to (default: localhost)");
-      console.log("  --cmd, -c       Run a one-off command against a fresh server instance, then"); // prettier-ignore
-      console.log("                    shut down. Does not affect your local data in .liveblocks/."); // prettier-ignore
-      console.log("                    Extra args are appended to the command, or replace {} if"); // prettier-ignore
-      console.log("                    present. Use -- before args starting with -."); // prettier-ignore
-      console.log("  --ci            Start a fresh server instance on every boot, ideal for CI"); // prettier-ignore
-      console.log("  --no-check      Skip project setup check on start");
-      console.log("  --verbose, -v   Show verbose output");
-      console.log("  --help, -h      Show help");
+      console.log(`  -p, --port <port>    Port to listen on (default: ${DEFAULT_PORT})`); // prettier-ignore
+      console.log("  -P, --random-port    Bind a random free port instead, never collides"); // prettier-ignore
+      console.log(
+        "      --host <host>    Host to bind to (default: localhost)"
+      );
+      console.log();
+      console.log("  -c, --cmd <command>  Run a command against the server, then shut down."); // prettier-ignore
+      console.log("                       Extra args are appended, or replace {} if present;"); // prettier-ignore
+      console.log("                       use -- before args starting with -. The command"); // prettier-ignore
+      console.log("                       inherits LIVEBLOCKS_BASE_URL and the local keys"); // prettier-ignore
+      console.log("                       (also NEXT_PUBLIC_, VITE_ and PUBLIC_ prefixed),"); // prettier-ignore
+      console.log("                       so apps need no source or .env changes."); // prettier-ignore
+      console.log();
+      console.log("      --persist        Keep data in .liveblocks/ (default without --cmd)"); // prettier-ignore
+      console.log("      --no-persist     Use a throwaway directory (default with --cmd)"); // prettier-ignore
+      console.log();
+      console.log(
+        "      --no-check       Skip the project setup check on start"
+      );
+      console.log("  -v, --verbose        Show verbose output");
+      console.log("  -h, --help           Show this help");
       return;
     }
 
-    let ephemeral = false;
-
-    // --ci implies ephemeral + --no-check
-    if (options.ci) {
-      ephemeral = true;
-      options["no-check"] = true;
-    }
-
-    // --cmd implies ephemeral + --no-check
+    // --cmd runs a command, then exits. The setup check is for interactive
+    // use, so it would only add noise here.
     if (options.cmd) {
-      // NOTE: While this is CURRENTLY the same as --ci, we keep it separate in
-      // case we want to have different implications here in the future
-      ephemeral = true;
       options["no-check"] = true;
     }
+
+    if (options.persist && options["no-persist"]) {
+      console.error(red("--persist and --no-persist are mutually exclusive"));
+      process.exit(1);
+    }
+
+    // Whether the server keeps its data in `.liveblocks/` rather than a
+    // throwaway directory.
+    //
+    // Persistence is its own axis, independent of whether a command is run and
+    // of whether the setup check runs. The default follows from who owns the
+    // server's lifetime: with `--cmd` the command does, so its data dies with
+    // it and a test run can never disturb `.liveblocks/`. Without `--cmd` a
+    // human does, so the data outlives the process. Either default can be
+    // stated explicitly, which is the only way to persist across `--cmd` runs
+    // or to get a throwaway server without one.
+    const persist = options.persist
+      ? true
+      : options["no-persist"]
+        ? false
+        : !options.cmd;
 
     // With --random-port, bind to port 0 so the OS hands us a guaranteed-free
     // port at bind time (no collisions, ever). Otherwise the precedence is:
@@ -215,7 +243,10 @@ const dev: SubCommand = {
     const hostname =
       options.host || process.env.LIVEBLOCKS_DEVSERVER_HOST || "localhost";
 
-    const ephemeralPath = ephemeral ? Rooms.useEphemeralStorage() : null;
+    const storageRoot = persist
+      ? Rooms.usePersistentStorage()
+      : Rooms.useEphemeralStorage();
+    const storageLabel = persist ? "persistent" : "ephemeral";
 
     if (requestedPort !== 0 && (await isPortInUse(requestedPort, hostname))) {
       console.error(
@@ -406,17 +437,15 @@ const dev: SubCommand = {
 
     // -----------------------------------------------------------------------------
 
-    const stderr = (msg: string) => process.stderr.write(msg + "\n");
-
     if (options.cmd) {
       stderr(
         `Liveblocks dev server ${dim(`v${__VERSION__}`)} running at http://${server.hostname}:${server.port}`
       );
-      if (ephemeralPath && options.verbose) {
-        stderr(dim(`Ephemeral mode, using ${ephemeralPath}`));
+      if (options.verbose) {
+        stderr(dim(`${storageLabel} storage, using ${storageRoot}`));
       }
       // Redirect all further console output to a log file
-      const logPath = join(ephemeralPath!, "server.log");
+      const logPath = join(storageRoot, "server.log");
       stderr(dim(`Server logs: ${logPath}`));
 
       const logFile = Bun.file(logPath).writer();
@@ -427,6 +456,13 @@ const dev: SubCommand = {
       console.log = writeLine;
       console.error = writeLine;
 
+      // A listening server always has a port; Bun's type just doesn't say so.
+      const boundPort = server.port;
+      if (boundPort === undefined) {
+        stderr(red("Dev server is not listening on a port"));
+        process.exit(1);
+      }
+
       // Spawn child process, then shut down on exit
       let code = 1;
       try {
@@ -436,8 +472,7 @@ const dev: SubCommand = {
           stderr: "inherit",
           env: {
             ...process.env,
-            LIVEBLOCKS_DEV_SERVER_HOST: hostname,
-            LIVEBLOCKS_DEV_SERVER_PORT: String(server.port),
+            ...childEnv(hostname, boundPort),
           },
         });
 
@@ -677,8 +712,8 @@ const dev: SubCommand = {
       originalLog(renderTabBar());
       originalLog(logsLegend());
       originalLog();
-      if (ephemeralPath && options.verbose) {
-        console.log(dim(`Ephemeral mode, using ${ephemeralPath}`));
+      if (options.verbose) {
+        console.log(dim(`${storageLabel} storage, using ${storageRoot}`));
       }
 
       process.stdin.setRawMode?.(true);

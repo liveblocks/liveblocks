@@ -13,6 +13,7 @@ export function Room({ children }: { children: ReactNode }) {
 
   return (
     <RoomProvider
+      baseUrl={process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL}
       id={roomId}
       initialPresence={{ presence: undefined }}
       initialStorage={{ records: new LiveMap() }}

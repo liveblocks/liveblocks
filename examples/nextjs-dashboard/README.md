@@ -65,10 +65,11 @@ You can optionally run this example locally using the
 [Liveblocks dev server](https://liveblocks.io/docs/tools/dev-server).
 
 - Install the example as detailed above
-- Run `npx liveblocks dev` to start the server
-- Add `baseUrl: "http://localhost:1153"` option to `LiveblocksProvider`
-- Replace `publicApiKey` in `LiveblocksProvider` with `"pk_localdev"`
-- Run `npm run dev` and go to [http://localhost:3000](http://localhost:3000)
+- Run `npm run dev:local` and go to
+  [http://localhost:3000](http://localhost:3000)
+
+This starts a local server and configures the example with
+`http://localhost:1153` and `pk_localdev`.
 
 </details>
 

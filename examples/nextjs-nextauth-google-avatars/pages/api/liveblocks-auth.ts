@@ -10,6 +10,7 @@ import { User } from "../../types";
 
 const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+  baseUrl: process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL,
 });
 
 export default async function auth(req: NextApiRequest, res: NextApiResponse) {
@@ -33,10 +34,7 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
   });
 
   // Use a naming pattern to allow access to rooms with a wildcard
-  liveblocksSession.allow(
-    `liveblocks:examples:*`,
-    ["*:write"]
-  );
+  liveblocksSession.allow(`liveblocks:examples:*`, ["*:write"]);
 
   const { status, body } = await liveblocksSession.authorize();
   res.status(status).end(body);

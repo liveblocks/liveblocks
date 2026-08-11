@@ -55,7 +55,8 @@ export type ClientMeta = JsonObject;
 // Module state
 // ---------------------------------------------------------------------------
 
-const DEFAULT_BASE_PATH = ".liveblocks/v2";
+const DEFAULT_ROOT = ".liveblocks";
+const DEFAULT_BASE_PATH = join(DEFAULT_ROOT, "v2");
 let basePath = DEFAULT_BASE_PATH;
 let isEphemeral = false;
 let _initializedDb: Database | null = null;
@@ -369,6 +370,20 @@ export function useEphemeralStorage(): string {
   isEphemeral = true;
   setBlobsRoot(blobsDir());
   return root;
+}
+
+/**
+ * Switch to persistent storage under `.liveblocks/`. Returns the root
+ * directory, the counterpart of `useEphemeralStorage()`'s return value, so
+ * callers can place sibling files (e.g. server.log) without caring which
+ * mode is active.
+ */
+export function usePersistentStorage(): string {
+  basePath = DEFAULT_BASE_PATH;
+  isEphemeral = false;
+  setBlobsRoot(blobsDir());
+  mkdirSync(DEFAULT_ROOT, { recursive: true });
+  return DEFAULT_ROOT;
 }
 
 /**
