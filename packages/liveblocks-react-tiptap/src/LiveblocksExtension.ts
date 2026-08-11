@@ -14,7 +14,6 @@ import {
   useYjsProvider,
 } from "@liveblocks/react/_private";
 import { useInitial } from "@liveblocks/react-ui/_private";
-import type { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import { getYjsProviderForRoom } from "@liveblocks/yjs";
 import type { AnyExtension, Editor } from "@tiptap/core";
 import { Extension, getMarkType, Mark } from "@tiptap/core";
@@ -31,6 +30,7 @@ import {
   CommentsExtension,
   FILTERED_THREADS_PLUGIN_KEY,
 } from "./comments/CommentsExtension";
+import { seedInitialContentWhenReady } from "./initialContent";
 import { MentionExtension } from "./mentions/MentionExtension";
 import type {
   LiveblocksExtensionOptions,
@@ -193,27 +193,6 @@ export const useLiveblocksExtension = (
   const client = useClient();
   const store = getUmbrellaStoreForClient(client);
   const roomId = room.id;
-  const yjsProvider = useYjsProvider();
-
-  // If the user provided initialContent, wait for ready and then set it
-  useEffect(() => {
-    if (
-      !isEditorReady ||
-      !yjsProvider ||
-      !options.initialContent ||
-      !editor.current
-    )
-      return;
-
-    // As noted in the tiptap documentation, you may not set initial content with collaboration.
-    // The docs provide the following workaround:
-    const ydoc = (yjsProvider as LiveblocksYjsProvider).getYDoc();
-    const hasContentSet = ydoc.getMap("liveblocks_config").get("hasContentSet");
-    if (!hasContentSet) {
-      ydoc.getMap("liveblocks_config").set("hasContentSet", true);
-      editor.current.commands.setContent(options.initialContent);
-    }
-  }, [isEditorReady, yjsProvider, options.initialContent]);
 
   useReportTextEditor(textEditorType, options.field ?? DEFAULT_OPTIONS.field);
 
@@ -257,6 +236,17 @@ export const useLiveblocksExtension = (
 
     onCreate() {
       editor.current = this.editor;
+      if (options.initialContent) {
+        this.storage.unsubs.push(
+          seedInitialContentWhenReady({
+            provider: this.storage.provider,
+            roomId,
+            field: options.field,
+            content: options.initialContent,
+            schema: this.editor.schema,
+          })
+        );
+      }
       if (this.editor.options.content) {
         console.warn(
           "[Liveblocks] Initial content must be set in the useLiveblocksExtension hook option. Remove content from your editor options."

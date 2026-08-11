@@ -1,5 +1,13 @@
 ## vNEXT (not yet released)
 
+### `@liveblocks/react-tiptap`
+
+- Fix `initialContent` being applied twice when two clients open an empty room
+  at the same time, and fix rooms getting permanently stuck empty when the
+  content write was dropped after the "already seeded" flag was written. The
+  content and the flag are now built in a detached Yjs document under a client
+  ID derived from the content, and applied as a single update.
+
 ## v3.23.1
 
 ### `@liveblocks/react-ui`
