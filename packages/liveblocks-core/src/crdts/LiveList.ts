@@ -1057,6 +1057,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * instead of resolving its position against the client's stale view.
    */
   #injectAt(element: TItem, index: number, intent: "insert" | "push"): void {
+    this._assertNotOrphaned();
     this._pool?.assertStorageIsWritable();
     if (index < 0 || index > this.#items.length) {
       throw new Error(
@@ -1095,6 +1096,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @param targetIndex The index where the element should be after moving.
    */
   move(index: number, targetIndex: number): void {
+    this._assertNotOrphaned();
     this._pool?.assertStorageIsWritable();
     if (targetIndex < 0) {
       throw new Error("targetIndex cannot be less than 0");
@@ -1171,6 +1173,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @param index The index of the element to delete
    */
   delete(index: number): void {
+    this._assertNotOrphaned();
     this._pool?.assertStorageIsWritable();
     if (index < 0 || index >= this.#items.length) {
       throw new Error(
@@ -1210,6 +1213,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   }
 
   clear(): void {
+    this._assertNotOrphaned();
     this._pool?.assertStorageIsWritable();
     if (this._pool) {
       const ops: ClientWireOp[] = [];
@@ -1256,6 +1260,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   }
 
   set(index: number, item: TItem): void {
+    this._assertNotOrphaned();
     this._pool?.assertStorageIsWritable();
     if (index < 0 || index >= this.#items.length) {
       throw new Error(

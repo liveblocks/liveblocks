@@ -309,6 +309,15 @@ export abstract class AbstractCrdt {
   }
 
   /** @internal */
+  protected _assertNotOrphaned(): void {
+    if (this.parent.type === "Orphaned") {
+      throw new Error(
+        "Cannot mutate this Live structure because it is no longer part of Storage. Retrieve the current value from its parent before mutating it."
+      );
+    }
+  }
+
+  /** @internal */
   get _parentKey(): string | null {
     switch (this.parent.type) {
       case "HasParent":

@@ -258,6 +258,7 @@ export class LiveMap<
    * @param value The value of the element to add. Should be serializable to JSON.
    */
   set(key: TKey, value: TValue): void {
+    this._assertNotOrphaned();
     this._pool?.assertStorageIsWritable();
     const oldValue = this.#map.get(key);
 
@@ -318,6 +319,7 @@ export class LiveMap<
    * @returns true if an element existed and has been removed, or false if the element does not exist.
    */
   delete(key: TKey): boolean {
+    this._assertNotOrphaned();
     this._pool?.assertStorageIsWritable();
     const item = this.#map.get(key);
 

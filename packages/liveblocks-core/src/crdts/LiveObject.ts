@@ -550,6 +550,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     key: TKey,
     value: Extract<Exclude<O[TKey], undefined>, Json>
   ): void {
+    this._assertNotOrphaned();
     this._pool?.assertStorageIsWritable();
 
     // Prepare synced-key deletion (if applicable) — does NOT dispatch yet
@@ -608,6 +609,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
         storageUpdates: Map<string, LiveObjectUpdates<O>>,
       ]
     | null {
+    this._assertNotOrphaned();
     this._pool?.assertStorageIsWritable();
 
     const k = key as string;
@@ -712,6 +714,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
    * @param patch The object used to overrides properties
    */
   update(patch: Partial<O>): void {
+    this._assertNotOrphaned();
     this._pool?.assertStorageIsWritable();
 
     // If detectLargeObjects is enabled, perform a runtime size check now so we
