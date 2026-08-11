@@ -176,6 +176,10 @@ export const useLiveblocksExtension = (
   );
   const editor = useRef<Editor | null>(null);
   const room = useRoom();
+  const provider = getYjsProviderForRoom(room, {
+    enablePermanentUserData: !!options.ai || options.enablePermanentUserData,
+    offlineSupport_experimental: options.offlineSupport_experimental,
+  });
 
   // TODO: we don't need these things if comments isn't turned on...
   // TODO: we don't have a reference to the editor here, need to figure this out
@@ -377,11 +381,6 @@ export const useLiveblocksExtension = (
       ];
     },
     addStorage() {
-      const provider = getYjsProviderForRoom(room, {
-        enablePermanentUserData:
-          !!options.ai || options.enablePermanentUserData,
-        offlineSupport_experimental: options.offlineSupport_experimental,
-      });
       return {
         doc: provider.getYDoc(),
         provider,

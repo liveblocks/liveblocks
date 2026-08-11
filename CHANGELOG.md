@@ -1,5 +1,12 @@
 ## vNEXT (not yet released)
 
+### `@liveblocks/react-tiptap`
+
+- `useLiveblocksExtension` now creates the Yjs provider itself, instead of
+  waiting until an editor is constructed. `useIsEditorReady` can therefore be
+  used to defer creating your editor until the content has loaded, rather than
+  only to hide it.
+
 ## v3.23.1
 
 ### `@liveblocks/react-ui`
