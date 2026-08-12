@@ -319,7 +319,10 @@ export abstract class AbstractCrdt {
     const node = crdtAsLiveNode(this);
     if (this.parent.type === "Orphaned" && !warnedOrphanedNodes.has(node)) {
       warnedOrphanedNodes.add(node);
-      console.warn(ORPHANED_NODE_WARNING);
+      console.warn(ORPHANED_NODE_WARNING, {
+        type: node.constructor.name,
+        formerParentKey: this.parent.oldKey,
+      });
     }
   }
 

@@ -48,7 +48,10 @@ describe("orphaned Live structures", () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     text.insert(0, "lost");
     expect(warn).toHaveBeenCalledOnce();
-    expect(warn).toHaveBeenCalledWith(ORPHANED_NODE_WARNING);
+    expect(warn).toHaveBeenCalledWith(ORPHANED_NODE_WARNING, {
+      type: "LiveText",
+      formerParentKey: "text",
+    });
     expect(text.toString()).toBe("lost");
   });
 
@@ -62,7 +65,10 @@ describe("orphaned Live structures", () => {
     text.format(1, 1, { bold: true });
 
     expect(warn).toHaveBeenCalledOnce();
-    expect(warn).toHaveBeenCalledWith(ORPHANED_NODE_WARNING);
+    expect(warn).toHaveBeenCalledWith(ORPHANED_NODE_WARNING, {
+      type: "LiveText",
+      formerParentKey: "child",
+    });
     expect(text.toString()).toBe("axc");
   });
 
@@ -80,7 +86,10 @@ describe("orphaned Live structures", () => {
     object.reconcilePartially({ value: 1 });
 
     expect(warn).toHaveBeenCalledOnce();
-    expect(warn).toHaveBeenCalledWith(ORPHANED_NODE_WARNING);
+    expect(warn).toHaveBeenCalledWith(ORPHANED_NODE_WARNING, {
+      type: "LiveObject",
+      formerParentKey: "child",
+    });
     expect(object.toJSON()).toEqual({ value: 1 });
   });
 
@@ -92,7 +101,10 @@ describe("orphaned Live structures", () => {
     map.delete("value");
 
     expect(warn).toHaveBeenCalledOnce();
-    expect(warn).toHaveBeenCalledWith(ORPHANED_NODE_WARNING);
+    expect(warn).toHaveBeenCalledWith(ORPHANED_NODE_WARNING, {
+      type: "LiveMap",
+      formerParentKey: "child",
+    });
     expect(map.toJSON()).toEqual({});
   });
 
@@ -109,7 +121,11 @@ describe("orphaned Live structures", () => {
     list.set(0, 2);
 
     expect(warn).toHaveBeenCalledOnce();
-    expect(warn).toHaveBeenCalledWith(ORPHANED_NODE_WARNING);
+    expect(warn).toHaveBeenCalledWith(ORPHANED_NODE_WARNING, {
+      type: "LiveList",
+      formerParentKey: "child",
+    });
     expect(list.toJSON()).toEqual([2]);
   });
+
 });
