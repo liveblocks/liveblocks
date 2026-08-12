@@ -1,0 +1,57 @@
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.toolbarButton {
+  padding: var(--space-4);
+}
+
+.toolbarButton svg {
+  height: 20px;
+  width: 20px;
+}
+
+.toolbarSeparator {
+  width: 1px;
+  height: var(--space-10);
+  background: var(--color-border);
+  margin: 0 var(--space-2);
+}
+
+.toolbarPopover {
+  display: flex;
+  min-width: 160px;
+  flex-direction: column;
+  padding: var(--space-4);
+  box-shadow: var(--shadow-xl);
+}
+
+.toolbarPopoverLabel {
+  font-size: var(--size-sm);
+  font-weight: 500;
+  padding: var(--space-2) var(--space-1) var(--space-4);
+}
+
+.toolbarPopoverBar {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.toolbarPopoverInput {
+  width: 200px;
+}
+
+.toolbarPopoverButton {
+  white-space: nowrap;
+}
+
+.headingsSelect {
+  width: 130px;
+}
+
+/* Use set width in static toolbar */
+[data-toolbar="static"] .blockSelector {
+  width: 130px;
+}
