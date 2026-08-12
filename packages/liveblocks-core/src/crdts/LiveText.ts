@@ -493,7 +493,7 @@ export class LiveText extends AbstractCrdt {
       return;
     }
 
-    this._assertNotOrphaned();
+    this._warnIfOrphaned();
     this._pool?.assertStorageIsWritable();
     const attached = this._pool !== undefined && this._id !== undefined;
     const reverse = attached ? this.#invertOperations(ops) : [];

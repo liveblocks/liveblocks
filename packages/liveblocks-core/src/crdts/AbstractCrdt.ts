@@ -1,5 +1,6 @@
 import { kInternal } from "../internal";
 import { assertNever } from "../lib/assert";
+import * as console from "../lib/fancy-console";
 import type { ReadonlyJson } from "../lib/Json";
 import type { Pos } from "../lib/position";
 import { asPos } from "../lib/position";
@@ -17,6 +18,11 @@ import type { OpSource, StorageUpdate, UpdateSource } from "./StorageUpdates";
 import { toUpdateSource } from "./StorageUpdates";
 import type { ReadonlyUnacknowledgedOps } from "./UnacknowledgedOps";
 import { UnacknowledgedOps } from "./UnacknowledgedOps";
+
+const warnedOrphanedNodes = new WeakSet<LiveNode>();
+
+const ORPHANED_NODE_WARNING =
+  "Cannot sync changes made to this Live structure because it is no longer part of Storage. Retrieve the current value from its parent before mutating it.";
 
 export type ApplyResult =
   | { reverse: Op[]; modified: StorageUpdate }
@@ -309,11 +315,11 @@ export abstract class AbstractCrdt {
   }
 
   /** @internal */
-  protected _assertNotOrphaned(): void {
-    if (this.parent.type === "Orphaned") {
-      throw new Error(
-        "Cannot mutate this Live structure because it is no longer part of Storage. Retrieve the current value from its parent before mutating it."
-      );
+  protected _warnIfOrphaned(): void {
+    const node = crdtAsLiveNode(this);
+    if (this.parent.type === "Orphaned" && !warnedOrphanedNodes.has(node)) {
+      warnedOrphanedNodes.add(node);
+      console.warn(ORPHANED_NODE_WARNING);
     }
   }
 

@@ -1,5 +1,6 @@
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 
+import * as console from "../../lib/fancy-console";
 import { OpCode } from "../../protocol/Op";
 import { createManagedPool } from "../AbstractCrdt";
 import { LiveList } from "../LiveList";
@@ -9,8 +10,8 @@ import { LiveText } from "../LiveText";
 import type { LiveStructure } from "../Lson";
 import { REMOTE } from "../StorageUpdates";
 
-const ORPHANED_ERROR =
-  "Cannot mutate this Live structure because it is no longer part of Storage. Retrieve the current value from its parent before mutating it.";
+const ORPHANED_NODE_WARNING =
+  "Cannot sync changes made to this Live structure because it is no longer part of Storage. Retrieve the current value from its parent before mutating it.";
 
 function orphan<T extends LiveStructure>(node: T): T {
   const pool = createManagedPool({ getCurrentConnectionId: () => 0 });
@@ -21,7 +22,11 @@ function orphan<T extends LiveStructure>(node: T): T {
 }
 
 describe("orphaned Live structures", () => {
-  test("a replaced LiveText can no longer be mutated", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  test("a replaced LiveText warns when mutated", () => {
     const pool = createManagedPool({ getCurrentConnectionId: () => 0 });
     const text = new LiveText();
     const root = new LiveObject({ text });
@@ -40,70 +45,71 @@ describe("orphaned Live structures", () => {
     );
 
     expect(root.get("text")).not.toBe(text);
-    expect(() => text.insert(0, "lost")).toThrow(ORPHANED_ERROR);
-    expect(text.toString()).toBe("");
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    text.insert(0, "lost");
+    expect(warn).toHaveBeenCalledOnce();
+    expect(warn).toHaveBeenCalledWith(ORPHANED_NODE_WARNING);
+    expect(text.toString()).toBe("lost");
   });
 
-  test("LiveText mutations throw", () => {
+  test("LiveText mutations warn once", () => {
     const text = orphan(new LiveText("abc"));
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-    expect(() => text.insert(1, "x")).toThrow(ORPHANED_ERROR);
-    expect(() => text.delete(1, 1)).toThrow(ORPHANED_ERROR);
-    expect(() => text.replace(1, 1, "x")).toThrow(ORPHANED_ERROR);
-    expect(() => text.format(1, 1, { bold: true })).toThrow(ORPHANED_ERROR);
-    expect(text.toString()).toBe("abc");
+    text.insert(1, "x");
+    text.delete(1, 1);
+    text.replace(1, 1, "x");
+    text.format(1, 1, { bold: true });
+
+    expect(warn).toHaveBeenCalledOnce();
+    expect(warn).toHaveBeenCalledWith(ORPHANED_NODE_WARNING);
+    expect(text.toString()).toBe("axc");
   });
 
-  test("LiveObject mutations throw", () => {
+  test("LiveObject mutations warn once", () => {
     const object = orphan(
       new LiveObject<{ local?: number; value: number }>({ value: 0 })
     );
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-    expect(() => object.set("value", 1)).toThrow(ORPHANED_ERROR);
-    expect(() => object.setLocal("local", 1)).toThrow(ORPHANED_ERROR);
-    expect(() => object.update({ value: 1 })).toThrow(ORPHANED_ERROR);
-    expect(() => object.delete("value")).toThrow(ORPHANED_ERROR);
-    expect(() => object.reconcile({ value: 1 })).toThrow(ORPHANED_ERROR);
-    expect(() => object.reconcilePartially({ value: 1 })).toThrow(
-      ORPHANED_ERROR
-    );
-    expect(object.toJSON()).toEqual({ value: 0 });
-  });
-
-  test("LiveMap mutations throw", () => {
-    const map = orphan(new LiveMap<string, number>([["value", 0]]));
-
-    expect(() => map.set("value", 1)).toThrow(ORPHANED_ERROR);
-    expect(() => map.delete("value")).toThrow(ORPHANED_ERROR);
-    expect(map.toJSON()).toEqual({ value: 0 });
-  });
-
-  test("LiveList mutations throw", () => {
-    const list = orphan(new LiveList([0, 1]));
-
-    expect(() => list.push(2)).toThrow(ORPHANED_ERROR);
-    expect(() => list.insert(2, 1)).toThrow(ORPHANED_ERROR);
-    expect(() => list.move(0, 1)).toThrow(ORPHANED_ERROR);
-    expect(() => list.delete(0)).toThrow(ORPHANED_ERROR);
-    expect(() => list.clear()).toThrow(ORPHANED_ERROR);
-    expect(() => list.set(0, 2)).toThrow(ORPHANED_ERROR);
-    expect(list.toJSON()).toEqual([0, 1]);
-  });
-
-  test("new unattached Live structures remain mutable", () => {
-    const text = new LiveText("a");
-    const object = new LiveObject({ value: 0 });
-    const map = new LiveMap<string, number>([["value", 0]]);
-    const list = new LiveList<number>([0]);
-
-    text.insert(1, "b");
     object.set("value", 1);
-    map.set("value", 1);
-    list.push(1);
+    object.setLocal("local", 1);
+    object.update({ value: 1 });
+    object.delete("value");
+    object.reconcile({ value: 1 });
+    object.reconcilePartially({ value: 1 });
 
-    expect(text.toString()).toBe("ab");
+    expect(warn).toHaveBeenCalledOnce();
+    expect(warn).toHaveBeenCalledWith(ORPHANED_NODE_WARNING);
     expect(object.toJSON()).toEqual({ value: 1 });
-    expect(map.toJSON()).toEqual({ value: 1 });
-    expect(list.toJSON()).toEqual([0, 1]);
+  });
+
+  test("LiveMap mutations warn once", () => {
+    const map = orphan(new LiveMap<string, number>([["value", 0]]));
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    map.set("value", 1);
+    map.delete("value");
+
+    expect(warn).toHaveBeenCalledOnce();
+    expect(warn).toHaveBeenCalledWith(ORPHANED_NODE_WARNING);
+    expect(map.toJSON()).toEqual({});
+  });
+
+  test("LiveList mutations warn once", () => {
+    const list = orphan(new LiveList([0, 1]));
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    list.push(2);
+    list.insert(2, 1);
+    list.move(0, 1);
+    list.delete(0);
+    list.clear();
+    list.push(1);
+    list.set(0, 2);
+
+    expect(warn).toHaveBeenCalledOnce();
+    expect(warn).toHaveBeenCalledWith(ORPHANED_NODE_WARNING);
+    expect(list.toJSON()).toEqual([2]);
   });
 });
