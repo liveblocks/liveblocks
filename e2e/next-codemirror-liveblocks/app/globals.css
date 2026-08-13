@@ -1,0 +1,98 @@
+@import "tailwindcss";
+
+.lb-remote-selection {
+  position: absolute;
+  background-color: color-mix(in srgb, var(--lb-remote-color) 25%, transparent);
+  border-radius: 1px;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+.lb-remote-caret {
+  position: absolute;
+  width: 0;
+  border-left: 2px solid var(--lb-remote-color);
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+.lb-cm-toolbar {
+  position: absolute;
+  z-index: 10;
+  top: 0.75rem;
+  right: 0.75rem;
+}
+
+.lb-cm-toolbar button {
+  border: 1px solid rgb(209 213 219);
+  border-radius: 0.375rem;
+  background: white;
+  padding: 0.375rem 0.625rem;
+  font: inherit;
+  font-size: 0.875rem;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 8%);
+}
+
+.lb-cm-thread-mark {
+  border-bottom: 2px solid rgb(234 179 8);
+  background-color: rgb(250 204 21 / 32%);
+  cursor: pointer;
+}
+
+.lb-cm-thread-mark-active {
+  background-color: rgb(250 204 21 / 48%);
+}
+
+.lb-cm-thread-mark-orphan {
+  border-bottom-color: rgb(156 163 175);
+  background-color: rgb(156 163 175 / 18%);
+}
+
+.lb-cm-pending-comment {
+  background-color: rgb(59 130 246 / 18%);
+  outline: 1px solid rgb(59 130 246 / 45%);
+}
+
+.lb-cm-floating-composer {
+  position: fixed;
+  z-index: 50;
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+  filter: drop-shadow(0 20px 24px rgb(0 0 0 / 12%));
+}
+
+.lb-cm-comments-sidebar {
+  min-height: 0;
+  overflow: auto;
+  border-left: 1px solid rgb(229 231 235);
+  background: rgb(249 250 251);
+  padding: 1rem;
+}
+
+.lb-cm-comments-sidebar h2 {
+  margin: 0 0 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.lb-cm-comments-empty {
+  margin: 0;
+  color: rgb(107 114 128);
+  font-size: 0.875rem;
+}
+
+.lb-cm-thread-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.lb-cm-thread-button {
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  text-align: left;
+}
+
+.lb-cm-thread-button[data-active] {
+  border-color: rgb(250 204 21);
+  box-shadow: 0 0 0 2px rgb(250 204 21 / 20%);
+}

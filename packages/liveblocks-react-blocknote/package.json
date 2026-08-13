@@ -39,6 +39,7 @@
     "lint": "eslint src/; stylelint src/styles/",
     "lint:package": "publint --strict && attw --pack",
     "start": "pnpm run dev",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:ci": "vitest run --coverage",
     "test:watch": "vitest"

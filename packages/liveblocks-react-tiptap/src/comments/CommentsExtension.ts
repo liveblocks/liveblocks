@@ -13,6 +13,7 @@ import type { EditorView } from "@tiptap/pm/view";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import { ySyncPluginKey } from "y-prosemirror";
 
+import { LIVEBLOCKS_COLLABORATION_PLUGIN_KEY } from "../collaboration-liveblocks/plugin";
 import type { CommentsExtensionStorage, ThreadPluginState } from "../types";
 import {
   LIVEBLOCKS_COMMENT_MARK_TYPE,
@@ -362,9 +363,15 @@ export const CommentsExtension = Extension.create<
     this: { storage: CommentsExtensionStorage; editor: Editor },
     { transaction }: { transaction: Transaction }
   ) {
+    const yjsMeta: unknown = transaction.getMeta(ySyncPluginKey);
+    const liveblocksMeta: unknown = transaction.getMeta(
+      LIVEBLOCKS_COLLABORATION_PLUGIN_KEY
+    );
+    const isRemoteCollaborationUpdate = yjsMeta || liveblocksMeta;
+
     // Close any pending composer when the user moves the selection locally
-    // (but ignore remote Yjs-driven selection changes).
-    if (this.storage.pendingComment && !transaction.getMeta(ySyncPluginKey)) {
+    // (but ignore remote collaboration-driven selection changes).
+    if (this.storage.pendingComment && !isRemoteCollaborationUpdate) {
       this.storage.pendingComment = false;
     }
 

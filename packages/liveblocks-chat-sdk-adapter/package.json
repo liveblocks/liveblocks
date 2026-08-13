@@ -30,6 +30,7 @@
     "format": "(eslint --fix src/ || true) && prettier --write src/",
     "lint": "eslint src/",
     "lint:package": "publint --strict && attw --pack",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:ci": "vitest run --coverage",
     "test:watch": "vitest"

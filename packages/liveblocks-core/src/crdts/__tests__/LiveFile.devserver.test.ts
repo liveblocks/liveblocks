@@ -9,7 +9,6 @@ import { describe, expect, test, vi } from "vitest";
 import { enterAndConnect, enterConnectAndGetStorage, initRoom } from "../../__tests__/_devserver"; // prettier-ignore
 import { createStorageFileId } from "../../lib/createIds";
 import { LiveFile } from "../LiveFile";
-import type { LiveObject } from "../LiveObject";
 
 const CONTENTS = "hello world";
 
@@ -17,6 +16,10 @@ const DEV_SERVER = `http://localhost:${process.env.LIVEBLOCKS_DEV_SERVER_PORT ??
 
 type ServerStorage = {
   data: Record<string, { data: { size: number } } | undefined>;
+};
+
+type Storage = {
+  file?: LiveFile;
 };
 
 /**
@@ -50,10 +53,10 @@ describe("LiveFile", () => {
 
   test("an uploaded file can be referenced from Storage and read back", async () => {
     const roomId = await initRoom({ liveblocksType: "LiveObject", data: {} });
-    const { room, storage } = await enterConnectAndGetStorage(roomId);
+    const { room, storage } = await enterConnectAndGetStorage<Storage>(roomId);
 
     const liveFile = await room.uploadFile(makeFile());
-    (storage.root as LiveObject<Record<string, unknown>>).set("file", liveFile);
+    storage.root.set("file", liveFile);
 
     await vi.waitFor(() =>
       expect(storage.root.toJSON()).toEqual({
@@ -69,10 +72,10 @@ describe("LiveFile", () => {
 
   test("getFileUrl returns a URL the bytes can actually be fetched from", async () => {
     const roomId = await initRoom({ liveblocksType: "LiveObject", data: {} });
-    const { room, storage } = await enterConnectAndGetStorage(roomId);
+    const { room, storage } = await enterConnectAndGetStorage<Storage>(roomId);
 
     const liveFile = await room.uploadFile(makeFile());
-    (storage.root as LiveObject<Record<string, unknown>>).set("file", liveFile);
+    storage.root.set("file", liveFile);
     await vi.waitFor(() =>
       expect(storage.root.toJSON()).toHaveProperty("file")
     );
@@ -87,13 +90,13 @@ describe("LiveFile", () => {
 
   test("the server's size wins over whatever the client claims", async () => {
     const roomId = await initRoom({ liveblocksType: "LiveObject", data: {} });
-    const { room, storage } = await enterConnectAndGetStorage(roomId);
+    const { room, storage } = await enterConnectAndGetStorage<Storage>(roomId);
 
     const uploaded = await room.uploadFile(makeFile());
 
     // Same file id, but lying about its size
     const liar = new LiveFile({ ...uploaded.data, size: 1 });
-    (storage.root as LiveObject<Record<string, unknown>>).set("file", liar);
+    storage.root.set("file", liar);
 
     // The claim is corrected where it counts. Note this asserts the *server's*
     // view: the lying client keeps its own optimistic value locally, since the

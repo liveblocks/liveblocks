@@ -5,14 +5,19 @@ import { injectBrandBadge } from "./brand";
 import type { InternalSyncStatus } from "./client";
 import type { Delegates, LostConnectionEvent, Status } from "./connection";
 import { ManagedSocket, StopRetrying } from "./connection";
-import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt";
-import { createManagedPool, OpSource } from "./crdts/AbstractCrdt";
+import type {
+  ApplyResult,
+  DispatchOptions,
+  ManagedPool,
+} from "./crdts/AbstractCrdt";
+import { createManagedPool } from "./crdts/AbstractCrdt";
 import {
   cloneLson,
   diffNodeMap,
   dumpPool,
   isLiveList,
   isLiveNode,
+  isLiveText,
   isSameNodeOrChildOf,
   liveObjectFromNodeStream,
   mergeStorageUpdates,
@@ -21,7 +26,20 @@ import type { LiveFile, LiveFileReference } from "./crdts/LiveFile";
 import { getLiveFileId } from "./crdts/LiveFile";
 import { LiveObject } from "./crdts/LiveObject";
 import type { LiveStructure, LsonObject } from "./crdts/Lson";
-import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
+import type {
+  OpSource,
+  StorageCallback,
+  StorageUpdate,
+  UpdateSource,
+  Via,
+} from "./crdts/StorageUpdates";
+import {
+  LOCAL_EDIT,
+  LOCAL_REDO,
+  LOCAL_UNDO,
+  REMOTE,
+  toUpdateSource,
+} from "./crdts/StorageUpdates";
 import { UnacknowledgedOps } from "./crdts/UnacknowledgedOps";
 import type {
   DCM,
@@ -102,7 +120,7 @@ import type {
 } from "./protocol/InboxNotifications";
 import type { MentionData } from "./protocol/MentionData";
 import type { ClientWireOp, Op, ServerWireOp } from "./protocol/Op";
-import { isIgnoredOp, OpCode } from "./protocol/Op";
+import { isCreateOp, isIgnoredOp, OpCode } from "./protocol/Op";
 import type { RoomSubscriptionSettings } from "./protocol/RoomSubscriptionSettings";
 import type {
   CommentsEventServerMsg,
@@ -128,7 +146,7 @@ import type {
   SerializedCrdt,
   SerializedRootObject,
 } from "./protocol/StorageNode";
-import { compactNodesToNodeStream } from "./protocol/StorageNode";
+import { compactNodesToNodeStream, CrdtType } from "./protocol/StorageNode";
 import type {
   SubscriptionData,
   SubscriptionDeleteInfo,
@@ -343,6 +361,14 @@ export type HistoryEvent = {
   canUndo: boolean;
   canRedo: boolean;
 };
+
+/** @internal */
+export type PrivateHistoryEvent =
+  | { action: "push"; id: number }
+  | { action: "undo"; id: number }
+  | { action: "redo"; id: number }
+  | { action: "clear" }
+  | { action: "discard"; ids: number[] };
 
 export type RoomEventName = Extract<
   keyof RoomEventCallbackMap<never, never, never>,
@@ -1263,7 +1289,14 @@ export interface SyncSource {
 export type PrivateRoomApi = {
   // For introspection in unit tests only
   presenceBuffer: Json | undefined;
-  undoStack: readonly (readonly Readonly<Stackframe<JsonObject>>[])[];
+  undoStack: readonly {
+    readonly id: number;
+    readonly frames: readonly Readonly<Stackframe<JsonObject>>[];
+  }[];
+  redoStack: readonly {
+    readonly id: number;
+    readonly frames: readonly Readonly<Stackframe<JsonObject>>[];
+  }[];
   nodeCount: number;
 
   // Get/set the associated Yjs provider on this room
@@ -1322,6 +1355,13 @@ export type PrivateRoomApi = {
 
   attachmentUrlsStore: BatchStore<string, string>;
   fileUrlsStore: BatchStore<FileUrlData, string>;
+  readonly history: Observable<
+    | { action: "push"; id: number }
+    | { action: "undo"; id: number }
+    | { action: "redo"; id: number }
+    | { action: "clear" }
+    | { action: "discard"; ids: number[] }
+  >;
 };
 
 function connectionAccessFromScopes(scopes: string[]): {
@@ -1346,6 +1386,11 @@ type Stackframe<P extends JsonObject> = Op | PresenceStackframe<P>;
 type PresenceStackframe<P extends JsonObject> = {
   readonly type: "presence";
   readonly data: P;
+};
+
+type HistoryStackItem<P extends JsonObject> = {
+  id: number;
+  frames: Stackframe<P>[];
 };
 
 type IdFactory = () => string;
@@ -1409,8 +1454,8 @@ type RoomState<
   pool: ManagedPool;
   root: LiveObject<S> | undefined;
 
-  undoStack: Stackframe<P>[][];
-  redoStack: Stackframe<P>[][];
+  undoStack: HistoryStackItem<P>[];
+  redoStack: HistoryStackItem<P>[];
 
   /**
    * When history is paused, all operations will get queued up here. When
@@ -1435,6 +1480,10 @@ type RoomState<
     // history must wait until after the batch’s `reverseOps` are merged
     // otherwise those ops become a second undo step.
     scheduleHistoryResume: boolean;
+
+    // LiveText can dispatch with empty `ops` while UPDATE_TEXT is in-flight
+    // (queued edits) but still request redo clearing via DispatchOptions.
+    clearRedoStack?: boolean;
   } | null;
 
   // A registry of yet-unacknowledged Ops. These Ops have already been
@@ -1699,6 +1748,10 @@ export function createRoom<
     unacknowledgedOps,
   };
 
+  let nextHistoryItemId = 0;
+  // Depth counter for nested history.disable() calls, 0 means history is not disabled
+  let historyDisabled = 0;
+
   // Accumulates nodes as initial storage arrives in chunks via
   // STORAGE_CHUNK messages. Once the final chunk arrives (with
   // done: true), the complete map is passed to processInitialStorage().
@@ -1826,7 +1879,8 @@ export function createRoom<
   function onDispatch(
     ops: ClientWireOp[],
     reverse: Op[],
-    storageUpdates: Map<string, StorageUpdate>
+    storageUpdates: Map<string, StorageUpdate>,
+    options?: DispatchOptions
   ): void {
     if (context.activeBatch) {
       for (const op of ops) {
@@ -1842,12 +1896,20 @@ export function createRoom<
         );
       }
       context.activeBatch.reverseOps.pushLeft(reverse);
+      // LiveText may dispatch with empty `ops` while an UPDATE_TEXT is
+      // in-flight (queued edits), but still pass `clearRedoStack: true`.
+      // Honor that here — the batch finally-block only sees ops.length.
+      if (options?.clearRedoStack) {
+        context.activeBatch.clearRedoStack = true;
+      }
     } else {
       if (reverse.length > 0) {
         addToUndoStack(reverse);
       }
+      if (options?.clearRedoStack ?? ops.length > 0) {
+        clearRedoStack();
+      }
       if (ops.length > 0) {
-        context.redoStack.length = 0;
         dispatchOps(ops);
       }
       notify({ storageUpdates });
@@ -1873,6 +1935,7 @@ export function createRoom<
     others: makeEventSource<OthersEvent<P, U>>(),
     storageBatch: makeEventSource<StorageUpdate[]>(),
     history: makeEventSource<HistoryEvent>(),
+    privateHistory: makeEventSource<PrivateHistoryEvent>(),
     storageDidLoad: makeEventSource<void>(),
     storageStatus: makeEventSource<StorageStatus>(),
     ydoc: makeEventSource<YDocUpdateServerMsg | UpdateYDocClientMsg>(),
@@ -1989,12 +2052,15 @@ export function createRoom<
   // Serializes the current live Storage into a NodeMap and diffs it against
   // `target`, returning the ops that make the live tree match `target`. Shared
   // by storage load (applied remotely) and restore (applied locally).
-  function diffCurrentStorageAgainst(target: NodeMap): Op[] {
+  function diffCurrentStorageAgainst(
+    target: NodeMap,
+    options?: { includeLiveTextUpdates?: boolean }
+  ): Op[] {
     const current: NodeMap = new Map();
     for (const [id, crdt] of context.pool.nodes) {
       current.set(id, crdt._serialize());
     }
-    return diffNodeMap(current, target);
+    return diffNodeMap(current, target, options);
   }
 
   function createOrUpdateRootFromMessage(nodes: NodeMap) {
@@ -2004,6 +2070,32 @@ export function createRoom<
 
     if (context.root !== undefined) {
       const result = applyRemoteOps(diffCurrentStorageAgainst(nodes));
+
+      // LiveText nodes are not covered by the op diff above (their op path
+      // carries pending-op transformation semantics that don't apply to
+      // authoritative snapshots). Reconcile them against the snapshot
+      // directly; locally pending text ops are preserved on top and re-sent
+      // by the offline-ops replay.
+      for (const [id, crdt] of nodes) {
+        if (crdt.type === CrdtType.TEXT) {
+          const node = context.pool.nodes.get(id);
+          if (node !== undefined && isLiveText(node)) {
+            // An authoritative snapshot from the server, so whatever it
+            // changes locally is a remote change as far as subscribers go.
+            const update = node._resyncText(crdt.data, crdt.version, REMOTE);
+            if (update !== undefined) {
+              result.updates.storageUpdates.set(
+                id,
+                mergeStorageUpdates(
+                  result.updates.storageUpdates.get(id),
+                  update
+                )
+              );
+            }
+          }
+        }
+      }
+
       notify(result.updates);
     } else {
       context.root = LiveObject._fromItems<S>(
@@ -2032,6 +2124,18 @@ export function createRoom<
     });
   }
 
+  function notifyPrivateHistory(event: PrivateHistoryEvent) {
+    if (historyDisabled > 0) return;
+    eventHub.privateHistory.notify(event);
+  }
+
+  function clearRedoStack() {
+    if (context.redoStack.length === 0) return;
+    const ids = context.redoStack.map((item) => item.id);
+    context.redoStack.length = 0;
+    notifyPrivateHistory({ action: "discard", ids });
+  }
+
   /**
    * Reconciles the live Storage so it matches the given target nodes (e.g. a
    * historic version snapshot): diffs them against the current state and applies
@@ -2048,7 +2152,8 @@ export function createRoom<
     }
 
     const ops = diffCurrentStorageAgainst(
-      new Map<string, SerializedCrdt>(nodes)
+      new Map<string, SerializedCrdt>(nodes),
+      { includeLiveTextUpdates: true }
     );
     if (ops.length === 0) {
       return; // Already identical -- nothing to do.
@@ -2072,10 +2177,15 @@ export function createRoom<
   function _addToRealUndoStack(frames: Stackframe<P>[]) {
     // If undo stack is too large, we remove the older item
     if (context.undoStack.length >= 50) {
-      context.undoStack.shift();
+      const evicted = context.undoStack.shift();
+      if (evicted !== undefined) {
+        notifyPrivateHistory({ action: "discard", ids: [evicted.id] });
+      }
     }
 
-    context.undoStack.push(frames);
+    const id = nextHistoryItemId++;
+    context.undoStack.push({ id, frames });
+    notifyPrivateHistory({ action: "push", id });
     onHistoryChange();
   }
 
@@ -2110,7 +2220,12 @@ export function createRoom<
     }
 
     if (storageUpdates !== undefined && storageUpdates.size > 0) {
-      const updates = Array.from(storageUpdates.values());
+      // This is the only place Storage updates reach subscribers, so it's
+      // where the internal `optimistic` flag gets dropped. See OpSource.
+      const updates = Array.from(storageUpdates.values(), (update) => ({
+        ...update,
+        source: toUpdateSource(update.source),
+      }));
       eventHub.storageBatch.notify(updates);
     }
     notifyStorageStatus();
@@ -2127,7 +2242,26 @@ export function createRoom<
     );
   }
 
-  function applyLocalOps(frames: readonly Stackframe<P>[]): {
+  /**
+   * How each still-unacknowledged op was made, for the ops where that isn't a
+   * plain edit. Lets an ack be reported with the same `via` as the change it
+   * confirms, instead of every ack looking like a fresh edit.
+   */
+  const viaByOpId = new Map<string, Via>();
+
+  function viaOfAckedOp(opId: string): Via {
+    const via = viaByOpId.get(opId);
+    if (via === undefined) {
+      return "edit";
+    }
+    viaByOpId.delete(opId);
+    return via;
+  }
+
+  function applyLocalOps(
+    frames: readonly Stackframe<P>[],
+    localSource: Extract<UpdateSource, { origin: "local" }> = LOCAL_EDIT
+  ): {
     opsToEmit: ClientWireOp[]; // Ops to send over the wire afterwards
     reverse: Stackframe<P>[]; // Reverse ops to add to the undo stack aftwards
     // Updates to notify about afterwards
@@ -2141,17 +2275,89 @@ export function createRoom<
       (f): f is PresenceStackframe<P> => f.type === "presence"
     );
 
+    // Restoring a detached LiveText starts a new server-side text timeline.
+    // Reusing the old ID could let operations from the deleted timeline apply
+    // to this new lifetime without being rebased. Ops replayed after reconnect
+    // already have opIds and must keep their original IDs.
+    const restoredTextIds = new Map<string, string>();
+    for (const op of ops) {
+      if (
+        op.type === OpCode.CREATE_TEXT &&
+        op.opId === undefined &&
+        context.pool.nodes.get(op.id) === undefined &&
+        !restoredTextIds.has(op.id)
+      ) {
+        restoredTextIds.set(op.id, context.pool.generateId());
+      }
+    }
+
+    const remappedOps =
+      restoredTextIds.size === 0
+        ? ops
+        : ops.map((op): Op => {
+            if (op.opId !== undefined) {
+              return op;
+            }
+
+            const id = restoredTextIds.get(op.id);
+
+            if (isCreateOp(op)) {
+              const parentId = restoredTextIds.get(op.parentId);
+              const deletedId =
+                op.deletedId === undefined
+                  ? undefined
+                  : restoredTextIds.get(op.deletedId);
+
+              if (
+                id === undefined &&
+                parentId === undefined &&
+                deletedId === undefined
+              ) {
+                return op;
+              }
+
+              if (op.type === OpCode.CREATE_TEXT && id !== undefined) {
+                return {
+                  ...op,
+                  id,
+                  version: 0,
+                  ...(parentId === undefined ? {} : { parentId }),
+                  ...(deletedId === undefined ? {} : { deletedId }),
+                };
+              }
+
+              return {
+                ...op,
+                ...(id === undefined ? {} : { id }),
+                ...(parentId === undefined ? {} : { parentId }),
+                ...(deletedId === undefined ? {} : { deletedId }),
+              };
+            }
+
+            return id === undefined ? op : { ...op, id };
+          });
+
     // Ensure all local ops have opIds assigned before applying them
-    const opsWithOpIds = ops.map((op: Op) =>
+    const opsWithOpIds = remappedOps.map((op: Op) =>
       op.opId === undefined
         ? { ...op, opId: context.pool.generateOpId() }
         : (op as ClientWireOp)
     );
 
+    // Remember how these ops came about, so that when the server acks them we
+    // can report the ack the same way. Only history replays are recorded; a
+    // plain edit is what an unrecorded opId means (see viaOfAckedOp).
+    if (localSource.via !== "edit") {
+      for (const op of opsWithOpIds) {
+        viaByOpId.set(op.opId, localSource.via);
+      }
+    }
+
     const { reverse, updates } = applyOps(
       pframes,
       opsWithOpIds,
-      /* isLocal */ true
+      /* isLocal */ true,
+      localSource
     );
     return { opsToEmit: opsWithOpIds, reverse, updates };
   }
@@ -2169,7 +2375,8 @@ export function createRoom<
   function applyOps(
     pframes: readonly PresenceStackframe<P>[],
     ops: readonly Op[],
-    isLocal: boolean
+    isLocal: boolean,
+    localSource: Extract<UpdateSource, { origin: "local" }> = LOCAL_EDIT
   ): {
     reverse: Stackframe<P>[];
     updates: {
@@ -2214,14 +2421,20 @@ export function createRoom<
       let source: OpSource;
 
       if (isLocal) {
-        source = OpSource.LOCAL;
+        source = { ...localSource, optimistic: true };
       } else if (op.opId !== undefined) {
         context.unacknowledgedOps.delete(op.opId);
-        source = OpSource.OURS;
+        // The server echoing back our own op. It describes a change this
+        // client made, now confirmed, so it keeps the `via` it was made with.
+        source = {
+          origin: "local",
+          via: viaOfAckedOp(op.opId),
+          optimistic: false,
+        };
       } else {
         // Remotely generated Ops (and fix Ops as a special case of that)
         // don't have opId anymore.
-        source = OpSource.THEIRS;
+        source = REMOTE;
       }
 
       const applyOpResult = applyOp(op, source);
@@ -2246,6 +2459,7 @@ export function createRoom<
           op.type === OpCode.CREATE_LIST ||
           op.type === OpCode.CREATE_MAP ||
           op.type === OpCode.CREATE_OBJECT ||
+          op.type === OpCode.CREATE_TEXT ||
           op.type === OpCode.CREATE_FILE
         ) {
           createdNodeIds.add(op.id);
@@ -2271,13 +2485,14 @@ export function createRoom<
     switch (op.type) {
       case OpCode.DELETE_OBJECT_KEY:
       case OpCode.UPDATE_OBJECT:
+      case OpCode.UPDATE_TEXT:
       case OpCode.DELETE_CRDT: {
         const node = context.pool.nodes.get(op.id);
         if (node === undefined) {
           return { modified: false };
         }
 
-        return node._apply(op, source === OpSource.LOCAL);
+        return node._apply(op, source);
       }
 
       case OpCode.SET_PARENT_KEY: {
@@ -2298,6 +2513,7 @@ export function createRoom<
       case OpCode.CREATE_OBJECT:
       case OpCode.CREATE_LIST:
       case OpCode.CREATE_MAP:
+      case OpCode.CREATE_TEXT:
       case OpCode.CREATE_FILE:
       case OpCode.CREATE_REGISTER: {
         if (op.parentId === undefined) {
@@ -2635,17 +2851,45 @@ export function createRoom<
           break;
         }
 
-        // Receiving a RejectedOps message in the client means that the server is no
-        // longer in sync with the client. Trying to synchronize the client again by
-        // rolling back particular Ops may be hard/impossible. It's fine to not try and
-        // accept the out-of-sync reality and throw an error.
+        // Receiving a RejectedOps message means the server refused some of
+        // our ops, so our optimistic local state is out of sync with the
+        // server. For LiveText ops this is a normal (if rare) situation —
+        // e.g. a client that was offline long enough to fall outside the
+        // server's retained history window — and we can recover: drop the
+        // rejected pending state and re-fetch the authoritative storage
+        // snapshot. For other ops (e.g. permission rejections), rolling back
+        // particular Ops is hard/impossible, so we keep the old behavior of
+        // accepting the out-of-sync reality and surfacing an error.
         case ServerMsgCode.REJECT_STORAGE_OP: {
           console.errorWithTitle(
             "Storage mutation rejection error",
             message.reason
           );
 
-          if (process.env.NODE_ENV !== "production") {
+          let needsStorageResync = false;
+          for (const opId of message.opIds) {
+            const rejectedOp = context.unacknowledgedOps.get(opId);
+            context.unacknowledgedOps.delete(opId);
+            context.buffer.storageOperations =
+              context.buffer.storageOperations.filter((op) => op.opId !== opId);
+            viaByOpId.delete(opId);
+
+            if (
+              rejectedOp !== undefined &&
+              rejectedOp.type === OpCode.UPDATE_TEXT
+            ) {
+              const node = context.pool.nodes.get(rejectedOp.id);
+              if (node !== undefined && isLiveText(node)) {
+                node._rejectPendingOp(opId);
+                needsStorageResync = true;
+              }
+            }
+          }
+
+          if (needsStorageResync) {
+            refreshStorage();
+            flushNowOrSoon();
+          } else if (process.env.NODE_ENV !== "production") {
             throw new Error(
               `Storage mutations rejected by server: ${message.reason}`
             );
@@ -3396,16 +3640,17 @@ export function createRoom<
     if (context.activeBatch) {
       throw new Error("undo is not allowed during a batch");
     }
-    const frames = context.undoStack.pop();
-    if (frames === undefined) {
+    const item = context.undoStack.pop();
+    if (item === undefined) {
       return;
     }
 
     context.pausedHistory = null;
-    const result = applyLocalOps(frames);
+    const result = applyLocalOps(item.frames, LOCAL_UNDO);
 
+    context.redoStack.push({ id: item.id, frames: result.reverse });
+    notifyPrivateHistory({ action: "undo", id: item.id });
     notify(result.updates);
-    context.redoStack.push(result.reverse);
     onHistoryChange();
 
     for (const op of result.opsToEmit) {
@@ -3419,16 +3664,17 @@ export function createRoom<
       throw new Error("redo is not allowed during a batch");
     }
 
-    const frames = context.redoStack.pop();
-    if (frames === undefined) {
+    const item = context.redoStack.pop();
+    if (item === undefined) {
       return;
     }
 
     context.pausedHistory = null;
-    const result = applyLocalOps(frames);
+    const result = applyLocalOps(item.frames, LOCAL_REDO);
 
+    context.undoStack.push({ id: item.id, frames: result.reverse });
+    notifyPrivateHistory({ action: "redo", id: item.id });
     notify(result.updates);
-    context.undoStack.push(result.reverse);
     onHistoryChange();
 
     for (const op of result.opsToEmit) {
@@ -3440,6 +3686,8 @@ export function createRoom<
   function clear() {
     context.undoStack.length = 0;
     context.redoStack.length = 0;
+    notifyPrivateHistory({ action: "clear" });
+    onHistoryChange();
   }
 
   function batch<T>(callback: () => T): T {
@@ -3478,10 +3726,11 @@ export function createRoom<
         commitPausedHistoryToUndoStack();
       }
 
-      if (currentBatch.ops.length > 0) {
-        // Only clear the redo stack if something has changed during a batch
-        // Clear the redo stack because batch is always called from a local operation
-        context.redoStack.length = 0;
+      if (currentBatch.ops.length > 0 || currentBatch.clearRedoStack) {
+        // Clear redo when the batch mutated storage, or when a nested
+        // dispatch explicitly requested it (e.g. LiveText queued edits
+        // with empty `ops` but `clearRedoStack: true`).
+        clearRedoStack();
       }
 
       if (currentBatch.ops.length > 0) {
@@ -3517,14 +3766,11 @@ export function createRoom<
     commitPausedHistoryToUndoStack();
   }
 
-  // Depth counter for nested history.disable() calls, 0 means history is not disabled
-  let historyDisabled = 0;
-
   function disableHistory<T>(fn: () => T): T {
     const origUndo = context.undoStack;
     const origRedo = context.redoStack;
-    const tempUndo: Stackframe<P>[][] = [];
-    const tempRedo: Stackframe<P>[][] = [];
+    const tempUndo: HistoryStackItem<P>[] = [];
+    const tempRedo: HistoryStackItem<P>[] = [];
     context.undoStack = tempUndo;
     context.redoStack = tempRedo;
     historyDisabled++;
@@ -3890,8 +4136,25 @@ export function createRoom<
     {
       [kInternal]: {
         get presenceBuffer() { return deepClone(context.buffer.presenceUpdates?.data ?? null) }, // prettier-ignore
-        get undoStack() { return deepClone(context.undoStack) }, // prettier-ignore
+        get undoStack() {
+          return structuredClone(
+            context.undoStack.map((item) => ({
+              id: item.id,
+              frames: item.frames,
+            }))
+          );
+        }, // prettier-ignore
+        get redoStack() {
+          return structuredClone(
+            context.redoStack.map((item) => ({
+              id: item.id,
+              frames: item.frames,
+            }))
+          );
+        }, // prettier-ignore
         get nodeCount() { return context.pool.nodes.size }, // prettier-ignore
+
+        history: eventHub.privateHistory.observable,
 
         getYjsProvider() {
           return context.yjsProvider;

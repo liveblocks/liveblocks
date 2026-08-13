@@ -1,5 +1,13 @@
 ## vNEXT (not yet released)
 
+### `@liveblocks/client`
+
+- Storage updates delivered to deep subscribers now carry a `source` field,
+  saying whether the change was made by this client
+  (`{ origin: "local", via: "edit" | "undo" | "redo" }`) or by another one
+  (`{ origin: "remote" }`), see
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-client#update-source).
+
 ## v3.23.1
 
 ### `@liveblocks/react-ui`

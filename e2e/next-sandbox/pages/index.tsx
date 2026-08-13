@@ -43,6 +43,11 @@ export default function Home() {
             <li>
               <Link href="/storage/stress/e2e-stress-test">Stress Test</Link>
             </li>
+            <li>
+              <Link href="/storage/text?room=e2e-storage-text">
+                LiveText
+              </Link>
+            </li>
           </ul>
         </li>
 

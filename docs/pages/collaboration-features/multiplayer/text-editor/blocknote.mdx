@@ -211,6 +211,31 @@ function TextEditor() {
 Learn more about
 [using multiple editors](/docs/api-reference/liveblocks-react-blocknote#Multiple-editors).
 
+### Liveblocks collaboration mode
+
+BlockNote uses Yjs-backed collaboration by default. You can opt into
+Liveblocks-backed storage instead by passing `collaborationMode:
+"liveblocks"`.
+
+```tsx
+import { useCreateBlockNoteWithLiveblocks } from "@liveblocks/react-blocknote";
+
+function TextEditor() {
+  const editor = useCreateBlockNoteWithLiveblocks(
+    {},
+    {
+      collaborationMode: "liveblocks",
+      field: "document",
+    }
+  );
+
+  // ...
+}
+```
+
+In this mode, documents are stored in `root._tiptap_docs`, keyed by `field`.
+`offlineSupport_experimental` stays Yjs-only.
+
 ### Offline support
 
 Liveblocks BlockNote has an experimental option that enables offline support.
