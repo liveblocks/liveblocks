@@ -50,7 +50,7 @@ conversation.
 Choose the features you need. Each guide uses Next.js and can be combined with
 the others.
 
-<ListGrid columns={2} defaultVisibleItems={4}>
+<ListGrid columns={2} defaultVisibleItems={2}>
   <DocsCard
     type="technology"
     title="Get started with Comments"
@@ -60,16 +60,16 @@ the others.
   />
   <DocsCard
     type="technology"
-    title="Get started with in-app notifications"
+    title="Add a notification tray"
     href="/docs/get-started/nextjs-notifications-in-app"
-    description="Show an unread notification inbox"
+    description="Show an unread comment notification inbox"
     visual={<DocsNextjsIcon />}
   />
   <DocsCard
     type="technology"
-    title="Get started with email notifications"
-    href="/docs/get-started/nextjs-notifications-email"
-    description="Email users about unread comments"
+    title="Add comments to a canvas"
+    href="/docs/get-started/nextjs-comments-canvas"
+    description="Add draggable comment threads"
     visual={<DocsNextjsIcon />}
   />
   <DocsCard
@@ -81,9 +81,9 @@ the others.
   />
   <DocsCard
     type="technology"
-    title="Get started with comments on a canvas"
-    href="/docs/get-started/nextjs-comments-canvas"
-    description="Add draggable comment threads"
+    title="Send unread comment emails"
+    href="/docs/get-started/nextjs-notifications-email"
+    description="Email users about unread comments"
     visual={<DocsNextjsIcon />}
   />
 </ListGrid>
