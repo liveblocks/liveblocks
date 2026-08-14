@@ -8,6 +8,26 @@
   (`{ origin: "remote" }`), see
   [docs](https://liveblocks.io/docs/api-reference/liveblocks-client#update-source).
 
+## v3.24.0
+
+This release introduces `LiveText` (beta), a collaborative rich-text data
+structure for plain text with optional inline formatting.
+
+### `@liveblocks/client`
+
+- Add `LiveText` for collaborative text editing with concurrent inserts,
+  deletes, and formatting changes.
+
+### `@liveblocks/codemirror`, `@liveblocks/lexical`, and `@liveblocks/prosemirror`
+
+- Introduce packages for integrating CodeMirror, Lexical, and ProseMirror
+  editors with Liveblocks Storage and `LiveText`.
+
+### `@liveblocks/react-tiptap`
+
+- Fix `useIsEditorReady()` so it correctly reports when the Tiptap editor is
+  ready.
+
 ## v3.23.1
 
 ### `@liveblocks/react-ui`
