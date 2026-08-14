@@ -192,12 +192,21 @@ export const useLiveblocksExtension = (
   //   }
   // });
 
-  const isEditorReady = useIsEditorReady();
   const client = useClient();
   const store = getUmbrellaStoreForClient(client);
   const roomId = room.id;
   const yjsProvider = useYjsProvider();
   const isLiveblocksStorageMode = options.collaborationMode === "liveblocks";
+
+  // order matters here, this should happen before useIsEditorReady
+  let provider =
+    !isLiveblocksStorageMode &&
+    getYjsProviderForRoom(room, {
+      enablePermanentUserData: !!options.ai || options.enablePermanentUserData,
+      offlineSupport_experimental: options.offlineSupport_experimental,
+    });
+
+  const isEditorReady = useIsEditorReady();
   const isReadyForSideEffects = isLiveblocksStorageMode || isEditorReady;
 
   // If the user provided initialContent, wait for ready and then set it
@@ -409,11 +418,12 @@ export const useLiveblocksExtension = (
         };
       }
 
-      const provider = getYjsProviderForRoom(room, {
+      provider = getYjsProviderForRoom(room, {
         enablePermanentUserData:
           !!options.ai || options.enablePermanentUserData,
         offlineSupport_experimental: options.offlineSupport_experimental,
       });
+
       return {
         mode: "yjs",
         field: options.field,
