@@ -12,14 +12,14 @@ room: chat messages, agent output, activity logs, and workflow progress. Feed
 updates appear in realtime for connected clients and remain available when they
 reconnect.
 
-<Banner title="Get started with Feeds" type="info">
+<Banner title="Get started with feeds" type="info">
 
 Build a working Next.js app with the
-[Feeds get-started guide](/docs/get-started/nextjs-feeds).
+[feeds get-started guide](/docs/get-started/nextjs-feeds).
 
 </Banner>
 
-## What to build with Feeds [#what-to-build]
+## What to build with feeds [#what-to-build]
 
 - Human and AI chat interfaces
 - Agent output and intermediate progress
@@ -27,7 +27,7 @@ Build a working Next.js app with the
 - Multi-agent orchestration and background workflow status
 - Structured messages between servers and connected clients
 
-## What Feeds provides [#features]
+## What feeds provides [#features]
 
 - **Realtime updates**: New feeds and messages appear without polling.
 - **Persistent messages**: Clients can reconnect and load earlier messages.
@@ -41,7 +41,7 @@ Build a working Next.js app with the
 ## Build a chat interface [#chat-interfaces]
 
 A chat interface is one feed whose messages contain the information needed to
-render each turn. Your application defines the message schema and UI; Feeds
+render each turn. Your application defines the message schema and UI; feeds
 handles persistence, realtime updates, pagination, and client/server access.
 
 ```tsx title="Chat.tsx"
@@ -157,7 +157,7 @@ await liveblocks.createFeedMessage({
 ```
 
 Use deterministic feed and message IDs if a trigger can be delivered more than
-once. Use Feeds for durable output, [Presence](/docs/products/sync/presence) for
+once. Use feeds for durable output, [presence](/docs/products/sync/presence) for
 temporary activity such as “searching” or “editing”, and
 [Agentic editing](/docs/products/sync/agentic-editing) when the workflow edits
 the shared document itself.
@@ -177,7 +177,7 @@ for each user:
 | ------------- | ----------------------------------------------------- |
 | `feeds:read`  | Read feeds and feed messages                          |
 | `feeds:write` | Read and create, update, or delete feeds and messages |
-| `feeds:none`  | No access to Feeds                                    |
+| `feeds:none`  | No access to feeds                                    |
 
 Use `feeds:read` for viewers and `feeds:write` for users who can send messages
 or manage feeds. Server-side calls with a secret key are not limited by an end
@@ -186,7 +186,7 @@ behalf.
 
 ## Next steps [#next-steps]
 
-- Read the [Feeds React API](/docs/api-reference/liveblocks-react#Feeds).
+- Read the [feeds React API](/docs/api-reference/liveblocks-react#Feeds).
 - Use [Broadcast events](/docs/products/sync/broadcast-events) for ephemeral
   messages that do not need persistence.
-- Combine Feeds with [AI Collaboration](/docs/use-cases/ai-collaboration).
+- Combine feeds with [AI Collaboration](/docs/use-cases/ai-collaboration).

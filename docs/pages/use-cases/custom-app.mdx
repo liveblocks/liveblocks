@@ -4,12 +4,12 @@ meta:
   parentTitle: "Use cases"
   description:
     "Build a custom collaborative application by combining Liveblocks Sync,
-    Presence, Comments, Notifications, and Feeds."
+    presence, Comments, Notifications, and feeds."
 ---
 
 Build a custom app when no editor or framework integration matches your
-interface. Start with Sync for shared application state and Presence for live
-user activity, then add Comments, Notifications, or Feeds for the workflows your
+interface. Start with Sync for shared application state and presence for live
+user activity, then add Comments, Notifications, or feeds for the workflows your
 product needs.
 
 ## Get started [#get-started]
@@ -64,7 +64,7 @@ settling on the document shape.
 
 ## Add live user awareness [#presence]
 
-Use [Presence](/docs/products/sync/presence) for temporary state such as the
+Use [presence](/docs/products/sync/presence) for temporary state such as the
 selected item, active tool, cursor, or typing status. Publish changes with
 [`useUpdateMyPresence`](/docs/api-reference/liveblocks-react#useUpdateMyPresence)
 and render collaborators with
@@ -80,7 +80,7 @@ function selectItem(itemId: string) {
 ```
 
 Keep persisted application data in Storage and connection-specific UI state in
-Presence.
+presence.
 
 ## Add collaboration workflows [#workflows]
 
@@ -88,7 +88,7 @@ Presence.
   records, regions, or application objects.
 - Use [Notifications](/docs/products/notifications) for mentions, replies, and
   custom activity users should receive outside the open room.
-- Use [Feeds](/docs/products/sync/feeds) for durable chat, activity, and agent
+- Use [feeds](/docs/products/sync/feeds) for durable chat, activity, and agent
   progress.
 - Use [Broadcast events](/docs/products/sync/broadcast-events) for temporary
   signals or to tell clients to revalidate external data.
@@ -104,7 +104,7 @@ same document through [Agentic editing](/docs/products/sync/agentic-editing),
 while connected clients receive the changes in realtime.
 
 Create a [version](/docs/products/sync/version-history) before broad agent edits
-and use server-side Presence to show temporary agent activity.
+and use server-side presence to show temporary agent activity.
 
 ## Examples [#examples]
 

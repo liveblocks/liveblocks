@@ -93,9 +93,9 @@ Choose a starting point for your slideshow.
 This is an overview of how each feature can be implemented. Store permanent
 slide content, order, and layout in [Sync](/docs/products/sync/overview). Keep
 temporary cursors, selections, and presentation state in
-[Presence](/docs/products/sync/presence). Use
+[presence](/docs/products/sync/presence). Use
 [Comments](/docs/products/comments) for review discussions and
-[Feeds](/docs/products/sync/feeds) for durable AI workflow state.
+[feeds](/docs/products/sync/feeds) for durable AI workflow state.
 
 ### Realtime collaboration [#realtime-collaboration]
 
@@ -147,7 +147,7 @@ each part of the deck.
 
 ### Presence [#presence]
 
-Use [Presence](/docs/products/sync/presence) for information that only matters
+Use [presence](/docs/products/sync/presence) for information that only matters
 while someone is connected, such as their cursor, active slide, selected
 element, and editing mode. Publish local state with
 [`useUpdateMyPresence`](/docs/api-reference/liveblocks-react#useUpdateMyPresence)
@@ -197,7 +197,7 @@ editor toolbar to show everyone currently in the room.
 ### Presentation mode [#presentation-mode]
 
 Presentation mode is temporary, so store the presenter’s status and active slide
-in Presence instead of the saved deck. Viewers can find the presenter with
+in presence instead of the saved deck. Viewers can find the presenter with
 [`useOthers`](/docs/api-reference/liveblocks-react#useOthers) and immediately
 follow the current slide, including when they join midway through a
 presentation.
@@ -271,7 +271,7 @@ use [`mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage) to
 apply them. To show that AI is working in your app use
 [`setPresence`](/docs/api-reference/liveblocks-node#post-rooms-roomId-presence)
 to show it working—your agent will appear in [presence](#presence) alongside
-humans. Finally, remove the agent’s Presence to indicate that the agent is no
+humans. Finally, remove the agent’s presence to indicate that the agent is no
 longer working.
 
 ```ts
@@ -522,7 +522,7 @@ More complex controls can be set too, learn more under
 ## Examples [#examples]
 
 Explore a complete slideshow with multiplayer editing, AI-generated slides, live
-cursors, Comments, and Feeds.
+cursors, Comments, and feeds.
 
 <ListGrid columns={2}>
   <ExampleCard

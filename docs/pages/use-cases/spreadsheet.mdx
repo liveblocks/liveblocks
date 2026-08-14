@@ -106,7 +106,7 @@ can be combined with the others.
 This is an overview of how each feature can be implemented. Store permanent
 rows, columns, and cell values in [Sync](/docs/products/sync/overview). Keep
 temporary selections and active cells in
-[Presence](/docs/products/sync/presence). The snippets below build a custom
+[presence](/docs/products/sync/presence). The snippets below build a custom
 table, but the same data model works when rendering with a grid library such as
 AG Grid or Handsontable.
 
@@ -187,7 +187,7 @@ each part of your table.
 
 ### Presence [#presence]
 
-Use [Presence](/docs/products/sync/presence) for information that only matters
+Use [presence](/docs/products/sync/presence) for information that only matters
 while someone is connected, such as their selected cell or the range they are
 highlighting. Add
 [`useUpdateMyPresence`](/docs/api-reference/liveblocks-react#useUpdateMyPresence)
@@ -221,7 +221,7 @@ function Cell({ rowId, columnId }: { rowId: string; columnId: string }) {
 }
 ```
 
-Learn more under [Presence](/docs/products/sync/presence).
+Learn more under [presence](/docs/products/sync/presence).
 
 ### Server-side editing [#server-side-editing]
 
@@ -260,7 +260,7 @@ then use [`mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage)
 to apply them. To show that AI is working in your app use
 [`setPresence`](/docs/api-reference/liveblocks-node#post-rooms-roomId-presence)
 to show it working—your agent will appear in [presence](#presence) alongside
-humans. Finally, remove the agent’s Presence to indicate that the agent is no
+humans. Finally, remove the agent’s presence to indicate that the agent is no
 longer working.
 
 ```ts

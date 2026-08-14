@@ -135,9 +135,9 @@ Choose a starting point for your app.
 
 This is an overview of how each feature can be implemented. Store permanent
 content in [Sync](/docs/products/sync/overview). Keep temporary cursors,
-selections, and interaction state in [Presence](/docs/products/sync/presence).
+selections, and interaction state in [presence](/docs/products/sync/presence).
 Use [Comments](/docs/products/comments) for review discussions and
-[Feeds](/docs/products/sync/feeds) for durable AI workflow state.
+[feeds](/docs/products/sync/feeds) for durable AI workflow state.
 
 ### Realtime collaboration [#realtime-collaboration]
 
@@ -236,7 +236,7 @@ To allow AI agents to modify the artifact, generate changes with AI, then use
 the same mutation shown under [Server-side editing](#server-side-editing) to
 apply them. Use
 [`setPresence`](/docs/api-reference/liveblocks-node#post-rooms-roomId-presence)
-before and after generation so the agent appears in Presence alongside humans.
+before and after generation so the agent appears in presence alongside humans.
 
 ```ts
 import { LiveObject } from "@liveblocks/client";
@@ -293,7 +293,7 @@ await liveblocks.setPresence(roomId, {
 // +++
 ```
 
-Additionally, use [Feeds](/docs/products/sync/feeds) to store durable AI
+Additionally, use [feeds](/docs/products/sync/feeds) to store durable AI
 workflow state and pass progress updates to the UI. Link to
 [Agentic editing](/docs/products/sync/agentic-editing).
 
@@ -366,8 +366,8 @@ More complex controls can be set too, learn more under
 - Use `useOthers`, not `useOthersMapped`, on these pages.
 - Use the exact server-side mutation again in the Agentic editing section after
   the generation step. Do not hide it behind a generic helper.
-- In Agentic editing, show the agent entering Presence, generating validated
-  structured output, applying the mutation, and leaving Presence. Keep these as
+- In Agentic editing, show the agent entering presence, generating validated
+  structured output, applying the mutation, and leaving presence. Keep these as
   four flat, sequential phases.
 - Verify the current Vercel AI SDK APIs and an available model before writing a
   new AI snippet. Do not copy a stale model name blindly.
@@ -386,7 +386,12 @@ More complex controls can be set too, learn more under
   inside Sync such as `useStorage`, `initialStorage`, and `mutateStorage`.
 - Do not rename or imply changes to public APIs.
 - Liveblocks Sync is hosted; do not say it can be self-hosted.
-- Feeds is part of Sync. Link to `/docs/products/sync/feeds`.
+- The products are **Sync**, **Comments**, and **Notifications**. Comments
+  contains threaded comments.
+- Feeds is part of Sync and is written lowercase (“feeds”) except at the start
+  of a sentence or heading. Link to `/docs/products/sync/feeds`.
+- Presence is part of Sync and is written lowercase (“presence”) except at the
+  start of a sentence or heading. Link to `/docs/products/sync/presence`.
 - Use LiveText for collaborative text editing. Do not describe LiveText as
   coming soon. This is always the preference over Yjs, but Yjs can be mentioned
   as an alternative.

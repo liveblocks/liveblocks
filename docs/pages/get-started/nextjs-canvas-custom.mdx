@@ -5,13 +5,13 @@ meta:
   parentTitle: "Quickstart"
   description:
     "Learn how to build a custom collaborative canvas with draggable boxes,
-    multiplayer undo/redo, and Presence using Liveblocks and Next.js."
+    multiplayer undo/redo, and presence using Liveblocks and Next.js."
 ---
 
 This guide shows you how to build a custom collaborative canvas in a Next.js
 `/app` directory application. You will synchronize draggable boxes with
 [Storage](/docs/products/sync/data-types), add multiplayer undo/redo, then show
-live cursors and selections with [Presence](/docs/products/sync/presence).
+live cursors and selections with [presence](/docs/products/sync/presence).
 
 <Banner title="Using a canvas library?">
 
@@ -83,7 +83,7 @@ interactions yourself.
       ```
 
       Use Storage for canvas data that must persist. Cursor and selection state
-      will be added to Presence in the final step.
+      will be added to presence in the final step.
 
     </StepContent>
 
@@ -585,16 +585,16 @@ interactions yourself.
 
   </Step>
   <Step lastStep>
-    <StepTitle>Add live cursors and selections with Presence</StepTitle>
+    <StepTitle>Add live cursors and selections with presence</StepTitle>
     <StepContent>
 
       Finish the canvas by moving the current selection from local React state
-      into Presence and adding cursor coordinates. Presence is temporary,
+      into presence and adding cursor coordinates. Presence is temporary,
       per-connection state, so it is not saved in the canvas document.
 
-      First, add the Presence type to `liveblocks.config.ts`.
+      First, add the presence type to `liveblocks.config.ts`.
 
-      ```ts title="Add the Presence type" file="liveblocks.config.ts"
+      ```ts title="Add the presence type" file="liveblocks.config.ts"
       declare global {
         interface Liveblocks {
           // +++
@@ -611,9 +611,9 @@ interactions yourself.
       }
       ```
 
-      Set the initial Presence values when entering the room.
+      Set the initial presence values when entering the room.
 
-      ```tsx title="Set the initial Presence" file="app/Room.tsx"
+      ```tsx title="Set the initial presence" file="app/Room.tsx"
       <RoomProvider
         id="my-canvas-room"
         // +++
@@ -631,7 +631,7 @@ interactions yourself.
       and read collaborators with
       [`useOthers`](/docs/api-reference/liveblocks-react#useOthers).
 
-      ```tsx title="Use Presence as the selection source" file="app/Canvas.tsx"
+      ```tsx title="Use presence as the selection source" file="app/Canvas.tsx"
       import {
         // ...
         // +++
