@@ -622,7 +622,7 @@
         "path": "/use-cases/slideshow"
       },
       {
-        "title": "AI Collaboration",
+        "title": "AI collaboration",
         "path": "/use-cases/ai-collaboration"
       },
       {
@@ -994,85 +994,6 @@
     ]
   },
   {
-    "title": "Upgrading",
-    "sort": "descending",
-    "defaultCollapsed": true,
-    "routes": [
-      {
-        "title": "Upgrading to 0.17",
-        "path": "/upgrading/0.17"
-      },
-      {
-        "title": "Upgrading to 0.18",
-        "path": "/upgrading/0.18"
-      },
-      {
-        "title": "Upgrading to 0.19",
-        "path": "/upgrading/0.19"
-      },
-      {
-        "title": "Upgrading to 1.0",
-        "path": "/upgrading/1.0"
-      },
-      {
-        "title": "Upgrading to 1.2",
-        "path": "/upgrading/1.2"
-      },
-      {
-        "title": "Upgrading to 1.5",
-        "path": "/upgrading/1.5"
-      },
-      {
-        "title": "Upgrading to 1.9",
-        "path": "/upgrading/1.9"
-      },
-      {
-        "title": "Upgrading to 1.10",
-        "path": "/upgrading/1.10"
-      },
-      {
-        "title": "Upgrading to 2.0",
-        "path": "/upgrading/2.0"
-      },
-      {
-        "title": "Upgrading to 2.2",
-        "path": "/upgrading/2.2"
-      },
-      {
-        "title": "Upgrading to 2.8",
-        "path": "/upgrading/2.8"
-      },
-      {
-        "title": "Upgrading to 2.9",
-        "path": "/upgrading/2.9"
-      },
-      {
-        "title": "Upgrading to 2.15",
-        "path": "/upgrading/2.15"
-      },
-      {
-        "title": "Upgrading to 2.16",
-        "path": "/upgrading/2.16"
-      },
-      {
-        "title": "Upgrading to 2.24",
-        "path": "/upgrading/2.24"
-      },
-      {
-        "title": "Upgrading to 3.0",
-        "path": "/upgrading/3.0"
-      },
-      {
-        "title": "Upgrading to 3.10",
-        "path": "/upgrading/3.10"
-      },
-      {
-        "title": "Upgrading to 3.18",
-        "path": "/upgrading/3.18"
-      }
-    ]
-  },
-  {
     "title": false,
     "routes": [
       {
@@ -1160,6 +1081,85 @@
       {
         "title": "Webhook events",
         "path": "/api-reference/webhook-events"
+      }
+    ]
+  },
+  {
+    "title": "Upgrading",
+    "sort": "descending",
+    "defaultCollapsed": true,
+    "routes": [
+      {
+        "title": "Upgrading to 0.17",
+        "path": "/api-reference/upgrading/0.17"
+      },
+      {
+        "title": "Upgrading to 0.18",
+        "path": "/api-reference/upgrading/0.18"
+      },
+      {
+        "title": "Upgrading to 0.19",
+        "path": "/api-reference/upgrading/0.19"
+      },
+      {
+        "title": "Upgrading to 1.0",
+        "path": "/api-reference/upgrading/1.0"
+      },
+      {
+        "title": "Upgrading to 1.2",
+        "path": "/api-reference/upgrading/1.2"
+      },
+      {
+        "title": "Upgrading to 1.5",
+        "path": "/api-reference/upgrading/1.5"
+      },
+      {
+        "title": "Upgrading to 1.9",
+        "path": "/api-reference/upgrading/1.9"
+      },
+      {
+        "title": "Upgrading to 1.10",
+        "path": "/api-reference/upgrading/1.10"
+      },
+      {
+        "title": "Upgrading to 2.0",
+        "path": "/api-reference/upgrading/2.0"
+      },
+      {
+        "title": "Upgrading to 2.2",
+        "path": "/api-reference/upgrading/2.2"
+      },
+      {
+        "title": "Upgrading to 2.8",
+        "path": "/api-reference/upgrading/2.8"
+      },
+      {
+        "title": "Upgrading to 2.9",
+        "path": "/api-reference/upgrading/2.9"
+      },
+      {
+        "title": "Upgrading to 2.15",
+        "path": "/api-reference/upgrading/2.15"
+      },
+      {
+        "title": "Upgrading to 2.16",
+        "path": "/api-reference/upgrading/2.16"
+      },
+      {
+        "title": "Upgrading to 2.24",
+        "path": "/api-reference/upgrading/2.24"
+      },
+      {
+        "title": "Upgrading to 3.0",
+        "path": "/api-reference/upgrading/3.0"
+      },
+      {
+        "title": "Upgrading to 3.10",
+        "path": "/api-reference/upgrading/3.10"
+      },
+      {
+        "title": "Upgrading to 3.18",
+        "path": "/api-reference/upgrading/3.18"
       }
     ]
   }
