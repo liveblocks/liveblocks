@@ -1,0 +1,287 @@
+---
+meta:
+  title: "Get started with a CodeMirror code editor using Liveblocks and React"
+  parentTitle: "Quickstart"
+  description:
+    "Learn how to install a CodeMirror code editor using Liveblocks and React"
+---
+
+Liveblocks is a realtime collaboration infrastructure for building performant
+collaborative experiences. Follow the following steps to start adding
+collaboration to your React application using the APIs from the
+[`@liveblocks/codemirror`](/docs/api-reference/liveblocks-codemirror) package.
+
+## Quickstart
+
+<PromptCta />
+
+<Steps>
+  <Step>
+    <StepTitle>Install Liveblocks and CodeMirror</StepTitle>
+    <StepContent>
+
+      Every Liveblocks package should use the same version.
+
+      ```bash trackEvent="install_liveblocks"
+      npm install @liveblocks/client @liveblocks/react @liveblocks/codemirror codemirror
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Initialize the `liveblocks.config.ts` file</StepTitle>
+    <StepContent>
+
+      We can use this file later to [define types for our application](/docs/api-reference/liveblocks-react#Typing-your-data).
+
+      ```bash
+      npx create-liveblocks-app@latest --init --framework react
+      ```
+
+      Add types for your CodeMirror document and presence:
+
+      ```ts file="liveblocks.config.ts"
+      import type { LiveblocksCodemirrorSelection } from "@liveblocks/codemirror";
+      import { LiveText } from "@liveblocks/client";
+
+      declare global {
+        interface Liveblocks {
+          Presence: {
+            selection: LiveblocksCodemirrorSelection | null;
+          };
+          Storage: {
+            document: LiveText;
+          };
+          UserMeta: {
+            id?: string;
+            info?: {
+              name?: string;
+              color?: string;
+            };
+          };
+        }
+      }
+
+      export {};
+      ```
+
+    </StepContent>
+
+  </Step>
+
+  <Step>
+    <StepTitle>Set up the Liveblocks client</StepTitle>
+    <StepContent>
+
+      Liveblocks uses the concept of rooms, separate virtual spaces where people
+      collaborate, and to create a realtime experience, multiple users must
+      be connected to the same room. Set up a Liveblocks client with [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider), and join a room with [`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider).
+
+      Store your editor document in Storage as [`LiveText`](/docs/api-reference/liveblocks-client#LiveText), and set an initial presence shape for cursors.
+
+      ```tsx file="App.tsx"
+      "use client";
+
+      import { LiveText } from "@liveblocks/client";
+      import {
+        LiveblocksProvider,
+        RoomProvider,
+      } from "@liveblocks/react/suspense";
+      import { Editor } from "./Editor";
+
+      export default function App() {
+        return (
+          <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
+            <RoomProvider
+              id="my-room"
+              // +++
+              initialPresence={{ selection: null }}
+              initialStorage={{ document: new LiveText("Hello, world") }}
+              // +++
+            >
+              {/* ... */}
+            </RoomProvider>
+          </LiveblocksProvider>
+        );
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Join a Liveblocks room</StepTitle>
+    <StepContent>
+
+      After setting up the room, you can add collaborative components inside it, using
+      [`ClientSideSuspense`](/docs/api-reference/liveblocks-react#ClientSideSuspense) to add loading spinners to your app.
+
+      ```tsx file="App.tsx"
+      "use client";
+
+      import { LiveText } from "@liveblocks/client";
+      import {
+        LiveblocksProvider,
+        RoomProvider,
+        ClientSideSuspense,
+      } from "@liveblocks/react/suspense";
+      import { Editor } from "./Editor";
+
+      export default function App() {
+        return (
+          <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
+            <RoomProvider
+              id="my-room"
+              initialPresence={{ selection: null }}
+              initialStorage={{ document: new LiveText("Hello, world") }}
+            >
+              <ClientSideSuspense fallback={<div>Loading…</div>}>
+                <Editor />
+              </ClientSideSuspense>
+            </RoomProvider>
+          </LiveblocksProvider>
+        );
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Set up the collaborative CodeMirror editor</StepTitle>
+    <StepContent>
+
+      Now that Liveblocks is set up, create a CodeMirror editor in `Editor.tsx`.
+      Use [`createLiveblocksSyncPlugin`](/docs/api-reference/liveblocks-codemirror#createLiveblocksSyncPlugin)
+      to sync the document with Storage, and
+      [`createLiveblocksPresencePlugin`](/docs/api-reference/liveblocks-codemirror#createLiveblocksPresencePlugin)
+      to show remote carets and selections.
+
+      ```tsx file="Editor.tsx"
+      "use client";
+
+      import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
+      import { EditorView } from "@codemirror/view";
+      import { EditorState } from "@codemirror/state";
+      import type { LiveText, Room } from "@liveblocks/client";
+      import {
+        createLiveblocksPresencePlugin,
+        createLiveblocksSyncPlugin,
+      } from "@liveblocks/codemirror";
+      import { useRoom } from "@liveblocks/react/suspense";
+
+      export function Editor() {
+        const room = useRoom();
+        const root = useRoot(room);
+
+        if (root == null) {
+          return <div>Loading…</div>;
+        }
+
+        return <EditorInner text={root.get("document")} />;
+      }
+
+      function EditorInner({ text }: { text: LiveText }) {
+        const room = useRoom();
+        const containerRef = useRef<HTMLDivElement>(null);
+
+        useEffect(() => {
+          if (containerRef.current === null) return;
+
+          const view = new EditorView({
+            parent: containerRef.current,
+            state: EditorState.create({
+              // +++
+              doc: text.toString(),
+              extensions: [
+                createLiveblocksSyncPlugin(room, text),
+                createLiveblocksPresencePlugin(room, text),
+              ],
+              // +++
+            }),
+          });
+
+          return () => {
+            view.destroy();
+          };
+        }, [room, text]);
+
+        return <div ref={containerRef} className="editor" />;
+      }
+
+      function useRoot(room: Room) {
+        const subscribe = room.events.storageDidLoad.subscribeOnce;
+        const getSnapshot = room.getStorageOrNull;
+        const getServerSnapshot = useCallback(() => null, []);
+        return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Style remote carets and selections</StepTitle>
+    <StepContent>
+
+      The presence plugin renders remote carets and selections using the
+      `.lb-remote-caret` and `.lb-remote-selection` class names. Add styles for
+      them in your CSS. This package does not ship a stylesheet.
+
+      ```css file="globals.css"
+      .editor {
+        height: 100%;
+      }
+
+      .lb-remote-selection {
+        position: absolute;
+        background-color: color-mix(in srgb, var(--lb-remote-color) 25%, transparent);
+        border-radius: 1px;
+        pointer-events: none;
+        box-sizing: border-box;
+      }
+
+      .lb-remote-caret {
+        position: absolute;
+        width: 0;
+        border-left: 2px solid var(--lb-remote-color);
+        pointer-events: none;
+        box-sizing: border-box;
+      }
+      ```
+
+      ```tsx file="main.tsx"
+      import "./globals.css";
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step lastStep>
+    <StepTitle>Next: authenticate and add your users</StepTitle>
+    <StepContent>
+      Your editor is set up and working now, but each user is anonymous—the next step is to
+      authenticate each user as they connect, and attach their name and color to remote carets.
+
+      <Button asChild className="not-markdown">
+        <a href="/docs/guides/how-to-add-users-to-liveblocks-presence-components">
+          Set up authentication and add user information
+        </a>
+      </Button>
+    </StepContent>
+
+  </Step>
+
+</Steps>
+
+## What to read next
+
+Congratulations! You now have set up the foundation for your collaborative
+CodeMirror editor inside your React application.
+
+- [@liveblocks/codemirror API Reference](/docs/api-reference/liveblocks-codemirror)
+- [CodeMirror website](https://codemirror.net)
+
+If you prefer to use Yjs with CodeMirror, see the
+[Yjs CodeMirror React quickstart](/docs/get-started/yjs-codemirror-react).

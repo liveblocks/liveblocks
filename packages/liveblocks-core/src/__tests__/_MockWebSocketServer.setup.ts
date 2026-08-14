@@ -307,7 +307,7 @@ export async function prepareStorageTest<
           ref.wss.last.send(
             serverMessage({
               type: ServerMsgCode.UPDATE_STORAGE,
-              ops: message.ops,
+              ops: message.ops.map(({ opId: _, ...op }) => op),
             })
           );
           subject.wss.last.send(
@@ -376,9 +376,7 @@ export async function prepareStorageTest<
     // this is what the last undo item looked like before we undo
 
     const before = deepCloneWithoutOpId(
-      subject.room[kInternal].undoStack[
-        subject.room[kInternal].undoStack.length - 1
-      ]
+      subject.room[kInternal].undoStack.at(-1)!.frames
     );
 
     // this will undo the whole stack
@@ -395,9 +393,7 @@ export async function prepareStorageTest<
 
     // this is what the last undo item looks like after redoing everything
     const after = deepCloneWithoutOpId(
-      subject.room[kInternal].undoStack[
-        subject.room[kInternal].undoStack.length - 1
-      ]
+      subject.room[kInternal].undoStack.at(-1)!.frames
     );
 
     // It should be identical before/after
@@ -505,7 +501,7 @@ export async function prepareStorageUpdateTest<
           ref.wss.last.send(
             serverMessage({
               type: ServerMsgCode.UPDATE_STORAGE,
-              ops: message.ops,
+              ops: message.ops.map(({ opId: _, ...op }) => op),
             })
           );
           subject.wss.last.send(

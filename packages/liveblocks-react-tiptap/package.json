@@ -47,6 +47,7 @@
     "@floating-ui/react-dom": "^2.1.0",
     "@liveblocks/client": "workspace:*",
     "@liveblocks/core": "workspace:*",
+    "@liveblocks/prosemirror": "workspace:*",
     "@liveblocks/react": "workspace:*",
     "@liveblocks/react-ui": "workspace:*",
     "@liveblocks/yjs": "workspace:*",

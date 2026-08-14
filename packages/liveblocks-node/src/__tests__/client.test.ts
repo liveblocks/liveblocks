@@ -984,7 +984,7 @@ describe("client", () => {
         metadata: {
           color: "blue",
         },
-        visibility: "private",
+        visibility: "private" as const,
       };
 
       server.use(

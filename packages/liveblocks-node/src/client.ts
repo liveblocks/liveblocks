@@ -47,6 +47,7 @@ import type {
   PlainLsonObject,
   QueryMetadata,
   QueryParams,
+  ReadonlyJson,
   RoomAccesses,
   RoomPermissions,
   RoomSubscriptionSettings,
@@ -1053,7 +1054,7 @@ export class Liveblocks {
 
   async #post(
     path: URLSafeString,
-    json: Json | undefined,
+    json: ReadonlyJson | undefined,
     options?: RequestOptions,
     params?: QueryParams
   ): Promise<Response> {
@@ -1083,7 +1084,7 @@ export class Liveblocks {
 
   async #patch(
     path: URLSafeString,
-    json: Json,
+    json: ReadonlyJson,
     options?: RequestOptions
   ): Promise<Response> {
     const url = urljoin(this.#baseUrl, path);

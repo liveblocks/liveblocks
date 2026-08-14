@@ -1,4 +1,6 @@
+import { kInternal } from "../internal";
 import { assertNever } from "../lib/assert";
+import * as console from "../lib/fancy-console";
 import type { ReadonlyJson } from "../lib/Json";
 import type { Pos } from "../lib/position";
 import { asPos } from "../lib/position";
@@ -12,13 +14,42 @@ import { OpCode } from "../protocol/Op";
 import type { SerializedCrdt } from "../protocol/StorageNode";
 import type * as DevTools from "../types/DevToolsTreeNode";
 import type { LiveNode, Lson } from "./Lson";
-import type { StorageUpdate } from "./StorageUpdates";
+import type { OpSource, StorageUpdate, UpdateSource } from "./StorageUpdates";
+import { toUpdateSource } from "./StorageUpdates";
 import type { ReadonlyUnacknowledgedOps } from "./UnacknowledgedOps";
 import { UnacknowledgedOps } from "./UnacknowledgedOps";
+
+const warnedOrphanedNodes = new WeakSet<LiveNode>();
+
+const ORPHANED_NODE_WARNING =
+  "Cannot sync changes made to this Live structure because it is no longer part of Storage. Retrieve the current value from its parent before mutating it.";
 
 export type ApplyResult =
   | { reverse: Op[]; modified: StorageUpdate }
   | { modified: false };
+
+export type DispatchOptions = {
+  /**
+   * Whether this dispatch should clear the redo stack. Defaults to true when
+   * any forward ops are included (a fresh local mutation), false otherwise.
+   * LiveText uses this to dispatch queued ops after an acknowledgement
+   * (which should not clear redo), and to register fresh local edits that
+   * don't carry wire ops yet (which should).
+   */
+  clearRedoStack?: boolean;
+};
+
+/**
+ * Private methods on any Liveblocks CRDT node. As a user of Liveblocks, NEVER
+ * USE ANY OF THESE DIRECTLY, because bad things will probably happen if you do.
+ */
+export type PrivateLiveNodeApi = {
+  /**
+   * Returns the CRDT node id once attached to the room pool. Detached nodes
+   * that have not entered storage yet return `undefined`.
+   */
+  getId(): string | undefined;
+};
 
 /**
  * The managed pool is a namespace registry (i.e. a context) that "owns" all
@@ -43,7 +74,8 @@ export interface ManagedPool {
   dispatch: (
     ops: ClientWireOp[],
     reverseOps: Op[],
-    storageUpdates: Map<string, StorageUpdate>
+    storageUpdates: Map<string, StorageUpdate>,
+    options?: DispatchOptions
   ) => void;
 
   /**
@@ -76,7 +108,8 @@ export type CreateManagedPoolOptions = {
   onDispatch?: (
     ops: ClientWireOp[],
     reverse: Op[],
-    storageUpdates: Map<string, StorageUpdate>
+    storageUpdates: Map<string, StorageUpdate>,
+    options?: DispatchOptions
   ) => void;
 
   /**
@@ -126,9 +159,10 @@ export function createManagedPool(
     dispatch(
       ops: ClientWireOp[],
       reverse: Op[],
-      storageUpdates: Map<string, StorageUpdate>
+      storageUpdates: Map<string, StorageUpdate>,
+      options?: DispatchOptions
     ) {
-      onDispatch?.(ops, reverse, storageUpdates);
+      onDispatch?.(ops, reverse, storageUpdates, options);
     },
 
     assertStorageIsWritable: () => {
@@ -141,36 +175,6 @@ export function createManagedPool(
 
     unacknowledgedOps,
   };
-}
-
-/**
- * When applying an op to a CRDT, we need to know where it came from to apply
- * it correctly.
- */
-export enum OpSource {
-  /**
-   * Optimistic update applied locally (from an undo, redo, or reconnect). Not
-   * yet acknowledged by the server. Will be sent to server and needs to be
-   * tracked for conflict resolution.
-   */
-  LOCAL,
-
-  /**
-   * Op received from server, originated from another client. Apply it, unless
-   * there's a pending local op for the same key (local ops take precedence
-   * until acknowledged).
-   *
-   * Note that a "fix Op" sent by the server in response to a local mutation
-   * that caused a conflict will also be classified as a THEIRS-like mutation.
-   * (As if another client resolved the conflict.)
-   */
-  THEIRS,
-
-  /**
-   * Op received from server, originated from THIS client. Server echoed it
-   * back to confirm.
-   */
-  OURS,
 }
 
 // TODO Temporary helper to help convert from AbstractCrdt -> LiveNode, only
@@ -245,10 +249,21 @@ type ParentInfo =
 
 export abstract class AbstractCrdt {
   //                  ^^^^^^^^^^^^ TODO: Make this an interface
+  declare readonly [kInternal]: PrivateLiveNodeApi;
+
   #pool?: ManagedPool;
   #id?: string;
 
   #parent: ParentInfo = NoParent;
+
+  constructor() {
+    Object.defineProperty(this, kInternal, {
+      value: {
+        getId: (): string | undefined => this.#id,
+      },
+      enumerable: false,
+    });
+  }
 
   /** @internal */
   _getParentKeyOrThrow(): string {
@@ -300,6 +315,18 @@ export abstract class AbstractCrdt {
   }
 
   /** @internal */
+  protected _warnIfOrphaned(): void {
+    const node = crdtAsLiveNode(this);
+    if (this.parent.type === "Orphaned" && !warnedOrphanedNodes.has(node)) {
+      warnedOrphanedNodes.add(node);
+      console.warn(ORPHANED_NODE_WARNING, {
+        type: node.constructor.name,
+        formerParentKey: this.parent.oldKey,
+      });
+    }
+  }
+
+  /** @internal */
   get _parentKey(): string | null {
     switch (this.parent.type) {
       case "HasParent":
@@ -317,11 +344,14 @@ export abstract class AbstractCrdt {
   }
 
   /** @internal */
-  _apply(op: Op, _isLocal: boolean): ApplyResult {
+  _apply(op: Op, source: OpSource): ApplyResult {
     switch (op.type) {
       case OpCode.DELETE_CRDT: {
         if (this.parent.type === "HasParent") {
-          return this.parent.node._detachChild(crdtAsLiveNode(this));
+          return this.parent.node._detachChild(
+            crdtAsLiveNode(this),
+            toUpdateSource(source)
+          );
         }
 
         return { modified: false };
@@ -399,7 +429,7 @@ export abstract class AbstractCrdt {
   }
 
   /** @internal */
-  abstract _detachChild(crdt: LiveNode): ApplyResult;
+  abstract _detachChild(crdt: LiveNode, source: UpdateSource): ApplyResult;
 
   /**
    * Serializes this CRDT and all its children into a list of creation ops

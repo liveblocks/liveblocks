@@ -8,6 +8,7 @@
     "test:ci": "turbo run test:ci",
     "test:types": "turbo run test:types",
     "test:deps": "turbo run test:deps",
+    "typecheck": "turbo run typecheck",
     "lint": "turbo run lint",
     "lint:package": "turbo run lint:package",
     "format": "turbo run format",

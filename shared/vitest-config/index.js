@@ -4,10 +4,20 @@ import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+// Keep one core module identity when tests import source-only test helpers.
+const liveblocksCore = path.resolve(
+  __dirname,
+  "../../packages/liveblocks-core/src/index.ts"
+);
+
 export function defaultLiveblocksVitestConfig(options = {}) {
   return defineConfig({
     resolve: {
       tsconfigPaths: true,
+      alias: {
+        "@liveblocks/core": liveblocksCore,
+      },
+      dedupe: ["@liveblocks/core"],
     },
     test: {
       include: ["src/**/*.test.[jt]s?(x)", "test/**/*.test.[jt]s?(x)"],
