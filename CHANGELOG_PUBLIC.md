@@ -20,7 +20,13 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 33 (2026-08-14)
 
+## Examples
+
+- Add dev server command to run relevant examples locally.
+
 ## Contributors
+
+ctnicholas
 
 # Week 32 (2026-08-07)
 
