@@ -38,9 +38,7 @@ export async function Issue({ issueId }: { issueId: string }) {
       ISSUE_LEXICAL_NODES
     )
       // Make new lines display correctly
-      .replace(/\n{2,}/g, (match) =>
-        "<p><br></p>".repeat(match.length - 1)
-      )
+      .replace(/\n{2,}/g, (match) => "<p><br></p>".repeat(match.length - 1))
       .replace(/\n(?!$)/g, "\n\n")
       .replace(/(\n+)$/g, (match) => "<p><br></p>".repeat(match.length));
 
@@ -86,11 +84,7 @@ export async function Issue({ issueId }: { issueId: string }) {
     error = err;
   }
 
-  if (
-    error ||
-    !results ||
-    Object.keys(results.storage).length === 0
-  ) {
+  if (error || !results || Object.keys(results.storage).length === 0) {
     console.log(error);
     return (
       <div className="max-w-[840px] mx-auto pt-20">

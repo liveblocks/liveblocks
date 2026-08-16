@@ -18,7 +18,13 @@ import {
   FORMAT_TEXT_COMMAND,
   type TextFormatType,
 } from "lexical";
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import classnames from "classnames";
 import { Select } from "@/components/Select";
 import { BoldIcon } from "@/icons/BoldIcon";
@@ -75,7 +81,8 @@ export function EditorFloatingToolbar() {
 
     const nativeSelection = window.getSelection();
     const domRange =
-      nativeSelection?.rangeCount !== undefined && nativeSelection.rangeCount > 0
+      nativeSelection?.rangeCount !== undefined &&
+      nativeSelection.rangeCount > 0
         ? nativeSelection.getRangeAt(0)
         : null;
 
@@ -206,7 +213,7 @@ export function EditorFloatingToolbar() {
   return (
     <div
       ref={toolbarRef}
-      className="lb-root fixed z-50 flex items-center gap-0.5 rounded-lg border border-neutral-200 bg-white p-1 shadow"
+      className="text-neutral-600 lb-root fixed z-50 flex items-center gap-0.5 rounded-lg border border-neutral-200 bg-white p-1 shadow"
       style={{ top: position.top, left: position.left }}
       onMouseDown={(event) => event.preventDefault()}
     >
@@ -217,7 +224,11 @@ export function EditorFloatingToolbar() {
         onValueChange={handleBlockChange}
       />
       <div className="mx-1 h-5 w-px bg-neutral-200" />
-      <ToolbarButton active={isBold} label="Bold" onClick={() => formatText("bold")}>
+      <ToolbarButton
+        active={isBold}
+        label="Bold"
+        onClick={() => formatText("bold")}
+      >
         <BoldIcon className="h-4 w-4" />
       </ToolbarButton>
       <ToolbarButton
@@ -241,7 +252,11 @@ export function EditorFloatingToolbar() {
       >
         <StrikethroughIcon className="h-4 w-4" />
       </ToolbarButton>
-      <ToolbarButton active={isCode} label="Code" onClick={() => formatText("code")}>
+      <ToolbarButton
+        active={isCode}
+        label="Code"
+        onClick={() => formatText("code")}
+      >
         <CodeIcon className="h-4 w-4" />
       </ToolbarButton>
     </div>

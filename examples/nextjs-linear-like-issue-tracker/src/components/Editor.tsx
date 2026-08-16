@@ -12,7 +12,7 @@ import { EditorTitle } from "@/components/EditorTitle";
 import { AiPresenceEditFrame } from "@/components/AiPresenceEditFrame";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { ListNode, ListItemNode } from "@lexical/list";
-import { ClientSideSuspense, useRoom } from "@liveblocks/react/suspense";
+import { ClientSideSuspense, useRoom } from "@liveblocks/react";
 import { ReactNode, useCallback, useSyncExternalStore } from "react";
 import { LinkNode } from "@lexical/link";
 import { CodeNode } from "@lexical/code";
