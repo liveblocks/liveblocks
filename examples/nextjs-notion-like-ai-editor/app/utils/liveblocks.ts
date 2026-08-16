@@ -1,6 +1,9 @@
+import { LiveObject, toPlainLson } from "@liveblocks/client";
 import { Liveblocks as LiveblocksNode, RoomData } from "@liveblocks/node";
 import { nanoid } from "nanoid";
+import type { Klass, LexicalNode } from "lexical";
 import { getRoomId } from "../config";
+import { markdownToLiveDocument } from "./lexical-live-storage";
 
 export const liveblocks = new LiveblocksNode({
   secret: process.env.LIVEBLOCKS_SECRET_KEY as string,
@@ -16,7 +19,11 @@ export async function getLatestRoom() {
   return rooms.length ? (rooms[0] as TypedRoomData) : null;
 }
 
-export async function createRoom(title: string = "Untitled document") {
+export async function createRoom(
+  title: string = "Untitled document",
+  markdown?: string,
+  nodes: ReadonlyArray<Klass<LexicalNode>> = []
+) {
   const pageId = nanoid();
 
   const room = (await liveblocks.createRoom(getRoomId(pageId), {
@@ -24,10 +31,17 @@ export async function createRoom(title: string = "Untitled document") {
     metadata: { pageId },
   })) as TypedRoomData;
 
-  await liveblocks.initializeStorageDocument(room.id, {
-    liveblocksType: "LiveObject",
-    data: { title },
-  });
+  const document = markdownToLiveDocument(markdown ?? "", nodes);
+
+  await liveblocks.initializeStorageDocument(
+    room.id,
+    toPlainLson(
+      new LiveObject({
+        title,
+        document,
+      })
+    ) as Parameters<typeof liveblocks.initializeStorageDocument>[1]
+  );
 
   return room;
 }

@@ -5,8 +5,6 @@ import {
   FORMAT_TEXT_COMMAND,
 } from "lexical";
 import { BoldIcon } from "../icons/BoldIcon";
-import { OPEN_FLOATING_COMPOSER_COMMAND } from "@liveblocks/react-lexical";
-import { CommentIcon } from "../icons/CommentIcon";
 import { motion } from "framer-motion";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { MouseEventHandler, ReactNode, useCallback } from "react";
@@ -200,17 +198,6 @@ export function FloatingToolbarOptions({
           }}
         >
           <CodeIcon className="w-4 h-4" />
-        </ToolbarButton>
-
-        <span className="w-[1px] py-3.5 bg-border/50" />
-
-        <ToolbarButton
-          onClick={() => {
-            editor.dispatchCommand(OPEN_FLOATING_COMPOSER_COMMAND, undefined);
-            setState("closed");
-          }}
-        >
-          <CommentIcon className="w-4 h-4" />
         </ToolbarButton>
       </div>
     </motion.div>
