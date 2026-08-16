@@ -632,52 +632,52 @@
     "title": "Use cases",
     "routes": [
       {
-        "title": "Canvas",
-        "path": "/use-cases/canvas"
-      },
-      {
-        "title": "Code editor",
-        "path": "/use-cases/code-editor"
-      },
-      {
-        "title": "Text editor",
-        "path": "/use-cases/text-editor"
-      },
-      {
-        "title": "Flowchart",
-        "path": "/use-cases/flowchart"
-      },
-      {
-        "title": "Slideshow",
-        "path": "/use-cases/slideshow"
-      },
-      {
         "title": "AI collaboration",
         "path": "/use-cases/ai-collaboration"
       },
       {
-        "title": "Spreadsheet",
-        "path": "/use-cases/spreadsheet"
-      },
-      {
-        "title": "Custom app",
-        "path": "/use-cases/custom-app"
-      },
-      {
-        "title": "Presence",
-        "path": "/use-cases/presence"
+        "title": "Canvas",
+        "path": "/use-cases/canvas"
       },
       {
         "title": "Chat",
         "path": "/use-cases/chat"
       },
       {
-        "title": "Inbox tray",
-        "path": "/use-cases/inbox-tray"
+        "title": "Code editor",
+        "path": "/use-cases/code-editor"
       },
       {
         "title": "Comments panel",
         "path": "/use-cases/comments-panel"
+      },
+      {
+        "title": "Custom app",
+        "path": "/use-cases/custom-app"
+      },
+      {
+        "title": "Flowchart",
+        "path": "/use-cases/flowchart"
+      },
+      {
+        "title": "Inbox tray",
+        "path": "/use-cases/inbox-tray"
+      },
+      {
+        "title": "Presence",
+        "path": "/use-cases/presence"
+      },
+      {
+        "title": "Slideshow",
+        "path": "/use-cases/slideshow"
+      },
+      {
+        "title": "Spreadsheet",
+        "path": "/use-cases/spreadsheet"
+      },
+      {
+        "title": "Text editor",
+        "path": "/use-cases/text-editor"
       }
     ]
   },
