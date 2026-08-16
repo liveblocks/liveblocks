@@ -5,27 +5,24 @@ import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import {
-  FloatingComposer,
-  FloatingThreads,
-  liveblocksConfig,
-  LiveblocksPlugin,
-  useIsEditorReady,
-} from "@liveblocks/react-lexical";
+  LiveblocksCollaborationPlugin,
+  RemoteCursorsPlugin,
+} from "@liveblocks/lexical";
 import { EditorTitle } from "@/components/EditorTitle";
 import { AiPresenceEditFrame } from "@/components/AiPresenceEditFrame";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { ListNode, ListItemNode } from "@lexical/list";
-import { ClientSideSuspense, useThreads } from "@liveblocks/react/suspense";
-import { ReactNode } from "react";
+import { ClientSideSuspense, useRoom } from "@liveblocks/react/suspense";
+import { ReactNode, useCallback, useSyncExternalStore } from "react";
 import { LinkNode } from "@lexical/link";
 import { CodeNode } from "@lexical/code";
-import { HorizontalRuleNode } from "@lexical/react/LexicalHorizontalRuleNode";
+import { HorizontalRuleNode } from "@lexical/extension";
+import type { Room } from "@liveblocks/client";
 import { ImmutableStorage } from "@/liveblocks.config";
 import { AI_EDITING_TYPE } from "@/lib/ai-editing-presence-types";
 import { EditorFloatingToolbar } from "./EditorFloatingToolbar";
 
-// Wrap your Lexical config with `liveblocksConfig`
-const initialConfig = liveblocksConfig({
+const initialConfig = {
   namespace: "Demo",
   nodes: [
     HorizontalRuleNode,
@@ -46,7 +43,7 @@ const initialConfig = liveblocksConfig({
       strikethrough: "lexical-strikethrough",
     },
   },
-});
+};
 
 export function Editor({
   contentFallback,
@@ -55,7 +52,8 @@ export function Editor({
   contentFallback: ReactNode;
   storageFallback: ImmutableStorage;
 }) {
-  const ready = useIsEditorReady();
+  const room = useRoom();
+  const root = useRoot(room);
 
   return (
     <LexicalComposer initialConfig={initialConfig}>
@@ -75,12 +73,12 @@ export function Editor({
         </div>
         <AiPresenceEditFrame editingType={AI_EDITING_TYPE.CONTENT}>
           <div className="relative">
-            <LiveblocksPlugin>
-              {!ready ? (
-                <div className="select-none cursor-wait editor-styles min-h-[24px]">
-                  {contentFallback}
-                </div>
-              ) : (
+            {root === null ? (
+              <div className="select-none cursor-wait editor-styles min-h-[24px]">
+                {contentFallback}
+              </div>
+            ) : (
+              <>
                 <RichTextPlugin
                   contentEditable={
                     <ContentEditable className="outline-none editor-styles min-h-[24px]" />
@@ -92,13 +90,12 @@ export function Editor({
                   }
                   ErrorBoundary={LexicalErrorBoundary}
                 />
-              )}
-              <ClientSideSuspense fallback={null}>
-                <TextEditorThreads />
-              </ClientSideSuspense>
-              <FloatingComposer />
-              <EditorFloatingToolbar />
-            </LiveblocksPlugin>
+                <LiveblocksCollaborationPlugin root={root.get("document")}>
+                  <RemoteCursorsPlugin />
+                </LiveblocksCollaborationPlugin>
+                <EditorFloatingToolbar />
+              </>
+            )}
           </div>
         </AiPresenceEditFrame>
       </div>
@@ -106,8 +103,11 @@ export function Editor({
   );
 }
 
-function TextEditorThreads() {
-  const { threads } = useThreads({ query: { resolved: false } });
-
-  return <FloatingThreads threads={threads} />;
+function useRoot(room: Room) {
+  const subscribe = room.events.storageDidLoad.subscribeOnce;
+  const getSnapshot = room.getStorageOrNull;
+  const getServerSnapshot = useCallback(() => {
+    return null;
+  }, []);
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }

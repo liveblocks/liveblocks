@@ -1,5 +1,5 @@
 @import "@liveblocks/react-ui/styles.css";
-@import "@liveblocks/react-lexical/styles.css";
+@import "@liveblocks/lexical/styles.css";
 
 /* Adjust default styles, except for tooltips, and in-editor highlights & mentions */
 .lb-root:not(.lb-tooltip, .lb-lexical-thread-mark, .lb-lexical-mention) {

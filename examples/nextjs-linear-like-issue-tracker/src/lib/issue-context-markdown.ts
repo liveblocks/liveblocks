@@ -1,7 +1,10 @@
-import { withLexicalDocument } from "@liveblocks/node-lexical";
 import { LABELS } from "@/config";
 import { liveblocks } from "@/liveblocks.server.config";
 import { ISSUE_LEXICAL_NODES } from "@/lib/issue-lexical-nodes";
+import {
+  storageDocumentToMarkdown,
+  type StorageJsonNode,
+} from "@/lib/lexical-live-storage";
 
 const LABEL_DISPLAY: Record<string, string> = Object.fromEntries(
   LABELS.map((l) => [l.id, l.text])
@@ -25,6 +28,7 @@ type StorageJson = {
   };
   labels: string[];
   links: string[];
+  document?: StorageJsonNode;
 };
 
 function formatLabelIds(ids: string[]): string {
@@ -61,19 +65,13 @@ export async function buildIssueContextMarkdown(roomId: string): Promise<string>
 
   let descriptionMd = "_No description could be loaded._";
   try {
-    descriptionMd = await withLexicalDocument(
-      {
-        roomId,
-        client: liveblocks,
-        nodes: [...ISSUE_LEXICAL_NODES],
-      },
-      async (doc) => {
-        const md = doc.toMarkdown().trim();
-        return md.length > 0 ? md : "_Empty._";
-      }
-    );
+    const md = storageDocumentToMarkdown(
+      storage.document,
+      ISSUE_LEXICAL_NODES
+    ).trim();
+    descriptionMd = md.length > 0 ? md : "_Empty._";
   } catch {
-    // Lexical unavailable for this room, should not happen
+    // Storage document unavailable for this room
   }
 
   const labels = Array.isArray(storage.labels) ? storage.labels : [];

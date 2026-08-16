@@ -1,14 +1,13 @@
-import { withLexicalDocument } from "@liveblocks/node-lexical";
-import { $convertFromMarkdownString, TRANSFORMERS } from "@lexical/markdown";
-import { $getRoot } from "lexical";
+import { LiveList } from "@liveblocks/client";
 import { liveblocks } from "@/liveblocks.server.config";
 import { ISSUE_LEXICAL_NODES } from "@/lib/issue-lexical-nodes";
+import { markdownToLiveNodes } from "@/lib/lexical-live-storage";
 import { AI_EDITING_TYPE } from "@/lib/ai-editing-presence-types";
 import { setAiRemotePresenceEditing } from "@/lib/ai-remote-presence";
 
 export type IssueDescriptionMarkdownMode = "append" | "replace";
 
-// Adds markdown content to Lexical
+// Adds markdown content to the issue description document in storage
 export async function applyIssueDescriptionMarkdown(
   roomId: string,
   markdown: string,
@@ -19,33 +18,20 @@ export async function applyIssueDescriptionMarkdown(
     return;
   }
 
+  const blocks = markdownToLiveNodes(text, ISSUE_LEXICAL_NODES);
+
   await setAiRemotePresenceEditing(roomId, [AI_EDITING_TYPE.CONTENT]);
-  await withLexicalDocument(
-    {
-      roomId,
-      client: liveblocks,
-      nodes: [...ISSUE_LEXICAL_NODES],
-    },
-    async (doc) => {
-      await doc.update(() => {
-        const root = $getRoot();
+  await liveblocks.mutateStorage(roomId, ({ root }) => {
+    const document = root.get("document");
 
-        if (mode === "replace") {
-          root.clear();
-          $convertFromMarkdownString(text, TRANSFORMERS);
-          return;
-        }
-
-        const last = root.getLastChild();
-        if (last !== null) {
-          last.selectEnd();
-        }
-        const prefix =
-          root.getChildrenSize() > 0 && root.getTextContent().trim().length > 0
-            ? "\n\n"
-            : "";
-        $convertFromMarkdownString(prefix + text, TRANSFORMERS);
-      });
+    if (mode === "replace") {
+      document.set("children", new LiveList(blocks));
+      return;
     }
-  );
+
+    const children = document.get("children");
+    for (const block of blocks) {
+      children.push(block);
+    }
+  });
 }
