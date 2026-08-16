@@ -8,7 +8,7 @@ err () {
 }
 
 usage () {
-    err "usage: release.sh [-h] [-V <version>] [-p] [-m <message>] [-f] [-w] <pkgdir> [<pkgdir>...]"
+    err "usage: release.sh [-h] [-V <version>] [-p] [-m <message>] [-f] [-w] [-c] <pkgdir> [<pkgdir>...]"
     err
     err "Prepare a release by updating files in this repo."
     err "Run this prior to publishing to NPM (or elsewhere, e.g. DevTools)."
@@ -18,6 +18,7 @@ usage () {
     err "    -m   improve the commit message by specifying what was bumped"
     err "    -f   force version update (use --force flag with npm version)"
     err "    -w   disable workspace updates (use --workspaces-update false with npm version)"
+    err "    -c   check and update CHANGELOG.md"
     err ""
 }
 
@@ -26,13 +27,15 @@ PUSH_COMMIT="false"
 COMMIT_MESSAGE="Bump to "
 FORCE_FLAG=""
 WORKSPACES_UPDATE_FLAG=""
-while getopts V:p:m:fwh flag; do
+UPDATE_CHANGELOG="false"
+while getopts V:pm:fwch flag; do
     case "$flag" in
         V) VERSION=$OPTARG;;
         p) PUSH_COMMIT="true";;
         m) COMMIT_MESSAGE=$OPTARG;;
         f) FORCE_FLAG="--force";;
         w) WORKSPACES_UPDATE_FLAG="--workspaces-update false";;
+        c) UPDATE_CHANGELOG="true";;
         *) usage; exit 2;;
     esac
 done
@@ -177,7 +180,9 @@ inject_changelog_heading () {
 check_is_valid_version "$VERSION"
 
 # Fail fast if a heading is due for this release but vNEXT has no entries
-assert_changelog_ready "$ROOT/CHANGELOG.md"
+if [ "$UPDATE_CHANGELOG" = "true" ]; then
+    assert_changelog_ready "$ROOT/CHANGELOG.md"
+fi
 
 # Run a fresh install to ensure the lock file isn't outdated before continuing
 pnpm install --no-frozen-lockfile
@@ -191,6 +196,10 @@ done
 pnpm install --no-frozen-lockfile
 
 # Add a CHANGELOG heading for this release if one doesn't exist yet
-inject_changelog_heading "$ROOT/CHANGELOG.md"
+FILES_TO_COMMIT=("pnpm-lock.yaml" "packages/" "tools/")
+if [ "$UPDATE_CHANGELOG" = "true" ]; then
+    inject_changelog_heading "$ROOT/CHANGELOG.md"
+    FILES_TO_COMMIT+=("CHANGELOG.md")
+fi
 
-commit_to_git "${COMMIT_MESSAGE}${VERSION}" "pnpm-lock.yaml" "packages/" "tools/" "CHANGELOG.md"
+commit_to_git "${COMMIT_MESSAGE}${VERSION}" "${FILES_TO_COMMIT[@]}"

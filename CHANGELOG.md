@@ -1,5 +1,38 @@
 ## vNEXT (not yet released)
 
+## v3.24.0
+
+This release introduces `LiveText` (beta), a collaborative rich-text data
+structure for plain text with optional inline formatting.
+
+### `@liveblocks/client`
+
+- Storage updates delivered to deep subscribers now carry a `source` field,
+  saying whether the change was made by this client
+  (`{ origin: "local", via: "edit" | "undo" | "redo" }`) or by another one
+  (`{ origin: "remote" }`), see
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-client#update-source).
+- Add `LiveText` for collaborative text editing with concurrent inserts,
+  deletes, and formatting changes.
+
+### `@liveblocks/codemirror`, `@liveblocks/lexical`, and `@liveblocks/prosemirror`
+
+- Introduce packages for integrating CodeMirror, Lexical, and ProseMirror
+  editors with Liveblocks Storage and `LiveText`.
+
+### `@liveblocks/react-tiptap`
+
+- Fix `useIsEditorReady()` so it correctly reports when the Tiptap editor is
+  ready. Thanks @danilowoz for the fix.
+
+## v3.23.1
+
+### `@liveblocks/react-ui`
+
+- Improve version history components for versions without authors, which can
+  occur with server-only changes. Add `HISTORY_VERSION_SUMMARY_AUTHORS_LIST` and
+  update `HISTORY_VERSION_PREVIEW_AUTHORS_LIST` overrides to reflect this.
+
 ## v3.23.0
 
 This release introduces `LiveFile`: a new data structure to store files such as
@@ -768,7 +801,8 @@ metadata to individual comments in the same way as thread metadata.
 This release introduces group mentions (e.g. `@engineering`) across all packages
 and first-class support for tenants. Learn more about
 [group mentions](https://liveblocks.io/docs/ready-made-features/comments/users-and-mentions)
-and [tenants](http://liveblocks.io/docs/authentication/tenants) in the docs.
+and [tenants](https://liveblocks.io/docs/authentication/organizations) in the
+docs.
 
 ### `@liveblocks/client`
 

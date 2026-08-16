@@ -3,12 +3,14 @@ import type { LiveList } from "../crdts/LiveList";
 import type { LiveMap } from "../crdts/LiveMap";
 import type { LiveObject } from "../crdts/LiveObject";
 import type { LiveRegister } from "../crdts/LiveRegister";
+import type { LiveText, LiveTextData } from "../crdts/LiveText";
 import type { Json, ReadonlyJson, ReadonlyJsonObject } from "../lib/Json";
 
 export type LiveStructure =
   | LiveObject<LsonObject>
   | LiveList<Lson>
   | LiveMap<string, Lson>
+  | LiveText
   | LiveFile;
 
 /**
@@ -71,6 +73,10 @@ export type ToJson<L extends Lson | LsonObject> =
   L extends LiveMap<infer KS extends string, infer V extends Lson> ?
     Lson extends V ? ReadonlyJsonObject :
     { readonly [K in KS]: ToJson<V> } :
+
+  // A LiveText serializes to a delta so inline attributes are preserved
+  L extends LiveText ?
+    LiveTextData :
 
   // A LiveFile serializes to its immutable metadata
   L extends LiveFile ?

@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/react",
-  "version": "3.23.0",
+  "version": "3.24.0",
   "description": "A set of React hooks and providers to use Liveblocks declaratively. Liveblocks is the all-in-one toolkit to build collaborative products like Figma, Notion, and more.",
   "license": "Apache-2.0",
   "author": "Liveblocks Inc.",
@@ -55,6 +55,7 @@
     "format": "(eslint --fix src/ || true) && prettier --write src/",
     "lint": "eslint src/",
     "lint:package": "publint --strict && attw --pack && bun scripts/check-exports.ts",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:ci": "vitest run --coverage",
     "test:types": "vitest run --config ./vitest.config.typecheck.ts",

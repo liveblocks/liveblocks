@@ -15,8 +15,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { existsSync } from "node:fs";
-import { resolve } from "node:path";
+import { existsSync, mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
 
 import { beforeAll, describe, expect, test } from "bun:test";
 
@@ -30,10 +31,10 @@ const CWD = resolve(import.meta.dir, "../..");
  */
 async function runCli(
   subArgs: string[],
-  options?: { env?: Record<string, string> }
+  options?: { env?: Record<string, string>; cwd?: string }
 ) {
   const proc = Bun.spawn(["bun", CLI, ...subArgs], {
-    cwd: CWD,
+    cwd: options?.cwd ?? CWD,
     stdout: "pipe",
     stderr: "pipe",
     env: { ...process.env, ...options?.env },
@@ -50,7 +51,7 @@ async function runCli(
 
 async function runDevCommand(
   args: string[],
-  options?: { env?: Record<string, string> }
+  options?: { env?: Record<string, string>; cwd?: string }
 ) {
   return runCli(["dev", ...args], options);
 }
@@ -146,6 +147,81 @@ describe("liveblocks dev -c", () => {
     expect(port).not.toBe(1153);
   });
 
+  test("injects connection details so apps need no config changes", async () => {
+    const { stdout, exitCode } = await runDevCommand([
+      "-p",
+      "7780",
+      "-c",
+      "env | grep LIVEBLOCKS",
+    ]);
+    expect(exitCode).toBe(0);
+    expect(stdout).toContain("LIVEBLOCKS_BASE_URL=http://localhost:7780");
+    expect(stdout).toContain("LIVEBLOCKS_PUBLIC_KEY=pk_localdev");
+    expect(stdout).toContain("LIVEBLOCKS_SECRET_KEY=sk_localdev");
+    expect(stdout).toContain(
+      "NEXT_PUBLIC_LIVEBLOCKS_BASE_URL=http://localhost:7780"
+    );
+    expect(stdout).toContain("NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY=pk_localdev");
+    expect(stdout).toContain("VITE_LIVEBLOCKS_BASE_URL=http://localhost:7780");
+    expect(stdout).toContain("VITE_LIVEBLOCKS_PUBLIC_KEY=pk_localdev");
+    expect(stdout).toContain(
+      "PUBLIC_LIVEBLOCKS_BASE_URL=http://localhost:7780"
+    );
+    expect(stdout).toContain("PUBLIC_LIVEBLOCKS_PUBLIC_KEY=pk_localdev");
+  });
+
+  test("never publishes a secret key under a client-visible prefix", async () => {
+    const { stdout, exitCode } = await runDevCommand([
+      "-p",
+      "7781",
+      "-c",
+      "env | grep LIVEBLOCKS",
+    ]);
+    expect(exitCode).toBe(0);
+
+    // Bundlers ship any variable carrying their own prefix to the browser, so
+    // a secret must never be injected under one. `VITE_` is Vite's equivalent
+    // of `NEXT_PUBLIC_`, not of `NEXT_`.
+    const published = stdout
+      .split("\n")
+      .map((line) => line.split("=")[0])
+      .filter((name) => /^(NEXT_PUBLIC_|VITE_|PUBLIC_)/.test(name));
+    expect(published).not.toContainEqual(expect.stringContaining("SECRET"));
+  });
+
+  test("overrides cloud credentials inherited from the parent environment", async () => {
+    const { stdout, exitCode } = await runDevCommand(
+      ["-p", "7782", "-c", "env | grep LIVEBLOCKS"],
+      {
+        env: {
+          LIVEBLOCKS_SECRET_KEY: "sk_prod_realkey",
+          NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY: "pk_prod_realkey",
+        },
+      }
+    );
+    expect(exitCode).toBe(0);
+    expect(stdout).not.toContain("sk_prod_realkey");
+    expect(stdout).not.toContain("pk_prod_realkey");
+    expect(stdout).toContain("LIVEBLOCKS_SECRET_KEY=sk_localdev");
+    expect(stdout).toContain("NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY=pk_localdev");
+  });
+
+  test("injected base URL follows --random-port", async () => {
+    const { stdout, exitCode } = await runDevCommand([
+      "-P",
+      "-c",
+      "env | grep LIVEBLOCKS",
+    ]);
+    expect(exitCode).toBe(0);
+
+    const port = stdout.match(/LIVEBLOCKS_DEV_SERVER_PORT=(\d+)/)?.[1];
+    expect(port).toBeDefined();
+    expect(stdout).toContain(`LIVEBLOCKS_BASE_URL=http://localhost:${port}`);
+    expect(stdout).toContain(
+      `NEXT_PUBLIC_LIVEBLOCKS_BASE_URL=http://localhost:${port}`
+    );
+  });
+
   test("does not change cwd of child process", async () => {
     const { stdout, exitCode } = await runDevCommand([
       "-p",
@@ -178,5 +254,49 @@ describe("liveblocks dev -c", () => {
   test("propagates child exit code", async () => {
     const { exitCode } = await runDevCommand(["-c", "exit 42"]);
     expect(exitCode).toBe(42);
+  });
+});
+
+describe("storage mode", () => {
+  test("--cmd is ephemeral by default, leaving .liveblocks/ alone", async () => {
+    const cwd = mkdtempSync(join(tmpdir(), "lb-cwd-"));
+    try {
+      const { stderr, exitCode } = await runDevCommand(
+        ["-P", "-v", "-c", "true"],
+        { cwd }
+      );
+      expect(exitCode).toBe(0);
+      expect(stderr).toContain("ephemeral storage");
+      expect(existsSync(join(cwd, ".liveblocks"))).toBe(false);
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("--persist keeps data under .liveblocks/", async () => {
+    const cwd = mkdtempSync(join(tmpdir(), "lb-cwd-"));
+    try {
+      const { stderr, exitCode } = await runDevCommand(
+        ["-P", "-v", "--persist", "-c", "true"],
+        { cwd }
+      );
+      expect(exitCode).toBe(0);
+      expect(stderr).toContain("persistent storage");
+      expect(existsSync(join(cwd, ".liveblocks"))).toBe(true);
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("--persist and --no-persist together is an error", async () => {
+    const { stderr, exitCode } = await runDevCommand([
+      "-P",
+      "--persist",
+      "--no-persist",
+      "-c",
+      "true",
+    ]);
+    expect(exitCode).toBe(1);
+    expect(stderr).toContain("mutually exclusive");
   });
 });

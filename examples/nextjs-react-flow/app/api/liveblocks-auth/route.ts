@@ -7,9 +7,10 @@ import { getRandomUser } from "../database";
  * https://liveblocks.io/docs/authentication
  */
 
-const liveblocks = new Liveblocks({
-  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
-});
+  const liveblocks = new Liveblocks({
+    secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+    baseUrl: process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL,
+  });
 
 export async function POST(_request: NextRequest) {
   if (!process.env.LIVEBLOCKS_SECRET_KEY) {

@@ -17,6 +17,7 @@
 
 import { abort, html, json, ZenRouter } from "@liveblocks/zenrouter";
 
+import { getBlobStore } from "~/dev-server/blobs/store";
 import welcomeHtml from "~/dev-server/static/welcome.html";
 
 export const zen = new ZenRouter({
@@ -37,3 +38,38 @@ zen.route("GET /", () =>
     )
   )
 );
+
+/**
+ * Serve a LiveFile blob to whoever holds a valid signed link.
+ *
+ * Unauthenticated by design: this is the dev-server stand-in for an object
+ * store's presigned URL, and the browser fetches it as an <img> src or similar,
+ * with no opportunity to attach a header. All the authority is in the query
+ * string, and the store checks it.
+ *
+ * Dev-server-only, so it's listed in DEVSERVER_ONLY_ROUTES in the route-parity
+ * check — production hands out R2 URLs, which never come back to us.
+ */
+zen.route("GET /blob", async ({ url }) => {
+  const store = getBlobStore();
+
+  const key = store.verifySignedGetUrl(url.searchParams);
+  if (key === undefined) {
+    abort(403);
+  }
+
+  const meta = await store.head(key);
+  const body = await store.get(key);
+  if (!meta || !body) {
+    abort(404);
+  }
+
+  return new Response(body, {
+    status: 200,
+    headers: {
+      "Content-Type": meta.contentType || "application/octet-stream",
+      "Content-Disposition": meta.contentDisposition,
+      "Content-Length": String(meta.size),
+    },
+  });
+});

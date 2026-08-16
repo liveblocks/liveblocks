@@ -41,6 +41,12 @@ const FEATURES: Feature[] = [
     description:
       "Drop pinned comments on the canvas and @mention the AI Assistant to make changes and reply in threads.",
   },
+  {
+    icon: <HistoryIcon />,
+    title: "Version history",
+    description:
+      "Open the clock button by the avatars to preview and restore flowchart snapshots taken before each AI run.",
+  },
 ];
 
 const styles: Record<string, CSSProperties> = {
@@ -319,6 +325,15 @@ function EditIcon() {
     <FeatureIconBase>
       <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
       <path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4z" />
+    </FeatureIconBase>
+  );
+}
+
+function HistoryIcon() {
+  return (
+    <FeatureIconBase>
+      <circle cx={12} cy={12} r={9} />
+      <path d="M12 7v5l3 2" />
     </FeatureIconBase>
   );
 }

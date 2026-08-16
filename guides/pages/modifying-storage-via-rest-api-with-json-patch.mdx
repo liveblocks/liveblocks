@@ -40,6 +40,7 @@ Storage is a tree of Liveblocks types:
 [LiveObject](/docs/api-reference/liveblocks-client#LiveObject),
 [LiveList](/docs/api-reference/liveblocks-client#LiveList), and
 [LiveMap](/docs/api-reference/liveblocks-client#LiveMap). It can also contain
+[LiveText](/docs/api-reference/liveblocks-client#LiveText) and
 [LiveFile](/docs/api-reference/liveblocks-client#LiveFile) nodes. When building
 your patch:
 
@@ -50,6 +51,12 @@ your patch:
 - **Nested values in `add` and `replace`:** If you pass a complex nested object
   or array as the `value` for an `add` or `replace` operation, it is
   automatically converted into LiveObjects and LiveLists on the server.
+- **LiveText values:** LiveText is a leaf node: only the LiveText node itself is
+  addressable, not fields under its serialized `data`. To replace its contents,
+  use `replace` with a string or a `LiveTextData` array, for example
+  `{ "op": "replace", "path": "/text", "value": [["Hello"]] }`. To remove a
+  LiveText, remove the whole node (for example, `/text`). LiveText versioning is
+  an internal detail and is not part of this API.
 - **LiveFile values:** Create or replace a LiveFile by passing its Plain LSON
   shape as the whole operation value:
   `{ "liveblocksType": "LiveFile", "data": LiveFileData }`. Use the
@@ -130,6 +137,39 @@ fails and no changes are applied. Use `test` to guard against concurrent updates
 [
   { "op": "test", "path": "/version", "value": 1 },
   { "op": "replace", "path": "/version", "value": 2 }
+]
+```
+
+## LiveText examples
+
+LiveText contents can currently only be replaced as a whole. Use a string for
+plain text, or an array of segments where each segment is `[text]` or
+`[text, attributes]`.
+
+```json
+[
+  { "op": "replace", "path": "/text", "value": "Hello" },
+  {
+    "op": "replace",
+    "path": "/text",
+    "value": [["Hello", { "bold": true }], [" world"]]
+  }
+]
+```
+
+Paths below a LiveText node, such as `/text/data/0/0`, are not supported. A
+whole LiveText node can still be removed:
+
+```json
+[{ "op": "remove", "path": "/text" }]
+```
+
+Use `test` against the whole LiveText node for optimistic checks.
+
+```json
+[
+  { "op": "test", "path": "/text", "value": [["Original"]] },
+  { "op": "replace", "path": "/text", "value": "Updated" }
 ]
 ```
 

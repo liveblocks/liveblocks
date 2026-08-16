@@ -5,7 +5,10 @@ import Head from "next/head";
 
 function MyApp({ Component, pageProps }: AppProps) {
   return (
-    <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
+    <LiveblocksProvider
+      authEndpoint="/api/liveblocks-auth"
+      baseUrl={process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL}
+    >
       <Head>
         <title>Liveblocks</title>
         <meta name="robots" content="noindex" />

@@ -224,6 +224,12 @@ This mode will:
 2. Run your unit tests.
 3. Stop the dev server.
 
+The command inherits `LIVEBLOCKS_BASE_URL`, `LIVEBLOCKS_PUBLIC_KEY` and
+`LIVEBLOCKS_SECRET_KEY`, along with the `NEXT_PUBLIC_`, `VITE_` and `PUBLIC_`
+prefixed variants for client-side code. If your app reads its connection details
+from the environment, it talks to the dev server without any change to your
+source or `.env` files.
+
 Example output:
 
 ```bash
@@ -274,6 +280,21 @@ We recommend:
    against a fresh instance (your local data in `.liveblocks/` won't be affected
    by your unit tests).
 
+## Persisting data
+
+Whether room data is kept is an explicit choice. By default,
+`npx liveblocks dev` persists data in the `.liveblocks/` folder, and `--cmd`
+uses a throwaway directory that is discarded when the command exits. Override
+either default with `--persist` or `--no-persist`:
+
+```bash
+# Throwaway server, nothing is written to .liveblocks/
+npx liveblocks dev --no-persist
+
+# Keep data between runs, useful when --cmd runs your app instead of your tests
+npx liveblocks dev --persist --cmd 'next dev'
+```
+
 ## Continuous Integration (CI) testing
 
 You can use the dev server in CI environments by setting up a test environment
@@ -303,13 +324,7 @@ You can run the dev server as a Docker container, which is useful for CI
 environments where you may not have Bun installed.
 
 ```bash
-docker run -p 1153:1153 ghcr.io/liveblocks/cli dev
-```
-
-To persist data between container restarts, mount a volume:
-
-```bash
-docker run -p 1153:1153 -v liveblocks-data:/app/.liveblocks ghcr.io/liveblocks/cli dev
+docker run -p 1153:1153 ghcr.io/liveblocks/dev-server
 ```
 
 ## Source code

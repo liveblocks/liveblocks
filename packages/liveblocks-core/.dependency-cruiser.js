@@ -145,6 +145,15 @@ export default {
       to: { pathNot: "^src/(globals|lib)/" },
     },
 
+    {
+      name: "illegal-import-from-internal",
+      comment:
+        "internal.ts contains shared foundational constants and must not depend on Liveblocks-specific modules.",
+      severity: "error",
+      from: { path: "^src/internal\\.ts$" },
+      to: { pathNot: "^src/(globals|lib)/" },
+    },
+
     // "Swimlane 1" - protocol/
     {
       name: "illegal-import-from-protocol",
@@ -179,10 +188,13 @@ export default {
     {
       name: "illegal-import-from-crdts",
       comment:
-        "All modules in crdts/ must have no other dependencies apart from refs/, types/, protocol/ or lib/.",
+        "All modules in crdts/ must have no other dependencies apart from internal.ts, refs/, types/, protocol/ or lib/.",
       severity: "error",
       from: { path: "^src/crdts/" },
-      to: { pathNot: "^src/(globals|crdts|refs|types|protocol|lib)/" },
+      to: {
+        pathNot:
+          "(^src/(globals|crdts|refs|types|protocol|lib)/|^src/internal\\.ts$)",
+      },
     },
   ],
 

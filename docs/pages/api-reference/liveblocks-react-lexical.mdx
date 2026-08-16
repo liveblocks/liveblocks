@@ -12,6 +12,13 @@ editor. It also adds realtime cursors, document persistence on the cloud,
 comments, and mentions. Read our
 [get started guides](/docs/get-started/text-editor/lexical) to learn more.
 
+<Banner>
+
+To sync Lexical with Liveblocks Storage instead (without Comments and mentions),
+use [`@liveblocks/lexical`](/docs/api-reference/liveblocks-lexical).
+
+</Banner>
+
 ## Setup
 
 To set up your collaborative Lexical editor, you must use
@@ -1701,6 +1708,11 @@ render a list of versions, see
 [`VersionHistory`](/docs/api-reference/liveblocks-react-ui#Version-History).
 Learn how to set this up in our
 [version history guide](/docs/guides/how-to-add-version-history-to-your-app).
+
+A version can have no authors when it contains only server-side changes. In that
+case, `HistoryVersionPreview` displays “Unattributed edits”. You can customize
+this text with
+[`HISTORY_VERSION_PREVIEW_AUTHORS_LIST`](/docs/api-reference/liveblocks-react-ui#Overrides-History-version-preview).
 
 #### Usage
 

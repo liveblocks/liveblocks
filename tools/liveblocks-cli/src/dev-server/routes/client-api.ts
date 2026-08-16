@@ -15,10 +15,39 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { ZenRouter } from "@liveblocks/zenrouter";
+import { abort, ZenRouter } from "@liveblocks/zenrouter";
+import { array, number, numeric, object, string } from "decoders";
 
+import {
+  storageFileId,
+  storageFileIds,
+  uploadId,
+} from "~/dev-server/lib/decoders";
 import { verifyJwtLite } from "~/dev-server/lib/jwt-lite";
+import {
+  abortStorageFileMultipartUpload,
+  completeStorageFileMultipartUpload,
+  createStorageFileMultipartUpload,
+  getStorageFileSignedUrls,
+  partitionStorageFileIds,
+  recordLivefileUpload,
+  requireInternalRoomId,
+  uploadStorageFile,
+  uploadStorageFileMultipartPart,
+} from "~/dev-server/lib/storage-files";
 import { DUMMY, NOT_IMPLEMENTED } from "~/dev-server/responses";
+
+/** The client's advisory `?fileSize=`, used only for pre-flight limit checks. */
+function optionalFileSize(url: URL): number | undefined {
+  const raw = url.searchParams.get("fileSize");
+  if (raw === null) return undefined;
+
+  const size = Number(raw);
+  if (!Number.isSafeInteger(size) || size < 0) {
+    abort(400);
+  }
+  return size;
+}
 
 export const zen = new ZenRouter({
   cors: {
@@ -33,6 +62,11 @@ export const zen = new ZenRouter({
     const token = header.slice(7); // Remove "Bearer " prefix
     const acessToken = verifyJwtLite(token);
     return acessToken !== null;
+  },
+  params: {
+    fileId: storageFileId,
+    partNumber: numeric,
+    uploadId,
   },
 });
 
@@ -137,6 +171,118 @@ zen.route("POST /v2/c/rooms/<roomId>/text-metadata", () => {
 
 /**
  * ------------------------------------------------------------
+ * LIVEFILE (Storage files)
+ * ------------------------------------------------------------
+ *
+ * Mirrors the secret-key routes, minus the single-file GET and plus the batch
+ * presigned-urls endpoint — the same asymmetry production has.
+ *
+ * TODO: Verify the authenticated user's write permission for this room. The
+ * dev server currently only checks that the token is valid, like the other
+ * room-scoped client routes here.
+ */
+
+zen.route(
+  "PUT /v2/c/rooms/<roomId>/storage/files/<fileId>/upload/<name>",
+  async ({ req, url, p }) => {
+    const internalRoomId = requireInternalRoomId(p.roomId);
+    if (!req.body) {
+      abort(400);
+    }
+
+    const file = await uploadStorageFile(
+      internalRoomId,
+      p.fileId,
+      p.name,
+      req.body,
+      optionalFileSize(url)
+    );
+    recordLivefileUpload(p.roomId, file);
+    return file;
+  }
+);
+
+zen.route(
+  "POST /v2/c/rooms/<roomId>/storage/files/<fileId>/multipart/<name>",
+  async ({ url, p }) => {
+    const internalRoomId = requireInternalRoomId(p.roomId);
+    return await createStorageFileMultipartUpload(
+      internalRoomId,
+      p.fileId,
+      p.name,
+      optionalFileSize(url)
+    );
+  }
+);
+
+zen.route(
+  "PUT /v2/c/rooms/<roomId>/storage/files/<fileId>/multipart/<uploadId>/<partNumber>",
+  async ({ req, p }) => {
+    const internalRoomId = requireInternalRoomId(p.roomId);
+    if (!req.body) {
+      abort(400);
+    }
+
+    return await uploadStorageFileMultipartPart(
+      internalRoomId,
+      p.fileId,
+      p.uploadId,
+      p.partNumber,
+      req.body
+    );
+  }
+);
+
+zen.route(
+  "POST /v2/c/rooms/<roomId>/storage/files/<fileId>/multipart/<uploadId>/complete",
+
+  object({ parts: array(object({ partNumber: number, etag: string })) }),
+
+  async ({ p, body }) => {
+    const internalRoomId = requireInternalRoomId(p.roomId);
+    const file = await completeStorageFileMultipartUpload(
+      internalRoomId,
+      p.fileId,
+      p.uploadId,
+      body.parts
+    );
+    recordLivefileUpload(p.roomId, file);
+    return file;
+  }
+);
+
+zen.route(
+  "DELETE /v2/c/rooms/<roomId>/storage/files/<fileId>/multipart/<uploadId>",
+  async ({ p }) => {
+    const internalRoomId = requireInternalRoomId(p.roomId);
+    await abortStorageFileMultipartUpload(internalRoomId, p.fileId, p.uploadId);
+    return new Response(null, { status: 200 });
+  }
+);
+
+zen.route(
+  "POST /v2/c/rooms/<roomId>/storage/files/presigned-urls",
+
+  object({ fileIds: storageFileIds }),
+
+  async ({ p, body }) => {
+    const internalRoomId = requireInternalRoomId(p.roomId);
+    const { referenced, uploaded } = partitionStorageFileIds(
+      p.roomId,
+      body.fileIds
+    );
+
+    return await getStorageFileSignedUrls(
+      internalRoomId,
+      body.fileIds,
+      referenced,
+      uploaded
+    );
+  }
+);
+
+/**
+ * ------------------------------------------------------------
  * NOT IMPLEMENTED ROUTES
  * ------------------------------------------------------------
  */
@@ -149,12 +295,6 @@ zen.route("POST /v2/c/rooms/<roomId>/text-metadata", () => {
   zen.route("POST /v2/c/rooms/<roomId>/attachments/<attachmentId>/multipart/<uploadId>/complete", () => NOT_IMPLEMENTED());
   zen.route("DELETE /v2/c/rooms/<roomId>/attachments/<attachmentId>/multipart/<uploadId>", () => NOT_IMPLEMENTED());
   zen.route("POST /v2/c/rooms/<roomId>/attachments/presigned-urls", () => NOT_IMPLEMENTED());
-  zen.route("PUT /v2/c/rooms/<roomId>/storage/files/<fileId>/upload/<name>", () => NOT_IMPLEMENTED());
-  zen.route("POST /v2/c/rooms/<roomId>/storage/files/<fileId>/multipart/<name>", () => NOT_IMPLEMENTED());
-  zen.route("PUT /v2/c/rooms/<roomId>/storage/files/<fileId>/multipart/<uploadId>/<partNumber>", () => NOT_IMPLEMENTED());
-  zen.route("POST /v2/c/rooms/<roomId>/storage/files/<fileId>/multipart/<uploadId>/complete", () => NOT_IMPLEMENTED());
-  zen.route("DELETE /v2/c/rooms/<roomId>/storage/files/<fileId>/multipart/<uploadId>", () => NOT_IMPLEMENTED());
-  zen.route("POST /v2/c/rooms/<roomId>/storage/files/presigned-urls", () => NOT_IMPLEMENTED());
   zen.route("POST /v2/c/rooms/<roomId>/send-message", () => NOT_IMPLEMENTED());
   zen.route("GET /v2/c/rooms/<roomId>/storage", () => NOT_IMPLEMENTED());
   zen.route("GET /v2/c/rooms/<roomId>/versions", () => NOT_IMPLEMENTED());

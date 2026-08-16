@@ -19,8 +19,9 @@ Options:
 | `--port`, `-p <port>`   | Port to listen on.                                                                                                        | `1153`            |
 | `--random-port`, `-P`   | Bind a random free port. The chosen port is exposed via the `LIVEBLOCKS_DEV_SERVER_PORT` env var. Ideal for CI.           |                   |
 | `--host <hostname>`     | Host to bind to.                                                                                                          | `localhost`       |
-| `--cmd`, `-c <command>` | Run a one-off command against a fresh server instance, then shut down. Does not affect your local data in `.liveblocks/`. |                   |
-| `--ci`                  | Start a fresh server instance on every boot, ideal for CI.                                                                |                   |
+| `--cmd`, `-c <command>` | Run a command against the server, then shut down. The command inherits `LIVEBLOCKS_BASE_URL` and the local keys (also `NEXT_PUBLIC_`, `VITE_` and `PUBLIC_` prefixed), so apps need no source or `.env` changes. |                   |
+| `--persist`             | Keep data in `.liveblocks/`.                                                                                              | Without `--cmd`   |
+| `--no-persist`           | Use a throwaway directory, leaving `.liveblocks/` untouched.                                                              | With `--cmd`      |
 | `--no-check`            | Skip project setup check on start.                                                                                        | Checks by default |
 | `--verbose`, `-v`       | Show verbose output.                                                                                                      |                   |
 | `--help`, `-h`          | Show help.                                                                                                                |                   |

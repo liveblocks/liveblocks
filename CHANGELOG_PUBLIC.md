@@ -18,6 +18,56 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 33 (2026-08-14)
+
+## Examples
+
+- Add dev server command to run relevant examples locally.
+
+## Contributors
+
+ctnicholas
+
+# Week 32 (2026-08-07)
+
+## v3.23.1
+
+### `@liveblocks/react-ui`
+
+- Improve version history components for versions without authors, which can
+  occur with server-only changes. Add `HISTORY_VERSION_SUMMARY_AUTHORS_LIST` and
+  update `HISTORY_VERSION_PREVIEW_AUTHORS_LIST` overrides to reflect this.
+
+## Liveblocks dev server (v1.8.0)
+
+- Add full support for LiveFile.
+
+## Examples
+
+- Add version history to advanced React Flow examples.
+
+## Website
+
+- New blog post: [What's new in Liveblocks: July 2026](https://liveblocks.io/blog/whats-new-in-liveblocks-july-2026).
+
+## Contributors
+
+nvie, ctnicholas, marcbouchenoire
+
+# Week 31 (2026-07-31)
+
+## Website
+
+- New blog post: [LiveFile: upload and share files in collaborative apps](https://liveblocks.io/blog/livefile-upload-and-share-files-on-collaborative-apps).
+
+## Examples
+
+- Added a skill that can create examples, including images and code.
+
+## Contributors
+
+ctnicholas
+
 # Week 30 (2026-07-24)
 
 ## v3.23.0
@@ -89,6 +139,32 @@ ctnicholas, ofoucherot, pierrelevaillant
 
 # Week 28 (2026-07-10)
 
+## v3.22.0
+
+### `@liveblocks/react`
+
+This release adds version history support for Storage: a version now snapshots
+both the room's Storage and Yjs documents (previously Yjs only).
+
+- Creating a version now also snapshots Storage, not just Yjs, see
+  [docs](https://liveblocks.io/docs/api-reference/rest-api-endpoints#create-version-history-snapshot).
+- `useHistoryVersions()` lists the room's versions. Each has a `vh_xxx` id, see
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-react#useHistoryVersions).
+- `useHistoryVersionStorageData("vh_xxx")` returns that version's Storage as a
+  read-only `LiveObject` so you can visualize or diff it manually, see
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-react#useHistoryVersionStorageData).
+- `useRestoreToStorageVersion("vh_xxx")` restores the room's Storage to that
+  version, as a single undoable change, see
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-react#useRestoreToStorageVersion).
+- `useDeleteHistoryVersion()` returns `deleteHistoryVersion("vh_xxx")` to
+  permanently delete a version, see
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-react#useDeleteHistoryVersion).
+
+### `@liveblocks/node` and Python SDK
+
+- Add methods for version history to list room versions, create a version
+  snapshot, and delete a version.
+
 ## Examples
 
 - New example:
@@ -103,7 +179,7 @@ ctnicholas, ofoucherot, pierrelevaillant
 
 ## Contributors
 
-ctnicholas, stacyschmitz
+nvie, marcbouchenoire, ctnicholas, stacyschmitz
 
 # Week 27 (2026-07-03)
 
@@ -1436,7 +1512,7 @@ ctnicholas, mmavko
 - Updated other information on the
   [users and mentions](https://liveblocks.io/docs/ready-made-features/comments/users-and-mentions)
   page.
-- Updated [Tenants](https://liveblocks.io/docs/authentication/tenants) page with
+- Updated [Organizations](https://liveblocks.io/docs/authentication/organizations) page with
   new information.
 - Add information on
   [AI web search](https://liveblocks.io/docs/ready-made-features/ai-copilots/knowledge#Web-search)
@@ -1702,7 +1778,7 @@ jrowny, ctnicholas
 This release introduces group mentions (e.g. `@engineering`) across all packages
 and first-class support for tenants. Learn more about
 [group mentions](https://liveblocks.io/docs/ready-made-features/comments/users-and-mentions)
-and [tenants](http://liveblocks.io/docs/authentication/tenants) in the docs.
+and [tenants](https://liveblocks.io/docs/authentication/organizations) in the docs.
 
 ### `@liveblocks/client`
 

@@ -271,6 +271,49 @@ describe("Serialization of nodes (to PlainLson format)", () => {
     convertedNodes.delete("root");
     expect(convertedNodes).toEqual(new Map<string, SerializedCrdt>(nodes));
   });
+
+  test("LiveText serializes without exposing version", () => {
+    const nodes: StorageNode[] = [
+      [
+        "si:1",
+        {
+          parentId: "root",
+          parentKey: "text",
+          type: CrdtType.TEXT,
+          data: [["Hello", { bold: true }], [" world"]],
+          version: 2,
+        },
+      ],
+    ];
+
+    const plainLson = snapshotToPlainLson(makeSnapshot(nodes));
+    expect(plainLson).toEqual({
+      liveblocksType: "LiveObject",
+      data: {
+        text: {
+          liveblocksType: "LiveText",
+          data: [["Hello", { bold: true }], [" world"]],
+        },
+      },
+    });
+
+    const convertedNodes = plainLsonToNodeMap(plainLson);
+    convertedNodes.delete("root");
+    expect(convertedNodes).toEqual(
+      new Map<string, SerializedCrdt>([
+        [
+          "si:1",
+          {
+            parentId: "root",
+            parentKey: "text",
+            type: CrdtType.TEXT,
+            data: [["Hello", { bold: true }], [" world"]],
+            version: 0,
+          },
+        ],
+      ])
+    );
+  });
 });
 
 describe("Deserialization of nodes (from PlainLson format)", () => {
@@ -389,6 +432,36 @@ describe("Deserialization of nodes (from PlainLson format)", () => {
     );
   });
 
+  test("LiveText initializes with internal version 0", () => {
+    const tree: PlainLsonObject = {
+      liveblocksType: "LiveObject",
+      data: {
+        text: {
+          liveblocksType: "LiveText",
+          data: [["Hello"]],
+        },
+      },
+    };
+
+    const convertedNodes = plainLsonToNodeMap(tree);
+    convertedNodes.delete("root");
+
+    expect(convertedNodes).toEqual(
+      new Map([
+        [
+          "si:1",
+          {
+            parentId: "root",
+            parentKey: "text",
+            type: CrdtType.TEXT,
+            data: [["Hello"]],
+            version: 0,
+          },
+        ],
+      ])
+    );
+  });
+
   test("Invalid liveblocksType should throw error", () => {
     const tree = {
       liveblocksType: "LiveObject",
@@ -463,6 +536,22 @@ describe("streaming === nonstreaming equivalence", () => {
       ["si:1", { parentId: "root", parentKey: "list", type: CrdtType.LIST }],
       ["si:2", { parentId: "root", parentKey: "map", type: CrdtType.MAP }],
       ["si:3", { data: {}, parentId: "root", parentKey: "obj", type: CrdtType.OBJECT }],
+    ];
+    expect(streamingResult(nodes)).toBe(nonstreamingResult(nodes));
+  });
+
+  test("LiveText", () => {
+    const nodes: StorageNode[] = [
+      [
+        "si:1",
+        {
+          parentId: "root",
+          parentKey: "text",
+          type: CrdtType.TEXT,
+          data: [["Hello", { bold: true }], [" world"]],
+          version: 2,
+        },
+      ],
     ];
     expect(streamingResult(nodes)).toBe(nonstreamingResult(nodes));
   });

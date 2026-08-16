@@ -8,7 +8,7 @@ import { CrdtType } from "../protocol/StorageNode";
 import type * as DevTools from "../types/DevToolsTreeNode";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
-import { AbstractCrdt, OpSource } from "./AbstractCrdt";
+import { AbstractCrdt } from "./AbstractCrdt";
 import {
   creationOpToLiveNode,
   deserialize,
@@ -17,6 +17,8 @@ import {
   lsonToLiveNode,
 } from "./liveblocks-helpers";
 import type { LiveNode, Lson, ToJson } from "./Lson";
+import type { OpSource, UpdateSource } from "./StorageUpdates";
+import { LOCAL_EDIT, toUpdateSource } from "./StorageUpdates";
 import type { UpdateDelta } from "./UpdateDelta";
 
 /**
@@ -30,6 +32,7 @@ export type LiveMapUpdates<TKey extends string, TValue extends Lson> = {
   //               ^^^^^^
   //               FIXME: `string` is not specific enough here. See if we can
   //               improve this type to match TKey!
+  source: UpdateSource;
 };
 
 /**
@@ -139,7 +142,12 @@ export class LiveMap<
       return { modified: false };
     }
 
-    if (source === OpSource.OURS) {
+    if (source.origin === "remote") {
+      // If a remote operation set an item,
+      // delete the unacknowledgedSet associated to the key
+      // to make sure any future ack can override it
+      this.#unacknowledgedSet.delete(key);
+    } else if (!source.optimistic) {
       const lastUpdateOpId = this.#unacknowledgedSet.get(key);
       if (lastUpdateOpId === opId) {
         // Acknowlegment from local operation
@@ -149,11 +157,6 @@ export class LiveMap<
         // Another local set has overriden the value, so we do nothing
         return { modified: false };
       }
-    } else if (source === OpSource.THEIRS) {
-      // If a remote operation set an item,
-      // delete the unacknowledgedSet associated to the key
-      // to make sure any future ack can override it
-      this.#unacknowledgedSet.delete(key);
     }
 
     const previousValue = this.#map.get(key);
@@ -176,6 +179,7 @@ export class LiveMap<
         node: this,
         type: "LiveMap",
         updates: { [key]: { type: "update" } },
+        source: toUpdateSource(source),
       },
       reverse,
     };
@@ -191,7 +195,7 @@ export class LiveMap<
   }
 
   /** @internal */
-  _detachChild(child: LiveNode): ApplyResult {
+  _detachChild(child: LiveNode, source: UpdateSource): ApplyResult {
     const id = nn(this._id);
     const parentKey = nn(child._parentKey);
     const reverse = child._toOps(id, parentKey);
@@ -214,6 +218,7 @@ export class LiveMap<
           deletedItem: liveNodeToLson(child),
         },
       },
+      source,
     };
 
     return { modified: storageUpdate, reverse };
@@ -253,6 +258,7 @@ export class LiveMap<
    * @param value The value of the element to add. Should be serializable to JSON.
    */
   set(key: TKey, value: TValue): void {
+    this._warnIfOrphaned();
     this._pool?.assertStorageIsWritable();
     const oldValue = this.#map.get(key);
 
@@ -275,6 +281,7 @@ export class LiveMap<
         node: this,
         type: "LiveMap",
         updates: { [key]: { type: "update" } },
+        source: LOCAL_EDIT,
       });
 
       const ops = item._toOpsWithOpId(this._id, key, this._pool);
@@ -312,6 +319,7 @@ export class LiveMap<
    * @returns true if an element existed and has been removed, or false if the element does not exist.
    */
   delete(key: TKey): boolean {
+    this._warnIfOrphaned();
     this._pool?.assertStorageIsWritable();
     const item = this.#map.get(key);
 
@@ -335,6 +343,7 @@ export class LiveMap<
             deletedItem: liveNodeToLson(item),
           },
         },
+        source: LOCAL_EDIT,
       });
       this._pool.dispatch(
         [

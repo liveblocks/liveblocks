@@ -598,6 +598,7 @@ describe("LiveList edge cases", () => {
           type: "LiveList",
           node: listItems,
           updates: [{ index: 1, item: "b", type: "insert" }],
+          source: { origin: "remote" },
         },
       ]);
       expect(rootDeepCallback).toHaveBeenCalledWith([
@@ -605,6 +606,7 @@ describe("LiveList edge cases", () => {
           type: "LiveList",
           node: listItems,
           updates: [{ index: 2, item: "c", type: "insert" }],
+          source: { origin: "local", via: "edit" },
         },
       ]);
       expect(listCallback).toHaveBeenCalledTimes(2);
@@ -673,6 +675,7 @@ describe("LiveList edge cases", () => {
           type: "LiveList",
           node: listItems,
           updates: [{ index: 0, previousIndex: 1, item: "b", type: "move" }],
+          source: { origin: "remote" },
         },
       ]);
 
@@ -733,6 +736,7 @@ describe("LiveList edge cases", () => {
           type: "LiveList",
           node: listItems,
           updates: [{ index: 1, type: "delete", deletedItem: "b" }],
+          source: { origin: "remote" },
         },
       ]);
 
@@ -757,13 +761,14 @@ describe("LiveList edge cases", () => {
       const items = root.get("items");
       const secondItem = items.get(1);
 
-      const applyResult = items._detachChild(secondItem!);
+      const applyResult = items._detachChild(secondItem!, { origin: "remote" });
 
       expect(applyResult).toEqual({
         modified: {
           type: "LiveList",
           node: items,
           updates: [{ index: 1, type: "delete", deletedItem: secondItem }],
+          source: { origin: "remote" },
         },
         reverse: [
           {
@@ -845,6 +850,7 @@ describe("LiveList edge cases", () => {
             node: items,
             type: "LiveList",
             updates: [{ type: "set", index: 0, item: "B" }],
+            source: { origin: "remote" },
           },
         ]);
       });
@@ -925,6 +931,7 @@ describe("LiveList edge cases", () => {
             node: items,
             type: "LiveList",
             updates: [{ type: "insert", index: 0, item: "B" }],
+            source: { origin: "remote" },
           },
         ]);
       });
@@ -971,6 +978,7 @@ describe("LiveList edge cases", () => {
             node: items,
             type: "LiveList",
             updates: [{ type: "insert", index: 0, item: "1" }],
+            source: { origin: "remote" },
           },
         ]);
       });

@@ -1,0 +1,318 @@
+---
+meta:
+  title: "@liveblocks/codemirror"
+  parentTitle: "API Reference"
+  description: "API Reference for the @liveblocks/codemirror package"
+alwaysShowAllNavigationLevels: false
+---
+
+`@liveblocks/codemirror` provides CodeMirror 6 plugins that sync a document with
+[`LiveText`](/docs/api-reference/liveblocks-client#LiveText) in Storage and
+display remote carets and selections. Read our
+[React](/docs/get-started/react-codemirror) or
+[Next.js](/docs/get-started/nextjs-codemirror) get started guides to learn more.
+
+## Setup
+
+Install Liveblocks, CodeMirror, and this package:
+
+```bash
+npm install @liveblocks/client @liveblocks/react @liveblocks/codemirror codemirror
+```
+
+Each Liveblocks package should use the same version.
+
+Create a room with a
+[`LiveText`](/docs/api-reference/liveblocks-client#LiveText) document in Storage
+and an initial presence shape for selection cursors:
+
+```tsx file="liveblocks.config.ts"
+import type { LiveblocksCodemirrorSelection } from "@liveblocks/codemirror";
+import { LiveText } from "@liveblocks/client";
+
+declare global {
+  interface Liveblocks {
+    Presence: {
+      selection: LiveblocksCodemirrorSelection | null;
+    };
+    Storage: {
+      document: LiveText;
+    };
+    UserMeta: {
+      id?: string;
+      info?: {
+        name?: string;
+        color?: string;
+      };
+    };
+  }
+}
+
+export {};
+```
+
+```tsx file="App.tsx"
+"use client";
+
+import { LiveText } from "@liveblocks/client";
+import {
+  ClientSideSuspense,
+  LiveblocksProvider,
+  RoomProvider,
+} from "@liveblocks/react/suspense";
+import { Editor } from "./Editor";
+
+export default function App() {
+  return (
+    <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
+      <RoomProvider
+        id="my-room"
+        // +++
+        initialPresence={{ selection: null }}
+        initialStorage={{ document: new LiveText("Hello, world") }}
+        // +++
+      >
+        <ClientSideSuspense fallback={<div>Loading…</div>}>
+          <Editor />
+        </ClientSideSuspense>
+      </RoomProvider>
+    </LiveblocksProvider>
+  );
+}
+```
+
+Attach the plugins after Storage has loaded. Create the editor with the
+`LiveText` content and both plugins in the initial extensions:
+
+```tsx file="Editor.tsx"
+"use client";
+
+import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
+import { EditorView } from "@codemirror/view";
+import { EditorState } from "@codemirror/state";
+import type { LiveText, Room } from "@liveblocks/client";
+import {
+  createLiveblocksPresencePlugin,
+  createLiveblocksSyncPlugin,
+} from "@liveblocks/codemirror";
+import { useRoom } from "@liveblocks/react/suspense";
+
+export function Editor() {
+  const room = useRoom();
+  const root = useRoot(room);
+
+  if (root == null) {
+    return <div>Loading…</div>;
+  }
+
+  return <EditorInner text={root.get("document")} />;
+}
+
+function EditorInner({ text }: { text: LiveText }) {
+  const room = useRoom();
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (containerRef.current === null) return;
+
+    const view = new EditorView({
+      parent: containerRef.current,
+      state: EditorState.create({
+        // +++
+        doc: text.toString(),
+        extensions: [
+          createLiveblocksSyncPlugin(room, text),
+          createLiveblocksPresencePlugin(room, text),
+        ],
+        // +++
+      }),
+    });
+
+    return () => {
+      view.destroy();
+    };
+  }, [room, text]);
+
+  return <div ref={containerRef} className="editor" />;
+}
+
+function useRoot(room: Room) {
+  const subscribe = room.events.storageDidLoad.subscribeOnce;
+  const getSnapshot = room.getStorageOrNull;
+  const getServerSnapshot = useCallback(() => null, []);
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+}
+```
+
+Add styles for remote carets and selections. This package does not ship a
+stylesheet.
+
+```css file="globals.css"
+.lb-remote-selection {
+  position: absolute;
+  background-color: color-mix(in srgb, var(--lb-remote-color) 25%, transparent);
+  border-radius: 1px;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+.lb-remote-caret {
+  position: absolute;
+  width: 0;
+  border-left: 2px solid var(--lb-remote-color);
+  pointer-events: none;
+  box-sizing: border-box;
+}
+```
+
+## createLiveblocksSyncPlugin
+
+Keeps a CodeMirror document in sync with a
+[`LiveText`](/docs/api-reference/liveblocks-client#LiveText) node in Storage.
+Local edits are written to Storage. Remote edits are applied to the editor. The
+plugin also wires undo and redo to the room’s history:
+
+- `Mod-z` — undo
+- `Mod-y` — redo
+- `Shift-Mod-z` — redo on macOS
+
+```tsx
+import { createLiveblocksSyncPlugin } from "@liveblocks/codemirror";
+
+const sync = createLiveblocksSyncPlugin(room, text);
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="extension" type="Extension">
+    A CodeMirror extension to add to your editor state.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="room" type="Room" required>
+    The Liveblocks room, retrieved with
+    [`useRoom`](/docs/api-reference/liveblocks-react#useRoom) or
+    [`client.enterRoom`](/docs/api-reference/liveblocks-client#Client.enterRoom).
+  </PropertiesListItem>
+  <PropertiesListItem name="text" type="LiveText" required>
+    The [`LiveText`](/docs/api-reference/liveblocks-client#LiveText) node to
+    sync with the editor document.
+  </PropertiesListItem>
+</PropertiesList>
+
+## createLiveblocksPresencePlugin
+
+Broadcasts the local selection to other clients and renders remote carets and
+selection highlights. Remote caret colors come from each user’s
+[`user.info.color`](/docs/api-reference/liveblocks-client#Room.getSelf). Set
+user info when authenticating or joining a room.
+
+The plugin renders elements with the `.lb-remote-caret` and
+`.lb-remote-selection` class names. Style them in your app CSS using the
+`--lb-remote-color` CSS variable.
+
+```tsx
+import { createLiveblocksPresencePlugin } from "@liveblocks/codemirror";
+
+const presence = createLiveblocksPresencePlugin(room, text);
+```
+
+Add the returned extensions to your editor:
+
+```tsx
+extensions: [
+  createLiveblocksSyncPlugin(room, text),
+  createLiveblocksPresencePlugin(room, text),
+];
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="extensions" type="Extension[]">
+    CodeMirror extensions that track remote selections and render carets.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="room" type="Room" required>
+    The Liveblocks room. Presence must include a `selection` field. See
+    [Typing](#Typing).
+  </PropertiesListItem>
+  <PropertiesListItem name="text" type="LiveText" required>
+    The same [`LiveText`](/docs/api-reference/liveblocks-client#LiveText) node
+    passed to [`createLiveblocksSyncPlugin`](#createLiveblocksSyncPlugin).
+  </PropertiesListItem>
+</PropertiesList>
+
+## LiveblocksCodemirrorSelection [#LiveblocksCodemirrorSelection]
+
+The presence selection shape used by
+[`createLiveblocksPresencePlugin`](#createLiveblocksPresencePlugin). Positions
+are encoded against the
+[`LiveText`](/docs/api-reference/liveblocks-client#LiveText) version so remote
+carets stay stable across concurrent edits.
+
+```ts
+import type { LiveblocksCodemirrorSelection } from "@liveblocks/codemirror";
+
+type Presence = {
+  selection: LiveblocksCodemirrorSelection | null;
+};
+```
+
+<PropertiesList title="Properties">
+  <PropertiesListItem name="anchor" type="number" required>
+    Encoded selection anchor index.
+  </PropertiesListItem>
+  <PropertiesListItem name="head" type="number" required>
+    Encoded selection head index.
+  </PropertiesListItem>
+  <PropertiesListItem name="version" type="number" required>
+    The [`LiveText`](/docs/api-reference/liveblocks-client#LiveText) version
+    used when encoding `anchor` and `head`.
+  </PropertiesListItem>
+</PropertiesList>
+
+## Typing [#Typing]
+
+Type your room’s presence, Storage, and user metadata in
+[`liveblocks.config.ts`](/docs/api-reference/liveblocks-react#Typing-your-data).
+Use [`LiveblocksCodemirrorSelection`](#LiveblocksCodemirrorSelection) for the
+presence `selection` field.
+
+```ts file="liveblocks.config.ts"
+import type { LiveblocksCodemirrorSelection } from "@liveblocks/codemirror";
+import { LiveText } from "@liveblocks/client";
+
+declare global {
+  interface Liveblocks {
+    Presence: {
+      selection: LiveblocksCodemirrorSelection | null;
+    };
+    Storage: {
+      document: LiveText;
+    };
+    UserMeta: {
+      id?: string;
+      info?: {
+        name?: string;
+        color?: string;
+      };
+    };
+  }
+}
+
+export {};
+```
+
+When joining a room, set `initialPresence` to `{ selection: null }` and
+`initialStorage` to your `LiveText` document:
+
+```tsx
+<RoomProvider
+  id="my-room"
+  initialPresence={{ selection: null }}
+  initialStorage={{ document: new LiveText("Hello, world") }}
+>
+  {/* children */}
+</RoomProvider>
+```

@@ -23,7 +23,9 @@ import { DEFAULT_BASE_URL } from "../constants";
 import { LiveList } from "../crdts/LiveList";
 import { LiveMap } from "../crdts/LiveMap";
 import { LiveObject } from "../crdts/LiveObject";
+import type { LiveText } from "../crdts/LiveText";
 import type { LsonObject } from "../crdts/Lson";
+import type { StorageUpdate, UpdateSource } from "../crdts/StorageUpdates";
 import { kInternal } from "../internal";
 import { makeEventSource } from "../lib/EventSource";
 import * as console from "../lib/fancy-console";
@@ -36,7 +38,7 @@ import { OpCode } from "../protocol/Op";
 import { ServerMsgCode } from "../protocol/ServerMsg";
 import type { StorageNode } from "../protocol/StorageNode";
 import { CrdtType, nodeStreamToCompactNodes } from "../protocol/StorageNode";
-import type { RoomConfig, RoomDelegates } from "../room";
+import type { PrivateHistoryEvent, RoomConfig, RoomDelegates } from "../room";
 import { createRoom } from "../room";
 import { WebsocketCloseCodes } from "../types/IWebSocket";
 import type { LiveblocksError } from "../types/LiveblocksError";
@@ -53,6 +55,7 @@ import {
 } from "./_MockWebSocketServer.behaviors";
 import {
   createSerializedList,
+  createSerializedMap,
   createSerializedObject,
   createSerializedRegister,
   createSerializedRoot,
@@ -2497,6 +2500,70 @@ describe("room", () => {
     });
   });
 
+  describe("version history restore", () => {
+    test("restores an existing LiveText through a forward UPDATE_TEXT op", async () => {
+      const { root, room, wss } = await prepareIsolatedStorageTest<{
+        text: LiveText;
+      }>(
+        [
+          createSerializedRoot(),
+          [
+            "text",
+            {
+              type: CrdtType.TEXT,
+              parentId: "root",
+              parentKey: "text",
+              data: [["Current"]],
+              version: 7,
+            },
+          ],
+        ],
+        1
+      );
+
+      room[kInternal].reconcileStorageWithNodes([
+        createSerializedRoot(),
+        [
+          "text",
+          {
+            type: CrdtType.TEXT,
+            parentId: "root",
+            parentKey: "text",
+            data: [["Historic", { bold: true }]],
+            version: 2,
+          },
+        ],
+      ]);
+
+      expect(root.get("text").toJSON()).toEqual([["Historic", { bold: true }]]);
+      expect(wss.receivedMessages.at(-1)).toEqual([
+        {
+          type: ClientMsgCode.UPDATE_STORAGE,
+          ops: [
+            {
+              type: OpCode.UPDATE_TEXT,
+              id: "text",
+              opId: "1:0",
+              baseVersion: 7,
+              ops: [
+                { type: "delete", index: 0, length: 7 },
+                {
+                  type: "insert",
+                  index: 0,
+                  text: "Historic",
+                  attributes: { bold: true },
+                },
+              ],
+            },
+          ],
+        },
+      ]);
+
+      room.history.undo();
+      expect(root.get("text").toString()).toBe("Current");
+    });
+  });
+
   describe("room load promises", () => {
     test("presence-ready promise", async () => {
       const { room } = createTestableRoom({
@@ -2757,6 +2824,321 @@ describe("room", () => {
       expect(result2.nextCursor).toBeUndefined();
 
       room.destroy();
+    });
+  });
+
+  describe("storage update source", () => {
+    function readSources(updates: StorageUpdate[]): UpdateSource[] {
+      return updates.map((update) => update.source);
+    }
+
+    test("local mutations are tagged local", async () => {
+      const { room, root } = await prepareIsolatedStorageTest<{ a: number }>(
+        [createSerializedRoot({ a: 0 })],
+        0,
+        { a: 0 }
+      );
+
+      const sources: UpdateSource[] = [];
+      onTestFinished(
+        room.events.storageBatch.subscribe((updates) => {
+          sources.push(...readSources(updates));
+        })
+      );
+
+      root.set("a", 1);
+
+      expect(sources).toEqual([{ origin: "local", via: "edit" }]);
+    });
+
+    test("remote ops without opId are tagged remote", async () => {
+      const { room, root, applyRemoteOperations } =
+        await prepareIsolatedStorageTest<{ a: number }>(
+          [createSerializedRoot({ a: 0 })],
+          0,
+          { a: 0 }
+        );
+
+      const sources: UpdateSource[] = [];
+      onTestFinished(
+        room.events.storageBatch.subscribe((updates) => {
+          sources.push(...readSources(updates));
+        })
+      );
+
+      applyRemoteOperations([
+        {
+          type: OpCode.UPDATE_OBJECT,
+          id: "root",
+          data: { a: 2 },
+        },
+      ]);
+
+      expect(sources).toEqual([{ origin: "remote" }]);
+      expect(root.get("a")).toBe(2);
+    });
+
+    test("peer client receives remote-tagged updates via prepareStorageTest", async () => {
+      const { refRoom, storage } = await prepareStorageTest<{ a: number }>(
+        [createSerializedRoot({ a: 0 })],
+        0
+      );
+
+      const sources: UpdateSource[] = [];
+      onTestFinished(
+        refRoom.events.storageBatch.subscribe((updates) => {
+          sources.push(...readSources(updates));
+        })
+      );
+
+      storage.root.set("a", 1);
+
+      expect(sources).toEqual([{ origin: "remote" }]);
+    });
+
+    test("undo and redo produce undo/redo-tagged storage updates", async () => {
+      const { room, root } = await prepareIsolatedStorageTest<{ a: number }>(
+        [createSerializedRoot({ a: 0 })],
+        0,
+        { a: 0 }
+      );
+
+      const sources: UpdateSource[] = [];
+      onTestFinished(
+        room.events.storageBatch.subscribe((updates) => {
+          sources.push(...readSources(updates));
+        })
+      );
+
+      root.set("a", 1);
+      expect(sources).toEqual([{ origin: "local", via: "edit" }]);
+
+      sources.length = 0;
+      room.history.undo();
+
+      expect(sources).toEqual([{ origin: "local", via: "undo" }]);
+
+      sources.length = 0;
+      room.history.redo();
+
+      expect(sources).toEqual([{ origin: "local", via: "redo" }]);
+    });
+
+    test("an acknowledgement keeps the via of the change it confirms", async () => {
+      const { room, root, applyRemoteOperations } =
+        await prepareIsolatedStorageTest<{ map: LiveMap<string, string> }>(
+          [
+            createSerializedRoot(),
+            createSerializedMap("0:1", "root", "map"),
+            createSerializedRegister("0:2", "0:1", "k", "old"),
+          ],
+          1
+        );
+
+      const sources: UpdateSource[] = [];
+      onTestFinished(
+        room.events.storageBatch.subscribe((updates) => {
+          sources.push(...readSources(updates));
+        })
+      );
+
+      root.get("map").set("k", "new");
+      room.history.undo(); // Restores "old" under a fresh opId
+
+      // Another client overwrites the same key before our undo is acked, which
+      // clears the pending-set bookkeeping for that key...
+      applyRemoteOperations([
+        {
+          type: OpCode.CREATE_REGISTER,
+          id: "2:0",
+          parentId: "0:1",
+          parentKey: "k",
+          data: "remote",
+        },
+      ]);
+
+      // ...so when the server acks the undo (by echoing it back verbatim), it
+      // lands as a real change instead of a no-op
+      applyRemoteOperations([
+        {
+          type: OpCode.CREATE_REGISTER,
+          id: "0:2",
+          parentId: "0:1",
+          parentKey: "k",
+          data: "old",
+          opId: "1:1",
+        },
+      ]);
+
+      expect(root.get("map").get("k")).toBe("old");
+      expect(sources).toEqual([
+        { origin: "local", via: "edit" },
+        { origin: "local", via: "undo" },
+        { origin: "remote" },
+        { origin: "local", via: "undo" }, // The ack, not a fresh "edit"
+      ]);
+    });
+  });
+
+  describe("private history events", () => {
+    test("undo and redo notify history before storage", async () => {
+      const { room, root } = await prepareIsolatedStorageTest<{ a: number }>(
+        [createSerializedRoot({ a: 1 })],
+        0,
+        { a: 1 }
+      );
+
+      const order: string[] = [];
+      onTestFinished(
+        room[kInternal].history.subscribe((event) => {
+          if (event.action === "undo" || event.action === "redo") {
+            order.push(`history:${event.action}`);
+          }
+        })
+      );
+      onTestFinished(
+        room.events.storageBatch.subscribe(() => {
+          order.push("storage");
+        })
+      );
+
+      root.set("a", 2);
+
+      order.length = 0;
+      room.history.undo();
+      expect(order).toEqual(["history:undo", "storage"]);
+
+      order.length = 0;
+      room.history.redo();
+      expect(order).toEqual(["history:redo", "storage"]);
+    });
+
+    test("push, undo, and redo emit stable ids", async () => {
+      const { room, root } = await prepareIsolatedStorageTest<{ a: number }>(
+        [createSerializedRoot({ a: 1 })],
+        0,
+        { a: 1 }
+      );
+
+      const events: PrivateHistoryEvent[] = [];
+      onTestFinished(
+        room[kInternal].history.subscribe((event) => events.push(event))
+      );
+
+      root.set("a", 2);
+      expect(events).toEqual([{ action: "push", id: 0 }]);
+
+      events.length = 0;
+      room.history.undo();
+      expect(events).toEqual([{ action: "undo", id: 0 }]);
+
+      events.length = 0;
+      room.history.redo();
+      expect(events).toEqual([{ action: "redo", id: 0 }]);
+    });
+
+    test("new edit after undo discards redo ids", async () => {
+      const { room, root } = await prepareIsolatedStorageTest<{ a: number }>(
+        [createSerializedRoot({ a: 1 })],
+        0,
+        { a: 1 }
+      );
+
+      const events: PrivateHistoryEvent[] = [];
+      onTestFinished(
+        room[kInternal].history.subscribe((event) => events.push(event))
+      );
+
+      root.set("a", 2);
+      room.history.undo();
+
+      events.length = 0;
+      root.set("a", 3);
+
+      expect(events).toEqual([
+        { action: "push", id: 1 },
+        { action: "discard", ids: [0] },
+      ]);
+    });
+
+    test("clear emits a clear event", async () => {
+      const { room, root } = await prepareIsolatedStorageTest<{ a: number }>(
+        [createSerializedRoot({ a: 1 })],
+        0,
+        { a: 1 }
+      );
+
+      const events: PrivateHistoryEvent[] = [];
+      onTestFinished(
+        room[kInternal].history.subscribe((event) => events.push(event))
+      );
+
+      root.set("a", 2);
+      room.history.undo();
+
+      events.length = 0;
+      room.history.clear();
+
+      expect(events).toEqual([{ action: "clear" }]);
+    });
+
+    test("batch coalesces to one push", async () => {
+      const { room, root } = await prepareIsolatedStorageTest<{ a: number }>(
+        [createSerializedRoot({ a: 1 })],
+        0,
+        { a: 1 }
+      );
+
+      const events: PrivateHistoryEvent[] = [];
+      onTestFinished(
+        room[kInternal].history.subscribe((event) => events.push(event))
+      );
+
+      room.batch(() => {
+        root.set("a", 2);
+        root.set("a", 3);
+      });
+
+      expect(events).toEqual([{ action: "push", id: 0 }]);
+    });
+
+    test("history.disable suppresses private history events", async () => {
+      const { room, root } = await prepareIsolatedStorageTest<{ a: number }>(
+        [createSerializedRoot({ a: 1 })],
+        0,
+        { a: 1 }
+      );
+
+      const events: PrivateHistoryEvent[] = [];
+      onTestFinished(
+        room[kInternal].history.subscribe((event) => events.push(event))
+      );
+
+      room.history.disable(() => {
+        root.set("a", 2);
+      });
+
+      expect(events).toEqual([]);
+    });
+
+    test("evicting the oldest undo item emits discard", async () => {
+      const { room, root } = await prepareIsolatedStorageTest<{ a: number }>(
+        [createSerializedRoot({ a: 0 })],
+        0,
+        { a: 0 }
+      );
+
+      const events: PrivateHistoryEvent[] = [];
+      onTestFinished(
+        room[kInternal].history.subscribe((event) => events.push(event))
+      );
+
+      for (let i = 1; i <= 51; i++) {
+        root.set("a", i);
+      }
+
+      expect(events.at(-2)).toEqual({ action: "discard", ids: [0] });
+      expect(events.at(-1)).toEqual({ action: "push", id: 50 });
     });
   });
 });

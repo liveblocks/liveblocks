@@ -13,6 +13,7 @@
   },
   "scripts": {
     "dev": "next dev",
+    "dev:local": "npx liveblocks dev --persist --cmd 'next dev'",
     "build": "next build",
     "start": "next start"
   },

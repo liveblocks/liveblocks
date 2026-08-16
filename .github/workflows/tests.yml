@@ -103,6 +103,10 @@ jobs:
             exit 1
           fi
 
+      - name: Typecheck
+        if: needs.check_for_code_changes.outputs.changes == 'true'
+        run: pnpm run typecheck --filter ${{ matrix.pkg }}
+
       - name: Run unit tests
         if: needs.check_for_code_changes.outputs.changes == 'true'
         run: pnpm run test:ci --filter ${{ matrix.pkg }}

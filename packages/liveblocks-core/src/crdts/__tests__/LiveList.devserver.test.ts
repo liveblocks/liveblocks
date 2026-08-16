@@ -807,6 +807,7 @@ describe("LiveList", () => {
             { index: 1, item: "b", type: "insert" },
             { index: 2, item: "c", type: "insert" },
           ],
+          source: { origin: "local", via: "edit" },
         },
       ]);
     });

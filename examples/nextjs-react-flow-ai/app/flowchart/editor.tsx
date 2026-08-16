@@ -48,6 +48,7 @@ import {
 } from "@xyflow/react";
 import { AvatarStack, Cursor, Icon } from "@liveblocks/react-ui";
 import { HelpControl } from "../../components/HelpButton";
+import { VersionsDialog } from "./version-history-dialog";
 import {
   useEditThreadMetadata,
   useThreads,
@@ -1165,6 +1166,7 @@ function Flow({ className, ...props }: ComponentProps<"div">) {
           <Panel position="top-right">
             <div className="flowchart-avatar-stack">
               <AvatarStack size={32} gap={3} max={5} />
+              <VersionsDialog />
             </div>
           </Panel>
           <Panel position="top-left">
