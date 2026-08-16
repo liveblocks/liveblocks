@@ -3,80 +3,555 @@ meta:
   title: "Text editor"
   parentTitle: "Use cases"
   description:
-    "Build collaborative text editors with LiveText, comments, mentions, and
-    version history."
+    "Build collaborative text editors with Tiptap, Lexical, or BlockNote,
+    synchronized with LiveText, with AI editing, version history, comments, and
+    mentions."
 ---
 
-Use LiveText for new collaborative text editors. It is the text data type inside
-Sync and can power different editor integrations while remaining available
-through the same Storage APIs as the rest of your document.
+Create a collaborative text editor with Liveblocks, or add collaboration to your
+existing editor. Enabling rrealtime editing, show live cursors and selections,
+edit documents with AI, restore previous versions, and add comments and
+mentions.
 
-<Banner title="Start with an editor integration" type="info">
+## Features [#features]
 
-Choose a supported editor from
-[Sync integrations](/docs/products/sync/integrations). For existing Yjs-based
-editors, see [when to keep using Yjs](/docs/products/sync/yjs).
+- [**Realtime collaboration**](#realtime-collaboration): The document is
+  permanent and updates in realtime for connected users.
+- [**Presence**](#presence): Show live cursors, selections, avatar stacks, and
+  agent activity.
+- [**Toolbars**](#toolbars): Add ready-made fixed and floating formatting
+  toolbars, or create your own.
+- [**Server-side editing**](#server-side-editing): Modify documents from your
+  back end, and watch them update in realtime.
+- [**Agentic editing**](#agentic-editing): Generate and apply text changes with
+  AI agents.
+- [**Version history**](#version-history): Save, preview, and restore documents
+  using manual or automatic snapshots.
+- [**Multiplayer undo/redo**](#multiplayer-undo-redo): Each user can
+  independently undo and redo their own changes.
+- [**Comments**](#comments): Attach comment threads to highlighted text and
+  display them inside your editor.
+- [**Mentions and notifications**](#mentions-and-notifications): Tag users
+  inline and notify them in-app or by email.
+- [**Permissions**](#permissions): Control which users can read and edit the
+  document.
 
-</Banner>
+## Get started [#get-started]
 
-## APIs you need [#apis]
+Choose a starting point for your text editor.
 
-- [`LiveText`](/docs/api-reference/liveblocks-client#LiveText) for collaborative
-  text
-- [`useStorage`](/docs/api-reference/liveblocks-react#useStorage) for related
-  document state
-- [Comments](/docs/products/comments) for inline discussions
-- [Notifications](/docs/products/notifications) for mentions and replies
-- [Version history](/docs/products/sync/version-history) for preview and restore
-- [Agentic editing](/docs/products/sync/agentic-editing) for server and AI edits
+<ListGrid columns={2} defaultVisibleItems={2}>
+  <DocsCard
+    type="technology"
+    title="Get started with Tiptap"
+    href="/docs/get-started/nextjs-tiptap-storage"
+    description="Rich text editor built on LiveText with Next.js"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with BlockNote"
+    href="/docs/get-started/nextjs-blocknote"
+    description="Block-based text editor with Next.js"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with Lexical"
+    href="/docs/get-started/nextjs-lexical-storage"
+    description="Rich text editor built on LiveText with Next.js"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with Tiptap and Yjs"
+    href="/docs/get-started/nextjs-tiptap"
+    description="Yjs-backed text editor with Next.js"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with Lexical and Yjs"
+    href="/docs/get-started/nextjs-lexical"
+    description="Yjs-backed text editor with Next.js"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with Tiptap"
+    href="/docs/get-started/react-tiptap-storage"
+    description="Rich text editor built on LiveText with React"
+    visual={<DocsReactIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with Lexical"
+    href="/docs/get-started/react-lexical-storage"
+    description="Rich text editor built on LiveText with React"
+    visual={<DocsReactIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with BlockNote"
+    href="/docs/get-started/react-blocknote"
+    description="Block-based text editor with React"
+    visual={<DocsReactIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with Tiptap and Yjs"
+    href="/docs/get-started/react-tiptap"
+    description="Yjs-backed text editor with React"
+    visual={<DocsReactIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with Lexical and Yjs"
+    href="/docs/get-started/react-lexical"
+    description="Yjs-backed text editor with React"
+    visual={<DocsReactIcon />}
+  />
+</ListGrid>
 
-```ts
-import { LiveText } from "@liveblocks/client";
+## Implementation [#implementation]
 
-const body = new LiveText("Start writing…");
-body.insert(body.length, " together");
-body.format(0, 5, { bold: true });
+This is an overview of how each feature can be implemented with
+[`@liveblocks/react-tiptap`](/docs/api-reference/liveblocks-react-tiptap),
+though a number of other editor plugins are available with similar APIs.
+Documents are stored in [Sync](/docs/products/sync/overview), live selections
+are broadcast using [presence](/docs/products/sync/presence), and comment
+threads are created using [Comments](/docs/products/comments).
+
+### Realtime collaboration [#realtime-collaboration]
+
+Using
+[`useLiveblocksExtension`](/docs/api-reference/liveblocks-react-tiptap#useLiveblocksExtension)
+with
+[`collaborationMode: "liveblocks"`](/docs/api-reference/liveblocks-react-tiptap#Liveblocks-collaboration-mode),
+your Tiptap editor stores its text as
+[`LiveText`](/docs/api-reference/liveblocks-client#LiveText) backed by Storage.
+The extension translates editor operations into LiveText updates, merging
+concurrent edits character-by-character, and every connected user sees changes
+in realtime.
+
+```tsx
+"use client";
+
+import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+
+function TextEditor() {
+  // +++
+  const liveblocks = useLiveblocksExtension({
+    collaborationMode: "liveblocks",
+    field: "document",
+  });
+  // +++
+
+  const editor = useEditor({
+    extensions: [
+      // +++
+      liveblocks,
+      // +++
+      StarterKit.configure({
+        // The Liveblocks extension comes with its own history handling
+        undoRedo: false,
+      }),
+    ],
+    immediatelyRender: false,
+  });
+
+  return <EditorContent editor={editor} />;
+}
 ```
 
-## Choose an editor [#choose-an-editor]
+Each editor is identified by its
+[`field`](/docs/api-reference/liveblocks-react-tiptap#Multiple-editors) value,
+so you can place multiple editors in one room by giving each a unique field, or
+use one room per document. Learn more under
+[Sync integrations](/docs/products/sync/integrations) and
+[Yjs](/docs/products/sync/yjs).
 
-Use the LiveText integration for the editor your application already uses. The
-integration handles translating editor operations to LiveText updates,
-multiplayer selections, and undo/redo. Add ready-made Comments components when
-users need inline annotations.
+### Presence [#presence]
 
-Yjs remains appropriate for an existing editor built around a `Y.Doc`, a
-dependency that only provides a Yjs binding, or an ecosystem feature not
-available through LiveText. New Liveblocks text editors should start with
-LiveText.
+The editor integration automatically displays each user’s caret and text
+selection, colored and labeled with the user data returned by
+[`resolveUsers`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers).
+To show who’s currently in the document, add the ready-made
+[`AvatarStack`](/docs/api-reference/liveblocks-react-ui#AvatarStack) component.
 
-## Users and mentions [#Users-and-mentions]
+```tsx
+import { AvatarStack } from "@liveblocks/react-ui";
 
-Resolve user names, avatars, and mention suggestions through `resolveUsers` and
-`resolveMentionSuggestions` on `LiveblocksProvider`. Comments and supported
-editor integrations use the same user IDs and notification settings.
+function TextEditorPresence() {
+  return <AvatarStack />;
+}
+```
 
-## Multiple editors [#Multiple-editors]
+You can also create custom avatar stacks and presence UI, learn more under
+[presence](/docs/products/sync/presence).
 
-Give each editor a stable document key within the room, or use one room per
-document. Choose the boundary that matches permissions and version history:
-room-level operations apply to every shared value in that room.
+### Toolbars [#toolbars]
 
-## Notifications [#Notifications]
+Add a formatting toolbar with the ready-made
+[`Toolbar`](/docs/api-reference/liveblocks-react-tiptap#Toolbar) component, or
+show one next to selected text with
+[`FloatingToolbar`](/docs/api-reference/liveblocks-react-tiptap#FloatingToolbar).
+Both render sensible defaults, and can be customized with components such as
+[`Toolbar.Button`](/docs/api-reference/liveblocks-react-tiptap#Toolbar.Button)
+and
+[`Toolbar.Toggle`](/docs/api-reference/liveblocks-react-tiptap#Toolbar.Toggle).
 
-Text mentions can create inbox notifications automatically. Add the
-[Notifications product](/docs/products/notifications) for an in-app inbox and
-configure
-[email notifications](/docs/products/notifications/email-notifications) when
-users should receive unread mentions outside the application.
+```tsx
+import { Toolbar, FloatingToolbar } from "@liveblocks/react-tiptap";
+import { EditorContent } from "@tiptap/react";
 
-## Guides and examples [#guides-and-examples]
+function TextEditorToolbars({ editor }) {
+  return (
+    <>
+      // +++
+      <Toolbar editor={editor} />
+      // +++
+      <EditorContent editor={editor} />
+      // +++
+      <FloatingToolbar editor={editor} />
+      // +++
+    </>
+  );
+}
+```
 
-- [Tiptap get-started guide](/docs/get-started/nextjs-tiptap)
-- [BlockNote get-started guide](/docs/get-started/nextjs-blocknote)
-- [Lexical get-started guide](/docs/get-started/nextjs-lexical)
-- [Advanced collaborative text editor example](https://liveblocks.io/examples/collaborative-text-editor-advanced/nextjs-tiptap-advanced)
-- [Text editor Comments example](https://liveblocks.io/examples/text-editor-comments/nextjs-comments-tiptap)
+### Server-side editing [#server-side-editing]
 
-The get-started guides describe the current package-specific setup. Use this
-page to choose the product capabilities around the editor.
+Because the document lives in Storage, server processes can edit text with
+[`Liveblocks.mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage),
+using the same [`LiveText`](/docs/api-reference/liveblocks-client#LiveText) API
+as the client. Connected users see the result in realtime. For example, a server
+can append to a `LiveText` field stored alongside the editor, such as a document
+summary.
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+});
+
+// +++
+await liveblocks.mutateStorage("document-room", ({ root }) => {
+  const summary = root.get("summary");
+  summary.insert(summary.length, " Approved by the review team.");
+  summary.format(0, 8, { bold: true });
+});
+// +++
+```
+
+Learn more under [Server-side editing](/docs/products/sync/server-side-editing).
+
+### Agentic editing [#agentic-editing]
+
+To allow AI agents to modify your document, generate your changes with AI then
+use [`mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage) to
+apply them. To show that AI is working in your app use
+[`setPresence`](/docs/api-reference/liveblocks-node#post-rooms-roomId-presence)
+to show it working—your agent will appear in [presence](#presence) alongside
+humans. Finally, remove the agent’s presence to indicate that the agent is no
+longer working.
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+import { generateText, Output } from "ai";
+import { z } from "zod";
+
+const liveblocks = new Liveblocks({
+  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+});
+
+const roomId = "document-room";
+const agent: Liveblocks["UserMeta"] = {
+  id: "ai-agent",
+  info: { name: "AI agent", color: "#7c3aed" },
+};
+
+// +++
+await liveblocks.setPresence(roomId, {
+  userId: agent.id,
+  userInfo: agent.info,
+  data: { status: "thinking" },
+  ttl: 60,
+});
+// +++
+
+// +++
+const { output } = await generateText({
+  model: "openai/gpt-5.6-sol",
+  output: Output.object({
+    schema: z.object({
+      summary: z.string(),
+    }),
+  }),
+  prompt: "Write a one-sentence summary of the document",
+});
+// +++
+
+// +++
+await liveblocks.mutateStorage(roomId, ({ root }) => {
+  const summary = root.get("summary");
+  summary.insert(summary.length, ` ${output.summary}`);
+});
+// +++
+
+// +++
+await liveblocks.setPresence(roomId, {
+  userId: agent.id,
+  userInfo: agent.info,
+  data: { status: "idle" },
+  ttl: 2,
+});
+// +++
+```
+
+Additionally, you can use [feeds](/docs/products/sync/feeds) to store AI
+workflow state, and to pass agent status updates to the UI. Learn more under
+[Agentic editing](/docs/products/sync/agentic-editing).
+
+### Version history [#version-history]
+
+Create version snapshots, manually or automatically, list old versions, and
+restore to a specific version. Use
+[`useHistoryVersions`](/docs/api-reference/liveblocks-react#useHistoryVersions)
+to list versions with the ready-made
+[`HistoryVersionSummaryList`](/docs/api-reference/liveblocks-react-ui#HistoryVersionSummaryList)
+component, then preview and restore a selected version with
+[`HistoryVersionPreview`](/docs/api-reference/liveblocks-react-tiptap#HistoryVersionPreview).
+
+```tsx
+import { useState } from "react";
+import { useHistoryVersions } from "@liveblocks/react/suspense";
+import { HistoryVersionPreview } from "@liveblocks/react-tiptap";
+import {
+  HistoryVersionSummary,
+  HistoryVersionSummaryList,
+} from "@liveblocks/react-ui";
+
+function DocumentHistory() {
+  // +++
+  const { versions } = useHistoryVersions();
+  // +++
+  const [selectedVersion, setSelectedVersion] = useState(null);
+
+  return (
+    <>
+      // +++
+      <HistoryVersionSummaryList>
+        {versions?.map((version) => (
+          <HistoryVersionSummary
+            key={version.id}
+            version={version}
+            onClick={() => setSelectedVersion(version)}
+            selected={version.id === selectedVersion?.id}
+          />
+        ))}
+      </HistoryVersionSummaryList>
+      // +++
+      {selectedVersion ? (
+        // +++
+        <HistoryVersionPreview
+          version={selectedVersion}
+          onVersionRestore={() => setSelectedVersion(null)}
+        />
+      ) : // +++
+      null}
+    </>
+  );
+}
+```
+
+Automatic versions can be enabled in the dashboard, and meaningful versions can
+be created from a backend with
+[`Liveblocks.createVersionHistorySnapshot`](/docs/api-reference/liveblocks-node#create-version-history-snapshot),
+for example before a large agentic edit. Learn more under
+[Version history](/docs/products/sync/version-history).
+
+### Multiplayer undo/redo [#multiplayer-undo-redo]
+
+The Liveblocks extension ships with its own history handling—each user can
+independently undo and redo their own changes without affecting other users’
+edits, using the standard keyboard shortcuts or the ready-made
+[`Toolbar.SectionHistory`](/docs/api-reference/liveblocks-react-tiptap#Toolbar.SectionHistory)
+buttons.
+
+```tsx
+import { Toolbar } from "@liveblocks/react-tiptap";
+
+function TextEditorToolbar({ editor }) {
+  return (
+    <Toolbar editor={editor}>
+      // +++
+      <Toolbar.SectionHistory />
+      // +++
+    </Toolbar>
+  );
+}
+```
+
+Learn more under
+[Multiplayer undo/redo](/docs/products/sync/multiplayer-undo-redo).
+
+### Comments [#comments]
+
+Using [Comments](/docs/products/comments), users can highlight text and attach a
+comment thread to it, which stays anchored to the text as the document changes.
+[`FloatingComposer`](/docs/api-reference/liveblocks-react-tiptap#FloatingComposer)
+displays a composer above selected text, and threads retrieved with
+[`useThreads`](/docs/api-reference/liveblocks-react#useThreads) can be displayed
+alongside the document with
+[`AnchoredThreads`](/docs/api-reference/liveblocks-react-tiptap#AnchoredThreads),
+or below their highlights with
+[`FloatingThreads`](/docs/api-reference/liveblocks-react-tiptap#FloatingThreads).
+
+```tsx
+import { useThreads } from "@liveblocks/react/suspense";
+import {
+  AnchoredThreads,
+  FloatingComposer,
+  FloatingThreads,
+} from "@liveblocks/react-tiptap";
+
+function TextEditorComments({ editor }) {
+  // +++
+  const { threads } = useThreads({ query: { resolved: false } });
+  // +++
+
+  return (
+    <>
+      // +++
+      <FloatingComposer editor={editor} className="w-[350px]" />
+      <FloatingThreads
+        editor={editor}
+        threads={threads}
+        className="block md:hidden w-[350px]"
+      />
+      <AnchoredThreads
+        editor={editor}
+        threads={threads}
+        className="hidden md:block w-[350px]"
+      />
+      // +++
+    </>
+  );
+}
+```
+
+Learn more under [Comments](/docs/products/comments).
+
+### Mentions and notifications [#mentions-and-notifications]
+
+Users can tag each other inline by typing `@`, with suggestions resolved through
+[`resolveMentionSuggestions`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveMentionSuggestions)
+on `LiveblocksProvider`. Mentioned users automatically receive a `textMention`
+inbox notification, which you can display with
+[`useInboxNotifications`](/docs/api-reference/liveblocks-react#useInboxNotifications)
+and the ready-made
+[`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification)
+component.
+
+```tsx
+import { useInboxNotifications } from "@liveblocks/react/suspense";
+import { InboxNotification, InboxNotificationList } from "@liveblocks/react-ui";
+
+function NotificationsInbox() {
+  // +++
+  const { inboxNotifications } = useInboxNotifications();
+  // +++
+
+  return (
+    <InboxNotificationList>
+      // +++
+      {inboxNotifications.map((inboxNotification) => (
+        <InboxNotification
+          key={inboxNotification.id}
+          inboxNotification={inboxNotification}
+        />
+      ))}
+      // +++
+    </InboxNotificationList>
+  );
+}
+```
+
+Unread mentions can also be sent by email using
+[email notifications](/docs/products/notifications/email-notifications). Learn
+more under [Notifications](/docs/products/notifications).
+
+### Permissions [#permissions]
+
+Each document is contained inside a room in your Liveblocks app, and permission
+groups can set access to the document. For example, your document may have an
+editor group and a viewer group. This can be set when modifying or creating a
+room, for example with
+[`Liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms).
+
+```ts
+await liveblocks.createRoom(`my-room-id`, {
+  defaultAccesses: [
+    // No access by default
+  ],
+  groupsAccesses: {
+    // "viewers" group has read access
+    viewers: ["*:read"],
+  },
+  usersAccesses: {
+    // "olivier" has write access
+    olivier: ["*:write"],
+  },
+});
+```
+
+More complex controls can be set too, learn more under
+[Permissions](/docs/authentication/permissions).
+
+## Examples [#examples]
+
+Explore complete implementations in our example gallery.
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "Advanced Collaborative Text Editor",
+      slug: "collaborative-text-editor-advanced/nextjs-tiptap-advanced",
+      image: "/images/examples/thumbnails/text-editor-advanced.jpg",
+      advanced: true,
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Collaborative Text Editor",
+      slug: "collaborative-text-editor/nextjs-tiptap",
+      image: "/images/examples/thumbnails/text-editor.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Text Editor Comments",
+      slug: "text-editor-comments/nextjs-comments-tiptap",
+      image: "/images/examples/thumbnails/comments-text-editor.png",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Custom LiveText Editor",
+      slug: "collaborative-text-editor/nextjs-livetext-custom",
+      image: "/images/examples/thumbnails/text-editor.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+</ListGrid>

@@ -17,12 +17,12 @@ files with AI, and restore previous versions.
   permanent and updates in realtime for connected users.
 - [**Presence**](#presence): Show remote carets, selections, avatar stacks, and
   agent activity.
-- [**Server-side editing**](#server-side-editing): Modify code from a trusted
-  back end.
+- [**Server-side editing**](#server-side-editing): Modify documents from your
+  back end, and watch them update in realtime.
 - [**Agentic editing**](#agentic-editing): Generate and apply code changes with
-  AI.
+  AI agents.
 - [**Version history**](#version-history): Save, preview, and restore file
-  versions.
+  versions using manual or automatic snapshots.
 - [**Multiplayer undo/redo**](#multiplayer-undo-redo): Each user can
   independently undo and redo their own changes.
 - [**Comments**](#comments): Attach review discussions to the code.
@@ -110,8 +110,8 @@ Choose a starting point for your code editor.
 
 This is an overview of how each feature can be implemented using the
 [`@liveblocks/codemirror`](/docs/api-reference/liveblocks-codemirror) package.
-Code is stored in [Sync](/docs/products/sync/overview) with carets and
-selections broadcast using [presence](/docs/products/sync/presence).
+Code files are stored in [Sync](/docs/products/sync/overview) and live
+selections are broadcast using [presence](/docs/products/sync/presence).
 
 ### Realtime collaboration [#realtime-collaboration]
 
