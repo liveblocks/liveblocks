@@ -1,6 +1,6 @@
 "use client";
 
-import { LiveList, LiveObject, LiveText } from "@liveblocks/client";
+import Loading from "./loading";
 import {
   ClientSideSuspense,
   LiveblocksProvider,
@@ -8,7 +8,6 @@ import {
 } from "@liveblocks/react/suspense";
 import { useSearchParams } from "next/navigation";
 import Editor from "./lexical/editor";
-import Loading from "./loading";
 
 // Learn how to structure your collaborative Next.js app
 // https://liveblocks.io/docs/guides/how-to-use-liveblocks-with-nextjs-app-directory
@@ -32,33 +31,23 @@ export default function Page() {
         const users = await response.json();
         return users;
       }}
+      resolveMentionSuggestions={async ({ text }) => {
+        const response = await fetch(
+          `/api/users/search?text=${encodeURIComponent(text)}`
+        );
+
+        if (!response.ok) {
+          throw new Error("Problem resolving mention suggestions");
+        }
+
+        const userIds = await response.json();
+        return userIds;
+      }}
     >
       <RoomProvider
         id={roomId}
         initialPresence={{
-          selection: null,
-        }}
-        initialStorage={{
-          document: new LiveObject({
-            kind: "root",
-            type: "root",
-            version: 1,
-            children: new LiveList([
-              new LiveObject({
-                kind: "element",
-                type: "paragraph",
-                version: 1,
-                children: new LiveList([
-                  new LiveObject({
-                    kind: "text",
-                    type: "text",
-                    version: 1,
-                    content: new LiveText(),
-                  }),
-                ]),
-              }),
-            ]),
-          }),
+          cursor: null,
         }}
       >
         <ClientSideSuspense fallback={<Loading />}>

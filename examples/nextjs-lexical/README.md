@@ -21,9 +21,9 @@
   <img src="https://img.shields.io/badge/lexical-message?style=flat&color=7bf" alt="Lexical" />
 </p>
 
-This example shows how to build a collaborative rich-text editor with [Liveblocks](https://liveblocks.io) Storage, [Lexical](https://lexical.dev/), and [Next.js](https://nextjs.org/).
+This example shows how to build a collaborative text editor with [Liveblocks](https://liveblocks.io), [Lexical](https://lexical.dev/), and [Next.js](https://nextjs.org/).
 
-The editor document is stored as a Liveblocks Storage tree backed by `LiveText`. As users edit, changes are automatically persisted and synced in real time across clients. Remote carets and selections are rendered with `@liveblocks/lexical`.
+As users edit the document, changes will be automatically persisted and synced—allowing for an editor that updates in real-time across clients. Users will also be able to see who see each other’s cursors in the document.
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/text-editor.png" width="536" alt="Collaborative Text Editor" />
 
