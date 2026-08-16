@@ -8,8 +8,9 @@ meta:
 ---
 
 Liveblocks Sync is a hosted sync engine for building collaborative applications.
-Use it to add multiplayer documents, human and agent presence, collaborative
-editors, realtime canvases, flowcharts, spreadsheets, and tables.
+Use it to create multiplayer documents, human and agent presence, collaborative
+editors, streaming chats, realtime canvases, flowcharts, spreadsheets, and
+tables.
 
 <Banner title="Get started with Sync" type="info">
 
@@ -25,6 +26,8 @@ application, then return here for the underlying concepts.
   merging responses.
 - **Realtime presence**: Render cursors, avatar stacks, selections, and agent
   activity.
+- **Feeds**: Persist streaming chats, agent state, activity streams, and
+  workflow messages.
 - **Optimistic updates**: Apply changes locally, then synchronize them in the
   background.
 - **Server-side editing**: Read and update collaborative documents from a
@@ -32,8 +35,6 @@ application, then return here for the underlying concepts.
 - **Multiplayer undo/redo**: Give each user a history that respects other
   people’s edits.
 - **Version history**: Preview and restore meaningful document snapshots.
-- **Feeds**: Persist realtime chat, activity, agent output, and workflow
-  messages in the same room as the collaborative document.
 - **Authentication and permissions**: Control who can read or edit each room.
 - **TypeScript-first data**: Type Storage, presence, events, and user info.
 
@@ -181,18 +182,91 @@ Liveblocks hosts, persists, and scales each room’s collaborative data. Use the
 dashboard and server APIs to manage rooms, inspect usage, create versions, and
 integrate webhooks without operating sync infrastructure yourself.
 
-## Next steps [#next-steps]
+## Learn more
 
-- Choose the right [Storage data types](/docs/products/sync/data-types).
-- Learn how [conflict resolution](/docs/products/sync/conflict-resolution)
-  behaves.
-- Add [presence](/docs/products/sync/presence) or
-  [multiplayer undo/redo](/docs/products/sync/multiplayer-undo-redo).
-- Edit a document from your backend with
-  [Server-side editing](/docs/products/sync/server-side-editing).
-- Let an AI agent edit with
-  [Agentic editing](/docs/products/sync/agentic-editing).
-- Add persistent chat, activity, or workflow messages with
-  [feeds](/docs/products/sync/feeds).
-- Browse [Sync integrations](/docs/products/sync/integrations) and
-  [use cases](/docs/use-cases/canvas).
+<ListGrid columns={2}>
+  <DocsCard
+    type="technology"
+    title="Data types"
+    href="/docs/products/sync/data-types"
+    description="Model collaborative state with Storage"
+    visual={<DocsStorageIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Conflict resolution"
+    href="/docs/products/sync/conflict-resolution"
+    description="How concurrent changes are merged"
+    visual={<DocsStorageIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Multiplayer undo/redo"
+    href="/docs/products/sync/multiplayer-undo-redo"
+    description="Give each user an independent edit history"
+    visual={<DocsMultiplayerUndoRedoIcon className="h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Presence"
+    href="/docs/products/sync/presence"
+    description="Show users, cursors, selections, and activity"
+    visual={<DocsSyncPresenceIcon className="h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Server-side editing"
+    href="/docs/products/sync/server-side-editing"
+    description="Edit documents from the back end"
+    visual={<DocsNodejsIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Agentic editing"
+    href="/docs/products/sync/agentic-editing"
+    description="Let AI agents edit shared data alongside users"
+    visual={<DocsAgenticEditingIcon className="h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Version history"
+    href="/docs/products/sync/version-history"
+    description="Preview and restore earlier document versions"
+    visual={<DocsVersionHistoryIcon className="h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Broadcast events"
+    href="/docs/products/sync/broadcast-events"
+    description="Send ephemeral events to connected clients"
+    visual={<DocsBroadcastEventsIcon className="h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Feeds"
+    href="/docs/products/sync/feeds"
+    description="Persist workflow state, streamed chats, more"
+    visual={<DocsFeedsIcon className="h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Authentication and permissions"
+    href="/docs/products/sync/authentication-and-permissions"
+    description="Control who can read or edit each room"
+    visual={<DocsBookIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Integrations"
+    href="/docs/products/sync/integrations"
+    description="Connect editors, diagrams, and state libraries"
+    visual={<DocsIntegrationsIcon className="h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Yjs"
+    href="/docs/products/sync/yjs"
+    description="Use the Yjs ecosystem with Liveblocks"
+    visual={<DocsYjsIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+</ListGrid>

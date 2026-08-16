@@ -360,7 +360,7 @@ function Textareas() {
 As well as on the client, you can set presence on the server, especially helful
 for enabling AI agent presence in your app. The
 [`Liveblocks.setPresence`](/docs/api-reference/liveblocks-node#post-rooms-roomId-presence)
-mtehod is used for this, and after it’s called,
+method is used for this, and after it’s called,
 [`useOthers`](/docs/api-reference/liveblocks-react#useOthers) will return the
 agent in the list of connected users. `data` and `userInfo` correspond to
 `Presence` and `UserInfo` in your types.
@@ -390,7 +390,7 @@ await liveblocks.setPresence("my-room-id", {
     cursor: { x: 100, y: 200 },
   },
   userInfo: {
-    name: "Research agent",
+    name: "AI agent",
     color: "#7c3aed",
     avatar: "https://example.com/ai-agent.png",
   },
@@ -402,3 +402,143 @@ await liveblocks.setPresence("my-room-id", {
 Presence expires after the time-to-live (TTL) period, in seconds, and is removed
 from the list of connected users. To remove agent presence, call it with
 `ttl: 2`, the minimum value, and it will be removed shortly after.
+
+### Example usage
+
+One way to use agent presence is to set it before running an AI workflow, then
+remove it after the workflow is complete. Here’s an example that modifies a
+[Sync](/docs/products/sync) document, displaying an AI avatar as it does the
+work. Avatars don’t need any presence data, so we can set it to an empty object.
+
+```ts file="liveblocks.config.ts"
+declare global {
+  interface Liveblocks {
+    Presence: {};
+    UserInfo: {
+      name: string;
+      color: string;
+      avatar: string;
+    };
+  }
+}
+```
+
+Set presence before and after running the AI workflow, setting `ttl` to the
+minimum value at the end.
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+import { generateText, Output } from "ai";
+import { z } from "zod";
+
+const liveblocks = new Liveblocks({
+  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+});
+
+// +++
+await liveblocks.setPresence("my-room-id", {
+  userId: "agent-123",
+  data: {},
+  userInfo: {
+    name: "AI agent",
+    color: "#7c3aed",
+    avatar: "https://example.com/ai-agent.png",
+  },
+  ttl: 30,
+});
+// +++
+
+const { output: content } = await generateText({
+  model: "openai/gpt-5.6-sol",
+  output: Output.object({
+    schema: z.object({
+      content: z.string(),
+    }),
+  }),
+  prompt: "Write a paragraph about realtime collaboration",
+});
+
+await liveblocks.mutateStorage(roomId, ({ root }) => {
+  const document = root.get("document");
+  document.set("content", record.content);
+});
+
+// +++
+await liveblocks.setPresence("my-room-id", {
+  userId: "agent-123",
+  data: {},
+  userInfo: {
+    name: "AI agent",
+    color: "#7c3aed",
+    avatar: "https://example.com/ai-agent.png",
+  },
+  ttl: 2,
+});
+// +++
+```
+
+In the front end, `agent-123` will appear in the list of connected users, and
+the AI avatar will be displayed in the UI.
+
+```tsx
+import { useOthers } from "@liveblocks/react/suspense";
+
+function AvatarStack() {
+  const others = useOthers();
+
+  return (
+    <div style={{ display: "flex", marginLeft: 4 }}>
+      {others.map(({ connectionId, presence, info }) => (
+        <img
+          key={connectionId}
+          src={info.avatar}
+          alt={info.name}
+          style={{ width: 20, height: 20, borderRadius: "50%", marginLeft: -4 }}
+        />
+      ))}
+    </div>
+  );
+}
+```
+
+#### Display all agents under a single avatar
+
+If you’d prefer all AI agents in the room to be displayed as single avatar,
+instead of showing a single avatar for each, modify your stack to account for
+this. This snippet assumes each agent’s user ID begins with `agent-`.
+
+```tsx
+import { useOthers } from "@liveblocks/react/suspense";
+
+function AvatarStack() {
+  const others = useOthers();
+  // +++
+  const agent = others.find(({ userId }) => userId.startsWith("agent-"));
+  const humans = others.filter(({ userId }) => !userId.startsWith("agent-"));
+  // +++
+
+  return (
+    <div style={{ display: "flex", marginLeft: 4 }}>
+      // +++
+      {humans.map(({ connectionId, presence, info }) => (
+        // +++
+        <img
+          key={connectionId}
+          src={info.avatar}
+          alt={info.name}
+          style={{ width: 20, height: 20, borderRadius: "50%", marginLeft: -4 }}
+        />
+      ))}
+      // +++
+      {agent && (
+        <img
+          src={agent.info.avatar}
+          alt={agent.info.name}
+          style={{ width: 20, height: 20, borderRadius: "50%", marginLeft: -4 }}
+        />
+      )}
+      // +++
+    </div>
+  );
+}
+```
