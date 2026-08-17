@@ -1170,9 +1170,9 @@ or:
 - New guide:
   [The new Storage engine and its benefits](https://liveblocks.io/docs/guides/about-the-new-storage-engine).
 - Updated
-  [overview information on Storage](https://liveblocks.io/docs/ready-made-features/multiplayer/sync-engine/liveblocks-storage).
+  [overview information on Storage](https://liveblocks.io/docs/collaboration-features/multiplayer/sync-engine/liveblocks-storage).
 - Updated
-  [overview inforamtion on Yjs](https://liveblocks.io/docs/ready-made-features/multiplayer/sync-engine/liveblocks-yjs).
+  [overview inforamtion on Yjs](https://liveblocks.io/docs/collaboration-features/multiplayer/sync-engine/liveblocks-yjs).
 
 ## Dashboard
 
@@ -1508,14 +1508,14 @@ ctnicholas, mmavko
 ## Documentation
 
 - New section on
-  [group mentions](https://liveblocks.io/docs/ready-made-features/comments/users-and-mentions#Group-mentions).
+  [group mentions](https://liveblocks.io/docs/collaboration-features/comments/users-and-mentions#Group-mentions).
 - Updated other information on the
-  [users and mentions](https://liveblocks.io/docs/ready-made-features/comments/users-and-mentions)
+  [users and mentions](https://liveblocks.io/docs/collaboration-features/comments/users-and-mentions)
   page.
 - Updated [Organizations](https://liveblocks.io/docs/authentication/organizations) page with
   new information.
 - Add information on
-  [AI web search](https://liveblocks.io/docs/ready-made-features/ai-copilots/knowledge#Web-search)
+  [AI web search](https://liveblocks.io/docs/collaboration-features/ai-copilots/knowledge#Web-search)
   in overview pages.
 
 ## Dashboard
@@ -1588,16 +1588,16 @@ jrowny, marcbouchenoire, nvie, ctnicholas
 ## Documentation
 
 - New AI Copilots get started guides for
-  [Next.js](https://liveblocks.io/docs/get-started/nextjs-ai-copilots) and
-  [React](https://liveblocks.io/docs/get-started/react-ai-copilots).
+  [Next.js](https://liveblocks.io/docs/get-started/nextjs-ai-chat) and
+  [React](https://liveblocks.io/docs/get-started/react-ai-chat).
 - New AI Copilots overview pages:
-  - [Copilots](https://liveblocks.io/docs/ready-made-features/ai-copilots/copilots).
-  - [Default components](https://liveblocks.io/docs/ready-made-features/ai-copilots/default-components).
-  - [Hooks](https://liveblocks.io/docs/ready-made-features/ai-copilots/hooks).
-  - [Knowledge](https://liveblocks.io/docs/ready-made-features/ai-copilots/knowledge).
-  - [Tools](https://liveblocks.io/docs/ready-made-features/ai-copilots/tools).
-  - [Styling and customization](https://liveblocks.io/docs/ready-made-features/ai-copilots/styling-and-customization).
-  - [Troubleshooting](https://liveblocks.io/docs/ready-made-features/ai-copilots/troubleshooting).
+  - [Copilots](https://liveblocks.io/docs/collaboration-features/ai-copilots/copilots).
+  - [Default components](https://liveblocks.io/docs/collaboration-features/ai-copilots/default-components).
+  - [Hooks](https://liveblocks.io/docs/collaboration-features/ai-copilots/hooks).
+  - [Knowledge](https://liveblocks.io/docs/collaboration-features/ai-copilots/knowledge).
+  - [Tools](https://liveblocks.io/docs/collaboration-features/ai-copilots/tools).
+  - [Styling and customization](https://liveblocks.io/docs/collaboration-features/ai-copilots/styling-and-customization).
+  - [Troubleshooting](https://liveblocks.io/docs/collaboration-features/ai-copilots/troubleshooting).
 - New guide:
   [How to use fallback AI models in AI Copilots](https://liveblocks.io/docs/guides/how-to-use-fallback-ai-models-in-ai-copilots).
 
@@ -1670,7 +1670,7 @@ ctnicholas, nimeshnayaju
 ## Documentation
 
 - New sections on
-  [notification batching](https://liveblocks.io/docs/ready-made-features/notifications/concepts#Notification-batching).
+  [notification batching](https://liveblocks.io/docs/collaboration-features/notifications/concepts#Notification-batching).
 - Better clarity on Storage/Yjs limits.
 
 ## Contributors
@@ -1777,7 +1777,7 @@ jrowny, ctnicholas
 
 This release introduces group mentions (e.g. `@engineering`) across all packages
 and first-class support for tenants. Learn more about
-[group mentions](https://liveblocks.io/docs/ready-made-features/comments/users-and-mentions)
+[group mentions](https://liveblocks.io/docs/collaboration-features/comments/users-and-mentions)
 and [tenants](https://liveblocks.io/docs/authentication/organizations) in the docs.
 
 ### `@liveblocks/client`
@@ -2139,8 +2139,8 @@ ofoucherot, sugardarius, pierrelevaillant, marcbouchenoire, nimeshnayaju, nvie
 
 ## Doocumentation
 
-- Improved [Limits](https://liveblocks.io/docs/platform/limits) page.
-- Improved [Plans](https://liveblocks.io/docs/platform/plans) page.
+- Improved [Limits](https://liveblocks.io/docs/pricing/limits) page.
+- Improved [Plans](https://liveblocks.io/docs/pricing/plans) page.
 
 ## Contributors
 
@@ -2544,7 +2544,7 @@ ctnicholas, marcbouchenoire, ofoucherot, flowflorent
 ## Documentation
 
 - New
-  [AI Copilots features](https://liveblocks.io/docs/ready-made-features/ai-copilots/features)
+  [AI Copilots features](https://liveblocks.io/docs/collaboration-features/ai-copilots/features)
   page, highlighting all upcoming features.
 - Mention first day free policy.
 - Small updates to docs homepage
@@ -2734,9 +2734,9 @@ nvie, sugardarius, ctnicholas, marcbouchenoire
 - API reference for
   [`@liveblocks/react-blocknoite`](https://liveblocks.io/docs/api-reference/liveblocks-react-blocknote).
 - Updated
-  [get started guides for BlockNote](https://liveblocks.io/docs/get-started/text-editor/blocknote).
+  [get started guides for BlockNote](https://liveblocks.io/docs/get-started/multiplayer/text-documents).
 - New
-  [BlockNote overview](https://liveblocks.io/docs/ready-made-features/text-editor/blocknote)
+  [BlockNote overview](https://liveblocks.io/docs/collaboration-features/multiplayer/text-editor/blocknote)
   page.
 - Updated guide on
   [modifying Storage from the server](https://liveblocks.io/docs/guides/how-to-modify-liveblocks-storage-from-the-server).
@@ -2824,7 +2824,7 @@ ctnicholas, marcbouchenoire, pierrelevaillant
 - New guide:
   [How to create a notification settings panel](https://liveblocks.io/docs/guides/how-to-create-a-notification-settings-panel).
 - Improved
-  [Notifications overview](https://liveblocks.io/docs/ready-made-features/notifications)
+  [Notifications overview](https://liveblocks.io/docs/collaboration-features/notifications)
   pages, adding info on user notification settings.
 - Improved existing webhooks guides, adding more context about notification
   channels, and how to create a settings panel.
@@ -3085,9 +3085,9 @@ await liveblocks.deleteNotificationSettings({ userId });
     [`updateNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-users-userId-notification-settings),
     [`deleteNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-users-userId-notification-settings).
 - Rewrote email notification overview pages for
-  [Comments](https://liveblocks.io/docs/ready-made-features/comments/email-notifications)
+  [Comments](https://liveblocks.io/docs/collaboration-features/comments/email-notifications)
   and
-  [Notifications](https://liveblocks.io/docs/ready-made-features/notifications/email-notifications).
+  [Notifications](https://liveblocks.io/docs/collaboration-features/notifications/email-notifications).
 - Adjusted existing notification guides to work with new dashboard settings.
 - Improved information structure for
   [`useInboxNotifications`](https://liveblocks.io/docs/api-reference/liveblocks-react#useInboxNotifications).
@@ -3464,7 +3464,7 @@ ctnicholas, nvie, marcbouchenoire
 - New guide:
   [How to send email notifications for unread text editor mentions](https://liveblocks.io/docs/guides/how-to-send-email-notifications-for-unread-text-editor-mentions).
 - Improved
-  [thread metadata page](https://liveblocks.io/docs/products/comments/metadata).
+  [thread metadata page](https://liveblocks.io/docs/collaboration-features/comments/metadata).
 
 ## Website
 
@@ -3686,7 +3686,7 @@ ctnicholas, nvie, marcbouchenoire, nimeshnayaju, sugardarius
 - [`@liveblocks/react-tiptap`](https://liveblocks.io/docs/api-reference/liveblocks-react-tiptap)
   API reference.
 - New
-  [Tiptap overview page](https://liveblocks.io/docs/ready-made-features/text-editor/tiptap).
+  [Tiptap overview page](https://liveblocks.io/docs/collaboration-features/multiplayer/text-editor/tiptap).
 - Restructured getting started, adding new guides for using
   `@liveblocks/react-tiptap` on
   [Next.js](https://liveblocks.io/docs/get-started/nextjs-tiptap) and
@@ -3696,7 +3696,7 @@ ctnicholas, nvie, marcbouchenoire, nimeshnayaju, sugardarius
 - Updated guide on
   [sending emails when comments are created](https://liveblocks.io/docs/guides/how-to-send-email-notifications-of-unread-comments).
 - Updated
-  [email notifications overview](https://liveblocks.io/docs/ready-made-features/comments/email-notifications).
+  [email notifications overview](https://liveblocks.io/docs/collaboration-features/comments/email-notifications).
 
 ## Examples
 
@@ -3753,7 +3753,7 @@ sugardarius, nimeshnayaju, marcbouchenoire, jrowny, ctnicholas
 ## Documentation
 
 - Improved clarity on Notifications being
-  [project-based](http://liveblocks.io/docs/ready-made-features/notifications/concepts#Project-based).
+  [project-based](https://liveblocks.io/docs/collaboration-features/notifications/concepts#Project-based).
 - Typo fixes.
 
 ## Contributors
@@ -4296,7 +4296,7 @@ jrowny, nvie, marcbouchenoire
 ## v2.2.0
 
 We are making `resolved` a first-class citizen property on
-[threads](https://liveblocks.io/docs/ready-made-features/comments/concepts#Threads),
+[threads](https://liveblocks.io/docs/collaboration-features/comments/concepts#Threads),
 for more information about this change please read our
 [Upgrade Guide for 2.2](https://liveblocks.io/docs/upgrading/2.2).
 
@@ -4482,7 +4482,7 @@ flowflorent, ctnicholas, nvie, stevenfabre, pierrelevaillant, marcbouchenoire
 - Create new guide on
   [how to add users to Liveblocks text editor](https://liveblocks.io/docs/guides/how-to-add-users-to-liveblocks-text-editor).
 - Updated
-  [Lexical product page](https://liveblocks.io/docs/ready-made-features/text-editor/lexical)
+  [Lexical product page](https://liveblocks.io/docs/collaboration-features/multiplayer/text-editor/lexical)
   with new information.
 - Improved Lexical get started guides.
 - Improved
@@ -4618,10 +4618,10 @@ For full upgrade instructions and codemods, see the
   [`LiveblocksProvider`](https://liveblocks.io/docs/api-reference/liveblocks-react#Liveblocks)
   props, details on typing, and more.
 - Added a set of product pages for
-  [Notifications](https://liveblocks.io/docs/ready-made-features/notifications),
+  [Notifications](https://liveblocks.io/docs/collaboration-features/notifications),
   with info on concepts, components, hooks, styling, and email notifications.
 - Added product page for
-  [Lexical](https://liveblocks.io/docs/ready-made-features/text-editor/lexical)
+  [Lexical](https://liveblocks.io/docs/collaboration-features/multiplayer/text-editor/lexical)
   summarising all its features.
 - Restructured and updated existing product pages for our new products.
 - More information on the
@@ -4639,7 +4639,7 @@ For full upgrade instructions and codemods, see the
 - Updated API references for new type improvements.
 - Updated various guides for new type improvements.
 - Updated images and text on
-  [How Liveblocks works](https://liveblocks.io/docs/concepts/how-liveblocks-works)
+  [How Liveblocks works](https://liveblocks.io/docs/concepts)
   page.
 
 ## Website
@@ -5786,7 +5786,7 @@ Liveblocks account.
   - `new WebhookHandler(secret).verifyRequest({ rawBody, headers })` can be used
     to verify event requests from Liveblock's webhook functionality. It also
     provides fully typed `WebhookEvents`.
-  - Check out our [Webhooks guide](https://liveblocks.io/docs/guides/webhooks)
+  - Check out our [Webhooks guide](https://liveblocks.io/docs/platform/webhooks)
     for more details
 
 # v0.19.8
@@ -5948,7 +5948,7 @@ Internal updates:
 All packages now provide an `isReadOnly` flag on user instances. It is available
 when getting self or others. `isReadOnly` is true when storage is read-only, see
 the
-[room management guide](https://liveblocks.io/docs/guides/managing-rooms-users-permissions#permissions)
+[room management guide](https://liveblocks.io/docs/authentication#permissions)
 for more information.
 
 ```ts
@@ -6009,7 +6009,7 @@ In **@liveblocks/react**:
   ```
 
   To read more, see
-  https://liveblocks.io/docs/guides/troubleshooting#stale-props-zombie-child
+  https://liveblocks.io/docs/api-reference/troubleshooting#stale-props-zombie-child
 
 - In **@liveblocks/zustand**:
   - Fix a confusing error message

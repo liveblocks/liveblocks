@@ -800,7 +800,7 @@ metadata to individual comments in the same way as thread metadata.
 
 This release introduces group mentions (e.g. `@engineering`) across all packages
 and first-class support for tenants. Learn more about
-[group mentions](https://liveblocks.io/docs/ready-made-features/comments/users-and-mentions)
+[group mentions](https://liveblocks.io/docs/collaboration-features/comments/users-and-mentions)
 and [tenants](https://liveblocks.io/docs/authentication/organizations) in the
 docs.
 
@@ -2289,7 +2289,7 @@ you're interested in getting access, please
 ## v2.2.0
 
 We are making `resolved` a first-class citizen property on
-[threads](https://liveblocks.io/docs/ready-made-features/comments/concepts#Threads),
+[threads](https://liveblocks.io/docs/collaboration-features/comments/concepts#Threads),
 for more information about this change please read our
 [Upgrade Guide for 2.2](https://liveblocks.io/docs/upgrading/2.2).
 
@@ -3545,7 +3545,7 @@ Liveblocks account.
   - `new WebhookHandler(secret).verifyRequest({ rawBody, headers })` can be used
     to verify event requests from Liveblock's webhook functionality. It also
     provides fully typed `WebhookEvents`.
-  - Check out our [Webhooks guide](https://liveblocks.io/docs/guides/webhooks)
+  - Check out our [Webhooks guide](https://liveblocks.io/docs/platform/webhooks)
     for more details
 
 ## v0.19.8
@@ -3707,7 +3707,7 @@ Internal updates:
 All packages now provide an `isReadOnly` flag on user instances. It is available
 when getting self or others. `isReadOnly` is true when storage is read-only, see
 the
-[room management guide](https://liveblocks.io/docs/guides/managing-rooms-users-permissions#permissions)
+[room management guide](https://liveblocks.io/docs/authentication#permissions)
 for more information.
 
 ```ts
@@ -3768,7 +3768,7 @@ In **@liveblocks/react**:
   ```
 
   To read more, see
-  https://liveblocks.io/docs/guides/troubleshooting#stale-props-zombie-child
+  https://liveblocks.io/docs/api-reference/troubleshooting#stale-props-zombie-child
 
 - In **@liveblocks/zustand**:
   - Fix a confusing error message
