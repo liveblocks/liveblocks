@@ -660,7 +660,7 @@ marcbouchenoire, ctnicholas, nvie, ofoucherot
 ## v3.18.0
 
 For full upgrade instructions, see the
-[3.18 upgrade guide](https://liveblocks.io/docs/platform/upgrading/3.18).
+[3.18 upgrade guide](https://liveblocks.io/docs/upgrading/3.18).
 
 ### `@liveblocks/client`
 
@@ -1565,7 +1565,7 @@ ctnicholas, pierrelevaillant, jrowny, nimeshnayaju
 ## Documentation
 
 - New guide:
-  [Upgrading to 3.10](https://liveblocks.io/docs/platform/upgrading/3.10).
+  [Upgrading to 3.10](https://liveblocks.io/docs/upgrading/3.10).
 - New guide:
   [Migrating from Tiptap 2 to 3](https://liveblocks.io/docs/guides/migrating-from-tiptap-2-to-3).
 - New guide:
@@ -2316,13 +2316,13 @@ We’ve used this as an opportunity to tidy up some of our existing APIs, ensuri
 consistency throughout our offering.
 
 For full upgrade instructions and codemods, see the
-[3.0 upgrade guide](https://liveblocks.io/docs/platform/upgrading/3.0).
+[3.0 upgrade guide](https://liveblocks.io/docs/upgrading/3.0).
 
 ### All packages
 
 - TypeScript 5.0 is now the minimum supported version.
 - Remove deprecated APIs, see
-  [the deprecated section](https://liveblocks.io/docs/platform/upgrading/3.0#deprecated)
+  [the deprecated section](https://liveblocks.io/docs/upgrading/3.0#deprecated)
   in the upgrade guide to learn more.
 
 ### `@liveblocks/react`
@@ -2434,7 +2434,7 @@ We are also using this opportunity to rename some of the concepts around
 notifications and notification settings to improve clarity. None of these
 changes are breaking but you can learn more about them, their rationale, and how
 to automatically apply them with a codemod in our
-[Upgrade Guide for 2.24](https://liveblocks.io/docs/platform/upgrading/2.24).
+[Upgrade Guide for 2.24](https://liveblocks.io/docs/upgrading/2.24).
 
 ### `@liveblocks/react-ui`
 
@@ -3257,7 +3257,7 @@ useErrorListener((err: LiveblocksError) => {
 ```
 
 See the
-[Upgrade Guide for 2.16](https://liveblocks.io/docs/platform/upgrading/2.16) to
+[Upgrade Guide for 2.16](https://liveblocks.io/docs/upgrading/2.16) to
 learn how to adapt your code.
 
 #### Filtering by absence of metadata
@@ -3280,7 +3280,7 @@ useThreads({
 ```
 
 See the
-[Upgrade Guide for 2.16](https://liveblocks.io/docs/platform/upgrading/2.16) to
+[Upgrade Guide for 2.16](https://liveblocks.io/docs/upgrading/2.16) to
 learn how to adapt your code.
 
 #### Bug fixes
@@ -3418,7 +3418,7 @@ rollup, esbuild, etc) to also down-compile code from dependencies inside
 
 ## Documentation
 
-- [Upgrade guide for 2.15](https://liveblocks.io/docs/platform/upgrading/2.15).
+- [Upgrade guide for 2.15](https://liveblocks.io/docs/upgrading/2.15).
 - Added links to email templates in guides and API reference.
 
 ## Contributors
@@ -3904,7 +3904,7 @@ marcbouchenoire, sugardarius, pierrelevaillant, nvie
 
 We are introducing attachments to allow users to add files to their comments,
 for more information about this change please read our
-[Upgrade Guide for 2.8](https://liveblocks.io/docs/platform/upgrading/2.8).
+[Upgrade Guide for 2.8](https://liveblocks.io/docs/upgrading/2.8).
 
 ### `@liveblocks/react-ui`
 
@@ -4298,7 +4298,7 @@ jrowny, nvie, marcbouchenoire
 We are making `resolved` a first-class citizen property on
 [threads](https://liveblocks.io/docs/ready-made-features/comments/concepts#Threads),
 for more information about this change please read our
-[Upgrade Guide for 2.2](https://liveblocks.io/docs/platform/upgrading/2.2).
+[Upgrade Guide for 2.2](https://liveblocks.io/docs/upgrading/2.2).
 
 ### `@liveblocks/react`
 
@@ -4551,7 +4551,7 @@ const client = createClient(/* options */);
 ```
 
 For full upgrade instructions and codemods, see the
-[2.0 upgrade guide](https://liveblocks.io/docs/platform/upgrading/2.0).
+[2.0 upgrade guide](https://liveblocks.io/docs/upgrading/2.0).
 
 ### `create-liveblocks-app`
 
@@ -5754,7 +5754,7 @@ Non-existent.
 # v1.0.0
 
 This major release marks the maturity of Liveblocks. For upgrade instructions,
-see the [1.0 upgrade guide](https://liveblocks.io/docs/platform/upgrading/1.0).
+see the [1.0 upgrade guide](https://liveblocks.io/docs/upgrading/1.0).
 
 ## `@liveblocks/node`
 
@@ -6031,7 +6031,7 @@ In **@liveblocks/react**:
 # v0.18.0
 
 For information, please read our
-[Upgrade Guide for 0.18](https://liveblocks.io/docs/platform/upgrading/0.18).
+[Upgrade Guide for 0.18](https://liveblocks.io/docs/upgrading/0.18).
 
 ## New React hooks ✨
 
@@ -6059,7 +6059,7 @@ For information, please read our
 - Remove support for directly importing hooks from **@liveblocks/client** (e.g.
   `import { useMyPresence } from '@liveblocks/react'`). If you’re still using
   these imports, see the
-  [Upgrade Guide for 0.17](https://liveblocks.io/docs/platform/upgrading/0.17)
+  [Upgrade Guide for 0.17](https://liveblocks.io/docs/upgrading/0.17)
   for instructions.
 - Remove `ClientProvider` and `useClient` hook
 - Remove `defaultPresence` and `defaultStorageRoot` arguments. (Just use
@@ -6203,7 +6203,7 @@ Fix `@liveblocks/nodes` packaging.
 # v0.17.0
 
 For information, please read our
-[Upgrade Guide](https://liveblocks.io/docs/platform/upgrading/0.17).
+[Upgrade Guide](https://liveblocks.io/docs/upgrading/0.17).
 
 ## TypeScript improvements ✨
 
@@ -6214,7 +6214,7 @@ longer need to provide any extra type annotations anywhere for your Liveblocks
 code! 🙌
 
 To learn how to set that up, follow the instructions in our
-[Upgrade Guide](https://liveblocks.io/docs/platform/upgrading/0.17).
+[Upgrade Guide](https://liveblocks.io/docs/upgrading/0.17).
 
 - No more `any` types used (in `@liveblocks/client` and `@liveblocks/react`)
 - All APIs that work with Presence data will now require it to be
@@ -6270,9 +6270,9 @@ It's surprisingly simple!
 - In **@liveblocks/react**:
   - Importing the React hooks directly is deprecated, instead use the new
     `createRoomContext()` helper. For help, read the
-    [Recommended Upgrade Steps section](https://liveblocks.io/docs/platform/upgrading/0.17#recommended-upgrade-steps)
+    [Recommended Upgrade Steps section](https://liveblocks.io/docs/upgrading/0.17#recommended-upgrade-steps)
     within our
-    [Upgrade Guide](https://liveblocks.io/docs/platform/upgrading/0.17)
+    [Upgrade Guide](https://liveblocks.io/docs/upgrading/0.17)
   - The second argument to `useList()`, `useObject()`, and `useMap()` is
     deprecated
   - The RoomProvider's `defaultPresence` is renamed to `initialPresence`
