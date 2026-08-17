@@ -3937,14 +3937,14 @@ needs. This will avoid unnecessary rerenders that happen with overselection.
 In order to select one item from a LiveMap within the storage tree with the
 `useStorage` method, you can use the example below:
 
-```ts
+```tsx showLineNumbers={false}
 const key = "errands";
 const myTodos = useStorage((root) => root.todoMap.get(key));
 ```
 
 In order to query a LiveMap, and filter for specific values:
 
-```ts
+```tsx showLineNumbers={false}
 const myTodos = useStorage(
   root => Array.from(root.todoMap.values()).filter(...),
   shallow,
@@ -3975,7 +3975,7 @@ const myTodos = useStorage(
 
 Returns the current room's _mutable_ Storage root. Always a LiveObject.
 
-```tsx
+```tsx showLineNumbers={false}
 import { useMutableStorage } from "@liveblocks/react/suspense";
 
 function Editor() {
@@ -3991,7 +3991,7 @@ only once, when Storage has finished loading, and never again when the contents
 of the tree change. That’s the point: the `LiveText` you hand to an editor stays
 referentially stable, so your editor isn’t torn down on every keystroke.
 
-```tsx
+```tsx showLineNumbers={false}
 // Rerenders on every keystroke
 const text = useStorage((root) => root.document);
 
@@ -4008,7 +4008,7 @@ automatically does that for you. You should always wrap related changes in
 [`Room.batch`](/docs/api-reference/liveblocks-client#Room.batch) yourself, so
 they’re sent as one update and undoable as a single step.
 
-```tsx
+```tsx showLineNumbers={false}
 const room = useRoom();
 const root = useMutableStorage();
 
