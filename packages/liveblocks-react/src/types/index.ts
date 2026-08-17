@@ -788,8 +788,11 @@ type RoomContextBundleCommon<
   useCanRedo(): boolean;
 
   /**
-   * Returns the mutable (!) Storage root. This hook exists for
-   * backward-compatible reasons.
+   * Returns the mutable (!) Storage root, wrapped in a 1-tuple.
+   *
+   * @deprecated Use `useMutableStorage()` instead, which returns the root
+   * directly instead of wrapping it in a 1-tuple, and which does not return
+   * `null` in its Suspense version.
    *
    * @example
    * const [root] = useStorageRoot();

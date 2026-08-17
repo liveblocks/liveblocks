@@ -1397,7 +1397,6 @@ function useStorageRoot_withRoomContext<S extends LsonObject>(
   return [useMutableStorage_withRoomContext<S>(RoomContext)];
 }
 
-// NOTE: This API exists for backward compatible reasons
 function useStorageRoot<S extends LsonObject>(): [root: LiveObject<S> | null] {
   return useStorageRoot_withRoomContext<S>(GlobalRoomContext);
 }
@@ -5443,8 +5442,11 @@ function _useSelfSuspense(...args: any[]) {
 }
 
 /**
- * Returns the mutable (!) Storage root. This hook exists for
- * backward-compatible reasons.
+ * Returns the mutable (!) Storage root, wrapped in a 1-tuple.
+ *
+ * @deprecated Use {@link useMutableStorage} instead, which returns the root
+ * directly instead of wrapping it in a 1-tuple, and which does not return
+ * `null` in its Suspense version.
  *
  * @example
  * const [root] = useStorageRoot();
