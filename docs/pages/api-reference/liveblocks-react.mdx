@@ -3971,6 +3971,67 @@ const myTodos = useStorage(
   </PropertiesListItem>
 </PropertiesList>
 
+### useMutableStorage [@badge=RoomProvider]
+
+Returns the current room's _mutable_ Storage root. Always a LiveObject.
+
+```tsx
+import { useMutableStorage } from "@liveblocks/react/suspense";
+
+function Editor() {
+  const root = useMutableStorage();
+  const liveText = root.get("document");
+
+  // …pass `liveText` to your editor binding
+}
+```
+
+Unlike [`useStorage`][], this hook is **not reactive**. Your component rerenders
+only once, when Storage has finished loading, and never again when the contents
+of the tree change. That’s the point: the `LiveText` you hand to an editor stays
+referentially stable, so your editor isn’t torn down on every keystroke.
+
+```tsx
+// Rerenders on every keystroke
+const text = useStorage((root) => root.document);
+
+// Rerenders only once, after Storage has loaded
+const liveText = useMutableStorage().get("document");
+```
+
+<Banner title="You are responsible for batching">
+
+If you make changes to Storage via `useMutableStorage`, you’re also responsible
+for batching mutations when you make them. This is unlike
+[`useMutation`](/docs/api-reference/liveblocks-react#useMutation), which
+automatically does that for you. You should always wrap related changes in
+[`Room.batch`](/docs/api-reference/liveblocks-client#Room.batch) yourself, so
+they’re sent as one update and undoable as a single step.
+
+```tsx
+const room = useRoom();
+const root = useMutableStorage();
+
+room.batch(() => {
+  root.get("settings").set("theme", "dark");
+  root.get("settings").set("fontSize", 14);
+});
+```
+
+</Banner>
+
+The non-Suspense version returns `null` while Storage is still loading. The
+[Suspense version][] suspends instead, and always returns the root.
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="root" type="LiveObject<TStorage> | null">
+    The mutable Storage root. Returns `null` while Storage is still loading (in
+    the non-Suspense version).
+  </PropertiesListItem>
+</PropertiesList>
+
 ### useUploadFile [@badge=RoomProvider]
 
 Returns a function that uploads a file to the current room. The function

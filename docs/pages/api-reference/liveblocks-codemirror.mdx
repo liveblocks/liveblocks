@@ -81,35 +81,26 @@ export default function App() {
 }
 ```
 
-Attach the plugins after Storage has loaded. Create the editor with the
-`LiveText` content and both plugins in the initial extensions:
+Use
+[`useMutableStorage`](/docs/api-reference/liveblocks-react#useMutableStorage) to
+get the `LiveText` once Storage has loaded, then create the editor with its
+content and both plugins in the initial extensions:
 
 ```tsx file="Editor.tsx"
 "use client";
 
-import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
+import { useEffect, useRef } from "react";
 import { EditorView } from "@codemirror/view";
 import { EditorState } from "@codemirror/state";
-import type { LiveText, Room } from "@liveblocks/client";
 import {
   createLiveblocksPresencePlugin,
   createLiveblocksSyncPlugin,
 } from "@liveblocks/codemirror";
-import { useRoom } from "@liveblocks/react/suspense";
+import { useMutableStorage, useRoom } from "@liveblocks/react/suspense";
 
 export function Editor() {
   const room = useRoom();
-  const root = useRoot(room);
-
-  if (root == null) {
-    return <div>Loading…</div>;
-  }
-
-  return <EditorInner text={root.get("document")} />;
-}
-
-function EditorInner({ text }: { text: LiveText }) {
-  const room = useRoom();
+  const text = useMutableStorage().get("document");
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -134,13 +125,6 @@ function EditorInner({ text }: { text: LiveText }) {
   }, [room, text]);
 
   return <div ref={containerRef} className="editor" />;
-}
-
-function useRoot(room: Room) {
-  const subscribe = room.events.storageDidLoad.subscribeOnce;
-  const getSnapshot = room.getStorageOrNull;
-  const getServerSnapshot = useCallback(() => null, []);
-  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 ```
 
