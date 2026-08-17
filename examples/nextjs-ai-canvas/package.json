@@ -1,0 +1,36 @@
+{
+  "name": "@liveblocks-examples/nextjs-ai-canvas",
+  "description": "MagicPath-style AI canvas built with Liveblocks, tldraw, and Next.js.",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.99.0",
+    "@liveblocks/client": "^3.19.3",
+    "@liveblocks/node": "^3.19.3",
+    "@liveblocks/react": "^3.19.3",
+    "@liveblocks/react-ui": "^3.19.3",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.17.0",
+    "next": "16.2.6",
+    "prism-react-renderer": "^2.4.1",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "tldraw": "^5.0.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.6",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
