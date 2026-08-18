@@ -2,47 +2,88 @@
 meta:
   title: "Server-side editing"
   parentTitle: "Sync"
-  description:
-    "Read and edit collaborative documents from trusted backend services."
+  description: "Read and edit collaborative documents from your back end."
 ---
 
-Server-side editing lets a trusted backend update the same Sync document as
-connected users. Use it for imports, external integrations, scheduled jobs, data
-migrations, moderation, and other work that starts outside the browser.
-Connected clients receive the changes in realtime.
+Sync data can be modified from your back end, using the same
+[conflict resolution](/docs/products/sync/conflict-resolution) that enables
+multiplayer collaboration on the front end. This allows you to create initial
+room data, schedule jobs, run migrations,
+[enable agentic editing](/docs/products/sync/agentic-editing), and more.
 
-<Banner title="Keep secret keys on the server" type="warning">
+## Server-side Sync APIs
 
-Server APIs use your project’s secret key and can access rooms independently of
-a connected user. Never expose the key to the browser, and authorize each
-request in your own backend before editing a room.
+There are two different ways to modify Sync data from your back end, using
+[methods in Node.js](#edit-sync-data-with-node-js-methods) or using
+[JSON Patch](#edit-sync-data-with-json-patch) from any language.
 
-</Banner>
+### Example document shape
 
-## Edit Storage from Node.js [#edit-storage]
+In these snippets, we’ll use the following document
+[type declaration](/docs/api-reference/liveblocks-react#typing-storage) as an
+example, a simple canvas with a
+[`LiveList`](/docs/products/sync/data-types#livelist) of
+[`LiveObject`](/docs/products/sync/data-types#liveobject) shapes
+
+```ts file="liveblocks.config.ts"
+import { LiveList, LiveObject } from "@liveblocks/core";
+
+// +++
+type Shape = LiveObject<{
+  x: number;
+  y: number;
+  color: string;
+}>;
+// +++
+
+declare global {
+  interface Liveblocks {
+    // +++
+    type Storage = {
+      shapes: LiveList<Shape>;
+    }
+    // +++
+  }
+}
+```
+
+### Edit Sync data with Node.js methods [#edit-sync-data-with-node-js-methods]
 
 Use
 [`Liveblocks.mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage)
-to read and modify Storage with the same conflict-free data types used by
-clients. This includes
-[`LiveObject`](/docs/products/sync/data-types#liveobject),
-[`LiveList`](/docs/products/sync/data-types#livelist),
-[`LiveMap`](/docs/products/sync/data-types#livemap), and
-[`LiveText`](/docs/products/sync/data-types#livetext).
+to read and modify Sync data with the same
+[conflict-free data types](/docs/products/sync/data-types) used by the front
+end. For example, to add a new shape from the server, get the `shapes` list with
+[`LiveObject.get`](/docs/api-reference/liveblocks-client#LiveObject.get), and
+push a new shape with
+[`LiveList.push`](/docs/api-reference/liveblocks-client#LiveList.push). It may
+be helpful to check that the list exists before creating it if your server
+process will run before
+[setting initial storage values](/docs/api-reference/liveblocks-react#setting-initial-storage).
 
 ```ts
 import { Liveblocks } from "@liveblocks/node";
 
 const liveblocks = new Liveblocks({
-  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+  secret: "{{SECRET_KEY}}",
 });
 
 // +++
-await liveblocks.mutateStorage("project:123", ({ root }) => {
-  root.get("tasks").get("task-1")?.set("status", "complete");
+await liveblocks.mutateStorage("my-room", ({ root }) => {
+  let shapes = root.get("shapes");
 
-  const title = root.get("title");
-  title.insert(title.length, " — reviewed");
+  if (!shapes) {
+    shapes = new LiveList([]);
+    root.set("shapes", shapes);
+  }
+
+  const newShape = new LiveObject({
+    x: 50,
+    y: 100,
+    color: "red",
+  });
+
+  shapes.push(newShape);
 });
 // +++
 ```
@@ -52,48 +93,29 @@ room. Clients update as those changes are persisted. The callback can be
 asynchronous, but changes made before an `await` may synchronize before later
 work completes, so do not treat it as a database transaction.
 
-Type the global `Liveblocks.Storage` interface so the same document model is
-used in your React and Node code. Read
-[Typing Storage](/docs/api-reference/liveblocks-react#typing-storage) for the
-complete setup.
+#### Edit multiple rooms [#edit-multiple-rooms]
 
-## Edit Storage with REST [#edit-storage-with-rest]
-
-Use the
-[`Storage` JSON Patch endpoint](/docs/api-reference/rest-api-endpoints#patch-rooms-roomId-storage-json-patch)
-from other languages or services that already produce JSON Patch operations.
-
-```http
-PATCH /v2/rooms/project:123/storage/json-patch
-Content-Type: application/json
-
-// +++
-[
-  { "op": "replace", "path": "/status", "value": "published" },
-  { "op": "add", "path": "/reviewedAt", "value": "2026-08-10T10:00:00Z" }
-]
-// +++
-```
-
-JSON Patch is useful for targeted edits to the document’s JSON representation.
-Prefer `mutateStorage` for complex edits involving several conflict-free data
-types, or when working in Node.js.
-
-## Edit multiple rooms [#edit-multiple-rooms]
-
-Use
-[`Liveblocks.massMutateStorage`](/docs/api-reference/liveblocks-node#mass-mutate-storage)
-for a migration or maintenance task that applies the same change to many rooms.
-Filter the rooms as narrowly as possible; passing an empty filter selects every
-room in the project.
+It’s also possible to edit multiple rooms at once with
+[`Liveblocks.massMutateStorage`](/docs/api-reference/liveblocks-node#mass-mutate-storage).
+This is particularly helpful for running data migrations—in this snippet, if a
+room has no schema version, it’s given a value, and a new `layers`
+[`LiveList`](/docs/api-reference/liveblocks-client#LiveList) is created. 5 rooms
+are processed concurrently.
 
 ```ts
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
 // +++
 await liveblocks.massMutateStorage(
   { query: { roomId: { startsWith: "project:" } } },
   ({ root }) => {
     if (!root.get("schemaVersion")) {
-      root.set("schemaVersion", 2);
+      root.set("schemaVersion", "2.0.0");
+      root.set("layers", new LiveList([]));
     }
   },
   { concurrency: 5 }
@@ -101,90 +123,129 @@ await liveblocks.massMutateStorage(
 // +++
 ```
 
-Make migrations safe to retry, use stable IDs when inserting data, and test the
-room filter before running a broad mutation.
+### Edit Sync data with JSON Patch [#edit-sync-data-with-json-patch]
 
-## Use document-aware helpers [#document-helpers]
+Use the
+[JSON Patch endpoint](/docs/api-reference/rest-api-endpoints#patch-rooms-roomId-storage-json-patch)
+to modify Sync data from any language, and from services that are familiar with
+JSON Patch operations such as AI agents. For example, to add a new shape from
+the server, use an `add` operation with the `/shapes/-` path, which appends the
+value to the end of the `shapes` list.
 
-Use the helper that understands your document format instead of editing its
-underlying representation directly.
+```http
+PATCH /v2/rooms/my-room/storage/json-patch
+Content-Type: application/json
 
-| Document                           | Server API                                                                                                                                  |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| Storage and LiveText               | [`Liveblocks.mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage)                                                            |
-| React Flow                         | [`mutateFlow`](/docs/api-reference/liveblocks-react-flow#mutateFlow)                                                                        |
-| Lexical                            | [`withLexicalDocument`](/docs/api-reference/liveblocks-node-lexical)                                                                        |
-| Tiptap, BlockNote, and ProseMirror | [`withProsemirrorDocument`](/docs/api-reference/liveblocks-node-prosemirror)                                                                |
-| Other Yjs documents                | [`Liveblocks.sendYjsBinaryUpdate`](/docs/api-reference/liveblocks-node#put-rooms-roomId-ydoc) and [Liveblocks Yjs](/docs/products/sync/yjs) |
+// +++
+[
+  {
+    "op": "add",
+    "path": "/shapes/-",
+    "value": {
+      "x": 50,
+      "y": 100,
+      "color": "red"
+    }
+  }
+]
+// +++
+```
 
-For example, `mutateFlow` exposes React Flow nodes and edges instead of Storage
-primitives.
+JSON Patch is also available in our Python SDK, named
+[`patch_storage_document`](/docs/api-reference/liveblocks-python#patch_storage_document).
+
+## Server-side integration APIs
+
+A number of Liveblocks integrations have server-side APIs that allow you to
+modify Sync data using the integration’s document model, instead of the Sync
+model.
+
+### React Flow
+
+You can
+[edit React Flow documents from the server](/docs/api-reference/liveblocks-react-flow#server-side)
+using [`mutateFlow`](/docs/api-reference/liveblocks-react-flow#mutateFlow). In
+this example, a new node and a new edge are added to the flow.
 
 ```ts
+import { Liveblocks } from "@liveblocks/node";
 import { mutateFlow } from "@liveblocks/react-flow/node";
 
+const client = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
 // +++
-await mutateFlow({ client: liveblocks, roomId: "flowchart:123" }, (flow) => {
-  flow.updateNodeData("review", { label: "Approved" });
-  flow.addEdge({
-    id: "review-to-publish",
-    source: "review",
-    target: "publish",
+await mutateFlow({ client, roomId: "my-room-id" }, (flow) => {
+  flow.addNode({
+    id: "2",
+    position: { x: 50, y: 1000 },
+    data: { label: "Hello world" },
   });
+  flow.addEdge({ id: "e1-2", source: "1", target: "2" });
 });
 // +++
 ```
 
-Text editor helpers load the editor’s document model, apply a native
-transaction, and synchronize the result. This preserves the schema and shared
-types expected by connected editors.
+### ProseMirror, Tiptap, and BlockNote
 
-## Create a version before a large edit [#create-a-version]
-
-Create a manual version before an import, migration, or other substantial
-change. Users can then preview or restore the previous document.
+You can edit ProseMirror, Tiptap, and BlockNote text documents from the server
+using
+[`withProsemirrorDocument`](/docs/api-reference/liveblocks-node-prosemirror#withProsemirrorDocument).
+In this example, new text is inserted into the document.
 
 ```ts
-// +++
-await liveblocks.createVersionHistorySnapshot("project:123");
+import { Liveblocks } from "@liveblocks/node";
+import { withProsemirrorDocument } from "@liveblocks/node-prosemirror";
 
-await liveblocks.mutateStorage("project:123", ({ root }) => {
-  applyValidatedImport(root);
+const client = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
 });
+
+// +++
+await withProsemirrorDocument(
+  {
+    client,
+    roomId: "test-room",
+  },
+  async (api) => {
+    await api.update((doc, tr) => {
+      return tr.insertText("Hello world");
+    });
+  }
+);
 // +++
 ```
 
-Read [Version history](/docs/products/sync/version-history) for automatic
-versions, previews, and restoration.
+### Lexical
 
-## Authorize and validate edits [#authorize-and-validate]
+You can edit Lexical text documents from the server using
+[`withLexicalDocument`](/docs/api-reference/liveblocks-node-lexical#withLexicalDocument).
+In this example, the document is updated with a new paragraph containing a text
+node.
 
-A server SDK call does not inherit the room permissions of the user who caused
-the request. Before applying a change:
+```ts
+import { Liveblocks } from "@liveblocks/node";
+import { withLexicalDocument } from "@liveblocks/node-lexical";
+import { $getRoot } from "lexical";
+import { $createParagraphNode, $createTextNode } from "lexical/nodes";
 
-- Authenticate the requesting user or service.
-- Check that it can edit the room in your application’s authorization model.
-- Validate room IDs, entity IDs, paths, and values against your document schema.
-- Limit the size and number of operations.
-- Make retryable jobs idempotent so they cannot insert the same data twice.
-- Handle [`LiveblocksError`](/docs/api-reference/liveblocks-node#error-handling)
-  and application errors separately.
+const client = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
 
-Read
-[Authentication and permissions](/docs/products/sync/authentication-and-permissions)
-for room access patterns.
-
-## Trigger follow-up work [#follow-up-work]
-
-Subscribe to
-[`storageUpdated`](/docs/api-reference/webhook-events#StorageUpdatedEvent) or
-[`yDocUpdated`](/docs/api-reference/webhook-events#YDocUpdatedEvent) webhooks
-when another service needs to index, export, or react to the updated document.
-Webhook deliveries can be retried, so make handlers idempotent.
-
-## Add AI editing [#ai-editing]
-
-AI editing uses the same server APIs, with additional workflow concerns such as
-showing agent presence, validating generated changes, persisting proposals, and
-letting users review or restore the result. Read
-[Agentic editing](/docs/products/sync/agentic-editing) for those patterns.
+// +++
+await withLexicalDocument(
+  { roomId: "my-room-id", client: liveblocks },
+  async (doc) => {
+    await doc.update(() => {
+      const root = $getRoot();
+      const paragraphNode = $createParagraphNode();
+      const textNode = $createTextNode("Hello world");
+      paragraphNode.append(textNode);
+      root.append(paragraphNode);
+    });
+  }
+);
+// +++
+```
